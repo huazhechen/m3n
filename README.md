@@ -1,4 +1,3 @@
-帮我评审一下这份设计，给出修改意见：
 # Max's Markup Music Notation (M3N) 文档
 
 > **文档版本**：M3N v0.1 
