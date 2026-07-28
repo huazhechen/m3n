@@ -154,29 +154,24 @@ function parseGroup(
 
   const notes = match[1].trim().split(/\s+/).filter(Boolean)
   const modeValue = match[2].trim()
-  const mode = modeValue === 'c' ? 'c' : 'tuplet'
 
   return {
     id,
     kind: 'group',
     source,
     notes,
-    mode,
+    mode: modeValue === 'c' ? 'c' : 'tuplet',
     value: modeValue,
     depth,
     state,
   }
 }
 
-function createNote(
-  id: string,
-  source: string,
-  depth: number,
-  state: ScoreState,
-): NoteEvent {
-  const caretsMatch = source.match(/\^+/g)?.[0] ?? ''
+function createNote(id: string, source: string, depth: number, state: ScoreState): NoteEvent {
+  const caretsMatch = source.match(/\^+/)?.[0] ?? ''
   const dotsMatch = source.match(/\.+/g)?.[0] ?? ''
   const base = source.replace(/[\^.~]/g, '')
+
   return {
     id,
     kind: 'note',
@@ -190,11 +185,7 @@ function createNote(
   }
 }
 
-function applyStateAttribute(
-  state: ScoreState,
-  meta: M3NDocument['meta'],
-  content: string,
-) {
+function applyStateAttribute(state: ScoreState, meta: M3NDocument['meta'], content: string) {
   if (/^1=/.test(content)) {
     const key = content.slice(2)
     if (!meta.key) {
@@ -222,8 +213,7 @@ function applyStateAttribute(
 function applyMetaAttribute(meta: M3NDocument['meta'], content: string) {
   if (content.startsWith('title=')) {
     meta.title = content.slice('title='.length)
-  }
-  if (content.startsWith('subtitle=')) {
+  } else if (content.startsWith('subtitle=')) {
     meta.subtitle = content.slice('subtitle='.length)
   }
 }
@@ -253,7 +243,7 @@ export function parseM3N(source: string): M3NDocument {
 
       const barline = /^(?::\|\|:|\|\|\||\|\|:|:\|\||\|)/.exec(rest)
       if (barline) {
-        events.push(createBarline(`l${lineIndex}-e${eventIndex++}`, barline[0]))
+        events.push(createBarline(`l${lineIndex}-e${eventIndex += 1}`, barline[0]))
         cursor += barline[0].length
         continue
       }
@@ -280,7 +270,7 @@ export function parseM3N(source: string): M3NDocument {
       const attribute = /^\{[^}]+\}/.exec(rest)
       if (attribute) {
         const content = attribute[0].slice(1, -1).trim()
-        const item = createAttribute(`l${lineIndex}-e${eventIndex++}`, attribute[0], content)
+        const item = createAttribute(`l${lineIndex}-e${eventIndex += 1}`, attribute[0], content)
         events.push(item)
         if (item.attributeType === 'state') {
           applyStateAttribute(state, meta, content)
@@ -295,7 +285,7 @@ export function parseM3N(source: string): M3NDocument {
       const group = /^\[[^[\]]+\]/.exec(rest)
       if (group) {
         const item = parseGroup(
-          `l${lineIndex}-e${eventIndex++}`,
+          `l${lineIndex}-e${eventIndex += 1}`,
           group[0],
           depth,
           cloneState(state),
@@ -311,7 +301,7 @@ export function parseM3N(source: string): M3NDocument {
       const note = /^(?:[1-7](?:[#b=]+)?(?:[ed]+)?|0|X)(?:\^+)?(?:\.+)?~?/.exec(rest)
       if (note) {
         const item = createNote(
-          `l${lineIndex}-e${eventIndex++}`,
+          `l${lineIndex}-e${eventIndex += 1}`,
           note[0],
           depth,
           cloneState(state),
@@ -324,7 +314,7 @@ export function parseM3N(source: string): M3NDocument {
 
       const fallback = /^\S+/.exec(rest)?.[0] ?? rest[0]
       events.push({
-        id: `l${lineIndex}-e${eventIndex++}`,
+        id: `l${lineIndex}-e${eventIndex += 1}`,
         kind: 'unknown',
         source: fallback,
       })
@@ -338,7 +328,7 @@ export function parseM3N(source: string): M3NDocument {
     if (depth !== 0) {
       diagnostics.push({
         id: `d-depth-${lineIndex}`,
-        message: `第 ${lineIndex + 1} 行括号没有闭合。`,
+        message: `第 ${lineIndex + 1} 行的括号没有闭合。`,
       })
     }
 

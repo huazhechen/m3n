@@ -6,9 +6,9 @@ type ModeSwitcherProps = {
 }
 
 const modes: Array<{ id: WorkspaceMode; label: string }> = [
-  { id: 'editor', label: '编辑器模式' },
-  { id: 'compare', label: '对照模式' },
-  { id: 'staff', label: '五线谱模式' },
+  { id: 'editor', label: '编辑器' },
+  { id: 'compare', label: '对照视图' },
+  { id: 'staff', label: '五线谱' },
 ]
 
 export function ModeSwitcher({ mode, onChange }: ModeSwitcherProps) {

@@ -11,7 +11,8 @@ export function SourceEditor({ value, onChange }: SourceEditorProps) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         spellCheck={false}
-        placeholder="{1=C} {4/4}\n1 2 3 4 | 5 6 7 1e |||"
+        placeholder="{1=C} {4/4} {tempo=96bpm}
+1 2 3 4 | 5 6 7 1e |||"
       />
     </label>
   )

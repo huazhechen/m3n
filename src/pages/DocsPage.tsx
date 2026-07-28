@@ -18,10 +18,8 @@ export function DocsPage() {
 
       <section className="page-intro">
         <p className="eyebrow">文档</p>
-        <h1>README 渲染视图</h1>
-        <p>
-          这里直接渲染仓库中的 <code>README.md</code>。所有 <code>m3n</code> 代码块都会用对照模式展示。
-        </p>
+        <h1>README 阅读视图</h1>
+        <p>文档按四级标题分页展示，左侧提供目录导航，文中的 M3N 代码块会直接渲染为乐谱结果。</p>
       </section>
 
       <MarkdownDocument source={readmeSource} />
