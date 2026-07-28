@@ -1,4 +1,5 @@
 import odeToJoy from '../scores/ode-to-joy.m3n?raw'
+import twinkleTwinkleLittleStar from '../scores/twinkle-twinkle-little-star.m3n?raw'
 
 export type PresetScore = {
   slug: string
@@ -17,6 +18,14 @@ export const presetScores: PresetScore[] = [
     composer: '贝多芬',
     category: '古典主题',
     source: odeToJoy,
+  },
+  {
+    slug: 'twinkle-twinkle-little-star',
+    title: '小星星',
+    subtitle: 'Twinkle, Twinkle, Little Star',
+    composer: '法国民歌',
+    category: '儿童民歌',
+    source: twinkleTwinkleLittleStar,
   },
 ]
 
