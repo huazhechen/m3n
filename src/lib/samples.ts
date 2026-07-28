@@ -1,5 +1,6 @@
 import maryHadALittleLamb from '../scores/mary-had-a-little-lamb.m3n?raw'
 import odeToJoy from '../scores/ode-to-joy.m3n?raw'
+import scarboroughFair from '../scores/scarborough-fair.m3n?raw'
 import twinkleTwinkleLittleStar from '../scores/twinkle-twinkle-little-star.m3n?raw'
 
 export type PresetScore = {
@@ -35,6 +36,14 @@ export const presetScores: PresetScore[] = [
     composer: '美国传统童谣',
     category: '儿童民歌',
     source: maryHadALittleLamb,
+  },
+  {
+    slug: 'scarborough-fair',
+    title: 'Scarborough Fair',
+    subtitle: 'ABC 转写样本',
+    composer: '英国传统民谣',
+    category: '传统民谣',
+    source: scarboroughFair,
   },
 ]
 
