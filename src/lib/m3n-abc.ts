@@ -27,6 +27,7 @@ type HeaderState = {
   key: string
   meter: Meter
   tempo: string
+  parts: string
 }
 
 type BodyConversionResult = {
@@ -42,6 +43,7 @@ const defaultHeader: HeaderState = {
   key: 'C',
   meter: { beats: 4, beatValue: 4 },
   tempo: '100',
+  parts: '',
 }
 
 const pitchLetters = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
@@ -247,6 +249,16 @@ function convertAttribute(content: string, header: HeaderState) {
     header.tempo = content.slice('tempo='.length).replace(/bpm$/i, '')
     return ''
   }
+  if (content.startsWith('parts=')) {
+    header.parts = content.slice('parts='.length)
+    return ''
+  }
+  if (content.startsWith('part=')) {
+    return `P:${content.slice('part='.length)}`
+  }
+  if (content.startsWith('rest=')) {
+    return `Z${content.slice('rest='.length)}`
+  }
   if (content.startsWith('chord=')) {
     return `"${content.slice('chord='.length)}"`
   }
@@ -285,6 +297,12 @@ function convertAttribute(content: string, header: HeaderState) {
   }
   if (content === 'decres') {
     return '!diminuendo(!'
+  }
+  if (content === '8va') {
+    return '!8va(!'
+  }
+  if (content === '8vb') {
+    return '!8vb(!'
   }
   if (content.startsWith('/')) {
     return content.includes('decres') ? '!diminuendo)!' : content.includes('cresc') ? '!crescendo)!' : ''
@@ -339,6 +357,7 @@ export function m3nToAbc(source: string): ConversionResult {
     `T:${header.title}`,
     header.subtitle ? `T:${header.subtitle}` : '',
     header.composer ? `C:${header.composer}` : '',
+    header.parts ? `N:M3N parts=${header.parts}` : '',
     `M:${header.meter.beats}/${header.meter.beatValue}`,
     `L:1/${header.meter.beatValue}`,
     `Q:1/${header.meter.beatValue}=${header.tempo || '100'}`,
@@ -481,6 +500,7 @@ function convertM3NBody(
 function parseAbcHeader(source: string) {
   const header = structuredClone(defaultHeader)
   const body: string[] = []
+  const lyrics: string[] = []
 
   source.split(/\r?\n/).forEach((line) => {
     if (/^T:/.test(line)) {
@@ -494,6 +514,10 @@ function parseAbcHeader(source: string) {
     }
     if (/^C:/.test(line)) {
       header.composer = line.slice(2).trim()
+      return
+    }
+    if (/^N:M3N parts=/.test(line)) {
+      header.parts = line.slice('N:M3N parts='.length).trim()
       return
     }
     if (/^M:/.test(line)) {
@@ -511,18 +535,34 @@ function parseAbcHeader(source: string) {
       header.key = line.slice(2).trim()
       return
     }
+    if (/^P:/.test(line)) {
+      body.push(line)
+      return
+    }
+    if (/^V:/.test(line)) {
+      body.push(line)
+      return
+    }
+    if (/^W:/.test(line)) {
+      lyrics.push(line.slice(2).trim())
+      return
+    }
     if (/^[A-Za-z]:/.test(line)) {
       return
     }
     body.push(line)
   })
 
-  return { header, body: body.join('\n') }
+  return { header, body: body.join('\n'), lyrics }
 }
 
 function abcNoteToM3N(token: string, key: string) {
   const hasTie = token.endsWith('-')
   const normalizedToken = hasTie ? token.slice(0, -1) : token
+
+  if (/^Z/.test(normalizedToken)) {
+    return `{rest=${normalizedToken.slice(1) || '1'}}`
+  }
 
   if (/^z/.test(normalizedToken)) {
     return applyAbcDurationToM3N('0', normalizedToken.slice(1))
@@ -549,6 +589,67 @@ function abcNoteToM3N(token: string, key: string) {
   return applyAbcDurationToM3N(base, durationRaw, hasTie)
 }
 
+const abcDecorationToM3N: Record<string, string> = {
+  ppp: '{ppp}',
+  pp: '{pp}',
+  p: '{p}',
+  mp: '{mp}',
+  mf: '{mf}',
+  f: '{f}',
+  ff: '{ff}',
+  fff: '{fff}',
+  fp: '{fp}',
+  sfz: '{sfz}',
+  trill: '{tr}',
+  uppermordent: '{wav}',
+  lowermordent: '{wav-}',
+  accent: '{str}',
+  staccato: '{tip}',
+  tenuto: '{hold}',
+  breath: '{breath}',
+  'crescendo(': '{cresc}',
+  'diminuendo(': '{decres}',
+  '8va(': '{8va}',
+  '8vb(': '{8vb}',
+}
+
+function convertAbcDecorations(value: string) {
+  return value
+    .replace(/!([A-Za-z0-9.()]+)!/g, (_match, name) => abcDecorationToM3N[name] ?? '')
+    .replace(/"([^"]+)"/g, (_match, label) =>
+      String(label).startsWith('^') ? `{text=${String(label).slice(1)}}` : `{chord=${label}}`,
+    )
+}
+
+function convertAbcNotesWithoutTouchingAttributes(value: string, key: string) {
+  const attributes: string[] = []
+  const protectedValue = value.replace(/\{[^}]+\}/g, (match) => {
+    const marker = `§${attributes.length}§`
+    attributes.push(match)
+    return marker
+  })
+  const groups: string[] = []
+
+  return protectedValue
+    .replace(/\((\d+):(\d+):\d+((?:[_=^]*[A-Ga-g][,']*[0-9/]*-?)+)/g, (_match, _count, units, notesRaw) => {
+      const notes = String(notesRaw).match(/[_=^]*[A-Ga-g][,']*[0-9/]*-?/g) ?? []
+      const value = `[${notes.map((note) => abcNoteToM3N(note, key).replace(/[().]/g, '')).join(' ')}:${units}]`
+      const marker = `¤${groups.length}¤`
+      groups.push(value)
+      return marker
+    })
+    .replace(/\[[A-Ga-gz,_'=^0-9/-]+\]/g, (match) => {
+      const notes = match.slice(1, -1).match(/[_=^]*[A-Ga-g][,']*[0-9/]*-?/g) ?? []
+      const value = `[${notes.map((note) => abcNoteToM3N(note, key)).join(' ')}:h]`
+      const marker = `¤${groups.length}¤`
+      groups.push(value)
+      return marker
+    })
+    .replace(/(?:Z[0-9]+|[_=^]*[A-Ga-gz][,']*[0-9/]*-?)/g, (token) => abcNoteToM3N(token, key))
+    .replace(/¤(\d+)¤/g, (_match, index) => groups[Number(index)] ?? '')
+    .replace(/§(\d+)§/g, (_match, index) => attributes[Number(index)] ?? '')
+}
+
 function applyAbcDurationToM3N(base: string, value: string, hasTie = false) {
   const tie = hasTie ? '~' : ''
 
@@ -562,8 +663,14 @@ function applyAbcDurationToM3N(base: string, value: string, hasTie = false) {
   if (value === '4') {
     return `${base}^^${tie}`
   }
+  if (value === '3') {
+    return `${base}^.${tie}`
+  }
   if (value === '/' || value === '/2') {
     return `(${base}${tie})`
+  }
+  if (value === '/4' || value === '1/4') {
+    return `((${base}${tie}))`
   }
   if (value === '3/2') {
     return `${base}.${tie}`
@@ -573,27 +680,55 @@ function applyAbcDurationToM3N(base: string, value: string, hasTie = false) {
 }
 
 export function abcToM3N(source: string): ConversionResult {
-  const { header, body } = parseAbcHeader(source)
+  const { header, body, lyrics } = parseAbcHeader(source)
   const output: string[] = [
     header.title ? `{title=${header.title}}` : '',
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
     header.composer ? `{composer=${header.composer}}` : '',
+    header.parts ? `{parts=${header.parts}}` : '',
     `{key=${header.key || 'C'}} {${header.meter.beats}/${header.meter.beatValue}} {tempo=${header.tempo}bpm}`,
   ].filter(Boolean)
 
-  const convertedBody = body
+  const bodyLines: string[] = []
+  const bassLines: string[] = []
+  let activeVoice: 'melody' | 'bass' = 'melody'
+
+  body.split(/\r?\n/).forEach((line) => {
+    if (/^V:/.test(line)) {
+      activeVoice = /bass/i.test(line) ? 'bass' : 'melody'
+      return
+    }
+    if (activeVoice === 'bass') {
+      bassLines.push(line)
+    } else {
+      bodyLines.push(line)
+    }
+  })
+
+  const convertAbcBody = (value: string) =>
+    convertAbcNotesWithoutTouchingAttributes(
+      convertAbcDecorations(value)
+        .replace(/^P:([^\n]+)/gm, (_match, value) => `{part=${String(value).trim()}}`)
+        .replace(/\[(\d+)\s+/g, (_match, value) => `{volta=${value}} `),
+      header.key,
+    )
     .replace(/\|:/g, '||:')
     .replace(/:\|\]/g, ':|||')
     .replace(/:\|/g, ':||')
     .replace(/\|\]/g, '|||')
     .replace(/\|/g, '|')
-    .replace(/\[[A-Ga-gz,_'=^0-9/-]+\]/g, (match) => {
-      const notes = match.slice(1, -1).match(/[_=^]*[A-Ga-g][,']*[0-9/]*-?/g) ?? []
-      return `[${notes.map((note) => abcNoteToM3N(note, header.key)).join(' ')}:h]`
-    })
-    .replace(/[_=^]*[A-Ga-gz][,']*[0-9/]*-?/g, (token) => abcNoteToM3N(token, header.key))
+    .replace(/:\|{4,}/g, ':|||')
 
-  output.push(convertedBody)
+  output.push(convertAbcBody(bodyLines.join('\n')))
+
+  if (bassLines.some((line) => line.trim())) {
+    output.push('', '{bass}', convertAbcBody(bassLines.join('\n')), '{/}')
+  }
+
+  lyrics.forEach((line) => {
+    const range = /^\[([^\]]+)\]\s*(.*)$/.exec(line)
+    output.push('', range ? `{lyrics=${range[1]}}` : '{lyrics}', range ? range[2] : line, '{/}')
+  })
 
   return {
     source,
