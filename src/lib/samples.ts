@@ -1,3 +1,4 @@
+import maryHadALittleLamb from '../scores/mary-had-a-little-lamb.m3n?raw'
 import odeToJoy from '../scores/ode-to-joy.m3n?raw'
 import twinkleTwinkleLittleStar from '../scores/twinkle-twinkle-little-star.m3n?raw'
 
@@ -26,6 +27,14 @@ export const presetScores: PresetScore[] = [
     composer: '法国民歌',
     category: '儿童民歌',
     source: twinkleTwinkleLittleStar,
+  },
+  {
+    slug: 'mary-had-a-little-lamb',
+    title: '玛丽有只小羊羔',
+    subtitle: 'Mary Had a Little Lamb',
+    composer: '美国传统童谣',
+    category: '儿童民歌',
+    source: maryHadALittleLamb,
   },
 ]
 
