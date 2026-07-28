@@ -1,46 +1,42 @@
 import { Link } from 'react-router-dom'
+import { TopNav } from '../components/TopNav'
 
 export function HomePage() {
   return (
-    <main className="page-shell">
-      <header className="topbar">
-        <span className="brand">M3N</span>
-        <div className="topbar-actions">
-          <Link to="/docs" className="ghost-button">
-            文档
-          </Link>
-          <Link to="/workspace" className="primary-button">
-            开始使用
-          </Link>
-        </div>
-      </header>
-
-      <section className="hero-panel">
+    <main>
+      <TopNav />
+      <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">Max&apos;s Markup Music Notation</p>
-          <h1>把纯文本乐谱直接变成可编辑、可渲染、可播放的 M3N 工作台。</h1>
-          <p className="lede">
-            M3N 面向单谱表、首调记谱和文本编辑场景。这里提供编辑器、五线谱渲染和文档阅读三条主路径。
+          <span className="eyebrow">Max&apos;s Markup Music Notation</span>
+          <h1>M3N 是面向旋律制谱的文本记谱语言。</h1>
+          <p>
+            用接近简谱的首调输入写旋律，用 abcjs 渲染为标准五线谱，并保留文本格式便于分享、版本管理和在线编辑。
           </p>
-          <div className="cta-row">
-            <Link to="/workspace" className="primary-button">
-              打开工作台
+          <div className="hero-actions">
+            <Link to="/editor" className="primary-link">
+              打开在线编辑器
             </Link>
-            <Link to="/docs" className="ghost-button">
-              阅读 README
+            <Link to="/docs" className="secondary-link">
+              阅读文档
             </Link>
           </div>
         </div>
-
-        <aside className="hero-card">
-          <div className="card-title">核心能力</div>
-          <ul>
-            <li>文本输入后直接渲染五线谱</li>
-            <li>支持播放与当前音符高亮</li>
-            <li>文档页面按章节分页并内联渲染示例</li>
-          </ul>
-        </aside>
+        <div className="hero-summary" aria-label="M3N 特性">
+          <section>
+            <h2>文本优先</h2>
+            <p>所有乐谱内容都是可复制、可比较、可提交的纯文本。</p>
+          </section>
+          <section>
+            <h2>双向转换</h2>
+            <p>M3N 和 ABC Notation 可以在编辑器中互相转换，便于接入 abcjs 生态。</p>
+          </section>
+          <section>
+            <h2>部署简单</h2>
+            <p>通过 `npm run build` 生成静态 `dist` 目录，适合部署到 Cloudflare Pages。</p>
+          </section>
+        </div>
       </section>
     </main>
   )
 }
+
