@@ -1,3 +1,4 @@
+import frereJacques from '../scores/frere-jacques.m3n?raw'
 import maryHadALittleLamb from '../scores/mary-had-a-little-lamb.m3n?raw'
 import odeToJoy from '../scores/ode-to-joy.m3n?raw'
 import scarboroughFair from '../scores/scarborough-fair.m3n?raw'
@@ -44,6 +45,14 @@ export const presetScores: PresetScore[] = [
     composer: '英国传统民谣',
     category: '传统民谣',
     source: scarboroughFair,
+  },
+  {
+    slug: 'frere-jacques',
+    title: '两只老虎',
+    subtitle: 'Frere Jacques',
+    composer: '法国传统儿歌',
+    category: '儿童民歌',
+    source: frereJacques,
   },
 ]
 
