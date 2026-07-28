@@ -1,0 +1,10 @@
+{title=Delibes Pizzicati} {subtitle=Simplified piano theme with independent bass}
+{composer=Delibes} {category=Classical Themes with Bass}
+{key=D} {2/4} {tempo=120bpm}
+{tip} 1 0 3 0 | 5 0 3 0 | 2 0 4 0 | 5^ 0 |
+1 0 3 0 | 5 0 6 0 | 7 0 5 0 | 1e^^ |||
+
+{bass}
+[1d 5d:h] [5d 1:h] | [6dd 3d:h] [3d 6d:h] | [4d 1:h] [5d 2:h] | [1d 5d:h]^ |
+[1d 5d:h] [5d 1:h] | [4d 1:h] [2d 6d:h] | [5d 2:h] [7dd 5d:h] | [1d 5d 1:h]^ |||
+{/}

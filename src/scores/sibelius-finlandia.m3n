@@ -1,0 +1,10 @@
+{title=Sibelius Finlandia} {subtitle=Simplified piano theme with independent bass}
+{composer=Sibelius} {category=Classical Themes with Bass}
+{key=Ab} {4/4} {tempo=72bpm}
+{mf} 1 2 3 5 | 4 3 2^ | 1 3 5 1e | 7 6 5^ |
+4 5 6 4 | 3 2 1^ | 5 6 7 2e | 1e^^ |||
+
+{bass}
+[1d 5d:h] 5d [3d 5d:h] 5d | [6dd 3d:h] 3d [3d 6d:h] 3d | [4d 1:h] 1 [5d 2:h] 2 | [1d 5d 1:h]^^ |
+[1d 5d:h] 5d [3d 5d:h] 5d | [6dd 3d:h] 3d [4d 1:h] 1 | [5d 2:h] 2 [7dd 5d:h] 5d | [1d 5d 1:h]^^ |||
+{/}

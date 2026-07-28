@@ -1,0 +1,10 @@
+{title=Flight of the Bumblebee} {subtitle=Simplified piano theme with independent bass}
+{composer=Rimsky-Korsakov} {category=Classical Themes with Bass}
+{key=Am} {2/4} {tempo=176bpm}
+{f} ((1 1# 2 2#)) ((3 4 4# 5)) | ((5# 6 6# 7)) ((1e 7 6# 6)) | ((5# 5 4# 4)) ((3 2# 2 1#)) | 1^^ |
+((1 2 3 4)) ((5 6 7 1e)) | ((7 6 5 4)) ((3 2 1 7d)) | 1 3 5 7 | 1e^^ |||
+
+{bass}
+[1d 5d:h] [5d 1:h] | [6dd 3d:h] [3d 6d:h] | [4d 1:h] [5d 2:h] | [1d 5d:h]^ |
+[1d 5d:h] [5d 1:h] | [4d 1:h] [2d 6d:h] | [5d 2:h] [7dd 5d:h] | [1d 5d 1:h]^ |||
+{/}

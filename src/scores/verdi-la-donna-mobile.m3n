@@ -1,0 +1,10 @@
+{title=Verdi La Donna Mobile} {subtitle=Simplified piano theme with independent bass}
+{composer=Verdi} {category=Classical Themes with Bass}
+{key=B} {3/8} {tempo=132bpm}
+{mp} 3. (4) 5 6 | 5. (4) 3 2 | 1 2 3 5 | 4. (3) 2^ |
+{cresc} 3. (4) 5 6 | 7. (1e) 2e 1e | {/cresc} 6 5 4 3 | 2 7d 1^ |||
+
+{bass}
+[1d 5d:h] [5d 1:h] | [6dd 3d:h] [3d 6d:h] | [4d 1:h] [5d 2:h] | [1d 5d:h]^ |
+[1d 5d:h] [5d 1:h] | [4d 1:h] [2d 6d:h] | [5d 2:h] [7dd 5d:h] | [1d 5d 1:h]^ |||
+{/}

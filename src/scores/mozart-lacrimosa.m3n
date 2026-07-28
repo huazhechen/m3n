@@ -1,0 +1,10 @@
+{title=Mozart Lacrimosa} {subtitle=Simplified piano theme with independent bass}
+{composer=Mozart} {category=Classical Themes with Bass}
+{key=Dm} {12/8} {tempo=54bpm}
+{p} 6d. (7d) 1 2 | 3. (2) 1 7d | 6d 1 4 3 | 2^ 7d |
+{cresc} 6d. (7d) 1 2 | 3 4 5 6 | {/cresc} 5 4 3 2 | 1^^ |||
+
+{bass}
+[1d 5d:h] 5d 1 [6dd 3d:h] 3d 6d | [4d 1:h] 1 4 [5d 2:h] 2 5 |
+[1d 5d:h] 5d 1 [6dd 3d:h] 3d 6d | [4d 1:h] 1 4 [5d 2:h] 7d 1 |||
+{/}

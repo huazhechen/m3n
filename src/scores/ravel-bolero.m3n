@@ -1,0 +1,10 @@
+{title=Ravel Bolero} {subtitle=Simplified piano theme with independent bass}
+{composer=Ravel} {category=Classical Themes with Bass}
+{key=C} {3/4} {tempo=72bpm}
+{mp} 1 (1 2) 3 1 | 1 (1 2) 3 1 | 5 (5 6) 7 5 | 5 (4 3) 2 1 |
+1 (1 2) 3 1 | 4 (4 5) 6 4 | 5 (5 6) 7 5 | 1e^^ |||
+
+{bass}
+[1d 5d:h] [3d 5d:h] [5d 7d:h] | [6dd 3d:h] [3d 6d:h] [5d 7d:h] | [4d 1:h] [1d 4:h] [5d 7d:h] | [1d 5d:h] [1d 3d:h] [1d 5d:h] |
+[6dd 3d:h] [3d 6d:h] [5d 7d:h] | [4d 1:h] [1d 4:h] [5d 7d:h] | [5d 2:h] [2d 5d:h] [7dd 5d:h] | [1d 5d 1:h]^ |||
+{/}

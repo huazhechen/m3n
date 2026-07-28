@@ -1,11 +1,3 @@
-import frereJacques from '../scores/frere-jacques.m3n?raw'
-import hotCrossBuns from '../scores/hot-cross-buns.m3n?raw'
-import jingleBellsChorus from '../scores/jingle-bells-chorus.m3n?raw'
-import maryHadALittleLamb from '../scores/mary-had-a-little-lamb.m3n?raw'
-import odeToJoy from '../scores/ode-to-joy.m3n?raw'
-import scarboroughFair from '../scores/scarborough-fair.m3n?raw'
-import twinkleTwinkleLittleStar from '../scores/twinkle-twinkle-little-star.m3n?raw'
-
 export type PresetScore = {
   slug: string
   title: string
@@ -15,63 +7,51 @@ export type PresetScore = {
   source: string
 }
 
-export const presetScores: PresetScore[] = [
-  {
-    slug: 'ode-to-joy',
-    title: '欢乐颂',
-    subtitle: '《第九交响曲》第四乐章主题',
-    composer: '贝多芬',
-    category: '古典主题',
-    source: odeToJoy,
-  },
-  {
-    slug: 'twinkle-twinkle-little-star',
-    title: '小星星',
-    subtitle: 'Twinkle, Twinkle, Little Star',
-    composer: '法国民歌',
-    category: '儿童民歌',
-    source: twinkleTwinkleLittleStar,
-  },
-  {
-    slug: 'mary-had-a-little-lamb',
-    title: '玛丽有只小羊羔',
-    subtitle: 'Mary Had a Little Lamb',
-    composer: '美国传统童谣',
-    category: '儿童民歌',
-    source: maryHadALittleLamb,
-  },
-  {
-    slug: 'scarborough-fair',
-    title: 'Scarborough Fair',
-    subtitle: 'ABC 转写样本',
-    composer: '英国传统民谣',
-    category: '传统民谣',
-    source: scarboroughFair,
-  },
-  {
-    slug: 'frere-jacques',
-    title: '两只老虎',
-    subtitle: 'Frere Jacques',
-    composer: '法国传统儿歌',
-    category: '儿童民歌',
-    source: frereJacques,
-  },
-  {
-    slug: 'hot-cross-buns',
-    title: 'Hot Cross Buns',
-    subtitle: '英国传统童谣',
-    composer: '英国传统童谣',
-    category: '儿童民歌',
-    source: hotCrossBuns,
-  },
-  {
-    slug: 'jingle-bells-chorus',
-    title: '铃儿响叮当',
-    subtitle: 'Jingle Bells 副歌',
-    composer: 'James Lord Pierpont',
-    category: '节日歌曲',
-    source: jingleBellsChorus,
-  },
-]
+const scoreModules = import.meta.glob('../scores/*.m3n', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>
 
-export const sampleM3N = presetScores[0].source
+function slugFromPath(path: string) {
+  return path.split('/').at(-1)?.replace(/\.m3n$/, '') ?? path
+}
+
+function readAttribute(source: string, name: string) {
+  const match = new RegExp(`\\{${name}=([^}]+)\\}`).exec(source)
+  return match?.[1].trim()
+}
+
+const categoryFallbacks: Record<string, string> = {
+  'frere-jacques': '儿童民歌',
+  'hot-cross-buns': '儿童民歌',
+  'jingle-bells-chorus': '节日歌曲',
+  'mary-had-a-little-lamb': '儿童民歌',
+  'ode-to-joy': '古典主题',
+  'scarborough-fair': '传统民谣',
+  'twinkle-twinkle-little-star': '儿童民歌',
+}
+
+export const presetScores: PresetScore[] = Object.entries(scoreModules)
+  .map(([path, source]) => {
+    const slug = slugFromPath(path)
+
+    return {
+      slug,
+      title: readAttribute(source, 'title') ?? slug,
+      subtitle: readAttribute(source, 'subtitle'),
+      composer: readAttribute(source, 'composer') ?? '佚名',
+      category: readAttribute(source, 'category') ?? categoryFallbacks[slug] ?? '其他',
+      source,
+    }
+  })
+  .sort((a, b) => {
+    if (a.category !== b.category) {
+      return a.category.localeCompare(b.category, 'zh-Hans-CN')
+    }
+
+    return a.title.localeCompare(b.title, 'zh-Hans-CN')
+  })
+
+export const sampleM3N =
+  presetScores.find((score) => score.slug === 'ode-to-joy')?.source ?? presetScores[0]?.source ?? ''
