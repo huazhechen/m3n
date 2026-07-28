@@ -1,5 +1,6 @@
 import frereJacques from '../scores/frere-jacques.m3n?raw'
 import hotCrossBuns from '../scores/hot-cross-buns.m3n?raw'
+import jingleBellsChorus from '../scores/jingle-bells-chorus.m3n?raw'
 import maryHadALittleLamb from '../scores/mary-had-a-little-lamb.m3n?raw'
 import odeToJoy from '../scores/ode-to-joy.m3n?raw'
 import scarboroughFair from '../scores/scarborough-fair.m3n?raw'
@@ -62,6 +63,14 @@ export const presetScores: PresetScore[] = [
     composer: '英国传统童谣',
     category: '儿童民歌',
     source: hotCrossBuns,
+  },
+  {
+    slug: 'jingle-bells-chorus',
+    title: '铃儿响叮当',
+    subtitle: 'Jingle Bells 副歌',
+    composer: 'James Lord Pierpont',
+    category: '节日歌曲',
+    source: jingleBellsChorus,
   },
 ]
 
