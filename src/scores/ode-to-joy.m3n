@@ -1,7 +1,14 @@
-{title=欢乐颂} {subtitle=《第九交响曲》第四乐章主题}
-{composer=贝多芬}
+{title=Ode to Joy} {subtitle=Beethoven Symphony No.9 theme with bass}
+{composer=Beethoven} {category=Classical Themes with Bass}
 {key=D} {4/4} {tempo=114bpm}
-3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 3. (2) 2^ |
+{mf} 3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 3. (2) 2^ |
 3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 2. (1) 1^ |
 2 2 3 1 | 2 (3 4) 3 1 | 2 (3 4) 3 2 | 1 2 5d 3~ |
 3 4 5 | 5 4 3 2 | 1 1 2 3 | 2. (1) 1^ |||
+
+{bass}
+[1d 5d:h] 5d [5dd 2d:h] 2d | [1d 5d:h] 5d [5dd 2d:h] 2d | [6dd 3d:h] 3d [3dd 7dd:h] 7dd | [4dd 1d:h] 1d [5dd 2d:h] 2d |
+[1d 5d:h] 5d [5dd 2d:h] 2d | [1d 5d:h] 5d [5dd 2d:h] 2d | [6dd 3d:h] 3d [3dd 7dd:h] 7dd | [4dd 1d:h] 1d [1dd 5dd 1d:h]^^ |
+[5dd 2d:h] 2d [1d 5d:h] 5d | [5dd 2d:h] 2d [1d 5d:h] 5d | [5dd 2d:h] 2d [1d 5d:h] 5d | [4dd 1d:h] 1d [5dd 2d:h] 2d |
+[1d 5d:h] 5d [5dd 2d:h] 2d | [1d 5d:h] 5d [5dd 2d:h] 2d | [6dd 3d:h] 3d [3dd 7dd:h] 7dd | [4dd 1d:h] 1d [1dd 5dd 1d:h]^^ |||
+{/}
