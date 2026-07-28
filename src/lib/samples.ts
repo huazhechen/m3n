@@ -1,7 +1,23 @@
-export const sampleM3N = `{title=欢乐颂} {subtitle=《第九交响曲》第四乐章主题}
-{composer=贝多芬}
-{key=D} {4/4} {tempo=114bpm}
-3 3 {lg}4 5{/} | {lg}5 4 3 2{/} | 1 1 2 3 | 3. (2) 2^ |
-3 3 {lg}4 5{/} | {lg}5 4 3 2{/} | 1 1 2 3 | 2. (1) 1^ |
-2 2 {lg}3 1{/} | {lg}2 (3 4) 3 1{/} | {lg}2 (3 4){/} {lg}3 2{/} | {lg}1 2{/} 5d 3~ |
-3 {lg}3 4 5{/} | {lg}5 4 3 2{/} | 1 1 2 3 | 2. (1) 1^ |||`
+import odeToJoy from '../scores/ode-to-joy.m3n?raw'
+
+export type PresetScore = {
+  slug: string
+  title: string
+  subtitle?: string
+  composer: string
+  category: string
+  source: string
+}
+
+export const presetScores: PresetScore[] = [
+  {
+    slug: 'ode-to-joy',
+    title: '欢乐颂',
+    subtitle: '《第九交响曲》第四乐章主题',
+    composer: '贝多芬',
+    category: '古典主题',
+    source: odeToJoy,
+  },
+]
+
+export const sampleM3N = presetScores[0].source

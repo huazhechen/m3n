@@ -8,9 +8,9 @@ export function TopNav() {
       </NavLink>
       <nav aria-label="主导航">
         <NavLink to="/editor">在线编辑</NavLink>
+        <NavLink to="/scores">预置乐谱</NavLink>
         <NavLink to="/docs">文档</NavLink>
       </nav>
     </header>
   )
 }
-

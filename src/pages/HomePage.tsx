@@ -16,6 +16,9 @@ export function HomePage() {
             <Link to="/editor" className="primary-link">
               打开在线编辑器
             </Link>
+            <Link to="/scores" className="secondary-link">
+              浏览预置乐谱
+            </Link>
             <Link to="/docs" className="secondary-link">
               阅读文档
             </Link>
@@ -39,4 +42,3 @@ export function HomePage() {
     </main>
   )
 }
-

@@ -168,6 +168,7 @@ h3 {
 .editor-pane,
 .render-pane,
 .score-card,
+.score-section,
 .book-toc,
 .markdown-panel,
 .page-heading {
@@ -301,6 +302,56 @@ textarea::selection {
 
 .score-card.compact {
   padding: 10px;
+}
+
+.score-library {
+  display: grid;
+  gap: 20px;
+}
+
+.score-section {
+  padding: 20px;
+}
+
+.section-heading {
+  margin-bottom: 14px;
+}
+
+.section-heading h2 {
+  margin-top: 4px;
+  font-size: 1.35rem;
+}
+
+.score-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.score-list .score-card {
+  display: flex;
+  min-height: 128px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.score-list .score-card:hover {
+  border-color: #2f6f73;
+}
+
+.score-list h3 {
+  font-size: 1.12rem;
+}
+
+.score-list p {
+  margin: 8px 0 0;
+  color: #5c6468;
+}
+
+.score-list span {
+  color: #174f54;
+  font-weight: 700;
 }
 
 .score-paper {
