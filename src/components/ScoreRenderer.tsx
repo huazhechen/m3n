@@ -5,6 +5,7 @@ import 'abcjs/abcjs-audio.css'
 type ScoreRendererProps = {
   abc: string
   compact?: boolean
+  activeRange?: { startChar: number; endChar: number } | null
   onActiveRange?: (range: { startChar?: number; endChar?: number } | null) => void
 }
 
@@ -41,10 +42,11 @@ function getHardLineBreaks(abc: string) {
   return breaks
 }
 
-export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRendererProps) {
+export function ScoreRenderer({ abc, compact = false, activeRange, onActiveRange }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement | null>(null)
   const audioRef = useRef<HTMLDivElement | null>(null)
   const highlightedElementsRef = useRef<Element[]>([])
+  const cursorElementsRef = useRef<Array<{ startChar: number; endChar: number; svgEl: SVGElement }>>([])
   const [message, setMessage] = useState('')
   const [staffWidth, setStaffWidth] = useState(0)
 
@@ -77,6 +79,7 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
     }
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
     highlightedElementsRef.current = []
+    cursorElementsRef.current = []
     onActiveRange?.(null)
     setMessage('')
 
@@ -104,6 +107,12 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
       })
 
       const visualObject = visualObjects[0]
+      cursorElementsRef.current = visualObject?.getSelectableArray().flatMap((selectable) => {
+        const { startChar, endChar } = selectable.absEl.abcelem
+        return startChar === undefined || endChar === undefined
+          ? []
+          : [{ startChar, endChar, svgEl: selectable.svgEl }]
+      }) ?? []
       if (!visualObject || !audioRef.current || !abcjs.synth.supportsAudio()) {
         return
       }
@@ -144,6 +153,19 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
       setMessage(error instanceof Error ? error.message : 'ABC 渲染失败。')
     }
   }, [abc, compact, onActiveRange, staffWidth])
+
+  useEffect(() => {
+    cursorElementsRef.current.forEach((item) => item.svgEl.classList.remove('is-cursor-active'))
+    if (!activeRange) {
+      return
+    }
+
+    cursorElementsRef.current.forEach((item) => {
+      if (activeRange.startChar < item.endChar && activeRange.endChar > item.startChar) {
+        item.svgEl.classList.add('is-cursor-active')
+      }
+    })
+  }, [activeRange])
 
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>

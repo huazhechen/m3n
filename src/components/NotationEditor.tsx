@@ -16,6 +16,7 @@ export function NotationEditor({
 }: NotationEditorProps) {
   const [mode, setMode] = useState<NotationMode>(initialMode)
   const [source, setSource] = useState(initialSource)
+  const [cursorPosition, setCursorPosition] = useState(0)
   const lineNumberRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const result = useMemo(() => convertNotation(source, mode), [source, mode])
@@ -28,11 +29,37 @@ export function NotationEditor({
   )
   const abc = mode === 'm3n' ? result.output : source
   const otherMode: NotationMode = mode === 'm3n' ? 'abc' : 'm3n'
+  const activeScoreRange = useMemo(() => {
+    if (mode === 'm3n') {
+      const mappedRange = result.sourceMap
+        ?.filter((item) => item.sourceStart < cursorPosition)
+        .at(-1)
+      return mappedRange
+        ? { startChar: mappedRange.outputStart, endChar: mappedRange.outputEnd }
+        : null
+    }
+
+    const notePattern = /(?:\[[^\]\r\n]+\]|[_=^]*[A-Ga-gz][,']*(?:\d+(?:\/\d*)?|\/\d*|\d*)-?)/g
+    let activeRange: { startChar: number; endChar: number } | null = null
+    let match: RegExpExecArray | null
+    while ((match = notePattern.exec(source))) {
+      if (match.index >= cursorPosition) {
+        break
+      }
+      const lineStart = source.lastIndexOf('\n', match.index) + 1
+      if (/^[A-Za-z]:/.test(source.slice(lineStart, match.index))) {
+        continue
+      }
+      activeRange = { startChar: match.index, endChar: match.index + match[0].length }
+    }
+    return activeRange
+  }, [cursorPosition, mode, result.sourceMap, source])
 
   const switchMode = () => {
     const converted = convertNotation(source, mode)
     setMode(otherMode)
     setSource(converted.output)
+    setCursorPosition(0)
   }
 
   const highlightSourceRange = useCallback(
@@ -90,7 +117,11 @@ export function NotationEditor({
             spellCheck={false}
             wrap="off"
             value={source}
-            onChange={(event) => setSource(event.target.value)}
+            onChange={(event) => {
+              setSource(event.target.value)
+              setCursorPosition(event.target.selectionStart)
+            }}
+            onSelect={(event) => setCursorPosition(event.currentTarget.selectionStart)}
             onScroll={(event) => {
               if (lineNumberRef.current) {
                 lineNumberRef.current.scrollTop = event.currentTarget.scrollTop
@@ -115,7 +146,12 @@ export function NotationEditor({
             <h2>标准五线谱</h2>
           </div>
         </div>
-        <ScoreRenderer abc={abc} compact={embedded} onActiveRange={highlightSourceRange} />
+        <ScoreRenderer
+          abc={abc}
+          compact={embedded}
+          activeRange={activeScoreRange}
+          onActiveRange={highlightSourceRange}
+        />
       </section>
     </div>
   )
