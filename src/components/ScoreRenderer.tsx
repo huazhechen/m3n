@@ -101,6 +101,9 @@ function createPlaybackSource(abc: string): PlaybackSource {
   const mappings: Array<{ playbackStart: number; playbackEnd: number; originalStart: number }> = []
   let expanded = header.join('')
   for (const part of partOrder) {
+    if (expanded.length > 0 && !expanded.endsWith('\n')) {
+      expanded += '\n'
+    }
     expanded += `P:${part}\n`
     for (const chunk of segments.get(part) ?? []) {
       const playbackStart = expanded.length
