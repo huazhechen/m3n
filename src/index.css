@@ -383,12 +383,167 @@ textarea::selection {
 .audio-controls {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: auto minmax(120px, 1fr) minmax(240px, 2fr);
+  grid-template-columns: auto minmax(120px, 1fr) minmax(240px, 2fr) auto;
   align-items: center;
   gap: 18px;
   min-height: 44px;
   padding: 6px 8px;
   border-top: 1px solid #d9e3df;
+}
+
+.print-button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #b8cfca;
+  border-radius: 4px;
+  background: #fffef9;
+  color: #285b5c;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.print-button:hover {
+  border-color: #2f6f73;
+  background: #dcebe6;
+}
+
+.export-dialog {
+  width: min(1240px, calc(100vw - 32px));
+  height: min(860px, calc(100vh - 32px));
+  border: 1px solid #cfd3ca;
+  border-radius: 6px;
+  padding: 0;
+  color: #1f2326;
+  background: #fffef9;
+  box-shadow: 0 20px 48px rgb(31 35 38 / 24%);
+}
+
+.export-dialog::backdrop {
+  background: rgb(31 35 38 / 38%);
+}
+
+.export-dialog form {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+}
+
+.export-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #d9e3df;
+}
+
+.export-dialog h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.export-header span {
+  color: #5c6468;
+  font-size: 13px;
+}
+
+.export-content {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.export-settings {
+  display: grid;
+  align-content: start;
+  gap: 20px;
+  padding: 20px;
+  border-right: 1px solid #d9e3df;
+}
+
+.export-dialog fieldset {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.export-dialog legend {
+  margin-bottom: 8px;
+  color: #5c6468;
+  font-size: 13px;
+}
+
+.export-dialog label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #285b5c;
+  font-size: 14px;
+}
+
+.export-field input {
+  width: 90px;
+  min-height: 32px;
+  border: 1px solid #b8cfca;
+  border-radius: 4px;
+  padding: 4px 7px;
+  color: #1f2326;
+  background: #ffffff;
+}
+
+.export-field span {
+  color: #5c6468;
+}
+
+.export-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #d9e3df;
+}
+
+.export-preview {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  background: #f0f3ee;
+}
+
+.export-preview-paper {
+  min-width: 100%;
+}
+
+.export-preview svg {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  background: #fffef9;
+  box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
+}
+
+.export-actions button {
+  min-height: 34px;
+  border: 1px solid #b8cfca;
+  border-radius: 4px;
+  padding: 0 12px;
+  color: #285b5c;
+  background: #fffef9;
+  cursor: pointer;
+}
+
+.export-actions button[type='submit'] {
+  border-color: #176e6e;
+  color: #ffffff;
+  background: #176e6e;
+}
+
+.export-actions button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .audio-controls .abcjs-inline-audio {
@@ -541,7 +696,7 @@ textarea::selection {
 
 @media (max-width: 720px) {
   .audio-controls {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 10px 14px;
   }
 
@@ -566,6 +721,24 @@ textarea::selection {
   .playback-progress input::-moz-range-thumb {
     width: 16px;
     height: 16px;
+  }
+
+  .export-dialog {
+    width: calc(100vw - 16px);
+    height: calc(100vh - 16px);
+  }
+
+  .export-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .export-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    border-right: 0;
+    border-bottom: 1px solid #d9e3df;
+    padding: 14px 16px;
   }
 }
 

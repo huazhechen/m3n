@@ -16,6 +16,99 @@ type PlaybackSource = {
   toOriginalPosition: (position: number) => number
 }
 
+type ExportFormat = 'png' | 'pdf'
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function scoreFileName(abc: string) {
+  const title = abc.match(/^T:(.+)$/m)?.[1]?.trim() || 'm3n-score'
+  return title.replace(/[\\/:*?"<>|]+/g, '-').slice(0, 80) || 'm3n-score'
+}
+
+function withoutBassStaff(abc: string) {
+  let isBassVoice = false
+  return abc
+    .split('\n')
+    .filter((line) => {
+      if (/^%%score\b/.test(line)) {
+        return false
+      }
+      if (/^V:bass\b/.test(line)) {
+        isBassVoice = true
+        return false
+      }
+      return !isBassVoice
+    })
+    .join('\n')
+}
+
+function getSvgSize(svg: SVGSVGElement, scale = 1) {
+  const bounds = svg.getBoundingClientRect()
+  const viewBox = svg.viewBox.baseVal
+  const transformScale = Math.max(scale, 1)
+  const width = viewBox.width || Number.parseFloat(svg.getAttribute('width') ?? '') / transformScale || bounds.width
+  const height = viewBox.height || Number.parseFloat(svg.getAttribute('height') ?? '') / transformScale || bounds.height
+  return { width, height }
+}
+
+function makeSvgResponsive(svg: SVGSVGElement, scale = 1) {
+  const { width, height } = getSvgSize(svg, scale)
+  if (width <= 0 || height <= 0) {
+    return
+  }
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+  svg.setAttribute('preserveAspectRatio', 'xMinYMin meet')
+  svg.removeAttribute('width')
+  svg.removeAttribute('height')
+  svg.style.transform = ''
+  svg.style.transformOrigin = ''
+}
+
+async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1) {
+  const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg, scale)
+  if (sourceWidth <= 0 || sourceHeight <= 0) {
+    throw new Error('五线谱尺寸无效。')
+  }
+
+  const targetHeight = Math.ceil(targetWidth * sourceHeight / sourceWidth)
+  const clone = svg.cloneNode(true) as SVGSVGElement
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  clone.setAttribute('width', String(sourceWidth))
+  clone.setAttribute('height', String(sourceHeight))
+  clone.setAttribute('viewBox', `0 0 ${sourceWidth} ${sourceHeight}`)
+  clone.style.background = '#fffef9'
+  clone.style.transform = ''
+  clone.style.transformOrigin = ''
+
+  const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  try {
+    const image = new Image()
+    image.src = url
+    await image.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = targetWidth
+    canvas.height = targetHeight
+    const context = canvas.getContext('2d')
+    if (!context) {
+      throw new Error('无法创建图片画布。')
+    }
+    context.fillStyle = '#fffef9'
+    context.fillRect(0, 0, targetWidth, targetHeight)
+    context.drawImage(image, 0, 0, targetWidth, targetHeight)
+    return canvas
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 function createPlaybackSource(abc: string): PlaybackSource {
   const lines = abc.match(/.*(?:\r?\n|$)/g)?.filter(Boolean) ?? []
   const header: string[] = []
@@ -104,6 +197,8 @@ export function ScoreRenderer({
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement | null>(null)
   const audioRef = useRef<HTMLDivElement | null>(null)
+  const exportDialogRef = useRef<HTMLDialogElement | null>(null)
+  const exportPreviewRef = useRef<HTMLDivElement | null>(null)
   const synthControlRef = useRef<InstanceType<typeof abcjs.synth.SynthController> | null>(null)
   const playbackSpeedRef = useRef(100)
   const appliedPlaybackSpeedRef = useRef(100)
@@ -115,6 +210,13 @@ export function ScoreRenderer({
   const [playbackProgress, setPlaybackProgress] = useState(0)
   const [playbackSpeed, setPlaybackSpeedValue] = useState(100)
   const [hasAudioControls, setHasAudioControls] = useState(false)
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('png')
+  const [exportWidth, setExportWidth] = useState(1600)
+  const [pdfScale, setPdfScale] = useState(100)
+  const [includeBass, setIncludeBass] = useState(true)
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const hasBassStaff = /^V:bass\b/m.test(abc)
 
   useEffect(() => {
     const paper = paperRef.current
@@ -281,6 +383,43 @@ export function ScoreRenderer({
     })
   }, [activeRange])
 
+  useEffect(() => {
+    if (!isExportDialogOpen) {
+      return
+    }
+    const preview = exportPreviewRef.current
+    if (!preview) {
+      return
+    }
+
+    preview.innerHTML = ''
+    const scale = exportFormat === 'pdf' ? pdfScale / 100 : 1
+    const width = exportFormat === 'png' ? Math.max(320, exportWidth) : 1600
+    abcjs.renderAbc(preview, includeBass || !hasBassStaff ? abc : withoutBassStaff(abc), {
+      add_classes: false,
+      staffwidth: width / scale,
+      scale,
+      wrap: {
+        preferredMeasuresPerLine: 0,
+        minSpacing: 1.5,
+        minSpacingLimit: 1.25,
+        maxSpacing: 2.5,
+        lastLineLimit: 1.5,
+      },
+      paddingtop: 16,
+      paddingbottom: 16,
+    })
+    preview.style.width = '100%'
+    preview.style.height = 'auto'
+    preview.style.overflow = 'visible'
+    const previewSvg = preview.querySelector('svg')
+    if (previewSvg) {
+      makeSvgResponsive(previewSvg, scale)
+      previewSvg.style.width = '100%'
+      previewSvg.style.height = 'auto'
+    }
+  }, [abc, exportFormat, exportWidth, hasBassStaff, includeBass, isExportDialogOpen, pdfScale])
+
   const seekPlayback = (value: number) => {
     setPlaybackProgress(value)
     const synthControl = synthControlRef.current as (InstanceType<typeof abcjs.synth.SynthController> & {
@@ -326,6 +465,96 @@ export function ScoreRenderer({
     if (synthControl?.isLoaded) {
       appliedPlaybackSpeedRef.current = value
       synthControl.setWarp(value).catch(() => undefined)
+    }
+  }
+
+  const openExportDialog = () => {
+    setIncludeBass(hasBassStaff)
+    setIsExportDialogOpen(true)
+    exportDialogRef.current?.showModal()
+  }
+
+  const exportScore = async () => {
+    setIsExporting(true)
+    setMessage('')
+    try {
+      const fileName = scoreFileName(abc)
+      const scale = exportFormat === 'pdf' ? pdfScale / 100 : 1
+      if (exportFormat === 'pdf' && (!Number.isFinite(scale) || scale < 0.5 || scale > 2)) {
+        throw new Error('PDF 缩放需介于 50% 和 200% 之间。')
+      }
+      const staffwidth = exportFormat === 'png' ? Math.max(320, exportWidth) : 1600 / scale
+      const exportPaper = document.createElement('div')
+      const [visualObject] = abcjs.renderAbc(
+        exportPaper,
+        includeBass || !hasBassStaff ? abc : withoutBassStaff(abc),
+        {
+          add_classes: false,
+          staffwidth: staffwidth / scale,
+          scale,
+          wrap: {
+            preferredMeasuresPerLine: 0,
+            minSpacing: 1.5,
+            minSpacingLimit: 1.25,
+            maxSpacing: 2.5,
+            lastLineLimit: 1.5,
+          },
+          paddingtop: 16,
+          paddingbottom: 16,
+        },
+      )
+      const svg = exportPaper.querySelector('svg')
+      if (!visualObject || !svg) {
+        throw new Error('当前没有可导出的五线谱。')
+      }
+      if (exportFormat === 'png') {
+        const width = Math.round(exportWidth)
+        if (!Number.isFinite(width) || width < 320 || width > 8000) {
+          throw new Error('PNG 宽度需介于 320 和 8000 像素之间。')
+        }
+        const canvas = await renderScoreCanvas(svg, width, scale)
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
+        if (!blob) {
+          throw new Error('PNG 生成失败。')
+        }
+        downloadBlob(blob, `${fileName}.png`)
+      } else {
+        const canvas = await renderScoreCanvas(svg, 1600, scale)
+        const documentWidth = 210
+        const documentHeight = 297
+        const margin = 10
+        const contentWidth = documentWidth - margin * 2
+        const contentHeight = documentHeight - margin * 2
+        const imageWidth = contentWidth
+        const sourcePageHeight = Math.floor(canvas.width * contentHeight / imageWidth)
+        const { jsPDF } = await import('jspdf')
+        const pdf = new jsPDF({ format: 'a4', unit: 'mm' })
+
+        for (let offset = 0, page = 0; offset < canvas.height; offset += sourcePageHeight, page += 1) {
+          if (page > 0) {
+            pdf.addPage('a4', 'portrait')
+          }
+          const pageHeight = Math.min(sourcePageHeight, canvas.height - offset)
+          const pageCanvas = document.createElement('canvas')
+          pageCanvas.width = canvas.width
+          pageCanvas.height = pageHeight
+          const context = pageCanvas.getContext('2d')
+          if (!context) {
+            throw new Error('无法创建 PDF 页面。')
+          }
+          context.fillStyle = '#fffef9'
+          context.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
+          context.drawImage(canvas, 0, -offset)
+          const imageHeight = pageHeight * imageWidth / canvas.width
+          pdf.addImage(pageCanvas, 'PNG', (documentWidth - imageWidth) / 2, margin, imageWidth, imageHeight, undefined, 'FAST')
+        }
+        pdf.save(`${fileName}.pdf`)
+      }
+      exportDialogRef.current?.close()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '导出失败。')
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -386,7 +615,103 @@ export function ScoreRenderer({
             <output>{Math.round(playbackProgress * 100)}%</output>
           </div>
         )}
+        <button type="button" className="print-button" onClick={openExportDialog}>
+          打印
+        </button>
       </div>
+      <dialog
+        ref={exportDialogRef}
+        className="export-dialog"
+        onClose={() => setIsExportDialogOpen(false)}
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void exportScore()
+          }}
+        >
+          <div className="export-header">
+            <h2>打印五线谱</h2>
+            <span>{exportFormat === 'pdf' ? 'A4 纵向' : 'PNG 图片'}</span>
+          </div>
+          <div className="export-content">
+            <div className="export-settings">
+              <fieldset>
+                <legend>格式</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="export-format"
+                    checked={exportFormat === 'png'}
+                    onChange={() => setExportFormat('png')}
+                  />
+                  PNG 图片
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="export-format"
+                    checked={exportFormat === 'pdf'}
+                    onChange={() => setExportFormat('pdf')}
+                  />
+                  PDF（A4）
+                </label>
+              </fieldset>
+              {hasBassStaff && (
+                <fieldset>
+                  <legend>低音谱表</legend>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={includeBass}
+                      onChange={(event) => setIncludeBass(event.currentTarget.checked)}
+                    />
+                    包含低音谱表
+                  </label>
+                </fieldset>
+              )}
+              {exportFormat === 'png' ? (
+                <label className="export-field">
+                  宽度
+                  <input
+                    type="number"
+                    min="320"
+                    max="8000"
+                    step="10"
+                    value={exportWidth}
+                    onChange={(event) => setExportWidth(Number(event.currentTarget.value))}
+                  />
+                  <span>px</span>
+                </label>
+              ) : (
+                <label className="export-field">
+                  缩放
+                  <input
+                    type="number"
+                    min="50"
+                    max="200"
+                    step="1"
+                    value={pdfScale}
+                    onChange={(event) => setPdfScale(Number(event.currentTarget.value))}
+                  />
+                  <span>%</span>
+                </label>
+              )}
+            </div>
+            <div className="export-preview" aria-label="打印预览">
+              <div ref={exportPreviewRef} className="export-preview-paper" />
+            </div>
+          </div>
+          <div className="export-actions">
+            <button type="button" onClick={() => exportDialogRef.current?.close()} disabled={isExporting}>
+              取消
+            </button>
+            <button type="submit" disabled={isExporting}>
+              {isExporting ? '正在生成' : '确认并下载'}
+            </button>
+          </div>
+        </form>
+      </dialog>
       {message && <p className="render-message">{message}</p>}
     </section>
   )
