@@ -25,7 +25,7 @@ export function ScoresPage() {
               {presetScores
                 .filter((score) => score.category === category)
                 .map((score) => (
-                  <Link className="score-card" key={score.slug} to={`/editor?score=${score.slug}`}>
+                  <Link className="score-card" key={score.slug} to={`/scores/${score.slug}`}>
                     <div>
                       <h3>{score.title}</h3>
                       {score.subtitle && <p>{score.subtitle}</p>}
