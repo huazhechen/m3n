@@ -326,6 +326,10 @@ function intervalEndDecoration(value: string) {
   return ''
 }
 
+function isPostfixAttribute(value: string) {
+  return /^(tr|echo|wav[+-]?|str|tip|brk|hold|breath|f[1-5])$/.test(value)
+}
+
 function convertAttribute(content: string, header: HeaderState) {
   if (content.startsWith('title=')) {
     header.title = content.slice('title='.length)
@@ -382,6 +386,9 @@ function convertAttribute(content: string, header: HeaderState) {
   if (content === 'tr') {
     return '!trill!'
   }
+  if (content === 'echo') {
+    return '!turn!'
+  }
   if (content === 'wav' || content === 'wav+') {
     return '!uppermordent!'
   }
@@ -399,6 +406,9 @@ function convertAttribute(content: string, header: HeaderState) {
   }
   if (content === 'breath') {
     return '!breath!'
+  }
+  if (/^f[1-5]$/.test(content)) {
+    return `!${content.slice(1)}!`
   }
   if (/^(ppp|pp|p|mp|mf|f|ff|fff|fp|sfz)$/.test(content)) {
     return `!${content}!`
@@ -511,12 +521,14 @@ function convertM3NBody(
   let beatPosition = 0
   let groupBoundary = false
   const intervalAttributes: IntervalAttribute[] = []
+  let lastNotationOutputIndex: number | null = null
 
   const outputLength = () => output.join('').length
 
   const pushMapped = (value: string, sourceStart: number, sourceEnd: number) => {
     const outputStart = outputLength()
     output.push(value)
+    lastNotationOutputIndex = output.length - 1
     mappings.push({
       outputStart,
       outputEnd: outputStart + value.length,
@@ -606,7 +618,16 @@ function convertM3NBody(
         }
       }
       if (value) {
-        output.push(value)
+        if (isPostfixAttribute(content) && lastNotationOutputIndex !== null) {
+          output[lastNotationOutputIndex] = `${value}${output[lastNotationOutputIndex]}`
+          const lastMapping = mappings.at(-1)
+          if (lastMapping) {
+            lastMapping.outputStart += value.length
+            lastMapping.outputEnd += value.length
+          }
+        } else {
+          output.push(value)
+        }
       }
       index += attribute[0].length
       continue
