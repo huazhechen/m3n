@@ -376,8 +376,8 @@ textarea::selection {
 
 .score-paper .is-cursor-active,
 .score-paper .is-cursor-active * {
-  fill: #16706f;
-  stroke: #16706f;
+  fill: #1683ff;
+  stroke: #1683ff;
 }
 
 .audio-controls {

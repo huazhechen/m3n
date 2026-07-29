@@ -7,6 +7,8 @@ type ScoreRendererProps = {
   compact?: boolean
   activeRange?: { startChar: number; endChar: number } | null
   onActiveRange?: (range: { startChar?: number; endChar?: number } | null) => void
+  onNoteClick?: (range: { startChar: number; endChar: number }) => void
+  onPaperBlur?: () => void
 }
 
 function getHardLineBreaks(abc: string) {
@@ -42,7 +44,14 @@ function getHardLineBreaks(abc: string) {
   return breaks
 }
 
-export function ScoreRenderer({ abc, compact = false, activeRange, onActiveRange }: ScoreRendererProps) {
+export function ScoreRenderer({
+  abc,
+  compact = false,
+  activeRange,
+  onActiveRange,
+  onNoteClick,
+  onPaperBlur,
+}: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement | null>(null)
   const audioRef = useRef<HTMLDivElement | null>(null)
   const highlightedElementsRef = useRef<Element[]>([])
@@ -97,9 +106,12 @@ export function ScoreRenderer({ abc, compact = false, activeRange, onActiveRange
           lastLineLimit: 1.5,
         },
         lineBreaks: hardLineBreaks.length > 0 ? ([hardLineBreaks] as unknown as number[]) : undefined,
+        // abcjs otherwise applies its default red selection before invoking clickListener.
+        selectionColor: 'currentColor',
         clickListener(abcElem) {
           if (abcElem.el_type === 'note' && abcElem.startChar !== undefined && abcElem.endChar !== undefined) {
-            onActiveRange?.({ startChar: abcElem.startChar, endChar: abcElem.endChar })
+            paper.focus({ preventScroll: true })
+            onNoteClick?.({ startChar: abcElem.startChar, endChar: abcElem.endChar })
           }
         },
         paddingtop: 16,
@@ -152,7 +164,7 @@ export function ScoreRenderer({ abc, compact = false, activeRange, onActiveRange
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'ABC 渲染失败。')
     }
-  }, [abc, compact, onActiveRange, staffWidth])
+  }, [abc, compact, onActiveRange, onNoteClick, staffWidth])
 
   useEffect(() => {
     cursorElementsRef.current.forEach((item) => item.svgEl.classList.remove('is-cursor-active'))
@@ -169,7 +181,16 @@ export function ScoreRenderer({ abc, compact = false, activeRange, onActiveRange
 
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
-      <div ref={paperRef} className="score-paper" />
+      <div
+        ref={paperRef}
+        className="score-paper"
+        tabIndex={0}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) {
+            onPaperBlur?.()
+          }
+        }}
+      />
       <div ref={audioRef} className="audio-controls" />
       {message && <p className="render-message">{message}</p>}
     </section>

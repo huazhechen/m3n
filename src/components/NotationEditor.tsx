@@ -17,6 +17,7 @@ export function NotationEditor({
   const [mode, setMode] = useState<NotationMode>(initialMode)
   const [source, setSource] = useState(initialSource)
   const [cursorPosition, setCursorPosition] = useState(0)
+  const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const lineNumberRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const result = useMemo(() => convertNotation(source, mode), [source, mode])
@@ -29,7 +30,7 @@ export function NotationEditor({
   )
   const abc = mode === 'm3n' ? result.output : source
   const otherMode: NotationMode = mode === 'm3n' ? 'abc' : 'm3n'
-  const activeScoreRange = useMemo(() => {
+  const cursorScoreRange = useMemo(() => {
     if (mode === 'm3n') {
       const mappedRange = result.sourceMap
         ?.filter((item) => item.sourceStart < cursorPosition)
@@ -54,13 +55,37 @@ export function NotationEditor({
     }
     return activeRange
   }, [cursorPosition, mode, result.sourceMap, source])
+  const activeScoreRange = isCursorHighlightActive ? cursorScoreRange : null
+
+  const updateCursorPosition = useCallback((position: number) => {
+    setCursorPosition(position)
+    setIsCursorHighlightActive(true)
+  }, [])
 
   const switchMode = () => {
     const converted = convertNotation(source, mode)
     setMode(otherMode)
     setSource(converted.output)
     setCursorPosition(0)
+    setIsCursorHighlightActive(false)
   }
+
+  const placeCursorAfterScoreNote = useCallback(
+    ({ startChar, endChar }: { startChar: number; endChar: number }) => {
+      const textarea = textareaRef.current
+      const sourcePosition = mode === 'abc'
+        ? endChar
+        : result.sourceMap?.find((item) => startChar < item.outputEnd && endChar > item.outputStart)
+          ?.sourceEnd
+      if (sourcePosition === undefined) {
+        return
+      }
+
+      textarea?.setSelectionRange(sourcePosition, sourcePosition)
+      updateCursorPosition(sourcePosition)
+    },
+    [mode, result.sourceMap, updateCursorPosition],
+  )
 
   const highlightSourceRange = useCallback(
     (range: { startChar?: number; endChar?: number } | null) => {
@@ -119,9 +144,10 @@ export function NotationEditor({
             value={source}
             onChange={(event) => {
               setSource(event.target.value)
-              setCursorPosition(event.target.selectionStart)
+              updateCursorPosition(event.target.selectionStart)
             }}
-            onSelect={(event) => setCursorPosition(event.currentTarget.selectionStart)}
+            onSelect={(event) => updateCursorPosition(event.currentTarget.selectionStart)}
+            onBlur={() => setIsCursorHighlightActive(false)}
             onScroll={(event) => {
               if (lineNumberRef.current) {
                 lineNumberRef.current.scrollTop = event.currentTarget.scrollTop
@@ -151,6 +177,8 @@ export function NotationEditor({
           compact={embedded}
           activeRange={activeScoreRange}
           onActiveRange={highlightSourceRange}
+          onNoteClick={placeCursorAfterScoreNote}
+          onPaperBlur={() => setIsCursorHighlightActive(false)}
         />
       </section>
     </div>
