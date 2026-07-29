@@ -646,7 +646,7 @@ function convertM3NBody(
       const grace = convertGraceAttribute(content, header.key)
       if (grace) {
         if (grace.isAfter) {
-          appendToNotation(`${grace.value}x0`, lastNotationOutputIndex)
+          appendToNotation(`${grace.value}x/1024`, lastNotationOutputIndex)
         } else {
           prependToNotation(grace.value, lastNotationOutputIndex, lastNotationMappingIndex)
         }
@@ -877,14 +877,51 @@ function abcNoteWithoutDuration(token: string) {
   return token.replace(/^([_=^]*[A-Ga-g][,']*)[0-9/]*(-?)$/, '$1$2')
 }
 
+function abcGraceToM3N(value: string, key: string, isAfter = false) {
+  const normalized = value.replace(/\s+/g, '')
+  const notes = normalized.match(/\/?[_=^]*[A-Ga-g][,']*[0-9/]*-?/g)
+  if (!notes || notes.join('') !== normalized) {
+    return null
+  }
+
+  const isAcciaccatura = notes.every((note) => note.startsWith('/'))
+  if (!isAcciaccatura && notes.some((note) => note.startsWith('/'))) {
+    return null
+  }
+
+  const kind = isAcciaccatura ? 'ac' : 'ap'
+  const m3nNotes = notes.map((note) => abcNoteToM3N(note.replace(/^\//, ''), key)).join(' ')
+  return `{${kind}${isAfter ? '+' : ''}(${m3nNotes})}`
+}
+
 function convertAbcNotesWithoutTouchingAttributes(value: string, key: string) {
   const attributes: string[] = []
-  const protectedValue = value.replace(/\{[^}]+\}/g, (match) => {
-    const marker = `§${attributes.length}§`
-    attributes.push(match)
-    return marker
-  })
   const groups: string[] = []
+  const notePattern = '[_=^]*[A-Ga-g][,\']*[0-9/]*-?'
+  const protectedValue = value
+    .replace(new RegExp(`(${notePattern})\\{([^{}]+)\\}x(?:0|/1024)`, 'g'), (match, note, graceRaw) => {
+      const grace = abcGraceToM3N(String(graceRaw), key, true)
+      if (!grace) {
+        return match
+      }
+      const marker = `¤${groups.length}¤`
+      groups.push(`${abcNoteToM3N(String(note), key)}${grace}`)
+      return marker
+    })
+    .replace(new RegExp(`\\{([^{}]+)\\}(${notePattern})`, 'g'), (match, graceRaw, note) => {
+      const grace = abcGraceToM3N(String(graceRaw), key)
+      if (!grace) {
+        return match
+      }
+      const marker = `¤${groups.length}¤`
+      groups.push(`${abcNoteToM3N(String(note), key)}${grace}`)
+      return marker
+    })
+    .replace(/\{[^}]+\}/g, (match) => {
+      const marker = `§${attributes.length}§`
+      attributes.push(match)
+      return marker
+    })
 
   return protectedValue
     .replace(/\((\d+):(\d+):\d+((?:[_=^]*[A-Ga-g][,']*[0-9/]*-?)+)/g, (_match, _count, units, notesRaw) => {
