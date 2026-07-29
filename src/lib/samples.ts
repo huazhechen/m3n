@@ -4,6 +4,7 @@ export type PresetScore = {
   subtitle?: string
   composer: string
   category: string
+  searchText: string
   source: string
 }
 
@@ -22,26 +23,44 @@ function readAttribute(source: string, name: string) {
   return match?.[1].trim()
 }
 
-const categoryFallbacks: Record<string, string> = {
-  'frere-jacques': '儿童民歌',
-  'hot-cross-buns': '儿童民歌',
-  'jingle-bells-chorus': '节日歌曲',
-  'mary-had-a-little-lamb': '儿童民歌',
-  'ode-to-joy': '古典主题',
-  'scarborough-fair': '传统民谣',
-  'twinkle-twinkle-little-star': '儿童民歌',
+const notationAttributeNames = new Set([
+  'key',
+  '1',
+  'tempo',
+  'transpose',
+  'parts',
+  'part',
+  'rest',
+  'chord',
+  'lyrics',
+])
+
+function readMetadataValues(source: string) {
+  return Array.from(source.matchAll(/\{([^=}\s]+)=([^}]*)\}/g))
+    .filter((match) => !notationAttributeNames.has(match[1]))
+    .map((match) => match[2].trim())
+    .filter(Boolean)
+}
+
+function normalizeSearchText(value: string) {
+  return value.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
 }
 
 export const presetScores: PresetScore[] = Object.entries(scoreModules)
   .map(([path, source]) => {
     const slug = slugFromPath(path)
+    const title = readAttribute(source, 'title') ?? slug
+    const subtitle = readAttribute(source, 'subtitle')
+    const composer = readAttribute(source, 'composer') ?? '佚名'
+    const category = readAttribute(source, 'category') ?? '未分类'
 
     return {
       slug,
-      title: readAttribute(source, 'title') ?? slug,
-      subtitle: readAttribute(source, 'subtitle'),
-      composer: readAttribute(source, 'composer') ?? '佚名',
-      category: readAttribute(source, 'category') ?? categoryFallbacks[slug] ?? '其他',
+      title,
+      subtitle,
+      composer,
+      category,
+      searchText: normalizeSearchText([title, subtitle, composer, category, ...readMetadataValues(source)].filter(Boolean).join(' ')),
       source,
     }
   })

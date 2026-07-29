@@ -27,6 +27,7 @@ type HeaderState = {
   key: string
   meter: Meter
   tempo: string
+  transpose: number
   parts: string
 }
 
@@ -43,6 +44,7 @@ const defaultHeader: HeaderState = {
   key: 'C',
   meter: { beats: 4, beatValue: 4 },
   tempo: '',
+  transpose: 0,
   parts: '',
 }
 
@@ -380,6 +382,13 @@ function convertAttribute(content: string, header: HeaderState) {
     header.tempo = content.slice('tempo='.length).replace(/bpm$/i, '')
     return ''
   }
+  if (content.startsWith('transpose=')) {
+    const value = content.slice('transpose='.length)
+    if (/^-?\d+$/.test(value)) {
+      header.transpose = Number(value)
+    }
+    return ''
+  }
   if (content.startsWith('parts=')) {
     header.parts = content.slice('parts='.length)
     return ''
@@ -518,6 +527,7 @@ export function m3nToAbc(source: string): ConversionResult {
     `M:${header.meter.beats}/${header.meter.beatValue}`,
     `L:1/${header.meter.beatValue}`,
     header.tempo ? `Q:1/${header.meter.beatValue}=${header.tempo}` : '',
+    header.transpose ? `%%MIDI transpose ${header.transpose}` : '',
     `K:${keyToAbc(header.key)}`,
     bassBody ? '%%score { melody | bass }' : '',
     bassBody ? 'V:melody clef=treble' : '',
@@ -765,6 +775,11 @@ function parseAbcHeader(source: string) {
       header.tempo = line.split('=').at(-1)?.trim() ?? header.tempo
       return
     }
+    const midiTranspose = /^%%MIDI\s+transpose\s+(-?\d+)\s*$/i.exec(line)
+    if (midiTranspose) {
+      header.transpose = Number(midiTranspose[1])
+      return
+    }
     if (/^K:/.test(line)) {
       header.key = line.slice(2).trim()
       hasKey = true
@@ -1006,7 +1021,7 @@ export function abcToM3N(source: string): ConversionResult {
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
     header.composer ? `{composer=${header.composer}}` : '',
     header.parts ? `{parts=${header.parts}}` : '',
-    `{key=${header.key || 'C'}} {${header.meter.beats}/${header.meter.beatValue}} {tempo=${header.tempo}bpm}`,
+    `{key=${header.key || 'C'}} {${header.meter.beats}/${header.meter.beatValue}} {tempo=${header.tempo}bpm}${header.transpose ? ` {transpose=${header.transpose}}` : ''}`,
   ].filter(Boolean)
 
   const bodyLines: string[] = []

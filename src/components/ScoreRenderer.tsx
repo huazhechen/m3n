@@ -324,10 +324,12 @@ export function ScoreRenderer({
             }
           },
           onEvent(event) {
-            highlightedElementsRef.current.forEach((element) =>
-              element.classList.remove('is-playing'),
-            )
-            if (event.startChar === undefined || event.endChar === undefined) {
+            const startChars = event.startCharArray ?? (event.startChar === undefined ? [] : [event.startChar])
+            const endChars = event.endCharArray ?? (event.endChar === undefined ? [] : [event.endChar])
+            if (startChars.length === 0 || endChars.length === 0) {
+              highlightedElementsRef.current.forEach((element) =>
+                element.classList.remove('is-playing'),
+              )
               highlightedElementsRef.current = []
               onActiveRange?.(null)
               return
@@ -335,14 +337,21 @@ export function ScoreRenderer({
             if (event.milliseconds === 0) {
               setPlaybackProgress(0)
             }
-            const startChar = playbackSource.toOriginalPosition(event.startChar)
-            const endChar = playbackSource.toOriginalPosition(event.endChar)
-            const elements = cursorElementsRef.current
-              .filter((item) => startChar < item.endChar && endChar > item.startChar)
-              .map((item) => item.svgEl)
+            const ranges = startChars.map((startChar, index) => ({
+              startChar: playbackSource.toOriginalPosition(startChar),
+              endChar: playbackSource.toOriginalPosition(endChars[index] ?? endChars[0]),
+            }))
+            const elements = playbackVisualObject === visualObject
+              ? event.elements?.flat().filter((element) => element instanceof Element) as Element[] ?? []
+              : cursorElementsRef.current
+                .filter((item) => ranges.some(
+                  (range) => range.startChar < item.endChar && range.endChar > item.startChar,
+                ))
+                .map((item) => item.svgEl)
+            highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
             elements.forEach((element) => element.classList.add('is-playing'))
             highlightedElementsRef.current = elements
-            onActiveRange?.({ startChar, endChar })
+            onActiveRange?.(ranges[0])
           },
           onFinished() {
             highlightedElementsRef.current.forEach((element) =>

@@ -10,14 +10,14 @@ export function HomePage() {
           <span className="eyebrow">Max&apos;s Markup Music Notation</span>
           <h1>M3N 是面向旋律制谱的文本记谱语言。</h1>
           <p>
-            用接近简谱的首调输入写旋律，用 abcjs 渲染为标准五线谱，并保留文本格式便于分享、版本管理和在线编辑。
+            使用首调记谱输入旋律，即时呈现为清晰的标准五线谱，让创作、校对与分享都更直接。
           </p>
           <div className="hero-actions">
             <Link to="/editor" className="primary-link">
               打开在线编辑器
             </Link>
             <Link to="/scores" className="secondary-link">
-              浏览预置乐谱
+              浏览乐谱库
             </Link>
             <Link to="/docs" className="secondary-link">
               阅读文档
@@ -26,16 +26,16 @@ export function HomePage() {
         </div>
         <div className="hero-summary" aria-label="M3N 特性">
           <section>
-            <h2>文本优先</h2>
-            <p>所有乐谱内容都是可复制、可比较、可提交的纯文本。</p>
+            <h2>首调记谱</h2>
+            <p>以首调方式输入旋律，表达清晰，输入自然。</p>
           </section>
           <section>
             <h2>即时渲染</h2>
-            <p>编辑 M3N 时同步生成标准五线谱，便于校对和试听。</p>
+            <p>输入内容即时呈现为标准五线谱，便于校对、试听和打印。</p>
           </section>
           <section>
-            <h2>部署简单</h2>
-            <p>通过 `npm run build` 生成静态 `dist` 目录，适合部署到 Cloudflare Pages。</p>
+            <h2>随时创作</h2>
+            <p>直接在浏览器中完成记谱、播放与导出，无需安装额外软件。</p>
           </section>
         </div>
       </section>
