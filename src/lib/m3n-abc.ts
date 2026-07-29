@@ -595,8 +595,8 @@ function convertM3NBody(
         groupBoundary ||
         depth === 0 &&
           (beatPosition === 0 || beamSpanInBeats(header.meter) - beatPosition < Number.EPSILON)
-      if (whitespace[0].includes('\n') || shouldBreakBeam) {
-        output.push(whitespace[0].includes('\n') ? '\n' : ' ')
+      if (shouldBreakBeam) {
+        output.push(' ')
       }
       groupBoundary = false
       line += whitespace[0].split('\n').length - 1
