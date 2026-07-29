@@ -1,7 +1,8 @@
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from 'react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useSearchParams } from 'react-router-dom'
 import { NotationEditor } from './NotationEditor'
 
 type DocumentSource = {
@@ -82,6 +83,7 @@ function isCodeChild(node: ReactNode, language: string) {
 
 export function MarkdownBook({ documents }: MarkdownBookProps) {
   const pages = useMemo(() => documents.flatMap(splitDocument), [documents])
+  const [searchParams, setSearchParams] = useSearchParams()
   const documentGroups = useMemo<DocumentGroup[]>(
     () =>
       documents.map((document) => ({
@@ -90,8 +92,17 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       })),
     [documents, pages],
   )
-  const [activePageId, setActivePageId] = useState(pages[0]?.id ?? '')
+  const activePageId = searchParams.get('page')
   const activePage = pages.find((page) => page.id === activePageId) ?? pages[0]
+
+  function selectPage(pageId: string) {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.set('page', pageId)
+      return next
+    })
+    window.scrollTo(0, 0)
+  }
 
   if (!activePage) {
     return null
@@ -113,7 +124,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
                 onClick={() => {
                   const firstPage = document.pages[0]
                   if (firstPage) {
-                    setActivePageId(firstPage.id)
+                    selectPage(firstPage.id)
                   }
                 }}
               >
@@ -126,7 +137,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
                     key={page.id}
                     type="button"
                     className={`toc-leaf ${page.id === activePage.id ? 'active' : ''}`}
-                    onClick={() => setActivePageId(page.id)}
+                    onClick={() => selectPage(page.id)}
                   >
                     {page.title}
                   </button>
