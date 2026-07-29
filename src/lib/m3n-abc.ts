@@ -398,8 +398,11 @@ function convertAttribute(content: string, header: HeaderState) {
   if (content === 'str') {
     return '!accent!'
   }
-  if (content === 'tip' || content === 'brk') {
-    return '!staccato!'
+  if (content === 'tip') {
+    return '.'
+  }
+  if (content === 'brk') {
+    return '!wedge!'
   }
   if (content === 'hold') {
     return '!tenuto!'
