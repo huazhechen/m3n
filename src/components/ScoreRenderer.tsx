@@ -11,39 +11,6 @@ type ScoreRendererProps = {
   onPaperBlur?: () => void
 }
 
-function getHardLineBreaks(abc: string) {
-  const lines = abc.split(/\r?\n/)
-  const barPattern = /:\|\]|\|:|:\||\|\]|\|/g
-  const breaks: number[] = []
-  let measures = 0
-
-  const isMusicLine = (line: string) => line.length > 0 && !/^[A-Za-z]:/.test(line) && !line.startsWith('%')
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index].trim()
-    if (!isMusicLine(line)) {
-      continue
-    }
-
-    measures += line.match(barPattern)?.length ?? 0
-    let nextMusicLine = false
-    for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex += 1) {
-      const next = lines[nextIndex].trim()
-      if (!next || next.startsWith('%')) {
-        continue
-      }
-      nextMusicLine = isMusicLine(next)
-      break
-    }
-
-    if (nextMusicLine && measures > 0) {
-      breaks.push(measures - 1)
-    }
-  }
-
-  return breaks
-}
-
 type PlaybackSource = {
   abc: string
   toOriginalPosition: (position: number) => number
@@ -137,10 +104,17 @@ export function ScoreRenderer({
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement | null>(null)
   const audioRef = useRef<HTMLDivElement | null>(null)
+  const synthControlRef = useRef<InstanceType<typeof abcjs.synth.SynthController> | null>(null)
+  const playbackSpeedRef = useRef(100)
+  const appliedPlaybackSpeedRef = useRef(100)
+  const pendingSeekRef = useRef<number | null>(null)
   const highlightedElementsRef = useRef<Element[]>([])
   const cursorElementsRef = useRef<Array<{ startChar: number; endChar: number; svgEl: SVGElement }>>([])
   const [message, setMessage] = useState('')
   const [staffWidth, setStaffWidth] = useState(0)
+  const [playbackProgress, setPlaybackProgress] = useState(0)
+  const [playbackSpeed, setPlaybackSpeedValue] = useState(100)
+  const [hasAudioControls, setHasAudioControls] = useState(false)
 
   useEffect(() => {
     const paper = paperRef.current
@@ -174,9 +148,12 @@ export function ScoreRenderer({
     cursorElementsRef.current = []
     onActiveRange?.(null)
     setMessage('')
+    setPlaybackProgress(0)
+    setHasAudioControls(false)
+    synthControlRef.current = null
+    pendingSeekRef.current = null
 
     try {
-      const hardLineBreaks = getHardLineBreaks(abc)
       const visualObjects = abcjs.renderAbc(paper, abc, {
         responsive: 'resize',
         add_classes: true,
@@ -188,7 +165,6 @@ export function ScoreRenderer({
           maxSpacing: 2.5,
           lastLineLimit: 1.5,
         },
-        lineBreaks: hardLineBreaks.length > 0 ? ([hardLineBreaks] as unknown as number[]) : undefined,
         // abcjs otherwise applies its default red selection before invoking clickListener.
         selectionColor: 'currentColor',
         clickListener(abcElem) {
@@ -223,9 +199,28 @@ export function ScoreRenderer({
           })[0]
 
       const synthControl = new abcjs.synth.SynthController()
+      synthControlRef.current = synthControl
       synthControl.load(
         audioRef.current,
         {
+          onBeat(beatNumber, totalBeats) {
+            const progress = totalBeats > 0 ? Math.max(0, Math.min(1, beatNumber / totalBeats)) : 0
+            setPlaybackProgress((current) => (Math.abs(current - progress) < 0.002 ? current : progress))
+          },
+          onReady() {
+            const controller = synthControlRef.current
+            const pendingSeek = pendingSeekRef.current
+            if (controller && pendingSeek !== null) {
+              controller.setProgress(pendingSeek)
+              const playbackController = controller as unknown as { seek?: (percent: number) => void }
+              playbackController.seek?.(pendingSeek)
+              pendingSeekRef.current = null
+            }
+            if (controller && appliedPlaybackSpeedRef.current !== playbackSpeedRef.current) {
+              appliedPlaybackSpeedRef.current = playbackSpeedRef.current
+              controller.setWarp(playbackSpeedRef.current).catch(() => undefined)
+            }
+          },
           onEvent(event) {
             highlightedElementsRef.current.forEach((element) =>
               element.classList.remove('is-playing'),
@@ -234,6 +229,9 @@ export function ScoreRenderer({
               highlightedElementsRef.current = []
               onActiveRange?.(null)
               return
+            }
+            if (event.milliseconds === 0) {
+              setPlaybackProgress(0)
             }
             const startChar = playbackSource.toOriginalPosition(event.startChar)
             const endChar = playbackSource.toOriginalPosition(event.endChar)
@@ -250,16 +248,18 @@ export function ScoreRenderer({
             )
             highlightedElementsRef.current = []
             onActiveRange?.(null)
+            setPlaybackProgress(1)
           },
         },
         {
-        displayLoop: true,
-        displayRestart: true,
+        displayLoop: false,
+        displayRestart: false,
         displayPlay: true,
-        displayProgress: true,
-        displayWarp: true,
+        displayProgress: false,
+        displayWarp: false,
         },
       )
+      setHasAudioControls(true)
       synthControl.setTune(playbackVisualObject, false).catch(() => {
         setMessage('当前浏览器需要用户交互后才能初始化音频。')
       })
@@ -281,6 +281,54 @@ export function ScoreRenderer({
     })
   }, [activeRange])
 
+  const seekPlayback = (value: number) => {
+    setPlaybackProgress(value)
+    const synthControl = synthControlRef.current as (InstanceType<typeof abcjs.synth.SynthController> & {
+      isLoaded?: boolean
+    }) | null
+    if (!synthControl) {
+      return
+    }
+
+    if (synthControl.isLoaded) {
+      synthControl.setProgress(value)
+      const playbackController = synthControl as unknown as { seek?: (percent: number) => void }
+      playbackController.seek?.(value)
+      return
+    }
+
+    pendingSeekRef.current = value
+    const playbackController = synthControl as unknown as {
+      go?: () => Promise<unknown>
+      isLoading?: boolean
+    }
+    if (!playbackController.isLoading) {
+      playbackController.go?.().catch(() => {
+        setMessage('当前浏览器无法初始化音频。')
+      })
+    }
+  }
+
+  const seekPlaybackFromPointer = (input: HTMLInputElement, clientX: number) => {
+    const bounds = input.getBoundingClientRect()
+    if (bounds.width === 0) {
+      return
+    }
+    seekPlayback(Math.max(0, Math.min(1, (clientX - bounds.left) / bounds.width)))
+  }
+
+  const setPlaybackSpeed = (value: number) => {
+    setPlaybackSpeedValue(value)
+    playbackSpeedRef.current = value
+    const synthControl = synthControlRef.current as (InstanceType<typeof abcjs.synth.SynthController> & {
+      isLoaded?: boolean
+    }) | null
+    if (synthControl?.isLoaded) {
+      appliedPlaybackSpeedRef.current = value
+      synthControl.setWarp(value).catch(() => undefined)
+    }
+  }
+
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
       <div
@@ -293,7 +341,52 @@ export function ScoreRenderer({
           }
         }}
       />
-      <div ref={audioRef} className="audio-controls" />
+      <div className="audio-controls">
+        <div ref={audioRef} />
+        {hasAudioControls && (
+          <div className="playback-speed">
+            <span>速度</span>
+            <input
+              type="range"
+              min="50"
+              max="200"
+              step="5"
+              value={playbackSpeed}
+              aria-label="Playback speed"
+              onChange={(event) => setPlaybackSpeed(Number(event.currentTarget.value))}
+            />
+            <output>{playbackSpeed}%</output>
+          </div>
+        )}
+        {hasAudioControls && (
+          <div className="playback-progress">
+            <span>播放进度</span>
+          <input
+            type="range"
+            min="0"
+            max="1000"
+            value={Math.round(playbackProgress * 1000)}
+            aria-label="Playback position"
+            onInput={(event) => seekPlayback(Number(event.currentTarget.value) / 1000)}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId)
+              seekPlaybackFromPointer(event.currentTarget, event.clientX)
+            }}
+            onPointerMove={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                seekPlaybackFromPointer(event.currentTarget, event.clientX)
+              }
+            }}
+            onPointerUp={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId)
+              }
+            }}
+          />
+            <output>{Math.round(playbackProgress * 100)}%</output>
+          </div>
+        )}
+      </div>
       {message && <p className="render-message">{message}</p>}
     </section>
   )

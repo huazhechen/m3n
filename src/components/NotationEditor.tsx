@@ -1,26 +1,23 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { convertNotation, type NotationMode } from '../lib/m3n-abc'
+import { m3nToAbc } from '../lib/m3n-abc'
 import { sampleM3N } from '../lib/samples'
 import { ScoreRenderer } from './ScoreRenderer'
 
 type NotationEditorProps = {
-  initialMode?: NotationMode
   initialSource?: string
   embedded?: boolean
 }
 
 export function NotationEditor({
-  initialMode = 'm3n',
   initialSource = sampleM3N,
   embedded = false,
 }: NotationEditorProps) {
-  const [mode, setMode] = useState<NotationMode>(initialMode)
   const [source, setSource] = useState(initialSource)
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const lineNumberRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const result = useMemo(() => convertNotation(source, mode), [source, mode])
+  const result = useMemo(() => m3nToAbc(source), [source])
   const lineNumbers = useMemo(
     () =>
       Array.from({ length: source.split('\n').length }, (_item, index) => String(index + 1)).join(
@@ -28,33 +25,15 @@ export function NotationEditor({
       ),
     [source],
   )
-  const abc = mode === 'm3n' ? result.output : source
-  const otherMode: NotationMode = mode === 'm3n' ? 'abc' : 'm3n'
+  const abc = result.output
   const cursorScoreRange = useMemo(() => {
-    if (mode === 'm3n') {
-      const mappedRange = result.sourceMap
-        ?.filter((item) => item.sourceStart < cursorPosition)
-        .at(-1)
-      return mappedRange
-        ? { startChar: mappedRange.outputStart, endChar: mappedRange.outputEnd }
-        : null
-    }
-
-    const notePattern = /(?:\[[^\]\r\n]+\]|[_=^]*[A-Ga-gz][,']*(?:\d+(?:\/\d*)?|\/\d*|\d*)-?)/g
-    let activeRange: { startChar: number; endChar: number } | null = null
-    let match: RegExpExecArray | null
-    while ((match = notePattern.exec(source))) {
-      if (match.index >= cursorPosition) {
-        break
-      }
-      const lineStart = source.lastIndexOf('\n', match.index) + 1
-      if (/^[A-Za-z]:/.test(source.slice(lineStart, match.index))) {
-        continue
-      }
-      activeRange = { startChar: match.index, endChar: match.index + match[0].length }
-    }
-    return activeRange
-  }, [cursorPosition, mode, result.sourceMap, source])
+    const mappedRange = result.sourceMap
+      ?.filter((item) => item.sourceStart < cursorPosition)
+      .at(-1)
+    return mappedRange
+      ? { startChar: mappedRange.outputStart, endChar: mappedRange.outputEnd }
+      : null
+  }, [cursorPosition, result.sourceMap])
   const activeScoreRange = isCursorHighlightActive ? cursorScoreRange : null
 
   const updateCursorPosition = useCallback((position: number) => {
@@ -62,21 +41,12 @@ export function NotationEditor({
     setIsCursorHighlightActive(true)
   }, [])
 
-  const switchMode = () => {
-    const converted = convertNotation(source, mode)
-    setMode(otherMode)
-    setSource(converted.output)
-    setCursorPosition(0)
-    setIsCursorHighlightActive(false)
-  }
-
   const placeCursorAfterScoreNote = useCallback(
     ({ startChar, endChar }: { startChar: number; endChar: number }) => {
       const textarea = textareaRef.current
-      const sourcePosition = mode === 'abc'
-        ? endChar
-        : result.sourceMap?.find((item) => startChar < item.outputEnd && endChar > item.outputStart)
-          ?.sourceEnd
+      const sourcePosition = result.sourceMap?.find(
+        (item) => startChar < item.outputEnd && endChar > item.outputStart,
+      )?.sourceEnd
       if (sourcePosition === undefined) {
         return
       }
@@ -84,7 +54,7 @@ export function NotationEditor({
       textarea?.setSelectionRange(sourcePosition, sourcePosition)
       updateCursorPosition(sourcePosition)
     },
-    [mode, result.sourceMap, updateCursorPosition],
+    [result.sourceMap, updateCursorPosition],
   )
 
   const highlightSourceRange = useCallback(
@@ -100,12 +70,6 @@ export function NotationEditor({
       }
       const { startChar, endChar } = range
 
-      if (mode === 'abc') {
-        textarea.focus({ preventScroll: true })
-        textarea.setSelectionRange(startChar, endChar)
-        return
-      }
-
       const mappedRange = result.sourceMap?.find(
         (item) => startChar < item.outputEnd && endChar > item.outputStart,
       )
@@ -113,10 +77,9 @@ export function NotationEditor({
         return
       }
 
-      textarea.focus({ preventScroll: true })
       textarea.setSelectionRange(mappedRange.sourceStart, mappedRange.sourceEnd)
     },
-    [mode, result.sourceMap],
+    [result.sourceMap],
   )
 
   return (
@@ -124,13 +87,7 @@ export function NotationEditor({
       <section className="editor-pane">
         <div className="pane-toolbar">
           <div>
-            <span className="eyebrow">文本编辑器</span>
-            <h2>{mode === 'm3n' ? 'M3N' : 'ABC Notation'}</h2>
-          </div>
-          <div className="toolbar-actions">
-            <button type="button" onClick={switchMode}>
-              转为 {otherMode === 'm3n' ? 'M3N' : 'ABC'}
-            </button>
+            <h2>编辑器</h2>
           </div>
         </div>
         <div className="source-editor">
@@ -153,7 +110,7 @@ export function NotationEditor({
                 lineNumberRef.current.scrollTop = event.currentTarget.scrollTop
               }
             }}
-            aria-label={`${mode} source`}
+            aria-label="M3N source"
           />
         </div>
         {result.diagnostics.length > 0 && (
@@ -168,8 +125,7 @@ export function NotationEditor({
       <section className="render-pane">
         <div className="pane-toolbar">
           <div>
-            <span className="eyebrow">abcjs 渲染</span>
-            <h2>标准五线谱</h2>
+            <h2>五线谱</h2>
           </div>
         </div>
         <ScoreRenderer

@@ -519,10 +519,11 @@ export function m3nToAbc(source: string): ConversionResult {
     `L:1/${header.meter.beatValue}`,
     header.tempo ? `Q:1/${header.meter.beatValue}=${header.tempo}` : '',
     `K:${keyToAbc(header.key)}`,
-    bassBody ? 'V:melody clef=treble name="Melody"' : '',
+    bassBody ? '%%score { melody | bass }' : '',
+    bassBody ? 'V:melody clef=treble' : '',
     body.trim(),
     ...lyrics.map((item) => `w:${convertM3NLyrics(item.text)}`),
-    bassBody ? 'V:bass clef=bass name="Bass"' : '',
+    bassBody ? 'V:bass clef=bass' : '',
     bassBody,
   ].filter(Boolean)
   const output = lines.join('\n')

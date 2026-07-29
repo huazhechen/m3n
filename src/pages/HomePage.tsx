@@ -30,8 +30,8 @@ export function HomePage() {
             <p>所有乐谱内容都是可复制、可比较、可提交的纯文本。</p>
           </section>
           <section>
-            <h2>双向转换</h2>
-            <p>M3N 和 ABC Notation 可以在编辑器中互相转换，便于接入 abcjs 生态。</p>
+            <h2>即时渲染</h2>
+            <p>编辑 M3N 时同步生成标准五线谱，便于校对和试听。</p>
           </section>
           <section>
             <h2>部署简单</h2>

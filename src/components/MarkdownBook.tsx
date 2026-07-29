@@ -190,7 +190,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
               const className = props.className ?? ''
               const value = String(props.children ?? '').replace(/\n$/, '')
               if (className.includes('language-m3n')) {
-                return <NotationEditor embedded initialMode="m3n" initialSource={value} />
+                return <NotationEditor embedded initialSource={value} />
               }
               return <code className={className}>{props.children}</code>
             },
