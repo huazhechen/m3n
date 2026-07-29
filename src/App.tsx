@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { DocsPage } from './pages/DocsPage'
+import { ConverterPage } from './pages/ConverterPage'
 import { EditorPage } from './pages/EditorPage'
 import { HomePage } from './pages/HomePage'
 import { ScoreReaderPage } from './pages/ScoreReaderPage'
@@ -13,6 +14,7 @@ export default function App() {
       <Route path="/scores" element={<ScoresPage />} />
       <Route path="/scores/:slug" element={<ScoreReaderPage />} />
       <Route path="/docs" element={<DocsPage />} />
+      <Route path="/convert" element={<ConverterPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

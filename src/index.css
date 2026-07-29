@@ -195,6 +195,135 @@ h3 {
   align-items: start;
 }
 
+.converter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.converter-actions {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.converter-actions .converter-button {
+  margin-left: auto;
+}
+
+.converter-toolbar {
+  justify-content: flex-start;
+}
+
+.converter-button,
+.converter-close {
+  min-height: 30px;
+  border: 1px solid #b8cfca;
+  border-radius: 4px;
+  padding: 0 10px;
+  color: #285b5c;
+  background: #fffef9;
+  cursor: pointer;
+}
+
+.converter-button {
+  min-height: 38px;
+  padding: 0 18px;
+  border-color: #b85326;
+  color: #ffffff;
+  background: #b85326;
+  font-weight: 700;
+}
+
+.converter-button:hover,
+.converter-close:hover {
+  border-color: #2f6f73;
+  background: #dcebe6;
+}
+
+.converter-button:hover {
+  border-color: #913f1b;
+  background: #913f1b;
+}
+
+.converter-dialog-overlay {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(31 35 38 / 38%);
+}
+
+.converter-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(920px, 100%);
+  max-height: min(760px, calc(100vh - 32px));
+  overflow: hidden;
+  border: 1px solid #cfd3ca;
+  border-radius: 6px;
+  background: #fffef9;
+  box-shadow: 0 20px 48px rgb(31 35 38 / 24%);
+}
+
+.converter-dialog-header,
+.converter-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+}
+
+.converter-dialog-header {
+  border-bottom: 1px solid #d9e3df;
+}
+
+.converter-dialog-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.converter-dialog-actions {
+  justify-content: flex-end;
+  border-top: 1px solid #d9e3df;
+}
+
+.converter-result {
+  min-height: 360px;
+  resize: none;
+}
+
+.format-switch {
+  display: flex;
+  border: 1px solid #b8cfca;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.format-switch button {
+  min-height: 30px;
+  border: 0;
+  border-right: 1px solid #b8cfca;
+  padding: 0 10px;
+  color: #285b5c;
+  background: #fffef9;
+  cursor: pointer;
+}
+
+.format-switch button:last-child {
+  border-right: 0;
+}
+
+.format-switch button.is-active {
+  color: #ffffff;
+  background: #176e6e;
+}
+
 .editor-grid.embedded {
   margin: 18px 0;
 }
@@ -733,6 +862,10 @@ textarea::selection {
 }
 
 @media (max-width: 720px) {
+  .converter-grid {
+    grid-template-columns: 1fr;
+  }
+
   .library-toolbar {
     display: grid;
     align-items: stretch;
