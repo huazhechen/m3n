@@ -286,7 +286,7 @@ function convertGraceAttribute(content: string, key: string) {
     return null
   }
 
-  const notes = match[3].trim().split(/\s+/).filter(Boolean)
+  const notes = match[2].trim().split(/\s+/).filter(Boolean)
   if (notes.length === 0 || notes.some((note) => !parseM3NNote(note))) {
     return null
   }
