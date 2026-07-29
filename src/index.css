@@ -398,7 +398,7 @@ textarea::selection {
   display: none;
   position: fixed;
   right: 16px;
-  bottom: 176px;
+  bottom: 72px;
   z-index: 20;
   width: min(320px, calc(100vw - 32px));
   max-height: calc(100vh - 148px);
@@ -536,7 +536,6 @@ textarea::selection {
 
 .doc-pagination {
   display: flex;
-  flex-direction: column;
   gap: 10px;
   position: fixed;
   right: 16px;
@@ -565,8 +564,12 @@ textarea::selection {
   background: rgb(23 79 84 / 82%);
 }
 
-.doc-pagination button:last-child {
+.doc-pagination button:nth-child(2) {
   background: rgb(47 111 115 / 82%);
+}
+
+.doc-pagination .doc-toc-toggle {
+  background: rgb(217 95 42 / 82%);
 }
 
 .doc-pagination button:disabled {

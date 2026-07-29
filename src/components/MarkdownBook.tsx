@@ -223,6 +223,15 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
           </button>
           <button
             type="button"
+            disabled={!nextPage}
+            aria-label="下一章"
+            title="下一章"
+            onClick={() => nextPage && selectPage(nextPage.id)}
+          >
+            ↓
+          </button>
+          <button
+            type="button"
             className="doc-toc-toggle"
             aria-expanded={isTocOpen}
             aria-controls="docs-toc"
@@ -231,15 +240,6 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
             onClick={() => setIsTocOpen((open) => !open)}
           >
             ☰
-          </button>
-          <button
-            type="button"
-            disabled={!nextPage}
-            aria-label="下一章"
-            title="下一章"
-            onClick={() => nextPage && selectPage(nextPage.id)}
-          >
-            ↓
           </button>
         </nav>
       </article>
