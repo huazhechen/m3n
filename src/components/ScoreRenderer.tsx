@@ -13,6 +13,24 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
   const audioRef = useRef<HTMLDivElement | null>(null)
   const highlightedElementsRef = useRef<Element[]>([])
   const [message, setMessage] = useState('')
+  const [staffWidth, setStaffWidth] = useState(0)
+
+  useEffect(() => {
+    const paper = paperRef.current
+    if (!paper) {
+      return
+    }
+
+    const updateWidth = () => {
+      const width = Math.floor(paper.clientWidth)
+      setStaffWidth((current) => (current === width ? current : width))
+    }
+
+    updateWidth()
+    const observer = new ResizeObserver(updateWidth)
+    observer.observe(paper)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -33,7 +51,14 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
       const visualObjects = abcjs.renderAbc(paper, abc, {
         responsive: 'resize',
         add_classes: true,
-        staffwidth: compact ? 620 : 820,
+        staffwidth: Math.max(320, staffWidth || (compact ? 620 : 820)),
+        wrap: {
+          preferredMeasuresPerLine: 0,
+          minSpacing: 1.5,
+          minSpacingLimit: 1.25,
+          maxSpacing: 2.5,
+          lastLineLimit: 1.5,
+        },
         paddingtop: 16,
         paddingbottom: 16,
       })
@@ -78,7 +103,7 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'ABC 渲染失败。')
     }
-  }, [abc, compact, onActiveRange])
+  }, [abc, compact, onActiveRange, staffWidth])
 
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
