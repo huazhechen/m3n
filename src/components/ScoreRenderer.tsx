@@ -44,6 +44,86 @@ function getHardLineBreaks(abc: string) {
   return breaks
 }
 
+type PlaybackSource = {
+  abc: string
+  toOriginalPosition: (position: number) => number
+}
+
+function createPlaybackSource(abc: string): PlaybackSource {
+  const lines = abc.match(/.*(?:\r?\n|$)/g)?.filter(Boolean) ?? []
+  const header: string[] = []
+  const segments = new Map<string, Array<{ value: string; originalStart: number }>>()
+  let hasKey = false
+  let partOrder: string[] | null = null
+  let activePart: string | null = null
+  let offset = 0
+
+  for (const line of lines) {
+    const content = line.replace(/\r?\n$/, '')
+    if (!hasKey) {
+      if (!partOrder && /^P:/.test(content)) {
+        partOrder = content.slice(2).trim().split(/\s+/).filter(Boolean)
+      } else {
+        header.push(line)
+      }
+      hasKey = /^K:/.test(content)
+      offset += line.length
+      continue
+    }
+
+    if (!partOrder && /^P:/.test(content) && /\s/.test(content.slice(2).trim())) {
+      partOrder = content.slice(2).trim().split(/\s+/).filter(Boolean)
+      offset += line.length
+      continue
+    }
+
+    if (/^P:/.test(content)) {
+      activePart = content.slice(2).trim()
+      if (!segments.has(activePart)) {
+        segments.set(activePart, [])
+      }
+      offset += line.length
+      continue
+    }
+
+    if (activePart) {
+      segments.get(activePart)?.push({ value: line, originalStart: offset })
+    } else {
+      header.push(line)
+    }
+    offset += line.length
+  }
+
+  if (!partOrder || partOrder.length === 0 || partOrder.some((part) => !segments.has(part))) {
+    return { abc, toOriginalPosition: (position) => position }
+  }
+
+  const mappings: Array<{ playbackStart: number; playbackEnd: number; originalStart: number }> = []
+  let expanded = header.join('')
+  for (const part of partOrder) {
+    expanded += `P:${part}\n`
+    for (const chunk of segments.get(part) ?? []) {
+      const playbackStart = expanded.length
+      expanded += chunk.value
+      mappings.push({
+        playbackStart,
+        playbackEnd: expanded.length,
+        originalStart: chunk.originalStart,
+      })
+    }
+  }
+
+  return {
+    abc: expanded,
+    toOriginalPosition(position) {
+      const mapping = mappings.find(
+        (item) => position >= item.playbackStart && position <= item.playbackEnd,
+      )
+      return mapping ? mapping.originalStart + position - mapping.playbackStart : position
+    },
+  }
+}
+
 export function ScoreRenderer({
   abc,
   compact = false,
@@ -129,6 +209,16 @@ export function ScoreRenderer({
         return
       }
 
+      const playbackSource = createPlaybackSource(abc)
+      const playbackVisualObject = playbackSource.abc === abc
+        ? visualObject
+        : abcjs.renderAbc(document.createElement('div'), playbackSource.abc, {
+            add_classes: true,
+            staffwidth: Math.max(320, staffWidth || (compact ? 620 : 820)),
+            paddingtop: 16,
+            paddingbottom: 16,
+          })[0]
+
       const synthControl = new abcjs.synth.SynthController()
       synthControl.load(
         audioRef.current,
@@ -137,10 +227,19 @@ export function ScoreRenderer({
             highlightedElementsRef.current.forEach((element) =>
               element.classList.remove('is-playing'),
             )
-            const elements = event.elements?.flat() ?? []
+            if (event.startChar === undefined || event.endChar === undefined) {
+              highlightedElementsRef.current = []
+              onActiveRange?.(null)
+              return
+            }
+            const startChar = playbackSource.toOriginalPosition(event.startChar)
+            const endChar = playbackSource.toOriginalPosition(event.endChar)
+            const elements = cursorElementsRef.current
+              .filter((item) => startChar < item.endChar && endChar > item.startChar)
+              .map((item) => item.svgEl)
             elements.forEach((element) => element.classList.add('is-playing'))
             highlightedElementsRef.current = elements
-            onActiveRange?.({ startChar: event.startChar, endChar: event.endChar })
+            onActiveRange?.({ startChar, endChar })
           },
           onFinished() {
             highlightedElementsRef.current.forEach((element) =>
@@ -158,7 +257,7 @@ export function ScoreRenderer({
         displayWarp: true,
         },
       )
-      synthControl.setTune(visualObject, false).catch(() => {
+      synthControl.setTune(playbackVisualObject, false).catch(() => {
         setMessage('当前浏览器需要用户交互后才能初始化音频。')
       })
     } catch (error) {

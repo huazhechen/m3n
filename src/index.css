@@ -368,16 +368,16 @@ textarea::selection {
   max-width: 100%;
 }
 
-.score-paper .is-playing,
-.score-paper .is-playing * {
-  fill: #d95f2a;
-  stroke: #d95f2a;
-}
-
 .score-paper .is-cursor-active,
 .score-paper .is-cursor-active * {
   fill: #1683ff;
   stroke: #1683ff;
+}
+
+.score-paper .is-playing,
+.score-paper .is-playing * {
+  fill: #d95f2a;
+  stroke: #d95f2a;
 }
 
 .audio-controls {

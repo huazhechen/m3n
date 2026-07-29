@@ -385,7 +385,7 @@ function convertAttribute(content: string, header: HeaderState) {
     return ''
   }
   if (content.startsWith('part=')) {
-    return `P:${content.slice('part='.length)}`
+    return `\nP:${content.slice('part='.length)}\n`
   }
   if (content.startsWith('rest=')) {
     return `Z${content.slice('rest='.length)}`
@@ -492,6 +492,14 @@ function convertM3NLyrics(value: string) {
     .join(' ')
 }
 
+function partOrderToAbc(value: string) {
+  return value.trim().split(/\s+/).filter(Boolean).join(' ')
+}
+
+function partOrderToM3N(value: string) {
+  return value.trim().split(/\s+/).filter(Boolean).join(' ')
+}
+
 export function m3nToAbc(source: string): ConversionResult {
   const diagnostics: string[] = []
   const header: HeaderState = structuredClone(defaultHeader)
@@ -500,12 +508,13 @@ export function m3nToAbc(source: string): ConversionResult {
   const bassResult = bass ? convertM3NBody(bass, header, diagnostics) : null
   const body = bodyResult.body.trim()
   const bassBody = bassResult?.body.trim() ?? ''
+  const partOrder = header.parts ? partOrderToAbc(header.parts) : ''
   const lines = [
     'X:1',
     header.title ? `T:${header.title}` : '',
     header.subtitle ? `T:${header.subtitle}` : '',
     header.composer ? `C:${header.composer}` : '',
-    header.parts ? `N:M3N parts=${header.parts}` : '',
+    partOrder ? `P:${partOrder}` : '',
     `M:${header.meter.beats}/${header.meter.beatValue}`,
     `L:1/${header.meter.beatValue}`,
     header.tempo ? `Q:1/${header.meter.beatValue}=${header.tempo}` : '',
@@ -610,10 +619,11 @@ function convertM3NBody(
       continue
     }
 
-    const bar = /^(?::\|\|\||:\|\|:|:\|\||\|\|\||\|\|:|\|)/.exec(rest)
+    const bar = /^(?::\|\|\||:\|\|:|:\|\||\|\|\||\|\|:|\|\||\|)/.exec(rest)
     if (bar) {
       const map: Record<string, string> = {
         '|': '|',
+        '||': '||',
         '|||': '|]',
         '||:': '|:',
         ':||': ':|',
@@ -722,6 +732,8 @@ function parseAbcHeader(source: string) {
   const header = structuredClone(defaultHeader)
   const body: string[] = []
   const lyrics: string[] = []
+  let hasKey = false
+  let hasMusic = false
 
   source.split(/\r?\n/).forEach((line) => {
     if (/^T:/.test(line)) {
@@ -754,10 +766,16 @@ function parseAbcHeader(source: string) {
     }
     if (/^K:/.test(line)) {
       header.key = line.slice(2).trim()
+      hasKey = true
       return
     }
     if (/^P:/.test(line)) {
-      body.push(line)
+      const value = line.slice(2).trim()
+      if (!hasMusic && !header.parts && (!hasKey || /\s/.test(value))) {
+        header.parts = partOrderToM3N(value)
+      } else {
+        body.push(line)
+      }
       return
     }
     if (/^V:/.test(line)) {
@@ -772,6 +790,9 @@ function parseAbcHeader(source: string) {
       return
     }
     body.push(line)
+    if (line.trim()) {
+      hasMusic = true
+    }
   })
 
   return { header, body: body.join('\n'), lyrics }
