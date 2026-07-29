@@ -281,7 +281,7 @@ function convertGroup(token: string, depth: number, key: string) {
 }
 
 function convertGraceAttribute(content: string, key: string) {
-  const match = /^(ac|ap)(\+)?\(([^)]+)\)$/.exec(content)
+  const match = /^(ac|ap)\(([^)]+)\)$/.exec(content)
   if (!match) {
     return null
   }
@@ -293,7 +293,7 @@ function convertGraceAttribute(content: string, key: string) {
 
   const prefix = match[1] === 'ac' ? '/' : ''
   const value = `{${notes.map((note) => `${prefix}${convertM3NNotePitch(note, key)}`).join('')}}`
-  return { value, isAfter: Boolean(match[2]) }
+  return value
 }
 
 function groupDurationInBeats(token: string, depth: number) {
@@ -571,12 +571,6 @@ function convertM3NBody(
     }
   }
 
-  const appendToNotation = (value: string, outputIndex: number | null) => {
-    if (outputIndex !== null) {
-      output[outputIndex] = `${output[outputIndex]}${value}`
-    }
-  }
-
   const advanceBeatPosition = (duration: number) => {
     const span = beamSpanInBeats(header.meter)
     beatPosition = (beatPosition + duration) % span
@@ -645,11 +639,7 @@ function convertM3NBody(
       let value = ''
       const grace = convertGraceAttribute(content, header.key)
       if (grace) {
-        if (grace.isAfter) {
-          appendToNotation(`${grace.value}x/1024`, lastNotationOutputIndex)
-        } else {
-          prependToNotation(grace.value, lastNotationOutputIndex, lastNotationMappingIndex)
-        }
+        prependToNotation(grace, lastNotationOutputIndex, lastNotationMappingIndex)
       } else if (content === '/') {
         value = intervalEndDecoration(intervalAttributes.pop() ?? '')
       } else {
@@ -877,7 +867,7 @@ function abcNoteWithoutDuration(token: string) {
   return token.replace(/^([_=^]*[A-Ga-g][,']*)[0-9/]*(-?)$/, '$1$2')
 }
 
-function abcGraceToM3N(value: string, key: string, isAfter = false) {
+function abcGraceToM3N(value: string, key: string) {
   const normalized = value.replace(/\s+/g, '')
   const notes = normalized.match(/\/?[_=^]*[A-Ga-g][,']*[0-9/]*-?/g)
   if (!notes || notes.join('') !== normalized) {
@@ -891,7 +881,7 @@ function abcGraceToM3N(value: string, key: string, isAfter = false) {
 
   const kind = isAcciaccatura ? 'ac' : 'ap'
   const m3nNotes = notes.map((note) => abcNoteToM3N(note.replace(/^\//, ''), key)).join(' ')
-  return `{${kind}${isAfter ? '+' : ''}(${m3nNotes})}`
+  return `{${kind}(${m3nNotes})}`
 }
 
 function convertAbcNotesWithoutTouchingAttributes(value: string, key: string) {
@@ -899,15 +889,6 @@ function convertAbcNotesWithoutTouchingAttributes(value: string, key: string) {
   const groups: string[] = []
   const notePattern = '[_=^]*[A-Ga-g][,\']*[0-9/]*-?'
   const protectedValue = value
-    .replace(new RegExp(`(${notePattern})\\{([^{}]+)\\}x(?:0|/1024)`, 'g'), (match, note, graceRaw) => {
-      const grace = abcGraceToM3N(String(graceRaw), key, true)
-      if (!grace) {
-        return match
-      }
-      const marker = `¤${groups.length}¤`
-      groups.push(`${abcNoteToM3N(String(note), key)}${grace}`)
-      return marker
-    })
     .replace(new RegExp(`\\{([^{}]+)\\}(${notePattern})`, 'g'), (match, graceRaw, note) => {
       const grace = abcGraceToM3N(String(graceRaw), key)
       if (!grace) {
