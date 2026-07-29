@@ -94,6 +94,9 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   )
   const activePageId = searchParams.get('page')
   const activePage = pages.find((page) => page.id === activePageId) ?? pages[0]
+  const activePageIndex = pages.findIndex((page) => page.id === activePage.id)
+  const previousPage = pages[activePageIndex - 1]
+  const nextPage = pages[activePageIndex + 1]
 
   function selectPage(pageId: string) {
     setSearchParams((current) => {
@@ -102,6 +105,26 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       return next
     })
     window.scrollTo(0, 0)
+  }
+
+  function selectMarkdownLink(href: string) {
+    const match = /^([A-Za-z0-9-]+\.md)(?:#(.+))?$/.exec(href)
+    if (!match) {
+      return false
+    }
+
+    const documentId = match[1].replace(/\.md$/i, '').toLowerCase()
+    const anchor = match[2] ? slugify(decodeURIComponent(match[2])) : ''
+    const target = anchor
+      ? pages.find((page) => page.id === `${documentId}-${anchor}`)
+      : pages.find((page) => page.documentId === documentId)
+
+    if (!target) {
+      return false
+    }
+
+    selectPage(target.id)
+    return true
   }
 
   if (!activePage) {
@@ -169,10 +192,31 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
               }
               return <code className={className}>{props.children}</code>
             },
+            a(props: ComponentPropsWithoutRef<'a'>) {
+              const href = props.href ?? ''
+              return (
+                <a
+                  {...props}
+                  onClick={(event) => {
+                    if (selectMarkdownLink(href)) {
+                      event.preventDefault()
+                    }
+                  }}
+                />
+              )
+            },
           }}
         >
           {activePage.content}
         </ReactMarkdown>
+        <nav className="doc-pagination" aria-label="文档章节导航">
+          <button type="button" disabled={!previousPage} onClick={() => previousPage && selectPage(previousPage.id)}>
+            上一章
+          </button>
+          <button type="button" disabled={!nextPage} onClick={() => nextPage && selectPage(nextPage.id)}>
+            下一章
+          </button>
+        </nav>
       </article>
     </div>
   )
