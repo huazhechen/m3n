@@ -484,6 +484,14 @@ function splitSupplementBlocks(source: string) {
   return { main, bass, lyrics }
 }
 
+function convertM3NLyrics(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .map((token) => (token === '%' ? '*' : token))
+    .join(' ')
+}
+
 export function m3nToAbc(source: string): ConversionResult {
   const diagnostics: string[] = []
   const header: HeaderState = structuredClone(defaultHeader)
@@ -504,9 +512,9 @@ export function m3nToAbc(source: string): ConversionResult {
     `K:${keyToAbc(header.key)}`,
     bassBody ? 'V:melody clef=treble name="Melody"' : '',
     body.trim(),
+    ...lyrics.map((item) => `w:${convertM3NLyrics(item.text)}`),
     bassBody ? 'V:bass clef=bass name="Bass"' : '',
     bassBody,
-    ...lyrics.map((item) => `W:${item.range ? `[${item.range}] ` : ''}${item.text.replace(/\s+/g, ' ')}`),
   ].filter(Boolean)
   const output = lines.join('\n')
   const bodyStart = output.indexOf(body)
@@ -756,7 +764,7 @@ function parseAbcHeader(source: string) {
       body.push(line)
       return
     }
-    if (/^W:/.test(line)) {
+    if (/^[Ww]:/.test(line)) {
       lyrics.push(line.slice(2).trim())
       return
     }
@@ -865,6 +873,14 @@ function applyAbcDurationToHarmonyGroup(notes: string[], value: string, hasTie =
 
 function abcNoteWithoutDuration(token: string) {
   return token.replace(/^([_=^]*[A-Ga-g][,']*)[0-9/]*(-?)$/, '$1$2')
+}
+
+function convertAbcLyrics(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .map((token) => (token === '*' ? '%' : token))
+    .join(' ')
 }
 
 function abcGraceToM3N(value: string, key: string) {
@@ -1009,7 +1025,8 @@ export function abcToM3N(source: string): ConversionResult {
 
   lyrics.forEach((line) => {
     const range = /^\[([^\]]+)\]\s*(.*)$/.exec(line)
-    output.push('', range ? `{lyrics=${range[1]}}` : '{lyrics}', range ? range[2] : line, '{/}')
+    const text = range ? range[2] : line
+    output.push('', range ? `{lyrics=${range[1]}}` : '{lyrics}', convertAbcLyrics(text), '{/}')
   })
 
   return {
