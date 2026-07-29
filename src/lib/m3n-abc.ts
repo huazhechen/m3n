@@ -42,7 +42,7 @@ const defaultHeader: HeaderState = {
   lyricist: '',
   key: 'C',
   meter: { beats: 4, beatValue: 4 },
-  tempo: '100',
+  tempo: '',
   parts: '',
 }
 
@@ -413,7 +413,7 @@ export function m3nToAbc(source: string): ConversionResult {
     header.parts ? `N:M3N parts=${header.parts}` : '',
     `M:${header.meter.beats}/${header.meter.beatValue}`,
     `L:1/${header.meter.beatValue}`,
-    `Q:1/${header.meter.beatValue}=${header.tempo || '100'}`,
+    header.tempo ? `Q:1/${header.meter.beatValue}=${header.tempo}` : '',
     `K:${keyToAbc(header.key)}`,
     bassBody ? 'V:melody clef=treble name="Melody"' : '',
     body.trim(),
