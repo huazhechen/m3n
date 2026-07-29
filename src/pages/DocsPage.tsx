@@ -14,13 +14,7 @@ export function DocsPage() {
   return (
     <main>
       <TopNav />
-      <section className="page-heading">
-        <span className="eyebrow">文档</span>
-        <h1>分页文档阅读器</h1>
-        <p>三篇文档按章节分页展示，所有 M3N 代码块都会以可编辑示例和五线谱预览呈现。</p>
-      </section>
       <MarkdownBook documents={documents} />
     </main>
   )
 }
-

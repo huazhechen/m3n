@@ -17,16 +17,11 @@ export function ScoreReaderPage() {
   return (
     <main>
       <TopNav />
-      <section className="page-heading score-reader-heading">
-        <div>
-          <span className="eyebrow">预置乐谱</span>
-          <h1>{score.title}</h1>
-          <p>{`${score.composer}${score.subtitle ? ` - ${score.subtitle}` : ''}`}</p>
-        </div>
+      <div className="score-reader-actions">
         <Link className="secondary-link" to={`/editor?score=${score.slug}`}>
           编辑
         </Link>
-      </section>
+      </div>
       <section className="score-reader" aria-label={`${score.title} 乐谱`}>
         <ScoreRenderer abc={result.output} />
       </section>

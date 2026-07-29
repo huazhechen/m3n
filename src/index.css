@@ -125,8 +125,7 @@ h3 {
   max-width: 900px;
 }
 
-.hero p,
-.page-heading p {
+.hero p {
   max-width: 760px;
   color: #5c6468;
   font-size: 1.05rem;
@@ -170,8 +169,7 @@ h3 {
 .score-card,
 .score-section,
 .book-toc,
-.markdown-panel,
-.page-heading {
+.markdown-panel {
   border: 1px solid #d9dbd4;
   border-radius: 8px;
   background: #ffffff;
@@ -188,16 +186,6 @@ h3 {
 .hero-summary p {
   margin: 8px 0 0;
   color: #62696c;
-}
-
-.page-heading {
-  margin: 24px 0;
-  padding: 24px;
-}
-
-.page-heading h1 {
-  margin-top: 8px;
-  font-size: clamp(2rem, 3vw, 3.4rem);
 }
 
 .editor-grid {
@@ -309,14 +297,13 @@ textarea::selection {
   gap: 20px;
 }
 
-.score-reader-heading {
+.score-reader-actions {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 20px;
+  justify-content: flex-end;
+  margin: 16px 0 8px;
 }
 
-.score-reader-heading .secondary-link {
+.score-reader-actions .secondary-link {
   flex: 0 0 auto;
 }
 
@@ -606,14 +593,14 @@ textarea::selection {
   }
 
   .top-nav,
-  .pane-toolbar,
-  .score-reader-heading {
+  .pane-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
 
   .top-nav nav,
-  .toolbar-actions {
+  .toolbar-actions,
+  .score-reader-actions {
     justify-content: flex-start;
   }
 
@@ -623,8 +610,7 @@ textarea::selection {
 
   .editor-pane,
   .render-pane,
-  .markdown-panel,
-  .page-heading {
+  .markdown-panel {
     padding: 14px;
   }
 }
