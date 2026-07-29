@@ -36,7 +36,7 @@ type BodyConversionResult = {
 }
 
 const defaultHeader: HeaderState = {
-  title: 'Untitled',
+  title: '',
   subtitle: '',
   composer: '',
   lyricist: '',
@@ -502,7 +502,7 @@ export function m3nToAbc(source: string): ConversionResult {
   const bassBody = bassResult?.body.trim() ?? ''
   const lines = [
     'X:1',
-    `T:${header.title}`,
+    header.title ? `T:${header.title}` : '',
     header.subtitle ? `T:${header.subtitle}` : '',
     header.composer ? `C:${header.composer}` : '',
     header.parts ? `N:M3N parts=${header.parts}` : '',
