@@ -8,6 +8,39 @@ type ScoreRendererProps = {
   onActiveRange?: (range: { startChar?: number; endChar?: number } | null) => void
 }
 
+function getHardLineBreaks(abc: string) {
+  const lines = abc.split(/\r?\n/)
+  const barPattern = /:\|\]|\|:|:\||\|\]|\|/g
+  const breaks: number[] = []
+  let measures = 0
+
+  const isMusicLine = (line: string) => line.length > 0 && !/^[A-Za-z]:/.test(line) && !line.startsWith('%')
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim()
+    if (!isMusicLine(line)) {
+      continue
+    }
+
+    measures += line.match(barPattern)?.length ?? 0
+    let nextMusicLine = false
+    for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex += 1) {
+      const next = lines[nextIndex].trim()
+      if (!next || next.startsWith('%')) {
+        continue
+      }
+      nextMusicLine = isMusicLine(next)
+      break
+    }
+
+    if (nextMusicLine && measures > 0) {
+      breaks.push(measures - 1)
+    }
+  }
+
+  return breaks
+}
+
 export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement | null>(null)
   const audioRef = useRef<HTMLDivElement | null>(null)
@@ -48,6 +81,7 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
     setMessage('')
 
     try {
+      const hardLineBreaks = getHardLineBreaks(abc)
       const visualObjects = abcjs.renderAbc(paper, abc, {
         responsive: 'resize',
         add_classes: true,
@@ -59,6 +93,7 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
           maxSpacing: 2.5,
           lastLineLimit: 1.5,
         },
+        lineBreaks: hardLineBreaks.length > 0 ? ([hardLineBreaks] as unknown as number[]) : undefined,
         paddingtop: 16,
         paddingbottom: 16,
       })
