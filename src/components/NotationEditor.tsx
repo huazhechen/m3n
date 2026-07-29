@@ -88,6 +88,7 @@ export function NotationEditor({
           <textarea
             ref={textareaRef}
             spellCheck={false}
+            wrap="off"
             value={source}
             onChange={(event) => setSource(event.target.value)}
             onScroll={(event) => {
