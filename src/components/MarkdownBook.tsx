@@ -219,7 +219,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
             title="上一章"
             onClick={() => previousPage && selectPage(previousPage.id)}
           >
-            ↑
+            ←
           </button>
           <button
             type="button"
@@ -228,7 +228,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
             title="下一章"
             onClick={() => nextPage && selectPage(nextPage.id)}
           >
-            ↓
+            →
           </button>
           <button
             type="button"
