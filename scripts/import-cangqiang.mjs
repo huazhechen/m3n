@@ -15,41 +15,23 @@ function convertNote(token) {
   return depth ? `${'('.repeat(depth)}${value}${')'.repeat(depth)}` : value
 }
 
-function toM3n({ title, key, meter, source, lyrics }) {
-  const normalizedKey = /^1=([A-G](?:#|b)?)$/.exec(key.trim())?.[1] ?? (key.trim() || 'C')
-  let music = source
-    .replace(/\{![\s\S]*?!\}/g, '')
-    .replace(/\{hot\}/g, '')
-    .replace(/\{(?:title|subtitle|key_signature|time_signature|bpm|play):\s*[^}]*\}/g, '')
-    .replace(/\{mark:\s*([^}]+)\}/g, (_match, part) => `{part=${part.trim()}}`)
-    .replace(/\{chord:\s*([^}]+)\}/g, (_match, chord) => `{chord=${chord.trim()}}`)
-    .replace(/([0-7][#bn]?)([gd]*)([,"']*)(x*)([,"']*)/g, (_match, note, shifts, leadingOctave, shortDuration, trailingOctave) => {
-      const normalizedOctave = `${leadingOctave}${trailingOctave}${'\''.repeat((shifts.match(/g/g) ?? []).length)}${','.repeat((shifts.match(/d/g) ?? []).length)}`
-      return `${note}${normalizedOctave}${'_'.repeat(shortDuration.length)}`
-    })
-    .replace(/\{\{/g, '')
-    .replace(/\}\}/g, '')
-    .replace(/(^|\s)([A-Z]):/gm, '$1{part=$2}')
-    .replace(/\([^)]*\)/g, (group) => group.replace(/[()]/g, ''))
-    .replace(/(?:0|[1-7])[#bn]?[,"']*[_=]*\.*-*/g, convertNote)
-    .replace(/v/g, '{breath}')
-    .replace(/\s+/g, ' ')
+function toHappi123({ title, key, meter, bpm, source, lyrics }) {
+  const music = source
+    .replace(/\{(?:title|key_signature|time_signature|bpm):\s*[^}]*\}\s*/g, '')
     .trim()
-
-  return [
-    `{title=${title}}`,
-    `{key=${normalizedKey}} {${meter || '4/4'}}`,
-    music,
-    ...lyrics.flatMap((lyric) => ['', '{lyrics}', lyric, '{/}']),
-    '',
-  ].join('\n')
-}
-
-function toHappi123(source, lyrics) {
   const lyricBlocks = lyrics
     .map((lyric) => `{lyric}\n${lyric}\n{/lyric}`)
     .join('\n\n')
-  return `${source.trim()}${lyricBlocks ? `\n\n${lyricBlocks}` : ''}\n`
+  return [
+    `{title:${title}}`,
+    `{key_signature:${key || 'C'}}`,
+    `{time_signature:${meter || '4/4'}}`,
+    bpm ? `{bpm:${bpm}}` : '',
+    '',
+    music,
+    lyricBlocks ? `\n${lyricBlocks}` : '',
+    '',
+  ].filter(Boolean).join('\n')
 }
 
 class Cdp {
@@ -135,17 +117,22 @@ try {
     const work = works[index]
     await cdp.navigate(`${baseUrl}/jianpu/zhuanye.html?id=${encodeURIComponent(work.id)}`)
     await waitForEditor(cdp)
-    const data = await cdp.evaluate(`(() => ({
+    const data = await cdp.evaluate(`(() => {
+      document.querySelectorAll('.tab, [data-tab], a, button').forEach((element) => {
+        if (element.textContent?.trim() === '歌词') element.click()
+      })
+      return {
       title: document.querySelector('#song_name')?.value || ${JSON.stringify(work.title ?? '')},
       key: document.querySelector('#key_signature')?.value || 'C',
       meter: document.querySelector('#time_signature')?.value || '4/4',
+      bpm: document.querySelector('#bpm')?.value || '',
       source: typeof editor === 'undefined' ? '' : editor.getValue(),
-      lyrics: [...document.querySelectorAll('textarea.lyric-input')].map(x => x.value.trim()).filter(Boolean),
-    }))()`)
-    const source = toHappi123(data.source, data.lyrics)
+      lyrics: [...document.querySelectorAll('textarea')].map(x => x.value.trim()).filter(Boolean),
+    }
+    })()`)
+    const source = toHappi123(data)
     const filename = String(work.id)
     await writeFile(resolve(scoreDirectory, `${filename}.h123`), source, 'utf8')
-    await writeFile(resolve(scoreDirectory, `${filename}.m3n`), toM3n({ ...data, source }), 'utf8')
     console.log(`${index + 1}/${works.length} ${filename} ${data.title}`)
   }
 } finally {

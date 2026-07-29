@@ -65,17 +65,59 @@ function convertTuplets(source: string, diagnostics: string[]) {
     })
 }
 
+function normalizeKey(value: string) {
+  const match = /^1=([#b]?)([A-G])(?:\d+)?$/i.exec(value.trim())
+  if (!match) return value.trim() || 'C'
+  return `${match[2].toUpperCase()}${match[1] === '#' ? '#' : match[1] === 'b' ? 'b' : ''}`
+}
+
+/** Normalize the older professional-editor dialect before parsing Happi123. */
+function normalizeProfessionalSource(source: string) {
+  let value = source
+    .replace(/\{![\s\S]*?!\}/g, '')
+    .replace(/\{\{/g, '')
+    .replace(/\}\}/g, '')
+    .replace(/\{br\}/g, '\n')
+    .replace(/\{hot\}|\{(?:ms|omit|repeat|section|octave|o\d+f):[^}]*\}/g, '')
+    .replace(/\{tip:\s*([^}]+)\}/g, (_match, text) => `{text=${String(text).trim()}}`)
+    .replace(/\{rest:\s*([^}]+)\}/g, (_match, beats) => `{rest=${String(beats).trim()}}`)
+    .replace(/\{dc\}/gi, '{DC}')
+    .replace(/\{ds\}/gi, '{DS}')
+    .replace(/\{dim\}/gi, '{decres}')
+    .replace(/\{S\}/g, '{segno}')
+    .replace(/^\s*([^\s:{}][^:\n]{0,48}):\s*/gm, (_match, label) => `{part=${String(label).trim()}} `)
+    .replace(/\[(\d+)(?:-[^:\]]*)?:/g, (_match, number) => `{volta=${number}} `)
+    .replace(/[\[\]]/g, '')
+    .replace(/[<>]/g, '')
+    .replace(/\b(?:tr|st)~?/g, '')
+
+  // In the professional editor, g/d are octave shifts and x or / halve duration.
+  value = value.replace(/\//g, 'x')
+  value = value.replace(/([0-7])([#bn]?)([gd]*)(x*)([#bn]?)/g, (_match, degree, leadingAccidental, shifts, shortDuration, trailingAccidental) => {
+    const accidental = leadingAccidental || trailingAccidental
+    const octave = String(shifts).replace(/g/g, "'").replace(/d/g, ',')
+    return `${degree}${accidental}${octave}${'_'.repeat(String(shortDuration).length)}`
+  })
+  value = value.replace(/([#b])([1-7])/g, '$2$1')
+  value = value
+    .replace(/x/g, '')
+    .replace(/(^|[^|]):\|(?!\|)/g, '$1:||')
+    .replace(/(?<=[0-7)])g/g, "'")
+    .replace(/(?<=[0-7)])d/g, ',')
+  return value
+}
+
 export function happi123ToM3N(source: string): ConversionResult {
   const diagnostics: string[] = []
   const header = { ...defaultHeader }
   const lyrics: string[] = []
-  let music = source.replace(/\{![\s\S]*?!\}/g, '')
+  let music = normalizeProfessionalSource(source)
 
   music = music.replace(/\{(title|subtitle|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, value) => {
     const trimmed = String(value).trim()
     if (name === 'title') header.title = trimmed
     if (name === 'subtitle') header.subtitle = trimmed
-    if (name === 'key_signature') header.key = trimmed || header.key
+    if (name === 'key_signature') header.key = normalizeKey(trimmed)
     if (name === 'time_signature') header.meter = trimmed || header.meter
     if (name === 'bpm') header.bpm = trimmed
     if (name === 'play') header.parts = trimmed
@@ -96,7 +138,7 @@ export function happi123ToM3N(source: string): ConversionResult {
 
   const convertedMusic = music
     .replace(/(?:0|[1-7])[#bn]?[,"']*[_=]*\.*-*/g, convertNote)
-    .replace(/v/g, '{breath}')
+    .replace(/\bv\b/g, '{breath}')
     .replace(/\|\|\|/g, '|||')
     .replace(/\|\|/g, '||')
     .replace(/\|/g, '|')
