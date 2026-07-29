@@ -304,6 +304,28 @@ function beamSpanInBeats(meter: Meter) {
   return meter.beatValue === 8 && meter.beats % 3 === 0 ? 3 : 1
 }
 
+type IntervalAttribute = 'cresc' | 'decres' | '8va' | '8vb'
+
+function isIntervalAttribute(value: string): value is IntervalAttribute {
+  return value === 'cresc' || value === 'decres' || value === '8va' || value === '8vb'
+}
+
+function intervalEndDecoration(value: string) {
+  if (value === 'cresc') {
+    return '!crescendo)!'
+  }
+  if (value === 'decres') {
+    return '!diminuendo)!'
+  }
+  if (value === '8va') {
+    return '!8va)!'
+  }
+  if (value === '8vb') {
+    return '!8vb)!'
+  }
+  return ''
+}
+
 function convertAttribute(content: string, header: HeaderState) {
   if (content.startsWith('title=')) {
     header.title = content.slice('title='.length)
@@ -394,7 +416,7 @@ function convertAttribute(content: string, header: HeaderState) {
     return '!8vb(!'
   }
   if (content.startsWith('/')) {
-    return content.includes('decres') ? '!diminuendo)!' : content.includes('cresc') ? '!crescendo)!' : ''
+    return intervalEndDecoration(content.slice(1))
   }
   if (content.startsWith('volta=')) {
     return `[${content.slice('volta='.length)}`
@@ -488,6 +510,7 @@ function convertM3NBody(
   let line = 1
   let beatPosition = 0
   let groupBoundary = false
+  const intervalAttributes: IntervalAttribute[] = []
 
   const outputLength = () => output.join('').length
 
@@ -566,7 +589,22 @@ function convertM3NBody(
 
     const attribute = /^\{[^}]+\}/.exec(rest)
     if (attribute) {
-      const value = convertAttribute(attribute[0].slice(1, -1).trim(), header)
+      const content = attribute[0].slice(1, -1).trim()
+      let value = ''
+      if (content === '/') {
+        value = intervalEndDecoration(intervalAttributes.pop() ?? '')
+      } else {
+        value = convertAttribute(content, header)
+        if (isIntervalAttribute(content)) {
+          intervalAttributes.push(content)
+        } else if (content.startsWith('/')) {
+          const closing = content.slice(1)
+          const matchingIndex = intervalAttributes.lastIndexOf(closing as IntervalAttribute)
+          if (matchingIndex !== -1) {
+            intervalAttributes.splice(matchingIndex, 1)
+          }
+        }
+      }
       if (value) {
         output.push(value)
       }
