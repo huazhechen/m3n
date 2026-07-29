@@ -94,6 +94,11 @@ export function ScoreRenderer({ abc, compact = false, onActiveRange }: ScoreRend
           lastLineLimit: 1.5,
         },
         lineBreaks: hardLineBreaks.length > 0 ? ([hardLineBreaks] as unknown as number[]) : undefined,
+        clickListener(abcElem) {
+          if (abcElem.el_type === 'note' && abcElem.startChar !== undefined && abcElem.endChar !== undefined) {
+            onActiveRange?.({ startChar: abcElem.startChar, endChar: abcElem.endChar })
+          }
+        },
         paddingtop: 16,
         paddingbottom: 16,
       })
