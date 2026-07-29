@@ -280,6 +280,22 @@ function convertGroup(token: string, depth: number, key: string) {
   return `${tupletPrefix}${notes.map((note) => convertM3NNote(note, depth, key)).join('')}`
 }
 
+function convertGraceAttribute(content: string, key: string) {
+  const match = /^(ac|ap)(\+)?\(([^)]+)\)$/.exec(content)
+  if (!match) {
+    return null
+  }
+
+  const notes = match[3].trim().split(/\s+/).filter(Boolean)
+  if (notes.length === 0 || notes.some((note) => !parseM3NNote(note))) {
+    return null
+  }
+
+  const prefix = match[1] === 'ac' ? '/' : ''
+  const value = `{${notes.map((note) => `${prefix}${convertM3NNotePitch(note, key)}`).join('')}}`
+  return { value, isAfter: Boolean(match[2]) }
+}
+
 function groupDurationInBeats(token: string, depth: number) {
   const match = /^\[([^\]:]+):([^\]]+)\](\^*)(\.*)~?$/.exec(token)
   if (!match) {
@@ -525,19 +541,35 @@ function convertM3NBody(
   let groupBoundary = false
   const intervalAttributes: IntervalAttribute[] = []
   let lastNotationOutputIndex: number | null = null
+  let lastNotationMappingIndex: number | null = null
+  const pendingPostGrace: Array<{ value: string; fallbackOutputIndex: number | null; fallbackMappingIndex: number | null }> = []
 
   const outputLength = () => output.join('').length
 
-  const pushMapped = (value: string, sourceStart: number, sourceEnd: number) => {
+  const pushMapped = (value: string, sourceStart: number, sourceEnd: number, prefix = '') => {
     const outputStart = outputLength()
-    output.push(value)
+    output.push(`${prefix}${value}`)
     lastNotationOutputIndex = output.length - 1
+    lastNotationMappingIndex = mappings.length
     mappings.push({
-      outputStart,
-      outputEnd: outputStart + value.length,
+      outputStart: outputStart + prefix.length,
+      outputEnd: outputStart + prefix.length + value.length,
       sourceStart,
       sourceEnd,
     })
+  }
+
+  const prependToNotation = (value: string, outputIndex: number | null, mappingIndex: number | null) => {
+    if (outputIndex === null || mappingIndex === null) {
+      return
+    }
+
+    output[outputIndex] = `${value}${output[outputIndex]}`
+    const mapping = mappings[mappingIndex]
+    if (mapping) {
+      mapping.outputStart += value.length
+      mapping.outputEnd += value.length
+    }
   }
 
   const advanceBeatPosition = (duration: number) => {
@@ -606,7 +638,18 @@ function convertM3NBody(
     if (attribute) {
       const content = attribute[0].slice(1, -1).trim()
       let value = ''
-      if (content === '/') {
+      const grace = convertGraceAttribute(content, header.key)
+      if (grace) {
+        if (grace.isAfter) {
+          pendingPostGrace.push({
+            value: grace.value,
+            fallbackOutputIndex: lastNotationOutputIndex,
+            fallbackMappingIndex: lastNotationMappingIndex,
+          })
+        } else {
+          prependToNotation(grace.value, lastNotationOutputIndex, lastNotationMappingIndex)
+        }
+      } else if (content === '/') {
         value = intervalEndDecoration(intervalAttributes.pop() ?? '')
       } else {
         value = convertAttribute(content, header)
@@ -638,7 +681,9 @@ function convertM3NBody(
 
     const group = /^\[[^[\]]+\](?:\^+)?(?:\.*)?~?/.exec(rest)
     if (group) {
-      pushMapped(convertGroup(group[0], depth, header.key), index, index + group[0].length)
+      const gracePrefix = pendingPostGrace.map((item) => item.value).join('')
+      pendingPostGrace.length = 0
+      pushMapped(convertGroup(group[0], depth, header.key), index, index + group[0].length, gracePrefix)
       advanceBeatPosition(groupDurationInBeats(group[0], depth))
       groupBoundary = false
       index += group[0].length
@@ -647,7 +692,9 @@ function convertM3NBody(
 
     const note = /^(?:0|[1-7][#b=]*[ed]*)(?:\^+)?(?:\.*)?~?/.exec(rest)
     if (note) {
-      pushMapped(convertM3NNote(note[0], depth, header.key), index, index + note[0].length)
+      const gracePrefix = pendingPostGrace.map((item) => item.value).join('')
+      pendingPostGrace.length = 0
+      pushMapped(convertM3NNote(note[0], depth, header.key), index, index + note[0].length, gracePrefix)
       const parsed = parseM3NNote(note[0])
       if (parsed) {
         advanceBeatPosition(durationInBeats(depth, parsed.carets.length, parsed.dots.length))
@@ -661,6 +708,15 @@ function convertM3NBody(
     diagnostics.push(`第 ${line} 行：无法转换片段：${unknown}`)
     output.push(`% ${unknown}`)
     index += unknown.length
+  }
+
+  if (pendingPostGrace.length > 0) {
+    const lastGrace = pendingPostGrace.at(-1)
+    prependToNotation(
+      pendingPostGrace.map((item) => item.value).join(''),
+      lastGrace?.fallbackOutputIndex ?? null,
+      lastGrace?.fallbackMappingIndex ?? null,
+    )
   }
 
   const rawBody = output.join('')
