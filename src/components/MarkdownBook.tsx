@@ -132,7 +132,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
                 <span>{document.description}</span>
               </button>
               <div className="toc-children">
-                {document.pages.map((page) => (
+                {document.pages.slice(1).map((page) => (
                   <button
                     key={page.id}
                     type="button"
