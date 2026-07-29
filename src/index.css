@@ -398,7 +398,7 @@ textarea::selection {
   display: none;
   position: fixed;
   right: 16px;
-  bottom: 124px;
+  bottom: 176px;
   z-index: 20;
   width: min(320px, calc(100vw - 32px));
   max-height: calc(100vh - 148px);
@@ -412,19 +412,7 @@ textarea::selection {
 }
 
 .doc-toc-toggle {
-  position: fixed;
-  right: 16px;
-  bottom: 72px;
-  z-index: 21;
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 6px 12px;
-  border: 1px solid #cfd3ca;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #174f54;
-  font-weight: 700;
+  background: rgb(217 95 42 / 82%);
 }
 
 .toc-tree {
@@ -548,7 +536,8 @@ textarea::selection {
 
 .doc-pagination {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   position: fixed;
   right: 16px;
   bottom: 16px;
@@ -560,16 +549,24 @@ textarea::selection {
 
 .doc-pagination button {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   place-items: center;
-  border: 1px solid #cfd3ca;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #174f54;
+  border: 1px solid rgb(255 255 255 / 58%);
+  border-radius: 50%;
+  color: #ffffff;
   font-size: 1.2rem;
   font-weight: 700;
   cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.doc-pagination button:first-child {
+  background: rgb(23 79 84 / 82%);
+}
+
+.doc-pagination button:last-child {
+  background: rgb(47 111 115 / 82%);
 }
 
 .doc-pagination button:disabled {

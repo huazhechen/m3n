@@ -135,15 +135,6 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
 
   return (
     <div className="book-layout">
-      <button
-        type="button"
-        className="doc-toc-toggle"
-        aria-expanded={isTocOpen}
-        aria-controls="docs-toc"
-        onClick={() => setIsTocOpen((open) => !open)}
-      >
-        目录
-      </button>
       <aside id="docs-toc" className={`book-toc ${isTocOpen ? 'is-open' : ''}`}>
         <span className="eyebrow">目录</span>
         <nav className="toc-tree" aria-label="文档目录">
@@ -228,7 +219,18 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
             title="上一章"
             onClick={() => previousPage && selectPage(previousPage.id)}
           >
-            ←
+            ↑
+          </button>
+          <button
+            type="button"
+            className="doc-toc-toggle"
+            aria-expanded={isTocOpen}
+            aria-controls="docs-toc"
+            aria-label="目录"
+            title="目录"
+            onClick={() => setIsTocOpen((open) => !open)}
+          >
+            ☰
           </button>
           <button
             type="button"
@@ -237,7 +239,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
             title="下一章"
             onClick={() => nextPage && selectPage(nextPage.id)}
           >
-            →
+            ↓
           </button>
         </nav>
       </article>
