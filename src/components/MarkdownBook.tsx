@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from 'react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useSearchParams } from 'react-router-dom'
@@ -84,6 +84,7 @@ function isCodeChild(node: ReactNode, language: string) {
 export function MarkdownBook({ documents }: MarkdownBookProps) {
   const pages = useMemo(() => documents.flatMap(splitDocument), [documents])
   const [searchParams, setSearchParams] = useSearchParams()
+  const [isTocOpen, setIsTocOpen] = useState(false)
   const documentGroups = useMemo<DocumentGroup[]>(
     () =>
       documents.map((document) => ({
@@ -104,6 +105,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       next.set('page', pageId)
       return next
     })
+    setIsTocOpen(false)
     window.scrollTo(0, 0)
   }
 
@@ -133,7 +135,16 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
 
   return (
     <div className="book-layout">
-      <aside className="book-toc">
+      <button
+        type="button"
+        className="doc-toc-toggle"
+        aria-expanded={isTocOpen}
+        aria-controls="docs-toc"
+        onClick={() => setIsTocOpen((open) => !open)}
+      >
+        目录
+      </button>
+      <aside id="docs-toc" className={`book-toc ${isTocOpen ? 'is-open' : ''}`}>
         <span className="eyebrow">目录</span>
         <nav className="toc-tree" aria-label="文档目录">
           {documentGroups.map((document) => (
