@@ -175,6 +175,18 @@ function greatestCommonDivisor(a: number, b: number): number {
   return b === 0 ? a : greatestCommonDivisor(b, a % b)
 }
 
+function durationInBeats(depth: number, carets: number, dots: number) {
+  let duration = 2 ** (carets - depth)
+  let dotDuration = duration / 2
+
+  for (let index = 0; index < dots; index += 1) {
+    duration += dotDuration
+    dotDuration /= 2
+  }
+
+  return duration
+}
+
 function parseM3NNote(token: string) {
   const match = /^(0|[1-7])([#b=]*)([ed]*)(\^*)(\.*)(~?)$/.exec(token)
   if (!match) {
@@ -266,6 +278,30 @@ function convertGroup(token: string, depth: number, key: string) {
     : `(${notes.length}`
 
   return `${tupletPrefix}${notes.map((note) => convertM3NNote(note, depth, key)).join('')}`
+}
+
+function groupDurationInBeats(token: string, depth: number) {
+  const match = /^\[([^\]:]+):([^\]]+)\](\^*)(\.*)~?$/.exec(token)
+  if (!match) {
+    return 0
+  }
+
+  const notes = match[1].trim().split(/\s+/).filter(Boolean)
+  const mode = match[2].trim()
+  const carets = match[3].length
+  const dots = match[4].length
+
+  if (mode === 'h') {
+    const first = parseM3NNote(notes[0] ?? '')
+    return first ? durationInBeats(depth, first.carets.length + carets, first.dots.length + dots) : 0
+  }
+
+  const units = Number(mode)
+  return Number.isFinite(units) ? units * durationInBeats(depth, carets, dots) : 0
+}
+
+function beamSpanInBeats(meter: Meter) {
+  return meter.beatValue === 8 && meter.beats % 3 === 0 ? 3 : 1
 }
 
 function convertAttribute(content: string, header: HeaderState) {
@@ -450,6 +486,8 @@ function convertM3NBody(
   let depth = 0
   let index = 0
   let line = 1
+  let beatPosition = 0
+  let groupBoundary = false
 
   const outputLength = () => output.join('').length
 
@@ -464,11 +502,26 @@ function convertM3NBody(
     })
   }
 
+  const advanceBeatPosition = (duration: number) => {
+    const span = beamSpanInBeats(header.meter)
+    beatPosition = (beatPosition + duration) % span
+    if (beatPosition < Number.EPSILON || span - beatPosition < Number.EPSILON) {
+      beatPosition = 0
+    }
+  }
+
   while (index < source.length) {
     const rest = source.slice(index)
     const whitespace = /^\s+/.exec(rest)
     if (whitespace) {
-      output.push(whitespace[0].includes('\n') ? '\n' : ' ')
+      const shouldBreakBeam =
+        groupBoundary ||
+        depth === 0 &&
+          (beatPosition === 0 || beamSpanInBeats(header.meter) - beatPosition < Number.EPSILON)
+      if (whitespace[0].includes('\n') || shouldBreakBeam) {
+        output.push(whitespace[0].includes('\n') ? '\n' : ' ')
+      }
+      groupBoundary = false
       line += whitespace[0].split('\n').length - 1
       index += whitespace[0].length
       continue
@@ -491,18 +544,22 @@ function convertM3NBody(
         ':||:': ':| |:',
       }
       output.push(` ${map[bar[0]]} `)
+      beatPosition = 0
+      groupBoundary = false
       index += bar[0].length
       continue
     }
 
     if (rest.startsWith('(')) {
       depth += 1
+      groupBoundary = false
       index += 1
       continue
     }
 
     if (rest.startsWith(')')) {
       depth = Math.max(0, depth - 1)
+      groupBoundary = depth === 0
       index += 1
       continue
     }
@@ -520,6 +577,8 @@ function convertM3NBody(
     const group = /^\[[^[\]]+\](?:\^+)?(?:\.*)?~?/.exec(rest)
     if (group) {
       pushMapped(convertGroup(group[0], depth, header.key), index, index + group[0].length)
+      advanceBeatPosition(groupDurationInBeats(group[0], depth))
+      groupBoundary = false
       index += group[0].length
       continue
     }
@@ -527,6 +586,11 @@ function convertM3NBody(
     const note = /^(?:0|[1-7][#b=]*[ed]*)(?:\^+)?(?:\.*)?~?/.exec(rest)
     if (note) {
       pushMapped(convertM3NNote(note[0], depth, header.key), index, index + note[0].length)
+      const parsed = parseM3NNote(note[0])
+      if (parsed) {
+        advanceBeatPosition(durationInBeats(depth, parsed.carets.length, parsed.dots.length))
+      }
+      groupBoundary = false
       index += note[0].length
       continue
     }
