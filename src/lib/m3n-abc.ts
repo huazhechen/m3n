@@ -175,13 +175,23 @@ function greatestCommonDivisor(a: number, b: number): number {
   return b === 0 ? a : greatestCommonDivisor(b, a % b)
 }
 
-function convertM3NNote(token: string, depth: number, key: string) {
+function parseM3NNote(token: string) {
   const match = /^(0|[1-7])([#b=]*)([ed]*)(\^*)(\.*)(~?)$/.exec(token)
   if (!match) {
-    return token
+    return null
   }
 
   const [, degreeRaw, accidentals, octave, carets, dots, tie] = match
+  return { degreeRaw, accidentals, octave, carets, dots, tie }
+}
+
+function convertM3NNote(token: string, depth: number, key: string) {
+  const parsed = parseM3NNote(token)
+  if (!parsed) {
+    return token
+  }
+
+  const { degreeRaw, accidentals, octave, carets, dots, tie } = parsed
   const duration = durationSuffix(depth, carets.length, dots.length)
 
   if (degreeRaw === '0') {
@@ -194,17 +204,60 @@ function convertM3NNote(token: string, depth: number, key: string) {
   return tie ? `${abcNote}-` : abcNote
 }
 
+function convertM3NNotePitch(token: string, key: string) {
+  const parsed = parseM3NNote(token)
+  if (!parsed) {
+    return token
+  }
+
+  const { degreeRaw, accidentals, octave, tie } = parsed
+  if (degreeRaw === '0') {
+    return 'z'
+  }
+
+  const degree = Number(degreeRaw)
+  const noteName = degreeToLetter(degree, key)
+  const abcNote = `${accidentalPrefix(accidentals)}${applyOctave(noteName, octave, implicitOctaveShift(degree, key))}`
+  return tie ? `${abcNote}-` : abcNote
+}
+
+function harmonyDuration(notes: string[], depth: number, carets = 0, dots = 0) {
+  const parsedNotes = notes.map(parseM3NNote)
+  const first = parsedNotes[0]
+  if (!first || parsedNotes.some((note) => !note)) {
+    return null
+  }
+
+  const sameDuration = parsedNotes.every(
+    (note) => note?.carets.length === first.carets.length && note.dots.length === first.dots.length,
+  )
+
+  if (!sameDuration) {
+    return null
+  }
+
+  return durationSuffix(depth, first.carets.length + carets, first.dots.length + dots)
+}
+
 function convertGroup(token: string, depth: number, key: string) {
-  const match = /^\[([^\]:]+):([^\]]+)\]$/.exec(token)
+  const match = /^\[([^\]:]+):([^\]]+)\](\^*)(\.*)(~?)$/.exec(token)
   if (!match) {
     return token
   }
 
   const notes = match[1].trim().split(/\s+/).filter(Boolean)
   const mode = match[2].trim()
+  const groupCarets = match[3].length
+  const groupDots = match[4].length
+  const groupTie = match[5]
 
   if (mode === 'h') {
-    return `[${notes.map((note) => convertM3NNote(note, 0, key)).join('')}]${durationSuffix(depth, 0, 0)}`
+    const duration = harmonyDuration(notes, depth, groupCarets, groupDots)
+    if (duration !== null) {
+      return `[${notes.map((note) => convertM3NNotePitch(note, key)).join('')}]${duration}${groupTie ? '-' : ''}`
+    }
+
+    return `[${notes.map((note) => convertM3NNote(note, depth, key)).join('')}]`
   }
 
   const totalUnits = Number(mode)
@@ -464,7 +517,7 @@ function convertM3NBody(
       continue
     }
 
-    const group = /^\[[^[\]]+\]/.exec(rest)
+    const group = /^\[[^[\]]+\](?:\^+)?(?:\.*)?~?/.exec(rest)
     if (group) {
       pushMapped(convertGroup(group[0], depth, header.key), index, index + group[0].length)
       index += group[0].length
@@ -621,6 +674,39 @@ function convertAbcDecorations(value: string) {
     )
 }
 
+function applyAbcDurationToHarmonyGroup(notes: string[], value: string, hasTie = false) {
+  const tie = hasTie ? '~' : ''
+
+  if (!value || value === '1') {
+    return `[${notes.join(' ')}:h]${tie}`
+  }
+
+  if (value === '2') {
+    return `[${notes.join(' ')}:h]^${tie}`
+  }
+  if (value === '4') {
+    return `[${notes.join(' ')}:h]^^${tie}`
+  }
+  if (value === '3') {
+    return `[${notes.join(' ')}:h]^.${tie}`
+  }
+  if (value === '/' || value === '/2') {
+    return `([${notes.join(' ')}:h]${tie})`
+  }
+  if (value === '/4' || value === '1/4') {
+    return `(([${notes.join(' ')}:h]${tie}))`
+  }
+  if (value === '3/2') {
+    return `[${notes.join(' ')}:h].${tie}`
+  }
+
+  return `[${notes.join(' ')}:h]${tie}`
+}
+
+function abcNoteWithoutDuration(token: string) {
+  return token.replace(/^([_=^]*[A-Ga-g][,']*)[0-9/]*(-?)$/, '$1$2')
+}
+
 function convertAbcNotesWithoutTouchingAttributes(value: string, key: string) {
   const attributes: string[] = []
   const protectedValue = value.replace(/\{[^}]+\}/g, (match) => {
@@ -638,9 +724,17 @@ function convertAbcNotesWithoutTouchingAttributes(value: string, key: string) {
       groups.push(value)
       return marker
     })
-    .replace(/\[[A-Ga-gz,_'=^0-9/-]+\]/g, (match) => {
-      const notes = match.slice(1, -1).match(/[_=^]*[A-Ga-g][,']*[0-9/]*-?/g) ?? []
-      const value = `[${notes.map((note) => abcNoteToM3N(note, key)).join(' ')}:h]`
+    .replace(/\[([A-Ga-g,_'=^0-9/-]+)\]([0-9/]*)(-?)/g, (_match, notesRaw, durationRaw, tieRaw) => {
+      const notes = String(notesRaw).match(/[_=^]*[A-Ga-g][,']*[0-9/]*-?/g) ?? []
+      const chordDuration = String(durationRaw)
+      const chordTie = String(tieRaw)
+      const value = chordDuration
+        ? applyAbcDurationToHarmonyGroup(
+            notes.map((note) => abcNoteToM3N(abcNoteWithoutDuration(note), key)),
+            chordDuration,
+            Boolean(chordTie),
+          )
+        : `[${notes.map((note) => abcNoteToM3N(note, key)).join(' ')}:h]`
       const marker = `¤${groups.length}¤`
       groups.push(value)
       return marker
