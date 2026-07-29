@@ -8,7 +8,7 @@ export type PresetScore = {
   source: string
 }
 
-const scoreModules = import.meta.glob('../scores/*.m3n', {
+const scoreModules = import.meta.glob('../scores/**/*.m3n', {
   eager: true,
   query: '?raw',
   import: 'default',
