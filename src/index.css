@@ -391,22 +391,35 @@ textarea::selection {
 }
 
 .book-layout {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
+  display: block;
 }
 
 .book-toc {
-  position: sticky;
-  top: 16px;
-  max-height: calc(100vh - 32px);
+  display: none;
+  position: fixed;
+  right: 16px;
+  bottom: 124px;
+  z-index: 20;
+  width: min(320px, calc(100vw - 32px));
+  max-height: calc(100vh - 148px);
   overflow: auto;
   padding: 16px;
+  box-shadow: 0 12px 28px rgb(31 35 38 / 18%);
+}
+
+.book-toc.is-open {
+  display: block;
 }
 
 .doc-toc-toggle {
-  display: none;
+  position: fixed;
+  right: 16px;
+  bottom: 72px;
+  z-index: 21;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 12px;
   border: 1px solid #cfd3ca;
   border-radius: 6px;
   background: #ffffff;
@@ -535,15 +548,28 @@ textarea::selection {
 
 .doc-pagination {
   display: flex;
-  justify-content: space-between;
   gap: 12px;
-  margin-top: 32px;
-  border-top: 1px solid #e2e3dc;
-  padding-top: 16px;
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 21;
+  margin: 0;
+  border: 0;
+  padding: 0;
 }
 
 .doc-pagination button {
-  min-width: 88px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #cfd3ca;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #174f54;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .doc-pagination button:disabled {
@@ -553,37 +579,8 @@ textarea::selection {
 
 @media (max-width: 1100px) {
   .hero,
-  .editor-grid,
-  .book-layout {
+  .editor-grid {
     grid-template-columns: 1fr;
-  }
-
-  .book-toc {
-    display: none;
-    position: fixed;
-    top: 74px;
-    right: 12px;
-    left: 12px;
-    z-index: 20;
-    max-height: calc(100vh - 92px);
-    overflow: auto;
-    border: 1px solid #cfd3ca;
-    border-radius: 6px;
-    background: #ffffff;
-    box-shadow: 0 12px 28px rgb(31 35 38 / 18%);
-  }
-
-  .book-toc.is-open {
-    display: block;
-  }
-
-  .doc-toc-toggle {
-    display: inline-flex;
-    grid-column: 1;
-    justify-self: start;
-    align-items: center;
-    min-height: 36px;
-    padding: 6px 12px;
   }
 }
 

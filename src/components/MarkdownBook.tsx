@@ -221,11 +221,23 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
           {activePage.content}
         </ReactMarkdown>
         <nav className="doc-pagination" aria-label="文档章节导航">
-          <button type="button" disabled={!previousPage} onClick={() => previousPage && selectPage(previousPage.id)}>
-            上一章
+          <button
+            type="button"
+            disabled={!previousPage}
+            aria-label="上一章"
+            title="上一章"
+            onClick={() => previousPage && selectPage(previousPage.id)}
+          >
+            ←
           </button>
-          <button type="button" disabled={!nextPage} onClick={() => nextPage && selectPage(nextPage.id)}>
-            下一章
+          <button
+            type="button"
+            disabled={!nextPage}
+            aria-label="下一章"
+            title="下一章"
+            onClick={() => nextPage && selectPage(nextPage.id)}
+          >
+            →
           </button>
         </nav>
       </article>
