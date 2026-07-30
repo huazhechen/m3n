@@ -247,7 +247,6 @@ function validateBody(source: string): string[] {
       // R5/R6: Ornament validation
       const ornamentMatch = /^(ac|ap)\(([^)]*)\)$/.exec(content)
       if (ornamentMatch) {
-        const prefix = ornamentMatch[1]
         const inner = ornamentMatch[2].trim()
         // R6: Empty ornament
         if (!inner) {
