@@ -21,7 +21,7 @@ function isValidAttribute(content: string): boolean {
   const eqIdx = content.indexOf('=')
   if (eqIdx !== -1) {
     const name = content.slice(0, eqIdx)
-    return VALID_INFO_FIELDS.has(name) || name === 'key' || name === 'chord' || name === 'rest' || name === 'text' || name === 'volta' || name === 'part'
+    return VALID_INFO_FIELDS.has(name) || name === 'key' || name === 'chord' || name === 'rest' || name === 'text' || name === 'volta' || name === 'part' || name === 'parts'
   }
   if (/^(ac|ap)\(/.test(content)) return true
   if (/^\d+\/\d+$/.test(content)) return true
@@ -65,6 +65,20 @@ function validateChordName(value: string): string | null {
   return null
 }
 
+function measureDurationInBeats(meter: { beats: number; beatValue: number }) {
+  return meter.beats * 4 / meter.beatValue
+}
+
+function isPowerOfTwo(value: number) {
+  return Number.isSafeInteger(value) && value > 0 && (value & (value - 1)) === 0
+}
+
+function splitPitchTokens(value: string): string[] | null {
+  const normalized = value.replace(/\s+/g, '')
+  const tokens = normalized.match(/[0-7][#b=]*[ed]*/g) ?? []
+  return tokens.join('') === normalized ? tokens : null
+}
+
 // --- Body validator ---
 
 function validateBody(source: string): string[] {
@@ -76,14 +90,21 @@ function validateBody(source: string): string[] {
   let parenDepthInMeasure = 0
   let groupDepthInMeasure = 0
   let currentMeasureBeats = 0
-  const measureBeatCounts: number[] = []
+  const measureBeatCounts: Array<{ actual: number; expected: number }> = []
   const intervalAttrs: string[] = []
   const seenInfoFields = new Set<string>()
-  let hasTerminalBarline = false
   let lastTiePitch: string | null = null
   let lastWasRest = false
   let currentMeter = { beats: 4, beatValue: 4 }
   const forwardRepeats: number[] = [] // line numbers of unmatched ||:
+
+  const commitMeasure = () => {
+    // Adjacent barlines are valid notation (for example, a section line followed by a repeat).
+    if (currentMeasureBeats > 0) {
+      measureBeatCounts.push({ actual: currentMeasureBeats, expected: measureDurationInBeats(currentMeter) })
+    }
+    currentMeasureBeats = 0
+  }
 
   while (index < source.length) {
     const rest = source.slice(index)
@@ -115,12 +136,7 @@ function validateBody(source: string): string[] {
         diagnostics.push(`第 ${line} 行：分组未在小节内闭合`)
       }
       // Save current measure beats
-      measureBeatCounts.push(currentMeasureBeats)
-      currentMeasureBeats = 0
-      // Track terminal barline
-      if (bar[0] === '|||' || bar[0] === ':|||') {
-        hasTerminalBarline = true
-      }
+      commitMeasure()
       // P4: Track repeat barlines
       if (bar[0] === '||:' || bar[0] === ':||:') {
         forwardRepeats.push(line)
@@ -187,10 +203,11 @@ function validateBody(source: string): string[] {
       // V3: Time signature format
       if (/^\d+\/\d+$/.test(content)) {
         const [beats, beatValue] = content.split('/').map(Number)
-        if (beats <= 0 || beatValue <= 0) {
+        if (!Number.isSafeInteger(beats) || beats <= 0 || !isPowerOfTwo(beatValue)) {
           diagnostics.push(`第 ${line} 行：拍号格式非法：${content}`)
+        } else {
+          currentMeter = { beats, beatValue }
         }
-        currentMeter = { beats, beatValue }
       }
 
       // V3: Tempo format
@@ -219,7 +236,10 @@ function validateBody(source: string): string[] {
         if (!Number.isFinite(restVal) || restVal <= 0 || !/^\d+$/.test(content.slice('rest='.length))) {
           diagnostics.push(`第 ${line} 行：多小节休止值非法：${content}`)
         } else {
-          currentMeasureBeats += restVal * currentMeter.beats
+          const expected = measureDurationInBeats(currentMeter)
+          for (let measure = 0; measure < restVal; measure += 1) {
+            measureBeatCounts.push({ actual: expected, expected })
+          }
         }
       }
 
@@ -234,6 +254,8 @@ function validateBody(source: string): string[] {
       // P2/P3: Interval attribute tracking
       if (content === 'cresc' || content === 'decres' || content === '8va' || content === '8vb' || content === 'lg') {
         intervalAttrs.push(content)
+      } else if (content === '/') {
+        intervalAttrs.pop()
       } else if (content.startsWith('/') && content.length > 1) {
         const closingName = content.slice(1)
         const idx = intervalAttrs.lastIndexOf(closingName)
@@ -252,8 +274,11 @@ function validateBody(source: string): string[] {
         if (!inner) {
           diagnostics.push(`第 ${line} 行：装饰音内至少需要一个音高`)
         } else {
-          const tokens = inner.split(/\s+/).filter(Boolean)
-          for (const token of tokens) {
+          const tokens = splitPitchTokens(inner)
+          if (!tokens) {
+            diagnostics.push(`第 ${line} 行：装饰音内含非法元素：${inner}`)
+          }
+          for (const token of tokens ?? []) {
             const parsed = parseM3NNote(token)
             if (!parsed) {
               diagnostics.push(`第 ${line} 行：装饰音内含非法元素：${token}`)
@@ -391,32 +416,28 @@ function validateBody(source: string): string[] {
     diagnostics.push(`第 ${repeatLine} 行：前反复线无对应后反复线`)
   }
 
-  // Remaining beats (piece ended without terminal barline)
+  // Commit the final measure when the source ends without a barline.
   if (currentMeasureBeats > 0) {
-    measureBeatCounts.push(currentMeasureBeats)
-  }
-
-  // S1: Missing terminal barline
-  if (!hasTerminalBarline && measureBeatCounts.length > 0) {
-    diagnostics.push('乐谱正文缺少终止线')
+    commitMeasure()
   }
 
   // M1: Measure beat validation
-  const meterBeats = currentMeter.beats
   if (measureBeatCounts.length === 1) {
-    if (measureBeatCounts[0] !== meterBeats) {
-      diagnostics.push(`小节拍数不合规：期望 ${meterBeats} 拍，实际 ${measureBeatCounts[0]} 拍`)
+    const measure = measureBeatCounts[0]
+    if (measure.actual !== measure.expected) {
+      diagnostics.push(`小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
     }
   } else if (measureBeatCounts.length >= 2) {
     for (let i = 1; i < measureBeatCounts.length - 1; i++) {
-      if (measureBeatCounts[i] !== meterBeats) {
-        diagnostics.push(`中间小节拍数不足：期望 ${meterBeats} 拍，实际 ${measureBeatCounts[i]} 拍`)
+      const measure = measureBeatCounts[i]
+      if (measure.actual !== measure.expected) {
+        diagnostics.push(`中间小节拍数不足：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
       }
     }
     const first = measureBeatCounts[0]
     const last = measureBeatCounts[measureBeatCounts.length - 1]
-    if (last !== meterBeats && first + last !== meterBeats) {
-      diagnostics.push(`首末小节拍数之和不为 ${meterBeats} 拍：首 ${first} 拍 + 末 ${last} 拍 = ${first + last} 拍`)
+    if (last.actual !== last.expected && first.actual + last.actual !== first.expected) {
+      diagnostics.push(`首末小节拍数之和不为 ${first.expected} 拍：首 ${first.actual} 拍 + 末 ${last.actual} 拍 = ${first.actual + last.actual} 拍`)
     }
   }
 
@@ -429,28 +450,22 @@ export function validateM3N(source: string): string[] {
   const diagnostics: string[] = []
   const { main, bass, lyrics } = splitSupplementBlocks(source)
 
-  // S2: Supplementary sections before main body
-  // Check if {lyrics} or {bass} appears before any terminal barline in raw source
+  // S2: Supplementary sections before the main body terminal line.
   const strippedSource = source.replace(/\/\/.*$/gm, '') // remove comments
-  const terminalPos = Math.max(
-    strippedSource.lastIndexOf('|||'),
-    strippedSource.lastIndexOf(':|||')
-  )
+  const firstSupplementPos = [strippedSource.indexOf('{lyrics'), strippedSource.indexOf('{bass}')]
+    .filter((position) => position >= 0)
+    .sort((a, b) => a - b)[0] ?? -1
+  const mainBeforeSupplement = firstSupplementPos >= 0
+    ? strippedSource.slice(0, firstSupplementPos)
+    : strippedSource
+  const terminalPos = Math.max(mainBeforeSupplement.lastIndexOf('|||'), mainBeforeSupplement.lastIndexOf(':|||'))
   if (terminalPos >= 0) {
-    const beforeTerminal = strippedSource.slice(0, terminalPos)
+    const beforeTerminal = mainBeforeSupplement.slice(0, terminalPos)
     if (/\{lyrics/.test(beforeTerminal)) {
-      diagnostics.push('补充片段出现在正文之前：歌词块须在终止线之后')
+      diagnostics.push('补充片段出现在正文之前：歌词块须在正文之后')
     }
     if (/\{bass\}/.test(beforeTerminal)) {
-      diagnostics.push('补充片段出现在正文之前：低音谱表须在终止线之后')
-    }
-  } else if (/\{lyrics/.test(strippedSource) || /\{bass\}/.test(strippedSource)) {
-    // No terminal barline but has supplements — supplement is before the (missing) body
-    if (/\{lyrics/.test(strippedSource)) {
-      diagnostics.push('补充片段出现在正文之前：歌词块须在终止线之后')
-    }
-    if (/\{bass\}/.test(strippedSource)) {
-      diagnostics.push('补充片段出现在正文之前：低音谱表须在终止线之后')
+      diagnostics.push('补充片段出现在正文之前：低音谱表须在正文之后')
     }
   }
 
@@ -494,11 +509,6 @@ export function validateM3N(source: string): string[] {
 
   // Validate main body
   diagnostics.push(...validateBody(main))
-
-  // S1: Bass missing terminal barline
-  if (bass && !/\|\|\|/.test(bass)) {
-    diagnostics.push('低音谱表缺少终止线')
-  }
 
   // Validate bass body
   if (bass) {

@@ -457,7 +457,7 @@ function convertAttribute(content: string, header: HeaderState, state: { keySeen
   }
   if (content.startsWith('chord=')) {
     const chordValue = content.slice('chord='.length)
-    const abc = romanChordToAbc(chordValue, header.key)
+    const abc = romanChordToAbc(chordValue, state.currentKey)
     return abc ?? ''
   }
   if (content.startsWith('text=')) {
@@ -568,7 +568,7 @@ export function m3nToAbc(source: string): ConversionResult {
   header.key = bodyResult.lastKey
   header.meter = bodyResult.lastMeter
   header.tempo = bodyResult.lastTempo
-  const bassResult = bass ? convertM3NBody(bass, header, diagnostics) : null
+  const bassResult = bass ? convertM3NBody(bass, header, diagnostics, false) : null
   const body = bodyResult.body.trim()
   const bassBody = bassResult?.body.trim() ?? ''
   const partOrder = header.parts ? partOrderToAbc(header.parts) : ''
@@ -625,6 +625,7 @@ function convertM3NBody(
   source: string,
   header: HeaderState,
   diagnostics: string[],
+  treatInitialAttributesAsHeader = true,
 ): BodyConversionResult {
   const output: string[] = []
   const mappings: SourceMapRange[] = []
@@ -636,7 +637,14 @@ function convertM3NBody(
   const intervalAttributes: IntervalAttribute[] = []
   let lastNotationOutputIndex: number | null = null
   let lastNotationMappingIndex: number | null = null
-  const state = { keySeen: false, meterSeen: false, tempoSeen: false, currentKey: header.key, currentMeter: { ...header.meter }, currentTempo: header.tempo }
+  const state = {
+    keySeen: !treatInitialAttributesAsHeader,
+    meterSeen: !treatInitialAttributesAsHeader,
+    tempoSeen: !treatInitialAttributesAsHeader,
+    currentKey: header.key,
+    currentMeter: { ...header.meter },
+    currentTempo: header.tempo,
+  }
 
   const outputLength = () => output.join('').length
 
@@ -667,7 +675,7 @@ function convertM3NBody(
   }
 
   const advanceBeatPosition = (duration: number) => {
-    const span = beamSpanInBeats(header.meter)
+    const span = beamSpanInBeats(state.currentMeter)
     const prevBeatPosition = beatPosition
     beatPosition = (beatPosition + duration) % span
     if (beatPosition < Number.EPSILON || span - beatPosition < Number.EPSILON) {
@@ -686,7 +694,7 @@ function convertM3NBody(
       const shouldBreakBeam =
         groupBoundary ||
         depth === 0 &&
-          (beatPosition === 0 || beamSpanInBeats(header.meter) - beatPosition < Number.EPSILON)
+          (beatPosition === 0 || beamSpanInBeats(state.currentMeter) - beatPosition < Number.EPSILON)
       if (shouldBreakBeam) {
         output.push(' ')
       }
