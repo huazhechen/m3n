@@ -14,6 +14,14 @@ dist-ssr
 .npm-cache
 __tmp_vite__
 
+# Local environment and tool caches
+.env
+.env.*
+!.env.example
+.vite
+coverage
+*.tsbuildinfo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
