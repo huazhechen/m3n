@@ -1,4 +1,4 @@
-import { durationInBeats, parseKey, parseM3NNote } from './notation/m3n-primitives'
+import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
 import { parseM3NGroupPitches } from './notation/m3n-groups'
 import { splitSupplementBlocks } from './notation/supplements'
 import type { ConversionResult, NotationMode, SourceMapRange } from './notation/types'
@@ -17,6 +17,10 @@ type HeaderState = {
   subtitle: string
   composer: string
   lyricist: string
+  arranger: string
+  copyright: string
+  source: string
+  note: string
   key: string
   meter: Meter
   tempo: string
@@ -30,6 +34,13 @@ type BodyConversionResult = {
   lastKey: string
   lastMeter: Meter
   lastTempo: string
+  settingEvents: SettingEvent[]
+}
+
+type SettingEvent = {
+  beat: number
+  kind: 'key' | 'meter' | 'tempo'
+  value: string
 }
 
 const defaultHeader: HeaderState = {
@@ -37,6 +48,10 @@ const defaultHeader: HeaderState = {
   subtitle: '',
   composer: '',
   lyricist: '',
+  arranger: '',
+  copyright: '',
+  source: '',
+  note: '',
   key: 'C',
   meter: { beats: 4, beatValue: 4 },
   tempo: '',
@@ -46,8 +61,6 @@ const defaultHeader: HeaderState = {
 
 const pitchLetters = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 const abcKeyAliases: Record<string, string> = {
-  maj: '',
-  min: 'm',
   dor: 'Dor',
   phr: 'Phr',
   lyd: 'Lyd',
@@ -60,13 +73,26 @@ function keyToAbc(rawKey: string) {
   return `${tonic}${abcKeyAliases[mode] ?? mode}`
 }
 
+function keyFromAbc(rawKey: string) {
+  const match = /^([A-G](?:#|b)?)\s*(maj(?:or)?|min(?:or)?|m|dor(?:ian)?|phr(?:ygian)?|lyd(?:ian)?|mix(?:olydian)?|loc(?:rian)?)?$/i.exec(rawKey.trim())
+  if (!match) return rawKey.trim()
+  const suffix = (match[2] ?? '').toLowerCase()
+  const modes: Record<string, string> = {
+    major: '', maj: '', minor: 'm', min: 'm', m: 'm',
+    dorian: 'dor', dor: 'dor', phrygian: 'phr', phr: 'phr',
+    lydian: 'lyd', lyd: 'lyd', mixolydian: 'mix', mix: 'mix',
+    locrian: 'loc', loc: 'loc',
+  }
+  return `${match[1]}${modes[suffix] ?? ''}`
+}
+
 export function romanChordToAbc(roman: string, key: string) {
   const romanToDegree: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7 }
-  const degreeMatch = /^([IVX]+)(m|dim|aug|sus[24]?|[2-9]|1[0-3])?$/i.exec(roman)
+  const degreeMatch = /^(I|II|III|IV|V|VI|VII|i|ii|iii|iv|v|vi|vii)(m|dim|aug|sus2|sus4|[2-9]|1[0-3])?$/.exec(roman)
   if (!degreeMatch) return null
   const degreeNum = romanToDegree[degreeMatch[1].toUpperCase()]
   if (degreeNum === undefined) return null
-  const root = degreeToLetter(degreeNum, key)
+  const root = degreeToChordRoot(degreeNum, key)
   const suffix = degreeMatch[2] ?? ''
   const isLowerRoman = degreeMatch[1] !== degreeMatch[1].toUpperCase()
   // Quality suffixes (m, dim, aug) already encode the chord quality
@@ -78,6 +104,19 @@ export function romanChordToAbc(roman: string, key: string) {
     return `"${root}${isLowerRoman ? 'm' : ''}${suffix}"`
   }
   return `"${root}${isLowerRoman ? 'm' : ''}"`
+}
+
+function degreeToChordRoot(degree: number, key: string) {
+  const { tonic, mode } = parseKey(key)
+  const naturalPitchClasses: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+  const tonicPitch = naturalPitchClasses[tonic[0]?.toUpperCase() ?? 'C']
+    + (tonic.endsWith('#') ? 1 : tonic.endsWith('b') ? -1 : 0)
+  const targetPitch = (tonicPitch + keyModeIntervals(mode)[degree - 1] + 12) % 12
+  const letter = degreeToLetter(degree, key)
+  const naturalPitch = naturalPitchClasses[letter]
+  const difference = (targetPitch - naturalPitch + 12) % 12
+  const accidental = difference === 1 ? '#' : difference === 2 ? '##' : difference === 11 ? 'b' : difference === 10 ? 'bb' : ''
+  return `${letter}${accidental}`
 }
 
 function degreeToLetter(degree: number, key: string) {
@@ -317,10 +356,10 @@ function beamSpanInBeats(meter: Meter) {
   return meter.beatValue === 8 && meter.beats % 3 === 0 ? 1.5 : 1
 }
 
-type IntervalAttribute = 'cresc' | 'decres' | '8va' | '8vb'
+type IntervalAttribute = 'cresc' | 'decres' | '8va' | '8vb' | 'lg'
 
 function isIntervalAttribute(value: string): value is IntervalAttribute {
-  return value === 'cresc' || value === 'decres' || value === '8va' || value === '8vb'
+  return value === 'cresc' || value === 'decres' || value === '8va' || value === '8vb' || value === 'lg'
 }
 
 function intervalEndDecoration(value: string) {
@@ -336,6 +375,9 @@ function intervalEndDecoration(value: string) {
   if (value === '8vb') {
     return '!8vb)!'
   }
+  if (value === 'lg') {
+    return ')'
+  }
   return ''
 }
 
@@ -343,7 +385,7 @@ function isPostfixAttribute(value: string) {
   return /^(tr|echo|wav[+-]?|str|tip|brk|hold|breath|f[1-5])$/.test(value)
 }
 
-function convertAttribute(content: string, header: HeaderState, state: { keySeen: boolean; meterSeen: boolean; tempoSeen: boolean; currentKey: string; currentMeter: Meter; currentTempo: string }) {
+function convertAttribute(content: string, header: HeaderState, state: { keySeen: boolean; meterSeen: boolean; tempoSeen: boolean; currentKey: string; currentMeter: Meter; currentTempo: string; currentChord: string }) {
   if (content.startsWith('title=')) {
     header.title = content.slice('title='.length)
     return ''
@@ -360,27 +402,33 @@ function convertAttribute(content: string, header: HeaderState, state: { keySeen
     header.lyricist = content.slice('lyricist='.length)
     return ''
   }
+  if (content.startsWith('arranger=')) {
+    header.arranger = content.slice('arranger='.length)
+    return ''
+  }
+  if (content.startsWith('copyright=')) {
+    header.copyright = content.slice('copyright='.length)
+    return ''
+  }
+  if (content.startsWith('source=')) {
+    header.source = content.slice('source='.length)
+    return ''
+  }
+  if (content.startsWith('note=')) {
+    header.note = content.slice('note='.length)
+    return ''
+  }
   if (content.startsWith('key=')) {
     const newKey = content.slice('key='.length)
     if (!state.keySeen) {
       state.keySeen = true
       header.key = newKey
       state.currentKey = newKey
+      return state.currentChord ? romanChordToAbc(state.currentChord, newKey) ?? '' : ''
     } else if (newKey !== state.currentKey) {
       state.currentKey = newKey
-      return `[K:${keyToAbc(newKey)}]`
-    }
-    return ''
-  }
-  if (content.startsWith('1=')) {
-    const newKey = content.slice('1='.length)
-    if (!state.keySeen) {
-      state.keySeen = true
-      header.key = newKey
-      state.currentKey = newKey
-    } else if (newKey !== state.currentKey) {
-      state.currentKey = newKey
-      return `[K:${keyToAbc(newKey)}]`
+      const chord = state.currentChord ? romanChordToAbc(state.currentChord, newKey) ?? '' : ''
+      return `\nK:${keyToAbc(newKey)}\n${chord}`
     }
     return ''
   }
@@ -393,19 +441,19 @@ function convertAttribute(content: string, header: HeaderState, state: { keySeen
       state.currentMeter = newMeter
     } else if (newMeter.beats !== state.currentMeter.beats || newMeter.beatValue !== state.currentMeter.beatValue) {
       state.currentMeter = newMeter
-      return `[M:${newMeter.beats}/${newMeter.beatValue}]`
+      return `\nM:${newMeter.beats}/${newMeter.beatValue}\n`
     }
     return ''
   }
-  if (/^\d+qpm$/i.test(content)) {
-    const newTempo = content.replace(/qpm$/i, '')
+  if (/^\d+qpm$/.test(content)) {
+    const newTempo = content.replace(/qpm$/, '')
     if (!state.tempoSeen) {
       state.tempoSeen = true
       header.tempo = newTempo
       state.currentTempo = newTempo
     } else if (newTempo !== state.currentTempo) {
       state.currentTempo = newTempo
-      return `[Q:1/4=${newTempo}]`
+      return `\nQ:1/4=${newTempo}\n`
     }
     return ''
   }
@@ -428,6 +476,7 @@ function convertAttribute(content: string, header: HeaderState, state: { keySeen
   }
   if (content.startsWith('chord=')) {
     const chordValue = content.slice('chord='.length)
+    state.currentChord = chordValue
     const abc = romanChordToAbc(chordValue, state.currentKey)
     return abc ?? ''
   }
@@ -482,6 +531,9 @@ function convertAttribute(content: string, header: HeaderState, state: { keySeen
   if (content === '8vb') {
     return '!8vb(!'
   }
+  if (content === 'lg') {
+    return '('
+  }
   if (content.startsWith('/')) {
     return intervalEndDecoration(content.slice(1))
   }
@@ -517,31 +569,24 @@ export function m3nToAbc(source: string): ConversionResult {
   const melodyFirstKey = header.key
   const melodyFirstMeter = { ...header.meter }
   const melodyFirstTempo = header.tempo
-  // Set header to current state at end of melody for bass processing
-  header.key = bodyResult.lastKey
-  header.meter = bodyResult.lastMeter
-  header.tempo = bodyResult.lastTempo
-  const bassResult = bass ? convertM3NBody(bass, header, diagnostics, false) : null
+  // Bass starts on the same timeline and therefore inherits the melody's initial settings.
+  header.key = melodyFirstKey
+  header.meter = melodyFirstMeter
+  header.tempo = melodyFirstTempo
+  const bassResult = bass ? convertM3NBody(bass, header, diagnostics, false, bodyResult.settingEvents) : null
   const body = bodyResult.body.trim()
   const bassBody = bassResult?.body.trim() ?? ''
   const partOrder = header.parts ? partOrderToAbc(header.parts) : ''
-  // If bass body exists and its start key/meter differs from the header,
-  // prepend inline directives so the bass voice starts correctly
-  const bassPrefixParts: string[] = []
-  if (bassBody) {
-    if (bodyResult.lastKey !== melodyFirstKey) {
-      bassPrefixParts.push(`K:${keyToAbc(bodyResult.lastKey)}`)
-    }
-    if (bodyResult.lastMeter.beats !== melodyFirstMeter.beats || bodyResult.lastMeter.beatValue !== melodyFirstMeter.beatValue) {
-      bassPrefixParts.push(`M:${bodyResult.lastMeter.beats}/${bodyResult.lastMeter.beatValue}`)
-    }
-  }
-  const bassPrefix = bassPrefixParts.length ? bassPrefixParts.join('\n') + '\n' : ''
   const lines = [
     'X:1',
     header.title ? `T:${header.title}` : '',
     header.subtitle ? `T:${header.subtitle}` : '',
     header.composer ? `C:${header.composer}` : '',
+    header.lyricist ? `N:M3N lyricist=${header.lyricist}` : '',
+    header.arranger ? `N:M3N arranger=${header.arranger}` : '',
+    header.copyright ? `N:M3N copyright=${header.copyright}` : '',
+    header.source ? `N:M3N source=${header.source}` : '',
+    header.note ? `N:M3N note=${header.note}` : '',
     partOrder ? `P:${partOrder}` : '',
     `M:${melodyFirstMeter.beats}/${melodyFirstMeter.beatValue}`,
     'L:1/4',
@@ -556,9 +601,12 @@ export function m3nToAbc(source: string): ConversionResult {
     bassBody ? '%%score { melody | bass }' : '',
     bassBody ? 'V:melody clef=treble' : '',
     body.trim(),
-    ...lyrics.map((item) => `w:${convertM3NLyrics(item.text)}`),
+    ...lyrics.flatMap((item) => [
+      item.range ? `N:M3N lyrics=${item.range}` : '',
+      `w:${convertM3NLyrics(item.text)}`,
+    ]),
     bassBody ? 'V:bass clef=bass' : '',
-    bassPrefix + bassBody,
+    bassBody,
   ].filter(Boolean)
   const output = lines.join('\n')
   const bodyStart = output.indexOf(body)
@@ -584,13 +632,17 @@ function convertM3NBody(
   header: HeaderState,
   diagnostics: string[],
   treatInitialAttributesAsHeader = true,
+  inheritedSettingEvents: SettingEvent[] = [],
 ): BodyConversionResult {
   const output: string[] = []
   const mappings: SourceMapRange[] = []
+  const settingEvents: SettingEvent[] = []
   let depth = 0
   let index = 0
   let line = 1
   let beatPosition = 0
+  let elapsedBeats = 0
+  let inheritedEventIndex = 0
   let groupBoundary = false
   const intervalAttributes: IntervalAttribute[] = []
   const structuralIntervals: Array<{ name: string; voltaStartBeat?: number }> = []
@@ -603,9 +655,32 @@ function convertM3NBody(
     currentKey: header.key,
     currentMeter: { ...header.meter },
     currentTempo: header.tempo,
+    currentChord: '',
   }
+  let partInitialState: Pick<typeof state, 'currentKey' | 'currentMeter' | 'currentTempo' | 'currentChord'> | null = null
 
   const outputLength = () => output.join('').length
+
+  const applyInheritedSettings = () => {
+    while (inheritedEventIndex < inheritedSettingEvents.length) {
+      const event = inheritedSettingEvents[inheritedEventIndex]
+      if (event.beat - elapsedBeats > Number.EPSILON) break
+      if (event.kind === 'key' && event.value !== state.currentKey) {
+        state.currentKey = event.value
+        output.push(`\nK:${keyToAbc(event.value)}\n`)
+      } else if (event.kind === 'meter') {
+        const [beats, beatValue] = event.value.split('/').map(Number)
+        if (beats !== state.currentMeter.beats || beatValue !== state.currentMeter.beatValue) {
+          state.currentMeter = { beats, beatValue }
+          output.push(`\nM:${event.value}\n`)
+        }
+      } else if (event.kind === 'tempo' && event.value !== state.currentTempo) {
+        state.currentTempo = event.value
+        output.push(`\nQ:1/4=${event.value}\n`)
+      }
+      inheritedEventIndex += 1
+    }
+  }
 
   const pushMapped = (value: string, sourceStart: number, sourceEnd: number, prefix = '') => {
     const outputStart = outputLength()
@@ -706,7 +781,7 @@ function convertM3NBody(
 
     const attribute = /^\{[^}]+\}/.exec(rest)
     if (attribute) {
-      const content = attribute[0].slice(1, -1).trim()
+      const content = attribute[0].slice(1, -1)
       const structuralName = content.startsWith('volta=')
         ? 'volta'
         : content.startsWith('part=')
@@ -727,13 +802,45 @@ function convertM3NBody(
         structuralIntervals.pop()
       }
       let value = ''
+      if (content.startsWith('rest=')) applyInheritedSettings()
+      const previousKey = state.currentKey
+      const previousMeter = { ...state.currentMeter }
+      const previousTempo = state.currentTempo
       const grace = convertGraceAttribute(content, state.currentKey)
       if (grace) {
         prependToNotation(grace, lastNotationOutputIndex, lastNotationMappingIndex)
       } else if (content === '/') {
         value = intervalEndDecoration(intervalAttributes.pop() ?? '')
       } else {
-        value = convertAttribute(content, header, state)
+        if (content.startsWith('part=')) {
+          partInitialState ??= {
+            currentKey: state.currentKey,
+            currentMeter: { ...state.currentMeter },
+            currentTempo: state.currentTempo,
+            currentChord: state.currentChord,
+          }
+          const reset: string[] = []
+          if (state.currentKey !== partInitialState.currentKey) reset.push(`K:${keyToAbc(partInitialState.currentKey)}\n`)
+          if (state.currentMeter.beats !== partInitialState.currentMeter.beats || state.currentMeter.beatValue !== partInitialState.currentMeter.beatValue) {
+            reset.push(`M:${partInitialState.currentMeter.beats}/${partInitialState.currentMeter.beatValue}\n`)
+          }
+          if (state.currentTempo !== partInitialState.currentTempo && partInitialState.currentTempo) {
+            reset.push(`Q:1/4=${partInitialState.currentTempo}\n`)
+          }
+          if (state.currentChord !== partInitialState.currentChord) {
+            reset.push(partInitialState.currentChord ? romanChordToAbc(partInitialState.currentChord, partInitialState.currentKey) ?? '' : '"N.C."')
+          }
+          state.keySeen = true
+          state.meterSeen = true
+          state.tempoSeen = true
+          state.currentKey = partInitialState.currentKey
+          state.currentMeter = { ...partInitialState.currentMeter }
+          state.currentTempo = partInitialState.currentTempo
+          state.currentChord = partInitialState.currentChord
+          value = `${convertAttribute(content, header, state)}${reset.join('')}`
+        } else {
+          value = convertAttribute(content, header, state)
+        }
         if (isIntervalAttribute(content)) {
           intervalAttributes.push(content)
         } else if (content.startsWith('/')) {
@@ -756,14 +863,30 @@ function convertM3NBody(
           output.push(value)
         }
       }
+      if (state.currentKey !== previousKey) {
+        settingEvents.push({ beat: elapsedBeats, kind: 'key', value: state.currentKey })
+      }
+      if (state.currentMeter.beats !== previousMeter.beats || state.currentMeter.beatValue !== previousMeter.beatValue) {
+        settingEvents.push({ beat: elapsedBeats, kind: 'meter', value: `${state.currentMeter.beats}/${state.currentMeter.beatValue}` })
+      }
+      if (state.currentTempo !== previousTempo) {
+        settingEvents.push({ beat: elapsedBeats, kind: 'tempo', value: state.currentTempo })
+      }
+      if (content.startsWith('rest=')) {
+        const measures = Number(content.slice('rest='.length))
+        if (Number.isFinite(measures) && measures > 0) elapsedBeats += measures * state.currentMeter.beats * 4 / state.currentMeter.beatValue
+      }
       index += attribute[0].length
       continue
     }
 
     const group = /^\[[^[\]]+\](?:\^+)?(?:\.*)?~?/.exec(rest)
     if (group) {
+      applyInheritedSettings()
       pushMapped(convertGroup(group[0], depth, state.currentKey), index, index + group[0].length)
-      advanceBeatPosition(groupDurationInBeats(group[0], depth))
+      const duration = groupDurationInBeats(group[0], depth)
+      advanceBeatPosition(duration)
+      elapsedBeats += duration
       groupBoundary = false
       index += group[0].length
       continue
@@ -771,10 +894,13 @@ function convertM3NBody(
 
     const note = /^(?:0|[1-7][#b=]*[ed]*)(?:\^+)?(?:\.*)?~?/.exec(rest)
     if (note) {
+      applyInheritedSettings()
       pushMapped(convertM3NNote(note[0], depth, state.currentKey), index, index + note[0].length)
       const parsed = parseM3NNote(note[0])
       if (parsed) {
-        advanceBeatPosition(durationInBeats(depth, parsed.carets.length, parsed.dots.length))
+        const duration = durationInBeats(depth, parsed.carets.length, parsed.dots.length)
+        advanceBeatPosition(duration)
+        elapsedBeats += duration
       }
       groupBoundary = false
       index += note[0].length
@@ -800,6 +926,7 @@ function convertM3NBody(
     lastKey: state.currentKey,
     lastMeter: state.currentMeter,
     lastTempo: state.currentTempo,
+    settingEvents,
   }
 }
 
@@ -807,6 +934,7 @@ function parseAbcHeader(source: string) {
   const header = structuredClone(defaultHeader)
   const body: string[] = []
   const lyrics: string[] = []
+  let pendingLyricRange = ''
   let hasKey = false
   let hasMusic = false
 
@@ -826,6 +954,15 @@ function parseAbcHeader(source: string) {
     }
     if (/^C:/.test(line)) {
       header.composer = line.slice(2).trim()
+      return
+    }
+    const m3nMetadata = /^N:M3N (lyricist|arranger|copyright|source|note)=(.*)$/.exec(line)
+    if (m3nMetadata) {
+      header[m3nMetadata[1] as 'lyricist' | 'arranger' | 'copyright' | 'source' | 'note'] = m3nMetadata[2]
+      return
+    }
+    if (/^N:M3N lyrics=/.test(line)) {
+      pendingLyricRange = line.slice('N:M3N lyrics='.length)
       return
     }
     if (/^N:M3N parts=/.test(line)) {
@@ -862,7 +999,7 @@ function parseAbcHeader(source: string) {
     }
     if (/^K:/.test(line)) {
       if (!hasMusic) {
-        header.key = line.slice(2).trim()
+        header.key = keyFromAbc(line.slice(2))
         hasKey = true
         return
       }
@@ -885,7 +1022,9 @@ function parseAbcHeader(source: string) {
       return
     }
     if (/^[Ww]:/.test(line)) {
-      lyrics.push(line.slice(2).trim())
+      const text = line.slice(2).trim()
+      lyrics.push(pendingLyricRange ? `[${pendingLyricRange}] ${text}` : text)
+      pendingLyricRange = ''
       return
     }
     if (/^L:/.test(line)) {
@@ -975,20 +1114,20 @@ const abcDecorationToM3N: Record<string, string> = {
 
 export function abcChordToRoman(chordName: string, key: string) {
   const { tonic } = parseKey(key)
-  const match = /^([A-G](?:#|b)?)(maj\d*|min\d*|m\d*|dim\d*|aug\d*|sus[24]?|[2-9]\d*|1[0-3]\d*)?$/i.exec(chordName)
-  if (!match) return chordName
+  const match = /^([A-G](?:#|b)?)(maj(?:[2-9]|1[0-3])?|min(?:[2-9]|1[0-3])?|m(?:[2-9]|1[0-3])?|dim|aug|sus[24]|[2-9]|1[0-3])?$/i.exec(chordName)
+  if (!match) return null
   const root = match[1]
   const suffix = match[2] ?? ''
   const tonicLetter = tonic[0]?.toUpperCase() ?? 'C'
   const tonicIndex = pitchLetters.indexOf(tonicLetter)
   const rootIndex = pitchLetters.indexOf(root[0].toUpperCase())
-  if (rootIndex === -1) return chordName
+  if (rootIndex === -1) return null
   const normalizedTonicIndex = tonicIndex === -1 ? 0 : tonicIndex
   const normalizedRootIndex = rootIndex === -1 ? normalizedTonicIndex : rootIndex
   const degree = ((normalizedRootIndex - normalizedTonicIndex + pitchLetters.length) % pitchLetters.length) + 1
   const degreeToRoman: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII' }
   const roman = degreeToRoman[degree]
-  if (!roman) return chordName
+  if (!roman || root.toLowerCase() !== degreeToChordRoot(degree, key).toLowerCase()) return null
   const isMinor = /^(m|min)\d*$/i.test(suffix)
   const isDim = /^dim/i.test(suffix)
   // Uppercase roman = major, lowercase roman = minor/diminished
@@ -1012,9 +1151,11 @@ function convertAbcDecorations(value: string, key: string) {
     .replace(/\[M:(\d+\/\d+)\]/g, (_match, meter) => `{${meter}}`)
     .replace(/\[Q:[^\]]*\b(\d+)\s*\]/g, (_match, tempo) => `{${tempo}qpm}`)
     .replace(/!([A-Za-z0-9.()]+)!/g, (_match, name) => abcDecorationToM3N[name] ?? '')
-    .replace(/"([^"]+)"/g, (_match, label) =>
-      String(label).startsWith('^') ? `{text=${String(label).slice(1)}}` : `{chord=${abcChordToRoman(label, key)}}`,
-    )
+    .replace(/"([^"]+)"/g, (_match, label) => {
+      if (String(label).startsWith('^')) return `{text=${String(label).slice(1)}}`
+      const chord = abcChordToRoman(label, key)
+      return chord ? `{chord=${chord}}` : `{text=${label}}`
+    })
 }
 
 function applyAbcDurationToHarmonyGroup(notes: string[], value: string, hasTie = false, unitLength = 4) {
@@ -1108,6 +1249,16 @@ function convertAbcNotesWithoutTouchingAttributes(value: string, key: string, un
       groups.push(value)
       return marker
     })
+    .replace(/\(/g, () => {
+      const marker = `§${attributes.length}§`
+      attributes.push('{lg}')
+      return marker
+    })
+    .replace(/\)/g, () => {
+      const marker = `§${attributes.length}§`
+      attributes.push('{/lg}')
+      return marker
+    })
     .replace(/(?:Z[0-9]+|[_=^]*[A-Ga-gz][,']*[0-9/]*-?)/g, (token) => abcNoteToM3N(token, key, unitLength))
     .replace(/¤(\d+)¤/g, (_match, index) => groups[Number(index)] ?? '')
     .replace(/§(\d+)§/g, (_match, index) => attributes[Number(index)] ?? '')
@@ -1137,6 +1288,11 @@ export function abcToM3N(source: string): ConversionResult {
     header.title ? `{title=${header.title}}` : '',
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
     header.composer ? `{composer=${header.composer}}` : '',
+    header.lyricist ? `{lyricist=${header.lyricist}}` : '',
+    header.arranger ? `{arranger=${header.arranger}}` : '',
+    header.copyright ? `{copyright=${header.copyright}}` : '',
+    header.source ? `{source=${header.source}}` : '',
+    header.note ? `{note=${header.note}}` : '',
     header.parts ? `{parts=${header.parts}}` : '',
     `{key=${header.key || 'C'}} {${header.meter.beats}/${header.meter.beatValue}}${header.tempo ? ` {${header.tempo}qpm}` : ''}${header.transpose ? ` {transpose=${header.transpose}}` : ''}`,
   ].filter(Boolean)
@@ -1177,7 +1333,7 @@ export function abcToM3N(source: string): ConversionResult {
           pendingAttrs = []
         }
         if (keyMatch) {
-          currentKey = keyMatch[1].trim()
+          currentKey = keyFromAbc(keyMatch[1])
           pendingAttrs.push(`key=${currentKey}`)
         }
         if (meterMatch) {
@@ -1231,7 +1387,17 @@ export function abcToM3N(source: string): ConversionResult {
       .join(' ')
   }
 
-  output.push(convertAbcBody(bodyLines.join('\n'), header.key, header.meter))
+  const closeNamedParts = (value: string) => {
+    let seenPart = false
+    const converted = value.replace(/\{part=[^}]+\}/g, (part) => {
+      const prefix = seenPart ? '{/part}\n' : ''
+      seenPart = true
+      return `${prefix}${part}`
+    })
+    return seenPart ? `${converted}\n{/part}` : converted
+  }
+
+  output.push(closeNamedParts(convertAbcBody(bodyLines.join('\n'), header.key, header.meter)))
 
   if (bassLines.some((line) => line.trim())) {
     output.push('', '{bass}', convertAbcBody(bassLines.join('\n'), header.key, header.meter), '{/}')

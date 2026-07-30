@@ -9,10 +9,11 @@ import {
   romanChordToAbc,
   splitSupplementBlocks,
 } from './m3n-abc'
+import { validateM3N } from './m3n-validate'
 
 describe('M3N primitives', () => {
   it('parses keys and notes', () => {
-    expect(parseKey('F#min')).toEqual({ tonic: 'F#', mode: 'min' })
+    expect(parseKey('F#m')).toEqual({ tonic: 'F#', mode: 'm' })
     expect(parseM3NNote('3#e^..~')).toEqual({
       degreeRaw: '3',
       accidentals: '#',
@@ -22,6 +23,9 @@ describe('M3N primitives', () => {
       tie: '~',
     })
     expect(parseM3NNote('8')).toBeNull()
+    expect(parseM3NNote('1#b')).toBeNull()
+    expect(parseM3NNote('1ed')).toBeNull()
+    expect(parseM3NNote('0~')).toBeNull()
   })
 
   it('calculates nested and dotted durations', () => {
@@ -32,6 +36,8 @@ describe('M3N primitives', () => {
 
   it('converts roman chord names in both directions', () => {
     expect(romanChordToAbc('vi7', 'C')).toBe('"Am7"')
+    expect(romanChordToAbc('III', 'D')).toBe('"F#"')
+    expect(romanChordToAbc('I', 'Bb')).toBe('"Bb"')
     expect(abcChordToRoman('Am7', 'C')).toBe('vi7')
   })
 
@@ -40,6 +46,14 @@ describe('M3N primitives', () => {
       main: '1 2\n\n',
       bass: '1 0',
       lyrics: [{ range: 'A', text: 'la la' }],
+    })
+  })
+
+  it('supports named supplement closes and nested bass intervals', () => {
+    expect(splitSupplementBlocks('1 |||\n{lyrics=2}\nla\n{/lyrics}\n{bass}{lg}1 2{/} 3 4 |||{/bass}')).toEqual({
+      main: '1 |||\n\n',
+      bass: '{lg}1 2{/} 3 4 |||',
+      lyrics: [{ range: '2', text: 'la' }],
     })
   })
 })
@@ -78,5 +92,65 @@ describe('notation conversion', () => {
 
     expect(result.output).toContain('[123:2]')
     expect(result.output).toContain('[135:h]')
+  })
+
+  it('preserves all specified metadata through an ABC round trip', () => {
+    const source = [
+      '{title=T} {lyricist=L} {arranger=A} {copyright=C} {source=S} {note=N}',
+      '{key=C} {4/4} 1 2 3 4 |||',
+    ].join('\n')
+    const abc = m3nToAbc(source).output
+    expect(abc).toContain('N:M3N lyricist=L')
+    expect(abc).toContain('N:M3N arranger=A')
+    const restored = abcToM3N(abc).output
+    expect(restored).toContain('{lyricist=L}')
+    expect(restored).toContain('{arranger=A}')
+    expect(restored).toContain('{copyright=C}')
+    expect(restored).toContain('{source=S}')
+    expect(restored).toContain('{note=N}')
+  })
+
+  it('preserves lyric pass ranges through an ABC round trip', () => {
+    const source = '{key=C} {2/4} 1 2 :|||\n{lyrics=2~4}la la{/lyrics}'
+    const abc = m3nToAbc(source).output
+    expect(abc).toContain('N:M3N lyrics=2~4')
+    expect(abcToM3N(abc).output).toContain('{lyrics=2~4}')
+  })
+
+  it('renders modal chord roots, re-evaluates sustained chords, and closes legato', () => {
+    const result = m3nToAbc('{key=D} {4/4} {chord=III}{lg}1 2{/} {key=G}3 4 |||')
+    expect(result.output).toContain('"F#"')
+    expect(result.output).toContain('K:G\n"B"')
+    expect(result.output).toMatch(/\(D\s+E\)/)
+    expect(abcToM3N(result.output).output).toContain('{lg}1 2{/lg}')
+  })
+
+  it('uses text when an ABC chord cannot be represented by M3N chord syntax', () => {
+    expect(abcChordToRoman('C#dim7', 'C')).toBeNull()
+    expect(abcToM3N('X:1\nM:4/4\nL:1/4\nK:C\n"C#dim7"C D E F |]').output).toContain('{text=C#dim7}')
+  })
+
+  it('normalizes ABC mode names to documented M3N suffixes', () => {
+    expect(abcToM3N('X:1\nM:4/4\nL:1/4\nK:F#min\nF,G,A,B, |').output).toContain('{key=F#m}')
+  })
+
+  it('resets settings at every named-part boundary', () => {
+    const source = [
+      '{parts=A B A} {key=C} {4/4}',
+      '{part=B}{key=G}1 2 3 4 ||{/}',
+      '{part=A}1 2 3 4 ||{/}',
+    ].join('\n')
+    const abc = m3nToAbc(source).output
+    expect(abc).toMatch(/P:B\s+K:G/)
+    expect(abc).toMatch(/P:A\s+K:C/)
+    const restored = abcToM3N(abc).output
+    expect(restored).toContain('{/part}')
+    expect(validateM3N(restored)).toEqual([])
+  })
+
+  it('mirrors melody setting changes onto the bass timeline', () => {
+    const abc = m3nToAbc('{key=C} {2/4} 1 2 | {key=G}1 2 |||\n{bass}1d 2d | 1d 2d |||{/}').output
+    const bass = abc.slice(abc.indexOf('V:bass'))
+    expect(bass).toContain('K:G')
   })
 })
