@@ -1,8 +1,8 @@
 import { MarkdownBook } from '../components/MarkdownBook'
 import { TopNav } from '../components/TopNav'
-import guide from '../../GUIDE.md?raw'
-import manual from '../../MANUAL.md?raw'
-import readme from '../../README.md?raw'
+import guide from '../../docs/GUIDE.md?raw'
+import manual from '../../docs/MANUAL.md?raw'
+import readme from '../../docs/README.md?raw'
 
 const documents = [
   { id: 'readme', title: '简介', description: 'M3N 的定位和快速示例。', source: readme },

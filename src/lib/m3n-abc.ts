@@ -305,14 +305,20 @@ function convertGroup(token: string, depth: number, key: string) {
   return `${tupletPrefix}${notes.map((note) => convertM3NNote(note, depth, key)).join('')}`
 }
 
+function splitGracePitches(value: string) {
+  const normalized = value.replace(/\s+/g, '')
+  const notes = normalized.match(/[0-7][#b=]*[ed]*/g) ?? []
+  return notes.join('') === normalized ? notes : null
+}
+
 function convertGraceAttribute(content: string, key: string) {
   const match = /^(ac|ap)\(([^)]+)\)$/.exec(content)
   if (!match) {
     return null
   }
 
-  const notes = match[2].trim().split(/\s+/).filter(Boolean)
-  if (notes.length === 0 || notes.some((note) => !parseM3NNote(note))) {
+  const notes = splitGracePitches(match[2])
+  if (!notes || notes.length === 0 || notes.some((note) => !parseM3NNote(note))) {
     return null
   }
 

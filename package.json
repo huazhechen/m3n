@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "check:docs": "node scripts/check-doc-examples.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

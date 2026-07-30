@@ -297,6 +297,16 @@ do re mi fa sol la si do
 
 大写罗马数字 = 大三和弦，小写 = 小三和弦。非自然音和弦通过后缀标注，如 V7（属七）、VIm（大六级）等。
 
+示例：
+
+```m3n
+{key=D} {4/4}
+{chord=I}3 3 4 5 | {chord=V}5 4 3 2 |
+{chord=I}1 1 2 3 | {chord=V}3. (2) 2^ |
+{chord=I}3 3 4 5 | {chord=V}5 4 3 2 |
+{chord=I}1 1 2 3 | {chord=V}2. (1) {chord=I}1^ |||
+```
+
 ---
 
 ### 7. 反复
