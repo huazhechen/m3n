@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import { TopNav } from '../components/TopNav'
 import { happi123ToM3N } from '../lib/happi123-m3n'
@@ -16,6 +16,27 @@ export function ConverterPage() {
   const [source, setSource] = useState(samples.abc)
   const [isResultOpen, setIsResultOpen] = useState(false)
   const inputLineNumbersRef = useRef<HTMLDivElement>(null)
+  const scrollWrapperRef = useRef<HTMLDivElement>(null)
+
+  const syncTextareaSize = useCallback(() => {
+    const textarea = scrollWrapperRef.current?.querySelector('textarea')
+    const wrapper = scrollWrapperRef.current
+    if (!textarea || !wrapper) return
+    textarea.style.height = '0px'
+    const contentHeight = textarea.scrollHeight
+    textarea.style.height = `${contentHeight}px`
+    const wrapperWidth = wrapper.clientWidth
+    textarea.style.width = '0px'
+    const contentWidth = textarea.scrollWidth
+    textarea.style.width = `${Math.max(contentWidth, wrapperWidth)}px`
+  }, [])
+
+  useEffect(() => {
+    syncTextareaSize()
+    const handleResize = () => syncTextareaSize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [syncTextareaSize, source])
   const result = useMemo(
     () => format === 'abc' ? abcToM3N(source) : happi123ToM3N(source),
     [format, source],
@@ -36,38 +57,43 @@ export function ConverterPage() {
   return (
     <main>
       <TopNav />
-      <div className="converter-grid">
-        <section className="editor-pane">
-          <div className="pane-toolbar converter-toolbar">
-            <div className="converter-actions">
-              <div className="format-switch" role="group" aria-label="输入类型">
-                <button type="button" className={format === 'abc' ? 'is-active' : ''} onClick={() => switchFormat('abc')}>ABC</button>
-                <button type="button" className={format === 'happi123' ? 'is-active' : ''} onClick={() => switchFormat('happi123')}>Happi123</button>
-              </div>
-              <button type="button" className="converter-button" onClick={() => setIsResultOpen(true)}>转换</button>
+      <div className="editor-container">
+        <header className="editor-header">
+          <div className="editor-header-left">
+            <div className="format-switch" role="group" aria-label="输入类型">
+              <button type="button" className={format === 'abc' ? 'is-active' : ''} onClick={() => switchFormat('abc')}>ABC</button>
+              <button type="button" className={format === 'happi123' ? 'is-active' : ''} onClick={() => switchFormat('happi123')}>Happi123</button>
             </div>
           </div>
-          <div className="source-editor">
-            <div ref={inputLineNumbersRef} className="line-numbers" aria-hidden="true">{inputLineNumbers}</div>
-            <textarea
-              spellCheck={false}
-              wrap="off"
-              value={source}
-              onChange={(event) => setSource(event.currentTarget.value)}
-              onScroll={(event) => {
-                if (inputLineNumbersRef.current) inputLineNumbersRef.current.scrollTop = event.currentTarget.scrollTop
-              }}
-              aria-label={`${format} source`}
-            />
+          <div className="editor-header-right">
+            <button type="button" className="action-button" onClick={() => setIsResultOpen(true)}>转换</button>
           </div>
-          {result.diagnostics.length > 0 && <ul className="diagnostics">{result.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>}
-        </section>
+        </header>
+        <div className="editor-body">
+          <section className="editor-pane">
+            <div className="source-editor">
+              <div ref={inputLineNumbersRef} className="line-numbers" aria-hidden="true">{inputLineNumbers}</div>
+              <div ref={scrollWrapperRef} className="textarea-scroll-wrapper">
+                <textarea
+                  spellCheck={false}
+                  wrap="off"
+                  value={source}
+                  onChange={(event) => {
+                    setSource(event.currentTarget.value)
+                    syncTextareaSize()
+                  }}
+                  aria-label={`${format} source`}
+                />
+              </div>
+            </div>
+            {result.diagnostics.length > 0 && <ul className="diagnostics">{result.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>}
+          </section>
 
-        <section className="render-pane">
-          <div className="pane-toolbar"><h2>五线谱</h2></div>
-          <ScoreRenderer abc={score.output} />
-          {score.diagnostics.length > 0 && <ul className="diagnostics">{score.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>}
-        </section>
+          <section className="render-pane">
+            <ScoreRenderer abc={score.output} showPrintButton={false} />
+            {score.diagnostics.length > 0 && <ul className="diagnostics">{score.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>}
+          </section>
+        </div>
       </div>
       {isResultOpen && (
         <div className="converter-dialog-overlay" role="presentation" onMouseDown={(event) => {
@@ -76,11 +102,11 @@ export function ConverterPage() {
           <section className="converter-dialog" role="dialog" aria-modal="true" aria-labelledby="converter-result-title">
             <div className="converter-dialog-header">
               <h2 id="converter-result-title">M3N 内容</h2>
-              <button type="button" className="converter-close" aria-label="关闭" onClick={() => setIsResultOpen(false)}>关闭</button>
+              <button type="button" className="action-button" aria-label="关闭" onClick={() => setIsResultOpen(false)}>关闭</button>
             </div>
             <textarea className="converter-result" readOnly spellCheck={false} value={result.output} aria-label="M3N 内容" />
             <div className="converter-dialog-actions">
-              <button type="button" className="converter-button" onClick={() => void copyResult()}>一键复制</button>
+              <button type="button" className="action-button" onClick={() => void copyResult()}>一键复制</button>
             </div>
           </section>
         </div>
