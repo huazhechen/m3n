@@ -2,6 +2,25 @@ import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
+import type { PresetScore } from '../lib/samples'
+
+function ScoreCard({ score }: { score: PresetScore }) {
+  return (
+    <Link className="score-card" to={`/scores/${score.slug}`}>
+      <div>
+        <h3>{score.title}</h3>
+        {score.subtitle && <p>{score.subtitle}</p>}
+      </div>
+      <div className="score-card-footer">
+        {score.composer && <span className="score-composer">{score.composer}</span>}
+        <div className="score-tags">
+          {score.hasLyrics && <span className="score-tag">词</span>}
+          {score.hasBass && <span className="score-tag">低</span>}
+        </div>
+      </div>
+    </Link>
+  )
+}
 
 export function ScoresPage() {
   const [query, setQuery] = useState('')
@@ -43,13 +62,7 @@ export function ScoresPage() {
               {scores
                 .filter((score) => score.category === category)
                 .map((score) => (
-                  <Link className="score-card" key={score.slug} to={`/scores/${score.slug}`}>
-                    <div>
-                      <h3>{score.title}</h3>
-                      {score.subtitle && <p>{score.subtitle}</p>}
-                    </div>
-                    <span>{score.composer}</span>
-                  </Link>
+                  <ScoreCard key={score.slug} score={score} />
                 ))}
             </div>
           </section>
