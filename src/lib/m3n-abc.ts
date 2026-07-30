@@ -599,6 +599,11 @@ export function m3nToAbc(source: string): ConversionResult {
     `M:${melodyFirstMeter.beats}/${melodyFirstMeter.beatValue}`,
     'L:1/4',
     melodyFirstTempo ? `Q:1/4=${melodyFirstTempo}` : '',
+    // Use piano for score voices and the automatic accompaniment bass.
+    '%%MIDI program 0',
+    '%%MIDI bassprog 0',
+    // abcjs turns quoted ABC chords into its own accompaniment track.
+    '%%MIDI chordprog 24',
     header.transpose ? `%%MIDI transpose ${header.transpose}` : '',
     `K:${keyToAbc(melodyFirstKey)}`,
     bassBody ? '%%score { melody | bass }' : '',

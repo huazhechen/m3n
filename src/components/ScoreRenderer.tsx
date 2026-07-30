@@ -387,7 +387,10 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
         },
       )
       setHasAudioControls(true)
-      synthControl.setTune(playbackVisualObject, false).catch(() => {
+      synthControl.setTune(playbackVisualObject, false, {
+        soundFontUrl: '/soundfonts/FluidR3_GM/',
+        soundFontVolumeMultiplier: 3,
+      }).catch(() => {
         setMessage('当前浏览器需要用户交互后才能初始化音频。')
       })
     } catch (error) {
