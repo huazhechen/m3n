@@ -1,4 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const output = resolve(root, 'public/favicon.svg')
+
+const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
   <title id="title">M3N</title>
   <desc id="desc">Three independent ascending notes on a musical staff</desc>
@@ -18,3 +25,8 @@
   <circle cx="32" cy="35" r="1.2" fill="#e6b94e"/>
   <circle cx="44" cy="28" r="1.2" fill="#e6b94e"/>
 </svg>
+`
+
+await mkdir(dirname(output), { recursive: true })
+await writeFile(output, svg, 'utf8')
+console.log(`Generated ${output}`)

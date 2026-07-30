@@ -59,9 +59,18 @@ main {
 }
 
 .brand-mark {
-  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #163f45;
+  font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
+}
+
+.brand-mark img {
+  display: block;
+  flex: 0 0 auto;
 }
 
 .top-nav nav {
