@@ -1,4 +1,5 @@
 import { durationInBeats, parseKey, parseM3NNote } from './notation/m3n-primitives'
+import { parseM3NGroupPitches } from './notation/m3n-groups'
 import { splitSupplementBlocks } from './notation/supplements'
 import type { ConversionResult, NotationMode, SourceMapRange } from './notation/types'
 
@@ -240,7 +241,10 @@ function convertGroup(token: string, depth: number, key: string) {
     return token
   }
 
-  const notes = match[1].trim().split(/\s+/).filter(Boolean)
+  const notes = parseM3NGroupPitches(match[1])
+  if (!notes || notes.length === 0) {
+    return token
+  }
   const mode = match[2].trim()
   const groupCarets = match[3].length
   const groupDots = match[4].length
@@ -291,7 +295,10 @@ function groupDurationInBeats(token: string, depth: number) {
     return 0
   }
 
-  const notes = match[1].trim().split(/\s+/).filter(Boolean)
+  const notes = parseM3NGroupPitches(match[1])
+  if (!notes || notes.length === 0) {
+    return 0
+  }
   const mode = match[2].trim()
   const carets = match[3].length
   const dots = match[4].length
@@ -586,6 +593,7 @@ function convertM3NBody(
   let beatPosition = 0
   let groupBoundary = false
   const intervalAttributes: IntervalAttribute[] = []
+  const structuralIntervals: Array<{ name: string; voltaStartBeat?: number }> = []
   let lastNotationOutputIndex: number | null = null
   let lastNotationMappingIndex: number | null = null
   const state = {
@@ -699,6 +707,25 @@ function convertM3NBody(
     const attribute = /^\{[^}]+\}/.exec(rest)
     if (attribute) {
       const content = attribute[0].slice(1, -1).trim()
+      const structuralName = content.startsWith('volta=')
+        ? 'volta'
+        : content.startsWith('part=')
+          ? 'part'
+          : content
+      if (structuralName === 'cresc' || structuralName === 'decres' || structuralName === '8va' || structuralName === '8vb' || structuralName === 'lg' || structuralName === 'volta' || structuralName === 'part') {
+        structuralIntervals.push({
+          name: structuralName,
+          voltaStartBeat: structuralName === 'volta' ? beatPosition : undefined,
+        })
+      } else if (content === '/') {
+        const closed = structuralIntervals.pop()
+        const afterClose = source.slice(index + attribute[0].length).trimStart()
+        if (closed?.name === 'volta' && afterClose.startsWith('{volta=')) {
+          beatPosition = closed.voltaStartBeat ?? beatPosition
+        }
+      } else if (content.startsWith('/')) {
+        structuralIntervals.pop()
+      }
       let value = ''
       const grace = convertGraceAttribute(content, state.currentKey)
       if (grace) {
@@ -995,17 +1022,17 @@ function applyAbcDurationToHarmonyGroup(notes: string[], value: string, hasTie =
   const { num, den } = parseAbcDuration(value)
   const quarterCount = (num / den) * (4 / unitLength)
 
-  if (quarterCount === 1) return `[${notes.join(' ')}:h]${tie}`
-  if (quarterCount === 2) return `[${notes.join(' ')}:h]^${tie}`
-  if (quarterCount === 4) return `[${notes.join(' ')}:h]^^${tie}`
-  if (quarterCount === 3) return `[${notes.join(' ')}:h]^.${tie}`
-  if (quarterCount === 0.5) return `([${notes.join(' ')}:h]${tie})`
-  if (quarterCount === 0.25) return `(([${notes.join(' ')}:h]${tie}))`
-  if (quarterCount === 1.5) return `[${notes.join(' ')}:h].${tie}`
-  if (quarterCount === 0.75) return `([${notes.join(' ')}:h].${tie})`
-  if (quarterCount === 0.125) return `((([${notes.join(' ')}:h]${tie})))`
+  if (quarterCount === 1) return `[${notes.join('')}:h]${tie}`
+  if (quarterCount === 2) return `[${notes.join('')}:h]^${tie}`
+  if (quarterCount === 4) return `[${notes.join('')}:h]^^${tie}`
+  if (quarterCount === 3) return `[${notes.join('')}:h]^.${tie}`
+  if (quarterCount === 0.5) return `([${notes.join('')}:h]${tie})`
+  if (quarterCount === 0.25) return `(([${notes.join('')}:h]${tie}))`
+  if (quarterCount === 1.5) return `[${notes.join('')}:h].${tie}`
+  if (quarterCount === 0.75) return `([${notes.join('')}:h].${tie})`
+  if (quarterCount === 0.125) return `((([${notes.join('')}:h]${tie})))`
 
-  return `[${notes.join(' ')}:h]${tie}`
+  return `[${notes.join('')}:h]${tie}`
 }
 
 function abcNoteWithoutDuration(token: string) {
@@ -1033,7 +1060,7 @@ function abcGraceToM3N(value: string, key: string) {
   }
 
   const kind = isAcciaccatura ? 'ac' : 'ap'
-  const m3nNotes = notes.map((note) => abcNoteToM3N(note.replace(/^\//, ''), key)).join(' ')
+  const m3nNotes = notes.map((note) => abcNoteToM3N(note.replace(/^\//, ''), key)).join('')
   return `{${kind}(${m3nNotes})}`
 }
 
@@ -1060,7 +1087,7 @@ function convertAbcNotesWithoutTouchingAttributes(value: string, key: string, un
   return protectedValue
     .replace(/\((\d+):(\d+):\d+((?:[_=^]*[A-Ga-g][,']*[0-9/]*-?)+)/g, (_match, _count, units, notesRaw) => {
       const notes = String(notesRaw).match(/[_=^]*[A-Ga-g][,']*[0-9/]*-?/g) ?? []
-      const value = `[${notes.map((note) => abcNoteToM3N(note, key, unitLength).replace(/[().]/g, '')).join(' ')}:${units}]`
+      const value = `[${notes.map((note) => abcNoteToM3N(note, key, unitLength).replace(/[().]/g, '')).join('')}:${units}]`
       const marker = `¤${groups.length}¤`
       groups.push(value)
       return marker
@@ -1076,7 +1103,7 @@ function convertAbcNotesWithoutTouchingAttributes(value: string, key: string, un
             Boolean(chordTie),
             unitLength,
           )
-        : `[${notes.map((note) => abcNoteToM3N(note, key, unitLength)).join(' ')}:h]`
+        : `[${notes.map((note) => abcNoteToM3N(note, key, unitLength)).join('')}:h]`
       const marker = `¤${groups.length}¤`
       groups.push(value)
       return marker

@@ -7,8 +7,8 @@
 3 4 5 | 5 4 3 2 | 1 1 2 3 | 2. (1) 1^ |||
 
 {bass}
-[1d 5d:h] 5d [5dd 2d:h] 2d | [1d 5d:h] 5d [5dd 2d:h] 2d | [6dd 3d:h] 3d [3dd 7dd:h] 7dd | [4dd 1d:h] 1d [5dd 2d:h] 2d |
-[1d 5d:h] 5d [5dd 2d:h] 2d | [1d 5d:h] 5d [5dd 2d:h] 2d | [6dd 3d:h] 3d [3dd 7dd:h] 7dd | [4dd 1d:h] 1d [1dd 5dd 1d:h]^^ |
-[5dd 2d:h] 2d [1d 5d:h] 5d | [5dd 2d:h] 2d [1d 5d:h] 5d | [5dd 2d:h] 2d [1d 5d:h] 5d | [4dd 1d:h] 1d [5dd 2d:h] 2d |
-[1d 5d:h] 5d [5dd 2d:h] 2d | [1d 5d:h] 5d [5dd 2d:h] 2d | [6dd 3d:h] 3d [3dd 7dd:h] 7dd | [4dd 1d:h] 1d [1dd 5dd 1d:h]^^ |||
+[1d5d:h] 5d [5dd2d:h] 2d | [1d5d:h] 5d [5dd2d:h] 2d | [6dd3d:h] 3d [3dd7dd:h] 7dd | [4dd1d:h] 1d [5dd2d:h] 2d |
+[1d5d:h] 5d [5dd2d:h] 2d | [1d5d:h] 5d [5dd2d:h] 2d | [6dd3d:h] 3d [3dd7dd:h] 7dd | [4dd1d:h] 1d [1dd5dd1d:h]^^ |
+[5dd2d:h] 2d [1d5d:h] 5d | [5dd2d:h] 2d [1d5d:h] 5d | [5dd2d:h] 2d [1d5d:h] 5d | [4dd1d:h] 1d [5dd2d:h] 2d |
+[1d5d:h] 5d [5dd2d:h] 2d | [1d5d:h] 5d [5dd2d:h] 2d | [6dd3d:h] 3d [3dd7dd:h] 7dd | [4dd1d:h] 1d [1dd5dd1d:h]^^ |||
 {/}

@@ -9,6 +9,8 @@
     "lint": "oxlint",
     "test": "vitest run",
     "check": "npm run lint && npm run test && npm run build",
+    "analyze:happi123": "tsx tools/convert-happi123.ts",
+    "convert:happi123": "tsx tools/convert-happi123.ts --write",
     "preview": "vite preview",
     "generate:icon": "node tools/generate-brand-icon.mjs"
   },
@@ -27,6 +29,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "tsx": "^4.23.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
     "vitest": "^4.1.10"

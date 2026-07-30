@@ -63,4 +63,20 @@ describe('notation conversion', () => {
     expect(roundTrip.output).not.toContain('% pro')
     expect(roundTrip.output.replace(/\s+/g, ' ')).toContain('C D E F | G A B c |]')
   })
+
+  it('treats whitespace inside groups as insignificant', () => {
+    const compact = m3nToAbc('{key=C} {2/4}\n[123:2] | [066:2] |')
+    const spaced = m3nToAbc('{key=C} {2/4}\n[1 2 3:2] | [0 6 6:2] |')
+
+    expect(compact.output).toBe(spaced.output)
+    expect(compact.output).toContain('(3:2:3CDE')
+    expect(compact.output).toContain('(3:2:3zAA')
+  })
+
+  it('serializes ABC groups without semantic spaces', () => {
+    const result = abcToM3N('X:1\nM:2/4\nL:1/4\nK:C\n(3:2:3CDE | [CEG] |')
+
+    expect(result.output).toContain('[123:2]')
+    expect(result.output).toContain('[135:h]')
+  })
 })

@@ -1,4 +1,5 @@
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
+import { parseM3NGroupPitches } from './notation/m3n-groups'
 import { splitSupplementBlocks } from './notation/supplements'
 
 // --- Attribute validation helpers ---
@@ -74,12 +75,6 @@ function isPowerOfTwo(value: number) {
   return Number.isSafeInteger(value) && value > 0 && (value & (value - 1)) === 0
 }
 
-function splitPitchTokens(value: string): string[] | null {
-  const normalized = value.replace(/\s+/g, '')
-  const tokens = normalized.match(/[0-7][#b=]*[ed]*/g) ?? []
-  return tokens.join('') === normalized ? tokens : null
-}
-
 // --- Body validator ---
 
 function validateBody(source: string): string[] {
@@ -91,18 +86,23 @@ function validateBody(source: string): string[] {
   let parenDepthInMeasure = 0
   let groupDepthInMeasure = 0
   let currentMeasureBeats = 0
-  const measureBeatCounts: Array<{ actual: number; expected: number }> = []
-  const intervalAttrs: string[] = []
+  const measureBeatCounts: Array<{ actual: number; expected: number; section: number }> = []
+  const intervalAttrs: Array<{ name: string; voltaStartBeats?: number }> = []
   const seenInfoFields = new Set<string>()
   let lastTiePitch: string | null = null
   let lastWasRest = false
   let currentMeter = { beats: 4, beatValue: 4 }
+  let currentSection = 0
   const forwardRepeats: number[] = [] // line numbers of unmatched ||:
 
   const commitMeasure = () => {
     // Adjacent barlines are valid notation (for example, a section line followed by a repeat).
     if (currentMeasureBeats > 0) {
-      measureBeatCounts.push({ actual: currentMeasureBeats, expected: measureDurationInBeats(currentMeter) })
+      measureBeatCounts.push({
+        actual: currentMeasureBeats,
+        expected: measureDurationInBeats(currentMeter),
+        section: currentSection,
+      })
     }
     currentMeasureBeats = 0
   }
@@ -178,6 +178,11 @@ function validateBody(source: string): string[] {
     if (attribute) {
       const content = attribute[0].slice(1, -1).trim()
 
+      if (content.startsWith('part=')) {
+        commitMeasure()
+        currentSection += 1
+      }
+
       // V1: Unknown attribute
       if (!isValidAttribute(content)) {
         diagnostics.push(`第 ${line} 行：未知属性：{${content}}`)
@@ -239,7 +244,7 @@ function validateBody(source: string): string[] {
         } else {
           const expected = measureDurationInBeats(currentMeter)
           for (let measure = 0; measure < restVal; measure += 1) {
-            measureBeatCounts.push({ actual: expected, expected })
+            measureBeatCounts.push({ actual: expected, expected, section: currentSection })
           }
         }
       }
@@ -253,17 +258,35 @@ function validateBody(source: string): string[] {
       }
 
       // P2/P3: Interval attribute tracking
-      if (content === 'cresc' || content === 'decres' || content === '8va' || content === '8vb' || content === 'lg') {
-        intervalAttrs.push(content)
+      const intervalName = content.startsWith('volta=')
+        ? 'volta'
+        : content.startsWith('part=')
+          ? 'part'
+          : content
+      if (intervalName === 'cresc' || intervalName === 'decres' || intervalName === '8va' || intervalName === '8vb' || intervalName === 'lg' || intervalName === 'volta' || intervalName === 'part') {
+        intervalAttrs.push({
+          name: intervalName,
+          voltaStartBeats: intervalName === 'volta' ? currentMeasureBeats : undefined,
+        })
       } else if (content === '/') {
-        intervalAttrs.pop()
+        const closed = intervalAttrs.pop()
+        if (!closed) {
+          diagnostics.push(`第 ${line} 行：闭合标签无对应开始：{/}`)
+        } else if (closed.name === 'volta') {
+          const afterClose = source.slice(index + attribute[0].length).trimStart()
+          if (afterClose.startsWith('{volta=')) {
+            currentMeasureBeats = closed.voltaStartBeats ?? currentMeasureBeats
+          }
+        }
       } else if (content.startsWith('/') && content.length > 1) {
         const closingName = content.slice(1)
-        const idx = intervalAttrs.lastIndexOf(closingName)
-        if (idx === -1) {
+        const current = intervalAttrs.at(-1)
+        if (!current) {
           diagnostics.push(`第 ${line} 行：闭合标签无对应开始：{/${closingName}}`)
+        } else if (current.name !== closingName) {
+          diagnostics.push(`第 ${line} 行：区间关闭顺序错误：期望 {/${current.name}}，实际 {/${closingName}}`)
         } else {
-          intervalAttrs.splice(idx, 1)
+          intervalAttrs.pop()
         }
       }
 
@@ -275,7 +298,7 @@ function validateBody(source: string): string[] {
         if (!inner) {
           diagnostics.push(`第 ${line} 行：装饰音内至少需要一个音高`)
         } else {
-          const tokens = splitPitchTokens(inner)
+          const tokens = parseM3NGroupPitches(inner)
           if (!tokens) {
             diagnostics.push(`第 ${line} 行：装饰音内含非法元素：${inner}`)
           }
@@ -309,21 +332,23 @@ function validateBody(source: string): string[] {
     }
     const group = /^\[([^\]:]+):([^\]]+)\](\^*)(\.*)(~?)/.exec(rest)
     if (group) {
-      const notes = group[1].trim().split(/\s+/).filter(Boolean)
+      const notes = parseM3NGroupPitches(group[1])
       const mode = group[2].trim()
 
       // R4: Insufficient notes in group (at least 2)
-      if (notes.length < 2) {
+      if (!notes) {
+        diagnostics.push(`第 ${line} 行：分组内含非法元素：${group[1].trim()}`)
+      } else if (notes.length < 2) {
         diagnostics.push(`第 ${line} 行：分组音数不足，至少需要两个音高`)
       }
 
       // R3: Illegal elements in group
-      for (const note of notes) {
+      for (const note of notes ?? []) {
         const parsed = parseM3NNote(note)
         if (!parsed) {
           diagnostics.push(`第 ${line} 行：分组内含非法元素：${note}`)
-        } else if (parsed.degreeRaw === '0') {
-          diagnostics.push(`第 ${line} 行：分组内不允许休止符`)
+        } else if (parsed.degreeRaw === '0' && mode === 'h') {
+          diagnostics.push(`第 ${line} 行：和声组内不允许休止符`)
         } else if (parsed.carets.length > 0 || parsed.dots.length > 0 || parsed.tie) {
           diagnostics.push(`第 ${line} 行：分组内不允许时值修饰符`)
         }
@@ -339,7 +364,7 @@ function validateBody(source: string): string[] {
 
       // Beat contribution
       if (mode === 'h') {
-        const first = parseM3NNote(notes[0] ?? '')
+        const first = parseM3NNote(notes?.[0] ?? '')
         if (first) {
           currentMeasureBeats += durationInBeats(parenDepth, first.carets.length + group[3].length, first.dots.length + group[4].length)
         }
@@ -399,7 +424,7 @@ function validateBody(source: string): string[] {
 
   // P2: Unclosed interval attributes
   for (const attr of intervalAttrs) {
-    diagnostics.push(`未闭合的区间属性：{${attr}}`)
+    diagnostics.push(`未闭合的区间属性：{${attr.name}}`)
   }
 
   // P1: Unclosed parens at end
@@ -422,21 +447,29 @@ function validateBody(source: string): string[] {
     commitMeasure()
   }
 
-  // M1: Measure beat validation
-  if (measureBeatCounts.length === 1) {
-    const measure = measureBeatCounts[0]
-    if (measure.actual !== measure.expected) {
-      diagnostics.push(`小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
+  // M1: Measure beat validation. Each named part has an independent pickup and ending.
+  const sections = new Map<number, typeof measureBeatCounts>()
+  for (const measure of measureBeatCounts) {
+    const counts = sections.get(measure.section) ?? []
+    counts.push(measure)
+    sections.set(measure.section, counts)
+  }
+  for (const counts of sections.values()) {
+    if (counts.length === 1) {
+      const measure = counts[0]
+      if (measure.actual !== measure.expected) {
+        diagnostics.push(`小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
+      }
+      continue
     }
-  } else if (measureBeatCounts.length >= 2) {
-    for (let i = 1; i < measureBeatCounts.length - 1; i++) {
-      const measure = measureBeatCounts[i]
+    for (let index = 1; index < counts.length - 1; index += 1) {
+      const measure = counts[index]
       if (measure.actual !== measure.expected) {
         diagnostics.push(`中间小节拍数不足：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
       }
     }
-    const first = measureBeatCounts[0]
-    const last = measureBeatCounts[measureBeatCounts.length - 1]
+    const first = counts[0]
+    const last = counts[counts.length - 1]
     if (last.actual !== last.expected && first.actual + last.actual !== first.expected) {
       diagnostics.push(`首末小节拍数之和不为 ${first.expected} 拍：首 ${first.actual} 拍 + 末 ${last.actual} 拍 = ${first.actual + last.actual} 拍`)
     }
@@ -493,7 +526,7 @@ export function validateM3N(source: string): string[] {
       referencedParts.push(...names)
     }
   }
-  const partDefMatch = source.match(/\{part=([A-Za-z0-9]+)\}/g)
+  const partDefMatch = source.match(/\{part=([^}\s]+)\}/g)
   if (partDefMatch) {
     for (const m of partDefMatch) {
       definedParts.add(m.slice(6, -1).trim())
