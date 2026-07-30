@@ -1,18 +1,10 @@
-export type NotationMode = 'm3n' | 'abc'
+import { durationInBeats, parseKey, parseM3NNote } from './notation/m3n-primitives'
+import { splitSupplementBlocks } from './notation/supplements'
+import type { ConversionResult, NotationMode, SourceMapRange } from './notation/types'
 
-export type ConversionResult = {
-  source: string
-  output: string
-  diagnostics: string[]
-  sourceMap?: SourceMapRange[]
-}
-
-export type SourceMapRange = {
-  outputStart: number
-  outputEnd: number
-  sourceStart: number
-  sourceEnd: number
-}
+export { durationInBeats, parseKey, parseM3NNote } from './notation/m3n-primitives'
+export { splitSupplementBlocks } from './notation/supplements'
+export type { ConversionResult, NotationMode, SourceMapRange } from './notation/types'
 
 type Meter = {
   beats: number
@@ -60,18 +52,6 @@ const abcKeyAliases: Record<string, string> = {
   lyd: 'Lyd',
   mix: 'Mix',
   loc: 'Loc',
-}
-
-export function parseKey(rawKey: string) {
-  const match = /^([A-G](?:#|b)?)([A-Za-z]*)$/.exec(rawKey.trim())
-  if (!match) {
-    return { tonic: 'C', mode: '' }
-  }
-
-  return {
-    tonic: match[1],
-    mode: match[2] || '',
-  }
 }
 
 function keyToAbc(rawKey: string) {
@@ -198,28 +178,6 @@ function durationSuffix(depth: number, carets: number, dots: number) {
 
 function greatestCommonDivisor(a: number, b: number): number {
   return b === 0 ? a : greatestCommonDivisor(b, a % b)
-}
-
-export function durationInBeats(depth: number, carets: number, dots: number) {
-  let duration = 2 ** (carets - depth)
-  let dotDuration = duration / 2
-
-  for (let index = 0; index < dots; index += 1) {
-    duration += dotDuration
-    dotDuration /= 2
-  }
-
-  return duration
-}
-
-export function parseM3NNote(token: string) {
-  const match = /^(0|[1-7])([#b=]*)([ed]*)(\^*)(\.*)(~?)$/.exec(token)
-  if (!match) {
-    return null
-  }
-
-  const [, degreeRaw, accidentals, octave, carets, dots, tie] = match
-  return { degreeRaw, accidentals, octave, carets, dots, tie }
 }
 
 function convertM3NNote(token: string, depth: number, key: string) {
@@ -527,24 +485,6 @@ function convertAttribute(content: string, header: HeaderState, state: { keySeen
   return ''
 }
 
-export function splitSupplementBlocks(source: string) {
-  const lyrics: Array<{ range: string; text: string }> = []
-  let bass = ''
-  let main = source
-
-  main = main.replace(/\{lyrics(?:=([^}]+))?\}([\s\S]*?)\{\/\}/g, (_match, range, text) => {
-    lyrics.push({ range: range ?? '', text: String(text).trim() })
-    return ''
-  })
-
-  main = main.replace(/\{bass\}([\s\S]*?)\{\/\}/g, (_match, text) => {
-    bass = String(text).trim()
-    return ''
-  })
-
-  return { main, bass, lyrics }
-}
-
 function convertM3NLyrics(value: string) {
   return value
     .trim()
@@ -844,6 +784,10 @@ function parseAbcHeader(source: string) {
   let hasMusic = false
 
   source.split(/\r?\n/).forEach((line) => {
+    // ABC comments and processor directives are metadata, never notation.
+    if (/^\s*%/.test(line)) {
+      return
+    }
     if (/^T:/.test(line)) {
       const titleLine = line.slice(2).trim()
       if (header.title === defaultHeader.title) {

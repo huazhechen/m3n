@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ScoreRenderer } from '../components/ScoreRenderer'
+import { SourceEditor } from '../components/SourceEditor'
 import { TopNav } from '../components/TopNav'
 import { happi123ToM3N } from '../lib/happi123-m3n'
 import { abcToM3N, m3nToAbc } from '../lib/m3n-abc'
@@ -15,35 +16,11 @@ export function ConverterPage() {
   const [format, setFormat] = useState<InputFormat>('abc')
   const [source, setSource] = useState(samples.abc)
   const [isResultOpen, setIsResultOpen] = useState(false)
-  const inputLineNumbersRef = useRef<HTMLDivElement>(null)
-  const scrollWrapperRef = useRef<HTMLDivElement>(null)
-
-  const syncTextareaSize = useCallback(() => {
-    const textarea = scrollWrapperRef.current?.querySelector('textarea')
-    const wrapper = scrollWrapperRef.current
-    if (!textarea || !wrapper) return
-    textarea.style.height = '0px'
-    const contentHeight = textarea.scrollHeight
-    textarea.style.height = `${contentHeight}px`
-    const wrapperWidth = wrapper.clientWidth
-    textarea.style.width = '0px'
-    const contentWidth = textarea.scrollWidth
-    textarea.style.width = `${Math.max(contentWidth, wrapperWidth)}px`
-  }, [])
-
-  useEffect(() => {
-    syncTextareaSize()
-    const handleResize = () => syncTextareaSize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [syncTextareaSize, source])
   const result = useMemo(
     () => format === 'abc' ? abcToM3N(source) : happi123ToM3N(source),
     [format, source],
   )
   const score = useMemo(() => m3nToAbc(result.output), [result.output])
-  const inputLineNumbers = Array.from({ length: source.split('\n').length }, (_item, index) => String(index + 1)).join('\n')
-
   const switchFormat = (nextFormat: InputFormat) => {
     setFormat(nextFormat)
     setSource(samples[nextFormat])
@@ -71,21 +48,11 @@ export function ConverterPage() {
         </header>
         <div className="editor-body">
           <section className="editor-pane">
-            <div className="source-editor">
-              <div ref={inputLineNumbersRef} className="line-numbers" aria-hidden="true">{inputLineNumbers}</div>
-              <div ref={scrollWrapperRef} className="textarea-scroll-wrapper">
-                <textarea
-                  spellCheck={false}
-                  wrap="off"
-                  value={source}
-                  onChange={(event) => {
-                    setSource(event.currentTarget.value)
-                    syncTextareaSize()
-                  }}
-                  aria-label={`${format} source`}
-                />
-              </div>
-            </div>
+            <SourceEditor
+              value={source}
+              ariaLabel={`${format} source`}
+              onChange={(event) => setSource(event.currentTarget.value)}
+            />
             {result.diagnostics.length > 0 && <ul className="diagnostics">{result.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>}
           </section>
 

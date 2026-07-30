@@ -1238,3 +1238,19 @@ a.action-button {
     padding: 14px;
   }
 }
+/* Route-level loading and recovery states intentionally avoid depending on page modules. */
+.page-status {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: #42494c;
+  text-align: center;
+}
+
+.page-error h1,
+.page-error p {
+  margin: 0;
+}

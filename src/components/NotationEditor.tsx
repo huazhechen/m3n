@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { m3nToAbc } from '../lib/m3n-abc'
 import { validateM3N } from '../lib/m3n-validate'
 import { sampleM3N } from '../lib/samples'
 import { ScoreRenderer } from './ScoreRenderer'
 import type { ScoreRendererRef } from './ScoreRenderer'
+import { SourceEditor } from './SourceEditor'
 
 type NotationEditorProps = {
   initialSource?: string
@@ -18,22 +19,13 @@ export function NotationEditor({
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const [isAbcDialogOpen, setIsAbcDialogOpen] = useState(false)
-  const lineNumberRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const scrollWrapperRef = useRef<HTMLDivElement>(null)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
   const result = useMemo(() => {
     const conv = m3nToAbc(source)
     conv.diagnostics.push(...validateM3N(source))
     return conv
   }, [source])
-  const lineNumbers = useMemo(
-    () =>
-      Array.from({ length: source.split('\n').length }, (_item, index) => String(index + 1)).join(
-        '\n',
-      ),
-    [source],
-  )
   const abc = result.output
   const cursorScoreRange = useMemo(() => {
     const mappedRange = result.sourceMap
@@ -49,28 +41,6 @@ export function NotationEditor({
     setCursorPosition(position)
     setIsCursorHighlightActive(true)
   }, [])
-
-  const syncTextareaSize = useCallback(() => {
-    const textarea = textareaRef.current
-    const wrapper = scrollWrapperRef.current
-    if (!textarea || !wrapper) return
-    // Auto-expand height to fit content
-    textarea.style.height = '0px'
-    const contentHeight = textarea.scrollHeight
-    textarea.style.height = `${contentHeight}px`
-    // Auto-expand width when content is wider than wrapper
-    const wrapperWidth = wrapper.clientWidth
-    textarea.style.width = '0px'
-    const contentWidth = textarea.scrollWidth
-    textarea.style.width = `${Math.max(contentWidth, wrapperWidth)}px`
-  }, [])
-
-  useEffect(() => {
-    syncTextareaSize()
-    const handleResize = () => syncTextareaSize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [syncTextareaSize, source])
 
   const placeCursorAfterScoreNote = useCallback(
     ({ startChar, endChar }: { startChar: number; endChar: number }) => {
@@ -131,27 +101,17 @@ export function NotationEditor({
       </header>
       <div className="editor-body">
         <section className="editor-pane">
-          <div className="source-editor">
-            <div ref={lineNumberRef} className="line-numbers" aria-hidden="true">
-              {lineNumbers}
-            </div>
-            <div ref={scrollWrapperRef} className="textarea-scroll-wrapper">
-              <textarea
-                ref={textareaRef}
-                spellCheck={false}
-                wrap="off"
-                value={source}
-                onChange={(event) => {
-                  setSource(event.target.value)
-                  updateCursorPosition(event.target.selectionStart)
-                  syncTextareaSize()
-                }}
-                onSelect={(event) => updateCursorPosition(event.currentTarget.selectionStart)}
-                onBlur={() => setIsCursorHighlightActive(false)}
-                aria-label="M3N source"
-              />
-            </div>
-          </div>
+          <SourceEditor
+            textareaRef={textareaRef}
+            value={source}
+            ariaLabel="M3N source"
+            onChange={(event) => {
+              setSource(event.currentTarget.value)
+              updateCursorPosition(event.currentTarget.selectionStart)
+            }}
+            onSelect={(event) => updateCursorPosition(event.currentTarget.selectionStart)}
+            onBlur={() => setIsCursorHighlightActive(false)}
+          />
           {result.diagnostics.length > 0 && (
             <ul className="diagnostics">
               {result.diagnostics.map((item) => (

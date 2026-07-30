@@ -1,4 +1,4 @@
-import type { ConversionResult } from './m3n-abc'
+import type { ConversionResult } from './notation/types'
 
 type HappiHeader = {
   title: string
@@ -85,9 +85,10 @@ function normalizeProfessionalSource(source: string) {
     .replace(/\{ds\}/gi, '{DS}')
     .replace(/\{dim\}/gi, '{decres}')
     .replace(/\{S\}/g, '{segno}')
-    .replace(/^\s*([^\s:{}][^:\n]{0,48}):\s*/gm, (_match, label) => `{part=${String(label).trim()}} `)
+    .replace(/^\s*([^\s:{}(][^:\n]{0,48}):\s*/gm, (_match, label) => `{part=${String(label).trim()}} `)
     .replace(/\[(\d+)(?:-[^:\]]*)?:/g, (_match, number) => `{volta=${number}} `)
-    .replace(/[\[\]]/g, '')
+    .replaceAll('[', '')
+    .replaceAll(']', '')
     .replace(/[<>]/g, '')
     .replace(/\b(?:tr|st)~?/g, '')
 
@@ -111,7 +112,7 @@ export function happi123ToM3N(source: string): ConversionResult {
   const diagnostics: string[] = []
   const header = { ...defaultHeader }
   const lyrics: string[] = []
-  let music = normalizeProfessionalSource(source)
+  let music = source
 
   music = music.replace(/\{(title|subtitle|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, value) => {
     const trimmed = String(value).trim()
@@ -128,6 +129,9 @@ export function happi123ToM3N(source: string): ConversionResult {
     lyrics.push(String(text).trim())
     return ''
   })
+  // Professional-dialect shorthand is only valid in the music body. Applying it
+  // before extracting structured fields corrupts meters and closing tags.
+  music = normalizeProfessionalSource(music)
   music = music.replace(/\{mark:\s*([^}]+)\}/g, (_match, value) => `{part=${String(value).trim()}}`)
   music = music.replace(/\{chord:\s*([^}]+)\}/g, (_match, value) => `{chord=${String(value).trim()}}`)
   music = convertTuplets(music, diagnostics)

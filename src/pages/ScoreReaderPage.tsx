@@ -21,16 +21,13 @@ export function ScoreReaderPage() {
     <main>
       <TopNav />
       <div className="score-reader-actions">
-        <a
+        <button
+          type="button"
           className="action-button"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault()
-            scoreRendererRef.current?.openExport()
-          }}
+          onClick={() => scoreRendererRef.current?.openExport()}
         >
           打印
-        </a>
+        </button>
         <Link className="action-button" to={`/editor?score=${score.slug}`}>
           编辑
         </Link>

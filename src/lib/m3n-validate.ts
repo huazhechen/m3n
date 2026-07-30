@@ -1,4 +1,5 @@
-import { splitSupplementBlocks, parseM3NNote, durationInBeats } from './m3n-abc'
+import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
+import { splitSupplementBlocks } from './notation/supplements'
 
 // --- Attribute validation helpers ---
 
