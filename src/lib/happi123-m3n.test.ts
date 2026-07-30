@@ -78,6 +78,13 @@ describe('happi123ToM3N', () => {
     expect(result.diagnostics).toEqual([])
   })
 
+  it('preserves explicit inline meter changes', () => {
+    const result = happi123ToM3N('{title:变拍}\n{key_signature:C}\n{time_signature:4/4}\n1111|{2/4}11|{4/4}1111|||')
+
+    expect(result.output).toContain('1 1 1 1 | {2/4} 1 1 | {4/4} 1 1 1 1 |||')
+    expect(result.diagnostics).toEqual([])
+  })
+
   it('corrects a clearly inconsistent declared meter', () => {
     const result = happi123ToM3N('{title:错拍号}\n{key_signature:C}\n{time_signature:4/4}\n11|22|33|44|55|||')
 
@@ -90,6 +97,13 @@ describe('happi123ToM3N', () => {
 
     expect(result.output.match(/\{br\}/g)).toHaveLength(2)
     expect(result.output).toContain('1 1 | {br}\n2 2 | {br}\n3 3 |||')
+  })
+
+  it('discards playback-only octave configuration', () => {
+    const result = happi123ToM3N('{title:音区}\n{key_signature:C}\n{time_signature:4/4}\n{octave:-1}\n1---|||')
+
+    expect(result.output).not.toContain('octave')
+    expect(result.diagnostics).toEqual([])
   })
 
   it('converts alternative notation blocks to volta endings', () => {

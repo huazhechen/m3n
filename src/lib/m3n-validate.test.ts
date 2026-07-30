@@ -38,4 +38,47 @@ describe('validateM3N', () => {
 
     expect(validateM3N(source)).toEqual([])
   })
+
+  it('allows volta endings to cover partial measures', () => {
+    const source = [
+      '{key=C} {4/4}',
+      '1 2 3 {volta=1}4 | 1 2 3 :||{/}',
+      '{volta=2}4 | 1 2 3 4 |||{/}',
+    ].join('\n')
+
+    expect(validateM3N(source)).toEqual([])
+  })
+
+  it('validates pickup and ending fragments per repeat region', () => {
+    const source = '{key=C} {2/4}\n||: 1 | 1 2 | 2 :|| ||: 3 | 3 4 | 4 :||'
+
+    expect(validateM3N(source)).toEqual([])
+  })
+
+  it('allows a pickup before a repeat to be completed by the first ending', () => {
+    const source = [
+      '{key=C} {2/4}',
+      '(0) (6d) ||: 3 4 | {volta=1}(0) (6d){/} :||',
+      '{volta=2}5 6 |{/} |||',
+    ].join('\n')
+
+    expect(validateM3N(source)).toEqual([])
+  })
+
+  it('allows an opening pickup outside a full-measure repeat', () => {
+    const source = '{key=C} {4/4}\n(0) (3) ||: 1 2 3 4 | 5 6 7 1e :||'
+
+    expect(validateM3N(source)).toEqual([])
+  })
+
+  it('allows a part ending to complement the next part pickup in playback order', () => {
+    const source = [
+      '{parts=A B A}',
+      '{key=C} {4/4}',
+      '{part=A} 1 | 1 2 3 4 | {/}',
+      '{part=B} 2 3 4 | {/}',
+    ].join('\n')
+
+    expect(validateM3N(source)).toEqual([])
+  })
 })

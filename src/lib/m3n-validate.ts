@@ -77,7 +77,7 @@ function isPowerOfTwo(value: number) {
 
 // --- Body validator ---
 
-function validateBody(source: string): string[] {
+function validateBody(source: string, partOrder: string[] = []): string[] {
   const diagnostics: string[] = []
 
   let index = 0
@@ -86,25 +86,36 @@ function validateBody(source: string): string[] {
   let parenDepthInMeasure = 0
   let groupDepthInMeasure = 0
   let currentMeasureBeats = 0
-  const measureBeatCounts: Array<{ actual: number; expected: number; section: number }> = []
+  const measureBeatCounts: Array<{ actual: number; expected: number; section: number; allowsPartial: boolean; part: string | null }> = []
   const intervalAttrs: Array<{ name: string; voltaStartBeats?: number }> = []
   const seenInfoFields = new Set<string>()
   let lastTiePitch: string | null = null
   let lastWasRest = false
   let currentMeter = { beats: 4, beatValue: 4 }
   let currentSection = 0
-  const forwardRepeats: number[] = [] // line numbers of unmatched ||:
+  let currentPart: string | null = null
+  let activeVoltaDepth = 0
+  let currentMeasureAllowsPartial = false
+  const forwardRepeats: number[] = []
 
   const commitMeasure = () => {
     // Adjacent barlines are valid notation (for example, a section line followed by a repeat).
     if (currentMeasureBeats > 0) {
-      measureBeatCounts.push({
+      const measure = {
         actual: currentMeasureBeats,
         expected: measureDurationInBeats(currentMeter),
         section: currentSection,
-      })
+        allowsPartial: currentMeasureAllowsPartial || activeVoltaDepth > 0,
+        part: currentPart,
+      }
+      measureBeatCounts.push(measure)
+      currentMeasureBeats = 0
+      currentMeasureAllowsPartial = activeVoltaDepth > 0
+      return measure
     }
     currentMeasureBeats = 0
+    currentMeasureAllowsPartial = activeVoltaDepth > 0
+    return null
   }
 
   while (index < source.length) {
@@ -137,15 +148,19 @@ function validateBody(source: string): string[] {
         diagnostics.push(`第 ${line} 行：分组未在小节内闭合`)
       }
       // Save current measure beats
-      commitMeasure()
-      // P4: Track repeat barlines
-      if (bar[0] === '||:' || bar[0] === ':||:') {
-        forwardRepeats.push(line)
+      const completedMeasure = commitMeasure()
+      if (bar[0] === '||:' || bar[0] === ':||' || bar[0] === ':|||' || bar[0] === ':||:') {
+        currentSection += 1
       }
+      // P4: Track repeat barlines
       if (bar[0] === ':||' || bar[0] === ':|||' || bar[0] === ':||:') {
-        if (forwardRepeats.length > 0) {
-          forwardRepeats.pop()
+        forwardRepeats.pop()
+      }
+      if (bar[0] === '||:' || bar[0] === ':||:') {
+        if (completedMeasure && completedMeasure.actual < completedMeasure.expected) {
+          completedMeasure.allowsPartial = true
         }
+        forwardRepeats.push(line)
       }
       parenDepthInMeasure = 0
       groupDepthInMeasure = 0
@@ -181,6 +196,7 @@ function validateBody(source: string): string[] {
       if (content.startsWith('part=')) {
         commitMeasure()
         currentSection += 1
+        currentPart = content.slice('part='.length).trim()
       }
 
       // V1: Unknown attribute
@@ -244,7 +260,7 @@ function validateBody(source: string): string[] {
         } else {
           const expected = measureDurationInBeats(currentMeter)
           for (let measure = 0; measure < restVal; measure += 1) {
-            measureBeatCounts.push({ actual: expected, expected, section: currentSection })
+            measureBeatCounts.push({ actual: expected, expected, section: currentSection, allowsPartial: false, part: currentPart })
           }
         }
       }
@@ -264,6 +280,10 @@ function validateBody(source: string): string[] {
           ? 'part'
           : content
       if (intervalName === 'cresc' || intervalName === 'decres' || intervalName === '8va' || intervalName === '8vb' || intervalName === 'lg' || intervalName === 'volta' || intervalName === 'part') {
+        if (intervalName === 'volta') {
+          activeVoltaDepth += 1
+          currentMeasureAllowsPartial = true
+        }
         intervalAttrs.push({
           name: intervalName,
           voltaStartBeats: intervalName === 'volta' ? currentMeasureBeats : undefined,
@@ -273,6 +293,8 @@ function validateBody(source: string): string[] {
         if (!closed) {
           diagnostics.push(`第 ${line} 行：闭合标签无对应开始：{/}`)
         } else if (closed.name === 'volta') {
+          activeVoltaDepth = Math.max(0, activeVoltaDepth - 1)
+          currentMeasureAllowsPartial = true
           const afterClose = source.slice(index + attribute[0].length).trimStart()
           if (afterClose.startsWith('{volta=')) {
             currentMeasureBeats = closed.voltaStartBeats ?? currentMeasureBeats
@@ -449,28 +471,56 @@ function validateBody(source: string): string[] {
 
   // M1: Measure beat validation. Each named part has an independent pickup and ending.
   const sections = new Map<number, typeof measureBeatCounts>()
+  const measuresByPart = new Map<string, typeof measureBeatCounts>()
   for (const measure of measureBeatCounts) {
     const counts = sections.get(measure.section) ?? []
     counts.push(measure)
     sections.set(measure.section, counts)
+    if (measure.part) {
+      const partCounts = measuresByPart.get(measure.part) ?? []
+      partCounts.push(measure)
+      measuresByPart.set(measure.part, partCounts)
+    }
   }
+
+  const endingComplementsNextPart = (measure: (typeof measureBeatCounts)[number]) => {
+    if (!measure.part || measuresByPart.get(measure.part)?.at(-1) !== measure) return false
+    const uses = partOrder.flatMap((part, index) => part === measure.part ? [index] : [])
+    if (uses.length === 0) return false
+    return uses.every((index) => {
+      const nextPart = partOrder[index + 1]
+      const nextFirst = nextPart ? measuresByPart.get(nextPart)?.[0] : undefined
+      return Boolean(
+        nextFirst
+        && nextFirst.actual < nextFirst.expected
+        && measure.actual + nextFirst.actual === measure.expected,
+      )
+    })
+  }
+
   for (const counts of sections.values()) {
     if (counts.length === 1) {
       const measure = counts[0]
-      if (measure.actual !== measure.expected) {
+      if (!measure.allowsPartial && measure.actual !== measure.expected && !endingComplementsNextPart(measure)) {
         diagnostics.push(`小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
       }
       continue
     }
     for (let index = 1; index < counts.length - 1; index += 1) {
       const measure = counts[index]
-      if (measure.actual !== measure.expected) {
+      if (!measure.allowsPartial && measure.actual !== measure.expected) {
         diagnostics.push(`中间小节拍数不足：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
       }
     }
     const first = counts[0]
     const last = counts[counts.length - 1]
-    if (last.actual !== last.expected && first.actual + last.actual !== first.expected) {
+    if (
+      !first.allowsPartial
+      && !last.allowsPartial
+      && last.actual !== last.expected
+      && first.actual + last.actual !== first.expected
+      && !endingComplementsNextPart(last)
+    ) {
       diagnostics.push(`首末小节拍数之和不为 ${first.expected} 拍：首 ${first.actual} 拍 + 末 ${last.actual} 拍 = ${first.actual + last.actual} 拍`)
     }
   }
@@ -542,7 +592,7 @@ export function validateM3N(source: string): string[] {
   }
 
   // Validate main body
-  diagnostics.push(...validateBody(main))
+  diagnostics.push(...validateBody(main, referencedParts))
 
   // Validate bass body
   if (bass) {

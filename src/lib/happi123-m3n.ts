@@ -115,6 +115,7 @@ function convertTag(content: string, diagnostics: string[]) {
   const value = separator >= 0 ? trimmed.slice(separator + 1).trim() : ''
 
   if (name === '__linebreak__' || name === 'br') return '{br}'
+  if (/^\d+\/\d+$/.test(trimmed)) return `{${trimmed}}`
   if (name === 'mark') return `{part=${value}}`
   if (name === 'section') return `{part=${value}}`
   if (name === 'tip') return `{text=${value}}`
@@ -129,6 +130,7 @@ function convertTag(content: string, diagnostics: string[]) {
   if (name === 'S' || name === 'start') return '||:'
   if (name.toLowerCase() === 'dc' || name.toLowerCase() === 'ds') return ':||'
   if (name === 'fine' || name === 'jump') return ''
+  if (name === 'octave') return ''
   if (name === 'hot' || name === 'ms' || name === 'omit' || name === 'f' || /^o\d+f$/.test(name)) {
     diagnostics.push(`已忽略仅影响原编辑器播放的标签：{${trimmed}}`)
     return ''
@@ -136,10 +138,6 @@ function convertTag(content: string, diagnostics: string[]) {
   if (name === 'repeat') {
     diagnostics.push(`M3N 暂无指定重复次数语法：{${trimmed}}`)
     return `{text=repeat ${value}}`
-  }
-  if (name === 'octave') {
-    diagnostics.push(`M3N 暂无局部播放八度配置：{${trimmed}}`)
-    return `{text=octave ${value}}`
   }
   if (trimmed.startsWith('!') && trimmed.endsWith('!')) return ''
   if (/^\d+$/.test(trimmed)) return ''
