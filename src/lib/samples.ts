@@ -2,8 +2,10 @@ export type PresetScore = {
   slug: string
   title: string
   subtitle?: string
-  composer: string
+  composer?: string
   category: string
+  hasLyrics: boolean
+  hasBass: boolean
   searchText: string
   source: string
 }
@@ -26,7 +28,6 @@ function readAttribute(source: string, name: string) {
 const notationAttributeNames = new Set([
   'key',
   '1',
-  'tempo',
   'transpose',
   'parts',
   'part',
@@ -51,8 +52,10 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
     const slug = slugFromPath(path)
     const title = readAttribute(source, 'title') ?? slug
     const subtitle = readAttribute(source, 'subtitle')
-    const composer = readAttribute(source, 'composer') ?? '佚名'
+    const composer = readAttribute(source, 'composer')
     const category = readAttribute(source, 'category') ?? '未分类'
+    const hasLyrics = source.includes('{lyrics}')
+    const hasBass = source.includes('{bass}')
 
     return {
       slug,
@@ -60,6 +63,8 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
       subtitle,
       composer,
       category,
+      hasLyrics,
+      hasBass,
       searchText: normalizeSearchText([title, subtitle, composer, category, ...readMetadataValues(source)].filter(Boolean).join(' ')),
       source,
     }
