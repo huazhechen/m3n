@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { m3nToAbc } from '../lib/m3n-abc'
+import { validateM3N } from '../lib/m3n-validate'
 import { sampleM3N } from '../lib/samples'
 import { ScoreRenderer } from './ScoreRenderer'
 import type { ScoreRendererRef } from './ScoreRenderer'
@@ -21,7 +22,11 @@ export function NotationEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollWrapperRef = useRef<HTMLDivElement>(null)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
-  const result = useMemo(() => m3nToAbc(source), [source])
+  const result = useMemo(() => {
+    const conv = m3nToAbc(source)
+    conv.diagnostics.push(...validateM3N(source))
+    return conv
+  }, [source])
   const lineNumbers = useMemo(
     () =>
       Array.from({ length: source.split('\n').length }, (_item, index) => String(index + 1)).join(
