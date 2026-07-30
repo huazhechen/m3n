@@ -1,5 +1,5 @@
 import abcjs from 'abcjs'
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import 'abcjs/abcjs-audio.css'
 
 type ScoreRendererProps = {
@@ -9,6 +9,12 @@ type ScoreRendererProps = {
   onActiveRange?: (range: { startChar?: number; endChar?: number } | null) => void
   onNoteClick?: (range: { startChar: number; endChar: number }) => void
   onPaperBlur?: () => void
+  showPrintButton?: boolean
+  onPrintClick?: () => void
+}
+
+export interface ScoreRendererRef {
+  openExport: () => void
 }
 
 type PlaybackSource = {
@@ -187,20 +193,30 @@ function createPlaybackSource(abc: string): PlaybackSource {
   }
 }
 
-export function ScoreRenderer({
+export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(function ScoreRenderer({
   abc,
   compact = false,
   activeRange,
   onActiveRange,
   onNoteClick,
   onPaperBlur,
-}: ScoreRendererProps) {
+  showPrintButton = true,
+  onPrintClick,
+}: ScoreRendererProps, ref) {
   const paperRef = useRef<HTMLDivElement | null>(null)
   const audioRef = useRef<HTMLDivElement | null>(null)
   const exportDialogRef = useRef<HTMLDialogElement | null>(null)
   const exportPreviewRef = useRef<HTMLDivElement | null>(null)
   const synthControlRef = useRef<InstanceType<typeof abcjs.synth.SynthController> | null>(null)
   const playbackSpeedRef = useRef(100)
+
+  useImperativeHandle(ref, () => ({
+    openExport: () => {
+      setIncludeBass(hasBassStaff)
+      setIsExportDialogOpen(true)
+      exportDialogRef.current?.showModal()
+    },
+  }))
   const appliedPlaybackSpeedRef = useRef(100)
   const pendingSeekRef = useRef<number | null>(null)
   const highlightedElementsRef = useRef<Element[]>([])
@@ -477,7 +493,7 @@ export function ScoreRenderer({
     }
   }
 
-  const openExportDialog = () => {
+  const internalOpenExportDialog = () => {
     setIncludeBass(hasBassStaff)
     setIsExportDialogOpen(true)
     exportDialogRef.current?.showModal()
@@ -624,9 +640,11 @@ export function ScoreRenderer({
             <output>{Math.round(playbackProgress * 100)}%</output>
           </div>
         )}
-        <button type="button" className="print-button" onClick={openExportDialog}>
-          打印
-        </button>
+        {showPrintButton && (
+          <button type="button" className="action-button" onClick={onPrintClick ?? internalOpenExportDialog}>
+            打印
+          </button>
+        )}
       </div>
       <dialog
         ref={exportDialogRef}
@@ -724,4 +742,4 @@ export function ScoreRenderer({
       {message && <p className="render-message">{message}</p>}
     </section>
   )
-}
+})
