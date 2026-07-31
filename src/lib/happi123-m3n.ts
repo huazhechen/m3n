@@ -1,5 +1,6 @@
 import { addTiesToNotes, convertHappiNote, extractHappiNotes, readHappiNote } from './happi123/notes'
 import { convertHappiLyrics } from './happi123/lyrics'
+import { getHappi123Metadata } from './happi123/metadata'
 import { validateM3N } from './m3n-validate'
 import type { ConversionResult } from './notation/types'
 
@@ -548,14 +549,23 @@ export function happi123ToM3N(source: string): ConversionResult {
     }
   }
   const music = applyMixedMeters(sectionedMusic, header.meters)
+  const metadata = getHappi123Metadata(header.title)
 
   const output = [
     header.title ? `{title=${header.title}}` : '',
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
+    metadata.composer ? `{composer=${metadata.composer}}` : '',
+    metadata.lyricist ? `{lyricist=${metadata.lyricist}}` : '',
+    '{source=Happi123}',
     header.parts ? `{parts=${header.parts}}` : '',
     `{key=${header.key}} {${header.meter}}${/^\d+$/.test(header.bpm) ? ` {${header.bpm}qpm}` : ''}`,
     music,
-    ...lyrics.flatMap((value) => ['', '{lyrics}', value, '{/}']),
+    ...lyrics.flatMap((value, index) => [
+      '',
+      lyrics.length > 1 ? `{lyrics=${index + 1}}` : '{lyrics}',
+      value,
+      '{/}',
+    ]),
   ].filter(Boolean).join('\n').replace(/\s*\{br\}\s*/g, ' {br}\n')
 
   return { source, output, diagnostics: [...new Set(diagnostics)] }

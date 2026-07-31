@@ -18,6 +18,9 @@ export function convertHappiLyrics(source: string) {
       continue
     }
     if (rest[0] === '/') {
+      // The Happi123 corpus uses slash runs as explicit lyric alignment
+      // placeholders.  Dropping them shifts every following syllable.
+      tokens.push('%')
       index += 1
       continue
     }

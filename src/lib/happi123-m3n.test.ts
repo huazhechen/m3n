@@ -4,7 +4,7 @@ import { happi123ToM3N } from './happi123-m3n'
 describe('happi123ToM3N', () => {
   it('converts metadata, notes, and lyrics', () => {
     const source = [
-      '{title:快乐颂}',
+      '{title:欢乐颂}',
       '{key_signature:1=#F4}',
       '{time_signature:3/4}',
       '{bpm:90}',
@@ -14,8 +14,10 @@ describe('happi123ToM3N', () => {
     const result = happi123ToM3N(source)
 
     expect(result.diagnostics).toEqual([])
-    expect(result.output).toContain('{title=快乐颂}')
+    expect(result.output).toContain('{title=欢乐颂}')
     expect(result.output).toContain('{key=F#} {3/4} {90qpm}')
+    expect(result.output).toContain('{composer=路德维希·范·贝多芬}')
+    expect(result.output).toContain('{source=Happi123}')
     expect(result.output).toContain('1 (2) 3^')
     expect(result.output).toContain('{lyrics}\n欢 乐 颂\n{/}')
   })
@@ -145,5 +147,12 @@ describe('happi123ToM3N', () => {
 
     expect(result.output).toContain('1 1 :|| 2 2 |||')
     expect(result.output).not.toContain('1 1 :||| 2 2')
+  })
+
+  it('preserves slash lyric placeholders and assigns separate verses to passes', () => {
+    const result = happi123ToM3N('{title:歌词}\n{key_signature:C}\n{time_signature:2/4}\n11:|||\n{lyric}甲/乙{/lyric}\n{lyric}丙/丁{/lyric}')
+
+    expect(result.output).toContain('{lyrics=1}\n甲 % 乙\n{/}')
+    expect(result.output).toContain('{lyrics=2}\n丙 % 丁\n{/}')
   })
 })
