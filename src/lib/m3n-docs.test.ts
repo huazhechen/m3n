@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import readme from '../../docs/README.md?raw'
 import guide from '../../docs/GUIDE.md?raw'
 import manual from '../../docs/MANUAL.md?raw'
 import { m3nToMei } from './m3n-mei'
@@ -10,6 +11,7 @@ function m3nExamples(markdown: string) {
 
 describe('documented M3N examples', () => {
   for (const [name, markdown] of [
+    ['README', readme],
     ['MANUAL', manual],
     ['GUIDE', guide],
   ] as const) {

@@ -1,6 +1,7 @@
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
 import { splitSupplementBlocks } from './notation/supplements'
+import { tokenizeM3N } from './notation/m3n-tokens'
 
 export type DirectEvent = {
   sourceStart: number
@@ -80,7 +81,6 @@ function parseBody(
   initialTempo: number,
   intervals: DirectInterval[],
 ) {
-  let index = 0
   let depth = 0
   let currentKey = initialKey
   let currentMeterCount = initialMeterCount
@@ -145,26 +145,14 @@ function parseBody(
     chordChanged = false
   }
 
-  while (index < source.length) {
-    const rest = source.slice(index)
-    const whitespace = /^\s+/.exec(rest)
-    if (whitespace) {
-      index += whitespace[0].length
-      continue
-    }
-    if (rest.startsWith('//')) {
-      const newline = rest.indexOf('\n')
-      index += newline === -1 ? rest.length : newline
-      continue
-    }
-    const attribute = /^\{([^}]*)\}/.exec(rest)
-    if (attribute) {
-      const value = attribute[1] ?? ''
+  for (const token of tokenizeM3N(source)) {
+    if (token.kind === 'space' || token.kind === 'comment') continue
+    if (token.kind === 'attribute') {
+      const value = token.content ?? ''
       const repeatCount = /^x(\d+)$/.exec(value)
       if (repeatCount && pendingRepeatEnd) {
         pendingRepeatEnd.repeatCount = Number(repeatCount[1])
         pendingRepeatEnd = undefined
-        index += attribute[0].length
         continue
       }
       pendingRepeatEnd = undefined
@@ -228,16 +216,13 @@ function parseBody(
         if (typeof closed === 'object' && closed.tempoTarget !== undefined) currentTempo = closed.tempoTarget
         lastEvent = undefined
       }
-      index += attribute[0].length
       continue
     }
-    const bar = /^(?::\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/.exec(rest)
-    if (bar) {
+    if (token.kind === 'bar') {
       const current = measure()
-      const value = bar[0]
+      const value = token.raw
       if (value === '||:' && current.events.length === 0) {
         current.left = 'rptstart'
-        index += value.length
         continue
       }
       current.right = value.startsWith(':||') ? 'rptend'
@@ -248,32 +233,29 @@ function parseBody(
       if (value === '||:' || value === ':||:') next.left = 'rptstart'
       measures().push(next)
       lastEvent = undefined
-      index += value.length
       continue
     }
-    if (rest[0] === '(') {
+    if (token.kind === 'open-paren') {
       pendingRepeatEnd = undefined
       depth += 1
-      index += 1
       continue
     }
-    if (rest[0] === ')') {
+    if (token.kind === 'close-paren') {
       pendingRepeatEnd = undefined
       depth = Math.max(0, depth - 1)
-      index += 1
       continue
     }
-    const group = /^\[([^\]:]+):([^\]]+)\](\^*)(\.*)(~?)/.exec(rest)
-    if (group) {
+    const group = token.kind === 'group' ? /^\[([^\]:]+):([^\]]+)\](\^*)(\.*)(~?)/.exec(token.raw) : null
+    if (group !== null) {
       pendingRepeatEnd = undefined
       const pitches = parseM3NGroupPitches(group[1] ?? '') ?? []
       const mode = group[2]?.trim() ?? ''
-      const sourceEnd = index + group[0].length
+      const sourceEnd = token.start + group[0].length
       if (pitches.length > 0) {
         const first = parseM3NNote(pitches[0] ?? '')
         const groupBeats = duration(depth, (first?.carets.length ?? 0) + group[3].length, (first?.dots.length ?? 0) + group[4].length)
         add({
-          sourceStart: index,
+          sourceStart: token.start,
           sourceEnd,
           kind: mode === 'h' ? 'chord' : 'tuplet',
           pitches,
@@ -290,16 +272,15 @@ function parseBody(
           },
         })
       }
-      index = sourceEnd
       continue
     }
-    const noteToken = /^(?:0|[1-7])(?:[#b=]*)(?:[ed]*)(?:\^*)(?:\.*)(?:~?)/.exec(rest)?.[0]
+    const noteToken = token.kind === 'note' ? token.raw : undefined
     const note = noteToken ? parseM3NNote(noteToken) : null
     if (note && noteToken) {
       pendingRepeatEnd = undefined
       add({
-        sourceStart: index,
-        sourceEnd: index + noteToken.length,
+        sourceStart: token.start,
+        sourceEnd: token.start + noteToken.length,
         kind: note.degreeRaw === '0' ? 'rest' : 'note',
         pitches: note.degreeRaw === '0' ? [] : [noteToken.replace(/[\^.~]+$/g, '')],
         key: currentKey,
@@ -309,10 +290,8 @@ function parseBody(
         navigation: [],
         octaveShift: 0,
       })
-      index += noteToken.length
       continue
     }
-    index += 1
   }
 }
 

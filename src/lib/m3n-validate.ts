@@ -1,15 +1,6 @@
 import { durationInBeats, keyModeIntervals } from './notation/m3n-primitives'
 import { parseM3NGrace } from './notation/m3n-groups'
-
-type TokenKind = 'space' | 'comment' | 'attribute' | 'bar' | 'open-paren' | 'close-paren' | 'group' | 'note' | 'unknown'
-
-type Token = {
-  kind: TokenKind
-  raw: string
-  line: number
-  start: number
-  content?: string
-}
+import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -76,8 +67,6 @@ const POSTFIX_FLAGS = new Set([
   'arp', 'tr', 'str', 'brk', 'tip', 'hold', 'fermata', 'breath', 'f1', 'f2', 'f3', 'f4', 'f5',
 ])
 
-const BAR_PATTERN = /^(?::\|\|\||:\|\|:|:\|\||\|\|\||\|\|:|\|\||\|)/
-const NOTE_PATTERN = /^[0-7][#b=ed^.~]*/
 const KEY_PATTERN = /^([A-G](?:#|b)?)(dor|phr|lyd|mix|m|loc)?$/
 const CHORD_PATTERN = /^(I|II|III|IV|V|VI|VII|i|ii|iii|iv|v|vi|vii)(?:m|dim|aug|sus2|sus4|[2-9]|1[0-3])?$/
 
@@ -87,75 +76,6 @@ function lineMessage(token: Token, message: string) {
 
 function isTrivia(token: Token) {
   return token.kind === 'space' || token.kind === 'comment'
-}
-
-function tokenize(source: string): Token[] {
-  const tokens: Token[] = []
-  let index = 0
-  let line = 1
-
-  const push = (kind: TokenKind, raw: string, content?: string) => {
-    tokens.push({ kind, raw, line, start: index, content })
-    line += raw.split('\n').length - 1
-    index += raw.length
-  }
-
-  while (index < source.length) {
-    const rest = source.slice(index)
-    const space = /^\s+/.exec(rest)?.[0]
-    if (space) {
-      push('space', space)
-      continue
-    }
-    if (rest.startsWith('//')) {
-      const end = rest.indexOf('\n')
-      push('comment', end === -1 ? rest : rest.slice(0, end))
-      continue
-    }
-    if (rest.startsWith('{')) {
-      const end = rest.indexOf('}')
-      if (end !== -1) {
-        const raw = rest.slice(0, end + 1)
-        push('attribute', raw, raw.slice(1, -1))
-      } else {
-        push('unknown', rest)
-      }
-      continue
-    }
-    const bar = BAR_PATTERN.exec(rest)?.[0]
-    if (bar) {
-      push('bar', bar)
-      continue
-    }
-    if (rest[0] === '(') {
-      push('open-paren', '(')
-      continue
-    }
-    if (rest[0] === ')') {
-      push('close-paren', ')')
-      continue
-    }
-    if (rest[0] === '[') {
-      const end = rest.indexOf(']')
-      if (end !== -1) {
-        const suffix = /^(?:\^*)(?:\.*)(?:~?)/.exec(rest.slice(end + 1))?.[0] ?? ''
-        push('group', rest.slice(0, end + 1 + suffix.length))
-      } else {
-        const raw = /^[^\s|{}()]*/.exec(rest)?.[0] || '['
-        push('unknown', raw)
-      }
-      continue
-    }
-    const note = NOTE_PATTERN.exec(rest)?.[0]
-    if (note) {
-      push('note', note)
-      continue
-    }
-    const unknown = /^[^\s|{}()[\]]+/.exec(rest)?.[0] ?? rest[0]
-    push('unknown', unknown)
-  }
-
-  return tokens
 }
 
 function attributeName(content: string) {
@@ -1012,7 +932,7 @@ function lyricItems(tokens: Token[]) {
 
 export function validateM3N(source: string): string[] {
   const diagnostics: string[] = []
-  const tokens = tokenize(source)
+  const tokens = tokenizeM3N(source)
   const { main, supplements } = extractSupplements(tokens, diagnostics)
   const mainResult = validateBody(main, diagnostics)
 
