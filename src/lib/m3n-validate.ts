@@ -47,6 +47,7 @@ type Block = {
   line: number
   range?: Set<number>
   octaveShift?: number
+  tempoTarget?: number
 }
 
 type Supplement = {
@@ -416,6 +417,10 @@ function validateBody(
       settings = structuredClone(commonSettings)
       unit = createUnit(null, settings.meter, token.line)
     }
+    if (top.tempoTarget !== undefined) {
+      settings.tempo = top.tempoTarget
+      if (!bass) settingEvents.push({ beat: elapsedBeats, kind: 'tempo', value: String(top.tempoTarget) })
+    }
   }
 
   const invalidatePostfix = () => {
@@ -677,9 +682,10 @@ function validateBody(
 
       if (isTempoRamp) {
         const tempo = Number(value)
-        if (!/^\d+$/.test(value) || !Number.isSafeInteger(tempo) || tempo <= 0) diagnostics.push(lineMessage(token, '渐快或渐慢的目标速度必须是正整数'))
+        const validTarget = /^\d+$/.test(value) && Number.isSafeInteger(tempo) && tempo > 0
+        if (!validTarget) diagnostics.push(lineMessage(token, '渐快或渐慢的目标速度必须是正整数'))
         if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能声明渐快或渐慢'))
-        blocks.push({ name, line: token.line })
+        blocks.push({ name, line: token.line, tempoTarget: validTarget ? tempo : undefined })
         continue
       }
 

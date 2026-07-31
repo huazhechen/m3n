@@ -46,4 +46,10 @@ describe('M3N accompaniment playback', () => {
       { startBeats: 3, tempo: 80, sourceStart: 29, ramp: true },
     ])
   })
+
+  it('keeps the target tempo after a gradual change closes', () => {
+    expect(buildTempoChanges('{2/4} {120qpm}\n{rit=80}1 2{/} | 3 4 |||')).toEqual([
+      { startBeats: 1, tempo: 80, sourceStart: 25, ramp: true },
+    ])
+  })
 })

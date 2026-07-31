@@ -264,7 +264,10 @@ function parseBody(
           : structureStack.length - 1
         const closed = index >= 0 ? structureStack.splice(index, 1)[0] : undefined
         if (closed === 'volta') activeEnding = undefined
-        if (typeof closed === 'object' && closed.tempoTarget !== undefined) currentTempo = closed.tempoTarget
+        if (typeof closed === 'object' && closed.tempoTarget !== undefined) {
+          currentTempo = closed.tempoTarget
+          if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'tempo', value: String(currentTempo) })
+        }
         if (closed === 'part') {
           currentKey = commonKey
           currentMeterCount = commonMeterCount
