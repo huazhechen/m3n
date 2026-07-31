@@ -1,4 +1,10 @@
-const GROUP_PITCH = /^(?:0|[1-7][#b=]*[ed]*)/
+const GROUP_PITCH = /^(?:0|[1-7](?:##?|bb?|=)?[ed]*)/
+
+export type M3NGrace = {
+  kind: 'ac' | 'ap'
+  pitchSource: string
+  depth: number
+}
 
 /** Parse consecutive group pitches without assigning meaning to whitespace. */
 export function parseM3NGroupPitches(source: string): string[] | null {
@@ -13,4 +19,15 @@ export function parseM3NGroupPitches(source: string): string[] | null {
     index += pitch.length
   }
   return pitches
+}
+
+export function parseM3NGrace(value: string): M3NGrace | null {
+  const match = /^(a[cp])(\(+)([^()]+)(\)+)$/.exec(value)
+  if (!match || match[2].length !== match[4].length) return null
+
+  return {
+    kind: match[1] as M3NGrace['kind'],
+    pitchSource: match[3],
+    depth: match[2].length,
+  }
 }

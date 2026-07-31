@@ -56,6 +56,7 @@ export function parseM3NNote(token: string): ParsedM3NNote | null {
   const [, degreeRaw, accidentals, octave, carets, dots, tie] = match
   if (degreeRaw === '0' && (accidentals || octave || tie)) return null
   if ((accidentals.includes('#') && accidentals.includes('b')) || (accidentals.includes('=') && accidentals !== '=')) return null
+  if (accidentals.length > 2) return null
   if (octave.includes('e') && octave.includes('d')) return null
   return { degreeRaw, accidentals, octave, carets, dots, tie }
 }

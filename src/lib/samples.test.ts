@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { m3nToAbc } from './m3n-abc'
+import { m3nToMei } from './m3n-mei'
 import { presetScores } from './samples'
 
 describe('bundled score corpus', () => {
@@ -14,18 +14,16 @@ describe('bundled score corpus', () => {
 
     for (const score of presetScores) {
       try {
-        const result = m3nToAbc(score.source)
-        if (!result.output.startsWith('X:1\n') || !result.output.includes('\nK:')) {
-          failures.push(`${score.slug}: missing ABC headers`)
+        const result = m3nToMei(score.source)
+        if (!result.mei.startsWith('<?xml') || !result.mei.includes('<scoreDef')) {
+          failures.push(`${score.slug}: missing MEI score`)
         }
-        for (const range of result.sourceMap ?? []) {
+        for (const range of result.sourceMap) {
           if (
             range.sourceStart < 0 ||
             range.sourceEnd > score.source.length ||
             range.sourceStart >= range.sourceEnd ||
-            range.outputStart < 0 ||
-            range.outputEnd > result.output.length ||
-            range.outputStart >= range.outputEnd
+            !range.xmlId
           ) {
             failures.push(`${score.slug}: invalid source map`)
             break

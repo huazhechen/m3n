@@ -3,7 +3,7 @@ import { useRef } from 'react'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import type { ScoreRendererRef } from '../components/ScoreRenderer'
 import { TopNav } from '../components/TopNav'
-import { m3nToAbc } from '../lib/m3n-abc'
+import { m3nToMei } from '../lib/m3n-mei'
 import { presetScores } from '../lib/samples'
 
 export function ScoreReaderPage() {
@@ -15,7 +15,7 @@ export function ScoreReaderPage() {
     return <Navigate to="/scores" replace />
   }
 
-  const result = m3nToAbc(score.source)
+  const result = m3nToMei(score.source)
 
   return (
     <main>
@@ -33,7 +33,17 @@ export function ScoreReaderPage() {
         </Link>
       </div>
       <section className="score-reader" aria-label={`${score.title} 乐谱`}>
-        <ScoreRenderer ref={scoreRendererRef} abc={result.output} />
+        <ScoreRenderer
+          ref={scoreRendererRef}
+          mei={result.mei}
+          title={result.title}
+          hasBassStaff={result.hasBassStaff}
+          headerMetadata={result.headerMetadata}
+          sourceMap={result.sourceMap}
+          accompaniment={result.accompaniment}
+          tempoChanges={result.tempoChanges}
+          tempo={result.tempo}
+        />
       </section>
     </main>
   )

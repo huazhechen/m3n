@@ -2,7 +2,8 @@ import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { searchForPage } from '../lib/docs-navigation'
 import { NotationEditor } from './NotationEditor'
 
 type DocumentSource = {
@@ -83,7 +84,8 @@ function isCodeChild(node: ReactNode, language: string) {
 
 export function MarkdownBook({ documents }: MarkdownBookProps) {
   const pages = useMemo(() => documents.flatMap(splitDocument), [documents])
-  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [isTocOpen, setIsTocOpen] = useState(false)
   const documentGroups = useMemo<DocumentGroup[]>(
     () =>
@@ -93,17 +95,17 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       })),
     [documents, pages],
   )
-  const activePageId = searchParams.get('page')
+  const pageParams = useMemo(() => new URLSearchParams(location.search), [location.search])
+  const activePageId = pageParams.get('page')
   const activePage = pages.find((page) => page.id === activePageId) ?? pages[0]
   const activePageIndex = pages.findIndex((page) => page.id === activePage.id)
   const previousPage = pages[activePageIndex - 1]
   const nextPage = pages[activePageIndex + 1]
 
   function selectPage(pageId: string) {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current)
-      next.set('page', pageId)
-      return next
+    navigate({
+      pathname: location.pathname,
+      search: searchForPage(location.search, pageId),
     })
     setIsTocOpen(false)
     window.scrollTo(0, 0)

@@ -5,13 +5,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    // abcjs is a single CommonJS entry and cannot be split internally. Keep it
-    // isolated so application chunks remain measurable and cache independently.
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          return id.includes('/node_modules/abcjs/') ? 'abcjs' : undefined
+          if (id.includes('/node_modules/verovio/')) return 'verovio'
+          if (id.includes('/node_modules/spessasynth_')) return 'spessasynth'
+          return undefined
         },
       },
     },

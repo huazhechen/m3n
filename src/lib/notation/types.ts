@@ -1,4 +1,4 @@
-export type NotationMode = 'm3n' | 'abc'
+export type NotationMode = 'm3n'
 
 export type SourceMapRange = {
   outputStart: number

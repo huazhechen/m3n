@@ -1,4 +1,5 @@
 import { durationInBeats, keyModeIntervals } from './notation/m3n-primitives'
+import { parseM3NGrace } from './notation/m3n-groups'
 
 type TokenKind = 'space' | 'comment' | 'attribute' | 'bar' | 'open-paren' | 'close-paren' | 'group' | 'note' | 'unknown'
 
@@ -72,8 +73,7 @@ const INFO_FIELDS = new Set([
 const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'lg', '8va', '8vb'])
 const DYNAMICS = new Set(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff'])
 const POSTFIX_FLAGS = new Set([
-  'tr', 'echo', 'str', 'brk', 'tip', 'hold', 'breath',
-  'wav', 'wav+', 'wav-', 'f1', 'f2', 'f3', 'f4', 'f5',
+  'arp', 'tr', 'str', 'brk', 'tip', 'hold', 'fermata', 'breath', 'f1', 'f2', 'f3', 'f4', 'f5',
 ])
 
 const BAR_PATTERN = /^(?::\|\|\||:\|\|:|:\|\||\|\|\||\|\|:|\|\||\|)/
@@ -283,6 +283,7 @@ function parsePitch(raw: string): { pitch: ParsedPitch | null; error: string | n
   if ((accidental.includes('#') && accidental.includes('b')) || (accidental.includes('=') && accidental !== '=')) {
     return { pitch: null, error: `临时变音组合非法：${raw}` }
   }
+  if (accidental.length > 2) return { pitch: null, error: `临时变音最多只能使用两个同类记号：${raw}` }
   if (octave.includes('e') && octave.includes('d')) {
     return { pitch: null, error: `八度方向混用：${raw}` }
   }
@@ -403,13 +404,18 @@ function validateBody(
   let terminalCount = 0
   let terminalSeen = false
   let terminalTailReported = false
-  let postfixTarget = false
+  let fineBeforeTerminal = false
+  let postfixTarget: 'note' | 'harmony' | false = false
   let pendingSfz: Token | null = null
   let pendingTie: PendingTie | null = null
   let repeatOpen: { line: number; id: number } | null = null
   let implicitRepeatUsed = false
   let repeatId = 0
   let currentVoltaRepeat = 0
+  let repeatCountTarget = false
+  let segnoCount = 0
+  let jumpCount = 0
+  let dsCount = 0
   let bodyInitial = structuredClone(defaultSettings)
   let elapsedBeats = 0
   let inheritedEventIndex = 0
@@ -577,7 +583,7 @@ function validateBody(
     }
     if (atom.tie && eligible) pendingTie = { kind: atom.kind as 'note' | 'harmony', pitches: atom.pitches ?? [], line: token.line }
     if (!tiedTarget) addLyrics(atom.lyricCount ?? (eligible ? 1 : 0))
-    postfixTarget = eligible
+    postfixTarget = atom.kind === 'note' || atom.kind === 'harmony' ? atom.kind : false
   }
 
   const handleBar = (token: Token) => {
@@ -605,16 +611,23 @@ function validateBody(
     }
     if (token.raw === '|||' || token.raw === ':|||') {
       terminalCount += 1
-      terminalSeen = true
+      terminalSeen = !fineBeforeTerminal
       if (currentPart) diagnostics.push(lineMessage(token, '具名乐段内不能使用终止线'))
     }
+    fineBeforeTerminal = false
+    repeatCountTarget = token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:'
   }
 
   for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex += 1) {
     const token = tokens[tokenIndex]
     if (isTrivia(token)) continue
 
-    if (terminalSeen && !terminalTailReported) {
+    if (fineBeforeTerminal && token.kind !== 'bar') fineBeforeTerminal = false
+
+    const isRepeatCount = token.kind === 'attribute' && /^x\d+$/.test(token.content ?? '')
+    if (!isRepeatCount && token.kind !== 'bar') repeatCountTarget = false
+
+    if (terminalSeen && !isRepeatCount && !terminalTailReported) {
       diagnostics.push(lineMessage(token, '终止线之后只能出现补充块、空白和注释'))
       terminalTailReported = true
     }
@@ -648,6 +661,14 @@ function validateBody(
 
     if (token.kind === 'attribute') {
       const content = token.content ?? ''
+      if (/^x\d+$/.test(content)) {
+        const count = Number(content.slice(1))
+        if (!repeatCountTarget) diagnostics.push(lineMessage(token, '反复次数标记必须紧跟后反复线'))
+        else if (!Number.isSafeInteger(count) || count < 2) diagnostics.push(lineMessage(token, '反复次数必须是不小于 2 的整数'))
+        repeatCountTarget = false
+        continue
+      }
+      repeatCountTarget = false
       const closing = closingBlockName(content)
       if (closing !== undefined) {
         rejectPendingSfz(token)
@@ -660,12 +681,14 @@ function validateBody(
       const value = equals === -1 ? '' : content.slice(equals + 1)
       const isInfo = INFO_FIELDS.has(name)
       const isPostfix = POSTFIX_FLAGS.has(content) || /^(?:ac|ap)\(/.test(content)
-      const isInterval = INTERVAL_FLAGS.has(content) || name === 'volta'
+      const isTempoRamp = name === 'accel' || name === 'rit'
+      const isInterval = INTERVAL_FLAGS.has(content) || name === 'volta' || isTempoRamp
       const isPosition = content === 'br' || name === 'text'
       const isState = DYNAMICS.has(content) || name === 'key' || name === 'chord' || /^\d+qpm$/.test(content)
 
       if (isPostfix) {
-        if (!postfixTarget) diagnostics.push(lineMessage(token, '后附点指令必须紧跟有音高的普通音符、和音组或同目标的后附点指令'))
+        if (!postfixTarget) diagnostics.push(lineMessage(token, '后置指令必须紧跟有音高的普通音符、和音组或同目标的后置指令'))
+        else if (content === 'arp' && postfixTarget !== 'harmony') diagnostics.push(lineMessage(token, '琶音只能附在和音组之后'))
       } else if (content === 'sfz') {
         invalidatePostfix()
         if (pendingSfz) diagnostics.push(lineMessage(token, 'sfz 不能连续叠加'))
@@ -729,6 +752,23 @@ function validateBody(
           if (!bass && changed) settingEvents.push({ beat: elapsedBeats, kind: 'tempo', value: String(tempo) })
         }
         if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能声明速度'))
+        continue
+      }
+
+      if (isTempoRamp) {
+        const tempo = Number(value)
+        if (!/^\d+$/.test(value) || !Number.isSafeInteger(tempo) || tempo <= 0) diagnostics.push(lineMessage(token, '渐快或渐慢的目标速度必须是正整数'))
+        if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能声明渐快或渐慢'))
+        blocks.push({ name, line: token.line })
+        continue
+      }
+
+      if (/^(?:segno|ds|dc|fine)$/.test(content)) {
+        if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能使用反复导航标记'))
+        if (content === 'segno') segnoCount += 1
+        if (content === 'ds' || content === 'dc') jumpCount += 1
+        if (content === 'ds') dsCount += 1
+        if (content === 'fine') fineBeforeTerminal = true
         continue
       }
 
@@ -813,11 +853,16 @@ function validateBody(
         continue
       }
 
-      if (/^(?:ac|ap)\(.*\)$/.test(content)) {
-        const inner = content.slice(3, -1)
-        if (!inner.replace(/\s+/g, '')) diagnostics.push(lineMessage(token, '装饰音内至少需要一个音高'))
+      if (/^(?:ac|ap)\(/.test(content)) {
+        const grace = parseM3NGrace(content)
+        if (!grace) {
+          diagnostics.push(lineMessage(token, '装饰音必须使用同层配对的圆括号包裹音高序列'))
+          continue
+        }
+
+        if (!grace.pitchSource.replace(/\s+/g, '')) diagnostics.push(lineMessage(token, '装饰音内至少需要一个音高'))
         else {
-          const sequence = splitPitchSequence(inner)
+          const sequence = splitPitchSequence(grace.pitchSource)
           if (sequence.error) diagnostics.push(lineMessage(token, `装饰音${sequence.error}`))
           if (sequence.hasRest) diagnostics.push(lineMessage(token, '装饰音内不允许休止符'))
         }
@@ -915,6 +960,9 @@ function validateBody(
   else finishRepeat()
 
   if (!bass) {
+    if (segnoCount > 1) diagnostics.push('segno 最多只能使用一次')
+    if (jumpCount > 1) diagnostics.push('ds 和 dc 总共最多只能使用一次')
+    if (dsCount > 0 && segnoCount !== 1) diagnostics.push('ds 必须配合唯一的 segno')
     if (firstPartSeen && !partOrderSeen) diagnostics.push('使用 part 时必须声明 parts 演奏顺序')
     for (const part of definedParts) {
       if (!referencedParts.includes(part)) diagnostics.push(`乐段定义未被引用：${part}`)

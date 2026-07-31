@@ -76,6 +76,3 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
 
     return a.title.localeCompare(b.title, 'zh-Hans-CN')
   })
-
-export const sampleM3N =
-  presetScores.find((score) => score.slug === 'ode-to-joy')?.source ?? presetScores[0]?.source ?? ''

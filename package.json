@@ -11,17 +11,19 @@
     "check": "npm run lint && npm run test && npm run build",
     "analyze:happi123": "tsx tools/convert-happi123.ts",
     "convert:happi123": "tsx tools/convert-happi123.ts --write",
+    "download:fluidr3": "node tools/download-fluidr3-gm.mjs",
     "preview": "vite preview",
     "generate:icon": "node tools/generate-brand-icon.mjs"
   },
   "dependencies": {
-    "abcjs": "^6.6.4",
     "jspdf": "^4.2.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.1",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "spessasynth_lib": "^4.3.12",
+    "verovio": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",

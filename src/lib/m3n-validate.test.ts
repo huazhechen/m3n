@@ -8,6 +8,27 @@ describe('validateM3N', () => {
     expect(validateM3N('{title=Test}\n{key=C} {4/4} {120qpm}\n1 2 3 4 |||')).toEqual([])
   })
 
+  it('accepts tenuto and fermata postfixes', () => {
+    expect(validateM3N('{key=C} {4/4}\n1{hold} 2{fermata} 3 4 |||')).toEqual([])
+  })
+
+  it('accepts arpeggios on chord groups only', () => {
+    expect(validateM3N('{key=C} {4/4}\n[135:h]{arp} 0 0 0 |||')).toEqual([])
+    expect(messages('{key=C} {4/4}\n1{arp} 2 3 4 |||')).toContain('琶音只能附在和音组之后')
+  })
+
+  it('validates tempo-ramp targets and bass restrictions', () => {
+    expect(validateM3N('{4/4} {120qpm}\n{accel=144}1 2 3 4{/} |||')).toEqual([])
+    expect(messages('{4/4}\n{rit=0}1 2 3 4{/} |||')).toContain('渐快或渐慢的目标速度必须是正整数')
+    expect(messages('{4/4}\n1 2 3 4 |||\n{bass}{rit=80}1 2 3 4{/}|||{/}')).toContain('低音谱表内不能声明渐快或渐慢')
+  })
+
+  it('validates basic repeat navigation markers', () => {
+    expect(validateM3N('{4/4}\n{segno}1 2 3 4 | 5 6 7 1e{fine} ||| 1 2 3 4{ds} ||')).toEqual([])
+    expect(messages('{4/4}\n{segno}1 2 3 4 | {segno}1 2 3 4 |||')).toContain('segno 最多只能使用一次')
+    expect(messages('{4/4}\n1 2 3 4{ds} |||')).toContain('ds 必须配合唯一的 segno')
+  })
+
   it('accepts independent pickup measures in named parts without terminal bars', () => {
     const source = [
       '{parts=A B A}',
@@ -23,8 +44,9 @@ describe('validateM3N', () => {
   })
 
   it('validates note, rest, group, and duration restrictions', () => {
-    const result = messages('{4/4}\n1#b 2ed 0~ [10:h] [1:h] [123:0] [123:2]~ |||')
+    const result = messages('{4/4}\n1#b 2ed 1### 2bbb 0~ [10:h] [1:h] [123:0] [123:2]~ |||')
     expect(result).toContain('临时变音组合非法')
+    expect(result).toContain('临时变音最多只能使用两个同类记号')
     expect(result).toContain('八度方向混用')
     expect(result).toContain('休止符不能使用音高修饰或延音')
     expect(result).toContain('和音组内不允许休止符')
@@ -62,7 +84,12 @@ describe('validateM3N', () => {
   it('enforces prefix and postfix attachment', () => {
     const result = messages('{4/4}\n{sfz}0 1{tr} {br}{ac(2)} 2 3 4 |||')
     expect(result).toContain('sfz 后方第一个元素必须是有音高')
-    expect(result).toContain('后附点指令必须紧跟有音高')
+    expect(result).toContain('后置指令必须紧跟有音高')
+  })
+
+  it('supports nested grace-note durations', () => {
+    expect(validateM3N('{4/4}\n1{ac(2)} 2{ac((34))} 3{ap(((456)))} 4 |||')).toEqual([])
+    expect(messages('{4/4}\n1{ac((2)} 2 3 4 |||')).toContain('装饰音必须使用同层配对的圆括号包裹音高序列')
   })
 
   it('validates ties by absolute pitch and atom type', () => {

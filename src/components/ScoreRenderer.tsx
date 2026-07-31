@@ -1,79 +1,150 @@
-import abcjs from 'abcjs'
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { createPlaybackSource } from '../features/score-renderer/score-document'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import type { MeiSourceMapRange } from '../lib/m3n-mei'
+import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
+import type { AccompanimentNote } from '../lib/m3n-playback'
+import type { TempoChange } from '../lib/m3n-playback'
+import type { SpessaPlayer } from '../features/score-renderer/spessa-player'
+import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import { ScoreExportDialog } from './ScoreExportDialog'
 import type { ScoreExportDialogRef } from './ScoreExportDialog'
-import 'abcjs/abcjs-audio.css'
 
 type ScoreRendererProps = {
-  abc: string
+  mei: string
+  title: string
+  hasBassStaff: boolean
+  headerMetadata: ScoreHeaderMetadata[]
+  sourceMap: MeiSourceMapRange[]
+  accompaniment: AccompanimentNote[]
+  tempoChanges: TempoChange[]
+  tempo: number
   compact?: boolean
-  activeRange?: { startChar: number; endChar: number } | null
-  onActiveRange?: (range: { startChar?: number; endChar?: number } | null) => void
-  onNoteClick?: (range: { startChar: number; endChar: number }) => void
+  activeXmlId?: string | null
+  onActiveXmlId?: (xmlId: string | null) => void
+  onNoteClick?: (xmlId: string) => void
   onPaperBlur?: () => void
   showPrintButton?: boolean
   onPrintClick?: () => void
 }
 
+const headerLabels = {
+  zh: { transpose: '移调', parts: '乐段', composer: '作曲者', arranger: '编曲者' },
+  en: { transpose: 'Transpose', parts: 'Parts', composer: 'Composer', arranger: 'Arranger' },
+} as const
+
+function formatHeaderMetadata(item: ScoreHeaderMetadata) {
+  if (!item.label) return item.value
+  const language = typeof navigator === 'undefined' || navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en'
+  const separator = language === 'en' ? ': ' : '：'
+  return `${headerLabels[language][item.label]}${separator}${item.value}`
+}
+
+type RenderPhase = 'loading-library' | 'waiting-layout' | 'layout'
+
 export interface ScoreRendererRef {
   openExport: () => void
 }
 
-type PlaybackController = InstanceType<typeof abcjs.synth.SynthController> & {
-  go?: () => Promise<unknown>
-  isLoaded?: boolean
-  isLoading?: boolean
-  seek?: (percent: number) => void
+let scoreRenderQueue = Promise.resolve()
+type PlaybackStopper = { current: () => void }
+let activePlayback: PlaybackStopper | null = null
+
+function claimPlayback(stopper: PlaybackStopper) {
+  if (activePlayback && activePlayback !== stopper) activePlayback.current()
+  activePlayback = stopper
 }
 
-function withPlaybackExtensions(
-  controller: InstanceType<typeof abcjs.synth.SynthController>,
-): PlaybackController {
-  return controller as PlaybackController
+function releasePlayback(stopper: PlaybackStopper) {
+  if (activePlayback === stopper) activePlayback = null
+}
+
+function enqueueScoreRender(task: () => Promise<void>) {
+  const queued = scoreRenderQueue.then(async () => {
+    await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
+    return task()
+  })
+  scoreRenderQueue = queued.catch(() => undefined)
+  return queued
+}
+
+function resolveLyricCollisions(paper: HTMLElement) {
+  for (const svg of paper.querySelectorAll<SVGSVGElement>('svg:not([data-m3n-lyric-adjusted])')) {
+    const verses = [...svg.querySelectorAll<SVGGElement>('g.verse')]
+    const obstacles = [...svg.querySelectorAll<SVGGraphicsElement>('.notehead, .stem, .flag, .beam')]
+    let offset = 0
+
+    for (const verse of verses) {
+      const lyric = verse.getBBox()
+      for (const obstacle of obstacles) {
+        const bounds = obstacle.getBBox()
+        const overlapsHorizontally = lyric.x < bounds.x + bounds.width && lyric.x + lyric.width > bounds.x
+        const overlapsVertically = lyric.y < bounds.y + bounds.height && lyric.y + lyric.height > bounds.y
+        if (overlapsHorizontally && overlapsVertically) {
+          offset = Math.max(offset, bounds.y + bounds.height - lyric.y + 80)
+        }
+      }
+    }
+
+    if (offset > 0) {
+      verses.forEach((verse) => verse.setAttribute('transform', `translate(0 ${offset})`))
+      const viewBox = svg.viewBox.baseVal
+      svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height + offset}`)
+    }
+    svg.dataset.m3nLyricAdjusted = 'true'
+  }
 }
 
 export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(function ScoreRenderer({
-  abc,
+  mei,
+  title,
+  hasBassStaff,
+  headerMetadata,
+  sourceMap,
+  accompaniment,
+  tempoChanges,
+  tempo,
   compact = false,
-  activeRange,
-  onActiveRange,
+  activeXmlId,
+  onActiveXmlId,
   onNoteClick,
   onPaperBlur,
   showPrintButton = true,
   onPrintClick,
-}: ScoreRendererProps, ref) {
-  const paperRef = useRef<HTMLDivElement | null>(null)
-  const audioRef = useRef<HTMLDivElement | null>(null)
-  const exportDialogRef = useRef<ScoreExportDialogRef | null>(null)
-  const synthControlRef = useRef<InstanceType<typeof abcjs.synth.SynthController> | null>(null)
-  const playbackSpeedRef = useRef(100)
+}, ref) {
+  const paperRef = useRef<HTMLDivElement>(null)
+  const exportDialogRef = useRef<ScoreExportDialogRef>(null)
+  const scoreRef = useRef<VerovioScore | null>(null)
+  const playerRef = useRef<SpessaPlayer | null>(null)
+  const stopPlaybackRef = useRef<() => void>(() => undefined)
+  const getPlayerRef = useRef<(() => Promise<SpessaPlayer>) | null>(null)
+  const midiRef = useRef<ArrayBuffer | null>(null)
+  const speedRef = useRef(100)
+  const isSeekingRef = useRef(false)
+  const pendingSeekProgressRef = useRef(0)
+  const highlightedElementsRef = useRef<Element[]>([])
+  const highlightedMeasuresRef = useRef<SVGGElement[]>([])
+  const hasRenderedRef = useRef(false)
+  const [staffWidth, setStaffWidth] = useState(0)
+  const [message, setMessage] = useState('')
+  const [playbackProgress, setPlaybackProgress] = useState(0)
+  const [playbackSpeed, setPlaybackSpeed] = useState(100)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isPlayerLoading, setIsPlayerLoading] = useState(false)
+  const [hasAudioControls, setHasAudioControls] = useState(false)
+  const [isRendering, setIsRendering] = useState(false)
+  const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
+  const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
 
   useImperativeHandle(ref, () => ({
     openExport: () => exportDialogRef.current?.open(),
   }), [])
-  const appliedPlaybackSpeedRef = useRef(100)
-  const pendingSeekRef = useRef<number | null>(null)
-  const highlightedElementsRef = useRef<Element[]>([])
-  const cursorElementsRef = useRef<Array<{ startChar: number; endChar: number; svgEl: SVGElement }>>([])
-  const [message, setMessage] = useState('')
-  const [staffWidth, setStaffWidth] = useState(0)
-  const [playbackProgress, setPlaybackProgress] = useState(0)
-  const [playbackSpeed, setPlaybackSpeedValue] = useState(100)
-  const [hasAudioControls, setHasAudioControls] = useState(false)
-  const hasBassStaff = /^V:bass\b/m.test(abc)
 
   useEffect(() => {
     const paper = paperRef.current
-    if (!paper) {
-      return
-    }
-
+    if (!paper) return
     const updateWidth = () => {
       const width = Math.floor(paper.clientWidth)
-      setStaffWidth((current) => (current === width ? current : width))
+      setStaffWidth((current) => current === width ? current : width)
     }
-
     updateWidth()
     const observer = new ResizeObserver(updateWidth)
     observer.observe(paper)
@@ -82,218 +153,288 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
 
   useEffect(() => {
     const paper = paperRef.current
-    if (!paper) {
-      return
-    }
-
-    paper.innerHTML = ''
-    if (audioRef.current) {
-      audioRef.current.innerHTML = ''
-    }
-    highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
+    if (!paper || staffWidth === 0) return
+    let cancelled = false
+    const isInitialRender = !hasRenderedRef.current
+    if (isInitialRender) paper.innerHTML = ''
+    releasePlayback(stopPlaybackRef)
+    playerRef.current?.destroy()
+    playerRef.current = null
+    scoreRef.current?.destroy()
+    scoreRef.current = null
+    midiRef.current = null
     highlightedElementsRef.current = []
-    cursorElementsRef.current = []
-    onActiveRange?.(null)
+    highlightedMeasuresRef.current = []
     setMessage('')
     setPlaybackProgress(0)
+    setIsPlaying(false)
     setHasAudioControls(false)
-    synthControlRef.current = null
-    pendingSeekRef.current = null
+    setIsRendering(true)
+    setRenderPhase(isInitialRender ? 'loading-library' : null)
+    setSelectedXmlId(null)
+    onActiveXmlId?.(null)
 
-    try {
-      const visualObjects = abcjs.renderAbc(paper, abc, {
-        responsive: 'resize',
-        add_classes: true,
-        staffwidth: Math.max(320, staffWidth || (compact ? 620 : 820)),
-        wrap: {
-          preferredMeasuresPerLine: 0,
-          minSpacing: 1.5,
-          minSpacingLimit: 1.25,
-          maxSpacing: 2.5,
-          lastLineLimit: 1.5,
-        },
-        // abcjs otherwise applies its default red selection before invoking clickListener.
-        selectionColor: 'currentColor',
-        clickListener(abcElem) {
-          if (abcElem.el_type === 'note' && abcElem.startChar !== undefined && abcElem.endChar !== undefined) {
-            paper.focus({ preventScroll: true })
-            onNoteClick?.({ startChar: abcElem.startChar, endChar: abcElem.endChar })
-          }
-        },
-        paddingtop: 16,
-        paddingbottom: 16,
+    void import('../features/score-renderer/verovio-score')
+      .then(({ VerovioScore }) => VerovioScore.create(mei))
+      .then((score) => {
+        if (cancelled) {
+          score.destroy()
+          return
+        }
+        scoreRef.current = score
+        if (isInitialRender) setRenderPhase('waiting-layout')
+
+        return enqueueScoreRender(() => {
+          if (cancelled) return Promise.resolve()
+          if (isInitialRender) setRenderPhase('layout')
+          const pageCount = score.prepareLayout({ width: Math.max(320, staffWidth), scale: compact ? 38 : 42 })
+
+          return new Promise<void>((resolve, reject) => {
+            let page = 1
+            const pages: string[] = []
+            const renderNextPage = () => {
+              if (cancelled) {
+                resolve()
+                return
+              }
+              try {
+                const svg = score.renderPage(page)
+                if (isInitialRender) paper.insertAdjacentHTML('beforeend', svg)
+                else pages.push(svg)
+                page += 1
+                if (page > pageCount) {
+                  if (!isInitialRender) paper.innerHTML = pages.join('')
+                  resolveLyricCollisions(paper)
+                  hasRenderedRef.current = true
+                  setHasAudioControls(true)
+                  const playerPromise = getPlayerRef.current?.()
+                  void playerPromise?.catch((error: unknown) => {
+                    if (!cancelled) setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
+                  })
+                  resolve()
+                  return
+                }
+                window.requestAnimationFrame(renderNextPage)
+              } catch (error) {
+                reject(error)
+              }
+            }
+            window.requestAnimationFrame(renderNextPage)
+          })
+        })
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setMessage(error instanceof Error ? error.message : 'MEI 乐谱渲染失败。')
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsRendering(false)
+          setRenderPhase(null)
+        }
       })
 
-      const visualObject = visualObjects[0]
-      cursorElementsRef.current = visualObject?.getSelectableArray().flatMap((selectable) => {
-        const { startChar, endChar } = selectable.absEl.abcelem
-        return startChar === undefined || endChar === undefined
-          ? []
-          : [{ startChar, endChar, svgEl: selectable.svgEl }]
-      }) ?? []
-      if (!visualObject || !audioRef.current || !abcjs.synth.supportsAudio()) {
-        return
-      }
-
-      const playbackSource = createPlaybackSource(abc)
-      const playbackVisualObject = playbackSource.abc === abc
-        ? visualObject
-        : abcjs.renderAbc(document.createElement('div'), playbackSource.abc, {
-            add_classes: true,
-            staffwidth: Math.max(320, staffWidth || (compact ? 620 : 820)),
-            paddingtop: 16,
-            paddingbottom: 16,
-          })[0]
-
-      const synthControl = new abcjs.synth.SynthController()
-      synthControlRef.current = synthControl
-      synthControl.load(
-        audioRef.current,
-        {
-          onBeat(beatNumber, totalBeats) {
-            const progress = totalBeats > 0 ? Math.max(0, Math.min(1, beatNumber / totalBeats)) : 0
-            setPlaybackProgress((current) => (Math.abs(current - progress) < 0.002 ? current : progress))
-          },
-          onReady() {
-            const controller = synthControlRef.current
-            const pendingSeek = pendingSeekRef.current
-            if (controller && pendingSeek !== null) {
-              controller.setProgress(pendingSeek)
-              const playbackController = withPlaybackExtensions(controller)
-              playbackController.seek?.(pendingSeek)
-              pendingSeekRef.current = null
-            }
-            if (controller && appliedPlaybackSpeedRef.current !== playbackSpeedRef.current) {
-              appliedPlaybackSpeedRef.current = playbackSpeedRef.current
-              controller.setWarp(playbackSpeedRef.current).catch(() => undefined)
-            }
-          },
-          onEvent(event) {
-            const startChars = event.startCharArray ?? (event.startChar === undefined ? [] : [event.startChar])
-            const endChars = event.endCharArray ?? (event.endChar === undefined ? [] : [event.endChar])
-            if (startChars.length === 0 || endChars.length === 0) {
-              highlightedElementsRef.current.forEach((element) =>
-                element.classList.remove('is-playing'),
-              )
-              highlightedElementsRef.current = []
-              onActiveRange?.(null)
-              return
-            }
-            if (event.milliseconds === 0) {
-              setPlaybackProgress(0)
-            }
-            const ranges = startChars.map((startChar, index) => ({
-              startChar: playbackSource.toOriginalPosition(startChar),
-              endChar: playbackSource.toOriginalPosition(endChars[index] ?? endChars[0]),
-            }))
-            const elements = playbackVisualObject === visualObject
-              ? event.elements?.flat().filter((element) => element instanceof Element) as Element[] ?? []
-              : cursorElementsRef.current
-                .filter((item) => ranges.some(
-                  (range) => range.startChar < item.endChar && range.endChar > item.startChar,
-                ))
-                .map((item) => item.svgEl)
-            highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
-            elements.forEach((element) => element.classList.add('is-playing'))
-            highlightedElementsRef.current = elements
-            onActiveRange?.(ranges[0])
-          },
-          onFinished() {
-            highlightedElementsRef.current.forEach((element) =>
-              element.classList.remove('is-playing'),
-            )
-            highlightedElementsRef.current = []
-            onActiveRange?.(null)
-            setPlaybackProgress(1)
-          },
-        },
-        {
-        displayLoop: false,
-        displayRestart: false,
-        displayPlay: true,
-        displayProgress: false,
-        displayWarp: false,
-        },
-      )
-      setHasAudioControls(true)
-      synthControl.setTune(playbackVisualObject, false, {
-        soundFontUrl: '/soundfonts/FluidR3_GM/',
-        soundFontVolumeMultiplier: 3,
-      }).catch(() => {
-        setMessage('当前浏览器需要用户交互后才能初始化音频。')
-      })
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'ABC 渲染失败。')
+    return () => {
+      cancelled = true
+      releasePlayback(stopPlaybackRef)
+      playerRef.current?.destroy()
+      playerRef.current = null
+      scoreRef.current?.destroy()
+      scoreRef.current = null
     }
-  }, [abc, compact, onActiveRange, onNoteClick, staffWidth])
+  }, [compact, mei, onActiveXmlId, staffWidth])
 
   useEffect(() => {
-    cursorElementsRef.current.forEach((item) => item.svgEl.classList.remove('is-cursor-active'))
-    if (!activeRange) {
-      return
-    }
-
-    cursorElementsRef.current.forEach((item) => {
-      if (activeRange.startChar < item.endChar && activeRange.endChar > item.startChar) {
-        item.svgEl.classList.add('is-cursor-active')
-      }
+    paperRef.current?.querySelectorAll('.is-cursor-active').forEach((element) => {
+      element.classList.remove('is-cursor-active')
     })
-  }, [activeRange])
+    const xmlId = activeXmlId ?? selectedXmlId
+    if (xmlId) paperRef.current?.querySelector(`#${xmlId}`)?.classList.add('is-cursor-active')
+  }, [activeXmlId, mei, selectedXmlId])
 
-  const seekPlayback = (value: number) => {
-    setPlaybackProgress(value)
-    const synthControl = synthControlRef.current
-    if (!synthControl) {
-      return
+  const clearPlaybackHighlight = () => {
+    highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
+    highlightedElementsRef.current = []
+    highlightedMeasuresRef.current.forEach((measure) => measure.classList.remove('is-playing-measure'))
+    highlightedMeasuresRef.current = []
+    onActiveXmlId?.(null)
+  }
+
+  const highlightMeasure = (measure: SVGGElement) => {
+    if (!measure.querySelector(':scope > .measure-playback-highlight')) {
+      const system = measure.closest<SVGGElement>('g.system')
+      const measureBounds = measure.getBBox()
+      const systemBounds = system?.getBBox() ?? measureBounds
+      const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+      band.classList.add('measure-playback-highlight')
+      band.setAttribute('x', String(measureBounds.x))
+      band.setAttribute('y', String(systemBounds.y))
+      band.setAttribute('width', String(measureBounds.width))
+      band.setAttribute('height', String(systemBounds.height))
+      measure.insertBefore(band, measure.firstChild)
     }
+    measure.classList.add('is-playing-measure')
+  }
 
-    const playbackController = withPlaybackExtensions(synthControl)
-    if (playbackController.isLoaded) {
-      synthControl.setProgress(value)
-      playbackController.seek?.(value)
-      return
-    }
+  stopPlaybackRef.current = () => {
+    playerRef.current?.pause()
+    setIsPlaying(false)
+    clearPlaybackHighlight()
+    releasePlayback(stopPlaybackRef)
+  }
 
-    pendingSeekRef.current = value
-    if (!playbackController.isLoading) {
-      playbackController.go?.().catch(() => {
-        setMessage('当前浏览器无法初始化音频。')
+  const updatePlaybackHighlight = (seconds: number, duration: number, scoreSeconds = seconds, syncProgress = true) => {
+    const progress = duration > 0 ? Math.max(0, Math.min(1, seconds / duration)) : 0
+    if (syncProgress) setPlaybackProgress(progress)
+    const timedElements = scoreRef.current?.elementsAtTime(scoreSeconds * 1000) ?? []
+    const elements = timedElements.flatMap(({ xmlId, rendition }) => {
+      const note = paperRef.current?.querySelector<SVGGElement>(`#${xmlId}`)
+      if (!note) return []
+      const verses = [...note.querySelectorAll<SVGGElement>(':scope > g.verse')]
+      return [...note.children].filter((element) => !element.classList.contains('verse') || element === verses[rendition - 1])
+    })
+    highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
+    elements.forEach((element) => element.classList.add('is-playing'))
+    highlightedElementsRef.current = elements
+    const measures = [...new Set(elements.map((element) => element.closest<SVGGElement>('g.measure')).filter((measure): measure is SVGGElement => Boolean(measure)))]
+    highlightedMeasuresRef.current.forEach((measure) => {
+      if (!measures.includes(measure)) measure.classList.remove('is-playing-measure')
+    })
+    measures.forEach(highlightMeasure)
+    highlightedMeasuresRef.current = measures
+    onActiveXmlId?.(timedElements.map((element) => element.xmlId).find((id) => sourceMap.some((range) => range.xmlId === id)) ?? null)
+  }
+
+  const onPlayerTime = (seconds: number, duration: number, scoreSeconds: number) => {
+    if (!isSeekingRef.current) updatePlaybackHighlight(seconds, duration, scoreSeconds)
+  }
+
+  const getPlayer = async () => {
+    if (playerRef.current) return playerRef.current
+    const score = scoreRef.current
+    if (!score) throw new Error('乐谱尚未准备完成。')
+    setIsPlayerLoading(true)
+    try {
+      midiRef.current ??= score.midi()
+      const { SpessaPlayer } = await import('../features/score-renderer/spessa-player')
+      const player = await SpessaPlayer.create(midiRef.current, accompaniment, tempo, tempoChanges, {
+        onEnded: () => {
+          stopPlaybackRef.current()
+        },
+        onTime: onPlayerTime,
       })
+      player.setSpeed(speedRef.current)
+      playerRef.current = player
+      return player
+    } finally {
+      setIsPlayerLoading(false)
     }
   }
 
-  const seekPlaybackFromPointer = (input: HTMLInputElement, clientX: number) => {
-    const bounds = input.getBoundingClientRect()
-    if (bounds.width === 0) {
-      return
+  getPlayerRef.current = getPlayer
+
+  const togglePlayback = async () => {
+    try {
+      const player = await getPlayer()
+      if (player.paused) {
+        claimPlayback(stopPlaybackRef)
+        await player.play()
+        setIsPlaying(true)
+      } else {
+        stopPlaybackRef.current()
+      }
+    } catch (error) {
+      releasePlayback(stopPlaybackRef)
+      setIsPlaying(false)
+      setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
     }
-    seekPlayback(Math.max(0, Math.min(1, (clientX - bounds.left) / bounds.width)))
   }
 
-  const setPlaybackSpeed = (value: number) => {
-    setPlaybackSpeedValue(value)
-    playbackSpeedRef.current = value
-    const synthControl = synthControlRef.current
-    if (synthControl && withPlaybackExtensions(synthControl).isLoaded) {
-      appliedPlaybackSpeedRef.current = value
-      synthControl.setWarp(value).catch(() => undefined)
+  const previewSeek = (progress: number) => {
+    pendingSeekProgressRef.current = progress
+    setPlaybackProgress(progress)
+    const player = playerRef.current
+    if (player) {
+      const playbackSeconds = progress * player.duration
+      updatePlaybackHighlight(playbackSeconds, player.duration, player.sourceTimeAt(playbackSeconds), false)
     }
   }
+
+  const commitSeek = useCallback(() => {
+    if (!isSeekingRef.current) return
+    const progress = pendingSeekProgressRef.current
+    playerRef.current?.seek(progress)
+    isSeekingRef.current = false
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('pointerup', commitSeek)
+    window.addEventListener('pointercancel', commitSeek)
+    return () => {
+      window.removeEventListener('pointerup', commitSeek)
+      window.removeEventListener('pointercancel', commitSeek)
+    }
+  }, [commitSeek])
+
+  const centeredHeaderItems = headerMetadata.filter((item) => item.side === 'center')
+    .sort((left, right) => left.priority - right.priority)
+  const leftHeaderItems = headerMetadata.filter((item) => item.side === 'left')
+    .sort((left, right) => left.priority - right.priority)
+  const rightHeaderItems = headerMetadata.filter((item) => item.side === 'right')
+    .sort((left, right) => left.priority - right.priority)
 
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
+      {headerMetadata.length > 0 && (
+        <header className="score-title-block">
+          {centeredHeaderItems.map((item) => item.priority === 0
+            ? <h1 key={item.priority}>{item.value}</h1>
+            : <p className="score-subtitle" key={item.priority}>{item.value}</p>)}
+          {(leftHeaderItems.length > 0 || rightHeaderItems.length > 0) && (
+            <div className="score-header-details">
+              <div className="score-header-column score-header-column-left">
+                {leftHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{formatHeaderMetadata(item)}</p>)}
+              </div>
+              <div className="score-header-column score-header-column-right">
+                {rightHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{formatHeaderMetadata(item)}</p>)}
+              </div>
+            </div>
+          )}
+        </header>
+      )}
       <div
         ref={paperRef}
-        className="score-paper"
+        className="score-paper verovio-score"
+        data-render-phase={renderPhase ?? undefined}
+        aria-busy={isRendering || undefined}
         tabIndex={0}
+        onClick={(event) => {
+          const element = (event.target as Element).closest('[id^="m3n-e-"]')
+          if (!element?.id) return
+          const xmlId = element.id
+          paperRef.current?.querySelectorAll('.is-cursor-active').forEach((activeElement) => {
+            activeElement.classList.remove('is-cursor-active')
+          })
+          element.classList.add('is-cursor-active')
+          setSelectedXmlId(xmlId)
+          window.requestAnimationFrame(() => onNoteClick?.(xmlId))
+        }}
         onBlurCapture={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) {
-            onPaperBlur?.()
-          }
+          if (!event.currentTarget.contains(event.relatedTarget)) onPaperBlur?.()
         }}
       />
       <div className="audio-controls">
-        <div ref={audioRef} />
+        {hasAudioControls && (
+          <button
+            type="button"
+            className="playback-toggle"
+            aria-label={isPlaying ? '暂停' : '播放'}
+            title={isPlaying ? '暂停' : '播放'}
+            disabled={isPlayerLoading}
+            onClick={() => void togglePlayback()}
+          >
+            <span className={isPlaying ? 'playback-icon pause' : 'playback-icon play'} aria-hidden="true" />
+          </button>
+        )}
         {hasAudioControls && (
           <div className="playback-speed">
             <span>速度</span>
@@ -303,8 +444,13 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
               max="200"
               step="5"
               value={playbackSpeed}
-              aria-label="Playback speed"
-              onChange={(event) => setPlaybackSpeed(Number(event.currentTarget.value))}
+              aria-label="播放速度"
+              onChange={(event) => {
+                const value = Number(event.currentTarget.value)
+                speedRef.current = value
+                setPlaybackSpeed(value)
+                playerRef.current?.setSpeed(value)
+              }}
             />
             <output>{playbackSpeed}%</output>
           </div>
@@ -312,28 +458,24 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
         {hasAudioControls && (
           <div className="playback-progress">
             <span>播放进度</span>
-          <input
-            type="range"
-            min="0"
-            max="1000"
-            value={Math.round(playbackProgress * 1000)}
-            aria-label="Playback position"
-            onInput={(event) => seekPlayback(Number(event.currentTarget.value) / 1000)}
-            onPointerDown={(event) => {
-              event.currentTarget.setPointerCapture(event.pointerId)
-              seekPlaybackFromPointer(event.currentTarget, event.clientX)
-            }}
-            onPointerMove={(event) => {
-              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                seekPlaybackFromPointer(event.currentTarget, event.clientX)
-              }
-            }}
-            onPointerUp={(event) => {
-              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                event.currentTarget.releasePointerCapture(event.pointerId)
-              }
-            }}
-          />
+            <input
+              type="range"
+              min="0"
+              max="1000"
+              value={Math.round(playbackProgress * 1000)}
+              aria-label="播放位置"
+              onPointerDown={() => {
+                isSeekingRef.current = true
+                pendingSeekProgressRef.current = playbackProgress
+              }}
+              onKeyDown={() => {
+                isSeekingRef.current = true
+                pendingSeekProgressRef.current = playbackProgress
+              }}
+              onKeyUp={commitSeek}
+              onBlur={commitSeek}
+              onInput={(event) => previewSeek(Number(event.currentTarget.value) / 1000)}
+            />
             <output>{Math.round(playbackProgress * 100)}%</output>
           </div>
         )}
@@ -345,7 +487,8 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       </div>
       <ScoreExportDialog
         ref={exportDialogRef}
-        abc={abc}
+        mei={mei}
+        title={title}
         hasBassStaff={hasBassStaff}
         onError={setMessage}
       />
