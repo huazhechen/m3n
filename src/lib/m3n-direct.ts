@@ -38,6 +38,11 @@ export type DirectInterval = {
 export type DirectMeasure = { events: DirectEvent[]; left?: string; right?: string; ending?: string; breakBefore?: boolean; breakAfter?: boolean; multiRest?: number; repeatCount?: number }
 export type DirectPart = { melody: DirectMeasure[]; bass: DirectMeasure[] }
 export type DirectLyricBlock = { range: string; syllables: string[] }
+type DirectSettingEvent = {
+  beats: number
+  kind: 'key' | 'meter' | 'tempo'
+  value: string
+}
 
 export type DirectDocument = {
   title: string
@@ -80,13 +85,20 @@ function parseBody(
   initialMeterUnit: number,
   initialTempo: number,
   intervals: DirectInterval[],
+  settingEvents: DirectSettingEvent[] = [],
+  inheritedSettingEvents: DirectSettingEvent[] = [],
 ) {
   let depth = 0
   let currentKey = initialKey
   let currentMeterCount = initialMeterCount
   let currentMeterUnit = initialMeterUnit
   let currentTempo = initialTempo
+  let commonKey = initialKey
+  let commonMeterCount = initialMeterCount
+  let commonMeterUnit = initialMeterUnit
+  let commonTempo = initialTempo
   let currentPart = 'score'
+  let hasParts = false
   let activeEnding: string | undefined
   let currentDynamic: string | undefined
   let dynamicChanged = false
@@ -96,6 +108,8 @@ function parseBody(
   let lastEvent: DirectEvent | undefined
   let pendingNavigation: Array<'segno' | 'ds' | 'dc' | 'fine'> = []
   let pendingRepeatEnd: DirectMeasure | undefined
+  let elapsedBeats = 0
+  let inheritedSettingIndex = 0
   const structureStack: Array<string | DirectInterval> = []
 
   const getPart = () => {
@@ -139,10 +153,26 @@ function parseBody(
       item.endStart = event.sourceStart
     }
     measure().events.push(event)
+    elapsedBeats += event.beats
     lastEvent = event
     pendingPrefix = undefined
     dynamicChanged = false
     chordChanged = false
+  }
+
+  const applyInheritedSettings = () => {
+    while (inheritedSettingIndex < inheritedSettingEvents.length) {
+      const event = inheritedSettingEvents[inheritedSettingIndex]
+      if (event.beats > elapsedBeats) break
+      if (event.kind === 'key') currentKey = event.value
+      if (event.kind === 'meter') {
+        const [count, unit] = event.value.split('/').map(Number)
+        currentMeterCount = count
+        currentMeterUnit = unit
+      }
+      if (event.kind === 'tempo') currentTempo = Number(event.value)
+      inheritedSettingIndex += 1
+    }
   }
 
   for (const token of tokenizeM3N(source)) {
@@ -156,23 +186,44 @@ function parseBody(
         continue
       }
       pendingRepeatEnd = undefined
-      if (value.startsWith('key=')) currentKey = value.slice(4)
+      if (value.startsWith('key=')) {
+        currentKey = value.slice(4)
+        if (!hasParts) commonKey = currentKey
+        if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'key', value: currentKey })
+      }
       if (value.startsWith('key=') && currentChord) chordChanged = true
       const meter = /^(\d+)\/(\d+)$/.exec(value)
       if (meter) {
         currentMeterCount = Number(meter[1])
         currentMeterUnit = Number(meter[2])
+        if (!hasParts) {
+          commonMeterCount = currentMeterCount
+          commonMeterUnit = currentMeterUnit
+        }
+        if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'meter', value: `${currentMeterCount}/${currentMeterUnit}` })
       }
       const tempo = /^(\d+)qpm$/.exec(value)
-      if (tempo) currentTempo = Number(tempo[1])
+      if (tempo) {
+        currentTempo = Number(tempo[1])
+        if (!hasParts) commonTempo = currentTempo
+        if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'tempo', value: String(currentTempo) })
+      }
       const multiRest = /^rest=(\d+)$/.exec(value)
-      if (multiRest) measure().multiRest = Number(multiRest[1])
+      if (multiRest) {
+        measure().multiRest = Number(multiRest[1])
+        elapsedBeats += Number(multiRest[1]) * currentMeterCount * 4 / currentMeterUnit
+      }
       if (value === 'br') {
         const current = measure()
         if (current.events.length === 0) current.breakBefore = true
         else current.breakAfter = true
       }
       if (value.startsWith('part=')) {
+        hasParts = true
+        currentKey = commonKey
+        currentMeterCount = commonMeterCount
+        currentMeterUnit = commonMeterUnit
+        currentTempo = commonTempo
         currentPart = value.slice(5).trim() || 'score'
         structureStack.push('part')
       } else if (value.startsWith('volta=')) {
@@ -214,6 +265,12 @@ function parseBody(
         const closed = index >= 0 ? structureStack.splice(index, 1)[0] : undefined
         if (closed === 'volta') activeEnding = undefined
         if (typeof closed === 'object' && closed.tempoTarget !== undefined) currentTempo = closed.tempoTarget
+        if (closed === 'part') {
+          currentKey = commonKey
+          currentMeterCount = commonMeterCount
+          currentMeterUnit = commonMeterUnit
+          currentTempo = commonTempo
+        }
         lastEvent = undefined
       }
       continue
@@ -247,6 +304,7 @@ function parseBody(
     }
     const group = token.kind === 'group' ? /^\[([^\]:]+):([^\]]+)\](\^*)(\.*)(~?)/.exec(token.raw) : null
     if (group !== null) {
+      applyInheritedSettings()
       pendingRepeatEnd = undefined
       const pitches = parseM3NGroupPitches(group[1] ?? '') ?? []
       const mode = group[2]?.trim() ?? ''
@@ -277,6 +335,7 @@ function parseBody(
     const noteToken = token.kind === 'note' ? token.raw : undefined
     const note = noteToken ? parseM3NNote(noteToken) : null
     if (note && noteToken) {
+      applyInheritedSettings()
       pendingRepeatEnd = undefined
       add({
         sourceStart: token.start,
@@ -328,11 +387,12 @@ export function parseM3NDocument(source: string): DirectDocument {
   const tempo = source.match(/\{(\d+)qpm\}/)?.[1]
   const parts = new Map<string, DirectPart>()
   const intervals: DirectInterval[] = []
+  const settingEvents: DirectSettingEvent[] = []
   const meterCount = Number(meter?.[1] ?? 4)
   const meterUnit = Number(meter?.[2] ?? 4)
   const initialTempo = Number(tempo ?? 120)
-  parseBody(main, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals)
-  if (bass) parseBody(bass, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals)
+  parseBody(main, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents)
+  if (bass) parseBody(bass, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
   return {
     title: metadata(source, 'title'),
     subtitle: metadata(source, 'subtitle'),
