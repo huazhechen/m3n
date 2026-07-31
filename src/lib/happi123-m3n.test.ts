@@ -130,4 +130,13 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('{part=DC2}')
     expect(result.output).not.toMatch(/text=(?:D\.C\.|Fine)/)
   })
+
+  it('uses ordinary section bars inside parts and adds a missing document terminator', () => {
+    const partResult = happi123ToM3N('{title:分段}\n{key_signature:C}\n{time_signature:2/4}\n{play:A}\nA: 11|||')
+    const plainResult = happi123ToM3N('{title:结尾}\n{key_signature:C}\n{time_signature:2/4}\n11|22')
+
+    expect(partResult.output).toContain('{part=A} 1 1 || {/}')
+    expect(partResult.output).not.toContain('|||')
+    expect(plainResult.output).toContain('1 1 | 2 2 |||')
+  })
 })

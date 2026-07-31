@@ -530,9 +530,15 @@ export function happi123ToM3N(source: string): ConversionResult {
     }
   }
   const partCount = definedParts.length
+  // A Happi123 terminal bar ends the source document, while an M3N part has
+  // no terminal semantics.  Keep the repeat/section meaning, but remove the
+  // document terminator before wrapping source sections as parts.
   const sectionedMusic = partCount > 0
-    ? `${converted.replace(/\{part=/g, (_match, offset) => offset === converted.indexOf('{part=') ? '{part=' : '{/} {part=')} {/}`
-    : converted
+    ? `${converted
+      .replace(/:\|\|\|/g, ':||')
+      .replace(/\|\|\|/g, '||')
+      .replace(/\{part=/g, (_match, offset) => offset === converted.indexOf('{part=') ? '{part=' : '{/} {part=')} {/}`
+    : /(?:\|\|\||:\|\|\|)\s*$/.test(converted) ? converted : `${converted} |||`
   if (header.meters.length === 1) {
     const correctedMeter = inferCorrectedMeter(sectionedMusic, header.meter)
     if (correctedMeter !== header.meter) {
