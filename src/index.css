@@ -1121,27 +1121,23 @@ a.action-button {
 }
 
 .book-layout {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(220px, 270px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 18px;
 }
 
 .book-toc {
-  display: none;
-  position: fixed;
-  right: 16px;
-  bottom: 72px;
-  z-index: 20;
-  width: min(320px, calc(100vw - 32px));
-  max-height: calc(100vh - 148px);
+  position: sticky;
+  top: 18px;
+  max-height: calc(100vh - 36px);
   overflow: auto;
   padding: 16px;
-  box-shadow: 0 12px 28px rgb(31 35 38 / 18%);
-}
-
-.book-toc.is-open {
-  display: block;
 }
 
 .doc-toc-toggle {
+  display: none;
   background: rgb(217 95 42 / 82%);
 }
 
@@ -1215,17 +1211,6 @@ a.action-button {
   overflow: hidden;
 }
 
-.doc-context {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-  border-bottom: 1px solid #e2e3dc;
-  padding-bottom: 12px;
-  color: #5c6468;
-}
-
 .markdown-panel h1,
 .markdown-panel h2,
 .markdown-panel h3,
@@ -1273,47 +1258,47 @@ a.action-button {
   padding: 10px 14px;
 }
 
-.doc-pagination {
-  display: flex;
-  gap: 10px;
+.doc-toc-toggle {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 21;
-  margin: 0;
-  border: 0;
-  padding: 0;
-}
-
-.doc-pagination button {
-  display: grid;
   width: 44px;
   height: 44px;
-  place-items: center;
   border: 1px solid rgb(255 255 255 / 58%);
   border-radius: 50%;
   color: #ffffff;
   font-size: 1.2rem;
   font-weight: 700;
   cursor: pointer;
+  place-items: center;
   backdrop-filter: blur(6px);
 }
 
-.doc-pagination button:first-child {
-  background: rgb(23 79 84 / 82%);
-}
+@media (max-width: 720px) {
+  .book-layout {
+    display: block;
+    margin-top: 0;
+  }
 
-.doc-pagination button:nth-child(2) {
-  background: rgb(47 111 115 / 82%);
-}
+  .book-toc {
+    display: none;
+    position: fixed;
+    right: 16px;
+    bottom: 72px;
+    z-index: 20;
+    width: min(320px, calc(100vw - 32px));
+    max-height: calc(100vh - 148px);
+    box-shadow: 0 12px 28px rgb(31 35 38 / 18%);
+  }
 
-.doc-pagination .doc-toc-toggle {
-  background: rgb(217 95 42 / 82%);
-}
+  .book-toc.is-open {
+    display: block;
+  }
 
-.doc-pagination button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+  .doc-toc-toggle {
+    display: grid;
+  }
 }
 
 @media (max-width: 1100px) {
