@@ -292,7 +292,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       }
       const tieEnd = previousTiedByStaff.get(staffNumber) ?? false
       previousTiedByStaff.set(staffNumber, event.tie)
-      const lyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
+      const lyrics = staffNumber === 1 && event.kind !== 'rest' && !tieEnd && !isInstrumentalEvent(event)
         ? lyricSyllables.flatMap((block, index) => {
           const lyric = block.syllables[melodyIndices[index]++]
           return lyric ? [{ ...lyric, n: block.n }] : []
