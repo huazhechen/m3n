@@ -5,7 +5,6 @@ import type { AccompanimentNote } from '../lib/m3n-playback'
 import type { TempoChange } from '../lib/m3n-playback'
 import type { SpessaPlayer } from '../features/score-renderer/spessa-player'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
-import { expandMeasuresForLyricCollisions } from '../features/score-renderer/lyric-layout'
 import { ScoreExportDialog } from './ScoreExportDialog'
 import type { ScoreExportDialogRef } from './ScoreExportDialog'
 
@@ -256,7 +255,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                 page += 1
                 if (page > pageCount) {
                   if (!isInitialRender) paper.innerHTML = pages.join('')
-                  expandMeasuresForLyricCollisions(paper)
                   resolveLyricCollisions(paper)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)

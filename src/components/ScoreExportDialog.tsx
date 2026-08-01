@@ -1,7 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { scoreFileName } from '../features/score-renderer/score-document'
 import { downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
-import { expandMeasuresForLyricCollisions } from '../features/score-renderer/lyric-layout'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 
 type ExportFormat = 'png' | 'pdf'
@@ -53,7 +52,6 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
             scale: format === 'pdf' ? 42 * pdfScale / 100 : 42,
             includeBass: includeBass || !hasBassStaff,
           })
-          expandMeasuresForLyricCollisions(preview)
         }
         score.destroy()
       }).catch((error: unknown) => {
@@ -79,7 +77,6 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           scale: 42 * scale,
           includeBass: includeBass || !hasBassStaff,
         })
-        expandMeasuresForLyricCollisions(exportPaper)
         const svg = exportPaper.querySelector('svg')
         if (!svg) throw new Error('当前没有可导出的五线谱。')
 
