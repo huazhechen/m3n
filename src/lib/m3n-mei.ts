@@ -565,9 +565,14 @@ export function m3nToMei(source: string): MeiConversionResult {
       ? layoutNodes.find((node) => node.navigation?.includes('segno'))
       : layoutNodes.find((node) => node.kind === 'section')
     const fine = layoutNodes.find((node) => node.navigation?.includes('fine'))
-    const destinationIndex = destination ? expansion.indexOf(`#${destination.id}`) : -1
-    const fineIndex = fine ? expansion.indexOf(`#${fine.id}`, Math.max(0, destinationIndex)) : expansion.length - 1
-    if (jumpIndex >= 0 && destinationIndex >= 0) expansion = [...expansion.slice(0, jumpIndex + 1), ...expansion.slice(destinationIndex, fineIndex + 1)]
+    const destinationIndex = destination ? layoutNodes.indexOf(destination) : -1
+    const returnEndIndex = fine ? layoutNodes.indexOf(fine) : layoutNodes.indexOf(jumpNode)
+    if (jumpIndex >= 0 && destinationIndex >= 0 && returnEndIndex >= destinationIndex) {
+      // Repeat marks apply on the initial pass. A D.S./D.C. return is a
+      // linear navigation path and must not re-trigger already played repeats.
+      const returnPath = layoutNodes.slice(destinationIndex, returnEndIndex + 1).map((node) => `#${node.id}`)
+      expansion = [...expansion.slice(0, jumpIndex + 1), ...returnPath]
+    }
   }
   const needsExpansion = hasNamedParts || hasEndings || hasNavigation || layoutNodes.some((node) => node.repeatCount)
   const sectionContent = [
