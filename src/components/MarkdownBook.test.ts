@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { documentHeadings, searchForDocument } from '../lib/docs-navigation'
+import { documentSections, searchForDocument } from '../lib/docs-navigation'
 
 describe('MarkdownBook navigation', () => {
   it('stores the selected document in the query string', () => {
     expect(searchForDocument('?mode=compact&page=manual-notes', 'manual')).toBe('?mode=compact&doc=manual')
   })
 
-  it('extracts unique anchor ids for second-level headings', () => {
-    expect(documentHeadings('# Title\n\n## 时值\n\n## 时值\n\n### Ignored')).toEqual([
-      { id: '时值', title: '时值' },
-      { id: '时值-2', title: '时值' },
+  it('groups third-level headings below their second-level section', () => {
+    expect(documentSections('# Title\n\n## 时值\n\n### 八分音符\n\n### 八分音符\n\n## 调号')).toEqual([
+      {
+        id: '时值',
+        title: '时值',
+        children: [
+          { id: '八分音符', title: '八分音符' },
+          { id: '八分音符-2', title: '八分音符' },
+        ],
+      },
+      { id: '调号', title: '调号', children: [] },
     ])
   })
 })

@@ -3,6 +3,10 @@ export type DocumentHeading = {
   title: string
 }
 
+export type DocumentSection = DocumentHeading & {
+  children: DocumentHeading[]
+}
+
 export function slugify(value: string) {
   return (
     value
@@ -13,20 +17,30 @@ export function slugify(value: string) {
   )
 }
 
-export function documentHeadings(source: string): DocumentHeading[] {
+export function documentSections(source: string): DocumentSection[] {
   const counts = new Map<string, number>()
+  const sections: DocumentSection[] = []
+  let currentSection: DocumentSection | undefined
 
-  return [...source.matchAll(/^##\s+(.+?)\s*#*\s*$/gm)].map((match) => {
-    const title = match[1]?.trim() ?? ''
+  for (const match of source.matchAll(/^(#{2,3})\s+(.+?)\s*#*\s*$/gm)) {
+    const title = match[2]?.trim() ?? ''
     const baseId = slugify(title)
     const occurrence = (counts.get(baseId) ?? 0) + 1
     counts.set(baseId, occurrence)
-
-    return {
+    const heading = {
       id: occurrence === 1 ? baseId : `${baseId}-${occurrence}`,
       title,
     }
-  })
+
+    if (match[1]?.length === 2) {
+      currentSection = { ...heading, children: [] }
+      sections.push(currentSection)
+    } else {
+      currentSection?.children.push(heading)
+    }
+  }
+
+  return sections
 }
 
 export function searchForDocument(search: string, documentId: string) {

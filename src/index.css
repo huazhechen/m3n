@@ -1187,6 +1187,39 @@ a.action-button {
   padding-left: 10px;
 }
 
+.toc-section {
+  display: grid;
+  gap: 4px;
+}
+
+.toc-section-heading {
+  border-color: transparent;
+  background: transparent;
+  color: #42494c;
+  font-size: 0.94rem;
+  padding: 7px 8px;
+}
+
+.toc-section-heading:hover {
+  border-color: #cfd3ca;
+  background: #ffffff;
+}
+
+.toc-section.active .toc-section-heading {
+  border-color: #2f6f73;
+  background: #eef7f6;
+  color: #174f54;
+  font-weight: 700;
+}
+
+.toc-subsections {
+  display: grid;
+  gap: 4px;
+  border-left: 1px solid #d9dbd4;
+  margin-left: 10px;
+  padding-left: 10px;
+}
+
 .toc-leaf {
   border-color: transparent;
   background: transparent;

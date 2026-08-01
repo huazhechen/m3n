@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { documentHeadings, searchForDocument, slugify } from '../lib/docs-navigation'
+import { documentSections, searchForDocument, slugify } from '../lib/docs-navigation'
 import { NotationEditor } from './NotationEditor'
 
 type DocumentSource = {
@@ -14,7 +14,7 @@ type DocumentSource = {
 }
 
 type DocumentGroup = DocumentSource & {
-  headings: ReturnType<typeof documentHeadings>
+  sections: ReturnType<typeof documentSections>
 }
 
 type MarkdownBookProps = {
@@ -43,12 +43,16 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     () =>
       documents.map((document) => ({
         ...document,
-        headings: documentHeadings(document.source),
+        sections: documentSections(document.source),
       })),
     [documents],
   )
   const pageParams = useMemo(() => new URLSearchParams(location.search), [location.search])
   const activeDocument = documentGroups.find((document) => document.id === pageParams.get('doc')) ?? documentGroups[0]
+  const activeDocumentHeadings = useMemo(
+    () => activeDocument?.sections.flatMap((section) => [section, ...section.children]) ?? [],
+    [activeDocument],
+  )
 
   useEffect(() => {
     if (!activeDocument) {
@@ -75,11 +79,11 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     }
 
     let frame = 0
-    const headingIds = new Set(activeDocument.headings.map((heading) => heading.id))
+    const headingIds = new Set(activeDocumentHeadings.map((heading) => heading.id))
 
     function updateActiveHeading() {
       frame = 0
-      const headingElements = [...(articleRef.current?.querySelectorAll<HTMLHeadingElement>('h2[id]') ?? [])]
+      const headingElements = [...(articleRef.current?.querySelectorAll<HTMLHeadingElement>('h2[id], h3[id]') ?? [])]
         .filter((heading) => headingIds.has(heading.id))
       const readingPosition = window.scrollY + window.innerHeight * 0.25
       const currentHeading = headingElements.reduce<string>((currentId, heading) => (
@@ -113,7 +117,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       window.removeEventListener('resize', scheduleHeadingUpdate)
       observer?.disconnect()
     }
-  }, [activeDocument])
+  }, [activeDocument, activeDocumentHeadings])
 
   useEffect(() => {
     if (!isTocOpen) {
@@ -169,7 +173,9 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     }
 
     const anchorTitle = match[2] ? decodeURIComponent(match[2]) : ''
-    const heading = target.headings.find((candidate) => candidate.title === anchorTitle)
+    const heading = target.sections
+      .flatMap((section) => [section, ...section.children])
+      .find((candidate) => candidate.title === anchorTitle)
     selectDocument(target.id, heading?.id ?? (anchorTitle ? slugify(anchorTitle) : ''))
     return true
   }, [documentGroups, selectDocument])
@@ -177,8 +183,13 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   const markdownComponents = useMemo(() => ({
     h2(props: ComponentPropsWithoutRef<'h2'>) {
       const title = String(props.children ?? '')
-      const heading = activeDocument.headings.find((candidate) => candidate.title === title)
+      const heading = activeDocumentHeadings.find((candidate) => candidate.title === title)
       return <h2 {...props} id={heading?.id ?? slugify(title)} />
+    },
+    h3(props: ComponentPropsWithoutRef<'h3'>) {
+      const title = String(props.children ?? '')
+      const heading = activeDocumentHeadings.find((candidate) => candidate.title === title)
+      return <h3 {...props} id={heading?.id ?? slugify(title)} />
     },
     pre(props: ComponentPropsWithoutRef<'pre'>) {
       if (isCodeChild(props.children, 'm3n')) {
@@ -207,7 +218,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
         />
       )
     },
-  }), [activeDocument.headings, selectMarkdownLink])
+  }), [activeDocumentHeadings, selectMarkdownLink])
 
   if (!activeDocument) {
     return null
@@ -238,17 +249,39 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
                 <span>{document.description}</span>
               </button>
               <div className="toc-children">
-                {document.headings.map((heading) => (
-                  <button
-                    key={heading.id}
-                    type="button"
-                    className={`toc-leaf ${document.id === activeDocument.id && heading.id === activeHeadingId ? 'active' : ''}`}
-                    aria-current={document.id === activeDocument.id && heading.id === activeHeadingId ? 'location' : undefined}
-                    onClick={() => selectDocument(document.id, heading.id)}
-                  >
-                    {heading.title}
-                  </button>
-                ))}
+                {document.sections.map((section) => {
+                  const isCurrentSection = document.id === activeDocument.id && (
+                    section.id === activeHeadingId || section.children.some((heading) => heading.id === activeHeadingId)
+                  )
+                  return (
+                    <section key={section.id} className={`toc-section ${isCurrentSection ? 'active' : ''}`}>
+                      <button
+                        type="button"
+                        className="toc-section-heading"
+                        aria-current={section.id === activeHeadingId ? 'location' : undefined}
+                        aria-expanded={section.children.length > 0 ? isCurrentSection : undefined}
+                        onClick={() => selectDocument(document.id, section.id)}
+                      >
+                        {section.title}
+                      </button>
+                      {isCurrentSection && section.children.length > 0 && (
+                        <div className="toc-subsections">
+                          {section.children.map((heading) => (
+                            <button
+                              key={heading.id}
+                              type="button"
+                              className={`toc-leaf ${heading.id === activeHeadingId ? 'active' : ''}`}
+                              aria-current={heading.id === activeHeadingId ? 'location' : undefined}
+                              onClick={() => selectDocument(document.id, heading.id)}
+                            >
+                              {heading.title}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  )
+                })}
               </div>
             </section>
           ))}
