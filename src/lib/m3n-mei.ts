@@ -1,4 +1,5 @@
 import { m3nPitch, parseM3NDocument } from './m3n-direct'
+import type { DirectLyricSyllable } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 import { buildAccompaniment, buildTempoChanges, type AccompanimentNote, type TempoChange } from './m3n-playback'
 import type { DirectEvent, DirectMeasure } from './m3n-direct'
@@ -33,18 +34,25 @@ export type MeiConversionResult = {
   tempo: number
 }
 
-type LyricSyllable = { text: string; wordpos?: 'i' | 'm' | 't' }
+type LyricSyllable = DirectLyricSyllable & { wordpos?: 'i' | 'm' | 't' }
 type VerseSyllable = LyricSyllable & { n: string }
 
-function splitLyricSyllables(tokens: string[]): LyricSyllable[] {
+function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
   return tokens.flatMap((token) => {
-    if (token === '%') return [{ text: token }]
-    const syllables = token.split('-').filter(Boolean)
-    if (syllables.length < 2) return [{ text: token }]
-    return syllables.map((text, index) => ({
+    if (token.text === '%') return [token]
+    const syllables = token.text.split('-').filter(Boolean)
+    if (syllables.length < 2) return [token]
+    let offset = 0
+    return syllables.map((text, index) => {
+      const sourceStart = token.sourceStart + offset
+      offset += text.length + 1
+      return {
       text,
+      sourceStart,
+      sourceEnd: sourceStart + text.length,
       wordpos: index === 0 ? 'i' : index === syllables.length - 1 ? 't' : 'm',
-    }))
+      }
+    })
   })
 }
 
@@ -290,6 +298,7 @@ export function m3nToMei(source: string): MeiConversionResult {
           return lyric ? [{ ...lyric, n: block.n }] : []
         })
         : []
+      lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
       return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, tieEnd, lyrics, accidentals) }
     })

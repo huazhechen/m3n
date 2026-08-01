@@ -1,6 +1,7 @@
 export type LyricBlock = {
   range: string
   text: string
+  sourceStart: number
 }
 
 export type SupplementBlocks = {
@@ -64,8 +65,10 @@ export function splitSupplementBlocks(source: string): SupplementBlocks {
       cursor = braceEnd + 1
     }
 
-    const text = source.slice(contentStart, contentEnd).trim()
-    if (kind === 'lyrics') lyrics.push({ range, text })
+    const rawText = source.slice(contentStart, contentEnd)
+    const leadingWhitespace = rawText.search(/\S|$/)
+    const text = rawText.trim()
+    if (kind === 'lyrics') lyrics.push({ range, text, sourceStart: contentStart + leadingWhitespace })
     else bass = text
     index = closeEnd
   }

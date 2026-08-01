@@ -37,7 +37,8 @@ export type DirectInterval = {
 
 export type DirectMeasure = { events: DirectEvent[]; left?: string; right?: string; ending?: string; breakBefore?: boolean; breakAfter?: boolean; multiRest?: number; repeatCount?: number }
 export type DirectPart = { melody: DirectMeasure[]; bass: DirectMeasure[] }
-export type DirectLyricBlock = { range: string; syllables: string[] }
+export type DirectLyricSyllable = { text: string; sourceStart: number; sourceEnd: number }
+export type DirectLyricBlock = { range: string; syllables: DirectLyricSyllable[] }
 type DirectSettingEvent = {
   beats: number
   kind: 'key' | 'meter' | 'tempo'
@@ -415,7 +416,14 @@ export function parseM3NDocument(source: string): DirectDocument {
     meterUnit,
     tempo: initialTempo,
     hasExplicitTempo: tempo !== undefined,
-    lyrics: lyrics.map((item) => ({ range: item.range, syllables: item.text.trim().split(/\s+/).filter(Boolean) })),
+    lyrics: lyrics.map((item) => ({
+      range: item.range,
+      syllables: Array.from(item.text.matchAll(/\S+/g)).map((match) => ({
+        text: match[0],
+        sourceStart: item.sourceStart + match.index,
+        sourceEnd: item.sourceStart + match.index + match[0].length,
+      })),
+    })),
     parts,
     partOrder: main.match(/\{parts=([^}]*)\}/)?.[1]?.trim().split(/\s+/).filter(Boolean) ?? [],
     intervals,

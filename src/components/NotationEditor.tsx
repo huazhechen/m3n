@@ -25,9 +25,14 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
       diagnostics: [...conversion.diagnostics, ...validateM3N(source)],
     }
   }, [source])
-  const cursorXmlId = useMemo(() => result.sourceMap
-    .filter((item) => item.sourceStart < cursorPosition)
-    .at(-1)?.xmlId ?? null, [cursorPosition, result.sourceMap])
+  const cursorXmlId = useMemo(() => {
+    const containingRange = result.sourceMap.find((item) => (
+      item.sourceStart <= cursorPosition && cursorPosition < item.sourceEnd
+    ))
+    return containingRange?.xmlId ?? result.sourceMap
+      .filter((item) => item.sourceStart < cursorPosition)
+      .at(-1)?.xmlId ?? null
+  }, [cursorPosition, result.sourceMap])
   const activeXmlId = isCursorHighlightActive ? cursorXmlId : null
 
   const updateCursorPosition = useCallback((position: number) => {

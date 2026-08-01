@@ -282,6 +282,16 @@ describe('M3N to MEI conversion', () => {
     ])
   })
 
+  it('maps lyric syllables to their rendered notes', () => {
+    const source = '{key=C} {2/4}\n1 2 |||\n{lyrics}\nla la\n{/}'
+    const result = m3nToMei(source)
+    const firstLyricStart = source.indexOf('la la')
+    const secondLyricStart = source.lastIndexOf('la')
+
+    expect(result.sourceMap).toContainEqual({ xmlId: 'm3n-e-1', sourceStart: firstLyricStart, sourceEnd: firstLyricStart + 2 })
+    expect(result.sourceMap).toContainEqual({ xmlId: 'm3n-e-2', sourceStart: secondLyricStart, sourceEnd: secondLyricStart + 2 })
+  })
+
   it('keeps rests inside sequential groups as rests', () => {
     const result = m3nToMei('{key=C} {2/4}\n[066:2] |||')
 
