@@ -13,4 +13,11 @@ describe('formatM3N', () => {
 
     expect(result).toContain('{lg}(1) (2){/} | 1 1 |||')
   })
+
+  it('preserves the music following an inline comment', () => {
+    const source = '{key=C} {2/4}\n// theme\n1 1 | 2 2 |||'
+    const result = formatM3N(source)
+
+    expect(result).toContain('// theme\n1 1 | 2 2 |||')
+  })
 })

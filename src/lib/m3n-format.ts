@@ -89,6 +89,13 @@ function normalizeBeamRun(nodes: BeamGroup[]) {
 function normalizeBeamGroups(source: string) {
   let output = ''
   for (let index = 0; index < source.length;) {
+    if (source.startsWith('//', index)) {
+      const newline = source.indexOf('\n', index)
+      const end = newline < 0 ? source.length : newline + 1
+      output += source.slice(index, end)
+      index = end
+      continue
+    }
     const interval = /^\{(?:lg|cresc|decres|8va|8vb|inst|accel=\d+|rit=\d+)\}/.exec(source.slice(index))?.[0]
     if (interval) {
       const close = source.indexOf('{/}', index + interval.length)
@@ -126,7 +133,14 @@ function normalizeBeamGroups(source: string) {
 }
 
 function formatMusic(source: string) {
-  const pieces = normalizeBeamGroups(source).trim().replace(/\s+/g, ' ').split(BARLINE)
+  const commentBreak = '\u0000'
+  const compact = normalizeBeamGroups(source)
+    .trim()
+    .replace(/\/\/[^\r\n]*/g, (comment) => `${comment}${commentBreak}`)
+    .replace(/\s+/g, ' ')
+    .replaceAll(`${commentBreak} `, commentBreak)
+    .replaceAll(commentBreak, '\n')
+  const pieces = compact.split(BARLINE)
   const lines: string[] = []
   let line = ''
   let measures = 0
