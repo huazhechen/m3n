@@ -213,9 +213,9 @@ describe('M3N to MEI conversion', () => {
   it('adds CJK spacing compensation only to character-based lyrics', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲乙\n{/}\n{lyrics-word=2}\nhello world\n{/}')
 
-    expect(result.mei).toContain('<verse n="1"><syl>甲\u200B</syl></verse>')
+    expect(result.mei).toContain('<verse n="1" label="1."><syl>甲\u200B</syl></verse>')
     expect(result.mei).toContain('<verse n="1"><syl>乙\u200B</syl></verse>')
-    expect(result.mei).toContain('<verse n="2"><syl>hello</syl></verse>')
+    expect(result.mei).toContain('<verse n="2" label="2."><syl>hello</syl></verse>')
     expect(result.mei).toContain('<verse n="2"><syl>world</syl></verse>')
     expect(result.mei).not.toContain('hello\u200B')
   })
@@ -255,7 +255,7 @@ describe('M3N to MEI conversion', () => {
   it('renders lyrics for multiple repeat passes as separate verses', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics-word=1}\nfirst pass\n{/}\n{lyrics-word=2}\nsecond pass\n{/}')
 
-    expect(result.mei).toContain('<verse n="1"><syl>first</syl></verse><verse n="2"><syl>second</syl></verse>')
+    expect(result.mei).toContain('<verse n="1" label="1."><syl>first</syl></verse><verse n="2" label="2."><syl>second</syl></verse>')
     expect(result.mei).toContain('<verse n="1"><syl>pass</syl></verse><verse n="2"><syl>pass</syl></verse>')
   })
 

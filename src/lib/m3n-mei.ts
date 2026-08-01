@@ -35,7 +35,7 @@ export type MeiConversionResult = {
 }
 
 type LyricSyllable = DirectLyricSyllable
-type VerseSyllable = LyricSyllable & { n: string; cjkSpacingCompensation: boolean }
+type VerseSyllable = LyricSyllable & { n: string; label?: string; cjkSpacingCompensation: boolean }
 
 function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
   return tokens
@@ -156,7 +156,7 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
     const text = lyric.underlined && lyric.kind !== 'extender'
       ? underlinedLyricText(lyric)
       : escapeXml(lyricText(lyric))
-    return `<verse n="${lyric.n}"><syl${connection}>${text}</syl></verse>`
+    return `<verse n="${lyric.n}"${lyric.label ? ` label="${lyric.label}"` : ''}><syl${connection}>${text}</syl></verse>`
   }).join('')
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
@@ -251,6 +251,7 @@ export function m3nToMei(source: string): MeiConversionResult {
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
   const lyricSyllables = document.lyrics.map((block, index) => ({
     n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
+    label: document.lyrics.length > 1 ? `${index + 1}.` : undefined,
     syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
       ...syllable,
       cjkSpacingCompensation: block.mode === 'char',
@@ -331,8 +332,9 @@ export function m3nToMei(source: string): MeiConversionResult {
         ? lyricSyllables.flatMap((block, index) => {
           const lyric = block.syllables[melodyIndices[index]]
           if (!lyric || lyric.forceTiedTarget !== tieEnd) return []
+          const label = melodyIndices[index] === 0 ? block.label : undefined
           melodyIndices[index] += 1
-          return [{ ...lyric, n: block.n }]
+          return [{ ...lyric, n: block.n, label }]
         })
         : []
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
