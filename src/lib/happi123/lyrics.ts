@@ -4,6 +4,7 @@ const PUNCTUATION = /^[，。！？、；：,.!?;:）】》”’…]+/
 export function convertHappiLyrics(source: string) {
   const tokens: string[] = []
   let index = 0
+  let forceTiedTarget = false
 
   while (index < source.length) {
     const rest = source.slice(index)
@@ -11,6 +12,20 @@ export function convertHappiLyrics(source: string) {
     if (whitespace) {
       index += whitespace[0].length
       continue
+    }
+    if (rest[0] === '+') {
+      forceTiedTarget = true
+      index += 1
+      continue
+    }
+    if (rest[0] === '(') {
+      const end = rest.indexOf(')')
+      if (end > 1) {
+        tokens.push(`${forceTiedTarget ? '+' : ''}(${rest.slice(1, end)})`)
+        forceTiedTarget = false
+        index += end + 1
+        continue
+      }
     }
     if (rest[0] === '_' ) {
       tokens.push('%')
@@ -25,7 +40,8 @@ export function convertHappiLyrics(source: string) {
       continue
     }
     if (HAN_CHARACTER.test(rest[0])) {
-      tokens.push(rest[0])
+      tokens.push(`${forceTiedTarget ? '+' : ''}${rest[0]}`)
+      forceTiedTarget = false
       index += 1
       continue
     }
@@ -39,7 +55,8 @@ export function convertHappiLyrics(source: string) {
     }
     const word = /^[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*-?/.exec(rest)
     if (word) {
-      tokens.push(word[0])
+      tokens.push(`${forceTiedTarget ? '+' : ''}${word[0]}`)
+      forceTiedTarget = false
       index += word[0].length
       continue
     }

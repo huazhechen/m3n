@@ -182,6 +182,22 @@ describe('happi123ToM3N', () => {
     expect(result.diagnostics).toEqual([])
   })
 
+  it('turns a terminal Happi123 repeat count into a terminal repeat bar', () => {
+    const result = happi123ToM3N('{title:终止反复}\n{key_signature:C}\n{time_signature:2/4}\n11|22|||{repeat:3}')
+
+    expect(result.output).toContain('1 1 | 2 2 :|||{x3}')
+    expect(result.output).not.toContain(':|||{x3} |||')
+    expect(result.diagnostics).toEqual([])
+  })
+
+  it('preserves Happi123 forced tied lyrics and grouped lyric items', () => {
+    const result = happi123ToM3N(
+      '{title:歌词方言}\n{key_signature:C}\n{time_signature:2/4}\n1~ 1 |||\n{lyric}甲+乙_(丙丁){/lyric}',
+    )
+
+    expect(result.output).toContain('{lyrics}\n甲 +乙 % (丙丁)\n{/}')
+  })
+
   it('preserves slash lyric placeholders and assigns separate verses to passes', () => {
     const result = happi123ToM3N('{title:歌词}\n{key_signature:C}\n{time_signature:2/4}\n11:|||\n{lyric}甲/乙{/lyric}\n{lyric}丙/丁{/lyric}')
 

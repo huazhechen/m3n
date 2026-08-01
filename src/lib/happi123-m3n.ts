@@ -584,7 +584,7 @@ function repairLegacyStructure(source: string) {
       .replace(/\{\/\}(\s*\{br\})?(?=\s*(?:\{part=|\{lyrics|$))/g, (_match, lineBreak) => lineBreak ?? '')
       .replace(/\{\/(?:part)?\}/g, '')
       .replace(/\{(?:lg|cresc|decres|8va|8vb|inst)\}/g, '')
-    if (!/\|\|\|\s*(?:\{lyrics|$)/.test(repaired)) repaired = `${repaired.trim()} |||`
+    if (!/(?:\|\|\||:\|\|\|)(?:\{x\d+\})?\s*(?:\{lyrics|$)/.test(repaired)) repaired = `${repaired.trim()} |||`
   }
   if (diagnostics.some((diagnostic) => diagnostic.includes('后置指令') || diagnostic.includes('sfz'))) {
     repaired = repaired.replace(/\{sfz\}|\{(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])\}|\{a[cp]\([^}]*\)\}/g, '')
@@ -600,6 +600,7 @@ export function happi123ToM3N(source: string): ConversionResult {
   const { header, body, lyrics } = parseSource(source)
   const converted = groupAdjacentEighthNotes(convertSequence(body, diagnostics).output)
     .replace(/(:\|\|\|?|:\|\|:)\s+\{x(\d+)\}/g, '$1{x$2}')
+    .replace(/\|\|\|\s*\{x(\d+)\}/g, ':|||{x$1}')
     .replace(/(?:\s*\{br\}\s*){2,}/g, ' {br} ')
     .replace(/^\s*\{br\}\s*/, '')
     .replace(/\s*\{br\}\s*$/, '')
@@ -628,7 +629,7 @@ export function happi123ToM3N(source: string): ConversionResult {
         .replace(/:\|\|\|/g, ':||')
         .replace(/\|\|\|/g, '||'),
     )
-    : /(?:\|\|\||:\|\|\|)\s*$/.test(converted) ? converted : `${converted} |||`
+    : /(?:\|\|\||:\|\|\|)(?:\{x\d+\})?\s*$/.test(converted) ? converted : `${converted} |||`
   if (header.meters.length === 1) {
     const correctedMeter = inferCorrectedMeter(sectionedMusic, header.meter)
     if (correctedMeter !== header.meter) {
