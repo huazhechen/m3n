@@ -43,6 +43,7 @@ export function ScoreReaderPage() {
           accompaniment={result.accompaniment}
           tempoChanges={result.tempoChanges}
           tempo={result.tempo}
+          showPrintButton={false}
         />
         {result.diagnostics.length > 0 && (
           <ul className="diagnostics score-reader-diagnostics" aria-label="乐谱校验错误">
