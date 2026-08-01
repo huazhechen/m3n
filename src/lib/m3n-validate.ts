@@ -920,7 +920,15 @@ function validateBody(
   const orderedUnits = firstPartSeen
     ? referencedParts.flatMap((part) => unitsByPart.get(part) ? [unitsByPart.get(part)!] : [])
     : completedUnits
+  const firstPlaybackUnits = firstPartSeen
+    ? referencedParts.filter((part, index) => referencedParts.indexOf(part) === index)
+      .flatMap((part) => unitsByPart.get(part) ? [unitsByPart.get(part)!] : [])
+    : completedUnits
   const lyricCount = (pass: number) => orderedUnits.reduce(
+    (sum, item) => sum + item.commonLyrics + (item.voltaLyrics.get(pass) ?? 0),
+    0,
+  )
+  const firstPlaybackLyricCount = (pass: number) => firstPlaybackUnits.reduce(
     (sum, item) => sum + item.commonLyrics + (item.voltaLyrics.get(pass) ?? 0),
     0,
   )
@@ -931,6 +939,7 @@ function validateBody(
   return {
     measures: orderedUnits.flatMap((item) => item.measures),
     lyricCount,
+    firstPlaybackLyricCount,
     lyricPasses,
     hasParts: firstPartSeen,
     ended: firstPartSeen ? !currentPart && definedParts.size > 0 : terminalCount === 1,
@@ -992,42 +1001,28 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
   if (bassBlocks.length > 1) diagnostics.push('每份文档最多包含一个低音谱表块')
   if (bassBlocks.length > 0 && mainResult.hasParts) diagnostics.push('低音谱表不能与具名乐段组合')
 
-  // Named parts describe one linear playback path. Multiple lyric blocks in
-  // that path are consecutive fragments, rather than alternate repeat passes.
-  const combinesPartLyrics = mainResult.hasParts && mainResult.lyricPasses.size === 1
   const lyricPasses = new Set<number>()
-  if (!combinesPartLyrics && lyrics.length > 1 && lyrics.some((block) => block.range === null)) {
+  if (lyrics.length > 1 && lyrics.some((block) => block.range === null)) {
     diagnostics.push('存在多个歌词块时，每个歌词块都必须指定遍次')
   }
-  let combinedLyricCount = 0
-  let combinedForcedTargets = 0
   for (const [index, lyric] of lyrics.entries()) {
     const items = lyricItems(lyric.tokens, lyric.lyricMode ?? 'char')
     if (items.count === 0) diagnostics.push(`第 ${lyric.line} 行：歌词块为空`)
     if (items.hasTab) diagnostics.push(`第 ${lyric.line} 行：歌词项必须使用半角空格或换行分隔，不能使用 Tab`)
     if (items.hasEmptyForcedTarget) diagnostics.push(`第 ${lyric.line} 行：+ 后必须跟随歌词项`)
-    combinedLyricCount += items.count
-    combinedForcedTargets += items.forcedTiedTargets
     const parsed = lyric.range === null
       ? { values: mainResult.lyricPasses, error: null }
       : parseRange(lyric.range, '歌词 ')
     if (parsed.error) diagnostics.push(`第 ${lyric.line} 行：${parsed.error}`)
-    if (combinesPartLyrics) continue
     for (const pass of parsed.values) {
       if (lyricPasses.has(pass)) diagnostics.push(`第 ${lyric.line} 行：歌词块遍次重叠：${pass}`)
       lyricPasses.add(pass)
-      const expected = mainResult.lyricCount(pass) + items.forcedTiedTargets
+      const expected = (mainResult.hasParts ? mainResult.firstPlaybackLyricCount(pass) : mainResult.lyricCount(pass)) + items.forcedTiedTargets
       const exceedsAvailablePositions = index > 0 && items.count > expected
       const firstBlockIsIncomplete = index === 0 && items.count !== expected
       if (mainResult.lyricPasses.size === 1 && (firstBlockIsIncomplete || exceedsAvailablePositions)) {
         diagnostics.push(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`)
       }
-    }
-  }
-  if (combinesPartLyrics && lyrics.length > 0) {
-    const expected = mainResult.lyricCount(1) + combinedForcedTargets
-    if (combinedLyricCount !== expected) {
-      diagnostics.push(`第 ${lyrics[0].line} 行：歌词对位数量不匹配：具名乐段需要 ${expected} 项，实际 ${combinedLyricCount} 项`)
     }
   }
 
