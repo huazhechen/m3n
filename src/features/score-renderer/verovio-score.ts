@@ -52,6 +52,7 @@ export class VerovioScore {
       breaks: layoutMei.includes('<sb/>') ? 'encoded' : 'auto',
       footer: 'none',
       header: 'none',
+      lyricTopMinMargin: 4,
       pageHeight: 60000,
       pageMarginTop: 8,
       pageWidth: Math.max(800, Math.round(width * 100 / effectiveScale)),
