@@ -213,9 +213,11 @@ describe('M3N to MEI conversion', () => {
   it('adds CJK spacing compensation only to character-based lyrics', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲乙\n{/}\n{lyrics-word=2}\nhello world\n{/}')
 
-    expect(result.mei).toContain('<verse n="1" label="1."><syl>甲\u200B</syl></verse>')
+    expect(result.mei).toContain('<verse n="1"><syl>甲\u200B</syl></verse>')
     expect(result.mei).toContain('<verse n="1"><syl>乙\u200B</syl></verse>')
-    expect(result.mei).toContain('<verse n="2" label="2."><syl>hello</syl></verse>')
+    expect(result.mei).toContain('<verse n="2"><syl>hello</syl></verse>')
+    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-1" place="below" type="lyric-verse-label">1.</dir>')
+    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-1" place="below" type="lyric-verse-label">2.</dir>')
     expect(result.mei).toContain('<verse n="2"><syl>world</syl></verse>')
     expect(result.mei).not.toContain('hello\u200B')
   })
@@ -255,8 +257,17 @@ describe('M3N to MEI conversion', () => {
   it('renders lyrics for multiple repeat passes as separate verses', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics-word=1}\nfirst pass\n{/}\n{lyrics-word=2}\nsecond pass\n{/}')
 
-    expect(result.mei).toContain('<verse n="1" label="1."><syl>first</syl></verse><verse n="2" label="2."><syl>second</syl></verse>')
+    expect(result.mei).toContain('<verse n="1"><syl>first</syl></verse><verse n="2"><syl>second</syl></verse>')
     expect(result.mei).toContain('<verse n="1"><syl>pass</syl></verse><verse n="2"><syl>pass</syl></verse>')
+  })
+
+  it('keeps part lyric placeholders empty instead of rendering later lyric blocks there', () => {
+    const result = m3nToMei('{2/4} {parts=A B}\n{part=A}1 2 ||{/}\n{part=B}3 4 ||{/}\n{lyrics=1}甲%{/}\n{lyrics=2}丙丁{/}')
+
+    expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse n="1"><syl>甲\u200B</syl></verse></note>')
+    expect(result.mei).not.toContain('<note xml:id="m3n-e-2" pname="d" oct="4" dur="4"><verse')
+    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse n="1"><syl>丙\u200B</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-4" pname="f" oct="4" dur="4"><verse n="1"><syl>丁\u200B</syl></verse></note>')
   })
 
   it('keeps instrumental intervals lyric-free without visual markers', () => {

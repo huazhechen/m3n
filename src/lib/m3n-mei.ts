@@ -156,7 +156,7 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
     const text = lyric.underlined && lyric.kind !== 'extender'
       ? underlinedLyricText(lyric)
       : escapeXml(lyricText(lyric))
-    return `<verse n="${lyric.n}"${lyric.label ? ` label="${lyric.label}"` : ''}><syl${connection}>${text}</syl></verse>`
+    return `<verse n="${lyric.n}"><syl${connection}>${text}</syl></verse>`
   }).join('')
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
@@ -247,16 +247,25 @@ export function m3nToMei(source: string): MeiConversionResult {
   }
   const previousTiedByStaff = new Map<number, boolean>()
   const previousKeyByStaff = new Map<number, string>()
+  const lyricLabelsBySource = new Map<number, string[]>()
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
-  const lyricSyllables = document.lyrics.map((block, index) => ({
-    n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
-    label: document.lyrics.length > 1 ? `${index + 1}.` : undefined,
-    syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
-      ...syllable,
-      cjkSpacingCompensation: block.mode === 'char',
-    })),
-  }))
+  const lyricSyllables = document.partOrder.length > 0 && document.lyrics.length > 1
+    ? [{
+      n: '1',
+      syllables: document.lyrics.flatMap((block) => splitLyricSyllables(block.syllables).map((syllable) => ({
+        ...syllable,
+        cjkSpacingCompensation: block.mode === 'char',
+      }))),
+    }]
+    : document.lyrics.map((block, index) => ({
+      n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
+      label: document.lyrics.length > 1 ? `${index + 1}.` : undefined,
+      syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
+        ...syllable,
+        cjkSpacingCompensation: block.mode === 'char',
+      })),
+    }))
   const melodyIndices = lyricSyllables.map(() => 0)
   const isInstrumentalEvent = (event: DirectEvent) => document.intervals.some((interval) => (
     interval.kind === 'inst' &&
@@ -337,6 +346,12 @@ export function m3nToMei(source: string): MeiConversionResult {
           return [{ ...lyric, n: block.n, label }]
         })
         : []
+      for (const lyric of lyrics) {
+        if (!lyric.label) continue
+        const labels = lyricLabelsBySource.get(event.sourceStart) ?? []
+        labels.push(lyric.label)
+        lyricLabelsBySource.set(event.sourceStart, labels)
+      }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
       return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
@@ -413,6 +428,7 @@ export function m3nToMei(source: string): MeiConversionResult {
         event.chord ? `<harm staff="${staffNumber}" startid="#${xmlId}">${chordSymbol(event.chord, event.key)}</harm>` : '',
         event.dynamic ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.dynamic}</dynam>` : '',
         event.prefix ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.prefix}</dynam>` : '',
+        ...(staffNumber === 1 ? (lyricLabelsBySource.get(event.sourceStart) ?? []).map((label) => `<dir staff="1" startid="#${xmlId}" place="below" type="lyric-verse-label">${label}</dir>`) : []),
         ...event.navigation.map((value) => {
           if (value === 'fine') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="fine">Fine</repeatMark>`
           const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value
