@@ -2,6 +2,7 @@ import { readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { happi123ToM3N } from '../src/lib/happi123-m3n'
+import { formatM3N } from '../src/lib/m3n-format'
 import { validateM3N } from '../src/lib/m3n-validate'
 
 type FileReport = {
@@ -38,7 +39,7 @@ for (const file of files) {
     slug,
     conversionDiagnostics: result.diagnostics,
     validationDiagnostics: validateM3N(result.output),
-    output: `${result.output.trim()}\n`,
+    output: formatM3N(result.output),
   }
   reports.push(report)
 
