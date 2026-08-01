@@ -374,9 +374,13 @@ export function m3nPitch(pitch: string, key: string) {
   const difference = (target - natural[letterIndex] + 12) % 12
   const keyAccid = difference === 1 ? 's' : difference === 2 ? 'ss'
     : difference === 11 ? 'f' : difference === 10 ? 'ff' : ''
-  const explicit = parsed.accidentals.includes('=') ? 'n'
-    : parsed.accidentals === '##' ? 'x' : parsed.accidentals.includes('#') ? 's'
-      : parsed.accidentals === 'bb' ? 'ff' : parsed.accidentals.includes('b') ? 'f' : ''
+  const explicitOffset = parsed.accidentals === '##' ? 2 : parsed.accidentals.includes('#') ? 1
+    : parsed.accidentals === 'bb' ? -2 : parsed.accidentals.includes('b') ? -1 : 0
+  const explicitDifference = (difference + explicitOffset + 12) % 12
+  const explicit = parsed.accidentals.includes('=') ? (keyAccid || 'n')
+    : parsed.accidentals ? explicitDifference === 1 ? 's' : explicitDifference === 2 ? 'x'
+      : explicitDifference === 11 ? 'f' : explicitDifference === 10 ? 'ff' : 'n'
+      : ''
   const octaveShift = [...parsed.octave].reduce((sum, value) => sum + (value === 'e' ? 1 : -1), 0)
   return {
     pname: letters[letterIndex].toLowerCase(),

@@ -155,6 +155,15 @@ describe('M3N to MEI conversion', () => {
     expect(m3nPitch('2bb', 'C').accidGes).toBe('ff')
   })
 
+  it('resolves explicit accidentals relative to the key signature', () => {
+    const pitch = m3nPitch('4#', 'Bb')
+    const result = m3nToMei('{key=Bb} {4/4}\n4# 1 2 3 |||')
+
+    expect(pitch).toMatchObject({ pname: 'e', accid: 'n', accidGes: 'n' })
+    expect(result.mei).toContain('pname="e" oct="5" accid="n" accid.ges="n"')
+    expect(result.mei).not.toContain('pname="e" oct="5" accid="s"')
+  })
+
   it('renders chord symbols in the active key', () => {
     const result = m3nToMei('{key=C} {4/4}\n{chord=V7}1 2 | {key=Bb}3 4 |||')
 
