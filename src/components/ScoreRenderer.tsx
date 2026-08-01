@@ -60,6 +60,13 @@ function translateVertically(element: SVGElement, offset: number) {
   element.setAttribute('transform', `${transform ? `${transform} ` : ''}translate(0 ${offset})`)
 }
 
+function lyricLineHeight(verse: SVGGElement, bounds: DOMRect) {
+  const lineHeights = [...verse.querySelectorAll<SVGGraphicsElement>('text')]
+    .map((text) => text.getBBox().height)
+    .filter((height) => height > 0)
+  return lineHeights.length > 0 ? Math.max(...lineHeights) : bounds.height
+}
+
 function resolveLyricCollisions(paper: HTMLElement) {
   for (const page of paper.querySelectorAll<SVGSVGElement>(':scope > svg:not([data-m3n-lyric-adjusted])')) {
     const engraving = page.querySelector<SVGSVGElement>(':scope > svg.definition-scale')
@@ -70,12 +77,30 @@ function resolveLyricCollisions(paper: HTMLElement) {
     for (const [index, system] of systems.entries()) {
       translateVertically(system, downstreamOffset)
       const verses = [...system.querySelectorAll<SVGGElement>('g.verse')]
-      const lyrics = verses.map((verse) => verse.getBBox())
-      const nextSystem = systems[index + 1]
-      if (!nextSystem || lyrics.length === 0) continue
+      const obstacles = [...system.querySelectorAll<SVGGraphicsElement>('.notehead, .stem, .flag, .beam')]
+      const lyrics = verses.map((verse) => {
+        const bounds = verse.getBBox()
+        return { bounds, lineHeight: lyricLineHeight(verse, bounds) }
+      })
+      let lyricOffset = 0
 
-      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.y + lyric.height + lyric.height * 0.5))
-      const nextTop = nextSystem.getBBox().y + downstreamOffset
+      for (const lyric of lyrics) {
+        for (const obstacle of obstacles) {
+          const bounds = obstacle.getBBox()
+          const overlapsHorizontally = lyric.bounds.x < bounds.x + bounds.width && lyric.bounds.x + lyric.bounds.width > bounds.x
+          const overlapsVertically = lyric.bounds.y < bounds.y + bounds.height && lyric.bounds.y + lyric.bounds.height > bounds.y
+          if (overlapsHorizontally && overlapsVertically) {
+            lyricOffset = Math.max(lyricOffset, bounds.y + bounds.height - lyric.bounds.y + lyric.lineHeight * 0.1)
+          }
+        }
+      }
+
+      verses.forEach((verse) => translateVertically(verse, lyricOffset))
+      const nextSystem = systems[index + 1]
+      if (!nextSystem || lyricOffset === 0 || lyrics.length === 0) continue
+
+      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.bounds.y + lyric.bounds.height + lyricOffset + lyric.lineHeight * 0.2))
+      const nextTop = nextSystem.getBBox().y
       downstreamOffset += Math.max(0, lyricBottom - nextTop)
     }
 
