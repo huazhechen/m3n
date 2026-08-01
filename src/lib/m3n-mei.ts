@@ -235,6 +235,14 @@ export function m3nToMei(source: string): MeiConversionResult {
     syllables: splitLyricSyllables(block.syllables),
   }))
   const melodyIndices = lyricSyllables.map(() => 0)
+  const isInstrumentalEvent = (event: DirectEvent) => document.intervals.some((interval) => (
+    interval.kind === 'inst' &&
+    interval.staff === 'melody' &&
+    interval.start !== undefined &&
+    interval.end !== undefined &&
+    interval.start <= event.sourceStart &&
+    event.sourceEnd <= interval.end
+  ))
 
   for (const part of document.parts.values()) {
     const measureCount = Math.max(part.melody.length, hasBassStaff ? part.bass.length : 0)
@@ -274,7 +282,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       }
       const tieEnd = previousTiedByStaff.get(staffNumber) ?? false
       previousTiedByStaff.set(staffNumber, event.tie)
-      const lyrics = staffNumber === 1 && event.kind !== 'rest'
+      const lyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
         ? lyricSyllables.flatMap((block, index) => {
           const lyric = block.syllables[melodyIndices[index]++]
           return lyric ? [{ ...lyric, n: block.n }] : []
@@ -384,6 +392,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       if (interval.kind === 'lg') return [`<slur startid="#${startid}" endid="#${endid}"/>`]
       if (interval.kind === 'cresc' || interval.kind === 'decres') return [`<hairpin staff="${staffNumber}" form="${interval.kind === 'cresc' ? 'cres' : 'dim'}" startid="#${startid}" endid="#${endid}"/>`]
       if (interval.kind === '8va' || interval.kind === '8vb') return [`<octave staff="${staffNumber}" dis="8" dis.place="${interval.kind === '8va' ? 'above' : 'below'}" startid="#${startid}" endid="#${endid}"/>`]
+      if (interval.kind === 'inst') return [`<bracketSpan staff="${staffNumber}" startid="#${startid}" endid="#${endid}" place="within"/>`]
       return []
     })
     return [...tempoControls, ...eventControls, ...intervalControls].map((xml) => `  ${xml}`).join('\n')

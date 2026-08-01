@@ -62,7 +62,7 @@ const INFO_FIELDS = new Set([
   'copyright', 'source', 'note', 'transpose',
 ])
 
-const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'lg', '8va', '8vb'])
+const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'lg', '8va', '8vb', 'inst'])
 const DYNAMICS = new Set(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff'])
 const POSTFIX_FLAGS = new Set([
   'arp', 'tr', 'str', 'brk', 'tip', 'hold', 'fermata', 'breath', 'f1', 'f2', 'f3', 'f4', 'f5',
@@ -345,6 +345,7 @@ function validateBody(
 
   const activeVolta = () => [...blocks].reverse().find((block) => block.name === 'volta')
   const activeOctaveShift = () => blocks.reduce((sum, block) => sum + (block.octaveShift ?? 0), 0)
+  const isInstrumental = () => blocks.some((block) => block.name === 'inst')
   const currentTopLevel = () => blocks.length === 0
 
   const commitMeasure = (line: number) => {
@@ -507,7 +508,7 @@ function validateBody(
       pendingTie = null
     }
     if (atom.tie && eligible) pendingTie = { kind: atom.kind as 'note' | 'harmony', pitches: atom.pitches ?? [], line: token.line }
-    if (!tiedTarget) addLyrics(atom.lyricCount ?? (eligible ? 1 : 0))
+    if (!tiedTarget) addLyrics(isInstrumental() ? 0 : atom.lyricCount ?? (eligible ? 1 : 0))
     postfixTarget = atom.kind === 'note' || atom.kind === 'harmony' ? atom.kind : false
   }
 

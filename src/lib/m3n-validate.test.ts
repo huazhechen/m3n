@@ -143,6 +143,10 @@ describe('validateM3N', () => {
     expect(messages(source)).toContain('第 2 遍需要 1 项，实际 2 项')
   })
 
+  it('excludes instrumental intervals from lyric alignment', () => {
+    expect(messages('{2/4} {inst}1 2{/} | 3 4 |||\n{lyrics}la la{/}')).toBe('')
+  })
+
   it('validates bass uniqueness, allowed content, and timeline alignment', () => {
     const source = [
       '{3/4} 1 2 3 |||',

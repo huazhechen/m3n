@@ -28,7 +28,7 @@ export type DirectEvent = {
 export type DirectInterval = {
   id: number
   staff: 'melody' | 'bass'
-  kind: 'cresc' | 'decres' | 'lg' | '8va' | '8vb' | 'accel' | 'rit'
+  kind: 'cresc' | 'decres' | 'lg' | '8va' | '8vb' | 'accel' | 'rit' | 'inst'
   tempoTarget?: number
   start?: number
   end?: number
@@ -230,7 +230,7 @@ function parseBody(
         structureStack.push('volta')
         activeEnding = value.slice(6).trim()
         ensureEndingMeasure()
-      } else if (/^(?:lg|cresc|decres|8va|8vb)$/.test(value) || /^(?:accel|rit)=\d+$/.test(value)) {
+      } else if (/^(?:lg|cresc|decres|8va|8vb|inst)$/.test(value) || /^(?:accel|rit)=\d+$/.test(value)) {
         const ramp = /^(accel|rit)=(\d+)$/.exec(value)
         const interval: DirectInterval = { id: intervals.length + 1, staff, kind: value as DirectInterval['kind'] }
         if (ramp) {
