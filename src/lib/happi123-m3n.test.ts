@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { happi123ToM3N } from './happi123-m3n'
+import { m3nToMei } from './m3n-mei'
 
 describe('happi123ToM3N', () => {
   it('converts metadata, notes, and lyrics', () => {
@@ -74,6 +75,14 @@ describe('happi123ToM3N', () => {
 
     expect(result.output).toContain('(7 6~) 6^.~ | 6^^ |||')
     expect(result.output).not.toContain('(7~)')
+  })
+
+  it('does not turn a single parenthesized note into a ligature group', () => {
+    const result = happi123ToM3N('{title:单音括号}\n{key_signature:C}\n{time_signature:2/4}\n(1//) 2 |||')
+
+    expect(result.output).toContain('((1)) 2 |||')
+    expect(result.output).not.toContain('{lg}')
+    expect(m3nToMei(result.output).mei).not.toMatch(/<slur startid="#([^"\n]+)" endid="#\1"/)
   })
 
   it('does not reinterpret a trill marker as a tie', () => {

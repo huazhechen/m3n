@@ -386,7 +386,9 @@ function convertSequence(
           const inner = applySuffixToGroup(rawInner.replace(/^t\s*:/, ''), suffix)
           const notes = extractHappiNotes(inner)
           const samePitch = notes.length > 1 && new Set(notes.map((note) => note.pitch)).size === 1
-          if (tieGroup || samePitch) {
+          if (notes.length === 1) {
+            output.push(convertSequence(inner, diagnostics, state).output)
+          } else if (tieGroup || samePitch) {
             output.push(convertSequence(addTiesToNotes(inner), diagnostics, state).output)
           } else {
             output.push(`{lg}${convertSequence(inner, diagnostics, state).output}{/}`)
