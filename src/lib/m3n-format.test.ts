@@ -32,4 +32,10 @@ describe('formatM3N', () => {
 
     expect(result).toContain('1e^^ {ds}:||')
   })
+
+  it('combines an ordinary repeat end and terminal bar', () => {
+    const result = formatM3N('{4/4}\n1e^^ :|| |||')
+
+    expect(result).toContain('1e^^ :|||')
+  })
 })
