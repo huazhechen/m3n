@@ -60,12 +60,6 @@ function translateVertically(element: SVGElement, offset: number) {
   element.setAttribute('transform', `${transform ? `${transform} ` : ''}translate(0 ${offset})`)
 }
 
-function translateHorizontally(element: SVGElement, offset: number) {
-  if (offset <= 0) return
-  const transform = element.getAttribute('transform')
-  element.setAttribute('transform', `${transform ? `${transform} ` : ''}translate(${offset} 0)`)
-}
-
 function lyricLineHeight(verse: SVGGElement, bounds: DOMRect) {
   const lineHeights = [...verse.querySelectorAll<SVGGraphicsElement>('text')]
     .map((text) => text.getBBox().height)
@@ -73,7 +67,7 @@ function lyricLineHeight(verse: SVGGElement, bounds: DOMRect) {
   return lineHeights.length > 0 ? Math.max(...lineHeights) : bounds.height
 }
 
-type PositionedLyric = { verse: SVGGElement; bounds: DOMRect; lineHeight: number; lineOffset: number; horizontalOffset: number }
+type PositionedLyric = { verse: SVGGElement; bounds: DOMRect; lineHeight: number; lineOffset: number }
 
 function addLyricLineSpacing(lyrics: PositionedLyric[]) {
   const rows = new Map<number, PositionedLyric[]>()
@@ -95,24 +89,6 @@ function addLyricLineSpacing(lyrics: PositionedLyric[]) {
   }
 }
 
-function addLyricHorizontalSpacing(lyrics: PositionedLyric[]) {
-  const rows = new Map<number, PositionedLyric[]>()
-  for (const lyric of lyrics) {
-    const row = Math.round(lyric.bounds.y)
-    const existing = rows.get(row)
-    if (existing) existing.push(lyric)
-    else rows.set(row, [lyric])
-  }
-
-  for (const row of rows.values()) {
-    let previousRight = -Infinity
-    for (const lyric of row.sort((left, right) => left.bounds.x - right.bounds.x)) {
-      lyric.horizontalOffset = Math.max(0, previousRight + lyric.lineHeight * 0.1 - lyric.bounds.x)
-      previousRight = Math.max(previousRight, lyric.bounds.x + lyric.bounds.width + lyric.horizontalOffset)
-    }
-  }
-}
-
 function resolveLyricCollisions(paper: HTMLElement) {
   for (const page of paper.querySelectorAll<SVGSVGElement>(':scope > svg:not([data-m3n-lyric-adjusted])')) {
     const engraving = page.querySelector<SVGSVGElement>(':scope > svg.definition-scale')
@@ -126,10 +102,9 @@ function resolveLyricCollisions(paper: HTMLElement) {
       const obstacles = [...system.querySelectorAll<SVGGraphicsElement>('.notehead, .stem path, .flag path, .beam path, .beam polygon')]
       const lyrics = verses.map((verse) => {
         const bounds = verse.getBBox()
-        return { verse, bounds, lineHeight: lyricLineHeight(verse, bounds), lineOffset: 0, horizontalOffset: 0 }
+        return { verse, bounds, lineHeight: lyricLineHeight(verse, bounds), lineOffset: 0 }
       })
       addLyricLineSpacing(lyrics)
-      addLyricHorizontalSpacing(lyrics)
       let lyricOffset = 0
 
       for (const lyric of lyrics) {
@@ -146,10 +121,7 @@ function resolveLyricCollisions(paper: HTMLElement) {
         }
       }
 
-      lyrics.forEach((lyric) => {
-        translateHorizontally(lyric.verse, lyric.horizontalOffset)
-        translateVertically(lyric.verse, lyric.lineOffset + lyricOffset)
-      })
+      lyrics.forEach((lyric) => translateVertically(lyric.verse, lyric.lineOffset + lyricOffset))
       const nextSystem = systems[index + 1]
       if (!nextSystem || lyricOffset === 0 || lyrics.length === 0) continue
 
