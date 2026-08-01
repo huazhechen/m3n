@@ -72,7 +72,7 @@ describe('happi123ToM3N', () => {
   it('ties a standalone extension to the final note inside a group', () => {
     const result = happi123ToM3N('{title:组延音}\n{key_signature:C}\n{time_signature:4/4}\n7_(6_6)--|----|||')
 
-    expect(result.output).toContain('(7) (6~) 6^.~ | 6^^ |||')
+    expect(result.output).toContain('(7 6~) 6^.~ | 6^^ |||')
     expect(result.output).not.toContain('(7~)')
   })
 

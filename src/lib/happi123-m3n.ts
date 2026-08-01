@@ -191,7 +191,7 @@ function normalizeNotationSpacing(source: string) {
 
 function groupAdjacentEighthNotes(source: string) {
   // M3N uses one parenthesized duration group for two adjacent eighth notes.
-  return source.replace(/\(([0-7][#b=ed^.]*)\) \(([0-7][#b=ed^.]*)\)/g, '($1 $2)')
+  return source.replace(/\(([0-7][#b=ed^.~]*)\) \(([0-7][#b=ed^.~]*)\)/g, '($1 $2)')
 }
 
 const M3N_BARLINE = /((?::\|\|\||:\|\|:|:\|\||\|\|\||\|\|:|\|\||\|))/
