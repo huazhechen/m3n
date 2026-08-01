@@ -421,44 +421,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
 
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
-      {headerMetadata.length > 0 && (
-        <header className="score-title-block">
-          {centeredHeaderItems.map((item) => item.priority === 0
-            ? <h1 key={item.priority}>{item.value}</h1>
-            : <p className="score-subtitle" key={item.priority}>{item.value}</p>)}
-          {(leftHeaderItems.length > 0 || rightHeaderItems.length > 0) && (
-            <div className="score-header-details">
-              <div className="score-header-column score-header-column-left">
-                {leftHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{item.value}</p>)}
-              </div>
-              <div className="score-header-column score-header-column-right">
-                {rightHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{item.value}</p>)}
-              </div>
-            </div>
-          )}
-        </header>
-      )}
-      <div
-        ref={paperRef}
-        className="score-paper verovio-score"
-        data-render-phase={renderPhase ?? undefined}
-        aria-busy={isRendering || undefined}
-        tabIndex={0}
-        onClick={(event) => {
-          const element = (event.target as Element).closest('[id^="m3n-e-"]')
-          if (!element?.id) return
-          const xmlId = element.id
-          paperRef.current?.querySelectorAll('.is-cursor-active').forEach((activeElement) => {
-            activeElement.classList.remove('is-cursor-active')
-          })
-          element.classList.add('is-cursor-active')
-          setSelectedXmlId(xmlId)
-          window.requestAnimationFrame(() => onNoteClick?.(xmlId))
-        }}
-        onBlurCapture={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) onPaperBlur?.()
-        }}
-      />
       <div className="audio-controls">
         {hasAudioControls && (
           <button
@@ -516,6 +478,44 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
           </button>
         )}
       </div>
+      {headerMetadata.length > 0 && (
+        <header className="score-title-block">
+          {centeredHeaderItems.map((item) => item.priority === 0
+            ? <h1 key={item.priority}>{item.value}</h1>
+            : <p className="score-subtitle" key={item.priority}>{item.value}</p>)}
+          {(leftHeaderItems.length > 0 || rightHeaderItems.length > 0) && (
+            <div className="score-header-details">
+              <div className="score-header-column score-header-column-left">
+                {leftHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{item.value}</p>)}
+              </div>
+              <div className="score-header-column score-header-column-right">
+                {rightHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{item.value}</p>)}
+              </div>
+            </div>
+          )}
+        </header>
+      )}
+      <div
+        ref={paperRef}
+        className="score-paper verovio-score"
+        data-render-phase={renderPhase ?? undefined}
+        aria-busy={isRendering || undefined}
+        tabIndex={0}
+        onClick={(event) => {
+          const element = (event.target as Element).closest('[id^="m3n-e-"]')
+          if (!element?.id) return
+          const xmlId = element.id
+          paperRef.current?.querySelectorAll('.is-cursor-active').forEach((activeElement) => {
+            activeElement.classList.remove('is-cursor-active')
+          })
+          element.classList.add('is-cursor-active')
+          setSelectedXmlId(xmlId)
+          window.requestAnimationFrame(() => onNoteClick?.(xmlId))
+        }}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) onPaperBlur?.()
+        }}
+      />
       <ScoreExportDialog
         ref={exportDialogRef}
         mei={mei}

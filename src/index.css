@@ -742,7 +742,7 @@ textarea::selection {
 }
 
 .audio-controls {
-  margin-top: 12px;
+  margin-bottom: 12px;
   display: grid;
   grid-template-columns: auto minmax(120px, 1fr) minmax(240px, 2fr) auto;
   align-items: center;
