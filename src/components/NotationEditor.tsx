@@ -91,6 +91,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           textareaRef={textareaRef}
           value={source}
           ariaLabel="M3N source"
+          readOnly={embedded}
           onChange={(event) => {
             setSource(event.currentTarget.value)
             updateCursorPosition(event.currentTarget.selectionStart)

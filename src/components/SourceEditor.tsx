@@ -9,6 +9,7 @@ type SourceEditorProps = {
   onSelect?: ReactEventHandler<HTMLTextAreaElement>
   onBlur?: FocusEventHandler<HTMLTextAreaElement>
   textareaRef?: RefObject<HTMLTextAreaElement | null>
+  readOnly?: boolean
 }
 
 export function SourceEditor({
@@ -19,6 +20,7 @@ export function SourceEditor({
   onSelect,
   onBlur,
   textareaRef,
+  readOnly = false,
 }: SourceEditorProps) {
   const lineNumbersRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLTextAreaElement>(null)
@@ -62,6 +64,7 @@ export function SourceEditor({
           }
         }}
         spellCheck={false}
+        readOnly={readOnly}
         wrap="off"
         value={value}
         onChange={onChange}
