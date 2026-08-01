@@ -76,10 +76,22 @@ function parseUnit(items: ParsedLyricItem[], raw: string, sourceStart: number, f
 export function parseLyricItems(source: string, sourceStart: number, mode: LyricMode): ParsedLyricItem[] {
   const items: ParsedLyricItem[] = []
   if (mode === 'word') {
-    for (const match of source.matchAll(/\S+/g)) {
-      const raw = match[0]
+    let index = 0
+    while (index < source.length) {
+      if (/\s/.test(source[index]!)) {
+        index += 1
+        continue
+      }
+      if (source.startsWith('//', index)) {
+        const newline = source.indexOf('\n', index)
+        index = newline === -1 ? source.length : newline + 1
+        continue
+      }
+      const start = index
+      while (index < source.length && !/\s/.test(source[index]!)) index += 1
+      const raw = source.slice(start, index)
       const forced = raw.startsWith('+')
-      parseUnit(items, forced ? raw.slice(1) : raw, sourceStart + (match.index ?? 0) + (forced ? 1 : 0), forced, mode)
+      parseUnit(items, forced ? raw.slice(1) : raw, sourceStart + start + (forced ? 1 : 0), forced, mode)
     }
     return items
   }
@@ -90,6 +102,11 @@ export function parseLyricItems(source: string, sourceStart: number, mode: Lyric
     const character = source[index]!
     if (/\s/.test(character)) {
       index += 1
+      continue
+    }
+    if (source.startsWith('//', index)) {
+      const newline = source.indexOf('\n', index)
+      index = newline === -1 ? source.length : newline + 1
       continue
     }
     if (character === '+') {

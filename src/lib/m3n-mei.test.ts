@@ -201,6 +201,15 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<syl>乙！</syl>')
   })
 
+  it('ignores inline comments in lyric blocks', () => {
+    const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲 // 注释内容\n乙\n{/}')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<syl>甲</syl>')
+    expect(result.mei).toContain('<syl>乙</syl>')
+    expect(result.mei).not.toContain('注释内容')
+  })
+
   it('expands repeated placeholders and encodes grouped lyrics as underlined single-note text', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 |||\n{lyrics}\n%{2} (甲乙) _{0}\n{/}')
 
