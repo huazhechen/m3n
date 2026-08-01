@@ -1,5 +1,5 @@
-import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import type { ComponentPropsWithoutRef, FocusEvent, ReactElement, ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -34,6 +34,8 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isTocOpen, setIsTocOpen] = useState(false)
+  const tocRef = useRef<HTMLElement>(null)
+  const tocToggleRef = useRef<HTMLButtonElement>(null)
   const documentGroups = useMemo<DocumentGroup[]>(
     () =>
       documents.map((document) => ({
@@ -62,6 +64,37 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
 
     return () => window.cancelAnimationFrame(frame)
   }, [activeDocument, location.hash])
+
+  useEffect(() => {
+    if (!isTocOpen) {
+      return
+    }
+
+    function closeTocWhenPointerLeaves(event: PointerEvent) {
+      const target = event.target
+      if (
+        target instanceof Node &&
+        (tocRef.current?.contains(target) || tocToggleRef.current?.contains(target))
+      ) {
+        return
+      }
+      setIsTocOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeTocWhenPointerLeaves)
+    return () => document.removeEventListener('pointerdown', closeTocWhenPointerLeaves)
+  }, [isTocOpen])
+
+  function closeTocWhenFocusLeaves(event: FocusEvent<HTMLElement>) {
+    const nextFocus = event.relatedTarget
+    if (
+      nextFocus instanceof Node &&
+      (tocRef.current?.contains(nextFocus) || tocToggleRef.current?.contains(nextFocus))
+    ) {
+      return
+    }
+    setIsTocOpen(false)
+  }
 
   function selectDocument(documentId: string, headingId = '') {
     navigate({
@@ -97,7 +130,12 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
 
   return (
     <div className="book-layout">
-      <aside id="docs-toc" className={`book-toc ${isTocOpen ? 'is-open' : ''}`}>
+      <aside
+        ref={tocRef}
+        id="docs-toc"
+        className={`book-toc ${isTocOpen ? 'is-open' : ''}`}
+        onBlur={closeTocWhenFocusLeaves}
+      >
         <span className="eyebrow">目录</span>
         <nav className="toc-tree" aria-label="文档目录">
           {documentGroups.map((document) => (
@@ -172,6 +210,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
           {activeDocument.source}
         </ReactMarkdown>
         <button
+          ref={tocToggleRef}
           type="button"
           className="doc-toc-toggle"
           aria-expanded={isTocOpen}
