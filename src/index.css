@@ -492,27 +492,9 @@ textarea::selection {
   margin: 16px 0 8px;
 }
 
-.score-reader-actions .secondary-link {
-  flex: 0 0 auto;
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid #b8cfca;
-  border-radius: 4px;
-  background: #fffef9;
-  color: #285b5c;
-  font-size: 13px;
-  cursor: pointer;
-  text-decoration: none;
-  text-align: center;
-  font-weight: normal;
-}
-
-.score-reader-actions .secondary-link:hover {
-  border-color: #2f6f73;
-  background: #dcebe6;
-}
-
-.score-reader-actions .secondary-link.is-disabled {
+.score-reader-actions .action-button.is-disabled {
+  display: inline-flex;
+  align-items: center;
   border-color: #d9dbd4;
   color: #9aa2a6;
   background: #f4f5f1;
