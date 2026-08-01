@@ -46,12 +46,12 @@ function escapeXml(value: string) {
     .replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 }
 
-const CJK_CHARACTER = /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/u
+const CJK_OR_FULLWIDTH_CHARACTER = /[\u3000-\u303F\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF01-\uFF60\uFFE0-\uFFEE]/u
 
 function lyricText(lyric: VerseSyllable) {
   const text = lyric.text.replaceAll('~', ' ')
   if (!lyric.cjkSpacingCompensation) return text
-  const compensation = Array.from(text).filter((character) => CJK_CHARACTER.test(character)).map(() => '\u200B').join('')
+  const compensation = Array.from(text).filter((character) => CJK_OR_FULLWIDTH_CHARACTER.test(character)).map(() => '\u200B').join('')
   return `${text}${compensation}`
 }
 

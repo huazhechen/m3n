@@ -197,8 +197,8 @@ describe('M3N to MEI conversion', () => {
   it('maps default lyrics by character while keeping punctuation on its lyric', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲，乙！\n{/}')
 
-    expect(result.mei).toContain('<syl>甲，\u200B</syl>')
-    expect(result.mei).toContain('<syl>乙！\u200B</syl>')
+    expect(result.mei).toContain('<syl>甲，\u200B\u200B</syl>')
+    expect(result.mei).toContain('<syl>乙！\u200B\u200B</syl>')
   })
 
   it('adds CJK spacing compensation only to character-based lyrics', () => {
