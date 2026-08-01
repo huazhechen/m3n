@@ -39,6 +39,11 @@ export function convertHappiLyrics(source: string) {
       index += 1
       continue
     }
+    if (rest[0] === ';') {
+      tokens.push('%')
+      index += 1
+      continue
+    }
     if (HAN_CHARACTER.test(rest[0])) {
       tokens.push(`${forceTiedTarget ? '+' : ''}${rest[0]}`)
       forceTiedTarget = false

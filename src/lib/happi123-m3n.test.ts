@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { happi123ToM3N } from './happi123-m3n'
+import { formatM3N } from './m3n-format'
 import { m3nToMei } from './m3n-mei'
 
 describe('happi123ToM3N', () => {
@@ -228,5 +229,11 @@ describe('happi123ToM3N', () => {
 
     expect(result.output).toContain('{lyrics=1}\n甲 % 乙\n{/}')
     expect(result.output).toContain('{lyrics=2}\n丙 % 丁\n{/}')
+  })
+
+  it('converts ASCII semicolons in Happi123 lyrics to alignment placeholders', () => {
+    const result = happi123ToM3N('{title:歌词}\n{key_signature:C}\n{time_signature:2/4}\n11|||\n{lyric}甲;乙；丙{/lyric}')
+
+    expect(formatM3N(result.output)).toContain('{lyrics}\n甲%乙；丙\n{/}')
   })
 })

@@ -19,6 +19,9 @@ const shouldWrite = process.argv.includes('--write')
 const showDetails = process.argv.includes('--details')
 const showMeasures = process.argv.includes('--measures')
 const selectedSlug = process.argv.find((argument) => argument.startsWith('--slug='))?.slice('--slug='.length)
+const selectedSlugs = new Set(
+  process.argv.find((argument) => argument.startsWith('--slugs='))?.slice('--slugs='.length).split(',').filter(Boolean) ?? [],
+)
 
 function diagnosticKind(message: string) {
   return message
@@ -27,7 +30,7 @@ function diagnosticKind(message: string) {
 }
 
 const files = (await readdir(sourceDirectory))
-  .filter((file) => file.endsWith('.h123'))
+  .filter((file) => file.endsWith('.h123') && (selectedSlugs.size === 0 || selectedSlugs.has(file.replace(/\.h123$/, ''))))
   .sort((left, right) => left.localeCompare(right))
 const reports: FileReport[] = []
 
