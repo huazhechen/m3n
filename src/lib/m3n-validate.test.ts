@@ -162,6 +162,18 @@ describe('validateM3N', () => {
     expect(validateM3N(source)).toEqual([])
   })
 
+  it('combines lyric blocks across the named-part playback order', () => {
+    const source = [
+      '{2/4} {parts=A B A}',
+      '{part=A}1 2 ||{/}',
+      '{part=B}3 4 ||{/}',
+      '{lyrics=1}甲乙{/}',
+      '{lyrics=2}丙丁{/}',
+      '{lyrics=3}戊己{/}',
+    ].join('\n')
+    expect(validateM3N(source)).toEqual([])
+  })
+
   it('excludes instrumental intervals from lyric alignment', () => {
     expect(messages('{2/4} {inst}1 2{/} | 3 4 |||\n{lyrics-word}la la{/}')).toBe('')
   })
