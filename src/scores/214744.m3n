@@ -3,10 +3,10 @@
 {source=Happi123}
 {parts=Intro A B A C C D E}
 {key=C} {4/4}
-{part=Intro} {br}
+{part=Intro} {inst} {br}
 ||: (3e) {text=重复7次} (2e) (6e) (2e) (3e) (2e) (6) (2e) :|| {br}
 3ee^^ | {br}
-{/} {part=A} 3e~ ((3e)) ((6)) ((1e)) ((3e)) 2e 5e | {br}
+{/} {/} {part=A} 3e~ ((3e)) ((6)) ((1e)) ((3e)) 2e 5e | {br}
 (2e.) ((7e)) (6e.) ((5#e)) 6e 3ee | {br}
 6e 3ee (2ee) (([2ee3ee2ee:2])) (7e) (5e) | {br}
 6e^. (0) (3e) | {br}

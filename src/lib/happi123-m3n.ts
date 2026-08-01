@@ -56,6 +56,10 @@ function normalizePartOrder(value: string) {
     .join(' ')
 }
 
+function isInstrumentalPart(name: string) {
+  return /^(?:intro|interlude|outro|instrumental|prelude|前奏|间奏|尾奏|过门)$/i.test(name.trim())
+}
+
 function numericChordToRoman(value: string) {
   const match = /^([1-7])(m|dim|aug|sus[24]?|[2-9]|1[0-3])?$/i.exec(value.trim())
   if (!match) {
@@ -512,6 +516,18 @@ function applyDalSegnoStructure(body: string, header: HappiHeader) {
   return structured
 }
 
+function sectionParts(source: string) {
+  const firstPartIndex = source.indexOf('{part=')
+  let activeInstrumental = false
+  const sections = source.replace(/\{part=([^}]+)\}/g, (match, rawName: string, offset: number) => {
+    const name = rawName.trim()
+    const closePrevious = offset === firstPartIndex ? '' : activeInstrumental ? '{/} {/} ' : '{/} '
+    activeInstrumental = isInstrumentalPart(name)
+    return `${closePrevious}${match}${activeInstrumental ? ' {inst}' : ''}`
+  })
+  return `${sections}${activeInstrumental ? ' {/} {/}' : ' {/}'}`
+}
+
 export function happi123ToM3N(source: string): ConversionResult {
   const diagnostics: string[] = []
   const { header, body, lyrics } = parseSource(source)
@@ -535,10 +551,11 @@ export function happi123ToM3N(source: string): ConversionResult {
   // no terminal semantics.  Keep the repeat/section meaning, but remove the
   // document terminator before wrapping source sections as parts.
   const sectionedMusic = partCount > 0
-    ? `${converted
-      .replace(/:\|\|\|/g, ':||')
-      .replace(/\|\|\|/g, '||')
-      .replace(/\{part=/g, (_match, offset) => offset === converted.indexOf('{part=') ? '{part=' : '{/} {part=')} {/}`
+    ? sectionParts(
+      converted
+        .replace(/:\|\|\|/g, ':||')
+        .replace(/\|\|\|/g, '||'),
+    )
     : /(?:\|\|\||:\|\|\|)\s*$/.test(converted) ? converted : `${converted} |||`
   if (header.meters.length === 1) {
     const correctedMeter = inferCorrectedMeter(sectionedMusic, header.meter)

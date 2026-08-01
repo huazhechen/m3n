@@ -142,6 +142,12 @@ describe('happi123ToM3N', () => {
     expect(plainResult.output).toContain('1 1 | 2 2 |||')
   })
 
+  it('marks explicitly named instrumental parts as lyric-free intervals', () => {
+    const result = happi123ToM3N('{title=前奏}\n{key_signature:C}\n{time_signature:2/4}\n{play:Intro A}\n{mark:Intro}11|{mark:A}22|||')
+
+    expect(result.output).toContain('{part=Intro} {inst} 1 1 | {/} {/} {part=A} 2 2 || {/}')
+  })
+
   it('does not promote a Happi123 repeat-section bar into a document terminator', () => {
     const result = happi123ToM3N('{title:反复段}\n{key_signature:C}\n{time_signature:2/4}\n11:||22|||')
 
