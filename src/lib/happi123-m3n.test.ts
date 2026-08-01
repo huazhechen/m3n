@@ -157,7 +157,7 @@ describe('happi123ToM3N', () => {
   it('converts a single dal segno jump to direct M3N navigation', () => {
     const result = happi123ToM3N('{title:反复}\n{key_signature:C}\n{time_signature:2/4}\n11|{start}22|{DS}')
 
-    expect(result.output).toContain('1 1 | {segno} 2 2 | {ds} |||')
+    expect(result.output).toContain('1 1 | {segno} 2 2 {ds}| |||')
   })
 
   it('moves a D.S. marker before its preceding repeat end before adding the terminal bar', () => {
@@ -170,6 +170,12 @@ describe('happi123ToM3N', () => {
     const result = happi123ToM3N('{title:返始}\n{key_signature:C}\n{time_signature:2/4}\n11|22{fine}|||')
 
     expect(result.output).toContain('1 1 | 2 2 {fine} |||')
+  })
+
+  it('moves fine before the Happi123 barline that precedes it', () => {
+    const result = happi123ToM3N('{title:返始}\n{key_signature:C}\n{time_signature:2/4}\n11:|{fine}|||')
+
+    expect(result.output).toContain('1 1 {fine}:|||')
   })
 
   it('uses ordinary section bars inside parts and adds a missing document terminator', () => {

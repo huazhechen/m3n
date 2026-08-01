@@ -7,7 +7,7 @@ const EPSILON = 1e-9
 /** Places a jump on the measure it concludes, then combines its terminal bar. */
 export function normalizeAdjacentBarlines(source: string) {
   return source
-    .replace(/(:\|\|)\s*(\{(?:ds|dc)\})/g, '$2$1')
+    .replace(/(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)\s*(\{(?:ds|dc|fine)\})/g, '$2$1')
     .replace(/:\|\|\s*\|\|\|/g, ':|||')
 }
 
@@ -166,7 +166,7 @@ function formatMusic(source: string) {
     }
   }
   if (line) lines.push(line)
-  return lines.join('\n').replace(/\{(ds|dc)\}\s+(:\|\|\|?)/g, '{$1}$2')
+  return lines.join('\n').replace(/\{(ds|dc|fine)\}\s+(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g, '{$1}$2')
 }
 
 function formatMain(source: string) {

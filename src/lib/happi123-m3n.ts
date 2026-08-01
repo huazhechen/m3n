@@ -336,7 +336,7 @@ function convertSequence(
       if (end >= 0) {
         const converted = convertTag(rest.slice(1, end), diagnostics)
         const previous = output.at(-1)
-        if ((converted === '{ds}' || converted === '{dc}') && previous && /^:\|\|$/.test(previous)) {
+        if ((converted === '{ds}' || converted === '{dc}' || converted === '{fine}') && previous && /^(?::\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)$/.test(previous)) {
           output[output.length - 1] = `${converted}${previous}`
         } else {
           output.push(converted)
