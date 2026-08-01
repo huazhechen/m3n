@@ -103,7 +103,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   const scoreRef = useRef<VerovioScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
   const stopPlaybackRef = useRef<() => void>(() => undefined)
-  const getPlayerRef = useRef<(() => Promise<SpessaPlayer>) | null>(null)
   const midiRef = useRef<ArrayBuffer | null>(null)
   const speedRef = useRef(100)
   const isSeekingRef = useRef(false)
@@ -195,10 +194,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                   resolveLyricCollisions(paper)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
-                  const playerPromise = getPlayerRef.current?.()
-                  void playerPromise?.catch((error: unknown) => {
-                    if (!cancelled) setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
-                  })
                   resolve()
                   return
                 }
@@ -317,8 +312,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       setIsPlayerLoading(false)
     }
   }
-
-  getPlayerRef.current = getPlayer
 
   const togglePlayback = async () => {
     try {
