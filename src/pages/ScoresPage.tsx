@@ -3,10 +3,15 @@ import { useMemo, useState } from 'react'
 import { TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
 import type { PresetScore } from '../lib/samples'
+import { validateM3N } from '../lib/m3n-validate'
 
-function ScoreCard({ score }: { score: PresetScore }) {
+function ScoreCard({ score, invalid }: { score: PresetScore; invalid: boolean }) {
   return (
-    <Link className="score-card" to={`/scores/${score.slug}`}>
+    <Link
+      className={invalid ? 'score-card is-invalid-score' : 'score-card'}
+      to={`/scores/${score.slug}`}
+      aria-label={invalid ? `${score.title}，包含校验问题` : undefined}
+    >
       <div>
         <h3>{score.title}</h3>
         <div className="score-notation-tags" aria-label={`调号 ${score.keySignature}，拍号 ${score.timeSignature}，速度 ${score.tempo} BPM`}>
@@ -29,6 +34,10 @@ function ScoreCard({ score }: { score: PresetScore }) {
 export function ScoresPage() {
   const [query, setQuery] = useState('')
   const normalizedQuery = query.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
+  const invalidScoreSlugs = useMemo(
+    () => new Set(presetScores.filter((score) => validateM3N(score.source).length > 0).map((score) => score.slug)),
+    [],
+  )
   const scores = useMemo(
     () => presetScores.filter((score) => score.searchText.includes(normalizedQuery)),
     [normalizedQuery],
@@ -66,7 +75,7 @@ export function ScoresPage() {
               {scores
                 .filter((score) => score.category === category)
                 .map((score) => (
-                  <ScoreCard key={score.slug} score={score} />
+                  <ScoreCard key={score.slug} score={score} invalid={invalidScoreSlugs.has(score.slug)} />
                 ))}
             </div>
           </section>

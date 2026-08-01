@@ -538,6 +538,16 @@ textarea::selection {
   border-color: #2f6f73;
 }
 
+.score-list .score-card.is-invalid-score {
+  border-color: #c05b35;
+  background: #fff8f3;
+}
+
+.score-list .score-card.is-invalid-score:hover {
+  border-color: #a33b24;
+  background: #fff1e8;
+}
+
 .score-list .score-card > div:first-child {
   flex: 1;
   display: flex;
