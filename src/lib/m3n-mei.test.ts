@@ -330,11 +330,11 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('<beam>\n                    <graceGrp')
   })
 
-  it('beams consecutive eighth notes by beats in 4/4', () => {
+  it('beams consecutive eighth notes in two-beat groups in 4/4', () => {
     const result = m3nToMei('{4/4}\n(5e6e5e3e) (4e5e4e2e)|||')
 
     expect(result.mei).toMatch(/<beam>\s*<note xml:id="m3n-e-1"/)
-    expect(result.mei.match(/<beam>/g)).toHaveLength(4)
+    expect(result.mei.match(/<beam>/g)).toHaveLength(2)
   })
 
   it('beams a dotted eighth note with its following sixteenth note', () => {

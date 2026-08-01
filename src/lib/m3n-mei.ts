@@ -200,16 +200,17 @@ function beamGroupBeats(meterCount: number, meterUnit: number) {
 function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number) {
   const groupBeats = beamGroupBeats(meterCount, meterUnit)
   const result: string[] = []
-  let group: string[] = []
+  let group: Array<{ beats: number; xml: string }> = []
   let position = 0
+  let groupStart = 0
 
   const flush = () => {
-    if (group.length > 1) result.push(['<beam>', ...group, '</beam>'].join('\n'))
-    else result.push(...group)
+    if (group.length > 1) result.push(['<beam>', ...group.map(({ xml }) => xml), '</beam>'].join('\n'))
+    else result.push(...group.map(({ xml }) => xml))
     group = []
   }
 
-  for (const item of events) {
+  for (const [index, item] of events.entries()) {
     if (item.prefix) {
       flush()
       result.push(item.prefix)
@@ -225,11 +226,22 @@ function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number)
     const remaining = groupBeats - position
     if (!beamable || item.event.beats > remaining + 0.0001) flush()
 
-    if (beamable) group.push(xml)
+    if (beamable) {
+      if (group.length === 0) groupStart = position
+      group.push({ beats: item.event.beats, xml })
+    }
     else result.push(xml)
 
     position = (position + item.event.beats) % groupBeats
-    if (position < 0.0001 || groupBeats - position < 0.0001) flush()
+    if (position < 0.0001 || groupBeats - position < 0.0001) {
+      const next = events[index + 1]
+      const canJoinStraightEighths = meterCount === 4 && meterUnit === 4 &&
+        groupStart < 0.0001 &&
+        group.reduce((total, { beats }) => total + beats, 0) < 2 - 0.0001 &&
+        group.every(({ beats }) => Math.abs(beats - 0.5) < 0.0001) &&
+        next?.event.kind !== 'rest' && Math.abs((next?.event.beats ?? 0) - 0.5) < 0.0001
+      if (!canJoinStraightEighths) flush()
+    }
   }
   flush()
   return result
