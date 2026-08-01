@@ -34,8 +34,10 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isTocOpen, setIsTocOpen] = useState(false)
+  const [activeHeadingId, setActiveHeadingId] = useState('')
   const tocRef = useRef<HTMLElement>(null)
   const tocToggleRef = useRef<HTMLButtonElement>(null)
+  const activeHeadingIdRef = useRef('')
   const documentGroups = useMemo<DocumentGroup[]>(
     () =>
       documents.map((document) => ({
@@ -46,7 +48,6 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   )
   const pageParams = useMemo(() => new URLSearchParams(location.search), [location.search])
   const activeDocument = documentGroups.find((document) => document.id === pageParams.get('doc')) ?? documentGroups[0]
-  const activeHeadingId = location.hash ? decodeURIComponent(location.hash.slice(1)) : ''
 
   useEffect(() => {
     if (!activeDocument) {
@@ -54,6 +55,8 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     }
 
     const targetId = location.hash ? decodeURIComponent(location.hash.slice(1)) : ''
+    activeHeadingIdRef.current = targetId
+    setActiveHeadingId(targetId)
     const frame = window.requestAnimationFrame(() => {
       if (targetId) {
         document.getElementById(targetId)?.scrollIntoView()
@@ -64,6 +67,50 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
 
     return () => window.cancelAnimationFrame(frame)
   }, [activeDocument, location.hash])
+
+  useEffect(() => {
+    if (!activeDocument) {
+      return
+    }
+
+    let frame = 0
+    const headingElements = activeDocument.headings.flatMap((heading) => {
+      const element = document.getElementById(heading.id)
+      return element ? [{ id: heading.id, element }] : []
+    })
+
+    function updateActiveHeading() {
+      frame = 0
+      const viewportMarker = window.innerHeight * 0.25
+      const currentHeading = headingElements.reduce<string>((currentId, heading) => (
+        heading.element.getBoundingClientRect().top <= viewportMarker ? heading.id : currentId
+      ), '')
+
+      if (activeHeadingIdRef.current === currentHeading) {
+        return
+      }
+
+      activeHeadingIdRef.current = currentHeading
+      setActiveHeadingId(currentHeading)
+      const hash = currentHeading ? `#${encodeURIComponent(currentHeading)}` : ''
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`)
+    }
+
+    function scheduleHeadingUpdate() {
+      if (!frame) {
+        frame = window.requestAnimationFrame(updateActiveHeading)
+      }
+    }
+
+    scheduleHeadingUpdate()
+    window.addEventListener('scroll', scheduleHeadingUpdate, { passive: true })
+    window.addEventListener('resize', scheduleHeadingUpdate)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', scheduleHeadingUpdate)
+      window.removeEventListener('resize', scheduleHeadingUpdate)
+    }
+  }, [activeDocument])
 
   useEffect(() => {
     if (!isTocOpen) {
