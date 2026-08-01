@@ -100,7 +100,7 @@ Verovio 是将乐谱数据雕版为 SVG 的引擎。它不是所见即所得编�
 
 | 意图 | 正式写法 | 要点 |
 | --- | --- | --- |
-| C 升 | `<note pname="c" oct="4" accid="s" dur="4"/>` | 常用 `accid`：`s` 升、`f` 降、`n` 还原、`ss` 重升、`ff` 重降。 |
+| C 升 | `<note pname="c" oct="4" accid="s" dur="4"/>` | 常用 `accid`：`s` 升、`f` 降、`n` 还原、`x` 重升、`ff` 重降；对应演奏属性 `accid.ges` 的重升值为 `ss`。 |
 | 独立临时记号 | `<note ...><accid accid="s"/></note>` | 子元素写法利于区分显示记号和演奏音高。 |
 | D 大调 | `<keySig sig="2s" mode="major"/>` | 初始值也可写为 `staffDef key.sig="2s" key.mode="major"`。 |
 | F 小调 | `<keySig sig="4f" mode="minor"/>` | `sig` 是数量和方向。 |

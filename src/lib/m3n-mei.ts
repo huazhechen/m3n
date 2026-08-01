@@ -117,8 +117,8 @@ function pitchXml(pitch: string, key: string, accidentals?: Map<string, string>,
   const value = m3nPitch(pitch, key)
   const octave = value.oct + octaveShift
   const accidentalKey = `${value.pname}${octave}`
-  if (value.accid) accidentals?.set(accidentalKey, value.accid)
-  const accidGes = value.accid || accidentals?.get(accidentalKey) || value.accidGes
+  if (value.accid) accidentals?.set(accidentalKey, value.accidGes ?? value.accid)
+  const accidGes = value.accid ? value.accidGes : accidentals?.get(accidentalKey) || value.accidGes
   return `pname="${value.pname}" oct="${octave}"${value.accid ? ` accid="${value.accid}"` : ''}${accidGes ? ` accid.ges="${accidGes}"` : ''}`
 }
 

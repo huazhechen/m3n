@@ -165,10 +165,19 @@ describe('M3N to MEI conversion', () => {
   it('serializes double accidentals with their MEI pitch values', () => {
     const result = m3nToMei('{key=C} {4/4}\n1## 2bb 1 2 |||')
 
-    expect(result.mei).toContain('pname="c" oct="4" accid="ss" accid.ges="ss"')
+    expect(result.mei).toContain('pname="c" oct="4" accid="x" accid.ges="ss"')
     expect(result.mei).toContain('pname="d" oct="4" accid="ff" accid.ges="ff"')
     expect(m3nPitch('1##', 'C').accidGes).toBe('ss')
+    expect(m3nPitch('1##', 'C').accid).toBe('x')
     expect(m3nPitch('2bb', 'C').accidGes).toBe('ff')
+  })
+
+  it('keeps the double-sharp gesture valid when the accidental carries through a measure', () => {
+    const notes = m3nToMei('{key=C} {4/4}\n1## 1 2 3 |||').mei.match(/<note[^>]+>/g) ?? []
+
+    expect(notes[0]).toContain('accid="x" accid.ges="ss"')
+    expect(notes[1]).toContain('accid.ges="ss"')
+    expect(notes[1]).not.toContain(' accid="')
   })
 
   it('resolves explicit accidentals relative to the key signature', () => {

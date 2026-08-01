@@ -393,7 +393,7 @@ export function m3nPitch(pitch: string, key: string) {
   return {
     pname: letters[letterIndex].toLowerCase(),
     oct: 4 + (letterIndex < tonicIndex ? 1 : 0) + octaveShift,
-    accid: explicit,
+    accid: explicit === 'ss' ? 'x' : explicit,
     accidGes: explicit || keyAccid,
   }
 }
