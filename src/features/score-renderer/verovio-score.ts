@@ -61,7 +61,7 @@ export class VerovioScore {
       pageMarginTop: 8,
       pageWidth: Math.max(800, Math.round(width * 100 / effectiveScale)),
       scale: effectiveScale,
-      svgCss: '.m3n-text-underline .rend { text-decoration: underline; } .m3n-text-underline > rect { display: none; }',
+      svgCss: '.m3n-text-underline .rend { text-decoration: underline; }',
       svgViewBox: true,
     })
     if (!this.toolkit.loadData(layoutMei)) {

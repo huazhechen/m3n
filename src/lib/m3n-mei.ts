@@ -152,7 +152,7 @@ function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: Ve
     const connection = lyric.kind === 'extender'
       ? ' con="u"'
       : lyric.underlined
-        ? ' type="m3n-text-underline" con="u"'
+        ? ' type="m3n-text-underline"'
       : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
     const text = lyric.underlined && lyric.kind !== 'extender'
       ? underlinedLyricText(lyric)
