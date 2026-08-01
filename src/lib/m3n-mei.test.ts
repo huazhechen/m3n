@@ -323,6 +323,13 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('acciaccatura')
   })
 
+  it('keeps a grace group outside the main-note beam', () => {
+    const result = m3nToMei('{key=C} {2/4}\n(7e){ac(56)} (6e) (5e) (6e) |||')
+
+    expect(result.mei).toContain('</graceGrp>\n                    <beam>\n                    <note xml:id="m3n-e-1"')
+    expect(result.mei).not.toContain('<beam>\n                    <graceGrp')
+  })
+
   it('beams consecutive eighth notes by beats in 4/4', () => {
     const result = m3nToMei('{4/4}\n(5e6e5e3e) (4e5e4e2e)|||')
 

@@ -214,12 +214,19 @@ function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number)
       flush()
       result.push(item.prefix)
     }
+    const graceEnd = item.xml.indexOf('</graceGrp>')
+    const grace = graceEnd >= 0 ? item.xml.slice(0, graceEnd + '</graceGrp>'.length) : ''
+    const xml = grace ? item.xml.slice(grace.length) : item.xml
+    if (grace) {
+      flush()
+      result.push(grace)
+    }
     const beamable = item.event.kind !== 'rest' && item.event.beats <= 0.75
     const remaining = groupBeats - position
     if (!beamable || item.event.beats > remaining + 0.0001) flush()
 
-    if (beamable) group.push(item.xml)
-    else result.push(item.xml)
+    if (beamable) group.push(xml)
+    else result.push(xml)
 
     position = (position + item.event.beats) % groupBeats
     if (position < 0.0001 || groupBeats - position < 0.0001) flush()
