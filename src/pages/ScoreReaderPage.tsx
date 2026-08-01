@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import type { ScoreRendererRef } from '../components/ScoreRenderer'
 import { TopNav } from '../components/TopNav'
@@ -10,12 +10,12 @@ export function ScoreReaderPage() {
   const { slug } = useParams()
   const score = presetScores.find((item) => item.slug === slug)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
+  const result = useMemo(() => m3nToMei(score?.source ?? ''), [score?.source])
 
   if (!score) {
     return <Navigate to="/scores" replace />
   }
 
-  const result = m3nToMei(score.source)
   const scoreIndex = presetScores.indexOf(score)
   const previousScore = presetScores[scoreIndex - 1]
   const nextScore = presetScores[scoreIndex + 1]

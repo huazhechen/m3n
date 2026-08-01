@@ -36,6 +36,7 @@ export interface ScoreRendererRef {
 let scoreRenderQueue = Promise.resolve()
 type PlaybackStopper = { current: () => void }
 let activePlayback: PlaybackStopper | null = null
+const EMPTY_INVALID_MEASURE_IDS: string[] = []
 
 function claimPlayback(stopper: PlaybackStopper) {
   if (activePlayback && activePlayback !== stopper) activePlayback.current()
@@ -167,7 +168,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   tempo,
   compact = false,
   activeXmlId,
-  invalidMeasureIds = [],
+  invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
   onActiveXmlId,
   onNoteClick,
   onPaperBlur,
