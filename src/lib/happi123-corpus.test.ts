@@ -18,6 +18,8 @@ describe('Happi123 score corpus', () => {
       if (!/^\{title=[^}]+\}/.test(result.output)) failures.push(`${slug}: title`)
       if (!/\{key=[A-G](?:#|b)?\} \{\d+\/\d+\}/.test(result.output)) failures.push(`${slug}: settings`)
       if (/\{\d+_\d+\}|\{part=\||\{lyric\}|\{tet=/.test(result.output)) failures.push(`${slug}: malformed legacy output`)
+      const sourceBpm = /^\{bpm:(\d+)\}/m.exec(source)?.[1]
+      if (sourceBpm && !result.output.includes(`{${sourceBpm}qpm}`)) failures.push(`${slug}: bpm`)
 
       const explicitBreakCount = [...source.matchAll(/\{(?:br|__linebreak__)\}/g)].length
       const outputBreakCount = result.output.match(/\{br\}/g)?.length ?? 0
