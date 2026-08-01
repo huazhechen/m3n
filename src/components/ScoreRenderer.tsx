@@ -81,7 +81,7 @@ function resolveLyricCollisions(paper: HTMLElement) {
           const overlapsHorizontally = lyric.x < bounds.x + bounds.width && lyric.x + lyric.width > bounds.x
           const overlapsVertically = lyric.y < bounds.y + bounds.height && lyric.y + lyric.height > bounds.y
           if (overlapsHorizontally && overlapsVertically) {
-            lyricOffset = Math.max(lyricOffset, bounds.y + bounds.height - lyric.y + lyric.height * 0.5)
+            lyricOffset = Math.max(lyricOffset, bounds.y + bounds.height - lyric.y + lyric.height * 0.2)
           }
         }
       }
@@ -90,7 +90,7 @@ function resolveLyricCollisions(paper: HTMLElement) {
       const nextSystem = systems[index + 1]
       if (!nextSystem || lyricOffset === 0 || lyrics.length === 0) continue
 
-      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.y + lyric.height + lyricOffset + lyric.height))
+      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.y + lyric.height + lyricOffset + lyric.height * 0.5))
       const nextTop = nextSystem.getBBox().y
       downstreamOffset += Math.max(0, lyricBottom - nextTop)
     }
@@ -98,8 +98,9 @@ function resolveLyricCollisions(paper: HTMLElement) {
     if (downstreamOffset > 0) {
       const pageViewBox = page.viewBox.baseVal
       const engravingViewBox = engraving.viewBox.baseVal
-      const scale = engravingViewBox.height > 0 ? pageViewBox.height / engravingViewBox.height : 1
-      page.setAttribute('viewBox', `${pageViewBox.x} ${pageViewBox.y} ${pageViewBox.width} ${pageViewBox.height + downstreamOffset * scale}`)
+      const engravingScale = engravingViewBox.height > 0 ? pageViewBox.height / engravingViewBox.height : 1
+      const pixelScale = pageViewBox.width > 0 ? page.getBoundingClientRect().width / pageViewBox.width : 1
+      page.style.marginBottom = `${downstreamOffset * engravingScale * pixelScale}px`
     }
     page.dataset.m3nLyricAdjusted = 'true'
   }
