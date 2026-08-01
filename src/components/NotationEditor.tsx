@@ -107,12 +107,14 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           compact={embedded}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}
-          diagnostics={result.diagnostics}
           onActiveXmlId={highlightSourceRange}
           onNoteClick={selectScoreNoteInSource}
           onPaperBlur={() => setIsCursorHighlightActive(false)}
           showPrintButton={false}
         />
+        {result.diagnostics.length > 0 && (
+          <ul className="diagnostics editor-render-diagnostics">{result.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>
+        )}
       </div>
 
       {isMeiDialogOpen && (
