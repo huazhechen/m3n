@@ -189,6 +189,11 @@ function normalizeNotationSpacing(source: string) {
     .replace(/([#bn]?[0-7][#bngd,'"]*)(\{tip:[^}]+\})([_=/x.~-]+)/g, '$1$3$2')
 }
 
+function groupAdjacentEighthNotes(source: string) {
+  // M3N uses one parenthesized duration group for two adjacent eighth notes.
+  return source.replace(/\(([0-7][#b=ed^.]*)\) \(([0-7][#b=ed^.]*)\)/g, '($1 $2)')
+}
+
 const M3N_BARLINE = /((?::\|\|\||:\|\|:|:\|\||\|\|\||\|\|:|\|\||\|))/
 
 function measureMatchesMeter(source: string, meter: string) {
@@ -591,7 +596,7 @@ function repairLegacyStructure(source: string) {
 export function happi123ToM3N(source: string): ConversionResult {
   const diagnostics: string[] = []
   const { header, body, lyrics } = parseSource(source)
-  const converted = convertSequence(body, diagnostics).output
+  const converted = groupAdjacentEighthNotes(convertSequence(body, diagnostics).output)
     .replace(/(:\|\|\|?|:\|\|:)\s+\{x(\d+)\}/g, '$1{x$2}')
     .replace(/(?:\s*\{br\}\s*){2,}/g, ' {br} ')
     .replace(/^\s*\{br\}\s*/, '')

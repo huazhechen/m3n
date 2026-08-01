@@ -58,7 +58,7 @@ describe('happi123ToM3N', () => {
   it('applies a shortening suffix only to the final note in a group', () => {
     const result = happi123ToM3N('{title:组后缀}\n{key_signature:C}\n{time_signature:3/4}\n(2g__2g)_ 1 1_ 1_|||')
 
-    expect(result.output).toContain('((2e~)) (2e) 1 (1) (1) |||')
+    expect(result.output).toContain('((2e~)) (2e) 1 (1 1) |||')
     expect(result.diagnostics).toEqual([])
   })
 
