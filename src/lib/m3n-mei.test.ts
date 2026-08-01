@@ -197,16 +197,26 @@ describe('M3N to MEI conversion', () => {
   it('maps default lyrics by character while keeping punctuation on its lyric', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲，乙！\n{/}')
 
-    expect(result.mei).toContain('<syl>甲，</syl>')
-    expect(result.mei).toContain('<syl>乙！</syl>')
+    expect(result.mei).toContain('<syl>甲，\u200B</syl>')
+    expect(result.mei).toContain('<syl>乙！\u200B</syl>')
+  })
+
+  it('adds CJK spacing compensation only to character-based lyrics', () => {
+    const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲乙\n{/}\n{lyrics-word=2}\nhello world\n{/}')
+
+    expect(result.mei).toContain('<verse n="1"><syl>甲\u200B</syl></verse>')
+    expect(result.mei).toContain('<verse n="1"><syl>乙\u200B</syl></verse>')
+    expect(result.mei).toContain('<verse n="2"><syl>hello</syl></verse>')
+    expect(result.mei).toContain('<verse n="2"><syl>world</syl></verse>')
+    expect(result.mei).not.toContain('hello\u200B')
   })
 
   it('ignores inline comments in lyric blocks', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲 // 注释内容\n乙\n{/}')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<syl>甲</syl>')
-    expect(result.mei).toContain('<syl>乙</syl>')
+    expect(result.mei).toContain('<syl>甲\u200B</syl>')
+    expect(result.mei).toContain('<syl>乙\u200B</syl>')
     expect(result.mei).not.toContain('注释内容')
   })
 
@@ -214,7 +224,7 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{key=G} {4/4}\n((3 3 4 5)) ((3 3 4 5)) ((3 3 4 5)) ((3 3 4 5)) :|||\n{lyrics=1}一二三四一二三四一二三四一二三四{/}\n// {lyrics-word=2}hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello {/}')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<verse n="1"><syl>一</syl></verse>')
+    expect(result.mei).toContain('<verse n="1"><syl>一\u200B</syl></verse>')
     expect(result.mei).not.toContain('<verse n="2">')
     expect(result.mei).not.toContain('hello')
   })
@@ -223,7 +233,7 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 |||\n{lyrics}\n%{2} (甲乙) _{0}\n{/}')
 
     expect(result.mei).not.toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse')
-    expect(result.mei).toContain('<syl con="u">甲乙</syl>')
+    expect(result.mei).toContain('<syl con="u">甲乙\u200B\u200B</syl>')
     expect(result.mei).toContain('<syl con="u"></syl>')
   })
 

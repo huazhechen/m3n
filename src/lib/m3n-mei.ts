@@ -35,7 +35,7 @@ export type MeiConversionResult = {
 }
 
 type LyricSyllable = DirectLyricSyllable
-type VerseSyllable = LyricSyllable & { n: string }
+type VerseSyllable = LyricSyllable & { n: string; cjkSpacingCompensation: boolean }
 
 function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
   return tokens
@@ -44,6 +44,15 @@ function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
 function escapeXml(value: string) {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;').replaceAll("'", '&apos;')
+}
+
+const CJK_CHARACTER = /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/u
+
+function lyricText(lyric: VerseSyllable) {
+  const text = lyric.text.replaceAll('~', ' ')
+  if (!lyric.cjkSpacingCompensation) return text
+  const compensation = Array.from(text).filter((character) => CJK_CHARACTER.test(character)).map(() => '\u200B').join('')
+  return `${text}${compensation}`
 }
 
 function keySignature(rawKey: string) {
@@ -136,7 +145,7 @@ function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: Ve
     const connection = lyric.underlined || lyric.kind === 'extender'
       ? ' con="u"'
       : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
-    return `<verse n="${lyric.n}"><syl${connection}>${escapeXml(lyric.text.replaceAll('~', ' '))}</syl></verse>`
+    return `<verse n="${lyric.n}"><syl${connection}>${escapeXml(lyricText(lyric))}</syl></verse>`
   }).join('')
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
@@ -231,7 +240,10 @@ export function m3nToMei(source: string): MeiConversionResult {
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
   const lyricSyllables = document.lyrics.map((block, index) => ({
     n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
-    syllables: splitLyricSyllables(block.syllables),
+    syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
+      ...syllable,
+      cjkSpacingCompensation: block.mode === 'char',
+    })),
   }))
   const melodyIndices = lyricSyllables.map(() => 0)
   const isInstrumentalEvent = (event: DirectEvent) => document.intervals.some((interval) => (
