@@ -81,7 +81,7 @@ function resolveLyricCollisions(paper: HTMLElement) {
           const overlapsHorizontally = lyric.x < bounds.x + bounds.width && lyric.x + lyric.width > bounds.x
           const overlapsVertically = lyric.y < bounds.y + bounds.height && lyric.y + lyric.height > bounds.y
           if (overlapsHorizontally && overlapsVertically) {
-            lyricOffset = Math.max(lyricOffset, bounds.y + bounds.height - lyric.y + 80)
+            lyricOffset = Math.max(lyricOffset, bounds.y + bounds.height - lyric.y + lyric.height * 0.5)
           }
         }
       }
@@ -90,9 +90,9 @@ function resolveLyricCollisions(paper: HTMLElement) {
       const nextSystem = systems[index + 1]
       if (!nextSystem || lyricOffset === 0 || lyrics.length === 0) continue
 
-      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.y + lyric.height + lyricOffset))
+      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.y + lyric.height + lyricOffset + lyric.height))
       const nextTop = nextSystem.getBBox().y
-      downstreamOffset += Math.max(0, lyricBottom + 80 - nextTop)
+      downstreamOffset += Math.max(0, lyricBottom - nextTop)
     }
 
     if (downstreamOffset > 0) {
