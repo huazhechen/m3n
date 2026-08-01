@@ -303,6 +303,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei.match(/<beam>/g)).toHaveLength(2)
   })
 
+  it('beams a dotted eighth note with its following sixteenth note', () => {
+    const result = m3nToMei('{4/4}\n5d^~ (5d) (0) (3.) ((2)) |')
+
+    expect(result.mei).toMatch(/<beam>\s*<note xml:id="m3n-e-4"[^>]*dur="8" dots="1"[^>]*>.*?<note xml:id="m3n-e-5"[^>]*dur="16"/s)
+  })
+
   it('creates two staves for an unsegmented score', () => {
     const source = [
       '{key=C} {2/4}',

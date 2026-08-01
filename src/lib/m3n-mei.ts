@@ -216,7 +216,7 @@ function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number)
       flush()
       result.push(item.prefix)
     }
-    const beamable = item.event.kind !== 'rest' && item.event.beats <= 0.5
+    const beamable = item.event.kind !== 'rest' && item.event.beats <= 0.75
     const remaining = groupBeats - position
     if (!beamable || item.event.beats > remaining + 0.0001) flush()
 
