@@ -45,7 +45,7 @@ M3N 是 UTF-8 纯文本，推荐扩展名为 `.m3n`。除歌词块外，空格�
 
 ### 2.1 信息字段
 
-`title`、`subtitle`、`composer`、`lyricist`、`arranger`、`copyright`、`source`、`note` 与 `transpose` 是信息字段。每个字段至多声明一次、值不能为空，且必须在第一个音乐原子前出现。
+`title`、`subtitle`、`singer`、`composer`、`lyricist`、`arranger`、`copyright`、`source`、`note` 与 `transpose` 是信息字段。每个字段至多声明一次、值不能为空，且必须在第一个音乐原子前出现。
 
 `transpose` 的值是整数半音数；正值升高，负值降低，且只改变播放音高，不改写源中的音符。
 

@@ -20,6 +20,7 @@ export type MeiConversionResult = {
   sourceMap: MeiSourceMapRange[]
   title: string
   subtitle: string
+  singer: string
   composer: string
   lyricist: string
   arranger: string
@@ -522,11 +523,12 @@ export function m3nToMei(source: string): MeiConversionResult {
   const headerMetadata: ScoreHeaderMetadata[] = ([
     { value: document.title, side: 'center', priority: 0 },
     { value: document.subtitle, side: 'center', priority: 10 },
-    { value: document.composer, side: 'right', priority: 20 },
+    { value: document.singer || document.composer, side: 'right', priority: 20 },
     { value: document.partOrder.join(' → '), side: 'left', priority: 30 },
   ] satisfies ScoreHeaderMetadata[]).filter((item) => item.value)
 
   const responsibility = [
+    document.singer ? ['singer', document.singer, 'Singer'] : null,
     document.composer ? ['composer', document.composer, 'Composer'] : null,
     document.lyricist ? ['lyricist', document.lyricist, 'Lyricist'] : null,
     document.arranger ? ['arranger', document.arranger, 'Arranger'] : null,
@@ -555,7 +557,7 @@ export function m3nToMei(source: string): MeiConversionResult {
   ].join('\n')
   return {
     source, mei, diagnostics: validateM3N(source), sourceMap,
-    title: document.title, subtitle: document.subtitle, composer: document.composer,
+    title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,
     lyricist: document.lyricist, arranger: document.arranger, hasBassStaff,
     partOrder: document.partOrder,
     headerMetadata,

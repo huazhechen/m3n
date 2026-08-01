@@ -1,4 +1,5 @@
 export type Happi123Metadata = {
+  singer?: string
   composer?: string
   lyricist?: string
 }

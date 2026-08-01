@@ -72,8 +72,12 @@ Happy_ New Year To You All
 | ----------------------- | -------- | --------------------------- |
 | `{title:文本}`          | 曲目标题 | `{title:生日歌}`            |
 | `{subtitle:文本}`       | 副标题   | `{subtitle:Happy birthday}` |
+| `{singer:文本}`         | 演唱者   | `{singer:王杰}`             |
+| `{composer:文本}`       | 作曲者   | `{composer:陈志远}`         |
+| `{lyricist:文本}`       | 作词者   | `{lyricist:陈乐融}`         |
 | `{key_signature:调}`    | 调号     | `{key_signature:F}`         |
 | `{time_signature:拍号}` | 拍号     | `{time_signature:3/4}`      |
+| `{bpm:数字}`            | 速度     | `{bpm:72}`                  |
 
 
 > **必须包含**：至少需要标题、调号和拍号

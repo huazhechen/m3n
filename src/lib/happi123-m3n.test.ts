@@ -22,6 +22,15 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('{lyrics}\n欢 乐 颂\n{/}')
   })
 
+  it('preserves singer and prefers header attributions declared in Happi123', () => {
+    const result = happi123ToM3N('{title:安妮}\n{singer:王杰}\n{composer:王杰}\n{lyricist:陈乐融}\n{key_signature:C}\n{time_signature:4/4}\n1---|||')
+
+    expect(result.output).toContain('{singer=王杰}')
+    expect(result.output).toContain('{composer=王杰}')
+    expect(result.output).toContain('{lyricist=陈乐融}')
+    expect(result.output).not.toContain('{composer=约翰·丹佛}')
+  })
+
   it('diagnoses lossy tuplets instead of silently discarding them', () => {
     const result = happi123ToM3N('(3: 1_ 2 3)')
     expect(result.diagnostics.some((message) => message.includes('三连音'))).toBe(true)

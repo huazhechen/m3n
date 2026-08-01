@@ -36,6 +36,17 @@ describe('M3N to MEI conversion', () => {
     expect(result.sourceMap[0]?.xmlId).toMatch(/^m3n-e-/)
   })
 
+  it('shows the singer in the header when present and otherwise falls back to the composer', () => {
+    const withSinger = m3nToMei('{title=Song} {singer=Singer} {composer=Composer}\n{key=C} {4/4} 1--- |||')
+    const withoutSinger = m3nToMei('{title=Instrumental} {composer=Composer}\n{key=C} {4/4} 1--- |||')
+
+    expect(withSinger.singer).toBe('Singer')
+    expect(withSinger.mei).toContain('<persName role="singer">Singer</persName>')
+    expect(withSinger.headerMetadata).toContainEqual({ value: 'Singer', side: 'right', priority: 20 })
+    expect(withSinger.headerMetadata).not.toContainEqual({ value: 'Composer', side: 'right', priority: 20 })
+    expect(withoutSinger.headerMetadata).toContainEqual({ value: 'Composer', side: 'right', priority: 20 })
+  })
+
   it('does not engrave an implicit default tempo', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 |||')
 

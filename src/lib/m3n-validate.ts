@@ -58,7 +58,7 @@ type Supplement = {
 }
 
 const INFO_FIELDS = new Set([
-  'title', 'subtitle', 'composer', 'lyricist', 'arranger',
+  'title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger',
   'copyright', 'source', 'note', 'transpose',
 ])
 

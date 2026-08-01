@@ -7,6 +7,9 @@ import type { ConversionResult } from './notation/types'
 type HappiHeader = {
   title: string
   subtitle: string
+  singer: string
+  composer: string
+  lyricist: string
   key: string
   meter: string
   meters: string[]
@@ -26,6 +29,9 @@ type ConversionState = {
 const defaultHeader: HappiHeader = {
   title: '',
   subtitle: '',
+  singer: '',
+  composer: '',
+  lyricist: '',
   key: 'C',
   meter: '4/4',
   meters: ['4/4'],
@@ -462,10 +468,13 @@ function parseSource(source: string) {
   const lyrics: string[] = []
   let body = source
 
-  body = body.replace(/\{(title|subtitle|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, rawValue) => {
+  body = body.replace(/\{(title|subtitle|singer|composer|lyricist|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, rawValue) => {
     const value = String(rawValue).trim()
     if (name === 'title') header.title = value
     if (name === 'subtitle') header.subtitle = value
+    if (name === 'singer') header.singer = value
+    if (name === 'composer') header.composer = value
+    if (name === 'lyricist') header.lyricist = value
     if (name === 'key_signature') header.key = normalizeKey(value)
     if (name === 'time_signature') {
       const meters = value.match(/\d+\/\d+/g) ?? []
@@ -592,8 +601,9 @@ export function happi123ToM3N(source: string): ConversionResult {
   const output = [
     header.title ? `{title=${header.title}}` : '',
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
-    metadata.composer ? `{composer=${metadata.composer}}` : '',
-    metadata.lyricist ? `{lyricist=${metadata.lyricist}}` : '',
+    header.singer ? `{singer=${header.singer}}` : '',
+    header.composer || metadata.composer ? `{composer=${header.composer || metadata.composer}}` : '',
+    header.lyricist || metadata.lyricist ? `{lyricist=${header.lyricist || metadata.lyricist}}` : '',
     '{source=Happi123}',
     header.parts ? `{parts=${header.parts}}` : '',
     `{key=${header.key}} {${header.meter}}${/^\d+$/.test(header.bpm) ? ` {${header.bpm}qpm}` : ''}`,

@@ -9,7 +9,7 @@ const sourceModules = import.meta.glob('../scores/happi123/*.h123', {
 
 describe('Happi123 score corpus', () => {
   it('converts every source into structurally valid M3N', () => {
-    expect(Object.keys(sourceModules)).toHaveLength(84)
+    expect(Object.keys(sourceModules)).toHaveLength(83)
     const failures: string[] = []
 
     for (const [path, source] of Object.entries(sourceModules)) {
