@@ -56,10 +56,6 @@ function normalizePartOrder(value: string) {
     .join(' ')
 }
 
-function isInstrumentalPart(name: string) {
-  return /^(?:intro|interlude|outro|instrumental|prelude|前奏|间奏|尾奏|过门)$/i.test(name.trim())
-}
-
 function numericChordToRoman(value: string) {
   const match = /^([1-7])(m|dim|aug|sus[24]?|[2-9]|1[0-3])?$/i.exec(value.trim())
   if (!match) {
@@ -72,8 +68,25 @@ function numericChordToRoman(value: string) {
   return `${roman}${minor ? '' : suffix === 'dim' ? 'dim' : suffix}`
 }
 
-function unwrapEditorGroups(value: string) {
-  return value.replace(/\{\{/g, '').replace(/\}\}/g, '')
+function findInstrumentalClosing(source: string, start: number) {
+  let index = start + 2
+  while (index < source.length - 1) {
+    if (source.startsWith('{{', index)) {
+      const nestedEnd = findInstrumentalClosing(source, index)
+      if (nestedEnd < 0) return -1
+      index = nestedEnd + 2
+      continue
+    }
+    if (source[index] === '{') {
+      const tagEnd = source.indexOf('}', index + 1)
+      if (tagEnd < 0) return -1
+      index = tagEnd + 1
+      continue
+    }
+    if (source.startsWith('}}', index)) return index
+    index += 1
+  }
+  return -1
 }
 
 function findClosing(source: string, start: number, open: string, close: string) {
@@ -269,6 +282,20 @@ function convertSequence(
       }
     }
 
+    if (rest.startsWith('{{')) {
+      const end = findInstrumentalClosing(rest, 0)
+      if (end >= 0) {
+        const inner = convertSequence(rest.slice(2, end), diagnostics, state)
+        output.push(`{inst}${inner.output}{/}`)
+        hasMusic ||= inner.hasMusic
+        index += end + 2
+        continue
+      }
+      diagnostics.push('器乐区间缺少右双大括号：{{')
+      index += 2
+      continue
+    }
+
     const dynamicGroup = /^\{([<>])([\s\S]*?)\1\}/.exec(rest)
     if (dynamicGroup) {
       const inner = convertSequence(dynamicGroup[2], diagnostics, state)
@@ -454,7 +481,7 @@ function parseSource(source: string) {
     return ''
   })
 
-  body = unwrapEditorGroups(body).replace(
+  body = body.replace(
     /^\s*([A-Za-z\u3400-\u9fff][^{}()[\]:|\r\n]{0,47}):\s*/gm,
     (_match, label) => `{mark:${String(label).trim()}} `,
   )
@@ -518,14 +545,7 @@ function applyDalSegnoStructure(body: string, header: HappiHeader) {
 
 function sectionParts(source: string) {
   const firstPartIndex = source.indexOf('{part=')
-  let activeInstrumental = false
-  const sections = source.replace(/\{part=([^}]+)\}/g, (match, rawName: string, offset: number) => {
-    const name = rawName.trim()
-    const closePrevious = offset === firstPartIndex ? '' : activeInstrumental ? '{/} {/} ' : '{/} '
-    activeInstrumental = isInstrumentalPart(name)
-    return `${closePrevious}${match}${activeInstrumental ? ' {inst}' : ''}`
-  })
-  return `${sections}${activeInstrumental ? ' {/} {/}' : ' {/}'}`
+  return `${source.replace(/\{part=/g, (_match, offset) => offset === firstPartIndex ? '{part=' : '{/} {part=')} {/}`
 }
 
 export function happi123ToM3N(source: string): ConversionResult {
