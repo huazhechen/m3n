@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { invalidMeasureBarEnds, validateM3N } from './m3n-validate'
+import { invalidMeasureBarEnds, invalidMeasureIds, validateM3N } from './m3n-validate'
 
 const messages = (source: string) => validateM3N(source).join('\n')
 
@@ -13,6 +13,8 @@ describe('validateM3N', () => {
     const invalidBar = source.indexOf('|', source.indexOf('|') + 1)
 
     expect(invalidMeasureBarEnds(source)).toEqual([invalidBar + 1])
+    expect(invalidMeasureIds(source)).toEqual(['m3n-measure-1-2'])
+    expect(messages(source)).toContain('第 2 行，第 2 小节：中间小节拍数不合规')
   })
 
   it('accepts tenuto and fermata postfixes', () => {

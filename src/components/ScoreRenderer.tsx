@@ -19,6 +19,7 @@ type ScoreRendererProps = {
   tempo: number
   compact?: boolean
   activeXmlId?: string | null
+  invalidMeasureIds?: string[]
   onActiveXmlId?: (xmlId: string | null) => void
   onNoteClick?: (xmlId: string) => void
   onPaperBlur?: () => void
@@ -144,6 +145,17 @@ function resolveLyricCollisions(paper: HTMLElement) {
   }
 }
 
+function highlightInvalidMeasureBarlines(paper: HTMLElement, measureIds: string[]) {
+  for (const id of measureIds) {
+    const measure = paper.querySelector<SVGGElement>(`#${id}`)
+    if (!measure) continue
+    const sibling = measure.nextElementSibling
+    const barline = measure.querySelector<SVGGElement>(':scope > .barLine')
+      ?? (sibling instanceof SVGGElement && sibling.classList.contains('barLine') ? sibling : null)
+    barline?.classList.add('is-invalid-measure-barline')
+  }
+}
+
 export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(function ScoreRenderer({
   mei,
   title,
@@ -155,6 +167,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   tempo,
   compact = false,
   activeXmlId,
+  invalidMeasureIds = [],
   onActiveXmlId,
   onNoteClick,
   onPaperBlur,
@@ -256,6 +269,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                 if (page > pageCount) {
                   if (!isInitialRender) paper.innerHTML = pages.join('')
                   resolveLyricCollisions(paper)
+                  highlightInvalidMeasureBarlines(paper, invalidMeasureIds)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()
@@ -288,7 +302,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, mei, onActiveXmlId, staffWidth])
+  }, [compact, invalidMeasureIds, mei, onActiveXmlId, staffWidth])
 
   useEffect(() => {
     paperRef.current?.querySelectorAll('.is-cursor-active').forEach((element) => {

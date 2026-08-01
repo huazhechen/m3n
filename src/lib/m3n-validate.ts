@@ -11,6 +11,7 @@ type Measure = {
   expected: number
   line: number
   barEnd: number
+  number: number
 }
 
 type Unit = {
@@ -275,24 +276,25 @@ function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidat
   const markInvalidBar = (measure: Measure) => {
     if (measure.barEnd >= 0) invalidBarEnds?.add(measure.barEnd)
   }
+  const location = (measure: Measure) => `第 ${measure.line} 行，第 ${measure.number} 小节`
   const measures = unit.measures
   for (const measure of measures) {
     if (measure.actual > measure.expected && !equal(measure.actual, measure.expected)) {
-      diagnostics.push(`第 ${measure.line} 行：小节拍数超出：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
+      diagnostics.push(`${location(measure)}：小节拍数超出：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
       markInvalidBar(measure)
     }
   }
   if (measures.length === 1) {
     const only = measures[0]
     if (!equal(only.actual, only.expected)) {
-      diagnostics.push(`第 ${only.line} 行：单个小节拍数必须满拍：期望 ${only.expected} 拍，实际 ${only.actual} 拍`)
+      diagnostics.push(`${location(only)}：单个小节拍数必须满拍：期望 ${only.expected} 拍，实际 ${only.actual} 拍`)
       markInvalidBar(only)
     }
     return
   }
   for (const measure of measures.slice(1, -1)) {
     if (!equal(measure.actual, measure.expected)) {
-      diagnostics.push(`第 ${measure.line} 行：中间小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
+      diagnostics.push(`${location(measure)}：中间小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
       markInvalidBar(measure)
     }
   }
@@ -300,11 +302,11 @@ function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidat
   const last = measures.at(-1)!
   if (equal(first.actual, first.expected)) {
     if (!equal(last.actual, last.expected)) {
-      diagnostics.push(`第 ${last.line} 行：没有弱起时末小节拍数必须满拍：期望 ${last.expected} 拍，实际 ${last.actual} 拍`)
+      diagnostics.push(`${location(last)}：没有弱起时末小节拍数必须满拍：期望 ${last.expected} 拍，实际 ${last.actual} 拍`)
       markInvalidBar(last)
     }
   } else if (!equal(first.expected, last.expected) || !equal(first.actual + last.actual, first.expected)) {
-    diagnostics.push(`首末小节拍数不互补：首 ${first.actual} 拍 + 末 ${last.actual} 拍，完整小节为 ${first.expected} 拍`)
+    diagnostics.push(`${location(first)} 与 ${location(last)}：首末小节拍数不互补：首 ${first.actual} 拍 + 末 ${last.actual} 拍，完整小节为 ${first.expected} 拍`)
     markInvalidBar(first)
     markInvalidBar(last)
   }
@@ -364,7 +366,7 @@ function validateBody(
 
   const commitMeasure = (line: number, barEnd = -1) => {
     if (unit.currentHasAtom && !unit.multiRestPendingBar) {
-      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine, barEnd })
+      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine, barEnd, number: unit.measures.length + 1 })
     }
     unit.beats = 0
     unit.currentHasAtom = false
@@ -759,7 +761,7 @@ function validateBody(
           pendingTie = null
         }
         for (let index = 0; index < count; index += 1) {
-          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line, barEnd: -1 })
+          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line, barEnd: -1, number: unit.measures.length + 1 })
         }
         elapsedBeats += count * unit.expected
         unit.currentHasAtom = true
@@ -968,6 +970,15 @@ export function invalidMeasureBarEnds(source: string) {
     })
   }
   return [...invalidBarEnds].sort((left, right) => left - right)
+}
+
+export function invalidMeasureIds(source: string) {
+  const invalidEnds = new Set(invalidMeasureBarEnds(source))
+  return tokenizeM3N(source).filter((token) => token.kind === 'bar').flatMap((token, index) => (
+    invalidEnds.has(token.start + token.raw.length)
+      ? [`m3n-measure-1-${index + 1}`]
+      : []
+  ))
 }
 
 export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}): string[] {

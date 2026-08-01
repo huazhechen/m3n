@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
-import type { ChangeEventHandler, FocusEventHandler, ReactEventHandler, ReactNode, RefObject } from 'react'
+import type { ChangeEventHandler, FocusEventHandler, ReactEventHandler, RefObject } from 'react'
 
 type SourceEditorProps = {
   value: string
@@ -9,30 +9,6 @@ type SourceEditorProps = {
   onSelect?: ReactEventHandler<HTMLTextAreaElement>
   onBlur?: FocusEventHandler<HTMLTextAreaElement>
   textareaRef?: RefObject<HTMLTextAreaElement | null>
-  invalidBarEnds?: number[]
-}
-
-function highlightedSource(value: string, invalidBarEnds: number[]) {
-  const ends = new Set(invalidBarEnds)
-  const fragments: ReactNode[] = []
-  let index = 0
-  let key = 0
-  while (index < value.length) {
-    const barStart = value.indexOf('|', index)
-    if (barStart === -1) {
-      fragments.push(value.slice(index))
-      break
-    }
-    if (barStart > index) fragments.push(value.slice(index, barStart))
-    let barEnd = barStart + 1
-    while (value[barEnd] === '|') barEnd += 1
-    const bar = value.slice(barStart, barEnd)
-    fragments.push(ends.has(barEnd)
-      ? <mark className="invalid-barline" key={key++}>{bar}</mark>
-      : bar)
-    index = barEnd
-  }
-  return fragments
 }
 
 export function SourceEditor({
@@ -43,11 +19,9 @@ export function SourceEditor({
   onSelect,
   onBlur,
   textareaRef,
-  invalidBarEnds = [],
 }: SourceEditorProps) {
   const lineNumbersRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLTextAreaElement>(null)
-  const highlightRef = useRef<HTMLPreElement>(null)
   const lines = Array.from(
     { length: value.split('\n').length },
     (_item, index) => String(index + 1),
@@ -80,8 +54,6 @@ export function SourceEditor({
   return (
     <div className="source-editor">
       <div ref={lineNumbersRef} className="line-numbers" aria-hidden="true">{lines}</div>
-      <div className="source-editor-stack">
-      <pre ref={highlightRef} className="source-highlight" aria-hidden="true">{highlightedSource(value, invalidBarEnds)}</pre>
       <textarea
         ref={(element) => {
           editorRef.current = element
@@ -99,14 +71,10 @@ export function SourceEditor({
           if (lineNumbersRef.current) {
             lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop
           }
-          if (highlightRef.current) {
-            highlightRef.current.style.transform = `translate(${-event.currentTarget.scrollLeft}px, ${-event.currentTarget.scrollTop}px)`
-          }
         }}
         onBlur={onBlur}
         aria-label={ariaLabel}
       />
-      </div>
     </div>
   )
 }
