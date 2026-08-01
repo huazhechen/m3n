@@ -139,6 +139,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<hairpin staff="1" form="dim" startid="#m3n-e-5" endid="#m3n-e-8"/>')
   })
 
+  it('omits zero-length slurs that Verovio cannot render', () => {
+    const result = m3nToMei('{key=C} {4/4}\n{lg}1{/} 2 3 4 |||')
+
+    expect(result.mei).not.toContain('<slur ')
+  })
+
   it('serializes arpeggios on chord groups as MEI arpeg controls', () => {
     const result = m3nToMei('{key=C} {4/4}\n[135:h]{arp} 0 0 0 |||')
 

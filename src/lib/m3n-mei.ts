@@ -437,6 +437,9 @@ export function m3nToMei(source: string): MeiConversionResult {
       const startid = idFor(interval.start)
       const endid = idFor(interval.endStart)
       if (!startid || !endid) return []
+      // Verovio rejects zero-length control intervals such as a slur whose
+      // start and end resolve to the same event.
+      if (startid === endid) return []
       if (staffNumber === 1 && (interval.kind === 'accel' || interval.kind === 'rit')) return [`<tempo staff="${staffNumber}" startid="#${startid}" endid="#${endid}" place="above" func="continuous">${interval.kind === 'rit' ? 'rit.' : 'accel.'}</tempo>`]
       if (interval.kind === 'lg') return [`<slur startid="#${startid}" endid="#${endid}"/>`]
       if (interval.kind === 'cresc' || interval.kind === 'decres') return [`<hairpin staff="${staffNumber}" form="${interval.kind === 'cresc' ? 'cres' : 'dim'}" startid="#${startid}" endid="#${endid}"/>`]
