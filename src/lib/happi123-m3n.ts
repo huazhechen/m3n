@@ -183,7 +183,7 @@ function applySuffixToGroup(inner: string, suffix: string) {
 
 function normalizeNotationSpacing(source: string) {
   return source
-    .replace(/([0-7][#bngd,'"]*)\s+([_=/x.]+)/g, '$1$2')
+    .replace(/([0-7][#bngd,'"]*)(?:\s+[_=/x.-]+)+/g, (match, note) => `${note}${match.slice(note.length).replace(/\s+/g, '')}`)
     .replace(/(^|[|\s])([_=/x.]+)([#bn]?[0-7])/g, '$1$3$2')
     .replace(/([#bn]?[0-7][#bngd,'"]*)(st|tr~?)([_=/x.-]+)/g, '$1$3$2')
     .replace(/([#bn]?[0-7][#bngd,'"]*)(\{tip:[^}]+\})([_=/x.~-]+)/g, '$1$3$2')

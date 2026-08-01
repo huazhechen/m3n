@@ -85,6 +85,12 @@ describe('happi123ToM3N', () => {
     expect(m3nToMei(result.output).mei).not.toMatch(/<slur startid="#([^"\n]+)" endid="#\1"/)
   })
 
+  it('keeps spaced duration extensions on their preceding note', () => {
+    const result = happi123ToM3N('{title:延音}\n{key_signature:C}\n{time_signature:3/4}\n(6, - -|6, --) |||')
+
+    expect(result.output).toContain('6d^.~ | 6d^. |||')
+  })
+
   it('does not reinterpret a trill marker as a tie', () => {
     const result = happi123ToM3N('{title:颤音}\n{key_signature:C}\n{time_signature:4/4}\n(1{tip:震音}1tr~)--|||')
 
