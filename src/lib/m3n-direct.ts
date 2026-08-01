@@ -1,6 +1,7 @@
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
 import { splitSupplementBlocks } from './notation/supplements'
+import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N } from './notation/m3n-tokens'
 
 export type DirectEvent = {
@@ -37,7 +38,7 @@ export type DirectInterval = {
 
 export type DirectMeasure = { events: DirectEvent[]; left?: string; right?: string; ending?: string; breakBefore?: boolean; breakAfter?: boolean; multiRest?: number; repeatCount?: number }
 export type DirectPart = { melody: DirectMeasure[]; bass: DirectMeasure[] }
-export type DirectLyricSyllable = { text: string; sourceStart: number; sourceEnd: number; forceTiedTarget: boolean }
+export type DirectLyricSyllable = { text: string; sourceStart: number; sourceEnd: number; forceTiedTarget: boolean; kind: 'text' | 'placeholder' | 'extender'; underlined: boolean; wordpos?: 'i' | 'm' | 't' }
 export type DirectLyricBlock = { range: string; syllables: DirectLyricSyllable[] }
 type DirectSettingEvent = {
   beats: number
@@ -54,7 +55,6 @@ export type DirectDocument = {
   lyricist: string
   arranger: string
   copyright: string
-  source: string
   note: string
   transpose: string
   key: string
@@ -68,7 +68,7 @@ export type DirectDocument = {
   intervals: DirectInterval[]
 }
 
-const metadataNames = ['title', 'subtitle', 'category', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
+const metadataNames = ['title', 'subtitle', 'category', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'note', 'transpose'] as const
 const dynamicVelocities: Record<string, number> = { ppp: 20, pp: 32, p: 45, mp: 60, mf: 76, f: 92, ff: 108, fff: 120 }
 
 function metadata(source: string, name: (typeof metadataNames)[number]) {
@@ -408,7 +408,6 @@ export function parseM3NDocument(source: string): DirectDocument {
     lyricist: metadata(source, 'lyricist'),
     arranger: metadata(source, 'arranger'),
     copyright: metadata(source, 'copyright'),
-    source: metadata(source, 'source'),
     note: metadata(source, 'note'),
     transpose: metadata(source, 'transpose'),
     key,
@@ -418,12 +417,7 @@ export function parseM3NDocument(source: string): DirectDocument {
     hasExplicitTempo: tempo !== undefined,
     lyrics: lyrics.map((item) => ({
       range: item.range,
-      syllables: Array.from(item.text.matchAll(/\S+/g)).map((match) => ({
-        text: match[0].startsWith('+') ? match[0].slice(1) : match[0],
-        sourceStart: item.sourceStart + match.index,
-        sourceEnd: item.sourceStart + match.index + match[0].length,
-        forceTiedTarget: match[0].startsWith('+'),
-      })),
+      syllables: parseLyricItems(item.text, item.sourceStart, item.mode),
     })),
     parts,
     partOrder: main.match(/\{parts=([^}]*)\}/)?.[1]?.trim().split(/\s+/).filter(Boolean) ?? [],

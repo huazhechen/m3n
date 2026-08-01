@@ -2,6 +2,7 @@ export type LyricBlock = {
   range: string
   text: string
   sourceStart: number
+  mode: 'char' | 'word'
 }
 
 export type SupplementBlocks = {
@@ -21,14 +22,15 @@ export function splitSupplementBlocks(source: string): SupplementBlocks {
 
   while (index < source.length) {
     const rest = source.slice(index)
-    const opener = /^\{(lyrics)(?:=([^}]+))?\}|^\{(bass)\}/.exec(rest)
+    const opener = /^\{(lyrics(?:-word)?)(?:=([^}]+))?\}|^\{(bass)\}/.exec(rest)
     if (!opener) {
       main.push(source[index])
       index += 1
       continue
     }
 
-    const kind = opener[1] ? 'lyrics' : 'bass'
+    const lyricKind = opener[1]
+    const kind = lyricKind ? 'lyrics' : 'bass'
     const range = opener[2] ?? ''
     const contentStart = index + opener[0].length
     let cursor = contentStart
@@ -68,7 +70,7 @@ export function splitSupplementBlocks(source: string): SupplementBlocks {
     const rawText = source.slice(contentStart, contentEnd)
     const leadingWhitespace = rawText.search(/\S|$/)
     const text = rawText.trim()
-    if (kind === 'lyrics') lyrics.push({ range, text, sourceStart: contentStart + leadingWhitespace })
+    if (kind === 'lyrics') lyrics.push({ range, text, sourceStart: contentStart + leadingWhitespace, mode: lyricKind === 'lyrics-word' ? 'word' : 'char' })
     else bass = text
     index = closeEnd
   }

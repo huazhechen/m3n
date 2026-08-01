@@ -34,27 +34,11 @@ export type MeiConversionResult = {
   tempo: number
 }
 
-type LyricSyllable = DirectLyricSyllable & { wordpos?: 'i' | 'm' | 't' }
+type LyricSyllable = DirectLyricSyllable
 type VerseSyllable = LyricSyllable & { n: string }
 
 function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
-  return tokens.flatMap((token) => {
-    if (token.text === '%') return [token]
-    const syllables = token.text.split('-').filter(Boolean)
-    if (syllables.length < 2) return [token]
-    let offset = 0
-    return syllables.map((text, index) => {
-      const sourceStart = token.sourceStart + offset
-      offset += text.length + 1
-      return {
-      text,
-      sourceStart,
-      sourceEnd: sourceStart + text.length,
-      forceTiedTarget: token.forceTiedTarget && index === 0,
-      wordpos: index === 0 ? 'i' : index === syllables.length - 1 ? 't' : 'm',
-      }
-    })
-  })
+  return tokens
 }
 
 function escapeXml(value: string) {
@@ -148,8 +132,12 @@ function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: Ve
   const velocity = velocityValue === undefined ? '' : ` vel="${velocityValue}"`
   const gestural = event.postfixes.includes('brk') ? ` dur.ges="${gesturalDuration(event.beats / 4)}"`
     : event.postfixes.includes('tip') ? ` dur.ges="${gesturalDuration(event.beats / 2)}"` : ''
-  const verse = lyrics.filter((lyric) => lyric.text !== '%').map((lyric) =>
-    `<verse n="${lyric.n}"><syl${lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''}>${escapeXml(lyric.text.replaceAll('~', ' '))}</syl></verse>`).join('')
+  const verse = lyrics.filter((lyric) => lyric.kind !== 'placeholder').map((lyric) => {
+    const connection = lyric.underlined || lyric.kind === 'extender'
+      ? ' con="u"'
+      : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
+    return `<verse n="${lyric.n}"><syl${connection}>${escapeXml(lyric.text.replaceAll('~', ' '))}</syl></verse>`
+  }).join('')
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
     event.postfixes.includes('brk') ? '<artic artic="stacciss"/>' : '',

@@ -529,7 +529,7 @@ function meterForBeats(beats: number) {
 
 function normalizeMeasureMeters(source: string) {
   if (/\{\d+\/64\}/.test(source)) return source
-  const diagnostics = validateM3N(source)
+  const diagnostics = validateM3N(source, { skipBeatValidation: true })
   if (!diagnostics.some((diagnostic) => diagnostic.includes('拍数'))) return source
 
   const insertions = new Map<number, string>()
@@ -550,7 +550,7 @@ function normalizeMeasureMeters(source: string) {
 }
 
 function repairLegacyStructure(source: string) {
-  const diagnostics = validateM3N(source)
+  const diagnostics = validateM3N(source, { skipBeatValidation: true })
   let repaired = source
 
   if (diagnostics.some((diagnostic) => diagnostic.includes('volta') || diagnostic.includes('反复结构'))) {
@@ -640,7 +640,6 @@ export function happi123ToM3N(source: string): ConversionResult {
     header.singer ? `{singer=${header.singer}}` : '',
     header.composer || metadata.composer ? `{composer=${header.composer || metadata.composer}}` : '',
     header.lyricist || metadata.lyricist ? `{lyricist=${header.lyricist || metadata.lyricist}}` : '',
-    '{source=Happi123}',
     header.parts ? `{parts=${header.parts}}` : '',
     `{key=${header.key}} {${header.meter}}${/^\d+$/.test(header.bpm) ? ` {${header.bpm}qpm}` : ''}`,
     music,

@@ -1,5 +1,6 @@
 import { durationInBeats, keyModeIntervals } from './notation/m3n-primitives'
 import { parseM3NGrace } from './notation/m3n-groups'
+import { parseLyricItems, type LyricMode } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
 
 type Meter = { beats: number; beatValue: number }
@@ -55,11 +56,12 @@ type Supplement = {
   line: number
   range: string | null
   tokens: Token[]
+  lyricMode?: LyricMode
 }
 
 const INFO_FIELDS = new Set([
   'title', 'subtitle', 'category', 'singer', 'composer', 'lyricist', 'arranger',
-  'copyright', 'source', 'note', 'transpose',
+  'copyright', 'note', 'transpose',
 ])
 
 const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'lg', '8va', '8vb', 'inst'])
@@ -88,7 +90,7 @@ function openingBlockName(content: string): string | null {
   if (INTERVAL_FLAGS.has(content)) return content
   if (content.startsWith('volta=')) return 'volta'
   if (content.startsWith('part=')) return 'part'
-  if (content === 'lyrics' || content.startsWith('lyrics=')) return 'lyrics'
+  if (content === 'lyrics' || content.startsWith('lyrics=') || content === 'lyrics-word' || content.startsWith('lyrics-word=')) return 'lyrics'
   if (content === 'bass') return 'bass'
   return null
 }
@@ -170,14 +172,15 @@ function extractSupplements(tokens: Token[], diagnostics: string[]) {
 
     if (token.kind === 'attribute') {
       const content = token.content ?? ''
-      const lyric = /^lyrics(?:=(.*))?$/.exec(content)
+      const lyric = /^(lyrics(?:-word)?)(?:=(.*))?$/.exec(content)
       if (lyric || content === 'bass') {
         supplementsStarted = true
         current = {
           kind: lyric ? 'lyrics' : 'bass',
           line: token.line,
-          range: lyric ? (lyric[1] ?? null) : null,
+          range: lyric ? (lyric[2] ?? null) : null,
           tokens: [],
+          lyricMode: lyric?.[1] === 'lyrics-word' ? 'word' : 'char',
         }
         nested = []
         continue
@@ -924,31 +927,27 @@ function validateBody(
   }
 }
 
-function lyricItems(tokens: Token[]) {
+function lyricItems(tokens: Token[], mode: LyricMode) {
   const source = tokens
     .filter((token) => token.kind !== 'comment')
     .map((token) => token.raw)
     .join('')
     .trim()
   if (!source) return { count: 0, forcedTiedTargets: 0, hasTab: false, hasEmptyForcedTarget: false }
-  const items = source.split(/[ \r\n]+/).filter(Boolean)
+  const items = parseLyricItems(source, 0, mode)
   return {
-    count: items.reduce((sum, item) => {
-      const lyric = item.startsWith('+') ? item.slice(1) : item
-      return sum + (lyric === '%' ? 1 : lyric.split('-').filter(Boolean).length)
-    }, 0),
-    forcedTiedTargets: items.filter((item) => item.startsWith('+')).length,
+    count: items.length,
+    forcedTiedTargets: items.filter((item) => item.forceTiedTarget).length,
     hasTab: /\t/.test(source),
-    hasEmptyForcedTarget: items.includes('+'),
+    hasEmptyForcedTarget: /\+(?=\s|$)/.test(source),
   }
 }
 
-export function validateM3N(source: string): string[] {
+export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}): string[] {
   const diagnostics: string[] = []
   const tokens = tokenizeM3N(source)
   const { main, supplements } = extractSupplements(tokens, diagnostics)
-  const importedHappi123 = main.some((token) => token.kind === 'attribute' && token.content === 'source=Happi123')
-  const mainResult = validateBody(main, diagnostics, { skipBeatValidation: importedHappi123 })
+  const mainResult = validateBody(main, diagnostics, { skipBeatValidation: options.skipBeatValidation })
 
   const lyrics = supplements.filter((block) => block.kind === 'lyrics')
   const bassBlocks = supplements.filter((block) => block.kind === 'bass')
@@ -960,7 +959,7 @@ export function validateM3N(source: string): string[] {
     diagnostics.push('存在多个歌词块时，每个歌词块都必须指定遍次')
   }
   for (const lyric of lyrics) {
-    const items = lyricItems(lyric.tokens)
+    const items = lyricItems(lyric.tokens, lyric.lyricMode ?? 'char')
     if (items.count === 0) diagnostics.push(`第 ${lyric.line} 行：歌词块为空`)
     if (items.hasTab) diagnostics.push(`第 ${lyric.line} 行：歌词项必须使用半角空格或换行分隔，不能使用 Tab`)
     if (items.hasEmptyForcedTarget) diagnostics.push(`第 ${lyric.line} 行：+ 后必须跟随歌词项`)
@@ -972,7 +971,7 @@ export function validateM3N(source: string): string[] {
       if (lyricPasses.has(pass)) diagnostics.push(`第 ${lyric.line} 行：歌词块遍次重叠：${pass}`)
       lyricPasses.add(pass)
       const expected = mainResult.lyricCount(pass) + items.forcedTiedTargets
-      if (!importedHappi123 && mainResult.lyricPasses.size === 1 && items.count !== expected) {
+      if (mainResult.lyricPasses.size === 1 && items.count !== expected) {
         diagnostics.push(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`)
       }
     }
