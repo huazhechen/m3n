@@ -93,6 +93,13 @@ describe('happi123ToM3N', () => {
     expect(result.output).not.toContain('{lg}')
   })
 
+  it('attaches Happi123 grace-note groups to their following main note', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n(5g6g)@7g/st |')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.output).toContain('(7e){ac(5e6e)}')
+  })
+
   it('keeps spaced duration extensions on their preceding note', () => {
     const result = happi123ToM3N('{title:延音}\n{key_signature:C}\n{time_signature:3/4}\n(6, - -|6, --) |||')
 

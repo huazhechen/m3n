@@ -27,6 +27,7 @@ type SequenceResult = {
 
 type ConversionState = {
   lastPitch: string | null
+  pendingGrace?: string
 }
 
 const defaultHeader: HappiHeader = {
@@ -383,7 +384,7 @@ function convertSequence(
         if (isGrace) {
           const pitches = extractHappiNotes(rawInner).map((note) => note.pitch).filter((pitch) => pitch !== '0')
           if (pitches.length > 0) {
-            output.push(`{ac(${pitches.join('')})}`)
+            state.pendingGrace = `${state.pendingGrace ?? ''}{ac(${pitches.join('')})}`
           }
         } else if (/^3\s*:/.test(rawInner)) {
           output.push(convertTuplet(rawInner.replace(/^3\s*:/, ''), diagnostics))
@@ -427,7 +428,8 @@ function convertSequence(
 
     const note = readHappiNote(source, index)
     if (note) {
-      output.push(convertHappiNote(note))
+      output.push(`${convertHappiNote(note)}${state.pendingGrace ?? ''}`)
+      state.pendingGrace = undefined
       if (note.pitch !== '0') state.lastPitch = note.pitch
       index = note.end
       hasMusic = true
@@ -593,7 +595,7 @@ function repairLegacyStructure(source: string) {
     if (!/(?:\|\|\||:\|\|\|)(?:\{x\d+\})?\s*(?:\{lyrics|$)/.test(repaired)) repaired = `${repaired.trim()} |||`
   }
   if (diagnostics.some((diagnostic) => diagnostic.includes('后置指令') || diagnostic.includes('sfz'))) {
-    repaired = repaired.replace(/\{sfz\}|\{(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])\}|\{a[cp]\([^}]*\)\}/g, '')
+    repaired = repaired.replace(/\{sfz\}|\{(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])\}/g, '')
   }
   if (diagnostics.some((diagnostic) => diagnostic.includes('延音目标'))) {
     repaired = repaired.replace(/~/g, '')
