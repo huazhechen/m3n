@@ -30,6 +30,10 @@ function normalizeScale(scale: number | undefined) {
   return Math.max(1, Math.min(1000, scale ?? 42))
 }
 
+export function layoutBreaks(mei: string) {
+  return mei.includes('<sb/>') ? 'smart' : 'auto'
+}
+
 export class VerovioScore {
   private readonly toolkit: VerovioToolkit
   private readonly mei: string
@@ -49,7 +53,7 @@ export class VerovioScore {
     const layoutMei = includeBass ? this.mei : withoutBassStaff(this.mei)
     this.toolkit.setOptions({
       adjustPageHeight: true,
-      breaks: layoutMei.includes('<sb/>') ? 'encoded' : 'auto',
+      breaks: layoutBreaks(layoutMei),
       footer: 'none',
       header: 'none',
       lyricTopMinMargin: 0,
