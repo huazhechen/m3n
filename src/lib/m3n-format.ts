@@ -1,9 +1,132 @@
 import { splitSupplementBlocks } from './notation/supplements'
+import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
 
 const BARLINE = /(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g
+const EPSILON = 1e-9
+
+type BeamAtom = { raw: string }
+type BeamGroup = { children: BeamNode[] }
+type BeamNode = BeamAtom | BeamGroup
+type BeamLeaf = { raw: string; duration: number; carets: number; dots: number }
+
+function parseBeamGroup(source: string, start: number): { node: BeamGroup; end: number } | null {
+  let index = start + 1
+  const children: BeamNode[] = []
+  while (index < source.length) {
+    if (/\s/.test(source[index])) {
+      index += 1
+      continue
+    }
+    if (source[index] === ')') return children.length > 0 ? { node: { children }, end: index + 1 } : null
+    if (source[index] === '(') {
+      const nested = parseBeamGroup(source, index)
+      if (!nested) return null
+      children.push(nested.node)
+      index = nested.end
+      continue
+    }
+    const raw = /^(?:0|[1-7])[#b=ed^.~]*/.exec(source.slice(index))?.[0]
+    if (!raw || !parseM3NNote(raw)) return null
+    children.push({ raw })
+    index += raw.length
+  }
+  return null
+}
+
+function beamLeaves(node: BeamNode, depth = 0): BeamLeaf[] | null {
+  if ('children' in node) {
+    const children = node.children.map((child) => beamLeaves(child, depth + 1))
+    return children.some((child) => !child) ? null : children.flat() as BeamLeaf[]
+  }
+  const parsed = parseM3NNote(node.raw)
+  if (!parsed) return null
+  return [{
+    raw: node.raw,
+    duration: durationInBeats(depth, parsed.carets.length, parsed.dots.length),
+    carets: parsed.carets.length,
+    dots: parsed.dots.length,
+  }]
+}
+
+function renderBeamLevel(leaves: BeamLeaf[], depth: number): string {
+  const result: string[] = []
+  for (let index = 0; index < leaves.length;) {
+    const leaf = leaves[index]
+    if (Math.abs(durationInBeats(depth, leaf.carets, leaf.dots) - leaf.duration) < EPSILON) {
+      result.push(leaf.raw)
+      index += 1
+      continue
+    }
+    const nested: BeamLeaf[] = []
+    while (index < leaves.length && Math.abs(durationInBeats(depth, leaves[index].carets, leaves[index].dots) - leaves[index].duration) >= EPSILON) {
+      nested.push(leaves[index])
+      index += 1
+    }
+    result.push(`(${renderBeamLevel(nested, depth + 1)})`)
+  }
+  return result.join(' ')
+}
+
+function normalizeBeamRun(nodes: BeamGroup[]) {
+  const leaves = nodes.flatMap((node) => beamLeaves(node) ?? [])
+  if (leaves.length === 0) return null
+  const output: string[] = []
+  let unit: BeamLeaf[] = []
+  let beats = 0
+  for (const leaf of leaves) {
+    if (beats + leaf.duration > 1 + EPSILON) return null
+    unit.push(leaf)
+    beats += leaf.duration
+    if (Math.abs(beats - 1) < EPSILON) {
+      output.push(unit.length === 1 ? unit[0].raw : `(${renderBeamLevel(unit, 1)})`)
+      unit = []
+      beats = 0
+    }
+  }
+  return unit.length === 0 ? output.join(' ') : null
+}
+
+function normalizeBeamGroups(source: string) {
+  let output = ''
+  for (let index = 0; index < source.length;) {
+    const interval = /^\{(?:lg|cresc|decres|8va|8vb|inst|accel=\d+|rit=\d+)\}/.exec(source.slice(index))?.[0]
+    if (interval) {
+      const close = source.indexOf('{/}', index + interval.length)
+      if (close >= 0) {
+        output += source.slice(index, close + 3)
+        index = close + 3
+        continue
+      }
+    }
+    if (source[index] !== '(') {
+      output += source[index]
+      index += 1
+      continue
+    }
+    const first = parseBeamGroup(source, index)
+    if (!first) {
+      output += source[index]
+      index += 1
+      continue
+    }
+    const nodes = [first.node]
+    let end = first.end
+    while (true) {
+      const whitespace = /^\s+/.exec(source.slice(end))?.[0] ?? ''
+      const next = whitespace && source[end + whitespace.length] === '(' ? parseBeamGroup(source, end + whitespace.length) : null
+      if (!next) break
+      nodes.push(next.node)
+      end = next.end
+    }
+    const normalized = nodes.length > 1 ? normalizeBeamRun(nodes) : null
+    output += normalized ?? source.slice(index, end)
+    index = end
+  }
+  return output
+}
 
 function formatMusic(source: string) {
-  const pieces = source.trim().replace(/\s+/g, ' ').split(BARLINE)
+  const pieces = normalizeBeamGroups(source).trim().replace(/\s+/g, ' ').split(BARLINE)
   const lines: string[] = []
   let line = ''
   let measures = 0
