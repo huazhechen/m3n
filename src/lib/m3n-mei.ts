@@ -11,7 +11,6 @@ export type ScoreHeaderMetadata = {
   value: string
   side: 'left' | 'right' | 'center'
   priority: number
-  label?: 'transpose' | 'parts' | 'composer' | 'arranger'
 }
 
 export type MeiConversionResult = {
@@ -515,9 +514,8 @@ export function m3nToMei(source: string): MeiConversionResult {
   const headerMetadata: ScoreHeaderMetadata[] = ([
     { value: document.title, side: 'center', priority: 0 },
     { value: document.subtitle, side: 'center', priority: 10 },
-    { value: document.composer, side: 'right', priority: 20, label: 'composer' },
-    { value: document.partOrder.join(' → '), side: 'left', priority: 30, label: 'parts' },
-    { value: document.arranger, side: 'right', priority: 30, label: 'arranger' },
+    { value: document.composer, side: 'right', priority: 20 },
+    { value: document.partOrder.join(' → '), side: 'left', priority: 30 },
   ] satisfies ScoreHeaderMetadata[]).filter((item) => item.value)
 
   const responsibility = [

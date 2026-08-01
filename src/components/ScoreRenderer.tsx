@@ -26,18 +26,6 @@ type ScoreRendererProps = {
   onPrintClick?: () => void
 }
 
-const headerLabels = {
-  zh: { transpose: '移调', parts: '乐段', composer: '作曲者', arranger: '编曲者' },
-  en: { transpose: 'Transpose', parts: 'Parts', composer: 'Composer', arranger: 'Arranger' },
-} as const
-
-function formatHeaderMetadata(item: ScoreHeaderMetadata) {
-  if (!item.label) return item.value
-  const language = typeof navigator === 'undefined' || navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en'
-  const separator = language === 'en' ? ': ' : '：'
-  return `${headerLabels[language][item.label]}${separator}${item.value}`
-}
-
 type RenderPhase = 'loading-library' | 'waiting-layout' | 'layout'
 
 export interface ScoreRendererRef {
@@ -392,10 +380,10 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
           {(leftHeaderItems.length > 0 || rightHeaderItems.length > 0) && (
             <div className="score-header-details">
               <div className="score-header-column score-header-column-left">
-                {leftHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{formatHeaderMetadata(item)}</p>)}
+                {leftHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{item.value}</p>)}
               </div>
               <div className="score-header-column score-header-column-right">
-                {rightHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{formatHeaderMetadata(item)}</p>)}
+                {rightHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{item.value}</p>)}
               </div>
             </div>
           )}

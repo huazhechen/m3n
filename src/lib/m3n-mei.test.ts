@@ -22,8 +22,7 @@ describe('M3N to MEI conversion', () => {
     expect(result.headerMetadata).toEqual([
       { value: 'Test', side: 'center', priority: 0 },
       { value: 'Sub', side: 'center', priority: 10 },
-      { value: 'Composer', side: 'right', priority: 20, label: 'composer' },
-      { value: 'Arranger', side: 'right', priority: 30, label: 'arranger' },
+      { value: 'Composer', side: 'right', priority: 20 },
     ])
     expect(result.mei).not.toContain('<pgHead>')
     expect(result.mei).toContain('<scoreDef midi.bpm="90"')
@@ -227,7 +226,7 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{key=C} {2/4} {parts=A B A}\n{part=A}1 2 |{/}\n{part=B}3 4 |{/}')
 
     expect(result.partOrder).toEqual(['A', 'B', 'A'])
-    expect(result.headerMetadata).toContainEqual({ value: 'A → B → A', side: 'left', priority: 30, label: 'parts' })
+    expect(result.headerMetadata).toContainEqual({ value: 'A → B → A', side: 'left', priority: 30 })
     expect(result.mei).toContain('<section xml:id="m3n-segment-1">')
     expect(result.mei).toContain('<section xml:id="m3n-segment-2">')
     expect(result.mei).toMatch(/<section xml:id="m3n-segment-2">\s+<sb\/>/)
