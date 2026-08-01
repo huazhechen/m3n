@@ -1,19 +1,20 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { formatM3N } from '../src/lib/m3n-format'
+import { formatM3N, normalizeAdjacentBarlines } from '../src/lib/m3n-format'
 import { m3nToMei } from '../src/lib/m3n-mei'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const scores = path.join(root, 'src', 'scores')
 const docs = path.join(root, 'docs')
 const shouldWrite = process.argv.includes('--write')
+const scoresOnly = process.argv.includes('--scores-only')
 const files = (await readdir(scores)).filter((file) => file.endsWith('.m3n')).sort()
 const docFiles = (await readdir(docs)).filter((file) => file.endsWith('.md')).sort()
 
 function formatChecked(source: string, label: string) {
   const formatted = formatM3N(source)
-  if (m3nToMei(source).mei !== m3nToMei(formatted).mei) {
+  if (m3nToMei(normalizeAdjacentBarlines(source)).mei !== m3nToMei(formatted).mei) {
     throw new Error(`格式化改变了乐谱语义：${label}`)
   }
   return formatted
@@ -34,11 +35,13 @@ for (const file of files) {
   if (original !== formatted && shouldWrite) await writeFile(filePath, formatted, 'utf8')
 }
 
-for (const file of docFiles) {
-  const filePath = path.join(docs, file)
-  const original = await readFile(filePath, 'utf8')
-  const formatted = formatM3NBlocks(original, file)
-  if (original !== formatted && shouldWrite) await writeFile(filePath, formatted, 'utf8')
+if (!scoresOnly) {
+  for (const file of docFiles) {
+    const filePath = path.join(docs, file)
+    const original = await readFile(filePath, 'utf8')
+    const formatted = formatM3NBlocks(original, file)
+    if (original !== formatted && shouldWrite) await writeFile(filePath, formatted, 'utf8')
+  }
 }
 
-console.log(`${shouldWrite ? 'Formatted' : 'Would format'} ${files.length} M3N files and ${docFiles.length} documentation files`)
+console.log(`${shouldWrite ? 'Formatted' : 'Would format'} ${files.length} M3N files${scoresOnly ? '' : ` and ${docFiles.length} documentation files`}`)
