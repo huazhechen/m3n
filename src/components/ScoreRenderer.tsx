@@ -172,16 +172,39 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
         scoreRef.current = score
         if (isInitialRender) setRenderPhase('waiting-layout')
 
-        return enqueueScoreRender(async () => {
-          if (cancelled) return
+        return enqueueScoreRender(() => {
+          if (cancelled) return Promise.resolve()
           if (isInitialRender) setRenderPhase('layout')
           const pageCount = score.prepareLayout({ width: Math.max(320, staffWidth), scale: compact ? 38 : 42 })
-          const pages = Array.from({ length: pageCount }, (_, index) => score.renderPage(index + 1))
-          if (cancelled) return
-          paper.innerHTML = pages.join('')
-          resolveLyricCollisions(paper)
-          hasRenderedRef.current = true
-          setHasAudioControls(true)
+
+          return new Promise<void>((resolve, reject) => {
+            let page = 1
+            const pages: string[] = []
+            const renderNextPage = () => {
+              if (cancelled) {
+                resolve()
+                return
+              }
+              try {
+                const svg = score.renderPage(page)
+                if (isInitialRender) paper.insertAdjacentHTML('beforeend', svg)
+                else pages.push(svg)
+                page += 1
+                if (page > pageCount) {
+                  if (!isInitialRender) paper.innerHTML = pages.join('')
+                  resolveLyricCollisions(paper)
+                  hasRenderedRef.current = true
+                  setHasAudioControls(true)
+                  resolve()
+                  return
+                }
+                window.requestAnimationFrame(renderNextPage)
+              } catch (error) {
+                reject(error)
+              }
+            }
+            window.requestAnimationFrame(renderNextPage)
+          })
         })
       })
       .catch((error: unknown) => {
