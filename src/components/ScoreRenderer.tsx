@@ -102,6 +102,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   const exportDialogRef = useRef<ScoreExportDialogRef>(null)
   const scoreRef = useRef<VerovioScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
+  const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
   const stopPlaybackRef = useRef<() => void>(() => undefined)
   const midiRef = useRef<ArrayBuffer | null>(null)
   const speedRef = useRef(100)
@@ -291,26 +292,39 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     if (!isSeekingRef.current) updatePlaybackHighlight(seconds, duration, scoreSeconds)
   }
 
-  const getPlayer = async () => {
-    if (playerRef.current) return playerRef.current
+  const getPlayer = () => {
+    if (playerRef.current) return Promise.resolve(playerRef.current)
+    if (playerInitializationRef.current) return playerInitializationRef.current
     const score = scoreRef.current
-    if (!score) throw new Error('乐谱尚未准备完成。')
-    setIsPlayerLoading(true)
-    try {
-      midiRef.current ??= score.midi()
-      const { SpessaPlayer } = await import('../features/score-renderer/spessa-player')
-      const player = await SpessaPlayer.create(midiRef.current, accompaniment, tempo, tempoChanges, {
-        onEnded: () => {
-          stopPlaybackRef.current()
-        },
-        onTime: onPlayerTime,
-      })
-      player.setSpeed(speedRef.current)
-      playerRef.current = player
-      return player
-    } finally {
-      setIsPlayerLoading(false)
-    }
+    if (!score) return Promise.reject(new Error('乐谱尚未准备完成。'))
+    const initialization = (async () => {
+      setIsPlayerLoading(true)
+      try {
+        midiRef.current ??= score.midi()
+        const { SpessaPlayer } = await import('../features/score-renderer/spessa-player')
+        const player = await SpessaPlayer.create(midiRef.current, accompaniment, tempo, tempoChanges, {
+          onEnded: () => {
+            stopPlaybackRef.current()
+          },
+          onTime: onPlayerTime,
+        })
+        player.setSpeed(speedRef.current)
+        playerRef.current = player
+        return player
+      } finally {
+        setIsPlayerLoading(false)
+      }
+    })()
+    playerInitializationRef.current = initialization
+    void initialization.then(
+      () => {
+        if (playerInitializationRef.current === initialization) playerInitializationRef.current = null
+      },
+      () => {
+        if (playerInitializationRef.current === initialization) playerInitializationRef.current = null
+      },
+    )
+    return initialization
   }
 
   const togglePlayback = async () => {
@@ -338,6 +352,20 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       const playbackSeconds = progress * player.duration
       updatePlaybackHighlight(playbackSeconds, player.duration, player.sourceTimeAt(playbackSeconds), false)
     }
+  }
+
+  const beginSeek = () => {
+    if (isSeekingRef.current) return
+    isSeekingRef.current = true
+    pendingSeekProgressRef.current = playbackProgress
+    void getPlayer().then((player) => {
+      const progress = pendingSeekProgressRef.current
+      const playbackSeconds = progress * player.duration
+      updatePlaybackHighlight(playbackSeconds, player.duration, player.sourceTimeAt(playbackSeconds), false)
+      if (!isSeekingRef.current) player.seek(progress)
+    }).catch((error: unknown) => {
+      setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
+    })
   }
 
   const commitSeek = useCallback(() => {
@@ -445,14 +473,8 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
               max="1000"
               value={Math.round(playbackProgress * 1000)}
               aria-label="播放位置"
-              onPointerDown={() => {
-                isSeekingRef.current = true
-                pendingSeekProgressRef.current = playbackProgress
-              }}
-              onKeyDown={() => {
-                isSeekingRef.current = true
-                pendingSeekProgressRef.current = playbackProgress
-              }}
+              onPointerDown={beginSeek}
+              onKeyDown={beginSeek}
               onKeyUp={commitSeek}
               onBlur={commitSeek}
               onInput={(event) => previewSeek(Number(event.currentTarget.value) / 1000)}
