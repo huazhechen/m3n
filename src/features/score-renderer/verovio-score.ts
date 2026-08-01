@@ -21,6 +21,7 @@ export type ScoreLayout = {
   width: number
   scale?: number
   includeBass?: boolean
+  invalidMeasureIds?: readonly string[]
 }
 
 export type TimedScoreElement = { xmlId: string; rendition: number }
@@ -32,6 +33,18 @@ function normalizeScale(scale: number | undefined) {
 
 export function layoutBreaks(mei: string) {
   return mei.includes('<sb/>') ? 'smart' : 'auto'
+}
+
+export function markInvalidMeasures(mei: string, measureIds: readonly string[]) {
+  if (measureIds.length === 0) return mei
+  const ids = new Set(measureIds)
+  const document = new DOMParser().parseFromString(mei, 'application/xml')
+  for (const measure of document.querySelectorAll('measure')) {
+    if (!ids.has(measure.getAttribute('xml:id') ?? '')) continue
+    const type = measure.getAttribute('type')
+    measure.setAttribute('type', type ? `${type} m3n-invalid-measure` : 'm3n-invalid-measure')
+  }
+  return new XMLSerializer().serializeToString(document)
 }
 
 export class VerovioScore {
@@ -48,9 +61,9 @@ export class VerovioScore {
     return new VerovioScore(toolkit, mei)
   }
 
-  prepareLayout({ width, scale = 42, includeBass = true }: ScoreLayout) {
+  prepareLayout({ width, scale = 42, includeBass = true, invalidMeasureIds = [] }: ScoreLayout) {
     const effectiveScale = normalizeScale(scale)
-    const layoutMei = includeBass ? this.mei : withoutBassStaff(this.mei)
+    const layoutMei = markInvalidMeasures(includeBass ? this.mei : withoutBassStaff(this.mei), invalidMeasureIds)
     this.toolkit.setOptions({
       adjustPageHeight: true,
       breaks: layoutBreaks(layoutMei),
@@ -61,7 +74,7 @@ export class VerovioScore {
       pageMarginTop: 8,
       pageWidth: Math.max(800, Math.round(width * 100 / effectiveScale)),
       scale: effectiveScale,
-      svgCss: '.m3n-text-underline .rend { text-decoration: underline; }',
+      svgCss: '.m3n-text-underline .rend { text-decoration: underline; } .m3n-invalid-measure > .barLine path { stroke: #c42626; }',
       svgViewBox: true,
     })
     if (!this.toolkit.loadData(layoutMei)) {

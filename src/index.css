@@ -737,10 +737,6 @@ textarea::selection {
   pointer-events: none;
 }
 
-.score-paper .is-invalid-measure-barline path {
-  stroke: #c42626;
-}
-
 .score-paper .is-playing-measure > .measure-playback-highlight {
   display: block;
   fill: #f0c66b;

@@ -146,17 +146,6 @@ function resolveLyricCollisions(paper: HTMLElement) {
   }
 }
 
-function highlightInvalidMeasureBarlines(paper: HTMLElement, measureIds: string[]) {
-  for (const id of measureIds) {
-    const measure = paper.querySelector<SVGGElement>(`#${id}`)
-    if (!measure) continue
-    const sibling = measure.nextElementSibling
-    const barline = measure.querySelector<SVGGElement>(':scope > .barLine')
-      ?? (sibling instanceof SVGGElement && sibling.classList.contains('barLine') ? sibling : null)
-    barline?.classList.add('is-invalid-measure-barline')
-  }
-}
-
 export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(function ScoreRenderer({
   mei,
   title,
@@ -252,7 +241,11 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
         return enqueueScoreRender(() => {
           if (cancelled) return Promise.resolve()
           if (isInitialRender) setRenderPhase('layout')
-          const pageCount = score.prepareLayout({ width: Math.max(320, staffWidth), scale: compact ? 38 : 42 })
+          const pageCount = score.prepareLayout({
+            width: Math.max(320, staffWidth),
+            scale: compact ? 38 : 42,
+            invalidMeasureIds,
+          })
 
           return new Promise<void>((resolve, reject) => {
             let page = 1
@@ -270,7 +263,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                 if (page > pageCount) {
                   if (!isInitialRender) paper.innerHTML = pages.join('')
                   resolveLyricCollisions(paper)
-                  highlightInvalidMeasureBarlines(paper, invalidMeasureIds)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()
