@@ -10,6 +10,7 @@ type Measure = {
   actual: number
   expected: number
   line: number
+  barEnd: number
 }
 
 type Unit = {
@@ -268,25 +269,31 @@ function createUnit(name: string | null, meter: Meter, line: number): Unit {
   }
 }
 
-function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidation = false) {
+function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidation = false, invalidBarEnds?: Set<number>) {
   if (skipBeatValidation || unit.measures.length === 0) return
   const equal = (a: number, b: number) => Math.abs(a - b) < 1e-9
+  const markInvalidBar = (measure: Measure) => {
+    if (measure.barEnd >= 0) invalidBarEnds?.add(measure.barEnd)
+  }
   const measures = unit.measures
   for (const measure of measures) {
     if (measure.actual > measure.expected && !equal(measure.actual, measure.expected)) {
       diagnostics.push(`第 ${measure.line} 行：小节拍数超出：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
+      markInvalidBar(measure)
     }
   }
   if (measures.length === 1) {
     const only = measures[0]
     if (!equal(only.actual, only.expected)) {
       diagnostics.push(`第 ${only.line} 行：单个小节拍数必须满拍：期望 ${only.expected} 拍，实际 ${only.actual} 拍`)
+      markInvalidBar(only)
     }
     return
   }
   for (const measure of measures.slice(1, -1)) {
     if (!equal(measure.actual, measure.expected)) {
       diagnostics.push(`第 ${measure.line} 行：中间小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
+      markInvalidBar(measure)
     }
   }
   const first = measures[0]
@@ -294,16 +301,19 @@ function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidat
   if (equal(first.actual, first.expected)) {
     if (!equal(last.actual, last.expected)) {
       diagnostics.push(`第 ${last.line} 行：没有弱起时末小节拍数必须满拍：期望 ${last.expected} 拍，实际 ${last.actual} 拍`)
+      markInvalidBar(last)
     }
   } else if (!equal(first.expected, last.expected) || !equal(first.actual + last.actual, first.expected)) {
     diagnostics.push(`首末小节拍数不互补：首 ${first.actual} 拍 + 末 ${last.actual} 拍，完整小节为 ${first.expected} 拍`)
+    markInvalidBar(first)
+    markInvalidBar(last)
   }
 }
 
 function validateBody(
   tokens: Token[],
   diagnostics: string[],
-  options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[]; skipBeatValidation?: boolean } = {},
+  options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[]; skipBeatValidation?: boolean; invalidBarEnds?: Set<number> } = {},
 ) {
   const bass = options.bass ?? false
   const skipBeatValidation = options.skipBeatValidation ?? false
@@ -352,9 +362,9 @@ function validateBody(
   const isInstrumental = () => blocks.some((block) => block.name === 'inst')
   const currentTopLevel = () => blocks.length === 0
 
-  const commitMeasure = (line: number) => {
+  const commitMeasure = (line: number, barEnd = -1) => {
     if (unit.currentHasAtom && !unit.multiRestPendingBar) {
-      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine })
+      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine, barEnd })
     }
     unit.beats = 0
     unit.currentHasAtom = false
@@ -379,7 +389,7 @@ function validateBody(
     if (unit.currentHasAtom && !unit.multiRestPendingBar) commitMeasure(unit.measureLine)
     finishTie()
     finishRepeat()
-    validateUnitMeasures(unit, diagnostics, bass || skipBeatValidation)
+    validateUnitMeasures(unit, diagnostics, bass || skipBeatValidation, options.invalidBarEnds)
     if (unit.name && !unit.hasAtom) diagnostics.push(`乐段 ${unit.name} 为空`)
     completedUnits.push(unit)
     if (unit.name) unitsByPart.set(unit.name, unit)
@@ -522,7 +532,7 @@ function validateBody(
       diagnostics.push(lineMessage(token, '圆括号必须在同一小节内闭合'))
       parens.length = 0
     }
-    commitMeasure(token.line)
+    commitMeasure(token.line, token.start + token.raw.length)
     if (token.raw === '||:') {
       if (repeatOpen) diagnostics.push(lineMessage(token, '反复区域不能嵌套或重叠'))
       repeatOpen = { line: token.line, id: ++repeatId }
@@ -749,7 +759,7 @@ function validateBody(
           pendingTie = null
         }
         for (let index = 0; index < count; index += 1) {
-          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line })
+          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line, barEnd: -1 })
         }
         elapsedBeats += count * unit.expected
         unit.currentHasAtom = true
@@ -941,6 +951,23 @@ function lyricItems(tokens: Token[], mode: LyricMode) {
     hasTab: /\t/.test(source),
     hasEmptyForcedTarget: /\+(?=\s|$)/.test(source),
   }
+}
+
+export function invalidMeasureBarEnds(source: string) {
+  const diagnostics: string[] = []
+  const invalidBarEnds = new Set<number>()
+  const { main, supplements } = extractSupplements(tokenizeM3N(source), diagnostics)
+  const mainResult = validateBody(main, diagnostics, { invalidBarEnds })
+  const bassBlock = supplements.find((block) => block.kind === 'bass')
+  if (bassBlock) {
+    validateBody(bassBlock.tokens, diagnostics, {
+      bass: true,
+      initial: mainResult.initial,
+      inheritedSettingEvents: mainResult.settingEvents,
+      invalidBarEnds,
+    })
+  }
+  return [...invalidBarEnds].sort((left, right) => left - right)
 }
 
 export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}): string[] {

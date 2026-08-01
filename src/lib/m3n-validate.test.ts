@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { validateM3N } from './m3n-validate'
+import { invalidMeasureBarEnds, validateM3N } from './m3n-validate'
 
 const messages = (source: string) => validateM3N(source).join('\n')
 
 describe('validateM3N', () => {
   it('accepts a complete unsegmented score', () => {
     expect(validateM3N('{title=Test}\n{key=C} {4/4} {120qpm}\n1 2 3 4 |||')).toEqual([])
+  })
+
+  it('locates the closing barline of invalid measures', () => {
+    const source = '{4/4}\n1 2 3 4 | 1 2 3 | 1 2 3 4 |||'
+    const invalidBar = source.indexOf('|', source.indexOf('|') + 1)
+
+    expect(invalidMeasureBarEnds(source)).toEqual([invalidBar + 1])
   })
 
   it('accepts tenuto and fermata postfixes', () => {

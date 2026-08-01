@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { m3nToMei } from '../lib/m3n-mei'
-import { validateM3N } from '../lib/m3n-validate'
+import { invalidMeasureBarEnds, validateM3N } from '../lib/m3n-validate'
 import defaultScore from '../scores/07_00001.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import type { ScoreRendererRef } from './ScoreRenderer'
@@ -25,6 +25,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
       diagnostics: [...conversion.diagnostics, ...validateM3N(source)],
     }
   }, [source])
+  const invalidBarEnds = useMemo(() => invalidMeasureBarEnds(source), [source])
   const cursorXmlId = useMemo(() => {
     const containingRange = result.sourceMap.find((item) => (
       item.sourceStart <= cursorPosition && cursorPosition < item.sourceEnd
@@ -88,6 +89,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           textareaRef={textareaRef}
           value={source}
           ariaLabel="M3N source"
+          invalidBarEnds={invalidBarEnds}
           onChange={(event) => {
             setSource(event.currentTarget.value)
             updateCursorPosition(event.currentTarget.selectionStart)
