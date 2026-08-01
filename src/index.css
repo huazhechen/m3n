@@ -487,6 +487,8 @@ textarea::selection {
 .score-reader-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   margin: 16px 0 8px;
 }
 
@@ -508,6 +510,13 @@ textarea::selection {
 .score-reader-actions .secondary-link:hover {
   border-color: #2f6f73;
   background: #dcebe6;
+}
+
+.score-reader-actions .secondary-link.is-disabled {
+  border-color: #d9dbd4;
+  color: #9aa2a6;
+  background: #f4f5f1;
+  cursor: default;
 }
 
 .score-reader {
@@ -573,6 +582,14 @@ textarea::selection {
   text-align: center;
 }
 
+.score-notation-tags {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
 .score-card-footer {
   display: flex;
   align-items: center;
@@ -599,6 +616,16 @@ textarea::selection {
   color: #fff;
   background: #2f6f73;
   border-radius: 10px;
+}
+
+.score-notation-tags .score-tag {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #285b5c;
+  background: #dcebe6;
 }
 
 .score-paper {

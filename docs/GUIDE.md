@@ -241,4 +241,4 @@ How I won-der what you are!
 {/}
 ```
 
-完整的《欢乐颂》示例可在[乐谱库](/scores/ode-to-joy)中查看。
+完整的《欢乐颂》示例可在[乐谱库](/scores/07_00001)中查看。

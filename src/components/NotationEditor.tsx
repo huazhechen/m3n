@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { m3nToMei } from '../lib/m3n-mei'
 import { validateM3N } from '../lib/m3n-validate'
-import defaultScore from '../scores/ode-to-joy.m3n?raw'
+import defaultScore from '../scores/07_00001.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import type { ScoreRendererRef } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'

@@ -1,10 +1,14 @@
 export type PresetScore = {
+  order: number
   slug: string
   title: string
   subtitle?: string
   singer?: string
   composer?: string
   category: string
+  keySignature: string
+  timeSignature: string
+  tempo: number
   hasLyrics: boolean
   hasBass: boolean
   searchText: string
@@ -21,9 +25,23 @@ function slugFromPath(path: string) {
   return path.split('/').at(-1)?.replace(/\.m3n$/, '') ?? path
 }
 
+function orderFromSlug(slug: string) {
+  const match = /^(\d{2})_(\d{5})$/.exec(slug)
+  return match ? Number(match[1]) * 100_000 + Number(match[2]) : Number.MAX_SAFE_INTEGER
+}
+
 function readAttribute(source: string, name: string) {
   const match = new RegExp(`\\{${name}=([^}]+)\\}`).exec(source)
   return match?.[1].trim()
+}
+
+function readTimeSignature(source: string) {
+  return source.match(/\{(\d+\/\d+)\}/)?.[1] ?? '4/4'
+}
+
+function readTempo(source: string) {
+  const match = source.match(/\{(\d+)qpm\}/)
+  return match ? Number(match[1]) : 120
 }
 
 const notationAttributeNames = new Set([
@@ -56,26 +74,27 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
     const singer = readAttribute(source, 'singer')
     const composer = readAttribute(source, 'composer')
     const category = readAttribute(source, 'category') ?? '未分类'
+    const keySignature = readAttribute(source, 'key') ?? 'C'
+    const timeSignature = readTimeSignature(source)
+    const tempo = readTempo(source)
     const hasLyrics = source.includes('{lyrics}')
     const hasBass = source.includes('{bass}')
 
     return {
+      order: orderFromSlug(slug),
       slug,
       title,
       subtitle,
       singer,
       composer,
       category,
+      keySignature,
+      timeSignature,
+      tempo,
       hasLyrics,
       hasBass,
       searchText: normalizeSearchText([title, subtitle, singer, composer, category, ...readMetadataValues(source)].filter(Boolean).join(' ')),
       source,
     }
   })
-  .sort((a, b) => {
-    if (a.category !== b.category) {
-      return a.category.localeCompare(b.category, 'zh-Hans-CN')
-    }
-
-    return a.title.localeCompare(b.title, 'zh-Hans-CN')
-  })
+  .sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug))

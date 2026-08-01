@@ -16,11 +16,28 @@ export function ScoreReaderPage() {
   }
 
   const result = m3nToMei(score.source)
+  const scoreIndex = presetScores.indexOf(score)
+  const previousScore = presetScores[scoreIndex - 1]
+  const nextScore = presetScores[scoreIndex + 1]
 
   return (
     <main>
       <TopNav />
       <div className="score-reader-actions">
+        {previousScore ? (
+          <Link className="secondary-link" to={`/scores/${previousScore.slug}`}>
+            上一曲
+          </Link>
+        ) : (
+          <span className="secondary-link is-disabled" aria-disabled="true">上一曲</span>
+        )}
+        {nextScore ? (
+          <Link className="secondary-link" to={`/scores/${nextScore.slug}`}>
+            下一曲
+          </Link>
+        ) : (
+          <span className="secondary-link is-disabled" aria-disabled="true">下一曲</span>
+        )}
         <button
           type="button"
           className="action-button"

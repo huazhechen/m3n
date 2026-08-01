@@ -7,6 +7,8 @@ describe('bundled score corpus', () => {
     expect(presetScores.length).toBeGreaterThan(50)
     expect(new Set(presetScores.map((score) => score.slug)).size).toBe(presetScores.length)
     expect(presetScores.every((score) => score.title && score.category)).toBe(true)
+    expect(presetScores.every((score) => score.keySignature && score.timeSignature && score.tempo > 0)).toBe(true)
+    expect(presetScores.map((score) => score.order)).toEqual([...presetScores.map((score) => score.order)].sort((left, right) => left - right))
   })
 
   it('converts every score with valid source mappings', () => {
