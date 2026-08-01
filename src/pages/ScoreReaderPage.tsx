@@ -4,6 +4,7 @@ import { ScoreRenderer } from '../components/ScoreRenderer'
 import type { ScoreRendererRef } from '../components/ScoreRenderer'
 import { TopNav } from '../components/TopNav'
 import { m3nToMei } from '../lib/m3n-mei'
+import { invalidMeasureIds } from '../lib/m3n-validate'
 import { presetScores } from '../lib/samples'
 
 export function ScoreReaderPage() {
@@ -11,6 +12,7 @@ export function ScoreReaderPage() {
   const score = presetScores.find((item) => item.slug === slug)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
   const result = useMemo(() => m3nToMei(score?.source ?? ''), [score?.source])
+  const invalidMeasures = useMemo(() => invalidMeasureIds(score?.source ?? ''), [score?.source])
 
   if (!score) {
     return <Navigate to="/scores" replace />
@@ -60,6 +62,7 @@ export function ScoreReaderPage() {
           accompaniment={result.accompaniment}
           tempoChanges={result.tempoChanges}
           tempo={result.tempo}
+          invalidMeasureIds={invalidMeasures}
           showPrintButton={false}
         />
         {result.diagnostics.length > 0 && (
