@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { documentSections, searchForDocument, slugify } from '../lib/docs-navigation'
+import { escapeTableCodePipes } from '../lib/markdown-table'
 import { NotationEditor } from './NotationEditor'
 
 type DocumentSource = {
@@ -292,7 +293,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
           remarkPlugins={[remarkGfm]}
           components={markdownComponents}
         >
-          {activeDocument.source}
+          {escapeTableCodePipes(activeDocument.source)}
         </ReactMarkdown>
         <button
           ref={tocToggleRef}
