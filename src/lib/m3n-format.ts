@@ -4,6 +4,13 @@ import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
 const BARLINE = /(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g
 const EPSILON = 1e-9
 
+/** Places a jump on the measure it concludes, then combines its terminal bar. */
+export function normalizeAdjacentBarlines(source: string) {
+  return source
+    .replace(/(:\|\|)\s*(\{(?:ds|dc)\})/g, '$2$1')
+    .replace(/:\|\|\s*\|\|\|/g, ':|||')
+}
+
 type BeamAtom = { raw: string }
 type BeamGroup = { children: BeamNode[] }
 type BeamNode = BeamAtom | BeamGroup
@@ -134,7 +141,7 @@ function normalizeBeamGroups(source: string) {
 
 function formatMusic(source: string) {
   const commentBreak = '\u0000'
-  const compact = normalizeBeamGroups(source)
+  const compact = normalizeAdjacentBarlines(normalizeBeamGroups(source))
     .trim()
     .replace(/\/\/[^\r\n]*/g, (comment) => `${comment}${commentBreak}`)
     .replace(/\s+/g, ' ')
@@ -159,7 +166,7 @@ function formatMusic(source: string) {
     }
   }
   if (line) lines.push(line)
-  return lines.join('\n')
+  return lines.join('\n').replace(/\{(ds|dc)\}\s+(:\|\|\|?)/g, '{$1}$2')
 }
 
 function formatMain(source: string) {

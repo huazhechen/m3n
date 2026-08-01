@@ -20,4 +20,16 @@ describe('formatM3N', () => {
 
     expect(result).toContain('// theme\n1 1 | 2 2 |||')
   })
+
+  it('moves a D.S. marker before the repeat end it concludes, then combines a terminal bar', () => {
+    const result = formatM3N('{4/4}\n1e^^ :|| {ds} |||')
+
+    expect(result).toContain('1e^^ {ds}:|||')
+  })
+
+  it('moves a D.S. marker before a repeat end even without a terminal bar', () => {
+    const result = formatM3N('{4/4}\n1e^^ :|| {ds}')
+
+    expect(result).toContain('1e^^ {ds}:||')
+  })
 })

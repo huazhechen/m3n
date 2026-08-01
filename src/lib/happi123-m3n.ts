@@ -2,6 +2,7 @@ import { addTiesToNotes, convertHappiNote, extractHappiNotes, readHappiNote } fr
 import { convertHappiLyrics } from './happi123/lyrics'
 import { getHappi123Metadata } from './happi123/metadata'
 import { parseM3NDocument } from './m3n-direct'
+import { normalizeAdjacentBarlines } from './m3n-format'
 import { validateM3N } from './m3n-validate'
 import type { ConversionResult } from './notation/types'
 
@@ -334,7 +335,12 @@ function convertSequence(
       const end = rest.indexOf('}')
       if (end >= 0) {
         const converted = convertTag(rest.slice(1, end), diagnostics)
-        output.push(converted)
+        const previous = output.at(-1)
+        if ((converted === '{ds}' || converted === '{dc}') && previous && /^:\|\|$/.test(previous)) {
+          output[output.length - 1] = `${converted}${previous}`
+        } else {
+          output.push(converted)
+        }
         if (/^\{rest=/.test(converted)) hasMusic = true
         index += end + 1
         continue
@@ -638,7 +644,7 @@ export function happi123ToM3N(source: string): ConversionResult {
       header.meters = [correctedMeter]
     }
   }
-  const music = applyMixedMeters(sectionedMusic, header.meters)
+  const music = applyMixedMeters(normalizeAdjacentBarlines(sectionedMusic), header.meters)
   const metadata = getHappi123Metadata(header.title)
 
   const rawOutput = [

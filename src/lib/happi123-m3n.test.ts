@@ -160,6 +160,12 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('1 1 | {segno} 2 2 | {ds} |||')
   })
 
+  it('moves a D.S. marker before its preceding repeat end before adding the terminal bar', () => {
+    const result = happi123ToM3N('{title:直到世界的尽头}\n{key_signature:C}\n{time_signature:4/4}\n1---:|{ds}')
+
+    expect(result.output).toContain('1^^ {ds}:|||')
+  })
+
   it('keeps fine immediately before the terminal bar', () => {
     const result = happi123ToM3N('{title:返始}\n{key_signature:C}\n{time_signature:2/4}\n11|22{fine}|||')
 
