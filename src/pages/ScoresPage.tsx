@@ -9,14 +9,18 @@ function ScoreCard({ score }: { score: PresetScore }) {
     <Link className="score-card" to={`/scores/${score.slug}`}>
       <div>
         <h3>{score.title}</h3>
-        {score.subtitle && <p>{score.subtitle}</p>}
+        <div className="score-notation-tags" aria-label={`调号 ${score.keySignature}，拍号 ${score.timeSignature}，速度 ${score.tempo} BPM`}>
+          <span className="score-tag">调 {score.keySignature}</span>
+          <span className="score-tag">拍 {score.timeSignature}</span>
+          <span className="score-tag">速 {score.tempo} BPM</span>
+        </div>
       </div>
       <div className="score-card-footer">
-        {(score.singer || score.composer) && <span className="score-composer">{score.singer || score.composer}</span>}
         <div className="score-tags">
           {score.hasLyrics && <span className="score-tag">词</span>}
           {score.hasBass && <span className="score-tag">低</span>}
         </div>
+        {(score.singer || score.composer) && <span className="score-composer">{score.singer || score.composer}</span>}
       </div>
     </Link>
   )
