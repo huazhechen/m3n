@@ -85,6 +85,13 @@ describe('happi123ToM3N', () => {
     expect(m3nToMei(result.output).mei).not.toMatch(/<slur startid="#([^"\n]+)" endid="#\1"/)
   })
 
+  it('does not turn a single parenthesized note with a trailing accidental into a ligature group', () => {
+    const result = happi123ToM3N('{title:单音升号}\n{key_signature:C}\n{time_signature:2/4}\n(4x#) 2 |||')
+
+    expect(result.output).toContain('(4#) 2 |||')
+    expect(result.output).not.toContain('{lg}')
+  })
+
   it('keeps spaced duration extensions on their preceding note', () => {
     const result = happi123ToM3N('{title:延音}\n{key_signature:C}\n{time_signature:3/4}\n(6, - -|6, --) |||')
 
