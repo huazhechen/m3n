@@ -498,7 +498,11 @@ export function m3nToMei(source: string): MeiConversionResult {
           content.push(measureContent(measures[index] as (typeof measures)[number]))
           index += 1
         }
-        nodes.push({ kind: 'ending', id: `m3n-ending-${++endingIndex}`, n: ending, partName, content: content.join('\n'), repeatCount: current?.repeatCount })
+        nodes.push({
+          kind: 'ending', id: `m3n-ending-${++endingIndex}`, n: ending, partName, content: content.join('\n'),
+          repeatCount: current?.repeatCount,
+          navigation: measures.slice(index - content.length, index).flatMap((measure) => measure?.navigation ?? []),
+        })
         continue
       }
       const sectionMeasures: typeof measures = []
@@ -525,14 +529,20 @@ export function m3nToMei(source: string): MeiConversionResult {
     let repeatStartIndex = 0
     for (let index = 0; index < nodes.length;) {
       const node = nodes[index]
-      if (node?.kind === 'section' && nodes[index + 1]?.kind === 'ending') {
-      let endingEnd = index + 1
+      const endingStart = node?.kind === 'section'
+        ? nodes.findIndex((candidate, candidateIndex) => candidateIndex > index && candidate.kind === 'ending', index + 1)
+        : -1
+      const repeatedSections = endingStart > index && (node?.repeatStart || endingStart === index + 1)
+        ? nodes.slice(index, endingStart)
+        : []
+      if (repeatedSections.length > 0) {
+      let endingEnd = endingStart
       while (nodes[endingEnd]?.kind === 'ending') endingEnd += 1
-      const endings = nodes.slice(index + 1, endingEnd)
+      const endings = nodes.slice(endingStart, endingEnd)
       const endingSets = endings.map((ending) => endingPasses(ending.n ?? ''))
       const passCount = Math.max(1, ...endingSets.flatMap((passes) => [...passes]), ...endings.map((ending) => ending.repeatCount ?? 0))
       for (let pass = 1; pass <= passCount; pass += 1) {
-        expansion.push(`#${node.id}`)
+        expansion.push(...repeatedSections.map((section) => `#${section.id}`))
         const ending = endings[endingSets.findIndex((passes) => passes.has(pass))]
         if (ending) expansion.push(`#${ending.id}`)
       }

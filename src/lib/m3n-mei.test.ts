@@ -118,6 +118,13 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('<section xml:id="m3n-segment-4">')
   })
 
+  it('repeats every section of a common volta passage and follows a D.S. inside an ending', () => {
+    const result = m3nToMei('{2/4}\n||: 1 2 | {segno}3 4 | {volta=1,3}5 6{fine}{/} :|| {volta=2}7 1{ds}{/} |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-ending-1 #m3n-segment-1 #m3n-segment-2 #m3n-ending-2 #m3n-segment-2 #m3n-ending-1"/>')
+  })
+
   it('keeps an explicitly reset tempo visible at an accelerando start', () => {
     const result = m3nToMei('{4/4} {120qpm}\n1 2 3 4 | {60qpm}1 2 3 4 | {120qpm}{accel=144}1 2 3 4{/} |||')
 
