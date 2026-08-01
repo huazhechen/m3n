@@ -343,8 +343,8 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     const elements = timedElements.flatMap(({ xmlId, rendition }) => {
       const note = paperRef.current?.querySelector<SVGGElement>(`#${xmlId}`)
       if (!note) return []
-      const verses = [...note.querySelectorAll<SVGGElement>(':scope > g.verse')]
-      return [...note.children].filter((element) => !element.classList.contains('verse') || element === verses[rendition - 1])
+      const activeVerse = note.querySelector<SVGGElement>(`:scope > #${xmlId}-v${rendition}`)
+      return [...note.children].filter((element) => !element.classList.contains('verse') || element === activeVerse)
     })
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
     elements.forEach((element) => element.classList.add('is-playing'))

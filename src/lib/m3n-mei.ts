@@ -35,7 +35,7 @@ export type MeiConversionResult = {
 }
 
 type LyricSyllable = DirectLyricSyllable
-type VerseSyllable = LyricSyllable & { n: string; cjkSpacingCompensation: boolean }
+type VerseSyllable = LyricSyllable & { n: string; verseIndex: number; cjkSpacingCompensation: boolean }
 
 function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
   return tokens
@@ -156,7 +156,7 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
     const text = lyric.underlined && lyric.kind !== 'extender'
       ? underlinedLyricText(lyric)
       : escapeXml(lyricText(lyric))
-    return `<verse n="${lyric.n}"><syl${connection}>${text}</syl></verse>`
+    return `<verse xml:id="${xmlId}-v${lyric.verseIndex}" n="${lyric.n}"><syl${connection}>${text}</syl></verse>`
   }).join('')
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
@@ -251,6 +251,7 @@ export function m3nToMei(source: string): MeiConversionResult {
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
   const lyricSyllables = document.lyrics.map((block, index) => ({
     n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
+    verseIndex: index + 1,
     syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
       ...syllable,
       cjkSpacingCompensation: block.mode === 'char',
@@ -332,7 +333,7 @@ export function m3nToMei(source: string): MeiConversionResult {
           const lyric = block.syllables[melodyIndices[index]]
           if (!lyric || lyric.forceTiedTarget !== tieEnd) return []
           melodyIndices[index] += 1
-          return [{ ...lyric, n: block.n }]
+          return [{ ...lyric, n: block.n, verseIndex: block.verseIndex }]
         })
         : []
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
