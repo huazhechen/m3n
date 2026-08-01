@@ -54,33 +54,6 @@ function enqueueScoreRender(task: () => Promise<void>) {
   return queued
 }
 
-function resolveLyricCollisions(paper: HTMLElement) {
-  for (const svg of paper.querySelectorAll<SVGSVGElement>('svg:not([data-m3n-lyric-adjusted])')) {
-    const verses = [...svg.querySelectorAll<SVGGElement>('g.verse')]
-    const obstacles = [...svg.querySelectorAll<SVGGraphicsElement>('.notehead, .stem, .flag, .beam')]
-    let offset = 0
-
-    for (const verse of verses) {
-      const lyric = verse.getBBox()
-      for (const obstacle of obstacles) {
-        const bounds = obstacle.getBBox()
-        const overlapsHorizontally = lyric.x < bounds.x + bounds.width && lyric.x + lyric.width > bounds.x
-        const overlapsVertically = lyric.y < bounds.y + bounds.height && lyric.y + lyric.height > bounds.y
-        if (overlapsHorizontally && overlapsVertically) {
-          offset = Math.max(offset, bounds.y + bounds.height - lyric.y + 80)
-        }
-      }
-    }
-
-    if (offset > 0) {
-      verses.forEach((verse) => verse.setAttribute('transform', `translate(0 ${offset})`))
-      const viewBox = svg.viewBox.baseVal
-      svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height + offset}`)
-    }
-    svg.dataset.m3nLyricAdjusted = 'true'
-  }
-}
-
 export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(function ScoreRenderer({
   mei,
   title,
@@ -192,7 +165,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                 page += 1
                 if (page > pageCount) {
                   if (!isInitialRender) paper.innerHTML = pages.join('')
-                  resolveLyricCollisions(paper)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()
