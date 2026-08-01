@@ -250,22 +250,14 @@ export function m3nToMei(source: string): MeiConversionResult {
   const lyricLabelsBySource = new Map<number, string[]>()
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
-  const lyricSyllables = document.partOrder.length > 0 && document.lyrics.length > 1
-    ? [{
-      n: '1',
-      syllables: document.lyrics.flatMap((block) => splitLyricSyllables(block.syllables).map((syllable) => ({
-        ...syllable,
-        cjkSpacingCompensation: block.mode === 'char',
-      }))),
-    }]
-    : document.lyrics.map((block, index) => ({
-      n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
-      label: document.lyrics.length > 1 ? `${index + 1}.` : undefined,
-      syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
-        ...syllable,
-        cjkSpacingCompensation: block.mode === 'char',
-      })),
-    }))
+  const lyricSyllables = document.lyrics.map((block, index) => ({
+    n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
+    label: document.lyrics.length > 1 ? `${index + 1}.` : undefined,
+    syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
+      ...syllable,
+      cjkSpacingCompensation: block.mode === 'char',
+    })),
+  }))
   const melodyIndices = lyricSyllables.map(() => 0)
   const isInstrumentalEvent = (event: DirectEvent) => document.intervals.some((interval) => (
     interval.kind === 'inst' &&
@@ -341,7 +333,7 @@ export function m3nToMei(source: string): MeiConversionResult {
         ? lyricSyllables.flatMap((block, index) => {
           const lyric = block.syllables[melodyIndices[index]]
           if (!lyric || lyric.forceTiedTarget !== tieEnd) return []
-          const label = melodyIndices[index] === 0 ? block.label : undefined
+          const label = melodyIndices[index] === 0 && 'label' in block ? block.label : undefined
           melodyIndices[index] += 1
           return [{ ...lyric, n: block.n, label }]
         })

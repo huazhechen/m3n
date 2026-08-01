@@ -261,15 +261,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<verse n="1"><syl>pass</syl></verse><verse n="2"><syl>pass</syl></verse>')
   })
 
-  it('keeps part lyric placeholders empty instead of rendering later lyric blocks there', () => {
-    const result = m3nToMei('{2/4} {parts=A B}\n{part=A}1 2 ||{/}\n{part=B}3 4 ||{/}\n{lyrics=1}甲%{/}\n{lyrics=2}丙丁{/}')
-
-    expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse n="1"><syl>甲\u200B</syl></verse></note>')
-    expect(result.mei).not.toContain('<note xml:id="m3n-e-2" pname="d" oct="4" dur="4"><verse')
-    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse n="1"><syl>丙\u200B</syl></verse></note>')
-    expect(result.mei).toContain('<note xml:id="m3n-e-4" pname="f" oct="4" dur="4"><verse n="1"><syl>丁\u200B</syl></verse></note>')
-  })
-
   it('keeps instrumental intervals lyric-free without visual markers', () => {
     const result = m3nToMei('{key=C} {2/4}\n{inst}1 2{/} | 3 4 |||\n{lyrics-word}\nla la\n{/}')
 
