@@ -284,6 +284,14 @@ function parseBody(
     if (token.kind === 'bar') {
       const current = measure()
       const value = token.raw
+      if (current.events.length === 0) {
+        const trailingNavigation = pendingNavigation.filter((navigation) => navigation !== 'segno')
+        const previousEvent = measures().at(-2)?.events.at(-1)
+        if (previousEvent && trailingNavigation.length > 0) {
+          previousEvent.navigation.push(...trailingNavigation)
+          pendingNavigation = pendingNavigation.filter((navigation) => navigation === 'segno')
+        }
+      }
       if (value === '||:' && current.events.length === 0) {
         current.left = 'rptstart'
         continue

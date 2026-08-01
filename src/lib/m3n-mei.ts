@@ -232,7 +232,6 @@ export function m3nToMei(source: string): MeiConversionResult {
   const document = parseM3NDocument(source)
   const sourceMap: MeiSourceMapRange[] = []
   const hasBassStaff = [...document.parts.values()].some((part) => part.bass.some((measure) => measure.events.length > 0))
-  const hasExplicitRepeatCount = [...document.parts.values()].some((part) => part.melody.some((measure) => measure.repeatCount !== undefined))
   let eventIndex = 0
   const eventIds = new Map<string, string>()
   const preassignedIds = new Map<DirectEvent, string>()
@@ -475,7 +474,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       return {
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',
-        repeatCount: melody?.repeatCount ?? (hasExplicitRepeatCount && melody?.right === 'rptend' ? 2 : undefined),
+        repeatCount: melody?.repeatCount ?? (melody?.right === 'rptend' ? 2 : undefined),
         navigation: melody?.events.flatMap((event) => event.navigation) ?? [],
         breakBefore: melody?.breakBefore,
         breakAfter: melody?.breakAfter,
@@ -489,7 +488,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       measure.xml,
       measure.breakAfter ? '<sb/>' : '',
     ].filter(Boolean).join('\n')
-    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; partName: string; content: string; repeatCount?: number; navigation?: string[] }> = []
+    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; partName: string; content: string; repeatStart?: boolean; repeatCount?: number; navigation?: string[] }> = []
     for (let index = 0; index < measures.length;) {
       const current = measures[index]
       const content: string[] = []
@@ -514,7 +513,7 @@ export function m3nToMei(source: string): MeiConversionResult {
         index += 1
         if (measure.repeatCount) break
       }
-      nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, partName, content: content.join('\n'), repeatCount: sectionMeasures.at(-1)?.repeatCount, navigation: sectionMeasures.flatMap((measure) => measure.navigation) })
+      nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, partName, content: content.join('\n'), repeatStart: sectionMeasures[0]?.repeatStart, repeatCount: sectionMeasures.at(-1)?.repeatCount, navigation: sectionMeasures.flatMap((measure) => measure.navigation) })
     }
     if (document.partOrder.length > 0 && partIndex > 0 && nodes[0] && !nodes[0].content.startsWith('<sb/>')) {
       nodes[0].content = `<sb/>\n${nodes[0].content}`
@@ -523,6 +522,7 @@ export function m3nToMei(source: string): MeiConversionResult {
   })
   const expandNodes = (nodes: typeof layoutNodes) => {
     const expansion: string[] = []
+    let repeatStartIndex = 0
     for (let index = 0; index < nodes.length;) {
       const node = nodes[index]
       if (node?.kind === 'section' && nodes[index + 1]?.kind === 'ending') {
@@ -536,10 +536,19 @@ export function m3nToMei(source: string): MeiConversionResult {
         const ending = endings[endingSets.findIndex((passes) => passes.has(pass))]
         if (ending) expansion.push(`#${ending.id}`)
       }
+      repeatStartIndex = expansion.length
       index = endingEnd
       continue
     }
-      if (node) expansion.push(...Array.from({ length: node.repeatCount ?? 1 }, () => `#${node.id}`))
+      if (node) {
+        expansion.push(`#${node.id}`)
+        if (node.repeatStart) repeatStartIndex = expansion.length - 1
+        if (node.repeatCount) {
+          const repeat = expansion.slice(repeatStartIndex)
+          for (let pass = 1; pass < node.repeatCount; pass += 1) expansion.push(...repeat)
+          repeatStartIndex = expansion.length
+        }
+      }
       index += 1
     }
     return expansion
@@ -551,7 +560,7 @@ export function m3nToMei(source: string): MeiConversionResult {
     : expandNodes(layoutNodes)
   const jumpNode = layoutNodes.find((node) => node.navigation?.includes('ds') || node.navigation?.includes('dc'))
   if (jumpNode) {
-    const jumpIndex = expansion.indexOf(`#${jumpNode.id}`)
+    const jumpIndex = expansion.lastIndexOf(`#${jumpNode.id}`)
     const destination = jumpNode.navigation?.includes('ds')
       ? layoutNodes.find((node) => node.navigation?.includes('segno'))
       : layoutNodes.find((node) => node.kind === 'section')

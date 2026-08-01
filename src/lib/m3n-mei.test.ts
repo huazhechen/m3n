@@ -459,6 +459,20 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-1 #m3n-segment-1"/>')
   })
 
+  it('expands an uncounted repeat twice', () => {
+    const result = m3nToMei('{key=C} {2/4}\n1 2 | 3 4 :|||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-1"/>')
+  })
+
+  it('finishes an implicit repeat before jumping to the segno', () => {
+    const result = m3nToMei('{key=C} {2/4}\n{segno}1 2 | 3 4 :|| {ds} |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-1 #m3n-segment-2 #m3n-segment-1 #m3n-segment-2 #m3n-segment-1 #m3n-segment-2"/>')
+  })
+
   it('keeps following music outside an explicitly counted repeat expansion', () => {
     const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | 3 4 :||{x3} 5 6 :|||')
 
