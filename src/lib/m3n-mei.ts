@@ -62,11 +62,6 @@ function escapeXml(value: string) {
     .replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 }
 
-function lyricSpacingAttribute(text: string) {
-  // Parenthetical Chinese lyric groups are visually narrower than four full glyphs.
-  return /^\uFF08[^\uFF08\uFF09]+\uFF09$/.test(text) ? ' letterspacing="2"' : ''
-}
-
 function keySignature(rawKey: string) {
   const pitchClasses: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
   const { tonic, mode } = parseKey(rawKey)
@@ -154,7 +149,7 @@ function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: Ve
   const gestural = event.postfixes.includes('brk') ? ` dur.ges="${gesturalDuration(event.beats / 4)}"`
     : event.postfixes.includes('tip') ? ` dur.ges="${gesturalDuration(event.beats / 2)}"` : ''
   const verse = lyrics.filter((lyric) => lyric.text !== '%').map((lyric) =>
-    `<verse n="${lyric.n}"><syl${lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''}${lyricSpacingAttribute(lyric.text)}>${escapeXml(lyric.text.replaceAll('~', ' '))}</syl></verse>`).join('')
+    `<verse n="${lyric.n}"><syl${lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''}>${escapeXml(lyric.text.replaceAll('~', ' '))}</syl></verse>`).join('')
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
     event.postfixes.includes('brk') ? '<artic artic="stacciss"/>' : '',
