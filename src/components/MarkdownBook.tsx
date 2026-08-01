@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, FocusEvent, ReactElement, ReactNode } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -146,16 +146,16 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     setIsTocOpen(false)
   }
 
-  function selectDocument(documentId: string, headingId = '') {
+  const selectDocument = useCallback((documentId: string, headingId = '') => {
     navigate({
       pathname: location.pathname,
       search: searchForDocument(location.search, documentId),
       hash: headingId ? `#${headingId}` : '',
     })
     setIsTocOpen(false)
-  }
+  }, [location.pathname, location.search, navigate])
 
-  function selectMarkdownLink(href: string) {
+  const selectMarkdownLink = useCallback((href: string) => {
     const match = /^([A-Za-z0-9-]+\.md)(?:#(.+))?$/.exec(href)
     if (!match) {
       return false
@@ -172,7 +172,42 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     const heading = target.headings.find((candidate) => candidate.title === anchorTitle)
     selectDocument(target.id, heading?.id ?? (anchorTitle ? slugify(anchorTitle) : ''))
     return true
-  }
+  }, [documentGroups, selectDocument])
+
+  const markdownComponents = useMemo(() => ({
+    h2(props: ComponentPropsWithoutRef<'h2'>) {
+      const title = String(props.children ?? '')
+      const heading = activeDocument.headings.find((candidate) => candidate.title === title)
+      return <h2 {...props} id={heading?.id ?? slugify(title)} />
+    },
+    pre(props: ComponentPropsWithoutRef<'pre'>) {
+      if (isCodeChild(props.children, 'm3n')) {
+        return <>{props.children}</>
+      }
+      return <pre>{props.children}</pre>
+    },
+    code(props: ComponentPropsWithoutRef<'code'>) {
+      const className = props.className ?? ''
+      const value = String(props.children ?? '').replace(/\n$/, '')
+      if (className.includes('language-m3n')) {
+        return <NotationEditor embedded initialSource={value} />
+      }
+      return <code className={className}>{props.children}</code>
+    },
+    a(props: ComponentPropsWithoutRef<'a'>) {
+      const href = props.href ?? ''
+      return (
+        <a
+          {...props}
+          onClick={(event) => {
+            if (selectMarkdownLink(href)) {
+              event.preventDefault()
+            }
+          }}
+        />
+      )
+    },
+  }), [activeDocument.headings, selectMarkdownLink])
 
   if (!activeDocument) {
     return null
@@ -222,40 +257,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       <article ref={articleRef} className="markdown-panel">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          components={{
-            h2(props: ComponentPropsWithoutRef<'h2'>) {
-              const title = String(props.children ?? '')
-              const heading = activeDocument.headings.find((candidate) => candidate.title === title)
-              return <h2 {...props} id={heading?.id ?? slugify(title)} />
-            },
-            pre(props: ComponentPropsWithoutRef<'pre'>) {
-              if (isCodeChild(props.children, 'm3n')) {
-                return <>{props.children}</>
-              }
-              return <pre>{props.children}</pre>
-            },
-            code(props) {
-              const className = props.className ?? ''
-              const value = String(props.children ?? '').replace(/\n$/, '')
-              if (className.includes('language-m3n')) {
-                return <NotationEditor embedded initialSource={value} />
-              }
-              return <code className={className}>{props.children}</code>
-            },
-            a(props: ComponentPropsWithoutRef<'a'>) {
-              const href = props.href ?? ''
-              return (
-                <a
-                  {...props}
-                  onClick={(event) => {
-                    if (selectMarkdownLink(href)) {
-                      event.preventDefault()
-                    }
-                  }}
-                />
-              )
-            },
-          }}
+          components={markdownComponents}
         >
           {activeDocument.source}
         </ReactMarkdown>
