@@ -100,7 +100,9 @@ function resolveLyricCollisions(paper: HTMLElement) {
       const engravingViewBox = engraving.viewBox.baseVal
       const engravingScale = engravingViewBox.height > 0 ? pageViewBox.height / engravingViewBox.height : 1
       const pixelScale = pageViewBox.width > 0 ? page.getBoundingClientRect().width / pageViewBox.width : 1
-      page.style.marginBottom = `${downstreamOffset * engravingScale * pixelScale}px`
+      const extraHeight = downstreamOffset * engravingScale * pixelScale
+      page.setAttribute('preserveAspectRatio', 'xMinYMin meet')
+      page.style.height = `${page.getBoundingClientRect().height + extraHeight}px`
     }
     page.dataset.m3nLyricAdjusted = 'true'
   }
