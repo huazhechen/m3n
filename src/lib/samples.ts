@@ -2,6 +2,7 @@ export type PresetScore = {
   slug: string
   title: string
   subtitle?: string
+  singer?: string
   composer?: string
   category: string
   hasLyrics: boolean
@@ -52,6 +53,7 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
     const slug = slugFromPath(path)
     const title = readAttribute(source, 'title') ?? slug
     const subtitle = readAttribute(source, 'subtitle')
+    const singer = readAttribute(source, 'singer')
     const composer = readAttribute(source, 'composer')
     const category = readAttribute(source, 'category') ?? '未分类'
     const hasLyrics = source.includes('{lyrics}')
@@ -61,11 +63,12 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
       slug,
       title,
       subtitle,
+      singer,
       composer,
       category,
       hasLyrics,
       hasBass,
-      searchText: normalizeSearchText([title, subtitle, composer, category, ...readMetadataValues(source)].filter(Boolean).join(' ')),
+      searchText: normalizeSearchText([title, subtitle, singer, composer, category, ...readMetadataValues(source)].filter(Boolean).join(' ')),
       source,
     }
   })

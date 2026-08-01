@@ -12,7 +12,7 @@ function ScoreCard({ score }: { score: PresetScore }) {
         {score.subtitle && <p>{score.subtitle}</p>}
       </div>
       <div className="score-card-footer">
-        {score.composer && <span className="score-composer">{score.composer}</span>}
+        {(score.singer || score.composer) && <span className="score-composer">{score.singer || score.composer}</span>}
         <div className="score-tags">
           {score.hasLyrics && <span className="score-tag">词</span>}
           {score.hasBass && <span className="score-tag">低</span>}
