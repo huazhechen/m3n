@@ -328,8 +328,16 @@ h3 {
   background: #176e6e;
 }
 
-.editor-container.embedded {
-  margin: 18px 0;
+.embedded-editor {
+  width: 100%;
+  min-width: 0;
+}
+
+.embedded-editor-body {
+  padding: 0;
+  grid-template-areas:
+    "render source"
+    "render-diagnostics source-diagnostics";
 }
 
 .pane-toolbar {
@@ -413,8 +421,8 @@ textarea::selection {
   background: #cfe8e5;
 }
 
-.embedded .source-editor,
-.embedded textarea {
+.embedded-editor .source-editor,
+.embedded-editor textarea {
   min-height: unset;
 }
 
@@ -1365,6 +1373,14 @@ a.action-button {
       "source-diagnostics"
       "render"
       "render-diagnostics";
+  }
+
+  .embedded-editor-body {
+    grid-template-areas:
+      "render"
+      "render-diagnostics"
+      "source"
+      "source-diagnostics";
   }
 }
 
