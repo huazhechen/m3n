@@ -736,6 +736,7 @@ textarea::selection {
   stroke: #d95f2a;
 }
 
+.score-paper .is-playing.stem path,
 .score-paper .is-playing .stem path {
   stroke: #d95f2a !important;
 }
