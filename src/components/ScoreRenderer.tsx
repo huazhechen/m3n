@@ -70,28 +70,12 @@ function resolveLyricCollisions(paper: HTMLElement) {
     for (const [index, system] of systems.entries()) {
       translateVertically(system, downstreamOffset)
       const verses = [...system.querySelectorAll<SVGGElement>('g.verse')]
-      const obstacles = systems.slice(index).flatMap((item) =>
-        [...item.querySelectorAll<SVGGraphicsElement>('.notehead, .stem, .flag, .beam')])
       const lyrics = verses.map((verse) => verse.getBBox())
-      let lyricOffset = 0
-
-      for (const lyric of lyrics) {
-        for (const obstacle of obstacles) {
-          const bounds = obstacle.getBBox()
-          const overlapsHorizontally = lyric.x < bounds.x + bounds.width && lyric.x + lyric.width > bounds.x
-          const overlapsVertically = lyric.y < bounds.y + bounds.height && lyric.y + lyric.height > bounds.y
-          if (overlapsHorizontally && overlapsVertically) {
-            lyricOffset = Math.max(lyricOffset, bounds.y + bounds.height - lyric.y + lyric.height * 0.2)
-          }
-        }
-      }
-
-      verses.forEach((verse) => translateVertically(verse, lyricOffset))
       const nextSystem = systems[index + 1]
-      if (!nextSystem || lyricOffset === 0 || lyrics.length === 0) continue
+      if (!nextSystem || lyrics.length === 0) continue
 
-      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.y + lyric.height + lyricOffset + lyric.height * 0.5))
-      const nextTop = nextSystem.getBBox().y
+      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.y + lyric.height + lyric.height * 0.5))
+      const nextTop = nextSystem.getBBox().y + downstreamOffset
       downstreamOffset += Math.max(0, lyricBottom - nextTop)
     }
 
