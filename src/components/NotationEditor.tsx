@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { formatM3N } from '../lib/m3n-format'
 import { m3nToMei } from '../lib/m3n-mei'
 import { invalidMeasureIds as findInvalidMeasureIds } from '../lib/m3n-validate'
 import defaultScore from '../scores/07_00001.m3n?raw'
@@ -69,12 +70,19 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
     setIsMeiDialogOpen(false)
   }
 
+  const formatSource = () => {
+    const formatted = formatM3N(source)
+    setSource(formatted)
+    updateCursorPosition(Math.min(cursorPosition, formatted.length))
+  }
+
   return (
     <div className={embedded ? 'embedded-editor' : 'editor-container'}>
       {!embedded && (
       <header className="editor-header">
         <div className="editor-header-left"><h2>编辑器</h2></div>
         <div className="editor-header-right">
+          <button type="button" className="action-button" onClick={formatSource}>格式化</button>
           <button type="button" className="action-button" onClick={() => setIsMeiDialogOpen(true)}>MEI</button>
           <button type="button" className="action-button" onClick={() => scoreRendererRef.current?.openExport()}>打印</button>
         </div>
