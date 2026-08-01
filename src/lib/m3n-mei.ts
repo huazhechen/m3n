@@ -392,10 +392,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       if (interval.kind === 'lg') return [`<slur startid="#${startid}" endid="#${endid}"/>`]
       if (interval.kind === 'cresc' || interval.kind === 'decres') return [`<hairpin staff="${staffNumber}" form="${interval.kind === 'cresc' ? 'cres' : 'dim'}" startid="#${startid}" endid="#${endid}"/>`]
       if (interval.kind === '8va' || interval.kind === '8vb') return [`<octave staff="${staffNumber}" dis="8" dis.place="${interval.kind === '8va' ? 'above' : 'below'}" startid="#${startid}" endid="#${endid}"/>`]
-      if (interval.kind === 'inst') return [
-        `<dir staff="${staffNumber}" startid="#${startid}" place="within">(</dir>`,
-        `<dir staff="${staffNumber}" startid="#${endid}" place="within">)</dir>`,
-      ]
+      if (interval.kind === 'inst') return [`<bracketSpan staff="${staffNumber}" startid="#${startid}" endid="#${endid}" place="within"/>`]
       return []
     })
     return [...tempoControls, ...eventControls, ...intervalControls].map((xml) => `  ${xml}`).join('\n')

@@ -190,12 +190,11 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<verse n="1"><syl>pass</syl></verse><verse n="2"><syl>pass</syl></verse>')
   })
 
-  it('parenthesizes instrumental intervals without consuming lyrics', () => {
+  it('uses native brackets for instrumental intervals without consuming lyrics', () => {
     const result = m3nToMei('{key=C} {2/4}\n{inst}1 2{/} | 3 4 |||\n{lyrics}\nla la\n{/}')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-1" place="within">(</dir>')
-    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-2" place="within">)</dir>')
+    expect(result.mei).toContain('<bracketSpan staff="1" startid="#m3n-e-1" endid="#m3n-e-2" place="within"/>')
     expect(result.mei).not.toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse')
     expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse n="1"><syl>la</syl></verse></note>')
   })
