@@ -54,6 +54,57 @@ function enqueueScoreRender(task: () => Promise<void>) {
   return queued
 }
 
+function translateVertically(element: SVGElement, offset: number) {
+  if (offset <= 0) return
+  const transform = element.getAttribute('transform')
+  element.setAttribute('transform', `${transform ? `${transform} ` : ''}translate(0 ${offset})`)
+}
+
+function resolveLyricCollisions(paper: HTMLElement) {
+  for (const page of paper.querySelectorAll<SVGSVGElement>(':scope > svg:not([data-m3n-lyric-adjusted])')) {
+    const engraving = page.querySelector<SVGSVGElement>(':scope > svg.definition-scale')
+    if (!engraving) continue
+    const systems = [...engraving.querySelectorAll<SVGGElement>(':scope > g.page-margin > g.system')]
+    let downstreamOffset = 0
+
+    for (const [index, system] of systems.entries()) {
+      translateVertically(system, downstreamOffset)
+      const verses = [...system.querySelectorAll<SVGGElement>('g.verse')]
+      const obstacles = systems.slice(index).flatMap((item) =>
+        [...item.querySelectorAll<SVGGraphicsElement>('.notehead, .stem, .flag, .beam')])
+      const lyrics = verses.map((verse) => verse.getBBox())
+      let lyricOffset = 0
+
+      for (const lyric of lyrics) {
+        for (const obstacle of obstacles) {
+          const bounds = obstacle.getBBox()
+          const overlapsHorizontally = lyric.x < bounds.x + bounds.width && lyric.x + lyric.width > bounds.x
+          const overlapsVertically = lyric.y < bounds.y + bounds.height && lyric.y + lyric.height > bounds.y
+          if (overlapsHorizontally && overlapsVertically) {
+            lyricOffset = Math.max(lyricOffset, bounds.y + bounds.height - lyric.y + 80)
+          }
+        }
+      }
+
+      verses.forEach((verse) => translateVertically(verse, lyricOffset))
+      const nextSystem = systems[index + 1]
+      if (!nextSystem || lyricOffset === 0 || lyrics.length === 0) continue
+
+      const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.y + lyric.height + lyricOffset))
+      const nextTop = nextSystem.getBBox().y
+      downstreamOffset += Math.max(0, lyricBottom + 80 - nextTop)
+    }
+
+    if (downstreamOffset > 0) {
+      const pageViewBox = page.viewBox.baseVal
+      const engravingViewBox = engraving.viewBox.baseVal
+      const scale = engravingViewBox.height > 0 ? pageViewBox.height / engravingViewBox.height : 1
+      page.setAttribute('viewBox', `${pageViewBox.x} ${pageViewBox.y} ${pageViewBox.width} ${pageViewBox.height + downstreamOffset * scale}`)
+    }
+    page.dataset.m3nLyricAdjusted = 'true'
+  }
+}
+
 export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(function ScoreRenderer({
   mei,
   title,
@@ -165,6 +216,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                 page += 1
                 if (page > pageCount) {
                   if (!isInitialRender) paper.innerHTML = pages.join('')
+                  resolveLyricCollisions(paper)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()
