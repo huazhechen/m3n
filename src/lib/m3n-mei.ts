@@ -194,7 +194,6 @@ type RenderedEvent = { event: DirectEvent; prefix?: string; xml: string }
 
 function beamGroupBeats(meterCount: number, meterUnit: number) {
   const beat = 4 / meterUnit
-  if (meterCount === 4 && meterUnit === 4) return beat * 2
   return meterUnit >= 8 && meterCount % 3 === 0 ? beat * 3 : beat
 }
 

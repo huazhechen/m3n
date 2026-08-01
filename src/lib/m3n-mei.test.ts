@@ -298,17 +298,23 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('acciaccatura')
   })
 
-  it('beams consecutive eighth notes by half measures in 4/4', () => {
+  it('beams consecutive eighth notes by beats in 4/4', () => {
     const result = m3nToMei('{4/4}\n(5e6e5e3e) (4e5e4e2e)|||')
 
     expect(result.mei).toMatch(/<beam>\s*<note xml:id="m3n-e-1"/)
-    expect(result.mei.match(/<beam>/g)).toHaveLength(2)
+    expect(result.mei.match(/<beam>/g)).toHaveLength(4)
   })
 
   it('beams a dotted eighth note with its following sixteenth note', () => {
     const result = m3nToMei('{4/4}\n5d^~ (5d) (0) (3.) ((2)) |')
 
     expect(result.mei).toMatch(/<beam>\s*<note xml:id="m3n-e-4"[^>]*dur="8" dots="1"[^>]*>.*?<note xml:id="m3n-e-5"[^>]*dur="16"/s)
+  })
+
+  it('does not beam dotted eighth-sixteenth pairs across 4/4 beats', () => {
+    const result = m3nToMei('{4/4}\n(5. (6)) (5. (3)) (4. (3)) 2 |')
+
+    expect(result.mei.match(/<beam>/g)).toHaveLength(3)
   })
 
   it('creates two staves for an unsegmented score', () => {
