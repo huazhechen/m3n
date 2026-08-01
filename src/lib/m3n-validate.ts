@@ -930,11 +930,16 @@ function lyricItems(tokens: Token[]) {
     .map((token) => token.raw)
     .join('')
     .trim()
-  if (!source) return { count: 0, hasTab: false }
+  if (!source) return { count: 0, forcedTiedTargets: 0, hasTab: false, hasEmptyForcedTarget: false }
   const items = source.split(/[ \r\n]+/).filter(Boolean)
   return {
-    count: items.reduce((sum, item) => sum + (item === '%' ? 1 : item.split('-').filter(Boolean).length), 0),
+    count: items.reduce((sum, item) => {
+      const lyric = item.startsWith('+') ? item.slice(1) : item
+      return sum + (lyric === '%' ? 1 : lyric.split('-').filter(Boolean).length)
+    }, 0),
+    forcedTiedTargets: items.filter((item) => item.startsWith('+')).length,
     hasTab: /\t/.test(source),
+    hasEmptyForcedTarget: items.includes('+'),
   }
 }
 
@@ -958,6 +963,7 @@ export function validateM3N(source: string): string[] {
     const items = lyricItems(lyric.tokens)
     if (items.count === 0) diagnostics.push(`第 ${lyric.line} 行：歌词块为空`)
     if (items.hasTab) diagnostics.push(`第 ${lyric.line} 行：歌词项必须使用半角空格或换行分隔，不能使用 Tab`)
+    if (items.hasEmptyForcedTarget) diagnostics.push(`第 ${lyric.line} 行：+ 后必须跟随歌词项`)
     const parsed = lyric.range === null
       ? { values: mainResult.lyricPasses, error: null }
       : parseRange(lyric.range, '歌词 ')
@@ -965,7 +971,7 @@ export function validateM3N(source: string): string[] {
     for (const pass of parsed.values) {
       if (lyricPasses.has(pass)) diagnostics.push(`第 ${lyric.line} 行：歌词块遍次重叠：${pass}`)
       lyricPasses.add(pass)
-      const expected = mainResult.lyricCount(pass)
+      const expected = mainResult.lyricCount(pass) + items.forcedTiedTargets
       if (!importedHappi123 && mainResult.lyricPasses.size === 1 && items.count !== expected) {
         diagnostics.push(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`)
       }

@@ -50,6 +50,7 @@ function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
       text,
       sourceStart,
       sourceEnd: sourceStart + text.length,
+      forceTiedTarget: token.forceTiedTarget && index === 0,
       wordpos: index === 0 ? 'i' : index === syllables.length - 1 ? 't' : 'm',
       }
     })
@@ -292,10 +293,12 @@ export function m3nToMei(source: string): MeiConversionResult {
       }
       const tieEnd = previousTiedByStaff.get(staffNumber) ?? false
       previousTiedByStaff.set(staffNumber, event.tie)
-      const lyrics = staffNumber === 1 && event.kind !== 'rest' && !tieEnd && !isInstrumentalEvent(event)
+      const lyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
         ? lyricSyllables.flatMap((block, index) => {
-          const lyric = block.syllables[melodyIndices[index]++]
-          return lyric ? [{ ...lyric, n: block.n }] : []
+          const lyric = block.syllables[melodyIndices[index]]
+          if (!lyric || lyric.forceTiedTarget !== tieEnd) return []
+          melodyIndices[index] += 1
+          return [{ ...lyric, n: block.n }]
         })
         : []
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))

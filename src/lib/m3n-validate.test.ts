@@ -147,6 +147,10 @@ describe('validateM3N', () => {
     expect(messages('{2/4} {inst}1 2{/} | 3 4 |||\n{lyrics}la la{/}')).toBe('')
   })
 
+  it('allows + prefixed lyrics on tied note targets', () => {
+    expect(messages('{3/4} 1~ 1 2 |||\n{lyrics}la +la la{/}')).toBe('')
+  })
+
   it('validates bass uniqueness, allowed content, and timeline alignment', () => {
     const source = [
       '{3/4} 1 2 3 |||',

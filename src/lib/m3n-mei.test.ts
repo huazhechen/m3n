@@ -221,6 +221,14 @@ describe('M3N to MEI conversion', () => {
     expect(result.sourceMap.some((item) => item.xmlId === 'm3n-e-2' && item.sourceStart > tiedTargetStart)).toBe(false)
   })
 
+  it('assigns a + prefixed lyric to a tied note target', () => {
+    const result = m3nToMei('{key=C} {3/4}\n1~ 1 2 |||\n{lyrics}\nla +la la\n{/}')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4" tie="t"><verse n="1"><syl>la</syl></verse></note>')
+    expect(result.mei).not.toContain('>+la</syl>')
+  })
+
   it('serializes acciaccaturas and appoggiaturas as grace notes', () => {
     const result = m3nToMei('{key=C} {4/4}\n1{ac(2)} 3{ap((45))} 5{ap(((6)))} 1e |||')
 
