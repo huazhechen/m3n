@@ -403,19 +403,21 @@ textarea {
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
-  width: 0;
+  width: 100%;
   min-width: 0;
   height: 100%;
   min-height: 0;
   overflow: auto;
-  color: transparent;
-  caret-color: #1f2326;
+  color: #1f2326;
 }
 
 .source-editor-stack {
   position: relative;
+  display: flex;
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -423,6 +425,7 @@ textarea {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 2;
   min-width: max-content;
   margin: 0;
   padding: 14px;
@@ -430,7 +433,7 @@ textarea {
   font-size: 0.95rem;
   line-height: 1.65;
   white-space: pre;
-  color: #1f2326;
+  color: transparent;
   pointer-events: none;
 }
 
