@@ -346,7 +346,6 @@ function validateBody(
   let pendingSfz: Token | null = null
   let pendingTie: PendingTie | null = null
   let repeatOpen: { line: number; id: number } | null = null
-  let implicitRepeatUsed = false
   let repeatId = 0
   let currentVoltaRepeat = 0
   let repeatCountTarget = false
@@ -383,7 +382,6 @@ function validateBody(
   const finishRepeat = () => {
     if (repeatOpen) diagnostics.push(`第 ${repeatOpen.line} 行：前反复线无对应后反复线`)
     repeatOpen = null
-    implicitRepeatUsed = false
     currentVoltaRepeat = 0
   }
 
@@ -541,8 +539,6 @@ function validateBody(
       currentVoltaRepeat = repeatOpen.id
     } else if (token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:') {
       if (!repeatOpen) {
-        if (implicitRepeatUsed) diagnostics.push(lineMessage(token, '同一校验单位最多使用一次隐式反复起点'))
-        implicitRepeatUsed = true
         currentVoltaRepeat = currentVoltaRepeat || ++repeatId
       }
       repeatOpen = null

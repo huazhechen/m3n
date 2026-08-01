@@ -38,6 +38,10 @@ describe('validateM3N', () => {
     expect(messages('{4/4}\n1 2 3 4{ds} |||')).toContain('ds 必须配合唯一的 segno')
   })
 
+  it('allows multiple implicit repeats from the beginning of a validation unit', () => {
+    expect(validateM3N('{2/4}\n1 2 :|| 3 4 :|||')).toEqual([])
+  })
+
   it('accepts independent pickup measures in named parts without terminal bars', () => {
     const source = [
       '{parts=A B A}',
