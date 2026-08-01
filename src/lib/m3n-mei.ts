@@ -63,8 +63,8 @@ function escapeXml(value: string) {
 }
 
 function lyricSpacingAttribute(text: string) {
-  // Reserve the full-width character count while keeping the final glyph spacing normal.
-  return /^\uFF08[^\uFF08\uFF09]+\uFF09$/.test(text) ? ` letterspacing="${Array.from(text).length}"` : ''
+  // Parenthetical Chinese lyric groups are visually narrower than four full glyphs.
+  return /^\uFF08[^\uFF08\uFF09]+\uFF09$/.test(text) ? ' letterspacing="2"' : ''
 }
 
 function keySignature(rawKey: string) {

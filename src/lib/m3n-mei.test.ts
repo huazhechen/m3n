@@ -194,9 +194,9 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<syl wordpos="t">kle</syl>')
   })
 
-  it('reserves the full-width character count for parenthetical Chinese lyric groups', () => {
+  it('reserves four-glyph width for parenthetical Chinese lyric groups', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n（苦的） 人\n{/}')
-    expect(result.mei).toContain('<syl letterspacing="4">（苦的）</syl>')
+    expect(result.mei).toContain('<syl letterspacing="2">（苦的）</syl>')
     expect(result.mei).toContain('<syl>人</syl>')
   })
 
