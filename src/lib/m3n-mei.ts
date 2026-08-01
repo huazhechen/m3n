@@ -20,6 +20,7 @@ export type MeiConversionResult = {
   sourceMap: MeiSourceMapRange[]
   title: string
   subtitle: string
+  category: string
   singer: string
   composer: string
   lyricist: string
@@ -557,7 +558,7 @@ export function m3nToMei(source: string): MeiConversionResult {
   ].join('\n')
   return {
     source, mei, diagnostics: validateM3N(source), sourceMap,
-    title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,
+    title: document.title, subtitle: document.subtitle, category: document.category, singer: document.singer, composer: document.composer,
     lyricist: document.lyricist, arranger: document.arranger, hasBassStaff,
     partOrder: document.partOrder,
     headerMetadata,

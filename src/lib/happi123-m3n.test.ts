@@ -23,8 +23,9 @@ describe('happi123ToM3N', () => {
   })
 
   it('preserves singer and prefers header attributions declared in Happi123', () => {
-    const result = happi123ToM3N('{title:安妮}\n{singer:王杰}\n{composer:王杰}\n{lyricist:陈乐融}\n{key_signature:C}\n{time_signature:4/4}\n1---|||')
+    const result = happi123ToM3N('{title:安妮}\n{category:华语流行}\n{singer:王杰}\n{composer:王杰}\n{lyricist:陈乐融}\n{key_signature:C}\n{time_signature:4/4}\n1---|||')
 
+    expect(result.output).toContain('{category=华语流行}')
     expect(result.output).toContain('{singer=王杰}')
     expect(result.output).toContain('{composer=王杰}')
     expect(result.output).toContain('{lyricist=陈乐融}')
@@ -120,26 +121,27 @@ describe('happi123ToM3N', () => {
   it('converts alternative notation blocks to volta endings', () => {
     const result = happi123ToM3N('{title:替代谱}\n{key_signature:C}\n{time_signature:2/4}\n{+12%%34}|')
 
-    expect(result.output).toContain('{volta=1}1 2{/} {volta=2}3 4{/} |')
+    expect(result.output).toContain('{volta=1}1 2{/} || {volta=2}3 4{/} |')
     expect(result.diagnostics).toEqual([])
   })
 
-  it('converts a single dal segno jump to an explicit part order', () => {
-    const result = happi123ToM3N('{title:反复}\n{key_signature:C}\n{time_signature:2/4}\n11|{start}22|{DS}')
+  it('closes Happi123 volta blocks before their final repeat bar', () => {
+    const result = happi123ToM3N('{title:房子}\n{key_signature:C}\n{time_signature:2/4}\n|:11[1:22:|]')
 
-    expect(result.output).toContain('{parts=DS1 DS2 DS2}')
-    expect(result.output).toContain('{part=DS1}')
-    expect(result.output).toContain('{part=DS2}')
-    expect(result.output).not.toMatch(/text=(?:D\.S\.|Segno|Coda)/)
+    expect(result.output).toContain('{volta=1}2 2{/} :||')
+    expect(result.diagnostics).toEqual([])
   })
 
-  it('converts da capo al fine to an explicit part order', () => {
-    const result = happi123ToM3N('{title:返始}\n{key_signature:C}\n{time_signature:2/4}\n11|{fine}22|{dc}')
+  it('converts a single dal segno jump to direct M3N navigation', () => {
+    const result = happi123ToM3N('{title:反复}\n{key_signature:C}\n{time_signature:2/4}\n11|{start}22|{DS}')
 
-    expect(result.output).toContain('{parts=DC1 DC2 DC1}')
-    expect(result.output).toContain('{part=DC1}')
-    expect(result.output).toContain('{part=DC2}')
-    expect(result.output).not.toMatch(/text=(?:D\.C\.|Fine)/)
+    expect(result.output).toContain('1 1 | {segno} 2 2 | {ds} |||')
+  })
+
+  it('keeps fine immediately before the terminal bar', () => {
+    const result = happi123ToM3N('{title:返始}\n{key_signature:C}\n{time_signature:2/4}\n11|22{fine}|||')
+
+    expect(result.output).toContain('1 1 | 2 2 {fine} |||')
   })
 
   it('uses ordinary section bars inside parts and adds a missing document terminator', () => {
@@ -162,6 +164,13 @@ describe('happi123ToM3N', () => {
 
     expect(result.output).toContain('1 1 :|| 2 2 |||')
     expect(result.output).not.toContain('1 1 :||| 2 2')
+  })
+
+  it('converts Happi123 repeat counts to M3N repeat-count markers', () => {
+    const result = happi123ToM3N('{title:重复次数}\n{key_signature:C}\n{time_signature:2/4}\n|:11:|{repeat:3}|||')
+
+    expect(result.output).toContain('||: 1 1 :||{x3} |||')
+    expect(result.diagnostics).toEqual([])
   })
 
   it('preserves slash lyric placeholders and assigns separate verses to passes', () => {

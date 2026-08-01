@@ -1,4 +1,6 @@
 {title:Valsentino(快速圆舞曲)}
+{category:古典与近现代器乐}
+{composer:Tommy Reilly}
 {bpm:176}
 {key_signature:1=bB}
 {time_signature:3/4}
@@ -44,7 +46,7 @@ C:
 
 [1:1-7d/6#d/|(6d--|6d)7d1|22#3:|]
 {br}
-[2:6d/7d/6d/6bd/6nd/7d/|1/2/2#/3/4/3/|65/4/3/2/|1/7d/6d/5d/4d/3d/]|
+[2:6d/7d/6d/6bd/6nd/7d/|1/2/2#/3/4/3/|65/4/3/2/|1/7d/6d/5d/4d/3d/]||
 
 {br}
 {mark:Coda}

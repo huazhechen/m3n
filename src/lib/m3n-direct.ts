@@ -47,6 +47,7 @@ type DirectSettingEvent = {
 export type DirectDocument = {
   title: string
   subtitle: string
+  category: string
   singer: string
   composer: string
   lyricist: string
@@ -66,7 +67,7 @@ export type DirectDocument = {
   intervals: DirectInterval[]
 }
 
-const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
+const metadataNames = ['title', 'subtitle', 'category', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
 const dynamicVelocities: Record<string, number> = { ppp: 20, pp: 32, p: 45, mp: 60, mf: 76, f: 92, ff: 108, fff: 120 }
 
 function metadata(source: string, name: (typeof metadataNames)[number]) {
@@ -400,6 +401,7 @@ export function parseM3NDocument(source: string): DirectDocument {
   return {
     title: metadata(source, 'title'),
     subtitle: metadata(source, 'subtitle'),
+    category: metadata(source, 'category'),
     singer: metadata(source, 'singer'),
     composer: metadata(source, 'composer'),
     lyricist: metadata(source, 'lyricist'),

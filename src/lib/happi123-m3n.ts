@@ -7,6 +7,7 @@ import type { ConversionResult } from './notation/types'
 type HappiHeader = {
   title: string
   subtitle: string
+  category: string
   singer: string
   composer: string
   lyricist: string
@@ -29,6 +30,7 @@ type ConversionState = {
 const defaultHeader: HappiHeader = {
   title: '',
   subtitle: '',
+  category: '',
   singer: '',
   composer: '',
   lyricist: '',
@@ -111,7 +113,6 @@ function convertTuplet(inner: string, diagnostics: string[]) {
   const annotations = [...inner.matchAll(/\{([^{}]+)\}/g)]
     .map((match) => convertTag(match[1], diagnostics))
     .join('')
-  const hasStaccato = /st/.test(inner)
   const trailingBar = inner.includes('|') ? ' |' : ''
   const notation = inner
     .replace(/\{[^{}]+\}/g, '')
@@ -129,7 +130,7 @@ function convertTuplet(inner: string, diagnostics: string[]) {
   }
   const depth = Math.min(...notes.map((note) => note.depth))
   const group = `[${notes.map((note) => note.pitch).join('')}:2]`
-  return `${annotations}${'('.repeat(depth)}${group}${')'.repeat(depth)}${hasStaccato ? '{tip}' : ''}${trailingBar}`
+  return `${annotations}${'('.repeat(depth)}${group}${')'.repeat(depth)}${trailingBar}`
 }
 
 function convertTag(content: string, diagnostics: string[]) {
@@ -151,16 +152,18 @@ function convertTag(content: string, diagnostics: string[]) {
   if (name === 'sf') return '{sfz}'
   if (name === 'dim') return '{text=dim.}'
   if (name === 'cresc') return '{text=cresc.}'
-  if (name === 'S' || name === 'start') return '||:'
-  if (name.toLowerCase() === 'dc' || name.toLowerCase() === 'ds') return ':||'
-  if (name === 'fine' || name === 'jump') return ''
+  if (name === 'S' || name === 'start') return '{segno}'
+  if (name.toLowerCase() === 'dc') return '{dc}'
+  if (name.toLowerCase() === 'ds') return '{ds}'
+  if (name === 'fine') return '{fine}'
+  if (name === 'jump') return ''
   if (name === 'octave') return ''
   if (name === 'hot' || name === 'ms' || name === 'omit' || name === 'f' || /^o\d+f$/.test(name)) {
-    diagnostics.push(`已忽略仅影响原编辑器播放的标签：{${trimmed}}`)
     return ''
   }
   if (name === 'repeat') {
-    diagnostics.push(`M3N 暂无指定重复次数语法：{${trimmed}}`)
+    if (/^[2-9]\d*$/.test(value)) return `{x${value}}`
+    diagnostics.push(`重复次数必须是大于 1 的整数：{${trimmed}}`)
     return `{text=repeat ${value}}`
   }
   if (trimmed.startsWith('!') && trimmed.endsWith('!')) return ''
@@ -248,6 +251,13 @@ function tiePreviousRenderedNote(output: string[], pitch: string) {
   return false
 }
 
+function wrapVolta(passes: string, content: string) {
+  const trailingBar = /\s*(:\|\|\||:\|\|:|:\|\||\|\|\||\|\||\|)\s*$/.exec(content)
+  if (!trailingBar || trailingBar.index === undefined) return `{volta=${passes}}${content}{/}`
+  const bar = trailingBar[1] === '|' ? '||' : trailingBar[1]
+  return `{volta=${passes}}${content.slice(0, trailingBar.index)}{/} ${bar}`
+}
+
 function convertSequence(
   rawSource: string,
   diagnostics: string[],
@@ -277,7 +287,9 @@ function convertSequence(
           const alternativeState = { ...state }
           const primary = convertSequence(alternatives[0], diagnostics, primaryState)
           const alternative = convertSequence(alternatives[1], diagnostics, alternativeState)
-          output.push(`{volta=1}${primary.output}{/} {volta=2}${alternative.output}{/}`)
+          const primaryVolta = wrapVolta('1', primary.output)
+          const separator = /(?:\|\|\||\|\||:\|\|:|:\|\|\|?)\s*$/.test(primaryVolta) ? ' ' : ' || '
+          output.push(`${primaryVolta}${separator}${wrapVolta('2', alternative.output)}`)
           state.lastPitch = primaryState.lastPitch ?? alternativeState.lastPitch
           hasMusic ||= primary.hasMusic || alternative.hasMusic
         } else {
@@ -330,7 +342,7 @@ function convertSequence(
         const volta = /^(\d+(?:[-,]\d+)*):/.exec(inner)
         if (volta) {
           const content = convertSequence(inner.slice(volta[0].length), diagnostics, state)
-          output.push(`{volta=${volta[1].replace(/-/g, '~')}}${content.output}{/}`)
+          output.push(wrapVolta(volta[1].replace(/-/g, '~'), content.output))
           hasMusic ||= content.hasMusic
         } else {
           diagnostics.push(`无法识别的房子语法：[${inner}]`)
@@ -343,7 +355,7 @@ function convertSequence(
       if (volta) {
         diagnostics.push(`房子缺少右方括号，已按文末闭合：${volta[1]}`)
         const content = convertSequence(rest.slice(volta[0].length), diagnostics, state)
-        output.push(`{volta=${volta[1].replace(/-/g, '~')}}${content.output}{/}`)
+        output.push(wrapVolta(volta[1].replace(/-/g, '~'), content.output))
         hasMusic ||= content.hasMusic
         index = source.length
         continue
@@ -468,10 +480,11 @@ function parseSource(source: string) {
   const lyrics: string[] = []
   let body = source
 
-  body = body.replace(/\{(title|subtitle|singer|composer|lyricist|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, rawValue) => {
+  body = body.replace(/\{(title|subtitle|category|singer|composer|lyricist|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, rawValue) => {
     const value = String(rawValue).trim()
     if (name === 'title') header.title = value
     if (name === 'subtitle') header.subtitle = value
+    if (name === 'category') header.category = value
     if (name === 'singer') header.singer = value
     if (name === 'composer') header.composer = value
     if (name === 'lyricist') header.lyricist = value
@@ -499,8 +512,6 @@ function parseSource(source: string) {
     /(\{br\}\s*)([A-Za-z\u3400-\u9fff][^{}()[\]:|\r\n]{0,47}):\s*/g,
     (_match, prefix, label) => `${prefix}{mark:${String(label).trim()}} `,
   )
-  body = applyDacapoStructure(body, header)
-  body = applyDalSegnoStructure(body, header)
   return { header, body, lyrics }
 }
 
@@ -535,6 +546,14 @@ function applyDalSegnoStructure(body: string, header: HappiHeader) {
   const returns = [...body.matchAll(/\{ds\}/gi)]
   if (markers.length !== 1 || returns.length !== 1) return body
 
+  const insideEnding = (index: number) => {
+    const prefix = body.slice(0, index)
+    return prefix.lastIndexOf('[') > prefix.lastIndexOf(']')
+  }
+  // A D.S. written inside a numbered ending controls that ending rather than
+  // defining a document-level playback route.
+  if (insideEnding(markers[0].index ?? 0) || insideEnding(returns[0].index ?? 0)) return body
+
   const returnIndex = returns[0].index ?? body.length
   const returnEnd = returnIndex + returns[0][0].length
   const hasTail = extractHappiNotes(body.slice(returnEnd)).length > 0 || /\{rest:\s*\d+\}/.test(body.slice(returnEnd))
@@ -562,6 +581,7 @@ export function happi123ToM3N(source: string): ConversionResult {
   const diagnostics: string[] = []
   const { header, body, lyrics } = parseSource(source)
   const converted = convertSequence(body, diagnostics).output
+    .replace(/(:\|\|\|?|:\|\|:)\s+\{x(\d+)\}/g, '$1{x$2}')
     .replace(/(?:\s*\{br\}\s*){2,}/g, ' {br} ')
     .replace(/^\s*\{br\}\s*/, '')
     .replace(/\s*\{br\}\s*$/, '')
@@ -601,6 +621,7 @@ export function happi123ToM3N(source: string): ConversionResult {
   const output = [
     header.title ? `{title=${header.title}}` : '',
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
+    header.category ? `{category=${header.category}}` : '',
     header.singer ? `{singer=${header.singer}}` : '',
     header.composer || metadata.composer ? `{composer=${header.composer || metadata.composer}}` : '',
     header.lyricist || metadata.lyricist ? `{lyricist=${header.lyricist || metadata.lyricist}}` : '',

@@ -72,6 +72,7 @@ Happy_ New Year To You All
 | ----------------------- | -------- | --------------------------- |
 | `{title:文本}`          | 曲目标题 | `{title:生日歌}`            |
 | `{subtitle:文本}`       | 副标题   | `{subtitle:Happy birthday}` |
+| `{category:文本}`       | 曲目分类 | `{category:华语流行}`       |
 | `{singer:文本}`         | 演唱者   | `{singer:王杰}`             |
 | `{composer:文本}`       | 作曲者   | `{composer:陈志远}`         |
 | `{lyricist:文本}`       | 作词者   | `{lyricist:陈乐融}`         |

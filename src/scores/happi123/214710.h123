@@ -1,9 +1,10 @@
 {title:天空之城}
+{category:古典与近现代器乐}
 {bpm:72}
 {key_signature:1=C6}
 {time_signature:4/4}
 {hot}
-{play: A B C A  间奏 C A D}
+{play: A B C A C A D}
 
 {mark:A}
 6,_7,_|1.7,_13|7,--3,_3,_|6,.5,_6,1|5,--3,_3,_|
