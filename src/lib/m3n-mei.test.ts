@@ -210,6 +210,15 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('注释内容')
   })
 
+  it('does not open a lyric block declared inside a comment', () => {
+    const result = m3nToMei('{key=G} {4/4}\n((3 3 4 5)) ((3 3 4 5)) ((3 3 4 5)) ((3 3 4 5)) :|||\n{lyrics=1}一二三四一二三四一二三四一二三四{/}\n// {lyrics-word=2}hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello {/}')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<verse n="1"><syl>一</syl></verse>')
+    expect(result.mei).not.toContain('<verse n="2">')
+    expect(result.mei).not.toContain('hello')
+  })
+
   it('expands repeated placeholders and encodes grouped lyrics as underlined single-note text', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 |||\n{lyrics}\n%{2} (甲乙) _{0}\n{/}')
 

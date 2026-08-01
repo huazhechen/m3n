@@ -21,6 +21,13 @@ export function splitSupplementBlocks(source: string): SupplementBlocks {
   let index = 0
 
   while (index < source.length) {
+    if (source.startsWith('//', index)) {
+      const newline = source.indexOf('\n', index)
+      const end = newline === -1 ? source.length : newline
+      main.push(source.slice(index, end))
+      index = end
+      continue
+    }
     const rest = source.slice(index)
     const opener = /^\{(lyrics(?:-word)?)(?:=([^}]+))?\}|^\{(bass)\}/.exec(rest)
     if (!opener) {
