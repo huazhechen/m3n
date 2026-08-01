@@ -109,6 +109,15 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-3 #m3n-segment-1 #m3n-segment-2"/>')
   })
 
+  it('keeps ordinary measures together between navigation boundaries', () => {
+    const result = m3nToMei('{2/4}\n{segno}1 2 | 3 4 | 5 6 | 7 1e{ds} |||')
+
+    expect(result.mei).toContain('<section xml:id="m3n-segment-2">\n            <measure xml:id="m3n-measure-1-2"')
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-3"')
+    expect(result.mei).toContain('<section xml:id="m3n-segment-3">')
+    expect(result.mei).not.toContain('<section xml:id="m3n-segment-4">')
+  })
+
   it('keeps an explicitly reset tempo visible at an accelerando start', () => {
     const result = m3nToMei('{4/4} {120qpm}\n1 2 3 4 | {60qpm}1 2 3 4 | {120qpm}{accel=144}1 2 3 4{/} |||')
 

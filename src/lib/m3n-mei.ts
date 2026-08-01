@@ -505,13 +505,13 @@ export function m3nToMei(source: string): MeiConversionResult {
       while (
         index < measures.length
         && !measures[index]?.ending
-        && (content.length === 0 || (!measures[index]?.repeatStart && !hasNavigation))
+        && (content.length === 0 || (!measures[index]?.repeatStart && measures[index]?.navigation.length === 0))
       ) {
         const measure = measures[index] as (typeof measures)[number]
         sectionMeasures.push(measure)
         content.push(measureContent(measure))
         index += 1
-        if (measure.repeatCount) break
+        if (measure.repeatCount || measure.navigation.length > 0) break
       }
       nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, partName, content: content.join('\n'), repeatStart: sectionMeasures[0]?.repeatStart, repeatCount: sectionMeasures.at(-1)?.repeatCount, navigation: sectionMeasures.flatMap((measure) => measure.navigation) })
     }
