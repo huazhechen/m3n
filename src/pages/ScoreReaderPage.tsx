@@ -44,6 +44,11 @@ export function ScoreReaderPage() {
           tempoChanges={result.tempoChanges}
           tempo={result.tempo}
         />
+        {result.diagnostics.length > 0 && (
+          <ul className="diagnostics score-reader-diagnostics" aria-label="乐谱校验错误">
+            {result.diagnostics.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        )}
       </section>
     </main>
   )

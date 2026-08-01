@@ -514,6 +514,10 @@ textarea::selection {
   min-height: 360px;
 }
 
+.score-reader-diagnostics {
+  margin-bottom: 16px;
+}
+
 .score-section {
   padding: 20px;
 }
