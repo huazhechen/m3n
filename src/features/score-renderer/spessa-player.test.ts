@@ -1,6 +1,6 @@
 import { BasicMIDI, MIDIBuilder } from 'spessasynth_core'
 import { describe, expect, it } from 'vitest'
-import { prepareScoreMidi, sourceTimeAt } from './spessa-player'
+import { prepareScoreMidi, seekTimeAtProgress, sourceTimeAt } from './spessa-player'
 
 describe('score MIDI playback preparation', () => {
   it('writes gradual tempo changes as MIDI tempo events', () => {
@@ -30,5 +30,11 @@ describe('score MIDI playback preparation', () => {
     const playback = BasicMIDI.fromArrayBuffer(prepareScoreMidi(source, [{ startBeats: 1, tempo: 60, ramp: true }]))
 
     expect(sourceTimeAt(playback, BasicMIDI.fromArrayBuffer(source), 1)).toBeCloseTo(0.75)
+  })
+
+  it('keeps seeks just before the end of a sequence', () => {
+    expect(seekTimeAtProgress(12, 1)).toBeCloseTo(11.999)
+    expect(seekTimeAtProgress(12, 2)).toBeCloseTo(11.999)
+    expect(seekTimeAtProgress(12, -1)).toBe(0)
   })
 })

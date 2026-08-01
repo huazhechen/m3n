@@ -37,6 +37,13 @@ export function sourceTimeAt(playbackMidi: BasicMIDI, sourceMidi: BasicMIDI, pla
   return sourceMidi.midiTicksToSeconds(playbackMidi.secondsToMIDITicks(playbackSeconds))
 }
 
+export function seekTimeAtProgress(duration: number, progress: number) {
+  if (!Number.isFinite(duration) || duration <= 0) return 0
+  const normalized = Math.max(0, Math.min(1, progress))
+  // SpessaSynth cannot seek to the exact end because there is no next event.
+  return Math.min(normalized * duration, Math.max(0, duration - 0.001))
+}
+
 function accompanimentMidi(notes: AccompanimentNote[], tempo: number, tempoChanges: TempoChange[]) {
   const sequence = new MIDIBuilder({ format: 1, initialTempo: tempo, name: 'M3N accompaniment' })
   sequence.addTrack('M3N accompaniment')
@@ -132,8 +139,8 @@ export class SpessaPlayer {
   }
 
   seek(progress: number) {
-    this.sequencer.currentTime = Math.max(0, Math.min(1, progress)) * this.sequencer.duration
-    if (this.accompanimentSequencer) this.accompanimentSequencer.currentTime = Math.max(0, Math.min(1, progress)) * this.accompanimentSequencer.duration
+    this.sequencer.currentTime = seekTimeAtProgress(this.sequencer.duration, progress)
+    if (this.accompanimentSequencer) this.accompanimentSequencer.currentTime = seekTimeAtProgress(this.accompanimentSequencer.duration, progress)
     this.emitProgress()
   }
 
