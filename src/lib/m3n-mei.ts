@@ -142,8 +142,10 @@ function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: Ve
   const gestural = event.postfixes.includes('brk') ? ` dur.ges="${gesturalDuration(event.beats / 4)}"`
     : event.postfixes.includes('tip') ? ` dur.ges="${gesturalDuration(event.beats / 2)}"` : ''
   const verse = lyrics.filter((lyric) => lyric.kind !== 'placeholder').map((lyric) => {
-    const connection = lyric.underlined || lyric.kind === 'extender'
+    const connection = lyric.kind === 'extender'
       ? ' con="u"'
+      : lyric.underlined
+        ? ' type="m3n-text-underline" con="u"'
       : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
     return `<verse n="${lyric.n}"><syl${connection}>${escapeXml(lyricText(lyric))}</syl></verse>`
   }).join('')
