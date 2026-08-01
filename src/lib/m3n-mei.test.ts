@@ -22,7 +22,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.headerMetadata).toEqual([
       { value: 'Test', side: 'center', priority: 0 },
       { value: 'Sub', side: 'center', priority: 10 },
-      { value: '+2', side: 'left', priority: 20, label: 'transpose' },
       { value: 'Composer', side: 'right', priority: 20, label: 'composer' },
       { value: 'Arranger', side: 'right', priority: 30, label: 'arranger' },
     ])

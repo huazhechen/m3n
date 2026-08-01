@@ -515,7 +515,6 @@ export function m3nToMei(source: string): MeiConversionResult {
   const headerMetadata: ScoreHeaderMetadata[] = ([
     { value: document.title, side: 'center', priority: 0 },
     { value: document.subtitle, side: 'center', priority: 10 },
-    { value: document.transpose ? `${Number(document.transpose) > 0 ? '+' : ''}${document.transpose}` : '', side: 'left', priority: 20, label: 'transpose' },
     { value: document.composer, side: 'right', priority: 20, label: 'composer' },
     { value: document.partOrder.join(' → '), side: 'left', priority: 30, label: 'parts' },
     { value: document.arranger, side: 'right', priority: 30, label: 'arranger' },
