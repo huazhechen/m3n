@@ -20,6 +20,7 @@ type ScoreRendererProps = {
   compact?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
+  diagnostics?: string[]
   onActiveXmlId?: (xmlId: string | null) => void
   onNoteClick?: (xmlId: string) => void
   onPaperBlur?: () => void
@@ -37,6 +38,7 @@ let scoreRenderQueue = Promise.resolve()
 type PlaybackStopper = { current: () => void }
 let activePlayback: PlaybackStopper | null = null
 const EMPTY_INVALID_MEASURE_IDS: string[] = []
+const EMPTY_DIAGNOSTICS: string[] = []
 
 function claimPlayback(stopper: PlaybackStopper) {
   if (activePlayback && activePlayback !== stopper) activePlayback.current()
@@ -158,6 +160,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   compact = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
+  diagnostics = EMPTY_DIAGNOSTICS,
   onActiveXmlId,
   onNoteClick,
   onPaperBlur,
@@ -558,6 +561,9 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
           if (!event.currentTarget.contains(event.relatedTarget)) onPaperBlur?.()
         }}
       />
+      {diagnostics.length > 0 && (
+        <ul className="diagnostics">{diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>
+      )}
       <ScoreExportDialog
         ref={exportDialogRef}
         mei={mei}

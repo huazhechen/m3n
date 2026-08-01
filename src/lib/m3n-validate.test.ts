@@ -152,6 +152,16 @@ describe('validateM3N', () => {
     expect(validateM3N(source)).toEqual([])
   })
 
+  it('allows later lyric blocks to omit alignment positions', () => {
+    const source = [
+      '{2/4} 1 2 |||',
+      '{lyrics=1}甲 乙{/}',
+      '{lyrics=2}丙{/}',
+      '{lyrics=3}丁{/}',
+    ].join('\n')
+    expect(validateM3N(source)).toEqual([])
+  })
+
   it('excludes instrumental intervals from lyric alignment', () => {
     expect(messages('{2/4} {inst}1 2{/} | 3 4 |||\n{lyrics-word}la la{/}')).toBe('')
   })

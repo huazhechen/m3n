@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { m3nToMei } from '../lib/m3n-mei'
-import { invalidMeasureIds as findInvalidMeasureIds, validateM3N } from '../lib/m3n-validate'
+import { invalidMeasureIds as findInvalidMeasureIds } from '../lib/m3n-validate'
 import defaultScore from '../scores/07_00001.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import type { ScoreRendererRef } from './ScoreRenderer'
@@ -18,13 +18,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
   const [isMeiDialogOpen, setIsMeiDialogOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
-  const result = useMemo(() => {
-    const conversion = m3nToMei(source)
-    return {
-      ...conversion,
-      diagnostics: [...conversion.diagnostics, ...validateM3N(source)],
-    }
-  }, [source])
+  const result = useMemo(() => m3nToMei(source), [source])
   const invalidMeasureIds = useMemo(() => findInvalidMeasureIds(source), [source])
   const cursorXmlId = useMemo(() => {
     const containingRange = result.sourceMap.find((item) => (
@@ -100,9 +94,6 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           onSelect={(event) => updateCursorPosition(event.currentTarget.selectionEnd)}
           onBlur={() => setIsCursorHighlightActive(false)}
         />
-        {result.diagnostics.length > 0 && (
-          <ul className="diagnostics editor-source-diagnostics">{result.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>
-        )}
         <ScoreRenderer
           ref={scoreRendererRef}
           mei={result.mei}
@@ -116,6 +107,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           compact={embedded}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}
+          diagnostics={result.diagnostics}
           onActiveXmlId={highlightSourceRange}
           onNoteClick={selectScoreNoteInSource}
           onPaperBlur={() => setIsCursorHighlightActive(false)}
