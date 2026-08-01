@@ -233,8 +233,14 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 |||\n{lyrics}\n%{2} (甲乙) _{0}\n{/}')
 
     expect(result.mei).not.toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse')
-    expect(result.mei).toContain('<syl type="m3n-text-underline" con="u">甲乙\u200B\u200B</syl>')
+    expect(result.mei).toContain('<syl type="m3n-text-underline" con="u"><rend>甲乙\u200B\u200B</rend></syl>')
     expect(result.mei).toContain('<syl con="u"></syl>')
+  })
+
+  it('underlines grouped lyric text without underlining punctuation', () => {
+    const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics-word}(word,word) next{/}')
+
+    expect(result.mei).toContain('<syl type="m3n-text-underline" con="u"><rend>word</rend>,<rend>word</rend></syl>')
   })
 
   it('renders lyrics for multiple repeat passes as separate verses', () => {

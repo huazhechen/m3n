@@ -47,12 +47,19 @@ function escapeXml(value: string) {
 }
 
 const CJK_OR_FULLWIDTH_CHARACTER = /[\u3000-\u303F\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF01-\uFF60\uFFE0-\uFFEE]/u
+const PUNCTUATION_ONLY = /^\p{P}+$/u
 
 function lyricText(lyric: VerseSyllable) {
   const text = lyric.text.replaceAll('~', ' ')
   if (!lyric.cjkSpacingCompensation) return text
   const compensation = Array.from(text).filter((character) => CJK_OR_FULLWIDTH_CHARACTER.test(character)).map(() => '\u200B').join('')
   return `${text}${compensation}`
+}
+
+function underlinedLyricText(lyric: VerseSyllable) {
+  return lyricText(lyric).split(/(\p{P}+)/u).filter(Boolean).map((segment) => (
+    PUNCTUATION_ONLY.test(segment) ? escapeXml(segment) : `<rend>${escapeXml(segment)}</rend>`
+  )).join('')
 }
 
 function keySignature(rawKey: string) {
@@ -147,7 +154,10 @@ function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: Ve
       : lyric.underlined
         ? ' type="m3n-text-underline" con="u"'
       : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
-    return `<verse n="${lyric.n}"><syl${connection}>${escapeXml(lyricText(lyric))}</syl></verse>`
+    const text = lyric.underlined && lyric.kind !== 'extender'
+      ? underlinedLyricText(lyric)
+      : escapeXml(lyricText(lyric))
+    return `<verse n="${lyric.n}"><syl${connection}>${text}</syl></verse>`
   }).join('')
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
