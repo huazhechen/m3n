@@ -38,6 +38,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   const tocRef = useRef<HTMLElement>(null)
   const tocToggleRef = useRef<HTMLButtonElement>(null)
   const activeHeadingIdRef = useRef('')
+  const articleRef = useRef<HTMLElement>(null)
   const documentGroups = useMemo<DocumentGroup[]>(
     () =>
       documents.map((document) => ({
@@ -74,16 +75,15 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     }
 
     let frame = 0
-    const headingElements = activeDocument.headings.flatMap((heading) => {
-      const element = document.getElementById(heading.id)
-      return element ? [{ id: heading.id, element }] : []
-    })
+    const headingIds = new Set(activeDocument.headings.map((heading) => heading.id))
 
     function updateActiveHeading() {
       frame = 0
-      const viewportMarker = window.innerHeight * 0.25
+      const headingElements = [...(articleRef.current?.querySelectorAll<HTMLHeadingElement>('h2[id]') ?? [])]
+        .filter((heading) => headingIds.has(heading.id))
+      const readingPosition = window.scrollY + window.innerHeight * 0.25
       const currentHeading = headingElements.reduce<string>((currentId, heading) => (
-        heading.element.getBoundingClientRect().top <= viewportMarker ? heading.id : currentId
+        heading.getBoundingClientRect().top + window.scrollY <= readingPosition ? heading.id : currentId
       ), '')
 
       if (activeHeadingIdRef.current === currentHeading) {
@@ -105,10 +105,13 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     scheduleHeadingUpdate()
     window.addEventListener('scroll', scheduleHeadingUpdate, { passive: true })
     window.addEventListener('resize', scheduleHeadingUpdate)
+    const observer = articleRef.current ? new ResizeObserver(scheduleHeadingUpdate) : null
+    if (articleRef.current) observer?.observe(articleRef.current)
     return () => {
       window.cancelAnimationFrame(frame)
       window.removeEventListener('scroll', scheduleHeadingUpdate)
       window.removeEventListener('resize', scheduleHeadingUpdate)
+      observer?.disconnect()
     }
   }, [activeDocument])
 
@@ -216,7 +219,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
           ))}
         </nav>
       </aside>
-      <article className="markdown-panel">
+      <article ref={articleRef} className="markdown-panel">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
