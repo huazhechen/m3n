@@ -61,6 +61,7 @@ export class VerovioScore {
       pageMarginTop: 8,
       pageWidth: Math.max(800, Math.round(width * 100 / effectiveScale)),
       scale: effectiveScale,
+      spacingLinear: 0.4,
       svgViewBox: true,
     })
     if (!this.toolkit.loadData(layoutMei)) {
