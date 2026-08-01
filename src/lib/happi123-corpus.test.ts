@@ -19,11 +19,9 @@ describe('Happi123 score corpus', () => {
       if (!/\{key=[A-G](?:#|b)?\} \{\d+\/\d+\}/.test(result.output)) failures.push(`${slug}: settings`)
       if (/\{\d+_\d+\}|\{part=\||\{lyric\}|\{tet=/.test(result.output)) failures.push(`${slug}: malformed legacy output`)
 
-      const musicLineCount = source
-        .replace(/\{lyric\}[\s\S]*?\{\/lyric\}/g, '')
-        .split(/\r?\n/)
-        .filter((line) => /[0-7|]/.test(line.replace(/\{[^}]*\}/g, ''))).length
-      if (musicLineCount > 1 && !result.output.includes('{br}')) failures.push(`${slug}: line breaks`)
+      const explicitBreakCount = [...source.matchAll(/\{(?:br|__linebreak__)\}/g)].length
+      const outputBreakCount = result.output.match(/\{br\}/g)?.length ?? 0
+      if (outputBreakCount !== explicitBreakCount) failures.push(`${slug}: line breaks`)
     }
 
     expect(failures).toEqual([])

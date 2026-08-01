@@ -256,7 +256,8 @@ function convertSequence(
     const rest = source.slice(index)
     const whitespace = /^\s+/.exec(rest)
     if (whitespace) {
-      output.push(/\r?\n/.test(whitespace[0]) ? ' {br} ' : ' ')
+      // Happi123 line wrapping is source formatting, not score layout.
+      output.push(' ')
       index += whitespace[0].length
       continue
     }

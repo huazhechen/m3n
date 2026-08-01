@@ -94,11 +94,11 @@ describe('happi123ToM3N', () => {
     expect(result.diagnostics).toContain('源谱拍号与小节时值不符，已从 4/4 更正为 2/4')
   })
 
-  it('preserves physical score lines as deduplicated M3N breaks', () => {
+  it('ignores physical Happi123 score lines while preserving explicit breaks', () => {
     const result = happi123ToM3N('{title:换行}\n{key_signature:C}\n{time_signature:2/4}\n11|\n22|\n{br}\n33|||')
 
-    expect(result.output.match(/\{br\}/g)).toHaveLength(2)
-    expect(result.output).toContain('1 1 | {br}\n2 2 | {br}\n3 3 |||')
+    expect(result.output.match(/\{br\}/g)).toHaveLength(1)
+    expect(result.output).toContain('1 1 | 2 2 | {br}\n3 3 |||')
   })
 
   it('discards playback-only octave configuration', () => {
