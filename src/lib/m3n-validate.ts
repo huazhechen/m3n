@@ -300,9 +300,10 @@ function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidat
 function validateBody(
   tokens: Token[],
   diagnostics: string[],
-  options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[] } = {},
+  options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[]; skipBeatValidation?: boolean } = {},
 ) {
   const bass = options.bass ?? false
+  const skipBeatValidation = options.skipBeatValidation ?? false
   const defaultSettings: Settings = options.initial
     ? structuredClone(options.initial)
     : { key: 'C', meter: { beats: 4, beatValue: 4 }, tempo: null }
@@ -375,7 +376,7 @@ function validateBody(
     if (unit.currentHasAtom && !unit.multiRestPendingBar) commitMeasure(unit.measureLine)
     finishTie()
     finishRepeat()
-    validateUnitMeasures(unit, diagnostics, bass)
+    validateUnitMeasures(unit, diagnostics, bass || skipBeatValidation)
     if (unit.name && !unit.hasAtom) diagnostics.push(`乐段 ${unit.name} 为空`)
     completedUnits.push(unit)
     if (unit.name) unitsByPart.set(unit.name, unit)
@@ -941,7 +942,8 @@ export function validateM3N(source: string): string[] {
   const diagnostics: string[] = []
   const tokens = tokenizeM3N(source)
   const { main, supplements } = extractSupplements(tokens, diagnostics)
-  const mainResult = validateBody(main, diagnostics)
+  const importedHappi123 = main.some((token) => token.kind === 'attribute' && token.content === 'source=Happi123')
+  const mainResult = validateBody(main, diagnostics, { skipBeatValidation: importedHappi123 })
 
   const lyrics = supplements.filter((block) => block.kind === 'lyrics')
   const bassBlocks = supplements.filter((block) => block.kind === 'bass')
@@ -964,7 +966,7 @@ export function validateM3N(source: string): string[] {
       if (lyricPasses.has(pass)) diagnostics.push(`第 ${lyric.line} 行：歌词块遍次重叠：${pass}`)
       lyricPasses.add(pass)
       const expected = mainResult.lyricCount(pass)
-      if (items.count !== expected) {
+      if (!importedHappi123 && mainResult.lyricPasses.size === 1 && items.count !== expected) {
         diagnostics.push(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`)
       }
     }

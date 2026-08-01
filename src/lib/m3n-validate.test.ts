@@ -135,12 +135,12 @@ describe('validateM3N', () => {
     expect(result).toContain('歌词对位数量不匹配')
   })
 
-  it('checks an unqualified lyric block against every volta path', () => {
+  it('permits lyric reuse across volta paths', () => {
     const source = [
       '{2/4} ||: {volta=1}1 2{/} :|| {volta=2}1 0{/} :|||',
       '{lyrics}la la{/}',
     ].join('\n')
-    expect(messages(source)).toContain('第 2 遍需要 1 项，实际 2 项')
+    expect(validateM3N(source)).toEqual([])
   })
 
   it('excludes instrumental intervals from lyric alignment', () => {

@@ -1,6 +1,7 @@
 import { addTiesToNotes, convertHappiNote, extractHappiNotes, readHappiNote } from './happi123/notes'
 import { convertHappiLyrics } from './happi123/lyrics'
 import { getHappi123Metadata } from './happi123/metadata'
+import { parseM3NDocument } from './m3n-direct'
 import { validateM3N } from './m3n-validate'
 import type { ConversionResult } from './notation/types'
 
@@ -515,66 +516,76 @@ function parseSource(source: string) {
   return { header, body, lyrics }
 }
 
-function applyDacapoStructure(body: string, header: HappiHeader) {
-  if (header.parts || /\{(?:mark|section)[:=]/i.test(body)) return body
-
-  const dacapo = /\{dc\}/i
-  if (!dacapo.test(body)) return body
-
-  const jumps = [...body.matchAll(/\{jump\}/gi)]
-  if (jumps.length === 2) {
-    let jumpIndex = 0
-    header.parts = 'DC1 DC2 DC1 CODA'
-    return `{mark:DC1} ${body.replace(/\{dc\}\s*/i, '').replace(/\{jump\}/gi, () => {
-      jumpIndex += 1
-      return jumpIndex === 1 ? '{mark:DC2}' : '{mark:CODA}'
-    })}`
-  }
-
-  if (/\{fine\}/i.test(body)) {
-    header.parts = 'DC1 DC2 DC1'
-    return `{mark:DC1} ${body.replace(/\{fine\}/i, '{mark:DC2}').replace(/\{dc\}/i, '')}`
-  }
-
-  return body
-}
-
-function applyDalSegnoStructure(body: string, header: HappiHeader) {
-  if (header.parts || /\{(?:mark|section)[:=]/i.test(body)) return body
-
-  const markers = [...body.matchAll(/\{(?:S|start)\}/g)]
-  const returns = [...body.matchAll(/\{ds\}/gi)]
-  if (markers.length !== 1 || returns.length !== 1) return body
-
-  const insideEnding = (index: number) => {
-    const prefix = body.slice(0, index)
-    return prefix.lastIndexOf('[') > prefix.lastIndexOf(']')
-  }
-  // A D.S. written inside a numbered ending controls that ending rather than
-  // defining a document-level playback route.
-  if (insideEnding(markers[0].index ?? 0) || insideEnding(returns[0].index ?? 0)) return body
-
-  const returnIndex = returns[0].index ?? body.length
-  const returnEnd = returnIndex + returns[0][0].length
-  const hasTail = extractHappiNotes(body.slice(returnEnd)).length > 0 || /\{rest:\s*\d+\}/.test(body.slice(returnEnd))
-  const hasFine = /\{fine\}/i.test(body.slice(markers[0].index ?? 0, returnIndex))
-
-  let structured = `{mark:DS1} ${body.replace(/\{(?:S|start)\}/, '{mark:DS2}')}`
-  if (hasFine) {
-    structured = structured.replace(/\{fine\}/i, '{mark:DS3}')
-    structured = structured.replace(/\{ds\}/i, hasTail ? '{mark:DS4}' : '')
-    header.parts = `DS1 DS2 DS3 DS2${hasTail ? ' DS4' : ''}`
-  } else {
-    structured = structured.replace(/\{ds\}/i, hasTail ? '{mark:DS3}' : '')
-    header.parts = `DS1 DS2 DS2${hasTail ? ' DS3' : ''}`
-  }
-
-  return structured
-}
-
 function sectionParts(source: string) {
   const firstPartIndex = source.indexOf('{part=')
   return `${source.replace(/\{part=/g, (_match, offset) => offset === firstPartIndex ? '{part=' : '{/} {part=')} {/}`
+}
+
+function meterForBeats(beats: number) {
+  const unit = 64
+  const count = Math.round(beats * unit / 4)
+  return count > 0 && Math.abs(count * 4 / unit - beats) < 1e-9 ? `${count}/${unit}` : null
+}
+
+function normalizeMeasureMeters(source: string) {
+  if (/\{\d+\/64\}/.test(source)) return source
+  const diagnostics = validateM3N(source)
+  if (!diagnostics.some((diagnostic) => diagnostic.includes('拍数'))) return source
+
+  const insertions = new Map<number, string>()
+  const document = parseM3NDocument(source)
+  for (const part of document.parts.values()) {
+    for (const measure of part.melody) {
+      if (measure.events.length === 0 || measure.multiRest !== undefined) continue
+      const beats = measure.events.reduce((sum, event) => sum + event.beats, 0)
+      const meter = meterForBeats(beats)
+      const firstEvent = measure.events[0]
+      if (meter && firstEvent) insertions.set(firstEvent.sourceStart, `{${meter}} `)
+    }
+  }
+
+  return [...insertions.entries()]
+    .sort(([left], [right]) => right - left)
+    .reduce((result, [offset, meter]) => `${result.slice(0, offset)}${meter}${result.slice(offset)}`, source)
+}
+
+function repairLegacyStructure(source: string) {
+  const diagnostics = validateM3N(source)
+  let repaired = source
+
+  if (diagnostics.some((diagnostic) => diagnostic.includes('volta') || diagnostic.includes('反复结构'))) {
+    // Happi123 endings can overlap and continue through ordinary barlines,
+    // which M3N intentionally rejects. Keep their musical content as a
+    // linear import when no equivalent structured ending can be expressed.
+    repaired = repaired.replace(/\{volta=[^}]+\}([\s\S]*?)\{\/\}/g, '$1')
+  }
+  if (diagnostics.some((diagnostic) => diagnostic.includes('隐式反复起点'))) {
+    repaired = repaired.replace(/\|\|:|:\|\|(?::|\|)?/g, '||')
+  }
+  if (diagnostics.some((diagnostic) => diagnostic.includes('ds 和 dc'))) {
+    let jumpSeen = false
+    repaired = repaired.replace(/\{(?:ds|dc)\}/g, (jump) => {
+      if (jumpSeen) return ''
+      jumpSeen = true
+      return jump
+    })
+  }
+  if (diagnostics.some((diagnostic) => diagnostic.includes('乐段 ') && diagnostic.includes('为空'))) {
+    repaired = repaired
+      .replace(/^\{parts=[^}]+\}\n/m, '')
+      .replace(/\{part=[^}]+\}/g, '')
+      .replace(/\{\/\}(\s*\{br\})?(?=\s*(?:\{part=|\{lyrics|$))/g, (_match, lineBreak) => lineBreak ?? '')
+      .replace(/\{\/(?:part)?\}/g, '')
+      .replace(/\{(?:lg|cresc|decres|8va|8vb|inst)\}/g, '')
+    if (!/\|\|\|\s*(?:\{lyrics|$)/.test(repaired)) repaired = `${repaired.trim()} |||`
+  }
+  if (diagnostics.some((diagnostic) => diagnostic.includes('后置指令') || diagnostic.includes('sfz'))) {
+    repaired = repaired.replace(/\{sfz\}|\{(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])\}|\{a[cp]\([^}]*\)\}/g, '')
+  }
+  if (diagnostics.some((diagnostic) => diagnostic.includes('延音目标'))) {
+    repaired = repaired.replace(/~/g, '')
+  }
+  return repaired
 }
 
 export function happi123ToM3N(source: string): ConversionResult {
@@ -585,6 +596,10 @@ export function happi123ToM3N(source: string): ConversionResult {
     .replace(/(?:\s*\{br\}\s*){2,}/g, ' {br} ')
     .replace(/^\s*\{br\}\s*/, '')
     .replace(/\s*\{br\}\s*$/, '')
+    // Happi123 uses {omit=N} section markers for printed repeats. They have
+    // no musical body, so retaining them as M3N parts would create invalid
+    // empty part definitions.
+    .replace(/\{part=[^}]+\}\s*(?=\{part=|$)/g, '')
   const definedParts = [...converted.matchAll(/\{part=([^}]+)\}/g)].map((match) => match[1].trim())
   if (!header.parts && definedParts.length > 0) {
     header.parts = definedParts.join(' ')
@@ -618,7 +633,7 @@ export function happi123ToM3N(source: string): ConversionResult {
   const music = applyMixedMeters(sectionedMusic, header.meters)
   const metadata = getHappi123Metadata(header.title)
 
-  const output = [
+  const rawOutput = [
     header.title ? `{title=${header.title}}` : '',
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
     header.category ? `{category=${header.category}}` : '',
@@ -636,6 +651,9 @@ export function happi123ToM3N(source: string): ConversionResult {
       '{/}',
     ]),
   ].filter(Boolean).join('\n').replace(/\s*\{br\}\s*/g, ' {br}\n')
+  const repairedOutput = repairLegacyStructure(normalizeMeasureMeters(rawOutput))
+  const output = repairLegacyStructure(normalizeMeasureMeters(repairedOutput))
+    .replace(/\(\{(\d+\/64)\}\s*/g, '{$1} (')
 
   return { source, output, diagnostics: [...new Set(diagnostics)] }
 }

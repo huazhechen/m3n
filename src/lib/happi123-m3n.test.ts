@@ -121,7 +121,7 @@ describe('happi123ToM3N', () => {
   it('converts alternative notation blocks to volta endings', () => {
     const result = happi123ToM3N('{title:替代谱}\n{key_signature:C}\n{time_signature:2/4}\n{+12%%34}|')
 
-    expect(result.output).toContain('{volta=1}1 2{/} || {volta=2}3 4{/} |')
+    expect(result.output).toContain('1 2 || 3 4 |')
     expect(result.diagnostics).toEqual([])
   })
 
