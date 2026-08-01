@@ -34,10 +34,6 @@ export function layoutBreaks(mei: string) {
   return mei.includes('<sb/>') ? 'smart' : 'auto'
 }
 
-export function renderNormalLyricSpacing(svg: string) {
-  return svg.replace(/(<g\b[^>]*class="[^"]*\bsyl\b[^"]*"[^>]*>[\s\S]*?<tspan\b[^>]*?)\s+letter-spacing="[^"]*"/g, '$1')
-}
-
 export class VerovioScore {
   private readonly toolkit: VerovioToolkit
   private readonly mei: string
@@ -74,7 +70,7 @@ export class VerovioScore {
   }
 
   renderPage(page: number) {
-    return renderNormalLyricSpacing(this.toolkit.renderToSVG(page))
+    return this.toolkit.renderToSVG(page)
   }
 
   layout(options: ScoreLayout) {
