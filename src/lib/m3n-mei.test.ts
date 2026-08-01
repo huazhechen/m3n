@@ -274,7 +274,8 @@ describe('M3N to MEI conversion', () => {
     const tiedTargetStart = source.indexOf('1 2')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).not.toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4" tie="t"><verse')
+    expect(result.mei).not.toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4"><verse')
+    expect(result.mei).toContain('<tie startid="#m3n-e-1" endid="#m3n-e-2"/>')
     expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="d" oct="4" dur="4"><verse n="1"><syl>la</syl></verse></note>')
     expect(result.sourceMap.some((item) => item.xmlId === 'm3n-e-2' && item.sourceStart > tiedTargetStart)).toBe(false)
   })
@@ -283,7 +284,8 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{key=C} {3/4}\n1~ 1 2 |||\n{lyrics-word}\nla +la la\n{/}')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4" tie="t"><verse n="1"><syl>la</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4"><verse n="1"><syl>la</syl></verse></note>')
+    expect(result.mei).toContain('<tie startid="#m3n-e-1" endid="#m3n-e-2"/>')
     expect(result.mei).not.toContain('>+la</syl>')
   })
 

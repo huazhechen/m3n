@@ -140,8 +140,7 @@ function chordSymbol(value: string, key: string) {
   return m3nChord(value, key)?.symbol ?? value
 }
 
-function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
-  const tie = event.tie && tieEnd ? ' tie="m"' : event.tie ? ' tie="i"' : tieEnd ? ' tie="t"' : ''
+function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
   const velocityValue = event.velocity === undefined && !event.postfixes.includes('str')
     ? undefined
     : Math.min(127, (event.velocity ?? 80) + (event.postfixes.includes('str') ? 20 : 0))
@@ -178,7 +177,7 @@ function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: Ve
   if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${durationAttributes(event.beats)}/>`
   if (event.kind === 'chord') {
     const notes = event.pitches.map((pitch) => `<note ${pitchXml(pitch, event.key, accidentals)}/>`).join('')
-    return `${graces}<chord xml:id="${xmlId}" ${durationAttributes(event.beats)}${gestural}${tie}${velocity}>${notes}${articulations}${verse}</chord>`
+    return `${graces}<chord xml:id="${xmlId}" ${durationAttributes(event.beats)}${gestural}${velocity}>${notes}${articulations}${verse}</chord>`
   }
   if (event.kind === 'tuplet' && event.tuplet) {
     const childBeats = event.tuplet.unitBeats
@@ -188,7 +187,7 @@ function eventXml(event: DirectEvent, xmlId: string, tieEnd: boolean, lyrics: Ve
     const content = childBeats <= 0.5 && !event.pitches.includes('0') ? `<beam>${children}</beam>` : children
     return `<tuplet xml:id="${xmlId}" num="${event.tuplet.num}" numbase="${event.tuplet.numbase}">${content}</tuplet>`
   }
-  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${durationAttributes(event.beats)}${gestural}${tie}${velocity}>${articulations}${verse}</note>`
+  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${durationAttributes(event.beats)}${gestural}${velocity}>${articulations}${verse}</note>`
 }
 
 type RenderedEvent = { event: DirectEvent; prefix?: string; xml: string }
@@ -283,6 +282,29 @@ export function m3nToMei(source: string): MeiConversionResult {
     }
   }
 
+  const tiesByStartId = new Map<string, string[]>()
+  const collectTies = (measures: DirectMeasure[]) => {
+    let tiedEvent: DirectEvent | undefined
+    for (const measure of measures) {
+      for (const event of measure.events) {
+        if (tiedEvent) {
+          const startid = preassignedIds.get(tiedEvent)
+          const endid = preassignedIds.get(event)
+          if (startid && endid) {
+            const ties = tiesByStartId.get(startid) ?? []
+            ties.push(`<tie startid="#${startid}" endid="#${endid}"/>`)
+            tiesByStartId.set(startid, ties)
+          }
+        }
+        tiedEvent = event.tie ? event : undefined
+      }
+    }
+  }
+  for (const part of document.parts.values()) {
+    collectTies(part.melody)
+    if (hasBassStaff) collectTies(part.bass)
+  }
+
   const renderStaff = (
     measure: DirectMeasure | undefined,
     staffNumber: number,
@@ -315,7 +337,7 @@ export function m3nToMei(source: string): MeiConversionResult {
         : []
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
-      return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, tieEnd, lyrics, accidentals) }
+      return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
     })
     const body = beamXml(renderedEvents, meter.count, meter.unit)
       .map((xml) => xml.split('\n').map((line) => `      ${line}`).join('\n'))
@@ -396,6 +418,7 @@ export function m3nToMei(source: string): MeiConversionResult {
           return `<repeatMark staff="${staffNumber}" startid="#${xmlId}" func="${func}"/>`
         }),
         ...event.postfixes.map((value) => postfix(xmlId, value)),
+        ...(tiesByStartId.get(xmlId) ?? []),
       ].filter(Boolean)
     })
     const tempoControls = staffNumber === 1 ? events.flatMap((event) => {
