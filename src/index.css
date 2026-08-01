@@ -376,26 +376,12 @@ h3 {
   overflow: hidden;
 }
 
-.line-numbers,
 textarea {
   margin: 0;
   padding: 14px;
   font-size: 0.95rem;
   line-height: 1.65;
   tab-size: 2;
-}
-
-.line-numbers {
-  flex: 0 0 34px;
-  padding-right: 6px;
-  padding-left: 4px;
-  white-space: pre;
-  overflow: hidden;
-  border-right: 1px solid #d9dbd4;
-  background: #f0f3ee;
-  color: #697276;
-  text-align: right;
-  user-select: none;
 }
 
 textarea {
@@ -1393,10 +1379,6 @@ a.action-button {
 
   .editor-body > .score-card {
     margin-top: 10px;
-  }
-
-  .source-editor .line-numbers {
-    display: none;
   }
 
   .source-editor {

@@ -26,7 +26,7 @@ pages -> components -> features -> lib/notation
 - `features/score-renderer/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
 - `components/ScoreRenderer.tsx`：组合 MEI 渲染、播放和光标事件。
 - `components/ScoreExportDialog.tsx`：导出状态、预览及 PNG/PDF 工作流。
-- `components/SourceEditor.tsx`：源码输入、行号与尺寸同步。
+- `components/SourceEditor.tsx`：源码输入与尺寸同步。
 - `pages`：路由级组合，不承载领域算法。
 
 ## 质量门禁

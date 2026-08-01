@@ -22,12 +22,7 @@ export function SourceEditor({
   textareaRef,
   readOnly = false,
 }: SourceEditorProps) {
-  const lineNumbersRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLTextAreaElement>(null)
-  const lines = Array.from(
-    { length: value.split('\n').length },
-    (_item, index) => String(index + 1),
-  ).join('\n')
 
   useLayoutEffect(() => {
     const editor = editorRef.current
@@ -55,7 +50,6 @@ export function SourceEditor({
 
   return (
     <div className="source-editor">
-      <div ref={lineNumbersRef} className="line-numbers" aria-hidden="true">{lines}</div>
       <textarea
         ref={(element) => {
           editorRef.current = element
@@ -70,11 +64,6 @@ export function SourceEditor({
         onChange={onChange}
         onFocus={onFocus}
         onSelect={onSelect}
-        onScroll={(event) => {
-          if (lineNumbersRef.current) {
-            lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop
-          }
-        }}
         onBlur={onBlur}
         aria-label={ariaLabel}
       />
