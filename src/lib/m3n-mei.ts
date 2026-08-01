@@ -172,7 +172,7 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
     const notes = (parseM3NGroupPitches(parsed.pitchSource) ?? [])
       .map((pitch) => `<note ${pitchXml(pitch, event.key)} dur="${duration}" grace="${grace}"/>`)
     const content = notes.length > 1 ? `<beam>${notes.join('')}</beam>` : notes.join('')
-    return content ? [`<graceGrp attach="pre">${content}</graceGrp>`] : []
+    return content ? [`<graceGrp attach="post">${content}</graceGrp>`] : []
   }).join('')
   if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${durationAttributes(event.beats)}/>`
   if (event.kind === 'chord') {
