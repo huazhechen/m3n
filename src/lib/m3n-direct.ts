@@ -386,7 +386,7 @@ export function m3nPitch(pitch: string, key: string) {
     : parsed.accidentals === 'bb' ? -2 : parsed.accidentals.includes('b') ? -1 : 0
   const explicitDifference = (difference + explicitOffset + 12) % 12
   const explicit = parsed.accidentals.includes('=') ? (keyAccid || 'n')
-    : parsed.accidentals ? explicitDifference === 1 ? 's' : explicitDifference === 2 ? 'x'
+    : parsed.accidentals ? explicitDifference === 1 ? 's' : explicitDifference === 2 ? 'ss'
       : explicitDifference === 11 ? 'f' : explicitDifference === 10 ? 'ff' : 'n'
       : ''
   const octaveShift = [...parsed.octave].reduce((sum, value) => sum + (value === 'e' ? 1 : -1), 0)
