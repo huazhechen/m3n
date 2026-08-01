@@ -408,7 +408,8 @@ textarea {
   height: 100%;
   min-height: 0;
   overflow: auto;
-  color: #1f2326;
+  color: transparent;
+  caret-color: #1f2326;
 }
 
 .source-editor-stack {
@@ -433,7 +434,7 @@ textarea {
   font-size: 0.95rem;
   line-height: 1.65;
   white-space: pre;
-  color: transparent;
+  color: #1f2326;
   pointer-events: none;
 }
 
