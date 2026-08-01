@@ -35,7 +35,7 @@ export type MeiConversionResult = {
 }
 
 type LyricSyllable = DirectLyricSyllable
-type VerseSyllable = LyricSyllable & { n: string; label?: string; cjkSpacingCompensation: boolean }
+type VerseSyllable = LyricSyllable & { n: string; cjkSpacingCompensation: boolean }
 
 function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
   return tokens
@@ -247,12 +247,10 @@ export function m3nToMei(source: string): MeiConversionResult {
   }
   const previousTiedByStaff = new Map<number, boolean>()
   const previousKeyByStaff = new Map<number, string>()
-  const lyricLabelsBySource = new Map<number, string[]>()
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
   const lyricSyllables = document.lyrics.map((block, index) => ({
     n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
-    label: document.lyrics.length > 1 ? `${index + 1}.` : undefined,
     syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
       ...syllable,
       cjkSpacingCompensation: block.mode === 'char',
@@ -333,17 +331,10 @@ export function m3nToMei(source: string): MeiConversionResult {
         ? lyricSyllables.flatMap((block, index) => {
           const lyric = block.syllables[melodyIndices[index]]
           if (!lyric || lyric.forceTiedTarget !== tieEnd) return []
-          const label = melodyIndices[index] === 0 && 'label' in block ? block.label : undefined
           melodyIndices[index] += 1
-          return [{ ...lyric, n: block.n, label }]
+          return [{ ...lyric, n: block.n }]
         })
         : []
-      for (const lyric of lyrics) {
-        if (!lyric.label) continue
-        const labels = lyricLabelsBySource.get(event.sourceStart) ?? []
-        labels.push(lyric.label)
-        lyricLabelsBySource.set(event.sourceStart, labels)
-      }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
       return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
@@ -420,7 +411,6 @@ export function m3nToMei(source: string): MeiConversionResult {
         event.chord ? `<harm staff="${staffNumber}" startid="#${xmlId}">${chordSymbol(event.chord, event.key)}</harm>` : '',
         event.dynamic ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.dynamic}</dynam>` : '',
         event.prefix ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.prefix}</dynam>` : '',
-        ...(staffNumber === 1 ? (lyricLabelsBySource.get(event.sourceStart) ?? []).map((label) => `<dir staff="1" startid="#${xmlId}" place="below" type="lyric-verse-label">${label}</dir>`) : []),
         ...event.navigation.map((value) => {
           if (value === 'fine') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="fine">Fine</repeatMark>`
           const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value

@@ -216,8 +216,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<verse n="1"><syl>甲\u200B</syl></verse>')
     expect(result.mei).toContain('<verse n="1"><syl>乙\u200B</syl></verse>')
     expect(result.mei).toContain('<verse n="2"><syl>hello</syl></verse>')
-    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-1" place="below" type="lyric-verse-label">1.</dir>')
-    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-1" place="below" type="lyric-verse-label">2.</dir>')
     expect(result.mei).toContain('<verse n="2"><syl>world</syl></verse>')
     expect(result.mei).not.toContain('hello\u200B')
   })
