@@ -177,12 +177,17 @@ function formatMain(source: string) {
   return `${source.slice(0, headerEnd).trimEnd()}\n${formatMusic(music)}`
 }
 
+function formatLyrics(source: string) {
+  const text = source.replace(/\s+/g, ' ').trim()
+  return text.replace(/%(?:\s*%)+/g, (run) => `%{${(run.match(/%/g) ?? []).length}}`)
+}
+
 /** Formats M3N source without changing its musical or lyric content. */
 export function formatM3N(source: string) {
   const { main, bass, lyrics } = splitSupplementBlocks(source)
   const supplements = [
     ...lyrics.map((lyric) => {
-      const text = lyric.mode === 'char' ? lyric.text.replace(/\s+/g, '') : lyric.text.replace(/\s+/g, ' ').trim()
+      const text = formatLyrics(lyric.text)
       const name = lyric.mode === 'word' ? 'lyrics-word' : 'lyrics'
       return `{${name}${lyric.range ? `=${lyric.range}` : ''}}\n${text}\n{/}`
     }),

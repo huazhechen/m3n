@@ -44,4 +44,10 @@ describe('formatM3N', () => {
 
     expect(result).toContain('1e^^ :|||')
   })
+
+  it('compresses consecutive lyric placeholders and repeated spaces', () => {
+    const result = formatM3N('{key=C} {2/4}\n1 2 |\n{lyrics}\n甲  % %  乙%%丙\n{/}')
+
+    expect(result).toContain('{lyrics}\n甲 %{2} 乙%{2}丙\n{/}')
+  })
 })
