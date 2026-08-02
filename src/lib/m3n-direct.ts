@@ -67,6 +67,45 @@ export type DirectDocument = {
   intervals: DirectInterval[]
 }
 
+function passRange(value: string) {
+  const passes = new Set<number>()
+  for (const item of value.split(',')) {
+    const range = /^(\d+)~(\d+)$/.exec(item.trim())
+    if (range) {
+      for (let pass = Number(range[1]); pass <= Number(range[2]); pass += 1) passes.add(pass)
+    } else {
+      const pass = Number(item.trim())
+      if (Number.isInteger(pass) && pass > 0) passes.add(pass)
+    }
+  }
+  return passes
+}
+
+/** Returns the playback passes in which each written measure occurs. */
+export function measurePlaybackPasses(measures: DirectMeasure[]) {
+  const passesByMeasure = new Map(measures.map((measure) => [measure, new Set([1])]))
+  let repeatStart = 0
+
+  for (const [index, measure] of measures.entries()) {
+    if (measure.left === 'rptstart') repeatStart = index
+    if (measure.right !== 'rptend') continue
+
+    let passCount = measure.repeatCount ?? 2
+    for (let endingIndex = index; measures[endingIndex]?.ending; endingIndex += 1) {
+      for (const pass of passRange(measures[endingIndex]!.ending!)) passCount = Math.max(passCount, pass)
+    }
+    for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
+      passesByMeasure.set(measures[repeatedIndex]!, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
+    }
+    repeatStart = index + 1
+  }
+
+  for (const measure of measures) {
+    if (measure.ending) passesByMeasure.set(measure, passRange(measure.ending))
+  }
+  return passesByMeasure
+}
+
 const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
 function metadata(source: string, name: (typeof metadataNames)[number]) {
   return source.match(new RegExp(`\\{${name}=([^}]*)\\}`))?.[1]?.trim() ?? ''

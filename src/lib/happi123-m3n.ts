@@ -1,7 +1,7 @@
 import { addTiesToNotes, convertHappiNote, extractHappiNotes, readHappiNote, type HappiNote } from './happi123/notes'
 import { convertHappiLyricItems, type HappiLyricItem } from './happi123/lyrics'
 import { getHappi123Metadata } from './happi123/metadata'
-import { parseM3NDocument } from './m3n-direct'
+import { measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
 import { normalizeAdjacentBarlines } from './m3n-format'
 import { validateM3N } from './m3n-validate'
 import type { ConversionResult } from './notation/types'
@@ -559,20 +559,6 @@ function parseSource(source: string) {
   return { header, body, lyrics }
 }
 
-function endingPasses(value: string) {
-  const passes = new Set<number>()
-  for (const item of value.split(',')) {
-    const range = /^(\d+)~(\d+)$/.exec(item.trim())
-    if (range) {
-      for (let pass = Number(range[1]); pass <= Number(range[2]); pass += 1) passes.add(pass)
-    } else {
-      const pass = Number(item.trim())
-      if (Number.isInteger(pass) && pass > 0) passes.add(pass)
-    }
-  }
-  return passes
-}
-
 function tiedLyricTargets(source: string, pass?: number) {
   const document = parseM3NDocument(source)
   const instrumentalRanges = document.intervals
@@ -580,9 +566,12 @@ function tiedLyricTargets(source: string, pass?: number) {
     .map((interval) => ({ start: interval.start!, end: interval.end! }))
   const inInstrumentalRange = (start: number) => instrumentalRanges.some((range) => start >= range.start && start <= range.end)
   const events = [...document.parts.values()]
-    .flatMap((part) => part.melody.flatMap((measure) => (
-      pass !== undefined && measure.ending && !endingPasses(measure.ending).has(pass) ? [] : measure.events
-    )))
+    .flatMap((part) => {
+      const passesByMeasure = measurePlaybackPasses(part.melody)
+      return part.melody.flatMap((measure) => (
+        pass !== undefined && !passesByMeasure.get(measure)?.has(pass) ? [] : measure.events
+      ))
+    })
     .filter((event) => !inInstrumentalRange(event.sourceStart))
   const targets: boolean[] = []
   let previousTied = false

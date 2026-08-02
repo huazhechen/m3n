@@ -1,4 +1,4 @@
-import { m3nPitch, parseM3NDocument } from './m3n-direct'
+import { m3nPitch, measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
 import type { DirectLyricSyllable } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 import { buildAccompaniment, buildTempoChanges, type AccompanimentNote, type TempoChange } from './m3n-playback'
@@ -275,6 +275,10 @@ export function m3nToMei(source: string): MeiConversionResult {
     })),
   }))
   const melodyIndices = lyricSyllables.map(() => 0)
+  const lyricPassesByMeasure = new Map<DirectMeasure, Set<number>>()
+  for (const part of document.parts.values()) {
+    for (const [measure, passes] of measurePlaybackPasses(part.melody)) lyricPassesByMeasure.set(measure, passes)
+  }
   const isInstrumentalEvent = (event: DirectEvent) => document.intervals.some((interval) => (
     interval.kind === 'inst' &&
     interval.staff === 'melody' &&
@@ -348,11 +352,11 @@ export function m3nToMei(source: string): MeiConversionResult {
       const lyricTargetCount = event.kind === 'tuplet'
         ? event.pitches.filter((pitch) => pitch !== '0').length
         : 1
-      const endingPassSet = measure?.ending ? endingPasses(measure.ending) : undefined
+      const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
       const lyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
         ? lyricSyllables.flatMap((block, index) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
           const passes = block.passes
-          if (endingPassSet && passes && ![...endingPassSet].some((pass) => passes.has(pass))) return []
+          if (passes && measurePasses && ![...measurePasses].some((pass) => passes.has(pass))) return []
           const lyric = block.syllables[melodyIndices[index]]
           const tiedTarget = targetIndex === 0 && tieEnd
           if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []

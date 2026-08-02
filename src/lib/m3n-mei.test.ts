@@ -244,7 +244,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('adds CJK spacing compensation only to character-based lyrics', () => {
-    const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲乙\n{/}\n{lyrics-word=2}\nhello world\n{/}')
+    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 :|||\n{lyrics}\n甲乙\n{/}\n{lyrics-word=2}\nhello world\n{/}')
 
     expect(result.mei).toContain('<verse xml:id="m3n-e-1-v1" n="1"><syl>甲\u200B</syl></verse>')
     expect(result.mei).toContain('<verse xml:id="m3n-e-2-v1" n="1"><syl>乙\u200B</syl></verse>')
@@ -286,10 +286,18 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('renders lyrics for multiple repeat passes as separate verses', () => {
-    const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics-word=1}\nfirst pass\n{/}\n{lyrics-word=2}\nsecond pass\n{/}')
+    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 :|||\n{lyrics-word=1}\nfirst pass\n{/}\n{lyrics-word=2}\nsecond pass\n{/}')
 
     expect(result.mei).toContain('<verse xml:id="m3n-e-1-v1" n="1"><syl>first</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>second</syl></verse>')
     expect(result.mei).toContain('<verse xml:id="m3n-e-2-v1" n="1"><syl>pass</syl></verse><verse xml:id="m3n-e-2-v2" n="2"><syl>pass</syl></verse>')
+  })
+
+  it('does not attach later-pass lyrics to a one-time introduction', () => {
+    const result = m3nToMei('{key=C} {2/4}\n1 2 | ||: 3 4 :|||\n{lyrics-word=1}intro words{/}\n{lyrics-word=2}second pass{/}')
+
+    expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>intro</syl></verse></note>')
+    expect(result.mei).not.toContain('xml:id="m3n-e-1-v2"')
+    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v2" n="2"><syl>second</syl></verse></note>')
   })
 
   it('maps pass-specific lyrics to their matching alternate endings', () => {
