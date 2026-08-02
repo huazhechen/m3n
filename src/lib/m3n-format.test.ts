@@ -45,6 +45,20 @@ describe('formatM3N', () => {
     expect(result).toContain('1e^^ :|||')
   })
 
+  it('merges a complete measure of consecutive rests into one rest', () => {
+    const result = formatM3N('{4/4}\n0 0 0 0 | 1 2 3 4 |||')
+
+    expect(result).toContain('0^^ | 1 2 3 4 |||')
+  })
+
+  it('merges grouped rests only when their total fills the measure', () => {
+    const complete = formatM3N('{2/4}\n(0 0) (0 0) | 1 2 |||')
+    const partial = formatM3N('{4/4}\n0 0 1 1 |||')
+
+    expect(complete).toContain('0^ | 1 2 |||')
+    expect(partial).toContain('0 0 1 1 |||')
+  })
+
   it('compresses consecutive lyric placeholders and repeated spaces', () => {
     const result = formatM3N('{key=C} {2/4}\n1 2 |\n{lyrics}\n甲  % %  乙%%丙\n{/}')
 

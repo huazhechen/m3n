@@ -1,5 +1,6 @@
 import { splitSupplementBlocks } from './notation/supplements'
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
+import { parseM3NDocument, type DirectEvent } from './m3n-direct'
 
 const BARLINE = /(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g
 const EPSILON = 1e-9
@@ -139,6 +140,51 @@ function normalizeBeamGroups(source: string) {
   return output
 }
 
+function restForBeats(beats: number) {
+  for (let depth = 0; depth <= 6; depth += 1) {
+    for (let carets = 0; carets <= 6; carets += 1) {
+      for (let dots = 0; dots <= 4; dots += 1) {
+        if (Math.abs(durationInBeats(depth, carets, dots) - beats) >= EPSILON) continue
+        return `${'('.repeat(depth)}0${'^'.repeat(carets)}${'.'.repeat(dots)}${')'.repeat(depth)}`
+      }
+    }
+  }
+  return null
+}
+
+function completeRestMeasureReplacement(events: DirectEvent[], source: string) {
+  if (events.length < 2 || events.some((event) => event.kind !== 'rest')) return null
+  const beats = events.reduce((sum, event) => sum + event.beats, 0)
+  const expected = (events[0]?.meterCount ?? 4) * 4 / (events[0]?.meterUnit ?? 4)
+  if (Math.abs(beats - expected) >= EPSILON) return null
+  let start = events[0]?.sourceStart
+  let end = events.at(-1)?.sourceEnd
+  const value = restForBeats(beats)
+  if (start === undefined || end === undefined || !value) return null
+  while (start > 0 && /[\s(]/.test(source[start - 1] ?? '')) start -= 1
+  while (end < source.length && /[\s)]/.test(source[end] ?? '')) end += 1
+  // Only replace plain rest notation; directives and comments keep their original placement.
+  return /^[\s()0^.]+$/.test(source.slice(start, end)) ? { start, end, value } : null
+}
+
+function mergeCompleteRestMeasures(source: string) {
+  const replacements: Array<{ start: number; end: number; value: string }> = []
+  for (const part of parseM3NDocument(source).parts.values()) {
+    for (const measure of part.melody) {
+      const replacement = completeRestMeasureReplacement(measure.events, source)
+      if (replacement) replacements.push(replacement)
+    }
+    for (const measure of part.bass) {
+      const replacement = completeRestMeasureReplacement(measure.events, source)
+      if (replacement) replacements.push(replacement)
+    }
+  }
+  return replacements.sort((left, right) => right.start - left.start).reduce(
+    (result, replacement) => `${result.slice(0, replacement.start)}${replacement.value}${result.slice(replacement.end)}`,
+    source,
+  )
+}
+
 function formatMusic(source: string) {
   const commentBreak = '\u0000'
   const compact = normalizeAdjacentBarlines(normalizeBeamGroups(source))
@@ -184,7 +230,7 @@ function formatLyrics(source: string) {
 
 /** Formats M3N source without changing its musical or lyric content. */
 export function formatM3N(source: string) {
-  const { main, bass, lyrics } = splitSupplementBlocks(source)
+  const { main, bass, lyrics } = splitSupplementBlocks(mergeCompleteRestMeasures(source))
   const supplements = [
     ...lyrics.map((lyric) => {
       const text = formatLyrics(lyric.text)
