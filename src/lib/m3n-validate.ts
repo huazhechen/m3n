@@ -1160,7 +1160,7 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
   if (bassBlocks.length > 1) diagnostics.push('每份文档最多包含一个低音谱表块')
   if (bassBlocks.length > 0 && mainResult.hasParts) diagnostics.push('低音谱表不能与具名乐段组合')
 
-  const lyricPasses = new Set<number>()
+  const lyricItemsByPass = new Map<number, ReturnType<typeof lyricItems> & { line: number }>()
   if (lyrics.length > 1 && lyrics.some((block) => block.range === null)) {
     diagnostics.push(lyricMessage('存在多个歌词块时，每个歌词块都必须指定遍次'))
   }
@@ -1177,19 +1177,27 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       : parseRange(lyric.range, '歌词 ')
     if (parsed.error) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：${parsed.error}`))
     for (const pass of parsed.values) {
-      if (lyricPasses.has(pass)) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词块遍次重叠：${pass}`))
-      lyricPasses.add(pass)
-      const expected = (mainResult.hasParts
-        ? mainResult.firstPlaybackLyricCount(pass)
-        : lyricCountsByPlaybackPass?.get(pass) ?? mainResult.lyricCount(pass)) + items.forcedTiedTargets
-      const exceedsAvailablePositions = items.count > expected
-      const firstPassIsIncomplete = pass === 1 && items.count !== expected
-      if (exceedsAvailablePositions || firstPassIsIncomplete) {
-        diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`))
+      const combined = lyricItemsByPass.get(pass)
+      if (combined) {
+        combined.items.push(...items.items)
+        combined.count += items.count
+        combined.forcedTiedTargets += items.forcedTiedTargets
+      } else {
+        lyricItemsByPass.set(pass, { ...items, items: [...items.items], line: lyric.line })
       }
-      if (hasForcedLyricOutsideTiedTarget(items.items, lyricTargetsByPlaybackPass.get(pass) ?? [])) {
-        diagnostics.push(lyricMessage(`第 ${lyric.line} 行：第 ${pass} 遍的 +歌词项不位于延音目标`))
-      }
+    }
+  }
+  for (const [pass, items] of lyricItemsByPass) {
+    const expected = (mainResult.hasParts
+      ? mainResult.firstPlaybackLyricCount(pass)
+      : lyricCountsByPlaybackPass?.get(pass) ?? mainResult.lyricCount(pass)) + items.forcedTiedTargets
+    const exceedsAvailablePositions = items.count > expected
+    const firstPassIsIncomplete = pass === 1 && items.count !== expected
+    if (exceedsAvailablePositions || firstPassIsIncomplete) {
+      diagnostics.push(lyricMessage(`第 ${items.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`))
+    }
+    if (hasForcedLyricOutsideTiedTarget(items.items, lyricTargetsByPlaybackPass.get(pass) ?? [])) {
+      diagnostics.push(lyricMessage(`第 ${items.line} 行：第 ${pass} 遍的 +歌词项不位于延音目标`))
     }
   }
 

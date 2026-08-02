@@ -163,17 +163,14 @@ describe('validateM3N', () => {
     expect(result).toContain('多小节休止不能使用圆括号修饰')
   })
 
-  it('validates lyric ranges, overlap, separators, and alignment', () => {
+  it('combines overlapping lyric ranges by playback pass', () => {
     const source = [
       '{2/4} 1 2 :|||',
-      '{lyrics=1} one two {/lyrics}',
-      '{lyrics=1~2} one\ttwo {/}',
+      '{lyrics=1} one {/lyrics}',
+      '{lyrics=1~2} two {/}',
     ].join('\n')
     const result = messages(source)
-    expect(result).toContain('[L]')
-    expect(result).toContain('歌词块遍次重叠：1')
-    expect(result).toContain('不能使用 Tab')
-    expect(result).not.toContain('歌词对位数量不匹配')
+    expect(result).toBe('')
   })
 
   it('prefixes lyric supplement structure diagnostics with [L]', () => {
