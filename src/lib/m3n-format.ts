@@ -139,9 +139,23 @@ function normalizeBeamGroups(source: string) {
   return output
 }
 
+function moveTrailingBreaksOutsideIntervals(source: string) {
+  const comments: string[] = []
+  let output = source.replace(/\/\/[^\r\n]*/g, (comment) => {
+    const index = comments.push(comment) - 1
+    return `@@m3n-comment-${index}@@`
+  })
+  let previous: string
+  do {
+    previous = output
+    output = output.replace(/\{br\}\s*(\{\/[^}]*\})/g, '$1 {br}')
+  } while (output !== previous)
+  return output.replace(/@@m3n-comment-(\d+)@@/g, (_match, index) => comments[Number(index)] ?? '')
+}
+
 function formatMusic(source: string) {
   const commentBreak = '\u0000'
-  const compact = normalizeAdjacentBarlines(normalizeBeamGroups(source))
+  const compact = normalizeAdjacentBarlines(normalizeBeamGroups(moveTrailingBreaksOutsideIntervals(source)))
     .trim()
     .replace(/\/\/[^\r\n]*/g, (comment) => `${comment}${commentBreak}`)
     .replace(/\s+/g, ' ')

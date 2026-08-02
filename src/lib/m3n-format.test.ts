@@ -14,6 +14,18 @@ describe('formatM3N', () => {
     expect(result).toContain('{lg}(1) (2){/} | 1 1 |||')
   })
 
+  it('moves a trailing line break outside its interval', () => {
+    const result = formatM3N('{part=A} {br} {/}')
+
+    expect(result).toBe('{part=A} {/} {br}\n')
+  })
+
+  it('keeps a line break within an interval when music follows it', () => {
+    const result = formatM3N('{lg} 1 {br} 2 {/} | 3 4 |||')
+
+    expect(result).toContain('{lg} 1 {br} 2 {/} | 3 4 |||')
+  })
+
   it('preserves the music following an inline comment', () => {
     const source = '{key=C} {2/4}\n// theme\n1 1 | 2 2 |||'
     const result = formatM3N(source)
