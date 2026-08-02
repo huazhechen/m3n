@@ -29,68 +29,6 @@ export function makeSvgResponsive(svg: SVGSVGElement, scale = 1) {
   svg.style.transformOrigin = ''
 }
 
-/** Adds an export-only title above the engraved score without changing the MEI layout. */
-export type ScoreExportHeaderItem = {
-  value: string
-  side: 'left' | 'right' | 'center'
-  priority: number
-}
-
-/** Adds the editor's header metadata above the engraved score for export. */
-export function addScoreHeader(svg: SVGSVGElement, metadata: readonly ScoreExportHeaderItem[]) {
-  const items = metadata.filter((item) => item.value.trim())
-  if (items.length === 0) return
-
-  const { width, height } = getSvgSize(svg)
-  if (width <= 0 || height <= 0) return
-  const namespace = 'http://www.w3.org/2000/svg'
-  const centered = items.filter((item) => item.side === 'center').sort((left, right) => left.priority - right.priority)
-  const left = items.filter((item) => item.side === 'left').sort((left, right) => left.priority - right.priority)
-  const right = items.filter((item) => item.side === 'right').sort((left, right) => left.priority - right.priority)
-  const headingSize = Math.max(20, width * 0.028)
-  const detailSize = Math.max(12, width * 0.018)
-  let cursor = 8
-
-  const textElement = (value: string, x: number, y: number, anchor: 'start' | 'middle' | 'end', size: number, weight = '400') => {
-    const text = document.createElementNS(namespace, 'text')
-    text.textContent = value
-    text.setAttribute('x', String(x))
-    text.setAttribute('y', String(y))
-    text.setAttribute('text-anchor', anchor)
-    text.setAttribute('font-family', 'sans-serif')
-    text.setAttribute('font-size', String(size))
-    text.setAttribute('font-weight', weight)
-    return text
-  }
-
-  const header = document.createElementNS(namespace, 'g')
-  for (const item of centered) {
-    const title = item.priority === 0
-    const size = title ? headingSize : detailSize
-    cursor += size
-    header.append(textElement(item.value, width / 2, cursor, 'middle', size, title ? '600' : '400'))
-    cursor += size * 0.15
-  }
-  if (left.length > 0 || right.length > 0) {
-    const detailRows = Math.max(left.length, right.length)
-    for (let index = 0; index < detailRows; index += 1) {
-      const y = cursor + detailSize + index * detailSize * 1.15
-      const leftItem = left[index]
-      const rightItem = right[index]
-      if (leftItem) header.append(textElement(leftItem.value, width * 0.04, y, 'start', detailSize))
-      if (rightItem) header.append(textElement(rightItem.value, width * 0.96, y, 'end', detailSize))
-    }
-    cursor += detailRows * detailSize * 1.15
-  }
-  const headerHeight = cursor + 6
-  const content = document.createElementNS(namespace, 'g')
-  while (svg.firstChild) content.append(svg.firstChild)
-  content.setAttribute('transform', `translate(0 ${headerHeight})`)
-  svg.append(header, content)
-  svg.setAttribute('viewBox', `0 0 ${width} ${height + headerHeight}`)
-  svg.setAttribute('height', String(height + headerHeight))
-}
-
 export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1) {
   const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg, scale)
   if (sourceWidth <= 0 || sourceHeight <= 0) {
@@ -126,5 +64,32 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
     return canvas
   } finally {
     URL.revokeObjectURL(url)
+  }
+}
+
+export async function renderHeaderAndScoreCanvas(header: HTMLElement | null, score: HTMLCanvasElement, width: number) {
+  if (!header) return score
+  const copy = header.cloneNode(true) as HTMLElement
+  copy.style.position = 'fixed'
+  copy.style.top = '0'
+  copy.style.left = '-10000px'
+  copy.style.width = `${width}px`
+  copy.style.minWidth = `${width}px`
+  document.body.append(copy)
+  try {
+    const { default: html2canvas } = await import('html2canvas')
+    const heading = await html2canvas(copy, { backgroundColor: '#fffef9', logging: false, scale: 1 })
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(width, score.width)
+    canvas.height = heading.height + score.height
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('无法创建导出画布。')
+    context.fillStyle = '#fffef9'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(heading, 0, 0, canvas.width, heading.height)
+    context.drawImage(score, 0, heading.height, canvas.width, score.height)
+    return canvas
+  } finally {
+    copy.remove()
   }
 }

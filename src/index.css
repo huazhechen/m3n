@@ -977,6 +977,8 @@ a.action-button {
 
 .export-preview-paper {
   min-width: 100%;
+  background: #fffef9;
+  box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
 }
 
 .export-preview svg {
@@ -984,8 +986,6 @@ a.action-button {
   width: 100%;
   min-width: 0;
   height: auto;
-  background: #fffef9;
-  box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
 }
 
 .export-actions button {

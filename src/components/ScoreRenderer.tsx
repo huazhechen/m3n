@@ -8,6 +8,7 @@ import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import { lyricVerseIndexForMeasureRendition, visibleLyricVerseNumbers } from '../features/score-renderer/lyric-rendition'
 import { ScoreExportDialog } from './ScoreExportDialog'
 import type { ScoreExportDialogRef } from './ScoreExportDialog'
+import { ScoreHeader } from './ScoreHeader'
 
 type ScoreRendererProps = {
   mei: string
@@ -469,13 +470,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     }
   }, [commitSeek])
 
-  const centeredHeaderItems = headerMetadata.filter((item) => item.side === 'center')
-    .sort((left, right) => left.priority - right.priority)
-  const leftHeaderItems = headerMetadata.filter((item) => item.side === 'left')
-    .sort((left, right) => left.priority - right.priority)
-  const rightHeaderItems = headerMetadata.filter((item) => item.side === 'right')
-    .sort((left, right) => left.priority - right.priority)
-
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
       <div className="audio-controls">
@@ -535,23 +529,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
           </button>
         )}
       </div>
-      {headerMetadata.length > 0 && (
-        <header className="score-title-block">
-          {centeredHeaderItems.map((item) => item.priority === 0
-            ? <h1 key={item.priority}>{item.value}</h1>
-            : <p className="score-subtitle" key={item.priority}>{item.value}</p>)}
-          {(leftHeaderItems.length > 0 || rightHeaderItems.length > 0) && (
-            <div className="score-header-details">
-              <div className="score-header-column score-header-column-left">
-                {leftHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{item.value}</p>)}
-              </div>
-              <div className="score-header-column score-header-column-right">
-                {rightHeaderItems.map((item) => <p className="score-header-item" key={item.priority}>{item.value}</p>)}
-              </div>
-            </div>
-          )}
-        </header>
-      )}
+      <ScoreHeader metadata={headerMetadata} />
       <div
         ref={paperRef}
         className="score-paper verovio-score"

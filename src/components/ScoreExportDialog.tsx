@@ -1,8 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { scoreFileName } from '../features/score-renderer/score-document'
-import { addScoreHeader, downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
+import { downloadBlob, renderHeaderAndScoreCanvas, renderScoreCanvas } from '../features/score-renderer/score-export'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
+import { ScoreHeader } from './ScoreHeader'
 
 type ExportFormat = 'png' | 'pdf'
 
@@ -29,6 +30,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
   function ScoreExportDialog({ mei, title, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
+    const previewHeaderRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('png')
     const [width, setWidth] = useState(DEFAULT_EXPORT_WIDTH)
     const [pdfScale, setPdfScale] = useState(100)
@@ -56,8 +58,6 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
             scale: format === 'pdf' ? 42 * pdfScale / 100 : 42,
             includeBass: includeBass || !hasBassStaff,
           })
-          const svg = preview.querySelector('svg')
-          if (svg) addScoreHeader(svg, headerMetadata)
         }
         score.destroy()
       }).catch((error: unknown) => {
@@ -85,7 +85,6 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         })
         const svg = exportPaper.querySelector('svg')
         if (!svg) throw new Error('当前没有可导出的五线谱。')
-        addScoreHeader(svg, headerMetadata)
 
         const fileName = scoreFileName(title)
         if (format === 'png') {
@@ -93,12 +92,14 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           if (!Number.isFinite(pngWidth) || pngWidth < 320 || pngWidth > 8000) {
             throw new Error('PNG 宽度需介于 320 和 8000 像素之间。')
           }
-          const canvas = await renderScoreCanvas(svg, pngWidth)
+          const scoreCanvas = await renderScoreCanvas(svg, pngWidth)
+          const canvas = await renderHeaderAndScoreCanvas(previewHeaderRef.current, scoreCanvas, pngWidth)
           const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
           if (!blob) throw new Error('PNG 生成失败。')
           downloadBlob(blob, `${fileName}.png`)
         } else {
-          const canvas = await renderScoreCanvas(svg, 1600)
+          const scoreCanvas = await renderScoreCanvas(svg, 1600)
+          const canvas = await renderHeaderAndScoreCanvas(previewHeaderRef.current, scoreCanvas, 1600)
           const documentWidth = 210
           const documentHeight = 297
           const margin = 10
@@ -147,7 +148,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
                 ? <label className="export-field">宽度<input type="number" min="320" max="8000" step="10" value={width} onChange={(event) => setWidth(Number(event.currentTarget.value))} /><span>px</span></label>
                 : <label className="export-field">缩放<input type="number" min="50" max="200" step="1" value={pdfScale} onChange={(event) => setPdfScale(Number(event.currentTarget.value))} /><span>%</span></label>}
             </div>
-            <div className="export-preview" aria-label="打印预览"><div ref={previewRef} className="export-preview-paper" /></div>
+            <div className="export-preview" aria-label="打印预览"><div className="export-preview-paper"><div ref={previewHeaderRef}><ScoreHeader metadata={headerMetadata} /></div><div ref={previewRef} /></div></div>
           </div>
           <div className="export-actions">
             <button type="button" onClick={() => dialogRef.current?.close()} disabled={isExporting}>取消</button>
