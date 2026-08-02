@@ -152,17 +152,17 @@ function restForBeats(beats: number) {
   return null
 }
 
-function completeRestMeasureReplacement(events: DirectEvent[], source: string) {
+function restRunReplacement(events: DirectEvent[], source: string, isCompleteMeasure: boolean) {
   if (events.length < 2 || events.some((event) => event.kind !== 'rest')) return null
   const beats = events.reduce((sum, event) => sum + event.beats, 0)
-  const expected = (events[0]?.meterCount ?? 4) * 4 / (events[0]?.meterUnit ?? 4)
-  if (Math.abs(beats - expected) >= EPSILON) return null
   let start = events[0]?.sourceStart
   let end = events.at(-1)?.sourceEnd
   const value = restForBeats(beats)
   if (start === undefined || end === undefined || !value) return null
-  while (start > 0 && /[\s(]/.test(source[start - 1] ?? '')) start -= 1
-  while (end < source.length && /[\s)]/.test(source[end] ?? '')) end += 1
+  if (isCompleteMeasure) {
+    while (start > 0 && /[\s(]/.test(source[start - 1] ?? '')) start -= 1
+    while (end < source.length && /[\s)]/.test(source[end] ?? '')) end += 1
+  }
   // Only replace plain rest notation; directives and comments keep their original placement.
   return /^[\s()0^.]+$/.test(source.slice(start, end)) ? { start, end, value } : null
 }
@@ -170,13 +170,19 @@ function completeRestMeasureReplacement(events: DirectEvent[], source: string) {
 function mergeCompleteRestMeasures(source: string) {
   const replacements: Array<{ start: number; end: number; value: string }> = []
   for (const part of parseM3NDocument(source).parts.values()) {
-    for (const measure of part.melody) {
-      const replacement = completeRestMeasureReplacement(measure.events, source)
-      if (replacement) replacements.push(replacement)
-    }
-    for (const measure of part.bass) {
-      const replacement = completeRestMeasureReplacement(measure.events, source)
-      if (replacement) replacements.push(replacement)
+    for (const staff of [part.melody, part.bass]) {
+      for (const measure of staff) {
+        let restRun: DirectEvent[] = []
+        const flushRestRun = () => {
+          const replacement = restRunReplacement(restRun, source, restRun.length === measure.events.length)
+          if (replacement) replacements.push(replacement)
+          restRun = []
+        }
+        for (const event of [...measure.events, null]) {
+          if (event?.kind === 'rest') restRun.push(event)
+          else if (restRun.length > 0) flushRestRun()
+        }
+      }
     }
   }
   return replacements.sort((left, right) => right.start - left.start).reduce(

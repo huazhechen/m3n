@@ -51,12 +51,12 @@ describe('formatM3N', () => {
     expect(result).toContain('0^^ | 1 2 3 4 |||')
   })
 
-  it('merges grouped rests only when their total fills the measure', () => {
+  it('merges grouped rests and rest runs before notes', () => {
     const complete = formatM3N('{2/4}\n(0 0) (0 0) | 1 2 |||')
-    const partial = formatM3N('{4/4}\n0 0 1 1 |||')
+    const partial = formatM3N('{4/4}\n0 0 1 2 |||')
 
     expect(complete).toContain('0^ | 1 2 |||')
-    expect(partial).toContain('0 0 1 1 |||')
+    expect(partial).toContain('0^ 1 2 |||')
   })
 
   it('compresses consecutive lyric placeholders and repeated spaces', () => {
