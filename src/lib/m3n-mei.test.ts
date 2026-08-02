@@ -496,7 +496,8 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<measure xml:id="m3n-measure-1-3" n="3" metcon="false" right="rptend">')
-    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-4" n="3" metcon="false" right="single">')
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-4" n="3" join="#m3n-measure-1-3" right="single">')
+    expect(result.mei).not.toContain('<measure xml:id="m3n-measure-1-4" n="3" metcon="false"')
   })
 
   it('expands an explicitly counted repeat the requested number of times', () => {

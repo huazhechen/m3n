@@ -208,7 +208,7 @@ Verovio 是将乐谱数据雕版为 SVG 的引擎。它不是所见即所得编�
 | --- | --- | --- |
 | 普通小节线 | 连续 `<measure>` | 通常不需要手写。 |
 | 重复起始/结束 | `<measure left="rptstart">` / `<measure right="rptend">` | 标记对应小节边界。 |
-| 不完整小节反复 | `<measure metcon="false" right="rptend">` | 不完整小节仍使用原生后反复线；`metcon="false"` 声明其有意不满拍。 |
+| 不完整小节反复 | `<measure metcon="false" right="rptend">`，补齐小节使用 `join="#..."` | 反复结束的小节声明其有意不满拍；紧随其后的补齐小节以 `join` 与其组成一个逻辑小节。 |
 | 起止重复 | `left="rptstart" right="rptend"` | 同一小节可同时具有两边界。 |
 | 一、二房子 | `<ending n="1">...</ending>` | `ending` 包住所属小节。 |
 | 乐段 | `<section>` | 可含小节、`ending`、`sb`、`pb`。 |
