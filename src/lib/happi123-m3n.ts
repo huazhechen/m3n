@@ -699,8 +699,9 @@ export function happi123ToM3N(source: string): ConversionResult {
   const diagnostics: string[] = []
   const { header, body, lyrics } = parseSource(source)
   const converted = groupAdjacentEighthNotes(convertSequence(body, diagnostics).output)
+    .replace(/:\|\|\s*\{x(\d+)\}\s*\|\|\|/g, ':|||{x$1}')
     .replace(/(:\|\|\|?|:\|\|:)\s+\{x(\d+)\}/g, '$1{x$2}')
-    .replace(/\|\|\|\s*\{x(\d+)\}/g, ':|||{x$1}')
+    .replace(/(^|[^:])\|\|\|\s*\{x(\d+)\}/g, '$1:|||{x$2}')
     .replace(/(?:\s*\{br\}\s*){2,}/g, ' {br} ')
     // Happi123 uses {omit=N} section markers for printed repeats. They have
     // no musical body, so retaining them as M3N parts would create invalid

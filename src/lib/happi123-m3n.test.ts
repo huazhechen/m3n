@@ -312,7 +312,7 @@ describe('happi123ToM3N', () => {
   it('converts Happi123 repeat counts to M3N repeat-count markers', () => {
     const result = happi123ToM3N('{title:重复次数}\n{key_signature:C}\n{time_signature:2/4}\n|:11:|{repeat:3}|||')
 
-    expect(result.output).toContain('||: 1 1 :||{x3} |||')
+    expect(result.output).toContain('||: 1 1 :|||{x3}')
     expect(result.diagnostics).toEqual([])
   })
 
@@ -388,5 +388,12 @@ describe('happi123ToM3N', () => {
     const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n11|||\n{lyric}你 好 hello world{/lyric}')
 
     expect(result.output).toContain('{lyrics}\n你好 hello world\n{/}')
+  })
+
+  it('merges a counted repeat end with its following terminal bar', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n12:|{repeat:4}|||\n{lyric}甲乙{/lyric}')
+
+    expect(result.output).toContain('1 2 :|||{x4}')
+    expect(result.output).not.toContain(':||{x4} |||')
   })
 })
