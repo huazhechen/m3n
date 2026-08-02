@@ -1,6 +1,5 @@
 import { addTiesToNotes, convertHappiNote, extractHappiNotes, readHappiNote, type HappiNote } from './happi123/notes'
 import { convertHappiLyricItems, type HappiLyricItem } from './happi123/lyrics'
-import { getHappi123Metadata } from './happi123/metadata'
 import { measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
 import { normalizeAdjacentBarlines } from './m3n-format'
 import { validateM3N } from './m3n-validate'
@@ -746,14 +745,12 @@ export function happi123ToM3N(source: string): ConversionResult {
     }
   }
   const music = applyMixedMeters(normalizeAdjacentBarlines(sectionedMusic), header.meters)
-  const metadata = getHappi123Metadata(header.title)
-
   const rawOutput = [
     header.title ? `{title=${header.title}}` : '',
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
     header.singer ? `{singer=${header.singer}}` : '',
-    header.composer || metadata.composer ? `{composer=${header.composer || metadata.composer}}` : '',
-    header.lyricist || metadata.lyricist ? `{lyricist=${header.lyricist || metadata.lyricist}}` : '',
+    header.composer ? `{composer=${header.composer}}` : '',
+    header.lyricist ? `{lyricist=${header.lyricist}}` : '',
     header.parts ? `{parts=${header.parts}}` : '',
     `{key=${header.key}} {${header.meter}}${/^\d+$/.test(header.bpm) ? ` {${header.bpm}qpm}` : ''}`,
     music,
