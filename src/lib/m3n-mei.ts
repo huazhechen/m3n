@@ -135,13 +135,15 @@ function chordSymbol(value: string, key: string) {
 }
 
 function verseXml(lyrics: VerseSyllable[], xmlId: string) {
-  return lyrics.filter((lyric) => lyric.kind !== 'placeholder').map((lyric) => {
+  return lyrics.map((lyric) => {
     const connection = lyric.kind === 'extender'
       ? ' con="u"'
       : lyric.underlined
         ? ' type="m3n-text-underline"'
       : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
-    const text = lyric.underlined && lyric.kind !== 'extender'
+    const text = lyric.kind === 'placeholder'
+      ? '\u200B'
+      : lyric.underlined && lyric.kind !== 'extender'
       ? underlinedLyricText(lyric)
       : escapeXml(lyricText(lyric))
     return `<verse xml:id="${xmlId}-v${lyric.verseIndex}" n="${lyric.n}"><syl${connection}>${text}</syl></verse>`
@@ -264,15 +266,19 @@ export function m3nToMei(source: string): MeiConversionResult {
   const previousKeyByStaff = new Map<number, string>()
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
-  const lyricSyllables = document.lyrics.map((block, index) => ({
-    n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
-    verseIndex: index + 1,
-    passes: block.range ? endingPasses(block.range) : undefined,
-    syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
-      ...syllable,
-      cjkSpacingCompensation: CJK_OR_FULLWIDTH_CHARACTER.test(syllable.text),
-    })),
-  }))
+  const lyricSyllables = document.lyrics.map((block, index) => {
+    const numericRange = /^\d+$/.test(block.range)
+    return {
+      n: numericRange ? block.range : String(index + 1),
+      verseIndex: numericRange ? Number(block.range) : index + 1,
+      passes: block.range ? endingPasses(block.range) : undefined,
+      syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
+        ...syllable,
+        cjkSpacingCompensation: CJK_OR_FULLWIDTH_CHARACTER.test(syllable.text),
+      })),
+    }
+  })
+  const lyricRowCount = Math.max(0, ...lyricSyllables.map((block) => Number(block.n)).filter(Number.isInteger))
   const melodyIndices = lyricSyllables.map(() => 0)
   const lyricPassesByMeasure = new Map<DirectMeasure, Set<number>>()
   for (const part of document.parts.values()) {
@@ -352,7 +358,8 @@ export function m3nToMei(source: string): MeiConversionResult {
         ? event.pitches.filter((pitch) => pitch !== '0').length
         : 1
       const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
-      const assignedLyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
+      const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
+      const assignedLyrics = hasLyricTarget
         ? lyricSyllables.flatMap((block, index) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
           const passes = block.passes
           if (passes && measurePasses && ![...measurePasses].some((pass) => passes.has(pass))) return []
@@ -363,17 +370,41 @@ export function m3nToMei(source: string): MeiConversionResult {
           return { ...lyric, n: block.n, verseIndex: block.verseIndex }
         }).flat())
         : []
-      const visualVerseIndexes = new Map<number, number>()
-      const lyrics = measure?.ending && !tieEnd
-        ? assignedLyrics.map((lyric) => {
-          let visualIndex = visualVerseIndexes.get(lyric.verseIndex)
-          if (visualIndex === undefined) {
-            visualIndex = visualVerseIndexes.size + 1
-            visualVerseIndexes.set(lyric.verseIndex, visualIndex)
-          }
-          return { ...lyric, n: String(visualIndex), verseIndex: visualIndex }
+      const lyrics = hasLyricTarget
+        ? lyricSyllables.flatMap((block) => {
+          const matched = assignedLyrics.filter((lyric) => lyric.verseIndex === block.verseIndex)
+          if (matched.length > 0) return matched
+          return [{
+            text: '',
+            sourceStart: event.sourceStart,
+            sourceEnd: event.sourceEnd,
+            forceTiedTarget: false,
+            kind: 'placeholder' as const,
+            underlined: false,
+            n: block.n,
+            verseIndex: block.verseIndex,
+            cjkSpacingCompensation: false,
+          }]
         })
-        : assignedLyrics
+        : []
+      if (hasLyricTarget) {
+        const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
+        for (let row = 1; row <= lyricRowCount; row += 1) {
+          if (occupiedRows.has(row)) continue
+          lyrics.push({
+            text: '',
+            sourceStart: event.sourceStart,
+            sourceEnd: event.sourceEnd,
+            forceTiedTarget: false,
+            kind: 'placeholder',
+            underlined: false,
+            n: String(row),
+            verseIndex: row,
+            cjkSpacingCompensation: false,
+          })
+        }
+        lyrics.sort((left, right) => left.verseIndex - right.verseIndex)
+      }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
       return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
