@@ -299,7 +299,7 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>intro</syl></verse></note>')
     expect(result.mei).not.toContain('xml:id="m3n-e-1-v2"')
-    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>second</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v2" n="2"><syl>second</syl></verse></note>')
   })
 
   it('maps pass-specific lyrics to their matching alternate endings', () => {
@@ -308,7 +308,15 @@ describe('M3N to MEI conversion', () => {
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>a</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>a</syl></verse></note>')
     expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>c</syl></verse></note>')
-    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v1" n="1"><syl>e</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v2" n="2"><syl>e</syl></verse></note>')
+  })
+
+  it('keeps second-pass lyrics on their row at tied note targets', () => {
+    const result = m3nToMei('{key=C} {3/4}\n||: 1~ 1 2 :|||\n{lyrics=1}one two{/}\n{lyrics=2}one +two three{/}')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-2-v2" n="2"><syl>two</syl></verse></note>')
+    expect(result.mei).not.toContain('xml:id="m3n-e-2-v1"')
   })
 
   it('starts every lyric block at the public opening for a 2~4 ending', () => {
