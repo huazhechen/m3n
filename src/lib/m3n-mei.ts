@@ -352,7 +352,7 @@ export function m3nToMei(source: string): MeiConversionResult {
         ? event.pitches.filter((pitch) => pitch !== '0').length
         : 1
       const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
-      const lyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
+      const assignedLyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
         ? lyricSyllables.flatMap((block, index) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
           const passes = block.passes
           if (passes && measurePasses && ![...measurePasses].some((pass) => passes.has(pass))) return []
@@ -363,6 +363,17 @@ export function m3nToMei(source: string): MeiConversionResult {
           return { ...lyric, n: block.n, verseIndex: block.verseIndex }
         }).flat())
         : []
+      const visualVerseIndexes = new Map<number, number>()
+      const lyrics = assignedLyrics.map((lyric) => {
+        // A playback pass is not a visual lyric-row number.  An alternate
+        // ending with only pass-two lyrics should still start at row one.
+        let visualIndex = visualVerseIndexes.get(lyric.verseIndex)
+        if (visualIndex === undefined) {
+          visualIndex = visualVerseIndexes.size + 1
+          visualVerseIndexes.set(lyric.verseIndex, visualIndex)
+        }
+        return { ...lyric, n: String(visualIndex), verseIndex: visualIndex }
+      })
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
       return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }

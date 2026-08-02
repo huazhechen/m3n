@@ -299,7 +299,7 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>intro</syl></verse></note>')
     expect(result.mei).not.toContain('xml:id="m3n-e-1-v2"')
-    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v2" n="2"><syl>second</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>second</syl></verse></note>')
   })
 
   it('maps pass-specific lyrics to their matching alternate endings', () => {
@@ -308,7 +308,7 @@ describe('M3N to MEI conversion', () => {
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>a</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>a</syl></verse></note>')
     expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>c</syl></verse></note>')
-    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v2" n="2"><syl>e</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v1" n="1"><syl>e</syl></verse></note>')
   })
 
   it('starts every lyric block at the public opening for a 2~4 ending', () => {
@@ -317,8 +317,8 @@ describe('M3N to MEI conversion', () => {
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('xml:id="m3n-e-1-v2" n="2"><syl>g</syl>')
     expect(result.mei).toContain('xml:id="m3n-e-1-v4" n="4"><syl>s</syl>')
-    expect(result.mei).toContain('xml:id="m3n-e-5-v2" n="2"><syl>i</syl>')
-    expect(result.mei).toContain('xml:id="m3n-e-5-v4" n="4"><syl>u</syl>')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v1" n="1"><syl>i</syl>')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v3" n="3"><syl>u</syl>')
   })
 
   it('keeps instrumental intervals lyric-free without visual markers', () => {
@@ -555,9 +555,9 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{2/4}\n||: {segno}1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{ds}{/} || {volta=3}7 1{/} |||\n{lyrics=3}甲乙丙丁{/}')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('xml:id="m3n-e-1-v1" n="3"><syl>甲')
-    expect(result.mei).not.toContain('xml:id="m3n-e-3-v1" n="3"')
-    expect(result.mei).toContain('xml:id="m3n-e-7-v1" n="3"><syl>丙')
+    expect(result.mei).toContain('xml:id="m3n-e-1-v1" n="1"><syl>甲')
+    expect(result.mei).not.toContain('xml:id="m3n-e-3-v1" n="1"')
+    expect(result.mei).toContain('xml:id="m3n-e-7-v1" n="1"><syl>丙')
   })
 
   it('writes incomplete repeat-boundary measures as native repeat bars', () => {
