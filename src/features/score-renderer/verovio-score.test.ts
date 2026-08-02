@@ -4,7 +4,7 @@ import { VerovioToolkit } from 'verovio/esm'
 import { BasicMIDI } from 'spessasynth_core'
 import { m3nToMei } from '../../lib/m3n-mei'
 import { automaticSystemBreakMeasureIds, encodeSystemBreaks } from './verovio-score'
-import { lyricVerseIndexForRendition } from './lyric-rendition'
+import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, measureHasLaterVisibleLyrics } from './lyric-rendition'
 
 async function renderedPitches(source: string) {
   const toolkit = new VerovioToolkit(await createVerovioModule())
@@ -43,6 +43,20 @@ describe('VerovioScore layout', () => {
     expect(lyricVerseIndexForRendition(3, 1)).toBe(0)
     expect(lyricVerseIndexForRendition(3, 2)).toBe(1)
     expect(lyricVerseIndexForRendition(3, 3)).toBe(2)
+  })
+
+  it('reuses first-pass lyrics only when a measure has no later visible lyrics', () => {
+    expect(measureHasLaterVisibleLyrics([
+      { id: 'm3n-e-1-v1', textContent: 'first' },
+      { id: 'm3n-e-1-v2', textContent: '\u200B' },
+    ])).toBe(false)
+    expect(lyricVerseIndexForMeasureRendition(2, 2, false)).toBe(0)
+
+    expect(measureHasLaterVisibleLyrics([
+      { id: 'm3n-e-1-v1', textContent: 'first' },
+      { id: 'm3n-e-1-v2', textContent: 'second' },
+    ])).toBe(true)
+    expect(lyricVerseIndexForMeasureRendition(2, 2, true)).toBe(1)
   })
 
   it('uses Verovio playback expansion for endings, repeats, D.S., and D.C.', async () => {

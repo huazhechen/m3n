@@ -5,7 +5,7 @@ import type { AccompanimentNote } from '../lib/m3n-playback'
 import type { TempoChange } from '../lib/m3n-playback'
 import type { SpessaPlayer } from '../features/score-renderer/spessa-player'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
-import { lyricVerseIndexForRendition } from '../features/score-renderer/lyric-rendition'
+import { lyricVerseIndexForMeasureRendition, measureHasLaterVisibleLyrics } from '../features/score-renderer/lyric-rendition'
 import { ScoreExportDialog } from './ScoreExportDialog'
 import type { ScoreExportDialogRef } from './ScoreExportDialog'
 
@@ -356,7 +356,9 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       const note = paperRef.current?.querySelector<SVGGElement>(`#${xmlId}`)
       if (!note) return []
       const verses = [...note.children].filter((element): element is SVGGElement => element.classList.contains('verse'))
-      const activeVerse = verses[lyricVerseIndexForRendition(verses.length, rendition)]
+      const measure = note.closest<SVGGElement>('g.measure')
+      const hasLaterVisibleLyrics = measureHasLaterVisibleLyrics(measure?.querySelectorAll<SVGGElement>('g.verse') ?? [])
+      const activeVerse = verses[lyricVerseIndexForMeasureRendition(verses.length, rendition, hasLaterVisibleLyrics)]
       return [...note.children].filter((element) => !element.classList.contains('verse') || element === activeVerse)
     })
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
