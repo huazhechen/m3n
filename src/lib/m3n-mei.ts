@@ -471,7 +471,10 @@ export function m3nToMei(source: string): MeiConversionResult {
   let endingIndex = 0
   const hasNavigation = [...document.parts.values()].some((part) => part.melody.some((measure) => measure.events.some((event) => event.navigation.length > 0)))
   const layoutNodes = [...document.parts.entries()].flatMap(([partName, part], partIndex) => {
-    while (part.melody.length > 1 && part.melody.at(-1)?.events.length === 0 && !part.melody.at(-1)?.multiRest) part.melody.pop()
+    while (part.melody.length > 1 && part.melody.at(-1)?.events.length === 0 && !part.melody.at(-1)?.multiRest) {
+      const trailing = part.melody.pop()
+      if (trailing?.breakBefore || trailing?.breakAfter) part.melody.at(-1)!.breakAfter = true
+    }
     while (part.bass.length > 1 && part.bass.at(-1)?.events.length === 0 && !part.bass.at(-1)?.multiRest) part.bass.pop()
     const measureCount = Math.max(part.melody.length, hasBassStaff ? part.bass.length : 0)
     let logicalMeasureNumber = 0
