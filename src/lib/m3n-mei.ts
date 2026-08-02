@@ -628,41 +628,62 @@ export function m3nToMei(source: string): MeiConversionResult {
   })
   const expandNodes = (nodes: typeof layoutNodes) => {
     const expansion: string[] = []
-    let repeatStartIndex = 0
-    for (let index = 0; index < nodes.length;) {
+    const endingGroups = new Map<number, { end: number; repeatStart: number; passCount: number }>()
+    let latestRepeatStart = 0
+    for (let index = 0; index < nodes.length; index += 1) {
       const node = nodes[index]
-      const canStartRepeat = node?.kind === 'section' && (node.repeatStart || index === 0)
-      let repeatEnd = -1
-      if (canStartRepeat) {
-        for (let candidateIndex = index; candidateIndex < nodes.length; candidateIndex += 1) {
-          if (candidateIndex > index && nodes[candidateIndex]?.repeatStart) break
-          if (nodes[candidateIndex]?.repeatCount) {
-            repeatEnd = candidateIndex
-            break
-          }
-        }
+      if (node?.kind === 'section' && node.repeatStart) latestRepeatStart = index
+      if (node?.kind !== 'ending') continue
+
+      const start = index
+      while (nodes[index + 1]?.kind === 'ending') index += 1
+      const endings = nodes.slice(start, index + 1)
+      const passCount = Math.max(1, ...endings.flatMap((ending) => [...endingPasses(ending.n ?? '')]), ...endings.map((ending) => ending.repeatCount ?? 0))
+      for (let endingIndex = start; endingIndex <= index; endingIndex += 1) {
+        endingGroups.set(endingIndex, { end: index, repeatStart: latestRepeatStart, passCount })
       }
-      let spanEnd = repeatEnd
-      while (spanEnd >= 0 && nodes[spanEnd + 1]?.kind === 'ending') spanEnd += 1
-      const repeatNodes = spanEnd >= index ? nodes.slice(index, spanEnd + 1) : []
-      const endings = repeatNodes.filter((candidate) => candidate.kind === 'ending')
-      if (endings.length > 0) {
-        const endingSets = endings.map((ending) => endingPasses(ending.n ?? ''))
-        const passCount = Math.max(1, ...endingSets.flatMap((passes) => [...passes]), ...repeatNodes.map((candidate) => candidate.repeatCount ?? 0))
-        for (let pass = 1; pass <= passCount; pass += 1) {
-          expansion.push(...repeatNodes
-            .filter((candidate) => candidate.kind !== 'ending' || endingPasses(candidate.n ?? '').has(pass))
-            .map((candidate) => `#${candidate.id}`))
+    }
+
+    const repeatVisits = new Map<number, number>()
+    const ordinaryRepeatEnds = new Set(nodes.flatMap((node, index) => node.kind === 'section' && node.repeatCount ? [index] : []))
+    let index = 0
+    while (index < nodes.length) {
+      const node = nodes[index]!
+      const endingGroup = endingGroups.get(index)
+      if (endingGroup) {
+        const visit = (repeatVisits.get(index) ?? 0) + 1
+        repeatVisits.set(index, visit)
+        const pass = Math.min(visit, endingGroup.passCount)
+        const selectedIndex = Array.from({ length: endingGroup.end - index + 1 }, (_, offset) => index + offset)
+          .find((endingIndex) => endingPasses(nodes[endingIndex]?.n ?? '').has(pass))
+        if (selectedIndex !== undefined) expansion.push(`#${nodes[selectedIndex]!.id}`)
+
+        const selected = selectedIndex === undefined ? undefined : nodes[selectedIndex]
+        if (selected?.repeatCount && visit < selected.repeatCount) {
+          index = endingGroup.repeatStart
+        } else {
+          index = endingGroup.end + 1
         }
-        index = spanEnd + 1
         continue
       }
-      if (node) {
-        expansion.push(`#${node.id}`)
-        if (node.repeatStart) repeatStartIndex = expansion.length - 1
-        if (node.repeatCount) {
-          const repeat = expansion.slice(repeatStartIndex)
-          for (let pass = 1; pass < node.repeatCount; pass += 1) expansion.push(...repeat)
+
+      expansion.push(`#${node.id}`)
+      if (node.repeatCount) {
+        const visit = (repeatVisits.get(index) ?? 0) + 1
+        repeatVisits.set(index, visit)
+        if (visit < node.repeatCount) {
+          for (const repeatEnd of ordinaryRepeatEnds) {
+            if (repeatEnd < index) repeatVisits.delete(repeatEnd)
+          }
+          let repeatStart = 0
+          for (let candidate = index; candidate >= 0; candidate -= 1) {
+            if (nodes[candidate]?.kind === 'section' && nodes[candidate]?.repeatStart) {
+              repeatStart = candidate
+              break
+            }
+          }
+          index = repeatStart
+          continue
         }
       }
       index += 1
