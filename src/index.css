@@ -217,6 +217,7 @@ h3 {
   gap: 12px;
 }
 
+.editor-header-left h1,
 .editor-header-left h2 {
   margin: 0;
   font-size: 1rem;
