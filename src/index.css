@@ -206,7 +206,7 @@ h3 {
 
 .editor-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   padding: 9px 12px;
 }
