@@ -35,7 +35,7 @@ export type MeiConversionResult = {
 }
 
 type LyricSyllable = DirectLyricSyllable
-type VerseSyllable = LyricSyllable & { n: string; verseIndex: number; cjkSpacingCompensation: boolean }
+type VerseSyllable = LyricSyllable & { n: string; verseIndex: number; cjkSpacingCompensation: boolean; passes?: ReadonlySet<number> }
 
 function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
   return tokens
@@ -123,17 +123,21 @@ function chordSymbol(value: string, key: string) {
 
 function verseXml(lyrics: VerseSyllable[], xmlId: string) {
   return lyrics.map((lyric) => {
+    const passes = lyric.passes ? [...lyric.passes] : []
+    const passType = passes.some((pass, index) => index > 0 && pass !== passes[index - 1]! + 1)
+      ? ` type="m3n-passes-${passes.join('-')}"`
+      : ''
     const connection = lyric.kind === 'extender'
       ? ' con="u"'
       : lyric.underlined
         ? ' type="m3n-text-underline"'
-      : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
+        : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
     const text = lyric.kind === 'placeholder'
       ? '\u200B'
       : lyric.underlined && lyric.kind !== 'extender'
       ? underlinedLyricText(lyric)
       : escapeXml(lyricText(lyric))
-    return `<verse xml:id="${xmlId}-v${lyric.verseIndex}" n="${lyric.n}"><syl${connection}>${text}</syl></verse>`
+    return `<verse xml:id="${xmlId}-v${lyric.verseIndex}" n="${lyric.n}"${passType}><syl${connection}>${text}</syl></verse>`
   }).join('')
 }
 
@@ -264,12 +268,14 @@ export function m3nToMei(source: string): MeiConversionResult {
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
   const lyricSyllables = document.lyrics.map((block, index) => {
     const numericRange = /^\d+$/.test(block.range)
+    const passes = block.range ? parsePassRange(block.range) : undefined
     return {
       n: numericRange ? block.range : String(index + 1),
       verseIndex: numericRange ? Number(block.range) : index + 1,
-      passes: block.range ? parsePassRange(block.range) : undefined,
+      passes,
       syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
         ...syllable,
+        passes,
         cjkSpacingCompensation: CJK_OR_FULLWIDTH_CHARACTER.test(syllable.text),
       })),
     }
@@ -388,6 +394,7 @@ export function m3nToMei(source: string): MeiConversionResult {
             underlined: false,
             n: block.n,
             verseIndex: block.verseIndex,
+            passes: block.passes,
             cjkSpacingCompensation: false,
           }]
         })
@@ -405,6 +412,7 @@ export function m3nToMei(source: string): MeiConversionResult {
             underlined: false,
             n: String(row),
             verseIndex: row,
+            passes: undefined,
             cjkSpacingCompensation: false,
           })
         }

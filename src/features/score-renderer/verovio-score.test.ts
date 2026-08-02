@@ -59,6 +59,11 @@ describe('VerovioScore layout', () => {
     ])).toEqual([1, 2])
     expect(lyricVerseIndexForMeasureRendition([{ id: 'm3n-e-1-v1' }, { id: 'm3n-e-1-v2' }, { id: 'm3n-e-1-v3' }], 3, [1, 2])).toBe(0)
     expect(lyricVerseIndexForMeasureRendition([{ id: 'm3n-e-1-v1' }, { id: 'm3n-e-1-v2' }, { id: 'm3n-e-1-v3' }], 4, [1, 2])).toBe(1)
+    expect(lyricVerseIndexForMeasureRendition([
+      { id: 'm3n-e-1-v1', classList: ['verse', 'm3n-passes-1-3'] },
+      { id: 'm3n-e-1-v2', classList: ['verse'] },
+      { id: 'm3n-e-1-v3', classList: ['verse'] },
+    ], 3, [1, 2, 3])).toBe(0)
   })
 
   it('uses Verovio playback expansion for endings, repeats, D.S., and D.C.', async () => {
