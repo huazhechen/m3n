@@ -345,7 +345,13 @@ function convertSequence(
         const converted = convertTag(rest.slice(1, end), diagnostics)
         const previous = output.at(-1)
         if ((converted === '{ds}' || converted === '{dc}' || converted === '{fine}') && previous && /^(?::\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)$/.test(previous)) {
-          output[output.length - 1] = `${converted}${previous}`
+          const beforeBar = output.at(-2)
+          if (beforeBar && /^\{volta=/.test(beforeBar) && beforeBar.endsWith('{/}')) {
+            output[output.length - 2] = `${beforeBar.slice(0, -3)}${converted}{/}`
+            output[output.length - 1] = previous
+          } else {
+            output[output.length - 1] = `${converted}${previous}`
+          }
         } else {
           output.push(converted)
         }

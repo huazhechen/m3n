@@ -268,6 +268,13 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('1^^ {ds}:|||')
   })
 
+  it('keeps a navigation marker inside a preceding volta before its barline', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n{start}|:11[1:22:|][2:33]||{DS}')
+
+    expect(result.output).toContain('{volta=2}3 3{ds}{/} ||')
+    expect(result.diagnostics).toEqual([])
+  })
+
   it('keeps fine immediately before the terminal bar', () => {
     const result = happi123ToM3N('{title:返始}\n{key_signature:C}\n{time_signature:2/4}\n11|22{fine}|||')
 
