@@ -21,7 +21,6 @@ export type ScoreLayout = {
   width: number
   scale?: number
   includeBass?: boolean
-  invalidMeasureIds?: readonly string[]
 }
 
 export type TimedScoreElement = { xmlId: string; rendition: number }
@@ -88,18 +87,6 @@ export function encodeSystemBreaks(mei: string, measureIds: ReadonlySet<string>)
     .replace(/<\/measure>\s*(?:<sb\/>\s*){2,}/g, '</measure><sb/>')
 }
 
-export function markInvalidMeasures(mei: string, measureIds: readonly string[]) {
-  if (measureIds.length === 0) return mei
-  const ids = new Set(measureIds)
-  const document = new DOMParser().parseFromString(mei, 'application/xml')
-  for (const measure of document.querySelectorAll('measure')) {
-    if (!ids.has(measure.getAttribute('xml:id') ?? '')) continue
-    const type = measure.getAttribute('type')
-    measure.setAttribute('type', type ? `${type} m3n-invalid-measure` : 'm3n-invalid-measure')
-  }
-  return new XMLSerializer().serializeToString(document)
-}
-
 export class VerovioScore {
   private readonly toolkit: VerovioToolkit
   private readonly mei: string
@@ -114,9 +101,9 @@ export class VerovioScore {
     return new VerovioScore(toolkit, mei)
   }
 
-  prepareLayout({ width, scale = 42, includeBass = true, invalidMeasureIds = [] }: ScoreLayout) {
+  prepareLayout({ width, scale = 42, includeBass = true }: ScoreLayout) {
     const effectiveScale = normalizeScale(scale)
-    let layoutMei = markInvalidMeasures(includeBass ? this.mei : withoutBassStaff(this.mei), invalidMeasureIds)
+    let layoutMei = includeBass ? this.mei : withoutBassStaff(this.mei)
     const layoutOptions = {
       adjustPageHeight: true,
       footer: 'none',

@@ -160,8 +160,10 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   measure.insertBefore(band, measure.firstChild)
 }
 
-function addInvalidMeasureHighlights(paper: HTMLElement) {
-  paper.querySelectorAll<SVGGElement>('g.measure.m3n-invalid-measure').forEach((measure) => {
+function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: readonly string[]) {
+  const invalidIds = new Set(invalidMeasureIds)
+  paper.querySelectorAll<SVGGElement>('g.measure[id]').forEach((measure) => {
+    if (!invalidIds.has(measure.id)) return
     addMeasureHighlight(measure, 'measure-error-highlight')
   })
 }
@@ -264,7 +266,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
           const pageCount = score.prepareLayout({
             width: Math.max(320, staffWidth),
             scale: compact ? 38 : 42,
-            invalidMeasureIds,
           })
 
           return new Promise<void>((resolve, reject) => {
@@ -283,7 +284,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                 if (page > pageCount) {
                   if (!isInitialRender) paper.innerHTML = pages.join('')
                   resolveLyricCollisions(paper)
-                  addInvalidMeasureHighlights(paper)
+                  addInvalidMeasureHighlights(paper, invalidMeasureIds)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()
