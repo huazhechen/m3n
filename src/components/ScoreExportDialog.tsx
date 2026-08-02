@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { scoreFileName } from '../features/score-renderer/score-document'
-import { downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
+import { addScoreTitle, downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 
 type ExportFormat = 'png' | 'pdf'
@@ -54,13 +54,15 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
             scale: format === 'pdf' ? 42 * pdfScale / 100 : 42,
             includeBass: includeBass || !hasBassStaff,
           })
+          const svg = preview.querySelector('svg')
+          if (svg) addScoreTitle(svg, title)
         }
         score.destroy()
       }).catch((error: unknown) => {
         if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
       })
       return () => { cancelled = true }
-    }, [format, hasBassStaff, includeBass, isOpen, mei, onError, pdfScale, width])
+    }, [format, hasBassStaff, includeBass, isOpen, mei, onError, pdfScale, title, width])
 
     const exportScore = async () => {
       setIsExporting(true)
@@ -81,6 +83,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         })
         const svg = exportPaper.querySelector('svg')
         if (!svg) throw new Error('当前没有可导出的五线谱。')
+        addScoreTitle(svg, title)
 
         const fileName = scoreFileName(title)
         if (format === 'png') {

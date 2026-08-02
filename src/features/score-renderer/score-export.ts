@@ -29,6 +29,33 @@ export function makeSvgResponsive(svg: SVGSVGElement, scale = 1) {
   svg.style.transformOrigin = ''
 }
 
+/** Adds an export-only title above the engraved score without changing the MEI layout. */
+export function addScoreTitle(svg: SVGSVGElement, title: string) {
+  const text = title.trim()
+  if (!text) return
+
+  const { width, height } = getSvgSize(svg)
+  if (width <= 0 || height <= 0) return
+  const headerHeight = Math.max(48, width * 0.09)
+  const namespace = 'http://www.w3.org/2000/svg'
+  const content = document.createElementNS(namespace, 'g')
+  while (svg.firstChild) content.append(svg.firstChild)
+  content.setAttribute('transform', `translate(0 ${headerHeight})`)
+
+  const heading = document.createElementNS(namespace, 'text')
+  heading.textContent = text
+  heading.setAttribute('x', String(width / 2))
+  heading.setAttribute('y', String(headerHeight * 0.64))
+  heading.setAttribute('text-anchor', 'middle')
+  heading.setAttribute('font-family', 'sans-serif')
+  heading.setAttribute('font-size', String(Math.max(20, headerHeight * 0.5)))
+  heading.setAttribute('font-weight', '600')
+
+  svg.append(heading, content)
+  svg.setAttribute('viewBox', `0 0 ${width} ${height + headerHeight}`)
+  svg.removeAttribute('height')
+}
+
 export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1) {
   const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg, scale)
   if (sourceWidth <= 0 || sourceHeight <= 0) {
