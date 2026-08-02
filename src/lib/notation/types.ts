@@ -1,3 +1,5 @@
+import type { ScoreDiagnostic } from './diagnostics'
+
 export type NotationMode = 'm3n'
 
 export type SourceMapRange = {
@@ -11,5 +13,6 @@ export type ConversionResult = {
   source: string
   output: string
   diagnostics: string[]
+  diagnosticDetails: ScoreDiagnostic[]
   sourceMap?: SourceMapRange[]
 }

@@ -9,6 +9,7 @@ import { ScoreRenderer } from './ScoreRenderer'
 import type { ScoreRendererRef } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'
 import { sharedScoreUrl } from '../lib/score-share'
+import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
 
 type NotationEditorProps = {
   initialSource?: string
@@ -127,8 +128,8 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           onPaperBlur={() => setIsCursorHighlightActive(false)}
           showPrintButton={false}
         />
-        {result.diagnostics.length > 0 && (
-          <ul className="diagnostics editor-render-diagnostics">{result.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>
+        {result.diagnosticDetails.length > 0 && (
+          <ul className="diagnostics editor-render-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.legacyMessage}`}>{formatScoreDiagnostic(item)}</li>)}</ul>
         )}
       </div>
 

@@ -2,6 +2,7 @@ import { durationInBeats, keyModeIntervals } from './notation/m3n-primitives'
 import { parseM3NGrace } from './notation/m3n-groups'
 import { parseLyricItems, type LyricMode } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
+import { diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
 import { measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
 
 type Meter = { beats: number; beatValue: number }
@@ -1254,4 +1255,9 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
 
   if (supplements.length > 0 && !mainResult.ended) diagnostics.push('补充块只能写在完整乐谱正文之后')
   return [...new Set(diagnostics)]
+}
+
+/** Typed validation result. `validateM3N` remains available for source compatibility. */
+export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}): ScoreDiagnostic[] {
+  return diagnosticsFromLegacyMessages(source, validateM3N(source, options))
 }

@@ -1,9 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { invalidMeasureBarEnds, invalidMeasureIds, validateM3N } from './m3n-validate'
+import { invalidMeasureBarEnds, invalidMeasureIds, validateM3N, validateM3NDiagnostics } from './m3n-validate'
 
 const messages = (source: string) => validateM3N(source).join('\n')
 
 describe('validateM3N', () => {
+  it('exposes structured diagnostics without changing legacy messages', () => {
+    const source = '{2/4}\n1 2 |||\n{lyrics}la{/}'
+    const diagnostics = validateM3NDiagnostics(source)
+
+    expect(diagnostics).toHaveLength(1)
+    expect(diagnostics[0]).toMatchObject({
+      code: 'M3N_LYRIC_ALIGNMENT',
+      severity: 'warning',
+      legacyMessage: validateM3N(source)[0],
+      range: { start: source.indexOf('{lyrics}'), end: source.length },
+    })
+  })
+
   it('accepts a complete unsegmented score', () => {
     expect(validateM3N('{title=Test}\n{key=C} {4/4} {120qpm}\n1 2 3 4 |||')).toEqual([])
   })

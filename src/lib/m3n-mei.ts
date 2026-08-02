@@ -1,12 +1,13 @@
 import { m3nPitch, measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
 import type { DirectLyricSyllable } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
-import { buildAccompaniment, buildTempoChanges, type AccompanimentNote, type TempoChange } from './m3n-playback'
+import { buildAccompanimentFromDocument, buildTempoChangesFromDocument, type AccompanimentNote, type TempoChange } from './m3n-playback'
 import type { DirectEvent, DirectMeasure } from './m3n-direct'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { parseKey } from './notation/m3n-primitives'
 import { buildPlaybackSequence, parsePassRange, type PlaybackNavigation } from './notation/repeats'
-import { validateM3N } from './m3n-validate'
+import { validateM3NDiagnostics } from './m3n-validate'
+import type { ScoreDiagnostic } from './notation/diagnostics'
 
 export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd: number }
 export type ScoreHeaderMetadata = {
@@ -19,6 +20,7 @@ export type MeiConversionResult = {
   source: string
   mei: string
   diagnostics: string[]
+  diagnosticDetails: ScoreDiagnostic[]
   sourceMap: MeiSourceMapRange[]
   title: string
   subtitle: string
@@ -254,7 +256,7 @@ export function m3nToMei(source: string): MeiConversionResult {
   let eventIndex = 0
   const eventIds = new Map<string, string>()
   const preassignedIds = new Map<DirectEvent, string>()
-  const tempoChanges = buildTempoChanges(source)
+  const tempoChanges = buildTempoChangesFromDocument(document)
   const tempoChangesBySource = new Map<number, TempoChange[]>()
   for (const change of tempoChanges) {
     if (change.sourceStart === undefined) continue
@@ -689,13 +691,14 @@ export function m3nToMei(source: string): MeiConversionResult {
     ...sectionContent.split('\n').map((line) => `            ${line}`),
     '          </section>', '        </score>', '      </mdiv>', '    </body>', '  </music>', '</mei>',
   ].join('\n')
+  const diagnosticDetails = validateM3NDiagnostics(source)
   return {
-    source, mei, diagnostics: validateM3N(source), sourceMap,
+    source, mei, diagnostics: diagnosticDetails.map((diagnostic) => diagnostic.legacyMessage), diagnosticDetails, sourceMap,
     title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,
     lyricist: document.lyricist, arranger: document.arranger, hasBassStaff,
     partOrder: document.partOrder,
     headerMetadata,
-    accompaniment: buildAccompaniment(source),
+    accompaniment: buildAccompanimentFromDocument(document),
     tempoChanges,
     tempo: document.tempo,
   }

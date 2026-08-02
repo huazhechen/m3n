@@ -16,6 +16,7 @@ pages -> components -> features -> lib/notation
 ## 当前边界
 
 - `lib/notation/types.ts`：格式、转换结果和源码映射契约。
+- `lib/notation/diagnostics.ts`：结构化诊断契约；迁移期间保留旧字符串诊断 API，以兼容现有调用方。
 - `lib/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
 - `lib/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
 - `lib/notation/supplements.ts`：歌词与低音补充块解析。

@@ -4,6 +4,7 @@ import { measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
 import { normalizeAdjacentBarlines } from './m3n-format'
 import { validateM3N } from './m3n-validate'
 import type { ConversionResult } from './notation/types'
+import { diagnosticsFromLegacyMessages } from './notation/diagnostics'
 
 type HappiHeader = {
   title: string
@@ -765,5 +766,6 @@ export function happi123ToM3N(source: string): ConversionResult {
   const output = repairLegacyStructure(normalizeMeasureMeters(repairedOutput), diagnostics)
     .replace(/\(\{(\d+\/64)\}\s*/g, '{$1} (')
 
-  return { source, output, diagnostics: [...new Set(diagnostics)] }
+  const uniqueDiagnostics = [...new Set(diagnostics)]
+  return { source, output, diagnostics: uniqueDiagnostics, diagnosticDetails: diagnosticsFromLegacyMessages(source, uniqueDiagnostics, 'HAPPI123_CONVERSION') }
 }

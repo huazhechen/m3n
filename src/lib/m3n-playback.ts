@@ -1,4 +1,4 @@
-import { parseM3NDocument, type DirectEvent } from './m3n-direct'
+import { parseM3NDocument, type DirectDocument, type DirectEvent } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 
 export type AccompanimentNote = { startBeats: number; durationBeats: number; midi: number; velocity: number }
@@ -9,7 +9,10 @@ function usesArpeggioPattern(meterCount: number, meterUnit: number) {
 }
 
 export function buildAccompaniment(source: string): AccompanimentNote[] {
-  const document = parseM3NDocument(source)
+  return buildAccompanimentFromDocument(parseM3NDocument(source))
+}
+
+export function buildAccompanimentFromDocument(document: DirectDocument): AccompanimentNote[] {
   const notes: AccompanimentNote[] = []
   let startBeats = 0
   let arpeggioIndex = 0
@@ -41,7 +44,10 @@ export function buildAccompaniment(source: string): AccompanimentNote[] {
 }
 
 export function buildTempoChanges(source: string): TempoChange[] {
-  const document = parseM3NDocument(source)
+  return buildTempoChangesFromDocument(parseM3NDocument(source))
+}
+
+export function buildTempoChangesFromDocument(document: DirectDocument): TempoChange[] {
   const changes: TempoChange[] = []
   const events: Array<{ event: DirectEvent; startBeats: number }> = []
   let startBeats = 0

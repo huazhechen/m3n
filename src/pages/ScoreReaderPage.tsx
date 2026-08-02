@@ -7,6 +7,7 @@ import { m3nToMei } from '../lib/m3n-mei'
 import { invalidMeasureIds } from '../lib/m3n-validate'
 import { presetScores } from '../lib/samples'
 import { sharedScoreSource, sharedScoreUrl } from '../lib/score-share'
+import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
 
 export function ScoreReaderPage() {
   const { slug } = useParams()
@@ -69,9 +70,9 @@ export function ScoreReaderPage() {
           invalidMeasureIds={invalidMeasures}
           showPrintButton={false}
         />
-        {result.diagnostics.length > 0 && (
+        {result.diagnosticDetails.length > 0 && (
           <ul className="diagnostics score-reader-diagnostics" aria-label="乐谱校验错误">
-            {result.diagnostics.map((item) => <li key={item}>{item}</li>)}
+            {result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.legacyMessage}`}>{formatScoreDiagnostic(item)}</li>)}
           </ul>
         )}
       </section>

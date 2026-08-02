@@ -4,6 +4,7 @@ import { SourceEditor } from '../components/SourceEditor'
 import { TopNav } from '../components/TopNav'
 import { happi123ToM3N } from '../lib/happi123-m3n'
 import { m3nToMei } from '../lib/m3n-mei'
+import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
 
 const sample = `{title:快乐123示例}\n{key_signature:C}\n{time_signature:4/4}\n{bpm:100}\n\n1 2 3 4 | 5 6 7 1' |||`
 
@@ -36,7 +37,7 @@ export function ConverterPage() {
             ariaLabel="Happi123 source"
             onChange={(event) => setSource(event.currentTarget.value)}
           />
-          {result.diagnostics.length > 0 && <ul className="diagnostics editor-source-diagnostics">{result.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>}
+          {result.diagnosticDetails.length > 0 && <ul className="diagnostics editor-source-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.legacyMessage}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
           <ScoreRenderer
             mei={score.mei}
             title={score.title}
@@ -48,7 +49,7 @@ export function ConverterPage() {
             tempo={score.tempo}
             showPrintButton={false}
           />
-          {score.diagnostics.length > 0 && <ul className="diagnostics editor-render-diagnostics">{score.diagnostics.map((item) => <li key={item}>{item}</li>)}</ul>}
+          {score.diagnosticDetails.length > 0 && <ul className="diagnostics editor-render-diagnostics">{score.diagnosticDetails.map((item) => <li key={`${item.code}:${item.legacyMessage}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
         </div>
       </div>
       {isResultOpen && (

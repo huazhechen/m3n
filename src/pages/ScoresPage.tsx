@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
 import type { PresetScore } from '../lib/samples'
-import { validateM3N } from '../lib/m3n-validate'
+import { validateM3NDiagnostics } from '../lib/m3n-validate'
 import { scoreDiagnosticSeverity, type ScoreDiagnosticSeverity } from '../lib/score-diagnostics'
 
 function ScoreCard({ score, severity }: { score: PresetScore; severity: ScoreDiagnosticSeverity }) {
@@ -39,7 +39,7 @@ export function ScoresPage() {
   const [query, setQuery] = useState('')
   const normalizedQuery = query.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
   const scoreSeverities = useMemo(
-    () => new Map(presetScores.map((score) => [score.slug, scoreDiagnosticSeverity(validateM3N(score.source))])),
+    () => new Map(presetScores.map((score) => [score.slug, scoreDiagnosticSeverity(validateM3NDiagnostics(score.source))])),
     [],
   )
   const scores = useMemo(

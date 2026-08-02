@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { buildAccompaniment, buildTempoChanges } from './m3n-playback'
+import { buildAccompaniment, buildAccompanimentFromDocument, buildTempoChanges, buildTempoChangesFromDocument } from './m3n-playback'
+import { parseM3NDocument } from './m3n-direct'
 
 describe('M3N accompaniment playback', () => {
+  it('derives playback data from an already parsed document', () => {
+    const source = '{key=C} {4/4} {120qpm}\n{chord=I}1 2 {rit=80}3 4{/} |||'
+    const document = parseM3NDocument(source)
+
+    expect(buildAccompanimentFromDocument(document)).toEqual(buildAccompaniment(source))
+    expect(buildTempoChangesFromDocument(document)).toEqual(buildTempoChanges(source))
+  })
+
   it('creates a MIDI-only block-chord plan without changing notation layers', () => {
     const notes = buildAccompaniment('{key=C} {5/4}\n{chord=I}1 2 3 4 5 |||')
 
