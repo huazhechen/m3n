@@ -14,7 +14,8 @@ function ScoreCard({ score, invalid }: { score: PresetScore; invalid: boolean })
     >
       <div>
         <h3>{score.title}</h3>
-        <div className="score-notation-tags" aria-label={`调号 ${score.keySignature}，拍号 ${score.timeSignature}，速度 ${score.tempo} BPM`}>
+        <div className="score-notation-tags" aria-label={`旋律复杂度评分 ${score.melodyComplexity.toFixed(1)}，调号 ${score.keySignature}，拍号 ${score.timeSignature}，速度 ${score.tempo} BPM`}>
+          <span className="score-tag">评分 {score.melodyComplexity.toFixed(1)}</span>
           <span className="score-tag">调 {score.keySignature}</span>
           <span className="score-tag">拍 {score.timeSignature}</span>
           <span className="score-tag">速 {score.tempo} BPM</span>

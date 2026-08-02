@@ -1,3 +1,5 @@
+import { assessM3NMelodyComplexity } from './m3n-melody-complexity'
+
 export type PresetScore = {
   order: number
   slug: string
@@ -10,6 +12,7 @@ export type PresetScore = {
   tempo: number
   hasLyrics: boolean
   hasBass: boolean
+  melodyComplexity: number
   searchText: string
   source: string
 }
@@ -77,6 +80,7 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
     const tempo = readTempo(source)
     const hasLyrics = source.includes('{lyrics}')
     const hasBass = source.includes('{bass}')
+    const melodyComplexity = assessM3NMelodyComplexity(source).score
 
     return {
       order: orderFromSlug(slug),
@@ -90,6 +94,7 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
       tempo,
       hasLyrics,
       hasBass,
+      melodyComplexity,
       searchText: normalizeSearchText([title, subtitle, singer, composer, ...readMetadataValues(source)].filter(Boolean).join(' ')),
       source,
     }
