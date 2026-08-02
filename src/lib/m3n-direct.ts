@@ -3,6 +3,7 @@ import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './not
 import { splitSupplementBlocks } from './notation/supplements'
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N } from './notation/m3n-tokens'
+import { measurePlaybackPasses as planMeasurePlaybackPasses } from './notation/repeats'
 
 export type DirectEvent = {
   sourceStart: number
@@ -67,76 +68,8 @@ export type DirectDocument = {
   intervals: DirectInterval[]
 }
 
-function passRange(value: string) {
-  const passes = new Set<number>()
-  for (const item of value.split(',')) {
-    const range = /^(\d+)~(\d+)$/.exec(item.trim())
-    if (range) {
-      for (let pass = Number(range[1]); pass <= Number(range[2]); pass += 1) passes.add(pass)
-    } else {
-      const pass = Number(item.trim())
-      if (Number.isInteger(pass) && pass > 0) passes.add(pass)
-    }
-  }
-  return passes
-}
-
-/** Returns the playback passes in which each written measure occurs. */
-export function measurePlaybackPasses(measures: DirectMeasure[]) {
-  const passesByMeasure = new Map(measures.map((measure) => [measure, new Set([1])]))
-  let repeatStart = 0
-
-  for (const [index, measure] of measures.entries()) {
-    if (measure.left === 'rptstart') repeatStart = index
-    if (measure.right !== 'rptend') continue
-
-    let passCount = measure.repeatCount ?? 2
-    // A repeat can govern several non-adjacent alternate-ending groups.  The
-    // maximum ending pass determines how often every public measure repeats.
-    for (let endingIndex = repeatStart; endingIndex <= index; endingIndex += 1) {
-      const ending = measures[endingIndex]?.ending
-      if (ending) for (const pass of passRange(ending)) passCount = Math.max(passCount, pass)
-    }
-    for (let endingIndex = index + 1; measures[endingIndex]?.ending; endingIndex += 1) {
-      for (const pass of passRange(measures[endingIndex]!.ending!)) passCount = Math.max(passCount, pass)
-    }
-    for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
-      passesByMeasure.set(measures[repeatedIndex]!, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
-    }
-  }
-
-  for (const measure of measures) {
-    if (measure.ending) passesByMeasure.set(measure, passRange(measure.ending))
-  }
-
-  const segnoIndex = measures.findIndex((measure) => measure.events.some((event) => event.navigation.includes('segno')))
-  const jumpIndex = measures.findIndex((measure) => measure.events.some((event) => event.navigation.includes('ds') || event.navigation.includes('dc')))
-  if (segnoIndex >= 0 && jumpIndex >= segnoIndex) {
-    let endingStart = jumpIndex
-    while (endingStart > 0 && measures[endingStart - 1]?.ending) endingStart -= 1
-    let endingEnd = jumpIndex + 1
-    while (measures[endingEnd]?.ending) endingEnd += 1
-    const currentEndingPass = Math.max(0, ...measures.slice(endingStart, endingEnd).flatMap((measure) => (
-      measure.ending ? [...passRange(measure.ending)] : []
-    )))
-    const returnPass = Math.min(...measures.slice(endingEnd).flatMap((measure) => (
-      measure.ending ? [...passRange(measure.ending)].filter((pass) => pass > currentEndingPass) : []
-    )))
-    if (Number.isFinite(returnPass)) {
-      for (const passes of passesByMeasure.values()) passes.delete(returnPass)
-      const returnEndingIndex = measures.findIndex((measure, index) => (
-        index >= endingEnd && measure.ending !== undefined && passRange(measure.ending).has(returnPass)
-      ))
-      for (let index = segnoIndex; index <= returnEndingIndex; index += 1) {
-        const measure = measures[index]!
-        if (!measure.ending || passRange(measure.ending).has(returnPass)) {
-          passesByMeasure.get(measure)?.add(returnPass)
-        }
-      }
-    }
-  }
-  return passesByMeasure
-}
+/** @deprecated Import from `notation/repeats` in new notation code. */
+export const measurePlaybackPasses = planMeasurePlaybackPasses
 
 const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
 function metadata(source: string, name: (typeof metadataNames)[number]) {

@@ -5,6 +5,7 @@ import { buildAccompaniment, buildTempoChanges, type AccompanimentNote, type Tem
 import type { DirectEvent, DirectMeasure } from './m3n-direct'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { parseKey } from './notation/m3n-primitives'
+import { buildPlaybackSequence, parsePassRange, type PlaybackNavigation } from './notation/repeats'
 import { validateM3N } from './m3n-validate'
 
 export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd: number }
@@ -114,20 +115,6 @@ function pitchXml(pitch: string, key: string, accidentals?: Map<string, string>,
   if (value.accid) accidentals?.set(accidentalKey, value.accidGes ?? value.accid)
   const accidGes = value.accid ? value.accidGes : accidentals?.get(accidentalKey) || value.accidGes
   return `pname="${value.pname}" oct="${octave}"${value.accid ? ` accid="${value.accid}"` : ''}${accidGes ? ` accid.ges="${accidGes}"` : ''}`
-}
-
-function endingPasses(value: string) {
-  const passes = new Set<number>()
-  for (const token of value.split(',')) {
-    const range = /^(\d+)~(\d+)$/.exec(token.trim())
-    if (range) {
-      for (let pass = Number(range[1]); pass <= Number(range[2]); pass += 1) passes.add(pass)
-    } else {
-      const pass = Number(token.trim())
-      if (Number.isInteger(pass) && pass > 0) passes.add(pass)
-    }
-  }
-  return passes
 }
 
 function chordSymbol(value: string, key: string) {
@@ -271,7 +258,7 @@ export function m3nToMei(source: string): MeiConversionResult {
     return {
       n: numericRange ? block.range : String(index + 1),
       verseIndex: numericRange ? Number(block.range) : index + 1,
-      passes: block.range ? endingPasses(block.range) : undefined,
+      passes: block.range ? parsePassRange(block.range) : undefined,
       syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
         ...syllable,
         cjkSpacingCompensation: CJK_OR_FULLWIDTH_CHARACTER.test(syllable.text),
@@ -592,7 +579,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       measure.xml,
       measure.breakAfter ? '<sb/>' : '',
     ].filter(Boolean).join('\n')
-    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; partName: string; content: string; repeatStart?: boolean; repeatCount?: number; navigation?: string[] }> = []
+    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; partName: string; content: string; repeatStart?: boolean; repeatCount?: number; navigation?: PlaybackNavigation[] }> = []
     for (let index = 0; index < measures.length;) {
       const current = measures[index]
       const content: string[] = []
@@ -626,129 +613,14 @@ export function m3nToMei(source: string): MeiConversionResult {
     }
     return nodes
   })
-  const expandNodes = (nodes: typeof layoutNodes) => {
-    const expansion: string[] = []
-    const endingGroups = new Map<number, { end: number; repeatStart: number; hasExplicitRepeatStart: boolean; passCount: number }>()
-    let latestRepeatStart = 0
-    let hasExplicitRepeatStart = false
-    for (let index = 0; index < nodes.length; index += 1) {
-      const node = nodes[index]
-      if (node?.kind === 'section' && node.repeatStart) {
-        latestRepeatStart = index
-        hasExplicitRepeatStart = true
-      }
-      if (node?.kind !== 'ending') continue
-
-      const start = index
-      while (nodes[index + 1]?.kind === 'ending') index += 1
-      const endings = nodes.slice(start, index + 1)
-      const passCount = Math.max(1, ...endings.flatMap((ending) => [...endingPasses(ending.n ?? '')]), ...endings.map((ending) => ending.repeatCount ?? 0))
-      for (let endingIndex = start; endingIndex <= index; endingIndex += 1) {
-        endingGroups.set(endingIndex, { end: index, repeatStart: latestRepeatStart, hasExplicitRepeatStart, passCount })
-      }
-    }
-
-    const repeatVisits = new Map<number, number>()
-    const ordinaryRepeatEnds = new Set(nodes.flatMap((node, index) => node.kind === 'section' && node.repeatCount ? [index] : []))
-    let index = 0
-    while (index < nodes.length) {
-      const node = nodes[index]!
-      const endingGroup = endingGroups.get(index)
-      if (endingGroup) {
-        const visit = (repeatVisits.get(index) ?? 0) + 1
-        repeatVisits.set(index, visit)
-        const pass = Math.min(visit, endingGroup.passCount)
-        const selectedIndex = Array.from({ length: endingGroup.end - index + 1 }, (_, offset) => index + offset)
-          .find((endingIndex) => endingPasses(nodes[endingIndex]?.n ?? '').has(pass))
-        if (selectedIndex !== undefined) expansion.push(`#${nodes[selectedIndex]!.id}`)
-
-        const selected = selectedIndex === undefined ? undefined : nodes[selectedIndex]
-        if (selected?.repeatCount && visit < selected.repeatCount) {
-          if (!endingGroup.hasExplicitRepeatStart) {
-            for (const endingIndex of endingGroups.keys()) {
-              if (endingIndex < index) repeatVisits.delete(endingIndex)
-            }
-          }
-          index = endingGroup.repeatStart
-        } else {
-          index = endingGroup.end + 1
-        }
-        continue
-      }
-
-      expansion.push(`#${node.id}`)
-      if (node.repeatCount) {
-        const visit = (repeatVisits.get(index) ?? 0) + 1
-        repeatVisits.set(index, visit)
-        if (visit < node.repeatCount) {
-          for (const repeatEnd of ordinaryRepeatEnds) {
-            if (repeatEnd < index) repeatVisits.delete(repeatEnd)
-          }
-          let repeatStart = 0
-          for (let candidate = index; candidate >= 0; candidate -= 1) {
-            if (nodes[candidate]?.kind === 'section' && nodes[candidate]?.repeatStart) {
-              repeatStart = candidate
-              break
-            }
-          }
-          index = repeatStart
-          continue
-        }
-      }
-      index += 1
-    }
-    return expansion
-  }
   const hasNamedParts = document.partOrder.length > 0
   const hasEndings = layoutNodes.some((node) => node.kind === 'ending')
-  let expansion = hasNamedParts
-    ? document.partOrder.flatMap((partName) => expandNodes(layoutNodes.filter((node) => node.partName === partName)))
-    : expandNodes(layoutNodes)
-  const jumpNode = layoutNodes.find((node) => node.navigation?.includes('ds') || node.navigation?.includes('dc'))
-  if (jumpNode) {
-    const jumpIndex = expansion.lastIndexOf(`#${jumpNode.id}`)
-    const destination = jumpNode.navigation?.includes('ds')
-      ? layoutNodes.find((node) => node.navigation?.includes('segno'))
-      : layoutNodes.find((node) => node.kind === 'section')
-    const fine = layoutNodes.find((node) => node.navigation?.includes('fine'))
-    const destinationIndex = destination ? layoutNodes.indexOf(destination) : -1
-    const jumpNodeIndex = layoutNodes.indexOf(jumpNode)
-    let returnEndIndex = fine ? layoutNodes.indexOf(fine) : jumpNodeIndex
-    let returnPass: number | undefined
-    let skipReturnEndings = false
-    if (!fine) {
-      let endingEnd = jumpNodeIndex + 1
-      while (layoutNodes[endingEnd]?.kind === 'ending') endingEnd += 1
-      const jumpPass = Math.max(0, ...endingPasses(jumpNode.n ?? ''))
-      const nextEndingIndex = layoutNodes.findIndex((node, index) => (
-        index > jumpNodeIndex
-        && index < endingEnd
-        && node.kind === 'ending'
-        && [...endingPasses(node.n ?? '')].some((pass) => pass > jumpPass)
-      ))
-      if (nextEndingIndex >= 0) {
-        const nextPasses = [...endingPasses(layoutNodes[nextEndingIndex]!.n ?? '')].filter((pass) => pass > jumpPass)
-        returnPass = Math.min(...nextPasses)
-        returnEndIndex = nextEndingIndex
-      } else {
-        skipReturnEndings = true
-        returnEndIndex = Math.min(endingEnd, layoutNodes.length - 1)
-      }
-    }
-    if (jumpIndex >= 0 && destinationIndex >= 0 && returnEndIndex >= destinationIndex) {
-      // Repeat marks apply on the initial pass. A D.S./D.C. return is a
-      // linear navigation path and must not re-trigger already played repeats.
-      const returnPath = layoutNodes.slice(destinationIndex, returnEndIndex + 1).flatMap((node) => {
-        if (node.kind !== 'ending') return `#${node.id}`
-        if (skipReturnEndings) return returnPass !== undefined && endingPasses(node.n ?? '').has(returnPass) ? `#${node.id}` : []
-        return !returnPass || endingPasses(node.n ?? '').has(returnPass) ? `#${node.id}` : []
-      })
-      expansion = [...expansion.slice(0, jumpIndex + 1), ...returnPath]
-    }
-  }
+  const expansion = hasNamedParts
+    ? document.partOrder.flatMap((partName) => buildPlaybackSequence(layoutNodes.filter((node) => node.partName === partName)))
+    : buildPlaybackSequence(layoutNodes)
   const needsExpansion = hasNamedParts || hasEndings || hasNavigation || layoutNodes.some((node) => node.repeatCount)
   const sectionContent = [
-    ...(needsExpansion ? [`<expansion xml:id="m3n-expansion" plist="${expansion.join(' ')}"/>`] : []),
+    ...(needsExpansion ? [`<expansion xml:id="m3n-expansion" plist="${expansion.map((id) => `#${id}`).join(' ')}"/>`] : []),
     ...layoutNodes.map((node) => !needsExpansion ? node.content
       : node.kind === 'ending'
         ? `<ending xml:id="${node.id}" n="${escapeXml(node.n ?? '')}">\n${node.content}\n</ending>`
