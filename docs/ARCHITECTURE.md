@@ -17,6 +17,7 @@ pages -> components -> features -> lib/notation
 
 - `lib/notation/types.ts`：格式、转换结果和源码映射契约。
 - `lib/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
+- `lib/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
 - `lib/notation/supplements.ts`：歌词与低音补充块解析。
 - `lib/m3n-direct.ts`：直接解析 M3N 文档并生成供 MEI 序列化使用的事件模型。
 - `lib/m3n-validate.ts`：语义校验，只依赖最小语法内核。
@@ -43,11 +44,12 @@ pages -> components -> features -> lib/notation
 
 按以下顺序继续，且每一步保持公共转换 API 兼容：
 
-1. 继续扩充 M3N 直接解析器对出版语义和演奏语义的覆盖。
-2. 为转换器引入显式 token/AST，替代多轮正则修改字符串；源码映射由 token span 自然生成。
-3. 将诊断从字符串升级为 `{ code, severity, message, range }`，界面再负责本地化展示。
-4. 为 `noUncheckedIndexedAccess` 逐模块消除风险，优先处理解析器和校验器，不使用无依据的非空断言。
-5. 将乐谱元数据生成到独立索引，乐谱正文按 slug 异步加载，避免列表页加载全部正文。
-6. 增加浏览器级编辑、播放、导出和键盘可访问性测试。
+1. 以 `notation/repeats` 的播放计划为单一事实来源，逐步让歌词对位直接消费书写小节到演奏轮次的映射。
+2. 继续扩充 M3N 直接解析器对出版语义和演奏语义的覆盖。
+3. 为转换器引入显式 token/AST，替代多轮正则修改字符串；源码映射由 token span 自然生成。
+4. 将诊断从字符串升级为 `{ code, severity, message, range }`，界面再负责本地化展示。
+5. 为 `noUncheckedIndexedAccess` 逐模块消除风险，优先处理解析器和校验器，不使用无依据的非空断言。
+6. 将乐谱元数据生成到独立索引，乐谱正文按 slug 异步加载，避免列表页加载全部正文。
+7. 增加浏览器级编辑、播放、导出和键盘可访问性测试。
 
 不建议为缩短文件而制造一行转发层；拆分应围绕稳定职责、可独立测试的状态机或第三方适配边界进行。
