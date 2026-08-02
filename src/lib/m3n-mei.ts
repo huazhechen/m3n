@@ -506,10 +506,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       const tempo = document.hasExplicitTempo && partIndex === 0 && measureIndex === 0
         ? `  ${tempoXml(document.tempo, document.meterCount, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
         : ''
-      const partLabel = document.partOrder.length > 0 && measureIndex === 0
-        ? `  <reh staff="1" tstamp="1">${escapeXml(partName)}</reh>\n`
-        : ''
-      const xml = `<measure xml:id="${measureId}" n="${displayedNumber}"${metcon}${join}${left}${right}>\n${tempo}${partLabel}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
+      const xml = `<measure xml:id="${measureId}" n="${displayedNumber}"${metcon}${join}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
       return {
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',
@@ -558,8 +555,14 @@ export function m3nToMei(source: string): MeiConversionResult {
       }
       nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, partName, content: content.join('\n'), repeatStart: sectionMeasures[0]?.repeatStart, repeatCount: sectionMeasures.at(-1)?.repeatCount, navigation: sectionMeasures.flatMap((measure) => measure.navigation) })
     }
-    if (document.partOrder.length > 0 && partIndex > 0 && nodes[0] && !nodes[0].content.startsWith('<sb/>')) {
-      nodes[0].content = `<sb/>\n${nodes[0].content}`
+    if (document.partOrder.length > 0 && nodes[0]) {
+      const firstNode = nodes[0]
+      const startsWithBreak = firstNode.content.startsWith('<sb/>')
+      const content = startsWithBreak ? firstNode.content.slice('<sb/>'.length).trimStart() : firstNode.content
+      const breakBefore = startsWithBreak || partIndex > 0 ? '<sb/>\n' : ''
+      const staffLabel = escapeXml(partName)
+      const partScoreDef = `<scoreDef><staffDef n="1" label="${staffLabel}" label.abbr="${staffLabel}"/></scoreDef>`
+      firstNode.content = `${breakBefore}${partScoreDef}\n${content}`
     }
     return nodes
   })
