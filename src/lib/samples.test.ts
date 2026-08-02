@@ -10,6 +10,9 @@ describe('bundled score corpus', () => {
     expect(presetScores.every((score) => score.keySignature && score.timeSignature && score.tempo > 0)).toBe(true)
     expect(presetScores.every((score) => score.melodyComplexity >= 1 && score.melodyComplexity <= 5)).toBe(true)
     expect(presetScores.map((score) => score.order)).toEqual([...presetScores.map((score) => score.order)].sort((left, right) => left - right))
+    expect(presetScores.map((score) => score.melodyComplexity)).toEqual(
+      [...presetScores.map((score) => score.melodyComplexity)].sort((left, right) => left - right),
+    )
   })
 
   it('converts every score with valid source mappings', () => {

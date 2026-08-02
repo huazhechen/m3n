@@ -28,8 +28,7 @@ function slugFromPath(path: string) {
 }
 
 function orderFromSlug(slug: string) {
-  const match = /^(\d{2})_(\d{5})$/.exec(slug)
-  return match ? Number(match[1]) * 100_000 + Number(match[2]) : Number.MAX_SAFE_INTEGER
+  return /^\d{5}$/.test(slug) ? Number(slug) : Number.MAX_SAFE_INTEGER
 }
 
 function readAttribute(source: string, name: string) {
