@@ -1,7 +1,7 @@
 import { splitSupplementBlocks } from './notation/supplements'
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
 
-const BARLINE = /(:\|\/|:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g
+const BARLINE = /(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g
 const EPSILON = 1e-9
 
 /** Places a jump on the measure it concludes, then combines its terminal bar. */
@@ -156,7 +156,7 @@ function formatMusic(source: string) {
     const piece = pieces[index]?.trim()
     if (!piece) continue
     line = `${line}${line ? ' ' : ''}${piece}`
-    if (index % 2 === 1 && piece !== ':|/') {
+    if (index % 2 === 1) {
       measures += 1
       if (measures === 4) {
         lines.push(line)
@@ -166,7 +166,7 @@ function formatMusic(source: string) {
     }
   }
   if (line) lines.push(line)
-  return lines.join('\n').replace(/\{(ds|dc|fine)\}\s+(:\|\/|:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g, '{$1}$2')
+  return lines.join('\n').replace(/\{(ds|dc|fine)\}\s+(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g, '{$1}$2')
 }
 
 function formatMain(source: string) {

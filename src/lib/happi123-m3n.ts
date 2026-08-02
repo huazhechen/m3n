@@ -601,21 +601,6 @@ function normalizeMeasureMeters(source: string) {
     .reduce((result, [offset, meter]) => `${result.slice(0, offset)}${meter}${result.slice(offset)}`, source)
 }
 
-function repairPickupRepeats(source: string) {
-  let repaired = source
-  let baseline = validateM3N(repaired).filter((diagnostic) => diagnostic.includes('拍数')).length
-  for (let index = 0; index < repaired.length; index += 1) {
-    if (!repaired.startsWith(':||', index)) continue
-    const candidate = `${repaired.slice(0, index)}:|/${repaired.slice(index + 3)}`
-    const candidateCount = validateM3N(candidate).filter((diagnostic) => diagnostic.includes('拍数')).length
-    if (candidateCount < baseline) {
-      repaired = candidate
-      baseline = candidateCount
-    }
-  }
-  return repaired
-}
-
 function repairLegacyStructure(source: string) {
   const diagnostics = validateM3N(source, { skipBeatValidation: true })
   let repaired = source
@@ -652,7 +637,7 @@ function repairLegacyStructure(source: string) {
   if (diagnostics.some((diagnostic) => diagnostic.includes('延音目标'))) {
     repaired = repaired.replace(/~/g, '')
   }
-  return repairPickupRepeats(repaired)
+  return repaired
 }
 
 export function happi123ToM3N(source: string): ConversionResult {

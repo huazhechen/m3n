@@ -461,14 +461,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       if (interval.kind === '8va' || interval.kind === '8vb') return [`<octave staff="${staffNumber}" dis="8" dis.place="${interval.kind === '8va' ? 'above' : 'below'}" startid="#${startid}" endid="#${endid}"/>`]
       return []
     })
-    const partialRepeat = staffNumber === 1 && measure?.partialRepeat
-      ? (() => {
-        const event = events.filter((item) => item.sourceEnd <= measure.partialRepeat!).at(-1)
-        const xmlId = idFor(event?.sourceStart)
-        return xmlId ? [`<dir staff="1" startid="#${xmlId}" place="above" type="m3n-partial-repeat">:|/</dir>`] : []
-      })()
-      : []
-    return [...tempoControls, ...eventControls, ...intervalControls, ...partialRepeat].map((xml) => `  ${xml}`).join('\n')
+    return [...tempoControls, ...eventControls, ...intervalControls].map((xml) => `  ${xml}`).join('\n')
   }
 
   let segmentIndex = 0
@@ -484,6 +477,9 @@ export function m3nToMei(source: string): MeiConversionResult {
       const right = melody?.right ? ` right="${melody.right}"` : ''
       const { changes: keyChanges, openingKey } = keyChangesForMeasure(melody, 1)
       const { meter, openingMeter } = meterChangeForMeasure(melody)
+      const expectedBeats = meter.count * 4 / meter.unit
+      const actualBeats = melody?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
+      const metcon = melody && Math.abs(actualBeats - expectedBeats) > 1e-9 ? ' metcon="false"' : ''
       const staves = [
         renderStaff(melody, 1, keyChanges, meter),
         hasBassStaff ? renderStaff(part.bass[measureIndex], 2, keyChanges, meter) : '',
@@ -496,7 +492,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       const partLabel = document.partOrder.length > 0 && measureIndex === 0
         ? `  <reh staff="1" tstamp="1">${escapeXml(partName)}</reh>\n`
         : ''
-      const xml = `<measure xml:id="m3n-measure-${partIndex + 1}-${measureIndex + 1}" n="${measureIndex + 1}"${left}${right}>\n${tempo}${partLabel}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
+      const xml = `<measure xml:id="m3n-measure-${partIndex + 1}-${measureIndex + 1}" n="${measureIndex + 1}"${metcon}${left}${right}>\n${tempo}${partLabel}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
       return {
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',

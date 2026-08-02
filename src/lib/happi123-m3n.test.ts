@@ -169,10 +169,10 @@ describe('happi123ToM3N', () => {
     expect(result.diagnostics).toEqual([])
   })
 
-  it('converts a Happi123 pickup repeat that ends before the final beat of a measure', () => {
+  it('converts a Happi123 pickup repeat into a native incomplete-measure repeat', () => {
     const result = happi123ToM3N('{key_signature:C}\n{time_signature:4/4}\n1_2_|3456|123:|4|567|||')
 
-    expect(result.output).toContain('(1 2) | 3 4 5 6 | 1 2 3 :|/ 4 | 5 6 7 |||')
+    expect(result.output).toContain('(1 2) | 3 4 5 6 | 1 2 3 :|| 4 | 5 6 7 |||')
     expect(result.diagnostics).toEqual([])
   })
 

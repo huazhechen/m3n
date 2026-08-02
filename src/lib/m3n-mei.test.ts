@@ -491,12 +491,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2 #m3n-segment-2"/>')
   })
 
-  it('renders incomplete-measure repeats as visible directions instead of measure repeat bars', () => {
-    const result = m3nToMei('{4/4}\n(1 2) | 3 4 5 6 | 1 2 3 :|/ 4 | 5 6 7 |||')
+  it('writes incomplete repeat-boundary measures as native repeat bars', () => {
+    const result = m3nToMei('{4/4}\n(1 2) | 3 4 5 6 | 1 2 3 :|| 4 | 5 6 7 |||')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-9" place="above" type="m3n-partial-repeat">:|/</dir>')
-    expect(result.mei).not.toContain('right="rptend"')
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-3" n="3" metcon="false" right="rptend">')
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-4" n="4" metcon="false" right="single">')
   })
 
   it('expands an explicitly counted repeat the requested number of times', () => {

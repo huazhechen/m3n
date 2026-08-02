@@ -12,6 +12,7 @@ type Measure = {
   line: number
   barEnd: number
   number: number
+  repeatEnd: boolean
 }
 
 type Unit = {
@@ -278,6 +279,13 @@ function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidat
   }
   const location = (measure: Measure) => `第 ${measure.line} 行，第 ${measure.number} 小节`
   const measures = unit.measures
+  const isComplementaryRepeatFragment = (index: number) => {
+    const measure = measures[index]!
+    const first = measures[0]
+    if (measure.repeatEnd && first && equal(measure.actual + first.actual, measure.expected)) return true
+    const previous = measures[index - 1]
+    return Boolean(previous?.repeatEnd && equal(measure.actual + previous.actual, measure.expected))
+  }
   for (const measure of measures) {
     if (measure.actual > measure.expected && !equal(measure.actual, measure.expected)) {
       diagnostics.push(`${location(measure)}：小节拍数超出：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
@@ -292,8 +300,8 @@ function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidat
     }
     return
   }
-  for (const measure of measures.slice(1, -1)) {
-    if (!equal(measure.actual, measure.expected)) {
+  for (const [index, measure] of measures.slice(1, -1).entries()) {
+    if (!equal(measure.actual, measure.expected) && !isComplementaryRepeatFragment(index + 1)) {
       diagnostics.push(`${location(measure)}：中间小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
       markInvalidBar(measure)
     }
@@ -363,9 +371,9 @@ function validateBody(
   const isInstrumental = () => blocks.some((block) => block.name === 'inst')
   const currentTopLevel = () => blocks.length === 0
 
-  const commitMeasure = (line: number, barEnd = -1) => {
+  const commitMeasure = (line: number, barEnd = -1, repeatEnd = false) => {
     if (unit.currentHasAtom && !unit.multiRestPendingBar) {
-      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine, barEnd, number: unit.measures.length + 1 })
+      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine, barEnd, number: unit.measures.length + 1, repeatEnd })
     }
     unit.beats = 0
     unit.currentHasAtom = false
@@ -532,19 +540,8 @@ function validateBody(
       diagnostics.push(lineMessage(token, '圆括号必须在同一小节内闭合'))
       parens.length = 0
     }
-    const partialRepeat = token.raw === ':|/'
-    if (partialRepeat) {
-      const pickup = unit.measures[0]?.actual
-      if (repeatOpen) diagnostics.push(lineMessage(token, '不完整小节反复不能嵌套或与前反复线组合'))
-      if (!pickup || unit.measures.length === 0 || Math.abs(pickup + unit.beats - unit.expected) > 1e-9) {
-        diagnostics.push(lineMessage(token, '不完整小节反复前的时值必须与开头弱起互补'))
-      }
-      currentVoltaRepeat = currentVoltaRepeat || ++repeatId
-      repeatOpen = null
-      repeatCountTarget = false
-      return
-    }
-    commitMeasure(token.line, token.start + token.raw.length)
+    const repeatEnd = token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:'
+    commitMeasure(token.line, token.start + token.raw.length, repeatEnd)
     if (token.raw === '||:') {
       if (repeatOpen) diagnostics.push(lineMessage(token, '反复区域不能嵌套或重叠'))
       repeatOpen = { line: token.line, id: ++repeatId }
@@ -769,7 +766,7 @@ function validateBody(
           pendingTie = null
         }
         for (let index = 0; index < count; index += 1) {
-          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line, barEnd: -1, number: unit.measures.length + 1 })
+          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line, barEnd: -1, number: unit.measures.length + 1, repeatEnd: false })
         }
         elapsedBeats += count * unit.expected
         unit.currentHasAtom = true
