@@ -582,14 +582,17 @@ export function m3nToMei(source: string): MeiConversionResult {
       const repeatedSections = endingStart > index && (node?.repeatStart || endingStart === index + 1)
         ? nodes.slice(index, endingStart)
         : []
-      if (repeatedSections.length > 0) {
       let endingEnd = endingStart
-      while (nodes[endingEnd]?.kind === 'ending') endingEnd += 1
-      const endings = nodes.slice(endingStart, endingEnd)
+      while (endingEnd >= 0 && nodes[endingEnd]?.kind === 'ending') endingEnd += 1
+      const endings = endingStart >= 0 ? nodes.slice(endingStart, endingEnd) : []
+      const hasRepeatEnd = endings.some((ending) => ending.repeatCount)
+      if (repeatedSections.length > 0 && hasRepeatEnd) {
       const endingSets = endings.map((ending) => endingPasses(ending.n ?? ''))
       const passCount = Math.max(1, ...endingSets.flatMap((passes) => [...passes]), ...endings.map((ending) => ending.repeatCount ?? 0))
+      const priorRepeat = expansion.slice(repeatStartIndex)
       for (let pass = 1; pass <= passCount; pass += 1) {
-        expansion.push(...repeatedSections.map((section) => `#${section.id}`))
+        if (pass === 1) expansion.push(...repeatedSections.map((section) => `#${section.id}`))
+        else expansion.push(...priorRepeat, ...repeatedSections.map((section) => `#${section.id}`))
         const ending = endings[endingSets.findIndex((passes) => passes.has(pass))]
         if (ending) expansion.push(`#${ending.id}`)
       }
@@ -623,11 +626,29 @@ export function m3nToMei(source: string): MeiConversionResult {
       : layoutNodes.find((node) => node.kind === 'section')
     const fine = layoutNodes.find((node) => node.navigation?.includes('fine'))
     const destinationIndex = destination ? layoutNodes.indexOf(destination) : -1
-    const returnEndIndex = fine ? layoutNodes.indexOf(fine) : layoutNodes.indexOf(jumpNode)
+    const jumpNodeIndex = layoutNodes.indexOf(jumpNode)
+    let returnEndIndex = fine ? layoutNodes.indexOf(fine) : jumpNodeIndex
+    let returnPass: number | undefined
+    if (!fine) {
+      let endingStart = jumpNodeIndex
+      while (layoutNodes[endingStart - 1]?.kind === 'ending') endingStart -= 1
+      let endingEnd = jumpNodeIndex + 1
+      while (layoutNodes[endingEnd]?.kind === 'ending') endingEnd += 1
+      const endings = layoutNodes.slice(endingStart, endingEnd)
+      const highestPass = Math.max(0, ...endings.flatMap((ending) => [...endingPasses(ending.n ?? '')]))
+      if (highestPass > 0) {
+        returnPass = highestPass
+        const matchingEnding = endings.find((ending) => endingPasses(ending.n ?? '').has(highestPass))
+        if (matchingEnding) returnEndIndex = layoutNodes.indexOf(matchingEnding)
+      }
+    }
     if (jumpIndex >= 0 && destinationIndex >= 0 && returnEndIndex >= destinationIndex) {
       // Repeat marks apply on the initial pass. A D.S./D.C. return is a
       // linear navigation path and must not re-trigger already played repeats.
-      const returnPath = layoutNodes.slice(destinationIndex, returnEndIndex + 1).map((node) => `#${node.id}`)
+      const returnPath = layoutNodes.slice(destinationIndex, returnEndIndex + 1).flatMap((node) => {
+        if (node.kind !== 'ending') return `#${node.id}`
+        return !returnPass || endingPasses(node.n ?? '').has(returnPass) ? `#${node.id}` : []
+      })
       expansion = [...expansion.slice(0, jumpIndex + 1), ...returnPath]
     }
   }

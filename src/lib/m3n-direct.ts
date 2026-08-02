@@ -103,6 +103,27 @@ export function measurePlaybackPasses(measures: DirectMeasure[]) {
   for (const measure of measures) {
     if (measure.ending) passesByMeasure.set(measure, passRange(measure.ending))
   }
+
+  const segnoIndex = measures.findIndex((measure) => measure.events.some((event) => event.navigation.includes('segno')))
+  const jumpIndex = measures.findIndex((measure) => measure.events.some((event) => event.navigation.includes('ds') || event.navigation.includes('dc')))
+  if (segnoIndex >= 0 && jumpIndex >= segnoIndex) {
+    let endingStart = jumpIndex
+    while (endingStart > 0 && measures[endingStart - 1]?.ending) endingStart -= 1
+    let endingEnd = jumpIndex + 1
+    while (measures[endingEnd]?.ending) endingEnd += 1
+    const returnPass = Math.max(0, ...measures.slice(endingStart, endingEnd).flatMap((measure) => (
+      measure.ending ? [...passRange(measure.ending)] : []
+    )))
+    if (returnPass > 0) {
+      for (const passes of passesByMeasure.values()) passes.delete(returnPass)
+      for (let index = segnoIndex; index < endingEnd; index += 1) {
+        const measure = measures[index]!
+        if (!measure.ending || passRange(measure.ending).has(returnPass)) {
+          passesByMeasure.get(measure)?.add(returnPass)
+        }
+      }
+    }
+  }
   return passesByMeasure
 }
 
