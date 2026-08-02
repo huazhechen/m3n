@@ -355,6 +355,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       const note = paperRef.current?.querySelector<SVGGElement>(`#${xmlId}`)
       if (!note) return []
       const activeVerse = note.querySelector<SVGGElement>(`:scope > #${xmlId}-v${rendition}`)
+        ?? note.querySelector<SVGGElement>(`:scope > #${xmlId}-v1`)
       return [...note.children].filter((element) => !element.classList.contains('verse') || element === activeVerse)
     })
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
