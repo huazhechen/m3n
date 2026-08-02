@@ -4,14 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run generate:score-index && vite",
+    "prebuild": "npm run generate:score-index",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
     "check": "npm run lint && npm run test && npm run build",
     "download:fluidr3": "node tools/download-fluidr3-gm.mjs",
     "preview": "vite preview",
-    "generate:icon": "node tools/generate-brand-icon.mjs"
+    "generate:icon": "node tools/generate-brand-icon.mjs",
+    "generate:score-index": "tsx tools/generate-score-index.ts"
   },
   "dependencies": {
     "jspdf": "^4.2.1",

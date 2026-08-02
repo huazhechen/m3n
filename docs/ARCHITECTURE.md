@@ -32,6 +32,7 @@ pages -> components -> features -> lib/notation
 - `components/ScoreExportDialog.tsx`：导出状态、预览及 PNG/PDF 工作流。
 - `components/SourceEditor.tsx`：源码输入与尺寸同步。
 - `pages`：路由级组合，不承载领域算法。
+- `scores/index.ts`：由工具生成的曲库元数据索引；乐谱正文在阅读页按 slug 异步加载。
 
 ## 质量门禁
 

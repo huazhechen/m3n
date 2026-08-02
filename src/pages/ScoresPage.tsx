@@ -3,8 +3,7 @@ import { useMemo, useState } from 'react'
 import { TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
 import type { PresetScore } from '../lib/samples'
-import { validateM3NDiagnostics } from '../lib/m3n-validate'
-import { scoreDiagnosticSeverity, type ScoreDiagnosticSeverity } from '../lib/score-diagnostics'
+import type { ScoreDiagnosticSeverity } from '../lib/score-diagnostics'
 
 function ScoreCard({ score, severity }: { score: PresetScore; severity: ScoreDiagnosticSeverity }) {
   const hasDiagnostics = severity !== 'none'
@@ -38,10 +37,6 @@ function ScoreCard({ score, severity }: { score: PresetScore; severity: ScoreDia
 export function ScoresPage() {
   const [query, setQuery] = useState('')
   const normalizedQuery = query.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
-  const scoreSeverities = useMemo(
-    () => new Map(presetScores.map((score) => [score.slug, scoreDiagnosticSeverity(validateM3NDiagnostics(score.source))])),
-    [],
-  )
   const scores = useMemo(
     () => presetScores.filter((score) => score.searchText.includes(normalizedQuery)),
     [normalizedQuery],
@@ -70,7 +65,7 @@ export function ScoresPage() {
         )}
         <div className="score-list">
           {scores.map((score) => (
-            <ScoreCard key={score.slug} score={score} severity={scoreSeverities.get(score.slug) ?? 'none'} />
+            <ScoreCard key={score.slug} score={score} severity={score.diagnosticSeverity} />
           ))}
         </div>
       </div>

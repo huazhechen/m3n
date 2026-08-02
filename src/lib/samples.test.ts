@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { m3nToMei } from './m3n-mei'
-import { presetScores } from './samples'
+import { loadPresetScoreSource, presetScores } from './samples'
 
 describe('bundled score corpus', () => {
   it('contains unique slugs and usable metadata', () => {
@@ -17,19 +17,24 @@ describe('bundled score corpus', () => {
     )
   })
 
-  it('converts every score with valid source mappings', () => {
+  it('converts every score with valid source mappings', async () => {
     const failures: string[] = []
 
     for (const score of presetScores) {
       try {
-        const result = m3nToMei(score.source)
+        const source = await loadPresetScoreSource(score.slug)
+        if (source === null) {
+          failures.push(`${score.slug}: missing source`)
+          continue
+        }
+        const result = m3nToMei(source)
         if (!result.mei.startsWith('<?xml') || !result.mei.includes('<scoreDef')) {
           failures.push(`${score.slug}: missing MEI score`)
         }
         for (const range of result.sourceMap) {
           if (
             range.sourceStart < 0 ||
-            range.sourceEnd > score.source.length ||
+            range.sourceEnd > source.length ||
             range.sourceStart >= range.sourceEnd ||
             !range.xmlId
           ) {

@@ -1,11 +1,11 @@
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import type { ScoreRendererRef } from '../components/ScoreRenderer'
 import { TopNav } from '../components/TopNav'
 import { m3nToMei } from '../lib/m3n-mei'
 import { invalidMeasureIds } from '../lib/m3n-validate'
-import { presetScores } from '../lib/samples'
+import { loadPresetScoreSource, presetScores } from '../lib/samples'
 import { sharedScoreSource, sharedScoreUrl } from '../lib/score-share'
 import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
 
@@ -14,14 +14,24 @@ export function ScoreReaderPage() {
   const location = useLocation()
   const score = presetScores.find((item) => item.slug === slug)
   const source = sharedScoreSource(location.search)
+  const [loadedSource, setLoadedSource] = useState<string | null>(null)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
-  const scoreSource = source ?? score?.source
+  const scoreSource = source ?? loadedSource
+  useEffect(() => {
+    if (source !== null || !slug) return
+    let cancelled = false
+    void loadPresetScoreSource(slug).then((value) => {
+      if (!cancelled) setLoadedSource(value)
+    })
+    return () => { cancelled = true }
+  }, [slug, source])
   const result = useMemo(() => m3nToMei(scoreSource ?? ''), [scoreSource])
   const invalidMeasures = useMemo(() => invalidMeasureIds(scoreSource ?? ''), [scoreSource])
 
-  if (!scoreSource) {
+  if (source === null && !score) {
     return <Navigate to="/scores" replace />
   }
+  if (scoreSource === null) return <main><TopNav /><div className="page-status" role="status">Loading...</div></main>
 
   const scoreIndex = score ? presetScores.indexOf(score) : -1
   const previousScore = scoreIndex > 0 ? presetScores[scoreIndex - 1] : undefined
