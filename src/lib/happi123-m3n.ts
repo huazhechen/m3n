@@ -1,4 +1,4 @@
-import { addTiesToNotes, convertHappiNote, extractHappiNotes, readHappiNote } from './happi123/notes'
+import { addTiesToNotes, convertHappiNote, extractHappiNotes, readHappiNote, type HappiNote } from './happi123/notes'
 import { convertHappiLyricItems, type HappiLyricItem } from './happi123/lyrics'
 import { getHappi123Metadata } from './happi123/metadata'
 import { parseM3NDocument } from './m3n-direct'
@@ -273,6 +273,15 @@ function convertSequence(
 ): SequenceResult {
   const source = normalizeNotationSpacing(rawSource)
   const output: string[] = []
+  let lastRenderedNote: { index: number; note: HappiNote; postfixes: string } | null = null
+  const appendPostfix = (postfix: string) => {
+    if (!lastRenderedNote) {
+      output.push(postfix)
+      return
+    }
+    lastRenderedNote.postfixes += postfix
+    output[lastRenderedNote.index] = `${convertHappiNote(lastRenderedNote.note)}${lastRenderedNote.postfixes}`
+  }
   let hasMusic = false
   let index = 0
 
@@ -393,14 +402,18 @@ function convertSequence(
           const inner = applySuffixToGroup(rawInner.replace(/^t\s*:/, ''), suffix)
           const notes = extractHappiNotes(inner)
           const samePitch = notes.length > 1 && new Set(notes.map((note) => note.pitch)).size === 1
+          const explicitExtension = /-/.test(rawInner) || suffix.includes('-')
           if (notes.length === 1) {
             output.push(convertSequence(inner, diagnostics, state).output)
-          } else if (tieGroup || samePitch) {
+          } else if (tieGroup || samePitch && !explicitExtension) {
             output.push(convertSequence(addTiesToNotes(inner), diagnostics, state).output)
+          } else if (explicitExtension && rawInner.includes('|')) {
+            output.push(convertSequence(inner, diagnostics, state).output)
           } else {
             output.push(`{lg}${convertSequence(inner, diagnostics, state).output}{/}`)
           }
         }
+        lastRenderedNote = null
         index += end + 1 + (isGrace ? 1 : suffix.length)
         hasMusic ||= !isGrace
         continue
@@ -421,6 +434,7 @@ function convertSequence(
         ':|||': ':|||',
       }
       output.push(mapped[bar[0]] ?? bar[0])
+      lastRenderedNote = null
       index += bar[0].length
       hasMusic = true
       continue
@@ -428,7 +442,12 @@ function convertSequence(
 
     const note = readHappiNote(source, index)
     if (note) {
-      output.push(`${convertHappiNote(note)}${state.pendingGrace ?? ''}`)
+      const rendered = convertHappiNote(note)
+      const postfixes = state.pendingGrace ?? ''
+      output.push(`${rendered}${postfixes}`)
+      lastRenderedNote = note.pitch !== '0' && !rendered.includes(' ')
+        ? { index: output.length - 1, note, postfixes }
+        : null
       state.pendingGrace = undefined
       if (note.pitch !== '0') state.lastPitch = note.pitch
       index = note.end
@@ -438,12 +457,12 @@ function convertSequence(
 
     const ornament = /^(tr~?|st|v)/.exec(rest)
     if (ornament) {
-      output.push(ornament[0].startsWith('tr') ? '{tr}' : ornament[0] === 'st' ? '{tip}' : '{breath}')
+      appendPostfix(ornament[0].startsWith('tr') ? '{tr}' : ornament[0] === 'st' ? '{tip}' : '{breath}')
       index += ornament[0].length
       continue
     }
     if (rest[0] === '>') {
-      output.push('{str}')
+      appendPostfix('{str}')
       index += 1
       continue
     }
@@ -454,7 +473,13 @@ function convertSequence(
     }
     if (rest[0] === '-' && /^-+/.test(rest)) {
       const extension = /^-+/.exec(rest)?.[0] ?? '-'
-      if (state.lastPitch) {
+      if (lastRenderedNote) {
+        lastRenderedNote.note = {
+          ...lastRenderedNote.note,
+          duration: lastRenderedNote.note.duration + extension.length,
+        }
+        output[lastRenderedNote.index] = `${convertHappiNote(lastRenderedNote.note)}${lastRenderedNote.postfixes}`
+      } else if (state.lastPitch) {
         tiePreviousRenderedNote(output, state.lastPitch)
         output.push(convertHappiNote({
           start: index,
@@ -495,6 +520,9 @@ function parseSource(source: string) {
   const header = { ...defaultHeader }
   const lyrics: HappiLyricItem[][] = []
   let body = source
+    // Omitted printed repeats have no body to convert. Remove the entire
+    // marker before it can become an empty M3N part, while preserving {br}.
+    .replace(/\{(?:mark|section):[^}]+\}\s*\{omit:[^}]+\}/g, '')
   let initialTimeSignatureSeen = false
 
   body = body.replace(/\{(title|subtitle|category|singer|composer|lyricist|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, rawValue) => {
@@ -652,7 +680,8 @@ function repairLegacyStructure(source: string) {
     if (!/(?:\|\|\||:\|\|\|)(?:\{x\d+\})?\s*(?:\{lyrics|$)/.test(repaired)) repaired = `${repaired.trim()} |||`
   }
   if (diagnostics.some((diagnostic) => diagnostic.includes('后置指令') || diagnostic.includes('sfz'))) {
-    repaired = repaired.replace(/\{sfz\}|\{(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])\}/g, '')
+    // An invalid sfz must not discard unrelated, already attached ornaments.
+    repaired = repaired.replace(/\{sfz\}/g, '').replace(/ {2,}/g, ' ')
   }
   if (diagnostics.some((diagnostic) => diagnostic.includes('延音目标'))) {
     repaired = repaired.replace(/~/g, '')
@@ -667,8 +696,6 @@ export function happi123ToM3N(source: string): ConversionResult {
     .replace(/(:\|\|\|?|:\|\|:)\s+\{x(\d+)\}/g, '$1{x$2}')
     .replace(/\|\|\|\s*\{x(\d+)\}/g, ':|||{x$1}')
     .replace(/(?:\s*\{br\}\s*){2,}/g, ' {br} ')
-    .replace(/^\s*\{br\}\s*/, '')
-    .replace(/\s*\{br\}\s*$/, '')
     // Happi123 uses {omit=N} section markers for printed repeats. They have
     // no musical body, so retaining them as M3N parts would create invalid
     // empty part definitions.

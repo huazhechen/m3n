@@ -53,8 +53,42 @@ describe('happi123ToM3N', () => {
   it('applies a group extension to the final tied note', () => {
     const result = happi123ToM3N('{title:连音}\n{key_signature:C}\n{time_signature:4/4}\n(11)--|||')
 
-    expect(result.output).toContain('1~ 1^. |||')
+    expect(result.output).toContain('{lg}1 1^.{/} |||')
     expect(result.diagnostics).toEqual([])
+  })
+
+  it('attaches Happi123 articulations to their preceding notes', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n1st 2tr|||')
+
+    expect(result.output).toContain('1{tip} 2{tr} |||')
+  })
+
+  it('keeps attached ornaments when an unsupported sfz is removed', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n1g/st{sf}2g/st|||')
+
+    expect(result.output).toContain('(1e){tip} (2e){tip} |||')
+    expect(result.output).not.toContain('{sfz}')
+  })
+
+  it('extends a postfixed note instead of creating a same-pitch tie', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n1>-|||')
+
+    expect(result.output).toContain('1^{str} |||')
+    expect(result.output).not.toContain('1~')
+  })
+
+  it('does not infer ties from equal pitches inside a group', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:3/4}\n(11)-|||')
+
+    expect(result.output).toContain('{lg}1 1^{/} |||')
+    expect(result.output).not.toContain('1~')
+  })
+
+  it('removes omitted sections while retaining an explicit line break', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n{mark:重复}{omit:2}{br}11|||')
+
+    expect(result.output).toContain('{br}\n1 1 |||')
+    expect(result.output).not.toContain('part=重复')
   })
 
   it('applies a shortening suffix only to the final note in a group', () => {
@@ -74,7 +108,7 @@ describe('happi123ToM3N', () => {
   it('ties a standalone extension to the final note inside a group', () => {
     const result = happi123ToM3N('{title:组延音}\n{key_signature:C}\n{time_signature:4/4}\n7_(6_6)--|----|||')
 
-    expect(result.output).toContain('(7 6~) 6^.~ | 6^^ |||')
+    expect(result.output).toContain('(7) {lg}(6) 6^.~{/} | 6^^ |||')
     expect(result.output).not.toContain('(7~)')
   })
 
@@ -103,14 +137,14 @@ describe('happi123ToM3N', () => {
   it('keeps spaced duration extensions on their preceding note', () => {
     const result = happi123ToM3N('{title:延音}\n{key_signature:C}\n{time_signature:3/4}\n(6, - -|6, --) |||')
 
-    expect(result.output).toContain('6d^.~ | 6d^. |||')
+    expect(result.output).toContain('6d^. | 6d^. |||')
   })
 
   it('does not reinterpret a trill marker as a tie', () => {
     const result = happi123ToM3N('{title:颤音}\n{key_signature:C}\n{time_signature:4/4}\n(1{tip:震音}1tr~)--|||')
 
-    expect(result.output).toContain('1~ {text=震音} 1^. {tr} |||')
-    expect(result.output).not.toContain('1^.~')
+    expect(result.output).toContain('{lg}1 {text=震音} 1^.{tr}{/} |||')
+    expect(result.output).not.toContain('1~')
   })
 
   it('switches between explicitly listed mixed meters by measure duration', () => {

@@ -3,7 +3,7 @@
 {bpm:132}
 {key_signature:1=A}
 {time_signature:2/4}
-{mark:A第一插部(a小调-C大调-a小调)}
+{mark:A第一插部}
 {br}
 {1=C}
 |:
@@ -25,7 +25,7 @@
 :|
 {br}
 
-{mark:B叠部(主部A大调)}
+{mark:B叠部}
 {br}
 {1=A}
 |:
@@ -34,7 +34,7 @@
 :|
 {br}
 
-{mark:C第二插部(#f小调-A大调-#f小调)}
+{mark:C第二插部}
 {br}
 {1=A}
 |:
@@ -50,7 +50,7 @@
 :|
 {br}
 
-{mark:B¹叠部再现}
+{mark:B¹}
 {br}
 {1=A}
 |:
@@ -74,4 +74,4 @@
 3g/.3g//|
 3g-{p}|3g-|4g//3g//2g//3g//4g//3g//2g//3g//|4g-|(4g)@3g/(4g)@3g/(4g)@3g/(4g)@3g/|{br}2g.5g/|
 3g-{f}|3g-|4g//3g//2g//3g//4g//3g//2g//3g//|4g-|(4g)@3g-|(3g)@2g/st(3g)@2g/st(3g)@2g/st(3g)@2g/st|{br}
-1g.{ff}3g/|1g.5g/|1g.3g/|1g/st3g/st1g/st5g/st|1gst1g>|1g>-|||
+1g.{ff}3g/|1g.5g/|1g.3g/|1g/st3g/st1g/st5g/st|1gst1g>|(1g>-|1g)|||
