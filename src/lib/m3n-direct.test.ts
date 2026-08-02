@@ -59,4 +59,11 @@ describe('direct M3N parser', () => {
     expect(passes.get(measures[2])).toEqual(new Set([2, 3, 4]))
     expect(passes.get(measures[3])).toEqual(new Set([1, 2, 3, 4]))
   })
+
+  it('keeps the initial second pass before a D.S. from a second ending', () => {
+    const measures = parseM3NDocument('{2/4} ||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{ds}{/} || {segno}7 1 |||').parts.get('score')!.melody
+    const passes = measurePlaybackPasses(measures)
+
+    expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
+  })
 })

@@ -116,12 +116,18 @@ export function measurePlaybackPasses(measures: DirectMeasure[]) {
     while (endingStart > 0 && measures[endingStart - 1]?.ending) endingStart -= 1
     let endingEnd = jumpIndex + 1
     while (measures[endingEnd]?.ending) endingEnd += 1
-    const returnPass = Math.max(0, ...measures.slice(endingStart, endingEnd).flatMap((measure) => (
+    const currentEndingPass = Math.max(0, ...measures.slice(endingStart, endingEnd).flatMap((measure) => (
       measure.ending ? [...passRange(measure.ending)] : []
     )))
-    if (returnPass > 0) {
+    const returnPass = Math.min(...measures.slice(endingEnd).flatMap((measure) => (
+      measure.ending ? [...passRange(measure.ending)].filter((pass) => pass > currentEndingPass) : []
+    )))
+    if (Number.isFinite(returnPass)) {
       for (const passes of passesByMeasure.values()) passes.delete(returnPass)
-      for (let index = segnoIndex; index < endingEnd; index += 1) {
+      const returnEndingIndex = measures.findIndex((measure, index) => (
+        index >= endingEnd && measure.ending !== undefined && passRange(measure.ending).has(returnPass)
+      ))
+      for (let index = segnoIndex; index <= returnEndingIndex; index += 1) {
         const measure = measures[index]!
         if (!measure.ending || passRange(measure.ending).has(returnPass)) {
           passesByMeasure.get(measure)?.add(returnPass)
