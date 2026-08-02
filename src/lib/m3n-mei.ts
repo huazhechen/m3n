@@ -363,7 +363,17 @@ export function m3nToMei(source: string): MeiConversionResult {
           return { ...lyric, n: block.n, verseIndex: block.verseIndex }
         }).flat())
         : []
-      const lyrics = assignedLyrics
+      const visualVerseIndexes = new Map<number, number>()
+      const lyrics = measure?.ending
+        ? assignedLyrics.map((lyric) => {
+          let visualIndex = visualVerseIndexes.get(lyric.verseIndex)
+          if (visualIndex === undefined) {
+            visualIndex = visualVerseIndexes.size + 1
+            visualVerseIndexes.set(lyric.verseIndex, visualIndex)
+          }
+          return { ...lyric, n: String(visualIndex), verseIndex: visualIndex }
+        })
+        : assignedLyrics
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
       return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
