@@ -69,16 +69,18 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
 
 export async function renderHeaderAndScoreCanvas(header: HTMLElement | null, score: HTMLCanvasElement, width: number) {
   if (!header) return score
+  const headerWidth = header.getBoundingClientRect().width
+  if (headerWidth <= 0) return score
   const copy = header.cloneNode(true) as HTMLElement
   copy.style.position = 'fixed'
   copy.style.top = '0'
   copy.style.left = '-10000px'
-  copy.style.width = `${width}px`
-  copy.style.minWidth = `${width}px`
+  copy.style.width = `${headerWidth}px`
+  copy.style.minWidth = `${headerWidth}px`
   document.body.append(copy)
   try {
     const { default: html2canvas } = await import('html2canvas')
-    const heading = await html2canvas(copy, { backgroundColor: '#fffef9', logging: false, scale: 1 })
+    const heading = await html2canvas(copy, { backgroundColor: '#fffef9', logging: false, scale: width / headerWidth })
     const canvas = document.createElement('canvas')
     canvas.width = Math.max(width, score.width)
     canvas.height = heading.height + score.height
