@@ -267,6 +267,52 @@ function mergeSustainedAtoms(source: string) {
   )
 }
 
+function noteForBeats(pitch: string, beats: number, tied: boolean) {
+  for (let carets = 0; carets <= 6; carets += 1) {
+    for (let dots = 0; dots <= 4; dots += 1) {
+      if (Math.abs(durationInBeats(0, carets, dots) - beats) < EPSILON) {
+        return `${pitch}${'^'.repeat(carets)}${'.'.repeat(dots)}${tied ? '~' : ''}`
+      }
+    }
+  }
+  return null
+}
+
+function splitSustainedNotesAtBeatBoundaries(source: string) {
+  const replacements: Array<{ start: number; end: number; value: string }> = []
+  const document = parseM3NDocument(source)
+  for (const part of document.parts.values()) {
+    for (const staff of [part.melody, part.bass]) {
+      for (const measure of staff) {
+        let offset = 0
+        for (const event of measure.events) {
+          const meterCount = event.meterCount ?? document.meterCount
+          const meterUnit = event.meterUnit ?? document.meterUnit
+          const beat = 4 / meterUnit
+          const measureBeats = meterCount * beat
+          const midpoint = meterCount % 2 === 0 ? measureBeats / 2 : undefined
+          const boundary = midpoint && offset > EPSILON && offset < midpoint - EPSILON && offset + event.beats > midpoint + EPSILON
+            ? midpoint
+            : undefined
+          if (boundary && event.kind === 'note' && event.pitches.length === 1) {
+            const firstBeats = boundary - offset
+            const secondBeats = event.beats - firstBeats
+            const pitch = event.pitches[0]
+            const first = pitch && noteForBeats(pitch, firstBeats, true)
+            const second = pitch && noteForBeats(pitch, secondBeats, event.tie)
+            if (first && second) replacements.push({ start: event.sourceStart, end: event.sourceEnd, value: `${first} ${second}` })
+          }
+          offset += event.beats
+        }
+      }
+    }
+  }
+  return replacements.sort((left, right) => right.start - left.start).reduce(
+    (result, replacement) => `${result.slice(0, replacement.start)}${replacement.value}${result.slice(replacement.end)}`,
+    source,
+  )
+}
+
 function formatMusic(source: string) {
   const commentBreak = '\u0000'
   const compact = normalizeAdjacentBarlines(normalizeBeamGroups(source))
@@ -319,7 +365,7 @@ function formatLyrics(source: string) {
 
 /** Formats M3N source without changing its musical or lyric content. */
 export function formatM3N(source: string) {
-  const { main, bass, lyrics } = splitSupplementBlocks(mergeSustainedAtoms(source))
+  const { main, bass, lyrics } = splitSupplementBlocks(splitSustainedNotesAtBeatBoundaries(mergeSustainedAtoms(source)))
   const supplements = [
     ...lyrics.map((lyric) => {
       const text = formatLyrics(lyric.text)

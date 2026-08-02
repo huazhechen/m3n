@@ -74,6 +74,13 @@ describe('formatM3N', () => {
     expect(acrossMidpoint).toContain('2 1~ 1 3 |||')
   })
 
+  it('splits a sustained note that crosses the midpoint of a divisible meter', () => {
+    const result = formatM3N('{key=F} {4/4}\n(3) 6d^..~ | 6d^ (6d 7bd) (6d 3d) |||')
+
+    expect(result).toContain('(3) 6d.~ 6d^~ | 6d^ (6d 7bd) (6d 3d) |||')
+    expect(validateM3N(result)).toEqual([])
+  })
+
   it('does not break nested rhythm parentheses while merging', () => {
     const result = formatM3N('{6/8}\n((0 0 0 0)) ((0 0 0 0)) ((0 0 0 0)) |||')
 
