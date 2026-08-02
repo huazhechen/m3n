@@ -31,8 +31,8 @@ function normalizeScale(scale: number | undefined) {
   return Math.max(1, Math.min(1000, scale ?? 42))
 }
 
-export function layoutBreaks(mei: string) {
-  return mei.includes('<sb/>') ? 'encoded' : 'auto'
+export function layoutBreaks() {
+  return 'line'
 }
 
 export function markInvalidMeasures(mei: string, measureIds: readonly string[]) {
@@ -66,7 +66,7 @@ export class VerovioScore {
     const layoutMei = markInvalidMeasures(includeBass ? this.mei : withoutBassStaff(this.mei), invalidMeasureIds)
     this.toolkit.setOptions({
       adjustPageHeight: true,
-      breaks: layoutBreaks(layoutMei),
+      breaks: layoutBreaks(),
       footer: 'none',
       header: 'none',
       lyricTopMinMargin: 0,
