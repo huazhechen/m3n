@@ -114,6 +114,54 @@ function playbackLyricCounts(source: string) {
   return counts
 }
 
+type LyricTarget = { tied: boolean }
+
+function playbackLyricTargets(source: string) {
+  const document = parseM3NDocument(source)
+  const targetsByPass = new Map<number, LyricTarget[]>()
+  const partNames = document.partOrder.length > 0
+    ? [...new Set(document.partOrder)]
+    : [...document.parts.keys()]
+  for (const name of partNames) {
+    const part = document.parts.get(name)
+    if (!part) continue
+    const passesByMeasure = measurePlaybackPasses(part.melody)
+    let previousTied = false
+    for (const measure of part.melody) {
+      const passes = passesByMeasure.get(measure) ?? new Set([1])
+      for (const event of measure.events) {
+        const tiedTarget = previousTied
+        previousTied = event.tie
+        const instrumental = document.intervals.some((interval) => interval.kind === 'inst'
+          && interval.staff === 'melody'
+          && interval.start !== undefined
+          && interval.end !== undefined
+          && interval.start <= event.sourceStart
+          && event.sourceEnd <= interval.end)
+        if (event.kind === 'rest' || instrumental) continue
+        const targetCount = event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
+        for (const pass of passes) {
+          const targets = targetsByPass.get(pass) ?? []
+          for (let index = 0; index < targetCount; index += 1) targets.push({ tied: tiedTarget && index === 0 })
+          targetsByPass.set(pass, targets)
+        }
+      }
+    }
+  }
+  return targetsByPass
+}
+
+function hasUnresolvedForcedLyricTarget(items: ReturnType<typeof parseLyricItems>, targets: readonly LyricTarget[]) {
+  let itemIndex = 0
+  for (const target of targets) {
+    const item = items[itemIndex]
+    if (!item) break
+    if (item.forceTiedTarget !== target.tied) continue
+    itemIndex += 1
+  }
+  return items.slice(itemIndex).some((item) => item.forceTiedTarget)
+}
+
 function supplementMessage(current: Supplement, token: Token, message: string) {
   const diagnostic = lineMessage(token, message)
   return current.kind === 'lyrics' ? lyricMessage(diagnostic) : diagnostic
@@ -1022,9 +1070,10 @@ function lyricItems(tokens: Token[], mode: LyricMode) {
     .map((token) => token.raw)
     .join('')
     .trim()
-  if (!source) return { count: 0, forcedTiedTargets: 0, hasTab: false, hasEmptyForcedTarget: false }
+  if (!source) return { items: [], count: 0, forcedTiedTargets: 0, hasTab: false, hasEmptyForcedTarget: false }
   const items = parseLyricItems(source, 0, mode)
   return {
+    items,
     count: items.length,
     forcedTiedTargets: items.filter((item) => item.forceTiedTarget).length,
     hasTab: /\t/.test(source),
@@ -1076,6 +1125,7 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
   const { main, supplements } = extractSupplements(tokens, diagnostics)
   const mainResult = validateBody(main, diagnostics, { skipBeatValidation: options.skipBeatValidation })
   const lyricCountsByPlaybackPass = mainResult.hasParts ? undefined : playbackLyricCounts(source)
+  const lyricTargetsByPlaybackPass = playbackLyricTargets(source)
 
   const lyrics = supplements.filter((block) => block.kind === 'lyrics')
   const bassBlocks = supplements.filter((block) => block.kind === 'bass')
@@ -1105,6 +1155,9 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       const firstPassIsIncomplete = pass === 1 && items.count !== expected
       if (exceedsAvailablePositions || firstPassIsIncomplete) {
         diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`))
+      }
+      if (hasUnresolvedForcedLyricTarget(items.items, lyricTargetsByPlaybackPass.get(pass) ?? [])) {
+        diagnostics.push(lyricMessage(`第 ${lyric.line} 行：第 ${pass} 遍存在没有可用延音目标的 +歌词项`))
       }
     }
   }

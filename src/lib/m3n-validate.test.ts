@@ -256,6 +256,12 @@ describe('validateM3N', () => {
     expect(messages('{3/4} 1~ 1 2 |||\n{lyrics}la +la la{/}')).toBe('')
   })
 
+  it('rejects + prefixed lyrics when no tied target is available', () => {
+    const source = '{4/4} 1 2 3 4 |||\n{lyrics}la +la la{/}'
+
+    expect(messages(source)).toContain('[L] 第 2 行：第 1 遍存在没有可用延音目标的 +歌词项')
+  })
+
   it('counts character lyrics, grouped lyrics, extenders, and repeated placeholders by alignment position', () => {
     expect(messages('{5/4} 1 2 3 4 5 |||\n{lyrics}甲，%{2}(乙丙)_{0}{/}')).toBe('')
   })
