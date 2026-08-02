@@ -390,6 +390,12 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('{lyrics}\n你好 hello world\n{/}')
   })
 
+  it('converts empty Happi123 lyric parentheses to an alignment placeholder', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:3/4}\n123|||\n{lyric}a()b{/lyric}')
+
+    expect(result.output).toContain('{lyrics}\na % b\n{/}')
+  })
+
   it('merges a counted repeat end with its following terminal bar', () => {
     const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n12:|{repeat:4}|||\n{lyric}甲乙{/lyric}')
 

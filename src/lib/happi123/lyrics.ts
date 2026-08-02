@@ -23,6 +23,11 @@ export function convertHappiLyricItems(source: string) {
       index += 1
       continue
     }
+    if (rest.startsWith('()')) {
+      items.push({ value: '%', placeholder: true })
+      index += 2
+      continue
+    }
     if (rest[0] === '(') {
       const end = rest.indexOf(')')
       if (end > 1) {
