@@ -392,6 +392,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toMatch(/m3n-measure-1-1[\s\S]*?<\/measure>\s*<sb\/>\s*<measure xml:id="m3n-measure-1-2"/)
   })
 
+  it('retains a line break before a part-closing interval', () => {
+    const result = m3nToMei('{key=C} {2/4} {parts=A B}\n{part=A}1 2 | {br} {/} {part=B}3 4 |')
+
+    expect(result.mei).toMatch(/m3n-measure-1-1[\s\S]*?<\/measure>\s*<sb\/>\s*<\/section>\s*<section xml:id="m3n-segment-2">/)
+  })
+
   it('serializes multi-measure rests as MEI multiRest elements', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 | {rest=4} | 4 3 2 1 |||')
 
