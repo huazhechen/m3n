@@ -611,7 +611,6 @@ export function m3nToMei(source: string): MeiConversionResult {
             .filter((candidate) => candidate.kind !== 'ending' || endingPasses(candidate.n ?? '').has(pass))
             .map((candidate) => `#${candidate.id}`))
         }
-        repeatStartIndex = expansion.length
         index = spanEnd + 1
         continue
       }
@@ -621,7 +620,6 @@ export function m3nToMei(source: string): MeiConversionResult {
         if (node.repeatCount) {
           const repeat = expansion.slice(repeatStartIndex)
           for (let pass = 1; pass < node.repeatCount; pass += 1) expansion.push(...repeat)
-          repeatStartIndex = expansion.length
         }
       }
       index += 1

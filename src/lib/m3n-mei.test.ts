@@ -560,6 +560,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('xml:id="m3n-e-7-v1" n="1"><syl>丙')
   })
 
+  it('repeats from the beginning for each implicit repeat end', () => {
+    const result = m3nToMei('{2/4} 1 2 :|| 3 4 :|| 5 6 |||')
+
+    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-1 #m3n-segment-2 #m3n-segment-1 #m3n-segment-1 #m3n-segment-2 #m3n-segment-3"/>')
+  })
+
   it('writes incomplete repeat-boundary measures as native repeat bars', () => {
     const result = m3nToMei('{4/4}\n(1 2) | 3 4 5 6 | 1 2 3 :|| 4 | 5 6 7 |||')
 

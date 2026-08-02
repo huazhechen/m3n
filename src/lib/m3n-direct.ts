@@ -103,7 +103,6 @@ export function measurePlaybackPasses(measures: DirectMeasure[]) {
     for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
       passesByMeasure.set(measures[repeatedIndex]!, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
     }
-    repeatStart = index + 1
   }
 
   for (const measure of measures) {
