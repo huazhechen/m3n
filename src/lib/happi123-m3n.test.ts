@@ -249,7 +249,7 @@ describe('happi123ToM3N', () => {
     const result = happi123ToM3N([
       '{key_signature:C}',
       '{time_signature:2/4}',
-      '|:11[1:22:|][2:33]{S}',
+      '|:11[1:22:|][2:33]44|',
     ].join('\n'))
 
     expect(result.output).toContain('{volta=')
@@ -268,10 +268,10 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('1^^ {ds}:|||')
   })
 
-  it('keeps a navigation marker inside a preceding volta before its barline', () => {
+  it('keeps a navigation marker after a preceding volta before its barline', () => {
     const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n{start}|:11[1:22:|][2:33]||{DS}')
 
-    expect(result.output).toContain('{volta=2}3 3{ds}{/} ||')
+    expect(result.output).toContain('{volta=2}3 3{/} {ds}||')
     expect(result.diagnostics).toEqual([])
   })
 

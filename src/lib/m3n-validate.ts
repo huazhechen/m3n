@@ -369,6 +369,7 @@ function validateBody(
   let repeatId = 0
   let currentVoltaRepeat = 0
   let completedVoltaGroup = false
+  let voltaNeedsBar = false
   let repeatCountTarget = false
   let segnoCount = 0
   let jumpCount = 0
@@ -445,10 +446,7 @@ function validateBody(
     blocks.pop()
     if (top.name === 'volta') {
       completedVoltaGroup = true
-      const next = tokens.slice(tokens.indexOf(token) + 1).find((candidate) => !isTrivia(candidate))
-      if (!next || next.kind !== 'bar') {
-        diagnostics.push(lineMessage(token, 'volta 关闭后必须紧接小节线'))
-      }
+      voltaNeedsBar = true
     }
     if (top.name === 'part') {
       finishUnit()
@@ -518,6 +516,10 @@ function validateBody(
   }
 
   const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet'; pitches?: number[]; tie?: boolean; lyricCount?: number }) => {
+    if (voltaNeedsBar && !activeVolta()) {
+      diagnostics.push(lineMessage(token, 'volta 关闭后、下一条小节线前不能出现音符'))
+      voltaNeedsBar = false
+    }
     if (completedVoltaGroup && !activeVolta()) {
       currentVoltaRepeat = 0
       completedVoltaGroup = false
@@ -555,6 +557,7 @@ function validateBody(
   }
 
   const handleBar = (token: Token) => {
+    voltaNeedsBar = false
     rejectPendingSfz(token)
     if (parens.length > 0) {
       diagnostics.push(lineMessage(token, '圆括号必须在同一小节内闭合'))

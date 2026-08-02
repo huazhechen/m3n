@@ -180,6 +180,11 @@ describe('validateM3N', () => {
     expect(validateM3N('{2/4} ||: 1 2 | {volta=1}3 4{/} :|| {volta=2}5 6{/} | 7 1e |||')).toEqual([])
   })
 
+  it('allows structural markers but rejects music before a volta closing barline', () => {
+    expect(validateM3N('{2/4} {segno} ||: 1 2 | {volta=1}3 4{/} {ds}:|||')).toEqual([])
+    expect(messages('{2/4} ||: 1 2 | {volta=1}3 4{/} 5 6 |')).toContain('volta 关闭后、下一条小节线前不能出现音符')
+  })
+
   it('allows a new volta group after ordinary music in the same outer repeat', () => {
     const source = '{2/4} ||: {volta=1}1 2{/} | {volta=2}3 4{/} | 5 6 | {volta=1}1 2{/} || {volta=2}3 4{/} | 5 6 :|||'
 
