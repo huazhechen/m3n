@@ -292,6 +292,15 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<verse xml:id="m3n-e-2-v1" n="1"><syl>pass</syl></verse><verse xml:id="m3n-e-2-v2" n="2"><syl>pass</syl></verse>')
   })
 
+  it('maps pass-specific lyrics to their matching alternate endings', () => {
+    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{/} |||\n{lyrics-word=1}a b c d{/}\n{lyrics-word=2}a b e f{/}')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>a</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>a</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>c</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v2" n="2"><syl>e</syl></verse></note>')
+  })
+
   it('keeps instrumental intervals lyric-free without visual markers', () => {
     const result = m3nToMei('{key=C} {2/4}\n{inst}1 2{/} | 3 4 |||\n{lyrics-word}\nla la\n{/}')
 

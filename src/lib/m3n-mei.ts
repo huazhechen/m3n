@@ -268,6 +268,7 @@ export function m3nToMei(source: string): MeiConversionResult {
   const lyricSyllables = document.lyrics.map((block, index) => ({
     n: /^\d+$/.test(block.range) ? block.range : String(index + 1),
     verseIndex: index + 1,
+    passes: block.range ? endingPasses(block.range) : undefined,
     syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
       ...syllable,
       cjkSpacingCompensation: block.mode === 'char',
@@ -347,8 +348,10 @@ export function m3nToMei(source: string): MeiConversionResult {
       const lyricTargetCount = event.kind === 'tuplet'
         ? event.pitches.filter((pitch) => pitch !== '0').length
         : 1
+      const endingPassSet = measure?.ending ? endingPasses(measure.ending) : undefined
       const lyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
         ? lyricSyllables.flatMap((block, index) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
+          if (endingPassSet && block.passes && ![...endingPassSet].some((pass) => block.passes.has(pass))) return []
           const lyric = block.syllables[melodyIndices[index]]
           const tiedTarget = targetIndex === 0 && tieEnd
           if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []
