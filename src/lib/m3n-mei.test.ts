@@ -484,6 +484,13 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2"/>')
   })
 
+  it('continues after a final alternate ending closed by a regular barline', () => {
+    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/} :|| {volta=2}5 6{/} | 7 1e |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2 #m3n-segment-2"/>')
+  })
+
   it('expands an explicitly counted repeat the requested number of times', () => {
     const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | 3 4 :|||{x3}')
 

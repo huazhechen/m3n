@@ -422,8 +422,8 @@ function validateBody(
     blocks.pop()
     if (top.name === 'volta') {
       const next = tokens.slice(tokens.indexOf(token) + 1).find((candidate) => !isTrivia(candidate))
-      if (!next || next.kind !== 'bar' || ![':||', ':||:', ':|||', '||', '|||'].includes(next.raw)) {
-        diagnostics.push(lineMessage(token, 'volta 关闭后必须紧接后反复线、双小节线或终止线'))
+      if (!next || next.kind !== 'bar') {
+        diagnostics.push(lineMessage(token, 'volta 关闭后必须紧接小节线'))
       }
     }
     if (top.name === 'part') {
