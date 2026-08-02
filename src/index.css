@@ -596,14 +596,24 @@ textarea::selection {
   border-color: #2f6f73;
 }
 
-.score-list .score-card.is-invalid-score {
-  border-color: #c05b35;
-  background: #fff8f3;
+.score-list .score-card.is-error-score {
+  border-color: #bd3026;
+  background: #fff5f4;
 }
 
-.score-list .score-card.is-invalid-score:hover {
-  border-color: #a33b24;
-  background: #fff1e8;
+.score-list .score-card.is-error-score:hover {
+  border-color: #98241d;
+  background: #ffecea;
+}
+
+.score-list .score-card.is-lyric-score {
+  border-color: #b07a00;
+  background: #fff9e8;
+}
+
+.score-list .score-card.is-lyric-score:hover {
+  border-color: #896000;
+  background: #fff3cf;
 }
 
 .score-list .score-card > div:first-child {

@@ -163,9 +163,24 @@ describe('validateM3N', () => {
       '{lyrics=1~2} one\ttwo {/}',
     ].join('\n')
     const result = messages(source)
+    expect(result).toContain('[L]')
     expect(result).toContain('歌词块遍次重叠：1')
     expect(result).toContain('不能使用 Tab')
     expect(result).not.toContain('歌词对位数量不匹配')
+  })
+
+  it('prefixes lyric supplement structure diagnostics with [L]', () => {
+    const diagnostics = [
+      ...validateM3N('{2/4} 1 2 |||\n{lyrics}{inst}la la{/lyrics}{/}'),
+      ...validateM3N('{2/4} 1 2 |||\n{lyrics}la la{/bass}'),
+      ...validateM3N('{2/4} 1 2 |||\n{bass}{lyrics}la la{/}{/}'),
+    ]
+
+    expect(diagnostics).toEqual(expect.arrayContaining([
+      expect.stringMatching(/^\[L\] .*区间关闭顺序错误/),
+      expect.stringMatching(/^\[L\] .*补充块关闭名称错误/),
+      expect.stringMatching(/^\[L\] .*补充块不能嵌套/),
+    ]))
   })
 
   it('rejects lyric reuse that exceeds a shorter volta path', () => {

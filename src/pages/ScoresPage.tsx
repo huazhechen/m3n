@@ -4,13 +4,16 @@ import { TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
 import type { PresetScore } from '../lib/samples'
 import { validateM3N } from '../lib/m3n-validate'
+import { scoreDiagnosticSeverity, type ScoreDiagnosticSeverity } from '../lib/score-diagnostics'
 
-function ScoreCard({ score, invalid }: { score: PresetScore; invalid: boolean }) {
+function ScoreCard({ score, severity }: { score: PresetScore; severity: ScoreDiagnosticSeverity }) {
+  const hasDiagnostics = severity !== 'none'
+  const diagnosticLabel = severity === 'lyric' ? '仅包含歌词对位问题' : '包含乐谱语法或结构错误'
   return (
     <Link
-      className={invalid ? 'score-card is-invalid-score' : 'score-card'}
+      className={`score-card${hasDiagnostics ? ` is-${severity}-score` : ''}`}
       to={`/scores/${score.slug}`}
-      aria-label={invalid ? `${score.title}，包含校验问题` : undefined}
+      aria-label={hasDiagnostics ? `${score.title}，${diagnosticLabel}` : undefined}
     >
       <div>
         <h3>{score.title}</h3>
@@ -35,8 +38,8 @@ function ScoreCard({ score, invalid }: { score: PresetScore; invalid: boolean })
 export function ScoresPage() {
   const [query, setQuery] = useState('')
   const normalizedQuery = query.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
-  const invalidScoreSlugs = useMemo(
-    () => new Set(presetScores.filter((score) => validateM3N(score.source).length > 0).map((score) => score.slug)),
+  const scoreSeverities = useMemo(
+    () => new Map(presetScores.map((score) => [score.slug, scoreDiagnosticSeverity(validateM3N(score.source))])),
     [],
   )
   const scores = useMemo(
@@ -67,7 +70,7 @@ export function ScoresPage() {
         )}
         <div className="score-list">
           {scores.map((score) => (
-            <ScoreCard key={score.slug} score={score} invalid={invalidScoreSlugs.has(score.slug)} />
+            <ScoreCard key={score.slug} score={score} severity={scoreSeverities.get(score.slug) ?? 'none'} />
           ))}
         </div>
       </div>

@@ -84,6 +84,15 @@ function lineMessage(token: Token, message: string) {
   return `第 ${token.line} 行：${message}`
 }
 
+function lyricMessage(message: string) {
+  return `[L] ${message}`
+}
+
+function supplementMessage(current: Supplement, token: Token, message: string) {
+  const diagnostic = lineMessage(token, message)
+  return current.kind === 'lyrics' ? lyricMessage(diagnostic) : diagnostic
+}
+
 function isTrivia(token: Token) {
   return token.kind === 'space' || token.kind === 'comment'
 }
@@ -149,7 +158,7 @@ function extractSupplements(tokens: Token[], diagnostics: string[]) {
           if (nested.length > 0) {
             const expected = nested.at(-1)
             if (closing !== null && closing !== expected) {
-              diagnostics.push(lineMessage(token, `区间关闭顺序错误：期望 {/${expected}}，实际 {/${closing}}`))
+              diagnostics.push(supplementMessage(current, token, `区间关闭顺序错误：期望 {/${expected}}，实际 {/${closing}}`))
             } else {
               nested.pop()
             }
@@ -157,7 +166,7 @@ function extractSupplements(tokens: Token[], diagnostics: string[]) {
             continue
           }
           if (closing !== null && closing !== current.kind) {
-            diagnostics.push(lineMessage(token, `补充块关闭名称错误：期望 {/${current.kind}}，实际 {/${closing}}`))
+            diagnostics.push(supplementMessage(current, token, `补充块关闭名称错误：期望 {/${current.kind}}，实际 {/${closing}}`))
             current.tokens.push(token)
             continue
           }
@@ -168,7 +177,8 @@ function extractSupplements(tokens: Token[], diagnostics: string[]) {
         const opener = openingBlockName(content)
         if (opener) {
           if (current.kind === 'lyrics' || opener === 'lyrics' || opener === 'bass' || opener === 'part') {
-            diagnostics.push(lineMessage(token, '补充块不能嵌套'))
+            const diagnostic = lineMessage(token, '补充块不能嵌套')
+            diagnostics.push(current.kind === 'lyrics' || opener === 'lyrics' ? lyricMessage(diagnostic) : diagnostic)
           }
           nested.push(opener)
         }
@@ -202,7 +212,9 @@ function extractSupplements(tokens: Token[], diagnostics: string[]) {
     }
   }
 
-  if (current) diagnostics.push(`第 ${current.line} 行：未闭合的补充块：{${current.kind}}`)
+  if (current) diagnostics.push(current.kind === 'lyrics'
+    ? lyricMessage(`第 ${current.line} 行：未闭合的歌词块`)
+    : `第 ${current.line} 行：未闭合的补充块：{${current.kind}}`)
   return { main, supplements }
 }
 
@@ -1045,25 +1057,25 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
 
   const lyricPasses = new Set<number>()
   if (lyrics.length > 1 && lyrics.some((block) => block.range === null)) {
-    diagnostics.push('存在多个歌词块时，每个歌词块都必须指定遍次')
+    diagnostics.push(lyricMessage('存在多个歌词块时，每个歌词块都必须指定遍次'))
   }
   for (const lyric of lyrics) {
     const items = lyricItems(lyric.tokens, lyric.lyricMode ?? 'char')
-    if (items.count === 0) diagnostics.push(`第 ${lyric.line} 行：歌词块为空`)
-    if (items.hasTab) diagnostics.push(`第 ${lyric.line} 行：歌词项必须使用半角空格或换行分隔，不能使用 Tab`)
-    if (items.hasEmptyForcedTarget) diagnostics.push(`第 ${lyric.line} 行：+ 后必须跟随歌词项`)
+    if (items.count === 0) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词块为空`))
+    if (items.hasTab) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词项必须使用半角空格或换行分隔，不能使用 Tab`))
+    if (items.hasEmptyForcedTarget) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：+ 后必须跟随歌词项`))
     const parsed = lyric.range === null
       ? { values: mainResult.lyricPasses, error: null }
       : parseRange(lyric.range, '歌词 ')
-    if (parsed.error) diagnostics.push(`第 ${lyric.line} 行：${parsed.error}`)
+    if (parsed.error) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：${parsed.error}`))
     for (const pass of parsed.values) {
-      if (lyricPasses.has(pass)) diagnostics.push(`第 ${lyric.line} 行：歌词块遍次重叠：${pass}`)
+      if (lyricPasses.has(pass)) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词块遍次重叠：${pass}`))
       lyricPasses.add(pass)
       const expected = (mainResult.hasParts ? mainResult.firstPlaybackLyricCount(pass) : mainResult.lyricCount(pass)) + items.forcedTiedTargets
       const exceedsAvailablePositions = items.count > expected
       const firstPassIsIncomplete = pass === 1 && items.count !== expected
       if (exceedsAvailablePositions || firstPassIsIncomplete) {
-        diagnostics.push(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`)
+        diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`))
       }
     }
   }
