@@ -127,6 +127,13 @@ describe('happi123ToM3N', () => {
     expect(result.diagnostics).toEqual([])
   })
 
+  it('converts inline Happi123 time signatures after the initial header', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:4/4}\n1111|{time_signature:2/4}11|{time_signature:4/4}1111|||')
+
+    expect(result.output).toContain('1 1 1 1 | {2/4} 1 1 | {4/4} 1 1 1 1 |||')
+    expect(result.diagnostics).toEqual([])
+  })
+
   it('corrects a clearly inconsistent declared meter', () => {
     const result = happi123ToM3N('{title:错拍号}\n{key_signature:C}\n{time_signature:4/4}\n11|22|33|44|55|||')
 

@@ -85,6 +85,8 @@ Happy_ New Year To You All
 
 > `{time_signature:M/N}` 分子M为小节拍数，分母为N分音符为一拍，比如 `3/4` 代表 4分音符为一拍，一小节为3拍。
 
+首个 `{time_signature:M/N}` 定义初始拍号。后续同名标签可以写在完整小节之间，用于中途换拍，例如 `...|{time_signature:2/4}11|{time_signature:4/4}1111|`。
+
 ## 音符与休止符
 
 | 名称     | 语法      | 示例 | 说明               |

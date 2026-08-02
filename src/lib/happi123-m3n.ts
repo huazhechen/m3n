@@ -495,6 +495,7 @@ function parseSource(source: string) {
   const header = { ...defaultHeader }
   const lyrics: HappiLyricItem[][] = []
   let body = source
+  let initialTimeSignatureSeen = false
 
   body = body.replace(/\{(title|subtitle|category|singer|composer|lyricist|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, rawValue) => {
     const value = String(rawValue).trim()
@@ -507,6 +508,8 @@ function parseSource(source: string) {
     if (name === 'key_signature') header.key = normalizeKey(value)
     if (name === 'time_signature') {
       const meters = value.match(/\d+\/\d+/g) ?? []
+      if (initialTimeSignatureSeen) return meters.length === 1 ? `{${meters[0]}}` : ''
+      initialTimeSignatureSeen = true
       header.meters = meters.length > 0 ? meters : header.meters
       header.meter = meters[0] ?? header.meter
     }
