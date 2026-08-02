@@ -162,12 +162,21 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
   }
   if (event.kind === 'tuplet' && event.tuplet) {
     const childBeats = event.tuplet.unitBeats
-    let lyricIndex = 0
+    const lyricsByVerse = new Map<number, VerseSyllable[]>()
+    for (const lyric of lyrics) {
+      const verseLyrics = lyricsByVerse.get(lyric.verseIndex) ?? []
+      verseLyrics.push(lyric)
+      lyricsByVerse.set(lyric.verseIndex, verseLyrics)
+    }
+    let lyricTargetIndex = 0
     const children = event.pitches.map((pitch, index) => {
       if (pitch === '0') return `<rest xml:id="${xmlId}-n${index + 1}" ${durationAttributes(childBeats)}/>`
       const childId = `${xmlId}-n${index + 1}`
-      const childVerse = verseXml(lyrics.slice(lyricIndex, lyricIndex + 1), childId)
-      lyricIndex += 1
+      const childLyrics = [...lyricsByVerse.values()]
+        .map((verseLyrics) => verseLyrics[lyricTargetIndex])
+        .filter((lyric): lyric is VerseSyllable => lyric !== undefined)
+      const childVerse = verseXml(childLyrics, childId)
+      lyricTargetIndex += 1
       const note = `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)} ${durationAttributes(childBeats)}`
       return childVerse ? `${note}>${childVerse}</note>` : `${note}/>`
     }).join('')

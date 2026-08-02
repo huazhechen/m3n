@@ -245,6 +245,14 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<syl wordpos="t">kle</syl>')
   })
 
+  it('renders every lyric verse on tuplet notes', () => {
+    const result = m3nToMei('{key=C} {2/4}\n||: [123:2] :|||\n{lyrics=1}甲乙丙{/}\n{lyrics=2}丁戊己{/}')
+
+    expect(result.mei).toContain('<note xml:id="m3n-e-1-n1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-n1-v1" n="1"><syl>甲\u200B</syl></verse><verse xml:id="m3n-e-1-n1-v2" n="2"><syl>丁\u200B</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-1-n2" pname="d" oct="4" dur="4"><verse xml:id="m3n-e-1-n2-v1" n="1"><syl>乙\u200B</syl></verse><verse xml:id="m3n-e-1-n2-v2" n="2"><syl>戊\u200B</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-1-n3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-1-n3-v1" n="1"><syl>丙\u200B</syl></verse><verse xml:id="m3n-e-1-n3-v2" n="2"><syl>己\u200B</syl></verse></note>')
+  })
+
   it('maps default lyrics by character while keeping punctuation on its lyric', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}\n甲，乙！\n{/}')
 
