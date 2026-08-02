@@ -30,28 +30,63 @@ export function makeSvgResponsive(svg: SVGSVGElement, scale = 1) {
 }
 
 /** Adds an export-only title above the engraved score without changing the MEI layout. */
-export function addScoreTitle(svg: SVGSVGElement, title: string) {
-  const text = title.trim()
-  if (!text) return
+export type ScoreExportHeaderItem = {
+  value: string
+  side: 'left' | 'right' | 'center'
+  priority: number
+}
+
+/** Adds the editor's header metadata above the engraved score for export. */
+export function addScoreHeader(svg: SVGSVGElement, metadata: readonly ScoreExportHeaderItem[]) {
+  const items = metadata.filter((item) => item.value.trim())
+  if (items.length === 0) return
 
   const { width, height } = getSvgSize(svg)
   if (width <= 0 || height <= 0) return
-  const headerHeight = Math.max(48, width * 0.09)
   const namespace = 'http://www.w3.org/2000/svg'
+  const centered = items.filter((item) => item.side === 'center').sort((left, right) => left.priority - right.priority)
+  const left = items.filter((item) => item.side === 'left').sort((left, right) => left.priority - right.priority)
+  const right = items.filter((item) => item.side === 'right').sort((left, right) => left.priority - right.priority)
+  const headingSize = Math.max(20, width * 0.035)
+  const detailSize = Math.max(13, width * 0.022)
+  let cursor = detailSize + 10
+
+  const textElement = (value: string, x: number, y: number, anchor: 'start' | 'middle' | 'end', size: number, weight = '400') => {
+    const text = document.createElementNS(namespace, 'text')
+    text.textContent = value
+    text.setAttribute('x', String(x))
+    text.setAttribute('y', String(y))
+    text.setAttribute('text-anchor', anchor)
+    text.setAttribute('font-family', 'sans-serif')
+    text.setAttribute('font-size', String(size))
+    text.setAttribute('font-weight', weight)
+    return text
+  }
+
+  const header = document.createElementNS(namespace, 'g')
+  for (const item of centered) {
+    const title = item.priority === 0
+    const size = title ? headingSize : detailSize
+    header.append(textElement(item.value, width / 2, cursor, 'middle', size, title ? '600' : '400'))
+    cursor += size * 1.35
+  }
+  if (left.length > 0 || right.length > 0) {
+    cursor += detailSize * 0.45
+    const detailRows = Math.max(left.length, right.length)
+    for (let index = 0; index < detailRows; index += 1) {
+      const y = cursor + index * detailSize * 1.35
+      const leftItem = left[index]
+      const rightItem = right[index]
+      if (leftItem) header.append(textElement(leftItem.value, width * 0.04, y, 'start', detailSize))
+      if (rightItem) header.append(textElement(rightItem.value, width * 0.96, y, 'end', detailSize))
+    }
+    cursor += detailRows * detailSize * 1.35
+  }
+  const headerHeight = cursor + detailSize
   const content = document.createElementNS(namespace, 'g')
   while (svg.firstChild) content.append(svg.firstChild)
   content.setAttribute('transform', `translate(0 ${headerHeight})`)
-
-  const heading = document.createElementNS(namespace, 'text')
-  heading.textContent = text
-  heading.setAttribute('x', String(width / 2))
-  heading.setAttribute('y', String(headerHeight * 0.64))
-  heading.setAttribute('text-anchor', 'middle')
-  heading.setAttribute('font-family', 'sans-serif')
-  heading.setAttribute('font-size', String(Math.max(20, headerHeight * 0.5)))
-  heading.setAttribute('font-weight', '600')
-
-  svg.append(heading, content)
+  svg.append(header, content)
   svg.setAttribute('viewBox', `0 0 ${width} ${height + headerHeight}`)
   svg.removeAttribute('height')
 }

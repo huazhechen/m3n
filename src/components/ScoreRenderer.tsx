@@ -578,6 +578,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
         mei={mei}
         title={title}
         hasBassStaff={hasBassStaff}
+        headerMetadata={headerMetadata}
         onError={setMessage}
       />
       {message && <p className="render-message">{message}</p>}

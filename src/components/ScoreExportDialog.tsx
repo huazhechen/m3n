@@ -1,7 +1,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { scoreFileName } from '../features/score-renderer/score-document'
-import { addScoreTitle, downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
+import { addScoreHeader, downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
+import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
 
 type ExportFormat = 'png' | 'pdf'
 
@@ -11,6 +12,7 @@ type ScoreExportDialogProps = {
   mei: string
   title: string
   hasBassStaff: boolean
+  headerMetadata: ScoreHeaderMetadata[]
   onError: (message: string) => void
 }
 
@@ -24,7 +26,7 @@ async function createVerovioScore(mei: string) {
 }
 
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
-  function ScoreExportDialog({ mei, title, hasBassStaff, onError }, ref) {
+  function ScoreExportDialog({ mei, title, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('png')
@@ -55,14 +57,14 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
             includeBass: includeBass || !hasBassStaff,
           })
           const svg = preview.querySelector('svg')
-          if (svg) addScoreTitle(svg, title)
+          if (svg) addScoreHeader(svg, headerMetadata)
         }
         score.destroy()
       }).catch((error: unknown) => {
         if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
       })
       return () => { cancelled = true }
-    }, [format, hasBassStaff, includeBass, isOpen, mei, onError, pdfScale, title, width])
+    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, mei, onError, pdfScale, width])
 
     const exportScore = async () => {
       setIsExporting(true)
@@ -83,7 +85,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         })
         const svg = exportPaper.querySelector('svg')
         if (!svg) throw new Error('当前没有可导出的五线谱。')
-        addScoreTitle(svg, title)
+        addScoreHeader(svg, headerMetadata)
 
         const fileName = scoreFileName(title)
         if (format === 'png') {
