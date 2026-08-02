@@ -628,11 +628,15 @@ export function m3nToMei(source: string): MeiConversionResult {
   })
   const expandNodes = (nodes: typeof layoutNodes) => {
     const expansion: string[] = []
-    const endingGroups = new Map<number, { end: number; repeatStart: number; passCount: number }>()
+    const endingGroups = new Map<number, { end: number; repeatStart: number; hasExplicitRepeatStart: boolean; passCount: number }>()
     let latestRepeatStart = 0
+    let hasExplicitRepeatStart = false
     for (let index = 0; index < nodes.length; index += 1) {
       const node = nodes[index]
-      if (node?.kind === 'section' && node.repeatStart) latestRepeatStart = index
+      if (node?.kind === 'section' && node.repeatStart) {
+        latestRepeatStart = index
+        hasExplicitRepeatStart = true
+      }
       if (node?.kind !== 'ending') continue
 
       const start = index
@@ -640,7 +644,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       const endings = nodes.slice(start, index + 1)
       const passCount = Math.max(1, ...endings.flatMap((ending) => [...endingPasses(ending.n ?? '')]), ...endings.map((ending) => ending.repeatCount ?? 0))
       for (let endingIndex = start; endingIndex <= index; endingIndex += 1) {
-        endingGroups.set(endingIndex, { end: index, repeatStart: latestRepeatStart, passCount })
+        endingGroups.set(endingIndex, { end: index, repeatStart: latestRepeatStart, hasExplicitRepeatStart, passCount })
       }
     }
 
@@ -660,6 +664,11 @@ export function m3nToMei(source: string): MeiConversionResult {
 
         const selected = selectedIndex === undefined ? undefined : nodes[selectedIndex]
         if (selected?.repeatCount && visit < selected.repeatCount) {
+          if (!endingGroup.hasExplicitRepeatStart) {
+            for (const endingIndex of endingGroups.keys()) {
+              if (endingIndex < index) repeatVisits.delete(endingIndex)
+            }
+          }
           index = endingGroup.repeatStart
         } else {
           index = endingGroup.end + 1
