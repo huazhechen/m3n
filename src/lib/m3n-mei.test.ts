@@ -445,6 +445,14 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-1"/>')
   })
 
+  it('writes every numbered lyric block onto the named-part baseline', () => {
+    const result = m3nToMei('{key=C} {2/4} {parts=A B A}\n{part=A}1 2 |{/}\n{part=B}3 4 |{/}\n{lyrics=1}one two three four{/}\n{lyrics=2}eins zwei drei vier{/}')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<verse xml:id="m3n-e-1-v1" n="1"><syl>one</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>eins</syl></verse>')
+    expect(result.mei).toContain('<verse xml:id="m3n-e-3-v1" n="1"><syl>three</syl></verse><verse xml:id="m3n-e-3-v2" n="2"><syl>drei</syl></verse>')
+  })
+
   it('converts explicit line breaks into MEI system breaks', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 | {br} 3 4 |')
 

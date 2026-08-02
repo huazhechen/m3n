@@ -345,7 +345,12 @@ export function m3nToMei(source: string): MeiConversionResult {
         ? event.pitches.filter((pitch) => pitch !== '0').length
         : 1
       const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
-      const lyricBlocksAtEvent = lyricSyllables.filter((block) => !block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
+      // Named parts use their first-occurrence path as the lyric baseline.
+      // Their numbered lyric blocks are alternate displayed verses, rather
+      // than repeat passes of the written measures.
+      const lyricBlocksAtEvent = document.partOrder.length > 0
+        ? lyricSyllables
+        : lyricSyllables.filter((block) => !block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
       const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
       const assignedLyrics = hasLyricTarget
         ? lyricBlocksAtEvent.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
