@@ -160,11 +160,13 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
               <p className="complexity-label">{complexity.label}</p>
               <dl className="complexity-metrics">
                 <div><dt>音符数</dt><dd>{complexity.metrics.noteCount}</dd></div>
-                <div><dt>每拍音符</dt><dd>{complexity.metrics.notesPerBeat}</dd></div>
+                <div><dt>演奏密度</dt><dd>{complexity.metrics.notesPerSecond} 音/秒</dd></div>
+                <div><dt>峰值密度</dt><dd>{complexity.metrics.peakNotesPerBeat} 音/拍</dd></div>
                 <div><dt>音域</dt><dd>{complexity.metrics.pitchRange} 半音</dd></div>
-                <div><dt>节奏时值</dt><dd>{complexity.metrics.rhythmicValues} 种</dd></div>
-                <div><dt>大跳比例</dt><dd>{Math.round(complexity.metrics.largeLeapRatio * 100)}%</dd></div>
-                <div><dt>变音与装饰</dt><dd>{complexity.metrics.accidentalCount} / {complexity.metrics.ornamentCount}</dd></div>
+                <div><dt>最大跳进</dt><dd>{complexity.metrics.maximumLeap} 半音</dd></div>
+                <div><dt>弱拍进入</dt><dd>{Math.round(complexity.metrics.offbeatRatio * 100)}%</dd></div>
+                <div><dt>节奏与装饰</dt><dd>{complexity.metrics.rhythmicValues} 种 / {complexity.metrics.ornamentCount}</dd></div>
+                <div><dt>变音、和弦、连音</dt><dd>{complexity.metrics.accidentalCount} / {complexity.metrics.chordCount} / {complexity.metrics.tieCount}</dd></div>
               </dl>
               <p className="complexity-note">评分仅分析高音谱表的书写旋律，不计入低音谱表。</p>
             </div>

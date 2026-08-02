@@ -98,4 +98,4 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
       source,
     }
   })
-  .sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug))
+  .sort((a, b) => a.melodyComplexity - b.melodyComplexity || a.order - b.order || a.slug.localeCompare(b.slug))

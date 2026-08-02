@@ -21,6 +21,23 @@ describe('M3N melody complexity', () => {
     expect(assessment.metrics).toMatchObject({ rhythmicValues: 3, accidentalCount: 1 })
     expect(assessment.metrics.pitchRange).toBeGreaterThan(24)
     expect(assessment.metrics.ornamentCount).toBeGreaterThan(1)
+    expect(assessment.metrics.maximumLeap).toBeGreaterThan(11)
+  })
+
+  it('accounts for tempo, off-beat writing, and local bursts', () => {
+    const steady = assessM3NMelodyComplexity('{4/4} {72qpm} 1 2 3 4 |||')
+    const demanding = assessM3NMelodyComplexity('{4/4} {180qpm} 1. 2. 3. 4. | ((5 6 7 1e)) |||')
+
+    expect(demanding.score).toBeGreaterThan(steady.score)
+    expect(demanding.metrics.notesPerSecond).toBeGreaterThan(steady.metrics.notesPerSecond)
+    expect(demanding.metrics.peakNotesPerBeat).toBeGreaterThan(steady.metrics.peakNotesPerBeat)
+    expect(demanding.metrics.offbeatRatio).toBeGreaterThan(0)
+  })
+
+  it('does not score a pitch change across a rest as a continuous leap', () => {
+    const assessment = assessM3NMelodyComplexity('{4/4} 1 0 1ee 0 |||')
+
+    expect(assessment.metrics.maximumLeap).toBe(0)
   })
 
   it('excludes bass notes from the assessment', () => {
