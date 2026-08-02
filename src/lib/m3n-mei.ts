@@ -145,8 +145,7 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
     ? undefined
     : Math.min(127, (event.velocity ?? 80) + (event.postfixes.includes('str') ? 20 : 0))
   const velocity = velocityValue === undefined ? '' : ` vel="${velocityValue}"`
-  const gestural = event.postfixes.includes('brk') ? ` dur.ges="${gesturalDuration(event.beats / 4)}"`
-    : event.postfixes.includes('tip') ? ` dur.ges="${gesturalDuration(event.beats / 2)}"` : ''
+  const gestural = event.postfixes.includes('brk') ? ` dur.ges="${gesturalDuration(event.beats / 4)}"` : ''
   const verse = lyrics.filter((lyric) => lyric.kind !== 'placeholder').map((lyric) => {
     const connection = lyric.kind === 'extender'
       ? ' con="u"'

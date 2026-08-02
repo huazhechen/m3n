@@ -156,6 +156,13 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<hairpin staff="1" form="dim" startid="#m3n-e-5" endid="#m3n-e-8"/>')
   })
 
+  it('leaves staccato performance duration to Verovio', () => {
+    const result = m3nToMei('{key=C} {2/4}\n1{tip} 2 |||')
+
+    expect(result.mei).toContain('xml:id="m3n-e-1" pname="c" oct="4" dur="4"><artic artic="stacc"/></note>')
+    expect(result.mei).not.toContain('dur.ges=')
+  })
+
   it('serializes arpeggios on chord groups as MEI arpeg controls', () => {
     const result = m3nToMei('{key=C} {4/4}\n[135:h]{arp} 0 0 0 |||')
 
