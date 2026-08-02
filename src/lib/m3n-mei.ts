@@ -577,30 +577,33 @@ export function m3nToMei(source: string): MeiConversionResult {
     let repeatStartIndex = 0
     for (let index = 0; index < nodes.length;) {
       const node = nodes[index]
-      const endingStart = node?.kind === 'section'
-        ? nodes.findIndex((candidate, candidateIndex) => candidateIndex > index && candidate.kind === 'ending', index + 1)
-        : -1
-      const repeatedSections = endingStart > index && (node?.repeatStart || endingStart === index + 1)
-        ? nodes.slice(index, endingStart)
-        : []
-      let endingEnd = endingStart
-      while (endingEnd >= 0 && nodes[endingEnd]?.kind === 'ending') endingEnd += 1
-      const endings = endingStart >= 0 ? nodes.slice(endingStart, endingEnd) : []
-      const hasRepeatEnd = endings.some((ending) => ending.repeatCount)
-      if (repeatedSections.length > 0 && hasRepeatEnd) {
-      const endingSets = endings.map((ending) => endingPasses(ending.n ?? ''))
-      const passCount = Math.max(1, ...endingSets.flatMap((passes) => [...passes]), ...endings.map((ending) => ending.repeatCount ?? 0))
-      const priorRepeat = expansion.slice(repeatStartIndex)
-      for (let pass = 1; pass <= passCount; pass += 1) {
-        if (pass === 1) expansion.push(...repeatedSections.map((section) => `#${section.id}`))
-        else expansion.push(...priorRepeat, ...repeatedSections.map((section) => `#${section.id}`))
-        const ending = endings[endingSets.findIndex((passes) => passes.has(pass))]
-        if (ending) expansion.push(`#${ending.id}`)
+      const canStartRepeat = node?.kind === 'section' && (node.repeatStart || index === 0)
+      let repeatEnd = -1
+      if (canStartRepeat) {
+        for (let candidateIndex = index; candidateIndex < nodes.length; candidateIndex += 1) {
+          if (candidateIndex > index && nodes[candidateIndex]?.repeatStart) break
+          if (nodes[candidateIndex]?.repeatCount) {
+            repeatEnd = candidateIndex
+            break
+          }
+        }
       }
-      repeatStartIndex = expansion.length
-      index = endingEnd
-      continue
-    }
+      let spanEnd = repeatEnd
+      while (spanEnd >= 0 && nodes[spanEnd + 1]?.kind === 'ending') spanEnd += 1
+      const repeatNodes = spanEnd >= index ? nodes.slice(index, spanEnd + 1) : []
+      const endings = repeatNodes.filter((candidate) => candidate.kind === 'ending')
+      if (endings.length > 0) {
+        const endingSets = endings.map((ending) => endingPasses(ending.n ?? ''))
+        const passCount = Math.max(1, ...endingSets.flatMap((passes) => [...passes]), ...repeatNodes.map((candidate) => candidate.repeatCount ?? 0))
+        for (let pass = 1; pass <= passCount; pass += 1) {
+          expansion.push(...repeatNodes
+            .filter((candidate) => candidate.kind !== 'ending' || endingPasses(candidate.n ?? '').has(pass))
+            .map((candidate) => `#${candidate.id}`))
+        }
+        repeatStartIndex = expansion.length
+        index = spanEnd + 1
+        continue
+      }
       if (node) {
         expansion.push(`#${node.id}`)
         if (node.repeatStart) repeatStartIndex = expansion.length - 1

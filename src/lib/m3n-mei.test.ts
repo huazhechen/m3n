@@ -534,11 +534,11 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2 #m3n-segment-2"/>')
   })
 
-  it('does not repeat a volta group until a later ending has a repeat barline', () => {
+  it('selects each non-adjacent volta group on its matching repeat pass', () => {
     const result = m3nToMei('{2/4}\n||: 1 2 | {volta=1}3 4{/} || {volta=2}5 6{/} || 7 1e | {volta=1}2 3{/}:|| {volta=2}4 5{/} |||')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-ending-2 #m3n-segment-2 #m3n-ending-3 #m3n-segment-1 #m3n-ending-1 #m3n-ending-2 #m3n-segment-2 #m3n-ending-4"/>')
+    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-2 #m3n-ending-3 #m3n-segment-1 #m3n-ending-2 #m3n-segment-2 #m3n-ending-4"/>')
   })
 
   it('maps third-pass lyrics from the segno return through the third ending', () => {

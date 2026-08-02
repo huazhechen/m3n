@@ -42,6 +42,8 @@ describe('VerovioScore layout', () => {
       .resolves.toEqual([60, 62, 64, 65, 67, 69])
     await expect(renderedPitches('{2/4} ||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{/} |||'))
       .resolves.toEqual([60, 62, 64, 65, 60, 62, 67, 69])
+    await expect(renderedPitches('{2/4} ||: 1 2 | {volta=1}3 4{/} | {volta=2}5 6{/} | 7 1e | {volta=1}2e 3e{/} | {volta=2}4e 5e{/} | 6e 7e :|| |||'))
+      .resolves.toEqual([60, 62, 64, 65, 71, 72, 74, 76, 81, 83, 60, 62, 67, 69, 71, 72, 77, 79, 81, 83])
     await expect(renderedPitches('{2/4} ||: 1 2 | {volta=1}3 4{/}:|| {volta=2~4}5 6{/}:||{x4} |||'))
       .resolves.toEqual([60, 62, 64, 65, 60, 62, 67, 69, 60, 62, 67, 69, 60, 62, 67, 69])
     await expect(renderedPitches('{2/4} {segno}1 2 | 3 4{fine} ||| 5 6{ds} ||'))
