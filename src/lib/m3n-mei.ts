@@ -544,14 +544,15 @@ export function m3nToMei(source: string): MeiConversionResult {
       const content: string[] = []
       if (current?.ending) {
         const ending = current.ending
+        const endingStart = index
         while (index < measures.length && measures[index]?.ending === ending) {
           content.push(measureContent(measures[index] as (typeof measures)[number]))
           index += 1
         }
         nodes.push({
           kind: 'ending', id: `m3n-ending-${++endingIndex}`, n: ending, partName, content: content.join('\n'),
-          repeatCount: current?.repeatCount,
-          navigation: measures.slice(index - content.length, index).flatMap((measure) => measure?.navigation ?? []),
+          repeatCount: measures[index - 1]?.repeatCount,
+          navigation: measures.slice(endingStart, index).flatMap((measure) => measure?.navigation ?? []),
         })
         continue
       }
