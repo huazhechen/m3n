@@ -69,17 +69,17 @@ describe('M3N to MEI conversion', () => {
     expect(commonTime.mei).toContain('</rend> = 120</tempo>')
 
     expect(compoundTime.mei).toContain('midi.bpm="120"')
-    expect(compoundTime.mei).toContain('glyph.name="metNoteQuarterUp"')
-    expect(compoundTime.mei).toContain('glyph.name="augmentationDot"')
-    expect(compoundTime.mei).toContain('</rend> = 80</tempo>')
+    expect(compoundTime.mei).toContain('glyph.name="metNote8thUp"')
+    expect(compoundTime.mei).not.toContain('glyph.name="augmentationDot"')
+    expect(compoundTime.mei).toContain('</rend> = 240</tempo>')
   })
 
   it('writes mid-score tempo changes using the active meter while preserving QPM', () => {
     const result = m3nToMei('{4/4} {120qpm}\n1 2 3 4 | {6/8} {90qpm}(1 2 3 4 5 6) |||')
 
-    expect(result.mei).toContain('<tempo xml:id="m3n-tempo-2" staff="1" startid="#m3n-e-5" midi.bpm="90"><rend glyph.auth="smufl" glyph.name="metNoteQuarterUp"')
-    expect(result.mei).toContain('augmentationDot')
-    expect(result.mei).toContain('</rend> = 60</tempo>')
+    expect(result.mei).toContain('<tempo xml:id="m3n-tempo-2" staff="1" startid="#m3n-e-5" midi.bpm="90"><rend glyph.auth="smufl" glyph.name="metNote8thUp"')
+    expect(result.mei).toContain('glyph.name="metNote8thUp"')
+    expect(result.mei).toContain('</rend> = 180</tempo>')
     expect(result.tempoChanges).toMatchObject([{ startBeats: 4, tempo: 90 }])
   })
 
@@ -398,6 +398,8 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<section xml:id="m3n-segment-1">')
     expect(result.mei).toContain('<section xml:id="m3n-segment-2">')
     expect(result.mei).not.toMatch(/<section xml:id="m3n-segment-2">\s+<sb\/>/)
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-1" n="1"')
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-2-1" n="2"')
     expect(result.mei).toContain('<reh staff="1" tstamp="1"><rend fontweight="bold">A</rend></reh>')
     expect(result.mei).toContain('<reh staff="1" tstamp="1"><rend fontweight="bold">B</rend></reh>')
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-1"/>')

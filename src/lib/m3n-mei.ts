@@ -92,17 +92,16 @@ function formatTempo(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.00$|0$/g, '')
 }
 
-function metronomeMark(qpm: number, meterCount: number, meterUnit: number) {
-  const isCompoundMeter = meterCount > 3 && meterCount % 3 === 0 && meterUnit >= 8
-  const unit = isCompoundMeter ? meterUnit / 2 : meterUnit
-  const dots = isCompoundMeter ? 1 : 0
-  const quarterNotesPerMark = 4 / unit * (dots ? 1.5 : 1)
+function metronomeMark(qpm: number, meterUnit: number) {
+  const unit = meterUnit
+  const dots = 0
+  const quarterNotesPerMark = 4 / unit
   const glyph = metronomeGlyphs[unit] ?? metronomeGlyphs[4]
   return { bpm: qpm / quarterNotesPerMark, dots, glyph }
 }
 
-function tempoXml(qpm: number, meterCount: number, meterUnit: number, position: string, id: string) {
-  const mark = metronomeMark(qpm, meterCount, meterUnit)
+function tempoXml(qpm: number, meterUnit: number, position: string, id: string) {
+  const mark = metronomeMark(qpm, meterUnit)
   const note = `<rend glyph.auth="smufl" glyph.name="${mark.glyph.name}" glyph.num="${mark.glyph.num}">&#x${mark.glyph.num.slice(2)};</rend>`
   const dot = mark.dots ? '<rend glyph.auth="smufl" glyph.name="augmentationDot" glyph.num="U+E1E7">&#xE1E7;</rend>' : ''
   return `<tempo xml:id="${id}" staff="1" ${position} midi.bpm="${qpm}">${note}${dot} = ${formatTempo(mark.bpm)}</tempo>`
@@ -455,7 +454,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       if (!xmlId) return []
       const changes = tempoChangesBySource.get(event.sourceStart) ?? []
       return [
-        ...changes.filter((change) => !change.ramp).map((change) => tempoXml(change.tempo, event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit, `startid="#${xmlId}"`, `m3n-tempo-${++tempoIndex}`)),
+        ...changes.filter((change) => !change.ramp).map((change) => tempoXml(change.tempo, event.meterUnit ?? document.meterUnit, `startid="#${xmlId}"`, `m3n-tempo-${++tempoIndex}`)),
       ].filter(Boolean)
     }) : []
     const first = events[0]?.sourceStart
@@ -477,6 +476,7 @@ export function m3nToMei(source: string): MeiConversionResult {
 
   let segmentIndex = 0
   let endingIndex = 0
+  let logicalMeasureNumber = 0
   const hasNavigation = [...document.parts.values()].some((part) => part.melody.some((measure) => measure.events.some((event) => event.navigation.length > 0)))
   const layoutNodes = [...document.parts.entries()].flatMap(([partName, part], partIndex) => {
     while (part.melody.length > 1 && part.melody.at(-1)?.events.length === 0 && !part.melody.at(-1)?.multiRest) {
@@ -485,7 +485,6 @@ export function m3nToMei(source: string): MeiConversionResult {
     }
     while (part.bass.length > 1 && part.bass.at(-1)?.events.length === 0 && !part.bass.at(-1)?.multiRest) part.bass.pop()
     const measureCount = Math.max(part.melody.length, hasBassStaff ? part.bass.length : 0)
-    let logicalMeasureNumber = 0
     let incompleteBoundaryMeasure: { beats: number; number: number; id: string; right?: string } | undefined
     const measures = Array.from({ length: measureCount }, (_, measureIndex) => {
       const melody = part.melody[measureIndex]
@@ -516,7 +515,7 @@ export function m3nToMei(source: string): MeiConversionResult {
         .filter(Boolean).map((staff) => staff.split('\n').map((line) => `  ${line}`).join('\n')).join('\n')
       const controls = [controlXml(melody, 1, meter), hasBassStaff ? controlXml(part.bass[measureIndex], 2, meter) : ''].filter(Boolean).join('\n')
       const tempo = document.hasExplicitTempo && partIndex === 0 && measureIndex === 0
-        ? `  ${tempoXml(document.tempo, document.meterCount, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
+        ? `  ${tempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
         : ''
       const partLabel = document.partOrder.length > 0 && measureIndex === 0
         ? `  <reh staff="1" tstamp="1"><rend fontweight="bold">${escapeXml(partName)}</rend></reh>\n`
