@@ -563,19 +563,31 @@ function tiedLyricTargets(source: string) {
 function convertLyricsForMusic(items: HappiLyricItem[], music: string) {
   const targets = tiedLyricTargets(music)
   let targetIndex = 0
-  return items
-    .filter((item) => {
+  const converted: string[] = []
+
+  for (const [index, item] of items.entries()) {
+    const tiedTarget = targets[targetIndex]
+    const next = items[index + 1]
+    const forceTiedTarget = !item.placeholder && tiedTarget && !next?.placeholder
+    if (forceTiedTarget) {
+      converted.push(item.value.startsWith('+') ? item.value : `+${item.value}`)
+      targetIndex += 1
+      continue
+    }
+
+    {
       // M3N omits automatic tied targets from lyric alignment. Happi123
       // sources may either spell them with a placeholder or leave them out.
       if (!item.placeholder) {
         while (targets[targetIndex]) targetIndex += 1
       }
-      const tiedTarget = targets[targetIndex]
+      const alignedTarget = targets[targetIndex]
       targetIndex += 1
-      return !item.placeholder || !tiedTarget
-    })
-    .map((item) => item.value)
-    .join(' ')
+      if (!item.placeholder || !alignedTarget) converted.push(item.value)
+    }
+  }
+
+  return converted.join(' ')
 }
 
 function sectionParts(source: string) {
