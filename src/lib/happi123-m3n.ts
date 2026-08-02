@@ -405,7 +405,7 @@ function convertSequence(
           const explicitExtension = /-/.test(rawInner) || suffix.includes('-')
           if (notes.length === 1) {
             output.push(convertSequence(inner, diagnostics, state).output)
-          } else if (tieGroup || samePitch && !explicitExtension) {
+          } else if (tieGroup || samePitch) {
             output.push(convertSequence(addTiesToNotes(inner), diagnostics, state).output)
           } else if (explicitExtension && rawInner.includes('|')) {
             output.push(convertSequence(inner, diagnostics, state).output)

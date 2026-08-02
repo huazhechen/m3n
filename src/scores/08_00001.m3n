@@ -6,8 +6,8 @@
 1^^~ | 1^^ | 2^^~ | 2^^~ |
 2^^~ | 2^^ || {br} {cresc}1^^ {text=渐强渐弱}{/} | {decres}2^^{/} |
 {cresc}4^^{/} | {decres}3^^{/} | {cresc}1^{/} {decres}2^{/} | {cresc}4^{/} {decres}3^{/} |
-{cresc}1^{/} {decres}2^{/} | {cresc}4^{/} {decres}3^{/} || {br} {lg}1 {text=震音} 1^.{tr}{/} | {lg}2 2^.{tr}{/} |
-1^^{tr} | 2^^{tr} | {decres}{lg}1 1^.{tr}{/}{/} | {decres}{lg}2 2^.{tr}{/}{/} |
+{cresc}1^{/} {decres}2^{/} | {cresc}4^{/} {decres}3^{/} || {br} 1~ {text=震音} 1^.{tr} | 2~ 2^.{tr} |
+1^^{tr} | 2^^{tr} | {decres}1~ 1^.{tr}{/} | {decres}2~ 2^.{tr}{/} |
 {decres}1^^{tr}{/} | {decres}2^^{tr}{/} || {br} ((1)){tip} {text=断音} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} (1){tip} | ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} (2){tip} ||
 {br} (1){tip} {text=节奏} ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} | ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (1){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} | (1.){tip} ((1)){tip} (1.){tip} ((1)){tip} (2.){tip} ((2)){tip} (2.){tip} ((2)){tip} | ((1)){tip} (1.){tip} ((1)){tip} (1.){tip} ((2)){tip} (2.){tip} ((2)){tip} (2.){tip} |
 ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} | ([111:2]) ([222:2]) ([111:2]) 1{tip} || {br} (2) {text=移孔吹吸切换} (3 2) (3) ((2)) ((3)) ((2)) ((3)) ((2)) ((3)) ((2)) ((3)) | (1 4) (1 4) ((1 4 1 4)) ((1 4 1 4)) ||
