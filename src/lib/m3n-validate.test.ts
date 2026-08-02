@@ -227,6 +227,16 @@ describe('validateM3N', () => {
     expect(validateM3N(source)).toEqual([])
   })
 
+  it('rejects lyrics that exceed the D.S. return path', () => {
+    const source = [
+      '{2/4} {segno}1 2 | 3 4{ds} |||',
+      '{lyrics=1}a b c d{/}',
+      '{lyrics=2}a b c d e{/}',
+    ].join('\n')
+
+    expect(messages(source)).toContain('第 2 遍需要 4 项，实际 5 项')
+  })
+
   it('validates named-part lyrics against their first playback only', () => {
     const source = [
       '{2/4} {parts=A B A}',

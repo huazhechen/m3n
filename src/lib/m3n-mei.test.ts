@@ -603,11 +603,10 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('xml:id="m3n-e-7-v1" n="1"><syl>丙')
   })
 
-  it('starts second-pass lyrics at the public opening before a D.S. from a second ending', () => {
+  it('reports second-pass lyrics that exceed a D.S. return path', () => {
     const result = m3nToMei('{2/4}\n||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{ds}{/} || {segno}7 1 |||\n{lyrics=1}a b c d e f{/}\n{lyrics=2}one two three four five six{/}')
 
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('xml:id="m3n-e-1-v2" n="2"><syl>one</syl>')
+    expect(result.diagnostics).toContain('[L] 第 4 行：歌词对位数量不匹配：第 2 遍需要 4 项，实际 6 项')
   })
 
   it('consumes later-pass placeholders from the segno on a plain D.S. return', () => {
