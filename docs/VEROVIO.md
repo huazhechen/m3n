@@ -208,6 +208,7 @@ Verovio 是将乐谱数据雕版为 SVG 的引擎。它不是所见即所得编�
 | --- | --- | --- |
 | 普通小节线 | 连续 `<measure>` | 通常不需要手写。 |
 | 重复起始/结束 | `<measure left="rptstart">` / `<measure right="rptend">` | 标记对应小节边界。 |
+| 小节内弱起回跳 | 无原生小节线属性 | 用 `<dir startid="...">:|/</dir>` 显示；Verovio 的 `rptend` 不能放在小节内部。 |
 | 起止重复 | `left="rptstart" right="rptend"` | 同一小节可同时具有两边界。 |
 | 一、二房子 | `<ending n="1">...</ending>` | `ending` 包住所属小节。 |
 | 乐段 | `<section>` | 可含小节、`ending`、`sb`、`pb`。 |

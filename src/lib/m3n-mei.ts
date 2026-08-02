@@ -461,7 +461,14 @@ export function m3nToMei(source: string): MeiConversionResult {
       if (interval.kind === '8va' || interval.kind === '8vb') return [`<octave staff="${staffNumber}" dis="8" dis.place="${interval.kind === '8va' ? 'above' : 'below'}" startid="#${startid}" endid="#${endid}"/>`]
       return []
     })
-    return [...tempoControls, ...eventControls, ...intervalControls].map((xml) => `  ${xml}`).join('\n')
+    const partialRepeat = staffNumber === 1 && measure?.partialRepeat
+      ? (() => {
+        const event = events.filter((item) => item.sourceEnd <= measure.partialRepeat!).at(-1)
+        const xmlId = idFor(event?.sourceStart)
+        return xmlId ? [`<dir staff="1" startid="#${xmlId}" place="above" type="m3n-partial-repeat">:|/</dir>`] : []
+      })()
+      : []
+    return [...tempoControls, ...eventControls, ...intervalControls, ...partialRepeat].map((xml) => `  ${xml}`).join('\n')
   }
 
   let segmentIndex = 0

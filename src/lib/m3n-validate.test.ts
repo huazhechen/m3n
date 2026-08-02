@@ -42,6 +42,14 @@ describe('validateM3N', () => {
     expect(validateM3N('{2/4}\n1 2 :|| 3 4 :|||')).toEqual([])
   })
 
+  it('accepts an incomplete-measure repeat that returns to the opening pickup', () => {
+    const source = '{4/4}\n(1 2) | 3 4 5 6 | 1 2 3 :|/ 4 | 5 6 7 |||'
+
+    expect(validateM3N(source)).toEqual([])
+    expect(messages('{4/4}\n(1 2) | 3 4 5 6 | 1 2 3 :|/ 4 | 5 6 7 1e |||')).toContain('首末小节拍数不互补')
+    expect(messages('{4/4}\n1 2 3 :|/ 4 |||')).toContain('不完整小节反复前的时值必须与开头弱起互补')
+  })
+
   it('accepts independent pickup measures in named parts without terminal bars', () => {
     const source = [
       '{parts=A B A}',

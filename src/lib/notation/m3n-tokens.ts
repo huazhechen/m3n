@@ -17,7 +17,7 @@ export type M3NToken = {
   content?: string
 }
 
-const BAR_PATTERN = /^(?::\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/
+const BAR_PATTERN = /^(?::\|\/|:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/
 const NOTE_PATTERN = /^[0-7][#b=ed^.~]*/
 
 /** Tokenize source without assigning syntactic or musical meaning to tokens. */

@@ -532,6 +532,18 @@ function validateBody(
       diagnostics.push(lineMessage(token, '圆括号必须在同一小节内闭合'))
       parens.length = 0
     }
+    const partialRepeat = token.raw === ':|/'
+    if (partialRepeat) {
+      const pickup = unit.measures[0]?.actual
+      if (repeatOpen) diagnostics.push(lineMessage(token, '不完整小节反复不能嵌套或与前反复线组合'))
+      if (!pickup || unit.measures.length === 0 || Math.abs(pickup + unit.beats - unit.expected) > 1e-9) {
+        diagnostics.push(lineMessage(token, '不完整小节反复前的时值必须与开头弱起互补'))
+      }
+      currentVoltaRepeat = currentVoltaRepeat || ++repeatId
+      repeatOpen = null
+      repeatCountTarget = false
+      return
+    }
     commitMeasure(token.line, token.start + token.raw.length)
     if (token.raw === '||:') {
       if (repeatOpen) diagnostics.push(lineMessage(token, '反复区域不能嵌套或重叠'))

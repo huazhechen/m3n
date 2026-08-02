@@ -162,6 +162,13 @@ describe('happi123ToM3N', () => {
     expect(result.diagnostics).toEqual([])
   })
 
+  it('converts a Happi123 pickup repeat that ends before the final beat of a measure', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:4/4}\n1_2_|3456|123:|4|567|||')
+
+    expect(result.output).toContain('(1 2) | 3 4 5 6 | 1 2 3 :|/ 4 | 5 6 7 |||')
+    expect(result.diagnostics).toEqual([])
+  })
+
   it('preserves a Happi123 final volta followed by a regular barline', () => {
     const result = happi123ToM3N('{title:房子}\n{key_signature:C}\n{time_signature:2/4}\n|:11[1:22:|][2:33]|44|||')
 
