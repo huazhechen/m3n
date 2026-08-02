@@ -1,5 +1,5 @@
 import { addTiesToNotes, convertHappiNote, extractHappiNotes, readHappiNote } from './happi123/notes'
-import { convertHappiLyrics } from './happi123/lyrics'
+import { convertHappiLyricItems, type HappiLyricItem } from './happi123/lyrics'
 import { getHappi123Metadata } from './happi123/metadata'
 import { parseM3NDocument } from './m3n-direct'
 import { normalizeAdjacentBarlines } from './m3n-format'
@@ -493,7 +493,7 @@ function convertSequence(
 
 function parseSource(source: string) {
   const header = { ...defaultHeader }
-  const lyrics: string[] = []
+  const lyrics: HappiLyricItem[][] = []
   let body = source
 
   body = body.replace(/\{(title|subtitle|category|singer|composer|lyricist|key_signature|time_signature|bpm|play):\s*([^}]*)\}/g, (_match, name, rawValue) => {
@@ -516,7 +516,7 @@ function parseSource(source: string) {
   })
 
   body = body.replace(/\{lyric\}([\s\S]*?)\{\/lyric\}/g, (_match, value) => {
-    lyrics.push(convertHappiLyrics(String(value)))
+    lyrics.push(convertHappiLyricItems(String(value)))
     return ''
   })
 
@@ -529,6 +529,40 @@ function parseSource(source: string) {
     (_match, prefix, label) => `${prefix}{mark:${String(label).trim()}} `,
   )
   return { header, body, lyrics }
+}
+
+function tiedLyricTargets(source: string) {
+  const document = parseM3NDocument(source)
+  const instrumentalRanges = document.intervals
+    .filter((interval) => interval.staff === 'melody' && interval.kind === 'inst' && interval.start !== undefined && interval.end !== undefined)
+    .map((interval) => ({ start: interval.start!, end: interval.end! }))
+  const inInstrumentalRange = (start: number) => instrumentalRanges.some((range) => start >= range.start && start <= range.end)
+  const events = [...document.parts.values()]
+    .flatMap((part) => part.melody.flatMap((measure) => measure.events))
+    .filter((event) => !inInstrumentalRange(event.sourceStart))
+  const targets: boolean[] = []
+  let previousTied = false
+
+  for (const event of events) {
+    if (event.kind === 'rest') {
+      previousTied = false
+      continue
+    }
+    const positions = event.kind === 'tuplet' ? event.pitches.length : 1
+    for (let index = 0; index < positions; index += 1) {
+      targets.push(index === 0 && previousTied)
+    }
+    previousTied = event.tie
+  }
+  return targets
+}
+
+function convertLyricsForMusic(items: HappiLyricItem[], music: string) {
+  const targets = tiedLyricTargets(music)
+  return items
+    .filter((item, index) => !item.placeholder || !targets[index])
+    .map((item) => item.value)
+    .join(' ')
 }
 
 function sectionParts(source: string) {
@@ -659,10 +693,10 @@ export function happi123ToM3N(source: string): ConversionResult {
     header.parts ? `{parts=${header.parts}}` : '',
     `{key=${header.key}} {${header.meter}}${/^\d+$/.test(header.bpm) ? ` {${header.bpm}qpm}` : ''}`,
     music,
-    ...lyrics.flatMap((value, index) => [
+    ...lyrics.flatMap((items, index) => [
       '',
       lyrics.length > 1 ? `{lyrics=${index + 1}}` : '{lyrics}',
-      value,
+      convertLyricsForMusic(items, music),
       '{/}',
     ]),
   ].filter(Boolean).join('\n').replace(/\s*\{br\}\s*/g, ' {br}\n')
