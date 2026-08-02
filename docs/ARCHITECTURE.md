@@ -12,6 +12,7 @@ pages -> components -> features -> lib/notation
 ```
 
 `lib/notation` 不得依赖 React、DOM 或具体页面。转换函数应保持确定性：相同输入总是产生相同输出与诊断。
+同一编辑操作的派生计算应复用已解析的领域文档，避免各模块重新扫描相同源码。
 
 ## 当前边界
 

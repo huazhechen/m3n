@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { invalidMeasureBarEnds, invalidMeasureIds, validateM3N, validateM3NDiagnostics } from './m3n-validate'
+import { parseM3NDocument } from './m3n-direct'
 
 const messages = (source: string) => validateM3N(source).join('\n')
 
@@ -15,6 +16,15 @@ describe('validateM3N', () => {
       legacyMessage: validateM3N(source)[0],
       range: { start: source.indexOf('{lyrics}'), end: source.length },
     })
+  })
+
+  it('reuses an already parsed document for validation and measure markers', () => {
+    const source = '{4/4}\n1 2 3 | 1 2 3 4 |||'
+    const document = parseM3NDocument(source)
+
+    expect(validateM3N(source, {}, document)).toEqual(validateM3N(source))
+    expect(validateM3NDiagnostics(source, {}, document)).toEqual(validateM3NDiagnostics(source))
+    expect(invalidMeasureIds(source, document)).toEqual(invalidMeasureIds(source))
   })
 
   it('accepts a complete unsegmented score', () => {

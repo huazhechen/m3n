@@ -1,4 +1,4 @@
-import { m3nPitch, measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
+import { m3nPitch, measurePlaybackPasses, parseM3NDocument, type DirectDocument } from './m3n-direct'
 import type { DirectLyricSyllable } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 import { buildAccompanimentFromDocument, buildTempoChangesFromDocument, type AccompanimentNote, type TempoChange } from './m3n-playback'
@@ -249,8 +249,7 @@ function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number)
   return result
 }
 
-export function m3nToMei(source: string): MeiConversionResult {
-  const document = parseM3NDocument(source)
+export function m3nToMei(source: string, document: DirectDocument = parseM3NDocument(source)): MeiConversionResult {
   const sourceMap: MeiSourceMapRange[] = []
   const hasBassStaff = [...document.parts.values()].some((part) => part.bass.some((measure) => measure.events.length > 0))
   let eventIndex = 0
@@ -691,7 +690,7 @@ export function m3nToMei(source: string): MeiConversionResult {
     ...sectionContent.split('\n').map((line) => `            ${line}`),
     '          </section>', '        </score>', '      </mdiv>', '    </body>', '  </music>', '</mei>',
   ].join('\n')
-  const diagnosticDetails = validateM3NDiagnostics(source)
+  const diagnosticDetails = validateM3NDiagnostics(source, {}, document)
   return {
     source, mei, diagnostics: diagnosticDetails.map((diagnostic) => diagnostic.legacyMessage), diagnosticDetails, sourceMap,
     title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,

@@ -3,7 +3,7 @@ import { parseM3NGrace } from './notation/m3n-groups'
 import { parseLyricItems, type LyricMode } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
 import { diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
-import { parseM3NDocument } from './m3n-direct'
+import { parseM3NDocument, type DirectDocument } from './m3n-direct'
 import { hasForcedLyricOutsideTiedTarget, playbackLyricCounts, playbackLyricTargets, sharedLyricRangeCount } from './m3n-lyric-alignment'
 
 type Meter = { beats: number; beatValue: number }
@@ -1048,9 +1048,8 @@ export function invalidMeasureBarEnds(source: string) {
   return [...invalidBarEnds].sort((left, right) => left - right)
 }
 
-export function invalidMeasureIds(source: string) {
+export function invalidMeasureIds(source: string, document = parseM3NDocument(source)) {
   const invalidEnds = new Set(invalidMeasureBarEnds(source))
-  const document = parseM3NDocument(source)
   const renderedMeasureCount = (measures: Array<{ events: unknown[]; multiRest?: number }>) => {
     let count = measures.length
     while (count > 1 && measures[count - 1]?.events.length === 0 && !measures[count - 1]?.multiRest) count -= 1
@@ -1069,9 +1068,8 @@ export function invalidMeasureIds(source: string) {
   })
 }
 
-export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}): string[] {
+export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document: DirectDocument = parseM3NDocument(source)): string[] {
   const diagnostics: string[] = []
-  const document = parseM3NDocument(source)
   const tokens = tokenizeM3N(source)
   const { main, supplements } = extractSupplements(tokens, diagnostics)
   const mainResult = validateBody(main, diagnostics, { skipBeatValidation: options.skipBeatValidation })
@@ -1158,6 +1156,6 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
-export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}): ScoreDiagnostic[] {
-  return diagnosticsFromLegacyMessages(source, validateM3N(source, options))
+export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: DirectDocument): ScoreDiagnostic[] {
+  return diagnosticsFromLegacyMessages(source, validateM3N(source, options, document))
 }

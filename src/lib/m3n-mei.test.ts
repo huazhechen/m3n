@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { m3nPitch } from './m3n-direct'
+import { m3nPitch, parseM3NDocument } from './m3n-direct'
 import { m3nToMei } from './m3n-mei'
 
 describe('M3N to MEI conversion', () => {
+  it('accepts an already parsed document', () => {
+    const source = '{key=C} {2/4} 1 2 |||'
+
+    expect(m3nToMei(source, parseM3NDocument(source))).toEqual(m3nToMei(source))
+  })
+
   it('creates a complete MEI score with source-linked notes', () => {
     const result = m3nToMei('{title=Test} {subtitle=Sub} {composer=Composer} {lyricist=Lyricist} {arranger=Arranger} {copyright=Copyright} {source=First edition} {note=Note} {transpose=2}\n{key=D} {3/4} {90qpm}\n1 2 3 | 4^. |||')
 

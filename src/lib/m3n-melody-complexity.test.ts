@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { assessM3NMelodyComplexity } from './m3n-melody-complexity'
+import { assessM3NDocumentMelodyComplexity, assessM3NMelodyComplexity } from './m3n-melody-complexity'
+import { parseM3NDocument } from './m3n-direct'
 
 describe('M3N melody complexity', () => {
+  it('assesses an already parsed document', () => {
+    const source = '{4/4} 1 2 3 4 |||'
+
+    expect(assessM3NDocumentMelodyComplexity(parseM3NDocument(source))).toEqual(assessM3NMelodyComplexity(source))
+  })
+
   it('rates a simple stepwise quarter-note melody near the bottom of the scale', () => {
     const assessment = assessM3NMelodyComplexity('{4/4} 1 2 3 4 | 5 4 3 2 |||')
 

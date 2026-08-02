@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatM3N } from '../lib/m3n-format'
-import { assessM3NMelodyComplexity } from '../lib/m3n-melody-complexity'
 import { m3nToMei } from '../lib/m3n-mei'
 import { invalidMeasureIds as findInvalidMeasureIds } from '../lib/m3n-validate'
 import defaultScore from '../scores/00002.m3n?raw'
@@ -10,6 +9,8 @@ import type { ScoreRendererRef } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'
 import { sharedScoreUrl } from '../lib/score-share'
 import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
+import { parseM3NDocument } from '../lib/m3n-direct'
+import { assessM3NDocumentMelodyComplexity } from '../lib/m3n-melody-complexity'
 
 type NotationEditorProps = {
   initialSource?: string
@@ -24,9 +25,10 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
   const [isComplexityDialogOpen, setIsComplexityDialogOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
-  const result = useMemo(() => m3nToMei(source), [source])
-  const complexity = useMemo(() => assessM3NMelodyComplexity(source), [source])
-  const invalidMeasureIds = useMemo(() => findInvalidMeasureIds(source), [source])
+  const document = useMemo(() => parseM3NDocument(source), [source])
+  const result = useMemo(() => m3nToMei(source, document), [document, source])
+  const complexity = useMemo(() => assessM3NDocumentMelodyComplexity(document), [document])
+  const invalidMeasureIds = useMemo(() => findInvalidMeasureIds(source, document), [document, source])
   const cursorXmlId = useMemo(() => {
     const containingRange = result.sourceMap.find((item) => (
       item.sourceStart <= cursorPosition && cursorPosition < item.sourceEnd
