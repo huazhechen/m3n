@@ -88,7 +88,7 @@ export function addScoreHeader(svg: SVGSVGElement, metadata: readonly ScoreExpor
   content.setAttribute('transform', `translate(0 ${headerHeight})`)
   svg.append(header, content)
   svg.setAttribute('viewBox', `0 0 ${width} ${height + headerHeight}`)
-  svg.removeAttribute('height')
+  svg.setAttribute('height', String(height + headerHeight))
 }
 
 export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1) {
