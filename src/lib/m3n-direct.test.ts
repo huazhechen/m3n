@@ -82,6 +82,14 @@ describe('direct M3N parser', () => {
     expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
   })
 
+  it('does not add a D.S. second pass to a first ending before later endings', () => {
+    const measures = parseM3NDocument('{2/4} ||: {segno}1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{ds}{/} || {volta=3}7 1{/} || {volta=4}2 3{/} |||').parts.get('score')!.melody
+    const passes = measurePlaybackPasses(measures)
+
+    expect(passes.get(measures[1])).toEqual(new Set([1]))
+    expect(passes.get(measures[2])).toEqual(new Set([2]))
+  })
+
   it('keeps a tie on the final pitched tuplet child', () => {
     const event = parseM3NDocument('{key=C} {4/4} [123~:2] 3 0 |||').parts.get('score')?.melody[0]?.events[0]
 

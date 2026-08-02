@@ -83,9 +83,13 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
       }
     } else if (measures[jumpIndex]?.events.some((event) => event.navigation.includes('ds'))) {
       // Without a later ending to name the return pass, D.S. supplies the
-      // second lyric path from the segno through the jump.
+      // second lyric path from the segno through the jump. Alternate endings
+      // still belong only to the passes written in their volta ranges.
       for (let index = segnoIndex; index <= jumpIndex; index += 1) {
-        passesByMeasure.get(measures[index]!)?.add(2)
+        const measure = measures[index]!
+        if (!measure.ending || parsePassRange(measure.ending).has(2)) {
+          passesByMeasure.get(measure)?.add(2)
+        }
       }
     }
   }
