@@ -153,20 +153,25 @@ function restForBeats(beats: number) {
   return null
 }
 
-function isCompoundMeter(event: DirectEvent) {
-  const count = event.meterCount ?? 4
-  return count >= 6 && count % 3 === 0
-}
-
-function staysWithinCompoundBeat(offset: number, beats: number, event: DirectEvent) {
-  const group = 3 * 4 / (event.meterUnit ?? 4)
-  return Math.floor((offset + EPSILON) / group) === Math.floor((offset + beats - EPSILON) / group)
+function respectsMergeBoundary(offset: number, beats: number, event: DirectEvent) {
+  const meterCount = event.meterCount ?? 4
+  const beat = 4 / (event.meterUnit ?? 4)
+  const measureBeats = meterCount * beat
+  const end = offset + beats
+  if (end > measureBeats + EPSILON) return false
+  if (meterCount % 2 === 0) {
+    const midpoint = measureBeats / 2
+    return !(offset > EPSILON && offset < midpoint - EPSILON && end > midpoint + EPSILON)
+  }
+  const beginsOnBeat = Math.abs(offset / beat - Math.round(offset / beat)) < EPSILON
+  const crossesBeat = Math.floor((offset + EPSILON) / beat) !== Math.floor((end - EPSILON) / beat)
+  return beginsOnBeat || !crossesBeat
 }
 
 function restRunReplacement(events: DirectEvent[], source: string, offset: number, depth: number) {
   if (events.length < 2 || events.some((event) => event.kind !== 'rest')) return null
   const beats = events.reduce((sum, event) => sum + event.beats, 0)
-  if (!staysWithinCompoundBeat(offset, beats, events[0]!)) return null
+  if (!respectsMergeBoundary(offset, beats, events[0]!)) return null
   let start = events[0]?.sourceStart
   let end = events.at(-1)?.sourceEnd
   const value = restForBeats(beats)
@@ -177,22 +182,41 @@ function restRunReplacement(events: DirectEvent[], source: string, offset: numbe
     if (source[start - 1] !== '(' || source[end] !== ')') return null
     start -= 1
     end += 1
-  }
+  } else if (depth !== 0) return null
   const allowedNotation = depth === 1 ? /^[\s()0^.]+$/ : /^[\s0^.]+$/
   return allowedNotation.test(source.slice(start, end)) ? { start, end, value } : null
 }
 
-function mergeCompleteRestMeasures(source: string) {
+function tiedNoteReplacement(events: DirectEvent[], source: string, offset: number, depth: number) {
+  const first = events[0]
+  if (!first || events.length < 2 || depth !== 0 || events.some((event) => event.kind !== 'note' || event.pitches.length !== 1 || event.pitches[0] !== first.pitches[0])) return null
+  const beats = events.reduce((sum, event) => sum + event.beats, 0)
+  if (!respectsMergeBoundary(offset, beats, first)) return null
+  const start = first.sourceStart
+  const end = events.at(-1)?.sourceEnd
+  const pitch = first.pitches[0]
+  if (end === undefined || !pitch) return null
+  for (let carets = 0; carets <= 6; carets += 1) {
+    for (let dots = 0; dots <= 4; dots += 1) {
+      if (Math.abs(durationInBeats(0, carets, dots) - beats) >= EPSILON) continue
+      const value = `${pitch}${'^'.repeat(carets)}${'.'.repeat(dots)}`
+      return /^[\s1-7#b=ed^.~]+$/.test(source.slice(start, end)) ? { start, end, value } : null
+    }
+  }
+  return null
+}
+
+function mergeSustainedAtoms(source: string) {
   const replacements: Array<{ start: number; end: number; value: string }> = []
+  const document = parseM3NDocument(source)
+  const hasForcedTiedLyrics = document.lyrics.some((block) => block.syllables.some((syllable) => syllable.forceTiedTarget))
   const parenTokens = tokenizeM3N(source).filter((token) => token.kind === 'open-paren' || token.kind === 'close-paren')
   const parenDepthAt = (position: number) => parenTokens.reduce((depth, token) => (
     token.start < position ? depth + (token.kind === 'open-paren' ? 1 : -1) : depth
   ), 0)
-  for (const part of parseM3NDocument(source).parts.values()) {
+  for (const part of document.parts.values()) {
     for (const staff of [part.melody, part.bass]) {
       for (const measure of staff) {
-        const firstEvent = measure.events[0]
-        if (!firstEvent || !isCompoundMeter(firstEvent)) continue
         let restRun: DirectEvent[] = []
         let offset = 0
         let restRunOffset = 0
@@ -205,11 +229,34 @@ function mergeCompleteRestMeasures(source: string) {
         for (const event of [...measure.events, null]) {
           if (event?.kind === 'rest') {
             const runBeats = restRun.reduce((sum, item) => sum + item.beats, 0)
-            if (restRun.length > 0 && !staysWithinCompoundBeat(restRunOffset, runBeats + event.beats, event)) flushRestRun()
+            if (restRun.length > 0 && !respectsMergeBoundary(restRunOffset, runBeats + event.beats, event)) flushRestRun()
             if (restRun.length === 0) restRunOffset = offset
             restRun.push(event)
           } else if (restRun.length > 0) flushRestRun()
           if (event) offset += event.beats
+        }
+
+        if (hasForcedTiedLyrics) continue
+        const offsets = measure.events.reduce<number[]>((values, event) => [...values, (values.at(-1) ?? 0) + event.beats], [0])
+        for (let index = 0; index < measure.events.length - 1;) {
+          const first = measure.events[index]
+          if (!first || first.kind !== 'note' || !first.tie) {
+            index += 1
+            continue
+          }
+          const run = [first]
+          let endIndex = index
+          while (run.at(-1)?.tie && endIndex + 1 < measure.events.length) {
+            const next = measure.events[endIndex + 1]
+            if (!next || next.kind !== 'note' || next.pitches[0] !== first.pitches[0]) break
+            run.push(next)
+            endIndex += 1
+          }
+          if (!run.at(-1)?.tie) {
+            const replacement = tiedNoteReplacement(run, source, offsets[index] ?? 0, parenDepthAt(first.sourceStart))
+            if (replacement) replacements.push(replacement)
+          }
+          index = Math.max(index + 1, endIndex + 1)
         }
       }
     }
@@ -265,7 +312,7 @@ function formatLyrics(source: string) {
 
 /** Formats M3N source without changing its musical or lyric content. */
 export function formatM3N(source: string) {
-  const { main, bass, lyrics } = splitSupplementBlocks(mergeCompleteRestMeasures(source))
+  const { main, bass, lyrics } = splitSupplementBlocks(mergeSustainedAtoms(source))
   const supplements = [
     ...lyrics.map((lyric) => {
       const text = formatLyrics(lyric.text)
