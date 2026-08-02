@@ -166,8 +166,7 @@ describe('validateM3N', () => {
   it('combines overlapping lyric ranges by playback pass', () => {
     const source = [
       '{2/4} 1 2 :|||',
-      '{lyrics=1} one {/lyrics}',
-      '{lyrics=1~2} two {/}',
+      '{lyrics=1~2} one two {/}',
     ].join('\n')
     const result = messages(source)
     expect(result).toBe('')
@@ -192,7 +191,7 @@ describe('validateM3N', () => {
       '{2/4} ||: {volta=1}1 2{/} :|| {volta=2}1 0{/} :|||',
       '{lyrics}la la{/}',
     ].join('\n')
-    expect(messages(source)).toContain('歌词对位数量不匹配：第 2 遍需要 1 项，实际 2 项')
+    expect(messages(source)).toContain('歌词对位数量不匹配：共享遍次需要 3 项，实际 2 项')
   })
 
   it('requires complete first-pass lyrics and permits only shorter later-pass lyrics', () => {

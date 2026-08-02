@@ -114,6 +114,28 @@ function playbackLyricCounts(source: string) {
   return counts
 }
 
+function sharedLyricRangeCount(source: string, selectedPasses: ReadonlySet<number>) {
+  const document = parseM3NDocument(source)
+  let count = 0
+  for (const part of document.parts.values()) {
+    const passesByMeasure = measurePlaybackPasses(part.melody)
+    let previousTied = false
+    for (const measure of part.melody) {
+      const passes = passesByMeasure.get(measure) ?? new Set([1])
+      const isShared = !measure.ending && [...selectedPasses].every((pass) => passes.has(pass))
+      const isSelectedEnding = Boolean(measure.ending) && [...selectedPasses].some((pass) => passes.has(pass))
+      for (const event of measure.events) {
+        const tiedTarget = previousTied
+        previousTied = event.tie
+        if (!isShared && !isSelectedEnding) continue
+        if (event.kind === 'rest' || tiedTarget) continue
+        count += event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
+      }
+    }
+  }
+  return count
+}
+
 type LyricTarget = { tied: boolean }
 
 function playbackLyricTargets(source: string) {
@@ -1176,6 +1198,13 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       ? { values: mainResult.lyricPasses, error: null }
       : parseRange(lyric.range, '歌词 ')
     if (parsed.error) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：${parsed.error}`))
+    if (parsed.values.size > 1) {
+      const expected = sharedLyricRangeCount(source, parsed.values) + items.forcedTiedTargets
+      if (items.count !== expected) {
+        diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词对位数量不匹配：共享遍次需要 ${expected} 项，实际 ${items.count} 项`))
+      }
+      continue
+    }
     for (const pass of parsed.values) {
       const combined = lyricItemsByPass.get(pass)
       if (combined) {
