@@ -172,7 +172,6 @@ h3 {
 
 .hero-summary section,
 .score-card,
-.score-section,
 .book-toc,
 .markdown-panel {
   border: 1px solid #d9dbd4;
@@ -503,19 +502,6 @@ textarea::selection {
 
 .score-reader-diagnostics {
   margin-bottom: 16px;
-}
-
-.score-section {
-  padding: 20px;
-}
-
-.section-heading {
-  margin-bottom: 14px;
-}
-
-.section-heading h2 {
-  margin-top: 4px;
-  font-size: 1.35rem;
 }
 
 .score-list {

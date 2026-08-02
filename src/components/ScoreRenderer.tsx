@@ -101,7 +101,7 @@ function resolveLyricCollisions(paper: HTMLElement) {
     for (const [index, system] of systems.entries()) {
       translateVertically(system, downstreamOffset)
       const verses = [...system.querySelectorAll<SVGGElement>('g.verse')]
-      const obstacles = [...system.querySelectorAll<SVGGraphicsElement>('.notehead, .stem path, .flag path, .beam path, .beam polygon')]
+      const obstacles = [...system.querySelectorAll<SVGGraphicsElement>('.notehead, .stem path, .flag path, .beam path, .beam polygon, .slur path, path.slur')]
       const lyrics = verses.map((verse) => {
         const bounds = verse.getBBox()
         return { verse, bounds, lineHeight: lyricLineHeight(verse, bounds), lineOffset: 0 }

@@ -24,10 +24,10 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('{lyrics}\n欢 乐 颂\n{/}')
   })
 
-  it('preserves singer and prefers header attributions declared in Happi123', () => {
+  it('drops legacy categories and preserves header attributions declared in Happi123', () => {
     const result = happi123ToM3N('{title:安妮}\n{category:华语流行}\n{singer:王杰}\n{composer:王杰}\n{lyricist:陈乐融}\n{key_signature:C}\n{time_signature:4/4}\n1---|||')
 
-    expect(result.output).toContain('{category=华语流行}')
+    expect(result.output).not.toContain('category')
     expect(result.output).toContain('{singer=王杰}')
     expect(result.output).toContain('{composer=王杰}')
     expect(result.output).toContain('{lyricist=陈乐融}')

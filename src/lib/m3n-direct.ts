@@ -48,7 +48,6 @@ type DirectSettingEvent = {
 export type DirectDocument = {
   title: string
   subtitle: string
-  category: string
   singer: string
   composer: string
   lyricist: string
@@ -68,7 +67,7 @@ export type DirectDocument = {
   intervals: DirectInterval[]
 }
 
-const metadataNames = ['title', 'subtitle', 'category', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
+const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
 function metadata(source: string, name: (typeof metadataNames)[number]) {
   return source.match(new RegExp(`\\{${name}=([^}]*)\\}`))?.[1]?.trim() ?? ''
 }
@@ -411,7 +410,6 @@ export function parseM3NDocument(source: string): DirectDocument {
   return {
     title: metadata(source, 'title'),
     subtitle: metadata(source, 'subtitle'),
-    category: metadata(source, 'category'),
     singer: metadata(source, 'singer'),
     composer: metadata(source, 'composer'),
     lyricist: metadata(source, 'lyricist'),

@@ -42,8 +42,6 @@ export function ScoresPage() {
     () => presetScores.filter((score) => score.searchText.includes(normalizedQuery)),
     [normalizedQuery],
   )
-  const categories = Array.from(new Set(scores.map((score) => score.category)))
-
   return (
     <main>
       <TopNav />
@@ -59,27 +57,18 @@ export function ScoresPage() {
               aria-label="搜索乐谱"
               value={query}
               onChange={(event) => setQuery(event.currentTarget.value)}
-              placeholder="搜索标题、作曲者、分类或其他乐谱信息"
+              placeholder="搜索标题、作曲者或其他乐谱信息"
             />
           </label>
         </section>
         {scores.length === 0 && (
           <p className="search-empty">没有找到匹配的乐谱。</p>
         )}
-        {categories.map((category) => (
-          <section className="score-section" key={category}>
-            <div className="section-heading">
-              <h2>{category}</h2>
-            </div>
-            <div className="score-list">
-              {scores
-                .filter((score) => score.category === category)
-                .map((score) => (
-                  <ScoreCard key={score.slug} score={score} invalid={invalidScoreSlugs.has(score.slug)} />
-                ))}
-            </div>
-          </section>
-        ))}
+        <div className="score-list">
+          {scores.map((score) => (
+            <ScoreCard key={score.slug} score={score} invalid={invalidScoreSlugs.has(score.slug)} />
+          ))}
+        </div>
       </div>
     </main>
   )

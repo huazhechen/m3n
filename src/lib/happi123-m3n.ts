@@ -9,7 +9,6 @@ import type { ConversionResult } from './notation/types'
 type HappiHeader = {
   title: string
   subtitle: string
-  category: string
   singer: string
   composer: string
   lyricist: string
@@ -33,7 +32,6 @@ type ConversionState = {
 const defaultHeader: HappiHeader = {
   title: '',
   subtitle: '',
-  category: '',
   singer: '',
   composer: '',
   lyricist: '',
@@ -529,7 +527,6 @@ function parseSource(source: string) {
     const value = String(rawValue).trim()
     if (name === 'title') header.title = value
     if (name === 'subtitle') header.subtitle = value
-    if (name === 'category') header.category = value
     if (name === 'singer') header.singer = value
     if (name === 'composer') header.composer = value
     if (name === 'lyricist') header.lyricist = value
@@ -737,7 +734,6 @@ export function happi123ToM3N(source: string): ConversionResult {
   const rawOutput = [
     header.title ? `{title=${header.title}}` : '',
     header.subtitle ? `{subtitle=${header.subtitle}}` : '',
-    header.category ? `{category=${header.category}}` : '',
     header.singer ? `{singer=${header.singer}}` : '',
     header.composer || metadata.composer ? `{composer=${header.composer || metadata.composer}}` : '',
     header.lyricist || metadata.lyricist ? `{lyricist=${header.lyricist || metadata.lyricist}}` : '',

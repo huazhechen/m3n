@@ -5,7 +5,6 @@ export type PresetScore = {
   subtitle?: string
   singer?: string
   composer?: string
-  category: string
   keySignature: string
   timeSignature: string
   tempo: number
@@ -73,7 +72,6 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
     const subtitle = readAttribute(source, 'subtitle')
     const singer = readAttribute(source, 'singer')
     const composer = readAttribute(source, 'composer')
-    const category = readAttribute(source, 'category') ?? '未分类'
     const keySignature = readAttribute(source, 'key') ?? 'C'
     const timeSignature = readTimeSignature(source)
     const tempo = readTempo(source)
@@ -87,13 +85,12 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
       subtitle,
       singer,
       composer,
-      category,
       keySignature,
       timeSignature,
       tempo,
       hasLyrics,
       hasBass,
-      searchText: normalizeSearchText([title, subtitle, singer, composer, category, ...readMetadataValues(source)].filter(Boolean).join(' ')),
+      searchText: normalizeSearchText([title, subtitle, singer, composer, ...readMetadataValues(source)].filter(Boolean).join(' ')),
       source,
     }
   })
