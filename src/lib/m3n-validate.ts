@@ -3,7 +3,8 @@ import { parseM3NGrace } from './notation/m3n-groups'
 import { parseLyricItems, type LyricMode } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
 import { diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
-import { measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
+import { parseM3NDocument } from './m3n-direct'
+import { hasForcedLyricOutsideTiedTarget, playbackLyricCounts, playbackLyricTargets, sharedLyricRangeCount } from './m3n-lyric-alignment'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -87,108 +88,6 @@ function lineMessage(token: Token, message: string) {
 
 function lyricMessage(message: string) {
   return `[L] ${message}`
-}
-
-function playbackLyricCounts(source: string) {
-  const document = parseM3NDocument(source)
-  const counts = new Map<number, number>()
-  for (const part of document.parts.values()) {
-    const passesByMeasure = measurePlaybackPasses(part.melody)
-    let previousTied = false
-    for (const measure of part.melody) {
-      const passes = passesByMeasure.get(measure) ?? new Set([1])
-      for (const event of measure.events) {
-        const tiedTarget = previousTied
-        previousTied = event.tie
-        const instrumental = document.intervals.some((interval) => interval.kind === 'inst'
-          && interval.staff === 'melody'
-          && interval.start !== undefined
-          && interval.end !== undefined
-          && interval.start <= event.sourceStart
-          && event.sourceEnd <= interval.end)
-        if (event.kind === 'rest' || tiedTarget || instrumental) continue
-        const targets = event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
-        for (const pass of passes) counts.set(pass, (counts.get(pass) ?? 0) + targets)
-      }
-    }
-  }
-  return counts
-}
-
-function sharedLyricRangeCount(source: string, selectedPasses: ReadonlySet<number>) {
-  const document = parseM3NDocument(source)
-  let count = 0
-  for (const part of document.parts.values()) {
-    const passesByMeasure = measurePlaybackPasses(part.melody)
-    let previousTied = false
-    for (const measure of part.melody) {
-      const passes = passesByMeasure.get(measure) ?? new Set([1])
-      const isShared = !measure.ending && [...selectedPasses].every((pass) => passes.has(pass))
-      const isSelectedEnding = Boolean(measure.ending) && [...selectedPasses].some((pass) => passes.has(pass))
-      for (const event of measure.events) {
-        const tiedTarget = previousTied
-        previousTied = event.tie
-        if (!isShared && !isSelectedEnding) continue
-        if (event.kind === 'rest' || tiedTarget) continue
-        count += event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
-      }
-    }
-  }
-  return count
-}
-
-type LyricTarget = { tied: boolean }
-
-function playbackLyricTargets(source: string) {
-  const document = parseM3NDocument(source)
-  const targetsByPass = new Map<number, LyricTarget[]>()
-  const partNames = document.partOrder.length > 0
-    ? [...new Set(document.partOrder)]
-    : [...document.parts.keys()]
-  for (const name of partNames) {
-    const part = document.parts.get(name)
-    if (!part) continue
-    const passesByMeasure = measurePlaybackPasses(part.melody)
-    let previousTied = false
-    for (const measure of part.melody) {
-      const passes = passesByMeasure.get(measure) ?? new Set([1])
-      for (const event of measure.events) {
-        const tiedTarget = previousTied
-        previousTied = event.tie
-        const instrumental = document.intervals.some((interval) => interval.kind === 'inst'
-          && interval.staff === 'melody'
-          && interval.start !== undefined
-          && interval.end !== undefined
-          && interval.start <= event.sourceStart
-          && event.sourceEnd <= interval.end)
-        if (event.kind === 'rest' || instrumental) continue
-        const targetCount = event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
-        for (const pass of passes) {
-          const targets = targetsByPass.get(pass) ?? []
-          for (let index = 0; index < targetCount; index += 1) targets.push({ tied: tiedTarget && index === 0 })
-          targetsByPass.set(pass, targets)
-        }
-      }
-    }
-  }
-  return targetsByPass
-}
-
-function hasForcedLyricOutsideTiedTarget(items: ReturnType<typeof parseLyricItems>, targets: readonly LyricTarget[]) {
-  let targetIndex = 0
-  for (const item of items) {
-    if (item.forceTiedTarget) {
-      if (!targets[targetIndex]?.tied) return true
-      targetIndex += 1
-      continue
-    }
-    // Ordinary lyrics automatically pass over tied continuations. A forced
-    // lyric must not do so: it applies to the immediately current target.
-    while (targets[targetIndex]?.tied) targetIndex += 1
-    if (targetIndex >= targets.length) break
-    targetIndex += 1
-  }
-  return false
 }
 
 function supplementMessage(current: Supplement, token: Token, message: string) {
@@ -1172,11 +1071,12 @@ export function invalidMeasureIds(source: string) {
 
 export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}): string[] {
   const diagnostics: string[] = []
+  const document = parseM3NDocument(source)
   const tokens = tokenizeM3N(source)
   const { main, supplements } = extractSupplements(tokens, diagnostics)
   const mainResult = validateBody(main, diagnostics, { skipBeatValidation: options.skipBeatValidation })
-  const lyricCountsByPlaybackPass = mainResult.hasParts ? undefined : playbackLyricCounts(source)
-  const lyricTargetsByPlaybackPass = playbackLyricTargets(source)
+  const lyricCountsByPlaybackPass = mainResult.hasParts ? undefined : playbackLyricCounts(document)
+  const lyricTargetsByPlaybackPass = playbackLyricTargets(document)
 
   const lyrics = supplements.filter((block) => block.kind === 'lyrics')
   const bassBlocks = supplements.filter((block) => block.kind === 'bass')
@@ -1200,7 +1100,7 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       : parseRange(lyric.range, '歌词 ')
     if (parsed.error) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：${parsed.error}`))
     if (parsed.values.size > 1) {
-      const expected = sharedLyricRangeCount(source, parsed.values) + items.forcedTiedTargets
+      const expected = sharedLyricRangeCount(document, parsed.values) + items.forcedTiedTargets
       if (items.count !== expected) {
         diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词对位数量不匹配：共享遍次需要 ${expected} 项，实际 ${items.count} 项`))
       }
