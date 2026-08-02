@@ -311,6 +311,16 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v2" n="2"><syl>e</syl></verse></note>')
   })
 
+  it('starts every lyric block at the public opening for a 2~4 ending', () => {
+    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/} | {volta=2~4}5 6{/} | 7 1e :||{x3} |||\n{lyrics=1}a b c d e f{/}\n{lyrics=2}g h i j k l{/}\n{lyrics=3}m n o p q r{/}\n{lyrics=4}s t u v w x{/}')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('xml:id="m3n-e-1-v2" n="2"><syl>g</syl>')
+    expect(result.mei).toContain('xml:id="m3n-e-1-v4" n="4"><syl>s</syl>')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v2" n="2"><syl>i</syl>')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v4" n="4"><syl>u</syl>')
+  })
+
   it('keeps instrumental intervals lyric-free without visual markers', () => {
     const result = m3nToMei('{key=C} {2/4}\n{inst}1 2{/} | 3 4 |||\n{lyrics}\nla la\n{/}')
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseM3NDocument } from './m3n-direct'
+import { measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
 
 describe('direct M3N parser', () => {
   it('uses the specified default tempo when no tempo directive is present', () => {
@@ -48,5 +48,15 @@ describe('direct M3N parser', () => {
 
     expect(melody).toMatchObject({ tempo: 80 })
     expect(bass).toMatchObject({ tempo: 80 })
+  })
+
+  it('assigns every public measure to all passes required by a later multi-pass ending', () => {
+    const measures = parseM3NDocument('{2/4} ||: 1 2 | {volta=1}3 4{/} | {volta=2~4}5 6{/} | 7 1e :||{x3} |||').parts.get('score')!.melody
+    const passes = measurePlaybackPasses(measures)
+
+    expect(passes.get(measures[0])).toEqual(new Set([1, 2, 3, 4]))
+    expect(passes.get(measures[1])).toEqual(new Set([1]))
+    expect(passes.get(measures[2])).toEqual(new Set([2, 3, 4]))
+    expect(passes.get(measures[3])).toEqual(new Set([1, 2, 3, 4]))
   })
 })

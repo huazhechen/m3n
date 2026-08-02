@@ -91,7 +91,13 @@ export function measurePlaybackPasses(measures: DirectMeasure[]) {
     if (measure.right !== 'rptend') continue
 
     let passCount = measure.repeatCount ?? 2
-    for (let endingIndex = index; measures[endingIndex]?.ending; endingIndex += 1) {
+    // A repeat can govern several non-adjacent alternate-ending groups.  The
+    // maximum ending pass determines how often every public measure repeats.
+    for (let endingIndex = repeatStart; endingIndex <= index; endingIndex += 1) {
+      const ending = measures[endingIndex]?.ending
+      if (ending) for (const pass of passRange(ending)) passCount = Math.max(passCount, pass)
+    }
+    for (let endingIndex = index + 1; measures[endingIndex]?.ending; endingIndex += 1) {
       for (const pass of passRange(measures[endingIndex]!.ending!)) passCount = Math.max(passCount, pass)
     }
     for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
