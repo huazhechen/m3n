@@ -81,6 +81,12 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
           passesByMeasure.get(measure)?.add(returnPass)
         }
       }
+    } else if (measures[jumpIndex]?.events.some((event) => event.navigation.includes('ds'))) {
+      // Without a later ending to name the return pass, D.S. supplies the
+      // second lyric path from the segno through the jump.
+      for (let index = segnoIndex; index <= jumpIndex; index += 1) {
+        passesByMeasure.get(measures[index]!)?.add(2)
+      }
     }
   }
   return passesByMeasure
