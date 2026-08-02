@@ -234,7 +234,7 @@ Verovio 是将乐谱数据雕版为 SVG 的引擎。它不是所见即所得编�
 ```
 
 - `sb` 是系统换行，`pb` 是分页。仅在尊重原始版面或用户明确插入时编码。
-- Web 渲染使用 `setOptions({ breaks: 'line' })`：`sb`/`pb` 是强制边界，其他位置仍由 Verovio 自动换行。`encoded` 仅采用已编码的断点；`auto` 和 `smart` 则忽略它们。
+- Web 渲染先以每个 `sb` 分出临时布局区间，分别使用 `breaks: 'auto'` 计算区间内的自动系统边界；随后将自动边界与原始 `sb` 合并，以 `encoded` 重排完整 MEI。用户插入的 `sb` 因而是强制边界，且其前后都会重新进行自动换行；临时边界不写回 MEI 或 M3N。
 - MEI 保存语义，Verovio 计算几何。不要持久化 SVG 坐标、CSS 或临时布局作为音乐语义。
 
 ## 4. WASM Toolkit（6.2.0）
@@ -286,7 +286,7 @@ try {
 | --- | --- | --- |
 | `pageWidth`, `pageHeight` | 页面尺寸 | 按容器/媒介稳定设置。 |
 | `scale` | 雕版缩放 | 会影响布局，变更后必须重排。 |
-| `breaks` | 换行策略 | Web 使用 `line`，同时遵守 `sb/pb` 并自动换行；`encoded` 只用编码断点，`auto`/`smart` 忽略编码断点。 |
+| `breaks` | 换行策略 | Web 先按 `sb` 分段并在各段以 `auto` 计算换行，再以 `encoded` 合并渲染；`encoded` 只用编码断点。 |
 | `adjustPageHeight` | 自动页面高度 | 连续长谱可用。 |
 | `pageMarginTop`, `header`, `footer` | 页面装饰 | Web 嵌入常用 `header/footer: 'none'`。 |
 | `svgViewBox` | 响应式 SVG | Web 嵌入建议开启。 |

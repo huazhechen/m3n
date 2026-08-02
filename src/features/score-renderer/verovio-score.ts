@@ -31,8 +31,61 @@ function normalizeScale(scale: number | undefined) {
   return Math.max(1, Math.min(1000, scale ?? 42))
 }
 
-export function layoutBreaks() {
-  return 'line'
+export function layoutSegments(mei: string) {
+  const document = new DOMParser().parseFromString(mei, 'application/xml')
+  const segments: string[][] = []
+  let measures: string[] = []
+  for (const element of document.querySelectorAll('measure, sb')) {
+    if (element.localName === 'sb') {
+      if (measures.length > 0) segments.push(measures)
+      measures = []
+      continue
+    }
+    const id = element.getAttribute('xml:id')
+    if (id) measures.push(id)
+  }
+  if (measures.length > 0) segments.push(measures)
+  return segments
+}
+
+export function layoutFragment(mei: string, measureIds: readonly string[]) {
+  const document = new DOMParser().parseFromString(mei, 'application/xml')
+  const selected = new Set(measureIds)
+  for (const sb of document.querySelectorAll('sb')) sb.remove()
+  for (const measure of document.querySelectorAll('measure')) {
+    if (!selected.has(measure.getAttribute('xml:id') ?? '')) measure.remove()
+  }
+  for (const expansion of document.querySelectorAll('expansion')) expansion.remove()
+  for (const container of [...document.querySelectorAll('section, ending')].reverse()) {
+    if (!container.querySelector('measure')) container.remove()
+  }
+  const presentIds = new Set([...document.querySelectorAll('*')]
+    .map((element) => element.getAttribute('xml:id'))
+    .filter((id): id is string => Boolean(id)))
+  for (const element of document.querySelectorAll('[startid], [endid]')) {
+    const references = [element.getAttribute('startid'), element.getAttribute('endid')]
+      .filter((value): value is string => Boolean(value))
+      .flatMap((value) => value.split(/\s+/).map((reference) => reference.replace(/^#/, '')))
+    if (references.some((reference) => !presentIds.has(reference))) element.remove()
+  }
+  return new XMLSerializer().serializeToString(document)
+}
+
+export function automaticSystemBreakMeasureIds(svgPages: readonly string[]) {
+  return new Set(svgPages.flatMap((svg) => svg
+    .split('class="system"')
+    .slice(1)
+    .map((system) => [...system.matchAll(/id="(m3n-measure-[^"]+)"/g)].at(-1)?.[1])
+    .filter((id): id is string => Boolean(id))))
+}
+
+export function encodeSystemBreaks(mei: string, measureIds: ReadonlySet<string>) {
+  if (measureIds.size === 0) return mei
+  return mei
+    .replace(/(<measure\b[^>]*\bxml:id="([^"]+)"[^>]*>[\s\S]*?<\/measure>)/g, (measure, _element, id: string) => (
+      measureIds.has(id) ? `${measure}<sb/>` : measure
+    ))
+    .replace(/<\/measure>\s*(?:<sb\/>\s*){2,}/g, '</measure><sb/>')
 }
 
 export function markInvalidMeasures(mei: string, measureIds: readonly string[]) {
@@ -63,10 +116,9 @@ export class VerovioScore {
 
   prepareLayout({ width, scale = 42, includeBass = true, invalidMeasureIds = [] }: ScoreLayout) {
     const effectiveScale = normalizeScale(scale)
-    const layoutMei = markInvalidMeasures(includeBass ? this.mei : withoutBassStaff(this.mei), invalidMeasureIds)
-    this.toolkit.setOptions({
+    let layoutMei = markInvalidMeasures(includeBass ? this.mei : withoutBassStaff(this.mei), invalidMeasureIds)
+    const layoutOptions = {
       adjustPageHeight: true,
-      breaks: layoutBreaks(),
       footer: 'none',
       header: 'none',
       lyricTopMinMargin: 0,
@@ -76,7 +128,25 @@ export class VerovioScore {
       scale: effectiveScale,
       svgCss: '.m3n-text-underline .rend { text-decoration: underline; }',
       svgViewBox: true,
-    })
+    }
+    const segments = layoutSegments(layoutMei)
+    if (segments.length > 1) {
+      const automaticBreaks = new Set<string>()
+      for (const segment of segments) {
+        this.toolkit.setOptions({ ...layoutOptions, breaks: 'auto' })
+        if (!this.toolkit.loadData(layoutFragment(layoutMei, segment))) {
+          throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
+        }
+        const breaks = automaticSystemBreakMeasureIds(Array.from(
+          { length: this.toolkit.getPageCount() },
+          (_, index) => this.toolkit.renderToSVG(index + 1),
+        ))
+        breaks.delete(segment.at(-1) ?? '')
+        breaks.forEach((id) => automaticBreaks.add(id))
+      }
+      layoutMei = encodeSystemBreaks(layoutMei, automaticBreaks)
+    }
+    this.toolkit.setOptions({ ...layoutOptions, breaks: layoutMei.includes('<sb/>') ? 'encoded' : 'auto' })
     if (!this.toolkit.loadData(layoutMei)) {
       throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
     }
