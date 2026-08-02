@@ -305,18 +305,22 @@ export function m3nToMei(source: string): MeiConversionResult {
     }
   }
 
-  const tiesByStartId = new Map<string, string[]>()
+  const tiesByStartEvent = new Map<DirectEvent, string[]>()
   const collectTies = (measures: DirectMeasure[]) => {
     let tiedEvent: DirectEvent | undefined
     for (const measure of measures) {
       for (const event of measure.events) {
         if (tiedEvent) {
-          const startid = preassignedIds.get(tiedEvent)
-          const endid = preassignedIds.get(event)
+          const tiedEventId = preassignedIds.get(tiedEvent)
+          const eventId = preassignedIds.get(event)
+          const startid = tiedEventId && tiedEvent.tieFromTupletIndex !== undefined
+            ? `${tiedEventId}-n${tiedEvent.tieFromTupletIndex + 1}`
+            : tiedEventId
+          const endid = eventId && event.kind === 'tuplet' ? `${eventId}-n1` : eventId
           if (startid && endid) {
-            const ties = tiesByStartId.get(startid) ?? []
+            const ties = tiesByStartEvent.get(tiedEvent) ?? []
             ties.push(`<tie startid="#${startid}" endid="#${endid}"/>`)
-            tiesByStartId.set(startid, ties)
+            tiesByStartEvent.set(tiedEvent, ties)
           }
         }
         tiedEvent = event.tie ? event : undefined
@@ -501,7 +505,7 @@ export function m3nToMei(source: string): MeiConversionResult {
           return `<repeatMark staff="${staffNumber}" startid="#${xmlId}" func="${func}"/>`
         }),
         ...event.postfixes.map((value) => postfix(xmlId, value)),
-        ...(tiesByStartId.get(xmlId) ?? []),
+        ...(tiesByStartEvent.get(event) ?? []),
       ].filter(Boolean)
     })
     const tempoControls = staffNumber === 1 ? events.flatMap((event) => {

@@ -76,6 +76,13 @@ describe('validateM3N', () => {
     expect(validateM3N('{key=C} {2/4}\n[0 6 6 : 2] |||')).toEqual([])
   })
 
+  it('allows a tie from the final pitched tuplet element only', () => {
+    expect(validateM3N('{key=C} {4/4}\n[123~:2] 3 0 |||')).toEqual([])
+    expect(messages('{key=C} {4/4}\n[123~:2] 4 0 |||')).toContain('延音目标的类型或绝对音高不匹配')
+    expect(messages('{key=C} {4/4}\n[1~23:2] 3 0 |||')).toContain('元素序列含非法内容')
+    expect(messages('{key=C} {4/4}\n[120~:2] 0 0 |||')).toContain('连音组内的延音只能附在最后一个有音高的元素上')
+  })
+
   it('validates note, rest, group, and duration restrictions', () => {
     const result = messages('{4/4}\n1#b 2ed 1### 2bbb 0~ [10:h] [1:h] [123:0] [123:2]~ |||')
     expect(result).toContain('临时变音组合非法')

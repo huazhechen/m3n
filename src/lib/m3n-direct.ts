@@ -1,4 +1,4 @@
-import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
+import { parseM3NGrace, parseM3NGroupPitches, parseM3NTupletPitches } from './notation/m3n-groups'
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
 import { splitSupplementBlocks } from './notation/supplements'
 import { parseLyricItems } from './notation/lyrics'
@@ -13,6 +13,7 @@ export type DirectEvent = {
   key: string
   beats: number
   tie: boolean
+  tieFromTupletIndex?: number
   dynamic?: string
   chord?: string
   chordState?: string
@@ -322,8 +323,9 @@ function parseBody(
     if (group !== null) {
       applyInheritedSettings()
       pendingRepeatEnd = undefined
-      const pitches = parseM3NGroupPitches(group[1] ?? '') ?? []
       const mode = group[2]?.trim() ?? ''
+      const tuplet = mode === 'h' ? null : parseM3NTupletPitches(group[1] ?? '')
+      const pitches = mode === 'h' ? parseM3NGroupPitches(group[1] ?? '') ?? [] : tuplet?.pitches ?? []
       const sourceEnd = token.start + group[0].length
       if (pitches.length > 0) {
         const first = parseM3NNote(pitches[0] ?? '')
@@ -335,7 +337,8 @@ function parseBody(
           pitches,
           key: currentKey,
           beats: mode === 'h' ? groupBeats : (Number(mode) || pitches.length - 1) * duration(depth, group[3].length, group[4].length),
-          tie: Boolean(group[5]),
+          tie: mode === 'h' ? Boolean(group[5]) : Boolean(tuplet?.tiesFromLast),
+          tieFromTupletIndex: tuplet?.tiesFromLast ? pitches.length - 1 : undefined,
           postfixes: [],
           navigation: [],
           octaveShift: 0,

@@ -316,25 +316,34 @@ function parsePitch(raw: string): { pitch: ParsedPitch | null; error: string | n
   }
 }
 
-function splitPitchSequence(source: string): { pitches: ParsedPitch[]; hasRest: boolean; error: string | null } {
+function splitPitchSequence(source: string, allowTerminalTie = false): { pitches: ParsedPitch[]; hasRest: boolean; firstPitch?: ParsedPitch; hasTerminalTie: boolean; terminalTieOnRest: boolean; error: string | null } {
   const normalized = source.replace(/\s+/g, '')
+  const hasTerminalTie = allowTerminalTie && normalized.endsWith('~')
+  const pitchSource = hasTerminalTie ? normalized.slice(0, -1) : normalized
   const pitches: ParsedPitch[] = []
   let hasRest = false
   let index = 0
-  while (index < normalized.length) {
-    if (normalized[index] === '0') {
+  while (index < pitchSource.length) {
+    if (pitchSource[index] === '0') {
       hasRest = true
       index += 1
       continue
     }
-    const token = /^[1-7][#b=]*[ed]*/.exec(normalized.slice(index))?.[0]
-    if (!token) return { pitches, hasRest, error: `元素序列含非法内容：${source}` }
+    const token = /^[1-7][#b=]*[ed]*/.exec(pitchSource.slice(index))?.[0]
+    if (!token) return { pitches, hasRest, hasTerminalTie, terminalTieOnRest: false, error: `元素序列含非法内容：${source}` }
     const parsed = parsePitch(token)
-    if (!parsed.pitch) return { pitches, hasRest, error: parsed.error }
+    if (!parsed.pitch) return { pitches, hasRest, hasTerminalTie, terminalTieOnRest: false, error: parsed.error }
     pitches.push(parsed.pitch)
     index += token.length
   }
-  return { pitches, hasRest, error: null }
+  return {
+    pitches,
+    hasRest,
+    firstPitch: pitchSource.startsWith('0') ? undefined : pitches[0],
+    hasTerminalTie,
+    terminalTieOnRest: hasTerminalTie && pitchSource.endsWith('0'),
+    error: null,
+  }
 }
 
 function tonicPitchClass(key: string) {
@@ -607,7 +616,7 @@ function validateBody(
     }
   }
 
-  const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet'; pitches?: number[]; tie?: boolean; lyricCount?: number }) => {
+  const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet'; pitches?: number[]; tie?: boolean; tieSource?: Omit<PendingTie, 'line'>; tieTarget?: Omit<PendingTie, 'line'>; tiedTargetLyricCount?: number; lyricCount?: number }) => {
     if (voltaNeedsBar && !activeVolta()) {
       diagnostics.push(lineMessage(token, 'volta 关闭后、下一条小节线前不能出现音符'))
       voltaNeedsBar = false
@@ -635,16 +644,21 @@ function validateBody(
 
     let tiedTarget = false
     if (pendingTie) {
-      const sameKind = pendingTie.kind === atom.kind
-      const actual = [...(atom.pitches ?? [])].sort((a, b) => a - b)
+      const target = atom.tieTarget ?? { kind: atom.kind as PendingTie['kind'], pitches: atom.pitches ?? [] }
+      const sameKind = pendingTie.kind === target.kind
+      const actual = [...target.pitches].sort((a, b) => a - b)
       const expected = [...pendingTie.pitches].sort((a, b) => a - b)
       const samePitches = actual.length === expected.length && actual.every((pitch, index) => pitch === expected[index])
       if (!sameKind || !samePitches) diagnostics.push(lineMessage(token, '延音目标的类型或绝对音高不匹配'))
       else tiedTarget = true
       pendingTie = null
     }
-    if (atom.tie && eligible) pendingTie = { kind: atom.kind as 'note' | 'harmony', pitches: atom.pitches ?? [], line: token.line }
+    if (atom.tie && (eligible || atom.tieSource)) {
+      const source = atom.tieSource ?? { kind: atom.kind as PendingTie['kind'], pitches: atom.pitches ?? [] }
+      pendingTie = { ...source, line: token.line }
+    }
     if (!tiedTarget) addLyrics(isInstrumental() ? 0 : atom.lyricCount ?? (eligible ? 1 : 0))
+    else addLyrics(isInstrumental() ? 0 : atom.tiedTargetLyricCount ?? 0)
     postfixTarget = atom.kind === 'note' || atom.kind === 'harmony' ? atom.kind : false
   }
 
@@ -987,25 +1001,33 @@ function validateBody(
         diagnostics.push(lineMessage(token, `音符分组格式非法：${token.raw}`))
         continue
       }
-      const sequence = splitPitchSequence(match[1])
       const mode = match[2].trim()
+      const harmony = mode === 'h'
+      const sequence = splitPitchSequence(match[1], !harmony)
       if (sequence.error) diagnostics.push(lineMessage(token, `分组${sequence.error}`))
       const elementCount = sequence.pitches.length + (sequence.hasRest ? (match[1].replace(/\s+/g, '').match(/0/g)?.length ?? 0) : 0)
       if (elementCount < 2) diagnostics.push(lineMessage(token, '音符分组至少需要两个元素'))
-      const harmony = mode === 'h'
       const units = Number(mode)
       if (!harmony && (!/^\d+$/.test(mode) || !Number.isSafeInteger(units) || units <= 0)) {
         diagnostics.push(lineMessage(token, `分组模式必须是 h 或正整数：${mode}`))
       }
       if (harmony && sequence.hasRest) diagnostics.push(lineMessage(token, '和音组内不允许休止符'))
       if (!harmony && match[5]) diagnostics.push(lineMessage(token, '连音组整体不能使用延音'))
+      if (!harmony && sequence.terminalTieOnRest) diagnostics.push(lineMessage(token, '连音组内的延音只能附在最后一个有音高的元素上'))
       const pitches = sequence.pitches.map(absolutePitch)
       const duration = (harmony ? 1 : Number.isFinite(units) && units > 0 ? units : 0)
         * durationInBeats(parens.length, match[3].length, match[4].length)
       addAtom(token, duration, {
         kind: harmony ? 'harmony' : 'tuplet',
         pitches,
-        tie: harmony && match[5] === '~',
+        tie: harmony ? match[5] === '~' : sequence.hasTerminalTie && !sequence.terminalTieOnRest,
+        tieSource: !harmony && sequence.hasTerminalTie && !sequence.terminalTieOnRest
+          ? { kind: 'note', pitches: pitches.length > 0 ? [pitches.at(-1)!] : [] }
+          : undefined,
+        tieTarget: !harmony && sequence.firstPitch
+          ? { kind: 'note', pitches: [absolutePitch(sequence.firstPitch)] }
+          : !harmony ? { kind: 'note', pitches: [] } : undefined,
+        tiedTargetLyricCount: !harmony ? Math.max(0, sequence.pitches.length - (sequence.firstPitch ? 1 : 0)) : undefined,
         lyricCount: harmony ? 1 : sequence.pitches.length,
       })
       continue

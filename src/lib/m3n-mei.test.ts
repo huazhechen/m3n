@@ -494,6 +494,13 @@ describe('M3N to MEI conversion', () => {
     ])
   })
 
+  it('ties the final tuplet child to the following note', () => {
+    const result = m3nToMei('{key=C} {4/4}\n[123~:2] 3 0 |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<tie startid="#m3n-e-1-n3" endid="#m3n-e-2"/>')
+  })
+
   it('attaches successive lyric items to each pitched tuplet child note', () => {
     const result = m3nToMei('{key=C} {2/4}\n[1 2 3:2] |\n{lyrics}\n\u7532\u4e59\u4e19\n{/}')
 

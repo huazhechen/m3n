@@ -81,4 +81,10 @@ describe('direct M3N parser', () => {
     expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
     expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
   })
+
+  it('keeps a tie on the final pitched tuplet child', () => {
+    const event = parseM3NDocument('{key=C} {4/4} [123~:2] 3 0 |||').parts.get('score')?.melody[0]?.events[0]
+
+    expect(event).toMatchObject({ kind: 'tuplet', pitches: ['1', '2', '3'], tie: true, tieFromTupletIndex: 2 })
+  })
 })
