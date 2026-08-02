@@ -7,9 +7,8 @@ export type Happi123Metadata = {
 // Only include attributions that identify the underlying work unambiguously.
 const metadataByTitle: Record<string, Happi123Metadata> = {
   '第二圆舞曲': { composer: '德米特里·肖斯塔科维奇' },
-  '安妮': { composer: '约翰·丹佛', lyricist: '约翰·丹佛' },
   '卡农': { composer: '约翰·帕赫贝尔' },
-  '土耳其进行曲': { composer: '沃尔夫冈·阿马德乌斯·莫扎特' },
+  '土耳其进行曲': { composer: '莫扎特' },
   '西西里': { composer: '加布里埃尔·福雷' },
   '遇见': { composer: '林一峰', lyricist: '易家扬' },
   '小星星': { composer: '传统法国民歌' },

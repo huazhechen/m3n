@@ -3,8 +3,8 @@
 {bpm:132}
 {key_signature:1=A}
 {time_signature:2/4}
-{mark:A第一插部}
-{br}
+{play:Episode1 Refrain Episode2 Refrain Episode1 Refrain Coda}
+{mark:Episode1}
 {1=C}
 |:
 7//{p}6//5#//6//|1g/0/
@@ -25,8 +25,7 @@
 :|
 {br}
 
-{mark:B叠部}
-{br}
+{mark:Refrain}
 {1=A}
 |:
 1g/st{f}2g/st|3gst1g/st2g/st|3g/st2g/st1g/st7st/|6/st7/st1g/st2g/st|7/st5/st
@@ -34,8 +33,7 @@
 :|
 {br}
 
-{mark:C第二插部}
-{br}
+{mark:Episode2}
 {1=A}
 |:
 3g//{p}4g//3g//2g//|1g//2g//1g//7//6//1g//7//6//|5#//6//7//5#//3//4#//5#//3//|6//{cresc}5#//6//7//1g//7//1g//2g//|3g//2#g//3g//2#g//
@@ -50,23 +48,7 @@
 :|
 {br}
 
-{mark:B¹}
-{br}
-{1=A}
-|:
-1g/st{f}2g/st|3gst1g/st2g/st|3g/st2g/st1g/st7st/|6/st7/st1g/st2g/st|7/st5/st
-1g/st2g/st|3gst1g/st2g/st|3g/st2g/st1g/st7/st|6/st2g/st7/st5/st|1g
-:|
-{br}
-
-{mark:A¹第一插部再现}{omit:24}
-
-{mark:B²叠部最终再现}{omit:8}
-{br}
-
-
-{mark:Coda尾声(A大调)}
-{br}
+{mark:Coda}
 {1=A}
 3g/.3g//|
 3g-{f}|3g-|4g//3g//2g//3g//4g//3g//2g//3g//|4g-|(4g)@3g/st(4g)@3g/st(4g)@3g/st(4g)@3g/st|{br}2g.5g/|

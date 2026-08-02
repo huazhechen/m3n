@@ -395,20 +395,16 @@ function convertSequence(
           if (pitches.length > 0) {
             state.pendingGrace = `${state.pendingGrace ?? ''}{ac(${pitches.join('')})}`
           }
-        } else if (/^3\s*:/.test(rawInner)) {
-          output.push(convertTuplet(rawInner.replace(/^3\s*:/, ''), diagnostics))
+        } else if (/^(?:3|t)\s*:/.test(rawInner)) {
+          output.push(convertTuplet(rawInner.replace(/^(?:3|t)\s*:/, ''), diagnostics))
         } else {
-          const tieGroup = /^t\s*:/.test(rawInner)
-          const inner = applySuffixToGroup(rawInner.replace(/^t\s*:/, ''), suffix)
+          const inner = applySuffixToGroup(rawInner, suffix)
           const notes = extractHappiNotes(inner)
           const samePitch = notes.length > 1 && new Set(notes.map((note) => note.pitch)).size === 1
-          const explicitExtension = /-/.test(rawInner) || suffix.includes('-')
           if (notes.length === 1) {
             output.push(convertSequence(inner, diagnostics, state).output)
-          } else if (tieGroup || samePitch && !explicitExtension) {
+          } else if (samePitch) {
             output.push(convertSequence(addTiesToNotes(inner), diagnostics, state).output)
-          } else if (explicitExtension && rawInner.includes('|')) {
-            output.push(convertSequence(inner, diagnostics, state).output)
           } else {
             output.push(`{lg}${convertSequence(inner, diagnostics, state).output}{/}`)
           }
