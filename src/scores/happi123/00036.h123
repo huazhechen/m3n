@@ -3,8 +3,6 @@
 {bpm:148}
 {key_signature:1=D}
 {time_signature:4/4}
-{play:A B B C}
-A:
 000x1x1x2x|3335|4x3(2x2)2x1x|
 1361g|7x6(5x5)3x2x|1166|5x(3x3x)(1x1)0|114x3(2x|2)--1x2x|
 3335|6x(5x5x)(2x2)2x1x|1361g|7x(6x6x)(5x5)3x2x|1166|5x(3x3x)(1x1)0x1x|
@@ -12,12 +10,11 @@ A:
 654x.(6xx6x)(5x|5x)3.0x1x1x2x|334x3(2x|2)0x5x(3:567)|(1g---|7)--5x5x|
 665x4(5x|3)--0x5x|671g6|5143x(3x|2---|2)
 
-B:
-0x5x5x2gx1gx(3gx|
+|:0x5x5x2gx1gx(3gx|
 3g.)1gx(5x1g(3gx)|3gx)2g.5x7x2gx(1gx|2gx(1gx)1gxx)(3gx.1gx)1gx5x(5x|5)-3x5x(1gx5x)|6.1x1x3(6x|6x)53x0x1x1x(3x|
-3x)3x3x43x3x(2x|2)
-C:
-0x5x5x(3gx|(3g)3g.)2gx3gx(2gx|(2g)-2gx)3gx4gx(3gx|(3g)---|
+3x)3x3x43x3x(2x|2):|
+
+00x5x5x(3gx|(3g)3g.)2gx3gx(2gx|(2g)-2gx)3gx4gx(3gx|(3g)---|
 3g)-5x5(6x|6)-6x6(5x|5.)(3x3x)1x1x(3x|3x)3x3x3x4x3x(2|2)(2x2x)0x5x5x(3gx|(3g)-3gx)2gx3gx(2gx|
 (2g)-2gx)3gx2gx(1gx|(1g)---|1g)-3x5(6x|6)-6x1gx1gx(5x|5.)(3x3x)1x1x(3x|3x)33x3x5x1gx(7x|7)---|||
 

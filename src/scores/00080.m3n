@@ -5,7 +5,7 @@
 1^^~ | 1^^ | 2^^~ | 2^^~ |
 2^^~ | 2^^ || {br} {cresc}1^^ {text=渐强渐弱}{/} | {decres}2^^{/} |
 {cresc}4^^{/} | {decres}3^^{/} | {cresc}1^{/} {decres}2^{/} | {cresc}4^{/} {decres}3^{/} |
-{cresc}1^{/} {decres}2^{/} | {cresc}4^{/} {decres}3^{/} || {br} 1~ {text=震音} 1^.{tr} | 2^^{tr} |
+{cresc}1^{/} {decres}2^{/} | {cresc}4^{/} {decres}3^{/} || {br} 1~ {text=震音} 1~ 1^{tr} | 2^^{tr} |
 1^^{tr} | 2^^{tr} | {decres}1^^{tr}{/} | {decres}2^^{tr}{/} |
 {decres}1^^{tr}{/} | {decres}2^^{tr}{/} || {br} ((1)){tip} {text=断音} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} (1){tip} | ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} (2){tip} ||
 {br} (1){tip} {text=节奏} ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} | ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (1){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} | (1.){tip} ((1)){tip} (1.){tip} ((1)){tip} (2.){tip} ((2)){tip} (2.){tip} ((2)){tip} | ((1)){tip} (1.){tip} ((1)){tip} (1.){tip} ((2)){tip} (2.){tip} ((2)){tip} (2.){tip} |
