@@ -8,6 +8,10 @@ describe('direct M3N parser', () => {
     expect(event).toMatchObject({ tempo: 120 })
   })
 
+  it('retains the source information field', () => {
+    expect(parseM3NDocument('{source=First edition} {4/4} 1 2 3 4 |||').source).toBe('First edition')
+  })
+
   it('does not leak part-local settings into the next named part', () => {
     const document = parseM3NDocument([
       '{key=C} {2/4} {120qpm} {parts=A B}',

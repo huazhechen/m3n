@@ -64,7 +64,7 @@ type Supplement = {
 
 const INFO_FIELDS = new Set([
   'title', 'subtitle', 'category', 'singer', 'composer', 'lyricist', 'arranger',
-  'copyright', 'note', 'transpose',
+  'copyright', 'source', 'note', 'transpose',
 ])
 
 const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'lg', '8va', '8vb', 'inst'])

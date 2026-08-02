@@ -4,7 +4,7 @@ import { m3nToMei } from './m3n-mei'
 
 describe('M3N to MEI conversion', () => {
   it('creates a complete MEI score with source-linked notes', () => {
-    const result = m3nToMei('{title=Test} {subtitle=Sub} {composer=Composer} {lyricist=Lyricist} {arranger=Arranger} {copyright=Copyright} {note=Note} {transpose=2}\n{key=D} {3/4} {90qpm}\n1 2 3 | 4^. |||')
+    const result = m3nToMei('{title=Test} {subtitle=Sub} {composer=Composer} {lyricist=Lyricist} {arranger=Arranger} {copyright=Copyright} {source=First edition} {note=Note} {transpose=2}\n{key=D} {3/4} {90qpm}\n1 2 3 | 4^. |||')
 
     expect(result.diagnostics).toEqual([])
     expect(result.title).toBe('Test')
@@ -15,6 +15,7 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<persName role="composer">Composer</persName>')
     expect(result.mei).toContain('<persName role="lyricist">Lyricist</persName>')
     expect(result.mei).toContain('<persName role="arranger">Arranger</persName>')
+    expect(result.mei).toContain('<source><bibl>First edition</bibl></source>')
     expect(result.subtitle).toBe('Sub')
     expect(result.composer).toBe('Composer')
     expect(result.lyricist).toBe('Lyricist')
