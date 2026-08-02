@@ -203,6 +203,13 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('1 1 | 2 2 | {br}\n3 3 |||')
   })
 
+  it('preserves a barline after an inner parenthesized note group', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:4/4}\n04/6/6/(1g/1g/)2g=2g=|7/6/ 6/(5/5-)|')
+
+    expect(result.output).toContain('0 (4 6) (6 1e~) (1e) ((2e)) ((2e)) | (7 6) (6 5~) 5^ |')
+    expect(result.diagnostics).toEqual([])
+  })
+
   it('discards playback-only octave configuration', () => {
     const result = happi123ToM3N('{title:音区}\n{key_signature:C}\n{time_signature:4/4}\n{octave:-1}\n1---|||')
 
