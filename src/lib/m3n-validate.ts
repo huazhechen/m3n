@@ -2,6 +2,7 @@ import { durationInBeats, keyModeIntervals } from './notation/m3n-primitives'
 import { parseM3NGrace } from './notation/m3n-groups'
 import { parseLyricItems, type LyricMode } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
+import { parseM3NDocument } from './m3n-direct'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -995,11 +996,23 @@ export function invalidMeasureBarEnds(source: string) {
 
 export function invalidMeasureIds(source: string) {
   const invalidEnds = new Set(invalidMeasureBarEnds(source))
-  return tokenizeM3N(source).filter((token) => token.kind === 'bar').flatMap((token, index) => (
-    invalidEnds.has(token.start + token.raw.length)
-      ? [`m3n-measure-1-${index + 1}`]
-      : []
-  ))
+  const document = parseM3NDocument(source)
+  const renderedMeasureCount = (measures: Array<{ events: unknown[]; multiRest?: number }>) => {
+    let count = measures.length
+    while (count > 1 && measures[count - 1]?.events.length === 0 && !measures[count - 1]?.multiRest) count -= 1
+    return count
+  }
+
+  return [...document.parts.values()].flatMap((part, partIndex) => {
+    const measureCount = Math.max(renderedMeasureCount(part.melody), renderedMeasureCount(part.bass))
+    return Array.from({ length: measureCount }, (_, measureIndex) => {
+      const melody = part.melody[measureIndex]
+      const bass = part.bass[measureIndex]
+      return invalidEnds.has(melody?.barEnd ?? -1) || invalidEnds.has(bass?.barEnd ?? -1)
+        ? `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
+        : null
+    }).filter((id): id is string => id !== null)
+  })
 }
 
 export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}): string[] {

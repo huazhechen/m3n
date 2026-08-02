@@ -17,6 +17,12 @@ describe('validateM3N', () => {
     expect(messages(source)).toContain('第 2 行，第 2 小节：中间小节拍数不合规')
   })
 
+  it('does not count a leading repeat bar as a rendered measure', () => {
+    const source = '{4/4}\n||: 1 2 3 4 | 1 2 3 | 1 2 3 4 |||'
+
+    expect(invalidMeasureIds(source)).toEqual(['m3n-measure-1-2'])
+  })
+
   it('accepts tenuto and fermata postfixes', () => {
     expect(validateM3N('{key=C} {4/4}\n1{hold} 2{fermata} 3 4 |||')).toEqual([])
   })

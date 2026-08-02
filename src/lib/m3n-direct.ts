@@ -35,7 +35,7 @@ export type DirectInterval = {
   endStart?: number
 }
 
-export type DirectMeasure = { events: DirectEvent[]; left?: string; right?: string; ending?: string; breakBefore?: boolean; breakAfter?: boolean; multiRest?: number; repeatCount?: number }
+export type DirectMeasure = { events: DirectEvent[]; left?: string; right?: string; ending?: string; breakBefore?: boolean; breakAfter?: boolean; multiRest?: number; repeatCount?: number; barEnd?: number }
 export type DirectPart = { melody: DirectMeasure[]; bass: DirectMeasure[] }
 export type DirectLyricSyllable = { text: string; sourceStart: number; sourceEnd: number; forceTiedTarget: boolean; kind: 'text' | 'placeholder' | 'extender'; underlined: boolean; wordpos?: 'i' | 'm' | 't' }
 export type DirectLyricBlock = { range: string; mode: 'char' | 'word'; syllables: DirectLyricSyllable[] }
@@ -295,6 +295,7 @@ function parseBody(
       current.right = value.startsWith(':||') ? 'rptend'
         : value.includes('|||') ? 'end'
           : value === '||' ? 'dbl' : 'single'
+      current.barEnd = token.start + value.length
       pendingRepeatEnd = value.startsWith(':||') ? current : undefined
       const next: DirectMeasure = { events: [], ending: activeEnding }
       if (value === '||:' || value === ':||:') next.left = 'rptstart'

@@ -351,7 +351,8 @@ export function m3nToMei(source: string): MeiConversionResult {
       const endingPassSet = measure?.ending ? endingPasses(measure.ending) : undefined
       const lyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
         ? lyricSyllables.flatMap((block, index) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
-          if (endingPassSet && block.passes && ![...endingPassSet].some((pass) => block.passes.has(pass))) return []
+          const passes = block.passes
+          if (endingPassSet && passes && ![...endingPassSet].some((pass) => passes.has(pass))) return []
           const lyric = block.syllables[melodyIndices[index]]
           const tiedTarget = targetIndex === 0 && tieEnd
           if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []
