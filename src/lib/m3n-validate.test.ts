@@ -165,7 +165,7 @@ describe('validateM3N', () => {
     const result = messages(source)
     expect(result).toContain('歌词块遍次重叠：1')
     expect(result).toContain('不能使用 Tab')
-    expect(result).toContain('歌词对位数量不匹配')
+    expect(result).not.toContain('歌词对位数量不匹配')
   })
 
   it('permits lyric reuse across volta paths', () => {

@@ -616,7 +616,12 @@ function convertLyricsForMusic(items: HappiLyricItem[], music: string, pass?: nu
     }
   }
 
-  return converted.join(' ')
+  return converted.reduce((text, item, index) => {
+    if (!text) return item
+    const previousHasEnglish = /[A-Za-z0-9]/.test(converted[index - 1] ?? '')
+    const currentHasEnglish = /[A-Za-z0-9]/.test(item)
+    return `${text}${previousHasEnglish || currentHasEnglish ? ' ' : ''}${item}`
+  }, '')
 }
 
 function sectionParts(source: string) {

@@ -73,29 +73,8 @@ function parseUnit(items: ParsedLyricItem[], raw: string, sourceStart: number, f
   }
 }
 
-export function parseLyricItems(source: string, sourceStart: number, mode: LyricMode): ParsedLyricItem[] {
+export function parseLyricItems(source: string, sourceStart: number, _mode: LyricMode): ParsedLyricItem[] {
   const items: ParsedLyricItem[] = []
-  if (mode === 'word') {
-    let index = 0
-    while (index < source.length) {
-      if (/\s/.test(source[index]!)) {
-        index += 1
-        continue
-      }
-      if (source.startsWith('//', index)) {
-        const newline = source.indexOf('\n', index)
-        index = newline === -1 ? source.length : newline + 1
-        continue
-      }
-      const start = index
-      while (index < source.length && !/\s/.test(source[index]!)) index += 1
-      const raw = source.slice(start, index)
-      const forced = raw.startsWith('+')
-      parseUnit(items, forced ? raw.slice(1) : raw, sourceStart + start + (forced ? 1 : 0), forced, mode)
-    }
-    return items
-  }
-
   let index = 0
   let forceNext = false
   while (index < source.length) {
@@ -118,8 +97,9 @@ export function parseLyricItems(source: string, sourceStart: number, mode: Lyric
     const repeated = /^%\{\d+\}/.exec(rest)?.[0]
     const extender = /^_\{[^}]*\}/.exec(rest)?.[0]
     const grouped = /^\([^)]*\)/.exec(rest)?.[0]
-    const raw = repeated ?? extender ?? grouped ?? character
-    parseUnit(items, raw, sourceStart + index, forceNext, mode)
+    const word = /^[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*-?/.exec(rest)?.[0]
+    const raw = repeated ?? extender ?? grouped ?? word ?? character
+    parseUnit(items, raw, sourceStart + index, forceNext, word ? 'word' : 'char')
     forceNext = false
     index += raw.length
   }

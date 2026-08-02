@@ -270,7 +270,7 @@ export function m3nToMei(source: string): MeiConversionResult {
     passes: block.range ? endingPasses(block.range) : undefined,
     syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
       ...syllable,
-      cjkSpacingCompensation: block.mode === 'char',
+      cjkSpacingCompensation: CJK_OR_FULLWIDTH_CHARACTER.test(syllable.text),
     })),
   }))
   const melodyIndices = lyricSyllables.map(() => 0)

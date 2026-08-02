@@ -305,25 +305,15 @@ function formatMain(source: string) {
   return `${source.slice(0, headerEnd).trimEnd()}\n${formatMusic(music)}`
 }
 
-function formatLyrics(source: string, mode: 'char' | 'word') {
-  if (mode === 'char') {
-    let result = ''
-    let index = 0
-    while (index < source.length) {
-      if (source.startsWith('//', index)) {
-        const end = source.indexOf('\n', index)
-        result += `${source.slice(index, end === -1 ? source.length : end).trimEnd()}\n`
-        index = end === -1 ? source.length : end + 1
-      } else if (/\s/.test(source[index]!)) {
-        index += 1
-      } else {
-        result += source[index]
-        index += 1
-      }
-    }
-    return result.trim().replace(/%(?:%)+/g, (run) => `%{${run.length}}`)
-  }
-  const text = source.replace(/\s+/g, ' ').trim()
+function formatLyrics(source: string) {
+  const text = source.split(/\r?\n/).map((line) => {
+    if (line.trimStart().startsWith('//')) return line.trimEnd()
+    return line.replace(/\s+/g, (whitespace, offset) => {
+      const previous = line.slice(0, offset).at(-1) ?? ''
+      const next = line[offset + whitespace.length] ?? ''
+      return /[A-Za-z0-9]/.test(previous) || /[A-Za-z0-9]/.test(next) ? ' ' : ''
+    }).trim()
+  }).filter(Boolean).join('\n')
   return text.replace(/%(?:\s*%)+/g, (run) => `%{${(run.match(/%/g) ?? []).length}}`)
 }
 
@@ -332,9 +322,8 @@ export function formatM3N(source: string) {
   const { main, bass, lyrics } = splitSupplementBlocks(mergeSustainedAtoms(source))
   const supplements = [
     ...lyrics.map((lyric) => {
-      const text = formatLyrics(lyric.text, lyric.mode)
-      const name = lyric.mode === 'word' ? 'lyrics-word' : 'lyrics'
-      return `{${name}${lyric.range ? `=${lyric.range}` : ''}}\n${text}\n{/}`
+      const text = formatLyrics(lyric.text)
+      return `{lyrics${lyric.range ? `=${lyric.range}` : ''}}\n${text}\n{/}`
     }),
     bass ? `{bass}\n${formatMusic(bass)}\n{/}` : '',
   ].filter(Boolean)

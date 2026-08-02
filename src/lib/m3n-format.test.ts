@@ -81,10 +81,10 @@ describe('formatM3N', () => {
     expect(result).toContain('((0 0 0 0))')
   })
 
-  it('compacts character lyrics while compressing consecutive placeholders', () => {
+  it('removes only Chinese lyric spacing while normalizing legacy lyric blocks', () => {
     const result = formatM3N('{key=C} {2/4}\n1 2 |\n{lyrics}\n甲  % %  乙%%丙\n{/}\n{lyrics-word}\nhello  world\n{/}')
 
     expect(result).toContain('{lyrics}\n甲%{2}乙%{2}丙\n{/}')
-    expect(result).toContain('{lyrics-word}\nhello world\n{/}')
+    expect(result).toContain('{lyrics}\nhello world\n{/}')
   })
 })

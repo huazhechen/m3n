@@ -21,7 +21,7 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('{composer=路德维希·范·贝多芬}')
     expect(result.output).not.toContain('{source=Happi123}')
     expect(result.output).toContain('1 (2) 3^')
-    expect(result.output).toContain('{lyrics}\n欢 乐 颂\n{/}')
+    expect(result.output).toContain('{lyrics}\n欢乐颂\n{/}')
   })
 
   it('drops legacy categories and preserves header attributions declared in Happi123', () => {
@@ -121,7 +121,7 @@ describe('happi123ToM3N', () => {
     const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n(3:123)|{lyric}甲乙丙{/lyric}')
     const mei = m3nToMei(result.output).mei
 
-    expect(result.output).toContain('{lyrics}\n甲 乙 丙\n{/}')
+    expect(result.output).toContain('{lyrics}\n甲乙丙\n{/}')
     expect(mei).toContain('xml:id="m3n-e-1-n1-v1"')
     expect(mei).toContain('xml:id="m3n-e-1-n2-v1"')
     expect(mei).toContain('xml:id="m3n-e-1-n3-v1"')
@@ -329,7 +329,7 @@ describe('happi123ToM3N', () => {
       '{title:歌词方言}\n{key_signature:C}\n{time_signature:2/4}\n1~ 1 |||\n{lyric}甲+乙_(丙丁){/lyric}',
     )
 
-    expect(result.output).toContain('{lyrics}\n甲 +乙 % (丙丁)\n{/}')
+    expect(result.output).toContain('{lyrics}\n甲+乙%(丙丁)\n{/}')
   })
 
   it.each(['_', ';'])('omits Happi123 %s placeholders at automatic M3N tied targets', (placeholder) => {
@@ -337,7 +337,7 @@ describe('happi123ToM3N', () => {
       `{key_signature:C}\n{time_signature:4/4}\n1~ 1 2 2 |||\n{lyric}\u7532${placeholder}\u4e59\u4e19{/lyric}`,
     )
 
-    expect(result.output).toContain('{lyrics}\n\u7532 \u4e59 \u4e19\n{/}')
+    expect(result.output).toContain('{lyrics}\n\u7532\u4e59\u4e19\n{/}')
     expect(result.output).not.toContain('{lyrics}\n\u7532 %')
   })
 
@@ -360,21 +360,21 @@ describe('happi123ToM3N', () => {
   it('preserves slash lyric placeholders and assigns separate verses to passes', () => {
     const result = happi123ToM3N('{title:歌词}\n{key_signature:C}\n{time_signature:2/4}\n11:|||\n{lyric}甲/乙{/lyric}\n{lyric}丙/丁{/lyric}')
 
-    expect(result.output).toContain('{lyrics=1}\n甲 % 乙\n{/}')
-    expect(result.output).toContain('{lyrics=2}\n丙 % 丁\n{/}')
+    expect(result.output).toContain('{lyrics=1}\n甲%乙\n{/}')
+    expect(result.output).toContain('{lyrics=2}\n丙%丁\n{/}')
   })
 
   it('aligns Happi123 lyrics to the matching alternate ending pass', () => {
     const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n|:12|[1:3~3:|][2:45]|||\n{lyric}甲乙丙丁{/lyric}\n{lyric}戊己庚辛{/lyric}')
 
-    expect(result.output).toContain('{lyrics=1}\n甲 乙 丙 +丁\n{/}')
-    expect(result.output).toContain('{lyrics=2}\n戊 己 庚 辛\n{/}')
+    expect(result.output).toContain('{lyrics=1}\n甲乙丙+丁\n{/}')
+    expect(result.output).toContain('{lyrics=2}\n戊己庚辛\n{/}')
   })
 
   it('omits one-time introductions when aligning later Happi123 lyric passes', () => {
     const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n1~1|:23:|||\n{lyric}甲乙丙丁{/lyric}\n{lyric}戊己{/lyric}')
 
-    expect(result.output).toContain('{lyrics=2}\n戊 己\n{/}')
+    expect(result.output).toContain('{lyrics=2}\n戊己\n{/}')
     expect(result.output).not.toContain('{lyrics=2}\n戊 +己')
   })
 
@@ -382,5 +382,11 @@ describe('happi123ToM3N', () => {
     const result = happi123ToM3N('{title:歌词}\n{key_signature:C}\n{time_signature:2/4}\n11|||\n{lyric}甲;乙；丙{/lyric}')
 
     expect(formatM3N(result.output)).toContain('{lyrics}\n甲%乙；丙\n{/}')
+  })
+
+  it('removes Chinese lyric spaces while preserving English word spacing', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n11|||\n{lyric}你 好 hello world{/lyric}')
+
+    expect(result.output).toContain('{lyrics}\n你好 hello world\n{/}')
   })
 })

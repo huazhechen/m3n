@@ -229,9 +229,11 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei.match(/<beam>/g)).toHaveLength(2)
   })
 
-  it('splits hyphenated English lyrics across consecutive notes', () => {
-    const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics-word}\nTwin-kle\n{/}')
+  it('automatically separates Chinese characters and hyphenated English lyrics', () => {
+    const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 |||\n{lyrics}\n你 好 Twin-kle\n{/}')
 
+    expect(result.mei).toContain('<syl>你\u200B</syl>')
+    expect(result.mei).toContain('<syl>好\u200B</syl>')
     expect(result.mei).toContain('<syl wordpos="i" con="d">Twin</syl>')
     expect(result.mei).toContain('<syl wordpos="t">kle</syl>')
   })
