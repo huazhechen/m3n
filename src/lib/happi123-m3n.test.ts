@@ -117,6 +117,16 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('[111:2] 1 |||')
   })
 
+  it('aligns Happi123 triplet lyrics to all three notes', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n(t:123)|{lyric}甲乙丙{/lyric}')
+    const mei = m3nToMei(result.output).mei
+
+    expect(result.output).toContain('{lyrics}\n甲 乙 丙\n{/}')
+    expect(mei).toContain('xml:id="m3n-e-1-n1-v1"')
+    expect(mei).toContain('xml:id="m3n-e-1-n2-v1"')
+    expect(mei).toContain('xml:id="m3n-e-1-n3-v1"')
+  })
+
   it('ties equal pitches across a bar within ordinary parentheses', () => {
     const result = happi123ToM3N('{key_signature:A}\n{time_signature:2/4}\n(1g>-|1g)|||')
 

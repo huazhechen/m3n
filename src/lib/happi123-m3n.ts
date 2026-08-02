@@ -575,9 +575,10 @@ function tiedLyricTargets(source: string) {
       previousTied = false
       continue
     }
-    // The renderer assigns one lyric item to a tuplet event as a whole.
-    // Keep conversion alignment on that same event boundary.
-    targets.push(previousTied)
+    const lyricTargetCount = event.kind === 'tuplet'
+      ? event.pitches.filter((pitch) => pitch !== '0').length
+      : 1
+    targets.push(previousTied, ...Array(Math.max(0, lyricTargetCount - 1)).fill(false))
     previousTied = event.tie
   }
   return targets

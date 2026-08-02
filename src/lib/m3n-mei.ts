@@ -136,8 +136,8 @@ function chordSymbol(value: string, key: string) {
   return m3nChord(value, key)?.symbol ?? value
 }
 
-function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
-  const verse = lyrics.filter((lyric) => lyric.kind !== 'placeholder').map((lyric) => {
+function verseXml(lyrics: VerseSyllable[], xmlId: string) {
+  return lyrics.filter((lyric) => lyric.kind !== 'placeholder').map((lyric) => {
     const connection = lyric.kind === 'extender'
       ? ' con="u"'
       : lyric.underlined
@@ -148,6 +148,10 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
       : escapeXml(lyricText(lyric))
     return `<verse xml:id="${xmlId}-v${lyric.verseIndex}" n="${lyric.n}"><syl${connection}>${text}</syl></verse>`
   }).join('')
+}
+
+function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
+  const verse = verseXml(lyrics, xmlId)
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
     event.postfixes.includes('brk') ? '<artic artic="stacciss"/>' : '',
@@ -171,11 +175,12 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
   }
   if (event.kind === 'tuplet' && event.tuplet) {
     const childBeats = event.tuplet.unitBeats
-    let lyricAttached = false
+    let lyricIndex = 0
     const children = event.pitches.map((pitch, index) => {
       if (pitch === '0') return `<rest xml:id="${xmlId}-n${index + 1}" ${durationAttributes(childBeats)}/>`
-      const childVerse = !lyricAttached ? verse : ''
-      lyricAttached ||= Boolean(childVerse)
+      const childId = `${xmlId}-n${index + 1}`
+      const childVerse = verseXml(lyrics.slice(lyricIndex, lyricIndex + 1), childId)
+      lyricIndex += 1
       const note = `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)} ${durationAttributes(childBeats)}`
       return childVerse ? `${note}>${childVerse}</note>` : `${note}/>`
     }).join('')
@@ -340,13 +345,17 @@ export function m3nToMei(source: string): MeiConversionResult {
       }
       const tieEnd = previousTiedByStaff.get(staffNumber) ?? false
       previousTiedByStaff.set(staffNumber, event.tie)
+      const lyricTargetCount = event.kind === 'tuplet'
+        ? event.pitches.filter((pitch) => pitch !== '0').length
+        : 1
       const lyrics = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
-        ? lyricSyllables.flatMap((block, index) => {
+        ? lyricSyllables.flatMap((block, index) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
           const lyric = block.syllables[melodyIndices[index]]
-          if (!lyric || lyric.forceTiedTarget !== tieEnd) return []
+          const tiedTarget = targetIndex === 0 && tieEnd
+          if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []
           melodyIndices[index] += 1
-          return [{ ...lyric, n: block.n, verseIndex: block.verseIndex }]
-        })
+          return { ...lyric, n: block.n, verseIndex: block.verseIndex }
+        }).flat())
         : []
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)

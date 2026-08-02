@@ -413,10 +413,12 @@ describe('M3N to MEI conversion', () => {
     ])
   })
 
-  it('attaches a tuplet lyric to its first pitched child note', () => {
-    const result = m3nToMei('{key=C} {2/4}\n[1 2 3:2] |\n{lyrics}\n\u68b3\n{/}')
+  it('attaches successive lyric items to each pitched tuplet child note', () => {
+    const result = m3nToMei('{key=C} {2/4}\n[1 2 3:2] |\n{lyrics}\n\u7532\u4e59\u4e19\n{/}')
 
-    expect(result.mei).toContain('<note xml:id="m3n-e-1-n1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>\u68b3\u200B</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-1-n1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-n1-v1" n="1"><syl>\u7532\u200B</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-1-n2" pname="d" oct="4" dur="4"><verse xml:id="m3n-e-1-n2-v1" n="1"><syl>\u4e59\u200B</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-1-n3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-1-n3-v1" n="1"><syl>\u4e19\u200B</syl></verse></note>')
   })
 
   it('maps lyric syllables to their rendered notes', () => {
