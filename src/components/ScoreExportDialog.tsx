@@ -5,6 +5,8 @@ import type { VerovioScore } from '../features/score-renderer/verovio-score'
 
 type ExportFormat = 'png' | 'pdf'
 
+const DEFAULT_EXPORT_WIDTH = 800
+
 type ScoreExportDialogProps = {
   mei: string
   title: string
@@ -26,8 +28,8 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('png')
-    const [width, setWidth] = useState(1600)
-    const [pdfScale, setPdfScale] = useState(50)
+    const [width, setWidth] = useState(DEFAULT_EXPORT_WIDTH)
+    const [pdfScale, setPdfScale] = useState(100)
     const [includeBass, setIncludeBass] = useState(true)
     const [isOpen, setIsOpen] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
@@ -48,7 +50,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       void createVerovioScore(mei).then((score) => {
         if (!cancelled) {
           preview.innerHTML = score.layout({
-            width: format === 'png' ? Math.max(320, width) : 1600,
+            width: format === 'png' ? Math.max(320, width) : DEFAULT_EXPORT_WIDTH,
             scale: format === 'pdf' ? 42 * pdfScale / 100 : 42,
             includeBass: includeBass || !hasBassStaff,
           })
@@ -69,7 +71,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (format === 'pdf' && (!Number.isFinite(scale) || scale < 0.5 || scale > 2)) {
           throw new Error('PDF 缩放需介于 50% 和 200% 之间。')
         }
-        const targetWidth = format === 'png' ? Math.max(320, width) : 1600
+        const targetWidth = format === 'png' ? Math.max(320, width) : DEFAULT_EXPORT_WIDTH
         score = await createVerovioScore(mei)
         const exportPaper = document.createElement('div')
         exportPaper.innerHTML = score.layout({
