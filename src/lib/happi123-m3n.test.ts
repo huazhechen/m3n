@@ -261,6 +261,14 @@ describe('happi123ToM3N', () => {
     expect(result.output).not.toContain('{lyrics}\n\u7532 %')
   })
 
+  it('realigns a placeholder after an implicit tied target', () => {
+    const result = happi123ToM3N(
+      '{key_signature:C}\n{time_signature:3/2}\n1~ 1 2~ 2 3 4 |||\n{lyric}a b/c d{/lyric}',
+    )
+
+    expect(result.output).toContain('{lyrics}\na b c d\n{/}')
+  })
+
   it('preserves slash lyric placeholders and assigns separate verses to passes', () => {
     const result = happi123ToM3N('{title:歌词}\n{key_signature:C}\n{time_signature:2/4}\n11:|||\n{lyric}甲/乙{/lyric}\n{lyric}丙/丁{/lyric}')
 

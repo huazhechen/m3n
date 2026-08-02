@@ -562,8 +562,18 @@ function tiedLyricTargets(source: string) {
 
 function convertLyricsForMusic(items: HappiLyricItem[], music: string) {
   const targets = tiedLyricTargets(music)
+  let targetIndex = 0
   return items
-    .filter((item, index) => !item.placeholder || !targets[index])
+    .filter((item) => {
+      // M3N omits automatic tied targets from lyric alignment. Happi123
+      // sources may either spell them with a placeholder or leave them out.
+      if (!item.placeholder) {
+        while (targets[targetIndex]) targetIndex += 1
+      }
+      const tiedTarget = targets[targetIndex]
+      targetIndex += 1
+      return !item.placeholder || !tiedTarget
+    })
     .map((item) => item.value)
     .join(' ')
 }
