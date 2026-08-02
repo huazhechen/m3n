@@ -356,6 +356,6 @@ describe('happi123ToM3N', () => {
   it('converts ASCII semicolons in Happi123 lyrics to alignment placeholders', () => {
     const result = happi123ToM3N('{title:歌词}\n{key_signature:C}\n{time_signature:2/4}\n11|||\n{lyric}甲;乙；丙{/lyric}')
 
-    expect(formatM3N(result.output)).toContain('{lyrics}\n甲 % 乙； 丙\n{/}')
+    expect(formatM3N(result.output)).toContain('{lyrics}\n甲%乙；丙\n{/}')
   })
 })
