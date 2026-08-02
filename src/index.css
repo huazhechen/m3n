@@ -1443,7 +1443,7 @@ a.action-button {
   }
 }
 
-@media (orientation: portrait) {
+@media (max-width: 1100px) {
   .editor-body {
     align-items: start;
   }
