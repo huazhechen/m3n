@@ -4,7 +4,7 @@ import { VerovioToolkit } from 'verovio/esm'
 import { BasicMIDI } from 'spessasynth_core'
 import { m3nToMei } from '../../lib/m3n-mei'
 import { automaticSystemBreakMeasureIds, encodeSystemBreaks } from './verovio-score'
-import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, measureHasLaterVisibleLyrics } from './lyric-rendition'
+import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, visibleLyricVerseNumbers } from './lyric-rendition'
 
 async function renderedPitches(source: string) {
   const toolkit = new VerovioToolkit(await createVerovioModule())
@@ -45,18 +45,19 @@ describe('VerovioScore layout', () => {
     expect(lyricVerseIndexForRendition(3, 3)).toBe(2)
   })
 
-  it('reuses first-pass lyrics only when a measure has no later visible lyrics', () => {
-    expect(measureHasLaterVisibleLyrics([
+  it('selects the most recent visible lyric verse for a repeated measure', () => {
+    expect(visibleLyricVerseNumbers([
       { id: 'm3n-e-1-v1', textContent: 'first' },
       { id: 'm3n-e-1-v2', textContent: '\u200B' },
-    ])).toBe(false)
-    expect(lyricVerseIndexForMeasureRendition(2, 2, false)).toBe(0)
+    ])).toEqual([1])
+    expect(lyricVerseIndexForMeasureRendition([{ id: 'm3n-e-1-v1' }, { id: 'm3n-e-1-v2' }], 2, [1])).toBe(0)
 
-    expect(measureHasLaterVisibleLyrics([
+    expect(visibleLyricVerseNumbers([
       { id: 'm3n-e-1-v1', textContent: 'first' },
       { id: 'm3n-e-1-v2', textContent: 'second' },
-    ])).toBe(true)
-    expect(lyricVerseIndexForMeasureRendition(2, 2, true)).toBe(1)
+      { id: 'm3n-e-1-v3', textContent: '\u200B' },
+    ])).toEqual([1, 2])
+    expect(lyricVerseIndexForMeasureRendition([{ id: 'm3n-e-1-v1' }, { id: 'm3n-e-1-v2' }, { id: 'm3n-e-1-v3' }], 4, [1, 2])).toBe(1)
   })
 
   it('uses Verovio playback expansion for endings, repeats, D.S., and D.C.', async () => {

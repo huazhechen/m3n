@@ -6,15 +6,28 @@ export function lyricVerseIndexForRendition(verseCount: number, rendition: numbe
   return verseCount === 0 ? -1 : Math.min(Math.max(0, rendition - 1), verseCount - 1)
 }
 
-/** A repeated measure with only first-pass lyrics reuses that first lyric line. */
-export function lyricVerseIndexForMeasureRendition(verseCount: number, rendition: number, hasLaterVisibleLyrics: boolean) {
-  if (verseCount === 0) return -1
-  return hasLaterVisibleLyrics ? lyricVerseIndexForRendition(verseCount, rendition) : 0
+type RenderedVerse = { id: string; textContent: string | null }
+
+function verseNumber(verse: Pick<RenderedVerse, 'id'>) {
+  return Number(/-v(\d+)$/.exec(verse.id)?.[1] ?? 0)
 }
 
-export function measureHasLaterVisibleLyrics(verses: Iterable<{ id: string; textContent: string | null }>) {
-  return [...verses].some((verse) => {
-    const verseNumber = Number(/-v(\d+)$/.exec(verse.id)?.[1] ?? 0)
-    return verseNumber > 1 && verse.textContent?.replaceAll('\u200B', '').trim()
-  })
+export function visibleLyricVerseNumbers(verses: Iterable<RenderedVerse>) {
+  return [...new Set([...verses]
+    .filter((verse) => verse.textContent?.replaceAll('\u200B', '').trim())
+    .map(verseNumber)
+    .filter((number) => number > 0))].sort((left, right) => left - right)
+}
+
+/** Chooses the requested lyric pass, falling back past blank placeholder rows. */
+export function lyricVerseIndexForMeasureRendition(
+  verses: readonly Pick<RenderedVerse, 'id'>[],
+  rendition: number,
+  visibleVerseNumbers: readonly number[],
+) {
+  if (verses.length === 0) return -1
+  const selectedNumber = [...visibleVerseNumbers].filter((number) => number <= Math.max(1, rendition)).at(-1) ?? visibleVerseNumbers[0]
+  if (selectedNumber === undefined) return 0
+  const index = verses.findIndex((verse) => verseNumber(verse) === selectedNumber)
+  return index >= 0 ? index : 0
 }
