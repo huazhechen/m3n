@@ -38,6 +38,8 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     const [includeBass, setIncludeBass] = useState(true)
     const [isOpen, setIsOpen] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
+    const previewWidth = format === 'png' ? Math.max(320, width) : DEFAULT_EXPORT_WIDTH
+    const headerScale = format === 'png' ? previewWidth / DEFAULT_EXPORT_WIDTH : pdfScale / 100
 
     useImperativeHandle(ref, () => ({
       open() {
@@ -160,7 +162,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
                 ? <label className="export-field">宽度<input type="number" min="320" max="8000" step="10" value={width} onChange={(event) => setWidth(Number(event.currentTarget.value))} /><span>px</span></label>
                 : <label className="export-field">缩放<input type="number" min="50" max="200" step="1" value={pdfScale} onChange={(event) => setPdfScale(Number(event.currentTarget.value))} /><span>%</span></label>}
             </div>
-            <div className="export-preview" aria-label="打印预览"><div className="export-preview-paper"><div ref={previewHeaderRef}><ScoreHeader metadata={headerMetadata} /></div><div ref={previewRef} /></div></div>
+            <div className="export-preview" aria-label="打印预览"><div className="export-preview-paper" style={{ width: `${previewWidth}px` }}><div ref={previewHeaderRef}><ScoreHeader metadata={headerMetadata} scale={headerScale} /></div><div ref={previewRef} /></div></div>
           </div>
           <div className="export-actions">
             <button type="button" onClick={() => dialogRef.current?.close()} disabled={isExporting}>取消</button>
