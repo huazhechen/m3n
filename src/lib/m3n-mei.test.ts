@@ -319,6 +319,13 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('xml:id="m3n-e-2-v1"')
   })
 
+  it('does not compact tied lyric targets inside alternate endings', () => {
+    const result = m3nToMei('{key=C} {3/4}\n||: 1 2 3 | {volta=1}4 5 6{/}:|| {volta=2}4~ 4 5{/} |||\n{lyrics=1}a b c d e f{/}\n{lyrics=2}g h i j +k l{/}')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<note xml:id="m3n-e-8" pname="f" oct="4" dur="4"><verse xml:id="m3n-e-8-v2" n="2"><syl>k</syl></verse></note>')
+  })
+
   it('starts every lyric block at the public opening for a 2~4 ending', () => {
     const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/} | {volta=2~4}5 6{/} | 7 1e :||{x3} |||\n{lyrics=1}a b c d e f{/}\n{lyrics=2}g h i j k l{/}\n{lyrics=3}m n o p q r{/}\n{lyrics=4}s t u v w x{/}')
 

@@ -364,7 +364,7 @@ export function m3nToMei(source: string): MeiConversionResult {
         }).flat())
         : []
       const visualVerseIndexes = new Map<number, number>()
-      const lyrics = measure?.ending
+      const lyrics = measure?.ending && !tieEnd
         ? assignedLyrics.map((lyric) => {
           let visualIndex = visualVerseIndexes.get(lyric.verseIndex)
           if (visualIndex === undefined) {
