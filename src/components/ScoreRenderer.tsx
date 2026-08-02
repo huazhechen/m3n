@@ -5,6 +5,7 @@ import type { AccompanimentNote } from '../lib/m3n-playback'
 import type { TempoChange } from '../lib/m3n-playback'
 import type { SpessaPlayer } from '../features/score-renderer/spessa-player'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
+import { lyricVerseIndexForRendition } from '../features/score-renderer/lyric-rendition'
 import { ScoreExportDialog } from './ScoreExportDialog'
 import type { ScoreExportDialogRef } from './ScoreExportDialog'
 
@@ -354,8 +355,8 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     const elements = timedElements.flatMap(({ xmlId, rendition }) => {
       const note = paperRef.current?.querySelector<SVGGElement>(`#${xmlId}`)
       if (!note) return []
-      const activeVerse = note.querySelector<SVGGElement>(`:scope > #${xmlId}-v${rendition}`)
-        ?? note.querySelector<SVGGElement>(`:scope > #${xmlId}-v1`)
+      const verses = [...note.children].filter((element): element is SVGGElement => element.classList.contains('verse'))
+      const activeVerse = verses[lyricVerseIndexForRendition(verses.length, rendition)]
       return [...note.children].filter((element) => !element.classList.contains('verse') || element === activeVerse)
     })
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))

@@ -4,6 +4,7 @@ import { VerovioToolkit } from 'verovio/esm'
 import { BasicMIDI } from 'spessasynth_core'
 import { m3nToMei } from '../../lib/m3n-mei'
 import { automaticSystemBreakMeasureIds, encodeSystemBreaks } from './verovio-score'
+import { lyricVerseIndexForRendition } from './lyric-rendition'
 
 async function renderedPitches(source: string) {
   const toolkit = new VerovioToolkit(await createVerovioModule())
@@ -35,6 +36,13 @@ describe('VerovioScore layout', () => {
     expect(encodeSystemBreaks(mei, new Set(['m3n-measure-1-1', 'm3n-measure-1-2']))).toBe(
       '<section><measure xml:id="m3n-measure-1-1"></measure><sb/><measure xml:id="m3n-measure-1-2"></measure><sb/><measure xml:id="m3n-measure-1-3"></measure></section>',
     )
+  })
+
+  it('maps each playback occurrence to its available lyric verse', () => {
+    expect(lyricVerseIndexForRendition(1, 1)).toBe(0)
+    expect(lyricVerseIndexForRendition(3, 1)).toBe(0)
+    expect(lyricVerseIndexForRendition(3, 2)).toBe(1)
+    expect(lyricVerseIndexForRendition(3, 3)).toBe(2)
   })
 
   it('uses Verovio playback expansion for endings, repeats, D.S., and D.C.', async () => {
