@@ -30,7 +30,7 @@ export function convertHappiLyricItems(source: string) {
     }
     const countedPlaceholder = /^\{\/([1-9]\d*)\}/.exec(rest)
     if (countedPlaceholder) {
-      items.push({ value: `%{${countedPlaceholder[1]}}`, placeholder: true })
+      items.push({ value: `{%${countedPlaceholder[1]}}`, placeholder: true })
       index += countedPlaceholder[0].length
       continue
     }

@@ -406,7 +406,7 @@ describe('happi123ToM3N', () => {
   it('converts counted Happi123 lyric placeholders to M3N placeholders', () => {
     const result = happi123ToM3N('{key_signature:C}\n{time_signature:4/4}\n1234|||\n{lyric}a{/50}b{/lyric}')
 
-    expect(result.output).toContain('{lyrics}\na %{50} b\n{/}')
+    expect(result.output).toContain('{lyrics}\na {%50} b\n{/}')
   })
 
   it('merges a counted repeat end with its following terminal bar', () => {

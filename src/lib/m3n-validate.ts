@@ -1147,6 +1147,9 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
     if (items.count === 0) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词块为空`))
     if (items.hasTab) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词项必须使用半角空格或换行分隔，不能使用 Tab`))
     if (items.hasEmptyForcedTarget) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：+ 后必须跟随歌词项`))
+    if (/%\{[1-9]\d*\}/.test(lyric.tokens.map((token) => token.raw).join(''))) {
+      diagnostics.push(lyricMessage(`第 ${lyric.line} 行：重复占位必须写作 {%N}`))
+    }
     const parsed = lyric.range === null
       ? { values: mainResult.lyricPasses, error: null }
       : parseRange(lyric.range, '歌词 ')

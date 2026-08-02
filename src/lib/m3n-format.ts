@@ -360,7 +360,7 @@ function formatLyrics(source: string) {
       return /[A-Za-z0-9]/.test(previous) || /[A-Za-z0-9]/.test(next) ? ' ' : ''
     }).trim()
   }).filter(Boolean).join('\n')
-  return text.replace(/%(?:\s*%)+/g, (run) => `%{${(run.match(/%/g) ?? []).length}}`)
+  return text.replace(/%(?:\s*%)+/g, (run) => `{%${(run.match(/%/g) ?? []).length}}`)
 }
 
 /** Formats M3N source without changing its musical or lyric content. */

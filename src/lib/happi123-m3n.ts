@@ -596,14 +596,14 @@ function convertLyricsForMusic(items: HappiLyricItem[], music: string, pass?: nu
 
   for (const item of items) {
     if (item.placeholder) {
-      const count = /^%\{(\d+)\}$/.exec(item.value)?.[1]
+      const count = /^\{%([1-9]\d*)\}$/.exec(item.value)?.[1]
       const targetCount = count ? Number(count) : 1
       let convertedCount = 0
       for (let index = 0; index < targetCount; index += 1) {
         if (!targets[targetIndex]) convertedCount += 1
         targetIndex += 1
       }
-      if (convertedCount > 0) converted.push(convertedCount === 1 ? '%' : `%{${convertedCount}}`)
+      if (convertedCount > 0) converted.push(convertedCount === 1 ? '%' : `{%${convertedCount}}`)
       continue
     }
 

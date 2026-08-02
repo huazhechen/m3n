@@ -25,7 +25,7 @@ function parseUnit(items: ParsedLyricItem[], raw: string, sourceStart: number, f
     items.push({ text: '%', sourceStart, sourceEnd: sourceStart + raw.length, forceTiedTarget, kind: 'placeholder', underlined: false })
     return
   }
-  const repeated = /^%\{(\d+)\}$/.exec(raw)
+  const repeated = /^\{%([1-9]\d*)\}$/.exec(raw)
   if (repeated) {
     for (let index = 0; index < Number(repeated[1]); index += 1) {
       items.push({ text: '%', sourceStart, sourceEnd: sourceStart + raw.length, forceTiedTarget: forceTiedTarget && index === 0, kind: 'placeholder', underlined: false })
@@ -94,7 +94,7 @@ export function parseLyricItems(source: string, sourceStart: number, _mode: Lyri
       continue
     }
     const rest = source.slice(index)
-    const repeated = /^%\{\d+\}/.exec(rest)?.[0]
+    const repeated = /^\{%[1-9]\d*\}/.exec(rest)?.[0]
     const extender = /^_\{[^}]*\}/.exec(rest)?.[0]
     const grouped = /^\([^)]*\)/.exec(rest)?.[0]
     const word = /^[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*-?/.exec(rest)?.[0]

@@ -281,7 +281,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('expands repeated placeholders and encodes grouped lyrics as underlined single-note text', () => {
-    const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 |||\n{lyrics}\n%{2} (甲乙) _{0}\n{/}')
+    const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 |||\n{lyrics}\n{%2} (甲乙) _{0}\n{/}')
 
     expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>\u200B</syl></verse></note>')
     expect(result.mei).toContain('<syl type="m3n-text-underline"><rend>甲乙\u200B\u200B</rend></syl>')
@@ -610,7 +610,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('consumes later-pass placeholders from the segno on a plain D.S. return', () => {
-    const result = m3nToMei('{2/4}\n{segno}1 2 | 3 4{ds} |||\n{lyrics=1}a b c d{/}\n{lyrics=2}%{2}x y{/}')
+    const result = m3nToMei('{2/4}\n{segno}1 2 | 3 4{ds} |||\n{lyrics=1}a b c d{/}\n{lyrics=2}{%2}x y{/}')
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>c</syl></verse><verse xml:id="m3n-e-3-v2" n="2"><syl>x</syl></verse></note>')

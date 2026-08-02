@@ -269,7 +269,11 @@ describe('validateM3N', () => {
   })
 
   it('counts character lyrics, grouped lyrics, extenders, and repeated placeholders by alignment position', () => {
-    expect(messages('{5/4} 1 2 3 4 5 |||\n{lyrics}甲，%{2}(乙丙)_{0}{/}')).toBe('')
+    expect(messages('{5/4} 1 2 3 4 5 |||\n{lyrics}甲，{%2}(乙丙)_{0}{/}')).toBe('')
+  })
+
+  it('rejects the legacy counted-placeholder syntax', () => {
+    expect(messages('{5/4} 1 2 3 4 5 |||\n{lyrics}%{2}甲乙丙{/}')).toContain('重复占位必须写作 {%N}')
   })
 
   it('validates bass uniqueness, allowed content, and timeline alignment', () => {
