@@ -715,17 +715,24 @@ export function m3nToMei(source: string): MeiConversionResult {
     const jumpNodeIndex = layoutNodes.indexOf(jumpNode)
     let returnEndIndex = fine ? layoutNodes.indexOf(fine) : jumpNodeIndex
     let returnPass: number | undefined
+    let skipReturnEndings = false
     if (!fine) {
-      let endingStart = jumpNodeIndex
-      while (layoutNodes[endingStart - 1]?.kind === 'ending') endingStart -= 1
       let endingEnd = jumpNodeIndex + 1
       while (layoutNodes[endingEnd]?.kind === 'ending') endingEnd += 1
-      const endings = layoutNodes.slice(endingStart, endingEnd)
-      const highestPass = Math.max(0, ...endings.flatMap((ending) => [...endingPasses(ending.n ?? '')]))
-      if (highestPass > 0) {
-        returnPass = highestPass
-        const matchingEnding = endings.find((ending) => endingPasses(ending.n ?? '').has(highestPass))
-        if (matchingEnding) returnEndIndex = layoutNodes.indexOf(matchingEnding)
+      const jumpPass = Math.max(0, ...endingPasses(jumpNode.n ?? ''))
+      const nextEndingIndex = layoutNodes.findIndex((node, index) => (
+        index > jumpNodeIndex
+        && index < endingEnd
+        && node.kind === 'ending'
+        && [...endingPasses(node.n ?? '')].some((pass) => pass > jumpPass)
+      ))
+      if (nextEndingIndex >= 0) {
+        const nextPasses = [...endingPasses(layoutNodes[nextEndingIndex]!.n ?? '')].filter((pass) => pass > jumpPass)
+        returnPass = Math.min(...nextPasses)
+        returnEndIndex = nextEndingIndex
+      } else {
+        skipReturnEndings = true
+        returnEndIndex = Math.min(endingEnd, layoutNodes.length - 1)
       }
     }
     if (jumpIndex >= 0 && destinationIndex >= 0 && returnEndIndex >= destinationIndex) {
@@ -733,6 +740,7 @@ export function m3nToMei(source: string): MeiConversionResult {
       // linear navigation path and must not re-trigger already played repeats.
       const returnPath = layoutNodes.slice(destinationIndex, returnEndIndex + 1).flatMap((node) => {
         if (node.kind !== 'ending') return `#${node.id}`
+        if (skipReturnEndings) return returnPass !== undefined && endingPasses(node.n ?? '').has(returnPass) ? `#${node.id}` : []
         return !returnPass || endingPasses(node.n ?? '').has(returnPass) ? `#${node.id}` : []
       })
       expansion = [...expansion.slice(0, jumpIndex + 1), ...returnPath]

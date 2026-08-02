@@ -114,7 +114,7 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{2/4} {segno}1 2 | {volta=1}3 4{/}{ds}|| 5 6 |||')
 
     expect(result.mei).toContain('<repeatMark staff="1" tstamp="3" place="above" func="dalSegno"/>')
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-1"/>')
+    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-segment-2"/>')
   })
 
   it('keeps ordinary measures together between navigation boundaries', () => {
