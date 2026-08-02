@@ -233,8 +233,8 @@ h3 {
   min-width: 0;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
-    "source render"
-    "source-diagnostics render-diagnostics";
+    "render source"
+    "render-diagnostics source-diagnostics";
   column-gap: 10px;
   row-gap: 0;
   align-items: stretch;
@@ -409,9 +409,6 @@ h3 {
 
 .embedded-editor-body {
   padding: 0;
-  grid-template-areas:
-    "render source"
-    "render-diagnostics source-diagnostics";
 }
 
 .pane-toolbar {
@@ -1428,14 +1425,6 @@ a.action-button {
   }
 
   .editor-body {
-    grid-template-areas:
-      "source"
-      "source-diagnostics"
-      "render"
-      "render-diagnostics";
-  }
-
-  .embedded-editor-body {
     grid-template-areas:
       "render"
       "render-diagnostics"
