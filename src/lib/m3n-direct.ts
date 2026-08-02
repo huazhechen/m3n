@@ -324,6 +324,7 @@ function parseBody(
       } else if (/^(?:segno|ds|dc|fine)$/.test(value)) {
         const navigation = value as 'segno' | 'ds' | 'dc' | 'fine'
         if (navigation !== 'segno' && lastEvent) lastEvent.navigation.push(navigation)
+        else if (navigation !== 'segno' && measure().events.length > 0) measure().events.at(-1)!.navigation.push(navigation)
         else pendingNavigation.push(navigation)
       } else if (/^(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])$/.test(value) || parseM3NGrace(value)) {
         if (lastEvent) lastEvent.postfixes.push(value)
