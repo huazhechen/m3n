@@ -596,8 +596,20 @@ function convertLyricsForMusic(items: HappiLyricItem[], music: string, pass?: nu
   const converted: string[] = []
 
   for (const item of items) {
+    if (item.placeholder) {
+      const count = /^%\{(\d+)\}$/.exec(item.value)?.[1]
+      const targetCount = count ? Number(count) : 1
+      let convertedCount = 0
+      for (let index = 0; index < targetCount; index += 1) {
+        if (!targets[targetIndex]) convertedCount += 1
+        targetIndex += 1
+      }
+      if (convertedCount > 0) converted.push(convertedCount === 1 ? '%' : `%{${convertedCount}}`)
+      continue
+    }
+
     const tiedTarget = targets[targetIndex]
-    const forceTiedTarget = !item.placeholder && tiedTarget
+    const forceTiedTarget = tiedTarget
     if (forceTiedTarget) {
       converted.push(item.value.startsWith('+') ? item.value : `+${item.value}`)
       targetIndex += 1
@@ -605,14 +617,10 @@ function convertLyricsForMusic(items: HappiLyricItem[], music: string, pass?: nu
     }
 
     {
-      // M3N omits automatic tied targets from lyric alignment. Happi123
-      // sources may either spell them with a placeholder or leave them out.
-      if (!item.placeholder) {
-        while (targets[targetIndex]) targetIndex += 1
-      }
-      const alignedTarget = targets[targetIndex]
+      // M3N omits automatic tied targets from lyric alignment.
+      while (targets[targetIndex]) targetIndex += 1
       targetIndex += 1
-      if (!item.placeholder || !alignedTarget) converted.push(item.value)
+      converted.push(item.value)
     }
   }
 

@@ -28,6 +28,12 @@ export function convertHappiLyricItems(source: string) {
       index += 2
       continue
     }
+    const countedPlaceholder = /^\{\/([1-9]\d*)\}/.exec(rest)
+    if (countedPlaceholder) {
+      items.push({ value: `%{${countedPlaceholder[1]}}`, placeholder: true })
+      index += countedPlaceholder[0].length
+      continue
+    }
     if (rest[0] === '(') {
       const end = rest.indexOf(')')
       if (end > 1) {
