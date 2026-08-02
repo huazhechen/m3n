@@ -168,12 +168,23 @@ describe('validateM3N', () => {
     expect(result).not.toContain('歌词对位数量不匹配')
   })
 
-  it('permits lyric reuse across volta paths', () => {
+  it('rejects lyric reuse that exceeds a shorter volta path', () => {
     const source = [
       '{2/4} ||: {volta=1}1 2{/} :|| {volta=2}1 0{/} :|||',
       '{lyrics}la la{/}',
     ].join('\n')
-    expect(validateM3N(source)).toEqual([])
+    expect(messages(source)).toContain('歌词对位数量不匹配：第 2 遍需要 1 项，实际 2 项')
+  })
+
+  it('requires complete first-pass lyrics and permits only shorter later-pass lyrics', () => {
+    const music = '{2/4} ||: {volta=1}1 2{/} :|| {volta=2}1 2{/} :|||'
+    const valid = `${music}\n{lyrics=1}one two{/}\n{lyrics=2}three{/}`
+    const incompleteFirstPass = `${music}\n{lyrics=1}one{/}\n{lyrics=2}three{/}`
+    const overflowingLaterPass = `${music}\n{lyrics=1}one two{/}\n{lyrics=2}three four five{/}`
+
+    expect(messages(valid)).not.toContain('歌词对位数量不匹配')
+    expect(messages(incompleteFirstPass)).toContain('歌词对位数量不匹配：第 1 遍需要 2 项，实际 1 项')
+    expect(messages(overflowingLaterPass)).toContain('歌词对位数量不匹配：第 2 遍需要 2 项，实际 3 项')
   })
 
   it('allows a regular barline after the final volta ending', () => {

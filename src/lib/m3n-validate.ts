@@ -1047,7 +1047,7 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
   if (lyrics.length > 1 && lyrics.some((block) => block.range === null)) {
     diagnostics.push('存在多个歌词块时，每个歌词块都必须指定遍次')
   }
-  for (const [index, lyric] of lyrics.entries()) {
+  for (const lyric of lyrics) {
     const items = lyricItems(lyric.tokens, lyric.lyricMode ?? 'char')
     if (items.count === 0) diagnostics.push(`第 ${lyric.line} 行：歌词块为空`)
     if (items.hasTab) diagnostics.push(`第 ${lyric.line} 行：歌词项必须使用半角空格或换行分隔，不能使用 Tab`)
@@ -1060,9 +1060,9 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       if (lyricPasses.has(pass)) diagnostics.push(`第 ${lyric.line} 行：歌词块遍次重叠：${pass}`)
       lyricPasses.add(pass)
       const expected = (mainResult.hasParts ? mainResult.firstPlaybackLyricCount(pass) : mainResult.lyricCount(pass)) + items.forcedTiedTargets
-      const exceedsAvailablePositions = index > 0 && items.count > expected
-      const firstBlockIsIncomplete = index === 0 && items.count !== expected
-      if (mainResult.lyricPasses.size === 1 && (firstBlockIsIncomplete || exceedsAvailablePositions)) {
+      const exceedsAvailablePositions = items.count > expected
+      const firstPassIsIncomplete = pass === 1 && items.count !== expected
+      if (exceedsAvailablePositions || firstPassIsIncomplete) {
         diagnostics.push(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`)
       }
     }
