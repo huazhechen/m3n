@@ -32,7 +32,7 @@ function normalizeScale(scale: number | undefined) {
 }
 
 export function layoutBreaks(mei: string) {
-  return mei.includes('<sb/>') ? 'smart' : 'auto'
+  return mei.includes('<sb/>') ? 'encoded' : 'auto'
 }
 
 export function markInvalidMeasures(mei: string, measureIds: readonly string[]) {
