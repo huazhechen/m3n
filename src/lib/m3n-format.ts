@@ -352,15 +352,15 @@ function formatMain(source: string) {
 }
 
 function formatLyrics(source: string) {
-  const text = source.split(/\r?\n/).map((line) => {
+  return source.split(/\r?\n/).map((line) => {
     if (line.trimStart().startsWith('//')) return line.trimEnd()
-    return line.replace(/\s+/g, (whitespace, offset) => {
+    const text = line.replace(/\s+/g, (whitespace, offset) => {
       const previous = line.slice(0, offset).at(-1) ?? ''
       const next = line[offset + whitespace.length] ?? ''
       return /[A-Za-z0-9]/.test(previous) || /[A-Za-z0-9]/.test(next) ? ' ' : ''
     }).trim()
-  }).filter(Boolean).join('\n')
-  return text.replace(/%(?:\s*%)+/g, (run) => `{%${(run.match(/%/g) ?? []).length}}`)
+    return text.replace(/%(?:\s*%)+/g, (run) => `{%${(run.match(/%/g) ?? []).length}}`)
+  }).join('\n')
 }
 
 /** Formats M3N source without changing its musical or lyric content. */

@@ -94,4 +94,10 @@ describe('formatM3N', () => {
     expect(result).toContain('{lyrics}\n甲{%2}乙{%2}丙\n{/}')
     expect(result).toContain('{lyrics}\nhello world\n{/}')
   })
+
+  it('preserves lyric line breaks, including blank lines between sections', () => {
+    const result = formatM3N('{key=C} {2/4}\n1 2 |\n{lyrics}\n第一行  % %\n\n第二行\n{/}')
+
+    expect(result).toContain('{lyrics}\n第一行{%2}\n\n第二行\n{/}')
+  })
 })
