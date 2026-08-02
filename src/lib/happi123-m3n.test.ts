@@ -217,6 +217,13 @@ describe('happi123ToM3N', () => {
     expect(result.diagnostics).toEqual([])
   })
 
+  it('preserves separate numbered volta groups within one outer repeat', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n|:11|[1:22]|[2:33]|44|[1:55]|[2:66]|77:|||')
+
+    expect(result.output.match(/\{volta=/g)).toHaveLength(4)
+    expect(result.diagnostics).toEqual([])
+  })
+
   it('closes Happi123 volta blocks before their final repeat bar', () => {
     const result = happi123ToM3N('{title:房子}\n{key_signature:C}\n{time_signature:2/4}\n|:11[1:22:|]')
 

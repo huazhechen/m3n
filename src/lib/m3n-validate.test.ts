@@ -167,6 +167,12 @@ describe('validateM3N', () => {
     expect(validateM3N('{2/4} ||: 1 2 | {volta=1}3 4{/} :|| {volta=2}5 6{/} | 7 1e |||')).toEqual([])
   })
 
+  it('allows a new volta group after ordinary music in the same outer repeat', () => {
+    const source = '{2/4} ||: {volta=1}1 2{/} | {volta=2}3 4{/} | 5 6 | {volta=1}1 2{/} || {volta=2}3 4{/} | 5 6 :|||'
+
+    expect(validateM3N(source)).toEqual([])
+  })
+
   it('allows later lyric blocks to omit alignment positions', () => {
     const source = [
       '{2/4} 1 2 |||',

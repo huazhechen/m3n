@@ -356,6 +356,7 @@ function validateBody(
   let repeatOpen: { line: number; id: number } | null = null
   let repeatId = 0
   let currentVoltaRepeat = 0
+  let completedVoltaGroup = false
   let repeatCountTarget = false
   let segnoCount = 0
   let jumpCount = 0
@@ -429,6 +430,7 @@ function validateBody(
     }
     blocks.pop()
     if (top.name === 'volta') {
+      completedVoltaGroup = true
       const next = tokens.slice(tokens.indexOf(token) + 1).find((candidate) => !isTrivia(candidate))
       if (!next || next.kind !== 'bar') {
         diagnostics.push(lineMessage(token, 'volta 关闭后必须紧接小节线'))
@@ -502,6 +504,10 @@ function validateBody(
   }
 
   const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet'; pitches?: number[]; tie?: boolean; lyricCount?: number }) => {
+    if (completedVoltaGroup && !activeVolta()) {
+      currentVoltaRepeat = 0
+      completedVoltaGroup = false
+    }
     firstMusicSeen = true
     unit.hasAtom = true
     for (const paren of parens) paren.atoms += 1
@@ -782,6 +788,7 @@ function validateBody(
         if (blocks.some((block) => block.name === 'volta')) diagnostics.push(lineMessage(token, 'volta 不能嵌套'))
         const group = currentVoltaRepeat || ++repeatId
         currentVoltaRepeat = group
+        completedVoltaGroup = false
         const used = voltaRanges.get(group) ?? new Set<number>()
         for (const pass of parsed.values) {
           if (used.has(pass)) diagnostics.push(lineMessage(token, `同一反复结构的 volta 遍次重叠：${pass}`))
