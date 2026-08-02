@@ -559,14 +559,30 @@ function parseSource(source: string) {
   return { header, body, lyrics }
 }
 
-function tiedLyricTargets(source: string) {
+function endingPasses(value: string) {
+  const passes = new Set<number>()
+  for (const item of value.split(',')) {
+    const range = /^(\d+)~(\d+)$/.exec(item.trim())
+    if (range) {
+      for (let pass = Number(range[1]); pass <= Number(range[2]); pass += 1) passes.add(pass)
+    } else {
+      const pass = Number(item.trim())
+      if (Number.isInteger(pass) && pass > 0) passes.add(pass)
+    }
+  }
+  return passes
+}
+
+function tiedLyricTargets(source: string, pass?: number) {
   const document = parseM3NDocument(source)
   const instrumentalRanges = document.intervals
     .filter((interval) => interval.staff === 'melody' && interval.kind === 'inst' && interval.start !== undefined && interval.end !== undefined)
     .map((interval) => ({ start: interval.start!, end: interval.end! }))
   const inInstrumentalRange = (start: number) => instrumentalRanges.some((range) => start >= range.start && start <= range.end)
   const events = [...document.parts.values()]
-    .flatMap((part) => part.melody.flatMap((measure) => measure.events))
+    .flatMap((part) => part.melody.flatMap((measure) => (
+      pass !== undefined && measure.ending && !endingPasses(measure.ending).has(pass) ? [] : measure.events
+    )))
     .filter((event) => !inInstrumentalRange(event.sourceStart))
   const targets: boolean[] = []
   let previousTied = false
@@ -585,8 +601,8 @@ function tiedLyricTargets(source: string) {
   return targets
 }
 
-function convertLyricsForMusic(items: HappiLyricItem[], music: string) {
-  const targets = tiedLyricTargets(music)
+function convertLyricsForMusic(items: HappiLyricItem[], music: string, pass?: number) {
+  const targets = tiedLyricTargets(music, pass)
   let targetIndex = 0
   const converted: string[] = []
 
@@ -743,7 +759,7 @@ export function happi123ToM3N(source: string): ConversionResult {
     ...lyrics.flatMap((items, index) => [
       '',
       lyrics.length > 1 ? `{lyrics=${index + 1}}` : '{lyrics}',
-      convertLyricsForMusic(items, music),
+      convertLyricsForMusic(items, music, lyrics.length > 1 ? index + 1 : undefined),
       '{/}',
     ]),
   ].filter(Boolean).join('\n').replace(/\s*\{br\}\s*/g, ' {br}\n')

@@ -346,6 +346,13 @@ describe('happi123ToM3N', () => {
     expect(result.output).toContain('{lyrics=2}\n丙 % 丁\n{/}')
   })
 
+  it('aligns Happi123 lyrics to the matching alternate ending pass', () => {
+    const result = happi123ToM3N('{key_signature:C}\n{time_signature:2/4}\n|:12|[1:3~3:|][2:45]|||\n{lyric}甲乙丙丁{/lyric}\n{lyric}戊己庚辛{/lyric}')
+
+    expect(result.output).toContain('{lyrics=1}\n甲 乙 丙 +丁\n{/}')
+    expect(result.output).toContain('{lyrics=2}\n戊 己 庚 辛\n{/}')
+  })
+
   it('converts ASCII semicolons in Happi123 lyrics to alignment placeholders', () => {
     const result = happi123ToM3N('{title:歌词}\n{key_signature:C}\n{time_signature:2/4}\n11|||\n{lyric}甲;乙；丙{/lyric}')
 
