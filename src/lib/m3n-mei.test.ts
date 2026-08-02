@@ -307,8 +307,8 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>a</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>a</syl></verse></note>')
-    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>c</syl></verse><verse xml:id="m3n-e-3-v2" n="2"><syl>\u200B</syl></verse></note>')
-    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v1" n="1"><syl>\u200B</syl></verse><verse xml:id="m3n-e-5-v2" n="2"><syl>e</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>c</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v1" n="1"><syl>e</syl></verse></note>')
   })
 
   it('keeps second-pass lyrics on their row at tied note targets', () => {
@@ -318,18 +318,18 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-2-v1" n="1"><syl>\u200B</syl></verse><verse xml:id="m3n-e-2-v2" n="2"><syl>two</syl></verse></note>')
   })
 
-  it('uses invisible lyrics for tied targets inside alternate endings', () => {
+  it('compacts tied-target lyrics inside alternate endings', () => {
     const result = m3nToMei('{key=C} {3/4}\n||: 1 2 3 | {volta=1}4 5 6{/}:|| {volta=2}4~ 4 5{/} |||\n{lyrics=1}a b c d e f{/}\n{lyrics=2}g h i j +k l{/}')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<note xml:id="m3n-e-8" pname="f" oct="4" dur="4"><verse xml:id="m3n-e-8-v1" n="1"><syl>\u200B</syl></verse><verse xml:id="m3n-e-8-v2" n="2"><syl>k</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-8" pname="f" oct="4" dur="4"><verse xml:id="m3n-e-8-v1" n="1"><syl>k</syl></verse></note>')
   })
 
-  it('uses invisible lyrics to preserve rows before third-pass lyrics', () => {
+  it('compacts rows before third-pass lyrics inside alternate endings', () => {
     const result = m3nToMei('{key=C} {2/4}\n||: {volta=1}1 2{/}:|| {volta=2}3 4{/} || {volta=3}5 6{/} |||\n{lyrics=1}a b{/}\n{lyrics=2}c d{/}\n{lyrics=3}e f{/}')
 
     expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v1" n="1"><syl>\u200B</syl></verse><verse xml:id="m3n-e-5-v2" n="2"><syl>\u200B</syl></verse><verse xml:id="m3n-e-5-v3" n="3"><syl>e</syl></verse></note>')
+    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v1" n="1"><syl>e</syl></verse></note>')
   })
 
   it('starts every lyric block at the public opening for a 2~4 ending', () => {
@@ -338,8 +338,8 @@ describe('M3N to MEI conversion', () => {
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('xml:id="m3n-e-1-v2" n="2"><syl>g</syl>')
     expect(result.mei).toContain('xml:id="m3n-e-1-v4" n="4"><syl>s</syl>')
-    expect(result.mei).toContain('xml:id="m3n-e-5-v2" n="2"><syl>i</syl>')
-    expect(result.mei).toContain('xml:id="m3n-e-5-v4" n="4"><syl>u</syl>')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v1" n="1"><syl>i</syl>')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v3" n="3"><syl>u</syl>')
   })
 
   it('keeps instrumental intervals lyric-free without visual markers', () => {
@@ -577,8 +577,8 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('xml:id="m3n-e-1-v1" n="1"><syl>\u200B</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>\u200B</syl></verse><verse xml:id="m3n-e-1-v3" n="3"><syl>甲')
-    expect(result.mei).toContain('xml:id="m3n-e-3-v3" n="3"><syl>\u200B</syl>')
-    expect(result.mei).toContain('xml:id="m3n-e-7-v3" n="3"><syl>丙')
+    expect(result.mei).not.toContain('xml:id="m3n-e-3-v3"')
+    expect(result.mei).toContain('xml:id="m3n-e-7-v1" n="1"><syl>丙')
   })
 
   it('repeats from the beginning for each implicit repeat end', () => {

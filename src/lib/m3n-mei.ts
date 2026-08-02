@@ -358,11 +358,11 @@ export function m3nToMei(source: string): MeiConversionResult {
         ? event.pitches.filter((pitch) => pitch !== '0').length
         : 1
       const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
+      const lyricBlocksAtEvent = lyricSyllables.filter((block) => !block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
       const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
       const assignedLyrics = hasLyricTarget
-        ? lyricSyllables.flatMap((block, index) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
-          const passes = block.passes
-          if (passes && measurePasses && ![...measurePasses].some((pass) => passes.has(pass))) return []
+        ? lyricBlocksAtEvent.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
+          const index = lyricSyllables.indexOf(block)
           const lyric = block.syllables[melodyIndices[index]]
           const tiedTarget = targetIndex === 0 && tieEnd
           if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []
@@ -371,7 +371,7 @@ export function m3nToMei(source: string): MeiConversionResult {
         }).flat())
         : []
       const lyrics = hasLyricTarget
-        ? lyricSyllables.flatMap((block) => {
+        ? lyricBlocksAtEvent.flatMap((block) => {
           const matched = assignedLyrics.filter((lyric) => lyric.verseIndex === block.verseIndex)
           if (matched.length > 0) return matched
           return [{
@@ -387,7 +387,7 @@ export function m3nToMei(source: string): MeiConversionResult {
           }]
         })
         : []
-      if (hasLyricTarget) {
+      if (hasLyricTarget && !measure?.ending) {
         const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
         for (let row = 1; row <= lyricRowCount; row += 1) {
           if (occupiedRows.has(row)) continue
@@ -404,6 +404,18 @@ export function m3nToMei(source: string): MeiConversionResult {
           })
         }
         lyrics.sort((left, right) => left.verseIndex - right.verseIndex)
+      }
+      if (measure?.ending) {
+        const visualRows = new Map<number, number>()
+        lyrics.forEach((lyric) => {
+          let row = visualRows.get(lyric.verseIndex)
+          if (row === undefined) {
+            row = visualRows.size + 1
+            visualRows.set(lyric.verseIndex, row)
+          }
+          lyric.n = String(row)
+          lyric.verseIndex = row
+        })
       }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
