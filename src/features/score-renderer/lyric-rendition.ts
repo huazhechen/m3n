@@ -19,15 +19,15 @@ export function visibleLyricVerseNumbers(verses: Iterable<RenderedVerse>) {
     .filter((number) => number > 0))].sort((left, right) => left - right)
 }
 
-/** Chooses the requested lyric pass, falling back past blank placeholder rows. */
+/** Cycles through visible lyric rows, ignoring blank placeholder rows. */
 export function lyricVerseIndexForMeasureRendition(
   verses: readonly Pick<RenderedVerse, 'id'>[],
   rendition: number,
   visibleVerseNumbers: readonly number[],
 ) {
   if (verses.length === 0) return -1
-  const selectedNumber = [...visibleVerseNumbers].filter((number) => number <= Math.max(1, rendition)).at(-1) ?? visibleVerseNumbers[0]
-  if (selectedNumber === undefined) return 0
+  if (visibleVerseNumbers.length === 0) return 0
+  const selectedNumber = visibleVerseNumbers[(Math.max(1, rendition) - 1) % visibleVerseNumbers.length]
   const index = verses.findIndex((verse) => verseNumber(verse) === selectedNumber)
   return index >= 0 ? index : 0
 }

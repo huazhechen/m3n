@@ -57,6 +57,7 @@ describe('VerovioScore layout', () => {
       { id: 'm3n-e-1-v2', textContent: 'second' },
       { id: 'm3n-e-1-v3', textContent: '\u200B' },
     ])).toEqual([1, 2])
+    expect(lyricVerseIndexForMeasureRendition([{ id: 'm3n-e-1-v1' }, { id: 'm3n-e-1-v2' }, { id: 'm3n-e-1-v3' }], 3, [1, 2])).toBe(0)
     expect(lyricVerseIndexForMeasureRendition([{ id: 'm3n-e-1-v1' }, { id: 'm3n-e-1-v2' }, { id: 'm3n-e-1-v3' }], 4, [1, 2])).toBe(1)
   })
 
