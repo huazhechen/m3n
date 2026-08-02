@@ -551,10 +551,9 @@ function tiedLyricTargets(source: string) {
       previousTied = false
       continue
     }
-    const positions = event.kind === 'tuplet' ? event.pitches.length : 1
-    for (let index = 0; index < positions; index += 1) {
-      targets.push(index === 0 && previousTied)
-    }
+    // The renderer assigns one lyric item to a tuplet event as a whole.
+    // Keep conversion alignment on that same event boundary.
+    targets.push(previousTied)
     previousTied = event.tie
   }
   return targets
@@ -565,10 +564,9 @@ function convertLyricsForMusic(items: HappiLyricItem[], music: string) {
   let targetIndex = 0
   const converted: string[] = []
 
-  for (const [index, item] of items.entries()) {
+  for (const item of items) {
     const tiedTarget = targets[targetIndex]
-    const next = items[index + 1]
-    const forceTiedTarget = !item.placeholder && tiedTarget && !next?.placeholder
+    const forceTiedTarget = !item.placeholder && tiedTarget
     if (forceTiedTarget) {
       converted.push(item.value.startsWith('+') ? item.value : `+${item.value}`)
       targetIndex += 1

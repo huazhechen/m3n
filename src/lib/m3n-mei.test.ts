@@ -405,6 +405,12 @@ describe('M3N to MEI conversion', () => {
     ])
   })
 
+  it('attaches a tuplet lyric to its first pitched child note', () => {
+    const result = m3nToMei('{key=C} {2/4}\n[1 2 3:2] |\n{lyrics}\n\u68b3\n{/}')
+
+    expect(result.mei).toContain('<note xml:id="m3n-e-1-n1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>\u68b3\u200B</syl></verse></note>')
+  })
+
   it('maps lyric syllables to their rendered notes', () => {
     const source = '{key=C} {2/4}\n1 2 |||\n{lyrics-word}\nla la\n{/}'
     const result = m3nToMei(source)
