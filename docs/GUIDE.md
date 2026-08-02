@@ -230,4 +230,4 @@ Twin-kle twin-kle lit-tle star How I won-der what you are!
 {/}
 ```
 
-完整的《欢乐颂》示例可在[乐谱库](/scores/00003)中查看。
+完整的《欢乐颂》示例可在[乐谱库](/scores/00002)中查看。

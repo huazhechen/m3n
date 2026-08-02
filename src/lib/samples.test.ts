@@ -12,6 +12,9 @@ describe('bundled score corpus', () => {
     expect(presetScores.map((score) => score.melodyComplexity)).toEqual(
       [...presetScores.map((score) => score.melodyComplexity)].sort((left, right) => left - right),
     )
+    expect(presetScores.map((score) => score.order)).toEqual(
+      Array.from({ length: presetScores.length }, (_, index) => index + 1),
+    )
   })
 
   it('converts every score with valid source mappings', () => {
@@ -43,6 +46,6 @@ describe('bundled score corpus', () => {
   })
 
   it('detects numbered lyric blocks in score metadata', () => {
-    expect(presetScores.find((score) => score.slug === '00020')?.hasLyrics).toBe(true)
+    expect(presetScores.find((score) => score.slug === '00021')?.hasLyrics).toBe(true)
   })
 })
