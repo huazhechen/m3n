@@ -33,7 +33,6 @@ const metadataByTitle: Record<string, Happi123Metadata> = {
   '童话镇': { composer: '暗杠', lyricist: '竹君' },
   '一步之遥': { composer: '阿斯托尔·皮亚佐拉' },
   '美丽的神话': { composer: '王力宏', lyricist: '王中言' },
-  '千千阙歌': { composer: '马饲野康二', lyricist: '林振强' },
   'New Boy': { composer: '朴树', lyricist: '朴树' },
   '黄昏': { composer: '周传雄', lyricist: '陈信荣' },
   '听海': { composer: '涂惠源', lyricist: '林秋离' },
