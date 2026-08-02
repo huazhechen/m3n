@@ -1,4 +1,4 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import { useMemo, useRef } from 'react'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import type { ScoreRendererRef } from '../components/ScoreRenderer'
@@ -6,34 +6,38 @@ import { TopNav } from '../components/TopNav'
 import { m3nToMei } from '../lib/m3n-mei'
 import { invalidMeasureIds } from '../lib/m3n-validate'
 import { presetScores } from '../lib/samples'
+import { sharedScoreSource, sharedScoreUrl } from '../lib/score-share'
 
 export function ScoreReaderPage() {
   const { slug } = useParams()
+  const location = useLocation()
   const score = presetScores.find((item) => item.slug === slug)
+  const source = sharedScoreSource(location.search)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
-  const result = useMemo(() => m3nToMei(score?.source ?? ''), [score?.source])
-  const invalidMeasures = useMemo(() => invalidMeasureIds(score?.source ?? ''), [score?.source])
+  const scoreSource = source ?? score?.source
+  const result = useMemo(() => m3nToMei(scoreSource ?? ''), [scoreSource])
+  const invalidMeasures = useMemo(() => invalidMeasureIds(scoreSource ?? ''), [scoreSource])
 
-  if (!score) {
+  if (!scoreSource) {
     return <Navigate to="/scores" replace />
   }
 
-  const scoreIndex = presetScores.indexOf(score)
-  const previousScore = presetScores[scoreIndex - 1]
-  const nextScore = presetScores[scoreIndex + 1]
+  const scoreIndex = score ? presetScores.indexOf(score) : -1
+  const previousScore = scoreIndex > 0 ? presetScores[scoreIndex - 1] : undefined
+  const nextScore = scoreIndex >= 0 ? presetScores[scoreIndex + 1] : undefined
 
   return (
     <main>
       <TopNav />
       <div className="score-reader-actions">
-        {previousScore ? (
+        {score && previousScore ? (
           <Link className="action-button" to={`/scores/${previousScore.slug}`}>
             上一曲
           </Link>
         ) : (
           <span className="action-button is-disabled" aria-disabled="true">上一曲</span>
         )}
-        {nextScore ? (
+        {score && nextScore ? (
           <Link className="action-button" to={`/scores/${nextScore.slug}`}>
             下一曲
           </Link>
@@ -47,11 +51,11 @@ export function ScoreReaderPage() {
         >
           打印
         </button>
-        <Link className="action-button" to={`/editor?score=${score.slug}`}>
+        <Link className="action-button" to={sharedScoreUrl('/editor', scoreSource)}>
           编辑
         </Link>
       </div>
-      <section className="score-reader" aria-label={`${score.title} 乐谱`}>
+      <section className="score-reader" aria-label={`${result.title || score?.title || '共享'} 乐谱`}>
         <ScoreRenderer
           ref={scoreRendererRef}
           mei={result.mei}

@@ -1,16 +1,16 @@
 import { NotationEditor } from '../components/NotationEditor'
 import { TopNav } from '../components/TopNav'
-import { presetScores } from '../lib/samples'
 import { useSearchParams } from 'react-router-dom'
+import { sharedScoreSource } from '../lib/score-share'
 
 export function EditorPage() {
   const [searchParams] = useSearchParams()
-  const selectedScore = presetScores.find((score) => score.slug === searchParams.get('score'))
+  const source = sharedScoreSource(searchParams.toString())
 
   return (
     <main>
       <TopNav />
-      <NotationEditor key={selectedScore?.slug ?? 'blank-editor'} initialSource={selectedScore?.source} />
+      <NotationEditor key={source ?? 'blank-editor'} initialSource={source ?? undefined} />
     </main>
   )
 }
