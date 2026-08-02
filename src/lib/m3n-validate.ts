@@ -151,15 +151,21 @@ function playbackLyricTargets(source: string) {
   return targetsByPass
 }
 
-function hasUnresolvedForcedLyricTarget(items: ReturnType<typeof parseLyricItems>, targets: readonly LyricTarget[]) {
-  let itemIndex = 0
-  for (const target of targets) {
-    const item = items[itemIndex]
-    if (!item) break
-    if (item.forceTiedTarget !== target.tied) continue
-    itemIndex += 1
+function hasForcedLyricOutsideTiedTarget(items: ReturnType<typeof parseLyricItems>, targets: readonly LyricTarget[]) {
+  let targetIndex = 0
+  for (const item of items) {
+    if (item.forceTiedTarget) {
+      if (!targets[targetIndex]?.tied) return true
+      targetIndex += 1
+      continue
+    }
+    // Ordinary lyrics automatically pass over tied continuations. A forced
+    // lyric must not do so: it applies to the immediately current target.
+    while (targets[targetIndex]?.tied) targetIndex += 1
+    if (targetIndex >= targets.length) break
+    targetIndex += 1
   }
-  return items.slice(itemIndex).some((item) => item.forceTiedTarget)
+  return false
 }
 
 function supplementMessage(current: Supplement, token: Token, message: string) {
@@ -1156,8 +1162,8 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       if (exceedsAvailablePositions || firstPassIsIncomplete) {
         diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`))
       }
-      if (hasUnresolvedForcedLyricTarget(items.items, lyricTargetsByPlaybackPass.get(pass) ?? [])) {
-        diagnostics.push(lyricMessage(`第 ${lyric.line} 行：第 ${pass} 遍存在没有可用延音目标的 +歌词项`))
+      if (hasForcedLyricOutsideTiedTarget(items.items, lyricTargetsByPlaybackPass.get(pass) ?? [])) {
+        diagnostics.push(lyricMessage(`第 ${lyric.line} 行：第 ${pass} 遍的 +歌词项不位于延音目标`))
       }
     }
   }

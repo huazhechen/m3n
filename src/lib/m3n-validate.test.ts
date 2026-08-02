@@ -259,7 +259,13 @@ describe('validateM3N', () => {
   it('rejects + prefixed lyrics when no tied target is available', () => {
     const source = '{4/4} 1 2 3 4 |||\n{lyrics}la +la la{/}'
 
-    expect(messages(source)).toContain('[L] 第 2 行：第 1 遍存在没有可用延音目标的 +歌词项')
+    expect(messages(source)).toContain('[L] 第 2 行：第 1 遍的 +歌词项不位于延音目标')
+  })
+
+  it('rejects + lyrics that skip ordinary notes to a later tie target', () => {
+    const source = '{4/4} 1 2 3~ 3 |||\n{lyrics}a +b c d{/}'
+
+    expect(messages(source)).toContain('[L] 第 2 行：第 1 遍的 +歌词项不位于延音目标')
   })
 
   it('counts character lyrics, grouped lyrics, extenders, and repeated placeholders by alignment position', () => {
