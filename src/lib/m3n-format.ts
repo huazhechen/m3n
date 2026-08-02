@@ -1,5 +1,6 @@
 import { splitSupplementBlocks } from './notation/supplements'
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
+import { tokenizeM3N } from './notation/m3n-tokens'
 import { parseM3NDocument, type DirectEvent } from './m3n-direct'
 
 const BARLINE = /(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)/g
@@ -152,35 +153,63 @@ function restForBeats(beats: number) {
   return null
 }
 
-function restRunReplacement(events: DirectEvent[], source: string, isCompleteMeasure: boolean) {
+function isCompoundMeter(event: DirectEvent) {
+  const count = event.meterCount ?? 4
+  return count >= 6 && count % 3 === 0
+}
+
+function staysWithinCompoundBeat(offset: number, beats: number, event: DirectEvent) {
+  const group = 3 * 4 / (event.meterUnit ?? 4)
+  return Math.floor((offset + EPSILON) / group) === Math.floor((offset + beats - EPSILON) / group)
+}
+
+function restRunReplacement(events: DirectEvent[], source: string, offset: number, depth: number) {
   if (events.length < 2 || events.some((event) => event.kind !== 'rest')) return null
   const beats = events.reduce((sum, event) => sum + event.beats, 0)
+  if (!staysWithinCompoundBeat(offset, beats, events[0]!)) return null
   let start = events[0]?.sourceStart
   let end = events.at(-1)?.sourceEnd
   const value = restForBeats(beats)
   if (start === undefined || end === undefined || !value) return null
-  if (isCompleteMeasure) {
-    while (start > 0 && /[\s(]/.test(source[start - 1] ?? '')) start -= 1
-    while (end < source.length && /[\s)]/.test(source[end] ?? '')) end += 1
+  if (depth === 1) {
+    while (start > 0 && /\s/.test(source[start - 1] ?? '')) start -= 1
+    while (end < source.length && /\s/.test(source[end] ?? '')) end += 1
+    if (source[start - 1] !== '(' || source[end] !== ')') return null
+    start -= 1
+    end += 1
   }
-  // Only replace plain rest notation; directives and comments keep their original placement.
-  return /^[\s()0^.]+$/.test(source.slice(start, end)) ? { start, end, value } : null
+  const allowedNotation = depth === 1 ? /^[\s()0^.]+$/ : /^[\s0^.]+$/
+  return allowedNotation.test(source.slice(start, end)) ? { start, end, value } : null
 }
 
 function mergeCompleteRestMeasures(source: string) {
   const replacements: Array<{ start: number; end: number; value: string }> = []
+  const parenTokens = tokenizeM3N(source).filter((token) => token.kind === 'open-paren' || token.kind === 'close-paren')
+  const parenDepthAt = (position: number) => parenTokens.reduce((depth, token) => (
+    token.start < position ? depth + (token.kind === 'open-paren' ? 1 : -1) : depth
+  ), 0)
   for (const part of parseM3NDocument(source).parts.values()) {
     for (const staff of [part.melody, part.bass]) {
       for (const measure of staff) {
+        const firstEvent = measure.events[0]
+        if (!firstEvent || !isCompoundMeter(firstEvent)) continue
         let restRun: DirectEvent[] = []
+        let offset = 0
+        let restRunOffset = 0
         const flushRestRun = () => {
-          const replacement = restRunReplacement(restRun, source, restRun.length === measure.events.length)
+          const first = restRun[0]
+          const replacement = first ? restRunReplacement(restRun, source, restRunOffset, parenDepthAt(first.sourceStart)) : null
           if (replacement) replacements.push(replacement)
           restRun = []
         }
         for (const event of [...measure.events, null]) {
-          if (event?.kind === 'rest') restRun.push(event)
-          else if (restRun.length > 0) flushRestRun()
+          if (event?.kind === 'rest') {
+            const runBeats = restRun.reduce((sum, item) => sum + item.beats, 0)
+            if (restRun.length > 0 && !staysWithinCompoundBeat(restRunOffset, runBeats + event.beats, event)) flushRestRun()
+            if (restRun.length === 0) restRunOffset = offset
+            restRun.push(event)
+          } else if (restRun.length > 0) flushRestRun()
+          if (event) offset += event.beats
         }
       }
     }

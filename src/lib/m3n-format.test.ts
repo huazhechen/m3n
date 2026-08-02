@@ -45,18 +45,25 @@ describe('formatM3N', () => {
     expect(result).toContain('1e^^ :|||')
   })
 
-  it('merges a complete measure of consecutive rests into one rest', () => {
+  it('does not merge rests in simple meters', () => {
     const result = formatM3N('{4/4}\n0 0 0 0 | 1 2 3 4 |||')
 
-    expect(result).toContain('0^^ | 1 2 3 4 |||')
+    expect(result).toContain('0 0 0 0 | 1 2 3 4 |||')
   })
 
-  it('merges grouped rests and rest runs before notes', () => {
-    const complete = formatM3N('{2/4}\n(0 0) (0 0) | 1 2 |||')
-    const partial = formatM3N('{4/4}\n0 0 1 2 |||')
+  it('merges rests inside each compound beat without crossing its boundary', () => {
+    const result = formatM3N('{6/8}\n(0 0 0) (0 0 0) |||')
 
-    expect(complete).toContain('0^ | 1 2 |||')
-    expect(partial).toContain('0^ 1 2 |||')
+    expect(result).toContain('0. 0. |||')
+    expect(result).not.toContain('0^. |||')
+  })
+
+  it('preserves simple-meter rests and nested rhythm', () => {
+    const crossBeatGroup = formatM3N('{4/4}\n1 0 0 3 | 4 5 6 7 |||')
+    const nestedRhythm = formatM3N('{3/4}\n1.(0) (0 1) | 2 3 4 |||')
+
+    expect(crossBeatGroup).toContain('1 0 0 3 | 4 5 6 7 |||')
+    expect(nestedRhythm).toContain('1.(0) (0 1) | 2 3 4 |||')
   })
 
   it('compresses consecutive lyric placeholders and repeated spaces', () => {
