@@ -4,6 +4,7 @@ import { downloadBlob, renderHeaderAndScoreCanvas, renderScoreCanvas } from '../
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
 import { ScoreHeader } from './ScoreHeader'
+import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisions'
 
 type ExportFormat = 'png' | 'pdf'
 
@@ -58,6 +59,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
             scale: format === 'pdf' ? 42 * pdfScale / 100 : 42,
             includeBass: includeBass || !hasBassStaff,
           })
+          resolveLyricCollisions(preview)
         }
         score.destroy()
       }).catch((error: unknown) => {
@@ -76,14 +78,24 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           throw new Error('PDF 缩放需介于 50% 和 200% 之间。')
         }
         const targetWidth = format === 'png' ? Math.max(320, width) : DEFAULT_EXPORT_WIDTH
-        score = await createVerovioScore(mei)
-        const exportPaper = document.createElement('div')
-        exportPaper.innerHTML = score.layout({
-          width: targetWidth,
-          scale: 42 * scale,
-          includeBass: includeBass || !hasBassStaff,
-        })
-        const svg = exportPaper.querySelector('svg')
+        let svg = previewRef.current?.querySelector<SVGSVGElement>('svg')?.cloneNode(true) as SVGSVGElement | undefined
+        if (!svg) {
+          score = await createVerovioScore(mei)
+          const exportPaper = document.createElement('div')
+          exportPaper.innerHTML = score.layout({
+            width: targetWidth,
+            scale: 42 * scale,
+            includeBass: includeBass || !hasBassStaff,
+          })
+          exportPaper.style.cssText = 'position:fixed; visibility:hidden; pointer-events:none; inset:0;'
+          document.body.append(exportPaper)
+          try {
+            resolveLyricCollisions(exportPaper)
+            svg = exportPaper.querySelector<SVGSVGElement>('svg')?.cloneNode(true) as SVGSVGElement | undefined
+          } finally {
+            exportPaper.remove()
+          }
+        }
         if (!svg) throw new Error('当前没有可导出的五线谱。')
 
         const fileName = scoreFileName(title)
