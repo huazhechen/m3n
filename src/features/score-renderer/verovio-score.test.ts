@@ -64,6 +64,10 @@ describe('VerovioScore layout', () => {
       { id: 'm3n-e-1-v2', classList: ['verse'] },
       { id: 'm3n-e-1-v3', classList: ['verse'] },
     ], 3, [1, 2, 3])).toBe(0)
+    expect(lyricVerseIndexForMeasureRendition([
+      { id: 'm3n-e-1-v1', classList: ['verse'] },
+      { id: 'm3n-e-1-v2', classList: ['verse', 'm3n-passes-2-3'] },
+    ], 3, [1, 2])).toBe(1)
   })
 
   it('uses Verovio playback expansion for endings, repeats, D.S., and D.C.', async () => {

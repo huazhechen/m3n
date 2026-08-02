@@ -124,7 +124,7 @@ function chordSymbol(value: string, key: string) {
 function verseXml(lyrics: VerseSyllable[], xmlId: string) {
   return lyrics.map((lyric) => {
     const passes = lyric.passes ? [...lyric.passes] : []
-    const passType = passes.some((pass, index) => index > 0 && pass !== passes[index - 1]! + 1)
+    const passType = passes.length > 1
       ? ` type="m3n-passes-${passes.join('-')}"`
       : ''
     const connection = lyric.kind === 'extender'
