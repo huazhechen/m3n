@@ -55,6 +55,13 @@ describe('validateM3N', () => {
     expect(messages('{4/4}\n(1 2) | 3 4 5 6 | 1 2 :|| 4 | 5 6 7 |||')).toContain('中间小节拍数不合规')
   })
 
+  it('accepts a repeat start in the middle of a measure when both playback paths complete it', () => {
+    const source = '{4/4}\n1 2 3 ||: 4 | 5 6 7 1 | 2 3 4 :|| 5 | 6 7 1 2 |||'
+
+    expect(validateM3N(source)).toEqual([])
+    expect(messages('{4/4}\n1 2 ||: 3 | 4 5 6 7 | 1 2 3 :|| 4 | 5 6 7 1 |||')).toContain('中间小节拍数不合规')
+  })
+
   it('accepts independent pickup measures in named parts without terminal bars', () => {
     const source = [
       '{parts=A B A}',

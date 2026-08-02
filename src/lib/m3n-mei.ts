@@ -482,7 +482,7 @@ export function m3nToMei(source: string): MeiConversionResult {
     while (part.bass.length > 1 && part.bass.at(-1)?.events.length === 0 && !part.bass.at(-1)?.multiRest) part.bass.pop()
     const measureCount = Math.max(part.melody.length, hasBassStaff ? part.bass.length : 0)
     let logicalMeasureNumber = 0
-    let incompleteRepeatEnd: { beats: number; number: number; id: string } | undefined
+    let incompleteBoundaryMeasure: { beats: number; number: number; id: string; right?: string } | undefined
     const measures = Array.from({ length: measureCount }, (_, measureIndex) => {
       const melody = part.melody[measureIndex]
       const left = melody?.left ? ` left="${melody.left}"` : ''
@@ -492,16 +492,18 @@ export function m3nToMei(source: string): MeiConversionResult {
       const expectedBeats = meter.count * 4 / meter.unit
       const actualBeats = melody?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
       const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
-      const priorIncompleteRepeatEnd = incompleteRepeatEnd
-      const completesRepeatEnd = priorIncompleteRepeatEnd && Math.abs(priorIncompleteRepeatEnd.beats + actualBeats - expectedBeats) < 1e-9
-        ? priorIncompleteRepeatEnd
+      const priorIncompleteBoundary = incompleteBoundaryMeasure
+      const completesBoundary = priorIncompleteBoundary
+        && (priorIncompleteBoundary.right === 'rptend' || melody?.left === 'rptstart')
+        && Math.abs(priorIncompleteBoundary.beats + actualBeats - expectedBeats) < 1e-9
+        ? priorIncompleteBoundary
         : undefined
       const isIncomplete = Boolean(melody && Math.abs(actualBeats - expectedBeats) > 1e-9)
-      const metcon = isIncomplete && !completesRepeatEnd ? ' metcon="false"' : ''
-      const join = completesRepeatEnd ? ` join="#${completesRepeatEnd.id}"` : ''
-      const displayedNumber = completesRepeatEnd?.number ?? ++logicalMeasureNumber
-      incompleteRepeatEnd = melody?.right === 'rptend' && isIncomplete
-        ? { beats: actualBeats, number: displayedNumber, id: measureId }
+      const metcon = isIncomplete && !completesBoundary ? ' metcon="false"' : ''
+      const join = completesBoundary ? ` join="#${completesBoundary.id}"` : ''
+      const displayedNumber = completesBoundary?.number ?? ++logicalMeasureNumber
+      incompleteBoundaryMeasure = isIncomplete
+        ? { beats: actualBeats, number: displayedNumber, id: measureId, right: melody?.right }
         : undefined
       const staves = [
         renderStaff(melody, 1, keyChanges, meter),

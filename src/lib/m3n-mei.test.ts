@@ -531,6 +531,14 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('<measure xml:id="m3n-measure-1-4" n="3" metcon="false"')
   })
 
+  it('joins a forward repeat that starts in the middle of a measure', () => {
+    const result = m3nToMei('{4/4}\n1 2 3 ||: 4 | 5 6 7 1 | 2 3 4 :|| 5 | 6 7 1 2 |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-1" n="1" metcon="false" right="single">')
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-2" n="1" join="#m3n-measure-1-1" left="rptstart" right="single">')
+  })
+
   it('expands an explicitly counted repeat the requested number of times', () => {
     const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | 3 4 :|||{x3}')
 

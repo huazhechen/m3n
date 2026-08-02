@@ -14,6 +14,9 @@ type Measure = {
   barEnd: number
   number: number
   repeatEnd: boolean
+  repeatStart: boolean
+  repeatStartId?: number
+  repeatTargetId?: number
 }
 
 type Unit = {
@@ -282,9 +285,16 @@ function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidat
   const measures = unit.measures
   const isComplementaryRepeatFragment = (index: number) => {
     const measure = measures[index]!
-    const first = measures[0]
-    if (measure.repeatEnd && first && equal(measure.actual + first.actual, measure.expected)) return true
     const previous = measures[index - 1]
+    const next = measures[index + 1]
+    if (measure.repeatStart && previous && equal(measure.actual + previous.actual, measure.expected)) return true
+    if (next?.repeatStart && equal(measure.actual + next.actual, measure.expected)) return true
+    if (measure.repeatEnd) {
+      const target = measure.repeatTargetId === undefined
+        ? measures[0]
+        : measures.find((candidate) => candidate.repeatStartId === measure.repeatTargetId)
+      if (target && equal(measure.actual + target.actual, measure.expected)) return true
+    }
     return Boolean(previous?.repeatEnd && equal(measure.actual + previous.actual, measure.expected))
   }
   for (const measure of measures) {
@@ -309,7 +319,8 @@ function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidat
   }
   const first = measures[0]
   const last = measures.at(-1)!
-  if (equal(first.actual, first.expected)) {
+  const firstCompletesAtRepeatStart = measures[1]?.repeatStart && equal(first.actual + measures[1].actual, first.expected)
+  if (equal(first.actual, first.expected) || firstCompletesAtRepeatStart) {
     if (!equal(last.actual, last.expected)) {
       diagnostics.push(`${location(last)}：没有弱起时末小节拍数必须满拍：期望 ${last.expected} 拍，实际 ${last.actual} 拍`)
       markInvalidBar(last)
@@ -373,10 +384,12 @@ function validateBody(
   const isInstrumental = () => blocks.some((block) => block.name === 'inst')
   const currentTopLevel = () => blocks.length === 0
 
-  const commitMeasure = (line: number, barEnd = -1, repeatEnd = false) => {
+  let nextMeasureRepeatStart: number | undefined
+  const commitMeasure = (line: number, barEnd = -1, repeatEnd = false, repeatTargetId?: number) => {
     if (unit.currentHasAtom && !unit.multiRestPendingBar) {
-      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine, barEnd, number: unit.measures.length + 1, repeatEnd })
+      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine, barEnd, number: unit.measures.length + 1, repeatEnd, repeatStart: nextMeasureRepeatStart !== undefined, repeatStartId: nextMeasureRepeatStart, repeatTargetId })
     }
+    nextMeasureRepeatStart = undefined
     unit.beats = 0
     unit.currentHasAtom = false
     unit.multiRestPendingBar = false
@@ -548,7 +561,7 @@ function validateBody(
       parens.length = 0
     }
     const repeatEnd = token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:'
-    commitMeasure(token.line, token.start + token.raw.length, repeatEnd)
+    commitMeasure(token.line, token.start + token.raw.length, repeatEnd, repeatOpen?.id)
     if (token.raw === '||:') {
       if (repeatOpen) diagnostics.push(lineMessage(token, '反复区域不能嵌套或重叠'))
       repeatOpen = { line: token.line, id: ++repeatId }
@@ -563,6 +576,7 @@ function validateBody(
         currentVoltaRepeat = repeatOpen.id
       }
     }
+    nextMeasureRepeatStart = token.raw === '||:' || token.raw === ':||:' ? repeatOpen?.id : undefined
     if (token.raw === '|||' || token.raw === ':|||') {
       terminalCount += 1
       terminalSeen = !fineBeforeTerminal
@@ -773,7 +787,7 @@ function validateBody(
           pendingTie = null
         }
         for (let index = 0; index < count; index += 1) {
-          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line, barEnd: -1, number: unit.measures.length + 1, repeatEnd: false })
+          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line, barEnd: -1, number: unit.measures.length + 1, repeatEnd: false, repeatStart: false })
         }
         elapsedBeats += count * unit.expected
         unit.currentHasAtom = true
