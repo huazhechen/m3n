@@ -79,10 +79,6 @@ function durationAttributes(beats: number) {
   return `dur="${closest.dur}"${closest.dots ? ` dots="${closest.dots}"` : ''}`
 }
 
-function gesturalDuration(beats: number) {
-  return /dur="(\d+)"/.exec(durationAttributes(beats))?.[1] ?? '4'
-}
-
 const metronomeGlyphs: Record<number, { name: string; num: string }> = {
   1: { name: 'metNoteWhole', num: 'U+ECA2' },
   2: { name: 'metNoteHalfUp', num: 'U+ECA3' },
@@ -141,11 +137,6 @@ function chordSymbol(value: string, key: string) {
 }
 
 function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
-  const velocityValue = event.velocity === undefined && !event.postfixes.includes('str')
-    ? undefined
-    : Math.min(127, (event.velocity ?? 80) + (event.postfixes.includes('str') ? 20 : 0))
-  const velocity = velocityValue === undefined ? '' : ` vel="${velocityValue}"`
-  const gestural = event.postfixes.includes('brk') ? ` dur.ges="${gesturalDuration(event.beats / 4)}"` : ''
   const verse = lyrics.filter((lyric) => lyric.kind !== 'placeholder').map((lyric) => {
     const connection = lyric.kind === 'extender'
       ? ' con="u"'
@@ -176,7 +167,7 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
   if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${durationAttributes(event.beats)}/>`
   if (event.kind === 'chord') {
     const notes = event.pitches.map((pitch) => `<note ${pitchXml(pitch, event.key, accidentals)}/>`).join('')
-    return `${graces}<chord xml:id="${xmlId}" ${durationAttributes(event.beats)}${gestural}${velocity}>${notes}${articulations}${verse}</chord>`
+    return `${graces}<chord xml:id="${xmlId}" ${durationAttributes(event.beats)}>${notes}${articulations}${verse}</chord>`
   }
   if (event.kind === 'tuplet' && event.tuplet) {
     const childBeats = event.tuplet.unitBeats
@@ -185,13 +176,13 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
       if (pitch === '0') return `<rest xml:id="${xmlId}-n${index + 1}" ${durationAttributes(childBeats)}/>`
       const childVerse = !lyricAttached ? verse : ''
       lyricAttached ||= Boolean(childVerse)
-      const note = `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)} ${durationAttributes(childBeats)}${velocity}`
+      const note = `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)} ${durationAttributes(childBeats)}`
       return childVerse ? `${note}>${childVerse}</note>` : `${note}/>`
     }).join('')
     const content = childBeats <= 0.5 && !event.pitches.includes('0') ? `<beam>${children}</beam>` : children
     return `<tuplet xml:id="${xmlId}" num="${event.tuplet.num}" numbase="${event.tuplet.numbase}">${content}</tuplet>`
   }
-  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${durationAttributes(event.beats)}${gestural}${velocity}>${articulations}${verse}</note>`
+  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${durationAttributes(event.beats)}>${articulations}${verse}</note>`
 }
 
 type RenderedEvent = { event: DirectEvent; prefix?: string; xml: string }

@@ -16,7 +16,6 @@ export type DirectEvent = {
   chord?: string
   chordState?: string
   prefix?: 'sfz'
-  velocity?: number
   postfixes: string[]
   navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
   octaveShift: number
@@ -70,8 +69,6 @@ export type DirectDocument = {
 }
 
 const metadataNames = ['title', 'subtitle', 'category', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
-const dynamicVelocities: Record<string, number> = { ppp: 20, pp: 32, p: 45, mp: 60, mf: 76, f: 92, ff: 108, fff: 120 }
-
 function metadata(source: string, name: (typeof metadataNames)[number]) {
   return source.match(new RegExp(`\\{${name}=([^}]*)\\}`))?.[1]?.trim() ?? ''
 }
@@ -140,7 +137,6 @@ function parseBody(
     event.chord = chordChanged ? currentChord : undefined
     event.chordState = currentChord
     event.prefix = pendingPrefix
-    event.velocity = pendingPrefix ? 120 : currentDynamic ? dynamicVelocities[currentDynamic] : undefined
     event.octaveShift = structureStack.reduce((shift, item) => {
       const kind = typeof item === 'object' ? item.kind : item
       return kind === '8va' ? shift + 1 : kind === '8vb' ? shift - 1 : shift

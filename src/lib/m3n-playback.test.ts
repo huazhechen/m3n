@@ -24,10 +24,8 @@ describe('M3N accompaniment playback', () => {
     ])
   })
 
-  it('adds audible trill notes to the playback track', () => {
-    const notes = buildAccompaniment('{key=C} {4/4}\n1{tr} 2 3 4 |||')
-
-    expect(notes).toContainEqual({ startBeats: 0.25, durationBeats: 0.25, midi: 62, velocity: 62 })
+  it('leaves trills to Verovio rather than adding accompaniment notes', () => {
+    expect(buildAccompaniment('{key=C} {4/4}\n1{tr} 2 3 4 |||')).toEqual([])
   })
 
   it('arpeggiates accompaniment in common meters', () => {

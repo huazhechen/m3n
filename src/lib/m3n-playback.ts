@@ -1,4 +1,4 @@
-import { m3nPitch, parseM3NDocument, type DirectEvent } from './m3n-direct'
+import { parseM3NDocument, type DirectEvent } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 
 export type AccompanimentNote = { startBeats: number; durationBeats: number; midi: number; velocity: number }
@@ -6,13 +6,6 @@ export type TempoChange = { startBeats: number; tempo: number; sourceStart?: num
 
 function usesArpeggioPattern(meterCount: number, meterUnit: number) {
   return (meterUnit === 4 && [2, 3, 4].includes(meterCount)) || (meterUnit === 8 && [6, 9, 12].includes(meterCount))
-}
-
-function midiFor(pitch: string, key: string) {
-  const value = m3nPitch(pitch, key)
-  const semitones: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }
-  const accidental = ({ s: 1, ss: 2, x: 2, f: -1, ff: -2 }[value.accidGes ?? value.accid ?? ''] ?? 0)
-  return (value.oct + 1) * 12 + (semitones[value.pname] ?? 0) + accidental
 }
 
 export function buildAccompaniment(source: string): AccompanimentNote[] {
@@ -38,13 +31,6 @@ export function buildAccompaniment(source: string): AccompanimentNote[] {
             }
           } else {
             notes.push(...chord.midi.map((midi) => ({ startBeats, durationBeats: event.beats, midi, velocity: 52 })))
-          }
-        }
-        const midi = event.pitches[0] ? midiFor(event.pitches[0], event.key) : undefined
-        if (midi !== undefined && event.postfixes.includes('tr')) {
-          const pulse = Math.min(0.25, event.beats / 4)
-          for (let offset = pulse; offset < event.beats - 0.0001; offset += pulse * 2) {
-            notes.push({ startBeats: startBeats + offset, durationBeats: pulse, midi: midi + 2, velocity: 62 })
           }
         }
         startBeats += event.beats
