@@ -46,6 +46,13 @@ describe('formatM3N', () => {
     expect(result).toContain('1e^^ :|||')
   })
 
+  it('removes a redundant ordinary or double bar before a repeat end', () => {
+    const result = formatM3N('{4/4}\n1 2 3 4 || :||')
+
+    expect(result).toContain('1 2 3 4 :||')
+    expect(result).not.toContain('|| :||')
+  })
+
   it('allows a rest run from the beginning of a divisible meter to cross its midpoint', () => {
     const result = formatM3N('{4/4}\n0 0 0 0 | 1 2 3 4 |||')
 

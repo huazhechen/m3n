@@ -10,6 +10,7 @@ const EPSILON = 1e-9
 export function normalizeAdjacentBarlines(source: string) {
   return source
     .replace(/(:\|\|\||:\|\|:|:\|\||\|\|:|\|\|\||\|\||\|)\s*(\{(?:ds|dc|fine)\})/g, '$2$1')
+    .replace(/(?:\|\||\|)\s+(?=:\|\|)/g, '')
     .replace(/:\|\|\s*\|\|\|/g, ':|||')
 }
 
