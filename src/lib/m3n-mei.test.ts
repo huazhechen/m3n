@@ -380,7 +380,7 @@ describe('M3N to MEI conversion', () => {
     expect(result.headerMetadata).toContainEqual({ value: 'A → B → A', side: 'left', priority: 30 })
     expect(result.mei).toContain('<section xml:id="m3n-segment-1">')
     expect(result.mei).toContain('<section xml:id="m3n-segment-2">')
-    expect(result.mei).toMatch(/<section xml:id="m3n-segment-2">\s+<sb\/>/)
+    expect(result.mei).not.toMatch(/<section xml:id="m3n-segment-2">\s+<sb\/>/)
     expect(result.mei).toContain('<reh staff="1" tstamp="1"><rend fontweight="bold">A</rend></reh>')
     expect(result.mei).toContain('<reh staff="1" tstamp="1"><rend fontweight="bold">B</rend></reh>')
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-1"/>')

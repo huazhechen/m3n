@@ -558,9 +558,6 @@ export function m3nToMei(source: string): MeiConversionResult {
       }
       nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, partName, content: content.join('\n'), repeatStart: sectionMeasures[0]?.repeatStart, repeatCount: sectionMeasures.at(-1)?.repeatCount, navigation: sectionMeasures.flatMap((measure) => measure.navigation) })
     }
-    if (document.partOrder.length > 0 && partIndex > 0 && nodes[0] && !nodes[0].content.startsWith('<sb/>')) {
-      nodes[0].content = `<sb/>\n${nodes[0].content}`
-    }
     return nodes
   })
   const expandNodes = (nodes: typeof layoutNodes) => {
