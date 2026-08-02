@@ -77,7 +77,7 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
     const keySignature = readAttribute(source, 'key') ?? 'C'
     const timeSignature = readTimeSignature(source)
     const tempo = readTempo(source)
-    const hasLyrics = source.includes('{lyrics}')
+    const hasLyrics = /\{lyrics(?:=[^}]*)?\}/.test(source)
     const hasBass = source.includes('{bass}')
     const melodyComplexity = assessM3NMelodyComplexity(source).score
 

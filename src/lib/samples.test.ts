@@ -42,4 +42,8 @@ describe('bundled score corpus', () => {
 
     expect(failures).toEqual([])
   })
+
+  it('detects numbered lyric blocks in score metadata', () => {
+    expect(presetScores.find((score) => score.slug === '00020')?.hasLyrics).toBe(true)
+  })
 })
