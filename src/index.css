@@ -735,6 +735,12 @@ textarea::selection {
   pointer-events: none;
 }
 
+.score-paper .measure-error-highlight {
+  fill: #e9a7a0;
+  opacity: 0.28;
+  pointer-events: none;
+}
+
 .score-paper .is-playing-measure > .measure-playback-highlight {
   display: block;
   fill: #f0c66b;

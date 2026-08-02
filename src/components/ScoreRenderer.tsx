@@ -146,6 +146,26 @@ function resolveLyricCollisions(paper: HTMLElement) {
   }
 }
 
+function addMeasureHighlight(measure: SVGGElement, className: string) {
+  if (measure.querySelector(`:scope > .${className}`)) return
+  const system = measure.closest<SVGGElement>('g.system')
+  const measureBounds = measure.getBBox()
+  const systemBounds = system?.getBBox() ?? measureBounds
+  const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+  band.classList.add(className)
+  band.setAttribute('x', String(measureBounds.x))
+  band.setAttribute('y', String(systemBounds.y))
+  band.setAttribute('width', String(measureBounds.width))
+  band.setAttribute('height', String(systemBounds.height))
+  measure.insertBefore(band, measure.firstChild)
+}
+
+function addInvalidMeasureHighlights(paper: HTMLElement) {
+  paper.querySelectorAll<SVGGElement>('g.measure.m3n-invalid-measure').forEach((measure) => {
+    addMeasureHighlight(measure, 'measure-error-highlight')
+  })
+}
+
 export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(function ScoreRenderer({
   mei,
   title,
@@ -263,6 +283,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                 if (page > pageCount) {
                   if (!isInitialRender) paper.innerHTML = pages.join('')
                   resolveLyricCollisions(paper)
+                  addInvalidMeasureHighlights(paper)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()
@@ -314,18 +335,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   }
 
   const highlightMeasure = (measure: SVGGElement) => {
-    if (!measure.querySelector(':scope > .measure-playback-highlight')) {
-      const system = measure.closest<SVGGElement>('g.system')
-      const measureBounds = measure.getBBox()
-      const systemBounds = system?.getBBox() ?? measureBounds
-      const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-      band.classList.add('measure-playback-highlight')
-      band.setAttribute('x', String(measureBounds.x))
-      band.setAttribute('y', String(systemBounds.y))
-      band.setAttribute('width', String(measureBounds.width))
-      band.setAttribute('height', String(systemBounds.height))
-      measure.insertBefore(band, measure.firstChild)
-    }
+    addMeasureHighlight(measure, 'measure-playback-highlight')
     measure.classList.add('is-playing-measure')
   }
 
