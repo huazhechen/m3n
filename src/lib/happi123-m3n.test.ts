@@ -245,6 +245,17 @@ describe('happi123ToM3N', () => {
     expect(result.diagnostics).toEqual([])
   })
 
+  it('reports invalid alternate endings without flattening them', () => {
+    const result = happi123ToM3N([
+      '{key_signature:C}',
+      '{time_signature:2/4}',
+      '|:11[1:22:|][2:33]{S}',
+    ].join('\n'))
+
+    expect(result.output).toContain('{volta=')
+    expect(result.diagnostics.some((diagnostic) => diagnostic.startsWith('房子结构无法转换为有效 M3N：'))).toBe(true)
+  })
+
   it('converts a single dal segno jump to direct M3N navigation', () => {
     const result = happi123ToM3N('{title:反复}\n{key_signature:C}\n{time_signature:2/4}\n11|{start}22|{DS}')
 

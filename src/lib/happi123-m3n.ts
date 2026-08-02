@@ -652,15 +652,13 @@ function normalizeMeasureMeters(source: string) {
     .reduce((result, [offset, meter]) => `${result.slice(0, offset)}${meter}${result.slice(offset)}`, source)
 }
 
-function repairLegacyStructure(source: string) {
+function repairLegacyStructure(source: string, conversionDiagnostics: string[]) {
   const diagnostics = validateM3N(source, { skipBeatValidation: true })
   let repaired = source
 
-  if (diagnostics.some((diagnostic) => diagnostic.includes('volta') || diagnostic.includes('反复结构'))) {
-    // Happi123 endings can overlap and continue through ordinary barlines,
-    // which M3N intentionally rejects. Keep their musical content as a
-    // linear import when no equivalent structured ending can be expressed.
-    repaired = repaired.replace(/\{volta=[^}]+\}([\s\S]*?)\{\/\}/g, '$1')
+  const voltaDiagnostics = diagnostics.filter((diagnostic) => diagnostic.includes('volta') || diagnostic.includes('反复结构'))
+  if (source.includes('{volta=') && voltaDiagnostics.length > 0) {
+    conversionDiagnostics.push(`房子结构无法转换为有效 M3N：${voltaDiagnostics.join('；')}`)
   }
   if (diagnostics.some((diagnostic) => diagnostic.includes('隐式反复起点'))) {
     repaired = repaired.replace(/\|\|:|:\|\|(?::|\|)?/g, '||')
@@ -752,8 +750,8 @@ export function happi123ToM3N(source: string): ConversionResult {
       '{/}',
     ]),
   ].filter(Boolean).join('\n').replace(/\s*\{br\}\s*/g, ' {br}\n')
-  const repairedOutput = repairLegacyStructure(normalizeMeasureMeters(rawOutput))
-  const output = repairLegacyStructure(normalizeMeasureMeters(repairedOutput))
+  const repairedOutput = repairLegacyStructure(normalizeMeasureMeters(rawOutput), diagnostics)
+  const output = repairLegacyStructure(normalizeMeasureMeters(repairedOutput), diagnostics)
     .replace(/\(\{(\d+\/64)\}\s*/g, '{$1} (')
 
   return { source, output, diagnostics: [...new Set(diagnostics)] }
