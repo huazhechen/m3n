@@ -97,7 +97,7 @@ function openingBlockName(content: string): string | null {
   if (INTERVAL_FLAGS.has(content)) return content
   if (content.startsWith('volta=')) return 'volta'
   if (content.startsWith('part=')) return 'part'
-  if (content === 'lyrics' || content.startsWith('lyrics=') || content === 'lyrics-word' || content.startsWith('lyrics-word=')) return 'lyrics'
+  if (content === 'lyrics' || content.startsWith('lyrics=')) return 'lyrics'
   if (content === 'bass') return 'bass'
   return null
 }
@@ -187,7 +187,7 @@ function extractSupplements(tokens: Token[], diagnostics: string[]) {
           line: token.line,
           range: lyric ? (lyric[2] ?? null) : null,
           tokens: [],
-          lyricMode: lyric?.[1] === 'lyrics-word' ? 'word' : 'char',
+          lyricMode: 'char',
         }
         nested = []
         continue

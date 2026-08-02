@@ -171,7 +171,7 @@ describe('validateM3N', () => {
   it('permits lyric reuse across volta paths', () => {
     const source = [
       '{2/4} ||: {volta=1}1 2{/} :|| {volta=2}1 0{/} :|||',
-      '{lyrics-word}la la{/}',
+      '{lyrics}la la{/}',
     ].join('\n')
     expect(validateM3N(source)).toEqual([])
   })
@@ -213,11 +213,11 @@ describe('validateM3N', () => {
   })
 
   it('excludes instrumental intervals from lyric alignment', () => {
-    expect(messages('{2/4} {inst}1 2{/} | 3 4 |||\n{lyrics-word}la la{/}')).toBe('')
+    expect(messages('{2/4} {inst}1 2{/} | 3 4 |||\n{lyrics}la la{/}')).toBe('')
   })
 
   it('allows + prefixed lyrics on tied note targets', () => {
-    expect(messages('{3/4} 1~ 1 2 |||\n{lyrics-word}la +la la{/}')).toBe('')
+    expect(messages('{3/4} 1~ 1 2 |||\n{lyrics}la +la la{/}')).toBe('')
   })
 
   it('counts character lyrics, grouped lyrics, extenders, and repeated placeholders by alignment position', () => {

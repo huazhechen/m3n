@@ -29,7 +29,7 @@ export function splitSupplementBlocks(source: string): SupplementBlocks {
       continue
     }
     const rest = source.slice(index)
-    const opener = /^\{(lyrics(?:-word)?)(?:=([^}]+))?\}|^\{(bass)\}/.exec(rest)
+    const opener = /^\{(lyrics)(?:=([^}]+))?\}|^\{(bass)\}/.exec(rest)
     if (!opener) {
       main.push(source[index])
       index += 1
@@ -77,7 +77,7 @@ export function splitSupplementBlocks(source: string): SupplementBlocks {
     const rawText = source.slice(contentStart, contentEnd)
     const leadingWhitespace = rawText.search(/\S|$/)
     const text = rawText.trim()
-    if (kind === 'lyrics') lyrics.push({ range, text, sourceStart: contentStart + leadingWhitespace, mode: lyricKind === 'lyrics-word' ? 'word' : 'char' })
+    if (kind === 'lyrics') lyrics.push({ range, text, sourceStart: contentStart + leadingWhitespace, mode: 'char' })
     else bass = text
     index = closeEnd
   }

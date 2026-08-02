@@ -246,7 +246,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('adds CJK spacing compensation only to character-based lyrics', () => {
-    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 :|||\n{lyrics}\n甲乙\n{/}\n{lyrics-word=2}\nhello world\n{/}')
+    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 :|||\n{lyrics}\n甲乙\n{/}\n{lyrics=2}\nhello world\n{/}')
 
     expect(result.mei).toContain('<verse xml:id="m3n-e-1-v1" n="1"><syl>甲\u200B</syl></verse>')
     expect(result.mei).toContain('<verse xml:id="m3n-e-2-v1" n="1"><syl>乙\u200B</syl></verse>')
@@ -265,7 +265,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('does not open a lyric block declared inside a comment', () => {
-    const result = m3nToMei('{key=G} {4/4}\n((3 3 4 5)) ((3 3 4 5)) ((3 3 4 5)) ((3 3 4 5)) :|||\n{lyrics=1}一二三四一二三四一二三四一二三四{/}\n// {lyrics-word=2}hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello {/}')
+    const result = m3nToMei('{key=G} {4/4}\n((3 3 4 5)) ((3 3 4 5)) ((3 3 4 5)) ((3 3 4 5)) :|||\n{lyrics=1}一二三四一二三四一二三四一二三四{/}\n// {lyrics=2}hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello hello {/}')
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<verse xml:id="m3n-e-1-v1" n="1"><syl>一\u200B</syl></verse>')
@@ -282,20 +282,20 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('underlines grouped lyric text without underlining punctuation', () => {
-    const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics-word}(word,word) next{/}')
+    const result = m3nToMei('{key=C} {2/4}\n1 2 |||\n{lyrics}(word,word) next{/}')
 
     expect(result.mei).toContain('<syl type="m3n-text-underline"><rend>word</rend>,<rend>word</rend></syl>')
   })
 
   it('renders lyrics for multiple repeat passes as separate verses', () => {
-    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 :|||\n{lyrics-word=1}\nfirst pass\n{/}\n{lyrics-word=2}\nsecond pass\n{/}')
+    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 :|||\n{lyrics=1}\nfirst pass\n{/}\n{lyrics=2}\nsecond pass\n{/}')
 
     expect(result.mei).toContain('<verse xml:id="m3n-e-1-v1" n="1"><syl>first</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>second</syl></verse>')
     expect(result.mei).toContain('<verse xml:id="m3n-e-2-v1" n="1"><syl>pass</syl></verse><verse xml:id="m3n-e-2-v2" n="2"><syl>pass</syl></verse>')
   })
 
   it('does not attach later-pass lyrics to a one-time introduction', () => {
-    const result = m3nToMei('{key=C} {2/4}\n1 2 | ||: 3 4 :|||\n{lyrics-word=1}intro words{/}\n{lyrics-word=2}second pass{/}')
+    const result = m3nToMei('{key=C} {2/4}\n1 2 | ||: 3 4 :|||\n{lyrics=1}intro words{/}\n{lyrics=2}second pass{/}')
 
     expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>intro</syl></verse></note>')
     expect(result.mei).not.toContain('xml:id="m3n-e-1-v2"')
@@ -303,7 +303,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('maps pass-specific lyrics to their matching alternate endings', () => {
-    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{/} |||\n{lyrics-word=1}a b c d{/}\n{lyrics-word=2}a b e f{/}')
+    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{/} |||\n{lyrics=1}a b c d{/}\n{lyrics=2}a b e f{/}')
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>a</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>a</syl></verse></note>')
@@ -312,7 +312,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('keeps instrumental intervals lyric-free without visual markers', () => {
-    const result = m3nToMei('{key=C} {2/4}\n{inst}1 2{/} | 3 4 |||\n{lyrics-word}\nla la\n{/}')
+    const result = m3nToMei('{key=C} {2/4}\n{inst}1 2{/} | 3 4 |||\n{lyrics}\nla la\n{/}')
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).not.toContain('<bracketSpan')
@@ -321,7 +321,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('does not assign lyrics to tied note targets', () => {
-    const source = '{key=C} {3/4}\n1~ 1 2 |||\n{lyrics-word}\nla la\n{/}'
+    const source = '{key=C} {3/4}\n1~ 1 2 |||\n{lyrics}\nla la\n{/}'
     const result = m3nToMei(source)
     const tiedTargetStart = source.indexOf('1 2')
 
@@ -333,7 +333,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('assigns a + prefixed lyric to a tied note target', () => {
-    const result = m3nToMei('{key=C} {3/4}\n1~ 1 2 |||\n{lyrics-word}\nla +la la\n{/}')
+    const result = m3nToMei('{key=C} {3/4}\n1~ 1 2 |||\n{lyrics}\nla +la la\n{/}')
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-2-v1" n="1"><syl>la</syl></verse></note>')
@@ -449,7 +449,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('maps lyric syllables to their rendered notes', () => {
-    const source = '{key=C} {2/4}\n1 2 |||\n{lyrics-word}\nla la\n{/}'
+    const source = '{key=C} {2/4}\n1 2 |||\n{lyrics}\nla la\n{/}'
     const result = m3nToMei(source)
     const firstLyricStart = source.indexOf('la la')
     const secondLyricStart = source.lastIndexOf('la')
