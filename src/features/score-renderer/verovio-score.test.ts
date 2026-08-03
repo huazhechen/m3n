@@ -46,6 +46,7 @@ describe('VerovioScore layout', () => {
     expect(mei).toContain('<tie startid="#m3n-e-2" endid="#m3n-e-3"/>')
     expect(layoutMei).toContain('<note xml:id="m3n-layout-ghost-1" pname="f" oct="4" dur="4" visible="false"/>')
     expect(layoutMei).toContain('<tie startid="#m3n-layout-ghost-1" endid="#m3n-e-5"/>')
+    expect(layoutMei.indexOf('m3n-layout-ghost-1')).toBeGreaterThan(layoutMei.indexOf('xml:id="m3n-ending-2"'))
   })
 
   it('loads the projected ghost tie in Verovio without changing canonical MIDI input', async () => {

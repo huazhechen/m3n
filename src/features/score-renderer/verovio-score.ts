@@ -122,7 +122,7 @@ function lastMeasure(content: string) {
 }
 
 function appendGhostTie(ending: string, target: MeiNote, ghostIndex: number) {
-  const measure = lastMeasure(ending)
+  const measure = /<measure\b[\s\S]*?<\/measure>/.exec(ending)?.[0]
   if (!measure) return ending
   const staffPattern = new RegExp(`(<staff\\b(?=[^>]*\\bn="${escapeRegExp(target.staff)}")[^>]*>)([\\s\\S]*?)(<\\/staff>)`)
   const ghostId = `m3n-layout-ghost-${ghostIndex}`
@@ -158,7 +158,7 @@ export function projectEndingTieGhosts(mei: string) {
       for (let index = 1; index < endings.length; index += 1) {
         const laterTarget = firstPitchedNote(endings[index] ?? '', staff)
         if (!laterTarget || !samePitch(target, laterTarget)) continue
-        endings[index - 1] = appendGhostTie(endings[index - 1] ?? '', laterTarget, ++ghostIndex)
+        endings[index] = appendGhostTie(endings[index] ?? '', laterTarget, ++ghostIndex)
       }
     }
     return `${sharedSection}${endings.join('')}`
