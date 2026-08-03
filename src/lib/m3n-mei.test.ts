@@ -39,6 +39,14 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('xml:id="m3n-e-1-v2"')
     expect(result.mei).not.toContain('xml:id="m3n-e-3-v2"')
   })
+
+  it('keeps house lyrics on their declared verse rows', () => {
+    const result = m3nToMei('{2/4}\nN: ||: 1 2 |\nL1: 甲乙\nL2: 丙丁\n---V1\nN: 3 4 :||\nL1: 戊己\n---V2\nN: 5 6 |||\nL2: 庚辛')
+
+    expect(result.mei).toContain('xml:id="m3n-e-3-v1" n="1"><syl>戊')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v2" n="2"><syl>庚')
+    expect(result.mei).not.toContain('xml:id="m3n-e-5-v1"')
+  })
   it('accepts an already parsed document', () => {
     const source = '{key=C} {2/4} 1 2 |||'
 

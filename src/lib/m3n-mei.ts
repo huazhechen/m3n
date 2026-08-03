@@ -423,18 +423,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         }
         lyrics.sort((left, right) => left.verseIndex - right.verseIndex)
       }
-      if (measure?.ending) {
-        const visualRows = new Map<number, number>()
-        lyrics.forEach((lyric) => {
-          let row = visualRows.get(lyric.verseIndex)
-          if (row === undefined) {
-            row = visualRows.size + 1
-            visualRows.set(lyric.verseIndex, row)
-          }
-          lyric.n = String(row)
-          lyric.verseIndex = row
-        })
-      }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
       return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
