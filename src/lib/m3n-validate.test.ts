@@ -142,17 +142,21 @@ describe('validateM3N', () => {
     expect(result).toContain('连音组整体不能使用延音')
   })
 
-  it('validates exact key, meter, tempo, chord, and range formats', () => {
+  it('validates exact key, meter, tempo, and chord formats', () => {
     const result = messages([
       '{key=Cmaj} {3/3} {120QPM} {chord=VIII} {transpose=1.5}',
-      '{volta=2~2}1 2 3 4{/} |||',
+      '1 2 3 4 |||',
     ].join('\n'))
     expect(result).toContain('调号格式非法')
     expect(result).toContain('拍号格式非法')
     expect(result).toContain('qpm 必须使用小写')
     expect(result).toContain('和弦标记值非法')
     expect(result).toContain('transpose 必须是整数')
-    expect(result).toContain('闭区间起点必须小于终点')
+  })
+
+  it('rejects the removed inline ending syntax', () => {
+    expect(messages('{2/4}\nN: {volta=1}1 2{/} |||')).toContain('旧房子区间语法已删除')
+    expect(messages('{2/4}\nN: {ending=1}1 2{/} |||')).toContain('旧房子区间语法已删除')
   })
 
   it('enforces metadata placement, uniqueness, and non-empty values', () => {
@@ -231,40 +235,6 @@ describe('validateM3N', () => {
       expect.stringMatching(/^\[L\] .*补充块关闭名称错误/),
       expect.stringMatching(/^\[L\] .*补充块不能嵌套/),
     ]))
-  })
-
-  it('rejects lyric reuse that exceeds a shorter volta path', () => {
-    const source = [
-      '{2/4} ||: {volta=1}1 2{/} :|| {volta=2}1 0{/} :|||',
-      '{lyrics}la la{/}',
-    ].join('\n')
-    expect(messages(source)).toContain('歌词对位数量不匹配：共享遍次需要 3 项，实际 2 项')
-  })
-
-  it('requires complete first-pass lyrics and permits only shorter later-pass lyrics', () => {
-    const music = '{2/4} ||: {volta=1}1 2{/} :|| {volta=2}1 2{/} :|||'
-    const valid = `${music}\n{lyrics=1}one two{/}\n{lyrics=2}three{/}`
-    const incompleteFirstPass = `${music}\n{lyrics=1}one{/}\n{lyrics=2}three{/}`
-    const overflowingLaterPass = `${music}\n{lyrics=1}one two{/}\n{lyrics=2}three four five{/}`
-
-    expect(messages(valid)).not.toContain('歌词对位数量不匹配')
-    expect(messages(incompleteFirstPass)).toContain('歌词对位数量不匹配：第 1 遍需要 2 项，实际 1 项')
-    expect(messages(overflowingLaterPass)).toContain('歌词对位数量不匹配：第 2 遍需要 2 项，实际 3 项')
-  })
-
-  it('allows a regular barline after the final volta ending', () => {
-    expect(validateM3N('{2/4} ||: 1 2 | {volta=1}3 4{/} :|| {volta=2}5 6{/} | 7 1e |||')).toEqual([])
-  })
-
-  it('allows structural markers but rejects music before a volta closing barline', () => {
-    expect(validateM3N('{2/4} {segno} ||: 1 2 | {volta=1}3 4{/} {ds}:|||')).toEqual([])
-    expect(messages('{2/4} ||: 1 2 | {volta=1}3 4{/} 5 6 |')).toContain('volta 关闭后、下一条小节线前不能出现音符')
-  })
-
-  it('allows a new volta group after ordinary music in the same outer repeat', () => {
-    const source = '{2/4} ||: {volta=1}1 2{/} | {volta=2}3 4{/} | 5 6 | {volta=1}1 2{/} || {volta=2}3 4{/} | 5 6 :|||'
-
-    expect(validateM3N(source)).toEqual([])
   })
 
   it('allows later lyric blocks to omit alignment positions', () => {

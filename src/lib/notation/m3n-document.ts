@@ -1,6 +1,6 @@
 export type M3NPhrase = {
   line: number
-  volta: string
+  passes: string
   melody?: { text: string; start: number }
   bass?: { text: string; start: number }
   harmony?: { text: string; start: number }
@@ -33,8 +33,8 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
   let offset = 0
   let musicSeen = false
 
-  const ensurePhrase = (line: number, volta = '') => {
-    phrase ??= { line, volta, lyrics: [] }
+  const ensurePhrase = (line: number, passes = '') => {
+    phrase ??= { line, passes, lyrics: [] }
     if (!section.phrases.includes(phrase)) section.phrases.push(phrase)
     return phrase
   }
@@ -64,7 +64,7 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
     const phraseMatch = /^---(?:V(\d+(?:\s*,\s*V?\d+)*))?$/.exec(trimmed)
     if (phraseMatch) {
       musicSeen = true
-      phrase = { line, volta: phraseMatch[1]?.replace(/\s*V?\s*/g, '') ?? '', lyrics: [] }
+      phrase = { line, passes: phraseMatch[1]?.replace(/\s*V?\s*/g, '') ?? '', lyrics: [] }
       section.phrases.push(phrase)
       offset += rawLine.length + 1
       continue
@@ -129,13 +129,14 @@ export function projectM3NDocument(source: string) {
   for (const section of structure.sections) {
     if (named) melody.push(`{part=${section.name}}`)
     for (const [phraseIndex, phrase] of section.phrases.entries()) {
-      if (phrase.volta) melody.push(`{volta=${phrase.volta}}`)
+      if (phrase.passes) melody.push(`{ending=${phrase.passes}}`)
       if (phrase.melody) {
-        const closesBeforeBar = phrase.volta ? '{/}' : ''
+        const closesBeforeBar = phrase.passes ? '{/}' : ''
         const closesPart = named && phraseIndex === section.phrases.length - 1 ? '{/}' : ''
         let text = closesBeforeBar
           ? phrase.melody.text.replace(/((?::\|\|\||:\|\||\|\|\|)(?:\{x\d+\})?)\s*$/, `${closesBeforeBar}$1`)
           : phrase.melody.text
+        if (closesBeforeBar && text === phrase.melody.text) text = `${text} ${closesBeforeBar}`
         if (closesPart && /(?::\|\|\||\|\|\|)(?:\{x\d+\})?\s*$/.test(text)) {
           text = text.replace(/((?::\|\|\||\|\|\|)(?:\{x\d+\})?)\s*$/, `${closesPart}$1`)
         } else if (closesPart) text = `${text} ${closesPart}`

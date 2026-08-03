@@ -231,9 +231,9 @@ function parseBody(
         currentTempo = commonTempo
         currentPart = value.slice(5).trim() || 'score'
         structureStack.push('part')
-      } else if (value.startsWith('volta=')) {
-        structureStack.push('volta')
-        activeEnding = value.slice(6).trim()
+      } else if (value.startsWith('ending=')) {
+        structureStack.push('ending')
+        activeEnding = value.slice(7).trim()
         ensureEndingMeasure()
       } else if (/^(?:lg|cresc|decres|8va|8vb|inst)$/.test(value) || /^(?:accel|rit)=\d+$/.test(value)) {
         const ramp = /^(accel|rit)=(\d+)$/.exec(value)
@@ -269,7 +269,7 @@ function parseBody(
           ? structureStack.map((item) => typeof item === 'object' ? item.kind : item).lastIndexOf(named)
           : structureStack.length - 1
         const closed = index >= 0 ? structureStack.splice(index, 1)[0] : undefined
-        if (closed === 'volta') activeEnding = undefined
+        if (closed === 'ending') activeEnding = undefined
         if (typeof closed === 'object' && closed.tempoTarget !== undefined) {
           currentTempo = closed.tempoTarget
           if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'tempo', value: String(currentTempo) })

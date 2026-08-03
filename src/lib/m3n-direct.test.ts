@@ -68,14 +68,14 @@ describe('direct M3N parser', () => {
   })
 
   it('attaches a D.S. after a closed ending to the preceding measure', () => {
-    const measures = parseM3NDocument('{2/4} {volta=1}1 2{/}{ds}|| 3 4 |||').parts.get('score')!.melody
+    const measures = parseM3NDocument('{2/4}\nN: 1 2{ds} ||\n---\nN: 3 4 |||').parts.get('score')!.melody
 
     expect(measures[0]?.events.at(-1)?.navigation).toEqual(['ds'])
     expect(measures[1]?.events[0]?.navigation).toEqual([])
   })
 
   it('assigns every public measure to all passes required by a later multi-pass ending', () => {
-    const measures = parseM3NDocument('{2/4} ||: 1 2 | {volta=1}3 4{/} | {volta=2~4}5 6{/} | 7 1e :||{x3} |||').parts.get('score')!.melody
+    const measures = parseM3NDocument('{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 |\n---V2,V3,V4\nN: 5 6 |\n---\nN: 7 1e :||{x3} |||').parts.get('score')!.melody
     const passes = measurePlaybackPasses(measures)
 
     expect(passes.get(measures[0])).toEqual(new Set([1, 2, 3, 4]))
@@ -85,7 +85,7 @@ describe('direct M3N parser', () => {
   })
 
   it('keeps the initial second pass before a D.S. from a second ending', () => {
-    const measures = parseM3NDocument('{2/4} ||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{ds}{/} || {segno}7 1 |||').parts.get('score')!.melody
+    const measures = parseM3NDocument('{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6{ds} ||\n---\nN: {segno}7 1 |||').parts.get('score')!.melody
     const passes = measurePlaybackPasses(measures)
 
     expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
@@ -100,7 +100,7 @@ describe('direct M3N parser', () => {
   })
 
   it('does not add a D.S. second pass to a first ending before later endings', () => {
-    const measures = parseM3NDocument('{2/4} ||: {segno}1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{ds}{/} || {volta=3}7 1{/} || {volta=4}2 3{/} |||').parts.get('score')!.melody
+    const measures = parseM3NDocument('{2/4}\nN: ||: {segno}1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6{ds} ||\n---V3\nN: 7 1 ||\n---V4\nN: 2 3 |||').parts.get('score')!.melody
     const passes = measurePlaybackPasses(measures)
 
     expect(passes.get(measures[1])).toEqual(new Set([1]))

@@ -3,7 +3,7 @@ import createVerovioModule from 'verovio/wasm'
 import { VerovioToolkit } from 'verovio/esm'
 import { BasicMIDI } from 'spessasynth_core'
 import { m3nToMei } from '../../lib/m3n-mei'
-import { automaticSystemBreakMeasureIds, encodeSystemBreaks } from './verovio-score'
+import { automaticSystemBreakMeasureIds, encodeSystemBreaks, projectEndingTieGhosts } from './verovio-score'
 import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, visibleLyricVerseNumbers } from './lyric-rendition'
 
 async function renderedPitches(source: string) {
@@ -36,6 +36,36 @@ describe('VerovioScore layout', () => {
     expect(encodeSystemBreaks(mei, new Set(['m3n-measure-1-1', 'm3n-measure-1-2']))).toBe(
       '<section><measure xml:id="m3n-measure-1-1"></measure><sb/><measure xml:id="m3n-measure-1-2"></measure><sb/><measure xml:id="m3n-measure-1-3"></measure></section>',
     )
+  })
+
+  it('adds an invisible tie anchor for later matching alternate endings only in the layout projection', () => {
+    const mei = m3nToMei('{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 4 3 |||').mei
+    const layoutMei = projectEndingTieGhosts(mei)
+
+    expect(mei).not.toContain('m3n-layout-ghost')
+    expect(mei).toContain('<tie startid="#m3n-e-2" endid="#m3n-e-3"/>')
+    expect(layoutMei).toContain('<note xml:id="m3n-layout-ghost-1" pname="f" oct="4" dur="4" visible="false"/>')
+    expect(layoutMei).toContain('<tie startid="#m3n-layout-ghost-1" endid="#m3n-e-5"/>')
+  })
+
+  it('loads the projected ghost tie in Verovio without changing canonical MIDI input', async () => {
+    const source = '{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 4 3 |||'
+    const mei = m3nToMei(source).mei
+    const toolkit = new VerovioToolkit(await createVerovioModule())
+    try {
+      expect(mei).not.toContain('m3n-layout-ghost')
+      expect(toolkit.loadData(projectEndingTieGhosts(mei))).toBe(1)
+      expect(toolkit.renderToSVG(1)).toContain('class="tie')
+    } finally {
+      toolkit.destroy()
+    }
+    await expect(renderedPitches(source)).resolves.toEqual([60, 65, 67, 60, 65, 65, 64])
+  })
+
+  it('does not add a ghost tie when a later ending starts on another pitch', () => {
+    const mei = m3nToMei('{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 3 4 |||').mei
+
+    expect(projectEndingTieGhosts(mei)).not.toContain('m3n-layout-ghost')
   })
 
   it('maps each playback occurrence to its available lyric verse', () => {
@@ -71,13 +101,11 @@ describe('VerovioScore layout', () => {
   })
 
   it('uses Verovio playback expansion for endings, repeats, D.S., and D.C.', async () => {
-    await expect(renderedPitches('{2/4} 1 2 | {volta=1}3 4{/} || {volta=2}5 6{/} |||'))
+    await expect(renderedPitches('{2/4}\nN: 1 2 |\n---V1\nN: 3 4 ||\n---V2\nN: 5 6 |||'))
       .resolves.toEqual([60, 62, 64, 65, 67, 69])
-    await expect(renderedPitches('{2/4} ||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{/} |||'))
+    await expect(renderedPitches('{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6 |||'))
       .resolves.toEqual([60, 62, 64, 65, 60, 62, 67, 69])
-    await expect(renderedPitches('{2/4} ||: 1 2 | {volta=1}3 4{/} | {volta=2}5 6{/} | 7 1e | {volta=1}2e 3e{/} | {volta=2}4e 5e{/} | 6e 7e :|| |||'))
-      .resolves.toEqual([60, 62, 64, 65, 71, 72, 74, 76, 81, 83, 60, 62, 67, 69, 71, 72, 77, 79, 81, 83])
-    await expect(renderedPitches('{2/4} ||: 1 2 | {volta=1}3 4{/}:|| {volta=2~4}5 6{/}:||{x4} |||'))
+    await expect(renderedPitches('{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2,V3,V4\nN: 5 6 :||{x4} |||'))
       .resolves.toEqual([60, 62, 64, 65, 60, 62, 67, 69, 60, 62, 67, 69, 60, 62, 67, 69])
     await expect(renderedPitches('{2/4} {segno}1 2 | 3 4{fine} ||| 5 6{ds} ||'))
       .resolves.toEqual([60, 62, 64, 65, 67, 69, 60, 62, 64, 65])

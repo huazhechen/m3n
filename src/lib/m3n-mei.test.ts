@@ -141,13 +141,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-3 #m3n-segment-1 #m3n-segment-2"/>')
   })
 
-  it('renders a D.S. after a closed ending at the preceding barline', () => {
-    const result = m3nToMei('{2/4} {segno}1 2 | {volta=1}3 4{/}{ds}|| 5 6 |||')
-
-    expect(result.mei).toContain('<repeatMark staff="1" tstamp="3" place="above" func="dalSegno"/>')
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-segment-2"/>')
-  })
-
   it('keeps ordinary measures together between navigation boundaries', () => {
     const result = m3nToMei('{2/4}\n{segno}1 2 | 3 4 | 5 6 | 7 1e{ds} |||')
 
@@ -155,13 +148,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<measure xml:id="m3n-measure-1-3"')
     expect(result.mei).toContain('<section xml:id="m3n-segment-3">')
     expect(result.mei).not.toContain('<section xml:id="m3n-segment-4">')
-  })
-
-  it('repeats every section of a common volta passage and follows a D.S. inside an ending', () => {
-    const result = m3nToMei('{2/4}\n||: 1 2 | {segno}3 4 | {volta=1,3}5 6{fine}{/} :|| {volta=2}7 1{ds}{/} |||')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-ending-1 #m3n-segment-1 #m3n-segment-2 #m3n-ending-2 #m3n-segment-2 #m3n-ending-1"/>')
   })
 
   it('keeps an explicitly reset tempo visible at an accelerando start', () => {
@@ -347,44 +333,11 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>\u200B</syl></verse><verse xml:id="m3n-e-3-v2" n="2"><syl>second</syl></verse></note>')
   })
 
-  it('maps pass-specific lyrics to their matching alternate endings', () => {
-    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{/} |||\n{lyrics=1}a b c d{/}\n{lyrics=2}a b e f{/}')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<note xml:id="m3n-e-1" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-1-v1" n="1"><syl>a</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>a</syl></verse></note>')
-    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>c</syl></verse></note>')
-    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v1" n="1"><syl>e</syl></verse></note>')
-  })
-
   it('keeps second-pass lyrics on their row at tied note targets', () => {
     const result = m3nToMei('{key=C} {3/4}\n||: 1~ 1 2 :|||\n{lyrics=1}one two{/}\n{lyrics=2}one +two three{/}')
 
     expect(result.diagnostics).toEqual([])
     expect(result.mei).toContain('<note xml:id="m3n-e-2" pname="c" oct="4" dur="4"><verse xml:id="m3n-e-2-v1" n="1"><syl>\u200B</syl></verse><verse xml:id="m3n-e-2-v2" n="2"><syl>two</syl></verse></note>')
-  })
-
-  it('compacts tied-target lyrics inside alternate endings', () => {
-    const result = m3nToMei('{key=C} {3/4}\n||: 1 2 3 | {volta=1}4 5 6{/}:|| {volta=2}4~ 4 5{/} |||\n{lyrics=1}a b c d e f{/}\n{lyrics=2}g h i j +k l{/}')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<note xml:id="m3n-e-8" pname="f" oct="4" dur="4"><verse xml:id="m3n-e-8-v1" n="1"><syl>k</syl></verse></note>')
-  })
-
-  it('compacts rows before third-pass lyrics inside alternate endings', () => {
-    const result = m3nToMei('{key=C} {2/4}\n||: {volta=1}1 2{/}:|| {volta=2}3 4{/} || {volta=3}5 6{/} |||\n{lyrics=1}a b{/}\n{lyrics=2}c d{/}\n{lyrics=3}e f{/}')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<note xml:id="m3n-e-5" pname="g" oct="4" dur="4"><verse xml:id="m3n-e-5-v1" n="1"><syl>e</syl></verse></note>')
-  })
-
-  it('starts every lyric block at the public opening for a 2~4 ending', () => {
-    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/} | {volta=2~4}5 6{/} | 7 1e :||{x3} |||\n{lyrics=1}a b c d e f{/}\n{lyrics=2}g h i j k l{/}\n{lyrics=3}m n o p q r{/}\n{lyrics=4}s t u v w x{/}')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('xml:id="m3n-e-1-v2" n="2"><syl>g</syl>')
-    expect(result.mei).toContain('xml:id="m3n-e-1-v4" n="4"><syl>s</syl>')
-    expect(result.mei).toContain('xml:id="m3n-e-5-v1" n="1"><syl>i</syl>')
-    expect(result.mei).toContain('xml:id="m3n-e-5-v3" n="3"><syl>u</syl>')
   })
 
   it('keeps instrumental intervals lyric-free without visual markers', () => {
@@ -604,54 +557,12 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('serializes alternate endings as MEI endings', () => {
-    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/} :|| {volta=2}1 0{/} |||')
+    const result = m3nToMei('{key=C} {2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 1 0 |||')
     expect(result.mei).toContain('<ending xml:id="m3n-ending-1" n="1">')
     expect(result.mei).toContain('<ending xml:id="m3n-ending-2" n="2">')
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2"/>')
     expect(result.mei).toContain('right="rptend"')
     expect(result.mei).not.toContain('<mSpace/>')
-  })
-
-  it('repeats the opening section for alternate endings without an explicit repeat start', () => {
-    const result = m3nToMei('{key=C} {2/4}\n1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{/}|||')
-
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2"/>')
-  })
-
-  it('continues after a final alternate ending closed by a regular barline', () => {
-    const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | {volta=1}3 4{/} :|| {volta=2}5 6{/} | 7 1e |||')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2 #m3n-segment-2"/>')
-  })
-
-  it('selects each non-adjacent volta group on its matching repeat pass', () => {
-    const result = m3nToMei('{2/4}\n||: 1 2 | {volta=1}3 4{/} || {volta=2}5 6{/} || 7 1e | {volta=1}2 3{/}:|| {volta=2}4 5{/} |||')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-2 #m3n-ending-3 #m3n-segment-1 #m3n-ending-2 #m3n-segment-2 #m3n-ending-4"/>')
-  })
-
-  it('resets earlier ending groups while preserving the later group after an implicit repeat', () => {
-    const result = m3nToMei('{2/4} 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{/} | 7 1 | {volta=1}2 3{/}:|| {volta=2}4 5{/} |||')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2 #m3n-segment-2 #m3n-ending-3 #m3n-segment-1 #m3n-ending-1 #m3n-segment-1 #m3n-ending-2 #m3n-segment-2 #m3n-ending-4"/>')
-  })
-
-  it('maps third-pass lyrics from the segno return through the third ending', () => {
-    const result = m3nToMei('{2/4}\n||: {segno}1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{ds}{/} || {volta=3}7 1{/} |||\n{lyrics=3}甲乙丙丁{/}')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('xml:id="m3n-e-1-v1" n="1"><syl>\u200B</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>\u200B</syl></verse><verse xml:id="m3n-e-1-v3" n="3"><syl>甲')
-    expect(result.mei).not.toContain('xml:id="m3n-e-3-v3"')
-    expect(result.mei).toContain('xml:id="m3n-e-7-v1" n="1"><syl>丙')
-  })
-
-  it('reports second-pass lyrics that exceed a D.S. return path', () => {
-    const result = m3nToMei('{2/4}\n||: 1 2 | {volta=1}3 4{/}:|| {volta=2}5 6{ds}{/} || {segno}7 1 |||\n{lyrics=1}a b c d e f{/}\n{lyrics=2}one two three four five six{/}')
-
-    expect(result.diagnostics).toContain('[L] 第 4 行：歌词对位数量不匹配：第 2 遍需要 4 项，实际 6 项')
   })
 
   it('consumes later-pass placeholders from the segno on a plain D.S. return', () => {

@@ -11,7 +11,7 @@ export type SupplementBlocks = {
   lyrics: LyricBlock[]
 }
 
-const NESTED_BLOCK = /^(?:cresc|decres|lg|8va|8vb|volta=|part=)/
+const NESTED_BLOCK = /^(?:cresc|decres|lg|8va|8vb|ending=|part=)/
 
 /** Split top-level supplement blocks while respecting interval blocks inside bass. */
 export function splitSupplementBlocks(source: string): SupplementBlocks {
@@ -59,7 +59,7 @@ export function splitSupplementBlocks(source: string): SupplementBlocks {
       if (braceEnd === -1) break
       const attribute = source.slice(cursor + 1, braceEnd)
       if (NESTED_BLOCK.test(attribute)) {
-        nested.push(attribute.startsWith('volta=') ? 'volta' : attribute.startsWith('part=') ? 'part' : attribute)
+        nested.push(attribute.startsWith('ending=') ? 'ending' : attribute.startsWith('part=') ? 'part' : attribute)
       } else if (attribute === '/' || attribute.startsWith('/')) {
         const named = attribute === '/' ? null : attribute.slice(1)
         if (nested.length > 0) {

@@ -33,7 +33,7 @@ type Unit = {
   currentHasAtom: boolean
   multiRestPendingBar: boolean
   commonLyrics: number
-  voltaLyrics: Map<number, number>
+  endingLyrics: Map<number, number>
 }
 
 type ParsedPitch = {
@@ -108,7 +108,7 @@ function attributeName(content: string) {
 
 function openingBlockName(content: string): string | null {
   if (INTERVAL_FLAGS.has(content)) return content
-  if (content.startsWith('volta=')) return 'volta'
+  if (content.startsWith('ending=')) return 'ending'
   if (content.startsWith('part=')) return 'part'
   if (content === 'lyrics' || content.startsWith('lyrics=')) return 'lyrics'
   if (content === 'bass') return 'bass'
@@ -296,7 +296,7 @@ function createUnit(name: string | null, meter: Meter, line: number): Unit {
     currentHasAtom: false,
     multiRestPendingBar: false,
     commonLyrics: 0,
-    voltaLyrics: new Map(),
+    endingLyrics: new Map(),
   }
 }
 
@@ -378,7 +378,7 @@ function validateBody(
   const infoSeen = new Set<string>()
   const referencedParts: string[] = []
   const definedParts = new Set<string>()
-  const voltaRanges = new Map<number, Set<number>>()
+  const endingRanges = new Map<number, Set<number>>()
   let partOrderSeen = false
   let firstPartSeen = false
   let currentPart: string | null = null
@@ -392,9 +392,9 @@ function validateBody(
   let pendingTie: PendingTie | null = null
   let repeatOpen: { line: number; id: number } | null = null
   let repeatId = 0
-  let currentVoltaRepeat = 0
-  let completedVoltaGroup = false
-  let voltaNeedsBar = false
+  let currentEndingRepeat = 0
+  let completedEndingGroup = false
+  let endingNeedsBar = false
   let repeatCountTarget = false
   let segnoCount = 0
   let jumpCount = 0
@@ -405,7 +405,7 @@ function validateBody(
   const settingEvents: SettingEvent[] = []
   const inheritedSettingEvents = options.inheritedSettingEvents ?? []
 
-  const activeVolta = () => [...blocks].reverse().find((block) => block.name === 'volta')
+  const activeEnding = () => [...blocks].reverse().find((block) => block.name === 'ending')
   const activeOctaveShift = () => blocks.reduce((sum, block) => sum + (block.octaveShift ?? 0), 0)
   const isInstrumental = () => blocks.some((block) => block.name === 'inst')
   const currentTopLevel = () => blocks.length === 0
@@ -431,7 +431,7 @@ function validateBody(
   const finishRepeat = () => {
     if (repeatOpen) diagnostics.push(`第 ${repeatOpen.line} 行：前反复线无对应后反复线`)
     repeatOpen = null
-    currentVoltaRepeat = 0
+    currentEndingRepeat = 0
   }
 
   const finishUnit = () => {
@@ -469,9 +469,9 @@ function validateBody(
       return
     }
     blocks.pop()
-    if (top.name === 'volta') {
-      completedVoltaGroup = true
-      voltaNeedsBar = true
+    if (top.name === 'ending') {
+      completedEndingGroup = true
+      endingNeedsBar = true
     }
     if (top.name === 'part') {
       finishUnit()
@@ -532,22 +532,22 @@ function validateBody(
   }
 
   const addLyrics = (count: number) => {
-    const volta = activeVolta()
-    if (volta?.range) {
-      for (const pass of volta.range) unit.voltaLyrics.set(pass, (unit.voltaLyrics.get(pass) ?? 0) + count)
+    const ending = activeEnding()
+    if (ending?.range) {
+      for (const pass of ending.range) unit.endingLyrics.set(pass, (unit.endingLyrics.get(pass) ?? 0) + count)
     } else {
       unit.commonLyrics += count
     }
   }
 
   const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet'; pitches?: number[]; tie?: boolean; tieSource?: Omit<PendingTie, 'line'>; tieTarget?: Omit<PendingTie, 'line'>; tiedTargetLyricCount?: number; lyricCount?: number }) => {
-    if (voltaNeedsBar && !activeVolta()) {
-      diagnostics.push(lineMessage(token, 'volta 关闭后、下一条小节线前不能出现音符'))
-      voltaNeedsBar = false
+    if (endingNeedsBar && !activeEnding()) {
+      diagnostics.push(lineMessage(token, '房子关闭后、下一条小节线前不能出现音符'))
+      endingNeedsBar = false
     }
-    if (completedVoltaGroup && !activeVolta()) {
-      currentVoltaRepeat = 0
-      completedVoltaGroup = false
+    if (completedEndingGroup && !activeEnding()) {
+      currentEndingRepeat = 0
+      completedEndingGroup = false
     }
     firstMusicSeen = true
     unit.hasAtom = true
@@ -587,7 +587,7 @@ function validateBody(
   }
 
   const handleBar = (token: Token) => {
-    voltaNeedsBar = false
+    endingNeedsBar = false
     rejectPendingSfz(token)
     if (parens.length > 0) {
       diagnostics.push(lineMessage(token, '圆括号必须在同一小节内闭合'))
@@ -598,15 +598,15 @@ function validateBody(
     if (token.raw === '||:') {
       if (repeatOpen) diagnostics.push(lineMessage(token, '反复区域不能嵌套或重叠'))
       repeatOpen = { line: token.line, id: ++repeatId }
-      currentVoltaRepeat = repeatOpen.id
+      currentEndingRepeat = repeatOpen.id
     } else if (token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:') {
       if (!repeatOpen) {
-        currentVoltaRepeat = currentVoltaRepeat || ++repeatId
+        currentEndingRepeat = currentEndingRepeat || ++repeatId
       }
       repeatOpen = null
       if (token.raw === ':||:') {
         repeatOpen = { line: token.line, id: ++repeatId }
-        currentVoltaRepeat = repeatOpen.id
+        currentEndingRepeat = repeatOpen.id
       }
     }
     nextMeasureRepeatStart = token.raw === '||:' || token.raw === ':||:' ? repeatOpen?.id : undefined
@@ -683,7 +683,7 @@ function validateBody(
       const isInfo = INFO_FIELDS.has(name)
       const isPostfix = POSTFIX_FLAGS.has(content) || /^(?:ac|ap)\(/.test(content)
       const isTempoRamp = name === 'accel' || name === 'rit'
-      const isInterval = INTERVAL_FLAGS.has(content) || name === 'volta' || isTempoRamp
+      const isInterval = INTERVAL_FLAGS.has(content) || name === 'ending' || isTempoRamp
       const isPosition = content === 'br' || name === 'text'
       const isState = DYNAMICS.has(content) || name === 'key' || name === 'chord' || /^\d+qpm$/.test(content)
 
@@ -829,21 +829,21 @@ function validateBody(
         continue
       }
 
-      if (name === 'volta') {
-        if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能使用 volta'))
-        const parsed = parseRange(value, 'volta ')
+      if (name === 'ending') {
+        if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能使用房子投影'))
+        const parsed = parseRange(value, '房子 ')
         if (parsed.error) diagnostics.push(lineMessage(token, parsed.error))
-        if (blocks.some((block) => block.name === 'volta')) diagnostics.push(lineMessage(token, 'volta 不能嵌套'))
-        const group = currentVoltaRepeat || ++repeatId
-        currentVoltaRepeat = group
-        completedVoltaGroup = false
-        const used = voltaRanges.get(group) ?? new Set<number>()
+        if (blocks.some((block) => block.name === 'ending')) diagnostics.push(lineMessage(token, '房子不能嵌套'))
+        const group = currentEndingRepeat || ++repeatId
+        currentEndingRepeat = group
+        completedEndingGroup = false
+        const used = endingRanges.get(group) ?? new Set<number>()
         for (const pass of parsed.values) {
-          if (used.has(pass)) diagnostics.push(lineMessage(token, `同一反复结构的 volta 遍次重叠：${pass}`))
+          if (used.has(pass)) diagnostics.push(lineMessage(token, `同一反复结构的房子遍次重叠：${pass}`))
           used.add(pass)
         }
-        voltaRanges.set(group, used)
-        blocks.push({ name: 'volta', line: token.line, range: parsed.values })
+        endingRanges.set(group, used)
+        blocks.push({ name: 'ending', line: token.line, range: parsed.values })
         continue
       }
 
@@ -993,15 +993,15 @@ function validateBody(
       .flatMap((part) => unitsByPart.get(part) ? [unitsByPart.get(part)!] : [])
     : completedUnits
   const lyricCount = (pass: number) => orderedUnits.reduce(
-    (sum, item) => sum + item.commonLyrics + (item.voltaLyrics.get(pass) ?? 0),
+    (sum, item) => sum + item.commonLyrics + (item.endingLyrics.get(pass) ?? 0),
     0,
   )
   const firstPlaybackLyricCount = (pass: number) => firstPlaybackUnits.reduce(
-    (sum, item) => sum + item.commonLyrics + (item.voltaLyrics.get(pass) ?? 0),
+    (sum, item) => sum + item.commonLyrics + (item.endingLyrics.get(pass) ?? 0),
     0,
   )
   const lyricPasses = new Set<number>([1])
-  for (const ranges of voltaRanges.values()) {
+  for (const ranges of endingRanges.values()) {
     for (const pass of ranges) lyricPasses.add(pass)
   }
   return {
@@ -1299,7 +1299,10 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
   const legacyDiagnostics = projected.structure.sections.length > 0
     ? projectedDiagnostics.filter((message) => !message.startsWith('[L]'))
     : projectedDiagnostics
-  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...lyricDiagnostics]
+  const removedEndingSyntax = /\{(?:volta|ending)=[^}]*\}/.test(source)
+    ? ['旧房子区间语法已删除；请将每个房子写成独立的 ---Vn 乐句']
+    : []
+  return [...projected.structure.diagnostics, ...removedEndingSyntax, ...legacyDiagnostics, ...lyricDiagnostics]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */

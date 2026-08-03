@@ -242,8 +242,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 2.4,
-    "searchText": "童话镇 陈一发儿 暗杠 童话镇 陈一发儿 暗杠 竹君 1 2 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "童话镇 陈一发儿 暗杠 童话镇 陈一发儿 暗杠 竹君",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 18,
@@ -285,7 +285,7 @@ export const presetScoreIndex = [
     "hasLyrics": false,
     "hasBass": false,
     "melodyComplexity": 2.5,
-    "searchText": "哆唻咪 朱莉·安德鲁斯 理查德·罗杰斯 哆唻咪 朱莉·安德鲁斯 理查德·罗杰斯 奥斯卡·汉默斯坦二世 1 2",
+    "searchText": "哆唻咪 朱莉·安德鲁斯 理查德·罗杰斯 哆唻咪 朱莉·安德鲁斯 理查德·罗杰斯 奥斯卡·汉默斯坦二世",
     "diagnosticSeverity": "none"
   },
   {
@@ -372,8 +372,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 2.6,
-    "searchText": "美丽的神话 王力宏 美丽的神话 王力宏 王中言 1 2 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "美丽的神话 王力宏 美丽的神话 王力宏 王中言",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 27,
@@ -400,7 +400,7 @@ export const presetScoreIndex = [
     "hasLyrics": false,
     "hasBass": false,
     "melodyComplexity": 2.6,
-    "searchText": "第二圆舞曲 德米特里·肖斯塔科维奇 第二圆舞曲 德米特里·肖斯塔科维奇 1 2 1 2",
+    "searchText": "第二圆舞曲 德米特里·肖斯塔科维奇 第二圆舞曲 德米特里·肖斯塔科维奇",
     "diagnosticSeverity": "none"
   },
   {
@@ -415,8 +415,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 2.7,
-    "searchText": "漫步人生路 邓丽君 中岛美雪 漫步人生路 邓丽君 中岛美雪 郑国江 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "漫步人生路 邓丽君 中岛美雪 漫步人生路 邓丽君 中岛美雪 郑国江",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 30,
@@ -444,7 +444,7 @@ export const presetScoreIndex = [
     "hasLyrics": false,
     "hasBass": false,
     "melodyComplexity": 2.7,
-    "searchText": "青鸟 生物股长 水野良树 青鸟 生物股长 水野良树 水野良树 1,3 2",
+    "searchText": "青鸟 生物股长 水野良树 青鸟 生物股长 水野良树 水野良树",
     "diagnosticSeverity": "none"
   },
   {
@@ -472,8 +472,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 2.8,
-    "searchText": "梨花又开放 周峰 梨花又开放 周峰 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "梨花又开放 周峰 梨花又开放 周峰",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 34,
@@ -515,8 +515,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 2.8,
-    "searchText": "牵丝戏 银临、aki阿杰 银临 牵丝戏 银临、aki阿杰 银临 vagary 1 2 1 2 3",
-    "diagnosticSeverity": "lyric"
+    "searchText": "牵丝戏 银临、aki阿杰 银临 牵丝戏 银临、aki阿杰 银临 vagary",
+    "diagnosticSeverity": "error"
   },
   {
     "order": 37,
@@ -558,8 +558,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 2.8,
-    "searchText": "贝加尔湖畔 李健 贝加尔湖畔 李健 李健 1 2 1",
-    "diagnosticSeverity": "none"
+    "searchText": "贝加尔湖畔 李健 贝加尔湖畔 李健 李健",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 40,
@@ -618,8 +618,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 2.9,
-    "searchText": "一千个伤心的理由 张学友 李偲菘 一千个伤心的理由 张学友 李偲菘 邢增华 1 2 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "一千个伤心的理由 张学友 李偲菘 一千个伤心的理由 张学友 李偲菘 邢增华",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 44,
@@ -662,7 +662,7 @@ export const presetScoreIndex = [
     "hasLyrics": false,
     "hasBass": false,
     "melodyComplexity": 2.9,
-    "searchText": "一步之遥 阿斯托尔·皮亚佐拉 一步之遥 阿斯托尔·皮亚佐拉 1 2",
+    "searchText": "一步之遥 阿斯托尔·皮亚佐拉 一步之遥 阿斯托尔·皮亚佐拉",
     "diagnosticSeverity": "none"
   },
   {
@@ -721,8 +721,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 2.9,
-    "searchText": "我的祖国 郭兰英 刘炽 我的祖国 郭兰英 刘炽 乔羽 1~2 3",
-    "diagnosticSeverity": "none"
+    "searchText": "我的祖国 郭兰英 刘炽 我的祖国 郭兰英 刘炽 乔羽",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 51,
@@ -793,8 +793,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 3,
-    "searchText": "明天会更好 罗大佑 明天会更好 罗大佑 罗大佑 1 2~4",
-    "diagnosticSeverity": "none"
+    "searchText": "明天会更好 罗大佑 明天会更好 罗大佑 罗大佑",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 56,
@@ -808,8 +808,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 3,
-    "searchText": "当年情 张国荣 顾嘉辉 当年情 张国荣 顾嘉辉 黄霑 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "当年情 张国荣 顾嘉辉 当年情 张国荣 顾嘉辉 黄霑",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 57,
@@ -868,8 +868,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 3,
-    "searchText": "世界赠予我的 王菲 曹正杰 世界赠予我的 王菲 曹正杰 袁晶 1 2 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "世界赠予我的 王菲 曹正杰 世界赠予我的 王菲 曹正杰 袁晶",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 61,
@@ -910,8 +910,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 3,
-    "searchText": "人世间 雷佳 钱雷 人世间 雷佳 钱雷 唐恬 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "人世间 雷佳 钱雷 人世间 雷佳 钱雷 唐恬",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 64,
@@ -953,7 +953,7 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 3.1,
-    "searchText": "老男孩 筷子兄弟 大塚爱 老男孩 大塚爱 王太利 筷子兄弟 1 2 3 4",
+    "searchText": "老男孩 筷子兄弟 大塚爱 老男孩 大塚爱 王太利 筷子兄弟",
     "diagnosticSeverity": "none"
   },
   {
@@ -983,8 +983,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 3.1,
-    "searchText": "如愿 王菲 钱雷 如愿 王菲 钱雷 唐恬 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "如愿 王菲 钱雷 如愿 王菲 钱雷 唐恬",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 69,
@@ -1012,8 +1012,8 @@ export const presetScoreIndex = [
     "hasLyrics": true,
     "hasBass": false,
     "melodyComplexity": 3.2,
-    "searchText": "听海 张惠妹 涂惠源 听海 张惠妹 涂惠源 林秋离 1 2 1 2 1 2",
-    "diagnosticSeverity": "none"
+    "searchText": "听海 张惠妹 涂惠源 听海 张惠妹 涂惠源 林秋离",
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 71,
@@ -1123,7 +1123,7 @@ export const presetScoreIndex = [
     "hasLyrics": false,
     "hasBass": false,
     "melodyComplexity": 4,
-    "searchText": "valsentino(快速圆舞曲) tommy reilly valsentino(快速圆舞曲) tommy reilly 1 2",
+    "searchText": "valsentino(快速圆舞曲) tommy reilly valsentino(快速圆舞曲) tommy reilly",
     "diagnosticSeverity": "none"
   },
   {
