@@ -29,6 +29,12 @@ export function makeSvgResponsive(svg: SVGSVGElement, scale = 1) {
   svg.style.transformOrigin = ''
 }
 
+export function a4SourcePageHeight(sourceWidth: number, margin = 10) {
+  const pageWidth = 210 - margin * 2
+  const pageHeight = 297 - margin * 2
+  return Math.floor(sourceWidth * pageHeight / pageWidth)
+}
+
 export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1) {
   const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg, scale)
   if (sourceWidth <= 0 || sourceHeight <= 0) {

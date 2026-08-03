@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { scoreFileName } from '../features/score-renderer/score-document'
-import { downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
+import { a4SourcePageHeight, downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
 import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisions'
@@ -33,7 +33,6 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     const previewRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('png')
     const [width, setWidth] = useState(DEFAULT_EXPORT_WIDTH)
-    const [pdfScale, setPdfScale] = useState(100)
     const [includeBass, setIncludeBass] = useState(true)
     const [isOpen, setIsOpen] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
@@ -54,8 +53,8 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       void createVerovioScore(mei).then((score) => {
         if (!cancelled) {
           preview.innerHTML = score.layout({
-            width: format === 'png' ? Math.max(320, width) : DEFAULT_EXPORT_WIDTH,
-            scale: format === 'pdf' ? 42 * pdfScale / 100 : 42,
+            width: Math.max(320, width),
+            scale: 42,
             includeBass: includeBass || !hasBassStaff,
           })
           addScoreHeaderToPaper(preview, headerMetadata)
@@ -66,25 +65,24 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
       })
       return () => { cancelled = true }
-    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, mei, onError, pdfScale, width])
+    }, [hasBassStaff, headerMetadata, includeBass, isOpen, mei, onError, width])
 
     const exportScore = async () => {
       setIsExporting(true)
       onError('')
       let score: VerovioScore | null = null
       try {
-        const scale = format === 'pdf' ? pdfScale / 100 : 1
-        if (format === 'pdf' && (!Number.isFinite(scale) || scale < 0.5 || scale > 2)) {
-          throw new Error('PDF 缩放需介于 50% 和 200% 之间。')
+        const targetWidth = Math.round(width)
+        if (!Number.isFinite(targetWidth) || targetWidth < 320 || targetWidth > 8000) {
+          throw new Error('导出宽度需介于 320 和 8000 像素之间。')
         }
-        const targetWidth = format === 'png' ? Math.max(320, width) : DEFAULT_EXPORT_WIDTH
         let svg = previewRef.current?.querySelector<SVGSVGElement>('svg')?.cloneNode(true) as SVGSVGElement | undefined
         if (!svg) {
           score = await createVerovioScore(mei)
           const exportPaper = document.createElement('div')
           exportPaper.innerHTML = score.layout({
             width: targetWidth,
-            scale: 42 * scale,
+            scale: 42,
             includeBass: includeBass || !hasBassStaff,
           })
           exportPaper.style.cssText = 'position:fixed; visibility:hidden; pointer-events:none; inset:0;'
@@ -101,22 +99,16 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
 
         const fileName = scoreFileName(title)
         if (format === 'png') {
-          const pngWidth = Math.round(width)
-          if (!Number.isFinite(pngWidth) || pngWidth < 320 || pngWidth > 8000) {
-            throw new Error('PNG 宽度需介于 320 和 8000 像素之间。')
-          }
-          const canvas = await renderScoreCanvas(svg, pngWidth)
+          const canvas = await renderScoreCanvas(svg, targetWidth)
           const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
           if (!blob) throw new Error('PNG 生成失败。')
           downloadBlob(blob, `${fileName}.png`)
         } else {
-          const canvas = await renderScoreCanvas(svg, 1600)
+          const canvas = await renderScoreCanvas(svg, targetWidth)
           const documentWidth = 210
-          const documentHeight = 297
           const margin = 10
           const imageWidth = documentWidth - margin * 2
-          const contentHeight = documentHeight - margin * 2
-          const sourcePageHeight = Math.floor(canvas.width * contentHeight / imageWidth)
+          const sourcePageHeight = a4SourcePageHeight(canvas.width, margin)
           const { jsPDF } = await import('jspdf')
           const pdf = new jsPDF({ format: 'a4', unit: 'mm' })
           for (let offset = 0, page = 0; offset < canvas.height; offset += sourcePageHeight, page += 1) {
@@ -155,9 +147,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
                 <label><input type="radio" name="export-format" checked={format === 'pdf'} onChange={() => setFormat('pdf')} />PDF（A4）</label>
               </fieldset>
               {hasBassStaff && <fieldset><legend>低音谱表</legend><label><input type="checkbox" checked={includeBass} onChange={(event) => setIncludeBass(event.currentTarget.checked)} />包含低音谱表</label></fieldset>}
-              {format === 'png'
-                ? <label className="export-field">宽度<input type="number" min="320" max="8000" step="10" value={width} onChange={(event) => setWidth(Number(event.currentTarget.value))} /><span>px</span></label>
-                : <label className="export-field">缩放<input type="number" min="50" max="200" step="1" value={pdfScale} onChange={(event) => setPdfScale(Number(event.currentTarget.value))} /><span>%</span></label>}
+              <label className="export-field">宽度<input type="number" min="320" max="8000" step="10" value={width} onChange={(event) => setWidth(Number(event.currentTarget.value))} /><span>px</span></label>
             </div>
             <div className="export-preview" aria-label="打印预览"><div className="export-preview-paper"><div ref={previewRef} /></div></div>
           </div>
