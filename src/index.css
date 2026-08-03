@@ -1211,6 +1211,19 @@ a.action-button {
   padding: 14px;
 }
 
+.markdown-panel :not(pre) > code {
+  padding: 1px 4px;
+  border: 1px solid #b9d4d0;
+  border-radius: 3px;
+  background: #e9f3f1;
+  color: #164c50;
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+}
+
 .book-layout {
   display: grid;
   grid-template-columns: minmax(220px, 270px) minmax(0, 1fr);
