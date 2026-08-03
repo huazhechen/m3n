@@ -31,4 +31,10 @@ describe('M3N v0.3 document structure', () => {
     expect(document.diagnostics).toContain('第 2 行：同一乐句只能有一个 N: 行')
     expect(document.diagnostics).toContain('第 1 行：L: 与编号歌词行不能混用')
   })
+
+  it('allows named section markers without form to coexist with anonymous sections', () => {
+    const document = parseM3NDocumentStructure('===Verse\nN: 1 2 |\n===\nN: 3 4 |||')
+
+    expect(document.diagnostics).toEqual([])
+  })
 })

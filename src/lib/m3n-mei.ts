@@ -258,15 +258,15 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   let previousTempo = document.tempo
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
   const lyricIndicesByPart = new Map<string, number>()
-  const lyricSyllables = document.lyrics.map((block, index) => {
+  const lyricSyllables = document.lyrics.map((block) => {
     const numericRange = /^\d+$/.test(block.range)
     const passes = block.range ? parsePassRange(block.range) : undefined
     const scopeKey = `${block.part ?? ''}\0${block.targetStart ?? 'global'}`
     const localIndex = (lyricIndicesByPart.get(scopeKey) ?? 0) + 1
     lyricIndicesByPart.set(scopeKey, localIndex)
     return {
-      n: numericRange ? block.range : String(block.part === undefined ? index + 1 : localIndex),
-      verseIndex: numericRange ? Number(block.range) : block.part === undefined ? index + 1 : localIndex,
+      n: numericRange ? block.range : String(block.part === undefined ? 1 : localIndex),
+      verseIndex: numericRange ? Number(block.range) : block.part === undefined ? 1 : localIndex,
       part: block.part,
       targetStart: block.targetStart,
       targetEnd: block.targetEnd,
@@ -499,6 +499,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
       if (!xmlId) return []
       return [
         event.chord ? `<harm staff="${staffNumber}" startid="#${xmlId}">${chordSymbol(event.chord, event.key)}</harm>` : '',
+        event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${xmlId}"><rend fontweight="bold">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
         event.dynamic ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.dynamic}</dynam>` : '',
         event.prefix ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.prefix}</dynam>` : '',
         ...event.navigation.map((value) => {

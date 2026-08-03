@@ -31,6 +31,23 @@ describe('M3N to MEI conversion', () => {
     ])
   })
 
+  it('renders named sections without form as labels on one continuous score', () => {
+    const result = m3nToMei('{2/4}\n===A\nN: 1 2 |\n===B\nN: 3 4 |||')
+
+    expect(result.partOrder).toEqual([])
+    expect(result.mei).not.toContain('<expansion')
+    expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-1"><rend fontweight="bold">A</rend></reh>')
+    expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-3"><rend fontweight="bold">B</rend></reh>')
+  })
+
+  it('keeps form sections separate in the written layout and playback expansion', () => {
+    const result = m3nToMei('{form=A,B,A}\n{2/4}\n===A\nN: 1 2 ||\n===B\nN: 3 4 ||')
+
+    expect(result.partOrder).toEqual(['A', 'B', 'A'])
+    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-1"/>')
+    expect(result.mei).toMatch(/<section xml:id="m3n-segment-2">[\s\S]*?<sb\/>\s*<measure xml:id="m3n-measure-2-1"/)
+  })
+
   it('does not render lyrics outside their v0.3 phrase', () => {
     const result = m3nToMei('{2/4}\nN: 1 2 |\nL: 甲乙\n---\nN: 3 4 |||\nL: 丙丁')
 

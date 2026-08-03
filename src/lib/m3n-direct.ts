@@ -23,6 +23,7 @@ export type DirectEvent = {
   postfixes: string[]
   navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
   octaveShift: number
+  sectionLabel?: string
   meterCount?: number
   meterUnit?: number
   tempo?: number
@@ -479,6 +480,7 @@ export function parseM3NDocument(source: string): DirectDocument {
     }
   }
   if (projected.structure.sections.length > 0) {
+    const usesForm = projected.structure.form.length > 0
     const tokens = tokenizeM3N(originalSource)
     const sourcePositions = new Map<number, number>()
     const regions = (staff: 'melody' | 'bass') => projected.structure.sections.flatMap((section) =>
@@ -509,7 +511,7 @@ export function parseM3NDocument(source: string): DirectDocument {
     }
 
     for (const section of projected.structure.sections) {
-      const part = document.parts.get(section.name || 'score')
+      const part = document.parts.get(usesForm ? section.name : 'score')
       if (!part) continue
       for (const phrase of section.phrases) {
         if (!phrase.melody || !phrase.harmony) continue
@@ -558,7 +560,7 @@ export function parseM3NDocument(source: string): DirectDocument {
           const reference = /^\{L(\d+)\}$/.exec(lyric.text.trim())
           if (reference) continue
           lyricRows.push({
-            part: section.name,
+            part: usesForm ? section.name : undefined,
             range: lyric.label,
             mode: 'char',
             syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start, 'char'),
@@ -569,6 +571,17 @@ export function parseM3NDocument(source: string): DirectDocument {
       }
     }
     document.lyrics = lyricRows
+    if (!usesForm) {
+      const score = document.parts.get('score')
+      for (const section of projected.structure.sections) {
+        const melody = section.phrases.find((phrase) => phrase.melody)?.melody
+        if (!section.name || !melody || !score) continue
+        const end = melody.start + melody.text.length
+        const event = score.melody.flatMap((measure) => measure.events)
+          .find((candidate) => melody.start <= candidate.sourceStart && candidate.sourceStart < end)
+        if (event) event.sectionLabel = section.name
+      }
+    }
   }
   return document
 }

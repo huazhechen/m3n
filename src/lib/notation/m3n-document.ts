@@ -108,11 +108,12 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
   }
   const named = sections.map(({ name }) => name).filter(Boolean)
   if (named.length > 0) {
-    if (named.length !== sections.length) diagnostics.push('具名乐段与未命名乐段不能混用')
-    if (new Set(named).size !== named.length) diagnostics.push('乐段名称不能重复')
-    const order = form.length > 0 ? form : named
-    for (const name of named) if (!order.includes(name)) diagnostics.push(`乐段 ${name} 未被 form 引用`)
-    for (const name of order) if (!named.includes(name)) diagnostics.push(`form 引用了未定义的乐段 ${name}`)
+    if (form.length > 0) {
+      if (named.length !== sections.length) diagnostics.push('具名乐段与未命名乐段不能混用')
+      if (new Set(named).size !== named.length) diagnostics.push('乐段名称不能重复')
+      for (const name of named) if (!form.includes(name)) diagnostics.push(`乐段 ${name} 未被 form 引用`)
+      for (const name of form) if (!named.includes(name)) diagnostics.push(`form 引用了未定义的乐段 ${name}`)
+    }
   } else if (form.length > 0) diagnostics.push('form 只能引用具名乐段')
 
   return { header: header.join('\n'), form, sections, diagnostics }
@@ -121,7 +122,8 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
 export function projectM3NDocument(source: string) {
   const structure = parseM3NDocumentStructure(source)
   const named = structure.sections.length > 0 && structure.sections.every((section) => Boolean(section.name))
-  const order = structure.form.length > 0 ? structure.form : structure.sections.map(({ name }) => name).filter(Boolean)
+  const usesForm = named && structure.form.length > 0
+  const order = structure.form
   const melody: string[] = []
   const lineMap: number[] = []
   const push = (text: string, sourceLine?: number) => {
@@ -130,16 +132,16 @@ export function projectM3NDocument(source: string) {
     for (let index = 0; index < lineCount; index += 1) lineMap.push(sourceLine ?? lineMap.length + 1)
   }
   push(structure.header.replace(/\{form=[^}]*\}/g, ''))
-  if (named) push(`{parts=${order.join(' ')}}`)
+  if (usesForm) push(`{parts=${order.join(' ')}}`)
   const bass: string[] = []
   const lyrics = new Map<string, string[]>()
-  for (const section of structure.sections) {
-    if (named) push(`{part=${section.name}}`, section.line)
+  for (const [sectionIndex, section] of structure.sections.entries()) {
+    if (usesForm) push(`{part=${section.name}}${sectionIndex > 0 ? '{br}' : ''}`, section.line)
     for (const [phraseIndex, phrase] of section.phrases.entries()) {
       if (phrase.passes) push(`{ending=${phrase.passes}}`, phrase.melody?.line ?? phrase.line)
       if (phrase.melody) {
         const closesBeforeBar = phrase.passes ? '{/}' : ''
-        const closesPart = named && phraseIndex === section.phrases.length - 1 ? '{/}' : ''
+        const closesPart = usesForm && phraseIndex === section.phrases.length - 1 ? '{/}' : ''
         let text = closesBeforeBar
           ? phrase.melody.text.replace(/((?::\|\|\||:\|\||\|\|\||\|\||\|)(?:\{x\d+\})?)\s*$/, `${closesBeforeBar}$1`)
           : phrase.melody.text

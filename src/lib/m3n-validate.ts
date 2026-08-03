@@ -1089,7 +1089,7 @@ function validateLyricMeasureAlignment(
 }
 
 export function phraseLyricTargets(document: DirectDocument, structure: M3NDocumentStructure, sectionName: string, phrase: M3NPhrase) {
-  const part = document.parts.get(sectionName || 'score')
+  const part = document.parts.get(structure.form.length > 0 ? sectionName : 'score')
   if (!part || !phrase.melody) return new Map<number, StrictLyricMeasureTargets>()
   const start = phrase.melody.start
   const end = start + phrase.melody.text.length
