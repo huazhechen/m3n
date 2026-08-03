@@ -32,7 +32,7 @@ pages -> components -> features -> lib/notation
 - `components/ScoreExportDialog.tsx`：导出状态、预览及 PNG/PDF 工作流。
 - `components/SourceEditor.tsx`：源码输入与尺寸同步。
 - `pages`：路由级组合，不承载领域算法。
-- `scores/index.ts`：由工具生成的曲库元数据索引；乐谱正文在阅读页按 slug 异步加载。
+- `scores/*.m3n`：曲库正文的唯一来源；`lib/samples.ts` 在构建时直接读取正文并生成曲目元数据。
 
 ## 质量门禁
 
@@ -53,7 +53,6 @@ pages -> components -> features -> lib/notation
 3. 为转换器引入显式 token/AST，替代多轮正则修改字符串；源码映射由 token span 自然生成。
 4. 将诊断从字符串升级为 `{ code, severity, message, range }`，界面再负责本地化展示。
 5. 为 `noUncheckedIndexedAccess` 逐模块消除风险，优先处理解析器和校验器，不使用无依据的非空断言。
-6. 将乐谱元数据生成到独立索引，乐谱正文按 slug 异步加载，避免列表页加载全部正文。
 7. 增加浏览器级编辑、播放、导出和键盘可访问性测试。
 
 不建议为缩短文件而制造一行转发层；拆分应围绕稳定职责、可独立测试的状态机或第三方适配边界进行。

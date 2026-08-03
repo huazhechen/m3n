@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { m3nToMei } from './m3n-mei'
-import { loadPresetScoreSource, presetScores } from './samples'
+import { presetScores } from './samples'
 
 describe('bundled score corpus', () => {
   it('contains unique slugs and usable metadata', () => {
@@ -12,29 +12,22 @@ describe('bundled score corpus', () => {
     expect(presetScores.map((score) => score.melodyComplexity)).toEqual(
       [...presetScores.map((score) => score.melodyComplexity)].sort((left, right) => left - right),
     )
-    expect(presetScores.map((score) => score.order)).toEqual(
-      Array.from({ length: presetScores.length }, (_, index) => index + 1),
-    )
+    expect(new Set(presetScores.map((score) => score.order)).size).toBe(presetScores.length)
   })
 
-  it('converts every score with valid source mappings', async () => {
+  it('converts every score with valid source mappings', () => {
     const failures: string[] = []
 
     for (const score of presetScores) {
       try {
-        const source = await loadPresetScoreSource(score.slug)
-        if (source === null) {
-          failures.push(`${score.slug}: missing source`)
-          continue
-        }
-        const result = m3nToMei(source)
+        const result = m3nToMei(score.source)
         if (!result.mei.startsWith('<?xml') || !result.mei.includes('<scoreDef')) {
           failures.push(`${score.slug}: missing MEI score`)
         }
         for (const range of result.sourceMap) {
           if (
             range.sourceStart < 0 ||
-            range.sourceEnd > source.length ||
+            range.sourceEnd > score.source.length ||
             range.sourceStart >= range.sourceEnd ||
             !range.xmlId
           ) {
