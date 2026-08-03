@@ -67,6 +67,9 @@ export function ScoreReaderPage() {
         >
           打印
         </button>
+        <Link className="action-button" to="/editor" state={{ source: scoreSource }}>
+          编辑
+        </Link>
       </div>
       <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
