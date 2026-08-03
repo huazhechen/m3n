@@ -125,13 +125,13 @@ function appendGhostTie(ending: string, target: MeiNote, ghostIndex: number) {
   const measure = /<measure\b[\s\S]*?<\/measure>/.exec(ending)?.[0]
   if (!measure) return ending
   const ghostId = `m3n-layout-ghost-${ghostIndex}`
-  const attributes = ['pname', 'oct', 'dur', 'accid', 'accid.ges']
+  const attributes = ['pname', 'oct', 'accid', 'accid.ges']
     .flatMap((name) => target.attributes[name] === undefined ? [] : [`${name}="${target.attributes[name]}"`])
     .join(' ')
   const targetPattern = new RegExp(`(<note\\b(?=[^>]*\\bxml:id="${escapeRegExp(target.id)}")[^>]*>)`)
   const updatedMeasure = measure
-    .replace(targetPattern, `<graceGrp attach="post"><note xml:id="${ghostId}" ${attributes} grace="unacc" visible="false"/></graceGrp>$1`)
-    .replace('</measure>', `<tie startid="#${ghostId}" endid="#${target.id}"/></measure>`)
+    .replace(targetPattern, `<graceGrp attach="post"><note xml:id="${ghostId}" ${attributes} dur="64" grace="unacc" visible="false"/></graceGrp>$1`)
+    .replace('</measure>', `<tie startid="#${ghostId}" endid="#${target.id}" curvedir="below"/></measure>`)
   return ending.replace(measure, updatedMeasure)
 }
 

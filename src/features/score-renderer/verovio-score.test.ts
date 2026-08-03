@@ -44,8 +44,8 @@ describe('VerovioScore layout', () => {
 
     expect(mei).not.toContain('m3n-layout-ghost')
     expect(mei).toContain('<tie startid="#m3n-e-2" endid="#m3n-e-3"/>')
-    expect(layoutMei).toContain('<graceGrp attach="post"><note xml:id="m3n-layout-ghost-1" pname="f" oct="4" dur="4" grace="unacc" visible="false"/></graceGrp>')
-    expect(layoutMei).toContain('<tie startid="#m3n-layout-ghost-1" endid="#m3n-e-5"/>')
+    expect(layoutMei).toContain('<graceGrp attach="post"><note xml:id="m3n-layout-ghost-1" pname="f" oct="4" dur="64" grace="unacc" visible="false"/></graceGrp>')
+    expect(layoutMei).toContain('<tie startid="#m3n-layout-ghost-1" endid="#m3n-e-5" curvedir="below"/>')
     expect(layoutMei.indexOf('m3n-layout-ghost-1')).toBeGreaterThan(layoutMei.indexOf('xml:id="m3n-ending-2"'))
   })
 
