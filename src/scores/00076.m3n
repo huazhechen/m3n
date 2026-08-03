@@ -1,29 +1,12 @@
 {title=土耳其进行曲}
 {composer=莫扎特}
-{parts=Epi1 Ref Epi2 Ref Epi1 Ref Coda}
+{form=Epi1,Ref,Epi2,Ref,Epi1,Ref,Coda}
 {key=A} {2/4} {132qpm}
-{part=Epi1} {key=C} ||: ((7)) {p} ((6)) ((5#)) ((6)) | (1e 0) ((2e 1e 7 1e)) | (3e 0) ((4e 3e 2#e 3e)) |
-((7e 6e 5#e 6e)) ((7e 6e 5#e 6e)) | 1ee (6e){tip} (1ee){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (6e){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (6e){tip} |
-(7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (4#e){tip} | 3e :|| ||: (3e){tip} {mf} (4e){tip} |
-(5e){tip} {text=③} (5e){tip} {text=③} ((6e 5e 4e 3e)) | (2e 0) (3e){tip} {p} (4e){tip} | (5e){tip} (5e){tip} ((6e 5e 4e 3e)) | 2e (1e){tip} {mf} (2e){tip} |
-(3e){tip} {text=③} (3e){tip} {text=③} ((4e 3e 2e 1e)) | (7 0) (1e){tip} {p} (2e){tip} | (3e){tip} (3e){tip} ((4e 3e 2e 1e)) | 7 ((7)) {p} ((6)) ((5#)) ((6)) |
-(1e 0) ((2e 1e 7 1e)) | (3e 0) ((4e 3e 2#e 3e)) | ((7e)) {text=cresc.} ((6e)) ((5#e)) ((6e)) ((7e)) ((6e)) ((5#e)) ((6e)) | 1ee {f} (6e){tip} (7e){tip} |
-(1ee){tip} (7e){tip} (6e){tip} (5#e){tip} | (6e){tip} {text=dim.} (3e){tip} (4e){tip} (2e){tip} | 1e {p} (7.){tr} (((6))) (((7))) | 6 :||
-{br} {/} {part=Ref} {key=A} ||: (1e){tip} {f} (2e){tip} | 3e{tip} (1e){tip} (2e){tip} | (3e){tip} (2e){tip} (1e){tip} (7){tip} |
-(6){tip} (7){tip} (1e){tip} (2e){tip} | (7){tip} (5){tip} (1e){tip} (2e){tip} | 3e{tip} (1e){tip} (2e){tip} | (3e){tip} (2e){tip} (1e){tip} (7){tip} |
-(6){tip} (2e){tip} (7){tip} (5){tip} | 1e :|| {br} {/} {part=Epi2} {key=A} ||: ((3e)) {p} ((4e)) ((3e)) ((2e)) |
-((1e 2e 1e 7)) ((6 1e 7 6)) | ((5# 6 7 5#)) ((3 4# 5# 3)) | ((6)) {text=cresc.} ((5#)) ((6)) ((7)) ((1e)) ((7)) ((1e)) ((2e)) | ((3e 2#e 3e 2#e)) ((3e 4e 3e 2=e)) |
-((1e)) {text=dim.} ((2e)) ((1e)) ((7)) ((6)) ((1e)) ((7)) ((6)) | ((5 6 7 5)) ((3 4# 5 3)) | ((4# 5 6 4#)) ((2# 3 4# 2#)) | 3 :||
-||: ((5)) {f} ((4)) ((3)) ((2)) | ((1 2 3 4)) ((5 6 7 1e)) | ((1e 7 6 5)) ((5 4 3 2)) |
-((1 2 3 4)) ((5 6 7 1e)) | (1#e 2e) ((5 4 3 2)) | ((1 2 3 4)) ((5 6 7 1e)) | ((1e 7 6 5)) ((5 4 3 2)) |
-((3 5 1 3)) ((2 4 7d 2)) | 1 ((3e)) {p} ((4e)) ((3e)) ((2e)) | ((1e 2e 1e 7)) ((6 1e 7 6)) | ((5# 6 7 5#)) ((3 4# 5# 3)) |
-((6)) {text=cresc.} ((5#)) ((6)) ((7)) ((1e)) ((7)) ((1e)) ((2e)) | ((3e 2#e 3e 2#e)) ((3e 2#e 3e 1#e)) | ((4e 3e 4e 3e)) ((4e 3e 4e 3e)) | ((4e)) {text=dim.} ((3e)) ((2e)) ((1e)) ((7)) ((1e)) ((2e)) ((7)) |
-((1e)) {p} ((2e)) ((3e)) ((6)) ((5#)) ((6)) ((7)) ((5#)) | 6 :|| {br} {/} {part=Coda} {key=A} (3e. (3e)) | 3e^ {f} |
-3e^ | ((4e 3e 2e 3e)) ((4e 3e 2e 3e)) | 4e^ | (3e){ac(4e)}{tip} (3e){ac(4e)}{tip} (3e){ac(4e)}{tip} (3e){ac(4e)}{tip} |
-2e. (5e) | 3e^ {mf} | 3e^ | ((4e 3e 2e 3e)) ((4e 3e 2e 3e)) |
-4e^ | 3e^{ac(4e)} | (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} | 1e (3e. (3e)) |
-3e^ {p} | 3e^ | ((4e 3e 2e 3e)) ((4e 3e 2e 3e)) | 4e^ |
-(3e){ac(4e)} (3e){ac(4e)} (3e){ac(4e)} (3e){ac(4e)} | 2e. (5e) | 3e^ {f} | 3e^ |
-((4e 3e 2e 3e)) ((4e 3e 2e 3e)) | 4e^ | 3e^{ac(4e)} | (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} |
-1e. {ff} (3e) | 1e. (5e) | 1e. (3e) | (1e){tip} (3e){tip} (1e){tip} (5e){tip} |
-1e{tip} 1e{str} | 1e^~{str} | 1e{str} || {/}
+===Epi1
+N: {key=C} ||: ((7)) {p} ((6)) ((5#)) ((6)) | (1e 0) ((2e 1e 7 1e)) | (3e 0) ((4e 3e 2#e 3e)) | ((7e 6e 5#e 6e)) ((7e 6e 5#e 6e)) | 1ee (6e){tip} (1ee){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (6e){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (6e){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (4#e){tip} | 3e :|| ||: (3e){tip} {mf} (4e){tip} | (5e){tip} {text=③} (5e){tip} {text=③} ((6e 5e 4e 3e)) | (2e 0) (3e){tip} {p} (4e){tip} | (5e){tip} (5e){tip} ((6e 5e 4e 3e)) | 2e (1e){tip} {mf} (2e){tip} | (3e){tip} {text=③} (3e){tip} {text=③} ((4e 3e 2e 1e)) | (7 0) (1e){tip} {p} (2e){tip} | (3e){tip} (3e){tip} ((4e 3e 2e 1e)) | 7 ((7)) {p} ((6)) ((5#)) ((6)) | (1e 0) ((2e 1e 7 1e)) | (3e 0) ((4e 3e 2#e 3e)) | ((7e)) {text=cresc.} ((6e)) ((5#e)) ((6e)) ((7e)) ((6e)) ((5#e)) ((6e)) | 1ee {f} (6e){tip} (7e){tip} | (1ee){tip} (7e){tip} (6e){tip} (5#e){tip} | (6e){tip} {text=dim.} (3e){tip} (4e){tip} (2e){tip} | 1e {p} (7.){tr} (((6))) (((7))) | 6 :|| {br}
+===Ref
+N: {key=A} ||: (1e){tip} {f} (2e){tip} | 3e{tip} (1e){tip} (2e){tip} | (3e){tip} (2e){tip} (1e){tip} (7){tip} | (6){tip} (7){tip} (1e){tip} (2e){tip} | (7){tip} (5){tip} (1e){tip} (2e){tip} | 3e{tip} (1e){tip} (2e){tip} | (3e){tip} (2e){tip} (1e){tip} (7){tip} | (6){tip} (2e){tip} (7){tip} (5){tip} | 1e :|| {br}
+===Epi2
+N: {key=A} ||: ((3e)) {p} ((4e)) ((3e)) ((2e)) | ((1e 2e 1e 7)) ((6 1e 7 6)) | ((5# 6 7 5#)) ((3 4# 5# 3)) | ((6)) {text=cresc.} ((5#)) ((6)) ((7)) ((1e)) ((7)) ((1e)) ((2e)) | ((3e 2#e 3e 2#e)) ((3e 4e 3e 2=e)) | ((1e)) {text=dim.} ((2e)) ((1e)) ((7)) ((6)) ((1e)) ((7)) ((6)) | ((5 6 7 5)) ((3 4# 5 3)) | ((4# 5 6 4#)) ((2# 3 4# 2#)) | 3 :|| ||: ((5)) {f} ((4)) ((3)) ((2)) | ((1 2 3 4)) ((5 6 7 1e)) | ((1e 7 6 5)) ((5 4 3 2)) | ((1 2 3 4)) ((5 6 7 1e)) | (1#e 2e) ((5 4 3 2)) | ((1 2 3 4)) ((5 6 7 1e)) | ((1e 7 6 5)) ((5 4 3 2)) | ((3 5 1 3)) ((2 4 7d 2)) | 1 ((3e)) {p} ((4e)) ((3e)) ((2e)) | ((1e 2e 1e 7)) ((6 1e 7 6)) | ((5# 6 7 5#)) ((3 4# 5# 3)) | ((6)) {text=cresc.} ((5#)) ((6)) ((7)) ((1e)) ((7)) ((1e)) ((2e)) | ((3e 2#e 3e 2#e)) ((3e 2#e 3e 1#e)) | ((4e 3e 4e 3e)) ((4e 3e 4e 3e)) | ((4e)) {text=dim.} ((3e)) ((2e)) ((1e)) ((7)) ((1e)) ((2e)) ((7)) | ((1e)) {p} ((2e)) ((3e)) ((6)) ((5#)) ((6)) ((7)) ((5#)) | 6 :|| {br}
+===Coda
+N: {key=A} (3e. (3e)) | 3e^ {f} | 3e^ | ((4e 3e 2e 3e)) ((4e 3e 2e 3e)) | 4e^ | (3e){ac(4e)}{tip} (3e){ac(4e)}{tip} (3e){ac(4e)}{tip} (3e){ac(4e)}{tip} | 2e. (5e) | 3e^ {mf} | 3e^ | ((4e 3e 2e 3e)) ((4e 3e 2e 3e)) | 4e^ | 3e^{ac(4e)} | (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} | 1e (3e. (3e)) | 3e^ {p} | 3e^ | ((4e 3e 2e 3e)) ((4e 3e 2e 3e)) | 4e^ | (3e){ac(4e)} (3e){ac(4e)} (3e){ac(4e)} (3e){ac(4e)} | 2e. (5e) | 3e^ {f} | 3e^ | ((4e 3e 2e 3e)) ((4e 3e 2e 3e)) | 4e^ | 3e^{ac(4e)} | (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} (2e){ac(3e)}{tip} | 1e. {ff} (3e) | 1e. (5e) | 1e. (3e) | (1e){tip} (3e){tip} (1e){tip} (5e){tip} | 1e{tip} 1e{str} | 1e^~{str} | 1e{str} ||

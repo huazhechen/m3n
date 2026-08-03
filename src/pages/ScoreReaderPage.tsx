@@ -74,9 +74,6 @@ export function ScoreReaderPage() {
           hasBassStaff={result.hasBassStaff}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
-          accompaniment={result.accompaniment}
-          tempoChanges={result.tempoChanges}
-          tempo={result.tempo}
           invalidMeasureIds={invalidMeasures}
           showPrintButton={false}
         />

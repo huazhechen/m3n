@@ -1,7 +1,6 @@
 import { m3nPitch, measurePlaybackPasses, parseM3NDocument, type DirectDocument } from './m3n-direct'
 import type { DirectLyricSyllable } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
-import { buildAccompanimentFromDocument, buildTempoChangesFromDocument, type AccompanimentNote, type TempoChange } from './m3n-playback'
 import type { DirectEvent, DirectMeasure } from './m3n-direct'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { parseKey } from './notation/m3n-primitives'
@@ -31,8 +30,6 @@ export type MeiConversionResult = {
   hasBassStaff: boolean
   partOrder: string[]
   headerMetadata: ScoreHeaderMetadata[]
-  accompaniment: AccompanimentNote[]
-  tempoChanges: TempoChange[]
   tempo: number
 }
 
@@ -255,17 +252,10 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   let eventIndex = 0
   const eventIds = new Map<string, string>()
   const preassignedIds = new Map<DirectEvent, string>()
-  const tempoChanges = buildTempoChangesFromDocument(document)
-  const tempoChangesBySource = new Map<number, TempoChange[]>()
-  for (const change of tempoChanges) {
-    if (change.sourceStart === undefined) continue
-    const changes = tempoChangesBySource.get(change.sourceStart) ?? []
-    changes.push(change)
-    tempoChangesBySource.set(change.sourceStart, changes)
-  }
   const previousTiedByStaff = new Map<number, boolean>()
   const previousKeyByStaff = new Map<number, string>()
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
+  let previousTempo = document.tempo
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
   const lyricSyllables = document.lyrics.map((block, index) => {
     const numericRange = /^\d+$/.test(block.range)
@@ -518,12 +508,13 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
       ].filter(Boolean)
     })
     const tempoControls = staffNumber === 1 ? events.flatMap((event) => {
+      if (event.tempo === undefined || event.tempo === previousTempo) return []
+      previousTempo = event.tempo
+      const followsRamp = document.intervals.some((interval) => interval.tempoTarget === event.tempo &&
+        interval.end !== undefined && interval.end < event.sourceStart)
+      if (followsRamp) return []
       const xmlId = idFor(event.sourceStart)
-      if (!xmlId) return []
-      const changes = tempoChangesBySource.get(event.sourceStart) ?? []
-      return [
-        ...changes.filter((change) => !change.ramp).map((change) => tempoXml(change.tempo, event.meterUnit ?? document.meterUnit, `startid="#${xmlId}"`, `m3n-tempo-${++tempoIndex}`)),
-      ].filter(Boolean)
+      return xmlId ? [tempoXml(event.tempo, event.meterUnit ?? document.meterUnit, `startid="#${xmlId}"`, `m3n-tempo-${++tempoIndex}`)] : []
     }) : []
     const first = events[0]?.sourceStart
     const last = events.at(-1)?.sourceEnd
@@ -697,8 +688,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
     lyricist: document.lyricist, arranger: document.arranger, hasBassStaff,
     partOrder: document.partOrder,
     headerMetadata,
-    accompaniment: buildAccompanimentFromDocument(document),
-    tempoChanges,
     tempo: document.tempo,
   }
 }

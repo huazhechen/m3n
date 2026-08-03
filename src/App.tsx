@@ -7,7 +7,6 @@ const EditorPage = lazy(() => import('./pages/EditorPage').then(({ EditorPage: P
 const ScoresPage = lazy(() => import('./pages/ScoresPage').then(({ ScoresPage: Page }) => ({ default: Page })))
 const ScoreReaderPage = lazy(() => import('./pages/ScoreReaderPage').then(({ ScoreReaderPage: Page }) => ({ default: Page })))
 const DocsPage = lazy(() => import('./pages/DocsPage').then(({ DocsPage: Page }) => ({ default: Page })))
-const ConverterPage = lazy(() => import('./pages/ConverterPage').then(({ ConverterPage: Page }) => ({ default: Page })))
 
 export default function App() {
   return (
@@ -20,7 +19,6 @@ export default function App() {
           <Route path="/scores" element={<ScoresPage />} />
           <Route path="/scores/:slug" element={<ScoreReaderPage />} />
           <Route path="/docs" element={<DocsPage />} />
-          <Route path="/convert" element={<ConverterPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

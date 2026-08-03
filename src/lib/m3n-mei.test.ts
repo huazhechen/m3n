@@ -3,6 +3,14 @@ import { m3nPitch, parseM3NDocument } from './m3n-direct'
 import { m3nToMei } from './m3n-mei'
 
 describe('M3N to MEI conversion', () => {
+  it('projects a v0.3 harmony row onto melody events', () => {
+    const result = m3nToMei('{key=C} {4/4}\nN: 1 2 3 4 | 5 6 7 1e |||\nC: (I) (V) | IV |')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<harm staff="1" startid="#m3n-e-1">C</harm>')
+    expect(result.mei).toContain('<harm staff="1" startid="#m3n-e-3">G</harm>')
+    expect(result.mei).toContain('<harm staff="1" startid="#m3n-e-5">F</harm>')
+  })
   it('accepts an already parsed document', () => {
     const source = '{key=C} {2/4} 1 2 |||'
 
@@ -86,7 +94,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<tempo xml:id="m3n-tempo-2" staff="1" startid="#m3n-e-5" midi.bpm="90"><rend glyph.auth="smufl" glyph.name="metNote8thUp"')
     expect(result.mei).toContain('glyph.name="metNote8thUp"')
     expect(result.mei).toContain('</rend> = 180</tempo>')
-    expect(result.tempoChanges).toMatchObject([{ startBeats: 4, tempo: 90 }])
   })
 
   it('writes a visible ritardando direction without intermediate tempo labels', () => {
@@ -96,7 +103,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('midi.bpm="107"')
     expect(result.mei).not.toContain('midi.bpm="80"')
     expect(result.mei).not.toContain('<octave')
-    expect(result.tempoChanges).toHaveLength(3)
   })
 
   it('renders and expands a D.S. al Fine navigation', () => {
@@ -215,7 +221,6 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.mei).toContain('<harm staff="1" startid="#m3n-e-1">G7</harm>')
     expect(result.mei).toContain('<harm staff="1" startid="#m3n-e-3">F7</harm>')
-    expect(result.mei).not.toContain('m3n-accompaniment')
   })
 
   it('writes mid-score key signature changes at the affected note', () => {

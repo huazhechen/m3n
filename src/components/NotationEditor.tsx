@@ -119,9 +119,6 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           hasBassStaff={result.hasBassStaff}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
-          accompaniment={result.accompaniment}
-          tempoChanges={result.tempoChanges}
-          tempo={result.tempo}
           compact={embedded}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}

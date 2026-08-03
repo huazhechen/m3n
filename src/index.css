@@ -794,10 +794,6 @@ textarea::selection {
   height: auto;
 }
 
-.score-paper svg .m3n-accompaniment {
-  display: none;
-}
-
 .score-paper .measure-playback-highlight {
   display: none;
   pointer-events: none;

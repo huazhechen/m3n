@@ -1,8 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { MeiSourceMapRange } from '../lib/m3n-mei'
 import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
-import type { AccompanimentNote } from '../lib/m3n-playback'
-import type { TempoChange } from '../lib/m3n-playback'
 import type { SpessaPlayer } from '../features/score-renderer/spessa-player'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import { lyricVerseIndexForMeasureRendition, visibleLyricVerseNumbers } from '../features/score-renderer/lyric-rendition'
@@ -17,9 +15,6 @@ type ScoreRendererProps = {
   hasBassStaff: boolean
   headerMetadata: ScoreHeaderMetadata[]
   sourceMap: MeiSourceMapRange[]
-  accompaniment: AccompanimentNote[]
-  tempoChanges: TempoChange[]
-  tempo: number
   compact?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
@@ -87,9 +82,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   hasBassStaff,
   headerMetadata,
   sourceMap,
-  accompaniment,
-  tempoChanges,
-  tempo,
   compact = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
@@ -299,7 +291,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       try {
         midiRef.current ??= score.midi()
         const { SpessaPlayer } = await import('../features/score-renderer/spessa-player')
-        const player = await SpessaPlayer.create(midiRef.current, accompaniment, tempo, tempoChanges, {
+        const player = await SpessaPlayer.create(midiRef.current, {
           onEnded: () => {
             stopPlaybackRef.current()
           },

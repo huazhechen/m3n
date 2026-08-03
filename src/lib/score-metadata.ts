@@ -32,7 +32,7 @@ function readTempo(source: string) {
   return match ? Number(match[1]) : 120
 }
 
-const notationAttributeNames = new Set(['key', '1', 'transpose', 'parts', 'part', 'rest', 'chord', 'lyrics'])
+const notationAttributeNames = new Set(['key', '1', 'transpose', 'form', 'parts', 'part', 'rest', 'chord', 'lyrics'])
 
 function readMetadataValues(source: string) {
   return Array.from(source.matchAll(/\{([^=}\s]+)=([^}]*)\}/g))
@@ -64,8 +64,8 @@ export function scoreMetadataFromSource(slug: string, source: string): PresetSco
     keySignature: readAttribute(source, 'key') ?? 'C',
     timeSignature: readTimeSignature(source),
     tempo: readTempo(source),
-    hasLyrics: /\{lyrics(?:=[^}]*)?\}/.test(source),
-    hasBass: source.includes('{bass}'),
+    hasLyrics: /^\s*L\d*:/m.test(source),
+    hasBass: /^\s*B:/m.test(source),
     melodyComplexity: assessM3NMelodyComplexity(source).score,
     searchText: normalizeSearchText([title, subtitle, singer, composer, ...readMetadataValues(source)].filter(Boolean).join(' ')),
     diagnosticSeverity: scoreDiagnosticSeverity(validateM3NDiagnostics(source)),

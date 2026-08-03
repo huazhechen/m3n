@@ -301,7 +301,7 @@ export const presetScoreIndex = [
     "hasBass": false,
     "melodyComplexity": 2.5,
     "searchText": "同桌的你 老狼 高晓松 同桌的你 老狼 高晓松 高晓松",
-    "diagnosticSeverity": "none"
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 22,
@@ -649,7 +649,7 @@ export const presetScoreIndex = [
     "hasBass": false,
     "melodyComplexity": 2.9,
     "searchText": "new boy 朴树 朴树 new boy 朴树 朴树 朴树",
-    "diagnosticSeverity": "none"
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 46,

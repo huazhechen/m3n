@@ -5,6 +5,12 @@ import { parseM3NDocument } from './m3n-direct'
 const messages = (source: string) => validateM3N(source).join('\n')
 
 describe('validateM3N', () => {
+  it('strictly validates lyrics for every v0.3 phrase traversal', () => {
+    expect(validateM3N('{form=A,A}\n{2/4}\n===A\nN: 1 2 |\nL1: 甲乙\nL2: {L1}')).toEqual([])
+    expect(messages('{form=A,A}\n{2/4}\n===A\nN: 1 2 |\nL1: 甲乙')).toContain('乐句缺少 L2: 歌词行')
+    expect(messages('N: 1 2 :|||{x2}\nL1: 甲乙\nL2: 甲乙丙')).toContain('乐句第 2 遍需要 2 项，实际 3 项')
+    expect(messages('{3/4}\nN: 1~ 1 2 |||\nL: 甲+乙丙')).toBe('')
+  })
   it('exposes structured diagnostics without changing legacy messages', () => {
     const source = '{2/4}\n1 2 |||\n{lyrics}la{/}'
     const diagnostics = validateM3NDiagnostics(source)
