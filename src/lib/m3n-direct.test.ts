@@ -52,6 +52,14 @@ describe('direct M3N parser', () => {
     ])
   })
 
+  it('does not render a lyric reference as an extra verse', () => {
+    const source = '{form=A,A,A}\n{2/4}\n===A\nN: 1 2 |||\nL1: 甲乙\nL2: 丙丁\nL3: {L2}'
+    const document = parseM3NDocument(source)
+
+    expect(document.lyrics.map((block) => block.range)).toEqual(['1', '2'])
+    expect(document.lyrics[1]?.syllables).toMatchObject([{ text: '丙' }, { text: '丁' }])
+  })
+
   it('inherits melody setting changes in the bass staff', () => {
     const document = parseM3NDocument([
       '{key=C} {2/4} {120qpm} 1 2 | {key=D} {3/4} {90qpm}1 2 3 |||',

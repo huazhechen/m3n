@@ -6,7 +6,7 @@ import { diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/
 import { parseM3NDocument, type DirectDocument } from './m3n-direct'
 import { hasForcedLyricOutsideTiedTarget, playbackLyricCounts, playbackLyricTargets, sharedLyricRangeCount } from './m3n-lyric-alignment'
 import { projectM3NDocument, type M3NDocumentStructure, type M3NPhrase } from './notation/m3n-document'
-import { measurePlaybackPasses } from './notation/repeats'
+import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -90,6 +90,13 @@ function lineMessage(token: Token, message: string) {
 
 function lyricMessage(message: string) {
   return `[L] ${message}`
+}
+
+function remapProjectedLines(message: string, lineMap: readonly number[]) {
+  return message.replace(/第 (\d+) 行/g, (_match, line: string) => {
+    const mapped = lineMap[Number(line) - 1]
+    return `第 ${mapped ?? line} 行`
+  })
 }
 
 function supplementMessage(current: Supplement, token: Token, message: string) {
@@ -1116,9 +1123,39 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
       targets.set(pass, passMeasures)
     }
   }
+  const section = structure.sections.find((candidate) => candidate.name === sectionName)
+  const phraseIndex = section?.phrases.indexOf(phrase) ?? -1
+  const contiguousHouses = (phrases: readonly M3NPhrase[]) => {
+    if (!phrases[0]?.passes) return []
+    const firstOrdinary = phrases.findIndex((candidate) => !candidate.passes)
+    return firstOrdinary < 0 ? phrases : phrases.slice(0, firstOrdinary)
+  }
+  const precedingHouses = phrase.passes || phraseIndex < 0
+    ? []
+    : contiguousHouses(section!.phrases.slice(0, phraseIndex).reverse())
+  const followingHouses = phrase.passes || phraseIndex < 0 || precedingHouses.length > 0
+    ? []
+    : (() => {
+      const following = section!.phrases.slice(phraseIndex + 1)
+      const firstHouse = following.findIndex((candidate) => Boolean(candidate.passes))
+      return firstHouse < 0 ? [] : contiguousHouses(following.slice(firstHouse))
+    })()
+  const adjacentHouses = precedingHouses.length > 0 ? precedingHouses : followingHouses
+  const housePassLimit = adjacentHouses.length === 0
+    ? undefined
+    : Math.max(...adjacentHouses.flatMap((candidate) => [...parsePassRange(candidate.passes)]))
+
+  // Playback passes are global so D.S. and alternate endings can share one
+  // state machine. Lyric labels are deliberately local to a phrase.
+  const localTargets = new Map(
+    [...targets.entries()]
+      .filter(([pass]) => housePassLimit === undefined || pass <= housePassLimit)
+      .sort(([left], [right]) => left - right)
+      .map(([, measureTargets], index) => [index + 1, measureTargets]),
+  )
   if (sectionName && structure.form.length > 0) {
     const occurrences = structure.form.filter((name) => name === sectionName).length
-    const local = [...targets.values()]
+    const local = [...localTargets.values()]
     const expanded = new Map<number, StrictLyricMeasureTargets>()
     let traversal = 1
     for (let occurrence = 0; occurrence < occurrences; occurrence += 1) {
@@ -1126,7 +1163,7 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
     }
     return expanded
   }
-  return targets
+  return localTargets
 }
 
 function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentStructure) {
@@ -1297,7 +1334,9 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
     .filter((message) => projected.structure.sections.length === 0 || !/^未分段正文必须且只能使用一次终止线，实际 0 次$/.test(message))
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
   const legacyDiagnostics = projected.structure.sections.length > 0
-    ? projectedDiagnostics.filter((message) => !message.startsWith('[L]'))
+    ? projectedDiagnostics
+      .filter((message) => !message.startsWith('[L]'))
+      .map((message) => remapProjectedLines(message, projected.lineMap))
     : projectedDiagnostics
   const removedEndingSyntax = /\{(?:volta|ending)=[^}]*\}/.test(source)
     ? ['旧房子区间语法已删除；请将每个房子写成独立的 ---Vn 乐句']

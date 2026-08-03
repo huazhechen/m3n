@@ -528,16 +528,14 @@ export function parseM3NDocument(source: string): DirectDocument {
     for (const section of projected.structure.sections) {
       for (const phrase of section.phrases) {
         if (!phrase.melody) continue
-        const local = new Map(phrase.lyrics.map((lyric) => [lyric.label, lyric]))
         for (const lyric of phrase.lyrics) {
           const reference = /^\{L(\d+)\}$/.exec(lyric.text.trim())
-          const row = reference ? local.get(reference[1] ?? '') : lyric
-          if (!row) continue
+          if (reference) continue
           lyricRows.push({
             part: section.name,
             range: lyric.label,
             mode: 'char',
-            syllables: parseLyricItems(row.text.replace(/\s*\|\s*/g, ' '), row.start, 'char'),
+            syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start, 'char'),
             targetStart: phrase.melody.start,
             targetEnd: phrase.melody.start + phrase.melody.text.length,
           })

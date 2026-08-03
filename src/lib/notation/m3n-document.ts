@@ -1,9 +1,9 @@
 export type M3NPhrase = {
   line: number
   passes: string
-  melody?: { text: string; start: number }
-  bass?: { text: string; start: number }
-  harmony?: { text: string; start: number }
+  melody?: { text: string; start: number; line: number }
+  bass?: { text: string; start: number; line: number }
+  harmony?: { text: string; start: number; line: number }
   lyrics: Array<{ label: string; text: string; start: number }>
 }
 
@@ -78,13 +78,13 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
       const start = contentStart + trimmed.indexOf(text)
       if (kind === 'N') {
         if (current.melody) diagnostics.push(`第 ${line} 行：同一乐句只能有一个 N: 行`)
-        current.melody = { text, start }
+        current.melody = { text, start, line }
       } else if (kind === 'B') {
         if (current.bass) diagnostics.push(`第 ${line} 行：同一乐句只能有一个 B: 行`)
-        current.bass = { text, start }
+        current.bass = { text, start, line }
       } else if (kind === 'C') {
         if (current.harmony) diagnostics.push(`第 ${line} 行：同一乐句只能有一个 C: 行`)
-        current.harmony = { text, start }
+        current.harmony = { text, start, line }
       } else {
         current.lyrics.push({ label: kind.slice(1), text, start })
       }
@@ -122,14 +122,21 @@ export function projectM3NDocument(source: string) {
   const structure = parseM3NDocumentStructure(source)
   const named = structure.sections.length > 0 && structure.sections.every((section) => Boolean(section.name))
   const order = structure.form.length > 0 ? structure.form : structure.sections.map(({ name }) => name).filter(Boolean)
-  const melody: string[] = [structure.header.replace(/\{form=[^}]*\}/g, '')]
-  if (named) melody.push(`{parts=${order.join(' ')}}`)
+  const melody: string[] = []
+  const lineMap: number[] = []
+  const push = (text: string, sourceLine?: number) => {
+    melody.push(text)
+    const lineCount = text.split('\n').length
+    for (let index = 0; index < lineCount; index += 1) lineMap.push(sourceLine ?? lineMap.length + 1)
+  }
+  push(structure.header.replace(/\{form=[^}]*\}/g, ''))
+  if (named) push(`{parts=${order.join(' ')}}`)
   const bass: string[] = []
   const lyrics = new Map<string, string[]>()
   for (const section of structure.sections) {
-    if (named) melody.push(`{part=${section.name}}`)
+    if (named) push(`{part=${section.name}}`, section.line)
     for (const [phraseIndex, phrase] of section.phrases.entries()) {
-      if (phrase.passes) melody.push(`{ending=${phrase.passes}}`)
+      if (phrase.passes) push(`{ending=${phrase.passes}}`, phrase.melody?.line ?? phrase.line)
       if (phrase.melody) {
         const closesBeforeBar = phrase.passes ? '{/}' : ''
         const closesPart = named && phraseIndex === section.phrases.length - 1 ? '{/}' : ''
@@ -140,20 +147,19 @@ export function projectM3NDocument(source: string) {
         if (closesPart && /(?::\|\|\||\|\|\|)(?:\{x\d+\})?\s*$/.test(text)) {
           text = text.replace(/((?::\|\|\||\|\|\|)(?:\{x\d+\})?)\s*$/, `${closesPart}$1`)
         } else if (closesPart) text = `${text} ${closesPart}`
-        melody.push(text)
+        push(text, phrase.melody.line)
       }
       if (phrase.bass) bass.push(phrase.bass.text)
-      const localLyrics = new Map(phrase.lyrics.map((lyric) => [lyric.label, lyric.text]))
       for (const lyric of phrase.lyrics) {
         const rows = lyrics.get(lyric.label) ?? []
         const reference = /^\{L(\d+)\}$/.exec(lyric.text.trim())
-        const text = reference ? localLyrics.get(reference[1] ?? '') ?? '' : lyric.text
-        rows.push(text.replace(/\s*\|\s*/g, ' '))
+        if (reference) continue
+        rows.push(lyric.text.replace(/\s*\|\s*/g, ' '))
         lyrics.set(lyric.label, rows)
       }
     }
   }
-  for (const [label, rows] of lyrics) melody.push(`{lyrics${label ? `=${label}` : ''}}${rows.join(' ')}{/}`)
-  if (bass.length > 0) melody.push(`{bass}${bass.join(' ')}{/}`)
-  return { source: melody.join('\n'), structure }
+  for (const [label, rows] of lyrics) push(`{lyrics${label ? `=${label}` : ''}}${rows.join(' ')}{/}`)
+  if (bass.length > 0) push(`{bass}${bass.join(' ')}{/}`)
+  return { source: melody.join('\n'), structure, lineMap }
 }

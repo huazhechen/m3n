@@ -25,6 +25,38 @@ describe('validateM3N', () => {
     expect(validateM3N('{2/4}\nN: 1 2 |\n---V1\nN: 3 4 |\n---V2\nN: 5 6 |||')).toEqual([])
   })
 
+  it('does not let a later house group increase an earlier phrase lyric count', () => {
+    const source = [
+      '{2/4}',
+      'N: ||: 1 2 |',
+      'L1: 甲乙',
+      'L2: 甲乙',
+      '---V1',
+      'N: 3 4 |',
+      '---V2',
+      'N: 5 6 |',
+      '---',
+      'N: 7 1 |',
+      'L1: 甲乙',
+      'L2: 甲乙',
+      '---V1',
+      'N: 2 3 :||',
+      '---V2',
+      'N: 4 5 ||',
+      '---V3',
+      'N: 6 7 |||',
+    ].join('\n')
+
+    expect(messages(source)).not.toContain('第 2 行：乐句缺少 L3: 歌词行')
+    expect(messages(source)).not.toContain('第 10 行：乐句缺少 L3: 歌词行')
+  })
+
+  it('maps projected diagnostics back to the original phrase line', () => {
+    const result = messages('{2/4}\nN: 1 2 |\n---V1\nN: 3{arp} 4 |||')
+
+    expect(result).toContain('第 4 行：琶音只能附在和音组之后')
+  })
+
   it('preserves measure alignment for lyric references and empty lyric targets', () => {
     const referenced = '{form=A,A}\n{2/4}\n===A\nN: 1 2 | 3 4 ||\nL1: 甲乙 | 丙丁\nL2: {L1}'
     expect(validateM3N(referenced)).toEqual([])
