@@ -66,32 +66,3 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
     URL.revokeObjectURL(url)
   }
 }
-
-export async function renderHeaderAndScoreCanvas(header: HTMLElement | null, score: HTMLCanvasElement, width: number) {
-  if (!header) return score
-  const headerWidth = header.getBoundingClientRect().width
-  if (headerWidth <= 0) return score
-  const copy = header.cloneNode(true) as HTMLElement
-  copy.style.position = 'fixed'
-  copy.style.top = '0'
-  copy.style.left = '-10000px'
-  copy.style.width = `${headerWidth}px`
-  copy.style.minWidth = `${headerWidth}px`
-  document.body.append(copy)
-  try {
-    const { default: html2canvas } = await import('html2canvas')
-    const heading = await html2canvas(copy, { backgroundColor: '#fffef9', logging: false, scale: width / headerWidth })
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.max(width, score.width)
-    canvas.height = heading.height + score.height
-    const context = canvas.getContext('2d')
-    if (!context) throw new Error('无法创建导出画布。')
-    context.fillStyle = '#fffef9'
-    context.fillRect(0, 0, canvas.width, canvas.height)
-    context.drawImage(heading, 0, 0, canvas.width, heading.height)
-    context.drawImage(score, 0, heading.height, canvas.width, score.height)
-    return canvas
-  } finally {
-    copy.remove()
-  }
-}

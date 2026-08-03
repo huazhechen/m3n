@@ -5,9 +5,9 @@ import type { SpessaPlayer } from '../features/score-renderer/spessa-player'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import { lyricVerseIndexForMeasureRendition, visibleLyricVerseNumbers } from '../features/score-renderer/lyric-rendition'
 import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisions'
+import { addScoreHeaderToPaper } from '../features/score-renderer/score-header-svg'
 import { ScoreExportDialog } from './ScoreExportDialog'
 import type { ScoreExportDialogRef } from './ScoreExportDialog'
-import { ScoreHeader } from './ScoreHeader'
 
 type ScoreRendererProps = {
   mei: string
@@ -188,6 +188,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
                 page += 1
                 if (page > pageCount) {
                   if (!isInitialRender) paper.innerHTML = pages.join('')
+                  addScoreHeaderToPaper(paper, headerMetadata)
                   resolveLyricCollisions(paper)
                   addInvalidMeasureHighlights(paper, invalidMeasureIds)
                   hasRenderedRef.current = true
@@ -222,7 +223,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, invalidMeasureIds, mei, onActiveXmlId, staffWidth])
+  }, [compact, headerMetadata, invalidMeasureIds, mei, onActiveXmlId, staffWidth])
 
   useEffect(() => {
     paperRef.current?.querySelectorAll('.is-cursor-active').forEach((element) => {
@@ -432,7 +433,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
           </button>
         )}
       </div>
-      <ScoreHeader metadata={headerMetadata} />
       <div
         ref={paperRef}
         className="score-paper verovio-score"
