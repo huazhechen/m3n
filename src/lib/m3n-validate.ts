@@ -1034,17 +1034,68 @@ function lyricItems(tokens: Token[], mode: LyricMode) {
 }
 
 type StrictLyricTarget = { tied: boolean }
+type StrictLyricMeasureTargets = StrictLyricTarget[][]
+
+type LyricMeasure = { text: string; start: number }
+
+function lyricMeasures(text: string, start: number): LyricMeasure[] | null {
+  if (!text.includes('|')) return null
+  const measures: LyricMeasure[] = []
+  let measureStart = 0
+  for (let index = 0; index <= text.length; index += 1) {
+    if (index < text.length && text[index] !== '|') continue
+    const raw = text.slice(measureStart, index)
+    const leading = raw.length - raw.trimStart().length
+    measures.push({ text: raw.trim(), start: start + measureStart + leading })
+    measureStart = index + 1
+  }
+  return measures
+}
+
+function validateLyricMeasureAlignment(
+  diagnostics: string[],
+  phrase: M3NPhrase,
+  pass: number,
+  lyric: { text: string; start: number },
+  measureTargets: StrictLyricMeasureTargets,
+) {
+  const measures = lyricMeasures(lyric.text, lyric.start)
+  if (!measures) {
+    const items = parseLyricItems(lyric.text, lyric.start, 'char')
+    const passTargets = measureTargets.flat()
+    const expected = passTargets.filter((target) => !target.tied).length + items.filter((item) => item.forceTiedTarget).length
+    if (items.length !== expected) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：歌词对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`))
+    if (hasForcedLyricOutsideTiedTarget(items, passTargets)) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句第 ${pass} 遍的 +歌词项不位于延音目标`))
+    return
+  }
+  if (measures.length !== measureTargets.length) {
+    diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句第 ${pass} 遍需要 ${measureTargets.length} 个歌词小节，实际 ${measures.length} 个`))
+  }
+  for (let index = 0; index < Math.max(measures.length, measureTargets.length); index += 1) {
+    const measure = measures[index] ?? { text: '', start: lyric.start + lyric.text.length }
+    const targets = measureTargets[index] ?? []
+    const items = parseLyricItems(measure.text, measure.start, 'char')
+    const expected = targets.filter((target) => !target.tied).length + items.filter((item) => item.forceTiedTarget).length
+    if (items.length !== expected) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：歌词第 ${index + 1} 小节对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`))
+    if (hasForcedLyricOutsideTiedTarget(items, targets)) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句第 ${pass} 遍歌词第 ${index + 1} 小节的 +歌词项不位于延音目标`))
+  }
+}
 
 export function phraseLyricTargets(document: DirectDocument, structure: M3NDocumentStructure, sectionName: string, phrase: M3NPhrase) {
   const part = document.parts.get(sectionName || 'score')
-  if (!part || !phrase.melody) return new Map<number, StrictLyricTarget[]>()
+  if (!part || !phrase.melody) return new Map<number, StrictLyricMeasureTargets>()
   const start = phrase.melody.start
   const end = start + phrase.melody.text.length
   const passesByMeasure = measurePlaybackPasses(part.melody)
-  const targets = new Map<number, StrictLyricTarget[]>()
+  const targets = new Map<number, StrictLyricMeasureTargets>()
   let previousTied = false
   for (const measure of part.melody) {
     const passes = passesByMeasure.get(measure) ?? new Set([1])
+    const belongsToPhrase = measure.events.some((event) => start <= event.sourceStart && event.sourceStart < end)
+    const measureTargets = new Map<number, StrictLyricTarget[]>()
+    if (belongsToPhrase) {
+      for (const pass of passes) measureTargets.set(pass, [])
+    }
     for (const event of measure.events) {
       const tied = previousTied
       previousTied = event.tie
@@ -1054,16 +1105,21 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
       if (instrumental) continue
       const count = event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
       for (const pass of passes) {
-        const passTargets = targets.get(pass) ?? []
+        const passTargets = measureTargets.get(pass) ?? []
         for (let index = 0; index < count; index += 1) passTargets.push({ tied: tied && index === 0 })
-        targets.set(pass, passTargets)
+        measureTargets.set(pass, passTargets)
       }
+    }
+    for (const [pass, currentTargets] of measureTargets) {
+      const passMeasures = targets.get(pass) ?? []
+      passMeasures.push(currentTargets)
+      targets.set(pass, passMeasures)
     }
   }
   if (sectionName && structure.form.length > 0) {
     const occurrences = structure.form.filter((name) => name === sectionName).length
     const local = [...targets.values()]
-    const expanded = new Map<number, StrictLyricTarget[]>()
+    const expanded = new Map<number, StrictLyricMeasureTargets>()
     let traversal = 1
     for (let occurrence = 0; occurrence < occurrences; occurrence += 1) {
       for (const passTargets of local) expanded.set(traversal++, passTargets)
@@ -1082,23 +1138,10 @@ function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentSt
       const rows = new Map(phrase.lyrics.map((row) => [row.label, row]))
       const generic = rows.get('')
       if (generic) {
-        const items = parseLyricItems(generic.text.replace(/\s*\|\s*/g, ' '), generic.start, 'char')
-        for (const [pass, passTargets] of targets) {
-          const expected = passTargets.filter((target) => !target.tied).length + items.filter((item) => item.forceTiedTarget).length
-          if (items.length !== expected) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：歌词对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`))
-          if (hasForcedLyricOutsideTiedTarget(items, passTargets)) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句第 ${pass} 遍的 +歌词项不位于延音目标`))
-        }
+        for (const [pass, passTargets] of targets) validateLyricMeasureAlignment(diagnostics, phrase, pass, generic, passTargets)
         continue
       }
       const requiredPasses = Math.max(0, ...targets.keys())
-      const referencedPasses = new Map<string, Set<number>>()
-      for (const [label, row] of rows) {
-        const reference = /^\{L(\d+)\}$/.exec(row.text.trim())
-        if (!reference || !/^\d+$/.test(label)) continue
-        const passes = referencedPasses.get(reference[1] ?? '') ?? new Set<number>([Number(reference[1])])
-        passes.add(Number(label))
-        referencedPasses.set(reference[1] ?? '', passes)
-      }
       for (let pass = 1; pass <= requiredPasses; pass += 1) {
         const row = rows.get(String(pass))
         if (!row) {
@@ -1111,18 +1154,9 @@ function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentSt
           diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${pass}: 只能引用同一乐句中更早的编号歌词行`))
           continue
         }
-        if (reference) continue
-        const items = parseLyricItems((referenced?.text ?? '').replace(/\s*\|\s*/g, ' '), referenced?.start ?? row.start, 'char')
         const passTargets = targets.get(pass) ?? []
-        const sharedPasses = referencedPasses.get(String(pass))
-        const expectedTargets = sharedPasses && !section.name
-          ? sharedLyricRangeCount(document, sharedPasses)
-          : passTargets.filter((target) => !target.tied).length
-        const expected = expectedTargets + items.filter((item) => item.forceTiedTarget).length
-        if (items.length !== expected) {
-          diagnostics.push(lyricMessage(`第 ${phrase.line} 行：歌词对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`))
-        }
-        if (hasForcedLyricOutsideTiedTarget(items, passTargets)) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句第 ${pass} 遍的 +歌词项不位于延音目标`))
+        const lyric = { text: referenced?.text ?? '', start: referenced?.start ?? row.start }
+        validateLyricMeasureAlignment(diagnostics, phrase, pass, lyric, passTargets)
       }
       for (const label of rows.keys()) {
         if (Number(label) > requiredPasses) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${label}: 超出乐句实际演奏次数 ${requiredPasses}`))

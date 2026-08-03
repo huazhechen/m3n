@@ -516,7 +516,7 @@ export const presetScoreIndex = [
     "hasBass": false,
     "melodyComplexity": 2.8,
     "searchText": "牵丝戏 银临、aki阿杰 银临 牵丝戏 银临、aki阿杰 银临 vagary 1 2 1 2 3",
-    "diagnosticSeverity": "none"
+    "diagnosticSeverity": "lyric"
   },
   {
     "order": 37,

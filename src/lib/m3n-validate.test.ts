@@ -11,6 +11,24 @@ describe('validateM3N', () => {
     expect(messages('N: 1 2 :|||{x2}\nL1: 甲乙\nL2: 甲乙丙')).toContain('乐句第 2 遍需要 2 项，实际 3 项')
     expect(messages('{3/4}\nN: 1~ 1 2 |||\nL: 甲+乙丙')).toBe('')
   })
+
+  it('validates bar-aligned v0.3 lyrics measure by measure', () => {
+    expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁')).toEqual([])
+
+    const misaligned = messages('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲 | 丙丁戊')
+    expect(misaligned).toContain('歌词第 1 小节对位数量不匹配：乐句第 1 遍需要 2 项，实际 1 项')
+    expect(misaligned).toContain('歌词第 2 小节对位数量不匹配：乐句第 1 遍需要 2 项，实际 3 项')
+    expect(messages('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁 | 戊己')).toContain('乐句第 1 遍需要 2 个歌词小节，实际 3 个')
+  })
+
+  it('preserves measure alignment for lyric references and empty lyric targets', () => {
+    const referenced = '{form=A,A}\n{2/4}\n===A\nN: 1 2 | 3 4 ||\nL1: 甲乙 | 丙丁\nL2: {L1}'
+    expect(validateM3N(referenced)).toEqual([])
+
+    const instrumental = '{2/4}\nN: {inst}1 2{/} | 3 4 |||\nL: | 甲乙'
+    expect(validateM3N(instrumental)).toEqual([])
+    expect(messages('{2/4}\nN: {inst}1 2{/} | 3 4 |||\nL: 甲乙 |')).toContain('歌词第 1 小节对位数量不匹配')
+  })
   it('exposes structured diagnostics without changing legacy messages', () => {
     const source = '{2/4}\n1 2 |||\n{lyrics}la{/}'
     const diagnostics = validateM3NDiagnostics(source)
