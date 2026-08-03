@@ -260,13 +260,15 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   const lyricIndicesByPart = new Map<string, number>()
   const lyricSyllables = document.lyrics.map((block) => {
     const numericRange = /^\d+$/.test(block.range)
-    const passes = block.range ? parsePassRange(block.range) : undefined
+    const passRange = block.range || block.phrasePasses
+    const passes = passRange ? parsePassRange(passRange) : undefined
+    const displayPass = !numericRange && passes?.size === 1 ? [...passes][0] : undefined
     const scopeKey = `${block.part ?? ''}\0${block.targetStart ?? 'global'}`
     const localIndex = (lyricIndicesByPart.get(scopeKey) ?? 0) + 1
     lyricIndicesByPart.set(scopeKey, localIndex)
     return {
-      n: numericRange ? block.range : String(block.part === undefined ? 1 : localIndex),
-      verseIndex: numericRange ? Number(block.range) : block.part === undefined ? 1 : localIndex,
+      n: numericRange ? block.range : String(displayPass ?? (block.part === undefined ? 1 : localIndex)),
+      verseIndex: numericRange ? Number(block.range) : displayPass ?? (block.part === undefined ? 1 : localIndex),
       part: block.part,
       targetStart: block.targetStart,
       targetEnd: block.targetEnd,

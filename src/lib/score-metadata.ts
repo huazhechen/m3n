@@ -3,7 +3,6 @@ import { validateM3NDiagnostics } from './m3n-validate'
 import { scoreDiagnosticSeverity, type ScoreDiagnosticSeverity } from './score-diagnostics'
 
 export type PresetScoreMetadata = {
-  order: number
   slug: string
   title: string
   subtitle?: string
@@ -45,17 +44,12 @@ function normalizeSearchText(value: string) {
   return value.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
 }
 
-function orderFromSlug(slug: string) {
-  return /^\d{5}$/.test(slug) ? Number(slug) : Number.MAX_SAFE_INTEGER
-}
-
 export function scoreMetadataFromSource(slug: string, source: string): PresetScoreMetadata {
   const title = readAttribute(source, 'title') ?? slug
   const subtitle = readAttribute(source, 'subtitle')
   const singer = readAttribute(source, 'singer')
   const composer = readAttribute(source, 'composer')
   return {
-    order: orderFromSlug(slug),
     slug,
     title,
     subtitle,

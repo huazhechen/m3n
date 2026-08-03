@@ -12,7 +12,6 @@ describe('bundled score corpus', () => {
     expect(presetScores.map((score) => score.melodyComplexity)).toEqual(
       [...presetScores.map((score) => score.melodyComplexity)].sort((left, right) => left - right),
     )
-    expect(new Set(presetScores.map((score) => score.order)).size).toBe(presetScores.length)
   })
 
   it('converts every score with valid source mappings', () => {
@@ -44,6 +43,6 @@ describe('bundled score corpus', () => {
   })
 
   it('detects numbered lyric blocks in score metadata', () => {
-    expect(presetScores.find((score) => score.slug === '00021')?.hasLyrics).toBe(true)
+    expect(presetScores.find((score) => score.slug === 'tong_zhuo_de_ni_01')?.hasLyrics).toBe(true)
   })
 })

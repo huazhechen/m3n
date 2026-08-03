@@ -3,7 +3,7 @@ import { scoreMetadataFromSource } from './score-metadata'
 
 describe('scoreMetadataFromSource', () => {
   it('indexes v0.3 supplemental rows without treating form as metadata', () => {
-    const metadata = scoreMetadataFromSource('00001', [
+    const metadata = scoreMetadataFromSource('test_score_01', [
       '{title=测试} {form=A,A}',
       '{key=C} {2/4}',
       '===A',

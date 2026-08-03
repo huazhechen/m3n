@@ -17,4 +17,6 @@ export const presetScores: PresetScore[] = Object.entries(scoreModules)
     ...scoreMetadataFromSource(slugFromPath(path), source),
     source,
   }))
-  .sort((a, b) => a.melodyComplexity - b.melodyComplexity || a.order - b.order || a.slug.localeCompare(b.slug))
+  .sort((a, b) => a.melodyComplexity - b.melodyComplexity
+    || a.title.localeCompare(b.title, 'zh-Hans-CN')
+    || a.slug.localeCompare(b.slug))
