@@ -41,7 +41,14 @@ export type DirectInterval = {
 export type DirectMeasure = { events: DirectEvent[]; left?: string; right?: string; ending?: string; breakBefore?: boolean; breakAfter?: boolean; multiRest?: number; repeatCount?: number; barEnd?: number }
 export type DirectPart = { melody: DirectMeasure[]; bass: DirectMeasure[] }
 export type DirectLyricSyllable = { text: string; sourceStart: number; sourceEnd: number; forceTiedTarget: boolean; kind: 'text' | 'placeholder' | 'extender'; underlined: boolean; wordpos?: 'i' | 'm' | 't' }
-export type DirectLyricBlock = { range: string; mode: 'char' | 'word'; syllables: DirectLyricSyllable[]; part?: string }
+export type DirectLyricBlock = {
+  range: string
+  mode: 'char' | 'word'
+  syllables: DirectLyricSyllable[]
+  part?: string
+  targetStart?: number
+  targetEnd?: number
+}
 type DirectSettingEvent = {
   beats: number
   kind: 'key' | 'meter' | 'tempo'
@@ -517,22 +524,27 @@ export function parseM3NDocument(source: string): DirectDocument {
       }
     }
 
-    const lyricRows = new Map<string, { part: string; range: string; syllables: DirectLyricSyllable[] }>()
+    const lyricRows: DirectLyricBlock[] = []
     for (const section of projected.structure.sections) {
       for (const phrase of section.phrases) {
+        if (!phrase.melody) continue
         const local = new Map(phrase.lyrics.map((lyric) => [lyric.label, lyric]))
         for (const lyric of phrase.lyrics) {
           const reference = /^\{L(\d+)\}$/.exec(lyric.text.trim())
           const row = reference ? local.get(reference[1] ?? '') : lyric
           if (!row) continue
-          const key = `${section.name}\0${lyric.label}`
-          const block = lyricRows.get(key) ?? { part: section.name, range: lyric.label, syllables: [] }
-          block.syllables.push(...parseLyricItems(row.text.replace(/\s*\|\s*/g, ' '), row.start, 'char'))
-          lyricRows.set(key, block)
+          lyricRows.push({
+            part: section.name,
+            range: lyric.label,
+            mode: 'char',
+            syllables: parseLyricItems(row.text.replace(/\s*\|\s*/g, ' '), row.start, 'char'),
+            targetStart: phrase.melody.start,
+            targetEnd: phrase.melody.start + phrase.melody.text.length,
+          })
         }
       }
     }
-    document.lyrics = [...lyricRows.values()].map(({ part, range, syllables }) => ({ part, range, mode: 'char', syllables }))
+    document.lyrics = lyricRows
   }
   return document
 }

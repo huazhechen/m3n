@@ -42,6 +42,16 @@ describe('direct M3N parser', () => {
     ])
   })
 
+  it('keeps each v0.3 lyric block scoped to its phrase', () => {
+    const source = '{2/4}\nN: 1 2 |\nL: 甲乙\n---\nN: 3 4 |||\nL: 丙丁'
+    const document = parseM3NDocument(source)
+
+    expect(document.lyrics).toMatchObject([
+      { range: '', targetStart: source.indexOf('1 2'), targetEnd: source.indexOf('1 2') + 5 },
+      { range: '', targetStart: source.indexOf('3 4'), targetEnd: source.indexOf('3 4') + 7 },
+    ])
+  })
+
   it('inherits melody setting changes in the bass staff', () => {
     const document = parseM3NDocument([
       '{key=C} {2/4} {120qpm} 1 2 | {key=D} {3/4} {90qpm}1 2 3 |||',

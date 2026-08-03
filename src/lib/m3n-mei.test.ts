@@ -30,6 +30,15 @@ describe('M3N to MEI conversion', () => {
       expect.objectContaining({ xmlId: 'm3n-e-4', sourceStart: cLyricStart + 1 }),
     ])
   })
+
+  it('does not render lyrics outside their v0.3 phrase', () => {
+    const result = m3nToMei('{2/4}\nN: 1 2 |\nL: 甲乙\n---\nN: 3 4 |||\nL: 丙丁')
+
+    expect(result.mei).toContain('xml:id="m3n-e-1-v1" n="1"><syl>甲')
+    expect(result.mei).toContain('xml:id="m3n-e-3-v1" n="1"><syl>丙')
+    expect(result.mei).not.toContain('xml:id="m3n-e-1-v2"')
+    expect(result.mei).not.toContain('xml:id="m3n-e-3-v2"')
+  })
   it('accepts an already parsed document', () => {
     const source = '{key=C} {2/4} 1 2 |||'
 

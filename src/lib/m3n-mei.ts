@@ -261,13 +261,15 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   const lyricSyllables = document.lyrics.map((block, index) => {
     const numericRange = /^\d+$/.test(block.range)
     const passes = block.range ? parsePassRange(block.range) : undefined
-    const partKey = block.part ?? ''
-    const localIndex = (lyricIndicesByPart.get(partKey) ?? 0) + 1
-    lyricIndicesByPart.set(partKey, localIndex)
+    const scopeKey = `${block.part ?? ''}\0${block.targetStart ?? 'global'}`
+    const localIndex = (lyricIndicesByPart.get(scopeKey) ?? 0) + 1
+    lyricIndicesByPart.set(scopeKey, localIndex)
     return {
       n: numericRange ? block.range : String(block.part === undefined ? index + 1 : localIndex),
       verseIndex: numericRange ? Number(block.range) : block.part === undefined ? index + 1 : localIndex,
       part: block.part,
+      targetStart: block.targetStart,
+      targetEnd: block.targetEnd,
       passes,
       syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
         ...syllable,
@@ -364,9 +366,12 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
       // Named parts use their first-occurrence path as the lyric baseline.
       // Their numbered lyric blocks are alternate displayed verses, rather
       // than repeat passes of the written measures.
-      const lyricBlocksAtEvent = document.partOrder.length > 0
-        ? lyricSyllables.filter((block) => block.part === undefined || block.part === partName)
-        : lyricSyllables.filter((block) => !block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
+      const lyricBlocksAtEvent = lyricSyllables.filter((block) => (
+        (document.partOrder.length === 0 || block.part === undefined || block.part === partName)
+        && (block.targetStart === undefined || block.targetStart <= event.sourceStart)
+        && (block.targetEnd === undefined || event.sourceStart < block.targetEnd)
+        && (document.partOrder.length > 0 || !block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
+      ))
       const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
       const assignedLyrics = hasLyricTarget
         ? lyricBlocksAtEvent.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
