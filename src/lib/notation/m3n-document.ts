@@ -134,7 +134,7 @@ export function projectM3NDocument(source: string) {
         const closesBeforeBar = phrase.passes ? '{/}' : ''
         const closesPart = named && phraseIndex === section.phrases.length - 1 ? '{/}' : ''
         let text = closesBeforeBar
-          ? phrase.melody.text.replace(/((?::\|\|\||:\|\||\|\|\|)(?:\{x\d+\})?)\s*$/, `${closesBeforeBar}$1`)
+          ? phrase.melody.text.replace(/((?::\|\|\||:\|\||\|\|\||\|\||\|)(?:\{x\d+\})?)\s*$/, `${closesBeforeBar}$1`)
           : phrase.melody.text
         if (closesBeforeBar && text === phrase.melody.text) text = `${text} ${closesBeforeBar}`
         if (closesPart && /(?::\|\|\||\|\|\|)(?:\{x\d+\})?\s*$/.test(text)) {

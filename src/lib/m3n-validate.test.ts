@@ -21,6 +21,10 @@ describe('validateM3N', () => {
     expect(messages('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁 | 戊己')).toContain('乐句第 1 遍需要 2 个歌词小节，实际 3 个')
   })
 
+  it('closes a house before its ordinary trailing barline', () => {
+    expect(validateM3N('{2/4}\nN: 1 2 |\n---V1\nN: 3 4 |\n---V2\nN: 5 6 |||')).toEqual([])
+  })
+
   it('preserves measure alignment for lyric references and empty lyric targets', () => {
     const referenced = '{form=A,A}\n{2/4}\n===A\nN: 1 2 | 3 4 ||\nL1: 甲乙 | 丙丁\nL2: {L1}'
     expect(validateM3N(referenced)).toEqual([])
