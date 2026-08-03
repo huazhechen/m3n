@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "m3n",
   "main": "worker/index.ts",
-  "compatibility_date": "2026-08-04",
+  "compatibility_date": "2026-08-03",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
@@ -10,7 +10,7 @@
   },
   "kv_namespaces": [
     {
-      "binding": "m3n-scores",
+      "binding": "M3N_SCORES",
       "id": "a3dc7e3dc4914a88aae04f9f81d0d426",
       "preview_id": "a3dc7e3dc4914a88aae04f9f81d0d426"
     }
