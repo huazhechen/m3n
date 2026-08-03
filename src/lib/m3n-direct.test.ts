@@ -25,6 +25,23 @@ describe('direct M3N parser', () => {
     expect(second).toMatchObject({ key: 'C', meterCount: 2, meterUnit: 4, tempo: 120 })
   })
 
+  it('keeps v0.3 lyrics scoped to their named part', () => {
+    const document = parseM3NDocument([
+      '{form=A,C} {2/4}',
+      '===A',
+      'N: 1 2 ||',
+      'L1: 甲乙',
+      '===C',
+      'N: 3 4 ||',
+      'L: 啦啦',
+    ].join('\n'))
+
+    expect(document.lyrics).toMatchObject([
+      { part: 'A', range: '1', syllables: [{ text: '甲' }, { text: '乙' }] },
+      { part: 'C', range: '', syllables: [{ text: '啦' }, { text: '啦' }] },
+    ])
+  })
+
   it('inherits melody setting changes in the bass staff', () => {
     const document = parseM3NDocument([
       '{key=C} {2/4} {120qpm} 1 2 | {key=D} {3/4} {90qpm}1 2 3 |||',

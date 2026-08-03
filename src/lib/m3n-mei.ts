@@ -257,12 +257,17 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
   let previousTempo = document.tempo
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
+  const lyricIndicesByPart = new Map<string, number>()
   const lyricSyllables = document.lyrics.map((block, index) => {
     const numericRange = /^\d+$/.test(block.range)
     const passes = block.range ? parsePassRange(block.range) : undefined
+    const partKey = block.part ?? ''
+    const localIndex = (lyricIndicesByPart.get(partKey) ?? 0) + 1
+    lyricIndicesByPart.set(partKey, localIndex)
     return {
-      n: numericRange ? block.range : String(index + 1),
-      verseIndex: numericRange ? Number(block.range) : index + 1,
+      n: numericRange ? block.range : String(block.part === undefined ? index + 1 : localIndex),
+      verseIndex: numericRange ? Number(block.range) : block.part === undefined ? index + 1 : localIndex,
+      part: block.part,
       passes,
       syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
         ...syllable,
@@ -332,6 +337,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   const renderStaff = (
     measure: DirectMeasure | undefined,
     staffNumber: number,
+    partName: string,
     keyChanges = new Map<number, string>(),
     meter = previousMeter,
   ) => {
@@ -359,7 +365,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
       // Their numbered lyric blocks are alternate displayed verses, rather
       // than repeat passes of the written measures.
       const lyricBlocksAtEvent = document.partOrder.length > 0
-        ? lyricSyllables
+        ? lyricSyllables.filter((block) => block.part === undefined || block.part === partName)
         : lyricSyllables.filter((block) => !block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
       const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
       const assignedLyrics = hasLyricTarget
@@ -392,7 +398,10 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         : []
       if (hasLyricTarget && !measure?.ending) {
         const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
-        for (let row = 1; row <= lyricRowCount; row += 1) {
+        const partLyricRowCount = document.partOrder.length > 0
+          ? Math.max(0, ...lyricBlocksAtEvent.map((block) => block.verseIndex))
+          : lyricRowCount
+        for (let row = 1; row <= partLyricRowCount; row += 1) {
           if (occupiedRows.has(row)) continue
           lyrics.push({
             text: '',
@@ -568,8 +577,8 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         ? { beats: actualBeats, number: displayedNumber, id: measureId, right: melody?.right }
         : undefined
       const staves = [
-        renderStaff(melody, 1, keyChanges, meter),
-        hasBassStaff ? renderStaff(part.bass[measureIndex], 2, keyChanges, meter) : '',
+        renderStaff(melody, 1, partName, keyChanges, meter),
+        hasBassStaff ? renderStaff(part.bass[measureIndex], 2, partName, keyChanges, meter) : '',
       ]
         .filter(Boolean).map((staff) => staff.split('\n').map((line) => `  ${line}`).join('\n')).join('\n')
       const controls = [controlXml(melody, 1, meter), hasBassStaff ? controlXml(part.bass[measureIndex], 2, meter) : ''].filter(Boolean).join('\n')

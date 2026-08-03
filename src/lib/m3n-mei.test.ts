@@ -11,6 +11,25 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<harm staff="1" startid="#m3n-e-3">G</harm>')
     expect(result.mei).toContain('<harm staff="1" startid="#m3n-e-5">F</harm>')
   })
+
+  it('attaches named-part lyrics only to events in the same part', () => {
+    const source = [
+      '{form=A,C} {2/4}',
+      '===A',
+      'N: 1 2 ||',
+      'L1: 甲乙',
+      '===C',
+      'N: 3 4 ||',
+      'L: 啦啦',
+    ].join('\n')
+    const result = m3nToMei(source)
+    const cLyricStart = source.indexOf('啦啦')
+
+    expect(result.sourceMap.filter((range) => range.sourceStart >= cLyricStart)).toEqual([
+      expect.objectContaining({ xmlId: 'm3n-e-3', sourceStart: cLyricStart }),
+      expect.objectContaining({ xmlId: 'm3n-e-4', sourceStart: cLyricStart + 1 }),
+    ])
+  })
   it('accepts an already parsed document', () => {
     const source = '{key=C} {2/4} 1 2 |||'
 
