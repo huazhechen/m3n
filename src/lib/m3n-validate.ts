@@ -1145,6 +1145,13 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
     ? undefined
     : Math.max(...adjacentHouses.flatMap((candidate) => [...parsePassRange(candidate.passes)]))
 
+  if (phrase.passes) {
+    const fallbackTargets = targets.values().next().value ?? []
+    return new Map([...parsePassRange(phrase.passes)]
+      .sort((left, right) => left - right)
+      .map((pass) => [pass, targets.get(pass) ?? fallbackTargets]))
+  }
+
   // Playback passes are global so D.S. and alternate endings can share one
   // state machine. Lyric labels are deliberately local to a phrase.
   const localTargets = new Map(
@@ -1179,7 +1186,7 @@ function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentSt
         continue
       }
       const requiredPasses = Math.max(0, ...targets.keys())
-      for (let pass = 1; pass <= requiredPasses; pass += 1) {
+      for (const [pass, passTargets] of targets) {
         const row = rows.get(String(pass))
         if (!row) {
           diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句缺少 L${pass}: 歌词行`))
@@ -1191,12 +1198,17 @@ function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentSt
           diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${pass}: 只能引用同一乐句中更早的编号歌词行`))
           continue
         }
-        const passTargets = targets.get(pass) ?? []
         const lyric = { text: referenced?.text ?? '', start: referenced?.start ?? row.start }
         validateLyricMeasureAlignment(diagnostics, phrase, pass, lyric, passTargets)
       }
       for (const label of rows.keys()) {
-        if (Number(label) > requiredPasses) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${label}: 超出乐句实际演奏次数 ${requiredPasses}`))
+        const pass = Number(label)
+        if (targets.has(pass)) continue
+        if (phrase.passes) {
+          diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${label}: 不属于该房子的遍次`))
+        } else if (pass > requiredPasses) {
+          diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${label}: 超出乐句实际演奏次数 ${requiredPasses}`))
+        }
       }
     }
   }

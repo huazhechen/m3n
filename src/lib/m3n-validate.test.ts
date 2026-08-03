@@ -51,6 +51,27 @@ describe('validateM3N', () => {
     expect(messages(source)).not.toContain('第 10 行：乐句缺少 L3: 歌词行')
   })
 
+  it('uses declared house passes for numbered lyric rows', () => {
+    const source = [
+      '{2/4}',
+      'N: ||: 1 2 |',
+      'L1: 甲乙',
+      'L2: 丙丁',
+      'L3: 戊己',
+      'L4: 庚辛',
+      '---V1',
+      'N: 3 4 :||',
+      'L: 壬癸',
+      '---V2,V3,V4',
+      'N: 5 6 :||{x4} |||',
+      'L2: 子丑',
+      'L3: 寅卯',
+      'L4: 辰巳',
+    ].join('\n')
+
+    expect(messages(source)).toBe('')
+  })
+
   it('maps projected diagnostics back to the original phrase line', () => {
     const result = messages('{2/4}\nN: 1 2 |\n---V1\nN: 3{arp} 4 |||')
 
