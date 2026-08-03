@@ -25,7 +25,7 @@ export function playbackLyricCounts(document: DirectDocument) {
     for (const measure of part.melody) {
       const passes = passesByMeasure.get(measure) ?? new Set([1])
       for (const event of measure.events) {
-        const tiedTarget = previousTied
+        const tiedTarget = previousTied || event.tieFrom !== undefined
         previousTied = event.tie
         if (event.kind === 'rest' || tiedTarget || isInstrumentalEvent(document, event)) continue
         const targets = lyricTargetCount(event)
@@ -47,7 +47,7 @@ export function sharedLyricRangeCount(document: DirectDocument, selectedPasses: 
       const isShared = !measure.ending && [...selectedPasses].every((pass) => passes.has(pass))
       const isSelectedEnding = Boolean(measure.ending) && [...selectedPasses].some((pass) => passes.has(pass))
       for (const event of measure.events) {
-        const tiedTarget = previousTied
+        const tiedTarget = previousTied || event.tieFrom !== undefined
         previousTied = event.tie
         if (!isShared && !isSelectedEnding) continue
         if (event.kind === 'rest' || tiedTarget) continue
@@ -72,7 +72,7 @@ export function playbackLyricTargets(document: DirectDocument) {
     for (const measure of part.melody) {
       const passes = passesByMeasure.get(measure) ?? new Set([1])
       for (const event of measure.events) {
-        const tiedTarget = previousTied
+        const tiedTarget = previousTied || event.tieFrom !== undefined
         previousTied = event.tie
         if (event.kind === 'rest' || isInstrumentalEvent(document, event)) continue
         const targetCount = lyricTargetCount(event)

@@ -109,6 +109,12 @@ describe('direct M3N parser', () => {
     expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
   })
 
+  it('marks matching alternate-ending starts as tie targets', () => {
+    const measures = parseM3NDocument('{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 4 3 |||').parts.get('score')!.melody
+
+    expect(measures.find((measure) => measure.ending === '2')?.events[0]?.tieFrom?.tie).toBe(true)
+  })
+
   it('assigns the D.S. return to the second lyric pass without later endings', () => {
     const measures = parseM3NDocument('{2/4} {segno}1 2 | 3 4{ds} |||').parts.get('score')!.melody
     const passes = measurePlaybackPasses(measures)

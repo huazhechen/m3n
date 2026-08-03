@@ -311,22 +311,24 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
 
   const tiesByStartEvent = new Map<DirectEvent, string[]>()
   const collectTies = (measures: DirectMeasure[]) => {
+    const addTie = (tiedEvent: DirectEvent, event: DirectEvent) => {
+      const tiedEventId = preassignedIds.get(tiedEvent)
+      const eventId = preassignedIds.get(event)
+      const startid = tiedEventId && tiedEvent.tieFromTupletIndex !== undefined
+        ? `${tiedEventId}-n${tiedEvent.tieFromTupletIndex + 1}`
+        : tiedEventId
+      const endid = eventId && event.kind === 'tuplet' ? `${eventId}-n1` : eventId
+      if (!startid || !endid) return
+      const ties = tiesByStartEvent.get(tiedEvent) ?? []
+      const tie = `<tie startid="#${startid}" endid="#${endid}"/>`
+      if (!ties.includes(tie)) ties.push(tie)
+      tiesByStartEvent.set(tiedEvent, ties)
+    }
     let tiedEvent: DirectEvent | undefined
     for (const measure of measures) {
       for (const event of measure.events) {
-        if (tiedEvent) {
-          const tiedEventId = preassignedIds.get(tiedEvent)
-          const eventId = preassignedIds.get(event)
-          const startid = tiedEventId && tiedEvent.tieFromTupletIndex !== undefined
-            ? `${tiedEventId}-n${tiedEvent.tieFromTupletIndex + 1}`
-            : tiedEventId
-          const endid = eventId && event.kind === 'tuplet' ? `${eventId}-n1` : eventId
-          if (startid && endid) {
-            const ties = tiesByStartEvent.get(tiedEvent) ?? []
-            ties.push(`<tie startid="#${startid}" endid="#${endid}"/>`)
-            tiesByStartEvent.set(tiedEvent, ties)
-          }
-        }
+        if (tiedEvent) addTie(tiedEvent, event)
+        if (event.tieFrom) addTie(event.tieFrom, event)
         tiedEvent = event.tie ? event : undefined
       }
     }
@@ -357,7 +359,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
           sourceMap.push({ xmlId: `${xmlId}-n${index + 1}`, sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
         })
       }
-      const tieEnd = previousTiedByStaff.get(staffNumber) ?? false
+      const tieEnd = (previousTiedByStaff.get(staffNumber) ?? false) || event.tieFrom !== undefined
       previousTiedByStaff.set(staffNumber, event.tie)
       const lyricTargetCount = event.kind === 'tuplet'
         ? event.pitches.filter((pitch) => pitch !== '0').length

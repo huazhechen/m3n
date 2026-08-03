@@ -1104,7 +1104,7 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
       for (const pass of passes) measureTargets.set(pass, [])
     }
     for (const event of measure.events) {
-      const tied = previousTied
+      const tied = previousTied || event.tieFrom !== undefined
       previousTied = event.tie
       if (event.sourceStart < start || event.sourceStart >= end || event.kind === 'rest') continue
       const instrumental = document.intervals.some((interval) => interval.kind === 'inst' && interval.staff === 'melody' &&

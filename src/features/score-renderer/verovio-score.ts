@@ -139,6 +139,7 @@ function appendGhostTie(ending: string, target: MeiNote, ghostIndex: number) {
 export function projectEndingTieGhosts(mei: string) {
   let ghostIndex = 0
   return mei.replace(/(<section\b(?=[^>]*\bxml:id="m3n-segment-[^"]+")[\s\S]*?<\/section>)((?:\s*<ending\b[\s\S]*?<\/ending>){2,})/g, (group, sharedSection: string, endingSource: string) => {
+    let projectedSection = sharedSection
     const endings = [...endingSource.matchAll(/<ending\b[\s\S]*?<\/ending>/g)].map((match) => match[0])
     const firstEnding = endings[0]
     const measure = lastMeasure(sharedSection)
@@ -157,10 +158,12 @@ export function projectEndingTieGhosts(mei: string) {
       for (let index = 1; index < endings.length; index += 1) {
         const laterTarget = firstPitchedNote(endings[index] ?? '', staff)
         if (!laterTarget || !samePitch(target, laterTarget)) continue
+        const branchTie = new RegExp(`\\s*<tie\\b(?=[^>]*\\bendid="#${escapeRegExp(laterTarget.id)}")[^>]*/>`, 'g')
+        projectedSection = projectedSection.replace(branchTie, '')
         endings[index] = appendGhostTie(endings[index] ?? '', laterTarget, ++ghostIndex)
       }
     }
-    return `${sharedSection}${endings.join('')}`
+    return `${projectedSection}${endings.join('')}`
   })
 }
 
