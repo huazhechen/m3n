@@ -1,10 +1,28 @@
+import { pinyin } from 'pinyin-pro'
+
 export type SharedScore = {
   source: string
   createdAt: string
 }
 
 export function isSharedScoreId(value: string | undefined) {
-  return value !== undefined && /^[A-Za-z0-9_-]{20,80}$/.test(value)
+  return value !== undefined && (/^[a-f0-9]{12}$/.test(value) || /^[a-z0-9]+(?:-[a-z0-9]+)*_[0-9]{13}$/.test(value))
+}
+
+function scoreTitle(source: string) {
+  return source.match(/\{title=([^}]*)\}/)?.[1]?.trim() ?? ''
+}
+
+export function submittedScoreId(source: string, timestamp = Date.now()) {
+  const transliterated = pinyin(scoreTitle(source), { toneType: 'none', separator: '-' })
+  const slug = transliterated
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 128) || 'untitled'
+  return `${slug}_${timestamp}`
 }
 
 async function responseError(response: Response) {
@@ -21,6 +39,19 @@ export async function createSharedScore(source: string) {
   if (!response.ok) throw new Error(await responseError(response))
   const payload = await response.json() as { id?: unknown }
   if (typeof payload.id !== 'string' || !isSharedScoreId(payload.id)) throw new Error('Server returned an invalid score ID.')
+  return payload.id
+}
+
+export async function submitScore(source: string) {
+  const id = submittedScoreId(source)
+  const response = await fetch('/api/scores/submissions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ source, id }),
+  })
+  if (!response.ok) throw new Error(await responseError(response))
+  const payload = await response.json() as { id?: unknown }
+  if (typeof payload.id !== 'string' || payload.id !== id || !isSharedScoreId(payload.id)) throw new Error('Server returned an invalid score ID.')
   return payload.id
 }
 

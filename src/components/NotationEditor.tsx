@@ -14,15 +14,16 @@ type NotationEditorProps = {
   initialSource?: string
   embedded?: boolean
   onBrowse?: (source: string) => Promise<void>
+  onSubmit?: (source: string) => Promise<void>
 }
 
-export function NotationEditor({ initialSource = defaultScore, embedded = false, onBrowse }: NotationEditorProps) {
+export function NotationEditor({ initialSource = defaultScore, embedded = false, onBrowse, onSubmit }: NotationEditorProps) {
   const [source, setSource] = useState(initialSource)
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const [isMeiDialogOpen, setIsMeiDialogOpen] = useState(false)
   const [isComplexityDialogOpen, setIsComplexityDialogOpen] = useState(false)
-  const [isSharing, setIsSharing] = useState(false)
+  const [sharingAction, setSharingAction] = useState<'browse' | 'submit' | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
@@ -87,14 +88,27 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
 
   const browseScore = async () => {
     if (!onBrowse) return
-    setIsSharing(true)
+    setSharingAction('browse')
     setShareError(null)
     try {
       await onBrowse(source)
     } catch (error) {
       setShareError(error instanceof Error ? error.message : 'Unable to create the shared score.')
     } finally {
-      setIsSharing(false)
+      setSharingAction(null)
+    }
+  }
+
+  const submitScore = async () => {
+    if (!onSubmit) return
+    setSharingAction('submit')
+    setShareError(null)
+    try {
+      await onSubmit(source)
+    } catch (error) {
+      setShareError(error instanceof Error ? error.message : 'Unable to submit the score.')
+    } finally {
+      setSharingAction(null)
     }
   }
 
@@ -108,7 +122,8 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
           <button type="button" className="action-button" onClick={() => setIsComplexityDialogOpen(true)}>复杂度</button>
           <button type="button" className="action-button" onClick={() => setIsMeiDialogOpen(true)}>MEI</button>
           <button type="button" className="action-button" onClick={() => scoreRendererRef.current?.openExport()}>打印</button>
-          {onBrowse && <button type="button" className="action-button" disabled={isSharing} onClick={() => void browseScore()}>{isSharing ? '保存中' : '浏览'}</button>}
+          {onBrowse && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void browseScore()}>{sharingAction === 'browse' ? '保存中' : '浏览'}</button>}
+          {onSubmit && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void submitScore()}>{sharingAction === 'submit' ? '提交中' : '提交'}</button>}
         </div>
       </header>
       )}
