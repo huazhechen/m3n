@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { formatM3N } from '../lib/m3n-format'
 import { m3nToMei } from '../lib/m3n-mei'
 import { invalidMeasureIds as findInvalidMeasureIds } from '../lib/m3n-validate'
@@ -7,7 +6,6 @@ import defaultScore from '../scores/00002.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import type { ScoreRendererRef } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'
-import { sharedScoreUrl } from '../lib/score-share'
 import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
 import { parseM3NDocument } from '../lib/m3n-direct'
 import { assessM3NDocumentMelodyComplexity } from '../lib/m3n-melody-complexity'
@@ -94,7 +92,6 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           <button type="button" className="action-button" onClick={() => setIsComplexityDialogOpen(true)}>复杂度</button>
           <button type="button" className="action-button" onClick={() => setIsMeiDialogOpen(true)}>MEI</button>
           <button type="button" className="action-button" onClick={() => scoreRendererRef.current?.openExport()}>打印</button>
-          <Link className="action-button" to={sharedScoreUrl('/reader', source)}>浏览</Link>
         </div>
       </header>
       )}

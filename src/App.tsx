@@ -15,7 +15,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/editor" element={<EditorPage />} />
-          <Route path="/reader" element={<ScoreReaderPage />} />
           <Route path="/scores" element={<ScoresPage />} />
           <Route path="/scores/:slug" element={<ScoreReaderPage />} />
           <Route path="/docs" element={<DocsPage />} />
