@@ -10,9 +10,9 @@
   },
   "kv_namespaces": [
     {
-      "binding": "M3N_SCORES",
-      "id": "REPLACE_WITH_KV_NAMESPACE_ID",
-      "preview_id": "REPLACE_WITH_KV_PREVIEW_NAMESPACE_ID"
+      "binding": "m3n-scores",
+      "id": "a3dc7e3dc4914a88aae04f9f81d0d426",
+      "preview_id": "a3dc7e3dc4914a88aae04f9f81d0d426"
     }
   ]
 }
