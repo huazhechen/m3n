@@ -61,16 +61,32 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{2/4}\nN: ||: 1 2 |\nL1: 甲乙\nL2: 丙丁\n---V1\nN: 3 4 :||\nL1: 戊己\n---V2\nN: 5 6 |||\nL2: 庚辛')
 
     expect(result.mei).toContain('xml:id="m3n-e-3-v1" n="1"><syl>戊')
-    expect(result.mei).toContain('xml:id="m3n-e-5-v2" n="2"><syl>庚')
-    expect(result.mei).not.toContain('xml:id="m3n-e-5-v1"')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v1" n="1"><syl>庚')
+    expect(result.mei).not.toContain('xml:id="m3n-e-5-v2"')
   })
 
   it('places plain house lyrics on their playback-pass row', () => {
     const result = m3nToMei('{2/4}\nN: ||: 1 2 |\nL1: 甲乙\nL2: 丙丁\n---V1\nN: 3 4 :||\nL: 戊己\n---V2\nN: 5 6 |||\nL: 庚辛')
 
     expect(result.mei).toContain('xml:id="m3n-e-3-v1" n="1"><syl>戊')
-    expect(result.mei).toContain('xml:id="m3n-e-5-v2" n="2"><syl>庚')
-    expect(result.mei).not.toContain('xml:id="m3n-e-5-v1"')
+    expect(result.mei).toContain('xml:id="m3n-e-5-v1" n="1"><syl>庚')
+    expect(result.mei).not.toContain('xml:id="m3n-e-5-v2"')
+  })
+
+  it('does not reserve unused lyric rows in a final single-verse phrase', () => {
+    const result = m3nToMei('{2/4}\nN: 1 2 |\nL1: 甲乙\nL2: 丙丁\n---\nN: 3 4 |||\nL1: 戊己')
+
+    expect(result.mei).toContain('xml:id="m3n-e-3-v1" n="1"><syl>戊')
+    expect(result.mei).not.toContain('xml:id="m3n-e-3-v2"')
+  })
+
+  it('compacts lyric rows in trailing endings that no longer meet a common section', () => {
+    const result = m3nToMei('{2/4}\nN: ||: 1 2 |\nL1: 甲乙\nL2: 丙丁\nL3: 戊己\n---V1\nN: 3 4 :||\nL1: 庚辛\n---V2\nN: 5 6 ||\nL2: 壬癸\n---V3\nN: 7 1e |||\nL3: 子丑')
+
+    expect(result.mei).toContain('xml:id="m3n-e-5-v1" n="1"><syl>壬')
+    expect(result.mei).not.toContain('xml:id="m3n-e-5-v2"')
+    expect(result.mei).toContain('xml:id="m3n-e-7-v1" n="1"><syl>子')
+    expect(result.mei).not.toContain('xml:id="m3n-e-7-v3"')
   })
   it('accepts an already parsed document', () => {
     const source = '{key=C} {2/4} 1 2 |||'

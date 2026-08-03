@@ -340,6 +340,26 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
     if (hasBassStaff) collectTies(part.bass)
   }
 
+  const compactLyricRowsInEnding = new Set<DirectMeasure>()
+  for (const part of document.parts.values()) {
+    for (let index = 1; index < part.melody.length; index += 1) {
+      const ending = part.melody[index]
+      const previous = part.melody[index - 1]
+      if (!ending?.ending || !previous?.ending || ending.ending === previous.ending) continue
+      const laterCommonUsesMultipleRows = part.melody.slice(index).some((measure) => (
+        !measure?.ending && measure?.events.some((event) => Math.max(0, ...lyricSyllables
+          .filter((block) => block.targetStart === undefined || (
+            block.targetStart <= event.sourceStart && event.sourceStart < (block.targetEnd ?? Infinity)
+          ))
+          .map((block) => block.verseIndex)) > 1)
+      ))
+      if (laterCommonUsesMultipleRows) continue
+      for (let endingIndex = index; part.melody[endingIndex]?.ending === ending.ending; endingIndex += 1) {
+        compactLyricRowsInEnding.add(part.melody[endingIndex]!)
+      }
+    }
+  }
+
   const renderStaff = (
     measure: DirectMeasure | undefined,
     staffNumber: number,
@@ -407,7 +427,8 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         : []
       if (hasLyricTarget && !measure?.ending) {
         const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
-        const partLyricRowCount = document.partOrder.length > 0
+        const hasScopedLyrics = lyricBlocksAtEvent.some((block) => block.targetStart !== undefined)
+        const partLyricRowCount = document.partOrder.length > 0 || hasScopedLyrics
           ? Math.max(0, ...lyricBlocksAtEvent.map((block) => block.verseIndex))
           : lyricRowCount
         for (let row = 1; row <= partLyricRowCount; row += 1) {
@@ -426,6 +447,15 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
           })
         }
         lyrics.sort((left, right) => left.verseIndex - right.verseIndex)
+      }
+      if (measure && compactLyricRowsInEnding.has(measure)) {
+        const visualRows = new Map<number, number>()
+        for (const lyric of lyrics) {
+          const row = visualRows.get(lyric.verseIndex) ?? visualRows.size + 1
+          visualRows.set(lyric.verseIndex, row)
+          lyric.n = String(row)
+          lyric.verseIndex = row
+        }
       }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
