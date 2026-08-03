@@ -6,7 +6,7 @@ export type SharedScore = {
 }
 
 export function isSharedScoreId(value: string | undefined) {
-  return value !== undefined && (/^[a-f0-9]{12}$/.test(value) || /^[a-z0-9]+(?:-[a-z0-9]+)*_[0-9]{13}$/.test(value))
+  return value !== undefined && (/^[a-f0-9]{12}$/.test(value) || /^[a-z0-9]+(?:_[a-z0-9]+)*_[0-9]{13}$/.test(value))
 }
 
 function scoreTitle(source: string) {
@@ -14,13 +14,13 @@ function scoreTitle(source: string) {
 }
 
 export function submittedScoreId(source: string, timestamp = Date.now()) {
-  const transliterated = pinyin(scoreTitle(source), { toneType: 'none', separator: '-' })
+  const transliterated = pinyin(scoreTitle(source), { toneType: 'none', separator: '_' })
   const slug = transliterated
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
     .slice(0, 128) || 'untitled'
   return `${slug}_${timestamp}`
 }

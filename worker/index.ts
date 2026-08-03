@@ -18,7 +18,7 @@ type SharedScore = {
 }
 
 const temporaryScoreIdPattern = /^[a-f0-9]{12}$/
-const submittedScoreIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*_[0-9]{13}$/
+const submittedScoreIdPattern = /^[a-z0-9]+(?:_[a-z0-9]+)*_[0-9]{13}$/
 const maxSourceBytes = 256 * 1024
 const temporaryScoreTtl = 7 * 24 * 60 * 60
 const submittedScoreTtl = 15 * 24 * 60 * 60

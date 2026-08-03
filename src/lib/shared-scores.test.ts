@@ -5,7 +5,7 @@ describe('submittedScoreId', () => {
   it('uses the score title pinyin and timestamp', () => {
     const id = submittedScoreId('{title=小星星}\n{key=C}', 1785859200000)
 
-    expect(id).toBe('xiao-xing-xing_1785859200000')
+    expect(id).toBe('xiao_xing_xing_1785859200000')
     expect(isSharedScoreId(id)).toBe(true)
   })
 

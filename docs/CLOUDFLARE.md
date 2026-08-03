@@ -24,7 +24,7 @@ npx wrangler deploy
 The Worker exposes two same-origin endpoints:
 
 - `POST /api/scores` creates a temporary score for the editor's 浏览 action. The Worker derives its ID from the first 48 bits of the source SHA-256 hash, encoded as 12 lowercase hexadecimal characters. The KV record expires after 7 days.
-- `POST /api/scores/submissions` stores a submitted score for the editor's 提交 action. Its body includes a key in the form `title-pinyin_13-digit-millisecond-timestamp`; the KV record expires after 15 days.
+- `POST /api/scores/submissions` stores a submitted score for the editor's 提交 action. Its body includes a key in the form `title_pinyin_13_digit_millisecond_timestamp`; the KV record expires after 15 days.
 - `GET /api/scores/:id` retrieves that score.
 
 Each source is capped at 256 KiB. The Worker accepts only the two documented ID forms; there is intentionally no browser-accessible overwrite or delete endpoint.

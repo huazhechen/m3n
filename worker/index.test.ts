@@ -39,7 +39,7 @@ describe('Cloudflare KV score API', () => {
 
   it('stores submitted scores for fifteen days', async () => {
     const { worker, puts } = testWorker()
-    const id = 'xiao-xing-xing_1785859200000'
+    const id = 'xiao_xing_xing_1785859200000'
     const created = await worker.fetch(new Request('https://m3n.example/api/scores/submissions', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
