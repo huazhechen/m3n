@@ -13,14 +13,17 @@ import { assessM3NDocumentMelodyComplexity } from '../lib/m3n-melody-complexity'
 type NotationEditorProps = {
   initialSource?: string
   embedded?: boolean
+  onBrowse?: (source: string) => Promise<void>
 }
 
-export function NotationEditor({ initialSource = defaultScore, embedded = false }: NotationEditorProps) {
+export function NotationEditor({ initialSource = defaultScore, embedded = false, onBrowse }: NotationEditorProps) {
   const [source, setSource] = useState(initialSource)
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const [isMeiDialogOpen, setIsMeiDialogOpen] = useState(false)
   const [isComplexityDialogOpen, setIsComplexityDialogOpen] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [shareError, setShareError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
   const document = useMemo(() => parseM3NDocument(source), [source])
@@ -82,6 +85,19 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
     updateCursorPosition(Math.min(cursorPosition, formatted.length))
   }
 
+  const browseScore = async () => {
+    if (!onBrowse) return
+    setIsSharing(true)
+    setShareError(null)
+    try {
+      await onBrowse(source)
+    } catch (error) {
+      setShareError(error instanceof Error ? error.message : 'Unable to create the shared score.')
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
   return (
     <div className={embedded ? 'embedded-editor' : 'editor-container'}>
       {!embedded && (
@@ -92,6 +108,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
           <button type="button" className="action-button" onClick={() => setIsComplexityDialogOpen(true)}>复杂度</button>
           <button type="button" className="action-button" onClick={() => setIsMeiDialogOpen(true)}>MEI</button>
           <button type="button" className="action-button" onClick={() => scoreRendererRef.current?.openExport()}>打印</button>
+          {onBrowse && <button type="button" className="action-button" disabled={isSharing} onClick={() => void browseScore()}>{isSharing ? '保存中' : '浏览'}</button>}
         </div>
       </header>
       )}
@@ -127,6 +144,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false 
         {result.diagnosticDetails.length > 0 && (
           <ul className="diagnostics editor-render-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.legacyMessage}`}>{formatScoreDiagnostic(item)}</li>)}</ul>
         )}
+        {shareError && <p className="editor-share-error" role="alert">{shareError}</p>}
       </div>
 
       {isMeiDialogOpen && (

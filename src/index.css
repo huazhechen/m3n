@@ -229,6 +229,11 @@ h3 {
   gap: 8px;
 }
 
+.editor-share-error {
+  margin: 0 12px 10px;
+  color: #9a3a25;
+}
+
 .editor-body {
   display: grid;
   min-width: 0;

@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import type { ScoreRendererRef } from '../components/ScoreRenderer'
 import { TopNav } from '../components/TopNav'
@@ -7,16 +7,34 @@ import { m3nToMei } from '../lib/m3n-mei'
 import { invalidMeasureIds } from '../lib/m3n-validate'
 import { presetScores } from '../lib/samples'
 import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
+import { isSharedScoreId, loadSharedScore } from '../lib/shared-scores'
 
 export function ScoreReaderPage() {
   const { slug } = useParams()
   const score = presetScores.find((item) => item.slug === slug)
+  const [sharedSource, setSharedSource] = useState<string | null | undefined>(undefined)
   const scoreRendererRef = useRef<ScoreRendererRef>(null)
-  const scoreSource = score?.source ?? ''
+  useEffect(() => {
+    let cancelled = false
+    if (score || !slug || !isSharedScoreId(slug)) {
+      setSharedSource(null)
+      return () => { cancelled = true }
+    }
+    setSharedSource(undefined)
+    void loadSharedScore(slug)
+      .then((shared) => { if (!cancelled) setSharedSource(shared?.source ?? null) })
+      .catch(() => { if (!cancelled) setSharedSource(null) })
+    return () => { cancelled = true }
+  }, [score, slug])
+
+  const scoreSource = score?.source ?? sharedSource ?? ''
   const result = useMemo(() => m3nToMei(scoreSource), [scoreSource])
   const invalidMeasures = useMemo(() => invalidMeasureIds(scoreSource), [scoreSource])
 
-  if (!score) {
+  if (!score && sharedSource === undefined) {
+    return <main><TopNav /><div className="page-status" role="status">Loading...</div></main>
+  }
+  if (!score && sharedSource === null) {
     return <Navigate to="/scores" replace />
   }
 
@@ -50,7 +68,7 @@ export function ScoreReaderPage() {
           打印
         </button>
       </div>
-      <section className="score-reader" aria-label={`${result.title || score.title} 乐谱`}>
+      <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
           ref={scoreRendererRef}
           mei={result.mei}
