@@ -1089,7 +1089,7 @@ function validateLyricMeasureAlignment(
 }
 
 export function phraseLyricTargets(document: DirectDocument, structure: M3NDocumentStructure, sectionName: string, phrase: M3NPhrase) {
-  const part = document.parts.get(structure.form.length > 0 ? sectionName : 'score')
+  const part = document.parts.get('score')
   if (!part || !phrase.melody) return new Map<number, StrictLyricMeasureTargets>()
   const start = phrase.melody.start
   const end = start + phrase.melody.text.length
@@ -1160,16 +1160,6 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
       .sort(([left], [right]) => left - right)
       .map(([, measureTargets], index) => [index + 1, measureTargets]),
   )
-  if (sectionName && structure.form.length > 0) {
-    const occurrences = structure.form.filter((name) => name === sectionName).length
-    const local = [...localTargets.values()]
-    const expanded = new Map<number, StrictLyricMeasureTargets>()
-    let traversal = 1
-    for (let occurrence = 0; occurrence < occurrences; occurrence += 1) {
-      for (const passTargets of local) expanded.set(traversal++, passTargets)
-    }
-    return expanded
-  }
   return localTargets
 }
 
@@ -1350,10 +1340,12 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       .filter((message) => !message.startsWith('[L]'))
       .map((message) => remapProjectedLines(message, projected.lineMap))
     : projectedDiagnostics
-  const removedEndingSyntax = /\{(?:volta|ending)=[^}]*\}/.test(source)
-    ? ['旧房子区间语法已删除；请将每个房子写成独立的 ---Vn 乐句']
-    : []
-  return [...projected.structure.diagnostics, ...removedEndingSyntax, ...legacyDiagnostics, ...lyricDiagnostics]
+  const removedSyntax = [
+    /\{(?:form|parts|part)=[^}]*\}/.test(source) ? '旧乐段编排语法已删除；请按实际演奏顺序书写乐句' : '',
+    /\{(?:volta|ending)=[^}]*\}/.test(source) ? '旧房子区间语法已删除；请将每个房子写成独立的 ---Vn 乐句' : '',
+    /\{(?:segno|ds|dc|fine)\}/.test(source) ? 'D.S./D.C. 导航语法已删除；请使用小节线反复和跳房子' : '',
+  ].filter(Boolean)
+  return [...projected.structure.diagnostics, ...removedSyntax, ...legacyDiagnostics, ...lyricDiagnostics]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */

@@ -1,16 +1,12 @@
-export type PlaybackNavigation = 'segno' | 'ds' | 'dc' | 'fine'
-
 export type PlaybackNode = {
   id: string
   kind: 'section' | 'ending'
   n?: string
   repeatStart?: boolean
   repeatCount?: number
-  navigation?: readonly PlaybackNavigation[]
 }
 
 export type PlaybackMeasure = {
-  events: ReadonlyArray<{ navigation: readonly PlaybackNavigation[] }>
   left?: string
   right?: string
   ending?: string
@@ -57,42 +53,6 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
     if (measure.ending) passesByMeasure.set(measure, parsePassRange(measure.ending))
   }
 
-  const segnoIndex = measures.findIndex((measure) => measure.events.some((event) => event.navigation.includes('segno')))
-  const jumpIndex = measures.findIndex((measure) => measure.events.some((event) => event.navigation.includes('ds') || event.navigation.includes('dc')))
-  if (segnoIndex >= 0 && jumpIndex >= segnoIndex) {
-    let endingStart = jumpIndex
-    while (endingStart > 0 && measures[endingStart - 1]?.ending) endingStart -= 1
-    let endingEnd = jumpIndex + 1
-    while (measures[endingEnd]?.ending) endingEnd += 1
-    const currentEndingPass = Math.max(0, ...measures.slice(endingStart, endingEnd).flatMap((measure) => (
-      measure.ending ? [...parsePassRange(measure.ending)] : []
-    )))
-    const returnPass = Math.min(...measures.slice(endingEnd).flatMap((measure) => (
-      measure.ending ? [...parsePassRange(measure.ending)].filter((pass) => pass > currentEndingPass) : []
-    )))
-    if (Number.isFinite(returnPass)) {
-      for (const passes of passesByMeasure.values()) passes.delete(returnPass)
-      const returnEndingIndex = measures.findIndex((measure, index) => (
-        index >= endingEnd && measure.ending !== undefined && parsePassRange(measure.ending).has(returnPass)
-      ))
-      for (let index = segnoIndex; index <= returnEndingIndex; index += 1) {
-        const measure = measures[index]!
-        if (!measure.ending || parsePassRange(measure.ending).has(returnPass)) {
-          passesByMeasure.get(measure)?.add(returnPass)
-        }
-      }
-    } else if (measures[jumpIndex]?.events.some((event) => event.navigation.includes('ds'))) {
-      // Without a later ending to name the return pass, D.S. supplies the
-      // second lyric path from the segno through the jump. Alternate endings
-      // still belong only to the passes written on their ending phrases.
-      for (let index = segnoIndex; index <= jumpIndex; index += 1) {
-        const measure = measures[index]!
-        if (!measure.ending || parsePassRange(measure.ending).has(2)) {
-          passesByMeasure.get(measure)?.add(2)
-        }
-      }
-    }
-  }
   return passesByMeasure
 }
 
@@ -183,51 +143,7 @@ function expandInitialPasses(nodes: readonly PlaybackNode[]) {
   return sequence
 }
 
-function appendJumpReturn(nodes: readonly PlaybackNode[], initial: string[]) {
-  const jumpIndex = nodes.findIndex((node) => node.navigation?.some((value) => value === 'ds' || value === 'dc'))
-  if (jumpIndex < 0) return initial
-
-  const jump = nodes[jumpIndex]!
-  const destinationIndex = jump.navigation?.includes('ds')
-    ? nodes.findIndex((node) => node.navigation?.includes('segno'))
-    : nodes.findIndex((node) => node.kind === 'section')
-  const fineIndex = nodes.findIndex((node) => node.navigation?.includes('fine'))
-  if (destinationIndex < 0) return initial
-
-  const playedJumpIndex = initial.lastIndexOf(jump.id)
-  if (playedJumpIndex < 0) return initial
-
-  let returnEndIndex = fineIndex >= 0 ? fineIndex : jumpIndex
-  let returnPass: number | undefined
-  let skipEndings = false
-  if (fineIndex < 0) {
-    let endingEnd = jumpIndex + 1
-    while (nodes[endingEnd]?.kind === 'ending') endingEnd += 1
-    const jumpPass = Math.max(0, ...parsePassRange(jump.n ?? ''))
-    const nextEndingIndex = nodes.findIndex((node, index) => (
-      index > jumpIndex
-      && index < endingEnd
-      && node.kind === 'ending'
-      && [...parsePassRange(node.n ?? '')].some((pass) => pass > jumpPass)
-    ))
-    if (nextEndingIndex >= 0) {
-      returnPass = Math.min(...[...parsePassRange(nodes[nextEndingIndex]!.n ?? '')].filter((pass) => pass > jumpPass))
-      returnEndIndex = nextEndingIndex
-    } else {
-      skipEndings = true
-      returnEndIndex = Math.min(endingEnd, nodes.length - 1)
-    }
-  }
-
-  const returnPath = nodes.slice(destinationIndex, returnEndIndex + 1).flatMap((node) => {
-    if (node.kind !== 'ending') return node.id
-    if (skipEndings) return returnPass !== undefined && parsePassRange(node.n ?? '').has(returnPass) ? node.id : []
-    return !returnPass || parsePassRange(node.n ?? '').has(returnPass) ? node.id : []
-  })
-  return [...initial.slice(0, playedJumpIndex + 1), ...returnPath]
-}
-
-/** Returns written node ids in performance order, including one D.S./D.C. return. */
+/** Returns written node ids in performance order. */
 export function buildPlaybackSequence(nodes: readonly PlaybackNode[]) {
-  return appendJumpReturn(nodes, expandInitialPasses(nodes))
+  return expandInitialPasses(nodes)
 }

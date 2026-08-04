@@ -21,7 +21,6 @@ export type DirectEvent = {
   chordState?: string
   prefix?: 'sfz'
   postfixes: string[]
-  navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
   octaveShift: number
   sectionLabel?: string
   meterCount?: number
@@ -103,18 +102,13 @@ function parseBody(
   intervals: DirectInterval[],
   settingEvents: DirectSettingEvent[] = [],
   inheritedSettingEvents: DirectSettingEvent[] = [],
+  phrasePasses: ReadonlyArray<{ start: number; end: number; passes: string }> = [],
 ) {
   let depth = 0
   let currentKey = initialKey
   let currentMeterCount = initialMeterCount
   let currentMeterUnit = initialMeterUnit
   let currentTempo = initialTempo
-  let commonKey = initialKey
-  let commonMeterCount = initialMeterCount
-  let commonMeterUnit = initialMeterUnit
-  let commonTempo = initialTempo
-  let currentPart = 'score'
-  let hasParts = false
   let activeEnding: string | undefined
   let currentDynamic: string | undefined
   let dynamicChanged = false
@@ -122,17 +116,16 @@ function parseBody(
   let chordChanged = false
   let pendingPrefix: 'sfz' | undefined
   let lastEvent: DirectEvent | undefined
-  let pendingNavigation: Array<'segno' | 'ds' | 'dc' | 'fine'> = []
   let pendingRepeatEnd: DirectMeasure | undefined
   let elapsedBeats = 0
   let inheritedSettingIndex = 0
   const structureStack: Array<string | DirectInterval> = []
 
   const getPart = () => {
-    let part = parts.get(currentPart)
+    let part = parts.get('score')
     if (!part) {
       part = { melody: [{ events: [] }], bass: [{ events: [] }] }
-      parts.set(currentPart, part)
+      parts.set('score', part)
     }
     return part
   }
@@ -147,6 +140,7 @@ function parseBody(
     }
   }
   const add = (event: DirectEvent) => {
+    activeEnding = phrasePasses.find((phrase) => phrase.start <= event.sourceStart && event.sourceStart < phrase.end)?.passes
     ensureEndingMeasure()
     event.dynamic = dynamicChanged ? currentDynamic : undefined
     event.chord = chordChanged ? currentChord : undefined
@@ -159,8 +153,6 @@ function parseBody(
     event.meterCount = currentMeterCount
     event.meterUnit = currentMeterUnit
     event.tempo = currentTempo
-    event.navigation = pendingNavigation
-    pendingNavigation = []
     for (const item of structureStack) {
       if (typeof item !== 'object') continue
       item.start ??= event.sourceStart
@@ -203,7 +195,6 @@ function parseBody(
       pendingRepeatEnd = undefined
       if (value.startsWith('key=')) {
         currentKey = value.slice(4)
-        if (!hasParts) commonKey = currentKey
         if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'key', value: currentKey })
       }
       if (value.startsWith('key=') && currentChord) chordChanged = true
@@ -211,16 +202,11 @@ function parseBody(
       if (meter) {
         currentMeterCount = Number(meter[1])
         currentMeterUnit = Number(meter[2])
-        if (!hasParts) {
-          commonMeterCount = currentMeterCount
-          commonMeterUnit = currentMeterUnit
-        }
         if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'meter', value: `${currentMeterCount}/${currentMeterUnit}` })
       }
       const tempo = /^(\d+)qpm$/.exec(value)
       if (tempo) {
         currentTempo = Number(tempo[1])
-        if (!hasParts) commonTempo = currentTempo
         if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'tempo', value: String(currentTempo) })
       }
       const multiRest = /^rest=(\d+)$/.exec(value)
@@ -233,19 +219,7 @@ function parseBody(
         if (current.events.length === 0) current.breakBefore = true
         else current.breakAfter = true
       }
-      if (value.startsWith('part=')) {
-        hasParts = true
-        currentKey = commonKey
-        currentMeterCount = commonMeterCount
-        currentMeterUnit = commonMeterUnit
-        currentTempo = commonTempo
-        currentPart = value.slice(5).trim() || 'score'
-        structureStack.push('part')
-      } else if (value.startsWith('ending=')) {
-        structureStack.push('ending')
-        activeEnding = value.slice(7).trim()
-        ensureEndingMeasure()
-      } else if (/^(?:lg|cresc|decres|8va|8vb|inst)$/.test(value) || /^(?:accel|rit)=\d+$/.test(value)) {
+      if (/^(?:lg|cresc|decres|8va|8vb|inst)$/.test(value) || /^(?:accel|rit)=\d+$/.test(value)) {
         const ramp = /^(accel|rit)=(\d+)$/.exec(value)
         const interval: DirectInterval = { id: intervals.length + 1, staff, kind: value as DirectInterval['kind'] }
         if (ramp) {
@@ -266,11 +240,6 @@ function parseBody(
       } else if (value === 'sfz') {
         pendingPrefix = 'sfz'
         lastEvent = undefined
-      } else if (/^(?:segno|ds|dc|fine)$/.test(value)) {
-        const navigation = value as 'segno' | 'ds' | 'dc' | 'fine'
-        if (navigation !== 'segno' && lastEvent) lastEvent.navigation.push(navigation)
-        else if (navigation !== 'segno' && measure().events.length > 0) measure().events.at(-1)!.navigation.push(navigation)
-        else pendingNavigation.push(navigation)
       } else if (/^(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])$/.test(value) || parseM3NGrace(value)) {
         if (lastEvent) lastEvent.postfixes.push(value)
       } else if (value === '/' || value.startsWith('/')) {
@@ -279,16 +248,9 @@ function parseBody(
           ? structureStack.map((item) => typeof item === 'object' ? item.kind : item).lastIndexOf(named)
           : structureStack.length - 1
         const closed = index >= 0 ? structureStack.splice(index, 1)[0] : undefined
-        if (closed === 'ending') activeEnding = undefined
         if (typeof closed === 'object' && closed.tempoTarget !== undefined) {
           currentTempo = closed.tempoTarget
           if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'tempo', value: String(currentTempo) })
-        }
-        if (closed === 'part') {
-          currentKey = commonKey
-          currentMeterCount = commonMeterCount
-          currentMeterUnit = commonMeterUnit
-          currentTempo = commonTempo
         }
         lastEvent = undefined
       }
@@ -297,14 +259,6 @@ function parseBody(
     if (token.kind === 'bar') {
       const current = measure()
       const value = token.raw
-      if (current.events.length === 0) {
-        const trailingNavigation = pendingNavigation.filter((navigation) => navigation !== 'segno')
-        const previousEvent = measures().at(-2)?.events.at(-1)
-        if (previousEvent && trailingNavigation.length > 0) {
-          previousEvent.navigation.push(...trailingNavigation)
-          pendingNavigation = pendingNavigation.filter((navigation) => navigation === 'segno')
-        }
-      }
       if (value === '||:' && current.events.length === 0) {
         current.left = 'rptstart'
         continue
@@ -351,7 +305,6 @@ function parseBody(
           tie: mode === 'h' ? Boolean(group[5]) : Boolean(tuplet?.tiesFromLast),
           tieFromTupletIndex: tuplet?.tiesFromLast ? pitches.length - 1 : undefined,
           postfixes: [],
-          navigation: [],
           octaveShift: 0,
           tuplet: mode === 'h' ? undefined : {
             num: pitches.length,
@@ -376,7 +329,6 @@ function parseBody(
         beats: duration(depth, note.carets.length, note.dots.length),
         tie: Boolean(note.tie),
         postfixes: [],
-        navigation: [],
         octaveShift: 0,
       })
       continue
@@ -428,7 +380,7 @@ export function parseM3NDocument(source: string): DirectDocument {
   const meterCount = Number(meter?.[1] ?? 4)
   const meterUnit = Number(meter?.[2] ?? 4)
   const initialTempo = Number(tempo ?? 120)
-  parseBody(main, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents)
+  parseBody(main, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], projected.phrasePasses)
   if (bass) parseBody(bass, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
   const document: DirectDocument = {
     title: metadata(source, 'title'),
@@ -452,7 +404,7 @@ export function parseM3NDocument(source: string): DirectDocument {
       syllables: parseLyricItems(item.text, item.sourceStart, item.mode),
     })),
     parts,
-    partOrder: main.match(/\{parts=([^}]*)\}/)?.[1]?.trim().split(/\s+/).filter(Boolean) ?? [],
+    partOrder: [],
     intervals,
   }
   const sameTiePitch = (left: DirectEvent, right: DirectEvent) => (
@@ -481,7 +433,6 @@ export function parseM3NDocument(source: string): DirectDocument {
     }
   }
   if (projected.structure.sections.length > 0) {
-    const usesForm = projected.structure.form.length > 0
     const tokens = tokenizeM3N(originalSource)
     const sourcePositions = new Map<number, number>()
     const regions = (staff: 'melody' | 'bass') => projected.structure.sections.flatMap((section) =>
@@ -512,7 +463,7 @@ export function parseM3NDocument(source: string): DirectDocument {
     }
 
     for (const section of projected.structure.sections) {
-      const part = document.parts.get(usesForm ? section.name : 'score')
+      const part = document.parts.get('score')
       if (!part) continue
       for (const phrase of section.phrases) {
         if (!phrase.melody || !phrase.harmony) continue
@@ -561,7 +512,6 @@ export function parseM3NDocument(source: string): DirectDocument {
           const reference = /^\{L(\d+)\}$/.exec(lyric.text.trim())
           if (reference) continue
           lyricRows.push({
-            part: usesForm ? section.name : undefined,
             range: lyric.label,
             mode: 'char',
             syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start, 'char'),
@@ -573,16 +523,14 @@ export function parseM3NDocument(source: string): DirectDocument {
       }
     }
     document.lyrics = lyricRows
-    if (!usesForm) {
-      const score = document.parts.get('score')
-      for (const section of projected.structure.sections) {
-        const melody = section.phrases.find((phrase) => phrase.melody)?.melody
-        if (!section.name || !melody || !score) continue
-        const end = melody.start + melody.text.length
-        const event = score.melody.flatMap((measure) => measure.events)
-          .find((candidate) => melody.start <= candidate.sourceStart && candidate.sourceStart < end)
-        if (event) event.sectionLabel = section.name
-      }
+    const score = document.parts.get('score')
+    for (const section of projected.structure.sections) {
+      const melody = section.phrases.find((phrase) => phrase.melody)?.melody
+      if (!section.name || !melody || !score) continue
+      const end = melody.start + melody.text.length
+      const event = score.melody.flatMap((measure) => measure.events)
+        .find((candidate) => melody.start <= candidate.sourceStart && candidate.sourceStart < end)
+      if (event) event.sectionLabel = section.name
     }
   }
   return document

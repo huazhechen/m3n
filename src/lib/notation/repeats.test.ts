@@ -40,24 +40,4 @@ describe('repeat planning', () => {
     expect(sequence).toEqual(['n1', 'n2', 'n3'])
   })
 
-  it('skips exhausted endings on a D.S. return', () => {
-    const sequence = buildPlaybackSequence(nodes(
-      { kind: 'section', navigation: ['segno'] },
-      { kind: 'ending', n: '1', navigation: ['ds'] },
-      { kind: 'section' },
-    ))
-
-    expect(sequence).toEqual(['n1', 'n2', 'n1', 'n3'])
-  })
-
-  it('uses the next ending on a D.S. return when it exists', () => {
-    const sequence = buildPlaybackSequence(nodes(
-      { kind: 'section', navigation: ['segno'] },
-      { kind: 'ending', n: '1', repeatCount: 2 },
-      { kind: 'ending', n: '2', navigation: ['ds'] },
-      { kind: 'ending', n: '3' },
-    ))
-
-    expect(sequence).toEqual(['n1', 'n2', 'n1', 'n3', 'n1', 'n4'])
-  })
 })

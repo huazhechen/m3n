@@ -5,12 +5,6 @@ import { parseM3NDocument } from './m3n-direct'
 const messages = (source: string) => validateM3N(source).join('\n')
 
 describe('validateM3N', () => {
-  it('strictly validates lyrics for every v0.3 phrase traversal', () => {
-    expect(validateM3N('{form=A,A}\n{2/4}\n===A\nN: 1 2 |\nL1: 甲乙\nL2: {L1}')).toEqual([])
-    expect(messages('{form=A,A}\n{2/4}\n===A\nN: 1 2 |\nL1: 甲乙')).toContain('乐句缺少 L2: 歌词行')
-    expect(messages('N: 1 2 :|||{x2}\nL1: 甲乙\nL2: 甲乙丙')).toContain('乐句第 2 遍需要 2 项，实际 3 项')
-    expect(messages('{3/4}\nN: 1~ 1 2 |||\nL: 甲+乙丙')).toBe('')
-  })
 
   it('validates bar-aligned v0.3 lyrics measure by measure', () => {
     expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁')).toEqual([])
@@ -78,14 +72,6 @@ describe('validateM3N', () => {
     expect(result).toContain('第 4 行：琶音只能附在和音组之后')
   })
 
-  it('preserves measure alignment for lyric references and empty lyric targets', () => {
-    const referenced = '{form=A,A}\n{2/4}\n===A\nN: 1 2 | 3 4 ||\nL1: 甲乙 | 丙丁\nL2: {L1}'
-    expect(validateM3N(referenced)).toEqual([])
-
-    const instrumental = '{2/4}\nN: {inst}1 2{/} | 3 4 |||\nL: | 甲乙'
-    expect(validateM3N(instrumental)).toEqual([])
-    expect(messages('{2/4}\nN: {inst}1 2{/} | 3 4 |||\nL: 甲乙 |')).toContain('歌词第 1 小节对位数量不匹配')
-  })
   it('exposes structured diagnostics without changing legacy messages', () => {
     const source = '{2/4}\n1 2 |||\n{lyrics}la{/}'
     const diagnostics = validateM3NDiagnostics(source)
@@ -142,11 +128,6 @@ describe('validateM3N', () => {
     expect(messages('{4/4}\n1 2 3 4 |||\n{bass}{rit=80}1 2 3 4{/}|||{/}')).toContain('低音谱表内不能声明渐快或渐慢')
   })
 
-  it('validates basic repeat navigation markers', () => {
-    expect(validateM3N('{4/4}\n{segno}1 2 3 4 | 5 6 7 1e{fine} ||| 1 2 3 4{ds} ||')).toEqual([])
-    expect(messages('{4/4}\n{segno}1 2 3 4 | {segno}1 2 3 4 |||')).toContain('segno 最多只能使用一次')
-    expect(messages('{4/4}\n1 2 3 4{ds} |||')).toContain('ds 必须配合唯一的 segno')
-  })
 
   it('allows multiple implicit repeats from the beginning of a validation unit', () => {
     expect(validateM3N('{2/4}\n1 2 :|| 3 4 :|||')).toEqual([])
@@ -166,15 +147,6 @@ describe('validateM3N', () => {
     expect(messages('{4/4}\n1 2 ||: 3 | 4 5 6 7 | 1 2 3 :|| 4 | 5 6 7 1 |||')).toContain('中间小节拍数不合规')
   })
 
-  it('accepts independent pickup measures in named parts without terminal bars', () => {
-    const source = [
-      '{parts=A B A}',
-      '{key=C} {4/4}',
-      '{part=A} 1 | 1 2 3 4 | 2 3 4 || {/part}',
-      '{part=B} 5 | 1 2 3 4 | 6 7 1 || {/}',
-    ].join('\n')
-    expect(validateM3N(source)).toEqual([])
-  })
 
   it('accepts rests and insignificant whitespace in tuplet groups', () => {
     expect(validateM3N('{key=C} {2/4}\n[0 6 6 : 2] |||')).toEqual([])
@@ -314,16 +286,6 @@ describe('validateM3N', () => {
     expect(messages(source)).toContain('第 2 遍需要 4 项，实际 5 项')
   })
 
-  it('validates named-part lyrics against their first playback only', () => {
-    const source = [
-      '{2/4} {parts=A B A}',
-      '{part=A}1 2 ||{/}',
-      '{part=B}3 4 ||{/}',
-      '{lyrics=1}甲乙丙丁{/}',
-      '{lyrics=2}戊己{/}',
-    ].join('\n')
-    expect(validateM3N(source)).toEqual([])
-  })
 
   it('excludes instrumental intervals from lyric alignment', () => {
     expect(messages('{2/4} {inst}1 2{/} | 3 4 |||\n{lyrics}la la{/}')).toBe('')

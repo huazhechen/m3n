@@ -4,7 +4,7 @@ import { m3nChord } from './m3n-harmony'
 import type { DirectEvent, DirectMeasure } from './m3n-direct'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { parseKey } from './notation/m3n-primitives'
-import { buildPlaybackSequence, parsePassRange, type PlaybackNavigation } from './notation/repeats'
+import { buildPlaybackSequence, parsePassRange } from './notation/repeats'
 import { validateM3NDiagnostics } from './m3n-validate'
 import type { ScoreDiagnostic } from './notation/diagnostics'
 
@@ -514,7 +514,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
     return { meter, openingMeter }
   }
 
-  const controlXml = (measure: DirectMeasure | undefined, staffNumber: number, meter = previousMeter) => {
+  const controlXml = (measure: DirectMeasure | undefined, staffNumber: number) => {
     const events = measure?.events ?? []
     const idFor = (sourceStart: number | undefined) => sourceStart === undefined ? undefined : eventIds.get(`${staffNumber}:${sourceStart}`)
     const postfix = (xmlId: string, value: string) => {
@@ -534,12 +534,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${xmlId}"><rend fontweight="bold">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
         event.dynamic ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.dynamic}</dynam>` : '',
         event.prefix ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.prefix}</dynam>` : '',
-        ...event.navigation.map((value) => {
-          if (value === 'fine') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="fine">Fine</repeatMark>`
-          const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value
-          if (value === 'ds' || value === 'dc') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="${func}"/>`
-          return `<repeatMark staff="${staffNumber}" startid="#${xmlId}" func="${func}"/>`
-        }),
         ...event.postfixes.map((value) => postfix(xmlId, value)),
         ...(tiesByStartEvent.get(event) ?? []),
       ].filter(Boolean)
@@ -573,7 +567,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   let segmentIndex = 0
   let endingIndex = 0
   let logicalMeasureNumber = 0
-  const hasNavigation = [...document.parts.values()].some((part) => part.melody.some((measure) => measure.events.some((event) => event.navigation.length > 0)))
   const layoutNodes = [...document.parts.entries()].flatMap(([partName, part], partIndex) => {
     while (part.melody.length > 1 && part.melody.at(-1)?.events.length === 0 && !part.melody.at(-1)?.multiRest) {
       const trailing = part.melody.pop()
@@ -609,7 +602,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         hasBassStaff ? renderStaff(part.bass[measureIndex], 2, partName, keyChanges, meter) : '',
       ]
         .filter(Boolean).map((staff) => staff.split('\n').map((line) => `  ${line}`).join('\n')).join('\n')
-      const controls = [controlXml(melody, 1, meter), hasBassStaff ? controlXml(part.bass[measureIndex], 2, meter) : ''].filter(Boolean).join('\n')
+      const controls = [controlXml(melody, 1), hasBassStaff ? controlXml(part.bass[measureIndex], 2) : ''].filter(Boolean).join('\n')
       const tempo = document.hasExplicitTempo && partIndex === 0 && measureIndex === 0
         ? `  ${tempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
         : ''
@@ -621,7 +614,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',
         repeatCount: melody?.repeatCount ?? (melody?.right === 'rptend' ? 2 : undefined),
-        navigation: melody?.events.flatMap((event) => event.navigation) ?? [],
         breakBefore: melody?.breakBefore,
         breakAfter: melody?.breakAfter,
         scoreDef: [openingKey ? keyScoreDefXml(openingKey) : '', openingMeter ? meterScoreDefXml(openingMeter) : ''].filter(Boolean).join('\n'),
@@ -634,13 +626,12 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
       measure.xml,
       measure.breakAfter ? '<sb/>' : '',
     ].filter(Boolean).join('\n')
-    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; partName: string; content: string; repeatStart?: boolean; repeatCount?: number; navigation?: PlaybackNavigation[] }> = []
+    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; partName: string; content: string; repeatStart?: boolean; repeatCount?: number }> = []
     for (let index = 0; index < measures.length;) {
       const current = measures[index]
       const content: string[] = []
       if (current?.ending) {
         const ending = current.ending
-        const endingStart = index
         while (index < measures.length && measures[index]?.ending === ending) {
           content.push(measureContent(measures[index] as (typeof measures)[number]))
           index += 1
@@ -648,7 +639,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         nodes.push({
           kind: 'ending', id: `m3n-ending-${++endingIndex}`, n: ending, partName, content: content.join('\n'),
           repeatCount: measures[index - 1]?.repeatCount,
-          navigation: measures.slice(endingStart, index).flatMap((measure) => measure?.navigation ?? []),
         })
         continue
       }
@@ -656,15 +646,15 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
       while (
         index < measures.length
         && !measures[index]?.ending
-        && (content.length === 0 || (!measures[index]?.repeatStart && measures[index]?.navigation.length === 0))
+        && (content.length === 0 || !measures[index]?.repeatStart)
       ) {
         const measure = measures[index] as (typeof measures)[number]
         sectionMeasures.push(measure)
         content.push(measureContent(measure))
         index += 1
-        if (measure.repeatCount || measure.navigation.length > 0) break
+        if (measure.repeatCount) break
       }
-      nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, partName, content: content.join('\n'), repeatStart: sectionMeasures[0]?.repeatStart, repeatCount: sectionMeasures.at(-1)?.repeatCount, navigation: sectionMeasures.flatMap((measure) => measure.navigation) })
+      nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, partName, content: content.join('\n'), repeatStart: sectionMeasures[0]?.repeatStart, repeatCount: sectionMeasures.at(-1)?.repeatCount })
     }
     return nodes
   })
@@ -673,7 +663,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   const expansion = hasNamedParts
     ? document.partOrder.flatMap((partName) => buildPlaybackSequence(layoutNodes.filter((node) => node.partName === partName)))
     : buildPlaybackSequence(layoutNodes)
-  const needsExpansion = hasNamedParts || hasEndings || hasNavigation || layoutNodes.some((node) => node.repeatCount)
+  const needsExpansion = hasNamedParts || hasEndings || layoutNodes.some((node) => node.repeatCount)
   const sectionContent = [
     ...(needsExpansion ? [`<expansion xml:id="m3n-expansion" plist="${expansion.map((id) => `#${id}`).join(' ')}"/>`] : []),
     ...layoutNodes.map((node) => !needsExpansion ? node.content

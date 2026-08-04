@@ -40,13 +40,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-3"><rend fontweight="bold">B</rend></reh>')
   })
 
-  it('keeps form sections separate in the written layout and playback expansion', () => {
-    const result = m3nToMei('{form=A,B,A}\n{2/4}\n===A\nN: 1 2 ||\n===B\nN: 3 4 ||')
-
-    expect(result.partOrder).toEqual(['A', 'B', 'A'])
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-1"/>')
-    expect(result.mei).toMatch(/<section xml:id="m3n-segment-2">[\s\S]*?<sb\/>\s*<measure xml:id="m3n-measure-2-1"/)
-  })
 
   it('does not render lyrics outside their v0.3 phrase', () => {
     const result = m3nToMei('{2/4}\nN: 1 2 |\nL: 甲乙\n---\nN: 3 4 |||\nL: 丙丁')
@@ -182,31 +175,8 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('<octave')
   })
 
-  it('renders and expands a D.S. al Fine navigation', () => {
-    const result = m3nToMei('{4/4}\n{segno}1 2 3 4 | 5 6 7 1e{fine} ||| 1e 7 6 5{ds} ||')
 
-    expect(result.mei).toContain('<repeatMark staff="1" startid="#m3n-e-1" func="segno"/>')
-    expect(result.mei).toContain('<repeatMark staff="1" tstamp="5" place="above" func="fine">Fine</repeatMark>')
-    expect(result.mei).toContain('<repeatMark staff="1" tstamp="5" place="above" func="dalSegno"/>')
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-3 #m3n-segment-1 #m3n-segment-2"/>')
-  })
 
-  it('renders and expands a D.C. al Fine navigation', () => {
-    const result = m3nToMei('{4/4}\n1 2 3 4 | 5 6 7 1e{fine} ||| 1e 7 6 5{dc} ||')
-
-    expect(result.mei).toContain('<repeatMark staff="1" tstamp="5" place="above" func="fine">Fine</repeatMark>')
-    expect(result.mei).toContain('<repeatMark staff="1" tstamp="5" place="above" func="daCapo"/>')
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-3 #m3n-segment-1 #m3n-segment-2"/>')
-  })
-
-  it('keeps ordinary measures together between navigation boundaries', () => {
-    const result = m3nToMei('{2/4}\n{segno}1 2 | 3 4 | 5 6 | 7 1e{ds} |||')
-
-    expect(result.mei).toContain('<section xml:id="m3n-segment-2">\n            <measure xml:id="m3n-measure-1-2"')
-    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-3"')
-    expect(result.mei).toContain('<section xml:id="m3n-segment-3">')
-    expect(result.mei).not.toContain('<section xml:id="m3n-segment-4">')
-  })
 
   it('keeps an explicitly reset tempo visible at an accelerando start', () => {
     const result = m3nToMei('{4/4} {120qpm}\n1 2 3 4 | {60qpm}1 2 3 4 | {120qpm}{accel=144}1 2 3 4{/} |||')
@@ -479,28 +449,7 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('<expansion')
   })
 
-  it('expands named parts in the declared performance order', () => {
-    const result = m3nToMei('{key=C} {2/4} {parts=A B A}\n{part=A}1 2 |{/}\n{part=B}3 4 |{/}')
 
-    expect(result.partOrder).toEqual(['A', 'B', 'A'])
-    expect(result.headerMetadata).toContainEqual({ value: 'A → B → A', side: 'left', priority: 30 })
-    expect(result.mei).toContain('<section xml:id="m3n-segment-1">')
-    expect(result.mei).toContain('<section xml:id="m3n-segment-2">')
-    expect(result.mei).not.toMatch(/<section xml:id="m3n-segment-2">\s+<sb\/>/)
-    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-1" n="1"')
-    expect(result.mei).toContain('<measure xml:id="m3n-measure-2-1" n="2"')
-    expect(result.mei).toContain('<reh staff="1" tstamp="1"><rend fontweight="bold">A</rend></reh>')
-    expect(result.mei).toContain('<reh staff="1" tstamp="1"><rend fontweight="bold">B</rend></reh>')
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-1"/>')
-  })
-
-  it('writes every numbered lyric block onto the named-part baseline', () => {
-    const result = m3nToMei('{key=C} {2/4} {parts=A B A}\n{part=A}1 2 |{/}\n{part=B}3 4 |{/}\n{lyrics=1}one two three four{/}\n{lyrics=2}eins zwei drei vier{/}')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<verse xml:id="m3n-e-1-v1" n="1"><syl>one</syl></verse><verse xml:id="m3n-e-1-v2" n="2"><syl>eins</syl></verse>')
-    expect(result.mei).toContain('<verse xml:id="m3n-e-3-v1" n="1"><syl>three</syl></verse><verse xml:id="m3n-e-3-v2" n="2"><syl>drei</syl></verse>')
-  })
 
   it('converts explicit line breaks into MEI system breaks', () => {
     const result = m3nToMei('{key=C} {2/4}\n1 2 | {br} 3 4 |')
@@ -508,11 +457,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toMatch(/m3n-measure-1-1[\s\S]*?<\/measure>\s*<sb\/>\s*<measure xml:id="m3n-measure-1-2"/)
   })
 
-  it('retains a line break before a part-closing interval', () => {
-    const result = m3nToMei('{key=C} {2/4} {parts=A B}\n{part=A}1 2 | {br} {/} {part=B}3 4 |')
-
-    expect(result.mei).toMatch(/m3n-measure-1-1[\s\S]*?<\/measure>\s*<sb\/>\s*<\/section>\s*<section xml:id="m3n-segment-2">/)
-  })
 
   it('serializes multi-measure rests as MEI multiRest elements', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 | {rest=4} | 4 3 2 1 |||')
@@ -623,12 +567,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toContain('<mSpace/>')
   })
 
-  it('consumes later-pass placeholders from the segno on a plain D.S. return', () => {
-    const result = m3nToMei('{2/4}\n{segno}1 2 | 3 4{ds} |||\n{lyrics=1}a b c d{/}\n{lyrics=2}{%2}x y{/}')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<note xml:id="m3n-e-3" pname="e" oct="4" dur="4"><verse xml:id="m3n-e-3-v1" n="1"><syl>c</syl></verse><verse xml:id="m3n-e-3-v2" n="2"><syl>x</syl></verse></note>')
-  })
 
   it('repeats from the beginning for each implicit repeat end', () => {
     const result = m3nToMei('{2/4} 1 2 :|| 3 4 :|| 5 6 |||')
@@ -667,12 +605,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-1"/>')
   })
 
-  it('does not repeat again after jumping to the segno', () => {
-    const result = m3nToMei('{key=C} {2/4}\n{segno}1 2 | 3 4 :|| {ds} |||')
-
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-2 #m3n-segment-1 #m3n-segment-2 #m3n-segment-1 #m3n-segment-2"/>')
-  })
 
   it('keeps following music outside an explicitly counted repeat expansion', () => {
     const result = m3nToMei('{key=C} {2/4}\n||: 1 2 | 3 4 :||{x3} 5 6 :|||')

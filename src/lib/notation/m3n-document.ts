@@ -15,19 +15,18 @@ export type M3NSection = {
 
 export type M3NDocumentStructure = {
   header: string
-  form: string[]
   sections: M3NSection[]
   diagnostics: string[]
 }
 
 const linePrefix = /^(N|B|C|L\d*):(?:[ \t]?)(.*)$/
+const phraseEndingBar = /(?:\|\|:|:\|\|:|:\|\|\||:\|\||\|\|\||\|\||\|)(?:\{x\d+\})?\s*(?:\/\/.*)?$/
+const nonAlignmentBar = /\|\||:\|\|/
 
 export function parseM3NDocumentStructure(source: string): M3NDocumentStructure {
   const diagnostics: string[] = []
   const sections: M3NSection[] = [{ name: '', line: 1, phrases: [] }]
   const header: string[] = []
-  const formMatch = source.match(/\{form=([^}]*)\}/)
-  const form = formMatch?.[1]?.split(',').map((name) => name.trim()).filter(Boolean) ?? []
   let section = sections[0]!
   let phrase: M3NPhrase | undefined
   let offset = 0
@@ -53,6 +52,7 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
     const sectionMatch = /^===\s*(.*)$/.exec(trimmed)
     if (sectionMatch) {
       musicSeen = true
+      if (phrase && !phrase.melody) diagnostics.push(`第 ${line} 行：=== 前的乐句缺少 N: 旋律行`)
       phrase = undefined
       const name = sectionMatch[1]?.trim() ?? ''
       section = { name, line, phrases: [] }
@@ -88,6 +88,7 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
       } else {
         current.lyrics.push({ label: kind.slice(1), text, start })
       }
+      if (kind !== 'N' && nonAlignmentBar.test(text)) diagnostics.push(`第 ${line} 行：${kind}: 只允许使用普通 | 作为小节对位标记`)
       offset += rawLine.length + 1
       continue
     }
@@ -96,60 +97,43 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
     offset += rawLine.length + 1
   }
 
-  if (!musicSeen) return { header: source, form, sections: [], diagnostics: [] }
+  if (!musicSeen) return { header: source, sections: [], diagnostics: [] }
   for (const currentSection of sections) {
     if (currentSection.phrases.length === 0) diagnostics.push(`第 ${currentSection.line} 行：乐段至少需要一个乐句`)
     for (const currentPhrase of currentSection.phrases) {
       if (!currentPhrase.melody) diagnostics.push(`第 ${currentPhrase.line} 行：乐句缺少 N: 旋律行`)
+      else if (!phraseEndingBar.test(currentPhrase.melody.text)) diagnostics.push(`第 ${currentPhrase.melody.line} 行：每个 N: 乐句必须以小节线结束`)
       const labels = currentPhrase.lyrics.map((lyric) => lyric.label)
       if (labels.includes('') && labels.some(Boolean)) diagnostics.push(`第 ${currentPhrase.line} 行：L: 与编号歌词行不能混用`)
       if (new Set(labels).size !== labels.length) diagnostics.push(`第 ${currentPhrase.line} 行：同一乐句不能重复相同的歌词行`)
     }
   }
-  const named = sections.map(({ name }) => name).filter(Boolean)
-  if (named.length > 0) {
-    if (form.length > 0) {
-      if (named.length !== sections.length) diagnostics.push('具名乐段与未命名乐段不能混用')
-      if (new Set(named).size !== named.length) diagnostics.push('乐段名称不能重复')
-      for (const name of named) if (!form.includes(name)) diagnostics.push(`乐段 ${name} 未被 form 引用`)
-      for (const name of form) if (!named.includes(name)) diagnostics.push(`form 引用了未定义的乐段 ${name}`)
-    }
-  } else if (form.length > 0) diagnostics.push('form 只能引用具名乐段')
-
-  return { header: header.join('\n'), form, sections, diagnostics }
+  return { header: header.join('\n'), sections, diagnostics }
 }
 
 export function projectM3NDocument(source: string) {
   const structure = parseM3NDocumentStructure(source)
-  const named = structure.sections.length > 0 && structure.sections.every((section) => Boolean(section.name))
-  const usesForm = named && structure.form.length > 0
-  const order = structure.form
   const melody: string[] = []
   const lineMap: number[] = []
+  const phrasePasses: Array<{ start: number; end: number; passes: string }> = []
+  let projectedLength = 0
   const push = (text: string, sourceLine?: number) => {
+    if (melody.length > 0) projectedLength += 1
+    const start = projectedLength
     melody.push(text)
+    projectedLength += text.length
     const lineCount = text.split('\n').length
     for (let index = 0; index < lineCount; index += 1) lineMap.push(sourceLine ?? lineMap.length + 1)
+    return start
   }
-  push(structure.header.replace(/\{form=[^}]*\}/g, ''))
-  if (usesForm) push(`{parts=${order.join(' ')}}`)
+  push(structure.header)
   const bass: string[] = []
   const lyrics = new Map<string, string[]>()
-  for (const [sectionIndex, section] of structure.sections.entries()) {
-    if (usesForm) push(`{part=${section.name}}${sectionIndex > 0 ? '{br}' : ''}`, section.line)
-    for (const [phraseIndex, phrase] of section.phrases.entries()) {
-      if (phrase.passes) push(`{ending=${phrase.passes}}`, phrase.melody?.line ?? phrase.line)
+  for (const section of structure.sections) {
+    for (const phrase of section.phrases) {
       if (phrase.melody) {
-        const closesBeforeBar = phrase.passes ? '{/}' : ''
-        const closesPart = usesForm && phraseIndex === section.phrases.length - 1 ? '{/}' : ''
-        let text = closesBeforeBar
-          ? phrase.melody.text.replace(/((?::\|\|\||:\|\||\|\|\||\|\||\|)(?:\{x\d+\})?)\s*$/, `${closesBeforeBar}$1`)
-          : phrase.melody.text
-        if (closesBeforeBar && text === phrase.melody.text) text = `${text} ${closesBeforeBar}`
-        if (closesPart && /(?::\|\|\||\|\|\|)(?:\{x\d+\})?\s*$/.test(text)) {
-          text = text.replace(/((?::\|\|\||\|\|\|)(?:\{x\d+\})?)\s*$/, `${closesPart}$1`)
-        } else if (closesPart) text = `${text} ${closesPart}`
-        push(text, phrase.melody.line)
+        const start = push(phrase.melody.text, phrase.melody.line)
+        if (phrase.passes) phrasePasses.push({ start, end: start + phrase.melody.text.length, passes: phrase.passes })
       }
       if (phrase.bass) bass.push(phrase.bass.text)
       for (const lyric of phrase.lyrics) {
@@ -163,5 +147,5 @@ export function projectM3NDocument(source: string) {
   }
   for (const [label, rows] of lyrics) push(`{lyrics${label ? `=${label}` : ''}}${rows.join(' ')}{/}`)
   if (bass.length > 0) push(`{bass}${bass.join(' ')}{/}`)
-  return { source: melody.join('\n'), structure, lineMap }
+  return { source: melody.join('\n'), structure, lineMap, phrasePasses }
 }

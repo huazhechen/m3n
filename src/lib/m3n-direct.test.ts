@@ -12,37 +12,24 @@ describe('direct M3N parser', () => {
     expect(parseM3NDocument('{source=First edition} {4/4} 1 2 3 4 |||').source).toBe('First edition')
   })
 
-  it('does not leak part-local settings into the next named part', () => {
+  it('keeps lyrics scoped to their display section phrases', () => {
     const document = parseM3NDocument([
-      '{key=C} {2/4} {120qpm} {parts=A B}',
-      '{part=A}{key=D} {3/4} {90qpm}1 2 3 |{/}',
-      '{part=B}1 2 |{/}',
-    ].join('\n'))
-    const first = document.parts.get('A')?.melody[0]?.events[0]
-    const second = document.parts.get('B')?.melody[0]?.events[0]
-
-    expect(first).toMatchObject({ key: 'D', meterCount: 3, meterUnit: 4, tempo: 90 })
-    expect(second).toMatchObject({ key: 'C', meterCount: 2, meterUnit: 4, tempo: 120 })
-  })
-
-  it('keeps v0.3 lyrics scoped to their named part', () => {
-    const document = parseM3NDocument([
-      '{form=A,C} {2/4}',
+      '{2/4}',
       '===A',
-      'N: 1 2 ||',
-      'L1: 甲乙',
+      'N: 1 2 |',
+      'L: 甲乙',
       '===C',
-      'N: 3 4 ||',
+      'N: 3 4 |||',
       'L: 啦啦',
     ].join('\n'))
 
     expect(document.lyrics).toMatchObject([
-      { part: 'A', range: '1', syllables: [{ text: '甲' }, { text: '乙' }] },
-      { part: 'C', range: '', syllables: [{ text: '啦' }, { text: '啦' }] },
+      { range: '', syllables: [{ text: '甲' }, { text: '乙' }] },
+      { range: '', syllables: [{ text: '啦' }, { text: '啦' }] },
     ])
   })
 
-  it('keeps each v0.3 lyric block scoped to its phrase', () => {
+  it('keeps each lyric block scoped to its phrase', () => {
     const source = '{2/4}\nN: 1 2 |\nL: 甲乙\n---\nN: 3 4 |||\nL: 丙丁'
     const document = parseM3NDocument(source)
 
@@ -53,7 +40,7 @@ describe('direct M3N parser', () => {
   })
 
   it('does not render a lyric reference as an extra verse', () => {
-    const source = '{form=A,A,A}\n{2/4}\n===A\nN: 1 2 |||\nL1: 甲乙\nL2: 丙丁\nL3: {L2}'
+    const source = '{2/4}\nN: 1 2 :|||{x3}\nL1: 甲乙\nL2: 丙丁\nL3: {L2}'
     const document = parseM3NDocument(source)
 
     expect(document.lyrics.map((block) => block.range)).toEqual(['1', '2'])
@@ -85,13 +72,6 @@ describe('direct M3N parser', () => {
     expect(bass).toMatchObject({ tempo: 80 })
   })
 
-  it('attaches a D.S. after a closed ending to the preceding measure', () => {
-    const measures = parseM3NDocument('{2/4}\nN: 1 2{ds} ||\n---\nN: 3 4 |||').parts.get('score')!.melody
-
-    expect(measures[0]?.events.at(-1)?.navigation).toEqual(['ds'])
-    expect(measures[1]?.events[0]?.navigation).toEqual([])
-  })
-
   it('assigns every public measure to all passes required by a later multi-pass ending', () => {
     const measures = parseM3NDocument('{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 |\n---V2,V3,V4\nN: 5 6 |\n---\nN: 7 1e :||{x3} |||').parts.get('score')!.melody
     const passes = measurePlaybackPasses(measures)
@@ -102,33 +82,10 @@ describe('direct M3N parser', () => {
     expect(passes.get(measures[3])).toEqual(new Set([1, 2, 3, 4]))
   })
 
-  it('keeps the initial second pass before a D.S. from a second ending', () => {
-    const measures = parseM3NDocument('{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6{ds} ||\n---\nN: {segno}7 1 |||').parts.get('score')!.melody
-    const passes = measurePlaybackPasses(measures)
-
-    expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
-  })
-
   it('marks matching alternate-ending starts as tie targets', () => {
     const measures = parseM3NDocument('{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 4 3 |||').parts.get('score')!.melody
 
     expect(measures.find((measure) => measure.ending === '2')?.events[0]?.tieFrom?.tie).toBe(true)
-  })
-
-  it('assigns the D.S. return to the second lyric pass without later endings', () => {
-    const measures = parseM3NDocument('{2/4} {segno}1 2 | 3 4{ds} |||').parts.get('score')!.melody
-    const passes = measurePlaybackPasses(measures)
-
-    expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
-    expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
-  })
-
-  it('does not add a D.S. second pass to a first ending before later endings', () => {
-    const measures = parseM3NDocument('{2/4}\nN: ||: {segno}1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6{ds} ||\n---V3\nN: 7 1 ||\n---V4\nN: 2 3 |||').parts.get('score')!.melody
-    const passes = measurePlaybackPasses(measures)
-
-    expect(passes.get(measures[1])).toEqual(new Set([1]))
-    expect(passes.get(measures[2])).toEqual(new Set([2]))
   })
 
   it('keeps a tie on the final pitched tuplet child', () => {
