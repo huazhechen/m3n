@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
-import { parseM3NDocument, type DirectEvent } from '../src/lib/m3n-direct'
+import { parseM3NDocument } from '../src/lib/m3n-direct'
+import type { ScoreEvent } from '../src/lib/notation/score-document'
 import { parseM3NDocumentStructure, type M3NPhrase } from '../src/lib/notation/m3n-document'
 import { parseLyricItems } from '../src/lib/notation/lyrics'
 import { measurePlaybackPasses } from '../src/lib/notation/repeats'
@@ -7,11 +8,11 @@ import { validateM3N } from '../src/lib/m3n-validate'
 
 const scoreIds = process.argv.slice(2)
 
-function phraseForEvent(phrases: M3NPhrase[], event: DirectEvent) {
+function phraseForEvent(phrases: M3NPhrase[], event: ScoreEvent) {
   return phrases.find((phrase) => phrase.melody && phrase.melody.start <= event.sourceStart && event.sourceStart < phrase.melody.start + phrase.melody.text.length)
 }
 
-function instrumental(document: ReturnType<typeof parseM3NDocument>, event: DirectEvent) {
+function instrumental(document: ReturnType<typeof parseM3NDocument>, event: ScoreEvent) {
   return document.intervals.some((interval) => interval.kind === 'inst' && interval.staff === 'melody'
     && interval.start !== undefined && interval.end !== undefined && interval.start <= event.sourceStart && event.sourceEnd <= interval.end)
 }

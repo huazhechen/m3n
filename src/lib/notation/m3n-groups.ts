@@ -37,11 +37,14 @@ export function parseM3NTupletPitches(source: string): M3NTupletPitches | null {
 
 export function parseM3NGrace(value: string): M3NGrace | null {
   const match = /^(a[cp])(\(+)([^()]+)(\)+)$/.exec(value)
-  if (!match || match[2].length !== match[4].length) return null
+  if (!match) return null
+  const open = match[2] ?? ''
+  const close = match[4] ?? ''
+  if (open.length !== close.length) return null
 
   return {
-    kind: match[1] as M3NGrace['kind'],
-    pitchSource: match[3],
-    depth: match[2].length,
+    kind: (match[1] ?? 'ac') as M3NGrace['kind'],
+    pitchSource: match[3] ?? '',
+    depth: open.length,
   }
 }

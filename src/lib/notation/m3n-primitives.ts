@@ -19,14 +19,14 @@ const MODE_INTERVALS: Record<(typeof M3N_KEY_MODES)[number], readonly number[]> 
   loc: [0, 1, 3, 5, 6, 8, 10],
 }
 
-export function parseKey(rawKey: string) {
+export function parseKey(rawKey: string): { tonic: string; mode: string } {
   const match = /^([A-G](?:#|b)?)([a-z]*)$/.exec(rawKey)
   if (!match || !M3N_KEY_MODES.includes((match[2] || '') as (typeof M3N_KEY_MODES)[number])) {
     return { tonic: 'C', mode: '' }
   }
 
   return {
-    tonic: match[1],
+    tonic: match[1] ?? 'C',
     mode: match[2] || '',
   }
 }
@@ -53,7 +53,12 @@ export function parseM3NNote(token: string): ParsedM3NNote | null {
     return null
   }
 
-  const [, degreeRaw, accidentals, octave, carets, dots, tie] = match
+  const degreeRaw = match[1] ?? ''
+  const accidentals = match[2] ?? ''
+  const octave = match[3] ?? ''
+  const carets = match[4] ?? ''
+  const dots = match[5] ?? ''
+  const tie = match[6] ?? ''
   if (degreeRaw === '0' && (accidentals || octave || tie)) return null
   if ((accidentals.includes('#') && accidentals.includes('b')) || (accidentals.includes('=') && accidentals !== '=')) return null
   if (accidentals.length > 2) return null

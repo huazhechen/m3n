@@ -1,9 +1,8 @@
-import type { DirectEvent, DirectMeasure } from './m3n-direct'
-import type { ScoreDocument } from './notation/score-document'
+import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './notation/score-document'
 
 export type LyricTarget = { tied: boolean }
 
-function isInstrumentalEvent(document: ScoreDocument, event: DirectEvent) {
+function isInstrumentalEvent(document: ScoreDocument, event: ScoreEvent) {
   return document.intervals.some((interval) => interval.kind === 'inst'
     && interval.staff === 'melody'
     && interval.start !== undefined
@@ -12,13 +11,13 @@ function isInstrumentalEvent(document: ScoreDocument, event: DirectEvent) {
     && event.sourceEnd <= interval.end)
 }
 
-function lyricTargetCount(event: DirectEvent) {
+function lyricTargetCount(event: ScoreEvent) {
   return event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
 }
 
 /** Counts written lyric targets in each melody measure. */
 export function lyricTargetCountsByMeasure(document: ScoreDocument) {
-  const counts = new Map<DirectMeasure, number>()
+  const counts = new Map<ScoreMeasure, number>()
   for (const part of document.parts.values()) {
     let previousTied = false
     for (const measure of part.melody) {

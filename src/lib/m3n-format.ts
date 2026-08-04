@@ -1,6 +1,7 @@
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
 import { parseM3NSyntaxTree } from './notation/syntax-tree'
-import { parseM3NDocument, type DirectEvent } from './m3n-direct'
+import { parseM3NDocument } from './m3n-direct'
+import type { ScoreEvent } from './notation/score-document'
 
 const EPSILON = 1e-9
 
@@ -109,7 +110,7 @@ function normalizeBeamGroups(source: string) {
   return output
 }
 
-function respectsMergeBoundary(offset: number, beats: number, event: DirectEvent) {
+function respectsMergeBoundary(offset: number, beats: number, event: ScoreEvent) {
   const beat = 4 / (event.meterUnit ?? 4)
   const measureBeats = (event.meterCount ?? 4) * beat
   const end = offset + beats
@@ -128,7 +129,7 @@ function durationToken(pitch: string, beats: number, tied = false) {
   return null
 }
 
-function restRunReplacement(events: DirectEvent[], source: string, offset: number, depth: number) {
+function restRunReplacement(events: ScoreEvent[], source: string, offset: number, depth: number) {
   const first = events[0]
   const last = events.at(-1)
   if (!first || !last || events.length < 2 || events.some((event) => event.kind !== 'rest')) return null
@@ -170,7 +171,7 @@ function replaceSustainedAtoms(source: string, splitAtStrongBeat: boolean) {
       }
     }
     if (splitAtStrongBeat) continue
-    let restRun: DirectEvent[] = []
+    let restRun: ScoreEvent[] = []
     let restOffset = 0
     const flushRestRun = () => {
       const first = restRun[0]

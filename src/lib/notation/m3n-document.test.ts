@@ -26,8 +26,15 @@ describe('M3N v0.4 document structure', () => {
   it('rejects duplicate melody rows and mixed lyric modes', () => {
     const document = parseM3NDocumentStructure('N: 1 2 |\nN: 3 4 |\nL: 甲乙\nL1: 丙丁')
 
-    expect(document.diagnostics).toContain('第 2 行：同一乐句只能有一个 N: 行')
-    expect(document.diagnostics).toContain('第 1 行：L: 与编号歌词行不能混用')
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'M3N_STRUCTURE_DUPLICATE_MELODY',
+      legacyMessage: '第 2 行：同一乐句只能有一个 N: 行',
+      range: { start: 9, end: 17 },
+    }))
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'M3N_STRUCTURE_MIXED_LYRIC_LABELS',
+      legacyMessage: '第 1 行：L: 与编号歌词行不能混用',
+    }))
   })
 
   it('starts a new independent phrase after a section marker', () => {
@@ -39,8 +46,18 @@ describe('M3N v0.4 document structure', () => {
   it('requires melody rows to end with a bar and restricts supplementary bars to alignment', () => {
     const document = parseM3NDocumentStructure('N: 1 2\nB: 1d 2d ||\nL: 甲乙 :||')
 
-    expect(document.diagnostics).toContain('第 1 行：每个 N: 乐句必须以小节线结束')
-    expect(document.diagnostics).toContain('第 2 行：B: 只允许使用普通 | 作为小节对位标记')
-    expect(document.diagnostics).toContain('第 3 行：L: 只允许使用普通 | 作为小节对位标记')
+    expect(document.diagnostics.map((item) => item.legacyMessage)).toEqual([
+      '第 2 行：B: 只允许使用普通 | 作为小节对位标记',
+      '第 3 行：L: 只允许使用普通 | 作为小节对位标记',
+      '第 1 行：每个 N: 乐句必须以小节线结束',
+    ])
+  })
+
+  it('keeps absolute row offsets for CRLF documents', () => {
+    const document = parseM3NDocumentStructure('===Verse\r\nN: 1 2 |\r\nL: 甲乙 |')
+    expect(document.sections[0]?.phrases[0]).toMatchObject({
+      melody: { start: 13 },
+      lyrics: [{ start: 23 }],
+    })
   })
 })

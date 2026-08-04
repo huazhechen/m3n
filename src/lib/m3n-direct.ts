@@ -3,22 +3,12 @@ import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './not
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N } from './notation/m3n-tokens'
 import { projectM3NDocument } from './notation/m3n-document'
-import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreLyricSyllable, ScoreMeasure, ScorePart } from './notation/score-document'
-
-export type DirectEvent = ScoreEvent
-export type DirectInterval = ScoreInterval
-export type DirectMeasure = ScoreMeasure
-export type DirectPart = ScorePart
-export type DirectLyricSyllable = ScoreLyricSyllable
-export type DirectLyricBlock = ScoreLyricBlock
+import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document'
 type DirectSettingEvent = {
   beats: number
   kind: 'key' | 'meter' | 'tempo'
   value: string
 }
-
-/** @deprecated Use ScoreDocument from notation/score-document. */
-export type DirectDocument = ScoreDocument
 
 const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
 function metadata(source: string, name: (typeof metadataNames)[number]) {
@@ -32,12 +22,12 @@ function duration(depth: number, carets = 0, dots = 0) {
 function parseBody(
   source: string,
   staff: 'melody' | 'bass',
-  parts: Map<string, DirectPart>,
+  parts: Map<string, ScorePart>,
   initialKey: string,
   initialMeterCount: number,
   initialMeterUnit: number,
   initialTempo: number,
-  intervals: DirectInterval[],
+  intervals: ScoreInterval[],
   settingEvents: DirectSettingEvent[] = [],
   inheritedSettingEvents: DirectSettingEvent[] = [],
   phrasePasses: ReadonlyArray<{ start: number; end: number; passes: string }> = [],
@@ -53,12 +43,12 @@ function parseBody(
   let currentChord: string | undefined
   let chordChanged = false
   let pendingPrefix: 'sfz' | undefined
-  let lastEvent: DirectEvent | undefined
+  let lastEvent: ScoreEvent | undefined
   let pendingNavigation: Array<'segno' | 'ds' | 'dc' | 'fine'> = []
-  let pendingRepeatEnd: DirectMeasure | undefined
+  let pendingRepeatEnd: ScoreMeasure | undefined
   let elapsedBeats = 0
   let inheritedSettingIndex = 0
-  const structureStack: Array<string | DirectInterval> = []
+  const structureStack: Array<string | ScoreInterval> = []
 
   const getPart = () => {
     let part = parts.get('score')
@@ -69,7 +59,7 @@ function parseBody(
     return part
   }
   const measures = () => getPart()[staff]
-  const measure = () => measures().at(-1) as DirectMeasure
+  const measure = () => measures().at(-1) as ScoreMeasure
   const ensureEndingMeasure = () => {
     const current = measure()
     if (current.events.length > 0 && current.ending !== activeEnding) {
@@ -78,7 +68,7 @@ function parseBody(
       current.ending = activeEnding
     }
   }
-  const add = (event: DirectEvent) => {
+  const add = (event: ScoreEvent) => {
     activeEnding = phrasePasses.find((phrase) => phrase.start <= event.sourceStart && event.sourceStart < phrase.end)?.passes
     ensureEndingMeasure()
     event.dynamic = dynamicChanged ? currentDynamic : undefined
@@ -111,12 +101,15 @@ function parseBody(
   const applyInheritedSettings = () => {
     while (inheritedSettingIndex < inheritedSettingEvents.length) {
       const event = inheritedSettingEvents[inheritedSettingIndex]
+      if (!event) break
       if (event.beats > elapsedBeats) break
       if (event.kind === 'key') currentKey = event.value
       if (event.kind === 'meter') {
         const [count, unit] = event.value.split('/').map(Number)
-        currentMeterCount = count
-        currentMeterUnit = unit
+        if (count !== undefined && unit !== undefined) {
+          currentMeterCount = count
+          currentMeterUnit = unit
+        }
       }
       if (event.kind === 'tempo') currentTempo = Number(event.value)
       inheritedSettingIndex += 1
@@ -162,7 +155,7 @@ function parseBody(
       }
       if (/^(?:lg|cresc|decres|8va|8vb|inst)$/.test(value) || /^(?:accel|rit)=\d+$/.test(value)) {
         const ramp = /^(accel|rit)=(\d+)$/.exec(value)
-        const interval: DirectInterval = { id: intervals.length + 1, staff, kind: value as DirectInterval['kind'] }
+        const interval: ScoreInterval = { id: intervals.length + 1, staff, kind: value as ScoreInterval['kind'] }
         if (ramp) {
           interval.kind = ramp[1] as 'accel' | 'rit'
           interval.tempoTarget = Number(ramp[2])
@@ -222,7 +215,7 @@ function parseBody(
           : value === '||' ? 'dbl' : 'single'
       current.barEnd = token.start + value.length
       pendingRepeatEnd = value.startsWith(':||') ? current : undefined
-      const next: DirectMeasure = { events: [], ending: activeEnding }
+      const next: ScoreMeasure = { events: [], ending: activeEnding }
       if (value === '||:' || value === ':||:') next.left = 'rptstart'
       measures().push(next)
       lastEvent = undefined
@@ -248,14 +241,16 @@ function parseBody(
       const sourceEnd = token.start + group[0].length
       if (pitches.length > 0) {
         const first = parseM3NNote(pitches[0] ?? '')
-        const groupBeats = duration(depth, (first?.carets.length ?? 0) + group[3].length, (first?.dots.length ?? 0) + group[4].length)
+        const carets = group[3] ?? ''
+        const dots = group[4] ?? ''
+        const groupBeats = duration(depth, (first?.carets.length ?? 0) + carets.length, (first?.dots.length ?? 0) + dots.length)
         add({
           sourceStart: token.start,
           sourceEnd,
           kind: mode === 'h' ? 'chord' : 'tuplet',
           pitches,
           key: currentKey,
-          beats: mode === 'h' ? groupBeats : (Number(mode) || pitches.length - 1) * duration(depth, group[3].length, group[4].length),
+          beats: mode === 'h' ? groupBeats : (Number(mode) || pitches.length - 1) * duration(depth, carets.length, dots.length),
           tie: mode === 'h' ? Boolean(group[5]) : Boolean(tuplet?.tiesFromLast),
           tieFromTupletIndex: tuplet?.tiesFromLast ? pitches.length - 1 : undefined,
           postfixes: [],
@@ -264,7 +259,7 @@ function parseBody(
           tuplet: mode === 'h' ? undefined : {
             num: pitches.length,
             numbase: Number(mode) || pitches.length - 1,
-            unitBeats: duration(depth, group[3].length, group[4].length),
+            unitBeats: duration(depth, carets.length, dots.length),
           },
         })
       }
@@ -297,13 +292,13 @@ export function m3nPitch(pitch: string, key: string) {
   if (!parsed || parsed.degreeRaw === '0') return { pname: 'c', oct: 4, accid: '' }
   const letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
   const { tonic, mode } = parseKey(key)
-  const tonicIndex = Math.max(0, letters.indexOf(tonic[0] ?? 'C'))
+  const tonicIndex = Math.max(0, letters.indexOf(tonic.charAt(0) || 'C'))
   const degree = Number(parsed.degreeRaw)
   const letterIndex = (tonicIndex + degree - 1) % 7
   const natural = [0, 2, 4, 5, 7, 9, 11]
-  const tonicPitch = natural[tonicIndex] + (tonic.endsWith('#') ? 1 : tonic.endsWith('b') ? -1 : 0)
+  const tonicPitch = (natural[tonicIndex] ?? 0) + (tonic.endsWith('#') ? 1 : tonic.endsWith('b') ? -1 : 0)
   const target = (tonicPitch + (keyModeIntervals(mode)[degree - 1] ?? 0) + 12) % 12
-  const difference = (target - natural[letterIndex] + 12) % 12
+  const difference = (target - (natural[letterIndex] ?? 0) + 12) % 12
   const keyAccid = difference === 1 ? 's' : difference === 2 ? 'ss'
     : difference === 11 ? 'f' : difference === 10 ? 'ff' : ''
   const explicitOffset = parsed.accidentals === '##' ? 2 : parsed.accidentals.includes('#') ? 1
@@ -315,7 +310,7 @@ export function m3nPitch(pitch: string, key: string) {
       : ''
   const octaveShift = [...parsed.octave].reduce((sum, value) => sum + (value === 'e' ? 1 : -1), 0)
   return {
-    pname: letters[letterIndex].toLowerCase(),
+    pname: (letters[letterIndex] ?? 'C').toLowerCase(),
     oct: 4 + (letterIndex < tonicIndex ? 1 : 0) + octaveShift,
     accid: explicit === 'ss' ? 'x' : explicit,
     accidGes: explicit || keyAccid,
@@ -329,8 +324,8 @@ export function parseM3NDocument(source: string): ScoreDocument {
   const key = source.match(/\{key=([^}]+)\}/)?.[1]?.trim() || 'C'
   const meter = source.match(/\{(\d+)\/(\d+)\}/)
   const tempo = source.match(/\{(\d+)qpm\}/)?.[1]
-  const parts = new Map<string, DirectPart>()
-  const intervals: DirectInterval[] = []
+  const parts = new Map<string, ScorePart>()
+  const intervals: ScoreInterval[] = []
   const settingEvents: DirectSettingEvent[] = []
   const meterCount = Number(meter?.[1] ?? 4)
   const meterUnit = Number(meter?.[2] ?? 4)
@@ -429,7 +424,7 @@ export function parseM3NDocument(source: string): ScoreDocument {
       }
     }
 
-    const lyricRows: DirectLyricBlock[] = []
+    const lyricRows: ScoreLyricBlock[] = []
     for (const section of projected.structure.sections) {
       for (const phrase of section.phrases) {
         if (!phrase.melody) continue

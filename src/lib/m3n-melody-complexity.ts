@@ -1,5 +1,5 @@
-import { m3nPitch, parseM3NDocument, type DirectEvent } from './m3n-direct'
-import type { ScoreDocument } from './notation/score-document'
+import { m3nPitch, parseM3NDocument } from './m3n-direct'
+import type { ScoreDocument, ScoreEvent } from './notation/score-document'
 
 export type MelodyComplexityMetrics = {
   noteCount: number
@@ -49,14 +49,14 @@ function round(value: number, decimals = 2) {
   return Math.round(value * multiplier) / multiplier
 }
 
-function midiPitch(value: string, event: DirectEvent) {
+function midiPitch(value: string, event: ScoreEvent) {
   const pitch = m3nPitch(value, event.key)
   return (pitch.oct + event.octaveShift + 1) * 12
     + (chromaticPitch[pitch.pname] ?? 0)
     + (accidentalOffset[pitch.accidGes ?? ''] ?? 0)
 }
 
-function eventPoints(event: DirectEvent, start: number): MelodyPoint[] {
+function eventPoints(event: ScoreEvent, start: number): MelodyPoint[] {
   if (event.kind === 'rest' || event.pitches.length === 0) return []
   const duration = event.kind === 'tuplet' && event.tuplet
     ? event.tuplet.unitBeats * event.tuplet.numbase / event.tuplet.num

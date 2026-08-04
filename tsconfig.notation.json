@@ -7,6 +7,9 @@
   "include": [
     "src/lib/notation/m3n-tokens.ts",
     "src/lib/notation/syntax-tree.ts",
-    "src/lib/notation/score-document.ts"
+    "src/lib/notation/score-document.ts",
+    "src/lib/notation/diagnostics.ts",
+    "src/lib/notation/m3n-document.ts",
+    "src/lib/m3n-direct.ts"
   ]
 }

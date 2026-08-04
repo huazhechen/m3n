@@ -1,13 +1,11 @@
 import { m3nPitch, parseM3NDocument } from './m3n-direct'
-import type { DirectLyricSyllable } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
-import type { DirectEvent, DirectMeasure } from './m3n-direct'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { parseKey } from './notation/m3n-primitives'
 import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, type PlaybackNavigation } from './notation/repeats'
 import { validateM3NDiagnostics } from './m3n-validate'
 import type { ScoreDiagnostic } from './notation/diagnostics'
-import type { ScoreDocument } from './notation/score-document'
+import type { ScoreDocument, ScoreEvent, ScoreLyricSyllable, ScoreMeasure } from './notation/score-document'
 
 export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd: number }
 export type ScoreHeaderMetadata = {
@@ -33,10 +31,10 @@ export type MeiConversionResult = {
   tempo: number
 }
 
-type LyricSyllable = DirectLyricSyllable
+type LyricSyllable = ScoreLyricSyllable
 type VerseSyllable = LyricSyllable & { n: string; verseIndex: number; cjkSpacingCompensation: boolean; passes?: ReadonlySet<number> }
 
-function splitLyricSyllables(tokens: DirectLyricSyllable[]): LyricSyllable[] {
+function splitLyricSyllables(tokens: ScoreLyricSyllable[]): LyricSyllable[] {
   return tokens
 }
 
@@ -140,7 +138,7 @@ function verseXml(lyrics: VerseSyllable[], xmlId: string) {
   }).join('')
 }
 
-function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
+function eventXml(event: ScoreEvent, xmlId: string, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
   const verse = verseXml(lyrics, xmlId)
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
@@ -189,7 +187,7 @@ function eventXml(event: DirectEvent, xmlId: string, lyrics: VerseSyllable[], ac
   return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${durationAttributes(event.beats)}>${articulations}${verse}</note>`
 }
 
-type RenderedEvent = { event: DirectEvent; prefix?: string; xml: string }
+type RenderedEvent = { event: ScoreEvent; prefix?: string; xml: string }
 
 function beamGroupBeats(meterCount: number, meterUnit: number) {
   const beat = 4 / meterUnit
@@ -251,7 +249,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
   const hasBassStaff = [...document.parts.values()].some((part) => part.bass.some((measure) => measure.events.length > 0))
   let eventIndex = 0
   const eventIds = new Map<string, string>()
-  const preassignedIds = new Map<DirectEvent, string>()
+  const preassignedIds = new Map<ScoreEvent, string>()
   const previousTiedByStaff = new Map<number, boolean>()
   const previousKeyByStaff = new Map<number, string>()
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
@@ -277,11 +275,11 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
   })
   const lyricRowCount = Math.max(0, ...lyricSyllables.map((block) => Number(block.n)).filter(Number.isInteger))
   const melodyIndices = lyricSyllables.map(() => 0)
-  const lyricPassesByMeasure = new Map<DirectMeasure, Set<number>>()
+  const lyricPassesByMeasure = new Map<ScoreMeasure, Set<number>>()
   for (const part of document.parts.values()) {
     for (const [measure, passes] of measurePlaybackPasses(part.melody)) lyricPassesByMeasure.set(measure, passes)
   }
-  const isInstrumentalEvent = (event: DirectEvent) => document.intervals.some((interval) => (
+  const isInstrumentalEvent = (event: ScoreEvent) => document.intervals.some((interval) => (
     interval.kind === 'inst' &&
     interval.staff === 'melody' &&
     interval.start !== undefined &&
@@ -306,9 +304,9 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
     }
   }
 
-  const tiesByStartEvent = new Map<DirectEvent, string[]>()
-  const collectTies = (measures: DirectMeasure[]) => {
-    const addTie = (tiedEvent: DirectEvent, event: DirectEvent) => {
+  const tiesByStartEvent = new Map<ScoreEvent, string[]>()
+  const collectTies = (measures: ScoreMeasure[]) => {
+    const addTie = (tiedEvent: ScoreEvent, event: ScoreEvent) => {
       const tiedEventId = preassignedIds.get(tiedEvent)
       const eventId = preassignedIds.get(event)
       const startid = tiedEventId && tiedEvent.tieFromTupletIndex !== undefined
@@ -321,7 +319,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       if (!ties.includes(tie)) ties.push(tie)
       tiesByStartEvent.set(tiedEvent, ties)
     }
-    let tiedEvent: DirectEvent | undefined
+    let tiedEvent: ScoreEvent | undefined
     for (const measure of measures) {
       for (const event of measure.events) {
         if (tiedEvent) addTie(tiedEvent, event)
@@ -334,7 +332,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
     if (hasBassStaff) collectTies(part.bass)
   }
 
-  const compactLyricRowsInEnding = new Set<DirectMeasure>()
+  const compactLyricRowsInEnding = new Set<ScoreMeasure>()
   for (const part of document.parts.values()) {
     for (let index = 1; index < part.melody.length; index += 1) {
       const ending = part.melody[index]
@@ -355,7 +353,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
   }
 
   const renderStaff = (
-    measure: DirectMeasure | undefined,
+    measure: ScoreMeasure | undefined,
     staffNumber: number,
     keyChanges = new Map<number, string>(),
     meter = previousMeter,
@@ -454,7 +452,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
     return `<staff n="${staffNumber}">\n  <layer n="1">\n${body}\n  </layer>\n</staff>`
   }
 
-  const keyChangesForMeasure = (measure: DirectMeasure | undefined, staffNumber: number) => {
+  const keyChangesForMeasure = (measure: ScoreMeasure | undefined, staffNumber: number) => {
     let key = previousKeyByStaff.get(staffNumber) ?? document.key
     const changes = new Map<number, string>()
     let openingKey: string | undefined
@@ -487,7 +485,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
     '</scoreDef>',
   ].join('\n')
 
-  const meterChangeForMeasure = (measure: DirectMeasure | undefined) => {
+  const meterChangeForMeasure = (measure: ScoreMeasure | undefined) => {
     let meter = previousMeter
     let openingMeter: typeof meter | undefined
     for (const [eventIndex, event] of (measure?.events ?? []).entries()) {
@@ -501,7 +499,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
     return { meter, openingMeter }
   }
 
-  const controlXml = (measure: DirectMeasure | undefined, staffNumber: number, meter = previousMeter) => {
+  const controlXml = (measure: ScoreMeasure | undefined, staffNumber: number, meter = previousMeter) => {
     const events = measure?.events ?? []
     const idFor = (sourceStart: number | undefined) => sourceStart === undefined ? undefined : eventIds.get(`${staffNumber}:${sourceStart}`)
     const postfix = (xmlId: string, value: string) => {

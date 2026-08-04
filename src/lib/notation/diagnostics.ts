@@ -13,6 +13,22 @@ export type ScoreDiagnostic = {
   legacyMessage: string
 }
 
+export function createScoreDiagnostic(input: {
+  code: string
+  message: string
+  range?: DiagnosticRange
+  severity?: DiagnosticSeverity
+  legacyMessage?: string
+}): ScoreDiagnostic {
+  return {
+    code: input.code,
+    severity: input.severity ?? 'error',
+    message: input.message,
+    range: input.range,
+    legacyMessage: input.legacyMessage ?? input.message,
+  }
+}
+
 function diagnosticCode(message: string, lyric: boolean) {
   if (lyric) return 'M3N_LYRIC_ALIGNMENT'
   if (/无法识别的语法|格式非法|多余的|缺少/.test(message)) return 'M3N_SYNTAX'

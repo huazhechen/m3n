@@ -1076,7 +1076,7 @@ function validateProjectedM3N(source: string, bassSource: string, options: { ski
   }
   return [...new Set(diagnostics)]
 }
-export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): string[] {
+function validationResult(source: string, options: { skipBeatValidation?: boolean }, document?: ScoreDocument) {
   const projected = projectM3NDocument(source)
   const parsed = document ?? parseM3NDocument(source)
   const projectedDiagnostics = validateProjectedM3N(projected.source, projected.bassSource, options)
@@ -1096,10 +1096,19 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       .filter((message) => !message.startsWith('[L]'))
       .map((message) => remapProjectedLines(message, projected.lineMap))
     : projectedDiagnostics
-  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics]
+  return {
+    structureDiagnostics: projected.structure.diagnostics,
+    compatibilityMessages: [...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics],
+  }
+}
+
+export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): string[] {
+  const result = validationResult(source, options, document)
+  return [...result.structureDiagnostics.map((diagnostic) => diagnostic.legacyMessage), ...result.compatibilityMessages]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
 export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): ScoreDiagnostic[] {
-  return diagnosticsFromLegacyMessages(source, validateM3N(source, options, document))
+  const result = validationResult(source, options, document)
+  return [...result.structureDiagnostics, ...diagnosticsFromLegacyMessages(source, result.compatibilityMessages)]
 }
