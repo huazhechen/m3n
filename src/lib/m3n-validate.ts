@@ -1,10 +1,10 @@
 import { durationInBeats, keyModeIntervals } from './notation/m3n-primitives'
 import { parseM3NGrace } from './notation/m3n-groups'
-import { parseLyricItems, type LyricMode } from './notation/lyrics'
+import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
 import { diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
 import { parseM3NDocument, type DirectDocument } from './m3n-direct'
-import { hasForcedLyricOutsideTiedTarget, playbackLyricCounts, playbackLyricTargets, sharedLyricRangeCount } from './m3n-lyric-alignment'
+import { hasForcedLyricOutsideTiedTarget } from './m3n-lyric-alignment'
 import { projectM3NDocument, type M3NDocumentStructure, type M3NPhrase } from './notation/m3n-document'
 import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 
@@ -62,14 +62,6 @@ type Block = {
   tempoTarget?: number
 }
 
-type Supplement = {
-  kind: 'lyrics' | 'bass'
-  line: number
-  range: string | null
-  tokens: Token[]
-  lyricMode?: LyricMode
-}
-
 const INFO_FIELDS = new Set([
   'title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger',
   'copyright', 'source', 'note', 'transpose',
@@ -99,11 +91,6 @@ function remapProjectedLines(message: string, lineMap: readonly number[]) {
   })
 }
 
-function supplementMessage(current: Supplement, token: Token, message: string) {
-  const diagnostic = lineMessage(token, message)
-  return current.kind === 'lyrics' ? lyricMessage(diagnostic) : diagnostic
-}
-
 function isTrivia(token: Token) {
   return token.kind === 'space' || token.kind === 'comment'
 }
@@ -113,124 +100,9 @@ function attributeName(content: string) {
   return equals === -1 ? content : content.slice(0, equals)
 }
 
-function openingBlockName(content: string): string | null {
-  if (INTERVAL_FLAGS.has(content)) return content
-  if (content.startsWith('ending=')) return 'ending'
-  if (content.startsWith('part=')) return 'part'
-  if (content === 'lyrics' || content.startsWith('lyrics=')) return 'lyrics'
-  if (content === 'bass') return 'bass'
-  return null
-}
-
 function closingBlockName(content: string) {
   if (content === '/') return null
   return content.startsWith('/') ? content.slice(1) : undefined
-}
-
-function parseRange(value: string, label: string): { values: Set<number>; error: string | null } {
-  const values = new Set<number>()
-  if (!value) return { values, error: `${label}遍次范围为空` }
-  let previous = 0
-  for (const item of value.split(',')) {
-    const single = /^\d+$/.exec(item)
-    const range = /^(\d+)~(\d+)$/.exec(item)
-    if (!single && !range) return { values, error: `${label}遍次范围格式非法：${value}` }
-    const start = Number(single?.[0] ?? range?.[1])
-    const end = Number(single?.[0] ?? range?.[2])
-    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start <= 0 || end <= 0) {
-      return { values, error: `${label}遍次必须为正整数` }
-    }
-    if (range && start >= end) return { values, error: `${label}闭区间起点必须小于终点` }
-    for (let valueAt = start; valueAt <= end; valueAt += 1) {
-      if (valueAt <= previous || values.has(valueAt)) {
-        return { values, error: `${label}遍次必须严格递增且不得重复或重叠` }
-      }
-      values.add(valueAt)
-      previous = valueAt
-    }
-  }
-  return { values, error: null }
-}
-
-function extractSupplements(tokens: Token[], diagnostics: string[]) {
-  const main: Token[] = []
-  const supplements: Supplement[] = []
-  let current: Supplement | null = null
-  let nested: string[] = []
-  let supplementsStarted = false
-  let restoredBodyReported = false
-
-  for (const token of tokens) {
-    if (current) {
-      if (token.kind === 'attribute') {
-        const content = token.content ?? ''
-        const closing = closingBlockName(content)
-        if (closing !== undefined) {
-          if (nested.length > 0) {
-            const expected = nested.at(-1)
-            if (closing !== null && closing !== expected) {
-              diagnostics.push(supplementMessage(current, token, `区间关闭顺序错误：期望 {/${expected}}，实际 {/${closing}}`))
-            } else {
-              nested.pop()
-            }
-            current.tokens.push(token)
-            continue
-          }
-          if (closing !== null && closing !== current.kind) {
-            diagnostics.push(supplementMessage(current, token, `补充块关闭名称错误：期望 {/${current.kind}}，实际 {/${closing}}`))
-            current.tokens.push(token)
-            continue
-          }
-          supplements.push(current)
-          current = null
-          continue
-        }
-        const opener = openingBlockName(content)
-        if (opener) {
-          if (current.kind === 'lyrics' || opener === 'lyrics' || opener === 'bass' || opener === 'part') {
-            const diagnostic = lineMessage(token, '补充块不能嵌套')
-            diagnostics.push(current.kind === 'lyrics' || opener === 'lyrics' ? lyricMessage(diagnostic) : diagnostic)
-          }
-          nested.push(opener)
-        }
-      }
-      current.tokens.push(token)
-      continue
-    }
-
-    if (token.kind === 'attribute') {
-      const content = token.content ?? ''
-      if (/^(?:form|parts|part)$/.test(content) || /^(?:form|parts|part|volta|ending)=/.test(content)) {
-        diagnostics.push(lineMessage(token, `未知指令：{${content}}`))
-        continue
-      }
-      const lyric = /^(lyrics(?:-word)?)(?:=(.*))?$/.exec(content)
-      if (lyric || content === 'bass') {
-        supplementsStarted = true
-        current = {
-          kind: lyric ? 'lyrics' : 'bass',
-          line: token.line,
-          range: lyric ? (lyric[2] ?? null) : null,
-          tokens: [],
-          lyricMode: 'char',
-        }
-        nested = []
-        continue
-      }
-    }
-
-    if (!supplementsStarted) {
-      main.push(token)
-    } else if (!isTrivia(token) && !restoredBodyReported) {
-      diagnostics.push(lineMessage(token, '第一个补充块开始后不能恢复乐谱正文'))
-      restoredBodyReported = true
-    }
-  }
-
-  if (current) diagnostics.push(current.kind === 'lyrics'
-    ? lyricMessage(`第 ${current.line} 行：未闭合的歌词块`)
-    : `第 ${current.line} 行：未闭合的补充块：{${current.kind}}`)
-  return { main, supplements }
 }
 
 function parsePitch(raw: string): { pitch: ParsedPitch | null; error: string | null } {
@@ -640,7 +512,7 @@ function validateBody(
     if (!isRepeatCount && token.kind !== 'bar') repeatCountTarget = false
 
     if (terminalSeen && !isRepeatCount && !terminalTailReported) {
-      diagnostics.push(lineMessage(token, '终止线之后只能出现补充块、空白和注释'))
+      diagnostics.push(lineMessage(token, '终止线之后只能出现空白和注释'))
       terminalTailReported = true
     }
     if (firstPartSeen && !currentPart && !(token.kind === 'attribute' && (token.content ?? '').startsWith('part='))) {
@@ -694,7 +566,7 @@ function validateBody(
       const isInfo = INFO_FIELDS.has(name)
       const isPostfix = POSTFIX_FLAGS.has(content) || /^(?:ac|ap)\(/.test(content)
       const isTempoRamp = name === 'accel' || name === 'rit'
-      const isInterval = INTERVAL_FLAGS.has(content) || name === 'ending' || isTempoRamp
+      const isInterval = INTERVAL_FLAGS.has(content) || isTempoRamp
       const isPosition = content === 'br' || name === 'text'
       const isState = DYNAMICS.has(content) || name === 'key' || name === 'chord' || /^\d+qpm$/.test(content)
 
@@ -837,24 +709,6 @@ function validateBody(
         unit.currentHasAtom = true
         unit.multiRestPendingBar = true
         postfixTarget = false
-        continue
-      }
-
-      if (name === 'ending') {
-        if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能使用房子投影'))
-        const parsed = parseRange(value, '房子 ')
-        if (parsed.error) diagnostics.push(lineMessage(token, parsed.error))
-        if (blocks.some((block) => block.name === 'ending')) diagnostics.push(lineMessage(token, '房子不能嵌套'))
-        const group = currentEndingRepeat || ++repeatId
-        currentEndingRepeat = group
-        completedEndingGroup = false
-        const used = endingRanges.get(group) ?? new Set<number>()
-        for (const pass of parsed.values) {
-          if (used.has(pass)) diagnostics.push(lineMessage(token, `同一反复结构的房子遍次重叠：${pass}`))
-          used.add(pass)
-        }
-        endingRanges.set(group, used)
-        blocks.push({ name: 'ending', line: token.line, range: parsed.values })
         continue
       }
 
@@ -1027,23 +881,6 @@ function validateBody(
   }
 }
 
-function lyricItems(tokens: Token[], mode: LyricMode) {
-  const source = tokens
-    .filter((token) => token.kind !== 'comment')
-    .map((token) => token.raw)
-    .join('')
-    .trim()
-  if (!source) return { items: [], count: 0, forcedTiedTargets: 0, hasTab: false, hasEmptyForcedTarget: false }
-  const items = parseLyricItems(source, 0, mode)
-  return {
-    items,
-    count: items.length,
-    forcedTiedTargets: items.filter((item) => item.forceTiedTarget).length,
-    hasTab: /\t/.test(source),
-    hasEmptyForcedTarget: /\+(?=\s|$)/.test(source),
-  }
-}
-
 type StrictLyricTarget = { tied: boolean }
 type StrictLyricMeasureTargets = StrictLyricTarget[][]
 
@@ -1212,17 +1049,7 @@ function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentSt
 export function invalidMeasureBarEnds(source: string) {
   const diagnostics: string[] = []
   const invalidBarEnds = new Set<number>()
-  const { main, supplements } = extractSupplements(tokenizeM3N(source), diagnostics)
-  const mainResult = validateBody(main, diagnostics, { invalidBarEnds })
-  const bassBlock = supplements.find((block) => block.kind === 'bass')
-  if (bassBlock) {
-    validateBody(bassBlock.tokens, diagnostics, {
-      bass: true,
-      initial: mainResult.initial,
-      inheritedSettingEvents: mainResult.settingEvents,
-      invalidBarEnds,
-    })
-  }
+  validateBody(tokenizeM3N(projectM3NDocument(source).source), diagnostics, { invalidBarEnds })
   return [...invalidBarEnds].sort((left, right) => left - right)
 }
 
@@ -1246,72 +1073,11 @@ export function invalidMeasureIds(source: string, document = parseM3NDocument(so
   })
 }
 
-function validateProjectedM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document: DirectDocument = parseM3NDocument(source)): string[] {
+function validateProjectedM3N(source: string, bassSource: string, options: { skipBeatValidation?: boolean } = {}): string[] {
   const diagnostics: string[] = []
-  const tokens = tokenizeM3N(source)
-  const { main, supplements } = extractSupplements(tokens, diagnostics)
-  const mainResult = validateBody(main, diagnostics, { skipBeatValidation: options.skipBeatValidation })
-  const lyricCountsByPlaybackPass = mainResult.hasParts ? undefined : playbackLyricCounts(document)
-  const lyricTargetsByPlaybackPass = playbackLyricTargets(document)
-
-  const lyrics = supplements.filter((block) => block.kind === 'lyrics')
-  const bassBlocks = supplements.filter((block) => block.kind === 'bass')
-  if (bassBlocks.length > 1) diagnostics.push('每份文档最多包含一个低音谱表块')
-  if (bassBlocks.length > 0 && mainResult.hasParts) diagnostics.push('低音谱表不能与具名乐段组合')
-
-  const lyricItemsByPass = new Map<number, ReturnType<typeof lyricItems> & { line: number }>()
-  if (lyrics.length > 1 && lyrics.some((block) => block.range === null)) {
-    diagnostics.push(lyricMessage('存在多个歌词块时，每个歌词块都必须指定遍次'))
-  }
-  for (const lyric of lyrics) {
-    const items = lyricItems(lyric.tokens, lyric.lyricMode ?? 'char')
-    if (items.count === 0) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词块为空`))
-    if (items.hasTab) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词项必须使用半角空格或换行分隔，不能使用 Tab`))
-    if (items.hasEmptyForcedTarget) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：+ 后必须跟随歌词项`))
-    if (/%\{[1-9]\d*\}/.test(lyric.tokens.map((token) => token.raw).join(''))) {
-      diagnostics.push(lyricMessage(`第 ${lyric.line} 行：重复占位必须写作 {%N}`))
-    }
-    const parsed = lyric.range === null
-      ? { values: mainResult.lyricPasses, error: null }
-      : parseRange(lyric.range, '歌词 ')
-    if (parsed.error) diagnostics.push(lyricMessage(`第 ${lyric.line} 行：${parsed.error}`))
-    if (parsed.values.size > 1) {
-      const expected = sharedLyricRangeCount(document, parsed.values) + items.forcedTiedTargets
-      if (items.count !== expected) {
-        diagnostics.push(lyricMessage(`第 ${lyric.line} 行：歌词对位数量不匹配：共享遍次需要 ${expected} 项，实际 ${items.count} 项`))
-      }
-      continue
-    }
-    for (const pass of parsed.values) {
-      const combined = lyricItemsByPass.get(pass)
-      if (combined) {
-        combined.items.push(...items.items)
-        combined.count += items.count
-        combined.forcedTiedTargets += items.forcedTiedTargets
-      } else {
-        lyricItemsByPass.set(pass, { ...items, items: [...items.items], line: lyric.line })
-      }
-    }
-  }
-  for (const [pass, items] of lyricItemsByPass) {
-    const expected = (mainResult.hasParts
-      ? mainResult.firstPlaybackLyricCount(pass)
-      : lyricCountsByPlaybackPass?.get(pass) ?? mainResult.lyricCount(pass)) + items.forcedTiedTargets
-    const exceedsAvailablePositions = items.count > expected
-    const firstPassIsIncomplete = pass === 1 && items.count !== expected
-    if (exceedsAvailablePositions || firstPassIsIncomplete) {
-      diagnostics.push(lyricMessage(`第 ${items.line} 行：歌词对位数量不匹配：第 ${pass} 遍需要 ${expected} 项，实际 ${items.count} 项`))
-    }
-    if (hasForcedLyricOutsideTiedTarget(items.items, lyricTargetsByPlaybackPass.get(pass) ?? [])) {
-      diagnostics.push(lyricMessage(`第 ${items.line} 行：第 ${pass} 遍的 +歌词项不位于延音目标`))
-    }
-  }
-
-  const bassBlock = bassBlocks[0]
-  if (bassBlock) {
-    const hasContent = bassBlock.tokens.some((token) => !isTrivia(token))
-    if (!hasContent) diagnostics.push(`第 ${bassBlock.line} 行：低音谱表内容为空`)
-    const bassResult = validateBody(bassBlock.tokens, diagnostics, {
+  const mainResult = validateBody(tokenizeM3N(source), diagnostics, { skipBeatValidation: options.skipBeatValidation })
+  if (bassSource) {
+    const bassResult = validateBody(tokenizeM3N(bassSource), diagnostics, {
       bass: true,
       initial: mainResult.initial,
       inheritedSettingEvents: mainResult.settingEvents,
@@ -1328,15 +1094,12 @@ function validateProjectedM3N(source: string, options: { skipBeatValidation?: bo
       }
     }
   }
-
-  if (supplements.length > 0 && !mainResult.ended) diagnostics.push('补充块只能写在完整乐谱正文之后')
   return [...new Set(diagnostics)]
 }
-
 export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: DirectDocument): string[] {
   const projected = projectM3NDocument(source)
   const parsed = document ?? parseM3NDocument(source)
-  const projectedDiagnostics = validateProjectedM3N(projected.source, options, parsed)
+  const projectedDiagnostics = validateProjectedM3N(projected.source, projected.bassSource, options)
     .filter((message) => projected.structure.sections.length === 0 || !/^未分段正文必须且只能使用一次终止线，实际 0 次$/.test(message))
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
   const legacyDiagnostics = projected.structure.sections.length > 0

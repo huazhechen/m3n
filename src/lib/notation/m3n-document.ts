@@ -128,7 +128,6 @@ export function projectM3NDocument(source: string) {
   }
   push(structure.header)
   const bass: string[] = []
-  const lyrics = new Map<string, string[]>()
   for (const section of structure.sections) {
     for (const phrase of section.phrases) {
       if (phrase.melody) {
@@ -136,16 +135,7 @@ export function projectM3NDocument(source: string) {
         if (phrase.passes) phrasePasses.push({ start, end: start + phrase.melody.text.length, passes: phrase.passes })
       }
       if (phrase.bass) bass.push(phrase.bass.text)
-      for (const lyric of phrase.lyrics) {
-        const rows = lyrics.get(lyric.label) ?? []
-        const reference = /^\{L(\d+)\}$/.exec(lyric.text.trim())
-        if (reference) continue
-        rows.push(lyric.text.replace(/\s*\|\s*/g, ' '))
-        lyrics.set(lyric.label, rows)
-      }
     }
   }
-  for (const [label, rows] of lyrics) push(`{lyrics${label ? `=${label}` : ''}}${rows.join(' ')}{/}`)
-  if (bass.length > 0) push(`{bass}${bass.join(' ')}{/}`)
-  return { source: melody.join('\n'), structure, lineMap, phrasePasses }
+  return { source: melody.join('\n'), bassSource: bass.join('\n'), structure, lineMap, phrasePasses }
 }

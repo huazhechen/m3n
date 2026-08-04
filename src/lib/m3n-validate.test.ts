@@ -72,19 +72,6 @@ describe('validateM3N', () => {
     expect(result).toContain('第 4 行：琶音只能附在和音组之后')
   })
 
-  it('exposes structured diagnostics without changing legacy messages', () => {
-    const source = '{2/4}\n1 2 |||\n{lyrics}la{/}'
-    const diagnostics = validateM3NDiagnostics(source)
-
-    expect(diagnostics).toHaveLength(1)
-    expect(diagnostics[0]).toMatchObject({
-      code: 'M3N_LYRIC_ALIGNMENT',
-      severity: 'warning',
-      legacyMessage: validateM3N(source)[0],
-      range: { start: source.indexOf('{lyrics}'), end: source.length },
-    })
-  })
-
   it('reuses an already parsed document for validation and measure markers', () => {
     const source = '{4/4}\n1 2 3 | 1 2 3 4 |||'
     const document = parseM3NDocument(source)
@@ -120,12 +107,6 @@ describe('validateM3N', () => {
   it('accepts arpeggios on chord groups only', () => {
     expect(validateM3N('{key=C} {4/4}\n[135:h]{arp} 0 0 0 |||')).toEqual([])
     expect(messages('{key=C} {4/4}\n1{arp} 2 3 4 |||')).toContain('琶音只能附在和音组之后')
-  })
-
-  it('validates tempo-ramp targets and bass restrictions', () => {
-    expect(validateM3N('{4/4} {120qpm}\n{accel=144}1 2 3 4{/} |||')).toEqual([])
-    expect(messages('{4/4}\n{rit=0}1 2 3 4{/} |||')).toContain('渐快或渐慢的目标速度必须是正整数')
-    expect(messages('{4/4}\n1 2 3 4 |||\n{bass}{rit=80}1 2 3 4{/}|||{/}')).toContain('低音谱表内不能声明渐快或渐慢')
   })
 
 
@@ -233,99 +214,5 @@ describe('validateM3N', () => {
     const result = messages('{4/4}\n1 {rest=2} | ({rest=1}) | 1 2 3 4 |||')
     expect(result).toContain('多小节休止必须独占一个小节位置')
     expect(result).toContain('多小节休止不能使用圆括号修饰')
-  })
-
-  it('combines overlapping lyric ranges by playback pass', () => {
-    const source = [
-      '{2/4} 1 2 :|||',
-      '{lyrics=1~2} one two {/}',
-    ].join('\n')
-    const result = messages(source)
-    expect(result).toBe('')
-  })
-
-  it('prefixes lyric supplement structure diagnostics with [L]', () => {
-    const diagnostics = [
-      ...validateM3N('{2/4} 1 2 |||\n{lyrics}{inst}la la{/lyrics}{/}'),
-      ...validateM3N('{2/4} 1 2 |||\n{lyrics}la la{/bass}'),
-      ...validateM3N('{2/4} 1 2 |||\n{bass}{lyrics}la la{/}{/}'),
-    ]
-
-    expect(diagnostics).toEqual(expect.arrayContaining([
-      expect.stringMatching(/^\[L\] .*区间关闭顺序错误/),
-      expect.stringMatching(/^\[L\] .*补充块关闭名称错误/),
-      expect.stringMatching(/^\[L\] .*补充块不能嵌套/),
-    ]))
-  })
-
-  it('allows later lyric blocks to omit alignment positions', () => {
-    const source = [
-      '{2/4} 1 2 |||',
-      '{lyrics=1}甲 乙{/}',
-      '{lyrics=2}丙{/}',
-      '{lyrics=3}丁{/}',
-    ].join('\n')
-    expect(validateM3N(source)).toEqual([])
-  })
-
-  it('rejects lyrics that exceed the D.S. return path', () => {
-    const source = [
-      '{2/4} {segno}1 2 | 3 4{ds} |||',
-      '{lyrics=1}a b c d{/}',
-      '{lyrics=2}a b c d e{/}',
-    ].join('\n')
-
-    expect(messages(source)).toContain('第 2 遍需要 4 项，实际 5 项')
-  })
-
-
-  it('excludes instrumental intervals from lyric alignment', () => {
-    expect(messages('{2/4} {inst}1 2{/} | 3 4 |||\n{lyrics}la la{/}')).toBe('')
-  })
-
-  it('allows + prefixed lyrics on tied note targets', () => {
-    expect(messages('{3/4} 1~ 1 2 |||\n{lyrics}la +la la{/}')).toBe('')
-  })
-
-  it('rejects + prefixed lyrics when no tied target is available', () => {
-    const source = '{4/4} 1 2 3 4 |||\n{lyrics}la +la la{/}'
-
-    expect(messages(source)).toContain('[L] 第 2 行：第 1 遍的 +歌词项不位于延音目标')
-  })
-
-  it('rejects + lyrics that skip ordinary notes to a later tie target', () => {
-    const source = '{4/4} 1 2 3~ 3 |||\n{lyrics}a +b c d{/}'
-
-    expect(messages(source)).toContain('[L] 第 2 行：第 1 遍的 +歌词项不位于延音目标')
-  })
-
-  it('counts character lyrics, grouped lyrics, extenders, and repeated placeholders by alignment position', () => {
-    expect(messages('{5/4} 1 2 3 4 5 |||\n{lyrics}甲，{%2}(乙丙)_{0}{/}')).toBe('')
-  })
-
-  it('rejects the legacy counted-placeholder syntax', () => {
-    expect(messages('{5/4} 1 2 3 4 5 |||\n{lyrics}%{2}甲乙丙{/}')).toContain('重复占位必须写作 {%N}')
-  })
-
-  it('validates bass uniqueness, allowed content, and timeline alignment', () => {
-    const source = [
-      '{3/4} 1 2 3 |||',
-      '{bass} {key=G} 1d^ 1d ||| {/bass}',
-      '{bass} 1d 2d 3d ||| {/}',
-    ].join('\n')
-    const result = messages(source)
-    expect(result).toContain('最多包含一个低音谱表块')
-    expect(result).toContain('低音谱表内不能声明调号')
-  })
-
-  it('shares melody key changes with bass tie validation', () => {
-    const source = '{key=C} {2/4} 1 2 | {key=G}1 2 |||\n{bass}1d 1d~ | 1d 2d |||{/}'
-    expect(messages(source)).toContain('延音目标的类型或绝对音高不匹配')
-  })
-
-  it('rejects supplementary blocks before an incomplete body or nested blocks', () => {
-    const result = messages('1 2\n{lyrics}{bass}x{/}{/}')
-    expect(result).toContain('补充块不能嵌套')
-    expect(result).toContain('补充块只能写在完整乐谱正文之后')
   })
 })

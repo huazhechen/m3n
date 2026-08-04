@@ -20,7 +20,6 @@ pages -> components -> features -> lib/notation
 - `lib/notation/diagnostics.ts`：结构化诊断契约；迁移期间保留旧字符串诊断 API，以兼容现有调用方。
 - `lib/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
 - `lib/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
-- `lib/notation/supplements.ts`：歌词与低音补充块解析。
 - `lib/m3n-direct.ts`：直接解析 M3N 文档并生成供 MEI 序列化使用的事件模型。
 - `lib/m3n-lyric-alignment.ts`：以已解析文档为输入的歌词演奏轮次和延音目标语义，供校验与后续渲染投影共享。
 - `lib/m3n-validate.ts`：语义校验，只依赖最小语法内核。
@@ -38,7 +37,7 @@ pages -> components -> features -> lib/notation
 
 提交前执行 `npm run check`，依次完成 lint、单元/语料测试、严格类型检查和生产构建。测试分三层：
 
-1. 基础语法单元测试，覆盖音符、时值、调号和补充块。
+1. 基础语法单元测试，覆盖音符、时值、调号和行式歌词、低音对位。
 2. 转换契约测试，覆盖往返、诊断和源码映射。
 3. 全量内置乐谱语料测试，防止真实乐谱在重构后无法转换。
 

@@ -46,11 +46,4 @@ describe('M3N melody complexity', () => {
 
     expect(assessment.metrics.maximumLeap).toBe(0)
   })
-
-  it('excludes bass notes from the assessment', () => {
-    const simple = assessM3NMelodyComplexity('{4/4} 1 2 3 4 |||')
-    const withVirtuosicBass = assessM3NMelodyComplexity('{4/4} 1 2 3 4 ||| {bass} ((1dd 7dd 1ee 7dd)) |||{/}')
-
-    expect(withVirtuosicBass).toEqual(simple)
-  })
 })

@@ -1,6 +1,5 @@
 import { parseM3NGrace, parseM3NGroupPitches, parseM3NTupletPitches } from './notation/m3n-groups'
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
-import { splitSupplementBlocks } from './notation/supplements'
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N } from './notation/m3n-tokens'
 import { measurePlaybackPasses as planMeasurePlaybackPasses } from './notation/repeats'
@@ -389,7 +388,6 @@ export function parseM3NDocument(source: string): DirectDocument {
   const originalSource = source
   const projected = projectM3NDocument(source)
   source = projected.source
-  const { main, bass, lyrics } = splitSupplementBlocks(source)
   const key = source.match(/\{key=([^}]+)\}/)?.[1]?.trim() || 'C'
   const meter = source.match(/\{(\d+)\/(\d+)\}/)
   const tempo = source.match(/\{(\d+)qpm\}/)?.[1]
@@ -399,8 +397,8 @@ export function parseM3NDocument(source: string): DirectDocument {
   const meterCount = Number(meter?.[1] ?? 4)
   const meterUnit = Number(meter?.[2] ?? 4)
   const initialTempo = Number(tempo ?? 120)
-  parseBody(main, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], projected.phrasePasses)
-  if (bass) parseBody(bass, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
+  parseBody(source, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], projected.phrasePasses)
+  if (projected.bassSource) parseBody(projected.bassSource, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
   const document: DirectDocument = {
     title: metadata(source, 'title'),
     subtitle: metadata(source, 'subtitle'),
@@ -417,11 +415,7 @@ export function parseM3NDocument(source: string): DirectDocument {
     meterUnit,
     tempo: initialTempo,
     hasExplicitTempo: tempo !== undefined,
-    lyrics: lyrics.map((item) => ({
-      range: item.range,
-      mode: item.mode,
-      syllables: parseLyricItems(item.text, item.sourceStart, item.mode),
-    })),
+    lyrics: [],
     parts,
     partOrder: [],
     intervals,

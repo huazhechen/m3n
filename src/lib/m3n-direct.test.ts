@@ -49,8 +49,9 @@ describe('direct M3N parser', () => {
 
   it('inherits melody setting changes in the bass staff', () => {
     const document = parseM3NDocument([
-      '{key=C} {2/4} {120qpm} 1 2 | {key=D} {3/4} {90qpm}1 2 3 |||',
-      '{bass}1d 2d | 1d 2d 3d |||{/}',
+      '{key=C} {2/4} {120qpm}',
+      'N: 1 2 | {key=D} {3/4} {90qpm}1 2 3 |||',
+      'B: 1d 2d | 1d 2d 3d |||',
     ].join('\n'))
     const bass = document.parts.get('score')?.bass
     const first = bass?.[0]?.events[0]
@@ -62,8 +63,9 @@ describe('direct M3N parser', () => {
 
   it('keeps a tempo-ramp target after its interval and shares it with bass', () => {
     const document = parseM3NDocument([
-      '{2/4} {120qpm} {rit=80}1 2{/} | 3 4 |||',
-      '{bass}1d 2d | 3d 4d |||{/}',
+      '{2/4} {120qpm}',
+      'N: {rit=80}1 2{/} | 3 4 |||',
+      'B: 1d 2d | 3d 4d |||',
     ].join('\n'))
     const melody = document.parts.get('score')?.melody[1]?.events[0]
     const bass = document.parts.get('score')?.bass[1]?.events[0]
