@@ -1095,7 +1095,6 @@ function validatePhraseHarmony(document: DirectDocument, structure: M3NDocumentS
           if (value === ')') {
             if (depth === 0) diagnostics.push(`第 ${phrase.harmony.line} 行：和弦行圆括号关闭顺序错误`)
             else depth -= 1
-            lastChord = undefined
             continue
           }
           if (value === '~') {
