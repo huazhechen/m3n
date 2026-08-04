@@ -10,6 +10,7 @@
     "src/lib/notation/score-document.ts",
     "src/lib/notation/diagnostics.ts",
     "src/lib/notation/m3n-document.ts",
+    "src/lib/notation/score-rules.ts",
     "src/lib/m3n-direct.ts"
   ]
 }

@@ -9,6 +9,7 @@ import { projectM3NDocument, type M3NDocumentStructure, type M3NPhrase } from '.
 import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 import { m3nChord } from './m3n-harmony'
 import type { ScoreDocument } from './notation/score-document'
+import { validateScoreDocument } from './notation/score-rules'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -1057,22 +1058,11 @@ function validateProjectedM3N(source: string, bassSource: string, options: { ski
   const diagnostics: string[] = []
   const mainResult = validateBody(tokenizeM3N(source), diagnostics, { skipBeatValidation: options.skipBeatValidation })
   if (bassSource) {
-    const bassResult = validateBody(tokenizeM3N(bassSource), diagnostics, {
+    validateBody(tokenizeM3N(bassSource), diagnostics, {
       bass: true,
       initial: mainResult.initial,
       inheritedSettingEvents: mainResult.settingEvents,
     })
-    if (bassResult.measures.length !== mainResult.measures.length) {
-      diagnostics.push(`双谱表小节数量不一致：正文 ${mainResult.measures.length} 小节，低音 ${bassResult.measures.length} 小节`)
-    } else {
-      for (let index = 0; index < mainResult.measures.length; index += 1) {
-        const melody = mainResult.measures[index]
-        const bassMeasure = bassResult.measures[index]
-        if (Math.abs(melody.actual - bassMeasure.actual) > 1e-9) {
-          diagnostics.push(`双谱表第 ${index + 1} 小节时值不一致：正文 ${melody.actual} 拍，低音 ${bassMeasure.actual} 拍`)
-        }
-      }
-    }
   }
   return [...new Set(diagnostics)]
 }
@@ -1091,6 +1081,7 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
     ? validatePhraseHarmony(parsed, projected.structure)
     : []
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
+  const scoreDiagnostics = validateScoreDocument(parsed)
   const legacyDiagnostics = projected.structure.sections.length > 0
     ? projectedDiagnostics
       .filter((message) => !message.startsWith('[L]'))
@@ -1098,17 +1089,18 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
     : projectedDiagnostics
   return {
     structureDiagnostics: projected.structure.diagnostics,
+    scoreDiagnostics,
     compatibilityMessages: [...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics],
   }
 }
 
 export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): string[] {
   const result = validationResult(source, options, document)
-  return [...result.structureDiagnostics.map((diagnostic) => diagnostic.legacyMessage), ...result.compatibilityMessages]
+  return [...result.structureDiagnostics.map((diagnostic) => diagnostic.legacyMessage), ...result.scoreDiagnostics.map((diagnostic) => diagnostic.legacyMessage), ...result.compatibilityMessages]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
 export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): ScoreDiagnostic[] {
   const result = validationResult(source, options, document)
-  return [...result.structureDiagnostics, ...diagnosticsFromLegacyMessages(source, result.compatibilityMessages)]
+  return [...result.structureDiagnostics, ...result.scoreDiagnostics, ...diagnosticsFromLegacyMessages(source, result.compatibilityMessages)]
 }

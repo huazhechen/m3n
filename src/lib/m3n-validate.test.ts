@@ -250,6 +250,15 @@ describe('validateM3N', () => {
     expect(diagnostics.find((item) => item.range)?.range).toEqual({ start: 6, end: source.length })
   })
 
+  it('validates bass alignment from the normalized score document', () => {
+    const source = '{2/4}\nN: 1 2 | 3 4 |||\nB: 1d 2d |||'
+    expect(validateM3N(source)).toContain('双谱表小节数量不一致：正文 2 小节，低音 1 小节')
+    expect(validateM3NDiagnostics(source)).toContainEqual(expect.objectContaining({
+      code: 'M3N_BASS_MEASURE_COUNT',
+      range: { start: source.indexOf('1d'), end: source.indexOf(' |||', source.indexOf('B:')) },
+    }))
+  })
+
   it('enforces multi-measure-rest isolation', () => {
     const result = messages('{4/4}\n1 {rest=2} | ({rest=1}) | 1 2 3 4 |||')
     expect(result).toContain('多小节休止必须独占一个小节位置')
