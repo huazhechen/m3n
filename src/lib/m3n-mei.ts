@@ -1,10 +1,10 @@
-import { m3nPitch, measurePlaybackPasses, parseM3NDocument, type DirectDocument } from './m3n-direct'
+import { m3nPitch, parseM3NDocument, type DirectDocument } from './m3n-direct'
 import type { DirectLyricSyllable } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 import type { DirectEvent, DirectMeasure } from './m3n-direct'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { parseKey } from './notation/m3n-primitives'
-import { buildPlaybackSequence, parsePassRange, type PlaybackNavigation } from './notation/repeats'
+import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, type PlaybackNavigation } from './notation/repeats'
 import { validateM3NDiagnostics } from './m3n-validate'
 import type { ScoreDiagnostic } from './notation/diagnostics'
 
@@ -28,7 +28,6 @@ export type MeiConversionResult = {
   lyricist: string
   arranger: string
   hasBassStaff: boolean
-  partOrder: string[]
   headerMetadata: ScoreHeaderMetadata[]
   tempo: number
 }
@@ -257,19 +256,14 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
   let previousTempo = document.tempo
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
-  const lyricIndicesByPart = new Map<string, number>()
   const lyricSyllables = document.lyrics.map((block) => {
     const numericRange = /^\d+$/.test(block.range)
     const passRange = block.range || block.phrasePasses
     const passes = passRange ? parsePassRange(passRange) : undefined
     const displayPass = !numericRange && passes?.size === 1 ? [...passes][0] : undefined
-    const scopeKey = `${block.part ?? ''}\0${block.targetStart ?? 'global'}`
-    const localIndex = (lyricIndicesByPart.get(scopeKey) ?? 0) + 1
-    lyricIndicesByPart.set(scopeKey, localIndex)
     return {
-      n: numericRange ? block.range : String(displayPass ?? (block.part === undefined ? 1 : localIndex)),
-      verseIndex: numericRange ? Number(block.range) : displayPass ?? (block.part === undefined ? 1 : localIndex),
-      part: block.part,
+      n: numericRange ? block.range : String(displayPass ?? 1),
+      verseIndex: numericRange ? Number(block.range) : displayPass ?? 1,
       targetStart: block.targetStart,
       targetEnd: block.targetEnd,
       passes,
@@ -330,7 +324,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
     for (const measure of measures) {
       for (const event of measure.events) {
         if (tiedEvent) addTie(tiedEvent, event)
-        if (event.tieFrom) addTie(event.tieFrom, event)
         tiedEvent = event.tie ? event : undefined
       }
     }
@@ -363,7 +356,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   const renderStaff = (
     measure: DirectMeasure | undefined,
     staffNumber: number,
-    partName: string,
     keyChanges = new Map<number, string>(),
     meter = previousMeter,
   ) => {
@@ -381,20 +373,16 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
           sourceMap.push({ xmlId: `${xmlId}-n${index + 1}`, sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
         })
       }
-      const tieEnd = (previousTiedByStaff.get(staffNumber) ?? false) || event.tieFrom !== undefined
+      const tieEnd = previousTiedByStaff.get(staffNumber) ?? false
       previousTiedByStaff.set(staffNumber, event.tie)
       const lyricTargetCount = event.kind === 'tuplet'
         ? event.pitches.filter((pitch) => pitch !== '0').length
         : 1
       const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
-      // Named parts use their first-occurrence path as the lyric baseline.
-      // Their numbered lyric blocks are alternate displayed verses, rather
-      // than repeat passes of the written measures.
       const lyricBlocksAtEvent = lyricSyllables.filter((block) => (
-        (document.partOrder.length === 0 || block.part === undefined || block.part === partName)
-        && (block.targetStart === undefined || block.targetStart <= event.sourceStart)
+        (block.targetStart === undefined || block.targetStart <= event.sourceStart)
         && (block.targetEnd === undefined || event.sourceStart < block.targetEnd)
-        && (document.partOrder.length > 0 || !block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
+        && (!block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
       ))
       const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
       const assignedLyrics = hasLyricTarget
@@ -428,9 +416,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
       if (hasLyricTarget && !measure?.ending) {
         const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
         const hasScopedLyrics = lyricBlocksAtEvent.some((block) => block.targetStart !== undefined)
-        const partLyricRowCount = document.partOrder.length > 0 || hasScopedLyrics
-          ? Math.max(0, ...lyricBlocksAtEvent.map((block) => block.verseIndex))
-          : lyricRowCount
+        const partLyricRowCount = hasScopedLyrics ? Math.max(0, ...lyricBlocksAtEvent.map((block) => block.verseIndex)) : lyricRowCount
         for (let row = 1; row <= partLyricRowCount; row += 1) {
           if (occupiedRows.has(row)) continue
           lyrics.push({
@@ -574,7 +560,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
   let endingIndex = 0
   let logicalMeasureNumber = 0
   const hasNavigation = [...document.parts.values()].some((part) => part.melody.some((measure) => measure.events.some((event) => event.navigation.length > 0)))
-  const layoutNodes = [...document.parts.entries()].flatMap(([partName, part], partIndex) => {
+  const layoutNodes = [...document.parts.values()].flatMap((part, partIndex) => {
     while (part.melody.length > 1 && part.melody.at(-1)?.events.length === 0 && !part.melody.at(-1)?.multiRest) {
       const trailing = part.melody.pop()
       if (trailing?.breakBefore || trailing?.breakAfter) part.melody.at(-1)!.breakAfter = true
@@ -605,18 +591,15 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         ? { beats: actualBeats, number: displayedNumber, id: measureId, right: melody?.right }
         : undefined
       const staves = [
-        renderStaff(melody, 1, partName, keyChanges, meter),
-        hasBassStaff ? renderStaff(part.bass[measureIndex], 2, partName, keyChanges, meter) : '',
+        renderStaff(melody, 1, keyChanges, meter),
+        hasBassStaff ? renderStaff(part.bass[measureIndex], 2, keyChanges, meter) : '',
       ]
         .filter(Boolean).map((staff) => staff.split('\n').map((line) => `  ${line}`).join('\n')).join('\n')
       const controls = [controlXml(melody, 1, meter), hasBassStaff ? controlXml(part.bass[measureIndex], 2, meter) : ''].filter(Boolean).join('\n')
       const tempo = document.hasExplicitTempo && partIndex === 0 && measureIndex === 0
         ? `  ${tempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
         : ''
-      const partLabel = document.partOrder.length > 0 && measureIndex === 0
-        ? `  <reh staff="1" tstamp="1"><rend fontweight="bold">${escapeXml(partName)}</rend></reh>\n`
-        : ''
-      const xml = `<measure xml:id="${measureId}" n="${displayedNumber}"${metcon}${join}${left}${right}>\n${tempo}${partLabel}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
+      const xml = `<measure xml:id="${measureId}" n="${displayedNumber}"${metcon}${join}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
       return {
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',
@@ -634,7 +617,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
       measure.xml,
       measure.breakAfter ? '<sb/>' : '',
     ].filter(Boolean).join('\n')
-    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; partName: string; content: string; repeatStart?: boolean; repeatCount?: number; navigation?: PlaybackNavigation[] }> = []
+    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; content: string; repeatStart?: boolean; repeatCount?: number; navigation?: PlaybackNavigation[] }> = []
     for (let index = 0; index < measures.length;) {
       const current = measures[index]
       const content: string[] = []
@@ -646,7 +629,7 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
           index += 1
         }
         nodes.push({
-          kind: 'ending', id: `m3n-ending-${++endingIndex}`, n: ending, partName, content: content.join('\n'),
+          kind: 'ending', id: `m3n-ending-${++endingIndex}`, n: ending, content: content.join('\n'),
           repeatCount: measures[index - 1]?.repeatCount,
           navigation: measures.slice(endingStart, index).flatMap((measure) => measure?.navigation ?? []),
         })
@@ -664,16 +647,13 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
         index += 1
         if (measure.repeatCount || measure.navigation.length > 0) break
       }
-      nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, partName, content: content.join('\n'), repeatStart: sectionMeasures[0]?.repeatStart, repeatCount: sectionMeasures.at(-1)?.repeatCount, navigation: sectionMeasures.flatMap((measure) => measure.navigation) })
+      nodes.push({ kind: 'section', id: `m3n-segment-${++segmentIndex}`, content: content.join('\n'), repeatStart: sectionMeasures[0]?.repeatStart, repeatCount: sectionMeasures.at(-1)?.repeatCount, navigation: sectionMeasures.flatMap((measure) => measure.navigation) })
     }
     return nodes
   })
-  const hasNamedParts = document.partOrder.length > 0
   const hasEndings = layoutNodes.some((node) => node.kind === 'ending')
-  const expansion = hasNamedParts
-    ? document.partOrder.flatMap((partName) => buildPlaybackSequence(layoutNodes.filter((node) => node.partName === partName)))
-    : buildPlaybackSequence(layoutNodes)
-  const needsExpansion = hasNamedParts || hasEndings || hasNavigation || layoutNodes.some((node) => node.repeatCount)
+  const expansion = buildPlaybackSequence(layoutNodes)
+  const needsExpansion = hasEndings || hasNavigation || layoutNodes.some((node) => node.repeatCount)
   const sectionContent = [
     ...(needsExpansion ? [`<expansion xml:id="m3n-expansion" plist="${expansion.map((id) => `#${id}`).join(' ')}"/>`] : []),
     ...layoutNodes.map((node) => !needsExpansion ? node.content
@@ -685,7 +665,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
     { value: document.title, side: 'center', priority: 0 },
     { value: document.subtitle, side: 'center', priority: 10 },
     { value: document.singer || document.composer, side: 'right', priority: 20 },
-    { value: document.partOrder.join(' → '), side: 'left', priority: 30 },
   ] satisfies ScoreHeaderMetadata[]).filter((item) => item.value)
 
   const responsibility = [
@@ -723,7 +702,6 @@ export function m3nToMei(source: string, document: DirectDocument = parseM3NDocu
     source, mei, diagnostics: diagnosticDetails.map((diagnostic) => diagnostic.legacyMessage), diagnosticDetails, sourceMap,
     title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,
     lyricist: document.lyricist, arranger: document.arranger, hasBassStaff,
-    partOrder: document.partOrder,
     headerMetadata,
     tempo: document.tempo,
   }

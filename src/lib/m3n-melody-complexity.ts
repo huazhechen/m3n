@@ -77,8 +77,7 @@ function eventPoints(event: DirectEvent, start: number): MelodyPoint[] {
 }
 
 function melodyEvents(document: DirectDocument) {
-  const names = document.partOrder.length > 0 ? document.partOrder : [...document.parts.keys()]
-  return names.flatMap((name) => document.parts.get(name)?.melody.flatMap((measure) => measure.events) ?? [])
+  return [...document.parts.values()].flatMap((part) => part.melody.flatMap((measure) => measure.events))
 }
 
 function scoreLabel(score: number): MelodyComplexityAssessment['label'] {

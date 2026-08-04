@@ -31,7 +31,7 @@ function migrate(file: string) {
       const passes = passesByMeasure.get(measure) ?? new Set([1])
       for (const event of measure.events) {
         const phrase = phraseForEvent(phrases, event)
-        const tied = previousTied || event.tieFrom !== undefined
+        const tied = previousTied
         previousTied = event.tie
         if (!phrase || event.kind === 'rest' || instrumental(document, event)) continue
         const count = event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1

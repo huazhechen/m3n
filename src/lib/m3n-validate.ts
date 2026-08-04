@@ -25,7 +25,6 @@ type Measure = {
 }
 
 type Unit = {
-  name: string | null
   measures: Measure[]
   beats: number
   expected: number
@@ -33,8 +32,6 @@ type Unit = {
   hasAtom: boolean
   currentHasAtom: boolean
   multiRestPendingBar: boolean
-  commonLyrics: number
-  endingLyrics: Map<number, number>
 }
 
 type ParsedPitch = {
@@ -58,7 +55,6 @@ type SettingEvent = {
 type Block = {
   name: string
   line: number
-  range?: Set<number>
   octaveShift?: number
   tempoTarget?: number
 }
@@ -169,9 +165,8 @@ function octaveShift(value: string) {
   return [...value].reduce((sum, char) => sum + (char === 'e' ? 1 : -1), 0)
 }
 
-function createUnit(name: string | null, meter: Meter, line: number): Unit {
+function createUnit(meter: Meter, line: number): Unit {
   return {
-    name,
     measures: [],
     beats: 0,
     expected: meter.beats * 4 / meter.beatValue,
@@ -179,8 +174,6 @@ function createUnit(name: string | null, meter: Meter, line: number): Unit {
     hasAtom: false,
     currentHasAtom: false,
     multiRestPendingBar: false,
-    commonLyrics: 0,
-    endingLyrics: new Map(),
   }
 }
 
@@ -251,21 +244,13 @@ function validateBody(
   const defaultSettings: Settings = options.initial
     ? structuredClone(options.initial)
     : { key: 'C', meter: { beats: 4, beatValue: 4 }, tempo: null }
-  let commonSettings = structuredClone(defaultSettings)
   let settings = structuredClone(defaultSettings)
-  let unit = createUnit(null, settings.meter, tokens[0]?.line ?? 1)
+  const unit = createUnit(settings.meter, tokens[0]?.line ?? 1)
   const completedUnits: Unit[] = []
-  const unitsByPart = new Map<string, Unit>()
   const blocks: Block[] = []
   const parens: Array<{ line: number; atoms: number }> = []
   const accidentalState = new Map<string, number>()
   const infoSeen = new Set<string>()
-  const referencedParts: string[] = []
-  const definedParts = new Set<string>()
-  const endingRanges = new Map<number, Set<number>>()
-  let partOrderSeen = false
-  let firstPartSeen = false
-  let currentPart: string | null = null
   let firstMusicSeen = false
   let terminalCount = 0
   let fineBeforeTerminal = false
@@ -274,9 +259,6 @@ function validateBody(
   let pendingTie: PendingTie | null = null
   let repeatOpen: { line: number; id: number } | null = null
   let repeatId = 0
-  let currentEndingRepeat = 0
-  let completedEndingGroup = false
-  let endingNeedsBar = false
   let repeatCountTarget = false
   let segnoCount = 0
   let jumpCount = 0
@@ -287,10 +269,7 @@ function validateBody(
   const settingEvents: SettingEvent[] = []
   const inheritedSettingEvents = options.inheritedSettingEvents ?? []
 
-  const activeEnding = () => [...blocks].reverse().find((block) => block.name === 'ending')
   const activeOctaveShift = () => blocks.reduce((sum, block) => sum + (block.octaveShift ?? 0), 0)
-  const isInstrumental = () => blocks.some((block) => block.name === 'inst')
-  const currentTopLevel = () => blocks.length === 0
 
   let nextMeasureRepeatStart: number | undefined
   const commitMeasure = (line: number, barEnd = -1, repeatEnd = false, repeatTargetId?: number) => {
@@ -313,7 +292,6 @@ function validateBody(
   const finishRepeat = () => {
     if (repeatOpen) diagnostics.push(`第 ${repeatOpen.line} 行：前反复线无对应后反复线`)
     repeatOpen = null
-    currentEndingRepeat = 0
   }
 
   const finishUnit = () => {
@@ -321,23 +299,7 @@ function validateBody(
     finishTie()
     finishRepeat()
     validateUnitMeasures(unit, diagnostics, bass || skipBeatValidation, options.invalidBarEnds)
-    if (unit.name && !unit.hasAtom) diagnostics.push(`乐段 ${unit.name} 为空`)
     completedUnits.push(unit)
-    if (unit.name) unitsByPart.set(unit.name, unit)
-  }
-
-  const startPart = (name: string, token: Token) => {
-    if (currentPart) diagnostics.push(lineMessage(token, 'part 不能嵌套'))
-    if (!currentTopLevel()) diagnostics.push(lineMessage(token, 'part 只能出现在乐谱正文顶层'))
-    if (definedParts.has(name)) diagnostics.push(lineMessage(token, `乐段重复定义：${name}`))
-    definedParts.add(name)
-    if (!firstPartSeen && unit.hasAtom) diagnostics.push(lineMessage(token, '使用具名乐段后，乐段外不能存在音乐内容'))
-    firstPartSeen = true
-    if (unit.hasAtom || unit.measures.length > 0) finishUnit()
-    settings = structuredClone(commonSettings)
-    unit = createUnit(name, settings.meter, token.line)
-    currentPart = name
-    blocks.push({ name: 'part', line: token.line })
   }
 
   const closeBlock = (token: Token, named: string | null) => {
@@ -351,16 +313,6 @@ function validateBody(
       return
     }
     blocks.pop()
-    if (top.name === 'ending') {
-      completedEndingGroup = true
-      endingNeedsBar = true
-    }
-    if (top.name === 'part') {
-      finishUnit()
-      currentPart = null
-      settings = structuredClone(commonSettings)
-      unit = createUnit(null, settings.meter, token.line)
-    }
     if (top.tempoTarget !== undefined) {
       settings.tempo = top.tempoTarget
       if (!bass) settingEvents.push({ beat: elapsedBeats, kind: 'tempo', value: String(top.tempoTarget) })
@@ -413,28 +365,10 @@ function validateBody(
     return base + accidental + shift * 12 + activeOctaveShift() * 12
   }
 
-  const addLyrics = (count: number) => {
-    const ending = activeEnding()
-    if (ending?.range) {
-      for (const pass of ending.range) unit.endingLyrics.set(pass, (unit.endingLyrics.get(pass) ?? 0) + count)
-    } else {
-      unit.commonLyrics += count
-    }
-  }
-
-  const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet'; pitches?: number[]; tie?: boolean; tieSource?: Omit<PendingTie, 'line'>; tieTarget?: Omit<PendingTie, 'line'>; tiedTargetLyricCount?: number; lyricCount?: number }) => {
-    if (endingNeedsBar && !activeEnding()) {
-      diagnostics.push(lineMessage(token, '房子关闭后、下一条小节线前不能出现音符'))
-      endingNeedsBar = false
-    }
-    if (completedEndingGroup && !activeEnding()) {
-      currentEndingRepeat = 0
-      completedEndingGroup = false
-    }
+  const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet'; pitches?: number[]; tie?: boolean; tieSource?: Omit<PendingTie, 'line'>; tieTarget?: Omit<PendingTie, 'line'> }) => {
     firstMusicSeen = true
     unit.hasAtom = true
     for (const paren of parens) paren.atoms += 1
-    if (firstPartSeen && !currentPart) diagnostics.push(lineMessage(token, '第一个 part 开始后，音乐内容必须位于 part 内'))
     if (unit.multiRestPendingBar) diagnostics.push(lineMessage(token, '多小节休止必须独占一个小节位置'))
     unit.currentHasAtom = true
     unit.measureLine = unit.currentHasAtom && unit.beats === 0 ? token.line : unit.measureLine
@@ -447,7 +381,6 @@ function validateBody(
       pendingSfz = null
     }
 
-    let tiedTarget = false
     if (pendingTie) {
       const target = atom.tieTarget ?? { kind: atom.kind as PendingTie['kind'], pitches: atom.pitches ?? [] }
       const sameKind = pendingTie.kind === target.kind
@@ -455,20 +388,16 @@ function validateBody(
       const expected = [...pendingTie.pitches].sort((a, b) => a - b)
       const samePitches = actual.length === expected.length && actual.every((pitch, index) => pitch === expected[index])
       if (!sameKind || !samePitches) diagnostics.push(lineMessage(token, '延音目标的类型或绝对音高不匹配'))
-      else tiedTarget = true
       pendingTie = null
     }
     if (atom.tie && (eligible || atom.tieSource)) {
       const source = atom.tieSource ?? { kind: atom.kind as PendingTie['kind'], pitches: atom.pitches ?? [] }
       pendingTie = { ...source, line: token.line }
     }
-    if (!tiedTarget) addLyrics(isInstrumental() ? 0 : atom.lyricCount ?? (eligible ? 1 : 0))
-    else addLyrics(isInstrumental() ? 0 : atom.tiedTargetLyricCount ?? 0)
     postfixTarget = atom.kind === 'note' || atom.kind === 'harmony' ? atom.kind : false
   }
 
   const handleBar = (token: Token) => {
-    endingNeedsBar = false
     rejectPendingSfz(token)
     if (parens.length > 0) {
       diagnostics.push(lineMessage(token, '圆括号必须在同一小节内闭合'))
@@ -479,21 +408,15 @@ function validateBody(
     if (token.raw === '||:') {
       if (repeatOpen) diagnostics.push(lineMessage(token, '反复区域不能嵌套或重叠'))
       repeatOpen = { line: token.line, id: ++repeatId }
-      currentEndingRepeat = repeatOpen.id
     } else if (token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:') {
-      if (!repeatOpen) {
-        currentEndingRepeat = currentEndingRepeat || ++repeatId
-      }
       repeatOpen = null
       if (token.raw === ':||:') {
         repeatOpen = { line: token.line, id: ++repeatId }
-        currentEndingRepeat = repeatOpen.id
       }
     }
     nextMeasureRepeatStart = token.raw === '||:' || token.raw === ':||:' ? repeatOpen?.id : undefined
     if (token.raw === '|||' || token.raw === ':|||') {
       terminalCount += 1
-      if (currentPart) diagnostics.push(lineMessage(token, '具名乐段内不能使用终止线'))
     }
     fineBeforeTerminal = false
     repeatCountTarget = token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:'
@@ -508,9 +431,6 @@ function validateBody(
     const isRepeatCount = token.kind === 'attribute' && /^x\d+$/.test(token.content ?? '')
     if (!isRepeatCount && token.kind !== 'bar') repeatCountTarget = false
 
-    if (firstPartSeen && !currentPart && !(token.kind === 'attribute' && (token.content ?? '').startsWith('part='))) {
-      diagnostics.push(lineMessage(token, '第一个 part 开始后，正文顶层只能继续定义 part'))
-    }
 
     if (token.kind === 'bar') {
       if (bass && !['|', '||', '|||'].includes(token.raw)) {
@@ -574,10 +494,6 @@ function validateBody(
         rejectPendingSfz(token)
       }
 
-      if (firstPartSeen && !currentPart && !content.startsWith('part=')) {
-        diagnostics.push(lineMessage(token, '第一个 part 开始后，正文顶层只能继续定义 part'))
-      }
-
       if (isInfo) {
         if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能声明乐谱信息'))
         if (firstMusicSeen) diagnostics.push(lineMessage(token, '乐谱信息必须写在第一个音乐原子之前'))
@@ -594,7 +510,6 @@ function validateBody(
           const changed = settings.key !== value
           settings.key = value
           accidentalState.clear()
-          if (!firstPartSeen) commonSettings.key = value
           if (!firstMusicSeen) bodyInitial.key = value
           if (!bass && changed) settingEvents.push({ beat: elapsedBeats, kind: 'key', value })
         }
@@ -610,7 +525,6 @@ function validateBody(
           if (unit.currentHasAtom || unit.multiRestPendingBar) diagnostics.push(lineMessage(token, '不能在尚未结束的小节中改变拍号'))
           settings.meter = { beats, beatValue }
           unit.expected = beats * 4 / beatValue
-          if (!firstPartSeen) commonSettings.meter = { beats, beatValue }
           if (!firstMusicSeen) bodyInitial.meter = { beats, beatValue }
           if (!bass) settingEvents.push({ beat: elapsedBeats, kind: 'meter', value: `${beats}/${beatValue}` })
         }
@@ -624,7 +538,6 @@ function validateBody(
         else {
           const changed = settings.tempo !== tempo
           settings.tempo = tempo
-          if (!firstPartSeen) commonSettings.tempo = tempo
           if (!firstMusicSeen) bodyInitial.tempo = tempo
           if (!bass && changed) settingEvents.push({ beat: elapsedBeats, kind: 'tempo', value: String(tempo) })
         }
@@ -656,27 +569,6 @@ function validateBody(
         continue
       }
 
-      if (name === 'parts') {
-        if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能使用具名乐段顺序'))
-        if (partOrderSeen) diagnostics.push(lineMessage(token, 'parts 只能声明一次'))
-        if (firstMusicSeen || firstPartSeen) diagnostics.push(lineMessage(token, 'parts 必须写在第一个 part 或音乐原子之前'))
-        partOrderSeen = true
-        const names = value.split(/\s+/).filter(Boolean)
-        if (names.length === 0) diagnostics.push(lineMessage(token, 'parts 至少需要一个乐段名称'))
-        for (const part of names) {
-          if (!part || /[\s{}=]/.test(part)) diagnostics.push(lineMessage(token, `乐段名称非法：${part}`))
-          referencedParts.push(part)
-        }
-        continue
-      }
-
-      if (name === 'part') {
-        if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能定义具名乐段'))
-        if (!value || /[\s{}=]/.test(value)) diagnostics.push(lineMessage(token, `乐段名称非法：${value}`))
-        startPart(value, token)
-        continue
-      }
-
       if (name === 'rest') {
         applyInheritedSettings()
         const count = Number(value)
@@ -686,7 +578,6 @@ function validateBody(
         }
         firstMusicSeen = true
         unit.hasAtom = true
-        if (firstPartSeen && !currentPart) diagnostics.push(lineMessage(token, '第一个 part 开始后，音乐内容必须位于 part 内'))
         for (const paren of parens) paren.atoms += 1
         if (parens.length > 0) diagnostics.push(lineMessage(token, '多小节休止不能使用圆括号修饰'))
         if (unit.currentHasAtom || unit.multiRestPendingBar) diagnostics.push(lineMessage(token, '多小节休止必须独占一个小节位置'))
@@ -758,7 +649,7 @@ function validateBody(
       const [, degree, accidental, octave, carets, dots, tie] = match
       if (degree === '0') {
         if (accidental || octave || tie) diagnostics.push(lineMessage(token, '休止符不能使用音高修饰或延音'))
-        addAtom(token, durationInBeats(parens.length, carets.length, dots.length), { kind: 'rest', lyricCount: 0 })
+        addAtom(token, durationInBeats(parens.length, carets.length, dots.length), { kind: 'rest' })
       } else {
         const parsed = parsePitch(`${degree}${accidental}${octave}`)
         if (!parsed.pitch) {
@@ -768,7 +659,7 @@ function validateBody(
         }
         const pitch = absolutePitch(parsed.pitch)
         addAtom(token, durationInBeats(parens.length, carets.length, dots.length), {
-          kind: 'note', pitches: [pitch], tie: tie === '~', lyricCount: 1,
+          kind: 'note', pitches: [pitch], tie: tie === '~',
         })
       }
       continue
@@ -808,8 +699,6 @@ function validateBody(
         tieTarget: !harmony && sequence.firstPitch
           ? { kind: 'note', pitches: [absolutePitch(sequence.firstPitch)] }
           : !harmony ? { kind: 'note', pitches: [] } : undefined,
-        tiedTargetLyricCount: !harmony ? Math.max(0, sequence.pitches.length - (sequence.firstPitch ? 1 : 0)) : undefined,
-        lyricCount: harmony ? 1 : sequence.pitches.length,
       })
       continue
     }
@@ -823,51 +712,18 @@ function validateBody(
     for (const paren of parens) diagnostics.push(`第 ${paren.line} 行：圆括号未闭合`)
   }
   for (const block of blocks) diagnostics.push(`第 ${block.line} 行：未闭合的区间块：{${block.name}}`)
-  if (currentPart) finishUnit()
-  else if (unit.hasAtom || unit.measures.length > 0) finishUnit()
+  if (unit.hasAtom || unit.measures.length > 0) finishUnit()
   else finishRepeat()
 
   if (!bass) {
     if (segnoCount > 1) diagnostics.push('segno 最多只能使用一次')
     if (jumpCount > 1) diagnostics.push('ds 和 dc 总共最多只能使用一次')
     if (dsCount > 0 && segnoCount !== 1) diagnostics.push('ds 必须配合唯一的 segno')
-    if (firstPartSeen && !partOrderSeen) diagnostics.push('使用 part 时必须声明 parts 演奏顺序')
-    for (const part of definedParts) {
-      if (!referencedParts.includes(part)) diagnostics.push(`乐段定义未被引用：${part}`)
-    }
-    for (const part of referencedParts) {
-      if (!definedParts.has(part)) diagnostics.push(`乐段引用未定义：${part}`)
-    }
-    if (!firstPartSeen && terminalCount !== 1) diagnostics.push(`未分段正文必须且只能使用一次终止线，实际 ${terminalCount} 次`)
-    if (firstPartSeen && terminalCount > 0) diagnostics.push('具名乐段内不得使用终止线')
+    if (terminalCount !== 1) diagnostics.push(`未分段正文必须且只能使用一次终止线，实际 ${terminalCount} 次`)
   }
 
-  const orderedUnits = firstPartSeen
-    ? referencedParts.flatMap((part) => unitsByPart.get(part) ? [unitsByPart.get(part)!] : [])
-    : completedUnits
-  const firstPlaybackUnits = firstPartSeen
-    ? referencedParts.filter((part, index) => referencedParts.indexOf(part) === index)
-      .flatMap((part) => unitsByPart.get(part) ? [unitsByPart.get(part)!] : [])
-    : completedUnits
-  const lyricCount = (pass: number) => orderedUnits.reduce(
-    (sum, item) => sum + item.commonLyrics + (item.endingLyrics.get(pass) ?? 0),
-    0,
-  )
-  const firstPlaybackLyricCount = (pass: number) => firstPlaybackUnits.reduce(
-    (sum, item) => sum + item.commonLyrics + (item.endingLyrics.get(pass) ?? 0),
-    0,
-  )
-  const lyricPasses = new Set<number>([1])
-  for (const ranges of endingRanges.values()) {
-    for (const pass of ranges) lyricPasses.add(pass)
-  }
   return {
-    measures: orderedUnits.flatMap((item) => item.measures),
-    lyricCount,
-    firstPlaybackLyricCount,
-    lyricPasses,
-    hasParts: firstPartSeen,
-    ended: firstPartSeen ? !currentPart && definedParts.size > 0 : terminalCount === 1,
+    measures: completedUnits.flatMap((item) => item.measures),
     initial: bodyInitial,
     settingEvents,
   }
@@ -937,7 +793,7 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
       for (const pass of passes) measureTargets.set(pass, [])
     }
     for (const event of measure.events) {
-      const tied = previousTied || event.tieFrom !== undefined
+      const tied = previousTied
       previousTied = event.tie
       if (event.sourceStart < start || event.sourceStart >= end || event.kind === 'rest') continue
       const instrumental = document.intervals.some((interval) => interval.kind === 'inst' && interval.staff === 'melody' &&

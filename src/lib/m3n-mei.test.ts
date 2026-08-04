@@ -34,7 +34,6 @@ describe('M3N to MEI conversion', () => {
   it('renders named sections without form as labels on one continuous score', () => {
     const result = m3nToMei('{2/4}\n===A\nN: 1 2 |\n===B\nN: 3 4 |||')
 
-    expect(result.partOrder).toEqual([])
     expect(result.mei).not.toContain('<expansion')
     expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-1"><rend fontweight="bold">A</rend></reh>')
     expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-3"><rend fontweight="bold">B</rend></reh>')

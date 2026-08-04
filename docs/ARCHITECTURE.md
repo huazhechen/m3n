@@ -21,7 +21,7 @@ pages -> components -> features -> lib/notation
 - `lib/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
 - `lib/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
 - `lib/m3n-direct.ts`：直接解析 M3N 文档并生成供 MEI 序列化使用的事件模型。
-- `lib/m3n-lyric-alignment.ts`：以已解析文档为输入的歌词演奏轮次和延音目标语义，供校验与后续渲染投影共享。
+- `lib/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
 - `lib/m3n-validate.ts`：语义校验，只依赖最小语法内核。
 - `features/score-renderer`：播放段落展开、导出文档与画布适配。
 - `lib/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。

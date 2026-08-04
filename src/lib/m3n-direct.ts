@@ -2,7 +2,6 @@ import { parseM3NGrace, parseM3NGroupPitches, parseM3NTupletPitches } from './no
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N } from './notation/m3n-tokens'
-import { measurePlaybackPasses as planMeasurePlaybackPasses } from './notation/repeats'
 import { projectM3NDocument } from './notation/m3n-document'
 
 export type DirectEvent = {
@@ -13,7 +12,6 @@ export type DirectEvent = {
   key: string
   beats: number
   tie: boolean
-  tieFrom?: DirectEvent
   tieFromTupletIndex?: number
   dynamic?: string
   chord?: string
@@ -46,7 +44,6 @@ export type DirectLyricBlock = {
   range: string
   mode: 'char' | 'word'
   syllables: DirectLyricSyllable[]
-  part?: string
   phrasePasses?: string
   targetStart?: number
   targetEnd?: number
@@ -75,12 +72,8 @@ export type DirectDocument = {
   hasExplicitTempo: boolean
   lyrics: DirectLyricBlock[]
   parts: Map<string, DirectPart>
-  partOrder: string[]
   intervals: DirectInterval[]
 }
-
-/** @deprecated Import from `notation/repeats` in new notation code. */
-export const measurePlaybackPasses = planMeasurePlaybackPasses
 
 const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
 function metadata(source: string, name: (typeof metadataNames)[number]) {
@@ -417,7 +410,6 @@ export function parseM3NDocument(source: string): DirectDocument {
     hasExplicitTempo: tempo !== undefined,
     lyrics: [],
     parts,
-    partOrder: [],
     intervals,
   }
   if (projected.structure.sections.length > 0) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { measurePlaybackPasses, parseM3NDocument } from './m3n-direct'
+import { parseM3NDocument } from './m3n-direct'
+import { measurePlaybackPasses } from './notation/repeats'
 
 describe('direct M3N parser', () => {
   it('uses the specified default tempo when no tempo directive is present', () => {
