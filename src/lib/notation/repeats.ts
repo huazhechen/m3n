@@ -1,12 +1,16 @@
+export type PlaybackNavigation = 'segno' | 'ds' | 'dc' | 'fine'
+
 export type PlaybackNode = {
   id: string
   kind: 'section' | 'ending'
   n?: string
   repeatStart?: boolean
   repeatCount?: number
+  navigation?: readonly PlaybackNavigation[]
 }
 
 export type PlaybackMeasure = {
+  events: ReadonlyArray<{ navigation: readonly PlaybackNavigation[] }>
   left?: string
   right?: string
   ending?: string
@@ -143,7 +147,24 @@ function expandInitialPasses(nodes: readonly PlaybackNode[]) {
   return sequence
 }
 
-/** Returns written node ids in performance order. */
+function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[]) {
+  const jumpIndex = nodes.findIndex((node) => node.navigation?.some((value) => value === 'ds' || value === 'dc'))
+  if (jumpIndex < 0) return initial
+  const jump = nodes[jumpIndex]!
+  const destination = jump.navigation?.includes('ds')
+    ? nodes.findIndex((node) => node.navigation?.includes('segno'))
+    : nodes.findIndex((node) => node.kind === 'section')
+  const fine = nodes.findIndex((node) => node.navigation?.includes('fine'))
+  if (destination < 0) return initial
+  const played = initial.lastIndexOf(jump.id)
+  if (played < 0) return initial
+  const end = fine >= 0 ? fine : jumpIndex
+  return [...initial.slice(0, played + 1), ...nodes.slice(destination, end + 1).flatMap((node) => (
+    node.kind !== 'ending' || !node.n || node.n.split(',').includes('2') ? node.id : []
+  ))]
+}
+
+/** Returns written node ids in performance order, including one navigation return. */
 export function buildPlaybackSequence(nodes: readonly PlaybackNode[]) {
-  return expandInitialPasses(nodes)
+  return appendNavigationReturn(nodes, expandInitialPasses(nodes))
 }

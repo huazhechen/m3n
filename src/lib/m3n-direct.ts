@@ -21,6 +21,7 @@ export type DirectEvent = {
   chordState?: string
   prefix?: 'sfz'
   postfixes: string[]
+  navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
   octaveShift: number
   sectionLabel?: string
   meterCount?: number
@@ -116,6 +117,7 @@ function parseBody(
   let chordChanged = false
   let pendingPrefix: 'sfz' | undefined
   let lastEvent: DirectEvent | undefined
+  let pendingNavigation: Array<'segno' | 'ds' | 'dc' | 'fine'> = []
   let pendingRepeatEnd: DirectMeasure | undefined
   let elapsedBeats = 0
   let inheritedSettingIndex = 0
@@ -153,6 +155,8 @@ function parseBody(
     event.meterCount = currentMeterCount
     event.meterUnit = currentMeterUnit
     event.tempo = currentTempo
+    event.navigation = pendingNavigation
+    pendingNavigation = []
     for (const item of structureStack) {
       if (typeof item !== 'object') continue
       item.start ??= event.sourceStart
@@ -240,6 +244,11 @@ function parseBody(
       } else if (value === 'sfz') {
         pendingPrefix = 'sfz'
         lastEvent = undefined
+      } else if (/^(?:segno|ds|dc|fine)$/.test(value)) {
+        const navigation = value as 'segno' | 'ds' | 'dc' | 'fine'
+        if (navigation !== 'segno' && lastEvent) lastEvent.navigation.push(navigation)
+        else if (navigation !== 'segno' && measure().events.length > 0) measure().events.at(-1)!.navigation.push(navigation)
+        else pendingNavigation.push(navigation)
       } else if (/^(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])$/.test(value) || parseM3NGrace(value)) {
         if (lastEvent) lastEvent.postfixes.push(value)
       } else if (value === '/' || value.startsWith('/')) {
@@ -259,6 +268,14 @@ function parseBody(
     if (token.kind === 'bar') {
       const current = measure()
       const value = token.raw
+      if (current.events.length === 0) {
+        const trailing = pendingNavigation.filter((navigation) => navigation !== 'segno')
+        const previous = measures().at(-2)?.events.at(-1)
+        if (previous && trailing.length > 0) {
+          previous.navigation.push(...trailing)
+          pendingNavigation = pendingNavigation.filter((navigation) => navigation === 'segno')
+        }
+      }
       if (value === '||:' && current.events.length === 0) {
         current.left = 'rptstart'
         continue
@@ -305,6 +322,7 @@ function parseBody(
           tie: mode === 'h' ? Boolean(group[5]) : Boolean(tuplet?.tiesFromLast),
           tieFromTupletIndex: tuplet?.tiesFromLast ? pitches.length - 1 : undefined,
           postfixes: [],
+          navigation: [],
           octaveShift: 0,
           tuplet: mode === 'h' ? undefined : {
             num: pitches.length,
@@ -329,6 +347,7 @@ function parseBody(
         beats: duration(depth, note.carets.length, note.dots.length),
         tie: Boolean(note.tie),
         postfixes: [],
+        navigation: [],
         octaveShift: 0,
       })
       continue

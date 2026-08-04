@@ -200,7 +200,7 @@ function extractSupplements(tokens: Token[], diagnostics: string[]) {
 
     if (token.kind === 'attribute') {
       const content = token.content ?? ''
-      if (/^(?:form|parts|part|segno|ds|dc|fine)$/.test(content) || /^(?:form|parts|part|volta|ending)=/.test(content)) {
+      if (/^(?:form|parts|part)$/.test(content) || /^(?:form|parts|part|volta|ending)=/.test(content)) {
         diagnostics.push(lineMessage(token, `未知指令：{${content}}`))
         continue
       }
