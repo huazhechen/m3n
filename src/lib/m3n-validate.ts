@@ -267,8 +267,6 @@ function validateBody(
   let currentPart: string | null = null
   let firstMusicSeen = false
   let terminalCount = 0
-  let terminalSeen = false
-  let terminalTailReported = false
   let fineBeforeTerminal = false
   let postfixTarget: 'note' | 'harmony' | false = false
   let pendingSfz: Token | null = null
@@ -435,7 +433,6 @@ function validateBody(
     firstMusicSeen = true
     unit.hasAtom = true
     for (const paren of parens) paren.atoms += 1
-    if (terminalSeen) diagnostics.push(lineMessage(token, '终止线之后不能再出现乐谱正文内容'))
     if (firstPartSeen && !currentPart) diagnostics.push(lineMessage(token, '第一个 part 开始后，音乐内容必须位于 part 内'))
     if (unit.multiRestPendingBar) diagnostics.push(lineMessage(token, '多小节休止必须独占一个小节位置'))
     unit.currentHasAtom = true
@@ -495,7 +492,6 @@ function validateBody(
     nextMeasureRepeatStart = token.raw === '||:' || token.raw === ':||:' ? repeatOpen?.id : undefined
     if (token.raw === '|||' || token.raw === ':|||') {
       terminalCount += 1
-      terminalSeen = !fineBeforeTerminal
       if (currentPart) diagnostics.push(lineMessage(token, '具名乐段内不能使用终止线'))
     }
     fineBeforeTerminal = false
@@ -511,10 +507,6 @@ function validateBody(
     const isRepeatCount = token.kind === 'attribute' && /^x\d+$/.test(token.content ?? '')
     if (!isRepeatCount && token.kind !== 'bar') repeatCountTarget = false
 
-    if (terminalSeen && !isRepeatCount && !terminalTailReported) {
-      diagnostics.push(lineMessage(token, '终止线之后只能出现空白和注释'))
-      terminalTailReported = true
-    }
     if (firstPartSeen && !currentPart && !(token.kind === 'attribute' && (token.content ?? '').startsWith('part='))) {
       diagnostics.push(lineMessage(token, '第一个 part 开始后，正文顶层只能继续定义 part'))
     }
@@ -693,7 +685,6 @@ function validateBody(
         }
         firstMusicSeen = true
         unit.hasAtom = true
-        if (terminalSeen) diagnostics.push(lineMessage(token, '终止线之后不能再出现乐谱正文内容'))
         if (firstPartSeen && !currentPart) diagnostics.push(lineMessage(token, '第一个 part 开始后，音乐内容必须位于 part 内'))
         for (const paren of parens) paren.atoms += 1
         if (parens.length > 0) diagnostics.push(lineMessage(token, '多小节休止不能使用圆括号修饰'))

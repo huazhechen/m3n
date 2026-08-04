@@ -221,9 +221,10 @@ describe('validateM3N', () => {
     expect(result).toContain('圆括号必须在同一小节内闭合')
   })
 
-  it('requires a unique final terminal', () => {
+  it('requires a unique terminal but allows later navigation', () => {
     expect(messages('{4/4}\n1 2 3 4 |')).toContain('必须且只能使用一次终止线')
-    expect(messages('{4/4}\n1 2 3 4 ||| 1')).toContain('终止线之后不能再出现')
+    expect(validateM3N('{4/4}\n{segno}1 2 3 4 ||| {ds}')).toEqual([])
+    expect(validateM3N('{4/4}\n1 2 3 4 ||| 1 2 3 4 |')).toEqual([])
   })
 
   it('enforces multi-measure-rest isolation', () => {
