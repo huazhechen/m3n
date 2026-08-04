@@ -1019,7 +1019,10 @@ function validatePhrasePlaybackPasses(document: DirectDocument, structure: M3NDo
         .filter((measure) => measure.events.some((event) => start <= event.sourceStart && event.sourceStart < end))
       const firstPasses = [...(measures[0] ? passesByMeasure.get(measures[0]) ?? new Set([1]) : new Set([1]))].join(',')
       const mismatch = measures.findIndex((measure) => [...(passesByMeasure.get(measure) ?? new Set([1]))].join(',') !== firstPasses)
-      if (mismatch > 0) diagnostics.push(`第 ${phrase.melody.line} 行，第 ${mismatch + 1} 小节：同一乐句内的小节演奏次数必须一致`)
+      const mismatchedMeasure = measures[mismatch]
+      if (mismatchedMeasure && mismatch > 0) {
+        diagnostics.push(`第 ${phrase.melody.line} 行，第 ${part.melody.indexOf(mismatchedMeasure) + 1} 小节：同一乐句内的小节演奏次数必须一致`)
+      }
     }
   }
   return diagnostics
