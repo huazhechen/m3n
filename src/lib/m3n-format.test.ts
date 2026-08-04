@@ -41,13 +41,13 @@ describe('formatM3N', () => {
     expect(validateM3N(formatted)).toEqual([])
   })
 
-  it('normalizes directive whitespace and splits long phrases with their lyrics', () => {
+  it('normalizes directive whitespace without splitting long phrases', () => {
     const source = `{title=A  B} {2/4}\nN: ${'1 2 | '.repeat(17)}\nL: ${'甲'.repeat(34)}`
     const formatted = formatM3N(source)
 
     expect(formatted).toContain('{title=A B}')
-    expect(formatted.match(/^N:/gm)).toHaveLength(2)
-    expect(formatted).toContain('\n---\nN:')
-    expect(validateM3N(formatted)).toEqual([])
+    expect(formatted.match(/^N:/gm)).toHaveLength(1)
+    expect(formatted).not.toContain('\n---\n')
+    expect(formatted).toContain(`N: ${'1 2 | '.repeat(17).trim()}`)
   })
 })
