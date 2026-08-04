@@ -183,9 +183,9 @@ describe('validateM3N', () => {
     expect(result).toContain('transpose 必须是整数')
   })
 
-  it('rejects the removed inline ending syntax', () => {
-    expect(messages('{2/4}\nN: {volta=1}1 2{/} |||')).toContain('旧房子区间语法已删除')
-    expect(messages('{2/4}\nN: {ending=1}1 2{/} |||')).toContain('旧房子区间语法已删除')
+  it('reports unsupported directives as unknown instructions', () => {
+    expect(messages('{2/4}\nN: {volta=1}1 2{/} |||')).toContain('未知指令：{volta=1}')
+    expect(messages('{2/4}\nN: {ending=1}1 2{/} |||')).toContain('未知指令：{ending=1}')
   })
 
   it('enforces metadata placement, uniqueness, and non-empty values', () => {
@@ -224,17 +224,9 @@ describe('validateM3N', () => {
     expect(result).toContain('圆括号必须在同一小节内闭合')
   })
 
-  it('requires a unique final terminal outside named parts', () => {
+  it('requires a unique final terminal', () => {
     expect(messages('{4/4}\n1 2 3 4 |')).toContain('必须且只能使用一次终止线')
     expect(messages('{4/4}\n1 2 3 4 ||| 1')).toContain('终止线之后不能再出现')
-    expect(messages('{parts=A}\n{part=A}1 2 3 4 |||{/}')).toContain('具名乐段内不能使用终止线')
-  })
-
-  it('enforces named-part definitions and top-level structure', () => {
-    const result = messages('{parts=A C}\n{part=A}1 2 3 4 ||{/}{key=G}\n{part=A}1 2 3 4 ||{/}')
-    expect(result).toContain('乐段重复定义')
-    expect(result).toContain('正文顶层只能继续定义 part')
-    expect(result).toContain('乐段引用未定义：C')
   })
 
   it('enforces multi-measure-rest isolation', () => {

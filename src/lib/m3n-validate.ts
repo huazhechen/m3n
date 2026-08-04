@@ -200,6 +200,10 @@ function extractSupplements(tokens: Token[], diagnostics: string[]) {
 
     if (token.kind === 'attribute') {
       const content = token.content ?? ''
+      if (/^(?:form|parts|part|segno|ds|dc|fine)$/.test(content) || /^(?:form|parts|part|volta|ending)=/.test(content)) {
+        diagnostics.push(lineMessage(token, `未知指令：{${content}}`))
+        continue
+      }
       const lyric = /^(lyrics(?:-word)?)(?:=(.*))?$/.exec(content)
       if (lyric || content === 'bass') {
         supplementsStarted = true
@@ -1340,12 +1344,7 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
       .filter((message) => !message.startsWith('[L]'))
       .map((message) => remapProjectedLines(message, projected.lineMap))
     : projectedDiagnostics
-  const removedSyntax = [
-    /\{(?:form|parts|part)=[^}]*\}/.test(source) ? '旧乐段编排语法已删除；请按实际演奏顺序书写乐句' : '',
-    /\{(?:volta|ending)=[^}]*\}/.test(source) ? '旧房子区间语法已删除；请将每个房子写成独立的 ---Vn 乐句' : '',
-    /\{(?:segno|ds|dc|fine)\}/.test(source) ? 'D.S./D.C. 导航语法已删除；请使用小节线反复和跳房子' : '',
-  ].filter(Boolean)
-  return [...projected.structure.diagnostics, ...removedSyntax, ...legacyDiagnostics, ...lyricDiagnostics]
+  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...lyricDiagnostics]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
