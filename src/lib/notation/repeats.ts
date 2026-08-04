@@ -66,6 +66,7 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
     n: measure.ending,
     repeatStart: measure.left === 'rptstart',
     repeatCount: measure.repeatCount ?? (measure.right === 'rptend' ? 2 : undefined),
+    navigation: measure.events.flatMap((event) => event.navigation),
   }))
   const passesByMeasure = new Map<T, Set<number>>(measures.map((measure) => [measure, new Set()]))
   const visits = new Map<number, number>()

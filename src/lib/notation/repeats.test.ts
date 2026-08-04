@@ -41,6 +41,21 @@ describe('repeat planning', () => {
     expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
   })
 
+  it('counts a D.S. return as another pass', () => {
+    const measures = [
+      { events: [{ navigation: ['segno' as const] }] },
+      { events: [] },
+      { events: [{ navigation: ['fine' as const] }] },
+      { events: [{ navigation: ['ds' as const] }] },
+    ]
+    const passes = measurePlaybackPasses(measures)
+
+    expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
+    expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
+    expect(passes.get(measures[2])).toEqual(new Set([1, 2]))
+    expect(passes.get(measures[3])).toEqual(new Set([1]))
+  })
+
   it('plays written endings in sequence when none closes a repeat', () => {
     const sequence = buildPlaybackSequence(nodes(
       { kind: 'section' },
