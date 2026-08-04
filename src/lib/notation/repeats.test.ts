@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildPlaybackSequence, parsePassRange, type PlaybackNode } from './repeats'
+import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, type PlaybackNode } from './repeats'
 
 const nodes = (...items: Omit<PlaybackNode, 'id'>[]) => items.map((item, index) => ({ id: `n${index + 1}`, ...item }))
 
@@ -28,6 +28,17 @@ describe('repeat planning', () => {
     ))
 
     expect(sequence).toEqual(['n1', 'n1', 'n1', 'n2', 'n2'])
+  })
+
+  it('counts earlier music across consecutive implicit repeats', () => {
+    const measures = [
+      { events: [], right: 'rptend' as const },
+      { events: [], right: 'rptend' as const },
+    ]
+    const passes = measurePlaybackPasses(measures)
+
+    expect(passes.get(measures[0])).toEqual(new Set([1, 2, 3, 4]))
+    expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
   })
 
   it('plays written endings in sequence when none closes a repeat', () => {

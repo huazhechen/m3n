@@ -33,30 +33,55 @@ export function parsePassRange(value: string) {
 
 /** Returns the playback passes in which each written measure occurs. */
 export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: readonly T[]) {
-  const passesByMeasure = new Map<T, Set<number>>(measures.map((measure) => [measure, new Set([1])]))
-  let repeatStart = 0
+  if (measures.some((measure) => measure.ending)) {
+    const passesByMeasure = new Map<T, Set<number>>(measures.map((measure) => [measure, new Set([1])]))
+    let repeatStart = 0
 
-  for (const [index, measure] of measures.entries()) {
-    if (measure.left === 'rptstart') repeatStart = index
-    if (measure.right !== 'rptend') continue
+    for (const [index, measure] of measures.entries()) {
+      if (measure.left === 'rptstart') repeatStart = index
+      if (measure.right !== 'rptend') continue
 
-    let passCount = measure.repeatCount ?? 2
-    for (let endingIndex = repeatStart; endingIndex <= index; endingIndex += 1) {
-      const ending = measures[endingIndex]?.ending
-      if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
+      let passCount = measure.repeatCount ?? 2
+      for (let endingIndex = repeatStart; endingIndex <= index; endingIndex += 1) {
+        const ending = measures[endingIndex]?.ending
+        if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
+      }
+      for (let endingIndex = index + 1; measures[endingIndex]?.ending; endingIndex += 1) {
+        for (const pass of parsePassRange(measures[endingIndex]!.ending!)) passCount = Math.max(passCount, pass)
+      }
+      for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
+        passesByMeasure.set(measures[repeatedIndex]!, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
+      }
     }
-    for (let endingIndex = index + 1; measures[endingIndex]?.ending; endingIndex += 1) {
-      for (const pass of parsePassRange(measures[endingIndex]!.ending!)) passCount = Math.max(passCount, pass)
+
+    for (const measure of measures) {
+      if (measure.ending) passesByMeasure.set(measure, parsePassRange(measure.ending))
     }
-    for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
-      passesByMeasure.set(measures[repeatedIndex]!, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
-    }
+    return passesByMeasure
   }
 
-  for (const measure of measures) {
-    if (measure.ending) passesByMeasure.set(measure, parsePassRange(measure.ending))
-  }
+  const nodes: PlaybackNode[] = measures.map((measure, index) => ({
+    id: String(index),
+    kind: measure.ending ? 'ending' : 'section',
+    n: measure.ending,
+    repeatStart: measure.left === 'rptstart',
+    repeatCount: measure.repeatCount ?? (measure.right === 'rptend' ? 2 : undefined),
+  }))
+  const passesByMeasure = new Map<T, Set<number>>(measures.map((measure) => [measure, new Set()]))
+  const visits = new Map<number, number>()
 
+  for (const id of buildPlaybackSequence(nodes)) {
+    const index = Number(id)
+    const measure = measures[index]
+    if (!measure) continue
+    if (measure.ending) {
+      passesByMeasure.set(measure, parsePassRange(measure.ending))
+      continue
+    }
+    const pass = (visits.get(index) ?? 0) + 1
+    visits.set(index, pass)
+    passesByMeasure.get(measure)?.add(pass)
+  }
   return passesByMeasure
 }
 
