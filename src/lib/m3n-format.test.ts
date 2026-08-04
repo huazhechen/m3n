@@ -26,8 +26,8 @@ describe('formatM3N', () => {
     const source = '{title=A  B}  {text=  dolce  } // heading\nN: {p}1{text=keep  spaces}  2  3  4  // phrase\n'
 
     expect(formatM3N(source)).toBe([
-      '{title=A  B} {text=  dolce  }  // heading',
-      'N: {p}1{text=keep  spaces} 2 3 4  // phrase',
+      '{title=A B} {text= dolce }  // heading',
+      'N: {p}1{text=keep spaces} 2 3 4  // phrase',
       '',
     ].join('\n'))
   })
@@ -38,6 +38,16 @@ describe('formatM3N', () => {
 
     expect(formatM3N(formatted)).toBe(formatted)
     expect(formatted).not.toContain('\n\n')
+    expect(validateM3N(formatted)).toEqual([])
+  })
+
+  it('normalizes directive whitespace and splits long phrases with their lyrics', () => {
+    const source = `{title=A  B} {2/4}\nN: ${'1 2 | '.repeat(17)}\nL: ${'甲'.repeat(34)}`
+    const formatted = formatM3N(source)
+
+    expect(formatted).toContain('{title=A B}')
+    expect(formatted.match(/^N:/gm)).toHaveLength(2)
+    expect(formatted).toContain('\n---\nN:')
     expect(validateM3N(formatted)).toEqual([])
   })
 })

@@ -1,6 +1,10 @@
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
+import { parseM3NDocumentStructure } from './notation/m3n-document'
+import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N } from './notation/m3n-tokens'
 import { parseM3NDocument, type DirectEvent } from './m3n-direct'
+import { lyricTargetCountsByMeasure } from './m3n-lyric-alignment'
+import { validateM3N } from './m3n-validate'
 
 const EPSILON = 1e-9
 
@@ -232,7 +236,7 @@ function normalizeWhitespaceOutsideDirectives(value: string) {
     if (inDirective) {
       directive += character
       if (character === '}') {
-        result += directive
+        result += directive.replace(/[ \t]{2,}/g, ' ')
         directive = ''
         inDirective = false
       }
@@ -255,6 +259,102 @@ function normalizeWhitespaceOutsideDirectives(value: string) {
   }
 
   return result + directive
+}
+
+function splitAtBars(value: string, boundaries: number[]) {
+  const bars = tokenizeM3N(value).filter((token) => token.kind === 'bar')
+  const offsets = boundaries.map((boundary) => {
+    const bar = bars[boundary - 1]
+    return bar ? bar.start + bar.raw.length : undefined
+  }).filter((offset): offset is number => offset !== undefined)
+  const parts: string[] = []
+  let start = 0
+  for (const end of offsets) {
+    parts.push(value.slice(start, end).trim())
+    start = end
+  }
+  parts.push(value.slice(start).trim())
+  return parts
+}
+
+function renderLyricItems(items: ReturnType<typeof parseLyricItems>) {
+  let result = ''
+  for (const item of items) {
+    const value = item.kind === 'placeholder' ? '%' : item.kind === 'extender' ? '_' : item.underlined ? `(${item.text})` : item.text
+    const prefixed = `${item.forceTiedTarget ? '+' : ''}${value}`
+    if (result && /[A-Za-z0-9]$/.test(result) && /^[A-Za-z0-9]/.test(prefixed)) result += ' '
+    result += prefixed
+  }
+  return result
+}
+
+function splitLyrics(value: string, targetCounts: number[]) {
+  if (/^\{L\d+\}$/.test(value.trim())) return targetCounts.map(() => value)
+  const items = parseLyricItems(value, 0, 'char')
+  const parts: string[] = []
+  let start = 0
+  for (const count of targetCounts.slice(0, -1)) {
+    const end = Math.min(items.length, start + count)
+    parts.push(renderLyricItems(items.slice(start, end)))
+    start = end
+  }
+  parts.push(renderLyricItems(items.slice(start)))
+  return parts
+}
+
+function lyricTargetsByChunk(source: string, phrase: { melody: { start: number; text: string } }, boundaries: number[]) {
+  const document = parseM3NDocument(source)
+  const start = phrase.melody.start
+  const end = start + phrase.melody.text.length
+  const measures = [...document.parts.values()].flatMap((part) => part.melody)
+    .filter((measure) => measure.events.some((event) => start <= event.sourceStart && event.sourceStart < end))
+  const countsByMeasure = lyricTargetCountsByMeasure(document)
+  const counts = measures.map((measure) => countsByMeasure.get(measure) ?? 0)
+  const ends = [...boundaries, measures.length]
+  let offset = 0
+  return ends.map((endIndex) => {
+    const count = counts.slice(offset, endIndex).reduce((sum, value) => sum + value, 0)
+    offset = endIndex
+    return count
+  })
+}
+
+function splitLongPhrases(source: string) {
+  const structure = parseM3NDocumentStructure(source)
+  const phrases = structure.sections.flatMap((section) => section.phrases)
+  const lines = source.trimEnd().split('\n')
+  const result: string[] = []
+  for (let index = 0; index < lines.length;) {
+    const line = lines[index] ?? ''
+    const melody = /^N:\s*(.*)$/.exec(line)
+    const phrase = phrases.find((candidate) => candidate.melody?.line === index + 1)
+    if (!melody || !phrase?.melody) { result.push(line); index += 1; continue }
+    const bars = tokenizeM3N(melody[1] ?? '').filter((token) => token.kind === 'bar')
+    const measureBars = bars.flatMap((bar, index) => bar.raw === '||:' ? [] : [index + 1])
+    if (measureBars.length <= 16) { result.push(line); index += 1; continue }
+    const measureBoundaries = Array.from({ length: Math.floor((measureBars.length - 1) / 16) }, (_, item) => (item + 1) * 16)
+    const boundaries = measureBoundaries.map((boundary) => measureBars[boundary - 1]!)
+    const fields: Array<{ label: string; value: string }> = []
+    while (index < lines.length) {
+      const match = /^(N|B|C|L\d*):\s*(.*)$/.exec(lines[index] ?? '')
+      if (!match) break
+      fields.push({ label: match[1] ?? '', value: match[2] ?? '' })
+      index += 1
+    }
+    const chunks = boundaries.length + 1
+    const melodyParts = splitAtBars(melody[1] ?? '', boundaries)
+    const lyricTargets = lyricTargetsByChunk(source, { melody: phrase.melody }, measureBoundaries)
+    for (let chunk = 0; chunk < chunks; chunk += 1) {
+      if (chunk > 0) result.push(`---${phrase.passes ? `V${phrase.passes.split(',').map((pass) => `V${pass}`).join(',').replace(/^V/, '')}` : ''}`)
+      for (const field of fields) {
+        const value = field.label === 'N' ? melodyParts[chunk] ?? ''
+          : field.label === 'B' || field.label === 'C' ? splitAtBars(field.value, boundaries)[chunk] ?? ''
+            : splitLyrics(field.value, lyricTargets)[chunk] ?? ''
+        result.push(`${field.label}: ${value}`.trimEnd())
+      }
+    }
+  }
+  return `${result.join('\n')}\n`
 }
 
 function normalizeLyricWhitespace(value: string) {
@@ -302,5 +402,7 @@ export function formatM3N(source: string) {
   const merged = replaceSustainedAtoms(source.replace(/\r\n?/g, '\n'), false)
   const normalized = replaceSustainedAtoms(merged, true)
   const formatted = normalized.split('\n').map(formatLine).filter(Boolean)
-  return `${formatted.join('\n')}\n`
+  const normalizedSource = `${formatted.join('\n')}\n`
+  const split = splitLongPhrases(normalizedSource)
+  return validateM3N(split).length <= validateM3N(normalizedSource).length ? split : normalizedSource
 }

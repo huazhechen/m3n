@@ -1,4 +1,4 @@
-import type { DirectDocument, DirectEvent } from './m3n-direct'
+import type { DirectDocument, DirectEvent, DirectMeasure } from './m3n-direct'
 import { measurePlaybackPasses } from './notation/repeats'
 
 export type LyricTarget = { tied: boolean }
@@ -14,6 +14,25 @@ function isInstrumentalEvent(document: DirectDocument, event: DirectEvent) {
 
 function lyricTargetCount(event: DirectEvent) {
   return event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
+}
+
+/** Counts written lyric targets in each melody measure. */
+export function lyricTargetCountsByMeasure(document: DirectDocument) {
+  const counts = new Map<DirectMeasure, number>()
+  for (const part of document.parts.values()) {
+    let previousTied = false
+    for (const measure of part.melody) {
+      let count = 0
+      for (const event of measure.events) {
+        const tiedTarget = previousTied || event.tieFrom !== undefined
+        previousTied = event.tie
+        if (event.kind === 'rest' || tiedTarget || isInstrumentalEvent(document, event)) continue
+        count += lyricTargetCount(event)
+      }
+      counts.set(measure, count)
+    }
+  }
+  return counts
 }
 
 /** Counts lyric targets for each performance pass of the written score. */
