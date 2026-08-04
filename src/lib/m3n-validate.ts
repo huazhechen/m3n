@@ -1028,6 +1028,33 @@ function validatePhrasePlaybackPasses(document: DirectDocument, structure: M3NDo
   return diagnostics
 }
 
+function validatePhraseSpans(document: DirectDocument, structure: M3NDocumentStructure) {
+  const diagnostics: string[] = []
+  const phrases = structure.sections.flatMap((section) => section.phrases
+    .filter((phrase): phrase is M3NPhrase & { melody: NonNullable<M3NPhrase['melody']> } => Boolean(phrase.melody)))
+  const phraseAt = (position: number) => phrases.findIndex((phrase) => (
+    phrase.melody.start <= position && position <= phrase.melody.start + phrase.melody.text.length
+  ))
+  for (const [index, phrase] of phrases.entries()) {
+    const end = phrase.melody.start + phrase.melody.text.length
+    const events = [...document.parts.values()].flatMap((part) => part.melody.flatMap((measure) => measure.events))
+      .filter((event) => phrase.melody.start <= event.sourceStart && event.sourceStart < end)
+    if (events.at(-1)?.tie && phrases[index + 1]?.passes) {
+      diagnostics.push(`第 ${phrase.melody.line} 行：延音不能跨越跳房子边界`)
+    }
+  }
+
+  for (const interval of document.intervals) {
+    if (interval.staff !== 'melody' || interval.kind !== 'lg' || interval.start === undefined || interval.end === undefined) continue
+    const startPhrase = phraseAt(interval.start)
+    const endPhrase = phraseAt(interval.end)
+    if (startPhrase >= 0 && endPhrase > startPhrase && phrases.slice(startPhrase + 1, endPhrase + 1).some((phrase) => phrase.passes)) {
+      diagnostics.push(`第 ${phrases[startPhrase]!.melody.line} 行：连音不能跨越跳房子边界`)
+    }
+  }
+  return diagnostics
+}
+
 function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentStructure) {
   const diagnostics: string[] = []
   for (const section of structure.sections) {
@@ -1128,13 +1155,16 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
   const phraseDiagnostics = projected.structure.sections.length > 0
     ? validatePhrasePlaybackPasses(parsed, projected.structure)
     : []
+  const phraseSpanDiagnostics = projected.structure.sections.length > 0
+    ? validatePhraseSpans(parsed, projected.structure)
+    : []
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
   const legacyDiagnostics = projected.structure.sections.length > 0
     ? projectedDiagnostics
       .filter((message) => !message.startsWith('[L]'))
       .map((message) => remapProjectedLines(message, projected.lineMap))
     : projectedDiagnostics
-  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...phraseDiagnostics, ...lyricDiagnostics]
+  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...lyricDiagnostics]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */

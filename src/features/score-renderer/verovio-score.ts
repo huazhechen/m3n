@@ -87,86 +87,6 @@ export function encodeSystemBreaks(mei: string, measureIds: ReadonlySet<string>)
     .replace(/<\/measure>\s*(?:<sb\/>\s*){2,}/g, '</measure><sb/>')
 }
 
-type MeiNote = { id: string; staff: string; attributes: Record<string, string> }
-
-function attribute(tag: string, name: string) {
-  return new RegExp(`\\b${name.replace('.', '\\\\.')}="([^"]*)"`).exec(tag)?.[1]
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
-function firstPitchedNote(content: string, staff: string): MeiNote | undefined {
-  const measure = /<measure\b[\s\S]*?<\/measure>/.exec(content)?.[0]
-  const staffContent = measure && new RegExp(`<staff\\b(?=[^>]*\\bn="${escapeRegExp(staff)}")[^>]*>[\\s\\S]*?<\\/staff>`).exec(measure)?.[0]
-  const tag = staffContent && /<note\b[^>]*>/.exec(staffContent)?.[0]
-  const id = tag && attribute(tag, 'xml:id')
-  if (!tag || !id) return undefined
-  return {
-    id,
-    staff,
-    attributes: Object.fromEntries(['pname', 'oct', 'dur', 'accid', 'accid.ges'].flatMap((name) => {
-      const value = attribute(tag, name)
-      return value === undefined ? [] : [[name, value]]
-    })),
-  }
-}
-
-function samePitch(left: MeiNote, right: MeiNote) {
-  return ['pname', 'oct', 'accid', 'accid.ges'].every((name) => left.attributes[name] === right.attributes[name])
-}
-
-function lastMeasure(content: string) {
-  return [...content.matchAll(/<measure\b[\s\S]*?<\/measure>/g)].at(-1)?.[0]
-}
-
-function appendGhostTie(ending: string, target: MeiNote, ghostIndex: number) {
-  const measure = /<measure\b[\s\S]*?<\/measure>/.exec(ending)?.[0]
-  if (!measure) return ending
-  const ghostId = `m3n-layout-ghost-${ghostIndex}`
-  const attributes = ['pname', 'oct', 'accid', 'accid.ges']
-    .flatMap((name) => target.attributes[name] === undefined ? [] : [`${name}="${target.attributes[name]}"`])
-    .join(' ')
-  const targetPattern = new RegExp(`(<note\\b(?=[^>]*\\bxml:id="${escapeRegExp(target.id)}")[^>]*>)`)
-  const updatedMeasure = measure
-    .replace(targetPattern, `<graceGrp attach="post"><note xml:id="${ghostId}" ${attributes} dur="64" grace="unacc" visible="false"/></graceGrp>$1`)
-    .replace('</measure>', `<tie startid="#${ghostId}" endid="#${target.id}" curvedir="below"/></measure>`)
-  return ending.replace(measure, updatedMeasure)
-}
-
-/** Adds layout-only tie anchors for later matching alternate endings. */
-export function projectEndingTieGhosts(mei: string) {
-  let ghostIndex = 0
-  return mei.replace(/(<section\b(?=[^>]*\bxml:id="m3n-segment-[^"]+")[\s\S]*?<\/section>)((?:\s*<ending\b[\s\S]*?<\/ending>){2,})/g, (group, sharedSection: string, endingSource: string) => {
-    let projectedSection = sharedSection
-    const endings = [...endingSource.matchAll(/<ending\b[\s\S]*?<\/ending>/g)].map((match) => match[0])
-    const firstEnding = endings[0]
-    const measure = lastMeasure(sharedSection)
-    if (!firstEnding || !measure) return group
-    const ties = [...measure.matchAll(/<tie\b(?=[^>]*\bendid="#([^"]+)")[^>]*\/>/g)]
-    for (const tie of ties) {
-      const endId = tie[1]
-      if (!endId || !firstEnding.includes(`xml:id="${endId}"`)) continue
-      const targetTag = new RegExp(`<note\\b(?=[^>]*\\bxml:id="${escapeRegExp(endId)}")[^>]*>`).exec(firstEnding)?.[0]
-      const staff = targetTag && /<staff\b(?=[^>]*\bn="([^"]+)")[^>]*>[\s\S]*?$/.exec(firstEnding.slice(0, firstEnding.indexOf(targetTag)))?.[1]
-      if (!targetTag || !staff) continue
-      const target = { id: endId, staff, attributes: Object.fromEntries(['pname', 'oct', 'dur', 'accid', 'accid.ges'].flatMap((name) => {
-        const value = attribute(targetTag, name)
-        return value === undefined ? [] : [[name, value]]
-      })) }
-      for (let index = 1; index < endings.length; index += 1) {
-        const laterTarget = firstPitchedNote(endings[index] ?? '', staff)
-        if (!laterTarget || !samePitch(target, laterTarget)) continue
-        const branchTie = new RegExp(`\\s*<tie\\b(?=[^>]*\\bendid="#${escapeRegExp(laterTarget.id)}")[^>]*/>`, 'g')
-        projectedSection = projectedSection.replace(branchTie, '')
-        endings[index] = appendGhostTie(endings[index] ?? '', laterTarget, ++ghostIndex)
-      }
-    }
-    return `${projectedSection}${endings.join('')}`
-  })
-}
-
 export class VerovioScore {
   private readonly toolkit: VerovioToolkit
   private readonly mei: string
@@ -183,7 +103,7 @@ export class VerovioScore {
 
   prepareLayout({ width, scale = 42, includeBass = true }: ScoreLayout) {
     const effectiveScale = normalizeScale(scale)
-    let layoutMei = projectEndingTieGhosts(includeBass ? this.mei : withoutBassStaff(this.mei))
+    let layoutMei = includeBass ? this.mei : withoutBassStaff(this.mei)
     const layoutOptions = {
       adjustPageHeight: true,
       footer: 'none',

@@ -25,6 +25,16 @@ describe('validateM3N', () => {
     expect(messages(source)).toContain('第 4 行，第 3 小节：同一乐句内的小节演奏次数必须一致')
   })
 
+  it('rejects ties and slurs across alternate-ending boundaries', () => {
+    const tie = '{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 4 3 |||'
+    const slur = '{2/4}\nN: {lg}1 2 |\n---V1\nN: 3 4{/} :||\n---V2\nN: 5 6 |||'
+    const ordinaryBoundary = '{2/4}\nN: 1 4~ |\n---\nN: 4 {lg}5 6 |\n---\nN: 1 2{/} |||'
+
+    expect(messages(tie)).toContain('延音不能跨越跳房子边界')
+    expect(messages(slur)).toContain('连音不能跨越跳房子边界')
+    expect(messages(ordinaryBoundary)).not.toContain('不能跨越跳房子边界')
+  })
+
   it('does not let a later house group increase an earlier phrase lyric count', () => {
     const source = [
       '{2/4}',

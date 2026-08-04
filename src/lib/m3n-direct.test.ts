@@ -84,12 +84,6 @@ describe('direct M3N parser', () => {
     expect(passes.get(measures[3])).toEqual(new Set([1, 2, 3, 4]))
   })
 
-  it('marks matching alternate-ending starts as tie targets', () => {
-    const measures = parseM3NDocument('{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 4 3 |||').parts.get('score')!.melody
-
-    expect(measures.find((measure) => measure.ending === '2')?.events[0]?.tieFrom?.tie).toBe(true)
-  })
-
   it('keeps a tie on the final pitched tuplet child', () => {
     const event = parseM3NDocument('{key=C} {4/4} [123~:2] 3 0 |||').parts.get('score')?.melody[0]?.events[0]
 

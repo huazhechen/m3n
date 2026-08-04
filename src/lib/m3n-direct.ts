@@ -420,31 +420,6 @@ export function parseM3NDocument(source: string): DirectDocument {
     partOrder: [],
     intervals,
   }
-  const sameTiePitch = (left: DirectEvent, right: DirectEvent) => (
-    left.kind !== 'rest' && right.kind !== 'rest' && left.pitches.length === right.pitches.length &&
-    left.pitches.every((pitch, index) => {
-      const leftPitch = m3nPitch(pitch, left.key)
-      const rightPitch = m3nPitch(right.pitches[index] ?? '', right.key)
-      return leftPitch.pname === rightPitch.pname && leftPitch.oct === rightPitch.oct && leftPitch.accidGes === rightPitch.accidGes
-    })
-  )
-  for (const part of document.parts.values()) {
-    for (const measures of [part.melody, part.bass]) {
-      for (let index = 0; index < measures.length; index += 1) {
-        const firstEnding = measures[index]
-        const tieSource = measures[index - 1]?.events.at(-1)
-        if (!firstEnding?.ending || !tieSource?.tie || measures[index - 1]?.ending) continue
-        let previousEnding = ''
-        for (let endingIndex = index; measures[endingIndex]?.ending; endingIndex += 1) {
-          const ending = measures[endingIndex]!
-          if (ending.ending === previousEnding) continue
-          previousEnding = ending.ending ?? ''
-          const target = ending.events.find((event) => event.kind !== 'rest')
-          if (target && sameTiePitch(tieSource, target)) target.tieFrom = tieSource
-        }
-      }
-    }
-  }
   if (projected.structure.sections.length > 0) {
     const tokens = tokenizeM3N(originalSource)
     const sourcePositions = new Map<number, number>()

@@ -3,7 +3,7 @@ import createVerovioModule from 'verovio/wasm'
 import { VerovioToolkit } from 'verovio/esm'
 import { BasicMIDI } from 'spessasynth_core'
 import { m3nToMei } from '../../lib/m3n-mei'
-import { automaticSystemBreakMeasureIds, encodeSystemBreaks, projectEndingTieGhosts } from './verovio-score'
+import { automaticSystemBreakMeasureIds, encodeSystemBreaks } from './verovio-score'
 import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, visibleLyricVerseNumbers } from './lyric-rendition'
 
 async function renderedPitches(source: string) {
@@ -36,39 +36,6 @@ describe('VerovioScore layout', () => {
     expect(encodeSystemBreaks(mei, new Set(['m3n-measure-1-1', 'm3n-measure-1-2']))).toBe(
       '<section><measure xml:id="m3n-measure-1-1"></measure><sb/><measure xml:id="m3n-measure-1-2"></measure><sb/><measure xml:id="m3n-measure-1-3"></measure></section>',
     )
-  })
-
-  it('adds an invisible tie anchor for later matching alternate endings only in the layout projection', () => {
-    const mei = m3nToMei('{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 4 3 |||').mei
-    const layoutMei = projectEndingTieGhosts(mei)
-
-    expect(mei).not.toContain('m3n-layout-ghost')
-    expect(mei).toContain('<tie startid="#m3n-e-2" endid="#m3n-e-3"/>')
-    expect(mei).toContain('<tie startid="#m3n-e-2" endid="#m3n-e-5"/>')
-    expect(layoutMei).not.toContain('<tie startid="#m3n-e-2" endid="#m3n-e-5"/>')
-    expect(layoutMei).toContain('<graceGrp attach="post"><note xml:id="m3n-layout-ghost-1" pname="f" oct="4" dur="64" grace="unacc" visible="false"/></graceGrp>')
-    expect(layoutMei).toContain('<tie startid="#m3n-layout-ghost-1" endid="#m3n-e-5" curvedir="below"/>')
-    expect(layoutMei.indexOf('m3n-layout-ghost-1')).toBeGreaterThan(layoutMei.indexOf('xml:id="m3n-ending-2"'))
-  })
-
-  it('loads the projected ghost tie in Verovio without changing canonical MIDI input', async () => {
-    const source = '{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 4 3 |||'
-    const mei = m3nToMei(source).mei
-    const toolkit = new VerovioToolkit(await createVerovioModule())
-    try {
-      expect(mei).not.toContain('m3n-layout-ghost')
-      expect(toolkit.loadData(projectEndingTieGhosts(mei))).toBe(1)
-      expect(toolkit.renderToSVG(1)).toContain('class="tie')
-    } finally {
-      toolkit.destroy()
-    }
-    await expect(renderedPitches(source)).resolves.toEqual([60, 65, 67, 60, 65, 64])
-  })
-
-  it('does not add a ghost tie when a later ending starts on another pitch', () => {
-    const mei = m3nToMei('{2/4}\nN: ||: 1 4~ |\n---V1\nN: 4 5 :||\n---V2\nN: 3 4 |||').mei
-
-    expect(projectEndingTieGhosts(mei)).not.toContain('m3n-layout-ghost')
   })
 
   it('maps each playback occurrence to its available lyric verse', () => {
