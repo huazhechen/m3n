@@ -19,6 +19,12 @@ describe('validateM3N', () => {
     expect(validateM3N('{2/4}\nN: 1 2 |\n---V1\nN: 3 4 |\n---V2\nN: 5 6 |||')).toEqual([])
   })
 
+  it('requires every measure in a phrase to have the same playback count', () => {
+    const source = '{2/4}\nN: 1 2 ||: 3 4 :|||'
+
+    expect(messages(source)).toContain('第 2 行，第 2 小节：同一乐句内的小节演奏次数必须一致')
+  })
+
   it('does not let a later house group increase an earlier phrase lyric count', () => {
     const source = [
       '{2/4}',

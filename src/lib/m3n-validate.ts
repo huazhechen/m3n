@@ -1004,6 +1004,27 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
   return localTargets
 }
 
+function validatePhrasePlaybackPasses(document: DirectDocument, structure: M3NDocumentStructure) {
+  const diagnostics: string[] = []
+  const part = document.parts.get('score')
+  if (!part) return diagnostics
+  const passesByMeasure = measurePlaybackPasses(part.melody)
+
+  for (const section of structure.sections) {
+    for (const phrase of section.phrases) {
+      if (!phrase.melody) continue
+      const start = phrase.melody.start
+      const end = start + phrase.melody.text.length
+      const measures = part.melody
+        .filter((measure) => measure.events.some((event) => start <= event.sourceStart && event.sourceStart < end))
+      const firstPasses = [...(measures[0] ? passesByMeasure.get(measures[0]) ?? new Set([1]) : new Set([1]))].join(',')
+      const mismatch = measures.findIndex((measure) => [...(passesByMeasure.get(measure) ?? new Set([1]))].join(',') !== firstPasses)
+      if (mismatch > 0) diagnostics.push(`第 ${phrase.melody.line} 行，第 ${mismatch + 1} 小节：同一乐句内的小节演奏次数必须一致`)
+    }
+  }
+  return diagnostics
+}
+
 function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentStructure) {
   const diagnostics: string[] = []
   for (const section of structure.sections) {
@@ -1101,13 +1122,16 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
   const parsed = document ?? parseM3NDocument(source)
   const projectedDiagnostics = validateProjectedM3N(projected.source, projected.bassSource, options)
     .filter((message) => projected.structure.sections.length === 0 || !/^未分段正文必须且只能使用一次终止线，实际 0 次$/.test(message))
+  const phraseDiagnostics = projected.structure.sections.length > 0
+    ? validatePhrasePlaybackPasses(parsed, projected.structure)
+    : []
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
   const legacyDiagnostics = projected.structure.sections.length > 0
     ? projectedDiagnostics
       .filter((message) => !message.startsWith('[L]'))
       .map((message) => remapProjectedLines(message, projected.lineMap))
     : projectedDiagnostics
-  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...lyricDiagnostics]
+  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...phraseDiagnostics, ...lyricDiagnostics]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
