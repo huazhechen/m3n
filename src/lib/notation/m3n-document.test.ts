@@ -53,6 +53,27 @@ describe('M3N v0.4 document structure', () => {
     ])
   })
 
+  it('rejects a phrase ending with a forward repeat bar', () => {
+    const document = parseM3NDocumentStructure([
+      'N: 1 2 ||:',
+      '---',
+      'N: 3 4 :||:',
+      '---',
+      'N: ||: 5 6 |',
+    ].join('\n'))
+
+    expect(document.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'M3N_STRUCTURE_TRAILING_REPEAT_START',
+        legacyMessage: '第 1 行：乐句不能以前反复线结尾',
+      }),
+      expect.objectContaining({
+        code: 'M3N_STRUCTURE_TRAILING_REPEAT_START',
+        legacyMessage: '第 3 行：乐句不能以前反复线结尾',
+      }),
+    ])
+  })
+
   it('keeps absolute row offsets for CRLF documents', () => {
     const document = parseM3NDocumentStructure('===Verse\r\nN: 1 2 |\r\nL: 甲乙 |')
     expect(document.sections[0]?.phrases[0]).toMatchObject({

@@ -23,7 +23,8 @@ export type M3NDocumentStructure = {
 }
 
 const linePrefix = /^(N|B|C|L\d*):(?:[ \t]?)(.*)$/
-const phraseEndingBar = /(?:\|\|:|:\|\|:|:\|\|\||:\|\||\|\|\||\|\||\|)(?:\{x\d+\})?\s*(?:\/\/.*)?$/
+const phraseEndingBar = /(?::\|\|\||:\|\||\|\|\||\|\||\|)(?:\{x\d+\})?\s*(?:\/\/.*)?$/
+const phraseTrailingRepeatStart = /(?:\|\|:|:\|\|:)\s*(?:\/\/.*)?$/
 const nonAlignmentBar = /\|\||:\|\|/
 
 export function parseM3NDocumentStructure(source: string): M3NDocumentStructure {
@@ -110,6 +111,7 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
     if (currentSection.phrases.length === 0) report(currentSection.line, 'M3N_STRUCTURE_EMPTY_SECTION', '乐段至少需要一个乐句')
     for (const currentPhrase of currentSection.phrases) {
       if (!currentPhrase.melody) report(currentPhrase.line, 'M3N_STRUCTURE_MISSING_MELODY', '乐句缺少 N: 旋律行')
+      else if (phraseTrailingRepeatStart.test(currentPhrase.melody.text)) report(currentPhrase.melody.line, 'M3N_STRUCTURE_TRAILING_REPEAT_START', '乐句不能以前反复线结尾')
       else if (!phraseEndingBar.test(currentPhrase.melody.text)) report(currentPhrase.melody.line, 'M3N_STRUCTURE_MISSING_FINAL_BAR', '每个 N: 乐句必须以小节线结束')
       const labels = currentPhrase.lyrics.map((lyric) => lyric.label)
       if (labels.includes('') && labels.some(Boolean)) report(currentPhrase.line, 'M3N_STRUCTURE_MIXED_LYRIC_LABELS', 'L: 与编号歌词行不能混用')
