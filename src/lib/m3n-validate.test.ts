@@ -35,6 +35,22 @@ describe('validateM3N', () => {
     expect(messages(ordinaryBoundary)).not.toContain('不能跨越跳房子边界')
   })
 
+  it('rejects ties and slurs leaving the final alternate ending', () => {
+    const tie = '{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6~ |\n---\nN: 6 5 |||'
+    const slur = '{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: {lg}5 6 |\n---\nN: 5 6{/} |||'
+
+    expect(messages(tie)).toContain('延音不能跨越跳房子边界')
+    expect(messages(slur)).toContain('连音不能跨越跳房子边界')
+  })
+
+  it('validates harmony syntax, measure alignment, duration, and ties', () => {
+    expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nC: I | (V) (V) |')).toEqual([])
+    expect(messages('{2/4}\nN: 1 2 |||\nC: garbage |')).toContain('和弦符号非法：garbage')
+    expect(messages('{2/4}\nN: 1 2 | 3 4 |||\nC: I |')).toContain('和弦行小节数量不匹配')
+    expect(messages('{2/4}\nN: 1 2 |||\nC: I V |')).toContain('和弦第 1 小节时值不匹配')
+    expect(messages('{2/4}\nN: 1 2 |||\nC: I~ V |')).toContain('和弦延续线两端必须是相同和弦')
+  })
+
   it('does not let a later house group increase an earlier phrase lyric count', () => {
     const source = [
       '{2/4}',

@@ -7,6 +7,7 @@ import { parseM3NDocument, type DirectDocument } from './m3n-direct'
 import { hasForcedLyricOutsideTiedTarget } from './m3n-lyric-alignment'
 import { projectM3NDocument, type M3NDocumentStructure, type M3NPhrase } from './notation/m3n-document'
 import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
+import { m3nChord } from './m3n-harmony'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -1030,7 +1031,7 @@ function validatePhraseSpans(document: DirectDocument, structure: M3NDocumentStr
     const end = phrase.melody.start + phrase.melody.text.length
     const events = [...document.parts.values()].flatMap((part) => part.melody.flatMap((measure) => measure.events))
       .filter((event) => phrase.melody.start <= event.sourceStart && event.sourceStart < end)
-    if (events.at(-1)?.tie && phrases[index + 1]?.passes) {
+    if (events.at(-1)?.tie && (phrase.passes || phrases[index + 1]?.passes)) {
       diagnostics.push(`第 ${phrase.melody.line} 行：延音不能跨越跳房子边界`)
     }
   }
@@ -1039,10 +1040,91 @@ function validatePhraseSpans(document: DirectDocument, structure: M3NDocumentStr
     if (interval.staff !== 'melody' || interval.kind !== 'lg' || interval.start === undefined || interval.end === undefined) continue
     const startPhrase = phraseAt(interval.start)
     const endPhrase = phraseAt(interval.end)
-    if (startPhrase >= 0 && endPhrase > startPhrase && phrases.slice(startPhrase + 1, endPhrase + 1).some((phrase) => phrase.passes)) {
+    if (startPhrase >= 0 && endPhrase > startPhrase && Array.from(
+      { length: endPhrase - startPhrase },
+      (_, offset) => [phrases[startPhrase + offset], phrases[startPhrase + offset + 1]] as const,
+    ).some(([left, right]) => left?.passes || right?.passes)) {
       diagnostics.push(`第 ${phrases[startPhrase]!.melody.line} 行：连音不能跨越跳房子边界`)
     }
   }
+  return diagnostics
+}
+
+function validatePhraseHarmony(document: DirectDocument, structure: M3NDocumentStructure) {
+  const diagnostics: string[] = []
+  const part = document.parts.get('score')
+  if (!part) return diagnostics
+  let pendingTie: { symbol: string; line: number } | undefined
+
+  for (const section of structure.sections) {
+    for (const phrase of section.phrases) {
+      if (!phrase.melody || !phrase.harmony) continue
+      const melodyEnd = phrase.melody.start + phrase.melody.text.length
+      const measures = part.melody.filter((measure) => measure.events.some((event) =>
+        phrase.melody!.start <= event.sourceStart && event.sourceStart < melodyEnd))
+      const harmonyMeasures = phrase.harmony.text.split(/\|+/)
+      if (harmonyMeasures.at(-1)?.trim() === '') harmonyMeasures.pop()
+      if (harmonyMeasures.length !== measures.length) {
+        diagnostics.push(`第 ${phrase.harmony.line} 行：和弦行小节数量不匹配：旋律 ${measures.length} 小节，和弦 ${harmonyMeasures.length} 小节`)
+      }
+
+      for (const [measureIndex, source] of harmonyMeasures.entries()) {
+        let depth = 0
+        let beats = 0
+        let cursor = 0
+        let lastChord: string | undefined
+        const tokenPattern = /\s+|\(|\)|~|(?:VII|III|II|IV|VI|V|I|vii|iii|ii|iv|vi|v|i)(?:m|dim|aug|sus2|sus4|maj7|maj9|[2-9]|1[0-3])?/gy
+        while (cursor < source.length) {
+          tokenPattern.lastIndex = cursor
+          const match = tokenPattern.exec(source)
+          if (!match) {
+            const invalid = /^\S+/.exec(source.slice(cursor))?.[0] ?? source[cursor]!
+            diagnostics.push(`第 ${phrase.harmony.line} 行：和弦符号非法：${invalid}`)
+            cursor += invalid.length
+            lastChord = undefined
+            continue
+          }
+          cursor = tokenPattern.lastIndex
+          const value = match[0]
+          if (/^\s+$/.test(value)) continue
+          if (value === '(') {
+            depth += 1
+            lastChord = undefined
+            continue
+          }
+          if (value === ')') {
+            if (depth === 0) diagnostics.push(`第 ${phrase.harmony.line} 行：和弦行圆括号关闭顺序错误`)
+            else depth -= 1
+            lastChord = undefined
+            continue
+          }
+          if (value === '~') {
+            if (!lastChord) diagnostics.push(`第 ${phrase.harmony.line} 行：和弦延续线必须紧跟和弦符号`)
+            else pendingTie = { symbol: lastChord, line: phrase.harmony.line }
+            lastChord = undefined
+            continue
+          }
+          if (!m3nChord(value, 'C')) {
+            diagnostics.push(`第 ${phrase.harmony.line} 行：和弦符号非法：${value}`)
+            lastChord = undefined
+            continue
+          }
+          if (pendingTie && pendingTie.symbol !== value) diagnostics.push(`第 ${pendingTie.line} 行：和弦延续线两端必须是相同和弦`)
+          pendingTie = undefined
+          lastChord = value
+          const measure = measures[measureIndex]
+          const capacity = measure?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
+          beats += capacity / 2 ** depth
+        }
+        if (depth > 0) diagnostics.push(`第 ${phrase.harmony.line} 行：和弦行圆括号必须在同一小节内闭合`)
+        const expected = measures[measureIndex]?.events.reduce((sum, event) => sum + event.beats, 0)
+        if (expected !== undefined && Math.abs(beats - expected) > 1e-9) {
+          diagnostics.push(`第 ${phrase.harmony.line} 行：和弦第 ${measureIndex + 1} 小节时值不匹配：旋律 ${expected} 拍，和弦 ${beats} 拍`)
+        }
+      }
+    }
+  }
+  if (pendingTie) diagnostics.push(`第 ${pendingTie.line} 行：和弦延续线没有紧接的同和弦目标`)
   return diagnostics
 }
 
@@ -1149,13 +1231,16 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
   const phraseSpanDiagnostics = projected.structure.sections.length > 0
     ? validatePhraseSpans(parsed, projected.structure)
     : []
+  const harmonyDiagnostics = projected.structure.sections.length > 0
+    ? validatePhraseHarmony(parsed, projected.structure)
+    : []
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
   const legacyDiagnostics = projected.structure.sections.length > 0
     ? projectedDiagnostics
       .filter((message) => !message.startsWith('[L]'))
       .map((message) => remapProjectedLines(message, projected.lineMap))
     : projectedDiagnostics
-  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...lyricDiagnostics]
+  return [...projected.structure.diagnostics, ...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
