@@ -206,7 +206,7 @@ function parseBody(
           pendingNavigation = pendingNavigation.filter((navigation) => navigation === 'segno')
         }
       }
-      if (value === '||:' && current.events.length === 0) {
+      if (value === '||:' && current.events.length === 0 && !current.multiRest) {
         current.left = 'rptstart'
         continue
       }

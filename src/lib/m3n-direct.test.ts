@@ -90,4 +90,12 @@ describe('direct M3N parser', () => {
 
     expect(event).toMatchObject({ kind: 'tuplet', pitches: ['1', '2', '3'], tie: true, tieFromTupletIndex: 2 })
   })
+
+  it('starts a forward repeat after a multi-measure rest', () => {
+    const measures = parseM3NDocument('{3/4}\nN: {rest=4} ||: 1^. |').parts.get('score')?.melody
+
+    expect(measures?.[0]).toMatchObject({ multiRest: 4, right: 'single' })
+    expect(measures?.[0]?.left).toBeUndefined()
+    expect(measures?.[1]).toMatchObject({ left: 'rptstart' })
+  })
 })

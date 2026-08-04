@@ -574,7 +574,9 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const { changes: keyChanges, openingKey } = keyChangesForMeasure(melody, 1)
       const { meter, openingMeter } = meterChangeForMeasure(melody)
       const expectedBeats = meter.count * 4 / meter.unit
-      const actualBeats = melody?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
+      const actualBeats = melody?.multiRest
+        ? expectedBeats
+        : melody?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
       const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
       const priorIncompleteBoundary = incompleteBoundaryMeasure
       const completesBoundary = priorIncompleteBoundary
@@ -586,6 +588,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const metcon = isIncomplete && !completesBoundary ? ' metcon="false"' : ''
       const join = completesBoundary ? ` join="#${completesBoundary.id}"` : ''
       const displayedNumber = completesBoundary?.number ?? ++logicalMeasureNumber
+      if (melody?.multiRest && !completesBoundary) logicalMeasureNumber += melody.multiRest - 1
       incompleteBoundaryMeasure = isIncomplete
         ? { beats: actualBeats, number: displayedNumber, id: measureId, right: melody?.right }
         : undefined
