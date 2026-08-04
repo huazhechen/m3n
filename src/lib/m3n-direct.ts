@@ -44,7 +44,6 @@ function parseBody(
   let chordChanged = false
   let pendingPrefix: 'sfz' | undefined
   let lastEvent: ScoreEvent | undefined
-  let pendingNavigation: Array<'segno' | 'ds' | 'dc' | 'fine'> = []
   let pendingRepeatEnd: ScoreMeasure | undefined
   let elapsedBeats = 0
   let inheritedSettingIndex = 0
@@ -82,8 +81,7 @@ function parseBody(
     event.meterCount = currentMeterCount
     event.meterUnit = currentMeterUnit
     event.tempo = currentTempo
-    event.navigation = pendingNavigation
-    pendingNavigation = []
+    event.navigation = []
     for (const item of structureStack) {
       if (typeof item !== 'object') continue
       item.start ??= event.sourceStart
@@ -176,9 +174,9 @@ function parseBody(
         lastEvent = undefined
       } else if (/^(?:segno|ds|dc|fine)$/.test(value)) {
         const navigation = value as 'segno' | 'ds' | 'dc' | 'fine'
-        if (navigation !== 'segno' && lastEvent) lastEvent.navigation.push(navigation)
-        else if (navigation !== 'segno' && measure().events.length > 0) measure().events.at(-1)!.navigation.push(navigation)
-        else pendingNavigation.push(navigation)
+        const current = measure()
+        current.navigation ??= []
+        current.navigation.push(navigation)
       } else if (/^(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])$/.test(value) || parseM3NGrace(value)) {
         if (lastEvent) lastEvent.postfixes.push(value)
       } else if (value === '/' || value.startsWith('/')) {
@@ -198,14 +196,6 @@ function parseBody(
     if (token.kind === 'bar') {
       const current = measure()
       const value = token.raw
-      if (current.events.length === 0) {
-        const trailing = pendingNavigation.filter((navigation) => navigation !== 'segno')
-        const previous = measures().at(-2)?.events.at(-1)
-        if (previous && trailing.length > 0) {
-          previous.navigation.push(...trailing)
-          pendingNavigation = pendingNavigation.filter((navigation) => navigation === 'segno')
-        }
-      }
       if (value === '||:' && current.events.length === 0 && !current.multiRest) {
         current.left = 'rptstart'
         continue

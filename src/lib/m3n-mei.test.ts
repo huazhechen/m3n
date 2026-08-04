@@ -338,6 +338,17 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toMatch(/m3n-measure-1-1[^>]*(?:left="rptstart"|metcon="false")/)
   })
 
+  it('anchors navigation markers to measure boundaries', () => {
+    const start = m3nToMei('{3/4}\nN: {segno}1 2 3 |||').mei
+    const ending = m3nToMei('{3/4}\nN: 1 2 3 {fine} | 1 2 3 {ds} | {rest=4} {dc} |||').mei
+
+    expect(start).toContain('<repeatMark staff="1" tstamp="1" place="above" func="segno"></repeatMark>')
+    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="fine">Fine</repeatMark>')
+    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="dalSegno"></repeatMark>')
+    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="daCapo"></repeatMark>')
+    expect(ending).toMatch(/<multiRest num="4"\/>[\s\S]*?<repeatMark staff="1" tstamp="4"[^>]*func="daCapo"/)
+  })
+
   it('serializes tuplets as MEI tuplets', () => {
     const result = m3nToMei('{key=C} {2/4}\n[1 2 3:2] |')
     expect(result.mei).toContain('<tuplet')

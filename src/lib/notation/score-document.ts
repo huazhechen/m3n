@@ -33,6 +33,7 @@ export type ScoreInterval = {
 
 export type ScoreMeasure = {
   events: ScoreEvent[]
+  navigation?: Array<'segno' | 'ds' | 'dc' | 'fine'>
   left?: string
   right?: string
   ending?: string

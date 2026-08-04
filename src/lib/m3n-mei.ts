@@ -529,6 +529,12 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
         ...(tiesByStartEvent.get(event) ?? []),
       ].filter(Boolean)
     })
+    const navigationControls = staffNumber === 1 ? (measure?.navigation ?? []).map((value) => {
+      const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value
+      const tstamp = value === 'segno' ? 1 : meter.count + 1
+      const label = value === 'fine' ? 'Fine' : ''
+      return `<repeatMark staff="${staffNumber}" tstamp="${tstamp}" place="above" func="${func}">${label}</repeatMark>`
+    }) : []
     const tempoControls = staffNumber === 1 ? events.flatMap((event) => {
       if (event.tempo === undefined || event.tempo === previousTempo) return []
       previousTempo = event.tempo
@@ -552,13 +558,14 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       if (interval.kind === '8va' || interval.kind === '8vb') return [`<octave staff="${staffNumber}" dis="8" dis.place="${interval.kind === '8va' ? 'above' : 'below'}" startid="#${startid}" endid="#${endid}"/>`]
       return []
     })
-    return [...tempoControls, ...eventControls, ...intervalControls].map((xml) => `  ${xml}`).join('\n')
+    return [...tempoControls, ...eventControls, ...navigationControls, ...intervalControls].map((xml) => `  ${xml}`).join('\n')
   }
 
   let segmentIndex = 0
   let endingIndex = 0
   let logicalMeasureNumber = 0
-  const hasNavigation = [...document.parts.values()].some((part) => part.melody.some((measure) => measure.events.some((event) => event.navigation.length > 0)))
+  const hasNavigation = [...document.parts.values()].some((part) => part.melody.some((measure) =>
+    Boolean(measure.navigation?.length) || measure.events.some((event) => event.navigation.length > 0)))
   const layoutNodes = [...document.parts.values()].flatMap((part, partIndex) => {
     while (part.melody.length > 1 && part.melody.at(-1)?.events.length === 0 && !part.melody.at(-1)?.multiRest) {
       const trailing = part.melody.pop()
@@ -606,7 +613,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',
         repeatCount: melody?.repeatCount ?? (melody?.right === 'rptend' ? 2 : undefined),
-        navigation: melody?.events.flatMap((event) => event.navigation) ?? [],
+        navigation: melody?.navigation ?? melody?.events.flatMap((event) => event.navigation) ?? [],
         breakBefore: melody?.breakBefore,
         breakAfter: melody?.breakAfter,
         scoreDef: [openingKey ? keyScoreDefXml(openingKey) : '', openingMeter ? meterScoreDefXml(openingMeter) : ''].filter(Boolean).join('\n'),
