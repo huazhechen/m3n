@@ -243,6 +243,13 @@ describe('validateM3N', () => {
     expect(validateM3N('{4/4}\n1 2 3 4 ||| 1 2 3 4 |')).toEqual([])
   })
 
+  it('returns stable typed diagnostic categories and source ranges', () => {
+    const source = '{4/4}\nN: 8 2 3 4 |||'
+    const diagnostics = validateM3NDiagnostics(source)
+    expect(diagnostics.some((item) => item.code === 'M3N_SYNTAX')).toBe(true)
+    expect(diagnostics.find((item) => item.range)?.range).toEqual({ start: 6, end: source.length })
+  })
+
   it('enforces multi-measure-rest isolation', () => {
     const result = messages('{4/4}\n1 {rest=2} | ({rest=1}) | 1 2 3 4 |||')
     expect(result).toContain('多小节休止必须独占一个小节位置')

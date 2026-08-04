@@ -1,3 +1,5 @@
+import { parseM3NSyntaxTree } from './syntax-tree'
+
 export type M3NPhrase = {
   line: number
   passes: string
@@ -38,9 +40,10 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
     return phrase
   }
 
-  const lines = source.split(/\r?\n/)
-  for (const [index, rawLine] of lines.entries()) {
-    const line = index + 1
+  const syntaxTree = parseM3NSyntaxTree(source)
+  for (const syntaxLine of syntaxTree.lines) {
+    const rawLine = syntaxLine.raw
+    const line = syntaxLine.line
     const trimmed = rawLine.trim()
     const leading = rawLine.length - rawLine.trimStart().length
     const contentStart = offset + leading

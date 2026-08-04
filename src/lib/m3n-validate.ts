@@ -3,11 +3,12 @@ import { parseM3NGrace } from './notation/m3n-groups'
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
 import { diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
-import { parseM3NDocument, type DirectDocument } from './m3n-direct'
+import { parseM3NDocument } from './m3n-direct'
 import { hasForcedLyricOutsideTiedTarget } from './m3n-lyric-alignment'
 import { projectM3NDocument, type M3NDocumentStructure, type M3NPhrase } from './notation/m3n-document'
 import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 import { m3nChord } from './m3n-harmony'
+import type { ScoreDocument } from './notation/score-document'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -777,7 +778,7 @@ function validateLyricMeasureAlignment(
   }
 }
 
-export function phraseLyricTargets(document: DirectDocument, structure: M3NDocumentStructure, sectionName: string, phrase: M3NPhrase) {
+export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocumentStructure, sectionName: string, phrase: M3NPhrase) {
   const part = document.parts.get('score')
   if (!part || !phrase.melody) return new Map<number, StrictLyricMeasureTargets>()
   const start = phrase.melody.start
@@ -852,7 +853,7 @@ export function phraseLyricTargets(document: DirectDocument, structure: M3NDocum
   return localTargets
 }
 
-function validatePhrasePlaybackPasses(document: DirectDocument, structure: M3NDocumentStructure) {
+function validatePhrasePlaybackPasses(document: ScoreDocument, structure: M3NDocumentStructure) {
   const diagnostics: string[] = []
   const part = document.parts.get('score')
   if (!part) return diagnostics
@@ -876,7 +877,7 @@ function validatePhrasePlaybackPasses(document: DirectDocument, structure: M3NDo
   return diagnostics
 }
 
-function validatePhraseSpans(document: DirectDocument, structure: M3NDocumentStructure) {
+function validatePhraseSpans(document: ScoreDocument, structure: M3NDocumentStructure) {
   const diagnostics: string[] = []
   const phrases = structure.sections.flatMap((section) => section.phrases
     .filter((phrase): phrase is M3NPhrase & { melody: NonNullable<M3NPhrase['melody']> } => Boolean(phrase.melody)))
@@ -906,7 +907,7 @@ function validatePhraseSpans(document: DirectDocument, structure: M3NDocumentStr
   return diagnostics
 }
 
-function validatePhraseHarmony(document: DirectDocument, structure: M3NDocumentStructure) {
+function validatePhraseHarmony(document: ScoreDocument, structure: M3NDocumentStructure) {
   const diagnostics: string[] = []
   const part = document.parts.get('score')
   if (!part) return diagnostics
@@ -983,7 +984,7 @@ function validatePhraseHarmony(document: DirectDocument, structure: M3NDocumentS
   return diagnostics
 }
 
-function validatePhraseLyrics(document: DirectDocument, structure: M3NDocumentStructure) {
+function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStructure) {
   const diagnostics: string[] = []
   for (const section of structure.sections) {
     for (const phrase of section.phrases) {
@@ -1075,7 +1076,7 @@ function validateProjectedM3N(source: string, bassSource: string, options: { ski
   }
   return [...new Set(diagnostics)]
 }
-export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: DirectDocument): string[] {
+export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): string[] {
   const projected = projectM3NDocument(source)
   const parsed = document ?? parseM3NDocument(source)
   const projectedDiagnostics = validateProjectedM3N(projected.source, projected.bassSource, options)
@@ -1099,6 +1100,6 @@ export function validateM3N(source: string, options: { skipBeatValidation?: bool
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
-export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: DirectDocument): ScoreDiagnostic[] {
+export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): ScoreDiagnostic[] {
   return diagnosticsFromLegacyMessages(source, validateM3N(source, options, document))
 }

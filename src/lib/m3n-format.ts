@@ -1,5 +1,5 @@
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
-import { tokenizeM3N } from './notation/m3n-tokens'
+import { parseM3NSyntaxTree } from './notation/syntax-tree'
 import { parseM3NDocument, type DirectEvent } from './m3n-direct'
 
 const EPSILON = 1e-9
@@ -152,7 +152,7 @@ function replaceSustainedAtoms(source: string, splitAtStrongBeat: boolean) {
   const replacements: Array<{ start: number; end: number; value: string }> = []
   const document = parseM3NDocument(source)
   const hasForcedTiedLyrics = document.lyrics.some((block) => block.syllables.some((syllable) => syllable.forceTiedTarget))
-  const parenTokens = tokenizeM3N(source).filter((token) => token.kind === 'open-paren' || token.kind === 'close-paren')
+  const parenTokens = parseM3NSyntaxTree(source).tokens.filter((token) => token.kind === 'open-paren' || token.kind === 'close-paren')
   const parenDepthAt = (position: number) => parenTokens.reduce((depth, token) => token.start < position ? depth + (token.kind === 'open-paren' ? 1 : -1) : depth, 0)
 
   for (const part of document.parts.values()) for (const staff of [part.melody, part.bass]) for (const measure of staff) {

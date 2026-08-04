@@ -3,77 +3,22 @@ import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './not
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N } from './notation/m3n-tokens'
 import { projectM3NDocument } from './notation/m3n-document'
+import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreLyricSyllable, ScoreMeasure, ScorePart } from './notation/score-document'
 
-export type DirectEvent = {
-  sourceStart: number
-  sourceEnd: number
-  kind: 'note' | 'chord' | 'rest' | 'tuplet'
-  pitches: string[]
-  key: string
-  beats: number
-  tie: boolean
-  tieFromTupletIndex?: number
-  dynamic?: string
-  chord?: string
-  chordState?: string
-  prefix?: 'sfz'
-  postfixes: string[]
-  navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
-  octaveShift: number
-  sectionLabel?: string
-  meterCount?: number
-  meterUnit?: number
-  tempo?: number
-  tuplet?: { num: number; numbase: number; unitBeats: number }
-}
-
-export type DirectInterval = {
-  id: number
-  staff: 'melody' | 'bass'
-  kind: 'cresc' | 'decres' | 'lg' | '8va' | '8vb' | 'accel' | 'rit' | 'inst'
-  tempoTarget?: number
-  start?: number
-  end?: number
-  endStart?: number
-}
-
-export type DirectMeasure = { events: DirectEvent[]; left?: string; right?: string; ending?: string; breakBefore?: boolean; breakAfter?: boolean; multiRest?: number; repeatCount?: number; barEnd?: number }
-export type DirectPart = { melody: DirectMeasure[]; bass: DirectMeasure[] }
-export type DirectLyricSyllable = { text: string; sourceStart: number; sourceEnd: number; forceTiedTarget: boolean; kind: 'text' | 'placeholder' | 'extender'; underlined: boolean; wordpos?: 'i' | 'm' | 't' }
-export type DirectLyricBlock = {
-  range: string
-  mode: 'char' | 'word'
-  syllables: DirectLyricSyllable[]
-  phrasePasses?: string
-  targetStart?: number
-  targetEnd?: number
-}
+export type DirectEvent = ScoreEvent
+export type DirectInterval = ScoreInterval
+export type DirectMeasure = ScoreMeasure
+export type DirectPart = ScorePart
+export type DirectLyricSyllable = ScoreLyricSyllable
+export type DirectLyricBlock = ScoreLyricBlock
 type DirectSettingEvent = {
   beats: number
   kind: 'key' | 'meter' | 'tempo'
   value: string
 }
 
-export type DirectDocument = {
-  title: string
-  subtitle: string
-  singer: string
-  composer: string
-  lyricist: string
-  arranger: string
-  copyright: string
-  source: string
-  note: string
-  transpose: string
-  key: string
-  meterCount: number
-  meterUnit: number
-  tempo: number
-  hasExplicitTempo: boolean
-  lyrics: DirectLyricBlock[]
-  parts: Map<string, DirectPart>
-  intervals: DirectInterval[]
-}
+/** @deprecated Use ScoreDocument from notation/score-document. */
+export type DirectDocument = ScoreDocument
 
 const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
 function metadata(source: string, name: (typeof metadataNames)[number]) {
@@ -377,7 +322,7 @@ export function m3nPitch(pitch: string, key: string) {
   }
 }
 
-export function parseM3NDocument(source: string): DirectDocument {
+export function parseM3NDocument(source: string): ScoreDocument {
   const originalSource = source
   const projected = projectM3NDocument(source)
   source = projected.source
@@ -392,7 +337,7 @@ export function parseM3NDocument(source: string): DirectDocument {
   const initialTempo = Number(tempo ?? 120)
   parseBody(source, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], projected.phrasePasses)
   if (projected.bassSource) parseBody(projected.bassSource, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
-  const document: DirectDocument = {
+  const document: ScoreDocument = {
     title: metadata(source, 'title'),
     subtitle: metadata(source, 'subtitle'),
     singer: metadata(source, 'singer'),

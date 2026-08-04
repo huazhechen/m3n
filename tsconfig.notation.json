@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.notation.tsbuildinfo",
+    "noUncheckedIndexedAccess": true
+  },
+  "include": [
+    "src/lib/notation/m3n-tokens.ts",
+    "src/lib/notation/syntax-tree.ts",
+    "src/lib/notation/score-document.ts"
+  ]
+}

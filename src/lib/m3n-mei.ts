@@ -1,4 +1,4 @@
-import { m3nPitch, parseM3NDocument, type DirectDocument } from './m3n-direct'
+import { m3nPitch, parseM3NDocument } from './m3n-direct'
 import type { DirectLyricSyllable } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 import type { DirectEvent, DirectMeasure } from './m3n-direct'
@@ -7,6 +7,7 @@ import { parseKey } from './notation/m3n-primitives'
 import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, type PlaybackNavigation } from './notation/repeats'
 import { validateM3NDiagnostics } from './m3n-validate'
 import type { ScoreDiagnostic } from './notation/diagnostics'
+import type { ScoreDocument } from './notation/score-document'
 
 export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd: number }
 export type ScoreHeaderMetadata = {
@@ -245,7 +246,7 @@ function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number)
   return result
 }
 
-export function m3nToMei(source: string, document: DirectDocument = parseM3NDocument(source)): MeiConversionResult {
+export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocument(source)): MeiConversionResult {
   const sourceMap: MeiSourceMapRange[] = []
   const hasBassStaff = [...document.parts.values()].some((part) => part.bass.some((measure) => measure.events.length > 0))
   let eventIndex = 0

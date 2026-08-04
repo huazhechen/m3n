@@ -1,8 +1,9 @@
-import type { DirectDocument, DirectEvent, DirectMeasure } from './m3n-direct'
+import type { DirectEvent, DirectMeasure } from './m3n-direct'
+import type { ScoreDocument } from './notation/score-document'
 
 export type LyricTarget = { tied: boolean }
 
-function isInstrumentalEvent(document: DirectDocument, event: DirectEvent) {
+function isInstrumentalEvent(document: ScoreDocument, event: DirectEvent) {
   return document.intervals.some((interval) => interval.kind === 'inst'
     && interval.staff === 'melody'
     && interval.start !== undefined
@@ -16,7 +17,7 @@ function lyricTargetCount(event: DirectEvent) {
 }
 
 /** Counts written lyric targets in each melody measure. */
-export function lyricTargetCountsByMeasure(document: DirectDocument) {
+export function lyricTargetCountsByMeasure(document: ScoreDocument) {
   const counts = new Map<DirectMeasure, number>()
   for (const part of document.parts.values()) {
     let previousTied = false

@@ -13,7 +13,9 @@ export type M3NToken = {
   kind: M3NTokenKind
   raw: string
   line: number
+  column: number
   start: number
+  end: number
   content?: string
 }
 
@@ -25,10 +27,13 @@ export function tokenizeM3N(source: string): M3NToken[] {
   const tokens: M3NToken[] = []
   let index = 0
   let line = 1
+  let column = 1
 
   const push = (kind: M3NTokenKind, raw: string, content?: string) => {
-    tokens.push({ kind, raw, line, start: index, content })
-    line += raw.split('\n').length - 1
+    tokens.push({ kind, raw, line, column, start: index, end: index + raw.length, content })
+    const parts = raw.split('\n')
+    line += parts.length - 1
+    column = parts.length > 1 ? (parts.at(-1)?.length ?? 0) + 1 : column + raw.length
     index += raw.length
   }
 
@@ -66,7 +71,7 @@ export function tokenizeM3N(source: string): M3NToken[] {
     }
     const note = NOTE_PATTERN.exec(rest)?.[0]
     if (note) { push('note', note); continue }
-    const unknown = /^[^\s|{}()[\]]+/.exec(rest)?.[0] ?? rest[0]
+    const unknown = /^[^\s|{}()[\]]+/.exec(rest)?.[0] ?? rest.charAt(0)
     push('unknown', unknown)
   }
 

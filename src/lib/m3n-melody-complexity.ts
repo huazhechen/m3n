@@ -1,4 +1,5 @@
-import { m3nPitch, parseM3NDocument, type DirectDocument, type DirectEvent } from './m3n-direct'
+import { m3nPitch, parseM3NDocument, type DirectEvent } from './m3n-direct'
+import type { ScoreDocument } from './notation/score-document'
 
 export type MelodyComplexityMetrics = {
   noteCount: number
@@ -76,7 +77,7 @@ function eventPoints(event: DirectEvent, start: number): MelodyPoint[] {
   }))
 }
 
-function melodyEvents(document: DirectDocument) {
+function melodyEvents(document: ScoreDocument) {
   return [...document.parts.values()].flatMap((part) => part.melody.flatMap((measure) => measure.events))
 }
 
@@ -102,7 +103,7 @@ export function assessM3NMelodyComplexity(source: string): MelodyComplexityAsses
 }
 
 /** Scores a previously parsed document without repeating syntax analysis. */
-export function assessM3NDocumentMelodyComplexity(document: DirectDocument): MelodyComplexityAssessment {
+export function assessM3NDocumentMelodyComplexity(document: ScoreDocument): MelodyComplexityAssessment {
   const events = melodyEvents(document)
   let elapsedBeats = 0
   const points: MelodyPoint[] = []

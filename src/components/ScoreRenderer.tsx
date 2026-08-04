@@ -8,6 +8,8 @@ import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisi
 import { addScoreHeaderToPaper } from '../features/score-renderer/score-header-svg'
 import { ScoreExportDialog } from './ScoreExportDialog'
 import type { ScoreExportDialogRef } from './ScoreExportDialog'
+import { scorePlaybackCoordinator, type PlaybackLease } from '../features/score-renderer/playback-coordinator'
+import { scoreRenderScheduler } from '../features/score-renderer/render-scheduler'
 
 type ScoreRendererProps = {
   mei: string
@@ -31,28 +33,7 @@ export interface ScoreRendererRef {
   openExport: () => void
 }
 
-let scoreRenderQueue = Promise.resolve()
-type PlaybackStopper = { current: () => void }
-let activePlayback: PlaybackStopper | null = null
 const EMPTY_INVALID_MEASURE_IDS: string[] = []
-
-function claimPlayback(stopper: PlaybackStopper) {
-  if (activePlayback && activePlayback !== stopper) activePlayback.current()
-  activePlayback = stopper
-}
-
-function releasePlayback(stopper: PlaybackStopper) {
-  if (activePlayback === stopper) activePlayback = null
-}
-
-function enqueueScoreRender(task: () => Promise<void>) {
-  const queued = scoreRenderQueue.then(async () => {
-    await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
-    return task()
-  })
-  scoreRenderQueue = queued.catch(() => undefined)
-  return queued
-}
 
 function addMeasureHighlight(measure: SVGGElement, className: string) {
   if (measure.querySelector(`:scope > .${className}`)) return
@@ -97,6 +78,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   const playerRef = useRef<SpessaPlayer | null>(null)
   const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
   const stopPlaybackRef = useRef<() => void>(() => undefined)
+  const playbackLeaseRef = useRef<PlaybackLease>({ stop: () => stopPlaybackRef.current() })
   const midiRef = useRef<ArrayBuffer | null>(null)
   const speedRef = useRef(100)
   const isSeekingRef = useRef(false)
@@ -135,10 +117,11 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   useEffect(() => {
     const paper = paperRef.current
     if (!paper || staffWidth === 0) return
+    const playbackLease = playbackLeaseRef.current
     let cancelled = false
     const isInitialRender = !hasRenderedRef.current
     if (isInitialRender) paper.innerHTML = ''
-    releasePlayback(stopPlaybackRef)
+    scorePlaybackCoordinator.release(playbackLease)
     playerRef.current?.destroy()
     playerRef.current = null
     scoreRef.current?.destroy()
@@ -165,7 +148,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
         scoreRef.current = score
         if (isInitialRender) setRenderPhase('waiting-layout')
 
-        return enqueueScoreRender(() => {
+        return scoreRenderScheduler.enqueue(() => {
           if (cancelled) return Promise.resolve()
           if (isInitialRender) setRenderPhase('layout')
           const pageCount = score.prepareLayout({
@@ -217,7 +200,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
 
     return () => {
       cancelled = true
-      releasePlayback(stopPlaybackRef)
+      scorePlaybackCoordinator.release(playbackLease)
       playerRef.current?.destroy()
       playerRef.current = null
       scoreRef.current?.destroy()
@@ -250,7 +233,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     playerRef.current?.pause()
     setIsPlaying(false)
     clearPlaybackHighlight()
-    releasePlayback(stopPlaybackRef)
+    scorePlaybackCoordinator.release(playbackLeaseRef.current)
   }
 
   const updatePlaybackHighlight = (seconds: number, duration: number, scoreSeconds = seconds, syncProgress = true) => {
@@ -321,14 +304,14 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     try {
       const player = await getPlayer()
       if (player.paused) {
-        claimPlayback(stopPlaybackRef)
+        scorePlaybackCoordinator.claim(playbackLeaseRef.current)
         await player.play()
         setIsPlaying(true)
       } else {
         stopPlaybackRef.current()
       }
     } catch (error) {
-      releasePlayback(stopPlaybackRef)
+      scorePlaybackCoordinator.release(playbackLeaseRef.current)
       setIsPlaying(false)
       setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
     }
