@@ -38,7 +38,7 @@ export function meiVerseXml(lyrics: readonly MeiVerseSyllable[], xmlId: string) 
         ? ' type="m3n-text-underline"'
         : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
     const text = lyric.kind === 'placeholder'
-      ? '\u200B'
+      ? lyric.cjkSpacingCompensation ? '\u2800\u200B' : '\u200B'
       : lyric.underlined && lyric.kind !== 'extender'
         ? underlinedLyricText(lyric)
         : escapeXml(lyricText(lyric))

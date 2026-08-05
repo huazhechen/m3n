@@ -12,6 +12,13 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<syl>有\u200B</syl>')
   })
 
+  it('reserves CJK lyric space for a parallel row at a forced tie target', () => {
+    const result = m3nToMei('{2/4}\nN: ||: 1~ 1 :||{x2} |||\nL1: 甲\nL2: 甲+乙')
+
+    expect(result.mei).toContain('<verse xml:id="m3n-e-2-v1" n="1"><syl>\u2800\u200B</syl></verse>')
+    expect(result.mei).toContain('<verse xml:id="m3n-e-2-v2" n="2"><syl>乙\u200B</syl></verse>')
+  })
+
   it('projects a v0.3 harmony row onto melody events', () => {
     const result = m3nToMei('{key=C} {4/4}\nN: 1 2 3 4 | 5 6 7 1e |||\nC: (I) (V) | IV |')
 

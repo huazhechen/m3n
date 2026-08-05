@@ -213,6 +213,12 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
         : []
       if (hasLyricTarget && !measure?.ending) {
         const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
+        const reservesForcedCjkSpace = lyrics.some((lyric) => lyric.forceTiedTarget && needsCjkSpacingCompensation(lyric.text))
+        if (reservesForcedCjkSpace) {
+          for (const lyric of lyrics) {
+            if (lyric.kind === 'placeholder') lyric.cjkSpacingCompensation = true
+          }
+        }
         const hasScopedLyrics = lyricBlocksAtEvent.some((block) => block.targetStart !== undefined)
         const remainingLyricRowCount = Math.max(0, ...lyricSyllables
           .filter((block) => block.targetEnd === undefined || event.sourceStart < block.targetEnd)
@@ -230,7 +236,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
             n: String(row),
             verseIndex: row,
             passes: undefined,
-            cjkSpacingCompensation: false,
+            cjkSpacingCompensation: reservesForcedCjkSpace,
           })
         }
         lyrics.sort((left, right) => left.verseIndex - right.verseIndex)
