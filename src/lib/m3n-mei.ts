@@ -534,8 +534,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
       const isIncomplete = Boolean(melody && Math.abs(actualBeats - expectedBeats) > 1e-9)
       const metcon = isIncomplete ? ' metcon="false"' : ''
-      const displayedNumber = ++measureNumber
-      if (melody?.multiRest) measureNumber += melody.multiRest - 1
+      measureNumber += 1
       const staves = [
         renderStaff(melody, 1, keyChanges, meter),
         hasBassStaff ? renderStaff(part.bass[measureIndex], 2, keyChanges, meter) : '',
@@ -545,7 +544,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const tempo = document.hasExplicitTempo && partIndex === 0 && measureIndex === 0
         ? `  ${tempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
         : ''
-      const xml = `<measure xml:id="${measureId}" n="${displayedNumber}"${metcon}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
+      const xml = `<measure xml:id="${measureId}" n="${measureNumber}"${metcon}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
       return {
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',

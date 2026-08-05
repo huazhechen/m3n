@@ -334,7 +334,7 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.mei).toContain('<measure xml:id="m3n-measure-1-1" n="1" right="single">')
     expect(result.mei).toContain('<multiRest num="4"/>')
-    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-2" n="5" left="rptstart" right="single">')
+    expect(result.mei).toContain('<measure xml:id="m3n-measure-1-2" n="2" left="rptstart" right="single">')
     expect(result.mei).not.toMatch(/m3n-measure-1-1[^>]*(?:left="rptstart"|metcon="false")/)
   })
 
