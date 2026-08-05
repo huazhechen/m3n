@@ -839,8 +839,7 @@ function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStr
   return diagnostics
 }
 
-export function invalidMeasureBarEnds(source: string) {
-  const document = parseM3NDocument(source)
+export function invalidMeasureBarEnds(source: string, document = parseM3NDocument(source)) {
   const diagnostics = validateScoreDocument(document, { source })
   const invalidBarEnds = new Set(diagnostics.flatMap((diagnostic) => {
     if (!diagnostic.code.startsWith('M3N_METER_')) return []
@@ -854,7 +853,7 @@ export function invalidMeasureBarEnds(source: string) {
 }
 
 export function invalidMeasureIds(source: string, document = parseM3NDocument(source)) {
-  const invalidEnds = new Set(invalidMeasureBarEnds(source))
+  const invalidEnds = new Set(invalidMeasureBarEnds(source, document))
   const renderedMeasureCount = (measures: Array<{ events: unknown[]; multiRest?: number }>) => {
     let count = measures.length
     while (count > 1 && measures[count - 1]?.events.length === 0 && !measures[count - 1]?.multiRest) count -= 1

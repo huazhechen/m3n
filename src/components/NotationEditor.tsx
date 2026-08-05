@@ -76,7 +76,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
   }
 
   const formatSource = () => {
-    const formatted = formatM3N(source)
+    const formatted = formatM3N(source, analysis)
     setSource(formatted)
     updateCursorPosition(Math.min(cursorPosition, formatted.length))
   }

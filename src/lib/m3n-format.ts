@@ -1,7 +1,8 @@
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
 import { parseM3NSyntaxTree } from './notation/syntax-tree'
 import { parseM3NDocument } from './m3n-direct'
-import type { ScoreEvent } from './notation/score-document'
+import type { ScoreDocument, ScoreEvent } from './notation/score-document'
+import type { M3NSyntaxTree } from './notation/syntax-tree'
 
 const EPSILON = 1e-9
 
@@ -149,11 +150,11 @@ function restRunReplacement(events: ScoreEvent[], source: string, offset: number
   return allowed.test(source.slice(start, end)) ? { start, end, value } : null
 }
 
-function replaceSustainedAtoms(source: string, splitAtStrongBeat: boolean) {
+function replaceSustainedAtoms(source: string, splitAtStrongBeat: boolean, context?: { score: ScoreDocument; syntaxTree: M3NSyntaxTree }) {
   const replacements: Array<{ start: number; end: number; value: string }> = []
-  const document = parseM3NDocument(source)
+  const document = context?.score ?? parseM3NDocument(source)
   const hasForcedTiedLyrics = document.lyrics.some((block) => block.syllables.some((syllable) => syllable.forceTiedTarget))
-  const parenTokens = parseM3NSyntaxTree(source).tokens.filter((token) => token.kind === 'open-paren' || token.kind === 'close-paren')
+  const parenTokens = (context?.syntaxTree ?? parseM3NSyntaxTree(source)).tokens.filter((token) => token.kind === 'open-paren' || token.kind === 'close-paren')
   const parenDepthAt = (position: number) => parenTokens.reduce((depth, token) => token.start < position ? depth + (token.kind === 'open-paren' ? 1 : -1) : depth, 0)
 
   for (const part of document.parts.values()) for (const staff of [part.melody, part.bass]) for (const measure of staff) {
@@ -299,8 +300,10 @@ function formatLine(line: string) {
 }
 
 /** Formats M3N layout without changing musical, structural, or lyric semantics. */
-export function formatM3N(source: string) {
-  const merged = replaceSustainedAtoms(source.replace(/\r\n?/g, '\n'), false)
+export function formatM3N(source: string, context?: { score: ScoreDocument; syntaxTree: M3NSyntaxTree }) {
+  const normalizedSource = source.replace(/\r\n?/g, '\n')
+  const reusableContext = normalizedSource === source ? context : undefined
+  const merged = replaceSustainedAtoms(normalizedSource, false, reusableContext)
   const normalized = replaceSustainedAtoms(merged, true)
   const formatted = normalized.split('\n').map(formatLine).filter(Boolean)
   return `${formatted.join('\n')}\n`
