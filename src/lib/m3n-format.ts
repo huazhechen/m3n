@@ -14,6 +14,10 @@ export function normalizeAdjacentBarlines(source: string) {
   return source
     .replace(/(?:\|\||\|)\s+(?=:\|\|)/g, '')
     .replace(/:\|\|\s*\|\|\|/g, ':|||')
+    .replace(/\|{1,3}(?:\s+\|{1,3})+/g, (run) => {
+      const width = Math.max(...(run.match(/\|+/g) ?? ['|']).map((bar) => bar.length))
+      return '|'.repeat(width)
+    })
 }
 
 type BeamAtom = { raw: string }

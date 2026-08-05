@@ -66,6 +66,14 @@ describe('formatM3N', () => {
     expect(validateM3NDiagnostics(formatM3N(source))).toEqual([])
   })
 
+  it('collapses consecutive music barlines without removing empty lyric measures', () => {
+    const source = '{2/4}\nN: 1 2 | | 0^ || | 3 4 | |||\nL: 甲乙 | | 丙丁\n'
+    const formatted = formatM3N(source)
+
+    expect(formatted).toContain('N: 1 2 | 0^ || 3 4 |||')
+    expect(formatted).toContain('L: 甲乙 | | 丙丁')
+  })
+
   it('adds lyric measure bars from the melody alignment', () => {
     const source = '{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙丙丁\n'
 
