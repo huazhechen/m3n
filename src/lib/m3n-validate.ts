@@ -55,14 +55,21 @@ const KEY_PATTERN = /^([A-G](?:#|b)?)(dor|phr|lyd|mix|m|loc)?$/
 const CHORD_PATTERN = /^(I|II|III|IV|V|VI|VII|i|ii|iii|iv|v|vi|vii)(?:m|dim|aug|sus2|sus4|[2-9]|1[0-3])?$/
 
 function lineMessage(token: Token, message: string) {
-  const code = message.includes('乐谱信息') || message.includes('transpose') ? 'M3N_SOURCE_METADATA'
-    : message.includes('拍号') ? 'M3N_SOURCE_METER'
-      : message.includes('速度') || message.includes('渐快') || message.includes('渐慢') ? 'M3N_SOURCE_TEMPO'
-        : message.includes('反复') || message.includes('segno') || message.includes('ds') || message.includes('dc') ? 'M3N_SOURCE_REPEAT'
-          : message.includes('和弦') || message.includes('和音') || message.includes('琶音') ? 'M3N_SOURCE_HARMONY'
-            : message.includes('装饰音') ? 'M3N_SOURCE_GRACE'
-              : message.includes('音高') || message.includes('音符') || message.includes('休止符') ? 'M3N_SOURCE_PITCH'
-                : 'M3N_SOURCE_SYNTAX'
+  const content = token.content ?? token.raw
+  const name = attributeName(content)
+  const code = token.kind === 'bar' ? 'M3N_SOURCE_REPEAT'
+    : token.kind === 'note' || token.kind === 'group' ? 'M3N_SOURCE_PITCH'
+      : token.kind === 'open-paren' || token.kind === 'close-paren' ? 'M3N_SOURCE_GROUPING'
+        : token.kind !== 'attribute' ? 'M3N_SOURCE_SYNTAX'
+          : INFO_FIELDS.has(name) ? 'M3N_SOURCE_METADATA'
+            : name === 'key' ? 'M3N_SOURCE_KEY'
+              : /^\d+\/\d+$/.test(content) ? 'M3N_SOURCE_METER'
+                : /^\d+qpm$/i.test(content) || name === 'accel' || name === 'rit' ? 'M3N_SOURCE_TEMPO'
+                  : /^(?:segno|ds|dc|fine)$/.test(content) ? 'M3N_SOURCE_REPEAT'
+                    : name === 'chord' || content === 'arp' ? 'M3N_SOURCE_HARMONY'
+                      : /^(?:ac|ap)\(/.test(content) ? 'M3N_SOURCE_GRACE'
+                        : name === 'rest' ? 'M3N_SOURCE_MULTI_REST'
+                          : 'M3N_SOURCE_DIRECTIVE'
   const legacyMessage = `第 ${token.line} 行：${message}`
   return createScoreDiagnostic({ code, message, legacyMessage, range: { start: token.start, end: token.end } })
 }
@@ -919,8 +926,10 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
   const syntaxDiagnostics = validateM3NSyntaxTree(context.syntaxTree ?? parseM3NSyntaxTree(source))
   const sourceDiagnostics = [
     ...typedSourceRuleDiagnostics,
-    ...diagnosticsFromLegacyMessages(source,
-      [...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics]),
+    ...diagnosticsFromLegacyMessages(source, phraseDiagnostics, 'M3N_PHRASE_PLAYBACK'),
+    ...diagnosticsFromLegacyMessages(source, phraseSpanDiagnostics, 'M3N_PHRASE_SPAN'),
+    ...diagnosticsFromLegacyMessages(source, harmonyDiagnostics, 'M3N_HARMONY'),
+    ...diagnosticsFromLegacyMessages(source, lyricDiagnostics, 'M3N_LYRIC_ALIGNMENT'),
   ]
   return [...projected.structure.diagnostics, ...sourceDiagnostics, ...syntaxDiagnostics, ...scoreDiagnostics]
 }
