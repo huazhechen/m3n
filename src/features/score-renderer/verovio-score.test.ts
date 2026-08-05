@@ -31,6 +31,16 @@ describe('VerovioScore layout', () => {
       toolkit.destroy()
     }
   })
+
+  it('renders a section label anchored to a tuplet note', async () => {
+    const toolkit = new VerovioToolkit(await createVerovioModule())
+    try {
+      expect(toolkit.loadData(m3nToMei('{2/4}\n===A\nN: ([123:2]) |||').mei)).toBe(1)
+      expect(toolkit.renderToSVG(1)).toContain('A')
+    } finally {
+      toolkit.destroy()
+    }
+  })
   it('collects the final measure of each automatically laid-out system', () => {
     const breaks = automaticSystemBreakMeasureIds([
       '<g class="system"><g id="m3n-measure-1-1"/><g id="m3n-measure-1-2"/></g><g class="system"><g id="m3n-measure-1-3"/></g>',

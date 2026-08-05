@@ -333,18 +333,20 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     const eventControls = events.flatMap((event) => {
       const xmlId = idFor(event.sourceStart)
       if (!xmlId) return []
+      // Verovio time-pointing controls must target a note or chord, not a tuplet container.
+      const startid = event.kind === 'tuplet' ? `${xmlId}-n1` : xmlId
       return [
-        event.chord ? `<harm staff="${staffNumber}" startid="#${xmlId}">${chordSymbol(event.chord, event.key)}</harm>` : '',
-        event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${xmlId}"><rend fontweight="bold">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
-        event.dynamic ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.dynamic}</dynam>` : '',
-        event.prefix ? `<dynam staff="${staffNumber}" startid="#${xmlId}">${event.prefix}</dynam>` : '',
+        event.chord ? `<harm staff="${staffNumber}" startid="#${startid}">${chordSymbol(event.chord, event.key)}</harm>` : '',
+        event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${startid}"><rend fontweight="bold">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
+        event.dynamic ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.dynamic}</dynam>` : '',
+        event.prefix ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.prefix}</dynam>` : '',
         ...event.navigation.map((value) => {
           if (value === 'fine') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="fine">Fine</repeatMark>`
           const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value
           if (value === 'ds' || value === 'dc') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="${func}"/>`
-          return `<repeatMark staff="${staffNumber}" startid="#${xmlId}" func="${func}"/>`
+          return `<repeatMark staff="${staffNumber}" startid="#${startid}" func="${func}"/>`
         }),
-        ...event.postfixes.map((value) => postfix(xmlId, value)),
+        ...event.postfixes.map((value) => postfix(startid, value)),
         ...(tiesByStartEvent.get(event) ?? []),
       ].filter(Boolean)
     })

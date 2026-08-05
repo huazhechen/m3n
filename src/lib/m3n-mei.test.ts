@@ -55,6 +55,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-3"><rend fontweight="bold">B</rend></reh>')
   })
 
+  it('anchors a named section on the first note of a tuplet', () => {
+    const result = m3nToMei('{2/4}\n===A\nN: ([123:2]) |||')
+
+    expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-1-n1"><rend fontweight="bold">A</rend></reh>')
+  })
+
 
   it('does not render lyrics outside their v0.3 phrase', () => {
     const result = m3nToMei('{2/4}\nN: 1 2 |\nL: 甲乙\n---\nN: 3 4 |||\nL: 丙丁')
