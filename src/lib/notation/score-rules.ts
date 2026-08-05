@@ -1,6 +1,7 @@
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics'
-import type { ScoreDocument, ScoreMeasure } from './score-document'
+import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './score-document'
 import { m3nPitch } from '../m3n-direct'
+import { parseM3NNote } from './m3n-primitives'
 
 const EPSILON = 1e-9
 
@@ -111,24 +112,44 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   return diagnostics
 }
 
-function absolutePitches(event: { pitches: string[]; key: string; octaveShift: number }) {
-  return event.pitches.map((pitch) => {
-    const value = m3nPitch(pitch, event.key)
-    return `${value.pname}:${value.oct + event.octaveShift}:${value.accidGes ?? value.accid}`
-  })
+function resolvedAbsolutePitches(measures: readonly ScoreMeasure[]) {
+  const resolved = new Map<ScoreEvent, string[]>()
+  for (const measure of measures) {
+    const accidentals = new Map<string, string>()
+    let activeKey: string | undefined
+    for (const event of measure.events) {
+      if (activeKey !== event.key) {
+        accidentals.clear()
+        activeKey = event.key
+      }
+      resolved.set(event, event.pitches.map((pitch) => {
+        const parsed = parseM3NNote(pitch)
+        const value = m3nPitch(pitch, event.key)
+        const accidentalKey = `${value.pname}:${value.oct}`
+        if (parsed?.accidentals) accidentals.set(accidentalKey, value.accidGes ?? value.accid)
+        const accidental = parsed?.accidentals
+          ? value.accidGes ?? value.accid
+          : accidentals.get(accidentalKey) ?? value.accidGes ?? value.accid
+        return `${value.pname}:${value.oct + event.octaveShift}:${accidental}`
+      }))
+    }
+  }
+  return resolved
 }
 
 function validateTies(measures: readonly ScoreMeasure[], source?: string) {
   const diagnostics: ScoreDiagnostic[] = []
+  const absolutePitches = resolvedAbsolutePitches(measures)
   const events = measures.flatMap((measure, measureIndex) => measure.events.map((event) => ({ event, measureIndex })))
   for (const [index, item] of events.entries()) {
     const { event, measureIndex } = item
     if (!event.tie || event.kind === 'rest') continue
     const target = events[index + 1]?.event
     const sourceKind = event.kind === 'tuplet' ? 'note' : event.kind
-    const sourcePitches = event.kind === 'tuplet' ? event.pitches.slice(-1) : event.pitches
+    const sourcePitches = absolutePitches.get(event) ?? []
+    const sourceTail = event.kind === 'tuplet' ? sourcePitches.slice(-1) : sourcePitches
     const matches = target && target.kind === sourceKind
-      && absolutePitches(target).join(',') === absolutePitches({ ...event, pitches: sourcePitches }).join(',')
+      && (absolutePitches.get(target) ?? []).join(',') === sourceTail.join(',')
     if (matches) continue
     const message = '延音目标的类型或绝对音高不匹配'
     const line = sourceLine(source, event.sourceStart)

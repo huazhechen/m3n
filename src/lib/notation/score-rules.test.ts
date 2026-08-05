@@ -44,4 +44,11 @@ describe('score document rules', () => {
     }))
     expect(tuplet.some((item) => item.code === 'M3N_TIE_TARGET_MISMATCH')).toBe(true)
   })
+
+  it('inherits an explicit accidental through the rest of its measure when validating ties', () => {
+    const source = '{key=C} {1/4}\n(7b) (7~) | 7b |||'
+
+    expect(validateScoreDocument(parseM3NDocument(source), { source }))
+      .not.toContainEqual(expect.objectContaining({ code: 'M3N_TIE_TARGET_MISMATCH' }))
+  })
 })
