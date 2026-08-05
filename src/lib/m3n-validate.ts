@@ -12,10 +12,6 @@ import type { ScoreDocument } from './notation/score-document'
 import { validateScoreDocument } from './notation/score-rules'
 import { validateM3NSyntaxTree } from './notation/syntax-rules'
 import { parseM3NSyntaxTree, type M3NSyntaxTree } from './notation/syntax-tree'
-import {
-  invalidMeasureBarEnds as deriveInvalidMeasureBarEnds,
-  invalidMeasureIds as deriveInvalidMeasureIds,
-} from './notation/measure-diagnostics'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -856,16 +852,6 @@ function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStr
     }
   }
   return diagnostics
-}
-
-/** @deprecated Prefer deriving this from an existing M3NAnalysis session. */
-export function invalidMeasureBarEnds(source: string, document = parseM3NDocument(source)) {
-  return deriveInvalidMeasureBarEnds(source, document)
-}
-
-/** @deprecated Prefer deriving this from an existing M3NAnalysis session. */
-export function invalidMeasureIds(source: string, document = parseM3NDocument(source)) {
-  return deriveInvalidMeasureIds(source, document)
 }
 
 function structureTokens(source: string, structure: M3NDocumentStructure, staff: 'melody' | 'bass') {

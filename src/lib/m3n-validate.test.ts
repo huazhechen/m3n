@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { invalidMeasureBarEnds, invalidMeasureIds, validateM3NDiagnostics } from './m3n-validate'
+import { validateM3NDiagnostics } from './m3n-validate'
 import { parseM3NDocument } from './m3n-direct'
+import { invalidMeasureBarEnds, invalidMeasureIds } from './notation/measure-diagnostics'
 
 const validateM3N = (source: string, options: { skipBeatValidation?: boolean } = {}, document?: ReturnType<typeof parseM3NDocument>) =>
   validateM3NDiagnostics(source, options, document).map((diagnostic) => diagnostic.message)
@@ -125,7 +126,7 @@ describe('validateM3N', () => {
 
     expect(validateM3N(source, {}, document)).toEqual(validateM3N(source))
     expect(validateM3NDiagnostics(source, {}, document)).toEqual(validateM3NDiagnostics(source))
-    expect(invalidMeasureIds(source, document)).toEqual(invalidMeasureIds(source))
+    expect(invalidMeasureIds(source, document)).toEqual(invalidMeasureIds(source, parseM3NDocument(source)))
   })
 
   it('accepts a complete unsegmented score', () => {
@@ -136,15 +137,16 @@ describe('validateM3N', () => {
     const source = '{4/4}\n1 2 3 4 | 1 2 3 | 1 2 3 4 |||'
     const invalidBar = source.indexOf('|', source.indexOf('|') + 1)
 
-    expect(invalidMeasureBarEnds(source)).toEqual([invalidBar + 1])
-    expect(invalidMeasureIds(source)).toEqual(['m3n-measure-1-2'])
+    const document = parseM3NDocument(source)
+    expect(invalidMeasureBarEnds(source, document)).toEqual([invalidBar + 1])
+    expect(invalidMeasureIds(source, document)).toEqual(['m3n-measure-1-2'])
     expect(messages(source)).toContain('第 2 行，第 2 小节：中间小节拍数不合规')
   })
 
   it('does not count a leading repeat bar as a rendered measure', () => {
     const source = '{4/4}\n||: 1 2 3 4 | 1 2 3 | 1 2 3 4 |||'
 
-    expect(invalidMeasureIds(source)).toEqual(['m3n-measure-1-2'])
+    expect(invalidMeasureIds(source, parseM3NDocument(source))).toEqual(['m3n-measure-1-2'])
   })
 
   it('accepts tenuto and fermata postfixes', () => {

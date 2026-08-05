@@ -1,25 +1,22 @@
-import { m3nPitch, parseM3NDocument } from './m3n-direct'
+import { parseM3NDocument } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 import {
   meiBeamXml as renderBeamXml,
   meiEventXml as renderEventXml,
   meiTempoXml as renderTempoXml,
 } from './mei-events'
-import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 import { validateM3NDiagnostics } from './m3n-validate'
 import type { ScoreDiagnostic } from './notation/diagnostics'
 import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './notation/score-document'
-import { meiVerseXml, needsCjkSpacingCompensation, type MeiVerseSyllable } from './notation/mei-lyrics'
-import { escapeXml, meiDurationAttributes } from './notation/mei-xml'
+import { needsCjkSpacingCompensation } from './notation/mei-lyrics'
+import { escapeXml } from './notation/mei-xml'
 import { projectM3NDocument, type M3NDocumentProjection } from './notation/m3n-document'
 import { parseM3NSyntaxTree, type M3NSyntaxTree } from './notation/syntax-tree'
 import { meiDocumentXml, meiKeySignature, scoreHeaderMetadata, type ScoreHeaderMetadata } from './notation/mei-document'
 import { meiSectionContent, type MeiLayoutNode } from './notation/mei-layout'
 
 export type { ScoreHeaderMetadata } from './notation/mei-document'
-
-type VerseSyllable = MeiVerseSyllable
 
 export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd: number }
 export type MeiConversionResult = {
@@ -38,157 +35,9 @@ export type MeiConversionResult = {
   tempo: number
 }
 
-const metronomeGlyphs: Record<number, { name: string; num: string }> = {
-  1: { name: 'metNoteWhole', num: 'U+ECA2' },
-  2: { name: 'metNoteHalfUp', num: 'U+ECA3' },
-  4: { name: 'metNoteQuarterUp', num: 'U+ECA5' },
-  8: { name: 'metNote8thUp', num: 'U+ECA7' },
-  16: { name: 'metNote16thUp', num: 'U+ECA9' },
-  32: { name: 'metNote32ndUp', num: 'U+ECAB' },
-  64: { name: 'metNote64thUp', num: 'U+ECAD' },
-}
-
-function formatTempo(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.00$|0$/g, '')
-}
-
-function metronomeMark(qpm: number, meterUnit: number) {
-  const unit = meterUnit
-  const dots = 0
-  const quarterNotesPerMark = 4 / unit
-  const glyph = metronomeGlyphs[unit] ?? { name: 'metNoteQuarterUp', num: 'U+ECA5' }
-  return { bpm: qpm / quarterNotesPerMark, dots, glyph }
-}
-
-function tempoXml(qpm: number, meterUnit: number, position: string, id: string) {
-  const mark = metronomeMark(qpm, meterUnit)
-  const note = `<rend glyph.auth="smufl" glyph.name="${mark.glyph.name}" glyph.num="${mark.glyph.num}">&#x${mark.glyph.num.slice(2)};</rend>`
-  const dot = mark.dots ? '<rend glyph.auth="smufl" glyph.name="augmentationDot" glyph.num="U+E1E7">&#xE1E7;</rend>' : ''
-  return `<tempo xml:id="${id}" staff="1" ${position} midi.bpm="${qpm}">${note}${dot} = ${formatTempo(mark.bpm)}</tempo>`
-}
-
-function pitchXml(pitch: string, key: string, accidentals?: Map<string, string>, octaveShift = 0) {
-  const value = m3nPitch(pitch, key)
-  const octave = value.oct + octaveShift
-  const accidentalKey = `${value.pname}${octave}`
-  if (value.accid) accidentals?.set(accidentalKey, value.accidGes ?? value.accid)
-  const accidGes = value.accid ? value.accidGes : accidentals?.get(accidentalKey) || value.accidGes
-  return `pname="${value.pname}" oct="${octave}"${value.accid ? ` accid="${value.accid}"` : ''}${accidGes ? ` accid.ges="${accidGes}"` : ''}`
-}
-
 function chordSymbol(value: string, key: string) {
   return m3nChord(value, key)?.symbol ?? value
 }
-
-function eventXml(event: ScoreEvent, xmlId: string, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
-  const verse = meiVerseXml(lyrics, xmlId)
-  const articulations = [
-    event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
-    event.postfixes.includes('brk') ? '<artic artic="stacciss"/>' : '',
-    event.postfixes.includes('tip') ? '<artic artic="stacc"/>' : '',
-    event.postfixes.includes('hold') ? '<artic artic="ten"/>' : '',
-  ].join('')
-  const graces = event.postfixes.flatMap((value) => {
-    const parsed = parseM3NGrace(value)
-    if (!parsed) return []
-    const grace = parsed.kind === 'ac' ? 'unacc' : 'acc'
-    const duration = 2 ** (parsed.depth + 2)
-    const notes = (parseM3NGroupPitches(parsed.pitchSource) ?? [])
-      .map((pitch) => `<note ${pitchXml(pitch, event.key)} dur="${duration}" grace="${grace}"/>`)
-    const content = notes.length > 1 ? `<beam>${notes.join('')}</beam>` : notes.join('')
-    return content ? [`<graceGrp attach="post">${content}</graceGrp>`] : []
-  }).join('')
-  if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}/>`
-  if (event.kind === 'chord') {
-    const notes = event.pitches.map((pitch) => `<note ${pitchXml(pitch, event.key, accidentals)}/>`).join('')
-    return `${graces}<chord xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}>${notes}${articulations}${verse}</chord>`
-  }
-  if (event.kind === 'tuplet' && event.tuplet) {
-    const childBeats = event.tuplet.unitBeats
-    const lyricsByVerse = new Map<number, VerseSyllable[]>()
-    for (const lyric of lyrics) {
-      const verseLyrics = lyricsByVerse.get(lyric.verseIndex) ?? []
-      verseLyrics.push(lyric)
-      lyricsByVerse.set(lyric.verseIndex, verseLyrics)
-    }
-    let lyricTargetIndex = 0
-    const children = event.pitches.map((pitch, index) => {
-      if (pitch === '0') return `<rest xml:id="${xmlId}-n${index + 1}" ${meiDurationAttributes(childBeats)}/>`
-      const childId = `${xmlId}-n${index + 1}`
-      const childLyrics = [...lyricsByVerse.values()]
-        .map((verseLyrics) => verseLyrics[lyricTargetIndex])
-        .filter((lyric): lyric is VerseSyllable => lyric !== undefined)
-      const childVerse = meiVerseXml(childLyrics, childId)
-      lyricTargetIndex += 1
-      const note = `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)} ${meiDurationAttributes(childBeats)}`
-      return childVerse ? `${note}>${childVerse}</note>` : `${note}/>`
-    }).join('')
-    const content = childBeats <= 0.5 && !event.pitches.includes('0') ? `<beam>${children}</beam>` : children
-    return `<tuplet xml:id="${xmlId}" num="${event.tuplet.num}" numbase="${event.tuplet.numbase}">${content}</tuplet>`
-  }
-  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${meiDurationAttributes(event.beats)}>${articulations}${verse}</note>`
-}
-
-type RenderedEvent = { event: ScoreEvent; prefix?: string; xml: string }
-
-function beamGroupBeats(meterCount: number, meterUnit: number) {
-  const beat = 4 / meterUnit
-  return meterUnit >= 8 && meterCount % 3 === 0 ? beat * 3 : beat
-}
-
-function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number) {
-  const groupBeats = beamGroupBeats(meterCount, meterUnit)
-  const result: string[] = []
-  let group: Array<{ beats: number; xml: string }> = []
-  let position = 0
-  let groupStart = 0
-
-  const flush = () => {
-    if (group.length > 1) result.push(['<beam>', ...group.map(({ xml }) => xml), '</beam>'].join('\n'))
-    else result.push(...group.map(({ xml }) => xml))
-    group = []
-  }
-
-  for (const [index, item] of events.entries()) {
-    if (item.prefix) {
-      flush()
-      result.push(item.prefix)
-    }
-    const graceEnd = item.xml.indexOf('</graceGrp>')
-    const grace = graceEnd >= 0 ? item.xml.slice(0, graceEnd + '</graceGrp>'.length) : ''
-    const xml = grace ? item.xml.slice(grace.length) : item.xml
-    if (grace) {
-      flush()
-      result.push(grace)
-    }
-    const beamable = item.event.kind !== 'rest' && item.event.beats <= 0.75
-    const remaining = groupBeats - position
-    if (!beamable || item.event.beats > remaining + 0.0001) flush()
-
-    if (beamable) {
-      if (group.length === 0) groupStart = position
-      group.push({ beats: item.event.beats, xml })
-    }
-    else result.push(xml)
-
-    position = (position + item.event.beats) % groupBeats
-    if (position < 0.0001 || groupBeats - position < 0.0001) {
-      const next = events[index + 1]
-      const canJoinStraightEighths = meterCount === 4 && meterUnit === 4 &&
-        groupStart < 0.0001 &&
-        group.reduce((total, { beats }) => total + beats, 0) < 2 - 0.0001 &&
-        group.every(({ beats }) => Math.abs(beats - 0.5) < 0.0001) &&
-        next?.event.kind !== 'rest' && Math.abs((next?.event.beats ?? 0) - 0.5) < 0.0001
-      if (!canJoinStraightEighths) flush()
-    }
-  }
-  flush()
-  return result
-}
-
-void tempoXml
-void eventXml
-void beamXml
 
 export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, context: { projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree } = {}): MeiConversionResult {
   const syntaxTree = context.syntaxTree ?? parseM3NSyntaxTree(source)

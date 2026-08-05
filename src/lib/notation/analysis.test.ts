@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '../m3n-direct'
 import { m3nToMei } from '../m3n-mei'
-import { invalidMeasureIds } from '../m3n-validate'
+import { invalidMeasureIds } from './measure-diagnostics'
 import { analyzeM3N } from './analysis'
 
 describe('M3N analysis', () => {
