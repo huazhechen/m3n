@@ -576,8 +576,8 @@ function validateLyricMeasureAlignment(
   lyric: { text: string; start: number },
   measureTargets: StrictLyricMeasureTargets,
 ) {
-  const measures = lyricMeasures(lyric.text, lyric.start)
-  if (!measures) {
+  const parsedMeasures = lyricMeasures(lyric.text, lyric.start)
+  if (!parsedMeasures) {
     const items = parseLyricItems(lyric.text, lyric.start, 'char')
     const passTargets = measureTargets.flat()
     const expected = passTargets.filter((target) => !target.tied).length + items.filter((item) => item.forceTiedTarget).length
@@ -585,6 +585,11 @@ function validateLyricMeasureAlignment(
     if (hasForcedLyricOutsideTiedTarget(items, passTargets)) diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：乐句第 ${pass} 遍的 +歌词项不位于延音目标`, lyric, 'warning'))
     return
   }
+  // A terminal lyric bar may either close the row or represent a final empty
+  // melody measure. It is decorative only when it would create an extra one.
+  const measures = parsedMeasures.length > measureTargets.length && parsedMeasures.at(-1)?.text === ''
+    ? parsedMeasures.slice(0, -1)
+    : parsedMeasures
   if (measures.length !== measureTargets.length) {
     diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：乐句第 ${pass} 遍需要 ${measureTargets.length} 个歌词小节，实际 ${measures.length} 个`, lyric, 'warning'))
   }

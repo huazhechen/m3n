@@ -15,6 +15,8 @@ describe('validateM3N', () => {
 
   it('validates bar-aligned v0.3 lyrics measure by measure', () => {
     expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁')).toEqual([])
+    expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁 |')).toEqual([])
+    expect(validateM3N('{2/4}\nN: 1 2 | 0 0 |||\nL: 甲乙 |')).toEqual([])
 
     const misaligned = messages('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲 | 丙丁戊')
     expect(misaligned).toContain('歌词第 1 小节对位数量不匹配：乐句第 1 遍需要 2 项，实际 1 项')
