@@ -483,9 +483,12 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     })
     const navigationControls = staffNumber === 1 ? (measure?.navigation ?? []).map((value) => {
       const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value
-      const tstamp = value === 'segno' ? 1 : meter.count + 1
+      const lastEventId = idFor(events.at(-1)?.sourceStart)
+      const anchor = value === 'segno'
+        ? 'tstamp="1"'
+        : lastEventId ? `startid="#${lastEventId}"` : `tstamp="${meter.count}"`
       const label = value === 'fine' ? 'Fine' : ''
-      return `<repeatMark staff="${staffNumber}" tstamp="${tstamp}" place="above" func="${func}">${label}</repeatMark>`
+      return `<repeatMark staff="${staffNumber}" ${anchor} place="above" func="${func}">${label}</repeatMark>`
     }) : []
     const tempoControls = staffNumber === 1 ? events.flatMap((event) => {
       if (event.tempo === undefined || event.tempo === previousTempo) return []

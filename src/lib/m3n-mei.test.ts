@@ -365,10 +365,10 @@ describe('M3N to MEI conversion', () => {
     const ending = m3nToMei('{3/4}\nN: 1 2 3 {fine} | 1 2 3 {ds} | {rest=4} ||| {dc}').mei
 
     expect(start).toContain('<repeatMark staff="1" tstamp="1" place="above" func="segno"/>')
-    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="fine">Fine</repeatMark>')
-    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="dalSegno"/>')
-    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="daCapo"/>')
-    expect(ending).toMatch(/<multiRest num="4"\/>[\s\S]*?<repeatMark staff="1" tstamp="4"[^>]*func="daCapo"/)
+    expect(ending).toContain('<repeatMark staff="1" startid="#m3n-e-3" place="above" func="fine">Fine</repeatMark>')
+    expect(ending).toContain('<repeatMark staff="1" startid="#m3n-e-6" place="above" func="dalSegno"/>')
+    expect(ending).toContain('<repeatMark staff="1" tstamp="3" place="above" func="daCapo"/>')
+    expect(ending).toMatch(/<multiRest num="4"\/>[\s\S]*?<repeatMark staff="1" tstamp="3"[^>]*func="daCapo"/)
   })
 
   it('serializes tuplets as MEI tuplets', () => {
