@@ -3,14 +3,13 @@ import { m3nPitch, parseM3NDocument } from './m3n-direct'
 import { m3nToMei } from './m3n-mei'
 
 describe('M3N to MEI conversion', () => {
-  it('does not add CJK spacing markers to parallel lyric verses', () => {
+  it('reserves later lyric rows before their scoped phrase', () => {
     const result = m3nToMei('{2/4}\nN: 1 2 |\nL: 草木\n---\nN: ||: 1 2 | 3 4 :||{x2} |||\nL1: 世间你我\nL2: 有多少人')
 
     expect(result.mei).toContain('<syl>草\u200B</syl>')
-    expect(result.mei).toContain('<syl>世</syl>')
-    expect(result.mei).toContain('<syl>有</syl>')
-    expect(result.mei).not.toContain('世\u200B')
-    expect(result.mei).not.toContain('有\u200B')
+    expect(result.mei).toContain('<verse xml:id="m3n-e-1-v2" n="2"><syl>\u200B</syl></verse>')
+    expect(result.mei).toContain('<syl>世\u200B</syl>')
+    expect(result.mei).toContain('<syl>有\u200B</syl>')
   })
 
   it('projects a v0.3 harmony row onto melody events', () => {

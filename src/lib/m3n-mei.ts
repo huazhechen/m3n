@@ -206,9 +206,6 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   let tempoIndex = document.hasExplicitTempo ? 1 : 0
   const lyricSyllables = document.lyrics.map((block) => {
     const numericRange = /^\d+$/.test(block.range)
-    const parallelVerseRows = numericRange && block.targetStart !== undefined
-      ? document.lyrics.filter((candidate) => candidate.targetStart === block.targetStart && /^\d+$/.test(candidate.range)).length
-      : 0
     const passRange = block.range || block.phrasePasses
     const passes = passRange ? parsePassRange(passRange) : undefined
     const displayPass = !numericRange && passes?.size === 1 ? [...passes][0] : undefined
@@ -221,9 +218,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       syllables: block.syllables.map((syllable) => ({
         ...syllable,
         passes,
-        // Verovio offsets separate CJK verse rows when each character has a
-        // spacing marker. Parallel L1/L2 rows must share a lyric origin.
-        cjkSpacingCompensation: parallelVerseRows < 2 && needsCjkSpacingCompensation(syllable.text),
+        cjkSpacingCompensation: needsCjkSpacingCompensation(syllable.text),
       })),
     }
   })
