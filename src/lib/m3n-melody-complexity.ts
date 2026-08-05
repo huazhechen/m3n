@@ -92,7 +92,11 @@ function scoreLabel(score: number): MelodyComplexityAssessment['label'] {
 function peakDensity(points: readonly MelodyPoint[]) {
   return points.reduce((peak, point, index) => {
     let count = 0
-    for (let candidate = index; candidate < points.length && points[candidate]!.start < point.start + 1; candidate += 1) count += 1
+    for (let candidate = index; candidate < points.length; candidate += 1) {
+      const candidatePoint = points[candidate]
+      if (!candidatePoint || candidatePoint.start >= point.start + 1) break
+      count += 1
+    }
     return Math.max(peak, count)
   }, 0)
 }
@@ -133,14 +137,18 @@ export function assessM3NDocumentMelodyComplexity(document: ScoreDocument): Melo
   const notesPerSecond = notesPerBeat * weightedTempo / 60
   const durations = new Set(points.map((point) => round(point.duration, 4)))
   const shortestDuration = points.reduce((shortest, point) => Math.min(shortest, point.duration), Infinity)
-  const intervals = melodicRuns.flatMap((pointsInRun) => pointsInRun.slice(1).map((point, index) => point.midi - pointsInRun[index]!.midi))
+  const intervals = melodicRuns.flatMap((pointsInRun) => pointsInRun.slice(1).flatMap((point, index) => {
+    const previous = pointsInRun[index]
+    return previous ? [point.midi - previous.midi] : []
+  }))
   const nonRepeatedIntervals = intervals.filter((interval) => interval !== 0)
   const largeLeapRatio = intervals.length > 0
     ? intervals.filter((interval) => Math.abs(interval) >= 5).length / intervals.length : 0
   const maximumLeap = Math.max(0, ...intervals.map((interval) => Math.abs(interval)))
-  const directionChanges = nonRepeatedIntervals.slice(1).filter((interval, index) => (
-    Math.sign(interval) !== Math.sign(nonRepeatedIntervals[index]!)
-  )).length
+  const directionChanges = nonRepeatedIntervals.slice(1).filter((interval, index) => {
+    const previous = nonRepeatedIntervals[index]
+    return previous !== undefined && Math.sign(interval) !== Math.sign(previous)
+  }).length
   const directionChangeRatio = nonRepeatedIntervals.length > 1 ? directionChanges / (nonRepeatedIntervals.length - 1) : 0
   const pitchRange = noteCount > 0 ? Math.max(...points.map((point) => point.midi)) - Math.min(...points.map((point) => point.midi)) : 0
   const accidentalCount = points.filter((point) => point.accidental).length

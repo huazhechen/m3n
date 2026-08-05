@@ -53,10 +53,12 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
         if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
       }
       for (let endingIndex = index + 1; measures[endingIndex]?.ending; endingIndex += 1) {
-        for (const pass of parsePassRange(measures[endingIndex]!.ending!)) passCount = Math.max(passCount, pass)
+        const ending = measures[endingIndex]?.ending
+        if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
       }
       for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
-        passesByMeasure.set(measures[repeatedIndex]!, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
+        const repeated = measures[repeatedIndex]
+        if (repeated) passesByMeasure.set(repeated, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
       }
     }
 
@@ -140,13 +142,15 @@ function expandInitialPasses(nodes: readonly PlaybackNode[]) {
   }
   let index = 0
   while (index < nodes.length) {
-    const node = nodes[index]!
+    const node = nodes[index]
+    if (!node) break
     const endingGroup = endingGroups.get(index)
     if (endingGroup) {
       const visit = (repeatVisits.get(index) ?? 0) + 1
       repeatVisits.set(index, visit)
       const selectedIndex = chooseEnding(nodes, index, endingGroup.end, Math.min(visit, endingGroup.passCount))
-      if (selectedIndex !== undefined) sequence.push(nodes[selectedIndex]!.id)
+      const selectedNode = selectedIndex === undefined ? undefined : nodes[selectedIndex]
+      if (selectedNode) sequence.push(selectedNode.id)
 
       const selected = selectedIndex === undefined ? undefined : nodes[selectedIndex]
       if (selected?.repeatCount && visit < selected.repeatCount) {

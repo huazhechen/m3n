@@ -319,7 +319,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const lyricBlocksAtEvent = lyricSyllables.filter((block) => (
         (block.targetStart === undefined || block.targetStart <= event.sourceStart)
         && (block.targetEnd === undefined || event.sourceStart < block.targetEnd)
-        && (!block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes!.has(pass)))
+        && (!block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes?.has(pass)))
       ))
       const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
       const assignedLyrics = hasLyricTarget
@@ -508,7 +508,8 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
   const layoutNodes = [...document.parts.values()].flatMap((part, partIndex) => {
     while (part.melody.length > 1 && part.melody.at(-1)?.events.length === 0 && !part.melody.at(-1)?.multiRest) {
       const trailing = part.melody.pop()
-      if (trailing?.breakBefore || trailing?.breakAfter) part.melody.at(-1)!.breakAfter = true
+      const previous = part.melody.at(-1)
+      if (previous && (trailing?.breakBefore || trailing?.breakAfter)) previous.breakAfter = true
     }
     while (part.bass.length > 1 && part.bass.at(-1)?.events.length === 0 && !part.bass.at(-1)?.multiRest) part.bass.pop()
     const measureCount = Math.max(part.melody.length, hasBassStaff ? part.bass.length : 0)

@@ -633,13 +633,13 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
     const firstOrdinary = phrases.findIndex((candidate) => !candidate.passes)
     return firstOrdinary < 0 ? phrases : phrases.slice(0, firstOrdinary)
   }
-  const precedingHouses = phrase.passes || phraseIndex < 0
+  const precedingHouses = phrase.passes || !section || phraseIndex < 0
     ? []
-    : contiguousHouses(section!.phrases.slice(0, phraseIndex).reverse())
-  const followingHouses = phrase.passes || phraseIndex < 0 || precedingHouses.length > 0
+    : contiguousHouses(section.phrases.slice(0, phraseIndex).reverse())
+  const followingHouses = phrase.passes || !section || phraseIndex < 0 || precedingHouses.length > 0
     ? []
     : (() => {
-      const following = section!.phrases.slice(phraseIndex + 1)
+      const following = section.phrases.slice(phraseIndex + 1)
       const firstHouse = following.findIndex((candidate) => Boolean(candidate.passes))
       return firstHouse < 0 ? [] : contiguousHouses(following.slice(firstHouse))
     })()
@@ -714,7 +714,8 @@ function validatePhraseSpans(document: ScoreDocument, structure: M3NDocumentStru
       { length: endPhrase - startPhrase },
       (_, offset) => [phrases[startPhrase + offset], phrases[startPhrase + offset + 1]] as const,
     ).some(([left, right]) => left?.passes || right?.passes)) {
-      diagnostics.push(`第 ${phrases[startPhrase]!.melody.line} 行：连音不能跨越跳房子边界`)
+      const startingPhrase = phrases[startPhrase]
+      if (startingPhrase) diagnostics.push(`第 ${startingPhrase.melody.line} 行：连音不能跨越跳房子边界`)
     }
   }
   return diagnostics
@@ -729,9 +730,10 @@ function validatePhraseHarmony(document: ScoreDocument, structure: M3NDocumentSt
   for (const section of structure.sections) {
     for (const phrase of section.phrases) {
       if (!phrase.melody || !phrase.harmony) continue
-      const melodyEnd = phrase.melody.start + phrase.melody.text.length
+      const melody = phrase.melody
+      const melodyEnd = melody.start + melody.text.length
       const measures = part.melody.filter((measure) => measure.events.some((event) =>
-        phrase.melody!.start <= event.sourceStart && event.sourceStart < melodyEnd))
+        melody.start <= event.sourceStart && event.sourceStart < melodyEnd))
       const harmonyMeasures = phrase.harmony.text.split(/\|+/)
       if (harmonyMeasures.at(-1)?.trim() === '') harmonyMeasures.pop()
       if (harmonyMeasures.length !== measures.length) {

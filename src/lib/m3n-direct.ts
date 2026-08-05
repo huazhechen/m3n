@@ -377,9 +377,10 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
       if (!part) continue
       for (const phrase of section.phrases) {
         if (!phrase.melody || !phrase.harmony) continue
-        const melodyEnd = phrase.melody.start + phrase.melody.text.length
+        const melody = phrase.melody
+        const melodyEnd = melody.start + melody.text.length
         const measures = part.melody.filter((measure) => measure.events.some((event) =>
-          phrase.melody!.start <= event.sourceStart && event.sourceStart < melodyEnd))
+          melody.start <= event.sourceStart && event.sourceStart < melodyEnd))
         const harmonyMeasures = phrase.harmony.text.split(/\|+/)
         for (const [measureIndex, harmony] of harmonyMeasures.entries()) {
           const events = measures[measureIndex]?.events ?? []
