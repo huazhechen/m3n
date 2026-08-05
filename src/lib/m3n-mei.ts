@@ -1,5 +1,10 @@
 import { m3nPitch, parseM3NDocument } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
+import {
+  meiBeamXml as renderBeamXml,
+  meiEventXml as renderEventXml,
+  meiTempoXml as renderTempoXml,
+} from './mei-events'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
 import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 import { validateM3NDiagnostics } from './m3n-validate'
@@ -13,6 +18,8 @@ import { meiDocumentXml, meiKeySignature, scoreHeaderMetadata, type ScoreHeaderM
 import { meiSectionContent, type MeiLayoutNode } from './notation/mei-layout'
 
 export type { ScoreHeaderMetadata } from './notation/mei-document'
+
+type VerseSyllable = MeiVerseSyllable
 
 export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd: number }
 export type MeiConversionResult = {
@@ -30,8 +37,6 @@ export type MeiConversionResult = {
   headerMetadata: ScoreHeaderMetadata[]
   tempo: number
 }
-
-type VerseSyllable = MeiVerseSyllable
 
 const metronomeGlyphs: Record<number, { name: string; num: string }> = {
   1: { name: 'metNoteWhole', num: 'U+ECA2' },
@@ -180,6 +185,10 @@ function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number)
   flush()
   return result
 }
+
+void tempoXml
+void eventXml
+void beamXml
 
 export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, context: { projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree } = {}): MeiConversionResult {
   const syntaxTree = context.syntaxTree ?? parseM3NSyntaxTree(source)
@@ -361,7 +370,10 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       if (hasLyricTarget && !measure?.ending) {
         const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
         const hasScopedLyrics = lyricBlocksAtEvent.some((block) => block.targetStart !== undefined)
-        const partLyricRowCount = hasScopedLyrics ? Math.max(0, ...lyricBlocksAtEvent.map((block) => block.verseIndex)) : lyricRowCount
+        const remainingLyricRowCount = Math.max(0, ...lyricSyllables
+          .filter((block) => block.targetEnd === undefined || event.sourceStart < block.targetEnd)
+          .map((block) => block.verseIndex))
+        const partLyricRowCount = hasScopedLyrics ? remainingLyricRowCount : lyricRowCount
         for (let row = 1; row <= partLyricRowCount; row += 1) {
           if (occupiedRows.has(row)) continue
           lyrics.push({
@@ -390,9 +402,9 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
-      return { event, prefix: keySig ? `<keySig sig="${meiKeySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
+      return { event, prefix: keySig ? `<keySig sig="${meiKeySignature(keySig)}"/>` : undefined, xml: renderEventXml(event, xmlId, lyrics, accidentals) }
     })
-    const body = beamXml(renderedEvents, meter.count, meter.unit)
+    const body = renderBeamXml(renderedEvents, meter.count, meter.unit)
       .map((xml) => xml.split('\n').map((line) => `      ${line}`).join('\n'))
       .join('\n') || '      <mSpace/>'
     return `<staff n="${staffNumber}">\n  <layer n="1">\n${body}\n  </layer>\n</staff>`
@@ -502,7 +514,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
         interval.end !== undefined && interval.end < event.sourceStart)
       if (followsRamp) return []
       const xmlId = idFor(event.sourceStart)
-      return xmlId ? [tempoXml(event.tempo, event.meterUnit ?? document.meterUnit, `startid="#${xmlId}"`, `m3n-tempo-${++tempoIndex}`)] : []
+      return xmlId ? [renderTempoXml(event.tempo, event.meterUnit ?? document.meterUnit, `startid="#${xmlId}"`, `m3n-tempo-${++tempoIndex}`)] : []
     }) : []
     const first = events[0]?.sourceStart
     const last = events.at(-1)?.sourceEnd
@@ -561,7 +573,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
         .filter(Boolean).map((staff) => staff.split('\n').map((line) => `  ${line}`).join('\n')).join('\n')
       const controls = [controlXml(melody, 1, meter), hasBassStaff ? controlXml(part.bass[measureIndex], 2, meter) : ''].filter(Boolean).join('\n')
       const tempo = document.hasExplicitTempo && partIndex === 0 && measureIndex === 0
-        ? `  ${tempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
+        ? `  ${renderTempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
         : ''
       const xml = `<measure xml:id="${measureId}" n="${measureNumber}"${metcon}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
       return {
