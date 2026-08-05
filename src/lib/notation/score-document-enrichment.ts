@@ -75,7 +75,7 @@ export function enrichScoreDocument(document: ScoreDocument, originalSource: str
       lyrics.push({
         range: lyric.label,
         mode: 'char',
-        syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start, 'char'),
+        syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start),
         phrasePasses: phrase.passes || undefined,
         targetStart: phrase.melody.start,
         targetEnd: phrase.melody.start + phrase.melody.text.length,

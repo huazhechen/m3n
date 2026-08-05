@@ -17,51 +17,39 @@ export type PresetScoreMetadata = {
   diagnosticSeverity: ScoreDiagnosticSeverity
 }
 
-function readAttribute(source: string, name: string) {
-  return new RegExp(`\\{${name}=([^}]+)\\}`).exec(source)?.[1].trim()
-}
-
-function readTimeSignature(source: string) {
-  return source.match(/\{(\d+\/\d+)\}/)?.[1] ?? '4/4'
-}
-
-function readTempo(source: string) {
-  const match = source.match(/\{(\d+)qpm\}/)
-  return match ? Number(match[1]) : 120
-}
-
-const notationAttributeNames = new Set(['key', '1', 'transpose', 'form', 'parts', 'part', 'rest', 'chord', 'lyrics'])
-
-function readMetadataValues(source: string) {
-  return Array.from(source.matchAll(/\{([^=}\s]+)=([^}]*)\}/g))
-    .filter((match) => !notationAttributeNames.has(match[1]))
-    .map((match) => match[2].trim())
-    .filter(Boolean)
-}
-
 function normalizeSearchText(value: string) {
   return value.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
 }
 
 export function scoreMetadataFromSource(slug: string, source: string): PresetScoreMetadata {
   const analysis = analyzeM3N(source)
-  const title = readAttribute(source, 'title') ?? slug
-  const subtitle = readAttribute(source, 'subtitle')
-  const singer = readAttribute(source, 'singer')
-  const composer = readAttribute(source, 'composer')
+  const { score, projection } = analysis
+  const title = score.title || slug
+  const hasLyrics = projection.structure.sections.some((section) => section.phrases.some((phrase) => phrase.lyrics.length > 0))
+  const hasBass = projection.structure.sections.some((section) => section.phrases.some((phrase) => phrase.bass !== undefined))
   return {
     slug,
     title,
-    subtitle,
-    singer,
-    composer,
-    keySignature: readAttribute(source, 'key') ?? 'C',
-    timeSignature: readTimeSignature(source),
-    tempo: readTempo(source),
-    hasLyrics: /^\s*L\d*:/m.test(source),
-    hasBass: /^\s*B:/m.test(source),
+    subtitle: score.subtitle || undefined,
+    singer: score.singer || undefined,
+    composer: score.composer || undefined,
+    keySignature: score.key,
+    timeSignature: `${score.meterCount}/${score.meterUnit}`,
+    tempo: score.tempo,
+    hasLyrics,
+    hasBass,
     melodyComplexity: analysis.complexity.score,
-    searchText: normalizeSearchText([title, subtitle, singer, composer, ...readMetadataValues(source)].filter(Boolean).join(' ')),
+    searchText: normalizeSearchText([
+      title,
+      score.subtitle,
+      score.singer,
+      score.composer,
+      score.lyricist,
+      score.arranger,
+      score.copyright,
+      score.source,
+      score.note,
+    ].filter(Boolean).join(' ')),
     diagnosticSeverity: scoreDiagnosticSeverity(analysis.conversion.diagnostics),
   }
 }

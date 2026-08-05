@@ -1,16 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { assessM3NDocumentMelodyComplexity, assessM3NMelodyComplexity } from './m3n-melody-complexity'
+import { assessM3NDocumentMelodyComplexity } from './m3n-melody-complexity'
 import { parseM3NDocument } from './m3n-direct'
 
 describe('M3N melody complexity', () => {
-  it('assesses an already parsed document', () => {
-    const source = '{4/4} 1 2 3 4 |||'
-
-    expect(assessM3NDocumentMelodyComplexity(parseM3NDocument(source))).toEqual(assessM3NMelodyComplexity(source))
-  })
-
   it('rates a simple stepwise quarter-note melody near the bottom of the scale', () => {
-    const assessment = assessM3NMelodyComplexity('{4/4} 1 2 3 4 | 5 4 3 2 |||')
+    const assessment = assessM3NDocumentMelodyComplexity(parseM3NDocument('{4/4} 1 2 3 4 | 5 4 3 2 |||'))
 
     expect(assessment.score).toBeGreaterThanOrEqual(1)
     expect(assessment.score).toBeLessThan(2)
@@ -18,11 +12,11 @@ describe('M3N melody complexity', () => {
   })
 
   it('rewards rhythm, leaps, accidentals, range, and ornaments in a demanding melody', () => {
-    const assessment = assessM3NMelodyComplexity([
+    const assessment = assessM3NDocumentMelodyComplexity(parseM3NDocument([
       '{4/4}',
       '((1 5e 2 6e)) {ac(7e)}3e{tr} 7d {tip} |',
       '([1 4# 7e:2]) ([2 6e 3:2]) 1ee{brk} 7dd{fermata} |||',
-    ].join(' '))
+    ].join(' ')))
 
     expect(assessment.score).toBeGreaterThan(3)
     expect(assessment.metrics).toMatchObject({ rhythmicValues: 3, accidentalCount: 1 })
@@ -32,8 +26,8 @@ describe('M3N melody complexity', () => {
   })
 
   it('accounts for tempo, off-beat writing, and local bursts', () => {
-    const steady = assessM3NMelodyComplexity('{4/4} {72qpm} 1 2 3 4 |||')
-    const demanding = assessM3NMelodyComplexity('{4/4} {180qpm} 1. 2. 3. 4. | ((5 6 7 1e)) |||')
+    const steady = assessM3NDocumentMelodyComplexity(parseM3NDocument('{4/4} {72qpm} 1 2 3 4 |||'))
+    const demanding = assessM3NDocumentMelodyComplexity(parseM3NDocument('{4/4} {180qpm} 1. 2. 3. 4. | ((5 6 7 1e)) |||'))
 
     expect(demanding.score).toBeGreaterThan(steady.score)
     expect(demanding.metrics.notesPerSecond).toBeGreaterThan(steady.metrics.notesPerSecond)
@@ -42,7 +36,7 @@ describe('M3N melody complexity', () => {
   })
 
   it('does not score a pitch change across a rest as a continuous leap', () => {
-    const assessment = assessM3NMelodyComplexity('{4/4} 1 0 1ee 0 |||')
+    const assessment = assessM3NDocumentMelodyComplexity(parseM3NDocument('{4/4} 1 0 1ee 0 |||'))
 
     expect(assessment.metrics.maximumLeap).toBe(0)
   })

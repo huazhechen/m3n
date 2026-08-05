@@ -1,38 +1,4 @@
-import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './notation/score-document'
-
 export type LyricTarget = { tied: boolean }
-
-function isInstrumentalEvent(document: ScoreDocument, event: ScoreEvent) {
-  return document.intervals.some((interval) => interval.kind === 'inst'
-    && interval.staff === 'melody'
-    && interval.start !== undefined
-    && interval.end !== undefined
-    && interval.start <= event.sourceStart
-    && event.sourceEnd <= interval.end)
-}
-
-function lyricTargetCount(event: ScoreEvent) {
-  return event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
-}
-
-/** Counts written lyric targets in each melody measure. */
-export function lyricTargetCountsByMeasure(document: ScoreDocument) {
-  const counts = new Map<ScoreMeasure, number>()
-  for (const part of document.parts.values()) {
-    let previousTied = false
-    for (const measure of part.melody) {
-      let count = 0
-      for (const event of measure.events) {
-        const tiedTarget = previousTied
-        previousTied = event.tie
-        if (event.kind === 'rest' || tiedTarget || isInstrumentalEvent(document, event)) continue
-        count += lyricTargetCount(event)
-      }
-      counts.set(measure, count)
-    }
-  }
-  return counts
-}
 
 export function hasForcedLyricOutsideTiedTarget(items: readonly { forceTiedTarget: boolean }[], targets: readonly LyricTarget[]) {
   let targetIndex = 0

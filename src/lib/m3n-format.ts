@@ -2,7 +2,7 @@ import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
 import { parseM3NSyntaxTree } from './notation/syntax-tree'
 import { parseM3NDocument } from './m3n-direct'
 import { parseLyricItems } from './notation/lyrics'
-import { parseM3NDocumentStructure } from './notation/m3n-document'
+import { projectM3NDocument } from './notation/m3n-document'
 import { phraseLyricTargets } from './m3n-validate'
 import type { ScoreDocument, ScoreEvent } from './notation/score-document'
 import type { M3NSyntaxTree } from './notation/syntax-tree'
@@ -319,8 +319,10 @@ function addLyricMeasureBars(source: string) {
       .trimEnd()
     return appendComment(`${match[1]}${lyric}`, comment)
   }).join('\n')
-  const structure = parseM3NDocumentStructure(source)
-  const document = parseM3NDocument(source)
+  const syntaxTree = parseM3NSyntaxTree(source)
+  const projection = projectM3NDocument(source, syntaxTree)
+  const { structure } = projection
+  const document = parseM3NDocument(source, projection)
   const insertions: Array<{ start: number; end: number }> = []
   for (const section of structure.sections) for (const phrase of section.phrases) {
     const targetsByPass = phraseLyricTargets(document, structure, section.name, phrase)
@@ -329,7 +331,7 @@ function addLyricMeasureBars(source: string) {
       const pass = Number(lyric.label || 1)
       const measures = targetsByPass.get(pass) ?? targetsByPass.values().next().value
       if (!measures || measures.length < 2) continue
-      const items = parseLyricItems(lyric.text, lyric.start, 'char')
+      const items = parseLyricItems(lyric.text, lyric.start)
       let itemIndex = 0
       for (const targets of measures.slice(0, -1)) {
         let targetIndex = 0

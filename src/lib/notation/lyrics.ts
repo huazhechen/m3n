@@ -1,4 +1,3 @@
-export type LyricMode = 'char' | 'word'
 export type ParsedLyricItem = {
   text: string
   sourceStart: number
@@ -20,7 +19,7 @@ function addItem(items: ParsedLyricItem[], text: string, sourceStart: number, so
   items.push({ text, sourceStart, sourceEnd, forceTiedTarget, kind: 'text', underlined, wordpos })
 }
 
-function parseUnit(items: ParsedLyricItem[], raw: string, sourceStart: number, forceTiedTarget: boolean, mode: LyricMode) {
+function parseUnit(items: ParsedLyricItem[], raw: string, sourceStart: number, forceTiedTarget: boolean, mode: 'char' | 'word') {
   if (raw === '%') {
     items.push({ text: '%', sourceStart, sourceEnd: sourceStart + raw.length, forceTiedTarget, kind: 'placeholder', underlined: false })
     return
@@ -73,7 +72,7 @@ function parseUnit(items: ParsedLyricItem[], raw: string, sourceStart: number, f
   }
 }
 
-export function parseLyricItems(source: string, sourceStart: number, _mode: LyricMode): ParsedLyricItem[] {
+export function parseLyricItems(source: string, sourceStart: number): ParsedLyricItem[] {
   const items: ParsedLyricItem[] = []
   let index = 0
   let forceNext = false

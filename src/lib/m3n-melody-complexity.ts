@@ -1,4 +1,4 @@
-import { m3nPitch, parseM3NDocument } from './m3n-direct'
+import { m3nPitch } from './m3n-direct'
 import type { ScoreDocument, ScoreEvent } from './notation/score-document'
 
 export type MelodyComplexityMetrics = {
@@ -99,11 +99,6 @@ function peakDensity(points: readonly MelodyPoint[]) {
     }
     return Math.max(peak, count)
   }, 0)
-}
-
-/** Scores written treble melody by its practical reading and execution load. */
-export function assessM3NMelodyComplexity(source: string): MelodyComplexityAssessment {
-  return assessM3NDocumentMelodyComplexity(parseM3NDocument(source))
 }
 
 /** Scores a previously parsed document without repeating syntax analysis. */

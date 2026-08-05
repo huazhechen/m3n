@@ -578,7 +578,7 @@ function validateLyricMeasureAlignment(
 ) {
   const parsedMeasures = lyricMeasures(lyric.text, lyric.start)
   if (!parsedMeasures) {
-    const items = parseLyricItems(lyric.text, lyric.start, 'char')
+    const items = parseLyricItems(lyric.text, lyric.start)
     const passTargets = measureTargets.flat()
     const expected = passTargets.filter((target) => !target.tied).length + items.filter((item) => item.forceTiedTarget).length
     if (items.length !== expected) diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：歌词对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`, lyric, 'warning'))
@@ -596,7 +596,7 @@ function validateLyricMeasureAlignment(
   for (let index = 0; index < Math.max(measures.length, measureTargets.length); index += 1) {
     const measure = measures[index] ?? { text: '', start: lyric.start + lyric.text.length }
     const targets = measureTargets[index] ?? []
-    const items = parseLyricItems(measure.text, measure.start, 'char')
+    const items = parseLyricItems(measure.text, measure.start)
     const expected = targets.filter((target) => !target.tied).length + items.filter((item) => item.forceTiedTarget).length
     if (items.length !== expected) diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：歌词第 ${index + 1} 小节对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`, lyric, 'warning'))
     if (hasForcedLyricOutsideTiedTarget(items, targets)) diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：乐句第 ${pass} 遍歌词第 ${index + 1} 小节的 +歌词项不位于延音目标`, lyric, 'warning'))
