@@ -24,18 +24,21 @@ pages -> components -> features -> lib/notation
 ## 当前边界
 
 - `lib/notation/syntax-tree.ts`：无损容错语法树、行节点与源码范围。
+- `lib/notation/syntax-rules.ts`：直接消费 directive AST 节点的区间闭合与指令值规则。
 - `lib/notation/score-document.ts`：规范化乐谱、声部、小节、事件、歌词和演奏区间契约。
 - `lib/notation/analysis.ts`：交互调用方的统一分析入口。
 - `lib/notation/types.ts`：转换结果和源码映射契约。
 - `lib/notation/diagnostics.ts`：结构化诊断契约；迁移期间保留旧字符串诊断 API，以兼容现有调用方。
 - `lib/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
 - `lib/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
-- `lib/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；双谱表小节数量和时值对齐已迁移至此。
+- `lib/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；小节时值、延音目标和双谱表对齐已迁移至此。弱起只允许首末小节互补，反复只能以完整小节为单位。
 - `lib/m3n-direct.ts`：从源码构造 `ScoreDocument`；领域消费者统一使用 `Score*` 类型，不再暴露旧 `Direct*` 类型。
 - `lib/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
 - `lib/m3n-validate.ts`：语义校验，只依赖最小语法内核。
 - `features/score-renderer`：播放段落展开、导出文档与画布适配。
 - `lib/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
+- `lib/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
+- `lib/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
 - `features/score-renderer/verovio-score.ts`：Verovio SVG 排版、MIDI 生成和时间映射。
 - `features/score-renderer/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
 - `features/score-renderer/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
@@ -62,9 +65,9 @@ pages -> components -> features -> lib/notation
 
 1. 以 `notation/repeats` 的播放计划为单一事实来源，逐步让歌词对位直接消费书写小节到演奏轮次的映射。
 2. 继续扩充 M3N 直接解析器对出版语义和演奏语义的覆盖。
-3. 文档结构规则已直接消费 `M3NSyntaxTree`，双谱表对齐规则已直接消费 `ScoreDocument`；继续逐条迁移旧校验状态机中的节拍、延音和指令规则，字符串 API 仅作为兼容输出。
-4. 诊断使用 `{ code, severity, message, range }`；结构规则已有稳定细分代码与精确 span，后续音乐规则沿用同一契约。
+3. 文档结构和区间指令规则已消费 `M3NSyntaxTree`，节拍、延音和双谱表规则已消费 `ScoreDocument`；旧 validator 中的不完全小节反复补拍与 `PendingTie` 状态已经删除，字符串 API 仅格式化原生结果和尚未迁移的语法规则。
+4. 诊断使用 `{ code, severity, message, messageArgs, range }`；UI 优先按稳定 code 和参数本地化，未迁移规则回退 `legacyMessage`。
 5. `typecheck:notation` 已对语法内核、文档结构和 `ScoreDocument` builder 启用 `noUncheckedIndexedAccess`；扩大范围时必须消除真实风险，不使用无依据的非空断言。
-7. 增加浏览器级编辑、播放、导出和键盘可访问性测试。
+7. Playwright 已覆盖真实浏览器编辑重排、播放/暂停、导出和源码双向定位；继续扩展键盘可访问性及多实例资源销毁场景。
 
 不建议为缩短文件而制造一行转发层；拆分应围绕稳定职责、可独立测试的状态机或第三方适配边界进行。

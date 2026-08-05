@@ -21,6 +21,8 @@ __tmp_vite__
 !.env.example
 .vite
 coverage
+test-results/
+playwright-report/
 *.tsbuildinfo
 
 # Editor directories and files

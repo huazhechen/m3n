@@ -146,17 +146,17 @@ describe('validateM3N', () => {
     expect(validateM3N('{2/4}\n1 2 :|| 3 4 :|||')).toEqual([])
   })
 
-  it('accepts complementary incomplete measures across a repeat boundary', () => {
+  it('rejects incomplete measures across a repeat boundary', () => {
     const source = '{4/4}\n(1 2) | 3 4 5 6 | 1 2 3 :|| 4 | 5 6 7 |||'
 
-    expect(validateM3N(source)).toEqual([])
+    expect(messages(source)).toContain('中间小节拍数不合规')
     expect(messages('{4/4}\n(1 2) | 3 4 5 6 | 1 2 :|| 4 | 5 6 7 |||')).toContain('中间小节拍数不合规')
   })
 
-  it('accepts a repeat start in the middle of a measure when both playback paths complete it', () => {
+  it('rejects a repeat start that splits an incomplete measure', () => {
     const source = '{4/4}\n1 2 3 ||: 4 | 5 6 7 1 | 2 3 4 :|| 5 | 6 7 1 2 |||'
 
-    expect(validateM3N(source)).toEqual([])
+    expect(messages(source)).toContain('中间小节拍数不合规')
     expect(messages('{4/4}\n1 2 ||: 3 | 4 5 6 7 | 1 2 3 :|| 4 | 5 6 7 1 |||')).toContain('中间小节拍数不合规')
   })
 
@@ -210,8 +210,8 @@ describe('validateM3N', () => {
 
   it('enforces stack order and reports missing or redundant closes', () => {
     const result = messages('{cresc}{lg}1 2 3 4{/cresc}{/lg}{/}{/} |||')
-    expect(result).toContain('区间关闭顺序错误')
-    expect(result).toContain('关闭指令没有对应开始')
+    expect(result).toContain('区间结束指令 {/cresc} 与当前 lg 不匹配')
+    expect(result).toContain('多余的区间结束指令：{/}')
   })
 
   it('enforces prefix and postfix attachment', () => {

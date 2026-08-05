@@ -1,4 +1,4 @@
-import { durationInBeats, keyModeIntervals } from './notation/m3n-primitives'
+import { durationInBeats } from './notation/m3n-primitives'
 import { parseM3NGrace } from './notation/m3n-groups'
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
@@ -10,24 +10,13 @@ import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 import { m3nChord } from './m3n-harmony'
 import type { ScoreDocument } from './notation/score-document'
 import { validateScoreDocument } from './notation/score-rules'
+import { validateM3NSyntaxTree } from './notation/syntax-rules'
+import { parseM3NSyntaxTree } from './notation/syntax-tree'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
 
-type Measure = {
-  actual: number
-  expected: number
-  line: number
-  barEnd: number
-  number: number
-  repeatEnd: boolean
-  repeatStart: boolean
-  repeatStartId?: number
-  repeatTargetId?: number
-}
-
 type Unit = {
-  measures: Measure[]
   beats: number
   expected: number
   measureLine: number
@@ -40,12 +29,6 @@ type ParsedPitch = {
   degree: number
   accidental: string
   octave: string
-}
-
-type PendingTie = {
-  kind: 'note' | 'harmony'
-  pitches: number[]
-  line: number
 }
 
 type SettingEvent = {
@@ -152,24 +135,8 @@ function splitPitchSequence(source: string, allowTerminalTie = false): { pitches
   }
 }
 
-function tonicPitchClass(key: string) {
-  const match = KEY_PATTERN.exec(key)
-  if (!match) return 0
-  const natural: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
-  return natural[match[1][0]] + (match[1].endsWith('#') ? 1 : match[1].endsWith('b') ? -1 : 0)
-}
-
-function keyMode(key: string) {
-  return KEY_PATTERN.exec(key)?.[2] ?? ''
-}
-
-function octaveShift(value: string) {
-  return [...value].reduce((sum, char) => sum + (char === 'e' ? 1 : -1), 0)
-}
-
 function createUnit(meter: Meter, line: number): Unit {
   return {
-    measures: [],
     beats: 0,
     expected: meter.beats * 4 / meter.beatValue,
     measureLine: line,
@@ -179,86 +146,25 @@ function createUnit(meter: Meter, line: number): Unit {
   }
 }
 
-function validateUnitMeasures(unit: Unit, diagnostics: string[], skipBeatValidation = false, invalidBarEnds?: Set<number>) {
-  if (skipBeatValidation || unit.measures.length === 0) return
-  const equal = (a: number, b: number) => Math.abs(a - b) < 1e-9
-  const markInvalidBar = (measure: Measure) => {
-    if (measure.barEnd >= 0) invalidBarEnds?.add(measure.barEnd)
-  }
-  const location = (measure: Measure) => `第 ${measure.line} 行，第 ${measure.number} 小节`
-  const measures = unit.measures
-  const isComplementaryRepeatFragment = (index: number) => {
-    const measure = measures[index]!
-    const previous = measures[index - 1]
-    const next = measures[index + 1]
-    if (measure.repeatStart && previous && equal(measure.actual + previous.actual, measure.expected)) return true
-    if (next?.repeatStart && equal(measure.actual + next.actual, measure.expected)) return true
-    if (measure.repeatEnd) {
-      const target = measure.repeatTargetId === undefined
-        ? measures[0]
-        : measures.find((candidate) => candidate.repeatStartId === measure.repeatTargetId)
-      if (target && equal(measure.actual + target.actual, measure.expected)) return true
-    }
-    return Boolean(previous?.repeatEnd && equal(measure.actual + previous.actual, measure.expected))
-  }
-  for (const measure of measures) {
-    if (measure.actual > measure.expected && !equal(measure.actual, measure.expected)) {
-      diagnostics.push(`${location(measure)}：小节拍数超出：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
-      markInvalidBar(measure)
-    }
-  }
-  if (measures.length === 1) {
-    const only = measures[0]
-    if (!equal(only.actual, only.expected)) {
-      diagnostics.push(`${location(only)}：单个小节拍数必须满拍：期望 ${only.expected} 拍，实际 ${only.actual} 拍`)
-      markInvalidBar(only)
-    }
-    return
-  }
-  for (const [index, measure] of measures.slice(1, -1).entries()) {
-    if (!equal(measure.actual, measure.expected) && !isComplementaryRepeatFragment(index + 1)) {
-      diagnostics.push(`${location(measure)}：中间小节拍数不合规：期望 ${measure.expected} 拍，实际 ${measure.actual} 拍`)
-      markInvalidBar(measure)
-    }
-  }
-  const first = measures[0]
-  const last = measures.at(-1)!
-  const firstCompletesAtRepeatStart = measures[1]?.repeatStart && equal(first.actual + measures[1].actual, first.expected)
-  if (equal(first.actual, first.expected) || firstCompletesAtRepeatStart) {
-    if (!equal(last.actual, last.expected)) {
-      diagnostics.push(`${location(last)}：没有弱起时末小节拍数必须满拍：期望 ${last.expected} 拍，实际 ${last.actual} 拍`)
-      markInvalidBar(last)
-    }
-  } else if (!equal(first.expected, last.expected) || !equal(first.actual + last.actual, first.expected)) {
-    diagnostics.push(`${location(first)} 与 ${location(last)}：首末小节拍数不互补：首 ${first.actual} 拍 + 末 ${last.actual} 拍，完整小节为 ${first.expected} 拍`)
-    markInvalidBar(first)
-    markInvalidBar(last)
-  }
-}
-
 function validateBody(
   tokens: Token[],
   diagnostics: string[],
-  options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[]; skipBeatValidation?: boolean; invalidBarEnds?: Set<number> } = {},
+  options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[] } = {},
 ) {
   const bass = options.bass ?? false
-  const skipBeatValidation = options.skipBeatValidation ?? false
   const defaultSettings: Settings = options.initial
     ? structuredClone(options.initial)
     : { key: 'C', meter: { beats: 4, beatValue: 4 }, tempo: null }
   let settings = structuredClone(defaultSettings)
   const unit = createUnit(settings.meter, tokens[0]?.line ?? 1)
-  const completedUnits: Unit[] = []
   const blocks: Block[] = []
   const parens: Array<{ line: number; atoms: number }> = []
-  const accidentalState = new Map<string, number>()
   const infoSeen = new Set<string>()
   let firstMusicSeen = false
   let terminalCount = 0
   let fineBeforeTerminal = false
   let postfixTarget: 'note' | 'harmony' | false = false
   let pendingSfz: Token | null = null
-  let pendingTie: PendingTie | null = null
   let repeatOpen: { line: number; id: number } | null = null
   let repeatId = 0
   let repeatCountTarget = false
@@ -271,24 +177,11 @@ function validateBody(
   const settingEvents: SettingEvent[] = []
   const inheritedSettingEvents = options.inheritedSettingEvents ?? []
 
-  const activeOctaveShift = () => blocks.reduce((sum, block) => sum + (block.octaveShift ?? 0), 0)
-
-  let nextMeasureRepeatStart: number | undefined
-  const commitMeasure = (line: number, barEnd = -1, repeatEnd = false, repeatTargetId?: number) => {
-    if (unit.currentHasAtom && !unit.multiRestPendingBar) {
-      unit.measures.push({ actual: unit.beats, expected: unit.expected, line: unit.measureLine, barEnd, number: unit.measures.length + 1, repeatEnd, repeatStart: nextMeasureRepeatStart !== undefined, repeatStartId: nextMeasureRepeatStart, repeatTargetId })
-    }
-    nextMeasureRepeatStart = undefined
+  const commitMeasure = (line: number) => {
     unit.beats = 0
     unit.currentHasAtom = false
     unit.multiRestPendingBar = false
     unit.measureLine = line
-    accidentalState.clear()
-  }
-
-  const finishTie = () => {
-    if (pendingTie) diagnostics.push(`第 ${pendingTie.line} 行：延音没有紧接的同类目标`)
-    pendingTie = null
   }
 
   const finishRepeat = () => {
@@ -298,10 +191,7 @@ function validateBody(
 
   const finishUnit = () => {
     if (unit.currentHasAtom && !unit.multiRestPendingBar) commitMeasure(unit.measureLine)
-    finishTie()
     finishRepeat()
-    validateUnitMeasures(unit, diagnostics, bass || skipBeatValidation, options.invalidBarEnds)
-    completedUnits.push(unit)
   }
 
   const closeBlock = (token: Token, named: string | null) => {
@@ -331,7 +221,6 @@ function validateBody(
       if (event.beat - elapsedBeats > 1e-9) break
       if (event.kind === 'key') {
         settings.key = event.value
-        accidentalState.clear()
       } else if (event.kind === 'meter') {
         const [beats, beatValue] = event.value.split('/').map(Number)
         settings.meter = { beats, beatValue }
@@ -352,22 +241,7 @@ function validateBody(
     return token
   }
 
-  const absolutePitch = (pitch: ParsedPitch) => {
-    const mode = keyMode(settings.key)
-    const base = 48 + tonicPitchClass(settings.key) + keyModeIntervals(mode)[pitch.degree - 1]
-    const shift = octaveShift(pitch.octave)
-    const stateKey = `${pitch.degree}|${shift}`
-    let accidental = accidentalState.get(stateKey) ?? 0
-    if (pitch.accidental) {
-      accidental = pitch.accidental === '='
-        ? 0
-        : [...pitch.accidental].reduce((sum, char) => sum + (char === '#' ? 1 : -1), 0)
-      accidentalState.set(stateKey, accidental)
-    }
-    return base + accidental + shift * 12 + activeOctaveShift() * 12
-  }
-
-  const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet'; pitches?: number[]; tie?: boolean; tieSource?: Omit<PendingTie, 'line'>; tieTarget?: Omit<PendingTie, 'line'> }) => {
+  const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet' }) => {
     firstMusicSeen = true
     unit.hasAtom = true
     for (const paren of parens) paren.atoms += 1
@@ -383,19 +257,6 @@ function validateBody(
       pendingSfz = null
     }
 
-    if (pendingTie) {
-      const target = atom.tieTarget ?? { kind: atom.kind as PendingTie['kind'], pitches: atom.pitches ?? [] }
-      const sameKind = pendingTie.kind === target.kind
-      const actual = [...target.pitches].sort((a, b) => a - b)
-      const expected = [...pendingTie.pitches].sort((a, b) => a - b)
-      const samePitches = actual.length === expected.length && actual.every((pitch, index) => pitch === expected[index])
-      if (!sameKind || !samePitches) diagnostics.push(lineMessage(token, '延音目标的类型或绝对音高不匹配'))
-      pendingTie = null
-    }
-    if (atom.tie && (eligible || atom.tieSource)) {
-      const source = atom.tieSource ?? { kind: atom.kind as PendingTie['kind'], pitches: atom.pitches ?? [] }
-      pendingTie = { ...source, line: token.line }
-    }
     postfixTarget = atom.kind === 'note' || atom.kind === 'harmony' ? atom.kind : false
   }
 
@@ -405,8 +266,7 @@ function validateBody(
       diagnostics.push(lineMessage(token, '圆括号必须在同一小节内闭合'))
       parens.length = 0
     }
-    const repeatEnd = token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:'
-    commitMeasure(token.line, token.start + token.raw.length, repeatEnd, repeatOpen?.id)
+    commitMeasure(token.line)
     if (token.raw === '||:') {
       if (repeatOpen) diagnostics.push(lineMessage(token, '反复区域不能嵌套或重叠'))
       repeatOpen = { line: token.line, id: ++repeatId }
@@ -416,7 +276,6 @@ function validateBody(
         repeatOpen = { line: token.line, id: ++repeatId }
       }
     }
-    nextMeasureRepeatStart = token.raw === '||:' || token.raw === ':||:' ? repeatOpen?.id : undefined
     if (token.raw === '|||' || token.raw === ':|||') {
       terminalCount += 1
     }
@@ -511,7 +370,6 @@ function validateBody(
         else {
           const changed = settings.key !== value
           settings.key = value
-          accidentalState.clear()
           if (!firstMusicSeen) bodyInitial.key = value
           if (!bass && changed) settingEvents.push({ beat: elapsedBeats, kind: 'key', value })
         }
@@ -583,12 +441,7 @@ function validateBody(
         for (const paren of parens) paren.atoms += 1
         if (parens.length > 0) diagnostics.push(lineMessage(token, '多小节休止不能使用圆括号修饰'))
         if (unit.currentHasAtom || unit.multiRestPendingBar) diagnostics.push(lineMessage(token, '多小节休止必须独占一个小节位置'))
-        if (pendingTie) {
-          diagnostics.push(lineMessage(token, '延音后方第一个音乐原子必须是同类目标'))
-          pendingTie = null
-        }
         for (let index = 0; index < count; index += 1) {
-          unit.measures.push({ actual: unit.expected, expected: unit.expected, line: token.line, barEnd: -1, number: unit.measures.length + 1, repeatEnd: false, repeatStart: false })
         }
         elapsedBeats += count * unit.expected
         unit.currentHasAtom = true
@@ -659,9 +512,8 @@ function validateBody(
           rejectPendingSfz(token)
           continue
         }
-        const pitch = absolutePitch(parsed.pitch)
         addAtom(token, durationInBeats(parens.length, carets.length, dots.length), {
-          kind: 'note', pitches: [pitch], tie: tie === '~',
+          kind: 'note',
         })
       }
       continue
@@ -688,19 +540,10 @@ function validateBody(
       if (harmony && sequence.hasRest) diagnostics.push(lineMessage(token, '和音组内不允许休止符'))
       if (!harmony && match[5]) diagnostics.push(lineMessage(token, '连音组整体不能使用延音'))
       if (!harmony && sequence.terminalTieOnRest) diagnostics.push(lineMessage(token, '连音组内的延音只能附在最后一个有音高的元素上'))
-      const pitches = sequence.pitches.map(absolutePitch)
       const duration = (harmony ? 1 : Number.isFinite(units) && units > 0 ? units : 0)
         * durationInBeats(parens.length, match[3].length, match[4].length)
       addAtom(token, duration, {
         kind: harmony ? 'harmony' : 'tuplet',
-        pitches,
-        tie: harmony ? match[5] === '~' : sequence.hasTerminalTie && !sequence.terminalTieOnRest,
-        tieSource: !harmony && sequence.hasTerminalTie && !sequence.terminalTieOnRest
-          ? { kind: 'note', pitches: pitches.length > 0 ? [pitches.at(-1)!] : [] }
-          : undefined,
-        tieTarget: !harmony && sequence.firstPitch
-          ? { kind: 'note', pitches: [absolutePitch(sequence.firstPitch)] }
-          : !harmony ? { kind: 'note', pitches: [] } : undefined,
       })
       continue
     }
@@ -714,7 +557,7 @@ function validateBody(
     for (const paren of parens) diagnostics.push(`第 ${paren.line} 行：圆括号未闭合`)
   }
   for (const block of blocks) diagnostics.push(`第 ${block.line} 行：未闭合的区间块：{${block.name}}`)
-  if (unit.hasAtom || unit.measures.length > 0) finishUnit()
+  if (unit.hasAtom) finishUnit()
   else finishRepeat()
 
   if (!bass) {
@@ -725,7 +568,6 @@ function validateBody(
   }
 
   return {
-    measures: completedUnits.flatMap((item) => item.measures),
     initial: bodyInitial,
     settingEvents,
   }
@@ -1028,9 +870,16 @@ function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStr
 }
 
 export function invalidMeasureBarEnds(source: string) {
-  const diagnostics: string[] = []
-  const invalidBarEnds = new Set<number>()
-  validateBody(tokenizeM3N(projectM3NDocument(source).source), diagnostics, { invalidBarEnds })
+  const document = parseM3NDocument(source)
+  const diagnostics = validateScoreDocument(document, { source })
+  const invalidBarEnds = new Set(diagnostics.flatMap((diagnostic) => {
+    if (!diagnostic.code.startsWith('M3N_METER_')) return []
+    const index = Number(diagnostic.messageArgs?.measure ?? 1) - 1
+    return [...document.parts.values()].flatMap((part) => {
+      const barEnd = part.melody[index]?.barEnd
+      return barEnd === undefined ? [] : [barEnd]
+    })
+  }))
   return [...invalidBarEnds].sort((left, right) => left - right)
 }
 
@@ -1054,9 +903,9 @@ export function invalidMeasureIds(source: string, document = parseM3NDocument(so
   })
 }
 
-function validateProjectedM3N(source: string, bassSource: string, options: { skipBeatValidation?: boolean } = {}): string[] {
+function validateProjectedM3N(source: string, bassSource: string): string[] {
   const diagnostics: string[] = []
-  const mainResult = validateBody(tokenizeM3N(source), diagnostics, { skipBeatValidation: options.skipBeatValidation })
+  const mainResult = validateBody(tokenizeM3N(source), diagnostics)
   if (bassSource) {
     validateBody(tokenizeM3N(bassSource), diagnostics, {
       bass: true,
@@ -1069,7 +918,7 @@ function validateProjectedM3N(source: string, bassSource: string, options: { ski
 function validationResult(source: string, options: { skipBeatValidation?: boolean }, document?: ScoreDocument) {
   const projected = projectM3NDocument(source)
   const parsed = document ?? parseM3NDocument(source)
-  const projectedDiagnostics = validateProjectedM3N(projected.source, projected.bassSource, options)
+  const projectedDiagnostics = validateProjectedM3N(projected.source, projected.bassSource)
     .filter((message) => projected.structure.sections.length === 0 || !/^未分段正文必须且只能使用一次终止线，实际 0 次$/.test(message))
   const phraseDiagnostics = projected.structure.sections.length > 0
     ? validatePhrasePlaybackPasses(parsed, projected.structure)
@@ -1081,26 +930,52 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
     ? validatePhraseHarmony(parsed, projected.structure)
     : []
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
-  const scoreDiagnostics = validateScoreDocument(parsed)
-  const legacyDiagnostics = projected.structure.sections.length > 0
+  const scoreDiagnostics = validateScoreDocument(parsed, { ...options, source })
+  const syntaxDiagnostics = validateM3NSyntaxTree(parseM3NSyntaxTree(source))
+  let legacyDiagnostics = projected.structure.sections.length > 0
     ? projectedDiagnostics
       .filter((message) => !message.startsWith('[L]'))
       .map((message) => remapProjectedLines(message, projected.lineMap))
     : projectedDiagnostics
+  if (scoreDiagnostics.some((diagnostic) => diagnostic.code.startsWith('M3N_METER_'))) {
+    legacyDiagnostics = legacyDiagnostics.filter((message) => !/小节拍数超出|单个小节拍数必须满拍|中间小节拍数不合规|没有弱起时末小节拍数必须满拍|首末小节拍数不互补/.test(message))
+  }
+  if (scoreDiagnostics.some((diagnostic) => diagnostic.code.startsWith('M3N_TIE_'))) {
+    legacyDiagnostics = legacyDiagnostics.filter((message) => !message.includes('延音目标的类型或绝对音高不匹配'))
+  }
+  if (syntaxDiagnostics.some((diagnostic) => diagnostic.code === 'M3N_DIRECTIVE_INVALID_TEMPO_TARGET')) {
+    legacyDiagnostics = legacyDiagnostics.filter((message) => !message.includes('渐快或渐慢的目标速度必须是正整数'))
+  }
+  if (syntaxDiagnostics.some((diagnostic) => diagnostic.code.includes('_CLOSE'))) {
+    legacyDiagnostics = legacyDiagnostics.filter((message) => !/关闭指令没有对应开始|区间关闭顺序错误/.test(message))
+  }
+  if (syntaxDiagnostics.some((diagnostic) => diagnostic.code === 'M3N_DIRECTIVE_UNCLOSED')) {
+    legacyDiagnostics = legacyDiagnostics.filter((message) => !message.includes('未闭合的区间块'))
+  }
   return {
     structureDiagnostics: projected.structure.diagnostics,
     scoreDiagnostics,
+    syntaxDiagnostics,
     compatibilityMessages: [...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics],
   }
 }
 
 export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): string[] {
   const result = validationResult(source, options, document)
-  return [...result.structureDiagnostics.map((diagnostic) => diagnostic.legacyMessage), ...result.scoreDiagnostics.map((diagnostic) => diagnostic.legacyMessage), ...result.compatibilityMessages]
+  const compatibility = result.compatibilityMessages
+  const nativeOnly = result.scoreDiagnostics.filter((diagnostic) => {
+    if (diagnostic.code.startsWith('M3N_METER_')) return !compatibility.some((message) => /小节拍数|首末小节/.test(message))
+    if (diagnostic.code.startsWith('M3N_TIE_')) return !compatibility.some((message) => message.includes('延音目标'))
+    return true
+  })
+  const syntaxNativeOnly = result.syntaxDiagnostics.filter((diagnostic) => !compatibility.some((message) => (
+    message === diagnostic.legacyMessage || message.endsWith(diagnostic.message)
+  )))
+  return [...result.structureDiagnostics.map((diagnostic) => diagnostic.legacyMessage), ...compatibility, ...syntaxNativeOnly.map((diagnostic) => diagnostic.legacyMessage), ...nativeOnly.map((diagnostic) => diagnostic.legacyMessage)]
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
 export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): ScoreDiagnostic[] {
   const result = validationResult(source, options, document)
-  return [...result.structureDiagnostics, ...result.scoreDiagnostics, ...diagnosticsFromLegacyMessages(source, result.compatibilityMessages)]
+  return [...result.structureDiagnostics, ...diagnosticsFromLegacyMessages(source, result.compatibilityMessages), ...result.syntaxDiagnostics, ...result.scoreDiagnostics]
 }

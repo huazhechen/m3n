@@ -8,8 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "typecheck:notation": "tsc -p tsconfig.notation.json",
-    "check": "npm run lint && npm run typecheck:notation && npm run test && npm run build",
+    "check": "npm run lint && npm run typecheck:notation && npm run test && npm run build && npm run test:e2e",
     "download:fluidr3": "node tools/download-fluidr3-gm.mjs",
     "preview": "vite preview",
     "preview:worker": "npm run build && wrangler dev",
@@ -28,6 +29,7 @@
     "verovio": "^6.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

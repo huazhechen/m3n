@@ -11,6 +11,9 @@
     "src/lib/notation/diagnostics.ts",
     "src/lib/notation/m3n-document.ts",
     "src/lib/notation/score-rules.ts",
+    "src/lib/notation/syntax-rules.ts",
+    "src/lib/notation/mei-xml.ts",
+    "src/lib/notation/mei-lyrics.ts",
     "src/lib/m3n-direct.ts"
   ]
 }

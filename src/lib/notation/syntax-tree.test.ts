@@ -15,4 +15,13 @@ describe('M3N syntax tree', () => {
     const notes = tree.tokens.filter((token) => token.kind === 'note')
     expect(notes.map(({ line, column }) => [line, column])).toEqual([[1, 3], [2, 3]])
   })
+
+  it('parses directive nodes with values and closing semantics', () => {
+    const tree = parseM3NSyntaxTree('N: {cresc}1 2{/cresc} {rit=72} |||')
+    expect(tree.lines[0]?.row?.directives).toEqual([
+      expect.objectContaining({ name: 'cresc', closing: false }),
+      expect.objectContaining({ name: 'cresc', closing: true }),
+      expect.objectContaining({ name: 'rit', value: '72', closing: false }),
+    ])
+  })
 })

@@ -5,7 +5,9 @@ import { parseKey } from './notation/m3n-primitives'
 import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, type PlaybackNavigation } from './notation/repeats'
 import { validateM3NDiagnostics } from './m3n-validate'
 import type { ScoreDiagnostic } from './notation/diagnostics'
-import type { ScoreDocument, ScoreEvent, ScoreLyricSyllable, ScoreMeasure } from './notation/score-document'
+import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './notation/score-document'
+import { meiVerseXml, needsCjkSpacingCompensation, type MeiVerseSyllable } from './notation/mei-lyrics'
+import { escapeXml, meiDurationAttributes } from './notation/mei-xml'
 
 export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd: number }
 export type ScoreHeaderMetadata = {
@@ -31,33 +33,7 @@ export type MeiConversionResult = {
   tempo: number
 }
 
-type LyricSyllable = ScoreLyricSyllable
-type VerseSyllable = LyricSyllable & { n: string; verseIndex: number; cjkSpacingCompensation: boolean; passes?: ReadonlySet<number> }
-
-function splitLyricSyllables(tokens: ScoreLyricSyllable[]): LyricSyllable[] {
-  return tokens
-}
-
-function escapeXml(value: string) {
-  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;').replaceAll("'", '&apos;')
-}
-
-const CJK_OR_FULLWIDTH_CHARACTER = /[\u3000-\u303F\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF01-\uFF60\uFFE0-\uFFEE]/u
-const PUNCTUATION_ONLY = /^\p{P}+$/u
-
-function lyricText(lyric: VerseSyllable) {
-  const text = lyric.text.replaceAll('~', ' ')
-  if (!lyric.cjkSpacingCompensation) return text
-  const compensation = Array.from(text).filter((character) => CJK_OR_FULLWIDTH_CHARACTER.test(character)).map(() => '\u200B').join('')
-  return `${text}${compensation}`
-}
-
-function underlinedLyricText(lyric: VerseSyllable) {
-  return lyricText(lyric).split(/(\p{P}+)/u).filter(Boolean).map((segment) => (
-    PUNCTUATION_ONLY.test(segment) ? escapeXml(segment) : `<rend>${escapeXml(segment)}</rend>`
-  )).join('')
-}
+type VerseSyllable = MeiVerseSyllable
 
 function keySignature(rawKey: string) {
   const pitchClasses: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
@@ -66,14 +42,6 @@ function keySignature(rawKey: string) {
   const relativeMajor = (tonicPitch + ({ m: 3, dor: 10, phr: 8, lyd: 5, mix: 7, loc: 1 }[mode] ?? 0) + 12) % 12
   const fifths = [0, 7, 2, -3, 4, -1, 6, 1, -4, 3, -2, 5][relativeMajor] ?? 0
   return fifths === 0 ? '0' : `${Math.abs(fifths)}${fifths > 0 ? 's' : 'f'}`
-}
-
-function durationAttributes(beats: number) {
-  const candidates = [1, 2, 4, 8, 16, 32, 64].flatMap((dur) =>
-    [0, 1, 2, 3].map((dots) => ({ dur, dots, beats: 4 / dur * (2 - 1 / 2 ** dots) })))
-  const closest = candidates.reduce((best, item) =>
-    Math.abs(item.beats - beats) < Math.abs(best.beats - beats) ? item : best)
-  return `dur="${closest.dur}"${closest.dots ? ` dots="${closest.dots}"` : ''}`
 }
 
 const metronomeGlyphs: Record<number, { name: string; num: string }> = {
@@ -118,28 +86,8 @@ function chordSymbol(value: string, key: string) {
   return m3nChord(value, key)?.symbol ?? value
 }
 
-function verseXml(lyrics: VerseSyllable[], xmlId: string) {
-  return lyrics.map((lyric) => {
-    const passes = lyric.passes ? [...lyric.passes] : []
-    const passType = passes.length > 1
-      ? ` type="m3n-passes-${passes.join('-')}"`
-      : ''
-    const connection = lyric.kind === 'extender'
-      ? ' con="u"'
-      : lyric.underlined
-        ? ' type="m3n-text-underline"'
-        : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
-    const text = lyric.kind === 'placeholder'
-      ? '\u200B'
-      : lyric.underlined && lyric.kind !== 'extender'
-      ? underlinedLyricText(lyric)
-      : escapeXml(lyricText(lyric))
-    return `<verse xml:id="${xmlId}-v${lyric.verseIndex}" n="${lyric.n}"${passType}><syl${connection}>${text}</syl></verse>`
-  }).join('')
-}
-
 function eventXml(event: ScoreEvent, xmlId: string, lyrics: VerseSyllable[], accidentals?: Map<string, string>) {
-  const verse = verseXml(lyrics, xmlId)
+  const verse = meiVerseXml(lyrics, xmlId)
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '',
     event.postfixes.includes('brk') ? '<artic artic="stacciss"/>' : '',
@@ -156,10 +104,10 @@ function eventXml(event: ScoreEvent, xmlId: string, lyrics: VerseSyllable[], acc
     const content = notes.length > 1 ? `<beam>${notes.join('')}</beam>` : notes.join('')
     return content ? [`<graceGrp attach="post">${content}</graceGrp>`] : []
   }).join('')
-  if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${durationAttributes(event.beats)}/>`
+  if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}/>`
   if (event.kind === 'chord') {
     const notes = event.pitches.map((pitch) => `<note ${pitchXml(pitch, event.key, accidentals)}/>`).join('')
-    return `${graces}<chord xml:id="${xmlId}" ${durationAttributes(event.beats)}>${notes}${articulations}${verse}</chord>`
+    return `${graces}<chord xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}>${notes}${articulations}${verse}</chord>`
   }
   if (event.kind === 'tuplet' && event.tuplet) {
     const childBeats = event.tuplet.unitBeats
@@ -171,20 +119,20 @@ function eventXml(event: ScoreEvent, xmlId: string, lyrics: VerseSyllable[], acc
     }
     let lyricTargetIndex = 0
     const children = event.pitches.map((pitch, index) => {
-      if (pitch === '0') return `<rest xml:id="${xmlId}-n${index + 1}" ${durationAttributes(childBeats)}/>`
+      if (pitch === '0') return `<rest xml:id="${xmlId}-n${index + 1}" ${meiDurationAttributes(childBeats)}/>`
       const childId = `${xmlId}-n${index + 1}`
       const childLyrics = [...lyricsByVerse.values()]
         .map((verseLyrics) => verseLyrics[lyricTargetIndex])
         .filter((lyric): lyric is VerseSyllable => lyric !== undefined)
-      const childVerse = verseXml(childLyrics, childId)
+      const childVerse = meiVerseXml(childLyrics, childId)
       lyricTargetIndex += 1
-      const note = `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)} ${durationAttributes(childBeats)}`
+      const note = `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)} ${meiDurationAttributes(childBeats)}`
       return childVerse ? `${note}>${childVerse}</note>` : `${note}/>`
     }).join('')
     const content = childBeats <= 0.5 && !event.pitches.includes('0') ? `<beam>${children}</beam>` : children
     return `<tuplet xml:id="${xmlId}" num="${event.tuplet.num}" numbase="${event.tuplet.numbase}">${content}</tuplet>`
   }
-  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${durationAttributes(event.beats)}>${articulations}${verse}</note>`
+  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${meiDurationAttributes(event.beats)}>${articulations}${verse}</note>`
 }
 
 type RenderedEvent = { event: ScoreEvent; prefix?: string; xml: string }
@@ -266,10 +214,10 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       targetStart: block.targetStart,
       targetEnd: block.targetEnd,
       passes,
-      syllables: splitLyricSyllables(block.syllables).map((syllable) => ({
+      syllables: block.syllables.map((syllable) => ({
         ...syllable,
         passes,
-        cjkSpacingCompensation: CJK_OR_FULLWIDTH_CHARACTER.test(syllable.text),
+        cjkSpacingCompensation: needsCjkSpacingCompensation(syllable.text),
       })),
     }
   })
@@ -573,7 +521,6 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
     }
     while (part.bass.length > 1 && part.bass.at(-1)?.events.length === 0 && !part.bass.at(-1)?.multiRest) part.bass.pop()
     const measureCount = Math.max(part.melody.length, hasBassStaff ? part.bass.length : 0)
-    let incompleteBoundaryMeasure: { beats: number; number: number; id: string; right?: string } | undefined
     const measures = Array.from({ length: measureCount }, (_, measureIndex) => {
       const melody = part.melody[measureIndex]
       const left = melody?.left ? ` left="${melody.left}"` : ''
@@ -585,20 +532,10 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
         ? expectedBeats
         : melody?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
       const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
-      const priorIncompleteBoundary = incompleteBoundaryMeasure
-      const completesBoundary = priorIncompleteBoundary
-        && (priorIncompleteBoundary.right === 'rptend' || melody?.left === 'rptstart')
-        && Math.abs(priorIncompleteBoundary.beats + actualBeats - expectedBeats) < 1e-9
-        ? priorIncompleteBoundary
-        : undefined
       const isIncomplete = Boolean(melody && Math.abs(actualBeats - expectedBeats) > 1e-9)
-      const metcon = isIncomplete && !completesBoundary ? ' metcon="false"' : ''
-      const join = completesBoundary ? ` join="#${completesBoundary.id}"` : ''
-      const displayedNumber = completesBoundary?.number ?? ++logicalMeasureNumber
-      if (melody?.multiRest && !completesBoundary) logicalMeasureNumber += melody.multiRest - 1
-      incompleteBoundaryMeasure = isIncomplete
-        ? { beats: actualBeats, number: displayedNumber, id: measureId, right: melody?.right }
-        : undefined
+      const metcon = isIncomplete ? ' metcon="false"' : ''
+      const displayedNumber = ++logicalMeasureNumber
+      if (melody?.multiRest) logicalMeasureNumber += melody.multiRest - 1
       const staves = [
         renderStaff(melody, 1, keyChanges, meter),
         hasBassStaff ? renderStaff(part.bass[measureIndex], 2, keyChanges, meter) : '',
@@ -608,7 +545,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const tempo = document.hasExplicitTempo && partIndex === 0 && measureIndex === 0
         ? `  ${tempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1')}\n`
         : ''
-      const xml = `<measure xml:id="${measureId}" n="${displayedNumber}"${metcon}${join}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
+      const xml = `<measure xml:id="${measureId}" n="${displayedNumber}"${metcon}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
       return {
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',
