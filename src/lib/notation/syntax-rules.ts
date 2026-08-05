@@ -9,9 +9,8 @@ export function validateM3NSyntaxTree(tree: M3NSyntaxTree): ScoreDiagnostic[] {
   const report = (code: string, message: string, node: M3NSyntaxTree['directives'][number]) => {
     diagnostics.push(createScoreDiagnostic({
       code,
-      message,
       range: { start: node.start, end: node.end },
-      legacyMessage: `第 ${node.line} 行：${message}`,
+      message: `第 ${node.line} 行：${message}`,
       messageArgs: { directive: node.name },
     }))
   }

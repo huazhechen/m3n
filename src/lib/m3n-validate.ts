@@ -2,7 +2,7 @@ import { durationInBeats } from './notation/m3n-primitives'
 import { parseM3NGrace } from './notation/m3n-groups'
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
-import { createScoreDiagnostic, diagnosticFromLegacyMessage, diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
+import { createScoreDiagnostic, type ScoreDiagnostic } from './notation/diagnostics'
 import { parseM3NDocument } from './m3n-direct'
 import { hasForcedLyricOutsideTiedTarget } from './m3n-lyric-alignment'
 import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure, type M3NPhrase } from './notation/m3n-document'
@@ -70,12 +70,15 @@ function lineMessage(token: Token, message: string) {
                       : /^(?:ac|ap)\(/.test(content) ? 'M3N_SOURCE_GRACE'
                         : name === 'rest' ? 'M3N_SOURCE_MULTI_REST'
                           : 'M3N_SOURCE_DIRECTIVE'
-  const legacyMessage = `第 ${token.line} 行：${message}`
-  return createScoreDiagnostic({ code, message, legacyMessage, range: { start: token.start, end: token.end } })
+  return createScoreDiagnostic({ code, message: `第 ${token.line} 行：${message}`, range: { start: token.start, end: token.end } })
 }
 
-function lyricMessage(message: string) {
-  return `[L] ${message}`
+function sourceDiagnostic(code: string, message: string, range?: { start: number; end: number }, severity: 'error' | 'warning' = 'error') {
+  return createScoreDiagnostic({ code, message, range, severity })
+}
+
+function phraseDiagnostic(code: string, message: string, row: { start: number; text: string }, severity: 'error' | 'warning' = 'error') {
+  return sourceDiagnostic(code, message, { start: row.start, end: row.start + row.text.length }, severity)
 }
 
 function isTrivia(token: Token) {
@@ -150,7 +153,7 @@ function createUnit(meter: Meter): Unit {
 
 function validateBody(
   tokens: Token[],
-  diagnostics: Array<string | ScoreDiagnostic>,
+  diagnostics: ScoreDiagnostic[],
   options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[]; requireTerminal?: boolean } = {},
 ) {
   const bass = options.bass ?? false
@@ -184,7 +187,7 @@ function validateBody(
   }
 
   const finishRepeat = () => {
-    if (repeatOpen) diagnostics.push(`第 ${repeatOpen.line} 行：前反复线无对应后反复线`)
+    if (repeatOpen) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', `第 ${repeatOpen.line} 行：前反复线无对应后反复线`))
     repeatOpen = null
   }
 
@@ -530,15 +533,15 @@ function validateBody(
 
   if (pendingSfz) diagnostics.push(lineMessage(pendingSfz, 'sfz 后缺少目标音符或和音组'))
   if (parens.length > 0) {
-    for (const paren of parens) diagnostics.push(`第 ${paren.line} 行：圆括号未闭合`)
+    for (const paren of parens) diagnostics.push(sourceDiagnostic('M3N_SOURCE_GROUPING', `第 ${paren.line} 行：圆括号未闭合`))
   }
   finishRepeat()
 
   if (!bass) {
-    if (segnoCount > 1) diagnostics.push('segno 最多只能使用一次')
-    if (jumpCount > 1) diagnostics.push('ds 和 dc 总共最多只能使用一次')
-    if (dsCount > 0 && segnoCount !== 1) diagnostics.push('ds 必须配合唯一的 segno')
-    if (options.requireTerminal !== false && terminalCount !== 1) diagnostics.push(`未分段正文必须且只能使用一次终止线，实际 ${terminalCount} 次`)
+    if (segnoCount > 1) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', 'segno 最多只能使用一次'))
+    if (jumpCount > 1) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', 'ds 和 dc 总共最多只能使用一次'))
+    if (dsCount > 0 && segnoCount !== 1) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', 'ds 必须配合唯一的 segno'))
+    if (options.requireTerminal !== false && terminalCount !== 1) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', `未分段正文必须且只能使用一次终止线，实际 ${terminalCount} 次`))
   }
 
   return {
@@ -567,7 +570,7 @@ function lyricMeasures(text: string, start: number): LyricMeasure[] | null {
 }
 
 function validateLyricMeasureAlignment(
-  diagnostics: string[],
+  diagnostics: ScoreDiagnostic[],
   phrase: M3NPhrase,
   pass: number,
   lyric: { text: string; start: number },
@@ -578,20 +581,20 @@ function validateLyricMeasureAlignment(
     const items = parseLyricItems(lyric.text, lyric.start, 'char')
     const passTargets = measureTargets.flat()
     const expected = passTargets.filter((target) => !target.tied).length + items.filter((item) => item.forceTiedTarget).length
-    if (items.length !== expected) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：歌词对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`))
-    if (hasForcedLyricOutsideTiedTarget(items, passTargets)) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句第 ${pass} 遍的 +歌词项不位于延音目标`))
+    if (items.length !== expected) diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：歌词对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`, lyric, 'warning'))
+    if (hasForcedLyricOutsideTiedTarget(items, passTargets)) diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：乐句第 ${pass} 遍的 +歌词项不位于延音目标`, lyric, 'warning'))
     return
   }
   if (measures.length !== measureTargets.length) {
-    diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句第 ${pass} 遍需要 ${measureTargets.length} 个歌词小节，实际 ${measures.length} 个`))
+    diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：乐句第 ${pass} 遍需要 ${measureTargets.length} 个歌词小节，实际 ${measures.length} 个`, lyric, 'warning'))
   }
   for (let index = 0; index < Math.max(measures.length, measureTargets.length); index += 1) {
     const measure = measures[index] ?? { text: '', start: lyric.start + lyric.text.length }
     const targets = measureTargets[index] ?? []
     const items = parseLyricItems(measure.text, measure.start, 'char')
     const expected = targets.filter((target) => !target.tied).length + items.filter((item) => item.forceTiedTarget).length
-    if (items.length !== expected) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：歌词第 ${index + 1} 小节对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`))
-    if (hasForcedLyricOutsideTiedTarget(items, targets)) diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句第 ${pass} 遍歌词第 ${index + 1} 小节的 +歌词项不位于延音目标`))
+    if (items.length !== expected) diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：歌词第 ${index + 1} 小节对位数量不匹配：乐句第 ${pass} 遍需要 ${expected} 项，实际 ${items.length} 项`, lyric, 'warning'))
+    if (hasForcedLyricOutsideTiedTarget(items, targets)) diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：乐句第 ${pass} 遍歌词第 ${index + 1} 小节的 +歌词项不位于延音目标`, lyric, 'warning'))
   }
 }
 
@@ -671,7 +674,7 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
 }
 
 function validatePhrasePlaybackPasses(document: ScoreDocument, structure: M3NDocumentStructure) {
-  const diagnostics: string[] = []
+  const diagnostics: ScoreDiagnostic[] = []
   const part = document.parts.get('score')
   if (!part) return diagnostics
   const passesByMeasure = measurePlaybackPasses(part.melody)
@@ -687,7 +690,7 @@ function validatePhrasePlaybackPasses(document: ScoreDocument, structure: M3NDoc
       const mismatch = measures.findIndex((measure) => [...(passesByMeasure.get(measure) ?? new Set([1]))].join(',') !== firstPasses)
       const mismatchedMeasure = measures[mismatch]
       if (mismatchedMeasure && mismatch > 0) {
-        diagnostics.push(`第 ${phrase.melody.line} 行，第 ${part.melody.indexOf(mismatchedMeasure) + 1} 小节：同一乐句内的小节演奏次数必须一致`)
+        diagnostics.push(phraseDiagnostic('M3N_PHRASE_PLAYBACK', `第 ${phrase.melody.line} 行，第 ${part.melody.indexOf(mismatchedMeasure) + 1} 小节：同一乐句内的小节演奏次数必须一致`, phrase.melody))
       }
     }
   }
@@ -695,7 +698,7 @@ function validatePhrasePlaybackPasses(document: ScoreDocument, structure: M3NDoc
 }
 
 function validatePhraseSpans(document: ScoreDocument, structure: M3NDocumentStructure) {
-  const diagnostics: string[] = []
+  const diagnostics: ScoreDiagnostic[] = []
   const phrases = structure.sections.flatMap((section) => section.phrases
     .filter((phrase): phrase is M3NPhrase & { melody: NonNullable<M3NPhrase['melody']> } => Boolean(phrase.melody)))
   const phraseAt = (position: number) => phrases.findIndex((phrase) => (
@@ -706,7 +709,7 @@ function validatePhraseSpans(document: ScoreDocument, structure: M3NDocumentStru
     const events = [...document.parts.values()].flatMap((part) => part.melody.flatMap((measure) => measure.events))
       .filter((event) => phrase.melody.start <= event.sourceStart && event.sourceStart < end)
     if (events.at(-1)?.tie && (phrase.passes || phrases[index + 1]?.passes)) {
-      diagnostics.push(`第 ${phrase.melody.line} 行：延音不能跨越跳房子边界`)
+      diagnostics.push(phraseDiagnostic('M3N_PHRASE_SPAN', `第 ${phrase.melody.line} 行：延音不能跨越跳房子边界`, phrase.melody))
     }
   }
 
@@ -719,14 +722,14 @@ function validatePhraseSpans(document: ScoreDocument, structure: M3NDocumentStru
       (_, offset) => [phrases[startPhrase + offset], phrases[startPhrase + offset + 1]] as const,
     ).some(([left, right]) => left?.passes || right?.passes)) {
       const startingPhrase = phrases[startPhrase]
-      if (startingPhrase) diagnostics.push(`第 ${startingPhrase.melody.line} 行：连音不能跨越跳房子边界`)
+      if (startingPhrase) diagnostics.push(phraseDiagnostic('M3N_PHRASE_SPAN', `第 ${startingPhrase.melody.line} 行：连音不能跨越跳房子边界`, startingPhrase.melody))
     }
   }
   return diagnostics
 }
 
 function validatePhraseHarmony(document: ScoreDocument, structure: M3NDocumentStructure) {
-  const diagnostics: string[] = []
+  const diagnostics: ScoreDiagnostic[] = []
   const part = document.parts.get('score')
   if (!part) return diagnostics
   let pendingTie: { symbol: string; line: number } | undefined
@@ -741,7 +744,7 @@ function validatePhraseHarmony(document: ScoreDocument, structure: M3NDocumentSt
       const harmonyMeasures = phrase.harmony.text.split(/\|+/)
       if (harmonyMeasures.at(-1)?.trim() === '') harmonyMeasures.pop()
       if (harmonyMeasures.length !== measures.length) {
-        diagnostics.push(`第 ${phrase.harmony.line} 行：和弦行小节数量不匹配：旋律 ${measures.length} 小节，和弦 ${harmonyMeasures.length} 小节`)
+        diagnostics.push(phraseDiagnostic('M3N_HARMONY', `第 ${phrase.harmony.line} 行：和弦行小节数量不匹配：旋律 ${measures.length} 小节，和弦 ${harmonyMeasures.length} 小节`, phrase.harmony))
       }
 
       for (const [measureIndex, source] of harmonyMeasures.entries()) {
@@ -755,7 +758,7 @@ function validatePhraseHarmony(document: ScoreDocument, structure: M3NDocumentSt
           const match = tokenPattern.exec(source)
           if (!match) {
             const invalid = /^\S+/.exec(source.slice(cursor))?.[0] ?? source[cursor]!
-            diagnostics.push(`第 ${phrase.harmony.line} 行：和弦符号非法：${invalid}`)
+            diagnostics.push(phraseDiagnostic('M3N_HARMONY', `第 ${phrase.harmony.line} 行：和弦符号非法：${invalid}`, phrase.harmony))
             cursor += invalid.length
             lastChord = undefined
             continue
@@ -769,42 +772,42 @@ function validatePhraseHarmony(document: ScoreDocument, structure: M3NDocumentSt
             continue
           }
           if (value === ')') {
-            if (depth === 0) diagnostics.push(`第 ${phrase.harmony.line} 行：和弦行圆括号关闭顺序错误`)
+            if (depth === 0) diagnostics.push(phraseDiagnostic('M3N_HARMONY', `第 ${phrase.harmony.line} 行：和弦行圆括号关闭顺序错误`, phrase.harmony))
             else depth -= 1
             continue
           }
           if (value === '~') {
-            if (!lastChord) diagnostics.push(`第 ${phrase.harmony.line} 行：和弦延续线必须紧跟和弦符号`)
+            if (!lastChord) diagnostics.push(phraseDiagnostic('M3N_HARMONY', `第 ${phrase.harmony.line} 行：和弦延续线必须紧跟和弦符号`, phrase.harmony))
             else pendingTie = { symbol: lastChord, line: phrase.harmony.line }
             lastChord = undefined
             continue
           }
           if (!m3nChord(value, 'C')) {
-            diagnostics.push(`第 ${phrase.harmony.line} 行：和弦符号非法：${value}`)
+            diagnostics.push(phraseDiagnostic('M3N_HARMONY', `第 ${phrase.harmony.line} 行：和弦符号非法：${value}`, phrase.harmony))
             lastChord = undefined
             continue
           }
-          if (pendingTie && pendingTie.symbol !== value) diagnostics.push(`第 ${pendingTie.line} 行：和弦延续线两端必须是相同和弦`)
+          if (pendingTie && pendingTie.symbol !== value) diagnostics.push(sourceDiagnostic('M3N_HARMONY', `第 ${pendingTie.line} 行：和弦延续线两端必须是相同和弦`))
           pendingTie = undefined
           lastChord = value
           const measure = measures[measureIndex]
           const capacity = measure?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
           beats += capacity / 2 ** depth
         }
-        if (depth > 0) diagnostics.push(`第 ${phrase.harmony.line} 行：和弦行圆括号必须在同一小节内闭合`)
+        if (depth > 0) diagnostics.push(phraseDiagnostic('M3N_HARMONY', `第 ${phrase.harmony.line} 行：和弦行圆括号必须在同一小节内闭合`, phrase.harmony))
         const expected = measures[measureIndex]?.events.reduce((sum, event) => sum + event.beats, 0)
         if (expected !== undefined && Math.abs(beats - expected) > 1e-9) {
-          diagnostics.push(`第 ${phrase.harmony.line} 行：和弦第 ${measureIndex + 1} 小节时值不匹配：旋律 ${expected} 拍，和弦 ${beats} 拍`)
+          diagnostics.push(phraseDiagnostic('M3N_HARMONY', `第 ${phrase.harmony.line} 行：和弦第 ${measureIndex + 1} 小节时值不匹配：旋律 ${expected} 拍，和弦 ${beats} 拍`, phrase.harmony))
         }
       }
     }
   }
-  if (pendingTie) diagnostics.push(`第 ${pendingTie.line} 行：和弦延续线没有紧接的同和弦目标`)
+  if (pendingTie) diagnostics.push(sourceDiagnostic('M3N_HARMONY', `第 ${pendingTie.line} 行：和弦延续线没有紧接的同和弦目标`))
   return diagnostics
 }
 
 function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStructure) {
-  const diagnostics: string[] = []
+  const diagnostics: ScoreDiagnostic[] = []
   for (const section of structure.sections) {
     for (const phrase of section.phrases) {
       if (phrase.lyrics.length === 0) continue
@@ -819,13 +822,13 @@ function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStr
       for (const [pass, passTargets] of targets) {
         const row = rows.get(String(pass))
         if (!row) {
-          diagnostics.push(lyricMessage(`第 ${phrase.line} 行：乐句缺少 L${pass}: 歌词行`))
+          diagnostics.push(sourceDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：乐句缺少 L${pass}: 歌词行`, undefined, 'warning'))
           continue
         }
         const reference = /^\{L(\d+)\}$/.exec(row.text.trim())
         const referenced = reference ? rows.get(reference[1] ?? '') : row
         if (reference && (!referenced || Number(reference[1]) >= pass)) {
-          diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${pass}: 只能引用同一乐句中更早的编号歌词行`))
+          diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：L${pass}: 只能引用同一乐句中更早的编号歌词行`, row, 'warning'))
           continue
         }
         const lyric = { text: referenced?.text ?? '', start: referenced?.start ?? row.start }
@@ -834,10 +837,11 @@ function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStr
       for (const label of rows.keys()) {
         const pass = Number(label)
         if (targets.has(pass)) continue
+        const row = rows.get(label)!
         if (phrase.passes) {
-          diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${label}: 不属于该房子的遍次`))
+          diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：L${label}: 不属于该房子的遍次`, row, 'warning'))
         } else if (pass > requiredPasses) {
-          diagnostics.push(lyricMessage(`第 ${phrase.line} 行：L${label}: 超出乐句实际演奏次数 ${requiredPasses}`))
+          diagnostics.push(phraseDiagnostic('M3N_LYRIC_ALIGNMENT', `第 ${phrase.line} 行：L${label}: 超出乐句实际演奏次数 ${requiredPasses}`, row, 'warning'))
         }
       }
     }
@@ -894,7 +898,7 @@ function structureTokens(source: string, structure: M3NDocumentStructure, staff:
 }
 
 function validateSourceRules(source: string, structure: M3NDocumentStructure): ScoreDiagnostic[] {
-  const diagnostics: Array<string | ScoreDiagnostic> = []
+  const diagnostics: ScoreDiagnostic[] = []
   const mainResult = validateBody(structureTokens(source, structure, 'melody'), diagnostics, {
     requireTerminal: structure.sections.length === 0,
   })
@@ -906,10 +910,7 @@ function validateSourceRules(source: string, structure: M3NDocumentStructure): S
       inheritedSettingEvents: mainResult.settingEvents,
     })
   }
-  const normalized = diagnostics.map((diagnostic) => typeof diagnostic === 'string'
-    ? diagnosticFromLegacyMessage(source, diagnostic)
-    : diagnostic)
-  return [...new Map(normalized.map((diagnostic) => [diagnostic.legacyMessage, diagnostic])).values()]
+  return [...new Map(diagnostics.map((diagnostic) => [`${diagnostic.code}:${diagnostic.message}`, diagnostic])).values()]
 }
 type ValidationContext = { document?: ScoreDocument; projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree }
 
@@ -931,19 +932,14 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
   const syntaxDiagnostics = validateM3NSyntaxTree(context.syntaxTree ?? parseM3NSyntaxTree(source))
   const sourceDiagnostics = [
     ...typedSourceRuleDiagnostics,
-    ...diagnosticsFromLegacyMessages(source, phraseDiagnostics, 'M3N_PHRASE_PLAYBACK'),
-    ...diagnosticsFromLegacyMessages(source, phraseSpanDiagnostics, 'M3N_PHRASE_SPAN'),
-    ...diagnosticsFromLegacyMessages(source, harmonyDiagnostics, 'M3N_HARMONY'),
-    ...diagnosticsFromLegacyMessages(source, lyricDiagnostics, 'M3N_LYRIC_ALIGNMENT'),
+    ...phraseDiagnostics,
+    ...phraseSpanDiagnostics,
+    ...harmonyDiagnostics,
+    ...lyricDiagnostics,
   ]
   return [...projected.structure.diagnostics, ...sourceDiagnostics, ...syntaxDiagnostics, ...scoreDiagnostics]
 }
 
-export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): string[] {
-  return validationResult(source, options, { document }).map((diagnostic) => diagnostic.legacyMessage)
-}
-
-/** Typed validation result. `validateM3N` remains available for source compatibility. */
 export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument, context: Omit<ValidationContext, 'document'> = {}): ScoreDiagnostic[] {
   return validationResult(source, options, { ...context, document })
 }

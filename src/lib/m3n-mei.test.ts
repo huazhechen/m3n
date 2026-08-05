@@ -92,7 +92,7 @@ describe('M3N to MEI conversion', () => {
     expect(result.diagnostics).toEqual([])
     expect(result.title).toBe('Test')
     expect(result.mei).toContain('meiversion="5.1"')
-    expect(result.mei).toContain('\n  <meiHead>\n')
+    expect(result.mei).toContain('<meiHead>')
     expect(result.mei).toContain('<title type="main">Test</title>')
     expect(result.mei).toContain('<title type="subordinate">Sub</title>')
     expect(result.mei).toContain('<persName role="composer">Composer</persName>')
@@ -110,7 +110,7 @@ describe('M3N to MEI conversion', () => {
     ])
     expect(result.mei).not.toContain('<pgHead>')
     expect(result.mei).toContain('<scoreDef midi.bpm="90"')
-    expect(result.mei).toContain('<tempo xml:id="m3n-tempo-1" staff="1" tstamp="1" midi.bpm="90"><rend glyph.auth="smufl" glyph.name="metNoteQuarterUp" glyph.num="U+ECA5">&#xECA5;</rend> = 90</tempo>')
+    expect(result.mei).toContain('<tempo xml:id="m3n-tempo-1" staff="1" tstamp="1" midi.bpm="90"><rend glyph.auth="smufl" glyph.name="metNoteQuarterUp" glyph.num="U+ECA5">\uECA5</rend> = 90</tempo>')
     expect(result.mei).toContain('<keySig sig="2s"/>')
     expect(result.mei).toContain('meter.count="3"')
     expect(result.mei).toContain('midi.bpm="90"')
@@ -190,7 +190,7 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<dynam staff="1" startid="#m3n-e-1">p</dynam>')
     expect(result.mei).toContain('<dynam staff="1" startid="#m3n-e-9">sfz</dynam>')
     expect(result.mei).toContain('xml:id="m3n-e-1" pname="c" oct="4" dur="4"><artic')
-    expect(result.mei).toContain('xml:id="m3n-e-9" pname="c" oct="4" dur="4"></note>')
+    expect(result.mei).toContain('xml:id="m3n-e-9" pname="c" oct="4" dur="4"/>')
     expect(result.mei).toContain('<trill startid="#m3n-e-1"/>')
     expect(result.mei).toContain('<artic artic="acc"/>')
     expect(result.mei).toContain('<artic artic="stacciss"/>')
@@ -273,7 +273,7 @@ describe('M3N to MEI conversion', () => {
   it('emits a cancelling key signature when changing from A major to C major', () => {
     const result = m3nToMei('{key=A} {4/4}\n1 2 3 4 | {key=C}1 2 3 4 |||')
 
-    expect(result.mei).toMatch(/<scoreDef>\s*<staffGrp>\s*<staffDef n="1"><keySig sig="0"\/><\/staffDef>/)
+    expect(result.mei).toContain('<keySig sig="0"><keyAccid pname="f" accid="n"/><keyAccid pname="c" accid="n"/><keyAccid pname="g" accid="n"/></keySig>')
   })
 
   it('uses score definitions and beam groups for meter changes at measure boundaries', () => {
@@ -297,8 +297,8 @@ describe('M3N to MEI conversion', () => {
   it('keeps a grace group outside the main-note beam', () => {
     const result = m3nToMei('{key=C} {2/4}\n(7e){ac(56)} (6e) (5e) (6e) |||')
 
-    expect(result.mei).toContain('</graceGrp>\n                    <beam>\n                    <note xml:id="m3n-e-1"')
-    expect(result.mei).not.toContain('<beam>\n                    <graceGrp')
+    expect(result.mei).toMatch(/<\/graceGrp><beam><note xml:id="m3n-e-1"/)
+    expect(result.mei).not.toMatch(/<beam><graceGrp/)
   })
 
   it('beams consecutive eighth notes in two-beat groups in 4/4', () => {
@@ -358,10 +358,10 @@ describe('M3N to MEI conversion', () => {
     const start = m3nToMei('{3/4}\nN: {segno}1 2 3 |||').mei
     const ending = m3nToMei('{3/4}\nN: 1 2 3 {fine} | 1 2 3 {ds} | {rest=4} {dc} |||').mei
 
-    expect(start).toContain('<repeatMark staff="1" tstamp="1" place="above" func="segno"></repeatMark>')
+    expect(start).toContain('<repeatMark staff="1" tstamp="1" place="above" func="segno"/>')
     expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="fine">Fine</repeatMark>')
-    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="dalSegno"></repeatMark>')
-    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="daCapo"></repeatMark>')
+    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="dalSegno"/>')
+    expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="daCapo"/>')
     expect(ending).toMatch(/<multiRest num="4"\/>[\s\S]*?<repeatMark staff="1" tstamp="4"[^>]*func="daCapo"/)
   })
 
@@ -411,7 +411,7 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei(source)
 
     expect(result.mei.match(/<beam>/g)).toHaveLength(14)
-    expect(result.mei).toMatch(/<beam>\s+<note/)
+    expect(result.mei).toMatch(/<beam><note/)
   })
 
   it('does not beam across rests', () => {

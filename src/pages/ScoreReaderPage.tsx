@@ -82,9 +82,9 @@ export function ScoreReaderPage() {
           invalidMeasureIds={invalidMeasures}
           showPrintButton={false}
         />
-        {result.diagnosticDetails.length > 0 && (
+        {result.diagnostics.length > 0 && (
           <ul className="diagnostics score-reader-diagnostics" aria-label="乐谱校验错误">
-            {result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.legacyMessage}`}>{formatScoreDiagnostic(item)}</li>)}
+            {result.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}
           </ul>
         )}
       </section>

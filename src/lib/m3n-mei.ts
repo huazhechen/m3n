@@ -7,8 +7,8 @@ import type { ScoreDiagnostic } from './notation/diagnostics'
 import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './notation/score-document'
 import { meiVerseXml, needsCjkSpacingCompensation, type MeiVerseSyllable } from './notation/mei-lyrics'
 import { escapeXml, meiDurationAttributes } from './notation/mei-xml'
-import type { M3NDocumentProjection } from './notation/m3n-document'
-import type { M3NSyntaxTree } from './notation/syntax-tree'
+import { projectM3NDocument, type M3NDocumentProjection } from './notation/m3n-document'
+import { parseM3NSyntaxTree, type M3NSyntaxTree } from './notation/syntax-tree'
 import { meiDocumentXml, meiKeySignature, scoreHeaderMetadata, type ScoreHeaderMetadata } from './notation/mei-document'
 import { meiSectionContent, type MeiLayoutNode } from './notation/mei-layout'
 
@@ -18,8 +18,7 @@ export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd:
 export type MeiConversionResult = {
   source: string
   mei: string
-  diagnostics: string[]
-  diagnosticDetails: ScoreDiagnostic[]
+  diagnostics: ScoreDiagnostic[]
   sourceMap: MeiSourceMapRange[]
   title: string
   subtitle: string
@@ -182,7 +181,10 @@ function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number)
   return result
 }
 
-export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocument(source), context: { projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree } = {}): MeiConversionResult {
+export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, context: { projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree } = {}): MeiConversionResult {
+  const syntaxTree = context.syntaxTree ?? parseM3NSyntaxTree(source)
+  const projection = context.projection ?? projectM3NDocument(source, syntaxTree)
+  const document = suppliedDocument ?? parseM3NDocument(source, projection)
   const sourceMap: MeiSourceMapRange[] = []
   const hasBassStaff = [...document.parts.values()].some((part) => part.bass.some((measure) => measure.events.length > 0))
   let eventIndex = 0
@@ -393,6 +395,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
 
   const keyChangesForMeasure = (measure: ScoreMeasure | undefined, staffNumber: number) => {
     let key = previousKeyByStaff.get(staffNumber) ?? document.key
+    const previousKey = key
     const changes = new Map<number, string>()
     let openingKey: string | undefined
     for (const [eventIndex, event] of (measure?.events ?? []).entries()) {
@@ -403,14 +406,24 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       }
     }
     previousKeyByStaff.set(staffNumber, key)
-    return { changes, openingKey }
+    return { changes, openingKey, previousKey }
   }
 
-  const keyScoreDefXml = (key: string) => [
+  const cancellingKeySigXml = (key: string, previousKey: string) => {
+    const nextSignature = meiKeySignature(key)
+    const previousSignature = meiKeySignature(previousKey)
+    const match = /^(\d+)([sf])$/.exec(previousSignature)
+    if (nextSignature !== '0' || !match) return `<keySig sig="${nextSignature}"/>`
+    const order = match[2] === 's' ? ['f', 'c', 'g', 'd', 'a', 'e', 'b'] : ['b', 'e', 'a', 'd', 'g', 'c', 'f']
+    const accidentals = order.slice(0, Number(match[1])).map((pname) => `<keyAccid pname="${pname}" accid="n"/>`).join('')
+    return `<keySig sig="0">${accidentals}</keySig>`
+  }
+
+  const keyScoreDefXml = (key: string, previousKey: string) => [
     '<scoreDef>',
     '  <staffGrp>',
-    `    <staffDef n="1"><keySig sig="${meiKeySignature(key)}"/></staffDef>`,
-    ...(hasBassStaff ? [`    <staffDef n="2"><keySig sig="${meiKeySignature(key)}"/></staffDef>`] : []),
+    `    <staffDef n="1">${cancellingKeySigXml(key, previousKey)}</staffDef>`,
+    ...(hasBassStaff ? [`    <staffDef n="2">${cancellingKeySigXml(key, previousKey)}</staffDef>`] : []),
     '  </staffGrp>',
     '</scoreDef>',
   ].join('\n')
@@ -523,7 +536,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const melody = part.melody[measureIndex]
       const left = melody?.left ? ` left="${melody.left}"` : ''
       const right = melody?.right ? ` right="${melody.right}"` : ''
-      const { changes: keyChanges, openingKey } = keyChangesForMeasure(melody, 1)
+      const { changes: keyChanges, openingKey, previousKey } = keyChangesForMeasure(melody, 1)
       const { meter, openingMeter } = meterChangeForMeasure(melody)
       const expectedBeats = meter.count * 4 / meter.unit
       const actualBeats = melody?.multiRest
@@ -550,7 +563,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
         navigation: melody?.navigation ?? melody?.events.flatMap((event) => event.navigation) ?? [],
         breakBefore: melody?.breakBefore,
         breakAfter: melody?.breakAfter,
-        scoreDef: [openingKey ? keyScoreDefXml(openingKey) : '', openingMeter ? meterScoreDefXml(openingMeter) : ''].filter(Boolean).join('\n'),
+        scoreDef: [openingKey ? keyScoreDefXml(openingKey, previousKey) : '', openingMeter ? meterScoreDefXml(openingMeter) : ''].filter(Boolean).join('\n'),
         xml,
       }
     })
@@ -597,9 +610,9 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
   const sectionContent = meiSectionContent(layoutNodes, hasNavigation)
   const headerMetadata = scoreHeaderMetadata(document)
   const mei = meiDocumentXml(document, sectionContent, hasBassStaff)
-  const diagnosticDetails = validateM3NDiagnostics(source, {}, document, context)
+  const diagnostics = validateM3NDiagnostics(source, {}, document, { syntaxTree, projection })
   return {
-    source, mei, diagnostics: diagnosticDetails.map((diagnostic) => diagnostic.legacyMessage), diagnosticDetails, sourceMap,
+    source, mei, diagnostics, sourceMap,
     title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,
     lyricist: document.lyricist, arranger: document.arranger, hasBassStaff,
     headerMetadata,

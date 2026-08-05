@@ -52,7 +52,6 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
     diagnostics.push(createScoreDiagnostic({
       code,
       message: located,
-      legacyMessage: located,
       range,
       messageArgs: line === undefined ? messageArgs : { ...messageArgs, line },
     }))
@@ -64,6 +63,17 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
     expected: measureExpectedBeats(document, measure),
   }))
   const equal = (left: number, right: number) => Math.abs(left - right) <= EPSILON
+  const complementary = new Set<number>()
+  for (let index = 0; index < values.length - 1; index += 1) {
+    const left = values[index]
+    const right = values[index + 1]
+    if (!left || !right || left.actual >= left.expected || right.actual >= right.expected) continue
+    if (equal(left.expected, right.expected) && equal(left.actual + right.actual, left.expected)) {
+      complementary.add(index)
+      complementary.add(index + 1)
+      index += 1
+    }
+  }
   for (const value of values) {
     if (value.actual > value.expected && !equal(value.actual, value.expected)) {
       report('M3N_METER_OVERFULL', `第 ${value.index + 1} 小节拍数超出：期望 ${value.expected} 拍，实际 ${value.actual} 拍`, value.measure,
@@ -79,6 +89,7 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
     return diagnostics
   }
   for (const value of values.slice(1, -1)) {
+    if (complementary.has(value.index)) continue
     if (!equal(value.actual, value.expected)) {
       report('M3N_METER_INCOMPLETE_MIDDLE', `第 ${value.index + 1} 小节：中间小节拍数不合规：期望 ${value.expected} 拍，实际 ${value.actual} 拍`, value.measure,
         { measure: value.index + 1, expected: value.expected, actual: value.actual })
@@ -87,6 +98,7 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   const first = values[0]
   const last = values.at(-1)
   if (!first || !last) return diagnostics
+  if (complementary.has(first.index) || complementary.has(last.index)) return diagnostics
   if (equal(first.actual, first.expected)) {
     if (!equal(last.actual, last.expected)) {
       report('M3N_METER_INCOMPLETE_FINAL', `第 ${last.index + 1} 小节：没有弱起时末小节拍数必须满拍：期望 ${last.expected} 拍，实际 ${last.actual} 拍`, last.measure,
@@ -123,7 +135,6 @@ function validateTies(measures: readonly ScoreMeasure[], source?: string) {
     diagnostics.push(createScoreDiagnostic({
       code: 'M3N_TIE_TARGET_MISMATCH',
       message: located,
-      legacyMessage: located,
       range: { start: event.sourceStart, end: event.sourceEnd },
     }))
   }
@@ -143,7 +154,6 @@ export function validateScoreDocument(document: ScoreDocument, options: { skipBe
       diagnostics.push(createScoreDiagnostic({
         code: 'M3N_BASS_MEASURE_COUNT',
         message,
-        legacyMessage: message,
         range: measureRange(bass.at(-1)),
         messageArgs: { melodyMeasures: melody.length, bassMeasures: bass.length },
       }))
@@ -159,7 +169,6 @@ export function validateScoreDocument(document: ScoreDocument, options: { skipBe
       diagnostics.push(createScoreDiagnostic({
         code: 'M3N_BASS_DURATION_MISMATCH',
         message,
-        legacyMessage: message,
         range: measureRange(bassMeasure),
         messageArgs: { measure: index + 1, melodyBeats, bassBeats },
       }))

@@ -18,6 +18,7 @@
     "src/lib/notation/mei-layout.ts",
     "src/lib/notation/repeats.ts",
     "src/lib/notation/analysis.ts",
+    "src/types/xmlbuilder2-browser.d.ts",
     "src/lib/m3n-direct.ts",
     "src/lib/m3n-lyric-alignment.ts",
     "src/lib/m3n-mei.ts",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatM3N } from './m3n-format'
-import { validateM3N } from './m3n-validate'
+import { validateM3NDiagnostics } from './m3n-validate'
 
 describe('formatM3N', () => {
   it('formats the current phrase structure without rewriting music atoms', () => {
@@ -38,7 +38,7 @@ describe('formatM3N', () => {
 
     expect(formatM3N(formatted)).toBe(formatted)
     expect(formatted).not.toContain('\n\n')
-    expect(validateM3N(formatted)).toEqual([])
+    expect(validateM3NDiagnostics(formatted)).toEqual([])
   })
 
   it('normalizes directive whitespace without splitting long phrases', () => {

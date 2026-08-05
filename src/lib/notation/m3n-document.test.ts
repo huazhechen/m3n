@@ -28,12 +28,12 @@ describe('M3N v0.4 document structure', () => {
 
     expect(document.diagnostics).toContainEqual(expect.objectContaining({
       code: 'M3N_STRUCTURE_DUPLICATE_MELODY',
-      legacyMessage: '第 2 行：同一乐句只能有一个 N: 行',
+      message: '第 2 行：同一乐句只能有一个 N: 行',
       range: { start: 9, end: 17 },
     }))
     expect(document.diagnostics).toContainEqual(expect.objectContaining({
       code: 'M3N_STRUCTURE_MIXED_LYRIC_LABELS',
-      legacyMessage: '第 1 行：L: 与编号歌词行不能混用',
+      message: '第 1 行：L: 与编号歌词行不能混用',
     }))
   })
 
@@ -43,13 +43,12 @@ describe('M3N v0.4 document structure', () => {
     expect(document.diagnostics).toEqual([])
   })
 
-  it('requires melody rows to end with a bar and restricts supplementary bars to alignment', () => {
+  it('allows melody fragments and restricts supplementary bars to alignment', () => {
     const document = parseM3NDocumentStructure('N: 1 2\nB: 1d 2d ||\nL: 甲乙 :||')
 
-    expect(document.diagnostics.map((item) => item.legacyMessage)).toEqual([
+    expect(document.diagnostics.map((item) => item.message)).toEqual([
       '第 2 行：B: 只允许使用普通 | 作为小节对位标记',
       '第 3 行：L: 只允许使用普通 | 作为小节对位标记',
-      '第 1 行：每个 N: 乐句必须以小节线结束',
     ])
   })
 
@@ -65,11 +64,11 @@ describe('M3N v0.4 document structure', () => {
     expect(document.diagnostics).toEqual([
       expect.objectContaining({
         code: 'M3N_STRUCTURE_TRAILING_REPEAT_START',
-        legacyMessage: '第 1 行：乐句不能以前反复线结尾',
+        message: '第 1 行：乐句不能以前反复线结尾',
       }),
       expect.objectContaining({
         code: 'M3N_STRUCTURE_TRAILING_REPEAT_START',
-        legacyMessage: '第 3 行：乐句不能以前反复线结尾',
+        message: '第 3 行：乐句不能以前反复线结尾',
       }),
     ])
   })

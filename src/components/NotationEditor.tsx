@@ -151,8 +151,8 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
           onPaperBlur={() => setIsCursorHighlightActive(false)}
           showPrintButton={false}
         />
-        {result.diagnosticDetails.length > 0 && (
-          <ul className="diagnostics editor-render-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.legacyMessage}`}>{formatScoreDiagnostic(item)}</li>)}</ul>
+        {result.diagnostics.length > 0 && (
+          <ul className="diagnostics editor-render-diagnostics">{result.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>
         )}
         {shareError && <p className="editor-share-error" role="alert">{shareError}</p>}
       </div>

@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { invalidMeasureBarEnds, invalidMeasureIds, validateM3N, validateM3NDiagnostics } from './m3n-validate'
+import { invalidMeasureBarEnds, invalidMeasureIds, validateM3NDiagnostics } from './m3n-validate'
 import { parseM3NDocument } from './m3n-direct'
+import { presetScores } from './samples'
 
+const validateM3N = (source: string, options: { skipBeatValidation?: boolean } = {}, document?: ReturnType<typeof parseM3NDocument>) =>
+  validateM3NDiagnostics(source, options, document).map((diagnostic) => diagnostic.message)
 const messages = (source: string) => validateM3N(source).join('\n')
 
 describe('validateM3N', () => {
+  it('accepts the phrase and pickup fragments in Turkish March', () => {
+    const source = presetScores.find((score) => score.slug === 'turkish_march_01')?.source ?? ''
+    expect(validateM3NDiagnostics(source)).toEqual([])
+  })
 
   it('validates bar-aligned v0.3 lyrics measure by measure', () => {
     expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁')).toEqual([])

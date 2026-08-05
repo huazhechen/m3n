@@ -28,7 +28,7 @@ pages -> components -> features -> lib/notation
 - `lib/notation/score-document.ts`：规范化乐谱、声部、小节、事件、歌词和演奏区间契约。
 - `lib/notation/analysis.ts`：交互调用方的统一分析入口。
 - `lib/notation/types.ts`：转换结果和源码映射契约。
-- `lib/notation/diagnostics.ts`：结构化诊断契约；迁移期间保留旧字符串诊断 API，以兼容现有调用方。
+- `lib/notation/diagnostics.ts`：结构化诊断契约；规则在产生诊断的位置直接提供稳定 code、严重级别和源码范围，不保留字符串诊断模式。
 - `lib/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
 - `lib/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
 - `lib/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；负责小节时值、延音目标和双谱表对齐。
@@ -39,7 +39,7 @@ pages -> components -> features -> lib/notation
 - `lib/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
 - `lib/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
 - `lib/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
-- `lib/notation/mei-document.ts`：MEI 文档头、责任者元数据和 `scoreDef` 序列化。
+- `lib/notation/mei-document.ts`：通过 XML builder 组装 MEI 文档头、责任者元数据、`scoreDef` 和 section，统一处理文本转义与文档序列化。
 - `lib/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
 - `features/score-renderer/verovio-score.ts`：Verovio SVG 排版、MIDI 生成和时间映射。
 - `features/score-renderer/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
@@ -68,7 +68,7 @@ pages -> components -> features -> lib/notation
 1. `analyzeM3N` 在同一会话中构造语法树、结构投影和 `ScoreDocument`，派生消费者复用该上下文。
 2. `notation/repeats` 通过单一播放计划同时提供演奏顺序和节点轮次。
 3. 文档结构和区间指令规则消费 `M3NSyntaxTree`，节拍、延音和双谱表规则消费 `ScoreDocument`；源码规则直接消费原文 token，诊断内部统一为 `ScoreDiagnostic[]`。
-4. 诊断使用 `{ code, severity, message, messageArgs, range }`；UI 优先按稳定 code 和参数本地化，未迁移规则回退 `legacyMessage`。
+4. 诊断只使用 `{ code, severity, message, messageArgs, range }`；UI 优先按稳定 code 和参数本地化，并以 `message` 作为未本地化 code 的显示回退。
 5. `typecheck:notation` 已对语法内核、文档结构和 `ScoreDocument` builder 启用 `noUncheckedIndexedAccess`；扩大范围时必须消除真实风险，不使用无依据的非空断言。
 7. Playwright 已覆盖真实浏览器编辑重排、播放/暂停、导出和源码双向定位；继续扩展键盘可访问性及多实例资源销毁场景。
 

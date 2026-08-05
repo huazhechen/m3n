@@ -10,7 +10,6 @@ export type ScoreDiagnostic = {
   severity: DiagnosticSeverity
   message: string
   range?: DiagnosticRange
-  legacyMessage: string
   messageArgs?: Readonly<Record<string, string | number>>
 }
 
@@ -19,7 +18,6 @@ export function createScoreDiagnostic(input: {
   message: string
   range?: DiagnosticRange
   severity?: DiagnosticSeverity
-  legacyMessage?: string
   messageArgs?: Readonly<Record<string, string | number>>
 }): ScoreDiagnostic {
   return {
@@ -27,39 +25,8 @@ export function createScoreDiagnostic(input: {
     severity: input.severity ?? 'error',
     message: input.message,
     range: input.range,
-    legacyMessage: input.legacyMessage ?? input.message,
     messageArgs: input.messageArgs,
   }
-}
-
-function rangeForLine(source: string, line: number): DiagnosticRange | undefined {
-  if (!Number.isSafeInteger(line) || line < 1) return undefined
-  let start = 0
-  for (let current = 1; current < line; current += 1) {
-    const newline = source.indexOf('\n', start)
-    if (newline === -1) return undefined
-    start = newline + 1
-  }
-  const newline = source.indexOf('\n', start)
-  return { start, end: newline === -1 ? source.length : newline }
-}
-
-/** Converts the established text protocol while consumers migrate to typed diagnostics. */
-export function diagnosticFromLegacyMessage(source: string, legacyMessage: string, code?: string): ScoreDiagnostic {
-  const lyric = legacyMessage.startsWith('[L] ')
-  const messageWithLocation = lyric ? legacyMessage.slice(4) : legacyMessage
-  const located = /^第 (\d+) 行：(.*)$/u.exec(messageWithLocation)
-  return {
-    code: code ?? (lyric ? 'M3N_LYRIC_ALIGNMENT' : 'M3N_VALIDATION'),
-    severity: lyric ? 'warning' : 'error',
-    message: located?.[2] ?? messageWithLocation,
-    range: located ? rangeForLine(source, Number(located[1])) : undefined,
-    legacyMessage,
-  }
-}
-
-export function diagnosticsFromLegacyMessages(source: string, messages: readonly string[], code?: string): ScoreDiagnostic[] {
-  return messages.map((message) => diagnosticFromLegacyMessage(source, message, code))
 }
 
 const localizedMessages: Partial<Record<string, (args: Readonly<Record<string, string | number>>) => string>> = {
@@ -75,5 +42,5 @@ const localizedMessages: Partial<Record<string, (args: Readonly<Record<string, s
 export function formatScoreDiagnostic(diagnostic: ScoreDiagnostic) {
   const formatter = localizedMessages[diagnostic.code]
   if (formatter && diagnostic.messageArgs) return formatter(diagnostic.messageArgs)
-  return diagnostic.legacyMessage
+  return diagnostic.message
 }

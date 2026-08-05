@@ -22,6 +22,15 @@ async function renderedPitches(source: string) {
 }
 
 describe('VerovioScore layout', () => {
+  it('renders cautionary naturals when changing from A major to C major', async () => {
+    const toolkit = new VerovioToolkit(await createVerovioModule())
+    try {
+      expect(toolkit.loadData(m3nToMei('{key=A} {4/4}\n1 2 3 4 | {key=C}1 2 3 4 |||').mei)).toBe(1)
+      expect(toolkit.renderToSVG(1)).toContain('E261')
+    } finally {
+      toolkit.destroy()
+    }
+  })
   it('collects the final measure of each automatically laid-out system', () => {
     const breaks = automaticSystemBreakMeasureIds([
       '<g class="system"><g id="m3n-measure-1-1"/><g id="m3n-measure-1-2"/></g><g class="system"><g id="m3n-measure-1-3"/></g>',
