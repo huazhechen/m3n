@@ -305,13 +305,20 @@ function formatLine(line: string) {
 }
 
 function addLyricMeasureBars(source: string) {
+  source = source.split('\n').map((line) => {
+    const match = /^(L\d*:\s*)(.*)$/.exec(line)
+    if (!match) return line
+    const { content, comment } = splitInlineComment(match[2] ?? '')
+    const lyric = content.replace(/\s*\|\s*/g, '').trimEnd()
+    return appendComment(`${match[1]}${lyric}`, comment)
+  }).join('\n')
   const structure = parseM3NDocumentStructure(source)
   const document = parseM3NDocument(source)
   const insertions: Array<{ start: number; end: number }> = []
   for (const section of structure.sections) for (const phrase of section.phrases) {
     const targetsByPass = phraseLyricTargets(document, structure, section.name, phrase)
     for (const lyric of phrase.lyrics) {
-      if (lyric.text.includes('|')) continue
+      if (/^\{L\d+\}$/.test(lyric.text.trim())) continue
       const pass = Number(lyric.label || 1)
       const measures = targetsByPass.get(pass) ?? targetsByPass.values().next().value
       if (!measures || measures.length < 2) continue
@@ -325,16 +332,28 @@ function addLyricMeasureBars(source: string) {
           if (!item) break
           remaining -= 1
         }
-        const item = items[itemIndex - 1]
-        if (!item || remaining > 0) break
-        let end = item.sourceEnd
+        if (remaining > 0) break
+        const previousItem = items[itemIndex - 1]
+        const nextItem = items[itemIndex]
+        const start = previousItem?.sourceEnd ?? nextItem?.sourceStart ?? lyric.start + lyric.text.length
+        let end = start
         while (end < source.length && /[ \t]/.test(source[end] ?? '')) end += 1
-        insertions.push({ start: item.sourceEnd, end })
+        insertions.push({ start, end })
       }
     }
   }
-  return [...new Map(insertions.map((item) => [item.start, item])).values()].sort((left, right) => right.start - left.start)
-    .reduce((result, item) => `${result.slice(0, item.start)} | ${result.slice(item.end)}`, source)
+  const grouped = new Map<number, { start: number; end: number; count: number }>()
+  for (const insertion of insertions) {
+    const existing = grouped.get(insertion.start)
+    if (existing) existing.count += 1
+    else grouped.set(insertion.start, { ...insertion, count: 1 })
+  }
+  return [...grouped.values()].sort((left, right) => right.start - left.start).reduce((result, item) => {
+    const bars = Array.from({ length: item.count }, () => '|').join(' ')
+    const leading = /\s/.test(result[item.start - 1] ?? '') ? '' : ' '
+    const trailing = item.end >= result.length || /[\r\n]/.test(result[item.end] ?? '') ? '' : ' '
+    return `${result.slice(0, item.start)}${leading}${bars}${trailing}${result.slice(item.end)}`
+  }, source)
 }
 
 /** Formats M3N layout without changing musical, structural, or lyric semantics. */

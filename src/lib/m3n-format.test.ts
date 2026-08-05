@@ -62,4 +62,13 @@ describe('formatM3N', () => {
 
     expect(formatM3N(source)).toBe('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁\n')
   })
+
+  it('preserves empty lyric measures when adding alignment bars', () => {
+    const middle = '{2/4}\nN: 1 2 | 0^ | 3 4 |||\nL: 甲乙 | 丙丁\n'
+    const consecutive = '{2/4}\nN: 0^ | 0^ | 1 2 |||\nL: 甲乙\n'
+
+    expect(formatM3N(middle)).toContain('L: 甲乙 | | 丙丁')
+    expect(formatM3N(consecutive)).toContain('L: | | 甲乙')
+    expect(formatM3N(formatM3N(middle))).toBe(formatM3N(middle))
+  })
 })
