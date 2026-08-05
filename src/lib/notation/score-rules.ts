@@ -120,10 +120,11 @@ function absolutePitches(event: { pitches: string[]; key: string; octaveShift: n
 
 function validateTies(measures: readonly ScoreMeasure[], source?: string) {
   const diagnostics: ScoreDiagnostic[] = []
-  const events = measures.flatMap((measure) => measure.events)
-  for (const [index, event] of events.entries()) {
+  const events = measures.flatMap((measure, measureIndex) => measure.events.map((event) => ({ event, measureIndex })))
+  for (const [index, item] of events.entries()) {
+    const { event, measureIndex } = item
     if (!event.tie || event.kind === 'rest') continue
-    const target = events[index + 1]
+    const target = events[index + 1]?.event
     const sourceKind = event.kind === 'tuplet' ? 'note' : event.kind
     const sourcePitches = event.kind === 'tuplet' ? event.pitches.slice(-1) : event.pitches
     const matches = target && target.kind === sourceKind
@@ -131,11 +132,13 @@ function validateTies(measures: readonly ScoreMeasure[], source?: string) {
     if (matches) continue
     const message = '延音目标的类型或绝对音高不匹配'
     const line = sourceLine(source, event.sourceStart)
-    const located = line === undefined ? message : `第 ${line} 行：${message}`
+    const measure = measureIndex + 1
+    const located = line === undefined ? `第 ${measure} 小节：${message}` : `第 ${line} 行，第 ${measure} 小节：${message}`
     diagnostics.push(createScoreDiagnostic({
       code: 'M3N_TIE_TARGET_MISMATCH',
       message: located,
       range: { start: event.sourceStart, end: event.sourceEnd },
+      messageArgs: { measure, ...(line === undefined ? {} : { line }) },
     }))
   }
   return diagnostics

@@ -34,9 +34,14 @@ describe('score document rules', () => {
   })
 
   it('validates ordinary and tuplet tie targets by absolute pitch', () => {
-    const ordinary = validateScoreDocument(parseM3NDocument('{key=C} {2/4}\n1~ 2 |||'))
+    const ordinarySource = '{key=C} {2/4}\n1 1~ | 2 2 |||'
+    const ordinary = validateScoreDocument(parseM3NDocument(ordinarySource), { source: ordinarySource })
     const tuplet = validateScoreDocument(parseM3NDocument('{key=C} {4/4}\n[123~:2] 4 0 |||'))
-    expect(ordinary.some((item) => item.code === 'M3N_TIE_TARGET_MISMATCH')).toBe(true)
+    expect(ordinary).toContainEqual(expect.objectContaining({
+      code: 'M3N_TIE_TARGET_MISMATCH',
+      message: '第 2 行，第 1 小节：延音目标的类型或绝对音高不匹配',
+      messageArgs: { line: 2, measure: 1 },
+    }))
     expect(tuplet.some((item) => item.code === 'M3N_TIE_TARGET_MISMATCH')).toBe(true)
   })
 })
