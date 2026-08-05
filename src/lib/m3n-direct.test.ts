@@ -99,6 +99,13 @@ describe('direct M3N parser', () => {
     expect(measures?.[1]).toMatchObject({ left: 'rptstart' })
   })
 
+  it('assigns a multi-measure rest to its alternate ending', () => {
+    const measures = parseM3NDocument('{3/4}\nN: ||: 1 2 3 |\n---V1\nN: {rest=3} :||\n---V2\nN: 1 2 3 |||').parts.get('score')?.melody
+
+    expect(measures?.[1]).toMatchObject({ multiRest: 3, ending: '1', right: 'rptend' })
+    expect(measures?.[2]).toMatchObject({ ending: '2' })
+  })
+
   it('does not create an empty measure from duplicate bars across phrase lines', () => {
     const source = '{2/4}\nN: 1 2 |\n---\nN: | 3 4 |||'
     const measures = parseM3NDocument(source).parts.get('score')?.melody

@@ -335,6 +335,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<multiRest num="4"/>')
   })
 
+  it('serializes an alternate ending containing only a multi-measure rest', () => {
+    const result = m3nToMei('{3/4}\nN: ||: 1 2 3 |\n---V1\nN: {rest=3} {fine}:||\n---V2\nN: 1 2 3 |||')
+
+    expect(result.mei).toMatch(/<ending[^>]*n="1">[\s\S]*?<multiRest num="3"\/>[\s\S]*?<\/ending>/)
+  })
+
   it('serializes text dynamics as directions and parameterless dynamics as hairpins', () => {
     const result = m3nToMei('{key=C} {4/4}\n{cresc=text}1 2{/} {dim=text}3 4{/} | {cresc}1 2{/} {decres}3 4{/} |||')
 

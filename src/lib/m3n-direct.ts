@@ -60,6 +60,9 @@ function parseBody(
   }
   const measures = () => getPart()[staff]
   const measure = () => measures().at(-1) as ScoreMeasure
+  const syncActiveEnding = (sourceStart: number) => {
+    activeEnding = phrasePasses.find((phrase) => phrase.start <= sourceStart && sourceStart < phrase.end)?.passes
+  }
   const ensureEndingMeasure = () => {
     const current = measure()
     if (current.events.length > 0 && current.ending !== activeEnding) {
@@ -69,7 +72,7 @@ function parseBody(
     }
   }
   const add = (event: ScoreEvent) => {
-    activeEnding = phrasePasses.find((phrase) => phrase.start <= event.sourceStart && event.sourceStart < phrase.end)?.passes
+    syncActiveEnding(event.sourceStart)
     ensureEndingMeasure()
     event.dynamic = dynamicChanged ? currentDynamic : undefined
     event.chord = chordChanged ? currentChord : undefined
@@ -144,6 +147,8 @@ function parseBody(
       }
       const multiRest = /^rest=(\d+)$/.exec(value)
       if (multiRest) {
+        syncActiveEnding(token.start)
+        ensureEndingMeasure()
         measure().multiRest = Number(multiRest[1])
         elapsedBeats += Number(multiRest[1]) * currentMeterCount * 4 / currentMeterUnit
       }
