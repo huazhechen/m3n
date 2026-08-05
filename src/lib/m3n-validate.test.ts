@@ -232,8 +232,8 @@ describe('validateM3N', () => {
   it('returns stable typed diagnostic categories and source ranges', () => {
     const source = '{4/4}\nN: 8 2 3 4 |||'
     const diagnostics = validateM3NDiagnostics(source)
-    expect(diagnostics.some((item) => item.code === 'M3N_SYNTAX')).toBe(true)
-    expect(diagnostics.find((item) => item.range)?.range).toEqual({ start: 6, end: source.length })
+    expect(diagnostics.some((item) => item.code === 'M3N_SOURCE_SYNTAX')).toBe(true)
+    expect(diagnostics.find((item) => item.code === 'M3N_SOURCE_SYNTAX')?.range).toEqual({ start: 9, end: 10 })
   })
 
   it('validates bass alignment from the normalized score document', () => {

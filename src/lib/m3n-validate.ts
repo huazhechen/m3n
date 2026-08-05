@@ -2,7 +2,7 @@ import { durationInBeats } from './notation/m3n-primitives'
 import { parseM3NGrace } from './notation/m3n-groups'
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
-import { diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
+import { createScoreDiagnostic, diagnosticFromLegacyMessage, diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
 import { parseM3NDocument } from './m3n-direct'
 import { hasForcedLyricOutsideTiedTarget } from './m3n-lyric-alignment'
 import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure, type M3NPhrase } from './notation/m3n-document'
@@ -55,7 +55,16 @@ const KEY_PATTERN = /^([A-G](?:#|b)?)(dor|phr|lyd|mix|m|loc)?$/
 const CHORD_PATTERN = /^(I|II|III|IV|V|VI|VII|i|ii|iii|iv|v|vi|vii)(?:m|dim|aug|sus2|sus4|[2-9]|1[0-3])?$/
 
 function lineMessage(token: Token, message: string) {
-  return `第 ${token.line} 行：${message}`
+  const code = message.includes('乐谱信息') || message.includes('transpose') ? 'M3N_SOURCE_METADATA'
+    : message.includes('拍号') ? 'M3N_SOURCE_METER'
+      : message.includes('速度') || message.includes('渐快') || message.includes('渐慢') ? 'M3N_SOURCE_TEMPO'
+        : message.includes('反复') || message.includes('segno') || message.includes('ds') || message.includes('dc') ? 'M3N_SOURCE_REPEAT'
+          : message.includes('和弦') || message.includes('和音') || message.includes('琶音') ? 'M3N_SOURCE_HARMONY'
+            : message.includes('装饰音') ? 'M3N_SOURCE_GRACE'
+              : message.includes('音高') || message.includes('音符') || message.includes('休止符') ? 'M3N_SOURCE_PITCH'
+                : 'M3N_SOURCE_SYNTAX'
+  const legacyMessage = `第 ${token.line} 行：${message}`
+  return createScoreDiagnostic({ code, message, legacyMessage, range: { start: token.start, end: token.end } })
 }
 
 function lyricMessage(message: string) {
@@ -134,8 +143,8 @@ function createUnit(meter: Meter): Unit {
 
 function validateBody(
   tokens: Token[],
-  diagnostics: string[],
-  options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[] } = {},
+  diagnostics: Array<string | ScoreDiagnostic>,
+  options: { bass?: boolean; initial?: Settings; inheritedSettingEvents?: SettingEvent[]; requireTerminal?: boolean } = {},
 ) {
   const bass = options.bass ?? false
   const defaultSettings: Settings = options.initial
@@ -518,7 +527,7 @@ function validateBody(
     if (segnoCount > 1) diagnostics.push('segno 最多只能使用一次')
     if (jumpCount > 1) diagnostics.push('ds 和 dc 总共最多只能使用一次')
     if (dsCount > 0 && segnoCount !== 1) diagnostics.push('ds 必须配合唯一的 segno')
-    if (terminalCount !== 1) diagnostics.push(`未分段正文必须且只能使用一次终止线，实际 ${terminalCount} 次`)
+    if (options.requireTerminal !== false && terminalCount !== 1) diagnostics.push(`未分段正文必须且只能使用一次终止线，实际 ${terminalCount} 次`)
   }
 
   return {
@@ -872,9 +881,11 @@ function structureTokens(source: string, structure: M3NDocumentStructure, staff:
   })))]
 }
 
-function validateSourceRules(source: string, structure: M3NDocumentStructure): string[] {
-  const diagnostics: string[] = []
-  const mainResult = validateBody(structureTokens(source, structure, 'melody'), diagnostics)
+function validateSourceRules(source: string, structure: M3NDocumentStructure): ScoreDiagnostic[] {
+  const diagnostics: Array<string | ScoreDiagnostic> = []
+  const mainResult = validateBody(structureTokens(source, structure, 'melody'), diagnostics, {
+    requireTerminal: structure.sections.length === 0,
+  })
   const bassTokens = structureTokens(source, structure, 'bass')
   if (bassTokens.length > 0) {
     validateBody(bassTokens, diagnostics, {
@@ -883,15 +894,17 @@ function validateSourceRules(source: string, structure: M3NDocumentStructure): s
       inheritedSettingEvents: mainResult.settingEvents,
     })
   }
-  return [...new Set(diagnostics)]
+  const normalized = diagnostics.map((diagnostic) => typeof diagnostic === 'string'
+    ? diagnosticFromLegacyMessage(source, diagnostic)
+    : diagnostic)
+  return [...new Map(normalized.map((diagnostic) => [diagnostic.legacyMessage, diagnostic])).values()]
 }
 type ValidationContext = { document?: ScoreDocument; projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree }
 
 function validationResult(source: string, options: { skipBeatValidation?: boolean }, context: ValidationContext = {}) {
   const projected = context.projection ?? projectM3NDocument(source, context.syntaxTree)
   const parsed = context.document ?? parseM3NDocument(source, projected)
-  const sourceRuleDiagnostics = validateSourceRules(source, projected.structure)
-    .filter((message) => projected.structure.sections.length === 0 || !/^未分段正文必须且只能使用一次终止线，实际 0 次$/.test(message))
+  const typedSourceRuleDiagnostics = validateSourceRules(source, projected.structure)
   const phraseDiagnostics = projected.structure.sections.length > 0
     ? validatePhrasePlaybackPasses(parsed, projected.structure)
     : []
@@ -904,11 +917,11 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
   const scoreDiagnostics = validateScoreDocument(parsed, { ...options, source })
   const syntaxDiagnostics = validateM3NSyntaxTree(context.syntaxTree ?? parseM3NSyntaxTree(source))
-  const legacyDiagnostics = projected.structure.sections.length > 0
-    ? sourceRuleDiagnostics.filter((message) => !message.startsWith('[L]'))
-    : sourceRuleDiagnostics
-  const sourceDiagnostics = diagnosticsFromLegacyMessages(source,
-    [...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics])
+  const sourceDiagnostics = [
+    ...typedSourceRuleDiagnostics,
+    ...diagnosticsFromLegacyMessages(source,
+      [...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics]),
+  ]
   return [...projected.structure.diagnostics, ...sourceDiagnostics, ...syntaxDiagnostics, ...scoreDiagnostics]
 }
 
