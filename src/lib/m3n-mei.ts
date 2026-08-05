@@ -1,21 +1,20 @@
 import { m3nPitch, parseM3NDocument } from './m3n-direct'
 import { m3nChord } from './m3n-harmony'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups'
-import { parseKey } from './notation/m3n-primitives'
-import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, type PlaybackNavigation } from './notation/repeats'
+import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 import { validateM3NDiagnostics } from './m3n-validate'
 import type { ScoreDiagnostic } from './notation/diagnostics'
 import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './notation/score-document'
 import { meiVerseXml, needsCjkSpacingCompensation, type MeiVerseSyllable } from './notation/mei-lyrics'
 import { escapeXml, meiDurationAttributes } from './notation/mei-xml'
+import type { M3NDocumentProjection } from './notation/m3n-document'
+import type { M3NSyntaxTree } from './notation/syntax-tree'
+import { meiDocumentXml, meiKeySignature, scoreHeaderMetadata, type ScoreHeaderMetadata } from './notation/mei-document'
+import { meiSectionContent, type MeiLayoutNode } from './notation/mei-layout'
+
+export type { ScoreHeaderMetadata } from './notation/mei-document'
 
 export type MeiSourceMapRange = { xmlId: string; sourceStart: number; sourceEnd: number }
-export type ScoreHeaderMetadata = {
-  value: string
-  side: 'left' | 'right' | 'center'
-  priority: number
-}
-
 export type MeiConversionResult = {
   source: string
   mei: string
@@ -35,15 +34,6 @@ export type MeiConversionResult = {
 
 type VerseSyllable = MeiVerseSyllable
 
-function keySignature(rawKey: string) {
-  const pitchClasses: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
-  const { tonic, mode } = parseKey(rawKey)
-  const tonicPitch = (pitchClasses[tonic[0] ?? 'C'] ?? 0) + (tonic.endsWith('#') ? 1 : tonic.endsWith('b') ? -1 : 0)
-  const relativeMajor = (tonicPitch + ({ m: 3, dor: 10, phr: 8, lyd: 5, mix: 7, loc: 1 }[mode] ?? 0) + 12) % 12
-  const fifths = [0, 7, 2, -3, 4, -1, 6, 1, -4, 3, -2, 5][relativeMajor] ?? 0
-  return fifths === 0 ? '0' : `${Math.abs(fifths)}${fifths > 0 ? 's' : 'f'}`
-}
-
 const metronomeGlyphs: Record<number, { name: string; num: string }> = {
   1: { name: 'metNoteWhole', num: 'U+ECA2' },
   2: { name: 'metNoteHalfUp', num: 'U+ECA3' },
@@ -62,7 +52,7 @@ function metronomeMark(qpm: number, meterUnit: number) {
   const unit = meterUnit
   const dots = 0
   const quarterNotesPerMark = 4 / unit
-  const glyph = metronomeGlyphs[unit] ?? metronomeGlyphs[4]
+  const glyph = metronomeGlyphs[unit] ?? { name: 'metNoteQuarterUp', num: 'U+ECA5' }
   return { bpm: qpm / quarterNotesPerMark, dots, glyph }
 }
 
@@ -192,7 +182,7 @@ function beamXml(events: RenderedEvent[], meterCount: number, meterUnit: number)
   return result
 }
 
-export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocument(source)): MeiConversionResult {
+export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocument(source), context: { projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree } = {}): MeiConversionResult {
   const sourceMap: MeiSourceMapRange[] = []
   const hasBassStaff = [...document.parts.values()].some((part) => part.bass.some((measure) => measure.events.length > 0))
   let eventIndex = 0
@@ -335,10 +325,11 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const assignedLyrics = hasLyricTarget
         ? lyricBlocksAtEvent.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
           const index = lyricSyllables.indexOf(block)
-          const lyric = block.syllables[melodyIndices[index]]
+          const lyricIndex = melodyIndices[index] ?? 0
+          const lyric = block.syllables[lyricIndex]
           const tiedTarget = targetIndex === 0 && tieEnd
           if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []
-          melodyIndices[index] += 1
+          melodyIndices[index] = lyricIndex + 1
           return { ...lyric, n: block.n, verseIndex: block.verseIndex }
         }).flat())
         : []
@@ -392,7 +383,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
-      return { event, prefix: keySig ? `<keySig sig="${keySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
+      return { event, prefix: keySig ? `<keySig sig="${meiKeySignature(keySig)}"/>` : undefined, xml: eventXml(event, xmlId, lyrics, accidentals) }
     })
     const body = beamXml(renderedEvents, meter.count, meter.unit)
       .map((xml) => xml.split('\n').map((line) => `      ${line}`).join('\n'))
@@ -418,8 +409,8 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
   const keyScoreDefXml = (key: string) => [
     '<scoreDef>',
     '  <staffGrp>',
-    `    <staffDef n="1"><keySig sig="${keySignature(key)}"/></staffDef>`,
-    ...(hasBassStaff ? [`    <staffDef n="2"><keySig sig="${keySignature(key)}"/></staffDef>`] : []),
+    `    <staffDef n="1"><keySig sig="${meiKeySignature(key)}"/></staffDef>`,
+    ...(hasBassStaff ? [`    <staffDef n="2"><keySig sig="${meiKeySignature(key)}"/></staffDef>`] : []),
     '  </staffGrp>',
     '</scoreDef>',
   ].join('\n')
@@ -562,7 +553,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       measure.xml,
       measure.breakAfter ? '<sb/>' : '',
     ].filter(Boolean).join('\n')
-    const nodes: Array<{ kind: 'section' | 'ending'; id: string; n?: string; content: string; repeatStart?: boolean; repeatCount?: number; navigation?: PlaybackNavigation[] }> = []
+    const nodes: MeiLayoutNode[] = []
     for (let index = 0; index < measures.length;) {
       const current = measures[index]
       const content: string[] = []
@@ -596,53 +587,10 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
     }
     return nodes
   })
-  const hasEndings = layoutNodes.some((node) => node.kind === 'ending')
-  const expansion = buildPlaybackSequence(layoutNodes)
-  const needsExpansion = hasEndings || hasNavigation || layoutNodes.some((node) => node.repeatCount)
-  const sectionContent = [
-    ...(needsExpansion ? [`<expansion xml:id="m3n-expansion" plist="${expansion.map((id) => `#${id}`).join(' ')}"/>`] : []),
-    ...layoutNodes.map((node) => !needsExpansion ? node.content
-      : node.kind === 'ending'
-        ? `<ending xml:id="${node.id}" n="${escapeXml(node.n ?? '')}">\n${node.content}\n</ending>`
-        : `<section xml:id="${node.id}">\n${node.content}\n</section>`),
-  ].join('\n')
-  const headerMetadata: ScoreHeaderMetadata[] = ([
-    { value: document.title, side: 'center', priority: 0 },
-    { value: document.subtitle, side: 'center', priority: 10 },
-    { value: document.singer || document.composer, side: 'right', priority: 20 },
-  ] satisfies ScoreHeaderMetadata[]).filter((item) => item.value)
-
-  const responsibility = [
-    document.singer ? ['singer', document.singer, 'Singer'] : null,
-    document.composer ? ['composer', document.composer, 'Composer'] : null,
-    document.lyricist ? ['lyricist', document.lyricist, 'Lyricist'] : null,
-    document.arranger ? ['arranger', document.arranger, 'Arranger'] : null,
-  ].filter((item): item is string[] => Boolean(item)).flatMap(([role, name, label]) => [
-    '        <respStmt>', `          <persName role="${role}">${escapeXml(name)}</persName>`,
-    `          <resp>${label}</resp>`, '        </respStmt>',
-  ])
-  const signature = keySignature(document.key)
-  const staffDefs = [
-    `<staffGrp symbol="${hasBassStaff ? 'brace' : 'none'}" bar.thru="true">`,
-    `  <staffDef n="1" lines="5" clef.shape="G" clef.line="2" meter.count="${document.meterCount}" meter.unit="${document.meterUnit}" midi.instrnum="0"><keySig sig="${signature}"/></staffDef>`,
-    ...(hasBassStaff ? [`  <staffDef n="2" lines="5" clef.shape="F" clef.line="4" meter.count="${document.meterCount}" meter.unit="${document.meterUnit}" midi.instrnum="0"><keySig sig="${signature}"/></staffDef>`] : []),
-    '</staffGrp>',
-  ]
-  const mei = [
-    '<?xml version="1.0" encoding="UTF-8"?>', '<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">',
-    '  <meiHead>', '    <fileDesc>', '      <titleStmt>',
-    `        <title type="main">${escapeXml(document.title)}</title>`,
-    ...(document.subtitle ? [`        <title type="subordinate">${escapeXml(document.subtitle)}</title>`] : []),
-    ...responsibility, '      </titleStmt>', '      <pubStmt/>',
-    ...(document.source ? ['      <sourceDesc>', `        <source><bibl>${escapeXml(document.source)}</bibl></source>`, '      </sourceDesc>'] : []),
-    '    </fileDesc>', '  </meiHead>',
-    '  <music>', '    <body>', '      <mdiv>', '        <score>',
-    `          <scoreDef midi.bpm="${document.tempo}">`,
-    ...staffDefs.map((line) => `            ${line}`), '          </scoreDef>', '          <section xml:id="m3n-score-section">',
-    ...sectionContent.split('\n').map((line) => `            ${line}`),
-    '          </section>', '        </score>', '      </mdiv>', '    </body>', '  </music>', '</mei>',
-  ].join('\n')
-  const diagnosticDetails = validateM3NDiagnostics(source, {}, document)
+  const sectionContent = meiSectionContent(layoutNodes, hasNavigation)
+  const headerMetadata = scoreHeaderMetadata(document)
+  const mei = meiDocumentXml(document, sectionContent, hasBassStaff)
+  const diagnosticDetails = validateM3NDiagnostics(source, {}, document, context)
   return {
     source, mei, diagnostics: diagnosticDetails.map((diagnostic) => diagnostic.legacyMessage), diagnosticDetails, sourceMap,
     title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,

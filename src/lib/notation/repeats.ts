@@ -18,6 +18,11 @@ export type PlaybackMeasure = {
   repeatCount?: number
 }
 
+export type PlaybackPlan = {
+  sequence: string[]
+  passesByNode: ReadonlyMap<string, ReadonlySet<number>>
+}
+
 export function parsePassRange(value: string) {
   const passes = new Set<number>()
   for (const token of value.split(',')) {
@@ -72,7 +77,7 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
   const passesByMeasure = new Map<T, Set<number>>(measures.map((measure) => [measure, new Set()]))
   const visits = new Map<number, number>()
 
-  for (const id of buildPlaybackSequence(nodes)) {
+  for (const id of planPlayback(nodes).sequence) {
     const index = Number(id)
     const measure = measures[index]
     if (!measure) continue
@@ -194,4 +199,19 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
 /** Returns written node ids in performance order, including one navigation return. */
 export function buildPlaybackSequence(nodes: readonly PlaybackNode[]) {
   return appendNavigationReturn(nodes, expandInitialPasses(nodes))
+}
+
+/** Plans playback order and visit numbers from the same expanded sequence. */
+export function planPlayback(nodes: readonly PlaybackNode[]): PlaybackPlan {
+  const sequence = buildPlaybackSequence(nodes)
+  const visits = new Map<string, number>()
+  const passesByNode = new Map<string, Set<number>>()
+  for (const id of sequence) {
+    const pass = (visits.get(id) ?? 0) + 1
+    visits.set(id, pass)
+    const passes = passesByNode.get(id) ?? new Set<number>()
+    passes.add(pass)
+    passesByNode.set(id, passes)
+  }
+  return { sequence, passesByNode }
 }

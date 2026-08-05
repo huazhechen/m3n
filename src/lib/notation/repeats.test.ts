@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, type PlaybackNode } from './repeats'
+import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, planPlayback, type PlaybackNode } from './repeats'
 
 const nodes = (...items: Omit<PlaybackNode, 'id'>[]) => items.map((item, index) => ({ id: `n${index + 1}`, ...item }))
 
 describe('repeat planning', () => {
+  it('reports playback order and node passes from one plan', () => {
+    const plan = planPlayback(nodes(
+      { kind: 'section', repeatStart: true },
+      { kind: 'section', repeatCount: 2 },
+    ))
+    expect(plan.sequence).toEqual(['n1', 'n2', 'n1', 'n2'])
+    expect([...plan.passesByNode.get('n1') ?? []]).toEqual([1, 2])
+  })
+
   it('parses individual and ranged playback passes', () => {
     expect(parsePassRange('1,3~5,7')).toEqual(new Set([1, 3, 4, 5, 7]))
   })

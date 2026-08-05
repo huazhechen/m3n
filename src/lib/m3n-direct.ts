@@ -2,7 +2,7 @@ import { parseM3NGrace, parseM3NGroupPitches, parseM3NTupletPitches } from './no
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
 import { parseLyricItems } from './notation/lyrics'
 import { tokenizeM3N } from './notation/m3n-tokens'
-import { projectM3NDocument } from './notation/m3n-document'
+import { projectM3NDocument, type M3NDocumentProjection } from './notation/m3n-document'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document'
 type DirectSettingEvent = {
   beats: number
@@ -307,9 +307,9 @@ export function m3nPitch(pitch: string, key: string) {
   }
 }
 
-export function parseM3NDocument(source: string): ScoreDocument {
+export function parseM3NDocument(source: string, projection: M3NDocumentProjection = projectM3NDocument(source)): ScoreDocument {
   const originalSource = source
-  const projected = projectM3NDocument(source)
+  const projected = projection
   source = projected.source
   const key = source.match(/\{key=([^}]+)\}/)?.[1]?.trim() || 'C'
   const meter = source.match(/\{(\d+)\/(\d+)\}/)

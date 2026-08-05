@@ -5,13 +5,13 @@ import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens'
 import { diagnosticsFromLegacyMessages, type ScoreDiagnostic } from './notation/diagnostics'
 import { parseM3NDocument } from './m3n-direct'
 import { hasForcedLyricOutsideTiedTarget } from './m3n-lyric-alignment'
-import { projectM3NDocument, type M3NDocumentStructure, type M3NPhrase } from './notation/m3n-document'
+import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure, type M3NPhrase } from './notation/m3n-document'
 import { measurePlaybackPasses, parsePassRange } from './notation/repeats'
 import { m3nChord } from './m3n-harmony'
 import type { ScoreDocument } from './notation/score-document'
 import { validateScoreDocument } from './notation/score-rules'
 import { validateM3NSyntaxTree } from './notation/syntax-rules'
-import { parseM3NSyntaxTree } from './notation/syntax-tree'
+import { parseM3NSyntaxTree, type M3NSyntaxTree } from './notation/syntax-tree'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -62,13 +62,6 @@ function lyricMessage(message: string) {
   return `[L] ${message}`
 }
 
-function remapProjectedLines(message: string, lineMap: readonly number[]) {
-  return message.replace(/第 (\d+) 行/g, (_match, line: string) => {
-    const mapped = lineMap[Number(line) - 1]
-    return `第 ${mapped ?? line} 行`
-  })
-}
-
 function isTrivia(token: Token) {
   return token.kind === 'space' || token.kind === 'comment'
 }
@@ -86,8 +79,8 @@ function closingBlockName(content: string) {
 function parsePitch(raw: string): { pitch: ParsedPitch | null; error: string | null } {
   const match = /^([1-7])([#b=]*)([ed]*)$/.exec(raw)
   if (!match) return { pitch: null, error: `音高格式非法：${raw}` }
-  const accidental = match[2]
-  const octave = match[3]
+  const accidental = match[2] ?? ''
+  const octave = match[3] ?? ''
   if ((accidental.includes('#') && accidental.includes('b')) || (accidental.includes('=') && accidental !== '=')) {
     return { pitch: null, error: `临时变音组合非法：${raw}` }
   }
@@ -179,16 +172,9 @@ function validateBody(
     repeatOpen = null
   }
 
-  const closeBlock = (token: Token, named: string | null) => {
+  const closeBlock = (named: string | null) => {
     const top = blocks.at(-1)
-    if (!top) {
-      diagnostics.push(lineMessage(token, `关闭指令没有对应开始：{/${named ?? ''}}`))
-      return
-    }
-    if (named !== null && named !== top.name) {
-      diagnostics.push(lineMessage(token, `区间关闭顺序错误：期望 {/${top.name}}，实际 {/${named}}`))
-      return
-    }
+    if (!top || (named !== null && named !== top.name)) return
     blocks.pop()
     if (top.tempoTarget !== undefined) {
       settings.tempo = top.tempoTarget
@@ -203,11 +189,12 @@ function validateBody(
   const applyInheritedSettings = () => {
     while (inheritedEventIndex < inheritedSettingEvents.length) {
       const event = inheritedSettingEvents[inheritedEventIndex]
+      if (!event) break
       if (event.beat - elapsedBeats > 1e-9) break
       if (event.kind === 'key') {
         settings.key = event.value
       } else if (event.kind === 'meter') {
-        const [beats, beatValue] = event.value.split('/').map(Number)
+        const [beats = 0, beatValue = 0] = event.value.split('/').map(Number)
         settings.meter = { beats, beatValue }
         unit.expected = beats * 4 / beatValue
       } else {
@@ -265,8 +252,7 @@ function validateBody(
     repeatCountTarget = token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:'
   }
 
-  for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex += 1) {
-    const token = tokens[tokenIndex]
+  for (const token of tokens) {
     if (isTrivia(token)) continue
 
     if (fineBeforeTerminal && token.kind !== 'bar') fineBeforeTerminal = false
@@ -312,7 +298,7 @@ function validateBody(
       const closing = closingBlockName(content)
       if (closing !== undefined) {
         rejectPendingSfz(token)
-        closeBlock(token, closing)
+        closeBlock(closing)
         continue
       }
 
@@ -355,7 +341,7 @@ function validateBody(
       }
 
       if (/^\d+\/\d+$/.test(content)) {
-        const [beats, beatValue] = content.split('/').map(Number)
+        const [beats = 0, beatValue = 0] = content.split('/').map(Number)
         const valid = Number.isSafeInteger(beats) && beats > 0 && Number.isSafeInteger(beatValue) && beatValue > 0 && Number.isInteger(Math.log2(beatValue))
         if (!valid) diagnostics.push(lineMessage(token, `拍号格式非法：${content}`))
         else {
@@ -385,7 +371,6 @@ function validateBody(
       if (name === 'accel' || name === 'rit') {
         const tempo = Number(value)
         const validTarget = /^\d+$/.test(value) && Number.isSafeInteger(tempo) && tempo > 0
-        if (!validTarget) diagnostics.push(lineMessage(token, '渐快或渐慢的目标速度必须是正整数'))
         if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能声明渐快或渐慢'))
         blocks.push({ name, line: token.line, tempoTarget: validTarget ? tempo : undefined })
         continue
@@ -471,7 +456,7 @@ function validateBody(
         diagnostics.push(lineMessage(token, `音符或时值后缀格式非法：${token.raw}`))
         continue
       }
-      const [, degree, accidental, octave, carets, dots, tie] = match
+      const [, degree = '', accidental = '', octave = '', carets = '', dots = '', tie = ''] = match
       if (degree === '0') {
         if (accidental || octave || tie) diagnostics.push(lineMessage(token, '休止符不能使用音高修饰或延音'))
         addAtom(token, durationInBeats(parens.length, carets.length, dots.length), { kind: 'rest' })
@@ -497,11 +482,12 @@ function validateBody(
         diagnostics.push(lineMessage(token, `音符分组格式非法：${token.raw}`))
         continue
       }
-      const mode = match[2].trim()
+      const pitchSource = match[1] ?? ''
+      const mode = (match[2] ?? '').trim()
       const harmony = mode === 'h'
-      const sequence = splitPitchSequence(match[1], !harmony)
+      const sequence = splitPitchSequence(pitchSource, !harmony)
       if (sequence.error) diagnostics.push(lineMessage(token, `分组${sequence.error}`))
-      const elementCount = sequence.pitches.length + (sequence.hasRest ? (match[1].replace(/\s+/g, '').match(/0/g)?.length ?? 0) : 0)
+      const elementCount = sequence.pitches.length + (sequence.hasRest ? (pitchSource.replace(/\s+/g, '').match(/0/g)?.length ?? 0) : 0)
       if (elementCount < 2) diagnostics.push(lineMessage(token, '音符分组至少需要两个元素'))
       const units = Number(mode)
       if (!harmony && (!/^\d+$/.test(mode) || !Number.isSafeInteger(units) || units <= 0)) {
@@ -511,7 +497,7 @@ function validateBody(
       if (!harmony && match[5]) diagnostics.push(lineMessage(token, '连音组整体不能使用延音'))
       if (!harmony && sequence.terminalTieOnRest) diagnostics.push(lineMessage(token, '连音组内的延音只能附在最后一个有音高的元素上'))
       const duration = (harmony ? 1 : Number.isFinite(units) && units > 0 ? units : 0)
-        * durationInBeats(parens.length, match[3].length, match[4].length)
+        * durationInBeats(parens.length, (match[3] ?? '').length, (match[4] ?? '').length)
       addAtom(token, duration, {
         kind: harmony ? 'harmony' : 'tuplet',
       })
@@ -526,7 +512,6 @@ function validateBody(
   if (parens.length > 0) {
     for (const paren of parens) diagnostics.push(`第 ${paren.line} 行：圆括号未闭合`)
   }
-  for (const block of blocks) diagnostics.push(`第 ${block.line} 行：未闭合的区间块：{${block.name}}`)
   finishRepeat()
 
   if (!bass) {
@@ -872,11 +857,27 @@ export function invalidMeasureIds(source: string, document = parseM3NDocument(so
   })
 }
 
-function validateProjectedM3N(source: string, bassSource: string): string[] {
+function structureTokens(source: string, structure: M3NDocumentStructure, staff: 'melody' | 'bass') {
+  if (structure.sections.length === 0) return staff === 'melody' ? tokenizeM3N(source) : []
+  const rows = structure.sections.flatMap((section) => section.phrases.flatMap((phrase) => {
+    const row = staff === 'melody' ? phrase.melody : phrase.bass
+    return row ? [row] : []
+  }))
+  const header = staff === 'melody' ? tokenizeM3N(structure.header) : []
+  return [...header, ...rows.flatMap((row) => tokenizeM3N(row.text).map((token) => ({
+    ...token,
+    line: row.line + token.line - 1,
+    start: row.start + token.start,
+    end: row.start + token.end,
+  })))]
+}
+
+function validateSourceRules(source: string, structure: M3NDocumentStructure): string[] {
   const diagnostics: string[] = []
-  const mainResult = validateBody(tokenizeM3N(source), diagnostics)
-  if (bassSource) {
-    validateBody(tokenizeM3N(bassSource), diagnostics, {
+  const mainResult = validateBody(structureTokens(source, structure, 'melody'), diagnostics)
+  const bassTokens = structureTokens(source, structure, 'bass')
+  if (bassTokens.length > 0) {
+    validateBody(bassTokens, diagnostics, {
       bass: true,
       initial: mainResult.initial,
       inheritedSettingEvents: mainResult.settingEvents,
@@ -884,10 +885,12 @@ function validateProjectedM3N(source: string, bassSource: string): string[] {
   }
   return [...new Set(diagnostics)]
 }
-function validationResult(source: string, options: { skipBeatValidation?: boolean }, document?: ScoreDocument) {
-  const projected = projectM3NDocument(source)
-  const parsed = document ?? parseM3NDocument(source)
-  const projectedDiagnostics = validateProjectedM3N(projected.source, projected.bassSource)
+type ValidationContext = { document?: ScoreDocument; projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree }
+
+function validationResult(source: string, options: { skipBeatValidation?: boolean }, context: ValidationContext = {}) {
+  const projected = context.projection ?? projectM3NDocument(source, context.syntaxTree)
+  const parsed = context.document ?? parseM3NDocument(source, projected)
+  const sourceRuleDiagnostics = validateSourceRules(source, projected.structure)
     .filter((message) => projected.structure.sections.length === 0 || !/^未分段正文必须且只能使用一次终止线，实际 0 次$/.test(message))
   const phraseDiagnostics = projected.structure.sections.length > 0
     ? validatePhrasePlaybackPasses(parsed, projected.structure)
@@ -900,51 +903,20 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
     : []
   const lyricDiagnostics = projected.structure.sections.length > 0 ? validatePhraseLyrics(parsed, projected.structure) : []
   const scoreDiagnostics = validateScoreDocument(parsed, { ...options, source })
-  const syntaxDiagnostics = validateM3NSyntaxTree(parseM3NSyntaxTree(source))
-  let legacyDiagnostics = projected.structure.sections.length > 0
-    ? projectedDiagnostics
-      .filter((message) => !message.startsWith('[L]'))
-      .map((message) => remapProjectedLines(message, projected.lineMap))
-    : projectedDiagnostics
-  if (scoreDiagnostics.some((diagnostic) => diagnostic.code.startsWith('M3N_METER_'))) {
-    legacyDiagnostics = legacyDiagnostics.filter((message) => !/小节拍数超出|单个小节拍数必须满拍|中间小节拍数不合规|没有弱起时末小节拍数必须满拍|首末小节拍数不互补/.test(message))
-  }
-  if (scoreDiagnostics.some((diagnostic) => diagnostic.code.startsWith('M3N_TIE_'))) {
-    legacyDiagnostics = legacyDiagnostics.filter((message) => !message.includes('延音目标的类型或绝对音高不匹配'))
-  }
-  if (syntaxDiagnostics.some((diagnostic) => diagnostic.code === 'M3N_DIRECTIVE_INVALID_TEMPO_TARGET')) {
-    legacyDiagnostics = legacyDiagnostics.filter((message) => !message.includes('渐快或渐慢的目标速度必须是正整数'))
-  }
-  if (syntaxDiagnostics.some((diagnostic) => diagnostic.code.includes('_CLOSE'))) {
-    legacyDiagnostics = legacyDiagnostics.filter((message) => !/关闭指令没有对应开始|区间关闭顺序错误/.test(message))
-  }
-  if (syntaxDiagnostics.some((diagnostic) => diagnostic.code === 'M3N_DIRECTIVE_UNCLOSED')) {
-    legacyDiagnostics = legacyDiagnostics.filter((message) => !message.includes('未闭合的区间块'))
-  }
-  return {
-    structureDiagnostics: projected.structure.diagnostics,
-    scoreDiagnostics,
-    syntaxDiagnostics,
-    compatibilityMessages: [...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics],
-  }
+  const syntaxDiagnostics = validateM3NSyntaxTree(context.syntaxTree ?? parseM3NSyntaxTree(source))
+  const legacyDiagnostics = projected.structure.sections.length > 0
+    ? sourceRuleDiagnostics.filter((message) => !message.startsWith('[L]'))
+    : sourceRuleDiagnostics
+  const sourceDiagnostics = diagnosticsFromLegacyMessages(source,
+    [...legacyDiagnostics, ...phraseDiagnostics, ...phraseSpanDiagnostics, ...harmonyDiagnostics, ...lyricDiagnostics])
+  return [...projected.structure.diagnostics, ...sourceDiagnostics, ...syntaxDiagnostics, ...scoreDiagnostics]
 }
 
 export function validateM3N(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): string[] {
-  const result = validationResult(source, options, document)
-  const compatibility = result.compatibilityMessages
-  const nativeOnly = result.scoreDiagnostics.filter((diagnostic) => {
-    if (diagnostic.code.startsWith('M3N_METER_')) return !compatibility.some((message) => /小节拍数|首末小节/.test(message))
-    if (diagnostic.code.startsWith('M3N_TIE_')) return !compatibility.some((message) => message.includes('延音目标'))
-    return true
-  })
-  const syntaxNativeOnly = result.syntaxDiagnostics.filter((diagnostic) => !compatibility.some((message) => (
-    message === diagnostic.legacyMessage || message.endsWith(diagnostic.message)
-  )))
-  return [...result.structureDiagnostics.map((diagnostic) => diagnostic.legacyMessage), ...compatibility, ...syntaxNativeOnly.map((diagnostic) => diagnostic.legacyMessage), ...nativeOnly.map((diagnostic) => diagnostic.legacyMessage)]
+  return validationResult(source, options, { document }).map((diagnostic) => diagnostic.legacyMessage)
 }
 
 /** Typed validation result. `validateM3N` remains available for source compatibility. */
-export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument): ScoreDiagnostic[] {
-  const result = validationResult(source, options, document)
-  return [...result.structureDiagnostics, ...diagnosticsFromLegacyMessages(source, result.compatibilityMessages), ...result.syntaxDiagnostics, ...result.scoreDiagnostics]
+export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument, context: Omit<ValidationContext, 'document'> = {}): ScoreDiagnostic[] {
+  return validationResult(source, options, { ...context, document })
 }

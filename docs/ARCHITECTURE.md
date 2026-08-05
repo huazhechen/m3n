@@ -39,6 +39,8 @@ pages -> components -> features -> lib/notation
 - `lib/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
 - `lib/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
 - `lib/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
+- `lib/notation/mei-document.ts`：MEI 文档头、责任者元数据和 `scoreDef` 序列化。
+- `lib/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
 - `features/score-renderer/verovio-score.ts`：Verovio SVG 排版、MIDI 生成和时间映射。
 - `features/score-renderer/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
 - `features/score-renderer/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
@@ -63,9 +65,9 @@ pages -> components -> features -> lib/notation
 
 按以下顺序继续，且每一步保持公共转换 API 兼容：
 
-1. 以 `notation/repeats` 的播放计划为单一事实来源，逐步让歌词对位直接消费书写小节到演奏轮次的映射。
-2. 继续扩充 M3N 直接解析器对出版语义和演奏语义的覆盖。
-3. 文档结构和区间指令规则消费 `M3NSyntaxTree`，节拍、延音和双谱表规则消费 `ScoreDocument`；字符串 API 负责格式化结构化诊断和尚未迁移的语法规则。
+1. `analyzeM3N` 在同一会话中构造语法树、结构投影和 `ScoreDocument`，派生消费者复用该上下文。
+2. `notation/repeats` 通过单一播放计划同时提供演奏顺序和节点轮次。
+3. 文档结构和区间指令规则消费 `M3NSyntaxTree`，节拍、延音和双谱表规则消费 `ScoreDocument`；源码规则直接消费原文 token，诊断内部统一为 `ScoreDiagnostic[]`。
 4. 诊断使用 `{ code, severity, message, messageArgs, range }`；UI 优先按稳定 code 和参数本地化，未迁移规则回退 `legacyMessage`。
 5. `typecheck:notation` 已对语法内核、文档结构和 `ScoreDocument` builder 启用 `noUncheckedIndexedAccess`；扩大范围时必须消除真实风险，不使用无依据的非空断言。
 7. Playwright 已覆盖真实浏览器编辑重排、播放/暂停、导出和源码双向定位；继续扩展键盘可访问性及多实例资源销毁场景。

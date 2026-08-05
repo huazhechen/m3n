@@ -1,4 +1,4 @@
-import { parseM3NSyntaxTree } from './syntax-tree'
+import { parseM3NSyntaxTree, type M3NSyntaxTree } from './syntax-tree'
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics'
 
 export type M3NPhrase = {
@@ -27,7 +27,7 @@ const phraseEndingBar = /(?::\|\|\||:\|\||\|\|\||\|\||\|)(?:\{x\d+\})?\s*(?:\/\/
 const phraseTrailingRepeatStart = /(?:\|\|:|:\|\|:)\s*(?:\/\/.*)?$/
 const nonAlignmentBar = /\|\||:\|\|/
 
-export function parseM3NDocumentStructure(source: string): M3NDocumentStructure {
+export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxTree = parseM3NSyntaxTree(source)): M3NDocumentStructure {
   const diagnostics: ScoreDiagnostic[] = []
   const rootSection: M3NSection = { name: '', line: 1, phrases: [] }
   const sections: M3NSection[] = [rootSection]
@@ -42,7 +42,6 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
     return phrase
   }
 
-  const syntaxTree = parseM3NSyntaxTree(source)
   const report = (line: number, code: string, message: string) => {
     const syntaxLine = syntaxTree.lines[line - 1]
     diagnostics.push(createScoreDiagnostic({
@@ -121,8 +120,8 @@ export function parseM3NDocumentStructure(source: string): M3NDocumentStructure 
   return { header: header.join('\n'), sections, diagnostics }
 }
 
-export function projectM3NDocument(source: string) {
-  const structure = parseM3NDocumentStructure(source)
+export function projectM3NDocument(source: string, syntaxTree?: M3NSyntaxTree) {
+  const structure = parseM3NDocumentStructure(source, syntaxTree)
   const melody: string[] = []
   const lineMap: number[] = []
   const phrasePasses: Array<{ start: number; end: number; passes: string }> = []
@@ -149,3 +148,5 @@ export function projectM3NDocument(source: string) {
   }
   return { source: melody.join('\n'), bassSource: bass.join('\n'), structure, lineMap, phrasePasses }
 }
+
+export type M3NDocumentProjection = ReturnType<typeof projectM3NDocument>
