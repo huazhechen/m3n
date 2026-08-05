@@ -258,7 +258,7 @@ describe('validateM3N', () => {
     expect(validateM3N(source)).toContain('双谱表小节数量不一致：正文 2 小节，低音 1 小节')
     expect(validateM3NDiagnostics(source)).toContainEqual(expect.objectContaining({
       code: 'M3N_BASS_MEASURE_COUNT',
-      range: { start: source.indexOf('1d'), end: source.indexOf(' |||', source.indexOf('B:')) },
+      range: { start: source.indexOf('1d'), end: source.indexOf('|||', source.indexOf('B:')) + 3 },
     }))
   })
 

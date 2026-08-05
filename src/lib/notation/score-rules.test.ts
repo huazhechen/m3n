@@ -35,7 +35,7 @@ describe('score document rules', () => {
     expect(validateScoreDocument(parseM3NDocument(source))).toContainEqual(expect.objectContaining({
       code: 'M3N_BASS_MEASURE_COUNT',
       message: '双谱表小节数量不一致：正文 2 小节，低音 1 小节',
-      range: { start: source.indexOf('1d'), end: source.indexOf(' |||', source.indexOf('B:')) },
+        range: { start: source.indexOf('1d'), end: source.indexOf('|||', source.indexOf('B:')) + 3 },
       messageArgs: { melodyMeasures: 2, bassMeasures: 1 },
     }))
   })

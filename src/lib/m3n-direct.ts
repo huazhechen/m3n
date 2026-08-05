@@ -1,9 +1,9 @@
 import { parseM3NGrace, parseM3NGroupPitches, parseM3NTupletPitches } from './notation/m3n-groups'
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
-import { projectM3NDocument, type M3NDocumentProjection } from './notation/m3n-document'
-import { enrichScoreDocument } from './notation/score-document-enrichment'
+import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure } from './notation/m3n-document'
 import { tokenizeM3N } from './notation/m3n-tokens'
-import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure, ScorePart } from './notation/score-document'
+import { parseLyricItems } from './notation/lyrics'
+import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document'
 type DirectSettingEvent = {
   beats: number
   kind: 'key' | 'meter' | 'tempo'
@@ -19,6 +19,23 @@ function duration(depth: number, carets = 0, dots = 0) {
   return durationInBeats(depth, carets, dots)
 }
 
+type SourceRow = { text: string; start: number; passes?: string }
+type ParsedBodySource = { text: string; positionAt: (offset: number) => number; phrasePasses: Array<{ start: number; end: number; passes: string }> }
+
+function bodySource(rows: readonly SourceRow[]): ParsedBodySource {
+  const positions: number[] = []
+  const text = rows.map((row, index) => {
+    if (index > 0) positions.push(rows[index - 1]?.start ?? 0)
+    positions.push(...Array.from({ length: row.text.length }, (_, offset) => row.start + offset))
+    return row.text
+  }).join('\n')
+  return {
+    text,
+    positionAt: (offset) => positions[offset] ?? (positions.at(-1) ?? 0) + 1,
+    phrasePasses: rows.flatMap((row) => row.passes ? [{ start: row.start, end: row.start + row.text.length, passes: row.passes }] : []),
+  }
+}
+
 function parseBody(
   source: string,
   staff: 'melody' | 'bass',
@@ -31,6 +48,7 @@ function parseBody(
   settingEvents: DirectSettingEvent[] = [],
   inheritedSettingEvents: DirectSettingEvent[] = [],
   phrasePasses: ReadonlyArray<{ start: number; end: number; passes: string }> = [],
+  positionAt: (offset: number) => number = (offset) => offset,
 ) {
   let depth = 0
   let currentKey = initialKey
@@ -119,6 +137,8 @@ function parseBody(
   }
 
   for (const token of tokenizeM3N(source)) {
+    const sourceStart = positionAt(token.start)
+    const sourceEnd = positionAt(token.end - 1) + 1
     if (token.kind === 'space' || token.kind === 'comment') continue
     if (token.kind === 'attribute') {
       const value = token.content ?? ''
@@ -147,7 +167,7 @@ function parseBody(
       }
       const multiRest = /^rest=(\d+)$/.exec(value)
       if (multiRest) {
-        syncActiveEnding(token.start)
+        syncActiveEnding(sourceStart)
         ensureEndingMeasure()
         measure().multiRest = Number(multiRest[1])
         elapsedBeats += Number(multiRest[1]) * currentMeterCount * 4 / currentMeterUnit
@@ -221,7 +241,7 @@ function parseBody(
       current.right = value.startsWith(':||') ? 'rptend'
         : value.includes('|||') ? 'end'
           : value === '||' ? 'dbl' : 'single'
-      current.barEnd = token.start + value.length
+      current.barEnd = sourceEnd
       pendingRepeatEnd = value.startsWith(':||') ? current : undefined
       const next: ScoreMeasure = { events: [], ending: activeEnding }
       if (value === '||:' || value === ':||:') next.left = 'rptstart'
@@ -247,14 +267,13 @@ function parseBody(
       const mode = group[2]?.trim() ?? ''
       const tuplet = mode === 'h' ? null : parseM3NTupletPitches(group[1] ?? '')
       const pitches = mode === 'h' ? parseM3NGroupPitches(group[1] ?? '') ?? [] : tuplet?.pitches ?? []
-      const sourceEnd = token.start + group[0].length
       if (pitches.length > 0) {
         const first = parseM3NNote(pitches[0] ?? '')
         const carets = group[3] ?? ''
         const dots = group[4] ?? ''
         const groupBeats = duration(depth, (first?.carets.length ?? 0) + carets.length, (first?.dots.length ?? 0) + dots.length)
         add({
-          sourceStart: token.start,
+          sourceStart,
           sourceEnd,
           kind: mode === 'h' ? 'chord' : 'tuplet',
           pitches,
@@ -280,8 +299,8 @@ function parseBody(
       applyInheritedSettings()
       pendingRepeatEnd = undefined
       add({
-        sourceStart: token.start,
-        sourceEnd: token.start + noteToken.length,
+        sourceStart,
+        sourceEnd,
         kind: note.degreeRaw === '0' ? 'rest' : 'note',
         pitches: note.degreeRaw === '0' ? [] : [noteToken.replace(/[\^.~]+$/g, '')],
         key: currentKey,
@@ -337,10 +356,66 @@ export function m3nPitch(pitch: string, key: string) {
   }
 }
 
+function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructure) {
+  const score = document.parts.get('score')
+  if (!score) return
+
+  for (const section of structure.sections) for (const phrase of section.phrases) {
+    if (!phrase.melody || !phrase.harmony) continue
+    const melodyEnd = phrase.melody.start + phrase.melody.text.length
+    const measures = score.melody.filter((measure) => measure.events.some((event) => (
+      phrase.melody!.start <= event.sourceStart && event.sourceStart < melodyEnd
+    )))
+    for (const [measureIndex, harmony] of phrase.harmony.text.split(/\|+/).entries()) {
+      const events = measures[measureIndex]?.events ?? []
+      if (events.length === 0) continue
+      let depth = 0
+      let offset = 0
+      for (const token of harmony.matchAll(/\(|\)|(?:VII|III|II|IV|VI|V|I|vii|iii|ii|iv|vi|v|i)(?:m|dim|aug|sus2|sus4|maj7|maj9|[2-9]|1[0-3])?/g)) {
+        const value = token[0]
+        if (value === '(') { depth += 1; continue }
+        if (value === ')') { depth = Math.max(0, depth - 1); continue }
+        let elapsed = 0
+        const target = events.find((event) => {
+          const matches = elapsed + 1e-9 >= offset
+          elapsed += event.beats
+          return matches
+        }) ?? events.at(-1)
+        if (target) { target.chord = value; target.chordState = value }
+        offset += (events[0]?.meterCount ?? document.meterCount) * 4 /
+          (events[0]?.meterUnit ?? document.meterUnit) / 2 ** depth
+      }
+    }
+  }
+
+  const lyrics: ScoreLyricBlock[] = []
+  for (const section of structure.sections) for (const phrase of section.phrases) {
+    if (!phrase.melody) continue
+    for (const lyric of phrase.lyrics) {
+      if (/^\{L(\d+)\}$/.test(lyric.text.trim())) continue
+      lyrics.push({
+        range: lyric.label,
+        mode: 'char',
+        syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start),
+        phrasePasses: phrase.passes || undefined,
+        targetStart: phrase.melody.start,
+        targetEnd: phrase.melody.start + phrase.melody.text.length,
+      })
+    }
+  }
+  document.lyrics = lyrics
+
+  for (const section of structure.sections) {
+    const melody = section.phrases.find((phrase) => phrase.melody)?.melody
+    if (!section.name || !melody) continue
+    const melodyEnd = melody.start + melody.text.length
+    const event = score.melody.flatMap((measure) => measure.events)
+      .find((candidate) => melody.start <= candidate.sourceStart && candidate.sourceStart < melodyEnd)
+    if (event) event.sectionLabel = section.name
+  }
+}
+
 export function parseM3NDocument(source: string, projection: M3NDocumentProjection = projectM3NDocument(source)): ScoreDocument {
-  const originalSource = source
-  const projected = projection
-  source = projected.source
   const key = source.match(/\{key=([^}]+)\}/)?.[1]?.trim() || 'C'
   const meter = source.match(/\{(\d+)\/(\d+)\}/)
   const tempo = source.match(/\{(\d+)qpm\}/)?.[1]
@@ -350,8 +425,17 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
   const meterCount = Number(meter?.[1] ?? 4)
   const meterUnit = Number(meter?.[2] ?? 4)
   const initialTempo = Number(tempo ?? 120)
-  parseBody(source, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], projected.phrasePasses)
-  if (projected.bassSource) parseBody(projected.bassSource, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
+  const phrases = projection.structure.sections.flatMap((section) => section.phrases)
+  const melody = bodySource(phrases.flatMap((phrase) => phrase.melody
+    ? [{ text: phrase.melody.text, start: phrase.melody.start, passes: phrase.passes || undefined }]
+    : []))
+  const bass = bodySource(phrases.flatMap((phrase) => phrase.bass
+    ? [{ text: phrase.bass.text, start: phrase.bass.start }]
+    : []))
+  const fallback = projection.structure.sections.length === 0 ? bodySource([{ text: source, start: 0 }]) : undefined
+  const melodyBody = fallback ?? melody
+  parseBody(melodyBody.text, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], melodyBody.phrasePasses, melodyBody.positionAt)
+  if (bass.text) parseBody(bass.text, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents, [], bass.positionAt)
   const document: ScoreDocument = {
     title: metadata(source, 'title'),
     subtitle: metadata(source, 'subtitle'),
@@ -372,5 +456,6 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
     parts,
     intervals,
   }
-  return enrichScoreDocument(document, originalSource, projected)
+  applyPhraseRows(document, projection.structure)
+  return document
 }

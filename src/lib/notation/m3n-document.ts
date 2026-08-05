@@ -119,31 +119,7 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
 
 export function projectM3NDocument(source: string, syntaxTree?: M3NSyntaxTree) {
   const structure = parseM3NDocumentStructure(source, syntaxTree)
-  const melody: string[] = []
-  const lineMap: number[] = []
-  const phrasePasses: Array<{ start: number; end: number; passes: string }> = []
-  let projectedLength = 0
-  const push = (text: string, sourceLine?: number) => {
-    if (melody.length > 0) projectedLength += 1
-    const start = projectedLength
-    melody.push(text)
-    projectedLength += text.length
-    const lineCount = text.split('\n').length
-    for (let index = 0; index < lineCount; index += 1) lineMap.push(sourceLine ?? lineMap.length + 1)
-    return start
-  }
-  push(structure.header)
-  const bass: string[] = []
-  for (const section of structure.sections) {
-    for (const phrase of section.phrases) {
-      if (phrase.melody) {
-        const start = push(phrase.melody.text, phrase.melody.line)
-        if (phrase.passes) phrasePasses.push({ start, end: start + phrase.melody.text.length, passes: phrase.passes })
-      }
-      if (phrase.bass) bass.push(phrase.bass.text)
-    }
-  }
-  return { source: melody.join('\n'), bassSource: bass.join('\n'), structure, lineMap, phrasePasses }
+  return { structure }
 }
 
 export type M3NDocumentProjection = ReturnType<typeof projectM3NDocument>
