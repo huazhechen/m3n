@@ -294,6 +294,17 @@ function parseBody(
       continue
     }
   }
+
+  const trailing = measure()
+  const previous = measures().at(-2)
+  const trailingEndNavigation = trailing.events.length === 0 && !trailing.multiRest
+    ? trailing.navigation?.filter((value) => value !== 'segno') ?? []
+    : []
+  if (previous && trailingEndNavigation.length > 0) {
+    previous.navigation ??= []
+    previous.navigation.push(...trailingEndNavigation)
+    trailing.navigation = trailing.navigation?.filter((value) => value === 'segno')
+  }
 }
 
 export function m3nPitch(pitch: string, key: string) {

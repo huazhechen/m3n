@@ -115,10 +115,11 @@ describe('direct M3N parser', () => {
   })
 
   it('stores navigation markers on their measure', () => {
-    const measures = parseM3NDocument('{3/4}\nN: {segno}1 2 3 | {rest=4} {dc} |||').parts.get('score')?.melody
+    const measures = parseM3NDocument('{3/4}\nN: {segno}1 2 3 | {rest=4} {fine} | {dc}1 2 3 ||| {ds}').parts.get('score')?.melody
 
     expect(measures?.[0]?.navigation).toEqual(['segno'])
-    expect(measures?.[1]?.navigation).toEqual(['dc'])
+    expect(measures?.[1]?.navigation).toEqual(['fine'])
+    expect(measures?.[2]?.navigation).toEqual(['dc', 'ds'])
     expect(measures?.flatMap((measure) => measure.events).flatMap((event) => event.navigation)).toEqual([])
   })
 })

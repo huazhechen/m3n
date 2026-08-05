@@ -362,7 +362,7 @@ describe('M3N to MEI conversion', () => {
 
   it('anchors navigation markers to measure boundaries', () => {
     const start = m3nToMei('{3/4}\nN: {segno}1 2 3 |||').mei
-    const ending = m3nToMei('{3/4}\nN: 1 2 3 {fine} | 1 2 3 {ds} | {rest=4} {dc} |||').mei
+    const ending = m3nToMei('{3/4}\nN: 1 2 3 {fine} | 1 2 3 {ds} | {rest=4} ||| {dc}').mei
 
     expect(start).toContain('<repeatMark staff="1" tstamp="1" place="above" func="segno"/>')
     expect(ending).toContain('<repeatMark staff="1" tstamp="4" place="above" func="fine">Fine</repeatMark>')
