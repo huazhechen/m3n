@@ -1,9 +1,9 @@
 import { parseM3NGrace, parseM3NGroupPitches, parseM3NTupletPitches } from './notation/m3n-groups'
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives'
-import { parseLyricItems } from './notation/lyrics'
-import { tokenizeM3N } from './notation/m3n-tokens'
 import { projectM3NDocument, type M3NDocumentProjection } from './notation/m3n-document'
-import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document'
+import { enrichScoreDocument } from './notation/score-document-enrichment'
+import { tokenizeM3N } from './notation/m3n-tokens'
+import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure, ScorePart } from './notation/score-document'
 type DirectSettingEvent = {
   beats: number
   kind: 'key' | 'meter' | 'tempo'
@@ -372,107 +372,5 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
     parts,
     intervals,
   }
-  if (projected.structure.sections.length > 0) {
-    const tokens = tokenizeM3N(originalSource)
-    const sourcePositions = new Map<number, number>()
-    const regions = (staff: 'melody' | 'bass') => projected.structure.sections.flatMap((section) =>
-      section.phrases.flatMap((phrase) => {
-        const row = staff === 'melody' ? phrase.melody : phrase.bass
-        return row ? [{ start: row.start, end: row.start + row.text.length }] : []
-      }))
-    const remapStaff = (staff: 'melody' | 'bass') => {
-      const ranges = regions(staff)
-      const atomTokens = tokens.filter((token) => (token.kind === 'note' || token.kind === 'group') &&
-        ranges.some((range) => range.start <= token.start && token.start < range.end))
-      const events = [...document.parts.values()].flatMap((part) => part[staff].flatMap((measure) => measure.events))
-      for (const [index, event] of events.entries()) {
-        const token = atomTokens[index]
-        if (!token) continue
-        sourcePositions.set(event.sourceStart, token.start)
-        sourcePositions.set(event.sourceEnd, token.start + token.raw.length)
-        event.sourceStart = token.start
-        event.sourceEnd = token.start + token.raw.length
-      }
-    }
-    remapStaff('melody')
-    remapStaff('bass')
-    for (const interval of document.intervals) {
-      if (interval.start !== undefined) interval.start = sourcePositions.get(interval.start) ?? interval.start
-      if (interval.endStart !== undefined) interval.endStart = sourcePositions.get(interval.endStart) ?? interval.endStart
-      if (interval.end !== undefined) interval.end = sourcePositions.get(interval.end) ?? interval.end
-    }
-
-    for (const section of projected.structure.sections) {
-      const part = document.parts.get('score')
-      if (!part) continue
-      for (const phrase of section.phrases) {
-        if (!phrase.melody || !phrase.harmony) continue
-        const melody = phrase.melody
-        const melodyEnd = melody.start + melody.text.length
-        const measures = part.melody.filter((measure) => measure.events.some((event) =>
-          melody.start <= event.sourceStart && event.sourceStart < melodyEnd))
-        const harmonyMeasures = phrase.harmony.text.split(/\|+/)
-        for (const [measureIndex, harmony] of harmonyMeasures.entries()) {
-          const events = measures[measureIndex]?.events ?? []
-          if (events.length === 0) continue
-          let depth = 0
-          let offset = 0
-          for (const token of harmony.matchAll(/\(|\)|(?:VII|III|II|IV|VI|V|I|vii|iii|ii|iv|vi|v|i)(?:m|dim|aug|sus2|sus4|maj7|maj9|[2-9]|1[0-3])?/g)) {
-            const value = token[0]
-            if (value === '(') {
-              depth += 1
-              continue
-            }
-            if (value === ')') {
-              depth = Math.max(0, depth - 1)
-              continue
-            }
-            let elapsed = 0
-            const target = events.find((event) => {
-              const matches = elapsed + 1e-9 >= offset
-              elapsed += event.beats
-              return matches
-            }) ?? events.at(-1)
-            if (target) {
-              target.chord = value
-              target.chordState = value
-            }
-            const meterCount = events[0]?.meterCount ?? document.meterCount
-            const meterUnit = events[0]?.meterUnit ?? document.meterUnit
-            offset += meterCount * 4 / meterUnit / 2 ** depth
-          }
-        }
-      }
-    }
-
-    const lyricRows: ScoreLyricBlock[] = []
-    for (const section of projected.structure.sections) {
-      for (const phrase of section.phrases) {
-        if (!phrase.melody) continue
-        for (const lyric of phrase.lyrics) {
-          const reference = /^\{L(\d+)\}$/.exec(lyric.text.trim())
-          if (reference) continue
-          lyricRows.push({
-            range: lyric.label,
-            mode: 'char',
-            syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start, 'char'),
-            phrasePasses: phrase.passes || undefined,
-            targetStart: phrase.melody.start,
-            targetEnd: phrase.melody.start + phrase.melody.text.length,
-          })
-        }
-      }
-    }
-    document.lyrics = lyricRows
-    const score = document.parts.get('score')
-    for (const section of projected.structure.sections) {
-      const melody = section.phrases.find((phrase) => phrase.melody)?.melody
-      if (!section.name || !melody || !score) continue
-      const end = melody.start + melody.text.length
-      const event = score.melody.flatMap((measure) => measure.events)
-        .find((candidate) => melody.start <= candidate.sourceStart && candidate.sourceStart < end)
-      if (event) event.sectionLabel = section.name
-    }
-  }
-  return document
+  return enrichScoreDocument(document, originalSource, projected)
 }

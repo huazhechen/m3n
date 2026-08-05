@@ -3,8 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import type { ScoreRendererRef } from '../components/ScoreRenderer'
 import { TopNav } from '../components/TopNav'
-import { m3nToMei } from '../lib/m3n-mei'
-import { invalidMeasureIds } from '../lib/m3n-validate'
+import { analyzeM3N } from '../lib/notation/analysis'
 import { presetScores } from '../lib/samples'
 import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
 import { isSharedScoreId, loadSharedScore } from '../lib/shared-scores'
@@ -28,8 +27,8 @@ export function ScoreReaderPage() {
   }, [score, slug])
 
   const scoreSource = score?.source ?? sharedSource ?? ''
-  const result = useMemo(() => m3nToMei(scoreSource), [scoreSource])
-  const invalidMeasures = useMemo(() => invalidMeasureIds(scoreSource), [scoreSource])
+  const analysis = useMemo(() => analyzeM3N(scoreSource), [scoreSource])
+  const { conversion: result, invalidMeasureIds: invalidMeasures } = analysis
 
   if (!score && sharedSource === undefined) {
     return <main><TopNav /><div className="page-status" role="status">Loading...</div></main>

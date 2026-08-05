@@ -1,5 +1,4 @@
-import { assessM3NMelodyComplexity } from './m3n-melody-complexity'
-import { validateM3NDiagnostics } from './m3n-validate'
+import { analyzeM3N } from './notation/analysis'
 import { scoreDiagnosticSeverity, type ScoreDiagnosticSeverity } from './score-diagnostics'
 
 export type PresetScoreMetadata = {
@@ -45,6 +44,7 @@ function normalizeSearchText(value: string) {
 }
 
 export function scoreMetadataFromSource(slug: string, source: string): PresetScoreMetadata {
+  const analysis = analyzeM3N(source)
   const title = readAttribute(source, 'title') ?? slug
   const subtitle = readAttribute(source, 'subtitle')
   const singer = readAttribute(source, 'singer')
@@ -60,8 +60,8 @@ export function scoreMetadataFromSource(slug: string, source: string): PresetSco
     tempo: readTempo(source),
     hasLyrics: /^\s*L\d*:/m.test(source),
     hasBass: /^\s*B:/m.test(source),
-    melodyComplexity: assessM3NMelodyComplexity(source).score,
+    melodyComplexity: analysis.complexity.score,
     searchText: normalizeSearchText([title, subtitle, singer, composer, ...readMetadataValues(source)].filter(Boolean).join(' ')),
-    diagnosticSeverity: scoreDiagnosticSeverity(validateM3NDiagnostics(source)),
+    diagnosticSeverity: scoreDiagnosticSeverity(analysis.conversion.diagnostics),
   }
 }

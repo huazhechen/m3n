@@ -12,6 +12,10 @@ import type { ScoreDocument } from './notation/score-document'
 import { validateScoreDocument } from './notation/score-rules'
 import { validateM3NSyntaxTree } from './notation/syntax-rules'
 import { parseM3NSyntaxTree, type M3NSyntaxTree } from './notation/syntax-tree'
+import {
+  invalidMeasureBarEnds as deriveInvalidMeasureBarEnds,
+  invalidMeasureIds as deriveInvalidMeasureIds,
+} from './notation/measure-diagnostics'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -854,37 +858,14 @@ function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStr
   return diagnostics
 }
 
+/** @deprecated Prefer deriving this from an existing M3NAnalysis session. */
 export function invalidMeasureBarEnds(source: string, document = parseM3NDocument(source)) {
-  const diagnostics = validateScoreDocument(document, { source })
-  const invalidBarEnds = new Set(diagnostics.flatMap((diagnostic) => {
-    if (!diagnostic.code.startsWith('M3N_METER_')) return []
-    const index = Number(diagnostic.messageArgs?.measure ?? 1) - 1
-    return [...document.parts.values()].flatMap((part) => {
-      const barEnd = part.melody[index]?.barEnd
-      return barEnd === undefined ? [] : [barEnd]
-    })
-  }))
-  return [...invalidBarEnds].sort((left, right) => left - right)
+  return deriveInvalidMeasureBarEnds(source, document)
 }
 
+/** @deprecated Prefer deriving this from an existing M3NAnalysis session. */
 export function invalidMeasureIds(source: string, document = parseM3NDocument(source)) {
-  const invalidEnds = new Set(invalidMeasureBarEnds(source, document))
-  const renderedMeasureCount = (measures: Array<{ events: unknown[]; multiRest?: number }>) => {
-    let count = measures.length
-    while (count > 1 && measures[count - 1]?.events.length === 0 && !measures[count - 1]?.multiRest) count -= 1
-    return count
-  }
-
-  return [...document.parts.values()].flatMap((part, partIndex) => {
-    const measureCount = Math.max(renderedMeasureCount(part.melody), renderedMeasureCount(part.bass))
-    return Array.from({ length: measureCount }, (_, measureIndex) => {
-      const melody = part.melody[measureIndex]
-      const bass = part.bass[measureIndex]
-      return invalidEnds.has(melody?.barEnd ?? -1) || invalidEnds.has(bass?.barEnd ?? -1)
-        ? `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
-        : null
-    }).filter((id): id is string => id !== null)
-  })
+  return deriveInvalidMeasureIds(source, document)
 }
 
 function structureTokens(source: string, structure: M3NDocumentStructure, staff: 'melody' | 'bass') {
