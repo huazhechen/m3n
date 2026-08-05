@@ -1,20 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import { invalidMeasureBarEnds, invalidMeasureIds, validateM3NDiagnostics } from './m3n-validate'
 import { parseM3NDocument } from './m3n-direct'
-import { presetScores } from './samples'
 
 const validateM3N = (source: string, options: { skipBeatValidation?: boolean } = {}, document?: ReturnType<typeof parseM3NDocument>) =>
   validateM3NDiagnostics(source, options, document).map((diagnostic) => diagnostic.message)
 const messages = (source: string) => validateM3N(source).join('\n')
 
 describe('validateM3N', () => {
-  it('accepts the phrase and pickup fragments in Turkish March', () => {
-    const source = presetScores.find((score) => score.slug === 'turkish_march_01')?.source ?? ''
+  it('accepts complementary pickup fragments across phrase boundaries', () => {
+    const source = '{2/4}\nN: 1 |\n---\nN: 2 | 3 4 |||'
+
     expect(validateM3NDiagnostics(source)).toEqual([])
   })
 
   it('accepts repeat pickup fragments closed by alternate endings', () => {
-    const source = presetScores.find((score) => score.slug === 'ming_tian_hui_geng_hao_01')?.source ?? ''
+    const source = '{2/4}\nN: ||: 1 |\n---V1\nN: 2 :||\n---V2\nN: 2 |||'
+
     expect(validateM3NDiagnostics(source)).toEqual([])
   })
 

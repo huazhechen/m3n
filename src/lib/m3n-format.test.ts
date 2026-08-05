@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatM3N } from './m3n-format'
 import { validateM3NDiagnostics } from './m3n-validate'
-import guangYinDeGuShi from '../scores/guang_yin_de_gu_shi_01.m3n?raw'
-import ruYuan from '../scores/ru_yuan_01.m3n?raw'
 
 describe('formatM3N', () => {
   it('formats the current phrase structure without rewriting music atoms', () => {
@@ -96,14 +94,16 @@ describe('formatM3N', () => {
     expect(validateM3NDiagnostics(formatM3N(source))).toEqual([])
   })
 
-  it('rebuilds measure alignment for every verse of Guang Yin De Gu Shi', () => {
-    const diagnostics = validateM3NDiagnostics(formatM3N(guangYinDeGuShi))
+  it('rebuilds measure alignment for every repeated verse', () => {
+    const source = '{2/4}\nN: ||: 1 2 | 3 4 :||{x2} |||\nL1: 甲乙丙丁\nL2: 戊己庚辛\n'
+    const diagnostics = validateM3NDiagnostics(formatM3N(source))
 
     expect(diagnostics.filter((item) => item.code === 'M3N_LYRIC_ALIGNMENT')).toEqual([])
   })
 
-  it('splits compressed lyric placeholders across measures in Ru Yuan', () => {
-    const diagnostics = validateM3NDiagnostics(formatM3N(ruYuan))
+  it('splits compressed lyric placeholders across measures', () => {
+    const source = '{2/4}\nN: 1 2 | 3 4 | 5 6 |||\nL: 甲%乙丙丁戊\n'
+    const diagnostics = validateM3NDiagnostics(formatM3N(source))
 
     expect(diagnostics.filter((item) => item.code === 'M3N_LYRIC_ALIGNMENT')).toEqual([])
   })
