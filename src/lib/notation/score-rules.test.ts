@@ -7,6 +7,29 @@ describe('score document rules', () => {
     const source = '{2/4}\nN: 1\n---\nN: 2 | 3 4 |||'
     expect(validateScoreDocument(parseM3NDocument(source), { source })).toEqual([])
   })
+
+  it('pairs a repeat pickup with each complementary alternate ending', () => {
+    const source = [
+      '{4/4}',
+      'N: ||: 1 | 1 2 3 4 |',
+      '---V1',
+      'N: 1 2 3 :||',
+      '---V2,V3,V4',
+      'N: 4 5 6 :||{x4} |||',
+    ].join('\n')
+
+    expect(validateScoreDocument(parseM3NDocument(source), { source })).toEqual([])
+  })
+
+  it('does not pair incomplete measures across alternate endings', () => {
+    const source = '{4/4}\nN: ||: 1 2 3 4 |\n---V1\nN: 1 2 3 :||\n---V2\nN: 4 :|| |||'
+    const diagnostics = validateScoreDocument(parseM3NDocument(source), { source })
+
+    expect(diagnostics).toContainEqual(expect.objectContaining({
+      code: 'M3N_METER_INCOMPLETE_MIDDLE',
+      messageArgs: expect.objectContaining({ measure: 2, actual: 3 }),
+    }))
+  })
   it('reports mismatched bass measure counts with a source range', () => {
     const source = '{2/4}\nN: 1 2 | 3 4 |||\nB: 1d 2d |||'
     expect(validateScoreDocument(parseM3NDocument(source))).toContainEqual(expect.objectContaining({

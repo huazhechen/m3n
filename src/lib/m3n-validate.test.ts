@@ -13,6 +13,11 @@ describe('validateM3N', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
   })
 
+  it('accepts repeat pickup fragments closed by alternate endings', () => {
+    const source = presetScores.find((score) => score.slug === 'ming_tian_hui_geng_hao_01')?.source ?? ''
+    expect(validateM3NDiagnostics(source)).toEqual([])
+  })
+
   it('validates bar-aligned v0.3 lyrics measure by measure', () => {
     expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁')).toEqual([])
     expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁 |')).toEqual([])

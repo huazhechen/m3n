@@ -2,6 +2,7 @@ import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics'
 import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './score-document'
 import { m3nPitch } from '../m3n-direct'
 import { parseM3NNote } from './m3n-primitives'
+import { measurePlaybackPasses } from './repeats'
 
 const EPSILON = 1e-9
 
@@ -65,14 +66,32 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   }))
   const equal = (left: number, right: number) => Math.abs(left - right) <= EPSILON
   const complementary = new Set<number>()
+  const passesByMeasure = measurePlaybackPasses(measures)
+  const sharePlaybackPass = (left: ScoreMeasure, right: ScoreMeasure) => {
+    const rightPasses = passesByMeasure.get(right)
+    return [...(passesByMeasure.get(left) ?? [])].some((pass) => rightPasses?.has(pass))
+  }
   for (let index = 0; index < values.length - 1; index += 1) {
     const left = values[index]
     const right = values[index + 1]
     if (!left || !right || left.actual >= left.expected || right.actual >= right.expected) continue
-    if (equal(left.expected, right.expected) && equal(left.actual + right.actual, left.expected)) {
+    if (sharePlaybackPass(left.measure, right.measure)
+      && equal(left.expected, right.expected)
+      && equal(left.actual + right.actual, left.expected)) {
       complementary.add(index)
       complementary.add(index + 1)
       index += 1
+    }
+  }
+  let repeatStartIndex: number | undefined
+  for (const value of values) {
+    if (value.measure.left === 'rptstart') repeatStartIndex = value.index
+    if (value.measure.right !== 'rptend' || repeatStartIndex === undefined) continue
+    const pickup = values[repeatStartIndex]
+    if (!pickup || pickup.actual >= pickup.expected || value.actual >= value.expected) continue
+    if (equal(pickup.expected, value.expected) && equal(pickup.actual + value.actual, pickup.expected)) {
+      complementary.add(repeatStartIndex)
+      complementary.add(value.index)
     }
   }
   for (const value of values) {
