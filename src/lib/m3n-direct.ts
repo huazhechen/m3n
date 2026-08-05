@@ -45,6 +45,7 @@ function parseBody(
   let pendingPrefix: 'sfz' | undefined
   let lastEvent: ScoreEvent | undefined
   let pendingRepeatEnd: ScoreMeasure | undefined
+  let lastBarLine: number | undefined
   let elapsedBeats = 0
   let inheritedSettingIndex = 0
   const structureStack: Array<string | ScoreInterval> = []
@@ -199,8 +200,17 @@ function parseBody(
     if (token.kind === 'bar') {
       const current = measure()
       const value = token.raw
+      const previous = measures().at(-2)
+      const redundantPhraseBar = /^(?:\|\|\||\|\||\|)$/.test(value)
+        && current.events.length === 0 && !current.multiRest
+        && previous?.barEnd !== undefined && lastBarLine !== undefined && token.line > lastBarLine
+      if (redundantPhraseBar) {
+        lastBarLine = token.line
+        continue
+      }
       if (value === '||:' && current.events.length === 0 && !current.multiRest) {
         current.left = 'rptstart'
+        lastBarLine = token.line
         continue
       }
       current.right = value.startsWith(':||') ? 'rptend'
@@ -211,6 +221,7 @@ function parseBody(
       const next: ScoreMeasure = { events: [], ending: activeEnding }
       if (value === '||:' || value === ':||:') next.left = 'rptstart'
       measures().push(next)
+      lastBarLine = token.line
       lastEvent = undefined
       continue
     }

@@ -291,6 +291,7 @@ function formatLine(line: string) {
     const source = phraseLine[2] ?? ''
     const music = kind === 'N' || kind === 'B'
       ? normalizeAdjacentBarlines(normalizeBeamGroups(source.replace(/\{br\}/g, ' ')))
+        .replace(/^\|{1,3}(?=\s|$)\s*/, '')
       : source
     return `${kind}: ${formatContent(music, kind.startsWith('L'))}`.trimEnd()
   }
@@ -309,7 +310,9 @@ function addLyricMeasureBars(source: string) {
     const match = /^(L\d*:\s*)(.*)$/.exec(line)
     if (!match) return line
     const { content, comment } = splitInlineComment(match[2] ?? '')
-    const lyric = content.replace(/\s*\|\s*/g, '').trimEnd()
+    const lyric = content.replace(/\s*\|\s*/g, '')
+      .replace(/\{%([1-9]\d*)\}/g, (_, count: string) => '%'.repeat(Number(count)))
+      .trimEnd()
     return appendComment(`${match[1]}${lyric}`, comment)
   }).join('\n')
   const structure = parseM3NDocumentStructure(source)
@@ -325,14 +328,21 @@ function addLyricMeasureBars(source: string) {
       const items = parseLyricItems(lyric.text, lyric.start, 'char')
       let itemIndex = 0
       for (const targets of measures.slice(0, -1)) {
-        let remaining = targets.filter((target) => !target.tied).length
-        while (itemIndex < items.length && remaining > 0) {
+        let targetIndex = 0
+        while (itemIndex < items.length && targetIndex < targets.length) {
           const item = items[itemIndex]
-          itemIndex += 1
           if (!item) break
-          remaining -= 1
+          if (item.forceTiedTarget) {
+            if (!targets[targetIndex]?.tied) break
+          } else {
+            while (targets[targetIndex]?.tied) targetIndex += 1
+            if (targetIndex >= targets.length) break
+          }
+          itemIndex += 1
+          targetIndex += 1
         }
-        if (remaining > 0) break
+        while (targets[targetIndex]?.tied) targetIndex += 1
+        if (targetIndex < targets.length) break
         const previousItem = items[itemIndex - 1]
         const nextItem = items[itemIndex]
         const start = previousItem?.sourceEnd ?? nextItem?.sourceStart ?? lyric.start + lyric.text.length
@@ -348,12 +358,15 @@ function addLyricMeasureBars(source: string) {
     if (existing) existing.count += 1
     else grouped.set(insertion.start, { ...insertion, count: 1 })
   }
-  return [...grouped.values()].sort((left, right) => right.start - left.start).reduce((result, item) => {
+  const aligned = [...grouped.values()].sort((left, right) => right.start - left.start).reduce((result, item) => {
     const bars = Array.from({ length: item.count }, () => '|').join(' ')
     const leading = /\s/.test(result[item.start - 1] ?? '') ? '' : ' '
     const trailing = item.end >= result.length || /[\r\n]/.test(result[item.end] ?? '') ? '' : ' '
     return `${result.slice(0, item.start)}${leading}${bars}${trailing}${result.slice(item.end)}`
   }, source)
+  return aligned.split('\n').map((line) => line.startsWith('L')
+    ? line.replace(/%{2,}/g, (run) => `{%${run.length}}`)
+    : line).join('\n')
 }
 
 /** Formats M3N layout without changing musical, structural, or lyric semantics. */

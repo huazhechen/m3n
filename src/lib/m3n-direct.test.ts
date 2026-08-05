@@ -99,6 +99,14 @@ describe('direct M3N parser', () => {
     expect(measures?.[1]).toMatchObject({ left: 'rptstart' })
   })
 
+  it('does not create an empty measure from duplicate bars across phrase lines', () => {
+    const source = '{2/4}\nN: 1 2 |\n---\nN: | 3 4 |||'
+    const measures = parseM3NDocument(source).parts.get('score')?.melody
+
+    expect(measures?.filter((measure) => measure.events.length > 0)).toHaveLength(2)
+    expect(measures?.some((measure) => measure.events.length === 0 && measure.barEnd !== undefined)).toBe(false)
+  })
+
   it('stores navigation markers on their measure', () => {
     const measures = parseM3NDocument('{3/4}\nN: {segno}1 2 3 | {rest=4} {dc} |||').parts.get('score')?.melody
 
