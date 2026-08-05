@@ -15,7 +15,8 @@
     "preview": "vite preview",
     "preview:worker": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy",
-    "generate:icon": "node tools/generate-brand-icon.mjs"
+    "generate:icon": "node tools/generate-brand-icon.mjs",
+    "format:scores": "tsx tools/format-scores.mts"
   },
   "dependencies": {
     "jspdf": "^4.2.1",

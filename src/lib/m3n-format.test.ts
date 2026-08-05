@@ -9,8 +9,8 @@ describe('formatM3N', () => {
     expect(formatM3N(source)).toBe([
       '{title=Test Song} {key=C} {4/4}',
       'N: 1~ 1 2 3 | 4 5 6 7 :||{x2}',
-      'L1: 你好%世界',
-      'L2: Hello world again now',
+      'L1: 你好% | 世界',
+      'L2: Hello world again | now',
       '---V1,V2',
       'N: [135:h]{arp} 0 0^ |||',
       '',
@@ -49,5 +49,17 @@ describe('formatM3N', () => {
     expect(formatted.match(/^N:/gm)).toHaveLength(1)
     expect(formatted).not.toContain('\n---\n')
     expect(formatted).toContain(`N: ${'1 2 | '.repeat(17).trim()}`)
+  })
+
+  it('removes manual breaks and merges adjacent sixteenth-note groups by beat', () => {
+    const source = '{4/4}\nN: {br} ((1)) ((2)) ((3)) ((4)) | ((5)) ((6)) ((7)) ((1e)) |||\n'
+
+    expect(formatM3N(source)).toBe('{4/4}\nN: ((1 2 3 4)) | ((5 6 7 1e)) |||\n')
+  })
+
+  it('adds lyric measure bars from the melody alignment', () => {
+    const source = '{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙丙丁\n'
+
+    expect(formatM3N(source)).toBe('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁\n')
   })
 })

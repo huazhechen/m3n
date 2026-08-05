@@ -45,7 +45,7 @@ const INFO_FIELDS = new Set([
   'copyright', 'source', 'note', 'transpose',
 ])
 
-const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'lg', '8va', '8vb', 'inst'])
+const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'dim', 'lg', '8va', '8vb', 'inst'])
 const DYNAMICS = new Set(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff'])
 const POSTFIX_FLAGS = new Set([
   'arp', 'tr', 'str', 'brk', 'tip', 'hold', 'fermata', 'breath', 'f1', 'f2', 'f3', 'f4', 'f5',
@@ -425,9 +425,13 @@ function validateBody(
         continue
       }
 
-      if (INTERVAL_FLAGS.has(content)) {
+      if (INTERVAL_FLAGS.has(name)) {
+        if (value && !((name === 'cresc' || name === 'decres' || name === 'dim') && value === 'text')) {
+          diagnostics.push(lineMessage(token, `区间指令 {${name}} 不支持参数：${value}`))
+          continue
+        }
         blocks.push({
-          name: content,
+          name: name === 'dim' ? 'decres' : name,
           line: token.line,
         })
         continue

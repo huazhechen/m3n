@@ -1,7 +1,7 @@
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics'
 import type { M3NSyntaxTree } from './syntax-tree'
 
-const INTERVALS = new Set(['cresc', 'decres', 'lg', '8va', '8vb', 'inst', 'accel', 'rit'])
+const INTERVALS = new Set(['cresc', 'decres', 'dim', 'lg', '8va', '8vb', 'inst', 'accel', 'rit'])
 
 export function validateM3NSyntaxTree(tree: M3NSyntaxTree): ScoreDiagnostic[] {
   const diagnostics: ScoreDiagnostic[] = []
@@ -16,6 +16,10 @@ export function validateM3NSyntaxTree(tree: M3NSyntaxTree): ScoreDiagnostic[] {
     }))
   }
   for (const directive of tree.directives) {
+    if ((directive.name === 'cresc' || directive.name === 'decres' || directive.name === 'dim')
+      && directive.value !== undefined && directive.value !== 'text') {
+      report('M3N_DIRECTIVE_INVALID_DISPLAY', '渐强渐弱只支持 text 显示参数', directive)
+    }
     if ((directive.name === 'accel' || directive.name === 'rit') && !directive.closing) {
       const target = Number(directive.value)
       if (!Number.isSafeInteger(target) || target <= 0) {

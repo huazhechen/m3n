@@ -493,7 +493,13 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       if (!startid || !endid) return []
       if (staffNumber === 1 && (interval.kind === 'accel' || interval.kind === 'rit')) return [`<tempo staff="${staffNumber}" startid="#${startid}" endid="#${endid}" place="above" func="continuous">${interval.kind === 'rit' ? 'rit.' : 'accel.'}</tempo>`]
       if (interval.kind === 'lg') return [`<slur startid="#${startid}" endid="#${endid}"/>`]
-      if (interval.kind === 'cresc' || interval.kind === 'decres') return [`<hairpin staff="${staffNumber}" form="${interval.kind === 'cresc' ? 'cres' : 'dim'}" startid="#${startid}" endid="#${endid}"/>`]
+      if (interval.kind === 'cresc' || interval.kind === 'decres') {
+        if (interval.display === 'text') {
+          const label = interval.kind === 'cresc' ? 'cresc.' : 'dim.'
+          return [`<dir staff="${staffNumber}" startid="#${startid}" endid="#${endid}" place="above" type="${interval.kind}">${label}</dir>`]
+        }
+        return [`<hairpin staff="${staffNumber}" form="${interval.kind === 'cresc' ? 'cres' : 'dim'}" startid="#${startid}" endid="#${endid}"/>`]
+      }
       if (interval.kind === '8va' || interval.kind === '8vb') return [`<octave staff="${staffNumber}" dis="8" dis.place="${interval.kind === '8va' ? 'above' : 'below'}" startid="#${startid}" endid="#${endid}"/>`]
       return []
     })

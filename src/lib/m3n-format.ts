@@ -1,6 +1,9 @@
 import { durationInBeats, parseM3NNote } from './notation/m3n-primitives'
 import { parseM3NSyntaxTree } from './notation/syntax-tree'
 import { parseM3NDocument } from './m3n-direct'
+import { parseLyricItems } from './notation/lyrics'
+import { parseM3NDocumentStructure } from './notation/m3n-document'
+import { phraseLyricTargets } from './m3n-validate'
 import type { ScoreDocument, ScoreEvent } from './notation/score-document'
 import type { M3NSyntaxTree } from './notation/syntax-tree'
 
@@ -286,7 +289,9 @@ function formatLine(line: string) {
   if (phraseLine) {
     const kind = phraseLine[1] ?? ''
     const source = phraseLine[2] ?? ''
-    const music = kind === 'N' || kind === 'B' ? normalizeAdjacentBarlines(normalizeBeamGroups(source)) : source
+    const music = kind === 'N' || kind === 'B'
+      ? normalizeAdjacentBarlines(normalizeBeamGroups(source.replace(/\{br\}/g, ' ')))
+      : source
     return `${kind}: ${formatContent(music, kind.startsWith('L'))}`.trimEnd()
   }
 
@@ -299,12 +304,45 @@ function formatLine(line: string) {
   return formatContent(trimmed)
 }
 
+function addLyricMeasureBars(source: string) {
+  const structure = parseM3NDocumentStructure(source)
+  const document = parseM3NDocument(source)
+  const insertions: Array<{ start: number; end: number }> = []
+  for (const section of structure.sections) for (const phrase of section.phrases) {
+    const targetsByPass = phraseLyricTargets(document, structure, section.name, phrase)
+    for (const lyric of phrase.lyrics) {
+      if (lyric.text.includes('|')) continue
+      const pass = Number(lyric.label || 1)
+      const measures = targetsByPass.get(pass) ?? targetsByPass.values().next().value
+      if (!measures || measures.length < 2) continue
+      const items = parseLyricItems(lyric.text, lyric.start, 'char')
+      let itemIndex = 0
+      for (const targets of measures.slice(0, -1)) {
+        let remaining = targets.filter((target) => !target.tied).length
+        while (itemIndex < items.length && remaining > 0) {
+          const item = items[itemIndex]
+          itemIndex += 1
+          if (!item) break
+          remaining -= 1
+        }
+        const item = items[itemIndex - 1]
+        if (!item || remaining > 0) break
+        let end = item.sourceEnd
+        while (end < source.length && /[ \t]/.test(source[end] ?? '')) end += 1
+        insertions.push({ start: item.sourceEnd, end })
+      }
+    }
+  }
+  return [...new Map(insertions.map((item) => [item.start, item])).values()].sort((left, right) => right.start - left.start)
+    .reduce((result, item) => `${result.slice(0, item.start)} | ${result.slice(item.end)}`, source)
+}
+
 /** Formats M3N layout without changing musical, structural, or lyric semantics. */
 export function formatM3N(source: string, context?: { score: ScoreDocument; syntaxTree: M3NSyntaxTree }) {
   const normalizedSource = source.replace(/\r\n?/g, '\n')
   const reusableContext = normalizedSource === source ? context : undefined
   const merged = replaceSustainedAtoms(normalizedSource, false, reusableContext)
   const normalized = replaceSustainedAtoms(merged, true)
-  const formatted = normalized.split('\n').map(formatLine).filter(Boolean)
-  return `${formatted.join('\n')}\n`
+  const formatted = `${normalized.split('\n').map(formatLine).filter(Boolean).join('\n')}\n`
+  return addLyricMeasureBars(formatted)
 }

@@ -26,6 +26,7 @@ export type ScoreInterval = {
   staff: 'melody' | 'bass'
   kind: 'cresc' | 'decres' | 'lg' | '8va' | '8vb' | 'accel' | 'rit' | 'inst'
   tempoTarget?: number
+  display?: 'text'
   start?: number
   end?: number
   endStart?: number

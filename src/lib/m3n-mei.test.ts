@@ -270,6 +270,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).not.toMatch(/<layer n="1">\s*<keySig sig="2s"/)
   })
 
+  it('emits a cancelling key signature when changing from A major to C major', () => {
+    const result = m3nToMei('{key=A} {4/4}\n1 2 3 4 | {key=C}1 2 3 4 |||')
+
+    expect(result.mei).toMatch(/<scoreDef>\s*<staffGrp>\s*<staffDef n="1"><keySig sig="0"\/><\/staffDef>/)
+  })
+
   it('uses score definitions and beam groups for meter changes at measure boundaries', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 | {3/4}1 2 3 | {6/8}(1 2 3 4 5 6) |||')
 
@@ -327,6 +333,16 @@ describe('M3N to MEI conversion', () => {
     const result = m3nToMei('{key=C} {4/4}\n1 2 3 4 | {rest=4} | 4 3 2 1 |||')
 
     expect(result.mei).toContain('<multiRest num="4"/>')
+  })
+
+  it('serializes text dynamics as directions and parameterless dynamics as hairpins', () => {
+    const result = m3nToMei('{key=C} {4/4}\n{cresc=text}1 2{/} {dim=text}3 4{/} | {cresc}1 2{/} {decres}3 4{/} |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-1" endid="#m3n-e-2" place="above" type="cresc">cresc.</dir>')
+    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-3" endid="#m3n-e-4" place="above" type="decres">dim.</dir>')
+    expect(result.mei).toContain('<hairpin staff="1" form="cres" startid="#m3n-e-5" endid="#m3n-e-6"/>')
+    expect(result.mei).toContain('<hairpin staff="1" form="dim" startid="#m3n-e-7" endid="#m3n-e-8"/>')
   })
 
   it('places a forward repeat after a leading multi-measure rest', () => {

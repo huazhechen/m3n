@@ -151,9 +151,12 @@ function parseBody(
         if (current.events.length === 0) current.breakBefore = true
         else current.breakAfter = true
       }
-      if (/^(?:lg|cresc|decres|8va|8vb|inst)$/.test(value) || /^(?:accel|rit)=\d+$/.test(value)) {
+      if (/^(?:lg|cresc|decres|dim|8va|8vb|inst)(?:=text)?$/.test(value) || /^(?:accel|rit)=\d+$/.test(value)) {
         const ramp = /^(accel|rit)=(\d+)$/.exec(value)
-        const interval: ScoreInterval = { id: intervals.length + 1, staff, kind: value as ScoreInterval['kind'] }
+        const [intervalName, display] = value.split('=')
+        const kind = intervalName === 'dim' ? 'decres' : intervalName
+        const interval: ScoreInterval = { id: intervals.length + 1, staff, kind: kind as ScoreInterval['kind'] }
+        if (display === 'text') interval.display = 'text'
         if (ramp) {
           interval.kind = ramp[1] as 'accel' | 'rit'
           interval.tempoTarget = Number(ramp[2])
