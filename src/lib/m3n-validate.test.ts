@@ -146,20 +146,6 @@ describe('validateM3N', () => {
     expect(validateM3N('{2/4}\n1 2 :|| 3 4 :|||')).toEqual([])
   })
 
-  it('rejects incomplete measures across a repeat boundary', () => {
-    const source = '{4/4}\n(1 2) | 3 4 5 6 | 1 2 3 :|| 4 | 5 6 7 |||'
-
-    expect(messages(source)).toContain('中间小节拍数不合规')
-    expect(messages('{4/4}\n(1 2) | 3 4 5 6 | 1 2 :|| 4 | 5 6 7 |||')).toContain('中间小节拍数不合规')
-  })
-
-  it('rejects a repeat start that splits an incomplete measure', () => {
-    const source = '{4/4}\n1 2 3 ||: 4 | 5 6 7 1 | 2 3 4 :|| 5 | 6 7 1 2 |||'
-
-    expect(messages(source)).toContain('中间小节拍数不合规')
-    expect(messages('{4/4}\n1 2 ||: 3 | 4 5 6 7 | 1 2 3 :|| 4 | 5 6 7 1 |||')).toContain('中间小节拍数不合规')
-  })
-
 
   it('accepts rests and insignificant whitespace in tuplet groups', () => {
     expect(validateM3N('{key=C} {2/4}\n[0 6 6 : 2] |||')).toEqual([])

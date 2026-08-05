@@ -17,10 +17,7 @@ type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
 
 type Unit = {
-  beats: number
   expected: number
-  measureLine: number
-  hasAtom: boolean
   currentHasAtom: boolean
   multiRestPendingBar: boolean
 }
@@ -40,7 +37,6 @@ type SettingEvent = {
 type Block = {
   name: string
   line: number
-  octaveShift?: number
   tempoTarget?: number
 }
 
@@ -135,12 +131,9 @@ function splitPitchSequence(source: string, allowTerminalTie = false): { pitches
   }
 }
 
-function createUnit(meter: Meter, line: number): Unit {
+function createUnit(meter: Meter): Unit {
   return {
-    beats: 0,
     expected: meter.beats * 4 / meter.beatValue,
-    measureLine: line,
-    hasAtom: false,
     currentHasAtom: false,
     multiRestPendingBar: false,
   }
@@ -156,7 +149,7 @@ function validateBody(
     ? structuredClone(options.initial)
     : { key: 'C', meter: { beats: 4, beatValue: 4 }, tempo: null }
   let settings = structuredClone(defaultSettings)
-  const unit = createUnit(settings.meter, tokens[0]?.line ?? 1)
+  const unit = createUnit(settings.meter)
   const blocks: Block[] = []
   const parens: Array<{ line: number; atoms: number }> = []
   const infoSeen = new Set<string>()
@@ -165,8 +158,7 @@ function validateBody(
   let fineBeforeTerminal = false
   let postfixTarget: 'note' | 'harmony' | false = false
   let pendingSfz: Token | null = null
-  let repeatOpen: { line: number; id: number } | null = null
-  let repeatId = 0
+  let repeatOpen: { line: number } | null = null
   let repeatCountTarget = false
   let segnoCount = 0
   let jumpCount = 0
@@ -177,21 +169,14 @@ function validateBody(
   const settingEvents: SettingEvent[] = []
   const inheritedSettingEvents = options.inheritedSettingEvents ?? []
 
-  const commitMeasure = (line: number) => {
-    unit.beats = 0
+  const commitMeasure = () => {
     unit.currentHasAtom = false
     unit.multiRestPendingBar = false
-    unit.measureLine = line
   }
 
   const finishRepeat = () => {
     if (repeatOpen) diagnostics.push(`第 ${repeatOpen.line} 行：前反复线无对应后反复线`)
     repeatOpen = null
-  }
-
-  const finishUnit = () => {
-    if (unit.currentHasAtom && !unit.multiRestPendingBar) commitMeasure(unit.measureLine)
-    finishRepeat()
   }
 
   const closeBlock = (token: Token, named: string | null) => {
@@ -243,12 +228,9 @@ function validateBody(
 
   const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet' }) => {
     firstMusicSeen = true
-    unit.hasAtom = true
     for (const paren of parens) paren.atoms += 1
     if (unit.multiRestPendingBar) diagnostics.push(lineMessage(token, '多小节休止必须独占一个小节位置'))
     unit.currentHasAtom = true
-    unit.measureLine = unit.currentHasAtom && unit.beats === 0 ? token.line : unit.measureLine
-    unit.beats += duration
     elapsedBeats += duration
 
     const eligible = atom.kind === 'note' || atom.kind === 'harmony'
@@ -266,14 +248,14 @@ function validateBody(
       diagnostics.push(lineMessage(token, '圆括号必须在同一小节内闭合'))
       parens.length = 0
     }
-    commitMeasure(token.line)
+    commitMeasure()
     if (token.raw === '||:') {
       if (repeatOpen) diagnostics.push(lineMessage(token, '反复区域不能嵌套或重叠'))
-      repeatOpen = { line: token.line, id: ++repeatId }
+      repeatOpen = { line: token.line }
     } else if (token.raw === ':||' || token.raw === ':|||' || token.raw === ':||:') {
       repeatOpen = null
       if (token.raw === ':||:') {
-        repeatOpen = { line: token.line, id: ++repeatId }
+        repeatOpen = { line: token.line }
       }
     }
     if (token.raw === '|||' || token.raw === ':|||') {
@@ -339,11 +321,6 @@ function validateBody(
       const value = equals === -1 ? '' : content.slice(equals + 1)
       const isInfo = INFO_FIELDS.has(name)
       const isPostfix = POSTFIX_FLAGS.has(content) || /^(?:ac|ap)\(/.test(content)
-      const isTempoRamp = name === 'accel' || name === 'rit'
-      const isInterval = INTERVAL_FLAGS.has(content) || isTempoRamp
-      const isPosition = content === 'br' || name === 'text'
-      const isState = DYNAMICS.has(content) || name === 'key' || name === 'chord' || /^\d+qpm$/.test(content)
-
       if (isPostfix) {
         if (!postfixTarget) diagnostics.push(lineMessage(token, '后置指令必须紧跟有音高的普通音符、和音组或同目标的后置指令'))
         else if (content === 'arp' && postfixTarget !== 'harmony') diagnostics.push(lineMessage(token, '琶音只能附在和音组之后'))
@@ -405,7 +382,7 @@ function validateBody(
         continue
       }
 
-      if (isTempoRamp) {
+      if (name === 'accel' || name === 'rit') {
         const tempo = Number(value)
         const validTarget = /^\d+$/.test(value) && Number.isSafeInteger(tempo) && tempo > 0
         if (!validTarget) diagnostics.push(lineMessage(token, '渐快或渐慢的目标速度必须是正整数'))
@@ -437,12 +414,9 @@ function validateBody(
           continue
         }
         firstMusicSeen = true
-        unit.hasAtom = true
         for (const paren of parens) paren.atoms += 1
         if (parens.length > 0) diagnostics.push(lineMessage(token, '多小节休止不能使用圆括号修饰'))
         if (unit.currentHasAtom || unit.multiRestPendingBar) diagnostics.push(lineMessage(token, '多小节休止必须独占一个小节位置'))
-        for (let index = 0; index < count; index += 1) {
-        }
         elapsedBeats += count * unit.expected
         unit.currentHasAtom = true
         unit.multiRestPendingBar = true
@@ -454,7 +428,6 @@ function validateBody(
         blocks.push({
           name: content,
           line: token.line,
-          octaveShift: content === '8va' ? 1 : content === '8vb' ? -1 : undefined,
         })
         continue
       }
@@ -487,9 +460,6 @@ function validateBody(
 
       if (/^\d+qpm$/i.test(content)) diagnostics.push(lineMessage(token, 'qpm 必须使用小写，速度值必须是正整数'))
       else diagnostics.push(lineMessage(token, `未知指令：{${content}}`))
-      if (bass && (isState || isPosition || isInterval)) {
-        // The specific bass restriction above is more useful when available.
-      }
       continue
     }
 
@@ -557,8 +527,7 @@ function validateBody(
     for (const paren of parens) diagnostics.push(`第 ${paren.line} 行：圆括号未闭合`)
   }
   for (const block of blocks) diagnostics.push(`第 ${block.line} 行：未闭合的区间块：{${block.name}}`)
-  if (unit.hasAtom) finishUnit()
-  else finishRepeat()
+  finishRepeat()
 
   if (!bass) {
     if (segnoCount > 1) diagnostics.push('segno 最多只能使用一次')

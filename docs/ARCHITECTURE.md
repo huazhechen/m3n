@@ -31,7 +31,7 @@ pages -> components -> features -> lib/notation
 - `lib/notation/diagnostics.ts`：结构化诊断契约；迁移期间保留旧字符串诊断 API，以兼容现有调用方。
 - `lib/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
 - `lib/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
-- `lib/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；小节时值、延音目标和双谱表对齐已迁移至此。弱起只允许首末小节互补，反复只能以完整小节为单位。
+- `lib/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；负责小节时值、延音目标和双谱表对齐。
 - `lib/m3n-direct.ts`：从源码构造 `ScoreDocument`；领域消费者统一使用 `Score*` 类型，不再暴露旧 `Direct*` 类型。
 - `lib/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
 - `lib/m3n-validate.ts`：语义校验，只依赖最小语法内核。
@@ -65,7 +65,7 @@ pages -> components -> features -> lib/notation
 
 1. 以 `notation/repeats` 的播放计划为单一事实来源，逐步让歌词对位直接消费书写小节到演奏轮次的映射。
 2. 继续扩充 M3N 直接解析器对出版语义和演奏语义的覆盖。
-3. 文档结构和区间指令规则已消费 `M3NSyntaxTree`，节拍、延音和双谱表规则已消费 `ScoreDocument`；旧 validator 中的不完全小节反复补拍与 `PendingTie` 状态已经删除，字符串 API 仅格式化原生结果和尚未迁移的语法规则。
+3. 文档结构和区间指令规则消费 `M3NSyntaxTree`，节拍、延音和双谱表规则消费 `ScoreDocument`；字符串 API 负责格式化结构化诊断和尚未迁移的语法规则。
 4. 诊断使用 `{ code, severity, message, messageArgs, range }`；UI 优先按稳定 code 和参数本地化，未迁移规则回退 `legacyMessage`。
 5. `typecheck:notation` 已对语法内核、文档结构和 `ScoreDocument` builder 启用 `noUncheckedIndexedAccess`；扩大范围时必须消除真实风险，不使用无依据的非空断言。
 7. Playwright 已覆盖真实浏览器编辑重排、播放/暂停、导出和源码双向定位；继续扩展键盘可访问性及多实例资源销毁场景。

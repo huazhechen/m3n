@@ -511,7 +511,7 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
 
   let segmentIndex = 0
   let endingIndex = 0
-  let logicalMeasureNumber = 0
+  let measureNumber = 0
   const hasNavigation = [...document.parts.values()].some((part) => part.melody.some((measure) =>
     Boolean(measure.navigation?.length) || measure.events.some((event) => event.navigation.length > 0)))
   const layoutNodes = [...document.parts.values()].flatMap((part, partIndex) => {
@@ -534,8 +534,8 @@ export function m3nToMei(source: string, document: ScoreDocument = parseM3NDocum
       const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
       const isIncomplete = Boolean(melody && Math.abs(actualBeats - expectedBeats) > 1e-9)
       const metcon = isIncomplete ? ' metcon="false"' : ''
-      const displayedNumber = ++logicalMeasureNumber
-      if (melody?.multiRest) logicalMeasureNumber += melody.multiRest - 1
+      const displayedNumber = ++measureNumber
+      if (melody?.multiRest) measureNumber += melody.multiRest - 1
       const staves = [
         renderStaff(melody, 1, keyChanges, meter),
         hasBassStaff ? renderStaff(part.bass[measureIndex], 2, keyChanges, meter) : '',
