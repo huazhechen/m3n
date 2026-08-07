@@ -17,20 +17,20 @@ function base64ToArrayBuffer(value: string) {
   return bytes.buffer
 }
 
-export type ScoreLayout = {
+type ScoreLayout = {
   width: number
   scale?: number
   includeBass?: boolean
 }
 
-export type TimedScoreElement = { xmlId: string; rendition: number }
+type TimedScoreElement = { xmlId: string; rendition: number }
 
 function normalizeScale(scale: number | undefined) {
   if (!Number.isFinite(scale)) return 42
   return Math.max(1, Math.min(1000, scale ?? 42))
 }
 
-export function layoutSegments(mei: string) {
+function layoutSegments(mei: string) {
   const document = new DOMParser().parseFromString(mei, 'application/xml')
   const segments: string[][] = []
   let measures: string[] = []
@@ -47,7 +47,7 @@ export function layoutSegments(mei: string) {
   return segments
 }
 
-export function layoutFragment(mei: string, measureIds: readonly string[]) {
+function layoutFragment(mei: string, measureIds: readonly string[]) {
   const document = new DOMParser().parseFromString(mei, 'application/xml')
   const selected = new Set(measureIds)
   for (const sb of document.querySelectorAll('sb')) sb.remove()
@@ -174,7 +174,7 @@ export class VerovioScore {
   }
 }
 
-export function withoutBassStaff(mei: string) {
+function withoutBassStaff(mei: string) {
   const document = new DOMParser().parseFromString(mei, 'application/xml')
   for (const element of document.querySelectorAll('staffDef[n="2"], staff[n="2"]')) {
     element.remove()

@@ -236,10 +236,10 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     scorePlaybackCoordinator.release(playbackLeaseRef.current)
   }
 
-  const updatePlaybackHighlight = (seconds: number, duration: number, scoreSeconds = seconds, syncProgress = true) => {
+  const updatePlaybackHighlight = (seconds: number, duration: number, syncProgress = true) => {
     const progress = duration > 0 ? Math.max(0, Math.min(1, seconds / duration)) : 0
     if (syncProgress) setPlaybackProgress(progress)
-    const timedElements = scoreRef.current?.elementsAtTime(scoreSeconds * 1000) ?? []
+    const timedElements = scoreRef.current?.elementsAtTime(seconds * 1000) ?? []
     const elements = timedElements.flatMap(({ xmlId, rendition }) => {
       const note = paperRef.current?.querySelector<SVGGElement>(`#${xmlId}`)
       if (!note) return []
@@ -261,8 +261,8 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     onActiveXmlId?.(timedElements.map((element) => element.xmlId).find((id) => sourceMap.some((range) => range.xmlId === id)) ?? null)
   }
 
-  const onPlayerTime = (seconds: number, duration: number, scoreSeconds: number) => {
-    if (!isSeekingRef.current) updatePlaybackHighlight(seconds, duration, scoreSeconds)
+  const onPlayerTime = (seconds: number, duration: number) => {
+    if (!isSeekingRef.current) updatePlaybackHighlight(seconds, duration)
   }
 
   const getPlayer = () => {
@@ -323,7 +323,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     const player = playerRef.current
     if (player) {
       const playbackSeconds = progress * player.duration
-      updatePlaybackHighlight(playbackSeconds, player.duration, player.sourceTimeAt(playbackSeconds), false)
+      updatePlaybackHighlight(playbackSeconds, player.duration, false)
     }
   }
 
@@ -334,7 +334,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
     void getPlayer().then((player) => {
       const progress = pendingSeekProgressRef.current
       const playbackSeconds = progress * player.duration
-      updatePlaybackHighlight(playbackSeconds, player.duration, player.sourceTimeAt(playbackSeconds), false)
+      updatePlaybackHighlight(playbackSeconds, player.duration, false)
       if (!isSeekingRef.current) player.seek(progress)
     }).catch((error: unknown) => {
       setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')

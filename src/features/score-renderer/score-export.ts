@@ -7,26 +7,13 @@ export function downloadBlob(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url)
 }
 
-export function getSvgSize(svg: SVGSVGElement, scale = 1) {
+function getSvgSize(svg: SVGSVGElement, scale = 1) {
   const bounds = svg.getBoundingClientRect()
   const viewBox = svg.viewBox.baseVal
   const transformScale = Math.max(scale, 1)
   const width = viewBox.width || Number.parseFloat(svg.getAttribute('width') ?? '') / transformScale || bounds.width
   const height = viewBox.height || Number.parseFloat(svg.getAttribute('height') ?? '') / transformScale || bounds.height
   return { width, height }
-}
-
-export function makeSvgResponsive(svg: SVGSVGElement, scale = 1) {
-  const { width, height } = getSvgSize(svg, scale)
-  if (width <= 0 || height <= 0) {
-    return
-  }
-  svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
-  svg.setAttribute('preserveAspectRatio', 'xMinYMin meet')
-  svg.removeAttribute('width')
-  svg.removeAttribute('height')
-  svg.style.transform = ''
-  svg.style.transformOrigin = ''
 }
 
 export function a4SourcePageHeight(sourceWidth: number, margin = 10) {

@@ -9,9 +9,9 @@ export function seekTimeAtProgress(duration: number, progress: number) {
   return Math.min(normalized * duration, Math.max(0, duration - 0.001))
 }
 
-export type PlayerListener = {
+type PlayerListener = {
   onEnded: () => void
-  onTime: (seconds: number, duration: number, sourceSeconds: number) => void
+  onTime: (seconds: number, duration: number) => void
 }
 
 export class SpessaPlayer {
@@ -20,17 +20,15 @@ export class SpessaPlayer {
   private readonly synth: WorkletSynthesizer
   private readonly sequencer: Sequencer
   private readonly listener: PlayerListener
-  readonly soundFontName: string
 
-  private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener, soundFontName: string) {
+  private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener) {
     this.context = context
     this.synth = synth
     this.sequencer = sequencer
     this.listener = listener
-    this.soundFontName = soundFontName
     this.sequencer.eventHandler.addEvent('songEnded', 'm3n-player', () => {
       this.stopProgressLoop()
-      this.listener.onTime(this.sequencer.duration, this.sequencer.duration, this.sourceTimeAt(this.sequencer.duration))
+      this.listener.onTime(this.sequencer.duration, this.sequencer.duration)
       this.listener.onEnded()
     })
   }
@@ -47,7 +45,7 @@ export class SpessaPlayer {
     await synth.isReady
     const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })
     sequencer.loadNewSongList([{ binary: midi, fileName: 'm3n-score.mid' }])
-    return new SpessaPlayer(context, synth, sequencer, listener, soundFont.name)
+    return new SpessaPlayer(context, synth, sequencer, listener)
   }
 
   get paused() {
@@ -56,10 +54,6 @@ export class SpessaPlayer {
 
   get duration() {
     return this.sequencer.duration
-  }
-
-  sourceTimeAt(playbackSeconds: number) {
-    return playbackSeconds
   }
 
   async play() {
@@ -91,7 +85,7 @@ export class SpessaPlayer {
 
   private emitProgress = () => {
     const playbackSeconds = this.sequencer.currentHighResolutionTime
-    this.listener.onTime(playbackSeconds, this.sequencer.duration, this.sourceTimeAt(playbackSeconds))
+    this.listener.onTime(playbackSeconds, this.sequencer.duration)
   }
 
   private startProgressLoop() {
