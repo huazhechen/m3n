@@ -16,4 +16,12 @@ describe('PDF export pagination', () => {
     expect(placement.x).toBeGreaterThan(10)
     expect(placement.x + placement.width).toBeLessThan(200)
   })
+
+  it('uses the full A4 content width for a correctly reserved page', () => {
+    const placement = a4ImagePlacement(800, a4SourcePageHeight(800))
+
+    expect(placement.x).toBeCloseTo(10)
+    expect(placement.y).toBe(10)
+    expect(placement.width).toBeCloseTo(190)
+  })
 })

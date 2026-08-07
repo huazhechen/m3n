@@ -4,7 +4,7 @@ import { a4ImagePlacement, a4SourcePageHeight, downloadBlob, renderScoreCanvas, 
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
 import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisions'
-import { addScoreHeaderToPaper } from '../features/score-renderer/score-header-svg'
+import { addScoreHeaderToPaper, scoreHeaderHeight } from '../features/score-renderer/score-header-svg'
 
 type ExportFormat = 'png' | 'pdf'
 
@@ -40,6 +40,10 @@ function cloneScorePages(paper: HTMLElement) {
     .map((svg) => svg.cloneNode(true) as SVGSVGElement)
 }
 
+function pdfNotationPageHeight(width: number, headerMetadata: readonly ScoreHeaderMetadata[]) {
+  return Math.max(1, a4SourcePageHeight(width) - scoreHeaderHeight(headerMetadata))
+}
+
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
   function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
@@ -66,7 +70,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (!cancelled) {
           preview.innerHTML = score.layout({
             width: Math.max(320, width),
-            pageHeight: format === 'pdf' ? a4SourcePageHeight(width) : undefined,
+            pageHeight: format === 'pdf' ? pdfNotationPageHeight(width, headerMetadata) : undefined,
             scale: 42,
             includeBass: includeBass || !hasBassStaff,
           })
@@ -94,7 +98,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         const exportPaper = document.createElement('div')
         exportPaper.innerHTML = score.layout({
           width: targetWidth,
-          pageHeight: format === 'pdf' ? a4SourcePageHeight(targetWidth) : undefined,
+          pageHeight: format === 'pdf' ? pdfNotationPageHeight(targetWidth, headerMetadata) : undefined,
           scale: 42,
           includeBass: includeBass || !hasBassStaff,
         })

@@ -30,7 +30,7 @@ export function a4ImagePlacement(sourceWidth: number, sourceHeight: number, marg
   const height = sourceHeight * scale
   return {
     x: margin + (contentWidth - width) / 2,
-    y: margin + (contentHeight - height) / 2,
+    y: margin,
     width,
     height,
   }

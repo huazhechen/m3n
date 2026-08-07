@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { withScoreHeader } from './score-header-svg'
+import { scoreHeaderHeight, withScoreHeader } from './score-header-svg'
 
 describe('score SVG header', () => {
   it('adds metadata above the Verovio engraving without changing its scale', () => {
@@ -18,5 +18,13 @@ describe('score SVG header', () => {
     const source = '<svg viewBox="0 0 800 100"><svg class="definition-scale" viewBox="0 0 19050 2380"></svg></svg>'
 
     expect(withScoreHeader(source, [])).toBe(source)
+    expect(scoreHeaderHeight([])).toBe(0)
+  })
+
+  it('reports the vertical space added by the header', () => {
+    expect(scoreHeaderHeight([
+      { value: 'Title', side: 'center', priority: 0 },
+      { value: 'Composer', side: 'right', priority: 20 },
+    ])).toBe(112)
   })
 })

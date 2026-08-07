@@ -40,6 +40,10 @@ function headerMarkup(metadata: readonly ScoreHeaderMetadata[], width: number) {
   return { markup: `<g class="m3n-score-header">${lines.join('')}</g>`, height: number(y + 8) }
 }
 
+export function scoreHeaderHeight(metadata: readonly ScoreHeaderMetadata[]) {
+  return metadata.length === 0 ? 0 : headerMarkup(metadata, 0).height
+}
+
 /** Adds the existing score header layout to the first Verovio SVG page. */
 export function withScoreHeader(svg: string, metadata: readonly ScoreHeaderMetadata[]) {
   if (metadata.length === 0) return svg

@@ -909,6 +909,7 @@ a.action-button {
   width: 90.4762%;
   height: 93.266%;
   object-fit: contain;
+  object-position: center top;
   box-shadow: none;
 }
 
