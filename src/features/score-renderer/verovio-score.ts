@@ -19,6 +19,7 @@ function base64ToArrayBuffer(value: string) {
 
 type ScoreLayout = {
   width: number
+  pageHeight?: number
   scale?: number
   includeBass?: boolean
 }
@@ -101,15 +102,16 @@ export class VerovioScore {
     return new VerovioScore(toolkit, mei)
   }
 
-  prepareLayout({ width, scale = 42, includeBass = true }: ScoreLayout) {
+  prepareLayout({ width, pageHeight, scale = 42, includeBass = true }: ScoreLayout) {
     const effectiveScale = normalizeScale(scale)
+    const fixedPageHeight = pageHeight !== undefined
     let layoutMei = includeBass ? this.mei : withoutBassStaff(this.mei)
     const layoutOptions = {
-      adjustPageHeight: true,
+      adjustPageHeight: !fixedPageHeight,
       footer: 'none',
       header: 'none',
       lyricTopMinMargin: 0,
-      pageHeight: 60000,
+      pageHeight: pageHeight === undefined ? 60000 : Math.max(800, Math.round(pageHeight * 100 / effectiveScale)),
       pageMarginTop: 8,
       pageWidth: Math.max(800, Math.round(width * 100 / effectiveScale)),
       scale: effectiveScale,

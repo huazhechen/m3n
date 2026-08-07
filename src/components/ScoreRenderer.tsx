@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MeiSourceMapRange } from '../lib/m3n-mei'
 import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
 import type { SpessaPlayer } from '../features/score-renderer/spessa-player'
@@ -6,32 +6,23 @@ import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import { lyricVerseIndexForMeasureRendition, visibleLyricVerseNumbers } from '../features/score-renderer/lyric-rendition'
 import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisions'
 import { addScoreHeaderToPaper } from '../features/score-renderer/score-header-svg'
-import { ScoreExportDialog } from './ScoreExportDialog'
-import type { ScoreExportDialogRef } from './ScoreExportDialog'
 import { scorePlaybackCoordinator, type PlaybackLease } from '../features/score-renderer/playback-coordinator'
 import { scoreRenderScheduler } from '../features/score-renderer/render-scheduler'
 
 type ScoreRendererProps = {
   mei: string
-  title: string
-  hasBassStaff: boolean
   headerMetadata: ScoreHeaderMetadata[]
   sourceMap: MeiSourceMapRange[]
+  layoutWidth?: number
   compact?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
   onActiveXmlId?: (xmlId: string | null) => void
   onNoteClick?: (xmlId: string) => void
   onPaperBlur?: () => void
-  showPrintButton?: boolean
-  onPrintClick?: () => void
 }
 
 type RenderPhase = 'loading-library' | 'waiting-layout' | 'layout'
-
-export interface ScoreRendererRef {
-  openExport: () => void
-}
 
 const EMPTY_INVALID_MEASURE_IDS: string[] = []
 
@@ -57,23 +48,19 @@ function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: read
   })
 }
 
-export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(function ScoreRenderer({
+export function ScoreRenderer({
   mei,
-  title,
-  hasBassStaff,
   headerMetadata,
   sourceMap,
+  layoutWidth,
   compact = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
   onActiveXmlId,
   onNoteClick,
   onPaperBlur,
-  showPrintButton = true,
-  onPrintClick,
-}, ref) {
+}: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement>(null)
-  const exportDialogRef = useRef<ScoreExportDialogRef>(null)
   const scoreRef = useRef<VerovioScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
   const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
@@ -96,10 +83,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
-
-  useImperativeHandle(ref, () => ({
-    openExport: () => exportDialogRef.current?.open(),
-  }), [])
+  const renderWidth = layoutWidth ?? staffWidth
 
   useEffect(() => {
     const paper = paperRef.current
@@ -116,7 +100,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
 
   useEffect(() => {
     const paper = paperRef.current
-    if (!paper || staffWidth === 0) return
+    if (!paper || renderWidth === 0) return
     const playbackLease = playbackLeaseRef.current
     let cancelled = false
     const isInitialRender = !hasRenderedRef.current
@@ -152,7 +136,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
           if (cancelled) return Promise.resolve()
           if (isInitialRender) setRenderPhase('layout')
           const pageCount = score.prepareLayout({
-            width: Math.max(320, staffWidth),
+            width: Math.max(320, renderWidth),
             scale: compact ? 38 : 42,
           })
 
@@ -206,7 +190,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, headerMetadata, invalidMeasureIds, mei, onActiveXmlId, staffWidth])
+  }, [compact, headerMetadata, invalidMeasureIds, mei, onActiveXmlId, renderWidth])
 
   useEffect(() => {
     paperRef.current?.querySelectorAll('.is-cursor-active').forEach((element) => {
@@ -410,11 +394,6 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
             <output>{Math.round(playbackProgress * 100)}%</output>
           </div>
         )}
-        {showPrintButton && (
-          <button type="button" className="action-button" onClick={onPrintClick ?? (() => exportDialogRef.current?.open())}>
-            打印
-          </button>
-        )}
       </div>
       <div
         ref={paperRef}
@@ -437,15 +416,7 @@ export const ScoreRenderer = forwardRef<ScoreRendererRef, ScoreRendererProps>(fu
           if (!event.currentTarget.contains(event.relatedTarget)) onPaperBlur?.()
         }}
       />
-      <ScoreExportDialog
-        ref={exportDialogRef}
-        mei={mei}
-        title={title}
-        hasBassStaff={hasBassStaff}
-        headerMetadata={headerMetadata}
-        onError={setMessage}
-      />
       {message && <p className="render-message">{message}</p>}
     </section>
   )
-})
+}

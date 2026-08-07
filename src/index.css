@@ -511,6 +511,7 @@ textarea::selection {
 
 .score-reader-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
@@ -524,6 +525,25 @@ textarea::selection {
   color: #9aa2a6;
   background: #f4f5f1;
   cursor: default;
+}
+
+.score-width-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  color: #285b5c;
+  font-size: 14px;
+}
+
+.score-width-field input {
+  width: 88px;
+  min-height: 34px;
+  border: 1px solid #b8cfca;
+  border-radius: 4px;
+  padding: 4px 7px;
+  color: #1f2326;
+  background: #fffef9;
 }
 
 .score-reader {
@@ -807,6 +827,17 @@ a.action-button {
   border-right: 1px solid #d9e3df;
 }
 
+.export-width-summary {
+  margin: 0;
+  color: #5c6468;
+  font-size: 13px;
+}
+
+.export-width-summary output {
+  color: #285b5c;
+  font-weight: 600;
+}
+
 .export-dialog fieldset {
   display: grid;
   gap: 16px;
@@ -829,20 +860,6 @@ a.action-button {
   font-size: 14px;
 }
 
-.export-field input {
-  width: 90px;
-  min-height: 32px;
-  border: 1px solid #b8cfca;
-  border-radius: 4px;
-  padding: 4px 7px;
-  color: #1f2326;
-  background: #ffffff;
-}
-
-.export-field span {
-  color: #5c6468;
-}
-
 .export-actions {
   display: flex;
   justify-content: flex-end;
@@ -861,8 +878,11 @@ a.action-button {
 
 .export-preview-paper {
   min-width: 100%;
-  background: #fffef9;
-  box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
+}
+
+.export-preview-paper > div {
+  display: grid;
+  gap: 12px;
 }
 
 .export-preview svg {
@@ -870,6 +890,8 @@ a.action-button {
   width: 100%;
   min-width: 0;
   height: auto;
+  background: #fffef9;
+  box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
 }
 
 .export-actions button {

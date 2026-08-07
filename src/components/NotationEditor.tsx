@@ -2,7 +2,6 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { formatM3N } from '../lib/m3n-format'
 import defaultScore from '../scores/huan_le_song_01.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
-import type { ScoreRendererRef } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'
 import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
 import { analyzeM3N } from '../lib/notation/analysis'
@@ -23,7 +22,6 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
   const [sharingAction, setSharingAction] = useState<'browse' | 'submit' | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const scoreRendererRef = useRef<ScoreRendererRef>(null)
   const analysis = useMemo(() => analyzeM3N(source), [source])
   const { conversion: result, complexity, invalidMeasureIds } = analysis
   const cursorXmlId = useMemo(() => {
@@ -116,7 +114,6 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
           <button type="button" className="action-button" onClick={formatSource}>格式化</button>
           <button type="button" className="action-button" onClick={() => setIsComplexityDialogOpen(true)}>复杂度</button>
           <button type="button" className="action-button" onClick={() => setIsMeiDialogOpen(true)}>MEI</button>
-          <button type="button" className="action-button" onClick={() => scoreRendererRef.current?.openExport()}>打印</button>
           {onBrowse && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void browseScore()}>{sharingAction === 'browse' ? '保存中' : '浏览'}</button>}
           {onSubmit && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void submitScore()}>{sharingAction === 'submit' ? '提交中' : '提交'}</button>}
         </div>
@@ -137,10 +134,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
           onBlur={() => setIsCursorHighlightActive(false)}
         />
         <ScoreRenderer
-          ref={scoreRendererRef}
           mei={result.mei}
-          title={result.title}
-          hasBassStaff={result.hasBassStaff}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
           compact={embedded}
@@ -149,7 +143,6 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
           onActiveXmlId={highlightSourceRange}
           onNoteClick={selectScoreNoteInSource}
           onPaperBlur={() => setIsCursorHighlightActive(false)}
-          showPrintButton={false}
         />
         {result.diagnostics.length > 0 && (
           <ul className="diagnostics editor-render-diagnostics">{result.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>

@@ -22,6 +22,37 @@ export function a4SourcePageHeight(sourceWidth: number, margin = 10) {
   return Math.floor(sourceWidth * pageHeight / pageWidth)
 }
 
+export function a4ImagePlacement(sourceWidth: number, sourceHeight: number, margin = 10) {
+  const contentWidth = 210 - margin * 2
+  const contentHeight = 297 - margin * 2
+  const scale = Math.min(contentWidth / sourceWidth, contentHeight / sourceHeight)
+  const width = sourceWidth * scale
+  const height = sourceHeight * scale
+  return {
+    x: margin + (contentWidth - width) / 2,
+    y: margin + (contentHeight - height) / 2,
+    width,
+    height,
+  }
+}
+
+export function stackScoreCanvases(canvases: readonly HTMLCanvasElement[]) {
+  if (canvases.length === 0) throw new Error('当前没有可导出的五线谱。')
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(...canvases.map((page) => page.width))
+  canvas.height = canvases.reduce((height, page) => height + page.height, 0)
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error('无法创建图片画布。')
+  context.fillStyle = '#fffef9'
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  let y = 0
+  for (const page of canvases) {
+    context.drawImage(page, 0, y)
+    y += page.height
+  }
+  return canvas
+}
+
 export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1) {
   const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg, scale)
   if (sourceWidth <= 0 || sourceHeight <= 0) {

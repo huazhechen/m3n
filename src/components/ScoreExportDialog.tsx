@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { scoreFileName } from '../features/score-renderer/score-document'
-import { a4SourcePageHeight, downloadBlob, renderScoreCanvas } from '../features/score-renderer/score-export'
+import { a4ImagePlacement, a4SourcePageHeight, downloadBlob, renderScoreCanvas, stackScoreCanvases } from '../features/score-renderer/score-export'
 import type { VerovioScore } from '../features/score-renderer/verovio-score'
 import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
 import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisions'
@@ -8,11 +8,10 @@ import { addScoreHeaderToPaper } from '../features/score-renderer/score-header-s
 
 type ExportFormat = 'png' | 'pdf'
 
-const DEFAULT_EXPORT_WIDTH = 800
-
 type ScoreExportDialogProps = {
   mei: string
   title: string
+  width: number
   hasBassStaff: boolean
   headerMetadata: ScoreHeaderMetadata[]
   onError: (message: string) => void
@@ -28,11 +27,10 @@ async function createVerovioScore(mei: string) {
 }
 
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
-  function ScoreExportDialog({ mei, title, hasBassStaff, headerMetadata, onError }, ref) {
+  function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('png')
-    const [width, setWidth] = useState(DEFAULT_EXPORT_WIDTH)
     const [includeBass, setIncludeBass] = useState(true)
     const [isOpen, setIsOpen] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
@@ -54,6 +52,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (!cancelled) {
           preview.innerHTML = score.layout({
             width: Math.max(320, width),
+            pageHeight: format === 'pdf' ? a4SourcePageHeight(width) : undefined,
             scale: 42,
             includeBass: includeBass || !hasBassStaff,
           })
@@ -65,7 +64,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
       })
       return () => { cancelled = true }
-    }, [hasBassStaff, headerMetadata, includeBass, isOpen, mei, onError, width])
+    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, mei, onError, width])
 
     const exportScore = async () => {
       setIsExporting(true)
@@ -76,53 +75,45 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (!Number.isFinite(targetWidth) || targetWidth < 320 || targetWidth > 8000) {
           throw new Error('导出宽度需介于 320 和 8000 像素之间。')
         }
-        let svg = previewRef.current?.querySelector<SVGSVGElement>('svg')?.cloneNode(true) as SVGSVGElement | undefined
-        if (!svg) {
-          score = await createVerovioScore(mei)
-          const exportPaper = document.createElement('div')
-          exportPaper.innerHTML = score.layout({
-            width: targetWidth,
-            scale: 42,
-            includeBass: includeBass || !hasBassStaff,
-          })
-          exportPaper.style.cssText = 'position:fixed; visibility:hidden; pointer-events:none; inset:0;'
-          document.body.append(exportPaper)
-          try {
-            addScoreHeaderToPaper(exportPaper, headerMetadata)
-            resolveLyricCollisions(exportPaper)
-            svg = exportPaper.querySelector<SVGSVGElement>('svg')?.cloneNode(true) as SVGSVGElement | undefined
-          } finally {
-            exportPaper.remove()
-          }
+        score = await createVerovioScore(mei)
+        const exportPaper = document.createElement('div')
+        exportPaper.innerHTML = score.layout({
+          width: targetWidth,
+          pageHeight: format === 'pdf' ? a4SourcePageHeight(targetWidth) : undefined,
+          scale: 42,
+          includeBass: includeBass || !hasBassStaff,
+        })
+        exportPaper.style.cssText = 'position:fixed; visibility:hidden; pointer-events:none; inset:0;'
+        document.body.append(exportPaper)
+        let svgs: SVGSVGElement[] = []
+        try {
+          addScoreHeaderToPaper(exportPaper, headerMetadata)
+          resolveLyricCollisions(exportPaper)
+          svgs = [...exportPaper.querySelectorAll<SVGSVGElement>('svg')]
+            .map((svg) => svg.cloneNode(true) as SVGSVGElement)
+        } finally {
+          exportPaper.remove()
         }
-        if (!svg) throw new Error('当前没有可导出的五线谱。')
+        if (svgs.length === 0) throw new Error('当前没有可导出的五线谱。')
+
+        const canvases: HTMLCanvasElement[] = []
+        for (const svg of svgs) canvases.push(await renderScoreCanvas(svg, targetWidth))
 
         const fileName = scoreFileName(title)
         if (format === 'png') {
-          const canvas = await renderScoreCanvas(svg, targetWidth)
+          const canvas = stackScoreCanvases(canvases)
           const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
           if (!blob) throw new Error('PNG 生成失败。')
           downloadBlob(blob, `${fileName}.png`)
         } else {
-          const canvas = await renderScoreCanvas(svg, targetWidth)
-          const documentWidth = 210
           const margin = 10
-          const imageWidth = documentWidth - margin * 2
-          const sourcePageHeight = a4SourcePageHeight(canvas.width, margin)
           const { jsPDF } = await import('jspdf')
           const pdf = new jsPDF({ format: 'a4', unit: 'mm' })
-          for (let offset = 0, page = 0; offset < canvas.height; offset += sourcePageHeight, page += 1) {
+          for (let page = 0; page < canvases.length; page += 1) {
             if (page > 0) pdf.addPage('a4', 'portrait')
-            const pageHeight = Math.min(sourcePageHeight, canvas.height - offset)
-            const pageCanvas = document.createElement('canvas')
-            pageCanvas.width = canvas.width
-            pageCanvas.height = pageHeight
-            const context = pageCanvas.getContext('2d')
-            if (!context) throw new Error('无法创建 PDF 页面。')
-            context.fillStyle = '#fffef9'
-            context.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
-            context.drawImage(canvas, 0, -offset)
-            pdf.addImage(pageCanvas, 'PNG', margin, margin, imageWidth, pageHeight * imageWidth / canvas.width, undefined, 'FAST')
+            const canvas = canvases[page]
+            const placement = a4ImagePlacement(canvas.width, canvas.height, margin)
+            pdf.addImage(canvas, 'PNG', placement.x, placement.y, placement.width, placement.height, undefined, 'FAST')
           }
           pdf.save(`${fileName}.pdf`)
         }
@@ -141,13 +132,13 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           <div className="export-header"><h2>打印五线谱</h2><span>{format === 'pdf' ? 'A4 纵向' : 'PNG 图片'}</span></div>
           <div className="export-content">
             <div className="export-settings">
+              <p className="export-width-summary">乐谱宽度 <output>{width}px</output></p>
               <fieldset>
                 <legend>格式</legend>
                 <label><input type="radio" name="export-format" checked={format === 'png'} onChange={() => setFormat('png')} />PNG 图片</label>
                 <label><input type="radio" name="export-format" checked={format === 'pdf'} onChange={() => setFormat('pdf')} />PDF（A4）</label>
               </fieldset>
               {hasBassStaff && <fieldset><legend>低音谱表</legend><label><input type="checkbox" checked={includeBass} onChange={(event) => setIncludeBass(event.currentTarget.checked)} />包含低音谱表</label></fieldset>}
-              <label className="export-field">宽度<input type="number" min="320" max="8000" step="10" value={width} onChange={(event) => setWidth(Number(event.currentTarget.value))} /><span>px</span></label>
             </div>
             <div className="export-preview" aria-label="打印预览"><div className="export-preview-paper"><div ref={previewRef} /></div></div>
           </div>
