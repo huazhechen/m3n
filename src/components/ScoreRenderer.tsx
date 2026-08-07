@@ -193,12 +193,24 @@ export function ScoreRenderer({
   }, [compact, headerMetadata, invalidMeasureIds, mei, onActiveXmlId, renderWidth])
 
   useEffect(() => {
-    paperRef.current?.querySelectorAll('.is-cursor-active').forEach((element) => {
+    const paper = paperRef.current
+    paper?.querySelectorAll('.is-cursor-active').forEach((element) => {
       element.classList.remove('is-cursor-active')
     })
+    paper?.querySelectorAll('.is-cursor-active-measure').forEach((measure) => {
+      measure.classList.remove('is-cursor-active-measure')
+    })
     const xmlId = activeXmlId ?? selectedXmlId
-    if (xmlId) paperRef.current?.querySelector(`#${xmlId}`)?.classList.add('is-cursor-active')
-  }, [activeXmlId, mei, selectedXmlId])
+    const element = xmlId ? paper?.querySelector(`#${xmlId}`) : null
+    if (element) {
+      element.classList.add('is-cursor-active')
+      const measure = element.closest<SVGGElement>('g.measure')
+      if (measure) {
+        addMeasureHighlight(measure, 'measure-cursor-highlight')
+        measure.classList.add('is-cursor-active-measure')
+      }
+    }
+  }, [activeXmlId, isRendering, mei, selectedXmlId])
 
   const clearPlaybackHighlight = () => {
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
@@ -405,10 +417,6 @@ export function ScoreRenderer({
           const element = (event.target as Element).closest('[id^="m3n-e-"]')
           if (!element?.id) return
           const xmlId = element.id
-          paperRef.current?.querySelectorAll('.is-cursor-active').forEach((activeElement) => {
-            activeElement.classList.remove('is-cursor-active')
-          })
-          element.classList.add('is-cursor-active')
           setSelectedXmlId(xmlId)
           window.requestAnimationFrame(() => onNoteClick?.(xmlId))
         }}

@@ -667,7 +667,7 @@ textarea::selection {
   overflow: auto;
   min-height: unset;
   border-radius: 6px;
-  background: #fffef9;
+  background: #ffffff;
 }
 
 .score-paper[aria-busy="true"] {
@@ -701,7 +701,8 @@ textarea::selection {
   height: auto;
 }
 
-.score-paper .measure-playback-highlight {
+.score-paper .measure-playback-highlight,
+.score-paper .measure-cursor-highlight {
   display: none;
   pointer-events: none;
 }
@@ -716,6 +717,12 @@ textarea::selection {
   display: block;
   fill: #f0c66b;
   opacity: 0.18;
+}
+
+.score-paper .is-cursor-active-measure > .measure-cursor-highlight {
+  display: block;
+  fill: #1683ff;
+  opacity: 0.1;
 }
 
 .score-paper .is-cursor-active,
@@ -890,7 +897,7 @@ a.action-button {
   width: 100%;
   min-width: 0;
   height: auto;
-  background: #fffef9;
+  background: #ffffff;
   box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
 }
 

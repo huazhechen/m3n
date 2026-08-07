@@ -115,8 +115,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (svgs.length === 0) throw new Error('当前没有可导出的五线谱。')
 
         const canvases: HTMLCanvasElement[] = []
-        const backgroundColor = format === 'pdf' ? '#ffffff' : '#fffef9'
-        for (const svg of svgs) canvases.push(await renderScoreCanvas(svg, targetWidth, 1, backgroundColor))
+        for (const svg of svgs) canvases.push(await renderScoreCanvas(svg, targetWidth))
 
         const fileName = scoreFileName(title)
         if (format === 'png') {

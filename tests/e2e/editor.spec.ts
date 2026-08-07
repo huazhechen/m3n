@@ -9,6 +9,8 @@ test('edits, renders, and maps a score note back to source', async ({ page }) =>
 
   const firstNote = page.locator('.score-paper [id^="m3n-e-"]').first()
   await expect(firstNote).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('.score-paper .is-cursor-active-measure')).toHaveCount(1)
+  await expect(page.locator('.score-paper .measure-cursor-highlight')).toBeVisible()
   await firstNote.locator('use, path').first().click()
   await expect.poll(() => editor.evaluate((element) => ({
     start: (element as HTMLTextAreaElement).selectionStart,
