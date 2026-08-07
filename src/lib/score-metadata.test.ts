@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { scoreMetadataFromSource } from './score-metadata'
 
 describe('scoreMetadataFromSource', () => {
-  it('indexes v0.3 supplemental rows without treating form as metadata', () => {
+  it('indexes score metadata without treating notation directives as metadata', () => {
     const metadata = scoreMetadataFromSource('test_score_01', [
-      '{title=测试} {form=A,A}',
+      '{title=测试} {transpose=1}',
       '{key=C} {2/4}',
       '===A',
       'N: 1 2 |',
@@ -15,6 +15,6 @@ describe('scoreMetadataFromSource', () => {
 
     expect(metadata.hasLyrics).toBe(true)
     expect(metadata.hasBass).toBe(true)
-    expect(metadata.searchText).not.toContain('a,a')
+    expect(metadata.searchText).toBe('测试')
   })
 })

@@ -94,7 +94,6 @@ function parseBody(
     ensureEndingMeasure()
     event.dynamic = dynamicChanged ? currentDynamic : undefined
     event.chord = chordChanged ? currentChord : undefined
-    event.chordState = currentChord
     event.prefix = pendingPrefix
     event.octaveShift = structureStack.reduce((shift, item) => {
       const kind = typeof item === 'object' ? item.kind : item
@@ -381,7 +380,7 @@ function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructur
           elapsed += event.beats
           return matches
         }) ?? events.at(-1)
-        if (target) { target.chord = value; target.chordState = value }
+        if (target) target.chord = value
         offset += (events[0]?.meterCount ?? document.meterCount) * 4 /
           (events[0]?.meterUnit ?? document.meterUnit) / 2 ** depth
       }

@@ -28,9 +28,9 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<harm staff="1" startid="#m3n-e-5">F</harm>')
   })
 
-  it('attaches named-part lyrics only to events in the same part', () => {
+  it('preserves lyric source mapping across named sections', () => {
     const source = [
-      '{form=A,C} {2/4}',
+      '{2/4}',
       '===A',
       'N: 1 2 ||',
       'L1: 甲乙',

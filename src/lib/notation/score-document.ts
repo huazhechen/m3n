@@ -9,7 +9,6 @@ export type ScoreEvent = {
   tieFromTupletIndex?: number
   dynamic?: string
   chord?: string
-  chordState?: string
   prefix?: 'sfz'
   postfixes: string[]
   navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
