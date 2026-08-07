@@ -35,6 +35,11 @@ function wrapA4PreviewPages(preview: HTMLElement) {
   })
 }
 
+function cloneScorePages(paper: HTMLElement) {
+  return [...paper.querySelectorAll<SVGSVGElement>(':scope > svg')]
+    .map((svg) => svg.cloneNode(true) as SVGSVGElement)
+}
+
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
   function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
@@ -99,8 +104,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         try {
           addScoreHeaderToPaper(exportPaper, headerMetadata)
           resolveLyricCollisions(exportPaper)
-          svgs = [...exportPaper.querySelectorAll<SVGSVGElement>('svg')]
-            .map((svg) => svg.cloneNode(true) as SVGSVGElement)
+          svgs = cloneScorePages(exportPaper)
         } finally {
           exportPaper.remove()
         }
