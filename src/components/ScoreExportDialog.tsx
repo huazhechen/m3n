@@ -26,6 +26,15 @@ async function createVerovioScore(mei: string) {
   return VerovioScore.create(mei)
 }
 
+function wrapA4PreviewPages(preview: HTMLElement) {
+  preview.querySelectorAll<SVGSVGElement>(':scope > svg').forEach((svg) => {
+    const page = document.createElement('div')
+    page.className = 'export-preview-page'
+    svg.replaceWith(page)
+    page.append(svg)
+  })
+}
+
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
   function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
@@ -58,6 +67,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           })
           addScoreHeaderToPaper(preview, headerMetadata)
           resolveLyricCollisions(preview)
+          if (format === 'pdf') wrapA4PreviewPages(preview)
         }
         score.destroy()
       }).catch((error: unknown) => {
@@ -129,7 +139,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     return (
       <dialog ref={dialogRef} className="export-dialog" onClose={() => setIsOpen(false)}>
         <form onSubmit={(event) => { event.preventDefault(); void exportScore() }}>
-          <div className="export-header"><h2>打印五线谱</h2><span>{format === 'pdf' ? 'A4 纵向' : 'PNG 图片'}</span></div>
+          <div className="export-header"><h2>打印五线谱</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm' : 'PNG 图片'}</span></div>
           <div className="export-content">
             <div className="export-settings">
               <p className="export-width-summary">乐谱宽度 <output>{width}px</output></p>

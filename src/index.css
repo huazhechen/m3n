@@ -894,6 +894,24 @@ a.action-button {
   box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
 }
 
+.export-preview-page {
+  position: relative;
+  aspect-ratio: 210 / 297;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #fffef9;
+  box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
+}
+
+.export-preview-page svg {
+  position: absolute;
+  inset: 3.367% 4.7619%;
+  width: 90.4762%;
+  height: 93.266%;
+  object-fit: contain;
+  box-shadow: none;
+}
+
 .export-actions button {
   min-height: 34px;
   border: 1px solid #b8cfca;
