@@ -53,7 +53,7 @@ export function stackScoreCanvases(canvases: readonly HTMLCanvasElement[]) {
   return canvas
 }
 
-export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1) {
+export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1, backgroundColor = '#fffef9') {
   const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg, scale)
   if (sourceWidth <= 0 || sourceHeight <= 0) {
     throw new Error('五线谱尺寸无效。')
@@ -65,7 +65,7 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
   clone.setAttribute('width', String(sourceWidth))
   clone.setAttribute('height', String(sourceHeight))
   clone.setAttribute('viewBox', `0 0 ${sourceWidth} ${sourceHeight}`)
-  clone.style.background = '#fffef9'
+  clone.style.background = backgroundColor
   clone.style.transform = ''
   clone.style.transformOrigin = ''
 
@@ -82,7 +82,7 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
     if (!context) {
       throw new Error('无法创建图片画布。')
     }
-    context.fillStyle = '#fffef9'
+    context.fillStyle = backgroundColor
     context.fillRect(0, 0, targetWidth, targetHeight)
     context.drawImage(image, 0, 0, targetWidth, targetHeight)
     return canvas
