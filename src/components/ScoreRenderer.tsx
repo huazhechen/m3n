@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { MeiSourceMapRange } from '../lib/m3n-mei'
-import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
-import type { SpessaPlayer } from '../features/score-renderer/spessa-player'
-import type { VerovioScore } from '../features/score-renderer/verovio-score'
-import { lyricVerseIndexForMeasureRendition, visibleLyricVerseNumbers } from '../features/score-renderer/lyric-rendition'
-import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisions'
-import { addScoreHeaderToPaper } from '../features/score-renderer/score-header-svg'
-import { scorePlaybackCoordinator, type PlaybackLease } from '../features/score-renderer/playback-coordinator'
-import { scoreRenderScheduler } from '../features/score-renderer/render-scheduler'
+import type { MeiSourceMapRange, ScoreHeaderMetadata } from '@m3n/notation'
+import {
+  addScoreHeaderToPaper,
+  lyricVerseIndexForMeasureRendition,
+  resolveLyricCollisions,
+  scorePlaybackCoordinator,
+  scoreRenderScheduler,
+  visibleLyricVerseNumbers,
+  type PlaybackLease,
+  type SpessaPlayer,
+  type VerovioScore,
+} from '@m3n/score-renderer'
 
 type ScoreRendererProps = {
   mei: string
@@ -122,7 +125,7 @@ export function ScoreRenderer({
     setSelectedXmlId(null)
     onActiveXmlId?.(null)
 
-    void import('../features/score-renderer/verovio-score')
+    void import('@m3n/score-renderer')
       .then(({ VerovioScore }) => VerovioScore.create(mei))
       .then((score) => {
         if (cancelled) {
@@ -270,7 +273,7 @@ export function ScoreRenderer({
       setIsPlayerLoading(true)
       try {
         midiRef.current ??= score.midi()
-        const { SpessaPlayer } = await import('../features/score-renderer/spessa-player')
+        const { SpessaPlayer } = await import('@m3n/score-renderer')
         const player = await SpessaPlayer.create(midiRef.current, {
           onEnded: () => {
             stopPlaybackRef.current()

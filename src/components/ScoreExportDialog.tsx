@@ -1,10 +1,17 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { scoreFileName } from '../features/score-renderer/score-document'
-import { a4ImagePlacement, a4SourcePageHeight, downloadBlob, renderScoreCanvas, stackScoreCanvases } from '../features/score-renderer/score-export'
-import type { VerovioScore } from '../features/score-renderer/verovio-score'
-import type { ScoreHeaderMetadata } from '../lib/m3n-mei'
-import { resolveLyricCollisions } from '../features/score-renderer/lyric-collisions'
-import { addScoreHeaderToPaper, scoreHeaderHeight } from '../features/score-renderer/score-header-svg'
+import type { ScoreHeaderMetadata } from '@m3n/notation'
+import {
+  a4ImagePlacement,
+  a4SourcePageHeight,
+  addScoreHeaderToPaper,
+  downloadBlob,
+  renderScoreCanvas,
+  resolveLyricCollisions,
+  scoreFileName,
+  scoreHeaderHeight,
+  stackScoreCanvases,
+  type VerovioScore,
+} from '@m3n/score-renderer'
 
 type ExportFormat = 'png' | 'pdf'
 
@@ -22,7 +29,7 @@ export type ScoreExportDialogRef = {
 }
 
 async function createVerovioScore(mei: string) {
-  const { VerovioScore } = await import('../features/score-renderer/verovio-score')
+  const { VerovioScore } = await import('@m3n/score-renderer')
   return VerovioScore.create(mei)
 }
 

@@ -1,4 +1,4 @@
-import { scoreMetadataFromSource, type PresetScoreMetadata } from './score-metadata'
+import { scoreMetadataFromSource, type PresetScoreMetadata } from '@m3n/notation'
 
 export type PresetScore = PresetScoreMetadata & { source: string }
 

@@ -3,22 +3,29 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm run build:packages && vite",
+    "build:packages": "npm run build -w @m3n/notation && npm run build -w @m3n/score-renderer",
+    "build": "npm run build:packages && tsc -b && vite build",
     "lint": "oxlint",
-    "test": "vitest run",
+    "test:packages": "npm run test -w @m3n/notation && npm run test -w @m3n/score-renderer",
+    "test": "npm run build:packages && npm run test:packages && vitest run",
     "test:e2e": "playwright test",
-    "typecheck:notation": "tsc -p tsconfig.notation.json",
-    "check": "npm run lint && npm run typecheck:notation && npm run test && npm run build && npm run test:e2e",
+    "typecheck:packages": "npm run typecheck -w @m3n/notation && npm run typecheck -w @m3n/score-renderer",
+    "check": "npm run lint && npm run typecheck:packages && npm run test && npm run build && npm run test:e2e",
     "download:fluidr3": "node tools/download-fluidr3-gm.mjs",
     "preview": "vite preview",
     "preview:worker": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy",
     "generate:icon": "node tools/generate-brand-icon.mjs",
-    "format:scores": "tsx tools/format-scores.mts"
+    "format:scores": "npm run build -w @m3n/notation && tsx tools/format-scores.mts"
   },
   "dependencies": {
+    "@m3n/notation": "*",
+    "@m3n/score-renderer": "*",
     "jspdf": "^4.2.1",
     "pinyin-pro": "^3.27.0",
     "react": "^19.2.7",

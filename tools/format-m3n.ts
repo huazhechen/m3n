@@ -1,8 +1,7 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { formatM3N, normalizeAdjacentBarlines } from '../src/lib/m3n-format'
-import { m3nToMei } from '../src/lib/m3n-mei'
+import { formatM3N, m3nToMei, normalizeAdjacentBarlines } from '@m3n/notation'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const scores = path.join(root, 'src', 'scores')

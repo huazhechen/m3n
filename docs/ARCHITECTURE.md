@@ -7,11 +7,12 @@
 依赖方向必须保持单向：
 
 ```text
-pages -> components -> features -> lib/notation
-                            \-> third-party adapters (Verovio, SpessaSynth, jsPDF)
+web app -> @m3n/score-renderer -> @m3n/notation
+       \-> @m3n/notation
+       \-> React / routing / application services
 ```
 
-`lib/notation` 不得依赖 React、DOM 或具体页面。转换函数应保持确定性：相同输入总是产生相同输出与诊断。
+`@m3n/notation` 不得依赖 React、DOM、具体页面或 `@m3n/score-renderer`。转换函数应保持确定性：相同输入总是产生相同输出与诊断。
 同一编辑操作的派生计算应复用已解析的领域文档，避免各模块重新扫描相同源码。
 
 领域层明确使用两个模型：
@@ -21,30 +22,38 @@ pages -> components -> features -> lib/notation
 
 交互调用方通过 `analyzeM3N` 建立一次分析会话并消费其派生结果，不应在同一次编辑更新中自行重复解析。
 
-## 当前边界
+## Workspace 边界
 
-- `lib/notation/syntax-tree.ts`：无损容错语法树、行节点与源码范围。
-- `lib/notation/syntax-rules.ts`：直接消费 directive AST 节点的区间闭合与指令值规则。
-- `lib/notation/score-document.ts`：规范化乐谱、声部、小节、事件、歌词和演奏区间契约。
-- `lib/notation/analysis.ts`：交互调用方的统一分析入口。
-- `lib/notation/types.ts`：转换结果和源码映射契约。
-- `lib/notation/diagnostics.ts`：结构化诊断契约；规则在产生诊断的位置直接提供稳定 code、严重级别和源码范围，不保留字符串诊断模式。
-- `lib/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
-- `lib/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
-- `lib/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；负责小节时值、延音目标和双谱表对齐。
-- `lib/m3n-direct.ts`：从源码构造 `ScoreDocument`；领域消费者统一使用 `Score*` 类型，不再暴露旧 `Direct*` 类型。
-- `lib/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
-- `lib/m3n-validate.ts`：语义校验，只依赖最小语法内核。
-- `features/score-renderer`：播放段落展开、导出文档与画布适配。
-- `lib/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
-- `lib/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
-- `lib/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
-- `lib/notation/mei-document.ts`：通过 XML builder 组装 MEI 文档头、责任者元数据、`scoreDef` 和 section，统一处理文本转义与文档序列化。
-- `lib/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
-- `features/score-renderer/verovio-score.ts`：Verovio SVG 排版、MIDI 生成和时间映射。
-- `features/score-renderer/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
-- `features/score-renderer/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
-- `features/score-renderer/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
+- `packages/notation`（`@m3n/notation`）：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换；可独立生成 JavaScript 与类型声明。
+- `packages/score-renderer`（`@m3n/score-renderer`）：浏览器渲染、播放、导出与资源调度；只通过 `@m3n/notation` 的公共入口访问领域类型。
+- `src`：React Web 应用、路由、曲库装载及分享服务；通过包名消费两个子包，不跨入其内部目录。
+- `worker`：部署边缘入口，不依赖 Web UI。
+
+包依赖只能是 `score-renderer -> notation`。根应用可以组合二者，但子包不得反向导入根应用。每个包在自身 `package.json` 中声明运行依赖，并提供独立的 `build`、`test`、`typecheck` 命令；根脚本显式按依赖顺序执行。
+
+## 内部职责
+
+- `packages/notation/src/notation/syntax-tree.ts`：无损容错语法树、行节点与源码范围。
+- `packages/notation/src/notation/syntax-rules.ts`：直接消费 directive AST 节点的区间闭合与指令值规则。
+- `packages/notation/src/notation/score-document.ts`：规范化乐谱、声部、小节、事件、歌词和演奏区间契约。
+- `packages/notation/src/notation/analysis.ts`：交互调用方的统一分析入口。
+- `packages/notation/src/notation/diagnostics.ts`：结构化诊断契约；规则在产生诊断的位置直接提供稳定 code、严重级别和源码范围，不保留字符串诊断模式。
+- `packages/notation/src/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
+- `packages/notation/src/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
+- `packages/notation/src/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；负责小节时值、延音目标和双谱表对齐。
+- `packages/notation/src/m3n-direct.ts`：从源码构造 `ScoreDocument`；领域消费者统一使用 `Score*` 类型，不再暴露旧 `Direct*` 类型。
+- `packages/notation/src/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
+- `packages/notation/src/m3n-validate.ts`：语义校验，只依赖最小语法内核。
+- `packages/score-renderer/src`：播放段落展开、导出文档与画布适配。
+- `packages/notation/src/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
+- `packages/notation/src/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
+- `packages/notation/src/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
+- `packages/notation/src/notation/mei-document.ts`：通过 XML builder 组装 MEI 文档头、责任者元数据、`scoreDef` 和 section，统一处理文本转义与文档序列化。
+- `packages/notation/src/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
+- `packages/score-renderer/src/verovio-score.ts`：Verovio SVG 排版、MIDI 生成和时间映射。
+- `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
+- `packages/score-renderer/src/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
+- `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `components/ScoreRenderer.tsx`：组合 MEI 渲染、播放和光标事件。
 - `components/ScoreExportDialog.tsx`：导出状态、预览及 PNG/PDF 工作流。
 - `components/SourceEditor.tsx`：源码输入与尺寸同步。
@@ -53,7 +62,7 @@ pages -> components -> features -> lib/notation
 
 ## 质量门禁
 
-提交前执行 `npm run check`，依次完成 lint、单元/语料测试、严格类型检查和生产构建。测试分三层：
+提交前执行 `npm run check`，依次完成 lint、各包严格类型检查、包级与应用级测试、生产构建和端到端测试。测试分三层：
 
 1. 基础语法单元测试，覆盖音符、时值、调号和行式歌词、低音对位。
 2. 转换契约测试，覆盖往返、诊断和源码映射。

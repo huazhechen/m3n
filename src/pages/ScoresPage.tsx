@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
+import type { ScoreDiagnosticSeverity } from '@m3n/notation'
 import { TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
 import type { PresetScore } from '../lib/samples'
-import type { ScoreDiagnosticSeverity } from '../lib/score-diagnostics'
 
 function ScoreCard({ score, severity }: { score: PresetScore; severity: ScoreDiagnosticSeverity }) {
   const hasDiagnostics = severity !== 'none'

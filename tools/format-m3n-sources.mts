@@ -1,7 +1,6 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { formatM3N } from '../src/lib/m3n-format'
-import { validateM3N } from '../src/lib/m3n-validate'
+import { formatM3N, validateM3N } from '@m3n/notation'
 
 type Candidate = { label: string; source: string; replace: (value: string) => void }
 

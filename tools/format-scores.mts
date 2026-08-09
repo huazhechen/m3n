@@ -1,6 +1,6 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { formatM3N } from '../src/lib/m3n-format'
+import { formatM3N } from '@m3n/notation'
 
 const scoresDirectory = resolve('src/scores')
 const files = (await readdir(scoresDirectory)).filter((file) => file.endsWith('.m3n')).sort()

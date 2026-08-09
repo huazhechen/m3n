@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import readme from '../../docs/README.md?raw'
 import guide from '../../docs/GUIDE.md?raw'
 import manual from '../../docs/MANUAL.md?raw'
-import { m3nToMei } from './m3n-mei'
-import { validateM3NDiagnostics } from './m3n-validate'
+import { m3nToMei, validateM3NDiagnostics } from '@m3n/notation'
 
 function m3nExamples(markdown: string) {
   return [...markdown.matchAll(/```m3n\r?\n([\s\S]*?)```/g)].map((match) => match[1].trim())

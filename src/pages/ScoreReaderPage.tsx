@@ -1,12 +1,11 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { analyzeM3N, formatScoreDiagnostic } from '@m3n/notation'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
 import { TopNav } from '../components/TopNav'
-import { analyzeM3N } from '../lib/notation/analysis'
 import { presetScores } from '../lib/samples'
-import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
 import { isSharedScoreId, loadSharedScore } from '../lib/shared-scores'
 
 export function ScoreReaderPage() {

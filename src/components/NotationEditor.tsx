@@ -1,10 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { formatM3N } from '../lib/m3n-format'
+import { analyzeM3N, formatM3N, formatScoreDiagnostic } from '@m3n/notation'
 import defaultScore from '../scores/huan_le_song_01.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'
-import { formatScoreDiagnostic } from '../lib/notation/diagnostics'
-import { analyzeM3N } from '../lib/notation/analysis'
 
 type NotationEditorProps = {
   initialSource?: string

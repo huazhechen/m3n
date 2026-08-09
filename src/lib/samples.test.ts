@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { m3nToMei } from './m3n-mei'
+import { m3nToMei } from '@m3n/notation'
 import { presetScores } from './samples'
 
 describe('bundled score corpus', () => {
