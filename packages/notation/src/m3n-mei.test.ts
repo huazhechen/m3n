@@ -373,6 +373,16 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<hairpin staff="1" form="dim" startid="#m3n-e-7" endid="#m3n-e-8"/>')
   })
 
+  it('skips interval controls whose start and end anchor are the same event', () => {
+    const result = m3nToMei('{key=C} {4/4}\n{cresc}1{/} {lg}2{/} {decres}3{/} {8va}4{/} | {cresc=text}5{/} {accel=144}6{/} |||')
+
+    expect(result.mei).not.toContain('<hairpin')
+    expect(result.mei).not.toContain('<slur')
+    expect(result.mei).not.toContain('<dir')
+    expect(result.mei).not.toContain('<tempo')
+    expect(result.mei).toContain('<octave staff="1" dis="8" dis.place="above" startid="#m3n-e-4" endid="#m3n-e-4"/>')
+  })
+
   it('places a forward repeat after a leading multi-measure rest', () => {
     const result = m3nToMei('{key=C} {3/4}\nN: {rest=4} ||: 1^. |')
 

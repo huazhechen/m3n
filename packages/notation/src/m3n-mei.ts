@@ -376,6 +376,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       const startid = idFor(interval.start)
       const endid = idFor(interval.endStart)
       if (!startid || !endid) return []
+      if (startid === endid && interval.kind !== '8va' && interval.kind !== '8vb') return []
       if (staffNumber === 1 && (interval.kind === 'accel' || interval.kind === 'rit')) return [`<tempo staff="${staffNumber}" startid="#${startid}" endid="#${endid}" place="above" func="continuous">${interval.kind === 'rit' ? 'rit.' : 'accel.'}</tempo>`]
       if (interval.kind === 'lg') return [`<slur startid="#${startid}" endid="#${endid}"/>`]
       if (interval.kind === 'cresc' || interval.kind === 'decres') {

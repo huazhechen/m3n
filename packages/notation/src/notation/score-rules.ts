@@ -1,5 +1,5 @@
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js' 
-import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './score-document.js'
+import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure } from './score-document.js'
 import { m3nPitch } from '../m3n-direct.js'
 import { parseM3NNote } from './m3n-primitives.js'
 import { measurePlaybackPasses } from './repeats.js'
@@ -184,8 +184,37 @@ function validateTies(measures: readonly ScoreMeasure[], source?: string) {
   return diagnostics
 }
 
+const intervalLabels: Record<ScoreInterval['kind'], string> = {
+  cresc: '渐强',
+  decres: '渐弱',
+  lg: '连音',
+  accel: '渐快',
+  rit: '渐慢',
+  '8va': '高八度',
+  '8vb': '低八度',
+  inst: '乐器',
+}
+
+function validateIntervalSpans(document: ScoreDocument, source?: string) {
+  const diagnostics: ScoreDiagnostic[] = []
+  for (const interval of document.intervals) {
+    if (interval.start === undefined || interval.endStart === undefined || interval.start !== interval.endStart) continue
+    if (interval.kind === '8va' || interval.kind === '8vb' || interval.kind === 'inst') continue
+    const message = `${intervalLabels[interval.kind]}区间只覆盖一个音符，无法渲染标记`
+    const line = sourceLine(source, interval.start)
+    diagnostics.push(createScoreDiagnostic({
+      code: 'M3N_INTERVAL_SPAN',
+      severity: 'warning',
+      message: line === undefined ? message : `第 ${line} 行：${message}`,
+      range: { start: interval.start, end: interval.end ?? interval.endStart },
+    }))
+  }
+  return diagnostics
+}
+
 export function validateScoreDocument(document: ScoreDocument, options: { skipBeatValidation?: boolean; source?: string } = {}): ScoreDiagnostic[] {
   const diagnostics: ScoreDiagnostic[] = []
+  diagnostics.push(...validateIntervalSpans(document, options.source))
   for (const part of document.parts.values()) {
     const melody = writtenMeasures(part.melody)
     const bass = writtenMeasures(part.bass)

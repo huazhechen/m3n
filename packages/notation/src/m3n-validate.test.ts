@@ -217,6 +217,15 @@ describe('validateM3N', () => {
     expect(result).toContain('多余的区间结束指令：{/}')
   })
 
+  it('warns when a renderable interval spans only one event', () => {
+    const result = messages('{4/4}\n{cresc}1{/} {decres}2{/} {lg}3{/} {8va}4{/} | {cresc=text}5{/} {accel=144}6{/} |||')
+
+    expect(result).toContain('第 2 行：渐强区间只覆盖一个音符，无法渲染标记')
+    expect(result).toContain('第 2 行：渐弱区间只覆盖一个音符，无法渲染标记')
+    expect(result).toContain('第 2 行：连音区间只覆盖一个音符，无法渲染标记')
+    expect(result).not.toContain('高八度')
+  })
+
   it('enforces prefix and postfix attachment', () => {
     const result = messages('{4/4}\n{sfz}0 1{tr} {br}{ac(2)} 2 3 4 |||')
     expect(result).toContain('sfz 后方第一个元素必须是有音高')
