@@ -152,7 +152,11 @@ export function naturalSystemLayout(svg: string): NaturalSystem[] {
       const id = parts[index]
       if (!id) continue
       const content = parts[index + 1] ?? ''
-      const xs = [...content.matchAll(/translate\(([\d.]+),/g)].map((match) => Number(match[1]))
+      const xs = [
+        ...[...content.matchAll(/translate\(([\d.]+),/g)].map((match) => Number(match[1])),
+        ...[...content.matchAll(/<path d="M([\d.]+) /g)].map((match) => Number(match[1])),
+        ...[...content.matchAll(/<text[^>]*\bx="([\d.]+)"/g)].map((match) => Number(match[1])),
+      ]
       measures.push({
         id,
         minX: xs.length > 0 ? Math.min(...xs) : 0,
@@ -171,7 +175,8 @@ export function extraSystemBreakMeasureIds(
   systems: readonly NaturalSystem[],
   availableWidth: number,
 ): string[] {
-  const warnThreshold = availableWidth / 0.8
+  const chunkTarget = availableWidth * 0.96
+  const warnThreshold = availableWidth * 0.95 / 0.8
   const breaks: string[] = []
   for (const system of systems) {
     const first = system.measures[0]
@@ -186,7 +191,7 @@ export function extraSystemBreakMeasureIds(
       if (!measure) continue
       const nextMin = Math.min(chunkMin, measure.minX)
       const nextMax = Math.max(chunkMax, measure.maxX)
-      if (nextMax - nextMin > availableWidth) {
+      if (nextMax - nextMin > chunkTarget) {
         breaks.push(measure.id)
         chunkMin = measure.minX
         chunkMax = measure.maxX
@@ -230,20 +235,25 @@ export class VerovioScore {
       svgViewBox: true,
     }
     const hasEncodedBreaks = layoutMei.includes('<sb/>')
-    if (fixedPageHeight && hasEncodedBreaks) {
-      this.toolkit.setOptions({ ...layoutOptions, breaks: 'encoded', pageWidth: 100000, noJustification: true })
-      if (!this.toolkit.loadData(layoutMei)) {
-        throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
-      }
-      const extraBreaks = extraSystemBreakMeasureIds(
-        naturalSystemLayout(this.toolkit.renderToSVG(1)),
-        (layoutOptions.pageWidth - 100) * 10,
-      )
-      for (const measureId of extraBreaks) {
-        if (!layoutMei.includes(`<sb/><measure xml:id="${measureId}"`)) {
-          layoutMei = layoutMei.replace(`<measure xml:id="${measureId}"`, `<sb/><measure xml:id="${measureId}"`)
+    if (hasEncodedBreaks) {
+      for (let iteration = 0; iteration < 4; iteration++) {
+        this.toolkit.setOptions({ ...layoutOptions, breaks: 'encoded', pageWidth: 100000, noJustification: true })
+        if (!this.toolkit.loadData(layoutMei)) {
+          throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
+        }
+        const extraBreaks = extraSystemBreakMeasureIds(
+          naturalSystemLayout(this.toolkit.renderToSVG(1)),
+          (layoutOptions.pageWidth - 100) * 10,
+        )
+        if (extraBreaks.length === 0) break
+        for (const measureId of extraBreaks) {
+          if (!layoutMei.includes(`<sb/><measure xml:id="${measureId}"`)) {
+            layoutMei = layoutMei.replace(`<measure xml:id="${measureId}"`, `<sb/><measure xml:id="${measureId}"`)
+          }
         }
       }
+    }
+    if (fixedPageHeight && hasEncodedBreaks) {
       this.toolkit.setOptions({ ...layoutOptions, breaks: 'encoded', noJustification: false })
       if (!this.toolkit.loadData(layoutMei)) {
         throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
