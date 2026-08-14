@@ -1,36 +1,17 @@
-# Max's Markup Music Notation (M3N)
+# 文档索引
 
-M3N 是一种面向旋律制谱的文本记谱语言。本工具让你在浏览器中学习并使用 M3N，在线编写、阅读和导出五线谱。
+`docs/` 承载两类文档：
 
-它适合希望快速记录旋律、校对乐谱，或以纯文本分享音乐的人。
+**应用内文档**（由 `src/pages/DocsPage.tsx` 以 raw 导入，在 `/docs` 页面展示）：
 
-## 快速体验
+- [HOME.md](HOME.md)：M3N 简介与快速体验。
+- [GUIDE.md](GUIDE.md)：M3N 使用指南。
+- [MANUAL.md](MANUAL.md)：完整语法与约束手册。
 
-```m3n
-{title=小星星} {composer=莫扎特}
-{key=C} {4/4} {108qpm}
-N: 1 1 5 5 | 6 6 5^ | 4 4 3 3 | 2 2 1^ |||
-```
+**开发内部文档**（不进入应用页面，供维护者与开发 Agent 查阅）：
 
-## 在线制谱
+- [ARCHITECTURE.md](ARCHITECTURE.md)：前端架构与工作区边界。
+- [CODEGRAPH.md](CODEGRAPH.md)：模块依赖与数据流。
+- [VEROVIO.md](VEROVIO.md)：Verovio 本地参考手册。
 
-[打开在线编辑器](/editor)，输入 M3N 后实时查看五线谱、试听播放，并导出 PNG 图片或 PDF。
-
-## 乐谱库
-
-[浏览乐谱库](/scores)，按曲目阅读五线谱、播放试听并直接打印，可以从阅读页进入编辑器。
-
-## 学习 M3N
-
-[指南](GUIDE.md) 按写作过程讲解 M3N：
-
-- [编写基础旋律](GUIDE.md#编写基础旋律)：音级、节奏、八度、临时变音与和弦。
-- [组织乐曲结构](GUIDE.md#组织乐曲结构)：反复、跳房子与具名乐段。
-- [丰富演奏细节](GUIDE.md#丰富演奏细节)：力度、奏法、歌词和低音谱表。
-
-需要完整语法、约束和错误规则时，请查阅 [M3N 手册](MANUAL.md)。
-
-## 开发文档
-
-- [前端架构](ARCHITECTURE.md)：工作区边界、内部职责和质量门禁。
-- [代码图谱](CODEGRAPH.md)：模块依赖、领域流水线、渲染播放链路和分享 API。
+仓库级开发说明见根目录 [README](../README.md)。
