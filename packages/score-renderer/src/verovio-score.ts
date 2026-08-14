@@ -119,7 +119,7 @@ export class VerovioScore {
       svgViewBox: true,
     }
     const segments = layoutSegments(layoutMei)
-    if (segments.length > 1) {
+    if (!fixedPageHeight && segments.length > 1) {
       const automaticBreaks = new Set<string>()
       for (const segment of segments) {
         this.toolkit.setOptions({ ...layoutOptions, breaks: 'auto' })
@@ -135,7 +135,10 @@ export class VerovioScore {
       }
       layoutMei = encodeSystemBreaks(layoutMei, automaticBreaks)
     }
-    this.toolkit.setOptions({ ...layoutOptions, breaks: layoutMei.includes('<sb/>') ? 'encoded' : 'auto' })
+    this.toolkit.setOptions({
+      ...layoutOptions,
+      breaks: fixedPageHeight ? 'auto' : (layoutMei.includes('<sb/>') ? 'encoded' : 'auto'),
+    })
     if (!this.toolkit.loadData(layoutMei)) {
       throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
     }

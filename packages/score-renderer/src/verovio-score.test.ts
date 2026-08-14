@@ -41,6 +41,30 @@ describe('VerovioScore layout', () => {
       toolkit.destroy()
     }
   })
+
+  it('paginates by page height even when system breaks are encoded', async () => {
+    const measures = Array.from({ length: 40 }, () => '1 2 3 4').join(' | {br}')
+    const mei = m3nToMei(`{key=C} {4/4}\n${measures} |||`).mei
+    const toolkit = new VerovioToolkit(await createVerovioModule())
+    try {
+      toolkit.setOptions({
+        adjustPageHeight: false,
+        breaks: 'auto',
+        footer: 'none',
+        header: 'none',
+        pageHeight: Math.max(800, Math.round(400 * 100 / 42)),
+        pageMarginTop: 8,
+        pageWidth: Math.max(800, Math.round(800 * 100 / 42)),
+        scale: 42,
+        svgViewBox: true,
+      })
+      expect(toolkit.loadData(mei)).toBe(1)
+
+      expect(toolkit.getPageCount()).toBeGreaterThan(1)
+    } finally {
+      toolkit.destroy()
+    }
+  })
   it('collects the final measure of each automatically laid-out system', () => {
     const breaks = automaticSystemBreakMeasureIds([
       '<g class="system"><g id="m3n-measure-1-1"/><g id="m3n-measure-1-2"/></g><g class="system"><g id="m3n-measure-1-3"/></g>',
