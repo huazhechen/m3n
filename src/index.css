@@ -378,6 +378,12 @@ h3 {
 
 .embedded-editor-body {
   padding: 0;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "render"
+    "render-diagnostics"
+    "source"
+    "source-diagnostics";
 }
 
 .pane-toolbar {

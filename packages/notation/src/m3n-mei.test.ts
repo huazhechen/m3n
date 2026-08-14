@@ -52,7 +52,14 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.mei).not.toContain('<expansion')
     expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-1"><rend fontweight="bold">A</rend></reh>')
-    expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-3"><rend fontweight="bold">B</rend></reh>')
+    expect(result.mei).toContain('<reh staff="1" startid="#m3n-e-2"><rend fontweight="bold">B</rend></reh>')
+  })
+
+  it('renders text directives as directions above the following note', () => {
+    const result = m3nToMei('{key=C} {4/4}\n1 {text=快速切换}2 3 4 |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-2" place="above">快速切换</dir>')
   })
 
   it('anchors a named section on the first note of a tuplet', () => {

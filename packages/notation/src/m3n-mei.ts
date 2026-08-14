@@ -102,6 +102,19 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     }
   }
 
+  const sectionRehAnchor = new Map<ScoreEvent, string>()
+  for (const part of document.parts.values()) {
+    for (const measures of [part.melody, part.bass] as const) {
+      let previous: ScoreEvent | undefined
+      for (const measure of measures) {
+        for (const event of measure.events) {
+          if (event.sectionLabel) sectionRehAnchor.set(previous ?? event, event.sectionLabel)
+          previous = event
+        }
+      }
+    }
+  }
+
   const tiesByStartEvent = new Map<ScoreEvent, string[]>()
   const collectTies = (measures: ScoreMeasure[]) => {
     const addTie = (tiedEvent: ScoreEvent, event: ScoreEvent) => {
@@ -345,9 +358,12 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       const startid = event.kind === 'tuplet' ? `${xmlId}-n1` : xmlId
       return [
         event.chord ? `<harm staff="${staffNumber}" startid="#${startid}">${chordSymbol(event.chord, event.key)}</harm>` : '',
-        event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${startid}"><rend fontweight="bold">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
+        sectionRehAnchor.has(event)
+          ? `<reh staff="${staffNumber}" startid="#${startid}"><rend fontweight="bold">${escapeXml(sectionRehAnchor.get(event) ?? '')}</rend></reh>`
+          : '',
         event.dynamic ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.dynamic}</dynam>` : '',
         event.prefix ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.prefix}</dynam>` : '',
+        event.text ? `<dir staff="${staffNumber}" startid="#${startid}" place="above">${escapeXml(event.text)}</dir>` : '',
         ...event.navigation.map((value) => {
           if (value === 'fine') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="fine">Fine</repeatMark>`
           const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value

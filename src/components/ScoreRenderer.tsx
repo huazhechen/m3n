@@ -417,7 +417,7 @@ export function ScoreRenderer({
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
       <div className="audio-controls">
-        {!compact && hasAudioControls && (
+        {hasAudioControls && (
           <button
             type="button"
             className="playback-toggle"

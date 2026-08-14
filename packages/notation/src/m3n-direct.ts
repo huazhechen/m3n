@@ -61,6 +61,7 @@ function parseBody(
   let currentChord: string | undefined
   let chordChanged = false
   let pendingPrefix: 'sfz' | undefined
+  let pendingText: string | undefined
   let lastEvent: ScoreEvent | undefined
   let pendingRepeatEnd: ScoreMeasure | undefined
   let lastBarLine: number | undefined
@@ -95,6 +96,10 @@ function parseBody(
     event.dynamic = dynamicChanged ? currentDynamic : undefined
     event.chord = chordChanged ? currentChord : undefined
     event.prefix = pendingPrefix
+    if (event.kind !== 'rest') {
+      event.text = pendingText
+      pendingText = undefined
+    }
     event.octaveShift = structureStack.reduce((shift, item) => {
       const kind = typeof item === 'object' ? item.kind : item
       return kind === '8va' ? shift + 1 : kind === '8vb' ? shift - 1 : shift
@@ -197,6 +202,8 @@ function parseBody(
         currentChord = value.slice(6)
         chordChanged = true
         lastEvent = undefined
+      } else if (value.startsWith('text=')) {
+        pendingText = value.slice(5)
       } else if (value === 'sfz') {
         pendingPrefix = 'sfz'
         lastEvent = undefined

@@ -10,6 +10,7 @@ export type ScoreEvent = {
   dynamic?: string
   chord?: string
   prefix?: 'sfz'
+  text?: string
   postfixes: string[]
   navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
   octaveShift: number
