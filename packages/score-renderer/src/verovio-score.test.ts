@@ -3,7 +3,12 @@ import createVerovioModule from 'verovio/wasm'
 import { VerovioToolkit } from 'verovio/esm'
 import { BasicMIDI } from 'spessasynth_core'
 import { m3nToMei } from '@m3n/notation'
-import { automaticSystemBreakMeasureIds, encodeSystemBreaks } from './verovio-score'
+import {
+  automaticSystemBreakMeasureIds,
+  encodeSystemBreaks,
+  encodedSystemLayout,
+  pageBreakMeasureIds,
+} from './verovio-score'
 import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, visibleLyricVerseNumbers } from './lyric-rendition'
 
 async function renderedPitches(source: string) {
@@ -42,14 +47,15 @@ describe('VerovioScore layout', () => {
     }
   })
 
-  it('paginates by page height even when system breaks are encoded', async () => {
+  it('paginates encoded system breaks when page breaks are present', async () => {
     const measures = Array.from({ length: 40 }, () => '1 2 3 4').join(' | {br}')
     const mei = m3nToMei(`{key=C} {4/4}\n${measures} |||`).mei
+      .replace('<measure xml:id="m3n-measure-1-21"', '<pb/><measure xml:id="m3n-measure-1-21"')
     const toolkit = new VerovioToolkit(await createVerovioModule())
     try {
       toolkit.setOptions({
         adjustPageHeight: false,
-        breaks: 'auto',
+        breaks: 'encoded',
         footer: 'none',
         header: 'none',
         pageHeight: Math.max(800, Math.round(400 * 100 / 42)),
@@ -64,6 +70,27 @@ describe('VerovioScore layout', () => {
     } finally {
       toolkit.destroy()
     }
+  })
+
+  it('reads system positions and first measure ids from an encoded SVG', () => {
+    const svg = '<svg><g class="system"><path d="M13 1019 L13 1739"/><g id="m3n-measure-1-1" class="measure"/></g>'
+      + '<g class="system"><path d="M13 3179 L13 3899"/><g id="m3n-measure-1-3" class="measure"/></g></svg>'
+
+    expect(encodedSystemLayout(svg)).toEqual([
+      { top: 1019, bottom: 1739, firstMeasure: 'm3n-measure-1-1' },
+      { top: 3179, bottom: 3899, firstMeasure: 'm3n-measure-1-3' },
+    ])
+  })
+
+  it('groups encoded systems into pages by height', () => {
+    const systems = [
+      { top: 1019, bottom: 1739, firstMeasure: 'm3n-measure-1-1' },
+      { top: 3179, bottom: 3899, firstMeasure: 'm3n-measure-1-5' },
+      { top: 5339, bottom: 6059, firstMeasure: 'm3n-measure-1-9' },
+    ]
+
+    expect(pageBreakMeasureIds(systems, 7000)).toEqual([])
+    expect(pageBreakMeasureIds(systems, 5000)).toEqual(['m3n-measure-1-9'])
   })
   it('collects the final measure of each automatically laid-out system', () => {
     const breaks = automaticSystemBreakMeasureIds([
