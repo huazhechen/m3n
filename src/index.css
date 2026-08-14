@@ -566,6 +566,10 @@ textarea::selection {
   border-color: #2f6f73;
 }
 
+.score-list .score-card.is-local-card:hover {
+  border-color: #2f6f73;
+}
+
 .score-list .score-card.is-error-score {
   border-color: #bd3026;
   background: #fff5f4;
@@ -608,76 +612,6 @@ textarea::selection {
   text-align: center;
 }
 
-.local-score-library {
-  margin: 8px 0 24px;
-}
-
-.local-score-library h2 {
-  margin: 0 0 10px;
-  font-size: 1.05rem;
-}
-
-.local-score-card {
-  border: 1px solid #cfd3ca;
-  border-radius: 6px;
-  padding: 6px 10px;
-  background: #fffef9;
-}
-
-.local-score-card.is-empty {
-  padding: 14px 16px;
-}
-
-.local-score-empty {
-  margin: 0;
-  color: #5c6468;
-  font-size: 0.92rem;
-}
-
-.local-score-list {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.local-score-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 8px;
-  border-bottom: 1px solid #e4e8e1;
-}
-
-.local-score-list li:last-child {
-  border-bottom: 0;
-}
-
-.local-score-info {
-  min-width: 0;
-}
-
-.local-score-info strong {
-  display: block;
-  font-size: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.local-score-info .score-notation-tags {
-  justify-content: flex-start;
-  margin-top: 6px;
-}
-
-.local-score-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 .score-notation-tags {
   display: flex;
   justify-content: center;
@@ -691,6 +625,67 @@ textarea::selection {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.score-card-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.score-card-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  box-sizing: border-box;
+  border: 1px solid #b8cfca;
+  border-radius: 4px;
+  padding: 0 8px;
+  color: #285b5c;
+  background: #fffef9;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.score-card-action:hover {
+  border-color: #2f6f73;
+  background: #dcebe6;
+}
+
+.score-card-action.is-danger {
+  border-color: #d8b4ae;
+  color: #9a3a25;
+}
+
+.score-card-action.is-danger:hover {
+  border-color: #98241d;
+  background: #ffecea;
+}
+
+.score-card-marker {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: #ffffff;
+  background: #1683ff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.score-card.is-local-card {
+  position: relative;
+  cursor: pointer;
+}
+
+.score-card.is-local-card h3 {
+  padding: 0 44px;
 }
 
 .score-composer {

@@ -58,6 +58,6 @@ test('renderer settings control width and drive the export dialog', async ({ pag
   await expect(exportDialog.getByText('600px')).toBeVisible()
   await expect(exportDialog.getByRole('spinbutton')).toHaveCount(0)
   await expect(exportDialog.locator('svg').first()).toBeVisible({ timeout: 30_000 })
-  await exportDialog.getByRole('radio', { name: 'PDF（A4）' }).check()
+  await expect(exportDialog.getByRole('radio', { name: 'PDF（A4 分页）' })).toBeChecked()
   await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
 })

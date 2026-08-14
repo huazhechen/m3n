@@ -47,7 +47,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
   function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
-    const [format, setFormat] = useState<ExportFormat>('png')
+    const [format, setFormat] = useState<ExportFormat>('pdf')
     const [includeBass, setIncludeBass] = useState(true)
     const [isOpen, setIsOpen] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
@@ -146,14 +146,14 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     return (
       <dialog ref={dialogRef} className="export-dialog" onClose={() => setIsOpen(false)}>
         <form onSubmit={(event) => { event.preventDefault(); void exportScore() }}>
-          <div className="export-header"><h2>打印五线谱</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm' : 'PNG 图片'}</span></div>
+          <div className="export-header"><h2>打印五线谱</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm' : 'PNG 连续图片'}</span></div>
           <div className="export-content">
             <div className="export-settings">
               <p className="export-width-summary">乐谱宽度 <output>{width}px</output></p>
               <fieldset>
                 <legend>格式</legend>
-                <label><input type="radio" name="export-format" checked={format === 'png'} onChange={() => setFormat('png')} />PNG 图片</label>
-                <label><input type="radio" name="export-format" checked={format === 'pdf'} onChange={() => setFormat('pdf')} />PDF（A4）</label>
+                <label><input type="radio" name="export-format" checked={format === 'pdf'} onChange={() => setFormat('pdf')} />PDF（A4 分页）</label>
+                <label><input type="radio" name="export-format" checked={format === 'png'} onChange={() => setFormat('png')} />PNG 图片（连续）</label>
               </fieldset>
               {hasBassStaff && <fieldset><legend>低音谱表</legend><label><input type="checkbox" checked={includeBass} onChange={(event) => setIncludeBass(event.currentTarget.checked)} />包含低音谱表</label></fieldset>}
             </div>

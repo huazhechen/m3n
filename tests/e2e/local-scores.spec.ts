@@ -25,20 +25,23 @@ test('submit is simulated locally and opens the reader', async ({ page }) => {
   await expect(page.locator('.score-reader svg').first()).toBeVisible({ timeout: 30_000 })
 })
 
-test('score library shows and deletes local scores', async ({ page }) => {
+test('score library marks local scores, opens on click, and deletes', async ({ page }) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill(source)
   await page.getByRole('button', { name: '浏览' }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)
 
   await page.goto('/scores')
-  const card = page.locator('.local-score-card')
-  await expect(card).toContainText('本地测试')
-  await card.getByRole('link', { name: '查看' }).click()
+  const localCard = page.locator('.score-list .score-card', { hasText: '本地测试' })
+  await expect(localCard).toBeVisible()
+  await expect(localCard.locator('.score-card-marker')).toHaveText('本地')
+  await expect(page.locator('.score-card-marker')).toHaveCount(1)
+  await localCard.click()
   await expect(page).toHaveURL(/\/scores\/local-/)
 
   await page.goto('/scores')
   page.on('dialog', (dialog) => dialog.accept())
-  await page.locator('.local-score-card').getByRole('button', { name: '删除' }).click()
-  await expect(page.locator('.local-score-card')).toContainText('暂无本地乐谱')
+  const card = page.locator('.score-list .score-card', { hasText: '本地测试' })
+  await card.getByRole('button', { name: '删除' }).click()
+  await expect(card).toHaveCount(0)
 })
