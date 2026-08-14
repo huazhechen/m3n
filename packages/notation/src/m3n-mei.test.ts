@@ -295,7 +295,7 @@ describe('M3N to MEI conversion', () => {
   it('emits a cancelling key signature when changing from A major to C major', () => {
     const result = m3nToMei('{key=A} {4/4}\n1 2 3 4 | {key=C}1 2 3 4 |||')
 
-    expect(result.mei).toContain('<keySig sig="0"><keyAccid pname="f" accid="n"/><keyAccid pname="c" accid="n"/><keyAccid pname="g" accid="n"/></keySig>')
+    expect(result.mei).toContain('<keySig><keyAccid pname="f" accid="n"/><keyAccid pname="c" accid="n"/><keyAccid pname="g" accid="n"/></keySig>')
   })
 
   it('uses score definitions and beam groups for meter changes at measure boundaries', () => {

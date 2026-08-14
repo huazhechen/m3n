@@ -109,6 +109,8 @@ Verovio 是将乐谱数据雕版为 SVG 的引擎。它不是所见即所得编�
 
 全局初始定义写在 `scoreDef/staffDef` 属性；中途变化以 `keySig`、`meterSig`、`clef` 事件置于变化发生处。不能只改后续音符而省略可见的调号、拍号或谱号。
 
+需要显示还原记号时（如从 A 大调回到 C 大调），用 `keyAccid accid="n"` 子元素列出前一调号的变音；此时不要再写 `sig` 属性，Verovio 会忽略与 `keyAccid` 子元素同时出现的 `sig` 并输出警告。
+
 ```xml
 <measure n="9"><staff n="1"><layer n="1">
   <keySig sig="3s" mode="major"/>

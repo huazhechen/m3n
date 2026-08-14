@@ -283,7 +283,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     if (nextSignature !== '0' || !match) return `<keySig sig="${nextSignature}"/>`
     const order = match[2] === 's' ? ['f', 'c', 'g', 'd', 'a', 'e', 'b'] : ['b', 'e', 'a', 'd', 'g', 'c', 'f']
     const accidentals = order.slice(0, Number(match[1])).map((pname) => `<keyAccid pname="${pname}" accid="n"/>`).join('')
-    return `<keySig sig="0">${accidentals}</keySig>`
+    return `<keySig>${accidentals}</keySig>`
   }
 
   const keyScoreDefXml = (key: string, previousKey: string) => [
