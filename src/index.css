@@ -458,6 +458,14 @@ textarea::selection {
   min-height: unset;
 }
 
+.embedded-editor .source-editor textarea {
+  width: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .diagnostics {
   margin: 12px 0 0;
   overflow-wrap: anywhere;
@@ -880,11 +888,6 @@ textarea::selection {
   gap: 10px;
 }
 
-.renderer-settings-switch > span:first-child {
-  color: #5c6468;
-  font-size: 13px;
-}
-
 .switch-control {
   position: relative;
   display: inline-flex;
@@ -1179,7 +1182,8 @@ a.action-button {
 
 .playback-speed span,
 .playback-progress span,
-.renderer-settings-row span {
+.renderer-settings-row span,
+.renderer-settings-switch > span:first-child {
   color: #285b5c;
   font-size: 12px;
   white-space: nowrap;

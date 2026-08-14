@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { analyzeM3N, formatM3N, formatScoreDiagnostic } from '@m3n/notation'
+import { analyzeM3N, formatM3N, formatMeiXml, formatScoreDiagnostic } from '@m3n/notation'
 import defaultScore from '../scores/huan_le_song_01.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'
@@ -29,6 +29,7 @@ export function NotationEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const analysis = useMemo(() => analyzeM3N(source), [source])
   const { conversion: result, complexity, invalidMeasureIds } = analysis
+  const formattedMei = useMemo(() => formatMeiXml(result.mei), [result.mei])
   const cursorXmlId = useMemo(() => {
     const containingRange = result.sourceMap.find((item) => (
       item.sourceStart <= cursorPosition && cursorPosition < item.sourceEnd
@@ -74,7 +75,7 @@ export function NotationEditor({
   }, [result.sourceMap])
 
   const copyMei = async () => {
-    await navigator.clipboard.writeText(result.mei)
+    await navigator.clipboard.writeText(formattedMei)
     setIsMeiDialogOpen(false)
   }
 
@@ -165,7 +166,7 @@ export function NotationEditor({
               <h2 id="mei-result-title">MEI 内容</h2>
               <button type="button" className="action-button" aria-label="关闭" onClick={() => setIsMeiDialogOpen(false)}>关闭</button>
             </div>
-            <textarea className="converter-result" readOnly spellCheck={false} value={result.mei} aria-label="MEI 内容" />
+            <textarea className="converter-result" readOnly spellCheck={false} value={formattedMei} aria-label="MEI 内容" />
             <div className="converter-dialog-actions">
               <button type="button" className="action-button" onClick={() => void copyMei()}>一键复制</button>
             </div>

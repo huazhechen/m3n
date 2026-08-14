@@ -1,5 +1,6 @@
 export * from './lyric-collisions'
 export * from './lyric-rendition'
+export * from './label-avoidance'
 export * from './playback-coordinator'
 export * from './render-scheduler'
 export * from './score-document'

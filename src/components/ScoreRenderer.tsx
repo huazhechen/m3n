@@ -24,6 +24,7 @@ import {
   scorePlaybackCoordinator,
   scoreRenderScheduler,
   a4SourcePageHeight,
+  avoidLabelCollisions,
   scoreHeaderHeight,
   wrapScorePagesIntoSheets,
   visibleLyricVerseNumbers,
@@ -199,6 +200,7 @@ export function ScoreRenderer({
                   resolveLyricCollisions(paper)
                   addInvalidMeasureHighlights(paper, invalidMeasureIds)
                   if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
+                  avoidLabelCollisions(paper)
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()

@@ -11,6 +11,7 @@ import {
   scoreHeaderHeight,
   stackScoreCanvases,
   wrapScorePagesIntoSheets,
+  avoidLabelCollisions,
   type VerovioScore,
 } from '@m3n/score-renderer'
 
@@ -75,6 +76,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           })
           addScoreHeaderToPaper(preview, headerMetadata)
           resolveLyricCollisions(preview)
+          avoidLabelCollisions(preview)
           if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
         }
         score.destroy()
@@ -107,6 +109,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         try {
           addScoreHeaderToPaper(exportPaper, headerMetadata)
           resolveLyricCollisions(exportPaper)
+          avoidLabelCollisions(exportPaper)
           svgs = cloneScorePages(exportPaper)
         } finally {
           exportPaper.remove()
