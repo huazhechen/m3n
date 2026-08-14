@@ -199,7 +199,8 @@ function validateIntervalSpans(document: ScoreDocument, source?: string) {
   const diagnostics: ScoreDiagnostic[] = []
   for (const interval of document.intervals) {
     if (interval.start === undefined || interval.endStart === undefined || interval.start !== interval.endStart) continue
-    if (interval.kind === '8va' || interval.kind === '8vb' || interval.kind === 'inst') continue
+    if (interval.kind === '8va' || interval.kind === '8vb' || interval.kind === 'inst'
+      || interval.kind === 'cresc' || interval.kind === 'decres') continue
     const message = `${intervalLabels[interval.kind]}区间只覆盖一个音符，无法渲染标记`
     const line = sourceLine(source, interval.start)
     diagnostics.push(createScoreDiagnostic({

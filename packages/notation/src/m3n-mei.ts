@@ -321,6 +321,14 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const controlXml = (measure: ScoreMeasure | undefined, staffNumber: number, meter = previousMeter) => {
     const events = measure?.events ?? []
     const idFor = (sourceStart: number | undefined) => sourceStart === undefined ? undefined : eventIds.get(`${staffNumber}:${sourceStart}`)
+    const beatSpans = new Map<number, { onset: number; end: number }>()
+    {
+      let beat = 0
+      for (const event of events) {
+        beatSpans.set(event.sourceStart, { onset: beat, end: beat + event.beats })
+        beat += event.beats
+      }
+    }
     const postfix = (xmlId: string, value: string) => {
       if (value === 'arp') return `<arpeg startid="#${xmlId}"/>`
       if (value === 'tr') return `<trill startid="#${xmlId}"/>`
@@ -376,7 +384,22 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       const startid = idFor(interval.start)
       const endid = idFor(interval.endStart)
       if (!startid || !endid) return []
-      if (startid === endid && interval.kind !== '8va' && interval.kind !== '8vb') return []
+      const singleNote = startid === endid
+      if (singleNote && (interval.kind === 'cresc' || interval.kind === 'decres')) {
+        const event = events.find((item) => item.sourceStart === interval.start)
+        const anchorId = event?.kind === 'tuplet' ? `${startid}-n1` : startid
+        if (interval.display === 'text') {
+          const label = interval.kind === 'cresc' ? 'cresc.' : 'dim.'
+          return [`<dir staff="${staffNumber}" startid="#${anchorId}" place="above" type="${interval.kind}">${label}</dir>`]
+        }
+        const span = event ? beatSpans.get(event.sourceStart) : undefined
+        if (span && span.end > span.onset) {
+          const tstamp = (value: number) => String(Math.round(value * 1000) / 1000)
+          return [`<hairpin staff="${staffNumber}" form="${interval.kind === 'cresc' ? 'cres' : 'dim'}" tstamp="${tstamp(span.onset + 1)}" tstamp2="${tstamp(span.end + 1)}"/>`]
+        }
+        return []
+      }
+      if (singleNote && interval.kind !== '8va' && interval.kind !== '8vb') return []
       if (staffNumber === 1 && (interval.kind === 'accel' || interval.kind === 'rit')) return [`<tempo staff="${staffNumber}" startid="#${startid}" endid="#${endid}" place="above" func="continuous">${interval.kind === 'rit' ? 'rit.' : 'accel.'}</tempo>`]
       if (interval.kind === 'lg') return [`<slur startid="#${startid}" endid="#${endid}"/>`]
       if (interval.kind === 'cresc' || interval.kind === 'decres') {

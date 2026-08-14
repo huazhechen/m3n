@@ -373,12 +373,28 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<hairpin staff="1" form="dim" startid="#m3n-e-7" endid="#m3n-e-8"/>')
   })
 
-  it('skips interval controls whose start and end anchor are the same event', () => {
+  it('renders single-note crescendo and diminuendo as hairpins spanning the note', () => {
+    const result = m3nToMei('{key=C} {4/4}\n{cresc}1^^{/} | {decres}2^^{/} |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<hairpin staff="1" form="cres" tstamp="1" tstamp2="5"/>')
+    expect(result.mei).toContain('<hairpin staff="1" form="dim" tstamp="1" tstamp2="5"/>')
+  })
+
+  it('renders single-note text dynamics as a direction without an end id', () => {
+    const result = m3nToMei('{key=C} {4/4}\n{cresc=text}1^^{/} |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-1" place="above" type="cresc">cresc.</dir>')
+  })
+
+  it('renders single-note dynamics but keeps skipping single-event slurs and ramps', () => {
     const result = m3nToMei('{key=C} {4/4}\n{cresc}1{/} {lg}2{/} {decres}3{/} {8va}4{/} | {cresc=text}5{/} {accel=144}6{/} |||')
 
-    expect(result.mei).not.toContain('<hairpin')
+    expect(result.mei).toContain('<hairpin staff="1" form="cres" tstamp="1" tstamp2="2"/>')
+    expect(result.mei).toContain('<hairpin staff="1" form="dim" tstamp="3" tstamp2="4"/>')
+    expect(result.mei).toContain('<dir staff="1" startid="#m3n-e-5" place="above" type="cresc">cresc.</dir>')
     expect(result.mei).not.toContain('<slur')
-    expect(result.mei).not.toContain('<dir')
     expect(result.mei).not.toContain('<tempo')
     expect(result.mei).toContain('<octave staff="1" dis="8" dis.place="above" startid="#m3n-e-4" endid="#m3n-e-4"/>')
   })
