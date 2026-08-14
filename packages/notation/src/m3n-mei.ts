@@ -71,8 +71,12 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       })),
     }
   })
-  const lyricRowCount = Math.max(0, ...lyricSyllables.map((block) => Number(block.n)).filter(Number.isInteger))
   const melodyIndices = lyricSyllables.map(() => 0)
+  const visibleVerseIndexes = new Set(lyricSyllables
+    .filter((block) => block.syllables.some((syllable) => (
+      syllable.kind === 'text' && syllable.text.replaceAll('~', '').trim() !== ''
+    )))
+    .map((block) => block.verseIndex))
   const lyricPassesByMeasure = new Map<ScoreMeasure, Set<number>>()
   for (const part of document.parts.values()) {
     for (const [measure, passes] of measurePlaybackPasses(part.melody)) lyricPassesByMeasure.set(measure, passes)
@@ -181,9 +185,16 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
         && (block.targetEnd === undefined || event.sourceStart < block.targetEnd)
         && (!block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes?.has(pass)))
       ))
+      const hasVisibleLyricText = (syllable: { kind: string; text: string }) => (
+        syllable.kind === 'text' && syllable.text.replaceAll('~', '').trim() !== ''
+      )
+      const textRowsAtEvent = new Set(lyricBlocksAtEvent
+        .filter((block) => block.syllables.some(hasVisibleLyricText))
+        .map((block) => block.verseIndex))
+      const activeLyricBlocks = lyricBlocksAtEvent.filter((block) => textRowsAtEvent.has(block.verseIndex))
       const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
       const assignedLyrics = hasLyricTarget
-        ? lyricBlocksAtEvent.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
+        ? activeLyricBlocks.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
           const index = lyricSyllables.indexOf(block)
           const lyricIndex = melodyIndices[index] ?? 0
           const lyric = block.syllables[lyricIndex]
@@ -194,7 +205,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
         }).flat())
         : []
       const lyrics = hasLyricTarget
-        ? lyricBlocksAtEvent.flatMap((block) => {
+        ? activeLyricBlocks.flatMap((block) => {
           const matched = assignedLyrics.filter((lyric) => lyric.verseIndex === block.verseIndex)
           if (matched.length > 0) return matched
           return [{
@@ -219,11 +230,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
             if (lyric.kind === 'placeholder') lyric.cjkSpacingCompensation = true
           }
         }
-        const hasScopedLyrics = lyricBlocksAtEvent.some((block) => block.targetStart !== undefined)
-        const remainingLyricRowCount = Math.max(0, ...lyricSyllables
-          .filter((block) => block.targetEnd === undefined || event.sourceStart < block.targetEnd)
-          .map((block) => block.verseIndex))
-        const partLyricRowCount = hasScopedLyrics ? remainingLyricRowCount : lyricRowCount
+        const partLyricRowCount = Math.max(0, ...textRowsAtEvent)
         for (let row = 1; row <= partLyricRowCount; row += 1) {
           if (occupiedRows.has(row)) continue
           lyrics.push({
@@ -252,7 +259,11 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       }
       lyrics.forEach((lyric) => sourceMap.push({ xmlId, sourceStart: lyric.sourceStart, sourceEnd: lyric.sourceEnd }))
       const keySig = keyChanges.get(eventIndex)
-      return { event, prefix: keySig ? `<keySig sig="${meiKeySignature(keySig)}"/>` : undefined, xml: renderEventXml(event, xmlId, lyrics, accidentals) }
+      return {
+        event,
+        prefix: keySig ? `<keySig sig="${meiKeySignature(keySig)}"/>` : undefined,
+        xml: renderEventXml(event, xmlId, lyrics, accidentals, visibleVerseIndexes),
+      }
     })
     const body = renderBeamXml(renderedEvents, meter.count, meter.unit)
       .map((xml) => xml.split('\n').map((line) => `      ${line}`).join('\n'))

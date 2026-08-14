@@ -30,8 +30,14 @@ export function meiTempoXml(qpm: number, meterUnit: number, position: string, id
   return `<tempo xml:id="${id}" staff="1" ${position} midi.bpm="${qpm}">${note} = ${value}</tempo>`
 }
 
-export function meiEventXml(event: ScoreEvent, xmlId: string, lyrics: MeiVerseSyllable[], accidentals?: Map<string, string>) {
-  const verse = meiVerseXml(lyrics, xmlId)
+export function meiEventXml(
+  event: ScoreEvent,
+  xmlId: string,
+  lyrics: MeiVerseSyllable[],
+  accidentals?: Map<string, string>,
+  visibleVerseIndexes?: ReadonlySet<number>,
+) {
+  const verse = meiVerseXml(lyrics, xmlId, visibleVerseIndexes)
   const articulations = [
     event.postfixes.includes('str') ? '<artic artic="acc"/>' : '', event.postfixes.includes('brk') ? '<artic artic="stacciss"/>' : '',
     event.postfixes.includes('tip') ? '<artic artic="stacc"/>' : '', event.postfixes.includes('hold') ? '<artic artic="ten"/>' : '',
@@ -61,7 +67,7 @@ export function meiEventXml(event: ScoreEvent, xmlId: string, lyrics: MeiVerseSy
       const childLyrics = [...lyricsByVerse.values()].map((items) => items[lyricTargetIndex]).filter((lyric): lyric is MeiVerseSyllable => lyric !== undefined)
       lyricTargetIndex += 1
       const note = `<note xml:id="${childId}" ${pitchXml(pitch, event.key, accidentals)} ${meiDurationAttributes(childBeats)}`
-      const childVerse = meiVerseXml(childLyrics, childId)
+      const childVerse = meiVerseXml(childLyrics, childId, visibleVerseIndexes)
       return childVerse ? `${note}>${childVerse}</note>` : `${note}/>`
     }).join('')
     const content = childBeats <= 0.5 && !event.pitches.includes('0') ? `<beam>${children}</beam>` : children

@@ -3,11 +3,11 @@ import { m3nPitch, parseM3NDocument } from './m3n-direct.js'
 import { m3nToMei } from './m3n-mei.js'
 
 describe('M3N to MEI conversion', () => {
-  it('reserves later lyric rows before their scoped phrase', () => {
+  it('reserves lyric rows only within the phrase that sings them', () => {
     const result = m3nToMei('{2/4}\nN: 1 2 |\nL: 草木\n---\nN: ||: 1 2 | 3 4 :||{x2} |||\nL1: 世间你我\nL2: 有多少人')
 
     expect(result.mei).toContain('<syl>草\u200B</syl>')
-    expect(result.mei).toContain('<verse xml:id="m3n-e-1-v2" n="2"><syl>\u200B</syl></verse>')
+    expect(result.mei).not.toContain('<verse xml:id="m3n-e-1-v2"')
     expect(result.mei).toContain('<syl>世\u200B</syl>')
     expect(result.mei).toContain('<syl>有\u200B</syl>')
   })
@@ -17,6 +17,13 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.mei).toContain('<verse xml:id="m3n-e-2-v1" n="1"><syl>\u2800\u200B</syl></verse>')
     expect(result.mei).toContain('<verse xml:id="m3n-e-2-v2" n="2"><syl>乙\u200B</syl></verse>')
+  })
+
+  it('omits lyric rows that have no visible text anywhere in the score', () => {
+    const result = m3nToMei('{2/4}\nN: 1 2 | 3 4 |||\nL1: 草 木 | 春 夏\nL2: {%2} {%2} | {%2} {%2}')
+
+    expect(result.mei).toContain('<verse xml:id="m3n-e-1-v1" n="1"><syl>草\u200B</syl></verse>')
+    expect(result.mei).not.toContain('-v2"')
   })
 
   it('projects a v0.3 harmony row onto melody events', () => {

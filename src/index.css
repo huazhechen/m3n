@@ -458,14 +458,6 @@ textarea::selection {
   min-height: unset;
 }
 
-.embedded-editor .source-editor textarea {
-  width: 100%;
-  height: auto;
-  overflow-x: hidden;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-}
-
 .diagnostics {
   margin: 12px 0 0;
   overflow-wrap: anywhere;

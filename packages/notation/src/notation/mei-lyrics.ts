@@ -28,20 +28,37 @@ function underlinedLyricText(lyric: MeiVerseSyllable) {
   )).join('')
 }
 
-export function meiVerseXml(lyrics: readonly MeiVerseSyllable[], xmlId: string) {
-  return lyrics.map((lyric) => {
-    const passes = lyric.passes ? [...lyric.passes] : []
-    const passType = passes.length > 1 ? ` type="m3n-passes-${passes.join('-')}"` : ''
-    const connection = lyric.kind === 'extender'
-      ? ' con="u"'
-      : lyric.underlined
-        ? ' type="m3n-text-underline"'
-        : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
-    const text = lyric.kind === 'placeholder'
-      ? lyric.cjkSpacingCompensation ? '\u2800\u200B' : '\u200B'
-      : lyric.underlined && lyric.kind !== 'extender'
-        ? underlinedLyricText(lyric)
-        : escapeXml(lyricText(lyric))
-    return `<verse xml:id="${xmlId}-v${lyric.verseIndex}" n="${lyric.n}"${passType}><syl${connection}>${text}</syl></verse>`
-  }).join('')
+export function meiVerseXml(
+  lyrics: readonly MeiVerseSyllable[],
+  xmlId: string,
+  visibleVerseIndexes?: ReadonlySet<number>,
+) {
+  const rows = new Map<number, MeiVerseSyllable[]>()
+  for (const lyric of lyrics) {
+    const row = rows.get(lyric.verseIndex) ?? []
+    row.push(lyric)
+    rows.set(lyric.verseIndex, row)
+  }
+  return [...rows.values()]
+    .filter((items) => {
+      const verseIndex = items[0]?.verseIndex ?? 0
+      return visibleVerseIndexes === undefined
+        || visibleVerseIndexes.has(verseIndex)
+    })
+    .map((items) => items.map((lyric) => {
+      const passes = lyric.passes ? [...lyric.passes] : []
+      const passType = passes.length > 1 ? ` type="m3n-passes-${passes.join('-')}"` : ''
+      const connection = lyric.kind === 'extender'
+        ? ' con="u"'
+        : lyric.underlined
+          ? ' type="m3n-text-underline"'
+          : lyric.wordpos ? ` wordpos="${lyric.wordpos}"${lyric.wordpos === 't' ? '' : ' con="d"'}` : ''
+      const text = lyric.kind === 'placeholder'
+        ? lyric.cjkSpacingCompensation ? '\u2800\u200B' : '\u200B'
+        : lyric.underlined && lyric.kind !== 'extender'
+          ? underlinedLyricText(lyric)
+          : escapeXml(lyricText(lyric))
+      return `<verse xml:id="${xmlId}-v${lyric.verseIndex}" n="${lyric.n}"${passType}><syl${connection}>${text}</syl></verse>`
+    }).join(''))
+    .join('')
 }

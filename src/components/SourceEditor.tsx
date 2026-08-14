@@ -30,7 +30,7 @@ export function SourceEditor({
 
     const portraitQuery = window.matchMedia('(orientation: portrait)')
     const resize = () => {
-      if (!portraitQuery.matches) {
+      if (!portraitQuery.matches && !readOnly) {
         editor.style.height = ''
         return
       }
@@ -46,7 +46,7 @@ export function SourceEditor({
       portraitQuery.removeEventListener('change', resize)
       window.removeEventListener('resize', resize)
     }
-  }, [value])
+  }, [readOnly, value])
 
   return (
     <div className="source-editor">
