@@ -27,6 +27,12 @@ npm run deploy   # 构建并部署到 Cloudflare
 
 常用脚本：`npm run build`、`npm run test`、`npm run test:e2e`、`npm run lint`、`npm run typecheck:packages`。
 
+### 本地乐谱与提交
+
+- 编辑器中的“浏览”把乐谱保存到浏览器本地（localStorage，30 天后过期，每次打开页面时自动清理），查看/编辑 URL 直接携带乐谱 ID。
+- “提交”才会写入远端 Worker。本地调试时默认模拟提交（写入 localStorage），需要请求真实接口时设置 `VITE_SUBMIT_MODE=remote`。
+- `npm run test:e2e` 复用已在 `127.0.0.1:4173` 运行的开发服务器（`reuseExistingServer`），不会自行启动。
+
 ## 文档
 
 - 应用内文档由 `docs/HOME.md`、`docs/GUIDE.md`、`docs/MANUAL.md` 组成，面向 M3N 用户，在 `/docs` 页面展示。

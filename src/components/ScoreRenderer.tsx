@@ -1,11 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MeiSourceMapRange, ScoreHeaderMetadata } from '@m3n/notation'
 import {
+  DEFAULT_PLAYBACK_SPEED,
+  DEFAULT_SCORE_WIDTH,
+  PLAYBACK_SPEED_KEY,
+  PLAYBACK_SPEED_MAX,
+  PLAYBACK_SPEED_MIN,
+  PLAYBACK_SPEED_STEP,
+  readRenderMode,
+  writeRenderMode,
+  type RenderMode,
+  SCORE_WIDTH_KEY,
+  SCORE_WIDTH_MAX,
+  SCORE_WIDTH_MIN,
+  SCORE_WIDTH_STEP,
+  readRendererSetting,
+  writeRendererSetting,
+} from '../lib/renderer-settings'
+import {
   addScoreHeaderToPaper,
   lyricVerseIndexForMeasureRendition,
   resolveLyricCollisions,
   scorePlaybackCoordinator,
   scoreRenderScheduler,
+  a4SourcePageHeight,
+  scoreHeaderHeight,
   visibleLyricVerseNumbers,
   type PlaybackLease,
   type SpessaPlayer,
@@ -16,11 +35,11 @@ type ScoreRendererProps = {
   mei: string
   headerMetadata: ScoreHeaderMetadata[]
   sourceMap: MeiSourceMapRange[]
-  layoutWidth?: number
   compact?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
   onActiveXmlId?: (xmlId: string | null) => void
+  onLayoutWidthChange?: (width: number) => void
   onNoteClick?: (xmlId: string) => void
   onPaperBlur?: () => void
 }
@@ -55,55 +74,53 @@ export function ScoreRenderer({
   mei,
   headerMetadata,
   sourceMap,
-  layoutWidth,
   compact = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
   onActiveXmlId,
+  onLayoutWidthChange,
   onNoteClick,
   onPaperBlur,
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement>(null)
   const scoreRef = useRef<VerovioScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
+  const settingsDialogRef = useRef<HTMLDialogElement>(null)
   const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
   const stopPlaybackRef = useRef<() => void>(() => undefined)
   const playbackLeaseRef = useRef<PlaybackLease>({ stop: () => stopPlaybackRef.current() })
   const midiRef = useRef<ArrayBuffer | null>(null)
-  const speedRef = useRef(100)
   const isSeekingRef = useRef(false)
   const pendingSeekProgressRef = useRef(0)
   const highlightedElementsRef = useRef<Element[]>([])
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
-  const [staffWidth, setStaffWidth] = useState(0)
   const [message, setMessage] = useState('')
   const [playbackProgress, setPlaybackProgress] = useState(0)
-  const [playbackSpeed, setPlaybackSpeed] = useState(100)
+  const [layoutWidth, setLayoutWidth] = useState(() => readRendererSetting(
+    SCORE_WIDTH_KEY,
+    DEFAULT_SCORE_WIDTH,
+    SCORE_WIDTH_MIN,
+    SCORE_WIDTH_MAX,
+  ))
+  const [playbackSpeed, setPlaybackSpeed] = useState(() => readRendererSetting(
+    PLAYBACK_SPEED_KEY,
+    DEFAULT_PLAYBACK_SPEED,
+    PLAYBACK_SPEED_MIN,
+    PLAYBACK_SPEED_MAX,
+  ))
+  const [renderMode, setRenderMode] = useState<RenderMode>(readRenderMode)
+  const speedRef = useRef(playbackSpeed)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPlayerLoading, setIsPlayerLoading] = useState(false)
   const [hasAudioControls, setHasAudioControls] = useState(false)
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
-  const renderWidth = layoutWidth ?? staffWidth
 
   useEffect(() => {
     const paper = paperRef.current
-    if (!paper) return
-    const updateWidth = () => {
-      const width = Math.floor(paper.clientWidth)
-      setStaffWidth((current) => current === width ? current : width)
-    }
-    updateWidth()
-    const observer = new ResizeObserver(updateWidth)
-    observer.observe(paper)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    const paper = paperRef.current
-    if (!paper || renderWidth === 0) return
+    if (!paper || layoutWidth === 0) return
     const playbackLease = playbackLeaseRef.current
     let cancelled = false
     const isInitialRender = !hasRenderedRef.current
@@ -138,8 +155,12 @@ export function ScoreRenderer({
         return scoreRenderScheduler.enqueue(() => {
           if (cancelled) return Promise.resolve()
           if (isInitialRender) setRenderPhase('layout')
+          const width = Math.max(SCORE_WIDTH_MIN, layoutWidth)
           const pageCount = score.prepareLayout({
-            width: Math.max(320, renderWidth),
+            width,
+            pageHeight: renderMode === 'paged'
+              ? Math.max(1, a4SourcePageHeight(width) - scoreHeaderHeight(headerMetadata))
+              : undefined,
             scale: compact ? 38 : 42,
           })
 
@@ -185,7 +206,7 @@ export function ScoreRenderer({
         }
       })
 
-    return () => {
+      return () => {
       cancelled = true
       scorePlaybackCoordinator.release(playbackLease)
       playerRef.current?.destroy()
@@ -193,7 +214,7 @@ export function ScoreRenderer({
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, headerMetadata, invalidMeasureIds, mei, onActiveXmlId, renderWidth])
+  }, [compact, headerMetadata, invalidMeasureIds, layoutWidth, mei, onActiveXmlId, renderMode])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -347,6 +368,26 @@ export function ScoreRenderer({
     isSeekingRef.current = false
   }, [])
 
+  const changeLayoutWidth = (value: number) => {
+    const width = Math.max(SCORE_WIDTH_MIN, Math.min(SCORE_WIDTH_MAX, value))
+    setLayoutWidth(width)
+    writeRendererSetting(SCORE_WIDTH_KEY, width)
+    onLayoutWidthChange?.(width)
+  }
+
+  const changePlaybackSpeed = (value: number) => {
+    const speed = Math.max(PLAYBACK_SPEED_MIN, Math.min(PLAYBACK_SPEED_MAX, value))
+    speedRef.current = speed
+    setPlaybackSpeed(speed)
+    writeRendererSetting(PLAYBACK_SPEED_KEY, speed)
+    playerRef.current?.setSpeed(speed)
+  }
+
+  const changeRenderMode = (mode: RenderMode) => {
+    setRenderMode(mode)
+    writeRenderMode(mode)
+  }
+
   useEffect(() => {
     window.addEventListener('pointerup', commitSeek)
     window.addEventListener('pointercancel', commitSeek)
@@ -372,26 +413,6 @@ export function ScoreRenderer({
           </button>
         )}
         {hasAudioControls && (
-          <div className="playback-speed">
-            <span>速度</span>
-            <input
-              type="range"
-              min="50"
-              max="200"
-              step="5"
-              value={playbackSpeed}
-              aria-label="播放速度"
-              onChange={(event) => {
-                const value = Number(event.currentTarget.value)
-                speedRef.current = value
-                setPlaybackSpeed(value)
-                playerRef.current?.setSpeed(value)
-              }}
-            />
-            <output>{playbackSpeed}%</output>
-          </div>
-        )}
-        {hasAudioControls && (
           <div className="playback-progress">
             <span>播放进度</span>
             <input
@@ -409,11 +430,81 @@ export function ScoreRenderer({
             <output>{Math.round(playbackProgress * 100)}%</output>
           </div>
         )}
+        {hasAudioControls && (
+          <button
+            type="button"
+            className="settings-toggle"
+            aria-label="渲染设置"
+            title="渲染设置"
+            onClick={() => settingsDialogRef.current?.showModal()}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+            </svg>
+          </button>
+        )}
       </div>
+      <dialog ref={settingsDialogRef} className="renderer-settings-dialog" aria-labelledby="renderer-settings-title">
+        <div className="renderer-settings-header">
+          <h2 id="renderer-settings-title">渲染设置</h2>
+          <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
+        </div>
+        <div className="renderer-settings-body">
+          <div className="renderer-settings-row">
+            <span>乐谱宽度</span>
+            <input
+              type="range"
+              min={SCORE_WIDTH_MIN}
+              max={SCORE_WIDTH_MAX}
+              step={SCORE_WIDTH_STEP}
+              value={layoutWidth}
+              aria-label="乐谱宽度"
+              onChange={(event) => changeLayoutWidth(Number(event.currentTarget.value))}
+            />
+            <output>{layoutWidth}px</output>
+          </div>
+          <div className="renderer-settings-row">
+            <span>播放速度</span>
+            <input
+              type="range"
+              min={PLAYBACK_SPEED_MIN}
+              max={PLAYBACK_SPEED_MAX}
+              step={PLAYBACK_SPEED_STEP}
+              value={playbackSpeed}
+              aria-label="播放速度"
+              onChange={(event) => changePlaybackSpeed(Number(event.currentTarget.value))}
+            />
+            <output>{playbackSpeed}%</output>
+          </div>
+          <fieldset className="renderer-settings-fieldset">
+            <legend>渲染模式</legend>
+            <label>
+              <input
+                type="radio"
+                name="render-mode"
+                checked={renderMode === 'paged'}
+                onChange={() => changeRenderMode('paged')}
+              />
+              分页（A4）
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="render-mode"
+                checked={renderMode === 'continuous'}
+                onChange={() => changeRenderMode('continuous')}
+              />
+              连续
+            </label>
+          </fieldset>
+        </div>
+      </dialog>
       <div
         ref={paperRef}
         className="score-paper verovio-score"
         data-render-phase={renderPhase ?? undefined}
+        data-render-mode={renderMode}
         aria-busy={isRendering || undefined}
         tabIndex={0}
         onClick={(event) => {

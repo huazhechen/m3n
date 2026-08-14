@@ -5,19 +5,33 @@ import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
 import { TopNav } from '../components/TopNav'
+import { isLocalScoreId, loadLocalScore } from '../lib/local-scores'
 import { presetScores } from '../lib/samples'
+import {
+  DEFAULT_SCORE_WIDTH,
+  SCORE_WIDTH_KEY,
+  SCORE_WIDTH_MAX,
+  SCORE_WIDTH_MIN,
+  readRendererSetting,
+} from '../lib/renderer-settings'
 import { isSharedScoreId, loadSharedScore } from '../lib/shared-scores'
 
 export function ScoreReaderPage() {
   const { slug } = useParams()
   const score = presetScores.find((item) => item.slug === slug)
+  const localScore = useMemo(() => (isLocalScoreId(slug) ? loadLocalScore(slug) : null), [slug])
   const [sharedSource, setSharedSource] = useState<string | null | undefined>(undefined)
   const exportDialogRef = useRef<ScoreExportDialogRef>(null)
-  const [layoutWidth, setLayoutWidth] = useState(800)
+  const [exportWidth, setExportWidth] = useState(() => readRendererSetting(
+    SCORE_WIDTH_KEY,
+    DEFAULT_SCORE_WIDTH,
+    SCORE_WIDTH_MIN,
+    SCORE_WIDTH_MAX,
+  ))
   const [exportError, setExportError] = useState('')
   useEffect(() => {
     let cancelled = false
-    if (score || !slug || !isSharedScoreId(slug)) {
+    if (score || localScore || !slug || !isSharedScoreId(slug)) {
       setSharedSource(null)
       return () => { cancelled = true }
     }
@@ -26,16 +40,16 @@ export function ScoreReaderPage() {
       .then((shared) => { if (!cancelled) setSharedSource(shared?.source ?? null) })
       .catch(() => { if (!cancelled) setSharedSource(null) })
     return () => { cancelled = true }
-  }, [score, slug])
+  }, [localScore, score, slug])
 
-  const scoreSource = score?.source ?? sharedSource ?? ''
+  const scoreSource = score?.source ?? localScore?.source ?? sharedSource ?? ''
   const analysis = useMemo(() => analyzeM3N(scoreSource), [scoreSource])
   const { conversion: result, invalidMeasureIds: invalidMeasures } = analysis
 
-  if (!score && sharedSource === undefined) {
+  if (!score && !localScore && sharedSource === undefined) {
     return <main><TopNav /><div className="page-status" role="status">Loading...</div></main>
   }
-  if (!score && sharedSource === null) {
+  if (!score && !localScore && sharedSource === null) {
     return <Navigate to="/scores" replace />
   }
 
@@ -68,23 +82,7 @@ export function ScoreReaderPage() {
         >
           打印
         </button>
-        <label className="score-width-field">
-          <span>乐谱宽度</span>
-          <input
-            type="number"
-            min="320"
-            max="8000"
-            step="10"
-            value={layoutWidth}
-            aria-label="乐谱宽度"
-            onChange={(event) => {
-              const value = Number(event.currentTarget.value)
-              if (Number.isFinite(value)) setLayoutWidth(Math.max(320, Math.min(8000, value)))
-            }}
-          />
-          <span>px</span>
-        </label>
-        <Link className="action-button" to="/editor" state={{ source: scoreSource }}>
+        <Link className="action-button" to={`/editor/${slug}`}>
           编辑
         </Link>
       </div>
@@ -93,14 +91,14 @@ export function ScoreReaderPage() {
           mei={result.mei}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
-          layoutWidth={layoutWidth}
           invalidMeasureIds={invalidMeasures}
+          onLayoutWidthChange={setExportWidth}
         />
         <ScoreExportDialog
           ref={exportDialogRef}
           mei={result.mei}
           title={result.title}
-          width={layoutWidth}
+          width={exportWidth}
           hasBassStaff={result.hasBassStaff}
           headerMetadata={result.headerMetadata}
           onError={setExportError}

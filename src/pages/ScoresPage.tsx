@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { useMemo, useState } from 'react'
-import type { ScoreDiagnosticSeverity } from '@m3n/notation'
+import { useEffect, useMemo, useState } from 'react'
+import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/notation'
 import { TopNav } from '../components/TopNav'
+import { deleteLocalScore, listLocalScores, type LocalScore } from '../lib/local-scores'
 import { presetScores } from '../lib/samples'
 import type { PresetScore } from '../lib/samples'
 
@@ -36,11 +37,15 @@ function ScoreCard({ score, severity }: { score: PresetScore; severity: ScoreDia
 
 export function ScoresPage() {
   const [query, setQuery] = useState('')
+  const [localScores, setLocalScores] = useState<LocalScore[]>(() => listLocalScores())
   const normalizedQuery = query.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
   const scores = useMemo(
     () => presetScores.filter((score) => score.searchText.includes(normalizedQuery)),
     [normalizedQuery],
   )
+  useEffect(() => {
+    setLocalScores(listLocalScores())
+  }, [])
   return (
     <main>
       <TopNav />
@@ -59,6 +64,48 @@ export function ScoresPage() {
               placeholder="搜索标题、作曲者或其他乐谱信息"
             />
           </label>
+        </section>
+        <section className="local-score-library" aria-label="本地乐谱">
+          <span className="eyebrow">Local Scores</span>
+          <h2>本地乐谱</h2>
+          <div className={`local-score-card${localScores.length === 0 ? ' is-empty' : ''}`}>
+            {localScores.length === 0 ? (
+              <p className="local-score-empty">暂无本地乐谱。在编辑器中点击“浏览”即可把当前乐谱保存到本地。</p>
+            ) : (
+              <ul className="local-score-list">
+                {localScores.map((score) => {
+                  const metadata = scoreMetadataFromSource(score.id, score.source)
+                  return (
+                    <li key={score.id} className="local-score-item">
+                      <div className="local-score-info">
+                        <strong>{metadata.title}</strong>
+                        <div className="score-notation-tags" aria-label={`调号 ${metadata.keySignature}，拍号 ${metadata.timeSignature}，速度 ${metadata.tempo} BPM`}>
+                          <span className="score-tag">调 {metadata.keySignature}</span>
+                          <span className="score-tag">拍 {metadata.timeSignature}</span>
+                          <span className="score-tag">速 {metadata.tempo} BPM</span>
+                        </div>
+                      </div>
+                      <div className="local-score-actions">
+                        <Link className="action-button" to={`/scores/${score.id}`}>查看</Link>
+                        <button
+                          type="button"
+                          className="action-button"
+                          onClick={() => {
+                            if (window.confirm('确定删除这首本地乐谱吗？')) {
+                              deleteLocalScore(score.id)
+                              setLocalScores(listLocalScores())
+                            }
+                          }}
+                        >
+                          删除
+                        </button>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
         </section>
         {scores.length === 0 && (
           <p className="search-empty">没有找到匹配的乐谱。</p>

@@ -1,4 +1,6 @@
 import { pinyin } from 'pinyin-pro'
+import { loadSimulatedSubmission, saveSimulatedSubmission } from './simulated-submissions'
+import { isSimulatedSubmit } from './submit-mode'
 
 export type SharedScore = {
   source: string
@@ -30,20 +32,12 @@ async function responseError(response: Response) {
   return typeof payload?.error === 'string' ? payload.error : `Request failed (${response.status}).`
 }
 
-export async function createSharedScore(source: string) {
-  const response = await fetch('/api/scores', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ source }),
-  })
-  if (!response.ok) throw new Error(await responseError(response))
-  const payload = await response.json() as { id?: unknown }
-  if (typeof payload.id !== 'string' || !isSharedScoreId(payload.id)) throw new Error('Server returned an invalid score ID.')
-  return payload.id
-}
-
 export async function submitScore(source: string) {
   const id = submittedScoreId(source)
+  if (isSimulatedSubmit()) {
+    saveSimulatedSubmission(id, source)
+    return id
+  }
   const response = await fetch('/api/scores/submissions', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -57,6 +51,7 @@ export async function submitScore(source: string) {
 
 export async function loadSharedScore(id: string): Promise<SharedScore | null> {
   if (!isSharedScoreId(id)) return null
+  if (isSimulatedSubmit()) return loadSimulatedSubmission(id)
   const response = await fetch(`/api/scores/${encodeURIComponent(id)}`)
   if (response.status === 404) return null
   if (!response.ok) throw new Error(await responseError(response))

@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { pruneExpiredLocalScores } from './lib/local-scores'
+import { pruneExpiredSimulatedSubmissions } from './lib/simulated-submissions'
 
 const HomePage = lazy(() => import('./pages/HomePage').then(({ HomePage: Page }) => ({ default: Page })))
 const EditorPage = lazy(() => import('./pages/EditorPage').then(({ EditorPage: Page }) => ({ default: Page })))
@@ -9,12 +11,16 @@ const ScoreReaderPage = lazy(() => import('./pages/ScoreReaderPage').then(({ Sco
 const DocsPage = lazy(() => import('./pages/DocsPage').then(({ DocsPage: Page }) => ({ default: Page })))
 
 export default function App() {
+  useEffect(() => {
+    pruneExpiredLocalScores()
+    pruneExpiredSimulatedSubmissions()
+  }, [])
   return (
     <AppErrorBoundary>
       <Suspense fallback={<div className="page-status" role="status">正在加载...</div>}>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/editor" element={<EditorPage />} />
+          <Route path="/editor/:scoreId?" element={<EditorPage />} />
           <Route path="/scores" element={<ScoresPage />} />
           <Route path="/scores/:slug" element={<ScoreReaderPage />} />
           <Route path="/docs" element={<DocsPage />} />

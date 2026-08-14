@@ -7,11 +7,18 @@ import { SourceEditor } from './SourceEditor'
 type NotationEditorProps = {
   initialSource?: string
   embedded?: boolean
+  simulatedSubmit?: boolean
   onBrowse?: (source: string) => Promise<void>
   onSubmit?: (source: string) => Promise<void>
 }
 
-export function NotationEditor({ initialSource = defaultScore, embedded = false, onBrowse, onSubmit }: NotationEditorProps) {
+export function NotationEditor({
+  initialSource = defaultScore,
+  embedded = false,
+  simulatedSubmit = false,
+  onBrowse,
+  onSubmit,
+}: NotationEditorProps) {
   const [source, setSource] = useState(initialSource)
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
@@ -109,6 +116,7 @@ export function NotationEditor({ initialSource = defaultScore, embedded = false,
       <header className="editor-header">
         <div className="editor-header-left"><h2>编辑器</h2></div>
         <div className="editor-header-right">
+          {simulatedSubmit && <span className="editor-mode-note">本地模拟提交</span>}
           <button type="button" className="action-button" onClick={formatSource}>格式化</button>
           <button type="button" className="action-button" onClick={() => setIsComplexityDialogOpen(true)}>复杂度</button>
           <button type="button" className="action-button" onClick={() => setIsMeiDialogOpen(true)}>MEI</button>
