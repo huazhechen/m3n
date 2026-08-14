@@ -14,6 +14,7 @@ dist-ssr
 .npm-cache
 __tmp_vite__
 .tmp/
+tmp/
 
 # Local environment and tool caches
 .env

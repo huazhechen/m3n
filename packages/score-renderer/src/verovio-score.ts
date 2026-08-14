@@ -244,7 +244,7 @@ export class VerovioScore {
           layoutMei = layoutMei.replace(`<measure xml:id="${measureId}"`, `<sb/><measure xml:id="${measureId}"`)
         }
       }
-      this.toolkit.setOptions({ ...layoutOptions, breaks: 'encoded' })
+      this.toolkit.setOptions({ ...layoutOptions, breaks: 'encoded', noJustification: false })
       if (!this.toolkit.loadData(layoutMei)) {
         throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
       }
@@ -273,6 +273,7 @@ export class VerovioScore {
     this.toolkit.setOptions({
       ...layoutOptions,
       breaks: fixedPageHeight ? (hasEncodedBreaks ? 'encoded' : 'auto') : (layoutMei.includes('<sb/>') ? 'encoded' : 'auto'),
+      noJustification: false,
     })
     if (!this.toolkit.loadData(layoutMei)) {
       throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
