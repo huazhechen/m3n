@@ -111,16 +111,32 @@ export function ScoreRenderer({
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
   const speedRef = useRef(playbackSpeed)
+  const [staffWidth, setStaffWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPlayerLoading, setIsPlayerLoading] = useState(false)
   const [hasAudioControls, setHasAudioControls] = useState(false)
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
+  const renderWidth = compact ? Math.max(SCORE_WIDTH_MIN, staffWidth || layoutWidth) : layoutWidth
+
+  useEffect(() => {
+    if (!compact) return
+    const paper = paperRef.current
+    if (!paper) return
+    const updateWidth = () => {
+      const width = Math.floor(paper.clientWidth)
+      setStaffWidth((current) => current === width ? current : width)
+    }
+    updateWidth()
+    const observer = new ResizeObserver(updateWidth)
+    observer.observe(paper)
+    return () => observer.disconnect()
+  }, [compact])
 
   useEffect(() => {
     const paper = paperRef.current
-    if (!paper || layoutWidth === 0) return
+    if (!paper || renderWidth === 0) return
     const playbackLease = playbackLeaseRef.current
     let cancelled = false
     const isInitialRender = !hasRenderedRef.current
@@ -155,7 +171,7 @@ export function ScoreRenderer({
         return scoreRenderScheduler.enqueue(() => {
           if (cancelled) return Promise.resolve()
           if (isInitialRender) setRenderPhase('layout')
-          const width = Math.max(SCORE_WIDTH_MIN, layoutWidth)
+          const width = renderWidth
           const pageCount = score.prepareLayout({
             width,
             pageHeight: renderMode === 'paged'
@@ -215,7 +231,7 @@ export function ScoreRenderer({
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, headerMetadata, invalidMeasureIds, layoutWidth, mei, onActiveXmlId, renderMode])
+  }, [compact, headerMetadata, invalidMeasureIds, mei, onActiveXmlId, renderMode, renderWidth])
 
   useEffect(() => {
     const paper = paperRef.current

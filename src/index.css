@@ -470,6 +470,7 @@ textarea::selection {
 .score-card {
   padding: 14px;
   overflow: hidden;
+  container-type: inline-size;
 }
 
 .score-card.compact {
@@ -1265,6 +1266,31 @@ a.action-button {
   text-align: right;
 }
 
+@container (max-width: 560px) {
+  .audio-controls {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px 14px;
+  }
+
+  .playback-progress {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: 380px) {
+  .playback-speed span,
+  .playback-progress span {
+    display: none;
+  }
+}
+
+@container (max-width: 320px) {
+  .playback-speed output,
+  .playback-progress output {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
   .editor-body {
     grid-template-columns: 1fr;
@@ -1278,15 +1304,6 @@ a.action-button {
 
   .score-search {
     width: 100%;
-  }
-
-  .audio-controls {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 10px 14px;
-  }
-
-  .playback-progress {
-    grid-column: 1 / -1;
   }
 
   .playback-speed input,
