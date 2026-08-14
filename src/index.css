@@ -634,49 +634,8 @@ textarea::selection {
   flex-shrink: 0;
 }
 
-.score-card-action {
-  display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  box-sizing: border-box;
-  border: 1px solid #b8cfca;
-  border-radius: 4px;
-  padding: 0 8px;
-  color: #285b5c;
-  background: #fffef9;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.score-card-action:hover {
-  border-color: #2f6f73;
-  background: #dcebe6;
-}
-
-.score-card-action.is-danger {
-  border-color: #d8b4ae;
-  color: #9a3a25;
-}
-
-.score-card-action.is-danger:hover {
-  border-color: #98241d;
-  background: #ffecea;
-}
-
 .score-card-marker {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  color: #ffffff;
   background: #1683ff;
-  font-size: 0.7rem;
-  font-weight: 700;
-  line-height: 1.4;
 }
 
 .score-card.is-local-card {
@@ -684,8 +643,26 @@ textarea::selection {
   cursor: pointer;
 }
 
-.score-card.is-local-card h3 {
-  padding: 0 44px;
+.score-card-delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-height: 26px;
+  box-sizing: border-box;
+  border: 1px solid #d8b4ae;
+  border-radius: 4px;
+  padding: 0 8px;
+  color: #9a3a25;
+  background: #fffef9;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.score-card-delete:hover {
+  border-color: #98241d;
+  background: #ffecea;
 }
 
 .score-composer {
@@ -765,7 +742,7 @@ textarea::selection {
   overflow: hidden;
   margin: 0 auto 14px;
   background: #ffffff;
-  box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
+  box-shadow: 0 2px 8px rgb(31 35 38 / 22%);
 }
 
 .score-paper[data-render-mode="paged"] .score-page-sheet svg {
@@ -777,6 +754,11 @@ textarea::selection {
   object-position: center top;
   background: #ffffff;
   box-shadow: none;
+}
+
+.score-paper[data-render-mode="paged"] {
+  background: #dfe3dd;
+  padding: 16px 20px;
 }
 
 .score-paper .measure-playback-highlight,

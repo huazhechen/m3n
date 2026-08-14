@@ -45,7 +45,6 @@ function ScoreCard({
   const content = (
     <>
       <div>
-        {isLocal && <span className="score-card-marker">本地</span>}
         <h3>{title}</h3>
         <div className="score-notation-tags" aria-label={`旋律复杂度评分 ${melodyComplexity.toFixed(1)}，调号 ${keySignature}，拍号 ${timeSignature}，速度 ${tempo} BPM`}>
           <span className="score-tag">评分 {melodyComplexity.toFixed(1)}</span>
@@ -56,23 +55,12 @@ function ScoreCard({
       </div>
       <div className="score-card-footer">
         <div className="score-tags">
+          {isLocal && <span className="score-tag score-card-marker">本地</span>}
           {hasLyrics && <span className="score-tag">词</span>}
           {hasBass && <span className="score-tag">低</span>}
         </div>
         <div className="score-card-footer-right">
           {(singer || composer) && <span className="score-composer">{singer || composer}</span>}
-          {onDelete && (
-            <button
-              type="button"
-              className="score-card-action is-danger"
-              onClick={(event) => {
-                event.stopPropagation()
-                onDelete()
-              }}
-            >
-              删除
-            </button>
-          )}
         </div>
       </div>
     </>
@@ -93,6 +81,18 @@ function ScoreCard({
         aria-label={hasDiagnostics ? `${title}，${diagnosticLabel}` : `${title}，查看乐谱`}
       >
         {content}
+        {onDelete && (
+          <button
+            type="button"
+            className="score-card-delete"
+            onClick={(event) => {
+              event.stopPropagation()
+              onDelete()
+            }}
+          >
+            删除
+          </button>
+        )}
       </div>
     )
     : (
