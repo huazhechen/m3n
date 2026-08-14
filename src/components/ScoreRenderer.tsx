@@ -25,6 +25,7 @@ import {
   scoreRenderScheduler,
   a4SourcePageHeight,
   scoreHeaderHeight,
+  wrapScorePagesIntoSheets,
   visibleLyricVerseNumbers,
   type PlaybackLease,
   type SpessaPlayer,
@@ -182,6 +183,7 @@ export function ScoreRenderer({
                   addScoreHeaderToPaper(paper, headerMetadata)
                   resolveLyricCollisions(paper)
                   addInvalidMeasureHighlights(paper, invalidMeasureIds)
+                  if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()
@@ -413,6 +415,21 @@ export function ScoreRenderer({
           </button>
         )}
         {hasAudioControls && (
+          <div className="playback-speed">
+            <span>速度</span>
+            <input
+              type="range"
+              min={PLAYBACK_SPEED_MIN}
+              max={PLAYBACK_SPEED_MAX}
+              step={PLAYBACK_SPEED_STEP}
+              value={playbackSpeed}
+              aria-label="播放速度"
+              onChange={(event) => changePlaybackSpeed(Number(event.currentTarget.value))}
+            />
+            <output>{playbackSpeed}%</output>
+          </div>
+        )}
+        {hasAudioControls && (
           <div className="playback-progress">
             <span>播放进度</span>
             <input
@@ -464,40 +481,21 @@ export function ScoreRenderer({
             />
             <output>{layoutWidth}px</output>
           </div>
-          <div className="renderer-settings-row">
-            <span>播放速度</span>
-            <input
-              type="range"
-              min={PLAYBACK_SPEED_MIN}
-              max={PLAYBACK_SPEED_MAX}
-              step={PLAYBACK_SPEED_STEP}
-              value={playbackSpeed}
-              aria-label="播放速度"
-              onChange={(event) => changePlaybackSpeed(Number(event.currentTarget.value))}
-            />
-            <output>{playbackSpeed}%</output>
-          </div>
-          <fieldset className="renderer-settings-fieldset">
-            <legend>渲染模式</legend>
-            <label>
+          <label className="renderer-settings-switch">
+            <span>分页</span>
+            <span className="switch-control">
               <input
-                type="radio"
-                name="render-mode"
+                type="checkbox"
+                role="switch"
+                aria-label="分页"
                 checked={renderMode === 'paged'}
-                onChange={() => changeRenderMode('paged')}
+                onChange={(event) => changeRenderMode(event.currentTarget.checked ? 'paged' : 'continuous')}
               />
-              分页（A4）
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="render-mode"
-                checked={renderMode === 'continuous'}
-                onChange={() => changeRenderMode('continuous')}
-              />
-              连续
-            </label>
-          </fieldset>
+              <span className="switch-track" aria-hidden="true">
+                <span className="switch-thumb" />
+              </span>
+            </span>
+          </label>
         </div>
       </dialog>
       <div

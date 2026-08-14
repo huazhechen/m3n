@@ -10,6 +10,7 @@ import {
   scoreFileName,
   scoreHeaderHeight,
   stackScoreCanvases,
+  wrapScorePagesIntoSheets,
   type VerovioScore,
 } from '@m3n/score-renderer'
 
@@ -31,15 +32,6 @@ export type ScoreExportDialogRef = {
 async function createVerovioScore(mei: string) {
   const { VerovioScore } = await import('@m3n/score-renderer')
   return VerovioScore.create(mei)
-}
-
-function wrapA4PreviewPages(preview: HTMLElement) {
-  preview.querySelectorAll<SVGSVGElement>(':scope > svg').forEach((svg) => {
-    const page = document.createElement('div')
-    page.className = 'export-preview-page'
-    svg.replaceWith(page)
-    page.append(svg)
-  })
 }
 
 function cloneScorePages(paper: HTMLElement) {
@@ -83,7 +75,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           })
           addScoreHeaderToPaper(preview, headerMetadata)
           resolveLyricCollisions(preview)
-          if (format === 'pdf') wrapA4PreviewPages(preview)
+          if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
         }
         score.destroy()
       }).catch((error: unknown) => {

@@ -762,10 +762,26 @@ textarea::selection {
   height: auto;
 }
 
-.score-paper[data-render-mode="paged"] svg {
+.score-paper[data-render-mode="paged"] .score-page-sheet {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 210 / 297;
+  box-sizing: border-box;
+  overflow: hidden;
   margin: 0 auto 14px;
   background: #ffffff;
-  box-shadow: 0 1px 3px rgb(31 35 38 / 18%);
+  box-shadow: 0 1px 3px rgb(31 35 38 / 12%);
+}
+
+.score-paper[data-render-mode="paged"] .score-page-sheet svg {
+  position: absolute;
+  inset: 3.367% 4.7619%;
+  width: 90.4762%;
+  height: 93.266%;
+  object-fit: contain;
+  object-position: center top;
+  background: #ffffff;
+  box-shadow: none;
 }
 
 .score-paper .measure-playback-highlight,
@@ -816,7 +832,7 @@ textarea::selection {
 .audio-controls {
   margin-bottom: 12px;
   display: grid;
-  grid-template-columns: auto minmax(200px, 1fr) auto;
+  grid-template-columns: auto minmax(120px, 1fr) minmax(240px, 2fr) auto;
   align-items: center;
   gap: 14px;
   min-height: 44px;
@@ -873,26 +889,64 @@ textarea::selection {
   padding: 18px;
 }
 
-.renderer-settings-fieldset {
-  display: grid;
+.renderer-settings-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  margin: 0;
-  padding: 0;
-  border: 0;
 }
 
-.renderer-settings-fieldset legend {
-  margin-bottom: 2px;
+.renderer-settings-switch > span:first-child {
   color: #5c6468;
   font-size: 13px;
 }
 
-.renderer-settings-fieldset label {
+.switch-control {
+  position: relative;
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #285b5c;
-  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.switch-control input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switch-track {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: #d7e2dd;
+  transition: background 0.15s ease;
+}
+
+.switch-control input:checked + .switch-track {
+  background: #1683ff;
+}
+
+.switch-control input:focus-visible + .switch-track {
+  outline: 2px solid #1683ff;
+  outline-offset: 2px;
+}
+
+.switch-thumb {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 2px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(31 35 38 / 24%);
+  transition: transform 0.15s ease;
+}
+
+.switch-control input:checked + .switch-track .switch-thumb {
+  transform: translateX(18px);
 }
 
 .renderer-settings-row {
@@ -1131,6 +1185,15 @@ a.action-button {
   opacity: 0.6;
 }
 
+.playback-speed {
+  display: grid;
+  grid-template-columns: auto minmax(72px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.playback-speed span,
 .playback-progress span,
 .renderer-settings-row span {
   color: #285b5c;
@@ -1138,6 +1201,7 @@ a.action-button {
   white-space: nowrap;
 }
 
+.playback-speed input,
 .playback-progress input,
 .renderer-settings-row input {
   appearance: none;
@@ -1150,6 +1214,7 @@ a.action-button {
   cursor: pointer;
 }
 
+.playback-speed input::-webkit-slider-runnable-track,
 .playback-progress input::-webkit-slider-runnable-track,
 .renderer-settings-row input::-webkit-slider-runnable-track {
   height: 4px;
@@ -1157,6 +1222,7 @@ a.action-button {
   background: #d7e2dd;
 }
 
+.playback-speed input::-moz-range-track,
 .playback-progress input::-moz-range-track,
 .renderer-settings-row input::-moz-range-track {
   height: 4px;
@@ -1164,6 +1230,7 @@ a.action-button {
   background: #d7e2dd;
 }
 
+.playback-speed input::-webkit-slider-thumb,
 .playback-progress input::-webkit-slider-thumb,
 .renderer-settings-row input::-webkit-slider-thumb {
   appearance: none;
@@ -1177,6 +1244,7 @@ a.action-button {
   box-shadow: 0 0 0 1px #1683ff;
 }
 
+.playback-speed input::-moz-range-thumb,
 .playback-progress input::-moz-range-thumb,
 .renderer-settings-row input::-moz-range-thumb {
   box-sizing: border-box;
@@ -1186,6 +1254,14 @@ a.action-button {
   border-radius: 50%;
   background: #1683ff;
   box-shadow: 0 0 0 1px #1683ff;
+}
+
+.playback-speed output {
+  min-width: 34px;
+  color: #285b5c;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .playback-progress {
@@ -1236,12 +1312,14 @@ a.action-button {
     grid-column: 1 / -1;
   }
 
+  .playback-speed input,
   .playback-progress input,
   .renderer-settings-row input {
     height: 32px;
     touch-action: none;
   }
 
+  .playback-speed input::-webkit-slider-thumb,
   .playback-progress input::-webkit-slider-thumb,
   .renderer-settings-row input::-webkit-slider-thumb {
     width: 18px;
@@ -1249,6 +1327,7 @@ a.action-button {
     margin-top: -7px;
   }
 
+  .playback-speed input::-moz-range-thumb,
   .playback-progress input::-moz-range-thumb,
   .renderer-settings-row input::-moz-range-thumb {
     width: 16px;
