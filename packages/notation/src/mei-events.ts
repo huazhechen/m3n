@@ -36,6 +36,7 @@ export function meiEventXml(
   lyrics: MeiVerseSyllable[],
   accidentals?: Map<string, string>,
   visibleVerseIndexes?: ReadonlySet<number>,
+  tieTarget = false,
 ) {
   const verse = meiVerseXml(lyrics, xmlId, visibleVerseIndexes)
   const articulations = [
@@ -53,7 +54,10 @@ export function meiEventXml(
   }).join('')
   if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}/>`
   if (event.kind === 'chord') {
-    const notes = event.pitches.map((pitch) => `<note ${pitchXml(pitch, event.key, accidentals)}/>`).join('')
+    const notes = event.pitches.map((pitch, index) => {
+      const tie = event.tie ? 'i' : tieTarget ? 't' : undefined
+      return `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)}${tie ? ` tie="${tie}"` : ''}/>`
+    }).join('')
     return `${graces}<chord xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}>${notes}${articulations}${verse}</chord>`
   }
   if (event.kind === 'tuplet' && event.tuplet) {

@@ -52,10 +52,13 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
         const ending = measures[endingIndex]?.ending
         if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
       }
-      for (let endingIndex = index + 1; measures[endingIndex]?.ending; endingIndex += 1) {
-        const ending = measures[endingIndex]?.ending
-        if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
-      }
+    for (let endingIndex = index + 1; measures[endingIndex]?.ending; endingIndex += 1) {
+      const ending = measures[endingIndex]?.ending
+      if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
+      const navigation = measures[endingIndex]?.navigation
+        ?? measures[endingIndex]?.events.flatMap((event) => event.navigation)
+      if (navigation?.some((value) => value === 'ds' || value === 'dc')) break
+    }
       for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
         const repeated = measures[repeatedIndex]
         if (repeated) passesByMeasure.set(repeated, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
@@ -194,10 +197,22 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
   if (destination < 0) return initial
   const played = initial.lastIndexOf(jump.id)
   if (played < 0) return initial
-  const end = fine >= 0 ? fine : jumpIndex
-  return [...initial.slice(0, played + 1), ...nodes.slice(destination, end + 1).flatMap((node) => (
-    node.kind !== 'ending' || !node.n || node.n.split(',').includes('2') ? node.id : []
-  ))]
+
+  const sections = nodes
+    .slice(destination, fine >= 0 ? fine + 1 : nodes.length)
+    .filter((node) => node.kind === 'section')
+    .map((node) => node.id)
+  const endingNodes = nodes.filter((node) => node.kind === 'ending')
+  const playedEndings = new Set(endingNodes
+    .filter((node) => initial.includes(node.id))
+    .map((node) => node.id))
+  const remainingHouses = endingNodes.filter((node) => !playedEndings.has(node.id))
+  const returnPart: string[] = []
+  for (const house of remainingHouses.length > 0 ? remainingHouses : [undefined]) {
+    returnPart.push(...sections)
+    if (house) returnPart.push(house.id)
+  }
+  return [...initial.slice(0, played + 1), ...returnPart]
 }
 
 /** Returns written node ids in performance order, including one navigation return. */

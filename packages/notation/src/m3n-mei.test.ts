@@ -455,6 +455,15 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<tie startid="#m3n-e-1-n3" endid="#m3n-e-2"/>')
   })
 
+  it('ties chord members per note so tied chords sustain in playback', () => {
+    const result = m3nToMei('{key=C} {4/4}\n[135:h]^~ [135:h]^ |||')
+
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<note xml:id="m3n-e-1-n1" pname="c" oct="4" tie="i"')
+    expect(result.mei).toContain('<note xml:id="m3n-e-2-n1" pname="c" oct="4" tie="t"')
+    expect(result.mei).toContain('<tie startid="#m3n-e-1-n1" endid="#m3n-e-2-n1"/>')
+  })
+
   it('keeps rests inside sequential groups as rests', () => {
     const result = m3nToMei('{key=C} {2/4}\n[066:2] |||')
 

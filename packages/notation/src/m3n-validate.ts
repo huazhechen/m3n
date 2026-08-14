@@ -539,7 +539,6 @@ function validateBody(
 
   if (!bass) {
     if (segnoCount > 1) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', 'segno 最多只能使用一次'))
-    if (jumpCount > 1) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', 'ds 和 dc 总共最多只能使用一次'))
     if (dsCount > 0 && segnoCount !== 1) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', 'ds 必须配合唯一的 segno'))
     if (options.requireTerminal !== false && terminalCount !== 1) diagnostics.push(sourceDiagnostic('M3N_SOURCE_REPEAT', `未分段正文必须且只能使用一次终止线，实际 ${terminalCount} 次`))
   }
@@ -611,9 +610,11 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
   const passesByMeasure = measurePlaybackPasses(part.melody)
   const targets = new Map<number, StrictLyricMeasureTargets>()
   let previousTied = false
+  let openingPasses: Set<number> | undefined
   for (const measure of part.melody) {
     const passes = passesByMeasure.get(measure) ?? new Set([1])
     const belongsToPhrase = measure.events.some((event) => start <= event.sourceStart && event.sourceStart < end)
+    if (belongsToPhrase && openingPasses === undefined) openingPasses = passes
     const measureTargets = new Map<number, StrictLyricTarget[]>()
     if (belongsToPhrase) {
       for (const pass of passes) measureTargets.set(pass, [])
@@ -671,7 +672,8 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
   // state machine. Lyric labels are deliberately local to a phrase.
   const localTargets = new Map(
     [...targets.entries()]
-      .filter(([pass]) => housePassLimit === undefined || pass <= housePassLimit)
+      .filter(([pass]) => (housePassLimit === undefined || pass <= housePassLimit)
+        && (openingPasses === undefined || openingPasses.has(pass)))
       .sort(([left], [right]) => left - right)
       .map(([, measureTargets], index) => [index + 1, measureTargets]),
   )

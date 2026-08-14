@@ -111,6 +111,16 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     const addTie = (tiedEvent: ScoreEvent, event: ScoreEvent) => {
       const tiedEventId = preassignedIds.get(tiedEvent)
       const eventId = preassignedIds.get(event)
+      if (tiedEventId && eventId && tiedEvent.kind === 'chord' && event.kind === 'chord') {
+        const count = Math.min(tiedEvent.pitches.length, event.pitches.length)
+        for (let index = 1; index <= count; index += 1) {
+          const ties = tiesByStartEvent.get(tiedEvent) ?? []
+          const tie = `<tie startid="#${tiedEventId}-n${index}" endid="#${eventId}-n${index}"/>`
+          if (!ties.includes(tie)) ties.push(tie)
+          tiesByStartEvent.set(tiedEvent, ties)
+        }
+        return
+      }
       const startid = tiedEventId && tiedEvent.tieFromTupletIndex !== undefined
         ? `${tiedEventId}-n${tiedEvent.tieFromTupletIndex + 1}`
         : tiedEventId
@@ -262,7 +272,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       return {
         event,
         prefix: keySig ? `<keySig sig="${meiKeySignature(keySig)}"/>` : undefined,
-        xml: renderEventXml(event, xmlId, lyrics, accidentals, visibleVerseIndexes),
+        xml: renderEventXml(event, xmlId, lyrics, accidentals, visibleVerseIndexes, tieEnd),
       }
     })
     const body = renderBeamXml(renderedEvents, meter.count, meter.unit)
