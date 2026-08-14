@@ -140,6 +140,65 @@ export function pageBreakMeasureIds(systems: readonly EncodedSystem[], capacity:
   return breaks
 }
 
+export type NaturalMeasure = { id: string; minX: number; maxX: number }
+export type NaturalSystem = { measures: NaturalMeasure[] }
+
+/** Reads each measure's horizontal extent from a non-justified encoded SVG. */
+export function naturalSystemLayout(svg: string): NaturalSystem[] {
+  return svg.split(/<g[^>]*class="system"/).slice(1).map((chunk) => {
+    const parts = chunk.split(/<g id="(m3n-measure-[^"]+)" class="measure">/)
+    const measures: NaturalMeasure[] = []
+    for (let index = 1; index < parts.length; index += 2) {
+      const id = parts[index]
+      if (!id) continue
+      const content = parts[index + 1] ?? ''
+      const xs = [...content.matchAll(/translate\(([\d.]+),/g)].map((match) => Number(match[1]))
+      measures.push({
+        id,
+        minX: xs.length > 0 ? Math.min(...xs) : 0,
+        maxX: xs.length > 0 ? Math.max(...xs) : 0,
+      })
+    }
+    return { measures }
+  })
+}
+
+/**
+ * Returns measure ids where an extra system break is needed so that a forced
+ * system fits the line without Verovio's justification compression warning.
+ */
+export function extraSystemBreakMeasureIds(
+  systems: readonly NaturalSystem[],
+  availableWidth: number,
+): string[] {
+  const warnThreshold = availableWidth / 0.8
+  const breaks: string[] = []
+  for (const system of systems) {
+    const first = system.measures[0]
+    if (!first) continue
+    const span = Math.max(...system.measures.map((measure) => measure.maxX))
+      - Math.min(...system.measures.map((measure) => measure.minX))
+    if (span <= warnThreshold) continue
+    let chunkMin = first.minX
+    let chunkMax = first.maxX
+    for (let index = 1; index < system.measures.length; index++) {
+      const measure = system.measures[index]
+      if (!measure) continue
+      const nextMin = Math.min(chunkMin, measure.minX)
+      const nextMax = Math.max(chunkMax, measure.maxX)
+      if (nextMax - nextMin > availableWidth) {
+        breaks.push(measure.id)
+        chunkMin = measure.minX
+        chunkMax = measure.maxX
+      } else {
+        chunkMin = nextMin
+        chunkMax = nextMax
+      }
+    }
+  }
+  return breaks
+}
+
 export class VerovioScore {
   private readonly toolkit: VerovioToolkit
   private readonly mei: string
@@ -172,6 +231,19 @@ export class VerovioScore {
     }
     const hasEncodedBreaks = layoutMei.includes('<sb/>')
     if (fixedPageHeight && hasEncodedBreaks) {
+      this.toolkit.setOptions({ ...layoutOptions, breaks: 'encoded', pageWidth: 100000, noJustification: true })
+      if (!this.toolkit.loadData(layoutMei)) {
+        throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')
+      }
+      const extraBreaks = extraSystemBreakMeasureIds(
+        naturalSystemLayout(this.toolkit.renderToSVG(1)),
+        (layoutOptions.pageWidth - 100) * 10,
+      )
+      for (const measureId of extraBreaks) {
+        if (!layoutMei.includes(`<sb/><measure xml:id="${measureId}"`)) {
+          layoutMei = layoutMei.replace(`<measure xml:id="${measureId}"`, `<sb/><measure xml:id="${measureId}"`)
+        }
+      }
       this.toolkit.setOptions({ ...layoutOptions, breaks: 'encoded' })
       if (!this.toolkit.loadData(layoutMei)) {
         throw new Error(this.toolkit.getLog() || 'Verovio 无法重排当前 MEI 乐谱。')

@@ -98,19 +98,18 @@ export function ScoreRenderer({
   const hasRenderedRef = useRef(false)
   const [message, setMessage] = useState('')
   const [playbackProgress, setPlaybackProgress] = useState(0)
-  const [layoutWidth, setLayoutWidth] = useState(() => readRendererSetting(
-    SCORE_WIDTH_KEY,
-    DEFAULT_SCORE_WIDTH,
-    SCORE_WIDTH_MIN,
-    SCORE_WIDTH_MAX,
+  const [layoutWidth, setLayoutWidth] = useState(() => (
+    compact ? 640 : readRendererSetting(SCORE_WIDTH_KEY, DEFAULT_SCORE_WIDTH, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX)
   ))
-  const [playbackSpeed, setPlaybackSpeed] = useState(() => readRendererSetting(
-    PLAYBACK_SPEED_KEY,
-    DEFAULT_PLAYBACK_SPEED,
-    PLAYBACK_SPEED_MIN,
-    PLAYBACK_SPEED_MAX,
+  const [playbackSpeed, setPlaybackSpeed] = useState(() => (
+    compact ? DEFAULT_PLAYBACK_SPEED : readRendererSetting(
+      PLAYBACK_SPEED_KEY,
+      DEFAULT_PLAYBACK_SPEED,
+      PLAYBACK_SPEED_MIN,
+      PLAYBACK_SPEED_MAX,
+    )
   ))
-  const [renderMode, setRenderMode] = useState<RenderMode>(readRenderMode)
+  const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
   const speedRef = useRef(playbackSpeed)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPlayerLoading, setIsPlayerLoading] = useState(false)
@@ -373,7 +372,7 @@ export function ScoreRenderer({
   const changeLayoutWidth = (value: number) => {
     const width = Math.max(SCORE_WIDTH_MIN, Math.min(SCORE_WIDTH_MAX, value))
     setLayoutWidth(width)
-    writeRendererSetting(SCORE_WIDTH_KEY, width)
+    if (!compact) writeRendererSetting(SCORE_WIDTH_KEY, width)
     onLayoutWidthChange?.(width)
   }
 
@@ -381,13 +380,13 @@ export function ScoreRenderer({
     const speed = Math.max(PLAYBACK_SPEED_MIN, Math.min(PLAYBACK_SPEED_MAX, value))
     speedRef.current = speed
     setPlaybackSpeed(speed)
-    writeRendererSetting(PLAYBACK_SPEED_KEY, speed)
+    if (!compact) writeRendererSetting(PLAYBACK_SPEED_KEY, speed)
     playerRef.current?.setSpeed(speed)
   }
 
   const changeRenderMode = (mode: RenderMode) => {
     setRenderMode(mode)
-    writeRenderMode(mode)
+    if (!compact) writeRenderMode(mode)
   }
 
   useEffect(() => {
@@ -402,7 +401,7 @@ export function ScoreRenderer({
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
       <div className="audio-controls">
-        {hasAudioControls && (
+        {!compact && hasAudioControls && (
           <button
             type="button"
             className="playback-toggle"
@@ -447,7 +446,7 @@ export function ScoreRenderer({
             <output>{Math.round(playbackProgress * 100)}%</output>
           </div>
         )}
-        {hasAudioControls && (
+        {!compact && hasAudioControls && (
           <button
             type="button"
             className="settings-toggle"
@@ -462,42 +461,44 @@ export function ScoreRenderer({
           </button>
         )}
       </div>
-      <dialog ref={settingsDialogRef} className="renderer-settings-dialog" aria-labelledby="renderer-settings-title">
-        <div className="renderer-settings-header">
-          <h2 id="renderer-settings-title">渲染设置</h2>
-          <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
-        </div>
-        <div className="renderer-settings-body">
-          <div className="renderer-settings-row">
-            <span>乐谱宽度</span>
-            <input
-              type="range"
-              min={SCORE_WIDTH_MIN}
-              max={SCORE_WIDTH_MAX}
-              step={SCORE_WIDTH_STEP}
-              value={layoutWidth}
-              aria-label="乐谱宽度"
-              onChange={(event) => changeLayoutWidth(Number(event.currentTarget.value))}
-            />
-            <output>{layoutWidth}px</output>
+      {!compact && (
+        <dialog ref={settingsDialogRef} className="renderer-settings-dialog" aria-labelledby="renderer-settings-title">
+          <div className="renderer-settings-header">
+            <h2 id="renderer-settings-title">渲染设置</h2>
+            <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
           </div>
-          <label className="renderer-settings-switch">
-            <span>分页</span>
-            <span className="switch-control">
+          <div className="renderer-settings-body">
+            <div className="renderer-settings-row">
+              <span>乐谱宽度</span>
               <input
-                type="checkbox"
-                role="switch"
-                aria-label="分页"
-                checked={renderMode === 'paged'}
-                onChange={(event) => changeRenderMode(event.currentTarget.checked ? 'paged' : 'continuous')}
+                type="range"
+                min={SCORE_WIDTH_MIN}
+                max={SCORE_WIDTH_MAX}
+                step={SCORE_WIDTH_STEP}
+                value={layoutWidth}
+                aria-label="乐谱宽度"
+                onChange={(event) => changeLayoutWidth(Number(event.currentTarget.value))}
               />
-              <span className="switch-track" aria-hidden="true">
-                <span className="switch-thumb" />
+              <output>{layoutWidth}px</output>
+            </div>
+            <label className="renderer-settings-switch">
+              <span>分页</span>
+              <span className="switch-control">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  aria-label="分页"
+                  checked={renderMode === 'paged'}
+                  onChange={(event) => changeRenderMode(event.currentTarget.checked ? 'paged' : 'continuous')}
+                />
+                <span className="switch-track" aria-hidden="true">
+                  <span className="switch-thumb" />
+                </span>
               </span>
-            </span>
-          </label>
-        </div>
-      </dialog>
+            </label>
+          </div>
+        </dialog>
+      )}
       <div
         ref={paperRef}
         className="score-paper verovio-score"

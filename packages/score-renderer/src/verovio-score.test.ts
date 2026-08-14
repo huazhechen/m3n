@@ -7,6 +7,8 @@ import {
   automaticSystemBreakMeasureIds,
   encodeSystemBreaks,
   encodedSystemLayout,
+  extraSystemBreakMeasureIds,
+  naturalSystemLayout,
   pageBreakMeasureIds,
 } from './verovio-score'
 import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, visibleLyricVerseNumbers } from './lyric-rendition'
@@ -91,6 +93,40 @@ describe('VerovioScore layout', () => {
 
     expect(pageBreakMeasureIds(systems, 7000)).toEqual([])
     expect(pageBreakMeasureIds(systems, 5000)).toEqual(['m3n-measure-1-9'])
+  })
+
+  it('reads measure extents from a non-justified encoded SVG', () => {
+    const svg = '<svg><g class="system">'
+      + '<g id="m3n-measure-1-1" class="measure"><use transform="translate(100, 10) scale(1)"/><use transform="translate(300, 10) scale(1)"/></g>'
+      + '<g id="m3n-measure-1-2" class="measure"><use transform="translate(500, 10) scale(1)"/></g>'
+      + '</g><g class="system">'
+      + '<g id="m3n-measure-1-3" class="measure"><use transform="translate(700, 10) scale(1)"/></g>'
+      + '</g></svg>'
+
+    expect(naturalSystemLayout(svg)).toEqual([
+      {
+        measures: [
+          { id: 'm3n-measure-1-1', minX: 100, maxX: 300 },
+          { id: 'm3n-measure-1-2', minX: 500, maxX: 500 },
+        ],
+      },
+      {
+        measures: [{ id: 'm3n-measure-1-3', minX: 700, maxX: 700 }],
+      },
+    ])
+  })
+
+  it('adds extra system breaks only to over-wide forced systems', () => {
+    const systems = [{
+      measures: [
+        { id: 'm3n-measure-1-1', minX: 0, maxX: 1000 },
+        { id: 'm3n-measure-1-2', minX: 1200, maxX: 2200 },
+        { id: 'm3n-measure-1-3', minX: 2400, maxX: 3400 },
+      ],
+    }]
+
+    expect(extraSystemBreakMeasureIds(systems, 2000)).toEqual(['m3n-measure-1-2', 'm3n-measure-1-3'])
+    expect(extraSystemBreakMeasureIds(systems, 4000)).toEqual([])
   })
   it('collects the final measure of each automatically laid-out system', () => {
     const breaks = automaticSystemBreakMeasureIds([
