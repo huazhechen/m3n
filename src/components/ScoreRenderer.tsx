@@ -526,9 +526,9 @@ export function ScoreRenderer({
             <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
           </div>
           <div className="renderer-settings-body">
-            <fieldset className="renderer-settings-row">
-              <legend>渲染模式</legend>
-              <div className="notation-mode-choice" role="radiogroup" aria-label="渲染模式">
+            <div className="renderer-settings-choice" role="radiogroup" aria-label="渲染模式">
+              <span>渲染模式</span>
+              <div className="notation-mode-choice">
                 <label>
                   <input
                     type="radio"
@@ -551,7 +551,7 @@ export function ScoreRenderer({
                   <span>简谱</span>
                 </label>
               </div>
-            </fieldset>
+            </div>
             <div className="renderer-settings-row">
               <span>乐谱宽度</span>
               <input

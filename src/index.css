@@ -903,6 +903,13 @@ textarea::selection {
   gap: 10px;
 }
 
+.renderer-settings-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .switch-control {
   position: relative;
   display: inline-flex;
@@ -912,6 +919,7 @@ textarea::selection {
 .switch-control input {
   position: absolute;
   inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -949,20 +957,6 @@ textarea::selection {
 
 .switch-control input:checked + .switch-track .switch-thumb {
   transform: translateX(18px);
-}
-
-.renderer-settings-row fieldset {
-  border: 0;
-  padding: 0;
-  margin: 0;
-  min-width: 0;
-}
-
-.renderer-settings-row legend {
-  color: #285b5c;
-  font-size: 12px;
-  white-space: nowrap;
-  padding: 0;
 }
 
 .notation-mode-choice {
@@ -1236,7 +1230,8 @@ a.action-button {
 .playback-speed span,
 .playback-progress span,
 .renderer-settings-row span,
-.renderer-settings-switch > span:first-child {
+.renderer-settings-switch > span:first-child,
+.renderer-settings-choice > span:first-child {
   color: #285b5c;
   font-size: 12px;
   white-space: nowrap;

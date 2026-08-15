@@ -12,10 +12,14 @@ const DEFAULT_NOTE_HEIGHT = 22
 const COMPACT_NOTE_HEIGHT = 18
 const ROW_GAP = 46
 const SYSTEM_GAP = 30
-const LYRIC_GAP = 10
-const LYRIC_LINE_HEIGHT = 26
+const LYRIC_FONT = 18
+const LYRIC_LINE_HEIGHT = 22
+const LYRIC_TOP_FACTOR = 1.3
+const SYSTEM_RIGHT_MARGIN = 24
 const TOP_PADDING = 6
 const BOTTOM_PADDING = 10
+
+const TIE_PATH_D = 'M -13,5 C 15,-15 65,-15 90,5 C 65,-25 15,-25 -13,5 Z'
 
 const PITCH_CLASS_LABELS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const NAVIGATION_LABELS: Record<string, string> = {
@@ -51,6 +55,7 @@ type System = {
   endX: number
   width: number
   hasLyrics: boolean
+  lyricRows: number
   height: number
 }
 
@@ -233,7 +238,7 @@ export class JianpuScore {
       rowMeasureGroups.set(row.staff, groups)
     }
 
-    const pages = buildPages(options, data, rows, rowMeasureGroups, systems)
+    const pages = buildPages(options, data, rows, rowMeasureGroups, measureStartX, measureEndX, systems, noteHeight)
     return new JianpuScore(options, pages)
   }
 
@@ -304,7 +309,7 @@ function computeSystems(
     const startX: number = startXs.length > 0 ? Math.min(...startXs) : (current?.endX ?? 0)
     const endX = endXs.length > 0 ? Math.max(...endXs) : startX + 40
     if (!current) {
-      current = { fromMeasure: index, toMeasure: index, startX, endX, width: endX - startX, hasLyrics: false, height: 0 }
+      current = { fromMeasure: index, toMeasure: index, startX, endX, width: endX - startX, hasLyrics: false, lyricRows: 0, height: 0 }
       continue
     }
     if (endX - current.startX <= width) {
@@ -313,12 +318,12 @@ function computeSystems(
       current.width = current.endX - current.startX
     } else {
       systems.push(current)
-      current = { fromMeasure: index, toMeasure: index, startX, endX, width: endX - startX, hasLyrics: false, height: 0 }
+      current = { fromMeasure: index, toMeasure: index, startX, endX, width: endX - startX, hasLyrics: false, lyricRows: 0, height: 0 }
     }
   }
   if (current) systems.push(current)
   if (systems.length === 0) {
-    systems.push({ fromMeasure: 0, toMeasure: 0, startX: 0, endX: width, width, hasLyrics: false, height: 0 })
+    systems.push({ fromMeasure: 0, toMeasure: 0, startX: 0, endX: width, width, hasLyrics: false, lyricRows: 0, height: 0 })
   }
   return systems
 }
@@ -337,15 +342,95 @@ function systemHasLyrics(data: JianpuScoreData, system: System) {
   return false
 }
 
-function rowTopInSystem(rows: RenderedRow[], hasLyrics: boolean, target: RenderedRow) {
+/** Maximum visible lyric rows within a system. */
+function systemLyricRows(data: JianpuScoreData, system: System) {
+  let rows = 0
+  for (let index = system.fromMeasure; index <= system.toMeasure; index += 1) {
+    const measure = data.measures[index]
+    if (!measure) continue
+    const verses = new Set(data.lyrics.filter((lyric) => (
+      lyric.staff === 'melody'
+      && lyric.kind !== 'placeholder'
+      && lyric.start >= measure.start - 1e-6
+      && lyric.start < measure.start + measure.length - 1e-6
+    )).map((lyric) => lyric.verse))
+    rows = Math.max(rows, verses.size)
+  }
+  return rows
+}
+
+function lyricReserve(noteHeight: number, melodyRow: RenderedRow | undefined, hasLyrics: boolean, lyricRows: number) {
+  if (!melodyRow || !hasLyrics || lyricRows === 0) return 0
+  const areaBottom = LYRIC_TOP_FACTOR * noteHeight + lyricRows * LYRIC_LINE_HEIGHT
+  return Math.max(2, areaBottom - melodyRow.y1 + 4)
+}
+
+function rowTopInSystem(rows: RenderedRow[], reserve: number, target: RenderedRow) {
   let y = TOP_PADDING
   for (const row of rows) {
     if (row === target) return y
     y += row.y1 - row.y0
-    if (row.staff === 'melody' && hasLyrics) y += LYRIC_GAP + LYRIC_LINE_HEIGHT
+    if (row.staff === 'melody') y += reserve
     y += ROW_GAP
   }
   return TOP_PADDING
+}
+
+/** Per-measure horizontal offsets that justify a row to the target width. */
+function justificationOffsets(
+  data: JianpuScoreData,
+  starts: ReadonlyMap<number, number>,
+  ends: ReadonlyMap<number, number>,
+  system: System,
+  targetWidth: number,
+) {
+  const offsets = new Map<number, number>()
+  const from = data.measures[system.fromMeasure]
+  const to = data.measures[system.toMeasure]
+  if (!from || !to) return offsets
+  const firstX = starts.get(from.start)
+  const lastEnd = ends.get(to.start)
+  const measureCount = system.toMeasure - system.fromMeasure + 1
+  if (firstX === undefined || lastEnd === undefined || measureCount <= 1) return offsets
+  const extra = Math.max(0, targetWidth - (lastEnd - firstX))
+  const perGap = extra / (measureCount - 1)
+  for (let index = system.fromMeasure; index <= system.toMeasure; index += 1) {
+    offsets.set(index, (index - system.fromMeasure) * perGap)
+  }
+  return offsets
+}
+
+/** Extends tie arcs so they reach their continuation after justification. */
+function stretchTies(rowEl: SVGGElement, offsets: ReadonlyMap<number, number>, data: JianpuScoreData) {
+  const blocks = [...rowEl.querySelectorAll<SVGGElement>('g[data-block-start]')]
+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
+    const block = blocks[blockIndex]
+    if (!block) continue
+    const paths = [...block.querySelectorAll<SVGPathElement>('path')].filter((path) => path.getAttribute('d') === TIE_PATH_D)
+    if (paths.length === 0) continue
+    const blockStart = Number(block.getAttribute('data-block-start'))
+    const fromOffset = offsets.get(measureIndexAt(data, blockStart)) ?? 0
+    for (const path of paths) {
+      const noteGroup = path.closest<SVGGElement>('g[data-id]')
+      const pitch = noteGroup?.getAttribute('data-id')?.split('-').at(-1)
+      if (!pitch) continue
+      const continuation = blocks.slice(blockIndex + 1).find((candidate) => (
+        candidate.querySelector(`g[data-id$="-${pitch}"]`) !== null
+      ))
+      if (!continuation) continue
+      const toOffset = offsets.get(measureIndexAt(data, Number(continuation.getAttribute('data-block-start')))) ?? 0
+      const delta = toOffset - fromOffset
+      if (Math.abs(delta) < 0.5) continue
+      const transform = path.getAttribute('transform') ?? ''
+      const match = /scale\(([\d.]+),/.exec(transform)
+      if (!match) continue
+      const scaleX = Number(match[1])
+      path.setAttribute('transform', transform.replace(
+        /scale\([\d.]+,/,
+        `scale(${rounded(scaleX + delta * 1.3 / 100)},`,
+      ))
+    }
+  }
 }
 
 function buildPages(
@@ -353,7 +438,10 @@ function buildPages(
   data: JianpuScoreData,
   rows: RenderedRow[],
   rowMeasureGroups: ReadonlyMap<JianpuScoreStaff, ReadonlyMap<number, SVGGElement>>,
+  starts: ReadonlyMap<JianpuScoreStaff, ReadonlyMap<number, number>>,
+  ends: ReadonlyMap<JianpuScoreStaff, ReadonlyMap<number, number>>,
   systems: System[],
+  noteHeight: number,
 ) {
   const contentBudget = options.paged
     ? Math.max(200, a4SourcePageHeight(options.width) - scoreHeaderHeight(options.headerMetadata))
@@ -362,13 +450,17 @@ function buildPages(
   let current: Page = { systems: [], height: 0 }
   for (const system of systems) {
     const hasLyrics = systemHasLyrics(data, system)
+    const lyricRows = systemLyricRows(data, system)
+    const melodyRow = rows.find((row) => row.staff === 'melody')
+    const reserve = lyricReserve(noteHeight, melodyRow, hasLyrics, lyricRows)
     const height = TOP_PADDING + rows.reduce((total, row, index) => {
       const rowHeight = row.y1 - row.y0
-      const lyricHeight = row.staff === 'melody' && hasLyrics ? LYRIC_GAP + LYRIC_LINE_HEIGHT : 0
+      const lyricHeight = row.staff === 'melody' ? reserve : 0
       const gap = index < rows.length - 1 ? ROW_GAP : 0
       return total + rowHeight + lyricHeight + gap
     }, 0) + BOTTOM_PADDING
     system.hasLyrics = hasLyrics
+    system.lyricRows = lyricRows
     system.height = height
     const gap = current.systems.length > 0 ? SYSTEM_GAP : 0
     if (current.systems.length > 0 && current.height + gap + height > contentBudget) {
@@ -380,7 +472,7 @@ function buildPages(
   }
   if (current.systems.length > 0) pages.push(current)
   if (pages.length === 0) {
-    const empty: System = { fromMeasure: 0, toMeasure: 0, startX: 0, endX: options.width, width: options.width, hasLyrics: false, height: 100 }
+    const empty: System = { fromMeasure: 0, toMeasure: 0, startX: 0, endX: options.width, width: options.width, hasLyrics: false, lyricRows: 0, height: 100 }
     pages.push({ systems: [{ system: empty, top: 0 }], height: empty.height })
   }
 
@@ -400,20 +492,33 @@ function buildPages(
     })
     for (const { system, top } of page.systems) {
       for (const row of rows) {
-        const rowTop = top + rowTopInSystem(rows, system.hasLyrics, row)
+        const melodyRow = rows.find((candidate) => candidate.staff === 'melody')
+        const reserve = lyricReserve(noteHeight, melodyRow, system.hasLyrics, system.lyricRows)
+        const rowTop = top + rowTopInSystem(rows, reserve, row)
         const rowEl = svgElement('g', {
           transform: `translate(${-system.startX}, ${rounded(rowTop - row.y0)})`,
           class: 'm3n-jianpu-system',
           'data-system-start': system.fromMeasure + 1,
         })
         const groups = rowMeasureGroups.get(row.staff)
+        const offsets = justificationOffsets(
+          data,
+          starts.get(row.staff) ?? new Map(),
+          ends.get(row.staff) ?? new Map(),
+          system,
+          Math.max(1, options.width - SYSTEM_RIGHT_MARGIN),
+        )
         for (let measureIndex = system.fromMeasure; measureIndex <= system.toMeasure; measureIndex += 1) {
           const group = groups?.get(measureIndex)
           if (!group) continue
           const isSystemStart = measureIndex === system.fromMeasure
           const clone = cloneMeasureGroup(group, isSystemStart && system.fromMeasure > 0)
-          if (clone) rowEl.append(clone)
+          if (!clone) continue
+          const offset = offsets.get(measureIndex) ?? 0
+          if (offset > 0.5) clone.setAttribute('transform', `translate(${rounded(offset)}, 0)`)
+          rowEl.append(clone)
         }
+        stretchTies(rowEl, offsets, data)
         svg.append(rowEl)
       }
     }
@@ -457,9 +562,13 @@ function decorateRow(
 ) {
   const melody = row.staff === 'melody'
   const labelsY = row.y0 - 12
-  const lyricBase = (row.y1 - row.y0) + LYRIC_GAP
+  const lyricBase = LYRIC_TOP_FACTOR * noteHeight
   const numberFont = Math.round(noteHeight * 1.2)
   const smallFont = Math.round(noteHeight * 0.9)
+  const laneA = labelsY - 3 * smallFont - 18
+  const laneB = labelsY - 2 * smallFont - 12
+  const laneC = labelsY - smallFont - 6
+  const laneD = labelsY
   const keyAt = (start: number) => [...data.keySignatures].reverse().find((entry) => entry.start <= start + 1e-6)
   const meterAt = (start: number) => [...data.timeSignatures].reverse().find((entry) => entry.start <= start + 1e-6)
 
@@ -475,15 +584,17 @@ function decorateRow(
       const meter = meterAt(measure.start)
       const keyChanged = data.keySignatures.some((entry) => Math.abs(entry.start - measure.start) < 1e-6)
       const meterChanged = data.timeSignatures.some((entry) => Math.abs(entry.start - measure.start) < 1e-6)
-      if (index === 0 || systemStarts.has(index) || keyChanged || meterChanged) {
+      const showKey = index === 0 || keyChanged || systemStarts.has(index)
+      const showMeter = index === 0 || meterChanged
+      if (showKey || showMeter) {
         const label = [
-          key ? `1=${PITCH_CLASS_LABELS[key.key % 12] ?? 'C'}` : '',
-          meter ? `${meter.numerator}/${meter.denominator}` : '',
+          showKey && key ? `1=${PITCH_CLASS_LABELS[key.key % 12] ?? 'C'}` : '',
+          showMeter && meter ? `${meter.numerator}/${meter.denominator}` : '',
         ].filter(Boolean).join(' ')
         if (label) {
           const text = svgElement('text', {
             x: startX,
-            y: labelsY,
+            y: laneC,
             class: 'm3n-jianpu-signature',
             'font-size': smallFont,
             'font-family': fontFamily,
@@ -498,7 +609,7 @@ function decorateRow(
         if (tempo) {
           const text = svgElement('text', {
             x: startX,
-            y: labelsY - smallFont - 6,
+            y: laneA,
             class: 'm3n-jianpu-tempo',
             'font-size': smallFont,
             'font-family': fontFamily,
@@ -511,7 +622,7 @@ function decorateRow(
       if (measure.ending) {
         const text = svgElement('text', {
           x: startX,
-          y: labelsY,
+          y: laneD,
           class: 'm3n-jianpu-ending',
           'font-size': smallFont,
           'font-weight': '700',
@@ -526,7 +637,7 @@ function decorateRow(
         if (!label) continue
         const text = svgElement('text', {
           x: startX,
-          y: labelsY,
+          y: laneD,
           class: 'm3n-jianpu-navigation',
           'font-size': smallFont,
           'font-family': fontFamily,
@@ -538,7 +649,7 @@ function decorateRow(
       if (measure.sectionLabel) {
         const text = svgElement('text', {
           x: startX,
-          y: labelsY,
+          y: laneB,
           class: 'm3n-jianpu-section',
           'font-size': smallFont,
           'font-style': 'italic',
@@ -551,7 +662,7 @@ function decorateRow(
       if (measure.multiRest) {
         const text = svgElement('text', {
           x: centerX,
-          y: labelsY,
+          y: laneD,
           class: 'm3n-jianpu-multirest',
           'font-size': smallFont,
           'font-family': fontFamily,
@@ -567,7 +678,7 @@ function decorateRow(
       if (measure.repeatEnd) {
         group.append(repeatBar(endX, row.y1, row.y0, false))
       }
-      drawLyrics(data, row, group, measure, lyricBase, smallFont, fontFamily, starts)
+      drawLyrics(data, row, group, measure, lyricBase, LYRIC_FONT, fontFamily, starts)
     }
 
     for (const tuplet of data.tuplets) {
@@ -631,7 +742,7 @@ function decorateRow(
         const x = (row.blockXs.get(note.start) ?? 0) + (row.blockWidths.get(note.start) ?? 0) / 2
         noteEl.append(svgElement('circle', {
           cx: x,
-          cy: noteHeight * 0.8,
+          cy: -noteHeight * 0.72,
           r: 2,
           class: 'm3n-jianpu-staccato',
           fill: '#20242b',
@@ -639,8 +750,8 @@ function decorateRow(
       }
       if (note.trill) {
         const text = svgElement('text', {
-          x: row.blockXs.get(note.start) ?? 0,
-          y: row.y0 - 6,
+          x: (row.blockXs.get(note.start) ?? 0) + (row.blockWidths.get(note.start) ?? 0) + 3,
+          y: 2,
           class: 'm3n-jianpu-trill',
           'font-size': smallFont,
           'font-style': 'italic',
@@ -660,8 +771,8 @@ function decorateRow(
       }
       if (note.dynamic) {
         const text = svgElement('text', {
-          x: row.blockXs.get(note.start) ?? 0,
-          y: row.y0 - 6,
+          x: (row.blockXs.get(note.start) ?? 0) + (row.blockWidths.get(note.start) ?? 0) + 3,
+          y: 2,
           class: 'm3n-jianpu-dynamic',
           'font-size': smallFont,
           'font-style': 'italic',
@@ -687,6 +798,18 @@ function decorateRow(
   for (let index = 0; index < data.measures.length; index += 1) {
     const measure = data.measures[index]
     if (measure) decorateMeasure(measure, index)
+  }
+
+  for (const group of groups.values()) {
+    for (const noteGroup of group.querySelectorAll<SVGGElement>('g[data-id]')) {
+      const texts = [...noteGroup.children].filter((child) => child.tagName === 'text')
+      if (texts.length !== 2) continue
+      const accidental = texts[0]?.textContent?.trim()
+      const number = texts[1]?.getAttribute('x')
+      if ((accidental === '#' || accidental === 'b') && number !== null) {
+        texts[0]?.setAttribute('x', String(Number(number) - 2))
+      }
+    }
   }
 
   for (const continuation of data.continuations) {
@@ -762,11 +885,18 @@ function drawLyrics(
   fontFamily: string,
   starts: ReadonlyMap<number, number>,
 ) {
-  const lyrics = data.lyrics.filter((lyric) => (
-    lyric.staff === row.staff
-    && lyric.start >= measure.start - 1e-6
-    && lyric.start < measure.start + measure.length - 1e-6
-  ))
+  const seen = new Set<string>()
+  const lyrics = data.lyrics.filter((lyric) => {
+    if (
+      lyric.staff !== row.staff
+      || lyric.start < measure.start - 1e-6
+      || lyric.start >= measure.start + measure.length - 1e-6
+    ) return false
+    const key = `${lyric.start}:${lyric.verse}:${lyric.text}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
   if (lyrics.length === 0) return
   const visibleVerses = [...new Set(lyrics.filter((lyric) => lyric.kind !== 'placeholder').map((lyric) => lyric.verse))].sort((a, b) => a - b)
   for (const verse of visibleVerses) {
