@@ -1,10 +1,15 @@
 import createVerovioModule from 'verovio/wasm' 
-import { VerovioToolkit } from 'verovio/esm'
+import { enableLogToBuffer, VerovioToolkit } from 'verovio/esm'
 
 let modulePromise: ReturnType<typeof createVerovioModule> | undefined
 
 function getModule() {
-  modulePromise ??= createVerovioModule()
+  modulePromise ??= createVerovioModule().then((module) => {
+    // Expanded ties can produce harmless playback-cursor warnings. Keep all
+    // Verovio diagnostics available through getLog() without writing to console.
+    enableLogToBuffer(true, module)
+    return module
+  })
   return modulePromise
 }
 
