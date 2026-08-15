@@ -21,6 +21,7 @@ describe('JianpuScore', () => {
     expect(paper.querySelector('g.measure')).not.toBeNull()
     expect(paper.querySelector('#m3n-e-1')).not.toBeNull()
     expect(paper.querySelector('[data-source-start="0"]')).not.toBeNull()
+    expect(paper.querySelector('#m3n-measure-1-1 line[x1="0"]')).toBeNull()
   })
 
   it('uses ScoreMeasure repeat data and direct event durations in the SVG', () => {
@@ -128,5 +129,15 @@ describe('JianpuScore', () => {
     expect(measureYs.size).toBeGreaterThan(1)
     expect([...paper.querySelectorAll<SVGLineElement>('g.measure .barline-thin')]
       .every((barline) => barline.closest('g.measure')?.getAttribute('transform')?.includes(',') ?? false)).toBe(true)
+
+    const compactScore = JianpuScore.create(analysis.score, { width: 800, paged: false, headerMetadata: [] })
+    const compactPaper = document.createElement('div')
+    compactScore.attach(compactPaper)
+    const systemCounts = new Map<string, number>()
+    for (const measure of compactPaper.querySelectorAll<SVGGElement>('g.measure[data-m3n-voice="score"]')) {
+      const y = /translate\([^,]+,([^)]+)\)/.exec(measure.getAttribute('transform') ?? '')?.[1]
+      if (y) systemCounts.set(y, (systemCounts.get(y) ?? 0) + 1)
+    }
+    expect(Math.max(...systemCounts.values())).toBeGreaterThan(1)
   })
 })

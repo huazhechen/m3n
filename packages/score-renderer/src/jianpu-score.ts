@@ -216,7 +216,8 @@ function relationArc(x1: number, x2: number, y: number, peak: number, className:
 
 function renderBarline(group: SVGGElement, type: string | undefined, x: number) {
   const thin = (x: number) => group.append(svg('line', { x1: x, x2: x, y1: -40, y2: 26, class: 'barline-thin' }))
-  if (!type || type === 'single') { thin(x); return }
+  if (!type) return
+  if (type === 'single') { thin(x); return }
   const repeatStart = type === 'rptstart'
   const repeatEnd = type === 'rptend'
   const thickX = repeatStart ? x : x - 4.5

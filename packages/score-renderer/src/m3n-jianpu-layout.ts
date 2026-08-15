@@ -12,6 +12,7 @@ export type LayoutMeasure = {
   width: number
   cellWidth: number
   beatGap: number
+  gridUnit: number
 }
 
 export type PositionedEvent = {
@@ -41,26 +42,39 @@ function visualSpan(event: ScoreEvent, beat: number) {
   return Math.max(0.25, event.beats / beat)
 }
 
-function visualSlots(event: ScoreEvent, beat: number) {
-  const span = visualSpan(event, beat)
-  return Number.isInteger(span) && span > 1 ? span : 1
+function greatestCommonDivisor(left: number, right: number): number {
+  let a = Math.abs(left)
+  let b = Math.abs(right)
+  while (b > 0) [a, b] = [b, a % b]
+  return a
+}
+
+function gridUnit(spans: readonly number[]) {
+  // M3N durations are binary subdivisions.  A common quarter-beat grid keeps
+  // dotted values and short notes proportional without expanding each short
+  // note to a full beat cell.
+  const ticks = spans.map((span) => Math.max(1, Math.round(span * 4)))
+  const divisor = ticks.reduce(greatestCommonDivisor, 4)
+  return Math.max(0.25, divisor / 4)
 }
 
 function metric(measure: ScoreMeasure, beat: number, fontSize: number, options: JianpuLayoutOptions) {
   const spans = measure.events.map((event) => visualSpan(event, beat))
-  const slots = measure.events.reduce((total, event) => total + visualSlots(event, beat), 0)
+  const unit = gridUnit(spans)
+  const slots = spans.reduce((total, span) => total + Math.max(1, Math.round(span / unit)), 0)
   const beatGaps = Math.max(0, Math.ceil(spans.reduce((total, value) => total + value, 0)) - 1)
-  const cell = measure.events.reduce((required, event) => {
+  const cell = measure.events.reduce((required, event, index) => {
     if (event.beats <= EPSILON) return required
     const defaultSymbolWidth = event.kind === 'tuplet'
       ? Math.max(fontSize * 1.2, event.pitches.length * fontSize * 0.56)
       : event.kind === 'chord' ? fontSize * 1.16 : fontSize * 0.96
     const minimumSymbolWidth = Math.max(defaultSymbolWidth, options.eventMinimumWidth?.(event) ?? 0)
-    return Math.max(required, minimumSymbolWidth / visualSpan(event, beat))
-  }, fontSize * 1.5)
+    const eventSlots = Math.max(1, Math.round((spans[index] ?? unit) / unit))
+    return Math.max(required, minimumSymbolWidth / eventSlots)
+  }, fontSize)
   const bar = fontSize * 0.55
   const beatGap = fontSize * 0.28
-  return { slots: Math.max(1, slots), width: Math.max(fontSize * 2.2, slots * cell + beatGaps * beatGap + bar), beatGaps, bar, beatGap }
+  return { unit, slots: Math.max(1, slots), width: Math.max(fontSize * 2.2, slots * cell + beatGaps * beatGap + bar), beatGaps, bar, beatGap }
 }
 
 /** Natural-width system wrapping used by JianpuABC when column alignment is disabled. */
@@ -131,6 +145,7 @@ export function layoutMeasures(
         width: measureWidth,
         cellWidth,
         beatGap: scaledBeatGap,
+        gridUnit: item.info.unit,
       })
       x += measureWidth + scaledGap
     }
@@ -139,8 +154,8 @@ export function layoutMeasures(
   return result
 }
 
-export function layoutXAt(offset: number, cellWidth: number, beatGap: number) {
-  const beat = Math.floor(offset)
+export function layoutXAt(offset: number, gridUnit: number, cellWidth: number, beatGap: number) {
+  const beat = Math.floor(offset * gridUnit + EPSILON)
   return offset * cellWidth + beat * beatGap
 }
 
@@ -149,10 +164,10 @@ export function positionEvents(placed: LayoutMeasure, beat: number): PositionedE
   let startBeat = 0
   return placed.measure.events.map((event, eventIndex) => {
     const span = visualSpan(event, beat)
-    const slots = visualSlots(event, beat)
-    const centerX = layoutXAt(offset + Math.max(span, 1) / 2, placed.cellWidth, placed.beatGap)
-    const output = { event, eventIndex, centerX, slotCount: slots, layoutSpan: span, layoutOffset: offset, startBeat }
-    offset += span
+    const slots = Math.max(1, Math.round(span / placed.gridUnit))
+    const centerX = layoutXAt(offset + slots / 2, placed.gridUnit, placed.cellWidth, placed.beatGap)
+    const output = { event, eventIndex, centerX, slotCount: slots, layoutSpan: slots, layoutOffset: offset, startBeat }
+    offset += slots
     startBeat += event.beats
     return output
   })
