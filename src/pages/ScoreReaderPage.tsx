@@ -89,6 +89,7 @@ export function ScoreReaderPage() {
       <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
           mei={result.mei}
+          scoreDocument={analysis.score}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
           invalidMeasureIds={invalidMeasures}

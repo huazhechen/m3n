@@ -1,0 +1,321 @@
+import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure } from '@m3n/notation'
+import { resolvePageConfig } from './open-fanqie-core/config.js'
+import { layoutVoiceGroup } from './open-fanqie-core/layout.js'
+import { continuousPageHeight, paginateVoiceGroups, renderDocumentSvgPages } from './open-fanqie-core/renderer.js'
+import type {
+  BarlineElement,
+  Mark,
+  MusicElement,
+  NoteElement,
+  ScoreDocument as FanqieDocument,
+  ScoreLine,
+  VoiceGroup,
+} from './open-fanqie-core/types.js'
+
+export type OpenFanqieScoreOptions = {
+  paged: boolean
+  width: number
+}
+
+type EventEntry = { event: ScoreEvent; index: number; lastIndex: number }
+type LyricsByEvent = Map<ScoreEvent, string[][]>
+
+function location(event: ScoreEvent) {
+  return { line: 1, column: event.sourceStart + 1, offset: event.sourceStart, length: event.sourceEnd - event.sourceStart }
+}
+
+function duration(beats: number) {
+  const safe = Math.max(0.125, beats)
+  const base = 2 ** Math.floor(Math.log2(safe))
+  const ratio = safe / base
+  const dots = ratio >= 1.875 - 1e-6 ? 3 : ratio >= 1.75 - 1e-6 ? 2 : ratio >= 1.5 - 1e-6 ? 1 : 0
+  return { duration: 4 / base, dots }
+}
+
+function pitch(token: string) {
+  const match = /^([1-7])([#b=]*)([ed]*)$/.exec(token)
+  if (!match) return { pitch: 0 as const, octave: 0, accidental: undefined }
+  const accidental = match[2] === '#' ? 'sharp' as const : match[2] === 'b' ? 'flat' as const : match[2] === '=' ? 'natural' as const : undefined
+  const octave = [...(match[3] ?? '')].reduce((value, item) => value + (item === 'e' ? 1 : -1), 0)
+  return { pitch: Number(match[1]) as NoteElement['pitch'], octave, accidental }
+}
+
+function ornaments(event: ScoreEvent) {
+  const names = [event.dynamic, event.prefix, ...event.postfixes]
+    .flatMap((value) => value ? [value === 'sfz' ? 'sf' : value] : [])
+    .filter((name) => ['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'sf', 'tr', 'cresc', 'dim', 'rit'].includes(name))
+  return names.map((name) => ({ name, level: 0 }))
+}
+
+function note(
+  event: ScoreEvent,
+  id: string | undefined,
+  beats = event.beats,
+  value = event.pitches[0] ?? '0',
+  m3nDataId = id,
+): NoteElement {
+  const rendered = pitch(value)
+  const time = duration(beats)
+  return {
+    kind: 'note',
+    ...rendered,
+    sound: rendered.pitch === 0 ? 'rest' : 'note',
+    hidden: false,
+    ...time,
+    ornaments: ornaments(event),
+    annotation: event.text ?? event.chord ?? event.sectionLabel,
+    code: value,
+    m3nId: id,
+    m3nDataId,
+    chordPitches: event.kind === 'chord' ? event.pitches.slice(1).flatMap((item) => {
+      const itemPitch = pitch(item)
+      return itemPitch.pitch === 0 ? [] : [{ pitch: itemPitch.pitch as 1 | 2 | 3 | 4 | 5 | 6 | 7, octave: itemPitch.octave, accidental: itemPitch.accidental }]
+    }) : [],
+    source: location(event),
+  }
+}
+
+function barline(measure: ScoreMeasure, fallback: boolean): BarlineElement {
+  const type = measure.right === 'end' ? 'end'
+    : measure.right === 'dbl' ? 'double'
+      : measure.right === 'rptend' ? 'repeat-end'
+        : measure.right === 'rptboth' ? 'repeat-both'
+          : fallback ? 'normal' : 'normal'
+  const navigation = measure.navigation ?? []
+  return {
+    kind: 'barline', type, ornaments: navigation.map((name) => ({ name, level: 0 })),
+    code: '|', source: { line: 1, column: 1, offset: 0, length: 0 },
+  }
+}
+
+function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
+  const targetEvents = [...document.parts.values()].flatMap((part) => part.melody.flatMap((measure) => measure.events))
+  const result: LyricsByEvent = new Map()
+  document.lyrics.forEach((block) => {
+    const numbered = /^\d+$/.exec(block.range)
+    const pass = numbered ? undefined : /V(\d+)/.exec(block.phrasePasses ?? '')
+    // This mirrors the MEI projection: generic L: is verse 1, while L2: and
+    // lyrics limited to V2 use their explicit pass row.
+    const row = Math.max(0, Number(numbered?.[0] ?? pass?.[1] ?? 1) - 1)
+    const targets = targetEvents.filter((event) => block.targetStart === undefined || block.targetEnd === undefined || (event.sourceStart >= block.targetStart && event.sourceEnd <= block.targetEnd))
+    let targetIndex = 0
+    block.syllables.forEach((syllable) => {
+      const target = targets[targetIndex]
+      targetIndex += 1
+      if (!target || syllable.kind !== 'text') return
+      const rows = result.get(target) ?? []
+      rows[row] = [...(rows[row] ?? []), syllable.text]
+      result.set(target, rows)
+      if (!syllable.forceTiedTarget) {
+        while (targets[targetIndex - 1]?.tie) targetIndex += 1
+      }
+    })
+  })
+  return result
+}
+
+function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
+  const activeRows = new Set(entries.flatMap(({ event }) => (lyrics.get(event) ?? []).flatMap((_, row) => lyrics.get(event)?.[row]?.length ? [row] : [])))
+  return [...activeRows].sort((left, right) => left - right).map((row) => ({
+    syllables: entries.flatMap(({ event, index, lastIndex }) => [
+      { text: lyrics.get(event)?.[row]?.join('') ?? '', source: location(event) },
+      ...Array.from({ length: lastIndex - index }, () => ({ text: '', source: location(event) })),
+    ]),
+    source: { line: 1, column: 1, offset: 0, length: 0 },
+  }))
+}
+
+function lineForMeasures(
+  measures: readonly ScoreMeasure[],
+  lyrics: LyricsByEvent,
+  voice: number,
+  ids: ReadonlyMap<ScoreEvent, string>,
+  endingContinuation = { fromPrevious: false, toNext: false },
+): ScoreLine {
+  const elements: MusicElement[] = []
+  const entries: EventEntry[] = []
+  const measureRanges: Array<{ measure: ScoreMeasure; start: number; end: number }> = []
+  if (measures[0]?.ending !== undefined) {
+    elements.push({ kind: 'barline', type: 'normal', ornaments: [], code: '|', source: { line: 1, column: 1, offset: 0, length: 0 } })
+  }
+  measures.forEach((measure, measureIndex) => {
+    const start = elements.length
+    if (measure.left === 'rptstart') {
+      elements.push({ ...barline(measure, false), type: 'repeat-start' })
+    }
+    measure.events.forEach((event) => {
+      const index = elements.length
+      if (event.kind === 'tuplet' && event.tuplet) {
+        const eventId = ids.get(event)
+        const tuplet = event.tuplet
+        event.pitches.forEach((value, tupletIndex) => {
+          elements.push(note(event, eventId === undefined ? undefined : `${eventId}-n${tupletIndex + 1}`, tuplet.unitBeats, value, eventId))
+        })
+        entries.push({ event, index, lastIndex: elements.length - 1 })
+        return
+      }
+      entries.push({ event, index, lastIndex: index })
+      elements.push(note(event, ids.get(event), Math.min(1, event.beats)))
+      const sustainCount = Math.max(0, Math.floor(event.beats + 1e-7) - 1)
+      for (let sustain = 0; sustain < sustainCount; sustain += 1) {
+        elements.push({ kind: 'sustain', duration: 4, ornaments: [], code: '-', source: location(event) })
+      }
+    })
+    if (measure.multiRest) {
+      const rest: ScoreEvent = { sourceStart: 0, sourceEnd: 0, kind: 'rest', pitches: [], key: 'C', beats: measure.multiRest * 4, tie: false, postfixes: [], navigation: [], octaveShift: 0 }
+      entries.push({ event: rest, index: elements.length, lastIndex: elements.length })
+      elements.push(note(rest, undefined))
+    }
+    elements.push(barline(measure, measureIndex === measures.length - 1))
+    measureRanges.push({ measure, start, end: elements.length - 1 })
+  })
+  const marks: Mark[] = []
+  entries.forEach((entry, index) => {
+    const next = entries[index + 1]
+    if (entry.event.tie && next) marks.push({ type: 'slur', start: entry.event.kind === 'tuplet' ? entry.lastIndex : entry.index, end: next.index, level: 0, source: location(entry.event) })
+    if (entry.event.kind === 'tuplet' && entry.event.tuplet) marks.push({ type: 'tuplet', start: entry.index, end: entry.lastIndex, level: 0, caption: String(entry.event.tuplet.num), source: location(entry.event) })
+  })
+  let rangeIndex = 0
+  while (rangeIndex < measureRanges.length) {
+    const first = measureRanges[rangeIndex]
+    const ending = first?.measure.ending
+    if (!first || !ending) { rangeIndex += 1; continue }
+    let last = rangeIndex
+    while (measureRanges[last + 1]?.measure.ending === ending) last += 1
+    const lastRange = measureRanges[last] ?? first
+    const caption = ending.replaceAll('V', '').split(',').filter(Boolean).join(',')
+    const previous = elements[first.start - 1]
+    const start = previous?.kind === 'barline' ? first.start - 1 : first.start
+    const continuesFromPrevious = rangeIndex === 0 && endingContinuation.fromPrevious
+    const continuesToNext = last === measureRanges.length - 1 && endingContinuation.toNext
+    marks.push({
+      type: 'volta', start, end: lastRange.end, level: 0,
+      caption: continuesFromPrevious || !caption ? undefined : `${caption}.`,
+      ...(continuesFromPrevious ? { continuationFromPrevious: true } : {}),
+      ...(continuesToNext ? { continuationToNext: true } : {}),
+      source: { line: 1, column: 1, offset: 0, length: 0 },
+    })
+    rangeIndex = last + 1
+  }
+  return { voice, elements, marks, lyrics: lyricLines(entries, lyrics), raw: '', source: { line: 1, column: 1, offset: 0, length: 0 } }
+}
+
+function addIntervals(lines: readonly ScoreLine[], intervals: readonly ScoreInterval[]) {
+  lines.forEach((line) => {
+    const staff = line.voice === 1 ? 'melody' : 'bass'
+    const entries = line.elements.flatMap((element, index) => element.kind === 'note' ? [{ element, index }] : [])
+    const first = entries[0]
+    const last = entries.at(-1)
+    if (!first || !last) return
+    const legato: Mark[] = []
+    intervals.filter((interval) => interval.staff === staff).forEach((interval) => {
+      const intervalStart = interval.start
+      const intervalEnd = interval.endStart
+      if (intervalStart === undefined || intervalEnd === undefined) return
+      if (intervalEnd < first.element.source.offset || intervalStart > last.element.source.offset) return
+      const start = entries.find((entry) => entry.element.source.offset >= intervalStart) ?? first
+      const end = [...entries].reverse().find((entry) => entry.element.source.offset <= intervalEnd) ?? last
+      if (start.index > end.index) return
+      const type = interval.kind === 'cresc' ? 'crescendo' : interval.kind === 'decres' ? 'decrescendo' : interval.kind === 'lg' ? 'slur' : undefined
+      if (!type) return
+      const mark: Mark = {
+        type, start: start.index, end: end.index, level: 0,
+        ...(intervalStart < first.element.source.offset ? { continuationFromPrevious: true } : {}),
+        ...(intervalEnd > last.element.source.offset ? { continuationToNext: true } : {}),
+        source: { line: 1, column: 1, offset: intervalStart, length: 0 },
+      }
+      if (type !== 'slur') { line.marks.push(mark); return }
+      const previous = legato.at(-1)
+      const hasMusicalGap = previous !== undefined && line.elements
+        .slice(previous.end + 1, mark.start)
+        .some((element) => element.kind === 'note' || element.kind === 'sustain')
+      if (previous && !hasMusicalGap) {
+        previous.end = mark.end
+        previous.continuationToNext = mark.continuationToNext
+      } else legato.push(mark)
+    })
+    line.marks.push(...legato)
+  })
+}
+
+function groupForMeasures(
+  melody: readonly ScoreMeasure[],
+  bass: readonly ScoreMeasure[],
+  lyrics: LyricsByEvent,
+  intervals: readonly ScoreInterval[],
+  ids: ReadonlyMap<ScoreEvent, string>,
+  endingContinuation?: { fromPrevious: boolean; toNext: boolean },
+): VoiceGroup {
+  const lines = [lineForMeasures(melody, lyrics, 1, ids, endingContinuation)]
+  if (bass.some((measure) => measure.events.length > 0 || measure.multiRest)) lines.push(lineForMeasures(bass, lyrics, 2, ids))
+  addIntervals(lines, intervals)
+  return { index: 0, voices: lines }
+}
+
+function systemGroups(document: ScoreDocument, width: number) {
+  const part = [...document.parts.values()][0]
+  if (!part) return []
+  const ids = new Map<ScoreEvent, string>()
+  let ordinal = 0
+  const hasBassStaff = [...document.parts.values()].some((scorePart) => scorePart.bass.some((measure) => measure.events.length > 0))
+  for (const scorePart of document.parts.values()) {
+    const measureCount = Math.max(scorePart.melody.length, hasBassStaff ? scorePart.bass.length : 0)
+    for (let measureIndex = 0; measureIndex < measureCount; measureIndex += 1) {
+      for (const event of scorePart.melody[measureIndex]?.events ?? []) ids.set(event, `m3n-e-${++ordinal}`)
+      for (const event of hasBassStaff ? scorePart.bass[measureIndex]?.events ?? [] : []) ids.set(event, `m3n-e-${++ordinal}`)
+    }
+  }
+  const lyrics = lyricsByEvent(document)
+  const groups: VoiceGroup[] = []
+  let start = 0
+  while (start < part.melody.length) {
+    let end = start
+    let forceJustify = false
+    while (end < part.melody.length) {
+      const candidate = groupForMeasures(
+        part.melody.slice(start, end + 1), part.bass.slice(start, end + 1), lyrics, document.intervals, ids,
+        {
+          fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
+          toNext: part.melody[end + 1]?.ending !== undefined && part.melody[end + 1]?.ending === part.melody[end]?.ending,
+        },
+      )
+      // Measure with the original engine before its justified-fit pass. Asking
+      // for an infinite right edge preserves its natural width for wrapping.
+      const layout = layoutVoiceGroup(candidate, 83, Number.POSITIVE_INFINITY)
+      if (end > start && (layout.endX > width - 77 || part.melody[end]?.breakBefore)) {
+        forceJustify = layout.endX > width - 77
+        break
+      }
+      end += 1
+      if (part.melody[end - 1]?.breakAfter) break
+    }
+    const group = groupForMeasures(
+      part.melody.slice(start, end), part.bass.slice(start, end), lyrics, document.intervals, ids,
+      {
+        fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
+        toNext: part.melody[end]?.ending !== undefined && part.melody[end]?.ending === part.melody[end - 1]?.ending,
+      },
+    )
+    if (forceJustify) group.forceJustify = true
+    groups.push(group)
+    start = end
+  }
+  return groups
+}
+
+/** Renders M3N's normalized ScoreDocument through the unmodified Fanqie layout and glyph engine. */
+export function renderOpenFanqieScore(document: ScoreDocument, options: OpenFanqieScoreOptions) {
+  const width = Math.max(320, Math.round(options.width))
+  const groups = systemGroups(document, width)
+  const metadata = { titles: [document.title, document.subtitle].filter(Boolean), authors: [document.singer || document.composer].filter(Boolean), mode: document.key, meters: [{ numerator: document.meterCount, denominator: document.meterUnit, parenthesized: false }], tempos: document.hasExplicitTempo ? [document.tempo] : [], instruments: [], remarks: [] }
+  const baseConfig = resolvePageConfig({ page: 'A4', width, height: 300 }, [])
+  const pageHeight = options.paged ? Math.round(width * 1.415) : Math.max(300, continuousPageHeight(groups, metadata, baseConfig))
+  const pageConfig = { page: 'A4' as const, width, height: pageHeight }
+  const config = resolvePageConfig(pageConfig, [])
+  const fanqie: FanqieDocument = {
+    source: '', diagnostics: [],
+    metadata,
+    pages: options.paged ? paginateVoiceGroups(groups, metadata, config) : [{ index: 0, groups }],
+  }
+  return renderDocumentSvgPages(fanqie, { pageConfig })
+}

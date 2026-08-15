@@ -44,7 +44,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/m3n-direct.ts`：从源码构造 `ScoreDocument`；领域消费者统一使用 `Score*` 类型，不再暴露旧 `Direct*` 类型。
 - `packages/notation/src/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
 - `packages/notation/src/m3n-validate.ts`：语义校验，只依赖最小语法内核。
-- `packages/score-renderer/src`：播放段落展开、导出文档与画布适配。
+- `packages/score-renderer/src`：播放段落展开、导出文档、Open Fanqie 简谱适配与画布适配。
 - `packages/notation/src/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
 - `packages/notation/src/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
 - `packages/notation/src/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。

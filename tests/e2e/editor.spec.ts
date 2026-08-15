@@ -30,6 +30,19 @@ test('exposes playback without a print action', async ({ page }) => {
   await expect(page.getByRole('button', { name: '打印' })).toHaveCount(0)
 })
 
+test('highlights numbered notation during playback with tuplets and a bass voice', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nB: 1 2 3 4 | 5 6 7 1e |||')
+  await page.getByRole('button', { name: '渲染设置' }).click()
+  await page.getByRole('switch', { name: '简谱渲染' }).check()
+  await page.getByRole('button', { name: '关闭' }).click()
+  const play = page.getByRole('button', { name: '播放' })
+  await expect(play).toBeVisible({ timeout: 30_000 })
+  await play.click()
+  await expect(page.locator('.score-paper [data-m3n-id="m3n-e-1"].is-playing')).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('button', { name: '暂停' }).click()
+})
+
 test('renderer settings control width and drive the export dialog', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'paged')
@@ -62,14 +75,17 @@ test('renderer settings control width and drive the export dialog', async ({ pag
   await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
 })
 
-test('keeps numbered notation unavailable until a dedicated renderer is added', async ({ page }) => {
+test('renders ScoreDocument through the Open Fanqie numbered-notation engine', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await expect(page.getByRole('button', { name: '渲染设置' })).toBeVisible({ timeout: 30_000 })
   await page.getByRole('button', { name: '渲染设置' }).click()
   const settings = page.getByRole('dialog')
   const numbered = settings.getByRole('switch', { name: '简谱渲染' })
-  await expect(numbered).toBeDisabled()
+  await expect(numbered).toBeEnabled()
   await expect(numbered).not.toBeChecked()
-  await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'staff')
-  await expect(page.locator('.score-paper [id^="m3n-e-"]').first()).toBeVisible()
+  await numbered.check()
+  await expect(numbered).toBeChecked()
+  await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'numbered')
+  await expect(page.locator('.score-paper svg[viewBox^="0 0"]').first()).toBeVisible()
+  await expect(page.locator('.score-paper [data-m3n-id^="m3n-e-"]').first()).toBeVisible()
 })

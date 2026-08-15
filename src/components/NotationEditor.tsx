@@ -142,6 +142,7 @@ export function NotationEditor({
         />
         <ScoreRenderer
           mei={result.mei}
+          scoreDocument={analysis.score}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
           compact={embedded}

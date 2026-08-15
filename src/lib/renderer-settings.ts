@@ -2,6 +2,7 @@ export const SCORE_WIDTH_KEY = 'm3n:score-width'
 export const PLAYBACK_SPEED_KEY = 'm3n:playback-speed'
 export const METRONOME_ENABLED_KEY = 'm3n:metronome-enabled'
 export const RENDER_MODE_KEY = 'm3n:render-mode'
+export const NUMBERED_NOTATION_KEY = 'm3n:numbered-notation'
 
 export const SCORE_WIDTH_MIN = 320
 export const SCORE_WIDTH_MAX = 2560
@@ -52,6 +53,22 @@ export function readRenderMode(): RenderMode {
 export function writeRenderMode(mode: RenderMode) {
   try {
     localStorage.setItem(RENDER_MODE_KEY, mode)
+  } catch {
+    // 本地存储不可用时忽略写入。
+  }
+}
+
+export function readNumberedNotation() {
+  try {
+    return localStorage.getItem(NUMBERED_NOTATION_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function writeNumberedNotation(enabled: boolean) {
+  try {
+    localStorage.setItem(NUMBERED_NOTATION_KEY, enabled ? '1' : '0')
   } catch {
     // 本地存储不可用时忽略写入。
   }
