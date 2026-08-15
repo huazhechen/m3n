@@ -180,6 +180,17 @@ function finalizeSystem(items: MeasureMetric[], available: number, options: Numb
   return { measures, y: 0, height }
 }
 
+function reserveSystemStartEnding(items: MeasureMetric[], options: NumberedLayoutOptions) {
+  const first = items[0]
+  // A volta beginning at a rendered system needs its own left structural
+  // column. Without it, the bracket leg starts on top of the first number.
+  if (!first?.measure.ending || first.measure.left) return
+  const offset = 35 * (options.fontSize / 18)
+  first.width += offset
+  first.barX += offset
+  first.placements.forEach((placement) => { placement.x += offset })
+}
+
 export function buildNumberedLayout(measures: readonly ScoreMeasure[], options: NumberedLayoutOptions): NumberedSystem[] {
   const available = Math.max(options.fontSize * 8, options.width - options.padding * 2)
   const rows: MeasureMetric[][] = []
@@ -196,6 +207,7 @@ export function buildNumberedLayout(measures: readonly ScoreMeasure[], options: 
   flush()
   let y = 0
   return rows.map((items) => {
+    reserveSystemStartEnding(items, options)
     const system = finalizeSystem(items, available, options)
     system.y = y
     y += system.height

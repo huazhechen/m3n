@@ -136,24 +136,48 @@ function drawPitch(group: SVGGElement, token: string, x: number, y: number, key:
 
 function drawBarline(parent: SVGGElement, type: string | undefined, x: number, fontSize: number) {
   if (!type) return
+  if (type === 'rptstart' || type === 'rptend' || type === 'rptboth') {
+    const scale = fontSize / 18
+    const repeat = svg('g', { class: `numbered-repeat numbered-bar-${type}`, 'data-bar-x': x })
+    const yTop = -14.5 * scale
+    const yBottom = 14.5 * scale
+    const rule = (offset: number, weight: number) => repeat.append(svg('line', {
+      x1: x + offset * scale,
+      x2: x + offset * scale,
+      y1: yTop,
+      y2: yBottom,
+      stroke: '#101010',
+      'stroke-width': weight * scale,
+      class: 'numbered-repeat-rule',
+    }))
+    const dots = (offset: number) => [-5.25, 5.25].forEach((y) => repeat.append(svg('circle', {
+      cx: x + offset * scale,
+      cy: y * scale,
+      r: 1.22 * scale,
+      fill: '#101010',
+      class: 'numbered-repeat-dot',
+    })))
+    if (type === 'rptend' || type === 'rptboth') {
+      dots(-8.2)
+      rule(-4.35, 0.82)
+      rule(-1.65, 1.32)
+    }
+    if (type === 'rptstart' || type === 'rptboth') {
+      rule(-1.65, 1.32)
+      rule(2.3, 0.82)
+      dots(6.8)
+    }
+    parent.append(repeat)
+    return
+  }
   const glyphId = type === 'single' ? 'xiaojiexian'
     : type === 'dbl' ? 'xiaojiexian_shuangxian'
       : type === 'end' ? 'jieshufu'
-        : type === 'rptstart' ? 'xunhuan_zuo'
-          : type === 'rptend' ? 'xunhuan_you'
-            : type === 'rptboth' ? 'xunhuan_zuoyou'
-            : undefined
+        : undefined
   if (glyphId) {
     const marker = glyph(parent, glyphId, x, 0, fontSize, `numbered-glyph numbered-bar-${type}`)
-    if (type === 'rptstart' || type === 'rptend' || type === 'rptboth') {
-      // The source glyph is drawn for a 1000-unit page.  At the responsive
-      // preview scale its 2.4-unit heavy rule becomes an opaque block; retain
-      // the original paths but optically condense just repeat boundaries.
-      const scale = fontSize / 18
-      marker.setAttribute('transform', `translate(${x} 0) scale(${scale * 0.78} ${scale})`)
-    }
     marker.setAttribute('data-bar-x', String(x))
-    if (type === 'end' || type === 'rptstart' || type === 'rptend' || type === 'rptboth') marker.classList.add('numbered-bar-heavy')
+    if (type === 'end') marker.classList.add('numbered-bar-heavy')
   }
 }
 

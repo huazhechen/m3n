@@ -59,7 +59,7 @@ describe('NumberedScore', () => {
     const beams = paper.querySelectorAll<SVGLineElement>('.numbered-beam')
     expect(beams).not.toHaveLength(0)
     expect([...beams].some((beam) => Number(beam.getAttribute('x2')) > Number(beam.getAttribute('x1')) + 20)).toBe(true)
-    expect(paper.querySelectorAll('.numbered-bar-heavy')).not.toHaveLength(0)
+    expect(paper.querySelectorAll('.numbered-repeat')).not.toHaveLength(0)
     expect(paper.querySelectorAll('[data-lyric-row="0"]')).not.toHaveLength(0)
     expect(paper.querySelectorAll('[data-lyric-row="1"]')).not.toHaveLength(0)
     expect(paper.querySelectorAll('[data-lyric-row="2"]')).not.toHaveLength(0)
@@ -92,6 +92,28 @@ describe('NumberedScore', () => {
     expect(paper.querySelectorAll('.numbered-bar-rptend')).toHaveLength(1)
     expect(paper.querySelectorAll('.numbered-bar-rptstart')).toHaveLength(1)
     expect(paper.querySelectorAll('.numbered-system')).toHaveLength(2)
+  })
+
+  it('reserves a system-leading structural column for an alternate ending', () => {
+    const document = parseM3NDocument('{2/4}\nN: 1 2 |||')
+    const measure = document.parts.get('score')?.melody.find((item) => item.events.length > 0)
+    if (measure) measure.ending = '1'
+    const layout = buildNumberedLayout(measure ? [measure] : [], { width: 480, padding: 20, fontSize: 18, beatLength: 1 })
+    const systemMeasure = layout[0]?.measures[0]
+
+    expect(systemMeasure?.leftBarX).toBe(20)
+    expect(systemMeasure?.placements[0]?.center).toBeGreaterThan(20)
+  })
+
+  it('draws repeat boundaries as separated rules instead of opaque glyph blocks', () => {
+    const document = parseM3NDocument('{2/4}\nN: ||: 1 2 :||: 3 4 |||')
+    const score = NumberedScore.create(document, { width: 640, headerMetadata: [], paged: false })
+    const paper = globalThis.document.createElement('div')
+    score.attach(paper)
+
+    expect(paper.querySelectorAll('.numbered-repeat-rule')).not.toHaveLength(0)
+    expect(paper.querySelectorAll('.numbered-repeat-dot')).not.toHaveLength(0)
+    expect(paper.querySelector('use[href="#xunhuan_zuo"], use[href="#xunhuan_you"], use[href="#xunhuan_zuoyou"]')).toBeNull()
   })
 
   it('renders changed key, meter, and tempo with the Open Fanqie boundary glyphs', () => {
