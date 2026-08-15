@@ -8,7 +8,7 @@ function number(value: number) {
   return Number(value.toFixed(2))
 }
 
-function headerMarkup(metadata: readonly ScoreHeaderMetadata[], width: number) {
+export function headerMarkup(metadata: readonly ScoreHeaderMetadata[], width: number) {
   const centered = metadata.filter((item) => item.side === 'center').sort((left, right) => left.priority - right.priority)
   const left = metadata.filter((item) => item.side === 'left').sort((left, right) => left.priority - right.priority)
   const right = metadata.filter((item) => item.side === 'right').sort((left, right) => left.priority - right.priority)
@@ -42,6 +42,20 @@ function headerMarkup(metadata: readonly ScoreHeaderMetadata[], width: number) {
 
 export function scoreHeaderHeight(metadata: readonly ScoreHeaderMetadata[]) {
   return metadata.length === 0 ? 0 : headerMarkup(metadata, 0).height
+}
+
+/** Applies a score header to any SVG with a numeric viewBox. */
+export function addScoreHeaderToSvg(svg: SVGSVGElement, metadata: readonly ScoreHeaderMetadata[], width: number, height: number) {
+  if (metadata.length === 0 || svg.hasAttribute('data-m3n-header')) return height
+  const { markup, height: headerHeight } = headerMarkup(metadata, width)
+  const content = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+  while (svg.firstChild) content.append(svg.firstChild)
+  content.setAttribute('transform', `translate(0, ${headerHeight})`)
+  svg.append(content)
+  svg.insertAdjacentHTML('afterbegin', markup)
+  svg.setAttribute('viewBox', `0 0 ${number(width)} ${number(height + headerHeight)}`)
+  svg.setAttribute('data-m3n-header', 'true')
+  return height + headerHeight
 }
 
 /** Adds the existing score header layout to the first Verovio SVG page. */

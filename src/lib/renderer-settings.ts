@@ -1,6 +1,7 @@
 export const SCORE_WIDTH_KEY = 'm3n:score-width'
 export const PLAYBACK_SPEED_KEY = 'm3n:playback-speed'
 export const RENDER_MODE_KEY = 'm3n:render-mode'
+export const NOTATION_MODE_KEY = 'm3n:notation-mode'
 
 export const SCORE_WIDTH_MIN = 320
 export const SCORE_WIDTH_MAX = 2560
@@ -51,6 +52,26 @@ export function readRenderMode(): RenderMode {
 export function writeRenderMode(mode: RenderMode) {
   try {
     localStorage.setItem(RENDER_MODE_KEY, mode)
+  } catch {
+    // 本地存储不可用时忽略写入。
+  }
+}
+
+export type NotationMode = 'staff' | 'jianpu'
+export const DEFAULT_NOTATION_MODE: NotationMode = 'staff'
+
+export function readNotationMode(): NotationMode {
+  try {
+    const raw = localStorage.getItem(NOTATION_MODE_KEY)
+    return raw === 'staff' || raw === 'jianpu' ? raw : DEFAULT_NOTATION_MODE
+  } catch {
+    return DEFAULT_NOTATION_MODE
+  }
+}
+
+export function writeNotationMode(mode: NotationMode) {
+  try {
+    localStorage.setItem(NOTATION_MODE_KEY, mode)
   } catch {
     // 本地存储不可用时忽略写入。
   }

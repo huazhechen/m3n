@@ -768,6 +768,29 @@ textarea::selection {
   padding: 16px 20px;
 }
 
+.score-paper[data-notation-mode="jianpu"][data-render-mode="continuous"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.score-paper[data-notation-mode="jianpu"] svg.jianpu-page {
+  width: auto;
+  max-width: none;
+  height: auto;
+}
+
+.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-signature,
+.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-tempo,
+.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-ending,
+.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-navigation,
+.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-section {
+  pointer-events: none;
+}
+
+.score-paper[data-notation-mode="jianpu"] .measure {
+  pointer-events: all;
+}
+
 .score-paper .measure-playback-highlight,
 .score-paper .measure-cursor-highlight {
   display: none;
@@ -926,6 +949,44 @@ textarea::selection {
 
 .switch-control input:checked + .switch-track .switch-thumb {
   transform: translateX(18px);
+}
+
+.renderer-settings-row fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.renderer-settings-row legend {
+  color: #285b5c;
+  font-size: 12px;
+  white-space: nowrap;
+  padding: 0;
+}
+
+.notation-mode-choice {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.notation-mode-choice label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #285b5c;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.notation-mode-choice input[type="radio"] {
+  appearance: auto;
+  width: auto;
+  height: auto;
+  accent-color: #1683ff;
+  cursor: pointer;
 }
 
 .renderer-settings-row {

@@ -61,3 +61,59 @@ test('renderer settings control width and drive the export dialog', async ({ pag
   await expect(exportDialog.getByRole('radio', { name: 'PDF（A4 分页）' })).toBeChecked()
   await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
 })
+
+test('switches to jianpu rendering and maps notes back to source', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill(source)
+  await expect(page.locator('.score-paper [id^="m3n-e-"]').first()).toBeVisible({ timeout: 30_000 })
+
+  await page.getByRole('button', { name: '渲染设置' }).click()
+  const settings = page.getByRole('dialog')
+  await settings.getByRole('radio', { name: '简谱' }).click()
+  await expect(page.locator('.score-paper')).toHaveAttribute('data-notation-mode', 'jianpu')
+  const jianpuPage = page.locator('.score-paper svg.jianpu-page').first()
+  await expect(jianpuPage).toBeVisible({ timeout: 30_000 })
+  await expect(jianpuPage.locator('g#m3n-e-1')).toBeVisible()
+
+  await jianpuPage.locator('g#m3n-e-1').click()
+  await expect.poll(() => page.getByLabel('M3N source').evaluate((element) => ({
+    start: (element as HTMLTextAreaElement).selectionStart,
+    end: (element as HTMLTextAreaElement).selectionEnd,
+  }))).not.toEqual({ start: 0, end: 0 })
+
+  await page.getByRole('button', { name: '渲染设置' }).click()
+  await page.getByRole('dialog').getByRole('radio', { name: '五线谱' }).click()
+  await expect(page.locator('.score-paper')).toHaveAttribute('data-notation-mode', 'staff')
+  await expect(page.locator('.score-paper svg.jianpu-page')).toHaveCount(0)
+  await expect(page.locator('.score-paper [id^="m3n-e-"]').first()).toBeVisible({ timeout: 30_000 })
+})
+
+test('plays jianpu with synchronized highlights', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill(source)
+  await page.getByRole('button', { name: '渲染设置' }).click()
+  await page.getByRole('dialog').getByRole('radio', { name: '简谱' }).click()
+  await expect(page.locator('.score-paper svg.jianpu-page').first()).toBeVisible({ timeout: 30_000 })
+
+  const play = page.getByRole('button', { name: '播放' })
+  await expect(play).toBeVisible()
+  await play.click()
+  await expect(page.getByRole('button', { name: '暂停' })).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('.score-paper .is-playing').first()).toBeVisible()
+  await page.getByRole('button', { name: '暂停' }).click()
+})
+
+test('exports jianpu pages from the reader', async ({ page }) => {
+  await page.goto('/scores/huan_le_song_01')
+  await expect(page.locator('.score-paper [id^="m3n-e-"]').first()).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('button', { name: '渲染设置' }).click()
+  await page.getByRole('dialog').getByRole('radio', { name: '简谱' }).click()
+  await expect(page.locator('.score-paper svg.jianpu-page').first()).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('button', { name: '关闭' }).click()
+
+  await page.getByRole('button', { name: '打印' }).click()
+  const exportDialog = page.getByRole('dialog')
+  await expect(exportDialog).toBeVisible()
+  await expect(exportDialog.locator('svg.jianpu-page').first()).toBeVisible({ timeout: 30_000 })
+  await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
+})

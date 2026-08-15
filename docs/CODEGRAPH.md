@@ -84,6 +84,8 @@ flowchart LR
   analysis["analyzeM3N"]
   complexity["melody complexity"]
   mei["m3n-mei"]
+  jianpu["m3n-jianpu"]
+  jianpuData["JianpuScoreData"]
   meiParts["mei-events / mei-layout<br/>mei-document / mei-lyrics"]
   xml["MEI XML + source map"]
   format["m3n-format"]
@@ -104,22 +106,28 @@ flowchart LR
   score --> mei
   syntax --> mei
   mei --> meiParts --> xml
+  score --> jianpu --> jianpuData
+  xml --> jianpu
   source --> format
   syntax --> format
   projection --> format
   score --> format --> formatted
 ```
 
-`M3NSyntaxTree` 保留原文和源码范围，供格式化、结构规则和定位使用；`ScoreDocument` 提供规范化音乐语义，供校验、复杂度计算、播放计划和 MEI 序列化使用。交互调用方以 `analyzeM3N` 为聚合入口，复用一次解析得到的派生结果。
+`M3NSyntaxTree` 保留原文和源码范围，供格式化、结构规则和定位使用；`ScoreDocument` 提供规范化音乐语义，供校验、复杂度计算、播放计划、MEI 序列化与简谱数据生成使用。`m3n-jianpu` 复用生成的 MEI 解析歌词与事件 ID，保证五线谱和简谱的源码映射、播放高亮完全一致。交互调用方以 `analyzeM3N` 为聚合入口，复用一次解析得到的派生结果。
 
 ## 渲染、播放与导出
 
 ```mermaid
 flowchart LR
   mei["MEI XML"] --> verovio["VerovioScore"]
+  jianpuData["JianpuScoreData"] --> jianpu["JianpuScore<br/>JianpuRender adapter"]
+  jianpurender["jianpurender"] --> jianpu
   scheduler["RenderScheduler"] --> verovio
   verovio --> svg["SVG score"]
   verovio --> midi["MIDI + time map"]
+  midi --> jianpu
+  jianpu --> svg
   midi --> player["SpessaPlayer"]
   soundfont["FluidR3 GM Piano SF3"] --> player
   coordinator["PlaybackCoordinator"] --> player
@@ -133,7 +141,7 @@ flowchart LR
   exporter --> pdf["PDF via jsPDF"]
 ```
 
-Verovio WASM 的排版任务由 `RenderScheduler` 串行化；`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。导出路径复用渲染 SVG，并在输出前组合标题信息。
+Verovio WASM 的排版任务由 `RenderScheduler` 串行化；`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。简谱由 `JianpuScore` 调用 JianpuRender 排布并补充歌词与结构标记，播放与五线谱共用同一 MIDI 时间轴（`elementsAtTime` 返回的 ID 直接映射到简谱 DOM）。导出路径复用渲染 SVG，并在输出前组合标题信息。
 
 ## 分享 API
 

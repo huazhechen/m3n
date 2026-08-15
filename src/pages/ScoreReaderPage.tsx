@@ -1,6 +1,6 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { analyzeM3N, formatScoreDiagnostic } from '@m3n/notation'
+import { analyzeM3N, formatScoreDiagnostic, toJianpuScoreData } from '@m3n/notation'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
@@ -9,10 +9,12 @@ import { isLocalScoreId, loadLocalScore } from '../lib/local-scores'
 import { presetScores } from '../lib/samples'
 import {
   DEFAULT_SCORE_WIDTH,
+  readNotationMode,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
   readRendererSetting,
+  type NotationMode,
 } from '../lib/renderer-settings'
 import { isSharedScoreId, loadSharedScore } from '../lib/shared-scores'
 
@@ -28,6 +30,7 @@ export function ScoreReaderPage() {
     SCORE_WIDTH_MIN,
     SCORE_WIDTH_MAX,
   ))
+  const [notationMode, setNotationMode] = useState<NotationMode>(() => readNotationMode())
   const [exportError, setExportError] = useState('')
   useEffect(() => {
     let cancelled = false
@@ -45,6 +48,7 @@ export function ScoreReaderPage() {
   const scoreSource = score?.source ?? localScore?.source ?? sharedSource ?? ''
   const analysis = useMemo(() => analyzeM3N(scoreSource), [scoreSource])
   const { conversion: result, invalidMeasureIds: invalidMeasures } = analysis
+  const jianpuData = useMemo(() => toJianpuScoreData(analysis.score, result.mei), [analysis.score, result.mei])
 
   if (!score && !localScore && sharedSource === undefined) {
     return <main><TopNav /><div className="page-status" role="status">Loading...</div></main>
@@ -91,8 +95,10 @@ export function ScoreReaderPage() {
           mei={result.mei}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
+          jianpuData={jianpuData}
           invalidMeasureIds={invalidMeasures}
           onLayoutWidthChange={setExportWidth}
+          onNotationModeChange={setNotationMode}
         />
         <ScoreExportDialog
           ref={exportDialogRef}
@@ -101,6 +107,8 @@ export function ScoreReaderPage() {
           width={exportWidth}
           hasBassStaff={result.hasBassStaff}
           headerMetadata={result.headerMetadata}
+          jianpuData={jianpuData}
+          notationMode={notationMode}
           onError={setExportError}
         />
         {exportError && <p className="render-message" role="alert">{exportError}</p>}

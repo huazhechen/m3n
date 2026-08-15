@@ -1,5 +1,6 @@
 export * from './m3n-direct.js'
 export * from './m3n-format.js'
+export * from './m3n-jianpu.js'
 export * from './m3n-lyric-alignment.js'
 export * from './m3n-mei.js'
 export * from './mei-format.js'

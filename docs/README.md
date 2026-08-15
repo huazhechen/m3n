@@ -13,5 +13,6 @@
 - [ARCHITECTURE.md](ARCHITECTURE.md)：前端架构与工作区边界。
 - [CODEGRAPH.md](CODEGRAPH.md)：模块依赖与数据流。
 - [VEROVIO.md](VEROVIO.md)：Verovio 本地参考手册。
+- [JIANPU.md](JIANPU.md)：JianpuRender 本地参考手册与简谱渲染边界。
 
 仓库级开发说明见根目录 [README](../README.md)。
