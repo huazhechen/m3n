@@ -769,13 +769,13 @@ textarea::selection {
 }
 
 .score-paper[data-notation-mode="jianpu"][data-render-mode="continuous"] {
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
 }
 
 .score-paper[data-notation-mode="jianpu"][data-render-mode="continuous"] svg.jianpu-page {
-  width: auto;
-  max-width: none;
+  width: 100%;
+  max-width: 100%;
   height: auto;
 }
 

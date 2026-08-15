@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import type { ScoreDocument } from '@m3n/notation'
 import { analyzeM3N } from '@m3n/notation'
 import { JianpuScore } from './jianpu-score.js'
+import { layoutMeasures } from './m3n-jianpu-layout.js'
 
 const scoreDocument: ScoreDocument = {
   title: 'Test', subtitle: '', singer: '', composer: '', lyricist: '', arranger: '', copyright: '', source: '', note: '', transpose: '', key: 'C', meterCount: 4, meterUnit: 4, tempo: 100, hasExplicitTempo: true, lyrics: [], intervals: [],
@@ -82,6 +83,12 @@ describe('JianpuScore', () => {
     expect(paper.querySelectorAll('.repeat-dot').length).toBeGreaterThan(0)
     expect(paper.querySelectorAll('.event-lyric').length).toBeGreaterThan(0)
     expect(paper.querySelectorAll('.m3n-jianpu-inline-setting')).toHaveLength(0)
+    const placements = layoutMeasures(analysis.score.parts.get('score')!.melody, 920, 28, 80, 136, 32, 1)
+    const systems = Map.groupBy(placements, (placement) => placement.y)
+    for (const system of systems.values()) {
+      const rightEdge = Math.max(...system.map((placement) => placement.x + placement.width))
+      expect(rightEdge).toBeCloseTo(892, 4)
+    }
     const measureYs = new Set([...paper.querySelectorAll<SVGGElement>('g.measure')]
       .map((measure) => /translate\([^,]+,([^\)]+)\)/.exec(measure.getAttribute('transform') ?? '')?.[1])
       .filter((y): y is string => y !== undefined))

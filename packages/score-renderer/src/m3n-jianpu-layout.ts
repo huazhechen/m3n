@@ -39,11 +39,11 @@ function visualSlots(event: ScoreEvent, beat: number) {
 function metric(measure: ScoreMeasure, beat: number, fontSize: number) {
   const spans = measure.events.map((event) => visualSpan(event, beat))
   const slots = measure.events.reduce((total, event) => total + visualSlots(event, beat), 0)
-  const beats = Math.max(0, Math.ceil(spans.reduce((total, value) => total + value, 0)) - 1)
+  const beatGaps = Math.max(0, Math.ceil(spans.reduce((total, value) => total + value, 0)) - 1)
   const cell = fontSize * 1.5
   const bar = fontSize * 0.55
   const beatGap = fontSize * 0.28
-  return { slots: Math.max(1, slots), width: Math.max(fontSize * 2.2, slots * cell + beats * beatGap + bar), beatGap }
+  return { slots: Math.max(1, slots), width: Math.max(fontSize * 2.2, slots * cell + beatGaps * beatGap + bar), beatGaps, bar, beatGap }
 }
 
 /** Natural-width system wrapping used by JianpuABC when column alignment is disabled. */
@@ -57,15 +57,58 @@ export function layoutMeasures(
   beat: number,
 ): LayoutMeasure[] {
   const available = Math.max(1, width - padding * 2)
-  const result: LayoutMeasure[] = []
-  let x = padding
-  let y = musicTop
+  const measureGap = fontSize * 0.35
+  type RowItem = { measure: ScoreMeasure; measureIndex: number; info: ReturnType<typeof metric>; width: number }
+  const rows: RowItem[][] = []
+  let row: RowItem[] = []
+  let rowWidth = 0
+  const flushRow = () => {
+    if (row.length > 0) rows.push(row)
+    row = []
+    rowWidth = 0
+  }
+
+  // First choose systems from their natural widths. The width of a completed
+  // system is justified below, independently of every other system.
   for (const [measureIndex, measure] of measures.entries()) {
+    if (measure.breakBefore) flushRow()
     const info = metric(measure, beat, fontSize)
-    if (x > padding && (x + info.width > width - padding || measure.breakBefore)) { x = padding; y += rowHeight }
-    result.push({ measure, measureIndex, x, y, width: info.width, cellWidth: Math.max(fontSize * 0.62, info.width / info.slots), beatGap: info.beatGap })
-    x += info.width
-    if (measure.breakAfter || x - padding > available) { x = padding; y += rowHeight }
+    const measureWidth = Math.min(available, info.width)
+    const nextWidth = rowWidth + (row.length === 0 ? 0 : measureGap) + measureWidth
+    if (row.length > 0 && nextWidth > available) flushRow()
+    row.push({ measure, measureIndex, info, width: measureWidth })
+    rowWidth += (row.length === 1 ? 0 : measureGap) + measureWidth
+    if (measure.breakAfter) flushRow()
+  }
+  flushRow()
+
+  const result: LayoutMeasure[] = []
+  let y = musicTop
+  for (const rowItems of rows) {
+    const naturalWidth = rowItems.reduce((total, item) => total + item.width, 0) + Math.max(0, rowItems.length - 1) * measureGap
+    const scale = naturalWidth > 0 ? available / naturalWidth : 1
+    const scaledGap = measureGap * scale
+    let x = padding
+    for (const item of rowItems) {
+      const measureWidth = item.width * scale
+      const scaledBeatGap = item.info.beatGap * scale
+      const scaledBar = item.info.bar * scale
+      const cellWidth = Math.max(
+        fontSize * 0.62,
+        (measureWidth - scaledBar - item.info.beatGaps * scaledBeatGap) / item.info.slots,
+      )
+      result.push({
+        measure: item.measure,
+        measureIndex: item.measureIndex,
+        x,
+        y,
+        width: measureWidth,
+        cellWidth,
+        beatGap: scaledBeatGap,
+      })
+      x += measureWidth + scaledGap
+    }
+    y += rowHeight
   }
   return result
 }

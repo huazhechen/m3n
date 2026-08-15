@@ -202,7 +202,7 @@ function barline(group: SVGGElement, type: string | undefined, x: number) {
   }
 }
 
-function renderMeasure(lyricsByEvent: ReadonlyMap<ScoreEvent, readonly string[]>, inlineSettings: ReadonlyMap<ScoreEvent, string>, measure: ScoreMeasure, index: number, layout: ReturnType<typeof measureLayout>, key: string, fontFamily: string, beat: number, measureId: string) {
+function renderMeasure(lyricsByEvent: ReadonlyMap<ScoreEvent, readonly string[]>, inlineSettings: ReadonlyMap<ScoreEvent, string>, measure: ScoreMeasure, index: number, layout: ReturnType<typeof measureLayout>, placement: ReturnType<typeof layoutMeasures>[number], key: string, fontFamily: string, beat: number, measureId: string) {
   const group = svg('g', { class: 'measure', id: measureId, 'data-measure-number': index + 1 })
   for (const item of layout.events) {
     const note = svg('g', { class: 'jianpu-event', id: item.id, 'data-source-start': item.event.sourceStart, 'data-source-end': item.event.sourceEnd, transform: `translate(${item.x},0)` })
@@ -260,7 +260,7 @@ function renderMeasure(lyricsByEvent: ReadonlyMap<ScoreEvent, readonly string[]>
   }
   barline(group, measure.left, 0)
   barline(group, measure.right, layout.width)
-  const positioned = positionEvents({ measure, measureIndex: index, x: 0, y: 0, width: layout.width, cellWidth: layout.width / Math.max(1, layout.events.length), beatGap: 0 }, beat)
+  const positioned = positionEvents(placement, beat)
   const duration = renderDurationLines(positioned, beat, NOTE_SIZE, layout.width)
   if (duration) {
     const marker = globalThis.document.createElementNS(SVG_NS, 'g')
@@ -320,7 +320,7 @@ export class JianpuScore {
       }
       const measureId = `m3n-measure-${item.partIndex + 1}-${item.placement.measureIndex + 1}${item.id.endsWith(':bass') ? '-bass' : ''}`
       const measureY = item.placement.y - pageYOffset
-      const group = renderMeasure(lyricsByEvent, inlineSettings, item.placement.measure, item.placement.measureIndex, item.layout, document.key, fontFamily, beat, measureId)
+      const group = renderMeasure(lyricsByEvent, inlineSettings, item.placement.measure, item.placement.measureIndex, item.layout, item.placement, document.key, fontFamily, beat, measureId)
       group.setAttribute('transform', `translate(${item.placement.x},${measureY})`)
       group.setAttribute('data-m3n-voice', item.id)
       page.append(group)
