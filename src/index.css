@@ -921,6 +921,14 @@ textarea::selection {
   outline-offset: 2px;
 }
 
+.switch-control input:disabled {
+  cursor: not-allowed;
+}
+
+.switch-control input:disabled + .switch-track {
+  opacity: 0.52;
+}
+
 .switch-thumb {
   display: block;
   width: 18px;

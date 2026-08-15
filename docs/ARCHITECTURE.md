@@ -51,7 +51,6 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/notation/mei-document.ts`：通过 XML builder 组装 MEI 文档头、责任者元数据、`scoreDef` 和 section，统一处理文本转义与文档序列化。
 - `packages/notation/src/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
 - `packages/score-renderer/src/verovio-score.ts`：Verovio SVG 排版、MIDI 生成和时间映射。
-- `packages/score-renderer/src/numbered-layout.ts` 与 `numbered-score.ts`：基于 `ScoreDocument` 的简谱系统布局和 SVG 绘制；Verovio 仍提供 MIDI 与时间映射。
 - `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
 - `packages/score-renderer/src/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。

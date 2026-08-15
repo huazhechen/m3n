@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { MeiSourceMapRange, ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
+import type { MeiSourceMapRange, ScoreHeaderMetadata } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_SPEED,
   DEFAULT_SCORE_WIDTH,
@@ -9,9 +9,7 @@ import {
   PLAYBACK_SPEED_MIN,
   PLAYBACK_SPEED_STEP,
   readRenderMode,
-  readNumberedNotation,
   writeRenderMode,
-  writeNumberedNotation,
   type RenderMode,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
@@ -42,7 +40,6 @@ type ScoreRendererProps = {
   sourceMap: MeiSourceMapRange[]
   compact?: boolean
   activeXmlId?: string | null
-  scoreDocument?: ScoreDocument | null
   invalidMeasureIds?: string[]
   onActiveXmlId?: (xmlId: string | null) => void
   onLayoutWidthChange?: (width: number) => void
@@ -86,7 +83,6 @@ export function ScoreRenderer({
   sourceMap,
   compact = false,
   activeXmlId,
-  scoreDocument = null,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
   onActiveXmlId,
   onLayoutWidthChange,
@@ -123,7 +119,6 @@ export function ScoreRenderer({
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
-  const [numberedNotation, setNumberedNotation] = useState(() => !compact && readNumberedNotation())
   const speedRef = useRef(playbackSpeed)
   const [staffWidth, setStaffWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -174,7 +169,7 @@ export function ScoreRenderer({
 
     void (async () => {
       try {
-        const { NumberedScore, VerovioScore } = await import('@m3n/score-renderer')
+        const { VerovioScore } = await import('@m3n/score-renderer')
         const score = await VerovioScore.create(mei)
         if (cancelled) {
           score.destroy()
@@ -182,23 +177,6 @@ export function ScoreRenderer({
         }
         scoreRef.current = score
         if (isInitialRender) setRenderPhase('waiting-layout')
-
-        if (numberedNotation && scoreDocument) {
-          paper.innerHTML = ''
-          const numbered = NumberedScore.create(scoreDocument, {
-            width: renderWidth,
-            paged: renderMode === 'paged',
-            compact,
-            headerMetadata,
-            pageHeight: renderMode === 'paged' ? a4SourcePageHeight(renderWidth) : undefined,
-          })
-          numbered.attach(paper)
-          if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
-          numbered.destroy()
-          hasRenderedRef.current = true
-          setHasAudioControls(true)
-          return
-        }
 
         await scoreRenderScheduler.enqueue(() => {
           if (cancelled) return Promise.resolve()
@@ -263,7 +241,7 @@ export function ScoreRenderer({
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, headerMetadata, invalidMeasureIds, mei, numberedNotation, onActiveXmlId, renderMode, renderWidth, scoreDocument])
+  }, [compact, headerMetadata, invalidMeasureIds, mei, onActiveXmlId, renderMode, renderWidth])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -444,11 +422,6 @@ export function ScoreRenderer({
     if (!compact) writeRenderMode(mode)
   }
 
-  const changeNumberedNotation = (enabled: boolean) => {
-    setNumberedNotation(enabled)
-    if (!compact) writeNumberedNotation(enabled)
-  }
-
   useEffect(() => {
     window.addEventListener('pointerup', commitSeek)
     window.addEventListener('pointercancel', commitSeek)
@@ -552,9 +525,8 @@ export function ScoreRenderer({
                   type="checkbox"
                   role="switch"
                   aria-label="简谱渲染"
-                  checked={numberedNotation}
-                  disabled={!scoreDocument}
-                  onChange={(event) => changeNumberedNotation(event.currentTarget.checked)}
+                  checked={false}
+                  disabled
                 />
                 <span className="switch-track" aria-hidden="true"><span className="switch-thumb" /></span>
               </span>
@@ -595,7 +567,7 @@ export function ScoreRenderer({
         className="score-paper verovio-score"
         data-render-phase={renderPhase ?? undefined}
         data-render-mode={renderMode}
-        data-notation={numberedNotation ? 'numbered' : 'staff'}
+        data-notation="staff"
         aria-busy={isRendering || undefined}
         tabIndex={0}
         onClick={(event) => {

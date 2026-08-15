@@ -91,7 +91,6 @@ export function ScoreReaderPage() {
           mei={result.mei}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
-          scoreDocument={analysis.score}
           invalidMeasureIds={invalidMeasures}
           onLayoutWidthChange={setExportWidth}
         />
