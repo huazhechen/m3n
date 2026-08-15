@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import type { ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
+import type { ScoreHeaderMetadata } from '@m3n/notation'
 import {
   a4ImagePlacement,
   a4SourcePageHeight,
@@ -13,7 +13,6 @@ import {
   wrapScorePagesIntoSheets,
   avoidLabelCollisions,
   type VerovioScore,
-  type JianpuScore,
 } from '@m3n/score-renderer'
 
 type ExportFormat = 'png' | 'pdf'
@@ -24,8 +23,6 @@ type ScoreExportDialogProps = {
   width: number
   hasBassStaff: boolean
   headerMetadata: ScoreHeaderMetadata[]
-  jianpuScore?: ScoreDocument | null
-  notationMode?: 'staff' | 'jianpu'
   onError: (message: string) => void
 }
 
@@ -38,11 +35,6 @@ async function createVerovioScore(mei: string) {
   return VerovioScore.create(mei)
 }
 
-async function createJianpuScore(jianpuScore: ScoreDocument, width: number, paged: boolean, headerMetadata: readonly ScoreHeaderMetadata[]) {
-  const { JianpuScore } = await import('@m3n/score-renderer')
-  return JianpuScore.create(jianpuScore, { width, paged, headerMetadata })
-}
-
 function cloneScorePages(paper: HTMLElement) {
   return [...paper.querySelectorAll<SVGSVGElement>(':scope > svg')]
     .map((svg) => svg.cloneNode(true) as SVGSVGElement)
@@ -53,7 +45,7 @@ function pdfNotationPageHeight(width: number, headerMetadata: readonly ScoreHead
 }
 
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
-  function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, jianpuScore = null, notationMode = 'staff', onError }, ref) {
+  function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('pdf')
@@ -74,72 +66,50 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       if (!isOpen || !preview) return
       let cancelled = false
       preview.innerHTML = ''
-      if (notationMode === 'jianpu' && jianpuScore) {
-        void createJianpuScore(jianpuScore, Math.max(320, width), format === 'pdf', headerMetadata)
-          .then((score) => {
-            if (!cancelled) {
-              score.attach(preview)
-              if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
-            }
-            score.destroy()
+      void createVerovioScore(mei).then((score) => {
+        if (!cancelled) {
+          preview.innerHTML = score.layout({
+            width: Math.max(320, width),
+            pageHeight: format === 'pdf' ? pdfNotationPageHeight(width, headerMetadata) : undefined,
+            scale: 42,
+            includeBass: includeBass || !hasBassStaff,
           })
-          .catch((error: unknown) => {
-            if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
-          })
-      } else {
-        void createVerovioScore(mei).then((score) => {
-          if (!cancelled) {
-            preview.innerHTML = score.layout({
-              width: Math.max(320, width),
-              pageHeight: format === 'pdf' ? pdfNotationPageHeight(width, headerMetadata) : undefined,
-              scale: 42,
-              includeBass: includeBass || !hasBassStaff,
-            })
-            addScoreHeaderToPaper(preview, headerMetadata)
-            resolveLyricCollisions(preview)
-            avoidLabelCollisions(preview)
-            if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
-          }
-          score.destroy()
-        }).catch((error: unknown) => {
-          if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
-        })
-      }
+          addScoreHeaderToPaper(preview, headerMetadata)
+          resolveLyricCollisions(preview)
+          avoidLabelCollisions(preview)
+          if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
+        }
+        score.destroy()
+      }).catch((error: unknown) => {
+        if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
+      })
       return () => { cancelled = true }
-    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, jianpuScore, mei, notationMode, onError, width])
+    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, mei, onError, width])
 
     const exportScore = async () => {
       setIsExporting(true)
       onError('')
       let score: VerovioScore | null = null
-      let jianpuRenderer: JianpuScore | null = null
       try {
         const targetWidth = Math.round(width)
         if (!Number.isFinite(targetWidth) || targetWidth < 320 || targetWidth > 8000) {
           throw new Error('导出宽度需介于 320 和 8000 像素之间。')
         }
         const exportPaper = document.createElement('div')
-        if (notationMode === 'jianpu' && jianpuScore) {
-          jianpuRenderer = await createJianpuScore(jianpuScore, targetWidth, format === 'pdf', headerMetadata)
-          jianpuRenderer.attach(exportPaper)
-        } else {
-          score = await createVerovioScore(mei)
-          exportPaper.innerHTML = score.layout({
-            width: targetWidth,
-            pageHeight: format === 'pdf' ? pdfNotationPageHeight(targetWidth, headerMetadata) : undefined,
-            scale: 42,
-            includeBass: includeBass || !hasBassStaff,
-          })
-        }
+        score = await createVerovioScore(mei)
+        exportPaper.innerHTML = score.layout({
+          width: targetWidth,
+          pageHeight: format === 'pdf' ? pdfNotationPageHeight(targetWidth, headerMetadata) : undefined,
+          scale: 42,
+          includeBass: includeBass || !hasBassStaff,
+        })
         exportPaper.style.cssText = 'position:fixed; visibility:hidden; pointer-events:none; inset:0;'
         document.body.append(exportPaper)
         let svgs: SVGSVGElement[] = []
         try {
-          if (notationMode !== 'jianpu' || !jianpuScore) {
-            addScoreHeaderToPaper(exportPaper, headerMetadata)
-            resolveLyricCollisions(exportPaper)
-            avoidLabelCollisions(exportPaper)
-          }
+          addScoreHeaderToPaper(exportPaper, headerMetadata)
+          resolveLyricCollisions(exportPaper)
+          avoidLabelCollisions(exportPaper)
           svgs = cloneScorePages(exportPaper)
         } finally {
           exportPaper.remove()
@@ -171,7 +141,6 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       } catch (error) {
         onError(error instanceof Error ? error.message : '导出失败。')
       } finally {
-        jianpuRenderer?.destroy()
         score?.destroy()
         setIsExporting(false)
       }

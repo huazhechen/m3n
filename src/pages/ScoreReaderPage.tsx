@@ -9,12 +9,10 @@ import { isLocalScoreId, loadLocalScore } from '../lib/local-scores'
 import { presetScores } from '../lib/samples'
 import {
   DEFAULT_SCORE_WIDTH,
-  readNotationMode,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
   readRendererSetting,
-  type NotationMode,
 } from '../lib/renderer-settings'
 import { isSharedScoreId, loadSharedScore } from '../lib/shared-scores'
 
@@ -30,7 +28,6 @@ export function ScoreReaderPage() {
     SCORE_WIDTH_MIN,
     SCORE_WIDTH_MAX,
   ))
-  const [notationMode, setNotationMode] = useState<NotationMode>(() => readNotationMode())
   const [exportError, setExportError] = useState('')
   useEffect(() => {
     let cancelled = false
@@ -94,10 +91,8 @@ export function ScoreReaderPage() {
           mei={result.mei}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
-          jianpuScore={analysis.score}
           invalidMeasureIds={invalidMeasures}
           onLayoutWidthChange={setExportWidth}
-          onNotationModeChange={setNotationMode}
         />
         <ScoreExportDialog
           ref={exportDialogRef}
@@ -106,8 +101,6 @@ export function ScoreReaderPage() {
           width={exportWidth}
           hasBassStaff={result.hasBassStaff}
           headerMetadata={result.headerMetadata}
-          jianpuScore={analysis.score}
-          notationMode={notationMode}
           onError={setExportError}
         />
         {exportError && <p className="render-message" role="alert">{exportError}</p>}

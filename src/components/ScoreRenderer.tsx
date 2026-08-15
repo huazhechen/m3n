@@ -1,20 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { MeiSourceMapRange, ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
+import type { MeiSourceMapRange, ScoreHeaderMetadata } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_SPEED,
   DEFAULT_SCORE_WIDTH,
-  DEFAULT_NOTATION_MODE,
   METRONOME_ENABLED_KEY,
   PLAYBACK_SPEED_KEY,
   PLAYBACK_SPEED_MAX,
   PLAYBACK_SPEED_MIN,
   PLAYBACK_SPEED_STEP,
-  readNotationMode,
   readRenderMode,
-  writeNotationMode,
   writeRenderMode,
   type RenderMode,
-  type NotationMode,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
@@ -42,7 +38,6 @@ type ScoreRendererProps = {
   mei: string
   headerMetadata: ScoreHeaderMetadata[]
   sourceMap: MeiSourceMapRange[]
-  jianpuScore?: ScoreDocument | null
   compact?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
@@ -50,7 +45,6 @@ type ScoreRendererProps = {
   onLayoutWidthChange?: (width: number) => void
   onNoteClick?: (xmlId: string) => void
   onPaperBlur?: () => void
-  onNotationModeChange?: (mode: NotationMode) => void
 }
 
 type RenderPhase = 'loading-library' | 'waiting-layout' | 'layout'
@@ -87,7 +81,6 @@ export function ScoreRenderer({
   mei,
   headerMetadata,
   sourceMap,
-  jianpuScore = null,
   compact = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
@@ -95,7 +88,6 @@ export function ScoreRenderer({
   onLayoutWidthChange,
   onNoteClick,
   onPaperBlur,
-  onNotationModeChange,
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement>(null)
   const scoreRef = useRef<VerovioScore | null>(null)
@@ -127,9 +119,6 @@ export function ScoreRenderer({
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
-  const [notationMode, setNotationMode] = useState<NotationMode>(() => (
-    compact ? DEFAULT_NOTATION_MODE : readNotationMode()
-  ))
   const speedRef = useRef(playbackSpeed)
   const [staffWidth, setStaffWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -160,7 +149,6 @@ export function ScoreRenderer({
     const playbackLease = playbackLeaseRef.current
     let cancelled = false
     const isInitialRender = !hasRenderedRef.current
-    const isJianpu = notationMode === 'jianpu' && jianpuScore !== null && jianpuScore !== undefined
     if (isInitialRender) paper.innerHTML = ''
     scorePlaybackCoordinator.release(playbackLease)
     playerRef.current?.destroy()
@@ -181,25 +169,13 @@ export function ScoreRenderer({
 
     void (async () => {
       try {
-        const { JianpuScore, VerovioScore } = await import('@m3n/score-renderer')
+        const { VerovioScore } = await import('@m3n/score-renderer')
         const score = await VerovioScore.create(mei)
         if (cancelled) {
           score.destroy()
           return
         }
         scoreRef.current = score
-        if (isJianpu) {
-          const jianpu = JianpuScore.create(jianpuScore!, {
-            width: renderWidth,
-            paged: renderMode === 'paged',
-            compact,
-            headerMetadata,
-          })
-          jianpu.attach(paper)
-          hasRenderedRef.current = true
-          setHasAudioControls(true)
-          return
-        }
         if (isInitialRender) setRenderPhase('waiting-layout')
 
         await scoreRenderScheduler.enqueue(() => {
@@ -265,7 +241,7 @@ export function ScoreRenderer({
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, headerMetadata, invalidMeasureIds, jianpuScore, mei, notationMode, onActiveXmlId, renderMode, renderWidth])
+  }, [compact, headerMetadata, invalidMeasureIds, mei, onActiveXmlId, renderMode, renderWidth])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -446,18 +422,6 @@ export function ScoreRenderer({
     if (!compact) writeRenderMode(mode)
   }
 
-  const changeNotationMode = (mode: NotationMode) => {
-    setNotationMode(mode)
-    if (!compact) writeNotationMode(mode)
-    onNotationModeChange?.(mode)
-  }
-
-  useEffect(() => {
-    onNotationModeChange?.(notationMode)
-    // 仅通知外部一次初始值，避免重复触发。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   useEffect(() => {
     window.addEventListener('pointerup', commitSeek)
     window.addEventListener('pointercancel', commitSeek)
@@ -554,32 +518,6 @@ export function ScoreRenderer({
             <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
           </div>
           <div className="renderer-settings-body">
-            <div className="renderer-settings-choice" role="radiogroup" aria-label="渲染模式">
-              <span>渲染模式</span>
-              <div className="notation-mode-choice">
-                <label>
-                  <input
-                    type="radio"
-                    name="notation-mode"
-                    value="staff"
-                    checked={notationMode === 'staff'}
-                    onChange={() => changeNotationMode('staff')}
-                  />
-                  <span>五线谱</span>
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="notation-mode"
-                    value="jianpu"
-                    checked={notationMode === 'jianpu'}
-                    onChange={() => changeNotationMode('jianpu')}
-                    disabled={!jianpuScore}
-                  />
-                  <span>简谱</span>
-                </label>
-              </div>
-            </div>
             <div className="renderer-settings-row">
               <span>乐谱宽度</span>
               <input
@@ -616,7 +554,6 @@ export function ScoreRenderer({
         className="score-paper verovio-score"
         data-render-phase={renderPhase ?? undefined}
         data-render-mode={renderMode}
-        data-notation-mode={notationMode}
         aria-busy={isRendering || undefined}
         tabIndex={0}
         onClick={(event) => {

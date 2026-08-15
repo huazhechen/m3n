@@ -768,29 +768,6 @@ textarea::selection {
   padding: 16px 20px;
 }
 
-.score-paper[data-notation-mode="jianpu"][data-render-mode="continuous"] {
-  overflow-x: hidden;
-  overflow-y: hidden;
-}
-
-.score-paper[data-notation-mode="jianpu"][data-render-mode="continuous"] svg.jianpu-page {
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-}
-
-.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-signature,
-.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-tempo,
-.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-ending,
-.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-navigation,
-.score-paper[data-notation-mode="jianpu"] .m3n-jianpu-section {
-  pointer-events: none;
-}
-
-.score-paper[data-notation-mode="jianpu"] .measure {
-  pointer-events: all;
-}
-
 .score-paper .measure-playback-highlight,
 .score-paper .measure-cursor-highlight {
   display: none;

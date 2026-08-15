@@ -144,7 +144,6 @@ export function NotationEditor({
           mei={result.mei}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
-          jianpuScore={analysis.score}
           compact={embedded}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}
