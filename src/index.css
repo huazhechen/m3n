@@ -1331,19 +1331,31 @@ a.action-button {
 
 @container (max-width: 560px) {
   .audio-controls {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "play speed"
+      "settings progress";
     gap: 10px 14px;
   }
 
-  .playback-progress {
-    grid-column: 1 / -1;
+  .playback-toggle {
+    grid-area: play;
   }
-}
 
-@container (max-width: 380px) {
-  .playback-speed span,
-  .playback-progress span {
-    display: none;
+  .playback-speed {
+    grid-area: speed;
+  }
+
+  .settings-toggle {
+    grid-area: settings;
+  }
+
+  .playback-progress {
+    grid-area: progress;
+  }
+
+  .score-card.compact .playback-progress {
+    grid-column: 1 / -1;
   }
 }
 
