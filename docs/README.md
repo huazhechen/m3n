@@ -13,5 +13,6 @@
 - [ARCHITECTURE.md](ARCHITECTURE.md)：前端架构与工作区边界。
 - [CODEGRAPH.md](CODEGRAPH.md)：模块依赖与数据流。
 - [VEROVIO.md](VEROVIO.md)：Verovio 本地参考手册。
+- [NUMBERED_NOTATION.md](NUMBERED_NOTATION.md)：基于 `ScoreDocument` 的简谱布局、歌词对齐和 Verovio 播放协作设计。
 
 仓库级开发说明见根目录 [README](../README.md)。

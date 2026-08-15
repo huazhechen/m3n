@@ -61,3 +61,15 @@ test('renderer settings control width and drive the export dialog', async ({ pag
   await expect(exportDialog.getByRole('radio', { name: 'PDF（A4 分页）' })).toBeChecked()
   await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
 })
+
+test('switches the renderer to numbered notation while retaining score event IDs', async ({ page }) => {
+  await page.goto('/scores/huan_le_song_01')
+  await expect(page.getByRole('button', { name: '渲染设置' })).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('button', { name: '渲染设置' }).click()
+  const settings = page.getByRole('dialog')
+  const numbered = settings.getByRole('switch', { name: '简谱渲染' })
+  await numbered.check()
+  await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'numbered')
+  await expect(page.locator('.score-paper svg.numbered-score').first()).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('.score-paper [id^="m3n-e-"]').first()).toBeVisible()
+})

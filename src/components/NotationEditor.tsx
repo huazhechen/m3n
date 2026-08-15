@@ -144,6 +144,7 @@ export function NotationEditor({
           mei={result.mei}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
+          scoreDocument={analysis.score}
           compact={embedded}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}
