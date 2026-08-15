@@ -31,6 +31,4 @@ declare module 'verovio/esm' {
     renderToSVG(page?: number, xmlDeclaration?: boolean): string
     setOptions(options: Record<string, unknown>): void
   }
-
-  export function enableLogToBuffer(value: boolean, module: VerovioModule): void
 }

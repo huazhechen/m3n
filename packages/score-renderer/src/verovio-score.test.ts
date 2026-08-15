@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest' 
 import createVerovioModule from 'verovio/wasm'
 import { VerovioToolkit } from 'verovio/esm'
 import { BasicMIDI } from 'spessasynth_core'
@@ -12,7 +12,6 @@ import {
   extraSystemBreakMeasureIds,
   naturalSystemLayout,
   pageBreakMeasureIds,
-  VerovioScore,
 } from './verovio-score'
 import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, visibleLyricVerseNumbers } from './lyric-rendition'
 
@@ -32,19 +31,6 @@ async function renderedPitches(source: string) {
 }
 
 describe('VerovioScore layout', () => {
-  it('buffers playback warnings for expanded ties', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const score = await VerovioScore.create(m3nToMei('{2/4}\nN: ||: 1~ 1 :||{x2} |||').mei)
-    try {
-      score.midi()
-      score.elementsAtTime(1500)
-      expect(warn).not.toHaveBeenCalled()
-    } finally {
-      warn.mockRestore()
-      score.destroy()
-    }
-  })
-
   it('renders cautionary naturals when changing from A major to C major', async () => {
     const toolkit = new VerovioToolkit(await createVerovioModule())
     try {
