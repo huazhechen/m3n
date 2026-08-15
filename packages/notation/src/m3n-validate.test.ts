@@ -114,6 +114,31 @@ describe('validateM3N', () => {
     expect(messages(source)).toBe('')
   })
 
+  it('accepts numbered lyric rows that only play on a D.S. return', () => {
+    const source = [
+      '{4/4}',
+      'N: ||: 1 2 3 4 |',
+      'L1: 甲乙丙丁',
+      'L2: 戊己庚辛',
+      '---',
+      'N: {segno} 1 2 3 4 |',
+      'L1: 甲乙丙丁',
+      'L2: 戊己庚辛',
+      'L3: {L2}',
+      '---V1',
+      'N: 1 2 3 4 :||',
+      'L: 壬癸子丑',
+      '---V2',
+      'N: 1 2 3 4 {ds} ||',
+      'L: 寅卯辰巳',
+      '---V3',
+      'N: 1 2 3 4 |||',
+      'L: 午未申酉',
+    ].join('\n')
+
+    expect(messages(source)).toBe('')
+  })
+
   it('maps projected diagnostics back to the original phrase line', () => {
     const result = messages('{2/4}\nN: 1 2 |\n---V1\nN: 3{arp} 4 |||')
 

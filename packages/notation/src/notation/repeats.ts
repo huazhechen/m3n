@@ -42,6 +42,7 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
   if (measures.some((measure) => measure.ending)) {
     const passesByMeasure = new Map<T, Set<number>>(measures.map((measure) => [measure, new Set([1])]))
     let repeatStart = 0
+    const endingPassCounts = new Map<number, number>()
 
     for (const [index, measure] of measures.entries()) {
       if (measure.left === 'rptstart') repeatStart = index
@@ -52,13 +53,14 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
         const ending = measures[endingIndex]?.ending
         if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
       }
-    for (let endingIndex = index + 1; measures[endingIndex]?.ending; endingIndex += 1) {
-      const ending = measures[endingIndex]?.ending
-      if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
-      const navigation = measures[endingIndex]?.navigation
-        ?? measures[endingIndex]?.events.flatMap((event) => event.navigation)
-      if (navigation?.some((value) => value === 'ds' || value === 'dc')) break
-    }
+      const groupStart = index + 1
+      for (let endingIndex = groupStart; measures[endingIndex]?.ending; endingIndex += 1) {
+        const ending = measures[endingIndex]?.ending
+        if (ending) for (const pass of parsePassRange(ending)) passCount = Math.max(passCount, pass)
+        const navigation = navigationOf(measures[endingIndex])
+        if (navigation.some((value) => value === 'ds' || value === 'dc')) break
+      }
+      if (measures[groupStart]?.ending) endingPassCounts.set(groupStart, passCount)
       for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
         const repeated = measures[repeatedIndex]
         if (repeated) passesByMeasure.set(repeated, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
@@ -67,6 +69,47 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
 
     for (const measure of measures) {
       if (measure.ending) passesByMeasure.set(measure, parsePassRange(measure.ending))
+    }
+
+    // D.S./D.C. jumps replay the section measures before the jump once per
+    // ending house that was not entered during the initial passes. Count those
+    // return passes so lyric requirements match the actual playback.
+    const segnoIndex = measures.findIndex((measure) => navigationOf(measure).includes('segno'))
+    const jumpIndex = measures.findIndex((measure) => {
+      const navigation = navigationOf(measure)
+      return navigation.includes('ds') || navigation.includes('dc')
+    })
+    if (jumpIndex >= 0) {
+      const jumpNavigation = navigationOf(measures[jumpIndex])
+      const destination = jumpNavigation.includes('ds') ? segnoIndex : 0
+      if (destination >= 0) {
+        const fineIndex = measures.findIndex((measure) => navigationOf(measure).includes('fine'))
+        const returnEnd = fineIndex >= 0 ? fineIndex : measures.length
+        const groupStart = [...endingPassCounts.keys()]
+          .filter((start) => start <= jumpIndex)
+          .sort((left, right) => right - left)[0]
+        const passCount = groupStart === undefined ? undefined : endingPassCounts.get(groupStart)
+        const remainingHouses = new Set<string>()
+        if (passCount !== undefined) {
+          for (let endingIndex = jumpIndex + 1; measures[endingIndex]?.ending; endingIndex += 1) {
+            const ending = measures[endingIndex]?.ending
+            if (ending && !remainingHouses.has(ending)
+              && [...parsePassRange(ending)].some((pass) => pass > passCount)) {
+              remainingHouses.add(ending)
+            }
+          }
+        }
+        const sectionIndexes: number[] = []
+        for (let index = destination; index < returnEnd; index += 1) {
+          if (measures[index] && !measures[index]?.ending) sectionIndexes.push(index)
+        }
+        const returnPasses = Math.max(1, remainingHouses.size)
+        const maxPass = Math.max(0, ...sectionIndexes.flatMap((index) => [...(passesByMeasure.get(measures[index]!) ?? [])]))
+        for (let offset = 1; offset <= returnPasses; offset += 1) {
+          const pass = maxPass + offset
+          for (const index of sectionIndexes) passesByMeasure.get(measures[index]!)?.add(pass)
+        }
+      }
     }
     return passesByMeasure
   }
@@ -95,6 +138,10 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
     passesByMeasure.get(measure)?.add(pass)
   }
   return passesByMeasure
+}
+
+function navigationOf<T extends PlaybackMeasure>(measure: T | undefined) {
+  return measure?.navigation ?? measure?.events.flatMap((event) => event.navigation) ?? []
 }
 
 function chooseEnding(nodes: readonly PlaybackNode[], start: number, end: number, pass: number) {

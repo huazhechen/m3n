@@ -65,6 +65,58 @@ describe('repeat planning', () => {
     expect(passes.get(measures[3])).toEqual(new Set([1]))
   })
 
+  it('counts D.S. return passes for sections with a remaining ending house', () => {
+    const measures = [
+      { events: [], left: 'rptstart' as const },
+      { events: [] },
+      { events: [], ending: '1' },
+      { events: [], ending: '2' },
+      { events: [{ navigation: ['segno' as const] }] },
+      { events: [] },
+      { events: [], ending: '1' },
+      { events: [], ending: '1', right: 'rptend' as const },
+      { events: [], ending: '2' },
+      { events: [], ending: '2', navigation: ['ds' as const] },
+      { events: [], ending: '3' },
+      { events: [], ending: '3' },
+    ]
+    const passes = measurePlaybackPasses(measures)
+
+    expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
+    expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
+    expect(passes.get(measures[2])).toEqual(new Set([1]))
+    expect(passes.get(measures[3])).toEqual(new Set([2]))
+    expect(passes.get(measures[4])).toEqual(new Set([1, 2, 3]))
+    expect(passes.get(measures[5])).toEqual(new Set([1, 2, 3]))
+    expect(passes.get(measures[6])).toEqual(new Set([1]))
+    expect(passes.get(measures[8])).toEqual(new Set([2]))
+    expect(passes.get(measures[10])).toEqual(new Set([3]))
+  })
+
+  it('counts one D.S. return pass per remaining ending house', () => {
+    const measures = [
+      { events: [], left: 'rptstart' as const },
+      { events: [] },
+      { events: [{ navigation: ['segno' as const] }] },
+      { events: [] },
+      { events: [], ending: '1' },
+      { events: [], ending: '1', right: 'rptend' as const },
+      { events: [], ending: '2', navigation: ['ds' as const] },
+      { events: [], ending: '3', navigation: ['ds' as const] },
+      { events: [], ending: '4' },
+    ]
+    const passes = measurePlaybackPasses(measures)
+
+    expect(passes.get(measures[0])).toEqual(new Set([1, 2]))
+    expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
+    expect(passes.get(measures[2])).toEqual(new Set([1, 2, 3, 4]))
+    expect(passes.get(measures[3])).toEqual(new Set([1, 2, 3, 4]))
+    expect(passes.get(measures[4])).toEqual(new Set([1]))
+    expect(passes.get(measures[6])).toEqual(new Set([2]))
+    expect(passes.get(measures[7])).toEqual(new Set([3]))
+    expect(passes.get(measures[8])).toEqual(new Set([4]))
+  })
+
   it('plays written endings in sequence when none closes a repeat', () => {
     const sequence = buildPlaybackSequence(nodes(
       { kind: 'section' },
