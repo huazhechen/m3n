@@ -1,5 +1,7 @@
+import { BasicMIDI } from 'spessasynth_core'
 import { Sequencer, WorkletSynthesizer } from 'spessasynth_lib' 
 import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
+import { Metronome, buildMetronomeBeats } from './metronome.js'
 
 const soundFont = { name: 'FluidR3-GM-Piano-SF3', url: '/soundfonts/FluidR3_GM-Piano.sf3' } as const
 export function seekTimeAtProgress(duration: number, progress: number) {
@@ -20,12 +22,15 @@ export class SpessaPlayer {
   private readonly synth: WorkletSynthesizer
   private readonly sequencer: Sequencer
   private readonly listener: PlayerListener
+  private readonly metronome: Metronome
+  private metronomeEnabled = false
 
-  private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener) {
+  private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener, metronome: Metronome) {
     this.context = context
     this.synth = synth
     this.sequencer = sequencer
     this.listener = listener
+    this.metronome = metronome
     this.sequencer.eventHandler.addEvent('songEnded', 'm3n-player', () => {
       this.stopProgressLoop()
       this.listener.onTime(this.sequencer.duration, this.sequencer.duration)
@@ -45,7 +50,7 @@ export class SpessaPlayer {
     await synth.isReady
     const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })
     sequencer.loadNewSongList([{ binary: midi, fileName: 'm3n-score.mid' }])
-    return new SpessaPlayer(context, synth, sequencer, listener)
+    return new SpessaPlayer(context, synth, sequencer, listener, new Metronome(context, buildMetronomeBeats(BasicMIDI.fromArrayBuffer(midi))))
   }
 
   get paused() {
@@ -59,25 +64,36 @@ export class SpessaPlayer {
   async play() {
     await this.context.resume()
     this.sequencer.play()
+    if (this.metronomeEnabled) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
     this.startProgressLoop()
   }
 
   pause() {
     this.sequencer.pause()
+    this.metronome.stop()
     this.stopProgressLoop()
   }
 
   seek(progress: number) {
     this.sequencer.currentTime = seekTimeAtProgress(this.sequencer.duration, progress)
+    if (this.metronomeEnabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
     this.emitProgress()
   }
 
   setSpeed(percent: number) {
     this.sequencer.playbackRate = percent / 100
+    if (this.metronomeEnabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
+  }
+
+  setMetronomeEnabled(enabled: boolean) {
+    this.metronomeEnabled = enabled
+    if (enabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
+    else this.metronome.stop()
   }
 
   destroy() {
     this.stopProgressLoop()
+    this.metronome.stop()
     this.sequencer.pause()
     this.synth.destroy()
     void this.context.close()

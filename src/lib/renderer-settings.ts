@@ -1,5 +1,6 @@
 export const SCORE_WIDTH_KEY = 'm3n:score-width'
 export const PLAYBACK_SPEED_KEY = 'm3n:playback-speed'
+export const METRONOME_ENABLED_KEY = 'm3n:metronome-enabled'
 export const RENDER_MODE_KEY = 'm3n:render-mode'
 export const NOTATION_MODE_KEY = 'm3n:notation-mode'
 

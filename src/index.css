@@ -839,7 +839,7 @@ textarea::selection {
 .audio-controls {
   margin-bottom: 12px;
   display: grid;
-  grid-template-columns: auto minmax(120px, 1fr) minmax(240px, 2fr) auto;
+  grid-template-columns: auto auto minmax(120px, 1fr) minmax(240px, 2fr) auto;
   align-items: center;
   gap: 14px;
   min-height: 44px;
@@ -1227,6 +1227,15 @@ a.action-button {
   min-width: 0;
 }
 
+.playback-metronome {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #285b5c;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .playback-speed span,
 .playback-progress span,
 .renderer-settings-row span,
@@ -1328,7 +1337,8 @@ a.action-button {
   .audio-controls {
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
-      "play speed"
+      "play metronome"
+      "speed progress"
       "settings progress";
     gap: 10px 14px;
   }
@@ -1339,6 +1349,10 @@ a.action-button {
 
   .playback-speed {
     grid-area: speed;
+  }
+
+  .playback-metronome {
+    grid-area: metronome;
   }
 
   .settings-toggle {

@@ -4,6 +4,7 @@ import {
   DEFAULT_PLAYBACK_SPEED,
   DEFAULT_SCORE_WIDTH,
   DEFAULT_NOTATION_MODE,
+  METRONOME_ENABLED_KEY,
   PLAYBACK_SPEED_KEY,
   PLAYBACK_SPEED_MAX,
   PLAYBACK_SPEED_MIN,
@@ -121,6 +122,9 @@ export function ScoreRenderer({
       PLAYBACK_SPEED_MIN,
       PLAYBACK_SPEED_MAX,
     )
+  ))
+  const [metronomeEnabled, setMetronomeEnabled] = useState(() => (
+    !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
   const [notationMode, setNotationMode] = useState<NotationMode>(() => (
@@ -349,6 +353,7 @@ export function ScoreRenderer({
           onTime: onPlayerTime,
         })
         player.setSpeed(speedRef.current)
+        player.setMetronomeEnabled(metronomeEnabled)
         playerRef.current = player
         return player
       } finally {
@@ -430,6 +435,12 @@ export function ScoreRenderer({
     playerRef.current?.setSpeed(speed)
   }
 
+  const changeMetronomeEnabled = (enabled: boolean) => {
+    setMetronomeEnabled(enabled)
+    if (!compact) writeRendererSetting(METRONOME_ENABLED_KEY, enabled ? 1 : 0)
+    playerRef.current?.setMetronomeEnabled(enabled)
+  }
+
   const changeRenderMode = (mode: RenderMode) => {
     setRenderMode(mode)
     if (!compact) writeRenderMode(mode)
@@ -470,6 +481,23 @@ export function ScoreRenderer({
           >
             <span className={isPlaying ? 'playback-icon pause' : 'playback-icon play'} aria-hidden="true" />
           </button>
+        )}
+        {hasAudioControls && (
+          <label className="playback-metronome">
+            <span>节拍器</span>
+            <span className="switch-control">
+              <input
+                type="checkbox"
+                role="switch"
+                aria-label="节拍器"
+                checked={metronomeEnabled}
+                onChange={(event) => changeMetronomeEnabled(event.currentTarget.checked)}
+              />
+              <span className="switch-track" aria-hidden="true">
+                <span className="switch-thumb" />
+              </span>
+            </span>
+          </label>
         )}
         {hasAudioControls && (
           <div className="playback-speed">
