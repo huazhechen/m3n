@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import type { JianpuScoreData, ScoreHeaderMetadata } from '@m3n/notation'
+import type { ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
 import {
   a4ImagePlacement,
   a4SourcePageHeight,
@@ -24,7 +24,7 @@ type ScoreExportDialogProps = {
   width: number
   hasBassStaff: boolean
   headerMetadata: ScoreHeaderMetadata[]
-  jianpuData?: JianpuScoreData | null
+  jianpuScore?: ScoreDocument | null
   notationMode?: 'staff' | 'jianpu'
   onError: (message: string) => void
 }
@@ -38,9 +38,9 @@ async function createVerovioScore(mei: string) {
   return VerovioScore.create(mei)
 }
 
-async function createJianpuScore(jianpuData: JianpuScoreData, width: number, paged: boolean, headerMetadata: readonly ScoreHeaderMetadata[]) {
+async function createJianpuScore(jianpuScore: ScoreDocument, width: number, paged: boolean, headerMetadata: readonly ScoreHeaderMetadata[]) {
   const { JianpuScore } = await import('@m3n/score-renderer')
-  return JianpuScore.create(jianpuData, { width, paged, headerMetadata })
+  return JianpuScore.create(jianpuScore, { width, paged, headerMetadata })
 }
 
 function cloneScorePages(paper: HTMLElement) {
@@ -53,7 +53,7 @@ function pdfNotationPageHeight(width: number, headerMetadata: readonly ScoreHead
 }
 
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
-  function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, jianpuData = null, notationMode = 'staff', onError }, ref) {
+  function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, jianpuScore = null, notationMode = 'staff', onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('pdf')
@@ -74,8 +74,8 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       if (!isOpen || !preview) return
       let cancelled = false
       preview.innerHTML = ''
-      if (notationMode === 'jianpu' && jianpuData) {
-        void createJianpuScore(jianpuData, Math.max(320, width), format === 'pdf', headerMetadata)
+      if (notationMode === 'jianpu' && jianpuScore) {
+        void createJianpuScore(jianpuScore, Math.max(320, width), format === 'pdf', headerMetadata)
           .then((score) => {
             if (!cancelled) {
               score.attach(preview)
@@ -106,22 +106,22 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         })
       }
       return () => { cancelled = true }
-    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, jianpuData, mei, notationMode, onError, width])
+    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, jianpuScore, mei, notationMode, onError, width])
 
     const exportScore = async () => {
       setIsExporting(true)
       onError('')
       let score: VerovioScore | null = null
-      let jianpuScore: JianpuScore | null = null
+      let jianpuRenderer: JianpuScore | null = null
       try {
         const targetWidth = Math.round(width)
         if (!Number.isFinite(targetWidth) || targetWidth < 320 || targetWidth > 8000) {
           throw new Error('导出宽度需介于 320 和 8000 像素之间。')
         }
         const exportPaper = document.createElement('div')
-        if (notationMode === 'jianpu' && jianpuData) {
-          jianpuScore = await createJianpuScore(jianpuData, targetWidth, format === 'pdf', headerMetadata)
-          jianpuScore.attach(exportPaper)
+        if (notationMode === 'jianpu' && jianpuScore) {
+          jianpuRenderer = await createJianpuScore(jianpuScore, targetWidth, format === 'pdf', headerMetadata)
+          jianpuRenderer.attach(exportPaper)
         } else {
           score = await createVerovioScore(mei)
           exportPaper.innerHTML = score.layout({
@@ -135,7 +135,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         document.body.append(exportPaper)
         let svgs: SVGSVGElement[] = []
         try {
-          if (notationMode !== 'jianpu' || !jianpuData) {
+          if (notationMode !== 'jianpu' || !jianpuScore) {
             addScoreHeaderToPaper(exportPaper, headerMetadata)
             resolveLyricCollisions(exportPaper)
             avoidLabelCollisions(exportPaper)
@@ -171,7 +171,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       } catch (error) {
         onError(error instanceof Error ? error.message : '导出失败。')
       } finally {
-        jianpuScore?.destroy()
+        jianpuRenderer?.destroy()
         score?.destroy()
         setIsExporting(false)
       }

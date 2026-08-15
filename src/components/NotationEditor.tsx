@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { analyzeM3N, formatM3N, formatMeiXml, formatScoreDiagnostic, toJianpuScoreData } from '@m3n/notation'
+import { analyzeM3N, formatM3N, formatMeiXml, formatScoreDiagnostic } from '@m3n/notation'
 import defaultScore from '../scores/huan_le_song_01.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'
@@ -30,7 +30,6 @@ export function NotationEditor({
   const analysis = useMemo(() => analyzeM3N(source), [source])
   const { conversion: result, complexity, invalidMeasureIds } = analysis
   const formattedMei = useMemo(() => formatMeiXml(result.mei), [result.mei])
-  const jianpuData = useMemo(() => toJianpuScoreData(analysis.score, result.mei), [analysis.score, result.mei])
   const cursorXmlId = useMemo(() => {
     const containingRange = result.sourceMap.find((item) => (
       item.sourceStart <= cursorPosition && cursorPosition < item.sourceEnd
@@ -145,7 +144,7 @@ export function NotationEditor({
           mei={result.mei}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
-          jianpuData={jianpuData}
+          jianpuScore={analysis.score}
           compact={embedded}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}

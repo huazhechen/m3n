@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { JianpuScoreData, MeiSourceMapRange, ScoreHeaderMetadata } from '@m3n/notation'
+import type { MeiSourceMapRange, ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_SPEED,
   DEFAULT_SCORE_WIDTH,
@@ -42,7 +42,7 @@ type ScoreRendererProps = {
   mei: string
   headerMetadata: ScoreHeaderMetadata[]
   sourceMap: MeiSourceMapRange[]
-  jianpuData?: JianpuScoreData | null
+  jianpuScore?: ScoreDocument | null
   compact?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
@@ -87,7 +87,7 @@ export function ScoreRenderer({
   mei,
   headerMetadata,
   sourceMap,
-  jianpuData = null,
+  jianpuScore = null,
   compact = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
@@ -160,7 +160,7 @@ export function ScoreRenderer({
     const playbackLease = playbackLeaseRef.current
     let cancelled = false
     const isInitialRender = !hasRenderedRef.current
-    const isJianpu = notationMode === 'jianpu' && jianpuData !== null && jianpuData !== undefined
+    const isJianpu = notationMode === 'jianpu' && jianpuScore !== null && jianpuScore !== undefined
     if (isInitialRender) paper.innerHTML = ''
     scorePlaybackCoordinator.release(playbackLease)
     playerRef.current?.destroy()
@@ -189,7 +189,7 @@ export function ScoreRenderer({
         }
         scoreRef.current = score
         if (isJianpu) {
-          const jianpu = JianpuScore.create(jianpuData, {
+          const jianpu = JianpuScore.create(jianpuScore!, {
             width: renderWidth,
             paged: renderMode === 'paged',
             compact,
@@ -265,7 +265,7 @@ export function ScoreRenderer({
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, headerMetadata, invalidMeasureIds, jianpuData, mei, notationMode, onActiveXmlId, renderMode, renderWidth])
+  }, [compact, headerMetadata, invalidMeasureIds, jianpuScore, mei, notationMode, onActiveXmlId, renderMode, renderWidth])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -574,7 +574,7 @@ export function ScoreRenderer({
                     value="jianpu"
                     checked={notationMode === 'jianpu'}
                     onChange={() => changeNotationMode('jianpu')}
-                    disabled={!jianpuData}
+                    disabled={!jianpuScore}
                   />
                   <span>简谱</span>
                 </label>

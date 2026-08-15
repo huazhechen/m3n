@@ -84,8 +84,7 @@ flowchart LR
   analysis["analyzeM3N"]
   complexity["melody complexity"]
   mei["m3n-mei"]
-  jianpu["m3n-jianpu"]
-  jianpuData["JianpuScoreData"]
+  jianpu["JianpuScore<br/>direct SVG renderer"]
   meiParts["mei-events / mei-layout<br/>mei-document / mei-lyrics"]
   xml["MEI XML + source map"]
   format["m3n-format"]
@@ -106,23 +105,21 @@ flowchart LR
   score --> mei
   syntax --> mei
   mei --> meiParts --> xml
-  score --> jianpu --> jianpuData
-  xml --> jianpu
+  score --> jianpu
   source --> format
   syntax --> format
   projection --> format
   score --> format --> formatted
 ```
 
-`M3NSyntaxTree` 保留原文和源码范围，供格式化、结构规则和定位使用；`ScoreDocument` 提供规范化音乐语义，供校验、复杂度计算、播放计划、MEI 序列化与简谱数据生成使用。`m3n-jianpu` 复用生成的 MEI 解析歌词与事件 ID，保证五线谱和简谱的源码映射、播放高亮完全一致。交互调用方以 `analyzeM3N` 为聚合入口，复用一次解析得到的派生结果。
+`M3NSyntaxTree` 保留原文和源码范围，供格式化、结构规则和定位使用；`ScoreDocument` 提供规范化音乐语义，供校验、复杂度计算、播放计划、MEI 序列化与简谱 SVG 渲染使用。简谱 renderer 直接遍历 `ScoreDocument`，并按 MEI 事件顺序分配稳定元素 ID。交互调用方以 `analyzeM3N` 为聚合入口，复用一次解析得到的派生结果。
 
 ## 渲染、播放与导出
 
 ```mermaid
 flowchart LR
   mei["MEI XML"] --> verovio["VerovioScore"]
-  jianpuData["JianpuScoreData"] --> jianpu["JianpuScore<br/>JianpuRender adapter"]
-  jianpurender["jianpurender"] --> jianpu
+  score["ScoreDocument"] --> jianpu["JianpuScore<br/>direct SVG renderer"]
   scheduler["RenderScheduler"] --> verovio
   verovio --> svg["SVG score"]
   verovio --> midi["MIDI + time map"]

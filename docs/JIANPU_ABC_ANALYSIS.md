@@ -30,8 +30,8 @@ JianpuABC 是一个浏览器无关的 TypeScript 工具链：JABC 解析器先�
 
 当前实现位于 `packages/score-renderer/src/jianpu-score.ts`，采用“数据转换 -> 原生 SVG 排版 -> measure/system/page 装饰”的纯浏览器适配边界：
 
-1. `toJianpuScoreData` 与 MEI 共享稳定事件 ID、歌词和延音续音。
-2. `JianpuScore.create` 同时排版旋律/低音、按小节断系统、按 A4 高度分页，并在断系统处去除重复起始小节线。
+1. `JianpuScore.create` 直接消费 `ScoreDocument`，在渲染器内按 MEI 顺序分配稳定事件 ID，并直接对齐歌词与延音。
+2. `JianpuScore.create` 同时排版旋律/低音、按小节断系统、按 A4 高度分页，并在断系统处处理起始小节线。
 3. 装饰阶段覆盖调号、拍号、速度、歌词、反复/ending、导航、tuplets、grace、力度和奏法；所有 note/measure 都保留源码定位属性。
 4. `attach` 与 `pagesClone` 分离页面挂载和导出，避免导出流程重新解析或重排。
 
@@ -40,4 +40,3 @@ JianpuABC 是一个浏览器无关的 TypeScript 工具链：JABC 解析器先�
 1. 增加 beat-clear 简谱显示模式（纯数据变换，不改源码 AST）。
 2. 增加渲染设置快照与 SVG 视觉回归测试，覆盖窄宽度、跨系统延音和多行歌词。
 3. 将 `JianpuScore` 的装饰绘制拆为可独立测试的 `layout`、`annotations`、`lyrics` 模块；保持公共 `create/attach/pagesClone` API 不变。
-

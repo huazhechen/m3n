@@ -1,6 +1,6 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { analyzeM3N, formatScoreDiagnostic, toJianpuScoreData } from '@m3n/notation'
+import { analyzeM3N, formatScoreDiagnostic } from '@m3n/notation'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
@@ -48,7 +48,6 @@ export function ScoreReaderPage() {
   const scoreSource = score?.source ?? localScore?.source ?? sharedSource ?? ''
   const analysis = useMemo(() => analyzeM3N(scoreSource), [scoreSource])
   const { conversion: result, invalidMeasureIds: invalidMeasures } = analysis
-  const jianpuData = useMemo(() => toJianpuScoreData(analysis.score, result.mei), [analysis.score, result.mei])
 
   if (!score && !localScore && sharedSource === undefined) {
     return <main><TopNav /><div className="page-status" role="status">Loading...</div></main>
@@ -95,7 +94,7 @@ export function ScoreReaderPage() {
           mei={result.mei}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
-          jianpuData={jianpuData}
+          jianpuScore={analysis.score}
           invalidMeasureIds={invalidMeasures}
           onLayoutWidthChange={setExportWidth}
           onNotationModeChange={setNotationMode}
@@ -107,7 +106,7 @@ export function ScoreReaderPage() {
           width={exportWidth}
           hasBassStaff={result.hasBassStaff}
           headerMetadata={result.headerMetadata}
-          jianpuData={jianpuData}
+          jianpuScore={analysis.score}
           notationMode={notationMode}
           onError={setExportError}
         />

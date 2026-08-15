@@ -11,7 +11,7 @@
 | 输入数据模型 | `JianpuInfo` | `notes`、`tempos`、`keySignatures`、`timeSignatures` |
 | 渲染入口 | `JianpuSVGRender` | 构造时渲染，`redraw(activeNote)` 高亮 |
 | 简谱数字换算 | `mapMidiToJianpu` | MIDI 音高 → 数字、八度点、临时记号 |
-| M3N 转换 | `m3n-jianpu` | `@m3n/notation` 的 `toJianpuScoreData` |
+| M3N 渲染输入 | `ScoreDocument` | `analyzeM3N(source).score` |
 | 页面与歌词适配 | `jianpu-score` | `@m3n/score-renderer` 的 `JianpuScore` |
 
 ## 1. 范围与边界
@@ -45,19 +45,12 @@ renderer.redraw(activeNote) // 可选：高亮某个音符并滚动
 
 构造完成后，`container` 内会生成一个可横向滚动的 `div` 和主 SVG。`#music` 分组包含所有 `g[data-block-start]` 块与小节线；`#signatures` 分组包含调号/拍号文字（适配层会隐藏并用自有标注替代，以便显示真实拍号）。
 
-## 4. M3N 适配
+## 4. M3N 直接渲染
 
-`packages/notation/src/m3n-jianpu.ts` 的 `toJianpuScoreData(score, mei)`：
+`packages/score-renderer/src/jianpu-score.ts` 的 `JianpuScore` 直接接收 `ScoreDocument`：
 
-- 以与 `m3nToMei` 完全相同的顺序分配事件 ID（`m3n-e-N`、和弦/连音子音符 `m3n-e-N-nK`），保证源码映射和播放高亮一致。
-- 把 `event.tie` 合并为一条延音音符，并记录被吸收的续音 ID（`continuations`）供 DOM 高亮回退。
-- 为每个小节生成布局拍号（处理弱起与不完整小节），同时保留显示拍号。
-- 从生成的 MEI 解析歌词（沿用 verse、passes、underline/extender 语义），不重复实现对位算法。
-
-`packages/score-renderer/src/jianpu-score.ts` 的 `JianpuScore`：
-
-- 调用 `JianpuSVGRender` 逐行排版（旋律行；有低音行时增加第二行）。
-- 按小节包裹 `g.measure`、写入音符 `id` / `data-source-*` / `data-m3n-id`，供现有光标、校验高亮与点击定位复用。
+- 直接从 `parts`、`ScoreMeasure`、`ScoreEvent` 建立自然宽度系统（旋律行；有低音行时增加第二行）。
+- 按与 MEI 相同的事件遍历顺序写入 `m3n-e-N`、`m3n-measure-N-M` 和 `data-source-*`，供现有光标、校验高亮与点击定位复用。
 - 补齐歌词、调号/拍号/速度标注、反复线（含点）、跳房子、段落名、反复/跳转记号、连音数字、装饰音、断奏/震音/重音与力度记号。
 - 按 A4 比例把连续 SVG 切分为页面，第一页写入乐谱标题头，`attach` 时复用现有 `score-page-sheet` 分页与导出流程。
 
