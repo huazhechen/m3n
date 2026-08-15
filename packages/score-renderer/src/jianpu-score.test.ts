@@ -4,6 +4,18 @@ import type { JianpuScoreData } from '@m3n/notation'
 import { JianpuScore } from './jianpu-score'
 
 function makeData(overrides: Partial<JianpuScoreData> = {}): JianpuScoreData {
+  const notes = Array.from({ length: 4 }, (_, index) => ({
+    staff: 'melody' as const,
+    start: index,
+    length: 1,
+    pitch: 60 + index * 2,
+    xmlId: `m3n-e-${index + 1}`,
+    sourceStart: index * 3,
+    sourceEnd: index * 3 + 3,
+    staccato: false,
+    trill: false,
+    accent: false,
+  }))
   return {
     title: 'Test',
     subtitle: '',
@@ -16,15 +28,20 @@ function makeData(overrides: Partial<JianpuScoreData> = {}): JianpuScoreData {
     meterCount: 4,
     meterUnit: 4,
     hasBass: false,
-    notes: [
-      { staff: 'melody', start: 0, length: 1, pitch: 60, xmlId: 'm3n-e-1', sourceStart: 0, sourceEnd: 3, staccato: false, trill: false, accent: false },
-      { staff: 'melody', start: 1, length: 1, pitch: 62, xmlId: 'm3n-e-2', sourceStart: 3, sourceEnd: 6, staccato: false, trill: false, accent: false },
-      { staff: 'melody', start: 2, length: 1, pitch: 64, xmlId: 'm3n-e-3', sourceStart: 6, sourceEnd: 9, staccato: false, trill: false, accent: false },
-      { staff: 'melody', start: 3, length: 1, pitch: 65, xmlId: 'm3n-e-4', sourceStart: 9, sourceEnd: 12, staccato: false, trill: false, accent: false },
-    ],
-    measures: [
-      { partIndex: 0, index: 0, number: 1, start: 0, length: 4, meterCount: 4, meterUnit: 4, xmlId: 'm3n-measure-1-1', repeatStart: false, repeatEnd: false, navigation: [] },
-    ],
+    notes,
+    measures: Array.from({ length: 1 }, (_, index) => ({
+      partIndex: 0,
+      index,
+      number: index + 1,
+      start: index * 4,
+      length: 4,
+      meterCount: 4,
+      meterUnit: 4,
+      xmlId: `m3n-measure-1-${index + 1}`,
+      repeatStart: false,
+      repeatEnd: false,
+      navigation: [],
+    })),
     keySignatures: [{ start: 0, key: 0 }],
     layoutTimeSignatures: [{ start: 0, numerator: 4, denominator: 4 }],
     timeSignatures: [{ start: 0, numerator: 4, denominator: 4 }],
@@ -35,6 +52,36 @@ function makeData(overrides: Partial<JianpuScoreData> = {}): JianpuScoreData {
     continuations: [],
     ...overrides,
   }
+}
+
+function longData(measureCount: number): JianpuScoreData {
+  return makeData({
+    notes: Array.from({ length: measureCount * 4 }, (_, index) => ({
+      staff: 'melody' as const,
+      start: index,
+      length: 1,
+      pitch: 60 + (index % 7) * 2,
+      xmlId: `m3n-e-${index + 1}`,
+      sourceStart: index,
+      sourceEnd: index + 1,
+      staccato: false,
+      trill: false,
+      accent: false,
+    })),
+    measures: Array.from({ length: measureCount }, (_, index) => ({
+      partIndex: 0,
+      index,
+      number: index + 1,
+      start: index * 4,
+      length: 4,
+      meterCount: 4,
+      meterUnit: 4,
+      xmlId: `m3n-measure-1-${index + 1}`,
+      repeatStart: false,
+      repeatEnd: false,
+      navigation: [],
+    })),
+  })
 }
 
 let originalGetBBox: (() => DOMRect) | undefined
@@ -120,5 +167,20 @@ describe('JianpuScore', () => {
     const pages = score.pagesClone()
     expect(pages).toHaveLength(1)
     expect(pages[0]?.getAttribute('viewBox')).toContain('800')
+  })
+
+  it('stacks several systems on one page instead of one row per page', () => {
+    const score = JianpuScore.create(longData(24), { width: 800, paged: true, headerMetadata: [] })
+    const pages = score.pagesClone()
+    expect(pages).toHaveLength(1)
+    const systems = pages[0]?.querySelectorAll('.m3n-jianpu-system') ?? []
+    expect(systems.length).toBeGreaterThanOrEqual(2)
+    expect(pages[0]?.querySelectorAll('g.measure[id]')).toHaveLength(24)
+  })
+
+  it('breaks onto a second page when systems exceed the page height', () => {
+    const score = JianpuScore.create(longData(60), { width: 800, paged: true, headerMetadata: [] })
+    const pages = score.pagesClone()
+    expect(pages.length).toBeGreaterThanOrEqual(2)
   })
 })

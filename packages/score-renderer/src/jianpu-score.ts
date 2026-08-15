@@ -8,9 +8,10 @@ import { a4SourcePageHeight } from './score-export.js'
 import { addScoreHeaderToSvg, scoreHeaderHeight } from './score-header-svg.js'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
-const DEFAULT_NOTE_HEIGHT = 24
+const DEFAULT_NOTE_HEIGHT = 22
 const COMPACT_NOTE_HEIGHT = 18
 const ROW_GAP = 46
+const SYSTEM_GAP = 30
 const LYRIC_GAP = 10
 const LYRIC_LINE_HEIGHT = 26
 const TOP_PADDING = 6
@@ -43,11 +44,24 @@ type RenderedRow = {
   maxX: number
 }
 
-type PageRange = {
+type System = {
   fromMeasure: number
   toMeasure: number
   startX: number
   endX: number
+  width: number
+  hasLyrics: boolean
+  height: number
+}
+
+type SystemPlacement = {
+  system: System
+  top: number
+}
+
+type Page = {
+  systems: SystemPlacement[]
+  height: number
 }
 
 function svgElement<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number | undefined> = {}) {
@@ -152,15 +166,6 @@ export class JianpuScore {
     const fontFamily = options.fontFamily ?? 'system-ui, sans-serif'
     const staffs: JianpuScoreStaff[] = data.hasBass ? ['melody', 'bass'] : ['melody']
     const rows = staffs.map((staff) => renderJianpuRow(data, staff, noteHeight, fontFamily))
-    const hasVisibleLyrics = data.lyrics.some((lyric) => lyric.kind !== 'placeholder')
-    const rowTop = new Map<JianpuScoreStaff, number>()
-    let nextTop = TOP_PADDING
-    for (const row of rows) {
-      rowTop.set(row.staff, nextTop)
-      nextTop += (row.y1 - row.y0) + ROW_GAP
-      if (row.staff === 'melody' && hasVisibleLyrics) nextTop += LYRIC_GAP + LYRIC_LINE_HEIGHT
-    }
-    const contentHeight = Math.max(1, nextTop - ROW_GAP + BOTTOM_PADDING)
     const measureStartX = new Map<JianpuScoreStaff, Map<number, number>>()
     const measureEndX = new Map<JianpuScoreStaff, Map<number, number>>()
     for (const row of rows) {
@@ -192,14 +197,11 @@ export class JianpuScore {
       measureEndX.set(row.staff, ends)
     }
 
+    const systems = computeSystems(data, rows, measureStartX, measureEndX, options.width)
+    const systemStarts = new Set(systems.map((system) => system.fromMeasure))
     const rowMeasureGroups = new Map<JianpuScoreStaff, Map<number, SVGGElement>>()
     for (const row of rows) {
       const groups = new Map<number, SVGGElement>()
-      const blockByStart = new Map<number, Element>()
-      for (const node of row.nodes) {
-        const blockStart = node.getAttribute('data-block-start')
-        if (blockStart !== null) blockByStart.set(Number(blockStart), node)
-      }
       for (let index = 0; index < data.measures.length; index += 1) {
         const measure = data.measures[index]
         if (!measure) continue
@@ -218,25 +220,20 @@ export class JianpuScore {
           : nearestMeasureIndex(data, node, measureStartX.get(row.staff)!)
         groups.get(index)?.append(node)
       }
-      decorateRow(data, row, groups, measureStartX.get(row.staff)!, measureEndX.get(row.staff)!, noteHeight, fontFamily)
+      decorateRow(
+        data,
+        row,
+        groups,
+        measureStartX.get(row.staff)!,
+        measureEndX.get(row.staff)!,
+        noteHeight,
+        fontFamily,
+        systemStarts,
+      )
       rowMeasureGroups.set(row.staff, groups)
     }
 
-    const ranges = computePageRanges(data, rows, measureStartX, measureEndX, options.width)
-    const pageHeight = options.paged
-      ? Math.max(a4SourcePageHeight(options.width) - scoreHeaderHeight(options.headerMetadata), contentHeight)
-      : contentHeight
-    const pages = ranges.map((range, index) => buildPage(
-      options,
-      rows,
-      rowTop,
-      rowMeasureGroups,
-      range,
-      index === 0,
-      options.width,
-      pageHeight,
-      contentHeight,
-    ))
+    const pages = buildPages(options, data, rows, rowMeasureGroups, systems)
     return new JianpuScore(options, pages)
   }
 
@@ -286,15 +283,15 @@ function nearestMeasureIndex(
   return bestIndex
 }
 
-function computePageRanges(
+function computeSystems(
   data: JianpuScoreData,
   rows: RenderedRow[],
   starts: ReadonlyMap<JianpuScoreStaff, ReadonlyMap<number, number>>,
   ends: ReadonlyMap<JianpuScoreStaff, ReadonlyMap<number, number>>,
   width: number,
-) {
-  const ranges: PageRange[] = []
-  let current: PageRange | null = null
+): System[] {
+  const systems: System[] = []
+  let current: System | null = null
   for (let index = 0; index < data.measures.length; index += 1) {
     const measure = data.measures[index]
     if (!measure) continue
@@ -304,59 +301,148 @@ function computePageRanges(
     const endXs = rows
       .map((row) => ends.get(row.staff)?.get(measure.start))
       .filter((value): value is number => value !== undefined)
-    const startX = startXs.length > 0 ? Math.min(...startXs) : (ranges.at(-1)?.endX ?? 0)
+    const startX: number = startXs.length > 0 ? Math.min(...startXs) : (current?.endX ?? 0)
     const endX = endXs.length > 0 ? Math.max(...endXs) : startX + 40
     if (!current) {
-      current = { fromMeasure: index, toMeasure: index, startX, endX }
+      current = { fromMeasure: index, toMeasure: index, startX, endX, width: endX - startX, hasLyrics: false, height: 0 }
       continue
     }
     if (endX - current.startX <= width) {
       current.toMeasure = index
       current.endX = Math.max(current.endX, endX)
+      current.width = current.endX - current.startX
     } else {
-      ranges.push(current)
-      current = { fromMeasure: index, toMeasure: index, startX, endX }
+      systems.push(current)
+      current = { fromMeasure: index, toMeasure: index, startX, endX, width: endX - startX, hasLyrics: false, height: 0 }
     }
   }
-  if (current) ranges.push(current)
-  if (ranges.length === 0) ranges.push({ fromMeasure: 0, toMeasure: 0, startX: 0, endX: width })
-  return ranges
+  if (current) systems.push(current)
+  if (systems.length === 0) {
+    systems.push({ fromMeasure: 0, toMeasure: 0, startX: 0, endX: width, width, hasLyrics: false, height: 0 })
+  }
+  return systems
 }
 
-function buildPage(
-  options: JianpuScoreOptions,
-  rows: RenderedRow[],
-  rowTop: ReadonlyMap<JianpuScoreStaff, number>,
-  rowMeasureGroups: ReadonlyMap<JianpuScoreStaff, ReadonlyMap<number, SVGGElement>>,
-  range: PageRange,
-  isFirst: boolean,
-  width: number,
-  height: number,
-  contentHeight: number,
-) {
-  const viewWidth = Math.max(1, width)
-  const viewHeight = options.paged ? Math.max(1, height) : Math.max(1, contentHeight)
-  const svg = svgElement('svg', {
-    xmlns: SVG_NS,
-    viewBox: `0 0 ${viewWidth} ${viewHeight}`,
-    width: viewWidth,
-    height: viewHeight,
-    class: 'jianpu-page',
-    'data-render-page': '1',
-  })
-  const clip = svgElement('g', { transform: `translate(${-range.startX}, 0)` })
-  for (const row of rows) {
-    const rowEl = svgElement('g', { transform: `translate(0, ${rounded((rowTop.get(row.staff) ?? 0) - row.y0)})` })
-    const groups = rowMeasureGroups.get(row.staff)
-    for (let index = range.fromMeasure; index <= range.toMeasure; index += 1) {
-      const group = groups?.get(index)
-      if (group) rowEl.append(group.cloneNode(true))
-    }
-    clip.append(rowEl)
+function systemHasLyrics(data: JianpuScoreData, system: System) {
+  for (let index = system.fromMeasure; index <= system.toMeasure; index += 1) {
+    const measure = data.measures[index]
+    if (!measure) continue
+    if (data.lyrics.some((lyric) => (
+      lyric.staff === 'melody'
+      && lyric.kind !== 'placeholder'
+      && lyric.start >= measure.start - 1e-6
+      && lyric.start < measure.start + measure.length - 1e-6
+    ))) return true
   }
-  svg.append(clip)
-  if (isFirst) addScoreHeaderToSvg(svg, options.headerMetadata, viewWidth, viewHeight)
-  return svg
+  return false
+}
+
+function rowTopInSystem(rows: RenderedRow[], hasLyrics: boolean, target: RenderedRow) {
+  let y = TOP_PADDING
+  for (const row of rows) {
+    if (row === target) return y
+    y += row.y1 - row.y0
+    if (row.staff === 'melody' && hasLyrics) y += LYRIC_GAP + LYRIC_LINE_HEIGHT
+    y += ROW_GAP
+  }
+  return TOP_PADDING
+}
+
+function buildPages(
+  options: JianpuScoreOptions,
+  data: JianpuScoreData,
+  rows: RenderedRow[],
+  rowMeasureGroups: ReadonlyMap<JianpuScoreStaff, ReadonlyMap<number, SVGGElement>>,
+  systems: System[],
+) {
+  const contentBudget = options.paged
+    ? Math.max(200, a4SourcePageHeight(options.width) - scoreHeaderHeight(options.headerMetadata))
+    : Number.POSITIVE_INFINITY
+  const pages: Page[] = []
+  let current: Page = { systems: [], height: 0 }
+  for (const system of systems) {
+    const hasLyrics = systemHasLyrics(data, system)
+    const height = TOP_PADDING + rows.reduce((total, row, index) => {
+      const rowHeight = row.y1 - row.y0
+      const lyricHeight = row.staff === 'melody' && hasLyrics ? LYRIC_GAP + LYRIC_LINE_HEIGHT : 0
+      const gap = index < rows.length - 1 ? ROW_GAP : 0
+      return total + rowHeight + lyricHeight + gap
+    }, 0) + BOTTOM_PADDING
+    system.hasLyrics = hasLyrics
+    system.height = height
+    const gap = current.systems.length > 0 ? SYSTEM_GAP : 0
+    if (current.systems.length > 0 && current.height + gap + height > contentBudget) {
+      pages.push(current)
+      current = { systems: [], height: 0 }
+    }
+    current.systems.push({ system, top: current.height + gap })
+    current.height += gap + height
+  }
+  if (current.systems.length > 0) pages.push(current)
+  if (pages.length === 0) {
+    const empty: System = { fromMeasure: 0, toMeasure: 0, startX: 0, endX: options.width, width: options.width, hasLyrics: false, height: 100 }
+    pages.push({ systems: [{ system: empty, top: 0 }], height: empty.height })
+  }
+
+  const pageHeight = options.paged
+    ? Math.max(a4SourcePageHeight(options.width), contentBudget)
+    : pages.reduce((total, page) => total + page.height, 0)
+  return pages.map((page, index) => {
+    const viewWidth = Math.max(1, options.width)
+    const viewHeight = options.paged ? Math.max(1, pageHeight) : Math.max(1, page.height)
+    const svg = svgElement('svg', {
+      xmlns: SVG_NS,
+      viewBox: `0 0 ${viewWidth} ${viewHeight}`,
+      width: viewWidth,
+      height: viewHeight,
+      class: 'jianpu-page',
+      'data-render-page': String(index + 1),
+    })
+    for (const { system, top } of page.systems) {
+      for (const row of rows) {
+        const rowTop = top + rowTopInSystem(rows, system.hasLyrics, row)
+        const rowEl = svgElement('g', {
+          transform: `translate(${-system.startX}, ${rounded(rowTop - row.y0)})`,
+          class: 'm3n-jianpu-system',
+          'data-system-start': system.fromMeasure + 1,
+        })
+        const groups = rowMeasureGroups.get(row.staff)
+        for (let measureIndex = system.fromMeasure; measureIndex <= system.toMeasure; measureIndex += 1) {
+          const group = groups?.get(measureIndex)
+          if (!group) continue
+          const isSystemStart = measureIndex === system.fromMeasure
+          const clone = cloneMeasureGroup(group, isSystemStart && system.fromMeasure > 0)
+          if (clone) rowEl.append(clone)
+        }
+        svg.append(rowEl)
+      }
+    }
+    if (index === 0) addScoreHeaderToSvg(svg, options.headerMetadata, viewWidth, viewHeight)
+    return svg
+  })
+}
+
+/** Clones a measure group, dropping the leading barline when a new system starts. */
+function cloneMeasureGroup(group: SVGGElement, dropLeadingBar: boolean) {
+  const clone = group.cloneNode(true) as SVGGElement
+  if (!dropLeadingBar) return clone
+  for (const node of [...clone.children]) {
+    if (node.tagName === 'path' && node.getAttribute('class') === undefined) {
+      const x = barPathX(node)
+      const startX = leadingBarX(group)
+      if (startX !== undefined && x !== undefined && x < startX && startX - x < 20) node.remove()
+    }
+  }
+  return clone
+}
+
+function leadingBarX(group: SVGGElement) {
+  let minX = Number.POSITIVE_INFINITY
+  for (const block of group.querySelectorAll<SVGGElement>('g[data-block-start]')) {
+    const box = block.getBBox()
+    minX = Math.min(minX, box.x)
+  }
+  return Number.isFinite(minX) ? minX : undefined
 }
 
 function decorateRow(
@@ -367,6 +453,7 @@ function decorateRow(
   ends: ReadonlyMap<number, number>,
   noteHeight: number,
   fontFamily: string,
+  systemStarts: ReadonlySet<number>,
 ) {
   const melody = row.staff === 'melody'
   const labelsY = row.y0 - 12
@@ -388,7 +475,7 @@ function decorateRow(
       const meter = meterAt(measure.start)
       const keyChanged = data.keySignatures.some((entry) => Math.abs(entry.start - measure.start) < 1e-6)
       const meterChanged = data.timeSignatures.some((entry) => Math.abs(entry.start - measure.start) < 1e-6)
-      if (index === 0 || keyChanged || meterChanged) {
+      if (index === 0 || systemStarts.has(index) || keyChanged || meterChanged) {
         const label = [
           key ? `1=${PITCH_CLASS_LABELS[key.key % 12] ?? 'C'}` : '',
           meter ? `${meter.numerator}/${meter.denominator}` : '',

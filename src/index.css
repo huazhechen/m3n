@@ -773,7 +773,7 @@ textarea::selection {
   overflow-y: hidden;
 }
 
-.score-paper[data-notation-mode="jianpu"] svg.jianpu-page {
+.score-paper[data-notation-mode="jianpu"][data-render-mode="continuous"] svg.jianpu-page {
   width: auto;
   max-width: none;
   height: auto;
@@ -1314,7 +1314,7 @@ a.action-button {
 }
 
 .playback-progress output {
-  min-width: 30px;
+  min-width: 34px;
   color: #285b5c;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
