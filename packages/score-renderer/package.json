@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@m3n/notation": "*",
-    "jianpurender": "^1.2.0",
     "spessasynth_lib": "^4.3.12",
     "verovio": "^6.2.0"
   },

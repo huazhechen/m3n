@@ -1,4 +1,4 @@
-import { JianpuSVGRender, mapMidiToJianpu, type JianpuInfo } from 'jianpurender'
+import { mapMidiToJianpu } from './jianpu-pitch.js'
 import type {
   JianpuScoreData,
   JianpuScoreMeasure,
@@ -77,56 +77,52 @@ function svgElement<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<
   return element
 }
 
-function rowJianpuInfo(data: JianpuScoreData, staff: JianpuScoreStaff): JianpuInfo {
-  return {
-    notes: data.notes
-      .filter((note) => note.staff === staff)
-      .map((note) => ({ start: note.start, length: note.length, pitch: note.pitch, intensity: 100 })),
-    keySignatures: data.keySignatures.map((entry) => ({ start: entry.start, key: entry.key })),
-    timeSignatures: data.layoutTimeSignatures.map((entry) => ({
-      start: entry.start,
-      numerator: entry.numerator,
-      denominator: entry.denominator,
-    })),
-    tempos: data.tempos.map((entry) => ({ start: entry.start, qpm: entry.qpm })),
-  }
-}
-
 function renderJianpuRow(
   data: JianpuScoreData,
   staff: JianpuScoreStaff,
   noteHeight: number,
   fontFamily: string,
 ): RenderedRow {
-  const host = document.createElement('div')
-  host.style.cssText = 'position:fixed;left:-100000px;top:0;width:10px;height:10px;overflow:hidden;pointer-events:none;'
-  document.body.append(host)
-  try {
-    new JianpuSVGRender(
-      rowJianpuInfo(data, staff),
-      { noteHeight, fontFamily, noteColor: '#20242b', activeNoteColor: '#c0392b' },
-      host,
-    )
-    const musicG = host.querySelector<SVGGElement>('g[data-id="music"]')
-    if (!musicG) {
-      return { staff, nodes: [], blockXs: new Map(), blockWidths: new Map(), y0: 0, y1: noteHeight, maxX: 0 }
+  const notes = data.notes.filter((note) => note.staff === staff).sort((a, b) => a.start - b.start)
+  const nodes: Element[] = []
+  const blockXs = new Map<number, number>()
+  const blockWidths = new Map<number, number>()
+  let x = 0
+  const key = data.keySignatures[0]?.key ?? 0
+  for (const note of notes) {
+    const width = Math.max(30, 24 + note.length * 10)
+    const block = svgElement('g', { 'data-block-start': note.start, transform: `translate(${x},0)` })
+    const mapped = mapMidiToJianpu(note.pitch, key)
+    const text = svgElement('text', { x: width / 2, y: 0, 'text-anchor': 'middle', 'font-size': noteHeight, 'font-family': fontFamily, fill: '#20242b' })
+    text.textContent = `${mapped.accidental === 1 ? '#' : mapped.accidental === -1 ? 'b' : ''}${mapped.jianpuNumber}`
+    const noteGroup = svgElement('g', { 'data-id': `${note.start}-${note.pitch}` })
+    noteGroup.append(text)
+    block.append(noteGroup)
+    if (mapped.octaveDot !== 0) {
+      const dots = svgElement('text', { x: width / 2, y: mapped.octaveDot > 0 ? -noteHeight * 0.75 : noteHeight * 0.65, 'text-anchor': 'middle', 'font-size': noteHeight * 0.55, 'font-family': fontFamily, fill: '#20242b' })
+      dots.textContent = mapped.octaveDot > 0 ? '.'.repeat(mapped.octaveDot) : ':'.repeat(-mapped.octaveDot)
+      block.append(dots)
     }
-    const blockXs = new Map<number, number>()
-    const blockWidths = new Map<number, number>()
-    let maxX = 0
-    for (const block of musicG.querySelectorAll<SVGGElement>('g[data-block-start]')) {
-      const start = Number(block.getAttribute('data-block-start'))
-      const box = block.getBBox()
-      blockXs.set(start, box.x)
-      blockWidths.set(start, box.width)
-      maxX = Math.max(maxX, box.x + box.width)
-    }
-    const box = musicG.getBBox()
-    const nodes = [...musicG.children].map((child) => child.cloneNode(true) as Element)
-    return { staff, nodes, blockXs, blockWidths, y0: box.y, y1: box.y + box.height, maxX }
-  } finally {
-    host.remove()
+    nodes.push(block)
+    blockXs.set(note.start, x)
+    blockWidths.set(note.start, width)
+    x += width
   }
+  for (const continuation of data.continuations.filter((item) => item.staff === staff)) {
+    if (blockXs.has(continuation.start)) continue
+    const block = svgElement('g', { 'data-block-start': continuation.start, transform: `translate(${x},0)` })
+    block.append(svgElement('g', { 'data-id': `${continuation.start}-0` }))
+    nodes.push(block)
+    blockXs.set(continuation.start, x)
+    blockWidths.set(continuation.start, 30)
+    x += 30
+  }
+  for (const measure of data.measures) {
+    const mx = [...blockXs.entries()].find(([, value]) => value >= (blockXs.get(measure.start) ?? 0))?.[1] ?? 0
+    const bar = svgElement('path', { d: `M ${mx} 8 V ${noteHeight + 8}`, stroke: '#20242b', 'stroke-width': 1, fill: 'none', 'data-measure-start': measure.start })
+    nodes.push(bar)
+  }
+  return { staff, nodes, blockXs, blockWidths, y0: -noteHeight, y1: noteHeight + 10, maxX: x }
 }
 
 function blockXAtOrBefore(blockXs: ReadonlyMap<number, number>, start: number) {
