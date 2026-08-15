@@ -1307,7 +1307,7 @@ a.action-button {
 
 .playback-progress {
   display: grid;
-  grid-template-columns: auto minmax(110px, 1fr) auto;
+  grid-template-columns: auto minmax(72px, 1fr) auto;
   align-items: center;
   gap: 8px;
   min-width: 0;
