@@ -55,6 +55,19 @@ describe('JianpuScore', () => {
     expect([...paper.querySelectorAll('.event-lyric')].map((node) => node.textContent)).toEqual(['你', '好'])
   })
 
+  it('only renders inline settings when the effective ScoreDocument state changes', () => {
+    const first = { sourceStart: 10, sourceEnd: 11, kind: 'note' as const, pitches: ['c'], key: 'C', beats: 1, tie: false, postfixes: [], navigation: [], octaveShift: 0, meterCount: 4, meterUnit: 4, tempo: 100 }
+    const second = { ...first, sourceStart: 12, sourceEnd: 13, pitches: ['d'], key: 'F', meterCount: 3, meterUnit: 4, tempo: 88 }
+    const withChange: ScoreDocument = {
+      ...scoreDocument,
+      parts: new Map([['score', { melody: [{ events: [first, second] }], bass: [] }]]),
+    }
+    const score = JianpuScore.create(withChange, { width: 640, paged: false, headerMetadata: [] })
+    const paper = document.createElement('div')
+    score.attach(paper)
+    expect([...paper.querySelectorAll('.m3n-jianpu-inline-setting')].map((node) => node.textContent)).toEqual(['1=F 3/4 ♩=88'])
+  })
+
   it('renders the qian_si_xi corpus score directly from ScoreDocument', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/qian_si_xi_01.m3n'), 'utf8')
     const analysis = analyzeM3N(source)
@@ -68,6 +81,7 @@ describe('JianpuScore', () => {
     expect(new Set(eventIds).size).toBe(eventIds.length)
     expect(paper.querySelectorAll('.repeat-dot').length).toBeGreaterThan(0)
     expect(paper.querySelectorAll('.event-lyric').length).toBeGreaterThan(0)
+    expect(paper.querySelectorAll('.m3n-jianpu-inline-setting')).toHaveLength(0)
     const measureYs = new Set([...paper.querySelectorAll<SVGGElement>('g.measure')]
       .map((measure) => /translate\([^,]+,([^\)]+)\)/.exec(measure.getAttribute('transform') ?? '')?.[1])
       .filter((y): y is string => y !== undefined))

@@ -141,6 +141,36 @@ function lyricIndex(document: ScoreDocument) {
   return index
 }
 
+/**
+ * ScoreEvent carries the effective key, meter, and tempo on every event.
+ * Inline notation is only needed where that effective state changes.
+ */
+function inlineSettingIndex(document: ScoreDocument) {
+  const index = new Map<ScoreEvent, string>()
+  for (const part of document.parts.values()) {
+    for (const measures of [part.melody, part.bass]) {
+      let key = document.key
+      let meterCount = document.meterCount
+      let meterUnit = document.meterUnit
+      let tempo = document.tempo
+      for (const measure of measures) {
+        for (const event of measure.events) {
+          const labels: string[] = []
+          if (event.key !== key) { labels.push(`1=${event.key}`); key = event.key }
+          if (event.meterCount !== undefined && event.meterUnit !== undefined && (event.meterCount !== meterCount || event.meterUnit !== meterUnit)) {
+            labels.push(`${event.meterCount}/${event.meterUnit}`)
+            meterCount = event.meterCount
+            meterUnit = event.meterUnit
+          }
+          if (event.tempo !== undefined && event.tempo !== tempo) { labels.push(`♩=${event.tempo}`); tempo = event.tempo }
+          if (labels.length > 0) index.set(event, labels.join(' '))
+        }
+      }
+    }
+  }
+  return index
+}
+
 function graceText(postfixes: readonly string[]) {
   const match = postfixes.find((postfix) => /^(ac|ap)\[/.test(postfix))
   if (!match) return undefined
@@ -172,7 +202,7 @@ function barline(group: SVGGElement, type: string | undefined, x: number) {
   }
 }
 
-function renderMeasure(lyricsByEvent: ReadonlyMap<ScoreEvent, readonly string[]>, measure: ScoreMeasure, index: number, layout: ReturnType<typeof measureLayout>, key: string, fontFamily: string, beat: number, measureId: string) {
+function renderMeasure(lyricsByEvent: ReadonlyMap<ScoreEvent, readonly string[]>, inlineSettings: ReadonlyMap<ScoreEvent, string>, measure: ScoreMeasure, index: number, layout: ReturnType<typeof measureLayout>, key: string, fontFamily: string, beat: number, measureId: string) {
   const group = svg('g', { class: 'measure', id: measureId, 'data-measure-number': index + 1 })
   for (const item of layout.events) {
     const note = svg('g', { class: 'jianpu-event', id: item.id, 'data-source-start': item.event.sourceStart, 'data-source-end': item.event.sourceEnd, transform: `translate(${item.x},0)` })
@@ -221,13 +251,10 @@ function renderMeasure(lyricsByEvent: ReadonlyMap<ScoreEvent, readonly string[]>
       number.textContent = String(event.event.tuplet.num)
       group.append(number)
     }
-    if (event.event.key !== key || event.event.meterCount !== undefined || event.event.tempo !== undefined) {
-      const signature = svg('text', { x: event.x + event.width / 2, y: -NOTE_SIZE * 1.55, 'text-anchor': 'middle', 'font-size': 13, 'font-family': fontFamily, fill: '#a4522c', 'font-weight': '700' })
-      signature.textContent = [
-        event.event.key !== key ? `1=${event.event.key}` : '',
-        event.event.meterCount !== undefined ? `${event.event.meterCount}/${event.event.meterUnit}` : '',
-        event.event.tempo !== undefined ? `♩=${event.event.tempo}` : '',
-      ].filter(Boolean).join(' ')
+    const setting = inlineSettings.get(event.event)
+    if (setting) {
+      const signature = svg('text', { x: event.x + event.width / 2, y: -NOTE_SIZE * 1.55, 'text-anchor': 'middle', 'font-size': 13, 'font-family': fontFamily, fill: '#a4522c', 'font-weight': '700', class: 'm3n-jianpu-inline-setting' })
+      signature.textContent = setting
       group.append(signature)
     }
   }
@@ -263,6 +290,7 @@ export class JianpuScore {
       ...(part.bass.some((measure) => measure.events.length > 0) ? [{ id: `${partId}:bass`, partIndex, staff: 'bass', measures: part.bass }] : []),
     ])
     const lyricsByEvent = lyricIndex(document)
+    const inlineSettings = inlineSettingIndex(document)
     const eventIds = stableEventIds(document)
     const renderRows: Array<{ id: string; partIndex: number; placement: ReturnType<typeof layoutMeasures>[number]; layout: ReturnType<typeof measureLayout> }> = []
     let voiceTop = 80
@@ -292,7 +320,7 @@ export class JianpuScore {
       }
       const measureId = `m3n-measure-${item.partIndex + 1}-${item.placement.measureIndex + 1}${item.id.endsWith(':bass') ? '-bass' : ''}`
       const measureY = item.placement.y - pageYOffset
-      const group = renderMeasure(lyricsByEvent, item.placement.measure, item.placement.measureIndex, item.layout, document.key, fontFamily, beat, measureId)
+      const group = renderMeasure(lyricsByEvent, inlineSettings, item.placement.measure, item.placement.measureIndex, item.layout, document.key, fontFamily, beat, measureId)
       group.setAttribute('transform', `translate(${item.placement.x},${measureY})`)
       group.setAttribute('data-m3n-voice', item.id)
       page.append(group)
