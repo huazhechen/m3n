@@ -302,10 +302,11 @@ export class JianpuScore {
       }
       voiceTop = Math.max(voiceTop + ROW_HEIGHT, (placements.at(-1)?.y ?? voiceTop) + ROW_HEIGHT + SYSTEM_GAP)
     }
+    const pageWidth = Math.max(maxWidth, ...renderRows.map((item) => item.placement.x + item.placement.width + PADDING))
     const naturalHeight = Math.max(220, voiceTop + PADDING)
-    const targetPageHeight = options.paged ? Math.max(a4SourcePageHeight(maxWidth), 420) : naturalHeight
+    const targetPageHeight = options.paged ? Math.max(a4SourcePageHeight(pageWidth), 420) : naturalHeight
     const pages: SVGSVGElement[] = []
-    let page = svg('svg', { xmlns: SVG_NS, viewBox: `0 0 ${maxWidth} ${targetPageHeight}`, width: maxWidth, height: targetPageHeight, class: 'jianpu-page' })
+    let page = svg('svg', { xmlns: SVG_NS, viewBox: `0 0 ${pageWidth} ${targetPageHeight}`, width: pageWidth, height: targetPageHeight, class: 'jianpu-page' })
     addJianpuStyle(page, NOTE_SIZE)
     let pageIndex = 0
     let pageYOffset = 0
@@ -314,7 +315,7 @@ export class JianpuScore {
     for (const item of renderRows) {
       if (options.paged && item.placement.y - pageYOffset + ROW_HEIGHT > targetPageHeight - PADDING && page.childElementCount > 0) {
         pages.push(page); pageIndex += 1; pageYOffset = item.placement.y - 80
-        page = svg('svg', { xmlns: SVG_NS, viewBox: `0 0 ${maxWidth} ${targetPageHeight}`, width: maxWidth, height: targetPageHeight, class: 'jianpu-page', 'data-render-page': pageIndex + 1 })
+        page = svg('svg', { xmlns: SVG_NS, viewBox: `0 0 ${pageWidth} ${targetPageHeight}`, width: pageWidth, height: targetPageHeight, class: 'jianpu-page', 'data-render-page': pageIndex + 1 })
         addJianpuStyle(page, NOTE_SIZE)
         previous = undefined
       }
@@ -336,7 +337,7 @@ export class JianpuScore {
         } else {
           page.append(arc(item.placement.x + 2, x2, baseY, baseY - NOTE_SIZE * 0.33, 'relation-arc tie-arc cross-system-tie-in'))
           const priorY = previous.placement.y - pageYOffset - NOTE_SIZE * 0.72
-          page.append(arc(x1, maxWidth - PADDING, priorY, priorY - NOTE_SIZE * 0.33, 'relation-arc tie-arc cross-system-tie-out'))
+          page.append(arc(x1, pageWidth - PADDING, priorY, priorY - NOTE_SIZE * 0.33, 'relation-arc tie-arc cross-system-tie-out'))
         }
       }
       previous = item
@@ -359,7 +360,7 @@ export class JianpuScore {
     const signature = svg('text', { x: PADDING, y: 54, 'font-size': 17, 'font-family': fontFamily, fill: '#52655c', class: 'm3n-jianpu-signature' })
     signature.textContent = `1=${document.key}  ${document.meterCount}/${document.meterUnit}  ♩=${document.tempo}`
     pages[0]!.prepend(signature)
-    addScoreHeaderToSvg(pages[0]!, options.headerMetadata, maxWidth, targetPageHeight)
+    addScoreHeaderToSvg(pages[0]!, options.headerMetadata, pageWidth, targetPageHeight)
     return new JianpuScore(pages, options.paged)
   }
 

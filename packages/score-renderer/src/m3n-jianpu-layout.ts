@@ -40,7 +40,11 @@ function metric(measure: ScoreMeasure, beat: number, fontSize: number) {
   const spans = measure.events.map((event) => visualSpan(event, beat))
   const slots = measure.events.reduce((total, event) => total + visualSlots(event, beat), 0)
   const beatGaps = Math.max(0, Math.ceil(spans.reduce((total, value) => total + value, 0)) - 1)
-  const cell = fontSize * 1.5
+  const cell = measure.events.reduce((required, event) => {
+    if (event.beats <= EPSILON) return required
+    const minimumSymbolWidth = event.kind === 'chord' ? fontSize * 1.05 : fontSize * 0.82
+    return Math.max(required, minimumSymbolWidth / visualSpan(event, beat))
+  }, fontSize * 1.5)
   const bar = fontSize * 0.55
   const beatGap = fontSize * 0.28
   return { slots: Math.max(1, slots), width: Math.max(fontSize * 2.2, slots * cell + beatGaps * beatGap + bar), beatGaps, bar, beatGap }
@@ -73,7 +77,7 @@ export function layoutMeasures(
   for (const [measureIndex, measure] of measures.entries()) {
     if (measure.breakBefore) flushRow()
     const info = metric(measure, beat, fontSize)
-    const measureWidth = Math.min(available, info.width)
+    const measureWidth = info.width
     const nextWidth = rowWidth + (row.length === 0 ? 0 : measureGap) + measureWidth
     if (row.length > 0 && nextWidth > available) flushRow()
     row.push({ measure, measureIndex, info, width: measureWidth })
@@ -84,9 +88,13 @@ export function layoutMeasures(
 
   const result: LayoutMeasure[] = []
   let y = musicTop
+  const targetWidth = Math.max(
+    available,
+    ...rows.map((items) => items.reduce((total, item) => total + item.width, 0) + Math.max(0, items.length - 1) * measureGap),
+  )
   for (const rowItems of rows) {
     const naturalWidth = rowItems.reduce((total, item) => total + item.width, 0) + Math.max(0, rowItems.length - 1) * measureGap
-    const scale = naturalWidth > 0 ? available / naturalWidth : 1
+    const scale = naturalWidth > 0 ? targetWidth / naturalWidth : 1
     const scaledGap = measureGap * scale
     let x = padding
     for (const item of rowItems) {

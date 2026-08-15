@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import type { ScoreDocument } from '@m3n/notation'
 import { analyzeM3N } from '@m3n/notation'
 import { JianpuScore } from './jianpu-score.js'
-import { layoutMeasures } from './m3n-jianpu-layout.js'
+import { layoutMeasures, positionEvents } from './m3n-jianpu-layout.js'
 
 const scoreDocument: ScoreDocument = {
   title: 'Test', subtitle: '', singer: '', composer: '', lyricist: '', arranger: '', copyright: '', source: '', note: '', transpose: '', key: 'C', meterCount: 4, meterUnit: 4, tempo: 100, hasExplicitTempo: true, lyrics: [], intervals: [],
@@ -84,11 +84,20 @@ describe('JianpuScore', () => {
     expect(paper.querySelectorAll('.event-lyric').length).toBeGreaterThan(0)
     expect(paper.querySelectorAll('.m3n-jianpu-inline-setting')).toHaveLength(0)
     const placements = layoutMeasures(analysis.score.parts.get('score')!.melody, 920, 28, 80, 136, 32, 1)
-    const systems = Map.groupBy(placements, (placement) => placement.y)
+    const systems = new Map<number, typeof placements>()
+    for (const placement of placements) systems.set(placement.y, [...(systems.get(placement.y) ?? []), placement])
+    const targetRightEdge = Math.max(...placements.map((placement) => placement.x + placement.width))
     for (const system of systems.values()) {
       const rightEdge = Math.max(...system.map((placement) => placement.x + placement.width))
-      expect(rightEdge).toBeCloseTo(892, 4)
+      expect(rightEdge).toBeCloseTo(targetRightEdge, 4)
     }
+    const tiedWithinMeasure = placements.flatMap((placement) => {
+      const positioned = positionEvents(placement, 1)
+      return positioned.flatMap((event, index) => event.event.tie && positioned[index + 1]
+        ? [positioned[index + 1]!.centerX - event.centerX]
+        : [])
+    })
+    expect(Math.min(...tiedWithinMeasure)).toBeGreaterThan(24)
     const measureYs = new Set([...paper.querySelectorAll<SVGGElement>('g.measure')]
       .map((measure) => /translate\([^,]+,([^\)]+)\)/.exec(measure.getAttribute('transform') ?? '')?.[1])
       .filter((y): y is string => y !== undefined))
