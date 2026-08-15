@@ -488,7 +488,7 @@ export function ScoreRenderer({
         )}
         {hasAudioControls && (
           <div className="playback-progress">
-            <span>播放进度</span>
+            <span>进度</span>
             <input
               type="range"
               min="0"
