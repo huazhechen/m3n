@@ -14,6 +14,7 @@ export type NumberedEventPlacement = {
   startBeat: number
   beat: number
   durationLines: number
+  extensionXs: number[]
 }
 
 export type NumberedSystem = {
@@ -21,6 +22,7 @@ export type NumberedSystem = {
     measure: ScoreMeasure
     index: number
     x: number
+    leftBarX: number
     width: number
     barX: number
     placements: NumberedEventPlacement[]
@@ -35,10 +37,11 @@ export type NumberedLayoutOptions = {
   fontSize: number
   beatLength: number
   lyricOverflow?: (event: ScoreEvent) => number
+  leadingWidth?: (measure: ScoreMeasure, index: number) => number
   rowHeight?: (measures: readonly ScoreMeasure[]) => number
 }
 
-type LocalPlacement = Omit<NumberedEventPlacement, 'width' | 'center'>
+type LocalPlacement = Omit<NumberedEventPlacement, 'width' | 'center' | 'extensionXs'> & { extensionOffsets: number[] }
 type MeasureMetric = {
   measure: ScoreMeasure
   index: number
@@ -59,13 +62,23 @@ function dotsWidth(event: ScoreEvent, fontSize: number) {
 function durationLines(event: ScoreEvent) {
   if (event.kind !== 'note' && event.kind !== 'rest') return 0
   if (event.beats >= 1) return 0
-  return Math.max(0, Math.min(3, Math.round(Math.log2(1 / Math.max(0.125, event.beats)))))
+  // A dotted eighth is 0.75 beats: it still needs one underline even though
+  // its logarithmic distance from a quarter is less than one full power.
+  return Math.max(0, Math.min(3, Math.ceil(Math.log2(1 / Math.max(0.125, event.beats)))))
 }
 
-function noteStep(event: ScoreEvent, fontSize: number) {
+function extensionCount(event: ScoreEvent, beatLength: number) {
+  if ((event.kind !== 'note' && event.kind !== 'rest') || event.beats < beatLength * 2) return 0
+  return Math.max(0, Math.floor(event.beats / beatLength) - 1)
+}
+
+function noteStep(event: ScoreEvent, fontSize: number, beatLength: number) {
   // Open Fanqie uses 37.5 for ordinary notes and 25 for reduced notes at its
   // 18px notation size.  Scaling those constants retains its recognizable grid.
-  return (durationLines(event) > 0 ? 25 : 37.5) * (fontSize / 18)
+  if (event.kind === 'tuplet') return Math.max(37.5, event.pitches.length * 25) * (fontSize / 18)
+  const scale = fontSize / 18
+  const base = (durationLines(event) > 0 ? 25 : 37.5) * scale
+  return base + extensionCount(event, beatLength) * 37.5 * scale
 }
 
 function measureMetric(measure: ScoreMeasure, index: number, options: NumberedLayoutOptions): MeasureMetric {
@@ -77,21 +90,31 @@ function measureMetric(measure: ScoreMeasure, index: number, options: NumberedLa
   measure.events.forEach((event, eventIndex) => {
     const beat = Math.max(0, Math.floor((startBeat + 1e-7) / beatLength))
     while (byBeat.length <= beat) byBeat.push([])
-    byBeat[beat]?.push({ event, eventIndex, x: 0, startBeat, beat, durationLines: durationLines(event) })
+    const extensions = extensionCount(event, beatLength)
+    byBeat[beat]?.push({
+      event,
+      eventIndex,
+      x: 0,
+      startBeat,
+      beat,
+      durationLines: durationLines(event),
+      extensionOffsets: Array.from({ length: extensions }, (_, extension) => (extension + 1) * 37.5 * scale),
+    })
     startBeat += event.beats
   })
 
-  // A leading repeat sign is a real layout object.  Reserving its barline
-  // column here keeps the first number clear of the dots and heavy stroke.
-  let beatStart = measure.left ? barGap : 0
+  // A forward-repeat begins a fresh rendered system.  Its barline needs a
+  // dedicated leading column so the first note never collides with its dots.
+  let beatStart = (measure.left ? barGap : 0) + (options.leadingWidth?.(measure, index) ?? 0)
   const placements: LocalPlacement[] = []
-  byBeat.forEach((items) => {
+  let barX = beatStart + barGap
+  byBeat.forEach((items, beatIndex) => {
     let column = items[0] ? accidentalWidth(items[0].event, options.fontSize) : 0
     items.forEach((item, itemIndex) => {
       if (itemIndex > 0) {
         const previous = items[itemIndex - 1]
         if (previous) {
-          column += Math.max(noteStep(previous.event, options.fontSize), noteStep(item.event, options.fontSize))
+          column += Math.max(noteStep(previous.event, options.fontSize, beatLength), noteStep(item.event, options.fontSize, beatLength))
             + dotsWidth(previous.event, options.fontSize)
             + accidentalWidth(item.event, options.fontSize)
             + (options.lyricOverflow?.(previous.event) ?? 0)
@@ -102,48 +125,57 @@ function measureMetric(measure: ScoreMeasure, index: number, options: NumberedLa
     })
     const last = items.at(-1)
     if (last) {
-      beatStart += last.x - beatStart + noteStep(last.event, options.fontSize)
-        + dotsWidth(last.event, options.fontSize)
-        + (options.lyricOverflow?.(last.event) ?? 0)
+      const trailing = dotsWidth(last.event, options.fontSize) + (options.lyricOverflow?.(last.event) ?? 0)
+      if (beatIndex === byBeat.length - 1) barX = last.x + (last.extensionOffsets.at(-1) ?? 0) + barGap + trailing
+      else beatStart = last.x + noteStep(last.event, options.fontSize, beatLength) + trailing
     }
   })
-  const barX = beatStart + barGap
   return { measure, index, width: barX + barGap, barX, placements }
 }
 
 function finalizeSystem(items: MeasureMetric[], available: number, options: NumberedLayoutOptions): NumberedSystem {
-  const naturalWidth = items.reduce((sum, item) => sum + item.width, 0)
-  // Fanqie's systems are justified to the printable edge.  Keeping a short
-  // final system at its natural width makes the page read as unfinished and
-  // also causes the barline grid to drift between rows.
-  const scale = naturalWidth > 0 ? available / naturalWidth : 1
-  let cursor = options.padding
-  const measures = items.map((item) => {
-    const x = cursor
-    const width = item.width * scale
+  const starts = items.reduce<number[]>((result, item) => [...result, (result.at(-1) ?? 0) + item.width], [0]).slice(0, -1)
+  const finalMetric = items.at(-1)
+  // Every non-terminal metric includes one trailing bar column for the next
+  // measure's first note. The final metric has no next measure, so including
+  // that invisible column would make its end barline consume two intervals.
+  const terminalWidth = finalMetric?.barX ?? 0
+  const precedingWidth = items.slice(0, -1).reduce((total, item) => total + item.width, 0)
+  const naturalWidth = Math.max(options.fontSize, precedingWidth + terminalWidth)
+  // Scale the complete visible grid, including the final note-to-barline gap.
+  // This makes the terminal column use the exact same ratio as normal bars.
+  const scale = available / naturalWidth
+  const rightEdge = options.padding + available
+  const measures = items.map((item, itemIndex) => {
+    const rawStart = starts[itemIndex] ?? 0
+    const x = options.padding + rawStart * scale
+    const terminal = itemIndex === items.length - 1
+    const width = (terminal ? item.barX : item.width) * scale
     const placements = item.placements.map((placement, placementIndex, all) => {
       const next = all[placementIndex + 1]
-      const right = next ? next.x : item.barX
-      const localWidth = Math.max(options.fontSize, right - placement.x)
-      const scaledX = x + placement.x * scale
+      const scaledX = options.padding + (rawStart + placement.x) * scale
+      const right = next
+        ? options.padding + (rawStart + next.x) * scale
+        : options.padding + (rawStart + item.barX) * scale
       return {
         ...placement,
         x: scaledX,
-        width: localWidth * scale,
+        width: Math.max(options.fontSize, right - scaledX),
         center: scaledX,
+        extensionXs: placement.extensionOffsets.map((offset) => options.padding + (rawStart + placement.x + offset) * scale),
       }
     })
-    cursor += width
-    return { measure: item.measure, index: item.index, x, width, barX: x + item.barX * scale, placements }
+    const previous = items[itemIndex - 1]
+    return {
+      measure: item.measure,
+      index: item.index,
+      x,
+      leftBarX: previous ? x - previous.width * scale + previous.barX * scale : x,
+      width,
+      barX: terminal ? rightEdge : options.padding + (rawStart + item.barX) * scale,
+      placements,
+    }
   })
-  const finalMeasure = measures.at(-1)
-  if (finalMeasure) {
-    const right = options.padding + available
-    finalMeasure.width = right - finalMeasure.x
-    finalMeasure.barX = right
-    const finalPlacement = finalMeasure.placements.at(-1)
-    if (finalPlacement) finalPlacement.width = Math.max(options.fontSize, right - finalPlacement.x)
-  }
   const height = options.rowHeight?.(items.map((item) => item.measure)) ?? options.fontSize * 4
   return { measures, y: 0, height }
 }
@@ -156,7 +188,7 @@ export function buildNumberedLayout(measures: readonly ScoreMeasure[], options: 
   const flush = () => { if (row.length) rows.push(row); row = []; rowWidth = 0 }
   measures.forEach((measure, index) => {
     const metric = measureMetric(measure, index, options)
-    if (row.length && (measure.breakBefore || rowWidth + metric.width > available)) flush()
+    if (row.length && (measure.breakBefore || measure.left === 'rptstart' || rowWidth + metric.width > available)) flush()
     row.push(metric)
     rowWidth += metric.width
     if (measure.breakAfter) flush()

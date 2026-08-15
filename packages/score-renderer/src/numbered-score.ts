@@ -16,6 +16,7 @@ export type NumberedScoreOptions = {
 
 type LyricCell = { row: number; text: string }
 type LyricMap = Map<ScoreEvent, LyricCell[]>
+type MeasureSettings = { key?: string; meter?: { count: number; unit: number }; tempo?: number }
 
 function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number | undefined> = {}) {
   const element = document.createElementNS(SVG_NS, tag)
@@ -109,10 +110,11 @@ function glyphStyle(page: SVGSVGElement, fontSize: number) {
   page.append(defs)
   const style = svg('style')
   style.textContent = `.numbered-score{background:#fff}.numbered-event{cursor:pointer}.numbered-hit{fill:transparent}.numbered-number{font:${fontSize * 1.42}px 'Times New Roman','Noto Serif CJK SC',serif;font-weight:600;fill:#101010;text-anchor:middle}.numbered-accidental{font:${fontSize * 0.82}px 'Times New Roman',serif;fill:#101010;text-anchor:end}.numbered-lyric{font:${fontSize}px 'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;fill:#101010;text-anchor:start}.numbered-label,.numbered-navigation,.numbered-ending-label{font:${fontSize * 0.72}px 'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;fill:#303030;text-anchor:middle}.numbered-title{font:${fontSize * 2}px 'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;font-weight:700;fill:#101010;text-anchor:middle}.numbered-subtitle{font:${fontSize * 1.1}px 'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;fill:#101010;text-anchor:middle}.numbered-header-meta{font:${fontSize * 0.9}px 'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;fill:#202020}.numbered-header-mode{font:${fontSize * 1.16}px 'Times New Roman','Noto Serif CJK SC',serif;fill:#101010}.numbered-header-meter{font:${fontSize * 1.05}px 'Times New Roman',serif;fill:#101010;text-anchor:middle}.numbered-bar{stroke:#101010;stroke-width:1.25}.numbered-bar-heavy{stroke:#101010;stroke-width:2.8}.numbered-beam{stroke:#101010;stroke-width:1.65;stroke-linecap:butt}.numbered-octave{fill:#101010}.numbered-ending,.numbered-tie{fill:none;stroke:#101010;stroke-width:1.1}.numbered-navigation-symbol{fill:none;stroke:#101010;stroke-width:1.1}.is-source-active .numbered-lyric,.numbered-lyric.is-playing{fill:#17699c}.measure-cursor-highlight,.measure-playback-highlight{fill:#dceeff;opacity:.52}`
+  style.textContent += '.numbered-tuplet{fill:none;stroke:#101010;stroke-width:1.1}'
   page.prepend(style)
 }
 
-function drawPitch(group: SVGGElement, token: string, x: number, y: number, key: string, fontSize: number, beamLines: number, offset = 0) {
+function drawPitch(group: SVGGElement, token: string, x: number, y: number, key: string, fontSize: number, beamLines: number, offset = 0, compact = false) {
   const parsed = pitch(token)
   const resolved = parsed.degree === '0' ? undefined : m3nPitch(token, key)
   const accidental = parsed.accidental || (resolved?.accid === 's' ? '#' : resolved?.accid === 'f' ? 'b' : resolved?.accid === 'n' ? '=' : '')
@@ -120,7 +122,8 @@ function drawPitch(group: SVGGElement, token: string, x: number, y: number, key:
   const accidentalId = accidental === '#' ? 'bianyinfu_sheng' : accidental === 'b' ? 'bianyinfu_jiang' : accidental === '=' ? 'bianyinfu_huanyuan' : undefined
   if (accidentalId) glyph(group, accidentalId, x, pitchY, fontSize, 'numbered-glyph numbered-accidental-glyph')
   else if (accidental) group.append(text(accidental, { x: x - fontSize * 0.55, y: pitchY + fontSize * 0.18, class: 'numbered-accidental' }))
-  glyph(group, parsed.degree === '0' ? 'shuzi_b_0' : `shuzi_b_${parsed.degree}`, x, pitchY, fontSize, 'numbered-glyph numbered-number').setAttribute('data-numbered-x', String(x))
+  const digitId = parsed.degree === '0' ? 'shuzi_b_0' : compact ? `shuzi_b_bian_${parsed.degree}` : `shuzi_b_${parsed.degree}`
+  glyph(group, digitId, x, pitchY, fontSize, `numbered-glyph numbered-number${compact ? ' numbered-tuplet-number' : ''}`).setAttribute('data-numbered-x', String(x))
   for (let index = 0; index < Math.abs(parsed.octave); index += 1) {
     const octaveY = parsed.octave > 0
       // Fanqie's octave glyphs carry their first dot offset internally.
@@ -138,11 +141,19 @@ function drawBarline(parent: SVGGElement, type: string | undefined, x: number, f
       : type === 'end' ? 'jieshufu'
         : type === 'rptstart' ? 'xunhuan_zuo'
           : type === 'rptend' ? 'xunhuan_you'
+            : type === 'rptboth' ? 'xunhuan_zuoyou'
             : undefined
   if (glyphId) {
     const marker = glyph(parent, glyphId, x, 0, fontSize, `numbered-glyph numbered-bar-${type}`)
+    if (type === 'rptstart' || type === 'rptend' || type === 'rptboth') {
+      // The source glyph is drawn for a 1000-unit page.  At the responsive
+      // preview scale its 2.4-unit heavy rule becomes an opaque block; retain
+      // the original paths but optically condense just repeat boundaries.
+      const scale = fontSize / 18
+      marker.setAttribute('transform', `translate(${x} 0) scale(${scale * 0.78} ${scale})`)
+    }
     marker.setAttribute('data-bar-x', String(x))
-    if (type === 'end' || type === 'rptstart' || type === 'rptend') marker.classList.add('numbered-bar-heavy')
+    if (type === 'end' || type === 'rptstart' || type === 'rptend' || type === 'rptboth') marker.classList.add('numbered-bar-heavy')
   }
 }
 
@@ -175,12 +186,23 @@ function drawEvent(parent: SVGGElement, placement: NumberedEventPlacement, lyric
   const beamLines = placement.durationLines
   if (event.kind === 'rest' || event.pitches.length === 0) drawPitch(group, '0', placement.center, 0, event.key, fontSize, beamLines)
   else if (event.pitches.length === 1) drawPitch(group, event.pitches[0] ?? '0', placement.center, 0, event.key, fontSize, beamLines)
-  else event.pitches.forEach((item, index) => drawPitch(group, item, placement.center, (index - (event.pitches.length - 1) / 2) * fontSize * 0.54, event.key, fontSize * 0.8, beamLines))
+  else if (event.kind === 'tuplet') {
+    const step = fontSize * (25 / 18)
+    const left = placement.center - (event.pitches.length - 1) * step / 2
+    event.pitches.forEach((item, index) => drawPitch(group, item, left + index * step, 0, event.key, fontSize, beamLines, 0, true))
+    const arcLeft = left - fontSize * 0.42
+    const arcRight = left + (event.pitches.length - 1) * step + fontSize * 0.42
+    const top = -fontSize * 1.13
+    group.append(svg('path', { d: `M ${arcLeft} ${top + fontSize * 0.4} C ${arcLeft + (arcRight - arcLeft) * 0.24} ${top - fontSize * 0.28}, ${arcRight - (arcRight - arcLeft) * 0.24} ${top - fontSize * 0.28}, ${arcRight} ${top + fontSize * 0.4}`, class: 'numbered-tuplet' }))
+    const tupletNumber = String(event.tuplet?.num ?? event.pitches.length)
+    if (/^[2-9]$/.test(tupletNumber)) glyph(group, `lianyin_shuzi_${tupletNumber}`, placement.center, top - fontSize * 0.12, fontSize, 'numbered-glyph numbered-tuplet-label')
+  } else event.pitches.forEach((item, index) => drawPitch(group, item, placement.center, (index - (event.pitches.length - 1) / 2) * fontSize * 0.54, event.key, fontSize * 0.8, beamLines))
   for (let index = 0; index < durationDots(event); index += 1) glyph(group, index === 0 ? 'fudian' : 'fudian2', placement.center + index * fontSize * 0.45, 0, fontSize, 'numbered-glyph numbered-duration-dot')
-  if (event.beats >= 2 && event.kind !== 'rest') {
-    const marks = Math.max(1, Math.floor(event.beats) - 1)
-    for (let index = 0; index < marks; index += 1) group.append(text('-', { x: placement.center + fontSize * (0.78 + index * 0.48), y: fontSize * 0.05, class: 'numbered-number' }))
-  }
+  placement.extensionXs.forEach((x, index) => {
+    const sustain = glyph(group, 'yanyinfu', x, 0, fontSize, 'numbered-glyph numbered-sustain')
+    sustain.setAttribute('data-numbered-sustain-x', String(x))
+    sustain.setAttribute('data-numbered-sustain-index', String(index))
+  })
   if (event.chord) group.append(text(event.chord, { x: placement.center, y: -fontSize * 1.55, class: 'numbered-label' }))
   if (event.dynamic || event.text) group.append(text(event.dynamic ?? event.text ?? '', { x: placement.center, y: -fontSize * 2.12, class: 'numbered-label' }))
   parent.append(group)
@@ -215,10 +237,14 @@ function drawEndings(parent: SVGGElement, system: NumberedSystem, fontSize: numb
     while (system.measures[end + 1]?.measure.ending === ending) end += 1
     const last = system.measures[end] ?? first
     const top = -fontSize * 2.45
-    const left = first.x + fontSize * 0.1
+    const left = first.leftBarX
     const right = last.barX
-    parent.append(svg('path', { d: `M ${left} ${top + fontSize * 0.7} V ${top} H ${right} V ${top + fontSize * 0.38}`, class: 'numbered-ending' }))
-    parent.append(text(`${ending}.`, { x: left + fontSize * 0.34, y: top + fontSize * 0.48, class: 'numbered-ending-label', 'text-anchor': 'start' }))
+    // Match the bracket legs to the Open Fanqie barline height so alternate
+    // endings read as structural measure boundaries instead of short labels.
+    const barHeight = fontSize * (29 / 18)
+    parent.append(svg('path', { d: `M ${left} ${top + barHeight} V ${top} H ${right} V ${top + barHeight * 0.84}`, class: 'numbered-ending' }))
+    if (/^\d$/.test(ending)) glyph(parent, `shuzi_b_bian_${ending}`, left + fontSize * 0.48, top + fontSize * 0.58, fontSize * 0.72, 'numbered-glyph numbered-ending-label')
+    else parent.append(text(ending, { x: left + fontSize * 0.34, y: top + fontSize * 0.48, class: 'numbered-ending-label', 'text-anchor': 'start' }))
     start = end + 1
   }
 }
@@ -229,44 +255,89 @@ function drawTies(parent: SVGGElement, system: NumberedSystem, fontSize: number)
     if (!current.event.tie) return
     const next = placements[index + 1]
     if (!next) return
-    const left = current.center + fontSize * 0.35
-    const right = next.center - fontSize * 0.35
+    const left = current.center + fontSize * (1 / 18)
+    const right = next.center - fontSize * (1 / 18)
     if (right <= left) return
-    const baseline = -fontSize * 1.05
-    const control = Math.max(fontSize * 0.35, (right - left) * 0.28)
-    parent.append(svg('path', { d: `M ${left} ${baseline} C ${left + control} ${baseline - fontSize * 0.62}, ${right - control} ${baseline - fontSize * 0.62}, ${right} ${baseline}`, class: 'numbered-tie' }))
+    const hasHighOctave = [current.event, next.event].some((event) => event.pitches.some((token) => pitch(token).octave > 0))
+    const baseline = -fontSize * ((16 + (hasHighOctave ? 5 : 0)) / 18)
+    const control = Math.max(fontSize * (0.4 / 18), (right - left) * 0.3 - fontSize * (0.4 / 18))
+    parent.append(svg('path', { d: `M ${left} ${baseline} C ${left + control} ${baseline - fontSize * (10 / 18)}, ${right - control} ${baseline - fontSize * (10 / 18)}, ${right} ${baseline}`, class: 'numbered-tie' }))
   })
 }
 
-function drawNavigation(parent: SVGGElement, measure: ScoreMeasure, x: number, fontSize: number) {
+function drawNavigation(parent: SVGGElement, measure: ScoreMeasure, startX: number, barX: number, fontSize: number) {
   const navigation = measure.navigation ?? []
   const y = -fontSize * 1.83
   navigation.forEach((item, index) => {
-    const itemX = x + index * fontSize * 1.5
+    const itemX = startX + index * fontSize * 1.5
     if (item === 'segno') {
       parent.append(svg('circle', { cx: itemX + fontSize * 0.35, cy: y - fontSize * 0.22, r: fontSize * 0.28, class: 'numbered-navigation-symbol' }))
       parent.append(svg('line', { x1: itemX + fontSize * 0.02, x2: itemX + fontSize * 0.67, y1: y + fontSize * 0.2, y2: y - fontSize * 0.63, class: 'numbered-navigation-symbol' }))
       parent.append(svg('circle', { cx: itemX + fontSize * 0.08, cy: y - fontSize * 0.62, r: fontSize * 0.07, fill: '#101010' }))
       parent.append(svg('circle', { cx: itemX + fontSize * 0.62, cy: y + fontSize * 0.17, r: fontSize * 0.07, fill: '#101010' }))
-    } else parent.append(text(item === 'ds' ? 'D.S.' : item === 'dc' ? 'D.C.' : 'Fine', { x: itemX, y, class: 'numbered-navigation', 'text-anchor': 'start' }))
+    } else {
+      const glyphId = item === 'fine' ? 'xiaojiexian_fine' : item === 'ds' ? 'xiaojiexian_ds' : 'xiaojiexian_dc'
+      // Open Fanqie places barline ornaments 26 logical units above the
+      // music baseline. Their visual centre must sit to the barline's left:
+      // anchoring it at barX overlays the D.S./D.C. letters on the rule.
+      const ornamentX = barX - fontSize * ((15 + index * 22) / 18)
+      const ornament = glyph(parent, glyphId, ornamentX, -fontSize * (26 / 18), fontSize, 'numbered-glyph numbered-navigation')
+      ornament.setAttribute('data-numbered-navigation-x', String(ornamentX))
+    }
   })
-  if (measure.repeatCount && measure.repeatCount !== 2) parent.append(text(`x${measure.repeatCount}`, { x: x - fontSize * 0.5, y, class: 'numbered-navigation', 'text-anchor': 'end' }))
+  if (measure.repeatCount && measure.repeatCount !== 2) {
+    const count = String(measure.repeatCount)
+    if (/^\d$/.test(count)) glyph(parent, `shuzi_b_bian_${count}`, barX - fontSize * 0.55, y, fontSize * 0.72, 'numbered-glyph numbered-navigation')
+    else parent.append(text(`x${count}`, { x: barX - fontSize * 0.5, y, class: 'numbered-navigation', 'text-anchor': 'end' }))
+  }
 }
 
-function drawSystem(page: SVGGElement, system: NumberedSystem, lyrics: LyricMap, ids: Map<ScoreEvent, string>, fontSize: number) {
+function measureSettingsWidth(settings: MeasureSettings | undefined, fontSize: number) {
+  if (!settings) return 0
+  const scale = fontSize / 18
+  return (settings.key ? 55 : 0) * scale + (settings.meter ? 45 : 0) * scale
+}
+
+function drawMeasureSettings(parent: SVGGElement, settings: MeasureSettings | undefined, x: number, fontSize: number) {
+  if (!settings) return
+  const scale = fontSize / 18
+  let cursor = x
+  if (settings.key) {
+    const key = /^([A-G])([#b]?)/.exec(settings.key)
+    const accidental = key?.[2]
+    glyph(parent, 'diaohao_fu', cursor, 0, fontSize)
+    const modeX = cursor + (accidental ? 45 : 40) * scale
+    if (accidental) glyph(parent, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, 0, fontSize)
+    glyph(parent, `diaohao_zimu_${key?.[1]?.toLowerCase() ?? 'c'}`, modeX, 0, fontSize)
+    cursor += (accidental ? 55 : 50) * scale
+  }
+  if (settings.meter) {
+    glyph(parent, 'linshi_paihao_fenxian', cursor, 0, fontSize)
+    glyph(parent, `linshi_paihao_shuzi_${settings.meter.count}`, cursor + 28 * scale, -12 * scale, fontSize)
+    glyph(parent, `linshi_paihao_shuzi_${settings.meter.unit}`, cursor + 28 * scale, 12 * scale, fontSize)
+    cursor += 45 * scale
+  }
+  if (settings.tempo) {
+    glyph(parent, 'jiepaifu', x, -26 * scale, fontSize)
+    parent.append(text(`= ${settings.tempo}`, { x: x + 32 * scale, y: -20 * scale, class: 'numbered-label' }))
+  }
+}
+
+function drawSystem(page: SVGGElement, system: NumberedSystem, lyrics: LyricMap, ids: Map<ScoreEvent, string>, settingsByMeasure: ReadonlyMap<ScoreMeasure, MeasureSettings>, fontSize: number) {
   const group = svg('g', { class: 'numbered-system' })
   const rows = systemLyricRows(system, lyrics)
   const lyricsByRow = new Map<number, Array<{ x: number; text: string }>>()
-  system.measures.forEach((measure) => {
+  system.measures.forEach((measure, measureIndex) => {
     const measureGroup = svg('g', { class: 'measure', 'data-measure-index': measure.index })
+    drawMeasureSettings(measureGroup, settingsByMeasure.get(measure.measure), measure.x, fontSize)
     measure.placements.forEach((placement) => {
       const cells = drawEvent(measureGroup, placement, lyrics, ids.get(placement.event) ?? `m3n-e-${measure.index + 1}-${placement.eventIndex + 1}`, fontSize)
       cells.forEach((cell) => lyricsByRow.set(cell.row, [...(lyricsByRow.get(cell.row) ?? []), { x: placement.center, text: cell.text }]))
     })
     drawBeams(measureGroup, measure.placements, fontSize)
-    drawBarline(measureGroup, measure.measure.left, measure.x, fontSize)
+    if (measureIndex === 0 && measure.measure.left) drawBarline(measureGroup, measure.measure.left, measure.x, fontSize)
     drawBarline(measureGroup, measure.measure.right, measure.barX, fontSize)
-    drawNavigation(measureGroup, measure.measure, measure.x, fontSize)
+    drawNavigation(measureGroup, measure.measure, measure.x, measure.barX, fontSize)
     group.append(measureGroup)
   })
   drawEndings(group, system, fontSize)
@@ -285,17 +356,8 @@ function drawNumberedHeader(page: SVGSVGElement, document: ScoreDocument, metada
   const infoY = title ? margin + 80 * scale : margin + 28 * scale
   if (title) page.append(text(title, { x: width / 2, y: titleY, class: 'numbered-title' }))
   if (subtitle) page.append(text(subtitle, { x: width / 2, y: titleY + fontSize * 1.55, class: 'numbered-subtitle' }))
-  const authorLines = [
-    document.lyricist ? `${document.lyricist} 词` : '',
-    document.composer ? `${document.composer} 曲` : '',
-    document.arranger ? `${document.arranger} 编曲` : '',
-    document.singer ? `${document.singer} 演唱` : '',
-  ].filter(Boolean)
-  if (authorLines.length === 0) {
-    const fallback = metadata.find((item) => item.side === 'right')?.value
-    if (fallback) authorLines.push(fallback)
-  }
-  authorLines.forEach((line, index) => page.append(text(line, { x: width - margin, y: infoY + fontSize * (index * 1.05), class: 'numbered-header-meta', 'text-anchor': 'end' })))
+  const author = document.singer || document.composer || metadata.find((item) => item.side === 'right')?.value
+  if (author) page.append(text(author, { x: width - margin, y: infoY, class: 'numbered-header-meta', 'text-anchor': 'end' }))
 
   const key = /^([A-G])([#b]?)/.exec(document.key)
   const keyLetter = key?.[1]?.toLowerCase() ?? 'c'
@@ -303,20 +365,19 @@ function drawNumberedHeader(page: SVGSVGElement, document: ScoreDocument, metada
   page.setAttribute('data-numbered-key', document.key)
   let x = margin
   glyph(page, 'diaohao_fu', x, infoY, fontSize)
-  x += fontSize * 0.88
+  const modeX = x + fontSize * (keyAccidental ? 45 / 18 : 40 / 18)
   if (keyAccidental) {
-    glyph(page, keyAccidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', x, infoY, fontSize)
-    x += fontSize * 0.32
+    glyph(page, keyAccidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, infoY, fontSize)
   }
-  glyph(page, `diaohao_zimu_${keyLetter}`, x, infoY, fontSize)
-  x += fontSize * 0.95
+  glyph(page, `diaohao_zimu_${keyLetter}`, modeX, infoY, fontSize)
+  x += fontSize * (keyAccidental ? 55 / 18 : 50 / 18)
   glyph(page, 'paihao_xian', x, infoY, fontSize)
-  x += fontSize * 0.55
-  glyph(page, `shuzi_b_bian_${String(document.meterCount).slice(-1)}`, x, infoY - fontSize * 0.67, fontSize)
-  glyph(page, `shuzi_b_bian_${String(document.meterUnit).slice(-1)}`, x, infoY + fontSize * 0.67, fontSize)
+  const meterX = x + fontSize * (10 / 18)
+  glyph(page, `shuzi_b_bian_${String(document.meterCount).slice(-1)}`, meterX, infoY - fontSize * (12 / 18), fontSize)
+  glyph(page, `shuzi_b_bian_${String(document.meterUnit).slice(-1)}`, meterX, infoY + fontSize * (12 / 18), fontSize)
   const tempoY = infoY + fontSize * 2.04
   glyph(page, 'jiepaifu', margin, tempoY, fontSize)
-  page.append(text(`= ${document.tempo}`, { x: margin + fontSize * 1.38, y: tempoY + fontSize * 0.12, class: 'numbered-header-meta', 'data-numbered-tempo': document.tempo }))
+  page.append(text(`= ${document.tempo}`, { x: margin + fontSize * (32 / 18), y: tempoY + fontSize * 0.12, class: 'numbered-header-meta', 'data-numbered-tempo': document.tempo }))
   return infoY + fontSize * 3.4
 }
 
@@ -338,7 +399,35 @@ export class NumberedScore {
     // the Verovio renderer.  Keep only a small internal notation gutter so
     // numbered notation reaches the identical content width.
     const pageMargin = Math.max(12, width * 0.025)
-    const systems = tracks.flatMap((measures) => buildNumberedLayout(measures, { width, padding: pageMargin, fontSize, beatLength: 1, lyricOverflow: (event) => lyricOverflow(event, lyrics, fontSize), rowHeight: (row) => rowAdvance(row, lyrics, fontSize) }))
+    const settingsByMeasure = new Map<ScoreMeasure, MeasureSettings>()
+    tracks.forEach((measures) => {
+      let key = document.key
+      let meterCount = document.meterCount
+      let meterUnit = document.meterUnit
+      let tempo = document.tempo
+      measures.forEach((measure, index) => {
+        const first = measure.events[0]
+        if (!first) return
+        const settings: MeasureSettings = {}
+        if (index > 0 && first.key !== key) settings.key = first.key
+        if (index > 0 && (first.meterCount !== meterCount || first.meterUnit !== meterUnit)) settings.meter = { count: first.meterCount ?? meterCount, unit: first.meterUnit ?? meterUnit }
+        if (index > 0 && first.tempo !== tempo) settings.tempo = first.tempo
+        if (Object.keys(settings).length > 0) settingsByMeasure.set(measure, settings)
+        key = first.key
+        meterCount = first.meterCount ?? meterCount
+        meterUnit = first.meterUnit ?? meterUnit
+        tempo = first.tempo ?? tempo
+      })
+    })
+    const systems = tracks.flatMap((measures) => buildNumberedLayout(measures, {
+      width,
+      padding: pageMargin,
+      fontSize,
+      beatLength: 1,
+      lyricOverflow: (event) => lyricOverflow(event, lyrics, fontSize),
+      leadingWidth: (measure) => measureSettingsWidth(settingsByMeasure.get(measure), fontSize),
+      rowHeight: (row) => rowAdvance(row, lyrics, fontSize),
+    }))
     const headerHeight = pageMargin + fontSize * 8
     const contentHeight = systems.reduce((sum, system) => sum + system.height, 0) + headerHeight + pageMargin
     const pageHeight = options.paged ? options.pageHeight ?? 1100 : Math.max(180, contentHeight)
@@ -354,7 +443,7 @@ export class NumberedScore {
         cursor = pageMargin
       }
       const holder = svg('g', { transform: `translate(0 ${cursor + systemTopClearance(fontSize, system.measures.map((measure) => measure.measure))})` })
-      drawSystem(holder, system, lyrics, ids, fontSize)
+      drawSystem(holder, system, lyrics, ids, settingsByMeasure, fontSize)
       page.append(holder)
       cursor += system.height
     })
