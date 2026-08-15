@@ -69,6 +69,30 @@ describe('JianpuScore', () => {
     expect([...paper.querySelectorAll('.m3n-jianpu-inline-setting')].map((node) => node.textContent)).toEqual(['1=F 3/4 ♩=88'])
   })
 
+  it('lays out independent jianpu glyphs without stacking octave, accidental, chord, and tuplet text', () => {
+    const first = { sourceStart: 10, sourceEnd: 11, kind: 'note' as const, pitches: ['1#ee'], key: 'C', beats: 1, tie: false, postfixes: [], navigation: [], octaveShift: 0 }
+    const chord = { ...first, sourceStart: 12, sourceEnd: 13, kind: 'chord' as const, pitches: ['1', '3e', '5'] }
+    const tuplet = { ...first, sourceStart: 14, sourceEnd: 15, kind: 'tuplet' as const, pitches: ['1', '2', '3'], beats: 1, tuplet: { num: 3, numbase: 2, unitBeats: 0.5 } }
+    const dense: ScoreDocument = {
+      ...scoreDocument,
+      lyrics: [{ range: '1', mode: 'word', targetStart: 10, targetEnd: 15, syllables: [
+        { text: '一段很长的歌词', sourceStart: 0, sourceEnd: 6, forceTiedTarget: false, kind: 'text', underlined: false },
+        { text: '和弦', sourceStart: 7, sourceEnd: 9, forceTiedTarget: false, kind: 'text', underlined: false },
+        { text: '三连音', sourceStart: 10, sourceEnd: 13, forceTiedTarget: false, kind: 'text', underlined: false },
+      ] }],
+      parts: new Map([['score', { melody: [{ events: [first, chord, tuplet] }], bass: [] }]]),
+    }
+    const score = JianpuScore.create(dense, { width: 640, paged: false, headerMetadata: [] })
+    const paper = document.createElement('div')
+    score.attach(paper)
+    const firstEvent = paper.querySelector<SVGGElement>('#m3n-e-1')!
+    expect(firstEvent.querySelector('.event-accidental')?.textContent).toBe('♯')
+    expect(firstEvent.querySelectorAll('.octave-dot')).toHaveLength(2)
+    expect(paper.querySelector('#m3n-e-2')?.querySelectorAll('.event-symbol')).toHaveLength(3)
+    expect(paper.querySelector('#m3n-e-3')?.querySelector('.tuplet-arc')).not.toBeNull()
+    expect(Number(firstEvent.querySelector<SVGRectElement>('.event-bg')?.getAttribute('width'))).toBeGreaterThan(100)
+  })
+
   it('renders the qian_si_xi corpus score directly from ScoreDocument', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/qian_si_xi_01.m3n'), 'utf8')
     const analysis = analyzeM3N(source)
@@ -99,7 +123,7 @@ describe('JianpuScore', () => {
     })
     expect(Math.min(...tiedWithinMeasure)).toBeGreaterThan(24)
     const measureYs = new Set([...paper.querySelectorAll<SVGGElement>('g.measure')]
-      .map((measure) => /translate\([^,]+,([^\)]+)\)/.exec(measure.getAttribute('transform') ?? '')?.[1])
+      .map((measure) => /translate\([^,]+,([^)]+)\)/.exec(measure.getAttribute('transform') ?? '')?.[1])
       .filter((y): y is string => y !== undefined))
     expect(measureYs.size).toBeGreaterThan(1)
     expect([...paper.querySelectorAll<SVGLineElement>('g.measure .barline-thin')]

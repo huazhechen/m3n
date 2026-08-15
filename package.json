@@ -26,7 +26,6 @@
   "dependencies": {
     "@m3n/notation": "*",
     "@m3n/score-renderer": "*",
-    "jianpurender": "^1.2.0",
     "jspdf": "^4.2.1",
     "pinyin-pro": "^3.27.0",
     "react": "^19.2.7",

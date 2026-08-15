@@ -138,7 +138,7 @@ flowchart LR
   exporter --> pdf["PDF via jsPDF"]
 ```
 
-Verovio WASM 的排版任务由 `RenderScheduler` 串行化；`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。简谱由 `JianpuScore` 调用 JianpuRender 排布并补充歌词与结构标记，播放与五线谱共用同一 MIDI 时间轴（`elementsAtTime` 返回的 ID 直接映射到简谱 DOM）。导出路径复用渲染 SVG，并在输出前组合标题信息。
+Verovio WASM 的排版任务由 `RenderScheduler` 串行化；`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。简谱由 `JianpuScore` 直接从 `ScoreDocument` 建立节拍网格、系统断行与 SVG，随后绘制歌词和结构标记；播放与五线谱共用同一 MIDI 时间轴（`elementsAtTime` 返回的 ID 直接映射到简谱 DOM）。标题信息经共享的 `score-header-svg` 写入两种记谱，导出路径复用渲染 SVG。
 
 ## 分享 API
 

@@ -24,6 +24,16 @@ export type PositionedEvent = {
   startBeat: number
 }
 
+/**
+ * Constraints supplied by a renderer before line breaking.  Keeping these in
+ * the layout pass means lyrics and dense symbols reserve space before SVG is
+ * painted instead of being allowed to collide after the fact.
+ */
+export type JianpuLayoutOptions = {
+  eventMinimumWidth?: (event: ScoreEvent) => number
+  justifyLastSystem?: boolean
+}
+
 const EPSILON = 1e-6
 
 function visualSpan(event: ScoreEvent, beat: number) {
@@ -36,13 +46,16 @@ function visualSlots(event: ScoreEvent, beat: number) {
   return Number.isInteger(span) && span > 1 ? span : 1
 }
 
-function metric(measure: ScoreMeasure, beat: number, fontSize: number) {
+function metric(measure: ScoreMeasure, beat: number, fontSize: number, options: JianpuLayoutOptions) {
   const spans = measure.events.map((event) => visualSpan(event, beat))
   const slots = measure.events.reduce((total, event) => total + visualSlots(event, beat), 0)
   const beatGaps = Math.max(0, Math.ceil(spans.reduce((total, value) => total + value, 0)) - 1)
   const cell = measure.events.reduce((required, event) => {
     if (event.beats <= EPSILON) return required
-    const minimumSymbolWidth = event.kind === 'chord' ? fontSize * 1.05 : fontSize * 0.82
+    const defaultSymbolWidth = event.kind === 'tuplet'
+      ? Math.max(fontSize * 1.2, event.pitches.length * fontSize * 0.56)
+      : event.kind === 'chord' ? fontSize * 1.16 : fontSize * 0.96
+    const minimumSymbolWidth = Math.max(defaultSymbolWidth, options.eventMinimumWidth?.(event) ?? 0)
     return Math.max(required, minimumSymbolWidth / visualSpan(event, beat))
   }, fontSize * 1.5)
   const bar = fontSize * 0.55
@@ -59,6 +72,7 @@ export function layoutMeasures(
   rowHeight: number,
   fontSize: number,
   beat: number,
+  options: JianpuLayoutOptions = {},
 ): LayoutMeasure[] {
   const available = Math.max(1, width - padding * 2)
   const measureGap = fontSize * 0.35
@@ -76,9 +90,11 @@ export function layoutMeasures(
   // system is justified below, independently of every other system.
   for (const [measureIndex, measure] of measures.entries()) {
     if (measure.breakBefore) flushRow()
-    const info = metric(measure, beat, fontSize)
+    const info = metric(measure, beat, fontSize, options)
     const measureWidth = info.width
     const nextWidth = rowWidth + (row.length === 0 ? 0 : measureGap) + measureWidth
+    // A system never starts with an empty over-wide measure.  The following
+    // justification pass can still fit it, while keeping the measure intact.
     if (row.length > 0 && nextWidth > available) flushRow()
     row.push({ measure, measureIndex, info, width: measureWidth })
     rowWidth += (row.length === 1 ? 0 : measureGap) + measureWidth
@@ -94,7 +110,9 @@ export function layoutMeasures(
   )
   for (const rowItems of rows) {
     const naturalWidth = rowItems.reduce((total, item) => total + item.width, 0) + Math.max(0, rowItems.length - 1) * measureGap
-    const scale = naturalWidth > 0 ? targetWidth / naturalWidth : 1
+    const isLast = rowItems === rows.at(-1)
+    const justify = options.justifyLastSystem ?? true
+    const scale = naturalWidth > 0 && (justify || !isLast) ? targetWidth / naturalWidth : 1
     const scaledGap = measureGap * scale
     let x = padding
     for (const item of rowItems) {
