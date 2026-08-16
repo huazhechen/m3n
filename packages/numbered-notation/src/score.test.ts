@@ -54,7 +54,7 @@ describe('NumberedNotationScore', () => {
     const [svg] = renderScore(parseM3NDocument(source), { paged: true, width: 800 })
 
     expect(svg).toContain('<circle')
-    expect(svg).toContain('data-type="jianshixian" stroke-width="1.5"')
+    expect(svg).toContain('data-type="jianshixian" stroke-width="1.7"')
     expect(svg).toContain('<path d="M 47.48,')
     expect(svg).toContain('<rect x="96.8"')
   })
