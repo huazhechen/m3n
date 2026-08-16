@@ -42,11 +42,12 @@ describe('NumberedNotationScore', () => {
   })
 
   it('renders extended rests as rests rather than sustain marks', () => {
-    const document = parseM3NDocument('{4/4}\nN: 0^ 1 2 3 |||')
+    const document = parseM3NDocument('{4/4}\nN: 0^ 1 2 3 |||\nL: 春 天 地')
     const [svg] = renderScore(document, { paged: false, width: 800 })
 
     expect(svg.match(/xlink:href="#shuzi_b_bian_0"/g)).toHaveLength(2)
     expect(svg).not.toContain('xlink:href="#yanyinfu"')
+    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-2"[^>]*>春<\/text>/)
   })
 
   it('uses compact glyph definitions without changing its requested page width', () => {

@@ -160,6 +160,9 @@ function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
     syllables: entries.flatMap(({ event, index, lastIndex }) => {
       const slots = lyrics.get(event)
       const count = lastIndex - index + 1
+      if (event.kind === 'rest') {
+        return Array.from({ length: count }, () => ({ text: '', source: location(event) }))
+      }
       if (event.kind !== 'tuplet') return [{ text: slots?.get(0)?.[row]?.join('') ?? '', source: location(event) }]
       return Array.from({ length: count }, (_, slot) => ({ text: slots?.get(slot)?.[row]?.join('') ?? '', source: location(event) }))
     }),
@@ -212,7 +215,8 @@ function lineForMeasures(
         entries.push({ event, index, lastIndex: elements.length - 1 })
         return
       }
-      entries.push({ event, index, lastIndex: index })
+      const entry = { event, index, lastIndex: index }
+      entries.push(entry)
       // Rests must not borrow the sustain mark (`-`). Expand whole beats to
       // individual rest symbols and retain only a fractional final duration
       // on the final rest glyph.
@@ -227,6 +231,7 @@ function lineForMeasures(
         if (remaining > 1e-7) {
           elements.push(note(event, ids.get(event), remaining, undefined, undefined, false, first ? keyChange : undefined))
         }
+        entry.lastIndex = elements.length - 1
         return
       }
       // Keep a fractional first beat on the note itself so dotted values retain
