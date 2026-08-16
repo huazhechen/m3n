@@ -1289,11 +1289,12 @@ export function continuousPageHeight(
   groups: ScorePage['groups'],
   metadata: Metadata,
   config: NumberedNotationLayout,
+  bottomPadding = config.marginBottom,
 ): number {
   const header = renderHeader(metadata, config, new GlyphRegistry())
   const spacing = pageSpacing(config)
   return Math.ceil(
-    header.bodyY + groups.reduce((height, group) => height + groupAdvance(group, config, spacing), 0) + config.marginBottom,
+    header.bodyY + groups.reduce((height, group) => height + groupAdvance(group, config, spacing), 0) + bottomPadding,
   )
 }
 

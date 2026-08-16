@@ -362,12 +362,14 @@ export class NumberedNotationScore {
       remarks: [],
     }
     const baseConfig = createNumberedNotationLayout({ width, height: 300, musicFontCss: options.musicFontCss })
-    const contentHeight = Math.max(220, continuousPageHeight(groups, metadata, baseConfig))
-    const pageHeight = options.paged ? Math.min(Math.round(width * 1.415), contentHeight) : contentHeight
+    const contentHeight = continuousPageHeight(groups, metadata, baseConfig, options.paged ? 12 : undefined)
+    const a4PageHeight = Math.round(width * 1.415)
+    const fitsOnOnePage = contentHeight <= a4PageHeight
+    const pageHeight = options.paged ? Math.min(a4PageHeight, contentHeight) : contentHeight
     const layout = createNumberedNotationLayout({ width, height: pageHeight, musicFontCss: options.musicFontCss })
     const numberedNotation: NumberedNotationDocument = {
       metadata,
-      pages: options.paged ? paginateVoiceGroups(groups, metadata, layout) : [{ index: 0, groups }],
+      pages: options.paged && !fitsOnOnePage ? paginateVoiceGroups(groups, metadata, layout) : [{ index: 0, groups }],
     }
     return renderNumberedNotationPages(numberedNotation, layout)
   }
