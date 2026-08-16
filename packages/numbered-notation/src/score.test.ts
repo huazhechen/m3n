@@ -55,7 +55,9 @@ describe('NumberedNotationScore', () => {
       { paged: true, width: 800 },
     )
 
-    expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(170)
+    expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(100)
+    const firstNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*id="m3n-e-1"/.exec(svg)?.[1])
+    expect(firstNoteY).toBeLessThan(40)
   })
 
   it('does not reserve lyric space below a lyric-free continuous score', () => {
@@ -179,8 +181,8 @@ describe('NumberedNotationScore', () => {
     const ys = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_[135]"/g)]
       .map((match) => Number(match[2]))
     expect(new Set(ys).size).toBe(3)
-    expect(ys[0]! - ys[1]!).toBe(18)
-    expect(ys[1]! - ys[2]!).toBe(18)
+    expect(ys[0]! - ys[1]!).toBeCloseTo(18)
+    expect(ys[1]! - ys[2]!).toBeCloseTo(18)
     const lowOctaveDotYs = [...svg.matchAll(/<use x="[\d.]+" y="([\d.]+)" xlink:href="#yingao_di"/g)].map((match) => Number(match[1]))
     expect(lowOctaveDotYs).toContain(ys[0]! + 0.6)
     expect(lowOctaveDotYs).toContain(ys[1]! + 0.6)

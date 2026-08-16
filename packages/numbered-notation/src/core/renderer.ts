@@ -272,7 +272,7 @@ function renderHeader(
     ...metadata.authors.map((value, index) => ({ value, side: 'right' as const, priority: 20 + index })),
   ]
   if (headerMetadata.length === 0) {
-    return { markup: [], bodyY: config.marginTop + config.bodyMarginTop + 6 }
+    return { markup: [], bodyY: config.bodyMarginTop + 6 }
   }
   const header = scoreHeaderLayout(headerMetadata, config.width)
   const markup = header.lines.map((line) => (
@@ -1290,7 +1290,7 @@ export function continuousPageHeight(
   metadata: Metadata,
   config: NumberedNotationLayout,
   // groupAdvance already includes each rendered lyric row and its line spacing.
-  bottomPadding = 12,
+  bottomPadding = 4,
 ): number {
   const header = renderHeader(metadata, config, new GlyphRegistry())
   const spacing = pageSpacing(config)
