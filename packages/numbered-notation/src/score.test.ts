@@ -464,6 +464,23 @@ describe('NumberedNotationScore', () => {
     expect(systemStarts).toEqual([0, 6])
   })
 
+  it('never leaves an incomplete line in the middle of the document', () => {
+    const source = readFileSync(new URL('../../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
+    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
+    const ends = [...svg.matchAll(/data-m3n-measure-end="([\d.]+)"/g)].map((match) => Number(match[1]))
+    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
+    const fullWidth = ends[systemStarts[1]! - 1] ?? ends[0]!
+
+    systemStarts.forEach((systemStart, index) => {
+      if (index === systemStarts.length - 1) return
+      const next = systemStarts[index + 1] ?? starts.length
+      const systemEnd = ends[next - 1]!
+      expect(systemEnd).toBeCloseTo(fullWidth, 3)
+      expect(next - systemStart).toBeGreaterThanOrEqual(2)
+    })
+  })
+
   it('keeps a short natural tail greedy and unstretched when balancing would halve it', () => {
     // Three wide measures followed by a narrow rest: the greedy split is 3+1,
     // and the balanced tail (one wide measure + the rest) still fits in less

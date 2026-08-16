@@ -427,24 +427,31 @@ function systemGroups(document: ScoreDocument, width: number) {
       const remaining = boundaryEnd - end
       const lineLength = end - start
       // Only consider balancing a two-system tail. The balanced candidate's
-      // last line must already be substantial (more than half of a full line)
-      // to justify stretching it; otherwise keep the greedy split and leave
-      // the final line at its natural width.
+      // last line must already be substantial to justify stretching it when
+      // this is the document's final segment; otherwise keep the greedy
+      // split and leave the final line at its natural width. A break in the
+      // middle of the document must never leave an incomplete line, so those
+      // segments are always divided evenly and justified.
       if (remaining <= lineLength) {
         const balancedEnd = start + Math.ceil((boundaryEnd - start) / 2)
-        const balancedTail = groupForMeasures(
-          part.melody.slice(balancedEnd, boundaryEnd), part.bass.slice(balancedEnd, boundaryEnd), lyrics, document.intervals, ids,
-          {
-            fromPrevious: part.melody[balancedEnd - 1]?.ending !== undefined && part.melody[balancedEnd - 1]?.ending === part.melody[balancedEnd]?.ending,
-            toNext: part.melody[boundaryEnd]?.ending !== undefined && part.melody[boundaryEnd]?.ending === part.melody[boundaryEnd - 1]?.ending,
-          },
-          keyBeforeMeasure(part.melody, balancedEnd, document.key),
-        )
-        const balancedTailWidth = layoutVoiceGroup(balancedTail, 83, Number.POSITIVE_INFINITY).endX - 83
-        const availableWidth = width - 160
-        if (balancedTailWidth > availableWidth / 2) {
+        if (boundaryEnd < measureCount) {
           end = balancedEnd
           justifiedFinalBoundaries.add(boundaryEnd)
+        } else {
+          const balancedTail = groupForMeasures(
+            part.melody.slice(balancedEnd, boundaryEnd), part.bass.slice(balancedEnd, boundaryEnd), lyrics, document.intervals, ids,
+            {
+              fromPrevious: part.melody[balancedEnd - 1]?.ending !== undefined && part.melody[balancedEnd - 1]?.ending === part.melody[balancedEnd]?.ending,
+              toNext: part.melody[boundaryEnd]?.ending !== undefined && part.melody[boundaryEnd]?.ending === part.melody[boundaryEnd - 1]?.ending,
+            },
+            keyBeforeMeasure(part.melody, balancedEnd, document.key),
+          )
+          const balancedTailWidth = layoutVoiceGroup(balancedTail, 83, Number.POSITIVE_INFINITY).endX - 83
+          const availableWidth = width - 160
+          if (balancedTailWidth > availableWidth / 2) {
+            end = balancedEnd
+            justifiedFinalBoundaries.add(boundaryEnd)
+          }
         }
       }
     }
@@ -461,20 +468,22 @@ function systemGroups(document: ScoreDocument, width: number) {
       group.forceJustify = true
     }
     if (justifiedFinalBoundaries.has(boundaryEnd) && end === boundaryEnd) {
-      // The balanced split assumed a full tail, but greedy re-wrapping can
-      // still leave a much shorter final line (for example a wide closing
-      // measure). Only justify that final line when it is genuinely
-      // substantial; otherwise keep its natural width.
-      const finalLine = groupForMeasures(
-        part.melody.slice(start, boundaryEnd), part.bass.slice(start, boundaryEnd), lyrics, document.intervals, ids,
-        {
-          fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
-          toNext: part.melody[boundaryEnd]?.ending !== undefined && part.melody[boundaryEnd]?.ending === part.melody[boundaryEnd - 1]?.ending,
-        },
-        keyBeforeMeasure(part.melody, start, document.key),
-      )
-      const finalLineWidth = layoutVoiceGroup(finalLine, 83, Number.POSITIVE_INFINITY).endX - 83
-      if (finalLineWidth <= (width - 160) / 2) group.forceJustify = false
+      if (boundaryEnd === measureCount) {
+        // The balanced split assumed a full tail, but greedy re-wrapping can
+        // still leave a much shorter final line (for example a wide closing
+        // measure). Only justify that final line when it is genuinely
+        // substantial; otherwise keep its natural width.
+        const finalLine = groupForMeasures(
+          part.melody.slice(start, boundaryEnd), part.bass.slice(start, boundaryEnd), lyrics, document.intervals, ids,
+          {
+            fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
+            toNext: part.melody[boundaryEnd]?.ending !== undefined && part.melody[boundaryEnd]?.ending === part.melody[boundaryEnd - 1]?.ending,
+          },
+          keyBeforeMeasure(part.melody, start, document.key),
+        )
+        const finalLineWidth = layoutVoiceGroup(finalLine, 83, Number.POSITIVE_INFINITY).endX - 83
+        if (finalLineWidth <= (width - 160) / 2) group.forceJustify = false
+      }
       justifiedFinalBoundaries.delete(boundaryEnd)
     }
     groups.push(group)
