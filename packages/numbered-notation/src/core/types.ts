@@ -53,6 +53,8 @@ export interface NoteElement {
   graceBefore?: NoteElement[]
   graceAfter?: NoteElement[]
   annotation?: string
+  /** Structural heading displayed above the first event of a section. */
+  sectionLabel?: string
   /** Key signature announced immediately before this event. */
   keyChange?: string
   code: string

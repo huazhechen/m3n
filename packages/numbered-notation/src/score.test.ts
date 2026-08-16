@@ -50,6 +50,14 @@ describe('NumberedNotationScore', () => {
     expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-2"[^>]*>春<\/text>/)
   })
 
+  it('renders section headings separately from text directives', () => {
+    const document = parseM3NDocument('{4/4}\n===练习\nN: {text=说明} 1 2 3 4 |||')
+    const [svg] = renderScore(document, { paged: false, width: 800 })
+
+    expect(svg).toMatch(/style="font-weight:bold;" font-size="14" font-family="serif">练习<\/text>/)
+    expect(svg).toMatch(/style="font-style:italic;" font-size="14" font-family="serif"[^>]*>说明<\/text>/)
+  })
+
   it('uses compact glyph definitions without changing its requested page width', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),

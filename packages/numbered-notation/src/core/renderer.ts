@@ -58,7 +58,8 @@ const DYNAMIC_ORNAMENTS = new Set([
 ])
 const DYNAMIC_GLYPH_SIZE = 22
 const TRILL_LABEL_SIZE = 13
-const SECTION_LABEL_SIZE = 10
+const TEXT_DIRECTIVE_SIZE = 14
+const SECTION_LABEL_SIZE = 14
 
 function text(
   value: string,
@@ -551,13 +552,27 @@ function renderNote(
     if (note.graceAfter !== undefined) {
       output.push(...renderGrace(note.graceAfter, x, noteY, false, nextGraceId('hy'), registry))
     }
+    const labelClearance = chordTopClearance(note)
+    const annotationY = noteY - 24 - labelClearance
+    if (note.sectionLabel !== undefined) {
+      output.push(
+        text(note.sectionLabel, x - 10, annotationY - 20, {
+          font: 'serif',
+          size: SECTION_LABEL_SIZE,
+          bold: true,
+          fill: '#1b1b1b',
+          dy: 0,
+        }),
+      )
+    }
     if (note.annotation !== undefined) {
       output.push(
-        text(note.annotation, x - 4.8, noteY - 19, {
-          font: config.lyricFont,
-          size: SECTION_LABEL_SIZE,
+        text(note.annotation, x - 4.8, annotationY, {
+          font: 'serif',
+          size: TEXT_DIRECTIVE_SIZE,
           fill: '#303030',
-          dy: 0.3355 * SECTION_LABEL_SIZE,
+          italic: true,
+          dy: 0,
           extra: { 'xml:space': 'preserve' },
         }),
       )
@@ -1344,7 +1359,8 @@ function lineTopPadding(line: ScoreLine): number {
             element.ornaments.some((ornament) => ornament.name === 'tr')
               ? 34 + chordTopClearance(element)
               : 0,
-            element.annotation === undefined ? 0 : 30 + chordTopClearance(element),
+            element.annotation === undefined ? 0 : 44 + chordTopClearance(element),
+            element.sectionLabel === undefined ? 0 : 64 + chordTopClearance(element),
             element.keyChange === undefined ? 0 : 28 + chordTopClearance(element),
           ]
         : element.kind === 'sustain' && element.ornaments.some((ornament) => DYNAMIC_ORNAMENTS.has(ornament.name))
