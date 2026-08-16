@@ -180,9 +180,9 @@ function modeHeader(
   })
 
   metadata.tempos.forEach((tempo, index) => {
-    const tempoY = y - 13 + index * 22
+    const tempoY = y + 32 + index * 22
     if (typeof tempo === 'number') {
-      output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 0.78 * glyphScale))
+      output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 1.36))
       output.push(
         text(`= ${String(tempo)}`, config.marginLeft + 27, tempoY, {
           font: 'system-ui, sans-serif',
@@ -227,7 +227,7 @@ function renderHeader(
       dy: 0,
     })
   ))
-  const infoY = header.height + 37
+  const infoY = header.height - 11
   markup.push(...modeHeader(metadata, config, registry, infoY))
   return {
     markup,
