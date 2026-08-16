@@ -28,6 +28,39 @@ describe('renderOpenFanqieScore', () => {
     expect(svg).toContain('>了</text>')
   })
 
+  it('does not render the parser placeholder after a final barline', () => {
+    const [svg] = renderOpenFanqieScore(parseM3NDocument('{2/4}\nN: 1 2 |||'), { paged: false, width: 1000 })
+
+    expect(svg.match(/code="\|j"/g)).toHaveLength(1)
+  })
+
+  it('keeps both sides of a repeat boundary without an empty measure', () => {
+    const [svg] = renderOpenFanqieScore(parseM3NDocument('{2/4}\nN: ||: 1 2 :|| |||'), { paged: false, width: 1000 })
+
+    expect(svg.match(/code="\|z"/g)).toHaveLength(1)
+    expect(svg.match(/code="\|y"/g)).toHaveLength(1)
+    expect(svg.match(/code="\|j"/g)).toHaveLength(1)
+  })
+
+  it('merges a plain barline before a forward repeat into one repeat-start', () => {
+    const [svg] = renderOpenFanqieScore(parseM3NDocument('{2/4}\nN: 1 2 | ||: 3 4 |||'), { paged: false, width: 1000 })
+
+    expect(svg.match(/code="\|z"/g)).toHaveLength(1)
+    expect(svg.match(/code="\|"/g) ?? []).toHaveLength(0)
+  })
+
+  it('merges a repeat end and following repeat start into repeat-both', () => {
+    const document = parseM3NDocument('{2/4}\nN: ||: 1 2 | 3 4 |||')
+    const measures = document.parts.get('score')!.melody
+    measures[0]!.right = 'rptend'
+    measures[1]!.left = 'rptstart'
+    const [svg] = renderOpenFanqieScore(document, { paged: false, width: 1000 })
+
+    expect(svg.match(/code="\|l"/g) ?? []).toHaveLength(1)
+    expect(svg.match(/code="\|y"/g) ?? []).toHaveLength(0)
+    expect(svg.match(/code="\|z"/g) ?? []).toHaveLength(1)
+  })
+
   it('measures natural Open Fanqie width before fitting, so long scores form multiple systems', () => {
     const source = `{4/4}\nN: ${Array.from({ length: 48 }, () => '1 2 3 4 |').join(' ')} |||`
     const [svg] = renderOpenFanqieScore(parseM3NDocument(source), { paged: false, width: 1000 })

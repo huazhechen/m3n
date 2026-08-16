@@ -135,12 +135,24 @@ function lineForMeasures(
   const elements: MusicElement[] = []
   const entries: EventEntry[] = []
   const measureRanges: Array<{ measure: ScoreMeasure; start: number; end: number }> = []
-  if (measures[0]?.ending !== undefined) {
+  // The direct ScoreDocument keeps the parser's post-bar placeholder measure.
+  // It carries no musical or boundary semantics and must not become an empty
+  // rendered measure after the final barline/repeat barline.
+  const renderMeasures = [...measures]
+  while (renderMeasures.length > 0) {
+    const last = renderMeasures.at(-1)
+    if (!last || last.events.length > 0 || last.multiRest || last.left !== undefined || last.right !== undefined) break
+    renderMeasures.pop()
+  }
+  if (renderMeasures[0]?.ending !== undefined) {
     elements.push({ kind: 'barline', type: 'normal', ornaments: [], code: '|', source: { line: 1, column: 1, offset: 0, length: 0 } })
   }
-  measures.forEach((measure, measureIndex) => {
+  renderMeasures.forEach((measure, measureIndex) => {
     const start = elements.length
-    if (measure.left === 'rptstart') {
+    const previousMeasure = renderMeasures[measureIndex - 1]
+    const nextMeasure = renderMeasures[measureIndex + 1]
+    const joinsRepeatBoundary = previousMeasure?.right !== undefined && measure.left === 'rptstart'
+    if (measure.left === 'rptstart' && !joinsRepeatBoundary) {
       elements.push({ ...barline(measure, false), type: 'repeat-start' })
     }
     measure.events.forEach((event) => {
@@ -166,7 +178,12 @@ function lineForMeasures(
       entries.push({ event: rest, index: elements.length, lastIndex: elements.length })
       elements.push(note(rest, undefined))
     }
-    elements.push(barline(measure, measureIndex === measures.length - 1))
+    const repeatBoundary = nextMeasure?.left === 'rptstart'
+      ? measure.right === 'rptend' ? 'repeat-both' : 'repeat-start'
+      : undefined
+    elements.push(repeatBoundary === undefined
+      ? barline(measure, measureIndex === renderMeasures.length - 1)
+      : { ...barline(measure, false), type: repeatBoundary })
     measureRanges.push({ measure, start, end: elements.length - 1 })
   })
   const marks: Mark[] = []
