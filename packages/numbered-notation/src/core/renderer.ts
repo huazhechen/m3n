@@ -52,6 +52,9 @@ const DYNAMIC_ORNAMENTS = new Set([
   'atempo',
   'rit',
 ])
+const DYNAMIC_GLYPH_SIZE = 22
+const TRILL_LABEL_SIZE = 13
+const SECTION_LABEL_SIZE = 10
 
 function text(
   value: string,
@@ -355,16 +358,16 @@ function ornamentPosition(
     // Dynamics need their own upper lane. Keeping them near the numeral
     // baseline makes p/mf/f collide with octave dots, grace notes and labels.
     const upperClearance = context.upperClearance ?? 0
-    if (context.hairpinStart === true) return { x: x - 15, y: y - 34 - upperClearance - ornament.level * 3.6 }
+    if (context.hairpinStart === true) return { x: x - 15, y: y - 38 - upperClearance - ornament.level * 3.6 }
     if (context.hairpinEnd === true) {
       return {
         x: x + 12,
-        y: y - 34 - upperClearance - ornament.level * 3.6 - (context.slurEnd === true ? 4.8 : 0),
+        y: y - 38 - upperClearance - ornament.level * 3.6 - (context.slurEnd === true ? 4.8 : 0),
       }
     }
-    return { x, y: y - 34 - upperClearance - ornament.level * 3.6 }
+    return { x, y: y - 38 - upperClearance - ornament.level * 3.6 }
   }
-  if (ornament.name === 'tr') return { x, y: y - 19 - (context.upperClearance ?? 0) }
+  if (ornament.name === 'tr') return { x, y: y - 21 - (context.upperClearance ?? 0) }
   if (['zkh', 'ykh', 'cy', 'tr', 'yc', 'ycy', 'shy', 'xhy'].includes(ornament.name)) {
     return { x, y }
   }
@@ -382,8 +385,18 @@ function renderOrnaments(
 ): string[] {
   return ornaments.flatMap((ornament) => {
     const position = ornamentPosition(ornament, x, y, context)
+    if (ornament.name === 'tr') {
+      return [text('tr', position.x, position.y, {
+        font: 'ui-serif, serif',
+        size: TRILL_LABEL_SIZE,
+        italic: true,
+        dy: 0,
+      })]
+    }
     const glyph = config.musicFontCss === undefined ? undefined : LEIPZIG_ORNAMENTS[ornament.name]
-    if (glyph !== undefined) return [leipzigGlyph(glyph, position.x, position.y, 17)]
+    if (glyph !== undefined) {
+      return [leipzigGlyph(glyph, position.x, position.y, DYNAMIC_GLYPH_SIZE)]
+    }
     const id = ornamentGlyph(ornament)
     if (id === undefined) return []
     return [registry.use(id, position.x, position.y)]
@@ -400,7 +413,10 @@ function renderInlineOrnaments(
   return ornaments.flatMap((ornament) => {
     const glyph = config.musicFontCss === undefined ? undefined : LEIPZIG_ORNAMENTS[ornament.name]
     const position = ornamentPosition(ornament, x, y, {})
-    if (glyph !== undefined) return leipzigGlyph(glyph, position.x, position.y, 17)
+    if (ornament.name === 'tr') return text('tr', position.x, position.y, {
+      font: 'ui-serif, serif', size: TRILL_LABEL_SIZE, italic: true, dy: 0,
+    })
+    if (glyph !== undefined) return leipzigGlyph(glyph, position.x, position.y, DYNAMIC_GLYPH_SIZE)
     const id =
       ornament.name === 'zkh'
         ? 'kuohu_zuo_bian'
@@ -517,11 +533,11 @@ function renderNote(
     }
     if (note.annotation !== undefined) {
       output.push(
-        text(note.annotation, x - 3.6, noteY - 14.4, {
+        text(note.annotation, x - 4.8, noteY - 19, {
           font: config.lyricFont,
-          size: 7.2,
+          size: SECTION_LABEL_SIZE,
           fill: '#303030',
-          dy: 0.3355 * 7.2,
+          dy: 0.3355 * SECTION_LABEL_SIZE,
           extra: { 'xml:space': 'preserve' },
         }),
       )
@@ -1288,15 +1304,15 @@ function lineTopPadding(line: ScoreLine): number {
       element.kind === 'note'
         ? [
             element.ornaments.some((ornament) => DYNAMIC_ORNAMENTS.has(ornament.name))
-              ? 52 + chordTopClearance(element)
+              ? 60 + chordTopClearance(element)
               : 0,
             element.ornaments.some((ornament) => ornament.name === 'tr')
-              ? 30 + chordTopClearance(element)
+              ? 34 + chordTopClearance(element)
               : 0,
-            element.annotation === undefined ? 0 : 22 + chordTopClearance(element),
+            element.annotation === undefined ? 0 : 30 + chordTopClearance(element),
           ]
         : element.kind === 'sustain' && element.ornaments.some((ornament) => DYNAMIC_ORNAMENTS.has(ornament.name))
-          ? [52]
+          ? [60]
           : [],
     ),
   )
