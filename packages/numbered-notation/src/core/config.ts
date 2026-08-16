@@ -11,8 +11,11 @@ export type NumberedNotationLayout = {
   lyricFont: FontFamily
   numberStyle: NumberStyle
   numberScale: number
+  headerGlyphScale: number
   titleSize: number
   subtitleSize: number
+  authorSize: number
+  tempoSize: number
   lyricSize: number
   bodyMarginTop: number
   musicToLyric: number
@@ -32,8 +35,11 @@ const defaults = {
   lyricFont: 'Microsoft YaHei' as FontFamily,
   numberStyle: 'b' as NumberStyle,
   numberScale: 0.6,
-  titleSize: 21.6,
-  subtitleSize: 12,
+  headerGlyphScale: 1,
+  titleSize: 36,
+  subtitleSize: 17.6,
+  authorSize: 16,
+  tempoSize: 16,
   lyricSize: 10.8,
   bodyMarginTop: 24,
   musicToLyric: 7.8,
@@ -57,8 +63,11 @@ export function createNumberedNotationLayout({
     lyricFont: defaults.lyricFont,
     numberStyle: defaults.numberStyle,
     numberScale: defaults.numberScale,
+    headerGlyphScale: defaults.headerGlyphScale,
     titleSize: defaults.titleSize,
     subtitleSize: defaults.subtitleSize,
+    authorSize: defaults.authorSize,
+    tempoSize: defaults.tempoSize,
     lyricSize: defaults.lyricSize,
     bodyMarginTop: defaults.bodyMarginTop,
     musicToLyric: defaults.musicToLyric,

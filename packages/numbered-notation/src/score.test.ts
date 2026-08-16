@@ -44,7 +44,7 @@ describe('NumberedNotationScore', () => {
     )
 
     expect(svg).toContain('<svg width="800"')
-    expect(svg).toContain('font-size="21.6"')
+    expect(svg).toContain('font-size="36"')
     expect(svg).toMatch(/id="m3n-e-1"[^>]*transform="[^"]*scale\(0.6\)/)
   })
 
@@ -189,10 +189,13 @@ describe('NumberedNotationScore', () => {
   })
 
   it('uses the compact tempo glyph and the staff-score credit priority', () => {
-    const document = parseM3NDocument('{title=测试曲} {singer=演唱者} {composer=作曲者} {lyricist=作词者} {4/4} {90qpm}\nN: 1 2 3 4 |||')
+    const document = parseM3NDocument('{title=测试曲} {subtitle=副标题} {singer=演唱者} {composer=作曲者} {lyricist=作词者} {4/4} {90qpm}\nN: 1 2 3 4 |||')
     const [svg] = renderScore(document, { paged: true, width: 1000 })
 
     expect(svg).toContain('xlink:href="#jiepaifu"')
+    expect(svg).toMatch(/font-size="17.6"[^>]*>副标题<\/text>/)
+    expect(svg).toMatch(/font-size="16"[^>]*>演唱者<\/text>/)
+    expect(svg).toMatch(/font-size="16"[^>]*data-jiepai="90">90<\/text>/)
     expect(svg).toContain('>演唱者</text>')
     expect(svg).not.toContain('>作曲者</text>')
     expect(svg).not.toContain('>作词者</text>')
