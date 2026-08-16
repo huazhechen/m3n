@@ -617,7 +617,7 @@ function renderBarline(
   notepos: string,
   registry: GlyphRegistry,
   config: NumberedNotationLayout,
-  measureLeadingX?: number,
+  measureAnchors?: { leadingX: number; firstNoteX?: number; lastNoteX?: number },
 ): string[] {
   const normalizedCodes = {
     normal: '|',
@@ -671,17 +671,19 @@ function renderBarline(
     const leipzigGlyphCode = config.musicFontCss === undefined
       ? undefined
       : LEIPZIG_NAVIGATION_GLYPHS[ornament.name]
-    // Segno marks the start of a section, so Verovio anchors it at the
-    // measure's leading barline. DS/DC/Fine belong to the measure end and
-    // stay above the last musical event, just left of the trailing barline.
-    const anchorX = ornament.name === 'segno' ? measureLeadingX ?? x : x
-    const horizontalOffset = ornament.name === 'segno' ? 0 : 46
+    // Segno marks the start of a section and hugs the measure's first
+    // musical event; DS/DC/Fine belong to the measure end and hug its last
+    // musical event. Anchoring to the notes keeps the signs attached to the
+    // measure regardless of how wide the system is.
+    const anchorX = ornament.name === 'segno'
+      ? (measureAnchors?.firstNoteX ?? measureAnchors?.leadingX ?? x) - 14
+      : (measureAnchors?.lastNoteX ?? x - 54) + 8
     if (leipzigGlyphCode !== undefined) {
-      output.push(leipzigGlyph(leipzigGlyphCode, anchorX - horizontalOffset, y - 30, 24))
+      output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y - 30, 24))
       return
     }
     const id = barlineOrnamentGlyph(ornament.name)
-    if (id !== undefined) output.push(registry.use(id, anchorX - horizontalOffset, y - 26))
+    if (id !== undefined) output.push(registry.use(id, anchorX, y - 26))
   })
   if (barline?.temporaryMeter !== undefined) {
     output.push(registry.use('linshi_paihao_fenxian', x + 18, y))
@@ -1208,6 +1210,13 @@ function renderLine(
     const leadingX = measureLeadingX
       ?? layout.elements.find((positioned) => positioned.measure === barline.measure)?.x
       ?? config.marginLeft
+    const noteElements = layout.elements.filter(
+      (positioned) =>
+        positioned.measure === barline.measure &&
+        positioned.element.kind === 'note',
+    )
+    const firstNoteX = noteElements[0]?.x
+    const lastNoteX = noteElements.at(-1)?.x
     outputForMeasure(barline.measure).push(
       ...renderBarline(
         barline.element,
@@ -1217,7 +1226,7 @@ function renderLine(
         notePositionCode(pageIndex, lineOrdinal, ordinal),
         registry,
         config,
-        leadingX,
+        { leadingX, firstNoteX, lastNoteX },
       ),
     )
   })

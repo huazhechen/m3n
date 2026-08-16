@@ -460,6 +460,23 @@ function systemGroups(document: ScoreDocument, width: number) {
       || (hasExplicitBoundary && beginsSegment && end === boundaryEnd)) {
       group.forceJustify = true
     }
+    if (justifiedFinalBoundaries.has(boundaryEnd) && end === boundaryEnd) {
+      // The balanced split assumed a full tail, but greedy re-wrapping can
+      // still leave a much shorter final line (for example a wide closing
+      // measure). Only justify that final line when it is genuinely
+      // substantial; otherwise keep its natural width.
+      const finalLine = groupForMeasures(
+        part.melody.slice(start, boundaryEnd), part.bass.slice(start, boundaryEnd), lyrics, document.intervals, ids,
+        {
+          fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
+          toNext: part.melody[boundaryEnd]?.ending !== undefined && part.melody[boundaryEnd]?.ending === part.melody[boundaryEnd - 1]?.ending,
+        },
+        keyBeforeMeasure(part.melody, start, document.key),
+      )
+      const finalLineWidth = layoutVoiceGroup(finalLine, 83, Number.POSITIVE_INFINITY).endX - 83
+      if (finalLineWidth <= (width - 160) / 2) group.forceJustify = false
+      justifiedFinalBoundaries.delete(boundaryEnd)
+    }
     groups.push(group)
     start = end
   }
