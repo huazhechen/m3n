@@ -53,6 +53,7 @@ type ScoreRendererProps = {
 type RenderPhase = 'loading-library' | 'waiting-layout' | 'layout'
 
 const EMPTY_INVALID_MEASURE_IDS: string[] = []
+const NUMBERED_NOTATION_VISUAL_SCALE = 0.8
 
 function queryScoreElement(paper: HTMLElement | null, xmlId: string) {
   return paper?.querySelector(`#${xmlId}`) ?? paper?.querySelector(`[data-m3n-id="${xmlId}"]`) ?? null
@@ -184,7 +185,10 @@ export function ScoreRenderer({
         if (isInitialRender) setRenderPhase('waiting-layout')
 
         if (numberedNotation && scoreDocument) {
-          paper.innerHTML = renderOpenFanqieScore(scoreDocument, { paged: renderMode === 'paged', width: renderWidth }).join('')
+          paper.innerHTML = renderOpenFanqieScore(scoreDocument, {
+            paged: renderMode === 'paged',
+            width: Math.round(renderWidth / NUMBERED_NOTATION_VISUAL_SCALE),
+          }).join('')
           if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
           hasRenderedRef.current = true
           setHasAudioControls(true)
