@@ -40,9 +40,11 @@ const defaults = {
   tempoSize: 16,
   lyricSize: 16,
   bodyMarginTop: 24,
+  // Minimum separation after the lowest visible music mark. Additional space
+  // is calculated from duration underlines, octave dots, and chord stacks.
   musicToLyric: 12,
   lyricToLyric: 6,
-  lineGap: 24,
+  lineGap: 10,
   voiceGap: 0,
 }
 

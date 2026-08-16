@@ -1164,7 +1164,7 @@ function renderLine(
       layout,
       pageIndex,
       lineOrdinal,
-      y + chordBottomPadding(layout.line) + (inlineLayerRanges(layout.line).length === 0 ? 0 : 16.8),
+      y + musicBottomPadding(layout.line),
       config,
       registry,
       musicToLyric,
@@ -1222,17 +1222,54 @@ function rowAdvance(
       : spacing.musicToLyric +
         line.lyrics.length * config.lyricSize +
         Math.max(0, line.lyrics.length * spacing.lyricToLyric - 6)
-  const temporaryVoiceBottom = inlineLayerRanges(line).length === 0 ? 0 : 16.8
-  const musicHeight = (line.lyrics.length === 0 ? 22.8 : 21) + chordBottomPadding(line)
-  return musicHeight + lyricHeight + spacing.lineGap + temporaryVoiceBottom
+  const musicHeight = (line.lyrics.length === 0 ? 22.8 : 21) + musicBottomPadding(line)
+  return musicHeight + lyricHeight + spacing.lineGap
 }
 
-function chordBottomPadding(line: ScoreLine): number {
+function musicBottomPadding(line: ScoreLine): number {
+  const temporaryVoiceRanges = inlineLayerRanges(line)
   return Math.max(
     0,
-    ...line.elements.flatMap((element) =>
-      element.kind === 'note' ? [chordCenterOffset(element)] : [],
-    ),
+    ...line.elements.flatMap((element, index) => {
+      if (element.kind !== 'note') return []
+      const insideTemporaryVoice = temporaryVoiceRanges.some(({ start, end, closesWithinLine }) =>
+        index > start && (closesWithinLine ? index < end : index <= end),
+      )
+      const noteY = chordCenterOffset(element) + (insideTemporaryVoice ? 28 : 0)
+      const underlineCount = Math.max(0, Math.log2(element.duration / 4))
+      const lowestOctaveDot = element.octave < 0
+        ? lowerOctaveDotY(noteY, underlineCount, Math.abs(element.octave) - 1) + OCTAVE_DOT_DIAMETER / 2
+        : noteY
+      // The normal numeral already occupies the baseline's bottom extent.
+      // Only marks extending below it need to move the lyric baseline.
+      const underlineBottom = underlineCount > 0
+        ? noteY + 10 + (underlineCount - 1) * 3.2 + 0.8
+        : noteY + 7.2
+      return [Math.max(lowestOctaveDot, underlineBottom) - 7.2]
+    }),
+  )
+}
+
+function curvedMarkTopPadding(line: ScoreLine): number {
+  const lifts = curvedMarkLifts(line.marks)
+  return Math.max(
+    0,
+    ...line.marks.flatMap((mark) => {
+      if (mark.type !== 'slur' && mark.type !== 'tuplet') return []
+      const markedNotes = line.elements.slice(mark.start, mark.end + 1)
+        .filter((element): element is NoteElement => element.kind === 'note')
+      const clearance = Math.max(
+        ...markedNotes.map((note) => Math.max(
+          chordTopClearance(note),
+          note.accidental === undefined ? 0 : 7,
+          note.ornaments.some(({ name }) => name === 'yc' || name === 'ycy') ? 7 : 0,
+        )),
+        0,
+      )
+      // Curved marks rise ten units above their anchor; the flatter continued
+      // variant needs the same conservative allowance.
+      return [22 + (lifts.get(mark) ?? mark.level * 8) + clearance]
+    }),
   )
 }
 
@@ -1256,7 +1293,7 @@ function lineTopPadding(line: ScoreLine): number {
         : [],
     ),
   )
-  return Math.max(symbolPadding, layerPadding, chordPadding)
+  return Math.max(symbolPadding, layerPadding, chordPadding, curvedMarkTopPadding(line))
 }
 
 function groupAdvance(
