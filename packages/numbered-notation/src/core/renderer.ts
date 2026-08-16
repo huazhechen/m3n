@@ -641,7 +641,6 @@ function renderBarline(
 function renderUnderlines(
   layout: LineLayout,
   y: number,
-  config: NumberedNotationLayout,
   yForElement: (elementIndex: number) => number = () => y,
 ): string[] {
   const output: string[] = []
@@ -671,10 +670,11 @@ function renderUnderlines(
         const first = run[0]
         const last = run[run.length - 1]
         if (first !== undefined && last !== undefined) {
-          const underlineY =
-            yForElement(first.elementIndex) + (10.5 + (level - 1) * 2.4) * config.numberScale
+          // Duration underlines retain their native visual weight and span.
+          // Only their first-row clearance changes for the smaller numerals.
+          const underlineY = yForElement(first.elementIndex) + 8.4 + (level - 1) * 1.8
           output.push(
-            `<line x1="${formatNumber(first.x - 3.6 * config.numberScale)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + (3.6 + last.element.dots * 6) * config.numberScale)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="${formatNumber(1.2 * config.numberScale)}" stroke="${INK}"></line>`,
+            `<line x1="${formatNumber(first.x - 3.6)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 3.6 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.2" stroke="${INK}"></line>`,
           )
         }
         run = []
@@ -1005,7 +1005,7 @@ function renderInlineLayer(
         ),
       )
     })
-    output.push(...renderUnderlines(layout, y, config))
+    output.push(...renderUnderlines(layout, y))
     layout.line.marks.forEach((mark) =>
       output.push(...renderMark(mark, layout, y, config, registry)),
     )
@@ -1133,7 +1133,7 @@ function renderLine(
     output.push(`<g class="measure">${measure.join('\n')}</g>`)
   })
   output.push(
-    ...renderUnderlines(layout, y, config, (elementIndex) => mainElementY(layout, elementIndex, y)),
+    ...renderUnderlines(layout, y, (elementIndex) => mainElementY(layout, elementIndex, y)),
   )
   const markLifts = curvedMarkLifts(layout.line.marks)
   layout.line.marks.forEach((mark) =>
