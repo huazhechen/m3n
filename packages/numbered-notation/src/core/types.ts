@@ -136,6 +136,8 @@ export interface LyricSyllable {
 
 export interface LyricLine {
   annotation?: string
+  /** Playback pass represented by this lyric row. */
+  rendition?: number
   syllables: LyricSyllable[]
   source: SourceLocation
 }

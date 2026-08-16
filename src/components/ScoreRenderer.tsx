@@ -59,10 +59,20 @@ function queryScoreElement(paper: HTMLElement | null, xmlId: string) {
   return paper?.querySelector(`#${xmlId}`) ?? paper?.querySelector(`[data-m3n-id="${xmlId}"]`) ?? null
 }
 
-function queryPlaybackElements(paper: HTMLElement | null, xmlId: string): Element[] {
+function queryPlaybackElements(paper: HTMLElement | null, xmlId: string, rendition: number): Element[] {
   if (!paper) return []
   const grouped = [...paper.querySelectorAll(`[data-m3n-id="${xmlId}"]`)]
-  return grouped.length > 0 ? grouped : [paper.querySelector(`#${xmlId}`)].filter(Boolean) as Element[]
+  if (grouped.length === 0) return [paper.querySelector(`#${xmlId}`)].filter(Boolean) as Element[]
+  const lyricRenditions = [...new Set(grouped
+    .map((element) => Number(element.getAttribute('data-m3n-rendition')))
+    .filter(Number.isInteger))]
+    .sort((left, right) => left - right)
+  if (lyricRenditions.length === 0) return grouped
+  const activeRendition = lyricRenditions[(Math.max(1, rendition) - 1) % lyricRenditions.length]
+  return grouped.filter((element) => {
+    const lyricRendition = element.getAttribute('data-m3n-rendition')
+    return lyricRendition === null || Number(lyricRendition) === activeRendition
+  })
 }
 
 function addMeasureHighlight(measure: SVGGElement, className: string) {
@@ -72,12 +82,15 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   const systemBounds = system?.getBBox() ?? measureBounds
   const numberedNotation = measure.closest<HTMLElement>('.score-paper')?.dataset.notation === 'numbered'
   const numberedMeasureStart = Number(measure.dataset.m3nMeasureStart)
+  const numberedMeasureEnd = Number(measure.dataset.m3nMeasureEnd)
   // Numbered notation records the logical barline-to-barline measure bounds.
   // The visible group starts at its first glyph, which omits leading whitespace.
   const left = numberedNotation && Number.isFinite(numberedMeasureStart)
     ? numberedMeasureStart
     : measureBounds.x
-  const right = measureBounds.x + measureBounds.width
+  const right = numberedNotation && Number.isFinite(numberedMeasureEnd)
+    ? numberedMeasureEnd
+    : measureBounds.x + measureBounds.width
   const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   band.classList.add(className)
   band.setAttribute('x', String(left))
@@ -330,7 +343,7 @@ export function ScoreRenderer({
     const progress = duration > 0 ? Math.max(0, Math.min(1, seconds / duration)) : 0
     if (syncProgress) setPlaybackProgress(progress)
     const timedElements = scoreRef.current?.elementsAtTime(seconds * 1000) ?? []
-    const elements = timedElements.flatMap(({ xmlId, rendition }) => queryPlaybackElements(paperRef.current, xmlId).flatMap((note) => {
+    const elements = timedElements.flatMap(({ xmlId, rendition }) => queryPlaybackElements(paperRef.current, xmlId, rendition).flatMap((note) => {
       const verses = [...note.children].filter((element): element is SVGGElement => element.classList.contains('verse'))
       if (note.children.length === 0) return [note]
       const measure = note.closest<SVGGElement>('g.measure')

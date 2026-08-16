@@ -153,7 +153,7 @@ function modeHeader(
   if (metadata.mode !== undefined) {
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
-    const modeX = x + (accidental === undefined ? 40 : 45) * keySpacing
+    const modeX = x + (accidental === undefined ? 40 : 55) * keySpacing
     output.push(text('1', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
     output.push(keySignatureEqualsGlyph(registry, x + 14.8, y))
     output.push(text(letter ?? 'C', x + 21.6, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
@@ -910,7 +910,10 @@ function renderLyrics(
       const value = syllable?.text ?? ''
       const playbackExtra: Readonly<Record<string, string>> = positioned.m3nDataId === undefined
         ? {}
-        : { 'data-m3n-id': positioned.m3nDataId }
+        : {
+            'data-m3n-id': positioned.m3nDataId,
+            'data-m3n-rendition': String(lyric.rendition ?? 1),
+          }
       output.push(
         text(value, positioned.x - config.lyricSize / 2, lyricY, {
           font: config.lyricFont,
@@ -1135,7 +1138,9 @@ function renderLine(
       ? layout.barlines.find((barline) => barline.measure === measureIndex - 1)?.x
       : undefined
     const measureStart = previousBarlineX ?? firstElementX ?? config.marginLeft
-    output.push(`<g class="measure" data-m3n-measure-start="${formatNumber(measureStart)}">${measure.join('\n')}</g>`)
+    const measureEnd = layout.barlines.find((barline) => barline.measure === measureIndex)?.x
+    const measureBounds = `data-m3n-measure-start="${formatNumber(measureStart)}"${measureEnd === undefined ? '' : ` data-m3n-measure-end="${formatNumber(measureEnd)}"`}`
+    output.push(`<g class="measure" ${measureBounds}>${measure.join('\n')}</g>`)
   })
   output.push(
     ...renderUnderlines(layout, y, (elementIndex) => renderedElementY(layout, elementIndex, y)),

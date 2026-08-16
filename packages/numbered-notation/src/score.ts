@@ -141,6 +141,7 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
 function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
   const activeRows = new Set(entries.flatMap(({ event }) => (lyrics.get(event) ?? []).flatMap((_, row) => lyrics.get(event)?.[row]?.length ? [row] : [])))
   return [...activeRows].sort((left, right) => left - right).map((row) => ({
+    rendition: row + 1,
     syllables: entries.flatMap(({ event, index, lastIndex }) => [
       { text: lyrics.get(event)?.[row]?.join('') ?? '', source: location(event) },
       ...Array.from({ length: lastIndex - index }, () => ({ text: '', source: location(event) })),

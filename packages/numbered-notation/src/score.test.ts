@@ -26,6 +26,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('id="m3n-e-1"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
     expect(svg).toContain('data-m3n-measure-start=')
+    expect(svg).toContain('data-m3n-measure-end=')
     expect(svg).toContain('id="m3n-playback-highlight"')
     expect(svg).toMatch(/<g class="measure"[^>]*>[\s\S]*id="m3n-e-1"/)
     expect(svg).toContain('xlink:href="#xunhuan_zuo"')
@@ -71,6 +72,7 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toMatch(/<circle[^>]*data-m3n-id="m3n-e-1"/)
     expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-1"[^>]*>春<\/text>/)
+    expect(svg).toContain('data-m3n-rendition="1"')
     expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-3"[^>]*>天<\/text>/)
     expect(svg).not.toMatch(/<text[^>]*data-m3n-id="m3n-e-2"[^>]*>天<\/text>/)
     expect(svg).toContain('font-size="16" font-family="serif"')
@@ -397,5 +399,9 @@ describe('NumberedNotationScore', () => {
     }
 
     expect(Math.max(...[...lyricYsBySystem.values()].map((rows) => rows.size))).toBe(3)
+    expect(svg).toContain('data-m3n-rendition="1"')
+    expect(svg).toContain('data-m3n-rendition="2"')
+    expect(svg).toContain('data-m3n-rendition="3"')
+    expect(svg).toMatch(/<text x="69\.6"[^>]*>F<\/text>[\s\S]*?<use x="92" y="[^"]+" xlink:href="#bianyinfu_sheng"/)
   })
 })
