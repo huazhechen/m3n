@@ -181,13 +181,13 @@ function modeHeader(
     output.push(`<rect x="${formatNumber(x + 0.8)}" y="${formatNumber(y - 0.7)}" width="16.8" height="1.4" fill="${INK}"></rect>`)
     const digitX = x + 9.2
     output.push(
-      text(String(meter.numerator), digitX, y - 6, {
-        font: 'Times, serif', size: 14.4, anchor: 'middle', dy: 0,
+      text(String(meter.numerator), digitX, y - 7, {
+        font: 'Times, serif', size: 16, anchor: 'middle', dy: 0,
       }),
     )
     output.push(
-      text(String(meter.denominator), digitX, y + 15, {
-        font: 'Times, serif', size: 14.4, anchor: 'middle', dy: 0,
+      text(String(meter.denominator), digitX, y + 17, {
+        font: 'Times, serif', size: 16, anchor: 'middle', dy: 0,
       }),
     )
     x += 24 * spacingScale

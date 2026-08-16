@@ -19,6 +19,7 @@ describe('NumberedNotationScore', () => {
     expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(400)
     expect(svg).toContain('>1=D</text>')
     expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
+    expect(svg).toContain('id="shuzi_b_bian_1" transform="translate(-50.56,-50)"')
     expect(svg).toContain('font-family="Microsoft YaHei"')
     expect(svg).toContain('id="m3n-e-1"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
@@ -284,8 +285,8 @@ describe('NumberedNotationScore', () => {
     expect(svg).toMatch(/y="151.2"[^>]*id="m3n-e-1"/)
     expect(svg).toContain('>1=C</text>')
     expect(svg).toContain('<rect x="96.8" y="100.3" width="16.8" height="1.4"')
-    expect(svg).toContain('x="105.2" y="95" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="14.4"')
-    expect(svg).toContain('x="105.2" y="116" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="14.4"')
+    expect(svg).toContain('x="105.2" y="94" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16"')
+    expect(svg).toContain('x="105.2" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16"')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {
