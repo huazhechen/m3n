@@ -1287,7 +1287,7 @@ export function paginateVoiceGroups(
   while (groupIndex < groups.length) {
     const header =
       pageIndex === 0
-        ? renderHeader(metadata, config, new GlyphRegistry())
+        ? renderHeader(metadata, config)
         : { bodyY: config.marginTop + config.bodyMarginTop + 6 }
     const spacing = pageSpacing(config)
     const bottom = config.height - config.marginBottom
