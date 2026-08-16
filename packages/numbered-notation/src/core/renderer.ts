@@ -132,6 +132,12 @@ const LEIPZIG_ORNAMENTS: Readonly<Partial<Record<Ornament['name'], string>>> = {
   tr: '&#xE566;',
 }
 
+const LEIPZIG_NAVIGATION_GLYPHS: Readonly<Partial<Record<string, string>>> = {
+  segno: '&#xE047;',
+  ds: '&#xE045;',
+  dc: '&#xE046;',
+}
+
 function leipzigGlyph(glyph: string, x: number, y: number, size: number): string {
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="${formatNumber(size)}">${glyph}</text>`
 }
@@ -595,6 +601,7 @@ function renderBarline(
   y: number,
   notepos: string,
   registry: GlyphRegistry,
+  config: NumberedNotationLayout,
 ): string[] {
   const normalizedCodes = {
     normal: '|',
@@ -645,8 +652,17 @@ function renderBarline(
     }),
   ]
   barline?.ornaments.forEach((ornament) => {
+    const leipzigGlyphCode = config.musicFontCss === undefined
+      ? undefined
+      : LEIPZIG_NAVIGATION_GLYPHS[ornament.name]
+    if (leipzigGlyphCode !== undefined) {
+      // Verovio anchors navigation signs above the last musical event, not
+      // on the trailing barline. Preserve that placement in numbered scores.
+      output.push(leipzigGlyph(leipzigGlyphCode, x - 46, y - 30, 24))
+      return
+    }
     const id = barlineOrnamentGlyph(ornament.name)
-    if (id !== undefined) output.push(registry.use(id, x, y - 26))
+    if (id !== undefined) output.push(registry.use(id, x - 46, y - 26))
   })
   if (barline?.temporaryMeter !== undefined) {
     output.push(registry.use('linshi_paihao_fenxian', x + 18, y))
@@ -1172,6 +1188,7 @@ function renderLine(
         barline.elementIndex === undefined ? y : mainElementY(layout, barline.elementIndex, y),
         notePositionCode(pageIndex, lineOrdinal, ordinal),
         registry,
+        config,
       ),
     )
   })
