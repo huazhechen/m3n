@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import type { ScoreHeaderMetadata } from '@m3n/notation'
+import type { ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
 import {
   a4ImagePlacement,
   a4SourcePageHeight,
@@ -19,6 +19,8 @@ type ExportFormat = 'png' | 'pdf'
 
 type ScoreExportDialogProps = {
   mei: string
+  scoreDocument?: ScoreDocument
+  numberedNotation: boolean
   title: string
   width: number
   hasBassStaff: boolean
@@ -40,12 +42,16 @@ function cloneScorePages(paper: HTMLElement) {
     .map((svg) => svg.cloneNode(true) as SVGSVGElement)
 }
 
+function musicFontCss(svg: string) {
+  return /@font-face\s*\{[\s\S]*?\}/.exec(svg)?.[0]
+}
+
 function pdfNotationPageHeight(width: number, headerMetadata: readonly ScoreHeaderMetadata[]) {
   return Math.max(1, a4SourcePageHeight(width) - scoreHeaderHeight(headerMetadata))
 }
 
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
-  function ScoreExportDialog({ mei, title, width, hasBassStaff, headerMetadata, onError }, ref) {
+  function ScoreExportDialog({ mei, scoreDocument, numberedNotation, title, width, hasBassStaff, headerMetadata, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('pdf')
@@ -68,6 +74,22 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       preview.innerHTML = ''
       void createVerovioScore(mei).then((score) => {
         if (!cancelled) {
+          if (numberedNotation && scoreDocument) {
+            void import('@m3n/numbered-notation').then(({ NumberedNotationScore }) => {
+              if (cancelled) return
+              const numberedWidth = Math.max(320, width)
+              score.prepareLayout({ width: numberedWidth, scale: 42 })
+              preview.innerHTML = NumberedNotationScore.create(scoreDocument).render({
+                paged: format === 'pdf',
+                width: numberedWidth,
+                musicFontCss: musicFontCss(score.renderPage(1)),
+              }).join('')
+              if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
+            }).catch((error: unknown) => {
+              if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
+            }).finally(() => score.destroy())
+            return
+          }
           preview.innerHTML = score.layout({
             width: Math.max(320, width),
             pageHeight: format === 'pdf' ? pdfNotationPageHeight(width, headerMetadata) : undefined,
@@ -78,13 +100,14 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           resolveLyricCollisions(preview)
           avoidLabelCollisions(preview)
           if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
+          score.destroy()
         }
-        score.destroy()
+        if (cancelled) score.destroy()
       }).catch((error: unknown) => {
         if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
       })
       return () => { cancelled = true }
-    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, mei, onError, width])
+    }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, mei, numberedNotation, onError, scoreDocument, width])
 
     const exportScore = async () => {
       setIsExporting(true)
@@ -97,24 +120,36 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         }
         const exportPaper = document.createElement('div')
         score = await createVerovioScore(mei)
-        exportPaper.innerHTML = score.layout({
-          width: targetWidth,
-          pageHeight: format === 'pdf' ? pdfNotationPageHeight(targetWidth, headerMetadata) : undefined,
-          scale: 42,
-          includeBass: includeBass || !hasBassStaff,
-        })
+        if (numberedNotation && scoreDocument) {
+          const { NumberedNotationScore } = await import('@m3n/numbered-notation')
+          score.prepareLayout({ width: targetWidth, scale: 42 })
+          exportPaper.innerHTML = NumberedNotationScore.create(scoreDocument).render({
+            paged: format === 'pdf',
+            width: targetWidth,
+            musicFontCss: musicFontCss(score.renderPage(1)),
+          }).join('')
+        } else {
+          exportPaper.innerHTML = score.layout({
+            width: targetWidth,
+            pageHeight: format === 'pdf' ? pdfNotationPageHeight(targetWidth, headerMetadata) : undefined,
+            scale: 42,
+            includeBass: includeBass || !hasBassStaff,
+          })
+        }
         exportPaper.style.cssText = 'position:fixed; visibility:hidden; pointer-events:none; inset:0;'
         document.body.append(exportPaper)
         let svgs: SVGSVGElement[] = []
         try {
-          addScoreHeaderToPaper(exportPaper, headerMetadata)
-          resolveLyricCollisions(exportPaper)
-          avoidLabelCollisions(exportPaper)
+          if (!numberedNotation || !scoreDocument) {
+            addScoreHeaderToPaper(exportPaper, headerMetadata)
+            resolveLyricCollisions(exportPaper)
+            avoidLabelCollisions(exportPaper)
+          }
           svgs = cloneScorePages(exportPaper)
         } finally {
           exportPaper.remove()
         }
-        if (svgs.length === 0) throw new Error('当前没有可导出的五线谱。')
+        if (svgs.length === 0) throw new Error(`当前没有可导出的${numberedNotation && scoreDocument ? '简谱' : '五线谱'}。`)
 
         const canvases: HTMLCanvasElement[] = []
         for (const svg of svgs) canvases.push(await renderScoreCanvas(svg, targetWidth))
@@ -149,7 +184,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     return (
       <dialog ref={dialogRef} className="export-dialog" onClose={() => setIsOpen(false)}>
         <form onSubmit={(event) => { event.preventDefault(); void exportScore() }}>
-          <div className="export-header"><h2>打印五线谱</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm' : 'PNG 连续图片'}</span></div>
+          <div className="export-header"><h2>打印{numberedNotation && scoreDocument ? '简谱' : '五线谱'}</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm' : 'PNG 连续图片'}</span></div>
           <div className="export-content">
             <div className="export-settings">
               <p className="export-width-summary">乐谱宽度 <output>{width}px</output></p>

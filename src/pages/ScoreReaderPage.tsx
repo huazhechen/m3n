@@ -9,6 +9,8 @@ import { isLocalScoreId, loadLocalScore } from '../lib/local-scores'
 import { presetScores } from '../lib/samples'
 import {
   DEFAULT_SCORE_WIDTH,
+  readNumberedNotation,
+  writeNumberedNotation,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
@@ -29,6 +31,7 @@ export function ScoreReaderPage() {
     SCORE_WIDTH_MAX,
   ))
   const [exportError, setExportError] = useState('')
+  const [numberedNotation, setNumberedNotation] = useState(readNumberedNotation)
   useEffect(() => {
     let cancelled = false
     if (score || localScore || !slug || !isSharedScoreId(slug)) {
@@ -93,11 +96,18 @@ export function ScoreReaderPage() {
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
           invalidMeasureIds={invalidMeasures}
+          numberedNotation={numberedNotation}
+          onNumberedNotationChange={(enabled) => {
+            setNumberedNotation(enabled)
+            writeNumberedNotation(enabled)
+          }}
           onLayoutWidthChange={setExportWidth}
         />
         <ScoreExportDialog
           ref={exportDialogRef}
           mei={result.mei}
+          scoreDocument={analysis.score}
+          numberedNotation={numberedNotation}
           title={result.title}
           width={exportWidth}
           hasBassStaff={result.hasBassStaff}
