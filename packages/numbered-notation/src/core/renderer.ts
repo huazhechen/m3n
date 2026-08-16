@@ -159,7 +159,7 @@ function modeHeader(
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
     const modeX = x + (accidental === undefined ? 40 : 45) * keySpacing
-    output.push(text(`1=${letter ?? 'C'}`, x, y + 5.6, { font: config.lyricFont, size: 12.8, dy: 0 }))
+    output.push(text(`1=${letter ?? 'C'}`, x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
     if (accidental !== undefined) {
       output.push(
         musicGlyph(accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y),
@@ -172,33 +172,24 @@ function modeHeader(
     const previousParenthesized = metadata.meters[index - 1]?.parenthesized === true
     const nextParenthesized = metadata.meters[index + 1]?.parenthesized === true
     if (meter.parenthesized && !previousParenthesized) {
-      output.push(text('(', x, y + 5.6, { font: config.lyricFont, size: 12.8, dy: 0 }))
+      output.push(text('(', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
       x += 15 * spacingScale
     }
     output.push(`<rect x="${formatNumber(x + 0.8)}" y="${formatNumber(y - 0.8)}" width="16.8" height="1.6" fill="${INK}"></rect>`)
-    // The fraction bar and digits are both scaled from their own origins.
-    // Align the digit origin to the scaled center of the fraction bar.
     const digitX = x + 9.2
     output.push(
-      numberedGlyph(
-        registry,
-        `shuzi_${config.numberStyle}_bian_${String(meter.numerator).slice(-1)}`,
-        digitX,
-        y - 12 * spacingScale,
-      ),
+      text(String(meter.numerator), digitX, y, {
+        font: 'Times, serif', size: 16, anchor: 'middle', dy: 0,
+      }),
     )
     output.push(
-      numberedGlyph(
-        registry,
-        `shuzi_${config.numberStyle}_bian_${String(meter.denominator).slice(-1)}`,
-        digitX,
-        y + 12 * spacingScale,
-        { fill: '#414141' },
-      ),
+      text(String(meter.denominator), digitX, y + 14.4, {
+        font: 'Times, serif', size: 16, anchor: 'middle', dy: 0, fill: '#414141',
+      }),
     )
     x += 27 * spacingScale
     if (meter.parenthesized && !nextParenthesized) {
-      output.push(text(')', x, y + 5.6, { font: config.lyricFont, size: 12.8, dy: 0 }))
+      output.push(text(')', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
       x += 15 * spacingScale
     }
   })
@@ -216,9 +207,8 @@ function modeHeader(
       output.push(keySignatureEqualsGlyph(registry, equalsX, y))
       output.push(
         text(String(tempo), equalsX + 10, tempoY, {
-          font: config.musicFontCss === undefined ? 'system-ui, sans-serif' : 'Times, serif',
-          size: config.musicFontCss === undefined ? config.tempoSize : 17.01,
-          bold: config.musicFontCss !== undefined,
+          font: 'Times, serif',
+          size: 16,
           dy: 0,
           extra: { 'data-jiepai': tempo },
         }),
@@ -644,9 +634,9 @@ function renderUnderlines(
         if (first !== undefined && last !== undefined) {
           // Duration underlines retain their native visual weight and span.
           // Only their first-row clearance changes for the smaller numerals.
-          const underlineY = yForElement(first.elementIndex) + 9 + (level - 1) * 1.8
+          const underlineY = yForElement(first.elementIndex) + 10 + (level - 1) * 1.8
           output.push(
-            `<line x1="${formatNumber(first.x - 6)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 6 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.6" stroke="${INK}"></line>`,
+            `<line x1="${formatNumber(first.x - 7)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 7 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.6" stroke="${INK}"></line>`,
           )
         }
         run = []
