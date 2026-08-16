@@ -364,17 +364,21 @@ function systemGroups(document: ScoreDocument, width: number) {
   const groups: VoiceGroup[] = []
   let start = 0
   while (start < part.melody.length) {
+    const beginsSegment = start === 0 || part.melody[start - 1]?.breakAfter === true || part.melody[start]?.breakBefore === true
     // Explicit `br` markers set a preferred system boundary. Within that
     // range, though, balance auto-wrapped measures rather than orphaning the
     // final measure on its own line.
     let boundaryEnd = part.melody.length
+    let hasExplicitBoundary = false
     for (let measure = start; measure < part.melody.length; measure += 1) {
       if (measure > start && part.melody[measure]?.breakBefore) {
         boundaryEnd = measure
+        hasExplicitBoundary = true
         break
       }
       if (part.melody[measure]?.breakAfter) {
         boundaryEnd = measure + 1
+        hasExplicitBoundary = true
         break
       }
     }
@@ -394,7 +398,16 @@ function systemGroups(document: ScoreDocument, width: number) {
       if (end > start && layout.endX > width - 77) break
       end += 1
     }
-    if (end < boundaryEnd && boundaryEnd - end === 1 && end - start >= 2) end -= 1
+    if (end < boundaryEnd) {
+      const remaining = boundaryEnd - end
+      const lineLength = end - start
+      if (remaining === 1 && lineLength >= 2) end -= 1
+      // Do not leave a short two-measure tail after a wide first line. This
+      // turns 4+2 (and 5+2) into the more balanced 3+3 (and 4+3).
+      else if (remaining === 2 && lineLength >= remaining + 2) {
+        end = start + Math.ceil((boundaryEnd - start) / 2)
+      }
+    }
     const group = groupForMeasures(
       part.melody.slice(start, end), part.bass.slice(start, end), lyrics, document.intervals, ids,
       {
@@ -403,6 +416,7 @@ function systemGroups(document: ScoreDocument, width: number) {
       },
       keyBeforeMeasure(part.melody, start, document.key),
     )
+    if (hasExplicitBoundary && beginsSegment && end === boundaryEnd) group.forceJustify = true
     groups.push(group)
     start = end
   }
