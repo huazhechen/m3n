@@ -81,6 +81,10 @@ function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: read
   })
 }
 
+function musicFontCss(svg: string) {
+  return /@font-face\s*\{[\s\S]*?\}/.exec(svg)?.[0]
+}
+
 export function ScoreRenderer({
   mei,
   headerMetadata,
@@ -191,9 +195,11 @@ export function ScoreRenderer({
         if (isInitialRender) setRenderPhase('waiting-layout')
 
         if (numberedNotation && scoreDocument) {
+          score.prepareLayout({ width: renderWidth, scale: compact ? 38 : 42 })
           paper.innerHTML = NumberedNotationScore.create(scoreDocument).render({
             paged: renderMode === 'paged',
             width: renderWidth,
+            musicFontCss: musicFontCss(score.renderPage(1)),
           }).join('')
           if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
           hasRenderedRef.current = true

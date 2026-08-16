@@ -201,6 +201,31 @@ describe('NumberedNotationScore', () => {
     expect(svg).not.toContain('>作词者</text>')
   })
 
+  it('uses Verovio’s metNoteQuarterUp glyph when its music font is supplied', () => {
+    const [svg] = renderScore(
+      parseM3NDocument('{title=测试曲} {4/4} {90qpm}\nN: 1 2 3 4 |||'),
+      { paged: true, width: 1000, musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }' },
+    )
+
+    expect(svg).toContain('@font-face { font-family: Leipzig; src: url(test); }')
+    expect(svg).toContain('font-family="Leipzig" font-size="30.24">&#xECA5;</text>')
+    expect(svg).not.toContain('xlink:href="#jiepaifu"')
+  })
+
+  it('uses Leipzig glyphs for standard accidentals and dynamics when its music font is supplied', () => {
+    const [svg] = renderScore(
+      parseM3NDocument('{title=测试曲} {4/4}\n{mf} 1# 2b 3= 4 |||'),
+      { paged: true, width: 1000, musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }' },
+    )
+
+    expect(svg).toContain('&#xE262;')
+    expect(svg).toContain('&#xE260;')
+    expect(svg).toContain('&#xE261;')
+    expect(svg).toContain('&#xE521;&#xE522;')
+    expect(svg).not.toContain('xlink:href="#bianyinfu_sheng"')
+    expect(svg).not.toContain('xlink:href="#lidu_mf"')
+  })
+
   it('uses the staff-score header metrics for numbered notation metadata', () => {
     const [svg] = renderScore(parseM3NDocument('{title=测试曲} {subtitle=副标题} {composer=作曲者} {key=D} {3/4}\nN: 1 2 3 4 |||'), { paged: true, width: 1000 })
 
@@ -216,10 +241,10 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('x="400" y="60" dy="0"')
     expect(svg).toContain('x="772" y="97.2" dy="0"')
-    expect(svg).toContain('x="75" y="133" dy="0"')
+    expect(svg).toContain('x="143.2" y="101" dy="0"')
     expect(svg).toContain('data-jiepai="100">= 100</text>')
-    expect(svg).toContain('translate(48,133) scale(1.36) translate(-48,-133)')
-    expect(svg).toMatch(/y="179.4"[^>]*id="m3n-e-1"/)
+    expect(svg).toContain('translate(116.2,101) scale(1.36) translate(-116.2,-101)')
+    expect(svg).toMatch(/y="169.4"[^>]*id="m3n-e-1"/)
     expect(svg).toContain('x="80" y="101" xlink:href="#diaohao_zimu_c"')
     expect(svg).toContain('x="88" y="101" xlink:href="#paihao_xian"')
   })

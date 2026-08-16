@@ -22,11 +22,13 @@ export type NumberedNotationLayout = {
   lyricToLyric: number
   lineGap: number
   voiceGap: number
+  musicFontCss?: string
 }
 
 export type NumberedNotationLayoutOptions = {
   width: number
   height: number
+  musicFontCss?: string
 }
 
 const defaults = {
@@ -51,6 +53,7 @@ const defaults = {
 export function createNumberedNotationLayout({
   width,
   height,
+  musicFontCss,
 }: NumberedNotationLayoutOptions): NumberedNotationLayout {
   return {
     width: Math.max(1, Math.round(width)),
@@ -74,6 +77,7 @@ export function createNumberedNotationLayout({
     lyricToLyric: defaults.lyricToLyric,
     lineGap: defaults.lineGap,
     voiceGap: defaults.voiceGap,
+    musicFontCss,
   }
 }
 

@@ -22,6 +22,7 @@ import type {
 export type NumberedNotationRenderOptions = {
   paged: boolean
   width: number
+  musicFontCss?: string
 }
 
 type EventEntry = { event: ScoreEvent; index: number; lastIndex: number }
@@ -360,9 +361,9 @@ export class NumberedNotationScore {
       instruments: [],
       remarks: [],
     }
-    const baseConfig = createNumberedNotationLayout({ width, height: 300 })
+    const baseConfig = createNumberedNotationLayout({ width, height: 300, musicFontCss: options.musicFontCss })
     const pageHeight = options.paged ? Math.round(width * 1.415) : Math.max(300, continuousPageHeight(groups, metadata, baseConfig))
-    const layout = createNumberedNotationLayout({ width, height: pageHeight })
+    const layout = createNumberedNotationLayout({ width, height: pageHeight, musicFontCss: options.musicFontCss })
     const numberedNotation: NumberedNotationDocument = {
       metadata,
       pages: options.paged ? paginateVoiceGroups(groups, metadata, layout) : [{ index: 0, groups }],

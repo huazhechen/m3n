@@ -109,6 +109,48 @@ function numberedGlyph(
   return scaledGlyph(registry, id, x, y, config.numberScale, extra)
 }
 
+function staffTempoGlyph(x: number, y: number): string {
+  return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="30.24">&#xECA5;</text>`
+}
+
+const LEIPZIG_ACCIDENTALS: Readonly<Partial<Record<string, string>>> = {
+  bianyinfu_sheng: '&#xE262;',
+  bianyinfu_jiang: '&#xE260;',
+  bianyinfu_huanyuan: '&#xE261;',
+}
+
+const LEIPZIG_ORNAMENTS: Readonly<Partial<Record<Ornament['name'], string>>> = {
+  ppp: '&#xE520;&#xE520;&#xE520;',
+  pp: '&#xE520;&#xE520;',
+  p: '&#xE520;',
+  mp: '&#xE521;&#xE520;',
+  mf: '&#xE521;&#xE522;',
+  f: '&#xE522;',
+  ff: '&#xE522;&#xE522;',
+  fff: '&#xE522;&#xE522;&#xE522;',
+  sf: '&#xE524;&#xE522;',
+  tr: '&#xE566;',
+}
+
+function leipzigGlyph(glyph: string, x: number, y: number, size: number): string {
+  return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="${formatNumber(size)}">${glyph}</text>`
+}
+
+function musicGlyph(
+  registry: GlyphRegistry,
+  id: string,
+  x: number,
+  y: number,
+  scale: number,
+  config: NumberedNotationLayout,
+  extra: Readonly<Record<string, string | number | undefined>> = {},
+): string {
+  const glyph = config.musicFontCss === undefined ? undefined : LEIPZIG_ACCIDENTALS[id]
+  return glyph === undefined
+    ? scaledGlyph(registry, id, x, y, scale, extra)
+    : leipzigGlyph(glyph, x - 7.2 * scale, y + 6 * scale, 18 * scale)
+}
+
 function audioCode(note: NoteElement): string {
   const octave = note.octave > 0 ? "'".repeat(note.octave) : ','.repeat(Math.abs(note.octave))
   return `${note.pitch}${octave}`
@@ -132,7 +174,7 @@ function modeHeader(
     output.push(scaledGlyph(registry, 'diaohao_fu', x, y, glyphScale))
     if (accidental !== undefined) {
       output.push(
-        scaledGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y, glyphScale),
+        musicGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y, glyphScale, config),
       )
     }
     output.push(
@@ -179,26 +221,33 @@ function modeHeader(
     }
   })
 
-  metadata.tempos.forEach((tempo, index) => {
-    const tempoY = y + 32 + index * 22
+  metadata.tempos.forEach((tempo) => {
+    const tempoX = x + (x === config.marginLeft ? 0 : 12)
     if (typeof tempo === 'number') {
-      output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 1.36))
+      if (config.musicFontCss === undefined) {
+        output.push(scaledGlyph(registry, 'jiepaifu', tempoX, y, 1.36))
+      } else {
+        output.push(staffTempoGlyph(tempoX, y))
+      }
       output.push(
-        text(`= ${String(tempo)}`, config.marginLeft + 27, tempoY, {
-          font: 'system-ui, sans-serif',
-          size: config.tempoSize,
+        text(`= ${String(tempo)}`, tempoX + (config.musicFontCss === undefined ? 27 : 10), y, {
+          font: config.musicFontCss === undefined ? 'system-ui, sans-serif' : 'Times, serif',
+          size: config.musicFontCss === undefined ? config.tempoSize : 17.01,
+          bold: config.musicFontCss !== undefined,
           dy: 0,
           extra: { 'data-jiepai': tempo },
         }),
       )
+      x = tempoX + 24 + String(tempo).length * 10
     } else {
       output.push(
-        text(tempo, config.marginLeft, tempoY, {
+        text(tempo, tempoX, y, {
           font: 'system-ui, sans-serif',
           size: config.tempoSize,
           dy: 0,
         }),
       )
+      x = tempoX + Math.max(24, tempo.length * config.tempoSize)
     }
   })
   return output
@@ -231,7 +280,7 @@ function renderHeader(
   markup.push(...modeHeader(metadata, config, registry, infoY))
   return {
     markup,
-    bodyY: header.height + (metadata.tempos.length > 0 ? 62 : 52),
+    bodyY: header.height + 52,
   }
 }
 
@@ -350,12 +399,15 @@ function renderOrnaments(
   x: number,
   y: number,
   registry: GlyphRegistry,
+  config: NumberedNotationLayout,
   context: OrnamentContext = {},
 ): string[] {
   return ornaments.flatMap((ornament) => {
+    const position = ornamentPosition(ornament, x, y, context)
+    const glyph = config.musicFontCss === undefined ? undefined : LEIPZIG_ORNAMENTS[ornament.name]
+    if (glyph !== undefined) return [leipzigGlyph(glyph, position.x, position.y, 17)]
     const id = ornamentGlyph(ornament)
     if (id === undefined) return []
-    const position = ornamentPosition(ornament, x, y, context)
     return [registry.use(id, position.x, position.y)]
   })
 }
@@ -365,8 +417,12 @@ function renderInlineOrnaments(
   x: number,
   y: number,
   registry: GlyphRegistry,
+  config: NumberedNotationLayout,
 ): string[] {
   return ornaments.flatMap((ornament) => {
+    const glyph = config.musicFontCss === undefined ? undefined : LEIPZIG_ORNAMENTS[ornament.name]
+    const position = ornamentPosition(ornament, x, y, {})
+    if (glyph !== undefined) return leipzigGlyph(glyph, position.x, position.y, 17)
     const id =
       ornament.name === 'zkh'
         ? 'kuohu_zuo_bian'
@@ -374,7 +430,6 @@ function renderInlineOrnaments(
           ? 'kuohu_you_bian'
           : ornamentGlyph(ornament)
     if (id === undefined) return []
-    const position = ornamentPosition(ornament, x, y, {})
     return registry.use(id, position.x, position.y)
   })
 }
@@ -392,7 +447,7 @@ function renderChordPitch(
     code: String(chordPitch.pitch),
     'data-m3n-id': note.m3nDataId ?? note.m3nId,
   }))
-  if (chordPitch.accidental !== undefined) output.push(numberedGlyph(registry, ACCIDENTAL_GLYPH_IDS[chordPitch.accidental], x, y, config))
+  if (chordPitch.accidental !== undefined) output.push(musicGlyph(registry, ACCIDENTAL_GLYPH_IDS[chordPitch.accidental], x, y, config.numberScale, config))
   const dotId = chordPitch.octave >= 0 ? 'yingao_gao' : 'yingao_di'
   const underlineCount = Math.max(0, Math.log2(note.duration / 4))
   for (let octave = 0; octave < Math.abs(chordPitch.octave); octave += 1) {
@@ -439,7 +494,7 @@ function renderNote(
       }),
     )
     if (note.accidental !== undefined) {
-      output.push(numberedGlyph(registry, ACCIDENTAL_GLYPH_IDS[note.accidental], x, y, config))
+      output.push(musicGlyph(registry, ACCIDENTAL_GLYPH_IDS[note.accidental], x, y, config.numberScale, config))
     }
     const dotId = note.octave >= 0 ? 'yingao_gao' : 'yingao_di'
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
@@ -471,7 +526,7 @@ function renderNote(
         }),
       )
     }
-    output.push(...renderOrnaments(note.ornaments, x, y, registry, ornamentContext))
+    output.push(...renderOrnaments(note.ornaments, x, y, registry, config, ornamentContext))
   }
   return output
 }
@@ -482,6 +537,7 @@ function renderSustain(
   y: number,
   notepos: string,
   registry: GlyphRegistry,
+  config: NumberedNotationLayout,
   timeOverride?: number,
 ): string[] {
   return [
@@ -491,7 +547,7 @@ function renderSustain(
       notepos,
       code: sustain.code,
     }),
-    ...renderOrnaments(sustain.ornaments, x, y, registry),
+    ...renderOrnaments(sustain.ornaments, x, y, registry, config),
   ]
 }
 
@@ -911,10 +967,10 @@ function renderInlineLayer(
           const id =
             element.pitch === 9 ? 'shuzi_x' : `shuzi_${config.numberStyle}_bian_${element.pitch}`
           output.push(registry.use(id, positioned.x, y))
-          output.push(...renderInlineOrnaments(element.ornaments, positioned.x, y, registry))
+          output.push(...renderInlineOrnaments(element.ornaments, positioned.x, y, registry, config))
         }
       } else if (layer.role === 'voice') {
-        output.push(...renderSustain(element, positioned.x, y, `${pageIndex}__`, registry))
+        output.push(...renderSustain(element, positioned.x, y, `${pageIndex}__`, registry, config))
       } else {
         output.push(registry.use('yanyinfu', positioned.x, y))
       }
@@ -1032,6 +1088,7 @@ function renderLine(
           elementY,
           notepos,
           registry,
+          config,
           timeOverride,
         ),
       )
@@ -1325,7 +1382,8 @@ function renderPage(
     if (multiVoice) y += spacing.voiceGap
   })
 
-  return `<svg width="${formatNumber(config.width)}" height="${formatNumber(config.height)}" version="1.1" viewBox="0 0 ${formatNumber(config.width)} ${formatNumber(config.height)}" encoding="UTF-8" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" height="100%" width="100%" fill="#ffffff"></rect>${registry.definitions()}\n${body.join('\n')}</svg>`
+  const musicFontStyle = config.musicFontCss === undefined ? '' : `<style type="text/css">${config.musicFontCss}</style>`
+  return `<svg width="${formatNumber(config.width)}" height="${formatNumber(config.height)}" version="1.1" viewBox="0 0 ${formatNumber(config.width)} ${formatNumber(config.height)}" encoding="UTF-8" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" height="100%" width="100%" fill="#ffffff"></rect>${musicFontStyle}${registry.definitions()}\n${body.join('\n')}</svg>`
 }
 
 export function renderNumberedNotationPages(
