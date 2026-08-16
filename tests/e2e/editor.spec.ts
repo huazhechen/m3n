@@ -88,3 +88,17 @@ test('renders ScoreDocument through the numbered notation numbered-notation engi
   await expect(page.locator('.score-paper svg[viewBox^="0 0"]').first()).toBeVisible()
   await expect(page.locator('.score-paper [data-m3n-id^="m3n-e-"]').first()).toBeVisible()
 })
+
+test('switches every embedded documentation score between staff and numbered notation', async ({ page }) => {
+  await page.goto('/docs?doc=guide')
+  const renderedScores = page.locator('.embedded-editor .score-paper')
+  await expect(renderedScores.first()).toHaveAttribute('data-notation', 'staff', { timeout: 30_000 })
+  expect(await renderedScores.count()).toBeGreaterThan(1)
+
+  const notationSwitch = page.getByRole('switch', { name: '简谱渲染' })
+  await notationSwitch.check()
+  await expect(renderedScores).toHaveCount(await renderedScores.count())
+  await expect.poll(() => renderedScores.evaluateAll((scores) => scores.map((score) => score.dataset.notation))).toEqual(
+    Array(await renderedScores.count()).fill('numbered'),
+  )
+})

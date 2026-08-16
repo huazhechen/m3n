@@ -1584,6 +1584,21 @@ a.action-button {
   overflow: hidden;
 }
 
+.document-notation-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
+.document-notation-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #285b5c;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .markdown-panel h1,
 .markdown-panel h2,
 .markdown-panel h3,

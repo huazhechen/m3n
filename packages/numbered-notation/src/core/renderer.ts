@@ -120,42 +120,44 @@ function modeHeader(
   y: number,
 ): string[] {
   const output: string[] = []
+  const glyphScale = config.headerGlyphScale
+  const spacingScale = 0.6
   let x = config.marginLeft
   if (metadata.mode !== undefined) {
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
-    const modeX = x + (accidental === undefined ? 40 : 45)
-    output.push(scaledGlyph(registry, 'diaohao_fu', x, y, config.headerGlyphScale))
+    const modeX = x + (accidental === undefined ? 40 : 45) * spacingScale
+    output.push(scaledGlyph(registry, 'diaohao_fu', x, y, glyphScale))
     if (accidental !== undefined) {
       output.push(
-        scaledGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y, config.headerGlyphScale),
+        scaledGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y, glyphScale),
       )
     }
     output.push(
-      scaledGlyph(registry, `diaohao_zimu_${letter?.toLowerCase()}`, modeX, y, config.headerGlyphScale, {
+      scaledGlyph(registry, `diaohao_zimu_${letter?.toLowerCase()}`, modeX, y, glyphScale, {
         code: metadata.mode,
         'data-diaohao': 'true',
       }),
     )
-    x += accidental === undefined ? 50 : 55
+    x += (accidental === undefined ? 50 : 55) * spacingScale
   }
 
   metadata.meters.forEach((meter, index) => {
     const previousParenthesized = metadata.meters[index - 1]?.parenthesized === true
     const nextParenthesized = metadata.meters[index + 1]?.parenthesized === true
     if (meter.parenthesized && !previousParenthesized) {
-      output.push(scaledGlyph(registry, 'paihao_kuohu_zuo', x, y, config.headerGlyphScale))
-      x += 15
+      output.push(scaledGlyph(registry, 'paihao_kuohu_zuo', x, y, glyphScale))
+      x += 15 * spacingScale
     }
-    output.push(scaledGlyph(registry, 'paihao_xian', x, y, config.headerGlyphScale))
-    const digitX = x + 10
+    output.push(scaledGlyph(registry, 'paihao_xian', x, y, glyphScale))
+    const digitX = x + 10 * spacingScale
     output.push(
       numberedGlyph(
         registry,
         `shuzi_${config.numberStyle}_bian_${String(meter.numerator).slice(-1)}`,
         digitX,
-        y - 12,
-        { ...config, numberScale: config.headerGlyphScale },
+        y - 12 * spacingScale,
+        { ...config, numberScale: glyphScale },
       ),
     )
     output.push(
@@ -163,25 +165,25 @@ function modeHeader(
         registry,
         `shuzi_${config.numberStyle}_bian_${String(meter.denominator).slice(-1)}`,
         digitX,
-        y + 12,
-        { ...config, numberScale: config.headerGlyphScale },
+        y + 12 * spacingScale,
+        { ...config, numberScale: glyphScale },
         { fill: '#414141' },
       ),
     )
-    x += 27
+    x += 27 * spacingScale
     if (meter.parenthesized && !nextParenthesized) {
-      output.push(scaledGlyph(registry, 'paihao_kuohu_you', x, y, config.headerGlyphScale))
-      x += 15
+      output.push(scaledGlyph(registry, 'paihao_kuohu_you', x, y, glyphScale))
+      x += 15 * spacingScale
     }
   })
 
   metadata.tempos.forEach((tempo, index) => {
     const tempoY = y + 40 + index * 22
     if (typeof tempo === 'number') {
-      output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 0.78 * config.headerGlyphScale))
+      output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 0.78 * glyphScale))
       output.push(
         text(String(tempo), config.marginLeft + 27, tempoY + 1, {
-          font: config.lyricFont,
+          font: 'system-ui, sans-serif',
           size: config.tempoSize,
           dy: 0.3355 * config.tempoSize,
           extra: { 'data-jiepai': tempo },
@@ -190,7 +192,7 @@ function modeHeader(
     } else {
       output.push(
         text(tempo, config.marginLeft, tempoY, {
-          font: config.lyricFont,
+          font: 'system-ui, sans-serif',
           size: config.tempoSize,
           dy: 0.3355 * config.tempoSize,
         }),
@@ -209,15 +211,16 @@ function renderHeader(
   if (metadata.titles.length === 0) {
     return { markup, bodyY: config.marginTop + config.bodyMarginTop + 6 }
   }
-  const titleY = config.marginTop + 30
+  const titleY = 60
   const [mainTitle, ...subtitles] = metadata.titles
   if (mainTitle !== undefined) {
     markup.push(
       text(mainTitle, config.width / 2, titleY, {
-        font: config.titleFont,
+        font: 'ui-serif, serif',
         size: config.titleSize,
         anchor: 'middle',
         bold: true,
+        dy: 0,
       }),
     )
   }
@@ -226,32 +229,32 @@ function renderHeader(
       text(
         subtitle,
         config.width / 2,
-        titleY + config.titleSize + 20 + index * (config.subtitleSize + 8),
+        95 + index * (config.subtitleSize + 16),
         {
-          font: config.titleFont,
+          font: 'ui-serif, serif',
           size: config.subtitleSize,
           anchor: 'middle',
+          dy: 0,
         },
       ),
     )
   })
-  const titleOffset = config.titleSize - 32
-  const infoY = config.marginTop + 96 + titleOffset
+  const infoY = 144
   markup.push(...modeHeader(metadata, config, registry, infoY))
   const authorSize = config.authorSize
   const authorBottomY =
-    config.marginTop + 116 + titleOffset + Math.max(0, metadata.authors.length - 1) * 21
+    129 + Math.max(0, metadata.authors.length - 1) * 26
   ;[...metadata.authors]
     .map((author, index) => ({ author, index }))
     .reverse()
     .forEach(({ author, index }) => {
       const authorY = authorBottomY - (metadata.authors.length - 1 - index) * (authorSize + 5)
       markup.push(
-        text(author, config.width - config.marginRight, authorY, {
-          font: config.lyricFont,
+        text(author, config.width - 28, authorY, {
+          font: 'system-ui, sans-serif',
           size: authorSize,
           anchor: 'end',
-          dy: -0.1645 * authorSize,
+          dy: 0,
         }),
       )
     })

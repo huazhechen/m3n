@@ -42,11 +42,13 @@ type ScoreRendererProps = {
   sourceMap: MeiSourceMapRange[]
   scoreDocument?: ScoreDocument
   compact?: boolean
+  numberedNotation?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
   onActiveXmlId?: (xmlId: string | null) => void
   onLayoutWidthChange?: (width: number) => void
   onNoteClick?: (xmlId: string) => void
+  onNumberedNotationChange?: (enabled: boolean) => void
   onPaperBlur?: () => void
 }
 
@@ -85,11 +87,13 @@ export function ScoreRenderer({
   sourceMap,
   scoreDocument,
   compact = false,
+  numberedNotation: numberedNotationOverride,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
   onActiveXmlId,
   onLayoutWidthChange,
   onNoteClick,
+  onNumberedNotationChange,
   onPaperBlur,
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement>(null)
@@ -122,7 +126,8 @@ export function ScoreRenderer({
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
-  const [numberedNotation, setNumberedNotation] = useState(() => !compact && readNumberedNotation())
+  const [storedNumberedNotation, setStoredNumberedNotation] = useState(() => !compact && readNumberedNotation())
+  const numberedNotation = numberedNotationOverride ?? storedNumberedNotation
   const speedRef = useRef(playbackSpeed)
   const [staffWidth, setStaffWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -442,7 +447,11 @@ export function ScoreRenderer({
   }
 
   const changeNumberedNotation = (enabled: boolean) => {
-    setNumberedNotation(enabled)
+    if (numberedNotationOverride !== undefined) {
+      onNumberedNotationChange?.(enabled)
+      return
+    }
+    setStoredNumberedNotation(enabled)
     if (!compact) writeNumberedNotation(enabled)
   }
 

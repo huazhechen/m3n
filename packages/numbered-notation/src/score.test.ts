@@ -37,7 +37,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('>了</text>')
   })
 
-  it('uses fixed 0.6-scale layout defaults without changing its requested page width', () => {
+  it('uses fixed 0.8-scale glyphs without changing its requested page width', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),
       { paged: false, width: 800 },
@@ -45,7 +45,7 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('<svg width="800"')
     expect(svg).toContain('font-size="32"')
-    expect(svg).toMatch(/id="m3n-e-1"[^>]*transform="[^"]*scale\(0.6\)/)
+    expect(svg).toMatch(/id="m3n-e-1"[^>]*transform="[^"]*scale\(0.8\)/)
   })
 
   it('maps M3N grace-note postfixes onto the following numbered-notation grace group', () => {
@@ -199,6 +199,15 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('>演唱者</text>')
     expect(svg).not.toContain('>作曲者</text>')
     expect(svg).not.toContain('>作词者</text>')
+  })
+
+  it('uses the staff-score header metrics for numbered notation metadata', () => {
+    const [svg] = renderScore(parseM3NDocument('{title=测试曲} {subtitle=副标题} {composer=作曲者} {key=D} {3/4}\nN: 1 2 3 4 |||'), { paged: true, width: 1000 })
+
+    expect(svg).toMatch(/x="500" y="60" dy="0"[^>]*font-size="32"[^>]*font-family="ui-serif, serif"[^>]*>测试曲<\/text>/)
+    expect(svg).toMatch(/x="500" y="95" dy="0"[^>]*font-size="16"[^>]*font-family="ui-serif, serif"[^>]*>副标题<\/text>/)
+    expect(svg).toMatch(/x="972" y="129" dy="0"[^>]*font-size="14"[^>]*font-family="system-ui, sans-serif"[^>]*>作曲者<\/text>/)
+    expect(svg).toContain('scale(0.8)')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {

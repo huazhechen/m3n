@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { documentSections, searchForDocument, slugify } from '../lib/docs-navigation'
 import { escapeTableCodePipes } from '../lib/markdown-table'
+import { readNumberedNotation, writeNumberedNotation } from '../lib/renderer-settings'
 import { NotationEditor } from './NotationEditor'
 
 type DocumentSource = {
@@ -36,6 +37,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   const navigate = useNavigate()
   const [isTocOpen, setIsTocOpen] = useState(false)
   const [activeHeadingId, setActiveHeadingId] = useState('')
+  const [numberedNotation, setNumberedNotation] = useState(readNumberedNotation)
   const tocRef = useRef<HTMLElement>(null)
   const tocToggleRef = useRef<HTMLButtonElement>(null)
   const activeHeadingIdRef = useRef('')
@@ -181,6 +183,11 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     return true
   }, [documentGroups, selectDocument])
 
+  const changeNumberedNotation = useCallback((enabled: boolean) => {
+    setNumberedNotation(enabled)
+    writeNumberedNotation(enabled)
+  }, [])
+
   const markdownComponents = useMemo(() => ({
     h2(props: ComponentPropsWithoutRef<'h2'>) {
       const title = String(props.children ?? '')
@@ -202,7 +209,14 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       const className = props.className ?? ''
       const value = String(props.children ?? '').replace(/\n$/, '')
       if (className.includes('language-m3n')) {
-        return <NotationEditor embedded initialSource={value} />
+        return (
+          <NotationEditor
+            embedded
+            initialSource={value}
+            numberedNotation={numberedNotation}
+            onNumberedNotationChange={changeNumberedNotation}
+          />
+        )
       }
       return <code className={className}>{props.children}</code>
     },
@@ -219,7 +233,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
         />
       )
     },
-  }), [activeDocumentHeadings, selectMarkdownLink])
+  }), [activeDocumentHeadings, changeNumberedNotation, numberedNotation, selectMarkdownLink])
 
   if (!activeDocument) {
     return null
@@ -289,6 +303,21 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
         </nav>
       </aside>
       <article ref={articleRef} className="markdown-panel">
+        <div className="document-notation-controls">
+          <label className="document-notation-toggle">
+            <span>简谱</span>
+            <span className="switch-control">
+              <input
+                type="checkbox"
+                role="switch"
+                aria-label="简谱渲染"
+                checked={numberedNotation}
+                onChange={(event) => changeNumberedNotation(event.currentTarget.checked)}
+              />
+              <span className="switch-track" aria-hidden="true"><span className="switch-thumb" /></span>
+            </span>
+          </label>
+        </div>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={markdownComponents}

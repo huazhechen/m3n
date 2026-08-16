@@ -7,16 +7,20 @@ import { SourceEditor } from './SourceEditor'
 type NotationEditorProps = {
   initialSource?: string
   embedded?: boolean
+  numberedNotation?: boolean
   simulatedSubmit?: boolean
   onBrowse?: (source: string) => Promise<void>
+  onNumberedNotationChange?: (enabled: boolean) => void
   onSubmit?: (source: string) => Promise<void>
 }
 
 export function NotationEditor({
   initialSource = defaultScore,
   embedded = false,
+  numberedNotation,
   simulatedSubmit = false,
   onBrowse,
+  onNumberedNotationChange,
   onSubmit,
 }: NotationEditorProps) {
   const [source, setSource] = useState(initialSource)
@@ -146,10 +150,12 @@ export function NotationEditor({
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
           compact={embedded}
+          numberedNotation={numberedNotation}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}
           onActiveXmlId={highlightSourceRange}
           onNoteClick={selectScoreNoteInSource}
+          onNumberedNotationChange={onNumberedNotationChange}
           onPaperBlur={() => setIsCursorHighlightActive(false)}
         />
         {result.diagnostics.length > 0 && (
