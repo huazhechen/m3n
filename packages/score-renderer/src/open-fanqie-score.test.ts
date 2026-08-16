@@ -14,6 +14,8 @@ describe('renderOpenFanqieScore', () => {
     expect(svg).toContain('font-family="Microsoft YaHei"')
     expect(svg).toContain('id="m3n-e-1"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
+    expect(svg).toContain('id="m3n-playback-highlight"')
+    expect(svg).toMatch(/<g class="measure">[\s\S]*id="m3n-e-1"/)
     expect(svg).toContain('xlink:href="#xunhuan_zuo"')
   })
 

@@ -31,6 +31,7 @@ import type {
 
 const FONT_SIZE_FIX = 0.8355
 const INK = '#1b1b1b'
+const NUMBERED_PLAYBACK_HIGHLIGHT_FILTER = '<filter id="m3n-playback-highlight" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="table" tableValues="0.851 1"/><feFuncG type="table" tableValues="0.373 1"/><feFuncB type="table" tableValues="0.165 1"/></feComponentTransfer></filter>'
 // A lower-octave dot extends 14 units below its numeral's origin. Chord
 // members therefore need more than one numeral height between their origins.
 const CHORD_STACK_STEP = 30
@@ -965,6 +966,14 @@ function renderLine(
   nextGraceId: (prefix: 'qy' | 'hy') => string,
 ): string[] {
   const output: string[] = []
+  const measureOutput = new Map<number, string[]>()
+  const outputForMeasure = (measure: number) => {
+    const existing = measureOutput.get(measure)
+    if (existing !== undefined) return existing
+    const created: string[] = []
+    measureOutput.set(measure, created)
+    return created
+  }
   const ordinals = itemOrdinals(layout.line)
   layout.elements.forEach((positioned) => {
     if (positioned.element.kind === 'barline') return
@@ -1004,7 +1013,7 @@ function renderLine(
       const slurEnd = layout.line.marks.some(
         (mark) => mark.type === 'slur' && mark.end === positioned.elementIndex,
       )
-      output.push(
+      outputForMeasure(positioned.measure).push(
         ...renderNote(
           positioned.element,
           positioned.x,
@@ -1027,7 +1036,7 @@ function renderLine(
       )
       const timeOverride =
         tuplet === undefined ? undefined : legacyPlaybackTime(positioned.element, tuplet)
-      output.push(
+      outputForMeasure(positioned.measure).push(
         ...renderSustain(
           positioned.element,
           positioned.x,
@@ -1046,7 +1055,7 @@ function renderLine(
       barline.elementIndex === undefined
         ? syntheticOrdinal
         : (ordinals.get(barline.elementIndex) ?? syntheticOrdinal)
-    output.push(
+    outputForMeasure(barline.measure).push(
       ...renderBarline(
         barline.element,
         barline.synthetic,
@@ -1056,6 +1065,9 @@ function renderLine(
         registry,
       ),
     )
+  })
+  measureOutput.forEach((measure) => {
+    output.push(`<g class="measure">${measure.join('\n')}</g>`)
   })
   output.push(
     ...renderUnderlines(layout, y, (elementIndex) => mainElementY(layout, elementIndex, y)),
@@ -1356,6 +1368,9 @@ export function renderDocumentSvgPages(document: ScoreDocument, options: SvgRend
   options.onDiagnostics?.(diagnostics)
   return document.pages.map((page) =>
     renderPage(page, document.metadata, config, customPages[page.index] ?? '').replace(
+      '</defs>',
+      `${NUMBERED_PLAYBACK_HIGHLIGHT_FILTER}</defs>`,
+    ).replace(
       ' xmlns="http://www.w3.org/2000/svg"',
       ' xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"',
     ),

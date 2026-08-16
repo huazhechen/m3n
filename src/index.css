@@ -808,6 +808,10 @@ textarea::selection {
   stroke: #d95f2a;
 }
 
+.score-paper[data-notation="numbered"] .is-playing {
+  filter: url("#m3n-playback-highlight");
+}
+
 .score-paper .is-playing.stem path,
 .score-paper .is-playing .stem path {
   stroke: #d95f2a !important;
