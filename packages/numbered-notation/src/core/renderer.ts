@@ -617,6 +617,7 @@ function renderBarline(
   notepos: string,
   registry: GlyphRegistry,
   config: NumberedNotationLayout,
+  measureLeadingX?: number,
 ): string[] {
   const normalizedCodes = {
     normal: '|',
@@ -670,14 +671,17 @@ function renderBarline(
     const leipzigGlyphCode = config.musicFontCss === undefined
       ? undefined
       : LEIPZIG_NAVIGATION_GLYPHS[ornament.name]
+    // Segno marks the start of a section, so Verovio anchors it at the
+    // measure's leading barline. DS/DC/Fine belong to the measure end and
+    // stay above the last musical event, just left of the trailing barline.
+    const anchorX = ornament.name === 'segno' ? measureLeadingX ?? x : x
+    const horizontalOffset = ornament.name === 'segno' ? 0 : 46
     if (leipzigGlyphCode !== undefined) {
-      // Verovio anchors navigation signs above the last musical event, not
-      // on the trailing barline. Preserve that placement in numbered scores.
-      output.push(leipzigGlyph(leipzigGlyphCode, x - 46, y - 30, 24))
+      output.push(leipzigGlyph(leipzigGlyphCode, anchorX - horizontalOffset, y - 30, 24))
       return
     }
     const id = barlineOrnamentGlyph(ornament.name)
-    if (id !== undefined) output.push(registry.use(id, x - 46, y - 26))
+    if (id !== undefined) output.push(registry.use(id, anchorX - horizontalOffset, y - 26))
   })
   if (barline?.temporaryMeter !== undefined) {
     output.push(registry.use('linshi_paihao_fenxian', x + 18, y))
@@ -1195,6 +1199,15 @@ function renderLine(
       barline.elementIndex === undefined
         ? syntheticOrdinal
         : (ordinals.get(barline.elementIndex) ?? syntheticOrdinal)
+    // The leading barline is the previous measure's trailing barline, or the
+    // synthetic system-start barline for the first measure of a system. This
+    // mirrors the measure-start calculation used for measure bounds below.
+    const measureLeadingX = barline.measure > 0
+      ? layout.barlines.find((candidate) => candidate.measure === barline.measure - 1)?.x
+      : undefined
+    const leadingX = measureLeadingX
+      ?? layout.elements.find((positioned) => positioned.measure === barline.measure)?.x
+      ?? config.marginLeft
     outputForMeasure(barline.measure).push(
       ...renderBarline(
         barline.element,
@@ -1204,6 +1217,7 @@ function renderLine(
         notePositionCode(pageIndex, lineOrdinal, ordinal),
         registry,
         config,
+        leadingX,
       ),
     )
   })

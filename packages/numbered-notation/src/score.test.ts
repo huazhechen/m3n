@@ -65,6 +65,34 @@ describe('NumberedNotationScore', () => {
     expect(svg.match(/font-style:italic;" font-size="14" font-family="serif"[^>]*>音阶三连模进<\/text>/g)).toHaveLength(1)
   })
 
+  it('anchors segno at the measure start rather than the trailing barline', () => {
+    const document = parseM3NDocument('{4/4}\nN: {segno} 1 2 3 4 | 1 2 3 4 |||')
+    const [svg] = renderScore(document, {
+      paged: false,
+      width: 1000,
+      musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
+    })
+    const segno = /<text x="([\d.]+)" y="[\d.]+"[^>]*font-family="Leipzig" font-size="24"[^>]*>&#xE047;<\/text>/.exec(svg)
+    const measureStart = Number(/data-m3n-measure-start="([\d.]+)"/.exec(svg)?.[1])
+
+    expect(segno).not.toBeNull()
+    expect(Number(segno?.[1])).toBeCloseTo(measureStart, 3)
+  })
+
+  it('keeps DS above the last event before its trailing barline', () => {
+    const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 {ds} | 1 2 3 4 |||')
+    const [svg] = renderScore(document, {
+      paged: false,
+      width: 1000,
+      musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
+    })
+    const ds = /<text x="([\d.]+)" y="[\d.]+"[^>]*font-family="Leipzig" font-size="24"[^>]*>&#xE045;<\/text>/.exec(svg)
+    const measureEnd = Number(/data-m3n-measure-end="([\d.]+)"/.exec(svg)?.[1])
+
+    expect(ds).not.toBeNull()
+    expect(Number(ds?.[1])).toBeCloseTo(measureEnd - 46, 3)
+  })
+
   it('uses compact glyph definitions without changing its requested page width', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),
