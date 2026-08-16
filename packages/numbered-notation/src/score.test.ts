@@ -241,12 +241,12 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('x="400" y="60" dy="0"')
     expect(svg).toContain('x="772" y="97.2" dy="0"')
-    expect(svg).toContain('x="143.2" y="101" dy="0"')
+    expect(svg).toContain('x="151.2" y="107" dy="0"')
     expect(svg).toContain('data-jiepai="100">= 100</text>')
-    expect(svg).toContain('translate(116.2,101) scale(1.36) translate(-116.2,-101)')
-    expect(svg).toMatch(/y="169.4"[^>]*id="m3n-e-1"/)
+    expect(svg).toContain('translate(124.2,107) scale(1.36) translate(-124.2,-107)')
+    expect(svg).toMatch(/y="149.4"[^>]*id="m3n-e-1"/)
     expect(svg).toContain('x="80" y="101" xlink:href="#diaohao_zimu_c"')
-    expect(svg).toContain('x="88" y="101" xlink:href="#paihao_xian"')
+    expect(svg).toContain('x="96" y="101" xlink:href="#paihao_xian"')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {

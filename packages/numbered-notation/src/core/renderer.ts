@@ -183,7 +183,7 @@ function modeHeader(
         'data-diaohao': 'true',
       }),
     )
-    x += (accidental === undefined ? 50 : 55) * keySpacingScale
+    x += (accidental === undefined ? 60 : 65) * keySpacingScale
   }
 
   metadata.meters.forEach((meter, index) => {
@@ -223,14 +223,15 @@ function modeHeader(
 
   metadata.tempos.forEach((tempo) => {
     const tempoX = x + (x === config.marginLeft ? 0 : 12)
+    const tempoY = y + 6
     if (typeof tempo === 'number') {
       if (config.musicFontCss === undefined) {
-        output.push(scaledGlyph(registry, 'jiepaifu', tempoX, y, 1.36))
+        output.push(scaledGlyph(registry, 'jiepaifu', tempoX, tempoY, 1.36))
       } else {
-        output.push(staffTempoGlyph(tempoX, y))
+        output.push(staffTempoGlyph(tempoX, tempoY))
       }
       output.push(
-        text(`= ${String(tempo)}`, tempoX + (config.musicFontCss === undefined ? 27 : 10), y, {
+        text(`= ${String(tempo)}`, tempoX + (config.musicFontCss === undefined ? 27 : 10), tempoY, {
           font: config.musicFontCss === undefined ? 'system-ui, sans-serif' : 'Times, serif',
           size: config.musicFontCss === undefined ? config.tempoSize : 17.01,
           bold: config.musicFontCss !== undefined,
@@ -241,7 +242,7 @@ function modeHeader(
       x = tempoX + 24 + String(tempo).length * 10
     } else {
       output.push(
-        text(tempo, tempoX, y, {
+        text(tempo, tempoX, tempoY, {
           font: 'system-ui, sans-serif',
           size: config.tempoSize,
           dy: 0,
@@ -280,7 +281,7 @@ function renderHeader(
   markup.push(...modeHeader(metadata, config, registry, infoY))
   return {
     markup,
-    bodyY: header.height + 52,
+    bodyY: header.height + 32,
   }
 }
 
