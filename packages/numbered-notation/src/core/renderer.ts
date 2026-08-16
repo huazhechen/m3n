@@ -367,6 +367,8 @@ interface OrnamentContext {
   hairpinEnd?: boolean
   slurEnd?: boolean
   upperClearance?: number
+  /** Highest mark top (smallest y) that an annotation must clear. */
+  annotationClearanceTop?: number
 }
 
 function ornamentPosition(
@@ -492,6 +494,70 @@ function chordTopClearance(note: NoteElement): number {
   return Math.max(0, ...members.map(({ octave, offset }) => upperOctaveClearance(octave) - offset))
 }
 
+/** Highest mark top (smallest y) an annotation must clear to avoid overlap. */
+function annotationClearanceTop(
+  layout: LineLayout,
+  elementIndex: number,
+  elementY: number,
+  annotation: string | undefined,
+  annotationLeft: number,
+): number | undefined {
+  if (annotation === undefined || annotation === '') return undefined
+  const annotationRight = annotationLeft + [...annotation].reduce(
+    (width, character) => width + (/[\u3000-\u9FFF\uFF00-\uFFEF]/.test(character) ? 14 : 7),
+    0,
+  )
+  let top: number | undefined
+  for (const mark of layout.line.marks) {
+    if (
+      mark.type !== 'crescendo' && mark.type !== 'decrescendo'
+      && mark.type !== 'tuplet' && mark.type !== 'slur'
+    ) continue
+    if (elementIndex < mark.start || elementIndex > mark.end) continue
+    const startX = nearestMarkX(layout, mark.start, 'forward')
+    const endX = nearestMarkX(layout, mark.end, 'backward')
+    if (startX === undefined || endX === undefined) continue
+    if (annotationRight < startX - 8 || annotationLeft > endX + 8) continue
+    let markTop: number
+    if (mark.type === 'crescendo' || mark.type === 'decrescendo') {
+      // A hairpin spreads linearly toward its far end; evaluate it at the
+      // annotation's right edge, where the overlap is deepest.
+      const reach = Math.min(annotationRight, endX + 7)
+      const t = Math.max(0, Math.min(1, (reach - (startX - 7)) / ((endX + 7) - (startX - 7))))
+      markTop = elementY - 30 - mark.level * 5 - 5 * t
+    } else {
+      // A tuplet or slur arc rises up to 7.5 units above its baseline; use
+      // the deepest rise inside the annotation's horizontal span.
+      const x1 = startX + 1
+      const x2 = endX - 1
+      const t0 = Math.max(0, Math.min(1, (annotationLeft - x1) / (x2 - x1)))
+      const t1 = Math.max(0, Math.min(1, (annotationRight - x1) / (x2 - x1)))
+      const riseT = t0 <= 0.5 && t1 >= 0.5
+        ? 0.5
+        : (Math.abs(0.5 - t0) <= Math.abs(0.5 - t1) ? t0 : t1)
+      const markedElements = layout.line.elements.slice(mark.start, mark.end + 1)
+      const markClearance = Math.max(
+        markedElements.some(
+          (element) =>
+            element.kind === 'note' &&
+            element.ornaments.some(({ name }) => name === 'yc' || name === 'ycy'),
+        )
+          ? 7
+          : 0,
+        ...markedElements.flatMap((element) =>
+          element.kind === 'note' ? [
+            chordTopClearance(element),
+            element.accidental === undefined ? 0 : 7,
+          ] : [],
+        ),
+      )
+      markTop = elementY - 12 - mark.level * 8 - markClearance - 30 * riseT * (1 - riseT)
+    }
+    top = top === undefined ? markTop : Math.min(top, markTop)
+  }
+  return top
+}
+
 function renderNote(
   note: NoteElement,
   x: number,
@@ -553,7 +619,10 @@ function renderNote(
       output.push(...renderGrace(note.graceAfter, x, noteY, false, nextGraceId('hy'), registry))
     }
     const labelClearance = chordTopClearance(note)
-    const annotationY = noteY - 19 - labelClearance
+    const defaultAnnotationY = noteY - 19 - labelClearance
+    const annotationY = ornamentContext.annotationClearanceTop === undefined
+      ? defaultAnnotationY
+      : Math.min(defaultAnnotationY, ornamentContext.annotationClearanceTop - 6)
     if (note.sectionLabel !== undefined) {
       output.push(
         text(note.sectionLabel, x - 10, annotationY - 20, {
@@ -1178,6 +1247,13 @@ function renderLine(
       const slurEnd = layout.line.marks.some(
         (mark) => mark.type === 'slur' && mark.end === positioned.elementIndex,
       )
+      const annotationClearance = annotationClearanceTop(
+        layout,
+        positioned.elementIndex,
+        elementY,
+        positioned.element.annotation,
+        positioned.x - 4.8,
+      )
       outputForMeasure(positioned.measure).push(
         ...renderNote(
           positioned.element,
@@ -1188,7 +1264,7 @@ function renderLine(
           registry,
           timeOverride,
           audioOverride,
-          { hairpinStart, hairpinEnd, slurEnd },
+          { hairpinStart, hairpinEnd, slurEnd, annotationClearanceTop: annotationClearance },
           nextGraceId,
         ),
       )

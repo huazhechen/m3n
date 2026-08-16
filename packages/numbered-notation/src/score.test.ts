@@ -58,6 +58,33 @@ describe('NumberedNotationScore', () => {
     expect(svg).toMatch(/style="font-style:italic;" font-size="14" font-family="serif"[^>]*>说明<\/text>/)
   })
 
+  it('keeps text directives at the default height when nothing overlaps', () => {
+    const document = parseM3NDocument('{4/4}\nN: {text=说明} 1 2 3 4 |||')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+    const annotationY = Number(/<text x="[\d.-]+" y="([\d.-]+)"[^>]*font-style:italic;[^"]*" font-size="14"[^>]*>说明<\/text>/.exec(svg)?.[1])
+    const noteY = Number(/<use x="[\d.-]+" y="([\d.-]+)"[^>]*data-m3n-id="m3n-e-1"/.exec(svg)?.[1])
+
+    expect(annotationY).toBeCloseTo(noteY - 19, 3)
+  })
+
+  it('raises text directives above overlapping tuplet arcs', () => {
+    const document = parseM3NDocument('{4/4}\nN: {text=三连音} ([123:2]) ([234:2]) 1 |||')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+    const annotationY = Number(/<text x="[\d.-]+" y="([\d.-]+)"[^>]*font-style:italic;[^"]*" font-size="14"[^>]*>三连音<\/text>/.exec(svg)?.[1])
+    const arcY = Number(/<path d="M [\d.-]+,([\d.-]+) C [^"]*" stroke-width="0.5"/.exec(svg)?.[1])
+
+    expect(annotationY).toBeLessThan(arcY - 6)
+  })
+
+  it('raises text directives above overlapping hairpins', () => {
+    const document = parseM3NDocument('{4/4}\nN: {text=渐强} {cresc}1^^{/} 2 |||')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+    const annotationY = Number(/<text x="[\d.-]+" y="([\d.-]+)"[^>]*font-style:italic;[^"]*" font-size="14"[^>]*>渐强<\/text>/.exec(svg)?.[1])
+    const hairpinY = Number(/<line x1="[\d.-]+" y1="([\d.-]+)"[^>]*stroke-width="1" stroke="#1b1b1b"/.exec(svg)?.[1])
+
+    expect(annotationY).toBeLessThan(hairpinY - 5)
+  })
+
   it('renders a text directive once over a tuplet instead of once per sub-note', () => {
     const document = parseM3NDocument('{4/4}\nN: {text=音阶三连模进} ([123:2]) ([234:2]) 1 |||')
     const [svg] = renderScore(document, { paged: false, width: 1000 })
