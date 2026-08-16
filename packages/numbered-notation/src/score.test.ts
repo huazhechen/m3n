@@ -321,7 +321,7 @@ describe('NumberedNotationScore', () => {
     const height = Number(/<svg width="1000" height="([\d.]+)"/.exec(svg)?.[1])
     const lyricYs = [...svg.matchAll(/<text x="[^"]+" y="([\d.]+)"[^>]*cipos=/g)].map((match) => Number(match[1]))
 
-    expect(Math.max(...lyricYs)).toBeLessThan(height - 80)
+    expect(Math.max(...lyricYs)).toBeLessThan(height - 32)
   })
 
   it('uses the first lyric row for generic L: after numbered lyric passes', () => {

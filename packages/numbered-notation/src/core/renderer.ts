@@ -1289,9 +1289,8 @@ export function continuousPageHeight(
   groups: ScorePage['groups'],
   metadata: Metadata,
   config: NumberedNotationLayout,
-  bottomPadding = groups.some((group) => group.voices.some((line) => line.lyrics.length > 0))
-    ? config.marginBottom
-    : 12,
+  // groupAdvance already includes each rendered lyric row and its line spacing.
+  bottomPadding = 12,
 ): number {
   const header = renderHeader(metadata, config, new GlyphRegistry())
   const spacing = pageSpacing(config)
