@@ -89,9 +89,23 @@ function scaledGlyph(
   x: number,
   y: number,
   scale: number,
+  extra: Readonly<Record<string, string | number | undefined>> = {},
 ): string {
-  registry.register(id)
-  return `<use x="${formatNumber(x)}" y="${formatNumber(y)}" xlink:href="#${id}" transform="translate(${formatNumber(x)},${formatNumber(y)}) scale(${formatNumber(scale)}) translate(${formatNumber(-x)},${formatNumber(-y)})" xmlns:xlink="http://www.w3.org/1999/xlink"></use>`
+  return registry.use(id, x, y, {
+    ...extra,
+    ...(scale === 1 ? {} : { transform: `translate(${formatNumber(x)},${formatNumber(y)}) scale(${formatNumber(scale)}) translate(${formatNumber(-x)},${formatNumber(-y)})` }),
+  })
+}
+
+function numberedGlyph(
+  registry: GlyphRegistry,
+  id: string,
+  x: number,
+  y: number,
+  config: ResolvedPageConfig,
+  extra: Readonly<Record<string, string | number | undefined>> = {},
+): string {
+  return scaledGlyph(registry, id, x, y, config.numberScale, extra)
 }
 
 function audioCode(note: NoteElement): string {
@@ -136,17 +150,21 @@ function modeHeader(
     output.push(registry.use('paihao_xian', x, y))
     const digitX = x + 10
     output.push(
-      registry.use(
+      numberedGlyph(
+        registry,
         `shuzi_${config.numberStyle}_bian_${String(meter.numerator).slice(-1)}`,
         digitX,
         y - 12,
+        config,
       ),
     )
     output.push(
-      registry.use(
+      numberedGlyph(
+        registry,
         `shuzi_${config.numberStyle}_bian_${String(meter.denominator).slice(-1)}`,
         digitX,
         y + 12,
+        config,
         { fill: '#414141' },
       ),
     )
@@ -160,12 +178,12 @@ function modeHeader(
   metadata.tempos.forEach((tempo, index) => {
     const tempoY = y + 40 + index * 22
     if (typeof tempo === 'number') {
-      output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 0.78))
+      output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 0.78 * config.numberScale))
       output.push(
         text(String(tempo), config.marginLeft + 27, tempoY + 1, {
           font: config.lyricFont,
-          size: 16,
-          dy: 0.3355 * 16,
+          size: 16 * config.numberScale,
+          dy: 0.3355 * 16 * config.numberScale,
           extra: { 'data-jiepai': tempo },
         }),
       )
@@ -173,8 +191,8 @@ function modeHeader(
       output.push(
         text(tempo, config.marginLeft, tempoY, {
           font: config.lyricFont,
-          size: 16,
-          dy: 0.3355 * 16,
+          size: 16 * config.numberScale,
+          dy: 0.3355 * 16 * config.numberScale,
         }),
       )
     }
@@ -396,16 +414,16 @@ function renderChordPitch(
   registry: GlyphRegistry,
 ): string[] {
   const output: string[] = []
-  output.push(registry.use(`shuzi_${config.numberStyle}_${chordPitch.pitch}`, x, y, {
+  output.push(numberedGlyph(registry, `shuzi_${config.numberStyle}_${chordPitch.pitch}`, x, y, config, {
     code: String(chordPitch.pitch),
     'data-m3n-id': note.m3nDataId ?? note.m3nId,
   }))
-  if (chordPitch.accidental !== undefined) output.push(registry.use(ACCIDENTAL_GLYPH_IDS[chordPitch.accidental], x, y))
+  if (chordPitch.accidental !== undefined) output.push(numberedGlyph(registry, ACCIDENTAL_GLYPH_IDS[chordPitch.accidental], x, y, config))
   const dotId = chordPitch.octave >= 0 ? 'yingao_gao' : 'yingao_di'
   const underlineCount = Math.max(0, Math.log2(note.duration / 4))
   for (let octave = 0; octave < Math.abs(chordPitch.octave); octave += 1) {
     const octaveY = chordPitch.octave > 0 ? y - octave * 6 : y + 1 + underlineCount * 4 + octave * 6
-    output.push(registry.use(dotId, x + (chordPitch.pitch === 4 ? 2.5 : 0), octaveY))
+    output.push(numberedGlyph(registry, dotId, x + (chordPitch.pitch === 4 ? 2.5 : 0), octaveY, config))
   }
   return output
 }
@@ -437,7 +455,7 @@ function renderNote(
   if (!note.hidden) {
     const id = note.pitch === 9 ? 'shuzi_x' : `shuzi_${config.numberStyle}_${note.pitch}`
     output.push(
-      registry.use(id, x, y, {
+      numberedGlyph(registry, id, x, y, config, {
         time: formatNumber(timeOverride ?? legacyPlaybackTime(note)),
         audio: audioOverride ?? audioCode(note),
         notepos,
@@ -447,18 +465,18 @@ function renderNote(
       }),
     )
     if (note.accidental !== undefined) {
-      output.push(registry.use(ACCIDENTAL_GLYPH_IDS[note.accidental], x, y))
+      output.push(numberedGlyph(registry, ACCIDENTAL_GLYPH_IDS[note.accidental], x, y, config))
     }
     const dotId = note.octave >= 0 ? 'yingao_gao' : 'yingao_di'
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
       const octaveY = note.octave > 0 ? y - octave * 6 : y + 1 + underlineCount * 4 + octave * 6
-      output.push(registry.use(dotId, x + (note.pitch === 4 ? 2.5 : 0), octaveY))
+      output.push(numberedGlyph(registry, dotId, x + (note.pitch === 4 ? 2.5 : 0), octaveY, config))
     }
-    if (note.dots >= 2) output.push(registry.use('fudian2', x, y))
-    else if (note.dots === 1) output.push(registry.use('fudian', x, y))
+    if (note.dots >= 2) output.push(numberedGlyph(registry, 'fudian2', x, y, config))
+    else if (note.dots === 1) output.push(numberedGlyph(registry, 'fudian', x, y, config))
     for (let dot = 2; dot < note.dots; dot += 1)
-      output.push(registry.use('fudian', x + 14 + (dot - 2) * 7, y))
+      output.push(numberedGlyph(registry, 'fudian', x + 14 + (dot - 2) * 7, y, config))
     note.chordPitches?.forEach((chordPitch, index) => {
       output.push(...renderChordPitch(note, chordPitch, x, y - (index + 1) * CHORD_STACK_STEP, config, registry))
     })

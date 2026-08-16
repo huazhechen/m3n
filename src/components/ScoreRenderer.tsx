@@ -187,7 +187,8 @@ export function ScoreRenderer({
         if (numberedNotation && scoreDocument) {
           paper.innerHTML = renderOpenFanqieScore(scoreDocument, {
             paged: renderMode === 'paged',
-            width: Math.round(renderWidth / NUMBERED_NOTATION_VISUAL_SCALE),
+            width: renderWidth,
+            visualScale: NUMBERED_NOTATION_VISUAL_SCALE,
           }).join('')
           if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
           hasRenderedRef.current = true

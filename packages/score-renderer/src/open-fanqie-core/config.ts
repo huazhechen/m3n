@@ -15,6 +15,7 @@ export const DEFAULT_PAGE_CONFIG: Readonly<LegacyPageConfig> = {
   margin_right: '80',
   biaoti_font: 'Microsoft YaHei',
   shuzi_font: 'b',
+  shuzi_scale: '1',
   geci_font: 'Microsoft YaHei',
   height_quci: '13',
   height_cici: '10',
@@ -45,6 +46,7 @@ export interface ResolvedPageConfig {
   titleFont: FontFamily
   lyricFont: FontFamily
   numberStyle: NumberStyle
+  numberScale: number
   titleSize: number
   subtitleSize: number
   lyricSize: number
@@ -113,6 +115,7 @@ export function resolvePageConfig(
     titleFont: raw.biaoti_font,
     lyricFont: raw.geci_font,
     numberStyle: raw.shuzi_font,
+    numberScale: Math.max(0.1, finiteNumber(raw.shuzi_scale, DEFAULT_PAGE_CONFIG.shuzi_scale ?? 1)),
     titleSize: finiteNumber(raw.biaoti_size, DEFAULT_PAGE_CONFIG.biaoti_size),
     subtitleSize: finiteNumber(raw.fubiaoti_size, DEFAULT_PAGE_CONFIG.fubiaoti_size),
     lyricSize: finiteNumber(raw.geci_size, DEFAULT_PAGE_CONFIG.geci_size),

@@ -30,6 +30,17 @@ describe('renderOpenFanqieScore', () => {
     expect(svg).toContain('>了</text>')
   })
 
+  it('scales numbered notation without changing its requested page width', () => {
+    const [svg] = renderOpenFanqieScore(
+      parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),
+      { paged: false, width: 800, visualScale: 0.8 },
+    )
+
+    expect(svg).toContain('<svg width="800"')
+    expect(svg).toContain('font-size="28.8"')
+    expect(svg).toMatch(/id="m3n-e-1"[^>]*transform="[^"]*scale\(0.8\)/)
+  })
+
   it('does not render the parser placeholder after a final barline', () => {
     const [svg] = renderOpenFanqieScore(parseM3NDocument('{2/4}\nN: 1 2 |||'), { paged: false, width: 1000 })
 

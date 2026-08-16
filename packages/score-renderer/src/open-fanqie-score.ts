@@ -1,5 +1,5 @@
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure } from '@m3n/notation'
-import { resolvePageConfig } from './open-fanqie-core/config.js'
+import { DEFAULT_PAGE_CONFIG, resolvePageConfig } from './open-fanqie-core/config.js'
 import { layoutVoiceGroup } from './open-fanqie-core/layout.js'
 import { continuousPageHeight, paginateVoiceGroups, renderDocumentSvgPages } from './open-fanqie-core/renderer.js'
 import type {
@@ -15,6 +15,7 @@ import type {
 export type OpenFanqieScoreOptions = {
   paged: boolean
   width: number
+  visualScale?: number
 }
 
 type EventEntry = { event: ScoreEvent; index: number; lastIndex: number }
@@ -323,11 +324,28 @@ function systemGroups(document: ScoreDocument, width: number) {
 /** Renders M3N's normalized ScoreDocument through the unmodified Fanqie layout and glyph engine. */
 export function renderOpenFanqieScore(document: ScoreDocument, options: OpenFanqieScoreOptions) {
   const width = Math.max(320, Math.round(options.width))
+  const visualScale = Math.max(0.1, Math.min(1, options.visualScale ?? 1))
   const groups = systemGroups(document, width)
   const metadata = { titles: [document.title, document.subtitle].filter(Boolean), authors: [document.singer || document.composer].filter(Boolean), mode: document.key, meters: [{ numerator: document.meterCount, denominator: document.meterUnit, parenthesized: false }], tempos: document.hasExplicitTempo ? [document.tempo] : [], instruments: [], remarks: [] }
-  const baseConfig = resolvePageConfig({ page: 'A4', width, height: 300 }, [])
+  const scaledPageConfig = {
+    page: 'A4' as const,
+    margin_top: Number(DEFAULT_PAGE_CONFIG.margin_top) * visualScale,
+    margin_bottom: Number(DEFAULT_PAGE_CONFIG.margin_bottom) * visualScale,
+    margin_left: Number(DEFAULT_PAGE_CONFIG.margin_left) * visualScale,
+    margin_right: Number(DEFAULT_PAGE_CONFIG.margin_right) * visualScale,
+    biaoti_size: Number(DEFAULT_PAGE_CONFIG.biaoti_size) * visualScale,
+    fubiaoti_size: Number(DEFAULT_PAGE_CONFIG.fubiaoti_size) * visualScale,
+    geci_size: Number(DEFAULT_PAGE_CONFIG.geci_size) * visualScale,
+    body_margin_top: Number(DEFAULT_PAGE_CONFIG.body_margin_top) * visualScale,
+    height_quci: Number(DEFAULT_PAGE_CONFIG.height_quci) * visualScale,
+    height_cici: Number(DEFAULT_PAGE_CONFIG.height_cici) * visualScale,
+    height_ciqu: Number(DEFAULT_PAGE_CONFIG.height_ciqu) * visualScale,
+    height_shengbu: Number(DEFAULT_PAGE_CONFIG.height_shengbu) * visualScale,
+    shuzi_scale: visualScale,
+  }
+  const baseConfig = resolvePageConfig({ ...scaledPageConfig, width, height: 300 }, [])
   const pageHeight = options.paged ? Math.round(width * 1.415) : Math.max(300, continuousPageHeight(groups, metadata, baseConfig))
-  const pageConfig = { page: 'A4' as const, width, height: pageHeight }
+  const pageConfig = { ...scaledPageConfig, width, height: pageHeight }
   const config = resolvePageConfig(pageConfig, [])
   const fanqie: FanqieDocument = {
     source: '', diagnostics: [],

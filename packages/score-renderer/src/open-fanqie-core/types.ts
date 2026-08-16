@@ -181,6 +181,7 @@ export interface LegacyPageConfig {
   margin_right: string | number
   biaoti_font: FontFamily
   shuzi_font: NumberStyle
+  shuzi_scale?: string | number
   geci_font: FontFamily
   height_quci: string | number
   height_cici: string | number
