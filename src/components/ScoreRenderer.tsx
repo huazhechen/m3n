@@ -68,10 +68,14 @@ function queryPlaybackElements(paper: HTMLElement | null, xmlId: string, renditi
     .filter(Number.isInteger))]
     .sort((left, right) => left - right)
   if (lyricRenditions.length === 0) return grouped
-  const activeRendition = lyricRenditions[(Math.max(1, rendition) - 1) % lyricRenditions.length]
+  const hasExactLyricRendition = lyricRenditions.includes(rendition)
   return grouped.filter((element) => {
     const lyricRendition = element.getAttribute('data-m3n-rendition')
-    return lyricRendition === null || Number(lyricRendition) === activeRendition
+    // Verovio's `rendN` is the playback occurrence, not an index into every
+    // lyric row visible in the document. Match it directly whenever possible;
+    // when a repeated occurrence has no dedicated row, keep its available
+    // lyrics visible rather than silently dropping the highlight.
+    return lyricRendition === null || !hasExactLyricRendition || Number(lyricRendition) === rendition
   })
 }
 
