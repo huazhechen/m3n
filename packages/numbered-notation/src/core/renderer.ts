@@ -985,7 +985,6 @@ function renderLyrics(
           `<use cx="0" cy="0" xlink:href="#${id}" transform="translate(${formatNumber(braceX)},${formatNumber(braceY)})scale(1,${formatNumber(lyricPitch * 0.15)})" xmlns:xlink="http://www.w3.org/1999/xlink"></use>`,
         )
       }
-      if (syllable?.text === '') return
       const value = syllable?.text ?? ''
       const playbackExtra: Readonly<Record<string, string>> = positioned.m3nDataId === undefined
         ? {}
@@ -994,6 +993,23 @@ function renderLyrics(
           'data-m3n-rendition': String(lyric.rendition ?? 1),
           'data-m3n-role': 'lyric',
           }
+      if (value === '') {
+        // Keep the lyric row discoverable for rendition-aware playback
+        // highlighting even when this particular note has no syllable, so a
+        // filled second verse never lights up during the first pass.
+        if (playbackExtra['data-m3n-id'] !== undefined) {
+          output.push(
+            text('', positioned.x - config.lyricSize / 2, lyricY, {
+              font: config.lyricFont,
+              size: config.lyricSize,
+              fill: '#101010',
+              dy: 0.3355 * config.lyricSize,
+              extra: { cipos: notePositionCode(pageIndex, lineOrdinal, positioned.ordinal), ...playbackExtra },
+            }),
+          )
+        }
+        return
+      }
       output.push(
         text(value, positioned.x - config.lyricSize / 2, lyricY, {
           font: config.lyricFont,

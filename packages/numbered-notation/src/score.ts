@@ -304,7 +304,12 @@ function lineForMeasures(
 function addIntervals(lines: readonly ScoreLine[], intervals: readonly ScoreInterval[]) {
   lines.forEach((line) => {
     const staff = line.voice === 1 ? 'melody' : 'bass'
-    const entries = line.elements.flatMap((element, index) => element.kind === 'note' ? [{ element, index }] : [])
+    // Sustain symbols extend a long note across its full duration, so they
+    // must anchor interval endpoints too: a four-beat crescendo over one
+    // whole note otherwise collapses onto its first numeral.
+    const entries = line.elements.flatMap((element, index) =>
+      element.kind === 'note' || element.kind === 'sustain' ? [{ element, index }] : [],
+    )
     const first = entries[0]
     const last = entries.at(-1)
     if (!first || !last) return

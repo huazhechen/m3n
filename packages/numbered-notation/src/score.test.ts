@@ -240,6 +240,25 @@ describe('NumberedNotationScore', () => {
     expect(svg).not.toContain('cipos="0_1_2">春</text>')
   })
 
+  it('keeps a missing first verse from lighting up the second verse during playback', () => {
+    const document = parseM3NDocument('{4/4}\nN: 1 2 3 | 1 2 3 |||\nL1: 春 天 | 来 了\nL2: 春 天 好 | 来 了 啊')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+    const renditions = [...svg.matchAll(/data-m3n-id="m3n-e-5"[^>]*data-m3n-rendition="(\d+)"[^>]*>([^<]*)<\/text>/g)]
+      .map((match) => ({ rendition: Number(match[1]), text: match[2] }))
+
+    expect(renditions.some(({ rendition, text }) => rendition === 1 && text === '')).toBe(true)
+    expect(renditions.some(({ rendition, text }) => rendition === 2 && text === '了')).toBe(true)
+  })
+
+  it('spans a crescendo across the sustain symbols of a long note', () => {
+    const document = parseM3NDocument('{4/4}\nN: {cresc}1^^{/} 2 |||')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+    const spans = [...svg.matchAll(/<line x1="([\d.]+)" y1="[\d.-]+" x2="([\d.]+)" y2="[\d.-]+" stroke-width="1" stroke="#1b1b1b" fill="none"><\/line>/g)]
+      .map((match) => Number(match[2]) - Number(match[1]))
+
+    expect(spans.some((span) => span > 60)).toBe(true)
+  })
+
   it('does not let placeholder lyrics consume tied continuations', () => {
     const document = parseM3NDocument('{4/4}\nN: 1~ 1 2 3 |||\nL: 春 % 天')
     const [svg] = renderScore(document, { paged: false, width: 1000 })
