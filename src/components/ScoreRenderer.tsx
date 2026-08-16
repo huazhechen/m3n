@@ -304,6 +304,7 @@ export function ScoreRenderer({
       const note = queryScoreElement(paperRef.current, xmlId) as SVGGElement | null
       if (!note) return []
       const verses = [...note.children].filter((element): element is SVGGElement => element.classList.contains('verse'))
+      if (note.children.length === 0) return [note]
       const measure = note.closest<SVGGElement>('g.measure')
       const visibleVerseNumbers = visibleLyricVerseNumbers(measure?.querySelectorAll<SVGGElement>('g.verse') ?? [])
       const activeVerse = verses[lyricVerseIndexForMeasureRendition(verses, rendition, visibleVerseNumbers)]
