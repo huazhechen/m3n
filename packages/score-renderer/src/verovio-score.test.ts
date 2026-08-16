@@ -11,6 +11,7 @@ import {
   encodedSystemLayout,
   extraSystemBreakMeasureIds,
   naturalSystemLayout,
+  normalizePlaybackElementId,
   pageBreakMeasureIds,
 } from './verovio-score'
 import { lyricVerseIndexForMeasureRendition, lyricVerseIndexForRendition, visibleLyricVerseNumbers } from './lyric-rendition'
@@ -31,6 +32,10 @@ async function renderedPitches(source: string) {
 }
 
 describe('VerovioScore layout', () => {
+  it('maps chord-member playback IDs back to their chord event', () => {
+    expect(normalizePlaybackElementId('m3n-e-12-v2-rend3')).toEqual({ xmlId: 'm3n-e-12', rendition: 3 })
+  })
+
   it('renders cautionary naturals when changing from A major to C major', async () => {
     const toolkit = new VerovioToolkit(await createVerovioModule())
     try {

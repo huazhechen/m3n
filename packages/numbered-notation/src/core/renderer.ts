@@ -156,7 +156,7 @@ function modeHeader(
   if (metadata.mode !== undefined) {
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
-    const letterX = x + (accidental === undefined ? 21.6 : 34)
+    const letterX = x + (accidental === undefined ? 28 : 34)
     output.push(text('1', x, y + 5.6, { font: headerFont, size: 16, dy: 0 }))
     output.push(text('=', x + 13.2, y + 5.6, { font: headerFont, size: 15, dy: 0 }))
     output.push(text(letter ?? 'C', letterX, y + 5.6, { font: headerFont, size: 16, dy: 0 }))
@@ -165,7 +165,7 @@ function modeHeader(
         text(accidental, letterX - 7, y + 1.4, { font: headerFont, size: 10, dy: 0 }),
       )
     }
-    x += (accidental === undefined ? 50 : 60) * keySpacing
+    x += (accidental === undefined ? 64 : 72) * keySpacing
   }
 
   metadata.meters.forEach((meter, index) => {
@@ -186,7 +186,7 @@ function modeHeader(
     output.push(text(String(meter.denominator), digitX, y + 17, {
       font: headerFont, size: 16, anchor: 'middle', dy: 0,
     }))
-    x += 24 * spacingScale
+    x += 32 * spacingScale
     if (meter.parenthesized && !nextParenthesized) {
       output.push(text(')', x, y + 5.6, { font: headerFont, size: 16, dy: 0 }))
       x += 15 * spacingScale

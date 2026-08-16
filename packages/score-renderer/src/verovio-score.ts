@@ -26,6 +26,16 @@ type ScoreLayout = {
 
 type TimedScoreElement = { xmlId: string; rendition: number }
 
+export function normalizePlaybackElementId(id: string): TimedScoreElement {
+  const match = /-rend(\d+)$/.exec(id)
+  return {
+    // Verovio reports a note inside a chord as `m3n-e-12-v2`; the numbered
+    // renderer deliberately binds the complete chord (and its lyric) to e-12.
+    xmlId: id.replace(/-rend\d+$/, '').replace(/-v\d+$/, ''),
+    rendition: Number(match?.[1] ?? 1),
+  }
+}
+
 function normalizeScale(scale: number | undefined) {
   if (!Number.isFinite(scale)) return 42
   return Math.max(1, Math.min(1000, scale ?? 42))
@@ -310,10 +320,7 @@ export class VerovioScore {
   elementsAtTime(milliseconds: number) {
     const elements = this.toolkit.getElementsAtTime(milliseconds)
     return [...(elements.notes ?? []), ...(elements.chords ?? [])]
-      .map((id): TimedScoreElement => {
-        const match = /-rend(\d+)$/.exec(id)
-        return { xmlId: id.replace(/-rend\d+$/, ''), rendition: Number(match?.[1] ?? 1) }
-      })
+      .map(normalizePlaybackElementId)
   }
 
   timeForElement(xmlId: string) {

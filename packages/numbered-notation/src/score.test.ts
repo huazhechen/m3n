@@ -59,7 +59,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('<circle')
     expect(svg).toContain('data-type="jianshixian" stroke-width="1.6"')
     expect(svg).toContain('<path d="M 47.48,')
-    expect(svg).toContain('<rect x="88.8"')
+    expect(svg).toContain('<rect x="100"')
   })
 
   it('keeps augmentation dots and lyrics attached to their sounding note', () => {
@@ -333,14 +333,14 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('x="400" y="60" dy="0"')
     expect(svg).toContain('x="772" y="97.2" dy="0"')
-    expect(svg).toContain('x="146.4" y="107" dy="0"')
+    expect(svg).toContain('x="162.4" y="107" dy="0"')
     expect(svg).toContain('data-jiepai="100"')
     expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
     expect(svg).toMatch(/y="151.2"[^>]*id="m3n-e-1"/)
     expect(svg).toContain('>C</text>')
-    expect(svg).toContain('<rect x="88.8" y="100.3" width="16.8" height="1.4"')
-    expect(svg).toContain('x="97.2" y="94" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
-    expect(svg).toContain('x="97.2" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
+    expect(svg).toContain('<rect x="100" y="100.3" width="16.8" height="1.4"')
+    expect(svg).toContain('x="108.4" y="94" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
+    expect(svg).toContain('x="108.4" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {

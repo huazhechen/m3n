@@ -40,7 +40,7 @@ const defaults = {
   tempoSize: 16,
   lyricSize: 16,
   bodyMarginTop: 24,
-  musicToLyric: 7.8,
+  musicToLyric: 12,
   lyricToLyric: 6,
   lineGap: 24,
   voiceGap: 0,
