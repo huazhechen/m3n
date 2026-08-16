@@ -763,6 +763,17 @@ textarea::selection {
   box-shadow: none;
 }
 
+.score-paper[data-notation="numbered"][data-render-mode="paged"] .score-page-sheet {
+  aspect-ratio: auto;
+}
+
+.score-paper[data-notation="numbered"][data-render-mode="paged"] .score-page-sheet svg {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+}
+
 .score-paper[data-render-mode="paged"] {
   background: #dfe3dd;
   padding: 16px 20px;

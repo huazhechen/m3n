@@ -15,7 +15,8 @@ describe('NumberedNotationScore', () => {
     const document = parseM3NDocument('{title=测试曲} {key=D} {3/4} {90qpm}\nN: ||: 1. 2 3 | 4~ 5 6 :|||{x3}\nL: 春天来 | 了')
     const [svg] = renderScore(document, { paged: true, width: 1000 })
 
-    expect(svg).toContain('<svg width="1000" height="1415"')
+    expect(svg).toContain('<svg width="1000"')
+    expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(400)
     expect(svg).toContain('xlink:href="#diaohao_fu"')
     expect(svg).toContain('xlink:href="#shuzi_b_1"')
     expect(svg).toContain('font-family="Microsoft YaHei"')
@@ -146,6 +147,7 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('xlink:href="#yanyinfu"')
     expect(svg).toContain('code="-"')
+    expect(svg).toContain('height="0.8" width="11" y="49.6"')
   })
 
   it('keeps all simultaneous chord pitches as vertically stacked numbered notation glyphs', () => {

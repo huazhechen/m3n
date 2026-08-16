@@ -362,7 +362,8 @@ export class NumberedNotationScore {
       remarks: [],
     }
     const baseConfig = createNumberedNotationLayout({ width, height: 300, musicFontCss: options.musicFontCss })
-    const pageHeight = options.paged ? Math.round(width * 1.415) : Math.max(300, continuousPageHeight(groups, metadata, baseConfig))
+    const contentHeight = Math.max(220, continuousPageHeight(groups, metadata, baseConfig))
+    const pageHeight = options.paged ? Math.min(Math.round(width * 1.415), contentHeight) : contentHeight
     const layout = createNumberedNotationLayout({ width, height: pageHeight, musicFontCss: options.musicFontCss })
     const numberedNotation: NumberedNotationDocument = {
       metadata,
