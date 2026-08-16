@@ -379,16 +379,16 @@ function ornamentPosition(
     // Dynamics need their own upper lane. Keeping them near the numeral
     // baseline makes p/mf/f collide with octave dots, grace notes and labels.
     const upperClearance = context.upperClearance ?? 0
-    if (context.hairpinStart === true) return { x: x - 15, y: y - 38 - upperClearance - ornament.level * 3.6 }
+    if (context.hairpinStart === true) return { x: x - 15, y: y - 19 - upperClearance - ornament.level * 3.6 }
     if (context.hairpinEnd === true) {
       return {
         x: x + 12,
-        y: y - 38 - upperClearance - ornament.level * 3.6 - (context.slurEnd === true ? 4.8 : 0),
+        y: y - 19 - upperClearance - ornament.level * 3.6 - (context.slurEnd === true ? 4.8 : 0),
       }
     }
-    return { x, y: y - 38 - upperClearance - ornament.level * 3.6 }
+    return { x, y: y - 19 - upperClearance - ornament.level * 3.6 }
   }
-  if (ornament.name === 'tr') return { x, y: y - 21 - (context.upperClearance ?? 0) }
+  if (ornament.name === 'tr') return { x, y: y - 14 - (context.upperClearance ?? 0) }
   if (['zkh', 'ykh', 'cy', 'tr', 'yc', 'ycy', 'shy', 'xhy'].includes(ornament.name)) {
     return { x, y }
   }
@@ -553,7 +553,7 @@ function renderNote(
       output.push(...renderGrace(note.graceAfter, x, noteY, false, nextGraceId('hy'), registry))
     }
     const labelClearance = chordTopClearance(note)
-    const annotationY = noteY - 24 - labelClearance
+    const annotationY = noteY - 19 - labelClearance
     if (note.sectionLabel !== undefined) {
       output.push(
         text(note.sectionLabel, x - 10, annotationY - 20, {
@@ -679,7 +679,7 @@ function renderBarline(
       ? (measureAnchors?.firstNoteX ?? measureAnchors?.leadingX ?? x) - 14
       : (measureAnchors?.lastNoteX ?? x - 54) + 8
     if (leipzigGlyphCode !== undefined) {
-      output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y - 30, 24))
+      output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y - 15, 24))
       return
     }
     const id = barlineOrnamentGlyph(ornament.name)

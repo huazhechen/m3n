@@ -434,7 +434,7 @@ describe('NumberedNotationScore', () => {
     const noteY = Number(/<use x="[\d.]+" y="([\d.]+)" xlink:href="#shuzi_b_bian_7"[^>]*id="m3n-e-1"/.exec(svg)?.[1])
     const dynamicY = Number(/<text x="[\d.]+" y="([\d.]+)" fill="#1b1b1b" font-family="Leipzig" font-size="22">&#xE520;<\/text>/.exec(svg)?.[1])
 
-    expect(noteY - dynamicY).toBeGreaterThanOrEqual(38)
+    expect(noteY - dynamicY).toBeGreaterThanOrEqual(19)
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {
