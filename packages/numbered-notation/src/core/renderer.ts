@@ -674,7 +674,7 @@ function renderUnderlines(
           // Only their first-row clearance changes for the smaller numerals.
           const underlineY = yForElement(first.elementIndex) + 8.4 + (level - 1) * 1.8
           output.push(
-            `<line x1="${formatNumber(first.x - 3.6)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 3.6 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.2" stroke="${INK}"></line>`,
+            `<line x1="${formatNumber(first.x - 5)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 5 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.5" stroke="${INK}"></line>`,
           )
         }
         run = []
@@ -758,10 +758,10 @@ function renderMark(
       ? 5
       : 0
   const lift = liftOverride ?? mark.level * 8
-  const top = y - 16 - lift - markClearance
+  const top = y - 12 - lift - markClearance
   if (mark.type === 'slur' || mark.type === 'tuplet') {
     if (mark.continuationFromPrevious === true || mark.continuationToNext === true) {
-      const flatY = y - 25.95 - lift - markClearance
+      const flatY = y - 21.95 - lift - markClearance
       const left = start + 12
       const right = end - 12
       const lineStart = mark.continuationFromPrevious === true ? config.marginLeft - 3 : left + 0.8
@@ -786,7 +786,7 @@ function renderMark(
     if (flat) {
       const left = start + 12
       const right = end - 12
-      const flatY = y - 25.95 - lift - markClearance
+      const flatY = y - 21.95 - lift - markClearance
       return [
         registry.use('lianyinxian_zuo', left, flatY),
         registry.use('lianyinxian_you', right, flatY),
@@ -1389,12 +1389,16 @@ function renderPage(
     })
     if (multiVoice) {
       const braceX = layout.voiceBraceX ?? startX
+      // The brace caps terminate at x=-27.3 in their native coordinate system.
+      // Anchor the double bar to that endpoint rather than the cap's midpoint.
+      const braceStemX = braceX - 27.3 * config.numberScale
+      const braceInnerStemX = braceStemX + 2.7 * config.numberScale
       body.push(scaledGlyph(registry, 'shengbufu_shang', braceX, firstY, config.numberScale))
       body.push(
-        `<line x1="${formatNumber(braceX - 15.3 * config.numberScale)}" y1="${formatNumber(firstY - 3.9 * config.numberScale)}" x2="${formatNumber(braceX - 15.3 * config.numberScale)}" y2="${formatNumber(lastY + 3.9 * config.numberScale)}" stroke-width="${formatNumber(2.4 * config.numberScale)}" stroke="${INK}" fill="none"></line>`,
+        `<line x1="${formatNumber(braceStemX)}" y1="${formatNumber(firstY - 5.6 * config.numberScale)}" x2="${formatNumber(braceStemX)}" y2="${formatNumber(lastY + 5.7 * config.numberScale)}" stroke-width="${formatNumber(2.4 * config.numberScale)}" stroke="${INK}" fill="none"></line>`,
       )
       body.push(
-        `<line x1="${formatNumber(braceX - 12.6 * config.numberScale)}" y1="${formatNumber(firstY - 4.8 * config.numberScale)}" x2="${formatNumber(braceX - 12.6 * config.numberScale)}" y2="${formatNumber(lastY + 4.8 * config.numberScale)}" stroke-width="${formatNumber(1.2 * config.numberScale)}" stroke="${INK}" fill="none"></line>`,
+        `<line x1="${formatNumber(braceInnerStemX)}" y1="${formatNumber(firstY - 6.5 * config.numberScale)}" x2="${formatNumber(braceInnerStemX)}" y2="${formatNumber(lastY + 6.6 * config.numberScale)}" stroke-width="${formatNumber(1.2 * config.numberScale)}" stroke="${INK}" fill="none"></line>`,
       )
       body.push(scaledGlyph(registry, 'shengbufu_xia', braceX, lastY, config.numberScale))
     }

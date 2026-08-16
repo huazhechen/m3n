@@ -54,7 +54,7 @@ describe('NumberedNotationScore', () => {
     const [svg] = renderScore(parseM3NDocument(source), { paged: true, width: 800 })
 
     expect(svg).toContain('xlink:href="#fudian"')
-    expect(svg).toContain('data-type="jianshixian" stroke-width="1.2"')
+    expect(svg).toContain('data-type="jianshixian" stroke-width="1.5"')
     expect(svg).toMatch(/xlink:href="#shengbufu_shang"[^>]*scale\(0.8\)/)
     expect(svg).toMatch(/xlink:href="#paihao_xian"[^>]*scale\(0.8\)/)
   })
