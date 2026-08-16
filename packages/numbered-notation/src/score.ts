@@ -74,6 +74,7 @@ function note(
   m3nDataId = id,
   includeGrace = true,
   keyChange?: string,
+  includeText = true,
 ): NoteElement {
   const rendered = pitch(value)
   const time = duration(beats)
@@ -85,8 +86,8 @@ function note(
     hidden: false,
     ...time,
     ornaments: ornaments(event),
-    annotation: event.text ?? event.chord,
-    sectionLabel: event.sectionLabel,
+    annotation: includeText ? event.text ?? event.chord : undefined,
+    sectionLabel: includeText ? event.sectionLabel : undefined,
     keyChange,
     code: value,
     m3nId: id,
@@ -211,7 +212,16 @@ function lineForMeasures(
         const eventId = ids.get(event)
         const tuplet = event.tuplet
         event.pitches.forEach((value, tupletIndex) => {
-          elements.push(note(event, eventId === undefined ? undefined : `${eventId}-n${tupletIndex + 1}`, tuplet.unitBeats, value, eventId, true, tupletIndex === 0 ? keyChange : undefined))
+          elements.push(note(
+            event,
+            eventId === undefined ? undefined : `${eventId}-n${tupletIndex + 1}`,
+            tuplet.unitBeats,
+            value,
+            eventId,
+            true,
+            tupletIndex === 0 ? keyChange : undefined,
+            tupletIndex === 0,
+          ))
         })
         entries.push({ event, index, lastIndex: elements.length - 1 })
         return

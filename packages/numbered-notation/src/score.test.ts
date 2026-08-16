@@ -58,6 +58,13 @@ describe('NumberedNotationScore', () => {
     expect(svg).toMatch(/style="font-style:italic;" font-size="14" font-family="serif"[^>]*>说明<\/text>/)
   })
 
+  it('renders a text directive once over a tuplet instead of once per sub-note', () => {
+    const document = parseM3NDocument('{4/4}\nN: {text=音阶三连模进} ([123:2]) ([234:2]) 1 |||')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+
+    expect(svg.match(/font-style:italic;" font-size="14" font-family="serif"[^>]*>音阶三连模进<\/text>/g)).toHaveLength(1)
+  })
+
   it('uses compact glyph definitions without changing its requested page width', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),
