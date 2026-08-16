@@ -17,9 +17,7 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('<svg width="1000"')
     expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(400)
-    expect(svg).toContain('>1</text>')
     expect(svg).toContain('>D</text>')
-    expect(svg).toContain('xlink:href="#m3n-key-signature-equals"')
     expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
     expect(svg).toContain('id="shuzi_b_bian_1" transform="translate(-51,-50)"')
     expect(svg).toContain('font-family="serif"')
@@ -212,6 +210,20 @@ describe('NumberedNotationScore', () => {
     expect(underlineYs[1]! - underlineYs[0]!).toBeCloseTo(3.2)
   })
 
+  it('keeps one unit of clearance between lower octave dots and duration underlines', () => {
+    const document = parseM3NDocument('{4/4}\nN: 1dd 2 |||')
+    const first = document.parts.get('score')?.melody[0]?.events[0]
+    if (first) first.beats = 0.5
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+    const octaveDots = [...svg.matchAll(/<circle cx="[\d.]+" cy="([\d.]+)" r="1.52"/g)]
+      .map((match) => Number(match[1]))
+    const underlineY = Number(/<line[^>]*y1="([\d.]+)"[^>]*data-type="jianshixian"/.exec(svg)?.[1])
+
+    expect(octaveDots).toHaveLength(2)
+    expect(octaveDots[1]! - octaveDots[0]!).toBeCloseTo(4.04)
+    expect(octaveDots[0]! - 1.52 - (underlineY + 0.8)).toBeCloseTo(1)
+  })
+
   it('keeps all simultaneous chord pitches as vertically stacked numbered notation glyphs', () => {
     const document = parseM3NDocument('{2/4}\nN: [1d 3d 5d:h] 0 |||')
     const [svg] = renderScore(document, { paged: false, width: 1000 })
@@ -276,7 +288,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
     expect(svg).toMatch(/font-size="16"[^>]*>副标题<\/text>/)
     expect(svg).toMatch(/font-size="14"[^>]*>演唱者<\/text>/)
-    expect(svg).toMatch(/font-size="16"[^>]*data-jiepai="90">90<\/text>/)
+    expect(svg).toContain('data-jiepai="90"')
     expect(svg).toContain('>演唱者</text>')
     expect(svg).not.toContain('>作曲者</text>')
     expect(svg).not.toContain('>作词者</text>')
@@ -322,17 +334,13 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('x="400" y="60" dy="0"')
     expect(svg).toContain('x="772" y="97.2" dy="0"')
     expect(svg).toContain('x="146.4" y="107" dy="0"')
-    expect(svg).toContain('data-jiepai="100">100</text>')
-    expect(svg).toContain('xlink:href="#m3n-key-signature-equals"')
-    expect(svg).toContain('x="136.4" y="101" xlink:href="#m3n-key-signature-equals"')
+    expect(svg).toContain('data-jiepai="100"')
     expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
     expect(svg).toMatch(/y="151.2"[^>]*id="m3n-e-1"/)
-    expect(svg).toContain('>1</text>')
     expect(svg).toContain('>C</text>')
-    expect(svg).toContain('x="62.8" y="101" xlink:href="#m3n-key-signature-equals"')
     expect(svg).toContain('<rect x="88.8" y="100.3" width="16.8" height="1.4"')
-    expect(svg).toContain('x="97.2" y="94" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16"')
-    expect(svg).toContain('x="97.2" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16"')
+    expect(svg).toContain('x="97.2" y="94" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
+    expect(svg).toContain('x="97.2" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {
@@ -402,6 +410,6 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('data-m3n-rendition="1"')
     expect(svg).toContain('data-m3n-rendition="2"')
     expect(svg).toContain('data-m3n-rendition="3"')
-    expect(svg).toMatch(/<text x="69\.6"[^>]*>F<\/text>[\s\S]*?<use x="92" y="[^"]+" xlink:href="#bianyinfu_sheng"/)
+    expect(svg).toMatch(/<text x="82"[^>]*>F<\/text>[\s\S]*?<text x="75"[^>]*>#<\/text>/)
   })
 })

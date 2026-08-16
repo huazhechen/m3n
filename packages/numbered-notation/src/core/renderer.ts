@@ -32,6 +32,9 @@ const NUMBERED_PLAYBACK_HIGHLIGHT_FILTER = '<filter id="m3n-playback-highlight" 
 // The compact numeral is 14.4 units high. A 22-unit pitch keeps adjacent
 // chord members and their octave dots distinct.
 const CHORD_STACK_STEP = 22
+const OCTAVE_DOT_DIAMETER = 3.04
+const OCTAVE_DOT_CLEARANCE = 1
+const OCTAVE_DOT_STEP = OCTAVE_DOT_DIAMETER + OCTAVE_DOT_CLEARANCE
 const DYNAMIC_ORNAMENTS = new Set([
   'ppp',
   'pp',
@@ -99,12 +102,6 @@ function staffTempoGlyph(x: number, y: number): string {
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="30.24">&#xECA5;</text>`
 }
 
-function keySignatureEqualsGlyph(registry: GlyphRegistry, x: number, y: number): string {
-  // These are the equals strokes from the numbered key-signature glyph ("1=C").
-  registry.define('m3n-key-signature-equals', '<rect height="2" width="11" x="-5.5" y="-3.14103" fill="#1b1b1b"/><rect height="2" width="11" x="-5.5" y="1.32479" fill="#1b1b1b"/>')
-  return registry.use('m3n-key-signature-equals', x, y)
-}
-
 const LEIPZIG_ORNAMENTS: Readonly<Partial<Record<Ornament['name'], string>>> = {
   ppp: '&#xE520;&#xE520;&#xE520;',
   pp: '&#xE520;&#xE520;',
@@ -130,6 +127,12 @@ function octaveDot(x: number, y: number, upper: boolean): string {
   return `<circle cx="${formatNumber(x)}" cy="${formatNumber(y + (upper ? -11.2 : 10.4))}" r="1.52" fill="${INK}"></circle>`
 }
 
+function lowerOctaveDotY(y: number, underlineCount: number, octave: number): number {
+  if (underlineCount === 0) return y + 0.48 + octave * OCTAVE_DOT_STEP
+  // Keep one unit of empty space between the last underline and the first dot.
+  return y + 2.92 + (underlineCount - 1) * 3.2 + octave * OCTAVE_DOT_STEP
+}
+
 function augmentationDot(x: number, y: number, m3nDataId?: string): string {
   const dataId = m3nDataId === undefined ? '' : ` data-m3n-id="${escapeXml(m3nDataId)}"`
   return `<circle cx="${formatNumber(x + 9.88)}" cy="${formatNumber(y - 0.2)}" r="1.96" fill="${INK}"${dataId}></circle>`
@@ -143,53 +146,49 @@ function audioCode(note: NoteElement): string {
 function modeHeader(
   metadata: Metadata,
   config: NumberedNotationLayout,
-  registry: GlyphRegistry,
   y: number,
 ): string[] {
   const output: string[] = []
   const spacingScale = 0.6
   const keySpacing = 0.8
+  const headerFont = 'system-ui, sans-serif'
   let x = config.marginLeft
   if (metadata.mode !== undefined) {
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
-    const modeX = x + (accidental === undefined ? 40 : 55) * keySpacing
-    output.push(text('1', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
-    output.push(keySignatureEqualsGlyph(registry, x + 14.8, y))
-    output.push(text(letter ?? 'C', x + 21.6, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
+    const letterX = x + (accidental === undefined ? 21.6 : 34)
+    output.push(text('1', x, y + 5.6, { font: headerFont, size: 16, dy: 0 }))
+    output.push(text('=', x + 13.2, y + 5.6, { font: headerFont, size: 15, dy: 0 }))
+    output.push(text(letter ?? 'C', letterX, y + 5.6, { font: headerFont, size: 16, dy: 0 }))
     if (accidental !== undefined) {
       output.push(
-        musicGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y),
+        text(accidental, letterX - 7, y + 1.4, { font: headerFont, size: 10, dy: 0 }),
       )
     }
-    x += (accidental === undefined ? 50 : 55) * keySpacing
+    x += (accidental === undefined ? 50 : 60) * keySpacing
   }
 
   metadata.meters.forEach((meter, index) => {
     const previousParenthesized = metadata.meters[index - 1]?.parenthesized === true
     const nextParenthesized = metadata.meters[index + 1]?.parenthesized === true
     if (meter.parenthesized && !previousParenthesized) {
-      output.push(text('(', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
+      output.push(text('(', x, y + 5.6, { font: headerFont, size: 16, dy: 0 }))
       x += 15 * spacingScale
     }
     // Keep the numerator and denominator optically balanced around the divider.
-    // Their baselines must not sit on the rule: Times descenders otherwise make
+    // Their baselines must not sit on the rule: UI-font descenders otherwise make
     // a compact meter look like the bar runs through its digits.
     output.push(`<rect x="${formatNumber(x + 0.8)}" y="${formatNumber(y - 0.7)}" width="16.8" height="1.4" fill="${INK}"></rect>`)
     const digitX = x + 9.2
-    output.push(
-      text(String(meter.numerator), digitX, y - 7, {
-        font: 'Times, serif', size: 16, anchor: 'middle', dy: 0,
-      }),
-    )
-    output.push(
-      text(String(meter.denominator), digitX, y + 17, {
-        font: 'Times, serif', size: 16, anchor: 'middle', dy: 0,
-      }),
-    )
+    output.push(text(String(meter.numerator), digitX, y - 7, {
+      font: headerFont, size: 16, anchor: 'middle', dy: 0,
+    }))
+    output.push(text(String(meter.denominator), digitX, y + 17, {
+      font: headerFont, size: 16, anchor: 'middle', dy: 0,
+    }))
     x += 24 * spacingScale
     if (meter.parenthesized && !nextParenthesized) {
-      output.push(text(')', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
+      output.push(text(')', x, y + 5.6, { font: headerFont, size: 16, dy: 0 }))
       x += 15 * spacingScale
     }
   })
@@ -204,10 +203,10 @@ function modeHeader(
         output.push(staffTempoGlyph(tempoX, tempoY))
       }
       const equalsX = tempoX + 22
-      output.push(keySignatureEqualsGlyph(registry, equalsX, y))
+      output.push(text('=', equalsX - 5, y + 5.6, { font: headerFont, size: 15, dy: 0 }))
       output.push(
         text(String(tempo), equalsX + 10, tempoY, {
-          font: 'Times, serif',
+          font: headerFont,
           size: 16,
           dy: 0,
           extra: { 'data-jiepai': tempo },
@@ -217,7 +216,7 @@ function modeHeader(
     } else {
       output.push(
         text(tempo, tempoX, tempoY, {
-          font: 'system-ui, sans-serif',
+          font: headerFont,
           size: config.tempoSize,
           dy: 0,
         }),
@@ -231,7 +230,6 @@ function modeHeader(
 function renderHeader(
   metadata: Metadata,
   config: NumberedNotationLayout,
-  registry: GlyphRegistry,
 ): { markup: string[]; bodyY: number } {
   const headerMetadata: ScoreHeaderMetadata[] = [
     ...metadata.titles.map((value, priority) => ({ value, side: 'center' as const, priority: priority * 10 })),
@@ -252,7 +250,7 @@ function renderHeader(
     })
   ))
   const infoY = header.height - 11
-  markup.push(...modeHeader(metadata, config, registry, infoY))
+  markup.push(...modeHeader(metadata, config, infoY))
   return {
     markup,
     bodyY: header.height + 32,
@@ -426,8 +424,8 @@ function renderChordPitch(
   const underlineCount = Math.max(0, Math.log2(note.duration / 4))
   for (let octave = 0; octave < Math.abs(chordPitch.octave); octave += 1) {
       const octaveY = chordPitch.octave > 0
-        ? y - octave * 2.88
-        : y + 0.48 + underlineCount * 1.92 + octave * 2.88
+        ? y - octave * OCTAVE_DOT_STEP
+        : lowerOctaveDotY(y, underlineCount, octave)
       output.push(octaveDot(x, octaveY, chordPitch.octave >= 0))
   }
   return output
@@ -438,7 +436,7 @@ function chordCenterOffset(note: NoteElement): number {
 }
 
 function upperOctaveClearance(octave: number): number {
-  return octave > 0 ? 5.52 + (octave - 1) * 2.88 : 0
+  return octave > 0 ? 5.52 + (octave - 1) * OCTAVE_DOT_STEP : 0
 }
 
 function chordTopClearance(note: NoteElement): number {
@@ -495,8 +493,8 @@ function renderNote(
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
       const octaveY = note.octave > 0
-        ? noteY - octave * 2.88
-        : noteY + 0.48 + underlineCount * 1.92 + octave * 2.88
+        ? noteY - octave * OCTAVE_DOT_STEP
+        : lowerOctaveDotY(noteY, underlineCount, octave)
       output.push(octaveDot(x, octaveY, note.octave >= 0))
     }
     if (note.dots >= 1) output.push(augmentationDot(x, noteY, note.m3nDataId ?? note.m3nId))
@@ -746,7 +744,10 @@ function renderMark(
       ? 7
       : 0,
     ...markedElements.flatMap((element) =>
-      element.kind === 'note' ? [chordTopClearance(element)] : [],
+      element.kind === 'note' ? [
+        chordTopClearance(element),
+        element.accidental === undefined ? 0 : 7,
+      ] : [],
     ),
   )
   const lift = liftOverride ?? mark.level * 8
@@ -1319,7 +1320,7 @@ export function continuousPageHeight(
   // groupAdvance already includes each rendered lyric row and its line spacing.
   bottomPadding = 4,
 ): number {
-  const header = renderHeader(metadata, config, new GlyphRegistry())
+  const header = renderHeader(metadata, config)
   const spacing = pageSpacing(config)
   return Math.ceil(
     header.bodyY + groups.reduce((height, group) => height + groupAdvance(group, config, spacing), 0) + bottomPadding,
@@ -1334,7 +1335,7 @@ function renderPage(
   const registry = new GlyphRegistry()
   const header =
     page.index === 0
-      ? renderHeader(metadata, config, registry)
+      ? renderHeader(metadata, config)
       : { markup: [], bodyY: config.marginTop + config.bodyMarginTop + 6 }
   const body: string[] = [...header.markup]
   const spacing = pageSpacing(config)
