@@ -11,12 +11,21 @@ function lyricLineHeight(verse: SVGGElement, bounds: DOMRect) {
   return lineHeights.length > 0 ? Math.max(...lineHeights) : bounds.height
 }
 
-type PositionedLyric = { verse: SVGGElement; bounds: DOMRect; lineHeight: number; lineOffset: number }
+type PositionedLyric = { verse: SVGGElement; bounds: DOMRect; baseline: number; lineHeight: number; lineOffset: number }
+
+function lyricBaseline(verse: SVGGElement, bounds: DOMRect) {
+  const baseline = verse.querySelector<SVGTextElement>('text')?.getAttribute('y')
+  const value = baseline === null || baseline === undefined ? Number.NaN : Number(baseline)
+  return Number.isFinite(value) ? value : bounds.y + bounds.height
+}
 
 function addLyricLineSpacing(lyrics: PositionedLyric[]) {
   const rows = new Map<number, PositionedLyric[]>()
   for (const lyric of lyrics) {
-    const row = Math.round(lyric.bounds.y)
+    // Glyph ink boxes vary by character (for example, 年 versus 中) despite
+    // sharing an identical lyric baseline. Group by the text baseline so a
+    // lyric line always receives one consistent vertical shift.
+    const row = Math.round(lyric.baseline)
     const existing = rows.get(row)
     if (existing) existing.push(lyric)
     else rows.set(row, [lyric])
@@ -52,7 +61,7 @@ export function resolveLyricCollisions(paper: HTMLElement) {
       const obstacles = [...system.querySelectorAll<SVGGraphicsElement>('.notehead, .stem path, .flag path, .beam path, .beam polygon, .slur path, path.slur, .staff > path')]
       const lyrics = verses.map((verse) => {
         const bounds = verse.getBBox()
-        return { verse, bounds, lineHeight: lyricLineHeight(verse, bounds), lineOffset: 0 }
+        return { verse, bounds, baseline: lyricBaseline(verse, bounds), lineHeight: lyricLineHeight(verse, bounds), lineOffset: 0 }
       })
       addLyricLineSpacing(lyrics)
       let lyricOffset = 0
@@ -62,7 +71,9 @@ export function resolveLyricCollisions(paper: HTMLElement) {
           const bounds = obstacle.getBBox()
           const lyricTop = lyric.bounds.y + lyric.lineOffset
           const overlapsHorizontally = lyric.bounds.x < bounds.x + bounds.width && lyric.bounds.x + lyric.bounds.width > bounds.x
-          const requiredLyricTop = bounds.y + bounds.height + lyric.lineHeight * 0.4
+          // A full lyric x-height keeps descenders and dense note groups from
+          // reading as a collision at normal score widths.
+          const requiredLyricTop = bounds.y + bounds.height + lyric.lineHeight
           if (overlapsHorizontally && bounds.y < lyricTop && lyricTop < requiredLyricTop) {
             lyricOffset = Math.max(lyricOffset, requiredLyricTop - lyricTop)
           }
