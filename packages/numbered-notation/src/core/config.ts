@@ -1,0 +1,78 @@
+import type { FontFamily, NumberStyle } from './types.js'
+
+export type NumberedNotationLayout = {
+  width: number
+  height: number
+  marginTop: number
+  marginBottom: number
+  marginLeft: number
+  marginRight: number
+  titleFont: FontFamily
+  lyricFont: FontFamily
+  numberStyle: NumberStyle
+  numberScale: number
+  titleSize: number
+  subtitleSize: number
+  lyricSize: number
+  bodyMarginTop: number
+  musicToLyric: number
+  lyricToLyric: number
+  lineGap: number
+  voiceGap: number
+}
+
+export type NumberedNotationLayoutOptions = {
+  width: number
+  height: number
+}
+
+const defaults = {
+  margin: 48,
+  titleFont: 'Microsoft YaHei' as FontFamily,
+  lyricFont: 'Microsoft YaHei' as FontFamily,
+  numberStyle: 'b' as NumberStyle,
+  numberScale: 0.6,
+  titleSize: 21.6,
+  subtitleSize: 12,
+  lyricSize: 10.8,
+  bodyMarginTop: 24,
+  musicToLyric: 7.8,
+  lyricToLyric: 6,
+  lineGap: 24,
+  voiceGap: 0,
+}
+
+export function createNumberedNotationLayout({
+  width,
+  height,
+}: NumberedNotationLayoutOptions): NumberedNotationLayout {
+  return {
+    width: Math.max(1, Math.round(width)),
+    height: Math.max(1, Math.round(height)),
+    marginTop: defaults.margin,
+    marginBottom: defaults.margin,
+    marginLeft: defaults.margin,
+    marginRight: defaults.margin,
+    titleFont: defaults.titleFont,
+    lyricFont: defaults.lyricFont,
+    numberStyle: defaults.numberStyle,
+    numberScale: defaults.numberScale,
+    titleSize: defaults.titleSize,
+    subtitleSize: defaults.subtitleSize,
+    lyricSize: defaults.lyricSize,
+    bodyMarginTop: defaults.bodyMarginTop,
+    musicToLyric: defaults.musicToLyric,
+    lyricToLyric: defaults.lyricToLyric,
+    lineGap: defaults.lineGap,
+    voiceGap: defaults.voiceGap,
+  }
+}
+
+export function pageSpacing(layout: NumberedNotationLayout) {
+  return {
+    musicToLyric: layout.musicToLyric,
+    lyricToLyric: layout.lyricToLyric,
+    lineGap: layout.lineGap,
+    voiceGap: layout.voiceGap,
+  }
+}

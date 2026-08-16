@@ -9,12 +9,12 @@ import type {
 import { graceWidth } from './grace.js'
 import { durationInQuarterNotes, type TimedElement, tupletScale } from './timing.js'
 
-export const PLAIN_NOTE_STEP = 37.5
-export const UNDERLINED_NOTE_STEP = 25
-export const BARLINE_GAP = 35
-const FINAL_SYMBOL_WIDTH = 14
+export const PLAIN_NOTE_STEP = 22.5
+export const UNDERLINED_NOTE_STEP = 15
+export const BARLINE_GAP = 21
+const FINAL_SYMBOL_WIDTH = 8.4
 // The backend uses a fixed lyric collision grid rather than the configured font size.
-const LYRIC_FULL_WIDTH_STEP = 250 / 9
+const LYRIC_FULL_WIDTH_STEP = 50 / 3
 
 interface AnalyzedItem {
   element: TimedElement
@@ -140,7 +140,7 @@ function targetSpacing(element: TimedElement, compact = false): number {
 
 function lyricOverflow(text: string): number {
   const cells = [...text].reduce(
-    (total, character) => total + (/^[\x00-\x7f]$/.test(character) ? 0.5 : 1),
+    (total, character) => total + ((character.codePointAt(0) ?? 0x80) <= 0x7f ? 0.5 : 1),
     0,
   )
   if (cells <= 1) return 0
@@ -170,7 +170,7 @@ function withinBeatTrailingWidth(element: TimedElement): number {
   if (element.kind !== 'note') return 0
   return (
     element.dots * (PLAIN_NOTE_STEP - UNDERLINED_NOTE_STEP) +
-    (element.ornaments.some(({ name }) => name === 'xhy' || name === 'shy') ? 7.5 : 0) +
+    (element.ornaments.some(({ name }) => name === 'xhy' || name === 'shy') ? 4.5 : 0) +
     graceWidth(element.graceAfter)
   )
 }
@@ -179,7 +179,7 @@ function leadingWidth(element: TimedElement, atBeatStart = false, previous?: Tim
   if (element.kind !== 'note') return 0
   return (
     graceWidth(element.graceBefore) +
-    (element.accidental === undefined ? 0 : 5) +
+    (element.accidental === undefined ? 0 : 3) +
     (!atBeatStart && element.duration === 8 && previous?.kind === 'note' && previous.duration === 8
       ? element.dots * (PLAIN_NOTE_STEP - UNDERLINED_NOTE_STEP)
       : 0)
@@ -204,7 +204,7 @@ function beatTerminalWidth(items: AnalyzedItem[]): number {
   return (
     withinBeatTrailingWidth(last.element) +
     (items.some(({ element }) => element.kind === 'note' && element.accidental !== undefined)
-      ? 5
+      ? 3
       : 0)
   )
 }
@@ -841,8 +841,8 @@ export function layoutVoiceGroup(
   const shouldFitLine =
     forceJustify || endX > maximumX || naturalWidth >= 700 || (measureCount > 1 && fillRatio >= 0.69)
   if (shouldFitLine && Number.isFinite(maximumX) && endX !== maximumX && endX > startX) {
-    // The legacy renderer reserves one reduced-note unit plus the 14 px width
-    // of the closing symbol, then pins that final barline to the right edge.
+    // Reserve one reduced-note unit plus the closing symbol, then pin the
+    // final barline to the right edge.
     const fixedVoiceColumn = voiceColumnEndX === undefined ? 0 : voiceColumnWidth
     const scale =
       (maximumX - startX + FINAL_SYMBOL_WIDTH - fixedVoiceColumn) /

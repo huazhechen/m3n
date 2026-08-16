@@ -25,7 +25,7 @@ export function tupletScale(mark: Mark): number | undefined {
   return 2 ** Math.floor(Math.log2(count - 1)) / count
 }
 
-export function legacyPlaybackTime(element: TimedElement, mark?: Mark): number {
+export function playbackTime(element: TimedElement, mark?: Mark): number {
   const scale = mark === undefined ? 1 : (tupletScale(mark) ?? 1)
   return Number((durationInQuarterNotes(element) * scale).toFixed(2))
 }

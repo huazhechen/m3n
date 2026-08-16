@@ -1,21 +1,27 @@
-import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure } from '@m3n/notation'
-import { DEFAULT_PAGE_CONFIG, resolvePageConfig } from './open-fanqie-core/config.js'
-import { layoutVoiceGroup } from './open-fanqie-core/layout.js'
-import { continuousPageHeight, paginateVoiceGroups, renderDocumentSvgPages } from './open-fanqie-core/renderer.js'
+import {
+  parseM3NGrace,
+  parseM3NGroupPitches,
+  type ScoreDocument,
+  type ScoreEvent,
+  type ScoreInterval,
+  type ScoreMeasure,
+} from '@m3n/notation'
+import { createNumberedNotationLayout } from './core/config.js'
+import { layoutVoiceGroup } from './core/layout.js'
+import { continuousPageHeight, paginateVoiceGroups, renderNumberedNotationPages } from './core/renderer.js'
 import type {
   BarlineElement,
   Mark,
   MusicElement,
   NoteElement,
-  ScoreDocument as FanqieDocument,
+  ScoreDocument as NumberedNotationDocument,
   ScoreLine,
   VoiceGroup,
-} from './open-fanqie-core/types.js'
+} from './core/types.js'
 
-export type OpenFanqieScoreOptions = {
+export type NumberedNotationRenderOptions = {
   paged: boolean
   width: number
-  visualScale?: number
 }
 
 type EventEntry = { event: ScoreEvent; index: number; lastIndex: number }
@@ -48,15 +54,27 @@ function ornaments(event: ScoreEvent) {
   return names.map((name) => ({ name, level: 0 }))
 }
 
+function graceNotes(event: ScoreEvent): NoteElement[] {
+  return event.postfixes.flatMap((postfix) => {
+    const grace = parseM3NGrace(postfix)
+    const pitches = grace === null ? null : parseM3NGroupPitches(grace.pitchSource)
+    if (grace === null || pitches === null) return []
+    const beats = 4 / 2 ** (grace.depth + 2)
+    return pitches.map((value) => note(event, undefined, beats, value, undefined, false))
+  })
+}
+
 function note(
   event: ScoreEvent,
   id: string | undefined,
   beats = event.beats,
   value = event.pitches[0] ?? '0',
   m3nDataId = id,
+  includeGrace = true,
 ): NoteElement {
   const rendered = pitch(value)
   const time = duration(beats)
+  const graceAfter = includeGrace ? graceNotes(event) : []
   return {
     kind: 'note',
     ...rendered,
@@ -72,6 +90,7 @@ function note(
       const itemPitch = pitch(item)
       return itemPitch.pitch === 0 ? [] : [{ pitch: itemPitch.pitch as 1 | 2 | 3 | 4 | 5 | 6 | 7, octave: itemPitch.octave, accidental: itemPitch.accidental }]
     }) : [],
+    ...(graceAfter.length === 0 ? {} : { graceAfter }),
     source: location(event),
   }
 }
@@ -321,36 +340,33 @@ function systemGroups(document: ScoreDocument, width: number) {
   return groups
 }
 
-/** Renders M3N's normalized ScoreDocument through the unmodified Fanqie layout and glyph engine. */
-export function renderOpenFanqieScore(document: ScoreDocument, options: OpenFanqieScoreOptions) {
-  const width = Math.max(320, Math.round(options.width))
-  const visualScale = Math.max(0.1, Math.min(1, options.visualScale ?? 1))
-  const groups = systemGroups(document, width)
-  const metadata = { titles: [document.title, document.subtitle].filter(Boolean), authors: [document.singer || document.composer].filter(Boolean), mode: document.key, meters: [{ numerator: document.meterCount, denominator: document.meterUnit, parenthesized: false }], tempos: document.hasExplicitTempo ? [document.tempo] : [], instruments: [], remarks: [] }
-  const scaledPageConfig = {
-    page: 'A4' as const,
-    margin_top: Number(DEFAULT_PAGE_CONFIG.margin_top) * visualScale,
-    margin_bottom: Number(DEFAULT_PAGE_CONFIG.margin_bottom) * visualScale,
-    margin_left: Number(DEFAULT_PAGE_CONFIG.margin_left) * visualScale,
-    margin_right: Number(DEFAULT_PAGE_CONFIG.margin_right) * visualScale,
-    biaoti_size: Number(DEFAULT_PAGE_CONFIG.biaoti_size) * visualScale,
-    fubiaoti_size: Number(DEFAULT_PAGE_CONFIG.fubiaoti_size) * visualScale,
-    geci_size: Number(DEFAULT_PAGE_CONFIG.geci_size) * visualScale,
-    body_margin_top: Number(DEFAULT_PAGE_CONFIG.body_margin_top) * visualScale,
-    height_quci: Number(DEFAULT_PAGE_CONFIG.height_quci) * visualScale,
-    height_cici: Number(DEFAULT_PAGE_CONFIG.height_cici) * visualScale,
-    height_ciqu: Number(DEFAULT_PAGE_CONFIG.height_ciqu) * visualScale,
-    height_shengbu: Number(DEFAULT_PAGE_CONFIG.height_shengbu) * visualScale,
-    shuzi_scale: visualScale,
+/** M3N's native numbered-notation score renderer. */
+export class NumberedNotationScore {
+  private constructor(private readonly document: ScoreDocument) {}
+
+  static create(document: ScoreDocument) {
+    return new NumberedNotationScore(document)
   }
-  const baseConfig = resolvePageConfig({ ...scaledPageConfig, width, height: 300 }, [])
-  const pageHeight = options.paged ? Math.round(width * 1.415) : Math.max(300, continuousPageHeight(groups, metadata, baseConfig))
-  const pageConfig = { ...scaledPageConfig, width, height: pageHeight }
-  const config = resolvePageConfig(pageConfig, [])
-  const fanqie: FanqieDocument = {
-    source: '', diagnostics: [],
-    metadata,
-    pages: options.paged ? paginateVoiceGroups(groups, metadata, config) : [{ index: 0, groups }],
+
+  render(options: NumberedNotationRenderOptions) {
+    const width = Math.max(320, Math.round(options.width))
+    const groups = systemGroups(this.document, width)
+    const metadata = {
+      titles: [this.document.title, this.document.subtitle].filter(Boolean),
+      authors: [this.document.singer || this.document.composer].filter(Boolean),
+      mode: this.document.key,
+      meters: [{ numerator: this.document.meterCount, denominator: this.document.meterUnit, parenthesized: false }],
+      tempos: this.document.hasExplicitTempo ? [this.document.tempo] : [],
+      instruments: [],
+      remarks: [],
+    }
+    const baseConfig = createNumberedNotationLayout({ width, height: 300 })
+    const pageHeight = options.paged ? Math.round(width * 1.415) : Math.max(300, continuousPageHeight(groups, metadata, baseConfig))
+    const layout = createNumberedNotationLayout({ width, height: pageHeight })
+    const numberedNotation: NumberedNotationDocument = {
+      metadata,
+      pages: options.paged ? paginateVoiceGroups(groups, metadata, layout) : [{ index: 0, groups }],
+    }
+    return renderNumberedNotationPages(numberedNotation, layout)
   }
-  return renderDocumentSvgPages(fanqie, { pageConfig })
 }

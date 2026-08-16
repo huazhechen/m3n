@@ -821,7 +821,7 @@ textarea::selection {
 .audio-controls {
   margin-bottom: 12px;
   display: grid;
-  grid-template-columns: auto auto minmax(120px, 1fr) minmax(240px, 2fr) auto;
+  grid-template-columns: auto auto minmax(120px, 1fr) minmax(200px, 2fr) auto auto;
   align-items: center;
   gap: 14px;
   min-height: 44px;
@@ -843,6 +843,16 @@ textarea::selection {
 .settings-toggle:hover {
   border-color: #125a5b;
   background: #dcebe6;
+}
+
+.notation-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 7px;
+  color: #285b5c;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .renderer-settings-dialog {
@@ -1325,11 +1335,11 @@ a.action-button {
 
 @container (max-width: 720px) {
   .audio-controls {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "play metronome settings"
-      "speed speed speed"
-      "progress progress progress";
+      "play metronome notation settings"
+      "speed speed speed speed"
+      "progress progress progress progress";
     gap: 10px 14px;
   }
 
@@ -1347,6 +1357,10 @@ a.action-button {
 
   .settings-toggle {
     grid-area: settings;
+  }
+
+  .notation-toggle {
+    grid-area: notation;
   }
 
   .playback-progress {

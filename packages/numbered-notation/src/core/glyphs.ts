@@ -88,7 +88,7 @@ function attributes(values: Readonly<Record<string, string | number | undefined>
     .join(' ')
 }
 
-/** Collects only the glyphs used by one rendered page, matching the legacy API. */
+/** Collects only the glyphs used by one rendered page. */
 export class GlyphRegistry {
   readonly #definitions = new Map<string, string>()
 

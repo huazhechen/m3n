@@ -75,12 +75,11 @@ test('renderer settings control width and drive the export dialog', async ({ pag
   await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
 })
 
-test('renders ScoreDocument through the Open Fanqie numbered-notation engine', async ({ page }) => {
+test('renders ScoreDocument through the numbered notation numbered-notation engine', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await expect(page.getByRole('button', { name: '渲染设置' })).toBeVisible({ timeout: 30_000 })
   await page.getByRole('button', { name: '渲染设置' }).click()
-  const settings = page.getByRole('dialog')
-  const numbered = settings.getByRole('switch', { name: '简谱渲染' })
+  const numbered = page.getByRole('switch', { name: '简谱渲染' })
   await expect(numbered).toBeEnabled()
   await expect(numbered).not.toBeChecked()
   await numbered.check()

@@ -53,8 +53,6 @@ type ScoreRendererProps = {
 type RenderPhase = 'loading-library' | 'waiting-layout' | 'layout'
 
 const EMPTY_INVALID_MEASURE_IDS: string[] = []
-const NUMBERED_NOTATION_VISUAL_SCALE = 0.8
-
 function queryScoreElement(paper: HTMLElement | null, xmlId: string) {
   return paper?.querySelector(`#${xmlId}`) ?? paper?.querySelector(`[data-m3n-id="${xmlId}"]`) ?? null
 }
@@ -175,7 +173,10 @@ export function ScoreRenderer({
 
     void (async () => {
       try {
-        const { VerovioScore, renderOpenFanqieScore } = await import('@m3n/score-renderer')
+        const [{ VerovioScore }, { NumberedNotationScore }] = await Promise.all([
+          import('@m3n/score-renderer'),
+          import('@m3n/numbered-notation'),
+        ])
         const score = await VerovioScore.create(mei)
         if (cancelled) {
           score.destroy()
@@ -185,10 +186,9 @@ export function ScoreRenderer({
         if (isInitialRender) setRenderPhase('waiting-layout')
 
         if (numberedNotation && scoreDocument) {
-          paper.innerHTML = renderOpenFanqieScore(scoreDocument, {
+          paper.innerHTML = NumberedNotationScore.create(scoreDocument).render({
             paged: renderMode === 'paged',
             width: renderWidth,
-            visualScale: NUMBERED_NOTATION_VISUAL_SCALE,
           }).join('')
           if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
           hasRenderedRef.current = true
@@ -521,6 +521,22 @@ export function ScoreRenderer({
           </div>
         )}
         {!compact && hasAudioControls && (
+          <label className="notation-toggle">
+            <span>简谱</span>
+            <span className="switch-control">
+              <input
+                type="checkbox"
+                role="switch"
+                aria-label="简谱渲染"
+                checked={numberedNotation}
+                disabled={!scoreDocument}
+                onChange={(event) => changeNumberedNotation(event.currentTarget.checked)}
+              />
+              <span className="switch-track" aria-hidden="true"><span className="switch-thumb" /></span>
+            </span>
+          </label>
+        )}
+        {!compact && hasAudioControls && (
           <button
             type="button"
             className="settings-toggle"
@@ -542,20 +558,6 @@ export function ScoreRenderer({
             <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
           </div>
           <div className="renderer-settings-body">
-            <label className="renderer-settings-switch">
-              <span>简谱渲染</span>
-              <span className="switch-control">
-                <input
-                  type="checkbox"
-                  role="switch"
-                  aria-label="简谱渲染"
-                  checked={numberedNotation}
-                  disabled={!scoreDocument}
-                  onChange={(event) => changeNumberedNotation(event.currentTarget.checked)}
-                />
-                <span className="switch-track" aria-hidden="true"><span className="switch-thumb" /></span>
-              </span>
-            </label>
             <div className="renderer-settings-row">
               <span>乐谱宽度</span>
               <input

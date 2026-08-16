@@ -1,4 +1,4 @@
-import { pageSpacing, resolvePageConfig, type ResolvedPageConfig } from './config.js'
+import { pageSpacing, type NumberedNotationLayout } from './config.js'
 import {
   ACCIDENTAL_GLYPH_IDS,
   BARLINE_GLYPH_IDS,
@@ -11,30 +11,26 @@ import {
 } from './glyphs.js'
 import { graceMetrics } from './grace.js'
 import { layoutVoiceGroup, type LineLayout, type PositionedElement } from './layout.js'
-import { parse } from './parser.js'
-import { legacyPlaybackTime } from './timing.js'
+import { playbackTime } from './timing.js'
 import type {
   BarlineElement,
-  Diagnostic,
   InlineLayerElement,
   Mark,
   Metadata,
   NoteElement,
   Ornament,
-  RenderOptions,
   ScoreLine,
   ScoreDocument,
   ScorePage,
   SustainElement,
-  SvgRenderOptions,
 } from './types.js'
 
 const FONT_SIZE_FIX = 0.8355
 const INK = '#1b1b1b'
 const NUMBERED_PLAYBACK_HIGHLIGHT_FILTER = '<filter id="m3n-playback-highlight" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="table" tableValues="0.851 1"/><feFuncG type="table" tableValues="0.373 1"/><feFuncB type="table" tableValues="0.165 1"/></feComponentTransfer></filter>'
-// A lower-octave dot extends 14 units below its numeral's origin. Chord
+// A lower-octave dot extends 8.4 units below its numeral's origin. Chord
 // members therefore need more than one numeral height between their origins.
-const CHORD_STACK_STEP = 30
+const CHORD_STACK_STEP = 18
 const DYNAMIC_ORNAMENTS = new Set([
   'ppp',
   'pp',
@@ -83,6 +79,10 @@ function text(
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" dy="${formatNumber(options.dy ?? FONT_SIZE_FIX * options.size)}"${options.anchor === undefined || options.anchor === 'start' ? '' : ` text-anchor="${options.anchor}"`} fill="${options.fill ?? INK}"${style === '' ? '' : ` style="${style};"`} font-size="${formatNumber(options.size)}" font-family="${escapeXml(options.font)}"${extra}>${escapeXml(value)}</text>`
 }
 
+function isAscii(value: string) {
+  return [...value].every((character) => (character.codePointAt(0) ?? 0x80) <= 0x7f)
+}
+
 function scaledGlyph(
   registry: GlyphRegistry,
   id: string,
@@ -102,7 +102,7 @@ function numberedGlyph(
   id: string,
   x: number,
   y: number,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   extra: Readonly<Record<string, string | number | undefined>> = {},
 ): string {
   return scaledGlyph(registry, id, x, y, config.numberScale, extra)
@@ -115,7 +115,7 @@ function audioCode(note: NoteElement): string {
 
 function modeHeader(
   metadata: Metadata,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   registry: GlyphRegistry,
   y: number,
 ): string[] {
@@ -124,37 +124,37 @@ function modeHeader(
   if (metadata.mode !== undefined) {
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
-    const modeX = x + (accidental === undefined ? 40 : 45)
-    output.push(registry.use('diaohao_fu', x, y))
+    const modeX = x + (accidental === undefined ? 24 : 27)
+    output.push(scaledGlyph(registry, 'diaohao_fu', x, y, config.numberScale))
     if (accidental !== undefined) {
       output.push(
-        registry.use(accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y),
+        scaledGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y, config.numberScale),
       )
     }
     output.push(
-      registry.use(`diaohao_zimu_${letter?.toLowerCase()}`, modeX, y, {
+      scaledGlyph(registry, `diaohao_zimu_${letter?.toLowerCase()}`, modeX, y, config.numberScale, {
         code: metadata.mode,
         'data-diaohao': 'true',
       }),
     )
-    x += accidental === undefined ? 50 : 55
+    x += accidental === undefined ? 30 : 33
   }
 
   metadata.meters.forEach((meter, index) => {
     const previousParenthesized = metadata.meters[index - 1]?.parenthesized === true
     const nextParenthesized = metadata.meters[index + 1]?.parenthesized === true
     if (meter.parenthesized && !previousParenthesized) {
-      output.push(registry.use('paihao_kuohu_zuo', x, y))
-      x += 15
+      output.push(scaledGlyph(registry, 'paihao_kuohu_zuo', x, y, config.numberScale))
+      x += 9
     }
-    output.push(registry.use('paihao_xian', x, y))
-    const digitX = x + 10
+    output.push(scaledGlyph(registry, 'paihao_xian', x, y, config.numberScale))
+    const digitX = x + 6
     output.push(
       numberedGlyph(
         registry,
         `shuzi_${config.numberStyle}_bian_${String(meter.numerator).slice(-1)}`,
         digitX,
-        y - 12,
+        y - 7.2,
         config,
       ),
     )
@@ -163,24 +163,24 @@ function modeHeader(
         registry,
         `shuzi_${config.numberStyle}_bian_${String(meter.denominator).slice(-1)}`,
         digitX,
-        y + 12,
+        y + 7.2,
         config,
         { fill: '#414141' },
       ),
     )
-    x += 27
+    x += 16.2
     if (meter.parenthesized && !nextParenthesized) {
-      output.push(registry.use('paihao_kuohu_you', x, y))
-      x += 15
+      output.push(scaledGlyph(registry, 'paihao_kuohu_you', x, y, config.numberScale))
+      x += 9
     }
   })
 
   metadata.tempos.forEach((tempo, index) => {
-    const tempoY = y + 40 + index * 22
+    const tempoY = y + 24 + index * 13.2
     if (typeof tempo === 'number') {
       output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 0.78 * config.numberScale))
       output.push(
-        text(String(tempo), config.marginLeft + 27, tempoY + 1, {
+        text(String(tempo), config.marginLeft + 16.2, tempoY + 0.6, {
           font: config.lyricFont,
           size: 16 * config.numberScale,
           dy: 0.3355 * 16 * config.numberScale,
@@ -202,14 +202,14 @@ function modeHeader(
 
 function renderHeader(
   metadata: Metadata,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   registry: GlyphRegistry,
 ): { markup: string[]; bodyY: number } {
   const markup: string[] = []
   if (metadata.titles.length === 0) {
-    return { markup, bodyY: config.marginTop + config.bodyMarginTop + 10 }
+    return { markup, bodyY: config.marginTop + config.bodyMarginTop + 6 }
   }
-  const titleY = config.marginTop + 30
+  const titleY = config.marginTop + 18
   const [mainTitle, ...subtitles] = metadata.titles
   if (mainTitle !== undefined) {
     markup.push(
@@ -226,7 +226,7 @@ function renderHeader(
       text(
         subtitle,
         config.width / 2,
-        titleY + config.titleSize + 20 + index * (config.subtitleSize + 8),
+        titleY + config.titleSize + 12 + index * (config.subtitleSize + 4.8),
         {
           font: config.titleFont,
           size: config.subtitleSize,
@@ -235,17 +235,17 @@ function renderHeader(
       ),
     )
   })
-  const titleOffset = config.titleSize - 36
-  const infoY = config.marginTop + 96 + titleOffset
+  const titleOffset = config.titleSize - 21.6
+  const infoY = config.marginTop + 57.6 + titleOffset
   markup.push(...modeHeader(metadata, config, registry, infoY))
-  const authorSize = config.lyricFont === 'KaiTi' ? 19 : 16
+  const authorSize = config.lyricFont === 'KaiTi' ? 11.4 : 9.6
   const authorBottomY =
-    config.marginTop + 116 + titleOffset + Math.max(0, metadata.authors.length - 1) * 21
+    config.marginTop + 69.6 + titleOffset + Math.max(0, metadata.authors.length - 1) * 12.6
   ;[...metadata.authors]
     .map((author, index) => ({ author, index }))
     .reverse()
     .forEach(({ author, index }) => {
-      const authorY = authorBottomY - (metadata.authors.length - 1 - index) * (authorSize + 5)
+      const authorY = authorBottomY - (metadata.authors.length - 1 - index) * (authorSize + 3)
       markup.push(
         text(author, config.width - config.marginRight, authorY, {
           font: config.lyricFont,
@@ -257,7 +257,7 @@ function renderHeader(
     })
   return {
     markup,
-    bodyY: infoY + config.bodyMarginTop + 20 + (metadata.tempos.length > 0 ? 30 : 0),
+    bodyY: infoY + config.bodyMarginTop + 12 + (metadata.tempos.length > 0 ? 18 : 0),
   }
 }
 
@@ -301,9 +301,9 @@ function renderGrace(
       const runEnds = runStart !== undefined && (!participates || index === notes.length - 1)
       if (!runEnds || runStart === undefined) return
       const runEnd = participates ? index : index - 1
-      const x1 = (metrics.positions[runStart] ?? 0) - 3.5
-      const x2 = (metrics.positions[runEnd] ?? 0) + 3.5
-      const lineY = -10.5 + level * 2
+      const x1 = (metrics.positions[runStart] ?? 0) - 2.1
+      const x2 = (metrics.positions[runEnd] ?? 0) + 2.1
+      const lineY = -6.3 + level * 1.2
       body.push(
         `<line x1="${formatNumber(x1)}" y1="${formatNumber(lineY)}" x2="${formatNumber(x2)}" y2="${formatNumber(lineY)}" stroke-width="1" stroke="${INK}"></line>`,
       )
@@ -314,9 +314,9 @@ function renderGrace(
   notes.forEach((note, index) => {
     const localX = metrics.positions[index] ?? 0
     const glyph = note.pitch === 9 ? 'shuzi_x' : `yiyin_shuzi_${note.pitch}`
-    body.push(registry.use(glyph, localX, -17))
+    body.push(registry.use(glyph, localX, -10.2))
     if (note.accidental !== undefined) {
-      body.push(registry.use(graceAccidentalGlyph(note.accidental), localX, -19))
+      body.push(registry.use(graceAccidentalGlyph(note.accidental), localX, -11.4))
     }
     const octaveGlyph = note.octave >= 0 ? 'yiyin_yingao_gao' : 'yiyin_yingao_di'
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
@@ -325,8 +325,8 @@ function renderGrace(
           octaveGlyph,
           localX,
           note.octave > 0
-            ? -18 - octave * 4
-            : -12 + ((noteLevels[index] ?? 1) - 1) * 2 + octave * 3,
+            ? -10.8 - octave * 2.4
+            : -7.2 + ((noteLevels[index] ?? 1) - 1) * 1.2 + octave * 1.8,
         ),
       )
     }
@@ -334,12 +334,12 @@ function renderGrace(
   const tail = before ? 'yiyinxian_qian' : 'yiyinxian_hou'
   const firstX = metrics.positions[0] ?? 0
   const lastX = metrics.positions.at(-1) ?? firstX
-  const tailX = (firstX + lastX) / 2 - 0.5
+  const tailX = (firstX + lastX) / 2 - 0.3
   const lowerOctaves = Math.max(0, ...notes.map((note) => -note.octave))
-  const tailY = -17 + (maxLevels - 1) * 2 + lowerOctaves * 4
+  const tailY = -10.2 + (maxLevels - 1) * 1.2 + lowerOctaves * 2.4
   body.push(registry.use(tail, tailX, tailY))
   registry.define(id, body.join(''))
-  return [registry.useDefined(id, before ? x - metrics.width - 5 : x + 15, y)]
+  return [registry.useDefined(id, before ? x - metrics.width - 3 : x + 9, y)]
 }
 
 interface OrnamentContext {
@@ -355,20 +355,20 @@ function ornamentPosition(
   context: OrnamentContext,
 ): { x: number; y: number } {
   if (DYNAMIC_ORNAMENTS.has(ornament.name)) {
-    if (context.hairpinStart === true) return { x: x - 25, y: y - 10 - ornament.level * 6 }
+    if (context.hairpinStart === true) return { x: x - 15, y: y - 6 - ornament.level * 3.6 }
     if (context.hairpinEnd === true) {
       return {
-        x: x + 20,
-        y: y - 10 - ornament.level * 6 - (context.slurEnd === true ? 8 : 0),
+        x: x + 12,
+        y: y - 6 - ornament.level * 3.6 - (context.slurEnd === true ? 4.8 : 0),
       }
     }
-    return { x, y: y - 3 - ornament.level * 6 }
+    return { x, y: y - 1.8 - ornament.level * 3.6 }
   }
   if (['zkh', 'ykh', 'cy', 'tr', 'yc', 'ycy', 'shy', 'xhy'].includes(ornament.name)) {
     return { x, y }
   }
-  if (ornament.name === 'bc') return { x, y: y - 17 - ornament.level * 6 }
-  return { x, y: y - 24 - ornament.level * 6 }
+  if (ornament.name === 'bc') return { x, y: y - 10.2 - ornament.level * 3.6 }
+  return { x, y: y - 14.4 - ornament.level * 3.6 }
 }
 
 function renderOrnaments(
@@ -410,7 +410,7 @@ function renderChordPitch(
   chordPitch: NonNullable<NoteElement['chordPitches']>[number],
   x: number,
   y: number,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   registry: GlyphRegistry,
 ): string[] {
   const output: string[] = []
@@ -422,8 +422,8 @@ function renderChordPitch(
   const dotId = chordPitch.octave >= 0 ? 'yingao_gao' : 'yingao_di'
   const underlineCount = Math.max(0, Math.log2(note.duration / 4))
   for (let octave = 0; octave < Math.abs(chordPitch.octave); octave += 1) {
-    const octaveY = chordPitch.octave > 0 ? y - octave * 6 : y + 1 + underlineCount * 4 + octave * 6
-    output.push(numberedGlyph(registry, dotId, x + (chordPitch.pitch === 4 ? 2.5 : 0), octaveY, config))
+    const octaveY = chordPitch.octave > 0 ? y - octave * 3.6 : y + 0.6 + underlineCount * 2.4 + octave * 3.6
+    output.push(numberedGlyph(registry, dotId, x + (chordPitch.pitch === 4 ? 1.5 : 0), octaveY, config))
   }
   return output
 }
@@ -433,7 +433,7 @@ function renderNote(
   x: number,
   y: number,
   notepos: string,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   registry: GlyphRegistry,
   timeOverride?: number,
   audioOverride?: string,
@@ -456,7 +456,7 @@ function renderNote(
     const id = note.pitch === 9 ? 'shuzi_x' : `shuzi_${config.numberStyle}_${note.pitch}`
     output.push(
       numberedGlyph(registry, id, x, y, config, {
-        time: formatNumber(timeOverride ?? legacyPlaybackTime(note)),
+        time: formatNumber(timeOverride ?? playbackTime(note)),
         audio: audioOverride ?? audioCode(note),
         notepos,
         code: note.code,
@@ -470,13 +470,13 @@ function renderNote(
     const dotId = note.octave >= 0 ? 'yingao_gao' : 'yingao_di'
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
-      const octaveY = note.octave > 0 ? y - octave * 6 : y + 1 + underlineCount * 4 + octave * 6
-      output.push(numberedGlyph(registry, dotId, x + (note.pitch === 4 ? 2.5 : 0), octaveY, config))
+      const octaveY = note.octave > 0 ? y - octave * 3.6 : y + 0.6 + underlineCount * 2.4 + octave * 3.6
+      output.push(numberedGlyph(registry, dotId, x + (note.pitch === 4 ? 1.5 : 0), octaveY, config))
     }
     if (note.dots >= 2) output.push(numberedGlyph(registry, 'fudian2', x, y, config))
     else if (note.dots === 1) output.push(numberedGlyph(registry, 'fudian', x, y, config))
     for (let dot = 2; dot < note.dots; dot += 1)
-      output.push(numberedGlyph(registry, 'fudian', x + 14 + (dot - 2) * 7, y, config))
+      output.push(numberedGlyph(registry, 'fudian', x + 8.4 + (dot - 2) * 4.2, y, config))
     note.chordPitches?.forEach((chordPitch, index) => {
       output.push(...renderChordPitch(note, chordPitch, x, y - (index + 1) * CHORD_STACK_STEP, config, registry))
     })
@@ -488,11 +488,11 @@ function renderNote(
     }
     if (note.annotation !== undefined) {
       output.push(
-        text(note.annotation, x - 6, y - 24, {
+        text(note.annotation, x - 3.6, y - 14.4, {
           font: config.lyricFont,
-          size: 12,
+          size: 7.2,
           fill: '#303030',
-          dy: 0.3355 * 12,
+          dy: 0.3355 * 7.2,
           extra: { 'xml:space': 'preserve' },
         }),
       )
@@ -625,9 +625,9 @@ function renderUnderlines(
         const first = run[0]
         const last = run[run.length - 1]
         if (first !== undefined && last !== undefined) {
-          const underlineY = yForElement(first.elementIndex) + 13 + (level - 1) * 3
+          const underlineY = yForElement(first.elementIndex) + 7.8 + (level - 1) * 1.8
           output.push(
-            `<line x1="${formatNumber(first.x - 6)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 6 + last.element.dots * 10)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="2" stroke="${INK}"></line>`,
+            `<line x1="${formatNumber(first.x - 3.6)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 3.6 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.2" stroke="${INK}"></line>`,
           )
         }
         run = []
@@ -691,7 +691,7 @@ function renderMark(
   mark: Mark,
   layout: LineLayout,
   y: number,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   registry: GlyphRegistry,
   liftOverride?: number,
 ): string[] {
@@ -735,9 +735,7 @@ function renderMark(
       return output
     }
     const span = x2 - x1
-    const flat =
-      config.slurStyle === 'flat' ||
-      (mark.type === 'slur' && config.slurStyle === 'auto' && end - start > 100)
+    const flat = mark.type === 'slur' && end - start > 100
     if (flat) {
       const left = start + 12
       const right = end - 12
@@ -827,7 +825,7 @@ function renderLyrics(
   pageIndex: number,
   lineOrdinal: number,
   y: number,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   registry: GlyphRegistry,
   musicToLyric: number,
   lyricToLyric: number,
@@ -840,11 +838,11 @@ function renderLyrics(
     return x === undefined ? [] : [{ x, ordinal: ordinals.get(index) ?? 0 }]
   })
   layout.line.lyrics.forEach((lyric, lyricIndex) => {
-    const lyricY = y + 25 + musicToLyric + lyricIndex * (config.lyricSize + lyricToLyric)
+    const lyricY = y + 15 + musicToLyric + lyricIndex * (config.lyricSize + lyricToLyric)
     const lyricPitch = config.lyricSize + lyricToLyric
     if (lyric.annotation !== undefined) {
       output.push(
-        text(lyric.annotation, (notePositions[0]?.x ?? config.marginLeft) - 10, lyricY, {
+        text(lyric.annotation, (notePositions[0]?.x ?? config.marginLeft) - 6, lyricY, {
           font: config.lyricFont,
           size: config.lyricSize,
           anchor: 'end',
@@ -857,9 +855,9 @@ function renderLyrics(
       const syllable = lyric.syllables[index]
       if (syllable?.leftBrace === true || syllable?.rightBrace === true) {
         const id = syllable.leftBrace === true ? 'ci_dakuohu_zuo' : 'ci_dakuohu_you'
-        const braceX = positioned.x + (syllable.leftBrace === true ? -15 : 15)
+        const braceX = positioned.x + (syllable.leftBrace === true ? -9 : 9)
         const braceLine = Math.max(0, lyricIndex - 1)
-        const braceY = y + 25 + musicToLyric + braceLine * lyricPitch + lyricPitch * 0.75 - 7
+        const braceY = y + 15 + musicToLyric + braceLine * lyricPitch + lyricPitch * 0.75 - 4.2
         registry.register(id)
         output.push(
           `<use cx="0" cy="0" xlink:href="#${id}" transform="translate(${formatNumber(braceX)},${formatNumber(braceY)})scale(1,${formatNumber(lyricPitch * 0.15)})" xmlns:xlink="http://www.w3.org/1999/xlink"></use>`,
@@ -879,11 +877,11 @@ function renderLyrics(
       if (syllable?.trailingPunctuation !== undefined) {
         const characters = [...value]
         const rightOffset = characters.reduce((sum, character, characterIndex) => {
-          const ascii = /^[\x00-\x7f]$/.test(character)
+          const ascii = isAscii(character)
           if (ascii) return sum + config.lyricSize * 0.25
           return sum + config.lyricSize * (characterIndex === 0 ? 0.5 : 1)
         }, 0)
-        const punctuationOffset = /^[\x00-\x7f]/.test(syllable.trailingPunctuation) ? 3 : 0
+        const punctuationOffset = isAscii(syllable.trailingPunctuation) ? 1.8 : 0
         output.push(
           text(
             syllable.trailingPunctuation,
@@ -908,7 +906,7 @@ function renderInlineLayer(
   startX: number,
   y: number,
   pageIndex: number,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   registry: GlyphRegistry,
   nextGraceId: (prefix: 'qy' | 'hy') => string,
   layout?: LineLayout,
@@ -966,8 +964,7 @@ function renderInlineLayer(
     )
     return output
   }
-  // The legacy renderer drops an inline layer at the end of a music line.
-  // `layout` is absent only for that terminal-layer case.
+  // `layout` is absent only for a terminal inline layer.
   void startX
   return output
 }
@@ -977,7 +974,7 @@ function renderLine(
   pageIndex: number,
   lineOrdinal: number,
   y: number,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   registry: GlyphRegistry,
   musicToLyric: number,
   lyricToLyric: number,
@@ -1006,7 +1003,7 @@ function renderLine(
           positioned.elementIndex <= mark.end,
       )
       const timeOverride =
-        tuplet === undefined ? undefined : legacyPlaybackTime(positioned.element, tuplet)
+        tuplet === undefined ? undefined : playbackTime(positioned.element, tuplet)
       const tie = layout.line.marks.find(
         (mark) => mark.type === 'slur' && mark.end === positioned.elementIndex,
       )
@@ -1053,7 +1050,7 @@ function renderLine(
           positioned.elementIndex <= mark.end,
       )
       const timeOverride =
-        tuplet === undefined ? undefined : legacyPlaybackTime(positioned.element, tuplet)
+        tuplet === undefined ? undefined : playbackTime(positioned.element, tuplet)
       outputForMeasure(positioned.measure).push(
         ...renderSustain(
           positioned.element,
@@ -1108,7 +1105,7 @@ function renderLine(
       layout,
       pageIndex,
       lineOrdinal,
-      y + (inlineLayerRanges(layout.line).length === 0 ? 0 : 28),
+      y + (inlineLayerRanges(layout.line).length === 0 ? 0 : 16.8),
       config,
       registry,
       musicToLyric,
@@ -1129,7 +1126,7 @@ function renderLine(
         ...renderInlineLayer(
           element,
           x,
-          y + (element.role === 'accompaniment' ? -40 : -28),
+          y + (element.role === 'accompaniment' ? -24 : -16.8),
           pageIndex,
           config,
           registry,
@@ -1157,7 +1154,7 @@ function renderLine(
 
 function rowAdvance(
   line: ScoreLine,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   spacing: ReturnType<typeof pageSpacing>,
 ): number {
   const lyricHeight =
@@ -1165,9 +1162,9 @@ function rowAdvance(
       ? 0
       : spacing.musicToLyric +
         line.lyrics.length * config.lyricSize +
-        Math.max(0, line.lyrics.length * spacing.lyricToLyric - 10)
-  const temporaryVoiceBottom = inlineLayerRanges(line).length === 0 ? 0 : 28
-  const musicHeight = line.lyrics.length === 0 ? 38 : 35
+        Math.max(0, line.lyrics.length * spacing.lyricToLyric - 6)
+  const temporaryVoiceBottom = inlineLayerRanges(line).length === 0 ? 0 : 16.8
+  const musicHeight = line.lyrics.length === 0 ? 22.8 : 21
   return musicHeight + lyricHeight + spacing.lineGap + temporaryVoiceBottom
 }
 
@@ -1175,19 +1172,19 @@ function lineTopPadding(line: ScoreLine): number {
   const symbolPadding = line.marks.some(
     ({ type }) => type === 'volta' || type === 'crescendo' || type === 'decrescendo',
   )
-    ? 12
+    ? 7.2
     : 0
   const layerPadding = Math.max(
     0,
     ...line.elements.flatMap((element) =>
-      element.kind === 'inline-layer' ? [element.role === 'accompaniment' ? 40 : 28] : [],
+      element.kind === 'inline-layer' ? [element.role === 'accompaniment' ? 24 : 16.8] : [],
     ),
   )
   const chordPadding = Math.max(
     0,
     ...line.elements.flatMap((element) =>
       element.kind === 'note' && element.chordPitches !== undefined
-        ? [element.chordPitches.length * CHORD_STACK_STEP + 9]
+        ? [element.chordPitches.length * CHORD_STACK_STEP + 5.4]
         : [],
     ),
   )
@@ -1196,7 +1193,7 @@ function lineTopPadding(line: ScoreLine): number {
 
 function groupAdvance(
   group: ScorePage['groups'][number],
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
   spacing: ReturnType<typeof pageSpacing>,
 ): number {
   const rows = group.voices.reduce(
@@ -1214,7 +1211,7 @@ function groupAdvance(
 export function paginateVoiceGroups(
   groups: ScorePage['groups'],
   metadata: Metadata,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
 ): ScorePage[] {
   const output: ScorePage[] = []
   let pageIndex = 0
@@ -1223,8 +1220,8 @@ export function paginateVoiceGroups(
     const header =
       pageIndex === 0
         ? renderHeader(metadata, config, new GlyphRegistry())
-        : { bodyY: config.marginTop + config.bodyMarginTop + 10 }
-    const spacing = pageSpacing(config, pageIndex + 1)
+        : { bodyY: config.marginTop + config.bodyMarginTop + 6 }
+    const spacing = pageSpacing(config)
     const bottom = config.height - config.marginBottom
     let y = header.bodyY
     const pageGroups: ScorePage['groups'] = []
@@ -1251,10 +1248,10 @@ export function paginateVoiceGroups(
 export function continuousPageHeight(
   groups: ScorePage['groups'],
   metadata: Metadata,
-  config: ResolvedPageConfig,
+  config: NumberedNotationLayout,
 ): number {
   const header = renderHeader(metadata, config, new GlyphRegistry())
-  const spacing = pageSpacing(config, 1)
+  const spacing = pageSpacing(config)
   return Math.ceil(
     header.bodyY + groups.reduce((height, group) => height + groupAdvance(group, config, spacing), 0) + config.marginBottom,
   )
@@ -1263,16 +1260,15 @@ export function continuousPageHeight(
 function renderPage(
   page: ScorePage,
   metadata: Metadata,
-  config: ResolvedPageConfig,
-  customCode: string,
+  config: NumberedNotationLayout,
 ): string {
   const registry = new GlyphRegistry()
   const header =
     page.index === 0
       ? renderHeader(metadata, config, registry)
-      : { markup: [], bodyY: config.marginTop + config.bodyMarginTop + 10 }
+      : { markup: [], bodyY: config.marginTop + config.bodyMarginTop + 6 }
   const body: string[] = [...header.markup]
-  const spacing = pageSpacing(config, page.index + 1)
+  const spacing = pageSpacing(config)
   let y = header.bodyY
   let lineOrdinal = 1
   let graceOrdinal = 0
@@ -1284,13 +1280,13 @@ function renderPage(
       0,
       ...group.voices.map((voice) =>
         [...(voice.caption ?? '')].reduce(
-          (width, character) => width + (/^[\x00-\x7f]$/.test(character) ? 8 : 16),
+          (width, character) => width + (isAscii(character) ? 4.8 : 9.6),
           0,
         ),
       ),
     )
     const hasCaption = group.voices.some(({ caption }) => caption !== undefined && caption !== '')
-    const voiceColumnWidth = !multiVoice ? 0 : hasCaption ? 26 + captionWidth : 20
+    const voiceColumnWidth = !multiVoice ? 0 : hasCaption ? 15.6 + captionWidth : 12
     const hasExplicitVoiceBrace = group.voices.some(({ elements }) =>
       elements.some(
         (element) =>
@@ -1298,11 +1294,11 @@ function renderPage(
       ),
     )
     const startX =
-      config.marginLeft + 3 + (multiVoice && !hasExplicitVoiceBrace ? voiceColumnWidth : 0)
+      config.marginLeft + 1.8 + (multiVoice && !hasExplicitVoiceBrace ? voiceColumnWidth : 0)
     const layout = layoutVoiceGroup(
       group,
       startX,
-      config.width - config.marginRight + 3,
+      config.width - config.marginRight + 1.8,
       hasExplicitVoiceBrace ? voiceColumnWidth : 0,
       group.forceJustify,
     )
@@ -1314,7 +1310,7 @@ function renderPage(
       if (index === 0) firstY = y
       if (multiVoice) {
         body.push(
-          text(scoreLine.caption ?? '', (layout.voiceBraceX ?? startX) - 35, y, {
+          text(scoreLine.caption ?? '', (layout.voiceBraceX ?? startX) - 21, y, {
             font: config.lyricFont,
             size: config.lyricSize,
             anchor: 'end',
@@ -1345,47 +1341,25 @@ function renderPage(
       const braceX = layout.voiceBraceX ?? startX
       body.push(registry.use('shengbufu_shang', braceX, firstY))
       body.push(
-        `<line x1="${formatNumber(braceX - 25.5)}" y1="${formatNumber(firstY - 6.5)}" x2="${formatNumber(braceX - 25.5)}" y2="${formatNumber(lastY + 6.5)}" stroke-width="4" stroke="${INK}" fill="none"></line>`,
+        `<line x1="${formatNumber(braceX - 15.3)}" y1="${formatNumber(firstY - 3.9)}" x2="${formatNumber(braceX - 15.3)}" y2="${formatNumber(lastY + 3.9)}" stroke-width="2.4" stroke="${INK}" fill="none"></line>`,
       )
       body.push(
-        `<line x1="${formatNumber(braceX - 21)}" y1="${formatNumber(firstY - 8)}" x2="${formatNumber(braceX - 21)}" y2="${formatNumber(lastY + 8)}" stroke-width="2" stroke="${INK}" fill="none"></line>`,
+        `<line x1="${formatNumber(braceX - 12.6)}" y1="${formatNumber(firstY - 4.8)}" x2="${formatNumber(braceX - 12.6)}" y2="${formatNumber(lastY + 4.8)}" stroke-width="1.2" stroke="${INK}" fill="none"></line>`,
       )
       body.push(registry.use('shengbufu_xia', braceX, lastY))
     }
     if (multiVoice) y += spacing.voiceGap
   })
 
-  return `<svg width="${formatNumber(config.width)}" height="${formatNumber(config.height)}" version="1.1" viewBox="0 0 ${formatNumber(config.width)} ${formatNumber(config.height)}" encoding="UTF-8" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" height="100%" width="100%" fill="#ffffff"></rect>${registry.definitions()}\n${body.join('\n')}\n<g id="custom">${customCode}</g></svg>`
+  return `<svg width="${formatNumber(config.width)}" height="${formatNumber(config.height)}" version="1.1" viewBox="0 0 ${formatNumber(config.width)} ${formatNumber(config.height)}" encoding="UTF-8" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" height="100%" width="100%" fill="#ffffff"></rect>${registry.definitions()}\n${body.join('\n')}</svg>`
 }
 
-function splitCustomCode(customCode: string | null | undefined): string[] {
-  if (customCode === undefined || customCode === null || customCode === '') return []
-  return customCode.replaceAll('&hh&', '\n').split('[fenye]')
-}
-
-function renderPages(dsl: string, options: SvgRenderOptions): string[] {
-  if (dsl === '') return []
-  const document = parse(dsl)
-  const diagnostics: Diagnostic[] = [...document.diagnostics]
-  const config = resolvePageConfig(options.pageConfig, diagnostics)
-  const customPages = splitCustomCode(options.customCode)
-  options.onDiagnostics?.(diagnostics)
+export function renderNumberedNotationPages(
+  document: ScoreDocument,
+  layout: NumberedNotationLayout,
+): string[] {
   return document.pages.map((page) =>
-    renderPage(page, document.metadata, config, customPages[page.index] ?? ''),
-  )
-}
-
-/**
- * Renders an already-normalized document. This keeps the Open Fanqie layout
- * and SVG path independent from its DSL parser for host applications.
- */
-export function renderDocumentSvgPages(document: ScoreDocument, options: SvgRenderOptions = {}): string[] {
-  const diagnostics: Diagnostic[] = [...document.diagnostics]
-  const config = resolvePageConfig(options.pageConfig, diagnostics)
-  const customPages = splitCustomCode(options.customCode)
-  options.onDiagnostics?.(diagnostics)
-  return document.pages.map((page) =>
-    renderPage(page, document.metadata, config, customPages[page.index] ?? '').replace(
+    renderPage(page, document.metadata, layout).replace(
       '</defs>',
       `${NUMBERED_PLAYBACK_HIGHLIGHT_FILTER}</defs>`,
     ).replace(
@@ -1393,26 +1367,4 @@ export function renderDocumentSvgPages(document: ScoreDocument, options: SvgRend
       ' xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"',
     ),
   )
-}
-
-/** Render a Fanqie score as standalone SVG pages. */
-export function renderSvgPages(dsl: string, options: SvgRenderOptions = {}): string[] {
-  return renderPages(dsl, options).map((page) =>
-    page.replace(
-      ' xmlns="http://www.w3.org/2000/svg"',
-      ' xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"',
-    ),
-  )
-}
-
-/** Render a Fanqie score using the legacy API's SVG-page response format. */
-export function render(dsl: string, options: RenderOptions = {}): string {
-  const pages = renderPages(dsl, options)
-  if (pages.length === 0) return ''
-  const requestedPage = options.pageNum ?? -1
-  return `${pages
-    .map((page, pageIndex) =>
-      requestedPage !== -1 && requestedPage !== pageIndex ? 'noRedraw' : page,
-    )
-    .join('[fenye]')}[fenye]`
 }

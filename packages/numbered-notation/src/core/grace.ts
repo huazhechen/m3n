@@ -1,8 +1,8 @@
 import type { NoteElement } from './types.js'
 
-export const GRACE_NOTE_WIDTH = 7
-export const GRACE_ACCIDENTAL_NOTE_WIDTH = 12
-export const GRACE_ACCIDENTAL_INSET = 5
+export const GRACE_NOTE_WIDTH = 4.2
+export const GRACE_ACCIDENTAL_NOTE_WIDTH = 7.2
+export const GRACE_ACCIDENTAL_INSET = 3
 
 export interface GraceMetrics {
   positions: number[]
