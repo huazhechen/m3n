@@ -1320,11 +1320,11 @@ a.action-button {
 
 @container (max-width: 560px) {
   .audio-controls {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      "play metronome"
-      "speed progress"
-      "settings progress";
+      "play metronome settings"
+      "speed speed speed"
+      "progress progress progress";
     gap: 10px 14px;
   }
 
