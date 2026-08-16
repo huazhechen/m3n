@@ -17,7 +17,7 @@ export function headerMarkup(metadata: readonly ScoreHeaderMetadata[], width: nu
 
   for (const item of centered) {
     const title = item.priority === 0
-    const fontSize = title ? 36 : 17.6
+    const fontSize = title ? 32 : 16
     const lineHeight = title ? 43.2 : 23.76
     if (!title) y += 8
     lines.push(`<text x="${number(width / 2)}" y="${number(y + fontSize)}" text-anchor="middle" fill="${title ? '#20242b' : '#59616d'}" font-family="ui-serif, serif" font-size="${fontSize}" font-weight="${title ? '700' : '400'}">${escapeXml(item.value)}</text>`)
@@ -28,11 +28,11 @@ export function headerMarkup(metadata: readonly ScoreHeaderMetadata[], width: nu
   if (detailCount > 0) {
     y += 12
     for (let index = 0; index < detailCount; index += 1) {
-      const baseline = y + 16
+      const baseline = y + 14
       const leftValue = left[index]?.value
       const rightValue = right[index]?.value
-      if (leftValue) lines.push(`<text x="28" y="${number(baseline)}" fill="#30363e" font-family="system-ui, sans-serif" font-size="16">${escapeXml(leftValue)}</text>`)
-      if (rightValue) lines.push(`<text x="${number(width - 28)}" y="${number(baseline)}" text-anchor="end" fill="#30363e" font-family="system-ui, sans-serif" font-size="16">${escapeXml(rightValue)}</text>`)
+      if (leftValue) lines.push(`<text x="28" y="${number(baseline)}" fill="#30363e" font-family="system-ui, sans-serif" font-size="14">${escapeXml(leftValue)}</text>`)
+      if (rightValue) lines.push(`<text x="${number(width - 28)}" y="${number(baseline)}" text-anchor="end" fill="#30363e" font-family="system-ui, sans-serif" font-size="14">${escapeXml(rightValue)}</text>`)
       y += 20.8 + (index < detailCount - 1 ? 6 : 0)
     }
   }

@@ -235,7 +235,7 @@ function renderHeader(
       ),
     )
   })
-  const titleOffset = config.titleSize - 36
+  const titleOffset = config.titleSize - 32
   const infoY = config.marginTop + 96 + titleOffset
   markup.push(...modeHeader(metadata, config, registry, infoY))
   const authorSize = config.authorSize

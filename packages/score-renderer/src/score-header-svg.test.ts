@@ -9,6 +9,8 @@ describe('score SVG header', () => {
     ])
 
     expect(svg).toContain('<g class="m3n-score-header">')
+    expect(svg).toContain('font-size="32"')
+    expect(svg).toContain('font-size="14"')
     expect(svg).toContain('>Title</text>')
     expect(svg).toContain('viewBox="0 0 800 212"')
     expect(svg).toContain('class="definition-scale" viewBox="0 0 19050 2380" x="0" y="112" width="800" height="100"')

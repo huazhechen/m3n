@@ -44,7 +44,7 @@ describe('NumberedNotationScore', () => {
     )
 
     expect(svg).toContain('<svg width="800"')
-    expect(svg).toContain('font-size="36"')
+    expect(svg).toContain('font-size="32"')
     expect(svg).toMatch(/id="m3n-e-1"[^>]*transform="[^"]*scale\(0.6\)/)
   })
 
@@ -193,8 +193,8 @@ describe('NumberedNotationScore', () => {
     const [svg] = renderScore(document, { paged: true, width: 1000 })
 
     expect(svg).toContain('xlink:href="#jiepaifu"')
-    expect(svg).toMatch(/font-size="17.6"[^>]*>副标题<\/text>/)
-    expect(svg).toMatch(/font-size="16"[^>]*>演唱者<\/text>/)
+    expect(svg).toMatch(/font-size="16"[^>]*>副标题<\/text>/)
+    expect(svg).toMatch(/font-size="14"[^>]*>演唱者<\/text>/)
     expect(svg).toMatch(/font-size="16"[^>]*data-jiepai="90">90<\/text>/)
     expect(svg).toContain('>演唱者</text>')
     expect(svg).not.toContain('>作曲者</text>')
