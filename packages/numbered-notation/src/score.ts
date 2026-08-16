@@ -26,7 +26,8 @@ export type NumberedNotationRenderOptions = {
 }
 
 type EventEntry = { event: ScoreEvent; index: number; lastIndex: number }
-type LyricsByEvent = Map<ScoreEvent, string[][]>
+type LyricTarget = { event: ScoreEvent; slot: number; tie: boolean }
+type LyricsByEvent = Map<ScoreEvent, Map<number, string[][]>>
 
 function location(event: ScoreEvent) {
   return { line: 1, column: event.sourceStart + 1, offset: event.sourceStart, length: event.sourceEnd - event.sourceStart }
@@ -111,9 +112,16 @@ function barline(measure: ScoreMeasure, fallback: boolean): BarlineElement {
 
 function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
   // Rests hold horizontal space, but never consume a lyric syllable.
-  const targetEvents = [...document.parts.values()].flatMap((part) => part.melody
+  const targetEvents: LyricTarget[] = [...document.parts.values()].flatMap((part) => part.melody
     .flatMap((measure) => measure.events)
-    .filter((event) => event.kind !== 'rest'))
+    .filter((event) => event.kind !== 'rest')
+    .flatMap((event) => event.kind === 'tuplet'
+      ? event.pitches.flatMap((pitch, slot) => pitch === '0' ? [] : [{
+          event,
+          slot,
+          tie: event.tie && slot === event.tieFromTupletIndex,
+        }])
+      : [{ event, slot: 0, tie: event.tie }]))
   const result: LyricsByEvent = new Map()
   document.lyrics.forEach((block) => {
     const numbered = /^\d+$/.exec(block.range)
@@ -121,7 +129,7 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     // This mirrors the MEI projection: generic L: is verse 1, while L2: and
     // lyrics limited to V2 use their explicit pass row.
     const row = Math.max(0, Number(numbered?.[0] ?? pass?.[1] ?? 1) - 1)
-    const targets = targetEvents.filter((event) => block.targetStart === undefined || block.targetEnd === undefined || (event.sourceStart >= block.targetStart && event.sourceEnd <= block.targetEnd))
+    const targets = targetEvents.filter(({ event }) => block.targetStart === undefined || block.targetEnd === undefined || (event.sourceStart >= block.targetStart && event.sourceEnd <= block.targetEnd))
     let targetIndex = 0
     block.syllables.forEach((syllable) => {
       // A regular lyric item belongs to the first event of a tied chain and
@@ -133,22 +141,26 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const target = targets[targetIndex]
       targetIndex += 1
       if (!target || syllable.kind !== 'text') return
-      const rows = result.get(target) ?? []
+      const slots = result.get(target.event) ?? new Map<number, string[][]>()
+      const rows = slots.get(target.slot) ?? []
       rows[row] = [...(rows[row] ?? []), syllable.text]
-      result.set(target, rows)
+      slots.set(target.slot, rows)
+      result.set(target.event, slots)
     })
   })
   return result
 }
 
 function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
-  const activeRows = new Set(entries.flatMap(({ event }) => (lyrics.get(event) ?? []).flatMap((_, row) => lyrics.get(event)?.[row]?.length ? [row] : [])))
+  const activeRows = new Set(entries.flatMap(({ event }) => [...(lyrics.get(event)?.values() ?? [])].flatMap((rows) => rows.flatMap((_, row) => rows[row]?.length ? [row] : []))))
   return [...activeRows].sort((left, right) => left - right).map((row) => ({
     rendition: row + 1,
-    syllables: entries.flatMap(({ event, index, lastIndex }) => [
-      { text: lyrics.get(event)?.[row]?.join('') ?? '', source: location(event) },
-      ...Array.from({ length: lastIndex - index }, () => ({ text: '', source: location(event) })),
-    ]),
+    syllables: entries.flatMap(({ event, index, lastIndex }) => {
+      const slots = lyrics.get(event)
+      const count = lastIndex - index + 1
+      if (event.kind !== 'tuplet') return [{ text: slots?.get(0)?.[row]?.join('') ?? '', source: location(event) }]
+      return Array.from({ length: count }, (_, slot) => ({ text: slots?.get(slot)?.[row]?.join('') ?? '', source: location(event) }))
+    }),
     source: { line: 1, column: 1, offset: 0, length: 0 },
   }))
 }

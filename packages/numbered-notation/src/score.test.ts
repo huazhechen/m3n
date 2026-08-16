@@ -281,6 +281,16 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('xlink:href="#lianyin_shuzi_3"')
   })
 
+  it('aligns each tuplet note with its own lyric syllable', () => {
+    const document = parseM3NDocument('{4/4}\nN: [123:2] 4 |||\nL: 一 二 三 四')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+
+    expect(svg).toMatch(/cipos="0_1_1"[^>]*>一<\/text>/)
+    expect(svg).toMatch(/cipos="0_1_2"[^>]*>二<\/text>/)
+    expect(svg).toMatch(/cipos="0_1_3"[^>]*>三<\/text>/)
+    expect(svg).toMatch(/cipos="0_1_4"[^>]*>四<\/text>/)
+  })
+
   it('uses MEI playback IDs for every voice and tuplet child', () => {
     const document = parseM3NDocument('{2/4}\nN: [123:2] 4 | 5 6 |||\nB: 1 2 | 3 4 |||')
     const [svg] = renderScore(document, { paged: false, width: 1000 })

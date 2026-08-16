@@ -31,7 +31,7 @@ export function normalizePlaybackElementId(id: string): TimedScoreElement {
   return {
     // Verovio reports a note inside a chord as `m3n-e-12-v2`; the numbered
     // renderer deliberately binds the complete chord (and its lyric) to e-12.
-    xmlId: id.replace(/-rend\d+$/, '').replace(/-v\d+$/, ''),
+    xmlId: id.replace(/-rend\d+$/, '').replace(/-v\d+$/, '').replace(/-n\d+$/, ''),
     rendition: Number(match?.[1] ?? 1),
   }
 }

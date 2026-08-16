@@ -36,6 +36,10 @@ describe('VerovioScore layout', () => {
     expect(normalizePlaybackElementId('m3n-e-12-v2-rend3')).toEqual({ xmlId: 'm3n-e-12', rendition: 3 })
   })
 
+  it('maps tuplet-child playback IDs back to their parent event', () => {
+    expect(normalizePlaybackElementId('m3n-e-12-n2')).toEqual({ xmlId: 'm3n-e-12', rendition: 1 })
+  })
+
   it('renders cautionary naturals when changing from A major to C major', async () => {
     const toolkit = new VerovioToolkit(await createVerovioModule())
     try {
