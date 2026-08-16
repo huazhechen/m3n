@@ -809,6 +809,7 @@ textarea::selection {
 }
 
 .score-paper[data-notation="numbered"] .is-playing {
+  stroke: none;
   filter: url("#m3n-playback-highlight");
 }
 
