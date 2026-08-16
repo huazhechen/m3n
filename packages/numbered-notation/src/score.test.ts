@@ -315,6 +315,14 @@ describe('NumberedNotationScore', () => {
     expect(svg).not.toContain('>作词者</text>')
   })
 
+  it('renders an in-line key change at its musical position', () => {
+    const document = parseM3NDocument('{key=A} {2/4}\nN: 1 | {key=Bb} 2 3 |||')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+
+    expect(svg).toContain('>B</text>')
+    expect(svg).toContain('>b</text>')
+  })
+
   it('uses Verovio’s metNoteQuarterUp glyph when its music font is supplied', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {4/4} {90qpm}\nN: 1 2 3 4 |||'),

@@ -109,6 +109,16 @@ function staffTempoGlyph(x: number, y: number): string {
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="30.24">&#xECA5;</text>`
 }
 
+function keyChangeLabel(key: string, x: number, y: number): string[] {
+  const letter = key.match(/[A-G]/)?.[0] ?? 'C'
+  const accidental = key.match(/[#$b]/)?.[0]
+  const output = [text('1', x, y, { font: 'system-ui, sans-serif', size: 14, dy: 0 })]
+  output.push(text('=', x + 10.5, y, { font: 'system-ui, sans-serif', size: 13, dy: 0 }))
+  output.push(text(letter, x + (accidental === undefined ? 22 : 27), y, { font: 'system-ui, sans-serif', size: 14, dy: 0 }))
+  if (accidental !== undefined) output.push(text(accidental, x + 20, y - 4, { font: 'system-ui, sans-serif', size: 9, dy: 0 }))
+  return output
+}
+
 const LEIPZIG_ORNAMENTS: Readonly<Partial<Record<Ornament['name'], string>>> = {
   ppp: '&#xE520;&#xE520;&#xE520;',
   pp: '&#xE520;&#xE520;',
@@ -545,6 +555,9 @@ function renderNote(
           extra: { 'xml:space': 'preserve' },
         }),
       )
+    }
+    if (note.keyChange !== undefined) {
+      output.push(...keyChangeLabel(note.keyChange, x - 14, noteY - 19))
     }
     output.push(...renderOrnaments(note.ornaments, x, noteY, registry, config, {
       ...ornamentContext,
@@ -1315,6 +1328,7 @@ function lineTopPadding(line: ScoreLine): number {
               ? 34 + chordTopClearance(element)
               : 0,
             element.annotation === undefined ? 0 : 30 + chordTopClearance(element),
+            element.keyChange === undefined ? 0 : 28 + chordTopClearance(element),
           ]
         : element.kind === 'sustain' && element.ornaments.some((ornament) => DYNAMIC_ORNAMENTS.has(ornament.name))
           ? [60]

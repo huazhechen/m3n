@@ -73,6 +73,7 @@ function note(
   value = event.pitches[0] ?? '0',
   m3nDataId = id,
   includeGrace = true,
+  keyChange?: string,
 ): NoteElement {
   const rendered = pitch(value)
   const time = duration(beats)
@@ -85,6 +86,7 @@ function note(
     ...time,
     ornaments: ornaments(event),
     annotation: event.text ?? event.chord ?? event.sectionLabel,
+    keyChange,
     code: value,
     m3nId: id,
     m3nDataId,
@@ -171,10 +173,12 @@ function lineForMeasures(
   voice: number,
   ids: ReadonlyMap<ScoreEvent, string>,
   endingContinuation = { fromPrevious: false, toNext: false },
+  initialKey = 'C',
 ): ScoreLine {
   const elements: MusicElement[] = []
   const entries: EventEntry[] = []
   const measureRanges: Array<{ measure: ScoreMeasure; start: number; end: number }> = []
+  let activeKey = initialKey
   // The direct ScoreDocument keeps the parser's post-bar placeholder measure.
   // It carries no musical or boundary semantics and must not become an empty
   // rendered measure after the final barline/repeat barline.
@@ -197,11 +201,13 @@ function lineForMeasures(
     }
     measure.events.forEach((event) => {
       const index = elements.length
+      const keyChange = event.key === activeKey ? undefined : event.key
+      activeKey = event.key
       if (event.kind === 'tuplet' && event.tuplet) {
         const eventId = ids.get(event)
         const tuplet = event.tuplet
         event.pitches.forEach((value, tupletIndex) => {
-          elements.push(note(event, eventId === undefined ? undefined : `${eventId}-n${tupletIndex + 1}`, tuplet.unitBeats, value, eventId))
+          elements.push(note(event, eventId === undefined ? undefined : `${eventId}-n${tupletIndex + 1}`, tuplet.unitBeats, value, eventId, true, tupletIndex === 0 ? keyChange : undefined))
         })
         entries.push({ event, index, lastIndex: elements.length - 1 })
         return
@@ -210,7 +216,7 @@ function lineForMeasures(
       // Keep a fractional first beat on the note itself so dotted values retain
       // their augmentation dots; whole beats after it remain sustain symbols.
       const noteBeats = Number.isInteger(event.beats) ? 1 : Math.min(1.75, event.beats)
-      elements.push(note(event, ids.get(event), noteBeats))
+      elements.push(note(event, ids.get(event), noteBeats, undefined, undefined, true, keyChange))
       const sustainCount = Math.max(0, Math.floor(event.beats - noteBeats + 1e-7))
       for (let sustain = 0; sustain < sustainCount; sustain += 1) {
         elements.push({
@@ -308,11 +314,21 @@ function groupForMeasures(
   intervals: readonly ScoreInterval[],
   ids: ReadonlyMap<ScoreEvent, string>,
   endingContinuation?: { fromPrevious: boolean; toNext: boolean },
+  initialKey?: string,
 ): VoiceGroup {
-  const lines = [lineForMeasures(melody, lyrics, 1, ids, endingContinuation)]
-  if (bass.some((measure) => measure.events.length > 0 || measure.multiRest)) lines.push(lineForMeasures(bass, lyrics, 2, ids))
+  const lines = [lineForMeasures(melody, lyrics, 1, ids, endingContinuation, initialKey)]
+  if (bass.some((measure) => measure.events.length > 0 || measure.multiRest)) lines.push(lineForMeasures(bass, lyrics, 2, ids, undefined, initialKey))
   addIntervals(lines, intervals)
   return { index: 0, voices: lines }
+}
+
+function keyBeforeMeasure(measures: readonly ScoreMeasure[], index: number, fallback: string) {
+  for (let measureIndex = index - 1; measureIndex >= 0; measureIndex -= 1) {
+    const events = measures[measureIndex]?.events
+    const key = events?.at(-1)?.key
+    if (key !== undefined) return key
+  }
+  return fallback
 }
 
 function systemGroups(document: ScoreDocument, width: number) {
@@ -341,6 +357,7 @@ function systemGroups(document: ScoreDocument, width: number) {
           fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
           toNext: part.melody[end + 1]?.ending !== undefined && part.melody[end + 1]?.ending === part.melody[end]?.ending,
         },
+        keyBeforeMeasure(part.melody, start, document.key),
       )
       // Measure with the original engine before its justified-fit pass. Asking
       // for an infinite right edge preserves its natural width for wrapping.
@@ -358,6 +375,7 @@ function systemGroups(document: ScoreDocument, width: number) {
         fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
         toNext: part.melody[end]?.ending !== undefined && part.melody[end]?.ending === part.melody[end - 1]?.ending,
       },
+      keyBeforeMeasure(part.melody, start, document.key),
     )
     if (forceJustify) group.forceJustify = true
     groups.push(group)

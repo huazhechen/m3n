@@ -53,6 +53,8 @@ export interface NoteElement {
   graceBefore?: NoteElement[]
   graceAfter?: NoteElement[]
   annotation?: string
+  /** Key signature announced immediately before this event. */
+  keyChange?: string
   code: string
   /** Host-owned stable event ID. */
   m3nId?: string
