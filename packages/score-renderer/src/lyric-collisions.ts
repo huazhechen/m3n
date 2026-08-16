@@ -71,9 +71,7 @@ export function resolveLyricCollisions(paper: HTMLElement) {
           const bounds = obstacle.getBBox()
           const lyricTop = lyric.bounds.y + lyric.lineOffset
           const overlapsHorizontally = lyric.bounds.x < bounds.x + bounds.width && lyric.bounds.x + lyric.bounds.width > bounds.x
-          // A full lyric x-height keeps descenders and dense note groups from
-          // reading as a collision at normal score widths.
-          const requiredLyricTop = bounds.y + bounds.height + lyric.lineHeight
+          const requiredLyricTop = bounds.y + bounds.height + lyric.lineHeight * 0.4
           if (overlapsHorizontally && bounds.y < lyricTop && lyricTop < requiredLyricTop) {
             lyricOffset = Math.max(lyricOffset, requiredLyricTop - lyricTop)
           }
