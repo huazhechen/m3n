@@ -12,6 +12,7 @@ import {
 import { graceMetrics } from './grace.js'
 import { layoutVoiceGroup, type LineLayout, type PositionedElement } from './layout.js'
 import { playbackTime } from './timing.js'
+import { scoreHeaderLayout, type ScoreHeaderMetadata } from '@m3n/notation'
 import type {
   BarlineElement,
   InlineLayerElement,
@@ -122,11 +123,12 @@ function modeHeader(
   const output: string[] = []
   const glyphScale = config.headerGlyphScale
   const spacingScale = 0.6
+  const keySpacingScale = Math.max(spacingScale, glyphScale)
   let x = config.marginLeft
   if (metadata.mode !== undefined) {
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
-    const modeX = x + (accidental === undefined ? 40 : 45) * spacingScale
+    const modeX = x + (accidental === undefined ? 40 : 45) * keySpacingScale
     output.push(scaledGlyph(registry, 'diaohao_fu', x, y, glyphScale))
     if (accidental !== undefined) {
       output.push(
@@ -139,7 +141,7 @@ function modeHeader(
         'data-diaohao': 'true',
       }),
     )
-    x += (accidental === undefined ? 50 : 55) * spacingScale
+    x += (accidental === undefined ? 50 : 55) * keySpacingScale
   }
 
   metadata.meters.forEach((meter, index) => {
@@ -178,14 +180,14 @@ function modeHeader(
   })
 
   metadata.tempos.forEach((tempo, index) => {
-    const tempoY = y + 40 + index * 22
+    const tempoY = y - 13 + index * 22
     if (typeof tempo === 'number') {
       output.push(scaledGlyph(registry, 'jiepaifu', config.marginLeft, tempoY, 0.78 * glyphScale))
       output.push(
-        text(String(tempo), config.marginLeft + 27, tempoY + 1, {
+        text(`= ${String(tempo)}`, config.marginLeft + 27, tempoY, {
           font: 'system-ui, sans-serif',
           size: config.tempoSize,
-          dy: 0.3355 * config.tempoSize,
+          dy: 0,
           extra: { 'data-jiepai': tempo },
         }),
       )
@@ -194,7 +196,7 @@ function modeHeader(
         text(tempo, config.marginLeft, tempoY, {
           font: 'system-ui, sans-serif',
           size: config.tempoSize,
-          dy: 0.3355 * config.tempoSize,
+          dy: 0,
         }),
       )
     }
@@ -207,60 +209,29 @@ function renderHeader(
   config: NumberedNotationLayout,
   registry: GlyphRegistry,
 ): { markup: string[]; bodyY: number } {
-  const markup: string[] = []
-  if (metadata.titles.length === 0) {
-    return { markup, bodyY: config.marginTop + config.bodyMarginTop + 6 }
+  const headerMetadata: ScoreHeaderMetadata[] = [
+    ...metadata.titles.map((value, priority) => ({ value, side: 'center' as const, priority: priority * 10 })),
+    ...metadata.authors.map((value, index) => ({ value, side: 'right' as const, priority: 20 + index })),
+  ]
+  if (headerMetadata.length === 0) {
+    return { markup: [], bodyY: config.marginTop + config.bodyMarginTop + 6 }
   }
-  const titleY = 60
-  const [mainTitle, ...subtitles] = metadata.titles
-  if (mainTitle !== undefined) {
-    markup.push(
-      text(mainTitle, config.width / 2, titleY, {
-        font: 'ui-serif, serif',
-        size: config.titleSize,
-        anchor: 'middle',
-        bold: true,
-        dy: 0,
-      }),
-    )
-  }
-  subtitles.forEach((subtitle, index) => {
-    markup.push(
-      text(
-        subtitle,
-        config.width / 2,
-        95 + index * (config.subtitleSize + 16),
-        {
-          font: 'ui-serif, serif',
-          size: config.subtitleSize,
-          anchor: 'middle',
-          dy: 0,
-        },
-      ),
-    )
-  })
-  const infoY = 144
-  markup.push(...modeHeader(metadata, config, registry, infoY))
-  const authorSize = config.authorSize
-  const authorBottomY =
-    129 + Math.max(0, metadata.authors.length - 1) * 26
-  ;[...metadata.authors]
-    .map((author, index) => ({ author, index }))
-    .reverse()
-    .forEach(({ author, index }) => {
-      const authorY = authorBottomY - (metadata.authors.length - 1 - index) * (authorSize + 5)
-      markup.push(
-        text(author, config.width - 28, authorY, {
-          font: 'system-ui, sans-serif',
-          size: authorSize,
-          anchor: 'end',
-          dy: 0,
-        }),
-      )
+  const header = scoreHeaderLayout(headerMetadata, config.width)
+  const markup = header.lines.map((line) => (
+    text(line.value, line.x, line.y, {
+      font: line.font,
+      size: line.size,
+      anchor: line.anchor,
+      bold: line.bold,
+      fill: line.fill,
+      dy: 0,
     })
+  ))
+  const infoY = header.height + 37
+  markup.push(...modeHeader(metadata, config, registry, infoY))
   return {
     markup,
-    bodyY: infoY + config.bodyMarginTop + 20 + (metadata.tempos.length > 0 ? 30 : 0),
+    bodyY: header.height + (metadata.tempos.length > 0 ? 62 : 52),
   }
 }
 

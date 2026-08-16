@@ -195,7 +195,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('xlink:href="#jiepaifu"')
     expect(svg).toMatch(/font-size="16"[^>]*>副标题<\/text>/)
     expect(svg).toMatch(/font-size="14"[^>]*>演唱者<\/text>/)
-    expect(svg).toMatch(/font-size="16"[^>]*data-jiepai="90">90<\/text>/)
+    expect(svg).toMatch(/font-size="16"[^>]*data-jiepai="90">= 90<\/text>/)
     expect(svg).toContain('>演唱者</text>')
     expect(svg).not.toContain('>作曲者</text>')
     expect(svg).not.toContain('>作词者</text>')
@@ -205,9 +205,22 @@ describe('NumberedNotationScore', () => {
     const [svg] = renderScore(parseM3NDocument('{title=测试曲} {subtitle=副标题} {composer=作曲者} {key=D} {3/4}\nN: 1 2 3 4 |||'), { paged: true, width: 1000 })
 
     expect(svg).toMatch(/x="500" y="60" dy="0"[^>]*font-size="32"[^>]*font-family="ui-serif, serif"[^>]*>测试曲<\/text>/)
-    expect(svg).toMatch(/x="500" y="95" dy="0"[^>]*font-size="16"[^>]*font-family="ui-serif, serif"[^>]*>副标题<\/text>/)
-    expect(svg).toMatch(/x="972" y="129" dy="0"[^>]*font-size="14"[^>]*font-family="system-ui, sans-serif"[^>]*>作曲者<\/text>/)
+    expect(svg).toMatch(/x="500" y="95.2" dy="0"[^>]*font-size="16"[^>]*font-family="ui-serif, serif"[^>]*>副标题<\/text>/)
+    expect(svg).toMatch(/x="972" y="128.96" dy="0"[^>]*font-size="14"[^>]*font-family="system-ui, sans-serif"[^>]*>作曲者<\/text>/)
     expect(svg).toContain('scale(0.8)')
+  })
+
+  it('aligns Xiao Xing Xing speed, header, and first note with the 800px staff score', () => {
+    const source = readFileSync(new URL('../../../src/scores/xiao_xing_xing_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })
+
+    expect(svg).toContain('x="400" y="60" dy="0"')
+    expect(svg).toContain('x="772" y="97.2" dy="0"')
+    expect(svg).toContain('x="75" y="136" dy="0"')
+    expect(svg).toContain('data-jiepai="100">= 100</text>')
+    expect(svg).toMatch(/y="179.4"[^>]*id="m3n-e-1"/)
+    expect(svg).toContain('x="80" y="149" xlink:href="#diaohao_zimu_c"')
+    expect(svg).toContain('x="88" y="149" xlink:href="#paihao_xian"')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {

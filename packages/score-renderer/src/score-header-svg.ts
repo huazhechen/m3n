@@ -1,4 +1,4 @@
-import type { ScoreHeaderMetadata } from '@m3n/notation'
+import { scoreHeaderLayout, type ScoreHeaderMetadata } from '@m3n/notation'
 
 function escapeXml(value: string) {
   return value.replace(/[&<>"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character] ?? character)
@@ -9,39 +9,15 @@ function number(value: number) {
 }
 
 export function headerMarkup(metadata: readonly ScoreHeaderMetadata[], width: number) {
-  const centered = metadata.filter((item) => item.side === 'center').sort((left, right) => left.priority - right.priority)
-  const left = metadata.filter((item) => item.side === 'left').sort((left, right) => left.priority - right.priority)
-  const right = metadata.filter((item) => item.side === 'right').sort((left, right) => left.priority - right.priority)
-  const lines: string[] = []
-  let y = 28
-
-  for (const item of centered) {
-    const title = item.priority === 0
-    const fontSize = title ? 32 : 16
-    const lineHeight = title ? 43.2 : 23.76
-    if (!title) y += 8
-    lines.push(`<text x="${number(width / 2)}" y="${number(y + fontSize)}" text-anchor="middle" fill="${title ? '#20242b' : '#59616d'}" font-family="ui-serif, serif" font-size="${fontSize}" font-weight="${title ? '700' : '400'}">${escapeXml(item.value)}</text>`)
-    y += lineHeight
-  }
-
-  const detailCount = Math.max(left.length, right.length)
-  if (detailCount > 0) {
-    y += 12
-    for (let index = 0; index < detailCount; index += 1) {
-      const baseline = y + 14
-      const leftValue = left[index]?.value
-      const rightValue = right[index]?.value
-      if (leftValue) lines.push(`<text x="28" y="${number(baseline)}" fill="#30363e" font-family="system-ui, sans-serif" font-size="14">${escapeXml(leftValue)}</text>`)
-      if (rightValue) lines.push(`<text x="${number(width - 28)}" y="${number(baseline)}" text-anchor="end" fill="#30363e" font-family="system-ui, sans-serif" font-size="14">${escapeXml(rightValue)}</text>`)
-      y += 20.8 + (index < detailCount - 1 ? 6 : 0)
-    }
-  }
-
-  return { markup: `<g class="m3n-score-header">${lines.join('')}</g>`, height: number(y + 8) }
+  const layout = scoreHeaderLayout(metadata, width)
+  const lines = layout.lines.map((line) => (
+    `<text x="${number(line.x)}" y="${number(line.y)}"${line.anchor === undefined ? '' : ` text-anchor="${line.anchor}"`} fill="${line.fill}" font-family="${line.font}" font-size="${line.size}" font-weight="${line.bold ? '700' : '400'}">${escapeXml(line.value)}</text>`
+  ))
+  return { markup: `<g class="m3n-score-header">${lines.join('')}</g>`, height: layout.height }
 }
 
 export function scoreHeaderHeight(metadata: readonly ScoreHeaderMetadata[]) {
-  return metadata.length === 0 ? 0 : headerMarkup(metadata, 0).height
+  return scoreHeaderLayout(metadata, 0).height
 }
 
 /** Applies a score header to any SVG with a numeric viewBox. */
