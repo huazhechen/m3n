@@ -19,7 +19,7 @@ describe('NumberedNotationScore', () => {
     expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(400)
     expect(svg).toContain('>1=D</text>')
     expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
-    expect(svg).toContain('id="shuzi_b_bian_1" transform="translate(-50.56,-50)"')
+    expect(svg).toContain('id="shuzi_b_bian_1" transform="translate(-51,-50)"')
     expect(svg).toContain('font-family="Microsoft YaHei"')
     expect(svg).toContain('id="m3n-e-1"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
