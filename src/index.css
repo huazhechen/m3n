@@ -1318,7 +1318,7 @@ a.action-button {
   text-align: right;
 }
 
-@container (max-width: 560px) {
+@container (max-width: 720px) {
   .audio-controls {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
@@ -1705,15 +1705,12 @@ a.action-button {
     width: min(100vw - 18px, 1440px);
   }
 
-  .top-nav,
   .pane-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .top-nav nav,
-  .toolbar-actions,
-  .score-reader-actions {
+  .toolbar-actions {
     justify-content: flex-start;
   }
 
