@@ -62,9 +62,9 @@ export function resolveLyricCollisions(paper: HTMLElement) {
           const bounds = obstacle.getBBox()
           const lyricTop = lyric.bounds.y + lyric.lineOffset
           const overlapsHorizontally = lyric.bounds.x < bounds.x + bounds.width && lyric.bounds.x + lyric.bounds.width > bounds.x
-          const overlapsVertically = lyricTop < bounds.y + bounds.height && lyricTop + lyric.bounds.height > bounds.y
-          if (overlapsHorizontally && overlapsVertically && bounds.y < lyricTop) {
-            lyricOffset = Math.max(lyricOffset, bounds.y + bounds.height - lyricTop + lyric.lineHeight * 0.2)
+          const requiredLyricTop = bounds.y + bounds.height + lyric.lineHeight * 0.4
+          if (overlapsHorizontally && bounds.y < lyricTop && lyricTop < requiredLyricTop) {
+            lyricOffset = Math.max(lyricOffset, requiredLyricTop - lyricTop)
           }
         }
       }
