@@ -41,6 +41,14 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('>了</text>')
   })
 
+  it('renders extended rests as rests rather than sustain marks', () => {
+    const document = parseM3NDocument('{4/4}\nN: 0^ 1 2 3 |||')
+    const [svg] = renderScore(document, { paged: false, width: 800 })
+
+    expect(svg.match(/xlink:href="#shuzi_b_bian_0"/g)).toHaveLength(2)
+    expect(svg).not.toContain('xlink:href="#yanyinfu"')
+  })
+
   it('uses compact glyph definitions without changing its requested page width', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),

@@ -213,6 +213,22 @@ function lineForMeasures(
         return
       }
       entries.push({ event, index, lastIndex: index })
+      // Rests must not borrow the sustain mark (`-`). Expand whole beats to
+      // individual rest symbols and retain only a fractional final duration
+      // on the final rest glyph.
+      if (event.kind === 'rest') {
+        let remaining = event.beats
+        let first = true
+        while (remaining >= 1 - 1e-7) {
+          elements.push(note(event, ids.get(event), 1, undefined, undefined, false, first ? keyChange : undefined))
+          remaining -= 1
+          first = false
+        }
+        if (remaining > 1e-7) {
+          elements.push(note(event, ids.get(event), remaining, undefined, undefined, false, first ? keyChange : undefined))
+        }
+        return
+      }
       // Keep a fractional first beat on the note itself so dotted values retain
       // their augmentation dots; whole beats after it remain sustain symbols.
       const noteBeats = Number.isInteger(event.beats) ? 1 : Math.min(1.75, event.beats)
@@ -348,9 +364,22 @@ function systemGroups(document: ScoreDocument, width: number) {
   const groups: VoiceGroup[] = []
   let start = 0
   while (start < part.melody.length) {
+    // Explicit `br` markers set a preferred system boundary. Within that
+    // range, though, balance auto-wrapped measures rather than orphaning the
+    // final measure on its own line.
+    let boundaryEnd = part.melody.length
+    for (let measure = start; measure < part.melody.length; measure += 1) {
+      if (measure > start && part.melody[measure]?.breakBefore) {
+        boundaryEnd = measure
+        break
+      }
+      if (part.melody[measure]?.breakAfter) {
+        boundaryEnd = measure + 1
+        break
+      }
+    }
     let end = start
-    let forceJustify = false
-    while (end < part.melody.length) {
+    while (end < boundaryEnd) {
       const candidate = groupForMeasures(
         part.melody.slice(start, end + 1), part.bass.slice(start, end + 1), lyrics, document.intervals, ids,
         {
@@ -362,13 +391,10 @@ function systemGroups(document: ScoreDocument, width: number) {
       // Measure with the original engine before its justified-fit pass. Asking
       // for an infinite right edge preserves its natural width for wrapping.
       const layout = layoutVoiceGroup(candidate, 83, Number.POSITIVE_INFINITY)
-      if (end > start && (layout.endX > width - 77 || part.melody[end]?.breakBefore)) {
-        forceJustify = layout.endX > width - 77
-        break
-      }
+      if (end > start && layout.endX > width - 77) break
       end += 1
-      if (part.melody[end - 1]?.breakAfter) break
     }
+    if (end < boundaryEnd && boundaryEnd - end === 1 && end - start >= 2) end -= 1
     const group = groupForMeasures(
       part.melody.slice(start, end), part.bass.slice(start, end), lyrics, document.intervals, ids,
       {
@@ -377,10 +403,12 @@ function systemGroups(document: ScoreDocument, width: number) {
       },
       keyBeforeMeasure(part.melody, start, document.key),
     )
-    if (forceJustify) group.forceJustify = true
     groups.push(group)
     start = end
   }
+  // Every non-final system should use the available measure width, including
+  // systems that were split at a source-level line-break preference.
+  groups.slice(0, -1).forEach((group) => { group.forceJustify = true })
   return groups
 }
 
