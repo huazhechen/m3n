@@ -188,6 +188,14 @@ describe('NumberedNotationScore', () => {
     expect(svg).not.toContain('cipos="0_1_2">春</text>')
   })
 
+  it('does not let placeholder lyrics consume tied continuations', () => {
+    const document = parseM3NDocument('{4/4}\nN: 1~ 1 2 3 |||\nL: 春 % 天')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+
+    expect(svg).toMatch(/cipos="0_1_1"[^>]*>春<\/text>/)
+    expect(svg).toMatch(/cipos="0_1_4"[^>]*>天<\/text>/)
+  })
+
   it('renders every complete beat after a long note as an numbered notation sustain glyph', () => {
     const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 |||')
     const first = document.parts.get('score')?.melody[0]?.events[0]

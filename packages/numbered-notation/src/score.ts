@@ -124,15 +124,18 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     const targets = targetEvents.filter((event) => block.targetStart === undefined || block.targetEnd === undefined || (event.sourceStart >= block.targetStart && event.sourceEnd <= block.targetEnd))
     let targetIndex = 0
     block.syllables.forEach((syllable) => {
+      // A regular lyric item belongs to the first event of a tied chain and
+      // must not consume any continuation events. Forced `+` lyrics are the
+      // explicit exception and may target a continuation event directly.
+      if (!syllable.forceTiedTarget) {
+        while (targets[targetIndex - 1]?.tie) targetIndex += 1
+      }
       const target = targets[targetIndex]
       targetIndex += 1
       if (!target || syllable.kind !== 'text') return
       const rows = result.get(target) ?? []
       rows[row] = [...(rows[row] ?? []), syllable.text]
       result.set(target, rows)
-      if (!syllable.forceTiedTarget) {
-        while (targets[targetIndex - 1]?.tie) targetIndex += 1
-      }
     })
   })
   return result
