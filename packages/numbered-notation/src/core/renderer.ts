@@ -644,9 +644,9 @@ function renderUnderlines(
         if (first !== undefined && last !== undefined) {
           // Duration underlines retain their native visual weight and span.
           // Only their first-row clearance changes for the smaller numerals.
-          const underlineY = yForElement(first.elementIndex) + 8.2 + (level - 1) * 1.8
+          const underlineY = yForElement(first.elementIndex) + 9 + (level - 1) * 1.8
           output.push(
-            `<line x1="${formatNumber(first.x - 6)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 6 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.7" stroke="${INK}"></line>`,
+            `<line x1="${formatNumber(first.x - 6)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 6 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.6" stroke="${INK}"></line>`,
           )
         }
         run = []
