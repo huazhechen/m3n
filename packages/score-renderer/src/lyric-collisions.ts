@@ -66,7 +66,7 @@ export function resolveLyricCollisions(paper: HTMLElement) {
 
       lyrics.forEach((lyric) => translateVertically(lyric.verse, lyric.lineOffset + lyricOffset))
       const nextSystem = systems[index + 1]
-      if (!nextSystem || lyricOffset === 0 || lyrics.length === 0) continue
+      if (!nextSystem || lyrics.length === 0) continue
 
       const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.bounds.y + lyric.bounds.height + lyric.lineOffset + lyricOffset + lyric.lineHeight * 0.2))
       downstreamOffset += Math.max(0, lyricBottom - nextSystem.getBBox().y)
