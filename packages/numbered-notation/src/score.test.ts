@@ -105,6 +105,8 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('xlink:href="#yiyin_shuzi_7"')
     expect(svg).toContain('xlink:href="#yiyin_shuzi_3"')
     expect(svg).toContain('xlink:href="#yiyin_shuzi_5"')
+    expect(svg).toContain('x1="-3" y1="-3.7" x2="10" y2="-3.7" stroke-width="0.9"')
+    expect(svg).toContain('x1="-3" y1="-1.8" x2="10" y2="-1.8" stroke-width="0.9"')
   })
 
   it('does not render the parser placeholder after a final barline', () => {

@@ -35,6 +35,10 @@ const CHORD_STACK_STEP = 22
 const OCTAVE_DOT_DIAMETER = 3.04
 const OCTAVE_DOT_CLEARANCE = 1
 const OCTAVE_DOT_STEP = OCTAVE_DOT_DIAMETER + OCTAVE_DOT_CLEARANCE
+const GRACE_UNDERLINE_Y = -3.7
+const GRACE_UNDERLINE_STEP = 1.9
+const GRACE_UNDERLINE_OVERHANG = 3
+const GRACE_UNDERLINE_STROKE = 0.9
 const DYNAMIC_ORNAMENTS = new Set([
   'ppp',
   'pp',
@@ -300,11 +304,11 @@ function renderGrace(
       const runEnds = runStart !== undefined && (!participates || index === notes.length - 1)
       if (!runEnds || runStart === undefined) return
       const runEnd = participates ? index : index - 1
-      const x1 = (metrics.positions[runStart] ?? 0) - 2.1
-      const x2 = (metrics.positions[runEnd] ?? 0) + 2.1
-      const lineY = -6.3 + level * 1.2
+      const x1 = (metrics.positions[runStart] ?? 0) - GRACE_UNDERLINE_OVERHANG
+      const x2 = (metrics.positions[runEnd] ?? 0) + GRACE_UNDERLINE_OVERHANG
+      const lineY = GRACE_UNDERLINE_Y + level * GRACE_UNDERLINE_STEP
       body.push(
-        `<line x1="${formatNumber(x1)}" y1="${formatNumber(lineY)}" x2="${formatNumber(x2)}" y2="${formatNumber(lineY)}" stroke-width="1" stroke="${INK}"></line>`,
+        `<line x1="${formatNumber(x1)}" y1="${formatNumber(lineY)}" x2="${formatNumber(x2)}" y2="${formatNumber(lineY)}" stroke-width="${GRACE_UNDERLINE_STROKE}" stroke="${INK}"></line>`,
       )
       runStart = undefined
     })
@@ -325,7 +329,7 @@ function renderGrace(
           localX,
           note.octave > 0
             ? -10.8 - octave * 2.4
-            : -7.2 + ((noteLevels[index] ?? 1) - 1) * 1.2 + octave * 1.8,
+            : -7.2 + ((noteLevels[index] ?? 1) - 1) * GRACE_UNDERLINE_STEP + octave * 2.4,
         ),
       )
     }
@@ -335,7 +339,7 @@ function renderGrace(
   const lastX = metrics.positions.at(-1) ?? firstX
   const tailX = (firstX + lastX) / 2 - 0.3
   const lowerOctaves = Math.max(0, ...notes.map((note) => -note.octave))
-  const tailY = -10.2 + (maxLevels - 1) * 1.2 + lowerOctaves * 2.4
+  const tailY = -10.2 + (maxLevels - 1) * GRACE_UNDERLINE_STEP + lowerOctaves * 2.4
   body.push(registry.use(tail, tailX, tailY))
   registry.define(id, body.join(''))
   return [registry.useDefined(id, before ? x - metrics.width - 3 : x + 9, y)]

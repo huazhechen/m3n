@@ -1,8 +1,10 @@
 import type { NoteElement } from './types.js'
 
-export const GRACE_NOTE_WIDTH = 4.2
-export const GRACE_ACCIDENTAL_NOTE_WIDTH = 7.2
-export const GRACE_ACCIDENTAL_INSET = 3
+// Grace-note glyphs are about six units wide. Reserve a one-unit optical gap
+// so adjacent grace digits remain distinct instead of running together.
+export const GRACE_NOTE_WIDTH = 7
+export const GRACE_ACCIDENTAL_NOTE_WIDTH = 10
+export const GRACE_ACCIDENTAL_INSET = 3.5
 
 export interface GraceMetrics {
   positions: number[]
