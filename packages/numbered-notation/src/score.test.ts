@@ -420,6 +420,30 @@ describe('NumberedNotationScore', () => {
     expect(svg).toMatch(/<use x="[\d.]+" y="[\d.]+" xlink:href="#xiaojiexian"/)
   })
 
+  it('balances Xiao Xing Xing into two six-measure systems at 1100 width', () => {
+    const source = readFileSync(new URL('../../../src/scores/xiao_xing_xing_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1100 })
+    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
+    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
+
+    expect(systemStarts).toEqual([0, 6])
+  })
+
+  it('keeps a short natural tail greedy and unstretched when balancing would halve it', () => {
+    // Three wide measures followed by a narrow rest: the greedy split is 3+1,
+    // and the balanced tail (one wide measure + the rest) still fits in less
+    // than half a line, so the original split and natural final line remain.
+    const wide = '1 2 3 4 5 6 1 2 3 4 5 6 1'
+    const source = `{4/4}\nN: ${wide} | ${wide} | ${wide} | 0 |||`
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1100 })
+    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
+    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
+    const ends = [...svg.matchAll(/data-m3n-measure-end="([\d.]+)"/g)].map((match) => Number(match[1]))
+
+    expect(systemStarts).toEqual([0, 3])
+    expect(Math.max(...ends.slice(3))).toBeLessThan(1023)
+  })
+
   it('combines contiguous M3N legato intervals into one numbered notation line', () => {
     const document = parseM3NDocument('{4/4}\nN: {lg}1 2 3 4{/}{lg}5 6 7 1e{/} |||')
     const [svg] = renderScore(document, { paged: false, width: 1000 })

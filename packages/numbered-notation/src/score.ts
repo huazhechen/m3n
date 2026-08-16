@@ -356,6 +356,12 @@ function keyBeforeMeasure(measures: readonly ScoreMeasure[], index: number, fall
 function systemGroups(document: ScoreDocument, width: number) {
   const part = [...document.parts.values()][0]
   if (!part) return []
+  let measureCount = part.melody.length
+  while (measureCount > 0) {
+    const last = part.melody[measureCount - 1]
+    if (!last || last.events.length > 0 || last.multiRest || last.left !== undefined || last.right !== undefined) break
+    measureCount -= 1
+  }
   const ids = new Map<ScoreEvent, string>()
   let ordinal = 0
   const hasBassStaff = [...document.parts.values()].some((scorePart) => scorePart.bass.some((measure) => measure.events.length > 0))
@@ -368,15 +374,18 @@ function systemGroups(document: ScoreDocument, width: number) {
   }
   const lyrics = lyricsByEvent(document)
   const groups: VoiceGroup[] = []
+  // Boundary indices whose final system was deliberately balanced. Both
+  // resulting systems should occupy the full available width in that case.
+  const justifiedFinalBoundaries = new Set<number>()
   let start = 0
-  while (start < part.melody.length) {
+  while (start < measureCount) {
     const beginsSegment = start === 0 || part.melody[start - 1]?.breakAfter === true || part.melody[start]?.breakBefore === true
     // Explicit `br` markers set a preferred system boundary. Within that
     // range, though, balance auto-wrapped measures rather than orphaning the
     // final measure on its own line.
-    let boundaryEnd = part.melody.length
+    let boundaryEnd = measureCount
     let hasExplicitBoundary = false
-    for (let measure = start; measure < part.melody.length; measure += 1) {
+    for (let measure = start; measure < measureCount; measure += 1) {
       if (measure > start && part.melody[measure]?.breakBefore) {
         boundaryEnd = measure
         hasExplicitBoundary = true
@@ -407,11 +416,26 @@ function systemGroups(document: ScoreDocument, width: number) {
     if (end < boundaryEnd) {
       const remaining = boundaryEnd - end
       const lineLength = end - start
-      if (remaining === 1 && lineLength >= 2) end -= 1
-      // Do not leave a short two-measure tail after a wide first line. This
-      // turns 4+2 (and 5+2) into the more balanced 3+3 (and 4+3).
-      else if (remaining === 2 && lineLength >= remaining + 2) {
-        end = start + Math.ceil((boundaryEnd - start) / 2)
+      // Only consider balancing a two-system tail. The balanced candidate's
+      // last line must already be substantial (more than half of a full line)
+      // to justify stretching it; otherwise keep the greedy split and leave
+      // the final line at its natural width.
+      if (remaining <= lineLength) {
+        const balancedEnd = start + Math.ceil((boundaryEnd - start) / 2)
+        const balancedTail = groupForMeasures(
+          part.melody.slice(balancedEnd, boundaryEnd), part.bass.slice(balancedEnd, boundaryEnd), lyrics, document.intervals, ids,
+          {
+            fromPrevious: part.melody[balancedEnd - 1]?.ending !== undefined && part.melody[balancedEnd - 1]?.ending === part.melody[balancedEnd]?.ending,
+            toNext: part.melody[boundaryEnd]?.ending !== undefined && part.melody[boundaryEnd]?.ending === part.melody[boundaryEnd - 1]?.ending,
+          },
+          keyBeforeMeasure(part.melody, balancedEnd, document.key),
+        )
+        const balancedTailWidth = layoutVoiceGroup(balancedTail, 83, Number.POSITIVE_INFINITY).endX - 83
+        const availableWidth = width - 160
+        if (balancedTailWidth > availableWidth / 2) {
+          end = balancedEnd
+          justifiedFinalBoundaries.add(boundaryEnd)
+        }
       }
     }
     const group = groupForMeasures(
@@ -422,13 +446,13 @@ function systemGroups(document: ScoreDocument, width: number) {
       },
       keyBeforeMeasure(part.melody, start, document.key),
     )
-    if (hasExplicitBoundary && beginsSegment && end === boundaryEnd) group.forceJustify = true
+    if (end < boundaryEnd || justifiedFinalBoundaries.has(boundaryEnd)
+      || (hasExplicitBoundary && beginsSegment && end === boundaryEnd)) {
+      group.forceJustify = true
+    }
     groups.push(group)
     start = end
   }
-  // Every non-final system should use the available measure width, including
-  // systems that were split at a source-level line-break preference.
-  groups.slice(0, -1).forEach((group) => { group.forceJustify = true })
   return groups
 }
 

@@ -93,7 +93,9 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
     ? numberedMeasureStart
     : measureBounds.x
   const right = numberedNotation && Number.isFinite(numberedMeasureEnd)
-    ? numberedMeasureEnd
+    // Numbered barline glyphs draw their visible stroke just left of the
+    // logical x anchor. Extend the band to the far edge of that stroke.
+    ? numberedMeasureEnd + 1
     : measureBounds.x + measureBounds.width
   const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   band.classList.add(className)

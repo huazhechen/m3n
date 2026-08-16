@@ -803,6 +803,17 @@ textarea::selection {
   opacity: 0.1;
 }
 
+/* Numbered notation selection is intentionally note-only: a full-measure
+ * blue band and stroked numeral contours make the compact glyphs blurry. */
+.score-paper[data-notation="numbered"] .measure-cursor-highlight {
+  display: none !important;
+}
+
+.score-paper[data-notation="numbered"] .is-cursor-active,
+.score-paper[data-notation="numbered"] .is-cursor-active * {
+  stroke: none !important;
+}
+
 .score-paper .is-cursor-active,
 .score-paper .is-cursor-active * {
   fill: #1683ff;
