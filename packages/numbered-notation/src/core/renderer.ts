@@ -113,6 +113,12 @@ function staffTempoGlyph(x: number, y: number): string {
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="30.24">&#xECA5;</text>`
 }
 
+function keySignatureEqualsGlyph(registry: GlyphRegistry, x: number, y: number, scale: number): string {
+  // These are the equals strokes from the numbered key-signature glyph ("1=C").
+  registry.define('m3n-key-signature-equals', '<rect height="2" width="11" x="-5.5" y="-3.14103" fill="#1b1b1b"/><rect height="2" width="11" x="-5.5" y="1.32479" fill="#1b1b1b"/>')
+  return scaledGlyph(registry, 'm3n-key-signature-equals', x, y, scale)
+}
+
 const LEIPZIG_ACCIDENTALS: Readonly<Partial<Record<string, string>>> = {
   bianyinfu_sheng: '&#xE262;',
   bianyinfu_jiang: '&#xE260;',
@@ -230,8 +236,10 @@ function modeHeader(
       } else {
         output.push(staffTempoGlyph(tempoX, tempoY))
       }
+      const equalsX = tempoX + 22
+      output.push(keySignatureEqualsGlyph(registry, equalsX, y, glyphScale))
       output.push(
-        text(`= ${String(tempo)}`, tempoX + (config.musicFontCss === undefined ? 27 : 10), tempoY, {
+        text(String(tempo), equalsX + 10, tempoY, {
           font: config.musicFontCss === undefined ? 'system-ui, sans-serif' : 'Times, serif',
           size: config.musicFontCss === undefined ? config.tempoSize : 17.01,
           bold: config.musicFontCss !== undefined,
@@ -239,7 +247,7 @@ function modeHeader(
           extra: { 'data-jiepai': tempo },
         }),
       )
-      x = tempoX + 24 + String(tempo).length * 10
+      x = equalsX + 20 + String(tempo).length * 10
     } else {
       output.push(
         text(tempo, tempoX, tempoY, {
