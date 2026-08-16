@@ -29,9 +29,9 @@ import type {
 const FONT_SIZE_FIX = 0.8355
 const INK = '#1b1b1b'
 const NUMBERED_PLAYBACK_HIGHLIGHT_FILTER = '<filter id="m3n-playback-highlight" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="table" tableValues="0.851 1"/><feFuncG type="table" tableValues="0.373 1"/><feFuncB type="table" tableValues="0.165 1"/></feComponentTransfer></filter>'
-// The compact numeral is 14.4 units high. A 20-unit pitch keeps adjacent
+// The compact numeral is 14.4 units high. A 22-unit pitch keeps adjacent
 // chord members and their octave dots distinct.
-const CHORD_STACK_STEP = 20
+const CHORD_STACK_STEP = 22
 const DYNAMIC_ORNAMENTS = new Set([
   'ppp',
   'pp',
@@ -105,12 +105,6 @@ function keySignatureEqualsGlyph(registry: GlyphRegistry, x: number, y: number):
   return registry.use('m3n-key-signature-equals', x, y)
 }
 
-const LEIPZIG_ACCIDENTALS: Readonly<Partial<Record<string, string>>> = {
-  bianyinfu_sheng: '&#xE262;',
-  bianyinfu_jiang: '&#xE260;',
-  bianyinfu_huanyuan: '&#xE261;',
-}
-
 const LEIPZIG_ORNAMENTS: Readonly<Partial<Record<Ornament['name'], string>>> = {
   ppp: '&#xE520;&#xE520;&#xE520;',
   pp: '&#xE520;&#xE520;',
@@ -128,8 +122,8 @@ function leipzigGlyph(glyph: string, x: number, y: number, size: number): string
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="${formatNumber(size)}">${glyph}</text>`
 }
 
-function musicGlyph(id: string, x: number, y: number): string {
-  return leipzigGlyph(LEIPZIG_ACCIDENTALS[id] ?? '', x - 5.76, y + 4.8, 14.4)
+function musicGlyph(registry: GlyphRegistry, id: string, x: number, y: number): string {
+  return registry.use(id, x, y)
 }
 
 function octaveDot(x: number, y: number, upper: boolean): string {
@@ -162,7 +156,7 @@ function modeHeader(
     output.push(text(`1=${letter ?? 'C'}`, x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
     if (accidental !== undefined) {
       output.push(
-        musicGlyph(accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y),
+        musicGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y),
       )
     }
     x += (accidental === undefined ? 60 : 65) * keySpacing
@@ -425,7 +419,7 @@ function renderChordPitch(
     code: String(chordPitch.pitch),
     'data-m3n-id': note.m3nDataId ?? note.m3nId,
   }))
-  if (chordPitch.accidental !== undefined) output.push(musicGlyph(ACCIDENTAL_GLYPH_IDS[chordPitch.accidental], x, y))
+  if (chordPitch.accidental !== undefined) output.push(musicGlyph(registry, ACCIDENTAL_GLYPH_IDS[chordPitch.accidental], x, y))
   const underlineCount = Math.max(0, Math.log2(note.duration / 4))
   for (let octave = 0; octave < Math.abs(chordPitch.octave); octave += 1) {
       const octaveY = chordPitch.octave > 0
@@ -438,6 +432,21 @@ function renderChordPitch(
 
 function chordCenterOffset(note: NoteElement): number {
   return (note.chordPitches?.length ?? 0) * CHORD_STACK_STEP / 2
+}
+
+function upperOctaveClearance(octave: number): number {
+  return octave > 0 ? 5.52 + (octave - 1) * 2.88 : 0
+}
+
+function chordTopClearance(note: NoteElement): number {
+  const members = [
+    { octave: note.octave, offset: chordCenterOffset(note) },
+    ...(note.chordPitches ?? []).map((pitch, index) => ({
+      octave: pitch.octave,
+      offset: chordCenterOffset(note) - (index + 1) * CHORD_STACK_STEP,
+    })),
+  ]
+  return Math.max(0, ...members.map(({ octave, offset }) => upperOctaveClearance(octave) - offset))
 }
 
 function renderNote(
@@ -478,7 +487,7 @@ function renderNote(
       }),
     )
     if (note.accidental !== undefined) {
-      output.push(musicGlyph(ACCIDENTAL_GLYPH_IDS[note.accidental], x, noteY))
+      output.push(musicGlyph(registry, ACCIDENTAL_GLYPH_IDS[note.accidental], x, noteY))
     }
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
@@ -724,15 +733,18 @@ function renderMark(
   const x1 = start + 1
   const x2 = end - 1
   const markedElements = layout.line.elements.slice(mark.start, mark.end + 1)
-  const markClearance = markedElements.some(
-    (element) =>
-      element.kind === 'note' &&
-      element.ornaments.some(({ name }) => name === 'yc' || name === 'ycy'),
+  const markClearance = Math.max(
+    markedElements.some(
+      (element) =>
+        element.kind === 'note' &&
+        element.ornaments.some(({ name }) => name === 'yc' || name === 'ycy'),
+    )
+      ? 7
+      : 0,
+    ...markedElements.flatMap((element) =>
+      element.kind === 'note' ? [chordTopClearance(element)] : [],
+    ),
   )
-    ? 7
-    : markedElements.some((element) => element.kind === 'note' && element.octave > 0)
-      ? 5
-      : 0
   const lift = liftOverride ?? mark.level * 8
   const top = y - 12 - lift - markClearance
   if (mark.type === 'slur' || mark.type === 'tuplet') {
@@ -1217,7 +1229,7 @@ function lineTopPadding(line: ScoreLine): number {
     0,
     ...line.elements.flatMap((element) =>
       element.kind === 'note' && element.chordPitches !== undefined
-        ? [chordCenterOffset(element) + 7.2]
+        ? [chordTopClearance(element) + 7.2]
         : [],
     ),
   )

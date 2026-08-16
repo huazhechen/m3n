@@ -193,14 +193,27 @@ describe('NumberedNotationScore', () => {
       .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }))
     const ys = pitches.map(({ y }) => y)
     expect(new Set(ys).size).toBe(3)
-    expect(ys[0]! - ys[1]!).toBeCloseTo(20)
-    expect(ys[1]! - ys[2]!).toBeCloseTo(20)
+    expect(ys[0]! - ys[1]!).toBeCloseTo(22)
+    expect(ys[1]! - ys[2]!).toBeCloseTo(22)
     expect((ys[0]! + ys[2]!) / 2).toBeCloseTo(ys[1]!)
     const lowOctaveDots = [...svg.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="1.52"/g)]
       .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }))
     pitches.forEach((pitch) => {
       expect(lowOctaveDots.some((dot) => Math.abs(dot.x - pitch.x) < 1e-6 && Math.abs(dot.y - (pitch.y + 10.88)) < 1e-6)).toBe(true)
     })
+  })
+
+  it('raises slurs above chord stacks and their upper octave dots', () => {
+    const [svg] = renderScore(
+      parseM3NDocument('{4/4}\nN: {lg}[1e 3ee 5e:h] 2{/} |||'),
+      { paged: false, width: 1000 },
+    )
+    const slurTop = Number(/<path d="M [\d.]+,([\d.]+) C/.exec(svg)?.[1])
+    const octaveDotYs = [...svg.matchAll(/<circle cx="[\d.]+" cy="([\d.]+)" r="1.52"/g)]
+      .map((match) => Number(match[1]))
+
+    expect(octaveDotYs).not.toHaveLength(0)
+    expect(slurTop).toBeLessThan(Math.min(...octaveDotYs) - 4)
   })
 
   it('expands ScoreDocument tuplets into compact numbered notation note groups', () => {
@@ -248,17 +261,16 @@ describe('NumberedNotationScore', () => {
     expect(svg).not.toContain('xlink:href="#jiepaifu"')
   })
 
-  it('uses Leipzig glyphs for standard accidentals and dynamics when its music font is supplied', () => {
+  it('uses compact accidental glyphs and Leipzig dynamics when its music font is supplied', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {4/4}\n{mf} 1# 2b 3= 4 |||'),
       { paged: true, width: 1000, musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }' },
     )
 
-    expect(svg).toContain('&#xE262;')
-    expect(svg).toContain('&#xE260;')
-    expect(svg).toContain('&#xE261;')
+    expect(svg).toContain('xlink:href="#bianyinfu_sheng"')
+    expect(svg).toContain('xlink:href="#bianyinfu_jiang"')
+    expect(svg).toContain('xlink:href="#bianyinfu_huanyuan"')
     expect(svg).toContain('&#xE521;&#xE522;')
-    expect(svg).not.toContain('xlink:href="#bianyinfu_sheng"')
     expect(svg).not.toContain('xlink:href="#lidu_mf"')
   })
 
