@@ -7,12 +7,11 @@ export function downloadBlob(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url)
 }
 
-function getSvgSize(svg: SVGSVGElement, scale = 1) {
+function getSvgSize(svg: SVGSVGElement) {
   const bounds = svg.getBoundingClientRect()
   const viewBox = svg.viewBox.baseVal
-  const transformScale = Math.max(scale, 1)
-  const width = viewBox.width || Number.parseFloat(svg.getAttribute('width') ?? '') / transformScale || bounds.width
-  const height = viewBox.height || Number.parseFloat(svg.getAttribute('height') ?? '') / transformScale || bounds.height
+  const width = viewBox.width || Number.parseFloat(svg.getAttribute('width') ?? '') || bounds.width
+  const height = viewBox.height || Number.parseFloat(svg.getAttribute('height') ?? '') || bounds.height
   return { width, height }
 }
 
@@ -53,12 +52,13 @@ export function stackScoreCanvases(canvases: readonly HTMLCanvasElement[]) {
   return canvas
 }
 
-export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, scale = 1) {
-  const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg, scale)
+export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, pixelRatio = 1) {
+  const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg)
   if (sourceWidth <= 0 || sourceHeight <= 0) {
     throw new Error('五线谱尺寸无效。')
   }
 
+  const safePixelRatio = Math.max(1, pixelRatio)
   const targetHeight = Math.ceil(targetWidth * sourceHeight / sourceWidth)
   const clone = svg.cloneNode(true) as SVGSVGElement
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
@@ -76,15 +76,15 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
     image.src = url
     await image.decode()
     const canvas = document.createElement('canvas')
-    canvas.width = targetWidth
-    canvas.height = targetHeight
+    canvas.width = Math.ceil(targetWidth * safePixelRatio)
+    canvas.height = Math.ceil(targetHeight * safePixelRatio)
     const context = canvas.getContext('2d')
     if (!context) {
       throw new Error('无法创建图片画布。')
     }
     context.fillStyle = '#ffffff'
-    context.fillRect(0, 0, targetWidth, targetHeight)
-    context.drawImage(image, 0, 0, targetWidth, targetHeight)
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
     return canvas
   } finally {
     URL.revokeObjectURL(url)

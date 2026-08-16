@@ -824,6 +824,12 @@ textarea::selection {
   filter: url("#m3n-playback-highlight");
 }
 
+.score-paper[data-notation="numbered"] text[data-m3n-role="lyric"].is-playing {
+  fill: #d95f2a !important;
+  stroke: none !important;
+  filter: none;
+}
+
 .score-paper .is-playing.stem path,
 .score-paper .is-playing .stem path {
   stroke: #d95f2a !important;

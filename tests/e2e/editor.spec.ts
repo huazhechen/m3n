@@ -32,7 +32,7 @@ test('exposes playback without a print action', async ({ page }) => {
 
 test('highlights numbered notation during playback with tuplets and a bass voice', async ({ page }) => {
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nB: 1 2 3 4 | 5 6 7 1e |||')
+  await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nL: 春夏秋冬天\nB: 1 2 3 4 | 5 6 7 1e |||')
   await page.getByRole('button', { name: '渲染设置' }).click()
   await page.getByRole('switch', { name: '简谱渲染' }).check()
   await page.getByRole('button', { name: '关闭' }).click()
@@ -40,6 +40,7 @@ test('highlights numbered notation during playback with tuplets and a bass voice
   await expect(play).toBeVisible({ timeout: 30_000 })
   await play.click()
   await expect(page.locator('.score-paper [data-m3n-id="m3n-e-1"].is-playing')).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('.score-paper text[data-m3n-id="m3n-e-1"].is-playing')).toBeVisible({ timeout: 30_000 })
   await page.getByRole('button', { name: '暂停' }).click()
 })
 

@@ -940,8 +940,9 @@ function renderLyrics(
       const playbackExtra: Readonly<Record<string, string>> = positioned.m3nDataId === undefined
         ? {}
         : {
-            'data-m3n-id': positioned.m3nDataId,
-            'data-m3n-rendition': String(lyric.rendition ?? 1),
+          'data-m3n-id': positioned.m3nDataId,
+          'data-m3n-rendition': String(lyric.rendition ?? 1),
+          'data-m3n-role': 'lyric',
           }
       output.push(
         text(value, positioned.x - config.lyricSize / 2, lyricY, {

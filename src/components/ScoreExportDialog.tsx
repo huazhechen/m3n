@@ -152,7 +152,8 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (svgs.length === 0) throw new Error(`当前没有可导出的${numberedNotation && scoreDocument ? '简谱' : '五线谱'}。`)
 
         const canvases: HTMLCanvasElement[] = []
-        for (const svg of svgs) canvases.push(await renderScoreCanvas(svg, targetWidth))
+        const pixelRatio = format === 'png' ? 2 : 1
+        for (const svg of svgs) canvases.push(await renderScoreCanvas(svg, targetWidth, pixelRatio))
 
         const fileName = scoreFileName(title)
         if (format === 'png') {

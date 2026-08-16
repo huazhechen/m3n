@@ -289,6 +289,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toMatch(/cipos="0_1_2"[^>]*>二<\/text>/)
     expect(svg).toMatch(/cipos="0_1_3"[^>]*>三<\/text>/)
     expect(svg).toMatch(/cipos="0_1_4"[^>]*>四<\/text>/)
+    expect(svg).toMatch(/data-m3n-role="lyric"[^>]*>一<\/text>/)
   })
 
   it('uses MEI playback IDs for every voice and tuplet child', () => {
