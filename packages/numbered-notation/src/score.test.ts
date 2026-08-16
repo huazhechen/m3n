@@ -147,7 +147,7 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('xlink:href="#yanyinfu"')
     expect(svg).toContain('code="-"')
-    expect(svg).toContain('height="0.8" width="11" y="49.6"')
+    expect(svg).toContain('height="2.5" width="11" y="48.75"')
   })
 
   it('keeps all simultaneous chord pitches as vertically stacked numbered notation glyphs', () => {
