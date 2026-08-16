@@ -29,9 +29,9 @@ import type {
 const FONT_SIZE_FIX = 0.8355
 const INK = '#1b1b1b'
 const NUMBERED_PLAYBACK_HIGHLIGHT_FILTER = '<filter id="m3n-playback-highlight" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="table" tableValues="0.851 1"/><feFuncG type="table" tableValues="0.373 1"/><feFuncB type="table" tableValues="0.165 1"/></feComponentTransfer></filter>'
-// A lower-octave dot extends 8.4 units below its numeral's origin. Chord
-// members therefore need more than one numeral height between their origins.
-const CHORD_STACK_STEP = 18
+// The compact numeral is 14.4 units high. A 20-unit pitch keeps adjacent
+// chord members and their octave dots distinct.
+const CHORD_STACK_STEP = 20
 const DYNAMIC_ORNAMENTS = new Set([
   'ppp',
   'pp',
@@ -133,7 +133,7 @@ function musicGlyph(id: string, x: number, y: number): string {
 }
 
 function octaveDot(x: number, y: number, upper: boolean): string {
-  return `<circle cx="${formatNumber(x - 0.56)}" cy="${formatNumber(y + (upper ? -11.2 : 10.4))}" r="1.52" fill="${INK}"></circle>`
+  return `<circle cx="${formatNumber(x)}" cy="${formatNumber(y + (upper ? -11.2 : 10.4))}" r="1.52" fill="${INK}"></circle>`
 }
 
 function augmentationDot(x: number, y: number): string {
@@ -175,19 +175,22 @@ function modeHeader(
       output.push(text('(', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
       x += 15 * spacingScale
     }
-    output.push(`<rect x="${formatNumber(x + 0.8)}" y="${formatNumber(y - 0.8)}" width="16.8" height="1.6" fill="${INK}"></rect>`)
+    // Keep the numerator and denominator optically balanced around the divider.
+    // Their baselines must not sit on the rule: Times descenders otherwise make
+    // a compact meter look like the bar runs through its digits.
+    output.push(`<rect x="${formatNumber(x + 0.8)}" y="${formatNumber(y - 0.7)}" width="16.8" height="1.4" fill="${INK}"></rect>`)
     const digitX = x + 9.2
     output.push(
-      text(String(meter.numerator), digitX, y, {
-        font: 'Times, serif', size: 16, anchor: 'middle', dy: 0,
+      text(String(meter.numerator), digitX, y - 6, {
+        font: 'Times, serif', size: 14.4, anchor: 'middle', dy: 0,
       }),
     )
     output.push(
-      text(String(meter.denominator), digitX, y + 14.4, {
-        font: 'Times, serif', size: 16, anchor: 'middle', dy: 0, fill: '#414141',
+      text(String(meter.denominator), digitX, y + 15, {
+        font: 'Times, serif', size: 14.4, anchor: 'middle', dy: 0,
       }),
     )
-    x += 27 * spacingScale
+    x += 24 * spacingScale
     if (meter.parenthesized && !nextParenthesized) {
       output.push(text(')', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
       x += 15 * spacingScale
@@ -428,9 +431,13 @@ function renderChordPitch(
       const octaveY = chordPitch.octave > 0
         ? y - octave * 2.88
         : y + 0.48 + underlineCount * 1.92 + octave * 2.88
-      output.push(octaveDot(x + (chordPitch.pitch === 4 ? 1.2 : 0), octaveY, chordPitch.octave >= 0))
+      output.push(octaveDot(x, octaveY, chordPitch.octave >= 0))
   }
   return output
+}
+
+function chordCenterOffset(note: NoteElement): number {
+  return (note.chordPitches?.length ?? 0) * CHORD_STACK_STEP / 2
 }
 
 function renderNote(
@@ -458,9 +465,10 @@ function renderNote(
     ]
   }
   if (!note.hidden) {
+    const noteY = y + chordCenterOffset(note)
     const id = note.pitch === 9 ? 'shuzi_x' : `shuzi_${config.numberStyle}_${note.pitch}`
     output.push(
-      numberedGlyph(registry, id, x, y, {
+      numberedGlyph(registry, id, x, noteY, {
         time: formatNumber(timeOverride ?? playbackTime(note)),
         audio: audioOverride ?? audioCode(note),
         notepos,
@@ -470,31 +478,31 @@ function renderNote(
       }),
     )
     if (note.accidental !== undefined) {
-      output.push(musicGlyph(ACCIDENTAL_GLYPH_IDS[note.accidental], x, y))
+      output.push(musicGlyph(ACCIDENTAL_GLYPH_IDS[note.accidental], x, noteY))
     }
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
       const octaveY = note.octave > 0
-        ? y - octave * 2.88
-        : y + 0.48 + underlineCount * 1.92 + octave * 2.88
-      output.push(octaveDot(x + (note.pitch === 4 ? 1.2 : 0), octaveY, note.octave >= 0))
+        ? noteY - octave * 2.88
+        : noteY + 0.48 + underlineCount * 1.92 + octave * 2.88
+      output.push(octaveDot(x, octaveY, note.octave >= 0))
     }
-    if (note.dots >= 1) output.push(augmentationDot(x, y))
-    if (note.dots >= 2) output.push(augmentationDot(x + 5.6, y))
+    if (note.dots >= 1) output.push(augmentationDot(x, noteY))
+    if (note.dots >= 2) output.push(augmentationDot(x + 5.6, noteY))
     for (let dot = 2; dot < note.dots; dot += 1)
-      output.push(augmentationDot(x + 6.72 + (dot - 2) * 3.36, y))
+      output.push(augmentationDot(x + 6.72 + (dot - 2) * 3.36, noteY))
     note.chordPitches?.forEach((chordPitch, index) => {
-      output.push(...renderChordPitch(note, chordPitch, x, y - (index + 1) * CHORD_STACK_STEP, config, registry))
+      output.push(...renderChordPitch(note, chordPitch, x, noteY - (index + 1) * CHORD_STACK_STEP, config, registry))
     })
     if (note.graceBefore !== undefined) {
-      output.push(...renderGrace(note.graceBefore, x, y, true, nextGraceId('qy'), registry))
+      output.push(...renderGrace(note.graceBefore, x, noteY, true, nextGraceId('qy'), registry))
     }
     if (note.graceAfter !== undefined) {
-      output.push(...renderGrace(note.graceAfter, x, y, false, nextGraceId('hy'), registry))
+      output.push(...renderGrace(note.graceAfter, x, noteY, false, nextGraceId('hy'), registry))
     }
     if (note.annotation !== undefined) {
       output.push(
-        text(note.annotation, x - 3.6, y - 14.4, {
+        text(note.annotation, x - 3.6, noteY - 14.4, {
           font: config.lyricFont,
           size: 7.2,
           fill: '#303030',
@@ -503,7 +511,7 @@ function renderNote(
         }),
       )
     }
-    output.push(...renderOrnaments(note.ornaments, x, y, registry, config, ornamentContext))
+    output.push(...renderOrnaments(note.ornaments, x, noteY, registry, config, ornamentContext))
   }
   return output
 }
@@ -679,6 +687,12 @@ function mainElementY(layout: LineLayout, elementIndex: number, y: number): numb
     )
   })
   return insideTemporaryVoice ? y + 28 : y
+}
+
+function renderedElementY(layout: LineLayout, elementIndex: number, y: number): number {
+  const element = layout.line.elements[elementIndex]
+  return mainElementY(layout, elementIndex, y) +
+    (element?.kind === 'note' ? chordCenterOffset(element) : 0)
 }
 
 function nearestMarkX(
@@ -967,7 +981,7 @@ function renderInlineLayer(
         ),
       )
     })
-    output.push(...renderUnderlines(layout, y))
+    output.push(...renderUnderlines(layout, y, (elementIndex) => renderedElementY(layout, elementIndex, y)))
     layout.line.marks.forEach((mark) =>
       output.push(...renderMark(mark, layout, y, config, registry)),
     )
@@ -1095,7 +1109,7 @@ function renderLine(
     output.push(`<g class="measure">${measure.join('\n')}</g>`)
   })
   output.push(
-    ...renderUnderlines(layout, y, (elementIndex) => mainElementY(layout, elementIndex, y)),
+    ...renderUnderlines(layout, y, (elementIndex) => renderedElementY(layout, elementIndex, y)),
   )
   const markLifts = curvedMarkLifts(layout.line.marks)
   layout.line.marks.forEach((mark) =>
@@ -1115,7 +1129,7 @@ function renderLine(
       layout,
       pageIndex,
       lineOrdinal,
-      y + (inlineLayerRanges(layout.line).length === 0 ? 0 : 16.8),
+      y + chordBottomPadding(layout.line) + (inlineLayerRanges(layout.line).length === 0 ? 0 : 16.8),
       config,
       registry,
       musicToLyric,
@@ -1174,8 +1188,17 @@ function rowAdvance(
         line.lyrics.length * config.lyricSize +
         Math.max(0, line.lyrics.length * spacing.lyricToLyric - 6)
   const temporaryVoiceBottom = inlineLayerRanges(line).length === 0 ? 0 : 16.8
-  const musicHeight = line.lyrics.length === 0 ? 22.8 : 21
+  const musicHeight = (line.lyrics.length === 0 ? 22.8 : 21) + chordBottomPadding(line)
   return musicHeight + lyricHeight + spacing.lineGap + temporaryVoiceBottom
+}
+
+function chordBottomPadding(line: ScoreLine): number {
+  return Math.max(
+    0,
+    ...line.elements.flatMap((element) =>
+      element.kind === 'note' ? [chordCenterOffset(element)] : [],
+    ),
+  )
 }
 
 function lineTopPadding(line: ScoreLine): number {
@@ -1194,7 +1217,7 @@ function lineTopPadding(line: ScoreLine): number {
     0,
     ...line.elements.flatMap((element) =>
       element.kind === 'note' && element.chordPitches !== undefined
-        ? [element.chordPitches.length * CHORD_STACK_STEP + 5.4]
+        ? [chordCenterOffset(element) + 7.2]
         : [],
     ),
   )

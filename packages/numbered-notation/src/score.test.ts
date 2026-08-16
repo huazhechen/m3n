@@ -188,14 +188,17 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('xlink:href="#shuzi_b_bian_3"')
     expect(svg).toContain('xlink:href="#shuzi_b_bian_5"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
-    const ys = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_bian_[135]"/g)]
-      .map((match) => Number(match[2]))
+    const pitches = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_bian_[135]"/g)]
+      .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }))
+    const ys = pitches.map(({ y }) => y)
     expect(new Set(ys).size).toBe(3)
-    expect(ys[0]! - ys[1]!).toBeCloseTo(18)
-    expect(ys[1]! - ys[2]!).toBeCloseTo(18)
-    const lowOctaveDotYs = [...svg.matchAll(/<circle cx="[\d.]+" cy="([\d.]+)" r="1.52"/g)].map((match) => Number(match[1]))
-    ys.forEach((y) => {
-      expect(lowOctaveDotYs.some((dotY) => Math.abs(dotY - (y + 10.88)) < 1e-6)).toBe(true)
+    expect(ys[0]! - ys[1]!).toBeCloseTo(20)
+    expect(ys[1]! - ys[2]!).toBeCloseTo(20)
+    expect((ys[0]! + ys[2]!) / 2).toBeCloseTo(ys[1]!)
+    const lowOctaveDots = [...svg.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="1.52"/g)]
+      .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }))
+    pitches.forEach((pitch) => {
+      expect(lowOctaveDots.some((dot) => Math.abs(dot.x - pitch.x) < 1e-6 && Math.abs(dot.y - (pitch.y + 10.88)) < 1e-6)).toBe(true)
     })
   })
 
@@ -273,14 +276,16 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('x="400" y="60" dy="0"')
     expect(svg).toContain('x="772" y="97.2" dy="0"')
-    expect(svg).toContain('x="156.2" y="107" dy="0"')
+    expect(svg).toContain('x="154.4" y="107" dy="0"')
     expect(svg).toContain('data-jiepai="100">100</text>')
     expect(svg).toContain('xlink:href="#m3n-key-signature-equals"')
-    expect(svg).toContain('x="146.2" y="101" xlink:href="#m3n-key-signature-equals"')
+    expect(svg).toContain('x="144.4" y="101" xlink:href="#m3n-key-signature-equals"')
     expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
-    expect(svg).toMatch(/y="149.4"[^>]*id="m3n-e-1"/)
+    expect(svg).toMatch(/y="151.2"[^>]*id="m3n-e-1"/)
     expect(svg).toContain('>1=C</text>')
-    expect(svg).toContain('<rect x="96.8" y="100.2" width="16.8"')
+    expect(svg).toContain('<rect x="96.8" y="100.3" width="16.8" height="1.4"')
+    expect(svg).toContain('x="105.2" y="95" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="14.4"')
+    expect(svg).toContain('x="105.2" y="116" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="14.4"')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {
