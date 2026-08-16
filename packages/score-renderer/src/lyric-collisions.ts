@@ -49,7 +49,7 @@ export function resolveLyricCollisions(paper: HTMLElement) {
       downstreamOffset = Math.max(downstreamOffset, occupiedLyricBottom - system.getBBox().y)
       translateVertically(system, downstreamOffset)
       const verses = [...system.querySelectorAll<SVGGElement>('g.verse')]
-      const obstacles = [...system.querySelectorAll<SVGGraphicsElement>('.notehead, .stem path, .flag path, .beam path, .beam polygon, .slur path, path.slur')]
+      const obstacles = [...system.querySelectorAll<SVGGraphicsElement>('.notehead, .stem path, .flag path, .beam path, .beam polygon, .slur path, path.slur, .staff > path')]
       const lyrics = verses.map((verse) => {
         const bounds = verse.getBBox()
         return { verse, bounds, lineHeight: lyricLineHeight(verse, bounds), lineOffset: 0 }
