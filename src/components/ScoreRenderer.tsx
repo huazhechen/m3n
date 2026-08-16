@@ -59,16 +59,30 @@ function queryScoreElement(paper: HTMLElement | null, xmlId: string) {
   return paper?.querySelector(`#${xmlId}`) ?? paper?.querySelector(`[data-m3n-id="${xmlId}"]`) ?? null
 }
 
+function queryPlaybackElements(paper: HTMLElement | null, xmlId: string): Element[] {
+  if (!paper) return []
+  const grouped = [...paper.querySelectorAll(`[data-m3n-id="${xmlId}"]`)]
+  return grouped.length > 0 ? grouped : [paper.querySelector(`#${xmlId}`)].filter(Boolean) as Element[]
+}
+
 function addMeasureHighlight(measure: SVGGElement, className: string) {
   if (measure.querySelector(`:scope > .${className}`)) return
   const system = measure.closest<SVGGElement>('g.system')
   const measureBounds = measure.getBBox()
   const systemBounds = system?.getBBox() ?? measureBounds
+  const numberedNotation = measure.closest<HTMLElement>('.score-paper')?.dataset.notation === 'numbered'
+  const numberedMeasureStart = Number(measure.dataset.m3nMeasureStart)
+  // Numbered notation records the logical barline-to-barline measure bounds.
+  // The visible group starts at its first glyph, which omits leading whitespace.
+  const left = numberedNotation && Number.isFinite(numberedMeasureStart)
+    ? numberedMeasureStart
+    : measureBounds.x
+  const right = measureBounds.x + measureBounds.width
   const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   band.classList.add(className)
-  band.setAttribute('x', String(measureBounds.x))
+  band.setAttribute('x', String(left))
   band.setAttribute('y', String(systemBounds.y))
-  band.setAttribute('width', String(measureBounds.width))
+  band.setAttribute('width', String(Math.max(0, right - left)))
   band.setAttribute('height', String(systemBounds.height))
   measure.insertBefore(band, measure.firstChild)
 }
@@ -316,16 +330,14 @@ export function ScoreRenderer({
     const progress = duration > 0 ? Math.max(0, Math.min(1, seconds / duration)) : 0
     if (syncProgress) setPlaybackProgress(progress)
     const timedElements = scoreRef.current?.elementsAtTime(seconds * 1000) ?? []
-    const elements = timedElements.flatMap(({ xmlId, rendition }) => {
-      const note = queryScoreElement(paperRef.current, xmlId) as SVGGElement | null
-      if (!note) return []
+    const elements = timedElements.flatMap(({ xmlId, rendition }) => queryPlaybackElements(paperRef.current, xmlId).flatMap((note) => {
       const verses = [...note.children].filter((element): element is SVGGElement => element.classList.contains('verse'))
       if (note.children.length === 0) return [note]
       const measure = note.closest<SVGGElement>('g.measure')
       const visibleVerseNumbers = visibleLyricVerseNumbers(measure?.querySelectorAll<SVGGElement>('g.verse') ?? [])
       const activeVerse = verses[lyricVerseIndexForMeasureRendition(verses, rendition, visibleVerseNumbers)]
       return [...note.children].filter((element) => !element.classList.contains('verse') || element === activeVerse)
-    })
+    }))
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
     elements.forEach((element) => element.classList.add('is-playing'))
     highlightedElementsRef.current = elements

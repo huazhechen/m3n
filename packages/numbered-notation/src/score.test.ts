@@ -17,14 +17,17 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('<svg width="1000"')
     expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(400)
-    expect(svg).toContain('>1=D</text>')
+    expect(svg).toContain('>1</text>')
+    expect(svg).toContain('>D</text>')
+    expect(svg).toContain('xlink:href="#m3n-key-signature-equals"')
     expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
     expect(svg).toContain('id="shuzi_b_bian_1" transform="translate(-51,-50)"')
-    expect(svg).toContain('font-family="Microsoft YaHei"')
+    expect(svg).toContain('font-family="serif"')
     expect(svg).toContain('id="m3n-e-1"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
+    expect(svg).toContain('data-m3n-measure-start=')
     expect(svg).toContain('id="m3n-playback-highlight"')
-    expect(svg).toMatch(/<g class="measure">[\s\S]*id="m3n-e-1"/)
+    expect(svg).toMatch(/<g class="measure"[^>]*>[\s\S]*id="m3n-e-1"/)
     expect(svg).toContain('xlink:href="#xunhuan_zuo"')
   })
 
@@ -57,7 +60,20 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('<circle')
     expect(svg).toContain('data-type="jianshixian" stroke-width="1.6"')
     expect(svg).toContain('<path d="M 47.48,')
-    expect(svg).toContain('<rect x="96.8"')
+    expect(svg).toContain('<rect x="88.8"')
+  })
+
+  it('keeps augmentation dots and lyrics attached to their sounding note', () => {
+    const [svg] = renderScore(
+      parseM3NDocument('{3/4}\nN: 1. 0 2 |||\nL: 春 天'),
+      { paged: false, width: 800 },
+    )
+
+    expect(svg).toMatch(/<circle[^>]*data-m3n-id="m3n-e-1"/)
+    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-1"[^>]*>春<\/text>/)
+    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-3"[^>]*>天<\/text>/)
+    expect(svg).not.toMatch(/<text[^>]*data-m3n-id="m3n-e-2"[^>]*>天<\/text>/)
+    expect(svg).toContain('font-size="16" font-family="serif"')
   })
 
   it('keeps a single-phrase paged score close to its content height', () => {
@@ -166,7 +182,7 @@ describe('NumberedNotationScore', () => {
     const document = parseM3NDocument('{2/4}\nN: 1~ 1 | 2 3 |||\nL: 春 | 天')
     const [svg] = renderScore(document, { paged: false, width: 1000 })
 
-    expect(svg).toContain('cipos="0_1_1">春</text>')
+    expect(svg).toMatch(/cipos="0_1_1"[^>]*>春<\/text>/)
     expect(svg).not.toContain('cipos="0_1_2">春</text>')
   })
 
@@ -178,7 +194,20 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('xlink:href="#yanyinfu"')
     expect(svg).toContain('code="-"')
+    expect(svg).toMatch(/xlink:href="#yanyinfu"[^>]*data-m3n-id="m3n-e-1"/)
     expect(svg).toContain('height="2.5" width="11" y="48.75"')
+  })
+
+  it('leaves one stroke-width of space between stacked duration underlines', () => {
+    const document = parseM3NDocument('{4/4}\nN: 1 2 |||')
+    const first = document.parts.get('score')?.melody[0]?.events[0]
+    if (first) first.beats = 0.25
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+    const underlineYs = [...svg.matchAll(/<line[^>]*y1="([\d.]+)"[^>]*data-type="jianshixian"/g)]
+      .map((match) => Number(match[1]))
+
+    expect(underlineYs).toHaveLength(2)
+    expect(underlineYs[1]! - underlineYs[0]!).toBeCloseTo(3.2)
   })
 
   it('keeps all simultaneous chord pitches as vertically stacked numbered notation glyphs', () => {
@@ -189,6 +218,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('xlink:href="#shuzi_b_bian_3"')
     expect(svg).toContain('xlink:href="#shuzi_b_bian_5"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
+    expect(svg.match(/data-m3n-id="m3n-e-1"/g)).toHaveLength(3)
     const pitches = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_bian_[135]"/g)]
       .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }))
     const ys = pitches.map(({ y }) => y)
@@ -289,16 +319,18 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('x="400" y="60" dy="0"')
     expect(svg).toContain('x="772" y="97.2" dy="0"')
-    expect(svg).toContain('x="154.4" y="107" dy="0"')
+    expect(svg).toContain('x="146.4" y="107" dy="0"')
     expect(svg).toContain('data-jiepai="100">100</text>')
     expect(svg).toContain('xlink:href="#m3n-key-signature-equals"')
-    expect(svg).toContain('x="144.4" y="101" xlink:href="#m3n-key-signature-equals"')
+    expect(svg).toContain('x="136.4" y="101" xlink:href="#m3n-key-signature-equals"')
     expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
     expect(svg).toMatch(/y="151.2"[^>]*id="m3n-e-1"/)
-    expect(svg).toContain('>1=C</text>')
-    expect(svg).toContain('<rect x="96.8" y="100.3" width="16.8" height="1.4"')
-    expect(svg).toContain('x="105.2" y="94" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16"')
-    expect(svg).toContain('x="105.2" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16"')
+    expect(svg).toContain('>1</text>')
+    expect(svg).toContain('>C</text>')
+    expect(svg).toContain('x="62.8" y="101" xlink:href="#m3n-key-signature-equals"')
+    expect(svg).toContain('<rect x="88.8" y="100.3" width="16.8" height="1.4"')
+    expect(svg).toContain('x="97.2" y="94" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16"')
+    expect(svg).toContain('x="97.2" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16"')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {

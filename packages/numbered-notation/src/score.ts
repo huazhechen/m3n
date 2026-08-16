@@ -110,7 +110,10 @@ function barline(measure: ScoreMeasure, fallback: boolean): BarlineElement {
 }
 
 function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
-  const targetEvents = [...document.parts.values()].flatMap((part) => part.melody.flatMap((measure) => measure.events))
+  // Rests hold horizontal space, but never consume a lyric syllable.
+  const targetEvents = [...document.parts.values()].flatMap((part) => part.melody
+    .flatMap((measure) => measure.events)
+    .filter((event) => event.kind !== 'rest'))
   const result: LyricsByEvent = new Map()
   document.lyrics.forEach((block) => {
     const numbered = /^\d+$/.exec(block.range)
@@ -194,7 +197,10 @@ function lineForMeasures(
       elements.push(note(event, ids.get(event), noteBeats))
       const sustainCount = Math.max(0, Math.floor(event.beats - noteBeats + 1e-7))
       for (let sustain = 0; sustain < sustainCount; sustain += 1) {
-        elements.push({ kind: 'sustain', duration: 4, ornaments: [], code: '-', source: location(event) })
+        elements.push({
+          kind: 'sustain', duration: 4, ornaments: [], code: '-',
+          m3nDataId: ids.get(event), source: location(event),
+        })
       }
     })
     if (measure.multiRest) {

@@ -130,8 +130,9 @@ function octaveDot(x: number, y: number, upper: boolean): string {
   return `<circle cx="${formatNumber(x)}" cy="${formatNumber(y + (upper ? -11.2 : 10.4))}" r="1.52" fill="${INK}"></circle>`
 }
 
-function augmentationDot(x: number, y: number): string {
-  return `<circle cx="${formatNumber(x + 9.88)}" cy="${formatNumber(y - 0.2)}" r="1.96" fill="${INK}"></circle>`
+function augmentationDot(x: number, y: number, m3nDataId?: string): string {
+  const dataId = m3nDataId === undefined ? '' : ` data-m3n-id="${escapeXml(m3nDataId)}"`
+  return `<circle cx="${formatNumber(x + 9.88)}" cy="${formatNumber(y - 0.2)}" r="1.96" fill="${INK}"${dataId}></circle>`
 }
 
 function audioCode(note: NoteElement): string {
@@ -153,13 +154,15 @@ function modeHeader(
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
     const modeX = x + (accidental === undefined ? 40 : 45) * keySpacing
-    output.push(text(`1=${letter ?? 'C'}`, x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
+    output.push(text('1', x, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
+    output.push(keySignatureEqualsGlyph(registry, x + 14.8, y))
+    output.push(text(letter ?? 'C', x + 21.6, y + 5.6, { font: 'Times, serif', size: 16, dy: 0 }))
     if (accidental !== undefined) {
       output.push(
         musicGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y),
       )
     }
-    x += (accidental === undefined ? 60 : 65) * keySpacing
+    x += (accidental === undefined ? 50 : 55) * keySpacing
   }
 
   metadata.meters.forEach((meter, index) => {
@@ -496,10 +499,10 @@ function renderNote(
         : noteY + 0.48 + underlineCount * 1.92 + octave * 2.88
       output.push(octaveDot(x, octaveY, note.octave >= 0))
     }
-    if (note.dots >= 1) output.push(augmentationDot(x, noteY))
-    if (note.dots >= 2) output.push(augmentationDot(x + 5.6, noteY))
+    if (note.dots >= 1) output.push(augmentationDot(x, noteY, note.m3nDataId ?? note.m3nId))
+    if (note.dots >= 2) output.push(augmentationDot(x + 5.6, noteY, note.m3nDataId ?? note.m3nId))
     for (let dot = 2; dot < note.dots; dot += 1)
-      output.push(augmentationDot(x + 6.72 + (dot - 2) * 3.36, noteY))
+      output.push(augmentationDot(x + 6.72 + (dot - 2) * 3.36, noteY, note.m3nDataId ?? note.m3nId))
     note.chordPitches?.forEach((chordPitch, index) => {
       output.push(...renderChordPitch(note, chordPitch, x, noteY - (index + 1) * CHORD_STACK_STEP, config, registry))
     })
@@ -540,6 +543,7 @@ function renderSustain(
       audio: '',
       notepos,
       code: sustain.code,
+      'data-m3n-id': sustain.m3nDataId,
     }),
     ...renderOrnaments(sustain.ornaments, x, y, registry, config),
   ]
@@ -651,7 +655,7 @@ function renderUnderlines(
         if (first !== undefined && last !== undefined) {
           // Duration underlines retain their native visual weight and span.
           // Only their first-row clearance changes for the smaller numerals.
-          const underlineY = yForElement(first.elementIndex) + 10 + (level - 1) * 1.8
+          const underlineY = yForElement(first.elementIndex) + 10 + (level - 1) * 3.2
           output.push(
             `<line x1="${formatNumber(first.x - 7)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 7 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.6" stroke="${INK}"></line>`,
           )
@@ -870,7 +874,11 @@ function renderLyrics(
   const notePositions = layout.line.elements.flatMap((element, index) => {
     if (element.kind !== 'note') return []
     const x = layout.xByElement.get(index)
-    return x === undefined ? [] : [{ x, ordinal: ordinals.get(index) ?? 0 }]
+    return x === undefined ? [] : [{
+      x,
+      ordinal: ordinals.get(index) ?? 0,
+      m3nDataId: element.m3nDataId ?? element.m3nId,
+    }]
   })
   layout.line.lyrics.forEach((lyric, lyricIndex) => {
     const lyricY = y + 15 + musicToLyric + lyricIndex * (config.lyricSize + lyricToLyric)
@@ -900,13 +908,16 @@ function renderLyrics(
       }
       if (syllable?.text === '') return
       const value = syllable?.text ?? ''
+      const playbackExtra: Readonly<Record<string, string>> = positioned.m3nDataId === undefined
+        ? {}
+        : { 'data-m3n-id': positioned.m3nDataId }
       output.push(
         text(value, positioned.x - config.lyricSize / 2, lyricY, {
           font: config.lyricFont,
           size: config.lyricSize,
           fill: '#101010',
           dy: 0.3355 * config.lyricSize,
-          extra: { cipos: notePositionCode(pageIndex, lineOrdinal, positioned.ordinal) },
+          extra: { cipos: notePositionCode(pageIndex, lineOrdinal, positioned.ordinal), ...playbackExtra },
         }),
       )
       if (syllable?.trailingPunctuation !== undefined) {
@@ -927,6 +938,7 @@ function renderLyrics(
               size: config.lyricSize,
               fill: '#101010',
               dy: 0.3355 * config.lyricSize,
+              extra: playbackExtra,
             },
           ),
         )
@@ -1117,8 +1129,13 @@ function renderLine(
       ),
     )
   })
-  measureOutput.forEach((measure) => {
-    output.push(`<g class="measure">${measure.join('\n')}</g>`)
+  measureOutput.forEach((measure, measureIndex) => {
+    const firstElementX = layout.elements.find((positioned) => positioned.measure === measureIndex)?.x
+    const previousBarlineX = measureIndex > 0
+      ? layout.barlines.find((barline) => barline.measure === measureIndex - 1)?.x
+      : undefined
+    const measureStart = previousBarlineX ?? firstElementX ?? config.marginLeft
+    output.push(`<g class="measure" data-m3n-measure-start="${formatNumber(measureStart)}">${measure.join('\n')}</g>`)
   })
   output.push(
     ...renderUnderlines(layout, y, (elementIndex) => renderedElementY(layout, elementIndex, y)),

@@ -68,6 +68,8 @@ export interface SustainElement {
   duration: 4
   ornaments: Ornament[]
   code: string
+  /** Host-owned source event ID for playback highlighting. */
+  m3nDataId?: string
   source: SourceLocation
 }
 
@@ -165,5 +167,5 @@ export interface ScoreDocument {
   pages: ScorePage[]
 }
 
-export type FontFamily = 'Microsoft YaHei' | 'SimSun' | 'SimHei' | 'KaiTi'
+export type FontFamily = 'Microsoft YaHei' | 'SimSun' | 'SimHei' | 'KaiTi' | 'serif'
 export type NumberStyle = 'a' | 'b' | 'c'
