@@ -58,6 +58,15 @@ describe('NumberedNotationScore', () => {
     expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(170)
   })
 
+  it('does not reserve lyric space below a lyric-free continuous score', () => {
+    const [svg] = renderScore(
+      parseM3NDocument('N: 1 1 5 5 | 6 6 5^ | 4 4 3 3 | 2 2 1^ |||'),
+      { paged: false, width: 800 },
+    )
+
+    expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(170)
+  })
+
   it('maps M3N grace-note postfixes onto the following numbered-notation grace group', () => {
     const [svg] = renderScore(
       parseM3NDocument('{2/4}\nN: 1{ac(7e)} 2{ap((3d5d))} |||'),
