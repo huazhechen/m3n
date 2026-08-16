@@ -342,6 +342,7 @@ interface OrnamentContext {
   hairpinStart?: boolean
   hairpinEnd?: boolean
   slurEnd?: boolean
+  upperClearance?: number
 }
 
 function ornamentPosition(
@@ -351,15 +352,19 @@ function ornamentPosition(
   context: OrnamentContext,
 ): { x: number; y: number } {
   if (DYNAMIC_ORNAMENTS.has(ornament.name)) {
-    if (context.hairpinStart === true) return { x: x - 15, y: y - 6 - ornament.level * 3.6 }
+    // Dynamics need their own upper lane. Keeping them near the numeral
+    // baseline makes p/mf/f collide with octave dots, grace notes and labels.
+    const upperClearance = context.upperClearance ?? 0
+    if (context.hairpinStart === true) return { x: x - 15, y: y - 34 - upperClearance - ornament.level * 3.6 }
     if (context.hairpinEnd === true) {
       return {
         x: x + 12,
-        y: y - 6 - ornament.level * 3.6 - (context.slurEnd === true ? 4.8 : 0),
+        y: y - 34 - upperClearance - ornament.level * 3.6 - (context.slurEnd === true ? 4.8 : 0),
       }
     }
-    return { x, y: y - 1.8 - ornament.level * 3.6 }
+    return { x, y: y - 34 - upperClearance - ornament.level * 3.6 }
   }
+  if (ornament.name === 'tr') return { x, y: y - 19 - (context.upperClearance ?? 0) }
   if (['zkh', 'ykh', 'cy', 'tr', 'yc', 'ycy', 'shy', 'xhy'].includes(ornament.name)) {
     return { x, y }
   }
@@ -521,7 +526,10 @@ function renderNote(
         }),
       )
     }
-    output.push(...renderOrnaments(note.ornaments, x, noteY, registry, config, ornamentContext))
+    output.push(...renderOrnaments(note.ornaments, x, noteY, registry, config, {
+      ...ornamentContext,
+      upperClearance: chordTopClearance(note),
+    }))
   }
   return output
 }
@@ -1274,6 +1282,24 @@ function curvedMarkTopPadding(line: ScoreLine): number {
 }
 
 function lineTopPadding(line: ScoreLine): number {
+  const upperOrnamentPadding = Math.max(
+    0,
+    ...line.elements.flatMap((element) =>
+      element.kind === 'note'
+        ? [
+            element.ornaments.some((ornament) => DYNAMIC_ORNAMENTS.has(ornament.name))
+              ? 52 + chordTopClearance(element)
+              : 0,
+            element.ornaments.some((ornament) => ornament.name === 'tr')
+              ? 30 + chordTopClearance(element)
+              : 0,
+            element.annotation === undefined ? 0 : 22 + chordTopClearance(element),
+          ]
+        : element.kind === 'sustain' && element.ornaments.some((ornament) => DYNAMIC_ORNAMENTS.has(ornament.name))
+          ? [52]
+          : [],
+    ),
+  )
   const symbolPadding = line.marks.some(
     ({ type }) => type === 'volta' || type === 'crescendo' || type === 'decrescendo',
   )
@@ -1293,7 +1319,7 @@ function lineTopPadding(line: ScoreLine): number {
         : [],
     ),
   )
-  return Math.max(symbolPadding, layerPadding, chordPadding, curvedMarkTopPadding(line))
+  return Math.max(upperOrnamentPadding, symbolPadding, layerPadding, chordPadding, curvedMarkTopPadding(line))
 }
 
 function groupAdvance(

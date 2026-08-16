@@ -343,6 +343,19 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('x="108.4" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
   })
 
+  it('keeps Turkish March dynamics above its octave notes and section labels', () => {
+    const source = readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), {
+      paged: false,
+      width: 800,
+      musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
+    })
+    const noteY = Number(/<use x="[\d.]+" y="([\d.]+)" xlink:href="#shuzi_b_bian_7"[^>]*id="m3n-e-1"/.exec(svg)?.[1])
+    const dynamicY = Number(/<text x="[\d.]+" y="([\d.]+)" fill="#1b1b1b" font-family="Leipzig" font-size="17">&#xE520;<\/text>/.exec(svg)?.[1])
+
+    expect(noteY - dynamicY).toBeGreaterThanOrEqual(34)
+  })
+
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {
     const source = readFileSync(new URL('../../../src/scores/guang_yin_de_gu_shi_01.m3n', import.meta.url), 'utf8')
     const pages = renderScore(parseM3NDocument(source), { paged: true, width: 1000 })
