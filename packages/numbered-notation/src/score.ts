@@ -188,8 +188,11 @@ function lineForMeasures(
         return
       }
       entries.push({ event, index, lastIndex: index })
-      elements.push(note(event, ids.get(event), Math.min(1, event.beats)))
-      const sustainCount = Math.max(0, Math.floor(event.beats + 1e-7) - 1)
+      // Keep a fractional first beat on the note itself so dotted values retain
+      // their augmentation dots; whole beats after it remain sustain symbols.
+      const noteBeats = Number.isInteger(event.beats) ? 1 : Math.min(1.75, event.beats)
+      elements.push(note(event, ids.get(event), noteBeats))
+      const sustainCount = Math.max(0, Math.floor(event.beats - noteBeats + 1e-7))
       for (let sustain = 0; sustain < sustainCount; sustain += 1) {
         elements.push({ kind: 'sustain', duration: 4, ornaments: [], code: '-', source: location(event) })
       }

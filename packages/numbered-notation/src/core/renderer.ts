@@ -200,7 +200,9 @@ function modeHeader(
       x += 15 * spacingScale
     }
     output.push(scaledGlyph(registry, 'paihao_xian', x, y, glyphScale))
-    const digitX = x + 10 * spacingScale
+    // The fraction bar and digits are both scaled from their own origins.
+    // Align the digit origin to the scaled center of the fraction bar.
+    const digitX = x + 11.5 * glyphScale
     output.push(
       numberedGlyph(
         registry,
@@ -460,8 +462,10 @@ function renderChordPitch(
   const dotId = chordPitch.octave >= 0 ? 'yingao_gao' : 'yingao_di'
   const underlineCount = Math.max(0, Math.log2(note.duration / 4))
   for (let octave = 0; octave < Math.abs(chordPitch.octave); octave += 1) {
-    const octaveY = chordPitch.octave > 0 ? y - octave * 3.6 : y + 0.6 + underlineCount * 2.4 + octave * 3.6
-    output.push(numberedGlyph(registry, dotId, x + (chordPitch.pitch === 4 ? 1.5 : 0), octaveY, config))
+      const octaveY = chordPitch.octave > 0
+        ? y - octave * 3.6 * config.numberScale
+        : y + (0.6 + underlineCount * 2.4 + octave * 3.6) * config.numberScale
+      output.push(numberedGlyph(registry, dotId, x + (chordPitch.pitch === 4 ? 1.5 * config.numberScale : 0), octaveY, config))
   }
   return output
 }
@@ -508,13 +512,15 @@ function renderNote(
     const dotId = note.octave >= 0 ? 'yingao_gao' : 'yingao_di'
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
-      const octaveY = note.octave > 0 ? y - octave * 3.6 : y + 0.6 + underlineCount * 2.4 + octave * 3.6
-      output.push(numberedGlyph(registry, dotId, x + (note.pitch === 4 ? 1.5 : 0), octaveY, config))
+      const octaveY = note.octave > 0
+        ? y - octave * 3.6 * config.numberScale
+        : y + (0.6 + underlineCount * 2.4 + octave * 3.6) * config.numberScale
+      output.push(numberedGlyph(registry, dotId, x + (note.pitch === 4 ? 1.5 * config.numberScale : 0), octaveY, config))
     }
     if (note.dots >= 2) output.push(numberedGlyph(registry, 'fudian2', x, y, config))
     else if (note.dots === 1) output.push(numberedGlyph(registry, 'fudian', x, y, config))
     for (let dot = 2; dot < note.dots; dot += 1)
-      output.push(numberedGlyph(registry, 'fudian', x + 8.4 + (dot - 2) * 4.2, y, config))
+      output.push(numberedGlyph(registry, 'fudian', x + (8.4 + (dot - 2) * 4.2) * config.numberScale, y, config))
     note.chordPitches?.forEach((chordPitch, index) => {
       output.push(...renderChordPitch(note, chordPitch, x, y - (index + 1) * CHORD_STACK_STEP, config, registry))
     })
@@ -635,6 +641,7 @@ function renderBarline(
 function renderUnderlines(
   layout: LineLayout,
   y: number,
+  config: NumberedNotationLayout,
   yForElement: (elementIndex: number) => number = () => y,
 ): string[] {
   const output: string[] = []
@@ -664,9 +671,10 @@ function renderUnderlines(
         const first = run[0]
         const last = run[run.length - 1]
         if (first !== undefined && last !== undefined) {
-          const underlineY = yForElement(first.elementIndex) + 7.8 + (level - 1) * 1.8
+          const underlineY =
+            yForElement(first.elementIndex) + (10.5 + (level - 1) * 2.4) * config.numberScale
           output.push(
-            `<line x1="${formatNumber(first.x - 3.6)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + 3.6 + last.element.dots * 6)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="1.2" stroke="${INK}"></line>`,
+            `<line x1="${formatNumber(first.x - 3.6 * config.numberScale)}" y1="${formatNumber(underlineY)}" x2="${formatNumber(last.x + (3.6 + last.element.dots * 6) * config.numberScale)}" y2="${formatNumber(underlineY)}" data-type="jianshixian" stroke-width="${formatNumber(1.2 * config.numberScale)}" stroke="${INK}"></line>`,
           )
         }
         run = []
@@ -997,7 +1005,7 @@ function renderInlineLayer(
         ),
       )
     })
-    output.push(...renderUnderlines(layout, y))
+    output.push(...renderUnderlines(layout, y, config))
     layout.line.marks.forEach((mark) =>
       output.push(...renderMark(mark, layout, y, config, registry)),
     )
@@ -1125,7 +1133,7 @@ function renderLine(
     output.push(`<g class="measure">${measure.join('\n')}</g>`)
   })
   output.push(
-    ...renderUnderlines(layout, y, (elementIndex) => mainElementY(layout, elementIndex, y)),
+    ...renderUnderlines(layout, y, config, (elementIndex) => mainElementY(layout, elementIndex, y)),
   )
   const markLifts = curvedMarkLifts(layout.line.marks)
   layout.line.marks.forEach((mark) =>
@@ -1381,14 +1389,14 @@ function renderPage(
     })
     if (multiVoice) {
       const braceX = layout.voiceBraceX ?? startX
-      body.push(registry.use('shengbufu_shang', braceX, firstY))
+      body.push(scaledGlyph(registry, 'shengbufu_shang', braceX, firstY, config.numberScale))
       body.push(
-        `<line x1="${formatNumber(braceX - 15.3)}" y1="${formatNumber(firstY - 3.9)}" x2="${formatNumber(braceX - 15.3)}" y2="${formatNumber(lastY + 3.9)}" stroke-width="2.4" stroke="${INK}" fill="none"></line>`,
+        `<line x1="${formatNumber(braceX - 15.3 * config.numberScale)}" y1="${formatNumber(firstY - 3.9 * config.numberScale)}" x2="${formatNumber(braceX - 15.3 * config.numberScale)}" y2="${formatNumber(lastY + 3.9 * config.numberScale)}" stroke-width="${formatNumber(2.4 * config.numberScale)}" stroke="${INK}" fill="none"></line>`,
       )
       body.push(
-        `<line x1="${formatNumber(braceX - 12.6)}" y1="${formatNumber(firstY - 4.8)}" x2="${formatNumber(braceX - 12.6)}" y2="${formatNumber(lastY + 4.8)}" stroke-width="1.2" stroke="${INK}" fill="none"></line>`,
+        `<line x1="${formatNumber(braceX - 12.6 * config.numberScale)}" y1="${formatNumber(firstY - 4.8 * config.numberScale)}" x2="${formatNumber(braceX - 12.6 * config.numberScale)}" y2="${formatNumber(lastY + 4.8 * config.numberScale)}" stroke-width="${formatNumber(1.2 * config.numberScale)}" stroke="${INK}" fill="none"></line>`,
       )
-      body.push(registry.use('shengbufu_xia', braceX, lastY))
+      body.push(scaledGlyph(registry, 'shengbufu_xia', braceX, lastY, config.numberScale))
     }
     if (multiVoice) y += spacing.voiceGap
   })

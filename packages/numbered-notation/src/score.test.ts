@@ -49,6 +49,16 @@ describe('NumberedNotationScore', () => {
     expect(svg).toMatch(/id="m3n-e-1"[^>]*transform="[^"]*scale\(0.8\)/)
   })
 
+  it('keeps dotted values and their scaled support glyphs aligned', () => {
+    const source = readFileSync(new URL('../../../src/scores/huan_le_song_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), { paged: true, width: 800 })
+
+    expect(svg).toContain('xlink:href="#fudian"')
+    expect(svg).toContain('data-type="jianshixian" stroke-width="0.96"')
+    expect(svg).toMatch(/xlink:href="#shengbufu_shang"[^>]*scale\(0.8\)/)
+    expect(svg).toMatch(/xlink:href="#paihao_xian"[^>]*scale\(0.8\)/)
+  })
+
   it('keeps a single-phrase paged score close to its content height', () => {
     const [svg] = renderScore(
       parseM3NDocument('N: 1 1 5 5 | 6 6 5^ | 4 4 3 3 | 2 2 1^ |||'),
@@ -184,9 +194,9 @@ describe('NumberedNotationScore', () => {
     expect(ys[0]! - ys[1]!).toBeCloseTo(18)
     expect(ys[1]! - ys[2]!).toBeCloseTo(18)
     const lowOctaveDotYs = [...svg.matchAll(/<use x="[\d.]+" y="([\d.]+)" xlink:href="#yingao_di"/g)].map((match) => Number(match[1]))
-    expect(lowOctaveDotYs).toContain(ys[0]! + 0.6)
-    expect(lowOctaveDotYs).toContain(ys[1]! + 0.6)
-    expect(lowOctaveDotYs).toContain(ys[2]! + 0.6)
+    ys.forEach((y) => {
+      expect(lowOctaveDotYs.some((dotY) => Math.abs(dotY - (y + 0.6 * 0.8)) < 1e-6)).toBe(true)
+    })
   })
 
   it('expands ScoreDocument tuplets into compact numbered notation note groups', () => {
