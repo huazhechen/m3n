@@ -975,6 +975,7 @@ function renderLyrics(
     }
     notePositions.forEach((positioned, index) => {
       const syllable = lyric.syllables[index]
+      if (syllable?.absent === true) return
       if (syllable?.leftBrace === true || syllable?.rightBrace === true) {
         const id = syllable.leftBrace === true ? 'ci_dakuohu_zuo' : 'ci_dakuohu_you'
         const braceX = positioned.x + (syllable.leftBrace === true ? -9 : 9)
@@ -992,6 +993,9 @@ function renderLyrics(
           'data-m3n-id': positioned.m3nDataId,
           'data-m3n-rendition': String(lyric.rendition ?? 1),
           'data-m3n-role': 'lyric',
+          ...(syllable?.passes === undefined || syllable.passes.size === 0
+            ? {}
+            : { 'data-m3n-passes': [...syllable.passes].sort((left, right) => left - right).join('-') }),
           }
       if (value === '') {
         // Keep the lyric row discoverable for rendition-aware playback

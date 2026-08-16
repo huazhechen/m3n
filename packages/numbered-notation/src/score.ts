@@ -1,6 +1,8 @@
 import {
+  measurePlaybackPasses,
   parseM3NGrace,
   parseM3NGroupPitches,
+  parsePassRange,
   type ScoreDocument,
   type ScoreEvent,
   type ScoreInterval,
@@ -11,6 +13,7 @@ import { layoutVoiceGroup } from './core/layout.js'
 import { continuousPageHeight, paginateVoiceGroups, renderNumberedNotationPages } from './core/renderer.js'
 import type {
   BarlineElement,
+  LyricSyllable,
   Mark,
   MusicElement,
   NoteElement,
@@ -27,7 +30,8 @@ export type NumberedNotationRenderOptions = {
 
 type EventEntry = { event: ScoreEvent; index: number; lastIndex: number }
 type LyricTarget = { event: ScoreEvent; slot: number; tie: boolean }
-type LyricsByEvent = Map<ScoreEvent, Map<number, string[][]>>
+type LyricRowData = { texts: string[]; passes: ReadonlySet<number> | undefined }
+type LyricsByEvent = Map<ScoreEvent, Map<number, Map<number, LyricRowData>>>
 
 function location(event: ScoreEvent) {
   return { line: 1, column: event.sourceStart + 1, offset: event.sourceStart, length: event.sourceEnd - event.sourceStart }
@@ -127,13 +131,29 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
         }])
       : [{ event, slot: 0, tie: event.tie }]))
   const result: LyricsByEvent = new Map()
+  const passesByEvent = new Map<ScoreEvent, ReadonlySet<number>>()
+  for (const part of document.parts.values()) {
+    for (const [measure, passes] of measurePlaybackPasses(part.melody)) {
+      const effective = passes.size > 0 ? passes : new Set([1])
+      for (const event of measure.events) passesByEvent.set(event, effective)
+    }
+  }
+  const rowPasses = (blockPasses: ReadonlySet<number> | undefined, event: ScoreEvent) => {
+    const measurePasses = passesByEvent.get(event)
+    if (blockPasses === undefined) return measurePasses
+    if (measurePasses === undefined) return blockPasses
+    return new Set([...blockPasses].filter((pass) => measurePasses.has(pass)))
+  }
   document.lyrics.forEach((block) => {
     const numbered = /^\d+$/.exec(block.range)
     const pass = numbered ? undefined : /V(\d+)/.exec(block.phrasePasses ?? '')
     // This mirrors the MEI projection: generic L: is verse 1, while L2: and
     // lyrics limited to V2 use their explicit pass row.
     const row = Math.max(0, Number(numbered?.[0] ?? pass?.[1] ?? 1) - 1)
+    const blockPassRange = block.range || block.phrasePasses
+    const blockPasses = blockPassRange ? parsePassRange(blockPassRange) : undefined
     const targets = targetEvents.filter(({ event }) => block.targetStart === undefined || block.targetEnd === undefined || (event.sourceStart >= block.targetStart && event.sourceEnd <= block.targetEnd))
+    const consumed = new Set<LyricTarget>()
     let targetIndex = 0
     block.syllables.forEach((syllable) => {
       // A regular lyric item belongs to the first event of a tied chain and
@@ -145,28 +165,54 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const target = targets[targetIndex]
       targetIndex += 1
       if (!target || syllable.kind !== 'text') return
-      const slots = result.get(target.event) ?? new Map<number, string[][]>()
-      const rows = slots.get(target.slot) ?? []
-      rows[row] = [...(rows[row] ?? []), syllable.text]
+      consumed.add(target)
+      const slots = result.get(target.event) ?? new Map<number, Map<number, LyricRowData>>()
+      const rows = slots.get(target.slot) ?? new Map<number, LyricRowData>()
+      const data = rows.get(row) ?? { texts: [], passes: undefined }
+      data.texts.push(syllable.text)
+      data.passes = rowPasses(blockPasses, target.event)
+      rows.set(row, data)
       slots.set(target.slot, rows)
       result.set(target.event, slots)
     })
+    // Notes inside the block's range that received no syllable still belong
+    // to the row; reserve their slot so rendition-aware highlighting can
+    // tell a missing first verse from a filled second one.
+    for (const target of targets) {
+      if (consumed.has(target)) continue
+      const slots = result.get(target.event) ?? new Map<number, Map<number, LyricRowData>>()
+      const rows = slots.get(target.slot) ?? new Map<number, LyricRowData>()
+      const data = rows.get(row) ?? { texts: [], passes: undefined }
+      data.passes = rowPasses(blockPasses, target.event)
+      rows.set(row, data)
+      slots.set(target.slot, rows)
+      result.set(target.event, slots)
+    }
   })
   return result
 }
 
 function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
-  const activeRows = new Set(entries.flatMap(({ event }) => [...(lyrics.get(event)?.values() ?? [])].flatMap((rows) => rows.flatMap((_, row) => rows[row]?.length ? [row] : []))))
+  const activeRows = new Set(entries.flatMap(({ event }) => [...(lyrics.get(event)?.values() ?? [])].flatMap((rows) => [...rows.keys()].filter((row) => rows.get(row)?.texts.some((text) => text !== '') ?? false))))
   return [...activeRows].sort((left, right) => left - right).map((row) => ({
     rendition: row + 1,
     syllables: entries.flatMap(({ event, index, lastIndex }) => {
       const slots = lyrics.get(event)
       const count = lastIndex - index + 1
       if (event.kind === 'rest') {
-        return Array.from({ length: count }, () => ({ text: '', source: location(event) }))
+        return Array.from({ length: count }, () => ({ text: '', source: location(event), absent: true }))
       }
-      if (event.kind !== 'tuplet') return [{ text: slots?.get(0)?.[row]?.join('') ?? '', source: location(event) }]
-      return Array.from({ length: count }, (_, slot) => ({ text: slots?.get(slot)?.[row]?.join('') ?? '', source: location(event) }))
+      const syllableFor = (slot: number): LyricSyllable => {
+        const data = slots?.get(slot)?.get(row)
+        if (data === undefined) return { text: '', source: location(event), absent: true }
+        return {
+          text: data.texts.join(''),
+          source: location(event),
+          ...(data.passes === undefined ? {} : { passes: data.passes }),
+        }
+      }
+      if (event.kind !== 'tuplet') return [syllableFor(0)]
+      return Array.from({ length: count }, (_, slot) => syllableFor(slot))
     }),
     source: { line: 1, column: 1, offset: 0, length: 0 },
   }))

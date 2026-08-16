@@ -132,6 +132,10 @@ export interface Mark {
 
 export interface LyricSyllable {
   text: string
+  /** Playback passes this syllable's measure participates in. */
+  passes?: ReadonlySet<number>
+  /** Row placeholder for a note this lyric row does not cover at all. */
+  absent?: boolean
   trailingPunctuation?: string
   leftBrace?: boolean
   rightBrace?: boolean

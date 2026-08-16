@@ -250,6 +250,25 @@ describe('NumberedNotationScore', () => {
     expect(renditions.some(({ rendition, text }) => rendition === 2 && text === '了')).toBe(true)
   })
 
+  it('tags repeated-section lyrics with their playback passes', () => {
+    const source = readFileSync(new URL('../../../src/scores/huang_hun_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1100 })
+    const verseTwo = [...svg.matchAll(/data-m3n-id="m3n-e-60"[^>]*data-m3n-passes="([^"]+)"[^>]*>([^<]*)<\/text>/g)]
+      .map((match) => ({ passes: match[1], text: match[2] }))
+    const verseThree = [...svg.matchAll(/<text[^>]*data-m3n-id="m3n-e-83"[^>]*>([^<]*)<\/text>/g)]
+      .map((match) => ({
+        passes: /data-m3n-passes="([^"]+)"/.exec(match[0])?.[1] ?? '',
+        rendition: Number(/data-m3n-rendition="(\d+)"/.exec(match[0])?.[1]),
+        text: match[1],
+      }))
+
+    expect(verseTwo).toEqual([{ passes: '1-2', text: '感' }])
+    expect(verseThree).toEqual([
+      { passes: '1', rendition: 1, text: '依' },
+      { passes: '2', rendition: 2, text: '依' },
+    ])
+  })
+
   it('spans a crescendo across the sustain symbols of a long note', () => {
     const document = parseM3NDocument('{4/4}\nN: {cresc}1^^{/} 2 |||')
     const [svg] = renderScore(document, { paged: false, width: 1000 })
