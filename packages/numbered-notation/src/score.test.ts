@@ -17,8 +17,8 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('<svg width="1000"')
     expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(400)
-    expect(svg).toContain('xlink:href="#diaohao_fu"')
-    expect(svg).toContain('xlink:href="#shuzi_b_1"')
+    expect(svg).toContain('>1=D</text>')
+    expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
     expect(svg).toContain('font-family="Microsoft YaHei"')
     expect(svg).toContain('id="m3n-e-1"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
@@ -38,7 +38,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('>了</text>')
   })
 
-  it('uses fixed 0.8-scale glyphs without changing its requested page width', () => {
+  it('uses compact glyph definitions without changing its requested page width', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),
       { paged: false, width: 800 },
@@ -46,17 +46,17 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('<svg width="800"')
     expect(svg).toContain('font-size="32"')
-    expect(svg).toMatch(/id="m3n-e-1"[^>]*transform="[^"]*scale\(0.8\)/)
+    expect(svg).toMatch(/xlink:href="#shuzi_b_bian_1"[^>]*id="m3n-e-1"/)
   })
 
   it('keeps dotted values and their scaled support glyphs aligned', () => {
     const source = readFileSync(new URL('../../../src/scores/huan_le_song_01.m3n', import.meta.url), 'utf8')
     const [svg] = renderScore(parseM3NDocument(source), { paged: true, width: 800 })
 
-    expect(svg).toContain('xlink:href="#fudian"')
+    expect(svg).toContain('<circle')
     expect(svg).toContain('data-type="jianshixian" stroke-width="1.5"')
-    expect(svg).toMatch(/xlink:href="#shengbufu_shang"[^>]*scale\(0.8\)/)
-    expect(svg).toMatch(/xlink:href="#paihao_xian"[^>]*scale\(0.8\)/)
+    expect(svg).toContain('<path d="M 47.48,')
+    expect(svg).toContain('<rect x="96.8"')
   })
 
   it('keeps a single-phrase paged score close to its content height', () => {
@@ -184,25 +184,25 @@ describe('NumberedNotationScore', () => {
     const document = parseM3NDocument('{2/4}\nN: [1d 3d 5d:h] 0 |||')
     const [svg] = renderScore(document, { paged: false, width: 1000 })
 
-    expect(svg).toContain('xlink:href="#shuzi_b_1"')
-    expect(svg).toContain('xlink:href="#shuzi_b_3"')
-    expect(svg).toContain('xlink:href="#shuzi_b_5"')
+    expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
+    expect(svg).toContain('xlink:href="#shuzi_b_bian_3"')
+    expect(svg).toContain('xlink:href="#shuzi_b_bian_5"')
     expect(svg).toContain('data-m3n-id="m3n-e-1"')
-    const ys = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_[135]"/g)]
+    const ys = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_bian_[135]"/g)]
       .map((match) => Number(match[2]))
     expect(new Set(ys).size).toBe(3)
     expect(ys[0]! - ys[1]!).toBeCloseTo(18)
     expect(ys[1]! - ys[2]!).toBeCloseTo(18)
-    const lowOctaveDotYs = [...svg.matchAll(/<use x="[\d.]+" y="([\d.]+)" xlink:href="#yingao_di"/g)].map((match) => Number(match[1]))
+    const lowOctaveDotYs = [...svg.matchAll(/<circle cx="[\d.]+" cy="([\d.]+)" r="1.52"/g)].map((match) => Number(match[1]))
     ys.forEach((y) => {
-      expect(lowOctaveDotYs.some((dotY) => Math.abs(dotY - (y + 0.6 * 0.8)) < 1e-6)).toBe(true)
+      expect(lowOctaveDotYs.some((dotY) => Math.abs(dotY - (y + 10.88)) < 1e-6)).toBe(true)
     })
   })
 
   it('expands ScoreDocument tuplets into compact numbered notation note groups', () => {
     const document = parseM3NDocument('{4/4}\nN: [123:2] 4 5 |||')
     const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const notes = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_([123])"[^>]*data-m3n-id="m3n-e-1"/g)]
+    const notes = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_bian_([123])"[^>]*data-m3n-id="m3n-e-1"/g)]
 
     expect(Number(notes[1]?.[1]) - Number(notes[0]?.[1])).toBe(15)
     expect(Number(notes[2]?.[1]) - Number(notes[1]?.[1])).toBe(15)
@@ -224,7 +224,7 @@ describe('NumberedNotationScore', () => {
     const document = parseM3NDocument('{title=测试曲} {subtitle=副标题} {singer=演唱者} {composer=作曲者} {lyricist=作词者} {4/4} {90qpm}\nN: 1 2 3 4 |||')
     const [svg] = renderScore(document, { paged: true, width: 1000 })
 
-    expect(svg).toContain('xlink:href="#jiepaifu"')
+    expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
     expect(svg).toMatch(/font-size="16"[^>]*>副标题<\/text>/)
     expect(svg).toMatch(/font-size="14"[^>]*>演唱者<\/text>/)
     expect(svg).toMatch(/font-size="16"[^>]*data-jiepai="90">90<\/text>/)
@@ -264,7 +264,7 @@ describe('NumberedNotationScore', () => {
     expect(svg).toMatch(/x="500" y="60" dy="0"[^>]*font-size="32"[^>]*font-family="ui-serif, serif"[^>]*>测试曲<\/text>/)
     expect(svg).toMatch(/x="500" y="95.2" dy="0"[^>]*font-size="16"[^>]*font-family="ui-serif, serif"[^>]*>副标题<\/text>/)
     expect(svg).toMatch(/x="972" y="128.96" dy="0"[^>]*font-size="14"[^>]*font-family="system-ui, sans-serif"[^>]*>作曲者<\/text>/)
-    expect(svg).toContain('scale(0.8)')
+    expect(svg).not.toContain('scale(0.8)')
   })
 
   it('aligns Xiao Xing Xing speed, header, and first note with the 800px staff score', () => {
@@ -277,10 +277,10 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('data-jiepai="100">100</text>')
     expect(svg).toContain('xlink:href="#m3n-key-signature-equals"')
     expect(svg).toContain('x="146.2" y="101" xlink:href="#m3n-key-signature-equals"')
-    expect(svg).toContain('translate(124.2,107) scale(1.36) translate(-124.2,-107)')
+    expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
     expect(svg).toMatch(/y="149.4"[^>]*id="m3n-e-1"/)
-    expect(svg).toContain('x="80" y="101" xlink:href="#diaohao_zimu_c"')
-    expect(svg).toContain('x="96" y="101" xlink:href="#paihao_xian"')
+    expect(svg).toContain('>1=C</text>')
+    expect(svg).toContain('<rect x="96.8" y="100.2" width="16.8"')
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {

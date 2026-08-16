@@ -84,39 +84,25 @@ function isAscii(value: string) {
   return [...value].every((character) => (character.codePointAt(0) ?? 0x80) <= 0x7f)
 }
 
-function scaledGlyph(
-  registry: GlyphRegistry,
-  id: string,
-  x: number,
-  y: number,
-  scale: number,
-  extra: Readonly<Record<string, string | number | undefined>> = {},
-): string {
-  return registry.use(id, x, y, {
-    ...extra,
-    ...(scale === 1 ? {} : { transform: `translate(${formatNumber(x)},${formatNumber(y)}) scale(${formatNumber(scale)}) translate(${formatNumber(-x)},${formatNumber(-y)})` }),
-  })
-}
-
 function numberedGlyph(
   registry: GlyphRegistry,
   id: string,
   x: number,
   y: number,
-  config: NumberedNotationLayout,
   extra: Readonly<Record<string, string | number | undefined>> = {},
 ): string {
-  return scaledGlyph(registry, id, x, y, config.numberScale, extra)
+  const compactId = /^shuzi_b_([0-7])$/.exec(id)?.[1]
+  return registry.use(compactId === undefined ? id : `shuzi_b_bian_${compactId}`, x, y, extra)
 }
 
 function staffTempoGlyph(x: number, y: number): string {
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="30.24">&#xECA5;</text>`
 }
 
-function keySignatureEqualsGlyph(registry: GlyphRegistry, x: number, y: number, scale: number): string {
+function keySignatureEqualsGlyph(registry: GlyphRegistry, x: number, y: number): string {
   // These are the equals strokes from the numbered key-signature glyph ("1=C").
   registry.define('m3n-key-signature-equals', '<rect height="2" width="11" x="-5.5" y="-3.14103" fill="#1b1b1b"/><rect height="2" width="11" x="-5.5" y="1.32479" fill="#1b1b1b"/>')
-  return scaledGlyph(registry, 'm3n-key-signature-equals', x, y, scale)
+  return registry.use('m3n-key-signature-equals', x, y)
 }
 
 const LEIPZIG_ACCIDENTALS: Readonly<Partial<Record<string, string>>> = {
@@ -142,19 +128,16 @@ function leipzigGlyph(glyph: string, x: number, y: number, size: number): string
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="${formatNumber(size)}">${glyph}</text>`
 }
 
-function musicGlyph(
-  registry: GlyphRegistry,
-  id: string,
-  x: number,
-  y: number,
-  scale: number,
-  config: NumberedNotationLayout,
-  extra: Readonly<Record<string, string | number | undefined>> = {},
-): string {
-  const glyph = config.musicFontCss === undefined ? undefined : LEIPZIG_ACCIDENTALS[id]
-  return glyph === undefined
-    ? scaledGlyph(registry, id, x, y, scale, extra)
-    : leipzigGlyph(glyph, x - 7.2 * scale, y + 6 * scale, 18 * scale)
+function musicGlyph(id: string, x: number, y: number): string {
+  return leipzigGlyph(LEIPZIG_ACCIDENTALS[id] ?? '', x - 5.76, y + 4.8, 14.4)
+}
+
+function octaveDot(x: number, y: number, upper: boolean): string {
+  return `<circle cx="${formatNumber(x - 0.56)}" cy="${formatNumber(y + (upper ? -11.2 : 10.4))}" r="1.52" fill="${INK}"></circle>`
+}
+
+function augmentationDot(x: number, y: number): string {
+  return `<circle cx="${formatNumber(x + 9.88)}" cy="${formatNumber(y - 0.2)}" r="1.96" fill="${INK}"></circle>`
 }
 
 function audioCode(note: NoteElement): string {
@@ -169,47 +152,39 @@ function modeHeader(
   y: number,
 ): string[] {
   const output: string[] = []
-  const glyphScale = config.headerGlyphScale
   const spacingScale = 0.6
-  const keySpacingScale = Math.max(spacingScale, glyphScale)
+  const keySpacing = 0.8
   let x = config.marginLeft
   if (metadata.mode !== undefined) {
     const letter = metadata.mode.match(/[A-G]/)?.[0]
     const accidental = metadata.mode.match(/[#$]/)?.[0]
-    const modeX = x + (accidental === undefined ? 40 : 45) * keySpacingScale
-    output.push(scaledGlyph(registry, 'diaohao_fu', x, y, glyphScale))
+    const modeX = x + (accidental === undefined ? 40 : 45) * keySpacing
+    output.push(text(`1=${letter ?? 'C'}`, x, y + 5.6, { font: config.lyricFont, size: 12.8, dy: 0 }))
     if (accidental !== undefined) {
       output.push(
-        musicGlyph(registry, accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y, glyphScale, config),
+        musicGlyph(accidental === '#' ? 'bianyinfu_sheng' : 'bianyinfu_jiang', modeX, y),
       )
     }
-    output.push(
-      scaledGlyph(registry, `diaohao_zimu_${letter?.toLowerCase()}`, modeX, y, glyphScale, {
-        code: metadata.mode,
-        'data-diaohao': 'true',
-      }),
-    )
-    x += (accidental === undefined ? 60 : 65) * keySpacingScale
+    x += (accidental === undefined ? 60 : 65) * keySpacing
   }
 
   metadata.meters.forEach((meter, index) => {
     const previousParenthesized = metadata.meters[index - 1]?.parenthesized === true
     const nextParenthesized = metadata.meters[index + 1]?.parenthesized === true
     if (meter.parenthesized && !previousParenthesized) {
-      output.push(scaledGlyph(registry, 'paihao_kuohu_zuo', x, y, glyphScale))
+      output.push(text('(', x, y + 5.6, { font: config.lyricFont, size: 12.8, dy: 0 }))
       x += 15 * spacingScale
     }
-    output.push(scaledGlyph(registry, 'paihao_xian', x, y, glyphScale))
+    output.push(`<rect x="${formatNumber(x + 0.8)}" y="${formatNumber(y - 0.8)}" width="16.8" height="1.6" fill="${INK}"></rect>`)
     // The fraction bar and digits are both scaled from their own origins.
     // Align the digit origin to the scaled center of the fraction bar.
-    const digitX = x + 11.5 * glyphScale
+    const digitX = x + 9.2
     output.push(
       numberedGlyph(
         registry,
         `shuzi_${config.numberStyle}_bian_${String(meter.numerator).slice(-1)}`,
         digitX,
         y - 12 * spacingScale,
-        { ...config, numberScale: glyphScale },
       ),
     )
     output.push(
@@ -218,13 +193,12 @@ function modeHeader(
         `shuzi_${config.numberStyle}_bian_${String(meter.denominator).slice(-1)}`,
         digitX,
         y + 12 * spacingScale,
-        { ...config, numberScale: glyphScale },
         { fill: '#414141' },
       ),
     )
     x += 27 * spacingScale
     if (meter.parenthesized && !nextParenthesized) {
-      output.push(scaledGlyph(registry, 'paihao_kuohu_you', x, y, glyphScale))
+      output.push(text(')', x, y + 5.6, { font: config.lyricFont, size: 12.8, dy: 0 }))
       x += 15 * spacingScale
     }
   })
@@ -234,12 +208,12 @@ function modeHeader(
     const tempoY = y + 6
     if (typeof tempo === 'number') {
       if (config.musicFontCss === undefined) {
-        output.push(scaledGlyph(registry, 'jiepaifu', tempoX, tempoY, 1.36))
+        output.push(staffTempoGlyph(tempoX, tempoY))
       } else {
         output.push(staffTempoGlyph(tempoX, tempoY))
       }
       const equalsX = tempoX + 22
-      output.push(keySignatureEqualsGlyph(registry, equalsX, y, glyphScale))
+      output.push(keySignatureEqualsGlyph(registry, equalsX, y))
       output.push(
         text(String(tempo), equalsX + 10, tempoY, {
           font: config.musicFontCss === undefined ? 'system-ui, sans-serif' : 'Times, serif',
@@ -454,18 +428,17 @@ function renderChordPitch(
   registry: GlyphRegistry,
 ): string[] {
   const output: string[] = []
-  output.push(numberedGlyph(registry, `shuzi_${config.numberStyle}_${chordPitch.pitch}`, x, y, config, {
+  output.push(numberedGlyph(registry, `shuzi_${config.numberStyle}_${chordPitch.pitch}`, x, y, {
     code: String(chordPitch.pitch),
     'data-m3n-id': note.m3nDataId ?? note.m3nId,
   }))
-  if (chordPitch.accidental !== undefined) output.push(musicGlyph(registry, ACCIDENTAL_GLYPH_IDS[chordPitch.accidental], x, y, config.numberScale, config))
-  const dotId = chordPitch.octave >= 0 ? 'yingao_gao' : 'yingao_di'
+  if (chordPitch.accidental !== undefined) output.push(musicGlyph(ACCIDENTAL_GLYPH_IDS[chordPitch.accidental], x, y))
   const underlineCount = Math.max(0, Math.log2(note.duration / 4))
   for (let octave = 0; octave < Math.abs(chordPitch.octave); octave += 1) {
       const octaveY = chordPitch.octave > 0
-        ? y - octave * 3.6 * config.numberScale
-        : y + (0.6 + underlineCount * 2.4 + octave * 3.6) * config.numberScale
-      output.push(numberedGlyph(registry, dotId, x + (chordPitch.pitch === 4 ? 1.5 * config.numberScale : 0), octaveY, config))
+        ? y - octave * 2.88
+        : y + 0.48 + underlineCount * 1.92 + octave * 2.88
+      output.push(octaveDot(x + (chordPitch.pitch === 4 ? 1.2 : 0), octaveY, chordPitch.octave >= 0))
   }
   return output
 }
@@ -497,7 +470,7 @@ function renderNote(
   if (!note.hidden) {
     const id = note.pitch === 9 ? 'shuzi_x' : `shuzi_${config.numberStyle}_${note.pitch}`
     output.push(
-      numberedGlyph(registry, id, x, y, config, {
+      numberedGlyph(registry, id, x, y, {
         time: formatNumber(timeOverride ?? playbackTime(note)),
         audio: audioOverride ?? audioCode(note),
         notepos,
@@ -507,20 +480,19 @@ function renderNote(
       }),
     )
     if (note.accidental !== undefined) {
-      output.push(musicGlyph(registry, ACCIDENTAL_GLYPH_IDS[note.accidental], x, y, config.numberScale, config))
+      output.push(musicGlyph(ACCIDENTAL_GLYPH_IDS[note.accidental], x, y))
     }
-    const dotId = note.octave >= 0 ? 'yingao_gao' : 'yingao_di'
     const underlineCount = Math.max(0, Math.log2(note.duration / 4))
     for (let octave = 0; octave < Math.abs(note.octave); octave += 1) {
       const octaveY = note.octave > 0
-        ? y - octave * 3.6 * config.numberScale
-        : y + (0.6 + underlineCount * 2.4 + octave * 3.6) * config.numberScale
-      output.push(numberedGlyph(registry, dotId, x + (note.pitch === 4 ? 1.5 * config.numberScale : 0), octaveY, config))
+        ? y - octave * 2.88
+        : y + 0.48 + underlineCount * 1.92 + octave * 2.88
+      output.push(octaveDot(x + (note.pitch === 4 ? 1.2 : 0), octaveY, note.octave >= 0))
     }
-    if (note.dots >= 2) output.push(numberedGlyph(registry, 'fudian2', x, y, config))
-    else if (note.dots === 1) output.push(numberedGlyph(registry, 'fudian', x, y, config))
+    if (note.dots >= 1) output.push(augmentationDot(x, y))
+    if (note.dots >= 2) output.push(augmentationDot(x + 5.6, y))
     for (let dot = 2; dot < note.dots; dot += 1)
-      output.push(numberedGlyph(registry, 'fudian', x + (8.4 + (dot - 2) * 4.2) * config.numberScale, y, config))
+      output.push(augmentationDot(x + 6.72 + (dot - 2) * 3.36, y))
     note.chordPitches?.forEach((chordPitch, index) => {
       output.push(...renderChordPitch(note, chordPitch, x, y - (index + 1) * CHORD_STACK_STEP, config, registry))
     })
@@ -1391,16 +1363,16 @@ function renderPage(
       const braceX = layout.voiceBraceX ?? startX
       // The brace caps terminate at x=-27.3 in their native coordinate system.
       // Anchor the double bar to that endpoint rather than the cap's midpoint.
-      const braceStemX = braceX - 27.3 * config.numberScale
-      const braceInnerStemX = braceStemX + 2.7 * config.numberScale
-      body.push(scaledGlyph(registry, 'shengbufu_shang', braceX, firstY, config.numberScale))
+      const braceStemX = braceX - 21.84
+      const braceInnerStemX = braceStemX + 2.16
+      body.push(`<path d="M ${formatNumber(braceX - 14.32)},${formatNumber(firstY - 10.4)} C ${formatNumber(braceX - 14.32)},${formatNumber(firstY - 10.4)} ${formatNumber(braceX - 15.12)},${formatNumber(firstY - 6)} ${formatNumber(braceStemX)},${formatNumber(firstY - 4.48)}" stroke="${INK}" stroke-width="1.6" fill="none"></path>`)
       body.push(
-        `<line x1="${formatNumber(braceStemX)}" y1="${formatNumber(firstY - 5.6 * config.numberScale)}" x2="${formatNumber(braceStemX)}" y2="${formatNumber(lastY + 5.7 * config.numberScale)}" stroke-width="${formatNumber(2.4 * config.numberScale)}" stroke="${INK}" fill="none"></line>`,
+        `<line x1="${formatNumber(braceStemX)}" y1="${formatNumber(firstY - 4.48)}" x2="${formatNumber(braceStemX)}" y2="${formatNumber(lastY + 4.56)}" stroke-width="1.92" stroke="${INK}" fill="none"></line>`,
       )
       body.push(
-        `<line x1="${formatNumber(braceInnerStemX)}" y1="${formatNumber(firstY - 6.5 * config.numberScale)}" x2="${formatNumber(braceInnerStemX)}" y2="${formatNumber(lastY + 6.6 * config.numberScale)}" stroke-width="${formatNumber(1.2 * config.numberScale)}" stroke="${INK}" fill="none"></line>`,
+        `<line x1="${formatNumber(braceInnerStemX)}" y1="${formatNumber(firstY - 5.2)}" x2="${formatNumber(braceInnerStemX)}" y2="${formatNumber(lastY + 5.28)}" stroke-width="0.96" stroke="${INK}" fill="none"></line>`,
       )
-      body.push(scaledGlyph(registry, 'shengbufu_xia', braceX, lastY, config.numberScale))
+      body.push(`<path d="M ${formatNumber(braceX - 14.2)},${formatNumber(lastY + 10.72)} C ${formatNumber(braceX - 14.2)},${formatNumber(lastY + 10.72)} ${formatNumber(braceX - 15)},${formatNumber(lastY + 6.14)} ${formatNumber(braceStemX + 0.12)},${formatNumber(lastY + 4.56)}" stroke="${INK}" stroke-width="1.6" fill="none"></path>`)
     }
     if (multiVoice) y += spacing.voiceGap
   })
