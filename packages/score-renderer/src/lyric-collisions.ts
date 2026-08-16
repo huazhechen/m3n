@@ -40,8 +40,13 @@ export function resolveLyricCollisions(paper: HTMLElement) {
     if (!engraving) continue
     const systems = [...engraving.querySelectorAll<SVGGElement>(':scope > g.page-margin > g.system')]
     let downstreamOffset = 0
+    let occupiedLyricBottom = -Infinity
 
-    for (const [index, system] of systems.entries()) {
+    for (const system of systems) {
+      // `getBBox()` is expressed in the system's local coordinate space and
+      // therefore ignores earlier transform offsets. Apply the accumulated
+      // lyric clearance before placing each successive system.
+      downstreamOffset = Math.max(downstreamOffset, occupiedLyricBottom - system.getBBox().y)
       translateVertically(system, downstreamOffset)
       const verses = [...system.querySelectorAll<SVGGElement>('g.verse')]
       const obstacles = [...system.querySelectorAll<SVGGraphicsElement>('.notehead, .stem path, .flag path, .beam path, .beam polygon, .slur path, path.slur')]
@@ -65,11 +70,9 @@ export function resolveLyricCollisions(paper: HTMLElement) {
       }
 
       lyrics.forEach((lyric) => translateVertically(lyric.verse, lyric.lineOffset + lyricOffset))
-      const nextSystem = systems[index + 1]
-      if (!nextSystem || lyrics.length === 0) continue
-
+      if (lyrics.length === 0) continue
       const lyricBottom = Math.max(...lyrics.map((lyric) => lyric.bounds.y + lyric.bounds.height + lyric.lineOffset + lyricOffset + lyric.lineHeight * 0.2))
-      downstreamOffset += Math.max(0, lyricBottom - nextSystem.getBBox().y)
+      occupiedLyricBottom = Math.max(occupiedLyricBottom, lyricBottom + downstreamOffset)
     }
 
     if (downstreamOffset > 0) {
