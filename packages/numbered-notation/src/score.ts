@@ -414,6 +414,53 @@ function keyBeforeMeasure(measures: readonly ScoreMeasure[], index: number, fall
   return fallback
 }
 
+/**
+ * Partition a segment into `lineCount` contiguous runs whose natural widths
+ * are as even as possible. `prefixWidths[k]` is the natural width of the
+ * first k measures, so a candidate line `[i, j)` measures
+ * `prefixWidths[j] - prefixWidths[i]`. The DP minimizes the widest line;
+ * ties keep earlier lines at the smallest split count so later lines are not
+ * starved.
+ */
+function balancedLineSizes(prefixWidths: readonly number[], lineCount: number): number[] {
+  const measureCount = prefixWidths.length - 1
+  if (lineCount <= 1) return [measureCount]
+  if (lineCount >= measureCount) return Array.from({ length: measureCount }, () => 1)
+  const widest: number[][] = Array.from({ length: lineCount + 1 }, () =>
+    Array(measureCount + 1).fill(Number.POSITIVE_INFINITY),
+  )
+  const splitAt: number[][] = Array.from({ length: lineCount + 1 }, () =>
+    Array(measureCount + 1).fill(0),
+  )
+  widest[0]![0] = 0
+  for (let lines = 1; lines <= lineCount; lines += 1) {
+    for (let measures = lines; measures <= measureCount; measures += 1) {
+      let best = Number.POSITIVE_INFINITY
+      let bestSplit = -1
+      for (let previous = lines - 1; previous < measures; previous += 1) {
+        const candidate = Math.max(
+          widest[lines - 1]![previous]!,
+          prefixWidths[measures]! - prefixWidths[previous]!,
+        )
+        if (candidate < best) {
+          best = candidate
+          bestSplit = previous
+        }
+      }
+      widest[lines]![measures] = best
+      splitAt[lines]![measures] = bestSplit
+    }
+  }
+  const sizes: number[] = []
+  let measures = measureCount
+  for (let lines = lineCount; lines >= 1; lines -= 1) {
+    const previous = splitAt[lines]![measures]!
+    sizes.unshift(measures - previous)
+    measures = previous
+  }
+  return sizes
+}
+
 function systemGroups(document: ScoreDocument, width: number) {
   const part = [...document.parts.values()][0]
   if (!part) return []
@@ -434,111 +481,64 @@ function systemGroups(document: ScoreDocument, width: number) {
     }
   }
   const lyrics = lyricsByEvent(document)
+  const groupForRange = (start: number, end: number) => groupForMeasures(
+    part.melody.slice(start, end), part.bass.slice(start, end), lyrics, document.intervals, ids,
+    {
+      fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
+      toNext: part.melody[end]?.ending !== undefined && part.melody[end]?.ending === part.melody[end - 1]?.ending,
+    },
+    keyBeforeMeasure(part.melody, start, document.key),
+  )
+  const measureRange = (start: number, end: number) => layoutVoiceGroup(
+    groupForRange(start, end), 83, Number.POSITIVE_INFINITY,
+  )
+
+  // 1. `{br}` splits the score into independent segments. The marker lands on
+  // the preceding measure (`breakAfter`) or the following one (`breakBefore`);
+  // both denote the same boundary.
+  const segmentStarts = [0]
+  for (let measure = 1; measure < measureCount; measure += 1) {
+    if (part.melody[measure]?.breakBefore || part.melody[measure - 1]?.breakAfter) {
+      segmentStarts.push(measure)
+    }
+  }
+  segmentStarts.push(measureCount)
+
   const groups: VoiceGroup[] = []
-  // Boundary indices whose final system was deliberately balanced. Both
-  // resulting systems should occupy the full available width in that case.
-  const justifiedFinalBoundaries = new Set<number>()
-  let start = 0
-  while (start < measureCount) {
-    const beginsSegment = start === 0 || part.melody[start - 1]?.breakAfter === true || part.melody[start]?.breakBefore === true
-    // Explicit `br` markers set a preferred system boundary. Within that
-    // range, though, balance auto-wrapped measures rather than orphaning the
-    // final measure on its own line.
-    let boundaryEnd = measureCount
-    let hasExplicitBoundary = false
-    for (let measure = start; measure < measureCount; measure += 1) {
-      if (measure > start && part.melody[measure]?.breakBefore) {
-        boundaryEnd = measure
-        hasExplicitBoundary = true
-        break
-      }
-      if (part.melody[measure]?.breakAfter) {
-        boundaryEnd = measure + 1
-        hasExplicitBoundary = true
-        break
-      }
-    }
-    let end = start
-    while (end < boundaryEnd) {
-      const candidate = groupForMeasures(
-        part.melody.slice(start, end + 1), part.bass.slice(start, end + 1), lyrics, document.intervals, ids,
-        {
-          fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
-          toNext: part.melody[end + 1]?.ending !== undefined && part.melody[end + 1]?.ending === part.melody[end]?.ending,
-        },
-        keyBeforeMeasure(part.melody, start, document.key),
-      )
-      // Measure with the original engine before its justified-fit pass. Asking
-      // for an infinite right edge preserves its natural width for wrapping.
-      const layout = layoutVoiceGroup(candidate, 83, Number.POSITIVE_INFINITY)
-      if (end > start && layout.endX > width - 77) break
-      end += 1
-    }
-    if (end < boundaryEnd) {
-      const remaining = boundaryEnd - end
-      const lineLength = end - start
-      // Only consider balancing a two-system tail. The balanced candidate's
-      // last line must already be substantial to justify stretching it when
-      // this is the document's final segment; otherwise keep the greedy
-      // split and leave the final line at its natural width. A break in the
-      // middle of the document must never leave an incomplete line, so those
-      // segments are always divided evenly and justified.
-      if (remaining <= lineLength) {
-        const balancedEnd = start + Math.ceil((boundaryEnd - start) / 2)
-        if (boundaryEnd < measureCount) {
-          end = balancedEnd
-          justifiedFinalBoundaries.add(boundaryEnd)
-        } else {
-          const balancedTail = groupForMeasures(
-            part.melody.slice(balancedEnd, boundaryEnd), part.bass.slice(balancedEnd, boundaryEnd), lyrics, document.intervals, ids,
-            {
-              fromPrevious: part.melody[balancedEnd - 1]?.ending !== undefined && part.melody[balancedEnd - 1]?.ending === part.melody[balancedEnd]?.ending,
-              toNext: part.melody[boundaryEnd]?.ending !== undefined && part.melody[boundaryEnd]?.ending === part.melody[boundaryEnd - 1]?.ending,
-            },
-            keyBeforeMeasure(part.melody, balancedEnd, document.key),
-          )
-          const balancedTailWidth = layoutVoiceGroup(balancedTail, 83, Number.POSITIVE_INFINITY).endX - 83
-          const availableWidth = width - 160
-          if (balancedTailWidth > availableWidth / 2) {
-            end = balancedEnd
-            justifiedFinalBoundaries.add(boundaryEnd)
-          }
-        }
-      }
-    }
-    const group = groupForMeasures(
-      part.melody.slice(start, end), part.bass.slice(start, end), lyrics, document.intervals, ids,
-      {
-        fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
-        toNext: part.melody[end]?.ending !== undefined && part.melody[end]?.ending === part.melody[end - 1]?.ending,
-      },
-      keyBeforeMeasure(part.melody, start, document.key),
-    )
-    if (end < boundaryEnd || justifiedFinalBoundaries.has(boundaryEnd)
-      || (hasExplicitBoundary && beginsSegment && end === boundaryEnd)) {
-      group.forceJustify = true
-    }
-    if (justifiedFinalBoundaries.has(boundaryEnd) && end === boundaryEnd) {
-      if (boundaryEnd === measureCount) {
-        // The balanced split assumed a full tail, but greedy re-wrapping can
-        // still leave a much shorter final line (for example a wide closing
-        // measure). Only justify that final line when it is genuinely
-        // substantial; otherwise keep its natural width.
-        const finalLine = groupForMeasures(
-          part.melody.slice(start, boundaryEnd), part.bass.slice(start, boundaryEnd), lyrics, document.intervals, ids,
-          {
-            fromPrevious: part.melody[start - 1]?.ending !== undefined && part.melody[start - 1]?.ending === part.melody[start]?.ending,
-            toNext: part.melody[boundaryEnd]?.ending !== undefined && part.melody[boundaryEnd]?.ending === part.melody[boundaryEnd - 1]?.ending,
-          },
-          keyBeforeMeasure(part.melody, start, document.key),
-        )
-        const finalLineWidth = layoutVoiceGroup(finalLine, 83, Number.POSITIVE_INFINITY).endX - 83
-        if (finalLineWidth <= (width - 160) / 2) group.forceJustify = false
-      }
-      justifiedFinalBoundaries.delete(boundaryEnd)
-    }
-    groups.push(group)
-    start = end
+  // Natural content budget per line: the renderer starts systems at 83 and
+  // wraps when natural content passes `width - 77`, then stretches the line
+  // across the page. This is the same conservative fit width the previous
+  // wrapper used.
+  const availableWidth = Math.max(1, width - 160)
+  for (let segmentIndex = 0; segmentIndex < segmentStarts.length - 1; segmentIndex += 1) {
+    const segmentStart = segmentStarts[segmentIndex]!
+    const segmentEnd = segmentStarts[segmentIndex + 1]!
+    const segmentLength = segmentEnd - segmentStart
+    // 2. Render the segment by default and read its natural width. Measure
+    // layout is additive, so each barline's x gives the natural width of the
+    // range up to that measure.
+    const segmentLayout = measureRange(segmentStart, segmentEnd)
+    const prefixWidths = [0]
+    segmentLayout.lines[0]?.barlines.forEach((barline) => {
+      prefixWidths.push(barline.x - 83)
+    })
+    const segmentWidth = segmentLayout.endX - 83
+    // 3. The segment width decides how many lines are needed, then the
+    // measures are split so every line carries an even share of that width.
+    let lineCount = Math.max(1, Math.ceil(segmentWidth / availableWidth))
+    lineCount = Math.min(lineCount, segmentLength)
+    const lineSizes = balancedLineSizes(prefixWidths, lineCount)
+    let start = segmentStart
+    lineSizes.forEach((size) => {
+      const end = start + size
+      const group = groupForRange(start, end)
+      const isFinalSegment = segmentIndex === segmentStarts.length - 2
+      // Evenly distributed lines all stretch across the full width; the sole
+      // line of the final segment keeps its natural width as a closing tail.
+      if (!(isFinalSegment && lineSizes.length === 1)) group.forceJustify = true
+      groups.push(group)
+      start = end
+    })
   }
   return groups
 }

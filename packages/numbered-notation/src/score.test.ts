@@ -546,10 +546,10 @@ describe('NumberedNotationScore', () => {
     })
   })
 
-  it('keeps a short natural tail greedy and unstretched when balancing would halve it', () => {
-    // Three wide measures followed by a narrow rest: the greedy split is 3+1,
-    // and the balanced tail (one wide measure + the rest) still fits in less
-    // than half a line, so the original split and natural final line remain.
+  it('splits a segment evenly by natural width and justifies every line', () => {
+    // Three wide measures followed by a narrow rest: the segment width calls
+    // for two lines, and the measures split 2+2 so each line carries an even
+    // share of the natural width. Both lines then stretch across the page.
     const wide = '1 2 3 4 5 6 1 2 3 4 5 6 1'
     const source = `{4/4}\nN: ${wide} | ${wide} | ${wide} | 0 |||`
     const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1100 })
@@ -557,8 +557,34 @@ describe('NumberedNotationScore', () => {
     const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
     const ends = [...svg.matchAll(/data-m3n-measure-end="([\d.]+)"/g)].map((match) => Number(match[1]))
 
-    expect(systemStarts).toEqual([0, 3])
-    expect(Math.max(...ends.slice(3))).toBeLessThan(1023)
+    expect(systemStarts).toEqual([0, 2])
+    const fullWidth = ends[systemStarts[1]! - 1]!
+    expect(Math.max(...ends)).toBeCloseTo(fullWidth, 3)
+    expect(fullWidth).toBeCloseTo(1053.8, 3)
+  })
+
+  it('keeps each {br} segment independent and balances it on its own width', () => {
+    const source = `{4/4}\nN: ${Array.from({ length: 20 }, () => '1 2 3 4 |').join(' ')} {br} 5 6 7 1e |||`
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
+    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
+    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
+    const ends = [...svg.matchAll(/data-m3n-measure-end="([\d.]+)"/g)].map((match) => Number(match[1]))
+    const fullWidth = ends[systemStarts[1]! - 1]!
+
+    // The {br} boundary always starts a fresh system. Lines inside a segment
+    // are split by width, so their measure counts differ by at most one, and
+    // every line before the final segment stretches across the page.
+    expect(systemStarts).toContain(20)
+    const segmentSizes = [...systemStarts.slice(1), starts.length].map(
+      (end, index) => end - systemStarts[index]!,
+    )
+    expect(Math.max(...segmentSizes.slice(0, -1)) - Math.min(...segmentSizes.slice(0, -1))).toBeLessThanOrEqual(1)
+    systemStarts.slice(0, -1).forEach((systemStart, index) => {
+      const next = systemStarts[index + 1] ?? starts.length
+      expect(ends[next - 1]!).toBeCloseTo(fullWidth, 3)
+    })
+    // The final one-measure segment stays at its natural width.
+    expect(Math.max(...ends.slice(systemStarts.at(-1)!))).toBeLessThan(953.8)
   })
 
   it('combines contiguous M3N legato intervals into one numbered notation line', () => {
