@@ -4,7 +4,7 @@
 ===Epi1
 N: ||: {key=C} {p} ((7 6 5# 6)) | (1e 0) ((2e 1e 7 1e)) | (3e 0) ((4e 3e 2#e 3e)) | ((7e 6e 5#e 6e)) ((7e 6e 5#e 6e)) | 1ee
 ---
-N: (6e{tip} 1ee){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (6e){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (6e){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (4#e){tip} | 3e :||{br}
+N: (6e{tip} 1ee){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (6e){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (6e){tip} | (7e){ac(5e6e)}{tip} (6e){tip} (5e){tip} (4#e){tip} | 3e :||
 ---
 N: ||: {mf} ([3e 5e:h]){tip} ([4e 6e:h]){tip} | ([5e 7e:h]){tip} ([5e 7e:h]){tip} ((6e 5e 4e 3e)) | (2e 0) {p} (3e){tip} (4e){tip} | (5e){tip} (5e){tip} ((6e 5e 4e 3e)) | 2e
 ---
