@@ -502,6 +502,20 @@ describe('NumberedNotationScore', () => {
     expect(noteY - dynamicY).toBeGreaterThanOrEqual(19)
   })
 
+  it('renders a {br} repeat boundary without duplicating the following measure', () => {
+    const source = readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8')
+    const svg = renderScore(parseM3NDocument(source), { paged: true, width: 800 }).join('\n')
+    // The {br} sits after `3e :||`, so the next measure starts with `||:`.
+    // It must appear in exactly one measure group; a leading repeat-start
+    // barline used to shift the segment's barline list by one, which made
+    // the balancing step emit the measure twice.
+    // A chord event renders three glyphs with its event id (main numeral and
+    // one use per upper pitch). A duplicated measure doubles that to six.
+    const countOf = (id: string) => (svg.match(new RegExp(`id="${id}"`, 'g')) ?? []).length
+    expect(countOf('m3n-e-41')).toBe(3)
+    expect(countOf('m3n-e-42')).toBe(3)
+  })
+
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {
     const source = readFileSync(new URL('../../../src/scores/guang_yin_de_gu_shi_01.m3n', import.meta.url), 'utf8')
     const pages = renderScore(parseM3NDocument(source), { paged: true, width: 1000 })

@@ -518,10 +518,12 @@ function systemGroups(document: ScoreDocument, width: number) {
     // layout is additive, so each barline's x gives the natural width of the
     // range up to that measure.
     const segmentLayout = measureRange(segmentStart, segmentEnd)
-    const prefixWidths = [0]
-    segmentLayout.lines[0]?.barlines.forEach((barline) => {
-      prefixWidths.push(barline.x - 83)
-    })
+    const naturalWidths = segmentLayout.lines[0]?.barlines.map((barline) => barline.x - 83) ?? []
+    // A leading barline (e.g. `||:` on the first measure) is analyzed as
+    // closing an empty zero-width measure, adding one extra barline. Keep
+    // only the closing barline of each real measure so the balancing DP
+    // sees exactly segmentLength measures.
+    const prefixWidths = [0, ...naturalWidths.slice(-segmentLength)]
     const segmentWidth = segmentLayout.endX - 83
     // 3. The segment width decides how many lines are needed, then the
     // measures are split so every line carries an even share of that width.
