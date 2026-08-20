@@ -82,7 +82,7 @@ function note(
 ): NoteElement {
   const rendered = pitch(value)
   const time = duration(beats)
-  const graceAfter = includeGrace ? graceNotes(event) : []
+  const graceBefore = includeGrace ? graceNotes(event) : []
   return {
     kind: 'note',
     ...rendered,
@@ -100,7 +100,7 @@ function note(
       const itemPitch = pitch(item)
       return itemPitch.pitch === 0 ? [] : [{ pitch: itemPitch.pitch as 1 | 2 | 3 | 4 | 5 | 6 | 7, octave: itemPitch.octave, accidental: itemPitch.accidental }]
     }) : [],
-    ...(graceAfter.length === 0 ? {} : { graceAfter }),
+    ...(graceBefore.length === 0 ? {} : { graceBefore }),
     source: location(event),
   }
 }
@@ -493,12 +493,15 @@ function systemGroups(document: ScoreDocument, width: number) {
     groupForRange(start, end), 83, Number.POSITIVE_INFINITY,
   )
 
-  // 1. `{br}` splits the score into independent segments. The marker lands on
-  // the preceding measure (`breakAfter`) or the following one (`breakBefore`);
-  // both denote the same boundary.
+  // 1. Named `===` sections and `{br}` both split the score into independent
+  // segments, each starting on a new system. A `{br}` marker lands on the
+  // preceding measure (`breakAfter`) or the following one (`breakBefore`);
+  // both denote the same boundary. Section names are stamped on the first
+  // event of the section, so that measure also starts a segment.
   const segmentStarts = [0]
   for (let measure = 1; measure < measureCount; measure += 1) {
-    if (part.melody[measure]?.breakBefore || part.melody[measure - 1]?.breakAfter) {
+    const sectionBoundary = part.melody[measure]?.events.some((event) => event.sectionLabel !== undefined)
+    if (part.melody[measure]?.breakBefore || part.melody[measure - 1]?.breakAfter || sectionBoundary) {
       segmentStarts.push(measure)
     }
   }

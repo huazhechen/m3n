@@ -879,7 +879,6 @@ function renderMark(
   const start = nearestMarkX(layout, mark.start, 'forward')
   const end = nearestMarkX(layout, mark.end, 'backward')
   if (start === undefined || end === undefined) return []
-  console.error('[mark]', mark.type, 'start', start.toFixed(1), 'end', end.toFixed(1), 'span', (end - start).toFixed(1), 'fromPrev', mark.continuationFromPrevious, 'toNext', mark.continuationToNext)
   const x1 = start + 1
   const x2 = end - 1
   const markedElements = layout.line.elements.slice(mark.start, mark.end + 1)

@@ -113,15 +113,16 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   const numberedNotation = measure.closest<HTMLElement>('.score-paper')?.dataset.notation === 'numbered'
   const numberedMeasureStart = Number(measure.dataset.m3nMeasureStart)
   const numberedMeasureEnd = Number(measure.dataset.m3nMeasureEnd)
-  // Numbered notation records the logical barline-to-barline measure bounds.
-  // The visible group starts at its first glyph, which omits leading whitespace.
+  // Numbered notation records logical barline-to-barline measure bounds.
+  // Barline glyphs paint opaque white masks a few units around their stroke,
+  // so extend the band by that half-width and draw it above the measure;
+  // otherwise the masks shave the front of the first measure and the tail of
+  // every other one.
   const left = numberedNotation && Number.isFinite(numberedMeasureStart)
-    ? numberedMeasureStart
+    ? numberedMeasureStart - 5
     : measureBounds.x
   const right = numberedNotation && Number.isFinite(numberedMeasureEnd)
-    // Numbered barline glyphs draw their visible stroke just left of the
-    // logical x anchor. Extend the band to the far edge of that stroke.
-    ? numberedMeasureEnd + 1
+    ? numberedMeasureEnd + 5
     : measureBounds.x + measureBounds.width
   const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   band.classList.add(className)
@@ -129,7 +130,8 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   band.setAttribute('y', String(systemBounds.y))
   band.setAttribute('width', String(Math.max(0, right - left)))
   band.setAttribute('height', String(systemBounds.height))
-  measure.insertBefore(band, measure.firstChild)
+  if (numberedNotation) measure.appendChild(band)
+  else measure.insertBefore(band, measure.firstChild)
 }
 
 function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: readonly string[]) {

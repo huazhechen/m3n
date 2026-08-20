@@ -175,7 +175,7 @@ describe('NumberedNotationScore', () => {
     expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(170)
   })
 
-  it('maps M3N grace-note postfixes onto the following numbered-notation grace group', () => {
+  it('maps M3N grace-note postfixes onto a leading numbered-notation grace group', () => {
     const [svg] = renderScore(
       parseM3NDocument('{2/4}\nN: 1{ac(7e)} 2{ap((3d5d))} |||'),
       { paged: false, width: 1000 },
@@ -186,6 +186,10 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('xlink:href="#yiyin_shuzi_5"')
     expect(svg).toContain('x1="-3" y1="-3.7" x2="10" y2="-3.7" stroke-width="0.9"')
     expect(svg).toContain('x1="-3" y1="-1.8" x2="10" y2="-1.8" stroke-width="0.9"')
+    // Grace groups precede the main note (前装饰音): the leading tail glyph
+    // is used and the following-note tail is not.
+    expect(svg).toContain('xlink:href="#yiyinxian_qian"')
+    expect(svg).not.toContain('xlink:href="#yiyinxian_hou"')
   })
 
   it('does not render the parser placeholder after a final barline', () => {
@@ -503,17 +507,17 @@ describe('NumberedNotationScore', () => {
   })
 
   it('renders a {br} repeat boundary without duplicating the following measure', () => {
-    const source = readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8')
-    const svg = renderScore(parseM3NDocument(source), { paged: true, width: 800 }).join('\n')
-    // The {br} sits after `3e :||`, so the next measure starts with `||:`.
-    // It must appear in exactly one measure group; a leading repeat-start
+    const svg = renderScore(
+      parseM3NDocument('{2/4}\nN: ||: 1 2 | 3 4 | 5 6 | 7 1e :||{br}\n---\nN: ||: 2 3 | 4 5 | 6 7 | 1e 2 |||'),
+      { paged: true, width: 800 },
+    ).join('\n')
+    // The {br} sits after `:||`, so the next measure starts with `||:` and
+    // must appear in exactly one measure group. A leading repeat-start
     // barline used to shift the segment's barline list by one, which made
-    // the balancing step emit the measure twice.
-    // A chord event renders three glyphs with its event id (main numeral and
-    // one use per upper pitch). A duplicated measure doubles that to six.
-    const countOf = (id: string) => (svg.match(new RegExp(`id="${id}"`, 'g')) ?? []).length
-    expect(countOf('m3n-e-41')).toBe(3)
-    expect(countOf('m3n-e-42')).toBe(3)
+    // the balancing step emit that measure twice (each event id doubled).
+    const countOf = (id: string) => (svg.match(new RegExp(`data-m3n-id="${id}"`, 'g')) ?? []).length
+    expect(countOf('m3n-e-9')).toBe(1)
+    expect(countOf('m3n-e-10')).toBe(1)
   })
 
   it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {
@@ -599,6 +603,17 @@ describe('NumberedNotationScore', () => {
     })
     // The final one-measure segment stays at its natural width.
     expect(Math.max(...ends.slice(systemStarts.at(-1)!))).toBeLessThan(953.8)
+  })
+
+  it('starts a new system at each named === section', () => {
+    const [svg] = renderScore(
+      parseM3NDocument('{4/4}\n===A\nN: 1 2 3 4 | 5 6 7 1e |\n===B\nN: 2 3 4 5 | 6 7 1e 2 |||'),
+      { paged: false, width: 1000 },
+    )
+    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
+    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
+
+    expect(systemStarts).toEqual([0, 2])
   })
 
   it('combines contiguous M3N legato intervals into one numbered notation line', () => {

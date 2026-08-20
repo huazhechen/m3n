@@ -50,7 +50,7 @@ export function meiEventXml(
     const notes = (parseM3NGroupPitches(parsed.pitchSource) ?? []).map((pitch) =>
       `<note ${pitchXml(pitch, event.key)} dur="${duration}" grace="${parsed.kind === 'ac' ? 'unacc' : 'acc'}"/>`)
     const content = notes.length > 1 ? `<beam>${notes.join('')}</beam>` : notes.join('')
-    return content ? [`<graceGrp attach="post">${content}</graceGrp>`] : []
+    return content ? [`<graceGrp attach="pre">${content}</graceGrp>`] : []
   }).join('')
   if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}/>`
   if (event.kind === 'chord') {

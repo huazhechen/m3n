@@ -324,9 +324,9 @@ describe('M3N to MEI conversion', () => {
   it('serializes acciaccaturas and appoggiaturas as grace notes', () => {
     const result = m3nToMei('{key=C} {4/4}\n1{ac(2)} 3{ap((45))} 5{ap(((6)))} 1e |||')
 
-    expect(result.mei).toContain('<graceGrp attach="post"><note pname="d" oct="4" dur="8" grace="unacc"/></graceGrp>')
+    expect(result.mei).toContain('<graceGrp attach="pre"><note pname="d" oct="4" dur="8" grace="unacc"/></graceGrp>')
     expect(result.mei).toContain('<beam><note pname="f" oct="4" dur="16" grace="acc"/><note pname="g" oct="4" dur="16" grace="acc"/></beam>')
-    expect(result.mei).toContain('<graceGrp attach="post"><note pname="a" oct="4" dur="32" grace="acc"/></graceGrp>')
+    expect(result.mei).toContain('<graceGrp attach="pre"><note pname="a" oct="4" dur="32" grace="acc"/></graceGrp>')
     expect(result.mei).not.toContain('acciaccatura')
   })
 
