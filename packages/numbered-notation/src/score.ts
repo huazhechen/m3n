@@ -572,7 +572,9 @@ export class NumberedNotationScore {
     const contentHeight = continuousPageHeight(groups, metadata, baseConfig, options.paged ? 12 : undefined)
     const a4PageHeight = Math.round(width * 1.415)
     const fitsOnOnePage = contentHeight <= a4PageHeight
-    const pageHeight = options.paged ? Math.min(a4PageHeight, contentHeight) : contentHeight
+    // Paged output always uses a full A4-height sheet even when the score is
+    // shorter than one page; only continuous mode hugs the content height.
+    const pageHeight = options.paged ? a4PageHeight : contentHeight
     const layout = createNumberedNotationLayout({ width, height: pageHeight, musicFontCss: options.musicFontCss })
     const numberedNotation: NumberedNotationDocument = {
       metadata,

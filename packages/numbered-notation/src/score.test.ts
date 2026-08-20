@@ -16,7 +16,7 @@ describe('NumberedNotationScore', () => {
     const [svg] = renderScore(document, { paged: true, width: 1000 })
 
     expect(svg).toContain('<svg width="1000"')
-    expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(400)
+    expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBe(1415)
     expect(svg).toContain('>D</text>')
     expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
     expect(svg).toContain('id="shuzi_b_bian_1" transform="translate(-51,-50)"')
@@ -155,13 +155,13 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('font-size="16" font-family="serif"')
   })
 
-  it('keeps a single-phrase paged score close to its content height', () => {
+  it('shows a single-phrase paged score at full page height', () => {
     const [svg] = renderScore(
       parseM3NDocument('N: 1 1 5 5 | 6 6 5^ | 4 4 3 3 | 2 2 1^ |||'),
       { paged: true, width: 800 },
     )
 
-    expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(100)
+    expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBe(1132)
     const firstNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*id="m3n-e-1"/.exec(svg)?.[1])
     expect(firstNoteY).toBeLessThan(40)
   })
