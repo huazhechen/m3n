@@ -354,7 +354,14 @@ function addIntervals(lines: readonly ScoreLine[], intervals: readonly ScoreInte
     // must anchor interval endpoints too: a four-beat crescendo over one
     // whole note otherwise collapses onto its first numeral.
     const entries = line.elements.flatMap((element, index) =>
-      element.kind === 'note' || element.kind === 'sustain' ? [{ element, index }] : [],
+      element.kind === 'note' || element.kind === 'sustain'
+        // The parser's multi-rest placeholder carries a zero-length source
+        // and must never anchor an interval end; it would otherwise pull a
+        // slur across a `{rest=N}` measure onto the rest glyph.
+        ? element.source.length > 0
+          ? [{ element, index }]
+          : []
+        : [],
     )
     const first = entries[0]
     const last = entries.at(-1)

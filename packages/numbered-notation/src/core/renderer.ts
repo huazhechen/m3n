@@ -686,7 +686,12 @@ function renderBarline(
   notepos: string,
   registry: GlyphRegistry,
   config: NumberedNotationLayout,
-  measureAnchors?: { leadingX: number; firstNoteX?: number; lastNoteX?: number },
+  measureAnchors?: {
+    leadingX: number
+    firstNoteX?: number
+    lastNoteX?: number
+    lastVisualX?: number
+  },
 ): string[] {
   const normalizedCodes = {
     normal: '|',
@@ -752,7 +757,15 @@ function renderBarline(
       return
     }
     const id = barlineOrnamentGlyph(ornament.name)
-    if (id !== undefined) output.push(registry.use(id, anchorX, y - 26))
+    if (id !== undefined) {
+      // The path wordmarks are centered on the anchor and roughly 24 units
+      // wide, so step clear of the last glyph and never cross the closing
+      // barline; the left-aligned Leipzig text keeps its +8 hug.
+      const pathAnchor = ornament.name === 'segno'
+        ? anchorX
+        : Math.min((measureAnchors?.lastVisualX ?? x - 54) + 22, x - 16)
+      output.push(registry.use(id, pathAnchor, y - 26))
+    }
   })
   if (barline?.temporaryMeter !== undefined) {
     output.push(registry.use('linshi_paihao_fenxian', x + 18, y))
@@ -1313,6 +1326,13 @@ function renderLine(
     )
     const firstNoteX = noteElements[0]?.x
     const lastNoteX = noteElements.at(-1)?.x
+    // Sustains are the last visible glyph of a long note, and the synthetic
+    // multi-rest rest must be cleared by the DS/DC/Fine wordmarks too.
+    const lastVisualX = layout.elements.filter(
+      (positioned) =>
+        positioned.measure === barline.measure &&
+        (positioned.element.kind === 'note' || positioned.element.kind === 'sustain'),
+    ).at(-1)?.x
     outputForMeasure(barline.measure).push(
       ...renderBarline(
         barline.element,
@@ -1322,7 +1342,7 @@ function renderLine(
         notePositionCode(pageIndex, lineOrdinal, ordinal),
         registry,
         config,
-        { leadingX, firstNoteX, lastNoteX },
+        { leadingX, firstNoteX, lastNoteX, lastVisualX },
       ),
     )
   })
@@ -1490,7 +1510,9 @@ function lineTopPadding(line: ScoreLine): number {
   const symbolPadding = line.marks.some(
     ({ type }) => type === 'volta' || type === 'crescendo' || type === 'decrescendo',
   )
-    ? 7.2
+    // Volta brackets and hairpins rise 30 units above the note baseline;
+    // reserve that height so they do not collide with the previous system.
+    ? 34
     : 0
   const layerPadding = Math.max(
     0,

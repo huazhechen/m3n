@@ -120,6 +120,47 @@ describe('NumberedNotationScore', () => {
     expect(Number(ds?.[1])).toBeCloseTo(lastNoteX + 8, 3)
   })
 
+  it('keeps fine clear of a multi-rest glyph', () => {
+    const source = readFileSync(new URL('../../../src/scores/second_waltz_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })
+    const restX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#shuzi_b_bian_0"[^>]*code="0"/.exec(svg)?.[1])
+    const fineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#xiaojiexian_fine"/.exec(svg)?.[1])
+
+    // The wordmark is centered on its anchor and ~24 units wide; it must sit
+    // to the right of the rest glyph instead of overlapping it.
+    expect(fineX - restX).toBeGreaterThan(15)
+  })
+
+  it('does not stretch a legato onto a multi-rest measure', () => {
+    const [svg] = renderScore(
+      parseM3NDocument('{4/4}\nN: {lg}1 2 3 4{/} | {rest=4} {fine}:||'),
+      { paged: false, width: 800 },
+    )
+    const measures = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((m) => Number(m[1]))
+    const secondMeasureStart = measures[1] ?? 0
+    const arc = /<path d="M [\d.]+,([\d.]+) C [\d.]+,([\d.]+),[\d.]+,([\d.]+),([\d.]+),([\d.]+) M/.exec(svg)
+    const arcEnd = arc === null ? 0 : Number(arc[4])
+
+    // The synthetic multi-rest rest must not anchor the slur's end.
+    expect(arcEnd).toBeLessThan(secondMeasureStart)
+  })
+
+  it('reserves space above a volta so it clears the previous system', () => {
+    const source = readFileSync(new URL('../../../src/scores/second_waltz_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })
+    const voltaYs = [...svg.matchAll(/<line x1="([\d.]+)" y1="([\d.]+)" x2="([\d.]+)" y2="([\d.]+)"[^>]*stroke-width="1" stroke="#1b1b1b" fill="none"><\/line>/g)]
+      .filter((m) => m[1] !== m[3])
+      .map((m) => Number(m[2]))
+    const systemNoteYs = [...svg.matchAll(/<use x="[\d.]+" y="([\d.]+)"[^>]*xlink:href="#shuzi_b_bian_"/g)]
+      .map((m) => Number(m[1]))
+
+    expect(voltaYs.length).toBeGreaterThan(0)
+    voltaYs.forEach((voltaY) => {
+      const previousNoteY = Math.max(...systemNoteYs.filter((y) => y < voltaY))
+      expect(voltaY - previousNoteY).toBeGreaterThanOrEqual(20)
+    })
+  })
+
   it('uses compact glyph definitions without changing its requested page width', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),
