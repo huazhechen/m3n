@@ -518,6 +518,13 @@ describe('NumberedNotationScore', () => {
     expect(svg).not.toContain('scale(0.8)')
   })
 
+  it('keeps the flat sign in flat-key headers', () => {
+    const [svg] = renderScore(parseM3NDocument('{title=茉莉花} {composer=中国民歌} {key=Eb} {2/4} {96qpm}\nN: 3 5 6 1e |||'), { paged: true, width: 1000 })
+
+    expect(svg).toContain('>E</text>')
+    expect(svg).toContain('>b</text>')
+  })
+
   it('aligns Xiao Xing Xing speed, header, and first note with the 800px staff score', () => {
     const source = readFileSync(new URL('../../../src/scores/xiao_xing_xing_01.m3n', import.meta.url), 'utf8')
     const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })

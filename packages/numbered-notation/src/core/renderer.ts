@@ -179,7 +179,7 @@ function modeHeader(
   let x = config.marginLeft
   if (metadata.mode !== undefined) {
     const letter = metadata.mode.match(/[A-G]/)?.[0]
-    const accidental = metadata.mode.match(/[#$]/)?.[0]
+    const accidental = metadata.mode.match(/[#$b]/)?.[0]
     const letterX = x + (accidental === undefined ? 28 : 34)
     output.push(text('1', x, y + 5.6, { font: headerFont, size: 16, dy: 0 }))
     output.push(text('=', x + 13.2, y + 5.6, { font: headerFont, size: 15, dy: 0 }))
