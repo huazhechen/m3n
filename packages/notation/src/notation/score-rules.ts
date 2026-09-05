@@ -167,8 +167,14 @@ function validateTies(measures: readonly ScoreMeasure[], source?: string) {
     const sourceKind = event.kind === 'tuplet' ? 'note' : event.kind
     const sourcePitches = absolutePitches.get(event) ?? []
     const sourceTail = event.kind === 'tuplet' ? sourcePitches.slice(-1) : sourcePitches
-    const matches = target && target.kind === sourceKind
-      && (absolutePitches.get(target) ?? []).join(',') === sourceTail.join(',')
+    const targetPitches = target ? absolutePitches.get(target) : undefined
+    const matches = target && (
+      (target.kind === sourceKind && targetPitches?.join(',') === sourceTail.join(','))
+      // A tuplet is sequential: an incoming tie targets its first pitched
+      // child, while an outgoing tie from a tuplet targets its final child.
+      // Keep the event-level model, but compare against the child pitch here.
+      || (event.kind === 'note' && target.kind === 'tuplet' && targetPitches?.[0] === sourcePitches[0])
+    )
     if (matches) continue
     const message = '延音目标的类型或绝对音高不匹配'
     const line = sourceLine(source, event.sourceStart)

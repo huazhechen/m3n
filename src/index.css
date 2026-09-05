@@ -849,7 +849,7 @@ textarea::selection {
 .audio-controls {
   margin-bottom: 12px;
   display: grid;
-  grid-template-columns: auto auto minmax(120px, 1fr) minmax(200px, 2fr) auto auto;
+  grid-template-columns: auto auto minmax(120px, 1fr) auto minmax(200px, 2fr) auto auto;
   align-items: center;
   gap: 14px;
   min-height: 44px;
@@ -1345,6 +1345,44 @@ a.action-button {
   min-width: 0;
 }
 
+.playback-transpose {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #285b5c;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.playback-transpose button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #b8cfca;
+  border-radius: 4px;
+  background: #fffef9;
+  color: #285b5c;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.playback-transpose button:hover:not(:disabled) {
+  border-color: #2f6f73;
+  background: #dcebe6;
+}
+
+.playback-transpose button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.playback-transpose output {
+  min-width: 28px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 .playback-progress output {
   min-width: 34px;
   color: #285b5c;
@@ -1363,9 +1401,9 @@ a.action-button {
 
 @container (max-width: 720px) {
   .audio-controls {
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
     grid-template-areas:
-      "play metronome notation settings"
+      "play metronome transpose notation settings"
       "speed speed speed speed"
       "progress progress progress progress";
     gap: 10px 14px;
@@ -1377,6 +1415,10 @@ a.action-button {
 
   .playback-speed {
     grid-area: speed;
+  }
+
+  .playback-transpose {
+    grid-area: transpose;
   }
 
   .playback-metronome {

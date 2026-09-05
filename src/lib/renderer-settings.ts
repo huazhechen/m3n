@@ -3,6 +3,7 @@ export const PLAYBACK_SPEED_KEY = 'm3n:playback-speed'
 export const METRONOME_ENABLED_KEY = 'm3n:metronome-enabled'
 export const RENDER_MODE_KEY = 'm3n:render-mode'
 export const NUMBERED_NOTATION_KEY = 'm3n:numbered-notation'
+export const TRANSPOSE_KEY = 'm3n:playback-transpose'
 
 export const SCORE_WIDTH_MIN = 320
 export const SCORE_WIDTH_MAX = 2560
@@ -13,6 +14,9 @@ export const PLAYBACK_SPEED_MIN = 50
 export const PLAYBACK_SPEED_MAX = 200
 export const PLAYBACK_SPEED_STEP = 5
 export const DEFAULT_PLAYBACK_SPEED = 100
+export const PLAYBACK_TRANSPOSE_MIN = -12
+export const PLAYBACK_TRANSPOSE_MAX = 12
+export const DEFAULT_PLAYBACK_TRANSPOSE = 0
 
 export type RenderMode = 'paged' | 'continuous'
 export const DEFAULT_RENDER_MODE: RenderMode = 'paged'

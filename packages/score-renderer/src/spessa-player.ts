@@ -16,6 +16,22 @@ type PlayerListener = {
   onTime: (seconds: number, duration: number) => void
 }
 
+/** Transpose melodic MIDI channels while leaving percussion (channel 10) intact. */
+export function transposeMidiData(midi: ArrayBuffer, semitones: number) {
+  const shift = Math.max(-12, Math.min(12, Math.trunc(semitones)))
+  if (shift === 0) return midi
+  const sequence = BasicMIDI.fromArrayBuffer(midi)
+  const channels = new Set<number>()
+  sequence.tracks.forEach((track) => track.channels.forEach((channel) => channels.add(channel)))
+  const changes = new Map<number, { keyShift: number }>()
+  channels.forEach((channel) => {
+    if (channel !== 9) changes.set(channel, { keyShift: shift })
+  })
+  if (changes.size === 0) return midi
+  sequence.modify({ channels: changes })
+  return sequence.writeMIDI()
+}
+
 export class SpessaPlayer {
   private animationFrame = 0
   private readonly context: AudioContext
@@ -38,7 +54,7 @@ export class SpessaPlayer {
     })
   }
 
-  static async create(midi: ArrayBuffer, listener: PlayerListener) {
+  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0) {
     const response = await fetch(soundFont.url)
     if (!response.ok) throw new Error(`无法加载 ${soundFont.name} 音色文件。`)
     const soundBank = await response.arrayBuffer()
@@ -48,8 +64,9 @@ export class SpessaPlayer {
     synth.connect(context.destination)
     await synth.soundBankManager.addSoundBank(soundBank, soundFont.name)
     await synth.isReady
+    const sequence = transposeMidiData(midi, transpose)
     const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })
-    sequencer.loadNewSongList([{ binary: midi, fileName: 'm3n-score.mid' }])
+    sequencer.loadNewSongList([{ binary: sequence, fileName: 'm3n-score.mid' }])
     return new SpessaPlayer(context, synth, sequencer, listener, new Metronome(context, buildMetronomeBeats(BasicMIDI.fromArrayBuffer(midi))))
   }
 

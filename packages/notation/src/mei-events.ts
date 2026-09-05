@@ -74,14 +74,20 @@ export function meiEventXml(
       const childId = `${xmlId}-n${index + 1}`
       const childLyrics = [...lyricsByVerse.values()].map((items) => items[lyricTargetIndex]).filter((lyric): lyric is MeiVerseSyllable => lyric !== undefined)
       lyricTargetIndex += 1
-      const note = `<note xml:id="${childId}" ${pitchXml(pitch, event.key, accidentals)} ${meiDurationAttributes(childBeats)}`
+      const tie = index === 0 && tieTarget
+        ? ' tie="t"'
+        : event.tie && index === event.tieFromTupletIndex
+          ? ' tie="i"'
+          : ''
+      const note = `<note xml:id="${childId}" ${pitchXml(pitch, event.key, accidentals)}${tie} ${meiDurationAttributes(childBeats)}`
       const childVerse = meiVerseXml(childLyrics, childId, visibleVerseIndexes)
       return childVerse ? `${note}>${childVerse}</note>` : `${note}/>`
     }).join('')
     const content = childBeats <= 0.5 && !event.pitches.includes('0') ? `<beam>${children}</beam>` : children
     return `<tuplet xml:id="${xmlId}" num="${event.tuplet.num}" numbase="${event.tuplet.numbase}">${content}</tuplet>`
   }
-  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)} ${meiDurationAttributes(event.beats)}>${articulations}${verse}</note>`
+  const tie = event.tie ? ' tie="i"' : tieTarget ? ' tie="t"' : ''
+  return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)}${tie} ${meiDurationAttributes(event.beats)}>${articulations}${verse}</note>`
 }
 
 export function meiBeamXml(events: RenderedMeiEvent[], meterCount: number, meterUnit: number) {

@@ -200,6 +200,11 @@ describe('validateM3N', () => {
     expect(messages('{key=C} {4/4}\n[120~:2] 0 0 |||')).toContain('连音组内的延音只能附在最后一个有音高的元素上')
   })
 
+  it('allows an ordinary note to tie into the first tuplet note', () => {
+    expect(validateM3N('{key=C} {4/4}\nN: 1~ ([123:2]) 4 0 |||')).toEqual([])
+    expect(messages('{key=C} {4/4}\nN: 1~ ([234:2]) 4 0 |||')).toContain('延音目标的类型或绝对音高不匹配')
+  })
+
   it('validates note, rest, group, and duration restrictions', () => {
     const result = messages('{4/4}\n1#b 2ed 1### 2bbb 0~ [10:h] [1:h] [123:0] [123:2]~ |||')
     expect(result).toContain('临时变音组合非法')

@@ -2,12 +2,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MeiSourceMapRange, ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_SPEED,
+  DEFAULT_PLAYBACK_TRANSPOSE,
   DEFAULT_SCORE_WIDTH,
   METRONOME_ENABLED_KEY,
   PLAYBACK_SPEED_KEY,
   PLAYBACK_SPEED_MAX,
   PLAYBACK_SPEED_MIN,
   PLAYBACK_SPEED_STEP,
+  PLAYBACK_TRANSPOSE_MAX,
+  PLAYBACK_TRANSPOSE_MIN,
+  TRANSPOSE_KEY,
   readRenderMode,
   readNumberedNotation,
   writeRenderMode,
@@ -187,6 +191,14 @@ export function ScoreRenderer({
       PLAYBACK_SPEED_MAX,
     )
   ))
+  const [playbackTranspose, setPlaybackTranspose] = useState(() => (
+    compact ? DEFAULT_PLAYBACK_TRANSPOSE : readRendererSetting(
+      TRANSPOSE_KEY,
+      DEFAULT_PLAYBACK_TRANSPOSE,
+      PLAYBACK_TRANSPOSE_MIN,
+      PLAYBACK_TRANSPOSE_MAX,
+    )
+  ))
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => (
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
@@ -194,6 +206,7 @@ export function ScoreRenderer({
   const [storedNumberedNotation, setStoredNumberedNotation] = useState(() => !compact && readNumberedNotation())
   const numberedNotation = numberedNotationOverride ?? storedNumberedNotation
   const speedRef = useRef(playbackSpeed)
+  const transposeRef = useRef(playbackTranspose)
   const [staffWidth, setStaffWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPlayerLoading, setIsPlayerLoading] = useState(false)
@@ -416,7 +429,7 @@ export function ScoreRenderer({
             stopPlaybackRef.current()
           },
           onTime: onPlayerTime,
-        })
+        }, transposeRef.current)
         player.setSpeed(speedRef.current)
         player.setMetronomeEnabled(metronomeEnabled)
         playerRef.current = player
@@ -500,6 +513,29 @@ export function ScoreRenderer({
     playerRef.current?.setSpeed(speed)
   }
 
+  const changePlaybackTranspose = (value: number) => {
+    const transpose = Math.max(PLAYBACK_TRANSPOSE_MIN, Math.min(PLAYBACK_TRANSPOSE_MAX, Math.trunc(value)))
+    const wasPlaying = Boolean(playerRef.current && !playerRef.current.paused)
+    transposeRef.current = transpose
+    setPlaybackTranspose(transpose)
+    if (!compact) writeRendererSetting(TRANSPOSE_KEY, transpose)
+    // MIDI note numbers are baked into the sequence. Rebuild it on the next
+    // play so an already-loaded player cannot keep the old pitch.
+    stopPlaybackRef.current()
+    playerRef.current?.destroy()
+    playerRef.current = null
+    midiRef.current = null
+    if (wasPlaying) {
+      void getPlayer().then(async (player) => {
+        scorePlaybackCoordinator.claim(playbackLeaseRef.current)
+        await player.play()
+        setIsPlaying(true)
+      }).catch((error: unknown) => {
+        setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
+      })
+    }
+  }
+
   const changeMetronomeEnabled = (enabled: boolean) => {
     setMetronomeEnabled(enabled)
     if (!compact) writeRendererSetting(METRONOME_ENABLED_KEY, enabled ? 1 : 0)
@@ -574,6 +610,14 @@ export function ScoreRenderer({
               onChange={(event) => changePlaybackSpeed(Number(event.currentTarget.value))}
             />
             <output>{playbackSpeed}%</output>
+          </div>
+        )}
+        {hasAudioControls && (
+          <div className="playback-transpose" aria-label="播放移调">
+            <span>移调</span>
+            <button type="button" aria-label="降低半音" disabled={playbackTranspose <= PLAYBACK_TRANSPOSE_MIN} onClick={() => changePlaybackTranspose(playbackTranspose - 1)}>↓</button>
+            <output>{playbackTranspose > 0 ? `+${playbackTranspose}` : playbackTranspose}</output>
+            <button type="button" aria-label="升高半音" disabled={playbackTranspose >= PLAYBACK_TRANSPOSE_MAX} onClick={() => changePlaybackTranspose(playbackTranspose + 1)}>↑</button>
           </div>
         )}
         {hasAudioControls && (
