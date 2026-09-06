@@ -779,7 +779,7 @@ function renderBarline(
       // barline; the left-aligned Leipzig text keeps its +8 hug.
       const pathAnchor = ornament.name === 'segno'
         ? anchorX
-        : Math.min((measureAnchors?.lastVisualX ?? x - 54) + 22, x - 16)
+        : Math.min((measureAnchors?.lastVisualX ?? x - 54) + 22, x - 22)
       output.push(registry.use(id, pathAnchor, y + NAVIGATION_PATH_Y_OFFSET))
     }
   })
