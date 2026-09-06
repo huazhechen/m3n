@@ -104,7 +104,7 @@ describe('NumberedNotationScore', () => {
     const firstNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="1"[^>]*data-m3n-id="m3n-e-1"/.exec(svg)?.[1])
 
     expect(segno).not.toBeNull()
-    expect(Number(segno?.[1])).toBeCloseTo(firstNoteX - 14, 3)
+    expect(Number(segno?.[1])).toBeCloseTo(firstNoteX - 42, 3)
     expect(Number(segno?.[2])).toBeCloseTo(firstNoteY, 3)
   })
 
@@ -134,6 +134,27 @@ describe('NumberedNotationScore', () => {
     // The fallback glyph's native path sits 20 units below its <use> anchor,
     // so this offset places its ink on the same row as the numbered glyph.
     expect(Number(fine?.[2]) + 20).toBeCloseTo(lastNoteY, 3)
+  })
+
+  it('reserves horizontal space for navigation marks in a wrapped score', () => {
+    const source = readFileSync(new URL('../../../src/scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
+    const [svg] = renderScore(parseM3NDocument(source), {
+      paged: false,
+      width: 1000,
+      musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
+    })
+    const measureGroups = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)].map((match) => match[0])
+    const segnoGroup = measureGroups.find((group) => group.includes('&#xE047;'))
+    const dsGroup = measureGroups.find((group) => group.includes('&#xE045;'))
+    const segnoX = Number(/<text x="([\d.]+)"[^>]*>&#xE047;<\/text>/.exec(segnoGroup ?? '')?.[1])
+    const segnoNoteX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#shuzi_/.exec(segnoGroup ?? '')?.[1])
+    const dsX = Number(/<text x="([\d.]+)"[^>]*>&#xE045;<\/text>/.exec(dsGroup ?? '')?.[1])
+    const dsBarlineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#(?:xiaojiexian|xiaojiexian_shuangxian|xunhuan_you|jieshufu)"/.exec(dsGroup ?? '')?.[1])
+
+    expect(segnoGroup).toBeDefined()
+    expect(dsGroup).toBeDefined()
+    expect(segnoNoteX - segnoX).toBeGreaterThan(30)
+    expect(dsBarlineX - dsX).toBeGreaterThan(35)
   })
 
   it('keeps fine clear of a multi-rest glyph', () => {

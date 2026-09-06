@@ -10,7 +10,13 @@ import {
   ornamentGlyph,
 } from './glyphs.js'
 import { graceMetrics } from './grace.js'
-import { layoutVoiceGroup, type LineLayout, type PositionedElement } from './layout.js'
+import {
+  layoutVoiceGroup,
+  NAVIGATION_MARK_WIDTH,
+  NAVIGATION_MARK_GAP,
+  type LineLayout,
+  type PositionedElement,
+} from './layout.js'
 import { playbackTime } from './timing.js'
 import { scoreHeaderLayout, type ScoreHeaderMetadata } from '@m3n/notation'
 import type {
@@ -756,8 +762,9 @@ function renderBarline(
     // musical event; DS/DC/Fine belong to the measure end and hug its last
     // musical event. Anchoring to the notes keeps the signs attached to the
     // measure regardless of how wide the system is.
+    const firstNoteX = measureAnchors?.firstNoteX ?? measureAnchors?.leadingX ?? x
     const anchorX = ornament.name === 'segno'
-      ? (measureAnchors?.firstNoteX ?? measureAnchors?.leadingX ?? x) - 14
+      ? firstNoteX - (config.musicFontCss === undefined ? 14 : NAVIGATION_MARK_WIDTH + NAVIGATION_MARK_GAP)
       : (measureAnchors?.lastNoteX ?? x - 54) + 8
     if (leipzigGlyphCode !== undefined) {
       output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y + NAVIGATION_TEXT_Y_OFFSET, 24))

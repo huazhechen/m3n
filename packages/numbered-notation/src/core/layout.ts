@@ -12,6 +12,13 @@ import { durationInQuarterNotes, type TimedElement, tupletScale } from './timing
 export const PLAIN_NOTE_STEP = 22.5
 export const UNDERLINED_NOTE_STEP = 15
 export const BARLINE_GAP = 21
+// Navigation wordmarks are rendered beside the first/last musical event. Keep
+// their reserved space in layout so the visual anchors remain clear of notes
+// and barlines after line fitting.
+export const NAVIGATION_MARK_WIDTH = 36
+export const NAVIGATION_MARK_GAP = 6
+export const NAVIGATION_MARK_LEADING_EXTRA = 28
+export const NAVIGATION_MARK_TRAILING_EXTRA = 28
 const FINAL_SYMBOL_WIDTH = 8.4
 // The backend uses a fixed lyric collision grid rather than the configured font size.
 const LYRIC_FULL_WIDTH_STEP = 50 / 3
@@ -529,6 +536,15 @@ export function layoutVoiceGroup(
     )
     if (hasInlineLeftColumn) measureStart += 20
 
+    const navigation = analyzed.flatMap(
+      ({ measures }) => measures[measureIndex]?.barline.element?.ornaments ?? [],
+    )
+    if (navigation.some(({ name }) => name === 'segno')) {
+      // Segno is attached to the measure start but stored on its closing
+      // barline. Shift the measure's notes right to make room for the mark.
+      measureStart += NAVIGATION_MARK_LEADING_EXTRA
+    }
+
     const beatCount = Math.max(
       0,
       ...alignmentAnalyses.map(({ measures }) => measures[measureIndex]?.beats.length ?? 0),
@@ -592,6 +608,9 @@ export function layoutVoiceGroup(
         : (beatStarts[lastBeat] ?? 0) +
           (beatColumns[lastBeat]?.[beatColumns[lastBeat].length - 1] ?? 0) +
           BARLINE_GAP +
+          (navigation.some(({ name }) => name !== 'segno')
+            ? NAVIGATION_MARK_TRAILING_EXTRA
+            : 0) +
           Math.max(
             0,
             ...alignmentAnalyses.flatMap(({ measures }) => {
