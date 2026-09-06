@@ -104,7 +104,7 @@ describe('NumberedNotationScore', () => {
     const firstNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="1"[^>]*data-m3n-id="m3n-e-1"/.exec(svg)?.[1])
 
     expect(segno).not.toBeNull()
-    expect(Number(segno?.[1])).toBeCloseTo(firstNoteX - 42, 3)
+    expect(Number(segno?.[1])).toBeCloseTo(firstNoteX - 34, 3)
     expect(Number(segno?.[2])).toBeCloseTo(firstNoteY, 3)
   })
 
@@ -120,7 +120,7 @@ describe('NumberedNotationScore', () => {
     const lastNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="4"[^>]*data-m3n-id="m3n-e-4"/.exec(svg)?.[1])
 
     expect(ds).not.toBeNull()
-    expect(Number(ds?.[1])).toBeCloseTo(lastNoteX + 8, 3)
+    expect(Number(ds?.[1])).toBeCloseTo(lastNoteX + 15, 3)
     expect(Number(ds?.[2])).toBeCloseTo(lastNoteY, 3)
   })
 
@@ -149,12 +149,16 @@ describe('NumberedNotationScore', () => {
     const segnoX = Number(/<text x="([\d.]+)"[^>]*>&#xE047;<\/text>/.exec(segnoGroup ?? '')?.[1])
     const segnoNoteX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#shuzi_/.exec(segnoGroup ?? '')?.[1])
     const dsX = Number(/<text x="([\d.]+)"[^>]*>&#xE045;<\/text>/.exec(dsGroup ?? '')?.[1])
+    const dsNoteXs = [...(dsGroup ?? '').matchAll(/<use x="([\d.]+)"[^>]*xlink:href="#(?:shuzi_b_bian_[1-7]|yanyinfu)"/g)].map((match) => Number(match[1]))
+    const dsLastNoteX = dsNoteXs.at(-1) ?? Number.NaN
     const dsBarlineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#(?:xiaojiexian|xiaojiexian_shuangxian|xunhuan_you|jieshufu)"/.exec(dsGroup ?? '')?.[1])
 
     expect(segnoGroup).toBeDefined()
     expect(dsGroup).toBeDefined()
-    expect(segnoNoteX - segnoX).toBeGreaterThan(30)
-    expect(dsBarlineX - dsX).toBeGreaterThan(35)
+    expect(segnoNoteX - segnoX).toBeGreaterThan(25)
+    expect(dsX - dsLastNoteX).toBeGreaterThan(10)
+    expect(dsBarlineX - dsX).toBeGreaterThan(10)
+    expect(Math.abs((dsX - dsLastNoteX) - (dsBarlineX - dsX))).toBeLessThan(6)
   })
 
   it('keeps fine clear of a multi-rest glyph', () => {

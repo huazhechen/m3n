@@ -14,6 +14,7 @@ import {
   layoutVoiceGroup,
   NAVIGATION_MARK_WIDTH,
   NAVIGATION_MARK_GAP,
+  NAVIGATION_MARK_TRAILING_OFFSET,
   type LineLayout,
   type PositionedElement,
 } from './layout.js'
@@ -765,7 +766,8 @@ function renderBarline(
     const firstNoteX = measureAnchors?.firstNoteX ?? measureAnchors?.leadingX ?? x
     const anchorX = ornament.name === 'segno'
       ? firstNoteX - (config.musicFontCss === undefined ? 14 : NAVIGATION_MARK_WIDTH + NAVIGATION_MARK_GAP)
-      : (measureAnchors?.lastNoteX ?? x - 54) + 8
+      : (measureAnchors?.lastNoteX ?? x - 54) +
+        (config.musicFontCss === undefined ? 8 : NAVIGATION_MARK_TRAILING_OFFSET)
     if (leipzigGlyphCode !== undefined) {
       output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y + NAVIGATION_TEXT_Y_OFFSET, 24))
       return

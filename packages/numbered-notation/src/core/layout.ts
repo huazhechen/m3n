@@ -15,10 +15,11 @@ export const BARLINE_GAP = 21
 // Navigation wordmarks are rendered beside the first/last musical event. Keep
 // their reserved space in layout so the visual anchors remain clear of notes
 // and barlines after line fitting.
-export const NAVIGATION_MARK_WIDTH = 36
+export const NAVIGATION_MARK_WIDTH = 28
 export const NAVIGATION_MARK_GAP = 6
-export const NAVIGATION_MARK_LEADING_EXTRA = 28
-export const NAVIGATION_MARK_TRAILING_EXTRA = 28
+export const NAVIGATION_MARK_LEADING_EXTRA = 20
+export const NAVIGATION_MARK_TRAILING_EXTRA = 6
+export const NAVIGATION_MARK_TRAILING_OFFSET = 15
 const FINAL_SYMBOL_WIDTH = 8.4
 // The backend uses a fixed lyric collision grid rather than the configured font size.
 const LYRIC_FULL_WIDTH_STEP = 50 / 3
