@@ -128,6 +128,7 @@ export class SpessaPlayer {
   }
 
   destroy() {
+    this.playToken += 1
     this.stopProgressLoop()
     this.metronome.stop()
     this.sequencer.pause()
