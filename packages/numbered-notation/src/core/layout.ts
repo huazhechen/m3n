@@ -18,8 +18,10 @@ export const BARLINE_GAP = 21
 export const NAVIGATION_MARK_WIDTH = 28
 export const NAVIGATION_MARK_GAP = 6
 export const NAVIGATION_MARK_LEADING_EXTRA = 20
-export const NAVIGATION_MARK_TRAILING_EXTRA = 12
-export const NAVIGATION_MARK_TRAILING_OFFSET = 23
+// Leave enough room for the complete DS/DC/Fine wordmark before the closing
+// barline. This is deliberately larger than the leading reserve because the
+// wordmarks are left-aligned at their note anchor.
+export const NAVIGATION_MARK_TRAILING_EXTRA = 26
 const FINAL_SYMBOL_WIDTH = 8.4
 // The backend uses a fixed lyric collision grid rather than the configured font size.
 const LYRIC_FULL_WIDTH_STEP = 50 / 3

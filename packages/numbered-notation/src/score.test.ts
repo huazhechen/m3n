@@ -120,7 +120,8 @@ describe('NumberedNotationScore', () => {
     const lastNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="4"[^>]*data-m3n-id="m3n-e-4"/.exec(svg)?.[1])
 
     expect(ds).not.toBeNull()
-    expect(Number(ds?.[1])).toBeCloseTo(lastNoteX + 23, 3)
+    expect(Number(ds?.[1]) - lastNoteX).toBeGreaterThanOrEqual(8)
+    expect(Number(ds?.[1]) - lastNoteX).toBeLessThanOrEqual(23)
     expect(Number(ds?.[2])).toBeCloseTo(lastNoteY, 3)
   })
 
@@ -156,24 +157,48 @@ describe('NumberedNotationScore', () => {
     expect(segnoGroup).toBeDefined()
     expect(dsGroup).toBeDefined()
     expect(segnoNoteX - segnoX).toBeGreaterThan(25)
-    expect(dsX - dsLastNoteX).toBeGreaterThan(10)
-    expect(dsBarlineX - dsX).toBeGreaterThan(10)
-    expect(Math.abs((dsX - dsLastNoteX) - (dsBarlineX - dsX))).toBeLessThan(6)
+    // Text starts at its anchor, so its 28-unit advance must be included
+    // when checking the visible right-hand clearance.
+    expect(dsX - dsLastNoteX).toBeGreaterThanOrEqual(8)
+    expect(dsBarlineX - dsX).toBeGreaterThanOrEqual(28)
+    expect(Math.abs((dsX - dsLastNoteX) - (dsBarlineX - dsX - 28))).toBeLessThan(8)
   })
 
   it('keeps fallback DS clear of the following barline', () => {
     const source = readFileSync(new URL('../../../src/scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-    const measureGroup = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)]
-      .map((match) => match[0])
-      .find((group) => group.includes('xlink:href="#xiaojiexian_ds"'))
-    const dsAnchor = Number(/<use x="([\d.]+)"[^>]*xlink:href="#xiaojiexian_ds"/.exec(measureGroup ?? '')?.[1])
-    const barlineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#(?:xiaojiexian|xiaojiexian_shuangxian|xunhuan_you|jieshufu)"/.exec(measureGroup ?? '')?.[1])
+    for (const width of [320, 800, 1000]) {
+      const [svg] = renderScore(parseM3NDocument(source), { paged: false, width })
+      const measureGroup = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)]
+        .map((match) => match[0])
+        .find((group) => group.includes('xlink:href="#xiaojiexian_ds"'))
+      const dsAnchor = Number(/<use x="([\d.]+)"[^>]*xlink:href="#xiaojiexian_ds"/.exec(measureGroup ?? '')?.[1])
+      const barlineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#(?:xiaojiexian|xiaojiexian_shuangxian|xunhuan_you|jieshufu)"/.exec(measureGroup ?? '')?.[1])
 
-    expect(measureGroup).toBeDefined()
-    // The fallback DS path extends about 14 units to the right of its anchor;
-    // leave at least six units before the barline's left edge.
-    expect(barlineX - dsAnchor).toBeGreaterThanOrEqual(20)
+      expect(measureGroup).toBeDefined()
+      // The fallback DS path extends to the right of its anchor; leave a
+      // clear visual gap before the barline's left edge.
+      expect(barlineX - dsAnchor).toBeGreaterThanOrEqual(20)
+    }
+  })
+
+  it('keeps Leipzig DS clear of the following barline at narrow widths', () => {
+    const source = readFileSync(new URL('../../../src/scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
+    for (const width of [320, 800, 1000]) {
+      const [svg] = renderScore(parseM3NDocument(source), {
+        paged: false,
+        width,
+        musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
+      })
+      const measureGroup = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)]
+        .map((match) => match[0])
+        .find((group) => group.includes('&#xE045;'))
+      const dsX = Number(/<text x="([\d.]+)"[^>]*>&#xE045;<\/text>/.exec(measureGroup ?? '')?.[1])
+      const barlineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#(?:xiaojiexian|xiaojiexian_shuangxian|xunhuan_you|jieshufu)"/.exec(measureGroup ?? '')?.[1])
+
+      expect(measureGroup).toBeDefined()
+      // Leipzig's DS glyph is left-aligned and advances about 28 units.
+      expect(barlineX - dsX).toBeGreaterThanOrEqual(28)
+    }
   })
 
   it('keeps fine clear of a multi-rest glyph', () => {

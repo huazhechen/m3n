@@ -14,7 +14,6 @@ import {
   layoutVoiceGroup,
   NAVIGATION_MARK_WIDTH,
   NAVIGATION_MARK_GAP,
-  NAVIGATION_MARK_TRAILING_OFFSET,
   type LineLayout,
   type PositionedElement,
 } from './layout.js'
@@ -152,6 +151,12 @@ const LEIPZIG_NAVIGATION_GLYPHS: Readonly<Partial<Record<string, string>>> = {
 // visual row as the numbered note glyphs.
 const NAVIGATION_TEXT_Y_OFFSET = 0
 const NAVIGATION_PATH_Y_OFFSET = -20
+// Approximate combined ink widths used to center the wordmark between the
+// final note and the barline. The resulting anchor is intentionally clamped
+// so very short measures still retain a minimum left-hand gap.
+const NAVIGATION_TEXT_BALANCE_INSET = 25
+const NAVIGATION_PATH_BALANCE_INSET = 6
+const NAVIGATION_PATH_BARLINE_CLEARANCE = 22
 
 function leipzigGlyph(glyph: string, x: number, y: number, size: number): string {
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="${formatNumber(size)}">${glyph}</text>`
@@ -764,22 +769,32 @@ function renderBarline(
     // musical event. Anchoring to the notes keeps the signs attached to the
     // measure regardless of how wide the system is.
     const firstNoteX = measureAnchors?.firstNoteX ?? measureAnchors?.leadingX ?? x
+    const lastNoteX = measureAnchors?.lastNoteX ?? x - 54
     const anchorX = ornament.name === 'segno'
       ? firstNoteX - (config.musicFontCss === undefined ? 14 : NAVIGATION_MARK_WIDTH + NAVIGATION_MARK_GAP)
-      : (measureAnchors?.lastNoteX ?? x - 54) +
-        (config.musicFontCss === undefined ? 8 : NAVIGATION_MARK_TRAILING_OFFSET)
+      : lastNoteX +
+        (config.musicFontCss === undefined
+          ? 8
+          : Math.max(
+              8,
+              Math.min(23, (x - lastNoteX - NAVIGATION_TEXT_BALANCE_INSET) / 2),
+            ))
     if (leipzigGlyphCode !== undefined) {
       output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y + NAVIGATION_TEXT_Y_OFFSET, 24))
       return
     }
     const id = barlineOrnamentGlyph(ornament.name)
     if (id !== undefined) {
-      // The path wordmarks are centered on the anchor and roughly 24 units
-      // wide, so step clear of the last glyph and never cross the closing
-      // barline; the left-aligned Leipzig text keeps its +8 hug.
+      // The path wordmarks are centered on the anchor. Center the mark in the
+      // available gap, then keep its right edge conservatively clear of the
+      // closing barline.
       const pathAnchor = ornament.name === 'segno'
         ? anchorX
-        : Math.min((measureAnchors?.lastVisualX ?? x - 54) + 22, x - 22)
+        : Math.min(
+            (measureAnchors?.lastVisualX ?? x - 54) +
+              (x - (measureAnchors?.lastVisualX ?? x - 54) + NAVIGATION_PATH_BALANCE_INSET) / 2,
+            x - NAVIGATION_PATH_BARLINE_CLEARANCE,
+          )
       output.push(registry.use(id, pathAnchor, y + NAVIGATION_PATH_Y_OFFSET))
     }
   })
