@@ -166,6 +166,7 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       : undefined
     const targets = targetEvents.filter(({ event }) => block.targetStart === undefined || block.targetEnd === undefined || (event.sourceStart >= block.targetStart && event.sourceEnd <= block.targetEnd))
     const consumed = new Set<LyricTarget>()
+    let annotationPending = annotation !== undefined
     let targetIndex = 0
     block.syllables.forEach((syllable) => {
       // A regular lyric item belongs to the first event of a tied chain and
@@ -183,7 +184,8 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const data = rows.get(row) ?? { texts: [], passes: undefined }
       data.texts.push(syllable.text)
       data.passes = rowPasses(blockPasses, target.event)
-      data.annotation = annotation
+      data.annotation = annotationPending ? annotation : undefined
+      if (annotationPending) annotationPending = false
       rows.set(row, data)
       slots.set(target.slot, rows)
       result.set(target.event, slots)
@@ -208,11 +210,16 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
 
 function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
   const activeRows = new Set(entries.flatMap(({ event }) => [...(lyrics.get(event)?.values() ?? [])].flatMap((rows) => [...rows.keys()].filter((row) => rows.get(row)?.texts.some((text) => text !== '') ?? false))))
-  return [...activeRows].sort((left, right) => left - right).map((row) => ({
+  const orderedRows = [...activeRows].sort((left, right) => left - right)
+  const firstRow = orderedRows[0]
+  const sharedAnnotation = [...lyrics.values()]
+    .flatMap((slots) => [...slots.values()].map((rows) => orderedRows
+      .map((row) => rows.get(row)?.annotation)
+      .find((annotation): annotation is string => annotation !== undefined)))
+    .find((annotation): annotation is string => annotation !== undefined)
+  return orderedRows.map((row) => ({
     rendition: row + 1,
-    annotation: [...lyrics.values()]
-      .flatMap((slots) => [...slots.values()].map((rows) => rows.get(row)?.annotation))
-      .find((annotation): annotation is string => annotation !== undefined),
+    annotation: row === firstRow ? sharedAnnotation : undefined,
     syllables: entries.flatMap(({ event, index, lastIndex }) => {
       const slots = lyrics.get(event)
       const count = lastIndex - index + 1
