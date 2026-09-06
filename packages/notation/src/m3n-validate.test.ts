@@ -139,6 +139,27 @@ describe('validateM3N', () => {
     expect(messages(source)).toBe('')
   })
 
+  it('counts a D.S. return when the segno phrase precedes alternate endings', () => {
+    const source = [
+      '{4/4}',
+      'N: ||: {segno} 1 2 3 4 |',
+      'L1: 甲乙丙丁',
+      'L2: 戊己庚辛',
+      'L3: 子丑寅卯',
+      '---V1',
+      'N: 3 4 5 6 :||',
+      'L: 庚辛壬癸',
+      '---V2',
+      'N: 5 6 7 1e ||',
+      'L: 壬癸子丑',
+      '---',
+      'N: 7 1e 2e 3e {ds} |||',
+      'L: 甲乙丙丁',
+    ].join('\n')
+
+    expect(messages(source)).toBe('')
+  })
+
   it('maps projected diagnostics back to the original phrase line', () => {
     const result = messages('{2/4}\nN: 1 2 |\n---V1\nN: 3{arp} 4 |||')
 

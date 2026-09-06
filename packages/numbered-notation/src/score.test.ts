@@ -238,6 +238,15 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('<rect x="100"')
   })
 
+  it('skips instrumental intervals when assigning lyric syllables', () => {
+    const document = parseM3NDocument('{4/4}\nN: {inst}1 2{/} 3 4 |||\nL: 甲乙')
+    const [svg] = renderScore(document, { paged: false, width: 800 })
+
+    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-3"[^>]*>甲<\/text>/)
+    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-4"[^>]*>乙<\/text>/)
+    expect(svg).not.toMatch(/<text[^>]*data-m3n-id="m3n-e-[12]"[^>]*>[甲乙]<\/text>/)
+  })
+
   it('keeps augmentation dots and lyrics attached to their sounding note', () => {
     const [svg] = renderScore(
       parseM3NDocument('{3/4}\nN: 1. 0 2 |||\nL: 春 天'),

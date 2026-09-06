@@ -611,10 +611,14 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
   const targets = new Map<number, StrictLyricMeasureTargets>()
   let previousTied = false
   let openingPasses: Set<number> | undefined
+  let segnoInPhrase = false
   for (const measure of part.melody) {
     const passes = passesByMeasure.get(measure) ?? new Set([1])
     const belongsToPhrase = measure.events.some((event) => start <= event.sourceStart && event.sourceStart < end)
     if (belongsToPhrase && openingPasses === undefined) openingPasses = passes
+    if (belongsToPhrase && (measure.navigation?.includes('segno') || measure.events.some((event) => event.navigation.includes('segno')))) {
+      segnoInPhrase = true
+    }
     const measureTargets = new Map<number, StrictLyricTarget[]>()
     if (belongsToPhrase) {
       for (const pass of passes) measureTargets.set(pass, [])
@@ -672,7 +676,7 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
   // state machine. Lyric labels are deliberately local to a phrase.
   const localTargets = new Map(
     [...targets.entries()]
-      .filter(([pass]) => (housePassLimit === undefined || pass <= housePassLimit)
+      .filter(([pass]) => (housePassLimit === undefined || pass <= housePassLimit || segnoInPhrase)
         && (openingPasses === undefined || openingPasses.has(pass)))
       .sort(([left], [right]) => left - right)
       .map(([, measureTargets], index) => [index + 1, measureTargets]),

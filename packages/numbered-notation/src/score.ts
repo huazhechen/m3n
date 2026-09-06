@@ -120,9 +120,17 @@ function barline(measure: ScoreMeasure, fallback: boolean): BarlineElement {
 
 function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
   // Rests hold horizontal space, but never consume a lyric syllable.
+  const isInstrumentalEvent = (event: ScoreEvent) => document.intervals.some((interval) => (
+    interval.kind === 'inst' &&
+    interval.staff === 'melody' &&
+    interval.start !== undefined &&
+    interval.end !== undefined &&
+    interval.start <= event.sourceStart &&
+    event.sourceEnd <= interval.end
+  ))
   const targetEvents: LyricTarget[] = [...document.parts.values()].flatMap((part) => part.melody
     .flatMap((measure) => measure.events)
-    .filter((event) => event.kind !== 'rest')
+    .filter((event) => event.kind !== 'rest' && !isInstrumentalEvent(event))
     .flatMap((event) => event.kind === 'tuplet'
       ? event.pitches.flatMap((pitch, slot) => pitch === '0' ? [] : [{
           event,
