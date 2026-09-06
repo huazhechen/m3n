@@ -199,7 +199,6 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const rows = slots.get(target.slot) ?? new Map<number, LyricRowData>()
       const data = rows.get(row) ?? { texts: [], passes: undefined }
       data.passes = rowPasses(blockPasses, target.event)
-      data.annotation = annotation
       rows.set(row, data)
       slots.set(target.slot, rows)
       result.set(target.event, slots)
@@ -211,15 +210,8 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
 function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
   const activeRows = new Set(entries.flatMap(({ event }) => [...(lyrics.get(event)?.values() ?? [])].flatMap((rows) => [...rows.keys()].filter((row) => rows.get(row)?.texts.some((text) => text !== '') ?? false))))
   const orderedRows = [...activeRows].sort((left, right) => left - right)
-  const firstRow = orderedRows[0]
-  const sharedAnnotation = [...lyrics.values()]
-    .flatMap((slots) => [...slots.values()].map((rows) => orderedRows
-      .map((row) => rows.get(row)?.annotation)
-      .find((annotation): annotation is string => annotation !== undefined)))
-    .find((annotation): annotation is string => annotation !== undefined)
   return orderedRows.map((row) => ({
     rendition: row + 1,
-    annotation: row === firstRow ? sharedAnnotation : undefined,
     syllables: entries.flatMap(({ event, index, lastIndex }) => {
       const slots = lyrics.get(event)
       const count = lastIndex - index + 1
@@ -231,6 +223,7 @@ function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
         if (data === undefined) return { text: '', source: location(event), absent: true }
         return {
           text: data.texts.join(''),
+          ...(data.annotation === undefined ? {} : { annotation: data.annotation }),
           source: location(event),
           ...(data.passes === undefined ? {} : { passes: data.passes }),
         }

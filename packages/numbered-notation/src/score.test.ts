@@ -457,6 +457,7 @@ describe('NumberedNotationScore', () => {
 
     expect(svg).toContain('>2.4.</text>')
     expect(svg).not.toContain('>1.2.</text>')
+    expect((svg.match(/>2\.4\.<\/text>/g) ?? [])).toHaveLength(1)
   })
 
   it('spans a crescendo across the sustain symbols of a long note', () => {

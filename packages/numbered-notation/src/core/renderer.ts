@@ -1076,20 +1076,20 @@ function renderLyrics(
   layout.line.lyrics.forEach((lyric, lyricIndex) => {
     const lyricY = y + 15 + musicToLyric + lyricIndex * (config.lyricSize + lyricToLyric)
     const lyricPitch = config.lyricSize + lyricToLyric
-    if (lyric.annotation !== undefined) {
-      output.push(
-        text(lyric.annotation, (notePositions[0]?.x ?? config.marginLeft) - 6, lyricY, {
-          font: config.lyricFont,
-          size: config.lyricSize,
-          anchor: 'end',
-          fill: '#101010',
-          dy: 0.3355 * config.lyricSize,
-        }),
-      )
-    }
     notePositions.forEach((positioned, index) => {
       const syllable = lyric.syllables[index]
       if (syllable?.absent === true) return
+      if (syllable?.annotation !== undefined) {
+        output.push(
+          text(syllable.annotation, positioned.x - config.lyricSize / 2 - 3, lyricY, {
+            font: config.lyricFont,
+            size: config.lyricSize,
+            anchor: 'end',
+            fill: '#101010',
+            dy: 0.3355 * config.lyricSize,
+          }),
+        )
+      }
       if (syllable?.leftBrace === true || syllable?.rightBrace === true) {
         const id = syllable.leftBrace === true ? 'ci_dakuohu_zuo' : 'ci_dakuohu_you'
         const braceX = positioned.x + (syllable.leftBrace === true ? -9 : 9)
