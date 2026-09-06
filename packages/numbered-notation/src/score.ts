@@ -242,11 +242,13 @@ function lineForMeasures(
   ids: ReadonlyMap<ScoreEvent, string>,
   endingContinuation = { fromPrevious: false, toNext: false },
   initialKey = 'C',
+  initialMeter = { numerator: 4, denominator: 4 },
 ): ScoreLine {
   const elements: MusicElement[] = []
   const entries: EventEntry[] = []
   const measureRanges: Array<{ measure: ScoreMeasure; start: number; end: number }> = []
   let activeKey = initialKey
+  let activeMeter = initialMeter
   // The direct ScoreDocument keeps the parser's post-bar placeholder measure.
   // It carries no musical or boundary semantics and must not become an empty
   // rendered measure after the final barline/repeat barline.
@@ -264,6 +266,17 @@ function lineForMeasures(
     const previousMeasure = renderMeasures[measureIndex - 1]
     const nextMeasure = renderMeasures[measureIndex + 1]
     const joinsRepeatBoundary = previousMeasure?.right !== undefined && measure.left === 'rptstart'
+    const firstEvent = measure.events[0]
+    const nextMeter = firstEvent
+      ? { numerator: firstEvent.meterCount ?? activeMeter.numerator, denominator: firstEvent.meterUnit ?? activeMeter.denominator }
+      : activeMeter
+    const meterChanged = nextMeter.numerator !== activeMeter.numerator || nextMeter.denominator !== activeMeter.denominator
+    if (meterChanged) {
+      const previousBarline = elements.at(-1)
+      if (previousBarline?.kind === 'barline') previousBarline.temporaryMeter = { ...nextMeter, parenthesized: false }
+      else elements.push({ kind: 'barline', type: 'normal', ornaments: [], code: '|', temporaryMeter: { ...nextMeter, parenthesized: false }, source: { line: 1, column: 1, offset: 0, length: 0 } })
+      activeMeter = nextMeter
+    }
     if (measure.left === 'rptstart' && !joinsRepeatBoundary) {
       elements.push({ ...barline(measure, false), type: 'repeat-start' })
     }
@@ -422,9 +435,10 @@ function groupForMeasures(
   ids: ReadonlyMap<ScoreEvent, string>,
   endingContinuation?: { fromPrevious: boolean; toNext: boolean },
   initialKey?: string,
+  initialMeter?: { numerator: number; denominator: number },
 ): VoiceGroup {
-  const lines = [lineForMeasures(melody, lyrics, 1, ids, endingContinuation, initialKey)]
-  if (bass.some((measure) => measure.events.length > 0 || measure.multiRest)) lines.push(lineForMeasures(bass, lyrics, 2, ids, undefined, initialKey))
+  const lines = [lineForMeasures(melody, lyrics, 1, ids, endingContinuation, initialKey, initialMeter)]
+  if (bass.some((measure) => measure.events.length > 0 || measure.multiRest)) lines.push(lineForMeasures(bass, lyrics, 2, ids, undefined, initialKey, initialMeter))
   addIntervals(lines, intervals)
   return { index: 0, voices: lines }
 }
@@ -434,6 +448,16 @@ function keyBeforeMeasure(measures: readonly ScoreMeasure[], index: number, fall
     const events = measures[measureIndex]?.events
     const key = events?.at(-1)?.key
     if (key !== undefined) return key
+  }
+  return fallback
+}
+
+function meterBeforeMeasure(measures: readonly ScoreMeasure[], index: number, fallback: { numerator: number; denominator: number }) {
+  for (let measureIndex = index - 1; measureIndex >= 0; measureIndex -= 1) {
+    const event = measures[measureIndex]?.events.at(-1)
+    if (event?.meterCount !== undefined && event.meterUnit !== undefined) {
+      return { numerator: event.meterCount, denominator: event.meterUnit }
+    }
   }
   return fallback
 }
@@ -512,6 +536,7 @@ function systemGroups(document: ScoreDocument, width: number) {
       toNext: part.melody[end]?.ending !== undefined && part.melody[end]?.ending === part.melody[end - 1]?.ending,
     },
     keyBeforeMeasure(part.melody, start, document.key),
+    meterBeforeMeasure(part.melody, start, { numerator: document.meterCount, denominator: document.meterUnit }),
   )
   const measureRange = (start: number, end: number) => layoutVoiceGroup(
     groupForRange(start, end), 83, Number.POSITIVE_INFINITY,

@@ -51,6 +51,7 @@ export class SpessaPlayer {
     this.metronome = metronome
     this.sequencer.eventHandler.addEvent('songEnded', 'm3n-player', () => {
       this.stopProgressLoop()
+      this.countInPending = true
       this.listener.onTime(this.sequencer.duration, this.sequencer.duration)
       this.listener.onEnded()
     })
@@ -90,7 +91,8 @@ export class SpessaPlayer {
   async play() {
     await this.context.resume()
     const token = ++this.playToken
-    const countInSeconds = this.metronomeEnabled && this.countInPending
+    const startsAtBeginning = this.countInPending || this.sequencer.currentHighResolutionTime <= 0.01
+    const countInSeconds = this.metronomeEnabled && startsAtBeginning
       ? this.metronome.countInDurationSeconds
       : 0
     if (this.metronomeEnabled) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate, countInSeconds > 0)

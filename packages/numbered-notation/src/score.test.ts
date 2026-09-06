@@ -604,6 +604,13 @@ describe('NumberedNotationScore', () => {
     expect(svg).toContain('>b</text>')
   })
 
+  it('renders meter changes on the preceding barline', () => {
+    const source = '{4/4}\nN: 1 2 3 4 | {3/4} 1 2 3 |||'
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
+
+    expect(svg).toContain('xlink:href="#linshi_paihao_shuzi_3"')
+  })
+
   it('uses Verovio’s metNoteQuarterUp glyph when its music font is supplied', () => {
     const [svg] = renderScore(
       parseM3NDocument('{title=测试曲} {4/4} {90qpm}\nN: 1 2 3 4 |||'),
