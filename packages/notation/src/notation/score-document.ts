@@ -52,6 +52,8 @@ export type ScoreLyricBlock = {
   mode: 'char' | 'word'
   syllables: ScoreLyricSyllable[]
   phrasePasses?: string
+  /** Explicitly shared lyric passes (for example a V2,V4 phrase or L4: {L2}). */
+  sharedPasses?: string
   targetStart?: number
   targetEnd?: number
 }

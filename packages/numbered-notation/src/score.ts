@@ -30,7 +30,7 @@ export type NumberedNotationRenderOptions = {
 
 type EventEntry = { event: ScoreEvent; index: number; lastIndex: number }
 type LyricTarget = { event: ScoreEvent; slot: number; tie: boolean }
-type LyricRowData = { texts: string[]; passes: ReadonlySet<number> | undefined }
+type LyricRowData = { texts: string[]; passes: ReadonlySet<number> | undefined; annotation?: string }
 type LyricsByEvent = Map<ScoreEvent, Map<number, Map<number, LyricRowData>>>
 
 function location(event: ScoreEvent) {
@@ -158,8 +158,12 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     // This mirrors the MEI projection: generic L: is verse 1, while L2: and
     // lyrics limited to V2 use their explicit pass row.
     const row = Math.max(0, Number(numbered?.[0] ?? pass?.[1] ?? 1) - 1)
-    const blockPassRange = block.range || block.phrasePasses
+    const blockPassRange = block.sharedPasses || block.range || block.phrasePasses
     const blockPasses = blockPassRange ? parsePassRange(blockPassRange) : undefined
+    const sharedPasses = block.sharedPasses ? parsePassRange(block.sharedPasses) : undefined
+    const annotation = sharedPasses && sharedPasses.size > 1
+      ? `${[...sharedPasses].sort((a, b) => a - b).join('.')}.`
+      : undefined
     const targets = targetEvents.filter(({ event }) => block.targetStart === undefined || block.targetEnd === undefined || (event.sourceStart >= block.targetStart && event.sourceEnd <= block.targetEnd))
     const consumed = new Set<LyricTarget>()
     let targetIndex = 0
@@ -179,6 +183,7 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const data = rows.get(row) ?? { texts: [], passes: undefined }
       data.texts.push(syllable.text)
       data.passes = rowPasses(blockPasses, target.event)
+      data.annotation = annotation
       rows.set(row, data)
       slots.set(target.slot, rows)
       result.set(target.event, slots)
@@ -192,6 +197,7 @@ function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const rows = slots.get(target.slot) ?? new Map<number, LyricRowData>()
       const data = rows.get(row) ?? { texts: [], passes: undefined }
       data.passes = rowPasses(blockPasses, target.event)
+      data.annotation = annotation
       rows.set(row, data)
       slots.set(target.slot, rows)
       result.set(target.event, slots)
@@ -204,6 +210,9 @@ function lyricLines(entries: readonly EventEntry[], lyrics: LyricsByEvent) {
   const activeRows = new Set(entries.flatMap(({ event }) => [...(lyrics.get(event)?.values() ?? [])].flatMap((rows) => [...rows.keys()].filter((row) => rows.get(row)?.texts.some((text) => text !== '') ?? false))))
   return [...activeRows].sort((left, right) => left - right).map((row) => ({
     rendition: row + 1,
+    annotation: [...lyrics.values()]
+      .flatMap((slots) => [...slots.values()].map((rows) => rows.get(row)?.annotation))
+      .find((annotation): annotation is string => annotation !== undefined),
     syllables: entries.flatMap(({ event, index, lastIndex }) => {
       const slots = lyrics.get(event)
       const count = lastIndex - index + 1

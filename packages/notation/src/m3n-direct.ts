@@ -3,6 +3,7 @@ import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './not
 import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure } from './notation/m3n-document.js'
 import { tokenizeM3N } from './notation/m3n-tokens.js'
 import { parseLyricItems } from './notation/lyrics.js'
+import { parsePassRange } from './notation/repeats.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document.js'
 type DirectSettingEvent = {
   beats: number
@@ -397,16 +398,39 @@ function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructur
   const lyrics: ScoreLyricBlock[] = []
   for (const section of structure.sections) for (const phrase of section.phrases) {
     if (!phrase.melody) continue
+    const blocksByLabel = new Map<string, ScoreLyricBlock>()
+    const references: Array<{ label: string; target: string }> = []
+    const phrasePasses = phrase.passes || undefined
+    const phrasePassSet = phrasePasses ? parsePassRange(phrasePasses) : new Set<number>()
+    const explicitSharedPasses = phrasePassSet.size > 1 ? [...phrasePassSet].sort((a, b) => a - b).join(',') : undefined
     for (const lyric of phrase.lyrics) {
-      if (/^\{L(\d+)\}$/.test(lyric.text.trim())) continue
-      lyrics.push({
+      const reference = /^\{L(\d+)\}$/.exec(lyric.text.trim())
+      if (reference) {
+        references.push({ label: lyric.label, target: reference[1]! })
+        continue
+      }
+      const block: ScoreLyricBlock = {
         range: lyric.label,
         mode: 'char',
         syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start),
-        phrasePasses: phrase.passes || undefined,
+        phrasePasses,
+        sharedPasses: explicitSharedPasses,
         targetStart: phrase.melody.start,
         targetEnd: phrase.melody.start + phrase.melody.text.length,
-      })
+      }
+      blocksByLabel.set(lyric.label, block)
+      lyrics.push(block)
+    }
+    for (const reference of references) {
+      const target = blocksByLabel.get(reference.target)
+      if (!target) continue
+      const passes = new Set<number>([
+        ...(target.sharedPasses ? parsePassRange(target.sharedPasses) : []),
+        ...(target.range ? parsePassRange(target.range) : []),
+        ...(reference.label ? parsePassRange(reference.label) : []),
+        ...(phrasePasses ? parsePassRange(phrasePasses) : []),
+      ])
+      if (passes.size > 1) target.sharedPasses = [...passes].sort((a, b) => a - b).join(',')
     }
   }
   document.lyrics = lyrics

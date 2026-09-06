@@ -446,9 +446,17 @@ describe('NumberedNotationScore', () => {
 
     expect(verseTwo).toEqual([{ passes: '1-2', text: '感' }])
     expect(verseThree).toEqual([
-      { passes: '1', rendition: 1, text: '依' },
+      { passes: '1-3', rendition: 1, text: '依' },
       { passes: '2', rendition: 2, text: '依' },
     ])
+  })
+
+  it('annotates explicitly shared lyric rows without annotating ordinary verses', () => {
+    const source = '{2/4}\nN: 1 2 |||\nL1: 甲乙\nL2: 丙丁\nL4: {L2}'
+    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
+
+    expect(svg).toContain('>2.4.</text>')
+    expect(svg).not.toContain('>1.2.</text>')
   })
 
   it('spans a crescendo across the sustain symbols of a long note', () => {
