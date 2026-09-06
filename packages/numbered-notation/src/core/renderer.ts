@@ -139,6 +139,13 @@ const LEIPZIG_NAVIGATION_GLYPHS: Readonly<Partial<Record<string, string>>> = {
   dc: '&#xE046;',
 }
 
+// Navigation marks occupy the music row. Leipzig text uses a font baseline,
+// while the fallback path glyphs are centered around their <use> anchor; the
+// latter therefore needs its native-coordinate compensation to share the same
+// visual row as the numbered note glyphs.
+const NAVIGATION_TEXT_Y_OFFSET = 0
+const NAVIGATION_PATH_Y_OFFSET = -20
+
 function leipzigGlyph(glyph: string, x: number, y: number, size: number): string {
   return `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${INK}" font-family="Leipzig" font-size="${formatNumber(size)}">${glyph}</text>`
 }
@@ -753,7 +760,7 @@ function renderBarline(
       ? (measureAnchors?.firstNoteX ?? measureAnchors?.leadingX ?? x) - 14
       : (measureAnchors?.lastNoteX ?? x - 54) + 8
     if (leipzigGlyphCode !== undefined) {
-      output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y - 15, 24))
+      output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y + NAVIGATION_TEXT_Y_OFFSET, 24))
       return
     }
     const id = barlineOrnamentGlyph(ornament.name)
@@ -764,7 +771,7 @@ function renderBarline(
       const pathAnchor = ornament.name === 'segno'
         ? anchorX
         : Math.min((measureAnchors?.lastVisualX ?? x - 54) + 22, x - 16)
-      output.push(registry.use(id, pathAnchor, y - 26))
+      output.push(registry.use(id, pathAnchor, y + NAVIGATION_PATH_Y_OFFSET))
     }
   })
   if (barline?.temporaryMeter !== undefined) {

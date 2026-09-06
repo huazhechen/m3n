@@ -99,11 +99,13 @@ describe('NumberedNotationScore', () => {
       width: 1000,
       musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
     })
-    const segno = /<text x="([\d.]+)" y="[\d.]+"[^>]*font-family="Leipzig" font-size="24"[^>]*>&#xE047;<\/text>/.exec(svg)
+    const segno = /<text x="([\d.]+)" y="([\d.]+)"[^>]*font-family="Leipzig" font-size="24"[^>]*>&#xE047;<\/text>/.exec(svg)
     const firstNoteX = Number(/<use x="([\d.]+)"[^>]*code="1"[^>]*data-m3n-id="m3n-e-1"/.exec(svg)?.[1])
+    const firstNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="1"[^>]*data-m3n-id="m3n-e-1"/.exec(svg)?.[1])
 
     expect(segno).not.toBeNull()
     expect(Number(segno?.[1])).toBeCloseTo(firstNoteX - 14, 3)
+    expect(Number(segno?.[2])).toBeCloseTo(firstNoteY, 3)
   })
 
   it('hugs DS to the last note instead of the trailing barline', () => {
@@ -113,11 +115,25 @@ describe('NumberedNotationScore', () => {
       width: 1000,
       musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
     })
-    const ds = /<text x="([\d.]+)" y="[\d.]+"[^>]*font-family="Leipzig" font-size="24"[^>]*>&#xE045;<\/text>/.exec(svg)
+    const ds = /<text x="([\d.]+)" y="([\d.]+)"[^>]*font-family="Leipzig" font-size="24"[^>]*>&#xE045;<\/text>/.exec(svg)
     const lastNoteX = Number(/<use x="([\d.]+)"[^>]*code="4"[^>]*data-m3n-id="m3n-e-4"/.exec(svg)?.[1])
+    const lastNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="4"[^>]*data-m3n-id="m3n-e-4"/.exec(svg)?.[1])
 
     expect(ds).not.toBeNull()
     expect(Number(ds?.[1])).toBeCloseTo(lastNoteX + 8, 3)
+    expect(Number(ds?.[2])).toBeCloseTo(lastNoteY, 3)
+  })
+
+  it('keeps fallback navigation wordmarks in the music row', () => {
+    const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 {fine} |||')
+    const [svg] = renderScore(document, { paged: false, width: 1000 })
+    const fine = /<use x="([\d.]+)" y="([\d.]+)" xlink:href="#xiaojiexian_fine"/.exec(svg)
+    const lastNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="4"[^>]*data-m3n-id="m3n-e-4"/.exec(svg)?.[1])
+
+    expect(fine).not.toBeNull()
+    // The fallback glyph's native path sits 20 units below its <use> anchor,
+    // so this offset places its ink on the same row as the numbered glyph.
+    expect(Number(fine?.[2]) + 20).toBeCloseTo(lastNoteY, 3)
   })
 
   it('keeps fine clear of a multi-rest glyph', () => {
