@@ -250,19 +250,29 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
     .filter((node) => node.kind === 'section')
     .map((node) => node.id)
   const endingNodes = nodes.filter((node) => node.kind === 'ending')
-  const playedEndings = new Set(endingNodes
-    .filter((node) => initial.includes(node.id))
-    .map((node) => node.id))
-  const remainingHouses = endingNodes.filter((node) => !playedEndings.has(node.id))
+  const jumpPass = jump.n === undefined ? undefined : Math.min(...parsePassRange(jump.n))
+  if (jumpPass === undefined || !Number.isFinite(jumpPass)) {
+    return [...initial.slice(0, played + 1), ...sections]
+  }
+
+  // A D.S. may appear in more than one alternate ending. Continue through
+  // the next numbered house after each return, allowing a later DS to trigger
+  // another pass, and stop when the return reaches Fine.
   const returnPart: string[] = []
-  for (const house of remainingHouses.length > 0 ? remainingHouses : [undefined]) {
+  let nextPass = jumpPass + 1
+  for (let iteration = 0; iteration < endingNodes.length + 1; iteration += 1) {
+    const house = endingNodes.find((node) => parsePassRange(node.n ?? '').has(nextPass))
     returnPart.push(...sections)
-    if (house) returnPart.push(house.id)
+    if (house === undefined) break
+    returnPart.push(house.id)
+    if (house.navigation?.includes('fine')) break
+    if (!house.navigation?.some((value) => value === 'ds' || value === 'dc')) break
+    nextPass += 1
   }
   return [...initial.slice(0, played + 1), ...returnPart]
 }
 
-/** Returns written node ids in performance order, including one navigation return. */
+/** Returns written node ids in performance order, including navigation returns. */
 export function buildPlaybackSequence(nodes: readonly PlaybackNode[]) {
   return appendNavigationReturn(nodes, expandInitialPasses(nodes))
 }

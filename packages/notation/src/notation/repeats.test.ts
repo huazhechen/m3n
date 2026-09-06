@@ -127,4 +127,22 @@ describe('repeat planning', () => {
     expect(sequence).toEqual(['n1', 'n2', 'n3'])
   })
 
+  it('continues through multiple D.S. endings until Fine', () => {
+    const sequence = buildPlaybackSequence(nodes(
+      { kind: 'section' },
+      { kind: 'section', repeatStart: true, navigation: ['segno'] },
+      { kind: 'section' },
+      { kind: 'ending', n: '1', repeatCount: 2 },
+      { kind: 'ending', n: '2,4', navigation: ['fine', 'ds'] },
+      { kind: 'ending', n: '3', navigation: ['ds'] },
+    ))
+
+    expect(sequence).toEqual([
+      'n1', 'n2', 'n3', 'n4',
+      'n2', 'n3', 'n5',
+      'n2', 'n3', 'n6',
+      'n2', 'n3', 'n5',
+    ])
+  })
+
 })
