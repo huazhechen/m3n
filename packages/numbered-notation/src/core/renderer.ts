@@ -770,14 +770,15 @@ function renderBarline(
     // measure regardless of how wide the system is.
     const firstNoteX = measureAnchors?.firstNoteX ?? measureAnchors?.leadingX ?? x
     const lastNoteX = measureAnchors?.lastNoteX ?? x - 54
+    const lastVisualX = measureAnchors?.lastVisualX ?? lastNoteX
     const anchorX = ornament.name === 'segno'
       ? firstNoteX - (config.musicFontCss === undefined ? 14 : NAVIGATION_MARK_WIDTH + NAVIGATION_MARK_GAP)
-      : lastNoteX +
+      : lastVisualX +
         (config.musicFontCss === undefined
           ? 8
           : Math.max(
               8,
-              Math.min(23, (x - lastNoteX - NAVIGATION_TEXT_BALANCE_INSET) / 2),
+              Math.min(23, (x - lastVisualX - NAVIGATION_TEXT_BALANCE_INSET) / 2),
             ))
     if (leipzigGlyphCode !== undefined) {
       output.push(leipzigGlyph(leipzigGlyphCode, anchorX, y + NAVIGATION_TEXT_Y_OFFSET, 24))
@@ -791,8 +792,8 @@ function renderBarline(
       const pathAnchor = ornament.name === 'segno'
         ? anchorX
         : Math.min(
-            (measureAnchors?.lastVisualX ?? x - 54) +
-              (x - (measureAnchors?.lastVisualX ?? x - 54) + NAVIGATION_PATH_BALANCE_INSET) / 2,
+            lastVisualX +
+              (x - lastVisualX + NAVIGATION_PATH_BALANCE_INSET) / 2,
             x - NAVIGATION_PATH_BARLINE_CLEARANCE,
           )
       output.push(registry.use(id, pathAnchor, y + NAVIGATION_PATH_Y_OFFSET))

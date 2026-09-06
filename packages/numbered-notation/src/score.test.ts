@@ -201,6 +201,26 @@ describe('NumberedNotationScore', () => {
     }
   })
 
+  it('anchors DS after the final sustain symbol', () => {
+    const document = parseM3NDocument('{4/4}\nN: 1^^^ {ds}|||')
+    for (const musicFontCss of [undefined, '@font-face { font-family: Leipzig; src: url(test); }']) {
+      const [svg] = renderScore(document, { paged: false, width: 800, musicFontCss })
+      const measureGroup = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)]
+        .map((match) => match[0])
+        .find((group) => group.includes(musicFontCss === undefined ? 'xiaojiexian_ds' : '&#xE045;'))
+      const sustainXs = [...(measureGroup ?? '').matchAll(/<use x="([\d.]+)"[^>]*xlink:href="#yanyinfu"/g)]
+        .map((match) => Number(match[1]))
+      const lastSustainX = sustainXs.at(-1) ?? Number.NaN
+      const dsX = musicFontCss === undefined
+        ? Number(/<use x="([\d.]+)"[^>]*xlink:href="#xiaojiexian_ds"/.exec(measureGroup ?? '')?.[1])
+        : Number(/<text x="([\d.]+)"[^>]*>&#xE045;<\/text>/.exec(measureGroup ?? '')?.[1])
+
+      expect(measureGroup).toBeDefined()
+      expect(sustainXs.length).toBeGreaterThan(0)
+      expect(dsX - lastSustainX).toBeGreaterThanOrEqual(8)
+    }
+  })
+
   it('keeps fine clear of a multi-rest glyph', () => {
     const source = readFileSync(new URL('../../../src/scores/second_waltz_01.m3n', import.meta.url), 'utf8')
     const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })
