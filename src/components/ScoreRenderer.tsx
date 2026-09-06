@@ -59,6 +59,20 @@ type ScoreRendererProps = {
 type RenderPhase = 'loading-library' | 'waiting-layout' | 'layout'
 
 const EMPTY_INVALID_MEASURE_IDS: string[] = []
+function playbackCountInBeats(scoreDocument: ScoreDocument | undefined) {
+  const measure = scoreDocument?.parts.get('score')?.melody[0]
+  const event = measure?.events[0]
+  const expected = (event?.meterCount ?? scoreDocument?.meterCount ?? 4) * 4 /
+    (event?.meterUnit ?? scoreDocument?.meterUnit ?? 4)
+  const actual = measure?.multiRest
+    ? expected
+    : measure?.events.reduce((total, item) => total + item.beats, 0) ?? 0
+  if (!Number.isFinite(expected) || expected <= 0) return 0
+  // A complete opening measure gets one full bar; a pickup gets only the
+  // missing beats needed to complete that first bar.
+  return actual > 0 && actual < expected ? expected - actual : expected
+}
+
 function queryScoreElement(paper: HTMLElement | null, xmlId: string) {
   return paper?.querySelector(`#${xmlId}`) ?? paper?.querySelector(`[data-m3n-id="${xmlId}"]`) ?? null
 }
@@ -429,7 +443,7 @@ export function ScoreRenderer({
             stopPlaybackRef.current()
           },
           onTime: onPlayerTime,
-        }, transposeRef.current)
+        }, transposeRef.current, playbackCountInBeats(scoreDocument))
         player.setSpeed(speedRef.current)
         player.setMetronomeEnabled(metronomeEnabled)
         playerRef.current = player

@@ -44,6 +44,12 @@ function secondsAtTick(tick: number, timeDivision: number, tempos: readonly Temp
   return seconds + (tick - previousTick) * 60 / (tempo * timeDivision)
 }
 
+export function initialBeatDurationSeconds(midi: BasicMIDI) {
+  const tempo = sortedTempoPoints(midi)[0]?.tempo ?? 120
+  const meter = sortedMeterPoints(midi)[0]
+  return 60 / tempo * (4 / (meter?.denominator ?? 4))
+}
+
 /** Builds accented beat positions from the expanded MIDI sequence. */
 export function buildMetronomeBeats(midi: BasicMIDI): MetronomeBeat[] {
   if (!Number.isFinite(midi.timeDivision) || midi.timeDivision <= 0 || midi.duration <= 0) return []
@@ -75,15 +81,37 @@ export class Metronome {
   private playbackRate = 1
   private readonly scheduled = new Set<OscillatorNode>()
 
-  constructor(private readonly context: AudioContext, private readonly beats: readonly MetronomeBeat[]) {}
+  constructor(
+    private readonly context: AudioContext,
+    beats: readonly MetronomeBeat[],
+    countInBeats = 0,
+    beatDurationSeconds = 0,
+  ) {
+    const count = Math.max(0, Math.ceil(countInBeats - 1e-9))
+    const countIn = count > 0 && beatDurationSeconds > 0
+      ? Array.from({ length: count }, (_, index) => ({
+          time: -(count - index) * beatDurationSeconds,
+          accent: index === 0,
+        }))
+      : []
+    this.beats = [...countIn, ...beats]
+    this.countInSeconds = count * beatDurationSeconds
+  }
 
-  start(playbackTime: number, playbackRate: number) {
+  private readonly beats: readonly MetronomeBeat[]
+  private readonly countInSeconds: number
+
+  start(playbackTime: number, playbackRate: number, includeCountIn = false) {
     this.stop()
     this.anchorAudioTime = this.context.currentTime
-    this.anchorPlaybackTime = Math.max(0, playbackTime)
+    this.anchorPlaybackTime = Math.max(0, playbackTime) - (includeCountIn ? this.countInSeconds : 0)
     this.playbackRate = Math.max(0.01, playbackRate)
     this.nextBeatIndex = this.findNextBeat(this.anchorPlaybackTime)
     this.schedule()
+  }
+
+  get countInDurationSeconds() {
+    return this.countInSeconds
   }
 
   stop() {

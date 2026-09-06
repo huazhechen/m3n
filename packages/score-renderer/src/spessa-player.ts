@@ -1,7 +1,7 @@
 import { BasicMIDI } from 'spessasynth_core'
 import { Sequencer, WorkletSynthesizer } from 'spessasynth_lib' 
 import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
-import { Metronome, buildMetronomeBeats } from './metronome.js'
+import { Metronome, buildMetronomeBeats, initialBeatDurationSeconds } from './metronome.js'
 
 const soundFont = { name: 'FluidR3-GM-Piano-SF3', url: '/soundfonts/FluidR3_GM-Piano.sf3' } as const
 export function seekTimeAtProgress(duration: number, progress: number) {
@@ -40,6 +40,8 @@ export class SpessaPlayer {
   private readonly listener: PlayerListener
   private readonly metronome: Metronome
   private metronomeEnabled = false
+  private countInPending = true
+  private playToken = 0
 
   private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener, metronome: Metronome) {
     this.context = context
@@ -54,7 +56,7 @@ export class SpessaPlayer {
     })
   }
 
-  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0) {
+  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0, countInBeats = 0) {
     const response = await fetch(soundFont.url)
     if (!response.ok) throw new Error(`无法加载 ${soundFont.name} 音色文件。`)
     const soundBank = await response.arrayBuffer()
@@ -64,10 +66,17 @@ export class SpessaPlayer {
     synth.connect(context.destination)
     await synth.soundBankManager.addSoundBank(soundBank, soundFont.name)
     await synth.isReady
-    const sequence = transposeMidiData(midi, transpose)
+    const midiSequence = transposeMidiData(midi, transpose)
     const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })
-    sequencer.loadNewSongList([{ binary: sequence, fileName: 'm3n-score.mid' }])
-    return new SpessaPlayer(context, synth, sequencer, listener, new Metronome(context, buildMetronomeBeats(BasicMIDI.fromArrayBuffer(midi))))
+    sequencer.loadNewSongList([{ binary: midiSequence, fileName: 'm3n-score.mid' }])
+    const parsedSequence = BasicMIDI.fromArrayBuffer(midi)
+    return new SpessaPlayer(
+      context,
+      synth,
+      sequencer,
+      listener,
+      new Metronome(context, buildMetronomeBeats(parsedSequence), countInBeats, initialBeatDurationSeconds(parsedSequence)),
+    )
   }
 
   get paused() {
@@ -80,12 +89,22 @@ export class SpessaPlayer {
 
   async play() {
     await this.context.resume()
+    const token = ++this.playToken
+    const countInSeconds = this.metronomeEnabled && this.countInPending
+      ? this.metronome.countInDurationSeconds
+      : 0
+    if (this.metronomeEnabled) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate, countInSeconds > 0)
+    if (countInSeconds > 0) {
+      await new Promise<void>((resolve) => window.setTimeout(resolve, countInSeconds * 1000 / Math.max(0.01, this.sequencer.playbackRate)))
+      if (token !== this.playToken) return
+    }
+    this.countInPending = false
     this.sequencer.play()
-    if (this.metronomeEnabled) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
     this.startProgressLoop()
   }
 
   pause() {
+    this.playToken += 1
     this.sequencer.pause()
     this.metronome.stop()
     this.stopProgressLoop()
