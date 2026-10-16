@@ -137,6 +137,29 @@ try {
             noteOverlap.push([digits[i].closest('.note').id, digits[j].closest('.note').id])
           }
         }
+        if (file === 'por_una_cabeza_01.m3n') {
+          const arcs = [...svg.querySelectorAll('path')].filter(path => !path.closest('g.note') && /[CQ]/.test(path.getAttribute('d') ?? ''))
+          for (const arc of arcs) {
+            const d = arc.getAttribute('d')
+            if ((d.match(/C/g) ?? []).length !== 2) continue
+            const n = d.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi).map(Number)
+            if (Math.abs(n[1] - n[7]) > 0.01 || Math.abs(n[3] - n[5]) > 0.01 || Math.abs(n[2] - n[0] - n[6] + n[4]) > 0.01) {
+              issues.push({ file, width, paged, asymmetricLegato: d })
+            }
+          }
+          for (const dot of svg.querySelectorAll('g.note circle')) {
+            const x = Number(dot.getAttribute('cx')), y = Number(dot.getAttribute('cy')), r = Number(dot.getAttribute('r')) + 1
+            for (const arc of arcs) {
+              const box = arc.getBBox()
+              if (x + r < box.x || x - r > box.x + box.width || y + r < box.y || y - r > box.y + box.height) continue
+              let collision = false
+              for (const radius of [0, r / 2, r]) for (let i = 0; i < 32; i++) {
+                if (arc.isPointInFill(new DOMPoint(x + radius * Math.cos(i * Math.PI / 16), y + radius * Math.sin(i * Math.PI / 16)))) collision = true
+              }
+              if (collision) issues.push({ file, width, paged, legatoOctaveCollision: [x, y], arc: arc.getAttribute('d') })
+            }
+          }
+        }
       }
       if (outside.length || overlap.length || noteOverlap.length) issues.push({ file, width, paged, outside: outside.slice(0, 3), outsideCount: outside.length, overlap: overlap.slice(0, 3), overlapCount: overlap.length, noteOverlap: noteOverlap.slice(0, 3), noteOverlapCount: noteOverlap.length })
     }

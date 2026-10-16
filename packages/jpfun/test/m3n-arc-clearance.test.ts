@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { compileScore } from '../src/pipeline.js';
 import type { PathCommand } from '../src/render/types.js';
-import { assert, attachmentCommands, nearly } from './helpers.js';
+import { assert, attachmentCommands, nearly, recordCommands } from './helpers.js';
 
 // Trace the painted ribbon independently of the layout solver. Both edges and
 // cross-system plateaus participate; comparing bounding boxes misses crossings.
@@ -104,4 +104,51 @@ test('adjacent arcs, other staves and compilation without relation alignment ret
     const paths = arcs(source, false).map(item => attachmentCommands(item).find(command => command.kind === 'path'));
     assert(paths[0]?.commands[0].op === 'M' && paths[1]?.commands[0].op === 'M'
         && nearly(paths[0].commands[0].y, paths[1].commands[0].y), 'default compilation must retain local arc geometry');
+});
+
+test('same-system arcs use the higher endpoint for a level, horizontally symmetric ribbon', () => {
+    for (const source of [
+        "1@a 2'@b @tie(a,b)",
+        "1''@a 2'@b @tie(a,b)",
+        "@up(1,3')@a 2@b @tie(a,b)",
+        "1@a 2''@b @tie(a,b,height=3px)",
+    ]) {
+        const result = compileScore(source, { alignRelations: true });
+        const [path] = attachmentCommands(result.layout.attachments[0]).filter(command => command.kind === 'path');
+        const [start, outer] = path.commands;
+        assert(start.op === 'M' && outer.op === 'C', 'expected a cubic ribbon');
+        const ports = result.layout.objects.map(node => node.box.y + (node.ports['tie.top']?.y ?? 0));
+        assert(nearly(start.y, Math.min(...ports)) && nearly(start.y, outer.y), 'both ends must use the higher musical port');
+        assert(nearly(outer.cy1, outer.cy2) && nearly(outer.cx1 - start.x, outer.x - outer.cx2), 'the outer edge must be symmetric');
+        if (source.includes('height=3px')) assert(nearly((start.y - outer.cy1) * 0.75, 3), 'leveling must preserve explicit arc height');
+    }
+});
+
+test('arc lower edges clear intervening octave dots in same-system and split fragments', () => {
+    for (const fontSize of [20, 40]) for (const notes of [
+        "1@a 2''@m 3@b",
+        "1@a 2''@m 3 4@b",
+        "1@a @up(2,3'')@m 4@b",
+        "1@a 2''@m @br() 3@b",
+        "1@a @br() 2''@m 3@b",
+        "1@a @br() 2''@m @br() 3@b",
+    ]) {
+        const result = compileScore(`${notes} @tie(a,b)`, { alignRelations: true, variables: { fontsize: fontSize } });
+        const middle = result.layout.objects.find(node => node.ast.labelable?.()?.label === 'm')!;
+        assert(middle, 'fixture must contain its labeled middle note');
+        const arc = result.layout.attachments[0];
+        const index = arc.regions.findIndex(region => region.line === middle.layoutLine);
+        const path = attachmentCommands(arc).filter(command => command.kind === 'path')[index];
+        const points = outline(path.commands);
+        const dots = recordCommands(result.layout).filter(command => command.kind === 'circle');
+        assert(dots.length > 0, 'fixture must contain upper octave dots');
+        for (const dot of dots) for (const x of [dot.cx - dot.r, dot.cx, dot.cx + dot.r]) {
+            assert(boundsAt(points, x).bottom <= dot.cy - dot.r - fontSize * 0.045,
+                `the complete arc band must clear the middle octave dots: ${notes}`);
+        }
+    }
+    const result = compileScore("1@a 2' 3@b @tie(a,b)", { alignRelations: true });
+    const [path] = attachmentCommands(result.layout.attachments[0]).filter(command => command.kind === 'path');
+    assert(path.commands[0].op === 'M' && nearly(path.commands[0].y, result.layout.objects[0].box.y),
+        'an arc that already clears middle dots must retain its original height above the endpoints');
 });

@@ -1,4 +1,4 @@
-// M3N modification: separate overlapping arc ribbons in relation-aligned layouts.
+// M3N modification: level arc endpoints and clear intervening notes and overlapping ribbons.
 import { ASTNodeBase, FunctionArgs, SourceSpan, ParserContext, ASTFunctionNode, ASTFunctionClass, type LengthValue } from "../ASTtypes.js";
 import type { CallArgumentInfo } from "../../parser/grammarType.js";
 import { Diagnostic, ErrorDiagnostic } from "../../diagnostic.js";
@@ -12,6 +12,7 @@ import { getLayoutBounds } from "../../layout/engine.js";
 import type {
     AttachmentLayoutContext,
     LayoutAttachment,
+    LayoutHost,
     LayoutPoint,
     Rect,
 } from "../../layout/types.js";
@@ -244,7 +245,7 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         }
     }
 
-    private tiePort(node: VisualTemporalNode): LayoutPoint {
+    private tiePort(node: LayoutHost): LayoutPoint {
         const port = node.ports["tie.top"];
         if (port) {
             return {
@@ -269,13 +270,20 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
             // 标签书写顺序不保证时间顺序，先按谱面行升序规范化
             if (startNode.layoutLine > endNode.layoutLine) [startNode, endNode] = [endNode, startNode];
 
-            const start = this.tiePort(startNode);
-            const end = this.tiePort(endNode);
+            let start = this.tiePort(startNode);
+            let end = this.tiePort(endNode);
+            const level = context.alignRelations && startNode.track === endNode.track;
+            const append = (segment: TieSegment) => segments.push(level
+                ? this.clearInterveningNotes(context, segment, startNode, endNode) : segment);
 
             if (startNode.layoutLine === endNode.layoutLine) {
+                if (level) {
+                    const y = Math.min(start.y, end.y);
+                    start = { ...start, y }; end = { ...end, y };
+                }
                 const startTop = this.hostTop(context, startNode.layoutLine, startNode.track);
                 const endTop = this.hostTop(context, endNode.layoutLine, endNode.track);
-                segments.push(this.arcSegment(
+                append(this.arcSegment(
                     start,
                     end,
                     startNode.layoutLine,
@@ -287,7 +295,7 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
 
             const height = this.height > 0 ? this.height : this.fontSize * CROSS_LINE_HEIGHT_RATIO;
             // 首行先起弧，再沿水平段延伸到当前谱面行最右侧
-            segments.push(this.openingSegment(
+            append(this.openingSegment(
                 start,
                 this.lineRightX(context, startNode.layoutLine),
                 height,
@@ -297,7 +305,7 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
 
             // 中间行可能没有任何可见对象，仍然需要逐行补一段水平线
             for (let line = startNode.layoutLine + 1; line < endNode.layoutLine; line++) {
-                segments.push(this.horizontalSegment(
+                append(this.horizontalSegment(
                     this.lineEntryX(context, line, startNode.track),
                     this.lineRightX(context, line),
                     this.hostTop(context, line, startNode.track) - height,
@@ -307,7 +315,7 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
             }
 
             // 跳过声部名、大括号等位于端点列之前的系统前缀，再落弧到终点
-            segments.push(this.closingSegment(
+            append(this.closingSegment(
                 this.lineEntryX(context, endNode.layoutLine, endNode.track),
                 end,
                 height,
@@ -316,6 +324,26 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
             ));
         }
         return segments;
+    }
+
+    /** Test the ribbon's lower edge against the musical tops inside this system fragment. */
+    private clearInterveningNotes(context: AttachmentLayoutContext, segment: TieSegment, start: VisualTemporalNode, end: VisualTemporalNode) {
+        let lift = 0;
+        const columns = context.getRangeColumns(segment.line, [start, end], start.track);
+        for (const host of columns.flat()) {
+            if (host.T.isZero() || host.track !== start.track || host === start || host === end) continue;
+            const bounds = getLayoutBounds(host, true);
+            const left = Math.max(segment.x, bounds.x), right = Math.min(segment.x + segment.w, bounds.x + bounds.w);
+            if (right < left) continue;
+            const top = this.tiePort(host).y;
+            // These arc edges have their highest lower-edge value at an end of
+            // the tested interval; octave dots are included in the musical port.
+            for (const x of [left, right]) {
+                const edge = ribbonAtX(segment.commands, x);
+                if (edge) lift = Math.max(lift, edge.bottom - top);
+            }
+        }
+        return lift > 0 ? shiftSegment(segment, -lift) : segment;
     }
 
     private resolveHeight(span: number) {
