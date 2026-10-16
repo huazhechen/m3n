@@ -213,7 +213,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     }
     const voices = [renderVoice(melody, 'melody')]
     if (options.includeBass !== false && bass.some(measure => measure.events.length || measure.multiRest)) voices.push(renderVoice(bass, 'bass'))
-    return voices.length > 1 ? `@voices(${voices.join(',')},connect="[-]")` : voices[0]!
+    return voices.length > 1 ? `@voices(${voices.join(',')},connect="[-]",repeatconnect=true)` : voices[0]!
   }
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,

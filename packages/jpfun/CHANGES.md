@@ -3,6 +3,7 @@
 The comparison base is the unmodified upstream import commit `d7c00a6`. See UPSTREAM.md for the exact upstream revision. Modified upstream source files carry M3N notices.
 
 - Workspace packaging and core-only application entry; original source, tests and snapshots retained. Optional importers are not exported to the browser application.
+- `@voices(...,repeatconnect=true)` repeats native voice connectors on every system, including explicit breaks, automatic wrapping and pagination. Zero-time continuation hosts reserve horizontal space without repeating voice labels or changing playback; omitting the option retains upstream behavior.
 - Copied the two upstream score fixtures into test/fixtures; updated their relative test path.
 - `compileScore({autoWrap:true})`: generic natural-width measurement and balanced measure breaking; dense measures split at note columns, preserving tuplet ranges, explicit breaks, parallel voices and original source spans. Default compilation is unchanged.
 - The layout result exposes solved horizontal occupancy, including lyrics. Automatic wrapping uses this occupancy so long words do not get compressed into their neighbors.

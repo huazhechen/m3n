@@ -1,4 +1,4 @@
-// M3N modification: lyric metadata, punctuation spacing, opt-in underlines and separate lyric prefixes.
+// M3N modification: lyric metadata/spacing and optional connectors on every system.
 import { ASTNodeBase, ASTBraceNode, FunctionArgs, SourceSpan, ASTFunctionNode, ASTFunctionClass, ASTTextNode } from "../ASTtypes.js";
 import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import { findRightParen } from "../../parser/parse-utils/call-utils.js";
@@ -6,6 +6,7 @@ import { findClosingQuote, quote, removeQuote } from "../../parser/parse-utils/s
 import { GrammarNode, GrammarSugarNode, type CallArgumentInfo } from "../../parser/grammarType.js";
 import { ParserContext, skipSpaces } from "../../parser/parserContext.js";
 import type { LoweringContext } from "../../lowering/loweringContext.js";
+import type { LoweringResult } from "../../lowering/types.js";
 import { isLayoutAttachment } from "../../layout/types.js";
 import { getLayoutBounds } from "../../layout/engine.js";
 import {
@@ -512,6 +513,7 @@ class VoicesFunction extends ASTFunctionNode {
 \`[]\` 是现有括线，\`{}\` 是弯曲大括号；编号从 1 开始，省略起点/终点表示首/末声部。
 默认 \`"[-]"\` 连接全部声部；\`""\` 只保留公共细连谱线。未指定的声部仍有细线，范围可以重叠，不改变声部或播放关系。
 用 \`@set(voices.connect="{1-2}[3-]")\` 设置后续多声部块的默认方案，显式参数写在所有声部之后。
+\`repeatconnect=true\` 在后续每个谱表系统左侧重复连接符并预留空间，声部名称仍只显示一次。
 
 **简写**：连续声明多个 \`N:\` 声部及其 \`L:\` 歌词，会自动组成 \`voices\`
 
@@ -541,6 +543,12 @@ N(女低): 1 2 3
             type: "string" as const,
             default: "[-]",
             description: '视觉连接：[1-4] 为现有括线，{5-7} 为弯曲大括号；省略端点表示首/末声部，空字符串只保留公共连谱线。',
+        }, {
+            name: "repeatconnect",
+            namedOnly: true,
+            type: "boolean" as const,
+            default: false,
+            description: "在换行或分页后的每个谱表系统重复连接符。",
         }]
     };
 
@@ -620,6 +628,7 @@ N(女低): 1 2 3
     /** 声部名右侧为大括号预留的横向空间 */
     readonly braceSpace: number;
     private readonly connect: string;
+    readonly repeatconnect: boolean;
     // 收集阶段只冻结配置，避免提前校验随后会被 V 声明覆盖的默认值。
     private get connectionSpecs(): ConnectionSpec[] {
         return parseConnections(this.connect, this.sourceSpan);
@@ -656,6 +665,27 @@ N(女低): 1 2 3
         return [];
     }
 
+    static override loweringFinalize(result: LoweringResult) {
+        const insertions = new Map<TemporalNodeBase[], VoiceNameTemporal[]>();
+        let order = 0;
+        for (const nodes of result.astToTemporal.values()) for (const node of nodes) order = Math.max(order, node.order + 1);
+        for (const attachment of [...result.attachments]) {
+            if (!(attachment instanceof VoicesBraceAttachment)) continue;
+            for (const { column, names, connector } of attachment.continuations(result)) {
+                for (const name of names) {
+                    name.order = order++;
+                    result.astToTemporal.get(name.ast)!.push(name);
+                }
+                insertions.set(column, [...(insertions.get(column) ?? []), ...names]);
+                result.attachments.push(connector);
+            }
+        }
+        if (insertions.size) result.columns = result.columns.flatMap(column => {
+            const names = insertions.get(column);
+            return names ? [names, column] : [column];
+        });
+    }
+
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
         this.voices = [];
@@ -664,9 +694,9 @@ N(女低): 1 2 3
         this.braceSpace = Math.max(ctx.variables.fontsize,
             (MIN_CONNECTOR_STEM * (BRACKET_HOOK_REACH + 0.5) + 0.5) / (1 - CONNECTOR_LABEL_GAP_RATIO));
         this.measure = makeVoicesMeasure(ctx.variables.fontsize);
-        [this.connect] = this.getArgValue(args, ctx) as [string];
+        [this.connect, this.repeatconnect] = this.getArgValue(args, ctx) as [string, boolean];
         for (const [key, value] of args) {
-            if (key === "connect") continue;
+            if (key === "connect" || key === "repeatconnect") continue;
             const valueSpan = value instanceof ASTNodeBase ? value.sourceSpan : (value as CallArgumentInfo).valueSpan;
             const voice = value instanceof ASTNodeBase ? value : ctx.parseArgWithType(valueSpan, "content", span.start);
             if (!(voice instanceof VoiceFunction)) {
@@ -697,6 +727,7 @@ N(女低): 1 2 3
     toString(source: string) {
         const parameters = this.voices.map(voice => `\t${voice.toString(source)}`);
         parameters.push(`\tconnect=${quote(serializeConnections(this.connectionSpecs))}`);
+        if (this.repeatconnect) parameters.push("\trepeatconnect=true");
         return `@voices(\n${parameters.join(",\n")}\n)`;
     }
 }
@@ -728,7 +759,7 @@ class VoiceNameTemporal extends TemporalNodeBase {
     private readonly braceSpace: number;
     private textBaselineY = 0;
 
-    constructor(ast: VoiceFunction, braceSpace: number) {
+    constructor(ast: VoiceFunction, braceSpace: number, private readonly continuation = false) {
         super();
         this.ast = ast;
         this.braceSpace = braceSpace;
@@ -739,12 +770,13 @@ class VoiceNameTemporal extends TemporalNodeBase {
     }
 
     override prepareLayout(context: LayoutPrepareContext) {
-        const metrics = this.ast.name
+        const metrics = this.ast.name && !this.continuation
             ? context.textMeasurer.measureText(this.ast.name, this.style)
             : { w: 0, h: 0, baseline: 0 };
         // 声部名和歌词行名称共用这一列，列宽取其中最宽的一个
         let labelWidth = metrics.w;
         for (const lyric of this.ast.lyrics) {
+            if (this.continuation) break;
             if (!lyric.name) continue;
             const lyricMetrics = context.textMeasurer.measureText(lyric.name, lyricNameStyle(this.ast.size, this.ast.font));
             labelWidth = Math.max(labelWidth, lyricMetrics.w);
@@ -777,7 +809,7 @@ class VoiceNameTemporal extends TemporalNodeBase {
     }
 
     override paint(painter: Painter) {
-        if (!this.ast.name) return;
+        if (!this.ast.name || this.continuation) return;
         painter.drawText(this.ast.name, this.box.x + this.box.anchor, this.box.y + this.textBaselineY, this.style);
     }
 }
@@ -799,6 +831,35 @@ class VoicesBraceAttachment implements LayoutAttachment {
     constructor(names: VoiceNameTemporal[], ast: VoicesFunction, private readonly connections: VoiceConnection[]) {
         this.names = names;
         this.ast = ast;
+    }
+
+    *continuations(result: LoweringResult) {
+        if (!this.ast.repeatconnect || this.names.length < 2) return;
+        const firstLine = this.names[0].layoutLine;
+        const seen = new Set<number>();
+        for (const column of result.columns) {
+            const line = column[0].layoutLine;
+            if (line <= firstLine || seen.has(line)) continue;
+            const belongs = column.some(node => {
+                if (!isVisualTemporalNode(node)) return false;
+                for (let ast: ASTNodeBase | null = node.ast; ast; ast = ast.parent) {
+                    if (ast === this.ast) return true;
+                }
+                return false;
+            });
+            if (!belongs) continue;
+            seen.add(line);
+            // Zero-time native hosts reserve a connector column before controls,
+            // repeats and notes. Their track axes also follow pagination.
+            const names = this.names.map(original => {
+                const name = new VoiceNameTemporal(original.ast, this.ast.braceSpace, true);
+                name.track = original.track;
+                name.t.copyFrom(column[0].t);
+                name.layoutLine = line;
+                return name;
+            });
+            yield { column, names, connector: new VoicesBraceAttachment(names, this.ast, this.connections) };
+        }
     }
 
     createGeometry() {
