@@ -1,5 +1,6 @@
 import { parseKey } from './m3n-primitives.js' 
 import type { ScoreDocument } from './score-document.js'
+import { scoreCreditLines } from '../score-credits.js'
 import { parse, stringify, type TNode } from 'txml/txml'
 
 export type ScoreHeaderMetadata = { value: string; side: 'left' | 'right' | 'center'; priority: number }
@@ -17,7 +18,7 @@ export function scoreHeaderMetadata(document: ScoreDocument): ScoreHeaderMetadat
   return ([
     { value: document.title, side: 'center', priority: 0 },
     { value: document.subtitle, side: 'center', priority: 10 },
-    { value: document.singer || document.composer, side: 'right', priority: 20 },
+    ...scoreCreditLines(document).map((value, index) => ({ value, side: 'right' as const, priority: 20 + index })),
   ] satisfies ScoreHeaderMetadata[]).filter((item) => item.value)
 }
 

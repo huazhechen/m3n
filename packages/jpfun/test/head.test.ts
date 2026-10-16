@@ -293,6 +293,33 @@ H.right: {@text(A) @text(B)}`);
         "right items must preserve writing order with the fixed item gap");
 });
 
+test("head itemgap and sidestacked preserve geometry through serialization", () => {
+    const source = `@head(center={@text(Title) @text(Subtitle)},
+        left={{@key(C) @meter(4,4) @tempo(96)}},
+        right={@text(Composer) @text(Singer)},
+        sidebelow=true, sidestacked=true, itemgap=16px, gap=7px)`;
+    for (const input of [source, parse(source).toString()]) {
+        const layout = layoutOf(input);
+        const controls = layout.objects.filter(node => node.ast instanceof ASTFunctionNode
+            && ["key", "meter", "tempo"].includes(node.ast.callName));
+        const boxes = textObjects(input);
+        const subtitle = boxes.get("Subtitle")!.box;
+        const composer = boxes.get("Composer")!.box;
+        const singer = boxes.get("Singer")!.box;
+        assert(nearly(composer.y - subtitle.y - subtitle.h, 7));
+        assert(nearly(singer.y - composer.y - composer.h, 7));
+        assert(nearly(Math.min(...controls.map(node => node.box.y)) - singer.y - singer.h, 7));
+        for (let index = 1; index < controls.length; index++) {
+            const before = controls[index - 1].box, after = controls[index].box;
+            assert(nearly(after.x - before.x - before.w, 16));
+        }
+    }
+    const solo = `@head(left=@text(L), sidebelow=true, sidestacked=true)`;
+    assert(nearly(textObjects(solo).get("L")!.box.y,
+        textObjects(`@head(left=@text(L), sidebelow=true)`).get("L")!.box.y),
+        "a missing side must not reserve an empty block");
+});
+
 test("head 拒绝正时长内容", () => {
     for (const source of [
         "@head(center={1})",

@@ -154,7 +154,9 @@ describe('M3N to MEI conversion', () => {
     expect(result.headerMetadata).toEqual([
       { value: 'Test', side: 'center', priority: 0 },
       { value: 'Sub', side: 'center', priority: 10 },
-      { value: 'Composer', side: 'right', priority: 20 },
+      { value: '作词：Lyricist', side: 'right', priority: 20 },
+      { value: '作曲：Composer', side: 'right', priority: 21 },
+      { value: '编曲：Arranger', side: 'right', priority: 22 },
     ])
     expect(result.mei).not.toContain('<pgHead>')
     expect(result.mei).toContain('<scoreDef midi.bpm="90"')
@@ -168,15 +170,16 @@ describe('M3N to MEI conversion', () => {
     expect(result.sourceMap[0]?.xmlId).toMatch(/^m3n-e-/)
   })
 
-  it('shows the singer in the header when present and otherwise falls back to the composer', () => {
+  it('labels every declared credit instead of choosing between singer and composer', () => {
     const withSinger = m3nToMei('{title=Song} {singer=Singer} {composer=Composer}\n{key=C} {4/4} 1--- |||')
     const withoutSinger = m3nToMei('{title=Instrumental} {composer=Composer}\n{key=C} {4/4} 1--- |||')
 
     expect(withSinger.singer).toBe('Singer')
     expect(withSinger.mei).toContain('<persName role="singer">Singer</persName>')
-    expect(withSinger.headerMetadata).toContainEqual({ value: 'Singer', side: 'right', priority: 20 })
-    expect(withSinger.headerMetadata).not.toContainEqual({ value: 'Composer', side: 'right', priority: 20 })
-    expect(withoutSinger.headerMetadata).toContainEqual({ value: 'Composer', side: 'right', priority: 20 })
+    expect(withSinger.headerMetadata.filter(item => item.side === 'right').map(item => item.value)).toEqual(['作曲：Composer', '演唱：Singer'])
+    expect(withoutSinger.headerMetadata.filter(item => item.side === 'right').map(item => item.value)).toEqual(['作曲：Composer'])
+    expect(m3nToMei('{lyricist=同一人}{composer=同一人}{singer=同一人}\n1--- |||').headerMetadata.map(item => item.value)).toEqual(['作词：同一人', '作曲：同一人', '演唱：同一人'])
+    expect(m3nToMei('1--- |||').headerMetadata).toEqual([])
   })
 
   it('does not engrave an implicit default tempo', () => {

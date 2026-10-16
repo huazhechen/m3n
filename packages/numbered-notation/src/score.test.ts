@@ -697,11 +697,30 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it('preserves header credit priority and rejects invalid widths', () => {
-    const { root } = render('{title=曲名} {singer=演唱者} {composer=作曲者} {4/4}\nN: 1 2 3 4 |||')
-    expect(root.body.textContent).toContain('演唱者')
-    expect(root.body.textContent).not.toContain('作曲者')
+  it('labels all declared credits and rejects invalid widths', () => {
+    const { root } = render('{title=曲名} {singer=演唱者} {composer=创作者} {lyricist=创作者} {arranger=编曲者} {4/4}\nN: 1 2 3 4 |||')
+    for (const credit of ['作词：创作者', '作曲：创作者', '编曲：编曲者', '演唱：演唱者']) expect(root.body.textContent).toContain(credit)
     expect(() => render('{4/4}\nN: 1 2 3 4 |||', { width: NaN })).toThrow()
+  })
+
+  it('spaces header controls by 16px and keeps narrow credits above them', () => {
+    const document = parseM3NDocument('{title=后来}{subtitle=测试副标题}{lyricist=施人诚}{composer=玉城千春}{arranger=长一些的编曲者署名}{singer=刘若英}{key=D}{4/4}{90qpm}\nN: 1 2 3 4 |||')
+    for (const width of [320, 600, 800]) for (const paged of [false, true]) {
+      const result = geometry(document, { width, paged })
+      const controls = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode && ['key', 'meter', 'tempo'].includes(node.ast.callName))
+      expect(controls).toHaveLength(3)
+      for (let index = 1; index < controls.length; index++) {
+        const before = controls[index - 1]!.box, after = controls[index]!.box
+        expect(after.x - before.x - before.w).toBeCloseTo(16)
+      }
+      const credits = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode && 'lines' in node.ast
+        && /^(作词|作曲|编曲|演唱)：/.test((node.ast.lines as string[])[0]!))
+      expect(credits).toHaveLength(4)
+      for (const credit of credits) {
+        expect(credit.box.x + credit.box.w).toBeCloseTo(width - 32)
+        if (width === 320) for (const control of controls) expect(control.box.y).toBeGreaterThan(credit.box.y + credit.box.h)
+      }
+    }
   })
 
   it('uses the embedded number font for both header and in-score tempos', () => {

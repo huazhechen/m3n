@@ -1,5 +1,5 @@
 import {
-  displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreEventIds,
+  displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreCreditLines, scoreEventIds,
   type ScoreDocument, type ScoreEvent, type ScoreMeasure,
 } from '@m3n/notation'
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
@@ -237,10 +237,20 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     if (options.includeBass !== false && bass.some(measure => measure.events.length || measure.multiRest)) voices.push(renderVoice(bass, 'bass'))
     return voices.length > 1 ? `@voices(${voices.join(',')},connect="[-]",repeatconnect=true)` : voices[0]!
   }
+  const headings = [
+    document.title ? `@text(${quote(document.title)},size=32px,align=center)` : '',
+    document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : '',
+  ].filter(Boolean).join(' ')
+  const credits = scoreCreditLines(document).map(value => `@text(${quote(value)},size=14px,align=right)`).join(' ')
+  const signatures = [
+    `@key(${quote(keyName(document.key))},size=16px)`,
+    `@meter(${document.meterCount},${document.meterUnit},size=18px)`,
+    document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : '',
+  ].filter(Boolean).join(' ')
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=32px,bottom=32px,left=32px,right=32px,gap=24px,fillRatio=0)`,
-    `@head(center={${[document.title ? `@text(${quote(document.title)},size=32px,align=center)` : '', document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : ''].filter(Boolean).join(' ')}},right={${document.singer || document.composer ? `@text(${quote(document.singer || document.composer)},size=14px)` : ''}},left={{@key(${quote(keyName(document.key))},size=16px) @meter(${document.meterCount},${document.meterUnit},size=18px) ${document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : ''}}}${document.subtitle ? ',sidebelow=true' : ''}) @br()`,
+    `@head(center={${headings}},right={${credits}},left={{${signatures}}},sidebelow=true,itemgap=16px${options.width < 600 ? ',sidestacked=true' : ''}) @br()`,
   ]
   const parts = [...document.parts.values()].map((part, index) => voicesForPart(part.melody, part.bass, index))
   for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {
