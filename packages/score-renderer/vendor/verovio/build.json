@@ -15,7 +15,33 @@
     "ABC",
     "GABC",
     "MXL",
-    "HUMDRUM"
+    "HUMDRUM",
+    "MUSICXML",
+    "EDIT"
   ],
-  "moduleSha256": "cf241b1c7fa57ee161eb81de917510f104e32c9b71e7f301bf556f65f3a57cfa"
+  "exportedFunctions": [
+    "_enableLog",
+    "_enableLogToBuffer",
+    "_vrvToolkit_constructor",
+    "_vrvToolkit_destructor",
+    "_vrvToolkit_getElementsAtTime",
+    "_vrvToolkit_getLog",
+    "_vrvToolkit_getPageCount",
+    "_vrvToolkit_getTimeForElement",
+    "_vrvToolkit_loadData",
+    "_vrvToolkit_renderToMIDI",
+    "_vrvToolkit_renderToSVG",
+    "_vrvToolkit_setOptions",
+    "_vrvToolkit_getVersion",
+    "_vrvToolkit_resetXmlIdSeed",
+    "_vrvToolkit_renderToTimemap",
+    "_vrvToolkit_getOptions",
+    "_vrvToolkit_getDefaultOptions",
+    "_vrvToolkit_getAvailableOptions"
+  ],
+  "compileOptimization": "-Os",
+  "linkOptimization": "-Oz",
+  "lto": true,
+  "sourcePatchSha256": "28677e3780a5aa9ef71f55b92eda2c07cf0805fe8879b4cc4a78053bab2dec47",
+  "moduleSha256": "f84d90847c42cac85a2d375f595750d43e75eb93beb0df464f081772e661fff3"
 }

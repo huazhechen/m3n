@@ -1,0 +1,178 @@
+diff --git a/include/vrv/iomusxml.h b/include/vrv/iomusxml.h
+index 56d305d..5ad0fa8 100644
+--- a/include/vrv/iomusxml.h
++++ b/include/vrv/iomusxml.h
+@@ -306,6 +306,7 @@ public:
+     // constructors and destructors
+     MusicXmlInput(Doc *doc);
+     virtual ~MusicXmlInput();
++    static data_ACCIDENTAL_WRITTEN ConvertAccidentalToAccid(const std::string &value);
+ 
+ private:
+     /*
+@@ -321,7 +322,7 @@ public:
+      * @name Public methods for converting MusicXML values to MEI attributes.
+      */
+     ///@{
+-    static data_ACCIDENTAL_WRITTEN ConvertAccidentalToAccid(const std::string &value);
++
+     ///@}
+ 
+ private:
+diff --git a/src/iomusxml.cpp b/src/iomusxml.cpp
+index 0192c59..eb0c58f 100644
+--- a/src/iomusxml.cpp
++++ b/src/iomusxml.cpp
+@@ -4503,50 +4503,6 @@ curvature_CURVEDIR MusicXmlInput::CombineCurvedir(curvature_CURVEDIR startDir, c
+ //////////////////////////////////////////////////////////////////////////////
+ // String to attribute converters
+ 
+-data_ACCIDENTAL_WRITTEN MusicXmlInput::ConvertAccidentalToAccid(const std::string &value)
+-{
+-    static const std::map<std::string, data_ACCIDENTAL_WRITTEN> Accidental2Accid{ //
+-        { "sharp", ACCIDENTAL_WRITTEN_s }, //
+-        { "natural", ACCIDENTAL_WRITTEN_n }, //
+-        { "flat", ACCIDENTAL_WRITTEN_f }, //
+-        { "double-sharp", ACCIDENTAL_WRITTEN_x }, //
+-        { "sharp-sharp", ACCIDENTAL_WRITTEN_ss }, //
+-        { "flat-flat", ACCIDENTAL_WRITTEN_ff }, //
+-        { "natural-sharp", ACCIDENTAL_WRITTEN_ns }, //
+-        { "natural-flat", ACCIDENTAL_WRITTEN_nf }, //
+-        { "quarter-flat", ACCIDENTAL_WRITTEN_1qf }, //
+-        { "quarter-sharp", ACCIDENTAL_WRITTEN_1qs }, //
+-        { "three-quarters-flat", ACCIDENTAL_WRITTEN_3qf }, //
+-        { "three-quarters-sharp", ACCIDENTAL_WRITTEN_3qs }, //
+-        { "sharp-down", ACCIDENTAL_WRITTEN_sd }, //
+-        { "sharp-up", ACCIDENTAL_WRITTEN_su }, //
+-        { "natural-down", ACCIDENTAL_WRITTEN_nd }, //
+-        { "natural-up", ACCIDENTAL_WRITTEN_nu }, //
+-        { "flat-down", ACCIDENTAL_WRITTEN_fd }, //
+-        { "flat-up", ACCIDENTAL_WRITTEN_fu }, //
+-        { "double-sharp-down", ACCIDENTAL_WRITTEN_xd }, //
+-        { "double-sharp-up", ACCIDENTAL_WRITTEN_xu }, //
+-        { "flat-flat-down", ACCIDENTAL_WRITTEN_ffd }, //
+-        { "flat-flat-up", ACCIDENTAL_WRITTEN_ffu }, //
+-        { "triple-sharp", ACCIDENTAL_WRITTEN_ts }, //
+-        { "triple-flat", ACCIDENTAL_WRITTEN_tf }, //
+-        { "slash-quarter-sharp", ACCIDENTAL_WRITTEN_bms }, //
+-        { "slash-sharp", ACCIDENTAL_WRITTEN_ks }, //
+-        { "slash-flat", ACCIDENTAL_WRITTEN_bf }, //
+-        { "double-slash-flat", ACCIDENTAL_WRITTEN_bmf }, //
+-        { "sori", ACCIDENTAL_WRITTEN_sori }, //
+-        { "koron", ACCIDENTAL_WRITTEN_koron }, //
+-        { "other", ACCIDENTAL_WRITTEN_NONE }
+-    };
+-
+-    const auto result = Accidental2Accid.find(value);
+-    if (result != Accidental2Accid.end()) {
+-        return result->second;
+-    }
+-
+-    LogWarning("MusicXML import: Unsupported accidental value '%s'", value.c_str());
+-    return ACCIDENTAL_WRITTEN_NONE;
+-}
+ 
+ data_ACCIDENTAL_GESTURAL MusicXmlInput::ConvertAlterToAccid(const float value)
+ {
+@@ -5278,4 +5234,51 @@ void MusicXmlInput::MidiToPitch(int midi, std::string &step, int &alter, int &oc
+ 
+ #endif // NO_MUSICXML_SUPPORT
+ 
++// M3N: shared by MEI custom tuning; keep available without the importer.
++data_ACCIDENTAL_WRITTEN MusicXmlInput::ConvertAccidentalToAccid(const std::string &value)
++{
++    static const std::map<std::string, data_ACCIDENTAL_WRITTEN> Accidental2Accid{ //
++        { "sharp", ACCIDENTAL_WRITTEN_s }, //
++        { "natural", ACCIDENTAL_WRITTEN_n }, //
++        { "flat", ACCIDENTAL_WRITTEN_f }, //
++        { "double-sharp", ACCIDENTAL_WRITTEN_x }, //
++        { "sharp-sharp", ACCIDENTAL_WRITTEN_ss }, //
++        { "flat-flat", ACCIDENTAL_WRITTEN_ff }, //
++        { "natural-sharp", ACCIDENTAL_WRITTEN_ns }, //
++        { "natural-flat", ACCIDENTAL_WRITTEN_nf }, //
++        { "quarter-flat", ACCIDENTAL_WRITTEN_1qf }, //
++        { "quarter-sharp", ACCIDENTAL_WRITTEN_1qs }, //
++        { "three-quarters-flat", ACCIDENTAL_WRITTEN_3qf }, //
++        { "three-quarters-sharp", ACCIDENTAL_WRITTEN_3qs }, //
++        { "sharp-down", ACCIDENTAL_WRITTEN_sd }, //
++        { "sharp-up", ACCIDENTAL_WRITTEN_su }, //
++        { "natural-down", ACCIDENTAL_WRITTEN_nd }, //
++        { "natural-up", ACCIDENTAL_WRITTEN_nu }, //
++        { "flat-down", ACCIDENTAL_WRITTEN_fd }, //
++        { "flat-up", ACCIDENTAL_WRITTEN_fu }, //
++        { "double-sharp-down", ACCIDENTAL_WRITTEN_xd }, //
++        { "double-sharp-up", ACCIDENTAL_WRITTEN_xu }, //
++        { "flat-flat-down", ACCIDENTAL_WRITTEN_ffd }, //
++        { "flat-flat-up", ACCIDENTAL_WRITTEN_ffu }, //
++        { "triple-sharp", ACCIDENTAL_WRITTEN_ts }, //
++        { "triple-flat", ACCIDENTAL_WRITTEN_tf }, //
++        { "slash-quarter-sharp", ACCIDENTAL_WRITTEN_bms }, //
++        { "slash-sharp", ACCIDENTAL_WRITTEN_ks }, //
++        { "slash-flat", ACCIDENTAL_WRITTEN_bf }, //
++        { "double-slash-flat", ACCIDENTAL_WRITTEN_bmf }, //
++        { "sori", ACCIDENTAL_WRITTEN_sori }, //
++        { "koron", ACCIDENTAL_WRITTEN_koron }, //
++        { "other", ACCIDENTAL_WRITTEN_NONE }
++    };
++
++    const auto result = Accidental2Accid.find(value);
++    if (result != Accidental2Accid.end()) {
++        return result->second;
++    }
++
++    LogWarning("MusicXML import: Unsupported accidental value '%s'", value.c_str());
++    return ACCIDENTAL_WRITTEN_NONE;
++}
++
++
+ } // namespace vrv
+diff --git a/src/editfunctor.cpp b/src/editfunctor.cpp
+index 87f3d95..15441f6 100644
+--- a/src/editfunctor.cpp
++++ b/src/editfunctor.cpp
+@@ -16,6 +16,7 @@
+ //----------------------------------------------------------------------------
+ 
+ namespace vrv {
++#ifndef NO_EDIT_SUPPORT
+ 
+ //----------------------------------------------------------------------------
+ // StructFunctor
+@@ -144,4 +145,5 @@ FunctorCode ScoreContextFunctor::VisitObjectEnd(Object *object)
+     return FUNCTOR_CONTINUE;
+ }
+ 
++#endif // NO_EDIT_SUPPORT
+ } // namespace vrv
+diff --git a/src/editortoolkit_shared.cpp b/src/editortoolkit_shared.cpp
+index ea2e072..7f126f9 100644
+--- a/src/editortoolkit_shared.cpp
++++ b/src/editortoolkit_shared.cpp
+@@ -54,12 +54,14 @@ namespace vrv {
+ 
+ EditorToolkitShared::EditorToolkitShared(Doc *doc, View *view) : EditorToolkit(doc, view)
+ {
++#ifndef NO_EDIT_SUPPORT
+     m_undoPrepared = false;
+     m_scoreContext = NULL;
+     m_sectionContext = NULL;
+     m_currentContext = NULL;
+ 
+     this->SetEditInfo();
++#endif // NO_EDIT_SUPPORT
+ }
+ 
+ EditorToolkitShared::~EditorToolkitShared()
+diff --git a/src/toolkit.cpp b/src/toolkit.cpp
+index 269ce46..d47ff42 100644
+--- a/src/toolkit.cpp
++++ b/src/toolkit.cpp
+@@ -497,7 +497,7 @@ void Toolkit::SetViewAndEditor()
+ {
+     m_view.SetDoc(&m_doc);
+ 
+-#if defined NO_HUMDRUM_SUPPORT
++#if defined(NO_HUMDRUM_SUPPORT) && !defined(NO_EDIT_SUPPORT)
+     // Create editor toolkit based on notation type.
+     if (m_editorToolkit != NULL) {
+         delete m_editorToolkit;

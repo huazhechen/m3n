@@ -14,8 +14,12 @@ const vendor = resolve(root, 'packages/score-renderer/vendor/verovio')
 const manifest = JSON.parse(await readFile(resolve(vendor, 'build.json'), 'utf8'))
 const moduleBytes = await readFile(resolve(vendor, 'verovio-module.mjs'))
 assert.equal(createHash('sha256').update(moduleBytes).digest('hex'), manifest.moduleSha256)
+const sourcePatch = await readFile(resolve(root, 'public/licenses/verovio/mei-only.patch'))
+assert.equal(createHash('sha256').update(sourcePatch).digest('hex'), manifest.sourcePatchSha256)
 const original = new VerovioToolkit(await createOriginalModule())
-const slim = new VerovioToolkit(await createSlimModule())
+const slimModule = await createSlimModule()
+assert.deepEqual(Object.keys(slimModule).filter(name => /^_(?:vrvToolkit_|enableLog)/.test(name)).sort(), [...manifest.exportedFunctions].sort())
+const slim = new VerovioToolkit(slimModule)
 const scores = await readdir(resolve(root, 'src/scores'))
 const sources = await Promise.all(scores.filter(file => file.endsWith('.m3n')).sort()
   .map(async file => ({ file, source: await readFile(resolve(root, 'src/scores', file), 'utf8') })))
@@ -62,7 +66,7 @@ for (const [name, bytes] of [['originalModule', await readFile(resolve(root, 'no
     brotli: brotliCompressSync(bytes, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length,
   }
 }
-assert.ok(report.sizes.slimModule.gzip < report.sizes.originalModule.gzip * 0.85, 'Expected at least 15% gzip savings')
+assert.ok(report.sizes.slimModule.gzip < report.sizes.originalModule.gzip * 0.6, 'Expected at least 40% gzip savings')
 await mkdir(resolve(root, '.tmp'), { recursive: true })
 await writeFile(resolve(root, '.tmp/verovio-verification.json'), `${JSON.stringify(report, null, 2)}\n`)
 console.log(JSON.stringify(report, null, 2))
