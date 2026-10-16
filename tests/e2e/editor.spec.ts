@@ -129,6 +129,22 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
   await page.getByRole('button', { name: '暂停' }).click()
 })
 
+test('orders numbered annotations above music and maps their clicks back to the source event', async ({ page }) => {
+  await page.goto('/editor')
+  const editor = page.getByLabel('M3N source')
+  const text = '{4/4}\n===训练\nN: {text=练习说明} {cresc}1{tr} 2 3 4{/} |||'
+  await editor.fill(text)
+  await page.getByRole('switch', { name: '简谱渲染' }).check()
+  const annotations = page.locator('.score-paper text[data-m3n-role="annotation"]')
+  await expect(annotations).toHaveCount(2)
+  const section = annotations.filter({ hasText: '训练' })
+  const instruction = annotations.filter({ hasText: '练习说明' })
+  const sectionBox = (await section.boundingBox())!, instructionBox = (await instruction.boundingBox())!
+  expect(sectionBox.y + sectionBox.height).toBeLessThan(instructionBox.y)
+  await instruction.click()
+  await expect.poll(() => editor.evaluate(element => (element as HTMLTextAreaElement).selectionStart)).toBe(text.indexOf('1{tr}'))
+})
+
 test('uses the numbered layout for export and honors excluding bass in SVG, PNG and PDF', async ({ page }, testInfo) => {
   const { readFile } = await import('node:fs/promises')
   await page.goto('/editor')

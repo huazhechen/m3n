@@ -156,6 +156,42 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.body.textContent).toContain('3')
   })
 
+  it('places section names above directions, harmony and music while keeping annotations linked to their event', () => {
+    const document = parseM3NDocument('{4/4}\n===训练\nN: {text=练习说明} {cresc}1{tr} 2 3 4{/} |||')
+    document.parts.values().next().value!.melody[0]!.events[0]!.chord = 'Am'
+    const { root } = render(document)
+    const annotations = [...root.querySelectorAll('text[data-m3n-role="annotation"]')]
+    expect(annotations.map(node => node.textContent)).toEqual(['Am', '练习说明', '训练'])
+    for (const node of annotations) expect(node.getAttribute('data-m3n-id')).toBe('m3n-e-1')
+    const y = (text: string) => Number(annotations.find(node => node.textContent === text)!.getAttribute('y'))
+    expect(y('训练')).toBeLessThan(y('练习说明'))
+    expect(y('练习说明')).toBeLessThan(y('Am'))
+    const result = geometry(document)
+    const direction = result.layout.attachments.at(-2)!.box
+    const music = result.layout.attachments.slice(0, -3).filter(item => item.regions.length)
+    expect(music.length).toBeGreaterThan(0)
+    for (const item of music) expect(direction.y + direction.h).toBeLessThan(item.box.y)
+  })
+
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('orders harmonica exercise annotations outside musical symbols at width $width, paged=$paged', settings => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), 'utf8')
+    const document = parseM3NDocument(source)
+    const result = geometry(document, settings)
+    const labels = result.layout.attachments.filter(item => item.sourceSpan && result.maskedSource.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith('@text('))
+    expect(labels.length).toBe(30)
+    const text = (item: typeof labels[number]) => result.maskedSource.slice(item.sourceSpan!.start, item.sourceSpan!.end)
+    const section = labels.find(item => text(item).includes('"机能训练"'))!.box
+    const instruction = labels.find(item => text(item).includes('"快速吹吸切换"'))!.box
+    expect(section.y + section.h).toBeLessThan(instruction.y)
+    for (const label of labels) for (const symbol of result.layout.attachments.filter(item => !labels.includes(item))) {
+      const overlaps = label.regions.some(a => symbol.regions.some(b => a.line === b.line && a.track === b.track
+        && a.x < b.x + b.w && b.x < a.x + a.w))
+      if (overlaps) expect(label.box.y + label.box.h).toBeLessThan(symbol.box.y)
+    }
+    const { root } = render(document, settings)
+    expect(root.querySelectorAll('text[data-m3n-role="annotation"]')).toHaveLength(labels.length)
+  })
+
   it('renders the number of complete-bar rests and excludes them from interval endpoints', () => {
     const { root, score } = render('{4/4}\nN: {lg}1 2 3 4{/} | {rest=2} | 4 3 2 1 |||')
     expect(root.querySelectorAll('g.measure')).toHaveLength(3)

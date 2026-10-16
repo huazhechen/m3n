@@ -1,10 +1,12 @@
 import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, ParserContext, SourceSpan, LengthValue } from "../ASTtypes.js";
+// M3N modification: optional anchored annotations avoid previously laid out music.
 import { ErrorDiagnostic } from "../../diagnostic.js";
 import { findClosingQuote, quote, removeQuote } from "../../parser/parse-utils/string-utils.js";
 import type { GrammarCallNodeTyped } from "../../parser/grammarType.js";
-import { DEFAULT_KEY, TemporalNodeBase } from "../temporal.js";
-import type { LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
+import { DEFAULT_KEY, isVisualTemporalNode, TemporalNodeBase, type VisualTemporalNode } from "../temporal.js";
+import type { AttachmentLayoutContext, LayoutAttachment, LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
 import type { Painter, TextStyle } from "../../render/types.js";
+import type { LoweringContext } from "../../lowering/loweringContext.js";
 
 type TextAlign = "left" | "center" | "right";
 
@@ -51,6 +53,13 @@ class TextFunction extends ASTFunctionNode {
                 type: "string" as const,
                 default: ""
             },
+            {
+                name: "above",
+                description: "可选宿主标签；文字作为附件排在宿主及先前关系记号上方，不推进时间",
+                type: "label" as const,
+                namedOnly: true,
+                default: "",
+            },
         ],
     };
 
@@ -74,10 +83,12 @@ class TextFunction extends ASTFunctionNode {
     lineAdvance: number;
     align: TextAlign;
     readonly font: string;
+    readonly above: ASTNodeBase | null;
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [text, size, lineHeight, align, font] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null];
+        const [text, size, lineHeight, align, font, above] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string];
         this.font = font || ctx.variables.font;
+        this.above = above instanceof ASTNodeBase ? above : null;
         if (align !== "left" && align !== "center" && align !== "right") {
             throw new ErrorDiagnostic(
                 "E_TEXT_INVALID_ALIGN",
@@ -91,11 +102,21 @@ class TextFunction extends ASTFunctionNode {
         this.align = align;
     }
 
-    override loweringEnter() { return [new TextTemporalNode(this)]; }
+    override loweringEnter(ctx: LoweringContext) {
+        if (!this.above) return [new TextTemporalNode(this)];
+        let host = ctx.getTemporalNodes(this.above).at(-1);
+        while (host?.foldedInto) host = host.foldedInto;
+        if (!host || !isVisualTemporalNode(host)) {
+            throw new ErrorDiagnostic("E_TEXT_INVALID_HOST", "@text 的 above 标签必须指向可见对象", this.sourceSpan);
+        }
+        ctx.addAttachment(new TextAboveAttachment(this, host));
+        return [];
+    }
 
     override toString() {
         const lineHeight = this.size === 0 ? 1.25 : this.lineAdvance / this.size;
-        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)})`;
+        const above = this.above ? `, above=${(this.above as ASTFunctionNode).label}` : "";
+        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above})`;
     }
 }
 
@@ -108,11 +129,12 @@ class TextTemporalNode extends TemporalNodeBase {
     private style: TextStyle;
     private textBaselineY = 0;
 
-    constructor(ast: TextFunction) {
+    constructor(ast: TextFunction, host?: VisualTemporalNode) {
         super();
         this.ast = ast;
         this.mergeKey = DEFAULT_KEY;
         this.style = { fontSize: ast.size, fontFamily: ast.font, fill: "#000", textAlign: ast.align };
+        if (host) this.style.semantic = { role: 'annotation', sourceSpan: host.ast.sourceSpan };
         this.initLayoutBox();
     }
 
@@ -146,5 +168,43 @@ class TextTemporalNode extends TemporalNodeBase {
             painter.drawText(line, x, y, this.style);
             y += lineAdvance;
         }
+    }
+}
+
+class TextAboveAttachment implements LayoutAttachment {
+    readonly layer = "foreground" as const;
+    readonly endPoints: readonly VisualTemporalNode[];
+    readonly sourceSpan: SourceSpan;
+
+    constructor(private readonly ast: TextFunction, private readonly host: VisualTemporalNode) {
+        this.endPoints = [host];
+        this.sourceSpan = { ...ast.sourceSpan };
+    }
+
+    createGeometry(context: AttachmentLayoutContext) {
+        // Each geometry owns its text node, so later measurement passes cannot mutate its paint snapshot.
+        const text = new TextTemporalNode(this.ast, this.host);
+        text.prepareLayout(context);
+        const box = text.box;
+        const { host } = this;
+        box.x = Math.max(context.originX, Math.min(
+            host.box.x + host.box.anchor - box.anchor,
+            context.originX + context.width - box.w,
+        ));
+        const line = context.lines[host.layoutLine];
+        let start = line.columnOf(host), end = start;
+        // Include the complete text width so neighboring notes and brackets also stay below it.
+        line.columns.forEach((column, index) => {
+            if (column.some(node => node.track === host.track
+                && node.box.x <= box.x + box.w && node.box.x + node.box.w >= box.x)) {
+                start = Math.min(start, index); end = Math.max(end, index);
+            }
+        });
+        const extent = context.getRangeExtents(host.layoutLine, [start, end], host.track);
+        box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - this.ast.size * 0.5 - box.h;
+        return {
+            regions: [{ x: box.x, y: box.y, w: box.w, h: box.h, line: host.layoutLine, track: host.track }],
+            paint(painter: Painter) { text.paint(painter); },
+        };
     }
 }

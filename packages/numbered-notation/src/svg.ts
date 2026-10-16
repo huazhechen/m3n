@@ -59,6 +59,10 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       if (!semantic) return undefined
       const target = sourceTargets.get(spanKey(semantic.sourceSpan))
       if (!target) return undefined
+      if (semantic.role === 'annotation') return {
+        'data-m3n-id': target.binding.xmlId, 'data-m3n-role': semantic.role,
+        'data-m3n-system': String(target.line), 'data-m3n-measure': target.binding.measureId,
+      }
       const row = projection.rows[semantic.row] ?? semantic.row
       const data = target.binding.lyrics.get(row)
       return {

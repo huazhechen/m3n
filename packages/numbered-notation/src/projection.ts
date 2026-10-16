@@ -45,6 +45,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const rowNumbers = [...new Set([...lyrics.values()].flatMap(slots => [...slots.values()].flatMap(rows => [...rows.keys()])))].sort((a, b) => a - b)
   const endpointLabels = new Map<ScoreEvent, { first: string; last: string; children: string[] }>()
   const relations: string[] = []
+  // Registered after musical relations, from inner to outer: harmony, directions, section names.
+  const annotations: string[][] = [[], [], []]
   let serial = 0
   const warn = (event: ScoreEvent, value: string) => diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${value}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
 
@@ -94,7 +96,6 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
           if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(`@tempo(${event.tempo},size=16px,font="M3N Numbers")`); activeTempo = event.tempo }
           const decorations: string[] = []
-          for (const text of [event.sectionLabel, event.text, event.chord]) if (text) decorations.push(`@text(${quote(text)},size=14px)`)
           if (event.dynamic && event.dynamic !== dynamic) { decorations.push(`@symbol(${quote(event.dynamic)},size=12px)`); dynamic = event.dynamic }
           if (event.prefix) decorations.push('@text("sfz",size=13px)')
           for (const name of event.postfixes) {
@@ -152,6 +153,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           }
           const first = children[0], last = children.at(-1)
           if (first && last) {
+            for (const [level, text] of [event.chord, event.text, event.sectionLabel].entries()) {
+              if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first})`)
+            }
             endpointLabels.set(event, { first, last, children })
             if (!firsts.has(measureIndex)) firsts.set(measureIndex, first)
             lasts.set(measureIndex, last)
@@ -240,5 +244,5 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     if (!start || !end || interval.display === 'text') continue
     relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
   }
-  return { source: [...header, parts.join(' @br() '), ...relations].join('\n'), bindings, diagnostics, rows: rowNumbers }
+  return { source: [...header, parts.join(' @br() '), ...relations, ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers }
 }

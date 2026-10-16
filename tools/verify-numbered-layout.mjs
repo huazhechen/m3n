@@ -80,6 +80,19 @@ try {
           issues.push({ file, width, paged, tempo: tempo.textContent, font: tempo.getAttribute('font-family') })
         }
       }
+      const annotations = texts.filter(node => node.getAttribute('data-m3n-role') === 'annotation')
+      for (const annotation of annotations) {
+        const note = annotation.ownerSVGElement.querySelector(`g.note[data-m3n-id="${annotation.getAttribute('data-m3n-id')}"]`)
+        const box = annotation.getBBox(), host = note?.getBBox()
+        if (!host || box.y + box.height > host.y + 1) issues.push({ file, width, paged, annotation: annotation.textContent, host: note?.id })
+      }
+      if (file === 'ban_yin_jie_kou_qin_ji_ben_gong_01.m3n') {
+        for (const [section, instruction] of [['机能训练', '快速吹吸切换'], ['音阶模进训练', '音阶(替代音)']]) {
+          const a = annotations.find(node => node.textContent === section)?.getBBox()
+          const b = annotations.find(node => node.textContent === instruction)?.getBBox()
+          if (!a || !b || a.y + a.height >= b.y) issues.push({ file, width, paged, section, instruction, order: 'incorrect' })
+        }
+      }
       if (file === 'super_mario_01.m3n' && width >= 800) {
         const first = document.querySelector('g.system')
         const measures = [...new Set([...first.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure')))]

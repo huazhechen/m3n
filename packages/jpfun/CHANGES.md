@@ -18,6 +18,7 @@ The comparison base is the unmodified upstream import commit `d7c00a6`. See UPST
 - Added native staccato, tenuto, staccatissimo and breath symbols.
 - `@tempo(...,font="...")` optionally overrides the numeric font for measurement and painting, preserving it in serialization. Omitting the option retains the upstream text-font default.
 - `@head(...,sidebelow=true)` places both side slots below the complete center block with the configured row gap, preventing subtitle collisions. The default retains upstream positioning below the first center row.
+- `@text(...,above=label)` optionally anchors zero-time text above a visible host and previously registered musical relations. Annotations reserve vertical space, follow their host through wrapping/pagination, stay inside the page margins and expose optional source metadata; ordinary text keeps its upstream geometry.
 - `@dyn(...,single=true)` permits a short hairpin over one event using native attachment geometry. The upstream default still rejects zero-time intervals. M3N playback continues to use the Verovio timeline.
 
 Local regression tests: test/m3n-wrapping.test.ts and test/m3n-metadata.test.ts. Application semantics and corpus tests live in @m3n/numbered-notation; real browser geometry checks are run by `npm run test:numbered-layout` at the workspace root.
