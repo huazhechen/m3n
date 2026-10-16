@@ -92,7 +92,7 @@
 | [半音阶口琴基本功](../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n) | 4/4 | 60 | 未确认同版本，或按练习用途判断 | 基本功练习起步速度，按训练用途保留，不以商业录音替换。 |
 | [啤酒桶波尔卡](../src/scores/beer_barrel_polka_01.m3n) | 2/4 | 132 | [Yvette Horner · Beer Barrel Polka（132 BPM）](https://songbpm.com/@yvette-horner/beer-barrel-polka--HUjkRgmi4) | Yvette Horner 版本 132，现有波尔卡速度合适。 |
 | [哆啦A梦](../src/scores/doraemon_01.m3n) | 4/4 | 120 | [カラオケまねきねこ · Doraemon no Uta - Karaoke Ōsugi Kumiko（123 BPM）](https://songbpm.com/@44kr44op44kq44kx44g44gt44gn44gt44gt/doraemon-no-uta-karaoke-osugi-kumiko-wap33) | 大杉久美子版卡拉 OK 约 123；保留接近原曲、便于演奏的 120。 |
-| [光阴的故事](../src/scores/guang_yin_de_gu_shi_01.m3n) | 3/4 | 100 | [羅大佑 · 光陰的故事（210 BPM）](https://songbpm.com/@luo-da-you/guang-yin-de-gu-shi-3Oozx4kX6E) | 罗大佑不同版本及自动测速（210、69）存在拍值和编曲差异；保留当前 3/4 叙事性编配的 100，不机械照抄。 |
+| [光阴的故事](../src/scores/guang_yin_de_gu_shi_01.m3n) | 6/8 | 100 | [羅大佑 · 光陰的故事（210 BPM）](https://songbpm.com/@luo-da-you/guang-yin-de-gu-shi-3Oozx4kX6E) | 罗大佑不同版本及自动测速（210、69）存在拍值和编曲差异；现按 6/8 记谱，保留四分音符 100 qpm，显示附点四分音符约 66.67，不机械照抄数据库数值。 |
 | [红河谷](../src/scores/hong_he_gu_01.m3n) | 4/4 | 92 | [Liu Fang · The Romance Of The Red River Valley（86 BPM）](https://songbpm.com/@liu-fang/the-romance-of-the-red-river-valley) | 传统民歌录音版本不同（本次检索 86、99 等）；保留适合当前编配的中慢速 92。 |
 | [红莓花儿开](../src/scores/hong_mei_hua_er_kai_01.m3n) | 2/4 | 96 | [Ирина Шведова · Ой цветёт калина（141 BPM）](https://songbpm.com/@irina-shvedova/oy-cvetyot-kalina-go7yAOQX_g) | 俄语版本测速 77–141，未确定与本谱相同的编配；保留已有歌唱性中速。 |
 | [欢乐颂](../src/scores/huan_le_song_01.m3n) | 4/4 | 120 | [Ludwig van Beethoven · Ode to Joy（109 BPM）](https://songbpm.com/@ludwig-van-beethoven/ode-to-joy-bXbrk8pUXH) | 本谱为《第九交响曲》合唱主题的教学选段，保留明朗的 120，不套用完整第四乐章的平均测速。 |
