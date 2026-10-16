@@ -179,6 +179,7 @@ export const TupletNode: ASTFunctionClass = TupletFunction;
  * layout 根据最终宿主坐标测量数字和括线，paint 只回放已冻结的绝对几何。
  */
 class TupletLayoutAttachment implements LayoutAttachment {
+    readonly alignmentKind = 'tuplet';
     layer = "foreground" as const;
 
     /** lowering 固化的连音语义；重复 layout 时保持不变 */
@@ -232,14 +233,10 @@ class TupletLayoutAttachment implements LayoutAttachment {
         const center = (left + right) / 2;
         const textGap = this.size * 0.12;
         const hookHeight = this.size * 0.18;
-        const hostGap = this.size * 0.14;
         // 范围避让与内容包含分别由系统查询，局部成员和正文使用同一入口。
-        const axis = context.getVisualAxis(first.layoutLine, first.track);
-        const extent = context.getRangeExtents(first.layoutLine, [first, last], first.track);
-        const bounds = context.getContentBounds(this.content);
-        const hostTop = Math.min(axis + (extent?.top ?? 0), bounds?.y ?? Infinity);
         const strokeWidth = Math.max(1, this.size * 0.055);
-        const lineY = hostTop - hostGap - Math.max(hookHeight, metrics.h / 2);
+        const peers = context.getAlignmentPeers?.(this, first.layoutLine) ?? [this];
+        const lineY = Math.min(...peers.map(peer => peer instanceof TupletLayoutAttachment ? peer.bracketY(context) : Infinity));
         const hookBottom = lineY + hookHeight;
         const textBaseline = lineY - metrics.h / 2 + metrics.baseline;
         const textLeft = center - metrics.w / 2 - textGap;
@@ -274,5 +271,15 @@ class TupletLayoutAttachment implements LayoutAttachment {
                 painter.drawText(text, center, textBaseline, style);
             },
         };
+    }
+
+    private bracketY(context: AttachmentLayoutContext) {
+        const first = this.endPoints[0], last = this.endPoints[this.endPoints.length - 1];
+        const metrics = context.textMeasurer.measureText(String(this.actual), this.style);
+        const axis = context.getVisualAxis(first.layoutLine, first.track);
+        const extent = context.getRangeExtents(first.layoutLine, [first, last], first.track);
+        const bounds = context.getContentBounds(this.content);
+        const hostTop = Math.min(axis + (extent?.top ?? 0), bounds?.y ?? Infinity);
+        return hostTop - this.size * 0.14 - Math.max(this.size * 0.18, metrics.h / 2);
     }
 }

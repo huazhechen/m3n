@@ -23,6 +23,7 @@ import {
 import { isLayoutAttachment } from "./types.js";
 import { liftInto, rangeColumns, resolveRange, type QueryLine } from "./range.js";
 import { TranslatingPainter } from "../render/translate.js";
+import { adjacentRelationGroups } from './relation-alignment.js';
 import type {
     AttachmentGeometry,
     AttachmentLayoutContext,
@@ -91,6 +92,7 @@ interface SubdomainItem extends AttachmentItem {
 
 /** 一块 attachment 的轴局部占用 */
 interface ExtentRange extends Extent {
+    attachment: LayoutAttachment;
     track: Track;
     left: number;
     right: number;
@@ -753,6 +755,9 @@ function measureAttachmentPass(
 ) {
     const measured = new Map<LayoutAttachment, AttachmentItem>();
     const occupancy: ExtentRange[][] = [];
+    const alignmentGroups = baseContext.alignRelations ? adjacentRelationGroups(attachments) : new Map<LayoutAttachment, readonly LayoutAttachment[]>();
+    let currentAttachment: LayoutAttachment;
+    const previews = new Map<LayoutAttachment, AttachmentItem>();
     let needsRelayout = false;
 
     // 同一测量轮坐标不变，子域几何只需平移一次
@@ -763,6 +768,23 @@ function measureAttachmentPass(
             if (item) measured.set(dependency, item);
         }
         return item;
+    }
+
+    // Aligned siblings may need clearance from a later sibling's nested content.
+    // Preview that content without publishing it as an earlier document obstacle.
+    function previewAttachment(attachment: LayoutAttachment) {
+        let item = previews.get(attachment);
+        if (item) return item;
+        const previous = currentAttachment;
+        currentAttachment = attachment;
+        try {
+            const geometry = attachment.createGeometry(context);
+            const box = { x: 0, y: 0, w: 0, h: 0 };
+            unionLayoutBoxes(box, geometry.regions);
+            item = { geometry, box };
+            previews.set(attachment, item);
+            return item;
+        } finally { currentAttachment = previous; }
     }
 
     function getRangeExtents(line: number, columns?: LayoutRange): ReadonlyMap<Track, Readonly<Extent>>;
@@ -798,6 +820,7 @@ function measureAttachmentPass(
         }
 
         for (const range of occupancy[line] ?? []) {
+            if (alignmentGroups.get(currentAttachment)?.includes(range.attachment)) continue;
             if (target && range.track !== target) continue;
             if (range.right <= left || range.left >= right) continue;
             include(range.track, range.top, range.bottom);
@@ -807,6 +830,12 @@ function measureAttachmentPass(
 
     const context: AttachmentLayoutContext = {
         ...baseContext,
+        getAlignmentPeers(attachment, line) {
+            return (alignmentGroups.get(attachment) ?? [attachment]).filter(peer => {
+                const points = peer.endPoints ?? [];
+                return points.some(node => node.layoutLine <= line) && points.some(node => node.layoutLine >= line);
+            });
+        },
         getRangeExtents,
         getAttachmentOccupancy(dependency) {
             const geometry = resolveAttachment(dependency)?.geometry;
@@ -827,7 +856,7 @@ function measureAttachmentPass(
                 // 端点越出本域的关系交给外层测量，此时还没有几何
                 const resolved = resolveAttachment(attachment);
                 if (!resolved && !attachments.includes(attachment)) continue;
-                const box = resolved?.box ?? context.getAttachmentBox(attachment);
+                const box = (resolved ?? (baseContext.alignRelations ? previewAttachment(attachment) : undefined))?.box ?? context.getAttachmentBox(attachment);
                 if (box.w > 0 || box.h > 0) boxes.push(box);
             }
             const bounds = { x: 0, y: 0, w: 0, h: 0 };
@@ -836,6 +865,7 @@ function measureAttachmentPass(
     };
 
     const items = attachments.map(attachment => {
+        currentAttachment = attachment;
         const geometry = attachment.createGeometry(context);
         const box: Rect = { x: 0, y: 0, w: 0, h: 0 };
         unionLayoutBoxes(box, geometry.regions);
@@ -856,6 +886,7 @@ function measureAttachmentPass(
             }
             if (reserve) includeTrackExtent(line.attachmentExtents, track, top, bottom);
             (occupancy[region.line] ??= []).push({
+                attachment,
                 track,
                 left: region.x,
                 right: region.x + region.w,

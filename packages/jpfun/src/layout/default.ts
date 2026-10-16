@@ -19,6 +19,7 @@ export function createLayoutPrepareContext(
     functionClasses: Iterable<ASTFunctionClass>,
     options: {
         textMeasurer?: TextMeasurer;
+        alignRelations?: boolean;
     } = {},
 ): LayoutPrepareContext {
     const handlers = new Map<string, LayoutDecorationHandler>();
@@ -35,6 +36,7 @@ export function createLayoutPrepareContext(
     }
 
     return {
+        alignRelations: options.alignRelations,
         textMeasurer: options.textMeasurer ?? defaultTextMeasurer,
         decorationHandlers: handlers,
     };

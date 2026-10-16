@@ -17,6 +17,7 @@ import { preprocessSource } from "./parser/preprocess.js";
 import type { TextMeasurer } from "./render/types.js";
 
 export interface CompileScoreOptions extends DocumentLayoutOptions {
+    alignRelations?: boolean;
     autoWrap?: boolean;
     functions?: ASTFunctionClass[];    // 替换默认函数注册表
     textMeasurer?: TextMeasurer;       // 替换默认文本测量来源
@@ -71,6 +72,7 @@ function compileRaw(source: string, options: CompileScoreOptions, natural = fals
         autoWrap: _autoWrap,
         functions = defaultFunctions,
         textMeasurer,
+        alignRelations,
         variables,
         ...layoutOptions
     } = options;
@@ -85,7 +87,7 @@ function compileRaw(source: string, options: CompileScoreOptions, natural = fals
     const loweringContext = new LoweringContext(parser.diagnostics);
     loweringContext.registerFunctions(functions);
     const lowering = loweringContext.lowerDocument(ast);
-    const layoutContext = createLayoutPrepareContext(functions, { textMeasurer });
+    const layoutContext = createLayoutPrepareContext(functions, { textMeasurer, alignRelations });
     const configuredPage = lowering.page;
     if (natural) lowering.page = { ...normalizePageConfig(configuredPage), width: 100_000_000, height: Infinity, fillRatio: 1 };
     const layout = layoutDocument(lowering, layoutContext, layoutOptions);

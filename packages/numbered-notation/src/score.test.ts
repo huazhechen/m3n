@@ -23,7 +23,7 @@ function lyrics(root: Document, id: string, row = 1) {
 }
 function geometry(document: ScoreDocument, settings = options) {
   const projection = projectNumberedScore(document, settings)
-  return compileScore(projection.source, { autoWrap: true })
+  return compileScore(projection.source, { autoWrap: true, alignRelations: true })
 }
 
 function mainPitches(node: VisualTemporalNode): { name: string; acc: string; octave: number }[] {
@@ -221,6 +221,18 @@ describe('jpFun numbered notation adapter', () => {
       const nodes = layout.objects.filter(node => node.layoutLine === line)
       expect(Math.min(...nodes.map(node => node.box.x)), `system ${line} left edge`).toBeCloseTo(32)
       expect(Math.max(...nodes.map(node => node.box.x + node.box.w)), `system ${line} right edge`).toBeCloseTo(968)
+    }
+  })
+
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('aligns harmonica tuplet brackets within each system at width $width, paged=$paged', settings => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), 'utf8')
+    const result = geometry(parseM3NDocument(source), settings)
+    const brackets = result.layout.attachments.filter(item => item.sourceSpan
+      && result.maskedSource.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith('@tuplet('))
+    expect(brackets.length).toBeGreaterThan(20)
+    for (const line of new Set(brackets.flatMap(item => item.regions.map(region => region.line)))) {
+      const tops = brackets.flatMap(item => item.regions.filter(region => region.line === line).map(region => region.y))
+      expect(Math.max(...tops) - Math.min(...tops), `system ${line} tuplet alignment`).toBeLessThan(0.01)
     }
   })
 

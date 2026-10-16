@@ -73,6 +73,8 @@ export interface PageConfig {
  * 字号由具体视觉函数在 parse 时固化为 px，不属于布局上下文
  */
 export interface LayoutPrepareContext {
+    /** M3N opt-in: align adjacent relations of the same kind within a staff/system. */
+    alignRelations?: boolean;
     textMeasurer: TextMeasurer;
     decorationHandlers: ReadonlyMap<string, LayoutDecorationHandler>; // addon key 到装饰 handler 的注册表
     /**
@@ -105,6 +107,8 @@ export type LayoutRange = readonly [from: number, to: number]
 
 /** attachment 根据当前视觉轴生成几何时需要的完整页面信息 */
 export interface AttachmentLayoutContext extends LayoutPrepareContext {
+    /** Adjacent, non-nested peers on this system; peers do not obstruct one another. */
+    getAlignmentPeers?(attachment: LayoutAttachment, line: number): readonly LayoutAttachment[];
     /** 占用测量使用布局位置，最终绘制才应用后置平移 */
     readonly layoutOnly?: boolean;
     width: number;      // 整篇可用的内容宽（页宽减左右边距），与行无关
@@ -255,6 +259,8 @@ export interface AttachmentGeometry {
  * 实例只保存语义输入和一次横向准备状态，不保存最终 box、regions 或绘制几何。
  */
 export interface LayoutAttachment extends LoweringAttachment {
+    /** M3N: independent alignment families, with nesting and track boundaries preserved. */
+    readonly alignmentKind?: string;
     /** 后置平移仅影响绘制，不参与占用求解 */
     placementOffset?: LayoutPoint;
     /** 几何端点；端点全部落在同一子域的成员上时，附件属于该子域。不表示内容包含或播放端点投影 */

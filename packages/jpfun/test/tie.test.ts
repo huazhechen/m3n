@@ -212,11 +212,11 @@ test("up 成员标签连接该成员，整体标签连接整个 up", () => {
         };
     };
 
-    const memberTie = tieStartY(`{1@x}^{@1(C4)} 2@y @tie(x,y)`);
+    const memberTie = tieStartY(`{1@x}^{3'} 2@y @tie(x,y)`);
     assert(nearly(memberTie.actual, memberTie.member) && !nearly(memberTie.actual, memberTie.chord),
         "a tie from an up member label must use that member's own top port");
 
-    const chordTie = tieStartY(`{1^@1(C4)}@x 2@y @tie(x,y)`);
+    const chordTie = tieStartY(`{1^3'}@x 2@y @tie(x,y)`);
     assert(nearly(chordTie.actual, chordTie.chord) && !nearly(chordTie.actual, chordTie.member),
         "a tie from an up label must use the whole chord's top port");
 });

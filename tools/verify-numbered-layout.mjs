@@ -96,6 +96,15 @@ try {
           const right = Math.max(...[...system.querySelectorAll('g.measure')].map(measure => Number(measure.getAttribute('data-m3n-measure-end'))))
           if (Math.abs(right - (width - 32)) > 0.5) issues.push({ file, width, paged, system: system.id, right, alignment: 'incomplete' })
         }
+        if (width === 1000) for (const instruction of ['音阶三连模进', '音阶三连模进倒扣', '音阶三连倒模进']) {
+          const label = annotations.find(node => node.textContent === instruction)
+          const host = label && label.ownerSVGElement.querySelector(`g.note[data-m3n-id="${label.getAttribute('data-m3n-id')}"] text`)
+          const top = label?.getBBox(), bottom = host?.getBBox()
+          const numbers = top && bottom ? texts.filter(node => node.ownerSVGElement === label.ownerSVGElement && node.textContent === '3'
+            && node.getAttribute('font-size') === String(22 * 0.72) && node.getBBox().y >= top.y + top.height && node.getBBox().y + node.getBBox().height <= bottom.y) : []
+          const ys = numbers.map(node => Number(node.getAttribute('y')))
+          if (ys.length < 2 || Math.max(...ys) - Math.min(...ys) > 0.5) issues.push({ file, width, paged, instruction, tupletBaselines: ys })
+        }
       }
       if (file === 'super_mario_01.m3n' && width >= 800) {
         const first = document.querySelector('g.system')

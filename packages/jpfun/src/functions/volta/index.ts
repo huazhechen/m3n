@@ -120,6 +120,7 @@ function barIn(column: readonly LayoutHost[] | undefined) {
 }
 
 class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
+    readonly alignmentKind = 'volta';
     layer = "foreground" as const;
 
     constructor(
@@ -150,9 +151,9 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
         };
     }
 
-    createGeometry(context: AttachmentLayoutContext) {
+    private measure(context: AttachmentLayoutContext) {
         if (!isVisualTemporalNode(this.from) || !isVisualTemporalNode(this.to)) {
-            return { regions: [], paint() {} };
+            return undefined;
         }
         const locate = (node: VisualTemporalNode) => {
             const view = context.lines[node.layoutLine];
@@ -163,7 +164,7 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
         if (from.line > to.line || (from.line === to.line && from.column > to.column)) {
             [from, to] = [to, from];
         }
-        if (from.column < 0 || to.column < 0) return { regions: [], paint() {} };
+        if (from.column < 0 || to.column < 0) return undefined;
 
         const head = from.view.columns[from.column][0];
         const tail = to.view.columns[to.column][0];
@@ -222,6 +223,21 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
             return { left, right, lineY: hostTop - size * 0.2 - hook, line, track: topTrack };
         });
 
+        return { draws, style, text, strokeWidth, halfStroke, hook, textY, firstLine, lastLine };
+    }
+
+    createGeometry(context: AttachmentLayoutContext) {
+        const measured = this.measure(context);
+        if (!measured) return { regions: [], paint() {} };
+        const { draws, style, text, strokeWidth, halfStroke, hook, textY, firstLine, lastLine } = measured;
+        const size = this.ast.size;
+        for (const draw of draws) {
+            for (const peer of context.getAlignmentPeers?.(this, draw.line) ?? []) {
+                if (!(peer instanceof VoltaAttachment) || peer === this) continue;
+                const other = peer.measure(context)?.draws.find(item => item.line === draw.line);
+                if (other) draw.lineY = Math.min(draw.lineY, other.lineY);
+            }
+        }
         return {
             regions: draws.map(({ left, right, lineY, line, track }) => ({
                 x: left - halfStroke,

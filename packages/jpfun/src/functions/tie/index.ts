@@ -96,6 +96,11 @@ class TieFunction extends ASTFunctionNode {
             ctx.diagnostics.push(Diagnostic.warning.UnresolvedEndpoint("tie", this.sourceSpan));
             return [];
         }
+        // M3N: folded zero-time marks need space outside the note's tie arc.
+        for (const node of endPoints) {
+            node.addon ??= {};
+            node.addon['@tie'] = Math.max(Number(node.addon['@tie'] ?? 0), this.height || this.fontSize * AUTO_HEIGHT_RATIO);
+        }
         ctx.addAttachment(new TieLayoutAttachment(endPoints, this.height, this.fontSize, this.sourceSpan));
         return [];
     }
@@ -116,6 +121,7 @@ interface TieSegment extends Rect {
 }
 
 class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
+    get alignmentKind() { return this.height === 0 ? 'tie' : undefined; }
     layer = "foreground" as const;
     readonly sourceSpan: SourceSpan;
 
@@ -229,6 +235,7 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
                     end,
                     startNode.layoutLine,
                     startTop <= endTop ? startNode.track : endNode.track,
+                    this.alignedHeight(context, startNode.layoutLine, Math.abs(end.x - start.x)),
                 ));
                 continue;
             }
@@ -272,6 +279,20 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         return this.fontSize * AUTO_HEIGHT_RATIO * ratio * (2 - ratio);
     }
 
+    private alignedHeight(context: AttachmentLayoutContext, line: number, span: number) {
+        if (!context.alignRelations || this.height > 0) return this.resolveHeight(span);
+        let height = this.resolveHeight(span);
+        for (const peer of context.getAlignmentPeers?.(this, line) ?? []) {
+            if (!(peer instanceof TieLayoutAttachment)) continue;
+            for (let i = 1; i < peer.endPoints.length; i++) {
+                const a = peer.endPoints[i - 1], b = peer.endPoints[i];
+                if (a.layoutLine !== line || b.layoutLine !== line) continue;
+                height = Math.max(height, peer.resolveHeight(Math.abs(peer.tiePort(b).x - peer.tiePort(a).x)));
+            }
+        }
+        return height;
+    }
+
     private lineEntryX(
         context: AttachmentLayoutContext,
         lineIndex: number,
@@ -303,6 +324,7 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         endInput: LayoutPoint,
         line: number,
         track: Track,
+        height: number,
     ) {
         let start = startInput;
         let end = endInput;
@@ -311,7 +333,7 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         const run = (end.x - start.x) * 0.25;
         const leftX = start.x + run;
         const rightX = end.x - run;
-        const lift = this.resolveHeight(end.x - start.x) * CUBIC_LIFT;
+        const lift = height * CUBIC_LIFT;
         const inner = Math.max(0, lift - this.thickness * CUBIC_LIFT);
 
         const commands: PathCommand[] = [
