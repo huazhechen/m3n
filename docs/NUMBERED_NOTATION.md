@@ -4,6 +4,8 @@
 
 `NumberedNotationScore.create(document).render(options)` 的唯一音乐输入是 `ScoreDocument`。它不读取 M3N 源文本、语法树、MEI 或 Verovio SVG。应用使用同一份 `ScoreDocument` 驱动简谱视图，仍以 MEI/Verovio 提供 MIDI、播放时序与五线谱视图。
 
+当前实现的已知语义遗漏、绘制质量差距与第三方替换建议见[简谱绘制质量审视与整改方案](NUMBERED_NOTATION_REMEDIATION.md)。下文描述现有实现，不代表与五线谱具有完整功能对等性。
+
 ## 支持范围
 
 适配器从 `ScoreDocument` 投影标题、右上角署名（演唱者优先、否则作曲者）、调号、拍号、速度、旋律/低音、休止、小节线、反复、跳房子、歌词、延音、连音组、力度、渐强/渐弱、文字和显式换行。`tuplet` 事件会展开为独立的顺序音符，使用简谱的连音组标记和紧凑时值布局，不会被投影为竖排和音；其 SVG 子音符仍以父事件 ID 供编辑器定位。速度使用节拍字形并按页头比例缩放。事件保留稳定的 `m3n-e-N` ID，因此点击选音、播放高亮和源码定位仍与现有交互契约一致。

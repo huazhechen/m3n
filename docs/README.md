@@ -13,5 +13,7 @@
 - [ARCHITECTURE.md](ARCHITECTURE.md)：前端架构与工作区边界。
 - [CODEGRAPH.md](CODEGRAPH.md)：模块依赖与数据流。
 - [VEROVIO.md](VEROVIO.md)：Verovio 本地参考手册。
+- [NUMBERED_NOTATION.md](NUMBERED_NOTATION.md)：当前简谱渲染的模型、页面与分行行为。
+- [NUMBERED_NOTATION_REMEDIATION.md](NUMBERED_NOTATION_REMEDIATION.md)：简谱质量审视、第三方引擎比较与整改方案。
 
 仓库级开发说明见根目录 [README](../README.md)。
