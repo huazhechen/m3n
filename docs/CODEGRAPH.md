@@ -87,7 +87,6 @@ flowchart LR
   scoreRules["score-rules"]
   diagnostics["ScoreDiagnostic[]"]
   analysis["analyzeM3N"]
-  complexity["melody complexity"]
   mei["m3n-mei"]
   meiParts["mei-events / mei-layout<br/>mei-document / mei-lyrics"]
   xml["MEI XML + source map"]
@@ -100,12 +99,10 @@ flowchart LR
   analysis --> projection
   analysis --> direct
   analysis --> validation
-  analysis --> complexity
   analysis --> mei
   syntax --> syntaxRules --> diagnostics
   score --> scoreRules --> diagnostics
   score --> validation --> diagnostics
-  score --> complexity
   score --> mei
   syntax --> mei
   mei --> meiParts --> xml
@@ -115,7 +112,7 @@ flowchart LR
   score --> format --> formatted
 ```
 
-`M3NSyntaxTree` 保留原文和源码范围，供格式化、结构规则和定位使用；`ScoreDocument` 提供规范化音乐语义，供校验、复杂度计算、播放计划与 MEI 序列化使用。交互调用方以 `analyzeM3N` 为聚合入口，复用一次解析得到的派生结果。
+`M3NSyntaxTree` 保留原文和源码范围，供格式化、结构规则和定位使用；`ScoreDocument` 提供规范化音乐语义，供校验、播放计划与 MEI 序列化使用。交互调用方以 `analyzeM3N` 为聚合入口，复用一次解析得到的派生结果。
 
 ## 渲染、播放与导出
 

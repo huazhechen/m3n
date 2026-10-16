@@ -20,7 +20,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 领域层明确使用两个模型：
 
 - `M3NSyntaxTree` 是无损且可容错的语法模型，保留原始行、token 与绝对源码范围，服务格式化、诊断和编辑器定位。
-- `ScoreDocument` 是规范化音乐语义模型，不承载排版空白等文本细节，服务校验、复杂度分析、播放计划与 MEI 序列化。
+- `ScoreDocument` 是规范化音乐语义模型，不承载排版空白等文本细节，服务校验、播放计划与 MEI 序列化。
 
 交互调用方通过 `analyzeM3N` 建立一次分析会话并消费其派生结果，不应在同一次编辑更新中自行重复解析。
 
@@ -63,7 +63,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `components/ScoreExportDialog.tsx`：导出状态、预览及简谱 SVG / 共用 PNG/PDF 工作流。
 - `components/SourceEditor.tsx`：源码输入与尺寸同步。
 - `pages`：路由级组合，不承载领域算法。
-- `scores/*.m3n`：曲库正文的唯一来源；`lib/samples.ts` 在构建时直接读取正文并生成曲目元数据。
+- `scores/*.m3n`：曲库正文的唯一来源；`lib/samples.ts` 在构建时直接读取正文并生成曲目元数据。`lib/score-order.ts` 按标题拼音或英文字母 A–Z 排序，本地与内置曲目共用该规则。
 
 ## 质量门禁
 

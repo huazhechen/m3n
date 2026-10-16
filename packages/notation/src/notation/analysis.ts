@@ -1,6 +1,5 @@
 import { parseM3NDocument } from '../m3n-direct.js' 
 import { m3nToMei } from '../m3n-mei.js'
-import { assessM3NDocumentMelodyComplexity } from '../m3n-melody-complexity.js'
 import { projectM3NDocument } from './m3n-document.js'
 import { invalidMeasureIds } from './measure-diagnostics.js'
 import { parseM3NSyntaxTree } from './syntax-tree.js'
@@ -15,7 +14,6 @@ export type M3NAnalysis = {
   projection: M3NDocumentProjection
   score: ScoreDocument
   conversion: MeiConversionResult
-  complexity: ReturnType<typeof assessM3NDocumentMelodyComplexity>
   invalidMeasureIds: string[]
 }
 
@@ -31,7 +29,6 @@ export function analyzeM3N(source: string): M3NAnalysis {
     projection,
     score,
     conversion,
-    complexity: assessM3NDocumentMelodyComplexity(score),
     invalidMeasureIds: invalidMeasureIds(source, score),
   }
 }

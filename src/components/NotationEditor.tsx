@@ -27,12 +27,11 @@ export function NotationEditor({
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const [isMeiDialogOpen, setIsMeiDialogOpen] = useState(false)
-  const [isComplexityDialogOpen, setIsComplexityDialogOpen] = useState(false)
   const [sharingAction, setSharingAction] = useState<'browse' | 'submit' | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const analysis = useMemo(() => analyzeM3N(source), [source])
-  const { conversion: result, complexity, invalidMeasureIds } = analysis
+  const { conversion: result, invalidMeasureIds } = analysis
   const formattedMei = useMemo(() => formatMeiXml(result.mei), [result.mei])
   const cursorXmlId = useMemo(() => {
     const containingRange = result.sourceMap.find((item) => (
@@ -123,7 +122,6 @@ export function NotationEditor({
         <div className="editor-header-right">
           {simulatedSubmit && <span className="editor-mode-note">本地模拟提交</span>}
           <button type="button" className="action-button" onClick={formatSource}>格式化</button>
-          <button type="button" className="action-button" onClick={() => setIsComplexityDialogOpen(true)}>复杂度</button>
           <button type="button" className="action-button" onClick={() => setIsMeiDialogOpen(true)}>MEI</button>
           {onBrowse && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void browseScore()}>{sharingAction === 'browse' ? '保存中' : '浏览'}</button>}
           {onSubmit && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void submitScore()}>{sharingAction === 'submit' ? '提交中' : '提交'}</button>}
@@ -181,33 +179,6 @@ export function NotationEditor({
         </div>
       )}
 
-      {isComplexityDialogOpen && (
-        <div className="converter-dialog-overlay" role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setIsComplexityDialogOpen(false)
-        }}>
-          <section className="complexity-dialog" role="dialog" aria-modal="true" aria-labelledby="complexity-result-title">
-            <div className="converter-dialog-header">
-              <h2 id="complexity-result-title">高音旋律复杂度</h2>
-              <button type="button" className="action-button" aria-label="关闭" onClick={() => setIsComplexityDialogOpen(false)}>关闭</button>
-            </div>
-            <div className="complexity-result">
-              <p className="complexity-score"><strong>{complexity.score.toFixed(1)}</strong><span>/ 5.0</span></p>
-              <p className="complexity-label">{complexity.label}</p>
-              <dl className="complexity-metrics">
-                <div><dt>音符数</dt><dd>{complexity.metrics.noteCount}</dd></div>
-                <div><dt>演奏密度</dt><dd>{complexity.metrics.notesPerSecond} 音/秒</dd></div>
-                <div><dt>峰值密度</dt><dd>{complexity.metrics.peakNotesPerBeat} 音/拍</dd></div>
-                <div><dt>音域</dt><dd>{complexity.metrics.pitchRange} 半音</dd></div>
-                <div><dt>最大跳进</dt><dd>{complexity.metrics.maximumLeap} 半音</dd></div>
-                <div><dt>弱拍进入</dt><dd>{Math.round(complexity.metrics.offbeatRatio * 100)}%</dd></div>
-                <div><dt>节奏与装饰</dt><dd>{complexity.metrics.rhythmicValues} 种 / {complexity.metrics.ornamentCount}</dd></div>
-                <div><dt>变音、和弦、连音</dt><dd>{complexity.metrics.accidentalCount} / {complexity.metrics.chordCount} / {complexity.metrics.tieCount}</dd></div>
-              </dl>
-              <p className="complexity-note">评分仅分析高音谱表的书写旋律，不计入低音谱表。</p>
-            </div>
-          </section>
-        </div>
-      )}
     </div>
   )
 }

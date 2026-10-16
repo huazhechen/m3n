@@ -1,6 +1,6 @@
 # @m3n/notation
 
-M3N 的纯 TypeScript 领域包，提供语法树、规范化乐谱模型、诊断、格式化、复杂度分析和 MEI 转换。
+M3N 的纯 TypeScript 领域包，提供语法树、规范化乐谱模型、诊断、格式化和 MEI 转换。
 
 ```ts
 import { analyzeM3N, formatM3N, m3nToMei } from '@m3n/notation'

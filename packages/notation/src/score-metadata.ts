@@ -12,7 +12,6 @@ export type PresetScoreMetadata = {
   tempo: number
   hasLyrics: boolean
   hasBass: boolean
-  melodyComplexity: number
   searchText: string
   diagnosticSeverity: ScoreDiagnosticSeverity
 }
@@ -38,7 +37,6 @@ export function scoreMetadataFromSource(slug: string, source: string): PresetSco
     tempo: score.tempo,
     hasLyrics,
     hasBass,
-    melodyComplexity: analysis.complexity.score,
     searchText: normalizeSearchText([
       title,
       score.subtitle,

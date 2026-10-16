@@ -45,3 +45,24 @@ test('score library marks local scores, opens on click, and deletes', async ({ p
   await card.getByRole('button', { name: '删除' }).click()
   await expect(card).toHaveCount(0)
 })
+
+test('library mixes local and built-in titles alphabetically and has no automatic ratings', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('m3n:local-scores', JSON.stringify(['Zzz 排序用例', 'Aaa 排序用例'].map((title, index) => ({
+      id: `local-sort-${index}`,
+      source: `{title=${title}} {4/4}\nN: 1 2 3 4 |||`,
+      createdAt: new Date().toISOString(),
+      expiresAt: Date.now() + 86_400_000,
+    }))))
+  })
+  await page.goto('/scores')
+  const titles = page.locator('.score-list .score-card h3')
+  await expect(titles.first()).toHaveText('Aaa 排序用例')
+  await expect(titles.last()).toHaveText('Zzz 排序用例')
+  await expect(page.locator('.score-list')).not.toContainText('评分')
+  await page.getByRole('searchbox', { name: '搜索乐谱' }).fill('排序用例')
+  await expect(titles).toHaveText(['Aaa 排序用例', 'Zzz 排序用例'])
+  await page.goto('/editor')
+  await expect(page.getByRole('button', { name: '格式化', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '复杂度', exact: true })).toHaveCount(0)
+})

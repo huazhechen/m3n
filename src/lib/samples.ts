@@ -1,4 +1,5 @@
 import { scoreMetadataFromSource, type PresetScoreMetadata } from '@m3n/notation'
+import { sortScoresByTitle } from './score-order'
 
 export type PresetScore = PresetScoreMetadata & { source: string }
 
@@ -12,11 +13,8 @@ function slugFromPath(path: string) {
   return path.split('/').at(-1)?.replace(/\.m3n$/, '') ?? path
 }
 
-export const presetScores: PresetScore[] = Object.entries(scoreModules)
+export const presetScores: PresetScore[] = sortScoresByTitle(Object.entries(scoreModules)
   .map(([path, source]) => ({
     ...scoreMetadataFromSource(slugFromPath(path), source),
     source,
-  }))
-  .sort((a, b) => a.melodyComplexity - b.melodyComplexity
-    || a.title.localeCompare(b.title, 'zh-Hans-CN')
-    || a.slug.localeCompare(b.slug))
+  })))

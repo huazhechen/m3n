@@ -4,6 +4,7 @@ import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/nota
 import { TopNav } from '../components/TopNav'
 import { deleteLocalScore, listLocalScores, type LocalScore } from '../lib/local-scores'
 import { presetScores, type PresetScore } from '../lib/samples'
+import { sortScoresByTitle } from '../lib/score-order'
 
 type ScoreCardData = {
   key: string
@@ -13,7 +14,6 @@ type ScoreCardData = {
   keySignature: string
   timeSignature: string
   tempo: number
-  melodyComplexity: number
   hasLyrics: boolean
   hasBass: boolean
   singer?: string
@@ -30,7 +30,6 @@ function ScoreCard({
   keySignature,
   timeSignature,
   tempo,
-  melodyComplexity,
   hasLyrics,
   hasBass,
   singer,
@@ -46,8 +45,7 @@ function ScoreCard({
     <>
       <div>
         <h3>{title}</h3>
-        <div className="score-notation-tags" aria-label={`旋律复杂度评分 ${melodyComplexity.toFixed(1)}，调号 ${keySignature}，拍号 ${timeSignature}，速度 ${tempo} BPM`}>
-          <span className="score-tag">评分 {melodyComplexity.toFixed(1)}</span>
+        <div className="score-notation-tags" aria-label={`调号 ${keySignature}，拍号 ${timeSignature}，速度 ${tempo} BPM`}>
           <span className="score-tag">调 {keySignature}</span>
           <span className="score-tag">拍 {timeSignature}</span>
           <span className="score-tag">速 {tempo} BPM</span>
@@ -115,7 +113,6 @@ function presetCardData(score: PresetScore): ScoreCardData {
     keySignature: score.keySignature,
     timeSignature: score.timeSignature,
     tempo: score.tempo,
-    melodyComplexity: score.melodyComplexity,
     hasLyrics: score.hasLyrics,
     hasBass: score.hasBass,
     singer: score.singer,
@@ -135,7 +132,6 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
     keySignature: metadata.keySignature,
     timeSignature: metadata.timeSignature,
     tempo: metadata.tempo,
-    melodyComplexity: metadata.melodyComplexity,
     hasLyrics: metadata.hasLyrics,
     hasBass: metadata.hasBass,
     singer: metadata.singer,
@@ -157,7 +153,7 @@ export function ScoresPage() {
         setLocalScores(listLocalScores())
       }
     }))
-    return [...locals, ...presetScores.map(presetCardData)]
+    return sortScoresByTitle([...locals, ...presetScores.map(presetCardData)])
   }, [localScores])
   const scores = useMemo(
     () => cards.filter((card) => card.searchText.includes(normalizedQuery)),
