@@ -192,6 +192,17 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.querySelectorAll('text[data-m3n-role="annotation"]')).toHaveLength(labels.length)
   })
 
+  it.each([false, true])('fills every harmonica exercise system at width 1000, paged=%s', paged => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), 'utf8')
+    const { layout } = geometry(parseM3NDocument(source), { width: 1000, paged })
+    const musicLines = new Set(layout.objects.filter(node => !node.T.isZero()).map(node => node.layoutLine))
+    for (const line of musicLines) {
+      const nodes = layout.objects.filter(node => node.layoutLine === line)
+      expect(Math.min(...nodes.map(node => node.box.x)), `system ${line} left edge`).toBeCloseTo(32)
+      expect(Math.max(...nodes.map(node => node.box.x + node.box.w)), `system ${line} right edge`).toBeCloseTo(968)
+    }
+  })
+
   it('renders the number of complete-bar rests and excludes them from interval endpoints', () => {
     const { root, score } = render('{4/4}\nN: {lg}1 2 3 4{/} | {rest=2} | 4 3 2 1 |||')
     expect(root.querySelectorAll('g.measure')).toHaveLength(3)

@@ -92,6 +92,10 @@ try {
           const b = annotations.find(node => node.textContent === instruction)?.getBBox()
           if (!a || !b || a.y + a.height >= b.y) issues.push({ file, width, paged, section, instruction, order: 'incorrect' })
         }
+        if (width === 1000) for (const system of document.querySelectorAll('g.system')) {
+          const right = Math.max(...[...system.querySelectorAll('g.measure')].map(measure => Number(measure.getAttribute('data-m3n-measure-end'))))
+          if (Math.abs(right - (width - 32)) > 0.5) issues.push({ file, width, paged, system: system.id, right, alignment: 'incomplete' })
+        }
       }
       if (file === 'super_mario_01.m3n' && width >= 800) {
         const first = document.querySelector('g.system')
