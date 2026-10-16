@@ -1,3 +1,4 @@
+// M3N modification: optional eighth-note flags for metronome beat units.
 import type { PathCommand } from "../../render/types.js";
 
 /** 已按字号固化的四分音符字形 */
@@ -33,13 +34,18 @@ const QUARTER_NOTE_COMMANDS: readonly PathCommand[] = [
     { op: "Z" },
 ];
 
-export function prepareQuarterNote(size: number): PreparedQuarterNote {
+export function prepareQuarterNote(size: number, unit = 4): PreparedQuarterNote {
     const scale = size / GLYPH_EM;
+    const flags: PathCommand[] = [];
+    for (let flag = 0; flag < Math.max(0, Math.log2(unit / 4)); flag += 1) {
+        const y = flag * 2.2;
+        flags.push({ op: "M", x: WIDTH, y }, { op: "Q", cx: WIDTH + 5, cy: y + 2, x: WIDTH + 2, y: y + 6 }, { op: "Q", cx: WIDTH + 3, cy: y + 3, x: WIDTH, y: y + 2 }, { op: "Z" });
+    }
     return {
-        w: WIDTH * scale,
+        w: (WIDTH + (flags.length ? 4 : 0)) * scale,
         h: HEIGHT * scale,
         stemCenterX: (STEM_LEFT + WIDTH) / 2 * scale,
-        commands: QUARTER_NOTE_COMMANDS,
+        commands: [...QUARTER_NOTE_COMMANDS, ...flags],
         scale,
     };
 }

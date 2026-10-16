@@ -55,7 +55,7 @@ export function meiDocumentXml(document: ScoreDocument, sectionContent: string, 
   const addStaff = (number: number, clefShape: string, clefLine: number) => staffDefinitions.push(
     xmlNode('staffDef', {
       n: number, lines: 5, 'clef.shape': clefShape, 'clef.line': clefLine,
-      'meter.count': document.meterCount, 'meter.unit': document.meterUnit, 'midi.instrnum': 0,
+      'midi.channel': number, 'meter.count': document.meterCount, 'meter.unit': document.meterUnit, 'midi.instrnum': 0,
     }, [xmlNode('keySig', { sig: signature })]),
   )
   addStaff(1, 'G', 2)

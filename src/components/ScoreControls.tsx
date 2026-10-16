@@ -5,6 +5,12 @@ import {
 } from '../lib/renderer-settings'
 
 type ScoreControlsProps = {
+  practice?: {
+    selected: boolean; onPlaySelection: () => void
+    a: number; b: number; looping: boolean; onMark: (point: 'a' | 'b') => void; onLoop: (enabled: boolean) => void
+    melodyMuted: boolean; bassMuted: boolean; hasBass: boolean; onMute: (staff: 1 | 2, muted: boolean) => void
+    follow: boolean; onFollow: (enabled: boolean) => void
+  }
   compact: boolean
   isPlaying: boolean
   isLoading: boolean
@@ -35,7 +41,7 @@ export function ScoreControls(props: ScoreControlsProps) {
   const id = useId()
   const [practiceOpen, setPracticeOpen] = useState(false)
   const playLabel = props.isPlaying ? '暂停' : '播放'
-  const practiceChanged = props.speed !== 100 || props.transpose !== 0 || props.metronomeEnabled
+  const practiceChanged = props.speed !== 100 || props.transpose !== 0 || props.metronomeEnabled || Boolean(props.practice && (props.practice.looping || props.practice.melodyMuted || props.practice.bassMuted || !props.practice.follow))
 
   return (
     <div className="audio-controls" role="group" aria-label="乐谱控制">
@@ -74,6 +80,15 @@ export function ScoreControls(props: ScoreControlsProps) {
       </div>
       <div id={`${id}-practice`} className="practice-panel" hidden={!practiceOpen}>
         <div className="practice-panel-heading"><span>练习设置</span><button type="button" className="control-reset" disabled={!practiceChanged || props.isLoading} onClick={props.onResetPractice}>恢复默认</button></div>
+        {props.practice && <div className="practice-range-controls">
+          <button type="button" className="action-button" disabled={!props.practice.selected || props.isLoading} onClick={props.practice.onPlaySelection}>从选中小节播放</button>
+          <button type="button" className="action-button" onClick={() => props.practice?.onMark('a')}>设为 A</button><output aria-label="循环起点">{Math.round(props.practice.a * 100)}%</output>
+          <button type="button" className="action-button" onClick={() => props.practice?.onMark('b')}>设为 B</button><output aria-label="循环终点">{Math.round(props.practice.b * 100)}%</output>
+          <label><input type="checkbox" aria-label="A–B 循环" checked={props.practice.looping} onChange={event => props.practice?.onLoop(event.currentTarget.checked)} />A–B 循环</label>
+          <label><input type="checkbox" aria-label="旋律静音" checked={props.practice.melodyMuted} onChange={event => props.practice?.onMute(1, event.currentTarget.checked)} />旋律静音</label>
+          {props.practice.hasBass && <label><input type="checkbox" aria-label="低音静音" checked={props.practice.bassMuted} onChange={event => props.practice?.onMute(2, event.currentTarget.checked)} />低音静音</label>}
+          <label><input type="checkbox" aria-label="播放跟随" checked={props.practice.follow} onChange={event => props.practice?.onFollow(event.currentTarget.checked)} />播放跟随</label>
+        </div>}
         <div className="practice-settings-grid">
           <div className="playback-speed">
             <label className="control-field-heading" htmlFor={`${id}-speed`}><span>播放速度</span><output>{props.speed}%</output></label>

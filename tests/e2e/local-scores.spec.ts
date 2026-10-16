@@ -12,7 +12,7 @@ test('browse saves locally and edit reuses the score id', async ({ page }) => {
 
   await page.getByRole('link', { name: '编辑' }).click()
   await expect(page).toHaveURL(/\/editor\/local-/)
-  await expect(page.getByLabel('M3N source')).toHaveValue(source)
+  await expect(page.getByLabel('M3N source')).toHaveText(source, { useInnerText: true })
   const editorUrl = page.url()
   const revised = source.replace('本地测试', '本地测试修订')
   await page.getByLabel('M3N source').fill(revised)
@@ -28,10 +28,10 @@ test('recovers the latest draft after reload and downloads an imported source fi
   await page.getByLabel('M3N source').fill(source)
   await expect(page.getByRole('status', { name: '草稿保存状态' })).toContainText('草稿已保存')
   await page.reload()
-  await expect(page.getByLabel('M3N source')).toHaveValue(source)
+  await expect(page.getByLabel('M3N source')).toHaveText(source, { useInnerText: true })
   const imported = source.replace('本地测试', '文件导入')
   await page.getByLabel('导入 M3N 文件').setInputFiles({ name: 'test.m3n', mimeType: 'text/plain', buffer: Buffer.from(imported) })
-  await expect(page.getByLabel('M3N source')).toHaveValue(imported)
+  await expect(page.getByLabel('M3N source')).toHaveText(imported, { useInnerText: true })
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: '下载 M3N' }).click()
   const file = await download
@@ -55,7 +55,7 @@ test('keeps the editor open with the source when local storage rejects a save', 
   await page.getByRole('button', { name: '保存并预览' }).click()
   await expect(page.getByRole('alert')).toContainText('本地保存失败')
   await expect(page).toHaveURL(/\/editor$/)
-  await expect(page.getByLabel('M3N source')).toHaveValue(source)
+  await expect(page.getByLabel('M3N source')).toHaveText(source, { useInnerText: true })
 })
 
 test('does not substitute a default score for a missing local work', async ({ page }) => {

@@ -1,7 +1,10 @@
+import { useState } from 'react'
+import { NotationEditor } from '../components/NotationEditor'
 import { Link } from 'react-router-dom'
 import { TopNav } from '../components/TopNav'
 
 export function HomePage() {
+  const [numbered, setNumbered] = useState(true)
   return (
     <main>
       <TopNav />
@@ -38,6 +41,10 @@ export function HomePage() {
             <p>直接在浏览器中完成记谱、播放与导出，无需安装额外软件。</p>
           </section>
         </div>
+      </section>
+      <section className="home-sample" aria-label="可试听谱例">
+        <div className="pane-toolbar"><h2>从一段旋律开始</h2><label><input type="checkbox" role="switch" aria-label="首页简谱" checked={numbered} onChange={event => setNumbered(event.currentTarget.checked)} />简谱</label></div>
+        <NotationEditor embedded initialSource={'{title=欢乐颂片段}{4/4}{108qpm}\nN: 3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 3. 2_ 2 - |||'} numberedNotation={numbered} onNumberedNotationChange={setNumbered} />
       </section>
     </main>
   )

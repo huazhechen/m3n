@@ -1571,3 +1571,58 @@ a.action-button {
 .page-error p {
   margin: 0;
 }
+
+/* Editor workspaces keep the input mounted when switching mobile panes. */
+.source-editor .cm-editor { width: 100%; min-width: 0; height: 100%; font-size: 15px; line-height: 1.7; background: #fbfcf8; }
+.source-editor .cm-scroller { overflow: auto; font-family: ui-monospace, monospace; }
+.source-editor .cm-content { min-height: 320px; padding: 12px 0; }
+.source-editor .cm-gutters { background: #f0f2eb; color: #6b756e; border-right: 1px solid #dce1d7; }
+.diagnostic-link { border: 0; padding: 4px; text-align: left; color: inherit; text-decoration: underline; background: transparent; cursor: pointer; }
+.editor-tabs { display: none; }
+.resizable-editor { grid-template-areas: "render divider source" "render-diagnostics divider source-diagnostics"; column-gap: 4px; align-items: start; }
+.resizable-editor > .source-editor { min-height: 420px; max-height: 75vh; height: 65vh; }
+.editor-divider { grid-area: divider; align-self: stretch; min-height: 420px; cursor: col-resize; touch-action: none; border-radius: 4px; background: #e5e9df; }
+.editor-divider:focus-visible { outline: 2px solid #2f6f73; }
+.embedded-editor .editor-tabs, .embedded-editor .editor-divider { display: none; }
+.embedded-editor .resizable-editor { display: flex; flex-direction: column; padding: 0; gap: 8px; }
+.embedded-editor .resizable-editor > .source-editor { height: auto; min-height: 0; max-height: 260px; }
+.embedded-editor .cm-content { min-height: 0; }
+@media (max-width: 720px) {
+  .editor-tabs { display: flex; padding: 4px 8px; gap: 8px; }
+  .editor-tabs button { min-height: 44px; flex: 1; background: #f0f2eb; border: 1px solid #d3d9ce; border-radius: 5px; }
+  .editor-tabs [aria-selected="true"] { background: #dcece6; border-color: #2f6f73; }
+  .resizable-editor { display: flex; flex-direction: column; align-items: stretch; }
+  .resizable-editor > .source-editor { height: 60vh; max-height: none; }
+  .editor-divider { display: none; }
+  .editor-container .resizable-editor[data-mobile-pane="source"] > .score-card,
+  .editor-container .resizable-editor[data-mobile-pane="preview"] > .source-editor { display: none; }
+  .editor-header { display: flex; flex-wrap: wrap; }
+  .editor-header-right { flex-wrap: wrap; }
+}
+.score-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.score-list .score-card { max-width: none; }
+.library-filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.library-filters select { min-height: 44px; border: 1px solid #cfd3ca; background: #fff; border-radius: 5px; }
+.recent-edits { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.recent-edits a { padding: 8px; }
+.score-list.is-compact-list { grid-template-columns: 1fr; }
+.score-list.is-compact-list .score-card { height: auto; min-height: 80px; flex-direction: row; align-items: center; gap: 16px; }
+.home-sample { max-width: 900px; margin: 32px auto; }
+.document-example > .action-button { display: inline-flex; margin: 8px 0 20px; }
+.practice-range-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
+.practice-range-controls label { display: inline-flex; min-height: 44px; align-items: center; gap: 4px; }
+.embedded-editor .resizable-editor { align-items: stretch; }
+.embedded-editor .resizable-editor > .score-card { order: -1; }
+.practice-range-controls button { min-height: 44px; }
+.editor-source-pane { grid-area: source; display: flex; min-width: 0; min-height: 420px; height: 65vh; max-height: 75vh; }
+.editor-preview-pane { grid-area: render; min-width: 0; }
+.embedded-editor .editor-source-pane { height: auto; min-height: 0; max-height: 260px; }
+.embedded-editor .editor-preview-pane { order: -1; }
+.score-paper[data-reading-fit="true"][data-render-mode="paged"] { padding: 0; background: #fff; }
+.score-paper[data-reading-fit="true"] .score-page-sheet { aspect-ratio: auto; box-shadow: none; }
+.score-paper[data-reading-fit="true"] .score-page-sheet svg { position: relative; inset: auto; width: 100%; height: auto; }
+@media (max-width: 720px) {
+  .editor-source-pane { height: 60vh; }
+  .editor-container .resizable-editor[data-mobile-pane="source"] > .editor-preview-pane,
+  .editor-container .resizable-editor[data-mobile-pane="preview"] > .editor-source-pane { display: none; }
+}

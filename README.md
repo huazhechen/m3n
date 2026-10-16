@@ -27,7 +27,9 @@ npm run check    # lint、类型检查、单元测试、构建与端到端测试
 npm run deploy   # 构建并部署到 Cloudflare
 ```
 
-常用脚本：`npm run build`、`npm run test`、`npm run test:e2e`、`npm run lint`、`npm run typecheck:packages`。
+编辑器提供语法高亮、补全、可定位诊断和后台分析；手机可切换源码／预览，桌面可调整分栏。阅读按容器宽度排版，打印版宽独立保存。两种谱式都可导出 SVG、PNG 和多页矢量 PDF；中文文字导出为轮廓，首次导出按需下载本站约 16 MB 字体。练习支持选中小节起播、A–B 循环、声部静音与播放跟随。
+
+常用脚本：`npm run build`、`npm run test`、`npm run test:e2e`、`npm run lint`、`npm run typecheck:packages`、`npm run check:boundaries`。
 
 ### 本地乐谱与提交
 

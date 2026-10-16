@@ -61,11 +61,11 @@ Fine、D.C.、D.S. 排在末音或休止符之后、小节线之前，与音符�
 
 主标题与副标题分别按自身文字宽度居中，对准页面内容区中线，不受彼此长度和两侧署名、调号、拍号、拍速宽度影响。有副标题时，署名、调号、拍号和拍速置于副标题下方，避免窄版重叠。
 
-浏览器加载字体后使用 `CanvasTextMeasurer`，离线测试可注入 `textMeasurer`。音符、调号、拍号及拍速数字（包括谱中变速）统一使用原样嵌入的 Barlow Semi Condensed Medium（SIL OFL 1.1），字形比原先的 Liberation Mono 更窄高、笔画更清晰。同一资源用于测量、显示和 SVG 导出，无 CDN 字体请求；固定来源、文件校验和及许可见 `public/licenses/barlow`。CSS 家族别名保持 `M3N Numbers`，静态 Medium 字体映射为引擎使用的普通字重，避免合成加粗。中文及普通文字使用系统 serif 字体，因此不同系统的文字度量可能不同。
+浏览器加载字体后使用 `CanvasTextMeasurer`，离线测试可注入 `textMeasurer`。音符、调号、拍号及拍速数字（包括谱中变速）统一使用原样嵌入的 Barlow Semi Condensed Medium（SIL OFL 1.1），字形比原先的 Liberation Mono 更窄高、笔画更清晰。同一资源用于测量、显示和 SVG 导出，无 CDN 字体请求；固定来源、文件校验和及许可见 `public/licenses/barlow`。CSS 家族别名保持 `M3N Numbers`，静态 Medium 字体映射为引擎使用的普通字重，避免合成加粗。阅读时中文及普通文字使用系统 serif 字体，因此不同系统的文字度量可能不同；下载时文字统一转为本站 Noto Serif CJK SC 字形轮廓。
 
 ## 导出与验证
 
-预览与最终导出调用相同接口、版宽和字体准备流程。简谱提供 SVG 矢量图、PNG 连续图和 A4 PDF；**PDF 仍是既有的 Canvas/PNG 嵌入路径，并非矢量 PDF**。SVG 内嵌数字字体，可独立保存。
+预览与最终导出调用相同接口、版宽和字体准备流程。两种谱式均提供 SVG 矢量图、PNG 连续图和 A4 多页矢量 PDF。导出时数字沿用内嵌字体，中文使用本站按需加载的 Noto Serif CJK SC，文字转成路径，不依赖接收设备字体；文字不可选择或搜索。PDF 经 svg2pdf.js 写入矢量路径，不嵌入 Canvas 图片。字体许可与重建方法见 `public/licenses/noto-serif/`。
 
 - `npm run test`：保留上游测试与快照；适配器为全部 82 首内置曲目分别建立用例，核对每个事件的音高、变音、八度、开始时间、时值、事件身份、控制记号同行及分页。
 - `npm run test:numbered-layout`：不启动服务器，在 Chromium 中检查全部曲库和三个复合谱例的 320/600/800/1000px、连续/分页组合，共 680 次布局，检查真实 SVG 边界、歌词相交及音符数字相交，输出 `.tmp/numbered-layout-report.json` 和示例截图。可用 `CHROMIUM_PATH` 指定浏览器。

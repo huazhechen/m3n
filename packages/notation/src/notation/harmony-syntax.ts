@@ -1,6 +1,6 @@
 /** Longest alternatives precede their prefixes (maj7 before m, III before I). */
 const romanRoot = 'VII|III|II|IV|VI|V|I|vii|iii|ii|iv|vi|v|i'
-const quality = 'maj7|maj9|sus2|sus4|dim|aug|m|1[0-3]|[2-9]'
+const quality = 'maj7|maj9|sus2|sus4|dim|aug|m(?:aj[79]|1[0-3]|[2-9])?|1[0-3]|[2-9]'
 export const harmonySymbolSource = `(?:N\\.C\\.|(?:${romanRoot}|[A-G][#b]?)(?:${quality})?(?:/[A-G][#b]?)?)`
 const harmonyPattern = new RegExp(`^${harmonySymbolSource}$`)
 const rootPattern = new RegExp(`^(${romanRoot}|[A-G][#b]?)(${quality})?(?:/([A-G][#b]?))?$`)

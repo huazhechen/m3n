@@ -1,8 +1,10 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { recordRecentEdit } from '../lib/recent-edits'
+import { EditorSplit } from './EditorSplit'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatM3N, formatMeiXml, formatScoreDiagnostic } from '@m3n/notation'
 import defaultScore from '../scores/huan_le_song_01.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
-import { SourceEditor } from './SourceEditor'
+import { SourceEditor, type SourceEditorHandle } from './SourceEditor'
 import { useScoreDraft } from '../hooks/useScoreDraft'
 import { SourceFileActions } from './SourceFileActions'
 import { useM3NAnalysis } from '../hooks/useM3NAnalysis'
@@ -12,6 +14,7 @@ type NotationEditorProps = {
   embedded?: boolean
   numberedNotation?: boolean
   simulatedSubmit?: boolean
+  draftScope?: string
   scoreId?: string
   onBrowse?: (source: string) => Promise<void>
   onNumberedNotationChange?: (enabled: boolean) => void
@@ -24,23 +27,27 @@ export function NotationEditor({
   numberedNotation,
   simulatedSubmit = false,
   scoreId,
+  draftScope,
   onBrowse,
   onNumberedNotationChange,
   onSubmit,
 }: NotationEditorProps) {
-  const { source, setSource, draftStatus, pauseDraft, resumeDraft, discardDraft } = useScoreDraft(initialSource, !embedded, scoreId)
+  const { source, setSource, draftStatus, pauseDraft, resumeDraft, discardDraft } = useScoreDraft(initialSource, !embedded, draftScope ?? scoreId)
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const [isMeiDialogOpen, setIsMeiDialogOpen] = useState(false)
   const [sharingAction, setSharingAction] = useState<'browse' | 'submit' | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const textareaRef = useRef<SourceEditorHandle>(null)
   const latestSource = useRef(source)
   useLayoutEffect(() => { latestSource.current = source }, [source])
   const [isComposing, setIsComposing] = useState(false)
   const { analysis, isAnalyzing, error: analysisError, retry: retryAnalysis } = useM3NAnalysis(source, { background: !embedded, suspended: isComposing })
-  const { conversion: result, invalidMeasureIds } = analysis
-  const formattedMei = useMemo(() => formatMeiXml(result.mei), [result.mei])
+  useEffect(() => {
+    if (!embedded && !draftScope && analysis.source === source && source !== initialSource) recordRecentEdit(scoreId ?? '', analysis.score.title || '未命名草稿')
+  }, [analysis, draftScope, embedded, initialSource, scoreId, source])
+  const { interaction: result, invalidMeasureIds } = analysis
+  const formattedMei = useMemo(() => isMeiDialogOpen ? formatMeiXml(analysis.conversion.mei) : '', [analysis, isMeiDialogOpen])
   const cursorXmlId = useMemo(() => {
     if (analysis.source !== source) return null
     const containingRange = result.sourceMap.find((item) => (
@@ -63,17 +70,8 @@ export function NotationEditor({
     const textarea = textareaRef.current
     if (!mappedRange || !textarea) return
 
-    const sourceLine = source.slice(0, mappedRange.sourceStart).split('\n').length - 1
-    const lineHeight = Number.parseFloat(window.getComputedStyle(textarea).lineHeight) || 20
-    textarea.scrollTop = Math.max(0, (sourceLine - 2) * lineHeight)
-
-    if (window.matchMedia('(max-width: 720px)').matches) {
-      updateCursorPosition(mappedRange.sourceEnd)
-      return
-    }
-
-    textarea.setSelectionRange(mappedRange.sourceStart, mappedRange.sourceEnd)
-    textarea.focus({ preventScroll: true })
+    textarea.select(mappedRange.sourceStart, mappedRange.sourceEnd, !window.matchMedia('(max-width: 720px)').matches)
+    updateCursorPosition(mappedRange.sourceEnd)
   }, [analysis.source, result.sourceMap, source, updateCursorPosition])
 
   const highlightSourceRange = useCallback((xmlId: string | null) => {
@@ -81,11 +79,11 @@ export function NotationEditor({
     const textarea = textareaRef.current
     if (!textarea) return
     if (!xmlId) {
-      textarea.setSelectionRange(textarea.selectionStart, textarea.selectionStart)
+      textarea.select(textarea.selection())
       return
     }
     const mappedRange = result.sourceMap.find((item) => item.xmlId === xmlId)
-    if (mappedRange) textarea.setSelectionRange(mappedRange.sourceStart, mappedRange.sourceEnd)
+    if (mappedRange) textarea.select(mappedRange.sourceStart, mappedRange.sourceEnd)
   }, [analysis.source, result.sourceMap])
 
   const copyMei = async () => {
@@ -144,24 +142,19 @@ export function NotationEditor({
       </header>
       )}
       {!embedded && <p className="editor-save-status" role="status" aria-label="草稿保存状态">{draftStatus || '作品保存在此浏览器；下载 M3N 可备份或在其他设备打开。'}</p>}
-      <div className={embedded ? 'editor-body embedded-editor-body' : 'editor-body'}>
-        <SourceEditor
-          textareaRef={textareaRef}
+      <EditorSplit source={<SourceEditor
+          editorRef={textareaRef}
+          diagnostics={analysis.source === source ? analysis.diagnostics : undefined}
           value={source}
           ariaLabel="M3N source"
           readOnly={embedded}
-          onChange={(event) => {
-            setSource(event.currentTarget.value)
-            updateCursorPosition(event.currentTarget.selectionStart)
-          }}
-          onFocus={(event) => updateCursorPosition(event.currentTarget.selectionEnd)}
-          onSelect={(event) => updateCursorPosition(event.currentTarget.selectionEnd)}
+          onChange={(value, position) => { setSource(value); updateCursorPosition(position) }}
+          onSelect={updateCursorPosition}
           onBlur={() => setIsCursorHighlightActive(false)}
           onCompositionStart={() => setIsComposing(true)}
           onCompositionEnd={() => setIsComposing(false)}
-        />
-        <ScoreRenderer
-          mei={result.mei}
+        />} preview={<ScoreRenderer
+          mei={analysis.getMei}
           scoreDocument={analysis.score}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
@@ -174,14 +167,14 @@ export function NotationEditor({
           onNoteClick={selectScoreNoteInSource}
           onNumberedNotationChange={onNumberedNotationChange}
           onPaperBlur={() => setIsCursorHighlightActive(false)}
-        />
-        {result.diagnostics.length > 0 && (
-          <ul className="diagnostics editor-render-diagnostics">{result.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>
+        />}>
+        {analysis.diagnostics.length > 0 && (
+          <ul className="diagnostics editor-render-diagnostics">{analysis.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}><button type="button" className="diagnostic-link" disabled={!item.range || analysis.source !== source} onClick={() => { if (item.range) textareaRef.current?.select(item.range.start, item.range.end, true) }}>{formatScoreDiagnostic(item)}</button></li>)}</ul>
         )}
         {shareError && <p className="editor-share-error" role="alert">{shareError}</p>}
         {analysisError && <p className="editor-share-error" role="alert">{analysisError} <button type="button" className="action-button" onClick={retryAnalysis}>重试分析</button></p>}
         {isAnalyzing && <p className="editor-analysis-status" role="status" aria-label="乐谱分析状态">{isComposing ? '正在输入…' : '正在更新乐谱…'}</p>}
-      </div>
+      </EditorSplit>
 
       {isMeiDialogOpen && (
         <div className="converter-dialog-overlay" role="presentation" onMouseDown={(event) => {

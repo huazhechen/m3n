@@ -17,7 +17,8 @@ export async function loadScoreSource(id: string): Promise<string | null> {
 }
 
 /** Resolves all score origins with one lifecycle and never displays the previous route's score. */
-export function useScoreSource(id: string | undefined): ScoreSourceState {
+export function useScoreSource(id: string | undefined) {
+  const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<ScoreSourceState>({ id, status: id ? 'loading' : 'ready' })
   useEffect(() => {
     if (!id) {
@@ -32,6 +33,7 @@ export function useScoreSource(id: string | undefined): ScoreSourceState {
       if (!cancelled) setState({ id, status: 'error', error: error instanceof Error ? error.message : '乐谱加载失败。' })
     })
     return () => { cancelled = true }
-  }, [id])
-  return state.id === id ? state : { id, status: id ? 'loading' : 'ready' }
+  }, [attempt, id])
+  const current: ScoreSourceState = state.id === id ? state : { id, status: id ? 'loading' : 'ready' }
+  return { ...current, retry: () => setAttempt(value => value + 1) }
 }

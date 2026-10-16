@@ -1,3 +1,4 @@
+import { displayedTempo } from './notation/tempo.js'
 import { m3nPitch } from './m3n-direct.js' 
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups.js'
 import type { ScoreEvent } from './notation/score-document.js'
@@ -22,12 +23,14 @@ function pitchXml(pitch: string, key: string, accidentals?: Map<string, string>,
   return `pname="${value.pname}" oct="${octave}"${value.accid ? ` accid="${value.accid}"` : ''}${accidGes ? ` accid.ges="${accidGes}"` : ''}`
 }
 
-export function meiTempoXml(qpm: number, meterUnit: number, position: string, id: string) {
-  const glyph = metronomeGlyphs[meterUnit] ?? metronomeGlyphs[4]!
-  const bpm = qpm / (4 / meterUnit)
+export function meiTempoXml(qpm: number, meterUnit: number, position: string, id: string, meterCount = 4) {
+  const display = displayedTempo(qpm, meterCount, meterUnit)
+  const glyph = metronomeGlyphs[display.unit] ?? metronomeGlyphs[4]!
+  const bpm = display.bpm
   const value = Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(2).replace(/\.00$|0$/g, '')
+  const dot = display.dots ? '<rend glyph.auth="smufl" glyph.name="augmentationDot" glyph.num="U+E1E7">&#xE1E7;</rend>' : ''
   const note = `<rend glyph.auth="smufl" glyph.name="${glyph.name}" glyph.num="${glyph.num}">&#x${glyph.num.slice(2)};</rend>`
-  return `<tempo xml:id="${id}" staff="1" ${position} midi.bpm="${qpm}">${note} = ${value}</tempo>`
+  return `<tempo xml:id="${id}" staff="1" ${position} midi.bpm="${qpm}">${note}${dot} = ${value}</tempo>`
 }
 
 export function meiEventXml(

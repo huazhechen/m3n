@@ -1,4 +1,18 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
+
+async function selectionStart(editor: Locator) {
+  return editor.evaluate(element => {
+    const selection = window.getSelection()
+    if (!selection?.rangeCount) return -1
+    const range = selection.getRangeAt(0)
+    const container = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer as Element : range.startContainer.parentElement
+    const line = container?.closest('.cm-line')
+    const lines = [...element.querySelectorAll('.cm-line')]
+    if (!line) return -1
+    const before = document.createRange(); before.selectNodeContents(line); before.setEnd(range.startContainer, range.startOffset)
+    return lines.slice(0, lines.indexOf(line)).reduce((total, item) => total + (item.textContent?.length ?? 0) + 1, 0) + before.toString().length
+  })
+}
 
 const source = '{title=Browser Test}\n{key=C} {4/4} {120qpm}\nN: 1 2 3 4 |||'
 
@@ -15,10 +29,7 @@ test('edits, renders, and maps a score note back to source', async ({ page }) =>
   await expect(page.locator('.score-paper .is-cursor-active-measure')).toHaveCount(1)
   await expect(paper.locator('.is-cursor-active-measure .measure-cursor-highlight')).toBeVisible()
   await firstNote.locator('use, path').first().click()
-  await expect.poll(() => editor.evaluate((element) => ({
-    start: (element as HTMLTextAreaElement).selectionStart,
-    end: (element as HTMLTextAreaElement).selectionEnd,
-  }))).not.toEqual({ start: 0, end: 0 })
+  await expect.poll(() => selectionStart(editor)).toBe(source.indexOf('1 2'))
 })
 
 test('exposes playback without a print action', async ({ page }) => {
@@ -45,7 +56,7 @@ test('highlights numbered notation during playback with tuplets and a bass voice
   await page.getByRole('button', { name: '暂停' }).click()
 })
 
-test('renderer settings control width and drive the export dialog', async ({ page }) => {
+test('keeps reading width and print width independent', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'paged')
   await expect(page.locator('.score-page-sheet').first()).toBeVisible({ timeout: 30_000 })
@@ -71,8 +82,9 @@ test('renderer settings control width and drive the export dialog', async ({ pag
   await page.getByRole('button', { name: '打印' }).click()
   const exportDialog = page.getByRole('dialog')
   await expect(exportDialog).toBeVisible()
-  await expect(exportDialog.getByText('600px')).toBeVisible()
-  await expect(exportDialog.getByRole('spinbutton')).toHaveCount(0)
+  await expect(exportDialog.getByRole('spinbutton', { name: '打印宽度' })).toHaveValue('800')
+  await exportDialog.getByRole('spinbutton', { name: '打印宽度' }).fill('700')
+  await expect(page.locator('.renderer-settings-row output')).toHaveText('600px')
   await expect(exportDialog.locator('svg').first()).toBeVisible({ timeout: 30_000 })
   await expect(exportDialog.getByRole('radio', { name: 'PDF（A4 分页）' })).toBeChecked()
   await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
@@ -130,9 +142,9 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
   const note = page.locator('.score-paper #m3n-e-2 text')
   await expect(note).toBeVisible()
   await note.click()
-  await expect.poll(() => editor.evaluate(element => (element as HTMLTextAreaElement).selectionStart)).toBe(text.indexOf('1 2') + 2)
+  await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1 2') + 2)
   await page.locator('.score-paper text[data-m3n-role="lyric"][data-m3n-id="m3n-e-1"]').first().click()
-  await expect.poll(() => editor.evaluate(element => (element as HTMLTextAreaElement).selectionStart)).toBe(text.indexOf('1 2'))
+  await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1 2'))
   await page.getByRole('button', { name: '播放' }).click()
   await expect(page.locator('.score-paper text[data-m3n-rendition="2"].is-playing').first()).toBeVisible({ timeout: 15_000 })
   await page.getByRole('button', { name: '暂停' }).click()
@@ -151,7 +163,7 @@ test('orders numbered annotations above music and maps their clicks back to the 
   const sectionBox = (await section.boundingBox())!, instructionBox = (await instruction.boundingBox())!
   expect(sectionBox.y + sectionBox.height).toBeLessThan(instructionBox.y)
   await instruction.click()
-  await expect.poll(() => editor.evaluate(element => (element as HTMLTextAreaElement).selectionStart)).toBe(text.indexOf('1{tr}'))
+  await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1{tr}'))
 })
 
 test('uses the numbered layout for export and honors excluding bass in SVG, PNG and PDF', async ({ page }, testInfo) => {

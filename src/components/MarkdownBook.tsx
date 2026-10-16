@@ -2,7 +2,7 @@ import type { ComponentPropsWithoutRef, FocusEvent, ReactElement, ReactNode } fr
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { documentSections, searchForDocument, slugify } from '../lib/docs-navigation'
 import { escapeTableCodePipes } from '../lib/markdown-table'
 import { readNumberedNotation, writeNumberedNotation } from '../lib/renderer-settings'
@@ -32,7 +32,7 @@ function MarkdownCode(props: ComponentPropsWithoutRef<'code'>) {
   const className = props.className ?? ''
   const value = String(props.children ?? '').replace(/\n$/, '')
   if (className.includes('language-m3n')) {
-    return <NotationEditor embedded initialSource={value} numberedNotation={notation?.enabled} onNumberedNotationChange={notation?.onChange} />
+    return <div className="document-example"><NotationEditor embedded initialSource={value} numberedNotation={notation?.enabled} onNumberedNotationChange={notation?.onChange} /><Link className="action-button" to="/editor" state={{ exampleSource: value }}>在编辑器试改</Link></div>
   }
   return <code className={className}>{props.children}</code>
 }

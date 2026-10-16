@@ -10,9 +10,9 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('renders absolute, slash and no-chord symbols without changing them with the key', () => {
-    const result = m3nToMei('{key=D}{4/4}\nN: 1 2 3 4 | 5 6 7 1e | 1e 7 6 5 | 4 3 2 1 |||\nC: Cmaj7 | Am | G/B | N.C. |')
+    const result = m3nToMei('{key=D}{4/4}\nN: 1 2 3 4 | 5 6 7 1e | 1e 7 6 5 | 4 3 2 1 |||\nC: Cmaj7 | Dm7 | G/B | N.C. |')
     expect(result.diagnostics).toEqual([])
-    for (const symbol of ['Cmaj7', 'Am', 'G/B', 'N.C.']) expect(result.mei).toContain(`>${symbol}</harm>`)
+    for (const symbol of ['Cmaj7', 'Dm7', 'G/B', 'N.C.']) expect(result.mei).toContain(`>${symbol}</harm>`)
   })
 
   it('reserves lyric rows only within the phrase that sings them', () => {
@@ -200,17 +200,17 @@ describe('M3N to MEI conversion', () => {
     expect(commonTime.mei).toContain('</rend> = 120</tempo>')
 
     expect(compoundTime.mei).toContain('midi.bpm="120"')
-    expect(compoundTime.mei).toContain('glyph.name="metNote8thUp"')
-    expect(compoundTime.mei).not.toContain('glyph.name="augmentationDot"')
-    expect(compoundTime.mei).toContain('</rend> = 240</tempo>')
+    expect(compoundTime.mei).toContain('glyph.name="metNoteQuarterUp"')
+    expect(compoundTime.mei).toContain('glyph.name="augmentationDot"')
+    expect(compoundTime.mei).toContain('</rend> = 80</tempo>')
   })
 
   it('writes mid-score tempo changes using the active meter while preserving QPM', () => {
     const result = m3nToMei('{4/4} {120qpm}\n1 2 3 4 | {6/8} {90qpm}(1 2 3 4 5 6) |||')
 
-    expect(result.mei).toContain('<tempo xml:id="m3n-tempo-2" staff="1" startid="#m3n-e-5" midi.bpm="90"><rend glyph.auth="smufl" glyph.name="metNote8thUp"')
-    expect(result.mei).toContain('glyph.name="metNote8thUp"')
-    expect(result.mei).toContain('</rend> = 180</tempo>')
+    expect(result.mei).toContain('<tempo xml:id="m3n-tempo-2" staff="1" startid="#m3n-e-5" midi.bpm="90"><rend glyph.auth="smufl" glyph.name="metNoteQuarterUp"')
+    expect(result.mei).toContain('glyph.name="augmentationDot"')
+    expect(result.mei).toContain('</rend> = 60</tempo>')
   })
 
   it('writes a visible ritardando direction without intermediate tempo labels', () => {

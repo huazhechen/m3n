@@ -1,3 +1,4 @@
+import { analyzeM3N } from '@m3n/notation'
 import { loadSimulatedSubmission, saveSimulatedSubmission } from './simulated-submissions'
 import { isSimulatedSubmit } from './submit-mode'
 
@@ -11,7 +12,7 @@ export function isSharedScoreId(value: string | undefined) {
 }
 
 function scoreTitle(source: string) {
-  return source.match(/\{title=([^}]*)\}/)?.[1]?.trim() ?? ''
+  return analyzeM3N(source).score.title.trim()
 }
 
 export async function submittedScoreId(source: string, timestamp = Date.now()) {

@@ -1,4 +1,4 @@
-// M3N modification: optional font override shared by measurement and painting.
+// M3N modification: font override and metronome unit/dot display; playback retains QPM.
 import { TemporalNodeBase, type TimeState } from "../temporal.js";
 import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, LengthValue, ParserContext, SourceSpan } from "../ASTtypes.js";
 import type { LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
@@ -38,17 +38,23 @@ class TempoFunction extends ASTFunctionNode {
                 type: "string" as const,
                 default: "",
             },
+            { name: "unit", description: "速度显示音符分母", type: "number" as const, default: 4 },
+            { name: "dots", description: "速度显示附点数", type: "number" as const, default: 0 },
         ],
     };
 
     bpm: number;
+    unit: number;
+    dots: number;
     size: number;
     readonly font: string;
     private readonly fontOverride: string;
 
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [bpm, size, font] = this.getArgValue(args, ctx) as [number, LengthValue, string];
+        const [bpm, size, font, unit, dots] = this.getArgValue(args, ctx) as [number, LengthValue, string, number, number];
+        this.unit = [1, 2, 4, 8, 16, 32, 64].includes(unit) ? unit : 4;
+        this.dots = Math.max(0, Math.min(2, Math.trunc(dots)));
         this.bpm = bpm;
         this.size = ctx.length2px(size);
         this.fontOverride = font;
@@ -60,7 +66,7 @@ class TempoFunction extends ASTFunctionNode {
     }
 
     override toString() {
-        return `@tempo(${this.bpm}, size=${this.size}px${this.fontOverride ? `, font=${quote(this.fontOverride)}` : ""})`;
+        return `@tempo(${this.bpm}, size=${this.size}px${this.fontOverride ? `, font=${quote(this.fontOverride)}` : ""}${this.unit !== 4 ? `, unit=${this.unit}` : ""}${this.dots ? `, dots=${this.dots}` : ""})`;
     }
 }
 
@@ -82,8 +88,8 @@ class TempoTemporalNode extends TemporalNodeBase {
     constructor(ast: TempoFunction) {
         super();
         this.ast = ast;
-        this.glyph = prepareQuarterNote(ast.size);
-        this.text = `= ${ast.bpm}`;
+        this.glyph = prepareQuarterNote(ast.size, ast.unit);
+        this.text = `= ${Math.round(ast.bpm / ((4 / ast.unit) * (2 - 2 ** -ast.dots)) * 100) / 100}`;
         this.style = { fontSize: ast.size, fontFamily: ast.font, fill: "#000" };
         // 非法值不入时间状态，也不告知播放系统，效果是保持上一个速度
         if (Number.isFinite(ast.bpm) && ast.bpm > 0) this.playbackState = { bpm: ast.bpm };
@@ -101,7 +107,7 @@ class TempoTemporalNode extends TemporalNodeBase {
 
         // 符头底端坐在文字基线上；符干比文字高时整块文字下移
         const textTop = Math.max(0, glyph.h - metrics.baseline);
-        this.textX = glyph.w + this.ast.size * 0.26;
+        this.textX = glyph.w + this.ast.size * (0.26 + this.ast.dots * 0.28);
         this.textBaselineY = textTop + metrics.baseline;
         this.glyphY = this.textBaselineY - glyph.h;
 
@@ -122,6 +128,11 @@ class TempoTemporalNode extends TemporalNodeBase {
                 scaleX: this.glyph.scale,
                 scaleY: this.glyph.scale,
             },
+        );
+        for (let dot = 0; dot < this.ast.dots; dot += 1) painter.drawCircle(
+            this.box.x + this.glyph.w + this.ast.size * (0.12 + dot * 0.28),
+            this.box.y + this.textBaselineY - this.ast.size * 0.16,
+            this.ast.size * 0.06, { fill: "#000" },
         );
         painter.drawText(
             this.text,

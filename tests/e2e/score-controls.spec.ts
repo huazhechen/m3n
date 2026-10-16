@@ -4,7 +4,7 @@ async function expectUsableControls(bar: Locator) {
   const issues = await bar.evaluate(element => {
     const bounds = element.getBoundingClientRect()
     const targets = [...new Set([...element.querySelectorAll<HTMLElement>('button, input')].map(control =>
-      control.matches('input[type="radio"], input[role="switch"]') ? control.closest('label')! : control,
+      control.matches('input[type="radio"], input[type="checkbox"], input[role="switch"]') ? control.closest('label')! : control,
     ))].filter(control => control.checkVisibility())
     const issues: string[] = []
     for (const [index, control] of targets.entries()) {
@@ -53,6 +53,7 @@ test('editor and embedded documentation controls fit their own narrow containers
   for (const route of ['/editor', '/docs?doc=guide']) {
     await page.setViewportSize({ width: 320, height: 900 })
     await page.goto(route)
+    if (route === '/editor') await page.getByRole('tab', { name: '预览', exact: true }).click()
     const bar = page.getByRole('group', { name: '乐谱控制', exact: true }).first()
     await expect(bar.getByRole('button', { name: '播放', exact: true })).toBeVisible()
     await expectUsableControls(bar)

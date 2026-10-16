@@ -25,4 +25,6 @@ The comparison base is the unmodified upstream import commit `d7c00a6`. See UPST
 - `@text(...,weight=700)` optionally sets text weight for both measurement and painting, preserving it in serialization. Omitting the option retains regular text and upstream recordings.
 - `@dyn(...,single=true)` permits a short hairpin over one event using native attachment geometry. The upstream default still rejects zero-time intervals. M3N playback continues to use the Verovio timeline.
 
+- `@tempo(...,unit=4,dots=0)` selects the engraved beat unit independently of QPM. Compound meter uses a dotted beat; eighth-note marks include flags. Playback remains in quarter notes.
+
 Local regression tests: test/m3n-wrapping.test.ts and test/m3n-metadata.test.ts. Application semantics and corpus tests live in @m3n/numbered-notation; real browser geometry checks are run by `npm run test:numbered-layout` at the workspace root.

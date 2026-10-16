@@ -25,7 +25,10 @@ describe('M3N analysis', () => {
       expect(scoreMetadataFromSource('lazy', source).title).toBe('Lazy')
       const analysis = analyzeM3N(source)
       expect(analysis.diagnostics).toEqual([])
+      expect(analysis.interaction.sourceMap).toHaveLength(4)
+      expect(analysis.interaction.headerMetadata[0]?.value).toBe('Lazy')
       expect(convert).not.toHaveBeenCalled()
+      expect(analysis.getMei()).toContain('<mei')
       const first = analysis.conversion
       expect(analysis.conversion).toBe(first)
       expect(first.diagnostics).toBe(analysis.diagnostics)

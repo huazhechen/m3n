@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { NotationEditor } from '../components/NotationEditor'
 import { TopNav } from '../components/TopNav'
 import { isLocalScoreId, saveLocalScore } from '../lib/local-scores'
@@ -9,16 +9,19 @@ import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
 
 export function EditorPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const exampleSource: string | undefined = typeof location.state?.exampleSource === 'string' ? location.state.exampleSource : undefined
   const { scoreId } = useParams()
-  const { source, status, error } = useScoreSource(scoreId)
-  if (status !== 'ready') return <main><TopNav /><ScoreLoadStatus status={status} error={error} /></main>
+  const { source, status, error, retry } = useScoreSource(scoreId)
+  if (status !== 'ready') return <main><TopNav /><ScoreLoadStatus status={status} error={error} onRetry={retry} /></main>
 
   return (
     <main>
       <TopNav />
       <NotationEditor
         key={scoreId ?? 'blank-editor'}
-        initialSource={source ?? undefined}
+        initialSource={exampleSource ?? source ?? undefined}
+        draftScope={exampleSource ? `example-${location.key}` : undefined}
         scoreId={scoreId}
         simulatedSubmit={isSimulatedSubmit()}
         onBrowse={async (source) => {

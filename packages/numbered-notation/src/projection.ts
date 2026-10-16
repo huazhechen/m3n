@@ -1,8 +1,13 @@
 import {
-  parseM3NGrace, parseM3NGroupPitches, scoreEventIds,
+  displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreEventIds,
   type ScoreDocument, type ScoreEvent, type ScoreMeasure,
 } from '@m3n/notation'
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
+
+function tempoMark(qpm: number, count: number, unit: number) {
+  const display = displayedTempo(qpm, count, unit)
+  return `@tempo(${qpm},size=16px,font="M3N Numbers",unit=${display.unit},dots=${display.dots})`
+}
 
 export type NumberedNotationDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type EventBinding = {
@@ -94,7 +99,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           if (event.key !== activeKey) { controls.push(`@key(${quote(keyName(event.key))},size=16px)`); activeKey = event.key }
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
-          if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(`@tempo(${event.tempo},size=16px,font="M3N Numbers")`); activeTempo = event.tempo }
+          if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(tempoMark(event.tempo, event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)); activeTempo = event.tempo }
           // Native up members stack from the note outwards. Keep articulations
           // inside ornaments/fingerings, with expression marks outside both.
           const articulations: string[] = [], decorations: string[] = [], expressionMarks: string[] = []
@@ -221,7 +226,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=32px,bottom=32px,left=32px,right=32px,gap=24px,fillRatio=0)`,
-    `@head(center={${[document.title ? `@text(${quote(document.title)},size=32px,align=center)` : '', document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : ''].filter(Boolean).join(' ')}},right={${document.singer || document.composer ? `@text(${quote(document.singer || document.composer)},size=14px)` : ''}},left={{@key(${quote(keyName(document.key))},size=16px) @meter(${document.meterCount},${document.meterUnit},size=18px) ${document.hasExplicitTempo ? `@tempo(${document.tempo},size=16px,font="M3N Numbers")` : ''}}}${document.subtitle ? ',sidebelow=true' : ''}) @br()`,
+    `@head(center={${[document.title ? `@text(${quote(document.title)},size=32px,align=center)` : '', document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : ''].filter(Boolean).join(' ')}},right={${document.singer || document.composer ? `@text(${quote(document.singer || document.composer)},size=14px)` : ''}},left={{@key(${quote(keyName(document.key))},size=16px) @meter(${document.meterCount},${document.meterUnit},size=18px) ${document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : ''}}}${document.subtitle ? ',sidebelow=true' : ''}) @br()`,
   ]
   const parts = [...document.parts.values()].map((part, index) => voicesForPart(part.melody, part.bass, index))
   const intervals = document.intervals.map(interval => ({ ...interval }))

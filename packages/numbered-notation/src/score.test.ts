@@ -37,10 +37,17 @@ const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filt
 
 describe('jpFun numbered notation adapter', () => {
   it('retains extended harmony symbols through the shared domain projection', () => {
-    const { root, score } = render('{key=D}{4/4}\nN: 1 2 3 4 | 5 6 7 1e | 1e 7 6 5 | 4 3 2 1 |||\nC: Imaj7 | Am | G/B | N.C. |')
+    const { root, score } = render('{key=D}{4/4}\nN: 1 2 3 4 | 5 6 7 1e | 1e 7 6 5 | 4 3 2 1 |||\nC: Imaj7 | Dm7 | G/B | N.C. |')
     const labels = [...root.querySelectorAll('text')].map(text => text.textContent).join('')
-    for (const symbol of ['Imaj7', 'Am', 'G/B', 'N.C.']) expect(labels).toContain(symbol)
+    for (const symbol of ['Imaj7', 'Dm7', 'G/B', 'N.C.']) expect(labels).toContain(symbol)
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+  })
+  it('engraves compound tempo with a dotted quarter while retaining QPM in the domain', () => {
+    const { root, document } = render('{6/8}{120qpm}\nN: (1 2 3) (4 5 6) |||')
+    expect(document.tempo).toBe(120)
+    expect([...root.querySelectorAll('text')].some(text => text.textContent === '= 80')).toBe(true)
+    const projected = projectNumberedScore(document, options)
+    expect(projected.source).toContain('@tempo(120,size=16px,font="M3N Numbers",unit=4,dots=1)')
   })
   it('uses the vendored engine and embedded font with stable interactive measure structure', () => {
     const { pages, root } = render('{title=测试曲} {key=D} {3/4} {90qpm}\nN: ||: 1 2 3 | 4 5 6 :|||\nL: 春天来了花开')

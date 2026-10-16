@@ -24,7 +24,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 交互调用方通过 `analyzeM3N` 建立一次分析会话并消费其派生结果，不应在同一次编辑更新中自行重复解析。
 
-分析会话直接提供 `diagnostics`；`conversion` 保持原有访问方式，在首次读取时才生成并缓存 MEI，复用同一份校验结果。元数据提取消费语义文档和诊断，不生成 MEI。初始设置从语法树首音之前的状态指令建立，信息字段仅来自文档首部，注释不参与解析。
+分析会话直接提供 `diagnostics`；`interaction` 独立提供源码映射、歌词分配、页头和低音存在性，不生成 XML。`getMei()` 与兼容的 `conversion` 在首次读取时才生成并缓存 MEI，复用同一份交互数据与校验结果。纯简谱显示不做 MEI 序列化。元数据提取消费语义文档和诊断，不生成 MEI。初始设置从语法树首音之前的状态指令建立，信息字段仅来自文档首部，注释不参与解析。
 
 结构投影、领域 builder 与源码规则复用语法树中的原始 token，保留绝对位置和 CRLF 偏移，不拼接正文后重新分词。`analyzeM3NSnapshot` 返回可结构化克隆的数据；`restoreM3NAnalysis` 恢复延迟转换入口。可编辑页面通过 `useM3NAnalysis` 在模块 Worker 中分析后续输入，一次只运行一个请求并保留最新待处理编辑；过时响应不能替换当前结果。中文组合输入期间保留原预览并暂停分析，等待更新时禁用播放，线程错误有重试入口；只读文档谱例使用同步分析，不为每个示例创建线程。
 
@@ -63,10 +63,13 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
 - `packages/score-renderer/src/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
-- `components/ScoreRenderer.tsx`：组合 MEI 渲染、播放和光标事件。
+- `lib/render-score.ts`：屏幕、打印预览和最终导出的统一排版入口，负责引擎选择、串行调度、取消、分页和 SVG 后处理。
+- `components/ScoreRenderer.tsx`：独立管理布局、播放和光标生命周期；改变版宽或谱式不销毁播放器，更新音乐文档时释放旧播放资源。
 - `components/ScoreControls.tsx`：播放、回到开头与进度常驻；简谱／五线谱直接选择，速度、移调、节拍器与恢复默认收纳在可展开的练习面板中。控制栏按所在容器宽度调整布局，按钮与滑条的触控区域至少 44px；嵌入文档的谱例共用控制栏，练习设置互相独立。
-- `components/ScoreExportDialog.tsx`：导出状态、预览及简谱 SVG / 共用 PNG/PDF 工作流。
-- `components/SourceEditor.tsx`：源码输入与尺寸同步。
+- `components/ScoreExportDialog.tsx`：打印参数、预览与下载状态；两种谱式均提供连续 SVG、PNG 与多页矢量 PDF。打印宽度单独持久化。
+- `lib/vector-export.ts`：把 SVG 文字按字符位置转为 OpenType 字形路径；数字沿用内嵌 Barlow，文字使用按需加载的本地 Noto Serif CJK SC。字形缺失明确报错。
+- `components/SourceEditor.tsx`：CodeMirror 编辑适配，提供高亮、行号、括号匹配、指令补全、历史与范围诊断；领域层不依赖编辑器。
+- `components/EditorSplit.tsx`：手机源码／预览标签切换，桌面拖动及方向键调整分栏，切换保留输入与分析。
 - `pages`：路由级组合，不承载领域算法。
 - `scores/*.m3n`：曲库正文的唯一来源；`tools/score-catalog-plugin.ts` 在构建时生成排序后的虚拟索引，`lib/samples.ts` 只消费索引并按曲目异步加载正文，浏览器不逐首解析内置曲库。`lib/score-order.ts` 按标题拼音或英文字母 A–Z 排序，本地与内置曲目共用该规则。
 - `hooks/useScoreSource.ts`：编辑页、阅读页共用的来源加载与失效请求取消；缺失和失败有明确页面状态，不替换成默认谱。
@@ -84,27 +87,27 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 文档页用稳定的 Markdown 组件及 Context 传播谱式设置，切换时保留已有谱例组件，避免所有谱例重新挂载。加载状态区分资源下载、五线谱引擎初始化、简谱字体准备、排版排队和实际排版。
 
+阅读默认按容器重新排版，保留可读字号；分页的纸张装饰在适应阅读宽度时简化。固定阅读宽度与分页设置仍可选，打印版宽使用单独的 `m3n:print-width`。
+
+练习支持从选中小节首次出现的位置播放、按进度设置 A–B 循环、独立静音旋律与低音、按活跃系统跟随滚动。MEI 明确为两个谱表分配 MIDI 通道 1、2；静音不修改音乐文档。循环在播放器时间轴执行，节拍器随循环跳转同步。
+
+导出字体约 16 MB，只在下载时从本站加载。SVG 和 PDF 的文字转为轮廓以保存中文及字形；文字不再可选择或搜索。PNG 使用相同轮廓生成。字体来源、许可证、校验值与重建脚本见 `public/licenses/noto-serif/`。
+
 `tests/e2e/render-resources.spec.ts` 在阻断所有外站 HTTP 请求的条件下验证显示、切换和播放，检查渲染模块和独立 WASM 各只请求一次、谱例节点保留，以及编辑和版宽变化后的缓存失效。测试附件记录本机冷启动与切换耗时，性能数字不作为设备或网络的固定门槛。
 
 ## 质量门禁
 
-提交前执行 `npm run check`，依次完成 lint、各包严格类型检查、包级与应用级测试、生产构建和端到端测试。测试分三层：
+提交前执行 `npm run check`，依次完成 AST 导入边界检查、lint、各包严格类型检查、包级与应用级测试、生产构建和端到端测试。测试分三层：
 
 1. 基础语法单元测试，覆盖音符、时值、调号和行式歌词、低音对位。
 2. 转换契约测试，覆盖往返、诊断和源码映射。
 3. 全量内置乐谱语料测试，防止真实乐谱在重构后无法转换。
 
-已修复的回归必须先有失败测试。第三方库细节应封装在 feature 或 component 边界，不得渗入 notation 内核。
+`tools/check-boundaries.mjs` 检查静态／动态 import 的包边界、依赖声明与公共入口；notation 类型检查不引入 DOM 库。已修复的回归必须先有失败测试。第三方库细节应封装在 feature 或 component 边界，不得渗入 notation 内核。
 
-## 后续演进
+## 继续维护时的约束
 
-按以下顺序继续，且每一步保持公共转换 API 兼容：
-
-1. `analyzeM3N` 在同一会话中构造语法树、结构投影和 `ScoreDocument`，派生消费者复用该上下文。
-2. `notation/repeats` 通过单一播放计划同时提供演奏顺序和节点轮次。
-3. 文档结构和区间指令规则消费 `M3NSyntaxTree`，节拍、延音和双谱表规则消费 `ScoreDocument`；源码规则直接消费原文 token，诊断内部统一为 `ScoreDiagnostic[]`。
-4. 诊断只使用 `{ code, severity, message, messageArgs, range }`；UI 优先按稳定 code 和参数本地化，并以 `message` 作为未本地化 code 的显示回退。
-5. `typecheck:notation` 已对语法内核、文档结构和 `ScoreDocument` builder 启用 `noUncheckedIndexedAccess`；扩大范围时必须消除真实风险，不使用无依据的非空断言。
-7. Playwright 已覆盖真实浏览器编辑重排、播放/暂停、导出和源码双向定位；继续扩展键盘可访问性及多实例资源销毁场景。
-
-不建议为缩短文件而制造一行转发层；拆分应围绕稳定职责、可独立测试的状态机或第三方适配边界进行。
+- 新语法同时验证领域、MEI 与简谱投影，公共转换 API 保持兼容。
+- 原文只在分析边界分词；元数据、诊断、格式化和交互消费已有模型。不要在界面组件中追加指令正则解释器。
+- 播放顺序及遍次使用 `notation/repeats`；谱式特有的歌词行视觉标签由各适配器维护。
+- 不将 SVG 坐标或具体编辑器对象放进领域模型，不为缩短文件制造单行转发层。

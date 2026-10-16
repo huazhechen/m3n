@@ -1,3 +1,4 @@
+import { deriveScoreInteraction, type ScoreInteraction } from './score-interaction.js'
 import { parseM3NDocument } from '../m3n-direct.js' 
 import { m3nToMei } from '../m3n-mei.js'
 import { projectM3NDocument } from './m3n-document.js'
@@ -14,11 +15,12 @@ export type M3NAnalysisSnapshot = {
   source: string
   syntaxTree: M3NSyntaxTree
   projection: M3NDocumentProjection
+  interaction: ScoreInteraction
   score: ScoreDocument
   diagnostics: ScoreDiagnostic[]
   invalidMeasureIds: string[]
 }
-export type M3NAnalysis = M3NAnalysisSnapshot & { conversion: MeiConversionResult }
+export type M3NAnalysis = M3NAnalysisSnapshot & { conversion: MeiConversionResult; getMei: () => string }
 
 /** Single parse boundary used by interactive consumers and future incremental analysis. */
 export function analyzeM3NSnapshot(source: string): M3NAnalysisSnapshot {
@@ -31,6 +33,7 @@ export function analyzeM3NSnapshot(source: string): M3NAnalysisSnapshot {
     syntaxTree,
     projection,
     score,
+    interaction: deriveScoreInteraction(score),
     diagnostics,
     invalidMeasureIds: invalidMeasureIds(source, score, diagnostics),
   }
@@ -39,11 +42,12 @@ export function analyzeM3NSnapshot(source: string): M3NAnalysisSnapshot {
 /** Restores lazy derived data after a structured-clone/Worker boundary. */
 export function restoreM3NAnalysis(snapshot: M3NAnalysisSnapshot): M3NAnalysis {
   let conversion: MeiConversionResult | undefined
+  const convert = () => conversion ??= m3nToMei(snapshot.source, snapshot.score, snapshot)
   return {
     ...snapshot,
+    getMei: () => convert().mei,
     get conversion() {
-      const { source, score, syntaxTree, projection, diagnostics } = snapshot
-      return conversion ??= m3nToMei(source, score, { syntaxTree, projection, diagnostics })
+      return convert()
     },
   }
 }

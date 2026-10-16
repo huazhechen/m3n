@@ -21,7 +21,7 @@ import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
 export function ScoreReaderPage() {
   const { slug } = useParams()
   const score = presetScores.find((item) => item.slug === slug)
-  const { source: scoreSource, status, error } = useScoreSource(slug)
+  const { source: scoreSource, status, error, retry } = useScoreSource(slug)
   const exportDialogRef = useRef<ScoreExportDialogRef>(null)
   const [exportWidth, setExportWidth] = useState(() => readRendererSetting(
     SCORE_WIDTH_KEY,
@@ -32,9 +32,10 @@ export function ScoreReaderPage() {
   const [exportError, setExportError] = useState('')
   const [numberedNotation, setNumberedNotation] = useState(readNumberedNotation)
   const analysis = useMemo(() => analyzeM3N(scoreSource ?? ''), [scoreSource])
-  const { conversion: result, invalidMeasureIds: invalidMeasures } = analysis
+  const { invalidMeasureIds: invalidMeasures } = analysis
+  const result = { ...analysis.score, ...analysis.interaction, diagnostics: analysis.diagnostics }
 
-  if (status !== 'ready') return <main><TopNav /><ScoreLoadStatus status={status} error={error} /></main>
+  if (status !== 'ready') return <main><TopNav /><ScoreLoadStatus status={status} error={error} onRetry={retry} /></main>
 
   const scoreIndex = score ? presetScores.indexOf(score) : -1
   const previousScore = scoreIndex > 0 ? presetScores[scoreIndex - 1] : undefined
@@ -75,7 +76,7 @@ export function ScoreReaderPage() {
       </div>
       <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
-          mei={result.mei}
+          mei={analysis.getMei}
           scoreDocument={analysis.score}
           headerMetadata={result.headerMetadata}
           sourceMap={result.sourceMap}
@@ -89,7 +90,7 @@ export function ScoreReaderPage() {
         />
         <ScoreExportDialog
           ref={exportDialogRef}
-          mei={result.mei}
+          mei={analysis.getMei}
           scoreDocument={analysis.score}
           numberedNotation={numberedNotation}
           title={result.title}

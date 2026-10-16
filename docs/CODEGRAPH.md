@@ -92,7 +92,7 @@ flowchart LR
   analysis["analyzeM3N"]
   mei["m3n-mei"]
   meiParts["mei-events / mei-layout<br/>mei-document / mei-lyrics"]
-  xml["MEI XML + source map"]
+  xml["MEI XML"]
   format["m3n-format"]
   formatted["formatted M3N"]
 
@@ -102,11 +102,12 @@ flowchart LR
   analysis --> projection
   analysis --> direct
   analysis --> validation
-  analysis --> mei
+  analysis --> interaction["score-interaction / source maps / lyrics"]
+  analysis -. on demand .-> mei
   syntax --> syntaxRules --> diagnostics
   score --> scoreRules --> diagnostics
   score --> validation --> diagnostics
-  score --> mei
+  score --> interaction --> mei
   syntax --> mei
   mei --> meiParts --> xml
   source --> format
@@ -124,8 +125,9 @@ flowchart LR
   document["ScoreDocument"] --> adapter["numbered-notation projection"]
   adapter --> jpfun["jpFun layout / paint"]
   jpfun --> numberedSvg["interactive numbered SVG"]
-  numberedSvg --> screen
-  numberedSvg --> exporter
+  numberedSvg --> renderService["lib/render-score"]
+  renderService --> screen
+  renderService --> exporter
   numberedSvg --> vector["standalone vector SVG"]
   mei["MEI XML"] --> verovio["VerovioScore"]
   scheduler["RenderScheduler"] --> verovio
@@ -141,10 +143,14 @@ flowchart LR
   svg --> header["score-header-svg"]
   header --> exporter["score-export"]
   exporter --> png["PNG"]
-  exporter --> pdf["PDF via jsPDF"]
+  exporter --> outlines["vector-export / local fonts"]
+  outlines --> pdf["vector PDF via svg2pdf / jsPDF"]
+  outlines --> vector
 ```
 
-简谱由独立加载的 jpFun 渲染，事件身份与 MEI 共享 `scoreEventIds`；只有播放时才需要 Verovio。简谱预览与导出共用适配器和内嵌数字字体，PDF 仍通过栅格图像生成。
+简谱由独立加载的 jpFun 渲染，事件身份与 MEI 共享 `scoreEventIds`；只有播放时才需要 Verovio。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
+
+`lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，谱式和宽度切换保留播放状态。
 
 Verovio WASM 的排版任务由 `RenderScheduler` 串行化；`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。播放使用 Verovio 的 MIDI 时间轴，`elementsAtTime` 返回的 ID 直接映射到 SVG DOM。标题信息经共享的 `score-header-svg` 写入五线谱，导出路径复用渲染 SVG。
 

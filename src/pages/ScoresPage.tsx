@@ -1,3 +1,4 @@
+import { recentEdits } from '../lib/recent-edits'
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/notation'
@@ -144,6 +145,12 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
 
 export function ScoresPage() {
   const [query, setQuery] = useState('')
+  const [origin, setOrigin] = useState('all')
+  const [keyFilter, setKeyFilter] = useState('')
+  const [meterFilter, setMeterFilter] = useState('')
+  const [property, setProperty] = useState('')
+  const [compact, setCompact] = useState(false)
+  const [recent] = useState(recentEdits)
   const [localScores, setLocalScores] = useState<LocalScore[]>(() => listLocalScores())
   const normalizedQuery = query.toLocaleLowerCase('zh-Hans-CN').replace(/\s+/g, ' ').trim()
   const cards = useMemo(() => {
@@ -156,8 +163,12 @@ export function ScoresPage() {
     return sortScoresByTitle([...locals, ...presetScores.map(presetCardData)])
   }, [localScores])
   const scores = useMemo(
-    () => cards.filter((card) => card.searchText.includes(normalizedQuery)),
-    [cards, normalizedQuery],
+    () => cards.filter(card => card.searchText.includes(normalizedQuery)
+      && (origin === 'all' || card.isLocal === (origin === 'local'))
+      && (!keyFilter || card.keySignature === keyFilter)
+      && (!meterFilter || card.timeSignature === meterFilter)
+      && (!property || (property === 'lyrics' ? card.hasLyrics : card.hasBass))),
+    [cards, normalizedQuery, origin, keyFilter, meterFilter, property],
   )
   useEffect(() => {
     setLocalScores(listLocalScores())
@@ -181,10 +192,19 @@ export function ScoresPage() {
             />
           </label>
         </section>
+        <div className="library-filters">
+          <label>来源 <select aria-label="乐谱来源" value={origin} onChange={event => setOrigin(event.currentTarget.value)}><option value="all">全部</option><option value="local">本地作品</option><option value="preset">内置曲库</option></select></label>
+          <label>调号 <select aria-label="筛选调号" value={keyFilter} onChange={event => setKeyFilter(event.currentTarget.value)}><option value="">全部</option>{[...new Set(cards.map(card => card.keySignature))].sort().map(value => <option key={value}>{value}</option>)}</select></label>
+          <label>拍号 <select aria-label="筛选拍号" value={meterFilter} onChange={event => setMeterFilter(event.currentTarget.value)}><option value="">全部</option>{[...new Set(cards.map(card => card.timeSignature))].sort().map(value => <option key={value}>{value}</option>)}</select></label>
+          <label>配置 <select aria-label="筛选音乐配置" value={property} onChange={event => setProperty(event.currentTarget.value)}><option value="">全部</option><option value="lyrics">有歌词</option><option value="bass">有低音</option></select></label>
+          <button type="button" className="action-button" aria-pressed={compact} onClick={() => setCompact(!compact)}>紧凑列表</button>
+          <output aria-live="polite">{scores.length} 首</output>
+        </div>
+        {recent.length > 0 && <nav className="recent-edits" aria-label="最近编辑"><strong>最近编辑</strong>{recent.map(item => <Link key={item.id} to={item.id ? `/editor/${item.id}` : '/editor'}>{item.title}</Link>)}</nav>}
         {scores.length === 0 && (
           <p className="search-empty">没有找到匹配的乐谱。</p>
         )}
-        <div className="score-list">
+        <div className={`score-list${compact ? ' is-compact-list' : ''}`}>
           {scores.map((card) => {
             const { key, ...cardProps } = card
             return <ScoreCard key={key} {...cardProps} />

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { analyzeM3N, formatScoreDiagnostic } from '@m3n/notation'
+import { formatScoreDiagnostic } from '@m3n/notation'
+import { useM3NAnalysis } from '../hooks/useM3NAnalysis'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import { SourceEditor } from '../components/SourceEditor'
 import { happi123ToM3N } from '../lib/happi123-m3n'
@@ -10,7 +11,8 @@ export function ConverterPage() {
   const [source, setSource] = useState(sample)
   const [isResultOpen, setIsResultOpen] = useState(false)
   const result = useMemo(() => happi123ToM3N(source), [source])
-  const analysis = useMemo(() => analyzeM3N(result.output), [result.output])
+  const [isComposing, setIsComposing] = useState(false)
+  const { analysis, isAnalyzing, error, retry } = useM3NAnalysis(result.output, { suspended: isComposing })
 
   const copyResult = async () => {
     await navigator.clipboard.writeText(result.output)
@@ -30,18 +32,22 @@ export function ConverterPage() {
         </header>
         <div className="editor-body">
           <SourceEditor
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
             value={source}
             ariaLabel="Happi123 source"
-            onChange={(event) => setSource(event.currentTarget.value)}
+            onChange={setSource}
           />
           {result.diagnosticDetails.length > 0 && <ul className="diagnostics editor-source-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
           <ScoreRenderer
-            mei={analysis.conversion.mei}
+            mei={analysis.getMei}
+            isSourceUpdating={isAnalyzing}
             scoreDocument={analysis.score}
-            headerMetadata={analysis.conversion.headerMetadata}
-            sourceMap={analysis.conversion.sourceMap}
+            headerMetadata={analysis.interaction.headerMetadata}
+            sourceMap={analysis.interaction.sourceMap}
           />
-          {analysis.conversion.diagnostics.length > 0 && <ul className="diagnostics editor-render-diagnostics">{analysis.conversion.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
+          {error && <p role="alert">{error} <button type="button" onClick={retry}>重试分析</button></p>}
+          {analysis.diagnostics.length > 0 && <ul className="diagnostics editor-render-diagnostics">{analysis.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
         </div>
       </div>
       {isResultOpen && (
