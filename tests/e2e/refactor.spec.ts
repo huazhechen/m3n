@@ -103,7 +103,16 @@ test('staff SVG and multipage PDF retain Chinese outlines and all written measur
     await dialog.getByRole('spinbutton', { name: '打印宽度' }).fill('600')
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
     const count = await dialog.locator('.export-preview-page').count()
-    if (format.startsWith('PDF')) expect(count).toBeGreaterThan(1)
+    if (format.startsWith('PDF')) {
+      expect(count).toBeGreaterThan(1)
+      // Portable nested viewports are required on every page, including pages
+      // without a header; svg2pdf cannot infer Verovio's implicit percentages.
+      const portable = await dialog.locator('.export-preview-page > svg').evaluateAll(pages => pages.every(page => {
+        const definition = page.querySelector(':scope > svg.definition-scale')
+        return definition && Number(definition.getAttribute('width')) > 500 && Number(definition.getAttribute('height')) > 500
+      }))
+      expect(portable).toBe(true)
+    }
     const downloading = page.waitForEvent('download')
     await dialog.getByRole('button', { name: '确认并下载' }).click()
     const download = await downloading

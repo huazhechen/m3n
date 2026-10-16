@@ -51,6 +51,17 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
         }
         check()
         target.innerHTML = pages.join('')
+        // Verovio leaves nested SVG dimensions implicit. PDF renderers resolve
+        // percentages against their output viewport rather than this viewBox.
+        // Explicit dimensions keep all pages at the same musical scale.
+        for (const page of target.querySelectorAll<SVGSVGElement>(':scope > svg')) {
+          const definition = page.querySelector<SVGSVGElement>(':scope > svg.definition-scale')
+          if (definition) {
+            definition.setAttribute('x', '0'); definition.setAttribute('y', '0')
+            definition.setAttribute('width', String(page.viewBox.baseVal.width))
+            definition.setAttribute('height', String(page.viewBox.baseVal.height))
+          }
+        }
         addScoreHeaderToPaper(target, input.headerMetadata)
         resolveLyricCollisions(target)
         avoidLabelCollisions(target)
