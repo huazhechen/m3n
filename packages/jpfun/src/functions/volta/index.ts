@@ -1,3 +1,4 @@
+// M3N modification: clear decorations on the closing bar reached by the volta bracket.
 import type {
     AttachmentLayoutContext,
     LayoutAttachment,
@@ -171,6 +172,9 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
 
         const firstLine = head.layoutLine;
         const lastLine = tail.layoutLine;
+        // The bracket reaches the closing bar, whose navigation marks can
+        // extend above the notes. Include it only on the same line.
+        const rangeEnd = rightBar?.layoutLine === lastLine ? rightBar : tail;
 
         const size = this.ast.size;
         const style: TextStyle = {
@@ -195,7 +199,7 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
             let hostTop = Infinity;
             const extents = line !== firstLine && line !== lastLine
                 ? context.getRangeExtents(line)
-                : context.getRangeExtents(line, [head, tail]);
+                : context.getRangeExtents(line, [head, rangeEnd]);
             for (const [track, extent] of extents) {
                 const y = context.getVisualAxis(line, track) + extent.top;
                 if (y < hostTop) {

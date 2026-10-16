@@ -233,6 +233,21 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.body.textContent).toContain('Fine')
   })
 
+  it.each([320, 600, 800, 1000])('clears the final D.S. below Andy’s last volta at width %s', width => {
+    const document = parseM3NDocument(readFileSync(resolve(process.cwd(), '../../src/scores/andy_01.m3n'), 'utf8'))
+    for (const paged of [false, true]) {
+      const projection = projectNumberedScore(document, { width, paged })
+      const { layout } = compileScore(projection.source, { autoWrap: true })
+      const house = layout.attachments.filter(attachment => attachment.sourceSpan
+        && projection.source.slice(attachment.sourceSpan.start).startsWith('@volta(')).at(-1)!
+      const bar = layout.objects.at(-1)!
+      expect(projection.source.slice(bar.ast.sourceSpan.start, bar.ast.sourceSpan.end)).toContain('@symbol(ds,')
+      const end = house.regions.at(-1)!
+      expect(end.line).toBe(bar.layoutLine)
+      expect(end.y + end.h).toBeLessThan(bar.box.y)
+    }
+  })
+
   it.each([320, 800])('renders an internal opening repeat once, with its following measure at width %s', width => {
     const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | {br} ||: 5 6 7 1e :|||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 :|||')
     const result = geometry(document, { width, paged: false })

@@ -338,6 +338,23 @@ test("括线高度只看房子覆盖的列", () => {
     assert(inside > plain + 1, `区间内的高标记应把括线顶上去，${inside} vs ${plain}`);
 });
 
+test("房子括线和末端下折避让边界小节线上的导航记号", () => {
+    for (const mark of ["ds", "dc", "fine"]) {
+        for (const split of ["", "@br() "]) {
+            const layout = layoutOf(`|: 1@a ${split} 2@b @up({:|},@symbol(${mark},size=16px)) @volta(a,b,1)`);
+            const house = layout.attachments[0];
+            const end = house.regions.at(-1)!;
+            const bar = layout.objects.at(-1)!;
+            const top = attachmentCommands(house).filter(command => command.kind === "line")
+                .filter(command => nearly(command.y1, command.y2)).at(-1)!;
+            assert(nearly(top.x2, bar.box.x + bar.box.anchor),
+                "the volta must still reach the closing bar");
+            assert(end.y + end.h < bar.box.y,
+                `${mark} must remain below both the bracket and its closing hook`);
+        }
+    }
+});
+
 test("房子画出上方括线、两端下折和遍数标签", () => {
     const layout = layoutOf(`|: 1 2@a :| 3@b || @volta(a, a, 1) @volta(b, b, 2)`);
     assert(layout.attachments.length === 2, `两个房子各产生一条括线，实际 ${layout.attachments.length}`);
