@@ -174,6 +174,47 @@ describe('jpFun numbered notation adapter', () => {
     expect(hairpin.endPoints.map(node => node.t.toNumber())).toEqual([0, 3])
   })
 
+  it.each([
+    ['two-beat notes', '{2/4}\nN: 6^~ | 6^ |||', 'note'],
+    ['four-beat notes across an explicit break', '{4/4}\nN: 6^^^~ | {br}6^^^ |||', 'note'],
+    ['a decorated sustained note', '{2/4}\nN: 6e^~{fermata} | 6e^ |||', 'up'],
+    ['a tuplet ending in a rest', '{2/4}\nN: [660:2]~ | 6^ |||', 'note'],
+  ])('anchors sustained-note ties on the pitched glyph: %s', (_name, source, kind) => {
+    const document = parseM3NDocument(source)
+    const events = [...document.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events))
+    for (const width of [320, 800]) for (const paged of [false, true]) {
+      const projection = projectNumberedScore(document, { width, paged })
+      const result = geometry(document, { width, paged })
+      const tie = result.lowering.attachments.find(attachment => 'endPoints' in attachment) as unknown as { endPoints: VisualTemporalNode[] }
+      const start = tie.endPoints[0]!
+      const ast = start.ast as ASTFunctionNode
+      const event = events[0]!
+      const binding = [...projection.bindings.values()].find(binding => binding.event === event && binding.slot === (event.tieFromTupletIndex ?? 0))!
+      expect(ast.callName).toBe(kind)
+      expect(ast.labelable?.()?.label).toBe(binding.label)
+      expect(mainPitches(start).map(pitch => pitch.name)).toEqual(['6'])
+    }
+  })
+
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('starts Andy’s 明白 tie on 6 instead of the sustain dash at width $width, paged=$paged', ({ width, paged }) => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/andy_01.m3n'), 'utf8')
+    const { root, document } = render(source, { width, paged })
+    const event = [...document.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events))
+      .find(event => event.sourceStart === source.indexOf('6^~ | 6^'))!
+    const id = scoreEventIds(document).get(event)!
+    expect(lyrics(root, id)).toBe('白')
+    const result = geometry(document, { width, paged })
+    const projection = projectNumberedScore(document, { width, paged })
+    const labels = [...projection.bindings.values()].filter(binding => binding.event === event).map(binding => binding.label)
+    const tie = (result.lowering.attachments as unknown as { endPoints?: VisualTemporalNode[] }[])
+      .find(attachment => attachment.endPoints?.some(node => labels.includes((node.ast as ASTFunctionNode).labelable?.()?.label ?? '')))!
+    const start = tie.endPoints![0]!
+    const ast = start.ast as ASTFunctionNode
+    expect(ast.labelable?.()?.label).toBe(labels[0])
+    expect(ast.callName).toBe('note')
+    expect(mainPitches(start).map(pitch => pitch.name)).toEqual(['6'])
+  })
+
   it('preserves underlined lyric groups without underlining neighboring syllables', () => {
     const { root } = render('{4/4}\nN: 1 2 3 4 |||\nL: (起来，)春(天里)好')
     const groups = [...root.querySelectorAll('text[data-m3n-underlined="true"]')]

@@ -171,8 +171,10 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             lasts.set(measureIndex, last)
             if (previousTied) {
               const endpoints = endpointLabels.get(previousTied)
+              // A sustain dash extends the duration, but the tie starts on the
+              // pitched glyph. Tuplets still select their last pitched child.
               const start = previousTied.tieFromTupletIndex === undefined
-                ? previousTied.kind === 'chord' ? endpoints?.first : endpoints?.last
+                ? endpoints?.first
                 : endpoints?.children[previousTied.tieFromTupletIndex]
               if (start) relations.push(`@tie(${start},${first})`)
             }
