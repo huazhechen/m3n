@@ -621,7 +621,21 @@ export function ScoreRenderer({
             <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
           </div>
           <div className="renderer-settings-body">
-            <label className="renderer-settings-row"><span>适应阅读宽度</span><input type="checkbox" checked={fitWidth} onChange={event => { setFitWidth(event.currentTarget.checked); writeRendererSetting('m3n:fit-width', event.currentTarget.checked ? 1 : 0) }} /></label>
+            <label className="renderer-settings-switch">
+              <span>适应阅读宽度</span>
+              <span className="switch-control">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  aria-label="适应阅读宽度"
+                  checked={fitWidth}
+                  onChange={event => { setFitWidth(event.currentTarget.checked); writeRendererSetting('m3n:fit-width', event.currentTarget.checked ? 1 : 0) }}
+                />
+                <span className="switch-track" aria-hidden="true">
+                  <span className="switch-thumb" />
+                </span>
+              </span>
+            </label>
             <div className="renderer-settings-row">
               <span>乐谱宽度</span>
               <input
