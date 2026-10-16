@@ -1,5 +1,5 @@
 import type { VerovioScore, SpessaPlayer } from '@m3n/score-renderer'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MeiSourceMapRange, ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_SPEED,
@@ -55,7 +55,7 @@ type ScoreRendererProps = {
   onPaperBlur?: () => void
 }
 
-type RenderPhase = 'loading-library' | 'waiting-layout' | 'layout'
+type RenderPhase = 'loading-library' | 'initializing-engine' | 'loading-fonts' | 'waiting-layout' | 'layout'
 
 const EMPTY_INVALID_MEASURE_IDS: string[] = []
 function playbackCountInBeats(scoreDocument: ScoreDocument | undefined) {
@@ -221,6 +221,9 @@ export function ScoreRenderer({
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
   const renderWidth = compact ? Math.max(SCORE_WIDTH_MIN, staffWidth || layoutWidth) : layoutWidth
+  // At most one snapshot per notation, scoped to the current score and layout settings.
+  const renderCache = useMemo(() => new Map<boolean, { markup: string; message: string }>(),
+    [compact, headerMetadata, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument])
 
   useEffect(() => {
     if (!compact) return
@@ -265,8 +268,19 @@ export function ScoreRenderer({
 
     void (async () => {
       try {
+        const cached = renderCache.get(numberedNotation)
+        paper.dataset.renderCache = cached ? 'hit' : 'miss'
+        if (cached) {
+          paper.innerHTML = cached.markup
+          setMessage(cached.message)
+          hasRenderedRef.current = true
+          setHasAudioControls(true)
+          return
+        }
         if (numberedNotation && scoreDocument) {
           const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
+          if (cancelled) return
+          if (isInitialRender) setRenderPhase('loading-fonts')
           await prepareNumberedNotationFonts()
           if (cancelled) return
           if (isInitialRender) setRenderPhase('layout')
@@ -275,12 +289,16 @@ export function ScoreRenderer({
           addInvalidMeasureHighlights(paper, invalidMeasureIds)
           if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
           const unsupported = numbered.diagnostics.filter(item => item.code.startsWith('NUMBERED_'))
-          if (unsupported.length) setMessage([...new Set(unsupported.map(item => item.message))].join('；'))
+          const message = [...new Set(unsupported.map(item => item.message))].join('；')
+          setMessage(message)
+          renderCache.set(numberedNotation, { markup: paper.innerHTML, message })
           hasRenderedRef.current = true
           setHasAudioControls(true)
           return
         }
         const { VerovioScore } = await import('@m3n/score-renderer/verovio')
+        if (cancelled) return
+        if (isInitialRender) setRenderPhase('initializing-engine')
         const score = await VerovioScore.create(mei)
         if (cancelled) { score.destroy(); return }
         scoreRef.current = score
@@ -318,6 +336,7 @@ export function ScoreRenderer({
                   addInvalidMeasureHighlights(paper, invalidMeasureIds)
                   if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
                   avoidLabelCollisions(paper)
+                  renderCache.set(numberedNotation, { markup: paper.innerHTML, message: '' })
                   hasRenderedRef.current = true
                   setHasAudioControls(true)
                   resolve()
@@ -350,7 +369,7 @@ export function ScoreRenderer({
       scoreRef.current?.destroy()
       scoreRef.current = null
     }
-  }, [compact, headerMetadata, invalidMeasureIds, mei, numberedNotation, onActiveXmlId, renderMode, renderWidth, scoreDocument])
+  }, [compact, headerMetadata, invalidMeasureIds, mei, numberedNotation, onActiveXmlId, renderCache, renderMode, renderWidth, scoreDocument])
 
   useEffect(() => {
     const paper = paperRef.current

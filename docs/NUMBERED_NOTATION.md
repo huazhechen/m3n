@@ -13,7 +13,9 @@ const pages = score.render({ width: 800, paged: true, includeBass: true })
 
 唯一音乐输入是 `ScoreDocument`；适配器不读取 `document.source`、MEI、Verovio SVG 或 MIDI。`projection.ts` 负责领域语义到 jpFun 脚本的投影，`lyrics.ts` 负责歌词槽位与遍次，`svg.ts` 只添加交互分组和属性，不移动或重新绘制音符与关系线。
 
-简谱显示与导出不初始化 Verovio。播放时才按需加载 Verovio 与 SpessaSynth，继续沿用现有 MIDI、反复与导航时间轴。`@m3n/score-renderer/view` 提供轻量页面工具，`/verovio` 和 `/player` 是独立的动态入口；生产打包不再把 Vite 的共享加载助手放入手工指定的 Verovio 块。
+简谱显示与导出不初始化 Verovio。播放时才按需加载 Verovio 与 SpessaSynth，继续沿用现有 MIDI、反复与导航时间轴。`@m3n/score-renderer/view` 提供轻量页面工具，`/verovio` 和 `/player` 是独立的动态入口；生产打包不再把 Vite 的共享加载助手放入手工指定的 Verovio 块。渲染库、WASM、字体和音源必须来自本站构建产物，禁止使用第三方运行时资源外链。
+
+应用为当前输入与布局设置分别缓存简谱和五线谱快照，重复切换可直接恢复；修改乐谱、版宽或分页等设置会使缓存失效。文档页切换通过 Context 更新谱例，保留已有组件。
 
 `scoreEventIds(document)` 是 MEI 与简谱共享的事件身份映射。唯一 DOM `id` 与可以重复的 `data-m3n-id` 分开：连音组子音符、长音增时线和长休止保留父事件身份，各自拥有唯一的可视 ID。小节跨系统或跨页时保留逻辑小节 ID，避免重复 DOM ID。歌词另带 `data-m3n-rendition` 和 `data-m3n-passes`，支持点击定位与反复遍次高亮。低音谱表共享旋律的反复小节线，避免并行声部的锚点错位。
 

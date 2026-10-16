@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, FocusEvent, ReactElement, ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -21,6 +21,20 @@ type DocumentGroup = DocumentSource & {
 
 type MarkdownBookProps = {
   documents: DocumentSource[]
+}
+
+type DocumentNotation = { enabled: boolean; onChange: (enabled: boolean) => void }
+const DocumentNotationContext = createContext<DocumentNotation | null>(null)
+
+// Keep the renderer component identity stable when the shared notation changes.
+function MarkdownCode(props: ComponentPropsWithoutRef<'code'>) {
+  const notation = useContext(DocumentNotationContext)
+  const className = props.className ?? ''
+  const value = String(props.children ?? '').replace(/\n$/, '')
+  if (className.includes('language-m3n')) {
+    return <NotationEditor embedded initialSource={value} numberedNotation={notation?.enabled} onNumberedNotationChange={notation?.onChange} />
+  }
+  return <code className={className}>{props.children}</code>
 }
 
 function isCodeChild(node: ReactNode, language: string) {
@@ -188,6 +202,8 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     writeNumberedNotation(enabled)
   }, [])
 
+  const notationContext = useMemo(() => ({ enabled: numberedNotation, onChange: changeNumberedNotation }), [numberedNotation, changeNumberedNotation])
+
   const markdownComponents = useMemo(() => ({
     h2(props: ComponentPropsWithoutRef<'h2'>) {
       const title = String(props.children ?? '')
@@ -205,21 +221,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       }
       return <pre>{props.children}</pre>
     },
-    code(props: ComponentPropsWithoutRef<'code'>) {
-      const className = props.className ?? ''
-      const value = String(props.children ?? '').replace(/\n$/, '')
-      if (className.includes('language-m3n')) {
-        return (
-          <NotationEditor
-            embedded
-            initialSource={value}
-            numberedNotation={numberedNotation}
-            onNumberedNotationChange={changeNumberedNotation}
-          />
-        )
-      }
-      return <code className={className}>{props.children}</code>
-    },
+    code: MarkdownCode,
     a(props: ComponentPropsWithoutRef<'a'>) {
       const href = props.href ?? ''
       return (
@@ -233,7 +235,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
         />
       )
     },
-  }), [activeDocumentHeadings, changeNumberedNotation, numberedNotation, selectMarkdownLink])
+  }), [activeDocumentHeadings, selectMarkdownLink])
 
   if (!activeDocument) {
     return null
@@ -318,12 +320,14 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
             </span>
           </label>
         </div>
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={markdownComponents}
-        >
-          {escapeTableCodePipes(activeDocument.source)}
-        </ReactMarkdown>
+        <DocumentNotationContext.Provider value={notationContext}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={markdownComponents}
+          >
+            {escapeTableCodePipes(activeDocument.source)}
+          </ReactMarkdown>
+        </DocumentNotationContext.Provider>
         <button
           ref={tocToggleRef}
           type="button"
