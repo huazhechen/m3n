@@ -9,7 +9,11 @@ function number(value: number) {
 }
 
 export function headerMarkup(metadata: readonly ScoreHeaderMetadata[], width: number) {
-  const layout = scoreHeaderLayout(metadata, width)
+  const context = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d')
+  const layout = scoreHeaderLayout(metadata, width, context ? (text, size, font) => {
+    context.font = `${size}px ${font}`
+    return context.measureText(text).width
+  } : undefined)
   const lines = layout.lines.map((line) => (
     `<text x="${number(line.x)}" y="${number(line.y)}"${line.anchor === undefined ? '' : ` text-anchor="${line.anchor}"`} fill="${line.fill}" font-family="${line.font}" font-size="${line.size}" font-weight="${line.bold ? '700' : '400'}">${escapeXml(line.value)}</text>`
   ))

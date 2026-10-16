@@ -241,7 +241,15 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     document.title ? `@text(${quote(document.title)},size=32px,align=center)` : '',
     document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : '',
   ].filter(Boolean).join(' ')
-  const credits = scoreCreditLines(document).map(value => `@text(${quote(value)},size=14px,align=right)`).join(' ')
+  const creditLines = scoreCreditLines(document).map(line => {
+    const colon = line.indexOf('：')
+    return { label: line.slice(0, colon + 1), name: line.slice(colon + 1) }
+  })
+  // Two native multiline text cells share their measured maximum widths.
+  const credits = creditLines.length ? `{${[
+    `@text(${quote(creditLines.map(credit => credit.label).join('\n'))},size=14px,lineheight=1.5,align=left)`,
+    `@text(${quote(creditLines.map(credit => credit.name).join('\n'))},size=14px,lineheight=1.5,align=right)`,
+  ].join(' ')}}` : ''
   const signatures = [
     `@key(${quote(keyName(document.key))},size=16px)`,
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,

@@ -699,7 +699,12 @@ describe('jpFun numbered notation adapter', () => {
 
   it('labels all declared credits and rejects invalid widths', () => {
     const { root } = render('{title=曲名} {singer=演唱者} {composer=创作者} {lyricist=创作者} {arranger=编曲者} {4/4}\nN: 1 2 3 4 |||')
-    for (const credit of ['作词：创作者', '作曲：创作者', '编曲：编曲者', '演唱：演唱者']) expect(root.body.textContent).toContain(credit)
+    const texts = [...root.querySelectorAll('text')]
+    for (const [label, name] of [['作词：', '创作者'], ['作曲：', '创作者'], ['编曲：', '编曲者'], ['演唱：', '演唱者']]) {
+      const role = texts.find(text => text.textContent === label)!
+      expect(role).toBeDefined()
+      expect(texts.some(text => text.textContent === name && text.getAttribute('y') === role.getAttribute('y'))).toBe(true)
+    }
     expect(() => render('{4/4}\nN: 1 2 3 4 |||', { width: NaN })).toThrow()
   })
 
@@ -713,11 +718,16 @@ describe('jpFun numbered notation adapter', () => {
         const before = controls[index - 1]!.box, after = controls[index]!.box
         expect(after.x - before.x - before.w).toBeCloseTo(16)
       }
-      const credits = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode && 'lines' in node.ast
+      const labels = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode && 'lines' in node.ast
         && /^(作词|作曲|编曲|演唱)：/.test((node.ast.lines as string[])[0]!))
-      expect(credits).toHaveLength(4)
-      for (const credit of credits) {
-        expect(credit.box.x + credit.box.w).toBeCloseTo(width - 32)
+      expect(labels).toHaveLength(1)
+      const names = result.layout.objects.find(node => node.ast instanceof ASTFunctionNode && 'lines' in node.ast
+        && (node.ast.lines as string[])[0] === '施人诚')!
+      expect(names).toBeDefined()
+      expect(names.box.x + names.box.w).toBeCloseTo(width - 32)
+      expect(names.box.x - labels[0]!.box.x - labels[0]!.box.w).toBeCloseTo(16)
+      expect(names.box.y).toBeCloseTo(labels[0]!.box.y)
+      for (const credit of [...labels, names]) {
         if (width === 320) for (const control of controls) expect(control.box.y).toBeGreaterThan(credit.box.y + credit.box.h)
       }
     }

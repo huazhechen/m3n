@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest' 
-import { m3nToMei } from '@m3n/notation'
+import { m3nToMei, scoreHeaderLayout } from '@m3n/notation'
 import { scoreHeaderHeight, withScoreHeader } from './score-header-svg'
 
 describe('score SVG header', () => {
@@ -32,13 +32,23 @@ describe('score SVG header', () => {
   })
 
   it('includes each labelled credit on its own row in staff SVG exports', () => {
-    const { headerMetadata } = m3nToMei('{title=曲名}{subtitle=副标题}{lyricist=词作者}{composer=曲作者}{arranger=编曲者}{singer=演唱者}\n1--- |||')
+    const { headerMetadata } = m3nToMei('{title=曲名}{subtitle=副标题}{lyricist=词作者}{composer=较长的曲作者}{arranger=编曲者}{singer=演唱者}\n1--- |||')
     for (const width of [320, 800]) {
       const svg = withScoreHeader(`<svg viewBox="0 0 ${width} 100"><svg class="definition-scale"></svg></svg>`, headerMetadata)
       const lines = [...svg.matchAll(/<text[^>]*y="([\d.]+)"[^>]*>([^<]*)<\/text>/g)]
-      expect(lines.map(line => line[2])).toEqual(['曲名', '副标题', '作词：词作者', '作曲：曲作者', '编曲：编曲者', '演唱：演唱者'])
+      expect(lines.map(line => line[2])).toEqual(['曲名', '副标题', '作词：', '词作者', '作曲：', '较长的曲作者', '编曲：', '编曲者', '演唱：', '演唱者'])
       const baselines = lines.map(line => Number(line[1]))
-      expect(baselines.every((y, index) => index === 0 || y > baselines[index - 1]!)).toBe(true)
+      expect(baselines[1]).toBeGreaterThan(baselines[0]!)
+      for (let index = 2; index < baselines.length; index += 2) {
+        expect(baselines[index]).toBeGreaterThan(baselines[index - 1]!)
+        expect(baselines[index + 1]).toBe(baselines[index])
+      }
+      const layout = scoreHeaderLayout(headerMetadata, width, text => text.length * 10)
+      const labels = layout.lines.filter(line => /^(作词|作曲|编曲|演唱)：$/.test(line.value))
+      const names = layout.lines.filter(line => line.anchor === 'end')
+      expect(new Set(labels.map(line => line.x)).size).toBe(1)
+      expect(new Set(names.map(line => line.x))).toEqual(new Set([width - 28]))
+      expect(names[0]!.x - 6 * 10 - labels[0]!.x - 3 * 10).toBe(16)
       expect(svg).toContain(`y="${scoreHeaderHeight(headerMetadata)}" width="${width}" height="100"`)
       expect(svg).toContain('text-anchor="end"')
     }
