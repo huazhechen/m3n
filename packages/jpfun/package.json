@@ -1,0 +1,28 @@
+{
+  "name": "@m3n/jpfun",
+  "version": "0.6.0-m3n.1",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "LICENSE",
+    "UPSTREAM.md",
+    "CHANGES.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test \"test/*.test.ts\""
+  },
+  "devDependencies": {
+    "@xmldom/xmldom": "^0.9.12"
+  }
+}

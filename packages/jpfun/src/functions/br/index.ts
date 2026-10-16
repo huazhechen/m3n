@@ -1,0 +1,99 @@
+import { ASTNodeBase, FunctionArgs, SourceSpan, ASTFunctionNode, ASTFunctionClass } from "../ASTtypes.js";
+import { ParserContext, skipSpaces, skipSpacesBack } from "../../parser/parserContext.js";
+import { TemporalNodeBase } from "../temporal.js";
+import type { LoweringResult } from "../../lowering/types.js";
+import { GrammarCallNodeTyped } from "../../parser/grammarType.js";
+import { Diagnostic, WarningDiagnostic } from "../../diagnostic.js";
+import { Fraction } from "../../fraction.js";
+
+class BrFunction extends ASTFunctionNode {
+    static override def = {
+        name: ["br"],
+        description: "换行",
+        details: `\
+~~~jpfun
+1 2 @br() 3 4
+~~~
+
+\`@br()\` 换到下一行，\`@br(2)\` 空出一行再继续
+
+**简写**：仅在顶层，连续至少两个换行表示换行`,
+        allowExtraArgs: false,
+        args: [
+            {
+                name: "offset",
+                description: "后续内容偏移的谱面行数，2 表示空出一行再继续",
+                type: "number" as const,
+                default: 1,
+            },
+        ],
+    };
+
+    static override deSugarAtom(source: string, start: number, end: number, depth: number) {
+        if (depth > 0) return null;  // 语法糖只在顶层生效
+        if (source[start] !== '\n') return null;
+        // 前一个 \n 必须留在 nodes 里，否则顶层 voice 后的 \n\n 会被吸进 voice 的 children
+        if (source[skipSpacesBack(source, start - 1)] !== '\n') return null;
+        let next = start + 1, p = next;
+        while ((p = skipSpaces(source, p, end)) < end && source[p] === '\n') next = ++p;
+        const node: GrammarCallNodeTyped = {
+            kind: "call",
+            typed: true,
+            name: "br",
+            args: new Map(),
+            span: { start, end: next },
+        };
+        return { next, node };
+    }
+
+    readonly offset: number;
+
+    override loweringEnter() {
+        const br = new TemporalNodeBase();
+        br.ast = this;
+        br.mergeKey = -1;
+        br.addon = { breakBefore: this.offset };
+        return [br];
+    }
+
+    /**
+     * 换行与换页共享校验；边界会切开全谱，不能截断持续事件
+     */
+    static override loweringFinalize = (result: LoweringResult) => {
+        const latestEnd = new Fraction();
+        const candidateEnd = new Fraction();
+        let latestNode: TemporalNodeBase | null = null;
+
+        for (const column of result.columns) {
+            if (latestNode && latestEnd.compare(column[0].t) > 0 && column.some(node => (node.addon?.breakBefore ?? 0) > 0)) {
+                throw Diagnostic.error.BreakInsideEvent(latestNode.ast.sourceSpan);
+            }
+
+            for (const node of column) {
+                if (node.T.isZero()) continue;
+                candidateEnd.copyFrom(node.t).add(node.T);
+                if (!latestNode || candidateEnd.compare(latestEnd) > 0) {
+                    latestEnd.copyFrom(candidateEnd);
+                    latestNode = node;
+                }
+            }
+        }
+    };
+
+    constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
+        super(span, parent);
+        const [offset] = this.getArgValue(args, ctx) as [number];
+        this.offset = Number.isFinite(offset) ? Math.max(1, Math.floor(offset)) : 1;
+        if (this.offset !== offset) {
+            ctx.diagnostics.push(new WarningDiagnostic(
+                "W_BR_OFFSET",
+                `@br 的 offset 必须是大于等于 1 的整数，已被修正为 ${this.offset}`,
+                this.sourceSpan
+            ));
+        }
+    }
+
+    override toString() { return `@br(${this.offset})`; }
+}
+
+export const BrNode: ASTFunctionClass = BrFunction;

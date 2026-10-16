@@ -1,0 +1,184 @@
+import type { LoweringContext } from "../../lowering/loweringContext.js";
+import {
+    DEFAULT_PAGE_CONFIG,
+    normalizePageConfig,
+} from "../../layout/page.js";
+import type {
+    AttachmentGeometry,
+    AttachmentLayoutContext,
+    LayoutAttachment,
+    PageConfig,
+} from "../../layout/types.js";
+import type { TextStyle } from "../../render/types.js";
+import { Diagnostic, WarningDiagnostic } from "../../diagnostic.js";
+import { quote } from "../../parser/parse-utils/string-utils.js";
+import {
+    ASTFunctionNode,
+    type ASTFunctionClass,
+    type ASTNodeBase,
+    type FunctionArgs,
+    type LengthValue,
+    type ParserContext,
+    type SourceSpan,
+} from "../ASTtypes.js";
+
+const px = (value: number): LengthValue => ({ value, unit: "px" });
+
+/** 页码字号，同时也是放得下页码所需的最小下边距 */
+export const PAGE_NUMBER_FONT_SIZE = 16;
+const PAGE_NUMBER_STYLE: TextStyle = { fontSize: PAGE_NUMBER_FONT_SIZE, textAlign: "center", fill: "#606060" };
+
+/** 单个 1 取当前页；多个 1 中最后一个取总页数，其余取当前页 */
+function formatPageNumber(pattern: string, current: number, total: number): string {
+    const last = pattern.lastIndexOf("1");
+    const hasTotal = pattern.indexOf("1") !== last;
+    return pattern.replace(/1/g, (_, index: number) => String(hasTotal && index === last ? total : current));
+}
+
+/** 浮在每页下边距带里的页码，不属于任何谱面行，因此不申报 Track 占用 */
+class PageNumberAttachment implements LayoutAttachment {
+    readonly layer = "foreground" as const;
+
+    constructor(
+        readonly sourceSpan: SourceSpan,
+        private readonly pattern: string,
+        private readonly marginBottom: number,
+        private readonly style: TextStyle,
+    ) {}
+
+    createGeometry(context: AttachmentLayoutContext): AttachmentGeometry {
+        const style = this.style;
+        const marks = context.pages.map((page, index) => {
+            const text = formatPageNumber(this.pattern, index + 1, context.pages.length);
+            const { w, h, baseline } = context.textMeasurer.measureText(text, style);
+            const center = page.y + page.h - this.marginBottom / 2;
+            return { text, x: page.x + page.w / 2, y: center - h / 2 + baseline, w, h, baseline };
+        });
+        return {
+            regions: marks.map(({ x, y, w, h, baseline }) => ({ x: x - w / 2, y: y - baseline, w, h })),
+            paint(painter) {
+                for (const mark of marks) painter.drawText(mark.text, mark.x, mark.y, style);
+            },
+        };
+    }
+}
+
+export class PageFunction extends ASTFunctionNode {
+    static override def = {
+        name: ["page"],
+        description: "设置文档页面",
+        details: `\
+~~~jpfun
+@page(
+    width=794px, height=1123px, top=48px, bottom=48px,
+    left=40px, right=40px, gap=1em, numbering="1/1", fillRatio=0.5
+)
+~~~
+尺寸接受 \`px\` 或 \`em\`。页边距和行距须非负；左右边距之和须小于页宽，固定页高时上下边距之和须小于页高。`,
+        allowExtraArgs: false,
+        args: [
+            { name: "width", description: "页面宽度，须大于左右页边距之和", type: "length" as const, default: px(DEFAULT_PAGE_CONFIG.width) },
+            { name: "height", description: "页面高度，小于等于 0 表示不自动分页、高度随内容增长；宽度为 `794px` 时，A4 对应高度约为 `1123px`", type: "length" as const, default: px(0) },
+            { name: "top", description: "页面上边距", type: "length" as const, default: px(DEFAULT_PAGE_CONFIG.marginTop) },
+            { name: "bottom", description: "页面下边距，启用页码时至少为 `16px`", type: "length" as const, default: px(DEFAULT_PAGE_CONFIG.marginBottom) },
+            { name: "left", description: "页面左边距", type: "length" as const, default: px(DEFAULT_PAGE_CONFIG.marginLeft) },
+            { name: "right", description: "页面右边距", type: "length" as const, default: px(DEFAULT_PAGE_CONFIG.marginRight) },
+            { name: "gap", description: "谱面行之间的最小间距", type: "length" as const, default: { value: 1, unit: "em" as const } },
+            // 单个 1 取当前页；多个 1 中最后一个取总页数
+            { name: "numbering", description: "页码格式，空值隐藏；`1` 显示当前页，`1/1` 显示当前页/总页数", type: "string" as const, default: "" },
+            { name: "font", description: "页码字体，空值沿用当前字体设置", type: "string" as const, default: "" },
+            { name: "fillRatio", description: "自然宽度达到该比例后撑满", type: "number" as const, default: DEFAULT_PAGE_CONFIG.fillRatio },
+        ],
+    };
+
+    readonly config: PageConfig | null;
+    private readonly numbering: string = "";
+    readonly font: string;
+
+    constructor(
+        sourceSpan: SourceSpan,
+        args: FunctionArgs,
+        ctx: ParserContext,
+        parent: ASTNodeBase | null = null,
+    ) {
+        super(sourceSpan, parent);
+        this.font = ctx.variables.font;
+
+        if (ctx.scopeDepth !== 0) {
+            ctx.diagnostics.push(new WarningDiagnostic(
+                "W_PAGE_NOT_TOP_LEVEL",
+                "@page 只能在文档顶层声明；当前声明已忽略",
+                sourceSpan,
+            ));
+            this.config = null;
+            return;
+        }
+
+        if (ctx.documentDeclarations["page"]) {
+            ctx.diagnostics.push(new WarningDiagnostic(
+                "W_DUPLICATE_PAGE",
+                "文档只能声明一个 @page；后续声明已忽略",
+                sourceSpan,
+            ));
+            this.config = null;
+            return;
+        }
+        ctx.documentDeclarations["page"] = true;
+
+        const values = this.getArgValue(args, ctx);
+        const fillRatio = values.pop() as number;
+        this.font = (values.pop() as string) || ctx.variables.font;
+        const numbering = values.pop() as string;
+        const [width, height, top, bottom, left, right, gap] =
+            (values as LengthValue[]).map(value => ctx.length2px(value));
+        if (!Number.isFinite(width) || width <= 0)
+            throw Diagnostic.error.InvalidPageConfig("@page 的 width 必须是正有限长度", sourceSpan);
+        if (!Number.isFinite(height))
+            throw Diagnostic.error.InvalidPageConfig("@page 的 height 必须是有限长度；小于等于 0 表示不自动分页", sourceSpan);
+        if ([top, bottom, left, right, gap].some(value => !Number.isFinite(value) || value < 0))
+            throw Diagnostic.error.InvalidPageConfig("@page 的边距和 gap 必须是非负有限长度", sourceSpan);
+        if (left + right >= width)
+            throw Diagnostic.error.InvalidPageConfig("@page 的左右边距没有留下可用内容宽度", sourceSpan);
+        if (height > 0 && top + bottom >= height)
+            throw Diagnostic.error.InvalidPageConfig("@page 的上下边距没有留下可用内容高度", sourceSpan);
+        if (numbering && bottom < PAGE_NUMBER_FONT_SIZE)
+            throw Diagnostic.error.InvalidPageConfig(
+                `@page 的 bottom 至少需要 ${PAGE_NUMBER_FONT_SIZE}px 才能放下页码`,
+                sourceSpan,
+            );
+
+        this.config = normalizePageConfig({
+            width,
+            height,
+            marginTop: top,
+            marginBottom: bottom,
+            marginLeft: left,
+            marginRight: right,
+            lineGap: gap,
+            fillRatio,
+        });
+        this.numbering = numbering;
+    }
+
+    override loweringEnter(ctx: LoweringContext) {
+        if (!ctx || !this.config) return [];
+        ctx.setPageConfig(this.config);
+        if (this.numbering) {
+            ctx.addAttachment(
+                new PageNumberAttachment(
+                    this.sourceSpan, this.numbering, this.config.marginBottom,
+                    { ...PAGE_NUMBER_STYLE, fontFamily: this.font }
+                ),
+            );
+        }
+        return [];
+    }
+
+    override toString() {
+        if (!this.config) return "@page()";
+        const { width, height, marginTop, marginBottom, marginLeft, marginRight, lineGap, fillRatio } = this.config;
+        return `@page(width=${width}px, height=${Number.isFinite(height) ? height : 0}px, top=${marginTop}px, bottom=${marginBottom}px, left=${marginLeft}px, right=${marginRight}px, gap=${lineGap}px, numbering=${quote(this.numbering)}, font=${quote(this.font)}, fillRatio=${fillRatio})`;
+    }
+}
+
+export const PageNode: ASTFunctionClass = PageFunction;

@@ -1,0 +1,188 @@
+import { ASTNodeBase, FunctionArgs, SourceSpan, ParserContext, ASTFunctionNode, ASTFunctionClass, functionAddonKey } from "../ASTtypes.js";
+import { ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
+import { GrammarNode, GrammarSugarNode } from "../../parser/grammarType.js";
+import type { LayoutDecorationHandler } from "../../layout/types.js";
+import type { LoweringContext } from "../../lowering/loweringContext.js";
+import type { LoweringGroup } from "../../lowering/types.js";
+
+const DOT_FUNC_NAME = "dot";
+const DOT_ADDON_KEY = functionAddonKey(DOT_FUNC_NAME);
+
+type DotLoweringGroup = LoweringGroup & { temporalCount: number };
+
+function durationFactor(count: number): [number, number] {
+    const denominator = 2 ** count;
+    return [2 * denominator - 1, denominator];
+}
+
+class DotFunction extends ASTFunctionNode {
+    static override def = {
+        name: [DOT_FUNC_NAME, "."],
+        description: "附点",
+        details: `\
+~~~jpfun
+@dot(1, n=2)
+~~~
+**简写**：目标后加 \`.\`，可重复。\`@dot(1, 2)\` 等价于 \`1..\`；\`{1^2}.\` 等价于 \`{1.^2}\`。
+
+\`@dot({1 2/ -}, 2)\` 包含多个时间元素，会报错；需要分别为各元素添加附点。`,
+        allowExtraArgs: false,
+        args: [
+            {
+                type: "content" as const,
+                description: "单个可见时间元素，如音符、增时线或折叠和弦",
+                default: null,
+            },
+            {
+                name: "n",
+                description: "附点数，第一点增加原时值的一半，后续各点增加量再减半",
+                type: "number" as const,
+                default: 1,
+            },
+        ]
+    };
+
+    static override deSugarAtom(source: string, start: number, end: number) {
+        // 检查 . 的数量
+        let dotCnt = 0;
+        let pos = start;
+        while (pos < end && source[pos] === '.') {
+            dotCnt++;
+            pos++;
+        }
+        if (dotCnt === 0) return null;
+        // 对前一个节点的探查放到 deSugarRelation 中
+        const node: GrammarSugarNode = {
+            kind: "sugar",
+            data: {
+                class: DotFunction,
+                n: dotCnt,
+            },
+            span: { start, end: pos },
+        };
+        return { next: pos, node };
+    };
+
+    static override deSugarRelation(ctx: ParserContext, nodes: (GrammarNode | number)[], at: number) {
+        const n = nodes[at++] as GrammarSugarNode;
+        if (n.data?.class !== DotFunction) return null;
+        const prevIndex = ASTFunctionNode.findLastFuncContentIndex(ctx.nodes, ctx.nodes.length - 1);
+        if (prevIndex < 0) return at;   // 没有了 直接当作无效文本跳过
+        const prev = ctx.nodes[prevIndex];
+        if (prev instanceof DotFunction) {
+            // 已经是dot了 继续加深
+            prev.n += n.data.n;
+            return at;
+        }
+        // 参数数量不校验 在构造函数里写
+        const argMap: FunctionArgs = new Map();
+        argMap.set(0, prev);
+        argMap.set("n", n.data.n);
+        const spanPrev = prev.sourceSpan;
+        const node = new DotFunction({
+            start: Math.min(spanPrev.start, n.span.start),
+            end: Math.max(spanPrev.end, n.span.end),
+        }, argMap, ctx, null);
+        ctx.nodes[prevIndex] = node;
+        return at;
+    }
+
+    /**
+     * 附点是目标对象右侧的通用装饰
+     * 默认从目标右边界、视觉轴开始排列；目标可用 ports["dot"] 覆盖锚点
+     */
+    static override layoutDecorationHandler: LayoutDecorationHandler = (host, value) => {
+        const count = Math.max(0, Math.floor(Number(value) || 0));
+        if (count === 0) return null;
+
+        const radius = host.ast.size * 0.075;
+        const gap = host.ast.size * 0.12;
+        const anchor = host.ports["dot"] ?? {
+            x: host.box.w,
+            y: host.box.visualAxis,
+        };
+        const start = anchor.x + gap + radius;
+        const step = radius * 2 + gap;
+        const right = start + (count - 1) * step + radius;
+        // 自定义锚点可能已经位于扩张后的盒内，也可能在盒外
+        host.box.w = Math.max(host.box.w, right);
+
+        return {
+            paint(painter) {
+                const centerY = host.box.y + anchor.y;
+                for (let i = 0; i < count; i++) {
+                    painter.drawCircle(
+                        host.box.x + start + i * step,
+                        centerY,
+                        radius,
+                        { fill: "#000" },
+                    );
+                }
+            },
+        };
+    };
+    override loweringEnter(ctx: LoweringContext) {
+        const count = this.n;
+        const group: DotLoweringGroup = {
+            temporalCount: 0,
+            onTemporal(node) {
+                group.temporalCount++;
+                if (count === 0) return;
+                const addon = node.addon ??= {};
+                const current = Number(addon[DOT_ADDON_KEY]) || 0;
+                const total = current + count;
+                const [totalNumerator, totalDenominator] = durationFactor(total);
+                const [currentNumerator, currentDenominator] = durationFactor(current);
+                node.T.mul(
+                    totalNumerator * currentDenominator,
+                    totalDenominator * currentNumerator,
+                );
+                addon[DOT_ADDON_KEY] = total;
+            },
+        };
+        ctx.beginLoweringGroup(this, group);
+        return [];
+    }
+    override loweringExit(ctx: LoweringContext) {
+        const group = ctx.endLoweringGroup(this) as DotLoweringGroup;
+        if (group.temporalCount !== 1) {
+            throw new ErrorDiagnostic(
+                "E_DOT_INVALID_CONTENT",
+                `函数 @dot 只能接收 1个元素，但找到了 ${group.temporalCount} 个`,
+                this.sourceSpan,
+            );
+        }
+        return [];
+    }
+    override timeFlowModel() {
+        return {
+            children: [this.content],
+            mode: "sequence" as const,
+        }
+    }
+
+    content: ASTNodeBase;
+    n: number;
+    override get children() { return [this.content]; }
+
+    constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
+        super(sourceSpan, parent);
+        [this.content, this.n] = this.getArgValue(args, ctx) as [ASTNodeBase, number];
+        this.content.parent = this;
+        const n = Math.max(0, Math.trunc(this.n));
+        if (n !== this.n) {
+            ctx.diagnostics.push(new WarningDiagnostic(
+                "W_DOT_INVALID_N",
+                `@dot 的数量参数 n 必须为非负整数，已被修正为 ${n}`,
+                this.sourceSpan
+            ));
+            this.n = n;
+        }
+    }
+
+    override toString(source: string) {
+        return `@dot(${this.content.toString(source)}, ${this.n})`;
+    }
+}
+
+export const DotNode: ASTFunctionClass = DotFunction;

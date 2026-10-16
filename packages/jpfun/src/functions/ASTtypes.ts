@@ -1,0 +1,294 @@
+﻿import type { SourceSpan, LengthValue, deSugarAtomFunction, deSugarRelationFunction } from "../parser/types.js";
+import type { CallArgumentInfo } from "../parser/grammarType.js";
+import type { ParserContext } from "../parser/parserContext.js";
+import { Diagnostic } from "../diagnostic.js";
+import type { Fraction } from "../fraction.js";
+import type {
+    LoweringAugmenter,
+    LoweringFinalizer,
+    TimeFlowModel,
+} from "../lowering/types.js";
+import type { TemporalNodeBase } from "./temporal.js";
+import type { LoweringContext } from "../lowering/loweringContext.js";
+import type { Track } from "../lowering/track.js";
+import type { LayoutDecorationHandler } from "../layout/types.js";
+
+export type { SourceSpan, ParserContext, LengthValue };
+export type paramType = "string" | "number" | "boolean" | "length" | "content" | "label";
+export type paramValue = string | number | boolean | LengthValue | ASTBraceNode | ASTNodeBase;
+
+/** 固化到 Temporal.addon 的函数语义统一使用 `@主函数名` */
+export function functionAddonKey<const Name extends string>(name: Name): `@${Name}` {
+    return `@${name}`;
+}
+
+export class ASTNodeBase {
+    // 空数组表示应该有 null表示自己就是叶子 和 timeFlowMode 的默认实现对应
+    get children(): ASTNodeBase[] | null { return null; }
+
+    constructor(
+        public sourceSpan: SourceSpan,  // 源码区间
+        public parent: ASTNodeBase | null = null,
+    ) {}
+
+    /**
+     * 进入当前层级的回调
+     * @param ctx 当前的 lowering 上下文
+     * @param track 当前事件所在的纵向音轨
+     * @returns 当前节点产生的事件
+     */
+    loweringEnter(
+        _ctx: LoweringContext,
+        _track: Track,
+    ): Iterable<TemporalNodeBase> {
+        return [];
+    }
+
+    /**
+     * 时间求解模式
+     * loweringEnter 返回的事件已规范化并加入索引后调用，决定子节点的展开方式。
+     * 需要本轮事件时通过 ctx.getTemporalNodes 查询
+     * @returns 返回 null 表示没有子元素，返回对象表示参与时间求解
+     */
+    timeFlowModel(_ctx: LoweringContext): TimeFlowModel | null { return null; }
+
+    /**
+     * 离开当前层级的回调 同 loweringEnter
+     *
+     * timeOffset 是 children 展开后的当前时间游标。
+     * 只有在同步重写本节点已经产生的 Temporal.t/T 时才可原地修改它，避免事件时间与后继事件起点不一致。
+     */
+    loweringExit(
+        _ctx: LoweringContext,
+        _track: Track,
+        _timeOffset: Fraction,
+    ): Iterable<TemporalNodeBase> {
+        return [];
+    }
+
+    // 去糖后文本输出
+    toString(source: string): string {
+        return source.slice(this.sourceSpan.start, this.sourceSpan.end);
+    }
+}
+
+export class ASTTextNode extends ASTNodeBase {}
+
+// label节点只负责语义标记，不参与渲染和其他逻辑
+// 绑定也在解析后完成 和本节点无关
+// 主要用途是高亮等编辑器功能
+export class ASTLabelNode extends ASTNodeBase {
+    label: string;
+    /** 被标注的节点。parent 是树结构、会被容器改写，不能用来表达这层关系 */
+    readonly target: ASTNodeBase;
+
+    constructor(sourceSpan: SourceSpan, label: string, target: ASTNodeBase, parent: ASTNodeBase | null = null) {
+        super(sourceSpan, parent);
+        this.label = label;
+        this.target = target;
+    }
+
+    override toString(_: string) {
+        return `@${this.label} `;
+    }
+}
+
+// 表示`{}`
+// span.start 是 `{` 的位置; (span.end-1) 是 `}` 的位置
+// 判断是否是创建的节点：
+export class ASTBraceNode extends ASTNodeBase {
+    content: ASTNodeBase[];
+    get children() { return this.content; }
+
+    constructor(sourceSpan: SourceSpan, content: ASTNodeBase[], parent: ASTNodeBase | null = null) {
+        super(sourceSpan, parent);
+        this.content = content;
+        this.content.forEach(item => item.parent = this);
+    }
+
+    innerSpan(): SourceSpan {
+        return ASTBraceNode.getContentSpan(this.content);
+    }
+
+    // 是复制的
+    static getContentSpan(content: ASTNodeBase[] | ASTNodeBase): SourceSpan {
+        if (Array.isArray(content)) {
+            if (content.length === 0) return { start: 0, end: 0 };
+            const firstSpan = ASTBraceNode.getContentSpan(content[0]);
+            const lastSpan = ASTBraceNode.getContentSpan(content[content.length - 1]);
+            return { start: firstSpan.start, end: lastSpan.end };
+        } else return { start: content.sourceSpan.start, end: content.sourceSpan.end };
+    }
+
+    override timeFlowModel() {
+        return {
+            children: this.content,
+            mode: "sequence" as const,
+        };
+    }
+
+    override toString(source: string) {
+        return `{${this.content.map(item => item.toString(source)).join("")}}`;
+    }
+}
+
+export interface FunctionArgDef {
+    name?: string;  // 参数名 (可选，位置参数可以没有)
+    /** 仅接受命名传参，不占用位置参数序号 */
+    namedOnly?: boolean;
+    description?: string;
+    type: paramType;// 参数类型
+    /** 参数默认值 null表示必填 否则报错 */
+    default: paramValue | null;
+}
+
+export interface FunctionDef {
+    name: string | string[]; // 函数名或别名列表
+    description: string; // 函数描述
+    details: string; // 使用示例和其他介绍
+    allowExtraArgs: boolean; // 是否允许传入定义中未声明的额外参数；类型未知时保留 SourceSpan 交给函数自己解析
+    extraArgType?: paramType; // 额外位置参数的统一类型；命名参数不套用该默认值
+    args: FunctionArgDef[]; // 参数定义列表
+}
+
+/** 按名称或位置查找参数，位置查找跳过仅命名参数 */
+export function resolveArgDef(def: FunctionDef, name: string | undefined, index: number): FunctionArgDef | undefined {
+    if (name) {
+        const key = name.toLowerCase();
+        return def.args.find(arg => arg.name?.toLowerCase() === key);
+    }
+    for (const arg of def.args) {
+        if (!arg.namedOnly && index-- === 0) return arg;
+    }
+    return undefined;
+}
+
+/** 参数名 -> 类型的规则：命名参数只认 def.args，位置参数可回落到 extraArgType */
+export function resolveArgType(def: FunctionDef, name: string | undefined, index: number): paramType | undefined {
+    return resolveArgDef(def, name, index)?.type
+        ?? (!name && def.allowExtraArgs ? def.extraArgType : undefined);
+}
+
+/** 别名里的第一个是主名；`@set` 的 key 和 `getArgValue` 的前缀必须用同一个 */
+export function primaryName(def: FunctionDef): string {
+    return Array.isArray(def.name) ? def.name[0] : def.name;
+}
+
+// 类型未知的额外参数（未声明的命名参数，或没有 extraArgType 的位置参数）保留整条 CallArgumentInfo：
+// 这些参数由函数自己解析并报诊断，所以名字和值的 span 都得给
+export type FunctionArgs = Map<string | number, paramValue | CallArgumentInfo>; // 参数值映射，key可以是位置索引（0,1,2...）或命名参数名
+
+// 所有函数节点的基类，提供通用的参数提取方法和标签功能
+// 非正常函数则实例化该函数 特征是getDef为undefined
+export class ASTFunctionNode extends ASTNodeBase {
+    /**
+     * 不实现 = 对标签透明，绑定继续向前找；返回 null = 边界，绑定到此为止；返回节点 = 标签承载者
+     */
+    labelable?(): ASTFunctionNode | null;
+    label?: string; // 可选的标签名，只对 labelable() 选中的节点有效; 或者是label节点
+
+    // 获取函数定义 对于未知函数，不定义def
+    static def?: FunctionDef;
+    get def(): FunctionDef | undefined {
+        return (this.constructor as typeof ASTFunctionNode).def;
+    }   // 默认让实例返回静态属性def 后面的类应该只重写static def
+    // 实例访问: new ().def 或 new ().constructor.def
+    // 静态访问: 类名.def 或 类名.prototype.def
+
+    get callName(): string {
+        return this.def ? primaryName(this.def) : "";
+    }
+
+    // 去糖函数 详见 ParserContext 中 deSugarAtomFns 和 deSugarRelationFns 的定义
+    static deSugarAtom: deSugarAtomFunction = () => null; // 默认没有去糖，子类只需要定义static deSugarAtom方法即可
+    get deSugarAtom(): deSugarAtomFunction { return (this.constructor as typeof ASTFunctionNode).deSugarAtom; }
+
+    static deSugarRelation: deSugarRelationFunction = () => null;
+    get deSugarRelation(): deSugarRelationFunction { return (this.constructor as typeof ASTFunctionNode).deSugarRelation; }
+
+    // 按声明顺序取值，位置编号独立于仅命名参数
+    getArgValue(args: FunctionArgs, ctx: ParserContext): paramValue[] {
+        const def = this.def;
+        if (!def) return [];
+        const prefix = primaryName(def);
+        let position = 0;
+        return def.args.map((argDef, declaredIndex) => {
+            const index = argDef.namedOnly ? undefined : position++;
+            const name = argDef.name?.toLowerCase();
+            const value = (name ? args.get(name) : undefined)
+                ?? (index === undefined ? undefined : args.get(index))
+                ?? (name ? ctx.variables[`${prefix}.${name}`.toLowerCase()] : undefined)
+                ?? argDef.default;
+            if (value === null) throw Diagnostic.error.MissingArg(prefix, argDef.name || (index ?? declaredIndex), this.sourceSpan);
+            return value;
+        });
+    }
+
+    override toString(source: string): string {
+        const name = this.callName;
+        if (!name) return super.toString(source);
+        return `@${name} `;
+    }
+
+    /**
+     * lowering 固化后的 attachment 生成钩子
+     *
+     * 普通 loweringEnter/loweringExit 在递归遍历 AST 时执行，
+     * 此时尚未完成锚点归并，事件的 t、track 和 layoutLine 不可用，因此需要观察完整事件流的功能不能在普通 hook 中可靠决定分组。
+     * 该 hook 读取 LoweringResult 并返回新建的 LoweringAttachment，LoweringContext 将返回值追加到当前文档或 fragment 的 attachments，不会把它们放入时间列或推进时间。
+     *
+     * 例：autobeam 扫描最终列，按轨道、谱面行、拍点和显式 beam 端点决定分组，再生成 BeamLayoutAttachment
+     */
+    static loweringAugment?: LoweringAugmenter;
+
+    /**
+     * 所有 loweringAugment 结果追加完成后的最终处理；此时已经得到了完整的 lowering 语义
+     * 所有派生 attachment 追加完成后，按函数注册顺序处理完整结果
+     * 可以进行校验（如 beam 和 tie）或者修改某些值
+     */
+    static loweringFinalize?: LoweringFinalizer;
+
+    /**
+     * 装饰函数可选的排版声明
+     * layout 引擎按 key 收集，不需要识别具体函数类
+     * addon 中的 `@key` 标志会使用该装饰
+     */
+    static layoutDecorationHandler?: LayoutDecorationHandler;
+
+    /**
+     * 在子树里找标签承载者
+     * 未实现 labelable = 透明，继续下潜；实现了就采信它的返回值，null 即拒绝，不再往里找。
+     * 拒绝时别退回去遍历 children —— grace 的 labelable() 内部已经走过整棵子树
+     * 只有函数节点声明 labelable，别的节点读到的必是 undefined，所以无需 instanceof
+     */
+    static findLabelable(node: ASTNodeBase): ASTFunctionNode | null {
+        const self = node as ASTFunctionNode;
+        if (self.labelable) return self.labelable();
+        for (const child of node.children ?? []) {
+            const target = ASTFunctionNode.findLabelable(child);
+            if (target) return target;
+        }
+        return null;
+    }
+
+    /**
+     * 用于语法糖向前结合
+     * 从指定位置向前寻找最后一个可由后缀语法糖包装的节点，跳过不产生语义对象的文本
+     */
+    static findLastFuncContentIndex(nodes: ASTNodeBase[], i: number): number {
+        for (; i >= 0; i--) {
+            if (nodes[i] instanceof ASTFunctionNode || nodes[i] instanceof ASTBraceNode) return i;
+        } return -1;
+    }
+}
+
+// 有实际含义的函数类的构造都应该长这样
+export type ASTFunctionClass = (new (
+    sourceSpan: SourceSpan,
+    args: FunctionArgs,
+    ctx: ParserContext,
+    parent: ASTNodeBase | null
+) => ASTFunctionNode) & Pick<typeof ASTFunctionNode,
+    "prototype" | "def" | "deSugarAtom" | "deSugarRelation"
+    | "loweringAugment" | "loweringFinalize" | "layoutDecorationHandler"
+>;

@@ -1,0 +1,179 @@
+import { ASTNodeBase, FunctionArgs, SourceSpan, ASTFunctionNode, ASTFunctionClass, ASTTextNode, ASTBraceNode, ASTLabelNode } from "../ASTtypes.js";
+import { ParserContext } from "../../parser/parserContext.js";
+import { GrammarNode, GrammarSugarNode, type CallArgumentInfo } from "../../parser/grammarType.js";
+import { ErrorDiagnostic } from "../../diagnostic.js";
+import type { MeasureFn, PlaceFn, TrackPlacement } from "../../lowering/track.js";
+
+/**
+ * 临时伴奏紧贴主旋律，用比系统级行距更小的间隙
+ * 间隙作用在盒边界之间，因此即使很小也不会互相穿模
+ */
+const GAP_RATIO = 0.4;
+
+const placeAbove: PlaceFn = (host, group, gap) =>
+    host.top - gap * GAP_RATIO - group.bottom;
+
+/**
+ * stack 的成员在局部坐标中按书写顺序自下而上排列
+ */
+const measureAbove: MeasureFn = (members, gap) => {
+    const step = gap * GAP_RATIO;
+    const placements: (TrackPlacement | null)[] = [];
+    let cursor = 0;
+    for (const extent of members) {
+        // 临时伴奏在本行没有内容就不占位，避免共用音轨白白抬高行高
+        if (!extent) {
+            placements.push(null);
+            continue;
+        }
+        const offset = cursor - extent.bottom;
+        placements.push({ offset, extent });
+        cursor = offset + extent.top - step;
+    }
+    return placements;
+};
+
+/**
+ * 同一宿主上的所有 stack 共用同一批音轨（laneKey 固定），
+ * 因此一行里先后出现的多段临时伴奏落在同一条基线上，不会上下抖动。
+ * hostIndex 取默认的 0：第一个成员就地留在宿主轨，保证旋律主线不被 @stack 打断。
+ */
+const STACK_TRACKS = {
+    laneKey: "stack",
+    measure: measureAbove,
+    place: placeAbove,
+};
+
+class StackFunction extends ASTFunctionNode {
+    static override def = {
+        name: ["stack"],
+        description: "临时多声部",
+        details: `\
+~~~jpfun
+@stack({1 2}, {3/ 4/ 5})
+~~~
+接受至少两个内容参数，各分支同时开始、保留各自时值，整体时长取最长分支。适合节奏不同的临时多声部。
+
+**简写**：\`{1 2} & {3/ 4/ 5}\`。可继续用 \`&\` 连接更多分支；若要写和弦，请使用 \`up\` / \`down\`。`,
+        allowExtraArgs: true,
+        extraArgType: "content" as const,
+        args: [],
+    };
+
+    static override deSugarAtom(source: string, start: number, _end: number) {
+        if (source[start] === '&') {
+            const node: GrammarSugarNode = {
+                kind: "sugar",
+                data: StackFunction,
+                span: { start, end: start + 1 },
+            }; return { next: start + 1, node };
+        } return null;
+    }
+
+    static override deSugarRelation(ctx: ParserContext, nodes: (GrammarNode | number)[], at: number) {
+        const n = nodes[at++] as GrammarSugarNode;
+        if (!(n.kind === "sugar" && n.data === StackFunction)) return null;
+        // 找上一个非文本节点 实现忽略中间内容的作用
+        // 另一个做法是如果上一个不是可用节点就报错
+        let left = ctx.nodes.length - 1;
+        for (; left >= 0; left--) {
+            if (ctx.nodes[left] instanceof ASTTextNode) continue;
+            break;
+        }
+        let leftNode: ASTNodeBase | null = left >= 0 ? ctx.nodes[left] : null;
+        if (leftNode === null) {
+            throw new ErrorDiagnostic(
+                "E_STACK_NO_TARGET",
+                "@stack语法糖错误: 左边没有找到可叠加的目标",
+                n.span
+            );
+        }
+        /** 左操作数在 ctx.nodes 中的起点；只有这一段会被 stack 吞并，更早的节点必须保留 */
+        let replaceFrom = left;
+        // 对 label 的特判: 目标变为label到被标记的节点范围内的所有节点
+        if (leftNode instanceof ASTLabelNode) {
+            const labelNode = leftNode;
+            let tgt: ASTNodeBase | null = labelNode.target;
+            // 在本层这个节点位于哪里（标签节点可能被wrap）
+            while (tgt && !ctx.nodes.includes(tgt)) tgt = tgt.parent;
+            for (let j = left - 1; j >= 0; j--) {
+                if (ctx.nodes[j] === tgt) {
+                    leftNode = new ASTBraceNode({
+                        start: tgt.sourceSpan.start,
+                        end: labelNode.sourceSpan.end,
+                    }, ctx.nodes.slice(j, left + 1), null);
+                    replaceFrom = j;
+                    break;
+                }
+            }
+        }
+        // 左操作数收敛成一个 stack，后续合并都在它身上进行
+        const host = leftNode instanceof StackFunction
+            ? leftNode
+            : new StackFunction(n.span, new Map(), ctx).addContent(leftNode);
+        // 找到下一个非文本节点 通过全量后续解析的方式进行 还是有些trick
+        const storage = ctx.nodes;
+        ctx.nodes = [];
+        ctx.makeNodes(nodes, at);
+        for (let i = 0; i < ctx.nodes.length; i++) {
+            // 后向跳过文本节点 和上面保持一致
+            const right = ctx.nodes[i];
+            if (right instanceof ASTTextNode) continue;
+            host.addContent(right);
+            storage.length = replaceFrom;
+            storage.push(host);
+            while (++i < ctx.nodes.length) storage.push(ctx.nodes[i]);
+            ctx.nodes = storage;
+            return nodes.length;
+        }
+        throw new ErrorDiagnostic(
+            "E_STACK_NO_TARGET",
+            "@stack语法糖错误: 右边没有找到可叠加的目标",
+            n.span
+        );
+    }
+
+    contents: ASTNodeBase[] = [];
+    override get children() { return this.contents; }
+    override timeFlowModel() {
+        return {
+            children: this.contents,
+            mode: "parallel" as const,
+            tracks: STACK_TRACKS,
+        };
+    }
+
+    constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
+        super(span, parent);
+        for (const [, value] of args) {
+            if (value instanceof ASTNodeBase) {
+                this.addContent(value);
+                continue;
+            }
+            const c = ctx.parseArgWithType((value as CallArgumentInfo).valueSpan, "content", span.start);
+            if (c !== null) {
+                this.addContent(c as ASTNodeBase);
+            }
+        }
+    }
+
+    /** 遇到另一个 stack 就展平；接收者存活，被吞并的成员列表最后清空 */
+    addContent(node: ASTNodeBase): StackFunction {
+        const contents = node instanceof StackFunction ? node.contents : [node];
+        const s = node.sourceSpan;
+        this.sourceSpan.start = Math.min(this.sourceSpan.start, s.start);
+        this.sourceSpan.end = Math.max(this.sourceSpan.end, s.end);
+        for (const c of contents) c.parent = this;
+        this.contents.push(...contents);
+        // stack 不实现 labelable、不进候选表，所以被吞并的空壳不会被 @tie() 取到，无需像 up 那样撤销登记
+        if (node instanceof StackFunction) node.contents.length = 0;
+        return this;
+    }
+
+    override toString(source: string) {
+        const contentStrs = this.contents.map(c => c.toString(source)).join(',\n');
+        return `@stack(\n  ${contentStrs.split('\n').join('\n  ')}\n)`;
+    }
+}
+
+export const StackNode: ASTFunctionClass = StackFunction;

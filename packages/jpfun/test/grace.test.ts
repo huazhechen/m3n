@@ -1,0 +1,367 @@
+import { deepStrictEqual } from "node:assert/strict";
+import { test } from "node:test";
+
+import { divLinePortName } from "../src/functions/div/index.js";
+import { GraceTemporal } from "../src/functions/grace/index.js";
+import type { LayoutBox } from "../src/layout/types.js";
+import type { VisualTemporalNode } from "../src/functions/temporal.js";
+import { compilePlayback } from "../src/playback/compile.js";
+import {
+    assert,
+    attachmentCommands,
+    expectLoweringError,
+    expectSnapshot,
+    layoutOf,
+    lower,
+    nearly,
+    playedNotes,
+    recordCommands,
+} from "./helpers.js";
+
+function layoutGrace(source: string) {
+    const result = layoutOf(source);
+    return { result, commands: recordCommands(result) };
+}
+
+/** 倚音向宿主借走的演奏时值：前倚音先发声，所以就是首个 gesture 的时长 */
+function stealOf(source: string) {
+    return playedNotes(compilePlayback(lower(source)))[0].duration.toNumber();
+}
+
+const plainNote = layoutGrace(`1`).result.objects[0];
+const preGrace = layoutGrace(`2>1`);
+const preGraceNode = preGrace.result.objects[0] as VisualTemporalNode & {
+    host: { box: LayoutBox };
+    graces: readonly VisualTemporalNode[];
+};
+
+test("倚音折叠成一个可见对象，但保留宿主的时值与端口", () => {
+    assert(preGrace.result.objects.length === 1, "a grace note must fold into a single visible object");
+    assert(preGraceNode.T.equals(plainNote.T), "the composite must keep the host duration");
+    assert(preGraceNode.box.w > plainNote.box.w, "a grace note must reserve intrinsic horizontal space");
+    assert(preGraceNode.box.anchor > plainNote.box.anchor, "a pre-grace must push the host anchor to the right");
+    assert(nearly(preGraceNode.ports["lyric"].x, preGraceNode.box.anchor),
+        "the composite must forward the host lyric anchor instead of the grace one");
+
+    expectSnapshot("grace-metrics",
+        `w=${preGraceNode.box.w.toFixed(2)} anchor=${preGraceNode.box.anchor.toFixed(2)}`
+        + ` steal=${stealOf(`2>1`)}`);
+});
+
+test("倚音比宿主小一级字号，坐在宿主基线之上的左侧", () => {
+    const graceTexts = preGrace.commands.filter(command => command.kind === "text");
+    assert(graceTexts.length === 2, "a grace composite must draw both the grace and the host");
+    const [hostText, graceText] = graceTexts[0].style.fontSize > graceTexts[1].style.fontSize
+        ? [graceTexts[0], graceTexts[1]]
+        : [graceTexts[1], graceTexts[0]];
+    assert(nearly(graceText.style.fontSize / hostText.style.fontSize, 0.7),
+        "a grace note must be exactly one scale step smaller than its host");
+    assert(graceText.y < hostText.y, "a grace note must sit above the host baseline");
+    assert(graceText.x < hostText.x, "a pre-grace must sit left of the host");
+});
+
+// 倚音默认就是八分音符，因此裸写也会有一条减时线；再写一个 '/' 变成十六分
+test("倚音的时值决定减时线数量与偷取的宿主时长", () => {
+    assert(preGrace.commands.filter(command => command.kind === "line").length === 1,
+        "a bare grace note must render its default eighth-note beam line");
+    assert(layoutGrace(`2/>1`).commands.filter(command => command.kind === "line").length === 2,
+        "an explicit div inside the grace must add a second line");
+    assert(preGraceNode.graces[0].T.equals(1, 2), "the grace member must keep its written duration for playback");
+    assert(nearly(stealOf(`2>1`), 0.5), "a bare grace steals half of the host duration");
+    assert(nearly(stealOf(`2/>1`), 0.25),
+        "a sixteenth grace steals a quarter of the host duration");
+});
+
+test("宿主的修饰在 loweringFinalize 还给宿主自己", () => {
+    const hostDiv = layoutGrace(`2>1/`);
+    const hostDivNode = hostDiv.result.objects[0];
+    const hostAnchorX = hostDivNode.box.x + hostDivNode.box.anchor;
+    const hostDivLine = hostDiv.commands
+        .filter(command => command.kind === "line")
+        .sort((a, b) => (b.x2 - b.x1) - (a.x2 - a.x1))[0];
+    assert(hostDivNode.ports[divLinePortName(0, "left")] !== undefined,
+        "the composite must expose the host div ports so beam and tie keep working");
+    assert(hostDivLine.x1 < hostAnchorX && hostDivLine.x2 > hostAnchorX,
+        "the host div line must be centred on the host anchor, not on the whole composite");
+    assert(hostDivLine.x1 > hostDivNode.box.x,
+        "the host div line must stay under the host digit instead of spanning the composite");
+});
+
+test("连续倚音合并成一条整线", () => {
+    const twoGraces = layoutGrace(`{3 2}>1`);
+    assert(twoGraces.result.attachments.length === 1,
+        "two real grace notes must merge into one beam");
+    const twoGraceLines = twoGraces.commands.filter(command => command.kind === "line");
+    const singleGraceLine = preGrace.commands.filter(command => command.kind === "line")[0];
+    assert(twoGraceLines.length === 1, "consecutive grace notes must share one merged beam line");
+    assert(twoGraceLines[0].x2 - twoGraceLines[0].x1 > singleGraceLine.x2 - singleGraceLine.x1,
+        "the merged line must span both grace notes");
+
+    const unevenGraces = layoutGrace(`{3,, 4}>4`);
+    const unevenTexts = unevenGraces.commands
+        .filter(command => command.kind === "text")
+        .filter(command => command.style.fontSize < 22);
+    assert(unevenTexts.length === 2 && nearly(unevenTexts[0].y, unevenTexts[1].y),
+        "grace notes must align on their visual axis even when one carries octave dots");
+    assert(unevenGraces.commands.filter(command => command.kind === "line").length === 1,
+        "octave dots must not break the merged grace beam line");
+
+    // 复合体可能又被当作宿主或和弦成员折叠进去，内层的合并仍要生效
+    assert(layoutGrace(`6>4<{3 5}`).commands.filter(command => command.kind === "line").length === 2,
+        "a grace run must still merge when its composite is folded as another grace's host");
+    assert(layoutGrace(`{{2 3}>1}^5`).commands.filter(command => command.kind === "line").length === 1,
+        "a grace run must still merge when its composite is folded into a chord");
+});
+
+test("倚音槽里的零时长标记只随块排版，不承担节奏", () => {
+    const marked = layoutGrace(`{@key(F) 1}>2`);
+    assert(marked.result.attachments.length === 0,
+        "a zero-duration mark must not be beamed to the grace note beside it");
+    const markedLine = marked.commands.filter(command => command.kind === "line")[0];
+    const soloLine = preGrace.commands.filter(command => command.kind === "line")[0];
+    assert(markedLine !== undefined && nearly(markedLine.x2 - markedLine.x1, soloLine.x2 - soloLine.x1),
+        "the grace note keeps exactly its own div line, not one stretched across the mark");
+
+    const keyText = marked.commands
+        .filter(command => command.kind === "text")
+        .find(command => command.text === "1=");
+    assert(keyText !== undefined && markedLine.x1 > keyText.x,
+        "the div line must stay under the grace digit, clear of the mark");
+
+    // 标记在视觉上是隔断：它两侧的倚音不是邻居，不能连成一条跨过标记的梁
+    const split = layoutGrace(`{2 @key(F) 1}>2`);
+    const splitKey = (split.result.objects[0] as GraceTemporal).graces[1].box;
+    const splitLines = split.commands.filter(command => command.kind === "line");
+    assert(split.result.attachments.length === 0,
+        "a mark standing between two grace notes must break the beam run");
+    assert(splitLines.length === 2
+        && splitLines.every(line => line.x2 < splitKey.x || nearly(line.x2, splitKey.x)
+            || line.x1 > splitKey.x + splitKey.w || nearly(line.x1, splitKey.x + splitKey.w)),
+        "each side of the mark keeps its own div line instead of one crossing the mark");
+
+    // 隔断只在标记处切一次，标记之后仍然相邻的倚音照常合并
+    assert(layoutGrace(`{2 @key(F) 1 3}>2`).result.attachments.length === 1,
+        "grace notes following the mark must still merge into one beam");
+});
+
+test("后置倚音不动宿主对齐点，两侧倚音共用一条肩线", () => {
+    const postGrace = layoutGrace(`1<2`);
+    const postGraceNode = postGrace.result.objects[0];
+    assert(nearly(postGraceNode.box.anchor, plainNote.box.anchor),
+        "a post-grace must leave the host anchor untouched");
+    const postTexts = postGrace.commands.filter(command => command.kind === "text");
+    assert(postTexts[1].x > postTexts[0].x, "a post-grace must sit right of the host");
+
+    const bothSides = layoutGrace(`6>4<3`);
+    assert(nearly(bothSides.result.objects[0].box.h, postGraceNode.box.h),
+        "a host carrying graces on both sides must not grow taller than a single-sided one");
+    const bothGraceTexts = bothSides.commands
+        .filter(command => command.kind === "text")
+        .filter(command => command.style.fontSize < 22);
+    assert(bothGraceTexts.length === 2 && nearly(bothGraceTexts[0].y, bothGraceTexts[1].y),
+        "the pre-grace and the post-grace of one note must share the same shoulder line");
+});
+
+test("宿主的高八度点不抬升倚音及其钩线端点", () => {
+    for (const template of ["2>HOST", "HOST<2", "2>HOST<3"]) {
+        const plain = layoutGrace(template.replace("HOST", "1"));
+        const plainTexts = plain.commands.filter(command => command.kind === "text");
+        const plainHost = plainTexts.find(command => command.text === "1")!;
+        const plainGraces = plainTexts.filter(command => command.text !== "1");
+        const plainHooks = plain.commands.filter(command => command.kind === "path");
+
+        for (const host of ["1'", "1'''", "1,,,,"]) {
+            const source = template.replace("HOST", host);
+            const dotted = layoutGrace(source);
+            const texts = dotted.commands.filter(command => command.kind === "text");
+            const hostText = texts.find(command => command.text === "1")!;
+            const graces = texts.filter(command => command.text !== "1");
+            const hooks = dotted.commands.filter(command => command.kind === "path");
+            assert(graces.length === plainGraces.length && hooks.length === plainHooks.length,
+                `octave dots must preserve grace notes and hooks: ${source}`);
+            for (let index = 0; index < graces.length; index++) {
+                assert(nearly(graces[index].y - hostText.y, plainGraces[index].y - plainHost.y),
+                    `octave dots must not move grace digits relative to the host digit: ${source}`);
+            }
+            for (let index = 0; index < hooks.length; index++) {
+                const start = hooks[index].commands[0];
+                const plainStart = plainHooks[index].commands[0];
+                assert(start.op === "M" && plainStart.op === "M"
+                    && nearly(start.y - hostText.y, plainStart.y - plainHost.y),
+                    `octave dots must not move hook endpoints relative to the host digit: ${source}`);
+            }
+        }
+    }
+});
+
+test("倚音嵌套时字号逐层缩小，修饰递归还给最里层宿主", () => {
+    const nestedGrace = layoutGrace(`1>2>3`);
+    const nestedSizes = nestedGrace.commands
+        .filter(command => command.kind === "text")
+        .map(command => command.style.fontSize)
+        .sort((a, b) => b - a);
+    assert(nestedSizes.length === 3, "nested grace notes must all be rendered");
+    assert(nearly(nestedSizes[1] / nestedSizes[0], 0.7) && nearly(nestedSizes[2] / nestedSizes[1], 0.7),
+        "nesting must scale the font size once per level");
+    expectSnapshot("grace-nested", `sizes=${nestedSizes.map(size => size.toFixed(1)).join("/")}`);
+
+    const nestedDivDots = layoutGrace(`1> 2,,,/>3`);
+    const nestedDots = nestedDivDots.commands.filter(command => command.kind === "circle");
+    const nestedDotTop = Math.min(...nestedDots.map(command => command.cy));
+    const nestedDivLines = nestedDivDots.commands
+        .filter(command => command.kind === "line")
+        .filter(command => command.x1 < nestedDots[0].cx && command.x2 > nestedDots[0].cx);
+    assert(nestedDots.length === 3 && nestedDivLines.length === 2,
+        "the innermost grace host must carry its own octave dots and div lines");
+    assert(nestedDivLines.every(command => command.y1 < nestedDotTop),
+        "div lines must stay between the digit and its octave dots");
+});
+
+test("和弦折叠进倚音时修饰递归交还给代表成员", () => {
+    const chordGrace = layoutGrace(`{1,,, ^ 3}/>2`);
+    const chordGraceDots = chordGrace.commands.filter(command => command.kind === "circle");
+    const chordGraceLines = chordGrace.commands.filter(command => command.kind === "line");
+    assert(chordGraceDots.length === 3 && chordGraceLines.length === 2,
+        "a chord folded into a grace must keep its lead member's dots and div lines");
+    assert(chordGraceLines.every(command =>
+        command.y1 < Math.min(...chordGraceDots.map(dot => dot.cy))),
+        "a folded chord's div lines must stay between the digit and its octave dots");
+});
+
+test("grace 外部标签穿透宿主后仍保留完整关系左操作数", () => {
+    for (const source of [
+        `@grace({1},{2})@x ^ 3`,
+        `@grace({1},{2})@x & 3`,
+        `@grace({1},{2})@x > 3`,
+    ]) {
+        assert(layoutOf(source).objects.length > 0,
+            `a labeled grace must remain the complete left relation operand: ${source}`);
+    }
+});
+
+test("倚音局部横排保持书写列序，混合时值和零时长标记使用零间隙", () => {
+    for (const source of ["{2 3/ @text(A) 4}>1", "1<{2 3/ @text(A) 4}"]) {
+        const node = layoutOf(source).objects[0];
+        assert(node instanceof GraceTemporal, "expected a grace composite");
+        for (let index = 1; index < node.graces.length; index++) {
+            const previous = node.graces[index - 1].box;
+            assert(nearly(node.graces[index].box.x, previous.x + previous.w),
+                "local columns must remain distinct and touch without duration-dependent gaps");
+        }
+        const width = node.graces.reduce((sum, grace) => sum + grace.box.w, 0);
+        assert(nearly(node.box.w, width + node.host.box.w + node.ast.size * 0.7 * 0.2),
+            "the composite reserves the natural widths and its existing side gap");
+        assert(node.graces.every(grace => (grace.springConfig.alpha_L ?? 0) > 0),
+            "zeroing temporary margins must not clear the members' spring configuration");
+    }
+});
+
+test("倚音内容只拒绝换行，并且至少产生一个可见对象", () => {
+    expectLoweringError(`{1 @br() 2}>3`, "E_GRACE_INVALID_CONTENT");
+    expectLoweringError(`{@program(40)}>3`, "E_GRACE_INVALID_CONTENT");
+    expectLoweringError(`{1 & 3}>{2 & 4}`, "E_GRACE_INVALID_HOST");
+    expectLoweringError(`3>{1 2}`, "E_GRACE_INVALID_HOST");
+
+    // 不可见的状态事件留在倚音的时间流里，照常影响后续音色
+    const changes = compilePlayback(lower(`{@program(40) 1}>2 3`)).events
+        .flatMap(event => event.kind === "program-change" ? [`${event.at.toNumber()}:${event.program}`] : []);
+    assert(changes.join() === "0:40", "a state event inside a grace must stay in its time flow");
+});
+
+test("倚音可以含多个声部：同列共用锚点并纵向叠放，声部轨只属于倚音子域", () => {
+    const layout = layoutOf(`{1 & 3}>2`);
+    const node = layout.objects[0];
+    assert(layout.objects.length === 1 && node instanceof GraceTemporal, "a multi-voice grace must still fold into one object");
+    const [main, branch] = node.graceColumns[0];
+    assert(node.graceColumns.length === 1 && branch !== undefined, "simultaneous voices must share one local column");
+    assert(main.track.parent === node.track && branch.track.parent === main.track,
+        "grace voices must stay on private tracks split from the host track");
+    assert(nearly(main.box.x + main.box.anchor, branch.box.x + branch.box.anchor),
+        "voices in one local column must share the column anchor");
+    assert(branch.box.y + branch.box.h < main.box.y, "the branch voice must stack above the main voice");
+
+    const single = layoutOf(`1>2`).objects[0] as GraceTemporal;
+    assert(nearly(main.box.y - node.host.box.y, single.graces[0].box.y - single.host.box.y),
+        "the main voice keeps the single-voice position on the host shoulder");
+    const [hook] = recordCommands(layout).filter(command => command.kind === "path");
+    assert(hook?.kind === "path" && hook.commands[0].op === "M"
+        && nearly(hook.commands[0].y, main.box.y + main.box.h),
+        "the hook must start from the bottom of the whole grace block");
+});
+
+test("每个倚音声部各自连梁，零时长标记只切断所在声部", () => {
+    const beams = layoutOf(`{{1 2} & {3 4}}>5`).attachments;
+    assert(beams.length === 2 && Math.abs(beams[0].box.y - beams[1].box.y) > 1,
+        "each grace voice must get its own beam at its own height");
+    assert(layoutOf(`{{1 2} & {3 @key(F) 4}}>5`).attachments.length === 1,
+        "a mark must only break the run of its own voice");
+});
+
+test("多声部倚音可以后置、嵌套或使用 @voices，同列声部互不重叠", () => {
+    for (const source of [`5<{{1 2} & 3}`, `{{2>1} & 3}>4`, `{1 & {3>4}}>2`, `{@voices(@voice({1 2}), @voice({3 4}))}>5`]) {
+        const node = layoutOf(source).objects[0];
+        assert(node instanceof GraceTemporal, `expected a grace composite: ${source}`);
+        for (const column of node.graceColumns) {
+            const boxes = column.map(member => member.box).filter(box => box.h > 0).sort((a, b) => a.y - b.y);
+            for (let index = 1; index < boxes.length; index++) {
+                assert(boxes[index - 1].y + boxes[index - 1].h <= boxes[index].y + 1e-6,
+                    `voices of one local column must not overlap: ${source}`);
+            }
+        }
+    }
+});
+
+/** 倚音块里带数字的括线，即 tuplet */
+function bracketOf(layout: ReturnType<typeof layoutOf>) {
+    const bracket = layout.attachments.find(attachment =>
+        attachmentCommands(attachment).some(command => command.kind === "text"));
+    assert(bracket, "expected a tuplet bracket");
+    return bracket.box;
+}
+
+test("倚音子域连同附件先排版：括线在声部之间撑出空间，并计入复合盒", () => {
+    const lowerVoice = layoutOf(`{@tuplet({1 2 3},2) & 1}>1`);
+    const node = lowerVoice.objects[0];
+    assert(node instanceof GraceTemporal, "expected a grace composite");
+    const [[main, branch]] = node.graceColumns;
+    const bracket = bracketOf(lowerVoice);
+    assert(branch.box.y + branch.box.h <= bracket.y + 1e-6 && bracket.y + bracket.h <= main.box.y + 1e-6,
+        "a bracket on the lower voice must push the upper voice above it, as in the document");
+
+    for (const source of [`{1 & @tuplet({3 4 5},2)}>2`, `@grace(1,@tuplet({2 3 4},2))`]) {
+        const layout = layoutOf(source);
+        const composite = layout.objects[0];
+        const box = bracketOf(layout);
+        assert(composite instanceof GraceTemporal && box.y >= composite.box.y - 1e-6
+            && box.y + box.h <= Math.min(...composite.graces.map(grace => grace.box.y)) + 1e-6,
+            `the composite must contain the bracket above its graces: ${source}`);
+    }
+});
+
+test("倚音内部标签可作关系端点，子域关系不受声明位置影响", () => {
+    const graceTie = layoutGrace(`2>1@a 3@b @tie(a,b)`);
+    assert(graceTie.result.attachments.length === 1
+        && attachmentCommands(graceTie.result.attachments[0]).some(command => command.kind === "path"),
+        "a label written inside a grace composite must still work as a tie endpoint");
+    for (const [inside, outside] of [
+        [`{2@a 3@b @tie(a,b)}>1`, `{2@a 3@b}>1 @tie(a,b)`],
+        [`{{2@a 3@b @tie(a,b)} & 5}>1`, `{{2@a 3@b} & 5}>1 @tie(a,b)`],
+    ]) {
+        const geometry = (source: string) => {
+            const layout = layoutOf(source);
+            const node = layout.objects[0];
+            assert(node instanceof GraceTemporal, `expected a grace composite: ${source}`);
+            return [node, ...node.graces, ...layout.attachments]
+                .map(({ box }) => [box.x, box.y, box.w, box.h].map(value => value.toFixed(6)).join())
+                .sort();
+        };
+        deepStrictEqual(geometry(outside), geometry(inside), `the writing position must not change the grace block: ${outside}`);
+    }
+});
+
+test("子域附件随复合体整体平移", () => {
+    const source = `@grace(1,@tuplet({2 3 4},2)) 5`;
+    const base = bracketOf(layoutOf(source));
+    const moved = bracketOf(layoutOf(`@adjust(${source.slice(0, -2)}, dx=5px, dy=-4px) 5`));
+    assert(nearly(moved.x - base.x, 5) && nearly(moved.y - base.y, -4), "sub-domain geometry must follow its composite");
+});

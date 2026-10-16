@@ -1,0 +1,379 @@
+import { deepStrictEqual, throws } from "node:assert/strict";
+import { test } from "node:test";
+
+import { ASTFunctionNode, ASTLabelNode, ASTNodeBase } from "../src/functions/ASTtypes.js";
+import { DashNode } from "../src/functions/dash/index.js";
+import { preprocessSource } from "../src/parser/preprocess.js";
+import { analyzeScoreSyntax, compileScore } from "../src/pipeline.js";
+import { assert, createParser, expectDiagnostic, expectSnapshot, parse } from "./helpers.js";
+
+const source = [
+    "line-a \\\\",
+    "line-b",
+    "line-c \\   \t",
+    "line-d",
+    "line-e \\% trailing comment",
+    "line-f",
+    "line-g % comment only \\",
+    "line-h \\% comment with escaped backslash \\\\",
+    "line-i \"100% in string\" % comment after string \\",
+    "line-j \\\\\\",
+    "line-k \\\\% comment with escaped backslash \\\\",
+    "end"
+].join("\n");
+
+test("numeric arguments reject infinities and overflowing lengths", () => {
+    for (const value of ["Infinity", "-Infinity", "1e309"]) {
+        const result = compileScore(`@div(1, ${value})`);
+        assert(result.diagnostics.some(item => item.code === "W_INVALID_NUMBER"), "non-finite numbers must be diagnosed");
+        assert(result.lowering.duration.equals(1, 2), "invalid count must fall back to one division");
+    }
+    const result = compileScore(`@set(fontsize=${"9".repeat(309)}px) 1`);
+    assert(result.diagnostics.some(item => item.code === "W_INVALID_LENGTH"), "overflowing length must be diagnosed");
+    assert(result.layout.objects.every(node => Number.isFinite(node.box.w) && Number.isFinite(node.box.x)), "fallback geometry must be finite");
+    for (const source of ["@div(1, 1024)", "@dot(1, 1024)", "@dot(@dot(1, 800), 800)"]) {
+        throws(() => compileScore(source), RangeError, "finite counts must not hang when fraction arithmetic overflows");
+    }
+});
+
+test("key octave parsing consumes the entire value", () => {
+    for (const tonality of ["C4junk", "C4#"]) {
+        expectDiagnostic(() => compileScore(`@key(${tonality}) 1`, { variables: { strict: true } }), "E_KEY_TONALITY");
+        assert(compileScore(`@key(${tonality}) 1`).diagnostics.some(item => item.code === "W_KEY_TONALITY"), "invalid spelling must be diagnosed");
+    }
+    assert(compileScore("@key(C#4) 1").diagnostics.length === 0, "canonical spelling must remain valid");
+});
+
+test("续行与注释掩码保持源码长度和行首偏移", () => {
+    const { maskedSource, lineStarts } = preprocessSource(source);
+    assert(maskedSource.length === source.length, "掩码不能改变源码长度，否则所有 span 都会错位");
+    expectSnapshot("parser-masked", [
+        `length=${maskedSource.length}`,
+        `masked=${JSON.stringify(maskedSource)}`,
+        `lineStarts=${lineStarts.join(", ")}`,
+    ].join("\n"));
+});
+
+test("CRLF preprocessing masks CR outside strings without shifting source spans", () => {
+    for (const [source, expected] of [
+        ["1\r\n2", "1 \n2"],
+        ["1\r\n\r\n2", "1 \n \n2"],
+        ['"a\r\n% b"\r\n2', '"a\r\n% b" \n2'],
+        ["1\\\r\n2", "1   2"],
+        ["1\\\\\r\n2", "1 \\ \n2"],
+        ["1\r2", "1\r2"],
+    ]) {
+        const result = preprocessSource(source);
+        deepStrictEqual(result.maskedSource, expected);
+        deepStrictEqual(result.maskedSource.length, source.length);
+        deepStrictEqual(result.lineStarts, [
+            0, ...[...source.matchAll(/\r\n|\r|\n/g)].map(match => match.index + match[0].length),
+        ]);
+        deepStrictEqual(result.commentSpans, []);
+    }
+    const source = '1 % comment\r\n@div(1, nope)';
+    const result = preprocessSource(source);
+    deepStrictEqual(result.commentSpans, [{ start: source.indexOf("%"), end: source.indexOf("\r") }]);
+    deepStrictEqual(result.maskedSource, `1${" ".repeat(source.indexOf("\n") - 1)}\n@div(1, nope)`);
+    const { syntax } = analyzeScoreSyntax(source);
+    deepStrictEqual(syntax.calls[0].span.start, source.indexOf("@div"));
+    const diagnostic = compileScore(source).diagnostics.find(item => item.code === "W_INVALID_NUMBER")!;
+    deepStrictEqual(diagnostic.span, { start: source.indexOf("nope"), end: source.indexOf("nope") + 4 });
+});
+
+test("引号必须配对才算字符串", () => {
+    for (const [source, comments] of [
+        [`"100% in string" % comment`, 1],
+        [`5" 英寸\n% comment`, 1],
+        [`"a\\" % b" 1`, 0],
+    ] as const) {
+        deepStrictEqual(preprocessSource(source).commentSpans.length, comments, source);
+    }
+});
+
+test("head 行语法糖只标记前缀并递归显式内容", () => {
+    const source = `H.title: jpFun 简谱示例
+H.title: @box(@text(测试))`;
+    const syntax = analyzeScoreSyntax(source).syntax;
+    const tokenText = (token: typeof syntax.tokens[number]) => source.slice(token.span.start, token.span.end);
+    assert(syntax.tokens.some(token => token.kind === "operator" && tokenText(token) === "H.title:"),
+        "head declaration prefix must be one operator token");
+    assert(!syntax.tokens.some(token => tokenText(token) === "H.title: jpFun 简谱示例"),
+        "bare head text must not be included in the operator token");
+    assert(!syntax.tokens.some(token => token.kind === "atom" && tokenText(token) === "F"),
+        "bare head text must not be scanned as note sugar");
+    assert(syntax.tokens.some(token => token.kind === "function" && tokenText(token) === "@box")
+        && syntax.tokens.some(token => token.kind === "function" && tokenText(token) === "@text"),
+    "explicit head content must retain nested function tokens");
+
+    const first = createParser(source).parseGrammar(0, source.length)[0];
+    assert(typeof first !== "number" && first.kind === "sugar"
+        && tokenText({ kind: "operator", span: first.span }) === "H.title:",
+    "parseGrammar must emit a short head sugar node");
+    assert(typeof first !== "number" && first.kind === "sugar"
+        && Object.keys(first.data).sort().join(",") === "class,field",
+    "head sugar data must contain only dispatch class and field");
+});
+
+test("未闭合的调用仍然向编辑器暴露语法信息", () => {
+    const incomplete = `@page(width=800px, height= % comment`;
+    const incompleteResult = analyzeScoreSyntax(incomplete);
+    const syntax = incompleteResult.syntax;
+    const text = (start: number, end: number) => incomplete.slice(start, end);
+    assert(syntax.calls.length === 1, "an incomplete call must remain available to editor tooling");
+    assert(syntax.calls[0].closeParenSpan === undefined, "an incomplete call must expose a missing close parenthesis");
+    assert(
+        syntax.tokens.some(token => token.kind === "function" && text(token.span.start, token.span.end) === "@page"),
+        "syntax analysis must identify the written function name",
+    );
+    assert(
+        syntax.tokens.some(token => token.kind === "property" && text(token.span.start, token.span.end) === "width"),
+        "syntax analysis must identify named arguments",
+    );
+    assert(
+        syntax.tokens.some(token => token.kind === "length" && text(token.span.start, token.span.end) === "800px"),
+        "syntax analysis must classify values from function argument definitions",
+    );
+    assert(
+        syntax.tokens.some(token => token.kind === "comment" && text(token.span.start, token.span.end).startsWith("%")),
+        "syntax analysis must preserve comments masked before AST parsing",
+    );
+    assert(incompleteResult.diagnostics.length > 0, "an incomplete call must report a diagnostic without throwing");
+});
+
+test("变长内容暴露嵌套的 atom 与语法糖运算符", () => {
+    const nested = analyzeScoreSyntax(`@voices(@voice({1/ 2}, A))`).syntax;
+    assert(nested.tokens.some(token => token.kind === "atom"), "variadic content must expose atom syntax");
+    assert(nested.tokens.some(token => token.kind === "operator"), "variadic content must expose sugar operators");
+});
+
+test("voice connection declarations are complete operator tokens, not notes or bars", () => {
+    for (const marker of ["V{}:", "V[]:", "V|:"]) {
+        for (const source of [`  ${marker} % group\nN: 1\nN: 2`, `1 ${marker}N:1 N:2`, `{${marker} N:1 N:2}`]) {
+            const { syntax, diagnostics } = analyzeScoreSyntax(source);
+            deepStrictEqual(diagnostics, []);
+            const start = source.indexOf(marker);
+            const end = start + marker.length;
+            deepStrictEqual(syntax.tokens.filter(token => token.span.start >= start && token.span.start < end),
+                [{ kind: "operator", span: { start, end } }], `${marker} must be a single complete operator`);
+        }
+    }
+    for (const incomplete of ["V", "V{", "V{}", "V[", "V[]", "V|"]) {
+        analyzeScoreSyntax(incomplete);
+    }
+    for (const source of ['"V{}: V[]: V|:"', "N:1\nL: V{}: V[]: V|:", "% V{}: V[]: V|:"]) {
+        const { syntax } = analyzeScoreSyntax(source);
+        assert(!syntax.tokens.some(token => token.kind === "operator" && /^V/.test(source.slice(token.span.start, token.span.end))),
+            "strings, lyrics and comments must not start connection groups");
+    }
+});
+
+test("嵌套的未闭合调用同时保留可见性和错误", () => {
+    const boundedResult = analyzeScoreSyntax(`{@page(width=1}`);
+    assert(boundedResult.syntax.calls.some(call => call.name === "page"), "an incomplete nested call must remain visible");
+    assert(boundedResult.diagnostics.some(item => item.code === "E_UNTERMINATED_CALL"), "an incomplete nested call must report its error");
+});
+
+test("语法 token 在跨越被掩码注释时保持严格非重叠且顺序拼接还原源码", () => {
+    const samples = [
+        `1 @gliss(a, b)\n\n% 滑音连接非常自由\n1@a 2 3@b`,
+        `N: 1 2\nL: 啦 啦 % 行尾注释\nN: 3 4`,
+        `@text(第一行 % 参数内注释\n第二行)`,
+        `1 \\ % 续行注释\n2`,
+    ];
+    for (const source of samples) {
+        const { tokens } = analyzeScoreSyntax(source).syntax;
+        let offset = 0;
+        let reconstructed = "";
+        for (const token of tokens) {
+            assert(token.span.start < token.span.end, "token span must not be empty");
+            assert(token.span.start >= offset, `token [${token.span.start}, ${token.span.end}) overlapped previous end ${offset}`);
+            if (token.span.start > offset) {
+                reconstructed += source.slice(offset, token.span.start);
+            }
+            reconstructed += source.slice(token.span.start, token.span.end);
+            offset = token.span.end;
+        }
+        if (offset < source.length) {
+            reconstructed += source.slice(offset);
+        }
+        deepStrictEqual(reconstructed, source, "sequential token slicing must reconstruct the original source without duplication");
+    }
+});
+
+test("命名参数与标签保留无歧义的字面量类型", () => {
+    const typedExtras = `@set(fontsize=30) 1@a 2@b @tie(a,b,height=0.5em) @up(1,2)`;
+    const typedSyntax = analyzeScoreSyntax(typedExtras).syntax;
+    const hasToken = (kind: string, value: string) => typedSyntax.tokens.some(token =>
+        token.kind === kind && typedExtras.slice(token.span.start, token.span.end) === value
+    );
+    assert(hasToken("number", "30"), "dynamic set values must use unambiguous literal types");
+    assert(hasToken("label", "a") && hasToken("label", "b"), "tie endpoints must use its variadic label contract");
+    assert(hasToken("length", "0.5em"), "unknown named arguments must retain unambiguous literal types");
+    assert(typedSyntax.tokens.filter(token => token.kind === "atom").length >= 4, "up variadic content must expose nested atoms");
+});
+
+test("syntaxOnly 不改变被识别的语法节点", () => {
+    const dual = `@set(fontsize=24)\n1 2/ 3. 5^1 @up(2,4) @div({1 2}) 6@x`;
+    const grammarShape = (syntaxOnly: boolean) => createParser(dual)
+        .parseGrammar(0, dual.length, syntaxOnly)
+        .map(node => typeof node === "number"
+            ? `text:${node}`
+            : `${node.kind}:${node.span.start}-${node.span.end}`)
+        .join(" ");
+    assert(
+        grammarShape(false) === grammarShape(true),
+        "syntaxOnly must not change which GrammarNodes are recognized",
+    );
+    expectSnapshot("parser-grammar-shape", grammarShape(true));
+});
+
+test("参数不足的调用在严格与宽容模式下各自处理", () => {
+    expectDiagnostic(() => createParser("@tie()").parse(), "E_NOT_ENOUGH_ARGS");
+
+    const strictParser = createParser("@tie()");
+    strictParser.setVariable("strict", true);
+    expectDiagnostic(() => strictParser.parseArgWithType({ start: 0, end: 6 }, "content"), "E_NOT_ENOUGH_ARGS");
+    assert(strictParser.diagnostics.length === 0, "strict content parsing must not record a recovered diagnostic");
+
+    const lenientParser = createParser("@tie()");
+    lenientParser.setVariable("strict", false);
+    assert(lenientParser.parseArgWithType({ start: 0, end: 6 }, "content") === null,
+        "non-strict content parsing must recover with null");
+    assert(lenientParser.diagnostics.some(item => item.code === "E_NOT_ENOUGH_ARGS"),
+        "non-strict content parsing must record the swallowed error");
+    assert(lenientParser.diagnostics.some(item => item.code === "W_INVALID_CONTENT"),
+        "non-strict content parsing must report its fallback");
+});
+
+test("content recovery removes discarded label candidates", () => {
+    const parser = createParser("@head(center={1 @tie()}) 2");
+    const nodes = parser.parse();
+    deepStrictEqual(parser.labelableNodes, [nodes.at(-1)]);
+    deepStrictEqual(parser.diagnostics.map(item => item.code), ["E_NOT_ENOUGH_ARGS", "W_INVALID_CONTENT"]);
+    expectDiagnostic(() => compileScore("@head(center={1 @tie()}) 2 @tie()"), "E_NOT_ENOUGH_ARGS");
+    expectDiagnostic(() => compileScore("1 @head(center={@x @tie()}) 2 @tie(x)"), "E_UNKNOWN_LABEL");
+});
+
+test("content recovery restores the original tail label after nested success", () => {
+    for (const strict of [false, true]) {
+        for (const label of ["absent", "undefined", "original"] as const) {
+            const source = "1 @div({@x 2^3^4}) @tie(missing)";
+            const parser = createParser(source);
+            parser.setVariable("strict", strict);
+            parser.parse(0, 1);
+            const candidates = parser.labelableNodes;
+            const target = candidates[0]!;
+            if (label === "absent") delete target.label;
+            else target.label = label === "undefined" ? undefined : label;
+            const descriptor = Object.getOwnPropertyDescriptor(target, "label");
+            const parseContent = () => parser.parseArgWithType({ start: 2, end: source.length }, "content");
+            if (strict) expectDiagnostic(parseContent, "E_UNKNOWN_LABEL");
+            else assert(parseContent() === null, "invalid content must be discarded");
+            assert(parser.labelableNodes === candidates, "recovery must preserve the shared array identity");
+            deepStrictEqual(candidates, [target]);
+            deepStrictEqual(Object.getOwnPropertyDescriptor(target, "label"), descriptor);
+            const warnings = label === "original" ? ["W_TARGET_ALREADY_LABELED"] : [];
+            deepStrictEqual(parser.diagnostics.map(item => item.code), [
+                ...warnings, ...(strict ? [] : ["E_UNKNOWN_LABEL", "W_INVALID_CONTENT"]),
+            ]);
+        }
+    }
+});
+
+test("inner content failure preserves successful outer labels", () => {
+    const source = "1 @x @head(center={2 @tie(missing)}) 3";
+    const parser = createParser(source);
+    parser.parse(0, 1);
+    const target = parser.labelableNodes[0]!;
+    assert(parser.parseArgWithType({ start: 2, end: source.length }, "content"), "outer content must succeed");
+    assert(target.label === "x", "inner recovery must preserve the outer label");
+    deepStrictEqual(parser.labelableNodes.map(node => node?.sourceSpan.start), [0, source.lastIndexOf("3")]);
+    deepStrictEqual(parser.diagnostics.map(item => item.code), ["E_UNKNOWN_LABEL", "W_INVALID_CONTENT"]);
+});
+
+test("content recovery preserves label boundaries", () => {
+    const source = "1 @x 2 @tie(missing)";
+    const parser = createParser(source);
+    parser.parse(0, 1);
+    const target = parser.labelableNodes[0]!;
+    parser.labelableNodes.push(null);
+    assert(parser.parseArgWithType({ start: 2, end: source.length }, "content") === null, "content must fail");
+    deepStrictEqual(parser.labelableNodes, [target, null]);
+    assert(target.label === undefined, "labels must not cross a null boundary");
+    assert(parser.diagnostics.length === 3, "recovery must preserve the warning before the error");
+});
+
+test("successful content keeps labels visible to later references", () => {
+    for (const source of ["@div({1@x}) 2@y @tie(x,y)", "1 @div({@x}) 2@y @tie(x,y)"]) {
+        const result = compileScore(source);
+        deepStrictEqual(result.diagnostics, []);
+        assert(result.lowering.attachments.length === 1, "successful labels must remain valid tie endpoints");
+    }
+});
+
+test("content recovery restores state and rethrows implementation errors", () => {
+    const failure = new TypeError("test implementation failure");
+    class BrokenFunction extends ASTFunctionNode {
+        static override def = {
+            name: "broken", description: "test", details: "@broken()", allowExtraArgs: false, args: [],
+        };
+        constructor() { super({ start: 0, end: 0 }); throw failure; }
+    }
+    const source = "1 @x 2 @broken()";
+    const parser = createParser(source);
+    parser.registerFunctions([BrokenFunction]);
+    parser.parse(0, 1);
+    const target = parser.labelableNodes[0]!;
+    const descriptor = Object.getOwnPropertyDescriptor(target, "label");
+    throws(() => parser.parseArgWithType({ start: 2, end: source.length }, "content"), error => error === failure);
+    deepStrictEqual(parser.labelableNodes, [target]);
+    deepStrictEqual(Object.getOwnPropertyDescriptor(target, "label"), descriptor);
+    deepStrictEqual(parser.diagnostics, []);
+});
+
+test("增时线独立承载标签，时值包装透明，小节线保持透明", () => {
+    for (const dash of ["-", "-/.", "@dash()", "@div(-,1)", "@box(-)"]) {
+        const parser = createParser(`1@a ${dash}@b`);
+        parser.parse();
+        const targets = parser.labelableNodes.filter(node => node?.label);
+        assert(targets.length === 2 && targets[0]?.label === "a"
+            && targets[1] instanceof DashNode && targets[1].label === "b",
+        "the dash must carry its own label without replacing the preceding note label");
+        assert(parser.diagnostics.length === 0, "labeling a dash must not warn");
+    }
+    const parser = createParser(`1 |@a`);
+    parser.parse();
+    assert(parser.labelableNodes.length === 1 && parser.labelableNodes[0]?.label === "a",
+        "bar lines must remain transparent to labels");
+});
+
+test("标签的 target 指向被标注对象，不随容器改写", () => {
+    const labelsOf = (root: ASTNodeBase) => {
+        const found: ASTLabelNode[] = [];
+        const visit = (node: ASTNodeBase) => {
+            if (node instanceof ASTLabelNode) found.push(node);
+            for (const child of node.children ?? []) visit(child);
+        };
+        visit(root);
+        return found;
+    };
+
+    // 根 ASTBraceNode 会把顶层节点的 parent 改写成自己，target 必须幸免
+    const flat = parse(`1@x 2@y`);
+    const flatLabels = labelsOf(flat);
+    assert(flatLabels.length === 2, "every bound label must stay reachable through children");
+    assert(flatLabels[0].target.sourceSpan.start === 0 && flatLabels[1].target.sourceSpan.start === 4,
+        "a label target must be the annotated node, not the container that adopted the label");
+    assert(flatLabels.every(label => label.parent === flat),
+        "parent must keep meaning the AST container");
+
+    // 同名标签可以反复使用，各自指向自己那个对象
+    const reused = labelsOf(parse(`1@x 2@y @tie(x,y) 3@x 4@y @tie(x,y)`));
+    assert(reused.filter(label => label.label === "x").map(label => label.target.sourceSpan.start).join() === "0,18",
+        "reusing a label name must bind each declaration to its own object");
+
+    const nested = labelsOf(parse(`@div({1@x})`));
+    assert(nested.length === 1 && nested[0].target.sourceSpan.start === 6,
+        "a label nested in braces must still point at the annotated node");
+});
