@@ -3,6 +3,7 @@ import {
   type ScoreDocument, type ScoreEvent, type ScoreMeasure,
 } from '@m3n/notation'
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
+import { sustainContinuations } from './sustains.js'
 
 function tempoMark(qpm: number, count: number, unit: number) {
   const display = displayedTempo(qpm, count, unit)
@@ -19,6 +20,7 @@ export type EventBinding = {
   event?: ScoreEvent
   slot: number
   lyrics: Map<number, LyricRowData>
+  sustain: boolean
 }
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
 export type ProjectionOptions = { width: number; paged: boolean; includeBass?: boolean }
@@ -45,10 +47,11 @@ function duration(expression: string, beats: number): string {
 export function projectNumberedScore(document: ScoreDocument, options: ProjectionOptions): ProjectedScore {
   const ids = scoreEventIds(document)
   const lyrics = lyricsByEvent(document)
+  const continuations = sustainContinuations(document, lyrics)
   const bindings = new Map<string, EventBinding>()
   const diagnostics: NumberedNotationDiagnostic[] = []
   const rowNumbers = [...new Set([...lyrics.values()].flatMap(slots => [...slots.values()].flatMap(rows => [...rows.keys()])))].sort((a, b) => a - b)
-  const endpointLabels = new Map<ScoreEvent, { first: string; last: string; children: string[] }>()
+  const endpointLabels = new Map<ScoreEvent, { first: string; last: string; children: string[]; tieStart: string }>()
   const relations: string[] = []
   const parentheses: string[] = []
   // Registered after musical relations, from inner to outer: harmony, directions, section names.
@@ -70,9 +73,11 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const xmlId = event ? ids.get(event)! : `m3n-rest-${partIndex + 1}-${serial}`
         const label = `m${++serial}`
         const visualId = `${xmlId}${suffix}`
-        const binding: EventBinding = { label, xmlId, visualId, measureId, staff, event, slot, lyrics: suffix.includes('sustain') ? new Map() : lyrics.get(event!)?.get(slot) ?? new Map() }
+        const binding: EventBinding = { label, xmlId, visualId, measureId, staff, event, slot, lyrics: suffix.includes('sustain') ? new Map() : lyrics.get(event!)?.get(slot) ?? new Map(), sustain: suffix.includes('sustain') || continuations.has(event!) }
         bindings.set(label, binding)
-        if (lyricTarget && staff === 'melody') lyricTargets.push(binding)
+        // Native dashes do not consume a lyric slot; their empty domain slots
+        // stay in the binding without shifting lyrics on following notes.
+        if (lyricTarget && staff === 'melody' && !continuations.has(event!)) lyricTargets.push(binding)
         return { expression: `${expression}@${label}`, label }
       }
       const visibleMeasures = [...measures]
@@ -148,7 +153,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             const noteContent = content.splice(controls.length)
             content.push(`@tuplet({${noteContent.join(' ')}},${event.tuplet.numbase})`)
           } else {
-            const base = event.kind === 'chord' ? `@up(${event.pitches.map(pitch => `@note(${quote(pitchName(pitch, event.octaveShift))})`).join(',')})` : `@note(${quote(pitchName(event.pitches[0] ?? '0', event.octaveShift))})`
+            const base = continuations.has(event) ? '@dash()' : event.kind === 'chord' ? `@up(${event.pitches.map(pitch => `@note(${quote(pitchName(pitch, event.octaveShift))})`).join(',')})` : `@note(${quote(pitchName(event.pitches[0] ?? '0', event.octaveShift))})`
             let remaining = event.beats
             let index = 0
             while (remaining > 1e-7) {
@@ -167,16 +172,16 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             for (const [level, text] of [event.chord, event.text, event.sectionLabel].entries()) {
               if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first}${level === 2 ? ',weight=700' : ''})`)
             }
-            endpointLabels.set(event, { first, last, children })
+            const head = continuations.get(event)
+            const tieStart = head ? endpointLabels.get(head)!.tieStart : event.tieFromTupletIndex === undefined ? first : children[event.tieFromTupletIndex]!
+            endpointLabels.set(event, { first, last, children, tieStart })
             if (!firsts.has(measureIndex)) firsts.set(measureIndex, first)
             lasts.set(measureIndex, last)
-            if (previousTied) {
+            if (previousTied && !head) {
               const endpoints = endpointLabels.get(previousTied)
               // A sustain dash extends the duration, but the tie starts on the
               // pitched glyph. Tuplets still select their last pitched child.
-              const start = previousTied.tieFromTupletIndex === undefined
-                ? endpoints?.first
-                : endpoints?.children[previousTied.tieFromTupletIndex]
+              const start = endpoints?.tieStart
               if (start) relations.push(`@tie(${start},${first})`)
             }
           }

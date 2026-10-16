@@ -44,6 +44,29 @@ test('exposes playback without a print action', async ({ page }) => {
   await expect(page.getByRole('button', { name: '打印' })).toHaveCount(0)
 })
 
+test('renders tied full beats as sustain dashes and maps a dash back to its own source event', async ({ page }) => {
+  const source = '{title=Sustain Test}{4/4}\nN: 6~ 6~ 6~ 6 |||\nL: 白'
+  await page.goto('/editor')
+  const editor = page.getByLabel('M3N source')
+  await editor.fill(source)
+  await page.getByRole('radio', { name: '简谱', exact: true }).check()
+  const paper = page.locator('.score-paper')
+  await expect(paper).toContainText('Sustain Test', { timeout: 30_000 })
+  await expect(paper.locator('g.note[data-m3n-role="sustain"]')).toHaveCount(3)
+  await expect(paper.locator('g.note text')).toHaveText(['6'])
+  await expect(paper.locator('text[data-m3n-role="lyric"]')).toHaveText(['白'])
+  const dash = paper.locator('#m3n-e-2')
+  await expect(dash.locator('text')).toHaveCount(0)
+  // A horizontal SVG line has a zero-height bounding box. Click its painted
+  // stroke with the real mouse instead of Playwright's box visibility check.
+  const point = await dash.locator('line').evaluate(line => {
+    const box = line.getBoundingClientRect()
+    return { x: box.x + box.width / 2, y: box.y }
+  })
+  await page.mouse.click(point.x, point.y)
+  await expect.poll(() => selectionStart(editor)).toBe(source.indexOf('6~', source.indexOf('6~') + 1))
+})
+
 test('highlights numbered notation during playback with tuplets and a bass voice', async ({ page }) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nL: 春夏秋冬天\nB: 1 2 3 4 | 5 6 7 1e |||')

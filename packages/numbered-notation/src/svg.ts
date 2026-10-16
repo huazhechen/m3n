@@ -41,6 +41,7 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
         objectLocations.set(node.order, value)
         return {
           class: 'note', id: value.binding.visualId, 'data-m3n-id': value.binding.xmlId,
+          ...(value.binding.sustain ? { 'data-m3n-role': 'sustain' } : {}),
           'data-jpfun-object': String(node.order), 'data-m3n-system': String(value.line), 'data-m3n-measure': value.binding.measureId,
         }
       }

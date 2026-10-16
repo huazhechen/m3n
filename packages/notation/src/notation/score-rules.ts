@@ -131,7 +131,8 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   return diagnostics
 }
 
-function resolvedAbsolutePitches(measures: readonly ScoreMeasure[]) {
+/** Absolute pitches with measure accidentals, key changes and octave shifts resolved. */
+export function resolveScorePitches(measures: readonly ScoreMeasure[]) {
   const resolved = new Map<ScoreEvent, string[]>()
   for (const measure of measures) {
     const accidentals = new Map<string, string>()
@@ -158,7 +159,7 @@ function resolvedAbsolutePitches(measures: readonly ScoreMeasure[]) {
 
 function validateTies(measures: readonly ScoreMeasure[], source?: string) {
   const diagnostics: ScoreDiagnostic[] = []
-  const absolutePitches = resolvedAbsolutePitches(measures)
+  const absolutePitches = resolveScorePitches(measures)
   const events = measures.flatMap((measure, measureIndex) => measure.events.map((event) => ({ event, measureIndex })))
   for (const [index, item] of events.entries()) {
     const { event, measureIndex } = item

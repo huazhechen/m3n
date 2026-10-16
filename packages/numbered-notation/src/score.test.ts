@@ -760,7 +760,13 @@ describe('jpFun numbered notation adapter', () => {
                 expect(native.every(Boolean), `${file}: missing event at ${event.sourceStart}`).toBe(true)
                 expect(native[0]!.t.toNumber(), `${file}: shifted ${staff} event`).toBeCloseTo(time)
                 expect(native.reduce((sum, node) => sum + node.T.toNumber(), 0), `${file}: wrong event duration`).toBeCloseTo(event.beats)
-                const pitched = event.kind === 'tuplet' ? native.flatMap(mainPitches) : mainPitches(native[0]!)
+                const inherited = bindings[0]!.sustain ? result.layout.objects.filter(node => node.track === native[0]!.track
+                  && node.t.compare(native[0]!.t) < 0 && mainPitches(node).some(pitch => pitch.name !== '0')).at(-1) : undefined
+                if (bindings[0]!.sustain) {
+                  expect(inherited, `${file}: sustain without a pitched head`).toBeDefined()
+                  expect(mainPitches(native[0]!)).toEqual([])
+                }
+                const pitched = event.kind === 'tuplet' ? native.flatMap(mainPitches) : mainPitches(inherited ?? native[0]!)
                 expect(pitched, `${file}: changed pitches at ${event.sourceStart}`).toEqual((event.kind === 'rest' ? ['0'] : event.pitches).map(pitch => {
                   const [, name, acc = '', octaves = ''] = /^([0-7])([#b=]*)([ed]*)$/.exec(pitch)!
                   return { name, acc: name === '0' ? '' : acc.replaceAll('=', 'n'), octave: name === '0' ? 0 : [...octaves].reduce((n, c) => n + (c === 'e' ? 1 : -1), event.octaveShift) }
