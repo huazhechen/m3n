@@ -50,6 +50,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const rowNumbers = [...new Set([...lyrics.values()].flatMap(slots => [...slots.values()].flatMap(rows => [...rows.keys()])))].sort((a, b) => a - b)
   const endpointLabels = new Map<ScoreEvent, { first: string; last: string; children: string[] }>()
   const relations: string[] = []
+  const parentheses: string[] = []
   // Registered after musical relations, from inner to outer: harmony, directions, section names.
   const annotations: string[][] = [[], [], []]
   let serial = 0
@@ -233,6 +234,23 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     `@head(center={${[document.title ? `@text(${quote(document.title)},size=32px,align=center)` : '', document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : ''].filter(Boolean).join(' ')}},right={${document.singer || document.composer ? `@text(${quote(document.singer || document.composer)},size=14px)` : ''}},left={{@key(${quote(keyName(document.key))},size=16px) @meter(${document.meterCount},${document.meterUnit},size=18px) ${document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : ''}}}${document.subtitle ? ',sidebelow=true' : ''}) @br()`,
   ]
   const parts = [...document.parts.values()].map((part, index) => voicesForPart(part.melody, part.bass, index))
+  for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {
+    const instrumental = document.intervals.filter(interval => interval.kind === 'inst' && interval.staff === staff)
+    let start: string | undefined, end: string | undefined
+    const flush = () => {
+      if (start && end) parentheses.push(`@paren(${start},${end})`)
+      start = end = undefined
+    }
+    for (const event of part[staff].flatMap(measure => measure.events)) {
+      if (!instrumental.some(interval => interval.start !== undefined && interval.end !== undefined
+        && event.sourceStart >= interval.start && event.sourceEnd <= interval.end)) { flush(); continue }
+      const labels = endpointLabels.get(event)
+      if (!labels) continue
+      start ??= labels.first
+      end = labels.last
+    }
+    flush()
+  }
   const intervals = document.intervals.map(interval => ({ ...interval }))
   for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {
     const events = part[staff].flatMap(measure => measure.events)
@@ -256,5 +274,5 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     if (!start || !end || interval.display === 'text') continue
     relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
   }
-  return { source: [...header, parts.join(' @br() '), ...relations, ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers }
+  return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers }
 }

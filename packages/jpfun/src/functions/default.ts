@@ -20,6 +20,7 @@ import { RestNode } from "./rest/index.js";
 import { UpNode, DownNode } from "./up/index.js";
 import { PageNode } from "./page/index.js";
 import { PageBreakNode } from "./pagebreak/index.js";
+import { ParenNode } from "./paren/index.js";
 import { ProgramNode } from "./program/index.js";
 import { StackNode } from "./stack/index.js";
 import { SymbolNode } from "./symbol/index.js";
@@ -42,7 +43,7 @@ export const defaultFunctions: ASTFunctionClass[] = [
     ArpeggioNode,
     GraceNode, SlideNode,  // 倚音与滑入滑出
     TieNode, BeamNode, GlissNode, DynNode,
-    BoxNode, VoltaNode,
+    BoxNode, VoltaNode, ParenNode,
     AdjustNode,   // 手工微调
     SetNode, KeyNode, MeterNode, TempoNode, ProgramNode,    // 设置
     TextNode, SymbolNode,

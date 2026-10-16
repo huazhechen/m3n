@@ -320,6 +320,44 @@ describe('jpFun numbered notation adapter', () => {
     expect(lyrics(instrumental.root, 'm3n-e-3')).toBe('春')
   })
 
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('engraves instrumental range parentheses across systems and pages at width $width, paged=$paged', ({ width, paged }) => {
+    const source = '{4/4}\nN: {inst}1d^ (2 3) 4 | ' + Array(28).fill('1 2 3 4 |').join(' ') + ' {br}[135:h]^ 0^ {/} | 5 6 7 1e |||\nL: 春天花开'
+    const document = parseM3NDocument(source)
+    const projection = projectNumberedScore(document, { width, paged })
+    expect(projection.source.match(/@paren\(/g)).toHaveLength(1)
+    const result = geometry(document, { width, paged })
+    const attachment = result.layout.attachments.find(attachment => attachment.sourceSpan
+      && projection.source.slice(attachment.sourceSpan.start, attachment.sourceSpan.end).startsWith('@paren('))!
+    const events = [...projection.bindings.values()].filter(binding => binding.event && binding.event.sourceEnd <= document.intervals[0]!.end!)
+    const labels = new Set(events.map(binding => binding.label))
+    const hosts = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode && labels.has(node.ast.labelable?.()?.label ?? ''))
+    const lines = [...new Set(hosts.map(node => node.layoutLine))]
+    expect(lines.length).toBeGreaterThan(1)
+    expect(attachment.regions).toHaveLength(lines.length * 2)
+    for (const line of lines) {
+      const notes = hosts.filter(node => node.layoutLine === line)
+      const [left, right] = attachment.regions.filter(region => region.line === line)
+      expect(left!.x + left!.w).toBeLessThan(Math.min(...notes.map(node => node.box.x)))
+      expect(right!.x).toBeGreaterThan(Math.max(...notes.map(node => node.box.x + node.box.w)))
+      expect(left!.x).toBeGreaterThanOrEqual(32 - 1e-6)
+      expect(right!.x + right!.w).toBeLessThanOrEqual(width - 32 + 1e-6)
+    }
+    if (paged && width === 320) expect(result.layout.pages.length).toBeGreaterThan(1)
+    const { root } = render(document, { width, paged })
+    expect([...root.querySelectorAll('text[data-m3n-role="lyric"]')].map(node => node.textContent).join('')).toBe('春天花开')
+  })
+
+  it('merges nested and adjacent instrumental markings without bracketing unmarked instrumental music or merged legato', () => {
+    const source = '{4/4}\nN: {inst}1 {inst}2{/inst} 3{/inst} {inst}4{/inst} | {lg}5 6{/lg} {lg}7 1e{/lg} |||'
+    const document = parseM3NDocument(source)
+    const projection = projectNumberedScore(document, options)
+    const bindings = [...projection.bindings.values()]
+    expect(projection.source.match(/@paren\(/g)).toHaveLength(1)
+    expect(projection.source).toContain(`@paren(${bindings[0]!.label},${bindings[3]!.label})`)
+    expect(projectNumberedScore(parseM3NDocument('N: 1 2 3 4 |'), options).source).not.toContain('@paren(')
+    expect(geometry(document).diagnostics).toEqual([])
+  })
+
   it('retains empty lyric slots and playback pass metadata across repeat verses', () => {
     const { root } = render('{2/4}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天\nL2: 花开满园')
     expect(root.querySelector('text[data-m3n-id="m3n-e-3"][data-m3n-rendition="1"]')).not.toBeNull()
@@ -520,11 +558,12 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it.each([320, 600, 800, 1000])('keeps Annie’s opening repeat with its measure at width %s', width => {
-    const document = parseM3NDocument(readFileSync(resolve(process.cwd(), '../../src/scores/annie_01.m3n'), 'utf8'))
+  it.each([320, 600, 800, 1000].flatMap(width => ['|', '||'].map(boundary => ({ width, boundary }))))('keeps opening repeats with their measure after $boundary at width $width', ({ width, boundary }) => {
+    const source = '{4/4}\nN: ' + Array(4).fill('1 2 3 4 |').join(' ') + ` 5 6 7 1e ${boundary} ||: 1 2 3 4 | 5 6 7 1e :|||`
+    const document = parseM3NDocument(source)
     const melody = [...document.parts.values()][0]!.melody
     const opening = melody.findIndex(measure => measure.left === 'rptstart')
-    expect(melody[opening - 1]!.right).toBe('dbl')
+    expect(melody[opening - 1]!.right).toBe(boundary === '||' ? 'dbl' : 'single')
     const time = melody.slice(0, opening).flatMap(measure => measure.events).reduce((sum, event) => sum + event.beats, 0)
     for (const paged of [false, true]) {
       const result = geometry(document, { width, paged })
