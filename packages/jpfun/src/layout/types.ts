@@ -109,6 +109,8 @@ export type LayoutRange = readonly [from: number, to: number]
 export interface AttachmentLayoutContext extends LayoutPrepareContext {
     /** Adjacent, non-nested peers on this system; peers do not obstruct one another. */
     getAlignmentPeers?(attachment: LayoutAttachment, line: number): readonly LayoutAttachment[];
+    /** Earlier declarations in this layout domain, following the same visibility rule as getRangeExtents. */
+    getPrecedingAttachments?(): readonly LayoutAttachment[];
     /** 占用测量使用布局位置，最终绘制才应用后置平移 */
     readonly layoutOnly?: boolean;
     width: number;      // 整篇可用的内容宽（页宽减左右边距），与行无关

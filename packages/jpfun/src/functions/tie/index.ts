@@ -1,3 +1,4 @@
+// M3N modification: separate overlapping arc ribbons in relation-aligned layouts.
 import { ASTNodeBase, FunctionArgs, SourceSpan, ParserContext, ASTFunctionNode, ASTFunctionClass, type LengthValue } from "../ASTtypes.js";
 import type { CallArgumentInfo } from "../../parser/grammarType.js";
 import { Diagnostic, ErrorDiagnostic } from "../../diagnostic.js";
@@ -170,10 +171,11 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
 
     createGeometry(context: AttachmentLayoutContext) {
         const segments = this.createSegments(context);
-        const regions = segments.map(({ commands, ...region }) => region);
+        if (context.alignRelations) this.clearEarlierArcs(context, segments);
+        const regions = segments.map(({ commands: _commands, ...region }) => region);
         const occupancy = segments.map(segment => {
             // 只申报主体上方那一段，下半截由主体自己占；本行没有主体时就只有弧带本身
-            // 用 getHostExtent 而不是 getRangeExtents：连音线只避让主体，彼此之间允许重叠
+            // 同轨弧线的避让已在几何中完成；这里只裁去宿主本身占用的下半截。
             const hostExtent = context.getHostExtent(segment.line, segment.track);
             const bottom = hostExtent
                 ? Math.max(segment.y, context.getVisualAxis(segment.line, segment.track) + hostExtent.top)
@@ -197,6 +199,49 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
                 }
             },
         };
+    }
+
+    /** Later arc declarations form the outer layer; adjacent arcs still share their original ports. */
+    private clearEarlierArcs(context: AttachmentLayoutContext, segments: TieSegment[]) {
+        const track = this.endPoints[0].track;
+        if (this.endPoints.some(node => node.track !== track)) return;
+        const first = this.endPoints.reduce((a, b) => a.t.compare(b.t) < 0 ? a : b);
+        const last = this.endPoints.reduce((a, b) => a.t.compare(b.t) > 0 ? a : b);
+        const obstacles: TieSegment[] = [];
+        for (const peer of context.getPrecedingAttachments?.() ?? []) {
+            if (!(peer instanceof TieLayoutAttachment) || peer.endPoints.some(node => node.track !== track)) continue;
+            const start = peer.endPoints.reduce((a, b) => a.t.compare(b.t) < 0 ? a : b);
+            const end = peer.endPoints.reduce((a, b) => a.t.compare(b.t) > 0 ? a : b);
+            // A common endpoint alone is adjacency, not an overlapping musical span.
+            if (end.t.compare(first.t) <= 0 || start.t.compare(last.t) >= 0) continue;
+            const occupancy = context.getAttachmentOccupancy(peer);
+            if (!occupancy) continue;
+            peer.createSegments(context).forEach((segment, index) => {
+                const placed = occupancy[index];
+                if (placed) obstacles.push(shiftSegment(segment, placed.y - segment.y));
+            });
+        }
+        const gap = this.fontSize * 0.15;
+        for (let index = 0; index < segments.length; index++) {
+            const segment = segments[index];
+            let lift = 0;
+            for (const obstacle of obstacles) {
+                if (obstacle.line !== segment.line) continue;
+                const left = Math.max(segment.x, obstacle.x);
+                const right = Math.min(segment.x + segment.w, obstacle.x + obstacle.w);
+                if (right <= left) continue;
+                // Sample at most one pixel apart, including both endpoints. A small
+                // extra margin covers interpolation between samples and rasterization.
+                const steps = Math.max(1, Math.ceil(right - left));
+                for (let step = 0; step <= steps; step++) {
+                    const x = left + (right - left) * step / steps;
+                    const outer = ribbonAtX(segment.commands, x);
+                    const inner = ribbonAtX(obstacle.commands, x);
+                    if (outer && inner) lift = Math.max(lift, outer.bottom - inner.top + gap);
+                }
+            }
+            if (lift > 0) segments[index] = shiftSegment(segment, -lift - this.fontSize * 0.02);
+        }
     }
 
     private tiePort(node: VisualTemporalNode): LayoutPoint {
@@ -420,4 +465,43 @@ function makeSegment(
     track: Track,
 ): TieSegment {
     return { commands, line, track, ...pathBounds(commands) };
+}
+
+function shiftSegment(segment: TieSegment, dy: number): TieSegment {
+    const commands = segment.commands.map(command => {
+        if (command.op === 'Z') return command;
+        if (command.op === 'C') return { ...command, y: command.y + dy, cy1: command.cy1 + dy, cy2: command.cy2 + dy };
+        if (command.op === 'Q') return { ...command, y: command.y + dy, cy: command.cy + dy };
+        return { ...command, y: command.y + dy };
+    });
+    return { ...segment, y: segment.y + dy, commands };
+}
+
+/** Tie ribbon edges are monotone in x, including the opening/closing cross-system curves. */
+function ribbonAtX(commands: readonly PathCommand[], x: number) {
+    let cursor: LayoutPoint = { x: 0, y: 0 };
+    let top = Infinity, bottom = -Infinity;
+    for (const command of commands) {
+        if (command.op === 'Z') continue;
+        if (command.op === 'M') { cursor = command; continue; }
+        const start = cursor;
+        cursor = command;
+        if (x < Math.min(start.x, command.x) - 1e-7 || x > Math.max(start.x, command.x) + 1e-7) continue;
+        const at = (t: number, axis: 'x' | 'y') => {
+            const u = 1 - t;
+            if (command.op === 'C') return u ** 3 * start[axis] + 3 * u * u * t * command[axis === 'x' ? 'cx1' : 'cy1']
+                + 3 * u * t * t * command[axis === 'x' ? 'cx2' : 'cy2'] + t ** 3 * command[axis];
+            if (command.op === 'Q') return u * u * start[axis] + 2 * u * t * command[axis === 'x' ? 'cx' : 'cy'] + t * t * command[axis];
+            return u * start[axis] + t * command[axis];
+        };
+        let low = 0, high = 1;
+        for (let iteration = 0; iteration < 28; iteration++) {
+            const middle = (low + high) / 2;
+            if ((at(middle, 'x') < x) === (command.x >= start.x)) low = middle;
+            else high = middle;
+        }
+        const y = at((low + high) / 2, 'y');
+        top = Math.min(top, y); bottom = Math.max(bottom, y);
+    }
+    return Number.isFinite(top) ? { top, bottom } : undefined;
 }

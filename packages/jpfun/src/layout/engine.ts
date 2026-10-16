@@ -830,6 +830,9 @@ function measureAttachmentPass(
 
     const context: AttachmentLayoutContext = {
         ...baseContext,
+        getPrecedingAttachments() {
+            return attachments.slice(0, attachments.indexOf(currentAttachment));
+        },
         getAlignmentPeers(attachment, line) {
             return (alignmentGroups.get(attachment) ?? [attachment]).filter(peer => {
                 const points = peer.endPoints ?? [];

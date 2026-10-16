@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { ASTFunctionNode, compileScore, type VisualTemporalNode } from '@m3n/jpfun'
+import { ASTFunctionNode, compileScore, RecordingPainter, type VisualTemporalNode } from '@m3n/jpfun'
 import { parseM3NDocument, scoreEventIds } from '@m3n/notation'
 import { projectNumberedScore } from './projection.js'
 import { NumberedNotationScore } from './score.js'
@@ -91,6 +91,37 @@ describe('numbered full-beat sustain continuations', () => {
     const bindings = [...projection.bindings.values()]
     expect(projection.source).toContain(`@tie(${bindings[0]!.label},${bindings[1]!.label})`)
     expect(projection.source).toContain(`@dyn(${bindings[0]!.label},${bindings[3]!.label},24)`)
+  })
+
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('keeps Ting Hai 不相信 legato clear of a retained same-pitch tie at $width, paged=$paged', ({ width, paged }) => {
+    // An independently marked continuation must retain its digit and tie, even
+    // though the unmarked built-in score can use sustain dashes here.
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/ting_hai_01.m3n'), 'utf8')
+      .replace('2e~ 2e^{/}', '2e~ 2e^{hold}{/}')
+    const { document, projection, result } = inspect(source, width, paged)
+    const interval = document.intervals.find(item => item.kind === 'lg' && source.slice(item.endStart).startsWith('2e^{hold}'))!
+    expect(interval).toBeDefined()
+    const events = [...document.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events))
+      .filter(event => event.sourceStart >= interval.start! && event.sourceStart <= interval.endStart!)
+    expect(events).toHaveLength(3)
+    const labels = events.map(event => [...projection.bindings.values()].find(binding => binding.event === event)!.label)
+    const relation = (start: string, end: string) => {
+      const index = (result.lowering.attachments as unknown as { endPoints?: VisualTemporalNode[] }[]).findIndex(attachment => {
+        const points = attachment.endPoints
+        return (points?.[0]?.ast as ASTFunctionNode | undefined)?.labelable?.()?.label === start
+          && (points?.at(-1)?.ast as ASTFunctionNode | undefined)?.labelable?.()?.label === end
+      })
+      expect(index).toBeGreaterThanOrEqual(0)
+      const painter = new RecordingPainter()
+      result.layout.attachments[index]!.paint(painter)
+      const path = painter.commands.filter(command => command.kind === 'path').at(-1)!
+      const endpoint = path.commands[path.commands[1]?.op === 'C' ? 1 : 2]!
+      if (endpoint.op !== 'C' && endpoint.op !== 'Q') throw new Error('expected arc endpoint')
+      return endpoint
+    }
+    const tie = relation(labels[1]!, labels[2]!), legato = relation(labels[0]!, labels[2]!)
+    expect(legato.x).toBeCloseTo(tie.x)
+    expect(tie.y - legato.y).toBeGreaterThanOrEqual(3)
   })
 
   it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('renders both Hou Lai 不再 endings as dashes with legato ending on 1 at $width, paged=$paged', ({ width, paged }) => {
