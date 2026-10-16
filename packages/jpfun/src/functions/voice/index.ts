@@ -50,6 +50,8 @@ function splitLyricText(text: string) {
     return { prefix: text.slice(0, start), body: text.slice(start, end) };
 }
 
+const visibleLyricText = (text: string) => text.replaceAll('\u200B', '').trim().length > 0;
+
 /**
  * voices 块在宿主基线上局部居中：首末两条 voice 基线的中点对齐宿主轴
  *
@@ -122,6 +124,13 @@ L: la la la
                 description: "歌词左侧的独立标记，JSON 对象以从 0 开始的 行:槽 为键、标记文本为值",
                 type: "string" as const,
                 default: "{}",
+            },
+            {
+                name: "compactlyrics",
+                namedOnly: true,
+                description: "按每行每轨的可见歌词收起空歌词行，保留原始行索引",
+                type: "boolean" as const,
+                default: false,
             },
             // 之后的参数都当作歌词参数
         ],
@@ -303,6 +312,7 @@ L: la la la
     readonly reserveLyricPunctuation: boolean;
     readonly underlinedLyricSlots: ReadonlySet<string>;
     readonly lyricPrefixes: ReadonlyMap<string, string>;
+    readonly compactLyrics: boolean;
     lyrics: {
         name: string,
         tokens: string[]   // 分词后的歌词内容
@@ -351,8 +361,9 @@ L: la la la
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
         this.size = ctx.variables.fontsize;
-        const [content, name, lyricUnderlines, lyricPrefixes] = this.getArgValue(args, ctx) as [ASTBraceNode, string, string, string];
+        const [content, name, lyricUnderlines, lyricPrefixes, compactLyrics] = this.getArgValue(args, ctx) as [ASTBraceNode, string, string, string, boolean];
         this.content = content; this.name = name;
+        this.compactLyrics = compactLyrics;
         this.content.parent = this;
         this.font = ctx.variables.font;
         this.reserveLyricPunctuation = ctx.variables.lyricspacing === "reserve";
@@ -369,6 +380,7 @@ L: la la la
         }
         args.delete('lyricunderlines');
         args.delete('lyricprefixes');
+        args.delete('compactlyrics');
         args.delete(0);
         args.delete("name");
         args.delete(1);
@@ -491,6 +503,7 @@ L: la la la
         const underlines = [...this.underlinedLyricSlots].filter(Boolean);
         if (underlines.length) parameters.push(`lyricunderlines=${quote(underlines.join(','))}`);
         if (this.lyricPrefixes.size) parameters.push(`lyricprefixes=${quote(JSON.stringify(Object.fromEntries(this.lyricPrefixes)))}`);
+        if (this.compactLyrics) parameters.push('compactlyrics=true');
         return `@voice(\n\t${parameters.join(",\n\t")}\n)`;
     }
 }
@@ -966,7 +979,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             let leftWidth = 0, rightWidth = 0;
             for (const [row, lyric] of lyrics.entries()) {
                 const text = lyric.tokens[i];
-                if (text) {
+                if (text && (!this.nameHost.ast.compactLyrics || visibleLyricText(text))) {
                     const { prefix, body } = splitLyricText(text);
                     const half = body ? context.textMeasurer.measureText(body, style).w / 2 : 0;
                     if (this.nameHost.ast.reserveLyricPunctuation) {
@@ -1002,7 +1015,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
         const preparedText = this.prepareGeometry(context);
         // 同一行同一轨的多行歌词由引擎合并成一段占用
         return {
-            regions: preparedText,
+            regions: this.nameHost.ast.compactLyrics ? preparedText.filter(item => visibleLyricText(item.text)) : preparedText,
             paint(painter: Painter) {
                 for (const item of preparedText) {
                     painter.drawText(item.text, item.x, item.y + item.textBaselineY, item.style);
@@ -1025,11 +1038,11 @@ class VoiceLyricsAttachment implements LayoutAttachment {
         if (targets.length === 0 || lyrics.length === 0) return preparedText;
 
         // 同一行、原始轨共用下沿，跨轨框外的占用可归属另一条轨
-        const baselines = new Map<number, Map<Track, { bottom: number; owner: Track }>>();
+        const baselines = new Map<number, Map<Track, { bottom: number; owner: Track; rows: number[] }>>();
         for (const target of targets) {
             let byTrack = baselines.get(target.layoutLine);
             if (!byTrack) baselines.set(target.layoutLine, byTrack = new Map());
-            const baseline = byTrack.get(target.track) ?? { bottom: -Infinity, owner: target.track };
+            const baseline = byTrack.get(target.track) ?? { bottom: -Infinity, owner: target.track, rows: [] };
             const bounds = getLayoutBounds(target);
             let bottom = bounds.y + bounds.h;
             let owner = target.track;
@@ -1051,6 +1064,15 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             byTrack.set(target.track, baseline);
         }
 
+        // Empty placeholders keep their original row metadata for playback, but
+        // only visible rows contribute height on this system and track.
+        for (const [line, byTrack] of baselines) for (const [track, baseline] of byTrack) {
+            baseline.rows = lyrics.flatMap((lyric, row) => !this.nameHost.ast.compactLyrics
+                || (line === this.nameHost.layoutLine && track === this.nameHost.track && visibleLyricText(lyric.name))
+                || targets.some((target, i) => target.layoutLine === line && target.track === track && visibleLyricText(lyric.tokens[i] ?? ''))
+                ? [row] : []);
+        }
+
         const fontSize = size * LYRIC_SIZE_RATIO;
         const rowGap = size * 0.24;
         const firstRowGap = size * 0.32;
@@ -1065,8 +1087,8 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             for (const [, baseline] of [...byTrack].sort(([left], [right]) =>
                 context.getVisualAxis(line, left) - context.getVisualAxis(line, right))) {
                 const row = rows.get(baseline.owner) ?? 0;
-                baseline.bottom += row * lyrics.length * (fontSize + rowGap);
-                rows.set(baseline.owner, row + 1);
+                baseline.bottom += row * (fontSize + rowGap);
+                rows.set(baseline.owner, row + baseline.rows.length);
             }
         }
 
@@ -1097,7 +1119,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                     style,
                     textBaselineY: metrics.baseline,
                     x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth,
-                    y: baselineOf(baseline.bottom, row) - metrics.baseline,
+                    y: baselineOf(baseline.bottom, Math.max(0, baseline.rows.indexOf(row))) - metrics.baseline,
                     w: metrics.w,
                     h: underlined ? Math.max(metrics.h, metrics.baseline + fontSize * 0.12 + 0.5) : metrics.h,
                     line: target.layoutLine,
@@ -1114,7 +1136,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                         style: annotationStyle,
                         textBaselineY: annotationMetrics.baseline,
                         x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth - annotationMetrics.w - fontSize * 0.2,
-                        y: baselineOf(baseline.bottom, row) - annotationMetrics.baseline,
+                        y: baselineOf(baseline.bottom, Math.max(0, baseline.rows.indexOf(row))) - annotationMetrics.baseline,
                         w: annotationMetrics.w,
                         h: annotationMetrics.h,
                         line: target.layoutLine,
@@ -1131,7 +1153,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                 style: nameStyle,
                 textBaselineY: metrics.baseline,
                 x: labelBox.x + labelBox.anchor - metrics.w,
-                y: baselineOf(labelBaseline.bottom, row) - metrics.baseline,
+                y: baselineOf(labelBaseline.bottom, Math.max(0, labelBaseline.rows.indexOf(row))) - metrics.baseline,
                 w: metrics.w,
                 h: metrics.h,
                 line: labelLine,

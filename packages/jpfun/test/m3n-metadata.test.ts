@@ -3,6 +3,30 @@ import { strict as assert } from 'node:assert';
 import { compileScore } from '../src/pipeline.js';
 import { renderLayoutPagesToSvg } from '../src/render/svg.js';
 import { defaultTextMeasurer } from '../src/render/text.js';
+import { recordCommands } from './helpers.js';
+
+test('compact lyrics collapse blank rows per system while preserving row metadata and serialization', () => {
+    const content = '1 2 @br() 3 4 @br() 5 6';
+    const blank = '{\u200B}';
+    const lyrics = `"春 天 ${blank} ${blank} @ @","花 开 @ @ ${blank} ${blank}","清 风 好 啊 你 好"`;
+    const source = `@voice({${content}},,${lyrics},compactlyrics=true)`;
+    const compact = compileScore(source);
+    const single = compileScore(`@voice({${content}},,"春 天 好 啊 你 好")`);
+    const original = compileScore(`@voice({${content}},,${lyrics})`);
+    const commands = recordCommands(compact.layout).filter(command => command.kind === 'text');
+    const notes = (result: typeof compact) => result.layout.objects.filter(node => !node.T.isZero());
+    const lastGap = (result: typeof compact) => notes(result)[4].box.y - notes(result)[2].box.y;
+    assert.ok(Math.abs(lastGap(compact) - lastGap(single)) < 1e-6);
+    assert.ok(lastGap(original) > lastGap(compact));
+    assert.ok(compact.layout.bounds.h < original.layout.bounds.h);
+    const visible = commands.find(command => command.text === '好')!;
+    assert.equal(visible.style.semantic?.row, 2);
+    const placeholder = commands.find(command => command.text === '\u200B' && command.style.semantic?.row === 0)!;
+    assert.equal(placeholder.y, visible.y);
+    const serialized = compact.ast.toString(source);
+    assert.match(serialized, /compactlyrics=true/);
+    assert.equal(compileScore(serialized).layout.bounds.h, compact.layout.bounds.h);
+});
 
 test('SVG exposes host-owned event groups and source-aware lyric rows', () => {
     const result = compileScore('N: 1 2\nL: 春天\nL: 花开');

@@ -287,6 +287,29 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.querySelector('text[data-m3n-rendition="2"]')?.getAttribute('data-m3n-passes')).toContain('2')
   })
 
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('collapses empty chorus rows in the Internationale at width $width, paged=$paged', ({ width, paged }) => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/the_internationale_01.m3n'), 'utf8')
+    const { root } = render(source, { width, paged })
+    const chorusSystems = [...root.querySelectorAll('g.system')].filter(system => {
+      const rows = [...system.querySelectorAll('text[data-m3n-role="lyric"]')]
+      return rows.some(node => node.getAttribute('data-m3n-rendition') === '1' && node.textContent?.replaceAll('\u200B', '').trim())
+        && rows.filter(node => node.getAttribute('data-m3n-rendition') !== '1').every(node => !node.textContent?.replaceAll('\u200B', '').trim())
+    })
+    expect(chorusSystems.length).toBeGreaterThan(1)
+    for (const system of chorusSystems) {
+      const rows = [...system.querySelectorAll('text[data-m3n-role="lyric"]')]
+      expect(new Set(rows.map(node => Number(node.getAttribute('y')))).size).toBe(1)
+      for (const row of rows.filter(node => node.getAttribute('data-m3n-rendition') !== '1')) {
+        expect(row.getAttribute('data-m3n-passes')).toBe(row.getAttribute('data-m3n-rendition'))
+      }
+    }
+    const projection = projectNumberedScore(parseM3NDocument(source), { width, paged })
+    const compact = compileScore(projection.source, { autoWrap: true, alignRelations: true })
+    const original = compileScore(projection.source.replaceAll(',compactlyrics=true', ''), { autoWrap: true, alignRelations: true })
+    if (!paged) expect(compact.layout.bounds.h).toBeLessThan(original.layout.bounds.h)
+    else expect(compact.layout.pages.length).toBeLessThanOrEqual(original.layout.pages.length)
+  })
+
   it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('labels each continuous ANDY passage once at width $width, paged=$paged', ({ width, paged }) => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/andy_01.m3n'), 'utf8')
     const { root, score } = render(source, { width, paged })
