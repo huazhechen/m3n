@@ -119,7 +119,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             if (name === 'arp') continue
             if (name === 'tr' || name === 'fermata') decorations.push(`@symbol(${name},size=12px)`)
             else if (name === 'str') articulations.push('@symbol(accent,size=12px)')
-            else if (name === 'tip') articulations.push('@symbol(staccato,size=4px)')
+            else if (name === 'tip') articulations.push('@symbol(staccatissimo,size=7px)')
             else if (name === 'hold') articulations.push('@symbol(tenuto,size=7px)')
             else if (name === 'brk') articulations.push('@symbol(staccatissimo,size=7px)')
             else if (name === 'breath') decorations.push('@symbol(breath,size=10px)')

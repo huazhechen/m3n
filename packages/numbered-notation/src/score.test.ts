@@ -130,24 +130,36 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it.each(['1e', '1ee', '[1e3e:h]', '1ee{ac(7e)}'])('keeps staccato next to octave dots and below other marks on %s', pitch => {
+  it.each(['1e', '1ee', '[1e3e:h]', '1ee{ac(7e)}'])('keeps the filled staccato wedge above octave dots and below other marks on %s', pitch => {
     const source = `{2/4}\nN: {p} {dim=text} ${pitch}{tr}{f1}{tip} 2{/} |||`
     const { document, root } = render(source)
     const note = geometry(document).layout.objects.find(node => !node.T.isZero())!
     const members = (note as VisualTemporalNode & { members: readonly VisualTemporalNode[] }).members
-    const staccato = members.find(member => (member.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccato')!
-    expect(staccato).toBeDefined()
-    const dot = getLayoutBounds(staccato)
-    for (const member of members.slice(1).filter(member => member !== staccato)) {
+    const wedge = members.find(member => (member.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccatissimo')!
+    expect(wedge).toBeDefined()
+    const wedgeBox = getLayoutBounds(wedge)
+    for (const member of members.slice(1).filter(member => member !== wedge)) {
       const box = getLayoutBounds(member)
-      expect(box.y + box.h).toBeLessThan(dot.y)
+      expect(box.y + box.h).toBeLessThan(wedgeBox.y)
     }
     const circles = [...root.querySelectorAll('#m3n-e-1 circle')]
     const octaveDots = circles.filter(circle => Number(circle.getAttribute('r')) === 22 * 0.075)
     expect(octaveDots).toHaveLength(pitch === '1e' ? 1 : 2)
-    const staccatoDot = circles.find(circle => Number(circle.getAttribute('r')) === 2)!
+    expect(circles).toHaveLength(octaveDots.length + (pitch.includes('{ac') ? 1 : 0))
+    expect(root.querySelector('#m3n-e-1 path[fill="#000"][stroke="none"]')).not.toBeNull()
     const octaveTop = Math.min(...octaveDots.map(circle => Number(circle.getAttribute('cy')) - Number(circle.getAttribute('r'))))
-    expect(Number(staccatoDot.getAttribute('cy')) + 2).toBeLessThan(octaveTop)
+    expect(wedgeBox.y + wedgeBox.h).toBeLessThan(octaveTop)
+  })
+
+  it('uses a filled wedge for staccato while preserving the open accent chevron', () => {
+    const { root } = render('{2/4}\nN: 1e{tip} 1e{str} |||')
+    const wedge = root.querySelector('#m3n-e-1 path')!
+    const accent = root.querySelector('#m3n-e-2 path')!
+    expect(wedge.getAttribute('fill')).toBe('#000')
+    expect(wedge.getAttribute('d')).toMatch(/Z$/)
+    expect(accent.getAttribute('fill')).toBe('none')
+    expect(accent.getAttribute('stroke')).toBe('#000')
+    expect(accent.getAttribute('d')).not.toMatch(/Z$/)
   })
 
   it('retains text directives, section labels and chord annotations together', () => {
