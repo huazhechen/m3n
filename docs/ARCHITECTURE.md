@@ -60,6 +60,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/score-renderer/src/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `components/ScoreRenderer.tsx`：组合 MEI 渲染、播放和光标事件。
+- `components/ScoreControls.tsx`：播放、回到开头与进度常驻；简谱／五线谱直接选择，速度、移调、节拍器与恢复默认收纳在可展开的练习面板中。控制栏按所在容器宽度调整布局，按钮与滑条的触控区域至少 44px；嵌入文档的谱例共用控制栏，练习设置互相独立。
 - `components/ScoreExportDialog.tsx`：导出状态、预览及简谱 SVG / 共用 PNG/PDF 工作流。
 - `components/SourceEditor.tsx`：源码输入与尺寸同步。
 - `pages`：路由级组合，不承载领域算法。

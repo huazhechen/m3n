@@ -1,4 +1,5 @@
 import type { VerovioScore, SpessaPlayer } from '@m3n/score-renderer'
+import { ScoreControls } from './ScoreControls'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MeiSourceMapRange, ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
 import {
@@ -9,7 +10,6 @@ import {
   PLAYBACK_SPEED_KEY,
   PLAYBACK_SPEED_MAX,
   PLAYBACK_SPEED_MIN,
-  PLAYBACK_SPEED_STEP,
   PLAYBACK_TRANSPOSE_MAX,
   PLAYBACK_TRANSPOSE_MIN,
   TRANSPOSE_KEY,
@@ -599,112 +599,43 @@ export function ScoreRenderer({
 
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
-      <div className="audio-controls">
-        {hasAudioControls && (
-          <button
-            type="button"
-            className="playback-toggle"
-            aria-label={isPlaying ? '暂停' : '播放'}
-            title={isPlaying ? '暂停' : '播放'}
-            disabled={isPlayerLoading}
-            onClick={() => void togglePlayback()}
-          >
-            <span className={isPlaying ? 'playback-icon pause' : 'playback-icon play'} aria-hidden="true" />
-          </button>
-        )}
-        {hasAudioControls && (
-          <label className="playback-metronome">
-            <span>节拍器</span>
-            <span className="switch-control">
-              <input
-                type="checkbox"
-                role="switch"
-                aria-label="节拍器"
-                checked={metronomeEnabled}
-                onChange={(event) => changeMetronomeEnabled(event.currentTarget.checked)}
-              />
-              <span className="switch-track" aria-hidden="true">
-                <span className="switch-thumb" />
-              </span>
-            </span>
-          </label>
-        )}
-        {hasAudioControls && (
-          <div className="playback-speed">
-            <span>速度</span>
-            <input
-              type="range"
-              min={PLAYBACK_SPEED_MIN}
-              max={PLAYBACK_SPEED_MAX}
-              step={PLAYBACK_SPEED_STEP}
-              value={playbackSpeed}
-              aria-label="播放速度"
-              onChange={(event) => changePlaybackSpeed(Number(event.currentTarget.value))}
-            />
-            <output>{playbackSpeed}%</output>
-          </div>
-        )}
-        {hasAudioControls && (
-          <div className="playback-transpose" aria-label="播放移调">
-            <span>移调</span>
-            <button type="button" aria-label="降低半音" disabled={playbackTranspose <= PLAYBACK_TRANSPOSE_MIN} onClick={() => changePlaybackTranspose(playbackTranspose - 1)}>↓</button>
-            <output>{playbackTranspose > 0 ? `+${playbackTranspose}` : playbackTranspose}</output>
-            <button type="button" aria-label="升高半音" disabled={playbackTranspose >= PLAYBACK_TRANSPOSE_MAX} onClick={() => changePlaybackTranspose(playbackTranspose + 1)}>↑</button>
-          </div>
-        )}
-        {hasAudioControls && (
-          <div className="playback-progress">
-            <span>进度</span>
-            <input
-              type="range"
-              min="0"
-              max="1000"
-              value={Math.round(playbackProgress * 1000)}
-              aria-label="播放位置"
-              onPointerDown={beginSeek}
-              onKeyDown={beginSeek}
-              onKeyUp={commitSeek}
-              onBlur={commitSeek}
-              onInput={(event) => previewSeek(Number(event.currentTarget.value) / 1000)}
-            />
-            <output>{Math.round(playbackProgress * 100)}%</output>
-          </div>
-        )}
-        {!compact && hasAudioControls && (
-          <label className="notation-toggle">
-            <span>简谱</span>
-            <span className="switch-control">
-              <input
-                type="checkbox"
-                role="switch"
-                aria-label="简谱渲染"
-                checked={numberedNotation}
-                disabled={!scoreDocument}
-                onChange={(event) => changeNumberedNotation(event.currentTarget.checked)}
-              />
-              <span className="switch-track" aria-hidden="true"><span className="switch-thumb" /></span>
-            </span>
-          </label>
-        )}
-        {!compact && hasAudioControls && (
-          <button
-            type="button"
-            className="settings-toggle"
-            aria-label="渲染设置"
-            title="渲染设置"
-            onClick={() => settingsDialogRef.current?.showModal()}
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-            </svg>
-          </button>
-        )}
-      </div>
+      {hasAudioControls && <ScoreControls
+        compact={compact}
+        isPlaying={isPlaying}
+        isLoading={isPlayerLoading}
+        progress={playbackProgress}
+        speed={playbackSpeed}
+        transpose={playbackTranspose}
+        metronomeEnabled={metronomeEnabled}
+        numberedNotation={numberedNotation}
+        canChangeNotation={Boolean(scoreDocument)}
+        onTogglePlayback={() => void togglePlayback()}
+        onRestart={() => {
+          isSeekingRef.current = false
+          pendingSeekProgressRef.current = 0
+          stopPlaybackRef.current()
+          playerRef.current?.seek(0)
+          setPlaybackProgress(0)
+          clearPlaybackHighlight()
+        }}
+        onSeekStart={beginSeek}
+        onSeek={previewSeek}
+        onSeekCommit={commitSeek}
+        onSpeedChange={changePlaybackSpeed}
+        onTransposeChange={changePlaybackTranspose}
+        onMetronomeChange={changeMetronomeEnabled}
+        onNotationChange={changeNumberedNotation}
+        onResetPractice={() => {
+          changePlaybackSpeed(DEFAULT_PLAYBACK_SPEED)
+          changeMetronomeEnabled(false)
+          if (playbackTranspose !== DEFAULT_PLAYBACK_TRANSPOSE) changePlaybackTranspose(DEFAULT_PLAYBACK_TRANSPOSE)
+        }}
+        onLayoutSettings={() => settingsDialogRef.current?.showModal()}
+      />}
       {!compact && (
         <dialog ref={settingsDialogRef} className="renderer-settings-dialog" aria-labelledby="renderer-settings-title">
           <div className="renderer-settings-header">
-            <h2 id="renderer-settings-title">渲染设置</h2>
+            <h2 id="renderer-settings-title">排版设置</h2>
             <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
           </div>
           <div className="renderer-settings-body">

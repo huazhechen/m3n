@@ -33,7 +33,7 @@ test('exposes playback without a print action', async ({ page }) => {
 test('highlights numbered notation during playback with tuplets and a bass voice', async ({ page }) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nL: 春夏秋冬天\nB: 1 2 3 4 | 5 6 7 1e |||')
-  await page.getByRole('switch', { name: '简谱渲染' }).check()
+  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   const play = page.getByRole('button', { name: '播放' })
   await expect(play).toBeVisible({ timeout: 30_000 })
   await play.click()
@@ -46,8 +46,9 @@ test('renderer settings control width and drive the export dialog', async ({ pag
   await page.goto('/scores/huan_le_song_01')
   await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'paged')
   await expect(page.locator('.score-page-sheet').first()).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('button', { name: '练习设置', exact: true }).click()
   await expect(page.getByRole('slider', { name: '播放速度' })).toBeVisible()
-  await page.getByRole('button', { name: '渲染设置' }).click()
+  await page.getByRole('button', { name: '排版设置' }).click()
   const settings = page.getByRole('dialog')
   await expect(settings).toBeVisible()
   const pagedSwitch = settings.getByRole('switch', { name: '分页' })
@@ -76,8 +77,8 @@ test('renderer settings control width and drive the export dialog', async ({ pag
 
 test('renders ScoreDocument through the vendored jpFun engine', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
-  await expect(page.getByRole('button', { name: '渲染设置' })).toBeVisible({ timeout: 30_000 })
-  const numbered = page.getByRole('switch', { name: '简谱渲染' })
+  await expect(page.getByRole('button', { name: '排版设置' })).toBeVisible({ timeout: 30_000 })
+  const numbered = page.getByRole('radio', { name: '简谱', exact: true })
   await expect(numbered).toBeEnabled()
   await expect(numbered).not.toBeChecked()
   await numbered.check()
@@ -116,7 +117,7 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
   const editor = page.getByLabel('M3N source')
   const text = '{2/4} {120qpm}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天来了\nL2: 花开满园'
   await editor.fill(text)
-  await page.getByRole('switch', { name: '简谱渲染' }).check()
+  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   await expect(page.locator('.score-paper svg[data-engine="jpfun"]').first()).toBeVisible()
   const note = page.locator('.score-paper #m3n-e-2 text')
   await expect(note).toBeVisible()
@@ -134,7 +135,7 @@ test('orders numbered annotations above music and maps their clicks back to the 
   const editor = page.getByLabel('M3N source')
   const text = '{4/4}\n===训练\nN: {text=练习说明} {cresc}1{tr} 2 3 4{/} |||'
   await editor.fill(text)
-  await page.getByRole('switch', { name: '简谱渲染' }).check()
+  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   const annotations = page.locator('.score-paper text[data-m3n-role="annotation"]')
   await expect(annotations).toHaveCount(2)
   const section = annotations.filter({ hasText: '训练' })
@@ -150,7 +151,7 @@ test('uses the numbered layout for export and honors excluding bass in SVG, PNG 
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{title=导出验证} {2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了\nB: 1d 2d | 3d 4d |||')
   await page.getByRole('button', { name: '浏览' }).click()
-  await page.getByRole('switch', { name: '简谱渲染' }).check()
+  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   await expect(page.locator('.score-paper svg[data-engine="jpfun"]')).toBeVisible()
   for (const [format, signature] of [['SVG 矢量图（连续）', '<svg'], ['PNG 图片（连续）', 'PNG'], ['PDF（A4 分页）', '%PDF']] as const) {
     await page.getByRole('button', { name: '打印' }).click()

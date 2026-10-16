@@ -64,30 +64,34 @@ export function ScoreReaderPage() {
     <main>
       <TopNav />
       <div className="score-reader-actions">
-        {score && previousScore ? (
-          <Link className="action-button" to={`/scores/${previousScore.slug}`}>
-            上一曲
+        <div className="score-reader-navigation" role="group" aria-label="切换曲目">
+          {score && previousScore ? (
+            <Link className="action-button" to={`/scores/${previousScore.slug}`}>
+              上一曲
+            </Link>
+          ) : (
+            <span className="action-button is-disabled" aria-disabled="true">上一曲</span>
+          )}
+          {score && nextScore ? (
+            <Link className="action-button" to={`/scores/${nextScore.slug}`}>
+              下一曲
+            </Link>
+          ) : (
+            <span className="action-button is-disabled" aria-disabled="true">下一曲</span>
+          )}
+        </div>
+        <div className="score-reader-tools" role="group" aria-label="乐谱操作">
+          <button
+            type="button"
+            className="action-button"
+            onClick={() => exportDialogRef.current?.open()}
+          >
+            打印
+          </button>
+          <Link className="action-button" to={`/editor/${slug}`}>
+            编辑
           </Link>
-        ) : (
-          <span className="action-button is-disabled" aria-disabled="true">上一曲</span>
-        )}
-        {score && nextScore ? (
-          <Link className="action-button" to={`/scores/${nextScore.slug}`}>
-            下一曲
-          </Link>
-        ) : (
-          <span className="action-button is-disabled" aria-disabled="true">下一曲</span>
-        )}
-        <button
-          type="button"
-          className="action-button"
-          onClick={() => exportDialogRef.current?.open()}
-        >
-          打印
-        </button>
-        <Link className="action-button" to={`/editor/${slug}`}>
-          编辑
-        </Link>
+        </div>
       </div>
       <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
