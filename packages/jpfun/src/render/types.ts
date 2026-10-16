@@ -32,7 +32,7 @@ export interface PaintStyle {
  * text 主要用于歌词、标题和用户输入的任意文本
  */
 export interface TextStyle {
-    semantic?: { role: 'lyric'; sourceSpan: SourceSpan; row: number; underlined?: boolean };
+    semantic?: { role: 'lyric' | 'lyric-prefix'; sourceSpan: SourceSpan; row: number; underlined?: boolean };
     fontSize: number;        // 字号，单位为布局坐标像素
     fontFamily?: string;     // Painter 原样使用的字体族列表
     fontWeight?: string | number; // CSS 或 Canvas 可接受的字重

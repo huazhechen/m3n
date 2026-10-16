@@ -186,13 +186,17 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const tokens = lyricTargets.map(target => {
           const data = target.lyrics.get(row)
           if (!data) return '@'
-          const text = `${data.annotation ?? ''}${data.texts.join('')}` || '\u200B'
+          const text = data.texts.join('') || '\u200B'
           return `{${text.replace(/[\\{}@-]/g, '\\$&')}}`
         }).join(' ')
         return quote(tokens)
       }) : []
       const underlines = rowNumbers.flatMap((row, rowIndex) => lyricTargets.flatMap((target, slot) => target.lyrics.get(row)?.underlined ? [`${rowIndex}:${slot}`] : []))
-      return `@voice({${pieces.join(' ')}},""${lyricArguments.length ? `,${lyricArguments.join(',')}` : ''}${underlines.length ? `,lyricunderlines=${quote(underlines.join(','))}` : ''})`
+      const prefixes = rowNumbers.flatMap((row, rowIndex) => lyricTargets.flatMap((target, slot) => {
+        const annotation = target.lyrics.get(row)?.annotation
+        return annotation ? [[`${rowIndex}:${slot}`, annotation]] : []
+      }))
+      return `@voice({${pieces.join(' ')}},""${lyricArguments.length ? `,${lyricArguments.join(',')}` : ''}${underlines.length ? `,lyricunderlines=${quote(underlines.join(','))}` : ''}${prefixes.length ? `,lyricprefixes=${quote(JSON.stringify(Object.fromEntries(prefixes)))}` : ''})`
     }
     const voices = [renderVoice(melody, 'melody')]
     if (options.includeBass !== false && bass.some(measure => measure.events.length || measure.multiRest)) voices.push(renderVoice(bass, 'bass'))

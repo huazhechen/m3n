@@ -8,6 +8,7 @@ The comparison base is the unmodified upstream import commit `d7c00a6`. See UPST
 - The layout result exposes solved horizontal occupancy, including lyrics. Automatic wrapping uses this occupancy so long words do not get compressed into their neighbors.
 - `@set(lyricspacing="reserve")` reserves opening/closing punctuation during lyric spacing. The upstream default keeps hanging punctuation behavior.
 - `@voice(...,lyricunderlines="0:0,1:2")` optionally underlines specific lyric row/slot pairs (zero-based). The native painter and layout occupancy include the underline; serialization preserves the option. Existing lyrics render unchanged without the option.
+- `@voice(...,lyricprefixes="{\"0:0\":\"1.\",\"1:0\":\"2.4.\"}")` optionally places separate labels before lyric row/slot pairs. Labels reserve left-side space while the syllables remain centered on their notes; SVG metadata distinguishes labels from lyric text and serialization preserves them.
 - Automatic wrapping moves simultaneous key/meter/tempo controls with their following note using one break per track. Opening repeat bars travel with the following measure rather than remaining at the end of the previous system.
 - Optional painter object callbacks and SVG attribute callbacks support event identity and lyric source/row metadata. Music coordinates and engraving remain native. Metadata is non-enumerable so visual styles and upstream recordings are unchanged.
 - Added native staccato, tenuto, staccatissimo and breath symbols.

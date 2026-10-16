@@ -19,7 +19,7 @@ function numbers(root: Document, id: string) {
   return [...root.querySelectorAll(`g.note[data-m3n-id="${id}"] text`)].map(text => text.textContent).join('')
 }
 function lyrics(root: Document, id: string, row = 1) {
-  return [...root.querySelectorAll(`text[data-m3n-id="${id}"][data-m3n-rendition="${row}"]`)].map(text => text.textContent?.replaceAll('\u200B', '')).join('')
+  return [...root.querySelectorAll(`text[data-m3n-role="lyric"][data-m3n-id="${id}"][data-m3n-rendition="${row}"]`)].map(text => text.textContent?.replaceAll('\u200B', '')).join('')
 }
 function geometry(document: ScoreDocument, settings = options) {
   const projection = projectNumberedScore(document, settings)
@@ -192,6 +192,37 @@ describe('jpFun numbered notation adapter', () => {
     expect(lyrics(root, 'm3n-e-3', 1)).toBe('')
     expect(lyrics(root, 'm3n-e-3', 2)).toBe('满')
     expect(root.querySelector('text[data-m3n-rendition="2"]')?.getAttribute('data-m3n-passes')).toContain('2')
+  })
+
+  it.each([320, 800])('labels every ANDY verse separately from its aligned lyrics at width %s', width => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/andy_01.m3n'), 'utf8')
+    const { root, score } = render(source, { width, paged: width === 320 })
+    expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+    const shared = [...root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')]
+      .find(node => node.textContent === '2.4.')!
+    expect(shared).toBeDefined()
+    const eventId = shared.getAttribute('data-m3n-id')!
+    const prefixes = [...root.querySelectorAll(`text[data-m3n-role="lyric-prefix"][data-m3n-id="${eventId}"]`)]
+    expect(prefixes.map(node => node.textContent)).toEqual(['1.', '2.4.', '3.'])
+    const syllables = [1, 2, 3].map(row => root.querySelector(`text[data-m3n-role="lyric"][data-m3n-id="${eventId}"][data-m3n-rendition="${row}"]`)!)
+    expect(syllables.map(node => node.textContent)).toEqual(['多', '我', '真'])
+    expect(new Set(syllables.map(node => node.getAttribute('x'))).size).toBe(1)
+    expect(shared.getAttribute('data-m3n-passes')).toBe('2-4')
+    for (const [index, prefix] of prefixes.entries()) {
+      expect(Number(prefix.getAttribute('x'))).toBeLessThan(Number(syllables[index]!.getAttribute('x')))
+      expect(prefix.getAttribute('y')).toBe(syllables[index]!.getAttribute('y'))
+    }
+  })
+
+  it('attaches verse labels to the first visible syllable after skipped slots', () => {
+    const { root } = render('{2/4}\nN: 1 2 :|||{x3}\nL1: %甲\nL2: (乙丙)丁\nL3: {L2}\n---\nN: 3 4 |||\nL: 戊己')
+    const prefixes = [...root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')]
+    expect(prefixes.map(node => [node.textContent, node.getAttribute('data-m3n-id')])).toEqual([
+      ['1.', 'm3n-e-2'], ['2.3.', 'm3n-e-1'],
+    ])
+    expect(lyrics(root, 'm3n-e-1', 2)).toBe('乙丙')
+    expect(root.querySelector('text[data-m3n-role="lyric-prefix"][data-m3n-underlined]')).toBeNull()
+    expect(root.querySelector('text[data-m3n-id="m3n-e-3"][data-m3n-role="lyric-prefix"]')).toBeNull()
   })
 
   it('retains repeat boundaries, navigation and volta numbers without phantom measures', () => {

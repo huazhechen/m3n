@@ -37,6 +37,10 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     if (measurePasses === undefined) return blockPasses
     return new Set([...blockPasses].filter((pass) => measurePasses.has(pass)))
   }
+  const phraseKey = (block: ScoreDocument['lyrics'][number]) => `${block.targetStart}:${block.targetEnd}`
+  const annotatedPhrases = new Set(document.lyrics
+    .filter(block => block.sharedPasses && parsePassRange(block.sharedPasses).size > 1)
+    .map(phraseKey))
   document.lyrics.forEach((block) => {
     const numbered = /^\d+$/.exec(block.range)
     const pass = numbered ? undefined : /V(\d+)/.exec(block.phrasePasses ?? '')
@@ -45,9 +49,8 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     const row = Math.max(0, Number(numbered?.[0] ?? pass?.[1] ?? 1) - 1)
     const blockPassRange = block.sharedPasses || block.range || block.phrasePasses
     const blockPasses = blockPassRange ? parsePassRange(blockPassRange) : undefined
-    const sharedPasses = block.sharedPasses ? parsePassRange(block.sharedPasses) : undefined
-    const annotation = sharedPasses && sharedPasses.size > 1
-      ? `${[...sharedPasses].sort((a, b) => a - b).join('.')}.`
+    const annotation = annotatedPhrases.has(phraseKey(block))
+      ? `${[...(blockPasses ?? [row + 1])].sort((a, b) => a - b).join('.')}.`
       : undefined
     const targets = targetEvents.filter(({ event }) => block.targetStart === undefined || block.targetEnd === undefined || (event.sourceStart >= block.targetStart && event.sourceEnd <= block.targetEnd))
     const consumed = new Set<LyricTarget>()

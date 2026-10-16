@@ -69,7 +69,7 @@ try {
             outside.push({ tag: element.tagName, text: element.textContent, id: element.closest('[data-m3n-id]')?.getAttribute('data-m3n-id'), box: [box.x, box.y, box.width, box.height] })
           }
         }
-        const lyrics = [...svg.querySelectorAll('text[data-m3n-role="lyric"]')]
+        const lyrics = [...svg.querySelectorAll('text[data-m3n-role="lyric"],text[data-m3n-role="lyric-prefix"]')]
           .filter(element => element.textContent.trim().replaceAll('\u200B', ''))
         for (let i = 0; i < lyrics.length; i++) for (let j = i + 1; j < lyrics.length; j++) {
           const a = lyrics[i].getBBox(), b = lyrics[j].getBBox()

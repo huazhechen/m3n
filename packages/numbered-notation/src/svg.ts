@@ -62,7 +62,7 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       const row = projection.rows[semantic.row] ?? semantic.row
       const data = target.binding.lyrics.get(row)
       return {
-        'data-m3n-id': target.binding.xmlId, 'data-m3n-role': 'lyric', 'data-m3n-rendition': String(row + 1),
+        'data-m3n-id': target.binding.xmlId, 'data-m3n-role': semantic.role, 'data-m3n-rendition': String(row + 1),
         'data-m3n-passes': data?.passes ? [...data.passes].join('-') : String(row + 1),
         'data-m3n-system': String(target.line), 'data-m3n-measure': target.binding.measureId,
         ...(semantic.underlined ? { 'data-m3n-underlined': 'true' } : {}),

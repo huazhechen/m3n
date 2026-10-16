@@ -1,4 +1,4 @@
-// M3N modification: lyric metadata, punctuation spacing and opt-in grouped lyric underlines.
+// M3N modification: lyric metadata, punctuation spacing, opt-in underlines and separate lyric prefixes.
 import { ASTNodeBase, ASTBraceNode, FunctionArgs, SourceSpan, ASTFunctionNode, ASTFunctionClass, ASTTextNode } from "../ASTtypes.js";
 import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import { findRightParen } from "../../parser/parse-utils/call-utils.js";
@@ -114,6 +114,13 @@ L: la la la
                 description: "需加下划线的歌词槽，使用从 0 开始的 行:槽 索引，以逗号分隔",
                 type: "string" as const,
                 default: "",
+            },
+            {
+                name: "lyricprefixes",
+                namedOnly: true,
+                description: "歌词左侧的独立标记，JSON 对象以从 0 开始的 行:槽 为键、标记文本为值",
+                type: "string" as const,
+                default: "{}",
             },
             // 之后的参数都当作歌词参数
         ],
@@ -294,6 +301,7 @@ L: la la la
     readonly font: string;
     readonly reserveLyricPunctuation: boolean;
     readonly underlinedLyricSlots: ReadonlySet<string>;
+    readonly lyricPrefixes: ReadonlyMap<string, string>;
     lyrics: {
         name: string,
         tokens: string[]   // 分词后的歌词内容
@@ -342,13 +350,24 @@ L: la la la
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
         this.size = ctx.variables.fontsize;
-        const [content, name, lyricUnderlines] = this.getArgValue(args, ctx) as [ASTBraceNode, string, string];
+        const [content, name, lyricUnderlines, lyricPrefixes] = this.getArgValue(args, ctx) as [ASTBraceNode, string, string, string];
         this.content = content; this.name = name;
         this.content.parent = this;
         this.font = ctx.variables.font;
         this.reserveLyricPunctuation = ctx.variables.lyricspacing === "reserve";
         this.underlinedLyricSlots = new Set(lyricUnderlines.split(','));
+        try {
+            const prefixes: unknown = JSON.parse(lyricPrefixes);
+            if (!prefixes || typeof prefixes !== 'object' || Array.isArray(prefixes)
+                || Object.entries(prefixes).some(([key, value]) => !/^\d+:\d+$/.test(key) || typeof value !== 'string')) {
+                throw new Error('Invalid lyric prefixes');
+            }
+            this.lyricPrefixes = new Map(Object.entries(prefixes));
+        } catch {
+            throw new ErrorDiagnostic('E_VOICE_INVALID_LYRIC_PREFIXES', 'lyricprefixes 必须是以 行:槽 为键、标记文本为值的 JSON 对象', span);
+        }
         args.delete('lyricunderlines');
+        args.delete('lyricprefixes');
         args.delete(0);
         args.delete("name");
         args.delete(1);
@@ -470,6 +489,7 @@ L: la la la
         }
         const underlines = [...this.underlinedLyricSlots].filter(Boolean);
         if (underlines.length) parameters.push(`lyricunderlines=${quote(underlines.join(','))}`);
+        if (this.lyricPrefixes.size) parameters.push(`lyricprefixes=${quote(JSON.stringify(Object.fromEntries(this.lyricPrefixes)))}`);
         return `@voice(\n\t${parameters.join(",\n\t")}\n)`;
     }
 }
@@ -883,7 +903,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
         for (let i = 0; i < targets.length; i++) {
             const target = targets[i];
             let leftWidth = 0, rightWidth = 0;
-            for (const lyric of lyrics) {
+            for (const [row, lyric] of lyrics.entries()) {
                 const text = lyric.tokens[i];
                 if (text) {
                     const { prefix, body } = splitLyricText(text);
@@ -896,6 +916,12 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                     } else {
                         leftWidth = Math.max(leftWidth, half);
                         rightWidth = Math.max(rightWidth, half);
+                    }
+                    const annotation = this.nameHost.ast.lyricPrefixes.get(`${row}:${i}`);
+                    if (annotation) {
+                        const prefixWidth = prefix ? context.textMeasurer.measureText(prefix, style).w : 0;
+                        const annotationWidth = context.textMeasurer.measureText(annotation, style).w;
+                        leftWidth = Math.max(leftWidth, half + prefixWidth + annotationWidth + style.fontSize * 0.2 + 1);
                     }
                 }
             }
@@ -1016,6 +1042,24 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                     line: target.layoutLine,
                     track: baseline.owner,
                 });
+                const annotation = this.nameHost.ast.lyricPrefixes.get(`${row}:${i}`);
+                if (annotation) {
+                    const annotationMetrics = context.textMeasurer.measureText(annotation, lyricStyle);
+                    const annotationStyle = Object.defineProperty({ ...lyricStyle }, 'semantic', {
+                        value: { role: 'lyric-prefix', sourceSpan: target.ast.sourceSpan, row }, enumerable: false,
+                    });
+                    preparedText.push({
+                        text: annotation,
+                        style: annotationStyle,
+                        textBaselineY: annotationMetrics.baseline,
+                        x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth - annotationMetrics.w - fontSize * 0.2,
+                        y: baselineOf(baseline.bottom, row) - annotationMetrics.baseline,
+                        w: annotationMetrics.w,
+                        h: annotationMetrics.h,
+                        line: target.layoutLine,
+                        track: baseline.owner,
+                    });
+                }
             }
 
             if (!lyric.name || !labelBox || !labelBaseline) continue;
