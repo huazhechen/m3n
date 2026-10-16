@@ -17,6 +17,8 @@
     "typecheck:packages": "npm run typecheck -w @m3n/jpfun && npm run typecheck -w @m3n/notation && npm run typecheck -w @m3n/numbered-notation && npm run typecheck -w @m3n/score-renderer",
     "check": "npm run lint && npm run typecheck:packages && npm run test && npm run build && npm run test:numbered-layout && npm run test:e2e",
     "download:fluidr3": "node tools/download-fluidr3-gm.mjs",
+    "build:verovio": "node tools/build-verovio.mjs",
+    "test:verovio": "npm run build -w @m3n/notation && node tools/verify-verovio.mjs",
     "preview": "vite preview",
     "preview:worker": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy",
@@ -38,7 +40,7 @@
     "remark-gfm": "^4.0.1",
     "spessasynth_lib": "^4.3.12",
     "txml": "^6.0.0",
-    "verovio": "^6.2.0"
+    "verovio": "6.2.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

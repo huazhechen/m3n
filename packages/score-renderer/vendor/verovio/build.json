@@ -1,0 +1,21 @@
+{
+  "version": "6.2.0",
+  "commit": "43f806031bfff2c64003fc8ddd9910820445f6ab",
+  "sourceSha256": "9ec55723381105f14453d5d182d09877d75d6f18c31ef4119164d74132a47eca",
+  "emscriptenVersion": "4.0.20",
+  "excludedFonts": [
+    "Gootville",
+    "Leland",
+    "Petaluma",
+    "Liberation"
+  ],
+  "disabledFeatures": [
+    "DARMS",
+    "PAE",
+    "ABC",
+    "GABC",
+    "MXL",
+    "HUMDRUM"
+  ],
+  "moduleSha256": "cf241b1c7fa57ee161eb81de917510f104e32c9b71e7f301bf556f65f3a57cfa"
+}

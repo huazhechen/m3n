@@ -4,7 +4,8 @@
   "type": "module",
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "vendor"
   ],
   "exports": {
     ".": {
@@ -33,7 +34,7 @@
     "@m3n/notation": "*",
     "spessasynth_core": "^4.3.12",
     "spessasynth_lib": "^4.3.12",
-    "verovio": "^6.2.0"
+    "verovio": "6.2.0"
   },
   "devDependencies": {
     "typescript": "~6.0.2",

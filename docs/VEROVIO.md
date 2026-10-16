@@ -4,6 +4,8 @@
 > 更新日期：2026-08-01  
 > 用途：供开发 Agent 离线查阅 Verovio 的范围、MEI 正式写法、WASM API 与排版规范。
 
+本文记录上游完整 API。M3N 生产环境使用同版本的精简 WASM，只输入 MEI；实际保留功能、字体与重建步骤见 [Verovio 精简构建](VEROVIO_BUILD.md)。下面的 npm 导入示例用于上游 API 参考，应用与 renderer 测试通过 `packages/score-renderer/vendor/verovio/verovio-module.mjs` 加载精简模块。
+
 ## 快速定位
 
 | 目标 | 搜索本页 | 首选元素/API |

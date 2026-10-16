@@ -1,4 +1,4 @@
-import createVerovioModule from 'verovio/wasm' 
+import createVerovioModule from '../vendor/verovio/verovio-module.mjs'
 import { VerovioToolkit } from 'verovio/esm'
 
 let modulePromise: ReturnType<typeof createVerovioModule> | undefined

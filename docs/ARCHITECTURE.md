@@ -68,9 +68,9 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 ## 渲染资源与切换
 
-生产渲染资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。Verovio 从本地 npm 包构建，当前发行包将 WASM 和音乐字体嵌入 JavaScript；jpFun 与数字字体也由本地构建提供。Cloudflare 的 `ASSETS` 绑定负责提供 `dist`，浏览器只请求本站 `/assets/*`；音源与 AudioWorklet 同样来自本站。文档中的参考链接和 SVG 的命名空间不是资源加载路径。
+生产渲染资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。Verovio 使用固定 6.2.0 版本的本地精简构建，将 WASM 和保留的音乐字体嵌入 JavaScript；npm 包仅提供同版本 toolkit 包装器。构建脚本裁掉未使用的字体和输入格式，源码、许可证、裁剪清单和重建方法见 [Verovio 构建说明](VEROVIO_BUILD.md)。jpFun 与数字字体也由本地构建提供。Cloudflare 的 `ASSETS` 绑定负责提供 `dist`，浏览器只请求本站 `/assets/*`；音源与 AudioWorklet 同样来自本站。文档中的参考链接和 SVG 的命名空间不是资源加载路径。
 
-冷启动需要下载并解析渲染包，再初始化 WASM 或准备字体。Verovio 当前构建文件约 7.9MB，gzip 约 2.36MB；这些数字描述构建产物，不代表线上实际传输大小。模块与 WASM 初始化在当前页面内复用，切换谱式不应重复下载。
+冷启动需要下载并解析渲染包，再初始化 WASM 或准备字体。Verovio 生产 chunk 由约 7.91MB 降到 6.28MB；gzip（level 9）由约 2.34MB 降到 1.62MB，Brotli（quality 11）由约 1.82MB 降到 1.18MB。这些数字描述构建产物，不代表线上实际传输大小。模块与 WASM 初始化在当前页面内复用，切换谱式不应重复下载。
 
 `ScoreRenderer` 对当前乐谱及版宽、分页、页头和诊断设置保留最多两份排版快照，分别对应简谱和五线谱；切换可复用，编辑或布局参数变化时整体失效。快照仅缓存页面标记，不保留已销毁的 toolkit；从快照恢复后需要播放时，仍按需初始化播放实例。缓存不跨曲目积累，也不持久化 SVG 坐标到领域数据。
 

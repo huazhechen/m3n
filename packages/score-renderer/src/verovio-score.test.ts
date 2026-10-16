@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest' 
-import createVerovioModule from 'verovio/wasm'
+import createVerovioModule from '../vendor/verovio/verovio-module.mjs'
 import { VerovioToolkit } from 'verovio/esm'
 import { BasicMIDI } from 'spessasynth_core'
 import { m3nToMei } from '@m3n/notation'
