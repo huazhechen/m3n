@@ -69,14 +69,20 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       }
       const visibleMeasures = [...measures]
       while (visibleMeasures.length && !visibleMeasures.at(-1)?.events.length && !visibleMeasures.at(-1)?.multiRest) visibleMeasures.pop()
+      const breaksBefore = (index: number) => index > 0 && Boolean(
+        visibleMeasures[index]?.breakBefore || visibleMeasures[index - 1]?.breakAfter
+        || visibleMeasures[index]?.events.some(event => event.sectionLabel)
+        || melody[index]?.breakBefore || melody[index - 1]?.breakAfter
+        || melody[index]?.events.some(event => event.sectionLabel),
+      )
       visibleMeasures.forEach((measure, measureIndex) => {
         const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
         const melodyMeasure = melody[measureIndex]
         // Parallel voices must share every bar anchor, including the opening repeat.
         // B: bars are alignment syntax; structural repetition belongs to N:.
         const structure = staff === 'bass' ? melodyMeasure ?? measure : measure
-        if (measureIndex && (measure.breakBefore || previousMeasure?.breakAfter || measure.events.some(event => event.sectionLabel) || melodyMeasure?.breakBefore || melody[measureIndex - 1]?.breakAfter || melodyMeasure?.events.some(event => event.sectionLabel))) pieces.push('@br()')
-        if (structure.left === 'rptstart' && previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth') pieces.push('@bar(3)')
+        if (breaksBefore(measureIndex)) pieces.push('@br()')
+        if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) pieces.push('@bar(3)')
         if (measure.multiRest) {
           const item = bind(`@rest(${measure.multiRest})`, undefined, measureId, 0)
           pieces.push(item.expression)
@@ -162,13 +168,16 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           pieces.push(content.join(' '))
         }
         const next = staff === 'bass' ? melody[measureIndex + 1] : visibleMeasures[measureIndex + 1]
-        const type = structure.right === 'end' ? 2 : structure.right === 'dbl' ? 1 : structure.right === 'rptboth' || structure.right === 'rptend' && next?.left === 'rptstart' ? 5 : structure.right === 'rptend' ? 4 : 0
+        const nextLine = breaksBefore(measureIndex + 1)
+        const closesRepeat = structure.right === 'rptboth' || structure.right === 'rptend'
+        const opensRepeat = structure.right === 'rptboth' || next?.left === 'rptstart'
+        const type = closesRepeat ? opensRepeat && !nextLine ? 5 : 4 : structure.right === 'end' ? 2 : structure.right === 'dbl' ? 1 : 0
         const navigation = [...new Set([...(measure.navigation ?? []), ...measure.events.flatMap(event => event.navigation)].filter(name => name !== 'segno'))]
         let bar = `@bar(${type})`
         if (navigation.length || (measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},${[...navigation.map(name => `@symbol(${name},size=16px)`), ...((measure.repeatCount ?? 2) > 2 ? [`@text("×${measure.repeatCount}",size=13px)`] : [])].join(',')})`
-        // A following opening repeat supplies the ordinary or double boundary.
-        // Emit it once, before the next measure, so a break keeps it there.
-        if (!((type === 0 || type === 1) && next?.left === 'rptstart' && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
+        // Within a system the opening repeat supplies the shared boundary.
+        // Across an explicit break both systems need their own boundary mark.
+        if (!((type === 0 || type === 1) && next?.left === 'rptstart' && !nextLine && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
         previousMeasure = structure
       })
       let endingStart = 0

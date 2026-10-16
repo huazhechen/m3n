@@ -58,7 +58,7 @@ try {
       document.querySelector('main').innerHTML = pages.join('')
       await document.fonts.ready
       checks++
-      const outside = [], overlap = []
+      const outside = [], overlap = [], noteOverlap = []
       for (const svg of document.querySelectorAll('svg')) {
         const view = svg.viewBox.baseVal
         for (const element of svg.querySelectorAll('text,line,path,circle,rect')) {
@@ -77,8 +77,15 @@ try {
             overlap.push([lyrics[i].textContent, lyrics[j].textContent])
           }
         }
+        const digits = [...svg.querySelectorAll('g.note text')].filter(element => /^[0-7]$/.test(element.textContent))
+        for (let i = 0; i < digits.length; i++) for (let j = i + 1; j < digits.length; j++) {
+          const a = digits[i].getBBox(), b = digits[j].getBBox()
+          if (Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0.5) {
+            noteOverlap.push([digits[i].closest('.note').id, digits[j].closest('.note').id])
+          }
+        }
       }
-      if (outside.length || overlap.length) issues.push({ file, width, paged, outside: outside.slice(0, 3), outsideCount: outside.length, overlap: overlap.slice(0, 3), overlapCount: overlap.length })
+      if (outside.length || overlap.length || noteOverlap.length) issues.push({ file, width, paged, outside: outside.slice(0, 3), outsideCount: outside.length, overlap: overlap.slice(0, 3), overlapCount: overlap.length, noteOverlap: noteOverlap.slice(0, 3), noteOverlapCount: noteOverlap.length })
     }
     times.sort((a, b) => a - b)
     return { checks, issues, scores: summaries.map(score => ({ ...score, checks: 8, issues: issues.filter(issue => issue.file === score.file).length })), timing: { p50: times[Math.floor(times.length * .5)], p95: times[Math.floor(times.length * .95)], max: times.at(-1) } }

@@ -276,17 +276,46 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it('shares a double-bar boundary with an opening repeat across both staves and an explicit break', () => {
+  it('closes both staves before an explicit break and opens their repeats on the next system', () => {
     const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 || {br} ||: 5 6 7 1e :|||\nB: 1d 2d 3d 4d || 5d 6d 7d 1 :|||')
     const result = geometry(document)
     const bars = result.layout.objects.filter(node => (node.ast as { callName?: string }).callName === 'bar' && node.t.equals(4))
-    expect(bars).toHaveLength(2)
-    for (const bar of bars) {
-      expect((bar.ast as { type?: number }).type).toBe(3)
+    expect(bars).toHaveLength(4)
+    const closing = bars.filter(bar => (bar.ast as { type?: number }).type === 1)
+    const opening = bars.filter(bar => (bar.ast as { type?: number }).type === 3)
+    expect(closing).toHaveLength(2)
+    expect(opening).toHaveLength(2)
+    for (const bar of opening) {
       const next = result.layout.objects.find(node => node.track === bar.track && node.t.equals(4) && !node.T.isZero())!
       expect(bar.layoutLine).toBe(next.layoutLine)
+      expect(closing.find(close => close.track === bar.track)!.layoutLine).toBe(bar.layoutLine - 1)
     }
-    expect(bars[0]!.box.x + bars[0]!.box.anchor).toBeCloseTo(bars[1]!.box.x + bars[1]!.box.anchor)
+    for (const pair of [closing, opening]) expect(pair[0]!.box.x + pair[0]!.box.anchor).toBeCloseTo(pair[1]!.box.x + pair[1]!.box.anchor)
+  })
+
+  it.each([320, 600, 800, 1000])('keeps Mario section repeats and beat groups legible at width %s', width => {
+    const document = parseM3NDocument(readFileSync(resolve(process.cwd(), '../../src/scores/super_mario_01.m3n'), 'utf8'))
+    const melody = [...document.parts.values()][0]!.melody
+    for (const paged of [false, true]) {
+      const result = geometry(document, { width, paged })
+      let time = 0
+      for (const measure of melody) {
+        if (measure.left === 'rptstart') {
+          const repeat = result.layout.objects.find(node => node.t.equals(time) && (node.ast as { type?: number }).type === 3)
+          const first = result.layout.objects.find(node => node.t.equals(time) && !node.T.isZero())!
+          expect(repeat, `missing opening repeat at beat ${time}`).toBeDefined()
+          expect(repeat!.layoutLine).toBe(first.layoutLine)
+        }
+        time += measure.events.reduce((sum, event) => sum + event.beats, 0)
+      }
+      const notes = result.layout.objects.filter(node => !node.T.isZero())
+      const starts = notes.filter((node, index) => index === 0 || node.layoutLine !== notes[index - 1]!.layoutLine)
+      for (const start of starts) expect(start.t.denominator, `split beat at ${start.t}`).toBe(1)
+      for (const boundary of [4, 44, 84]) {
+        const closing = result.layout.objects.find(node => node.t.equals(boundary) && (node.ast as { type?: number }).type === 0)
+        expect(closing, `missing preceding bar at beat ${boundary}`).toBeDefined()
+      }
+    }
   })
 
   it('keeps first-verse L: after explicit numbered lyric rows', () => {

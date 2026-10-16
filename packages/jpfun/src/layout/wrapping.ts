@@ -53,15 +53,35 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
                 range.start = Math.min(range.start, node.t.toNumber()); range.end = Math.max(range.end, node.t.toNumber() + node.T.toNumber());
                 tupletRanges.set(ast, range);
             }
-            let left = measure.start;
-            for (const key of [...new Set(timed.map(node => node.t.toString()))]) {
-                const column = timed.filter(node => node.t.toString() === key);
-                const time = column[0].t.toNumber();
-                if ([...tupletRanges.values()].some(range => time > range.start && time < range.end)) continue;
-                const right = Math.max(...column.map(rightOf));
-                if (right - left <= contentWidth * 0.88 || column[0].t.equals(timed[0].t)) continue;
-                breakColumn(measure.nodes, column[0].t);
-                left = Math.min(...column.map(leftOf));
+            // Balance the entire measure instead of greedily filling its first
+            // line and leaving a few notes (or a single rest) on the next one.
+            const times = [...new Map(timed.map(node => [node.t.toString(), node.t])).values()];
+            const boundaries = times.filter(time => ![...tupletRanges.values()].some(range => time.toNumber() > range.start && time.toNumber() < range.end));
+            const groups = boundaries.map((time, index) => {
+                const next = boundaries[index + 1];
+                const nodes = measure.nodes.filter(node => node.t.compare(time) >= 0 && (!next || node.t.compare(next) < 0));
+                return { time, left: Math.min(...nodes.map(leftOf)), right: Math.max(...nodes.map(rightOf)) };
+            });
+            const costs = new Array<number>(groups.length + 1).fill(Infinity);
+            const previous = new Array<number>(groups.length + 1).fill(0);
+            costs[0] = 0;
+            for (let end = 1; end <= groups.length; end++) {
+                let right = -Infinity;
+                for (let start = end - 1; start >= 0; start--) {
+                    right = Math.max(right, groups[start].right);
+                    const width = right - groups[start].left;
+                    if (width > contentWidth * 0.94 && start < end - 1) break;
+                    const slack = Math.max(0, contentWidth * 0.94 - width);
+                    const beat = groups[start].time.clone().sub(timed[0].t);
+                    const offBeat = start > 0 && beat.denominator !== 1;
+                    const cost = costs[start] + contentWidth ** 2 + slack ** 2
+                        + (offBeat ? contentWidth ** 2 : 0)
+                        + Math.max(0, width - contentWidth) ** 2 * 100;
+                    if (cost < costs[end]) { costs[end] = cost; previous[end] = start; }
+                }
+            }
+            for (let end = groups.length; previous[end] > 0; end = previous[end]) {
+                breakColumn(measure.nodes, groups[previous[end]].time);
             }
         }
         // Minimize squared unused space, never compress a normal measure to fit a preceding one.
@@ -93,8 +113,9 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
 function breakPosition(node: ASTNodeBase): number {
     let target = node;
     for (let parent = target.parent; parent; parent = target.parent) {
-        if (parent instanceof ASTBraceNode && parent.children.length === 1) target = parent;
-        else if (parent instanceof ASTFunctionNode && ['div', 'dot', 'up', 'down', 'grace', 'arp', 'adjust'].includes(parent.callName)) target = parent;
+        if (parent instanceof ASTBraceNode && (parent.children.length === 1
+            || parent.parent instanceof ASTFunctionNode && parent.parent.callName === 'tuplet')) target = parent;
+        else if (parent instanceof ASTFunctionNode && ['div', 'dot', 'up', 'down', 'grace', 'arp', 'adjust', 'tuplet'].includes(parent.callName)) target = parent;
         else break;
     }
     return target.sourceSpan.start;

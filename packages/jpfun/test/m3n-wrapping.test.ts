@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { compileScore } from '../src/pipeline.js';
 import { getLayoutBounds } from '../src/layout/engine.js';
+import { automaticBreakPositions } from '../src/layout/wrapping.js';
 
 test('automatic wrapping fits long scores and keeps original event source spans', () => {
     const source = '@page(width=320px)\n' + Array(32).fill('1 2 3 4 |').join(' ');
@@ -74,4 +75,34 @@ test('an opening repeat belongs to the following measure when wrapping', () => {
     const next = result.layout.objects.find(node => node.t.equals(repeat.t) && !node.T.isZero())!;
     assert.equal(repeat.layoutLine, next.layoutLine);
     assert.ok(repeat.box.x < next.box.x);
+});
+
+test('balances dense measure fragments at whole beats without orphaning their tails', () => {
+    const source = '@page(width=320px,left=32px,right=32px) ' + Array(16).fill('1//').join(' ') + ' |';
+    const result = compileScore(source, { autoWrap: true });
+    const notes = result.layout.objects.filter(node => !node.T.isZero());
+    const lines = new Map<number, typeof notes>();
+    for (const note of notes) lines.set(note.layoutLine, [...(lines.get(note.layoutLine) ?? []), note]);
+    assert.equal(notes.length, 16);
+    assert.equal(lines.size, 2);
+    for (const line of lines.values()) {
+        assert.equal(line[0].t.denominator, 1, 'a split must preserve a complete beat group');
+        assert.equal(line.length, 8, 'the two halves must be balanced');
+        for (const note of line) assert.equal(source.slice(note.ast.sourceSpan.start, note.ast.sourceSpan.end), '1');
+    }
+});
+
+test('inserts a break before a complete tuplet instead of inside its first member', () => {
+    const source = '@page(width=320px) ' + Array(8).fill('@tuplet({1/ 2/ 3/},2) 4 5 6 |').join(' ');
+    const naturalSource = source.replace('width=320px', 'width=1000000px');
+    const positions = automaticBreakPositions(compileScore(naturalSource).layout, 240);
+    assert.ok(positions.length > 0);
+    for (const position of positions) assert.ok(naturalSource.slice(position).startsWith('@tuplet('));
+    const result = compileScore(source, { autoWrap: true });
+    assert.equal(result.lowering.duration.toNumber(), 32);
+    assert.ok(result.layout.lineCount > 1);
+    for (const attachment of result.lowering.attachments) {
+        if (!attachment.endPoints || attachment.endPoints.length !== 3) continue;
+        assert.equal(new Set(attachment.endPoints.map(node => node.layoutLine)).size, 1);
+    }
 });
