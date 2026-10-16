@@ -24,6 +24,8 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 交互调用方通过 `analyzeM3N` 建立一次分析会话并消费其派生结果，不应在同一次编辑更新中自行重复解析。
 
+分析会话直接提供 `diagnostics`；`conversion` 保持原有访问方式，在首次读取时才生成并缓存 MEI，复用同一份校验结果。元数据提取消费语义文档和诊断，不生成 MEI。初始设置从语法树首音之前的状态指令建立，信息字段仅来自文档首部，注释不参与解析。
+
 ## Workspace 边界
 
 - `packages/notation`（`@m3n/notation`）：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换；可独立生成 JavaScript 与类型声明。
@@ -64,7 +66,10 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `components/ScoreExportDialog.tsx`：导出状态、预览及简谱 SVG / 共用 PNG/PDF 工作流。
 - `components/SourceEditor.tsx`：源码输入与尺寸同步。
 - `pages`：路由级组合，不承载领域算法。
-- `scores/*.m3n`：曲库正文的唯一来源；`lib/samples.ts` 在构建时直接读取正文并生成曲目元数据。`lib/score-order.ts` 按标题拼音或英文字母 A–Z 排序，本地与内置曲目共用该规则。
+- `scores/*.m3n`：曲库正文的唯一来源；`tools/score-catalog-plugin.ts` 在构建时生成排序后的虚拟索引，`lib/samples.ts` 只消费索引并按曲目异步加载正文，浏览器不逐首解析内置曲库。`lib/score-order.ts` 按标题拼音或英文字母 A–Z 排序，本地与内置曲目共用该规则。
+- `hooks/useScoreSource.ts`：编辑页、阅读页共用的来源加载与失效请求取消；缺失和失败有明确页面状态，不替换成默认谱。
+- `hooks/useScoreDraft.ts`：草稿恢复、延迟保存与离开页面时写入；本地正式保存更新原 ID，持久化失败不得返回成功。
+- `notation/harmony-syntax.ts`：和弦符号的共享定义；和弦行解析、校验与 MEI 符号生成复用它，最长后缀优先匹配。
 
 ## 渲染资源与切换
 

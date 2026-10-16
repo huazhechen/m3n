@@ -68,6 +68,7 @@ export function parseM3NSyntaxTree(source: string): M3NSyntaxTree {
   const lines: M3NSyntaxLine[] = []
   let offset = 0
   let musicSeen = false
+  let tokenIndex = 0
   for (const [index, raw] of source.split(/\r?\n/).entries()) {
     const line = index + 1
     const leading = raw.length - raw.trimStart().length
@@ -89,7 +90,12 @@ export function parseM3NSyntaxTree(source: string): M3NSyntaxTree {
       const contentStart = offset + leading + raw.trimStart().indexOf(content)
       const contentEnd = contentStart + content.length
       const kind: M3NRowKind = label === 'N' ? 'melody' : label === 'B' ? 'bass' : label === 'C' ? 'harmony' : 'lyrics'
-      const rowTokens = tokens.filter((token) => contentStart <= token.start && token.start < contentEnd)
+      while (tokenIndex < tokens.length && (tokens[tokenIndex]?.start ?? Infinity) < contentStart) tokenIndex += 1
+      const rowTokens: M3NToken[] = []
+      while (tokenIndex < tokens.length && (tokens[tokenIndex]?.start ?? Infinity) < contentEnd) {
+        const token = tokens[tokenIndex++]
+        if (token) rowTokens.push(token)
+      }
       const rowDirectives = rowTokens.map(directiveNode).filter((node): node is M3NDirectiveNode => node !== null)
       const row: M3NSyntaxRow = {
         start: offset + leading,

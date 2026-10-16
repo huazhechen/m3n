@@ -3,12 +3,15 @@ import { analyzeM3N, formatM3N, formatMeiXml, formatScoreDiagnostic } from '@m3n
 import defaultScore from '../scores/huan_le_song_01.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import { SourceEditor } from './SourceEditor'
+import { useScoreDraft } from '../hooks/useScoreDraft'
+import { SourceFileActions } from './SourceFileActions'
 
 type NotationEditorProps = {
   initialSource?: string
   embedded?: boolean
   numberedNotation?: boolean
   simulatedSubmit?: boolean
+  scoreId?: string
   onBrowse?: (source: string) => Promise<void>
   onNumberedNotationChange?: (enabled: boolean) => void
   onSubmit?: (source: string) => Promise<void>
@@ -19,11 +22,12 @@ export function NotationEditor({
   embedded = false,
   numberedNotation,
   simulatedSubmit = false,
+  scoreId,
   onBrowse,
   onNumberedNotationChange,
   onSubmit,
 }: NotationEditorProps) {
-  const [source, setSource] = useState(initialSource)
+  const { source, setSource, draftStatus, pauseDraft, resumeDraft, discardDraft } = useScoreDraft(initialSource, !embedded, scoreId)
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const [isMeiDialogOpen, setIsMeiDialogOpen] = useState(false)
@@ -92,9 +96,12 @@ export function NotationEditor({
     if (!onBrowse) return
     setSharingAction('browse')
     setShareError(null)
+    pauseDraft()
     try {
       await onBrowse(source)
+      discardDraft()
     } catch (error) {
+      resumeDraft()
       setShareError(error instanceof Error ? error.message : 'Unable to create the shared score.')
     } finally {
       setSharingAction(null)
@@ -121,13 +128,15 @@ export function NotationEditor({
         <div className="editor-header-left"><h2>编辑器</h2></div>
         <div className="editor-header-right">
           {simulatedSubmit && <span className="editor-mode-note">本地模拟提交</span>}
+          <SourceFileActions source={source} title={analysis.score.title} onImport={value => { setSource(value); updateCursorPosition(0) }} onError={setShareError} />
           <button type="button" className="action-button" onClick={formatSource}>格式化</button>
           <button type="button" className="action-button" onClick={() => setIsMeiDialogOpen(true)}>MEI</button>
-          {onBrowse && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void browseScore()}>{sharingAction === 'browse' ? '保存中' : '浏览'}</button>}
-          {onSubmit && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void submitScore()}>{sharingAction === 'submit' ? '提交中' : '提交'}</button>}
+          {onBrowse && <button type="button" className="action-button" disabled={sharingAction !== null} onClick={() => void browseScore()}>{sharingAction === 'browse' ? '保存中' : '保存并预览'}</button>}
+          {onSubmit && <button type="button" className="action-button" title="生成保留 15 天的分享链接" disabled={sharingAction !== null} onClick={() => void submitScore()}>{sharingAction === 'submit' ? '生成中' : '临时分享'}</button>}
         </div>
       </header>
       )}
+      {!embedded && <p className="editor-save-status" role="status" aria-label="草稿保存状态">{draftStatus || '作品保存在此浏览器；下载 M3N 可备份或在其他设备打开。'}</p>}
       <div className={embedded ? 'editor-body embedded-editor-body' : 'editor-body'}>
         <SourceEditor
           textareaRef={textareaRef}

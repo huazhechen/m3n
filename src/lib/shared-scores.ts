@@ -1,4 +1,3 @@
-import { pinyin } from 'pinyin-pro'
 import { loadSimulatedSubmission, saveSimulatedSubmission } from './simulated-submissions'
 import { isSimulatedSubmit } from './submit-mode'
 
@@ -15,7 +14,8 @@ function scoreTitle(source: string) {
   return source.match(/\{title=([^}]*)\}/)?.[1]?.trim() ?? ''
 }
 
-export function submittedScoreId(source: string, timestamp = Date.now()) {
+export async function submittedScoreId(source: string, timestamp = Date.now()) {
+  const { pinyin } = await import('pinyin-pro')
   const transliterated = pinyin(scoreTitle(source), { toneType: 'none', separator: '_' })
   const slug = transliterated
     .normalize('NFKD')
@@ -33,7 +33,7 @@ async function responseError(response: Response) {
 }
 
 export async function submitScore(source: string) {
-  const id = submittedScoreId(source)
+  const id = await submittedScoreId(source)
   if (isSimulatedSubmit()) {
     saveSimulatedSubmission(id, source)
     return id

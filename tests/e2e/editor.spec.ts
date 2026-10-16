@@ -158,7 +158,7 @@ test('uses the numbered layout for export and honors excluding bass in SVG, PNG 
   const { readFile } = await import('node:fs/promises')
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{title=导出验证} {2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了\nB: 1d 2d | 3d 4d |||')
-  await page.getByRole('button', { name: '浏览' }).click()
+  await page.getByRole('button', { name: '保存并预览' }).click()
   await page.getByRole('radio', { name: '简谱', exact: true }).check()
   await expect(page.locator('.score-paper svg[data-engine="jpfun"]')).toBeVisible()
   for (const [format, signature] of [['SVG 矢量图（连续）', '<svg'], ['PNG 图片（连续）', 'PNG'], ['PDF（A4 分页）', '%PDF']] as const) {

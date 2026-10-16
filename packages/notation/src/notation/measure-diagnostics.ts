@@ -1,9 +1,9 @@
 import type { ScoreDocument } from './score-document.js' 
 import { validateScoreDocument } from './score-rules.js'
+import type { ScoreDiagnostic } from './diagnostics.js'
 
 /** Derives renderer-facing meter failures from an already parsed score. */
-export function invalidMeasureBarEnds(source: string, document: ScoreDocument) {
-  const diagnostics = validateScoreDocument(document, { source })
+export function invalidMeasureBarEnds(source: string, document: ScoreDocument, diagnostics: readonly ScoreDiagnostic[] = validateScoreDocument(document, { source })) {
   const invalidBarEnds = new Set(diagnostics.flatMap((diagnostic) => {
     if (!diagnostic.code.startsWith('M3N_METER_')) return []
     const index = Number(diagnostic.messageArgs?.measure ?? 1) - 1
@@ -16,8 +16,8 @@ export function invalidMeasureBarEnds(source: string, document: ScoreDocument) {
 }
 
 /** Returns stable MEI measure IDs for meter-invalid measures. */
-export function invalidMeasureIds(source: string, document: ScoreDocument) {
-  const invalidEnds = new Set(invalidMeasureBarEnds(source, document))
+export function invalidMeasureIds(source: string, document: ScoreDocument, diagnostics?: readonly ScoreDiagnostic[]) {
+  const invalidEnds = new Set(invalidMeasureBarEnds(source, document, diagnostics))
   const renderedMeasureCount = (measures: Array<{ events: unknown[]; multiRest?: number }>) => {
     let count = measures.length
     while (count > 1 && measures[count - 1]?.events.length === 0 && !measures[count - 1]?.multiRest) count -= 1

@@ -3,6 +3,24 @@ import { parseM3NDocument } from './m3n-direct.js'
 import { measurePlaybackPasses } from './notation/repeats.js'
 
 describe('direct M3N parser', () => {
+  it('starts with defaults until a later key or tempo change is reached', () => {
+    const score = parseM3NDocument('N: 1 2 3 4 | {key=G}{90qpm}1 2 3 4 |||')
+    expect(score).toMatchObject({ key: 'C', tempo: 120, hasExplicitTempo: false })
+    expect(score.parts.get('score')?.melody[0]?.events[0]).toMatchObject({ key: 'C', tempo: 120 })
+    expect(score.parts.get('score')?.melody[1]?.events[0]).toMatchObject({ key: 'G', tempo: 90 })
+  })
+
+  it('ignores commented settings and metadata while retaining opening row settings', () => {
+    const score = parseM3NDocument('// {title=Wrong} {key=G} {60qpm}\n{title=Right}\nN: {key=D}{96qpm}1 2 3 4 |||')
+    expect(score).toMatchObject({ title: 'Right', key: 'D', tempo: 96, hasExplicitTempo: true })
+    expect(score.parts.get('score')?.melody[0]?.events[0]).toMatchObject({ key: 'D', tempo: 96 })
+  })
+
+  it('uses the last opening setting and does not read metadata out of lyrics', () => {
+    const score = parseM3NDocument('{key=C}{key=F}{title=Header}\nN: 1 2 3 4 |||\nL: {composer=Not metadata}')
+    expect(score).toMatchObject({ key: 'F', title: 'Header', composer: '' })
+  })
+
   it('uses the specified default tempo when no tempo directive is present', () => {
     const event = parseM3NDocument('{4/4} 1 2 3 4 |||').parts.get('score')?.melody[0]?.events[0]
 

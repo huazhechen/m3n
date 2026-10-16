@@ -117,9 +117,9 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
   return { header: header.join('\n'), sections, diagnostics }
 }
 
-export function projectM3NDocument(source: string, syntaxTree?: M3NSyntaxTree) {
+export function projectM3NDocument(source: string, syntaxTree: M3NSyntaxTree = parseM3NSyntaxTree(source)) {
   const structure = parseM3NDocumentStructure(source, syntaxTree)
-  return { structure }
+  return { structure, syntaxTree }
 }
 
 export type M3NDocumentProjection = ReturnType<typeof projectM3NDocument>

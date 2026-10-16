@@ -48,6 +48,6 @@ export function scoreMetadataFromSource(slug: string, source: string): PresetSco
       score.source,
       score.note,
     ].filter(Boolean).join(' ')),
-    diagnosticSeverity: scoreDiagnosticSeverity(analysis.conversion.diagnostics),
+    diagnosticSeverity: scoreDiagnosticSeverity(analysis.diagnostics),
   }
 }

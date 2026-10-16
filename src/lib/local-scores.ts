@@ -1,11 +1,10 @@
 export const LOCAL_SCORES_KEY = 'm3n:local-scores'
-export const LOCAL_SCORE_TTL_MS = 30 * 24 * 60 * 60 * 1000
-
 export type LocalScore = {
   id: string
   source: string
   createdAt: string
-  expiresAt: number
+  updatedAt?: string
+  expiresAt: number | null
 }
 
 const localScoreIdPattern = /^local-[a-z0-9-]+$/
@@ -15,7 +14,7 @@ export function isLocalScoreId(value: string | undefined): value is string {
 }
 
 export function createLocalScoreId() {
-  return `local-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`
+  return `local-${crypto.randomUUID()}`
 }
 
 function isLocalScoreRecord(value: unknown): value is LocalScore {
@@ -23,20 +22,22 @@ function isLocalScoreRecord(value: unknown): value is LocalScore {
     && typeof (value as LocalScore).id === 'string'
     && typeof (value as LocalScore).source === 'string'
     && typeof (value as LocalScore).createdAt === 'string'
-    && typeof (value as LocalScore).expiresAt === 'number'
+    && ((value as LocalScore).expiresAt === null || typeof (value as LocalScore).expiresAt === 'number')
 }
 
 export function pruneExpiredLocalScoreEntries(entries: LocalScore[], now: number) {
-  return entries.filter((entry) => entry.expiresAt > now)
+  return entries.filter((entry) => entry.expiresAt === null || entry.expiresAt > now)
 }
 
-function readLocalScores(): LocalScore[] {
+function readLocalScores(strict = false): LocalScore[] {
   try {
     const raw = localStorage.getItem(LOCAL_SCORES_KEY)
     if (raw === null) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed.filter(isLocalScoreRecord) : []
-  } catch {
+    if (!Array.isArray(parsed) || !parsed.every(isLocalScoreRecord)) throw new Error('Invalid local score data')
+    return parsed
+  } catch (cause) {
+    if (strict) throw new Error('本地保存失败：无法读取已有作品，已保留原始浏览器数据。请先下载当前 M3N 文件备份。', { cause })
     return []
   }
 }
@@ -44,8 +45,8 @@ function readLocalScores(): LocalScore[] {
 function writeLocalScores(scores: LocalScore[]) {
   try {
     localStorage.setItem(LOCAL_SCORES_KEY, JSON.stringify(scores))
-  } catch {
-    // 本地存储不可用时忽略写入。
+  } catch (cause) {
+    throw new Error('本地保存失败：浏览器存储不可用或空间已满。请下载 M3N 文件备份后重试。', { cause })
   }
 }
 
@@ -56,15 +57,18 @@ export function pruneExpiredLocalScores(now = Date.now()) {
   return remaining
 }
 
-export function saveLocalScore(source: string, now = Date.now()): LocalScore {
+export function saveLocalScore(source: string, now = Date.now(), existingId?: string): LocalScore {
+  const scores = pruneExpiredLocalScoreEntries(readLocalScores(true), now)
+  const previous = existingId ? scores.find(score => score.id === existingId) : undefined
+  if (existingId && !previous) throw new Error('原乐谱已不存在，请另存为新乐谱。')
   const score: LocalScore = {
-    id: createLocalScoreId(),
+    id: previous?.id ?? createLocalScoreId(),
     source,
-    createdAt: new Date(now).toISOString(),
-    expiresAt: now + LOCAL_SCORE_TTL_MS,
+    createdAt: previous?.createdAt ?? new Date(now).toISOString(),
+    updatedAt: new Date(now).toISOString(),
+    expiresAt: null,
   }
-  const scores = pruneExpiredLocalScores(now)
-  writeLocalScores([score, ...scores])
+  writeLocalScores([score, ...scores.filter(item => item.id !== score.id)])
   return score
 }
 

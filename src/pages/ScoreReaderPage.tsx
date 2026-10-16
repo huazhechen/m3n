@@ -1,11 +1,10 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { useMemo, useRef, useState } from 'react'
 import { analyzeM3N, formatScoreDiagnostic } from '@m3n/notation'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
 import { TopNav } from '../components/TopNav'
-import { isLocalScoreId, loadLocalScore } from '../lib/local-scores'
 import { presetScores } from '../lib/samples'
 import {
   DEFAULT_SCORE_WIDTH,
@@ -16,13 +15,13 @@ import {
   SCORE_WIDTH_MIN,
   readRendererSetting,
 } from '../lib/renderer-settings'
-import { isSharedScoreId, loadSharedScore } from '../lib/shared-scores'
+import { useScoreSource } from '../hooks/useScoreSource'
+import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
 
 export function ScoreReaderPage() {
   const { slug } = useParams()
   const score = presetScores.find((item) => item.slug === slug)
-  const localScore = useMemo(() => (isLocalScoreId(slug) ? loadLocalScore(slug) : null), [slug])
-  const [sharedSource, setSharedSource] = useState<string | null | undefined>(undefined)
+  const { source: scoreSource, status, error } = useScoreSource(slug)
   const exportDialogRef = useRef<ScoreExportDialogRef>(null)
   const [exportWidth, setExportWidth] = useState(() => readRendererSetting(
     SCORE_WIDTH_KEY,
@@ -32,29 +31,10 @@ export function ScoreReaderPage() {
   ))
   const [exportError, setExportError] = useState('')
   const [numberedNotation, setNumberedNotation] = useState(readNumberedNotation)
-  useEffect(() => {
-    let cancelled = false
-    if (score || localScore || !slug || !isSharedScoreId(slug)) {
-      setSharedSource(null)
-      return () => { cancelled = true }
-    }
-    setSharedSource(undefined)
-    void loadSharedScore(slug)
-      .then((shared) => { if (!cancelled) setSharedSource(shared?.source ?? null) })
-      .catch(() => { if (!cancelled) setSharedSource(null) })
-    return () => { cancelled = true }
-  }, [localScore, score, slug])
-
-  const scoreSource = score?.source ?? localScore?.source ?? sharedSource ?? ''
-  const analysis = useMemo(() => analyzeM3N(scoreSource), [scoreSource])
+  const analysis = useMemo(() => analyzeM3N(scoreSource ?? ''), [scoreSource])
   const { conversion: result, invalidMeasureIds: invalidMeasures } = analysis
 
-  if (!score && !localScore && sharedSource === undefined) {
-    return <main><TopNav /><div className="page-status" role="status">Loading...</div></main>
-  }
-  if (!score && !localScore && sharedSource === null) {
-    return <Navigate to="/scores" replace />
-  }
+  if (status !== 'ready') return <main><TopNav /><ScoreLoadStatus status={status} error={error} /></main>
 
   const scoreIndex = score ? presetScores.indexOf(score) : -1
   const previousScore = scoreIndex > 0 ? presetScores[scoreIndex - 1] : undefined

@@ -179,8 +179,17 @@ h3 {
 
 .editor-header-right {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 8px;
+}
+
+.editor-save-status {
+  margin: 0;
+  padding: 0 12px 10px;
+  color: #5c6468;
+  font-size: 0.8rem;
 }
 
 .editor-mode-note {

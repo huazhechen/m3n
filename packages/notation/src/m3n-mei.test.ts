@@ -3,6 +3,18 @@ import { m3nPitch, parseM3NDocument } from './m3n-direct.js'
 import { m3nToMei } from './m3n-mei.js'
 
 describe('M3N to MEI conversion', () => {
+  it.each(['Imaj7', 'Imaj9'])('keeps the documented %s chord whole', (chord) => {
+    const result = m3nToMei(`{4/4}\nN: 1 2 3 4 |||\nC: ${chord} |`)
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain(`>C${chord.slice(1)}</harm>`)
+  })
+
+  it('renders absolute, slash and no-chord symbols without changing them with the key', () => {
+    const result = m3nToMei('{key=D}{4/4}\nN: 1 2 3 4 | 5 6 7 1e | 1e 7 6 5 | 4 3 2 1 |||\nC: Cmaj7 | Am | G/B | N.C. |')
+    expect(result.diagnostics).toEqual([])
+    for (const symbol of ['Cmaj7', 'Am', 'G/B', 'N.C.']) expect(result.mei).toContain(`>${symbol}</harm>`)
+  })
+
   it('reserves lyric rows only within the phrase that sings them', () => {
     const result = m3nToMei('{2/4}\nN: 1 2 |\nL: 草木\n---\nN: ||: 1 2 | 3 4 :||{x2} |||\nL1: 世间你我\nL2: 有多少人')
 

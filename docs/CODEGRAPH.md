@@ -70,7 +70,7 @@ flowchart TD
   shared --> api["/api/scores"]
 ```
 
-页面由 `App.tsx` 懒加载。编辑器和阅读页共享分析与渲染路径；曲库元数据在构建时由 `lib/samples.ts` 从 `.m3n` 正文生成。
+页面由 `App.tsx` 懒加载。编辑器和阅读页共享 `useScoreSource` 加载、分析与渲染路径；曲库元数据在构建时由 `tools/score-catalog-plugin.ts` 从 `.m3n` 正文生成虚拟索引，`lib/samples.ts` 消费索引并按曲目加载正文。
 
 ## Notation 领域流水线
 

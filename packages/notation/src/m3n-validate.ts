@@ -12,6 +12,7 @@ import type { ScoreDocument } from './notation/score-document.js'
 import { validateScoreDocument } from './notation/score-rules.js'
 import { validateM3NSyntaxTree } from './notation/syntax-rules.js'
 import { parseM3NSyntaxTree, type M3NSyntaxTree } from './notation/syntax-tree.js'
+import { harmonyTokens, parseHarmonySymbol } from './notation/harmony-syntax.js'
 
 type Meter = { beats: number; beatValue: number }
 type Settings = { key: string; meter: Meter; tempo: number | null }
@@ -52,7 +53,6 @@ const POSTFIX_FLAGS = new Set([
 ])
 
 const KEY_PATTERN = /^([A-G](?:#|b)?)(dor|phr|lyd|mix|m|loc)?$/
-const CHORD_PATTERN = /^(I|II|III|IV|V|VI|VII|i|ii|iii|iv|v|vi|vii)(?:m|dim|aug|sus2|sus4|[2-9]|1[0-3])?$/
 
 function lineMessage(token: Token, message: string) {
   const content = token.content ?? token.raw
@@ -405,7 +405,7 @@ function validateBody(
       }
 
       if (name === 'chord') {
-        if (!CHORD_PATTERN.test(value)) diagnostics.push(lineMessage(token, `和弦标记值非法：${value}`))
+        if (!parseHarmonySymbol(value)) diagnostics.push(lineMessage(token, `和弦标记值非法：${value}`))
         if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能使用和弦标记'))
         continue
       }
@@ -752,7 +752,7 @@ function validatePhraseHarmony(document: ScoreDocument, structure: M3NDocumentSt
       const melodyEnd = melody.start + melody.text.length
       const measures = part.melody.filter((measure) => measure.events.some((event) =>
         melody.start <= event.sourceStart && event.sourceStart < melodyEnd))
-      const harmonyMeasures = phrase.harmony.text.split(/\|+/)
+      const harmonyMeasures = (phrase.harmony.text.split('//')[0] ?? '').split(/\|+/)
       if (harmonyMeasures.at(-1)?.trim() === '') harmonyMeasures.pop()
       if (harmonyMeasures.length !== measures.length) {
         diagnostics.push(phraseDiagnostic('M3N_HARMONY', `第 ${phrase.harmony.line} 行：和弦行小节数量不匹配：旋律 ${measures.length} 小节，和弦 ${harmonyMeasures.length} 小节`, phrase.harmony))
@@ -763,7 +763,7 @@ function validatePhraseHarmony(document: ScoreDocument, structure: M3NDocumentSt
         let beats = 0
         let cursor = 0
         let lastChord: string | undefined
-        const tokenPattern = /\s+|\(|\)|~|(?:VII|III|II|IV|VI|V|I|vii|iii|ii|iv|vi|v|i)(?:m|dim|aug|sus2|sus4|maj7|maj9|[2-9]|1[0-3])?/gy
+        const tokenPattern = harmonyTokens('gy')
         while (cursor < source.length) {
           tokenPattern.lastIndex = cursor
           const match = tokenPattern.exec(source)

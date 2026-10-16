@@ -5,15 +5,12 @@ import { tokenizeM3N } from './notation/m3n-tokens.js'
 import { parseLyricItems } from './notation/lyrics.js'
 import { parsePassRange } from './notation/repeats.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document.js'
+import { documentSettings } from './notation/document-settings.js'
+import { harmonyTokens, parseHarmonySymbol } from './notation/harmony-syntax.js'
 type DirectSettingEvent = {
   beats: number
   kind: 'key' | 'meter' | 'tempo'
   value: string
-}
-
-const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
-function metadata(source: string, name: (typeof metadataNames)[number]) {
-  return source.match(new RegExp(`\\{${name}=([^}]*)\\}`))?.[1]?.trim() ?? ''
 }
 
 function duration(depth: number, carets = 0, dots = 0) {
@@ -378,10 +375,11 @@ function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructur
       if (events.length === 0) continue
       let depth = 0
       let offset = 0
-      for (const token of harmony.matchAll(/\(|\)|(?:VII|III|II|IV|VI|V|I|vii|iii|ii|iv|vi|v|i)(?:m|dim|aug|sus2|sus4|maj7|maj9|[2-9]|1[0-3])?/g)) {
+      for (const token of (harmony.split('//')[0] ?? '').matchAll(harmonyTokens())) {
         const value = token[0]
         if (value === '(') { depth += 1; continue }
         if (value === ')') { depth = Math.max(0, depth - 1); continue }
+        if (!parseHarmonySymbol(value)) continue
         let elapsed = 0
         const target = events.find((event) => {
           const matches = elapsed + 1e-9 >= offset
@@ -446,15 +444,11 @@ function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructur
 }
 
 export function parseM3NDocument(source: string, projection: M3NDocumentProjection = projectM3NDocument(source)): ScoreDocument {
-  const key = source.match(/\{key=([^}]+)\}/)?.[1]?.trim() || 'C'
-  const meter = source.match(/\{(\d+)\/(\d+)\}/)
-  const tempo = source.match(/\{(\d+)qpm\}/)?.[1]
+  const settings = documentSettings(projection.syntaxTree)
+  const { key, meterCount, meterUnit, tempo: initialTempo } = settings
   const parts = new Map<string, ScorePart>()
   const intervals: ScoreInterval[] = []
   const settingEvents: DirectSettingEvent[] = []
-  const meterCount = Number(meter?.[1] ?? 4)
-  const meterUnit = Number(meter?.[2] ?? 4)
-  const initialTempo = Number(tempo ?? 120)
   const phrases = projection.structure.sections.flatMap((section) => section.phrases)
   const melody = bodySource(phrases.flatMap((phrase) => phrase.melody
     ? [{ text: phrase.melody.text, start: phrase.melody.start, passes: phrase.passes || undefined }]
@@ -467,21 +461,7 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
   parseBody(melodyBody.text, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], melodyBody.phrasePasses, melodyBody.positionAt)
   if (bass.text) parseBody(bass.text, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents, [], bass.positionAt)
   const document: ScoreDocument = {
-    title: metadata(source, 'title'),
-    subtitle: metadata(source, 'subtitle'),
-    singer: metadata(source, 'singer'),
-    composer: metadata(source, 'composer'),
-    lyricist: metadata(source, 'lyricist'),
-    arranger: metadata(source, 'arranger'),
-    copyright: metadata(source, 'copyright'),
-    source: metadata(source, 'source'),
-    note: metadata(source, 'note'),
-    transpose: metadata(source, 'transpose'),
-    key,
-    meterCount,
-    meterUnit,
-    tempo: initialTempo,
-    hasExplicitTempo: tempo !== undefined,
+    ...settings,
     lyrics: [],
     parts,
     intervals,

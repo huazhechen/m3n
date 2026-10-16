@@ -1,6 +1,6 @@
 # M3N — Max's Markup Music Notation
 
-M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器端的 M3N 编辑器：在线编写、阅读和导出五线谱，并在 `/docs` 提供 M3N 指南与手册。
+M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器端的 M3N 编辑器：在线编写、阅读、试听和导出简谱与五线谱，并在 `/docs` 提供 M3N 指南与手册。
 
 ## 仓库结构
 
@@ -8,13 +8,15 @@ M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器�
 | --- | --- |
 | `packages/notation` | `@m3n/notation`：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换。 |
 | `packages/score-renderer` | `@m3n/score-renderer`：五线谱（Verovio）的浏览器渲染、播放、导出与资源调度。 |
+| `packages/numbered-notation` | `ScoreDocument` 到简谱引擎的语义与交互适配。 |
+| `packages/jpfun` | 固定版本、保留补丁与许可记录的简谱排版核心。 |
 | `src` | React Web 应用、路由、曲库装载及分享服务。 |
 | `worker` | Cloudflare Worker 部署入口，不依赖 Web UI。 |
 | `docs` | 应用内用户文档与开发内部文档，见[文档索引](docs/README.md)。 |
 | `tools` | 构建与辅助脚本。 |
 | `tests` | 端到端测试（Playwright）。 |
 
-包依赖方向保持 `src -> @m3n/score-renderer -> @m3n/notation`；`@m3n/notation` 不依赖 React、DOM 或渲染器。详细约定见[前端架构](docs/ARCHITECTURE.md)与[代码图谱](docs/CODEGRAPH.md)。
+包依赖方向保持 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / jpfun`；`notation` 不依赖 React、DOM 或渲染器。详细约定见[前端架构](docs/ARCHITECTURE.md)与[代码图谱](docs/CODEGRAPH.md)。
 
 ## 开发
 
@@ -29,9 +31,11 @@ npm run deploy   # 构建并部署到 Cloudflare
 
 ### 本地乐谱与提交
 
-- 编辑器中的“浏览”把乐谱保存到浏览器本地（localStorage，30 天后过期，每次打开页面时自动清理），查看/编辑 URL 直接携带乐谱 ID。
-- “提交”才会写入远端 Worker。本地调试时默认模拟提交（写入 localStorage），需要请求真实接口时设置 `VITE_SUBMIT_MODE=remote`。
-- `npm run test:e2e` 复用已在 `127.0.0.1:4173` 运行的开发服务器（`reuseExistingServer`），不会自行启动。
+- “保存并预览”把作品保存在此浏览器，编辑已有本地作品时更新原 ID；新保存的作品不自动过期，旧版临时记录仍按原期限清理。存储失败会保留输入并显示错误。
+- 编辑器自动恢复和保存草稿；“导入”和“下载 M3N”支持文件备份与跨设备迁移。清除浏览器数据会删除本地作品和草稿。
+- “临时分享”生成保留 15 天的链接。本地调试时默认模拟分享（写入 localStorage），需要请求真实接口时设置 `VITE_SUBMIT_MODE=remote`。
+- 内置曲库元数据由 Vite 插件在构建时生成，正文按曲目异步加载，新增 `.m3n` 文件自动进入索引和语料测试。
+- `npm run test:e2e` 会构建本地模拟分享版本并临时启动 `127.0.0.1:4173` 的生产预览；已有该地址服务时复用。测试不启动开发服务器。
 
 ## 文档
 

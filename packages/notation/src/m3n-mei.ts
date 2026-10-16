@@ -40,7 +40,7 @@ function chordSymbol(value: string, key: string) {
   return m3nChord(value, key)?.symbol ?? value
 }
 
-export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, context: { projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree } = {}): MeiConversionResult {
+export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, context: { projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree; diagnostics?: ScoreDiagnostic[] } = {}): MeiConversionResult {
   const syntaxTree = context.syntaxTree ?? parseM3NSyntaxTree(source)
   const projection = context.projection ?? projectM3NDocument(source, syntaxTree)
   const document = suppliedDocument ?? parseM3NDocument(source, projection)
@@ -526,7 +526,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const sectionContent = meiSectionContent(layoutNodes, hasNavigation)
   const headerMetadata = scoreHeaderMetadata(document)
   const mei = meiDocumentXml(document, sectionContent, hasBassStaff)
-  const diagnostics = validateM3NDiagnostics(source, {}, document, { syntaxTree, projection })
+  const diagnostics = context.diagnostics ?? validateM3NDiagnostics(source, {}, document, { syntaxTree, projection })
   return {
     source, mei, diagnostics, sourceMap,
     title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,
