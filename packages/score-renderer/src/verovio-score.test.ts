@@ -32,6 +32,18 @@ async function renderedPitches(source: string) {
 }
 
 describe('VerovioScore layout', () => {
+  it('assigns melody and bass to distinct MIDI channels for independent muting', async () => {
+    const toolkit = new VerovioToolkit(await createVerovioModule())
+    try {
+      expect(toolkit.loadData(m3nToMei('{4/4}\nN: 1 2 3 4 |||\nB: 1d 2d 3d 4d |||').mei)).toBe(1)
+      const binary = atob(toolkit.renderToMIDI().replace(/^data:audio\/midi;base64,/, ''))
+      const midi = BasicMIDI.fromArrayBuffer(Uint8Array.from(binary, char => char.charCodeAt(0)).buffer)
+      const on = midi.tracks.flatMap(track => track.events).filter(event => (event.statusByte & 0xf0) === 0x90 && event.data[1]! > 0)
+      expect(new Set(on.map(event => event.statusByte & 0xf))).toEqual(new Set([0, 1]))
+      expect(on.filter(event => (event.statusByte & 0xf) === 0).map(event => event.data[0])).toEqual([60, 62, 64, 65])
+      expect(on.filter(event => (event.statusByte & 0xf) === 1).map(event => event.data[0])).toEqual([48, 50, 52, 53])
+    } finally { toolkit.destroy() }
+  })
   it('maps chord-member playback IDs back to their chord event', () => {
     expect(normalizePlaybackElementId('m3n-e-12-v2-rend3')).toEqual({ xmlId: 'm3n-e-12', rendition: 3 })
   })

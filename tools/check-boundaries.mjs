@@ -3,6 +3,7 @@ import { isBuiltin } from 'node:module'
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 const root = process.cwd()
+const appManifest = JSON.parse(await readFile('package.json', 'utf8'))
 const manifests = new Map()
 for (const name of await readdir('packages')) {
   const folder = path.join(root, 'packages', name)
@@ -24,9 +25,10 @@ async function scan(folder, owner) {
         if (specifier.startsWith('.')) {
           const target = path.resolve(path.dirname(file), specifier)
           if (owner && !target.startsWith(`${owner}/`)) fail('包内相对导入不得越过本包边界')
+          if (file.startsWith(`${root}/worker/`) && target.startsWith(`${root}/src/`)) fail('部署 Worker 不得依赖 Web UI')
           if (!owner && target.startsWith(`${root}/packages/`)) fail('应用必须通过包的公共入口导入')
-        } else if (owner && !isBuiltin(specifier)) {
-          const manifest = manifests.get(owner)
+        } else if (!isBuiltin(specifier) && !specifier.startsWith('virtual:')) {
+          const manifest = owner ? manifests.get(owner) : appManifest
           const name = specifier.startsWith('@') ? specifier.split('/').slice(0, 2).join('/') : specifier.split('/')[0]
           const allowed = { ...manifest.dependencies, ...manifest.devDependencies }
           if (!allowed[name] && name !== manifest.name) fail('依赖未在本包声明')

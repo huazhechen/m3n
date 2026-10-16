@@ -18,6 +18,10 @@ test('editor provides highlighting, completions, diagnostic navigation and keybo
   await editor.press('Control+Space')
   await expect(page.getByRole('listbox')).toBeVisible()
   await expect(page.getByRole('option', { name: 'key=C', exact: true })).toBeVisible()
+  await editor.fill('{4/4}\nN: (1 2) 3 4 5 |||')
+  await editor.press('Home')
+  for (let index = 0; index < 4; index++) await editor.press('ArrowRight')
+  await expect(page.locator('.cm-matchingBracket')).toHaveCount(2)
   await page.screenshot({ path: info.outputPath('editor-desktop.png') })
 })
 
@@ -68,12 +72,21 @@ test('practice starts at the selected measure and loops with independent staff m
   await page.getByRole('slider', { name: '播放位置', exact: true }).focus()
   await page.getByRole('slider', { name: '播放位置', exact: true }).press('Home')
   await page.getByRole('button', { name: '设为 A', exact: true }).click()
-  for (let index = 0; index < 2; index++) await page.getByRole('slider', { name: '播放位置', exact: true }).press('ArrowRight')
+  for (let index = 0; index < 2; index++) await page.getByRole('slider', { name: '播放位置', exact: true }).press('PageUp')
   await page.getByRole('button', { name: '设为 B', exact: true }).click()
   await page.getByRole('checkbox', { name: 'A–B 循环', exact: true }).check()
   await expect(page.getByRole('checkbox', { name: 'A–B 循环', exact: true })).toBeChecked()
   await page.getByRole('checkbox', { name: '低音静音', exact: true }).check()
   await page.getByRole('checkbox', { name: '播放跟随', exact: true }).uncheck()
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  // Outlast B (20% of this six-second score) to verify a real wrap, not just the toggle.
+  await page.waitForTimeout(1700)
+  expect(Number(await page.getByRole('slider', { name: '播放位置', exact: true }).inputValue())).toBeLessThan(210)
+  await page.getByRole('radio', { name: '五线谱', exact: true }).check()
+  await expect(paper.locator('svg[data-engine="jpfun"]')).toHaveCount(0)
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '暂停', exact: true }).click()
   await page.getByRole('button', { name: '恢复默认', exact: true }).click()
   await expect(page.getByRole('checkbox', { name: '旋律静音', exact: true })).not.toBeChecked()
 })
@@ -101,6 +114,11 @@ test('staff SVG and multipage PDF retain Chinese outlines and all written measur
       expect(svg).toContain('data-outlined-text="中文矢量验证"')
       expect(svg).toContain('m3n-e-256')
       expect(svg).not.toContain('<text')
+      const lyricOutlines = await page.evaluate(svg => {
+        const document = new DOMParser().parseFromString(svg, 'image/svg+xml')
+        return ['春', '天', '来', '了'].map(char => [...document.querySelectorAll('[data-outlined-text]')].some(group => group.getAttribute('data-outlined-text')?.includes(char) && Boolean(group.querySelector('path[d]'))))
+      }, svg)
+      expect(lyricOutlines).toEqual([true, true, true, true])
     } else {
       const pdf = bytes.toString('latin1')
       expect((pdf.match(/\/Type \/Page\b/g) ?? []).length).toBe(count)
@@ -108,4 +126,51 @@ test('staff SVG and multipage PDF retain Chinese outlines and all written measur
       expect(bytes.length).toBeGreaterThan(20_000)
     }
   }
+})
+
+
+test('homepage plays both notations and documentation examples open as editable sources', async ({ page }) => {
+  await page.goto('/')
+  const sample = page.getByRole('region', { name: '可试听谱例' })
+  await expect(sample.locator('svg[data-engine="jpfun"]')).toBeVisible()
+  await sample.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(sample.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await page.getByRole('switch', { name: '首页简谱', exact: true }).uncheck()
+  await expect(sample.locator('svg[data-engine="jpfun"]')).toHaveCount(0)
+  await expect(sample.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await page.goto('/docs?doc=guide')
+  const exampleSource = await page.locator('.document-example .cm-content').first().innerText()
+  await page.getByRole('link', { name: '在编辑器试改', exact: true }).first().click()
+  await expect(page).toHaveURL(/\/editor$/)
+  const editor = page.locator('.editor-container').getByRole('textbox', { name: 'M3N source', exact: true })
+  await expect(editor).toBeVisible()
+  await expect(editor).not.toHaveAttribute('aria-readonly', 'true')
+  await expect(editor).toHaveText(exampleSource, { useInnerText: true })
+})
+
+
+test('mobile saving and export recover visibly from a failed local font request', async ({ page }, info) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/editor')
+  await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=手机保存导出}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
+  await page.getByRole('button', { name: '保存并预览', exact: true }).click()
+  await expect(page).toHaveURL(/\/scores\/local-/)
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '暂停', exact: true }).click()
+  let failed = false
+  await page.route('**/fonts/NotoSerifCJKsc-Regular.otf', async route => {
+    if (!failed) { failed = true; await route.fulfill({ status: 503, body: '' }) }
+    else await route.continue()
+  })
+  await page.getByRole('button', { name: '打印', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('radio', { name: 'SVG 矢量图（连续）', exact: true }).check()
+  await dialog.getByRole('button', { name: '确认并下载', exact: true }).click()
+  await expect(dialog.getByRole('alert')).toContainText('无法加载导出中文字体')
+  await page.screenshot({ path: info.outputPath('mobile-export-retry.png') })
+  const downloading = page.waitForEvent('download')
+  await dialog.getByRole('button', { name: '确认并下载', exact: true }).click()
+  await (await downloading).saveAs(info.outputPath('手机保存导出.svg'))
+  await expect(dialog).not.toBeVisible()
 })

@@ -1,3 +1,4 @@
+import { EditorSplit } from '../components/EditorSplit'
 import { useMemo, useState } from 'react'
 import { formatScoreDiagnostic } from '@m3n/notation'
 import { useM3NAnalysis } from '../hooks/useM3NAnalysis'
@@ -30,25 +31,23 @@ export function ConverterPage() {
             <button type="button" className="action-button" onClick={() => setIsResultOpen(true)}>转换</button>
           </div>
         </header>
-        <div className="editor-body">
-          <SourceEditor
+        <EditorSplit source={<SourceEditor
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
             value={source}
             ariaLabel="Happi123 source"
             onChange={setSource}
-          />
-          {result.diagnosticDetails.length > 0 && <ul className="diagnostics editor-source-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
-          <ScoreRenderer
+          />} preview={<ScoreRenderer
             mei={analysis.getMei}
             isSourceUpdating={isAnalyzing}
             scoreDocument={analysis.score}
             headerMetadata={analysis.interaction.headerMetadata}
             sourceMap={analysis.interaction.sourceMap}
-          />
+          />}>
+          {result.diagnosticDetails.length > 0 && <ul className="diagnostics editor-source-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
           {error && <p role="alert">{error} <button type="button" onClick={retry}>重试分析</button></p>}
           {analysis.diagnostics.length > 0 && <ul className="diagnostics editor-render-diagnostics">{analysis.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
-        </div>
+        </EditorSplit>
       </div>
       {isResultOpen && (
         <div className="converter-dialog-overlay" role="presentation" onMouseDown={(event) => {

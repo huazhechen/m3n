@@ -337,3 +337,14 @@ toolkit.destroy()
 ```
 
 MEI Guidelines 中合法的元素不保证当前 Verovio 完整实现；Verovio 能容错渲染也不证明 MEI 合法。两者均须分别验证。
+
+## 本项目的声部 MIDI 通道
+
+Verovio 6.2 的 MIDI 生成从 `staffDef` 内的 `instrDef` 读取通道；直接在 `staffDef` 上添加 `midi.channel` 不会分离播放通道。本项目输出：
+
+```xml
+<staffDef n="1"><instrDef midi.channel="0" midi.instrnum="0"/></staffDef>
+<staffDef n="2"><instrDef midi.channel="1" midi.instrnum="0"/></staffDef>
+```
+
+这里 MIDI 通道按 0 起始编码，分别对应用户通常称的通道 1、2。播放器的旋律／低音静音操作作用于这两个通道；`verovio-score.test.ts` 解码真实生成的 MIDI 验证声部、音高与通道。

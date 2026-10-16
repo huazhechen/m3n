@@ -11,7 +11,9 @@ export function useM3NAnalysis(source: string, { background = true, suspended = 
 
   useEffect(() => () => { client.current?.destroy(); client.current = null }, [])
   useEffect(() => {
-    if (!background || suspended || analysis.source === source) return
+    if (!background) return
+    if (analysis.source === source) { setError(''); return }
+    if (suspended) return
     let cancelled = false
     const timer = window.setTimeout(() => {
       try {

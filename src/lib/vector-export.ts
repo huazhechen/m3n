@@ -29,26 +29,39 @@ export async function outlineSvgText(svg: SVGSVGElement) {
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g')
     for (const attr of text.attributes) if (['transform', 'opacity', 'class', 'id'].includes(attr.name) || attr.name.startsWith('data-')) group.setAttribute(attr.name, attr.value)
     const walker = document.createTreeWalker(text, NodeFilter.SHOW_TEXT)
-    let node: Node | null, offset = 0
+    const characters: Array<{ char: string; element: Element }> = []
+    let node: Node | null
+    let pendingSpace: Element | null = null
     while ((node = walker.nextNode())) {
-      const style = getComputedStyle(node.parentElement ?? text)
+      const element = node.parentElement ?? text
+      const preserve = /pre|break-spaces/.test(getComputedStyle(element).whiteSpace)
+      for (const char of node.textContent ?? '') {
+        // SVG's addressable characters exclude collapsed indentation. Keep the
+        // originating tspan for font properties while matching browser geometry.
+        if (!preserve && /[ \t\r\n]/.test(char)) { pendingSpace = element; continue }
+        if (pendingSpace && characters.length) characters.push({ char: ' ', element: pendingSpace })
+        pendingSpace = null
+        characters.push({ char, element })
+      }
+    }
+    let offset = 0
+    for (const { char, element } of characters) {
+      const index = offset
+      offset += char.length
+      if (/\s|[\u200B\u2800]/u.test(char)) continue
+      const style = getComputedStyle(element)
       const size = Number.parseFloat(style.fontSize) || 16
       const font = style.fontFamily.includes('M3N Numbers') && numbers ? numbers : fallback
-      for (const char of node.textContent ?? '') {
-        const index = offset
-        offset += char.length
-        if (/\s|[\u200B\u2800]/u.test(char)) continue
-        if (!font.hasChar(char)) throw new Error(`导出字体不包含字符“${char}”（U+${char.codePointAt(0)!.toString(16).toUpperCase()}）。`)
-        if (index >= text.getNumberOfChars()) continue
-        const position = text.getStartPositionOfChar(index)
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-        path.setAttribute('d', font.getPath(char, position.x, position.y, size).toPathData(3))
-        path.setAttribute('fill', style.fill || '#000000')
-        const rotation = text.getRotationOfChar(index)
-        if (rotation) path.setAttribute('transform', `rotate(${rotation} ${position.x} ${position.y})`)
-        if (Number.parseInt(style.fontWeight, 10) >= 600) { path.setAttribute('stroke', style.fill); path.setAttribute('stroke-width', String(size * 0.015)) }
-        group.append(path)
-      }
+      if (!font.hasChar(char)) throw new Error(`导出字体不包含字符“${char}”（U+${char.codePointAt(0)!.toString(16).toUpperCase()}）。`)
+      if (index >= text.getNumberOfChars()) throw new Error('SVG 文字位置与字符数量不一致，无法完整导出。')
+      const position = text.getStartPositionOfChar(index)
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      path.setAttribute('d', font.getPath(char, position.x, position.y, size).toPathData(3))
+      path.setAttribute('fill', style.fill || '#000000')
+      const rotation = text.getRotationOfChar(index)
+      if (rotation) path.setAttribute('transform', `rotate(${rotation} ${position.x} ${position.y})`)
+      if (Number.parseInt(style.fontWeight, 10) >= 600) { path.setAttribute('stroke', style.fill); path.setAttribute('stroke-width', String(size * 0.015)) }
+      group.append(path)
     }
     group.setAttribute('data-outlined-text', text.textContent ?? '')
     text.replaceWith(group)

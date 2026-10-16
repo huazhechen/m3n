@@ -25,11 +25,12 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     const [includeBass, setIncludeBass] = useState(true)
     const [printWidth, setPrintWidth] = useState(() => readRendererSetting('m3n:print-width', width, 320, 2560))
     const [isOpen, setIsOpen] = useState(false)
+    const [exportError, setExportError] = useState('')
     const [isExporting, setIsExporting] = useState(false)
     const [isPreviewing, setIsPreviewing] = useState(false)
     const [previewAttempt, setPreviewAttempt] = useState(0)
     const [previewError, setPreviewError] = useState('')
-    useImperativeHandle(ref, () => ({ open() { setIncludeBass(hasBassStaff); setIsOpen(true); dialogRef.current?.showModal() } }), [hasBassStaff])
+    useImperativeHandle(ref, () => ({ open() { setIncludeBass(hasBassStaff); setExportError(''); setIsOpen(true); dialogRef.current?.showModal() } }), [hasBassStaff])
     useEffect(() => {
       const preview = previewRef.current
       if (!isOpen || !preview) return
@@ -43,7 +44,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     }, [format, headerMetadata, includeBass, isOpen, mei, numberedNotation, printWidth, scoreDocument, previewAttempt])
 
     const exportScore = async () => {
-      setIsExporting(true); onError('')
+      setIsExporting(true); setExportError(''); onError('')
       const paper = document.createElement('div')
       paper.style.cssText = `position:fixed;left:-20000px;top:0;width:${printWidth}px;pointer-events:none;`
       document.body.append(paper)
@@ -77,7 +78,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           pdf.save(`${fileName}.pdf`)
         }
         dialogRef.current?.close()
-      } catch (error) { onError(error instanceof Error ? error.message : '导出失败。') }
+      } catch (error) { const message = error instanceof Error ? error.message : '导出失败。'; setExportError(message); onError(message) }
       finally { paper.remove(); setIsExporting(false) }
     }
     return <dialog ref={dialogRef} className="export-dialog" onClose={() => setIsOpen(false)}>
@@ -97,6 +98,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           </div>
           <div className="export-preview" aria-label="打印预览" aria-busy={isPreviewing}><div className="export-preview-paper"><div ref={previewRef} /></div></div>
         </div>
+        {exportError && <p className="export-error" role="alert">{exportError} 请重试下载。</p>}
         <div className="export-actions"><button type="button" onClick={() => dialogRef.current?.close()} disabled={isExporting}>取消</button><button type="submit" disabled={isExporting || isPreviewing || Boolean(previewError)}>{isExporting ? '正在生成' : '确认并下载'}</button></div>
       </form>
     </dialog>

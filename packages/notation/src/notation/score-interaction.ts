@@ -70,88 +70,88 @@ export function deriveScoreInteraction(document: ScoreDocument) {
     for (const measure of part.melody) {
       for (const event of measure.events) {
         const staffNumber = 1
-      const lyricTargetCount = event.kind === 'tuplet'
-        ? event.pitches.filter((pitch) => pitch !== '0').length
-        : 1
-      const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
-      const lyricBlocksAtEvent = lyricSyllables.filter((block) => (
-        (block.targetStart === undefined || block.targetStart <= event.sourceStart)
-        && (block.targetEnd === undefined || event.sourceStart < block.targetEnd)
-        && (!block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes?.has(pass)))
-      ))
-      const hasVisibleLyricText = (syllable: { kind: string; text: string }) => (
-        syllable.kind === 'text' && syllable.text.replaceAll('~', '').trim() !== ''
-      )
-      const textRowsAtEvent = new Set(lyricBlocksAtEvent
-        .filter((block) => block.syllables.some(hasVisibleLyricText))
-        .map((block) => block.verseIndex))
-      const activeLyricBlocks = lyricBlocksAtEvent.filter((block) => textRowsAtEvent.has(block.verseIndex))
-      const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
-      const assignedLyrics = hasLyricTarget
-        ? activeLyricBlocks.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
-          const index = lyricSyllables.indexOf(block)
-          const lyricIndex = melodyIndices[index] ?? 0
-          const lyric = block.syllables[lyricIndex]
-          const tiedTarget = targetIndex === 0 && tieEnd
-          if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []
-          melodyIndices[index] = lyricIndex + 1
-          return { ...lyric, n: block.n, verseIndex: block.verseIndex }
-        }).flat())
-        : []
-      const lyrics = hasLyricTarget
-        ? activeLyricBlocks.flatMap((block) => {
-          const matched = assignedLyrics.filter((lyric) => lyric.verseIndex === block.verseIndex)
-          if (matched.length > 0) return matched
-          return [{
-            text: '',
-            sourceStart: event.sourceStart,
-            sourceEnd: event.sourceEnd,
-            forceTiedTarget: false,
-            kind: 'placeholder' as const,
-            underlined: false,
-            n: block.n,
-            verseIndex: block.verseIndex,
-            passes: block.passes,
-            cjkSpacingCompensation: false,
-          }]
-        })
-        : []
-      if (hasLyricTarget && !measure?.ending) {
-        const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
-        const reservesForcedCjkSpace = lyrics.some((lyric) => lyric.forceTiedTarget && needsCjkSpacingCompensation(lyric.text))
-        if (reservesForcedCjkSpace) {
+        const lyricTargetCount = event.kind === 'tuplet'
+          ? event.pitches.filter((pitch) => pitch !== '0').length
+          : 1
+        const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
+        const lyricBlocksAtEvent = lyricSyllables.filter((block) => (
+          (block.targetStart === undefined || block.targetStart <= event.sourceStart)
+          && (block.targetEnd === undefined || event.sourceStart < block.targetEnd)
+          && (!block.passes || !measurePasses || [...measurePasses].some((pass) => block.passes?.has(pass)))
+        ))
+        const hasVisibleLyricText = (syllable: { kind: string; text: string }) => (
+          syllable.kind === 'text' && syllable.text.replaceAll('~', '').trim() !== ''
+        )
+        const textRowsAtEvent = new Set(lyricBlocksAtEvent
+          .filter((block) => block.syllables.some(hasVisibleLyricText))
+          .map((block) => block.verseIndex))
+        const activeLyricBlocks = lyricBlocksAtEvent.filter((block) => textRowsAtEvent.has(block.verseIndex))
+        const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
+        const assignedLyrics = hasLyricTarget
+          ? activeLyricBlocks.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
+            const index = lyricSyllables.indexOf(block)
+            const lyricIndex = melodyIndices[index] ?? 0
+            const lyric = block.syllables[lyricIndex]
+            const tiedTarget = targetIndex === 0 && tieEnd
+            if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []
+            melodyIndices[index] = lyricIndex + 1
+            return { ...lyric, n: block.n, verseIndex: block.verseIndex }
+          }).flat())
+          : []
+        const lyrics = hasLyricTarget
+          ? activeLyricBlocks.flatMap((block) => {
+            const matched = assignedLyrics.filter((lyric) => lyric.verseIndex === block.verseIndex)
+            if (matched.length > 0) return matched
+            return [{
+              text: '',
+              sourceStart: event.sourceStart,
+              sourceEnd: event.sourceEnd,
+              forceTiedTarget: false,
+              kind: 'placeholder' as const,
+              underlined: false,
+              n: block.n,
+              verseIndex: block.verseIndex,
+              passes: block.passes,
+              cjkSpacingCompensation: false,
+            }]
+          })
+          : []
+        if (hasLyricTarget && !measure?.ending) {
+          const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
+          const reservesForcedCjkSpace = lyrics.some((lyric) => lyric.forceTiedTarget && needsCjkSpacingCompensation(lyric.text))
+          if (reservesForcedCjkSpace) {
+            for (const lyric of lyrics) {
+              if (lyric.kind === 'placeholder') lyric.cjkSpacingCompensation = true
+            }
+          }
+          const partLyricRowCount = Math.max(0, ...textRowsAtEvent)
+          for (let row = 1; row <= partLyricRowCount; row += 1) {
+            if (occupiedRows.has(row)) continue
+            lyrics.push({
+              text: '',
+              sourceStart: event.sourceStart,
+              sourceEnd: event.sourceEnd,
+              forceTiedTarget: false,
+              kind: 'placeholder',
+              underlined: false,
+              n: String(row),
+              verseIndex: row,
+              passes: undefined,
+              cjkSpacingCompensation: reservesForcedCjkSpace,
+            })
+          }
+          lyrics.sort((left, right) => left.verseIndex - right.verseIndex)
+        }
+        if (measure && compactLyricRowsInEnding.has(measure)) {
+          const visualRows = new Map<number, number>()
           for (const lyric of lyrics) {
-            if (lyric.kind === 'placeholder') lyric.cjkSpacingCompensation = true
+            const row = visualRows.get(lyric.verseIndex) ?? visualRows.size + 1
+            visualRows.set(lyric.verseIndex, row)
+            lyric.n = String(row)
+            lyric.verseIndex = row
           }
         }
-        const partLyricRowCount = Math.max(0, ...textRowsAtEvent)
-        for (let row = 1; row <= partLyricRowCount; row += 1) {
-          if (occupiedRows.has(row)) continue
-          lyrics.push({
-            text: '',
-            sourceStart: event.sourceStart,
-            sourceEnd: event.sourceEnd,
-            forceTiedTarget: false,
-            kind: 'placeholder',
-            underlined: false,
-            n: String(row),
-            verseIndex: row,
-            passes: undefined,
-            cjkSpacingCompensation: reservesForcedCjkSpace,
-          })
-        }
-        lyrics.sort((left, right) => left.verseIndex - right.verseIndex)
-      }
-      if (measure && compactLyricRowsInEnding.has(measure)) {
-        const visualRows = new Map<number, number>()
-        for (const lyric of lyrics) {
-          const row = visualRows.get(lyric.verseIndex) ?? visualRows.size + 1
-          visualRows.set(lyric.verseIndex, row)
-          lyric.n = String(row)
-          lyric.verseIndex = row
-        }
-      }
-      lyricsByEvent.set(event, lyrics)
+        lyricsByEvent.set(event, lyrics)
         tieEnd = event.tie
       }
     }

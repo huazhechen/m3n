@@ -53,7 +53,7 @@ export function SourceEditor(props: SourceEditorProps) {
         return { from: word.from + 1, options: directives.map(label => ({ label, apply: `${label}}`, type: 'keyword' })) }
       }] }),
       EditorView.contentAttributes.of({ 'aria-label': props.ariaLabel, 'aria-multiline': 'true', role: 'textbox', spellcheck: 'false', autocapitalize: 'off' }),
-      readonlyConfig.of(EditorState.readOnly.of(Boolean(props.readOnly))),
+      readonlyConfig.of([EditorState.readOnly.of(Boolean(props.readOnly)), EditorView.editable.of(!props.readOnly)]),
       EditorView.updateListener.of(update => {
         if (update.docChanged) latest.current.onChange(update.state.doc.toString(), update.state.selection.main.head)
         if (update.selectionSet) latest.current.onSelect?.(update.state.selection.main.head)
@@ -83,7 +83,7 @@ export function SourceEditor(props: SourceEditorProps) {
     if (!view || view.state.doc.toString() === props.value) return
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: props.value } })
   }, [props.value])
-  useLayoutEffect(() => { viewRef.current?.dispatch({ effects: readonlyConfig.reconfigure(EditorState.readOnly.of(Boolean(props.readOnly))) }) }, [props.readOnly])
+  useLayoutEffect(() => { viewRef.current?.dispatch({ effects: readonlyConfig.reconfigure([EditorState.readOnly.of(Boolean(props.readOnly)), EditorView.editable.of(!props.readOnly)]) }) }, [props.readOnly])
   useLayoutEffect(() => {
     const view = viewRef.current
     if (!view) return
