@@ -47,9 +47,10 @@ export function compileScore(
     if (!options.autoWrap) return compileRaw(source, options);
     const natural = compileRaw(source, options, true);
     const page = normalizePageConfig(natural.lowering.page);
-    const positions = automaticBreakPositions(natural.layout, page.width - page.marginLeft - page.marginRight);
+    const preferred = natural.lowering.columns.flat().filter(node => node.addon?.preferredBreakBefore).map(node => node.t.toString());
+    const positions = automaticBreakPositions(natural.layout, page.width - page.marginLeft - page.marginRight, new Set(preferred));
     if (!positions.length) return compileRaw(source, options);
-    const inserted = insertAutomaticBreaks(source, positions);
+    const inserted = insertAutomaticBreaks(source, positions, natural.layout);
     const result = compileRaw(inserted.source, options);
     const seen = new Set<ASTNodeBase>();
     const restoreNode = (node: ASTNodeBase) => {

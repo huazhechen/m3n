@@ -260,7 +260,7 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it.each([320, 600, 800, 1000])('renders Annie’s double bar and opening repeat as one boundary at width %s', width => {
+  it.each([320, 600, 800, 1000])('keeps Annie’s opening repeat with its measure at width %s', width => {
     const document = parseM3NDocument(readFileSync(resolve(process.cwd(), '../../src/scores/annie_01.m3n'), 'utf8'))
     const melody = [...document.parts.values()][0]!.melody
     const opening = melody.findIndex(measure => measure.left === 'rptstart')
@@ -269,10 +269,12 @@ describe('jpFun numbered notation adapter', () => {
     for (const paged of [false, true]) {
       const result = geometry(document, { width, paged })
       const bars = result.layout.objects.filter(node => (node.ast as { callName?: string }).callName === 'bar' && node.t.equals(time))
-      expect(bars).toHaveLength(1)
-      expect((bars[0]!.ast as { type?: number }).type).toBe(3)
       const next = result.layout.objects.find(node => node.t.equals(time) && !node.T.isZero())!
-      expect(bars[0]!.layoutLine).toBe(next.layoutLine)
+      const opening = bars.filter(bar => (bar.ast as { type?: number }).type === 3)
+      expect(opening).toHaveLength(1)
+      expect(opening[0]!.layoutLine).toBe(next.layoutLine)
+      const previous = result.layout.objects.filter(node => node.t.compare(time) < 0 && !node.T.isZero()).at(-1)!
+      expect(bars).toHaveLength(previous.layoutLine === next.layoutLine ? 1 : 2)
     }
   })
 
@@ -301,8 +303,8 @@ describe('jpFun numbered notation adapter', () => {
       let time = 0
       for (const measure of melody) {
         if (measure.left === 'rptstart') {
-          const repeat = result.layout.objects.find(node => node.t.equals(time) && (node.ast as { type?: number }).type === 3)
           const first = result.layout.objects.find(node => node.t.equals(time) && !node.T.isZero())!
+          const repeat = result.layout.objects.find(node => node.t.equals(time) && [3, 5].includes((node.ast as { type?: number }).type ?? -1))
           expect(repeat, `missing opening repeat at beat ${time}`).toBeDefined()
           expect(repeat!.layoutLine).toBe(first.layoutLine)
         }
@@ -312,10 +314,32 @@ describe('jpFun numbered notation adapter', () => {
       const starts = notes.filter((node, index) => index === 0 || node.layoutLine !== notes[index - 1]!.layoutLine)
       for (const start of starts) expect(start.t.denominator, `split beat at ${start.t}`).toBe(1)
       for (const boundary of [4, 44, 84]) {
+        const previous = notes.filter(node => node.t.compare(boundary) < 0).at(-1)!
+        const next = notes.find(node => node.t.equals(boundary))!
         const closing = result.layout.objects.find(node => node.t.equals(boundary) && (node.ast as { type?: number }).type === 0)
-        expect(closing, `missing preceding bar at beat ${boundary}`).toBeDefined()
+        if (previous.layoutLine !== next.layoutLine) expect(closing, `missing preceding bar at beat ${boundary}`).toBeDefined()
+        else expect(closing).toBeUndefined()
       }
     }
+  })
+
+  it('fits Mario’s introduction and complete A section on a wide first system', () => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/super_mario_01.m3n'), 'utf8')
+    const { root } = render(source, { width: 1000 })
+    const measures = [...root.querySelector('g.system')!.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure'))
+    expect([...new Set(measures)]).toEqual(['m3n-measure-1-1', 'm3n-measure-1-2', 'm3n-measure-1-3'])
+    for (const label of ['P', 'A']) expect(root.querySelector('g.system')!.textContent).toContain(label)
+  })
+
+  it('allows named sections to share a system in both staves while honoring an explicit break', () => {
+    const source = '{4/4}\n===甲\nN: 1 2 3 4 |\nB: 1d^ 5d^ |\n===乙\nN: 5 6 7 1e |\nB: 4d^ 5d^ |\n===丙\nN: {br} 4 3 2 1 |||\nB: 5d^ 1d^ |||'
+    const { layout } = geometry(parseM3NDocument(source), { width: 1000, paged: false })
+    const before = layout.objects.filter(node => !node.T.isZero() && node.t.compare(8) < 0)
+    const after = layout.objects.filter(node => !node.T.isZero() && node.t.compare(8) >= 0)
+    expect(new Set(before.map(node => node.layoutLine)).size).toBe(1)
+    expect(new Set(before.map(node => node.track)).size).toBe(2)
+    expect(new Set(after.map(node => node.layoutLine)).size).toBe(1)
+    expect(after[0]!.layoutLine).toBe(before[0]!.layoutLine + 1)
   })
 
   it('keeps first-verse L: after explicit numbered lyric rows', () => {

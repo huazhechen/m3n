@@ -3,6 +3,8 @@ import { strict as assert } from 'node:assert';
 import { compileScore } from '../src/pipeline.js';
 import { getLayoutBounds } from '../src/layout/engine.js';
 import { automaticBreakPositions } from '../src/layout/wrapping.js';
+import { compilePlayback } from '../src/playback/compile.js';
+import { playedNotes } from './helpers.js';
 
 test('automatic wrapping fits long scores and keeps original event source spans', () => {
     const source = '@page(width=320px)\n' + Array(32).fill('1 2 3 4 |').join(' ');
@@ -104,5 +106,51 @@ test('inserts a break before a complete tuplet instead of inside its first membe
     for (const attachment of result.lowering.attachments) {
         if (!attachment.endPoints || attachment.endPoints.length !== 3) continue;
         assert.equal(new Set(attachment.endPoints.map(node => node.layoutLine)).size, 1);
+    }
+});
+
+test('soft breaks allow a short introduction to share the following section', () => {
+    const source = '@page(width=1000px) 1 2 3 4 | @br(soft=true) 5 6 7 1 |';
+    for (const autoWrap of [false, true]) {
+        const result = compileScore(source, { autoWrap });
+        assert.equal(result.layout.lineCount, 1);
+        assert.equal(result.lowering.duration.toNumber(), 8);
+    }
+    assert.equal(compileScore(source.replace('@br(soft=true)', '@br()'), { autoWrap: true }).layout.lineCount, 2);
+});
+
+test('prefers a section boundary over a similarly balanced ordinary boundary', () => {
+    const source = '@set(fontsize=22) @page(width=550px,left=32px,right=32px) '
+        + '1 2 3 4 | 1 2 3 4 | @br(soft=true) 1 2 3 4 | 1 2 3 4 | 1 2 3 4 |';
+    const result = compileScore(source, { autoWrap: true });
+    const next = result.layout.objects.find(node => node.layoutLine === 1 && !node.T.isZero())!;
+    assert.equal(result.layout.lineCount, 2);
+    assert.equal(next.t.toNumber(), 8);
+    const plain = compileScore(source.replace('@br(soft=true)', ''), { autoWrap: true });
+    assert.equal(plain.layout.objects.find(node => node.layoutLine === 1 && !node.T.isZero())!.t.toNumber(), 12);
+});
+
+test('splits shared repeat boundaries across systems without changing playback or source spans', () => {
+    const source = '@set(fontsize=22) @page(width=240px,left=20px,right=20px) |: 1 2 3 4:|: @br(soft=true) 5 6 7 1 :|';
+    const plain = compileScore(source);
+    const result = compileScore(source, { autoWrap: true });
+    const bars = result.layout.objects.filter(node => node.t.equals(4) && (node.ast as any).callName === 'bar');
+    assert.deepEqual(bars.map(node => [(node.ast as any).type, node.layoutLine]), [[4, 0], [3, 1]]);
+    assert.equal(source.slice(bars[0].ast.sourceSpan.start, bars[0].ast.sourceSpan.end), ':|:');
+    const played = (result: typeof plain) => playedNotes(compilePlayback(result.lowering)).map(note => [note.midi, note.start, note.duration]);
+    assert.deepEqual(played(result), played(plain));
+    for (const node of result.layout.objects.filter(node => !node.T.isZero())) {
+        assert.match(source.slice(node.ast.sourceSpan.start, node.ast.sourceSpan.end), /^[1-7]$/);
+    }
+});
+
+test('keeps soft section breaks synchronized across parallel voices', () => {
+    const music = '1 2 3 4 | 1 2 3 4 | @br(soft=true) 5 6 7 1 | 5 6 7 1 | 5 6 7 1 |';
+    const result = compileScore(`@set(fontsize=22) @page(width=550px,left=32px,right=32px) @voices(@voice({${music}}),@voice({${music}}))`, { autoWrap: true });
+    assert.equal(result.layout.lineCount, 2);
+    for (const node of result.layout.objects.filter(node => !node.T.isZero())) {
+        const simultaneous = result.layout.objects.filter(other => !other.T.isZero() && other.t.equals(node.t));
+        assert.equal(simultaneous.length, 2);
+        assert.equal(new Set(simultaneous.map(other => other.layoutLine)).size, 1);
     }
 });

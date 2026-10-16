@@ -4,11 +4,18 @@ import { ASTBraceNode, ASTFunctionNode, type ASTNodeBase } from '../functions/AS
 import type { SourceSpan } from '../parser/types.js';
 import type { DocumentLayoutResult } from './engine.js';
 
-const isOpeningRepeat = (node: VisualTemporalNode) => node.ast instanceof ASTFunctionNode
-    && node.ast.callName === 'bar' && (node.ast as ASTFunctionNode & { type?: number }).type === 3;
+function barAst(node: VisualTemporalNode) {
+    let ast: ASTNodeBase | undefined = node.ast;
+    while (ast) {
+        if (ast instanceof ASTFunctionNode && ast.callName === 'bar') return ast as ASTFunctionNode & { type: number; size: number };
+        ast = ast.children?.[0];
+    }
+    return undefined;
+}
+const isOpeningRepeat = (node: VisualTemporalNode) => barAst(node)?.type === 3;
 
 /** Source positions for explicit breaks; all parallel members at a boundary share one break. */
-export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number): number[] {
+export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number, preferredTimes: ReadonlySet<string> = new Set()): number[] {
     const insertions = new Set<number>();
     const leftOf = (node: VisualTemporalNode) => layout.horizontalBounds?.get(node)?.x ?? node.box.x;
     const rightOf = (node: VisualTemporalNode) => { const box = layout.horizontalBounds?.get(node) ?? node.box; return box.x + box.w; };
@@ -93,7 +100,11 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
                 const width = measures[end - 1].end - measures[start].start;
                 if (width > contentWidth * 0.94 && start < end - 1) break;
                 const slack = Math.max(0, contentWidth * 0.94 - width);
-                const cost = best[start] + slack * slack + Math.max(0, width - contentWidth) ** 2 * 100;
+                const first = measures[start].nodes.find(node => node.T.compare(0) > 0)!;
+                // Prefer section boundaries when their surrounding lines remain
+                // reasonably full; a short introduction can share the next section.
+                const preference = start > 0 && preferredTimes.size && !preferredTimes.has(first.t.toString()) ? contentWidth ** 2 * 0.25 : 0;
+                const cost = best[start] + slack * slack + preference + Math.max(0, width - contentWidth) ** 2 * 100;
                 if (cost < best[end]) { best[end] = cost; previous[end] = start; }
             }
         }
@@ -121,17 +132,51 @@ function breakPosition(node: ASTNodeBase): number {
     return target.sourceSpan.start;
 }
 
-export function insertAutomaticBreaks(source: string, positions: readonly number[]) {
-    const command = ' @br() ';
+export function insertAutomaticBreaks(source: string, positions: readonly number[], layout?: DocumentLayoutResult) {
+    const edits: { start: number; end: number; text: string }[] = [];
+    const replace = (span: SourceSpan, text: string) => {
+        const original = source.slice(span.start, span.end);
+        let left = 0, right = 0;
+        while (left < Math.min(original.length, text.length) && original[left] === text[left]) left++;
+        while (right < Math.min(original.length, text.length) - left && original.at(-right - 1) === text.at(-right - 1)) right++;
+        // Retain unchanged arguments so decorations keep their precise source ranges.
+        edits.push({ start: span.start + left, end: span.end - right, text: text.slice(left, text.length - right) });
+    };
+    for (const at of positions) {
+        let command = ' @br() ';
+        const following = layout?.objects.find(node => breakPosition(node.ast) === at && (node.mergeKey !== ANCHOR_KEY || isOpeningRepeat(node)));
+        if (following) {
+            const bars = layout!.objects.filter(node => node.track === following.track && node.t.equals(following.t) && node.mergeKey === ANCHOR_KEY);
+            const combined = bars.map(barAst).find(ast => ast?.type === 5);
+            if (combined) {
+                // A shared end/start repeat becomes two marks across systems.
+                replace(combined.sourceSpan, combined.toString(source).replace(/^@bar\(5(?=[,)])/, '@bar(4'));
+                command += `@bar(3,${combined.size}px) `;
+            } else if (isOpeningRepeat(following) && !bars.some(node => node !== following && !isOpeningRepeat(node))) {
+                // A new system still needs a closing bar on its preceding line.
+                command = ` @bar(0,${barAst(following)!.size}px)${command}`;
+            }
+        }
+        edits.push({ start: at, end: at, text: command });
+    }
+    edits.sort((a, b) => a.start - b.start);
+    const ranges: { start: number; end: number; originalStart: number; originalEnd: number }[] = [];
     let output = '', previous = 0;
-    for (const at of positions) { output += source.slice(previous, at) + command; previous = at; }
+    for (const edit of edits) {
+        output += source.slice(previous, edit.start);
+        const start = output.length;
+        output += edit.text;
+        ranges.push({ start, end: output.length, originalStart: edit.start, originalEnd: edit.end });
+        previous = edit.end;
+    }
     output += source.slice(previous);
-    const originalOffset = (offset: number) => {
+    const originalOffset = (offset: number, end = false) => {
         let shift = 0;
-        for (const at of positions) {
-            if (offset < at + shift) break;
-            if (offset < at + shift + command.length) return at;
-            shift += command.length;
+        for (const range of ranges) {
+            if (offset < range.start) break;
+            if (offset === range.start) return range.originalStart;
+            if (offset < range.end) return end ? range.originalEnd : range.originalStart;
+            shift += range.end - range.start - (range.originalEnd - range.originalStart);
         }
         return offset - shift;
     };
@@ -139,6 +184,6 @@ export function insertAutomaticBreaks(source: string, positions: readonly number
     return { source: output, restore(span: SourceSpan) {
         if (seen.has(span)) return;
         seen.add(span);
-        span.start = originalOffset(span.start); span.end = originalOffset(span.end);
+        span.start = originalOffset(span.start); span.end = originalOffset(span.end, true);
     } };
 }

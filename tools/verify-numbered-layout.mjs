@@ -58,6 +58,11 @@ try {
       document.querySelector('main').innerHTML = pages.join('')
       await document.fonts.ready
       checks++
+      if (file === 'super_mario_01.m3n' && width >= 800) {
+        const first = document.querySelector('g.system')
+        const measures = [...new Set([...first.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure')))]
+        if (measures.join(',') !== 'm3n-measure-1-1,m3n-measure-1-2,m3n-measure-1-3') issues.push({ file, width, paged, shortIntroduction: measures })
+      }
       const outside = [], overlap = [], noteOverlap = []
       for (const svg of document.querySelectorAll('svg')) {
         const view = svg.viewBox.baseVal

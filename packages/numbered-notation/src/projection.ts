@@ -71,9 +71,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       while (visibleMeasures.length && !visibleMeasures.at(-1)?.events.length && !visibleMeasures.at(-1)?.multiRest) visibleMeasures.pop()
       const breaksBefore = (index: number) => index > 0 && Boolean(
         visibleMeasures[index]?.breakBefore || visibleMeasures[index - 1]?.breakAfter
-        || visibleMeasures[index]?.events.some(event => event.sectionLabel)
-        || melody[index]?.breakBefore || melody[index - 1]?.breakAfter
-        || melody[index]?.events.some(event => event.sectionLabel),
+        || melody[index]?.breakBefore || melody[index - 1]?.breakAfter,
       )
       visibleMeasures.forEach((measure, measureIndex) => {
         const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
@@ -82,6 +80,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         // B: bars are alignment syntax; structural repetition belongs to N:.
         const structure = staff === 'bass' ? melodyMeasure ?? measure : measure
         if (breaksBefore(measureIndex)) pieces.push('@br()')
+        else if (measureIndex && (measure.events.some(event => event.sectionLabel) || melodyMeasure?.events.some(event => event.sectionLabel))) pieces.push('@br(soft=true)')
         if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) pieces.push('@bar(3)')
         if (measure.multiRest) {
           const item = bind(`@rest(${measure.multiRest})`, undefined, measureId, 0)

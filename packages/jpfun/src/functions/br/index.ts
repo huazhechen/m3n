@@ -1,5 +1,6 @@
 import { ASTNodeBase, FunctionArgs, SourceSpan, ASTFunctionNode, ASTFunctionClass } from "../ASTtypes.js";
 import { ParserContext, skipSpaces, skipSpacesBack } from "../../parser/parserContext.js";
+// M3N addition: optional preferred breaks for automatic wrapping.
 import { TemporalNodeBase } from "../temporal.js";
 import type { LoweringResult } from "../../lowering/types.js";
 import { GrammarCallNodeTyped } from "../../parser/grammarType.js";
@@ -17,6 +18,8 @@ class BrFunction extends ASTFunctionNode {
 
 \`@br()\` 换到下一行，\`@br(2)\` 空出一行再继续
 
+\`@br(soft=true)\` 为自动分行提供优先边界；空间充足时可与前面的内容同行。
+
 **简写**：仅在顶层，连续至少两个换行表示换行`,
         allowExtraArgs: false,
         args: [
@@ -25,6 +28,12 @@ class BrFunction extends ASTFunctionNode {
                 description: "后续内容偏移的谱面行数，2 表示空出一行再继续",
                 type: "number" as const,
                 default: 1,
+            },
+            {
+                name: "soft",
+                description: "仅作为自动分行的优先边界，不强制换行",
+                type: "boolean" as const,
+                default: false,
             },
         ],
     };
@@ -47,12 +56,13 @@ class BrFunction extends ASTFunctionNode {
     }
 
     readonly offset: number;
+    readonly soft: boolean;
 
     override loweringEnter() {
         const br = new TemporalNodeBase();
         br.ast = this;
         br.mergeKey = -1;
-        br.addon = { breakBefore: this.offset };
+        br.addon = this.soft ? { preferredBreakBefore: true } : { breakBefore: this.offset };
         return [br];
     }
 
@@ -82,7 +92,8 @@ class BrFunction extends ASTFunctionNode {
 
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
-        const [offset] = this.getArgValue(args, ctx) as [number];
+        const [offset, soft] = this.getArgValue(args, ctx) as [number, boolean];
+        this.soft = soft;
         this.offset = Number.isFinite(offset) ? Math.max(1, Math.floor(offset)) : 1;
         if (this.offset !== offset) {
             ctx.diagnostics.push(new WarningDiagnostic(
@@ -93,7 +104,7 @@ class BrFunction extends ASTFunctionNode {
         }
     }
 
-    override toString() { return `@br(${this.offset})`; }
+    override toString() { return `@br(${this.offset}${this.soft ? ',soft=true' : ''})`; }
 }
 
 export const BrNode: ASTFunctionClass = BrFunction;
