@@ -2,7 +2,7 @@
 {composer=DJ OKAWARI}
 {key=C} {4/4} {128qpm}
 ===Intro
-N: ||: (3e) {text=重复7次} (2e 6e) (2e 3e) (2e 6) (2e) :||
+N: ||: (3e) (2e 6e) (2e 3e) (2e 6) (2e) :||{x7}
 ---
 N: 3ee^^ |
 ===A
