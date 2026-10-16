@@ -8,7 +8,7 @@
 
 - 先按歌名、演唱者检索 [SongBPM](https://songbpm.com/)，排除同名曲、DJ、改速、现场及不同演唱者。表内链接指向实际检索到的曲目；其 BPM 是数据库记录，可能有半拍、倍拍或自动测速误差。
 - 将资料速度与本谱的歌词密度、句长、音符时值一起判断。相同声音写成八分音符或十六分音符时，对应的四分音符速度会不同，不能只复制数据库数字。半速换算均在逐曲说明中列出。
-- M3N 的 `qpm` 始终是四分音符/分钟。6/8、9/8 的附点四分音符拍速为 `qpm÷1.5`。数据库数值究竟对应八分音符、四分音符还是附点四分音符，须单独确认，不对所有复拍子统一乘除。
+- M3N 的 `qpm` 始终是四分音符/分钟。谱面统一以拍号分母对应的音符标速，不加附点，显示数值为 `qpm × 分母 ÷ 4`；6/8、9/8、12/8 均显示八分音符速度 `qpm × 2`。数据库数值究竟对应八分音符、四分音符还是附点四分音符，须单独确认，不对所有复拍子统一乘除。
 - 用 [LRCLIB](https://lrclib.net/) 的同步歌词交叉核对部分容易混淆的拍值。歌词时间戳只作长乐句的近似参照，不当作逐音符的精确演奏时间。
 - 检索不到相同版本，或自动测速和谱中拍值不能可靠对应时，明确保留现有编配建议，不以无关作品代替证据。
 
@@ -16,7 +16,7 @@
 
 | 曲目 | 时间戳与谱面对应 | 结果 |
 | --- | --- | --- |
-| 只要平凡 | [张杰、张碧晨](https://lrclib.net/api/get/19123959)：04.76“也许很远或是昨天”到 21.25“放过对错才知答案”，本谱相隔 8 小节、24 个四分音符 | `24×60÷16.49≈87.3 qpm`；采用 87，显示附点四分音符 = 58 |
+| 只要平凡 | [张杰、张碧晨](https://lrclib.net/api/get/19123959)：04.76“也许很远或是昨天”到 21.25“放过对错才知答案”，本谱相隔 8 小节、24 个四分音符 | `24×60÷16.49≈87.3 qpm`；采用 87，显示八分音符 = 174 |
 | 贝加尔湖畔 | [李健](https://lrclib.net/api/get/29460955)：56.79“那里春风沉醉”到 64.75“月光把爱恋”，本谱相隔 4 小节、16 个四分音符 | `16×60÷7.96≈120.6 qpm`；采用 120，不能误取半速 60 |
 | 相思 | [毛阿敏](https://lrclib.net/api/get/32417738)：18.37“红豆生南国”到 32.73“醉卧不夜城”，本谱相隔 8 小节、24 个四分音符 | `24×60÷14.36≈100.3 qpm`；采用 100 |
 | 如愿 | [王菲](https://lrclib.net/api/get/34493274)：31.40“你是遥遥的路”到 45.69“你是明月清风”，本谱两个“你”相隔 16 个四分音符 | `16×60÷14.29≈67.2 qpm`；采用 67。该歌词条目的时长字段与实际歌词时间矛盾，因此只使用歌词中的时间戳 |
@@ -25,7 +25,7 @@
 
 ## 已调整
 
-表内“速度”均为源码的四分音符速度 `qpm`，不一定等于页面按实际拍值显示的每分钟拍数。
+表内“速度”均为源码的四分音符速度 `qpm`，不一定等于页面按拍号分母音符显示的每分钟拍数。
 
 | 曲谱 | 拍号 | 原速度 → 建议速度 | 网络参照 | 判断 |
 | --- | --- | --- | --- | --- |
@@ -66,7 +66,7 @@
 | [铁血丹心](../src/scores/tie_xue_dan_xin_01.m3n) | 4/4 | 108 → **88** | [Roman Tam · 鐵血丹心 (無線電視劇[射鵰英雄傳之鐵血丹心]主題曲)（176 BPM）](https://songbpm.com/@roman-tam/tie-xie-dan-xin-wu-xian-dian-shi-ju-she-diao-ying-xiong-chuan-zhi-tie-xie-dan-xin-zhu-ti-qu---1998-digital-remaster) | 罗文原版记录 176，当前谱长音与八分音符歌词对应半速 88。 |
 | [听海](../src/scores/ting_hai_01.m3n) | 4/4 | 68 → **62** | [A-Mei Chang · 聽海（124 BPM）](https://songbpm.com/@a-mei-chang/6ig95rw3-wrljo) | 张惠妹原唱多条记录约 124，当前谱按半速 62 对应。 |
 | [童话镇](../src/scores/tong_hua_zhen_01.m3n) | 4/4 | 78 → **70** | [陈一发儿 · 童话镇（140 BPM）](https://songbpm.com/@6zmi5lia5yr5ys/56ul6kd6zwh-nxigk) | 陈一发儿原版记录 140，当前谱取半速 70；不依据 0.8X 改速条目。 |
-| [同桌的你](../src/scores/tong_zhuo_de_ni_01.m3n) | 6/8 | 100 → **96** | [Lao Lang · 同桌的你（95年紅星版）（95 BPM）](https://songbpm.com/@lao-lang/95-splw8) | 老狼原版资料约 95–98，当前 6/8 谱采用四分音符 96（附点四分音符 64），与歌词句长相符。 |
+| [同桌的你](../src/scores/tong_zhuo_de_ni_01.m3n) | 6/8 | 100 → **96** | [Lao Lang · 同桌的你（95年紅星版）（95 BPM）](https://songbpm.com/@lao-lang/95-splw8) | 老狼原版资料约 95–98，当前 6/8 谱采用四分音符 96（谱面显示八分音符 192），与歌词句长相符。 |
 | [蜗牛与黄鹂鸟](../src/scores/wo_niu_yu_huang_li_niao_01.m3n) | 2/4 | 108 → **75** | [YinShia · 蝸牛與黃鸝鳥（75 BPM）](https://songbpm.com/@yinshia/gua-niu-yu-huang-li-niao-fxY7-TITOl) | 银霞原唱记录存在 149–150 与 75 的倍拍关系；当前十六分音符谱采用 75。 |
 | [我要你](../src/scores/wo_yao_ni_01.m3n) | 4/4 | 72 → **66** | [任素汐 · 我要你（131 BPM）](https://songbpm.com/@ren-su-xi/wo-yao-ni-eBWm51jQwX) | 任素汐原唱约 131，当前谱取半速约 65.5，取整数 66；不使用现场 128。 |
 | [我只在乎你](../src/scores/wo_zhi_zai_hu_ni_01.m3n) | 4/4 | 72 → **70** | [Teresa Teng · 我只在乎你（140 BPM）](https://songbpm.com/@teresa-teng/wo-zhi-zai-hu-ni) | 邓丽君原唱约 140；当前密集十六分音符歌词对应半速 70。 |
@@ -79,7 +79,7 @@
 | [月亮代表我的心](../src/scores/yue_liang_dai_biao_wo_de_xin_01.m3n) | 4/4 | 70 → **78** | [Teresa Teng · 月亮代表我的心（78 BPM）](https://songbpm.com/@teresa-teng/yue-liang-dai-biao-wo-de-xin-e33cc139-7bc9-4b87-8359-311a39cf7131) | 邓丽君原唱多条记录为 78；排除陈佳等翻唱速度。 |
 | [云宫迅音](../src/scores/yun_gong_xun_yin_01.m3n) | 4/4 | 140 → **124** | [許鏡清 · 雲宮迅音 (電視劇《西遊記》片頭曲)（124 BPM）](https://songbpm.com/@xu-jing-qing/yun-gong-xun-yin-dian-shi-ju-xi-you-ji-pian-tou-qu-cgrUuZ2W17) | 选择许镜清《西游记》原声条目的 124，排除 DJ 燃版 128 等改编。 |
 | [直到世界的尽头](../src/scores/zhi_dao_shi_jie_de_jin_tou_01.m3n) | 4/4 | 140 → **104** | [歌っちゃ王 · 世界が終るまでは・・・(オリジナルアーティスト:WANDS)[ガイドメロディ無しカラオケ]（104 BPM）](https://songbpm.com/@getutiya-wang/shi-jiega-zhongrumadeha-orizinaruateisuto-wands-gaidomerodei-wusikaraoke) | WANDS 原曲卡拉 OK 与乐队重录版本均约 104，当前 4/4 谱采用 104。 |
-| [只要平凡](../src/scores/zhi_yao_ping_fan_01.m3n) | 6/8 | 76 → **87** | [张碧晨 · 只要平凡 - 电影《我不是药神》主题曲（174 BPM）](https://songbpm.com/@5byg56kn5pmo/5yq6kab5bmz5yehic0g55s15b2x44ck5oir5lin5piv6i2v56we44cl5li76aky5puy-x4hir) | 原唱记录 174 对应八分音符脉冲，当前 6/8 谱取四分音符 87、附点四分音符 58；以歌词时间戳交叉核对。 |
+| [只要平凡](../src/scores/zhi_yao_ping_fan_01.m3n) | 6/8 | 76 → **87** | [张碧晨 · 只要平凡 - 电影《我不是药神》主题曲（174 BPM）](https://songbpm.com/@5byg56kn5pmo/5yq6kab5bmz5yehic0g55s15b2x44ck5oir5lin5piv6i2v56we44cl5li76aky5puy-x4hir) | 原唱记录 174 对应八分音符脉冲，当前 6/8 谱取四分音符 87，谱面显示八分音符 174；以歌词时间戳交叉核对。 |
 
 ## 已核查并保留
 
@@ -92,7 +92,7 @@
 | [半音阶口琴基本功](../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n) | 4/4 | 60 | 未确认同版本，或按练习用途判断 | 基本功练习起步速度，按训练用途保留，不以商业录音替换。 |
 | [啤酒桶波尔卡](../src/scores/beer_barrel_polka_01.m3n) | 2/4 | 132 | [Yvette Horner · Beer Barrel Polka（132 BPM）](https://songbpm.com/@yvette-horner/beer-barrel-polka--HUjkRgmi4) | Yvette Horner 版本 132，现有波尔卡速度合适。 |
 | [哆啦A梦](../src/scores/doraemon_01.m3n) | 4/4 | 120 | [カラオケまねきねこ · Doraemon no Uta - Karaoke Ōsugi Kumiko（123 BPM）](https://songbpm.com/@44kr44op44kq44kx44g44gt44gn44gt44gt/doraemon-no-uta-karaoke-osugi-kumiko-wap33) | 大杉久美子版卡拉 OK 约 123；保留接近原曲、便于演奏的 120。 |
-| [光阴的故事](../src/scores/guang_yin_de_gu_shi_01.m3n) | 6/8 | 100 | [羅大佑 · 光陰的故事（210 BPM）](https://songbpm.com/@luo-da-you/guang-yin-de-gu-shi-3Oozx4kX6E) | 罗大佑不同版本及自动测速（210、69）存在拍值和编曲差异；现按 6/8 记谱，保留四分音符 100 qpm，显示附点四分音符约 66.67，不机械照抄数据库数值。 |
+| [光阴的故事](../src/scores/guang_yin_de_gu_shi_01.m3n) | 6/8 | 100 | [羅大佑 · 光陰的故事（210 BPM）](https://songbpm.com/@luo-da-you/guang-yin-de-gu-shi-3Oozx4kX6E) | 罗大佑不同版本及自动测速（210、69）存在拍值和编曲差异；现按 6/8 记谱，保留四分音符 100 qpm，显示八分音符 200，不机械照抄数据库数值。 |
 | [红河谷](../src/scores/hong_he_gu_01.m3n) | 4/4 | 92 | [Liu Fang · The Romance Of The Red River Valley（86 BPM）](https://songbpm.com/@liu-fang/the-romance-of-the-red-river-valley) | 传统民歌录音版本不同（本次检索 86、99 等）；保留适合当前编配的中慢速 92。 |
 | [红莓花儿开](../src/scores/hong_mei_hua_er_kai_01.m3n) | 2/4 | 96 | [Ирина Шведова · Ой цветёт калина（141 BPM）](https://songbpm.com/@irina-shvedova/oy-cvetyot-kalina-go7yAOQX_g) | 俄语版本测速 77–141，未确定与本谱相同的编配；保留已有歌唱性中速。 |
 | [欢乐颂](../src/scores/huan_le_song_01.m3n) | 4/4 | 120 | [Ludwig van Beethoven · Ode to Joy（109 BPM）](https://songbpm.com/@ludwig-van-beethoven/ode-to-joy-bXbrk8pUXH) | 本谱为《第九交响曲》合唱主题的教学选段，保留明朗的 120，不套用完整第四乐章的平均测速。 |
@@ -113,7 +113,7 @@
 | [温柔的倾诉](../src/scores/wen_rou_de_qing_su_01.m3n) | 4/4 | 68 | [Nino Rota · Love Theme From "The Godfather"（69 BPM）](https://songbpm.com/@nino-rota/love-theme-from-the-godfather) | Nino Rota 主题录音约 69，保留接近的 68，避免混用快版或全组曲平均速度。 |
 | [我的祖国](../src/scores/wo_de_zu_guo_01.m3n) | 4/4 | 76 | [郭兰英 · 我的祖国（173 BPM）](https://songbpm.com/@guo-lan-ying/5oir55qe56ww5zu9-oxa98) | 郭兰英同名录音的自动测速分歧较大（93、108、173），原曲也有段落伸缩；保留抒情主题编配的 76。 |
 | [我和你](../src/scores/wo_he_ni_01.m3n) | 4/4 | 60 | 未确认同版本，或按练习用途判断 | 仅确认到刘欢现场版本而未确认奥运会原版测速，保留原谱舒缓的 60。 |
-| [我和我的祖国](../src/scores/wo_he_wo_de_zu_guo_01.m3n) | 6/8 | 80 | [李谷一 · 我和我的祖国（162 BPM）](https://songbpm.com/@5p2o6lc35lia/5oir5zkm5oir55qe56ww5zu9-qzk2s) | 李谷一版本记录 162 可按八分音符脉冲理解，当前 6/8、9/8 谱四分音符约 81；保留接近的 80，不把 162 直接写成 qpm。 |
+| [我和我的祖国](../src/scores/wo_he_wo_de_zu_guo_01.m3n) | 6/8 | 80 | [李谷一 · 我和我的祖国（162 BPM）](https://songbpm.com/@5p2o6lc35lia/5oir5zkm5oir55qe56ww5zu9-qzk2s) | 李谷一版本记录 162 可按八分音符脉冲理解，当前 6/8、9/8 谱四分音符约 81；保留接近的 80，谱面显示八分音符 160，不把 162 直接写成 qpm。 |
 | [喜洋洋](../src/scores/xi_yang_yang_01.m3n) | 2/4 | 120 | [刘明源 · 喜洋洋（185 BPM）](https://songbpm.com/@liu-ming-yuan/xi-yang-yang-2frABcPKUX) | 民族器乐录音自动测速约 184–185，但本谱含密集十六分音符且结构不同；保留 120 的演奏建议，未据平均测速强行改成 185。 |
 | [下雨的时候](../src/scores/xia_yu_de_shi_hou_01.m3n) | 4/4 | 80 | 未确认同版本，或按练习用途判断 | 原谱未署名，检索到的小提琴及同名流行歌曲无法确认为同一编配；保留 80。 |
 | [小红帽](../src/scores/xiao_hong_mao_01.m3n) | 2/4 | 108 | [呂佩玉 · 小红帽 - 童謠：妹妹揹著洋娃娃（109 BPM）](https://songbpm.com/@lu-pei-yu/5bcp57qi5bi9ic0g56ul6kygouwmuewmueapueirla0iwogwogw-joxip) | 童谣版本约 109–120，保留接近、便于演奏的 108。 |

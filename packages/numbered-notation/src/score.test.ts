@@ -42,12 +42,31 @@ describe('jpFun numbered notation adapter', () => {
     for (const symbol of ['Imaj7', 'Dm7', 'G/B', 'N.C.']) expect(labels).toContain(symbol)
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
   })
-  it('engraves compound tempo with a dotted quarter while retaining QPM in the domain', () => {
-    const { root, document } = render('{6/8}{120qpm}\nN: (1 2 3) (4 5 6) |||')
+  it.each([
+    ['6/8', '(1 2 3) (4 5 6)', 8, 240],
+    ['9/8', '(1 2 3) (4 5 6) (7 1e 2e)', 8, 240],
+    ['12/8', '(1 2 3) (4 5 6) (7 1e 2e) (3e 2e 1e)', 8, 240],
+    ['6/16', '((1 2 3)) ((4 5 6))', 16, 480],
+    ['2/2', '1^ 2^', 2, 60],
+    ['3/4', '1 2 3', 4, 120],
+  ])('engraves %s tempo with the denominator note while retaining QPM', (meter, notes, unit, bpm) => {
+    const { root, document } = render(`{${meter}}{120qpm}\nN: ${notes} |||`)
     expect(document.tempo).toBe(120)
-    expect([...root.querySelectorAll('text')].some(text => text.textContent === '= 80')).toBe(true)
+    expect([...root.querySelectorAll('text')].some(text => text.textContent === `= ${bpm}`)).toBe(true)
     const projected = projectNumberedScore(document, options)
-    expect(projected.source).toContain('@tempo(120,size=16px,font="M3N Numbers",unit=4,dots=1)')
+    expect(projected.source).toContain(`@tempo(120,size=16px,font="M3N Numbers",unit=${unit},dots=0)`)
+  })
+  it('uses the active denominator for mid-score tempo changes', () => {
+    const { root, document } = render('{4/4}{120qpm}\nN: 1 2 3 4 | {6/8}{90qpm}(1 2 3) (4 5 6) |||')
+    expect(root.body.textContent).toContain('= 180')
+    expect(projectNumberedScore(document, options).source).toContain('@tempo(90,size=16px,font="M3N Numbers",unit=8,dots=0)')
+  })
+  it('shows an eighth-note tempo of 160 for Wo He Wo De Zu Guo without changing playback', () => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/wo_he_wo_de_zu_guo_01.m3n'), 'utf8')
+    const { root, document } = render(source)
+    expect(document.tempo).toBe(80)
+    expect(root.body.textContent).toContain('= 160')
+    expect(projectNumberedScore(document, options).source).toContain('@tempo(80,size=16px,font="M3N Numbers",unit=8,dots=0)')
   })
   it('uses the vendored engine and embedded font with stable interactive measure structure', () => {
     const { pages, root } = render('{title=测试曲} {key=D} {3/4} {90qpm}\nN: ||: 1 2 3 | 4 5 6 :|||\nL: 春天来了花开')
