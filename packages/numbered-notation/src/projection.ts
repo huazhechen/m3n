@@ -89,6 +89,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         if (breaksBefore(measureIndex)) pieces.push('@br()')
         else if (measureIndex && (measure.events.some(event => event.sectionLabel) || melodyMeasure?.events.some(event => event.sectionLabel))) pieces.push('@br(soft=true)')
         if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) pieces.push('@bar(3)')
+        // Navigation belongs to a measure, even when its directive follows a note.
+        // Zero-time Segno stays on the music axis and wraps with the first event.
+        if (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno'))) pieces.push('@symbol(segno,size=16px)')
         if (measure.multiRest) {
           const item = bind(`@rest(${measure.multiRest})`, undefined, measureId, 0)
           pieces.push(item.expression)
@@ -122,7 +125,6 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             if ((interval.kind === 'cresc' || interval.kind === 'decres') && interval.display === 'text') expressionMarks.push(`@text(${quote(interval.kind === 'cresc' ? 'cresc.' : 'dim.')},size=13px)`)
             if (interval.kind === 'accel' || interval.kind === 'rit') expressionMarks.push(`@text(${quote(`${interval.kind}. → ${interval.tempoTarget}`)},size=13px)`)
           }
-          if (event.navigation.includes('segno')) expressionMarks.push('@symbol(segno,size=16px)')
           const marks = [...articulations, ...decorations, ...expressionMarks]
           const decorate = (expression: string) => {
             let value = expression

@@ -354,6 +354,36 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.body.textContent).toContain('Fine')
   })
 
+  it.each([
+    ['opening repeat', '||: {segno}1 2 :|| 3 4 {ds} |||', 0],
+    ['mid-score with controls', '1 2 | {key=G}{3/4}{80qpm}{segno} 3 4 5 | 6 7 1e {ds} |||', 2],
+    ['explicit break and tuplet', '1 2 | {br}{segno}[345:2] | 6 7 {ds} |||', 2],
+    ['navigation written after the notes', '1 2 | 3 4 {segno} | 5 6 {ds} |||', 2],
+    ['whole-measure rests', '1 2 | {segno}{rest=2} | 3 4 {ds} |||', 2],
+  ])('renders the Segno destination at the measure opening: %s', (_name, music, targetBeat) => {
+    const source = `{2/4}\nN: ${music}`
+    const document = parseM3NDocument(source)
+    for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {
+      const { layout, lowering } = geometry(document, { width, paged })
+      const symbols = [...lowering.astToTemporal.values()].flat().filter(node => node.ast instanceof ASTFunctionNode
+        && (node.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'segno')
+      expect(symbols).toHaveLength(1)
+      const symbol = symbols[0]!
+      expect(isVisualTemporalNode(symbol)).toBe(true)
+      if (!isVisualTemporalNode(symbol)) continue
+      const first = layout.objects.find(node => !node.T.isZero() && node.t.equals(targetBeat))!
+      expect(symbol.t.toNumber()).toBe(targetBeat)
+      expect(symbol.layoutLine).toBe(first.layoutLine)
+      expect(symbol.box.y + symbol.box.visualAxis).toBeCloseTo(first.box.y + first.box.visualAxis)
+      expect(symbol.box.x + symbol.box.w).toBeLessThan(first.box.x)
+      expect(symbol.box.w).toBeGreaterThan(0)
+      expect(symbol.box.h).toBeGreaterThan(0)
+      const { root } = render(document, { width, paged })
+      const plain = render(source.replace('{segno}', ''), { width, paged })
+      expect(root.querySelectorAll('path').length).toBe(plain.root.querySelectorAll('path').length + 1)
+    }
+  })
+
   it.each(['fine', 'dc', 'ds'])('places %s before the closing bar on the music axis without raising its volta', name => {
     const source = `{2/4}\nN: ||: {segno}1 2 |\n---V1\nN: 3 4 {${name}} :||\n---V2\nN: 5 6 |||`
     const { layout, lowering } = geometry(parseM3NDocument(source))
@@ -592,6 +622,11 @@ describe('jpFun numbered notation adapter', () => {
       for (const settings of [{ width: 800, paged: false }, { width: 320, paged: true }]) {
         const projection = projectNumberedScore(document, settings)
         const result = geometry(document, settings)
+        const expectedSegnos = [...document.parts.values()].flatMap(part => [...part.melody, ...part.bass])
+          .filter(measure => measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno'))).length
+        const segnos = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode
+          && (node.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'segno')
+        expect(segnos, `${file}: missing Segno destination`).toHaveLength(expectedSegnos)
         const nodes = new Map<string, VisualTemporalNode>()
         for (const node of result.layout.objects) {
           const selected = node.ast instanceof ASTFunctionNode ? node.ast.labelable?.() : null
@@ -599,10 +634,14 @@ describe('jpFun numbered notation adapter', () => {
           for (let ast = node.ast; ast; ast = ast.parent!) {
             if (ast instanceof ASTFunctionNode && ast.label) nodes.set(ast.label, node)
           }
-          if (node.ast instanceof ASTFunctionNode && ['key', 'meter', 'tempo', 'bar'].includes(node.ast.callName)) {
+          if (node.ast instanceof ASTFunctionNode && (['key', 'meter', 'tempo', 'bar'].includes(node.ast.callName) || segnos.includes(node))) {
             if (node.ast.callName === 'bar' && (node.ast as { type?: number }).type !== 3) continue
             const next = result.layout.objects.find(next => next.track === node.track && next.t.equals(node.t) && !next.T.isZero())
             if (next) expect(node.layoutLine, `${file}: orphaned ${node.ast.callName}`).toBe(next.layoutLine)
+            if (next && segnos.includes(node)) {
+              expect(node.box.y + node.box.visualAxis).toBeCloseTo(next.box.y + next.box.visualAxis)
+              expect(node.box.x + node.box.w).toBeLessThan(next.box.x)
+            }
           }
         }
         let partTime = 0
