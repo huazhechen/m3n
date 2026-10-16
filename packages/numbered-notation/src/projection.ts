@@ -95,27 +95,30 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
           if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(`@tempo(${event.tempo},size=16px,font="M3N Numbers")`); activeTempo = event.tempo }
-          const decorations: string[] = []
-          if (event.dynamic && event.dynamic !== dynamic) { decorations.push(`@symbol(${quote(event.dynamic)},size=12px)`); dynamic = event.dynamic }
-          if (event.prefix) decorations.push('@text("sfz",size=13px)')
+          // Native up members stack from the note outwards. Keep articulations
+          // inside ornaments/fingerings, with expression marks outside both.
+          const articulations: string[] = [], decorations: string[] = [], expressionMarks: string[] = []
+          if (event.dynamic && event.dynamic !== dynamic) { expressionMarks.push(`@symbol(${quote(event.dynamic)},size=12px)`); dynamic = event.dynamic }
+          if (event.prefix) expressionMarks.push('@text("sfz",size=13px)')
           for (const name of event.postfixes) {
             if (parseM3NGrace(name)) continue
             if (name === 'arp') continue
             if (name === 'tr' || name === 'fermata') decorations.push(`@symbol(${name},size=12px)`)
-            else if (name === 'str') decorations.push('@symbol(accent,size=12px)')
-            else if (name === 'tip') decorations.push('@symbol(staccato,size=4px)')
-            else if (name === 'hold') decorations.push('@symbol(tenuto,size=7px)')
-            else if (name === 'brk') decorations.push('@symbol(staccatissimo,size=7px)')
+            else if (name === 'str') articulations.push('@symbol(accent,size=12px)')
+            else if (name === 'tip') articulations.push('@symbol(staccato,size=4px)')
+            else if (name === 'hold') articulations.push('@symbol(tenuto,size=7px)')
+            else if (name === 'brk') articulations.push('@symbol(staccatissimo,size=7px)')
             else if (name === 'breath') decorations.push('@symbol(breath,size=10px)')
             else if (/^f[1-5]$/.test(name)) decorations.push(`@text(${quote(name.slice(1))},size=11px)`)
-            else if (name === 'sfz') decorations.push('@text("sfz",size=13px)')
+            else if (name === 'sfz') expressionMarks.push('@text("sfz",size=13px)')
             else warn(event, name)
           }
           for (const interval of document.intervals.filter(interval => interval.staff === staff && interval.start === event.sourceStart)) {
-            if ((interval.kind === 'cresc' || interval.kind === 'decres') && interval.display === 'text') decorations.push(`@text(${quote(interval.kind === 'cresc' ? 'cresc.' : 'dim.')},size=13px)`)
-            if (interval.kind === 'accel' || interval.kind === 'rit') decorations.push(`@text(${quote(`${interval.kind}. → ${interval.tempoTarget}`)},size=13px)`)
+            if ((interval.kind === 'cresc' || interval.kind === 'decres') && interval.display === 'text') expressionMarks.push(`@text(${quote(interval.kind === 'cresc' ? 'cresc.' : 'dim.')},size=13px)`)
+            if (interval.kind === 'accel' || interval.kind === 'rit') expressionMarks.push(`@text(${quote(`${interval.kind}. → ${interval.tempoTarget}`)},size=13px)`)
           }
-          if (event.navigation.includes('segno')) decorations.push('@symbol(segno,size=16px)')
+          if (event.navigation.includes('segno')) expressionMarks.push('@symbol(segno,size=16px)')
+          const marks = [...articulations, ...decorations, ...expressionMarks]
           const decorate = (expression: string) => {
             let value = expression
             const grace = event.postfixes.flatMap(value => {
@@ -124,7 +127,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             })
             if (grace.length) value = `@grace({${value}},{${grace.join(' ')}})`
             if (event.postfixes.includes('arp') && event.kind === 'chord') value = `@arp({${value}})`
-            return decorations.length ? `@up({${value}},${decorations.join(',')})` : value
+            return marks.length ? `@up({${value}},${marks.join(',')})` : value
           }
           const children: string[] = []
           const content: string[] = [...controls]

@@ -117,6 +117,26 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
+  it.each(['1e', '1ee', '[1e3e:h]', '1ee{ac(7e)}'])('keeps staccato next to octave dots and below other marks on %s', pitch => {
+    const source = `{2/4}\nN: {p} {dim=text} ${pitch}{tr}{f1}{tip} 2{/} |||`
+    const { document, root } = render(source)
+    const note = geometry(document).layout.objects.find(node => !node.T.isZero())!
+    const members = (note as VisualTemporalNode & { members: readonly VisualTemporalNode[] }).members
+    const staccato = members.find(member => (member.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccato')!
+    expect(staccato).toBeDefined()
+    const dot = getLayoutBounds(staccato)
+    for (const member of members.slice(1).filter(member => member !== staccato)) {
+      const box = getLayoutBounds(member)
+      expect(box.y + box.h).toBeLessThan(dot.y)
+    }
+    const circles = [...root.querySelectorAll('#m3n-e-1 circle')]
+    const octaveDots = circles.filter(circle => Number(circle.getAttribute('r')) === 22 * 0.075)
+    expect(octaveDots).toHaveLength(pitch === '1e' ? 1 : 2)
+    const staccatoDot = circles.find(circle => Number(circle.getAttribute('r')) === 2)!
+    const octaveTop = Math.min(...octaveDots.map(circle => Number(circle.getAttribute('cy')) - Number(circle.getAttribute('r'))))
+    expect(Number(staccatoDot.getAttribute('cy')) + 2).toBeLessThan(octaveTop)
+  })
+
   it('retains text directives, section labels and chord annotations together', () => {
     const source = '{4/4}\n===练习\nN: {text=说明} {chord=C} 1 2 3 4 |||'
     const { root } = render(source)
