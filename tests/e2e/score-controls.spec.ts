@@ -115,7 +115,7 @@ test('returning to the beginning stops playback and clears the cursor without in
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   const restart = bar.getByRole('button', { name: '回到开头' })
   await restart.click()
-  expect(resources.filter(url => /verovio-score-|spessa-player-|soundfonts\//.test(url))).toEqual([])
+  expect(resources.filter(url => /verovio-score-|\.wasm(?:\?|$)|spessa-player-|soundfonts\//.test(url))).toEqual([])
   await bar.getByRole('button', { name: '播放', exact: true }).click()
   await expect(bar.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
   const position = bar.getByRole('slider', { name: '播放位置' })

@@ -9,6 +9,13 @@
     "Petaluma",
     "Liberation"
   ],
+  "excludedResources": [
+    "Bravura",
+    "Bravura.css"
+  ],
+  "supportedMusicFonts": [
+    "Leipzig"
+  ],
   "disabledFeatures": [
     "DARMS",
     "PAE",
@@ -42,6 +49,9 @@
   "compileOptimization": "-Os",
   "linkOptimization": "-Oz",
   "lto": true,
+  "binaryenCores": 1,
+  "externalWasm": true,
   "sourcePatchSha256": "28677e3780a5aa9ef71f55b92eda2c07cf0805fe8879b4cc4a78053bab2dec47",
-  "moduleSha256": "f84d90847c42cac85a2d375f595750d43e75eb93beb0df464f081772e661fff3"
+  "moduleSha256": "bf683a2e922dd027852856eaf52074ce4bf3063e90929391c6a5df963bb1c5c7",
+  "wasmSha256": "d55396e6ccf6263eeda9ef4e4cd0c9ff9a291248200e981dd4f3c85ff8e6aa1b"
 }

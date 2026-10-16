@@ -45,8 +45,10 @@ const sourcePatch = resolve(notices, 'mei-only.patch')
 run('patch', ['-p1', '--batch', '-i', sourcePatch], { cwd: source })
 
 // Liberation's optional embedded text font is never enabled by M3N.
-// Keep data/text (Times metrics) and both required music fonts untouched.
+// Keep all Leipzig glyphs, Times metrics and the required Bravura code/name map.
 const excludedFonts = ['Gootville', 'Leland', 'Petaluma', 'Liberation']
+const excludedResources = ['Bravura', 'Bravura.css']
+const supportedMusicFonts = ['Leipzig']
 const disabledFeatures = ['DARMS', 'PAE', 'ABC', 'GABC', 'MXL', 'HUMDRUM', 'MUSICXML', 'EDIT']
 const flags = ['-flto', '-DNDEBUG', '-std=c++20', '-sSTRICT=1', '-fwasm-exceptions']
 const compileOptimization = '-Os'
@@ -67,30 +69,35 @@ const resources = resolve(work, 'data')
 await rm(resources, { recursive: true, force: true })
 await cp(resolve(source, 'data'), resources, { recursive: true })
 for (const entry of await readdir(resources)) {
-  if (excludedFonts.some(font => entry === font || entry.startsWith(`${font}.`))) {
+  if (excludedResources.includes(entry) || excludedFonts.some(font => entry === font || entry.startsWith(`${font}.`))) {
     await rm(resolve(resources, entry), { recursive: true, force: true })
   }
 }
 await mkdir(vendor, { recursive: true })
 const output = resolve(work, 'verovio-module.mjs')
+// Run Binaryen serially to keep exception optimization byte layouts stable.
 run('em++', [resolve(build, 'libverovio.a'), linkOptimization, ...flags,
   '-sWASM=1', '-sINITIAL_MEMORY=128MB', '-sSTACK_SIZE=64MB', '-sALLOW_MEMORY_GROWTH=1',
-  '-sSINGLE_FILE=1', '-sINCOMING_MODULE_JS_API=onRuntimeInitialized',
+  '-sSINGLE_FILE=0', '-sINCOMING_MODULE_JS_API=onRuntimeInitialized',
   '-sMODULARIZE=1', '-sEXPORT_ES6=1', '-sEXPORT_NAME=createVerovioModule',
   `-sEXPORTED_FUNCTIONS=${JSON.stringify(exportedFunctions)}`,
   '-sEXPORTED_RUNTIME_METHODS=["cwrap","HEAPU8"]', '--embed-file', 'data/', '-o', output,
-])
+], { env: { ...process.env, BINARYEN_CORES: '1' } })
 const bytes = await readFile(output)
 await writeFile(resolve(vendor, 'verovio-module.mjs'), Buffer.concat([
   Buffer.from('/*! Verovio 6.2.0, LGPL-3.0-or-later. M3N slim build; license, source and recipe: /licenses/verovio/README.txt */\n'), bytes,
 ]))
 const artifact = await readFile(resolve(vendor, 'verovio-module.mjs'))
+const wasm = await readFile(resolve(work, 'verovio-module.wasm'))
+await writeFile(resolve(vendor, 'verovio-module.wasm'), wasm)
 await writeFile(resolve(vendor, 'build.json'), `${JSON.stringify({
   version: '6.2.0', commit, sourceSha256, emscriptenVersion,
-  excludedFonts, disabledFeatures, exportedFunctions, compileOptimization, linkOptimization, lto: true,
+  excludedFonts, excludedResources, supportedMusicFonts, disabledFeatures, exportedFunctions,
+  compileOptimization, linkOptimization, lto: true, binaryenCores: 1, externalWasm: true,
   sourcePatchSha256: createHash('sha256').update(await readFile(sourcePatch)).digest('hex'),
   moduleSha256: createHash('sha256').update(artifact).digest('hex'),
+  wasmSha256: createHash('sha256').update(wasm).digest('hex'),
 }, null, 2)}\n`)
 // Ship the exact recipe beside the corresponding source for LGPL recipients.
 await cp(fileURLToPath(import.meta.url), resolve(notices, 'build-verovio.mjs'))
-console.log(`Built ${artifact.length.toLocaleString()} bytes; ${vendor}`)
+console.log(`Built JS ${artifact.length.toLocaleString()} + WASM ${wasm.length.toLocaleString()} bytes; ${vendor}`)

@@ -225,6 +225,7 @@ export class VerovioScore {
 
   static async create(mei: string) {
     const toolkit = new VerovioToolkit(await getModule())
+    toolkit.setOptions({ font: 'Leipzig', fontFallback: 'Leipzig' })
     return new VerovioScore(toolkit, mei)
   }
 

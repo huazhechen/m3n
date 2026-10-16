@@ -35,7 +35,10 @@ test('staff and numbered rendering use only same-origin resources across switche
   expect(external).toEqual([])
   const libraryRequests = requests.filter(path => /verovio-score-/.test(path))
   expect(libraryRequests).toHaveLength(1)
-  const report = { coldStaffMs, switchMs: timings, libraryRequests, external }
+  const wasmRequests = requests.filter(path => /\.wasm$/.test(path))
+  expect(wasmRequests).toHaveLength(1)
+  expect(wasmRequests[0]).toMatch(/^\/assets\/verovio-module-[\w-]+\.wasm$/)
+  const report = { coldStaffMs, switchMs: timings, libraryRequests, wasmRequests, external }
   await testInfo.attach('render-resource-audit', { body: JSON.stringify(report, null, 2), contentType: 'application/json' })
   console.log('Render resource audit:', JSON.stringify(report))
 })

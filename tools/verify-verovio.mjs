@@ -14,6 +14,10 @@ const vendor = resolve(root, 'packages/score-renderer/vendor/verovio')
 const manifest = JSON.parse(await readFile(resolve(vendor, 'build.json'), 'utf8'))
 const moduleBytes = await readFile(resolve(vendor, 'verovio-module.mjs'))
 assert.equal(createHash('sha256').update(moduleBytes).digest('hex'), manifest.moduleSha256)
+const wasmBytes = await readFile(resolve(vendor, 'verovio-module.wasm'))
+assert.equal(createHash('sha256').update(wasmBytes).digest('hex'), manifest.wasmSha256)
+assert.equal(manifest.externalWasm, true)
+assert.deepEqual(manifest.supportedMusicFonts, ['Leipzig'])
 const sourcePatch = await readFile(resolve(root, 'public/licenses/verovio/mei-only.patch'))
 assert.equal(createHash('sha256').update(sourcePatch).digest('hex'), manifest.sourcePatchSha256)
 const original = new VerovioToolkit(await createOriginalModule())
@@ -31,11 +35,11 @@ samples.push({ file: 'text-and-symbol-fonts', mei: `<mei xmlns="http://www.music
 <dir startid="#n1"><rend fontweight="bold" fontstyle="italic">Allegro</rend> <rend glyph.auth="smufl">&#xECA2;</rend></dir></measure>
 </section></score></mdiv></body></music></mei>` })
 
-const report = { version: slim.getVersion(), scores: sources.length, checks: 0, pages: 0, fonts: ['Leipzig', 'Bravura'], sizes: {} }
+const report = { version: slim.getVersion(), scores: sources.length, checks: 0, pages: 0, fonts: ['Leipzig'], sizes: {} }
 try {
   assert.equal(slim.getVersion(), original.getVersion())
   for (const { file, mei } of samples) for (const font of report.fonts) {
-    const options = { font, footer: 'none', header: 'none', pageWidth: 1905, pageHeight: 2694, scale: 42, svgViewBox: true }
+    const options = { font, fontFallback: 'Leipzig', footer: 'none', header: 'none', pageWidth: 1905, pageHeight: 2694, scale: 42, svgViewBox: true }
     const results = [original, slim].map(toolkit => {
       toolkit.setOptions(options)
       toolkit.resetXmlIdSeed(1)
@@ -59,14 +63,20 @@ try {
   original.destroy()
   slim.destroy()
 }
-for (const [name, bytes] of [['originalModule', await readFile(resolve(root, 'node_modules/verovio/dist/verovio-module.mjs'))], ['slimModule', moduleBytes]]) {
+for (const [name, bytes] of [
+  ['originalModule', await readFile(resolve(root, 'node_modules/verovio/dist/verovio-module.mjs'))],
+  ['slimModule', moduleBytes], ['slimWasm', wasmBytes],
+]) {
   report.sizes[name] = {
     raw: bytes.length,
     gzip: gzipSync(bytes, { level: 9 }).length,
     brotli: brotliCompressSync(bytes, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length,
   }
 }
-assert.ok(report.sizes.slimModule.gzip < report.sizes.originalModule.gzip * 0.6, 'Expected at least 40% gzip savings')
+// Separate HTTP resources are compressed separately; include both in the gate.
+report.sizes.slimTotal = Object.fromEntries(['raw', 'gzip', 'brotli']
+  .map(encoding => [encoding, report.sizes.slimModule[encoding] + report.sizes.slimWasm[encoding]]))
+assert.ok(report.sizes.slimTotal.gzip < report.sizes.originalModule.gzip * 0.45, 'Expected at least 55% total gzip savings')
 await mkdir(resolve(root, '.tmp'), { recursive: true })
 await writeFile(resolve(root, '.tmp/verovio-verification.json'), `${JSON.stringify(report, null, 2)}\n`)
 console.log(JSON.stringify(report, null, 2))

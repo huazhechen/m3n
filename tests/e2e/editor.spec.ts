@@ -7,10 +7,13 @@ test('edits, renders, and maps a score note back to source', async ({ page }) =>
   const editor = page.getByLabel('M3N source')
   await editor.fill(source)
 
+  const paper = page.locator('.score-paper')
+  await expect(paper).toContainText('Browser Test', { timeout: 30_000 })
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const firstNote = page.locator('.score-paper [id^="m3n-e-"]').first()
   await expect(firstNote).toBeVisible({ timeout: 30_000 })
   await expect(page.locator('.score-paper .is-cursor-active-measure')).toHaveCount(1)
-  await expect(page.locator('.score-paper .measure-cursor-highlight')).toBeVisible()
+  await expect(paper.locator('.is-cursor-active-measure .measure-cursor-highlight')).toBeVisible()
   await firstNote.locator('use, path').first().click()
   await expect.poll(() => editor.evaluate((element) => ({
     start: (element as HTMLTextAreaElement).selectionStart,
@@ -104,12 +107,17 @@ test('switches every embedded documentation score between staff and numbered not
 
 test('renders numbered scores and their embedded fonts without loading Verovio', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
-  await page.route('**/*verovio*', route => route.abort())
+  const engineRequests: string[] = []
+  await page.route(url => /verovio|\.wasm$/.test(url.pathname), route => {
+    engineRequests.push(route.request().url())
+    return route.abort()
+  })
   await page.goto('/scores/tong_hua_zhen_01')
   await expect(page.locator('.score-paper svg[data-engine="jpfun"]').first()).toBeVisible()
   await expect(page.getByRole('button', { name: '播放' })).toBeEnabled()
   expect(await page.evaluate(() => document.fonts.check('22px "M3N Numbers"'))).toBe(true)
   expect(await page.locator('.score-paper svg').first().innerHTML()).toContain('data:font/ttf;base64,')
+  expect(engineRequests).toEqual([])
 })
 
 test('maps numbered notes and lyrics to source and highlights the repeated verse', async ({ page }) => {

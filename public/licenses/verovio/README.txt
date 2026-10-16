@@ -4,10 +4,12 @@ Upstream commit: 43f806031bfff2c64003fc8ddd9910820445f6ab
 License: LGPL-3.0-or-later (COPYING.LESSER and COPYING in this directory).
 
 M3N distributes a modified build with unused resources and input formats
-excluded. Leipzig and Bravura music fonts, Times text metrics, SVG, MEI,
-MIDI and timing support are retained. Gootville, Leland, Petaluma and the
-optional Liberation web font are excluded. Font notices are provided here;
-font sources and embedded dependency notices are in the source archive.
+excluded. All Leipzig glyphs and CSS, Bravura.xml symbol names and metrics,
+Times text metrics, SVG, MEI, MIDI and timing support are retained.
+Bravura glyphs and CSS, Gootville, Leland, Petaluma and the optional
+Liberation web font are excluded. Music rendering supports Leipzig only.
+Font notices are provided here; font sources and embedded dependency notices
+are in the source archive.
 Unused MusicXML importing, Verovio editor code and C API entry points are
 excluded too; retained exports are listed in the repository's build.json.
 
@@ -25,9 +27,11 @@ GNU Make, patch, tar and Node.js, then run:
   node tools/build-verovio.mjs
 The recipe applies the pinned version header and CMake version-generation
 change, repairs the upstream MusicXML/editor exclusion guards, compiles with
-size and link-time optimization, filters resources and links the replacement
-ES module. The shared accidental converter is preserved verbatim outside the
-MusicXML guard. No engraving or playback algorithms are changed.
+size and link-time optimization, runs Binaryen serially for reproducibility,
+filters resources and links the replacement
+ES module and its adjacent verovio-module.wasm binary. Both files must be
+distributed together. The shared accidental converter is preserved verbatim
+outside the MusicXML guard. No engraving or playback algorithms are changed.
 See docs/VEROVIO_BUILD.md in the M3N repository for integration and verification.
 
 These source and notice files are optional downloads and are not loaded
