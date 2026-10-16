@@ -1,4 +1,5 @@
 import { parseM3NDocument } from './m3n-direct.js' 
+import { scoreEventIds } from './score-event-ids.js'
 import { m3nChord } from './m3n-harmony.js'
 import {
   meiBeamXml as renderBeamXml,
@@ -45,9 +46,8 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const document = suppliedDocument ?? parseM3NDocument(source, projection)
   const sourceMap: MeiSourceMapRange[] = []
   const hasBassStaff = [...document.parts.values()].some((part) => part.bass.some((measure) => measure.events.length > 0))
-  let eventIndex = 0
   const eventIds = new Map<string, string>()
-  const preassignedIds = new Map<ScoreEvent, string>()
+  const preassignedIds = scoreEventIds(document)
   const previousTiedByStaff = new Map<number, boolean>()
   const previousKeyByStaff = new Map<number, string>()
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
@@ -94,13 +94,11 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     const measureCount = Math.max(part.melody.length, hasBassStaff ? part.bass.length : 0)
     for (let measureIndex = 0; measureIndex < measureCount; measureIndex += 1) {
       for (const event of part.melody[measureIndex]?.events ?? []) {
-        const xmlId = `m3n-e-${++eventIndex}`
-        preassignedIds.set(event, xmlId)
+        const xmlId = preassignedIds.get(event)!
         eventIds.set(`1:${event.sourceStart}`, xmlId)
       }
       for (const event of hasBassStaff ? part.bass[measureIndex]?.events ?? [] : []) {
-        const xmlId = `m3n-e-${++eventIndex}`
-        preassignedIds.set(event, xmlId)
+        const xmlId = preassignedIds.get(event)!
         eventIds.set(`2:${event.sourceStart}`, xmlId)
       }
     }
@@ -176,7 +174,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     const events = measure?.events ?? []
     const accidentals = new Map<string, string>()
     const renderedEvents = events.map((event, eventIndex) => {
-      const xmlId = preassignedIds.get(event) ?? `m3n-e-${++eventIndex}`
+      const xmlId = preassignedIds.get(event)!
       eventIds.set(`${staffNumber}:${event.sourceStart}`, xmlId)
       sourceMap.push({ xmlId, sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
       if (event.kind === 'tuplet') {

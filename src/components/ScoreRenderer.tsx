@@ -1,3 +1,4 @@
+import type { VerovioScore, SpessaPlayer } from '@m3n/score-renderer'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MeiSourceMapRange, ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
 import {
@@ -36,9 +37,7 @@ import {
   wrapScorePagesIntoSheets,
   visibleLyricVerseNumbers,
   type PlaybackLease,
-  type SpessaPlayer,
-  type VerovioScore,
-} from '@m3n/score-renderer'
+} from '@m3n/score-renderer/view'
 
 type ScoreRendererProps = {
   mei: string
@@ -131,11 +130,7 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   const numberedNotation = measure.closest<HTMLElement>('.score-paper')?.dataset.notation === 'numbered'
   const numberedMeasureStart = Number(measure.dataset.m3nMeasureStart)
   const numberedMeasureEnd = Number(measure.dataset.m3nMeasureEnd)
-  // Numbered notation records logical barline-to-barline measure bounds.
-  // Barline glyphs paint opaque white masks a few units around their stroke,
-  // so extend the band by that half-width and draw it above the measure;
-  // otherwise the masks shave the front of the first measure and the tail of
-  // every other one.
+  // Native numbered bounds remain valid when a measure continues on another system.
   const left = numberedNotation && Number.isFinite(numberedMeasureStart)
     ? numberedMeasureStart - 5
     : measureBounds.x
@@ -155,13 +150,9 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
 function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: readonly string[]) {
   const invalidIds = new Set(invalidMeasureIds)
   paper.querySelectorAll<SVGGElement>('g.measure[id]').forEach((measure) => {
-    if (!invalidIds.has(measure.id)) return
+    if (!invalidIds.has(measure.dataset.m3nMeasureId ?? measure.id)) return
     addMeasureHighlight(measure, 'measure-error-highlight')
   })
-}
-
-function musicFontCss(svg: string) {
-  return /@font-face\s*\{[\s\S]*?\}/.exec(svg)?.[0]
 }
 
 export function ScoreRenderer({
@@ -180,6 +171,7 @@ export function ScoreRenderer({
   onPaperBlur,
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement>(null)
+  const renderGenerationRef = useRef(0)
   const scoreRef = useRef<VerovioScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
   const settingsDialogRef = useRef<HTMLDialogElement>(null)
@@ -249,6 +241,9 @@ export function ScoreRenderer({
     if (!paper || renderWidth === 0) return
     const playbackLease = playbackLeaseRef.current
     let cancelled = false
+    renderGenerationRef.current += 1
+    playerInitializationRef.current = null
+    setIsPlayerLoading(false)
     const isInitialRender = !hasRenderedRef.current
     if (isInitialRender) paper.innerHTML = ''
     scorePlaybackCoordinator.release(playbackLease)
@@ -270,30 +265,26 @@ export function ScoreRenderer({
 
     void (async () => {
       try {
-        const [{ VerovioScore }, { NumberedNotationScore }] = await Promise.all([
-          import('@m3n/score-renderer'),
-          import('@m3n/numbered-notation'),
-        ])
-        const score = await VerovioScore.create(mei)
-        if (cancelled) {
-          score.destroy()
-          return
-        }
-        scoreRef.current = score
-        if (isInitialRender) setRenderPhase('waiting-layout')
-
         if (numberedNotation && scoreDocument) {
-          score.prepareLayout({ width: renderWidth, scale: compact ? 38 : 42 })
-          paper.innerHTML = NumberedNotationScore.create(scoreDocument).render({
-            paged: renderMode === 'paged',
-            width: renderWidth,
-            musicFontCss: musicFontCss(score.renderPage(1)),
-          }).join('')
+          const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
+          await prepareNumberedNotationFonts()
+          if (cancelled) return
+          if (isInitialRender) setRenderPhase('layout')
+          const numbered = NumberedNotationScore.create(scoreDocument)
+          paper.innerHTML = numbered.render({ paged: renderMode === 'paged', width: renderWidth }).join('')
+          addInvalidMeasureHighlights(paper, invalidMeasureIds)
           if (renderMode === 'paged') wrapScorePagesIntoSheets(paper, 'score-page-sheet')
+          const unsupported = numbered.diagnostics.filter(item => item.code.startsWith('NUMBERED_'))
+          if (unsupported.length) setMessage([...new Set(unsupported.map(item => item.message))].join('；'))
           hasRenderedRef.current = true
           setHasAudioControls(true)
           return
         }
+        const { VerovioScore } = await import('@m3n/score-renderer/verovio')
+        const score = await VerovioScore.create(mei)
+        if (cancelled) { score.destroy(); return }
+        scoreRef.current = score
+        if (isInitialRender) setRenderPhase('waiting-layout')
 
         await scoreRenderScheduler.enqueue(() => {
           if (cancelled) return Promise.resolve()
@@ -350,8 +341,9 @@ export function ScoreRenderer({
       }
     })()
 
-      return () => {
+    return () => {
       cancelled = true
+      renderGenerationRef.current += 1
       scorePlaybackCoordinator.release(playbackLease)
       playerRef.current?.destroy()
       playerRef.current = null
@@ -431,25 +423,32 @@ export function ScoreRenderer({
   const getPlayer = () => {
     if (playerRef.current) return Promise.resolve(playerRef.current)
     if (playerInitializationRef.current) return playerInitializationRef.current
-    const score = scoreRef.current
-    if (!score) return Promise.reject(new Error('乐谱尚未准备完成。'))
+    const generation = renderGenerationRef.current
     const initialization = (async () => {
       setIsPlayerLoading(true)
       try {
+        let score = scoreRef.current
+        if (!score) {
+          const { VerovioScore } = await import('@m3n/score-renderer/verovio')
+          score = await VerovioScore.create(mei)
+          if (generation !== renderGenerationRef.current) { score.destroy(); throw new Error('乐谱已更新，请重新播放。') }
+          scoreRef.current = score
+        }
         midiRef.current ??= score.midi()
-        const { SpessaPlayer } = await import('@m3n/score-renderer')
+        const { SpessaPlayer } = await import('@m3n/score-renderer/player')
         const player = await SpessaPlayer.create(midiRef.current, {
           onEnded: () => {
             stopPlaybackRef.current()
           },
           onTime: onPlayerTime,
         }, transposeRef.current, playbackCountInBeats(scoreDocument))
+        if (generation !== renderGenerationRef.current) { player.destroy(); throw new Error('乐谱已更新，请重新播放。') }
         player.setSpeed(speedRef.current)
         player.setMetronomeEnabled(metronomeEnabled)
         playerRef.current = player
         return player
       } finally {
-        setIsPlayerLoading(false)
+        if (generation === renderGenerationRef.current) setIsPlayerLoading(false)
       }
     })()
     playerInitializationRef.current = initialization

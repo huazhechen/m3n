@@ -6,14 +6,5 @@ export default defineConfig({
   plugins: [react()],
   build: {
     chunkSizeWarningLimit: 800,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('/node_modules/verovio/')) return 'verovio'
-          if (id.includes('/node_modules/spessasynth_')) return 'spessasynth'
-          return undefined
-        },
-      },
-    },
   },
 })

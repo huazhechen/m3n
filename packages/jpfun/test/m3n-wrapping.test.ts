@@ -1,0 +1,55 @@
+import { test } from 'node:test';
+import { strict as assert } from 'node:assert';
+import { compileScore } from '../src/pipeline.js';
+import { getLayoutBounds } from '../src/layout/engine.js';
+
+test('automatic wrapping fits long scores and keeps original event source spans', () => {
+    const source = '@page(width=320px)\n' + Array(32).fill('1 2 3 4 |').join(' ');
+    const result = compileScore(source, { autoWrap: true });
+    assert.ok(result.layout.lineCount > 4);
+    const notes = result.layout.objects.filter(node => node.T.compare(0) > 0);
+    assert.equal(notes.length, 128);
+    for (const node of notes) {
+        assert.match(source.slice(node.ast.sourceSpan.start, node.ast.sourceSpan.end), /^[1-4]$/);
+        const box = getLayoutBounds(node);
+        assert.ok(box.x >= 39 && box.x + box.w <= 281, JSON.stringify(box));
+    }
+});
+
+test('wrapping preserves explicit segment breaks and aligns parallel voices', () => {
+    const source = '@page(width=380px)\nN: {' + Array(12).fill('1 2 3 4 |').join(' ') + ' @br() 5 6 7 1 |}\nN: {' + Array(12).fill('1, - 5, - |').join(' ') + ' @br() 2, - 1, - |}';
+    const result = compileScore(source, { autoWrap: true });
+    const notes = result.layout.objects.filter(node => node.T.compare(0) > 0);
+    const linesByTime = new Map<string, Set<number>>();
+    for (const node of notes) {
+        const key = node.t.toString();
+        const lines = linesByTime.get(key) ?? new Set(); lines.add(node.layoutLine); linesByTime.set(key, lines);
+    }
+    assert.ok(result.layout.lineCount > 2);
+    assert.ok([...linesByTime.values()].every(lines => lines.size === 1));
+});
+
+test('wraps dotted and divided single-event wrappers without changing their duration', () => {
+    const source = '@page(width=320px)\n' + Array(10).fill('@dot({@div({1},1)},1) 2/ 3/ 4/ 5/ 6/ |').join(' ');
+    const result = compileScore(source, { autoWrap: true });
+    assert.ok(result.layout.lineCount > 1);
+    assert.equal(result.lowering.duration.toNumber(), 32.5);
+});
+
+test('splits an oversized measure without overlapping its note glyphs', () => {
+    const source = '@page(width=320px)\n' + Array(64).fill('1/').join(' ') + ' |';
+    const result = compileScore(source, { autoWrap: true });
+    const notes = result.layout.objects.filter(node => node.T.compare(0) > 0);
+    assert.equal(notes.length, 64);
+    assert.ok(result.layout.lineCount > 1);
+    for (const node of notes) { const b = getLayoutBounds(node); assert.ok(b.x >= 39 && b.x + b.w <= 281); }
+});
+
+test('automatic wrapping includes the complete lyric occupancy at both endpoints', () => {
+    const result = compileScore('@set(lyricspacing="reserve") @page(width=320px) @voice({' + Array(12).fill('1/ 2/ 3/ 4/ 5 6 |').join(' ') + '},,"' + Array(12).fill('internationalization').join(' ') + '")', { autoWrap: true });
+    const lyrics = result.layout.attachments.flatMap(attachment => attachment.regions).filter(region => region.w > 100);
+    for (const [index, left] of lyrics.entries()) for (const right of lyrics.slice(index + 1)) {
+        if (left.line !== right.line) continue;
+        assert.ok(left.x + left.w <= right.x || right.x + right.w <= left.x);
+    }
+});

@@ -8,6 +8,8 @@
 
 ```text
 web app -> @m3n/score-renderer -> @m3n/notation
+       \-> @m3n/numbered-notation -> @m3n/jpfun
+       |                       \-> @m3n/notation
        \-> @m3n/notation
        \-> React / routing / application services
 ```
@@ -26,10 +28,12 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 - `packages/notation`（`@m3n/notation`）：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换；可独立生成 JavaScript 与类型声明。
 - `packages/score-renderer`（`@m3n/score-renderer`）：浏览器渲染、播放、导出与资源调度；只通过 `@m3n/notation` 的公共入口访问领域类型。
-- `src`：React Web 应用、路由、曲库装载及分享服务；通过包名消费两个子包，不跨入其内部目录。
+- `packages/numbered-notation`：领域文档到 jpFun 的语义投影、歌词遍次和 SVG 交互适配。
+- `packages/jpfun`：固定版本的第三方简谱核心源码，负责通用排版和绘制。
+- `src`：React Web 应用、路由、曲库装载及分享服务；通过包名消费子包，不跨入其内部目录。
 - `worker`：部署边缘入口，不依赖 Web UI。
 
-包依赖只能是 `score-renderer -> notation`。根应用可以组合二者，但子包不得反向导入根应用。每个包在自身 `package.json` 中声明运行依赖，并提供独立的 `build`、`test`、`typecheck` 命令；根脚本显式按依赖顺序执行。
+包依赖为 `score-renderer -> notation`、`numbered-notation -> notation / jpfun`。jpFun 不依赖 M3N 类型。根应用可以组合这些包，但子包不得反向导入根应用。每个包在自身 `package.json` 中声明运行依赖，并提供独立的 `build`、`test`、`typecheck` 命令；根脚本显式按依赖顺序执行。
 
 ## 内部职责
 
@@ -45,7 +49,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
 - `packages/notation/src/m3n-validate.ts`：语义校验，只依赖最小语法内核。
 - `packages/score-renderer/src`：播放段落展开、导出文档与 Verovio 画布适配。
-- `packages/numbered-notation/src`：`ScoreDocument` 到简谱 SVG 的原生排版与页面适配。
+- `packages/numbered-notation/src`：`ScoreDocument` 到 jpFun 的投影与 SVG 事件适配；实际排版在 `packages/jpfun`。
 - `packages/notation/src/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
 - `packages/notation/src/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
 - `packages/notation/src/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
@@ -56,7 +60,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/score-renderer/src/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `components/ScoreRenderer.tsx`：组合 MEI 渲染、播放和光标事件。
-- `components/ScoreExportDialog.tsx`：导出状态、预览及 PNG/PDF 工作流。
+- `components/ScoreExportDialog.tsx`：导出状态、预览及简谱 SVG / 共用 PNG/PDF 工作流。
 - `components/SourceEditor.tsx`：源码输入与尺寸同步。
 - `pages`：路由级组合，不承载领域算法。
 - `scores/*.m3n`：曲库正文的唯一来源；`lib/samples.ts` 在构建时直接读取正文并生成曲目元数据。

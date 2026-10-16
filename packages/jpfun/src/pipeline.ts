@@ -1,4 +1,7 @@
-import { ASTBraceNode, type ASTFunctionClass } from "./functions/ASTtypes.js";
+// M3N modification: optional automatic wrapping with original source spans preserved.
+import { ASTBraceNode, type ASTFunctionClass, type ASTNodeBase } from "./functions/ASTtypes.js";
+import { automaticBreakPositions, insertAutomaticBreaks } from './layout/wrapping.js';
+import { normalizePageConfig } from './layout/page.js';
 import { defaultFunctions } from "./functions/default.js";
 import { createLayoutPrepareContext } from "./layout/default.js";
 import {
@@ -14,6 +17,7 @@ import { preprocessSource } from "./parser/preprocess.js";
 import type { TextMeasurer } from "./render/types.js";
 
 export interface CompileScoreOptions extends DocumentLayoutOptions {
+    autoWrap?: boolean;
     functions?: ASTFunctionClass[];    // 替换默认函数注册表
     textMeasurer?: TextMeasurer;       // 替换默认文本测量来源
     variables?: Record<string, any>;
@@ -40,7 +44,30 @@ export function compileScore(
     source: string,
     options: CompileScoreOptions = {},
 ): CompileScoreResult {
+    if (!options.autoWrap) return compileRaw(source, options);
+    const natural = compileRaw(source, options, true);
+    const page = normalizePageConfig(natural.lowering.page);
+    const positions = automaticBreakPositions(natural.layout, page.width - page.marginLeft - page.marginRight);
+    if (!positions.length) return compileRaw(source, options);
+    const inserted = insertAutomaticBreaks(source, positions);
+    const result = compileRaw(inserted.source, options);
+    const seen = new Set<ASTNodeBase>();
+    const restoreNode = (node: ASTNodeBase) => {
+        if (seen.has(node)) return;
+        seen.add(node); inserted.restore(node.sourceSpan);
+        for (const child of node.children ?? []) restoreNode(child);
+    };
+    restoreNode(result.ast);
+    for (const nodes of result.lowering.astToTemporal.values()) for (const node of nodes) restoreNode(node.ast);
+    for (const diagnostic of result.diagnostics) inserted.restore(diagnostic.span);
+    for (const attachment of result.lowering.attachments) if (attachment.sourceSpan) inserted.restore(attachment.sourceSpan);
+    result.maskedSource = natural.maskedSource; result.lineStarts = natural.lineStarts;
+    return result;
+}
+
+function compileRaw(source: string, options: CompileScoreOptions, natural = false): CompileScoreResult {
     const {
+        autoWrap: _autoWrap,
         functions = defaultFunctions,
         textMeasurer,
         variables,
@@ -58,7 +85,10 @@ export function compileScore(
     loweringContext.registerFunctions(functions);
     const lowering = loweringContext.lowerDocument(ast);
     const layoutContext = createLayoutPrepareContext(functions, { textMeasurer });
+    const configuredPage = lowering.page;
+    if (natural) lowering.page = { ...normalizePageConfig(configuredPage), width: 100_000_000, height: Infinity, fillRatio: 1 };
     const layout = layoutDocument(lowering, layoutContext, layoutOptions);
+    lowering.page = configuredPage;
 
     return {
         lineStarts,

@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "sideEffects": false,
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,7 +18,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@m3n/notation": "*"
+    "@m3n/notation": "*",
+    "@m3n/jpfun": "*",
+    "txml": "^6.0.0"
   },
   "devDependencies": {
     "typescript": "~6.0.2",

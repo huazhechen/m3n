@@ -10,6 +10,8 @@ flowchart LR
   app["src<br/>React Web App"]
   renderer["@m3n/score-renderer<br/>render / playback / export"]
   notation["@m3n/notation<br/>syntax / domain / MEI"]
+  numbered["@m3n/numbered-notation<br/>semantic / interaction adapter"]
+  jpfun["@m3n/jpfun<br/>vendored engraving core"]
   scores["src/scores/*.m3n<br/>built-in score corpus"]
   docs["docs/*.md<br/>guide and manual"]
   worker["worker<br/>Cloudflare Worker"]
@@ -20,6 +22,9 @@ flowchart LR
   browser --> worker
   app --> notation
   app --> renderer
+  app --> numbered
+  numbered --> notation
+  numbered --> jpfun
   renderer --> notation
   scores --> app
   docs --> app
@@ -27,7 +32,7 @@ flowchart LR
   worker --> assets
 ```
 
-允许的包依赖方向为 `src -> @m3n/score-renderer -> @m3n/notation`，同时 `src` 可以直接调用 `@m3n/notation`。`worker` 是独立部署入口，不依赖 React 或两个业务包。
+允许的包依赖方向为 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / jpfun`。jpFun 不依赖 M3N 领域类型。`worker` 是独立部署入口，不依赖 React 或这些业务包。
 
 ## Web 应用
 
@@ -116,6 +121,12 @@ flowchart LR
 
 ```mermaid
 flowchart LR
+  document["ScoreDocument"] --> adapter["numbered-notation projection"]
+  adapter --> jpfun["jpFun layout / paint"]
+  jpfun --> numberedSvg["interactive numbered SVG"]
+  numberedSvg --> screen
+  numberedSvg --> exporter
+  numberedSvg --> vector["standalone vector SVG"]
   mei["MEI XML"] --> verovio["VerovioScore"]
   scheduler["RenderScheduler"] --> verovio
   verovio --> svg["SVG score"]
@@ -132,6 +143,8 @@ flowchart LR
   exporter --> png["PNG"]
   exporter --> pdf["PDF via jsPDF"]
 ```
+
+简谱由独立加载的 jpFun 渲染，事件身份与 MEI 共享 `scoreEventIds`；只有播放时才需要 Verovio。简谱预览与导出共用适配器和内嵌数字字体，PDF 仍通过栅格图像生成。
 
 Verovio WASM 的排版任务由 `RenderScheduler` 串行化；`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。播放使用 Verovio 的 MIDI 时间轴，`elementsAtTime` 返回的 ID 直接映射到 SVG DOM。标题信息经共享的 `score-header-svg` 写入五线谱，导出路径复用渲染 SVG。
 

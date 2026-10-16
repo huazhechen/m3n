@@ -1,3 +1,4 @@
+// M3N modification: retain target source spans and lyric row in rendered text styles.
 import { ASTNodeBase, ASTBraceNode, FunctionArgs, SourceSpan, ASTFunctionNode, ASTFunctionClass, ASTTextNode } from "../ASTtypes.js";
 import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import { findRightParen } from "../../parser/parse-utils/call-utils.js";
@@ -284,6 +285,7 @@ L: la la la
     name: string;   // 声部名称
     size: number;   // 声部的字体大小
     readonly font: string;
+    readonly reserveLyricPunctuation: boolean;
     lyrics: {
         name: string,
         tokens: string[]   // 分词后的歌词内容
@@ -335,6 +337,7 @@ L: la la la
         [this.content, this.name] = this.getArgValue(args, ctx) as [ASTBraceNode, string];
         this.content.parent = this;
         this.font = ctx.variables.font;
+        this.reserveLyricPunctuation = ctx.variables.lyricspacing === "reserve";
         args.delete(0);
         args.delete("name");
         args.delete(1);
@@ -866,22 +869,31 @@ class VoiceLyricsAttachment implements LayoutAttachment {
         const style: TextStyle = { fontSize: size * LYRIC_SIZE_RATIO, fontFamily: this.nameHost.ast.font, fill: "#000" };
         for (let i = 0; i < targets.length; i++) {
             const target = targets[i];
-            let halfWidth = 0;
+            let leftWidth = 0, rightWidth = 0;
             for (const lyric of lyrics) {
                 const text = lyric.tokens[i];
                 if (text) {
-                    const { body } = splitLyricText(text);
-                    if (body) halfWidth = Math.max(halfWidth, context.textMeasurer.measureText(body, style).w / 2);
+                    const { prefix, body } = splitLyricText(text);
+                    const half = body ? context.textMeasurer.measureText(body, style).w / 2 : 0;
+                    if (this.nameHost.ast.reserveLyricPunctuation) {
+                        const prefixWidth = prefix ? context.textMeasurer.measureText(prefix, style).w : 0;
+                        const full = context.textMeasurer.measureText(text, style).w;
+                        leftWidth = Math.max(leftWidth, half + prefixWidth + 1);
+                        rightWidth = Math.max(rightWidth, full - half - prefixWidth + 1);
+                    } else {
+                        leftWidth = Math.max(leftWidth, half);
+                        rightWidth = Math.max(rightWidth, half);
+                    }
                 }
             }
-            if (halfWidth === 0) continue;
+            if (leftWidth === 0 && rightWidth === 0) continue;
             // 只扩大求解占用；视觉盒和端口不动，音符内部几何因此保持原位。
             lines[target.layoutLine]?.registerHorizontalLayoutHook(target, target, ({ columns, start }) => {
                 const element = columns[start].find(item => item.time === target);
                 if (!element) return;
                 const lyricOffset = target.ports["lyric"].x - target.box.anchor;
-                element.WL = Math.max(element.WL, halfWidth - lyricOffset);
-                element.WR = Math.max(element.WR, halfWidth + lyricOffset);
+                element.WL = Math.max(element.WL, leftWidth - lyricOffset);
+                element.WR = Math.max(element.WR, rightWidth + lyricOffset);
             });
         }
     }
@@ -971,9 +983,13 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                 const { prefix, body } = splitLyricText(text);
                 const bodyWidth = body ? context.textMeasurer.measureText(body, lyricStyle).w : 0;
                 const prefixWidth = prefix ? context.textMeasurer.measureText(prefix, lyricStyle).w : 0;
+                // Semantic metadata does not change visual style equality or upstream recordings.
+                const style = Object.defineProperty({ ...lyricStyle }, 'semantic', {
+                    value: { role: 'lyric', sourceSpan: target.ast.sourceSpan, row }, enumerable: false,
+                });
                 preparedText.push({
                     text,
-                    style: lyricStyle,
+                    style,
                     textBaselineY: metrics.baseline,
                     x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth,
                     y: baselineOf(baseline.bottom, row) - metrics.baseline,

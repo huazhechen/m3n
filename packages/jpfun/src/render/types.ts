@@ -1,3 +1,6 @@
+// M3N modification: optional semantic hooks for host-owned SVG interaction metadata.
+import type { VisualTemporalNode } from '../functions/temporal.js';
+import type { SourceSpan } from '../parser/types.js';
 /**
  * 字形的排版度量
  *
@@ -29,6 +32,7 @@ export interface PaintStyle {
  * text 主要用于歌词、标题和用户输入的任意文本
  */
 export interface TextStyle {
+    semantic?: { role: 'lyric'; sourceSpan: SourceSpan; row: number };
     fontSize: number;        // 字号，单位为布局坐标像素
     fontFamily?: string;     // Painter 原样使用的字体族列表
     fontWeight?: string | number; // CSS 或 Canvas 可接受的字重
@@ -68,6 +72,8 @@ export interface PathTransform {
  * 不直接访问 SVGElement 或 CanvasRenderingContext2D
  */
 export interface Painter {
+    beginObject?(node: VisualTemporalNode): void;
+    endObject?(): void;
     drawText(text: string, x: number, y: number, style: TextStyle): void;
     drawLine(x1: number, y1: number, x2: number, y2: number, style?: PaintStyle): void;
     drawRect(x: number, y: number, w: number, h: number, style?: PaintStyle): void;

@@ -1,0 +1,109 @@
+// M3N addition: generic automatic line breaking using the engine's natural geometry.
+import { ANCHOR_KEY, type VisualTemporalNode } from '../functions/temporal.js';
+import { ASTBraceNode, ASTFunctionNode, type ASTNodeBase } from '../functions/ASTtypes.js';
+import type { SourceSpan } from '../parser/types.js';
+import type { DocumentLayoutResult } from './engine.js';
+
+/** Source positions for explicit breaks; all parallel members at a boundary share one break. */
+export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number): number[] {
+    const insertions = new Set<number>();
+    const leftOf = (node: VisualTemporalNode) => layout.horizontalBounds?.get(node)?.x ?? node.box.x;
+    const rightOf = (node: VisualTemporalNode) => { const box = layout.horizontalBounds?.get(node) ?? node.box; return box.x + box.w; };
+    const lines = new Map<number, VisualTemporalNode[]>();
+    for (const node of layout.objects) {
+        const line = lines.get(node.layoutLine) ?? [];
+        line.push(node); lines.set(node.layoutLine, line);
+    }
+    for (const nodes of lines.values()) {
+        const musical = nodes.filter(node => node.T.compare(0) > 0);
+        if (!musical.length) continue;
+        const bars = nodes.filter(node => node.mergeKey === ANCHOR_KEY && node.t.compare(musical[0].t) > 0);
+        const times = [...new Set(bars.map(node => node.t.toString()))];
+        const measures: { nodes: VisualTemporalNode[]; end: number; start: number }[] = [];
+        let pending = [...nodes];
+        for (const key of times) {
+            const bar = bars.find(node => node.t.toString() === key)!;
+            const members = pending.filter(node => node.t.compare(bar.t) < 0 || node.t.compare(bar.t) === 0 && node.mergeKey === ANCHOR_KEY);
+            pending = pending.filter(node => !members.includes(node));
+            if (members.some(node => node.T.compare(0) > 0)) measures.push({ nodes: members, start: Math.min(...members.map(leftOf)), end: Math.max(...members.map(rightOf)) });
+        }
+        if (pending.some(node => node.T.compare(0) > 0)) measures.push({ nodes: pending, start: Math.min(...pending.map(leftOf)), end: Math.max(...pending.map(rightOf)) });
+        // A very dense single measure must reflow too, rather than compressing glyphs.
+        for (const measure of measures) {
+            if (measure.end - measure.start <= contentWidth * 0.94) continue;
+            const timed = measure.nodes.filter(node => node.T.compare(0) > 0);
+            const tupletRanges = new Map<ASTNodeBase, { start: number; end: number }>();
+            for (const node of timed) for (let ast = node.ast.parent; ast; ast = ast.parent) {
+                if (!(ast instanceof ASTFunctionNode) || ast.callName !== 'tuplet') continue;
+                const range = tupletRanges.get(ast) ?? { start: Infinity, end: -Infinity };
+                range.start = Math.min(range.start, node.t.toNumber()); range.end = Math.max(range.end, node.t.toNumber() + node.T.toNumber());
+                tupletRanges.set(ast, range);
+            }
+            let left = measure.start;
+            for (const key of [...new Set(timed.map(node => node.t.toString()))]) {
+                const column = timed.filter(node => node.t.toString() === key);
+                const time = column[0].t.toNumber();
+                if ([...tupletRanges.values()].some(range => time > range.start && time < range.end)) continue;
+                const right = Math.max(...column.map(rightOf));
+                if (right - left <= contentWidth * 0.88 || column[0].t.equals(timed[0].t)) continue;
+                for (const node of column) insertions.add(breakPosition(node.ast));
+                left = Math.min(...column.map(leftOf));
+            }
+        }
+        // Minimize squared unused space, never compress a normal measure to fit a preceding one.
+        const best = new Array<number>(measures.length + 1).fill(Infinity);
+        const previous = new Array<number>(measures.length + 1).fill(0);
+        best[0] = 0;
+        for (let end = 1; end <= measures.length; end++) {
+            for (let start = end - 1; start >= Math.max(0, end - 48); start--) {
+                const width = measures[end - 1].end - measures[start].start;
+                if (width > contentWidth * 0.94 && start < end - 1) break;
+                const slack = Math.max(0, contentWidth * 0.94 - width);
+                const cost = best[start] + slack * slack + Math.max(0, width - contentWidth) ** 2 * 100;
+                if (cost < best[end]) { best[end] = cost; previous[end] = start; }
+            }
+        }
+        const starts: number[] = [];
+        for (let end = measures.length; end > 0; end = previous[end]) starts.push(previous[end]);
+        for (const start of starts.filter(index => index > 0)) {
+            const members = measures[start].nodes;
+            const first = members.filter(node => node.mergeKey !== ANCHOR_KEY).reduce((a, b) => a.t.compare(b.t) <= 0 ? a : b);
+            // Explicit commands must be inserted into each parallel voice at the same time.
+            for (const node of members.filter(node => node.t.compare(first.t) === 0 && node.mergeKey !== ANCHOR_KEY)) insertions.add(breakPosition(node.ast));
+        }
+    }
+    return [...insertions].sort((a, b) => a - b);
+}
+
+/** Do not insert a control event inside a single-event duration/grace wrapper. */
+function breakPosition(node: ASTNodeBase): number {
+    let target = node;
+    for (let parent = target.parent; parent; parent = target.parent) {
+        if (parent instanceof ASTBraceNode && parent.children.length === 1) target = parent;
+        else if (parent instanceof ASTFunctionNode && ['div', 'dot', 'up', 'down', 'grace', 'arp', 'adjust'].includes(parent.callName)) target = parent;
+        else break;
+    }
+    return target.sourceSpan.start;
+}
+
+export function insertAutomaticBreaks(source: string, positions: readonly number[]) {
+    const command = ' @br() ';
+    let output = '', previous = 0;
+    for (const at of positions) { output += source.slice(previous, at) + command; previous = at; }
+    output += source.slice(previous);
+    const originalOffset = (offset: number) => {
+        let shift = 0;
+        for (const at of positions) {
+            if (offset < at + shift) break;
+            if (offset < at + shift + command.length) return at;
+            shift += command.length;
+        }
+        return offset - shift;
+    };
+    const seen = new WeakSet<object>();
+    return { source: output, restore(span: SourceSpan) {
+        if (seen.has(span)) return;
+        seen.add(span);
+        span.start = originalOffset(span.start); span.end = originalOffset(span.end);
+    } };
+}

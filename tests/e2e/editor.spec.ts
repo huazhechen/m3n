@@ -74,7 +74,7 @@ test('renderer settings control width and drive the export dialog', async ({ pag
   await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
 })
 
-test('renders ScoreDocument through the numbered notation numbered-notation engine', async ({ page }) => {
+test('renders ScoreDocument through the vendored jpFun engine', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await expect(page.getByRole('button', { name: '渲染设置' })).toBeVisible({ timeout: 30_000 })
   const numbered = page.getByRole('switch', { name: '简谱渲染' })
@@ -99,4 +99,62 @@ test('switches every embedded documentation score between staff and numbered not
   await expect.poll(() => renderedScores.evaluateAll((scores) => scores.map((score) => score.dataset.notation))).toEqual(
     Array(await renderedScores.count()).fill('numbered'),
   )
+})
+
+test('renders numbered scores and their embedded fonts without loading Verovio', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
+  await page.route('**/*verovio*', route => route.abort())
+  await page.goto('/scores/tong_hua_zhen_01')
+  await expect(page.locator('.score-paper svg[data-engine="jpfun"]').first()).toBeVisible()
+  await expect(page.getByRole('button', { name: '播放' })).toBeEnabled()
+  expect(await page.evaluate(() => document.fonts.check('22px "M3N Numbers"'))).toBe(true)
+  expect(await page.locator('.score-paper svg').first().innerHTML()).toContain('data:font/ttf;base64,')
+})
+
+test('maps numbered notes and lyrics to source and highlights the repeated verse', async ({ page }) => {
+  await page.goto('/editor')
+  const editor = page.getByLabel('M3N source')
+  const text = '{2/4} {120qpm}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天来了\nL2: 花开满园'
+  await editor.fill(text)
+  await page.getByRole('switch', { name: '简谱渲染' }).check()
+  await expect(page.locator('.score-paper svg[data-engine="jpfun"]').first()).toBeVisible()
+  const note = page.locator('.score-paper #m3n-e-2 text')
+  await expect(note).toBeVisible()
+  await note.click()
+  await expect.poll(() => editor.evaluate(element => (element as HTMLTextAreaElement).selectionStart)).toBe(text.indexOf('1 2') + 2)
+  await page.locator('.score-paper text[data-m3n-role="lyric"][data-m3n-id="m3n-e-1"]').first().click()
+  await expect.poll(() => editor.evaluate(element => (element as HTMLTextAreaElement).selectionStart)).toBe(text.indexOf('1 2'))
+  await page.getByRole('button', { name: '播放' }).click()
+  await expect(page.locator('.score-paper text[data-m3n-rendition="2"].is-playing').first()).toBeVisible({ timeout: 15_000 })
+  await page.getByRole('button', { name: '暂停' }).click()
+})
+
+test('uses the numbered layout for export and honors excluding bass in SVG, PNG and PDF', async ({ page }, testInfo) => {
+  const { readFile } = await import('node:fs/promises')
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill('{title=导出验证} {2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了\nB: 1d 2d | 3d 4d |||')
+  await page.getByRole('button', { name: '浏览' }).click()
+  await page.getByRole('switch', { name: '简谱渲染' }).check()
+  await expect(page.locator('.score-paper svg[data-engine="jpfun"]')).toBeVisible()
+  for (const [format, signature] of [['SVG 矢量图（连续）', '<svg'], ['PNG 图片（连续）', 'PNG'], ['PDF（A4 分页）', '%PDF']] as const) {
+    await page.getByRole('button', { name: '打印' }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByRole('radio', { name: format, exact: true }).check()
+    await dialog.getByRole('checkbox', { name: '包含低音谱表' }).uncheck()
+    await expect(dialog.locator('svg[data-engine="jpfun"]').first()).toBeVisible()
+    await expect(dialog.locator('[data-m3n-id="m3n-e-3"]')).toHaveCount(0)
+    await expect(dialog.locator('[data-m3n-id="m3n-e-5"]').first()).toBeVisible()
+    const download = page.waitForEvent('download')
+    await dialog.getByRole('button', { name: '确认并下载' }).click()
+    const downloaded = await download
+    const path = testInfo.outputPath(downloaded.suggestedFilename())
+    await downloaded.saveAs(path)
+    const bytes = await readFile(path)
+    expect(bytes.length).toBeGreaterThan(1000)
+    expect(bytes.subarray(0, 80).toString()).toContain(signature)
+    if (format.startsWith('SVG')) {
+      expect(bytes.toString()).toContain('data:font/ttf;base64,')
+      expect(bytes.toString()).not.toContain('data-m3n-id="m3n-e-3"')
+    }
+  }
 })

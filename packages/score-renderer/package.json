@@ -3,11 +3,25 @@
   "version": "0.1.0",
   "type": "module",
   "sideEffects": false,
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./view": {
+      "types": "./dist/view.d.ts",
+      "import": "./dist/view.js"
+    },
+    "./verovio": {
+      "types": "./dist/verovio-score.d.ts",
+      "import": "./dist/verovio-score.js"
+    },
+    "./player": {
+      "types": "./dist/spessa-player.d.ts",
+      "import": "./dist/spessa-player.js"
     }
   },
   "scripts": {

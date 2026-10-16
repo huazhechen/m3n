@@ -1,3 +1,4 @@
+// M3N modification: expose solved horizontal occupancy for generic wrapping.
 import { Diagnostic } from "../diagnostic.js";
 import type { Track, TrackGroup, TrackPlacement } from "../lowering/track.js";
 import {
@@ -46,6 +47,7 @@ export type { DocumentLayoutPage } from "./page.js";
 
 export interface DocumentLayoutResult {
     diagnostics: Diagnostic[];       // parser 与 lowering 传入的诊断信息
+    horizontalBounds?: ReadonlyMap<VisualTemporalNode, { x: number; w: number }>;
     objects: VisualTemporalNode[];   // 已准备尺寸并获得最终坐标的可见事件
     attachments: PlacedAttachment[]; // box、tie、beam、歌词等非时间对象的最终几何
     bounds: Rect;                    // 所有对象和辅助对象的最终外接矩形
@@ -246,8 +248,14 @@ export function layoutDocument(
     const horizontal = lines.map((line, index) => prepareHorizontalLine(line.columns, index, options));
     const views = horizontal.map(line => line.view);
     for (const attachment of documentAttachments) attachment.prepareHorizontal?.(views, context);
+    const horizontalBounds = new Map<VisualTemporalNode, { x: number; w: number }>();
     for (const line of horizontal) {
-        line.layout(contentWidth, page.fillRatio);
+        const elements = line.layout(contentWidth, page.fillRatio);
+        for (const column of elements) for (const element of column) {
+            if (element.fake || !isVisualTemporalNode(element.time as TemporalNodeBase)) continue;
+            const node = element.time as VisualTemporalNode;
+            horizontalBounds.set(node, { x: node.box.x + node.box.anchor - element.WL + originX, w: element.WL + element.WR });
+        }
         for (const column of line.view.columns) {
             for (const node of column) node.box.x += originX;
         }
@@ -354,6 +362,7 @@ export function layoutDocument(
 
     return {
         diagnostics: result.diagnostics,
+        horizontalBounds,
         objects,
         attachments,
         bounds,

@@ -1,4 +1,6 @@
-import type { DocumentLayoutResult } from "../layout/engine.js";
+// M3N modification: forward semantic object boundaries to SVG page painters.
+import { getLayoutBounds, type DocumentLayoutResult } from "../layout/engine.js";
+import type { VisualTemporalNode } from '../functions/temporal.js';
 import type { Rect } from "../layout/types.js";
 import type { PaintStyle, Painter, PathCommand, PathTransform, TextStyle } from "./types.js";
 
@@ -14,8 +16,10 @@ export function paintLayout(result: DocumentLayoutResult, painter: Painter) {
         if (attachment.layer === "background") attachment.paint(painter);
     }
     for (const node of result.objects) {
+        painter.beginObject?.(node);
         node.paint(painter);
         for (const decoration of node.decorations) decoration.paint?.(painter);
+        painter.endObject?.();
     }
     for (const attachment of result.attachments) {
         if (attachment.layer === "foreground") attachment.paint(painter);
@@ -23,6 +27,16 @@ export function paintLayout(result: DocumentLayoutResult, painter: Painter) {
 }
 
 class PagePainter implements Painter {
+    private activePainters: Painter[] = [];
+    beginObject(node: VisualTemporalNode) {
+        const bounds = getLayoutBounds(node);
+        this.activePainters = [];
+        this.route(bounds.y, bounds.y + bounds.h, painter => { this.activePainters.push(painter); painter.beginObject?.(node); });
+    }
+    endObject() {
+        for (const painter of this.activePainters) painter.endObject?.();
+        this.activePainters = [];
+    }
     constructor(
         private readonly pages: readonly Rect[],
         private readonly painters: readonly Painter[],

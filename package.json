@@ -15,13 +15,14 @@
     "test": "npm run build:packages && npm run test:packages && vitest run",
     "test:e2e": "playwright test",
     "typecheck:packages": "npm run typecheck -w @m3n/jpfun && npm run typecheck -w @m3n/notation && npm run typecheck -w @m3n/numbered-notation && npm run typecheck -w @m3n/score-renderer",
-    "check": "npm run lint && npm run typecheck:packages && npm run test && npm run build && npm run test:e2e",
+    "check": "npm run lint && npm run typecheck:packages && npm run test && npm run build && npm run test:numbered-layout && npm run test:e2e",
     "download:fluidr3": "node tools/download-fluidr3-gm.mjs",
     "preview": "vite preview",
     "preview:worker": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy",
     "generate:icon": "node tools/generate-brand-icon.mjs",
-    "format:scores": "npm run build -w @m3n/notation && tsx tools/format-scores.mts"
+    "format:scores": "npm run build -w @m3n/notation && tsx tools/format-scores.mts",
+    "test:numbered-layout": "node tools/verify-numbered-layout.mjs"
   },
   "dependencies": {
     "@m3n/notation": "*",

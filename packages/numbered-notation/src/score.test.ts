@@ -1,844 +1,246 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { parseM3NDocument, type ScoreDocument } from '@m3n/notation'
-import {
-  NumberedNotationScore,
-  type NumberedNotationRenderOptions,
-} from './score.js'
+import { readFileSync, readdirSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { compileScore, getLayoutBounds } from '@m3n/jpfun'
+import { m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
+import { NumberedNotationScore, type NumberedNotationRenderOptions } from './score.js'
+import { projectNumberedScore } from './projection.js'
 
-function renderScore(document: ScoreDocument, options: NumberedNotationRenderOptions) {
-  return NumberedNotationScore.create(document).render(options)
+const options = { paged: false, width: 800 }
+function render(source: string | ScoreDocument, settings: Partial<NumberedNotationRenderOptions> = {}) {
+  const document = typeof source === 'string' ? parseM3NDocument(source) : source
+  const score = NumberedNotationScore.create(document)
+  const pages = score.render({ ...options, ...settings })
+  const root = new DOMParser().parseFromString(`<main>${pages.join('')}</main>`, 'text/html')
+  return { pages, root, score, document }
+}
+function numbers(root: Document, id: string) {
+  return [...root.querySelectorAll(`g.note[data-m3n-id="${id}"] text`)].map(text => text.textContent).join('')
+}
+function lyrics(root: Document, id: string, row = 1) {
+  return [...root.querySelectorAll(`text[data-m3n-id="${id}"][data-m3n-rendition="${row}"]`)].map(text => text.textContent?.replaceAll('\u200B', '')).join('')
+}
+function geometry(document: ScoreDocument, settings = options) {
+  const projection = projectNumberedScore(document, settings)
+  return compileScore(projection.source, { autoWrap: true })
 }
 
-describe('NumberedNotationScore', () => {
-  it('uses the numbered notation page, glyph, layout, and font contract from a ScoreDocument', () => {
-    const document = parseM3NDocument('{title=测试曲} {key=D} {3/4} {90qpm}\nN: ||: 1. 2 3 | 4~ 5 6 :|||{x3}\nL: 春天来 | 了')
-    const [svg] = renderScore(document, { paged: true, width: 1000 })
-
-    expect(svg).toContain('<svg width="1000"')
-    expect(Number(/<svg width="1000" height="(\d+)"/.exec(svg)?.[1])).toBe(1415)
-    expect(svg).toContain('>D</text>')
-    expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
-    expect(svg).toContain('id="shuzi_b_bian_1" transform="translate(-51,-50)"')
-    expect(svg).toContain('font-family="serif"')
-    expect(svg).toContain('id="m3n-e-1"')
-    expect(svg).toContain('data-m3n-id="m3n-e-1"')
-    expect(svg).toContain('data-m3n-measure-start=')
-    expect(svg).toContain('data-m3n-measure-end=')
-    expect(svg).toContain('id="m3n-playback-highlight"')
-    expect(svg).toMatch(/<g class="measure"[^>]*>[\s\S]*id="m3n-e-1"/)
-    expect(svg).toContain('xlink:href="#xunhuan_zuo"')
+describe('jpFun numbered notation adapter', () => {
+  it('uses the vendored engine and embedded font with stable interactive measure structure', () => {
+    const { pages, root } = render('{title=测试曲} {key=D} {3/4} {90qpm}\nN: ||: 1 2 3 | 4 5 6 :|||\nL: 春天来了花开')
+    expect(root.querySelector('svg')?.getAttribute('data-engine')).toBe('jpfun')
+    expect(root.querySelector('g.system g.measure #m3n-e-1')).not.toBeNull()
+    expect(root.querySelector('.measure')?.getAttribute('data-m3n-measure-start')).not.toBeNull()
+    expect(pages[0]).toContain('data:font/ttf;base64,')
+    expect(pages[0]).not.toContain('shuzi_b_bian')
+    expect(root.body.textContent).toContain('测试曲')
   })
 
-  it('derives lyrics and rendering only from the normalized ScoreDocument', () => {
-    const document = parseM3NDocument('{2/4}\nN: 1 2 | 3 4 |||\nL: 春天 | 来了')
-    document.source = 'intentionally unrelated'
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toContain('>春</text>')
-    expect(svg).toContain('>天</text>')
-    expect(svg).toContain('>来</text>')
-    expect(svg).toContain('>了</text>')
+  it('renders solely from ScoreDocument without reading its source text', () => {
+    const document = parseM3NDocument('{2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了')
+    const before = render(document).pages
+    document.source = 'unrelated content'
+    expect(render(document).pages).toEqual(before)
   })
 
-  it('renders extended rests as rests rather than sustain marks', () => {
-    const document = parseM3NDocument('{4/4}\nN: 0^ 1 2 3 |||\nL: 春 天 地')
-    const [svg] = renderScore(document, { paged: false, width: 800 })
-
-    expect(svg.match(/xlink:href="#shuzi_b_bian_0"/g)).toHaveLength(2)
-    expect(svg).not.toContain('xlink:href="#yanyinfu"')
-    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-2"[^>]*>春<\/text>/)
+  it('shares every MEI event ID, including bass and tuplet children', () => {
+    const { root, document } = render('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nB: 1 2 3 4 | 5 6 7 1e |||')
+    const mei = m3nToMei(document.source, document)
+    for (const id of scoreEventIds(document).values()) {
+      expect(mei.sourceMap.some(item => item.xmlId === id)).toBe(true)
+      expect(root.querySelector(`[data-m3n-id="${id}"]`)).not.toBeNull()
+    }
+    expect(root.querySelector('#m3n-e-1-n3')).not.toBeNull()
+    const ids = [...root.querySelectorAll('[id]')].map(node => node.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('renders section headings separately from text directives', () => {
-    const document = parseM3NDocument('{4/4}\n===练习\nN: {text=说明} 1 2 3 4 |||')
-    const [svg] = renderScore(document, { paged: false, width: 800 })
-
-    expect(svg).toMatch(/style="font-weight:bold;" font-size="14" font-family="serif">练习<\/text>/)
-    expect(svg).toMatch(/style="font-style:italic;" font-size="14" font-family="serif"[^>]*>说明<\/text>/)
+  it('aligns both voices when the melody supplies opening and closing repeat anchors', () => {
+    const document = parseM3NDocument('{6/8}\nN: ||: (1 2 3) (4 5 6) | 1e^. :||\nB: 1d 3d 5d | [1d3d5d:h]^. |||')
+    const result = geometry(document)
+    expect(result.lowering.duration.toNumber()).toBe(6)
+    const first = result.layout.objects.filter(node => node.T.compare(0) > 0 && node.t.isZero())
+    expect(first).toHaveLength(2)
+    expect(first[0]!.box.x + first[0]!.box.anchor).toBeCloseTo(first[1]!.box.x + first[1]!.box.anchor)
   })
 
-  it('keeps text directives at the default height when nothing overlaps', () => {
-    const document = parseM3NDocument('{4/4}\nN: {text=说明} 1 2 3 4 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const annotationY = Number(/<text x="[\d.-]+" y="([\d.-]+)"[^>]*font-style:italic;[^"]*" font-size="14"[^>]*>说明<\/text>/.exec(svg)?.[1])
-    const noteY = Number(/<use x="[\d.-]+" y="([\d.-]+)"[^>]*data-m3n-id="m3n-e-1"/.exec(svg)?.[1])
-
-    expect(annotationY).toBeCloseTo(noteY - 19, 3)
+  it('keeps event IDs stable when the export excludes the bass staff', () => {
+    const source = '{2/4}\nN: 1 2 | 3 4 |||\nB: 1d 2d | 3d 4d |||'
+    const withBass = render(source), withoutBass = render(source, { includeBass: false })
+    expect(withoutBass.root.querySelector('#m3n-e-5')).not.toBeNull()
+    expect(withoutBass.root.querySelector('#m3n-e-3')).toBeNull()
+    expect(withBass.root.querySelector('#m3n-e-3')).not.toBeNull()
   })
 
-  it('raises text directives above overlapping tuplet arcs', () => {
-    const document = parseM3NDocument('{4/4}\nN: {text=三连音} ([123:2]) ([234:2]) 1 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const annotationY = Number(/<text x="[\d.-]+" y="([\d.-]+)"[^>]*font-style:italic;[^"]*" font-size="14"[^>]*>三连音<\/text>/.exec(svg)?.[1])
-    const arcY = Number(/<path d="M [\d.-]+,([\d.-]+) C [^"]*" stroke-width="0.5"/.exec(svg)?.[1])
-
-    expect(annotationY).toBeLessThan(arcY - 6)
+  it('renders long rests without sustain marks or duplicate DOM IDs', () => {
+    const { root } = render('{4/4}\nN: 0^ 1 2 |||\nL: 春天')
+    expect(numbers(root, 'm3n-e-1')).toBe('00')
+    expect(root.querySelectorAll('#m3n-e-1')).toHaveLength(1)
+    expect(lyrics(root, 'm3n-e-2')).toBe('春')
+    expect(lyrics(root, 'm3n-e-3')).toBe('天')
   })
 
-  it('raises text directives above overlapping hairpins', () => {
-    const document = parseM3NDocument('{4/4}\nN: {text=渐强} {cresc}1^^{/} 2 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const annotationY = Number(/<text x="[\d.-]+" y="([\d.-]+)"[^>]*font-style:italic;[^"]*" font-size="14"[^>]*>渐强<\/text>/.exec(svg)?.[1])
-    const hairpinY = Number(/<line x1="[\d.-]+" y1="([\d.-]+)"[^>]*stroke-width="1" stroke="#1b1b1b"/.exec(svg)?.[1])
-
-    expect(annotationY).toBeLessThan(hairpinY - 5)
+  it('renders all sustained beats and retains exact very short and dotted durations', () => {
+    const { root, document } = render('{4/4}\nN: 1^^^ | ((((2)))) 3. |||')
+    expect(root.querySelectorAll('g.note[data-m3n-id="m3n-e-1"]')).toHaveLength(8)
+    expect(root.querySelectorAll('g.note[data-m3n-id="m3n-e-1"] line')).toHaveLength(7)
+    const result = geometry(document)
+    const expected = [...document.parts.values()][0]!.melody.flatMap(m => m.events).reduce((sum, event) => sum + event.beats, 0)
+    expect(result.lowering.duration.toNumber()).toBeCloseTo(expected)
+    expect(root.querySelectorAll('circle').length).toBeGreaterThan(0)
   })
 
-  it('renders a text directive once over a tuplet instead of once per sub-note', () => {
-    const document = parseM3NDocument('{4/4}\nN: {text=音阶三连模进} ([123:2]) ([234:2]) 1 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg.match(/font-style:italic;" font-size="14" font-family="serif"[^>]*>音阶三连模进<\/text>/g)).toHaveLength(1)
+  it.each(['(1 2) 3 4 5', '(1.) ((2)) 3 4 5', '((1 2 3 4)) 5 6 7'])('preserves fractional durations in %s', notes => {
+    const document = parseM3NDocument(`{4/4}\nN: ${notes} |||`)
+    const expected = [...document.parts.values()][0]!.melody.flatMap(measure => measure.events).reduce((sum, event) => sum + event.beats, 0)
+    expect(geometry(document).lowering.duration.toNumber()).toBeCloseTo(expected)
   })
 
-  it('hugs segno to the first note instead of the trailing barline', () => {
-    const document = parseM3NDocument('{4/4}\nN: {segno} 1 2 3 4 | 1 2 3 4 |||')
-    const [svg] = renderScore(document, {
-      paged: false,
-      width: 1000,
-      musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
-    })
-    const segno = /<text x="([\d.]+)" y="([\d.]+)"[^>]*font-family="Leipzig" font-size="24"[^>]*>&#xE047;<\/text>/.exec(svg)
-    const firstNoteX = Number(/<use x="([\d.]+)"[^>]*code="1"[^>]*data-m3n-id="m3n-e-1"/.exec(svg)?.[1])
-    const firstNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="1"[^>]*data-m3n-id="m3n-e-1"/.exec(svg)?.[1])
-
-    expect(segno).not.toBeNull()
-    expect(Number(segno?.[1])).toBeCloseTo(firstNoteX - 34, 3)
-    expect(Number(segno?.[2])).toBeCloseTo(firstNoteY, 3)
-  })
-
-  it('hugs DS to the last note instead of the trailing barline', () => {
-    const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 {ds} | 1 2 3 4 |||')
-    const [svg] = renderScore(document, {
-      paged: false,
-      width: 1000,
-      musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
-    })
-    const ds = /<text x="([\d.]+)" y="([\d.]+)"[^>]*font-family="Leipzig" font-size="24"[^>]*>&#xE045;<\/text>/.exec(svg)
-    const lastNoteX = Number(/<use x="([\d.]+)"[^>]*code="4"[^>]*data-m3n-id="m3n-e-4"/.exec(svg)?.[1])
-    const lastNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="4"[^>]*data-m3n-id="m3n-e-4"/.exec(svg)?.[1])
-
-    expect(ds).not.toBeNull()
-    expect(Number(ds?.[1]) - lastNoteX).toBeGreaterThanOrEqual(8)
-    expect(Number(ds?.[1]) - lastNoteX).toBeLessThanOrEqual(23)
-    expect(Number(ds?.[2])).toBeCloseTo(lastNoteY, 3)
-  })
-
-  it('keeps fallback navigation wordmarks in the music row', () => {
-    const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 {fine} |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const fine = /<use x="([\d.]+)" y="([\d.]+)" xlink:href="#xiaojiexian_fine"/.exec(svg)
-    const lastNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*code="4"[^>]*data-m3n-id="m3n-e-4"/.exec(svg)?.[1])
-
-    expect(fine).not.toBeNull()
-    // The fallback glyph's native path sits 20 units below its <use> anchor,
-    // so this offset places its ink on the same row as the numbered glyph.
-    expect(Number(fine?.[2]) + 20).toBeCloseTo(lastNoteY, 3)
-  })
-
-  it('reserves horizontal space for navigation marks in a wrapped score', () => {
-    const source = readFileSync(new URL('../../../src/scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), {
-      paged: false,
-      width: 1000,
-      musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
-    })
-    const measureGroups = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)].map((match) => match[0])
-    const segnoGroup = measureGroups.find((group) => group.includes('&#xE047;'))
-    const dsGroup = measureGroups.find((group) => group.includes('&#xE045;'))
-    const segnoX = Number(/<text x="([\d.]+)"[^>]*>&#xE047;<\/text>/.exec(segnoGroup ?? '')?.[1])
-    const segnoNoteX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#shuzi_/.exec(segnoGroup ?? '')?.[1])
-    const dsX = Number(/<text x="([\d.]+)"[^>]*>&#xE045;<\/text>/.exec(dsGroup ?? '')?.[1])
-    const dsNoteXs = [...(dsGroup ?? '').matchAll(/<use x="([\d.]+)"[^>]*xlink:href="#(?:shuzi_b_bian_[1-7]|yanyinfu)"/g)].map((match) => Number(match[1]))
-    const dsLastNoteX = dsNoteXs.at(-1) ?? Number.NaN
-    const dsBarlineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#(?:xiaojiexian|xiaojiexian_shuangxian|xunhuan_you|jieshufu)"/.exec(dsGroup ?? '')?.[1])
-
-    expect(segnoGroup).toBeDefined()
-    expect(dsGroup).toBeDefined()
-    expect(segnoNoteX - segnoX).toBeGreaterThan(25)
-    // Text starts at its anchor, so its 28-unit advance must be included
-    // when checking the visible right-hand clearance.
-    expect(dsX - dsLastNoteX).toBeGreaterThanOrEqual(8)
-    expect(dsBarlineX - dsX).toBeGreaterThanOrEqual(28)
-    expect(Math.abs((dsX - dsLastNoteX) - (dsBarlineX - dsX - 28))).toBeLessThan(8)
-  })
-
-  it('keeps fallback DS clear of the following barline', () => {
-    const source = readFileSync(new URL('../../../src/scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
-    for (const width of [320, 800, 1000]) {
-      const [svg] = renderScore(parseM3NDocument(source), { paged: false, width })
-      const measureGroup = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)]
-        .map((match) => match[0])
-        .find((group) => group.includes('xlink:href="#xiaojiexian_ds"'))
-      const dsAnchor = Number(/<use x="([\d.]+)"[^>]*xlink:href="#xiaojiexian_ds"/.exec(measureGroup ?? '')?.[1])
-      const barlineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#(?:xiaojiexian|xiaojiexian_shuangxian|xunhuan_you|jieshufu)"/.exec(measureGroup ?? '')?.[1])
-
-      expect(measureGroup).toBeDefined()
-      // The fallback DS path extends to the right of its anchor; leave a
-      // clear visual gap before the barline's left edge.
-      expect(barlineX - dsAnchor).toBeGreaterThanOrEqual(20)
+  it.each(['fermata', 'tip', 'str', 'hold', 'brk', 'breath', 'tr', 'f1', 'f5'])('retains the %s postfix', name => {
+    const plain = render('{4/4}\nN: 1 2 3 4 |||').root.querySelector('#m3n-e-1')!.innerHTML
+    const marked = render(`{4/4}\nN: 1{${name}} 2 3 4 |||`)
+    expect(marked.root.querySelector('#m3n-e-1')!.innerHTML).not.toBe(plain)
+    expect(marked.score.diagnostics.filter(item => item.code === 'NUMBERED_UNSUPPORTED_MARK')).toEqual([])
+    for (const object of geometry(marked.document).layout.objects) {
+      const box = getLayoutBounds(object)
+      expect(box.w).toBeLessThan(800)
     }
   })
 
-  it('keeps Leipzig DS clear of the following barline at narrow widths', () => {
-    const source = readFileSync(new URL('../../../src/scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
-    for (const width of [320, 800, 1000]) {
-      const [svg] = renderScore(parseM3NDocument(source), {
-        paged: false,
-        width,
-        musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
-      })
-      const measureGroup = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)]
-        .map((match) => match[0])
-        .find((group) => group.includes('&#xE045;'))
-      const dsX = Number(/<text x="([\d.]+)"[^>]*>&#xE045;<\/text>/.exec(measureGroup ?? '')?.[1])
-      const barlineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#(?:xiaojiexian|xiaojiexian_shuangxian|xunhuan_you|jieshufu)"/.exec(measureGroup ?? '')?.[1])
+  it('retains text directives, section labels and chord annotations together', () => {
+    const source = '{4/4}\n===练习\nN: {text=说明} {chord=C} 1 2 3 4 |||'
+    const { root } = render(source)
+    expect(root.body.textContent).toContain('练习')
+    expect(root.body.textContent).toContain('说明')
+    expect(root.body.textContent).toContain('C')
+  })
 
-      expect(measureGroup).toBeDefined()
-      // Leipzig's DS glyph is left-aligned and advances about 28 units.
-      expect(barlineX - dsX).toBeGreaterThanOrEqual(28)
+  it('retains octave intervals and transposes each chord pitch visually', () => {
+    const base = render('{4/4}\nN: [135:h] 2 3 4 |||')
+    const shifted = render('{4/4}\nN: {8va}[135:h] 2 3 4{/} |||')
+    expect(shifted.root.querySelector('#m3n-e-1')!.querySelectorAll('circle').length).toBeGreaterThan(base.root.querySelector('#m3n-e-1')!.querySelectorAll('circle').length)
+    expect(numbers(shifted.root, 'm3n-e-1')).toBe('135')
+  })
+
+  it('preserves tempo, key and meter changes at their musical positions', () => {
+    const { root } = render('{key=C} {4/4} {90qpm}\nN: 1 2 3 4 | {120qpm} {key=Bb} {3/4} 5 6 7 |||')
+    expect(root.body.textContent).toContain('90')
+    expect(root.body.textContent).toContain('120')
+    expect(root.body.textContent).toContain('B')
+    expect(root.body.textContent).toContain('3')
+  })
+
+  it('renders the number of complete-bar rests and excludes them from interval endpoints', () => {
+    const { root, score } = render('{4/4}\nN: {lg}1 2 3 4{/} | {rest=2} | 4 3 2 1 |||')
+    expect(root.querySelectorAll('g.measure')).toHaveLength(3)
+    expect(root.body.textContent).toContain('2')
+    expect(score.diagnostics.filter(d => d.severity === 'error')).toEqual([])
+  })
+
+  it('renders leading grace notes and keeps them inside the main event group', () => {
+    const { root } = render('{4/4}\nN: 1{ac(7d)} 2{ap((35))} 3 4 |||')
+    expect(numbers(root, 'm3n-e-1')).toContain('7')
+    expect(numbers(root, 'm3n-e-2')).toContain('35')
+    expect(root.querySelector('#m3n-e-1')?.querySelectorAll('text').length).toBe(2)
+  })
+
+  it('expands tuplets sequentially with per-note lyrics and a shared playback identity', () => {
+    const { root } = render('{4/4}\nN: [123:2] 4 5 |||\nL: 春夏秋冬天')
+    expect(lyrics(root, 'm3n-e-1')).toBe('春夏秋')
+    expect(numbers(root, 'm3n-e-1')).toBe('123')
+    expect(root.querySelectorAll('[id^="m3n-e-1-n"]')).toHaveLength(3)
+  })
+
+  it('keeps lyrics on the first tied event and skips instrumental passages', () => {
+    const tied = render('{4/4}\nN: 1~ 1 2 3 |||\nL: 春天地')
+    expect(lyrics(tied.root, 'm3n-e-1')).toBe('春')
+    expect(lyrics(tied.root, 'm3n-e-2')).toBe('')
+    expect(lyrics(tied.root, 'm3n-e-3')).toBe('天')
+    const instrumental = render('{4/4}\nN: {inst}1 2{/} 3 4 |||\nL: 春天')
+    expect(lyrics(instrumental.root, 'm3n-e-3')).toBe('春')
+  })
+
+  it('retains empty lyric slots and playback pass metadata across repeat verses', () => {
+    const { root } = render('{2/4}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天\nL2: 花开满园')
+    expect(root.querySelector('text[data-m3n-id="m3n-e-3"][data-m3n-rendition="1"]')).not.toBeNull()
+    expect(lyrics(root, 'm3n-e-3', 1)).toBe('')
+    expect(lyrics(root, 'm3n-e-3', 2)).toBe('满')
+    expect(root.querySelector('text[data-m3n-rendition="2"]')?.getAttribute('data-m3n-passes')).toContain('2')
+  })
+
+  it('retains repeat boundaries, navigation and volta numbers without phantom measures', () => {
+    const { root } = render('{2/4}\nN: ||: {segno}1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6 {fine} |||')
+    expect(root.querySelectorAll('g.measure')).toHaveLength(3)
+    expect(root.body.textContent).toContain('1.')
+    expect(root.body.textContent).toContain('2.')
+    expect(root.body.textContent).toContain('Fine')
+  })
+
+  it('keeps first-verse L: after explicit numbered lyric rows', () => {
+    const { root } = render('{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 春天来了\nL2: 花开满园\n---\nN: 5 6 |||\nL: 你好')
+    expect(lyrics(root, 'm3n-e-5', 1)).toBe('你')
+  })
+
+  it('respects named sections and explicit breaks while reflowing with width', () => {
+    const source = '{4/4}\n===甲\nN: ' + Array(12).fill('1 2 3 4 |').join(' ') + '{br} 5 6 7 1e |\n===乙\nN: 1 2 3 4 |||'
+    const narrow = render(source, { width: 320 }), wide = render(source, { width: 1000 })
+    expect(narrow.root.querySelectorAll('g.system').length).toBeGreaterThan(wide.root.querySelectorAll('g.system').length)
+    expect(wide.root.querySelectorAll('g.system').length).toBeGreaterThanOrEqual(3)
+    expect(wide.root.querySelectorAll('#m3n-e-49')).toHaveLength(1)
+  })
+
+  it('paginates complete systems and keeps every final lyric inside the page', () => {
+    const source = '{4/4}\nN: ' + Array(60).fill('1 2 3 4 |').join(' ') + '\nL: ' + '春天花开'.repeat(60) + '\nL2: ' + '满园花香'.repeat(60)
+    const { pages, root } = render(source, { width: 600, paged: true })
+    expect(pages.length).toBeGreaterThan(1)
+    expect(root.querySelectorAll('g.note')).toHaveLength(240)
+    for (const svg of root.querySelectorAll('svg')) {
+      const [x, y, width, height] = svg.getAttribute('viewBox')!.split(' ').map(Number)
+      expect(x).toBe(0); expect(width).toBe(600)
+      for (const lyric of svg.querySelectorAll('text[data-m3n-role="lyric"]')) expect(Number(lyric.getAttribute('y'))).toBeLessThan(y! + height! - 20)
     }
   })
 
-  it('anchors DS after the final sustain symbol', () => {
-    const document = parseM3NDocument('{4/4}\nN: 1^^^ {ds}|||')
-    for (const musicFontCss of [undefined, '@font-face { font-family: Leipzig; src: url(test); }']) {
-      const [svg] = renderScore(document, { paged: false, width: 800, musicFontCss })
-      const measureGroup = [...svg.matchAll(/<g class="measure"[\s\S]*?<\/g>/g)]
-        .map((match) => match[0])
-        .find((group) => group.includes(musicFontCss === undefined ? 'xiaojiexian_ds' : '&#xE045;'))
-      const sustainXs = [...(measureGroup ?? '').matchAll(/<use x="([\d.]+)"[^>]*xlink:href="#yanyinfu"/g)]
-        .map((match) => Number(match[1]))
-      const lastSustainX = sustainXs.at(-1) ?? Number.NaN
-      const dsX = musicFontCss === undefined
-        ? Number(/<use x="([\d.]+)"[^>]*xlink:href="#xiaojiexian_ds"/.exec(measureGroup ?? '')?.[1])
-        : Number(/<text x="([\d.]+)"[^>]*>&#xE045;<\/text>/.exec(measureGroup ?? '')?.[1])
-
-      expect(measureGroup).toBeDefined()
-      expect(sustainXs.length).toBeGreaterThan(0)
-      expect(dsX - lastSustainX).toBeGreaterThanOrEqual(8)
-    }
+  it('preserves header credit priority and rejects invalid widths', () => {
+    const { root } = render('{title=曲名} {singer=演唱者} {composer=作曲者} {4/4}\nN: 1 2 3 4 |||')
+    expect(root.body.textContent).toContain('演唱者')
+    expect(root.body.textContent).not.toContain('作曲者')
+    expect(() => render('{4/4}\nN: 1 2 3 4 |||', { width: NaN })).toThrow()
   })
 
-  it('keeps fine clear of a multi-rest glyph', () => {
-    const source = readFileSync(new URL('../../../src/scores/second_waltz_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })
-    const restX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#shuzi_b_bian_0"[^>]*code="0"/.exec(svg)?.[1])
-    const fineX = Number(/<use x="([\d.]+)"[^>]*xlink:href="#xiaojiexian_fine"/.exec(svg)?.[1])
-
-    // The wordmark is centered on its anchor and ~24 units wide; it must sit
-    // to the right of the rest glyph instead of overlapping it.
-    expect(fineX - restX).toBeGreaterThan(15)
+  it('renders single-event hairpins and merges consecutive legato ranges', () => {
+    const single = render('{4/4}\nN: {cresc}1{/} 2 3 4 |||')
+    expect(single.score.diagnostics.filter(d => d.severity === 'error')).toEqual([])
+    expect(geometry(single.document).layout.attachments.length).toBeGreaterThan(0)
+    const merged = geometry(parseM3NDocument('{4/4}\nN: {lg}1 2{/} {lg}3 4{/} |||'))
+    const whole = geometry(parseM3NDocument('{4/4}\nN: {lg}1 2 3 4{/} |||'))
+    expect(merged.layout.attachments.length).toBe(whole.layout.attachments.length)
   })
 
-  it('does not stretch a legato onto a multi-rest measure', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('{4/4}\nN: {lg}1 2 3 4{/} | {rest=4} {fine}:||'),
-      { paged: false, width: 800 },
-    )
-    const measures = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((m) => Number(m[1]))
-    const secondMeasureStart = measures[1] ?? 0
-    const arc = /<path d="M [\d.]+,([\d.]+) C [\d.]+,([\d.]+),[\d.]+,([\d.]+),([\d.]+),([\d.]+) M/.exec(svg)
-    const arcEnd = arc === null ? 0 : Number(arc[4])
-
-    // The synthetic multi-rest rest must not anchor the slur's end.
-    expect(arcEnd).toBeLessThan(secondMeasureStart)
-  })
-
-  it('reserves space above a volta so it clears the previous system', () => {
-    const source = readFileSync(new URL('../../../src/scores/second_waltz_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })
-    const voltaYs = [...svg.matchAll(/<line x1="([\d.]+)" y1="([\d.]+)" x2="([\d.]+)" y2="([\d.]+)"[^>]*stroke-width="1" stroke="#1b1b1b" fill="none"><\/line>/g)]
-      .filter((m) => m[1] !== m[3])
-      .map((m) => Number(m[2]))
-    const systemNoteYs = [...svg.matchAll(/<use x="[\d.]+" y="([\d.]+)"[^>]*xlink:href="#shuzi_b_bian_"/g)]
-      .map((m) => Number(m[1]))
-
-    expect(voltaYs.length).toBeGreaterThan(0)
-    voltaYs.forEach((voltaY) => {
-      const previousNoteY = Math.max(...systemNoteYs.filter((y) => y < voltaY))
-      expect(voltaY - previousNoteY).toBeGreaterThanOrEqual(20)
-    })
-  })
-
-  it('uses compact glyph definitions without changing its requested page width', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('{title=测试曲} {2/4}\nN: 1 2 |||'),
-      { paged: false, width: 800 },
-    )
-
-    expect(svg).toContain('<svg width="800"')
-    expect(svg).toContain('font-size="32"')
-    expect(svg).toMatch(/xlink:href="#shuzi_b_bian_1"[^>]*id="m3n-e-1"/)
-  })
-
-  it('keeps dotted values and their scaled support glyphs aligned', () => {
-    const source = readFileSync(new URL('../../../src/scores/huan_le_song_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: true, width: 800 })
-
-    expect(svg).toContain('<circle')
-    expect(svg).toContain('data-type="jianshixian" stroke-width="1.6"')
-    expect(svg).toContain('<path d="M 47.48,')
-    expect(svg).toContain('<rect x="100"')
-  })
-
-  it('skips instrumental intervals when assigning lyric syllables', () => {
-    const document = parseM3NDocument('{4/4}\nN: {inst}1 2{/} 3 4 |||\nL: 甲乙')
-    const [svg] = renderScore(document, { paged: false, width: 800 })
-
-    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-3"[^>]*>甲<\/text>/)
-    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-4"[^>]*>乙<\/text>/)
-    expect(svg).not.toMatch(/<text[^>]*data-m3n-id="m3n-e-[12]"[^>]*>[甲乙]<\/text>/)
-  })
-
-  it('keeps augmentation dots and lyrics attached to their sounding note', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('{3/4}\nN: 1. 0 2 |||\nL: 春 天'),
-      { paged: false, width: 800 },
-    )
-
-    expect(svg).toMatch(/<circle[^>]*data-m3n-id="m3n-e-1"/)
-    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-1"[^>]*>春<\/text>/)
-    expect(svg).toContain('data-m3n-rendition="1"')
-    expect(svg).toMatch(/<text[^>]*data-m3n-id="m3n-e-3"[^>]*>天<\/text>/)
-    expect(svg).not.toMatch(/<text[^>]*data-m3n-id="m3n-e-2"[^>]*>天<\/text>/)
-    expect(svg).toContain('font-size="16" font-family="serif"')
-  })
-
-  it('shows a single-phrase paged score at full page height', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('N: 1 1 5 5 | 6 6 5^ | 4 4 3 3 | 2 2 1^ |||'),
-      { paged: true, width: 800 },
-    )
-
-    expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBe(1132)
-    const firstNoteY = Number(/<use x="[\d.]+" y="([\d.]+)"[^>]*id="m3n-e-1"/.exec(svg)?.[1])
-    expect(firstNoteY).toBeLessThan(40)
-  })
-
-  it('does not reserve lyric space below a lyric-free continuous score', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('N: 1 1 5 5 | 6 6 5^ | 4 4 3 3 | 2 2 1^ |||'),
-      { paged: false, width: 800 },
-    )
-
-    expect(Number(/<svg width="800" height="(\d+)"/.exec(svg)?.[1])).toBeLessThan(170)
-  })
-
-  it('maps M3N grace-note postfixes onto a leading numbered-notation grace group', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('{2/4}\nN: 1{ac(7e)} 2{ap((3d5d))} |||'),
-      { paged: false, width: 1000 },
-    )
-
-    expect(svg).toContain('xlink:href="#yiyin_shuzi_7"')
-    expect(svg).toContain('xlink:href="#yiyin_shuzi_3"')
-    expect(svg).toContain('xlink:href="#yiyin_shuzi_5"')
-    expect(svg).toContain('x1="-3" y1="-3.7" x2="10" y2="-3.7" stroke-width="0.9"')
-    expect(svg).toContain('x1="-3" y1="-1.8" x2="10" y2="-1.8" stroke-width="0.9"')
-    // Grace groups precede the main note (前装饰音): the leading tail glyph
-    // is used and the following-note tail is not.
-    expect(svg).toContain('xlink:href="#yiyinxian_qian"')
-    expect(svg).not.toContain('xlink:href="#yiyinxian_hou"')
-  })
-
-  it('does not render the parser placeholder after a final barline', () => {
-    const [svg] = renderScore(parseM3NDocument('{2/4}\nN: 1 2 |||'), { paged: false, width: 1000 })
-
-    expect(svg.match(/code="\|j"/g)).toHaveLength(1)
-  })
-
-  it('keeps both sides of a repeat boundary without an empty measure', () => {
-    const [svg] = renderScore(parseM3NDocument('{2/4}\nN: ||: 1 2 :|| |||'), { paged: false, width: 1000 })
-
-    expect(svg.match(/code="\|z"/g)).toHaveLength(1)
-    expect(svg.match(/code="\|y"/g)).toHaveLength(1)
-    expect(svg.match(/code="\|j"/g)).toHaveLength(1)
-  })
-
-  it('merges a plain barline before a forward repeat into one repeat-start', () => {
-    const [svg] = renderScore(parseM3NDocument('{2/4}\nN: 1 2 | ||: 3 4 |||'), { paged: false, width: 1000 })
-
-    expect(svg.match(/code="\|z"/g)).toHaveLength(1)
-    expect(svg.match(/code="\|"/g) ?? []).toHaveLength(0)
-  })
-
-  it('merges a repeat end and following repeat start into repeat-both', () => {
-    const document = parseM3NDocument('{2/4}\nN: ||: 1 2 | 3 4 |||')
-    const measures = document.parts.get('score')!.melody
-    measures[0]!.right = 'rptend'
-    measures[1]!.left = 'rptstart'
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg.match(/code="\|l"/g) ?? []).toHaveLength(1)
-    expect(svg.match(/code="\|y"/g) ?? []).toHaveLength(0)
-    expect(svg.match(/code="\|z"/g) ?? []).toHaveLength(1)
-  })
-
-  it('measures natural numbered notation width before fitting, so long scores form multiple systems', () => {
-    const source = `{4/4}\nN: ${Array.from({ length: 48 }, () => '1 2 3 4 |').join(' ')} |||`
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-    const systems = new Set([...svg.matchAll(/notepos="0_(\d+)_/g)].map((match) => match[1]))
-
-    expect(systems.size).toBeGreaterThan(1)
-  })
-
-  it('wraps the Lao Nan Hai corpus score into multiple numbered notation systems', () => {
-    const source = readFileSync(new URL('../../../src/scores/lao_nan_hai_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-    const systems = new Set([...svg.matchAll(/notepos="0_(\d+)_/g)].map((match) => match[1]))
-
-    expect(systems.size).toBeGreaterThan(1)
-  })
-
-  it('reflows systems when the configured page width changes', () => {
-    const source = `{4/4}\nN: ${Array.from({ length: 24 }, () => '1 2 3 4 |').join(' ')} |||`
-    const document = parseM3NDocument(source)
-    const systemsAt = (width: number) => {
-      const [svg] = renderScore(document, { paged: false, width })
-      return new Set([...svg.matchAll(/notepos="0_(\d+)_/g)].map((match) => match[1])).size
-    }
-
-    expect(systemsAt(480)).toBeGreaterThan(systemsAt(1000))
-  })
-
-  it('projects ScoreMeasure endings as numbered notation volta brackets', () => {
-    const document = parseM3NDocument('{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toContain('>1.</text>')
-    const captionIndex = svg.indexOf('>1.</text>')
-    const bracket = svg.slice(Math.max(0, captionIndex - 500), captionIndex)
-    expect(bracket).toContain('<line x1=')
-    expect(svg).toContain('xlink:href="#xiaojiexian"')
-  })
-
-  it('anchors lyrics on the first note of a tied chain', () => {
-    const document = parseM3NDocument('{2/4}\nN: 1~ 1 | 2 3 |||\nL: 春 | 天')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toMatch(/cipos="0_1_1"[^>]*>春<\/text>/)
-    expect(svg).not.toContain('cipos="0_1_2">春</text>')
-  })
-
-  it('keeps a missing first verse from lighting up the second verse during playback', () => {
-    const document = parseM3NDocument('{4/4}\nN: 1 2 3 | 1 2 3 |||\nL1: 春 天 | 来 了\nL2: 春 天 好 | 来 了 啊')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const renditions = [...svg.matchAll(/data-m3n-id="m3n-e-5"[^>]*data-m3n-rendition="(\d+)"[^>]*>([^<]*)<\/text>/g)]
-      .map((match) => ({ rendition: Number(match[1]), text: match[2] }))
-
-    expect(renditions.some(({ rendition, text }) => rendition === 1 && text === '')).toBe(true)
-    expect(renditions.some(({ rendition, text }) => rendition === 2 && text === '了')).toBe(true)
-  })
-
-  it('tags repeated-section lyrics with their playback passes', () => {
-    const source = readFileSync(new URL('../../../src/scores/huang_hun_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1100 })
-    const verseTwo = [...svg.matchAll(/data-m3n-id="m3n-e-60"[^>]*data-m3n-passes="([^"]+)"[^>]*>([^<]*)<\/text>/g)]
-      .map((match) => ({ passes: match[1], text: match[2] }))
-    const verseThree = [...svg.matchAll(/<text[^>]*data-m3n-id="m3n-e-83"[^>]*>([^<]*)<\/text>/g)]
-      .map((match) => ({
-        passes: /data-m3n-passes="([^"]+)"/.exec(match[0])?.[1] ?? '',
-        rendition: Number(/data-m3n-rendition="(\d+)"/.exec(match[0])?.[1]),
-        text: match[1],
-      }))
-
-    expect(verseTwo).toEqual([{ passes: '1-2', text: '感' }])
-    expect(verseThree).toEqual([
-      { passes: '1-3', rendition: 1, text: '依' },
-      { passes: '2', rendition: 2, text: '依' },
-    ])
-  })
-
-  it('annotates explicitly shared lyric rows without annotating ordinary verses', () => {
-    const source = '{2/4}\nN: 1 2 |||\nL1: 甲乙\nL2: 丙丁\nL4: {L2}'
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-
-    expect(svg).toContain('>2.4.</text>')
-    expect(svg).not.toContain('>1.2.</text>')
-    expect((svg.match(/>2\.4\.<\/text>/g) ?? [])).toHaveLength(1)
-  })
-
-  it('spans a crescendo across the sustain symbols of a long note', () => {
-    const document = parseM3NDocument('{4/4}\nN: {cresc}1^^{/} 2 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const spans = [...svg.matchAll(/<line x1="([\d.]+)" y1="[\d.-]+" x2="([\d.]+)" y2="[\d.-]+" stroke-width="1" stroke="#1b1b1b" fill="none"><\/line>/g)]
-      .map((match) => Number(match[2]) - Number(match[1]))
-
-    expect(spans.some((span) => span > 60)).toBe(true)
-  })
-
-  it('does not let placeholder lyrics consume tied continuations', () => {
-    const document = parseM3NDocument('{4/4}\nN: 1~ 1 2 3 |||\nL: 春 % 天')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toMatch(/cipos="0_1_1"[^>]*>春<\/text>/)
-    expect(svg).toMatch(/cipos="0_1_4"[^>]*>天<\/text>/)
-  })
-
-  it('renders every complete beat after a long note as an numbered notation sustain glyph', () => {
+  it('reports unsupported marks instead of silently discarding them', () => {
     const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 |||')
-    const first = document.parts.get('score')?.melody[0]?.events[0]
-    if (first) first.beats = 2
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toContain('xlink:href="#yanyinfu"')
-    expect(svg).toContain('code="-"')
-    expect(svg).toMatch(/xlink:href="#yanyinfu"[^>]*data-m3n-id="m3n-e-1"/)
-    expect(svg).toContain('height="2.5" width="11" y="48.75"')
+    document.parts.values().next().value!.melody[0]!.events[0]!.postfixes.push('unknown')
+    expect(render(document).score.diagnostics.some(item => item.code === 'NUMBERED_UNSUPPORTED_MARK')).toBe(true)
   })
 
-  it('leaves one stroke-width of space between stacked duration underlines', () => {
-    const document = parseM3NDocument('{4/4}\nN: 1 2 |||')
-    const first = document.parts.get('score')?.melody[0]?.events[0]
-    if (first) first.beats = 0.25
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const underlineYs = [...svg.matchAll(/<line[^>]*y1="([\d.]+)"[^>]*data-type="jianshixian"/g)]
-      .map((match) => Number(match[1]))
-
-    expect(underlineYs).toHaveLength(2)
-    expect(underlineYs[1]! - underlineYs[0]!).toBeCloseTo(3.2)
-  })
-
-  it('keeps one unit of clearance between lower octave dots and duration underlines', () => {
-    const document = parseM3NDocument('{4/4}\nN: 1dd 2 |||')
-    const first = document.parts.get('score')?.melody[0]?.events[0]
-    if (first) first.beats = 0.5
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const octaveDots = [...svg.matchAll(/<circle cx="[\d.]+" cy="([\d.]+)" r="1.52"/g)]
-      .map((match) => Number(match[1]))
-    const underlineY = Number(/<line[^>]*y1="([\d.]+)"[^>]*data-type="jianshixian"/.exec(svg)?.[1])
-
-    expect(octaveDots).toHaveLength(2)
-    expect(octaveDots[1]! - octaveDots[0]!).toBeCloseTo(4.04)
-    expect(octaveDots[0]! - 1.52 - (underlineY + 0.8)).toBeCloseTo(1)
-  })
-
-  it('keeps all simultaneous chord pitches as vertically stacked numbered notation glyphs', () => {
-    const document = parseM3NDocument('{2/4}\nN: [1d 3d 5d:h] 0 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toContain('xlink:href="#shuzi_b_bian_1"')
-    expect(svg).toContain('xlink:href="#shuzi_b_bian_3"')
-    expect(svg).toContain('xlink:href="#shuzi_b_bian_5"')
-    expect(svg).toContain('data-m3n-id="m3n-e-1"')
-    expect(svg.match(/data-m3n-id="m3n-e-1"/g)).toHaveLength(3)
-    const pitches = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_bian_[135]"/g)]
-      .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }))
-    const ys = pitches.map(({ y }) => y)
-    expect(new Set(ys).size).toBe(3)
-    expect(ys[0]! - ys[1]!).toBeCloseTo(22)
-    expect(ys[1]! - ys[2]!).toBeCloseTo(22)
-    expect((ys[0]! + ys[2]!) / 2).toBeCloseTo(ys[1]!)
-    const lowOctaveDots = [...svg.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="1.52"/g)]
-      .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }))
-    pitches.forEach((pitch) => {
-      expect(lowOctaveDots.some((dot) => Math.abs(dot.x - pitch.x) < 1e-6 && Math.abs(dot.y - (pitch.y + 10.88)) < 1e-6)).toBe(true)
-    })
-  })
-
-  it('raises slurs above chord stacks and their upper octave dots', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('{4/4}\nN: {lg}[1e 3ee 5e:h] 2{/} |||'),
-      { paged: false, width: 1000 },
-    )
-    const slurTop = Number(/<path d="M [\d.]+,([\d.]+) C/.exec(svg)?.[1])
-    const octaveDotYs = [...svg.matchAll(/<circle cx="[\d.]+" cy="([\d.]+)" r="1.52"/g)]
-      .map((match) => Number(match[1]))
-
-    expect(octaveDotYs).not.toHaveLength(0)
-    expect(slurTop).toBeLessThan(Math.min(...octaveDotYs) - 4)
-  })
-
-  it('expands ScoreDocument tuplets into compact numbered notation note groups', () => {
-    const document = parseM3NDocument('{4/4}\nN: [123:2] 4 5 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-    const notes = [...svg.matchAll(/<use x="([\d.]+)" y="([\d.]+)" xlink:href="#shuzi_b_bian_([123])"[^>]*data-m3n-id="m3n-e-1"/g)]
-
-    expect(Number(notes[1]?.[1]) - Number(notes[0]?.[1])).toBe(15)
-    expect(Number(notes[2]?.[1]) - Number(notes[1]?.[1])).toBe(15)
-    expect(new Set(notes.map((match) => match[2]))).toHaveLength(1)
-    expect(svg).toContain('xlink:href="#lianyin_shuzi_3"')
-  })
-
-  it('aligns each tuplet note with its own lyric syllable', () => {
-    const document = parseM3NDocument('{4/4}\nN: [123:2] 4 |||\nL: 一 二 三 四')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toMatch(/cipos="0_1_1"[^>]*>一<\/text>/)
-    expect(svg).toMatch(/cipos="0_1_2"[^>]*>二<\/text>/)
-    expect(svg).toMatch(/cipos="0_1_3"[^>]*>三<\/text>/)
-    expect(svg).toMatch(/cipos="0_1_4"[^>]*>四<\/text>/)
-    expect(svg).toMatch(/data-m3n-role="lyric"[^>]*>一<\/text>/)
-  })
-
-  it('uses MEI playback IDs for every voice and tuplet child', () => {
-    const document = parseM3NDocument('{2/4}\nN: [123:2] 4 | 5 6 |||\nB: 1 2 | 3 4 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toContain('id="m3n-e-1-n1"')
-    expect(svg).toContain('id="m3n-e-1-n3"')
-    expect(svg).toContain('id="m3n-e-4"')
-    expect(svg).toContain('id="m3n-e-5"')
-  })
-
-  it('uses the compact tempo glyph and the staff-score credit priority', () => {
-    const document = parseM3NDocument('{title=测试曲} {subtitle=副标题} {singer=演唱者} {composer=作曲者} {lyricist=作词者} {4/4} {90qpm}\nN: 1 2 3 4 |||')
-    const [svg] = renderScore(document, { paged: true, width: 1000 })
-
-    expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
-    expect(svg).toMatch(/font-size="16"[^>]*>副标题<\/text>/)
-    expect(svg).toMatch(/font-size="14"[^>]*>演唱者<\/text>/)
-    expect(svg).toContain('data-jiepai="90"')
-    expect(svg).toContain('>演唱者</text>')
-    expect(svg).not.toContain('>作曲者</text>')
-    expect(svg).not.toContain('>作词者</text>')
-  })
-
-  it('renders an in-line key change at its musical position', () => {
-    const document = parseM3NDocument('{key=A} {2/4}\nN: 1 | {key=Bb} 2 3 |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg).toContain('>B</text>')
-    expect(svg).toContain('>b</text>')
-  })
-
-  it('renders meter changes on the preceding barline', () => {
-    const source = '{4/4}\nN: 1 2 3 4 | {3/4} 1 2 3 |||'
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-
-    expect(svg).toContain('xlink:href="#linshi_paihao_shuzi_3"')
-  })
-
-  it('uses Verovio’s metNoteQuarterUp glyph when its music font is supplied', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('{title=测试曲} {4/4} {90qpm}\nN: 1 2 3 4 |||'),
-      { paged: true, width: 1000, musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }' },
-    )
-
-    expect(svg).toContain('@font-face { font-family: Leipzig; src: url(test); }')
-    expect(svg).toContain('font-family="Leipzig" font-size="30.24">&#xECA5;</text>')
-    expect(svg).not.toContain('xlink:href="#jiepaifu"')
-  })
-
-  it('uses compact accidental glyphs and Leipzig dynamics when its music font is supplied', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('{title=测试曲} {4/4}\n{mf} 1# 2b 3= 4 |||'),
-      { paged: true, width: 1000, musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }' },
-    )
-
-    expect(svg).toContain('xlink:href="#bianyinfu_sheng"')
-    expect(svg).toContain('xlink:href="#bianyinfu_jiang"')
-    expect(svg).toContain('xlink:href="#bianyinfu_huanyuan"')
-    expect(svg).toContain('&#xE521;&#xE522;')
-    expect(svg).not.toContain('xlink:href="#lidu_mf"')
-  })
-
-  it('uses the staff-score header metrics for numbered notation metadata', () => {
-    const [svg] = renderScore(parseM3NDocument('{title=测试曲} {subtitle=副标题} {composer=作曲者} {key=D} {3/4}\nN: 1 2 3 4 |||'), { paged: true, width: 1000 })
-
-    expect(svg).toMatch(/x="500" y="60" dy="0"[^>]*font-size="32"[^>]*font-family="ui-serif, serif"[^>]*>测试曲<\/text>/)
-    expect(svg).toMatch(/x="500" y="95.2" dy="0"[^>]*font-size="16"[^>]*font-family="ui-serif, serif"[^>]*>副标题<\/text>/)
-    expect(svg).toMatch(/x="972" y="128.96" dy="0"[^>]*font-size="14"[^>]*font-family="system-ui, sans-serif"[^>]*>作曲者<\/text>/)
-    expect(svg).not.toContain('scale(0.8)')
-  })
-
-  it('keeps the flat sign in flat-key headers', () => {
-    const [svg] = renderScore(parseM3NDocument('{title=茉莉花} {composer=中国民歌} {key=Eb} {2/4} {96qpm}\nN: 3 5 6 1e |||'), { paged: true, width: 1000 })
-
-    expect(svg).toContain('>E</text>')
-    expect(svg).toContain('>b</text>')
-  })
-
-  it('aligns Xiao Xing Xing speed, header, and first note with the 800px staff score', () => {
-    const source = readFileSync(new URL('../../../src/scores/xiao_xing_xing_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })
-
-    expect(svg).toContain('x="400" y="60" dy="0"')
-    expect(svg).toContain('x="772" y="97.2" dy="0"')
-    expect(svg).toContain('x="162.4" y="107" dy="0"')
-    expect(svg).toContain('data-jiepai="100"')
-    expect(svg).toContain('font-family="Leipzig" font-size="30.24"')
-    expect(svg).toMatch(/y="151.2"[^>]*id="m3n-e-1"/)
-    expect(svg).toContain('>C</text>')
-    expect(svg).toContain('<rect x="100" y="100.3" width="16.8" height="1.4"')
-    expect(svg).toContain('x="108.4" y="94" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
-    expect(svg).toContain('x="108.4" y="118" dy="0" text-anchor="middle" fill="#1b1b1b" font-size="16" font-family="system-ui, sans-serif"')
-  })
-
-  it('keeps Turkish March dynamics above its octave notes and section labels', () => {
-    const source = readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), {
-      paged: false,
-      width: 800,
-      musicFontCss: '@font-face { font-family: Leipzig; src: url(test); }',
-    })
-    const noteY = Number(/<use x="[\d.]+" y="([\d.]+)" xlink:href="#shuzi_b_bian_7"[^>]*id="m3n-e-1"/.exec(svg)?.[1])
-    const dynamicY = Number(/<text x="[\d.]+" y="([\d.]+)" fill="#1b1b1b" font-family="Leipzig" font-size="22">&#xE520;<\/text>/.exec(svg)?.[1])
-
-    expect(noteY - dynamicY).toBeGreaterThanOrEqual(19)
-  })
-
-  it('renders a {br} repeat boundary without duplicating the following measure', () => {
-    const svg = renderScore(
-      parseM3NDocument('{2/4}\nN: ||: 1 2 | 3 4 | 5 6 | 7 1e :||{br}\n---\nN: ||: 2 3 | 4 5 | 6 7 | 1e 2 |||'),
-      { paged: true, width: 800 },
-    ).join('\n')
-    // The {br} sits after `:||`, so the next measure starts with `||:` and
-    // must appear in exactly one measure group. A leading repeat-start
-    // barline used to shift the segment's barline list by one, which made
-    // the balancing step emit that measure twice (each event id doubled).
-    const countOf = (id: string) => (svg.match(new RegExp(`data-m3n-id="${id}"`, 'g')) ?? []).length
-    expect(countOf('m3n-e-9')).toBe(1)
-    expect(countOf('m3n-e-10')).toBe(1)
-  })
-
-  it('paginates by the rendered lyric rows so Guang Yin De Gu Shi lyrics remain visible', () => {
-    const source = readFileSync(new URL('../../../src/scores/guang_yin_de_gu_shi_01.m3n', import.meta.url), 'utf8')
-    const pages = renderScore(parseM3NDocument(source), { paged: true, width: 1000 })
-
-    expect(pages.length).toBeGreaterThan(0)
-    pages.forEach((svg) => {
-      const lyricYs = [...svg.matchAll(/<text x="[^"]+" y="([\d.]+)"[^>]*cipos=/g)].map((match) => Number(match[1]))
-      expect(Math.max(...lyricYs)).toBeLessThanOrEqual(1335)
-    })
-  })
-
-  it('justifies an automatically wrapped Hong He Gu first system at 930 width', () => {
-    const source = readFileSync(new URL('../../../src/scores/hong_he_gu_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: true, width: 930 })
-
-    expect(svg).toMatch(/<use x="[\d.]+" y="[\d.]+" xlink:href="#xiaojiexian"/)
-  })
-
-  it('balances Xiao Xing Xing into two six-measure systems at 1100 width', () => {
-    const source = readFileSync(new URL('../../../src/scores/xiao_xing_xing_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1100 })
-    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
-    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
-
-    expect(systemStarts).toEqual([0, 6])
-  })
-
-  it('never leaves an incomplete line in the middle of the document', () => {
-    const source = readFileSync(new URL('../../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
-    const ends = [...svg.matchAll(/data-m3n-measure-end="([\d.]+)"/g)].map((match) => Number(match[1]))
-    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
-    const fullWidth = ends[systemStarts[1]! - 1] ?? ends[0]!
-
-    systemStarts.forEach((systemStart, index) => {
-      if (index === systemStarts.length - 1) return
-      const next = systemStarts[index + 1] ?? starts.length
-      const systemEnd = ends[next - 1]!
-      expect(systemEnd).toBeCloseTo(fullWidth, 3)
-      expect(next - systemStart).toBeGreaterThanOrEqual(2)
-    })
-  })
-
-  it('splits a segment evenly by natural width and justifies every line', () => {
-    // Three wide measures followed by a narrow rest: the segment width calls
-    // for two lines, and the measures split 2+2 so each line carries an even
-    // share of the natural width. Both lines then stretch across the page.
-    const wide = '1 2 3 4 5 6 1 2 3 4 5 6 1'
-    const source = `{4/4}\nN: ${wide} | ${wide} | ${wide} | 0 |||`
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1100 })
-    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
-    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
-    const ends = [...svg.matchAll(/data-m3n-measure-end="([\d.]+)"/g)].map((match) => Number(match[1]))
-
-    expect(systemStarts).toEqual([0, 2])
-    const fullWidth = ends[systemStarts[1]! - 1]!
-    expect(Math.max(...ends)).toBeCloseTo(fullWidth, 3)
-    expect(fullWidth).toBeCloseTo(1053.8, 3)
-  })
-
-  it('keeps each {br} segment independent and balances it on its own width', () => {
-    const source = `{4/4}\nN: ${Array.from({ length: 20 }, () => '1 2 3 4 |').join(' ')} {br} 5 6 7 1e |||`
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
-    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
-    const ends = [...svg.matchAll(/data-m3n-measure-end="([\d.]+)"/g)].map((match) => Number(match[1]))
-    const fullWidth = ends[systemStarts[1]! - 1]!
-
-    // The {br} boundary always starts a fresh system. Lines inside a segment
-    // are split by width, so their measure counts differ by at most one, and
-    // every line before the final segment stretches across the page.
-    expect(systemStarts).toContain(20)
-    const segmentSizes = [...systemStarts.slice(1), starts.length].map(
-      (end, index) => end - systemStarts[index]!,
-    )
-    expect(Math.max(...segmentSizes.slice(0, -1)) - Math.min(...segmentSizes.slice(0, -1))).toBeLessThanOrEqual(1)
-    systemStarts.slice(0, -1).forEach((systemStart, index) => {
-      const next = systemStarts[index + 1] ?? starts.length
-      expect(ends[next - 1]!).toBeCloseTo(fullWidth, 3)
-    })
-    // The final one-measure segment stays at its natural width.
-    expect(Math.max(...ends.slice(systemStarts.at(-1)!))).toBeLessThan(953.8)
-  })
-
-  it('starts a new system at each named === section', () => {
-    const [svg] = renderScore(
-      parseM3NDocument('{4/4}\n===A\nN: 1 2 3 4 | 5 6 7 1e |\n===B\nN: 2 3 4 5 | 6 7 1e 2 |||'),
-      { paged: false, width: 1000 },
-    )
-    const starts = [...svg.matchAll(/data-m3n-measure-start="([\d.]+)"/g)].map((match) => Number(match[1]))
-    const systemStarts = starts.flatMap((start, index) => Math.abs(start - 49.8) < 0.001 ? [index] : [])
-
-    expect(systemStarts).toEqual([0, 2])
-  })
-
-  it('combines contiguous M3N legato intervals into one numbered notation line', () => {
-    const document = parseM3NDocument('{4/4}\nN: {lg}1 2 3 4{/}{lg}5 6 7 1e{/} |||')
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg.match(/xlink:href="#lianyinxian_zuo"/g)).toHaveLength(1)
-  })
-
-  it('starts a volta at the system edge when its first measure starts a new system', () => {
-    const source = readFileSync(new URL('../../../src/scores/qian_si_xi_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-
-    expect(svg).toMatch(/<use x="[\d.]+" y="[^"]+" xlink:href="#xiaojiexian"[^>]*code="\|"/)
-    expect(svg).toMatch(/<line x1="[\d.]+" y1="[^"]+" x2="[\d.]+" y2="[^"]+"/)
-  })
-
-  it('continues a cross-system volta without repeating its house number', () => {
-    const document = parseM3NDocument('{2/4}\nN: 1 2 | 3 4 |||')
-    const melody = document.parts.get('score')?.melody
-    if (!melody) throw new Error('Expected melody')
-    melody.forEach((measure) => { measure.ending = '1' })
-    melody[0]!.breakAfter = true
-    const [svg] = renderScore(document, { paged: false, width: 1000 })
-
-    expect(svg.match(/>1\.<\/text>/g)).toHaveLength(1)
-  })
-
-  it('gives Tong Hua Zhen a continuous page tall enough for its final lyric system', () => {
-    const source = readFileSync(new URL('../../../src/scores/tong_hua_zhen_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 1000 })
-    const height = Number(/<svg width="1000" height="([\d.]+)"/.exec(svg)?.[1])
-    const lyricYs = [...svg.matchAll(/<text x="[^"]+" y="([\d.]+)"[^>]*cipos=/g)].map((match) => Number(match[1]))
-
-    expect(Math.max(...lyricYs)).toBeLessThan(height - 32)
-  })
-
-  it('uses the first lyric row for generic L: after numbered lyric passes', () => {
-    const source = readFileSync(new URL('../../../src/scores/zhi_yao_ping_fan_01.m3n', import.meta.url), 'utf8')
-    const [svg] = renderScore(parseM3NDocument(source), { paged: false, width: 800 })
-    const lyricYsBySystem = new Map<string, Set<string>>()
-    for (const match of svg.matchAll(/<text x="[^"]+" y="([^"]+)"[^>]*cipos="0_(\d+)_\d+"[^>]*>[^<]*<\/text>/g)) {
-      const rows = lyricYsBySystem.get(match[2] ?? '') ?? new Set<string>()
-      rows.add(match[1] ?? '')
-      lyricYsBySystem.set(match[2] ?? '', rows)
+  it('renders the entire built-in score corpus with every musical event preserved', () => {
+    for (const file of readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n'))) {
+      const source = readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')
+      const document = parseM3NDocument(source)
+      const score = NumberedNotationScore.create(document)
+      const expectedDuration = [...document.parts.values()].reduce((sum, part) => sum + Math.max(...[part.melody, part.bass].map(measures => measures.reduce((sum, measure) => sum + (measure.multiRest ?? 0) * document.meterCount * 4 / document.meterUnit + measure.events.reduce((sum, event) => sum + event.beats, 0), 0))), 0)
+      expect(geometry(document).lowering.duration.toNumber(), file).toBeCloseTo(expectedDuration)
+      for (const settings of [{ width: 800, paged: false }, { width: 320, paged: true }]) {
+        const pages = score.render(settings)
+        const markup = pages.join('')
+        expect(pages.length, file).toBeGreaterThan(0)
+        expect(markup, file).not.toMatch(/(?:NaN|Infinity)/)
+        for (const id of scoreEventIds(document).values()) expect(markup, `${file}: ${id}`).toContain(`data-m3n-id="${id}"`)
+        const ids = [...markup.matchAll(/\sid="([^"]+)"/g)].map(match => match[1])
+        expect(new Set(ids).size, file).toBe(ids.length)
+        expect(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')), file).toEqual([])
+      }
     }
-
-    expect(Math.max(...[...lyricYsBySystem.values()].map((rows) => rows.size))).toBe(3)
-    expect(svg).toContain('data-m3n-rendition="1"')
-    expect(svg).toContain('data-m3n-rendition="2"')
-    expect(svg).toContain('data-m3n-rendition="3"')
-    expect(svg).toMatch(/<text x="82"[^>]*>F<\/text>[\s\S]*?<text x="75"[^>]*>#<\/text>/)
-  })
+  }, 30000)
 })

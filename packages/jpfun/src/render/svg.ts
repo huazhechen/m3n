@@ -1,9 +1,13 @@
+// M3N modification: configurable semantic SVG attributes; engraving remains upstream.
 import type { DocumentLayoutResult } from "../layout/engine.js";
+import type { VisualTemporalNode } from '../functions/temporal.js';
 import { layoutPageBounds, paintLayoutPages } from "./paint.js";
 import { DEFAULT_TEXT_FONT } from "./text.js";
 import type { PaintStyle, Painter, PathCommand, PathTransform, TextStyle } from "./types.js";
 
 export interface SvgRenderOptions {
+    objectAttributes?: (node: VisualTemporalNode) => Readonly<Record<string, string>> | undefined;
+    textAttributes?: (style: TextStyle) => Readonly<Record<string, string>> | undefined;
     padding?: number;       // viewBox 四周额外保留的空间
     background?: string;    // 可选背景颜色，默认透明
 }
@@ -76,8 +80,26 @@ function opacityAttribute(style?: PaintStyle): string {
 /** 生成独立 SVG 字符串的 Painter；路径直接输出最终坐标 */
 export class SvgPainter implements Painter {
     private body: string[] = [];
+    private grouped = false;
+    constructor(private readonly options: SvgRenderOptions = {}) {}
+    beginObject(node: VisualTemporalNode) {
+        const attrs = this.options.objectAttributes?.(node);
+        this.grouped = attrs !== undefined;
+        if (attrs) this.body.push(`<g${this.attributes(attrs)}>`);
+    }
+    endObject() {
+        if (this.grouped) this.body.push('</g>');
+        this.grouped = false;
+    }
+    private attributes(attrs: Readonly<Record<string, string>>) {
+        return Object.entries(attrs).map(([name, value]) => {
+            if (!/^[a-zA-Z_][a-zA-Z0-9_.:-]*$/.test(name) || /^on/i.test(name)) throw new Error(`Invalid SVG attribute: ${name}`);
+            return ` ${name}="${escapeXml(value)}"`;
+        }).join('');
+    }
 
     drawText(text: string, x: number, y: number, style: TextStyle) {
+        const semantic = this.options.textAttributes?.(style);
         const family = style.fontFamily ?? DEFAULT_TEXT_FONT;
         const weight = style.fontWeight ?? "normal";
         const fill = style.fill ?? "#000";
@@ -85,7 +107,7 @@ export class SvgPainter implements Painter {
             ? "middle"
             : style.textAlign === "right" ? "end" : "start";
         this.body.push(
-            `<text x="${number(x)}" y="${number(y)}" `
+            `<text${semantic ? this.attributes(semantic) : ''} x="${number(x)}" y="${number(y)}" `
             + `font-family="${escapeXml(family)}" font-size="${number(style.fontSize)}" `
             + `font-weight="${escapeXml(String(weight))}" text-anchor="${textAnchor}" `
             + `fill="${escapeXml(fill)}" xml:space="preserve"`
@@ -167,7 +189,7 @@ export function renderLayoutPagesToSvg(
     options: SvgRenderOptions = {},
 ): string[] {
     const bounds = layoutPageBounds(result);
-    const painters = bounds.map(() => new SvgPainter());
+    const painters = bounds.map(() => new SvgPainter(options));
     paintLayoutPages(result, painters);
     return painters.map((painter, index) => painter.toSvg(bounds[index], options));
 }

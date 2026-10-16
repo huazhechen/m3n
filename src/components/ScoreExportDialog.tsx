@@ -1,3 +1,4 @@
+import type { VerovioScore } from '@m3n/score-renderer'
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
 import {
@@ -12,10 +13,9 @@ import {
   stackScoreCanvases,
   wrapScorePagesIntoSheets,
   avoidLabelCollisions,
-  type VerovioScore,
-} from '@m3n/score-renderer'
+} from '@m3n/score-renderer/view'
 
-type ExportFormat = 'png' | 'pdf'
+type ExportFormat = 'png' | 'pdf' | 'svg'
 
 type ScoreExportDialogProps = {
   mei: string
@@ -33,17 +33,13 @@ export type ScoreExportDialogRef = {
 }
 
 async function createVerovioScore(mei: string) {
-  const { VerovioScore } = await import('@m3n/score-renderer')
+  const { VerovioScore } = await import('@m3n/score-renderer/verovio')
   return VerovioScore.create(mei)
 }
 
 function cloneScorePages(paper: HTMLElement) {
   return [...paper.querySelectorAll<SVGSVGElement>(':scope > svg')]
     .map((svg) => svg.cloneNode(true) as SVGSVGElement)
-}
-
-function musicFontCss(svg: string) {
-  return /@font-face\s*\{[\s\S]*?\}/.exec(svg)?.[0]
 }
 
 function pdfNotationPageHeight(width: number, headerMetadata: readonly ScoreHeaderMetadata[]) {
@@ -62,6 +58,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     useImperativeHandle(ref, () => ({
       open() {
         setIncludeBass(hasBassStaff)
+        if (!numberedNotation && format === 'svg') setFormat('pdf')
         setIsOpen(true)
         dialogRef.current?.showModal()
       },
@@ -72,40 +69,33 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       if (!isOpen || !preview) return
       let cancelled = false
       preview.innerHTML = ''
-      void createVerovioScore(mei).then((score) => {
-        if (!cancelled) {
+      void (async () => {
+        let score: VerovioScore | undefined
+        try {
           if (numberedNotation && scoreDocument) {
-            void import('@m3n/numbered-notation').then(({ NumberedNotationScore }) => {
-              if (cancelled) return
-              const numberedWidth = Math.max(320, width)
-              score.prepareLayout({ width: numberedWidth, scale: 42 })
-              preview.innerHTML = NumberedNotationScore.create(scoreDocument).render({
-                paged: format === 'pdf',
-                width: numberedWidth,
-                musicFontCss: musicFontCss(score.renderPage(1)),
-              }).join('')
-              if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
-            }).catch((error: unknown) => {
-              if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
-            }).finally(() => score.destroy())
-            return
+            const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
+            await prepareNumberedNotationFonts()
+            if (cancelled) return
+            preview.innerHTML = NumberedNotationScore.create(scoreDocument).render({
+              paged: format === 'pdf', width: Math.max(320, width), includeBass,
+            }).join('')
+          } else {
+            score = await createVerovioScore(mei)
+            if (cancelled) return
+            preview.innerHTML = score.layout({
+              width: Math.max(320, width),
+              pageHeight: format === 'pdf' ? pdfNotationPageHeight(width, headerMetadata) : undefined,
+              scale: 42, includeBass: includeBass || !hasBassStaff,
+            })
+            addScoreHeaderToPaper(preview, headerMetadata)
+            resolveLyricCollisions(preview)
+            avoidLabelCollisions(preview)
           }
-          preview.innerHTML = score.layout({
-            width: Math.max(320, width),
-            pageHeight: format === 'pdf' ? pdfNotationPageHeight(width, headerMetadata) : undefined,
-            scale: 42,
-            includeBass: includeBass || !hasBassStaff,
-          })
-          addScoreHeaderToPaper(preview, headerMetadata)
-          resolveLyricCollisions(preview)
-          avoidLabelCollisions(preview)
           if (format === 'pdf') wrapScorePagesIntoSheets(preview, 'export-preview-page')
-          score.destroy()
-        }
-        if (cancelled) score.destroy()
-      }).catch((error: unknown) => {
-        if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
-      })
+        } catch (error) {
+          if (!cancelled) onError(error instanceof Error ? error.message : '打印预览失败。')
+        } finally { score?.destroy() }
+      })()
       return () => { cancelled = true }
     }, [format, hasBassStaff, headerMetadata, includeBass, isOpen, mei, numberedNotation, onError, scoreDocument, width])
 
@@ -119,16 +109,16 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           throw new Error('导出宽度需介于 320 和 8000 像素之间。')
         }
         const exportPaper = document.createElement('div')
-        score = await createVerovioScore(mei)
         if (numberedNotation && scoreDocument) {
-          const { NumberedNotationScore } = await import('@m3n/numbered-notation')
-          score.prepareLayout({ width: targetWidth, scale: 42 })
+          const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
+          await prepareNumberedNotationFonts()
           exportPaper.innerHTML = NumberedNotationScore.create(scoreDocument).render({
             paged: format === 'pdf',
             width: targetWidth,
-            musicFontCss: musicFontCss(score.renderPage(1)),
+            includeBass,
           }).join('')
         } else {
+          score = await createVerovioScore(mei)
           exportPaper.innerHTML = score.layout({
             width: targetWidth,
             pageHeight: format === 'pdf' ? pdfNotationPageHeight(targetWidth, headerMetadata) : undefined,
@@ -151,11 +141,17 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         }
         if (svgs.length === 0) throw new Error(`当前没有可导出的${numberedNotation && scoreDocument ? '简谱' : '五线谱'}。`)
 
+        const fileName = scoreFileName(title)
+        if (format === 'svg') {
+          const svg = new XMLSerializer().serializeToString(svgs[0])
+          downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), `${fileName}.svg`)
+          dialogRef.current?.close()
+          return
+        }
         const canvases: HTMLCanvasElement[] = []
         const pixelRatio = format === 'png' ? 2 : 1
         for (const svg of svgs) canvases.push(await renderScoreCanvas(svg, targetWidth, pixelRatio))
 
-        const fileName = scoreFileName(title)
         if (format === 'png') {
           const canvas = stackScoreCanvases(canvases)
           const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
@@ -185,7 +181,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     return (
       <dialog ref={dialogRef} className="export-dialog" onClose={() => setIsOpen(false)}>
         <form onSubmit={(event) => { event.preventDefault(); void exportScore() }}>
-          <div className="export-header"><h2>打印{numberedNotation && scoreDocument ? '简谱' : '五线谱'}</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm' : 'PNG 连续图片'}</span></div>
+          <div className="export-header"><h2>打印{numberedNotation && scoreDocument ? '简谱' : '五线谱'}</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm' : format === 'svg' ? 'SVG 矢量图片' : 'PNG 连续图片'}</span></div>
           <div className="export-content">
             <div className="export-settings">
               <p className="export-width-summary">乐谱宽度 <output>{width}px</output></p>
@@ -193,6 +189,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
                 <legend>格式</legend>
                 <label><input type="radio" name="export-format" checked={format === 'pdf'} onChange={() => setFormat('pdf')} />PDF（A4 分页）</label>
                 <label><input type="radio" name="export-format" checked={format === 'png'} onChange={() => setFormat('png')} />PNG 图片（连续）</label>
+                {numberedNotation && <label><input type="radio" name="export-format" checked={format === 'svg'} onChange={() => setFormat('svg')} />SVG 矢量图（连续）</label>}
               </fieldset>
               {hasBassStaff && <fieldset><legend>低音谱表</legend><label><input type="checkbox" checked={includeBass} onChange={(event) => setIncludeBass(event.currentTarget.checked)} />包含低音谱表</label></fieldset>}
             </div>

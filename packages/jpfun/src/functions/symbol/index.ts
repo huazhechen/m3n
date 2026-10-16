@@ -1,3 +1,5 @@
+// M3N modification: register additional basic articulation symbols.
+import { articulationSymbols } from './symbols/articulations.js';
 import { ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import type { LayoutBox, LayoutPrepareContext, Rect } from "../../layout/types.js";
 import { DEFAULT_KEY, TemporalNodeBase, type TimeState } from "../temporal.js";
@@ -67,7 +69,7 @@ type SymbolPattern = NonNullable<SymbolDefinition["pattern"]>;
 const symbolTable = new Map<string, SymbolDefinition>();
 const symbolPatterns: SymbolPattern[] = [];
 for (const definition of [trSymbol, fermataSymbol, prallSymbol, mordentSymbol, accentSymbol,
-    ...dynamicSymbols, dcSymbol, dsSymbol, segnoSymbol, fineSymbol]) {
+    ...dynamicSymbols, ...articulationSymbols, dcSymbol, dsSymbol, segnoSymbol, fineSymbol]) {
     const name = definition.name.toLowerCase();
     if (symbolTable.has(name)) throw new Error(`Duplicate symbol name: ${definition.name}`);
     symbolTable.set(name, definition);

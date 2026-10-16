@@ -21,7 +21,7 @@ test('submit is simulated locally and opens the reader', async ({ page }) => {
   await page.getByLabel('M3N source').fill(source)
   await page.getByRole('button', { name: '提交' }).click()
 
-  await expect(page).toHaveURL(/\/scores\/[a-z0-9]+_[0-9]{13}/)
+  await expect(page).toHaveURL(/\/scores\/[a-z0-9_]+_[0-9]{13}/)
   await expect(page.locator('.score-reader svg').first()).toBeVisible({ timeout: 30_000 })
 })
 

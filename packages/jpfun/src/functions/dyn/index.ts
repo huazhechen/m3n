@@ -1,3 +1,4 @@
+// M3N modification: opt-in single-event hairpins reuse native geometry.
 import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import type { AttachmentLayoutContext, LayoutAttachment } from "../../layout/types.js";
 import type { LoweringContext } from "../../lowering/loweringContext.js";
@@ -41,6 +42,7 @@ class DynFunction extends ASTFunctionNode {
             { name: "from", description: "渐变起点的标签", type: "label" as const, default: null },
             { name: "to", description: "渐变终点的标签", type: "label" as const, default: null },
             { name: "dv", description: "力度变化量，正数渐强，负数渐弱", type: "number" as const, default: null },
+            { name: "single", description: "允许单音符短发夹", type: "boolean" as const, default: false },
         ],
     };
 
@@ -112,6 +114,7 @@ class DynFunction extends ASTFunctionNode {
     readonly to: ASTNodeBase;
     readonly dv: number;
     readonly size: number;
+    readonly single: boolean;
 
     override loweringEnter(ctx: LoweringContext) {
         const from = ctx.getTemporalNodes(this.from).at(0);
@@ -135,7 +138,7 @@ class DynFunction extends ASTFunctionNode {
                 this.sourceSpan,
             );
         }
-        if (fromHost.t.equals(toHost.t)) {
+        if (fromHost.t.equals(toHost.t) && !this.single) {
             throw new ErrorDiagnostic(
                 "E_DYN_ZERO_SPAN",
                 "@dyn 的两个端点必须位于不同时间",
@@ -153,7 +156,7 @@ class DynFunction extends ASTFunctionNode {
 
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
-        const [from, to, inputDv] = this.getArgValue(args, ctx) as [ASTNodeBase, ASTNodeBase, number];
+        const [from, to, inputDv, single] = this.getArgValue(args, ctx) as [ASTNodeBase, ASTNodeBase, number, boolean];
         let dv = inputDv;
         if (!Number.isFinite(dv) || dv === 0) {
             throw new ErrorDiagnostic(
@@ -173,12 +176,13 @@ class DynFunction extends ASTFunctionNode {
         this.from = from;
         this.to = to;
         this.dv = dv;
+        this.single = single;
         this.size = ctx.variables.fontsize;
     }
 
     override toString(source: string) {
         const name = (node: ASTNodeBase) => (node as ASTFunctionNode).label ?? node.toString(source);
-        return `@dyn(${name(this.from)}, ${name(this.to)}, ${this.dv})`;
+        return `@dyn(${name(this.from)}, ${name(this.to)}, ${this.dv}${this.single ? ", single=true" : ""})`;
     }
 }
 
