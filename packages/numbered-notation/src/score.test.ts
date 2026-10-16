@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { ASTFunctionNode, compileScore, getLayoutBounds, type VisualTemporalNode } from '@m3n/jpfun'
+import { ASTFunctionNode, compileScore, getLayoutBounds, isVisualTemporalNode, type VisualTemporalNode } from '@m3n/jpfun'
 import { m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
 import { NumberedNotationScore, type NumberedNotationRenderOptions } from './score.js'
 import { projectNumberedScore } from './projection.js'
@@ -231,6 +231,51 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.body.textContent).toContain('1.')
     expect(root.body.textContent).toContain('2.')
     expect(root.body.textContent).toContain('Fine')
+  })
+
+  it.each(['fine', 'dc', 'ds'])('places %s before the closing bar on the music axis without raising its volta', name => {
+    const source = `{2/4}\nN: ||: {segno}1 2 |\n---V1\nN: 3 4 {${name}} :||\n---V2\nN: 5 6 |||`
+    const { layout, lowering } = geometry(parseM3NDocument(source))
+    const symbol = [...lowering.astToTemporal.values()].flat().find(node => node.ast instanceof ASTFunctionNode
+      && (node.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === name)!
+    expect(isVisualTemporalNode(symbol)).toBe(true)
+    if (!isVisualTemporalNode(symbol)) return
+    const lastNote = layout.objects.filter(node => !node.T.isZero())[3]!
+    const bar = symbol.foldedInto as VisualTemporalNode
+    expect(symbol.box.y + symbol.box.visualAxis).toBeCloseTo(lastNote.box.y + lastNote.box.visualAxis)
+    expect(symbol.box.x).toBeGreaterThan(lastNote.box.x + lastNote.box.w)
+    expect(symbol.box.x + symbol.box.w).toBeLessThan(bar.box.x + bar.box.anchor)
+    const projection = projectNumberedScore(parseM3NDocument(source), options)
+    const house = layout.attachments.find(attachment => attachment.sourceSpan
+      && projection.source.slice(attachment.sourceSpan.start).startsWith('@volta('))!
+    const plain = geometry(parseM3NDocument(source.replace(`{${name}}`, '')))
+    const plainProjection = projectNumberedScore(parseM3NDocument(source.replace(`{${name}}`, '')), options)
+    const plainHouse = plain.layout.attachments.find(attachment => attachment.sourceSpan
+      && plainProjection.source.slice(attachment.sourceSpan.start).startsWith('@volta('))!
+    const plainNote = plain.layout.objects.filter(node => !node.T.isZero())[3]!
+    expect(lastNote.box.y + lastNote.box.visualAxis - house.box.y)
+      .toBeCloseTo(plainNote.box.y + plainNote.box.visualAxis - plainHouse.box.y)
+  })
+
+  it.each([320, 600, 800, 1000])('keeps Second Waltz navigation inline through wrapping and pagination at width %s', width => {
+    const document = parseM3NDocument(readFileSync(resolve(process.cwd(), '../../src/scores/second_waltz_01.m3n'), 'utf8'))
+    for (const paged of [false, true]) {
+      const { layout, lowering } = geometry(document, { width, paged })
+      const symbols = [...lowering.astToTemporal.values()].flat().filter(node => node.ast instanceof ASTFunctionNode
+        && ['fine', 'dc'].includes((node.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name ?? ''))
+      expect(symbols).toHaveLength(2)
+      for (const symbol of symbols) {
+        expect(isVisualTemporalNode(symbol)).toBe(true)
+        if (!isVisualTemporalNode(symbol)) continue
+        const bar = symbol.foldedInto as VisualTemporalNode
+        const previous = layout.objects.filter(node => node.track === bar.track && !node.T.isZero() && node.t.compare(bar.t) < 0).at(-1)!
+        expect(symbol.layoutLine).toBe(previous.layoutLine)
+        expect(symbol.box.y + symbol.box.visualAxis).toBeCloseTo(previous.box.y + previous.box.visualAxis)
+        expect(symbol.box.x).toBeGreaterThan(previous.box.x + previous.box.w)
+        expect(symbol.box.x + symbol.box.w).toBeLessThan(bar.box.x + bar.box.anchor)
+        expect(bar.box.h).toBeCloseTo((bar.ast as ASTFunctionNode & { size: number }).size)
+      }
+    }
   })
 
   it.each([320, 600, 800, 1000])('clears the final D.S. below Andy’s last volta at width %s', width => {

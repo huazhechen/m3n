@@ -1,9 +1,15 @@
 import { LengthValue, ASTNodeBase, FunctionArgs, SourceSpan, ParserContext, ASTFunctionNode, ASTFunctionClass } from "../ASTtypes.js";
 import { GrammarCallNodeTyped } from "../../parser/grammarType.js";
-import { ANCHOR_KEY, isVisualTemporalNode, TemporalNodeBase } from "../temporal.js";
-import type { PlaybackColumnOf, PlaybackCursor, PlaybackFlow, PlaybackFlowHook } from "../../playback/types.js";
-import type { HorizontalLineView, LayoutBox, LayoutHost } from "../../layout/types.js";
+// M3N modification: optional inline content before a bar reserves horizontal space.
+import { ANCHOR_KEY, isVisualTemporalNode, TemporalNodeBase, type TimeState, type VisualTemporalNode } from "../temporal.js";
+import type { PlaybackColumnOf, PlaybackCursor, PlaybackEmitter, PlaybackFlow, PlaybackFlowHook } from "../../playback/types.js";
+import type { HorizontalLineView, LayoutBox, LayoutHost, LayoutPrepareContext } from "../../layout/types.js";
 import type { Painter } from "../../render/types.js";
+import type { LoweringContext } from "../../lowering/loweringContext.js";
+import type { Track } from "../../lowering/track.js";
+import { Fraction } from "../../fraction.js";
+import { ErrorDiagnostic } from "../../diagnostic.js";
+import { getLayoutBounds, layoutLocalSequence } from "../../layout/engine.js";
 
 class BarFunction extends ASTFunctionNode {
     static override def = {
@@ -30,6 +36,12 @@ class BarFunction extends ASTFunctionNode {
                     value: 1.25,
                     unit: "em",
                 } as LengthValue,
+            },
+            {
+                name: "before",
+                description: "排在小节线前、与音符行对齐的文字或符号；不推进时间，不能换行或包含多声部",
+                type: "content" as const,
+                default: "",
             },
         ]
     };
@@ -63,22 +75,40 @@ class BarFunction extends ASTFunctionNode {
 
     type: number;
     size: number;
+    readonly before: ASTNodeBase | null;
+    override get children() { return this.before ? [this.before] : []; }
 
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [type, size] = this.getArgValue(args, ctx) as [number, LengthValue];
+        const [type, size, before] = this.getArgValue(args, ctx) as [number, LengthValue, ASTNodeBase | string];
         this.type = type;
         this.size = ctx.length2px(size);
+        this.before = before instanceof ASTNodeBase ? before : null;
+        if (this.before) this.before.parent = this;
     }
 
-    override loweringEnter() {
+    override loweringEnter(ctx: LoweringContext, track: Track) {
+        const before: VisualTemporalNode[] = [];
+        if (this.before) ctx.isolateFromLoweringGroups(() => {
+            const columns = ctx.trackedEvents(this.before!, new Fraction(), track);
+            for (const column of columns) {
+                const node = column[0];
+                if (column.length !== 1 || !isVisualTemporalNode(node) || !node.T.isZero()
+                    || node.mergeKey === ANCHOR_KEY || (node.addon?.breakBefore ?? 0) > 0) {
+                    throw new ErrorDiagnostic("E_BAR_BEFORE_CONTENT",
+                        "@bar 的 before 只允许不推进时间的可见文字或符号，不能换行或包含多声部", this.before!.sourceSpan);
+                }
+                before.push(node);
+            }
+        });
         return [this.type >= 3 && this.type <= 5
-            ? new RepeatBarTemporalNode(this)
-            : new BarTemporalNode(this)];
+            ? new RepeatBarTemporalNode(this, before)
+            : new BarTemporalNode(this, before)];
     }
 
-    override toString() {
-        return `@bar(${this.type}, ${this.size}px)`;
+    override toString(source: string) {
+        const before = this.before ? `, before=${source.slice(this.before.sourceSpan.start, this.before.sourceSpan.end)}` : "";
+        return `@bar(${this.type}, ${this.size}px${before})`;
     }
 }
 
@@ -90,8 +120,10 @@ class BarTemporalNode extends TemporalNodeBase {
 
     private lines: { x: number; w: number }[] = [];
     private repeatDots: { x: number; y: number; r: number }[] = [];
+    private readonly beforeX: number[] = [];
+    private barY = 0;
 
-    constructor(ast: BarFunction) {
+    constructor(ast: BarFunction, readonly before: readonly VisualTemporalNode[]) {
         super();
         this.ast = ast;
         this.mergeKey = ANCHOR_KEY;
@@ -101,6 +133,20 @@ class BarTemporalNode extends TemporalNodeBase {
             alpha_L: 128,
             alpha_R: 128,
         }
+        for (const node of before) node.foldedInto = this;
+    }
+
+    override onTimeState(state: TimeState) {
+        for (const node of this.before) {
+            node.t.copyFrom(this.t);
+            node.track = this.track;
+            node.layoutLine = this.layoutLine;
+            node.onTimeState?.(state);
+        }
+    }
+
+    override emitPlayback(emitter: PlaybackEmitter) {
+        for (const node of this.before) emitter.play(node);
     }
 
     /**
@@ -139,7 +185,7 @@ class BarTemporalNode extends TemporalNodeBase {
         });
     }
 
-    override prepareLayout() {
+    override prepareLayout(context: LayoutPrepareContext) {
         const { type, size } = this.ast;
         this.lines.length = 0;
         const repeatDots: { x: number; y: number }[] = [];
@@ -194,15 +240,41 @@ class BarTemporalNode extends TemporalNodeBase {
         this.box.visualAxis = h / 2;
         for (const line of this.lines) line.x -= this.box.anchor;
         this.repeatDots = repeatDots.map(dot => ({ x: dot.x - this.box.anchor, y: dot.y, r: dotRadius }));
+
+        let prefixWidth = this.before.length ? size * 0.16 : 0;
+        let top = -h / 2, bottom = h / 2;
+        this.beforeX.length = 0;
+        for (const node of this.before) {
+            const width = layoutLocalSequence([node], context);
+            const bounds = getLayoutBounds(node, true);
+            this.beforeX.push(prefixWidth - bounds.x);
+            prefixWidth += width + size * 0.16;
+            top = Math.min(top, bounds.y - node.box.visualAxis);
+            bottom = Math.max(bottom, bounds.y + bounds.h - node.box.visualAxis);
+        }
+        this.barY = -h / 2 - top;
+        this.box.w += prefixWidth;
+        this.box.anchor += prefixWidth;
+        this.box.h = bottom - top;
+        this.box.visualAxis = -top;
+    }
+
+    override onPlaced() {
+        for (let i = 0; i < this.before.length; i++) {
+            const node = this.before[i];
+            node.box.x = this.box.x + this.beforeX[i];
+            node.box.y = this.box.y + this.box.visualAxis - node.box.visualAxis;
+            node.onPlaced?.();
+        }
     }
 
     override paint(painter: Painter) {
         for (const line of this.lines) {
             painter.drawRect(
                 this.box.x + this.box.anchor + line.x,
-                this.box.y,
+                this.box.y + this.barY,
                 line.w,
-                this.box.h,
+                this.ast.size,
                 { fill: "#000" },
             );
         }
@@ -210,10 +282,14 @@ class BarTemporalNode extends TemporalNodeBase {
         for (const dot of this.repeatDots) {
             painter.drawCircle(
                 this.box.x + this.box.anchor + dot.x,
-                this.box.y + dot.y,
+                this.box.y + this.barY + dot.y,
                 dot.r,
                 { fill: "#000" },
             );
+        }
+        for (const node of this.before) {
+            node.paint(painter);
+            for (const decoration of node.decorations) decoration.paint?.(painter);
         }
     }
 }

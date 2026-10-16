@@ -45,6 +45,8 @@ const pages = score.render({ width: 800, paged: true, includeBass: true })
 
 同一乐句出现共享遍次标记时，全部歌词行都显示各自的遍次，例如 `1.`、`2.4.`、`3.`。标记由引擎独立排在各行首个可见歌词的左侧并预留空间，歌词正文仍与音符居中对齐；跳过的空槽不提前消耗标记。
 
+Fine、D.C.、D.S. 排在末音或休止符之后、小节线之前，与音符行的视觉轴对齐。引擎通过小节线的 `before` 内容预留完整横向占位，导航记号跟随末尾小节线换行、分页，不额外抬高房子线；原生反复和跳转语义仍由记号保留。反复次数继续显示在小节线上方，房子线仍避让音符、高低八度点、连奏线和上方标注。
+
 浏览器加载字体后使用 `CanvasTextMeasurer`，离线测试可注入 `textMeasurer`。数字使用原样嵌入的 Barlow Semi Condensed Medium（SIL OFL 1.1），字形比原先的 Liberation Mono 更窄高、笔画更清晰。同一资源用于测量、显示和 SVG 导出，无 CDN 字体请求；固定来源、文件校验和及许可见 `public/licenses/barlow`。CSS 家族别名保持 `M3N Numbers`，静态 Medium 字体映射为引擎使用的普通字重，避免合成加粗。中文及普通文字使用系统 serif 字体，因此不同系统的文字度量可能不同。
 
 ## 导出与验证

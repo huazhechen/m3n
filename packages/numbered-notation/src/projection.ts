@@ -172,8 +172,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const opensRepeat = structure.right === 'rptboth' || next?.left === 'rptstart'
         const type = closesRepeat ? opensRepeat && !nextLine ? 5 : 4 : structure.right === 'end' ? 2 : structure.right === 'dbl' ? 1 : 0
         const navigation = [...new Set([...(measure.navigation ?? []), ...measure.events.flatMap(event => event.navigation)].filter(name => name !== 'segno'))]
-        let bar = `@bar(${type})`
-        if (navigation.length || (measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},${[...navigation.map(name => `@symbol(${name},size=16px)`), ...((measure.repeatCount ?? 2) > 2 ? [`@text("×${measure.repeatCount}",size=13px)`] : [])].join(',')})`
+        const beforeBar = navigation.map(name => `@symbol(${name},size=${name === 'fine' ? 12 : 16}px)`).join(' ')
+        let bar = `@bar(${type}${beforeBar ? `,before={${beforeBar}}` : ''})`
+        if ((measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},@text("×${measure.repeatCount}",size=13px))`
         // Within a system the opening repeat supplies the shared boundary.
         // Across an explicit break both systems need their own boundary mark.
         if (!((type === 0 || type === 1) && next?.left === 'rptstart' && !nextLine && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
