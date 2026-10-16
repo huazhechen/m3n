@@ -152,7 +152,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             lasts.set(measureIndex, last)
             if (previousTied) {
               const endpoints = endpointLabels.get(previousTied)
-              const start = previousTied.tieFromTupletIndex === undefined ? endpoints?.last : endpoints?.children[previousTied.tieFromTupletIndex]
+              const start = previousTied.tieFromTupletIndex === undefined
+                ? previousTied.kind === 'chord' ? endpoints?.first : endpoints?.last
+                : endpoints?.children[previousTied.tieFromTupletIndex]
               if (start) relations.push(`@tie(${start},${first})`)
             }
           }
@@ -160,11 +162,13 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           pieces.push(content.join(' '))
         }
         const next = staff === 'bass' ? melody[measureIndex + 1] : visibleMeasures[measureIndex + 1]
-        const type = structure.right === 'end' ? 2 : structure.right === 'dbl' ? 1 : structure.right === 'rptboth' || structure.right === 'rptend' && next?.left === 'rptstart' ? 5 : structure.right === 'rptend' ? 4 : next?.left === 'rptstart' ? 3 : 0
+        const type = structure.right === 'end' ? 2 : structure.right === 'dbl' ? 1 : structure.right === 'rptboth' || structure.right === 'rptend' && next?.left === 'rptstart' ? 5 : structure.right === 'rptend' ? 4 : 0
         const navigation = [...new Set([...(measure.navigation ?? []), ...measure.events.flatMap(event => event.navigation)].filter(name => name !== 'segno'))]
         let bar = `@bar(${type})`
         if (navigation.length || (measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},${[...navigation.map(name => `@symbol(${name},size=16px)`), ...((measure.repeatCount ?? 2) > 2 ? [`@text("×${measure.repeatCount}",size=13px)`] : [])].join(',')})`
-        pieces.push(bar)
+        // A following opening repeat already supplies this boundary. Emit it
+        // once, before the next measure, so an explicit break keeps it there.
+        if (!(type === 0 && next?.left === 'rptstart' && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
         previousMeasure = structure
       })
       let endingStart = 0
@@ -187,7 +191,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         }).join(' ')
         return quote(tokens)
       }) : []
-      return `@voice({${pieces.join(' ')}},""${lyricArguments.length ? `,${lyricArguments.join(',')}` : ''})`
+      const underlines = rowNumbers.flatMap((row, rowIndex) => lyricTargets.flatMap((target, slot) => target.lyrics.get(row)?.underlined ? [`${rowIndex}:${slot}`] : []))
+      return `@voice({${pieces.join(' ')}},""${lyricArguments.length ? `,${lyricArguments.join(',')}` : ''}${underlines.length ? `,lyricunderlines=${quote(underlines.join(','))}` : ''})`
     }
     const voices = [renderVoice(melody, 'melody')]
     if (options.includeBass !== false && bass.some(measure => measure.events.length || measure.multiRest)) voices.push(renderVoice(bass, 'bass'))
@@ -217,7 +222,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     const events = [...document.parts.values()].flatMap(part => part[interval.staff].flatMap(measure => measure.events)).filter(event => interval.start !== undefined && interval.endStart !== undefined && event.sourceStart >= interval.start && event.sourceStart <= interval.endStart)
     const first = events[0], last = events.at(-1)
     if (!first || !last) continue
-    const start = endpointLabels.get(first)?.first, end = endpointLabels.get(last)?.last
+    const start = endpointLabels.get(first)?.first
+    const end = interval.kind === 'lg' && last.kind === 'chord' ? endpointLabels.get(last)?.first : endpointLabels.get(last)?.last
     if (!start || !end || interval.display === 'text') continue
     relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
   }

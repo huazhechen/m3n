@@ -22,7 +22,8 @@
     "deploy": "npm run build && wrangler deploy",
     "generate:icon": "node tools/generate-brand-icon.mjs",
     "format:scores": "npm run build -w @m3n/notation && tsx tools/format-scores.mts",
-    "test:numbered-layout": "node tools/verify-numbered-layout.mjs"
+    "test:numbered-layout": "node tools/verify-numbered-layout.mjs",
+    "test:numbered-audit": "node tools/verify-numbered-layout.mjs --screenshots"
   },
   "dependencies": {
     "@m3n/notation": "*",

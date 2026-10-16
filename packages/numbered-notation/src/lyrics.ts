@@ -1,6 +1,6 @@
 import { measurePlaybackPasses, parsePassRange, type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 type LyricTarget = { event: ScoreEvent; slot: number; tie: boolean }
-export type LyricRowData = { texts: string[]; passes: ReadonlySet<number> | undefined; annotation?: string }
+export type LyricRowData = { texts: string[]; passes: ReadonlySet<number> | undefined; annotation?: string; underlined?: boolean }
 export type LyricsByEvent = Map<ScoreEvent, Map<number, Map<number, LyricRowData>>>
 
 export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
@@ -68,6 +68,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const rows = slots.get(target.slot) ?? new Map<number, LyricRowData>()
       const data = rows.get(row) ?? { texts: [], passes: undefined }
       data.texts.push(syllable.text)
+      data.underlined = syllable.underlined
       data.passes = rowPasses(blockPasses, target.event)
       data.annotation = annotationPending ? annotation : undefined
       if (annotationPending) annotationPending = false

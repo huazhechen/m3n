@@ -19,3 +19,15 @@ test('opt-in single-event hairpins paint a native attachment without changing th
     assert.ok(result.layout.attachments.some(attachment => attachment.regions.length > 0));
     assert.throws(() => compileScore('1@a 2 @dyn(a,a,24)'), { code: 'E_DYN_ZERO_SPAN' });
 });
+
+test('native lyric underlines paint only the selected slots and survive serialization', () => {
+    const source = '@voice({1 2 3},,"{起来，} 春 {天里}",lyricunderlines="0:0,0:2")';
+    const result = compileScore(source);
+    const [svg] = renderLayoutPagesToSvg(result.layout);
+    assert.equal((svg.match(/<line /g) ?? []).length, 2);
+    const plain = compileScore('@voice({1 2 3},,"{起来，} 春 {天里}")');
+    assert.equal((renderLayoutPagesToSvg(plain.layout)[0].match(/<line /g) ?? []).length, 0);
+    const serialized = result.ast.toString(source);
+    assert.match(serialized, /lyricunderlines=/);
+    assert.equal((renderLayoutPagesToSvg(compileScore(serialized).layout)[0].match(/<line /g) ?? []).length, 2);
+});

@@ -9,6 +9,7 @@ import { build } from 'vite'
 const root = resolve(import.meta.dirname, '..')
 const temp = mkdtempSync(join(tmpdir(), 'm3n-layout-'))
 const output = join(root, '.tmp')
+const screenshots = process.argv.includes('--screenshots')
 let browser
 try {
   const entry = join(temp, 'entry.ts')
@@ -35,17 +36,20 @@ try {
   scores.push(
     { file: 'regression-lyrics', source: '{4/4}\nN: ' + Array(12).fill('(1 2) (3 4) 5 6 |').join(' ') + '\nL: ' + '“春天，花开！”'.repeat(12) + '\nL2: ' + 'internationalization '.repeat(12) },
     { file: 'regression-relations', source: '{6/8}\nN: ||: {lg}(1d 2d 3d) [1d3d5d:h]{hold} 1{ac(7d)}{/} | {cresc}1^.{/} :||\n---\nN: {rest=2} | 1{fermata} 2 3 |||' },
+    { file: 'regression-controls-chords-lyrics', source: '{4/4}\nN: 1 2 3 4 | {key=G} {2/4} {80qpm} [1d3d5d:h]^~ | [1d3d5d:h]^ |\nB: 1d 2d 3d 4d | 5d^ | 5d^ |\n---\nN: ||: {4/4} 1 2 3 4 :|||\nB: 1d^ 5d^ |||\nL: (起来，)春(天里)好' },
   )
   const report = await page.evaluate(async (scores) => {
     await m3n.prepareNumberedNotationFonts()
-    const issues = [], times = []
+    const issues = [], times = [], summaries = []
     let checks = 0
     for (const { file, source } of scores) for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {
       const before = performance.now()
       const scoreDocument = m3n.parseM3NDocument(source)
       let pages
       try {
-        pages = m3n.NumberedNotationScore.create(scoreDocument).render({ width, paged })
+        const score = m3n.NumberedNotationScore.create(scoreDocument)
+        pages = score.render({ width, paged })
+        if (width === 800 && !paged) summaries.push({ file, title: scoreDocument.title, events: [...scoreDocument.parts.values()].reduce((sum, part) => sum + [...part.melody, ...part.bass].reduce((sum, measure) => sum + measure.events.length, 0), 0), diagnostics: score.diagnostics })
       } catch (error) {
         issues.push({ file, width, paged, error: String(error) })
         continue
@@ -77,7 +81,7 @@ try {
       if (outside.length || overlap.length) issues.push({ file, width, paged, outside: outside.slice(0, 3), outsideCount: outside.length, overlap: overlap.slice(0, 3), overlapCount: overlap.length })
     }
     times.sort((a, b) => a - b)
-    return { checks, issues, timing: { p50: times[Math.floor(times.length * .5)], p95: times[Math.floor(times.length * .95)], max: times.at(-1) } }
+    return { checks, issues, scores: summaries.map(score => ({ ...score, checks: 8, issues: issues.filter(issue => issue.file === score.file).length })), timing: { p50: times[Math.floor(times.length * .5)], p95: times[Math.floor(times.length * .95)], max: times.at(-1) } }
   }, scores)
   mkdirSync(output, { recursive: true })
   writeFileSync(join(output, 'numbered-layout-report.json'), JSON.stringify(report, null, 2))
@@ -88,6 +92,23 @@ try {
     await document.fonts.ready
   })
   await page.locator('main').screenshot({ path: join(output, 'numbered-layout-example.png') })
+  if (screenshots) {
+    const auditOutput = join(output, 'numbered-audit')
+    mkdirSync(auditOutput, { recursive: true })
+    for (const { file, source } of scores) for (const [width, paged] of [[800, false], [320, true]]) {
+      await page.evaluate(async ({ source, width, paged }) => {
+        const main = document.querySelector('main')
+        main.style.width = `${width}px`
+        main.innerHTML = m3n.NumberedNotationScore.create(m3n.parseM3NDocument(source)).render({ width, paged }).join('')
+        await document.fonts.ready
+      }, { source, width, paged })
+      await page.locator('main').screenshot({ path: join(auditOutput, `${file}-${width}.png`) })
+    }
+    const escape = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;')
+    writeFileSync(join(auditOutput, 'index.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>简谱逐曲检查</title><style>body{font-family:serif;margin:24px;background:#eee}article{margin:24px 0;background:white;padding:16px}figure{display:flex;align-items:flex-start;gap:16px;margin:0}img{max-width:100%;height:auto}a{display:block;max-width:72%}a+ a{max-width:28%}</style><h1>简谱逐曲检查</h1><p>800px 连续排版与 320px 分页；点击查看原图。几何结果见 manifest.json。</p>${report.scores.map(score => `<article><h2>${escape(score.title || score.file)}</h2><p>${escape(score.file)} · ${score.events} 个事件 · ${score.issues ? `${score.issues} 个问题` : '几何检查通过'}</p><figure><a href="${score.file}-800.png"><img loading="lazy" src="${score.file}-800.png" alt="800px 连续"></a><a href="${score.file}-320.png"><img loading="lazy" src="${score.file}-320.png" alt="320px 分页"></a></figure></article>`).join('')}</html>`)
+    writeFileSync(join(auditOutput, 'manifest.json'), JSON.stringify(report, null, 2))
+    console.log(`逐曲截图：${join(auditOutput, 'index.html')}`)
+  }
   assert.equal(report.issues.length, 0, JSON.stringify(report.issues.slice(0, 10), null, 2))
 } finally {
   await browser?.close()

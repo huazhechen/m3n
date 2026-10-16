@@ -1,4 +1,4 @@
-// M3N modification: retain target source spans and lyric row in rendered text styles.
+// M3N modification: lyric metadata, punctuation spacing and opt-in grouped lyric underlines.
 import { ASTNodeBase, ASTBraceNode, FunctionArgs, SourceSpan, ASTFunctionNode, ASTFunctionClass, ASTTextNode } from "../ASTtypes.js";
 import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import { findRightParen } from "../../parser/parse-utils/call-utils.js";
@@ -105,6 +105,13 @@ L: la la la
             {
                 name: "name",
                 description: "显示在左侧的声部名称，空值隐藏名称",
+                type: "string" as const,
+                default: "",
+            },
+            {
+                name: "lyricunderlines",
+                namedOnly: true,
+                description: "需加下划线的歌词槽，使用从 0 开始的 行:槽 索引，以逗号分隔",
                 type: "string" as const,
                 default: "",
             },
@@ -286,6 +293,7 @@ L: la la la
     size: number;   // 声部的字体大小
     readonly font: string;
     readonly reserveLyricPunctuation: boolean;
+    readonly underlinedLyricSlots: ReadonlySet<string>;
     lyrics: {
         name: string,
         tokens: string[]   // 分词后的歌词内容
@@ -334,10 +342,13 @@ L: la la la
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
         this.size = ctx.variables.fontsize;
-        [this.content, this.name] = this.getArgValue(args, ctx) as [ASTBraceNode, string];
+        const [content, name, lyricUnderlines] = this.getArgValue(args, ctx) as [ASTBraceNode, string, string];
+        this.content = content; this.name = name;
         this.content.parent = this;
         this.font = ctx.variables.font;
         this.reserveLyricPunctuation = ctx.variables.lyricspacing === "reserve";
+        this.underlinedLyricSlots = new Set(lyricUnderlines.split(','));
+        args.delete('lyricunderlines');
         args.delete(0);
         args.delete("name");
         args.delete(1);
@@ -457,6 +468,8 @@ L: la la la
                 ? "@" : `{${token.replace(/[\\{}@-]/g, "\\$&")}}`).join(" "));
             parameters.push(lyric.name ? `${lyric.name}=${text}` : text);
         }
+        const underlines = [...this.underlinedLyricSlots].filter(Boolean);
+        if (underlines.length) parameters.push(`lyricunderlines=${quote(underlines.join(','))}`);
         return `@voice(\n\t${parameters.join(",\n\t")}\n)`;
     }
 }
@@ -906,6 +919,10 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             paint(painter: Painter) {
                 for (const item of preparedText) {
                     painter.drawText(item.text, item.x, item.y + item.textBaselineY, item.style);
+                    if (item.style.semantic?.underlined) {
+                        const y = item.y + item.textBaselineY + item.style.fontSize * 0.12;
+                        painter.drawLine(item.x, y, item.x + item.w, y, { stroke: item.style.fill, strokeWidth: 1 });
+                    }
                 }
             },
         };
@@ -983,9 +1000,10 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                 const { prefix, body } = splitLyricText(text);
                 const bodyWidth = body ? context.textMeasurer.measureText(body, lyricStyle).w : 0;
                 const prefixWidth = prefix ? context.textMeasurer.measureText(prefix, lyricStyle).w : 0;
+                const underlined = this.nameHost.ast.underlinedLyricSlots.has(`${row}:${i}`);
                 // Semantic metadata does not change visual style equality or upstream recordings.
                 const style = Object.defineProperty({ ...lyricStyle }, 'semantic', {
-                    value: { role: 'lyric', sourceSpan: target.ast.sourceSpan, row }, enumerable: false,
+                    value: { role: 'lyric', sourceSpan: target.ast.sourceSpan, row, ...(underlined ? { underlined: true } : {}) }, enumerable: false,
                 });
                 preparedText.push({
                     text,
@@ -994,7 +1012,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                     x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth,
                     y: baselineOf(baseline.bottom, row) - metrics.baseline,
                     w: metrics.w,
-                    h: metrics.h,
+                    h: underlined ? Math.max(metrics.h, metrics.baseline + fontSize * 0.12 + 0.5) : metrics.h,
                     line: target.layoutLine,
                     track: baseline.owner,
                 });

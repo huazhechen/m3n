@@ -53,3 +53,25 @@ test('automatic wrapping includes the complete lyric occupancy at both endpoints
         assert.ok(left.x + left.w <= right.x || right.x + right.w <= left.x);
     }
 });
+
+test('keeps key, meter and tempo changes with the following note in each voice', () => {
+    const music = Array(8).fill('1 2 3 4 |').join(' ')
+        + ' @key(G4) @meter(2,4) @tempo(80) 5 6 | @meter(4,4) 1 2 3 4 |';
+    const source = `@page(width=320px) @voices(@voice({${music}}),@voice({${music}}))`;
+    const result = compileScore(source, { autoWrap: true });
+    for (const node of result.layout.objects.filter(node => ['key', 'meter', 'tempo'].includes((node.ast as any).callName))) {
+        const next = result.layout.objects.find(candidate => candidate.track === node.track && candidate.t.equals(node.t) && !candidate.T.isZero());
+        assert.ok(next);
+        assert.equal(node.layoutLine, next.layoutLine, `${node.ast.toString(source)} was orphaned`);
+    }
+    assert.equal(result.lowering.duration.toNumber(), 38);
+});
+
+test('an opening repeat belongs to the following measure when wrapping', () => {
+    const source = '@page(width=320px) ' + Array(8).fill('1 2 3 4 |').join(' ') + ' |: 5 6 7 1 :|';
+    const result = compileScore(source, { autoWrap: true });
+    const repeat = result.layout.objects.find(node => (node.ast as any).type === 3)!;
+    const next = result.layout.objects.find(node => node.t.equals(repeat.t) && !node.T.isZero())!;
+    assert.equal(repeat.layoutLine, next.layoutLine);
+    assert.ok(repeat.box.x < next.box.x);
+});

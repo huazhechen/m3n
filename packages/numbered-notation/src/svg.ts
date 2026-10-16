@@ -45,7 +45,8 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
         }
       }
       const candidates = objectsByTrack.get(node.track) ?? []
-      const previous = candidates.filter(value => node.mergeKey === ANCHOR_KEY ? value.node.t.compare(node.t) < 0 : value.node.t.compare(node.t) <= 0).at(-1)
+      const openingRepeat = node.ast instanceof ASTFunctionNode && node.ast.callName === 'bar' && (node.ast as ASTFunctionNode & { type?: number }).type === 3
+      const previous = candidates.filter(value => node.mergeKey === ANCHOR_KEY && !openingRepeat ? value.node.t.compare(node.t) < 0 : value.node.t.compare(node.t) <= 0).at(-1)
       const next = candidates.find(value => value.node.t.compare(node.t) >= 0 && value.node.ast.sourceSpan.start < node.ast.sourceSpan.end)
       const related = previous ?? next
       if (!related || node.ast.sourceSpan.start < Math.min(...candidates.map(value => value.node.ast.sourceSpan.start))) return undefined
@@ -64,6 +65,7 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
         'data-m3n-id': target.binding.xmlId, 'data-m3n-role': 'lyric', 'data-m3n-rendition': String(row + 1),
         'data-m3n-passes': data?.passes ? [...data.passes].join('-') : String(row + 1),
         'data-m3n-system': String(target.line), 'data-m3n-measure': target.binding.measureId,
+        ...(semantic.underlined ? { 'data-m3n-underlined': 'true' } : {}),
       }
     },
   })

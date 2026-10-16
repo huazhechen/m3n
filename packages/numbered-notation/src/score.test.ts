@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { compileScore, getLayoutBounds } from '@m3n/jpfun'
+import { ASTFunctionNode, compileScore, getLayoutBounds, type VisualTemporalNode } from '@m3n/jpfun'
 import { m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
 import { NumberedNotationScore, type NumberedNotationRenderOptions } from './score.js'
 import { projectNumberedScore } from './projection.js'
@@ -25,6 +25,15 @@ function geometry(document: ScoreDocument, settings = options) {
   const projection = projectNumberedScore(document, settings)
   return compileScore(projection.source, { autoWrap: true })
 }
+
+function mainPitches(node: VisualTemporalNode): { name: string; acc: string; octave: number }[] {
+  const compound = node as VisualTemporalNode & { host?: VisualTemporalNode; members?: readonly VisualTemporalNode[]; name?: string; acc?: string; octave?: number }
+  if (compound.name !== undefined) return [{ name: compound.name, acc: compound.acc ?? '', octave: compound.octave ?? 0 }]
+  if (compound.host) return mainPitches(compound.host) // Grace notes do not replace the main pitch.
+  return (compound.members ?? []).filter(member => !member.T.isZero()).flatMap(mainPitches)
+}
+
+const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
   it('uses the vendored engine and embedded font with stable interactive measure structure', () => {
@@ -123,6 +132,22 @@ describe('jpFun numbered notation adapter', () => {
     expect(numbers(shifted.root, 'm3n-e-1')).toBe('135')
   })
 
+  it('anchors long chord ties to the chord instead of its final low sustain dash', () => {
+    const result = geometry(parseM3NDocument('{4/4}\nN: [1d3d5d:h]^^~ | [1d3d5d:h]^^ |||'))
+    const tie = result.lowering.attachments.find(attachment => 'endPoints' in attachment) as unknown as { endPoints: { ast: { callName: string } }[] }
+    expect(tie.endPoints.map(node => node.ast.callName)).toEqual(['up', 'up'])
+    const hairpinResult = geometry(parseM3NDocument('{4/4}\nN: {cresc}[1d3d5d:h]^^{/} |||'))
+    const hairpin = hairpinResult.lowering.attachments.find(attachment => 'endPoints' in attachment) as unknown as { endPoints: VisualTemporalNode[] }
+    expect(hairpin.endPoints.map(node => node.t.toNumber())).toEqual([0, 3])
+  })
+
+  it('preserves underlined lyric groups without underlining neighboring syllables', () => {
+    const { root } = render('{4/4}\nN: 1 2 3 4 |||\nL: (起来，)春(天里)好')
+    const groups = [...root.querySelectorAll('text[data-m3n-underlined="true"]')]
+    expect(groups.map(node => node.textContent)).toEqual(['起来，', '天里'])
+    expect(root.querySelector('text[data-m3n-id="m3n-e-2"][data-m3n-underlined]')).toBeNull()
+  })
+
   it('preserves tempo, key and meter changes at their musical positions', () => {
     const { root } = render('{key=C} {4/4} {90qpm}\nN: 1 2 3 4 | {120qpm} {key=Bb} {3/4} 5 6 7 |||')
     expect(root.body.textContent).toContain('90')
@@ -177,6 +202,18 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.body.textContent).toContain('Fine')
   })
 
+  it.each([320, 800])('renders an internal opening repeat once, with its following measure at width %s', width => {
+    const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | {br} ||: 5 6 7 1e :|||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 :|||')
+    const result = geometry(document, { width, paged: false })
+    const repeats = result.layout.objects.filter(node => (node.ast as { callName?: string; type?: number }).callName === 'bar' && (node.ast as { type?: number }).type === 3)
+    expect(repeats).toHaveLength(2) // One per staff, sharing the same musical boundary.
+    for (const repeat of repeats) {
+      const next = result.layout.objects.find(node => node.track === repeat.track && node.t.equals(repeat.t) && !node.T.isZero())!
+      expect(repeat.layoutLine).toBe(next.layoutLine)
+      expect(repeat.box.x).toBeLessThan(next.box.x)
+    }
+  })
+
   it('keeps first-verse L: after explicit numbered lyric rows', () => {
     const { root } = render('{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 春天来了\nL2: 花开满园\n---\nN: 5 6 |||\nL: 你好')
     expect(lyrics(root, 'm3n-e-5', 1)).toBe('你')
@@ -224,14 +261,53 @@ describe('jpFun numbered notation adapter', () => {
     expect(render(document).score.diagnostics.some(item => item.code === 'NUMBERED_UNSUPPORTED_MARK')).toBe(true)
   })
 
-  it('renders the entire built-in score corpus with every musical event preserved', () => {
-    for (const file of readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n'))) {
+  it.each(corpusFiles)('preserves musical content, timing and layout for %s', file => {
       const source = readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')
       const document = parseM3NDocument(source)
       const score = NumberedNotationScore.create(document)
       const expectedDuration = [...document.parts.values()].reduce((sum, part) => sum + Math.max(...[part.melody, part.bass].map(measures => measures.reduce((sum, measure) => sum + (measure.multiRest ?? 0) * document.meterCount * 4 / document.meterUnit + measure.events.reduce((sum, event) => sum + event.beats, 0), 0))), 0)
       expect(geometry(document).lowering.duration.toNumber(), file).toBeCloseTo(expectedDuration)
       for (const settings of [{ width: 800, paged: false }, { width: 320, paged: true }]) {
+        const projection = projectNumberedScore(document, settings)
+        const result = geometry(document, settings)
+        const nodes = new Map<string, VisualTemporalNode>()
+        for (const node of result.layout.objects) {
+          const selected = node.ast instanceof ASTFunctionNode ? node.ast.labelable?.() : null
+          if (selected?.label) nodes.set(selected.label, node)
+          for (let ast = node.ast; ast; ast = ast.parent!) {
+            if (ast instanceof ASTFunctionNode && ast.label) nodes.set(ast.label, node)
+          }
+          if (node.ast instanceof ASTFunctionNode && ['key', 'meter', 'tempo', 'bar'].includes(node.ast.callName)) {
+            if (node.ast.callName === 'bar' && (node.ast as { type?: number }).type !== 3) continue
+            const next = result.layout.objects.find(next => next.track === node.track && next.t.equals(node.t) && !next.T.isZero())
+            if (next) expect(node.layoutLine, `${file}: orphaned ${node.ast.callName}`).toBe(next.layoutLine)
+          }
+        }
+        let partTime = 0
+        for (const part of document.parts.values()) {
+          const ends = []
+          for (const staff of ['melody', 'bass'] as const) {
+            let time = partTime
+            for (const measure of part[staff]) {
+              time += (measure.multiRest ?? 0) * document.meterCount * 4 / document.meterUnit
+              for (const event of measure.events) {
+                const bindings = [...projection.bindings.values()].filter(binding => binding.event === event)
+                const native = bindings.map(binding => nodes.get(binding.label)!)
+                expect(native.every(Boolean), `${file}: missing event at ${event.sourceStart}`).toBe(true)
+                expect(native[0]!.t.toNumber(), `${file}: shifted ${staff} event`).toBeCloseTo(time)
+                expect(native.reduce((sum, node) => sum + node.T.toNumber(), 0), `${file}: wrong event duration`).toBeCloseTo(event.beats)
+                const pitched = event.kind === 'tuplet' ? native.flatMap(mainPitches) : mainPitches(native[0]!)
+                expect(pitched, `${file}: changed pitches at ${event.sourceStart}`).toEqual((event.kind === 'rest' ? ['0'] : event.pitches).map(pitch => {
+                  const [, name, acc = '', octaves = ''] = /^([0-7])([#b=]*)([ed]*)$/.exec(pitch)!
+                  return { name, acc: name === '0' ? '' : acc.replaceAll('=', 'n'), octave: name === '0' ? 0 : [...octaves].reduce((n, c) => n + (c === 'e' ? 1 : -1), event.octaveShift) }
+                }))
+                time += event.beats
+              }
+            }
+            ends.push(time)
+          }
+          partTime = Math.max(...ends)
+        }
         const pages = score.render(settings)
         const markup = pages.join('')
         expect(pages.length, file).toBeGreaterThan(0)
@@ -241,6 +317,5 @@ describe('jpFun numbered notation adapter', () => {
         expect(new Set(ids).size, file).toBe(ids.length)
         expect(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')), file).toEqual([])
       }
-    }
   }, 30000)
 })

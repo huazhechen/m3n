@@ -4,6 +4,9 @@ import { ASTBraceNode, ASTFunctionNode, type ASTNodeBase } from '../functions/AS
 import type { SourceSpan } from '../parser/types.js';
 import type { DocumentLayoutResult } from './engine.js';
 
+const isOpeningRepeat = (node: VisualTemporalNode) => node.ast instanceof ASTFunctionNode
+    && node.ast.callName === 'bar' && (node.ast as ASTFunctionNode & { type?: number }).type === 3;
+
 /** Source positions for explicit breaks; all parallel members at a boundary share one break. */
 export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number): number[] {
     const insertions = new Set<number>();
@@ -15,6 +18,17 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
         line.push(node); lines.set(node.layoutLine, line);
     }
     for (const nodes of lines.values()) {
+        // All zero-time controls at a boundary travel with the next note. Inserting
+        // a break before each control creates several empty musical lines.
+        const breakColumn = (members: VisualTemporalNode[], time: VisualTemporalNode['t']) => {
+            const byTrack = new Map<VisualTemporalNode['track'], number>();
+            for (const node of members) {
+                if (!node.t.equals(time) || node.mergeKey === ANCHOR_KEY && !isOpeningRepeat(node)) continue;
+                const position = breakPosition(node.ast);
+                byTrack.set(node.track, Math.min(byTrack.get(node.track) ?? Infinity, position));
+            }
+            for (const position of byTrack.values()) insertions.add(position);
+        };
         const musical = nodes.filter(node => node.T.compare(0) > 0);
         if (!musical.length) continue;
         const bars = nodes.filter(node => node.mergeKey === ANCHOR_KEY && node.t.compare(musical[0].t) > 0);
@@ -23,7 +37,7 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
         let pending = [...nodes];
         for (const key of times) {
             const bar = bars.find(node => node.t.toString() === key)!;
-            const members = pending.filter(node => node.t.compare(bar.t) < 0 || node.t.compare(bar.t) === 0 && node.mergeKey === ANCHOR_KEY);
+            const members = pending.filter(node => node.t.compare(bar.t) < 0 || node.t.compare(bar.t) === 0 && node.mergeKey === ANCHOR_KEY && !isOpeningRepeat(node));
             pending = pending.filter(node => !members.includes(node));
             if (members.some(node => node.T.compare(0) > 0)) measures.push({ nodes: members, start: Math.min(...members.map(leftOf)), end: Math.max(...members.map(rightOf)) });
         }
@@ -46,7 +60,7 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
                 if ([...tupletRanges.values()].some(range => time > range.start && time < range.end)) continue;
                 const right = Math.max(...column.map(rightOf));
                 if (right - left <= contentWidth * 0.88 || column[0].t.equals(timed[0].t)) continue;
-                for (const node of column) insertions.add(breakPosition(node.ast));
+                breakColumn(measure.nodes, column[0].t);
                 left = Math.min(...column.map(leftOf));
             }
         }
@@ -69,7 +83,7 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
             const members = measures[start].nodes;
             const first = members.filter(node => node.mergeKey !== ANCHOR_KEY).reduce((a, b) => a.t.compare(b.t) <= 0 ? a : b);
             // Explicit commands must be inserted into each parallel voice at the same time.
-            for (const node of members.filter(node => node.t.compare(first.t) === 0 && node.mergeKey !== ANCHOR_KEY)) insertions.add(breakPosition(node.ast));
+            breakColumn(members, first.t);
         }
     }
     return [...insertions].sort((a, b) => a - b);
