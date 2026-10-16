@@ -1,7 +1,9 @@
+// M3N modification: optional font override shared by measurement and painting.
 import { TemporalNodeBase, type TimeState } from "../temporal.js";
 import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, LengthValue, ParserContext, SourceSpan } from "../ASTtypes.js";
 import type { LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
 import type { Painter, TextStyle } from "../../render/types.js";
+import { quote } from "../../parser/parse-utils/string-utils.js";
 import { prepareQuarterNote, type PreparedQuarterNote } from "./glyph.js";
 
 class TempoFunction extends ASTFunctionNode {
@@ -30,26 +32,36 @@ class TempoFunction extends ASTFunctionNode {
                     unit: "em",
                 } as LengthValue,
             },
+            {
+                name: "font",
+                description: "速度数字字体，空值沿用当前字体设置",
+                type: "string" as const,
+                default: "",
+            },
         ],
     };
 
     bpm: number;
     size: number;
     readonly font: string;
+    private readonly fontOverride: string;
 
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [bpm, size] = this.getArgValue(args, ctx) as [number, LengthValue];
+        const [bpm, size, font] = this.getArgValue(args, ctx) as [number, LengthValue, string];
         this.bpm = bpm;
         this.size = ctx.length2px(size);
-        this.font = ctx.variables.font;
+        this.fontOverride = font;
+        this.font = font || ctx.variables.font;
     }
 
     override loweringEnter() {
         return [new TempoTemporalNode(this)];
     }
 
-    override toString() { return `@tempo(${this.bpm}, size=${this.size}px)`; }
+    override toString() {
+        return `@tempo(${this.bpm}, size=${this.size}px${this.fontOverride ? `, font=${quote(this.fontOverride)}` : ""})`;
+    }
 }
 
 export const TempoNode: ASTFunctionClass = TempoFunction;

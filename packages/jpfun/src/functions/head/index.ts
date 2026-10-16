@@ -1,3 +1,4 @@
+// M3N modification: optionally place side slots below all center rows.
 import { ErrorDiagnostic } from "../../diagnostic.js";
 import { layoutHorizontalRegion, type HorizontalLayoutHookContext } from "../../layout/model.js";
 import type { HorizontalLineView, LayoutBox, Extent } from "../../layout/types.js";
@@ -133,14 +134,16 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
             laneKey: `head/rows/${owner.sourceSpan.start}/${name}`,
             hostIndex: null,
             measure: members => {
-                // 行从上到下排列，同一遍取得标题首行底边和侧栏整组范围
+                // 行从上到下排列；sidebelow 可选择完整中区底边，否则沿用首行底边。
                 let top: number | undefined;
                 let bottom: number | undefined;
                 if (name === "center") this.titleBottom = 0;
                 const placements = members.map(extent => {
                     if (!extent) return null;
                     const offset = bottom === void 0 ? 0 : bottom + owner.gap - extent.top;
-                    if (bottom === void 0 && name === "center") this.titleBottom = extent.bottom;
+                    if (name === "center" && (bottom === void 0 || owner.sideBelow)) {
+                        this.titleBottom = offset + extent.bottom + (owner.sideBelow ? owner.gap : 0);
+                    }
                     top ??= offset + extent.top;
                     bottom = offset + extent.bottom;
                     return { offset, extent };
@@ -345,6 +348,7 @@ class HeadSlotNode extends ASTNodeBase {
  *    成员的 `onPlaced`，使折叠成员同步最终坐标，attachment 再读取这些坐标生成几何。
  *
  * Head 只协调布局，不建立局部列或局部 attachment 系统。内部内容须为零时长，且不能主动换谱面行。
+ * sidebelow=true 时，两侧从完整 center 块底部再加 gap 处开始，避免与副标题重叠。
  */
 class HeadFunction extends ASTFunctionNode {
     static override def = {
@@ -370,12 +374,14 @@ H.tempo: 94
             { name: "center", description: "中区零时长内容，如标题与副标题", type: "content" as const, default: "" },
             { name: "right", description: "右区零时长内容，如作者与署名", type: "content" as const, default: "" },
             { name: "gap", description: "每个区内相邻行的垂直间距", type: "length" as const, default: { value: DEFAULT_GAP_PX, unit: "px" as const } },
+            { name: "sidebelow", description: "将两侧内容放在整个中区下方，并保留 gap 间距", type: "boolean" as const, default: false },
         ],
     };
 
     readonly slots: [HeadSlotNode, HeadSlotNode, HeadSlotNode];
     readonly size: number;
     readonly gap: number;
+    readonly sideBelow: boolean;
     private createdBySugar = false;
 
     override get children() { return this.slots; }
@@ -498,7 +504,9 @@ H.tempo: 94
     ) {
         super(span, parent);
         this.size = ctx.variables.fontsize;
-        this.gap = ctx.length2px(this.getArgValue(args, ctx)[3] as LengthValue);
+        const values = this.getArgValue(args, ctx);
+        this.gap = ctx.length2px(values[3] as LengthValue);
+        this.sideBelow = values[4] as boolean;
         const rows = (name: SlotName, index: number) => {
             const value = args.get(name) ?? args.get(index);
             if (!(value instanceof ASTNodeBase)) return [];
@@ -542,6 +550,7 @@ H.tempo: 94
                 return `  ${slot.name}={\n${rows}\n  }`;
             });
         if (this.gap !== DEFAULT_GAP_PX) slots.push(`  gap=${this.gap}px`);
+        if (this.sideBelow) slots.push("  sidebelow=true");
         return `@head(\n${slots.join(",\n")}\n)`;
     }
 

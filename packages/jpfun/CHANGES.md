@@ -16,6 +16,8 @@ The comparison base is the unmodified upstream import commit `d7c00a6`. See UPST
 - `@bar(...,before={...})` optionally places zero-time symbols or text before the bar on the music axis. Their full width participates in wrapping and the bar anchor remains on its stroke; folded navigation symbols retain their playback hooks. Bars without inline content retain upstream geometry.
 - Optional painter object callbacks and SVG attribute callbacks support event identity and lyric source/row metadata. Music coordinates and engraving remain native. Metadata is non-enumerable so visual styles and upstream recordings are unchanged.
 - Added native staccato, tenuto, staccatissimo and breath symbols.
+- `@tempo(...,font="...")` optionally overrides the numeric font for measurement and painting, preserving it in serialization. Omitting the option retains the upstream text-font default.
+- `@head(...,sidebelow=true)` places both side slots below the complete center block with the configured row gap, preventing subtitle collisions. The default retains upstream positioning below the first center row.
 - `@dyn(...,single=true)` permits a short hairpin over one event using native attachment geometry. The upstream default still rejects zero-time intervals. M3N playback continues to use the Verovio timeline.
 
 Local regression tests: test/m3n-wrapping.test.ts and test/m3n-metadata.test.ts. Application semantics and corpus tests live in @m3n/numbered-notation; real browser geometry checks are run by `npm run test:numbered-layout` at the workspace root.

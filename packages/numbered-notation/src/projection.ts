@@ -92,7 +92,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           if (event.key !== activeKey) { controls.push(`@key(${quote(keyName(event.key))},size=16px)`); activeKey = event.key }
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
-          if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(`@tempo(${event.tempo},size=16px)`); activeTempo = event.tempo }
+          if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(`@tempo(${event.tempo},size=16px,font="M3N Numbers")`); activeTempo = event.tempo }
           const decorations: string[] = []
           for (const text of [event.sectionLabel, event.text, event.chord]) if (text) decorations.push(`@text(${quote(text)},size=14px)`)
           if (event.dynamic && event.dynamic !== dynamic) { decorations.push(`@symbol(${quote(event.dynamic)},size=12px)`); dynamic = event.dynamic }
@@ -214,7 +214,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=32px,bottom=32px,left=32px,right=32px,gap=24px)`,
-    `@head(center={${[document.title ? `@text(${quote(document.title)},size=32px)` : '', document.subtitle ? `@text(${quote(document.subtitle)},size=16px)` : ''].filter(Boolean).join(' ')}},right={${document.singer || document.composer ? `@text(${quote(document.singer || document.composer)},size=14px)` : ''}},left={{@key(${quote(keyName(document.key))},size=16px) @meter(${document.meterCount},${document.meterUnit},size=18px) ${document.hasExplicitTempo ? `@tempo(${document.tempo},size=16px)` : ''}}}) @br()`,
+    `@head(center={${[document.title ? `@text(${quote(document.title)},size=32px,align=center)` : '', document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : ''].filter(Boolean).join(' ')}},right={${document.singer || document.composer ? `@text(${quote(document.singer || document.composer)},size=14px)` : ''}},left={{@key(${quote(keyName(document.key))},size=16px) @meter(${document.meterCount},${document.meterUnit},size=18px) ${document.hasExplicitTempo ? `@tempo(${document.tempo},size=16px,font="M3N Numbers")` : ''}}}${document.subtitle ? ',sidebelow=true' : ''}) @br()`,
   ]
   const parts = [...document.parts.values()].map((part, index) => voicesForPart(part.melody, part.bass, index))
   const intervals = document.intervals.map(interval => ({ ...interval }))

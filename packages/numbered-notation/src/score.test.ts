@@ -419,6 +419,34 @@ describe('jpFun numbered notation adapter', () => {
     expect(() => render('{4/4}\nN: 1 2 3 4 |||', { width: NaN })).toThrow()
   })
 
+  it('uses the embedded number font for both header and in-score tempos', () => {
+    const { root } = render('{96qpm} {4/4}\nN: 1 2 3 4 | {120qpm} 5 6 7 1e |||')
+    const tempos = [...root.querySelectorAll('text')].filter(text => /^= (96|120)$/.test(text.textContent ?? ''))
+    expect(new Set(tempos.map(text => text.textContent))).toEqual(new Set(['= 96', '= 120']))
+    expect(tempos).toHaveLength(2)
+    for (const tempo of tempos) expect(tempo.getAttribute('font-family')).toBe('M3N Numbers')
+  })
+
+  it.each([
+    ['新不了情', '电影《新不了情》主题曲'],
+    ['很长很长的主标题', '短副标题'],
+  ])('centers title and subtitle independently: %s', (title, subtitle) => {
+    const source = `{title=${title}} {subtitle=${subtitle}} {singer=演唱者} {key=D} {90qpm} {4/4}\nN: 1 2 3 4 |||`
+    for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {
+      const result = geometry(parseM3NDocument(source), { width, paged })
+      const headings = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode
+        && node.ast.callName === 'text' && 'lines' in node.ast
+        && [title, subtitle].includes((node.ast.lines as string[])[0]!))
+      expect(headings).toHaveLength(2)
+      for (const heading of headings) expect(Math.abs(heading.box.x + heading.box.w / 2 - width / 2)).toBeLessThan(0.05)
+      expect(headings[0]!.box.y + headings[0]!.box.h).toBeLessThan(headings[1]!.box.y)
+      const controls = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode
+        && ['key', 'meter', 'tempo'].includes(node.ast.callName))
+      expect(controls).toHaveLength(3)
+      for (const control of controls) expect(control.box.y).toBeGreaterThan(headings[1]!.box.y + headings[1]!.box.h)
+    }
+  })
+
   it('renders single-event hairpins and merges consecutive legato ranges', () => {
     const single = render('{4/4}\nN: {cresc}1{/} 2 3 4 |||')
     expect(single.score.diagnostics.filter(d => d.severity === 'error')).toEqual([])

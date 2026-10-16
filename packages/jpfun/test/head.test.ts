@@ -215,6 +215,22 @@ test("head 以 center 首个有视觉占用的行作为标题行", () => {
         "non-visual center rows must not detach side slots from the title bottom");
 });
 
+test("head sidebelow reserves space below every center row and survives serialization", () => {
+    const source = `@head(center={@text(Title, 2em, align=center) @text(Subtitle, align=center)},
+        left={{@key(C) @meter(4,4) @tempo(96)}}, right={@text(Author)}, gap=7px, sidebelow=true)`;
+    for (const input of [source, parse(source).toString()]) {
+        const layout = layoutOf(input);
+        const heading = textObjects(input).get("Subtitle")!.box;
+        const sideNodes = layout.objects.filter(node => node.ast instanceof ASTFunctionNode
+            && (["key", "meter", "tempo"].includes(node.ast.callName)
+                || node.ast.callName === "text" && "lines" in node.ast
+                    && (node.ast.lines as string[])[0] === "Author"));
+        assert(sideNodes.length === 4);
+        for (const node of sideNodes) assert(node.box.y >= heading.y + heading.h + 7 - 1e-6,
+            "side slots must leave the requested gap beneath the subtitle");
+    }
+});
+
 test("head 三槽独立计算内部行距", () => {
     const positions = (rightSize: string) => {
         const layout = layoutOf(`@head(

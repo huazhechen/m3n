@@ -58,6 +58,28 @@ try {
       document.querySelector('main').innerHTML = pages.join('')
       await document.fonts.ready
       checks++
+      const texts = [...document.querySelectorAll('svg text')]
+      for (const [text, size] of [[scoreDocument.title, '32'], [scoreDocument.subtitle, '16']]) {
+        if (!text) continue
+        const heading = texts.find(node => node.textContent === text && node.getAttribute('font-size') === size)
+        const box = heading?.getBBox()
+        if (!box || Math.abs(box.x + box.width / 2 - width / 2) > 0.5) {
+          issues.push({ file, width, paged, heading: text, center: box ? box.x + box.width / 2 : null })
+        }
+        if (scoreDocument.subtitle && box) for (const other of heading.ownerSVGElement.querySelectorAll('text')) {
+          if (other === heading) continue
+          const otherBox = other.getBBox()
+          if (Math.min(box.x + box.width, otherBox.x + otherBox.width) - Math.max(box.x, otherBox.x) > 0.5
+            && Math.min(box.y + box.height, otherBox.y + otherBox.height) - Math.max(box.y, otherBox.y) > 0.5) {
+            issues.push({ file, width, paged, heading: text, overlap: other.textContent })
+          }
+        }
+      }
+      for (const tempo of texts.filter(node => /^= \d+(?:\.\d+)?$/.test(node.textContent))) {
+        if (tempo.getAttribute('font-family') !== 'M3N Numbers') {
+          issues.push({ file, width, paged, tempo: tempo.textContent, font: tempo.getAttribute('font-family') })
+        }
+      }
       if (file === 'super_mario_01.m3n' && width >= 800) {
         const first = document.querySelector('g.system')
         const measures = [...new Set([...first.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure')))]
