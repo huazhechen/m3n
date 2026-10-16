@@ -5,7 +5,7 @@ import { assert, nearly, parse, recordCommands } from "./helpers.js";
 test("anchored text sits outside tuplets, ties, hairpins and earlier annotations without consuming time", () => {
     const source = `@tuplet({@up(1, $p, @symbol(staccato,size=4px))@a 2 3@b},2)
         @tie(a,b) @dyn(a,b,24)
-        @text(Instruction,size=14px,above=a) @text(Section,size=14px,above=a)`;
+        @text(Instruction,size=14px,above=a) @text(Section,size=14px,above=a,weight=700)`;
     for (const input of [source, parse(source).toString(source)]) {
         const result = compileScore(input);
         assert(nearly(result.lowering.duration.toNumber(), 2));
@@ -20,6 +20,8 @@ test("anchored text sits outside tuplets, ties, hairpins and earlier annotations
         const texts = recordCommands(result.layout).filter(command => command.kind === "text");
         assert(texts.filter(command => command.text === "Instruction").length === 1);
         assert(texts.find(command => command.text === "Instruction")?.style.semantic?.role === "annotation");
+        assert(texts.find(command => command.text === "Instruction")?.style.fontWeight === undefined);
+        assert(texts.find(command => command.text === "Section")?.style.fontWeight === 700);
     }
 });
 

@@ -162,6 +162,7 @@ describe('jpFun numbered notation adapter', () => {
     const { root } = render(document)
     const annotations = [...root.querySelectorAll('text[data-m3n-role="annotation"]')]
     expect(annotations.map(node => node.textContent)).toEqual(['Am', '练习说明', '训练'])
+    expect(annotations.map(node => node.getAttribute('font-weight'))).toEqual(['normal', 'normal', '700'])
     for (const node of annotations) expect(node.getAttribute('data-m3n-id')).toBe('m3n-e-1')
     const y = (text: string) => Number(annotations.find(node => node.textContent === text)!.getAttribute('y'))
     expect(y('训练')).toBeLessThan(y('练习说明'))

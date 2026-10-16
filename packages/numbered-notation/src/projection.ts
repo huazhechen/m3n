@@ -154,7 +154,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const first = children[0], last = children.at(-1)
           if (first && last) {
             for (const [level, text] of [event.chord, event.text, event.sectionLabel].entries()) {
-              if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first})`)
+              if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first}${level === 2 ? ',weight=700' : ''})`)
             }
             endpointLabels.set(event, { first, last, children })
             if (!firsts.has(measureIndex)) firsts.set(measureIndex, first)

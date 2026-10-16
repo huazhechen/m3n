@@ -1,5 +1,5 @@
 import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, ParserContext, SourceSpan, LengthValue } from "../ASTtypes.js";
-// M3N modification: optional anchored annotations avoid previously laid out music.
+// M3N modification: optional anchored annotations avoid previously laid out music; text weight is shared by measurement and painting.
 import { ErrorDiagnostic } from "../../diagnostic.js";
 import { findClosingQuote, quote, removeQuote } from "../../parser/parse-utils/string-utils.js";
 import type { GrammarCallNodeTyped } from "../../parser/grammarType.js";
@@ -60,6 +60,13 @@ class TextFunction extends ASTFunctionNode {
                 namedOnly: true,
                 default: "",
             },
+            {
+                name: "weight",
+                description: "文本字重，400 为常规，700 为粗体",
+                type: "number" as const,
+                namedOnly: true,
+                default: 400,
+            },
         ],
     };
 
@@ -84,11 +91,13 @@ class TextFunction extends ASTFunctionNode {
     align: TextAlign;
     readonly font: string;
     readonly above: ASTNodeBase | null;
+    readonly weight: number;
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [text, size, lineHeight, align, font, above] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string];
+        const [text, size, lineHeight, align, font, above, weight] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number];
         this.font = font || ctx.variables.font;
         this.above = above instanceof ASTNodeBase ? above : null;
+        this.weight = weight;
         if (align !== "left" && align !== "center" && align !== "right") {
             throw new ErrorDiagnostic(
                 "E_TEXT_INVALID_ALIGN",
@@ -116,7 +125,8 @@ class TextFunction extends ASTFunctionNode {
     override toString() {
         const lineHeight = this.size === 0 ? 1.25 : this.lineAdvance / this.size;
         const above = this.above ? `, above=${(this.above as ASTFunctionNode).label}` : "";
-        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above})`;
+        const weight = this.weight === 400 ? "" : `, weight=${this.weight}`;
+        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight})`;
     }
 }
 
@@ -134,6 +144,7 @@ class TextTemporalNode extends TemporalNodeBase {
         this.ast = ast;
         this.mergeKey = DEFAULT_KEY;
         this.style = { fontSize: ast.size, fontFamily: ast.font, fill: "#000", textAlign: ast.align };
+        if (ast.weight !== 400) this.style.fontWeight = ast.weight;
         if (host) this.style.semantic = { role: 'annotation', sourceSpan: host.ast.sourceSpan };
         this.initLayoutBox();
     }
