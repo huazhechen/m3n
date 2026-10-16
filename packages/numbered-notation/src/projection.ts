@@ -166,9 +166,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const navigation = [...new Set([...(measure.navigation ?? []), ...measure.events.flatMap(event => event.navigation)].filter(name => name !== 'segno'))]
         let bar = `@bar(${type})`
         if (navigation.length || (measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},${[...navigation.map(name => `@symbol(${name},size=16px)`), ...((measure.repeatCount ?? 2) > 2 ? [`@text("×${measure.repeatCount}",size=13px)`] : [])].join(',')})`
-        // A following opening repeat already supplies this boundary. Emit it
-        // once, before the next measure, so an explicit break keeps it there.
-        if (!(type === 0 && next?.left === 'rptstart' && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
+        // A following opening repeat supplies the ordinary or double boundary.
+        // Emit it once, before the next measure, so a break keeps it there.
+        if (!((type === 0 || type === 1) && next?.left === 'rptstart' && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
         previousMeasure = structure
       })
       let endingStart = 0

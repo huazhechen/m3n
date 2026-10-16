@@ -260,6 +260,35 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
+  it.each([320, 600, 800, 1000])('renders Annie’s double bar and opening repeat as one boundary at width %s', width => {
+    const document = parseM3NDocument(readFileSync(resolve(process.cwd(), '../../src/scores/annie_01.m3n'), 'utf8'))
+    const melody = [...document.parts.values()][0]!.melody
+    const opening = melody.findIndex(measure => measure.left === 'rptstart')
+    expect(melody[opening - 1]!.right).toBe('dbl')
+    const time = melody.slice(0, opening).flatMap(measure => measure.events).reduce((sum, event) => sum + event.beats, 0)
+    for (const paged of [false, true]) {
+      const result = geometry(document, { width, paged })
+      const bars = result.layout.objects.filter(node => (node.ast as { callName?: string }).callName === 'bar' && node.t.equals(time))
+      expect(bars).toHaveLength(1)
+      expect((bars[0]!.ast as { type?: number }).type).toBe(3)
+      const next = result.layout.objects.find(node => node.t.equals(time) && !node.T.isZero())!
+      expect(bars[0]!.layoutLine).toBe(next.layoutLine)
+    }
+  })
+
+  it('shares a double-bar boundary with an opening repeat across both staves and an explicit break', () => {
+    const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 || {br} ||: 5 6 7 1e :|||\nB: 1d 2d 3d 4d || 5d 6d 7d 1 :|||')
+    const result = geometry(document)
+    const bars = result.layout.objects.filter(node => (node.ast as { callName?: string }).callName === 'bar' && node.t.equals(4))
+    expect(bars).toHaveLength(2)
+    for (const bar of bars) {
+      expect((bar.ast as { type?: number }).type).toBe(3)
+      const next = result.layout.objects.find(node => node.track === bar.track && node.t.equals(4) && !node.T.isZero())!
+      expect(bar.layoutLine).toBe(next.layoutLine)
+    }
+    expect(bars[0]!.box.x + bars[0]!.box.anchor).toBeCloseTo(bars[1]!.box.x + bars[1]!.box.anchor)
+  })
+
   it('keeps first-verse L: after explicit numbered lyric rows', () => {
     const { root } = render('{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 春天来了\nL2: 花开满园\n---\nN: 5 6 |||\nL: 你好')
     expect(lyrics(root, 'm3n-e-5', 1)).toBe('你')
