@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
-import type { ChangeEventHandler, FocusEventHandler, ReactEventHandler, RefObject } from 'react'
+import type { ChangeEventHandler, CompositionEventHandler, FocusEventHandler, ReactEventHandler, RefObject } from 'react'
 
 type SourceEditorProps = {
   value: string
@@ -10,6 +10,8 @@ type SourceEditorProps = {
   onBlur?: FocusEventHandler<HTMLTextAreaElement>
   textareaRef?: RefObject<HTMLTextAreaElement | null>
   readOnly?: boolean
+  onCompositionStart?: CompositionEventHandler<HTMLTextAreaElement>
+  onCompositionEnd?: CompositionEventHandler<HTMLTextAreaElement>
 }
 
 export function SourceEditor({
@@ -21,6 +23,8 @@ export function SourceEditor({
   onBlur,
   textareaRef,
   readOnly = false,
+  onCompositionStart,
+  onCompositionEnd,
 }: SourceEditorProps) {
   const editorRef = useRef<HTMLTextAreaElement>(null)
 
@@ -65,6 +69,8 @@ export function SourceEditor({
         onFocus={onFocus}
         onSelect={onSelect}
         onBlur={onBlur}
+        onCompositionStart={onCompositionStart}
+        onCompositionEnd={onCompositionEnd}
         aria-label={ariaLabel}
       />
     </div>

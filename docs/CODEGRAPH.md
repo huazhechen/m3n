@@ -48,6 +48,9 @@ flowchart TD
   editorPage --> notationEditor["NotationEditor"]
   notationEditor --> sourceEditor["SourceEditor"]
   notationEditor --> analyze["analyzeM3N / formatM3N"]
+  notationEditor --> analysisHook["useM3NAnalysis"]
+  analysisHook --> analysisWorker["analysis.worker / analyzeM3NSnapshot"]
+  analysisWorker --> notationPkg["@m3n/notation"]
   notationEditor --> scoreRenderer["ScoreRenderer"]
 
   readerPage --> samples["lib/samples"]
@@ -66,7 +69,7 @@ flowchart TD
 
   scoreRenderer --> rendererPkg["@m3n/score-renderer"]
   exportDialog --> rendererPkg
-  analyze --> notationPkg["@m3n/notation"]
+  analyze --> notationPkg
   shared --> api["/api/scores"]
 ```
 

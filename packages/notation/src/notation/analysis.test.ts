@@ -1,12 +1,23 @@
 import { describe, expect, it, vi } from 'vitest'
 import * as conversion from '../m3n-mei.js'
 import { scoreMetadataFromSource } from '../score-metadata.js'
+import * as tokenizer from './m3n-tokens.js'
 import { parseM3NDocument } from '../m3n-direct.js'
 import { m3nToMei } from '../m3n-mei.js'
 import { invalidMeasureIds } from './measure-diagnostics.js'
 import { analyzeM3N } from './analysis.js'
 
 describe('M3N analysis', () => {
+  it('tokenizes a structured document once for building, validation and conversion', () => {
+    const tokenize = vi.spyOn(tokenizer, 'tokenizeM3N')
+    try {
+      const source = '// comment\r\n{key=G}{4/4}\r\nN: 1 2 3 4 |||\r\nB: 1d 2d 3d 4d |\r\nL: 春夏秋冬'
+      const analysis = analyzeM3N(source)
+      expect(analysis.conversion.diagnostics).toEqual([])
+      expect(tokenize).toHaveBeenCalledTimes(1)
+      for (const range of analysis.conversion.sourceMap) expect(source.slice(range.sourceStart, range.sourceEnd)).not.toBe('')
+    } finally { tokenize.mockRestore() }
+  })
   it('does not serialize MEI for metadata and memoizes conversion without validating again', () => {
     const convert = vi.spyOn(conversion, 'm3nToMei')
     try {

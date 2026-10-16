@@ -1,7 +1,7 @@
 import { parseM3NGrace, parseM3NGroupPitches, parseM3NTupletPitches } from './notation/m3n-groups.js'
 import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './notation/m3n-primitives.js'
 import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure } from './notation/m3n-document.js'
-import { tokenizeM3N } from './notation/m3n-tokens.js'
+import type { M3NToken } from './notation/m3n-tokens.js'
 import { parseLyricItems } from './notation/lyrics.js'
 import { parsePassRange } from './notation/repeats.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document.js'
@@ -17,25 +17,8 @@ function duration(depth: number, carets = 0, dots = 0) {
   return durationInBeats(depth, carets, dots)
 }
 
-type SourceRow = { text: string; start: number; passes?: string }
-type ParsedBodySource = { text: string; positionAt: (offset: number) => number; phrasePasses: Array<{ start: number; end: number; passes: string }> }
-
-function bodySource(rows: readonly SourceRow[]): ParsedBodySource {
-  const positions: number[] = []
-  const text = rows.map((row, index) => {
-    if (index > 0) positions.push(rows[index - 1]?.start ?? 0)
-    positions.push(...Array.from({ length: row.text.length }, (_, offset) => row.start + offset))
-    return row.text
-  }).join('\n')
-  return {
-    text,
-    positionAt: (offset) => positions[offset] ?? (positions.at(-1) ?? 0) + 1,
-    phrasePasses: rows.flatMap((row) => row.passes ? [{ start: row.start, end: row.start + row.text.length, passes: row.passes }] : []),
-  }
-}
-
 function parseBody(
-  source: string,
+  tokens: readonly M3NToken[],
   staff: 'melody' | 'bass',
   parts: Map<string, ScorePart>,
   initialKey: string,
@@ -46,7 +29,6 @@ function parseBody(
   settingEvents: DirectSettingEvent[] = [],
   inheritedSettingEvents: DirectSettingEvent[] = [],
   phrasePasses: ReadonlyArray<{ start: number; end: number; passes: string }> = [],
-  positionAt: (offset: number) => number = (offset) => offset,
 ) {
   let depth = 0
   let currentKey = initialKey
@@ -138,9 +120,9 @@ function parseBody(
     }
   }
 
-  for (const token of tokenizeM3N(source)) {
-    const sourceStart = positionAt(token.start)
-    const sourceEnd = positionAt(token.end - 1) + 1
+  for (const token of tokens) {
+    const sourceStart = token.start
+    const sourceEnd = token.end
     if (token.kind === 'space' || token.kind === 'comment') continue
     if (token.kind === 'attribute') {
       const value = token.content ?? ''
@@ -450,16 +432,13 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
   const intervals: ScoreInterval[] = []
   const settingEvents: DirectSettingEvent[] = []
   const phrases = projection.structure.sections.flatMap((section) => section.phrases)
-  const melody = bodySource(phrases.flatMap((phrase) => phrase.melody
-    ? [{ text: phrase.melody.text, start: phrase.melody.start, passes: phrase.passes || undefined }]
-    : []))
-  const bass = bodySource(phrases.flatMap((phrase) => phrase.bass
-    ? [{ text: phrase.bass.text, start: phrase.bass.start }]
-    : []))
-  const fallback = projection.structure.sections.length === 0 ? bodySource([{ text: source, start: 0 }]) : undefined
-  const melodyBody = fallback ?? melody
-  parseBody(melodyBody.text, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], melodyBody.phrasePasses, melodyBody.positionAt)
-  if (bass.text) parseBody(bass.text, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents, [], bass.positionAt)
+  const melody = phrases.flatMap(phrase => phrase.melody?.tokens ?? [])
+  const bass = phrases.flatMap(phrase => phrase.bass?.tokens ?? [])
+  const phrasePasses = phrases.flatMap(phrase => phrase.melody && phrase.passes
+    ? [{ start: phrase.melody.start, end: phrase.melody.start + phrase.melody.text.length, passes: phrase.passes }] : [])
+  const melodyTokens = projection.structure.sections.length === 0 ? projection.syntaxTree.tokens : melody
+  parseBody(melodyTokens, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], phrasePasses)
+  if (bass.length > 0) parseBody(bass, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
   const document: ScoreDocument = {
     ...settings,
     lyrics: [],

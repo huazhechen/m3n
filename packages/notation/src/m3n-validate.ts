@@ -1,7 +1,7 @@
 import { durationInBeats } from './notation/m3n-primitives.js' 
 import { parseM3NGrace } from './notation/m3n-groups.js'
 import { parseLyricItems } from './notation/lyrics.js'
-import { tokenizeM3N, type M3NToken as Token } from './notation/m3n-tokens.js'
+import type { M3NToken as Token } from './notation/m3n-tokens.js'
 import { createScoreDiagnostic, type ScoreDiagnostic } from './notation/diagnostics.js'
 import { parseM3NDocument } from './m3n-direct.js'
 import { hasForcedLyricOutsideTiedTarget } from './m3n-lyric-alignment.js'
@@ -860,27 +860,22 @@ function validatePhraseLyrics(document: ScoreDocument, structure: M3NDocumentStr
   return diagnostics
 }
 
-function structureTokens(source: string, structure: M3NDocumentStructure, staff: 'melody' | 'bass') {
-  if (structure.sections.length === 0) return staff === 'melody' ? tokenizeM3N(source) : []
+function structureTokens(tree: M3NSyntaxTree, structure: M3NDocumentStructure, staff: 'melody' | 'bass') {
+  if (structure.sections.length === 0) return staff === 'melody' ? tree.tokens : []
   const rows = structure.sections.flatMap((section) => section.phrases.flatMap((phrase) => {
     const row = staff === 'melody' ? phrase.melody : phrase.bass
     return row ? [row] : []
   }))
-  const header = staff === 'melody' ? tokenizeM3N(structure.header) : []
-  return [...header, ...rows.flatMap((row) => tokenizeM3N(row.text).map((token) => ({
-    ...token,
-    line: row.line + token.line - 1,
-    start: row.start + token.start,
-    end: row.start + token.end,
-  })))]
+  const header = staff === 'melody' ? structure.headerTokens : []
+  return [...header, ...rows.flatMap(row => row.tokens)]
 }
 
-function validateSourceRules(source: string, structure: M3NDocumentStructure): ScoreDiagnostic[] {
+function validateSourceRules(tree: M3NSyntaxTree, structure: M3NDocumentStructure): ScoreDiagnostic[] {
   const diagnostics: ScoreDiagnostic[] = []
-  const mainResult = validateBody(structureTokens(source, structure, 'melody'), diagnostics, {
+  const mainResult = validateBody(structureTokens(tree, structure, 'melody'), diagnostics, {
     requireTerminal: structure.sections.length === 0,
   })
-  const bassTokens = structureTokens(source, structure, 'bass')
+  const bassTokens = structureTokens(tree, structure, 'bass')
   if (bassTokens.length > 0) {
     validateBody(bassTokens, diagnostics, {
       bass: true,
@@ -895,7 +890,7 @@ type ValidationContext = { document?: ScoreDocument; projection?: M3NDocumentPro
 function validationResult(source: string, options: { skipBeatValidation?: boolean }, context: ValidationContext = {}) {
   const projected = context.projection ?? projectM3NDocument(source, context.syntaxTree)
   const parsed = context.document ?? parseM3NDocument(source, projected)
-  const typedSourceRuleDiagnostics = validateSourceRules(source, projected.structure)
+  const typedSourceRuleDiagnostics = validateSourceRules(projected.syntaxTree, projected.structure)
   const phraseDiagnostics = projected.structure.sections.length > 0
     ? validatePhrasePlaybackPasses(parsed, projected.structure)
     : []

@@ -72,6 +72,7 @@ test('editing the score and changing width invalidate both notation snapshots', 
   const toggle = page.getByRole('radio', { name: '简谱', exact: true })
   await editor.fill('{title=原谱} {4/4}\nN: 1 2 3 4 |||')
   await expect(paper.locator('svg').first()).toBeVisible({ timeout: 30_000 })
+  await expect(paper).toContainText('原谱')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   await toggle.check()
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')

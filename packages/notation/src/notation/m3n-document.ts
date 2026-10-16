@@ -1,12 +1,15 @@
 import { parseM3NSyntaxTree, type M3NSyntaxTree } from './syntax-tree.js' 
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
+import type { M3NToken } from './m3n-tokens.js'
+
+export type M3NSourceRow = { text: string; start: number; line: number; tokens: M3NToken[] }
 
 export type M3NPhrase = {
   line: number
   passes: string
-  melody?: { text: string; start: number; line: number }
-  bass?: { text: string; start: number; line: number }
-  harmony?: { text: string; start: number; line: number }
+  melody?: M3NSourceRow
+  bass?: M3NSourceRow
+  harmony?: M3NSourceRow
   lyrics: Array<{ label: string; text: string; start: number }>
 }
 
@@ -18,11 +21,11 @@ export type M3NSection = {
 
 export type M3NDocumentStructure = {
   header: string
+  headerTokens: M3NToken[]
   sections: M3NSection[]
   diagnostics: ScoreDiagnostic[]
 }
 
-const linePrefix = /^(N|B|C|L\d*):(?:[ \t]?)(.*)$/
 const phraseTrailingRepeatStart = /(?:\|\|:|:\|\|:)\s*(?:\/\/.*)?$/
 const nonAlignmentBar = /\|\||:\|\|/
 
@@ -34,6 +37,7 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
   let section = rootSection
   let phrase: M3NPhrase | undefined
   let musicSeen = false
+  let musicStart = source.length
 
   const ensurePhrase = (line: number, passes = '') => {
     phrase ??= { line, passes, lyrics: [] }
@@ -53,14 +57,13 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
     const rawLine = syntaxLine.raw
     const line = syntaxLine.line
     const trimmed = rawLine.trim()
-    const leading = rawLine.length - rawLine.trimStart().length
-    const contentStart = syntaxLine.start + leading
     if (!trimmed || trimmed.startsWith('//')) {
       if (!musicSeen) header.push(rawLine)
       continue
     }
     const sectionMatch = /^===\s*(.*)$/.exec(trimmed)
     if (sectionMatch) {
+      musicStart = Math.min(musicStart, syntaxLine.start)
       musicSeen = true
       if (phrase && !phrase.melody) report(line, 'M3N_STRUCTURE_MISSING_MELODY', '=== 前的乐句缺少 N: 旋律行')
       phrase = undefined
@@ -72,27 +75,30 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
     }
     const phraseMatch = /^---(?:V(\d+(?:\s*,\s*V?\d+)*))?$/.exec(trimmed)
     if (phraseMatch) {
+      musicStart = Math.min(musicStart, syntaxLine.start)
       musicSeen = true
       phrase = { line, passes: phraseMatch[1]?.replace(/\s*V?\s*/g, '') ?? '', lyrics: [] }
       section.phrases.push(phrase)
       continue
     }
-    const prefixed = linePrefix.exec(trimmed)
-    if (prefixed) {
+    const syntaxRow = syntaxLine.row
+    if (syntaxRow) {
+      musicStart = Math.min(musicStart, syntaxLine.start)
       musicSeen = true
       const current = ensurePhrase(line)
-      const kind = prefixed[1] ?? ''
-      const text = prefixed[2] ?? ''
-      const start = contentStart + trimmed.indexOf(text)
+      const kind = syntaxRow.label
+      const text = syntaxRow.content
+      const start = syntaxRow.contentStart
+      const row = { text, start, line, tokens: syntaxRow.tokens }
       if (kind === 'N') {
         if (current.melody) report(line, 'M3N_STRUCTURE_DUPLICATE_MELODY', '同一乐句只能有一个 N: 行')
-        current.melody = { text, start, line }
+        current.melody = row
       } else if (kind === 'B') {
         if (current.bass) report(line, 'M3N_STRUCTURE_DUPLICATE_BASS', '同一乐句只能有一个 B: 行')
-        current.bass = { text, start, line }
+        current.bass = row
       } else if (kind === 'C') {
         if (current.harmony) report(line, 'M3N_STRUCTURE_DUPLICATE_HARMONY', '同一乐句只能有一个 C: 行')
-        current.harmony = { text, start, line }
+        current.harmony = row
       } else {
         current.lyrics.push({ label: kind.slice(1), text, start })
       }
@@ -103,7 +109,8 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
     else report(line, 'M3N_STRUCTURE_UNKNOWN_ROW', `正文必须写在 N:、B:、C: 或 L: 行中：${trimmed}`)
   }
 
-  if (!musicSeen) return { header: source, sections: [], diagnostics: [] }
+  const headerTokens = syntaxTree.tokens.filter(token => token.start < musicStart)
+  if (!musicSeen) return { header: source, headerTokens, sections: [], diagnostics: [] }
   for (const currentSection of sections) {
     if (currentSection.phrases.length === 0) report(currentSection.line, 'M3N_STRUCTURE_EMPTY_SECTION', '乐段至少需要一个乐句')
     for (const currentPhrase of currentSection.phrases) {
@@ -114,7 +121,7 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
       if (new Set(labels).size !== labels.length) report(currentPhrase.line, 'M3N_STRUCTURE_DUPLICATE_LYRIC', '同一乐句不能重复相同的歌词行')
     }
   }
-  return { header: header.join('\n'), sections, diagnostics }
+  return { header: header.join('\n'), headerTokens, sections, diagnostics }
 }
 
 export function projectM3NDocument(source: string, syntaxTree: M3NSyntaxTree = parseM3NSyntaxTree(source)) {

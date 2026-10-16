@@ -45,6 +45,7 @@ type ScoreRendererProps = {
   sourceMap: MeiSourceMapRange[]
   scoreDocument?: ScoreDocument
   compact?: boolean
+  isSourceUpdating?: boolean
   numberedNotation?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
@@ -161,6 +162,7 @@ export function ScoreRenderer({
   sourceMap,
   scoreDocument,
   compact = false,
+  isSourceUpdating = false,
   numberedNotation: numberedNotationOverride,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
@@ -224,6 +226,8 @@ export function ScoreRenderer({
   // At most one snapshot per notation, scoped to the current score and layout settings.
   const renderCache = useMemo(() => new Map<boolean, { markup: string; message: string }>(),
     [compact, headerMetadata, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument])
+
+  useEffect(() => { if (isSourceUpdating) stopPlaybackRef.current() }, [isSourceUpdating])
 
   useEffect(() => {
     if (!compact) return
@@ -602,7 +606,7 @@ export function ScoreRenderer({
       {hasAudioControls && <ScoreControls
         compact={compact}
         isPlaying={isPlaying}
-        isLoading={isPlayerLoading}
+        isLoading={isPlayerLoading || isSourceUpdating}
         progress={playbackProgress}
         speed={playbackSpeed}
         transpose={playbackTranspose}
