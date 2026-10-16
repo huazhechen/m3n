@@ -51,7 +51,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const bindings = new Map<string, EventBinding>()
   const diagnostics: NumberedNotationDiagnostic[] = []
   const rowNumbers = [...new Set([...lyrics.values()].flatMap(slots => [...slots.values()].flatMap(rows => [...rows.keys()])))].sort((a, b) => a - b)
-  const endpointLabels = new Map<ScoreEvent, { first: string; last: string; children: string[]; tieStart: string }>()
+  const endpointLabels = new Map<ScoreEvent, { first: string; last: string; children: string[]; tieStart: string; legatoEnd: string }>()
   const relations: string[] = []
   const parentheses: string[] = []
   // Registered after musical relations, from inner to outer: harmony, directions, section names.
@@ -174,7 +174,11 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             }
             const head = continuations.get(event)
             const tieStart = head ? endpointLabels.get(head)!.tieStart : event.tieFromTupletIndex === undefined ? first : children[event.tieFromTupletIndex]!
-            endpointLabels.set(event, { first, last, children, tieStart })
+            // Legato ends on the last pitched glyph, even when its source
+            // interval includes sustain dashes. Tuplets keep their last note.
+            const legatoEnd = head ? endpointLabels.get(head)!.legatoEnd
+              : event.kind === 'tuplet' ? children[event.pitches.findLastIndex(pitch => pitch !== '0')] ?? last : first
+            endpointLabels.set(event, { first, last, children, tieStart, legatoEnd })
             if (!firsts.has(measureIndex)) firsts.set(measureIndex, first)
             lasts.set(measureIndex, last)
             if (previousTied && !head) {
@@ -275,7 +279,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     const first = events[0], last = events.at(-1)
     if (!first || !last) continue
     const start = endpointLabels.get(first)?.first
-    const end = interval.kind === 'lg' && last.kind === 'chord' ? endpointLabels.get(last)?.first : endpointLabels.get(last)?.last
+    const end = interval.kind === 'lg' ? endpointLabels.get(last)?.legatoEnd : endpointLabels.get(last)?.last
     if (!start || !end || interval.display === 'text') continue
     relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
   }

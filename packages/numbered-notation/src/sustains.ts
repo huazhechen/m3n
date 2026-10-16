@@ -17,15 +17,15 @@ export function sustainContinuations(document: ScoreDocument, lyrics: LyricsByEv
       for (const [index, event] of measure.events.entries()) {
         const previous = measure.events[index - 1]
         const hasLyrics = [...(lyrics.get(event)?.values() ?? [])].some(rows => [...rows.values()].some(row => row.texts.some(text => text.trim())))
-        const hasSlurEndpoint = document.intervals.some(interval => interval.staff === staff && interval.kind === 'lg'
-          && (interval.start === event.sourceStart || interval.endStart === event.sourceStart))
+        const hasSlurStart = document.intervals.some(interval => interval.staff === staff && interval.kind === 'lg'
+          && interval.start === event.sourceStart)
         if (previous?.tie && (event.kind === 'note' || event.kind === 'chord') && previous.kind === event.kind
           && event.key === previous.key && event.octaveShift === previous.octaveShift && pitches(event) === pitches(previous)
           && whole(beat) && whole(event.beats) && event.beats >= 1
           && event.meterCount === previous.meterCount && event.meterUnit === previous.meterUnit
           && event.tempo === previous.tempo && event.dynamic === previous.dynamic
           && !event.postfixes.length && !event.prefix && !event.chord && !event.text && !event.sectionLabel
-          && !hasLyrics && !hasSlurEndpoint) {
+          && !hasLyrics && !hasSlurStart) {
           result.set(event, result.get(previous) ?? previous)
         }
         beat += event.beats
