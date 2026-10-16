@@ -194,12 +194,19 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.querySelector('text[data-m3n-rendition="2"]')?.getAttribute('data-m3n-passes')).toContain('2')
   })
 
-  it.each([320, 800])('labels every ANDY verse separately from its aligned lyrics at width %s', width => {
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('labels each continuous ANDY passage once at width $width, paged=$paged', ({ width, paged }) => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/andy_01.m3n'), 'utf8')
-    const { root, score } = render(source, { width, paged: width === 320 })
+    const { root, score } = render(source, { width, paged })
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
-    const shared = [...root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')]
-      .find(node => node.textContent === '2.4.')!
+    const allPrefixes = [...root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')]
+    expect(allPrefixes.map(node => [node.textContent, lyrics(root, node.getAttribute('data-m3n-id')!, Number(node.getAttribute('data-m3n-rendition')))])).toEqual([
+      ['1.', '多'], ['2.4.', '我'], ['3.', '真'], ['2.4.', '几'],
+    ])
+    for (const syllable of ['希', '暂', '躁']) {
+      const lyric = [...root.querySelectorAll('text[data-m3n-role="lyric"]')].find(node => node.textContent === syllable)!
+      expect(lyric.getAttribute('data-m3n-passes')).toBe('2-4')
+    }
+    const shared = allPrefixes.find(node => node.textContent === '2.4.')!
     expect(shared).toBeDefined()
     const eventId = shared.getAttribute('data-m3n-id')!
     const prefixes = [...root.querySelectorAll(`text[data-m3n-role="lyric-prefix"][data-m3n-id="${eventId}"]`)]
@@ -223,6 +230,27 @@ describe('jpFun numbered notation adapter', () => {
     expect(lyrics(root, 'm3n-e-1', 2)).toBe('乙丙')
     expect(root.querySelector('text[data-m3n-role="lyric-prefix"][data-m3n-underlined]')).toBeNull()
     expect(root.querySelector('text[data-m3n-id="m3n-e-3"][data-m3n-role="lyric-prefix"]')).toBeNull()
+  })
+
+  it('carries a pending verse label across a phrase containing only skipped slots', () => {
+    const { root } = render('{2/4}\nN: ||: 1 2 |\nL1: %%\nL2: 甲乙\nL3: {L2}\n---\nN: 3 4 :|||{x3}\nL1: 丙丁\nL2: 戊己\nL3: {L2}')
+    const prefixes = [...root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')]
+    expect(prefixes.map(node => [node.textContent, node.getAttribute('data-m3n-id')])).toEqual([
+      ['2.3.', 'm3n-e-1'], ['1.', 'm3n-e-3'],
+    ])
+  })
+
+  it.each([
+    ['changed verse grouping', '---\nN: 3 4 |\nL1: 庚辛\nL2: {L1}\nL3: 壬癸\n---', ''],
+    ['music without lyrics', '---\nN: 3 4 |\n---', ''],
+    ['instrumental music', '---\nN: {inst}3 4{/} |\n---', ''],
+    ['whole-bar rests', '---\nN: {rest=2} |\n---', ''],
+    ['a new section', '===新段', ''],
+    ['a new repeat', '---', '||:'],
+  ])('restarts verse labels after %s', (_reason, boundary, opening) => {
+    const { root } = render(`{2/4}\nN: 1 2 |\nL1: 甲乙\nL2: 丙丁\nL3: {L2}\n${boundary}\nN: ${opening} 5 6 :|||{x3}\nL1: 戊己\nL2: 子丑\nL3: {L2}`)
+    const prefixes = [...root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')]
+    expect(prefixes.filter(node => node.textContent === '2.3.').map(node => lyrics(root, node.getAttribute('data-m3n-id')!, 2))).toEqual(['丙', '子'])
   })
 
   it('retains repeat boundaries, navigation and volta numbers without phantom measures', () => {
