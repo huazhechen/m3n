@@ -1,0 +1,50 @@
+{
+  "baselineEdition": "第十一版",
+  "rendererSha256": "6fc50a4008f1af8a774b1a28bc9d862af3d1becd157034907351090cdc3ab36c",
+  "body": {
+    "width": 696,
+    "height": 1057
+  },
+  "options": {
+    "showCredits": false,
+    "includeBass": true,
+    "uniformSystemHeight": true,
+    "pageMargin": 8
+  },
+  "audits": [
+    {
+      "name": "repeat",
+      "sourceFile": "bei_jia_er_hu_pan-repeat.m3n",
+      "pdfFile": "贝加尔湖畔-局部反复-单页.pdf",
+      "sourceSha256": "fd8a4b41072840df9ba8e1c0d0b5c8f7bd3efb451a3b31b156c33378f5eda8f6",
+      "width": 770,
+      "systemGap": 18,
+      "systems": 10,
+      "notePx": 19.885714285714286,
+      "lyricPx": 16.306285714285714,
+      "fillPercent": 99.14098676091825,
+      "outside": 0,
+      "overlaps": 0,
+      "clipped": 0,
+      "outlinedOverflow": 0,
+      "playedEvents": 273
+    },
+    {
+      "name": "repeat-lyrics-ds",
+      "sourceFile": "bei_jia_er_hu_pan-repeat-ds.m3n",
+      "pdfFile": "贝加尔湖畔-反复与DS-单页.pdf",
+      "sourceSha256": "ae088c011cc8b8ac460dad2ee3f19dabc9102efdab467c8cba0e307510fba1da",
+      "width": 758,
+      "systemGap": 18,
+      "systems": 10,
+      "notePx": 20.200527704485488,
+      "lyricPx": 16.564432717678102,
+      "fillPercent": 99.79837625728617,
+      "outside": 0,
+      "overlaps": 0,
+      "clipped": 0,
+      "outlinedOverflow": 0,
+      "playedEvents": 273
+    }
+  ]
+}
