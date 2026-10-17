@@ -1,12 +1,12 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第六版",
+  "edition": "第七版",
   "showCredits": false,
   "uniformSystemHeight": true,
   "rendererSha256": "aa12930f343c195970b55c421840fa26fe2c4d15612f28de99df95d033523a4e",
   "sourceCount": 82,
   "entryCount": 82,
-  "pageCount": 79,
+  "pageCount": 89,
   "frontPages": 4,
   "baseWidth": 780,
   "page": {
@@ -6176,26 +6176,30 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        101.435,
-        101.435,
-        101.435,
-        101.435,
-        124.755,
-        124.755,
-        124.755,
-        124.755,
-        124.755
+        104.335,
+        104.335,
+        104.335,
+        104.335,
+        104.335,
+        104.335,
+        127.655,
+        127.655,
+        127.655,
+        127.655,
+        127.655,
+        127.655,
+        127.655
       ],
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "器乐间奏与跨拍延音",
-      "width": 880,
-      "systemGap": 18,
-      "relativeScalePercent": 88.64,
-      "screenNotePx": 17.4,
-      "versusV1Percent": 105.51,
-      "versusV2Percent": 86.91,
+      "width": 628,
+      "systemGap": 22,
+      "relativeScalePercent": 124.2,
+      "screenNotePx": 24.38,
+      "versusV1Percent": 147.85,
+      "versusV2Percent": 121.79,
       "previousPages": [
         25
       ],
@@ -6203,114 +6207,27 @@
         25
       ],
       "pages": [
-        25
+        25,
+        26
       ],
-      "systems": 10,
+      "systems": 14,
       "systemsPerPage": [
-        10
+        7,
+        7
       ],
       "sourceSha256": "e811527abb2f79a93e1dbd4285784f4c08c3d4a9b5c8094087c77f8dd8b7f92d",
       "candidates": [
         {
-          "width": 880,
-          "systemGap": 18,
-          "rows": 10,
-          "pages": 1,
-          "cost": 1528
+          "width": 628,
+          "systemGap": 22,
+          "rows": 14,
+          "pages": 2,
+          "cost": 2376.8
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 900,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 920,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 33,
@@ -6348,7 +6265,7 @@
         26
       ],
       "pages": [
-        26
+        27
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -6498,7 +6415,7 @@
         27
       ],
       "pages": [
-        27
+        28
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -6642,7 +6559,7 @@
         28
       ],
       "pages": [
-        28
+        29
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -6793,7 +6710,7 @@
         29
       ],
       "pages": [
-        29
+        30
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -6952,7 +6869,7 @@
         30
       ],
       "pages": [
-        30
+        31
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -7094,7 +7011,7 @@
         19
       ],
       "pages": [
-        31
+        32
       ],
       "systems": 5,
       "systemsPerPage": [
@@ -7299,7 +7216,7 @@
         31
       ],
       "pages": [
-        31
+        32
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -7508,7 +7425,7 @@
         32
       ],
       "pages": [
-        32
+        33
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -7659,7 +7576,7 @@
         33
       ],
       "pages": [
-        33
+        34
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -7802,7 +7719,7 @@
         34
       ],
       "pages": [
-        34
+        35
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -7948,7 +7865,7 @@
         35
       ],
       "pages": [
-        35
+        36
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -8106,7 +8023,7 @@
         36
       ],
       "pages": [
-        36
+        37
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -8257,7 +8174,7 @@
         37
       ],
       "pages": [
-        37
+        38
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -8413,8 +8330,8 @@
         38
       ],
       "pages": [
-        38,
-        39
+        39,
+        40
       ],
       "systems": 21,
       "systemsPerPage": [
@@ -8570,8 +8487,8 @@
         39
       ],
       "pages": [
-        40,
-        41
+        41,
+        42
       ],
       "systems": 17,
       "systemsPerPage": [
@@ -8695,27 +8612,31 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        129.155,
-        129.155,
-        129.155,
-        129.155,
-        129.155,
-        129.155,
-        129.155,
-        105.835,
-        105.835,
-        105.835
+        131.155,
+        131.155,
+        131.155,
+        131.155,
+        131.155,
+        131.155,
+        131.155,
+        131.155,
+        131.155,
+        131.155,
+        107.835,
+        107.835,
+        107.835,
+        107.835
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "较长结构与密集八分、十六分",
-      "width": 940,
-      "systemGap": 18,
-      "relativeScalePercent": 82.98,
-      "screenNotePx": 16.29,
-      "versusV1Percent": 94.28,
-      "versusV2Percent": 93.57,
+      "width": 690,
+      "systemGap": 20,
+      "relativeScalePercent": 113.04,
+      "screenNotePx": 22.19,
+      "versusV1Percent": 128.44,
+      "versusV2Percent": 127.47,
       "previousPages": [
         42,
         43
@@ -8724,120 +8645,27 @@
         40
       ],
       "pages": [
-        42
+        43,
+        44
       ],
-      "systems": 11,
+      "systems": 15,
       "systemsPerPage": [
-        11
+        7,
+        8
       ],
       "sourceSha256": "c7bfdb89ca21b9d1a21b6190a674ed7c6267d566b983e1c3f368299fbb2b7487",
       "candidates": [
         {
-          "width": 580,
-          "systemGap": 18,
-          "rows": 19,
-          "pages": 3,
-          "cost": 3348
-        },
-        {
-          "width": 940,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1564
-        },
-        {
-          "width": 960,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1576
+          "width": 690,
+          "systemGap": 20,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2414
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 900,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 920,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 49,
@@ -8847,26 +8675,29 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        129.835,
-        129.835,
-        129.835,
-        129.835,
-        129.835,
-        129.835,
-        129.835,
-        129.835,
-        129.835
+        131.835,
+        131.835,
+        131.835,
+        131.835,
+        131.835,
+        131.835,
+        131.835,
+        131.835,
+        131.835,
+        131.835,
+        131.835,
+        108.515
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "器乐过门与密集节奏",
-      "width": 900,
-      "systemGap": 20,
-      "relativeScalePercent": 86.67,
-      "screenNotePx": 17.01,
-      "versusV1Percent": 98.47,
-      "versusV2Percent": 84.98,
+      "width": 654,
+      "systemGap": 22,
+      "relativeScalePercent": 119.27,
+      "screenNotePx": 23.41,
+      "versusV1Percent": 135.51,
+      "versusV2Percent": 116.95,
       "previousPages": [
         44,
         45
@@ -8875,117 +8706,27 @@
         41
       ],
       "pages": [
-        43
+        45,
+        46
       ],
-      "systems": 10,
+      "systems": 13,
       "systemsPerPage": [
-        10
+        6,
+        7
       ],
       "sourceSha256": "a8c6261b1f5d28d8a86f6625c6246ce56056aa1a2a8b540b4e5291188360deeb",
       "candidates": [
         {
-          "width": 900,
-          "systemGap": 20,
-          "rows": 10,
-          "pages": 1,
-          "cost": 1540
-        },
-        {
-          "width": 920,
-          "systemGap": 20,
-          "rows": 10,
-          "pages": 1,
-          "cost": 1552
+          "width": 654,
+          "systemGap": 22,
+          "rows": 13,
+          "pages": 2,
+          "cost": 2392.4
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 50,
@@ -8997,24 +8738,29 @@
       "baselineSteps": [
         99.675,
         99.675,
+        99.675,
         122.995,
         122.995,
         122.995,
         122.995,
         122.995,
         122.995,
-        122.995
+        122.995,
+        122.995,
+        122.995,
+        99.675,
+        99.675
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "切分、十六分与跳进",
-      "width": 900,
+      "width": 640,
       "systemGap": 18,
-      "relativeScalePercent": 86.67,
-      "screenNotePx": 17.01,
-      "versusV1Percent": 98.47,
-      "versusV2Percent": 87.11,
+      "relativeScalePercent": 121.88,
+      "screenNotePx": 23.93,
+      "versusV1Percent": 138.48,
+      "versusV2Percent": 122.49,
       "previousPages": [
         46,
         47
@@ -9023,11 +8769,13 @@
         42
       ],
       "pages": [
-        44
+        47,
+        48
       ],
-      "systems": 10,
+      "systems": 15,
       "systemsPerPage": [
-        10
+        7,
+        8
       ],
       "sourceSha256": "2a041f913c0e79867fc3903bde71349ae6e5175ab240332f3aaa6be077da3502",
       "candidates": [
@@ -9037,103 +8785,11 @@
           "rows": 15,
           "pages": 2,
           "cost": 2384
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 10,
-          "pages": 1,
-          "cost": 1540
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 920,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 51,
@@ -9171,7 +8827,7 @@
         43
       ],
       "pages": [
-        45
+        49
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -9311,7 +8967,7 @@
         44
       ],
       "pages": [
-        46
+        50
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -9434,26 +9090,31 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        125.856,
-        125.857,
-        102.537,
-        125.857,
-        125.856,
-        125.857,
-        125.857,
-        125.857,
-        102.536
+        126.34,
+        126.34,
+        126.34,
+        103.02,
+        103.02,
+        126.34,
+        126.34,
+        126.34,
+        126.341,
+        126.34,
+        126.34,
+        103.02,
+        103.02,
+        103.02
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "密集节奏与长线条",
-      "width": 860,
+      "width": 628,
       "systemGap": 18,
-      "relativeScalePercent": 90.7,
-      "screenNotePx": 17.8,
-      "versusV1Percent": 107.96,
-      "versusV2Percent": 91.16,
+      "relativeScalePercent": 124.2,
+      "screenNotePx": 24.38,
+      "versusV1Percent": 147.85,
+      "versusV2Percent": 124.83,
       "previousPages": [
         50
       ],
@@ -9461,117 +9122,27 @@
         45
       ],
       "pages": [
-        47
+        51,
+        52
       ],
-      "systems": 10,
+      "systems": 15,
       "systemsPerPage": [
-        10
+        7,
+        8
       ],
       "sourceSha256": "66bb01a967e40319576a37bb2c20544e2b9799ef5f41d9a542938a82c2bc38b8",
       "candidates": [
         {
-          "width": 860,
+          "width": 628,
           "systemGap": 18,
-          "rows": 10,
-          "pages": 1,
-          "cost": 1516
-        },
-        {
-          "width": 880,
-          "systemGap": 18,
-          "rows": 10,
-          "pages": 1,
-          "cost": 1528
+          "rows": 15,
+          "pages": 2,
+          "cost": 2376.8
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 900,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 920,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 54,
@@ -9605,7 +9176,7 @@
         46
       ],
       "pages": [
-        48
+        53
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -9737,10 +9308,14 @@
         98.04,
         98.04,
         98.04,
+        98.04,
         121.36,
         121.36,
         121.36,
         121.36,
+        121.36,
+        121.36,
+        98.04,
         98.04,
         98.04,
         98.04
@@ -9749,12 +9324,12 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "跨拍、变拍与细分节奏",
-      "width": 860,
+      "width": 628,
       "systemGap": 18,
-      "relativeScalePercent": 90.7,
-      "screenNotePx": 17.8,
-      "versusV1Percent": 110.42,
-      "versusV2Percent": 86.71,
+      "relativeScalePercent": 124.2,
+      "screenNotePx": 24.38,
+      "versusV1Percent": 151.21,
+      "versusV2Percent": 118.74,
       "previousPages": [
         52
       ],
@@ -9762,117 +9337,27 @@
         47
       ],
       "pages": [
-        49
+        54,
+        55
       ],
-      "systems": 11,
+      "systems": 15,
       "systemsPerPage": [
-        11
+        7,
+        8
       ],
       "sourceSha256": "a5b58a7c9f8cefc943c84f34b845bccbddae6285315bb12b29165c43fa3ea929",
       "candidates": [
         {
-          "width": 520,
+          "width": 628,
           "systemGap": 18,
-          "rows": 19,
-          "pages": 3,
-          "cost": 3312
-        },
-        {
-          "width": 860,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1516
+          "rows": 15,
+          "pages": 2,
+          "cost": 2376.8
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 900,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 920,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 56,
@@ -9908,7 +9393,7 @@
         48
       ],
       "pages": [
-        50
+        56
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -10056,7 +9541,7 @@
         49
       ],
       "pages": [
-        51
+        57
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -10207,7 +9692,7 @@
         50
       ],
       "pages": [
-        52
+        58
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -10360,7 +9845,7 @@
         51
       ],
       "pages": [
-        53
+        59
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -10511,7 +9996,7 @@
         52
       ],
       "pages": [
-        54
+        60
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -10663,7 +10148,7 @@
         53
       ],
       "pages": [
-        55
+        61
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -10815,7 +10300,7 @@
         54
       ],
       "pages": [
-        56
+        62
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -10971,8 +10456,8 @@
         55
       ],
       "pages": [
-        57,
-        58
+        63,
+        64
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -11114,7 +10599,7 @@
         56
       ],
       "pages": [
-        59
+        65
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -11317,7 +10802,7 @@
         56
       ],
       "pages": [
-        59
+        65
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -11522,7 +11007,7 @@
         56
       ],
       "pages": [
-        59
+        65
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -11737,7 +11222,7 @@
         57
       ],
       "pages": [
-        60
+        66
       ],
       "systems": 16,
       "systemsPerPage": [
@@ -11927,7 +11412,7 @@
         58
       ],
       "pages": [
-        61
+        67
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -12122,7 +11607,7 @@
         59
       ],
       "pages": [
-        62
+        68
       ],
       "systems": 13,
       "systemsPerPage": [
@@ -12284,18 +11769,23 @@
         89.49,
         89.49,
         89.49,
+        89.49,
+        89.49,
+        89.49,
+        89.49,
+        89.49,
         89.49
       ],
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "difficulty": 3,
       "reason": "反复结构与较快八分音符",
-      "width": 900,
+      "width": 622,
       "systemGap": 18,
-      "relativeScalePercent": 86.67,
-      "screenNotePx": 17.01,
-      "versusV1Percent": 98.47,
-      "versusV2Percent": 82.86,
+      "relativeScalePercent": 125.4,
+      "screenNotePx": 24.62,
+      "versusV1Percent": 142.49,
+      "versusV2Percent": 119.89,
       "previousPages": [
         66
       ],
@@ -12303,126 +11793,27 @@
         60
       ],
       "pages": [
-        63
+        69,
+        70
       ],
-      "systems": 14,
+      "systems": 19,
       "systemsPerPage": [
-        14
+        9,
+        10
       ],
       "sourceSha256": "978d6da06b8a9151db8ea3d3100fcc7f2a6d25b3b4b670c37a588db6d11b4f8c",
       "candidates": [
         {
-          "width": 540,
+          "width": 622,
           "systemGap": 18,
-          "rows": 23,
-          "pages": 3,
-          "cost": 3324
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 14,
-          "pages": 1,
-          "cost": 1540
-        },
-        {
-          "width": 920,
-          "systemGap": 18,
-          "rows": 13,
-          "pages": 1,
-          "cost": 1552
-        },
-        {
-          "width": 940,
-          "systemGap": 18,
-          "rows": 13,
-          "pages": 1,
-          "cost": 1564
-        },
-        {
-          "width": 960,
-          "systemGap": 18,
-          "rows": 12,
-          "pages": 1,
-          "cost": 1576
+          "rows": 19,
+          "pages": 2,
+          "cost": 2373.2
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 71,
@@ -12464,7 +11855,7 @@
         61
       ],
       "pages": [
-        64
+        71
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -12655,7 +12046,7 @@
         62
       ],
       "pages": [
-        65
+        72
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -12848,7 +12239,7 @@
         63
       ],
       "pages": [
-        66
+        73
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -13052,7 +12443,7 @@
         64
       ],
       "pages": [
-        67
+        74
       ],
       "systems": 13,
       "systemsPerPage": [
@@ -13199,33 +12590,38 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57,
-        71.57
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57,
+        75.57
       ],
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
       "reason": "连续音型与跨小节延音",
-      "width": 860,
-      "systemGap": 18,
-      "relativeScalePercent": 90.7,
-      "screenNotePx": 17.8,
-      "versusV1Percent": 110.42,
-      "versusV2Percent": 86.71,
+      "width": 614,
+      "systemGap": 22,
+      "relativeScalePercent": 127.04,
+      "screenNotePx": 24.94,
+      "versusV1Percent": 154.65,
+      "versusV2Percent": 121.45,
       "previousPages": [
         71
       ],
@@ -13233,132 +12629,27 @@
         65
       ],
       "pages": [
-        68
+        75,
+        76
       ],
-      "systems": 17,
+      "systems": 22,
       "systemsPerPage": [
-        17
+        10,
+        12
       ],
       "sourceSha256": "33935ad4368386a17c24f7ed5fb7f3f143143914210bd4211203b57fec51d6d8",
       "candidates": [
         {
-          "width": 540,
-          "systemGap": 18,
-          "rows": 29,
-          "pages": 3,
-          "cost": 3324
-        },
-        {
-          "width": 860,
-          "systemGap": 18,
-          "rows": 17,
-          "pages": 1,
-          "cost": 1516
-        },
-        {
-          "width": 880,
-          "systemGap": 18,
-          "rows": 16,
-          "pages": 1,
-          "cost": 1528
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 16,
-          "pages": 1,
-          "cost": 1540
-        },
-        {
-          "width": 920,
-          "systemGap": 18,
-          "rows": 14,
-          "pages": 1,
-          "cost": 1552
-        },
-        {
-          "width": 940,
-          "systemGap": 18,
-          "rows": 14,
-          "pages": 1,
-          "cost": 1564
-        },
-        {
-          "width": 960,
-          "systemGap": 18,
-          "rows": 13,
-          "pages": 1,
-          "cost": 1576
+          "width": 614,
+          "systemGap": 22,
+          "rows": 22,
+          "pages": 2,
+          "cost": 2368.4
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 76,
@@ -13395,7 +12686,7 @@
         66
       ],
       "pages": [
-        69
+        77
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -13660,7 +12951,7 @@
         67
       ],
       "pages": [
-        70
+        78
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -13854,7 +13145,7 @@
         68
       ],
       "pages": [
-        71
+        79
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -14029,7 +13320,7 @@
         69
       ],
       "pages": [
-        72
+        80
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -14191,48 +13482,55 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        78.522,
-        78.522,
-        78.521,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.521,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.521,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.521,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.522,
-        78.521,
-        78.522,
-        78.522,
-        78.522
+        77.844,
+        77.843,
+        77.844,
+        77.844,
+        77.844,
+        77.843,
+        77.844,
+        77.844,
+        77.844,
+        77.844,
+        77.843,
+        77.844,
+        77.844,
+        77.844,
+        77.844,
+        77.843,
+        77.844,
+        77.844,
+        77.844,
+        77.843,
+        77.844,
+        77.844,
+        77.844,
+        77.844,
+        77.843,
+        77.844,
+        77.844,
+        77.844,
+        77.843,
+        77.844,
+        77.844,
+        77.844,
+        77.844,
+        77.843,
+        77.844,
+        77.844,
+        77.844,
+        77.843
       ],
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "长篇幅、快速音型与高音区",
-      "width": 900,
+      "width": 760,
       "systemGap": 18,
-      "relativeScalePercent": 86.67,
-      "screenNotePx": 17.01,
-      "versusV1Percent": 105.51,
-      "versusV2Percent": 84.98,
+      "relativeScalePercent": 102.63,
+      "screenNotePx": 20.15,
+      "versusV1Percent": 124.94,
+      "versusV2Percent": 100.64,
       "previousPages": [
         76,
         77
@@ -14242,128 +13540,29 @@
         71
       ],
       "pages": [
-        73,
-        74
+        81,
+        82,
+        83
       ],
-      "systems": 32,
+      "systems": 39,
       "systemsPerPage": [
-        16,
-        16
+        12,
+        13,
+        14
       ],
       "sourceSha256": "532f6bb67573f1895dc5593051ab9645b305a3fcbe7c592f2f72beb366af435c",
       "candidates": [
-        {
-          "width": 580,
-          "systemGap": 18,
-          "rows": 59,
-          "pages": 6,
-          "cost": 6348
-        },
-        {
-          "width": 600,
-          "systemGap": 18,
-          "rows": 52,
-          "pages": 5,
-          "cost": 5360
-        },
-        {
-          "width": 640,
-          "systemGap": 18,
-          "rows": 45,
-          "pages": 4,
-          "cost": 4384
-        },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 39,
           "pages": 3,
           "cost": 3456
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 32,
-          "pages": 2,
-          "cost": 2540
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 920,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为3页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 81,
@@ -14397,18 +13596,21 @@
         97.93,
         97.93,
         97.93,
+        97.93,
+        97.93,
+        97.93,
         97.93
       ],
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速半音、装饰与多次变调",
-      "width": 900,
+      "width": 720,
       "systemGap": 18,
-      "relativeScalePercent": 86.67,
-      "screenNotePx": 17.01,
-      "versusV1Percent": 98.47,
-      "versusV2Percent": 108.35,
+      "relativeScalePercent": 108.33,
+      "screenNotePx": 21.27,
+      "versusV1Percent": 123.09,
+      "versusV2Percent": 135.44,
       "previousPages": [
         78,
         79
@@ -14417,135 +13619,29 @@
         72
       ],
       "pages": [
-        75,
-        76
+        84,
+        85,
+        86
       ],
-      "systems": 26,
+      "systems": 29,
       "systemsPerPage": [
-        13,
-        13
+        9,
+        10,
+        10
       ],
       "sourceSha256": "5dc41521fba6b4620c547c499564dc2de4b53d495d366cd97f431ceec9c566cc",
       "candidates": [
         {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 26,
-          "pages": 2,
-          "cost": 2540
-        },
-        {
-          "width": 920,
-          "systemGap": 18,
-          "rows": 25,
-          "pages": 2,
-          "cost": 2552
-        }
-      ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
           "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 980,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 1000,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 1020,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 1040,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+          "systemGap": 18,
+          "rows": 29,
+          "pages": 3,
+          "cost": 3432
         }
       ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "乐段及后反复后强制换行；全曲统一音乐行高，保持两页并选择最大可用音符。"
+      "reviewNote": "按第六版建议增为3页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
       "order": 82,
@@ -14606,9 +13702,9 @@
         73
       ],
       "pages": [
-        77,
-        78,
-        79
+        87,
+        88,
+        89
       ],
       "systems": 33,
       "systemsPerPage": [
@@ -15276,24 +14372,43 @@
     {
       "page": 25,
       "section": "pop",
-      "fillPercent": 91.5,
+      "fillPercent": 90.4,
       "items": [
         {
           "id": "bei_jia_er_hu_pan",
           "title": "贝加尔湖畔",
           "systems": [
             1,
-            10
+            7
           ],
-          "width": 880,
-          "systemGap": 18,
+          "width": 628,
+          "systemGap": 22,
           "top": 0,
-          "height": 967.52
+          "height": 955.33
         }
       ]
     },
     {
       "page": 26,
+      "section": "pop",
+      "fillPercent": 93.3,
+      "items": [
+        {
+          "id": "bei_jia_er_hu_pan",
+          "title": "贝加尔湖畔",
+          "systems": [
+            8,
+            14
+          ],
+          "width": 628,
+          "systemGap": 22,
+          "top": 0,
+          "height": 986.69
+        }
+      ]
+    },
+    {
+      "page": 27,
       "section": "pop",
       "fillPercent": 99.2,
       "items": [
@@ -15312,7 +14427,7 @@
       ]
     },
     {
-      "page": 27,
+      "page": 28,
       "section": "pop",
       "fillPercent": 98.8,
       "items": [
@@ -15331,7 +14446,7 @@
       ]
     },
     {
-      "page": 28,
+      "page": 29,
       "section": "pop",
       "fillPercent": 93.4,
       "items": [
@@ -15350,7 +14465,7 @@
       ]
     },
     {
-      "page": 29,
+      "page": 30,
       "section": "pop",
       "fillPercent": 99.7,
       "items": [
@@ -15369,7 +14484,7 @@
       ]
     },
     {
-      "page": 30,
+      "page": 31,
       "section": "pop",
       "fillPercent": 100,
       "items": [
@@ -15388,7 +14503,7 @@
       ]
     },
     {
-      "page": 31,
+      "page": 32,
       "section": "pop",
       "fillPercent": 98.6,
       "items": [
@@ -15419,7 +14534,7 @@
       ]
     },
     {
-      "page": 32,
+      "page": 33,
       "section": "pop",
       "fillPercent": 98.2,
       "items": [
@@ -15438,7 +14553,7 @@
       ]
     },
     {
-      "page": 33,
+      "page": 34,
       "section": "pop",
       "fillPercent": 91.5,
       "items": [
@@ -15457,7 +14572,7 @@
       ]
     },
     {
-      "page": 34,
+      "page": 35,
       "section": "pop",
       "fillPercent": 98.6,
       "items": [
@@ -15476,7 +14591,7 @@
       ]
     },
     {
-      "page": 35,
+      "page": 36,
       "section": "pop",
       "fillPercent": 98.8,
       "items": [
@@ -15495,7 +14610,7 @@
       ]
     },
     {
-      "page": 36,
+      "page": 37,
       "section": "pop",
       "fillPercent": 98.5,
       "items": [
@@ -15514,7 +14629,7 @@
       ]
     },
     {
-      "page": 37,
+      "page": 38,
       "section": "pop",
       "fillPercent": 92.1,
       "items": [
@@ -15533,7 +14648,7 @@
       ]
     },
     {
-      "page": 38,
+      "page": 39,
       "section": "pop",
       "fillPercent": 95.9,
       "items": [
@@ -15552,7 +14667,7 @@
       ]
     },
     {
-      "page": 39,
+      "page": 40,
       "section": "pop",
       "fillPercent": 97.5,
       "items": [
@@ -15571,7 +14686,7 @@
       ]
     },
     {
-      "page": 40,
+      "page": 41,
       "section": "pop",
       "fillPercent": 97.7,
       "items": [
@@ -15590,7 +14705,7 @@
       ]
     },
     {
-      "page": 41,
+      "page": 42,
       "section": "pop",
       "fillPercent": 95.1,
       "items": [
@@ -15609,64 +14724,121 @@
       ]
     },
     {
-      "page": 42,
+      "page": 43,
       "section": "pop",
-      "fillPercent": 99.4,
+      "fillPercent": 97.8,
       "items": [
         {
           "id": "lao_nan_hai",
           "title": "老男孩",
           "systems": [
             1,
-            11
+            7
           ],
-          "width": 940,
-          "systemGap": 18,
-          "top": 0,
-          "height": 1050.5
-        }
-      ]
-    },
-    {
-      "page": 43,
-      "section": "pop",
-      "fillPercent": 100,
-      "items": [
-        {
-          "id": "liang_liang",
-          "title": "凉凉",
-          "systems": [
-            1,
-            10
-          ],
-          "width": 900,
+          "width": 690,
           "systemGap": 20,
           "top": 0,
-          "height": 1056.67
+          "height": 1033.67
         }
       ]
     },
     {
       "page": 44,
       "section": "pop",
-      "fillPercent": 91.6,
+      "fillPercent": 91,
+      "items": [
+        {
+          "id": "lao_nan_hai",
+          "title": "老男孩",
+          "systems": [
+            8,
+            15
+          ],
+          "width": 690,
+          "systemGap": 20,
+          "top": 0,
+          "height": 961.61
+        }
+      ]
+    },
+    {
+      "page": 45,
+      "section": "pop",
+      "fillPercent": 90.4,
+      "items": [
+        {
+          "id": "liang_liang",
+          "title": "凉凉",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 654,
+          "systemGap": 22,
+          "top": 0,
+          "height": 955.82
+        }
+      ]
+    },
+    {
+      "page": 46,
+      "section": "pop",
+      "fillPercent": 90.3,
+      "items": [
+        {
+          "id": "liang_liang",
+          "title": "凉凉",
+          "systems": [
+            7,
+            13
+          ],
+          "width": 654,
+          "systemGap": 22,
+          "top": 0,
+          "height": 954
+        }
+      ]
+    },
+    {
+      "page": 47,
+      "section": "pop",
+      "fillPercent": 91.8,
       "items": [
         {
           "id": "qian_si_xi",
           "title": "牵丝戏",
           "systems": [
             1,
-            10
+            7
           ],
-          "width": 900,
+          "width": 640,
           "systemGap": 18,
           "top": 0,
-          "height": 968.48
+          "height": 969.92
         }
       ]
     },
     {
-      "page": 45,
+      "page": 48,
+      "section": "pop",
+      "fillPercent": 96.9,
+      "items": [
+        {
+          "id": "qian_si_xi",
+          "title": "牵丝戏",
+          "systems": [
+            8,
+            15
+          ],
+          "width": 640,
+          "systemGap": 18,
+          "top": 0,
+          "height": 1023.86
+        }
+      ]
+    },
+    {
+      "page": 49,
       "section": "pop",
       "fillPercent": 97.9,
       "items": [
@@ -15685,7 +14857,7 @@
       ]
     },
     {
-      "page": 46,
+      "page": 50,
       "section": "pop",
       "fillPercent": 96.9,
       "items": [
@@ -15704,26 +14876,45 @@
       ]
     },
     {
-      "page": 47,
+      "page": 51,
       "section": "pop",
-      "fillPercent": 98.1,
+      "fillPercent": 97.6,
       "items": [
         {
           "id": "shi_jie_zeng_yu_wo_de",
           "title": "世界赠予我的",
           "systems": [
             1,
-            10
+            7
           ],
-          "width": 860,
+          "width": 628,
           "systemGap": 18,
           "top": 0,
-          "height": 1036.68
+          "height": 1032.05
         }
       ]
     },
     {
-      "page": 48,
+      "page": 52,
+      "section": "pop",
+      "fillPercent": 99.9,
+      "items": [
+        {
+          "id": "shi_jie_zeng_yu_wo_de",
+          "title": "世界赠予我的",
+          "systems": [
+            8,
+            15
+          ],
+          "width": 628,
+          "systemGap": 18,
+          "top": 0,
+          "height": 1055.43
+        }
+      ]
+    },
+    {
+      "page": 53,
       "section": "pop",
       "fillPercent": 99.9,
       "items": [
@@ -15742,26 +14933,45 @@
       ]
     },
     {
-      "page": 49,
+      "page": 54,
       "section": "pop",
-      "fillPercent": 96.7,
+      "fillPercent": 90.1,
       "items": [
         {
           "id": "man_man_xi_huan_ni",
           "title": "慢慢喜欢你",
           "systems": [
             1,
-            11
+            7
           ],
-          "width": 860,
+          "width": 628,
           "systemGap": 18,
           "top": 0,
-          "height": 1022.21
+          "height": 952.77
         }
       ]
     },
     {
-      "page": 50,
+      "page": 55,
+      "section": "pop",
+      "fillPercent": 92.1,
+      "items": [
+        {
+          "id": "man_man_xi_huan_ni",
+          "title": "慢慢喜欢你",
+          "systems": [
+            8,
+            15
+          ],
+          "width": 628,
+          "systemGap": 18,
+          "top": 0,
+          "height": 973.28
+        }
+      ]
+    },
+    {
+      "page": 56,
       "section": "pop",
       "fillPercent": 97.6,
       "items": [
@@ -15780,7 +14990,7 @@
       ]
     },
     {
-      "page": 51,
+      "page": 57,
       "section": "pop",
       "fillPercent": 97.4,
       "items": [
@@ -15799,7 +15009,7 @@
       ]
     },
     {
-      "page": 52,
+      "page": 58,
       "section": "pop",
       "fillPercent": 99.2,
       "items": [
@@ -15818,7 +15028,7 @@
       ]
     },
     {
-      "page": 53,
+      "page": 59,
       "section": "pop",
       "fillPercent": 97.4,
       "items": [
@@ -15837,7 +15047,7 @@
       ]
     },
     {
-      "page": 54,
+      "page": 60,
       "section": "pop",
       "fillPercent": 99.6,
       "items": [
@@ -15856,7 +15066,7 @@
       ]
     },
     {
-      "page": 55,
+      "page": 61,
       "section": "pop",
       "fillPercent": 97.8,
       "items": [
@@ -15875,7 +15085,7 @@
       ]
     },
     {
-      "page": 56,
+      "page": 62,
       "section": "pop",
       "fillPercent": 99.9,
       "items": [
@@ -15894,7 +15104,7 @@
       ]
     },
     {
-      "page": 57,
+      "page": 63,
       "section": "pop",
       "fillPercent": 94.5,
       "items": [
@@ -15913,7 +15123,7 @@
       ]
     },
     {
-      "page": 58,
+      "page": 64,
       "section": "pop",
       "fillPercent": 99.9,
       "items": [
@@ -15932,7 +15142,7 @@
       ]
     },
     {
-      "page": 59,
+      "page": 65,
       "section": "instrumental",
       "fillPercent": 98.2,
       "items": [
@@ -15975,7 +15185,7 @@
       ]
     },
     {
-      "page": 60,
+      "page": 66,
       "section": "instrumental",
       "fillPercent": 92.3,
       "items": [
@@ -15994,7 +15204,7 @@
       ]
     },
     {
-      "page": 61,
+      "page": 67,
       "section": "instrumental",
       "fillPercent": 98.4,
       "items": [
@@ -16013,7 +15223,7 @@
       ]
     },
     {
-      "page": 62,
+      "page": 68,
       "section": "instrumental",
       "fillPercent": 91.6,
       "items": [
@@ -16032,26 +15242,45 @@
       ]
     },
     {
-      "page": 63,
+      "page": 69,
       "section": "instrumental",
-      "fillPercent": 98.3,
+      "fillPercent": 96.1,
       "items": [
         {
           "id": "doraemon",
           "title": "哆啦A梦",
           "systems": [
             1,
-            14
+            9
           ],
-          "width": 900,
+          "width": 622,
           "systemGap": 18,
           "top": 0,
-          "height": 1039.41
+          "height": 1015.27
         }
       ]
     },
     {
-      "page": 64,
+      "page": 70,
+      "section": "instrumental",
+      "fillPercent": 97.4,
+      "items": [
+        {
+          "id": "doraemon",
+          "title": "哆啦A梦",
+          "systems": [
+            10,
+            19
+          ],
+          "width": 622,
+          "systemGap": 18,
+          "top": 0,
+          "height": 1029.66
+        }
+      ]
+    },
+    {
+      "page": 71,
       "section": "instrumental",
       "fillPercent": 98.9,
       "items": [
@@ -16070,7 +15299,7 @@
       ]
     },
     {
-      "page": 65,
+      "page": 72,
       "section": "instrumental",
       "fillPercent": 94.2,
       "items": [
@@ -16089,7 +15318,7 @@
       ]
     },
     {
-      "page": 66,
+      "page": 73,
       "section": "instrumental",
       "fillPercent": 93.9,
       "items": [
@@ -16108,7 +15337,7 @@
       ]
     },
     {
-      "page": 67,
+      "page": 74,
       "section": "instrumental",
       "fillPercent": 96.5,
       "items": [
@@ -16127,26 +15356,45 @@
       ]
     },
     {
-      "page": 68,
+      "page": 75,
       "section": "instrumental",
-      "fillPercent": 99.9,
+      "fillPercent": 91.8,
       "items": [
         {
           "id": "ju_ci_lang_de_xia_tian",
           "title": "菊次郎的夏天",
           "systems": [
             1,
-            17
+            10
           ],
-          "width": 860,
-          "systemGap": 18,
+          "width": 614,
+          "systemGap": 22,
           "top": 0,
-          "height": 1055.99
+          "height": 970.51
         }
       ]
     },
     {
-      "page": 69,
+      "page": 76,
+      "section": "instrumental",
+      "fillPercent": 99.8,
+      "items": [
+        {
+          "id": "ju_ci_lang_de_xia_tian",
+          "title": "菊次郎的夏天",
+          "systems": [
+            11,
+            22
+          ],
+          "width": 614,
+          "systemGap": 22,
+          "top": 0,
+          "height": 1054.76
+        }
+      ]
+    },
+    {
+      "page": 77,
       "section": "instrumental",
       "fillPercent": 99.7,
       "items": [
@@ -16165,7 +15413,7 @@
       ]
     },
     {
-      "page": 70,
+      "page": 78,
       "section": "instrumental",
       "fillPercent": 99,
       "items": [
@@ -16184,7 +15432,7 @@
       ]
     },
     {
-      "page": 71,
+      "page": 79,
       "section": "instrumental",
       "fillPercent": 94.8,
       "items": [
@@ -16203,7 +15451,7 @@
       ]
     },
     {
-      "page": 72,
+      "page": 80,
       "section": "instrumental",
       "fillPercent": 97.7,
       "items": [
@@ -16222,83 +15470,121 @@
       ]
     },
     {
-      "page": 73,
+      "page": 81,
       "section": "instrumental",
-      "fillPercent": 99.4,
+      "fillPercent": 90.2,
       "items": [
         {
           "id": "flower_dance",
           "title": "花之舞",
           "systems": [
             1,
-            16
+            12
           ],
-          "width": 900,
+          "width": 760,
           "systemGap": 18,
           "top": 0,
-          "height": 1051.07
+          "height": 952.94
         }
       ]
     },
     {
-      "page": 74,
+      "page": 82,
       "section": "instrumental",
-      "fillPercent": 93.8,
+      "fillPercent": 90.8,
       "items": [
         {
           "id": "flower_dance",
           "title": "花之舞",
           "systems": [
-            17,
-            32
+            13,
+            25
           ],
-          "width": 900,
+          "width": 760,
           "systemGap": 18,
           "top": 0,
-          "height": 991.81
+          "height": 959.72
         }
       ]
     },
     {
-      "page": 75,
+      "page": 83,
       "section": "instrumental",
-      "fillPercent": 99.8,
+      "fillPercent": 96.4,
+      "items": [
+        {
+          "id": "flower_dance",
+          "title": "花之舞",
+          "systems": [
+            26,
+            39
+          ],
+          "width": 760,
+          "systemGap": 18,
+          "top": 0,
+          "height": 1018.66
+        }
+      ]
+    },
+    {
+      "page": 84,
+      "section": "instrumental",
+      "fillPercent": 91.1,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
           "systems": [
             1,
-            13
+            9
           ],
-          "width": 900,
+          "width": 720,
           "systemGap": 18,
           "top": 0,
-          "height": 1054.62
+          "height": 962.68
         }
       ]
     },
     {
-      "page": 76,
+      "page": 85,
       "section": "instrumental",
-      "fillPercent": 95.6,
+      "fillPercent": 91.7,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
           "systems": [
-            14,
-            26
+            10,
+            19
           ],
-          "width": 900,
+          "width": 720,
           "systemGap": 18,
           "top": 0,
-          "height": 1010.41
+          "height": 969.4
         }
       ]
     },
     {
-      "page": 77,
+      "page": 86,
+      "section": "instrumental",
+      "fillPercent": 91.6,
+      "items": [
+        {
+          "id": "turkish_march",
+          "title": "土耳其进行曲",
+          "systems": [
+            20,
+            29
+          ],
+          "width": 720,
+          "systemGap": 18,
+          "top": 0,
+          "height": 968
+        }
+      ]
+    },
+    {
+      "page": 87,
       "section": "instrumental",
       "fillPercent": 99.6,
       "items": [
@@ -16317,7 +15603,7 @@
       ]
     },
     {
-      "page": 78,
+      "page": 88,
       "section": "instrumental",
       "fillPercent": 93.1,
       "items": [
@@ -16336,7 +15622,7 @@
       ]
     },
     {
-      "page": 79,
+      "page": 89,
       "section": "instrumental",
       "fillPercent": 92.2,
       "items": [
@@ -16358,14 +15644,14 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 952,
-    "minimumMusicPageFillPercent": 91.495,
+    "geometryCandidates": 931,
+    "minimumMusicPageFillPercent": 90.139,
     "underfilledMusicPages": 0,
     "outside": 0,
     "overlaps": 0,
     "unsafeCuts": 0,
     "orphanContinuationPages": 0,
-    "outlinedPages": 79,
+    "outlinedPages": 89,
     "outlinedPageOverflow": 0
   }
 }

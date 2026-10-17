@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第六版",
+  "edition": "第七版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -583,11 +583,15 @@
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "器乐间奏与跨拍延音",
-      "width": 780,
+      "width": 628,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 2,
+      "systemGap": 22,
+      "uniformSystemHeight": true
     },
     {
       "id": "yu_jian",
@@ -807,11 +811,15 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "较长结构与密集八分、十六分",
-      "width": 780,
+      "width": 690,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 2,
+      "systemGap": 20,
+      "uniformSystemHeight": true
     },
     {
       "id": "liang_liang",
@@ -821,11 +829,15 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "器乐过门与密集节奏",
-      "width": 780,
+      "width": 654,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 2,
+      "systemGap": 22,
+      "uniformSystemHeight": true
     },
     {
       "id": "qian_si_xi",
@@ -835,11 +847,15 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "切分、十六分与跳进",
-      "width": 780,
+      "width": 640,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 2,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "ren_shi_jian",
@@ -877,11 +893,15 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "密集节奏与长线条",
-      "width": 780,
+      "width": 628,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 2,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "ming_tian_hui_geng_hao",
@@ -905,11 +925,15 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "跨拍、变拍与细分节奏",
-      "width": 780,
+      "width": 628,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 2,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "xin_bu_liao_qing",
@@ -1115,11 +1139,15 @@
       "group": "舞曲与动画主题",
       "difficulty": 3,
       "reason": "反复结构与较快八分音符",
-      "width": 780,
-      "sharePage": true,
+      "width": 622,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 2,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "yun_gong_xun_yin",
@@ -1185,11 +1213,15 @@
       "group": "快速音型与装饰",
       "difficulty": 4,
       "reason": "连续音型与跨小节延音",
-      "width": 780,
-      "sharePage": true,
+      "width": 614,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 2,
+      "systemGap": 22,
+      "uniformSystemHeight": true
     },
     {
       "id": "por_una_cabeza",
@@ -1266,11 +1298,15 @@
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "长篇幅、快速音型与高音区",
-      "width": 780,
-      "sharePage": true,
+      "width": 760,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "按第六版建议增为3页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "widthLocked": true,
+      "pageCount": 3,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "turkish_march",
@@ -1280,18 +1316,15 @@
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速半音、装饰与多次变调",
-      "width": 780,
+      "width": 720,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "乐段及后反复后强制换行；全曲统一音乐行高，保持两页并选择最大可用音符。",
-      "pageCount": 2,
-      "widthCandidates": [
-        980,
-        1000,
-        1020,
-        1040
-      ]
+      "reviewNote": "按第六版建议增为3页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
+      "pageCount": 3,
+      "widthLocked": true,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "valsentino",
@@ -1315,8 +1348,8 @@
       ]
     }
   ],
-  "outputPdf": "循序渐进简谱集-v6.pdf",
-  "outputKey": "scorebook-v6",
+  "outputPdf": "循序渐进简谱集-v7.pdf",
+  "outputKey": "scorebook-v7",
   "page": {
     "width": 744,
     "height": 1133,

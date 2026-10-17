@@ -1,10 +1,10 @@
 {
   "edition": "第六版",
-  "baselineLayout": "layout-record.json",
+  "baselineLayout": "layout-record-v6.json",
   "normalizationWidth": 744,
   "minimumMusicPageFillPercent": 90,
-  "applied": false,
-  "note": "均为真实字体安全布局候选，未应用到成品；PDF 内容由用户亲自检查。",
+  "applied": true,
+  "note": "10 首具有可行候选的曲目已应用到第七版；current 字段保留第六版基线，proposed 字段保留原建议。《明天会更好》无可行候选，继续保留一页。PDF 内容由用户亲自检查。",
   "entries": [
     {
       "id": "lao_nan_hai",
@@ -326,5 +326,8 @@
         "minimumFillPercent": 91.818
       }
     }
-  ]
+  ],
+  "appliedEdition": "第七版",
+  "appliedLayout": "layout-record.json",
+  "appliedCount": 10
 }
