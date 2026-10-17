@@ -956,6 +956,7 @@ type PreparedLyricText = LayoutRegion & {
 
 class VoiceLyricsAttachment implements LayoutAttachment {
     layer = "foreground" as const;
+    readonly spacingRole = 'lyrics' as const;
 
     get sourceSpan() { return this.nameHost.ast.sourceSpan; }
 
@@ -1045,6 +1046,10 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             const baseline = byTrack.get(target.track) ?? { bottom: -Infinity, owner: target.track, rows: [] };
             const bounds = getLayoutBounds(target);
             let bottom = bounds.y + bounds.h;
+            if (context.uniformSystemHeight) {
+                const reserved = context.getHostExtent(target.layoutLine, target.track);
+                if (reserved) bottom = Math.max(bottom, context.getVisualAxis(target.layoutLine, target.track) + reserved.bottom);
+            }
             let owner = target.track;
             for (const frame of this.frames) {
                 const box = context.getAttachmentBox(frame);

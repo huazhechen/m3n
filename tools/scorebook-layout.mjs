@@ -56,6 +56,11 @@ export function measure(source, width, spacing = {}) {
     cuts.push((systems[i - 1].bottom + systems[i].top) / 2)
   }
   cuts.push(bottom + 8)
+  const baselines = systems.map(({node}) => {
+    const digit = [...node.querySelectorAll('g.note[data-m3n-id^="m3n-e-"] text')].find(text => text.getAttribute('font-size') === '22' && /^[0-7]$/.test(text.textContent))
+    return digit ? Number(digit.getAttribute('y')) : null
+  })
+  const baselineSteps = baselines.slice(1).map((axis,i) => axis === null || baselines[i] === null ? null : Number((axis-baselines[i]).toFixed(3)))
   const overlaps = []
   for (const selector of ['text[data-m3n-role="lyric"],text[data-m3n-role="lyric-prefix"]', 'g.note text']) {
     const nodes = [...svg.querySelectorAll(selector)].filter(n => n.textContent.trim() && (selector[0] !== 'g' || /^[0-7]$/.test(n.textContent)))
@@ -70,7 +75,7 @@ export function measure(source, width, spacing = {}) {
     const b = node.getBBox()
     if (b.y < cut - 0.2 && b.y+b.height > cut + 0.2) clipped.push({ cut, tag: node.tagName, text:node.textContent, box:[b.x,b.y,b.width,b.height], parent:node.parentElement.outerHTML.slice(0,250) })
   }
-  return { width, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped,
+  return { width, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps,
     diagnostics: score.diagnostics, markup }
 }
 

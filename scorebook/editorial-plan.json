@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第四版 · iPad mini 阅读版",
+  "edition": "第五版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -59,22 +59,23 @@
       "group": "每日训练",
       "difficulty": 4,
       "reason": "按原谱顺序连续进行机能与音阶模进训练",
-      "width": 780,
+      "width": 740,
       "widthLocked": true,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [
         14,
-        26
+        30
       ],
-      "reviewNote": "整份原谱保留，第一篇开头供每日训练；按原顺序排三页，机能训练整段在首页，另两页在完整练习之间接续。"
+      "reviewNote": "整份原谱保留，第一篇开头供每日训练；按原顺序排三页，机能训练整段在首页，另两页在完整练习之间接续。",
+      "uniformSystemHeight": false
     },
     {
       "id": "xiao_xing_xing",
       "file": "xiao_xing_xing_01.m3n",
       "title": "小星星",
       "section": "basics",
-      "group": "长音与稳定节拍",
+      "group": "入门旋律",
       "difficulty": 1,
       "reason": "重复音、级进和二分音符",
       "width": 780,
@@ -84,11 +85,26 @@
       "reviewNote": ""
     },
     {
+      "id": "huan_le_song",
+      "file": "huan_le_song_01.m3n",
+      "title": "欢乐颂",
+      "section": "basics",
+      "group": "入门旋律",
+      "difficulty": 1,
+      "reason": "重复音与级进，逐步加入附点和八分音符",
+      "width": 780,
+      "sharePage": true,
+      "breakBefore": false,
+      "pageBreaks": [],
+      "reviewNote": "只显示旋律，紧接小星星，与同组入门短曲统一字号合页。",
+      "includeBass": false
+    },
+    {
       "id": "wo_he_ni",
       "file": "wo_he_ni_01.m3n",
       "title": "我和你",
       "section": "basics",
-      "group": "长音与稳定节拍",
+      "group": "入门旋律",
       "difficulty": 1,
       "reason": "慢速长音和低音区转换",
       "width": 780,
@@ -193,7 +209,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "",
+      "widthCandidates": [
+        542,
+        544,
+        546,
+        548,
+        550,
+        552,
+        554,
+        556,
+        558
+      ]
     },
     {
       "id": "rang_wo_men_dang_qi_shuang_jiang",
@@ -207,22 +234,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
-    },
-    {
-      "id": "huan_le_song",
-      "file": "huan_le_song_01.m3n",
-      "title": "欢乐颂",
-      "section": "basics",
-      "group": "入门旋律综合",
-      "difficulty": 2,
-      "reason": "以单声部旋律练习节拍、附点与连贯乐句",
-      "width": 780,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "PDF 只显示旋律，原谱低音内容保留。",
-      "includeBass": false
+      "reviewNote": "",
+      "widthCandidates": [
+        542,
+        544,
+        546,
+        548,
+        550,
+        552,
+        554,
+        556,
+        558
+      ]
     },
     {
       "id": "auld_lang_syne",
@@ -446,7 +469,38 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "",
+      "widthCandidates": [
+        702,
+        704,
+        706,
+        708,
+        710,
+        712,
+        714,
+        716,
+        718,
+        720,
+        722,
+        724,
+        726,
+        728,
+        730,
+        732,
+        734,
+        736,
+        738,
+        740,
+        742,
+        744,
+        746,
+        748,
+        750,
+        752,
+        754,
+        756,
+        758
+      ]
     },
     {
       "id": "bai_hua_lin",
@@ -474,7 +528,38 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "",
+      "widthCandidates": [
+        742,
+        744,
+        746,
+        748,
+        750,
+        752,
+        754,
+        756,
+        758,
+        760,
+        762,
+        764,
+        766,
+        768,
+        770,
+        772,
+        774,
+        776,
+        778,
+        780,
+        782,
+        784,
+        786,
+        788,
+        790,
+        792,
+        794,
+        796,
+        798
+      ]
     },
     {
       "id": "tong_zhuo_de_ni",
@@ -1118,7 +1203,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "",
+      "widthCandidates": [
+        522,
+        524,
+        526,
+        528,
+        530,
+        532,
+        534,
+        536,
+        538
+      ]
     },
     {
       "id": "beer_barrel_polka",
@@ -1188,9 +1284,14 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "原谱各乐段及每个后反复符号之后强制换行；保持两页，以完整谱行均衡分页。",
-      "widthLocked": true,
-      "pageCount": 2
+      "reviewNote": "乐段及后反复后强制换行；全曲统一音乐行高，保持两页并选择最大可用音符。",
+      "pageCount": 2,
+      "widthCandidates": [
+        980,
+        1000,
+        1020,
+        1040
+      ]
     },
     {
       "id": "valsentino",
@@ -1204,13 +1305,18 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "拆为两页，以完整谱行均衡分页并放大快速音型。",
-      "widthLocked": true,
-      "pageCount": 2
+      "reviewNote": "三页以完整谱行均衡分页；逐一比较版宽，选择能容纳三页的最大音符，全曲统一音乐行高。",
+      "pageCount": 3,
+      "widthCandidates": [
+        980,
+        1000,
+        1020,
+        1040
+      ]
     }
   ],
-  "outputPdf": "循序渐进简谱集-iPad-mini-v4.pdf",
-  "outputKey": "scorebook-ipad-v4",
+  "outputPdf": "循序渐进简谱集-v5.pdf",
+  "outputKey": "scorebook-v5",
   "page": {
     "width": 744,
     "height": 1133,
@@ -1219,7 +1325,9 @@
     "bodyBottom": 1095,
     "scoreMargin": 8,
     "systemGap": 18,
-    "shortWorkGap": 22
+    "shortWorkGap": 22,
+    "minimumFillPercent": 90
   },
-  "showCredits": false
+  "showCredits": false,
+  "uniformSystemHeight": true
 }

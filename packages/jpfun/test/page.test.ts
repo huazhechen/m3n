@@ -31,6 +31,19 @@ import {
     recordCommands,
 } from "./helpers.js";
 
+test("uniform systems keep their baseline pitch through automatic page boundaries", () => {
+    const result = compileScore('@page(width=240px,height=170px,top=10px,bottom=10px,gap=12px) 1 @br() 2\'\' @br() 3,, @br() 4 @br() 5', { uniformSystemHeight: true });
+    assert(result.layout.pages.length > 1, 'fixture must span pages');
+    const distances: number[] = [];
+    for (const page of result.layout.pages) {
+        const axes = result.layout.objects.filter(node => !node.T.isZero() && node.layoutLine >= page.lineStart && node.layoutLine < page.lineEnd)
+            .map(node => node.box.y + node.box.visualAxis);
+        for (let i = 1; i < axes.length; i++) distances.push(axes[i] - axes[i - 1]);
+    }
+    assert(distances.length > 1, 'fixture must have adjacent rows on multiple pages');
+    assert(distances.every(distance => nearly(distance, distances[0])), 'page justification must not alter the uniform pitch');
+});
+
 test("br 在 lowering 阶段就固化行号，并把文档切成两个系统", () => {
     const loweredBreak = lower(`1 2 @br() 3 4`);
     const loweredBreakLines = loweredBreak.columns

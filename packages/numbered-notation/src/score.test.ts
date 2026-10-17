@@ -21,9 +21,9 @@ function numbers(root: Document, id: string) {
 function lyrics(root: Document, id: string, row = 1) {
   return [...root.querySelectorAll(`text[data-m3n-role="lyric"][data-m3n-id="${id}"][data-m3n-rendition="${row}"]`)].map(text => text.textContent?.replaceAll('\u200B', '')).join('')
 }
-function geometry(document: ScoreDocument, settings = options) {
+function geometry(document: ScoreDocument, settings: NumberedNotationRenderOptions = options) {
   const projection = projectNumberedScore(document, settings)
-  return compileScore(projection.source, { autoWrap: true, alignRelations: true })
+  return compileScore(projection.source, { autoWrap: true, alignRelations: true, uniformSystemHeight: settings.uniformSystemHeight })
 }
 
 function mainPitches(node: VisualTemporalNode): { name: string; acc: string; octave: number }[] {
@@ -36,6 +36,43 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  const systemBaselines = (root: Document) => [...root.querySelectorAll('g.system')].map(system => {
+    const digit = [...system.querySelectorAll('g.note[data-m3n-id^="m3n-e-"] text')].find(node => node.getAttribute('font-size') === '22' && /^[0-7]$/.test(node.textContent ?? ''))!
+    return Number(digit.getAttribute('y'))
+  })
+
+  it('keeps uniform music baselines despite different octaves, relations and section labels', () => {
+    const source = '{title=等行高} {4/4}\nN: 1 2 3 4 | {br} {lg}1ee 2ee 3ee 4ee{/} |\n===B\nN: {br} 1dd 2dd 3dd 4dd | {br} 1 2 3 4 |||'
+    const natural = render(source)
+    const uniform = render(source, { uniformSystemHeight: true })
+    const axes = systemBaselines(uniform.root)
+    expect(axes).toHaveLength(4)
+    for (let i = 2; i < axes.length; i++) expect(axes[i]! - axes[i - 1]!).toBeCloseTo(axes[1]! - axes[0]!, 2)
+    expect(new Set(systemBaselines(natural.root).slice(1).map((y, i) => (y - systemBaselines(natural.root)[i]!).toFixed(2))).size).toBeGreaterThan(1)
+    expect([...uniform.root.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-id')))
+      .toEqual([...natural.root.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-id')))
+    expect(uniform.score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+  })
+
+  it('adds only the visible lyric rows to the uniform music envelope', () => {
+    const source = '{4/4}\nN: 1 2 3 4 | {br} 1ee 2ee 3ee 4ee | {br} 1dd 2dd 3dd 4dd | {br} 1 2 3 4 |||\nL: 春风花开春风花开春风花开春风花开\nL2: _ _ _ _ 山间流水 _ _ _ _ _ _ _ _'
+    const { root, score } = render(source, { uniformSystemHeight: true })
+    const axes = systemBaselines(root)
+    expect(axes).toHaveLength(4)
+    expect(axes[3]! - axes[2]!).toBeCloseTo(axes[1]! - axes[0]!, 2)
+    expect(axes[2]! - axes[1]!).toBeGreaterThan(axes[1]! - axes[0]! + 15)
+    expect([...root.querySelectorAll('text[data-m3n-role="lyric"]')].filter(node => node.textContent?.includes('山'))).toHaveLength(1)
+    expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+  })
+
+  it.each(['turkish_march_01.m3n', 'ju_ci_lang_de_xia_tian_01.m3n', 'valsentino_01.m3n', 'second_waltz_01.m3n'])('keeps every music baseline evenly spaced in %s', file => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')
+    const { root } = render(source, { uniformSystemHeight: true, includeBass: false })
+    const axes = systemBaselines(root)
+    expect(axes.length).toBeGreaterThan(3)
+    for (let i = 2; i < axes.length; i++) expect(axes[i]! - axes[i - 1]!).toBeCloseTo(axes[1]! - axes[0]!, 2)
+  })
+
   it('reduces system spacing without changing notes, lyrics or event identities', () => {
     const source = '{4/4}\nN: 1~ 1 2 3 | {br} 4 5 6 7 | {br} 1e 7 6 5 | {br} 4 3 2 1 |||\nL: 春天花开山间流水清风明月故乡'
     const normal = render(source)
@@ -799,7 +836,7 @@ describe('jpFun numbered notation adapter', () => {
       const score = NumberedNotationScore.create(document)
       const expectedDuration = [...document.parts.values()].reduce((sum, part) => sum + Math.max(...[part.melody, part.bass].map(measures => measures.reduce((sum, measure) => sum + (measure.multiRest ?? 0) * document.meterCount * 4 / document.meterUnit + measure.events.reduce((sum, event) => sum + event.beats, 0), 0))), 0)
       expect(geometry(document).lowering.duration.toNumber(), file).toBeCloseTo(expectedDuration)
-      for (const settings of [{ width: 800, paged: false }, { width: 320, paged: true }]) {
+      for (const settings of [{ width: 800, paged: false }, { width: 320, paged: true }, { width: 800, paged: false, uniformSystemHeight: true }, { width: 320, paged: true, uniformSystemHeight: true }]) {
         const projection = projectNumberedScore(document, settings)
         const result = geometry(document, settings)
         const expectedSegnos = [...document.parts.values()].flatMap(part => [...part.melody, ...part.bass])

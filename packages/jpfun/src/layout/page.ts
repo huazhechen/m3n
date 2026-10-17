@@ -80,11 +80,13 @@ export function normalizePageConfig(source: Partial<PageConfig> = {}): PageConfi
 /**
  * 把已经测好自然高度的谱面行分页，并给出每行的全局顶部坐标。
  * pageBreaks 按行号索引：undefined 不强制换页，true/false 强制换页并指定上一页是否拉伸。
+ * justifyPages=false 保留固定节距，不向完整页面的行间分配余白。
  */
 export function paginateLayoutLines(
     heights: readonly number[],
     page: PageConfig,
     pageBreaks: readonly (boolean | undefined)[] = [],
+    justifyPages = true,
 ): { pages: DocumentLayoutPage[]; lineTops: number[] } {
     const availableHeight = page.height - page.marginTop - page.marginBottom;
     const pages: DocumentLayoutPage[] = [];
@@ -137,7 +139,7 @@ export function paginateLayoutLines(
 
         // 强制边界与自然溢出统一封页；无限页高不分配余白
         if (i > start && (pageBreaks[i] !== undefined || Number.isFinite(page.height) && used + page.lineGap + height > availableHeight + 1e-6)) {
-            closePage(i, Number.isFinite(page.height) && (pageBreaks[i] ?? true));
+            closePage(i, justifyPages && Number.isFinite(page.height) && (pageBreaks[i] ?? true));
         }
         used += (i > start ? page.lineGap : 0) + height;
         contentHeight += height;

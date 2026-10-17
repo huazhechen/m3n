@@ -40,6 +40,7 @@ import type {
 
 export interface DocumentLayoutOptions extends SolverOptions {
     rowGap?: number;    // 强制覆盖每行的轨道间距；缺省按该行最大字号推导
+    uniformSystemHeight?: boolean;
 }
 
 // 兼容旧导入路径；布局入口会把正常页面溢出转换为 ErrorDiagnostic
@@ -63,10 +64,11 @@ interface LineExtents {
     /**
      * attachment 测量区域折算出的占用，必要时触发最终重排
      *
-     * 故意跨轮累积（查询范围的占用列表则逐轮重建）：第二轮放置发生在第二轮测量之前，
-     * 求轴时读到的必须是第一轮的结果。如果将来加第三轮，要先重新定义这里的语义。
+     * 故意跨轮累积（查询范围的占用列表则逐轮重建）：每轮放置先读取此前测得的预留，
+     * 再测量附件补充占用；等行高模式可继续迭代，使歌词适应统一音乐下沿。
      */
     attachmentExtents: Map<Track, Extent>;
+    musicAttachmentExtents?: Map<Track, Extent>;
 }
 
 interface LayoutLine extends LineExtents {
@@ -211,6 +213,7 @@ export function layoutDocument(
     };
     context = {
         ...context,
+        uniformSystemHeight: options.uniformSystemHeight,
         layoutSubdomain(owner, columns, root, attachments) {
             // 横排时内层子域先排版并认领关系，这里只取剩下的
             const line = layoutLocalLine(columns, context);
@@ -274,16 +277,29 @@ export function layoutDocument(
 
     /** 按当前主体与 attachment 占用求轴、分页并放置所有主体 */
     const placeVertically = () => {
+        // Header-only lines keep their natural height. Music hosts, ornaments and
+        // relations share one envelope per track across the complete score.
+        const musicLines = lines.map(line => line.columns.some(column => column.some(node => !node.T.isZero())));
+        const uniformExtents = new Map<Track, Extent>();
+        if (options.uniformSystemHeight) lines.forEach((line, i) => {
+            if (!musicLines[i]) return;
+            for (const extents of [line.hostExtents, line.musicAttachmentExtents]) {
+                for (const [track, extent] of extents ?? []) includeTrackExtent(uniformExtents, track, extent.top, extent.bottom);
+            }
+        });
+        const hostExtents = lines.map((line, i) => options.uniformSystemHeight && musicLines[i]
+            ? new Map([...line.hostExtents].map(([track, extent]) => [track, uniformExtents.get(track) ?? extent]))
+            : line.hostExtents);
         const heights: number[] = [];
         const axes = lines.map((line, i) => {
-            const solved = solveVerticalAxes(line, result.rootTrack, rowGaps[i]);
+            const solved = solveVerticalAxes({ ...line, hostExtents: hostExtents[i] }, result.rootTrack, rowGaps[i]);
             heights.push(solved.height);
             return solved.axes;
         });
         let pages: DocumentLayoutPage[];
         let lineTops: number[];
         try {
-            ({ pages, lineTops } = paginateLayoutLines(heights, page, pageBreaks));
+            ({ pages, lineTops } = paginateLayoutLines(heights, page, pageBreaks, !options.uniformSystemHeight));
         } catch (error) {
             if (!(error instanceof PageLayoutError)) throw error;
             // 用溢出的元素的 span 构成 Error
@@ -320,7 +336,7 @@ export function layoutDocument(
             lines: views,
             // 子域的私有轨在正文里归入复合体所在的轨
             getVisualAxis: (line, track) => visualAxisOf(line, lift(track)),
-            getHostExtent: (line, track) => lines[line]?.hostExtents.get(lift(track)),
+            getHostExtent: (line, track) => hostExtents[line]?.get(lift(track)),
             getRangeColumns: (line, range, track) => rangeColumns(views[line], range, track, lift),
         };
 
@@ -331,7 +347,9 @@ export function layoutDocument(
     let placement = placeVertically();
     let measured = measureAttachments(documentAttachments, placement.attachmentContext, lines, lift, subdomainGeometry, hosts);
 
-    if (measured.needsRelayout) {
+    // Uniform music envelopes can move lyric baselines on the second pass.
+    // Remeasure those local lyric reservations before final pagination.
+    for (let pass = 0; measured.needsRelayout && pass < (options.uniformSystemHeight ? 4 : 1); pass++) {
         placement = placeVertically();
         measured = measureAttachments(documentAttachments, placement.attachmentContext, lines, lift, subdomainGeometry, hosts);
     }
@@ -888,6 +906,9 @@ function measureAttachmentPass(
                 needsRelayout = true;
             }
             if (reserve) includeTrackExtent(line.attachmentExtents, track, top, bottom);
+            if (reserve && baseContext.uniformSystemHeight && attachment.spacingRole !== 'lyrics') {
+                includeTrackExtent(line.musicAttachmentExtents ??= new Map(), track, top, bottom);
+            }
             (occupancy[region.line] ??= []).push({
                 attachment,
                 track,

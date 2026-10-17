@@ -73,6 +73,8 @@ export interface PageConfig {
  * 字号由具体视觉函数在 parse 时固化为 px，不属于布局上下文
  */
 export interface LayoutPrepareContext {
+    /** M3N opt-in: reserve one music envelope on every system; lyrics stay local. */
+    uniformSystemHeight?: boolean;
     /** M3N opt-in: align adjacent relations of the same kind within a staff/system. */
     alignRelations?: boolean;
     textMeasurer: TextMeasurer;
@@ -118,7 +120,7 @@ export interface AttachmentLayoutContext extends LayoutPrepareContext {
     pages: readonly Rect[]; // 本轮分页得到的纸张边界 page函数用于获取页码内容和位置
     lines: readonly Omit<HorizontalLineView, "registerHorizontalLayoutHook">[]; // 已完成横向求解的时间列拓扑与主体
     getVisualAxis(line: number, track: Track): number;
-    /** 只包含可见主体的轴局部占用（top 通常为负），不受 attachment 或最终分页坐标影响 */
+    /** 主体的轴局部占用；等行高模式返回整曲音乐预留，不含歌词或最终分页坐标 */
     getHostExtent(line: number, track: Track): Readonly<Extent> | undefined;
     /** 获取本行范围内的列；对象端点沿 foldedInto 上溯到本域的列 */
     getRangeColumns(line: number, range?: LayoutRange, track?: Track): readonly (readonly LayoutHost[])[];
@@ -261,6 +263,8 @@ export interface AttachmentGeometry {
  * 实例只保存语义输入和一次横向准备状态，不保存最终 box、regions 或绘制几何。
  */
 export interface LayoutAttachment extends LoweringAttachment {
+    /** Lyrics extend only the systems on which they are visible. */
+    readonly spacingRole?: 'lyrics';
     /** M3N: independent alignment families, with nesting and track boundaries preserved. */
     readonly alignmentKind?: string;
     /** 后置平移仅影响绘制，不参与占用求解 */
