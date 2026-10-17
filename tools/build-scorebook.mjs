@@ -12,24 +12,25 @@ const temp = join(root, '.tmp',plan.outputKey??'scorebook')
 const pdfFile=plan.outputPdf??'循序渐进简谱集-v1.pdf'
 const previous=JSON.parse(readFileSync(join(output,'layout-record-v1.json'),'utf8'))
 const previousById=new Map(previous.entries.map(e=>[e.id,e]))
+const secondEdition=JSON.parse(readFileSync(join(output,'layout-record-v2.json'),'utf8'))
+const secondById=new Map(secondEdition.entries.map(e=>[e.id,e]))
+const sharedEntryIds=new Set(secondEdition.pages.filter(p=>p.items.length>1).flatMap(p=>p.items.map(e=>e.id)))
 mkdirSync(temp, { recursive: true })
 mkdirSync(join(temp,'pages'), { recursive: true })
 const staged=join(temp,'staged');mkdirSync(staged,{recursive:true})
 const sourceFiles = readdirSync(join(root,'src/scores')).filter(f=>f.endsWith('.m3n')).sort()
-assert.deepEqual([...new Set(plan.entries.map(e=>e.file))].sort(), sourceFiles, 'Every source must be included')
+assert.deepEqual(plan.entries.map(e=>e.file).sort(), sourceFiles, 'Every original source must be included exactly once')
 assert.equal(new Set(plan.entries.map(e=>e.id)).size,plan.entries.length,'Entry IDs must be unique')
 const training = readFileSync(join(root,'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'),'utf8')
-const matches = [...training.matchAll(/N: \{text=([^}]+)\}/g)]
-const exercises = new Map(matches.map((m,i)=>[m[1],training.slice(m.index,matches[i+1]?.index??training.length)
-  .replace(/\n===.*/g,'').replace(/\n---\s*\nN:\s*(?=\n|$)/g,'').trim().replace(/\n---\s*$/,'').trim()]))
-const musicLines = source => source.split('\n').filter(line=>/^N:\s*\S/.test(line))
-assert.deepEqual(musicLines([...exercises.values()].join('\n')),musicLines(training),'Exercise extraction preserves every music line')
-assert.deepEqual(plan.entries.filter(e=>e.practice).map(e=>e.practice).sort(), [...exercises.keys()].sort(), 'Every exercise exactly once')
+const trainingEntry=plan.entries.find(e=>e.file==='ban_yin_jie_kou_qin_ji_ben_gong_01.m3n')
+assert.equal(trainingEntry,plan.entries[0],'Daily training opens the first section')
+assert.equal(trainingEntry.section,'basics')
 for(const entry of plan.entries) {
-  assert(entry.width>=700&&entry.width<=1040,'Keep note sizes close to the base width')
-  entry.source=entry.practice?`{title=${entry.title}}\n{key=C} {4/4} {60qpm}\n${exercises.get(entry.practice)}`:readFileSync(join(root,'src/scores',entry.file),'utf8')
+  assert(entry.width>=520&&entry.width<=1040,'Keep note sizes within the reading range')
+  entry.source=readFileSync(join(root,'src/scores',entry.file),'utf8')
   entry.sourceSha256=createHash('sha256').update(entry.source).digest('hex')
 }
+assert.equal(trainingEntry.source,training,'Daily training preserves the complete original source and order')
 await build({configFile:false,logLevel:'error',build:{outDir:join(temp,'bundle'),emptyOutDir:true,minify:false,
   lib:{entry:join(root,'tools/scorebook-layout.mjs'),name:'scorebook',formats:['iife'],fileName:()=>'bundle.js'}}})
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||['/usr/bin/chromium','/usr/sbin/chromium','/usr/bin/chromium-browser'].find(existsSync),headless:true})
@@ -51,27 +52,30 @@ function paginate(layout,entry) {
  }
  // Balanced dynamic programming over whole systems. Continuations contain at least 3 systems.
  const memo=new Map()
- function solve(start) {
-  if(start===n)return {cost:0,ranges:[]}
-  if(memo.has(start))return memo.get(start)
+ function solve(start,remaining=entry.pageCount??null) {
+  if(start===n)return remaining===null||remaining===0?{cost:0,ranges:[]}:null
+  if(remaining!==null&&remaining<=0)return null
+  const key=`${start}/${remaining}`
+  if(memo.has(key))return memo.get(key)
   let best=null
   for(let end=start+1;end<=n;end++) {
    const used=cuts[end]-cuts[start]+(start?36:0)
    if(used>cap)break
    if(start>0&&end-start<3)continue
-   const next=solve(end);if(!next)continue
+   const next=solve(end,remaining===null?null:remaining-1);if(!next)continue
    const slack=(cap-used)/cap
    const cost=100+slack*slack*10+next.cost
    if(!best||cost<best.cost)best={cost,ranges:[[start,end],...next.ranges]}
   }
-  memo.set(start,best);return best
+  memo.set(key,best);return best
  }
  const result=solve(0)
  if(!result)throw new Error(`Cannot paginate ${entry.title} at ${layout.width}`)
  return result.ranges
 }
-function candidateCost(layout,ranges,width,preferred) {
+function candidateCost(layout,ranges,width,preferred,fillPage) {
  const s=renderScale(width)
+ if(fillPage&&ranges.length===1)return 1000+width*0.6
  return ranges.length*1000 + Math.abs(width-preferred)*0.6 + ranges.reduce((sum,[a,b])=>sum+((bodyHeight-(layout.cuts[b]-layout.cuts[a]+(a?36:0))*s)/bodyHeight)**2,0)*20
 }
 try {
@@ -87,8 +91,8 @@ try {
  const rendererHash=createHash('sha256').update(readFileSync(join(temp,'bundle/bundle.js'))).update(readFileSync(join(root,'public/fonts/NotoSerifCJKsc-Regular.otf'))).digest('hex')
  const measured=[]
  for(const [i,entry] of plan.entries.entries()) {
-  let best
-  const summaries=[]
+  let best,fillPage=false
+  const summaries=[],rejectedCandidates=[],sharedLayouts=new Map()
   for(const width of entry.widthLocked?[entry.width]:[...new Set([entry.width,...plan.widthCandidates,...(entry.widthCandidates??[])])]) {
    const key=createHash('sha256').update(rendererHash+JSON.stringify({...spacing,systemGap:entry.systemGap??spacing.systemGap})+entry.source+width).digest('hex'),cachePath=join(cacheFolder,key+'.json')
    let layout=existsSync(cachePath)?JSON.parse(readFileSync(cachePath,'utf8')):null
@@ -98,17 +102,20 @@ try {
     if(trial.renderError||trial.outside.length||trial.overlaps.length||trial.clipped.length){rejected.push({systemGap,reason:trial.renderError??'Unsafe geometry'});continue}
     layout={...trial,systemGap,rejectedSpacing:rejected};break
    }
-   assert(layout,`${entry.title}: no safe spacing at ${width}px: ${JSON.stringify(rejected)}`)
+   if(!layout){rejectedCandidates.push({width,reasons:rejected});continue}
    layout.systemGap??=spacing.systemGap
    writeFileSync(cachePath,JSON.stringify(layout))
    assert.equal(layout.outside.length,0,`${entry.title}: outside page at ${width}`)
    assert.equal(layout.overlaps.length,0,`${entry.title}: overlapping lyrics or notes at ${width}`)
    assert.equal(layout.clipped.length,0,`${entry.title}: unsafe system cuts at ${width}`)
-   const ranges=paginate(layout,entry),cost=candidateCost(layout,ranges,width,entry.width)
+   if(width===entry.width)fillPage=!entry.widthLocked&&!sharedEntryIds.has(entry.id)&&!(layout.rows<=5&&layout.height*renderScale(width)<bodyHeight*0.6)
+   const ranges=paginate(layout,entry),cost=candidateCost(layout,ranges,width,entry.width,fillPage)
    summaries.push({width,systemGap:layout.systemGap,rows:layout.rows,pages:ranges.length,cost:Number(cost.toFixed(2))})
+   if(entry.sharePage&&ranges.length===1)sharedLayouts.set(width,{...layout,ranges,cost})
    if(!best||cost<best.cost)best={...layout,ranges,cost}
   }
-  measured.push({...entry,layout:best,candidates:summaries})
+  assert(best,`${entry.title}: no safe layout: ${JSON.stringify(rejectedCandidates)}`)
+  measured.push({...entry,layout:best,candidates:summaries,rejectedCandidates,sharedLayouts,fillPage})
   console.log(`${String(i+1).padStart(3)}/${plan.entries.length} ${entry.title}: ${best.width}px ${best.rows} systems [${best.ranges.map(([a,b])=>b-a)}]`)
  }
  writeFileSync(join(temp,'layouts.json'),JSON.stringify(measured))
@@ -132,6 +139,13 @@ try {
     memo.set(start,best);return best
    }
    for(const [a,b] of pack(0).ranges) {
+    // Enlarge a packed page together, preserving one consistent size for its short works.
+    for(const width of b-a>1?[...group[a].sharedLayouts.keys()].filter(w=>w>=640).sort((a,b)=>a-b):[]) {
+     const layouts=group.slice(a,b).map(e=>e.sharedLayouts.get(width))
+     if(layouts.some(l=>!l)||layouts.reduce((sum,l)=>sum+l.height*renderScale(width),0)+(b-a-1)*shortGap>bodyHeight)continue
+     for(let k=a;k<b;k++){group[k].layout=layouts[k-a];heights[k]=layouts[k-a].height*renderScale(width)}
+     break
+    }
     const target={section:entry.section,items:[],used:0};musicPages.push(target)
     for(let k=a;k<b;k++) {const e=group[k],l=e.layout,y=target.used+(k>a?shortGap:0),height=heights[k];target.items.push({entry:e,start:0,end:l.rows,index:0,y,height,cropTop:0,cropBottom:l.height});target.used=y+height}
    }
@@ -145,7 +159,7 @@ try {
    i++
   }
  }
- // Four contents pages keep every item easy to locate, including extracted exercises.
+ // Keep each original score as one contents entry, including the full daily training.
  const tocItems=plan.sections.flatMap(section=>[{section},...measured.filter(e=>e.section===section.id).map(entry=>({entry}))])
  const tocRows=32, tocCount=Math.ceil(tocItems.length/tocRows), frontCount=1+tocCount
  const entryPages=new Map()
@@ -153,25 +167,25 @@ try {
   const pages=entryPages.get(item.entry.id)??[];pages.push(frontCount+index+1);entryPages.set(item.entry.id,pages)
  }
  const total=frontCount+musicPages.length
- const footer=num=>svgText(String(num),pageWidth-8,pageHeight-6,9,'text-anchor="end" fill="#888"')
+ const footer=num=>svgText(String(num),pageWidth-bodyX,pageHeight-16,9,'text-anchor="end" fill="#888"')
  const pageSvg=(content,num)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${pageWidth}" height="${pageHeight}" viewBox="0 0 ${pageWidth} ${pageHeight}"><rect width="${pageWidth}" height="${pageHeight}" fill="white"/>${content}${footer(num)}</svg>`
  const pages=[]
  let cover=svgText('循序渐进',74,250,58)+svgText('简谱集',74,333,72)+`<line x1="78" y1="375" x2="340" y2="375" stroke="#333" stroke-width="2"/>`
  cover+=svgText('基础练习 · 民歌经典 · 流行歌曲 · 影视与器乐',78,426,18)
- cover+=svgText('82 份原始曲谱 · 81 首乐曲与 28 项分级练习',78,468,16)
+ cover+=svgText('82 份完整原谱 · 81 首乐曲与一套每日基本功',78,468,16)
  cover+=svgText(plan.edition,78,506,16)
  for(const [i,section] of plan.sections.entries())cover+=svgText(section.title,78,620+i*43,18)
- cover+=svgText('iPad mini 竖屏 · 窄边距 · 保留歌词、低音与音乐记号',78,937,14)+svgText('难度 1—5 为本谱集当前简谱编配的相对等级。',78,967,14)+svgText('优先大音符阅读；略超一页的曲目适度缩小合并。',78,997,14)
+ cover+=svgText('iPad mini 竖屏 · 适度留边 · 保留歌词、低音与音乐记号',78,937,14)+svgText('难度 1—5 为本谱集当前简谱编配的相对等级。',78,967,14)+svgText('逐曲放大利用页面；快速长曲保留舒展的分页。',78,997,14)
  pages.push({kind:'cover',svg:pageSvg(cover,1)})
  for(let t=0;t<tocCount;t++) {
-  let content=svgText('目录',56,70,30)+svgText(`${t+1} / ${tocCount}`,738,68,14,'text-anchor="end"')
-  content+=svgText('编号  曲目 / 练习',56,110,13,'fill="#666"')+svgText('难度',635,110,13,'fill="#666"')+svgText('页码',738,110,13,'text-anchor="end" fill="#666"')
+  let content=svgText('目录',56,70,30)+svgText(`${t+1} / ${tocCount}`,pageWidth-48,68,14,'text-anchor="end"')
+  content+=svgText('编号  曲目 / 训练',56,110,13,'fill="#666"')+svgText('难度',600,110,13,'fill="#666"')+svgText('页码',pageWidth-48,110,13,'text-anchor="end" fill="#666"')
   const rows=tocItems.slice(t*tocRows,(t+1)*tocRows)
   for(const [j,row]of rows.entries()) {
    if(row.section){content+=svgText(row.section.title,56,139+j*28,16,'font-weight="700"');continue}
    const e=row.entry
    const y=139+j*28,nums=entryPages.get(e.id),label=nums.length===1?nums[0]:`${nums[0]}–${nums.at(-1)}`
-   content+=svgText(`${String(measured.indexOf(e)+1).padStart(3,'0')}  ${e.title}`,56,y,15)+svgText(String(e.difficulty),648,y,14)+svgText(label,738,y,14,'text-anchor="end"')
+   content+=svgText(`${String(measured.indexOf(e)+1).padStart(3,'0')}  ${e.title}`,56,y,15)+svgText(String(e.difficulty),613,y,14)+svgText(label,pageWidth-48,y,14,'text-anchor="end"')
   }
   pages.push({kind:'contents',svg:pageSvg(content,t+2)})
  }
@@ -189,9 +203,12 @@ try {
   }
   pages.push({kind:'music',svg:pageSvg(content,num)})
  }
- const records=measured.map((e,i)=>({order:i+1,id:e.id,title:e.title,file:e.file,practice:e.practice,section:e.section,group:e.group,difficulty:e.difficulty,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),versusV1Percent:Number(((bodyWidth/e.layout.width)/(704/previousById.get(e.id).width*pageWidth/794)*100).toFixed(2)),previousPages:previousById.get(e.id).pages,pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,reviewNote:e.reviewNote}))
+ const records=measured.map((e,i)=>{
+  const first=previousById.get(e.id),second=secondById.get(e.id)
+  return {order:i+1,id:e.id,title:e.title,file:e.file,section:e.section,group:e.group,difficulty:e.difficulty,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),versusV1Percent:first?Number(((bodyWidth/e.layout.width)/(704/first.width*pageWidth/794)*100).toFixed(2)):null,versusV2Percent:second?Number(((bodyWidth/e.layout.width)/(secondEdition.body.width/second.width)*100).toFixed(2)):null,previousPages:first?.pages??[],secondEditionPages:second?.pages??[],pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
+ })
  const pageRecords=musicPages.map((p,i)=>({page:frontCount+i+1,section:p.section,fillPercent:Number((p.used/bodyHeight*100).toFixed(1)),items:p.items.map(item=>({id:item.entry.id,title:item.entry.title,systems:[item.start+1,item.end],width:item.entry.layout.width,systemGap:item.entry.layout.systemGap,top:Number(item.y.toFixed(2)),height:Number(item.height.toFixed(2))}))}))
- const report={title:plan.title,edition:plan.edition,rendererSha256:rendererHash,sourceCount:sourceFiles.length,entryCount:records.length,pageCount:total,frontPages:frontCount,baseWidth:plan.baseWidth,page:profile,body:{width:bodyWidth,height:bodyHeight},entries:records,pages:pageRecords,validation:{sourceCoverage:true,exerciseCoverage:true,geometryCandidates:records.reduce((s,e)=>s+e.candidates.length,0),outside:0,overlaps:0,unsafeCuts:0,orphanContinuationPages:pageRecords.flatMap(p=>p.items).filter(item=>item.systems[0]>1&&item.systems[1]-item.systems[0]+1<3).length}}
+ const report={title:plan.title,edition:plan.edition,rendererSha256:rendererHash,sourceCount:sourceFiles.length,entryCount:records.length,pageCount:total,frontPages:frontCount,baseWidth:plan.baseWidth,page:profile,body:{width:bodyWidth,height:bodyHeight},entries:records,pages:pageRecords,validation:{sourceCoverage:true,trainingSourcePreserved:true,geometryCandidates:records.reduce((s,e)=>s+e.candidates.length,0),outside:0,overlaps:0,unsafeCuts:0,orphanContinuationPages:pageRecords.flatMap(p=>p.items).filter(item=>item.systems[0]>1&&item.systems[1]-item.systems[0]+1<3).length}}
  assert.equal(report.validation.orphanContinuationPages,0)
  writeFileSync(join(staged,'layout-record.json'),JSON.stringify(report,null,2)+'\n')
  writeFileSync(join(temp,'unoutlined-pages.json'),JSON.stringify(pages))
@@ -210,14 +227,14 @@ try {
  writeFileSync(join(temp,'print.html'),html)
  await page.setContent(html,{timeout:120000})
  await page.pdf({path:join(staged,pdfFile),width:`${pageWidth}px`,height:`${pageHeight}px`,printBackground:true,preferCSSPageSize:true,timeout:120000})
- const csv=['序号,编号,曲目,分类,分组,难度,页码,版宽px,相对缩放%,适宽音符px,各页谱行数,排序依据,校阅备注,相比旧版音符大小%,旧版页码,行间留白px',...records.map(e=>[e.order,e.id,e.title,plan.sections.find(s=>s.id===e.section).title,e.group,e.difficulty,e.pages.join('/'),e.width,e.relativeScalePercent,e.screenNotePx,e.systemsPerPage.join('/'),e.reason,e.reviewNote,e.versusV1Percent,e.previousPages.join('/'),e.systemGap].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))].join('\n')
+ const csv=['序号,编号,曲目,分类,分组,难度,页码,版宽px,相对缩放%,适宽音符px,各页谱行数,排序依据,校阅备注,相比旧版音符大小%,旧版页码,行间留白px,相比第二版音符大小%,第二版页码',...records.map(e=>[e.order,e.id,e.title,plan.sections.find(s=>s.id===e.section).title,e.group,e.difficulty,e.pages.join('/'),e.width,e.relativeScalePercent,e.screenNotePx,e.systemsPerPage.join('/'),e.reason,e.reviewNote,e.versusV1Percent,e.previousPages.join('/'),e.systemGap,e.versusV2Percent,e.secondEditionPages.join('/')].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))].join('\n')
  writeFileSync(join(staged,'排序与缩放记录.csv'),'\uFEFF'+csv+'\n')
- let md=`# 简谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：81 首乐曲，以及从《半音阶口琴基本功》完整拆出的 28 项练习，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按当前简谱编配的节奏、音域、临时变音、连音组、装饰、变拍和反复复杂度评为 1—5 级；这是编辑分级，不是考级等级。分类内优先兼顾风格与学习目标，再按难度推进。\n\n默认版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的 iPad mini 竖屏比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px，谱行最小留白 ${profile.systemGap}px（旧版24px；密集连线按需要保留20—24px）。普通谱面优先放大音符；只为合并整曲而适度缩小。保留原谱的歌词、低音、原有建议速度与音乐记号。相比旧版的百分比均按同一设备适宽显示计算，100%表示与第一版相同，118.85%表示大约增大19%；不是印刷字号。\n\n|序号|曲目 / 练习|难度|页码|版宽 px|相对缩放|谱行分配|行间留白px|同屏音符 / 旧版|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|---|\n`
+ let md=`# 简谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：81 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按当前简谱编配的节奏、音域、临时变音、连音组、装饰、变拍和反复复杂度评为 1—5 级；这是编辑分级，不是考级等级。分类内优先兼顾风格与学习目标，再按难度推进。\n\n默认版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的 iPad mini 竖屏比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px，谱行最小留白 ${profile.systemGap}px（旧版24px；密集连线按需要保留20—24px）。单页曲目在 520—960px 候选中优先选择能完整容纳的最小版宽，以便放大音符；很短的曲目保留适度留白，合页短曲统一字号，候选最小640px。《土耳其进行曲》固定780px、均衡分两页；每日基本功按原谱整体分页。保留原谱的歌词、低音、原有建议速度与音乐记号。相比旧版的百分比均按同一设备适宽显示计算，100%表示与对应版本相同；不是印刷字号。\n\n|序号|曲目 / 练习|难度|页码|版宽 px|相对缩放|谱行分配|行间留白px|同屏音符 / 第一版|同屏音符 / 第二版|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|---|---|\n`
  for(const section of plan.sections) {
-  md+=`| |**${section.title}**| | | | | | | |${section.description}|\n`
-  for(const e of records.filter(e=>e.section===section.id))md+=`|${String(e.order).padStart(3,'0')}|${e.title}|${e.difficulty}|${e.pages.join('、')}|${e.width}|${e.relativeScalePercent}%|${e.systemsPerPage.join(' + ')}|${e.systemGap}|${e.versusV1Percent}%|${e.reason}${e.reviewNote?'；'+e.reviewNote:''}|\n`
+  md+=`| |**${section.title}**| | | | | | | | |${section.description}|\n`
+  for(const e of records.filter(e=>e.section===section.id))md+=`|${String(e.order).padStart(3,'0')}|${e.title}|${e.difficulty}|${e.pages.join('、')}|${e.width}|${e.relativeScalePercent}%|${e.systemsPerPage.join(' + ')}|${e.systemGap}|${e.versusV1Percent===null?'—':e.versusV1Percent+'%'}|${e.versusV2Percent===null?'—':e.versusV2Percent+'%'}|${e.reason}${e.reviewNote?'；'+e.reviewNote:''}|\n`
  }
- md+='\n每页项目位置与谱行范围见 `layout-record.json`；逐页人工校阅结论见 `逐页校阅.md`。后续可按编号或 PDF 页码提出调序、合页、字号与分页意见。\n'
+ md+='\n每页项目位置与谱行范围见 `layout-record.json`；PDF 内容由用户亲自检查，反馈记录见 `逐页校阅.md`。后续可按编号或 PDF 页码提出调序、合页、字号与分页意见。\n'
  writeFileSync(join(staged,'排序与缩放记录.md'),md)
  report.validation.outlinedPages=total
  report.validation.outlinedPageOverflow=0
