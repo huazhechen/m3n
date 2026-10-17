@@ -23,7 +23,7 @@ export type EventBinding = {
   sustain: boolean
 }
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
-export type ProjectionOptions = { width: number; paged: boolean; includeBass?: boolean }
+export type ProjectionOptions = { width: number; paged: boolean; includeBass?: boolean; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 const pitchName = (token: string, shift = 0) => {
   const match = /^([0-7])([#b=]*)([ed]*)$/.exec(token)
@@ -257,7 +257,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   ].filter(Boolean).join(' ')
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
-    `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=32px,bottom=32px,left=32px,right=32px,gap=24px,fillRatio=0)`,
+    `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,
     `@head(center={${headings}},right={${credits}},left={{${signatures}}},sidebelow=true,itemgap=16px${options.width < 600 ? ',sidestacked=true' : ''}) @br()`,
   ]
   const parts = [...document.parts.values()].map((part, index) => voicesForPart(part.melody, part.bass, index))

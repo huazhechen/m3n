@@ -8,6 +8,8 @@ export type NumberedNotationRenderOptions = {
   width: number
   includeBass?: boolean
   textMeasurer?: TextMeasurer
+  pageMargin?: number
+  systemGap?: number
 }
 
 /** Pure frontend jpFun adapter; ScoreDocument is the only musical input. */
@@ -18,6 +20,9 @@ export class NumberedNotationScore {
 
   render(options: NumberedNotationRenderOptions): string[] {
     if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
+    for (const value of [options.pageMargin, options.systemGap]) {
+      if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
+    }
     const projection = projectNumberedScore(this.document, { ...options, width: Math.max(320, Math.round(options.width)) })
     const canvas = typeof document === 'undefined' || typeof CanvasRenderingContext2D === 'undefined' ? null : document.createElement('canvas')
     const context = canvas?.getContext('2d')

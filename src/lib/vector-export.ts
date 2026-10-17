@@ -1,4 +1,5 @@
 import type { Font } from 'opentype.js'
+import { glyphPathData } from './vector-glyph'
 let textFont: Promise<Font> | undefined
 const numberFonts = new Map<string, Font>()
 
@@ -56,7 +57,7 @@ export async function outlineSvgText(svg: SVGSVGElement) {
       if (index >= text.getNumberOfChars()) throw new Error('SVG 文字位置与字符数量不一致，无法完整导出。')
       const position = text.getStartPositionOfChar(index)
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      path.setAttribute('d', font.getPath(char, position.x, position.y, size).toPathData(3))
+      path.setAttribute('d', glyphPathData(font, char, position.x, position.y, size))
       path.setAttribute('fill', style.fill || '#000000')
       const rotation = text.getRotationOfChar(index)
       if (rotation) path.setAttribute('transform', `rotate(${rotation} ${position.x} ${position.y})`)

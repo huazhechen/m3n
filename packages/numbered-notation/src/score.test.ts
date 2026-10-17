@@ -36,6 +36,23 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it('reduces system spacing without changing notes, lyrics or event identities', () => {
+    const source = '{4/4}\nN: 1~ 1 2 3 | {br} 4 5 6 7 | {br} 1e 7 6 5 | {br} 4 3 2 1 |||\nL: 春天花开山间流水清风明月故乡'
+    const normal = render(source)
+    const compact = render(source, { systemGap: 18, pageMargin: 8 })
+    const height = (root: Document) => Number(root.querySelector('svg')!.getAttribute('height'))
+    const events = (root: Document) => [...root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent])
+    expect(height(compact.root)).toBeLessThan(height(normal.root))
+    expect(compact.root.querySelectorAll('g.system')).toHaveLength(normal.root.querySelectorAll('g.system').length)
+    expect(events(compact.root)).toEqual(events(normal.root))
+    expect([...compact.root.querySelectorAll('[data-m3n-role="lyric"]')].map(node => node.textContent))
+      .toEqual([...normal.root.querySelectorAll('[data-m3n-role="lyric"]')].map(node => node.textContent))
+    expect(compact.score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+  })
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])('rejects invalid compact spacing %s', value => {
+    expect(() => render('N: 1 2 3 4 |||', { systemGap: value })).toThrow('非负有限数值')
+    expect(() => render('N: 1 2 3 4 |||', { pageMargin: value })).toThrow('非负有限数值')
+  })
   it('retains extended harmony symbols through the shared domain projection', () => {
     const { root, score } = render('{key=D}{4/4}\nN: 1 2 3 4 | 5 6 7 1e | 1e 7 6 5 | 4 3 2 1 |||\nC: Imaj7 | Dm7 | G/B | N.C. |')
     const labels = [...root.querySelectorAll('text')].map(text => text.textContent).join('')

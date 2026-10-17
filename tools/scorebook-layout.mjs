@@ -13,7 +13,7 @@ export async function prepare(fontBase64) {
   await prepareNumberedNotationFonts()
 }
 
-export function measure(source, width) {
+export function measure(source, width, spacing = {}) {
   const score = NumberedNotationScore.create(parseM3NDocument(source))
   // Inject the same text family for measurements and SVG text.
   const canvas = document.createElement('canvas'), context = canvas.getContext('2d')
@@ -21,7 +21,7 @@ export function measure(source, width) {
     context.font = `${style.fontWeight ?? ''} ${style.fontSize ?? 22}px ${style.fontFamily === 'serif' ? '"Scorebook Text"' : style.fontFamily ?? '"Scorebook Text"'}`.trim()
     return { w: Math.max(context.measureText(text).width, style.fontSize * 0.25), h: style.fontSize, baseline: style.fontSize * 0.8 }
   } }
-  const [markup] = score.render({ width, paged: false, includeBass: true, textMeasurer })
+  const [markup] = score.render({ width, paged: false, includeBass: true, textMeasurer, ...spacing })
   const host = document.querySelector('#scratch')
   host.innerHTML = markup
   const svg = host.firstElementChild
@@ -47,7 +47,7 @@ export function measure(source, width) {
   }
   const cuts = [0]
   for (let i = 1; i < systems.length; i++) {
-    if (systems[i - 1].bottom > systems[i].top + 0.2) throw new Error(`Overlapping systems at ${i}`)
+    if (systems[i - 1].bottom > systems[i].top + 0.2) throw new Error(`Overlapping systems at ${i}: ${JSON.stringify(systems.slice(i-1,i+1).map(({top,bottom})=>({top,bottom})))}`)
     cuts.push((systems[i - 1].bottom + systems[i].top) / 2)
   }
   cuts.push(bottom + 8)
