@@ -1,12 +1,12 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第九版",
+  "edition": "第十版",
   "showCredits": false,
   "uniformSystemHeight": true,
   "rendererSha256": "46dbd68942d21b8f4d6d7870f07c18207310df59c2cd9011af25adaed3e4b329",
   "sourceCount": 82,
   "entryCount": 82,
-  "pageCount": 88,
+  "pageCount": 87,
   "frontPages": 4,
   "baseWidth": 780,
   "page": {
@@ -1405,15 +1405,15 @@
         false
       ],
       "section": "basics",
-      "group": "活泼的二拍子",
+      "group": "轻快的旋律",
       "difficulty": 2,
       "reason": "重复节奏与八分音符",
-      "width": 700,
+      "width": 618,
       "systemGap": 18,
-      "relativeScalePercent": 111.43,
-      "screenNotePx": 21.87,
-      "versusV1Percent": 126.61,
-      "versusV2Percent": 106.53,
+      "relativeScalePercent": 126.21,
+      "screenNotePx": 24.78,
+      "versusV1Percent": 143.41,
+      "versusV2Percent": 120.67,
       "previousPages": [
         8
       ],
@@ -1589,11 +1589,18 @@
           "rows": 2,
           "pages": 1,
           "cost": 1123.27
+        },
+        {
+          "width": 618,
+          "systemGap": 18,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1108.62
         }
       ],
       "rejectedCandidates": [],
       "fillPage": false,
-      "reviewNote": ""
+      "reviewNote": "《虫儿飞》与《哆唻咪》互换；与《苏珊娜》《小红帽》统一字号合页。"
     },
     {
       "order": 9,
@@ -1614,15 +1621,15 @@
         false
       ],
       "section": "basics",
-      "group": "活泼的二拍子",
+      "group": "轻快的旋律",
       "difficulty": 2,
       "reason": "连续八分音符与跳进",
-      "width": 700,
+      "width": 618,
       "systemGap": 18,
-      "relativeScalePercent": 111.43,
-      "screenNotePx": 21.87,
-      "versusV1Percent": 126.61,
-      "versusV2Percent": 106.53,
+      "relativeScalePercent": 126.21,
+      "screenNotePx": 24.78,
+      "versusV1Percent": 143.41,
+      "versusV2Percent": 120.67,
       "previousPages": [
         8
       ],
@@ -1798,227 +1805,21 @@
           "rows": 3,
           "pages": 1,
           "cost": 1122.04
+        },
+        {
+          "width": 618,
+          "systemGap": 18,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1106.92
         }
       ],
       "rejectedCandidates": [],
       "fillPage": false,
-      "reviewNote": ""
+      "reviewNote": "《虫儿飞》与《哆唻咪》互换；与《苏珊娜》《小红帽》统一字号合页。"
     },
     {
       "order": 10,
-      "id": "duo_lai_mi",
-      "title": "哆唻咪",
-      "file": "duo_lai_mi_01.m3n",
-      "includeBass": true,
-      "uniformSystemHeight": true,
-      "baselineSteps": [
-        58.81,
-        58.81,
-        58.81,
-        80.755,
-        80.755
-      ],
-      "voltaSystems": [
-        false,
-        false,
-        false,
-        false,
-        true,
-        true
-      ],
-      "section": "basics",
-      "group": "活泼的二拍子",
-      "difficulty": 2,
-      "reason": "音阶进行与节奏变化",
-      "width": 700,
-      "systemGap": 18,
-      "relativeScalePercent": 111.43,
-      "screenNotePx": 21.87,
-      "versusV1Percent": 126.61,
-      "versusV2Percent": 106.53,
-      "previousPages": [
-        8
-      ],
-      "secondEditionPages": [
-        8
-      ],
-      "pages": [
-        9
-      ],
-      "systems": 6,
-      "systemsPerPage": [
-        6
-      ],
-      "sourceSha256": "7792d33a07c54149d82c61b359f11f8bc78ebd4988e3da15fd4b224d4f4ce51b",
-      "candidates": [
-        {
-          "width": 780,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1008.25
-        },
-        {
-          "width": 520,
-          "systemGap": 18,
-          "rows": 8,
-          "pages": 1,
-          "cost": 1156.99
-        },
-        {
-          "width": 540,
-          "systemGap": 18,
-          "rows": 7,
-          "pages": 1,
-          "cost": 1146.11
-        },
-        {
-          "width": 560,
-          "systemGap": 18,
-          "rows": 7,
-          "pages": 1,
-          "cost": 1134.43
-        },
-        {
-          "width": 580,
-          "systemGap": 18,
-          "rows": 7,
-          "pages": 1,
-          "cost": 1122.75
-        },
-        {
-          "width": 600,
-          "systemGap": 18,
-          "rows": 6,
-          "pages": 1,
-          "cost": 1112.28
-        },
-        {
-          "width": 620,
-          "systemGap": 18,
-          "rows": 6,
-          "pages": 1,
-          "cost": 1100.61
-        },
-        {
-          "width": 640,
-          "systemGap": 18,
-          "rows": 6,
-          "pages": 1,
-          "cost": 1088.92
-        },
-        {
-          "width": 660,
-          "systemGap": 18,
-          "rows": 6,
-          "pages": 1,
-          "cost": 1077.23
-        },
-        {
-          "width": 680,
-          "systemGap": 18,
-          "rows": 6,
-          "pages": 1,
-          "cost": 1065.53
-        },
-        {
-          "width": 700,
-          "systemGap": 18,
-          "rows": 6,
-          "pages": 1,
-          "cost": 1053.82
-        },
-        {
-          "width": 720,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1043.5
-        },
-        {
-          "width": 740,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1031.76
-        },
-        {
-          "width": 760,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1020.01
-        },
-        {
-          "width": 800,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1020.48
-        },
-        {
-          "width": 820,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1032.7
-        },
-        {
-          "width": 840,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1044.92
-        },
-        {
-          "width": 860,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1057.13
-        },
-        {
-          "width": 880,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1069.33
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1082.99
-        },
-        {
-          "width": 920,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1095.16
-        },
-        {
-          "width": 940,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1107.32
-        },
-        {
-          "width": 960,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1119.48
-        }
-      ],
-      "rejectedCandidates": [],
-      "fillPage": false,
-      "reviewNote": ""
-    },
-    {
-      "order": 11,
       "id": "chong_er_fei",
       "title": "虫儿飞",
       "file": "chong_er_fei_01.m3n",
@@ -2038,15 +1839,15 @@
         false
       ],
       "section": "basics",
-      "group": "附点与连奏",
+      "group": "轻快的旋律",
       "difficulty": 2,
       "reason": "附点节奏和连奏",
-      "width": 544,
+      "width": 618,
       "systemGap": 18,
-      "relativeScalePercent": 143.38,
-      "screenNotePx": 28.15,
-      "versusV1Percent": 162.92,
-      "versusV2Percent": 137.08,
+      "relativeScalePercent": 126.21,
+      "screenNotePx": 24.78,
+      "versusV1Percent": 143.41,
+      "versusV2Percent": 120.67,
       "previousPages": [
         9
       ],
@@ -2054,7 +1855,7 @@
         9
       ],
       "pages": [
-        10
+        9
       ],
       "systems": 5,
       "systemsPerPage": [
@@ -2285,11 +2086,238 @@
           "rows": 5,
           "pages": 1,
           "cost": 1139.58
+        },
+        {
+          "width": 618,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1104.57
         }
       ],
       "rejectedCandidates": [],
       "fillPage": false,
-      "reviewNote": ""
+      "reviewNote": "《虫儿飞》与《哆唻咪》互换；与《苏珊娜》《小红帽》统一字号合页。"
+    },
+    {
+      "order": 11,
+      "id": "duo_lai_mi",
+      "title": "哆唻咪",
+      "file": "duo_lai_mi_01.m3n",
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "baselineSteps": [
+        58.81,
+        58.81,
+        58.81,
+        80.755,
+        80.755
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "section": "basics",
+      "group": "音阶与连奏",
+      "difficulty": 2,
+      "reason": "音阶进行与节奏变化",
+      "width": 588,
+      "systemGap": 18,
+      "relativeScalePercent": 132.65,
+      "screenNotePx": 26.04,
+      "versusV1Percent": 150.73,
+      "versusV2Percent": 126.82,
+      "previousPages": [
+        8
+      ],
+      "secondEditionPages": [
+        8
+      ],
+      "pages": [
+        10
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "7792d33a07c54149d82c61b359f11f8bc78ebd4988e3da15fd4b224d4f4ce51b",
+      "candidates": [
+        {
+          "width": 780,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1008.25
+        },
+        {
+          "width": 520,
+          "systemGap": 18,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1156.99
+        },
+        {
+          "width": 540,
+          "systemGap": 18,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1146.11
+        },
+        {
+          "width": 560,
+          "systemGap": 18,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1134.43
+        },
+        {
+          "width": 580,
+          "systemGap": 18,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1122.75
+        },
+        {
+          "width": 600,
+          "systemGap": 18,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1112.28
+        },
+        {
+          "width": 620,
+          "systemGap": 18,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1100.61
+        },
+        {
+          "width": 640,
+          "systemGap": 18,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1088.92
+        },
+        {
+          "width": 660,
+          "systemGap": 18,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1077.23
+        },
+        {
+          "width": 680,
+          "systemGap": 18,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1065.53
+        },
+        {
+          "width": 700,
+          "systemGap": 18,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1053.82
+        },
+        {
+          "width": 720,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1043.5
+        },
+        {
+          "width": 740,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1031.76
+        },
+        {
+          "width": 760,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1020.01
+        },
+        {
+          "width": 800,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1020.48
+        },
+        {
+          "width": 820,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1032.7
+        },
+        {
+          "width": 840,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1044.92
+        },
+        {
+          "width": 860,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1057.13
+        },
+        {
+          "width": 880,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1069.33
+        },
+        {
+          "width": 900,
+          "systemGap": 18,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1082.99
+        },
+        {
+          "width": 920,
+          "systemGap": 18,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1095.16
+        },
+        {
+          "width": 940,
+          "systemGap": 18,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1107.32
+        },
+        {
+          "width": 960,
+          "systemGap": 18,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1119.48
+        },
+        {
+          "width": 588,
+          "systemGap": 18,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1119.28
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "《哆唻咪》与《虫儿飞》互换；与《让我们荡起双桨》统一字号合页。"
     },
     {
       "order": 12,
@@ -2299,14 +2327,12 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        56.02,
-        56.02,
-        56.02,
-        56.019,
-        56.02
+        56.11,
+        56.111,
+        56.111,
+        56.11
       ],
       "voltaSystems": [
-        false,
         false,
         false,
         false,
@@ -2314,15 +2340,15 @@
         false
       ],
       "section": "basics",
-      "group": "附点与连奏",
+      "group": "音阶与连奏",
       "difficulty": 2,
       "reason": "弱起、附点与短连奏",
-      "width": 544,
+      "width": 588,
       "systemGap": 18,
-      "relativeScalePercent": 143.38,
-      "screenNotePx": 28.15,
-      "versusV1Percent": 162.92,
-      "versusV2Percent": 137.08,
+      "relativeScalePercent": 132.65,
+      "screenNotePx": 26.04,
+      "versusV1Percent": 150.73,
+      "versusV2Percent": 126.82,
       "previousPages": [
         9
       ],
@@ -2332,9 +2358,9 @@
       "pages": [
         10
       ],
-      "systems": 6,
+      "systems": 5,
       "systemsPerPage": [
-        6
+        5
       ],
       "sourceSha256": "c1f943e782179b549c83a4d35ca6c5f0207caee1679a949b981b6dc8bce4b78b",
       "candidates": [
@@ -2561,11 +2587,18 @@
           "rows": 5,
           "pages": 1,
           "cost": 1139.5
+        },
+        {
+          "width": 588,
+          "systemGap": 18,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1122.01
         }
       ],
       "rejectedCandidates": [],
       "fillPage": false,
-      "reviewNote": ""
+      "reviewNote": "《哆唻咪》与《虫儿飞》互换；与《让我们荡起双桨》统一字号合页。"
     },
     {
       "order": 13,
@@ -14567,37 +14600,35 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93,
-        97.93
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868,
+        80.868
       ],
       "voltaSystems": [
-        false,
         false,
         false,
         false,
@@ -14631,12 +14662,12 @@
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速半音、装饰与多次变调",
-      "width": 720,
+      "width": 808,
       "systemGap": 18,
-      "relativeScalePercent": 108.33,
-      "screenNotePx": 21.27,
-      "versusV1Percent": 123.09,
-      "versusV2Percent": 135.44,
+      "relativeScalePercent": 96.53,
+      "screenNotePx": 18.95,
+      "versusV1Percent": 109.69,
+      "versusV2Percent": 120.69,
       "previousPages": [
         78,
         79
@@ -14646,28 +14677,26 @@
       ],
       "pages": [
         83,
-        84,
-        85
+        84
       ],
-      "systems": 29,
+      "systems": 28,
       "systemsPerPage": [
-        9,
-        10,
-        10
+        14,
+        14
       ],
-      "sourceSha256": "5dc41521fba6b4620c547c499564dc2de4b53d495d366cd97f431ceec9c566cc",
+      "sourceSha256": "8b268c6ea745628743742fd383581f6414bdfba32aabb4b198fed34b6d4a7859",
       "candidates": [
         {
-          "width": 720,
+          "width": 808,
           "systemGap": 18,
-          "rows": 29,
-          "pages": 3,
-          "cost": 3432
+          "rows": 28,
+          "pages": 2,
+          "cost": 2484.8
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按第六版建议增为3页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
+      "reviewNote": "删除全部乐段名称并收紧统一行高，按14+14行分为两页；在第5个后反复之后分页，9个完整反复段均不跨页，保留全部强制换行。"
     },
     {
       "order": 82,
@@ -14767,9 +14796,9 @@
         73
       ],
       "pages": [
+        85,
         86,
-        87,
-        88
+        87
       ],
       "systems": 35,
       "systemsPerPage": [
@@ -14920,7 +14949,7 @@
     {
       "page": 9,
       "section": "basics",
-      "fillPercent": 98.5,
+      "fillPercent": 98.2,
       "items": [
         {
           "id": "su_shan_na",
@@ -14929,10 +14958,10 @@
             1,
             3
           ],
-          "width": 700,
+          "width": 618,
           "systemGap": 18,
           "top": 0,
-          "height": 228.15
+          "height": 258.42
         },
         {
           "id": "xiao_hong_mao",
@@ -14941,30 +14970,11 @@
             1,
             4
           ],
-          "width": 700,
+          "width": 618,
           "systemGap": 18,
-          "top": 250.15,
-          "height": 282.58
+          "top": 280.42,
+          "height": 320.07
         },
-        {
-          "id": "duo_lai_mi",
-          "title": "哆唻咪",
-          "systems": [
-            1,
-            6
-          ],
-          "width": 700,
-          "systemGap": 18,
-          "top": 554.72,
-          "height": 486.91
-        }
-      ]
-    },
-    {
-      "page": 10,
-      "section": "basics",
-      "fillPercent": 98.4,
-      "items": [
         {
           "id": "chong_er_fei",
           "title": "虫儿飞",
@@ -14972,22 +14982,41 @@
             1,
             5
           ],
-          "width": 544,
+          "width": 618,
+          "systemGap": 18,
+          "top": 622.49,
+          "height": 415.29
+        }
+      ]
+    },
+    {
+      "page": 10,
+      "section": "basics",
+      "fillPercent": 98.6,
+      "items": [
+        {
+          "id": "duo_lai_mi",
+          "title": "哆唻咪",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 588,
           "systemGap": 18,
           "top": 0,
-          "height": 471.78
+          "height": 579.66
         },
         {
           "id": "rang_wo_men_dang_qi_shuang_jiang",
           "title": "让我们荡起双桨",
           "systems": [
             1,
-            6
+            5
           ],
-          "width": 544,
+          "width": 588,
           "systemGap": 18,
-          "top": 493.78,
-          "height": 546.72
+          "top": 601.66,
+          "height": 440.03
         }
       ]
     },
@@ -16470,62 +16499,43 @@
     {
       "page": 83,
       "section": "instrumental",
-      "fillPercent": 91.1,
+      "fillPercent": 99.9,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
           "systems": [
             1,
-            9
+            14
           ],
-          "width": 720,
+          "width": 808,
           "systemGap": 18,
           "top": 0,
-          "height": 962.68
+          "height": 1055.77
         }
       ]
     },
     {
       "page": 84,
       "section": "instrumental",
-      "fillPercent": 91.7,
+      "fillPercent": 94.8,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
           "systems": [
-            10,
-            19
+            15,
+            28
           ],
-          "width": 720,
+          "width": 808,
           "systemGap": 18,
           "top": 0,
-          "height": 969.4
+          "height": 1001.59
         }
       ]
     },
     {
       "page": 85,
-      "section": "instrumental",
-      "fillPercent": 91.6,
-      "items": [
-        {
-          "id": "turkish_march",
-          "title": "土耳其进行曲",
-          "systems": [
-            20,
-            29
-          ],
-          "width": 720,
-          "systemGap": 18,
-          "top": 0,
-          "height": 968
-        }
-      ]
-    },
-    {
-      "page": 86,
       "section": "instrumental",
       "fillPercent": 95.2,
       "items": [
@@ -16544,7 +16554,7 @@
       ]
     },
     {
-      "page": 87,
+      "page": 86,
       "section": "instrumental",
       "fillPercent": 96.5,
       "items": [
@@ -16563,7 +16573,7 @@
       ]
     },
     {
-      "page": 88,
+      "page": 87,
       "section": "instrumental",
       "fillPercent": 98.6,
       "items": [
@@ -16585,14 +16595,14 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 933,
+    "geometryCandidates": 938,
     "minimumMusicPageFillPercent": 90.139,
     "underfilledMusicPages": 0,
     "outside": 0,
     "overlaps": 0,
     "unsafeCuts": 0,
     "orphanContinuationPages": 0,
-    "outlinedPages": 88,
+    "outlinedPages": 87,
     "outlinedPageOverflow": 0
   }
 }

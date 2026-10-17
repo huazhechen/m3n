@@ -1,0 +1,229 @@
+{
+  "edition": "第十版",
+  "baselinePdf": "循序渐进简谱集-v10.pdf",
+  "applied": false,
+  "notationSizeBasis": {
+    "pageWidth": 744,
+    "bodyWidth": 696,
+    "nativeNoteFontSize": 22,
+    "unit": "px"
+  },
+  "search": {
+    "widthCandidates": [
+      568,
+      570,
+      580,
+      600,
+      "小字号曲目：580—770，步长10"
+    ],
+    "systemGaps": [
+      18,
+      20,
+      22,
+      24
+    ],
+    "targetNotePx": "约20—26.5",
+    "minimumFillPercentExclusive": 90,
+    "extraPageCandidates": 2,
+    "geometry": "真实字体 SVG；边界、音符/歌词相交及分页切口均须为0；未检查 PDF 视觉"
+  },
+  "candidates": [
+    {
+      "id": "mei_li_de_shen_hua",
+      "title": "美丽的神话",
+      "currentNotePx": 19.14,
+      "currentPages": [
+        29
+      ],
+      "best": {
+        "width": 630,
+        "systemGap": 24,
+        "notePx": 24.304761904761904,
+        "systems": [
+          8,
+          8
+        ],
+        "fills": [
+          91.52822110321777,
+          90.38562971777533
+        ]
+      },
+      "currentWidth": 800
+    },
+    {
+      "id": "ren_shi_jian",
+      "title": "人世间",
+      "currentNotePx": 18.67,
+      "currentPages": [
+        48
+      ],
+      "best": {
+        "width": 590,
+        "systemGap": 24,
+        "notePx": 25.952542372881357,
+        "systems": [
+          7,
+          7
+        ],
+        "fills": [
+          93.5241479792455,
+          91.24090367413494
+        ]
+      },
+      "currentWidth": 820
+    },
+    {
+      "id": "ming_tian_hui_geng_hao",
+      "title": "明天会更好",
+      "currentNotePx": 17.8,
+      "currentPages": [
+        52
+      ],
+      "best": {
+        "width": 620,
+        "systemGap": 24,
+        "notePx": 24.696774193548386,
+        "systems": [
+          5,
+          5
+        ],
+        "fills": [
+          97.22414728334003,
+          90.94958611627841
+        ]
+      },
+      "currentWidth": 860
+    },
+    {
+      "id": "yue_ban_xiao_ye_qu",
+      "title": "月半小夜曲",
+      "currentNotePx": 19.63,
+      "currentPages": [
+        59
+      ],
+      "best": {
+        "width": 590,
+        "systemGap": 24,
+        "notePx": 25.952542372881357,
+        "systems": [
+          8,
+          8
+        ],
+        "fills": [
+          92.6459085816109,
+          90.93680483606393
+        ]
+      },
+      "currentWidth": 780
+    },
+    {
+      "id": "andy",
+      "title": "ANDY",
+      "currentNotePx": 19.14,
+      "currentPages": [
+        60
+      ],
+      "best": {
+        "width": 600,
+        "systemGap": 24,
+        "notePx": 25.52,
+        "systems": [
+          6,
+          7
+        ],
+        "fills": [
+          90.74569624194359,
+          91.16053263827553
+        ]
+      },
+      "currentWidth": 800
+    },
+    {
+      "id": "ting_hai",
+      "title": "听海",
+      "currentNotePx": 19.14,
+      "currentPages": [
+        61
+      ],
+      "best": {
+        "width": 600,
+        "systemGap": 24,
+        "notePx": 25.52,
+        "systems": [
+          8,
+          8
+        ],
+        "fills": [
+          97.78810995890491,
+          91.02433993394575
+        ]
+      },
+      "currentWidth": 800
+    },
+    {
+      "id": "canon",
+      "title": "卡农",
+      "currentNotePx": 19.63,
+      "currentPages": [
+        78
+      ],
+      "best": {
+        "width": 590,
+        "systemGap": 20,
+        "notePx": 25.952542372881357,
+        "systems": [
+          12,
+          13
+        ],
+        "fills": [
+          91.47272136930401,
+          90.228333749767
+        ]
+      },
+      "currentWidth": 780
+    }
+  ],
+  "withoutFeasibleCandidateInThisSearch": [
+    {
+      "id": "por_una_cabeza",
+      "title": "一步之遥",
+      "currentNotePx": 29.45,
+      "currentPages": [
+        76
+      ]
+    },
+    {
+      "id": "the_internationale",
+      "title": "国际歌",
+      "currentNotePx": 19.63,
+      "currentPages": [
+        15
+      ]
+    },
+    {
+      "id": "bai_hua_lin",
+      "title": "白桦林",
+      "currentNotePx": 19.14,
+      "currentPages": [
+        20
+      ]
+    },
+    {
+      "id": "yi_qian_ge_shang_xin_de_li_you",
+      "title": "一千个伤心的理由",
+      "currentNotePx": 19.14,
+      "currentPages": [
+        58
+      ]
+    },
+    {
+      "id": "turkish_march",
+      "title": "土耳其进行曲",
+      "currentNotePx": 18.95,
+      "currentPages": [
+        83,
+        84
+      ]
+    }
+  ]
+}

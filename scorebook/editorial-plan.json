@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第九版",
+  "edition": "第十版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -161,56 +161,48 @@
       "file": "su_shan_na_01.m3n",
       "title": "苏珊娜",
       "section": "basics",
-      "group": "活泼的二拍子",
+      "group": "轻快的旋律",
       "difficulty": 2,
       "reason": "重复节奏与八分音符",
       "width": 780,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "《虫儿飞》与《哆唻咪》互换；与《苏珊娜》《小红帽》统一字号合页。",
+      "widthCandidates": [
+        618
+      ]
     },
     {
       "id": "xiao_hong_mao",
       "file": "xiao_hong_mao_01.m3n",
       "title": "小红帽",
       "section": "basics",
-      "group": "活泼的二拍子",
+      "group": "轻快的旋律",
       "difficulty": 2,
       "reason": "连续八分音符与跳进",
       "width": 780,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
-    },
-    {
-      "id": "duo_lai_mi",
-      "file": "duo_lai_mi_01.m3n",
-      "title": "哆唻咪",
-      "section": "basics",
-      "group": "活泼的二拍子",
-      "difficulty": 2,
-      "reason": "音阶进行与节奏变化",
-      "width": 780,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "《虫儿飞》与《哆唻咪》互换；与《苏珊娜》《小红帽》统一字号合页。",
+      "widthCandidates": [
+        618
+      ]
     },
     {
       "id": "chong_er_fei",
       "file": "chong_er_fei_01.m3n",
       "title": "虫儿飞",
       "section": "basics",
-      "group": "附点与连奏",
+      "group": "轻快的旋律",
       "difficulty": 2,
       "reason": "附点节奏和连奏",
       "width": 780,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "",
+      "reviewNote": "《虫儿飞》与《哆唻咪》互换；与《苏珊娜》《小红帽》统一字号合页。",
       "widthCandidates": [
         542,
         544,
@@ -220,7 +212,25 @@
         552,
         554,
         556,
-        558
+        558,
+        618
+      ]
+    },
+    {
+      "id": "duo_lai_mi",
+      "file": "duo_lai_mi_01.m3n",
+      "title": "哆唻咪",
+      "section": "basics",
+      "group": "音阶与连奏",
+      "difficulty": 2,
+      "reason": "音阶进行与节奏变化",
+      "width": 780,
+      "sharePage": true,
+      "breakBefore": false,
+      "pageBreaks": [],
+      "reviewNote": "《哆唻咪》与《虫儿飞》互换；与《让我们荡起双桨》统一字号合页。",
+      "widthCandidates": [
+        588
       ]
     },
     {
@@ -228,14 +238,14 @@
       "file": "rang_wo_men_dang_qi_shuang_jiang_01.m3n",
       "title": "让我们荡起双桨",
       "section": "basics",
-      "group": "附点与连奏",
+      "group": "音阶与连奏",
       "difficulty": 2,
       "reason": "弱起、附点与短连奏",
       "width": 780,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "",
+      "reviewNote": "《哆唻咪》与《虫儿飞》互换；与《让我们荡起双桨》统一字号合页。",
       "widthCandidates": [
         542,
         544,
@@ -245,7 +255,8 @@
         552,
         554,
         556,
-        558
+        558,
+        588
       ]
     },
     {
@@ -1319,12 +1330,14 @@
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速半音、装饰与多次变调",
-      "width": 720,
+      "width": 808,
       "sharePage": false,
       "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "按第六版建议增为3页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。",
-      "pageCount": 3,
+      "pageBreaks": [
+        14
+      ],
+      "reviewNote": "删除全部乐段名称并收紧统一行高，按14+14行分为两页；在第5个后反复之后分页，9个完整反复段均不跨页，保留全部强制换行。",
+      "pageCount": 2,
       "widthLocked": true,
       "systemGap": 18,
       "uniformSystemHeight": true
@@ -1347,8 +1360,8 @@
       "widthLocked": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v9.pdf",
-  "outputKey": "scorebook-v9",
+  "outputPdf": "循序渐进简谱集-v10.pdf",
+  "outputKey": "scorebook-v10",
   "page": {
     "width": 744,
     "height": 1133,
