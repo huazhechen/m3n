@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第七版",
+  "edition": "第八版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -59,16 +59,17 @@
       "group": "每日训练",
       "difficulty": 4,
       "reason": "按原谱顺序连续进行机能与音阶模进训练",
-      "width": 740,
+      "width": 1010,
       "widthLocked": true,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [
-        14,
-        30
+        16
       ],
-      "reviewNote": "整份原谱保留，第一篇开头供每日训练；按原顺序排三页，机能训练整段在首页，另两页在完整练习之间接续。",
-      "uniformSystemHeight": false
+      "reviewNote": "整份原谱与28项练习原顺序保留；版宽1010px将15项两行练习合为一行，长音、渐强渐弱与震音各一行；统一基础节距，按16+17行分两页，完整练习之间分页。",
+      "uniformSystemHeight": true,
+      "pageCount": 2,
+      "systemGap": 18
     },
     {
       "id": "xiao_xing_xing",
@@ -1348,8 +1349,8 @@
       ]
     }
   ],
-  "outputPdf": "循序渐进简谱集-v7.pdf",
-  "outputKey": "scorebook-v7",
+  "outputPdf": "循序渐进简谱集-v8.pdf",
+  "outputKey": "scorebook-v8",
   "page": {
     "width": 744,
     "height": 1133,
