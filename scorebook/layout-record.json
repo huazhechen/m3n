@@ -1,9 +1,9 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十版",
+  "edition": "第十一版",
   "showCredits": false,
   "uniformSystemHeight": true,
-  "rendererSha256": "46dbd68942d21b8f4d6d7870f07c18207310df59c2cd9011af25adaed3e4b329",
+  "rendererSha256": "6fc50a4008f1af8a774b1a28bc9d862af3d1becd157034907351090cdc3ab36c",
   "sourceCount": 82,
   "entryCount": 82,
   "pageCount": 87,
@@ -9750,12 +9750,13 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
+        139.09,
+        150.783,
+        174.102,
+        174.103,
         162.41,
-        183.255,
-        183.255,
-        183.255,
-        159.935,
-        159.935
+        92.45,
+        92.45
       ],
       "voltaSystems": [
         false,
@@ -9763,19 +9764,20 @@
         true,
         true,
         true,
-        true,
-        true
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "变拍、器乐段与多段歌词",
-      "width": 860,
+      "width": 786,
       "systemGap": 18,
-      "relativeScalePercent": 90.7,
-      "screenNotePx": 17.8,
-      "versusV1Percent": 110.42,
-      "versusV2Percent": 95.6,
+      "relativeScalePercent": 99.24,
+      "screenNotePx": 19.48,
+      "versusV1Percent": 120.81,
+      "versusV2Percent": 104.61,
       "previousPages": [
         51
       ],
@@ -9785,121 +9787,23 @@
       "pages": [
         52
       ],
-      "systems": 7,
+      "systems": 8,
       "systemsPerPage": [
-        7
+        8
       ],
-      "sourceSha256": "aabe48b2bdd641a4eb490297a49337ba0616ffedb0ec96892e2f7331576e0993",
+      "sourceSha256": "25be00bb334c99d07a31d438096a11e2f4af97a35a7302f99fa6685ee0db5e43",
       "candidates": [
         {
-          "width": 860,
+          "width": 786,
           "systemGap": 18,
-          "rows": 7,
+          "rows": 8,
           "pages": 1,
-          "cost": 1516
-        },
-        {
-          "width": 880,
-          "systemGap": 18,
-          "rows": 7,
-          "pages": 1,
-          "cost": 1528
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 7,
-          "pages": 1,
-          "cost": 1540
-        },
-        {
-          "width": 920,
-          "systemGap": 18,
-          "rows": 7,
-          "pages": 1,
-          "cost": 1552
+          "cost": 1471.6
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "前面第一次反复、后面三遍的安排不变；副歌移出房子，相同歌词合并，保留末遍异词；一页8行，音符约19.48px。"
     },
     {
       "order": 55,
@@ -15886,19 +15790,19 @@
     {
       "page": 52,
       "section": "pop",
-      "fillPercent": 96.7,
+      "fillPercent": 100,
       "items": [
         {
           "id": "ming_tian_hui_geng_hao",
           "title": "明天会更好",
           "systems": [
             1,
-            7
+            8
           ],
-          "width": 860,
+          "width": 786,
           "systemGap": 18,
           "top": 0,
-          "height": 1022.54
+          "height": 1056.85
         }
       ]
     },
@@ -16595,7 +16499,7 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 938,
+    "geometryCandidates": 935,
     "minimumMusicPageFillPercent": 90.139,
     "underfilledMusicPages": 0,
     "outside": 0,

@@ -50,6 +50,26 @@ describe('repeat planning', () => {
     expect(passes.get(measures[1])).toEqual(new Set([1, 2]))
   })
 
+  it('counts an early first-ending return separately from three later chorus passes', () => {
+    const measures = [
+      { events: [], left: 'rptstart' },
+      { events: [], ending: '1' },
+      { events: [], ending: '1', right: 'rptend' },
+      { events: [], ending: '2,3,4' },
+      { events: [], ending: '2,3,4' },
+      { events: [] },
+      { events: [], right: 'rptend', repeatCount: 3 },
+      { events: [] },
+    ]
+    const passes = measurePlaybackPasses(measures)
+
+    expect(passes.get(measures[0])).toEqual(new Set([1, 2, 3, 4]))
+    for (const index of [1, 2]) expect(passes.get(measures[index])).toEqual(new Set([1]))
+    for (const index of [3, 4]) expect(passes.get(measures[index])).toEqual(new Set([2, 3, 4]))
+    for (const index of [5, 6]) expect(passes.get(measures[index])).toEqual(new Set([1, 2, 3]))
+    expect(passes.get(measures[7])).toEqual(new Set([1]))
+  })
+
   it('counts a D.S. return as another pass', () => {
     const measures = [
       { events: [{ navigation: ['segno' as const] }] },

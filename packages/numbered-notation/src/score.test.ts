@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { ASTFunctionNode, compileScore, getLayoutBounds, isVisualTemporalNode, type VisualTemporalNode } from '@m3n/jpfun'
-import { m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
+import { measurePlaybackPasses, m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
 import { NumberedNotationScore, type NumberedNotationRenderOptions } from './score.js'
 import { projectNumberedScore } from './projection.js'
 
@@ -36,6 +36,29 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it('keeps four verses and three compact chorus passes in Tomorrow Will Be Better', () => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/ming_tian_hui_geng_hao_01.m3n'), 'utf8')
+    const { document, root, score } = render(source, { width: 786, pageMargin: 8, systemGap: 18, showCredits: false, uniformSystemHeight: true })
+    const measures = [...document.parts.values()][0]!.melody.filter(measure => measure.events.length)
+    const passes = measurePlaybackPasses(measures)
+    expect([...passes.get(measures[0]!)!]).toEqual([1, 2, 3, 4])
+    expect([...passes.get(measures[13]!)!]).toEqual([1, 2, 3])
+    const mei = new DOMParser().parseFromString(m3nToMei(source).mei, 'text/xml')
+    const sequence = mei.querySelector('expansion')!.getAttribute('plist')!.split(' ')
+    expect(sequence).toEqual([
+      '#m3n-segment-1', '#m3n-ending-1',
+      '#m3n-segment-1', '#m3n-ending-2', '#m3n-segment-2',
+      '#m3n-segment-1', '#m3n-ending-2', '#m3n-segment-2',
+      '#m3n-segment-1', '#m3n-ending-2', '#m3n-segment-2',
+    ])
+    const sharedChorus = measures.slice(14, 18).flatMap(measure => measure.events)
+    const ids = scoreEventIds(document)
+    const rows = sharedChorus.flatMap(event => [...root.querySelectorAll(`text[data-m3n-role="lyric"][data-m3n-id="${ids.get(event)}"]`)]
+      .map(node => node.getAttribute('data-m3n-rendition')))
+    expect(new Set(rows)).toEqual(new Set(['1']))
+    expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+  })
+
   const systemBaselines = (root: Document) => [...root.querySelectorAll('g.system')].map(system => {
     const digit = [...system.querySelectorAll('g.note[data-m3n-id^="m3n-e-"] text')].find(node => node.getAttribute('font-size') === '22' && /^[0-7]$/.test(node.textContent ?? ''))!
     return Number(digit.getAttribute('y'))

@@ -39,6 +39,39 @@ export function parsePassRange(value: string) {
 
 /** Returns the playback passes in which each written measure occurs. */
 export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: readonly T[]) {
+  const endingRepeatIndex = measures.findIndex((measure) => measure.ending && measure.right === 'rptend')
+  const commonRepeatAfterEndings = endingRepeatIndex >= 0 && measures.slice(endingRepeatIndex + 1)
+    .some((measure) => !measure.ending && measure.right === 'rptend')
+  if (commonRepeatAfterEndings
+    && !measures.some((measure) => navigationOf(measure).some((value) => value === 'ds' || value === 'dc'))) {
+    // A common repeat after alternate endings can reach the verse more often
+    // than the chorus. Fold multi-measure houses into single playback nodes
+    // and count those common passages from the actual plan.
+    const groups: Array<{ node: PlaybackNode; measures: T[] }> = []
+    for (const measure of measures) {
+      const previous = groups.at(-1)
+      const node: PlaybackNode = {
+        id: String(groups.length),
+        kind: measure.ending ? 'ending' : 'section',
+        n: measure.ending,
+        repeatStart: measure.left === 'rptstart',
+        repeatCount: measure.repeatCount ?? (measure.right === 'rptend' ? 2 : undefined),
+        navigation: navigationOf(measure),
+      }
+      if (measure.ending && previous?.node.n === measure.ending && !previous.node.repeatCount) {
+        previous.measures.push(measure)
+        previous.node.repeatCount = node.repeatCount
+        previous.node.navigation = [...(previous.node.navigation ?? []), ...(node.navigation ?? [])]
+      } else {
+        groups.push({ node, measures: [measure] })
+      }
+    }
+    const plan = planPlayback(groups.map((group) => group.node))
+    return new Map<T, Set<number>>(groups.flatMap(({ node, measures: group }) => {
+      const passes = node.n ? parsePassRange(node.n) : new Set(plan.passesByNode.get(node.id))
+      return group.map((measure) => [measure, new Set(passes)] as const)
+    }))
+  }
   if (measures.some((measure) => measure.ending)) {
     const passesByMeasure = new Map<T, Set<number>>(measures.map((measure) => [measure, new Set([1])]))
     let repeatStart = 0

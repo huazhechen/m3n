@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十版",
+  "edition": "第十一版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -924,11 +924,15 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "变拍、器乐段与多段歌词",
-      "width": 780,
+      "width": 786,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "前面第一次反复、后面三遍的安排不变；副歌移出房子，相同歌词合并，保留末遍异词；一页8行，音符约19.48px。",
+      "widthLocked": true,
+      "pageCount": 1,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "man_man_xi_huan_ni",
@@ -1360,8 +1364,8 @@
       "widthLocked": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v10.pdf",
-  "outputKey": "scorebook-v10",
+  "outputPdf": "循序渐进简谱集-v11.pdf",
+  "outputKey": "scorebook-v11",
   "page": {
     "width": 744,
     "height": 1133,
