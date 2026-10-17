@@ -65,12 +65,45 @@ describe('jpFun numbered notation adapter', () => {
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
   })
 
-  it.each(['turkish_march_01.m3n', 'ju_ci_lang_de_xia_tian_01.m3n', 'valsentino_01.m3n', 'second_waltz_01.m3n'])('keeps every music baseline evenly spaced in %s', file => {
+  it.each(['turkish_march_01.m3n', 'ju_ci_lang_de_xia_tian_01.m3n', 'valsentino_01.m3n', 'second_waltz_01.m3n'])('keeps each music spacing band consistent in %s', file => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')
     const { root } = render(source, { uniformSystemHeight: true, includeBass: false })
     const axes = systemBaselines(root)
     expect(axes.length).toBeGreaterThan(3)
-    for (let i = 2; i < axes.length; i++) expect(axes[i]! - axes[i - 1]!).toBeCloseTo(axes[1]! - axes[0]!, 2)
+    const bands = new Map<string, number>()
+    const systems = [...root.querySelectorAll('g.system')]
+    for (let i = 1; i < axes.length; i++) {
+      const band = systems[i]!.getAttribute('data-m3n-volta')!
+      const step = axes[i]! - axes[i - 1]!
+      if (bands.has(band)) expect(step).toBeCloseTo(bands.get(band)!, 2)
+      else bands.set(band, step)
+    }
+    expect(bands.size).toBeLessThanOrEqual(2)
+  })
+
+  it.each([false, true])('keeps plain systems compact around a cross-system volta, lyrics=%s', withLyrics => {
+    const music = '{4/4}\nN: ||: 1 2 3 4 | {br} 1 2 3 4 | {br}\n---V1\nN: 1 2 3 4 | {br} 1 2 3 4 | {br} 1 2 3 4 :|| {br}\n---V2\nN: 1 2 3 4 | {br}\n---\nN: 1 2 3 4 | {br} 1 2 3 4 |||'
+    const source = withLyrics ? music
+      .replace('---V1', 'L: 春风花开春风花开\nL2: _ _ _ _ 山间流水\n---V1')
+      .replace('---V2', 'L: 春风花开春风花开春风花开\n---V2')
+      .replace('---\nN:', 'L: 春风花开\n---\nN:')
+      + '\nL: 春风花开春风花开' : music
+    const { root, score } = render(source, { uniformSystemHeight: true })
+    const systems = [...root.querySelectorAll('g.system')], y = systemBaselines(root)
+    expect(systems.map(s => s.getAttribute('data-m3n-volta'))).toEqual(['false', 'false', 'true', 'true', 'true', 'true', 'false', 'false'])
+    const rows = systems.map(s => new Set([...s.querySelectorAll('[data-m3n-role="lyric"]')].filter(n => n.textContent?.replaceAll('\u200B', '').trim()).map(n => n.getAttribute('y'))).size)
+    const bands = new Map<string, number>()
+    for (let i = 1; i < y.length; i++) {
+      const key = `${rows[i - 1]}:${systems[i]!.getAttribute('data-m3n-volta')}`
+      const step = y[i]! - y[i - 1]!
+      if (bands.has(key)) expect(step).toBeCloseTo(bands.get(key)!, 2)
+      else bands.set(key, step)
+    }
+    expect(bands.get(`${withLyrics ? 1 : 0}:true`)!).toBeGreaterThan(bands.get(`${withLyrics ? 1 : 0}:false`)! + 10)
+    expect(score.diagnostics.filter(d => d.severity === 'error')).toEqual([])
+    const natural = render(source)
+    expect([...root.querySelectorAll('g.note')].map(n => [n.getAttribute('data-m3n-id'), n.textContent]))
+      .toEqual([...natural.root.querySelectorAll('g.note')].map(n => [n.getAttribute('data-m3n-id'), n.textContent]))
   })
 
   it('reduces system spacing without changing notes, lyrics or event identities', () => {

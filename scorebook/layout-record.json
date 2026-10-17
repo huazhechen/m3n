@@ -1,9 +1,9 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第八版",
+  "edition": "第九版",
   "showCredits": false,
   "uniformSystemHeight": true,
-  "rendererSha256": "aa12930f343c195970b55c421840fa26fe2c4d15612f28de99df95d033523a4e",
+  "rendererSha256": "46dbd68942d21b8f4d6d7870f07c18207310df59c2cd9011af25adaed3e4b329",
   "sourceCount": 82,
   "entryCount": 82,
   "pageCount": 88,
@@ -66,6 +66,41 @@
         87.73,
         87.73
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "basics",
       "group": "每日训练",
       "difficulty": 4,
@@ -111,6 +146,11 @@
       "baselineSteps": [
         45.5,
         45.5
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
       ],
       "section": "basics",
       "group": "入门旋律",
@@ -316,6 +356,13 @@
         53.75,
         53.75
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "basics",
       "group": "入门旋律",
       "difficulty": 1,
@@ -518,6 +565,12 @@
         45.5,
         45.5,
         45.5
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
       ],
       "section": "basics",
       "group": "入门旋律",
@@ -722,6 +775,12 @@
         51.068,
         51.069
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "basics",
       "group": "八分音符入门",
       "difficulty": 1,
@@ -925,6 +984,12 @@
         49.57,
         49.57
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "basics",
       "group": "八分音符入门",
       "difficulty": 1,
@@ -1126,6 +1191,11 @@
       "baselineSteps": [
         53.251,
         53.251
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
       ],
       "section": "basics",
       "group": "八分音符入门",
@@ -1329,16 +1399,21 @@
         45.5,
         45.5
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
       "section": "basics",
       "group": "活泼的二拍子",
       "difficulty": 2,
       "reason": "重复节奏与八分音符",
-      "width": 720,
+      "width": 700,
       "systemGap": 18,
-      "relativeScalePercent": 108.33,
-      "screenNotePx": 21.27,
-      "versusV1Percent": 123.09,
-      "versusV2Percent": 103.57,
+      "relativeScalePercent": 111.43,
+      "screenNotePx": 21.87,
+      "versusV1Percent": 126.61,
+      "versusV2Percent": 106.53,
       "previousPages": [
         8
       ],
@@ -1532,16 +1607,22 @@
         47.81,
         47.81
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "basics",
       "group": "活泼的二拍子",
       "difficulty": 2,
       "reason": "连续八分音符与跳进",
-      "width": 720,
+      "width": 700,
       "systemGap": 18,
-      "relativeScalePercent": 108.33,
-      "screenNotePx": 21.27,
-      "versusV1Percent": 123.09,
-      "versusV2Percent": 103.57,
+      "relativeScalePercent": 111.43,
+      "screenNotePx": 21.87,
+      "versusV1Percent": 126.61,
+      "versusV2Percent": 106.53,
       "previousPages": [
         8
       ],
@@ -1731,21 +1812,30 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        80.755,
-        80.755,
+        58.81,
+        58.81,
+        58.81,
         80.755,
         80.755
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
       ],
       "section": "basics",
       "group": "活泼的二拍子",
       "difficulty": 2,
       "reason": "音阶进行与节奏变化",
-      "width": 720,
+      "width": 700,
       "systemGap": 18,
-      "relativeScalePercent": 108.33,
-      "screenNotePx": 21.27,
-      "versusV1Percent": 123.09,
-      "versusV2Percent": 103.57,
+      "relativeScalePercent": 111.43,
+      "screenNotePx": 21.87,
+      "versusV1Percent": 126.61,
+      "versusV2Percent": 106.53,
       "previousPages": [
         8
       ],
@@ -1755,9 +1845,9 @@
       "pages": [
         9
       ],
-      "systems": 5,
+      "systems": 6,
       "systemsPerPage": [
-        5
+        6
       ],
       "sourceSha256": "7792d33a07c54149d82c61b359f11f8bc78ebd4988e3da15fd4b224d4f4ce51b",
       "candidates": [
@@ -1766,161 +1856,161 @@
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1006.74
+          "cost": 1008.25
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 8,
           "pages": 1,
-          "cost": 1156.08
+          "cost": 1156.99
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1144.78
+          "cost": 1146.11
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1133.02
+          "cost": 1134.43
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1121.28
+          "cost": 1122.75
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1110.68
+          "cost": 1112.28
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1098.99
+          "cost": 1100.61
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1087.29
+          "cost": 1088.92
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1075.59
+          "cost": 1077.23
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1063.89
+          "cost": 1065.53
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1052.17
+          "cost": 1053.82
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1041.96
+          "cost": 1043.5
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1030.23
+          "cost": 1031.76
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1018.49
+          "cost": 1020.01
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1018.99
+          "cost": 1020.48
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1031.23
+          "cost": 1032.7
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1043.46
+          "cost": 1044.92
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1055.68
+          "cost": 1057.13
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1067.9
+          "cost": 1069.33
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1081.68
+          "cost": 1082.99
         },
         {
           "width": 920,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1093.86
+          "cost": 1095.16
         },
         {
           "width": 940,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1106.04
+          "cost": 1107.32
         },
         {
           "width": 960,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1118.22
+          "cost": 1119.48
         }
       ],
       "rejectedCandidates": [],
@@ -1939,6 +2029,13 @@
         55.51,
         55.51,
         55.51
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "basics",
       "group": "附点与连奏",
@@ -2208,6 +2305,14 @@
         56.019,
         56.02
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "basics",
       "group": "附点与连奏",
       "difficulty": 2,
@@ -2473,6 +2578,11 @@
         52.65,
         52.65
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
       "section": "folk",
       "group": "民歌与抒情",
       "difficulty": 2,
@@ -2675,6 +2785,12 @@
         55.51,
         55.51,
         55.51
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
       ],
       "section": "folk",
       "group": "民歌与抒情",
@@ -2880,6 +2996,13 @@
         61.67,
         61.67
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "folk",
       "group": "民歌与抒情",
       "difficulty": 2,
@@ -3083,6 +3206,12 @@
         55.51,
         55.51
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "folk",
       "group": "三拍子与调式",
       "difficulty": 2,
@@ -3285,6 +3414,12 @@
         55.51,
         55.51,
         55.51
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
       ],
       "section": "folk",
       "group": "三拍子与调式",
@@ -3490,6 +3625,13 @@
         47.81,
         47.81
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "folk",
       "group": "三拍子与调式",
       "difficulty": 2,
@@ -3692,6 +3834,12 @@
         58.308,
         58.308,
         58.308
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
       ],
       "section": "folk",
       "group": "民族旋律与节奏",
@@ -3896,6 +4044,12 @@
         50.34,
         50.34
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "folk",
       "group": "民族旋律与节奏",
       "difficulty": 2,
@@ -4098,6 +4252,12 @@
         58.59,
         58.59,
         58.59
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
       ],
       "section": "folk",
       "group": "民族旋律与节奏",
@@ -4306,6 +4466,16 @@
         137.7,
         91.06
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "folk",
       "group": "节奏与多段歌词",
       "difficulty": 3,
@@ -4494,6 +4664,17 @@
         87.98,
         87.98
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "folk",
       "group": "节奏与多段歌词",
       "difficulty": 3,
@@ -4655,23 +4836,32 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        144.135,
-        144.135,
-        144.135,
-        144.135,
+        133.756,
+        133.756,
+        133.756,
+        133.756,
         144.135,
         144.135
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
       ],
       "section": "folk",
       "group": "宽广乐句",
       "difficulty": 3,
       "reason": "连奏、附点与多段歌词",
-      "width": 720,
+      "width": 680,
       "systemGap": 20,
-      "relativeScalePercent": 108.33,
-      "screenNotePx": 21.27,
-      "versusV1Percent": 123.09,
-      "versusV2Percent": 103.57,
+      "relativeScalePercent": 114.71,
+      "screenNotePx": 22.52,
+      "versusV1Percent": 130.33,
+      "versusV2Percent": 109.66,
       "previousPages": [
         16
       ],
@@ -4693,6 +4883,20 @@
           "rows": 6,
           "pages": 1,
           "cost": 1468
+        },
+        {
+          "width": 680,
+          "systemGap": 20,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1408
+        },
+        {
+          "width": 700,
+          "systemGap": 20,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1420
         },
         {
           "width": 720,
@@ -4811,14 +5015,6 @@
         {
           "width": 660,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         }
       ],
       "fillPage": true,
@@ -4840,6 +5036,17 @@
         114.54,
         114.54,
         91.22
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "folk",
       "group": "宽广乐句",
@@ -5025,6 +5232,19 @@
         80.59,
         80.59
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "抒情入门",
       "difficulty": 2,
@@ -5165,25 +5385,36 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        112.435,
-        112.435,
-        112.435,
-        112.435,
-        112.435,
-        112.435,
+        91.59,
+        91.59,
+        91.59,
+        91.59,
+        91.59,
+        91.59,
         112.435,
         112.435
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
       ],
       "section": "pop",
       "group": "抒情入门",
       "difficulty": 2,
       "reason": "歌唱性乐句与八分音符",
-      "width": 728,
+      "width": 640,
       "systemGap": 18,
-      "relativeScalePercent": 107.14,
-      "screenNotePx": 21.03,
-      "versusV1Percent": 121.74,
-      "versusV2Percent": 102.43,
+      "relativeScalePercent": 121.88,
+      "screenNotePx": 23.93,
+      "versusV1Percent": 138.48,
+      "versusV2Percent": 116.52,
       "previousPages": [
         20
       ],
@@ -5200,39 +5431,32 @@
       "sourceSha256": "48ad1e1a052e4ec91caa9cdc5eba7194a101977f6d09d90282c9a2f4e1415ce8",
       "candidates": [
         {
-          "width": 728,
+          "width": 640,
           "systemGap": 18,
           "rows": 9,
           "pages": 1,
-          "cost": 1436.8
+          "cost": 1384
         },
         {
-          "width": 730,
+          "width": 660,
           "systemGap": 18,
           "rows": 9,
           "pages": 1,
-          "cost": 1438
+          "cost": 1396
         },
         {
-          "width": 732,
+          "width": 680,
           "systemGap": 18,
           "rows": 9,
           "pages": 1,
-          "cost": 1439.2
+          "cost": 1408
         },
         {
-          "width": 734,
+          "width": 700,
           "systemGap": 18,
           "rows": 9,
           "pages": 1,
-          "cost": 1440.4
-        },
-        {
-          "width": 736,
-          "systemGap": 18,
-          "rows": 9,
-          "pages": 1,
-          "cost": 1441.6
+          "cost": 1420
         }
       ],
       "rejectedCandidates": [
@@ -5262,22 +5486,6 @@
         },
         {
           "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -5377,6 +5585,26 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
+          "width": 728,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 730,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 732,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 734,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 736,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
           "width": 738,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
@@ -5438,6 +5666,19 @@
         121.29,
         121.29,
         121.29
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "三拍与复拍",
@@ -5589,6 +5830,16 @@
         132.86,
         132.86,
         132.86
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "三拍与复拍",
@@ -5866,6 +6117,18 @@
         77.212,
         77.211
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "三拍与复拍",
       "difficulty": 3,
@@ -6022,6 +6285,18 @@
         80.59,
         80.59
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "三拍与复拍",
       "difficulty": 3,
@@ -6159,30 +6434,50 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        104.335,
-        104.335,
-        104.335,
-        104.335,
-        104.335,
-        104.335,
-        127.655,
-        127.655,
-        127.655,
-        127.655,
-        127.655,
-        127.655,
-        127.655
+        82.171,
+        82.171,
+        82.171,
+        82.171,
+        105.435,
+        105.435,
+        82.171,
+        105.491,
+        105.491,
+        105.491,
+        105.491,
+        105.491,
+        105.491,
+        128.755,
+        105.435
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
       ],
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "器乐间奏与跨拍延音",
-      "width": 628,
+      "width": 578,
       "systemGap": 22,
-      "relativeScalePercent": 124.2,
-      "screenNotePx": 24.38,
-      "versusV1Percent": 147.85,
-      "versusV2Percent": 121.79,
+      "relativeScalePercent": 134.95,
+      "screenNotePx": 26.49,
+      "versusV1Percent": 160.63,
+      "versusV2Percent": 132.32,
       "previousPages": [
         25
       ],
@@ -6193,24 +6488,24 @@
         24,
         25
       ],
-      "systems": 14,
+      "systems": 16,
       "systemsPerPage": [
-        7,
-        7
+        8,
+        8
       ],
       "sourceSha256": "e811527abb2f79a93e1dbd4285784f4c08c3d4a9b5c8094087c77f8dd8b7f92d",
       "candidates": [
         {
-          "width": 628,
+          "width": 578,
           "systemGap": 22,
-          "rows": 14,
+          "rows": 16,
           "pages": 2,
-          "cost": 2376.8
+          "cost": 2346.8
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
+      "reviewNote": "第七版增页保留；房子与普通谱行分别统一高度，按指定页数重新选择可用字号，各页高度利用率高于90%。"
     },
     {
       "order": 33,
@@ -6230,6 +6525,19 @@
         110.07,
         110.07,
         110.07
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "切分与延音",
@@ -6381,6 +6689,18 @@
         103.91,
         103.91
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -6515,26 +6835,40 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        101.435,
-        101.435,
-        101.435,
-        101.435,
-        101.435,
-        101.435,
+        86.75,
+        86.75,
+        86.75,
+        86.75,
+        86.75,
+        86.75,
+        86.75,
         101.435,
         101.435,
         101.435
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true
       ],
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "长音、跨拍与情绪层次",
-      "width": 780,
+      "width": 720,
       "systemGap": 18,
-      "relativeScalePercent": 100,
-      "screenNotePx": 19.63,
-      "versusV1Percent": 113.62,
-      "versusV2Percent": 95.6,
+      "relativeScalePercent": 108.33,
+      "screenNotePx": 21.27,
+      "versusV1Percent": 123.09,
+      "versusV2Percent": 103.57,
       "previousPages": [
         28
       ],
@@ -6544,41 +6878,49 @@
       "pages": [
         28
       ],
-      "systems": 10,
+      "systems": 11,
       "systemsPerPage": [
-        10
+        11
       ],
       "sourceSha256": "98dd6c4f0c99bf92dab02883ae36c28960a82668306a51183843850b0d6385c6",
       "candidates": [
         {
-          "width": 780,
+          "width": 720,
           "systemGap": 18,
-          "rows": 10,
+          "rows": 11,
           "pages": 1,
-          "cost": 1468
+          "cost": 1432
         },
         {
-          "width": 560,
+          "width": 740,
           "systemGap": 18,
-          "rows": 15,
-          "pages": 2,
-          "cost": 2336
+          "rows": 11,
+          "pages": 1,
+          "cost": 1444
         },
         {
-          "width": 800,
+          "width": 760,
           "systemGap": 18,
-          "rows": 10,
+          "rows": 11,
           "pages": 1,
-          "cost": 1480
+          "cost": 1456
         }
       ],
       "rejectedCandidates": [
+        {
+          "width": 780,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
         {
           "width": 520,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
           "width": 540,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 560,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -6610,15 +6952,7 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
+          "width": 800,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -6665,27 +6999,40 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
+        91.59,
+        91.59,
+        91.59,
+        91.59,
+        91.59,
         104.515,
-        104.515,
-        104.515,
-        104.515,
-        104.515,
-        104.515,
-        104.515,
-        104.515,
+        91.59,
+        91.59,
         104.515,
         104.515
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        true
       ],
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "切分、附点与长句",
-      "width": 820,
+      "width": 800,
       "systemGap": 18,
-      "relativeScalePercent": 95.12,
-      "screenNotePx": 18.67,
-      "versusV1Percent": 108.08,
-      "versusV2Percent": 90.94,
+      "relativeScalePercent": 97.5,
+      "screenNotePx": 19.14,
+      "versusV1Percent": 110.78,
+      "versusV2Percent": 93.21,
       "previousPages": [
         29
       ],
@@ -6702,11 +7049,18 @@
       "sourceSha256": "40c2d656f9696220ba9ec18c60bb1c419d98542d72b6eb8a800f33ea24132628",
       "candidates": [
         {
-          "width": 620,
+          "width": 580,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2372
+          "cost": 2348
+        },
+        {
+          "width": 800,
+          "systemGap": 18,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1480
         },
         {
           "width": 820,
@@ -6714,34 +7068,6 @@
           "rows": 11,
           "pages": 1,
           "cost": 1492
-        },
-        {
-          "width": 840,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1504
-        },
-        {
-          "width": 860,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1516
-        },
-        {
-          "width": 880,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1528
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1540
         }
       ],
       "rejectedCandidates": [
@@ -6762,11 +7088,11 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 580,
+          "width": 600,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 600,
+          "width": 620,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -6798,7 +7124,19 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 800,
+          "width": 840,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 860,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 880,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 900,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -6825,26 +7163,38 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
+        103.91,
         116.505,
         116.505,
-        116.505,
-        93.185,
-        93.185,
-        93.185,
-        93.185,
-        93.185,
-        93.185
+        80.59,
+        80.59,
+        80.59,
+        80.59,
+        80.59,
+        80.59
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "弱起、附点与低音区",
-      "width": 720,
+      "width": 680,
       "systemGap": 18,
-      "relativeScalePercent": 108.33,
-      "screenNotePx": 21.27,
-      "versusV1Percent": 123.09,
-      "versusV2Percent": 103.57,
+      "relativeScalePercent": 114.71,
+      "screenNotePx": 22.52,
+      "versusV1Percent": 130.33,
+      "versusV2Percent": 109.66,
       "previousPages": [
         30
       ],
@@ -6861,11 +7211,18 @@
       "sourceSha256": "a4e870744f9e6587de6730e793f7904adf98e1eecf222e3f6cad8ceddd284e01",
       "candidates": [
         {
-          "width": 520,
+          "width": 680,
           "systemGap": 18,
-          "rows": 14,
-          "pages": 2,
-          "cost": 2312
+          "rows": 10,
+          "pages": 1,
+          "cost": 1408
+        },
+        {
+          "width": 700,
+          "systemGap": 18,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1420
         },
         {
           "width": 720,
@@ -6878,6 +7235,10 @@
       "rejectedCandidates": [
         {
           "width": 780,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 520,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -6906,14 +7267,6 @@
         },
         {
           "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -6976,6 +7329,13 @@
         86.734,
         86.734,
         86.733
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "香港影视金曲",
@@ -7181,6 +7541,14 @@
         77.9,
         77.9,
         77.9
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "香港影视金曲",
@@ -7391,6 +7759,20 @@
         64.75,
         64.75
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -7542,6 +7924,19 @@
         72.96,
         72.96
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -7676,25 +8071,38 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        121.585,
-        121.585,
-        121.585,
-        98.265,
-        98.265,
-        98.265,
-        98.265,
-        98.265
+        106.99,
+        106.99,
+        119.585,
+        83.67,
+        83.67,
+        83.67,
+        83.67,
+        83.67,
+        83.67
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
       "reason": "十六分节奏与低音区",
-      "width": 700,
-      "systemGap": 20,
-      "relativeScalePercent": 111.43,
-      "screenNotePx": 21.87,
-      "versusV1Percent": 126.61,
-      "versusV2Percent": 106.53,
+      "width": 680,
+      "systemGap": 18,
+      "relativeScalePercent": 114.71,
+      "screenNotePx": 22.52,
+      "versusV1Percent": 130.33,
+      "versusV2Percent": 109.66,
       "previousPages": [
         34
       ],
@@ -7704,25 +8112,25 @@
       "pages": [
         34
       ],
-      "systems": 9,
+      "systems": 10,
       "systemsPerPage": [
-        9
+        10
       ],
       "sourceSha256": "50402494f15e6c29c73bb442cb651e041aabb08b1bff531d7511d78535ee61b2",
       "candidates": [
+        {
+          "width": 680,
+          "systemGap": 18,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1408
+        },
         {
           "width": 700,
           "systemGap": 20,
           "rows": 9,
           "pages": 1,
           "cost": 1420
-        },
-        {
-          "width": 720,
-          "systemGap": 20,
-          "rows": 9,
-          "pages": 1,
-          "cost": 1432
         }
       ],
       "rejectedCandidates": [
@@ -7763,7 +8171,7 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 680,
+          "width": 720,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -7830,6 +8238,17 @@
         89.548,
         89.549,
         89.548
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "十六分与变拍",
@@ -7989,6 +8408,20 @@
         82.169,
         82.169
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -8139,6 +8572,19 @@
         80.59,
         80.59,
         80.59
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "十六分与变拍",
@@ -8295,6 +8741,29 @@
         91.81,
         91.81
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -8435,33 +8904,56 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        124.755,
-        124.755,
-        124.755,
-        124.755,
-        124.755,
-        124.755,
-        124.755,
-        101.435,
-        124.755,
-        124.755,
-        124.755,
+        103.91,
+        103.91,
+        103.91,
+        103.91,
+        103.91,
+        103.91,
+        103.91,
         124.755,
         101.435,
-        101.435,
-        101.435,
-        101.435
+        103.91,
+        124.755,
+        103.91,
+        103.91,
+        80.59,
+        80.59,
+        80.59,
+        80.59,
+        80.59
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
       "reason": "反复歌词、切分与长句",
-      "width": 720,
+      "width": 680,
       "systemGap": 18,
-      "relativeScalePercent": 108.33,
-      "screenNotePx": 21.27,
-      "versusV1Percent": 123.09,
-      "versusV2Percent": 122.16,
+      "relativeScalePercent": 114.71,
+      "screenNotePx": 22.52,
+      "versusV1Percent": 130.33,
+      "versusV2Percent": 129.35,
       "previousPages": [
         40,
         41
@@ -8473,33 +8965,26 @@
         40,
         41
       ],
-      "systems": 17,
+      "systems": 19,
       "systemsPerPage": [
-        8,
-        9
+        9,
+        10
       ],
       "sourceSha256": "9f4b8b1e269c1cb30d1e656d6c3813ec68c119b7b0a9ce04212154b8590d5c27",
       "candidates": [
         {
-          "width": 720,
+          "width": 680,
           "systemGap": 18,
-          "rows": 17,
+          "rows": 19,
           "pages": 2,
-          "cost": 2432
+          "cost": 2408
         },
         {
-          "width": 740,
+          "width": 700,
           "systemGap": 18,
-          "rows": 17,
+          "rows": 19,
           "pages": 2,
-          "cost": 2444
-        },
-        {
-          "width": 760,
-          "systemGap": 18,
-          "rows": 17,
-          "pages": 2,
-          "cost": 2456
+          "cost": 2420
         }
       ],
       "rejectedCandidates": [
@@ -8540,11 +9025,15 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 680,
+          "width": 720,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 700,
+          "width": 740,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 760,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -8585,7 +9074,7 @@
         }
       ],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "保留原有两页，房子与普通谱行分档等行高；重新选择更大字号，完整谱行分页，各页高度利用率高于90%。"
     },
     {
       "order": 48,
@@ -8595,14 +9084,15 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        131.155,
-        131.155,
-        131.155,
-        131.155,
-        131.155,
-        131.155,
-        131.155,
-        131.155,
+        110.31,
+        110.31,
+        110.31,
+        110.31,
+        110.31,
+        110.31,
+        110.31,
+        110.31,
+        110.31,
         131.155,
         131.155,
         107.835,
@@ -8610,16 +9100,34 @@
         107.835,
         107.835
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "较长结构与密集八分、十六分",
-      "width": 690,
+      "width": 650,
       "systemGap": 20,
-      "relativeScalePercent": 113.04,
-      "screenNotePx": 22.19,
-      "versusV1Percent": 128.44,
-      "versusV2Percent": 127.47,
+      "relativeScalePercent": 120,
+      "screenNotePx": 23.56,
+      "versusV1Percent": 136.35,
+      "versusV2Percent": 135.32,
       "previousPages": [
         42,
         43
@@ -8631,24 +9139,24 @@
         42,
         43
       ],
-      "systems": 15,
+      "systems": 16,
       "systemsPerPage": [
-        7,
+        8,
         8
       ],
       "sourceSha256": "c7bfdb89ca21b9d1a21b6190a674ed7c6267d566b983e1c3f368299fbb2b7487",
       "candidates": [
         {
-          "width": 690,
+          "width": 650,
           "systemGap": 20,
-          "rows": 15,
+          "rows": 16,
           "pages": 2,
-          "cost": 2414
+          "cost": 2390
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
+      "reviewNote": "第七版增页保留；房子与普通谱行分别统一高度，按指定页数重新选择可用字号，各页高度利用率高于90%。"
     },
     {
       "order": 49,
@@ -8658,29 +9166,46 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        131.835,
-        131.835,
-        131.835,
-        131.835,
-        131.835,
-        131.835,
-        131.835,
-        131.835,
-        131.835,
-        131.835,
-        131.835,
-        108.515
+        112.99,
+        112.99,
+        112.99,
+        112.99,
+        112.99,
+        112.99,
+        112.99,
+        112.99,
+        112.99,
+        112.99,
+        112.99,
+        133.835,
+        110.515
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "器乐过门与密集节奏",
-      "width": 654,
-      "systemGap": 22,
-      "relativeScalePercent": 119.27,
-      "screenNotePx": 23.41,
-      "versusV1Percent": 135.51,
-      "versusV2Percent": 116.95,
+      "width": 594,
+      "systemGap": 24,
+      "relativeScalePercent": 131.31,
+      "screenNotePx": 25.78,
+      "versusV1Percent": 149.2,
+      "versusV2Percent": 128.76,
       "previousPages": [
         44,
         45
@@ -8692,24 +9217,24 @@
         44,
         45
       ],
-      "systems": 13,
+      "systems": 14,
       "systemsPerPage": [
-        6,
+        7,
         7
       ],
       "sourceSha256": "a8c6261b1f5d28d8a86f6625c6246ce56056aa1a2a8b540b4e5291188360deeb",
       "candidates": [
         {
-          "width": 654,
-          "systemGap": 22,
-          "rows": 13,
+          "width": 594,
+          "systemGap": 24,
+          "rows": 14,
           "pages": 2,
-          "cost": 2392.4
+          "cost": 2356.4
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
+      "reviewNote": "第七版增页保留；房子与普通谱行分别统一高度，按指定页数重新选择可用字号，各页高度利用率高于90%。"
     },
     {
       "order": 50,
@@ -8719,31 +9244,50 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        99.675,
-        99.675,
-        99.675,
+        84.99,
+        84.99,
+        84.99,
         122.995,
         122.995,
-        122.995,
-        122.995,
-        122.995,
-        122.995,
-        122.995,
-        122.995,
+        108.31,
+        108.31,
+        108.31,
+        108.31,
+        108.31,
+        108.31,
+        108.31,
         122.995,
         99.675,
         99.675
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "切分、十六分与跳进",
-      "width": 640,
+      "width": 606,
       "systemGap": 18,
-      "relativeScalePercent": 121.88,
-      "screenNotePx": 23.93,
-      "versusV1Percent": 138.48,
-      "versusV2Percent": 122.49,
+      "relativeScalePercent": 128.71,
+      "screenNotePx": 25.27,
+      "versusV1Percent": 146.25,
+      "versusV2Percent": 129.37,
       "previousPages": [
         46,
         47
@@ -8755,24 +9299,24 @@
         46,
         47
       ],
-      "systems": 15,
+      "systems": 16,
       "systemsPerPage": [
-        7,
+        8,
         8
       ],
       "sourceSha256": "2a041f913c0e79867fc3903bde71349ae6e5175ab240332f3aaa6be077da3502",
       "candidates": [
         {
-          "width": 640,
+          "width": 606,
           "systemGap": 18,
-          "rows": 15,
+          "rows": 16,
           "pages": 2,
-          "cost": 2384
+          "cost": 2363.6
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
+      "reviewNote": "第七版增页保留；房子与普通谱行分别统一高度，按指定页数重新选择可用字号，各页高度利用率高于90%。"
     },
     {
       "order": 51,
@@ -8792,6 +9336,19 @@
         89.83,
         113.15,
         113.15
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "密集节奏与反复",
@@ -8933,6 +9490,14 @@
         134.62,
         134.62
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
@@ -9073,31 +9638,48 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        126.34,
-        126.34,
-        126.34,
-        103.02,
-        103.02,
-        126.34,
-        126.34,
-        126.34,
-        126.341,
-        126.34,
-        126.34,
-        103.02,
-        103.02,
-        103.02
+        110.538,
+        110.537,
+        125.907,
+        102.587,
+        102.587,
+        110.538,
+        125.907,
+        125.907,
+        110.537,
+        110.538,
+        110.537,
+        87.218,
+        87.217,
+        87.218
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "密集节奏与长线条",
-      "width": 628,
+      "width": 584,
       "systemGap": 18,
-      "relativeScalePercent": 124.2,
-      "screenNotePx": 24.38,
-      "versusV1Percent": 147.85,
-      "versusV2Percent": 124.83,
+      "relativeScalePercent": 133.56,
+      "screenNotePx": 26.22,
+      "versusV1Percent": 158.98,
+      "versusV2Percent": 134.24,
       "previousPages": [
         50
       ],
@@ -9116,16 +9698,16 @@
       "sourceSha256": "66bb01a967e40319576a37bb2c20544e2b9799ef5f41d9a542938a82c2bc38b8",
       "candidates": [
         {
-          "width": 628,
+          "width": 584,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2376.8
+          "cost": 2350.4
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
+      "reviewNote": "第七版增页保留；房子与普通谱行分别统一高度，按指定页数重新选择可用字号，各页高度利用率高于90%。"
     },
     {
       "order": 54,
@@ -9135,12 +9717,21 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        183.255,
+        162.41,
         183.255,
         183.255,
         183.255,
         159.935,
         159.935
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true
       ],
       "section": "pop",
       "group": "密集节奏与反复",
@@ -9194,13 +9785,6 @@
           "rows": 7,
           "pages": 1,
           "cost": 1552
-        },
-        {
-          "width": 940,
-          "systemGap": 18,
-          "rows": 7,
-          "pages": 1,
-          "cost": 1564
         }
       ],
       "rejectedCandidates": [
@@ -9273,6 +9857,10 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
+          "width": 940,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
           "width": 960,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         }
@@ -9302,6 +9890,23 @@
         98.04,
         98.04,
         98.04
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "密集节奏与反复",
@@ -9350,25 +9955,36 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        109.355,
-        109.355,
-        109.355,
-        109.355,
-        109.355,
-        109.355,
-        109.355,
+        93.57,
+        93.57,
+        93.57,
+        93.57,
+        93.57,
+        93.57,
+        93.57,
         109.355
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
       "reason": "三连音与复杂节奏",
-      "width": 740,
+      "width": 680,
       "systemGap": 18,
-      "relativeScalePercent": 105.41,
-      "screenNotePx": 20.69,
-      "versusV1Percent": 119.77,
-      "versusV2Percent": 100.77,
+      "relativeScalePercent": 114.71,
+      "screenNotePx": 22.52,
+      "versusV1Percent": 130.33,
+      "versusV2Percent": 109.66,
       "previousPages": [
         53
       ],
@@ -9385,25 +10001,18 @@
       "sourceSha256": "8fec122b86c490e72767e6fa2da99efa352a0d803954957be25d43ffdceb6a12",
       "candidates": [
         {
-          "width": 540,
-          "systemGap": 18,
-          "rows": 13,
-          "pages": 2,
-          "cost": 2324
-        },
-        {
-          "width": 560,
-          "systemGap": 18,
-          "rows": 13,
-          "pages": 2,
-          "cost": 2336
-        },
-        {
-          "width": 740,
+          "width": 680,
           "systemGap": 18,
           "rows": 9,
           "pages": 1,
-          "cost": 1444
+          "cost": 1408
+        },
+        {
+          "width": 700,
+          "systemGap": 18,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1420
         }
       ],
       "rejectedCandidates": [
@@ -9413,6 +10022,14 @@
         },
         {
           "width": 520,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 540,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 560,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -9436,15 +10053,11 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
           "width": 720,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 740,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -9506,6 +10119,16 @@
         91.59,
         91.59,
         91.59
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
@@ -9647,27 +10270,42 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        80.709,
-        105.789,
-        105.789,
-        105.79,
-        105.789,
-        105.789,
-        105.789,
-        105.789,
-        105.789,
-        80.709
+        58.11,
+        83.191,
+        83.19,
+        83.19,
+        83.19,
+        83.191,
+        83.19,
+        83.19,
+        105.835,
+        105.835,
+        80.755
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
       "reason": "反复歌词、器乐段与跳房子",
-      "width": 800,
+      "width": 740,
       "systemGap": 18,
-      "relativeScalePercent": 97.5,
-      "screenNotePx": 19.14,
-      "versusV1Percent": 113.42,
-      "versusV2Percent": 93.21,
+      "relativeScalePercent": 105.41,
+      "screenNotePx": 20.69,
+      "versusV1Percent": 122.62,
+      "versusV2Percent": 100.77,
       "previousPages": [
         55
       ],
@@ -9677,46 +10315,35 @@
       "pages": [
         57
       ],
-      "systems": 11,
+      "systems": 12,
       "systemsPerPage": [
-        11
+        12
       ],
       "sourceSha256": "88e17fe24b0fde2228f672d24cb6fad454467fc18885ed5d97d286af8fa6382a",
       "candidates": [
         {
-          "width": 800,
+          "width": 780,
           "systemGap": 18,
-          "rows": 11,
+          "rows": 12,
           "pages": 1,
-          "cost": 1480
+          "cost": 1468
         },
         {
-          "width": 820,
+          "width": 740,
           "systemGap": 18,
-          "rows": 11,
+          "rows": 12,
           "pages": 1,
-          "cost": 1492
+          "cost": 1444
         },
         {
-          "width": 840,
+          "width": 760,
           "systemGap": 18,
-          "rows": 11,
+          "rows": 12,
           "pages": 1,
-          "cost": 1504
-        },
-        {
-          "width": 860,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1516
+          "cost": 1456
         }
       ],
       "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
         {
           "width": 520,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
@@ -9762,11 +10389,19 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 740,
+          "width": 800,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 760,
+          "width": 820,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 840,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 860,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -9801,15 +10436,27 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
+        115.752,
         127.835,
-        127.835,
+        104.515,
+        92.433,
+        92.432,
         104.515,
         104.515,
         104.515,
-        104.515,
-        104.515,
-        104.515,
-        104.515
+        92.433
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        true,
+        true,
+        true,
+        false
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
@@ -9837,11 +10484,11 @@
       "sourceSha256": "ff9a973b786838d7ef2a12a076907b3407e2c152bbdd159aac9b306281f2dd53",
       "candidates": [
         {
-          "width": 580,
+          "width": 560,
           "systemGap": 18,
-          "rows": 14,
+          "rows": 15,
           "pages": 2,
-          "cost": 2348
+          "cost": 2336
         },
         {
           "width": 800,
@@ -9872,7 +10519,7 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 560,
+          "width": 580,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -9951,27 +10598,42 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        104.367,
-        104.368,
-        104.367,
-        104.368,
-        104.368,
-        104.367,
-        104.368,
-        104.367,
-        104.368,
-        104.368
+        84.99,
+        84.99,
+        84.99,
+        84.99,
+        84.99,
+        84.99,
+        84.99,
+        84.99,
+        105.282,
+        105.282,
+        105.282
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
       "reason": "高音区、切分与跳进",
-      "width": 820,
+      "width": 780,
       "systemGap": 18,
-      "relativeScalePercent": 95.12,
-      "screenNotePx": 18.67,
-      "versusV1Percent": 110.65,
-      "versusV2Percent": 90.94,
+      "relativeScalePercent": 100,
+      "screenNotePx": 19.63,
+      "versusV1Percent": 116.33,
+      "versusV2Percent": 95.6,
       "previousPages": [
         57
       ],
@@ -9981,46 +10643,35 @@
       "pages": [
         59
       ],
-      "systems": 11,
+      "systems": 12,
       "systemsPerPage": [
-        11
+        12
       ],
       "sourceSha256": "770d83cea17c788734901d24b5ddd3f6673b4d598776c4c3f4959bfacc3e081f",
       "candidates": [
         {
-          "width": 620,
+          "width": 780,
           "systemGap": 18,
-          "rows": 15,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1468
+        },
+        {
+          "width": 560,
+          "systemGap": 18,
+          "rows": 17,
           "pages": 2,
-          "cost": 2372
+          "cost": 2336
         },
         {
-          "width": 820,
+          "width": 800,
           "systemGap": 18,
-          "rows": 11,
+          "rows": 12,
           "pages": 1,
-          "cost": 1492
-        },
-        {
-          "width": 840,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1504
-        },
-        {
-          "width": 860,
-          "systemGap": 18,
-          "rows": 11,
-          "pages": 1,
-          "cost": 1516
+          "cost": 1480
         }
       ],
       "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
         {
           "width": 520,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
@@ -10030,15 +10681,15 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
           "width": 580,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
           "width": 600,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 620,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -10070,7 +10721,15 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 800,
+          "width": 820,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 840,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 860,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -10105,14 +10764,25 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        83.945,
-        155.665,
+        58.59,
+        130.31,
         155.665,
         155.665,
         109.025,
         109.025,
         109.025,
         109.025
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
@@ -10145,20 +10815,6 @@
           "rows": 9,
           "pages": 1,
           "cost": 1480
-        },
-        {
-          "width": 820,
-          "systemGap": 18,
-          "rows": 9,
-          "pages": 1,
-          "cost": 1492
-        },
-        {
-          "width": 840,
-          "systemGap": 18,
-          "rows": 9,
-          "pages": 1,
-          "cost": 1504
         }
       ],
       "rejectedCandidates": [
@@ -10216,6 +10872,14 @@
         },
         {
           "width": 760,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 820,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 840,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -10265,6 +10929,20 @@
         93.57,
         93.57,
         93.57
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
@@ -10403,34 +11081,54 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        129.194,
-        129.195,
-        129.195,
-        129.195,
-        105.874,
-        105.875,
-        105.875,
-        105.875,
-        105.874,
-        105.875,
-        105.875,
-        105.875,
-        105.874,
-        105.875,
-        105.875,
-        105.875,
-        105.874
+        110.07,
+        110.07,
+        110.07,
+        110.07,
+        86.75,
+        105.367,
+        105.368,
+        105.367,
+        105.368,
+        86.75,
+        86.75,
+        86.75,
+        86.75,
+        86.75,
+        86.75,
+        86.75,
+        86.75
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
       "reason": "变调、倚音与多段歌词",
-      "width": 720,
+      "width": 660,
       "systemGap": 18,
-      "relativeScalePercent": 108.33,
-      "screenNotePx": 21.27,
-      "versusV1Percent": 123.09,
-      "versusV2Percent": 122.16,
+      "relativeScalePercent": 118.18,
+      "screenNotePx": 23.2,
+      "versusV1Percent": 134.28,
+      "versusV2Percent": 133.27,
       "previousPages": [
         60,
         61
@@ -10450,18 +11148,11 @@
       "sourceSha256": "698c3016f0deed4cb95caf1a76956eea7615b1a4470629250ce06726f19006d0",
       "candidates": [
         {
-          "width": 580,
-          "systemGap": 18,
-          "rows": 22,
-          "pages": 3,
-          "cost": 3348
-        },
-        {
-          "width": 720,
+          "width": 660,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2432
+          "cost": 2396
         }
       ],
       "rejectedCandidates": [
@@ -10482,6 +11173,10 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
+          "width": 580,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
           "width": 600,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
@@ -10494,15 +11189,15 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
           "width": 680,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
           "width": 700,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 720,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -10551,7 +11246,7 @@
         }
       ],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "保留原有两页，房子与普通谱行分档等行高；重新选择更大字号，完整谱行分页，各页高度利用率高于90%。"
     },
     {
       "order": 64,
@@ -10564,6 +11259,12 @@
         55.51,
         55.51,
         55.51
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
@@ -10767,6 +11468,12 @@
         55.51,
         55.51,
         55.51
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
@@ -10972,6 +11679,14 @@
         56.229,
         56.229,
         56.229
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
@@ -11188,6 +11903,24 @@
         55.51,
         55.51
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
       "difficulty": 3,
@@ -11378,6 +12111,22 @@
         61.67,
         61.67
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
       "difficulty": 3,
@@ -11560,29 +12309,48 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
+        59.91,
+        59.91,
+        59.91,
+        59.91,
+        59.91,
         78.445,
-        78.445,
-        78.445,
-        78.445,
-        78.445,
-        78.445,
-        78.445,
-        78.445,
-        78.445,
-        78.445,
-        78.445,
+        59.91,
+        59.91,
+        59.91,
+        59.91,
+        59.91,
+        59.91,
+        59.91,
         78.445
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
       ],
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "difficulty": 3,
       "reason": "三拍子、倚音与圆舞曲乐句",
-      "width": 800,
+      "width": 700,
       "systemGap": 18,
-      "relativeScalePercent": 97.5,
-      "screenNotePx": 19.14,
-      "versusV1Percent": 110.78,
-      "versusV2Percent": 93.21,
+      "relativeScalePercent": 111.43,
+      "screenNotePx": 21.87,
+      "versusV1Percent": 126.61,
+      "versusV2Percent": 106.53,
       "previousPages": [
         65
       ],
@@ -11592,32 +12360,46 @@
       "pages": [
         67
       ],
-      "systems": 13,
+      "systems": 15,
       "systemsPerPage": [
-        13
+        15
       ],
       "sourceSha256": "18c400f9400998eddc6e9d18f1cdc00d8ecda4cb1a204589b4e02d615d99f08f",
       "candidates": [
         {
-          "width": 540,
+          "width": 780,
           "systemGap": 18,
-          "rows": 19,
-          "pages": 2,
-          "cost": 2324
+          "rows": 14,
+          "pages": 1,
+          "cost": 1468
         },
         {
-          "width": 560,
+          "width": 700,
           "systemGap": 18,
-          "rows": 19,
-          "pages": 2,
-          "cost": 2336
+          "rows": 15,
+          "pages": 1,
+          "cost": 1420
         },
         {
-          "width": 580,
+          "width": 720,
           "systemGap": 18,
-          "rows": 19,
-          "pages": 2,
-          "cost": 2348
+          "rows": 14,
+          "pages": 1,
+          "cost": 1432
+        },
+        {
+          "width": 740,
+          "systemGap": 18,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1444
+        },
+        {
+          "width": 760,
+          "systemGap": 18,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1456
         },
         {
           "width": 800,
@@ -11685,11 +12467,19 @@
       ],
       "rejectedCandidates": [
         {
-          "width": 780,
+          "width": 520,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 520,
+          "width": 540,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 560,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 580,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -11710,22 +12500,6 @@
         },
         {
           "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         }
       ],
@@ -11758,6 +12532,27 @@
         89.49,
         89.49,
         89.49
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "舞曲与动画主题",
@@ -11820,6 +12615,23 @@
         59.91,
         59.91,
         59.91
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "舞曲与动画主题",
@@ -12011,6 +12823,20 @@
         68.59,
         68.59,
         68.59
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "快速音型与装饰",
@@ -12205,6 +13031,19 @@
         66.73,
         66.73
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
@@ -12396,29 +13235,48 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        80.755,
-        80.755,
-        80.755,
-        80.755,
-        80.755,
-        80.755,
-        80.755,
-        80.755,
-        80.755,
-        80.755,
-        80.755,
-        80.755
+        61.67,
+        61.67,
+        61.67,
+        61.67,
+        61.67,
+        61.67,
+        61.67,
+        61.67,
+        80.732,
+        80.732,
+        80.732,
+        80.732,
+        61.67,
+        61.67
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
       "reason": "快速节奏与高音区",
-      "width": 780,
+      "width": 740,
       "systemGap": 18,
-      "relativeScalePercent": 100,
-      "screenNotePx": 19.63,
-      "versusV1Percent": 113.62,
-      "versusV2Percent": 95.6,
+      "relativeScalePercent": 105.41,
+      "screenNotePx": 20.69,
+      "versusV1Percent": 119.77,
+      "versusV2Percent": 100.77,
       "previousPages": [
         70
       ],
@@ -12428,9 +13286,9 @@
       "pages": [
         73
       ],
-      "systems": 13,
+      "systems": 15,
       "systemsPerPage": [
-        13
+        15
       ],
       "sourceSha256": "185af31948d14e58ee4b0c8ff414e9feba92f8caed45d597aa75d9de98ca930e",
       "candidates": [
@@ -12442,11 +13300,25 @@
           "cost": 1468
         },
         {
-          "width": 600,
+          "width": 540,
           "systemGap": 18,
-          "rows": 19,
+          "rows": 21,
           "pages": 2,
-          "cost": 2360
+          "cost": 2324
+        },
+        {
+          "width": 740,
+          "systemGap": 18,
+          "rows": 15,
+          "pages": 1,
+          "cost": 1444
+        },
+        {
+          "width": 760,
+          "systemGap": 18,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1456
         },
         {
           "width": 800,
@@ -12518,15 +13390,15 @@
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
           "width": 560,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
           "width": 580,
+          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
+        },
+        {
+          "width": 600,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         },
         {
@@ -12551,14 +13423,6 @@
         },
         {
           "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         }
       ],
@@ -12594,6 +13458,30 @@
         75.57,
         75.57,
         75.57
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "快速音型与装饰",
@@ -12642,26 +13530,38 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        70.655,
-        70.655,
-        70.655,
-        70.655,
-        70.655,
-        70.655,
-        70.655,
+        61.91,
+        61.91,
+        61.91,
+        61.91,
+        61.91,
+        61.91,
+        61.91,
         70.655,
         70.655
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
       ],
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
       "reason": "探戈切分、装饰与变调",
-      "width": 528,
+      "width": 520,
       "systemGap": 20,
-      "relativeScalePercent": 147.73,
-      "screenNotePx": 29,
-      "versusV1Percent": 167.85,
-      "versusV2Percent": 141.23,
+      "relativeScalePercent": 150,
+      "screenNotePx": 29.45,
+      "versusV1Percent": 170.44,
+      "versusV2Percent": 143.41,
       "previousPages": [
         72
       ],
@@ -12683,6 +13583,13 @@
           "rows": 7,
           "pages": 1,
           "cost": 1468
+        },
+        {
+          "width": 520,
+          "systemGap": 20,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1312
         },
         {
           "width": 540,
@@ -12832,6 +13739,27 @@
           "cost": 1576
         },
         {
+          "width": 522,
+          "systemGap": 20,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1313.2
+        },
+        {
+          "width": 524,
+          "systemGap": 20,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1314.4
+        },
+        {
+          "width": 526,
+          "systemGap": 20,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1315.6
+        },
+        {
           "width": 528,
           "systemGap": 20,
           "rows": 10,
@@ -12874,24 +13802,7 @@
           "cost": 1322.8
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 522,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 524,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 526,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
       "reviewNote": ""
     },
@@ -12916,6 +13827,22 @@
         66.388,
         66.388,
         66.388
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "快速音型与装饰",
@@ -13111,6 +14038,26 @@
         57.206,
         57.207
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 4,
@@ -13275,27 +14222,42 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        80.555,
-        80.555,
-        80.555,
-        80.555,
-        80.555,
-        80.555,
-        80.555,
-        80.555,
-        80.555,
-        80.555
+        64.75,
+        64.75,
+        64.75,
+        78.555,
+        64.75,
+        64.75,
+        64.75,
+        64.75,
+        64.75,
+        64.75,
+        64.75
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速十六分、连奏与装饰",
-      "width": 660,
-      "systemGap": 20,
-      "relativeScalePercent": 118.18,
-      "screenNotePx": 23.2,
-      "versusV1Percent": 134.28,
-      "versusV2Percent": 112.99,
+      "width": 600,
+      "systemGap": 18,
+      "relativeScalePercent": 130,
+      "screenNotePx": 25.52,
+      "versusV1Percent": 147.71,
+      "versusV2Percent": 124.29,
       "previousPages": [
         75
       ],
@@ -13305,9 +14267,9 @@
       "pages": [
         79
       ],
-      "systems": 11,
+      "systems": 12,
       "systemsPerPage": [
-        11
+        12
       ],
       "sourceSha256": "cf50b781582c55acbf91692ed66c87362bccdf1e51b1476e8116120eb2d53135",
       "candidates": [
@@ -13317,6 +14279,27 @@
           "rows": 9,
           "pages": 1,
           "cost": 1468
+        },
+        {
+          "width": 600,
+          "systemGap": 18,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1360
+        },
+        {
+          "width": 620,
+          "systemGap": 20,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1372
+        },
+        {
+          "width": 640,
+          "systemGap": 20,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1384
         },
         {
           "width": 660,
@@ -13440,18 +14423,6 @@
         {
           "width": 580,
           "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
         }
       ],
       "fillPage": true,
@@ -13503,6 +14474,47 @@
         77.844,
         77.844,
         77.843
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "综合进阶",
@@ -13584,6 +14596,37 @@
         97.93,
         97.93
       ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
@@ -13634,49 +14677,88 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
         76.355,
         76.355,
         76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355,
-        76.355
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49,
+        68.49
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速三拍子、半音、三连音与变调",
-      "width": 620,
+      "width": 586,
       "systemGap": 18,
-      "relativeScalePercent": 125.81,
-      "screenNotePx": 24.7,
-      "versusV1Percent": 142.95,
-      "versusV2Percent": 148.03,
+      "relativeScalePercent": 133.11,
+      "screenNotePx": 26.13,
+      "versusV1Percent": 151.24,
+      "versusV2Percent": 156.62,
       "previousPages": [
         80,
         81
@@ -13689,130 +14771,25 @@
         87,
         88
       ],
-      "systems": 33,
+      "systems": 35,
       "systemsPerPage": [
         11,
-        11,
-        11
+        12,
+        12
       ],
       "sourceSha256": "203ad9bd556ae74f25ee4efd219fe1b564ad5d4d4fcd716fb453b2dd5927dbbe",
       "candidates": [
         {
-          "width": 620,
+          "width": 586,
           "systemGap": 18,
-          "rows": 33,
+          "rows": 35,
           "pages": 3,
-          "cost": 3372
+          "cost": 3351.6
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 820,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 900,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 920,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 980,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 1000,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 1020,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 1040,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "三页以完整谱行均衡分页；逐一比较版宽，选择能容纳三页的最大音符，全曲统一音乐行高。"
+      "reviewNote": "保留三页；普通与房子谱行分档等行高，采用586px，按11+12+12条完整谱行分页，各页高度利用率高于90%。"
     }
   ],
   "pages": [
@@ -13943,7 +14920,7 @@
     {
       "page": 9,
       "section": "basics",
-      "fillPercent": 96.6,
+      "fillPercent": 98.5,
       "items": [
         {
           "id": "su_shan_na",
@@ -13952,10 +14929,10 @@
             1,
             3
           ],
-          "width": 720,
+          "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 221.81
+          "height": 228.15
         },
         {
           "id": "xiao_hong_mao",
@@ -13964,22 +14941,22 @@
             1,
             4
           ],
-          "width": 720,
+          "width": 700,
           "systemGap": 18,
-          "top": 243.81,
-          "height": 274.73
+          "top": 250.15,
+          "height": 282.58
         },
         {
           "id": "duo_lai_mi",
           "title": "哆唻咪",
           "systems": [
             1,
-            5
+            6
           ],
-          "width": 720,
+          "width": 700,
           "systemGap": 18,
-          "top": 540.54,
-          "height": 480.18
+          "top": 554.72,
+          "height": 486.91
         }
       ]
     },
@@ -14184,7 +15161,7 @@
     {
       "page": 16,
       "section": "folk",
-      "fillPercent": 98.5,
+      "fillPercent": 99.3,
       "items": [
         {
           "id": "wo_de_zu_guo",
@@ -14193,10 +15170,10 @@
             1,
             7
           ],
-          "width": 720,
+          "width": 680,
           "systemGap": 20,
           "top": 0,
-          "height": 1041.08
+          "height": 1049.2
         }
       ]
     },
@@ -14241,7 +15218,7 @@
     {
       "page": 19,
       "section": "pop",
-      "fillPercent": 99.8,
+      "fillPercent": 98.5,
       "items": [
         {
           "id": "li_hua_you_kai_fang",
@@ -14250,10 +15227,10 @@
             1,
             9
           ],
-          "width": 728,
+          "width": 640,
           "systemGap": 18,
           "top": 0,
-          "height": 1054.77
+          "height": 1041.12
         }
       ]
     },
@@ -14336,38 +15313,38 @@
     {
       "page": 24,
       "section": "pop",
-      "fillPercent": 90.4,
+      "fillPercent": 93.9,
       "items": [
         {
           "id": "bei_jia_er_hu_pan",
           "title": "贝加尔湖畔",
           "systems": [
             1,
-            7
+            8
           ],
-          "width": 628,
+          "width": 578,
           "systemGap": 22,
           "top": 0,
-          "height": 955.33
+          "height": 992.78
         }
       ]
     },
     {
       "page": 25,
       "section": "pop",
-      "fillPercent": 93.3,
+      "fillPercent": 99.7,
       "items": [
         {
           "id": "bei_jia_er_hu_pan",
           "title": "贝加尔湖畔",
           "systems": [
-            8,
-            14
+            9,
+            16
           ],
-          "width": 628,
+          "width": 578,
           "systemGap": 22,
           "top": 0,
-          "height": 986.69
+          "height": 1053.54
         }
       ]
     },
@@ -14412,26 +15389,26 @@
     {
       "page": 28,
       "section": "pop",
-      "fillPercent": 93.4,
+      "fillPercent": 99.7,
       "items": [
         {
           "id": "an_xiang",
           "title": "暗香",
           "systems": [
             1,
-            10
+            11
           ],
-          "width": 780,
+          "width": 720,
           "systemGap": 18,
           "top": 0,
-          "height": 987.52
+          "height": 1054.3
         }
       ]
     },
     {
       "page": 29,
       "section": "pop",
-      "fillPercent": 99.7,
+      "fillPercent": 93.6,
       "items": [
         {
           "id": "mei_li_de_shen_hua",
@@ -14440,17 +15417,17 @@
             1,
             11
           ],
-          "width": 820,
+          "width": 800,
           "systemGap": 18,
           "top": 0,
-          "height": 1053.35
+          "height": 989.73
         }
       ]
     },
     {
       "page": 30,
       "section": "pop",
-      "fillPercent": 100,
+      "fillPercent": 96.1,
       "items": [
         {
           "id": "dang_nian_qing",
@@ -14459,10 +15436,10 @@
             1,
             10
           ],
-          "width": 720,
+          "width": 680,
           "systemGap": 18,
           "top": 0,
-          "height": 1056.72
+          "height": 1015.75
         }
       ]
     },
@@ -14538,19 +15515,19 @@
     {
       "page": 34,
       "section": "pop",
-      "fillPercent": 98.6,
+      "fillPercent": 98.1,
       "items": [
         {
           "id": "man_bu_ren_sheng_lu",
           "title": "漫步人生路",
           "systems": [
             1,
-            9
+            10
           ],
-          "width": 700,
-          "systemGap": 20,
+          "width": 680,
+          "systemGap": 18,
           "top": 0,
-          "height": 1041.71
+          "height": 1036.43
         }
       ]
     },
@@ -14652,152 +15629,152 @@
     {
       "page": 40,
       "section": "pop",
-      "fillPercent": 97.7,
+      "fillPercent": 99.4,
       "items": [
         {
           "id": "tong_hua_zhen",
           "title": "童话镇",
           "systems": [
             1,
-            8
+            9
           ],
-          "width": 720,
+          "width": 680,
           "systemGap": 18,
           "top": 0,
-          "height": 1033.1
+          "height": 1050.88
         }
       ]
     },
     {
       "page": 41,
       "section": "pop",
-      "fillPercent": 95.1,
+      "fillPercent": 94.3,
       "items": [
         {
           "id": "tong_hua_zhen",
           "title": "童话镇",
           "systems": [
-            9,
-            17
+            10,
+            19
           ],
-          "width": 720,
+          "width": 680,
           "systemGap": 18,
           "top": 0,
-          "height": 1004.89
+          "height": 997.14
         }
       ]
     },
     {
       "page": 42,
       "section": "pop",
-      "fillPercent": 97.8,
+      "fillPercent": 99.1,
       "items": [
         {
           "id": "lao_nan_hai",
           "title": "老男孩",
           "systems": [
             1,
-            7
+            8
           ],
-          "width": 690,
+          "width": 650,
           "systemGap": 20,
           "top": 0,
-          "height": 1033.67
+          "height": 1047.85
         }
       ]
     },
     {
       "page": 43,
       "section": "pop",
-      "fillPercent": 91,
+      "fillPercent": 93.4,
       "items": [
         {
           "id": "lao_nan_hai",
           "title": "老男孩",
           "systems": [
-            8,
-            15
+            9,
+            16
           ],
-          "width": 690,
+          "width": 650,
           "systemGap": 20,
           "top": 0,
-          "height": 961.61
+          "height": 987.45
         }
       ]
     },
     {
       "page": 44,
       "section": "pop",
-      "fillPercent": 90.4,
+      "fillPercent": 98.4,
       "items": [
         {
           "id": "liang_liang",
           "title": "凉凉",
           "systems": [
             1,
-            6
+            7
           ],
-          "width": 654,
-          "systemGap": 22,
+          "width": 594,
+          "systemGap": 24,
           "top": 0,
-          "height": 955.82
+          "height": 1040
         }
       ]
     },
     {
       "page": 45,
       "section": "pop",
-      "fillPercent": 90.3,
+      "fillPercent": 90.5,
       "items": [
         {
           "id": "liang_liang",
           "title": "凉凉",
           "systems": [
-            7,
-            13
+            8,
+            14
           ],
-          "width": 654,
-          "systemGap": 22,
+          "width": 594,
+          "systemGap": 24,
           "top": 0,
-          "height": 954
+          "height": 956.91
         }
       ]
     },
     {
       "page": 46,
       "section": "pop",
-      "fillPercent": 91.8,
+      "fillPercent": 99.9,
       "items": [
         {
           "id": "qian_si_xi",
           "title": "牵丝戏",
           "systems": [
             1,
-            7
+            8
           ],
-          "width": 640,
+          "width": 606,
           "systemGap": 18,
           "top": 0,
-          "height": 969.92
+          "height": 1055.97
         }
       ]
     },
     {
       "page": 47,
       "section": "pop",
-      "fillPercent": 96.9,
+      "fillPercent": 95.1,
       "items": [
         {
           "id": "qian_si_xi",
           "title": "牵丝戏",
           "systems": [
-            8,
-            15
+            9,
+            16
           ],
-          "width": 640,
+          "width": 606,
           "systemGap": 18,
           "top": 0,
-          "height": 1023.86
+          "height": 1005.41
         }
       ]
     },
@@ -14842,7 +15819,7 @@
     {
       "page": 50,
       "section": "pop",
-      "fillPercent": 97.6,
+      "fillPercent": 97.7,
       "items": [
         {
           "id": "shi_jie_zeng_yu_wo_de",
@@ -14851,17 +15828,17 @@
             1,
             7
           ],
-          "width": 628,
+          "width": 584,
           "systemGap": 18,
           "top": 0,
-          "height": 1032.05
+          "height": 1032.94
         }
       ]
     },
     {
       "page": 51,
       "section": "pop",
-      "fillPercent": 99.9,
+      "fillPercent": 96.6,
       "items": [
         {
           "id": "shi_jie_zeng_yu_wo_de",
@@ -14870,17 +15847,17 @@
             8,
             15
           ],
-          "width": 628,
+          "width": 584,
           "systemGap": 18,
           "top": 0,
-          "height": 1055.43
+          "height": 1020.91
         }
       ]
     },
     {
       "page": 52,
       "section": "pop",
-      "fillPercent": 99.9,
+      "fillPercent": 96.7,
       "items": [
         {
           "id": "ming_tian_hui_geng_hao",
@@ -14892,7 +15869,7 @@
           "width": 860,
           "systemGap": 18,
           "top": 0,
-          "height": 1056.28
+          "height": 1022.54
         }
       ]
     },
@@ -14937,7 +15914,7 @@
     {
       "page": 55,
       "section": "pop",
-      "fillPercent": 97.6,
+      "fillPercent": 94,
       "items": [
         {
           "id": "xin_bu_liao_qing",
@@ -14946,10 +15923,10 @@
             1,
             9
           ],
-          "width": 740,
+          "width": 680,
           "systemGap": 18,
           "top": 0,
-          "height": 1031.35
+          "height": 993.1
         }
       ]
     },
@@ -14975,26 +15952,26 @@
     {
       "page": 57,
       "section": "pop",
-      "fillPercent": 99.2,
+      "fillPercent": 98.5,
       "items": [
         {
           "id": "annie",
           "title": "安妮",
           "systems": [
             1,
-            11
+            12
           ],
-          "width": 800,
+          "width": 740,
           "systemGap": 18,
           "top": 0,
-          "height": 1048.24
+          "height": 1041.56
         }
       ]
     },
     {
       "page": 58,
       "section": "pop",
-      "fillPercent": 97.4,
+      "fillPercent": 92.4,
       "items": [
         {
           "id": "yi_qian_ge_shang_xin_de_li_you",
@@ -15006,33 +15983,33 @@
           "width": 800,
           "systemGap": 18,
           "top": 0,
-          "height": 1029.33
+          "height": 976.78
         }
       ]
     },
     {
       "page": 59,
       "section": "pop",
-      "fillPercent": 99.6,
+      "fillPercent": 99,
       "items": [
         {
           "id": "yue_ban_xiao_ye_qu",
           "title": "月半小夜曲",
           "systems": [
             1,
-            11
+            12
           ],
-          "width": 820,
+          "width": 780,
           "systemGap": 18,
           "top": 0,
-          "height": 1052.82
+          "height": 1046.77
         }
       ]
     },
     {
       "page": 60,
       "section": "pop",
-      "fillPercent": 97.8,
+      "fillPercent": 91.6,
       "items": [
         {
           "id": "andy",
@@ -15044,7 +16021,7 @@
           "width": 800,
           "systemGap": 18,
           "top": 0,
-          "height": 1033.92
+          "height": 967.75
         }
       ]
     },
@@ -15070,7 +16047,7 @@
     {
       "page": 62,
       "section": "pop",
-      "fillPercent": 94.5,
+      "fillPercent": 91.6,
       "items": [
         {
           "id": "ru_yuan",
@@ -15079,17 +16056,17 @@
             1,
             8
           ],
-          "width": 720,
+          "width": 660,
           "systemGap": 18,
           "top": 0,
-          "height": 999.38
+          "height": 968.17
         }
       ]
     },
     {
       "page": 63,
       "section": "pop",
-      "fillPercent": 99.9,
+      "fillPercent": 93.6,
       "items": [
         {
           "id": "ru_yuan",
@@ -15098,10 +16075,10 @@
             9,
             18
           ],
-          "width": 720,
+          "width": 660,
           "systemGap": 18,
           "top": 0,
-          "height": 1056.12
+          "height": 989.7
         }
       ]
     },
@@ -15189,19 +16166,19 @@
     {
       "page": 67,
       "section": "instrumental",
-      "fillPercent": 91.6,
+      "fillPercent": 96.8,
       "items": [
         {
           "id": "second_waltz",
           "title": "第二圆舞曲",
           "systems": [
             1,
-            13
+            15
           ],
-          "width": 800,
+          "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 968.09
+          "height": 1022.8
         }
       ]
     },
@@ -15303,19 +16280,19 @@
     {
       "page": 73,
       "section": "instrumental",
-      "fillPercent": 96.5,
+      "fillPercent": 97.4,
       "items": [
         {
           "id": "qing_niao",
           "title": "青鸟",
           "systems": [
             1,
-            13
+            15
           ],
-          "width": 780,
+          "width": 740,
           "systemGap": 18,
           "top": 0,
-          "height": 1019.71
+          "height": 1029.19
         }
       ]
     },
@@ -15360,7 +16337,7 @@
     {
       "page": 76,
       "section": "instrumental",
-      "fillPercent": 99.7,
+      "fillPercent": 92.4,
       "items": [
         {
           "id": "por_una_cabeza",
@@ -15369,10 +16346,10 @@
             1,
             10
           ],
-          "width": 528,
+          "width": 520,
           "systemGap": 20,
           "top": 0,
-          "height": 1053.9
+          "height": 976.47
         }
       ]
     },
@@ -15417,19 +16394,19 @@
     {
       "page": 79,
       "section": "instrumental",
-      "fillPercent": 97.7,
+      "fillPercent": 97,
       "items": [
         {
           "id": "xi_yang_yang",
           "title": "喜洋洋",
           "systems": [
             1,
-            11
+            12
           ],
-          "width": 660,
-          "systemGap": 20,
+          "width": 600,
+          "systemGap": 18,
           "top": 0,
-          "height": 1032.47
+          "height": 1025.17
         }
       ]
     },
@@ -15550,7 +16527,7 @@
     {
       "page": 86,
       "section": "instrumental",
-      "fillPercent": 99.6,
+      "fillPercent": 95.2,
       "items": [
         {
           "id": "valsentino",
@@ -15559,48 +16536,48 @@
             1,
             11
           ],
-          "width": 620,
+          "width": 586,
           "systemGap": 18,
           "top": 0,
-          "height": 1052.74
+          "height": 1006.39
         }
       ]
     },
     {
       "page": 87,
       "section": "instrumental",
-      "fillPercent": 93.1,
+      "fillPercent": 96.5,
       "items": [
         {
           "id": "valsentino",
           "title": "Valsentino(快速圆舞曲)",
           "systems": [
             12,
-            22
+            23
           ],
-          "width": 620,
+          "width": 586,
           "systemGap": 18,
           "top": 0,
-          "height": 984.51
+          "height": 1020.23
         }
       ]
     },
     {
       "page": 88,
       "section": "instrumental",
-      "fillPercent": 92.2,
+      "fillPercent": 98.6,
       "items": [
         {
           "id": "valsentino",
           "title": "Valsentino(快速圆舞曲)",
           "systems": [
-            23,
-            33
+            24,
+            35
           ],
-          "width": 620,
+          "width": 586,
           "systemGap": 18,
           "top": 0,
-          "height": 974.54
+          "height": 1042.37
         }
       ]
     }
@@ -15608,7 +16585,7 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 931,
+    "geometryCandidates": 933,
     "minimumMusicPageFillPercent": 90.139,
     "underfilledMusicPages": 0,
     "outside": 0,

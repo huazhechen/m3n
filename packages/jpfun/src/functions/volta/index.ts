@@ -121,6 +121,7 @@ function barIn(column: readonly LayoutHost[] | undefined) {
 
 class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
     readonly alignmentKind = 'volta';
+    readonly spacingRole = 'volta' as const;
     layer = "foreground" as const;
 
     constructor(

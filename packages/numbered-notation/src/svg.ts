@@ -1,4 +1,4 @@
-import { ASTFunctionNode, ANCHOR_KEY, renderLayoutPagesToSvg, type ASTNodeBase, type CompileScoreResult, type VisualTemporalNode } from '@m3n/jpfun'
+import { ASTFunctionNode, ANCHOR_KEY, isLayoutAttachment, renderLayoutPagesToSvg, type ASTNodeBase, type CompileScoreResult, type VisualTemporalNode } from '@m3n/jpfun'
 import { parse, stringify, type TNode } from 'txml/txml'
 import { NUMBER_FONT_CSS } from './font-data.js'
 import type { EventBinding, ProjectedScore } from './projection.js'
@@ -19,6 +19,11 @@ function labelBinding(node: VisualTemporalNode, projection: ProjectedScore) {
 
 /** Adds interaction structure around jpFun output; never draws or moves music glyphs. */
 export function renderInteractivePages(result: CompileScoreResult, projection: ProjectedScore): string[] {
+  const voltaSpans = new Set(result.lowering.attachments.filter(isLayoutAttachment)
+    .filter(attachment => attachment.spacingRole === 'volta' && attachment.sourceSpan)
+    .map(attachment => spanKey(attachment.sourceSpan!)))
+  const voltaLines = new Set(result.layout.attachments.filter(attachment => attachment.sourceSpan && voltaSpans.has(spanKey(attachment.sourceSpan)))
+    .flatMap(attachment => attachment.regions.flatMap(region => region.line === undefined ? [] : [region.line])))
   const located = new Map<VisualTemporalNode, Located>()
   const sourceTargets = new Map<string, Located>()
   for (const node of result.layout.objects) {
@@ -89,7 +94,7 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       const key = `${systemIndex}:${measureId}`
       let system = systems.get(systemIndex)
       if (!system) {
-        system = { tagName: 'g', attributes: { class: 'system', id: `m3n-system-${pageIndex + 1}-${systemIndex}` }, children: [] }
+        system = { tagName: 'g', attributes: { class: 'system', id: `m3n-system-${pageIndex + 1}-${systemIndex}`, 'data-m3n-volta': String(voltaLines.has(Number(systemIndex))) }, children: [] }
         systems.set(systemIndex, system)
       }
       let measure = measures.get(key)

@@ -69,6 +69,7 @@ interface LineExtents {
      */
     attachmentExtents: Map<Track, Extent>;
     musicAttachmentExtents?: Map<Track, Extent>;
+    hasVolta?: boolean;
 }
 
 interface LayoutLine extends LineExtents {
@@ -277,18 +278,23 @@ export function layoutDocument(
 
     /** 按当前主体与 attachment 占用求轴、分页并放置所有主体 */
     const placeVertically = () => {
-        // Header-only lines keep their natural height. Music hosts, ornaments and
-        // relations share one envelope per track across the complete score.
+        // Keep a common music body and lower edge. Only systems carrying a
+        // volta share its upper envelope, including annotations above the bracket.
+        // Header-only lines keep their natural height; lyrics remain local.
         const musicLines = lines.map(line => line.columns.some(column => column.some(node => !node.T.isZero())));
         const uniformExtents = new Map<Track, Extent>();
+        const voltaExtents = new Map<Track, Extent>();
         if (options.uniformSystemHeight) lines.forEach((line, i) => {
             if (!musicLines[i]) return;
-            for (const extents of [line.hostExtents, line.musicAttachmentExtents]) {
-                for (const [track, extent] of extents ?? []) includeTrackExtent(uniformExtents, track, extent.top, extent.bottom);
+            for (const [track, extent] of line.hostExtents) includeTrackExtent(uniformExtents, track, extent.top, extent.bottom);
+            for (const [track, extent] of line.musicAttachmentExtents ?? []) {
+                includeTrackExtent(uniformExtents, track, line.hasVolta ? 0 : extent.top, extent.bottom);
+                if (line.hasVolta) includeTrackExtent(voltaExtents, track, extent.top, extent.bottom);
             }
         });
+        for (const [track, extent] of uniformExtents) includeTrackExtent(voltaExtents, track, extent.top, extent.bottom);
         const hostExtents = lines.map((line, i) => options.uniformSystemHeight && musicLines[i]
-            ? new Map([...line.hostExtents].map(([track, extent]) => [track, uniformExtents.get(track) ?? extent]))
+            ? new Map([...line.hostExtents].map(([track, extent]) => [track, (line.hasVolta ? voltaExtents : uniformExtents).get(track) ?? extent]))
             : line.hostExtents);
         const heights: number[] = [];
         const axes = lines.map((line, i) => {
@@ -908,6 +914,10 @@ function measureAttachmentPass(
             if (reserve) includeTrackExtent(line.attachmentExtents, track, top, bottom);
             if (reserve && baseContext.uniformSystemHeight && attachment.spacingRole !== 'lyrics') {
                 includeTrackExtent(line.musicAttachmentExtents ??= new Map(), track, top, bottom);
+                if (attachment.spacingRole === 'volta' && !line.hasVolta) {
+                    line.hasVolta = true;
+                    needsRelayout = true;
+                }
             }
             (occupancy[region.line] ??= []).push({
                 attachment,

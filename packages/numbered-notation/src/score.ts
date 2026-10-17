@@ -10,6 +10,7 @@ export type NumberedNotationRenderOptions = {
   textMeasurer?: TextMeasurer
   pageMargin?: number
   systemGap?: number
+  /** Fixed music spacing, with extra headroom on systems carrying volta brackets. */
   uniformSystemHeight?: boolean
 }
 
