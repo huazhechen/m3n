@@ -1,0 +1,330 @@
+{
+  "edition": "第六版",
+  "baselineLayout": "layout-record.json",
+  "normalizationWidth": 744,
+  "minimumMusicPageFillPercent": 90,
+  "applied": false,
+  "note": "均为真实字体安全布局候选，未应用到成品；PDF 内容由用户亲自检查。",
+  "entries": [
+    {
+      "id": "lao_nan_hai",
+      "title": "老男孩",
+      "file": "lao_nan_hai_01.m3n",
+      "sourceSha256": "c7bfdb89ca21b9d1a21b6190a674ed7c6267d566b983e1c3f368299fbb2b7487",
+      "currentPages": [
+        42
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 940,
+      "currentScreenNotePx": 16.29,
+      "priority": "优先",
+      "proposed": {
+        "pageCount": 2,
+        "width": 690,
+        "systemGap": 20,
+        "uniformSystemHeight": true,
+        "screenNotePx": 22.19,
+        "gainPercent": 36.2,
+        "systemsPerPage": [
+          7,
+          8
+        ],
+        "fillPercent": [
+          97.793,
+          90.975
+        ],
+        "minimumFillPercent": 90.975
+      }
+    },
+    {
+      "id": "liang_liang",
+      "title": "凉凉",
+      "file": "liang_liang_01.m3n",
+      "sourceSha256": "a8c6261b1f5d28d8a86f6625c6246ce56056aa1a2a8b540b4e5291188360deeb",
+      "currentPages": [
+        43
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 900,
+      "currentScreenNotePx": 17.01,
+      "priority": "优先",
+      "proposed": {
+        "pageCount": 2,
+        "width": 654,
+        "systemGap": 22,
+        "uniformSystemHeight": true,
+        "screenNotePx": 23.41,
+        "gainPercent": 37.6,
+        "systemsPerPage": [
+          6,
+          7
+        ],
+        "fillPercent": [
+          90.427,
+          90.255
+        ],
+        "minimumFillPercent": 90.255
+      }
+    },
+    {
+      "id": "qian_si_xi",
+      "title": "牵丝戏",
+      "file": "qian_si_xi_01.m3n",
+      "sourceSha256": "2a041f913c0e79867fc3903bde71349ae6e5175ab240332f3aaa6be077da3502",
+      "currentPages": [
+        44
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 900,
+      "currentScreenNotePx": 17.01,
+      "priority": "优先",
+      "proposed": {
+        "pageCount": 2,
+        "width": 640,
+        "systemGap": 18,
+        "uniformSystemHeight": true,
+        "screenNotePx": 23.92,
+        "gainPercent": 40.6,
+        "systemsPerPage": [
+          7,
+          8
+        ],
+        "fillPercent": [
+          91.761,
+          96.865
+        ],
+        "minimumFillPercent": 91.761
+      }
+    },
+    {
+      "id": "doraemon",
+      "title": "哆啦A梦",
+      "file": "doraemon_01.m3n",
+      "sourceSha256": "978d6da06b8a9151db8ea3d3100fcc7f2a6d25b3b4b670c37a588db6d11b4f8c",
+      "currentPages": [
+        63
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 900,
+      "currentScreenNotePx": 17.01,
+      "priority": "优先",
+      "proposed": {
+        "pageCount": 2,
+        "width": 622,
+        "systemGap": 18,
+        "uniformSystemHeight": true,
+        "screenNotePx": 24.62,
+        "gainPercent": 44.7,
+        "systemsPerPage": [
+          9,
+          10
+        ],
+        "fillPercent": [
+          96.052,
+          97.413
+        ],
+        "minimumFillPercent": 96.052
+      }
+    },
+    {
+      "id": "flower_dance",
+      "title": "花之舞",
+      "file": "flower_dance_01.m3n",
+      "sourceSha256": "532f6bb67573f1895dc5593051ab9645b305a3fcbe7c592f2f72beb366af435c",
+      "currentPages": [
+        73,
+        74
+      ],
+      "currentPageCount": 2,
+      "currentWidth": 900,
+      "currentScreenNotePx": 17.01,
+      "priority": "器乐优先",
+      "proposed": {
+        "pageCount": 3,
+        "width": 760,
+        "systemGap": 18,
+        "uniformSystemHeight": true,
+        "screenNotePx": 20.15,
+        "gainPercent": 18.4,
+        "systemsPerPage": [
+          12,
+          13,
+          14
+        ],
+        "fillPercent": [
+          90.156,
+          90.797,
+          96.372
+        ],
+        "minimumFillPercent": 90.156
+      }
+    },
+    {
+      "id": "turkish_march",
+      "title": "土耳其进行曲",
+      "file": "turkish_march_01.m3n",
+      "sourceSha256": "5dc41521fba6b4620c547c499564dc2de4b53d495d366cd97f431ceec9c566cc",
+      "currentPages": [
+        75,
+        76
+      ],
+      "currentPageCount": 2,
+      "currentWidth": 900,
+      "currentScreenNotePx": 17.01,
+      "priority": "器乐优先",
+      "proposed": {
+        "pageCount": 3,
+        "width": 720,
+        "systemGap": 18,
+        "uniformSystemHeight": true,
+        "screenNotePx": 21.27,
+        "gainPercent": 25,
+        "systemsPerPage": [
+          9,
+          10,
+          10
+        ],
+        "fillPercent": [
+          91.077,
+          91.713,
+          91.58
+        ],
+        "minimumFillPercent": 91.077
+      }
+    },
+    {
+      "id": "bei_jia_er_hu_pan",
+      "title": "贝加尔湖畔",
+      "file": "bei_jia_er_hu_pan_01.m3n",
+      "sourceSha256": "e811527abb2f79a93e1dbd4285784f4c08c3d4a9b5c8094087c77f8dd8b7f92d",
+      "currentPages": [
+        25
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 880,
+      "currentScreenNotePx": 17.4,
+      "priority": "其次",
+      "proposed": {
+        "pageCount": 2,
+        "width": 628,
+        "systemGap": 22,
+        "uniformSystemHeight": true,
+        "screenNotePx": 24.38,
+        "gainPercent": 40.1,
+        "systemsPerPage": [
+          7,
+          7
+        ],
+        "fillPercent": [
+          90.381,
+          93.348
+        ],
+        "minimumFillPercent": 90.381
+      }
+    },
+    {
+      "id": "shi_jie_zeng_yu_wo_de",
+      "title": "世界赠予我的",
+      "file": "shi_jie_zeng_yu_wo_de_01.m3n",
+      "sourceSha256": "66bb01a967e40319576a37bb2c20544e2b9799ef5f41d9a542938a82c2bc38b8",
+      "currentPages": [
+        47
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 860,
+      "currentScreenNotePx": 17.8,
+      "priority": "其次",
+      "proposed": {
+        "pageCount": 2,
+        "width": 628,
+        "systemGap": 18,
+        "uniformSystemHeight": true,
+        "screenNotePx": 24.38,
+        "gainPercent": 36.9,
+        "systemsPerPage": [
+          7,
+          8
+        ],
+        "fillPercent": [
+          97.64,
+          99.851
+        ],
+        "minimumFillPercent": 97.64
+      }
+    },
+    {
+      "id": "ming_tian_hui_geng_hao",
+      "title": "明天会更好",
+      "file": "ming_tian_hui_geng_hao_01.m3n",
+      "sourceSha256": "aabe48b2bdd641a4eb490297a49337ba0616ffedb0ec96892e2f7331576e0993",
+      "currentPages": [
+        48
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 860,
+      "currentScreenNotePx": 17.8,
+      "priority": "暂保留",
+      "proposed": null
+    },
+    {
+      "id": "man_man_xi_huan_ni",
+      "title": "慢慢喜欢你",
+      "file": "man_man_xi_huan_ni_01.m3n",
+      "sourceSha256": "a5b58a7c9f8cefc943c84f34b845bccbddae6285315bb12b29165c43fa3ea929",
+      "currentPages": [
+        49
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 860,
+      "currentScreenNotePx": 17.8,
+      "priority": "其次",
+      "proposed": {
+        "pageCount": 2,
+        "width": 628,
+        "systemGap": 18,
+        "uniformSystemHeight": true,
+        "screenNotePx": 24.38,
+        "gainPercent": 36.9,
+        "systemsPerPage": [
+          7,
+          8
+        ],
+        "fillPercent": [
+          90.139,
+          92.079
+        ],
+        "minimumFillPercent": 90.139
+      }
+    },
+    {
+      "id": "ju_ci_lang_de_xia_tian",
+      "title": "菊次郎的夏天",
+      "file": "ju_ci_lang_de_xia_tian_01.m3n",
+      "sourceSha256": "33935ad4368386a17c24f7ed5fb7f3f143143914210bd4211203b57fec51d6d8",
+      "currentPages": [
+        68
+      ],
+      "currentPageCount": 1,
+      "currentWidth": 860,
+      "currentScreenNotePx": 17.8,
+      "priority": "器乐优先",
+      "proposed": {
+        "pageCount": 2,
+        "width": 614,
+        "systemGap": 22,
+        "uniformSystemHeight": true,
+        "screenNotePx": 24.94,
+        "gainPercent": 40.1,
+        "systemsPerPage": [
+          10,
+          12
+        ],
+        "fillPercent": [
+          91.818,
+          99.788
+        ],
+        "minimumFillPercent": 91.818
+      }
+    }
+  ]
+}

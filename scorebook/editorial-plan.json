@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第五版",
+  "edition": "第六版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -444,20 +444,6 @@
       "reviewNote": ""
     },
     {
-      "id": "qian_nv_you_hun",
-      "file": "qian_nv_you_hun_01.m3n",
-      "title": "倩女幽魂",
-      "section": "pop",
-      "group": "抒情入门",
-      "difficulty": 2,
-      "reason": "较规整的节奏与短篇幅",
-      "width": 780,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": ""
-    },
-    {
       "id": "li_hua_you_kai_fang",
       "file": "li_hua_you_kai_fang_01.m3n",
       "title": "梨花又开放",
@@ -674,18 +660,32 @@
       "reviewNote": ""
     },
     {
+      "id": "qian_nv_you_hun",
+      "file": "qian_nv_you_hun_01.m3n",
+      "title": "倩女幽魂",
+      "section": "pop",
+      "group": "香港影视金曲",
+      "difficulty": 2,
+      "reason": "较规整的节奏与短篇幅",
+      "width": 780,
+      "sharePage": true,
+      "breakBefore": false,
+      "pageBreaks": [],
+      "reviewNote": "与铁血丹心统一字号合页，保持完整旋律与歌词。"
+    },
+    {
       "id": "tie_xue_dan_xin",
       "file": "tie_xue_dan_xin_01.m3n",
       "title": "铁血丹心",
       "section": "pop",
-      "group": "切分与延音",
+      "group": "香港影视金曲",
       "difficulty": 3,
       "reason": "附点节奏与低音跳进",
       "width": 780,
-      "sharePage": false,
+      "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "与倩女幽魂统一字号合页，保持完整旋律与歌词。"
     },
     {
       "id": "san_bu",
@@ -1315,8 +1315,8 @@
       ]
     }
   ],
-  "outputPdf": "循序渐进简谱集-v5.pdf",
-  "outputKey": "scorebook-v5",
+  "outputPdf": "循序渐进简谱集-v6.pdf",
+  "outputKey": "scorebook-v6",
   "page": {
     "width": 744,
     "height": 1133,
