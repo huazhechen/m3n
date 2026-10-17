@@ -1,0 +1,8522 @@
+{
+  "title": "循序渐进简谱集",
+  "edition": "第一版 · 待校阅",
+  "rendererSha256": "a84a9d063b7a179e33b57948376092f4b46742db8fb7186307acac7e10e13d72",
+  "sourceCount": 82,
+  "entryCount": 109,
+  "pageCount": 89,
+  "frontPages": 5,
+  "baseWidth": 840,
+  "body": {
+    "width": 704,
+    "height": 965
+  },
+  "entries": [
+    {
+      "order": 1,
+      "id": "practice-02",
+      "title": "长音",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "长音",
+      "section": "basics",
+      "group": "长音与稳定节拍",
+      "difficulty": 1,
+      "reason": "保持时值和稳定气息",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        6
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "1e70b8b4059d3d6883bbb85eb249cdb44ec841b669809afc345ff497211db342",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.06
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.71
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.89
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.22
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.37
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1048.52
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 2,
+      "id": "practice-03",
+      "title": "渐强渐弱",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "渐强渐弱",
+      "section": "basics",
+      "group": "长音与稳定节拍",
+      "difficulty": 1,
+      "reason": "在长音上控制力度",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        6
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "7e82a84863b630b7da3a6cba1b8ac5304e8061d11759e070376aac580e05f469",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.66
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.3
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.48
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.83
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.99
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1048.15
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 3,
+      "id": "xiao_xing_xing",
+      "title": "小星星",
+      "file": "xiao_xing_xing_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "长音与稳定节拍",
+      "difficulty": 1,
+      "reason": "重复音、级进和二分音符",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        6
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "e9311ebf2b8550af96ee447481c64f90d54195e5830b86c7a3d8a1103b366c3d",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1013.09
+        },
+        {
+          "width": 800,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.32
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.94
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1025.23
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1037.37
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1049.5
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 4,
+      "id": "wo_he_ni",
+      "title": "我和你",
+      "file": "wo_he_ni_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "长音与稳定节拍",
+      "difficulty": 1,
+      "reason": "慢速长音和低音区转换",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        6
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "6a0ba5722b509019746e40b810a0a65efbc2d03ff21bb93ec31cdf30380dfa7d",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1011.26
+        },
+        {
+          "width": 800,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1034.89
+        },
+        {
+          "width": 820,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.08
+        },
+        {
+          "width": 860,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.43
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.6
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.76
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 5,
+      "id": "long_long_ago",
+      "title": "很久以前",
+      "file": "long_long_ago_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "八分音符入门",
+      "difficulty": 1,
+      "reason": "短句中的八分音符",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        7
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "5f4f53cbc46c6ccf284f3b6f9b31ce2bb1f2b138b4210a3ff5557178b3fcd6c4",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1009.77
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.38
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.58
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.95
+        },
+        {
+          "width": 880,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1034.12
+        },
+        {
+          "width": 900,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1046.29
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 6,
+      "id": "song_bie",
+      "title": "送别",
+      "file": "song_bie_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "八分音符入门",
+      "difficulty": 1,
+      "reason": "长短时值与连贯乐句",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        7
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "704fd6af553756b24d8c9e76688e1304c6971115d77b70eb29b089b06e108a19",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1010.04
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.63
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.84
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1022.23
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.74
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.9
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 7,
+      "id": "hong_he_gu",
+      "title": "红河谷",
+      "file": "hong_he_gu_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "八分音符入门",
+      "difficulty": 1,
+      "reason": "弱起与规整乐句",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        7
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "c7c5f5b2be9d0bf8ade72c7969c8599c056ccaa28550e4272d0fbfe178f7e664",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.71
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.41
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.56
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.85
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.99
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1049.12
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 8,
+      "id": "su_shan_na",
+      "title": "苏珊娜",
+      "file": "su_shan_na_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "活泼的二拍子",
+      "difficulty": 2,
+      "reason": "重复节奏与八分音符",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        8
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "450472cb5e96ece049172b1248f49950b46bdf5b1ae3a5086a0c9f16aa858049",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1011.68
+        },
+        {
+          "width": 800,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.32
+        },
+        {
+          "width": 820,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.51
+        },
+        {
+          "width": 860,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.85
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1036.01
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1048.17
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 9,
+      "id": "xiao_hong_mao",
+      "title": "小红帽",
+      "file": "xiao_hong_mao_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "活泼的二拍子",
+      "difficulty": 2,
+      "reason": "连续八分音符与跳进",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        8
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "1704a2257ea68f13f1f891fdb338d06ce630ff8847d14c06468278bef2adc124",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1011.5
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.72
+        },
+        {
+          "width": 820,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.32
+        },
+        {
+          "width": 860,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.67
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.83
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.99
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 10,
+      "id": "duo_lai_mi",
+      "title": "哆唻咪",
+      "file": "duo_lai_mi_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "活泼的二拍子",
+      "difficulty": 2,
+      "reason": "音阶进行与节奏变化",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        8
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "7792d33a07c54149d82c61b359f11f8bc78ebd4988e3da15fd4b224d4f4ce51b",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1006.75
+        },
+        {
+          "width": 800,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1030.28
+        },
+        {
+          "width": 820,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1018.52
+        },
+        {
+          "width": 860,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1018.98
+        },
+        {
+          "width": 880,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1031.2
+        },
+        {
+          "width": 900,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1043.42
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 11,
+      "id": "chong_er_fei",
+      "title": "虫儿飞",
+      "file": "chong_er_fei_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "附点与连奏",
+      "difficulty": 2,
+      "reason": "附点节奏和连奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        9
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "0e98b7a8bcb155c2f3424a8fc04896f6e1e427be86c53221d7e9a169f79d3704",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1009.96
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.55
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.75
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1022.15
+        },
+        {
+          "width": 880,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1034.34
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.92
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 12,
+      "id": "rang_wo_men_dang_qi_shuang_jiang",
+      "title": "让我们荡起双桨",
+      "file": "rang_wo_men_dang_qi_shuang_jiang_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "附点与连奏",
+      "difficulty": 2,
+      "reason": "弱起、附点与短连奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        9
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "c1f943e782179b549c83a4d35ca6c5f0207caee1679a949b981b6dc8bce4b78b",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1009.45
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.02
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.24
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.65
+        },
+        {
+          "width": 880,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.84
+        },
+        {
+          "width": 900,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1046.03
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 13,
+      "id": "huan_le_song",
+      "title": "欢乐颂",
+      "file": "huan_le_song_01.m3n",
+      "practice": null,
+      "section": "basics",
+      "group": "旋律与伴奏初步",
+      "difficulty": 2,
+      "reason": "保留原谱低音，先熟悉旋律，再尝试双声部",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        10
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "7902cdd1f64ea929fa3ebc9ca2bf503e4f18edbe108e23f20901608bc1e53bce",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1001.94
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1025.53
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1013.73
+        },
+        {
+          "width": 860,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1016.47
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1028.7
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1040.92
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 14,
+      "id": "auld_lang_syne",
+      "title": "友谊地久天长",
+      "file": "auld_lang_syne_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "民歌与抒情",
+      "difficulty": 2,
+      "reason": "弱起与八分音符",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        11
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "d40a3489ba3c31a8924d43c4c3dbb4922ddce80bdbc37615a40bdd3289d9b019",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1011.32
+        },
+        {
+          "width": 800,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1034.95
+        },
+        {
+          "width": 820,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.14
+        },
+        {
+          "width": 860,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.49
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.66
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.82
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 15,
+      "id": "mo_si_ke_jiao_wai_de_wan_shang",
+      "title": "莫斯科郊外的晚上",
+      "file": "mo_si_ke_jiao_wai_de_wan_shang_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "民歌与抒情",
+      "difficulty": 2,
+      "reason": "小调旋律与连贯气息",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        11
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "44f07778abe4a58cfd7685efa29d5ecc76051cefc02d00bfe339902464989f1d",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1011.11
+        },
+        {
+          "width": 800,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1034.73
+        },
+        {
+          "width": 820,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1022.93
+        },
+        {
+          "width": 860,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.29
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.46
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.62
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 16,
+      "id": "san_tao_che",
+      "title": "三套车",
+      "file": "san_tao_che_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "民歌与抒情",
+      "difficulty": 2,
+      "reason": "低音区与附点节奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        11
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "7f9cf6b6bd7c9c1377d1c0e34060582266b4525b58e0be8b5ea922e119bd41db",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1009.33
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1032.91
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.12
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.53
+        },
+        {
+          "width": 880,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.73
+        },
+        {
+          "width": 900,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1045.91
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 17,
+      "id": "scarborough_fair",
+      "title": "斯卡布罗集市",
+      "file": "scarborough_fair_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "三拍子与调式",
+      "difficulty": 2,
+      "reason": "三拍子和调式色彩",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        12
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "217693dec3eca3506a8cceb3cb2921e05d481cb017990507f29da71eebdf1b55",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1009.5
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.08
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.3
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.7
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.34
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.51
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 18,
+      "id": "sound_of_silence",
+      "title": "寂静之声",
+      "file": "sound_of_silence_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "三拍子与调式",
+      "difficulty": 2,
+      "reason": "弱起与旋律走向",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        12
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "20e0313677fa5d0c23982a9ed1c41eabe7bfe38266d3fa351e3d7195b6ad7b75",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1010.9
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.15
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.37
+        },
+        {
+          "width": 860,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.08
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.25
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.42
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 19,
+      "id": "ai_er_lan_hua_mei",
+      "title": "爱尔兰画眉",
+      "file": "ai_er_lan_hua_mei_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "三拍子与调式",
+      "difficulty": 2,
+      "reason": "八分音符与句尾长音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        12
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "a9584381752d2d1136c39623d83445cf60cf6d2b1c3140f06cfdbe8dbce5f0a9",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1010.12
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.72
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.92
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1022.32
+        },
+        {
+          "width": 880,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1034.5
+        },
+        {
+          "width": 900,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1046.68
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 20,
+      "id": "mo_li_hua",
+      "title": "茉莉花",
+      "file": "mo_li_hua_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "民族旋律与节奏",
+      "difficulty": 2,
+      "reason": "五声性旋律与附点",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        13
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "2390f561bb74d5f757889175a4fec77431f669ccda6d4c25f1aec93004e5208d",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1009.41
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.01
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.21
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.6
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.25
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.41
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 21,
+      "id": "katyusha",
+      "title": "喀秋莎",
+      "file": "katyusha_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "民族旋律与节奏",
+      "difficulty": 2,
+      "reason": "较快二拍子与小调",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        13
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "93af49bd7fca60724e611714f94ce22a0e76ed5cb165062ac6e7f04d57b94243",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1011.38
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.74
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.95
+        },
+        {
+          "width": 860,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1023.55
+        },
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1035.72
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.88
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 22,
+      "id": "wo_niu_yu_huang_li_niao",
+      "title": "蜗牛与黄鹂鸟",
+      "file": "wo_niu_yu_huang_li_niao_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "民族旋律与节奏",
+      "difficulty": 3,
+      "reason": "十六分与切分节奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        13
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "5e8b591eb1000e275bd1a3db6aad314fef280e617505bfc1cd48177bbc0e73b8",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1009.82
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.41
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.62
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1022.01
+        },
+        {
+          "width": 880,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1034.19
+        },
+        {
+          "width": 900,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1047.67
+        }
+      ],
+      "reviewNote": "与同为二拍子的《茉莉花》《喀秋莎》合页，由附点过渡到十六分与切分"
+    },
+    {
+      "order": 23,
+      "id": "hong_mei_hua_er_kai",
+      "title": "红莓花儿开",
+      "file": "hong_mei_hua_er_kai_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "节奏与多段歌词",
+      "difficulty": 3,
+      "reason": "弱起与多段歌词",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        14
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "2851a48e289b3386286527d625515d7f809767e77fc5a2d3bc705c1fbf0a2681",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1001.08
+        },
+        {
+          "width": 800,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1024.75
+        },
+        {
+          "width": 820,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1012.91
+        },
+        {
+          "width": 860,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1013.25
+        },
+        {
+          "width": 880,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1025.42
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1037.6
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 24,
+      "id": "the_internationale",
+      "title": "国际歌",
+      "file": "the_internationale_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "节奏与多段歌词",
+      "difficulty": 3,
+      "reason": "附点节奏、弱起与三段歌词",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        15
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "86f8db8ddf0fb77fe21b151df75513c6562dbad8ed39d6d1329cc49f71fe17fa",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1000.01
+        },
+        {
+          "width": 800,
+          "rows": 10,
+          "pages": 2,
+          "cost": 2030.91
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012
+        },
+        {
+          "width": 860,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012.05
+        },
+        {
+          "width": 880,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1024.36
+        },
+        {
+          "width": 900,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1036.47
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 25,
+      "id": "wo_de_zu_guo",
+      "title": "我的祖国",
+      "file": "wo_de_zu_guo_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "宽广乐句",
+      "difficulty": 3,
+      "reason": "连奏、附点与多段歌词",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        16
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "6a2b5f5939e915002ce0f59ad63dfff8c8b7a74db4fe8c646f91f64493c0ce16",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1000.68
+        },
+        {
+          "width": 800,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1024.01
+        },
+        {
+          "width": 820,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1012.54
+        },
+        {
+          "width": 860,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1012.82
+        },
+        {
+          "width": 880,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1024.97
+        },
+        {
+          "width": 900,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1037.13
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 26,
+      "id": "wo_he_wo_de_zu_guo",
+      "title": "我和我的祖国",
+      "file": "wo_he_wo_de_zu_guo_01.m3n",
+      "practice": null,
+      "section": "folk",
+      "group": "宽广乐句",
+      "difficulty": 4,
+      "reason": "6/8与9/8变拍及连奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        17
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "07374d4fcfd105f2599f221aac14cf75bde18aa639f8f706b7f5eddd70195f19",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1000.36
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012.02
+        },
+        {
+          "width": 860,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1012.48
+        },
+        {
+          "width": 880,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1025.4
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1037.58
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 27,
+      "id": "yue_liang_dai_biao_wo_de_xin",
+      "title": "月亮代表我的心",
+      "file": "yue_liang_dai_biao_wo_de_xin_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "抒情入门",
+      "difficulty": 2,
+      "reason": "附点与完整连奏乐句",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        18
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "6300d5e4f45e1e3ff694e351758016ba827177a83344634862bc864f368953ae",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1000.95
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.64
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012.8
+        },
+        {
+          "width": 860,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1013.12
+        },
+        {
+          "width": 880,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1025.29
+        },
+        {
+          "width": 900,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1037.46
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 28,
+      "id": "qian_nv_you_hun",
+      "title": "倩女幽魂",
+      "file": "qian_nv_you_hun_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "抒情入门",
+      "difficulty": 2,
+      "reason": "较规整的节奏与短篇幅",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        19
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "f906a6ab3dbb7980f20c6e9634ff6a95b6789a0eb2022ce5bc450ac7852857d7",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1005.49
+        },
+        {
+          "width": 800,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1029.01
+        },
+        {
+          "width": 820,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1017.25
+        },
+        {
+          "width": 860,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1017.72
+        },
+        {
+          "width": 880,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1029.95
+        },
+        {
+          "width": 900,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1042.17
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 29,
+      "id": "li_hua_you_kai_fang",
+      "title": "梨花又开放",
+      "file": "li_hua_you_kai_fang_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "抒情入门",
+      "difficulty": 2,
+      "reason": "歌唱性乐句与八分音符",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        20
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "48ad1e1a052e4ec91caa9cdc5eba7194a101977f6d09d90282c9a2f4e1415ce8",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1002.17
+        },
+        {
+          "width": 800,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1025.76
+        },
+        {
+          "width": 820,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1013.96
+        },
+        {
+          "width": 860,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1014.38
+        },
+        {
+          "width": 880,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1026.59
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1038.79
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 30,
+      "id": "bai_hua_lin",
+      "title": "白桦林",
+      "file": "bai_hua_lin_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三拍与复拍",
+      "difficulty": 3,
+      "reason": "三拍子与跨拍延音",
+      "width": 900,
+      "relativeScalePercent": 93.33,
+      "noteSizePt": 12.9,
+      "pages": [
+        21
+      ],
+      "systems": 10,
+      "systemsPerPage": [
+        10
+      ],
+      "sourceSha256": "fa32e74374229fabf7fffbbad32f43e4ae9038d2ecd45967c931aea9c6ff6f97",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2008.28
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2030.17
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2018.64
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2020.74
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2033.2
+        },
+        {
+          "width": 900,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1036.17
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 31,
+      "id": "guang_yin_de_gu_shi",
+      "title": "光阴的故事",
+      "file": "guang_yin_de_gu_shi_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三拍与复拍",
+      "difficulty": 3,
+      "reason": "6/8拍中的连续八分音符",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        22
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "695e24d2673cd08f236f684003f3fe568427db6a8d1ae25b6384c5ec16487f1e",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1000.19
+        },
+        {
+          "width": 800,
+          "rows": 8,
+          "pages": 2,
+          "cost": 2032.11
+        },
+        {
+          "width": 820,
+          "rows": 8,
+          "pages": 2,
+          "cost": 2020.59
+        },
+        {
+          "width": 860,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1012.27
+        },
+        {
+          "width": 880,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1024.38
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1036.49
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 32,
+      "id": "tong_zhuo_de_ni",
+      "title": "同桌的你",
+      "file": "tong_zhuo_de_ni_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三拍与复拍",
+      "difficulty": 3,
+      "reason": "6/8拍与弱起、反复",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        23
+      ],
+      "systems": 10,
+      "systemsPerPage": [
+        10
+      ],
+      "sourceSha256": "4d08e246646a56aa2f00e764b4331456f6ebeb823c81aa411294a6e86d020f2f",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1000.05
+        },
+        {
+          "width": 800,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1024
+        },
+        {
+          "width": 820,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1012.01
+        },
+        {
+          "width": 860,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1012.1
+        },
+        {
+          "width": 880,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.45
+        },
+        {
+          "width": 900,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1036.57
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 33,
+      "id": "xiang_si",
+      "title": "相思",
+      "file": "xiang_si_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三拍与复拍",
+      "difficulty": 3,
+      "reason": "三拍子、附点和跨小节延音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        24
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "809c2055770745c8fd762127f4b2de6cb467013e0c3960fd64ef3bad1f599b32",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1002
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.86
+        },
+        {
+          "width": 820,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1013.79
+        },
+        {
+          "width": 860,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1014.2
+        },
+        {
+          "width": 880,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1026.41
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1039.65
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 34,
+      "id": "bei_jia_er_hu_pan",
+      "title": "贝加尔湖畔",
+      "file": "bei_jia_er_hu_pan_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "切分与延音",
+      "difficulty": 3,
+      "reason": "器乐间奏与跨拍延音",
+      "width": 880,
+      "relativeScalePercent": 95.45,
+      "noteSizePt": 13.2,
+      "pages": [
+        25
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "e811527abb2f79a93e1dbd4285784f4c08c3d4a9b5c8094087c77f8dd8b7f92d",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2007.12
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2030.18
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2018.65
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2021.23
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1024
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1036.02
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 35,
+      "id": "yu_jian",
+      "title": "遇见",
+      "file": "yu_jian_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "切分与延音",
+      "difficulty": 3,
+      "reason": "切分与高音区器乐间奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        26
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "a69c45d0e18bde8c984b34aa5054468c028b3211b2bf3598c55f79b7b2da7869",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1000.46
+        },
+        {
+          "width": 800,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1024.02
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012.34
+        },
+        {
+          "width": 860,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012.59
+        },
+        {
+          "width": 880,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.72
+        },
+        {
+          "width": 900,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1036.87
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 36,
+      "id": "huang_hun",
+      "title": "黄昏",
+      "file": "huang_hun_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "切分与延音",
+      "difficulty": 3,
+      "reason": "切分节奏与延音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        27
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "3dd621b636043f8d3ad7e69b11db9939ec76763e9e03547094e920184e6be6cc",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1001.39
+        },
+        {
+          "width": 800,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1024.82
+        },
+        {
+          "width": 820,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1013.21
+        },
+        {
+          "width": 860,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1014.41
+        },
+        {
+          "width": 880,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1026.61
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1038.82
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 37,
+      "id": "an_xiang",
+      "title": "暗香",
+      "file": "an_xiang_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "切分与延音",
+      "difficulty": 3,
+      "reason": "长音、跨拍与情绪层次",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        28
+      ],
+      "systems": 10,
+      "systemsPerPage": [
+        10
+      ],
+      "sourceSha256": "98dd6c4f0c99bf92dab02883ae36c28960a82668306a51183843850b0d6385c6",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1000.12
+        },
+        {
+          "width": 800,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2032.56
+        },
+        {
+          "width": 820,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1012.06
+        },
+        {
+          "width": 860,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1012.19
+        },
+        {
+          "width": 880,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.82
+        },
+        {
+          "width": 900,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1036.97
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 38,
+      "id": "mei_li_de_shen_hua",
+      "title": "美丽的神话",
+      "file": "mei_li_de_shen_hua_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "切分与延音",
+      "difficulty": 3,
+      "reason": "切分、附点与长句",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        29
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "40c2d656f9696220ba9ec18c60bb1c419d98542d72b6eb8a800f33ea24132628",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1000.11
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2032.61
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2021.1
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1012.18
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1024.27
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1036.36
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 39,
+      "id": "dang_nian_qing",
+      "title": "当年情",
+      "file": "dang_nian_qing_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "切分与延音",
+      "difficulty": 3,
+      "reason": "弱起、附点与低音区",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        30
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "a4e870744f9e6587de6730e793f7904adf98e1eecf222e3f6cad8ceddd284e01",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1000.61
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.36
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012.47
+        },
+        {
+          "width": 860,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012.74
+        },
+        {
+          "width": 880,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1025.59
+        },
+        {
+          "width": 900,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1037.77
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 40,
+      "id": "tie_xue_dan_xin",
+      "title": "铁血丹心",
+      "file": "tie_xue_dan_xin_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "切分与延音",
+      "difficulty": 3,
+      "reason": "附点节奏与低音跳进",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        31
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "1959f1e6c89f5cde082ef7aa719969922501de4590a2343e7a4a4c89c1e75ceb",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1004.44
+        },
+        {
+          "width": 800,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1027.98
+        },
+        {
+          "width": 820,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1016.21
+        },
+        {
+          "width": 860,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1016.67
+        },
+        {
+          "width": 880,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1028.89
+        },
+        {
+          "width": 900,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1042.54
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 41,
+      "id": "san_bu",
+      "title": "散步",
+      "file": "san_bu_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "切分与延音",
+      "difficulty": 3,
+      "reason": "切分与器乐乐句",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        32
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "7861a95c63ac006188002685ba93cd977eba69f029008d44ea3d302e83215c0f",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1003.67
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1027.21
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1015.44
+        },
+        {
+          "width": 860,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1015.89
+        },
+        {
+          "width": 880,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1028.11
+        },
+        {
+          "width": 900,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1040.33
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 42,
+      "id": "qiu_ying",
+      "title": "秋樱",
+      "file": "qiu_ying_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "十六分与变拍",
+      "difficulty": 3,
+      "reason": "变拍与歌唱性乐句",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        33
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "d9a97b820de21919efe04df6036cb67ff3e9509b849d80c22804aa5424458cab",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1003.28
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1026.83
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1015.06
+        },
+        {
+          "width": 860,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1016.21
+        },
+        {
+          "width": 880,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1028.43
+        },
+        {
+          "width": 900,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1040.65
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 43,
+      "id": "man_bu_ren_sheng_lu",
+      "title": "漫步人生路",
+      "file": "man_bu_ren_sheng_lu_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "十六分与变拍",
+      "difficulty": 3,
+      "reason": "十六分节奏与低音区",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        34
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "50402494f15e6c29c73bb442cb651e041aabb08b1bff531d7511d78535ee61b2",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1001.99
+        },
+        {
+          "width": 800,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1024.73
+        },
+        {
+          "width": 820,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1012.89
+        },
+        {
+          "width": 860,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1014.2
+        },
+        {
+          "width": 880,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1026.4
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1038.6
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 44,
+      "id": "wo_zhi_zai_hu_ni",
+      "title": "我只在乎你",
+      "file": "wo_zhi_zai_hu_ni_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "十六分与变拍",
+      "difficulty": 3,
+      "reason": "连续十六分与跨拍延音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        35
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "33d4ff1b7d9cbecdc5d58da1456e3f5c94ab65cf5c0d1f397791a816d63840b9",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1000.97
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.23
+        },
+        {
+          "width": 820,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1012.82
+        },
+        {
+          "width": 860,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1014.15
+        },
+        {
+          "width": 880,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1026.35
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1038.55
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 45,
+      "id": "guo_huo",
+      "title": "过火",
+      "file": "guo_huo_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "十六分与变拍",
+      "difficulty": 3,
+      "reason": "密集歌词和切分",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        36
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "50e24c46e31d6af4496f673161ef633588f27bcdfd779e49d8b335c440df551d",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1000.06
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2032.33
+        },
+        {
+          "width": 820,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1012.02
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1012.11
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1024.17
+        },
+        {
+          "width": 900,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1036.75
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 46,
+      "id": "yue_ding",
+      "title": "约定",
+      "file": "yue_ding_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "十六分与变拍",
+      "difficulty": 3,
+      "reason": "切分、弱起与句尾装饰",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        37
+      ],
+      "systems": 10,
+      "systemsPerPage": [
+        10
+      ],
+      "sourceSha256": "bb52895962ee659e6ae4011ec4f375c7f46e620abccb188a68a8d7dd766d30c3",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1000.79
+        },
+        {
+          "width": 800,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1024.15
+        },
+        {
+          "width": 820,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1012.24
+        },
+        {
+          "width": 860,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1012.95
+        },
+        {
+          "width": 880,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1025.11
+        },
+        {
+          "width": 900,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1037.27
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 47,
+      "id": "hou_lai",
+      "title": "后来",
+      "file": "hou_lai_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "十六分与变拍",
+      "difficulty": 3,
+      "reason": "多段歌词、切分和连奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        38,
+        39
+      ],
+      "systems": 19,
+      "systemsPerPage": [
+        9,
+        10
+      ],
+      "sourceSha256": "310d89d542d457a38ad5e86fcabea7d73920e2d523cc5784ee03b9318460f632",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 19,
+          "pages": 2,
+          "cost": 2001.54
+        },
+        {
+          "width": 800,
+          "rows": 20,
+          "pages": 2,
+          "cost": 2024.56
+        },
+        {
+          "width": 820,
+          "rows": 19,
+          "pages": 2,
+          "cost": 2013.25
+        },
+        {
+          "width": 860,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2014.47
+        },
+        {
+          "width": 880,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2026.82
+        },
+        {
+          "width": 900,
+          "rows": 17,
+          "pages": 2,
+          "cost": 2040.16
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 48,
+      "id": "tong_hua_zhen",
+      "title": "童话镇",
+      "file": "tong_hua_zhen_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "十六分与变拍",
+      "difficulty": 3,
+      "reason": "反复歌词、切分与长句",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        40,
+        41
+      ],
+      "systems": 16,
+      "systemsPerPage": [
+        7,
+        9
+      ],
+      "sourceSha256": "9f4b8b1e269c1cb30d1e656d6c3813ec68c119b7b0a9ce04212154b8590d5c27",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2002.13
+        },
+        {
+          "width": 800,
+          "rows": 17,
+          "pages": 2,
+          "cost": 2024.9
+        },
+        {
+          "width": 820,
+          "rows": 17,
+          "pages": 2,
+          "cost": 2013.16
+        },
+        {
+          "width": 860,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2015.54
+        },
+        {
+          "width": 880,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2027.92
+        },
+        {
+          "width": 900,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2040.31
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 49,
+      "id": "lao_nan_hai",
+      "title": "老男孩",
+      "file": "lao_nan_hai_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "较长结构与密集八分、十六分",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        42,
+        43
+      ],
+      "systems": 13,
+      "systemsPerPage": [
+        6,
+        7
+      ],
+      "sourceSha256": "c7bfdb89ca21b9d1a21b6190a674ed7c6267d566b983e1c3f368299fbb2b7487",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 13,
+          "pages": 2,
+          "cost": 2003.46
+        },
+        {
+          "width": 800,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2025.04
+        },
+        {
+          "width": 820,
+          "rows": 14,
+          "pages": 2,
+          "cost": 2014.12
+        },
+        {
+          "width": 860,
+          "rows": 13,
+          "pages": 2,
+          "cost": 2015.85
+        },
+        {
+          "width": 880,
+          "rows": 13,
+          "pages": 2,
+          "cost": 2028.24
+        },
+        {
+          "width": 900,
+          "rows": 13,
+          "pages": 2,
+          "cost": 2040.63
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 50,
+      "id": "liang_liang",
+      "title": "凉凉",
+      "file": "liang_liang_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "器乐过门与密集节奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        44,
+        45
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        5,
+        6
+      ],
+      "sourceSha256": "a8c6261b1f5d28d8a86f6625c6246ce56056aa1a2a8b540b4e5291188360deeb",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2006.5
+        },
+        {
+          "width": 800,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2029.58
+        },
+        {
+          "width": 820,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2018.04
+        },
+        {
+          "width": 860,
+          "rows": 10,
+          "pages": 2,
+          "cost": 2020.57
+        },
+        {
+          "width": 880,
+          "rows": 10,
+          "pages": 2,
+          "cost": 2033.03
+        },
+        {
+          "width": 900,
+          "rows": 10,
+          "pages": 2,
+          "cost": 2045.47
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 51,
+      "id": "qian_si_xi",
+      "title": "牵丝戏",
+      "file": "qian_si_xi_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "切分、十六分与跳进",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        46,
+        47
+      ],
+      "systems": 12,
+      "systemsPerPage": [
+        6,
+        6
+      ],
+      "sourceSha256": "2a041f913c0e79867fc3903bde71349ae6e5175ab240332f3aaa6be077da3502",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2005.61
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2028.73
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2017.17
+        },
+        {
+          "width": 860,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2018.05
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2032.27
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2044.71
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 52,
+      "id": "ren_shi_jian",
+      "title": "人世间",
+      "file": "ren_shi_jian_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "慢速密集节奏与高音区",
+      "width": 900,
+      "relativeScalePercent": 93.33,
+      "noteSizePt": 12.9,
+      "pages": [
+        48
+      ],
+      "systems": 10,
+      "systemsPerPage": [
+        10
+      ],
+      "sourceSha256": "ef232d10fef0d405082f9077d30bb3a2a3431701b4373e81d05597f448073892",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2008.29
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2029.71
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2018.17
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2020.74
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2033.18
+        },
+        {
+          "width": 900,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1036.15
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 53,
+      "id": "zhi_yao_ping_fan",
+      "title": "只要平凡",
+      "file": "zhi_yao_ping_fan_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "复拍、三段歌词与临时变音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        49
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "95a98244c037c3de3327d5b9a329b80b85d95b905ba4a830331e42326df004b9",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1002.69
+        },
+        {
+          "width": 800,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1026.25
+        },
+        {
+          "width": 820,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1014.47
+        },
+        {
+          "width": 860,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1014.91
+        },
+        {
+          "width": 880,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1028.35
+        },
+        {
+          "width": 900,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1040.57
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 54,
+      "id": "shi_jie_zeng_yu_wo_de",
+      "title": "世界赠予我的",
+      "file": "shi_jie_zeng_yu_wo_de_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "密集节奏与长线条",
+      "width": 880,
+      "relativeScalePercent": 95.45,
+      "noteSizePt": 13.2,
+      "pages": [
+        50
+      ],
+      "systems": 10,
+      "systemsPerPage": [
+        10
+      ],
+      "sourceSha256": "66bb01a967e40319576a37bb2c20544e2b9799ef5f41d9a542938a82c2bc38b8",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2007.37
+        },
+        {
+          "width": 800,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2030.45
+        },
+        {
+          "width": 820,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2018.91
+        },
+        {
+          "width": 860,
+          "rows": 10,
+          "pages": 2,
+          "cost": 2021.16
+        },
+        {
+          "width": 880,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1024
+        },
+        {
+          "width": 900,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1036.02
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 55,
+      "id": "ming_tian_hui_geng_hao",
+      "title": "明天会更好",
+      "file": "ming_tian_hui_geng_hao_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "变拍、器乐段与多段歌词",
+      "width": 900,
+      "relativeScalePercent": 93.33,
+      "noteSizePt": 12.9,
+      "pages": [
+        51
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "aabe48b2bdd641a4eb490297a49337ba0616ffedb0ec96892e2f7331576e0993",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 8,
+          "pages": 2,
+          "cost": 2006.09
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 2,
+          "cost": 2028.35
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 2,
+          "cost": 2016.77
+        },
+        {
+          "width": 860,
+          "rows": 8,
+          "pages": 2,
+          "cost": 2018.52
+        },
+        {
+          "width": 880,
+          "rows": 8,
+          "pages": 2,
+          "cost": 2030.95
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1036
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 56,
+      "id": "man_man_xi_huan_ni",
+      "title": "慢慢喜欢你",
+      "file": "man_man_xi_huan_ni_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "跨拍、变拍与细分节奏",
+      "width": 900,
+      "relativeScalePercent": 93.33,
+      "noteSizePt": 12.9,
+      "pages": [
+        52
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "a5b58a7c9f8cefc943c84f34b845bccbddae6285315bb12b29165c43fa3ea929",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2007.85
+        },
+        {
+          "width": 800,
+          "rows": 13,
+          "pages": 2,
+          "cost": 2029.72
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2019.39
+        },
+        {
+          "width": 860,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2020.31
+        },
+        {
+          "width": 880,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2032.76
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1036.03
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 57,
+      "id": "xin_bu_liao_qing",
+      "title": "新不了情",
+      "file": "xin_bu_liao_qing_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "difficulty": 4,
+      "reason": "三连音与复杂节奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        53
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "8fec122b86c490e72767e6fa2da99efa352a0d803954957be25d43ffdceb6a12",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1000.84
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.14
+        },
+        {
+          "width": 820,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1012.69
+        },
+        {
+          "width": 860,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1013
+        },
+        {
+          "width": 880,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1025.16
+        },
+        {
+          "width": 900,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1037.33
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 58,
+      "id": "wo_yao_ni",
+      "title": "我要你",
+      "file": "wo_yao_ni_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "difficulty": 4,
+      "reason": "三连音、十六分与多段歌词",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        54
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "701304fbe0f510a012e3f02457907e3f946a9433a0f6b8d4ee320b6a7de339f2",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1002.32
+        },
+        {
+          "width": 800,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1025.06
+        },
+        {
+          "width": 820,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1014.11
+        },
+        {
+          "width": 860,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1014.54
+        },
+        {
+          "width": 880,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1026.75
+        },
+        {
+          "width": 900,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1038.96
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 59,
+      "id": "annie",
+      "title": "安妮",
+      "file": "annie_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "difficulty": 4,
+      "reason": "反复歌词、器乐段与跳房子",
+      "width": 860,
+      "relativeScalePercent": 97.67,
+      "noteSizePt": 13.5,
+      "pages": [
+        55
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "88e17fe24b0fde2228f672d24cb6fad454467fc18885ed5d97d286af8fa6382a",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2009.06
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2032.14
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2020.6
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1012.13
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1024.21
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1036.29
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 60,
+      "id": "yi_qian_ge_shang_xin_de_li_you",
+      "title": "一千个伤心的理由",
+      "file": "yi_qian_ge_shang_xin_de_li_you_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "difficulty": 4,
+      "reason": "十六分切分与跳房子",
+      "width": 860,
+      "relativeScalePercent": 97.67,
+      "noteSizePt": 13.5,
+      "pages": [
+        56
+      ],
+      "systems": 10,
+      "systemsPerPage": [
+        10
+      ],
+      "sourceSha256": "ff9a973b786838d7ef2a12a076907b3407e2c152bbdd159aac9b306281f2dd53",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2007.78
+        },
+        {
+          "width": 800,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2030.86
+        },
+        {
+          "width": 820,
+          "rows": 11,
+          "pages": 2,
+          "cost": 2019.33
+        },
+        {
+          "width": 860,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1012.02
+        },
+        {
+          "width": 880,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1024.02
+        },
+        {
+          "width": 900,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1036.42
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 61,
+      "id": "yue_ban_xiao_ye_qu",
+      "title": "月半小夜曲",
+      "file": "yue_ban_xiao_ye_qu_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "difficulty": 4,
+      "reason": "高音区、切分与跳进",
+      "width": 860,
+      "relativeScalePercent": 97.67,
+      "noteSizePt": 13.5,
+      "pages": [
+        57
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "770d83cea17c788734901d24b5ddd3f6673b4d598776c4c3f4959bfacc3e081f",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2008.19
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2031.25
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2019.73
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1012.07
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1024.12
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1036.2
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 62,
+      "id": "andy",
+      "title": "ANDY",
+      "file": "andy_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "difficulty": 4,
+      "reason": "反复导航与密集节奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        58
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "82173dbcb962bb8c8f7d21d2a5f75c198ff1d96561dd00e4f6b2c8306d33a9d9",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1000.03
+        },
+        {
+          "width": 800,
+          "rows": 10,
+          "pages": 2,
+          "cost": 2031.64
+        },
+        {
+          "width": 820,
+          "rows": 10,
+          "pages": 2,
+          "cost": 2020.12
+        },
+        {
+          "width": 860,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1012.08
+        },
+        {
+          "width": 880,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1024.14
+        },
+        {
+          "width": 900,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1036.21
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 63,
+      "id": "ting_hai",
+      "title": "听海",
+      "file": "ting_hai_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "difficulty": 4,
+      "reason": "三连音、细分节奏与双层连线",
+      "width": 880,
+      "relativeScalePercent": 95.45,
+      "noteSizePt": 13.2,
+      "pages": [
+        59
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "c37ceb48450b98779697fd9be9a3ad5453a1118b5dbf6af66034179db106013f",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 13,
+          "pages": 2,
+          "cost": 2006.56
+        },
+        {
+          "width": 800,
+          "rows": 14,
+          "pages": 2,
+          "cost": 2028.31
+        },
+        {
+          "width": 820,
+          "rows": 13,
+          "pages": 2,
+          "cost": 2017.87
+        },
+        {
+          "width": 860,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2020.43
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1024.04
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1036.09
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 64,
+      "id": "ru_yuan",
+      "title": "如愿",
+      "file": "ru_yuan_01.m3n",
+      "practice": null,
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "difficulty": 4,
+      "reason": "变调、倚音与多段歌词",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        60,
+        61
+      ],
+      "systems": 15,
+      "systemsPerPage": [
+        7,
+        8
+      ],
+      "sourceSha256": "698c3016f0deed4cb95caf1a76956eea7615b1a4470629250ce06726f19006d0",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2003.26
+        },
+        {
+          "width": 800,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2025.71
+        },
+        {
+          "width": 820,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2014.02
+        },
+        {
+          "width": 860,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2015.63
+        },
+        {
+          "width": 880,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2028.01
+        },
+        {
+          "width": 900,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2040.39
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 65,
+      "id": "tai_yang_zhao_chang_sheng_qi",
+      "title": "太阳照常升起",
+      "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "短主题与歌唱性旋律",
+      "difficulty": 2,
+      "reason": "短篇幅与长音",
+      "width": 880,
+      "relativeScalePercent": 95.45,
+      "noteSizePt": 13.2,
+      "pages": [
+        62
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "ba68eef17fdbd66b4b1c8de59095ecedf59f2ac9e33b04047cadf537a2698a45",
+      "candidates": [
+        {
+          "width": 880,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1011.3
+        }
+      ],
+      "reviewNote": "版宽增加40px，减少一条谱行，与两首歌唱性器乐主题合页"
+    },
+    {
+      "order": 66,
+      "id": "liang_zhu",
+      "title": "梁祝",
+      "file": "liang_zhu_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "短主题与歌唱性旋律",
+      "difficulty": 3,
+      "reason": "民族旋律与装饰、连奏",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        62
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "28abc471eb20e0d1db5a2a33de78be1bb50447f3bb95729240c75ec0c99db894",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1009.38
+        },
+        {
+          "width": 800,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1032.95
+        },
+        {
+          "width": 820,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.17
+        },
+        {
+          "width": 860,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1021.58
+        },
+        {
+          "width": 880,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1033.77
+        },
+        {
+          "width": 900,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1045.96
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 67,
+      "id": "wen_rou_de_qing_su",
+      "title": "温柔的倾诉",
+      "file": "wen_rou_de_qing_su_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "短主题与歌唱性旋律",
+      "difficulty": 3,
+      "reason": "小调、临时升音与切分",
+      "width": 860,
+      "relativeScalePercent": 97.67,
+      "noteSizePt": 13.5,
+      "pages": [
+        62
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "c69fa8876ac1e9b28e000c3dcc44ab10bdbe81661caae999bcad8fa18355d4b4",
+      "candidates": [
+        {
+          "width": 860,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1008.69
+        }
+      ],
+      "reviewNote": "版宽增加20px，减少一条谱行，放在《梁祝》之后合页"
+    },
+    {
+      "order": 68,
+      "id": "castle_in_the_sky",
+      "title": "天空之城",
+      "file": "castle_in_the_sky_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "短主题与歌唱性旋律",
+      "difficulty": 3,
+      "reason": "长线条与高音区",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        63
+      ],
+      "systems": 15,
+      "systemsPerPage": [
+        15
+      ],
+      "sourceSha256": "dbe2a712a93474409f596a6fbfab215dd67a37055c5a1c52d6e799d5282e3894",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 15,
+          "pages": 1,
+          "cost": 1000.8
+        },
+        {
+          "width": 800,
+          "rows": 16,
+          "pages": 1,
+          "cost": 1024.26
+        },
+        {
+          "width": 820,
+          "rows": 15,
+          "pages": 1,
+          "cost": 1012.66
+        },
+        {
+          "width": 860,
+          "rows": 15,
+          "pages": 1,
+          "cost": 1012.96
+        },
+        {
+          "width": 880,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1026.1
+        },
+        {
+          "width": 900,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1038.29
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 69,
+      "id": "xia_yu_de_shi_hou",
+      "title": "下雨的时候",
+      "file": "xia_yu_de_shi_hou_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "短主题与歌唱性旋律",
+      "difficulty": 3,
+      "reason": "长音、切分与器乐反复",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        64
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "f049ab9327b8223d0b27695cc62daa25eb3f06344a5542f8a6041ec55064239d",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1001.9
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1024.95
+        },
+        {
+          "width": 820,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1013.69
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1014.1
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1026.3
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1038.51
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 70,
+      "id": "second_waltz",
+      "title": "第二圆舞曲",
+      "file": "second_waltz_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "舞曲与动画主题",
+      "difficulty": 3,
+      "reason": "三拍子、倚音与圆舞曲乐句",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        65
+      ],
+      "systems": 13,
+      "systemsPerPage": [
+        13
+      ],
+      "sourceSha256": "18c400f9400998eddc6e9d18f1cdc00d8ecda4cb1a204589b4e02d615d99f08f",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1000.53
+        },
+        {
+          "width": 800,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1024.09
+        },
+        {
+          "width": 820,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1012.17
+        },
+        {
+          "width": 860,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1012.66
+        },
+        {
+          "width": 880,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1024.8
+        },
+        {
+          "width": 900,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1037.47
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 71,
+      "id": "doraemon",
+      "title": "哆啦A梦",
+      "file": "doraemon_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "舞曲与动画主题",
+      "difficulty": 3,
+      "reason": "反复结构与较快八分音符",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        66
+      ],
+      "systems": 15,
+      "systemsPerPage": [
+        15
+      ],
+      "sourceSha256": "978d6da06b8a9151db8ea3d3100fcc7f2a6d25b3b4b670c37a588db6d11b4f8c",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 15,
+          "pages": 1,
+          "cost": 1000.04
+        },
+        {
+          "width": 800,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2033.29
+        },
+        {
+          "width": 820,
+          "rows": 15,
+          "pages": 1,
+          "cost": 1012.01
+        },
+        {
+          "width": 860,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1012.18
+        },
+        {
+          "width": 880,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1024.27
+        },
+        {
+          "width": 900,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1036.37
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 72,
+      "id": "yun_gong_xun_yin",
+      "title": "云宫迅音",
+      "file": "yun_gong_xun_yin_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "舞曲与动画主题",
+      "difficulty": 3,
+      "reason": "器乐反复与跳进",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        67
+      ],
+      "systems": 13,
+      "systemsPerPage": [
+        13
+      ],
+      "sourceSha256": "d9033001b66c920bfbb5406279db324ca902bf439bed30b6439b7ebc32ab89a7",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1001.04
+        },
+        {
+          "width": 800,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1024.29
+        },
+        {
+          "width": 820,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1012.87
+        },
+        {
+          "width": 860,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1013.82
+        },
+        {
+          "width": 880,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1026.02
+        },
+        {
+          "width": 900,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1038.21
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 73,
+      "id": "super_mario",
+      "title": "超级玛丽",
+      "file": "super_mario_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "difficulty": 4,
+      "reason": "休止切分、跳进与临时变音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        68
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "a698a42975838251bfdf7149c6596836d45f69322a8035a22b98d8643dae97dc",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1002.22
+        },
+        {
+          "width": 800,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1025.8
+        },
+        {
+          "width": 820,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1014.01
+        },
+        {
+          "width": 860,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1014.43
+        },
+        {
+          "width": 880,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1026.64
+        },
+        {
+          "width": 900,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1038.85
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 74,
+      "id": "zhi_dao_shi_jie_de_jin_tou",
+      "title": "直到世界的尽头",
+      "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "difficulty": 4,
+      "reason": "高音区、切分与导航",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        69
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "7ba39d9aa0a6fcba68559fbf12c88dea1d00843aa79af52eeeedb6418072c767",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1004.33
+        },
+        {
+          "width": 800,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1026.87
+        },
+        {
+          "width": 820,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1015.1
+        },
+        {
+          "width": 860,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1016.57
+        },
+        {
+          "width": 880,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1028.8
+        },
+        {
+          "width": 900,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1041.02
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 75,
+      "id": "qing_niao",
+      "title": "青鸟",
+      "file": "qing_niao_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "difficulty": 4,
+      "reason": "快速节奏与高音区",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        70
+      ],
+      "systems": 13,
+      "systemsPerPage": [
+        13
+      ],
+      "sourceSha256": "185af31948d14e58ee4b0c8ff414e9feba92f8caed45d597aa75d9de98ca930e",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1000.19
+        },
+        {
+          "width": 800,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2031.95
+        },
+        {
+          "width": 820,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1012.11
+        },
+        {
+          "width": 860,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1012.28
+        },
+        {
+          "width": 880,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1024.38
+        },
+        {
+          "width": 900,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1036.49
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 76,
+      "id": "ju_ci_lang_de_xia_tian",
+      "title": "菊次郎的夏天",
+      "file": "ju_ci_lang_de_xia_tian_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "difficulty": 4,
+      "reason": "连续音型与跨小节延音",
+      "width": 900,
+      "relativeScalePercent": 93.33,
+      "noteSizePt": 12.9,
+      "pages": [
+        71
+      ],
+      "systems": 17,
+      "systemsPerPage": [
+        17
+      ],
+      "sourceSha256": "33935ad4368386a17c24f7ed5fb7f3f143143914210bd4211203b57fec51d6d8",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2007.96
+        },
+        {
+          "width": 800,
+          "rows": 19,
+          "pages": 2,
+          "cost": 2030.05
+        },
+        {
+          "width": 820,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2019.5
+        },
+        {
+          "width": 860,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2020.41
+        },
+        {
+          "width": 880,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2032.86
+        },
+        {
+          "width": 900,
+          "rows": 17,
+          "pages": 1,
+          "cost": 1036.04
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 77,
+      "id": "por_una_cabeza",
+      "title": "一步之遥",
+      "file": "por_una_cabeza_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "difficulty": 4,
+      "reason": "探戈切分、装饰与变调",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        72
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "bf12fc39b71a81f87fdc8973057a200dec6036e50927806b655cddbf582c66cb",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1005.04
+        },
+        {
+          "width": 800,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1028.55
+        },
+        {
+          "width": 820,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1016.79
+        },
+        {
+          "width": 860,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1018.46
+        },
+        {
+          "width": 880,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1030.68
+        },
+        {
+          "width": 900,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1042.9
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 78,
+      "id": "beer_barrel_polka",
+      "title": "啤酒桶波尔卡",
+      "file": "beer_barrel_polka_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "difficulty": 4,
+      "reason": "快速二拍子、倚音与变调",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        73
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "1cf04890ac87b654171671c79cb18cc68ff72e94b19d94eff9856a3fd4d14283",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1002.26
+        },
+        {
+          "width": 800,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1025.33
+        },
+        {
+          "width": 820,
+          "rows": 12,
+          "pages": 1,
+          "cost": 1013.52
+        },
+        {
+          "width": 860,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1014.47
+        },
+        {
+          "width": 880,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1026.68
+        },
+        {
+          "width": 900,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1038.89
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 79,
+      "id": "canon",
+      "title": "卡农",
+      "file": "canon_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "综合进阶",
+      "difficulty": 4,
+      "reason": "从长音渐进到十六分音型",
+      "width": 860,
+      "relativeScalePercent": 97.67,
+      "noteSizePt": 13.5,
+      "pages": [
+        74
+      ],
+      "systems": 18,
+      "systemsPerPage": [
+        18
+      ],
+      "sourceSha256": "892b0ef27739bcce4fc18663baead1fec880f4e9315267d35a105a17b99ae8a8",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2009.38
+        },
+        {
+          "width": 800,
+          "rows": 20,
+          "pages": 2,
+          "cost": 2030.7
+        },
+        {
+          "width": 820,
+          "rows": 19,
+          "pages": 2,
+          "cost": 2020.05
+        },
+        {
+          "width": 860,
+          "rows": 18,
+          "pages": 1,
+          "cost": 1012.01
+        },
+        {
+          "width": 880,
+          "rows": 17,
+          "pages": 1,
+          "cost": 1024.16
+        },
+        {
+          "width": 900,
+          "rows": 16,
+          "pages": 1,
+          "cost": 1036.48
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 80,
+      "id": "xi_yang_yang",
+      "title": "喜洋洋",
+      "file": "xi_yang_yang_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "综合进阶",
+      "difficulty": 5,
+      "reason": "快速十六分、连奏与装饰",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        75
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "cf50b781582c55acbf91692ed66c87362bccdf1e51b1476e8116120eb2d53135",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1002.76
+        },
+        {
+          "width": 800,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1025.54
+        },
+        {
+          "width": 820,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1013.74
+        },
+        {
+          "width": 860,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1014.98
+        },
+        {
+          "width": 880,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1027.16
+        },
+        {
+          "width": 900,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1040.28
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 81,
+      "id": "flower_dance",
+      "title": "花之舞",
+      "file": "flower_dance_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "综合进阶",
+      "difficulty": 5,
+      "reason": "长篇幅、快速音型与高音区",
+      "width": 900,
+      "relativeScalePercent": 93.33,
+      "noteSizePt": 12.9,
+      "pages": [
+        76,
+        77
+      ],
+      "systems": 35,
+      "systemsPerPage": [
+        16,
+        19
+      ],
+      "sourceSha256": "532f6bb67573f1895dc5593051ab9645b305a3fcbe7c592f2f72beb366af435c",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 38,
+          "pages": 3,
+          "cost": 3003.64
+        },
+        {
+          "width": 800,
+          "rows": 41,
+          "pages": 3,
+          "cost": 3025.5
+        },
+        {
+          "width": 820,
+          "rows": 39,
+          "pages": 3,
+          "cost": 3014.64
+        },
+        {
+          "width": 860,
+          "rows": 37,
+          "pages": 3,
+          "cost": 3016.76
+        },
+        {
+          "width": 880,
+          "rows": 37,
+          "pages": 3,
+          "cost": 3029.25
+        },
+        {
+          "width": 900,
+          "rows": 35,
+          "pages": 2,
+          "cost": 2036.06
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 82,
+      "id": "turkish_march",
+      "title": "土耳其进行曲",
+      "file": "turkish_march_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "综合进阶",
+      "difficulty": 5,
+      "reason": "快速半音、装饰与多次变调",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        78,
+        79
+      ],
+      "systems": 23,
+      "systemsPerPage": [
+        11,
+        12
+      ],
+      "sourceSha256": "7fbf5d1fafec858b1eb72e0cf47ae489963585518900e1d3c700d3c4dfc017e9",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 23,
+          "pages": 2,
+          "cost": 2000.84
+        },
+        {
+          "width": 800,
+          "rows": 24,
+          "pages": 2,
+          "cost": 2024.19
+        },
+        {
+          "width": 820,
+          "rows": 24,
+          "pages": 2,
+          "cost": 2012.3
+        },
+        {
+          "width": 860,
+          "rows": 23,
+          "pages": 2,
+          "cost": 2013.09
+        },
+        {
+          "width": 880,
+          "rows": 22,
+          "pages": 2,
+          "cost": 2025.79
+        },
+        {
+          "width": 900,
+          "rows": 22,
+          "pages": 2,
+          "cost": 2038.09
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 83,
+      "id": "valsentino",
+      "title": "Valsentino(快速圆舞曲)",
+      "file": "valsentino_01.m3n",
+      "practice": null,
+      "section": "instrumental",
+      "group": "综合进阶",
+      "difficulty": 5,
+      "reason": "快速三拍子、半音、三连音与变调",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        80,
+        81
+      ],
+      "systems": 25,
+      "systemsPerPage": [
+        12,
+        13
+      ],
+      "sourceSha256": "203ad9bd556ae74f25ee4efd219fe1b564ad5d4d4fcd716fb453b2dd5927dbbe",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 25,
+          "pages": 2,
+          "cost": 2001.45
+        },
+        {
+          "width": 800,
+          "rows": 26,
+          "pages": 2,
+          "cost": 2024.64
+        },
+        {
+          "width": 820,
+          "rows": 26,
+          "pages": 2,
+          "cost": 2012.88
+        },
+        {
+          "width": 860,
+          "rows": 24,
+          "pages": 2,
+          "cost": 2014.37
+        },
+        {
+          "width": 880,
+          "rows": 24,
+          "pages": 2,
+          "cost": 2026.71
+        },
+        {
+          "width": 900,
+          "rows": 24,
+          "pages": 2,
+          "cost": 2038.97
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 84,
+      "id": "practice-11",
+      "title": "音阶(替代音)",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "音阶(替代音)",
+      "section": "technique",
+      "group": "音阶与三度",
+      "difficulty": 2,
+      "reason": "熟悉两组八度音阶",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        82
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "8db68d9d349985b18d4cb9fcfca26ba02ec666210c44aaca6a5bc50e99ddb216",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 85,
+      "id": "practice-12",
+      "title": "三度模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "三度模进",
+      "section": "technique",
+      "group": "音阶与三度",
+      "difficulty": 3,
+      "reason": "三度音程与模进",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        82
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "158a818c7ff4ffbcd0f5cb253dcf468108f4946e8e62148c1822c9b2478965a8",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 86,
+      "id": "practice-13",
+      "title": "三度模进倒扣",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "三度模进倒扣",
+      "section": "technique",
+      "group": "音阶与三度",
+      "difficulty": 3,
+      "reason": "改变模进方向",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        82
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "bdbb43ded695afac1c8da8d9cbb2c19157b1d308e17c524ccda7889e56d3a910",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 87,
+      "id": "practice-14",
+      "title": "三度倒模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "三度倒模进",
+      "section": "technique",
+      "group": "音阶与三度",
+      "difficulty": 3,
+      "reason": "反向三度模进",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        82
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "ae7967cb01e5864b88a67f99a5b9452210d778f056c503bdc35c6c6df51b0510",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 88,
+      "id": "practice-26",
+      "title": "五声音阶三度模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "五声音阶三度模进",
+      "section": "technique",
+      "group": "音阶与三度",
+      "difficulty": 3,
+      "reason": "五声音阶跳进",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        82
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "a617845d5fac2f912cea99138c0ca3661543e8edd0f52ac4a4b60454b42b96e7",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 89,
+      "id": "practice-15",
+      "title": "音阶三连模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "音阶三连模进",
+      "section": "technique",
+      "group": "三连音",
+      "difficulty": 3,
+      "reason": "均匀三连音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        83
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "03cc98464a6a9cdd6f746f81bdd33918206df6492c3159a2254ca1f36f1e251a",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.37
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.19
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.54
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.71
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1047.87
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 90,
+      "id": "practice-16",
+      "title": "音阶三连模进倒扣",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "音阶三连模进倒扣",
+      "section": "technique",
+      "group": "三连音",
+      "difficulty": 3,
+      "reason": "交替方向的三连音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        83
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "d02cebae56f2fc0f0cea5cafab757c6a5b0e5b714045ce66fbbe857233860497",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.37
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.19
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.54
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.71
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1047.87
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 91,
+      "id": "practice-17",
+      "title": "音阶三连倒模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "音阶三连倒模进",
+      "section": "technique",
+      "group": "三连音",
+      "difficulty": 3,
+      "reason": "反向三连音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        84
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "fea60ec7d3cdd7cdc90b9996a0539ef57be326f591d3e726c0fa3016d21831e0",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.37
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.19
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.54
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.71
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1047.87
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 92,
+      "id": "practice-27",
+      "title": "五声音阶三连模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "五声音阶三连模进",
+      "section": "technique",
+      "group": "三连音",
+      "difficulty": 3,
+      "reason": "五声性三连音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        84
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "328167fc4f0fbe9488eee06703c5ee461b4ca39a119874809577636fa117ca7c",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1013.35
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.05
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.2
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.49
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.62
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1049.75
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 93,
+      "id": "practice-21",
+      "title": "三和弦三连模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "三和弦三连模进",
+      "section": "technique",
+      "group": "三连音",
+      "difficulty": 4,
+      "reason": "分解三和弦与三连音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        84
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "4975d77f6c215e935c9cb66d30efd2bae0469001d5a49560742100a2fe882296",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.37
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.19
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.54
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.71
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1047.87
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 94,
+      "id": "practice-23",
+      "title": "四度模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "四度模进",
+      "section": "technique",
+      "group": "音程跳进",
+      "difficulty": 3,
+      "reason": "四度移孔",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        85
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "477ab885129cfb9a7f809e5f129a0fadbc58f987bd91dd6cfc62d86cb6312578",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 95,
+      "id": "practice-24",
+      "title": "五度模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "五度模进",
+      "section": "technique",
+      "group": "音程跳进",
+      "difficulty": 3,
+      "reason": "五度移孔",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        85
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "56dc1c38ce66502279f515af8697c8be8b98ffeff7cd846a8d9fdd6746e57c0a",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 96,
+      "id": "practice-25",
+      "title": "六度模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "六度模进",
+      "section": "technique",
+      "group": "音程跳进",
+      "difficulty": 4,
+      "reason": "六度移孔",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        85
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "1bfb38f80f7c0520f64d8f8826d2e59e279f4b7e9b1d7dd34d421feee18e1e6b",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 97,
+      "id": "practice-18",
+      "title": "音阶四连模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "音阶四连模进",
+      "section": "technique",
+      "group": "十六分音型",
+      "difficulty": 4,
+      "reason": "均匀十六分音符",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        86
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "41c1a727c5cf4171659bcf71cff8f5bbcc13e502a2904bcb2af6812500bc5357",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.52
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.19
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.36
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.67
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.82
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1048.96
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 98,
+      "id": "practice-19",
+      "title": "音阶四连模进倒扣",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "音阶四连模进倒扣",
+      "section": "technique",
+      "group": "十六分音型",
+      "difficulty": 4,
+      "reason": "交替方向的十六分",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        86
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "decb710d19d76eec35696f00fd9d547947196439fe234e5f1fe6d5f013bf4a0e",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.52
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.19
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.36
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.67
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.82
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1048.96
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 99,
+      "id": "practice-20",
+      "title": "音阶四连倒模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "音阶四连倒模进",
+      "section": "technique",
+      "group": "十六分音型",
+      "difficulty": 4,
+      "reason": "反向十六分",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        87
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "87add5be091f4c32c261f3296eaa380cd5f7205b424344e3b4b0b79815d1c7a4",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.52
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.19
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.36
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.67
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.82
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1048.96
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 100,
+      "id": "practice-28",
+      "title": "五声音阶四连模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "五声音阶四连模进",
+      "section": "technique",
+      "group": "十六分音型",
+      "difficulty": 4,
+      "reason": "五声性十六分",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        87
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "5108f98b0c1688deefb391d9d81884482eab6ed548bce8c57b4f491bcbd0c591",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 101,
+      "id": "practice-22",
+      "title": "三和弦四连模进",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "三和弦四连模进",
+      "section": "technique",
+      "group": "十六分音型",
+      "difficulty": 4,
+      "reason": "分解和弦十六分",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        87
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "f2f2add8f5a09262a7591d43fdefb371c74418b99c069f0b334bf8eb82e11716",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.52
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.19
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.36
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.67
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.82
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1048.96
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 102,
+      "id": "practice-01",
+      "title": "快速吹吸切换",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "快速吹吸切换",
+      "section": "technique",
+      "group": "机能与奏法",
+      "difficulty": 4,
+      "reason": "同孔快速吹吸",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        88
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "b98f68bdcc152a28bc31e3b5e379d811d9b97a07fff98ffd2436fdb8ab911137",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 103,
+      "id": "practice-07",
+      "title": "移孔吹吸切换",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "移孔吹吸切换",
+      "section": "technique",
+      "group": "机能与奏法",
+      "difficulty": 4,
+      "reason": "移孔与吹吸协调",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        88
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "0b5ff7728069eabfbda3bb01965d4a34aa6a7cc5e80573f8bec364bdc18e7b96",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 104,
+      "id": "practice-08",
+      "title": "移孔按键切换",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "移孔按键切换",
+      "section": "technique",
+      "group": "机能与奏法",
+      "difficulty": 4,
+      "reason": "移孔与按键协调",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        88
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "8e0f59049c6ce7252993ad7bda2dc9c5881593f70733b7b24d8f5b0b3e063df7",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 105,
+      "id": "practice-09",
+      "title": "按键吹吸切换",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "按键吹吸切换",
+      "section": "technique",
+      "group": "机能与奏法",
+      "difficulty": 4,
+      "reason": "按键与吹吸协调",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        88
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "8dcab6df0908f660cdcc70dd1f7c41c62722703ec118664586c7ee3350acde43",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 106,
+      "id": "practice-10",
+      "title": "跨孔",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "跨孔",
+      "section": "technique",
+      "group": "机能与奏法",
+      "difficulty": 4,
+      "reason": "大跨度快速移孔",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        89
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "168d4748d8deeef32ffc7ce9d7e872c8e6c41140fb753caf50e52a3122548019",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1014.04
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.77
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.91
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1026.17
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.29
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.4
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 107,
+      "id": "practice-05",
+      "title": "断音",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "断音",
+      "section": "technique",
+      "group": "机能与奏法",
+      "difficulty": 4,
+      "reason": "快速断音",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        89
+      ],
+      "systems": 1,
+      "systemsPerPage": [
+        1
+      ],
+      "sourceSha256": "1f8122e74958e9b62ec9e80e657353e38118ff72280fd805f261015efc379b5c",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1013.76
+        },
+        {
+          "width": 800,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1037.48
+        },
+        {
+          "width": 820,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.62
+        },
+        {
+          "width": 860,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1025.89
+        },
+        {
+          "width": 880,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1038.02
+        },
+        {
+          "width": 900,
+          "rows": 1,
+          "pages": 1,
+          "cost": 1050.14
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 108,
+      "id": "practice-06",
+      "title": "节奏",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "节奏",
+      "section": "technique",
+      "group": "机能与奏法",
+      "difficulty": 4,
+      "reason": "断音中的节奏组合",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        89
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "6e5ce8c54da7cc89cb51bf34efeedf62e159a9dbc319d3c6a5beded3f5cca8be",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.88
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.53
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.71
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1024.04
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1036.2
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1048.36
+        }
+      ],
+      "reviewNote": ""
+    },
+    {
+      "order": 109,
+      "id": "practice-04",
+      "title": "震音",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "practice": "震音",
+      "section": "technique",
+      "group": "机能与奏法",
+      "difficulty": 4,
+      "reason": "持续音与震音控制",
+      "width": 840,
+      "relativeScalePercent": 100,
+      "noteSizePt": 13.82,
+      "pages": [
+        89
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "8a81c75decece0402b69460ba23d6658cc09607c8ff7e61edb43494257d85ae0",
+      "candidates": [
+        {
+          "width": 840,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.47
+        },
+        {
+          "width": 800,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.1
+        },
+        {
+          "width": 820,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.29
+        },
+        {
+          "width": 860,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1023.64
+        },
+        {
+          "width": 880,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1035.8
+        },
+        {
+          "width": 900,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1047.96
+        }
+      ],
+      "reviewNote": ""
+    }
+  ],
+  "pages": [
+    {
+      "page": 6,
+      "section": "basics",
+      "fillPercent": 99.4,
+      "items": [
+        {
+          "id": "practice-02",
+          "title": "长音",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 215.78
+        },
+        {
+          "id": "practice-03",
+          "title": "渐强渐弱",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 245.78,
+          "height": 228.22
+        },
+        {
+          "id": "xiao_xing_xing",
+          "title": "小星星",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 504,
+          "height": 184.35
+        },
+        {
+          "id": "wo_he_ni",
+          "title": "我和你",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 840,
+          "top": 718.35,
+          "height": 240.95
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "section": "basics",
+      "fillPercent": 85.8,
+      "items": [
+        {
+          "id": "long_long_ago",
+          "title": "很久以前",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 290.68
+        },
+        {
+          "id": "song_bie",
+          "title": "送别",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 320.68,
+          "height": 281.37
+        },
+        {
+          "id": "hong_he_gu",
+          "title": "红河谷",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 632.05,
+          "height": 195.74
+        }
+      ]
+    },
+    {
+      "page": 8,
+      "section": "basics",
+      "fillPercent": 95.9,
+      "items": [
+        {
+          "id": "su_shan_na",
+          "title": "苏珊娜",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 227.51
+        },
+        {
+          "id": "xiao_hong_mao",
+          "title": "小红帽",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 840,
+          "top": 257.51,
+          "height": 233.32
+        },
+        {
+          "id": "duo_lai_mi",
+          "title": "哆唻咪",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 840,
+          "top": 520.83,
+          "height": 404.21
+        }
+      ]
+    },
+    {
+      "page": 9,
+      "section": "basics",
+      "fillPercent": 63.8,
+      "items": [
+        {
+          "id": "chong_er_fei",
+          "title": "虫儿飞",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 284.13
+        },
+        {
+          "id": "rang_wo_men_dang_qi_shuang_jiang",
+          "title": "让我们荡起双桨",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 314.13,
+          "height": 301.7
+        }
+      ]
+    },
+    {
+      "page": 10,
+      "section": "basics",
+      "fillPercent": 68.9,
+      "items": [
+        {
+          "id": "huan_le_song",
+          "title": "欢乐颂",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 664.59
+        }
+      ]
+    },
+    {
+      "page": 11,
+      "section": "folk",
+      "fillPercent": 88.1,
+      "items": [
+        {
+          "id": "auld_lang_syne",
+          "title": "友谊地久天长",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 239.03
+        },
+        {
+          "id": "mo_si_ke_jiao_wai_de_wan_shang",
+          "title": "莫斯科郊外的晚上",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 840,
+          "top": 269.03,
+          "height": 245.76
+        },
+        {
+          "id": "san_tao_che",
+          "title": "三套车",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 544.8,
+          "height": 305.84
+        }
+      ]
+    },
+    {
+      "page": 12,
+      "section": "folk",
+      "fillPercent": 92.3,
+      "items": [
+        {
+          "id": "scarborough_fair",
+          "title": "斯卡布罗集市",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 299.8
+        },
+        {
+          "id": "sound_of_silence",
+          "title": "寂静之声",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 840,
+          "top": 329.8,
+          "height": 252.75
+        },
+        {
+          "id": "ai_er_lan_hua_mei",
+          "title": "爱尔兰画眉",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 612.56,
+          "height": 278.42
+        }
+      ]
+    },
+    {
+      "page": 13,
+      "section": "folk",
+      "fillPercent": 92.1,
+      "items": [
+        {
+          "id": "mo_li_hua",
+          "title": "茉莉花",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 303.14
+        },
+        {
+          "id": "katyusha",
+          "title": "喀秋莎",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 840,
+          "top": 333.14,
+          "height": 237.1
+        },
+        {
+          "id": "wo_niu_yu_huang_li_niao",
+          "title": "蜗牛与黄鹂鸟",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 600.24,
+          "height": 288.98
+        }
+      ]
+    },
+    {
+      "page": 14,
+      "section": "folk",
+      "fillPercent": 76.8,
+      "items": [
+        {
+          "id": "hong_mei_hua_er_kai",
+          "title": "红莓花儿开",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 741.04
+        }
+      ]
+    },
+    {
+      "page": 15,
+      "section": "folk",
+      "fillPercent": 97.3,
+      "items": [
+        {
+          "id": "the_internationale",
+          "title": "国际歌",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 939.42
+        }
+      ]
+    },
+    {
+      "page": 16,
+      "section": "folk",
+      "fillPercent": 81.6,
+      "items": [
+        {
+          "id": "wo_de_zu_guo",
+          "title": "我的祖国",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 787.55
+        }
+      ]
+    },
+    {
+      "page": 17,
+      "section": "folk",
+      "fillPercent": 86.5,
+      "items": [
+        {
+          "id": "wo_he_wo_de_zu_guo",
+          "title": "我和我的祖国",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 835.03
+        }
+      ]
+    },
+    {
+      "page": 18,
+      "section": "pop",
+      "fillPercent": 78.1,
+      "items": [
+        {
+          "id": "yue_liang_dai_biao_wo_de_xin",
+          "title": "月亮代表我的心",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 754.14
+        }
+      ]
+    },
+    {
+      "page": 19,
+      "section": "pop",
+      "fillPercent": 47.6,
+      "items": [
+        {
+          "id": "qian_nv_you_hun",
+          "title": "倩女幽魂",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 459.45
+        }
+      ]
+    },
+    {
+      "page": 20,
+      "section": "pop",
+      "fillPercent": 67,
+      "items": [
+        {
+          "id": "li_hua_you_kai_fang",
+          "title": "梨花又开放",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 646.99
+        }
+      ]
+    },
+    {
+      "page": 21,
+      "section": "pop",
+      "fillPercent": 90.9,
+      "items": [
+        {
+          "id": "bai_hua_lin",
+          "title": "白桦林",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 900,
+          "top": 0,
+          "height": 876.9
+        }
+      ]
+    },
+    {
+      "page": 22,
+      "section": "pop",
+      "fillPercent": 90.4,
+      "items": [
+        {
+          "id": "guang_yin_de_gu_shi",
+          "title": "光阴的故事",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 872.1
+        }
+      ]
+    },
+    {
+      "page": 23,
+      "section": "pop",
+      "fillPercent": 95.1,
+      "items": [
+        {
+          "id": "tong_zhuo_de_ni",
+          "title": "同桌的你",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 917.3
+        }
+      ]
+    },
+    {
+      "page": 24,
+      "section": "pop",
+      "fillPercent": 68.4,
+      "items": [
+        {
+          "id": "xiang_si",
+          "title": "相思",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 660.09
+        }
+      ]
+    },
+    {
+      "page": 25,
+      "section": "pop",
+      "fillPercent": 99.1,
+      "items": [
+        {
+          "id": "bei_jia_er_hu_pan",
+          "title": "贝加尔湖畔",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 880,
+          "top": 0,
+          "height": 956.15
+        }
+      ]
+    },
+    {
+      "page": 26,
+      "section": "pop",
+      "fillPercent": 84.8,
+      "items": [
+        {
+          "id": "yu_jian",
+          "title": "遇见",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 818.76
+        }
+      ]
+    },
+    {
+      "page": 27,
+      "section": "pop",
+      "fillPercent": 73.7,
+      "items": [
+        {
+          "id": "huang_hun",
+          "title": "黄昏",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 710.85
+        }
+      ]
+    },
+    {
+      "page": 28,
+      "section": "pop",
+      "fillPercent": 92.4,
+      "items": [
+        {
+          "id": "an_xiang",
+          "title": "暗香",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 891.19
+        }
+      ]
+    },
+    {
+      "page": 29,
+      "section": "pop",
+      "fillPercent": 92.7,
+      "items": [
+        {
+          "id": "mei_li_de_shen_hua",
+          "title": "美丽的神话",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 894.35
+        }
+      ]
+    },
+    {
+      "page": 30,
+      "section": "pop",
+      "fillPercent": 82.6,
+      "items": [
+        {
+          "id": "dang_nian_qing",
+          "title": "当年情",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 797.16
+        }
+      ]
+    },
+    {
+      "page": 31,
+      "section": "pop",
+      "fillPercent": 52.9,
+      "items": [
+        {
+          "id": "tie_xue_dan_xin",
+          "title": "铁血丹心",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 510.16
+        }
+      ]
+    },
+    {
+      "page": 32,
+      "section": "pop",
+      "fillPercent": 57.2,
+      "items": [
+        {
+          "id": "san_bu",
+          "title": "散步",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 551.67
+        }
+      ]
+    },
+    {
+      "page": 33,
+      "section": "pop",
+      "fillPercent": 59.5,
+      "items": [
+        {
+          "id": "qiu_ying",
+          "title": "秋樱",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 573.99
+        }
+      ]
+    },
+    {
+      "page": 34,
+      "section": "pop",
+      "fillPercent": 68.4,
+      "items": [
+        {
+          "id": "man_bu_ren_sheng_lu",
+          "title": "漫步人生路",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 660.32
+        }
+      ]
+    },
+    {
+      "page": 35,
+      "section": "pop",
+      "fillPercent": 78,
+      "items": [
+        {
+          "id": "wo_zhi_zai_hu_ni",
+          "title": "我只在乎你",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 752.61
+        }
+      ]
+    },
+    {
+      "page": 36,
+      "section": "pop",
+      "fillPercent": 94.7,
+      "items": [
+        {
+          "id": "guo_huo",
+          "title": "过火",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 914.21
+        }
+      ]
+    },
+    {
+      "page": 37,
+      "section": "pop",
+      "fillPercent": 80.1,
+      "items": [
+        {
+          "id": "yue_ding",
+          "title": "约定",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 772.85
+        }
+      ]
+    },
+    {
+      "page": 38,
+      "section": "pop",
+      "fillPercent": 81.1,
+      "items": [
+        {
+          "id": "hou_lai",
+          "title": "后来",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 782.9
+        }
+      ]
+    },
+    {
+      "page": 39,
+      "section": "pop",
+      "fillPercent": 79.7,
+      "items": [
+        {
+          "id": "hou_lai",
+          "title": "后来",
+          "systems": [
+            10,
+            19
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 768.95
+        }
+      ]
+    },
+    {
+      "page": 40,
+      "section": "pop",
+      "fillPercent": 77.9,
+      "items": [
+        {
+          "id": "tong_hua_zhen",
+          "title": "童话镇",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 752.06
+        }
+      ]
+    },
+    {
+      "page": 41,
+      "section": "pop",
+      "fillPercent": 75.9,
+      "items": [
+        {
+          "id": "tong_hua_zhen",
+          "title": "童话镇",
+          "systems": [
+            8,
+            16
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 732.76
+        }
+      ]
+    },
+    {
+      "page": 42,
+      "section": "pop",
+      "fillPercent": 69.3,
+      "items": [
+        {
+          "id": "lao_nan_hai",
+          "title": "老男孩",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 668.69
+        }
+      ]
+    },
+    {
+      "page": 43,
+      "section": "pop",
+      "fillPercent": 71.9,
+      "items": [
+        {
+          "id": "lao_nan_hai",
+          "title": "老男孩",
+          "systems": [
+            7,
+            13
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 694.24
+        }
+      ]
+    },
+    {
+      "page": 44,
+      "section": "pop",
+      "fillPercent": 59.8,
+      "items": [
+        {
+          "id": "liang_liang",
+          "title": "凉凉",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 576.8
+        }
+      ]
+    },
+    {
+      "page": 45,
+      "section": "pop",
+      "fillPercent": 59.6,
+      "items": [
+        {
+          "id": "liang_liang",
+          "title": "凉凉",
+          "systems": [
+            6,
+            11
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 575.15
+        }
+      ]
+    },
+    {
+      "page": 46,
+      "section": "pop",
+      "fillPercent": 66.3,
+      "items": [
+        {
+          "id": "qian_si_xi",
+          "title": "牵丝戏",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 639.57
+        }
+      ]
+    },
+    {
+      "page": 47,
+      "section": "pop",
+      "fillPercent": 59.1,
+      "items": [
+        {
+          "id": "qian_si_xi",
+          "title": "牵丝戏",
+          "systems": [
+            7,
+            12
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 570.65
+        }
+      ]
+    },
+    {
+      "page": 48,
+      "section": "pop",
+      "fillPercent": 91.5,
+      "items": [
+        {
+          "id": "ren_shi_jian",
+          "title": "人世间",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 900,
+          "top": 0,
+          "height": 882.83
+        }
+      ]
+    },
+    {
+      "page": 49,
+      "section": "pop",
+      "fillPercent": 63.3,
+      "items": [
+        {
+          "id": "zhi_yao_ping_fan",
+          "title": "只要平凡",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 611.14
+        }
+      ]
+    },
+    {
+      "page": 50,
+      "section": "pop",
+      "fillPercent": 99.3,
+      "items": [
+        {
+          "id": "shi_jie_zeng_yu_wo_de",
+          "title": "世界赠予我的",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 880,
+          "top": 0,
+          "height": 958.32
+        }
+      ]
+    },
+    {
+      "page": 51,
+      "section": "pop",
+      "fillPercent": 99.6,
+      "items": [
+        {
+          "id": "ming_tian_hui_geng_hao",
+          "title": "明天会更好",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 900,
+          "top": 0,
+          "height": 961.32
+        }
+      ]
+    },
+    {
+      "page": 52,
+      "section": "pop",
+      "fillPercent": 96.4,
+      "items": [
+        {
+          "id": "man_man_xi_huan_ni",
+          "title": "慢慢喜欢你",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 900,
+          "top": 0,
+          "height": 930.63
+        }
+      ]
+    },
+    {
+      "page": 53,
+      "section": "pop",
+      "fillPercent": 79.5,
+      "items": [
+        {
+          "id": "xin_bu_liao_qing",
+          "title": "新不了情",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 766.98
+        }
+      ]
+    },
+    {
+      "page": 54,
+      "section": "pop",
+      "fillPercent": 65.9,
+      "items": [
+        {
+          "id": "wo_yao_ni",
+          "title": "我要你",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 636.09
+        }
+      ]
+    },
+    {
+      "page": 55,
+      "section": "pop",
+      "fillPercent": 91.9,
+      "items": [
+        {
+          "id": "annie",
+          "title": "安妮",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 860,
+          "top": 0,
+          "height": 886.48
+        }
+      ]
+    },
+    {
+      "page": 56,
+      "section": "pop",
+      "fillPercent": 96.9,
+      "items": [
+        {
+          "id": "yi_qian_ge_shang_xin_de_li_you",
+          "title": "一千个伤心的理由",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 860,
+          "top": 0,
+          "height": 935.33
+        }
+      ]
+    },
+    {
+      "page": 57,
+      "section": "pop",
+      "fillPercent": 94.2,
+      "items": [
+        {
+          "id": "yue_ban_xiao_ye_qu",
+          "title": "月半小夜曲",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 860,
+          "top": 0,
+          "height": 908.8
+        }
+      ]
+    },
+    {
+      "page": 58,
+      "section": "pop",
+      "fillPercent": 96.1,
+      "items": [
+        {
+          "id": "andy",
+          "title": "ANDY",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 926.96
+        }
+      ]
+    },
+    {
+      "page": 59,
+      "section": "pop",
+      "fillPercent": 95.3,
+      "items": [
+        {
+          "id": "ting_hai",
+          "title": "听海",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 880,
+          "top": 0,
+          "height": 919.47
+        }
+      ]
+    },
+    {
+      "page": 60,
+      "section": "pop",
+      "fillPercent": 75.8,
+      "items": [
+        {
+          "id": "ru_yuan",
+          "title": "如愿",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 731
+        }
+      ]
+    },
+    {
+      "page": 61,
+      "section": "pop",
+      "fillPercent": 67.7,
+      "items": [
+        {
+          "id": "ru_yuan",
+          "title": "如愿",
+          "systems": [
+            8,
+            15
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 653.5
+        }
+      ]
+    },
+    {
+      "page": 62,
+      "section": "instrumental",
+      "fillPercent": 96.6,
+      "items": [
+        {
+          "id": "tai_yang_zhao_chang_sheng_qi",
+          "title": "太阳照常升起",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 880,
+          "top": 0,
+          "height": 239.54
+        },
+        {
+          "id": "liang_zhu",
+          "title": "梁祝",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 840,
+          "top": 269.54,
+          "height": 304.23
+        },
+        {
+          "id": "wen_rou_de_qing_su",
+          "title": "温柔的倾诉",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 860,
+          "top": 603.77,
+          "height": 328.74
+        }
+      ]
+    },
+    {
+      "page": 63,
+      "section": "instrumental",
+      "fillPercent": 80,
+      "items": [
+        {
+          "id": "castle_in_the_sky",
+          "title": "天空之城",
+          "systems": [
+            1,
+            15
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 771.54
+        }
+      ]
+    },
+    {
+      "page": 64,
+      "section": "instrumental",
+      "fillPercent": 69.2,
+      "items": [
+        {
+          "id": "xia_yu_de_shi_hou",
+          "title": "下雨的时候",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 667.79
+        }
+      ]
+    },
+    {
+      "page": 65,
+      "section": "instrumental",
+      "fillPercent": 83.8,
+      "items": [
+        {
+          "id": "second_waltz",
+          "title": "第二圆舞曲",
+          "systems": [
+            1,
+            13
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 808.38
+        }
+      ]
+    },
+    {
+      "page": 66,
+      "section": "instrumental",
+      "fillPercent": 95.6,
+      "items": [
+        {
+          "id": "doraemon",
+          "title": "哆啦A梦",
+          "systems": [
+            1,
+            15
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 922.8
+        }
+      ]
+    },
+    {
+      "page": 67,
+      "section": "instrumental",
+      "fillPercent": 77.2,
+      "items": [
+        {
+          "id": "yun_gong_xun_yin",
+          "title": "云宫迅音",
+          "systems": [
+            1,
+            13
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 745.14
+        }
+      ]
+    },
+    {
+      "page": 68,
+      "section": "instrumental",
+      "fillPercent": 66.7,
+      "items": [
+        {
+          "id": "super_mario",
+          "title": "超级玛丽",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 643.61
+        }
+      ]
+    },
+    {
+      "page": 69,
+      "section": "instrumental",
+      "fillPercent": 53.4,
+      "items": [
+        {
+          "id": "zhi_dao_shi_jie_de_jin_tou",
+          "title": "直到世界的尽头",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 515.77
+        }
+      ]
+    },
+    {
+      "page": 70,
+      "section": "instrumental",
+      "fillPercent": 90.4,
+      "items": [
+        {
+          "id": "qing_niao",
+          "title": "青鸟",
+          "systems": [
+            1,
+            13
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 872
+        }
+      ]
+    },
+    {
+      "page": 71,
+      "section": "instrumental",
+      "fillPercent": 95.6,
+      "items": [
+        {
+          "id": "ju_ci_lang_de_xia_tian",
+          "title": "菊次郎的夏天",
+          "systems": [
+            1,
+            17
+          ],
+          "width": 900,
+          "top": 0,
+          "height": 922.82
+        }
+      ]
+    },
+    {
+      "page": 72,
+      "section": "instrumental",
+      "fillPercent": 49.8,
+      "items": [
+        {
+          "id": "por_una_cabeza",
+          "title": "一步之遥",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 480.78
+        }
+      ]
+    },
+    {
+      "page": 73,
+      "section": "instrumental",
+      "fillPercent": 66.4,
+      "items": [
+        {
+          "id": "beer_barrel_polka",
+          "title": "啤酒桶波尔卡",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 640.81
+        }
+      ]
+    },
+    {
+      "page": 74,
+      "section": "instrumental",
+      "fillPercent": 97.8,
+      "items": [
+        {
+          "id": "canon",
+          "title": "卡农",
+          "systems": [
+            1,
+            18
+          ],
+          "width": 860,
+          "top": 0,
+          "height": 944.22
+        }
+      ]
+    },
+    {
+      "page": 75,
+      "section": "instrumental",
+      "fillPercent": 62.9,
+      "items": [
+        {
+          "id": "xi_yang_yang",
+          "title": "喜洋洋",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 606.79
+        }
+      ]
+    },
+    {
+      "page": 76,
+      "section": "instrumental",
+      "fillPercent": 94.9,
+      "items": [
+        {
+          "id": "flower_dance",
+          "title": "花之舞",
+          "systems": [
+            1,
+            16
+          ],
+          "width": 900,
+          "top": 0,
+          "height": 915.59
+        }
+      ]
+    },
+    {
+      "page": 77,
+      "section": "instrumental",
+      "fillPercent": 98.3,
+      "items": [
+        {
+          "id": "flower_dance",
+          "title": "花之舞",
+          "systems": [
+            17,
+            35
+          ],
+          "width": 900,
+          "top": 0,
+          "height": 948.48
+        }
+      ]
+    },
+    {
+      "page": 78,
+      "section": "instrumental",
+      "fillPercent": 83.4,
+      "items": [
+        {
+          "id": "turkish_march",
+          "title": "土耳其进行曲",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 805.07
+        }
+      ]
+    },
+    {
+      "page": 79,
+      "section": "instrumental",
+      "fillPercent": 87.9,
+      "items": [
+        {
+          "id": "turkish_march",
+          "title": "土耳其进行曲",
+          "systems": [
+            12,
+            23
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 847.98
+        }
+      ]
+    },
+    {
+      "page": 80,
+      "section": "instrumental",
+      "fillPercent": 82.7,
+      "items": [
+        {
+          "id": "valsentino",
+          "title": "Valsentino(快速圆舞曲)",
+          "systems": [
+            1,
+            12
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 798.22
+        }
+      ]
+    },
+    {
+      "page": 81,
+      "section": "instrumental",
+      "fillPercent": 79.3,
+      "items": [
+        {
+          "id": "valsentino",
+          "title": "Valsentino(快速圆舞曲)",
+          "systems": [
+            13,
+            25
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 765.52
+        }
+      ]
+    },
+    {
+      "page": 82,
+      "section": "technique",
+      "fillPercent": 93.5,
+      "items": [
+        {
+          "id": "practice-11",
+          "title": "音阶(替代音)",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 156.48
+        },
+        {
+          "id": "practice-12",
+          "title": "三度模进",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 186.48,
+          "height": 156.48
+        },
+        {
+          "id": "practice-13",
+          "title": "三度模进倒扣",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 372.96,
+          "height": 156.48
+        },
+        {
+          "id": "practice-14",
+          "title": "三度倒模进",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 559.44,
+          "height": 156.48
+        },
+        {
+          "id": "practice-26",
+          "title": "五声音阶三度模进",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 745.92,
+          "height": 156.48
+        }
+      ]
+    },
+    {
+      "page": 83,
+      "section": "technique",
+      "fillPercent": 52.3,
+      "items": [
+        {
+          "id": "practice-15",
+          "title": "音阶三连模进",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 237.53
+        },
+        {
+          "id": "practice-16",
+          "title": "音阶三连模进倒扣",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 267.53,
+          "height": 237.53
+        }
+      ]
+    },
+    {
+      "page": 84,
+      "section": "technique",
+      "fillPercent": 73.7,
+      "items": [
+        {
+          "id": "practice-17",
+          "title": "音阶三连倒模进",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 237.53
+        },
+        {
+          "id": "practice-27",
+          "title": "五声音阶三连模进",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 267.53,
+          "height": 176.58
+        },
+        {
+          "id": "practice-21",
+          "title": "三和弦三连模进",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 474.11,
+          "height": 237.53
+        }
+      ]
+    },
+    {
+      "page": 85,
+      "section": "technique",
+      "fillPercent": 54.9,
+      "items": [
+        {
+          "id": "practice-23",
+          "title": "四度模进",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 156.48
+        },
+        {
+          "id": "practice-24",
+          "title": "五度模进",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 186.48,
+          "height": 156.48
+        },
+        {
+          "id": "practice-25",
+          "title": "六度模进",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 372.96,
+          "height": 156.48
+        }
+      ]
+    },
+    {
+      "page": 86,
+      "section": "technique",
+      "fillPercent": 44.9,
+      "items": [
+        {
+          "id": "practice-18",
+          "title": "音阶四连模进",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 201.58
+        },
+        {
+          "id": "practice-19",
+          "title": "音阶四连模进倒扣",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 231.58,
+          "height": 201.58
+        }
+      ]
+    },
+    {
+      "page": 87,
+      "section": "technique",
+      "fillPercent": 64.2,
+      "items": [
+        {
+          "id": "practice-20",
+          "title": "音阶四连倒模进",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 201.58
+        },
+        {
+          "id": "practice-28",
+          "title": "五声音阶四连模进",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 231.58,
+          "height": 156.48
+        },
+        {
+          "id": "practice-22",
+          "title": "三和弦四连模进",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 418.06,
+          "height": 201.58
+        }
+      ]
+    },
+    {
+      "page": 88,
+      "section": "technique",
+      "fillPercent": 74.2,
+      "items": [
+        {
+          "id": "practice-01",
+          "title": "快速吹吸切换",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 156.48
+        },
+        {
+          "id": "practice-07",
+          "title": "移孔吹吸切换",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 186.48,
+          "height": 156.48
+        },
+        {
+          "id": "practice-08",
+          "title": "移孔按键切换",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 372.96,
+          "height": 156.48
+        },
+        {
+          "id": "practice-09",
+          "title": "按键吹吸切换",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 559.44,
+          "height": 156.48
+        }
+      ]
+    },
+    {
+      "page": 89,
+      "section": "technique",
+      "fillPercent": 89.8,
+      "items": [
+        {
+          "id": "practice-10",
+          "title": "跨孔",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 0,
+          "height": 156.48
+        },
+        {
+          "id": "practice-05",
+          "title": "断音",
+          "systems": [
+            1,
+            1
+          ],
+          "width": 840,
+          "top": 186.48,
+          "height": 164.56
+        },
+        {
+          "id": "practice-06",
+          "title": "节奏",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 381.04,
+          "height": 221.27
+        },
+        {
+          "id": "practice-04",
+          "title": "震音",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 840,
+          "top": 632.31,
+          "height": 234.27
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "sourceCoverage": true,
+    "exerciseCoverage": true,
+    "geometryCandidates": 644,
+    "outside": 0,
+    "overlaps": 0,
+    "unsafeCuts": 0,
+    "orphanContinuationPages": 0,
+    "outlinedPages": 89,
+    "outlinedPageOverflow": 0
+  }
+}
