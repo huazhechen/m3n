@@ -14,14 +14,19 @@ export async function prepare(fontBase64) {
 }
 
 export function measure(source, width, spacing = {}) {
-  const score = NumberedNotationScore.create(parseM3NDocument(source))
+  const { showCredits = true, ...renderOptions } = spacing
+  const scoreDocument = parseM3NDocument(source)
+  if (!showCredits) {
+    for (const field of ['lyricist', 'composer', 'arranger', 'singer']) scoreDocument[field] = ''
+  }
+  const score = NumberedNotationScore.create(scoreDocument)
   // Inject the same text family for measurements and SVG text.
   const canvas = document.createElement('canvas'), context = canvas.getContext('2d')
   const textMeasurer = { measureText(text, style) {
     context.font = `${style.fontWeight ?? ''} ${style.fontSize ?? 22}px ${style.fontFamily === 'serif' ? '"Scorebook Text"' : style.fontFamily ?? '"Scorebook Text"'}`.trim()
     return { w: Math.max(context.measureText(text).width, style.fontSize * 0.25), h: style.fontSize, baseline: style.fontSize * 0.8 }
   } }
-  const [markup] = score.render({ width, paged: false, includeBass: true, textMeasurer, ...spacing })
+  const [markup] = score.render({ width, paged: false, includeBass: true, textMeasurer, ...renderOptions })
   const host = document.querySelector('#scratch')
   host.innerHTML = markup
   const svg = host.firstElementChild

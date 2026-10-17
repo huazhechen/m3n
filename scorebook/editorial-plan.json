@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第三版 · iPad mini 阅读版",
+  "edition": "第四版 · iPad mini 阅读版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -214,14 +214,15 @@
       "file": "huan_le_song_01.m3n",
       "title": "欢乐颂",
       "section": "basics",
-      "group": "旋律与伴奏初步",
+      "group": "入门旋律综合",
       "difficulty": 2,
-      "reason": "保留原谱低音，先熟悉旋律，再尝试双声部",
+      "reason": "以单声部旋律练习节拍、附点与连贯乐句",
       "width": 780,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "PDF 只显示旋律，原谱低音内容保留。",
+      "includeBass": false
     },
     {
       "id": "auld_lang_syne",
@@ -1187,7 +1188,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复两页，以完整谱行均衡分页并放大快速音型。",
+      "reviewNote": "原谱各乐段及每个后反复符号之后强制换行；保持两页，以完整谱行均衡分页。",
       "widthLocked": true,
       "pageCount": 2
     },
@@ -1200,14 +1201,16 @@
       "difficulty": 5,
       "reason": "快速三拍子、半音、三连音与变调",
       "width": 780,
-      "sharePage": true,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "拆为两页，以完整谱行均衡分页并放大快速音型。",
+      "widthLocked": true,
+      "pageCount": 2
     }
   ],
-  "outputPdf": "循序渐进简谱集-iPad-mini-v3.pdf",
-  "outputKey": "scorebook-ipad-v3",
+  "outputPdf": "循序渐进简谱集-iPad-mini-v4.pdf",
+  "outputKey": "scorebook-ipad-v4",
   "page": {
     "width": 744,
     "height": 1133,
@@ -1217,5 +1220,6 @@
     "scoreMargin": 8,
     "systemGap": 18,
     "shortWorkGap": 22
-  }
+  },
+  "showCredits": false
 }

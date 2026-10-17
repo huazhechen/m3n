@@ -93,12 +93,13 @@ try {
  for(const [i,entry] of plan.entries.entries()) {
   let best,fillPage=false
   const summaries=[],rejectedCandidates=[],sharedLayouts=new Map()
+  const entryOptions={...spacing,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true}
   for(const width of entry.widthLocked?[entry.width]:[...new Set([entry.width,...plan.widthCandidates,...(entry.widthCandidates??[])])]) {
-   const key=createHash('sha256').update(rendererHash+JSON.stringify({...spacing,systemGap:entry.systemGap??spacing.systemGap})+entry.source+width).digest('hex'),cachePath=join(cacheFolder,key+'.json')
+   const key=createHash('sha256').update(rendererHash+JSON.stringify({...entryOptions,systemGap:entry.systemGap??spacing.systemGap})+entry.source+width).digest('hex'),cachePath=join(cacheFolder,key+'.json')
    let layout=existsSync(cachePath)?JSON.parse(readFileSync(cachePath,'utf8')):null
    const rejected=[]
    if(!layout)for(const systemGap of [...new Set([entry.systemGap??spacing.systemGap,20,22,24])]) {
-    const trial=await page.evaluate(({source,width,spacing})=>window.scorebook.measure(source,width,spacing),{source:entry.source,width,spacing:{...spacing,systemGap}}).catch(error=>({renderError:error.message}))
+    const trial=await page.evaluate(({source,width,spacing})=>window.scorebook.measure(source,width,spacing),{source:entry.source,width,spacing:{...entryOptions,systemGap}}).catch(error=>({renderError:error.message}))
     if(trial.renderError||trial.outside.length||trial.overlaps.length||trial.clipped.length){rejected.push({systemGap,reason:trial.renderError??'Unsafe geometry'});continue}
     layout={...trial,systemGap,rejectedSpacing:rejected};break
    }
@@ -175,7 +176,7 @@ try {
  cover+=svgText('82 份完整原谱 · 81 首乐曲与一套每日基本功',78,468,16)
  cover+=svgText(plan.edition,78,506,16)
  for(const [i,section] of plan.sections.entries())cover+=svgText(section.title,78,620+i*43,18)
- cover+=svgText('iPad mini 竖屏 · 适度留边 · 保留歌词、低音与音乐记号',78,937,14)+svgText('难度 1—5 为本谱集当前简谱编配的相对等级。',78,967,14)+svgText('逐曲放大利用页面；快速长曲保留舒展的分页。',78,997,14)
+ cover+=svgText('iPad mini 竖屏 · 适度留边 · 保留旋律、歌词与音乐记号',78,937,14)+svgText('难度 1—5 为本谱集当前简谱编配的相对等级。',78,967,14)+svgText('逐曲放大利用页面；快速长曲保留舒展的分页。',78,997,14)
  pages.push({kind:'cover',svg:pageSvg(cover,1)})
  for(let t=0;t<tocCount;t++) {
   let content=svgText('目录',56,70,30)+svgText(`${t+1} / ${tocCount}`,pageWidth-48,68,14,'text-anchor="end"')
@@ -205,22 +206,22 @@ try {
  }
  const records=measured.map((e,i)=>{
   const first=previousById.get(e.id),second=secondById.get(e.id)
-  return {order:i+1,id:e.id,title:e.title,file:e.file,section:e.section,group:e.group,difficulty:e.difficulty,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),versusV1Percent:first?Number(((bodyWidth/e.layout.width)/(704/first.width*pageWidth/794)*100).toFixed(2)):null,versusV2Percent:second?Number(((bodyWidth/e.layout.width)/(secondEdition.body.width/second.width)*100).toFixed(2)):null,previousPages:first?.pages??[],secondEditionPages:second?.pages??[],pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
+  return {order:i+1,id:e.id,title:e.title,file:e.file,includeBass:e.includeBass??true,section:e.section,group:e.group,difficulty:e.difficulty,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),versusV1Percent:first?Number(((bodyWidth/e.layout.width)/(704/first.width*pageWidth/794)*100).toFixed(2)):null,versusV2Percent:second?Number(((bodyWidth/e.layout.width)/(secondEdition.body.width/second.width)*100).toFixed(2)):null,previousPages:first?.pages??[],secondEditionPages:second?.pages??[],pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
  })
  const pageRecords=musicPages.map((p,i)=>({page:frontCount+i+1,section:p.section,fillPercent:Number((p.used/bodyHeight*100).toFixed(1)),items:p.items.map(item=>({id:item.entry.id,title:item.entry.title,systems:[item.start+1,item.end],width:item.entry.layout.width,systemGap:item.entry.layout.systemGap,top:Number(item.y.toFixed(2)),height:Number(item.height.toFixed(2))}))}))
- const report={title:plan.title,edition:plan.edition,rendererSha256:rendererHash,sourceCount:sourceFiles.length,entryCount:records.length,pageCount:total,frontPages:frontCount,baseWidth:plan.baseWidth,page:profile,body:{width:bodyWidth,height:bodyHeight},entries:records,pages:pageRecords,validation:{sourceCoverage:true,trainingSourcePreserved:true,geometryCandidates:records.reduce((s,e)=>s+e.candidates.length,0),outside:0,overlaps:0,unsafeCuts:0,orphanContinuationPages:pageRecords.flatMap(p=>p.items).filter(item=>item.systems[0]>1&&item.systems[1]-item.systems[0]+1<3).length}}
+ const report={title:plan.title,edition:plan.edition,showCredits:plan.showCredits??true,rendererSha256:rendererHash,sourceCount:sourceFiles.length,entryCount:records.length,pageCount:total,frontPages:frontCount,baseWidth:plan.baseWidth,page:profile,body:{width:bodyWidth,height:bodyHeight},entries:records,pages:pageRecords,validation:{sourceCoverage:true,trainingSourcePreserved:true,geometryCandidates:records.reduce((s,e)=>s+e.candidates.length,0),outside:0,overlaps:0,unsafeCuts:0,orphanContinuationPages:pageRecords.flatMap(p=>p.items).filter(item=>item.systems[0]>1&&item.systems[1]-item.systems[0]+1<3).length}}
  assert.equal(report.validation.orphanContinuationPages,0)
  writeFileSync(join(staged,'layout-record.json'),JSON.stringify(report,null,2)+'\n')
  writeFileSync(join(temp,'unoutlined-pages.json'),JSON.stringify(pages))
  for(const [i,p]of pages.entries()) {
   await page.locator('#print-page').evaluate((host,markup)=>{host.innerHTML=markup},p.svg)
-  // All pages are saved for an actual page-by-page visual review.
+  // Save optional page previews for the user alongside the vector output.
   p.svg=await page.evaluate(()=>window.scorebook.outlinePage())
   assert(!/NaN|Infinity/.test(p.svg), `Outlined page ${i+1} contains invalid coordinates`)
   const outside=await page.evaluate(({pageWidth,pageHeight})=>[...document.querySelectorAll('#print-page path,#print-page line,#print-page circle')].filter(node=>{const b=node.getBoundingClientRect();return b.width&&b.height&&(b.left<-.5||b.right>pageWidth+.5||b.top<-.5||b.bottom>pageHeight+.5)}).map(node=>node.outerHTML.slice(0,160)),{pageWidth,pageHeight})
   assert.equal(outside.length,0,`Outlined page ${i+1} exceeds paper: ${JSON.stringify(outside.slice(0,3))}`)
   await page.locator('#print-page').screenshot({path:join(temp,'pages',`${String(i+1).padStart(3,'0')}.png`)})
-  if(i%10===0)console.log(`Outline / review pages ${i+1}/${pages.length}`)
+  if(i%10===0)console.log(`Outline pages ${i+1}/${pages.length}`)
  }
  // Print already paginated vector SVGs; Chromium never scales individual pages to fit.
  const html=`<!doctype html><meta charset="utf-8"><title>${plan.title} · ${plan.edition}</title><style>@page{size:${pageWidth}px ${pageHeight}px;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0}section{width:${pageWidth}px;height:${pageHeight}px;break-after:page;overflow:hidden}section:last-child{break-after:auto}section>svg{display:block;width:${pageWidth}px;height:${pageHeight}px}</style>${pages.map(p=>`<section>${p.svg}</section>`).join('')}`
@@ -229,7 +230,7 @@ try {
  await page.pdf({path:join(staged,pdfFile),width:`${pageWidth}px`,height:`${pageHeight}px`,printBackground:true,preferCSSPageSize:true,timeout:120000})
  const csv=['序号,编号,曲目,分类,分组,难度,页码,版宽px,相对缩放%,适宽音符px,各页谱行数,排序依据,校阅备注,相比旧版音符大小%,旧版页码,行间留白px,相比第二版音符大小%,第二版页码',...records.map(e=>[e.order,e.id,e.title,plan.sections.find(s=>s.id===e.section).title,e.group,e.difficulty,e.pages.join('/'),e.width,e.relativeScalePercent,e.screenNotePx,e.systemsPerPage.join('/'),e.reason,e.reviewNote,e.versusV1Percent,e.previousPages.join('/'),e.systemGap,e.versusV2Percent,e.secondEditionPages.join('/')].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))].join('\n')
  writeFileSync(join(staged,'排序与缩放记录.csv'),'\uFEFF'+csv+'\n')
- let md=`# 简谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：81 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按当前简谱编配的节奏、音域、临时变音、连音组、装饰、变拍和反复复杂度评为 1—5 级；这是编辑分级，不是考级等级。分类内优先兼顾风格与学习目标，再按难度推进。\n\n默认版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的 iPad mini 竖屏比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px，谱行最小留白 ${profile.systemGap}px（旧版24px；密集连线按需要保留20—24px）。单页曲目在 520—960px 候选中优先选择能完整容纳的最小版宽，以便放大音符；很短的曲目保留适度留白，合页短曲统一字号，候选最小640px。《土耳其进行曲》固定780px、均衡分两页；每日基本功按原谱整体分页。保留原谱的歌词、低音、原有建议速度与音乐记号。相比旧版的百分比均按同一设备适宽显示计算，100%表示与对应版本相同；不是印刷字号。\n\n|序号|曲目 / 练习|难度|页码|版宽 px|相对缩放|谱行分配|行间留白px|同屏音符 / 第一版|同屏音符 / 第二版|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|---|---|\n`
+ let md=`# 简谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：81 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按当前简谱编配的节奏、音域、临时变音、连音组、装饰、变拍和反复复杂度评为 1—5 级；这是编辑分级，不是考级等级。分类内优先兼顾风格与学习目标，再按难度推进。\n\n默认版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的 iPad mini 竖屏比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px，谱行最小留白 ${profile.systemGap}px（旧版24px；密集连线按需要保留20—24px）。单页曲目在 520—960px 候选中优先选择能完整容纳的最小版宽，以便放大音符；很短的曲目保留适度留白，合页短曲统一字号，候选最小640px。《土耳其进行曲》与《Valsentino(快速圆舞曲)》固定780px、各分两页；每日基本功按原谱整体分页。${plan.showCredits===false?'PDF 统一隐藏作词、作曲、编曲、演唱等右侧署名。':''}《欢乐颂》按条目设置隐藏低音谱表；原谱署名与低音内容仍保留。保留原谱的歌词、原有建议速度与音乐记号。相比旧版的百分比均按同一设备适宽显示计算，100%表示与对应版本相同；不是印刷字号。\n\n|序号|曲目 / 练习|难度|页码|版宽 px|相对缩放|谱行分配|行间留白px|同屏音符 / 第一版|同屏音符 / 第二版|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|---|---|\n`
  for(const section of plan.sections) {
   md+=`| |**${section.title}**| | | | | | | | |${section.description}|\n`
   for(const e of records.filter(e=>e.section===section.id))md+=`|${String(e.order).padStart(3,'0')}|${e.title}|${e.difficulty}|${e.pages.join('、')}|${e.width}|${e.relativeScalePercent}%|${e.systemsPerPage.join(' + ')}|${e.systemGap}|${e.versusV1Percent===null?'—':e.versusV1Percent+'%'}|${e.versusV2Percent===null?'—':e.versusV2Percent+'%'}|${e.reason}${e.reviewNote?'；'+e.reviewNote:''}|\n`

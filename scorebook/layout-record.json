@@ -1,10 +1,11 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第三版 · iPad mini 阅读版",
-  "rendererSha256": "fe1859912682cb6680314c33dc36e35b7f0bcaca861a8daeb5e423ccdc4580c3",
+  "edition": "第四版 · iPad mini 阅读版",
+  "showCredits": false,
+  "rendererSha256": "fdd5ad72b21ff4746ece02cf98ff3773ffdb0bf8e8e595596b8aca60fb23e697",
   "sourceCount": 82,
   "entryCount": 82,
-  "pageCount": 76,
+  "pageCount": 77,
   "frontPages": 4,
   "baseWidth": 780,
   "page": {
@@ -27,6 +28,7 @@
       "id": "ban_yin_jie_kou_qin_ji_ben_gong",
       "title": "半音阶口琴基本功",
       "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "每日训练",
       "difficulty": 4,
@@ -69,6 +71,7 @@
       "id": "xiao_xing_xing",
       "title": "小星星",
       "file": "xiao_xing_xing_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "长音与稳定节拍",
       "difficulty": 1,
@@ -106,28 +109,28 @@
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1165.39
+          "cost": 1166.07
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1153.72
+          "cost": 1154.37
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1142.02
+          "cost": 1142.66
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1130.31
+          "cost": 1130.94
         },
         {
           "width": 600,
@@ -265,6 +268,7 @@
       "id": "wo_he_ni",
       "title": "我和你",
       "file": "wo_he_ni_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "长音与稳定节拍",
       "difficulty": 1,
@@ -295,161 +299,161 @@
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1012.57
+          "cost": 1013
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1162.6
+          "cost": 1164.5
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1150.97
+          "cost": 1152.84
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1139.32
+          "cost": 1141.16
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1127.65
+          "cost": 1129.46
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1117.27
+          "cost": 1117.75
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1105.55
+          "cost": 1106.02
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1093.82
+          "cost": 1094.28
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1082.07
+          "cost": 1082.53
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1070.32
+          "cost": 1070.77
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1058.55
+          "cost": 1058.99
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1046.77
+          "cost": 1047.21
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1034.98
+          "cost": 1035.41
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1024.4
+          "cost": 1024.84
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1024.73
+          "cost": 1025.16
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1036.89
+          "cost": 1037.31
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1049.04
+          "cost": 1049.45
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1061.19
+          "cost": 1061.59
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1073.33
+          "cost": 1073.72
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1085.46
+          "cost": 1085.85
         },
         {
           "width": 920,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1097.59
+          "cost": 1097.97
         },
         {
           "width": 940,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1109.71
+          "cost": 1110.09
         },
         {
           "width": 960,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1121.83
+          "cost": 1122.2
         }
       ],
       "rejectedCandidates": [],
@@ -461,6 +465,7 @@
       "id": "long_long_ago",
       "title": "很久以前",
       "file": "long_long_ago_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "八分音符入门",
       "difficulty": 1,
@@ -498,28 +503,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1160.62
+          "cost": 1161.09
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1148.97
+          "cost": 1149.45
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1137.32
+          "cost": 1137.79
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1125.65
+          "cost": 1126.11
         },
         {
           "width": 600,
@@ -657,6 +662,7 @@
       "id": "song_bie",
       "title": "送别",
       "file": "song_bie_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "八分音符入门",
       "difficulty": 1,
@@ -694,28 +700,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1160.36
+          "cost": 1161.36
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1149.88
+          "cost": 1150.98
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1138.24
+          "cost": 1139.33
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1127.89
+          "cost": 1129.07
         },
         {
           "width": 600,
@@ -853,6 +859,7 @@
       "id": "hong_he_gu",
       "title": "红河谷",
       "file": "hong_he_gu_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "八分音符入门",
       "difficulty": 1,
@@ -890,28 +897,28 @@
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1164.96
+          "cost": 1165.61
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1153.27
+          "cost": 1153.91
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1141.57
+          "cost": 1142.2
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1129.85
+          "cost": 1130.47
         },
         {
           "width": 600,
@@ -1049,16 +1056,17 @@
       "id": "su_shan_na",
       "title": "苏珊娜",
       "file": "su_shan_na_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "活泼的二拍子",
       "difficulty": 2,
       "reason": "重复节奏与八分音符",
-      "width": 700,
+      "width": 680,
       "systemGap": 18,
-      "relativeScalePercent": 111.43,
-      "screenNotePx": 21.87,
-      "versusV1Percent": 126.61,
-      "versusV2Percent": 106.53,
+      "relativeScalePercent": 114.71,
+      "screenNotePx": 22.52,
+      "versusV1Percent": 130.33,
+      "versusV2Percent": 109.66,
       "previousPages": [
         8
       ],
@@ -1086,28 +1094,28 @@
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1163.88
+          "cost": 1164.5
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1152.23
+          "cost": 1152.84
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1140.56
+          "cost": 1141.16
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1128.88
+          "cost": 1129.46
         },
         {
           "width": 600,
@@ -1245,16 +1253,17 @@
       "id": "xiao_hong_mao",
       "title": "小红帽",
       "file": "xiao_hong_mao_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "活泼的二拍子",
       "difficulty": 2,
       "reason": "连续八分音符与跳进",
-      "width": 700,
+      "width": 680,
       "systemGap": 18,
-      "relativeScalePercent": 111.43,
-      "screenNotePx": 21.87,
-      "versusV1Percent": 126.61,
-      "versusV2Percent": 106.53,
+      "relativeScalePercent": 114.71,
+      "screenNotePx": 22.52,
+      "versusV1Percent": 130.33,
+      "versusV2Percent": 109.66,
       "previousPages": [
         8
       ],
@@ -1282,28 +1291,28 @@
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1162.3
+          "cost": 1162.85
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1150.67
+          "cost": 1151.22
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1139.03
+          "cost": 1139.57
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1127.36
+          "cost": 1127.9
         },
         {
           "width": 600,
@@ -1441,16 +1450,17 @@
       "id": "duo_lai_mi",
       "title": "哆唻咪",
       "file": "duo_lai_mi_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "活泼的二拍子",
       "difficulty": 2,
       "reason": "音阶进行与节奏变化",
-      "width": 700,
+      "width": 680,
       "systemGap": 18,
-      "relativeScalePercent": 111.43,
-      "screenNotePx": 21.87,
-      "versusV1Percent": 126.61,
-      "versusV2Percent": 106.53,
+      "relativeScalePercent": 114.71,
+      "screenNotePx": 22.52,
+      "versusV1Percent": 130.33,
+      "versusV2Percent": 109.66,
       "previousPages": [
         8
       ],
@@ -1471,161 +1481,161 @@
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1008.15
+          "cost": 1008.5
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 8,
           "pages": 1,
-          "cost": 1156.77
+          "cost": 1157.5
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1145.63
+          "cost": 1146.59
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1133.93
+          "cost": 1134.92
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1122.23
+          "cost": 1123.25
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1112.31
+          "cost": 1112.64
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1100.63
+          "cost": 1100.97
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1088.95
+          "cost": 1089.28
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1077.26
+          "cost": 1077.59
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1065.56
+          "cost": 1065.89
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1053.85
+          "cost": 1054.18
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1043.4
+          "cost": 1043.76
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1031.66
+          "cost": 1032.02
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1019.91
+          "cost": 1020.26
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1020.38
+          "cost": 1020.73
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1032.61
+          "cost": 1032.95
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1044.82
+          "cost": 1045.16
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1057.03
+          "cost": 1057.37
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1069.23
+          "cost": 1069.56
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1082.91
+          "cost": 1083.26
         },
         {
           "width": 920,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1095.08
+          "cost": 1095.43
         },
         {
           "width": 940,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1107.24
+          "cost": 1107.58
         },
         {
           "width": 960,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1119.4
+          "cost": 1119.74
         }
       ],
       "rejectedCandidates": [],
@@ -1637,6 +1647,7 @@
       "id": "chong_er_fei",
       "title": "虫儿飞",
       "file": "chong_er_fei_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "附点与连奏",
       "difficulty": 2,
@@ -1674,28 +1685,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1160.34
+          "cost": 1161.33
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1148.71
+          "cost": 1149.71
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1138.37
+          "cost": 1139.48
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1126.71
+          "cost": 1127.81
         },
         {
           "width": 600,
@@ -1833,6 +1844,7 @@
       "id": "rang_wo_men_dang_qi_shuang_jiang",
       "title": "让我们荡起双桨",
       "file": "rang_wo_men_dang_qi_shuang_jiang_01.m3n",
+      "includeBass": true,
       "section": "basics",
       "group": "附点与连奏",
       "difficulty": 2,
@@ -1870,28 +1882,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1159.61
+          "cost": 1160.52
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1147.97
+          "cost": 1148.89
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1137.57
+          "cost": 1138.61
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1125.91
+          "cost": 1126.94
         },
         {
           "width": 600,
@@ -2029,16 +2041,17 @@
       "id": "huan_le_song",
       "title": "欢乐颂",
       "file": "huan_le_song_01.m3n",
+      "includeBass": false,
       "section": "basics",
-      "group": "旋律与伴奏初步",
+      "group": "入门旋律综合",
       "difficulty": 2,
-      "reason": "保留原谱低音，先熟悉旋律，再尝试双声部",
-      "width": 600,
+      "reason": "以单声部旋律练习节拍、附点与连贯乐句",
+      "width": 780,
       "systemGap": 18,
-      "relativeScalePercent": 130,
-      "screenNotePx": 25.52,
-      "versusV1Percent": 147.71,
-      "versusV2Percent": 124.29,
+      "relativeScalePercent": 100,
+      "screenNotePx": 19.63,
+      "versusV1Percent": 113.62,
+      "versusV2Percent": 95.6,
       "previousPages": [
         10
       ],
@@ -2048,183 +2061,184 @@
       "pages": [
         12
       ],
-      "systems": 5,
+      "systems": 3,
       "systemsPerPage": [
-        5
+        3
       ],
       "sourceSha256": "7902cdd1f64ea929fa3ebc9ca2bf503e4f18edbe108e23f20901608bc1e53bce",
       "candidates": [
         {
           "width": 780,
           "systemGap": 18,
-          "rows": 4,
+          "rows": 3,
           "pages": 1,
-          "cost": 1468
+          "cost": 1012.22
         },
         {
           "width": 520,
           "systemGap": 18,
-          "rows": 6,
-          "pages": 2,
-          "cost": 2159.84
+          "rows": 5,
+          "pages": 1,
+          "cost": 1161.98
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 5,
-          "pages": 2,
-          "cost": 2151.27
+          "pages": 1,
+          "cost": 1150.35
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
-          "pages": 2,
-          "cost": 2139.98
+          "pages": 1,
+          "cost": 1138.71
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
-          "pages": 2,
-          "cost": 2128.66
+          "pages": 1,
+          "cost": 1127.05
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1360
+          "cost": 1115.37
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1372
+          "cost": 1103.68
         },
         {
           "width": 640,
           "systemGap": 18,
-          "rows": 5,
+          "rows": 4,
           "pages": 1,
-          "cost": 1384
+          "cost": 1093.21
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1396
+          "cost": 1081.47
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1408
+          "cost": 1069.73
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1420
+          "cost": 1057.97
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1432
+          "cost": 1046.2
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1444
+          "cost": 1034.42
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1456
+          "cost": 1022.64
         },
         {
           "width": 800,
           "systemGap": 18,
-          "rows": 4,
+          "rows": 3,
           "pages": 1,
-          "cost": 1480
+          "cost": 1024.39
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1492
+          "cost": 1036.55
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1504
+          "cost": 1048.71
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1516
+          "cost": 1060.86
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1528
+          "cost": 1073.01
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1540
+          "cost": 1085.15
         },
         {
           "width": 920,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1552
+          "cost": 1097.28
         },
         {
           "width": 940,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1564
+          "cost": 1109.41
         },
         {
           "width": 960,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1576
+          "cost": 1121.53
         }
       ],
       "rejectedCandidates": [],
-      "fillPage": true,
-      "reviewNote": ""
+      "fillPage": false,
+      "reviewNote": "PDF 只显示旋律，原谱低音内容保留。"
     },
     {
       "order": 13,
       "id": "auld_lang_syne",
       "title": "友谊地久天长",
       "file": "auld_lang_syne_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "民歌与抒情",
       "difficulty": 2,
@@ -2262,28 +2276,28 @@
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1162.82
+          "cost": 1164.05
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1151.18
+          "cost": 1152.4
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1139.53
+          "cost": 1140.73
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1127.86
+          "cost": 1129.04
         },
         {
           "width": 600,
@@ -2421,6 +2435,7 @@
       "id": "mo_si_ke_jiao_wai_de_wan_shang",
       "title": "莫斯科郊外的晚上",
       "file": "mo_si_ke_jiao_wai_de_wan_shang_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "民歌与抒情",
       "difficulty": 2,
@@ -2458,28 +2473,28 @@
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1160.9
+          "cost": 1161.96
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1149.28
+          "cost": 1150.33
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1139.07
+          "cost": 1140.23
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1127.4
+          "cost": 1128.55
         },
         {
           "width": 600,
@@ -2617,6 +2632,7 @@
       "id": "san_tao_che",
       "title": "三套车",
       "file": "san_tao_che_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "民歌与抒情",
       "difficulty": 2,
@@ -2654,28 +2670,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1159.89
+          "cost": 1160.32
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1148.25
+          "cost": 1148.69
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1136.6
+          "cost": 1137.04
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1124.95
+          "cost": 1125.39
         },
         {
           "width": 600,
@@ -2813,6 +2829,7 @@
       "id": "scarborough_fair",
       "title": "斯卡布罗集市",
       "file": "scarborough_fair_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "三拍子与调式",
       "difficulty": 2,
@@ -2850,28 +2867,28 @@
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1161.38
+          "cost": 1161.89
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1149.75
+          "cost": 1150.26
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1138.11
+          "cost": 1138.62
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1126.46
+          "cost": 1126.96
         },
         {
           "width": 600,
@@ -3009,6 +3026,7 @@
       "id": "sound_of_silence",
       "title": "寂静之声",
       "file": "sound_of_silence_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "三拍子与调式",
       "difficulty": 2,
@@ -3039,161 +3057,161 @@
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1012.2
+          "cost": 1012.62
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1160.84
+          "cost": 1162.48
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1149.22
+          "cost": 1150.85
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1137.59
+          "cost": 1139.2
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1125.93
+          "cost": 1127.54
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1115.42
+          "cost": 1115.86
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1105.09
+          "cost": 1105.55
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1093.37
+          "cost": 1093.82
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1081.63
+          "cost": 1082.08
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1069.88
+          "cost": 1070.32
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1058.12
+          "cost": 1058.55
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1046.35
+          "cost": 1046.78
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1034.57
+          "cost": 1034.99
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1022.78
+          "cost": 1023.19
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1024.37
+          "cost": 1024.79
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1036.53
+          "cost": 1036.94
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1048.69
+          "cost": 1049.09
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1060.84
+          "cost": 1061.24
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1072.99
+          "cost": 1073.37
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1085.12
+          "cost": 1085.51
         },
         {
           "width": 920,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1097.26
+          "cost": 1097.64
         },
         {
           "width": 940,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1109.39
+          "cost": 1109.76
         },
         {
           "width": 960,
           "systemGap": 18,
           "rows": 3,
           "pages": 1,
-          "cost": 1121.51
+          "cost": 1121.88
         }
       ],
       "rejectedCandidates": [],
@@ -3205,6 +3223,7 @@
       "id": "ai_er_lan_hua_mei",
       "title": "爱尔兰画眉",
       "file": "ai_er_lan_hua_mei_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "三拍子与调式",
       "difficulty": 2,
@@ -3242,28 +3261,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1160.96
+          "cost": 1161.45
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1149.34
+          "cost": 1149.82
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1137.7
+          "cost": 1138.19
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1127.24
+          "cost": 1127.76
         },
         {
           "width": 600,
@@ -3401,6 +3420,7 @@
       "id": "mo_li_hua",
       "title": "茉莉花",
       "file": "mo_li_hua_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "民族旋律与节奏",
       "difficulty": 2,
@@ -3438,28 +3458,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1159.82
+          "cost": 1160.25
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1149.6
+          "cost": 1150.1
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1137.94
+          "cost": 1138.44
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1126.26
+          "cost": 1126.76
         },
         {
           "width": 600,
@@ -3597,6 +3617,7 @@
       "id": "katyusha",
       "title": "喀秋莎",
       "file": "katyusha_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "民族旋律与节奏",
       "difficulty": 2,
@@ -3634,28 +3655,28 @@
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1161.6
+          "cost": 1162.72
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1149.97
+          "cost": 1151.09
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1138.33
+          "cost": 1139.44
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1128.01
+          "cost": 1129.2
         },
         {
           "width": 600,
@@ -3793,6 +3814,7 @@
       "id": "wo_niu_yu_huang_li_niao",
       "title": "蜗牛与黄鹂鸟",
       "file": "wo_niu_yu_huang_li_niao_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "民族旋律与节奏",
       "difficulty": 3,
@@ -3830,28 +3852,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1160.62
+          "cost": 1161.09
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1148.99
+          "cost": 1149.46
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1137.35
+          "cost": 1137.82
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1126.95
+          "cost": 1127.47
         },
         {
           "width": 600,
@@ -3989,6 +4011,7 @@
       "id": "hong_mei_hua_er_kai",
       "title": "红莓花儿开",
       "file": "hong_mei_hua_er_kai_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "节奏与多段歌词",
       "difficulty": 3,
@@ -4026,28 +4049,28 @@
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2157.05
+          "cost": 2157.35
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2146.78
+          "cost": 2147.42
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2135.34
+          "cost": 2136.01
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2123.92
+          "cost": 2124.6
         },
         {
           "width": 600,
@@ -4185,6 +4208,7 @@
       "id": "the_internationale",
       "title": "国际歌",
       "file": "the_internationale_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "节奏与多段歌词",
       "difficulty": 3,
@@ -4222,28 +4246,28 @@
           "systemGap": 18,
           "rows": 15,
           "pages": 3,
-          "cost": 3160.68
+          "cost": 3161.15
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 14,
           "pages": 3,
-          "cost": 3150.73
+          "cost": 3151.29
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2132.38
+          "cost": 2132.65
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2120.64
+          "cost": 2120.96
         },
         {
           "width": 600,
@@ -4381,6 +4405,7 @@
       "id": "wo_de_zu_guo",
       "title": "我的祖国",
       "file": "wo_de_zu_guo_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "宽广乐句",
       "difficulty": 3,
@@ -4418,56 +4443,56 @@
           "systemGap": 20,
           "rows": 10,
           "pages": 2,
-          "cost": 2156.42
+          "cost": 2156.86
         },
         {
           "width": 540,
           "systemGap": 20,
           "rows": 9,
           "pages": 2,
-          "cost": 2145.63
+          "cost": 2146.25
         },
         {
           "width": 560,
           "systemGap": 20,
           "rows": 9,
           "pages": 2,
-          "cost": 2134.11
+          "cost": 2134.8
         },
         {
           "width": 580,
           "systemGap": 20,
           "rows": 9,
           "pages": 2,
-          "cost": 2122.62
+          "cost": 2123.35
         },
         {
           "width": 600,
           "systemGap": 20,
           "rows": 8,
           "pages": 2,
-          "cost": 2113.75
+          "cost": 2113.97
         },
         {
           "width": 620,
           "systemGap": 20,
           "rows": 8,
           "pages": 2,
-          "cost": 2102.36
+          "cost": 2102.59
         },
         {
           "width": 640,
           "systemGap": 20,
           "rows": 8,
           "pages": 2,
-          "cost": 2090.96
+          "cost": 2091.19
         },
         {
           "width": 660,
           "systemGap": 20,
           "rows": 8,
           "pages": 2,
-          "cost": 2079.54
+          "cost": 2079.79
         },
         {
           "width": 680,
@@ -4577,16 +4602,17 @@
       "id": "wo_he_wo_de_zu_guo",
       "title": "我和我的祖国",
       "file": "wo_he_wo_de_zu_guo_01.m3n",
+      "includeBass": true,
       "section": "folk",
       "group": "宽广乐句",
       "difficulty": 4,
       "reason": "6/8与9/8变拍及连奏",
-      "width": 680,
+      "width": 660,
       "systemGap": 18,
-      "relativeScalePercent": 114.71,
-      "screenNotePx": 22.52,
-      "versusV1Percent": 130.33,
-      "versusV2Percent": 109.66,
+      "relativeScalePercent": 118.18,
+      "screenNotePx": 23.2,
+      "versusV1Percent": 134.28,
+      "versusV2Percent": 112.99,
       "previousPages": [
         17
       ],
@@ -4614,56 +4640,56 @@
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2156.28
+          "cost": 2156.53
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2145.16
+          "cost": 2145.86
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2133.58
+          "cost": 2134.33
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2122.91
+          "cost": 2123.7
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2112.03
+          "cost": 2112.26
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2102.32
+          "cost": 2102.56
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 9,
           "pages": 2,
-          "cost": 2092.68
+          "cost": 2092.99
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 9,
-          "pages": 2,
-          "cost": 2081.27
+          "pages": 1,
+          "cost": 1396
         },
         {
           "width": 680,
@@ -4773,6 +4799,7 @@
       "id": "yue_liang_dai_biao_wo_de_xin",
       "title": "月亮代表我的心",
       "file": "yue_liang_dai_biao_wo_de_xin_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "抒情入门",
       "difficulty": 2,
@@ -4810,49 +4837,49 @@
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2157.48
+          "cost": 2158.11
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2146.82
+          "cost": 2147.66
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2135.4
+          "cost": 2136.28
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2125.18
+          "cost": 2126.23
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2114.61
+          "cost": 2114.88
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2103.24
+          "cost": 2103.51
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2091.86
+          "cost": 2092.13
         },
         {
           "width": 660,
@@ -4969,6 +4996,7 @@
       "id": "qian_nv_you_hun",
       "title": "倩女幽魂",
       "file": "qian_nv_you_hun_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "抒情入门",
       "difficulty": 2,
@@ -4999,161 +5027,161 @@
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1006.79
+          "cost": 1007.11
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 8,
           "pages": 1,
-          "cost": 1156.03
+          "cost": 1156.28
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1144.63
+          "cost": 1145.27
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1132.86
+          "cost": 1133.55
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1121.1
+          "cost": 1121.84
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1109.91
+          "cost": 1110.13
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1099.19
+          "cost": 1099.47
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1087.49
+          "cost": 1087.77
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1075.78
+          "cost": 1076.07
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1064.07
+          "cost": 1064.36
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1052.35
+          "cost": 1052.64
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1040.63
+          "cost": 1040.92
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1030.28
+          "cost": 1030.61
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1018.54
+          "cost": 1018.87
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1019.04
+          "cost": 1019.35
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1031.27
+          "cost": 1031.59
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1043.5
+          "cost": 1043.81
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1055.72
+          "cost": 1056.03
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1067.94
+          "cost": 1068.24
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1080.14
+          "cost": 1080.44
         },
         {
           "width": 920,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1092.34
+          "cost": 1092.64
         },
         {
           "width": 940,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1105.76
+          "cost": 1106.08
         },
         {
           "width": 960,
           "systemGap": 18,
           "rows": 4,
           "pages": 1,
-          "cost": 1117.94
+          "cost": 1118.25
         }
       ],
       "rejectedCandidates": [],
@@ -5165,6 +5193,7 @@
       "id": "li_hua_you_kai_fang",
       "title": "梨花又开放",
       "file": "li_hua_you_kai_fang_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "抒情入门",
       "difficulty": 2,
@@ -5202,28 +5231,28 @@
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2159.9
+          "cost": 2160.24
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2149.75
+          "cost": 2150.1
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2138.44
+          "cost": 2138.8
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2127.12
+          "cost": 2127.48
         },
         {
           "width": 600,
@@ -5361,6 +5390,7 @@
       "id": "bai_hua_lin",
       "title": "白桦林",
       "file": "bai_hua_lin_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三拍与复拍",
       "difficulty": 3,
@@ -5391,98 +5421,98 @@
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2009.12
+          "cost": 2009.38
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3158.85
+          "cost": 3159.62
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 16,
-          "pages": 3,
-          "cost": 3150.28
+          "pages": 2,
+          "cost": 2144.06
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2132.1
+          "cost": 2132.21
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2120.65
+          "cost": 2121.06
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2109.34
+          "cost": 2109.44
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2097.74
+          "cost": 2097.86
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2087.34
+          "cost": 2087.53
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2075.86
+          "cost": 2076.05
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2065.38
+          "cost": 2065.63
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2053.93
+          "cost": 2054.17
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2043.54
+          "cost": 2043.79
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2032.08
+          "cost": 2032.33
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2020.61
+          "cost": 2020.86
         },
         {
           "width": 800,
@@ -5557,6 +5587,7 @@
       "id": "guang_yin_de_gu_shi",
       "title": "光阴的故事",
       "file": "guang_yin_de_gu_shi_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三拍与复拍",
       "difficulty": 3,
@@ -5594,28 +5625,28 @@
           "systemGap": 18,
           "rows": 12,
           "pages": 3,
-          "cost": 3160.86
+          "cost": 3161.36
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2144.19
+          "cost": 2144.42
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2132.38
+          "cost": 2132.66
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2120.65
+          "cost": 2120.97
         },
         {
           "width": 600,
@@ -5753,6 +5784,7 @@
       "id": "tong_zhuo_de_ni",
       "title": "同桌的你",
       "file": "tong_zhuo_de_ni_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三拍与复拍",
       "difficulty": 3,
@@ -5790,63 +5822,63 @@
           "systemGap": 18,
           "rows": 15,
           "pages": 3,
-          "cost": 3162.41
+          "cost": 3163.32
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2144.49
+          "cost": 2144.76
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2132.78
+          "cost": 2133.14
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2121.7
+          "cost": 2122.4
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2110.71
+          "cost": 2110.9
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2099.21
+          "cost": 2099.41
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2088.84
+          "cost": 2089.08
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2078.62
+          "cost": 2078.86
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2067.19
+          "cost": 2067.43
         },
         {
           "width": 700,
@@ -5949,6 +5981,7 @@
       "id": "xiang_si",
       "title": "相思",
       "file": "xiang_si_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三拍与复拍",
       "difficulty": 3,
@@ -5986,35 +6019,35 @@
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2159.88
+          "cost": 2160.96
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2148.54
+          "cost": 2149.65
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2138.56
+          "cost": 2139.73
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2127.23
+          "cost": 2128.42
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2116.76
+          "cost": 2117.1
         },
         {
           "width": 620,
@@ -6145,6 +6178,7 @@
       "id": "bei_jia_er_hu_pan",
       "title": "贝加尔湖畔",
       "file": "bei_jia_er_hu_pan_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -6182,28 +6216,28 @@
           "systemGap": 18,
           "rows": 17,
           "pages": 3,
-          "cost": 3160.63
+          "cost": 3161.23
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 17,
           "pages": 3,
-          "cost": 3149.94
+          "cost": 3150.57
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2132.19
+          "cost": 2132.38
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2120.41
+          "cost": 2120.64
         },
         {
           "width": 600,
@@ -6341,6 +6375,7 @@
       "id": "yu_jian",
       "title": "遇见",
       "file": "yu_jian_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -6378,63 +6413,63 @@
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2156.3
+          "cost": 2156.5
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2144.54
+          "cost": 2144.83
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2132.84
+          "cost": 2133.21
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2121.19
+          "cost": 2121.64
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2110.79
+          "cost": 2111
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2100.34
+          "cost": 2100.56
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2088.91
+          "cost": 2089.13
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2078.26
+          "cost": 2078.53
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2069
+          "cost": 2069.29
         },
         {
           "width": 700,
@@ -6537,16 +6572,17 @@
       "id": "huang_hun",
       "title": "黄昏",
       "file": "huang_hun_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "切分节奏与延音",
-      "width": 640,
+      "width": 620,
       "systemGap": 18,
-      "relativeScalePercent": 121.88,
-      "screenNotePx": 23.93,
-      "versusV1Percent": 138.48,
-      "versusV2Percent": 116.52,
+      "relativeScalePercent": 125.81,
+      "screenNotePx": 24.7,
+      "versusV1Percent": 142.95,
+      "versusV2Percent": 120.28,
       "previousPages": [
         27
       ],
@@ -6574,42 +6610,42 @@
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2157.75
+          "cost": 2158.35
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2147.32
+          "cost": 2148.27
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2135.92
+          "cost": 2136.91
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2124.54
+          "cost": 2125.55
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2115.19
+          "cost": 2115.47
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 10,
-          "pages": 2,
-          "cost": 2105.22
+          "pages": 1,
+          "cost": 1372
         },
         {
           "width": 640,
@@ -6733,6 +6769,7 @@
       "id": "an_xiang",
       "title": "暗香",
       "file": "an_xiang_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -6770,63 +6807,63 @@
           "systemGap": 18,
           "rows": 17,
           "pages": 3,
-          "cost": 3161.59
+          "cost": 3162.59
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2144.01
+          "cost": 2144.18
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2132.79
+          "cost": 2133.32
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2121.82
+          "cost": 2122.4
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2110.74
+          "cost": 2110.92
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2099.26
+          "cost": 2099.45
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2089.03
+          "cost": 2089.29
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2077.6
+          "cost": 2077.86
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2067.45
+          "cost": 2067.71
         },
         {
           "width": 700,
@@ -6929,6 +6966,7 @@
       "id": "mei_li_de_shen_hua",
       "title": "美丽的神话",
       "file": "mei_li_de_shen_hua_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -6966,28 +7004,28 @@
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3161.91
+          "cost": 3162.56
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2144.06
+          "cost": 2144.22
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2132.6
+          "cost": 2132.81
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2121.43
+          "cost": 2121.83
         },
         {
           "width": 600,
@@ -7125,6 +7163,7 @@
       "id": "dang_nian_qing",
       "title": "当年情",
       "file": "dang_nian_qing_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -7162,56 +7201,56 @@
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2157.04
+          "cost": 2157.5
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2145.45
+          "cost": 2145.99
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2135.55
+          "cost": 2136.35
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2124.14
+          "cost": 2124.97
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2113.35
+          "cost": 2113.59
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2101.96
+          "cost": 2102.21
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2092.12
+          "cost": 2092.44
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2080.72
+          "cost": 2081.04
         },
         {
           "width": 680,
@@ -7321,6 +7360,7 @@
       "id": "tie_xue_dan_xin",
       "title": "铁血丹心",
       "file": "tie_xue_dan_xin_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -7358,7 +7398,7 @@
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2163.04
+          "cost": 2163.92
         },
         {
           "width": 540,
@@ -7517,6 +7557,7 @@
       "id": "san_bu",
       "title": "散步",
       "file": "san_bu_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "切分与延音",
       "difficulty": 3,
@@ -7713,6 +7754,7 @@
       "id": "qiu_ying",
       "title": "秋樱",
       "file": "qiu_ying_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -7750,7 +7792,7 @@
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2163.16
+          "cost": 2163.56
         },
         {
           "width": 540,
@@ -7909,6 +7951,7 @@
       "id": "man_bu_ren_sheng_lu",
       "title": "漫步人生路",
       "file": "man_bu_ren_sheng_lu_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -7946,49 +7989,49 @@
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2159.45
+          "cost": 2160.5
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2148.08
+          "cost": 2149.17
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2136.72
+          "cost": 2137.83
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2125.35
+          "cost": 2126.49
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2114.81
+          "cost": 2115.13
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2103.44
+          "cost": 2103.76
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2092.05
+          "cost": 2092.38
         },
         {
           "width": 660,
@@ -8105,6 +8148,7 @@
       "id": "wo_zhi_zai_hu_ni",
       "title": "我只在乎你",
       "file": "wo_zhi_zai_hu_ni_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -8142,42 +8186,42 @@
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2156.34
+          "cost": 2156.69
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2147.87
+          "cost": 2148.83
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2136.48
+          "cost": 2137.47
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 11,
           "pages": 2,
-          "cost": 2124.73
+          "cost": 2125.69
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2116.08
+          "cost": 2116.41
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2104.48
+          "cost": 2104.81
         },
         {
           "width": 640,
@@ -8301,6 +8345,7 @@
       "id": "guo_huo",
       "title": "过火",
       "file": "guo_huo_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -8338,63 +8383,63 @@
           "systemGap": 18,
           "rows": 19,
           "pages": 3,
-          "cost": 3160.37
+          "cost": 3161.32
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2144.02
+          "cost": 2144.19
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2132.4
+          "cost": 2132.7
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2120.67
+          "cost": 2121.04
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2110.17
+          "cost": 2110.35
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2099.59
+          "cost": 2099.8
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2089.29
+          "cost": 2089.51
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2078.95
+          "cost": 2079.21
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2068.92
+          "cost": 2069.23
         },
         {
           "width": 700,
@@ -8497,6 +8542,7 @@
       "id": "yue_ding",
       "title": "约定",
       "file": "yue_ding_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -8534,28 +8580,28 @@
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2157.01
+          "cost": 2157.36
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2145.43
+          "cost": 2145.83
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2133.9
+          "cost": 2134.33
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2122.39
+          "cost": 2122.86
         },
         {
           "width": 600,
@@ -8693,6 +8739,7 @@
       "id": "hou_lai",
       "title": "后来",
       "file": "hou_lai_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -8724,147 +8771,147 @@
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2003.07
+          "cost": 2003.23
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 30,
           "pages": 4,
-          "cost": 4158.08
+          "cost": 4158.54
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 29,
           "pages": 4,
-          "cost": 4147.58
+          "cost": 4148.24
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 27,
           "pages": 3,
-          "cost": 3132.2
+          "cost": 3132.5
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 27,
           "pages": 3,
-          "cost": 3120.42
+          "cost": 3120.74
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 27,
           "pages": 3,
-          "cost": 3109.03
+          "cost": 3109.15
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 26,
           "pages": 3,
-          "cost": 3098.26
+          "cost": 3098.39
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 23,
           "pages": 3,
-          "cost": 3089.26
+          "cost": 3089.46
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 22,
-          "pages": 3,
-          "cost": 3078.97
+          "pages": 2,
+          "cost": 2072.08
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 22,
           "pages": 2,
-          "cost": 2060.17
+          "cost": 2060.18
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 21,
           "pages": 2,
-          "cost": 2048.55
+          "cost": 2048.63
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 21,
           "pages": 2,
-          "cost": 2036.8
+          "cost": 2036.89
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 20,
           "pages": 2,
-          "cost": 2025.66
+          "cost": 2025.76
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 20,
           "pages": 2,
-          "cost": 2014
+          "cost": 2014.11
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2015.47
+          "cost": 2015.63
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2028.66
+          "cost": 2028.82
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2042.22
+          "cost": 2042.42
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2054.66
+          "cost": 2054.86
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2068.06
+          "cost": 2068.26
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2080.49
+          "cost": 2080.69
         },
         {
           "width": 920,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2092.91
+          "cost": 2093.11
         },
         {
           "width": 940,
@@ -8890,6 +8937,7 @@
       "id": "tong_hua_zhen",
       "title": "童话镇",
       "file": "tong_hua_zhen_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "十六分与变拍",
       "difficulty": 3,
@@ -8921,140 +8969,140 @@
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2002.76
+          "cost": 2002.92
         },
         {
           "width": 520,
           "systemGap": 24,
           "rows": 26,
           "pages": 4,
-          "cost": 4157.03
+          "cost": 4157.5
         },
         {
           "width": 540,
           "systemGap": 24,
           "rows": 24,
           "pages": 4,
-          "cost": 4147.54
+          "cost": 4148.24
         },
         {
           "width": 560,
           "systemGap": 24,
           "rows": 24,
           "pages": 4,
-          "cost": 4136.52
+          "cost": 4137.27
         },
         {
           "width": 580,
           "systemGap": 24,
           "rows": 23,
           "pages": 3,
-          "cost": 3120.3
+          "cost": 3120.57
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 22,
           "pages": 3,
-          "cost": 3109.86
+          "cost": 3110.01
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 22,
           "pages": 3,
-          "cost": 3098.46
+          "cost": 3098.62
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 20,
           "pages": 3,
-          "cost": 3089.75
+          "cost": 3089.92
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 20,
           "pages": 3,
-          "cost": 3078.55
+          "cost": 3078.73
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2060.21
+          "cost": 2060.26
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2048.39
+          "cost": 2048.45
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2037.63
+          "cost": 2037.76
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2025.99
+          "cost": 2026.13
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2014.37
+          "cost": 2014.52
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2017.28
+          "cost": 2017.49
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2029.74
+          "cost": 2029.95
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2042.2
+          "cost": 2042.41
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2054.65
+          "cost": 2054.86
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2067.79
+          "cost": 2068
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2080.23
+          "cost": 2080.44
         },
         {
           "width": 920,
@@ -9087,6 +9135,7 @@
       "id": "lao_nan_hai",
       "title": "老男孩",
       "file": "lao_nan_hai_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
@@ -9118,140 +9167,140 @@
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2003.92
+          "cost": 2004.08
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 22,
           "pages": 4,
-          "cost": 4159.14
+          "cost": 4159.77
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 21,
-          "pages": 4,
-          "cost": 4149.4
+          "pages": 3,
+          "cost": 3144.23
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 20,
           "pages": 3,
-          "cost": 3132.57
+          "cost": 3132.86
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 19,
           "pages": 3,
-          "cost": 3121.54
+          "cost": 3122
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3111.53
+          "cost": 3111.68
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3100.24
+          "cost": 3100.4
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 17,
           "pages": 3,
-          "cost": 3090.59
+          "cost": 3090.83
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2072.31
+          "cost": 2072.35
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2060.51
+          "cost": 2060.57
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2049.46
+          "cost": 2049.59
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2037.81
+          "cost": 2037.95
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2026.17
+          "cost": 2026.32
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2014.55
+          "cost": 2014.71
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2017.57
+          "cost": 2017.78
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2030.03
+          "cost": 2030.24
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2042.47
+          "cost": 2042.69
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2056.35
+          "cost": 2056.57
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2068.8
+          "cost": 2069.02
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2081.24
+          "cost": 2081.45
         },
         {
           "width": 920,
@@ -9284,6 +9333,7 @@
       "id": "liang_liang",
       "title": "凉凉",
       "file": "liang_liang_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
@@ -9315,98 +9365,98 @@
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2008.05
+          "cost": 2008.3
         },
         {
           "width": 520,
           "systemGap": 20,
           "rows": 16,
           "pages": 3,
-          "cost": 3158.73
+          "cost": 3159.48
         },
         {
           "width": 540,
           "systemGap": 20,
           "rows": 16,
           "pages": 3,
-          "cost": 3147.5
+          "cost": 3148.31
         },
         {
           "width": 560,
           "systemGap": 20,
           "rows": 16,
           "pages": 3,
-          "cost": 3136.31
+          "cost": 3137.16
         },
         {
           "width": 580,
           "systemGap": 20,
           "rows": 15,
-          "pages": 3,
-          "cost": 3126.52
+          "pages": 2,
+          "cost": 2120.09
         },
         {
           "width": 600,
           "systemGap": 20,
           "rows": 14,
           "pages": 2,
-          "cost": 2108.73
+          "cost": 2108.78
         },
         {
           "width": 620,
           "systemGap": 20,
           "rows": 14,
           "pages": 2,
-          "cost": 2097.01
+          "cost": 2097.09
         },
         {
           "width": 640,
           "systemGap": 20,
           "rows": 14,
           "pages": 2,
-          "cost": 2085.35
+          "cost": 2085.44
         },
         {
           "width": 660,
           "systemGap": 20,
           "rows": 13,
           "pages": 2,
-          "cost": 2074.53
+          "cost": 2074.69
         },
         {
           "width": 680,
           "systemGap": 20,
           "rows": 13,
           "pages": 2,
-          "cost": 2062.98
+          "cost": 2063.16
         },
         {
           "width": 700,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2053.99
+          "cost": 2054.23
         },
         {
           "width": 720,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2042.52
+          "cost": 2042.77
         },
         {
           "width": 740,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2031.02
+          "cost": 2031.27
         },
         {
           "width": 760,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2019.54
+          "cost": 2019.79
         },
         {
           "width": 800,
@@ -9481,6 +9531,7 @@
       "id": "qian_si_xi",
       "title": "牵丝戏",
       "file": "qian_si_xi_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
@@ -9512,105 +9563,105 @@
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2007.45
+          "cost": 2007.68
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 19,
           "pages": 3,
-          "cost": 3157.37
+          "cost": 3157.76
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3146.21
+          "cost": 3146.79
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3134.91
+          "cost": 3135.55
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3123.65
+          "cost": 3124.34
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2108.16
+          "cost": 2108.2
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2096.34
+          "cost": 2096.39
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2085.36
+          "cost": 2085.5
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2074.39
+          "cost": 2074.55
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2064.2
+          "cost": 2064.39
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2053.4
+          "cost": 2053.61
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2041.93
+          "cost": 2042.14
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2030.44
+          "cost": 2030.66
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2018.95
+          "cost": 2019.17
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2019.95
+          "cost": 2020.17
         },
         {
           "width": 820,
@@ -9678,6 +9729,7 @@
       "id": "ren_shi_jian",
       "title": "人世间",
       "file": "ren_shi_jian_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
@@ -9708,98 +9760,98 @@
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2008.59
+          "cost": 2008.84
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 20,
           "pages": 3,
-          "cost": 3157.21
+          "cost": 3157.59
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3147.51
+          "cost": 3148.3
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2132.4
+          "cost": 2132.6
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2120.99
+          "cost": 2121.46
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2109.73
+          "cost": 2109.89
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2098.16
+          "cost": 2098.33
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2086.62
+          "cost": 2086.79
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2076.12
+          "cost": 2076.36
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2064.62
+          "cost": 2064.86
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2053.12
+          "cost": 2053.37
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2043.06
+          "cost": 2043.31
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2031.58
+          "cost": 2031.83
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2020.09
+          "cost": 2020.34
         },
         {
           "width": 800,
@@ -9874,6 +9926,7 @@
       "id": "zhi_yao_ping_fan",
       "title": "只要平凡",
       "file": "zhi_yao_ping_fan_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
@@ -9911,28 +9964,28 @@
           "systemGap": 18,
           "rows": 7,
           "pages": 2,
-          "cost": 2161.67
+          "cost": 2162.47
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 7,
           "pages": 2,
-          "cost": 2150.38
+          "cost": 2151.19
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 7,
           "pages": 2,
-          "cost": 2139.07
+          "cost": 2139.89
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1120.07
+          "cost": 1120.22
         },
         {
           "width": 600,
@@ -10070,6 +10123,7 @@
       "id": "shi_jie_zeng_yu_wo_de",
       "title": "世界赠予我的",
       "file": "shi_jie_zeng_yu_wo_de_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
@@ -10100,98 +10154,98 @@
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2008.97
+          "cost": 2009.23
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 16,
           "pages": 3,
-          "cost": 3160.24
+          "cost": 3161.2
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 16,
           "pages": 3,
-          "cost": 3149.12
+          "cost": 3150.12
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 16,
-          "pages": 3,
-          "cost": 3138.01
+          "pages": 2,
+          "cost": 2132.04
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 16,
-          "pages": 3,
-          "cost": 3126.91
+          "pages": 2,
+          "cost": 2120.16
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2108.69
+          "cost": 2108.75
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2096.98
+          "cost": 2097.06
         },
         {
           "width": 640,
           "systemGap": 20,
           "rows": 14,
           "pages": 2,
-          "cost": 2085.76
+          "cost": 2085.92
         },
         {
           "width": 660,
           "systemGap": 20,
           "rows": 14,
           "pages": 2,
-          "cost": 2074.16
+          "cost": 2074.34
         },
         {
           "width": 680,
           "systemGap": 20,
           "rows": 12,
           "pages": 2,
-          "cost": 2064.73
+          "cost": 2064.98
         },
         {
           "width": 700,
           "systemGap": 20,
           "rows": 12,
           "pages": 2,
-          "cost": 2053.24
+          "cost": 2053.49
         },
         {
           "width": 720,
           "systemGap": 20,
           "rows": 12,
           "pages": 2,
-          "cost": 2041.75
+          "cost": 2042
         },
         {
           "width": 740,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2031.96
+          "cost": 2032.21
         },
         {
           "width": 760,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2020.47
+          "cost": 2020.73
         },
         {
           "width": 800,
@@ -10266,6 +10320,7 @@
       "id": "ming_tian_hui_geng_hao",
       "title": "明天会更好",
       "file": "ming_tian_hui_geng_hao_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
@@ -10303,28 +10358,28 @@
           "systemGap": 18,
           "rows": 14,
           "pages": 3,
-          "cost": 3156.22
+          "cost": 3156.42
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 14,
           "pages": 3,
-          "cost": 3144.54
+          "cost": 3144.8
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 13,
           "pages": 3,
-          "cost": 3134.38
+          "cost": 3134.63
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 12,
           "pages": 3,
-          "cost": 3124.64
+          "cost": 3124.96
         },
         {
           "width": 600,
@@ -10462,16 +10517,17 @@
       "id": "man_man_xi_huan_ni",
       "title": "慢慢喜欢你",
       "file": "man_man_xi_huan_ni_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "跨拍、变拍与细分节奏",
-      "width": 780,
+      "width": 760,
       "systemGap": 18,
-      "relativeScalePercent": 100,
-      "screenNotePx": 19.63,
-      "versusV1Percent": 121.74,
-      "versusV2Percent": 95.6,
+      "relativeScalePercent": 102.63,
+      "screenNotePx": 20.15,
+      "versusV1Percent": 124.94,
+      "versusV2Percent": 98.12,
       "previousPages": [
         52
       ],
@@ -10499,91 +10555,91 @@
           "systemGap": 18,
           "rows": 19,
           "pages": 3,
-          "cost": 3158.84
+          "cost": 3159.58
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 19,
           "pages": 3,
-          "cost": 3147.64
+          "cost": 3148.43
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3137.49
+          "cost": 3138.33
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2120.12
+          "cost": 2120.37
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2108.52
+          "cost": 2108.62
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2097.6
+          "cost": 2097.71
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2086.68
+          "cost": 2086.87
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2075.15
+          "cost": 2075.35
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2063.64
+          "cost": 2063.85
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2052.13
+          "cost": 2052.34
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2041.77
+          "cost": 2041.99
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2031.71
+          "cost": 2031.98
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 12,
-          "pages": 2,
-          "cost": 2021.43
+          "pages": 1,
+          "cost": 1456
         },
         {
           "width": 800,
@@ -10658,6 +10714,7 @@
       "id": "xin_bu_liao_qing",
       "title": "新不了情",
       "file": "xin_bu_liao_qing_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
@@ -10695,28 +10752,28 @@
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2157.09
+          "cost": 2157.28
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2145.53
+          "cost": 2145.74
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2134.01
+          "cost": 2134.23
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2123.59
+          "cost": 2123.82
         },
         {
           "width": 600,
@@ -10854,16 +10911,17 @@
       "id": "wo_yao_ni",
       "title": "我要你",
       "file": "wo_yao_ni_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
       "reason": "三连音、十六分与多段歌词",
-      "width": 600,
+      "width": 580,
       "systemGap": 18,
-      "relativeScalePercent": 130,
-      "screenNotePx": 25.52,
-      "versusV1Percent": 147.71,
-      "versusV2Percent": 124.29,
+      "relativeScalePercent": 134.48,
+      "screenNotePx": 26.4,
+      "versusV1Percent": 152.8,
+      "versusV2Percent": 128.57,
       "previousPages": [
         54
       ],
@@ -10891,28 +10949,28 @@
           "systemGap": 18,
           "rows": 10,
           "pages": 2,
-          "cost": 2159.22
+          "cost": 2160.17
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 8,
           "pages": 2,
-          "cost": 2150.77
+          "cost": 2152.11
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 8,
           "pages": 2,
-          "cost": 2139.48
+          "cost": 2140.83
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 8,
-          "pages": 2,
-          "cost": 2128.17
+          "pages": 1,
+          "cost": 1348
         },
         {
           "width": 600,
@@ -11050,6 +11108,7 @@
       "id": "annie",
       "title": "安妮",
       "file": "annie_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
@@ -11086,78 +11145,78 @@
           "width": 520,
           "systemGap": 18,
           "rows": 18,
-          "pages": 3,
-          "cost": 3162.28
+          "pages": 2,
+          "cost": 2156.08
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 18,
-          "pages": 3,
-          "cost": 3150.85
+          "pages": 2,
+          "cost": 2144.2
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2132.42
+          "cost": 2132.77
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2120.7
+          "cost": 2121.12
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2110.06
+          "cost": 2110.2
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2099.47
+          "cost": 2099.69
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2089.04
+          "cost": 2089.26
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2078.99
+          "cost": 2079.27
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2067.55
+          "cost": 2067.83
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2056.1
+          "cost": 2056.38
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2044.64
+          "cost": 2044.92
         },
         {
           "width": 740,
@@ -11246,16 +11305,17 @@
       "id": "yi_qian_ge_shang_xin_de_li_you",
       "title": "一千个伤心的理由",
       "file": "yi_qian_ge_shang_xin_de_li_you_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
       "reason": "十六分切分与跳房子",
-      "width": 800,
+      "width": 780,
       "systemGap": 20,
-      "relativeScalePercent": 97.5,
-      "screenNotePx": 19.14,
-      "versusV1Percent": 113.42,
-      "versusV2Percent": 95.6,
+      "relativeScalePercent": 100,
+      "screenNotePx": 19.63,
+      "versusV1Percent": 116.33,
+      "versusV2Percent": 98.06,
       "previousPages": [
         56
       ],
@@ -11265,9 +11325,9 @@
       "pages": [
         53
       ],
-      "systems": 10,
+      "systems": 11,
       "systemsPerPage": [
-        10
+        11
       ],
       "sourceSha256": "ff9a973b786838d7ef2a12a076907b3407e2c152bbdd159aac9b306281f2dd53",
       "candidates": [
@@ -11275,99 +11335,99 @@
           "width": 780,
           "systemGap": 20,
           "rows": 11,
-          "pages": 2,
-          "cost": 2009.41
+          "pages": 1,
+          "cost": 1468
         },
         {
           "width": 520,
           "systemGap": 20,
           "rows": 18,
           "pages": 3,
-          "cost": 3158.44
+          "cost": 3158.93
         },
         {
           "width": 540,
           "systemGap": 20,
           "rows": 17,
           "pages": 3,
-          "cost": 3148.36
+          "cost": 3149.33
         },
         {
           "width": 560,
           "systemGap": 20,
           "rows": 15,
           "pages": 2,
-          "cost": 2132.2
+          "cost": 2132.33
         },
         {
           "width": 580,
           "systemGap": 20,
           "rows": 14,
           "pages": 2,
-          "cost": 2120.81
+          "cost": 2121.28
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2110.63
+          "cost": 2110.8
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2099.13
+          "cost": 2099.3
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2087.63
+          "cost": 2087.81
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2076.14
+          "cost": 2076.33
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2064.64
+          "cost": 2064.84
         },
         {
           "width": 700,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2055.34
+          "cost": 2055.59
         },
         {
           "width": 720,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2043.87
+          "cost": 2044.12
         },
         {
           "width": 740,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2032.39
+          "cost": 2032.65
         },
         {
           "width": 760,
           "systemGap": 20,
           "rows": 11,
           "pages": 2,
-          "cost": 2020.91
+          "cost": 2021.16
         },
         {
           "width": 800,
@@ -11442,16 +11502,17 @@
       "id": "yue_ban_xiao_ye_qu",
       "title": "月半小夜曲",
       "file": "yue_ban_xiao_ye_qu_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
       "reason": "高音区、切分与跳进",
-      "width": 760,
+      "width": 740,
       "systemGap": 18,
-      "relativeScalePercent": 102.63,
-      "screenNotePx": 20.15,
-      "versusV1Percent": 119.39,
-      "versusV2Percent": 98.12,
+      "relativeScalePercent": 105.41,
+      "screenNotePx": 20.69,
+      "versusV1Percent": 122.62,
+      "versusV2Percent": 100.77,
       "previousPages": [
         57
       ],
@@ -11479,84 +11540,84 @@
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3160.4
+          "cost": 3161.32
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 17,
-          "pages": 3,
-          "cost": 3150.97
+          "pages": 2,
+          "cost": 2144.19
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2132.23
+          "cost": 2132.4
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2120.43
+          "cost": 2120.68
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2109.54
+          "cost": 2109.69
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2098.68
+          "cost": 2098.85
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2087.16
+          "cost": 2087.34
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2076.67
+          "cost": 2076.9
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2065.2
+          "cost": 2065.43
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2054.83
+          "cost": 2055.07
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2044.8
+          "cost": 2045.08
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 12,
-          "pages": 2,
-          "cost": 2033.33
+          "pages": 1,
+          "cost": 1444
         },
         {
           "width": 760,
@@ -11638,6 +11699,7 @@
       "id": "andy",
       "title": "ANDY",
       "file": "andy_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
@@ -11675,28 +11737,28 @@
           "systemGap": 18,
           "rows": 15,
           "pages": 3,
-          "cost": 3161.09
+          "cost": 3161.43
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2144.09
+          "cost": 2144.13
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2132.16
+          "cost": 2132.18
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2121.21
+          "cost": 2121.4
         },
         {
           "width": 600,
@@ -11834,6 +11896,7 @@
       "id": "ting_hai",
       "title": "听海",
       "file": "ting_hai_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
@@ -11864,98 +11927,98 @@
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2008.39
+          "cost": 2008.64
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 20,
           "pages": 3,
-          "cost": 3158.13
+          "cost": 3158.79
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 18,
           "pages": 3,
-          "cost": 3148.83
+          "cost": 3149.58
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2132.03
+          "cost": 2132.19
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2120.55
+          "cost": 2120.84
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2109.09
+          "cost": 2109.19
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2097.46
+          "cost": 2097.58
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2085.87
+          "cost": 2086
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2074.3
+          "cost": 2074.44
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2064.75
+          "cost": 2064.96
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2053.28
+          "cost": 2053.49
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2041.81
+          "cost": 2042.02
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2030.12
+          "cost": 2030.33
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2019.87
+          "cost": 2020.13
         },
         {
           "width": 800,
@@ -12030,16 +12093,17 @@
       "id": "ru_yuan",
       "title": "如愿",
       "file": "ru_yuan_01.m3n",
+      "includeBass": true,
       "section": "pop",
       "group": "三连音与进阶抒情",
       "difficulty": 4,
       "reason": "变调、倚音与多段歌词",
-      "width": 920,
+      "width": 900,
       "systemGap": 18,
-      "relativeScalePercent": 84.78,
-      "screenNotePx": 16.64,
-      "versusV1Percent": 96.33,
-      "versusV2Percent": 95.6,
+      "relativeScalePercent": 86.67,
+      "screenNotePx": 17.01,
+      "versusV1Percent": 98.47,
+      "versusV2Percent": 97.73,
       "previousPages": [
         60,
         61
@@ -12050,9 +12114,9 @@
       "pages": [
         57
       ],
-      "systems": 13,
+      "systems": 14,
       "systemsPerPage": [
-        13
+        14
       ],
       "sourceSha256": "698c3016f0deed4cb95caf1a76956eea7615b1a4470629250ce06726f19006d0",
       "candidates": [
@@ -12061,140 +12125,140 @@
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2004.99
+          "cost": 2005.2
         },
         {
           "width": 520,
           "systemGap": 18,
           "rows": 25,
           "pages": 4,
-          "cost": 4159.52
+          "cost": 4160.13
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 24,
-          "pages": 4,
-          "cost": 4149.47
+          "pages": 3,
+          "cost": 3144.17
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 23,
           "pages": 3,
-          "cost": 3132.69
+          "cost": 3133.05
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 22,
           "pages": 3,
-          "cost": 3121.62
+          "cost": 3122.14
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 21,
           "pages": 3,
-          "cost": 3111.22
+          "cost": 3111.39
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 20,
           "pages": 3,
-          "cost": 3101.05
+          "cost": 3101.23
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2084.06
+          "cost": 2084.11
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2072.51
+          "cost": 2072.58
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2060.76
+          "cost": 2060.84
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2049.04
+          "cost": 2049.13
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2037.34
+          "cost": 2037.45
         },
         {
           "width": 740,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2026.32
+          "cost": 2026.48
         },
         {
           "width": 760,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2015.54
+          "cost": 2015.7
         },
         {
           "width": 800,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2017.43
+          "cost": 2017.64
         },
         {
           "width": 820,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2029.88
+          "cost": 2030.09
         },
         {
           "width": 840,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2042.32
+          "cost": 2042.53
         },
         {
           "width": 860,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2054.76
+          "cost": 2054.97
         },
         {
           "width": 880,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2068.77
+          "cost": 2069
         },
         {
           "width": 900,
           "systemGap": 18,
           "rows": 14,
-          "pages": 2,
-          "cost": 2081.26
+          "pages": 1,
+          "cost": 1540
         },
         {
           "width": 920,
@@ -12227,6 +12291,7 @@
       "id": "tai_yang_zhao_chang_sheng_qi",
       "title": "太阳照常升起",
       "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
       "difficulty": 2,
@@ -12264,28 +12329,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1160.18
+          "cost": 1160.63
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1148.56
+          "cost": 1149.01
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1138.26
+          "cost": 1138.77
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1126.6
+          "cost": 1127.11
         },
         {
           "width": 600,
@@ -12423,6 +12488,7 @@
       "id": "liang_zhu",
       "title": "梁祝",
       "file": "liang_zhu_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
       "difficulty": 3,
@@ -12460,28 +12526,28 @@
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1159.99
+          "cost": 1160.44
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1148.37
+          "cost": 1148.81
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 6,
           "pages": 1,
-          "cost": 1136.73
+          "cost": 1137.18
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 5,
           "pages": 1,
-          "cost": 1126.43
+          "cost": 1126.93
         },
         {
           "width": 600,
@@ -12619,6 +12685,7 @@
       "id": "wen_rou_de_qing_su",
       "title": "温柔的倾诉",
       "file": "wen_rou_de_qing_su_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
       "difficulty": 3,
@@ -12656,28 +12723,28 @@
           "systemGap": 18,
           "rows": 9,
           "pages": 1,
-          "cost": 1157.29
+          "cost": 1157.86
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1147.41
+          "cost": 1148.26
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1135.74
+          "cost": 1136.6
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 7,
           "pages": 1,
-          "cost": 1124.06
+          "cost": 1124.92
         },
         {
           "width": 600,
@@ -12815,6 +12882,7 @@
       "id": "castle_in_the_sky",
       "title": "天空之城",
       "file": "castle_in_the_sky_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
       "difficulty": 3,
@@ -12852,28 +12920,28 @@
           "systemGap": 18,
           "rows": 25,
           "pages": 2,
-          "cost": 2156.97
+          "cost": 2157.11
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 23,
           "pages": 2,
-          "cost": 2146.45
+          "cost": 2146.67
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 20,
           "pages": 2,
-          "cost": 2137.09
+          "cost": 2137.42
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2126.56
+          "cost": 2126.91
         },
         {
           "width": 600,
@@ -13011,6 +13079,7 @@
       "id": "xia_yu_de_shi_hou",
       "title": "下雨的时候",
       "file": "xia_yu_de_shi_hou_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
       "difficulty": 3,
@@ -13207,6 +13276,7 @@
       "id": "second_waltz",
       "title": "第二圆舞曲",
       "file": "second_waltz_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "difficulty": 3,
@@ -13244,28 +13314,28 @@
           "systemGap": 18,
           "rows": 20,
           "pages": 2,
-          "cost": 2157.44
+          "cost": 2157.61
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2146.54
+          "cost": 2146.78
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2135.04
+          "cost": 2135.31
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2123.61
+          "cost": 2123.89
         },
         {
           "width": 600,
@@ -13403,6 +13473,7 @@
       "id": "doraemon",
       "title": "哆啦A梦",
       "file": "doraemon_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "difficulty": 3,
@@ -13440,28 +13511,28 @@
           "systemGap": 18,
           "rows": 24,
           "pages": 2,
-          "cost": 2156.04
+          "cost": 2156.11
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 23,
           "pages": 2,
-          "cost": 2144.34
+          "cost": 2144.55
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 23,
           "pages": 2,
-          "cost": 2132.62
+          "cost": 2132.88
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 22,
           "pages": 2,
-          "cost": 2121.47
+          "cost": 2121.81
         },
         {
           "width": 600,
@@ -13599,6 +13670,7 @@
       "id": "yun_gong_xun_yin",
       "title": "云宫迅音",
       "file": "yun_gong_xun_yin_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "difficulty": 3,
@@ -13636,28 +13708,28 @@
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2158.68
+          "cost": 2158.94
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2148.3
+          "cost": 2148.58
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2136.94
+          "cost": 2137.24
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2125.59
+          "cost": 2125.89
         },
         {
           "width": 600,
@@ -13795,6 +13867,7 @@
       "id": "super_mario",
       "title": "超级玛丽",
       "file": "super_mario_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
@@ -13832,28 +13905,28 @@
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2159.9
+          "cost": 2160.23
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 15,
           "pages": 2,
-          "cost": 2148.56
+          "cost": 2148.9
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2138.33
+          "cost": 2138.67
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 13,
           "pages": 2,
-          "cost": 2127.92
+          "cost": 2128.32
         },
         {
           "width": 600,
@@ -13991,16 +14064,17 @@
       "id": "zhi_dao_shi_jie_de_jin_tou",
       "title": "直到世界的尽头",
       "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
       "reason": "高音区、切分与导航",
-      "width": 580,
+      "width": 540,
       "systemGap": 18,
-      "relativeScalePercent": 134.48,
-      "screenNotePx": 26.4,
-      "versusV1Percent": 152.8,
-      "versusV2Percent": 128.57,
+      "relativeScalePercent": 144.44,
+      "screenNotePx": 28.36,
+      "versusV1Percent": 164.12,
+      "versusV2Percent": 138.1,
       "previousPages": [
         69
       ],
@@ -14010,9 +14084,9 @@
       "pages": [
         65
       ],
-      "systems": 11,
+      "systems": 12,
       "systemsPerPage": [
-        11
+        12
       ],
       "sourceSha256": "7ba39d9aa0a6fcba68559fbf12c88dea1d00843aa79af52eeeedb6418072c767",
       "candidates": [
@@ -14028,21 +14102,21 @@
           "systemGap": 18,
           "rows": 12,
           "pages": 2,
-          "cost": 2163.06
+          "cost": 2164.41
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 12,
-          "pages": 2,
-          "cost": 2151.79
+          "pages": 1,
+          "cost": 1324
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 12,
-          "pages": 2,
-          "cost": 2140.51
+          "pages": 1,
+          "cost": 1336
         },
         {
           "width": 580,
@@ -14187,6 +14261,7 @@
       "id": "qing_niao",
       "title": "青鸟",
       "file": "qing_niao_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
@@ -14224,77 +14299,77 @@
           "systemGap": 18,
           "rows": 22,
           "pages": 2,
-          "cost": 2156.01
+          "cost": 2156.16
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 21,
           "pages": 2,
-          "cost": 2144.39
+          "cost": 2144.68
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 21,
           "pages": 2,
-          "cost": 2132.67
+          "cost": 2133.04
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 20,
           "pages": 2,
-          "cost": 2121.37
+          "cost": 2121.95
         },
         {
           "width": 600,
           "systemGap": 18,
           "rows": 19,
           "pages": 2,
-          "cost": 2110.98
+          "cost": 2111.16
         },
         {
           "width": 620,
           "systemGap": 18,
           "rows": 18,
           "pages": 2,
-          "cost": 2100.13
+          "cost": 2100.36
         },
         {
           "width": 640,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2089.44
+          "cost": 2089.69
         },
         {
           "width": 660,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2078.02
+          "cost": 2078.27
         },
         {
           "width": 680,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2067.81
+          "cost": 2068.1
         },
         {
           "width": 700,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2056.38
+          "cost": 2056.67
         },
         {
           "width": 720,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2044.94
+          "cost": 2045.23
         },
         {
           "width": 740,
@@ -14383,6 +14458,7 @@
       "id": "ju_ci_lang_de_xia_tian",
       "title": "菊次郎的夏天",
       "file": "ju_ci_lang_de_xia_tian_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
@@ -14420,28 +14496,28 @@
           "systemGap": 18,
           "rows": 30,
           "pages": 3,
-          "cost": 3159.48
+          "cost": 3159.7
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 29,
           "pages": 3,
-          "cost": 3149.08
+          "cost": 3149.38
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 29,
-          "pages": 3,
-          "cost": 3137.98
+          "pages": 2,
+          "cost": 2132
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 29,
           "pages": 2,
-          "cost": 2120.03
+          "cost": 2120.06
         },
         {
           "width": 600,
@@ -14579,6 +14655,7 @@
       "id": "por_una_cabeza",
       "title": "一步之遥",
       "file": "por_una_cabeza_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
@@ -14775,6 +14852,7 @@
       "id": "beer_barrel_polka",
       "title": "啤酒桶波尔卡",
       "file": "beer_barrel_polka_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "快速音型与装饰",
       "difficulty": 4,
@@ -14812,28 +14890,28 @@
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2161.22
+          "cost": 2161.59
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 17,
           "pages": 2,
-          "cost": 2149.92
+          "cost": 2150.3
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2139.56
+          "cost": 2139.95
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 16,
           "pages": 2,
-          "cost": 2128.26
+          "cost": 2128.64
         },
         {
           "width": 600,
@@ -14971,6 +15049,7 @@
       "id": "canon",
       "title": "卡农",
       "file": "canon_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 4,
@@ -15008,28 +15087,28 @@
           "systemGap": 18,
           "rows": 31,
           "pages": 3,
-          "cost": 3160.14
+          "cost": 3160.4
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 29,
-          "pages": 3,
-          "cost": 3150.34
+          "pages": 2,
+          "cost": 2144.02
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 27,
           "pages": 2,
-          "cost": 2132.39
+          "cost": 2132.48
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 25,
           "pages": 2,
-          "cost": 2121.44
+          "cost": 2121.61
         },
         {
           "width": 600,
@@ -15167,16 +15246,17 @@
       "id": "xi_yang_yang",
       "title": "喜洋洋",
       "file": "xi_yang_yang_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速十六分、连奏与装饰",
-      "width": 600,
+      "width": 580,
       "systemGap": 18,
-      "relativeScalePercent": 130,
-      "screenNotePx": 25.52,
-      "versusV1Percent": 147.71,
-      "versusV2Percent": 124.29,
+      "relativeScalePercent": 134.48,
+      "screenNotePx": 26.4,
+      "versusV1Percent": 152.8,
+      "versusV2Percent": 128.57,
       "previousPages": [
         75
       ],
@@ -15186,9 +15266,9 @@
       "pages": [
         71
       ],
-      "systems": 12,
+      "systems": 13,
       "systemsPerPage": [
-        12
+        13
       ],
       "sourceSha256": "cf50b781582c55acbf91692ed66c87362bccdf1e51b1476e8116120eb2d53135",
       "candidates": [
@@ -15204,28 +15284,28 @@
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2161.88
+          "cost": 2162.28
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2150.59
+          "cost": 2151
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 14,
           "pages": 2,
-          "cost": 2139.29
+          "cost": 2139.7
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 13,
-          "pages": 2,
-          "cost": 2128.92
+          "pages": 1,
+          "cost": 1348
         },
         {
           "width": 600,
@@ -15363,6 +15443,7 @@
       "id": "flower_dance",
       "title": "花之舞",
       "file": "flower_dance_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
@@ -15404,28 +15485,28 @@
           "systemGap": 18,
           "rows": 73,
           "pages": 6,
-          "cost": 6156.95
+          "cost": 6157.02
         },
         {
           "width": 540,
           "systemGap": 18,
           "rows": 68,
           "pages": 6,
-          "cost": 6147.72
+          "cost": 6147.89
         },
         {
           "width": 560,
           "systemGap": 18,
           "rows": 66,
           "pages": 5,
-          "cost": 5132.62
+          "cost": 5132.68
         },
         {
           "width": 580,
           "systemGap": 18,
           "rows": 59,
           "pages": 5,
-          "cost": 5123.67
+          "cost": 5123.85
         },
         {
           "width": 600,
@@ -15563,6 +15644,7 @@
       "id": "turkish_march",
       "title": "土耳其进行曲",
       "file": "turkish_march_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
@@ -15584,40 +15666,41 @@
         74,
         75
       ],
-      "systems": 24,
+      "systems": 28,
       "systemsPerPage": [
-        12,
-        12
+        14,
+        14
       ],
-      "sourceSha256": "7fbf5d1fafec858b1eb72e0cf47ae489963585518900e1d3c700d3c4dfc017e9",
+      "sourceSha256": "5dc41521fba6b4620c547c499564dc2de4b53d495d366cd97f431ceec9c566cc",
       "candidates": [
         {
           "width": 780,
           "systemGap": 18,
-          "rows": 24,
+          "rows": 28,
           "pages": 2,
-          "cost": 2001.67
+          "cost": 2000.46
         }
       ],
       "rejectedCandidates": [],
       "fillPage": false,
-      "reviewNote": "恢复两页，以完整谱行均衡分页并放大快速音型。"
+      "reviewNote": "原谱各乐段及每个后反复符号之后强制换行；保持两页，以完整谱行均衡分页。"
     },
     {
       "order": 82,
       "id": "valsentino",
       "title": "Valsentino(快速圆舞曲)",
       "file": "valsentino_01.m3n",
+      "includeBass": true,
       "section": "instrumental",
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速三拍子、半音、三连音与变调",
-      "width": 940,
+      "width": 780,
       "systemGap": 18,
-      "relativeScalePercent": 82.98,
-      "screenNotePx": 16.29,
-      "versusV1Percent": 94.28,
-      "versusV2Percent": 97.64,
+      "relativeScalePercent": 100,
+      "screenNotePx": 19.63,
+      "versusV1Percent": 113.62,
+      "versusV2Percent": 117.67,
       "previousPages": [
         80,
         81
@@ -15626,11 +15709,13 @@
         73
       ],
       "pages": [
-        76
+        76,
+        77
       ],
-      "systems": 21,
+      "systems": 26,
       "systemsPerPage": [
-        21
+        12,
+        14
       ],
       "sourceSha256": "203ad9bd556ae74f25ee4efd219fe1b564ad5d4d4fcd716fb453b2dd5927dbbe",
       "candidates": [
@@ -15640,165 +15725,11 @@
           "rows": 26,
           "pages": 2,
           "cost": 2002.87
-        },
-        {
-          "width": 520,
-          "systemGap": 18,
-          "rows": 40,
-          "pages": 4,
-          "cost": 4159.06
-        },
-        {
-          "width": 540,
-          "systemGap": 18,
-          "rows": 38,
-          "pages": 4,
-          "cost": 4149.08
-        },
-        {
-          "width": 560,
-          "systemGap": 18,
-          "rows": 37,
-          "pages": 3,
-          "cost": 3132.31
-        },
-        {
-          "width": 580,
-          "systemGap": 18,
-          "rows": 36,
-          "pages": 3,
-          "cost": 3120.81
-        },
-        {
-          "width": 600,
-          "systemGap": 18,
-          "rows": 34,
-          "pages": 3,
-          "cost": 3110.33
-        },
-        {
-          "width": 620,
-          "systemGap": 18,
-          "rows": 33,
-          "pages": 3,
-          "cost": 3099.59
-        },
-        {
-          "width": 640,
-          "systemGap": 18,
-          "rows": 32,
-          "pages": 3,
-          "cost": 3088.84
-        },
-        {
-          "width": 660,
-          "systemGap": 18,
-          "rows": 31,
-          "pages": 3,
-          "cost": 3078.37
-        },
-        {
-          "width": 680,
-          "systemGap": 18,
-          "rows": 30,
-          "pages": 2,
-          "cost": 2060.11
-        },
-        {
-          "width": 700,
-          "systemGap": 18,
-          "rows": 29,
-          "pages": 2,
-          "cost": 2048.54
-        },
-        {
-          "width": 720,
-          "systemGap": 18,
-          "rows": 28,
-          "pages": 2,
-          "cost": 2037.18
-        },
-        {
-          "width": 740,
-          "systemGap": 18,
-          "rows": 27,
-          "pages": 2,
-          "cost": 2025.67
-        },
-        {
-          "width": 760,
-          "systemGap": 18,
-          "rows": 26,
-          "pages": 2,
-          "cost": 2014.47
-        },
-        {
-          "width": 800,
-          "systemGap": 18,
-          "rows": 25,
-          "pages": 2,
-          "cost": 2015.69
-        },
-        {
-          "width": 820,
-          "systemGap": 18,
-          "rows": 24,
-          "pages": 2,
-          "cost": 2028.94
-        },
-        {
-          "width": 840,
-          "systemGap": 18,
-          "rows": 24,
-          "pages": 2,
-          "cost": 2041.25
-        },
-        {
-          "width": 860,
-          "systemGap": 18,
-          "rows": 24,
-          "pages": 2,
-          "cost": 2053.69
-        },
-        {
-          "width": 880,
-          "systemGap": 18,
-          "rows": 23,
-          "pages": 2,
-          "cost": 2066.88
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 23,
-          "pages": 2,
-          "cost": 2079.25
-        },
-        {
-          "width": 920,
-          "systemGap": 18,
-          "rows": 21,
-          "pages": 2,
-          "cost": 2092.92
-        },
-        {
-          "width": 940,
-          "systemGap": 18,
-          "rows": 21,
-          "pages": 1,
-          "cost": 1564
-        },
-        {
-          "width": 960,
-          "systemGap": 18,
-          "rows": 20,
-          "pages": 1,
-          "cost": 1576
         }
       ],
       "rejectedCandidates": [],
-      "fillPage": true,
-      "reviewNote": ""
+      "fillPage": false,
+      "reviewNote": "拆为两页，以完整谱行均衡分页并放大快速音型。"
     }
   ],
   "pages": [
@@ -15862,7 +15793,7 @@
     {
       "page": 8,
       "section": "basics",
-      "fillPercent": 55.6,
+      "fillPercent": 54,
       "items": [
         {
           "id": "xiao_xing_xing",
@@ -15886,7 +15817,7 @@
           "width": 640,
           "systemGap": 18,
           "top": 271.54,
-          "height": 316.46
+          "height": 299.02
         }
       ]
     },
@@ -15936,7 +15867,7 @@
     {
       "page": 10,
       "section": "basics",
-      "fillPercent": 98.4,
+      "fillPercent": 99.6,
       "items": [
         {
           "id": "su_shan_na",
@@ -15945,10 +15876,10 @@
             1,
             3
           ],
-          "width": 700,
+          "width": 680,
           "systemGap": 18,
           "top": 0,
-          "height": 228.15
+          "height": 234.86
         },
         {
           "id": "xiao_hong_mao",
@@ -15957,10 +15888,10 @@
             1,
             4
           ],
-          "width": 700,
+          "width": 680,
           "systemGap": 18,
-          "top": 250.15,
-          "height": 282.58
+          "top": 256.86,
+          "height": 290.89
         },
         {
           "id": "duo_lai_mi",
@@ -15969,10 +15900,10 @@
             1,
             6
           ],
-          "width": 700,
+          "width": 680,
           "systemGap": 18,
-          "top": 554.72,
-          "height": 485.58
+          "top": 569.75,
+          "height": 483.44
         }
       ]
     },
@@ -16010,19 +15941,19 @@
     {
       "page": 12,
       "section": "basics",
-      "fillPercent": 97.9,
+      "fillPercent": 21.8,
       "items": [
         {
           "id": "huan_le_song",
           "title": "欢乐颂",
           "systems": [
             1,
-            5
+            3
           ],
-          "width": 600,
+          "width": 780,
           "systemGap": 18,
           "top": 0,
-          "height": 1034.8
+          "height": 230.85
         }
       ]
     },
@@ -16072,7 +16003,7 @@
     {
       "page": 14,
       "section": "folk",
-      "fillPercent": 98.8,
+      "fillPercent": 97.2,
       "items": [
         {
           "id": "scarborough_fair",
@@ -16096,7 +16027,7 @@
           "width": 660,
           "systemGap": 18,
           "top": 348.61,
-          "height": 323.58
+          "height": 306.66
         },
         {
           "id": "ai_er_lan_hua_mei",
@@ -16107,7 +16038,7 @@
           ],
           "width": 660,
           "systemGap": 18,
-          "top": 694.19,
+          "top": 677.28,
           "height": 350.12
         }
       ]
@@ -16196,7 +16127,7 @@
     {
       "page": 18,
       "section": "folk",
-      "fillPercent": 98.7,
+      "fillPercent": 97.2,
       "items": [
         {
           "id": "wo_de_zu_guo",
@@ -16208,14 +16139,14 @@
           "width": 680,
           "systemGap": 20,
           "top": 0,
-          "height": 1043.63
+          "height": 1027.22
         }
       ]
     },
     {
       "page": 19,
       "section": "folk",
-      "fillPercent": 97.3,
+      "fillPercent": 98.5,
       "items": [
         {
           "id": "wo_he_wo_de_zu_guo",
@@ -16224,17 +16155,17 @@
             1,
             9
           ],
-          "width": 680,
+          "width": 660,
           "systemGap": 18,
           "top": 0,
-          "height": 1028.28
+          "height": 1041.42
         }
       ]
     },
     {
       "page": 20,
       "section": "pop",
-      "fillPercent": 96.7,
+      "fillPercent": 95.1,
       "items": [
         {
           "id": "yue_liang_dai_biao_wo_de_xin",
@@ -16246,14 +16177,14 @@
           "width": 660,
           "systemGap": 18,
           "top": 0,
-          "height": 1022
+          "height": 1005.09
         }
       ]
     },
     {
       "page": 21,
       "section": "pop",
-      "fillPercent": 41.7,
+      "fillPercent": 40.4,
       "items": [
         {
           "id": "qian_nv_you_hun",
@@ -16265,7 +16196,7 @@
           "width": 780,
           "systemGap": 18,
           "top": 0,
-          "height": 440.92
+          "height": 426.61
         }
       ]
     },
@@ -16291,7 +16222,7 @@
     {
       "page": 23,
       "section": "pop",
-      "fillPercent": 93.1,
+      "fillPercent": 91.8,
       "items": [
         {
           "id": "bai_hua_lin",
@@ -16303,7 +16234,7 @@
           "width": 800,
           "systemGap": 18,
           "top": 0,
-          "height": 984.11
+          "height": 970.16
         }
       ]
     },
@@ -16329,7 +16260,7 @@
     {
       "page": 25,
       "section": "pop",
-      "fillPercent": 94.9,
+      "fillPercent": 93.4,
       "items": [
         {
           "id": "tong_zhuo_de_ni",
@@ -16341,14 +16272,14 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 1003.55
+          "height": 987.61
         }
       ]
     },
     {
       "page": 26,
       "section": "pop",
-      "fillPercent": 91.3,
+      "fillPercent": 89.6,
       "items": [
         {
           "id": "xiang_si",
@@ -16360,7 +16291,7 @@
           "width": 620,
           "systemGap": 18,
           "top": 0,
-          "height": 964.87
+          "height": 946.87
         }
       ]
     },
@@ -16386,7 +16317,7 @@
     {
       "page": 28,
       "section": "pop",
-      "fillPercent": 98.8,
+      "fillPercent": 97.3,
       "items": [
         {
           "id": "yu_jian",
@@ -16398,14 +16329,14 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 1044.82
+          "height": 1028.87
         }
       ]
     },
     {
       "page": 29,
       "section": "pop",
-      "fillPercent": 97.1,
+      "fillPercent": 98.5,
       "items": [
         {
           "id": "huang_hun",
@@ -16414,17 +16345,17 @@
             1,
             10
           ],
-          "width": 640,
+          "width": 620,
           "systemGap": 18,
           "top": 0,
-          "height": 1026.04
+          "height": 1040.9
         }
       ]
     },
     {
       "page": 30,
       "section": "pop",
-      "fillPercent": 99,
+      "fillPercent": 97.5,
       "items": [
         {
           "id": "an_xiang",
@@ -16436,7 +16367,7 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 1046.67
+          "height": 1030.72
         }
       ]
     },
@@ -16462,7 +16393,7 @@
     {
       "page": 32,
       "section": "pop",
-      "fillPercent": 93.1,
+      "fillPercent": 91.5,
       "items": [
         {
           "id": "dang_nian_qing",
@@ -16474,14 +16405,14 @@
           "width": 680,
           "systemGap": 18,
           "top": 0,
-          "height": 983.82
+          "height": 967.4
         }
       ]
     },
     {
       "page": 33,
       "section": "pop",
-      "fillPercent": 98.9,
+      "fillPercent": 94,
       "items": [
         {
           "id": "tie_xue_dan_xin",
@@ -16493,7 +16424,7 @@
           "width": 540,
           "systemGap": 18,
           "top": 0,
-          "height": 1045.49
+          "height": 993.93
         }
       ]
     },
@@ -16519,7 +16450,7 @@
     {
       "page": 35,
       "section": "pop",
-      "fillPercent": 99.9,
+      "fillPercent": 97.6,
       "items": [
         {
           "id": "qiu_ying",
@@ -16531,14 +16462,14 @@
           "width": 540,
           "systemGap": 18,
           "top": 0,
-          "height": 1055.84
+          "height": 1031.35
         }
       ]
     },
     {
       "page": 36,
       "section": "pop",
-      "fillPercent": 94.3,
+      "fillPercent": 92.7,
       "items": [
         {
           "id": "man_bu_ren_sheng_lu",
@@ -16550,14 +16481,14 @@
           "width": 660,
           "systemGap": 18,
           "top": 0,
-          "height": 996.32
+          "height": 979.41
         }
       ]
     },
     {
       "page": 37,
       "section": "pop",
-      "fillPercent": 92.1,
+      "fillPercent": 90.4,
       "items": [
         {
           "id": "wo_zhi_zai_hu_ni",
@@ -16569,14 +16500,14 @@
           "width": 640,
           "systemGap": 18,
           "top": 0,
-          "height": 972.98
+          "height": 955.54
         }
       ]
     },
     {
       "page": 38,
       "section": "pop",
-      "fillPercent": 99.5,
+      "fillPercent": 98,
       "items": [
         {
           "id": "guo_huo",
@@ -16588,7 +16519,7 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 1051.58
+          "height": 1035.63
         }
       ]
     },
@@ -16614,7 +16545,7 @@
     {
       "page": 40,
       "section": "pop",
-      "fillPercent": 95.8,
+      "fillPercent": 94.7,
       "items": [
         {
           "id": "hou_lai",
@@ -16626,14 +16557,14 @@
           "width": 940,
           "systemGap": 18,
           "top": 0,
-          "height": 1012.99
+          "height": 1001.11
         }
       ]
     },
     {
       "page": 41,
       "section": "pop",
-      "fillPercent": 99.2,
+      "fillPercent": 98,
       "items": [
         {
           "id": "tong_hua_zhen",
@@ -16645,14 +16576,14 @@
           "width": 920,
           "systemGap": 18,
           "top": 0,
-          "height": 1048.34
+          "height": 1036.2
         }
       ]
     },
     {
       "page": 42,
       "section": "pop",
-      "fillPercent": 90.2,
+      "fillPercent": 89.1,
       "items": [
         {
           "id": "lao_nan_hai",
@@ -16664,14 +16595,14 @@
           "width": 920,
           "systemGap": 18,
           "top": 0,
-          "height": 953.82
+          "height": 941.69
         }
       ]
     },
     {
       "page": 43,
       "section": "pop",
-      "fillPercent": 96.3,
+      "fillPercent": 95,
       "items": [
         {
           "id": "liang_liang",
@@ -16683,14 +16614,14 @@
           "width": 800,
           "systemGap": 20,
           "top": 0,
-          "height": 1017.75
+          "height": 1003.8
         }
       ]
     },
     {
       "page": 44,
       "section": "pop",
-      "fillPercent": 95.6,
+      "fillPercent": 94.3,
       "items": [
         {
           "id": "qian_si_xi",
@@ -16702,14 +16633,14 @@
           "width": 820,
           "systemGap": 18,
           "top": 0,
-          "height": 1010.16
+          "height": 996.55
         }
       ]
     },
     {
       "page": 45,
       "section": "pop",
-      "fillPercent": 93.1,
+      "fillPercent": 91.8,
       "items": [
         {
           "id": "ren_shi_jian",
@@ -16721,7 +16652,7 @@
           "width": 800,
           "systemGap": 18,
           "top": 0,
-          "height": 983.99
+          "height": 970.04
         }
       ]
     },
@@ -16747,7 +16678,7 @@
     {
       "page": 47,
       "section": "pop",
-      "fillPercent": 99.8,
+      "fillPercent": 98.5,
       "items": [
         {
           "id": "shi_jie_zeng_yu_wo_de",
@@ -16759,7 +16690,7 @@
           "width": 800,
           "systemGap": 20,
           "top": 0,
-          "height": 1054.93
+          "height": 1040.98
         }
       ]
     },
@@ -16785,7 +16716,7 @@
     {
       "page": 49,
       "section": "pop",
-      "fillPercent": 97.5,
+      "fillPercent": 98.6,
       "items": [
         {
           "id": "man_man_xi_huan_ni",
@@ -16794,10 +16725,10 @@
             1,
             12
           ],
-          "width": 780,
+          "width": 760,
           "systemGap": 18,
           "top": 0,
-          "height": 1030.42
+          "height": 1042.55
         }
       ]
     },
@@ -16823,7 +16754,7 @@
     {
       "page": 51,
       "section": "pop",
-      "fillPercent": 97.1,
+      "fillPercent": 98.6,
       "items": [
         {
           "id": "wo_yao_ni",
@@ -16832,17 +16763,17 @@
             1,
             8
           ],
-          "width": 600,
+          "width": 580,
           "systemGap": 18,
           "top": 0,
-          "height": 1026.08
+          "height": 1042.21
         }
       ]
     },
     {
       "page": 52,
       "section": "pop",
-      "fillPercent": 95.5,
+      "fillPercent": 94.1,
       "items": [
         {
           "id": "annie",
@@ -16854,33 +16785,33 @@
           "width": 740,
           "systemGap": 18,
           "top": 0,
-          "height": 1009.92
+          "height": 994.83
         }
       ]
     },
     {
       "page": 53,
       "section": "pop",
-      "fillPercent": 88.7,
+      "fillPercent": 98.7,
       "items": [
         {
           "id": "yi_qian_ge_shang_xin_de_li_you",
           "title": "一千个伤心的理由",
           "systems": [
             1,
-            10
+            11
           ],
-          "width": 800,
+          "width": 780,
           "systemGap": 20,
           "top": 0,
-          "height": 937.94
+          "height": 1043.64
         }
       ]
     },
     {
       "page": 54,
       "section": "pop",
-      "fillPercent": 97.7,
+      "fillPercent": 98.8,
       "items": [
         {
           "id": "yue_ban_xiao_ye_qu",
@@ -16889,10 +16820,10 @@
             1,
             12
           ],
-          "width": 760,
+          "width": 740,
           "systemGap": 18,
           "top": 0,
-          "height": 1032.58
+          "height": 1044.57
         }
       ]
     },
@@ -16918,7 +16849,7 @@
     {
       "page": 56,
       "section": "pop",
-      "fillPercent": 94.3,
+      "fillPercent": 93,
       "items": [
         {
           "id": "ting_hai",
@@ -16930,26 +16861,26 @@
           "width": 800,
           "systemGap": 18,
           "top": 0,
-          "height": 996.9
+          "height": 982.95
         }
       ]
     },
     {
       "page": 57,
       "section": "pop",
-      "fillPercent": 94.6,
+      "fillPercent": 100,
       "items": [
         {
           "id": "ru_yuan",
           "title": "如愿",
           "systems": [
             1,
-            13
+            14
           ],
-          "width": 920,
+          "width": 900,
           "systemGap": 18,
           "top": 0,
-          "height": 999.91
+          "height": 1056.89
         }
       ]
     },
@@ -17113,26 +17044,26 @@
     {
       "page": 65,
       "section": "instrumental",
-      "fillPercent": 94.5,
+      "fillPercent": 99.9,
       "items": [
         {
           "id": "zhi_dao_shi_jie_de_jin_tou",
           "title": "直到世界的尽头",
           "systems": [
             1,
-            11
+            12
           ],
-          "width": 580,
+          "width": 540,
           "systemGap": 18,
           "top": 0,
-          "height": 999.06
+          "height": 1056.06
         }
       ]
     },
     {
       "page": 66,
       "section": "instrumental",
-      "fillPercent": 94.9,
+      "fillPercent": 93.5,
       "items": [
         {
           "id": "qing_niao",
@@ -17144,7 +17075,7 @@
           "width": 740,
           "systemGap": 18,
           "top": 0,
-          "height": 1003.12
+          "height": 988.03
         }
       ]
     },
@@ -17170,7 +17101,7 @@
     {
       "page": 68,
       "section": "instrumental",
-      "fillPercent": 91.4,
+      "fillPercent": 89,
       "items": [
         {
           "id": "por_una_cabeza",
@@ -17182,7 +17113,7 @@
           "width": 520,
           "systemGap": 20,
           "top": 0,
-          "height": 966.28
+          "height": 940.84
         }
       ]
     },
@@ -17227,19 +17158,19 @@
     {
       "page": 71,
       "section": "instrumental",
-      "fillPercent": 89.1,
+      "fillPercent": 99.3,
       "items": [
         {
           "id": "xi_yang_yang",
           "title": "喜洋洋",
           "systems": [
             1,
-            12
+            13
           ],
-          "width": 600,
+          "width": 580,
           "systemGap": 18,
           "top": 0,
-          "height": 941.95
+          "height": 1049.79
         }
       ]
     },
@@ -17284,11 +17215,49 @@
     {
       "page": 74,
       "section": "instrumental",
-      "fillPercent": 78.6,
+      "fillPercent": 88.4,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
+          "systems": [
+            1,
+            14
+          ],
+          "width": 780,
+          "systemGap": 18,
+          "top": 0,
+          "height": 934.38
+        }
+      ]
+    },
+    {
+      "page": 75,
+      "section": "instrumental",
+      "fillPercent": 90.2,
+      "items": [
+        {
+          "id": "turkish_march",
+          "title": "土耳其进行曲",
+          "systems": [
+            15,
+            28
+          ],
+          "width": 780,
+          "systemGap": 18,
+          "top": 0,
+          "height": 953.42
+        }
+      ]
+    },
+    {
+      "page": 76,
+      "section": "instrumental",
+      "fillPercent": 72,
+      "items": [
+        {
+          "id": "valsentino",
+          "title": "Valsentino(快速圆舞曲)",
           "systems": [
             1,
             12
@@ -17296,45 +17265,26 @@
           "width": 780,
           "systemGap": 18,
           "top": 0,
-          "height": 830.78
+          "height": 761.51
         }
       ]
     },
     {
-      "page": 75,
+      "page": 77,
       "section": "instrumental",
-      "fillPercent": 80.6,
-      "items": [
-        {
-          "id": "turkish_march",
-          "title": "土耳其进行曲",
-          "systems": [
-            13,
-            24
-          ],
-          "width": 780,
-          "systemGap": 18,
-          "top": 0,
-          "height": 852.11
-        }
-      ]
-    },
-    {
-      "page": 76,
-      "section": "instrumental",
-      "fillPercent": 99.4,
+      "fillPercent": 74.4,
       "items": [
         {
           "id": "valsentino",
           "title": "Valsentino(快速圆舞曲)",
           "systems": [
-            1,
-            21
+            13,
+            26
           ],
-          "width": 940,
+          "width": 780,
           "systemGap": 18,
           "top": 0,
-          "height": 1050.16
+          "height": 786.8
         }
       ]
     }
@@ -17342,12 +17292,12 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 1842,
+    "geometryCandidates": 1820,
     "outside": 0,
     "overlaps": 0,
     "unsafeCuts": 0,
     "orphanContinuationPages": 0,
-    "outlinedPages": 76,
+    "outlinedPages": 77,
     "outlinedPageOverflow": 0
   }
 }
