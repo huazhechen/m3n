@@ -1,0 +1,52 @@
+{
+  "baselineEdition": "第十二版",
+  "rendererSha256": "6fc50a4008f1af8a774b1a28bc9d862af3d1becd157034907351090cdc3ab36c",
+  "width": 778,
+  "notePx": 19.681233933161955,
+  "notePt": 14.760925449871467,
+  "body": {
+    "width": 696,
+    "height": 1057
+  },
+  "shortWorkGap": 22,
+  "fillPercent": 94.76995493305131,
+  "systems": [
+    7,
+    7
+  ],
+  "entries": [
+    {
+      "id": "por_una_cabeza",
+      "title": "一步之遥",
+      "sourceFile": "por_una_cabeza_01.m3n",
+      "sourceSha256": "bf12fc39b71a81f87fdc8973057a200dec6036e50927806b655cddbf582c66cb",
+      "previousPage": 75,
+      "previousNotePx": 29.45,
+      "systemGap": 20,
+      "systems": 7,
+      "sourcePreserved": true,
+      "noteIdentityPreserved": true
+    },
+    {
+      "id": "zhi_dao_shi_jie_de_jin_tou",
+      "title": "直到世界的尽头",
+      "sourceFile": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
+      "sourceSha256": "7ba39d9aa0a6fcba68559fbf12c88dea1d00843aa79af52eeeedb6418072c767",
+      "previousPage": 71,
+      "previousNotePx": 26.4,
+      "systemGap": 18,
+      "systems": 7,
+      "sourcePreserved": true,
+      "noteIdentityPreserved": true
+    }
+  ],
+  "validation": {
+    "sourcePreserved": true,
+    "noteIdentityPreserved": true,
+    "outside": 0,
+    "overlaps": 0,
+    "unsafeCuts": 0,
+    "outlinedOverflow": 0,
+    "pdfPages": 1
+  }
+}
