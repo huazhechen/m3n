@@ -43,6 +43,9 @@ const bodyX=profile.outerMargin,bodyWidth=pageWidth-bodyX*2,bodyTop=profile.body
 const shortGap=profile.shortWorkGap
 const minimumFillPercent=profile.minimumFillPercent??0
 assert(Number.isFinite(minimumFillPercent)&&minimumFillPercent>=0&&minimumFillPercent<100,'Minimum page fill must be between 0 and 100')
+const maximumNotePx=profile.maximumNotePx??null
+assert(maximumNotePx===null||Number.isFinite(maximumNotePx)&&maximumNotePx>0,'Maximum note size must be a positive finite number')
+const minimumScoreWidth=maximumNotePx===null?0:22*bodyWidth/maximumNotePx
 const spacing={pageMargin:profile.scoreMargin,systemGap:profile.systemGap}
 const renderScale=width=>bodyWidth/width
 function paginate(layout,entry) {
@@ -69,7 +72,9 @@ try {
   let best,fillPage=Boolean(entry.pageCount)
   const summaries=[],rejectedCandidates=[],sharedLayouts=new Map()
   const entryOptions={...spacing,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false}
-  for(const width of entry.widthLocked?[entry.width]:[...new Set([entry.width,...plan.widthCandidates,...(entry.widthCandidates??[])])]) {
+  const widths=(entry.widthLocked?[entry.width]:[...new Set([entry.width,...plan.widthCandidates,...(entry.widthCandidates??[])])]).filter(width=>width>=minimumScoreWidth)
+  assert(widths.length,`${entry.title}: no candidate meets the maximum note size`)
+  for(const width of widths) {
    const key=createHash('sha256').update(rendererHash+JSON.stringify({...entryOptions,systemGap:entry.systemGap??spacing.systemGap})+entry.source+width).digest('hex'),cachePath=join(cacheFolder,key+'.json')
    let layout=existsSync(cachePath)?JSON.parse(readFileSync(cachePath,'utf8')):null
    const rejected=[]
@@ -196,7 +201,11 @@ try {
   return {order:i+1,id:e.id,title:e.title,file:e.file,includeBass:e.includeBass??true,uniformSystemHeight:e.uniformSystemHeight??plan.uniformSystemHeight??false,baselineSteps:e.layout.baselineSteps,voltaSystems:e.layout.voltaSystems,section:e.section,group:e.group,difficulty:e.difficulty,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),versusV1Percent:first?Number(((bodyWidth/e.layout.width)/(704/first.width*pageWidth/794)*100).toFixed(2)):null,versusV2Percent:second?Number(((bodyWidth/e.layout.width)/(secondEdition.body.width/second.width)*100).toFixed(2)):null,previousPages:first?.pages??[],secondEditionPages:second?.pages??[],pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
  })
  const pageRecords=musicPages.map((p,i)=>({page:frontCount+i+1,section:p.section,fillPercent:Number((p.used/bodyHeight*100).toFixed(1)),items:p.items.map(item=>({id:item.entry.id,title:item.entry.title,systems:[item.start+1,item.end],width:item.entry.layout.width,systemGap:item.entry.layout.systemGap,top:Number(item.y.toFixed(2)),height:Number(item.height.toFixed(2))}))}))
+ const oversizedNoteEntries=records.filter(e=>maximumNotePx!==null&&22*bodyWidth/e.width>maximumNotePx+1e-6).length
+ assert.equal(oversizedNoteEntries,0,'Every score must meet the maximum note size')
  const report={title:plan.title,edition:plan.edition,showCredits:plan.showCredits??true,uniformSystemHeight:plan.uniformSystemHeight??false,rendererSha256:rendererHash,sourceCount:sourceFiles.length,entryCount:records.length,pageCount:total,frontPages:frontCount,baseWidth:plan.baseWidth,page:profile,body:{width:bodyWidth,height:bodyHeight},entries:records,pages:pageRecords,validation:{sourceCoverage:true,trainingSourcePreserved:true,geometryCandidates:records.reduce((s,e)=>s+e.candidates.length,0),minimumMusicPageFillPercent:Number(Math.min(...musicPages.map(p=>p.used/bodyHeight*100)).toFixed(3)),underfilledMusicPages:musicPages.filter(p=>p.used/bodyHeight*100<=minimumFillPercent).length,outside:0,overlaps:0,unsafeCuts:0,orphanContinuationPages:pageRecords.flatMap(p=>p.items).filter(item=>item.systems[0]>1&&item.systems[1]-item.systems[0]+1<3).length}}
+ report.validation.maximumMusicNotePx=Number(Math.max(...records.map(e=>22*bodyWidth/e.width)).toFixed(3))
+ report.validation.oversizedNoteEntries=oversizedNoteEntries
  assert.equal(report.validation.orphanContinuationPages,0)
  writeFileSync(join(staged,'layout-record.json'),JSON.stringify(report,null,2)+'\n')
  writeFileSync(join(temp,'unoutlined-pages.json'),JSON.stringify(pages))

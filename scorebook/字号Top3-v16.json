@@ -1,0 +1,127 @@
+{
+  "edition": "第十六版",
+  "excludeExercises": true,
+  "scoreCount": 80,
+  "largestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "梨花又开放",
+      "notePx": 23.93,
+      "pages": [
+        17
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "相思",
+      "notePx": 23.93,
+      "pages": [
+        21
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "秋樱",
+      "notePx": 23.93,
+      "pages": [
+        29
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "慢慢喜欢你",
+      "notePx": 23.93,
+      "pages": [
+        46,
+        47
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "我要你",
+      "notePx": 23.93,
+      "pages": [
+        49
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "梁祝",
+      "notePx": 23.93,
+      "pages": [
+        58
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "温柔的倾诉",
+      "notePx": 23.93,
+      "pages": [
+        58
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "下雨的时候",
+      "notePx": 23.93,
+      "pages": [
+        60
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "超级玛丽",
+      "notePx": 23.93,
+      "pages": [
+        65
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "菊次郎的夏天",
+      "notePx": 23.93,
+      "pages": [
+        67,
+        68
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "喜洋洋",
+      "notePx": 23.93,
+      "pages": [
+        72
+      ]
+    }
+  ],
+  "smallestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "土耳其进行曲",
+      "notePx": 18.95,
+      "pages": [
+        76,
+        77
+      ]
+    },
+    {
+      "rank": 2,
+      "title": "凉凉",
+      "notePx": 19.04,
+      "pages": [
+        40
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "世界赠予我的",
+      "notePx": 19.09,
+      "pages": [
+        44
+      ]
+    }
+  ],
+  "minimumNotePx": 18.95,
+  "maximumNotePx": 23.93,
+  "ratio": 1.262796833773087
+}
