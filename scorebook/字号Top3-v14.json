@@ -1,0 +1,62 @@
+{
+  "edition": "第十四版",
+  "excludeExercises": true,
+  "scoreCount": 81,
+  "largestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "Valsentino(快速圆舞曲)",
+      "notePx": 26.13,
+      "pages": [
+        80,
+        81,
+        82
+      ]
+    },
+    {
+      "rank": 2,
+      "title": "哆唻咪",
+      "notePx": 26.04,
+      "pages": [
+        9
+      ]
+    },
+    {
+      "rank": 2,
+      "title": "让我们荡起双桨",
+      "notePx": 26.04,
+      "pages": [
+        9
+      ]
+    }
+  ],
+  "smallestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "直到世界的尽头",
+      "notePx": 18.58,
+      "pages": [
+        46
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "只要平凡",
+      "notePx": 18.58,
+      "pages": [
+        46
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "人世间",
+      "notePx": 18.67,
+      "pages": [
+        45
+      ]
+    }
+  ],
+  "minimumNotePx": 18.58,
+  "maximumNotePx": 26.13,
+  "ratio": 1.4063509149623252
+}

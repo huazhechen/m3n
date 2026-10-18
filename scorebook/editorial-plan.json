@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十三版",
+  "edition": "第十四版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -871,6 +871,25 @@
       "reviewNote": ""
     },
     {
+      "id": "zhi_dao_shi_jie_de_jin_tou",
+      "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
+      "title": "直到世界的尽头",
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "difficulty": 4,
+      "reason": "高音区、切分与导航",
+      "width": 824,
+      "sharePage": true,
+      "breakBefore": true,
+      "pageBreaks": [],
+      "reviewNote": "《直到世界的尽头》在前、《只要平凡》在后合为一页，7 + 4 行，统一18.58px音符，高度利用率97.168%；完整原谱不删减。",
+      "widthLocked": true,
+      "maximumSharedWidth": 824,
+      "pageCount": 1,
+      "systemGap": 18,
+      "uniformSystemHeight": true
+    },
+    {
       "id": "zhi_yao_ping_fan",
       "file": "zhi_yao_ping_fan_01.m3n",
       "title": "只要平凡",
@@ -878,11 +897,16 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "复拍、三段歌词与临时变音",
-      "width": 780,
-      "sharePage": false,
+      "width": 824,
+      "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "《直到世界的尽头》在前、《只要平凡》在后合为一页，7 + 4 行，统一18.58px音符，高度利用率97.168%；完整原谱不删减。",
+      "widthLocked": true,
+      "maximumSharedWidth": 824,
+      "pageCount": 1,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "shi_jie_zeng_yu_wo_de",
@@ -892,13 +916,13 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "密集节奏与长线条",
-      "width": 584,
+      "width": 802,
       "sharePage": false,
-      "breakBefore": false,
+      "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "第七版增页保留；房子与普通谱行分别统一高度，按指定页数重新选择可用字号，各页高度利用率高于90%。",
+      "reviewNote": "完整原谱改为一页10行，音符19.09px，高度利用率96.031%。",
       "widthLocked": true,
-      "pageCount": 2,
+      "pageCount": 1,
       "systemGap": 18,
       "uniformSystemHeight": true
     },
@@ -1182,20 +1206,6 @@
       "reviewNote": ""
     },
     {
-      "id": "zhi_dao_shi_jie_de_jin_tou",
-      "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
-      "title": "直到世界的尽头",
-      "section": "instrumental",
-      "group": "快速音型与装饰",
-      "difficulty": 4,
-      "reason": "高音区、切分与导航",
-      "width": 780,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": ""
-    },
-    {
       "id": "qing_niao",
       "file": "qing_niao_01.m3n",
       "title": "青鸟",
@@ -1363,8 +1373,8 @@
       "widthLocked": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v13.pdf",
-  "outputKey": "scorebook-v13",
+  "outputPdf": "循序渐进简谱集-v14.pdf",
+  "outputKey": "scorebook-v14",
   "page": {
     "width": 744,
     "height": 1133,

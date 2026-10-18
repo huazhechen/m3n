@@ -125,7 +125,15 @@ try {
  assert(musicPages.every(p=>p.used<=bodyHeight+1e-6),'Every music page must fit the content area')
  // Keep each original score as one contents entry, including the full daily training.
  const tocItems=plan.sections.flatMap(section=>[{section},...measured.filter(e=>e.section===section.id).map(entry=>({entry}))])
- const tocRows=32, tocCount=Math.ceil(tocItems.length/tocRows), frontCount=1+tocCount
+ const tocCount=2,tocColumns=2,frontCount=1+tocCount,tocColumnItems=[]
+ let tocCursor=0
+ for(let column=0;column<tocCount*tocColumns;column++) {
+  const remainingColumns=tocCount*tocColumns-column
+  let end=tocCursor+Math.ceil((tocItems.length-tocCursor)/remainingColumns)
+  if(remainingColumns>1&&tocItems[end-1]?.section)end--
+  tocColumnItems.push(tocItems.slice(tocCursor,end));tocCursor=end
+ }
+ assert.equal(tocCursor,tocItems.length,'The contents must include every entry')
  const entryPages=new Map()
  for(const [index,p] of musicPages.entries()) for(const item of p.items) {
   const pages=entryPages.get(item.entry.id)??[];pages.push(frontCount+index+1);entryPages.set(item.entry.id,pages)
@@ -143,14 +151,30 @@ try {
  pages.push({kind:'cover',svg:pageSvg(cover,1)})
  for(let t=0;t<tocCount;t++) {
   let content=svgText('目录',56,70,30)+svgText(`${t+1} / ${tocCount}`,pageWidth-48,68,14,'text-anchor="end"')
-  content+=svgText('编号  曲目 / 训练',56,110,13,'fill="#666"')+svgText('难度',600,110,13,'fill="#666"')+svgText('页码',pageWidth-48,110,13,'text-anchor="end" fill="#666"')
-  const rows=tocItems.slice(t*tocRows,(t+1)*tocRows)
-  for(const [j,row]of rows.entries()) {
-   if(row.section){content+=svgText(row.section.title,56,139+j*28,16,'font-weight="700"');continue}
-   const e=row.entry
-   const y=139+j*28,nums=entryPages.get(e.id),label=nums.length===1?nums[0]:`${nums[0]}–${nums.at(-1)}`
-   content+=svgText(`${String(measured.indexOf(e)+1).padStart(3,'0')}  ${e.title}`,56,y,15)+svgText(String(e.difficulty),613,y,14)+svgText(label,pageWidth-48,y,14,'text-anchor="end"')
+  const tocMargin=40,tocGap=32,tocWidth=(pageWidth-2*tocMargin-tocGap)/tocColumns
+  for(let column=0;column<tocColumns;column++) {
+   const x=tocMargin+column*(tocWidth+tocGap),right=x+tocWidth
+   content+=`<g data-scorebook-toc-column="${column}" data-scorebook-left="${x}" data-scorebook-right="${right}">`
+   content+=svgText('编号  曲目 / 训练',x,110,13,'fill="#666"')+svgText('页码',right,110,13,'text-anchor="end" fill="#666"')
+   const rows=tocColumnItems[t*tocColumns+column]
+   assert(rows.length<=26,'Each contents column must fit the page')
+   assert(!rows.at(-1)?.section,'A contents section heading must stay with its first entry')
+   for(const [j,row]of rows.entries()) {
+    const y=145+j*36
+    if(row.section){content+=svgText(row.section.title,x,y,16,'font-weight="700"');continue}
+    const e=row.entry,nums=entryPages.get(e.id),label=nums.length===1?nums[0]:`${nums[0]}–${nums.at(-1)}`
+    content+=`<g data-scorebook-toc-entry="${escape(e.id)}">`+svgText(`${String(measured.indexOf(e)+1).padStart(3,'0')}  ${e.title}`,x,y,15,'data-scorebook-role="toc-title"')+svgText(label,right,y,14,'text-anchor="end" data-scorebook-role="toc-pages"')+'</g>'
+   }
+   content+='</g>'
   }
+  await page.locator('#print-page').evaluate((host,markup)=>{host.innerHTML=markup},pageSvg(content,t+2))
+  const contentsIssues=await page.evaluate(()=>[...document.querySelectorAll('[data-scorebook-toc-column]')].flatMap(column=>{
+   const left=Number(column.getAttribute('data-scorebook-left')),right=Number(column.getAttribute('data-scorebook-right')),issues=[]
+   for(const text of column.querySelectorAll('text')){const b=text.getBBox();if(b.x<left-.5||b.x+b.width>right+.5||b.y+b.height>1095)issues.push(text.textContent)}
+   for(const entry of column.querySelectorAll('[data-scorebook-toc-entry]')){const a=entry.querySelector('[data-scorebook-role="toc-title"]').getBBox(),b=entry.querySelector('[data-scorebook-role="toc-pages"]').getBBox();if(a.x+a.width+8>b.x)issues.push(entry.textContent)}
+   return issues
+  }))
+  assert.deepEqual(contentsIssues,[],'Contents text must fit its column and leave room for page numbers')
   pages.push({kind:'contents',svg:pageSvg(content,t+2)})
  }
  for(const [i,p]of musicPages.entries()) {
@@ -193,7 +217,7 @@ try {
  await page.pdf({path:join(staged,pdfFile),width:`${pageWidth}px`,height:`${pageHeight}px`,printBackground:true,preferCSSPageSize:true,timeout:120000})
  const csv=['序号,编号,曲目,分类,分组,难度,页码,版宽px,相对缩放%,适宽音符px,各页谱行数,排序依据,校阅备注,相比旧版音符大小%,旧版页码,行间留白px,相比第二版音符大小%,第二版页码',...records.map(e=>[e.order,e.id,e.title,plan.sections.find(s=>s.id===e.section).title,e.group,e.difficulty,e.pages.join('/'),e.width,e.relativeScalePercent,e.screenNotePx,e.systemsPerPage.join('/'),e.reason,e.reviewNote,e.versusV1Percent,e.previousPages.join('/'),e.systemGap,e.versusV2Percent,e.secondEditionPages.join('/')].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))].join('\n')
  writeFileSync(join(staged,'排序与缩放记录.csv'),'\uFEFF'+csv+'\n')
- let md=`# 简谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：81 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按当前简谱编配的节奏、音域、临时变音、连音组、装饰、变拍和反复复杂度评为 1—5 级；这是编辑分级，不是考级等级。分类内优先兼顾风格与学习目标，再按难度推进。\n\n默认版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的竖向比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px，谱行最小留白 ${profile.systemGap}px（旧版24px；密集连线按需要保留20—24px）。单页曲目在 520—960px 候选中优先选择能完整容纳的最小版宽，以便放大音符；很短的曲目保留适度留白，合页短曲统一字号，候选最小520px，合页版宽不超过基准版宽。所有正文谱页的自然占用高度必须严格高于正文区域的 ${minimumFillPercent}%；构建会拒绝低于或等于下限的分页与合页候选，封面和目录不参与此项约束。各乐曲采用分档等行高，普通谱行保持统一基础高度，房子谱行另用统一较高档，歌词再按每行实际行数增加高度；${records[0].uniformSystemHeight?'每日训练也使用统一基础节距，保留独立练习标题与原有换行':'每日训练保留独立练习间距'}。《土耳其进行曲》分 ${records.find(e=>e.id==='turkish_march').pages.length} 页，《Valsentino(快速圆舞曲)》分 ${records.find(e=>e.id==='valsentino').pages.length} 页，采用已验证的候选版宽，保持指定页数与正文高度下限；每日基本功按原谱整体分页。${plan.showCredits===false?'PDF 统一隐藏作词、作曲、编曲、演唱等右侧署名。':''}《欢乐颂》按条目设置隐藏低音谱表；原谱署名与低音内容仍保留。保留原谱的歌词、原有建议速度与音乐记号。相比旧版的百分比均按同一设备适宽显示计算，100%表示与对应版本相同；不是印刷字号。\n\n|序号|曲目 / 练习|难度|页码|版宽 px|相对缩放|谱行分配|行间留白px|同屏音符 / 第一版|同屏音符 / 第二版|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|---|---|\n`
+ let md=`# 简谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：81 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按当前简谱编配的节奏、音域、临时变音、连音组、装饰、变拍和反复复杂度评为 1—5 级；这是编辑分级，不是考级等级。分类内优先兼顾风格与学习目标，再按难度推进。\n\n默认版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的竖向比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px，谱行最小留白 ${profile.systemGap}px（旧版24px；密集连线按需要保留20—24px）。单页曲目在 520—960px 候选中优先选择能完整容纳的最小版宽，以便放大音符；很短的曲目保留适度留白，合页短曲统一字号，候选最小520px，合页默认不超过基准版宽，已确认组合可由各条目的 maximumSharedWidth 明确指定上限。所有正文谱页的自然占用高度必须严格高于正文区域的 ${minimumFillPercent}%；构建会拒绝低于或等于下限的分页与合页候选，封面和目录不参与此项约束。各乐曲采用分档等行高，普通谱行保持统一基础高度，房子谱行另用统一较高档，歌词再按每行实际行数增加高度；${records[0].uniformSystemHeight?'每日训练也使用统一基础节距，保留独立练习标题与原有换行':'每日训练保留独立练习间距'}。《土耳其进行曲》分 ${records.find(e=>e.id==='turkish_march').pages.length} 页，《Valsentino(快速圆舞曲)》分 ${records.find(e=>e.id==='valsentino').pages.length} 页，采用已验证的候选版宽，保持指定页数与正文高度下限；每日基本功按原谱整体分页。${plan.showCredits===false?'PDF 统一隐藏作词、作曲、编曲、演唱等右侧署名。':''}《欢乐颂》按条目设置隐藏低音谱表；原谱署名与低音内容仍保留。保留原谱的歌词、原有建议速度与音乐记号。相比旧版的百分比均按同一设备适宽显示计算，100%表示与对应版本相同；不是印刷字号。\n\n|序号|曲目 / 练习|难度|页码|版宽 px|相对缩放|谱行分配|行间留白px|同屏音符 / 第一版|同屏音符 / 第二版|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|---|---|\n`
  for(const section of plan.sections) {
   md+=`| |**${section.title}**| | | | | | | | |${section.description}|\n`
   for(const e of records.filter(e=>e.section===section.id))md+=`|${String(e.order).padStart(3,'0')}|${e.title}|${e.difficulty}|${e.pages.join('、')}|${e.width}|${e.relativeScalePercent}%|${e.systemsPerPage.join(' + ')}|${e.systemGap}|${e.versusV1Percent===null?'—':e.versusV1Percent+'%'}|${e.versusV2Percent===null?'—':e.versusV2Percent+'%'}|${e.reason}${e.reviewNote?'；'+e.reviewNote:''}|\n`
