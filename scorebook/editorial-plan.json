@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十六版",
+  "edition": "第十七版",
   "sourceCount": 81,
   "baseWidth": 780,
   "widthCandidates": [
@@ -966,14 +966,14 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "跨拍、变拍与细分节奏",
-      "width": 640,
+      "width": 736,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "保留两页，7 + 8行，23.93px，91.536% / 93.439%。",
+      "reviewNote": "三段主歌共用前9小节，第一与第二、三遍用跳房子保留两种结尾；副歌演奏两遍、尾声保留。单页10行，20.80px，99.966%。",
       "widthLocked": true,
-      "pageCount": 2,
-      "systemGap": 22,
+      "pageCount": 1,
+      "systemGap": 0,
       "uniformSystemHeight": true
     },
     {
@@ -1395,16 +1395,14 @@
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速半音、装饰与多次变调",
-      "width": 808,
+      "width": 688,
       "sharePage": false,
       "breakBefore": false,
-      "pageBreaks": [
-        14
-      ],
-      "reviewNote": "删除全部乐段名称并收紧统一行高，按14+14行分为两页；在第5个后反复之后分页，9个完整反复段均不跨页，保留全部强制换行。",
+      "pageBreaks": [],
+      "reviewNote": "顿音贴近主音、前倚音置于左上侧，保留普通等行高与所有强制换行；按16+16行分两页，允许反复段内部分页，22.26px，99.720% / 95.704%。",
       "pageCount": 2,
       "widthLocked": true,
-      "systemGap": 18,
+      "systemGap": 0,
       "uniformSystemHeight": true
     },
     {
@@ -1428,8 +1426,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v16.pdf",
-  "outputKey": "scorebook-v16",
+  "outputPdf": "循序渐进简谱集-v17.pdf",
+  "outputKey": "scorebook-v17",
   "page": {
     "width": 744,
     "height": 1133,

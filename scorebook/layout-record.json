@@ -1,12 +1,12 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十六版",
+  "edition": "第十七版",
   "showCredits": false,
   "uniformSystemHeight": true,
-  "rendererSha256": "6fc50a4008f1af8a774b1a28bc9d862af3d1becd157034907351090cdc3ab36c",
+  "rendererSha256": "c64f9cda46aaca12eaf8786259c781f9ec2b4e7363a56b3d05165158c8103ebd",
   "sourceCount": 81,
   "entryCount": 81,
-  "pageCount": 79,
+  "pageCount": 78,
   "frontPages": 3,
   "baseWidth": 780,
   "page": {
@@ -6412,32 +6412,22 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        102.04,
-        102.04,
-        102.04,
-        102.04,
-        125.36,
-        125.36,
-        125.36,
-        125.36,
-        125.36,
-        125.36,
-        102.04,
-        102.04,
-        102.04,
-        102.04
+        126.68,
+        126.68,
+        134.545,
+        134.545,
+        103.36,
+        80.04,
+        80.04,
+        80.04,
+        80.04
       ],
       "voltaSystems": [
         false,
         false,
         false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
+        true,
+        true,
         false,
         false,
         false,
@@ -6448,12 +6438,12 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "跨拍、变拍与细分节奏",
-      "width": 640,
-      "systemGap": 22,
-      "relativeScalePercent": 121.88,
-      "screenNotePx": 23.93,
-      "versusV1Percent": 148.37,
-      "versusV2Percent": 116.52,
+      "width": 736,
+      "systemGap": 0,
+      "relativeScalePercent": 105.98,
+      "screenNotePx": 20.8,
+      "versusV1Percent": 129.02,
+      "versusV2Percent": 101.32,
       "previousPages": [
         52
       ],
@@ -6461,27 +6451,25 @@
         47
       ],
       "pages": [
-        46,
-        47
+        46
       ],
-      "systems": 15,
+      "systems": 10,
       "systemsPerPage": [
-        7,
-        8
+        10
       ],
-      "sourceSha256": "a5b58a7c9f8cefc943c84f34b845bccbddae6285315bb12b29165c43fa3ea929",
+      "sourceSha256": "c8eb4eb841ae361403793ceb0756e40ce0c93013cdbf3e369d42a47ef5f32297",
       "candidates": [
         {
-          "width": 640,
-          "systemGap": 22,
-          "rows": 15,
-          "pages": 2,
-          "cost": 2384
+          "width": 736,
+          "systemGap": 0,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1441.6
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "保留两页，7 + 8行，23.93px，91.536% / 93.439%。"
+      "reviewNote": "三段主歌共用前9小节，第一与第二、三遍用跳房子保留两种结尾；副歌演奏两遍、尾声保留。单页10行，20.80px，99.966%。"
     },
     {
       "order": 54,
@@ -6528,7 +6516,7 @@
         48
       ],
       "pages": [
-        48
+        47
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -6659,7 +6647,7 @@
         49
       ],
       "pages": [
-        49
+        48
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -6730,7 +6718,7 @@
         50
       ],
       "pages": [
-        50
+        49
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -6868,7 +6856,7 @@
         51
       ],
       "pages": [
-        51
+        50
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -7007,7 +6995,7 @@
         52
       ],
       "pages": [
-        52
+        51
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -7140,7 +7128,7 @@
         53
       ],
       "pages": [
-        53
+        52
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -7276,7 +7264,7 @@
         54
       ],
       "pages": [
-        54
+        53
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -7428,8 +7416,8 @@
         55
       ],
       "pages": [
-        55,
-        56
+        54,
+        55
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -7550,7 +7538,7 @@
         56
       ],
       "pages": [
-        57
+        56
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -7615,7 +7603,7 @@
         63
       ],
       "pages": [
-        57
+        56
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -7672,7 +7660,7 @@
         56
       ],
       "pages": [
-        58
+        57
       ],
       "systems": 5,
       "systemsPerPage": [
@@ -7733,7 +7721,7 @@
         56
       ],
       "pages": [
-        58
+        57
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -7812,7 +7800,7 @@
         57
       ],
       "pages": [
-        59
+        58
       ],
       "systems": 16,
       "systemsPerPage": [
@@ -7991,7 +7979,7 @@
         58
       ],
       "pages": [
-        60
+        59
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -8180,7 +8168,7 @@
         59
       ],
       "pages": [
-        61
+        60
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -8369,8 +8357,8 @@
         60
       ],
       "pages": [
-        62,
-        63
+        61,
+        62
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -8448,7 +8436,7 @@
         61
       ],
       "pages": [
-        64
+        63
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -8629,7 +8617,7 @@
         62
       ],
       "pages": [
-        65
+        64
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -8818,7 +8806,7 @@
         64
       ],
       "pages": [
-        66
+        65
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -9005,8 +8993,8 @@
         65
       ],
       "pages": [
-        67,
-        68
+        66,
+        67
       ],
       "systems": 21,
       "systemsPerPage": [
@@ -9066,7 +9054,7 @@
         66
       ],
       "pages": [
-        69
+        68
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -9131,7 +9119,7 @@
         32
       ],
       "pages": [
-        69
+        68
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -9206,7 +9194,7 @@
         67
       ],
       "pages": [
-        70
+        69
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -9396,7 +9384,7 @@
         68
       ],
       "pages": [
-        71
+        70
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -9557,7 +9545,7 @@
         69
       ],
       "pages": [
-        72
+        71
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -9684,9 +9672,9 @@
         71
       ],
       "pages": [
+        72,
         73,
-        74,
-        75
+        74
       ],
       "systems": 39,
       "systemsPerPage": [
@@ -9716,35 +9704,43 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868,
-        80.868
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93,
+        59.93
       ],
       "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
         false,
         false,
         false,
@@ -9778,12 +9774,12 @@
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速半音、装饰与多次变调",
-      "width": 808,
-      "systemGap": 18,
-      "relativeScalePercent": 96.53,
-      "screenNotePx": 18.95,
-      "versusV1Percent": 109.69,
-      "versusV2Percent": 120.69,
+      "width": 688,
+      "systemGap": 0,
+      "relativeScalePercent": 113.37,
+      "screenNotePx": 22.26,
+      "versusV1Percent": 128.82,
+      "versusV2Percent": 141.74,
       "previousPages": [
         78,
         79
@@ -9792,27 +9788,27 @@
         72
       ],
       "pages": [
-        76,
-        77
+        75,
+        76
       ],
-      "systems": 28,
+      "systems": 32,
       "systemsPerPage": [
-        14,
-        14
+        16,
+        16
       ],
       "sourceSha256": "8b268c6ea745628743742fd383581f6414bdfba32aabb4b198fed34b6d4a7859",
       "candidates": [
         {
-          "width": 808,
-          "systemGap": 18,
-          "rows": 28,
+          "width": 688,
+          "systemGap": 0,
+          "rows": 32,
           "pages": 2,
-          "cost": 2484.8
+          "cost": 2412.8
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "删除全部乐段名称并收紧统一行高，按14+14行分为两页；在第5个后反复之后分页，9个完整反复段均不跨页，保留全部强制换行。"
+      "reviewNote": "顿音贴近主音、前倚音置于左上侧，保留普通等行高与所有强制换行；按16+16行分两页，允许反复段内部分页，22.26px，99.720% / 95.704%。"
     },
     {
       "order": 81,
@@ -9900,8 +9896,8 @@
         73
       ],
       "pages": [
-        78,
-        79
+        77,
+        78
       ],
       "systems": 29,
       "systemsPerPage": [
@@ -10905,43 +10901,24 @@
     {
       "page": 46,
       "section": "pop",
-      "fillPercent": 91.5,
+      "fillPercent": 100,
       "items": [
         {
           "id": "man_man_xi_huan_ni",
           "title": "慢慢喜欢你",
           "systems": [
             1,
-            7
+            10
           ],
-          "width": 640,
-          "systemGap": 22,
+          "width": 736,
+          "systemGap": 0,
           "top": 0,
-          "height": 967.53
+          "height": 1056.64
         }
       ]
     },
     {
       "page": 47,
-      "section": "pop",
-      "fillPercent": 93.4,
-      "items": [
-        {
-          "id": "man_man_xi_huan_ni",
-          "title": "慢慢喜欢你",
-          "systems": [
-            8,
-            15
-          ],
-          "width": 640,
-          "systemGap": 22,
-          "top": 0,
-          "height": 987.65
-        }
-      ]
-    },
-    {
-      "page": 48,
       "section": "pop",
       "fillPercent": 94,
       "items": [
@@ -10960,7 +10937,7 @@
       ]
     },
     {
-      "page": 49,
+      "page": 48,
       "section": "pop",
       "fillPercent": 94.4,
       "items": [
@@ -10979,7 +10956,7 @@
       ]
     },
     {
-      "page": 50,
+      "page": 49,
       "section": "pop",
       "fillPercent": 98.5,
       "items": [
@@ -10998,7 +10975,7 @@
       ]
     },
     {
-      "page": 51,
+      "page": 50,
       "section": "pop",
       "fillPercent": 92.4,
       "items": [
@@ -11017,7 +10994,7 @@
       ]
     },
     {
-      "page": 52,
+      "page": 51,
       "section": "pop",
       "fillPercent": 99,
       "items": [
@@ -11036,7 +11013,7 @@
       ]
     },
     {
-      "page": 53,
+      "page": 52,
       "section": "pop",
       "fillPercent": 91.6,
       "items": [
@@ -11055,7 +11032,7 @@
       ]
     },
     {
-      "page": 54,
+      "page": 53,
       "section": "pop",
       "fillPercent": 99.9,
       "items": [
@@ -11074,7 +11051,7 @@
       ]
     },
     {
-      "page": 55,
+      "page": 54,
       "section": "pop",
       "fillPercent": 91.6,
       "items": [
@@ -11093,7 +11070,7 @@
       ]
     },
     {
-      "page": 56,
+      "page": 55,
       "section": "pop",
       "fillPercent": 93.6,
       "items": [
@@ -11112,7 +11089,7 @@
       ]
     },
     {
-      "page": 57,
+      "page": 56,
       "section": "instrumental",
       "fillPercent": 98.9,
       "items": [
@@ -11143,7 +11120,7 @@
       ]
     },
     {
-      "page": 58,
+      "page": 57,
       "section": "instrumental",
       "fillPercent": 91.8,
       "items": [
@@ -11174,7 +11151,7 @@
       ]
     },
     {
-      "page": 59,
+      "page": 58,
       "section": "instrumental",
       "fillPercent": 92.3,
       "items": [
@@ -11193,7 +11170,7 @@
       ]
     },
     {
-      "page": 60,
+      "page": 59,
       "section": "instrumental",
       "fillPercent": 98.4,
       "items": [
@@ -11212,7 +11189,7 @@
       ]
     },
     {
-      "page": 61,
+      "page": 60,
       "section": "instrumental",
       "fillPercent": 96.8,
       "items": [
@@ -11231,7 +11208,7 @@
       ]
     },
     {
-      "page": 62,
+      "page": 61,
       "section": "instrumental",
       "fillPercent": 92.8,
       "items": [
@@ -11250,7 +11227,7 @@
       ]
     },
     {
-      "page": 63,
+      "page": 62,
       "section": "instrumental",
       "fillPercent": 94.1,
       "items": [
@@ -11269,7 +11246,7 @@
       ]
     },
     {
-      "page": 64,
+      "page": 63,
       "section": "instrumental",
       "fillPercent": 98.9,
       "items": [
@@ -11288,7 +11265,7 @@
       ]
     },
     {
-      "page": 65,
+      "page": 64,
       "section": "instrumental",
       "fillPercent": 94.2,
       "items": [
@@ -11307,7 +11284,7 @@
       ]
     },
     {
-      "page": 66,
+      "page": 65,
       "section": "instrumental",
       "fillPercent": 97.4,
       "items": [
@@ -11326,7 +11303,7 @@
       ]
     },
     {
-      "page": 67,
+      "page": 66,
       "section": "instrumental",
       "fillPercent": 90.2,
       "items": [
@@ -11345,7 +11322,7 @@
       ]
     },
     {
-      "page": 68,
+      "page": 67,
       "section": "instrumental",
       "fillPercent": 90.1,
       "items": [
@@ -11364,7 +11341,7 @@
       ]
     },
     {
-      "page": 69,
+      "page": 68,
       "section": "instrumental",
       "fillPercent": 96.2,
       "items": [
@@ -11395,7 +11372,7 @@
       ]
     },
     {
-      "page": 70,
+      "page": 69,
       "section": "instrumental",
       "fillPercent": 99,
       "items": [
@@ -11414,7 +11391,7 @@
       ]
     },
     {
-      "page": 71,
+      "page": 70,
       "section": "instrumental",
       "fillPercent": 94.8,
       "items": [
@@ -11433,7 +11410,7 @@
       ]
     },
     {
-      "page": 72,
+      "page": 71,
       "section": "instrumental",
       "fillPercent": 90.2,
       "items": [
@@ -11452,7 +11429,7 @@
       ]
     },
     {
-      "page": 73,
+      "page": 72,
       "section": "instrumental",
       "fillPercent": 90.2,
       "items": [
@@ -11471,7 +11448,7 @@
       ]
     },
     {
-      "page": 74,
+      "page": 73,
       "section": "instrumental",
       "fillPercent": 90.8,
       "items": [
@@ -11490,7 +11467,7 @@
       ]
     },
     {
-      "page": 75,
+      "page": 74,
       "section": "instrumental",
       "fillPercent": 96.4,
       "items": [
@@ -11509,45 +11486,45 @@
       ]
     },
     {
-      "page": 76,
+      "page": 75,
       "section": "instrumental",
-      "fillPercent": 99.9,
+      "fillPercent": 99.7,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
           "systems": [
             1,
-            14
+            16
           ],
-          "width": 808,
-          "systemGap": 18,
+          "width": 688,
+          "systemGap": 0,
           "top": 0,
-          "height": 1055.77
+          "height": 1054.04
         }
       ]
     },
     {
-      "page": 77,
+      "page": 76,
       "section": "instrumental",
-      "fillPercent": 94.8,
+      "fillPercent": 95.7,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
           "systems": [
-            15,
-            28
+            17,
+            32
           ],
-          "width": 808,
-          "systemGap": 18,
+          "width": 688,
+          "systemGap": 0,
           "top": 0,
-          "height": 1001.59
+          "height": 1011.59
         }
       ]
     },
     {
-      "page": 78,
+      "page": 77,
       "section": "instrumental",
       "fillPercent": 98.8,
       "items": [
@@ -11566,7 +11543,7 @@
       ]
     },
     {
-      "page": 79,
+      "page": 78,
       "section": "instrumental",
       "fillPercent": 99.9,
       "items": [
@@ -11597,7 +11574,7 @@
     "orphanContinuationPages": 0,
     "maximumMusicNotePx": 23.925,
     "oversizedNoteEntries": 0,
-    "outlinedPages": 79,
+    "outlinedPages": 78,
     "outlinedPageOverflow": 0
   }
 }

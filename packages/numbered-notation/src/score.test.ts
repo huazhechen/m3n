@@ -36,6 +36,47 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it('preserves every performed measure, lyric and tie in the compact Slow Like You arrangement', () => {
+    const original = readFileSync(resolve(process.cwd(), 'test/fixtures/man-man-original.m3n'), 'utf8')
+    const compact = readFileSync(resolve(process.cwd(), '../../src/scores/man_man_xi_huan_ni_01.m3n'), 'utf8')
+    const performed = (source: string) => {
+      const result = m3nToMei(source)
+      expect(result.diagnostics).toEqual([])
+      const mei = new DOMParser().parseFromString(result.mei, 'text/xml')
+      const visits = new Map<string, number>()
+      const tieStarts = new Set([...mei.querySelectorAll('tie')].map(tie => tie.getAttribute('startid')!.slice(1)))
+      const tieEnds = new Set([...mei.querySelectorAll('tie')].map(tie => tie.getAttribute('endid')!.slice(1)))
+      const canonical = (node: Element, pass: number): unknown => {
+        const verses = [...node.children].filter(child => child.localName === 'verse')
+        const verse = verses.find(child => Number(child.getAttribute('n')) === pass) ?? (verses.length === 1 ? verses[0] : undefined)
+        const id = node.getAttribute('xml:id') ?? ''
+        return {
+          name: node.localName,
+          attributes: [...node.attributes].filter(attribute => attribute.name !== 'xml:id').map(attribute => [attribute.name, attribute.value]).sort(),
+          lyric: verse?.textContent?.replaceAll('\u200B', '') ?? '',
+          tieStart: tieStarts.has(id), tieEnd: tieEnds.has(id),
+          children: [...node.children].filter(child => child.localName !== 'verse').map(child => canonical(child, pass)),
+        }
+      }
+      return mei.querySelector('expansion')!.getAttribute('plist')!.split(' ').flatMap(ref => {
+        const count = (visits.get(ref) ?? 0) + 1
+        visits.set(ref, count)
+        const segment = [...mei.querySelectorAll('section,ending')].find(node => node.getAttribute('xml:id') === ref.slice(1))!
+        return [...segment.querySelectorAll('measure')].map(measure => canonical(measure.querySelector('layer')!, count))
+      })
+    }
+    const expected = performed(original)
+    expect(expected).toHaveLength(57)
+    expect(performed(compact)).toEqual(expected)
+    const { document, score } = render(compact, { width: 736, pageMargin: 8, systemGap: 0, showCredits: false, uniformSystemHeight: true })
+    const measures = [...document.parts.values()][0]!.melody.filter(measure => measure.events.length)
+    expect(measures).toHaveLength(27)
+    const passes = measurePlaybackPasses(measures)
+    expect([...passes.get(measures[0]!)!]).toEqual([1, 2, 3])
+    expect([...passes.get(measures[13]!)!]).toEqual([1, 2])
+    expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+  })
+
   it('keeps four verses and three compact chorus passes in Tomorrow Will Be Better', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/ming_tian_hui_geng_hao_01.m3n'), 'utf8')
     const { document, root, score } = render(source, { width: 786, pageMargin: 8, systemGap: 18, showCredits: false, uniformSystemHeight: true })
@@ -264,7 +305,9 @@ describe('jpFun numbered notation adapter', () => {
     const { document, root } = render(source)
     const note = geometry(document).layout.objects.find(node => !node.T.isZero())!
     const members = (note as VisualTemporalNode & { members: readonly VisualTemporalNode[] }).members
-    const wedge = members.find(member => (member.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccatissimo')!
+    const grace = members[0] as VisualTemporalNode & { host?: VisualTemporalNode & { members?: readonly VisualTemporalNode[] } }
+    const articulations = grace.host?.members ?? members
+    const wedge = articulations.find(member => (member.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccatissimo')!
     expect(wedge).toBeDefined()
     const wedgeBox = getLayoutBounds(wedge)
     for (const member of members.slice(1).filter(member => member !== wedge)) {
@@ -278,6 +321,26 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.querySelector('#m3n-e-1 path[fill="#000"][stroke="none"]')).not.toBeNull()
     const octaveTop = Math.min(...octaveDots.map(circle => Number(circle.getAttribute('cy')) - Number(circle.getAttribute('r'))))
     expect(wedgeBox.y + wedgeBox.h).toBeLessThan(octaveTop)
+  })
+
+  it.each(['1', '1e', '1ee', '[1e3e:h]'])('keeps the main-note staccatissimo at the same height beside leading grace notes on %s', pitch => {
+    const descendants = (node: VisualTemporalNode): VisualTemporalNode[] => {
+      const compound = node as VisualTemporalNode & { host?: VisualTemporalNode; graces?: readonly VisualTemporalNode[]; members?: readonly VisualTemporalNode[] }
+      return [node, ...[...(compound.host ? [compound.host] : []), ...(compound.graces ?? []), ...(compound.members ?? [])].flatMap(descendants)]
+    }
+    const wedgeOf = (document: ScoreDocument) => descendants(geometry(document).layout.objects.find(node => !node.T.isZero())!)
+      .find(node => (node.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccatissimo')!
+    const plain = render(`{2/4}\nN: ${pitch}{tip} 2 |||`)
+    const marked = render(`{2/4}\nN: ${pitch}{ac(5e6e)}{tip} 2 |||`)
+    const axis = (root: Document) => Number(root.querySelector('#m3n-e-1 text[font-size="22"]')!.getAttribute('y'))
+    expect(getLayoutBounds(wedgeOf(marked.document)).y - axis(marked.root))
+      .toBeCloseTo(getLayoutBounds(wedgeOf(plain.document)).y - axis(plain.root), 5)
+    const all = descendants(geometry(marked.document).layout.objects.find(node => !node.T.isZero())!)
+    const wedge = getLayoutBounds(all.find(node => (node.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccatissimo')!)
+    const grace = all.find(node => 'graces' in node) as VisualTemporalNode & { graces: readonly VisualTemporalNode[] }
+    expect(grace.graces).toHaveLength(2)
+    for (const note of grace.graces) expect(getLayoutBounds(note).x + getLayoutBounds(note).w).toBeLessThan(wedge.x)
+    expect(marked.score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
   })
 
   it('uses a filled wedge for staccato while preserving the open accent chevron', () => {

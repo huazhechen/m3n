@@ -138,9 +138,14 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
               const parsed = parseM3NGrace(value)
               return parsed ? (parseM3NGroupPitches(parsed.pitchSource) ?? []).map(pitch => duration(`@note(${quote(pitchName(pitch, event.octaveShift))})`, 4 / 2 ** (parsed.depth + 2))) : []
             })
+            // Articulations belong to the main note. A leading grace block sits
+            // beside it, so stacking these marks above the entire block adds
+            // unnecessary height. Grace forwards the main note's shoulder port.
+            if (grace.length && articulations.length) value = `@up({${value}},${articulations.join(',')})`
             if (grace.length) value = `@grace({${value}},{${grace.join(' ')}})`
             if (event.postfixes.includes('arp') && event.kind === 'chord') value = `@arp({${value}})`
-            return marks.length ? `@up({${value}},${marks.join(',')})` : value
+            const outerMarks = grace.length ? [...decorations, ...expressionMarks] : marks
+            return outerMarks.length ? `@up({${value}},${outerMarks.join(',')})` : value
           }
           const children: string[] = []
           const content: string[] = [...controls]
