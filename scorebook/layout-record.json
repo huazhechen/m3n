@@ -1,12 +1,12 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十一版",
+  "edition": "第十二版",
   "showCredits": false,
   "uniformSystemHeight": true,
   "rendererSha256": "6fc50a4008f1af8a774b1a28bc9d862af3d1becd157034907351090cdc3ab36c",
   "sourceCount": 82,
   "entryCount": 82,
-  "pageCount": 87,
+  "pageCount": 86,
   "frontPages": 4,
   "baseWidth": 780,
   "page": {
@@ -6467,33 +6467,21 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        82.171,
-        82.171,
-        82.171,
-        82.171,
-        105.435,
-        105.435,
-        82.171,
-        105.491,
-        105.491,
-        105.491,
-        105.491,
-        105.491,
-        105.491,
-        128.755,
-        105.435
+        124.755,
+        124.755,
+        101.435,
+        97.97,
+        97.97,
+        97.97,
+        97.97,
+        124.755,
+        124.755
       ],
       "voltaSystems": [
         false,
-        false,
-        false,
-        false,
-        false,
         true,
         true,
-        false,
-        false,
-        false,
+        true,
         false,
         false,
         false,
@@ -6505,12 +6493,12 @@
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "器乐间奏与跨拍延音",
-      "width": 578,
-      "systemGap": 22,
-      "relativeScalePercent": 134.95,
-      "screenNotePx": 26.49,
-      "versusV1Percent": 160.63,
-      "versusV2Percent": 132.32,
+      "width": 770,
+      "systemGap": 18,
+      "relativeScalePercent": 101.3,
+      "screenNotePx": 19.89,
+      "versusV1Percent": 120.58,
+      "versusV2Percent": 99.33,
       "previousPages": [
         25
       ],
@@ -6518,27 +6506,25 @@
         25
       ],
       "pages": [
-        24,
-        25
+        24
       ],
-      "systems": 16,
+      "systems": 10,
       "systemsPerPage": [
-        8,
-        8
+        10
       ],
-      "sourceSha256": "e811527abb2f79a93e1dbd4285784f4c08c3d4a9b5c8094087c77f8dd8b7f92d",
+      "sourceSha256": "fd8a4b41072840df9ba8e1c0d0b5c8f7bd3efb451a3b31b156c33378f5eda8f6",
       "candidates": [
         {
-          "width": 578,
-          "systemGap": 22,
-          "rows": 16,
-          "pages": 2,
-          "cost": 2346.8
+          "width": 770,
+          "systemGap": 18,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1462
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "第七版增页保留；房子与普通谱行分别统一高度，按指定页数重新选择可用字号，各页高度利用率高于90%。"
+      "reviewNote": "开头六小节共用旋律、两遍歌词用房子区分结尾；保留完整演奏内容。一页10行，音符约19.89px，高度利用率99.1%。"
     },
     {
       "order": 33,
@@ -6589,7 +6575,7 @@
         26
       ],
       "pages": [
-        26
+        25
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -6751,7 +6737,7 @@
         27
       ],
       "pages": [
-        27
+        26
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -6909,7 +6895,7 @@
         28
       ],
       "pages": [
-        28
+        27
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -7073,7 +7059,7 @@
         29
       ],
       "pages": [
-        29
+        28
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -7235,7 +7221,7 @@
         30
       ],
       "pages": [
-        30
+        29
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -7387,7 +7373,7 @@
         19
       ],
       "pages": [
-        31
+        30
       ],
       "systems": 5,
       "systemsPerPage": [
@@ -7600,7 +7586,7 @@
         31
       ],
       "pages": [
-        31
+        30
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -7823,7 +7809,7 @@
         32
       ],
       "pages": [
-        32
+        31
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -7987,7 +7973,7 @@
         33
       ],
       "pages": [
-        33
+        32
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -8143,7 +8129,7 @@
         34
       ],
       "pages": [
-        34
+        33
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -8300,7 +8286,7 @@
         35
       ],
       "pages": [
-        35
+        34
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -8472,7 +8458,7 @@
         36
       ],
       "pages": [
-        36
+        35
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -8636,7 +8622,7 @@
         37
       ],
       "pages": [
-        37
+        36
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -8815,8 +8801,8 @@
         38
       ],
       "pages": [
-        38,
-        39
+        37,
+        38
       ],
       "systems": 21,
       "systemsPerPage": [
@@ -8995,8 +8981,8 @@
         39
       ],
       "pages": [
-        40,
-        41
+        39,
+        40
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -9169,8 +9155,8 @@
         40
       ],
       "pages": [
-        42,
-        43
+        41,
+        42
       ],
       "systems": 16,
       "systemsPerPage": [
@@ -9247,8 +9233,8 @@
         41
       ],
       "pages": [
-        44,
-        45
+        43,
+        44
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -9329,8 +9315,8 @@
         42
       ],
       "pages": [
-        46,
-        47
+        45,
+        46
       ],
       "systems": 16,
       "systemsPerPage": [
@@ -9400,7 +9386,7 @@
         43
       ],
       "pages": [
-        48
+        47
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -9548,7 +9534,7 @@
         44
       ],
       "pages": [
-        49
+        48
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -9720,8 +9706,8 @@
         45
       ],
       "pages": [
-        50,
-        51
+        49,
+        50
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -9785,7 +9771,7 @@
         46
       ],
       "pages": [
-        52
+        51
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -9862,8 +9848,8 @@
         47
       ],
       "pages": [
-        53,
-        54
+        52,
+        53
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -9929,7 +9915,7 @@
         48
       ],
       "pages": [
-        55
+        54
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -10084,7 +10070,7 @@
         49
       ],
       "pages": [
-        56
+        55
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -10250,7 +10236,7 @@
         50
       ],
       "pages": [
-        57
+        56
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -10412,7 +10398,7 @@
         51
       ],
       "pages": [
-        58
+        57
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -10578,7 +10564,7 @@
         52
       ],
       "pages": [
-        59
+        58
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -10738,7 +10724,7 @@
         53
       ],
       "pages": [
-        60
+        59
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -10898,7 +10884,7 @@
         54
       ],
       "pages": [
-        61
+        60
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -11074,8 +11060,8 @@
         55
       ],
       "pages": [
-        62,
-        63
+        61,
+        62
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -11220,7 +11206,7 @@
         56
       ],
       "pages": [
-        64
+        63
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -11429,7 +11415,7 @@
         56
       ],
       "pages": [
-        64
+        63
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -11642,7 +11628,7 @@
         56
       ],
       "pages": [
-        64
+        63
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -11875,7 +11861,7 @@
         57
       ],
       "pages": [
-        65
+        64
       ],
       "systems": 16,
       "systemsPerPage": [
@@ -12081,7 +12067,7 @@
         58
       ],
       "pages": [
-        66
+        65
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -12295,7 +12281,7 @@
         59
       ],
       "pages": [
-        67
+        66
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -12508,8 +12494,8 @@
         60
       ],
       "pages": [
-        68,
-        69
+        67,
+        68
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -12587,7 +12573,7 @@
         61
       ],
       "pages": [
-        70
+        69
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -12792,7 +12778,7 @@
         62
       ],
       "pages": [
-        71
+        70
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -12998,7 +12984,7 @@
         63
       ],
       "pages": [
-        72
+        71
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -13221,7 +13207,7 @@
         64
       ],
       "pages": [
-        73
+        72
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -13437,8 +13423,8 @@
         65
       ],
       "pages": [
-        74,
-        75
+        73,
+        74
       ],
       "systems": 22,
       "systemsPerPage": [
@@ -13506,7 +13492,7 @@
         66
       ],
       "pages": [
-        76
+        75
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -13798,7 +13784,7 @@
         67
       ],
       "pages": [
-        77
+        76
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -14012,7 +13998,7 @@
         68
       ],
       "pages": [
-        78
+        77
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -14202,7 +14188,7 @@
         69
       ],
       "pages": [
-        79
+        78
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -14472,9 +14458,9 @@
         71
       ],
       "pages": [
+        79,
         80,
-        81,
-        82
+        81
       ],
       "systems": 39,
       "systemsPerPage": [
@@ -14580,8 +14566,8 @@
         72
       ],
       "pages": [
-        83,
-        84
+        82,
+        83
       ],
       "systems": 28,
       "systemsPerPage": [
@@ -14700,9 +14686,9 @@
         73
       ],
       "pages": [
+        84,
         85,
-        86,
-        87
+        86
       ],
       "systems": 35,
       "systemsPerPage": [
@@ -15246,43 +15232,24 @@
     {
       "page": 24,
       "section": "pop",
-      "fillPercent": 93.9,
+      "fillPercent": 99.1,
       "items": [
         {
           "id": "bei_jia_er_hu_pan",
           "title": "贝加尔湖畔",
           "systems": [
             1,
-            8
+            10
           ],
-          "width": 578,
-          "systemGap": 22,
+          "width": 770,
+          "systemGap": 18,
           "top": 0,
-          "height": 992.78
+          "height": 1047.92
         }
       ]
     },
     {
       "page": 25,
-      "section": "pop",
-      "fillPercent": 99.7,
-      "items": [
-        {
-          "id": "bei_jia_er_hu_pan",
-          "title": "贝加尔湖畔",
-          "systems": [
-            9,
-            16
-          ],
-          "width": 578,
-          "systemGap": 22,
-          "top": 0,
-          "height": 1053.54
-        }
-      ]
-    },
-    {
-      "page": 26,
       "section": "pop",
       "fillPercent": 99.2,
       "items": [
@@ -15301,7 +15268,7 @@
       ]
     },
     {
-      "page": 27,
+      "page": 26,
       "section": "pop",
       "fillPercent": 98.8,
       "items": [
@@ -15320,7 +15287,7 @@
       ]
     },
     {
-      "page": 28,
+      "page": 27,
       "section": "pop",
       "fillPercent": 99.7,
       "items": [
@@ -15339,7 +15306,7 @@
       ]
     },
     {
-      "page": 29,
+      "page": 28,
       "section": "pop",
       "fillPercent": 93.6,
       "items": [
@@ -15358,7 +15325,7 @@
       ]
     },
     {
-      "page": 30,
+      "page": 29,
       "section": "pop",
       "fillPercent": 96.1,
       "items": [
@@ -15377,7 +15344,7 @@
       ]
     },
     {
-      "page": 31,
+      "page": 30,
       "section": "pop",
       "fillPercent": 98.6,
       "items": [
@@ -15408,7 +15375,7 @@
       ]
     },
     {
-      "page": 32,
+      "page": 31,
       "section": "pop",
       "fillPercent": 98.2,
       "items": [
@@ -15427,7 +15394,7 @@
       ]
     },
     {
-      "page": 33,
+      "page": 32,
       "section": "pop",
       "fillPercent": 91.5,
       "items": [
@@ -15446,7 +15413,7 @@
       ]
     },
     {
-      "page": 34,
+      "page": 33,
       "section": "pop",
       "fillPercent": 98.1,
       "items": [
@@ -15465,7 +15432,7 @@
       ]
     },
     {
-      "page": 35,
+      "page": 34,
       "section": "pop",
       "fillPercent": 98.8,
       "items": [
@@ -15484,7 +15451,7 @@
       ]
     },
     {
-      "page": 36,
+      "page": 35,
       "section": "pop",
       "fillPercent": 98.5,
       "items": [
@@ -15503,7 +15470,7 @@
       ]
     },
     {
-      "page": 37,
+      "page": 36,
       "section": "pop",
       "fillPercent": 92.1,
       "items": [
@@ -15522,7 +15489,7 @@
       ]
     },
     {
-      "page": 38,
+      "page": 37,
       "section": "pop",
       "fillPercent": 95.9,
       "items": [
@@ -15541,7 +15508,7 @@
       ]
     },
     {
-      "page": 39,
+      "page": 38,
       "section": "pop",
       "fillPercent": 97.5,
       "items": [
@@ -15560,7 +15527,7 @@
       ]
     },
     {
-      "page": 40,
+      "page": 39,
       "section": "pop",
       "fillPercent": 99.4,
       "items": [
@@ -15579,7 +15546,7 @@
       ]
     },
     {
-      "page": 41,
+      "page": 40,
       "section": "pop",
       "fillPercent": 94.3,
       "items": [
@@ -15598,7 +15565,7 @@
       ]
     },
     {
-      "page": 42,
+      "page": 41,
       "section": "pop",
       "fillPercent": 99.1,
       "items": [
@@ -15617,7 +15584,7 @@
       ]
     },
     {
-      "page": 43,
+      "page": 42,
       "section": "pop",
       "fillPercent": 93.4,
       "items": [
@@ -15636,7 +15603,7 @@
       ]
     },
     {
-      "page": 44,
+      "page": 43,
       "section": "pop",
       "fillPercent": 98.4,
       "items": [
@@ -15655,7 +15622,7 @@
       ]
     },
     {
-      "page": 45,
+      "page": 44,
       "section": "pop",
       "fillPercent": 90.5,
       "items": [
@@ -15674,7 +15641,7 @@
       ]
     },
     {
-      "page": 46,
+      "page": 45,
       "section": "pop",
       "fillPercent": 99.9,
       "items": [
@@ -15693,7 +15660,7 @@
       ]
     },
     {
-      "page": 47,
+      "page": 46,
       "section": "pop",
       "fillPercent": 95.1,
       "items": [
@@ -15712,7 +15679,7 @@
       ]
     },
     {
-      "page": 48,
+      "page": 47,
       "section": "pop",
       "fillPercent": 97.9,
       "items": [
@@ -15731,7 +15698,7 @@
       ]
     },
     {
-      "page": 49,
+      "page": 48,
       "section": "pop",
       "fillPercent": 96.9,
       "items": [
@@ -15750,7 +15717,7 @@
       ]
     },
     {
-      "page": 50,
+      "page": 49,
       "section": "pop",
       "fillPercent": 97.7,
       "items": [
@@ -15769,7 +15736,7 @@
       ]
     },
     {
-      "page": 51,
+      "page": 50,
       "section": "pop",
       "fillPercent": 96.6,
       "items": [
@@ -15788,7 +15755,7 @@
       ]
     },
     {
-      "page": 52,
+      "page": 51,
       "section": "pop",
       "fillPercent": 100,
       "items": [
@@ -15807,7 +15774,7 @@
       ]
     },
     {
-      "page": 53,
+      "page": 52,
       "section": "pop",
       "fillPercent": 90.1,
       "items": [
@@ -15826,7 +15793,7 @@
       ]
     },
     {
-      "page": 54,
+      "page": 53,
       "section": "pop",
       "fillPercent": 92.1,
       "items": [
@@ -15845,7 +15812,7 @@
       ]
     },
     {
-      "page": 55,
+      "page": 54,
       "section": "pop",
       "fillPercent": 94,
       "items": [
@@ -15864,7 +15831,7 @@
       ]
     },
     {
-      "page": 56,
+      "page": 55,
       "section": "pop",
       "fillPercent": 97.4,
       "items": [
@@ -15883,7 +15850,7 @@
       ]
     },
     {
-      "page": 57,
+      "page": 56,
       "section": "pop",
       "fillPercent": 98.5,
       "items": [
@@ -15902,7 +15869,7 @@
       ]
     },
     {
-      "page": 58,
+      "page": 57,
       "section": "pop",
       "fillPercent": 92.4,
       "items": [
@@ -15921,7 +15888,7 @@
       ]
     },
     {
-      "page": 59,
+      "page": 58,
       "section": "pop",
       "fillPercent": 99,
       "items": [
@@ -15940,7 +15907,7 @@
       ]
     },
     {
-      "page": 60,
+      "page": 59,
       "section": "pop",
       "fillPercent": 91.6,
       "items": [
@@ -15959,7 +15926,7 @@
       ]
     },
     {
-      "page": 61,
+      "page": 60,
       "section": "pop",
       "fillPercent": 99.9,
       "items": [
@@ -15978,7 +15945,7 @@
       ]
     },
     {
-      "page": 62,
+      "page": 61,
       "section": "pop",
       "fillPercent": 91.6,
       "items": [
@@ -15997,7 +15964,7 @@
       ]
     },
     {
-      "page": 63,
+      "page": 62,
       "section": "pop",
       "fillPercent": 93.6,
       "items": [
@@ -16016,7 +15983,7 @@
       ]
     },
     {
-      "page": 64,
+      "page": 63,
       "section": "instrumental",
       "fillPercent": 98.2,
       "items": [
@@ -16059,7 +16026,7 @@
       ]
     },
     {
-      "page": 65,
+      "page": 64,
       "section": "instrumental",
       "fillPercent": 92.3,
       "items": [
@@ -16078,7 +16045,7 @@
       ]
     },
     {
-      "page": 66,
+      "page": 65,
       "section": "instrumental",
       "fillPercent": 98.4,
       "items": [
@@ -16097,7 +16064,7 @@
       ]
     },
     {
-      "page": 67,
+      "page": 66,
       "section": "instrumental",
       "fillPercent": 96.8,
       "items": [
@@ -16116,7 +16083,7 @@
       ]
     },
     {
-      "page": 68,
+      "page": 67,
       "section": "instrumental",
       "fillPercent": 96.1,
       "items": [
@@ -16135,7 +16102,7 @@
       ]
     },
     {
-      "page": 69,
+      "page": 68,
       "section": "instrumental",
       "fillPercent": 97.4,
       "items": [
@@ -16154,7 +16121,7 @@
       ]
     },
     {
-      "page": 70,
+      "page": 69,
       "section": "instrumental",
       "fillPercent": 98.9,
       "items": [
@@ -16173,7 +16140,7 @@
       ]
     },
     {
-      "page": 71,
+      "page": 70,
       "section": "instrumental",
       "fillPercent": 94.2,
       "items": [
@@ -16192,7 +16159,7 @@
       ]
     },
     {
-      "page": 72,
+      "page": 71,
       "section": "instrumental",
       "fillPercent": 93.9,
       "items": [
@@ -16211,7 +16178,7 @@
       ]
     },
     {
-      "page": 73,
+      "page": 72,
       "section": "instrumental",
       "fillPercent": 97.4,
       "items": [
@@ -16230,7 +16197,7 @@
       ]
     },
     {
-      "page": 74,
+      "page": 73,
       "section": "instrumental",
       "fillPercent": 91.8,
       "items": [
@@ -16249,7 +16216,7 @@
       ]
     },
     {
-      "page": 75,
+      "page": 74,
       "section": "instrumental",
       "fillPercent": 99.8,
       "items": [
@@ -16268,7 +16235,7 @@
       ]
     },
     {
-      "page": 76,
+      "page": 75,
       "section": "instrumental",
       "fillPercent": 92.4,
       "items": [
@@ -16287,7 +16254,7 @@
       ]
     },
     {
-      "page": 77,
+      "page": 76,
       "section": "instrumental",
       "fillPercent": 99,
       "items": [
@@ -16306,7 +16273,7 @@
       ]
     },
     {
-      "page": 78,
+      "page": 77,
       "section": "instrumental",
       "fillPercent": 94.8,
       "items": [
@@ -16325,7 +16292,7 @@
       ]
     },
     {
-      "page": 79,
+      "page": 78,
       "section": "instrumental",
       "fillPercent": 97,
       "items": [
@@ -16344,7 +16311,7 @@
       ]
     },
     {
-      "page": 80,
+      "page": 79,
       "section": "instrumental",
       "fillPercent": 90.2,
       "items": [
@@ -16363,7 +16330,7 @@
       ]
     },
     {
-      "page": 81,
+      "page": 80,
       "section": "instrumental",
       "fillPercent": 90.8,
       "items": [
@@ -16382,7 +16349,7 @@
       ]
     },
     {
-      "page": 82,
+      "page": 81,
       "section": "instrumental",
       "fillPercent": 96.4,
       "items": [
@@ -16401,7 +16368,7 @@
       ]
     },
     {
-      "page": 83,
+      "page": 82,
       "section": "instrumental",
       "fillPercent": 99.9,
       "items": [
@@ -16420,7 +16387,7 @@
       ]
     },
     {
-      "page": 84,
+      "page": 83,
       "section": "instrumental",
       "fillPercent": 94.8,
       "items": [
@@ -16439,7 +16406,7 @@
       ]
     },
     {
-      "page": 85,
+      "page": 84,
       "section": "instrumental",
       "fillPercent": 95.2,
       "items": [
@@ -16458,7 +16425,7 @@
       ]
     },
     {
-      "page": 86,
+      "page": 85,
       "section": "instrumental",
       "fillPercent": 96.5,
       "items": [
@@ -16477,7 +16444,7 @@
       ]
     },
     {
-      "page": 87,
+      "page": 86,
       "section": "instrumental",
       "fillPercent": 98.6,
       "items": [
@@ -16506,7 +16473,7 @@
     "overlaps": 0,
     "unsafeCuts": 0,
     "orphanContinuationPages": 0,
-    "outlinedPages": 87,
+    "outlinedPages": 86,
     "outlinedPageOverflow": 0
   }
 }

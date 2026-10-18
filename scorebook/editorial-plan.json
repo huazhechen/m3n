@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十一版",
+  "edition": "第十二版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -595,14 +595,14 @@
       "group": "切分与延音",
       "difficulty": 3,
       "reason": "器乐间奏与跨拍延音",
-      "width": 578,
+      "width": 770,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第七版增页保留；房子与普通谱行分别统一高度，按指定页数重新选择可用字号，各页高度利用率高于90%。",
+      "reviewNote": "开头六小节共用旋律、两遍歌词用房子区分结尾；保留完整演奏内容。一页10行，音符约19.89px，高度利用率99.1%。",
       "widthLocked": true,
-      "pageCount": 2,
-      "systemGap": 22,
+      "pageCount": 1,
+      "systemGap": 18,
       "uniformSystemHeight": true
     },
     {
@@ -1364,8 +1364,8 @@
       "widthLocked": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v11.pdf",
-  "outputKey": "scorebook-v11",
+  "outputPdf": "循序渐进简谱集-v12.pdf",
+  "outputKey": "scorebook-v12",
   "page": {
     "width": 744,
     "height": 1133,
