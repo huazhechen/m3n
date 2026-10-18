@@ -1,0 +1,166 @@
+{
+  "edition": "第二十三版",
+  "excludeExercises": true,
+  "scoreCount": 80,
+  "largestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "梨花又开放",
+      "notePx": 23.93,
+      "pages": [
+        17
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "相思",
+      "notePx": 23.93,
+      "pages": [
+        21
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "秋樱",
+      "notePx": 23.93,
+      "pages": [
+        29
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "我要你",
+      "notePx": 23.93,
+      "pages": [
+        47
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "梁祝",
+      "notePx": 23.93,
+      "pages": [
+        56
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "温柔的倾诉",
+      "notePx": 23.93,
+      "pages": [
+        56
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "下雨的时候",
+      "notePx": 23.93,
+      "pages": [
+        58
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "哆啦A梦",
+      "notePx": 23.93,
+      "pages": [
+        60,
+        61
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "超级玛丽",
+      "notePx": 23.93,
+      "pages": [
+        63
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "菊次郎的夏天",
+      "notePx": 23.93,
+      "pages": [
+        65,
+        66
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "啤酒桶波尔卡",
+      "notePx": 23.93,
+      "pages": [
+        68
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "喜洋洋",
+      "notePx": 23.93,
+      "pages": [
+        70
+      ]
+    }
+  ],
+  "smallestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "凉凉",
+      "notePx": 19.04,
+      "pages": [
+        40
+      ]
+    },
+    {
+      "rank": 2,
+      "title": "世界赠予我的",
+      "notePx": 19.09,
+      "pages": [
+        43
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "白桦林",
+      "notePx": 19.14,
+      "pages": [
+        18
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "一千个伤心的理由",
+      "notePx": 19.14,
+      "pages": [
+        49
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "听海",
+      "notePx": 19.14,
+      "pages": [
+        52
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "一步之遥",
+      "notePx": 19.14,
+      "pages": [
+        67
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "散步",
+      "notePx": 19.14,
+      "pages": [
+        67
+      ]
+    }
+  ],
+  "minimumNotePx": 19.04,
+  "maximumNotePx": 23.93,
+  "ratio": 1.256827731092437
+}
