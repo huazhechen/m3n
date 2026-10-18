@@ -19,6 +19,26 @@ test('equal measures reserve identical cells while preserving different internal
     assert.deepEqual(equal.diagnostics, []);
 });
 
+test('equal cells leave readable space on both sides of single and repeat bars at different sizes', () => {
+    for (const size of [22, 44]) {
+        const source = `@set(fontsize=${size}px) @page(width=${size * 55}px,left=20px,right=20px,fillRatio=0) 1 2 3 4 | 5 6 7 1' :| 2' 3' 4' 5' |||`;
+        const result = compileScore(source, { equalMeasures: true });
+        const bars = result.layout.objects.filter(node => node.mergeKey === ANCHOR_KEY);
+        const notes = result.layout.objects.filter(node => !node.T.isZero());
+        for (const bar of bars) {
+            const box = getLayoutBounds(bar);
+            const before = notes.filter(note => note.t.compare(bar.t) < 0).at(-1);
+            const after = notes.find(note => note.t.compare(bar.t) >= 0);
+            if (before) {
+                const note = getLayoutBounds(before);
+                assert.ok(box.x - note.x - note.w >= size * 0.5, 'last note must clear the complete bar glyph');
+            }
+            if (after) assert.ok(getLayoutBounds(after).x - box.x - box.w >= size * 0.5, 'first note must clear the complete bar glyph');
+        }
+        assert.deepEqual(result.diagnostics, []);
+    }
+});
+
 test('equal-measure pagination preserves repeats, grace notes and complete tuplets', () => {
     const music = Array(8).fill('@grace({1},{7/}) @tuplet({2 3 4},2) 5 | 6 - - - |').join(' ');
     const source = `@page(width=320px,height=360px,left=20px,right=20px,fillRatio=0) |: ${music} :|`;
@@ -62,4 +82,24 @@ test('equal-measure wrapping budgets the densest measure and preserves parallel 
         assert.match(source.slice(note.ast.sourceSpan.start, note.ast.sourceSpan.end), /^(?:[1-7]'?|-)$/);
     }
     assert.deepEqual(result.diagnostics, []);
+});
+
+test('compact wrapping joins sparse long notes while leaving fast passages and playback intact', () => {
+    const slow = Array(8).fill('1 - - - |').join(' ');
+    const fast = Array(8).fill('1/ 2/ 3/ 4/ 5/ 6/ 7/ 1\'/ |').join(' ');
+    const source = `@set(fontsize=22px) @page(width=754px,left=8px,right=8px,fillRatio=0) ${slow} @br() ${fast}`;
+    const options = { autoWrap: true, equalMeasures: true };
+    const normal = compileScore(source, options), compact = compileScore(source, { ...options, wrap: 'compact' });
+    const slowLines = (result: typeof compact) => new Set(result.layout.objects.filter(node => !node.T.isZero() && node.t.compare(32) < 0).map(node => node.layoutLine)).size;
+    assert.ok(slowLines(compact) < slowLines(normal));
+    const fastLines = (result: typeof compact) => {
+        const notes = result.layout.objects.filter(node => !node.T.isZero() && node.t.compare(32) >= 0);
+        return notes.map(node => [node.ast.sourceSpan, node.layoutLine - notes[0].layoutLine, node.box.x]);
+    };
+    assert.deepEqual(fastLines(compact), fastLines(normal));
+    const played = (result: typeof compact) => playedNotes(compilePlayback(result.lowering)).map(note => [note.midi, note.start, note.duration]);
+    assert.deepEqual(played(compact), played(normal));
+    assert.deepEqual(compact.diagnostics, []);
+    const plain = compileScore(source, { autoWrap: true });
+    assert.deepEqual(compileScore(source, { autoWrap: true, wrap: 'compact' }).layout.objects.map(node => node.box), plain.layout.objects.map(node => node.box));
 });

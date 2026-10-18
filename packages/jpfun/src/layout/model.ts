@@ -235,7 +235,7 @@ export interface HorizontalLayoutHookEntry {
     readonly hook: HorizontalLayoutHook;
 }
 
-export interface EqualMeasureRange { start: number; end: number; bar?: number }
+export interface EqualMeasureRange { start: number; end: number; bar?: number; padding?: number }
 
 /** 不处理 fixed 和写回，只求一组普通列的 anchor 坐标；返回自然布局是否有余量 */
 function solveHorizontal(
@@ -492,11 +492,12 @@ export function layoutHorizontal(
         const leftOf = (column: number) => Math.max(...mat[column].map(el => el.WL));
         const tail = equalMeasures.at(-1)!.bar;
         const width = (limit - (tail === undefined ? 0 : rightOf(tail))) / equalMeasures.length;
-        const gap = 4;
         equalMeasures.forEach((range, index) => {
-            const previous = equalMeasures[index - 1]?.bar;
-            const left = index * width + (previous === undefined ? 0 : rightOf(previous) + gap);
-            const right = (index + 1) * width - (range.bar === undefined ? 0 : leftOf(range.bar) + gap);
+            const previous = equalMeasures[index - 1];
+            // Filling each cell removes the bar's ordinary spring margins.
+            // Restore a size-relative inset outside the complete bar glyph.
+            const left = index * width + (previous?.bar === undefined ? 0 : rightOf(previous.bar) + (previous.padding ?? 0));
+            const right = (index + 1) * width - (range.bar === undefined ? 0 : leftOf(range.bar) + (range.padding ?? 0));
             const localX = X.subarray(range.start, range.end);
             layoutHorizontalRegion(mat.slice(range.start, range.end), rows, localX,
                 fixed.subarray(range.start, Math.max(range.start, range.end - 1)),

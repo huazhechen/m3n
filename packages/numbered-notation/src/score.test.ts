@@ -47,6 +47,15 @@ describe('jpFun numbered notation adapter', () => {
       .toEqual([...disabled.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
     expect(equal.score.diagnostics).toEqual([])
   })
+  it('passes compact wrapping through for sparse exercise measures without changing event identities', () => {
+    const source = '{equal-measures=true}\n{4/4}\nN: ' + Array(8).fill('1^^ |').join(' ')
+    const normal = render(source, { width: 800 })
+    const compact = render(source, { width: 800, wrap: 'compact' })
+    expect(compact.root.querySelectorAll('g.system').length).toBeLessThan(normal.root.querySelectorAll('g.system').length)
+    expect([...compact.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
+      .toEqual([...normal.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
+    expect(compact.score.diagnostics).toEqual([])
+  })
   it('preserves every performed measure, lyric and tie in the compact Slow Like You arrangement', () => {
     const original = readFileSync(resolve(process.cwd(), 'test/fixtures/man-man-original.m3n'), 'utf8')
     const compact = readFileSync(resolve(process.cwd(), '../../src/scores/man_man_xi_huan_ni_01.m3n'), 'utf8')

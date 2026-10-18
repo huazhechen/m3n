@@ -1,9 +1,9 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第二十一版",
+  "edition": "第二十二版",
   "showCredits": false,
   "uniformSystemHeight": true,
-  "rendererSha256": "b3482c66f9a5c3cf924285bba5f77f8d10afabfc03bd6558e2f333f42f58cf46",
+  "rendererSha256": "32023adfae17cb875eacfc4f111a72362e6bb3b1fab7522286222bcebb0c1211",
   "sourceCount": 81,
   "entryCount": 81,
   "pageCount": 77,
@@ -34,51 +34,46 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "compact",
       "baselineSteps": [
-        60.25,
-        39.25,
-        67.675,
-        46.675,
-        61.315,
-        61.315,
-        58.89,
-        58.89,
-        47.17,
-        49.25,
-        49.25,
-        49.25,
-        49.25,
-        70.25,
-        49.25,
-        49.25,
-        49.25,
-        73.23,
-        52.23,
-        73.23,
-        52.23,
-        73.23,
-        52.23,
-        49.25,
-        33.31,
-        49.25,
-        33.31,
-        49.25,
-        33.31,
-        73.23,
-        52.23,
-        49.25,
-        33.31,
-        49.25,
-        49.25,
-        49.25,
-        49.25,
-        73.23,
-        49.25
+        66.35,
+        73.775,
+        68.815,
+        64.99,
+        64.99,
+        54.67,
+        55.35,
+        55.35,
+        55.35,
+        55.35,
+        74.95,
+        55.35,
+        55.35,
+        55.35,
+        79.33,
+        59.73,
+        79.33,
+        59.73,
+        79.33,
+        59.73,
+        55.35,
+        40.81,
+        55.35,
+        40.81,
+        55.35,
+        40.81,
+        79.33,
+        59.73,
+        55.35,
+        40.81,
+        55.35,
+        55.35,
+        55.35,
+        55.35,
+        79.33,
+        55.35
       ],
       "voltaSystems": [
-        false,
-        false,
-        false,
         false,
         false,
         false,
@@ -120,10 +115,7 @@
       "paragraphSystems": [
         "0:0",
         "0:1",
-        "0:1",
         "0:2",
-        "0:2",
-        "0:3",
         "0:3",
         "0:4",
         "0:5",
@@ -162,10 +154,10 @@
       "section": "basics",
       "group": "每日训练",
       "reason": "按原谱顺序连续进行机能与音阶模进训练",
-      "width": 754,
-      "systemGap": 3.5,
-      "relativeScalePercent": 103.45,
-      "screenNotePx": 20.31,
+      "width": 792,
+      "systemGap": 11,
+      "relativeScalePercent": 98.48,
+      "screenNotePx": 19.33,
       "versusV1Percent": null,
       "versusV2Percent": null,
       "previousPages": [],
@@ -174,24 +166,24 @@
         4,
         5
       ],
-      "systems": 40,
+      "systems": 37,
       "systemsPerPage": [
-        19,
-        21
+        17,
+        20
       ],
       "sourceSha256": "ed9f207ef0a4853571b356baa903c5c234e4e7d1167cc0a8bac375c8a5f386df",
       "candidates": [
         {
-          "width": 754,
-          "systemGap": 3.5,
-          "rows": 40,
+          "width": 792,
+          "systemGap": 11,
+          "rows": 37,
           "pages": 2,
-          "cost": 2452.4
+          "cost": 2475.2
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "28项练习原顺序与全部音符保留；各段独立统一音乐行高，标题只占所在行；允许练习内换行及跨页，按19+21行分两页，20.31px，各页99.989% / 98.005%，两页内优先放大字号。 开启行内小节等宽，保留原音符字号与页数。"
+      "reviewNote": "28项练习顺序及全部音乐保留；长音、渐强渐弱和颤音各合为一行，快速音型保留正常换行；37行按17+20行分两页，19.33px，额外行距11px，标题贴近本行。"
     },
     {
       "order": 2,
@@ -201,6 +193,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         45.5
       ],
@@ -256,9 +249,10 @@
       "includeBass": false,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
-        53.733,
-        53.733
+        53.75,
+        53.75
       ],
       "voltaSystems": [
         false,
@@ -314,6 +308,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         45.5,
         45.5
@@ -372,10 +367,11 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
-        54.527,
-        54.526,
-        54.527
+        53.748,
+        53.749,
+        53.748
       ],
       "voltaSystems": [
         false,
@@ -433,6 +429,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         45.07,
         45.07,
@@ -494,9 +491,10 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
-        50.112,
-        50.112
+        49.531,
+        49.532
       ],
       "voltaSystems": [
         false,
@@ -552,6 +550,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         41,
         41
@@ -610,6 +609,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         43.31,
         43.31,
@@ -671,6 +671,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         47.91,
         47.91,
@@ -732,6 +733,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         47.25,
         47.25,
@@ -799,6 +801,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         49.01,
         49.01,
@@ -863,6 +866,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         48.65,
         48.65
@@ -921,6 +925,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         51.51,
         51.51,
@@ -982,6 +987,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         57.67,
         57.67,
@@ -1049,6 +1055,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         55.51,
         55.51,
@@ -1110,6 +1117,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         55.51,
         55.51,
@@ -1171,6 +1179,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         47.81,
         47.81,
@@ -1235,10 +1244,11 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
-        58.678,
-        58.679,
-        60.438
+        56.739,
+        56.739,
+        58.499
       ],
       "voltaSystems": [
         false,
@@ -1296,6 +1306,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         50.34,
         50.34,
@@ -1357,9 +1368,10 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
-        57.088,
-        57.088,
+        56.153,
+        56.153,
         58.59,
         58.59
       ],
@@ -1421,6 +1433,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         53.75,
         130.31,
@@ -1494,6 +1507,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         134.62,
         134.62,
@@ -1570,6 +1584,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         133.756,
         133.756,
@@ -1640,6 +1655,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         114.54,
         114.54,
@@ -1716,6 +1732,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         80.59,
         80.59,
@@ -1798,6 +1815,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         91.59,
         91.59,
@@ -1874,6 +1892,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         95.66,
         95.66,
@@ -1956,6 +1975,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         131.63,
         131.63,
@@ -2029,6 +2049,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         146.998,
         142.85,
@@ -2108,6 +2129,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         80.59,
         80.59,
@@ -2190,6 +2212,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         116.505,
         124.755,
@@ -2269,16 +2292,17 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
-        79.71,
-        79.71,
-        79.71,
-        79.49,
-        79.49,
-        83.56,
-        106.879,
-        106.88,
-        106.88,
+        80.393,
+        80.392,
+        80.393,
+        80.392,
+        80.393,
+        86.552,
+        109.873,
+        109.872,
+        109.873,
         102.81
       ],
       "voltaSystems": [
@@ -2351,6 +2375,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         72.34,
         79.49,
@@ -2430,6 +2455,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         86.75,
         86.75,
@@ -2512,6 +2538,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         72.34,
         72.34,
@@ -2597,6 +2624,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         101.525,
         114.745,
@@ -2676,6 +2704,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         86.733,
         86.734,
@@ -2740,6 +2769,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         77.9,
         77.9,
@@ -2807,6 +2837,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         79.57,
         79.57,
@@ -2889,6 +2920,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         106.99,
         106.99,
@@ -2968,6 +3000,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         100.402,
         100.403,
@@ -3044,6 +3077,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         82.169,
         82.169,
@@ -3129,6 +3163,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         78.34,
         78.34,
@@ -3211,6 +3246,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         84.99,
         84.99,
@@ -3326,6 +3362,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         103.91,
         103.91,
@@ -3435,6 +3472,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         110.31,
         110.31,
@@ -3535,6 +3573,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         110.99,
         110.99,
@@ -3615,6 +3654,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         68.827,
         62.89,
@@ -3701,6 +3741,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         64.57,
         64.57,
@@ -3786,6 +3827,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         106.946,
         123.895,
@@ -3865,6 +3907,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         129.561,
         144.552,
@@ -3938,6 +3981,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         106.167,
         106.168,
@@ -4017,6 +4061,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         91.81,
         91.81,
@@ -4093,6 +4138,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         114.91,
         114.91,
@@ -4166,6 +4212,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         58.11,
         83.191,
@@ -4251,6 +4298,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         111.082,
         133.835,
@@ -4330,6 +4378,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         84.99,
         84.99,
@@ -4415,6 +4464,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         58.59,
         130.31,
@@ -4494,6 +4544,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         86.75,
         88.51,
@@ -4579,6 +4630,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         103.91,
         103.91,
@@ -4685,6 +4737,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         55.51,
         55.51,
@@ -4746,6 +4799,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         66.73,
         66.73,
@@ -4822,6 +4876,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         57.51,
         57.51,
@@ -4886,13 +4941,14 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
-        56.997,
-        56.997,
-        56.998,
-        56.997,
-        56.997,
-        56.922
+        56.594,
+        56.594,
+        56.593,
+        56.594,
+        56.594,
+        56.594
       ],
       "voltaSystems": [
         false,
@@ -4956,6 +5012,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         51.26,
         51.26,
@@ -5053,6 +5110,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         55.51,
         55.51,
@@ -5064,10 +5122,10 @@
         55.51,
         55.51,
         55.51,
-        57.452,
-        57.452,
-        57.452,
-        57.452
+        61.163,
+        61.163,
+        61.163,
+        61.163
       ],
       "voltaSystems": [
         false,
@@ -5147,6 +5205,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         53.75,
         59.91,
@@ -5154,8 +5213,8 @@
         59.91,
         59.91,
         78.445,
-        58.899,
-        58.898,
+        57.099,
+        57.099,
         59.91,
         59.91,
         59.91,
@@ -5241,26 +5300,27 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
-        84.73,
-        84.73,
-        84.73,
-        81.75,
-        81.43,
-        81.43,
-        81.43,
-        81.43,
-        81.43,
-        88.57,
-        84.73,
-        84.73,
-        81.75,
-        81.43,
-        81.43,
-        81.43,
-        81.43,
-        81.43,
-        83.51
+        85.73,
+        85.73,
+        85.73,
+        81.35,
+        82.43,
+        82.43,
+        82.43,
+        82.43,
+        82.43,
+        88.17,
+        85.73,
+        85.73,
+        81.35,
+        82.43,
+        82.43,
+        82.43,
+        82.43,
+        82.43,
+        83.11
       ],
       "voltaSystems": [
         false,
@@ -5310,7 +5370,7 @@
       "group": "舞曲与动画主题",
       "reason": "反复结构与较快八分音符",
       "width": 640,
-      "systemGap": 36,
+      "systemGap": 37,
       "relativeScalePercent": 121.88,
       "screenNotePx": 23.93,
       "versusV1Percent": 138.48,
@@ -5334,7 +5394,7 @@
       "candidates": [
         {
           "width": 640,
-          "systemGap": 36,
+          "systemGap": 37,
           "rows": 20,
           "pages": 2,
           "cost": 2384
@@ -5352,6 +5412,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         59.91,
         59.91,
@@ -5446,17 +5507,18 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
-        70.59,
+        69.19,
         68.51,
-        70.59,
+        69.19,
         52.34,
-        70.59,
-        70.59,
+        69.19,
+        69.19,
         68.51,
-        70.59,
+        69.19,
         52.34,
-        70.59,
+        69.19,
         68.51
       ],
       "voltaSystems": [
@@ -5531,6 +5593,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         59.91,
         61.67,
@@ -5625,6 +5688,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         78.73,
         78.73,
@@ -5739,6 +5803,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         61.91,
         61.91,
@@ -5806,6 +5871,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         63.65,
         63.65,
@@ -5882,6 +5948,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": true,
+      "wrap": "normal",
       "baselineSteps": [
         53.81,
         53.81,
@@ -5973,6 +6040,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         57.206,
         57.207,
@@ -6076,6 +6144,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         66.59,
         66.59,
@@ -6158,33 +6227,34 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
-        74.028,
+        72.628,
         67.79,
         67.79,
         67.79,
         67.79,
         67.79,
         67.79,
-        74.028,
+        72.628,
         67.79,
         67.79,
-        74.028,
-        67.79,
-        67.79,
-        67.79,
+        72.628,
         67.79,
         67.79,
         67.79,
-        64.81,
+        67.79,
+        67.79,
+        67.79,
+        63.41,
         57.409,
         57.409,
         57.41,
-        64.81,
+        63.41,
         57.409,
         57.409,
         57.409,
-        64.81,
+        63.41,
         58.36,
         58.359,
         58.359,
@@ -6192,7 +6262,7 @@
         58.359,
         58.359,
         58.36,
-        59.75,
+        58.35,
         48.87,
         48.87,
         48.87,
@@ -6322,9 +6392,9 @@
       ],
       "systems": 45,
       "systemsPerPage": [
-        12,
+        13,
         15,
-        18
+        17
       ],
       "sourceSha256": "532f6bb67573f1895dc5593051ab9645b305a3fcbe7c592f2f72beb366af435c",
       "candidates": [
@@ -6348,6 +6418,7 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
         66.388,
         72.09,
@@ -6487,8 +6558,9 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "equalMeasures": false,
+      "wrap": "normal",
       "baselineSteps": [
-        65.51,
+        64.11,
         63.43,
         63.43,
         68.49,
@@ -6499,18 +6571,18 @@
         68.49,
         68.49,
         68.49,
-        65.51,
+        64.11,
         63.43,
         63.43,
-        65.51,
+        64.11,
         63.43,
         63.43,
         63.43,
-        65.51,
+        64.11,
         53.75,
         74.595,
         68.105,
-        65.51,
+        64.11,
         63.43,
         63.43,
         63.43,
@@ -6623,45 +6695,45 @@
     {
       "page": 4,
       "section": "basics",
-      "fillPercent": 100,
+      "fillPercent": 96.4,
       "items": [
         {
           "id": "ban_yin_jie_kou_qin_ji_ben_gong",
           "title": "半音阶口琴基本功",
           "systems": [
             1,
-            19
+            17
           ],
-          "width": 754,
-          "systemGap": 3.5,
+          "width": 792,
+          "systemGap": 11,
           "top": 0,
-          "height": 1056.88
+          "height": 1019.01
         }
       ]
     },
     {
       "page": 5,
       "section": "basics",
-      "fillPercent": 98,
+      "fillPercent": 99.5,
       "items": [
         {
           "id": "ban_yin_jie_kou_qin_ji_ben_gong",
           "title": "半音阶口琴基本功",
           "systems": [
-            20,
-            40
+            18,
+            37
           ],
-          "width": 754,
-          "systemGap": 3.5,
+          "width": 792,
+          "systemGap": 11,
           "top": 0,
-          "height": 1035.92
+          "height": 1052.17
         }
       ]
     },
     {
       "page": 6,
       "section": "basics",
-      "fillPercent": 91.3,
+      "fillPercent": 91.1,
       "items": [
         {
           "id": "xiao_xing_xing",
@@ -6685,7 +6757,7 @@
           "width": 766,
           "systemGap": 18,
           "top": 189.15,
-          "height": 242.53
+          "height": 242.56
         },
         {
           "id": "wo_he_ni",
@@ -6696,7 +6768,7 @@
           ],
           "width": 766,
           "systemGap": 18,
-          "top": 453.68,
+          "top": 453.71,
           "height": 208.49
         },
         {
@@ -6708,15 +6780,15 @@
           ],
           "width": 766,
           "systemGap": 18,
-          "top": 684.17,
-          "height": 281.04
+          "top": 684.2,
+          "height": 278.21
         }
       ]
     },
     {
       "page": 7,
       "section": "basics",
-      "fillPercent": 99.7,
+      "fillPercent": 99.5,
       "items": [
         {
           "id": "song_bie",
@@ -6740,7 +6812,7 @@
           "width": 704,
           "systemGap": 13.5,
           "top": 292.14,
-          "height": 240.53
+          "height": 238.81
         },
         {
           "id": "su_shan_na",
@@ -6751,7 +6823,7 @@
           ],
           "width": 704,
           "systemGap": 13.5,
-          "top": 554.67,
+          "top": 552.94,
           "height": 213.51
         },
         {
@@ -6763,7 +6835,7 @@
           ],
           "width": 704,
           "systemGap": 13.5,
-          "top": 790.17,
+          "top": 788.45,
           "height": 263.17
         }
       ]
@@ -6900,7 +6972,7 @@
     {
       "page": 11,
       "section": "folk",
-      "fillPercent": 98.1,
+      "fillPercent": 97.1,
       "items": [
         {
           "id": "mo_li_hua",
@@ -6912,7 +6984,7 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 329.3
+          "height": 321.59
         },
         {
           "id": "katyusha",
@@ -6923,7 +6995,7 @@
           ],
           "width": 700,
           "systemGap": 18,
-          "top": 351.3,
+          "top": 343.59,
           "height": 289.58
         },
         {
@@ -6935,8 +7007,8 @@
           ],
           "width": 700,
           "systemGap": 18,
-          "top": 662.88,
-          "height": 374.41
+          "top": 655.16,
+          "height": 371.62
         }
       ]
     },
@@ -7152,7 +7224,7 @@
     {
       "page": 23,
       "section": "pop",
-      "fillPercent": 95.6,
+      "fillPercent": 97.1,
       "items": [
         {
           "id": "yu_jian",
@@ -7164,7 +7236,7 @@
           "width": 740,
           "systemGap": 18,
           "top": 0,
-          "height": 1010.54
+          "height": 1026.06
         }
       ]
     },
@@ -7803,7 +7875,7 @@
     {
       "page": 56,
       "section": "instrumental",
-      "fillPercent": 91.5,
+      "fillPercent": 91.2,
       "items": [
         {
           "id": "liang_zhu",
@@ -7827,7 +7899,7 @@
           "width": 640,
           "systemGap": 20,
           "top": 435.8,
-          "height": 531.55
+          "height": 528.57
         }
       ]
     },
@@ -7853,7 +7925,7 @@
     {
       "page": 58,
       "section": "instrumental",
-      "fillPercent": 96,
+      "fillPercent": 97.6,
       "items": [
         {
           "id": "xia_yu_de_shi_hou",
@@ -7865,14 +7937,14 @@
           "width": 640,
           "systemGap": 18,
           "top": 0,
-          "height": 1015.05
+          "height": 1031.19
         }
       ]
     },
     {
       "page": 59,
       "section": "instrumental",
-      "fillPercent": 94.6,
+      "fillPercent": 94.3,
       "items": [
         {
           "id": "second_waltz",
@@ -7884,14 +7956,14 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 1000.12
+          "height": 996.54
         }
       ]
     },
     {
       "page": 60,
       "section": "instrumental",
-      "fillPercent": 90.4,
+      "fillPercent": 91.1,
       "items": [
         {
           "id": "doraemon",
@@ -7901,16 +7973,16 @@
             9
           ],
           "width": 640,
-          "systemGap": 36,
+          "systemGap": 37,
           "top": 0,
-          "height": 955.36
+          "height": 962.64
         }
       ]
     },
     {
       "page": 61,
       "section": "instrumental",
-      "fillPercent": 95.7,
+      "fillPercent": 96.3,
       "items": [
         {
           "id": "doraemon",
@@ -7920,9 +7992,9 @@
             20
           ],
           "width": 640,
-          "systemGap": 36,
+          "systemGap": 37,
           "top": 0,
-          "height": 1011.08
+          "height": 1017.93
         }
       ]
     },
@@ -7948,7 +8020,7 @@
     {
       "page": 63,
       "section": "instrumental",
-      "fillPercent": 92.3,
+      "fillPercent": 91.3,
       "items": [
         {
           "id": "super_mario",
@@ -7960,7 +8032,7 @@
           "width": 640,
           "systemGap": 20,
           "top": 0,
-          "height": 975.81
+          "height": 965.16
         }
       ]
     },
@@ -8112,57 +8184,57 @@
     {
       "page": 71,
       "section": "instrumental",
-      "fillPercent": 93.2,
+      "fillPercent": 99.7,
       "items": [
         {
           "id": "flower_dance",
           "title": "花之舞",
           "systems": [
             1,
-            12
+            13
           ],
           "width": 656,
           "systemGap": 14,
           "top": 0,
-          "height": 985.41
+          "height": 1053.36
         }
       ]
     },
     {
       "page": 72,
       "section": "instrumental",
-      "fillPercent": 97.8,
+      "fillPercent": 96.7,
       "items": [
         {
           "id": "flower_dance",
           "title": "花之舞",
           "systems": [
-            13,
-            27
+            14,
+            28
           ],
           "width": 656,
           "systemGap": 14,
           "top": 0,
-          "height": 1033.51
+          "height": 1022.02
         }
       ]
     },
     {
       "page": 73,
       "section": "instrumental",
-      "fillPercent": 99.8,
+      "fillPercent": 93.3,
       "items": [
         {
           "id": "flower_dance",
           "title": "花之舞",
           "systems": [
-            28,
+            29,
             45
           ],
           "width": 656,
           "systemGap": 14,
           "top": 0,
-          "height": 1054.47
+          "height": 986.14
         }
       ]
     },
@@ -8207,7 +8279,7 @@
     {
       "page": 76,
       "section": "instrumental",
-      "fillPercent": 96.3,
+      "fillPercent": 95.9,
       "items": [
         {
           "id": "valsentino",
@@ -8219,14 +8291,14 @@
           "width": 706,
           "systemGap": 18,
           "top": 0,
-          "height": 1018.03
+          "height": 1013.89
         }
       ]
     },
     {
       "page": 77,
       "section": "instrumental",
-      "fillPercent": 92.8,
+      "fillPercent": 92.4,
       "items": [
         {
           "id": "valsentino",
@@ -8238,7 +8310,7 @@
           "width": 706,
           "systemGap": 18,
           "top": 0,
-          "height": 980.8
+          "height": 976.66
         }
       ]
     }
@@ -8247,7 +8319,7 @@
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
     "geometryCandidates": 81,
-    "minimumMusicPageFillPercent": 90.384,
+    "minimumMusicPageFillPercent": 90.388,
     "underfilledMusicPages": 0,
     "outside": 0,
     "overlaps": 0,

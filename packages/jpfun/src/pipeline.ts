@@ -19,6 +19,8 @@ import type { TextMeasurer } from "./render/types.js";
 export interface CompileScoreOptions extends DocumentLayoutOptions {
     alignRelations?: boolean;
     autoWrap?: boolean;
+    /** Compact sparse long-note measures; dense passages keep normal wrapping. */
+    wrap?: 'normal' | 'compact';
     functions?: ASTFunctionClass[];    // 替换默认函数注册表
     textMeasurer?: TextMeasurer;       // 替换默认文本测量来源
     variables?: Record<string, any>;
@@ -49,7 +51,7 @@ export function compileScore(
     const natural = compileRaw(source, options, true);
     const page = normalizePageConfig(natural.lowering.page);
     const preferred = natural.lowering.columns.flat().filter(node => node.addon?.preferredBreakBefore).map(node => node.t.toString());
-    const positions = automaticBreakPositions(natural.layout, page.width - page.marginLeft - page.marginRight, new Set(preferred), options.equalMeasures);
+    const positions = automaticBreakPositions(natural.layout, page.width - page.marginLeft - page.marginRight, new Set(preferred), options.equalMeasures, options.wrap);
     if (!positions.length) return compileRaw(source, options);
     const inserted = insertAutomaticBreaks(source, positions, natural.layout);
     const result = compileRaw(inserted.source, options);
@@ -70,6 +72,7 @@ export function compileScore(
 function compileRaw(source: string, options: CompileScoreOptions, natural = false): CompileScoreResult {
     const {
         autoWrap: _autoWrap,
+        wrap: _wrap,
         functions = defaultFunctions,
         textMeasurer,
         alignRelations,

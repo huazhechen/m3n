@@ -14,6 +14,8 @@ export type NumberedNotationRenderOptions = {
   uniformSystemHeight?: boolean
   /** Override the document's equal-measure layout setting. */
   equalMeasures?: boolean
+  /** Fit sparse sustained-note exercises more compactly without tightening fast passages. */
+  wrap?: 'normal' | 'compact'
 }
 
 /** Pure frontend jpFun adapter; ScoreDocument is the only musical input. */
@@ -31,7 +33,7 @@ export class NumberedNotationScore {
     const canvas = typeof document === 'undefined' || typeof CanvasRenderingContext2D === 'undefined' ? null : document.createElement('canvas')
     const context = canvas?.getContext('2d')
     const textMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
-    const result = compileScore(projection.source, { autoWrap: true, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
+    const result = compileScore(projection.source, { autoWrap: true, wrap: options.wrap, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
     this.diagnostics = [...projection.diagnostics, ...result.diagnostics.map(item => ({ code: item.code, message: item.message, severity: item instanceof ErrorDiagnostic ? 'error' as const : 'warning' as const }))]
     const error = this.diagnostics.find(item => item.severity === 'error')
     if (error) throw new Error(`简谱排版失败：${error.message}`)

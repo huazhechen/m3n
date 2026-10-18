@@ -81,3 +81,14 @@ test('paragraph height groups survive automatic pagination', () => {
     for (const page of paged.layout.pages) for (let line = page.lineStart + 1; line < page.lineEnd; line++) nearly(p[line] - p[line - 1], y[line] - y[line - 1]);
     assert.deepEqual(paged.diagnostics, []);
 });
+
+test('a local exercise heading sits closer to its own music than the preceding system', () => {
+    const result = compileScore('@page(width=800px,gap=12px) 1 2 3 4 | @br() 1@next 2 3 4 | @text(练习,size=14px,above=next,local=true)', { uniformSystemHeight: true });
+    const title = result.layout.attachments.at(-1)!.box;
+    const before = result.layout.objects.filter(node => node.layoutLine === 0).map(node => getLayoutBounds(node));
+    const after = result.layout.objects.filter(node => node.layoutLine === 1).map(node => getLayoutBounds(node));
+    const outer = title.y - Math.max(...before.map(box => box.y + box.h));
+    const inner = Math.min(...after.map(box => box.y)) - title.y - title.h;
+    assert.ok(inner > 0 && outer > inner * 2);
+    assert.deepEqual(result.diagnostics, []);
+});

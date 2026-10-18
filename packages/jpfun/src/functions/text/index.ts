@@ -222,7 +222,10 @@ class TextAboveAttachment implements LayoutAttachment {
             }
         });
         const extent = context.getRangeExtents(host.layoutLine, [start, end], host.track);
-        box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - this.ast.size * 0.5 - box.h;
+        // Local headings belong to the following music, so keep their inner gap
+        // smaller than the separation between successive systems.
+        const gap = this.ast.size * (this.ast.local ? 0.4 : 0.5);
+        box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - gap - box.h;
         return {
             regions: [{ x: box.x, y: box.y, w: box.w, h: box.h, line: host.layoutLine, track: host.track }],
             paint(painter: Painter) { text.paint(painter); },

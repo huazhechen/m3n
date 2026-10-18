@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第二十一版",
+  "edition": "第二十二版",
   "sourceCount": 81,
   "baseWidth": 780,
   "widthCandidates": [
@@ -58,17 +58,18 @@
       "section": "basics",
       "group": "每日训练",
       "reason": "按原谱顺序连续进行机能与音阶模进训练",
-      "width": 754,
+      "width": 792,
       "widthLocked": true,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [
-        19
+        17
       ],
-      "reviewNote": "28项练习原顺序与全部音符保留；各段独立统一音乐行高，标题只占所在行；允许练习内换行及跨页，按19+21行分两页，20.31px，各页99.989% / 98.005%，两页内优先放大字号。 开启行内小节等宽，保留原音符字号与页数。",
+      "reviewNote": "28项练习顺序及全部音乐保留；长音、渐强渐弱和颤音各合为一行，快速音型保留正常换行；37行按17+20行分两页，19.33px，额外行距11px，标题贴近本行。",
       "uniformSystemHeight": true,
       "pageCount": 2,
-      "systemGap": 3.5
+      "systemGap": 11,
+      "wrap": "compact"
     },
     {
       "id": "xiao_xing_xing",
@@ -1277,7 +1278,7 @@
       "reviewNote": "段内统一音乐行高，标题只占所在行；20行，23.93px，各页高度利用率 90.384% / 95.656%。",
       "widthLocked": true,
       "pageCount": 2,
-      "systemGap": 36,
+      "systemGap": 37,
       "uniformSystemHeight": true
     },
     {
@@ -1482,8 +1483,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v21.pdf",
-  "outputKey": "scorebook-v21",
+  "outputPdf": "循序渐进简谱集-v22.pdf",
+  "outputKey": "scorebook-v22",
   "page": {
     "width": 744,
     "height": 1133,

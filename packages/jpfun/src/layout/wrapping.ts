@@ -15,7 +15,7 @@ function barAst(node: VisualTemporalNode) {
 const isOpeningRepeat = (node: VisualTemporalNode) => barAst(node)?.type === 3;
 
 /** Source positions for explicit breaks; all parallel members at a boundary share one break. */
-export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number, preferredTimes: ReadonlySet<string> = new Set(), equalMeasures = false): number[] {
+export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number, preferredTimes: ReadonlySet<string> = new Set(), equalMeasures = false, wrap: 'normal' | 'compact' = 'normal'): number[] {
     const insertions = new Set<number>();
     const leftOf = (node: VisualTemporalNode) => layout.horizontalBounds?.get(node)?.x ?? node.box.x;
     const rightOf = (node: VisualTemporalNode) => { const box = layout.horizontalBounds?.get(node) ?? node.box; return box.x + box.w; };
@@ -94,14 +94,24 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
         // Minimize squared unused space, never compress a normal measure to fit a preceding one.
         const best = new Array<number>(measures.length + 1).fill(Infinity);
         const previous = new Array<number>(measures.length + 1).fill(0);
+        const sparse = measures.map(measure => {
+            const timed = measure.nodes.filter(node => node.T.compare(0) > 0);
+            return timed.length <= 4 && timed.every(node => node.T.compare(1) >= 0
+                && rightOf(node) - leftOf(node) <= node.box.w * 1.5);
+        });
         best[0] = 0;
         for (let end = 1; end <= measures.length; end++) {
             let widest = 0;
+            let compact = wrap === 'compact' && equalMeasures;
             for (let start = end - 1; start >= Math.max(0, end - 48); start--) {
                 widest = Math.max(widest, measures[start].end - measures[start].start);
+                compact &&= sparse[start];
                 const width = equalMeasures ? widest * (end - start) : measures[end - 1].end - measures[start].start;
-                if (width > contentWidth * 0.94 && start < end - 1) break;
-                const slack = Math.max(0, contentWidth * 0.94 - width);
+                // Sparse sustained notes can surrender some natural spring space.
+                // Tuplets, short notes and wide lyric constraints keep the normal budget.
+                const capacity = contentWidth * (compact ? 1.16 : 0.94);
+                if (width > capacity && start < end - 1) break;
+                const slack = Math.max(0, capacity - width);
                 const first = measures[start].nodes.find(node => node.T.compare(0) > 0)!;
                 // Prefer section boundaries when their surrounding lines remain
                 // reasonably full; a short introduction can share the next section.

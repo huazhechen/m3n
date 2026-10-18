@@ -8,7 +8,8 @@ export function equalMeasureRanges(columns: readonly (readonly VisualTemporalNod
     let start = 0, musical = false;
     for (let i = 0; i < columns.length; i++) {
         if (musical && columns[i].some(node => node.mergeKey === ANCHOR_KEY)) {
-            ranges.push({ start, end: i, bar: i });
+            const bars = columns[i].filter(node => node.mergeKey === ANCHOR_KEY);
+            ranges.push({ start, end: i, bar: i, padding: Math.max(...bars.map(node => node.box.h)) * 0.55 });
             start = i + 1;
             musical = false;
         }
