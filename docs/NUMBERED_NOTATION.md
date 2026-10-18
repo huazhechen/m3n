@@ -108,6 +108,10 @@ Fine、D.C.、D.S. 排在末音或休止符之后、小节线之前，与音符�
 
 预览与最终导出调用相同接口、版宽和字体准备流程。两种谱式均提供 SVG 矢量图、PNG 连续图和 A4 多页矢量 PDF。导出时数字沿用内嵌字体，中文使用本站按需加载的 Noto Serif CJK SC，文字转成路径，不依赖接收设备字体；文字不可选择或搜索。轮廓坐标先对齐到 0.001px，避免 opentype.js 2 将接近整数的小数舍入为 NaN、造成字形笔画缺失；导出遇到无效坐标会明确失败。PDF 经 svg2pdf.js 写入矢量路径，不嵌入 Canvas 图片。字体许可与重建方法见 `public/licenses/noto-serif/`。
 
+谱集另提供 `npm run compact:scorebook`，从最近一次 `build:scorebook` 保存的 `unoutlined-pages.json` 生成 `-精简.pdf`，保留原轮廓版。命令校验版次、渲染器摘要和全部谱源摘要，拒绝过期布局。导出先按原轮廓流程解析SVG的可寻址字符，处理空白、tspan、UTF-16索引和旋转，将每个字形固定到原来的基线位置；常规字形由Chromium嵌入并共用字体子集，粗体沿用原轮廓版的0.015倍字号描边，不另换粗体字体。使用同一Noto Serif CJK SC和Barlow字体资源，不重新排谱、缩小字号或转为图片。
+
+当前第十七版精简PDF为3,872,345字节，原轮廓版为16,271,137字节，减小76.2%。生成器逐字检查基线误差不超过0.001px、逐页检查实际纸张边界；保存后用 `pdfinfo` 确认78页及相同纸张尺寸，用 `pdffonts` 确认所有字体子集嵌入且保留Unicode映射，用 `pdfimages` 确认没有栅格图片。布局、页码及字号记录继续沿用同一 `layout-record.json`；PDF体积、SHA-256及逐页字形数量保存为 `PDF体积记录-v17.json`。仅精简谱集采用此路径，其他SVG、PNG和PDF导出仍沿用轮廓流程。
+
 - `npm run test`：保留上游测试与快照；适配器为全部 81 首内置曲目分别建立用例，核对每个事件的音高、变音、八度、开始时间、时值、事件身份、控制记号同行及分页。
 - `npm run test:numbered-layout`：不启动服务器，在 Chromium 中检查全部曲库和三个复合谱例的 320/600/800/1000px、连续/分页组合，共 672 次布局，检查真实 SVG 边界、歌词相交及音符数字相交，输出 `.tmp/numbered-layout-report.json` 和示例截图。可用 `CHROMIUM_PATH` 指定浏览器。
 - `npm run test:numbered-audit`：执行上述检查，并生成逐曲的 800px 连续、320px 分页截图及索引 `.tmp/numbered-audit/index.html`。索引与 `manifest.json` 保留逐曲结果，截图不纳入 Git。

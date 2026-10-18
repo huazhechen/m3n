@@ -28,7 +28,8 @@
     "test:numbered-layout": "node tools/verify-numbered-layout.mjs",
     "test:numbered-audit": "node tools/verify-numbered-layout.mjs --screenshots",
     "check:boundaries": "node tools/check-boundaries.mjs",
-    "build:scorebook": "npm run build:packages && node tools/build-scorebook.mjs"
+    "build:scorebook": "npm run build:packages && node tools/build-scorebook.mjs",
+    "compact:scorebook": "node tools/compact-scorebook-pdf.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
