@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十九版",
+  "edition": "第二十版",
   "sourceCount": 81,
   "baseWidth": 780,
   "widthCandidates": [
@@ -1454,14 +1454,14 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速半音、装饰与多次变调",
-      "width": 640,
+      "width": 720,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "段内统一音乐行高，标题只占所在行；32行，23.93px，各页高度利用率 91.558% / 91.417%。",
+      "reviewNote": "恢复18px额外行间留白，29行按14+15行分两页，音符21.27px；两页自然高度利用率93.634% / 97.538%。保留原谱音乐、段落与反复后换行。",
       "pageCount": 2,
       "widthLocked": true,
-      "systemGap": 2,
+      "systemGap": 18,
       "uniformSystemHeight": true
     },
     {
@@ -1482,8 +1482,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v19.pdf",
-  "outputKey": "scorebook-v19",
+  "outputPdf": "循序渐进简谱集-v20.pdf",
+  "outputKey": "scorebook-v20",
   "page": {
     "width": 744,
     "height": 1133,

@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十九版",
+  "edition": "第二十版",
   "showCredits": false,
   "uniformSystemHeight": true,
   "rendererSha256": "b3482c66f9a5c3cf924285bba5f77f8d10afabfc03bd6558e2f333f42f58cf46",
@@ -6357,42 +6357,36 @@
       "uniformSystemHeight": true,
       "equalMeasures": false,
       "baselineSteps": [
-        50.388,
-        56.09,
-        56.09,
-        50.31,
-        59.95,
-        58.95,
-        56.09,
-        47.45,
-        47.45,
-        47.45,
-        41.39,
-        41.39,
-        52.29,
-        52.29,
-        47.45,
-        56.09,
-        56.09,
-        38.911,
-        50.388,
-        56.09,
-        56.09,
-        50.31,
-        59.95,
-        58.95,
-        56.09,
-        50.388,
-        50.388,
-        51.45,
-        51.45,
-        51.45,
-        51.45
+        66.388,
+        72.09,
+        72.09,
+        75.95,
+        74.95,
+        72.09,
+        63.45,
+        63.45,
+        63.45,
+        57.39,
+        57.39,
+        68.29,
+        68.29,
+        63.45,
+        72.09,
+        72.09,
+        54.911,
+        66.388,
+        72.09,
+        72.09,
+        75.95,
+        74.95,
+        72.09,
+        66.388,
+        66.388,
+        67.45,
+        67.45,
+        67.45
       ],
       "voltaSystems": [
-        false,
-        false,
-        false,
         false,
         false,
         false,
@@ -6428,7 +6422,6 @@
         "0:0,0:1",
         "0:2,0:3",
         "0:3,0:4",
-        "0:4",
         "0:4,0:5",
         "0:6",
         "0:6,0:7",
@@ -6446,7 +6439,6 @@
         "0:14,0:15",
         "0:16,0:17",
         "0:17,0:18",
-        "0:18",
         "0:18,0:19",
         "0:20",
         "0:20,0:21",
@@ -6454,18 +6446,17 @@
         "0:22",
         "0:22,0:23",
         "0:23",
-        "0:23",
         "0:23"
       ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速半音、装饰与多次变调",
-      "width": 640,
-      "systemGap": 2,
-      "relativeScalePercent": 121.88,
-      "screenNotePx": 23.93,
-      "versusV1Percent": 138.48,
-      "versusV2Percent": 152.37,
+      "width": 720,
+      "systemGap": 18,
+      "relativeScalePercent": 108.33,
+      "screenNotePx": 21.27,
+      "versusV1Percent": 123.09,
+      "versusV2Percent": 135.44,
       "previousPages": [
         78,
         79
@@ -6477,24 +6468,24 @@
         75,
         76
       ],
-      "systems": 32,
+      "systems": 29,
       "systemsPerPage": [
-        16,
-        16
+        14,
+        15
       ],
       "sourceSha256": "8b268c6ea745628743742fd383581f6414bdfba32aabb4b198fed34b6d4a7859",
       "candidates": [
         {
-          "width": 640,
-          "systemGap": 2,
-          "rows": 32,
+          "width": 720,
+          "systemGap": 18,
+          "rows": 29,
           "pages": 2,
-          "cost": 2384
+          "cost": 2432
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "段内统一音乐行高，标题只占所在行；32行，23.93px，各页高度利用率 91.558% / 91.417%。"
+      "reviewNote": "恢复18px额外行间留白，29行按14+15行分两页，音符21.27px；两页自然高度利用率93.634% / 97.538%。保留原谱音乐、段落与反复后换行。"
     },
     {
       "order": 81,
@@ -8205,38 +8196,38 @@
     {
       "page": 75,
       "section": "instrumental",
-      "fillPercent": 91.6,
+      "fillPercent": 93.6,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
           "systems": [
             1,
-            16
+            14
           ],
-          "width": 640,
-          "systemGap": 2,
+          "width": 720,
+          "systemGap": 18,
           "top": 0,
-          "height": 967.77
+          "height": 989.71
         }
       ]
     },
     {
       "page": 76,
       "section": "instrumental",
-      "fillPercent": 91.4,
+      "fillPercent": 97.5,
       "items": [
         {
           "id": "turkish_march",
           "title": "土耳其进行曲",
           "systems": [
-            17,
-            32
+            15,
+            29
           ],
-          "width": 640,
-          "systemGap": 2,
+          "width": 720,
+          "systemGap": 18,
           "top": 0,
-          "height": 966.28
+          "height": 1030.97
         }
       ]
     },

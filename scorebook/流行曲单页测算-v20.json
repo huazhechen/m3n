@@ -1,0 +1,495 @@
+{
+  "edition": "第二十版",
+  "scope": "流行歌曲篇中目前占两页的5首曲目",
+  "minimumNotePx": 19,
+  "maximumNotePx": 24,
+  "bodyWidth": 696,
+  "bodyHeight": 1057,
+  "minimumMusicPageFillPercent": 90,
+  "totalMeasuredTrials": 841,
+  "eligibleOnePageCandidates": [],
+  "scores": [
+    {
+      "id": "hou_lai",
+      "title": "后来",
+      "currentPages": [
+        34,
+        35
+      ],
+      "currentNotePx": 21.87,
+      "widthAt19Px": 805.8947368421053,
+      "bestSafeTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 3,
+        "note": 19,
+        "rows": 18,
+        "totalFill": 117.16791802407376,
+        "medianBaseline": 66.33590909090908,
+        "ranges": null
+      },
+      "normalGapTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 18,
+        "note": 19,
+        "rows": 18,
+        "totalFill": 139.22864701994575,
+        "medianBaseline": 79.29045454545454,
+        "ranges": null
+      },
+      "repeatAnalysis": {
+        "id": "hou_lai",
+        "title": "后来",
+        "diagnostics": [],
+        "written": 59,
+        "played": 68,
+        "repeats": 1,
+        "endings": [],
+        "navigation": [],
+        "runs": [
+          {
+            "first": [
+              2,
+              9
+            ],
+            "second": [
+              47,
+              54
+            ],
+            "length": 8
+          },
+          {
+            "first": [
+              10,
+              12
+            ],
+            "second": [
+              26,
+              28
+            ],
+            "length": 3
+          },
+          {
+            "first": [
+              21,
+              23
+            ],
+            "second": [
+              37,
+              39
+            ],
+            "length": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "tong_hua_zhen",
+      "title": "童话镇",
+      "currentPages": [
+        36,
+        37
+      ],
+      "currentNotePx": 22.52,
+      "widthAt19Px": 805.8947368421053,
+      "bestSafeTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 1,
+        "note": 19,
+        "rows": 15,
+        "totalFill": 103.73024112474707,
+        "medianBaseline": 75.05863636363635,
+        "ranges": null
+      },
+      "normalGapTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 18,
+        "note": 19,
+        "rows": 15,
+        "totalFill": 124.56536595282289,
+        "medianBaseline": 89.74045454545454,
+        "ranges": null
+      },
+      "repeatAnalysis": {
+        "id": "tong_hua_zhen",
+        "title": "童话镇",
+        "diagnostics": [],
+        "written": 61,
+        "played": 99,
+        "repeats": 1,
+        "endings": [
+          "1",
+          "2"
+        ],
+        "navigation": [],
+        "runs": [
+          {
+            "first": [
+              2,
+              6
+            ],
+            "second": [
+              10,
+              14
+            ],
+            "length": 5
+          },
+          {
+            "first": [
+              48,
+              52
+            ],
+            "second": [
+              56,
+              60
+            ],
+            "length": 5
+          },
+          {
+            "first": [
+              17,
+              18
+            ],
+            "second": [
+              21,
+              22
+            ],
+            "length": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "lao_nan_hai",
+      "title": "老男孩",
+      "currentPages": [
+        38,
+        39
+      ],
+      "currentNotePx": 23.56,
+      "widthAt19Px": 805.8947368421053,
+      "bestSafeTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 1,
+        "note": 19,
+        "rows": 13,
+        "totalFill": 104.69470758619379,
+        "medianBaseline": 78.85863636363636,
+        "ranges": null
+      },
+      "normalGapTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 18,
+        "note": 19,
+        "rows": 13,
+        "totalFill": 122.75182492367797,
+        "medianBaseline": 93.54045454545454,
+        "ranges": null
+      },
+      "repeatAnalysis": {
+        "id": "lao_nan_hai",
+        "title": "老男孩",
+        "diagnostics": [],
+        "written": 63,
+        "played": 127,
+        "repeats": 1,
+        "endings": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "navigation": [
+          "segno",
+          "ds",
+          "ds"
+        ],
+        "runs": [
+          {
+            "first": [
+              1,
+              6
+            ],
+            "second": [
+              9,
+              14
+            ],
+            "length": 6
+          },
+          {
+            "first": [
+              26,
+              30
+            ],
+            "second": [
+              34,
+              38
+            ],
+            "length": 5
+          },
+          {
+            "first": [
+              17,
+              19
+            ],
+            "second": [
+              21,
+              23
+            ],
+            "length": 3
+          },
+          {
+            "first": [
+              19,
+              21
+            ],
+            "second": [
+              46,
+              48
+            ],
+            "length": 3
+          },
+          {
+            "first": [
+              38,
+              40
+            ],
+            "second": [
+              61,
+              63
+            ],
+            "length": 3
+          },
+          {
+            "first": [
+              23,
+              24
+            ],
+            "second": [
+              50,
+              51
+            ],
+            "length": 2
+          },
+          {
+            "first": [
+              39,
+              40
+            ],
+            "second": [
+              58,
+              59
+            ],
+            "length": 2
+          },
+          {
+            "first": [
+              58,
+              59
+            ],
+            "second": [
+              62,
+              63
+            ],
+            "length": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "qian_si_xi",
+      "title": "牵丝戏",
+      "currentPages": [
+        41,
+        42
+      ],
+      "currentNotePx": 23.78,
+      "widthAt19Px": 805.8947368421053,
+      "bestSafeTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 13,
+        "note": 19,
+        "rows": 12,
+        "totalFill": 102.98156951539461,
+        "medianBaseline": 87.72213636363635,
+        "ranges": null
+      },
+      "normalGapTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 18,
+        "note": 19,
+        "rows": 12,
+        "totalFill": 107.88395127785056,
+        "medianBaseline": 92.04031818181817,
+        "ranges": null
+      },
+      "repeatAnalysis": {
+        "id": "qian_si_xi",
+        "title": "牵丝戏",
+        "diagnostics": [],
+        "written": 37,
+        "played": 64,
+        "repeats": 1,
+        "endings": [
+          "1",
+          "2",
+          "3"
+        ],
+        "navigation": [
+          "segno",
+          "ds"
+        ],
+        "runs": [
+          {
+            "first": [
+              1,
+              4
+            ],
+            "second": [
+              9,
+              12
+            ],
+            "length": 4
+          },
+          {
+            "first": [
+              5,
+              7
+            ],
+            "second": [
+              14,
+              16
+            ],
+            "length": 3
+          },
+          {
+            "first": [
+              6,
+              7
+            ],
+            "second": [
+              23,
+              24
+            ],
+            "length": 2
+          },
+          {
+            "first": [
+              15,
+              16
+            ],
+            "second": [
+              23,
+              24
+            ],
+            "length": 2
+          },
+          {
+            "first": [
+              32,
+              33
+            ],
+            "second": [
+              36,
+              37
+            ],
+            "length": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru_yuan",
+      "title": "如愿",
+      "currentPages": [
+        54,
+        55
+      ],
+      "currentNotePx": 23.63,
+      "widthAt19Px": 805.8947368421053,
+      "bestSafeTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 0,
+        "note": 19,
+        "rows": 15,
+        "totalFill": 102.34859821217543,
+        "medianBaseline": 74.19068181818182,
+        "ranges": null
+      },
+      "normalGapTrialAt19Px": {
+        "width": 805.8947368421053,
+        "gap": 18,
+        "note": 19,
+        "rows": 15,
+        "totalFill": 124.40931614322717,
+        "medianBaseline": 89.73613636363636,
+        "ranges": null
+      },
+      "repeatAnalysis": {
+        "id": "ru_yuan",
+        "title": "如愿",
+        "diagnostics": [],
+        "written": 78,
+        "played": 104,
+        "repeats": 1,
+        "endings": [
+          "1",
+          "2"
+        ],
+        "navigation": [],
+        "runs": [
+          {
+            "first": [
+              17,
+              23
+            ],
+            "second": [
+              25,
+              31
+            ],
+            "length": 7
+          },
+          {
+            "first": [
+              5,
+              6
+            ],
+            "second": [
+              13,
+              14
+            ],
+            "length": 2
+          },
+          {
+            "first": [
+              32,
+              33
+            ],
+            "second": [
+              40,
+              41
+            ],
+            "length": 2
+          },
+          {
+            "first": [
+              54,
+              55
+            ],
+            "second": [
+              62,
+              63
+            ],
+            "length": 2
+          }
+        ]
+      }
+    }
+  ],
+  "notes": [
+    "原谱仅调整版宽与额外行间留白的候选均未达到19px以上单页。",
+    "另试乐句分组和显式换行；牵丝戏在19px、零额外留白时仍需100.119%高度。",
+    "如愿细分乐句在19.002px、零额外留白时仍需101.049%高度。",
+    "原有旋律、歌词、曲式和页数未改。",
+    "本结果描述已测方案，不代表任意曲式改写都不可能。"
+  ]
+}
