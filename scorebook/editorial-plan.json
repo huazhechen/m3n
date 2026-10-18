@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第二十版",
+  "edition": "第二十一版",
   "sourceCount": 81,
   "baseWidth": 780,
   "widthCandidates": [
@@ -940,14 +940,14 @@
       "section": "pop",
       "group": "密集节奏与反复",
       "reason": "切分、十六分与跳进",
-      "width": 644,
+      "width": 771,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "房子边界两处强制换行，避免多段音乐预留与多行歌词混排；保留完整歌词及正常字号比例，12行合为一页。",
       "widthLocked": true,
-      "pageCount": 2,
-      "systemGap": 36,
+      "pageCount": 1,
+      "systemGap": 8,
       "uniformSystemHeight": true
     },
     {
@@ -1482,8 +1482,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v20.pdf",
-  "outputKey": "scorebook-v20",
+  "outputPdf": "循序渐进简谱集-v21.pdf",
+  "outputKey": "scorebook-v21",
   "page": {
     "width": 744,
     "height": 1133,
