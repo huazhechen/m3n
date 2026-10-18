@@ -1,0 +1,56 @@
+{
+  "baselineEdition": "第十二版",
+  "rendererSha256": "6fc50a4008f1af8a774b1a28bc9d862af3d1becd157034907351090cdc3ab36c",
+  "width": 870,
+  "notePx": 17.6,
+  "notePt": 13.200000000000001,
+  "body": {
+    "width": 696,
+    "height": 1057
+  },
+  "lyricPx": 14.432,
+  "shortWorkGap": 22,
+  "fillPercent": 95.62550424740014,
+  "systems": [
+    8,
+    4
+  ],
+  "entries": [
+    {
+      "id": "san_bu",
+      "title": "散步",
+      "sourceFile": "san_bu_01.m3n",
+      "sourceSha256": "7861a95c63ac006188002685ba93cd977eba69f029008d44ea3d302e83215c0f",
+      "previousPage": 31,
+      "previousNotePx": 26.4,
+      "systemGap": 18,
+      "systems": 8,
+      "sourcePreserved": true,
+      "noteIdentityPreserved": true,
+      "lyricIdentityPreserved": true
+    },
+    {
+      "id": "zhi_yao_ping_fan",
+      "title": "只要平凡",
+      "sourceFile": "zhi_yao_ping_fan_01.m3n",
+      "sourceSha256": "95a98244c037c3de3327d5b9a329b80b85d95b905ba4a830331e42326df004b9",
+      "previousPage": 48,
+      "previousNotePx": 26.4,
+      "systemGap": 18,
+      "systems": 4,
+      "sourcePreserved": true,
+      "noteIdentityPreserved": true,
+      "lyricIdentityPreserved": true
+    }
+  ],
+  "validation": {
+    "sourcePreserved": true,
+    "noteIdentityPreserved": true,
+    "lyricIdentityPreserved": true,
+    "outside": 0,
+    "overlaps": 0,
+    "unsafeCuts": 0,
+    "outlinedOverflow": 0,
+    "pdfPages": 1
+  }
+}
