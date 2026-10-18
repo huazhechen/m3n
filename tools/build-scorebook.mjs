@@ -104,7 +104,8 @@ try {
   if(entry.sharePage&&entry.layout.ranges.length===1) {
    const group=[entry];let j=i+1
    while(j<measured.length) {const e=measured[j];if(e.breakBefore||!e.sharePage||e.layout.ranges.length!==1||e.section!==entry.section||e.group!==entry.group)break;group.push(e);j++}
-   const packed=packScorebookGroup(group,{bodyHeight,shortGap,renderScale,minimumFillPercent,maximumSharedWidth:plan.baseWidth})
+   const maximumSharedWidth=Math.min(...group.map(e=>e.maximumSharedWidth??plan.baseWidth))
+   const packed=packScorebookGroup(group,{bodyHeight,shortGap,renderScale,minimumFillPercent,maximumSharedWidth})
    assert(packed,`No shared layout above ${minimumFillPercent}% for ${group.map(e=>e.title).join(' / ')}`)
    for(const {start:a,end:b,layouts} of packed) {
     const target={section:entry.section,items:[],used:0};musicPages.push(target)

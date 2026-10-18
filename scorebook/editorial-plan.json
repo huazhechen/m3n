@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十二版",
+  "edition": "第十三版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -704,20 +704,6 @@
       "reviewNote": "与倩女幽魂统一字号合页，保持完整旋律与歌词。"
     },
     {
-      "id": "san_bu",
-      "file": "san_bu_01.m3n",
-      "title": "散步",
-      "section": "pop",
-      "group": "切分与延音",
-      "difficulty": 3,
-      "reason": "切分与器乐乐句",
-      "width": 780,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": ""
-    },
-    {
       "id": "qiu_ying",
       "file": "qiu_ying_01.m3n",
       "title": "秋樱",
@@ -1249,22 +1235,35 @@
       "group": "快速音型与装饰",
       "difficulty": 4,
       "reason": "探戈切分、装饰与变调",
-      "width": 780,
+      "width": 800,
+      "sharePage": true,
+      "breakBefore": true,
+      "pageBreaks": [],
+      "reviewNote": "与《散步》合为一页，统一19.14px音符，高度利用率96.2%。",
+      "widthLocked": true,
+      "maximumSharedWidth": 800,
+      "pageCount": 1,
+      "systemGap": 20,
+      "uniformSystemHeight": true
+    },
+    {
+      "id": "san_bu",
+      "file": "san_bu_01.m3n",
+      "title": "散步",
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "difficulty": 3,
+      "reason": "切分与器乐乐句",
+      "width": 800,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "",
-      "widthCandidates": [
-        522,
-        524,
-        526,
-        528,
-        530,
-        532,
-        534,
-        536,
-        538
-      ]
+      "reviewNote": "与《一步之遥》合为一页，统一19.14px音符，高度利用率96.2%。",
+      "widthLocked": true,
+      "maximumSharedWidth": 800,
+      "pageCount": 1,
+      "systemGap": 18,
+      "uniformSystemHeight": true
     },
     {
       "id": "beer_barrel_polka",
@@ -1276,7 +1275,7 @@
       "reason": "快速二拍子、倚音与变调",
       "width": 780,
       "sharePage": true,
-      "breakBefore": false,
+      "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": ""
     },
@@ -1364,8 +1363,8 @@
       "widthLocked": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v12.pdf",
-  "outputKey": "scorebook-v12",
+  "outputPdf": "循序渐进简谱集-v13.pdf",
+  "outputKey": "scorebook-v13",
   "page": {
     "width": 744,
     "height": 1133,

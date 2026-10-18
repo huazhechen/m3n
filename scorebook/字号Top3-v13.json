@@ -1,0 +1,110 @@
+{
+  "edition": "第十三版",
+  "excludeExercises": true,
+  "scoreCount": 81,
+  "largestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "只要平凡",
+      "notePx": 26.4,
+      "pages": [
+        47
+      ]
+    },
+    {
+      "rank": 1,
+      "title": "直到世界的尽头",
+      "notePx": 26.4,
+      "pages": [
+        70
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "世界赠予我的",
+      "notePx": 26.22,
+      "pages": [
+        48,
+        49
+      ]
+    }
+  ],
+  "smallestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "人世间",
+      "notePx": 18.67,
+      "pages": [
+        46
+      ]
+    },
+    {
+      "rank": 2,
+      "title": "土耳其进行曲",
+      "notePx": 18.95,
+      "pages": [
+        81,
+        82
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "白桦林",
+      "notePx": 19.14,
+      "pages": [
+        20
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "美丽的神话",
+      "notePx": 19.14,
+      "pages": [
+        28
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "一千个伤心的理由",
+      "notePx": 19.14,
+      "pages": [
+        56
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "ANDY",
+      "notePx": 19.14,
+      "pages": [
+        58
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "听海",
+      "notePx": 19.14,
+      "pages": [
+        59
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "一步之遥",
+      "notePx": 19.14,
+      "pages": [
+        74
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "散步",
+      "notePx": 19.14,
+      "pages": [
+        74
+      ]
+    }
+  ],
+  "minimumNotePx": 18.67,
+  "maximumNotePx": 26.4,
+  "ratio": 1.4140332083556506
+}
