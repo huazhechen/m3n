@@ -1,0 +1,136 @@
+{
+  "status": "独立排版试算，尚未应用到整册",
+  "source": "src/scores/qian_si_xi_01.m3n",
+  "source-sha256": "2a041f913c0e79867fc3903bde71349ae6e5175ab240332f3aaa6be077da3502",
+  "note-size-unit": "最终正文中的音符px",
+  "options": [
+    {
+      "id": "a",
+      "note": 19,
+      "gap": 13,
+      "cap": 1085,
+      "variant": "original",
+      "proposal": {
+        "titleSize": 24,
+        "headerGap": 3
+      },
+      "rows": 12,
+      "height": 1079.8789332129738,
+      "fillPercent": 99.52801227769345,
+      "lyricFontSizes": [
+        15.579999999999998
+      ],
+      "preservedEventIds": 228,
+      "visibleLyricGlyphs": 306,
+      "fullLyricsPreserved": true,
+      "validation": {
+        "outside": 0,
+        "overlaps": 0,
+        "unsafeCuts": 0,
+        "diagnosticErrors": 0
+      }
+    },
+    {
+      "id": "b",
+      "note": 19.5,
+      "gap": 18,
+      "cap": 1057,
+      "variant": "original",
+      "proposal": {
+        "lyricRatio": 0.72,
+        "lyricGap": 0.16,
+        "lyricTop": 0.24
+      },
+      "rows": 11,
+      "height": 1000.5007058923894,
+      "fillPercent": 94.65474984790816,
+      "lyricFontSizes": [
+        14.04
+      ],
+      "preservedEventIds": 228,
+      "visibleLyricGlyphs": 306,
+      "fullLyricsPreserved": true,
+      "validation": {
+        "outside": 0,
+        "overlaps": 0,
+        "unsafeCuts": 0,
+        "diagnosticErrors": 0
+      }
+    },
+    {
+      "id": "b-large",
+      "note": 20,
+      "gap": 18,
+      "cap": 1057,
+      "variant": "original",
+      "proposal": {
+        "lyricRatio": 0.68,
+        "lyricGap": 0.16,
+        "lyricTop": 0.24
+      },
+      "rows": 11,
+      "height": 1011.5145822004838,
+      "fillPercent": 95.69674382218389,
+      "lyricFontSizes": [
+        13.6
+      ],
+      "preservedEventIds": 228,
+      "visibleLyricGlyphs": 306,
+      "fullLyricsPreserved": true,
+      "validation": {
+        "outside": 0,
+        "overlaps": 0,
+        "unsafeCuts": 0,
+        "diagnosticErrors": 0
+      }
+    },
+    {
+      "id": "c",
+      "note": 20,
+      "gap": 18,
+      "cap": 1057,
+      "variant": "original",
+      "proposal": {
+        "lyrics": "first"
+      },
+      "rows": 12,
+      "height": 1029.8881496082652,
+      "fillPercent": 97.43501888441487,
+      "lyricFontSizes": [
+        16.4
+      ],
+      "preservedEventIds": 228,
+      "visibleLyricGlyphs": 191,
+      "fullLyricsPreserved": false,
+      "validation": {
+        "outside": 0,
+        "overlaps": 0,
+        "unsafeCuts": 0,
+        "diagnosticErrors": 0
+      }
+    },
+    {
+      "id": "d",
+      "note": 23.925,
+      "gap": 18,
+      "cap": 1057,
+      "variant": "breaks",
+      "proposal": {
+        "lyrics": "none"
+      },
+      "rows": 14,
+      "height": 1050.7566513061524,
+      "fillPercent": 99.40933314154707,
+      "lyricFontSizes": [],
+      "preservedEventIds": 228,
+      "visibleLyricGlyphs": 0,
+      "fullLyricsPreserved": false,
+      "validation": {
+        "outside": 0,
+        "overlaps": 0,
+        "unsafeCuts": 0,
+        "diagnosticErrors": 0
+      }
+    }
+  ]
+}
