@@ -5592,113 +5592,6 @@
       "reviewNote": ""
     },
     {
-      "order": 53,
-      "id": "zhi_yao_ping_fan",
-      "title": "只要平凡",
-      "file": "zhi_yao_ping_fan_01.m3n",
-      "practice": null,
-      "section": "pop",
-      "group": "密集节奏与反复",
-      "difficulty": 4,
-      "reason": "复拍、三段歌词与临时变音",
-      "width": 780,
-      "systemGap": 18,
-      "relativeScalePercent": 100,
-      "screenNotePx": 20.53,
-      "versusV1Percent": 118.85,
-      "previousPages": [
-        49
-      ],
-      "pages": [
-        44
-      ],
-      "systems": 5,
-      "systemsPerPage": [
-        5
-      ],
-      "sourceSha256": "95a98244c037c3de3327d5b9a329b80b85d95b905ba4a830331e42326df004b9",
-      "candidates": [
-        {
-          "width": 780,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1003.62
-        },
-        {
-          "width": 760,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1015.38
-        },
-        {
-          "width": 800,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1015.87
-        },
-        {
-          "width": 820,
-          "systemGap": 18,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1028.11
-        },
-        {
-          "width": 840,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1041.6
-        },
-        {
-          "width": 860,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1053.83
-        },
-        {
-          "width": 880,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1066.05
-        },
-        {
-          "width": 900,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1078.27
-        },
-        {
-          "width": 920,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1090.48
-        },
-        {
-          "width": 940,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1102.68
-        },
-        {
-          "width": 960,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1114.88
-        }
-      ],
-      "reviewNote": ""
-    },
-    {
       "order": 54,
       "id": "shi_jie_zeng_yu_wo_de",
       "title": "世界赠予我的",
@@ -12613,20 +12506,7 @@
       "page": 44,
       "section": "pop",
       "fillPercent": 57.4,
-      "items": [
-        {
-          "id": "zhi_yao_ping_fan",
-          "title": "只要平凡",
-          "systems": [
-            1,
-            5
-          ],
-          "width": 780,
-          "systemGap": 18,
-          "top": 0,
-          "height": 629.98
-        }
-      ]
+      "items": []
     },
     {
       "page": 45,

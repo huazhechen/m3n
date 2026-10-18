@@ -110,4 +110,3 @@
 | 月亮代表我的心 | [yue_liang_dai_biao_wo_de_xin_01.m3n](../src/scores/yue_liang_dai_biao_wo_de_xin_01.m3n) | 143 | 8/8 |
 | 云宫迅音 | [yun_gong_xun_yin_01.m3n](../src/scores/yun_gong_xun_yin_01.m3n) | 196 | 8/8 |
 | 直到世界的尽头 | [zhi_dao_shi_jie_de_jin_tou_01.m3n](../src/scores/zhi_dao_shi_jie_de_jin_tou_01.m3n) | 156 | 8/8 |
-| 只要平凡 | [zhi_yao_ping_fan_01.m3n](../src/scores/zhi_yao_ping_fan_01.m3n) | 76 | 8/8 |

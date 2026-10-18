@@ -1,0 +1,109 @@
+{
+  "edition": "第十五版",
+  "excludeExercises": true,
+  "scoreCount": 80,
+  "largestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "直到世界的尽头",
+      "notePx": 26.77,
+      "pages": [
+        46
+      ]
+    },
+    {
+      "rank": 2,
+      "title": "哆唻咪",
+      "notePx": 26.04,
+      "pages": [
+        9
+      ]
+    },
+    {
+      "rank": 2,
+      "title": "让我们荡起双桨",
+      "notePx": 26.04,
+      "pages": [
+        9
+      ]
+    }
+  ],
+  "smallestTop3IncludingTies": [
+    {
+      "rank": 1,
+      "title": "土耳其进行曲",
+      "notePx": 18.95,
+      "pages": [
+        78,
+        79
+      ]
+    },
+    {
+      "rank": 2,
+      "title": "世界赠予我的",
+      "notePx": 19.09,
+      "pages": [
+        47
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "白桦林",
+      "notePx": 19.14,
+      "pages": [
+        19
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "美丽的神话",
+      "notePx": 19.14,
+      "pages": [
+        27
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "一千个伤心的理由",
+      "notePx": 19.14,
+      "pages": [
+        54
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "ANDY",
+      "notePx": 19.14,
+      "pages": [
+        56
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "听海",
+      "notePx": 19.14,
+      "pages": [
+        57
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "一步之遥",
+      "notePx": 19.14,
+      "pages": [
+        71
+      ]
+    },
+    {
+      "rank": 3,
+      "title": "散步",
+      "notePx": 19.14,
+      "pages": [
+        71
+      ]
+    }
+  ],
+  "minimumNotePx": 18.95,
+  "maximumNotePx": 26.77,
+  "ratio": 1.412664907651715
+}

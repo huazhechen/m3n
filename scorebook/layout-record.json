@@ -1,12 +1,12 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十四版",
+  "edition": "第十五版",
   "showCredits": false,
   "uniformSystemHeight": true,
   "rendererSha256": "6fc50a4008f1af8a774b1a28bc9d862af3d1becd157034907351090cdc3ab36c",
-  "sourceCount": 82,
-  "entryCount": 82,
-  "pageCount": 82,
+  "sourceCount": 81,
+  "entryCount": 81,
+  "pageCount": 81,
   "frontPages": 3,
   "baseWidth": 780,
   "page": {
@@ -9179,18 +9179,20 @@
       "includeBass": true,
       "uniformSystemHeight": true,
       "baselineSteps": [
-        89.83,
-        89.83,
-        89.83,
-        113.15,
-        113.15,
-        113.15,
-        89.83,
-        89.83,
-        113.15,
-        113.15
+        71.83,
+        71.83,
+        71.83,
+        95.15,
+        95.15,
+        95.15,
+        95.15,
+        71.83,
+        71.83,
+        95.15,
+        95.15
       ],
       "voltaSystems": [
+        false,
         false,
         false,
         false,
@@ -9207,12 +9209,12 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "慢速密集节奏与高音区",
-      "width": 820,
-      "systemGap": 18,
-      "relativeScalePercent": 95.12,
-      "screenNotePx": 18.67,
-      "versusV1Percent": 115.8,
-      "versusV2Percent": 93.27,
+      "width": 736,
+      "systemGap": 0,
+      "relativeScalePercent": 105.98,
+      "screenNotePx": 20.8,
+      "versusV1Percent": 129.02,
+      "versusV2Percent": 103.92,
       "previousPages": [
         48
       ],
@@ -9222,112 +9224,23 @@
       "pages": [
         45
       ],
-      "systems": 11,
+      "systems": 12,
       "systemsPerPage": [
-        11
+        12
       ],
       "sourceSha256": "ef232d10fef0d405082f9077d30bb3a2a3431701b4373e81d05597f448073892",
       "candidates": [
         {
-          "width": 820,
-          "systemGap": 18,
-          "rows": 11,
+          "width": 736,
+          "systemGap": 0,
+          "rows": 12,
           "pages": 1,
-          "cost": 1492
+          "cost": 1441.6
         }
       ],
-      "rejectedCandidates": [
-        {
-          "width": 780,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 520,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 540,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 560,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 580,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 600,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 620,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 640,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 660,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 680,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 700,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 720,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 740,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 760,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 800,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 840,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 860,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 880,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 900,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 920,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 940,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        },
-        {
-          "width": 960,
-          "reason": "Cannot meet page count, safe cuts and minimum page fill together"
-        }
-      ],
+      "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": ""
+      "reviewNote": "完整原谱保持一页12行，取消额外行间留白，保留自然音乐及歌词预留；20.80px音符，比原18.67px增大约11.4%，高度利用率99.893%。"
     },
     {
       "order": 51,
@@ -9342,9 +9255,17 @@
         66.73,
         66.73,
         66.73,
+        66.73,
+        66.73,
+        66.73,
+        66.73,
         66.73
       ],
       "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
         false,
         false,
         false,
@@ -9357,12 +9278,12 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "高音区、切分与导航",
-      "width": 824,
+      "width": 572,
       "systemGap": 18,
-      "relativeScalePercent": 94.66,
-      "screenNotePx": 18.58,
-      "versusV1Percent": 107.56,
-      "versusV2Percent": 90.5,
+      "relativeScalePercent": 136.36,
+      "screenNotePx": 26.77,
+      "versusV1Percent": 154.94,
+      "versusV2Percent": 130.37,
       "previousPages": [
         69
       ],
@@ -9372,81 +9293,26 @@
       "pages": [
         46
       ],
-      "systems": 7,
+      "systems": 11,
       "systemsPerPage": [
-        7
+        11
       ],
       "sourceSha256": "7ba39d9aa0a6fcba68559fbf12c88dea1d00843aa79af52eeeedb6418072c767",
       "candidates": [
         {
-          "width": 824,
+          "width": 572,
           "systemGap": 18,
-          "rows": 7,
+          "rows": 11,
           "pages": 1,
-          "cost": 1494.4
+          "cost": 1343.2
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "《直到世界的尽头》在前、《只要平凡》在后合为一页，7 + 4 行，统一18.58px音符，高度利用率97.168%；完整原谱不删减。"
+      "reviewNote": "独立一页11行，26.77px音符，高度利用率95.200%。"
     },
     {
       "order": 52,
-      "id": "zhi_yao_ping_fan",
-      "title": "只要平凡",
-      "file": "zhi_yao_ping_fan_01.m3n",
-      "includeBass": true,
-      "uniformSystemHeight": true,
-      "baselineSteps": [
-        134.62,
-        134.62,
-        134.62
-      ],
-      "voltaSystems": [
-        false,
-        false,
-        false,
-        false
-      ],
-      "section": "pop",
-      "group": "密集节奏与反复",
-      "difficulty": 4,
-      "reason": "复拍、三段歌词与临时变音",
-      "width": 824,
-      "systemGap": 18,
-      "relativeScalePercent": 94.66,
-      "screenNotePx": 18.58,
-      "versusV1Percent": 107.56,
-      "versusV2Percent": 90.5,
-      "previousPages": [
-        49
-      ],
-      "secondEditionPages": [
-        44
-      ],
-      "pages": [
-        46
-      ],
-      "systems": 4,
-      "systemsPerPage": [
-        4
-      ],
-      "sourceSha256": "95a98244c037c3de3327d5b9a329b80b85d95b905ba4a830331e42326df004b9",
-      "candidates": [
-        {
-          "width": 824,
-          "systemGap": 18,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1494.4
-        }
-      ],
-      "rejectedCandidates": [],
-      "fillPage": true,
-      "reviewNote": "《直到世界的尽头》在前、《只要平凡》在后合为一页，7 + 4 行，统一18.58px音符，高度利用率97.168%；完整原谱不删减。"
-    },
-    {
-      "order": 53,
       "id": "shi_jie_zeng_yu_wo_de",
       "title": "世界赠予我的",
       "file": "shi_jie_zeng_yu_wo_de_01.m3n",
@@ -9513,7 +9379,7 @@
       "reviewNote": "完整原谱改为一页10行，音符19.09px，高度利用率96.031%。"
     },
     {
-      "order": 54,
+      "order": 53,
       "id": "ming_tian_hui_geng_hao",
       "title": "明天会更好",
       "file": "ming_tian_hui_geng_hao_01.m3n",
@@ -9576,7 +9442,7 @@
       "reviewNote": "前面第一次反复、后面三遍的安排不变；副歌移出房子，相同歌词合并，保留末遍异词；一页8行，音符约19.48px。"
     },
     {
-      "order": 55,
+      "order": 54,
       "id": "man_man_xi_huan_ni",
       "title": "慢慢喜欢你",
       "file": "man_man_xi_huan_ni_01.m3n",
@@ -9655,7 +9521,7 @@
       "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
-      "order": 56,
+      "order": 55,
       "id": "xin_bu_liao_qing",
       "title": "新不了情",
       "file": "xin_bu_liao_qing_01.m3n",
@@ -9812,7 +9678,7 @@
       "reviewNote": ""
     },
     {
-      "order": 57,
+      "order": 56,
       "id": "wo_yao_ni",
       "title": "我要你",
       "file": "wo_yao_ni_01.m3n",
@@ -9970,7 +9836,7 @@
       "reviewNote": ""
     },
     {
-      "order": 58,
+      "order": 57,
       "id": "annie",
       "title": "安妮",
       "file": "annie_01.m3n",
@@ -10136,7 +10002,7 @@
       "reviewNote": ""
     },
     {
-      "order": 59,
+      "order": 58,
       "id": "yi_qian_ge_shang_xin_de_li_you",
       "title": "一千个伤心的理由",
       "file": "yi_qian_ge_shang_xin_de_li_you_01.m3n",
@@ -10298,7 +10164,7 @@
       "reviewNote": ""
     },
     {
-      "order": 60,
+      "order": 59,
       "id": "yue_ban_xiao_ye_qu",
       "title": "月半小夜曲",
       "file": "yue_ban_xiao_ye_qu_01.m3n",
@@ -10464,7 +10330,7 @@
       "reviewNote": ""
     },
     {
-      "order": 61,
+      "order": 60,
       "id": "andy",
       "title": "ANDY",
       "file": "andy_01.m3n",
@@ -10618,7 +10484,7 @@
       "reviewNote": ""
     },
     {
-      "order": 62,
+      "order": 61,
       "id": "ting_hai",
       "title": "听海",
       "file": "ting_hai_01.m3n",
@@ -10781,7 +10647,7 @@
       "reviewNote": ""
     },
     {
-      "order": 63,
+      "order": 62,
       "id": "ru_yuan",
       "title": "如愿",
       "file": "ru_yuan_01.m3n",
@@ -10956,7 +10822,7 @@
       "reviewNote": "保留原有两页，房子与普通谱行分档等行高；重新选择更大字号，完整谱行分页，各页高度利用率高于90%。"
     },
     {
-      "order": 64,
+      "order": 63,
       "id": "tai_yang_zhao_chang_sheng_qi",
       "title": "太阳照常升起",
       "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
@@ -11165,7 +11031,7 @@
       "reviewNote": ""
     },
     {
-      "order": 65,
+      "order": 64,
       "id": "liang_zhu",
       "title": "梁祝",
       "file": "liang_zhu_01.m3n",
@@ -11374,7 +11240,7 @@
       "reviewNote": ""
     },
     {
-      "order": 66,
+      "order": 65,
       "id": "wen_rou_de_qing_su",
       "title": "温柔的倾诉",
       "file": "wen_rou_de_qing_su_01.m3n",
@@ -11587,7 +11453,7 @@
       "reviewNote": ""
     },
     {
-      "order": 67,
+      "order": 66,
       "id": "castle_in_the_sky",
       "title": "天空之城",
       "file": "castle_in_the_sky_01.m3n",
@@ -11797,7 +11663,7 @@
       "reviewNote": ""
     },
     {
-      "order": 68,
+      "order": 67,
       "id": "xia_yu_de_shi_hou",
       "title": "下雨的时候",
       "file": "xia_yu_de_shi_hou_01.m3n",
@@ -12009,7 +11875,7 @@
       "reviewNote": ""
     },
     {
-      "order": 69,
+      "order": 68,
       "id": "second_waltz",
       "title": "第二圆舞曲",
       "file": "second_waltz_01.m3n",
@@ -12214,7 +12080,7 @@
       "reviewNote": ""
     },
     {
-      "order": 70,
+      "order": 69,
       "id": "doraemon",
       "title": "哆啦A梦",
       "file": "doraemon_01.m3n",
@@ -12301,7 +12167,7 @@
       "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
-      "order": 71,
+      "order": 70,
       "id": "yun_gong_xun_yin",
       "title": "云宫迅音",
       "file": "yun_gong_xun_yin_01.m3n",
@@ -12512,7 +12378,7 @@
       "reviewNote": ""
     },
     {
-      "order": 72,
+      "order": 71,
       "id": "super_mario",
       "title": "超级玛丽",
       "file": "super_mario_01.m3n",
@@ -12720,7 +12586,7 @@
       "reviewNote": ""
     },
     {
-      "order": 73,
+      "order": 72,
       "id": "qing_niao",
       "title": "青鸟",
       "file": "qing_niao_01.m3n",
@@ -12922,7 +12788,7 @@
       "reviewNote": ""
     },
     {
-      "order": 74,
+      "order": 73,
       "id": "ju_ci_lang_de_xia_tian",
       "title": "菊次郎的夏天",
       "file": "ju_ci_lang_de_xia_tian_01.m3n",
@@ -13015,7 +12881,7 @@
       "reviewNote": "按第六版建议增为2页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
-      "order": 75,
+      "order": 74,
       "id": "por_una_cabeza",
       "title": "一步之遥",
       "file": "por_una_cabeza_01.m3n",
@@ -13074,7 +12940,7 @@
       "reviewNote": "与《散步》合为一页，统一19.14px音符，高度利用率96.2%。"
     },
     {
-      "order": 76,
+      "order": 75,
       "id": "san_bu",
       "title": "散步",
       "file": "san_bu_01.m3n",
@@ -13139,7 +13005,7 @@
       "reviewNote": "与《一步之遥》合为一页，统一19.14px音符，高度利用率96.2%。"
     },
     {
-      "order": 77,
+      "order": 76,
       "id": "beer_barrel_polka",
       "title": "啤酒桶波尔卡",
       "file": "beer_barrel_polka_01.m3n",
@@ -13345,7 +13211,7 @@
       "reviewNote": ""
     },
     {
-      "order": 78,
+      "order": 77,
       "id": "canon",
       "title": "卡农",
       "file": "canon_01.m3n",
@@ -13547,7 +13413,7 @@
       "reviewNote": ""
     },
     {
-      "order": 79,
+      "order": 78,
       "id": "xi_yang_yang",
       "title": "喜洋洋",
       "file": "xi_yang_yang_01.m3n",
@@ -13761,7 +13627,7 @@
       "reviewNote": ""
     },
     {
-      "order": 80,
+      "order": 79,
       "id": "flower_dance",
       "title": "花之舞",
       "file": "flower_dance_01.m3n",
@@ -13892,7 +13758,7 @@
       "reviewNote": "按第六版建议增为3页，统一字号与基础行距，保留完整谱行，各页利用率高于90%。"
     },
     {
-      "order": 81,
+      "order": 80,
       "id": "turkish_march",
       "title": "土耳其进行曲",
       "file": "turkish_march_01.m3n",
@@ -13998,7 +13864,7 @@
       "reviewNote": "删除全部乐段名称并收紧统一行高，按14+14行分为两页；在第5个后反复之后分页，9个完整反复段均不跨页，保留全部强制换行。"
     },
     {
-      "order": 82,
+      "order": 81,
       "id": "valsentino",
       "title": "Valsentino(快速圆舞曲)",
       "file": "valsentino_01.m3n",
@@ -14025,14 +13891,8 @@
         68.49,
         68.49,
         68.49,
-        68.49,
-        68.49,
-        68.49,
-        68.49,
         76.355,
         76.355,
-        76.355,
-        68.49,
         68.49,
         68.49,
         68.49,
@@ -14062,14 +13922,8 @@
         false,
         false,
         false,
-        false,
-        false,
-        false,
-        false,
         true,
         true,
-        true,
-        false,
         false,
         false,
         false,
@@ -14081,12 +13935,12 @@
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速三拍子、半音、三连音与变调",
-      "width": 586,
+      "width": 706,
       "systemGap": 18,
-      "relativeScalePercent": 133.11,
-      "screenNotePx": 26.13,
-      "versusV1Percent": 151.24,
-      "versusV2Percent": 156.62,
+      "relativeScalePercent": 110.48,
+      "screenNotePx": 21.69,
+      "versusV1Percent": 125.53,
+      "versusV2Percent": 130,
       "previousPages": [
         80,
         81
@@ -14096,28 +13950,26 @@
       ],
       "pages": [
         80,
-        81,
-        82
+        81
       ],
-      "systems": 35,
+      "systems": 29,
       "systemsPerPage": [
-        11,
-        12,
-        12
+        14,
+        15
       ],
       "sourceSha256": "203ad9bd556ae74f25ee4efd219fe1b564ad5d4d4fcd716fb453b2dd5927dbbe",
       "candidates": [
         {
-          "width": 586,
+          "width": 706,
           "systemGap": 18,
-          "rows": 35,
-          "pages": 3,
-          "cost": 3351.6
+          "rows": 29,
+          "pages": 2,
+          "cost": 2423.6
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "保留三页；普通与房子谱行分档等行高，采用586px，按11+12+12条完整谱行分页，各页高度利用率高于90%。"
+      "reviewNote": "完整原谱压为两页，14 + 15行，统一21.69px音符，高度利用率98.799% / 99.944%。"
     }
   ],
   "pages": [
@@ -15071,50 +14923,38 @@
     {
       "page": 45,
       "section": "pop",
-      "fillPercent": 97.9,
+      "fillPercent": 99.9,
       "items": [
         {
           "id": "ren_shi_jian",
           "title": "人世间",
           "systems": [
             1,
-            11
+            12
           ],
-          "width": 820,
-          "systemGap": 18,
+          "width": 736,
+          "systemGap": 0,
           "top": 0,
-          "height": 1035
+          "height": 1055.87
         }
       ]
     },
     {
       "page": 46,
       "section": "pop",
-      "fillPercent": 97.2,
+      "fillPercent": 95.2,
       "items": [
         {
           "id": "zhi_dao_shi_jie_de_jin_tou",
           "title": "直到世界的尽头",
           "systems": [
             1,
-            7
+            11
           ],
-          "width": 824,
+          "width": 572,
           "systemGap": 18,
           "top": 0,
-          "height": 473.07
-        },
-        {
-          "id": "zhi_yao_ping_fan",
-          "title": "只要平凡",
-          "systems": [
-            1,
-            4
-          ],
-          "width": 824,
-          "systemGap": 18,
-          "top": 495.07,
-          "height": 531.99
+          "height": 1006.27
         }
       ]
     },
@@ -15784,57 +15624,38 @@
     {
       "page": 80,
       "section": "instrumental",
-      "fillPercent": 95.2,
+      "fillPercent": 98.8,
       "items": [
         {
           "id": "valsentino",
           "title": "Valsentino(快速圆舞曲)",
           "systems": [
             1,
-            11
+            14
           ],
-          "width": 586,
+          "width": 706,
           "systemGap": 18,
           "top": 0,
-          "height": 1006.39
+          "height": 1044.31
         }
       ]
     },
     {
       "page": 81,
       "section": "instrumental",
-      "fillPercent": 96.5,
+      "fillPercent": 99.9,
       "items": [
         {
           "id": "valsentino",
           "title": "Valsentino(快速圆舞曲)",
           "systems": [
-            12,
-            23
+            15,
+            29
           ],
-          "width": 586,
+          "width": 706,
           "systemGap": 18,
           "top": 0,
-          "height": 1020.23
-        }
-      ]
-    },
-    {
-      "page": 82,
-      "section": "instrumental",
-      "fillPercent": 98.6,
-      "items": [
-        {
-          "id": "valsentino",
-          "title": "Valsentino(快速圆舞曲)",
-          "systems": [
-            24,
-            35
-          ],
-          "width": 586,
-          "systemGap": 18,
-          "top": 0,
-          "height": 1042.37
+          "height": 1056.41
         }
       ]
     }
@@ -15842,14 +15663,14 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 881,
+    "geometryCandidates": 880,
     "minimumMusicPageFillPercent": 90.139,
     "underfilledMusicPages": 0,
     "outside": 0,
     "overlaps": 0,
     "unsafeCuts": 0,
     "orphanContinuationPages": 0,
-    "outlinedPages": 82,
+    "outlinedPages": 81,
     "outlinedPageOverflow": 0
   }
 }

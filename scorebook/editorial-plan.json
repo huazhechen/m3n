@@ -1,7 +1,7 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十四版",
-  "sourceCount": 82,
+  "edition": "第十五版",
+  "sourceCount": 81,
   "baseWidth": 780,
   "widthCandidates": [
     520,
@@ -864,11 +864,15 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "慢速密集节奏与高音区",
-      "width": 780,
+      "width": 736,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": ""
+      "reviewNote": "完整原谱保持一页12行，取消额外行间留白，保留自然音乐及歌词预留；20.80px音符，比原18.67px增大约11.4%，高度利用率99.893%。",
+      "widthLocked": true,
+      "pageCount": 1,
+      "systemGap": 0,
+      "uniformSystemHeight": true
     },
     {
       "id": "zhi_dao_shi_jie_de_jin_tou",
@@ -878,32 +882,12 @@
       "group": "密集节奏与反复",
       "difficulty": 4,
       "reason": "高音区、切分与导航",
-      "width": 824,
-      "sharePage": true,
+      "width": 572,
+      "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "《直到世界的尽头》在前、《只要平凡》在后合为一页，7 + 4 行，统一18.58px音符，高度利用率97.168%；完整原谱不删减。",
+      "reviewNote": "独立一页11行，26.77px音符，高度利用率95.200%。",
       "widthLocked": true,
-      "maximumSharedWidth": 824,
-      "pageCount": 1,
-      "systemGap": 18,
-      "uniformSystemHeight": true
-    },
-    {
-      "id": "zhi_yao_ping_fan",
-      "file": "zhi_yao_ping_fan_01.m3n",
-      "title": "只要平凡",
-      "section": "pop",
-      "group": "密集节奏与反复",
-      "difficulty": 4,
-      "reason": "复拍、三段歌词与临时变音",
-      "width": 824,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "《直到世界的尽头》在前、《只要平凡》在后合为一页，7 + 4 行，统一18.58px音符，高度利用率97.168%；完整原谱不删减。",
-      "widthLocked": true,
-      "maximumSharedWidth": 824,
       "pageCount": 1,
       "systemGap": 18,
       "uniformSystemHeight": true
@@ -1363,18 +1347,21 @@
       "group": "综合进阶",
       "difficulty": 5,
       "reason": "快速三拍子、半音、三连音与变调",
-      "width": 586,
+      "width": 706,
       "sharePage": false,
       "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "保留三页；普通与房子谱行分档等行高，采用586px，按11+12+12条完整谱行分页，各页高度利用率高于90%。",
-      "pageCount": 3,
+      "pageBreaks": [
+        14
+      ],
+      "reviewNote": "完整原谱压为两页，14 + 15行，统一21.69px音符，高度利用率98.799% / 99.944%。",
+      "pageCount": 2,
       "systemGap": 18,
-      "widthLocked": true
+      "widthLocked": true,
+      "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v14.pdf",
-  "outputKey": "scorebook-v14",
+  "outputPdf": "循序渐进简谱集-v15.pdf",
+  "outputKey": "scorebook-v15",
   "page": {
     "width": 744,
     "height": 1133,

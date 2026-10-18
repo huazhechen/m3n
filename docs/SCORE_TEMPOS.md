@@ -16,7 +16,6 @@
 
 | 曲目 | 时间戳与谱面对应 | 结果 |
 | --- | --- | --- |
-| 只要平凡 | [张杰、张碧晨](https://lrclib.net/api/get/19123959)：04.76“也许很远或是昨天”到 21.25“放过对错才知答案”，本谱相隔 8 小节、24 个四分音符 | `24×60÷16.49≈87.3 qpm`；采用 87，显示八分音符 = 174 |
 | 贝加尔湖畔 | [李健](https://lrclib.net/api/get/29460955)：56.79“那里春风沉醉”到 64.75“月光把爱恋”，本谱相隔 4 小节、16 个四分音符 | `16×60÷7.96≈120.6 qpm`；采用 120，不能误取半速 60 |
 | 相思 | [毛阿敏](https://lrclib.net/api/get/32417738)：18.37“红豆生南国”到 32.73“醉卧不夜城”，本谱相隔 8 小节、24 个四分音符 | `24×60÷14.36≈100.3 qpm`；采用 100 |
 | 如愿 | [王菲](https://lrclib.net/api/get/34493274)：31.40“你是遥遥的路”到 45.69“你是明月清风”，本谱两个“你”相隔 16 个四分音符 | `16×60÷14.29≈67.2 qpm`；采用 67。该歌词条目的时长字段与实际歌词时间矛盾，因此只使用歌词中的时间戳 |
@@ -79,7 +78,6 @@
 | [月亮代表我的心](../src/scores/yue_liang_dai_biao_wo_de_xin_01.m3n) | 4/4 | 70 → **78** | [Teresa Teng · 月亮代表我的心（78 BPM）](https://songbpm.com/@teresa-teng/yue-liang-dai-biao-wo-de-xin-e33cc139-7bc9-4b87-8359-311a39cf7131) | 邓丽君原唱多条记录为 78；排除陈佳等翻唱速度。 |
 | [云宫迅音](../src/scores/yun_gong_xun_yin_01.m3n) | 4/4 | 140 → **124** | [許鏡清 · 雲宮迅音 (電視劇《西遊記》片頭曲)（124 BPM）](https://songbpm.com/@xu-jing-qing/yun-gong-xun-yin-dian-shi-ju-xi-you-ji-pian-tou-qu-cgrUuZ2W17) | 选择许镜清《西游记》原声条目的 124，排除 DJ 燃版 128 等改编。 |
 | [直到世界的尽头](../src/scores/zhi_dao_shi_jie_de_jin_tou_01.m3n) | 4/4 | 140 → **104** | [歌っちゃ王 · 世界が終るまでは・・・(オリジナルアーティスト:WANDS)[ガイドメロディ無しカラオケ]（104 BPM）](https://songbpm.com/@getutiya-wang/shi-jiega-zhongrumadeha-orizinaruateisuto-wands-gaidomerodei-wusikaraoke) | WANDS 原曲卡拉 OK 与乐队重录版本均约 104，当前 4/4 谱采用 104。 |
-| [只要平凡](../src/scores/zhi_yao_ping_fan_01.m3n) | 6/8 | 76 → **87** | [张碧晨 · 只要平凡 - 电影《我不是药神》主题曲（174 BPM）](https://songbpm.com/@5byg56kn5pmo/5yq6kab5bmz5yehic0g55s15b2x44ck5oir5lin5piv6i2v56we44cl5li76aky5puy-x4hir) | 原唱记录 174 对应八分音符脉冲，当前 6/8 谱取四分音符 87，谱面显示八分音符 174；以歌词时间戳交叉核对。 |
 
 ## 已核查并保留
 

@@ -3195,67 +3195,6 @@
       "reviewNote": ""
     },
     {
-      "order": 53,
-      "id": "zhi_yao_ping_fan",
-      "title": "只要平凡",
-      "file": "zhi_yao_ping_fan_01.m3n",
-      "practice": null,
-      "section": "pop",
-      "group": "密集节奏与反复",
-      "difficulty": 4,
-      "reason": "复拍、三段歌词与临时变音",
-      "width": 840,
-      "relativeScalePercent": 100,
-      "noteSizePt": 13.82,
-      "pages": [
-        49
-      ],
-      "systems": 5,
-      "systemsPerPage": [
-        5
-      ],
-      "sourceSha256": "95a98244c037c3de3327d5b9a329b80b85d95b905ba4a830331e42326df004b9",
-      "candidates": [
-        {
-          "width": 840,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1002.69
-        },
-        {
-          "width": 800,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1026.25
-        },
-        {
-          "width": 820,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1014.47
-        },
-        {
-          "width": 860,
-          "rows": 5,
-          "pages": 1,
-          "cost": 1014.91
-        },
-        {
-          "width": 880,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1028.35
-        },
-        {
-          "width": 900,
-          "rows": 4,
-          "pages": 1,
-          "cost": 1040.57
-        }
-      ],
-      "reviewNote": ""
-    },
-    {
       "order": 54,
       "id": "shi_jie_zeng_yu_wo_de",
       "title": "世界赠予我的",
@@ -7553,19 +7492,7 @@
       "page": 49,
       "section": "pop",
       "fillPercent": 63.3,
-      "items": [
-        {
-          "id": "zhi_yao_ping_fan",
-          "title": "只要平凡",
-          "systems": [
-            1,
-            5
-          ],
-          "width": 840,
-          "top": 0,
-          "height": 611.14
-        }
-      ]
+      "items": []
     },
     {
       "page": 50,
