@@ -278,24 +278,36 @@ export function layoutDocument(
 
     /** 按当前主体与 attachment 占用求轴、分页并放置所有主体 */
     const placeVertically = () => {
-        // Keep a common music body and lower edge. Only systems carrying a
+        // Share the music body and lower edge within each paragraph. Only systems carrying a
         // volta share its upper envelope, including annotations above the bracket.
         // Header-only lines keep their natural height; lyrics remain local.
         const musicLines = lines.map(line => line.columns.some(column => column.some(node => !node.T.isZero())));
-        const uniformExtents = new Map<Track, Extent>();
-        const voltaExtents = new Map<Track, Extent>();
+        const uniformGroups = new Map<string, Map<Track, Extent>>();
+        const voltaGroups = new Map<string, Map<Track, Extent>>();
+        const groupMap = (groups: Map<string, Map<Track, Extent>>, key: string) => {
+            let extents = groups.get(key);
+            if (!extents) groups.set(key, extents = new Map());
+            return extents;
+        };
+        const lineGroups = lines.map(line => new Set(line.columns.flat().filter(node => !node.T.isZero()).map(node => node.addon?.systemHeightGroup ?? '')));
         if (options.uniformSystemHeight) lines.forEach((line, i) => {
             if (!musicLines[i]) return;
-            for (const [track, extent] of line.hostExtents) includeTrackExtent(uniformExtents, track, extent.top, extent.bottom);
+            for (const node of line.columns.flat()) includeHostExtent(groupMap(uniformGroups, node.addon?.systemHeightGroup ?? ''), node);
             for (const [track, extent] of line.musicAttachmentExtents ?? []) {
-                includeTrackExtent(uniformExtents, track, line.hasVolta ? 0 : extent.top, extent.bottom);
-                if (line.hasVolta) includeTrackExtent(voltaExtents, track, extent.top, extent.bottom);
+                for (const group of lineGroups[i]) {
+                    includeTrackExtent(groupMap(uniformGroups, group), track, line.hasVolta ? 0 : extent.top, extent.bottom);
+                    if (line.hasVolta) includeTrackExtent(groupMap(voltaGroups, group), track, extent.top, extent.bottom);
+                }
             }
         });
-        for (const [track, extent] of uniformExtents) includeTrackExtent(voltaExtents, track, extent.top, extent.bottom);
-        const hostExtents = lines.map((line, i) => options.uniformSystemHeight && musicLines[i]
-            ? new Map([...line.hostExtents].map(([track, extent]) => [track, (line.hasVolta ? voltaExtents : uniformExtents).get(track) ?? extent]))
-            : line.hostExtents);
+        for (const [group, extents] of uniformGroups) for (const [track, extent] of extents) includeTrackExtent(groupMap(voltaGroups, group), track, extent.top, extent.bottom);
+        const hostExtents = lines.map((line, i) => {
+            if (!options.uniformSystemHeight || !musicLines[i]) return line.hostExtents;
+            const extents = new Map<Track, Extent>();
+            for (const group of lineGroups[i]) for (const [track, extent] of (line.hasVolta ? voltaGroups : uniformGroups).get(group) ?? []) includeTrackExtent(extents, track, extent.top, extent.bottom);
+            for (const [track, extent] of line.hostExtents) includeTrackExtent(extents, track, extent.top, extent.bottom);
+            return extents;
+        });
         const heights: number[] = [];
         const axes = lines.map((line, i) => {
             const solved = solveVerticalAxes({ ...line, hostExtents: hostExtents[i] }, result.rootTrack, rowGaps[i]);
@@ -912,7 +924,7 @@ function measureAttachmentPass(
                 needsRelayout = true;
             }
             if (reserve) includeTrackExtent(line.attachmentExtents, track, top, bottom);
-            if (reserve && baseContext.uniformSystemHeight && attachment.spacingRole !== 'lyrics') {
+            if (reserve && baseContext.uniformSystemHeight && attachment.spacingRole !== 'lyrics' && attachment.spacingRole !== 'local') {
                 includeTrackExtent(line.musicAttachmentExtents ??= new Map(), track, top, bottom);
                 if (attachment.spacingRole === 'volta' && !line.hasVolta) {
                     line.hasVolta = true;

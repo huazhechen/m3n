@@ -9,6 +9,7 @@ import { DivNode } from "./div/index.js";
 import { DotNode } from "./dot/index.js";
 import { DynNode } from "./dyn/index.js";
 import { GraceNode } from "./grace/index.js";
+import { SpacingNode } from "./spacing/index.js";
 import { GlissNode } from "./gliss/index.js";
 import { SlideNode } from "./slide/index.js";
 import { HeadNode } from "./head/index.js";
@@ -36,7 +37,7 @@ export const defaultFunctions: ASTFunctionClass[] = [
     NoteNode, DashNode, RestNode, BarNode,
     DivNode, DotNode, TupletNode,   // 装饰性
     VoiceNode, VoicesNode,  // 歌词和声部
-    BrNode, PageBreakNode,  // 排版
+    BrNode, PageBreakNode, SpacingNode,  // 排版
     PageNode, HeadNode,   // 文档页面与谱头
     StackNode,  // 时间同步
     UpNode, DownNode,

@@ -94,7 +94,8 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       const key = `${systemIndex}:${measureId}`
       let system = systems.get(systemIndex)
       if (!system) {
-        system = { tagName: 'g', attributes: { class: 'system', id: `m3n-system-${pageIndex + 1}-${systemIndex}`, 'data-m3n-volta': String(voltaLines.has(Number(systemIndex))) }, children: [] }
+        const paragraphs = [...new Set(result.layout.objects.filter(node => node.layoutLine === Number(systemIndex) && !node.T.isZero()).map(node => node.addon?.systemHeightGroup ?? ''))]
+        system = { tagName: 'g', attributes: { class: 'system', id: `m3n-system-${pageIndex + 1}-${systemIndex}`, 'data-m3n-volta': String(voltaLines.has(Number(systemIndex))), 'data-m3n-paragraph': paragraphs.join(',') }, children: [] }
         systems.set(systemIndex, system)
       }
       let measure = measures.get(key)

@@ -67,6 +67,13 @@ class TextFunction extends ASTFunctionNode {
                 namedOnly: true,
                 default: 400,
             },
+            {
+                name: "local",
+                description: "上方标题仅在所在行预留高度，不计入等行高音乐最大值",
+                type: "boolean" as const,
+                namedOnly: true,
+                default: false,
+            },
         ],
     };
 
@@ -92,12 +99,14 @@ class TextFunction extends ASTFunctionNode {
     readonly font: string;
     readonly above: ASTNodeBase | null;
     readonly weight: number;
+    readonly local: boolean;
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [text, size, lineHeight, align, font, above, weight] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number];
+        const [text, size, lineHeight, align, font, above, weight, local] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number, boolean];
         this.font = font || ctx.variables.font;
         this.above = above instanceof ASTNodeBase ? above : null;
         this.weight = weight;
+        this.local = local;
         if (align !== "left" && align !== "center" && align !== "right") {
             throw new ErrorDiagnostic(
                 "E_TEXT_INVALID_ALIGN",
@@ -126,7 +135,7 @@ class TextFunction extends ASTFunctionNode {
         const lineHeight = this.size === 0 ? 1.25 : this.lineAdvance / this.size;
         const above = this.above ? `, above=${(this.above as ASTFunctionNode).label}` : "";
         const weight = this.weight === 400 ? "" : `, weight=${this.weight}`;
-        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight})`;
+        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight}${this.local ? ', local=true' : ''})`;
     }
 }
 
@@ -183,6 +192,7 @@ class TextTemporalNode extends TemporalNodeBase {
 }
 
 class TextAboveAttachment implements LayoutAttachment {
+    get spacingRole() { return this.ast.local ? 'local' as const : undefined; }
     readonly layer = "foreground" as const;
     readonly endPoints: readonly VisualTemporalNode[];
     readonly sourceSpan: SourceSpan;

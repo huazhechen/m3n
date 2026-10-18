@@ -53,3 +53,31 @@ test('a bracket on the upper voice does not change the distance between parallel
     for (const distance of distances) nearly(distance, distances[0]);
     assert.deepEqual(result.diagnostics, []);
 });
+
+test('paragraph groups share music height locally and ignore headings on other systems', () => {
+    const music = '@page(width=800px,top=8px,bottom=8px) @spacing({1@a 2 3 4 | @br() 1 2 3 4 | @br() 1 2 3 4 |},group="A") @br() @spacing({1\'\' 2\'\' 3\'\' 4\'\' | @br() 1 2 3 4 | @br() 1 2 3 4 |},group="B")';
+    const options = { uniformSystemHeight: true, alignRelations: true };
+    const bare = compileScore(music, options);
+    const named = compileScore(music + ' @text(段落标题,size=14px,above=a,local=true)', options);
+    const natural = compileScore(music);
+    const y = axes(named), b = axes(bare), n = axes(natural);
+    nearly(y[2] - y[1], y[1] - y[0]);
+    nearly(y[5] - y[4], y[4] - y[3]);
+    assert.ok(y[4] - y[3] > y[1] - y[0] + 5);
+    assert.ok(y[0] > b[0] + 10);
+    nearly(y[2] - y[1], b[2] - b[1]);
+    assert.ok(Math.abs(n[5] - n[4] - (y[5] - y[4])) > 5);
+    assert.deepEqual(named.diagnostics, []);
+    assert.equal(named.lowering.duration.toString(), bare.lowering.duration.toString());
+    assert.equal(named.layout.objects.filter(node => !node.T.isZero()).length, 24);
+});
+
+test('paragraph height groups survive automatic pagination', () => {
+    const music = '@page(width=800px,top=8px,bottom=8px) @spacing({1 2 3 4 | @br() 1 2 3 4 | @br() 1 2 3 4 |},group="A") @br() @spacing({1\'\' 2\'\' 3\'\' 4\'\' | @br() 1 2 3 4 | @br() 1 2 3 4 |},group="B")';
+    const options = { uniformSystemHeight: true, alignRelations: true };
+    const continuous = compileScore(music, options), y = axes(continuous);
+    const paged = compileScore(music.replace('width=800px', 'width=800px,height=160px'), options), p = axes(paged);
+    assert.ok(paged.layout.pages.length >= 2);
+    for (const page of paged.layout.pages) for (let line = page.lineStart + 1; line < page.lineEnd; line++) nearly(p[line] - p[line - 1], y[line] - y[line - 1]);
+    assert.deepEqual(paged.diagnostics, []);
+});

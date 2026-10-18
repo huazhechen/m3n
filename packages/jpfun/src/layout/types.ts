@@ -73,7 +73,7 @@ export interface PageConfig {
  * 字号由具体视觉函数在 parse 时固化为 px，不属于布局上下文
  */
 export interface LayoutPrepareContext {
-    /** M3N opt-in: uniform music envelopes, with extra headroom only on volta systems; lyrics stay local. */
+    /** M3N opt-in: paragraph-local music envelopes; headings and lyrics stay local. */
     uniformSystemHeight?: boolean;
     /** M3N opt-in: align adjacent relations of the same kind within a staff/system. */
     alignRelations?: boolean;
@@ -263,8 +263,8 @@ export interface AttachmentGeometry {
  * 实例只保存语义输入和一次横向准备状态，不保存最终 box、regions 或绘制几何。
  */
 export interface LayoutAttachment extends LoweringAttachment {
-    /** Lyrics stay local; volta headroom is shared only by systems carrying a bracket. */
-    readonly spacingRole?: 'lyrics' | 'volta';
+    /** Lyrics and local headings do not join music envelopes; volta headroom stays in its band. */
+    readonly spacingRole?: 'lyrics' | 'volta' | 'local';
     /** M3N: independent alignment families, with nesting and track boundaries preserved. */
     readonly alignmentKind?: string;
     /** 后置平移仅影响绘制，不参与占用求解 */

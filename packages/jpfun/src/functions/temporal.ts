@@ -44,6 +44,8 @@ export const DEFAULT_PROGRAM = 0;
 
 /** 每个事件的可选语义声明；核心字段与函数私有的 @键分开 */
 export interface TemporalAddon {
+    /** M3N: music envelopes are shared only within this paragraph group. */
+    systemHeightGroup?: string;
     /** 请求在当前时间列之前换几行，缺省为 0 */
     breakBefore?: number;
     /** M3N: automatic wrapping may prefer this boundary without forcing a line. */

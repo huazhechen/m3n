@@ -77,6 +77,7 @@ export function measure(source, width, spacing = {}) {
   }
   return { width, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps,
     voltaSystems: systems.map(({node}) => node.getAttribute('data-m3n-volta') === 'true'),
+    paragraphSystems: systems.map(({node}) => node.getAttribute('data-m3n-paragraph')),
     diagnostics: score.diagnostics, markup }
 }
 

@@ -441,6 +441,9 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
   if (bass.length > 0) parseBody(bass, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
   const document: ScoreDocument = {
     ...settings,
+    paragraphs: phrases.flatMap((phrase, index) => phrase.melody
+      ? [{ id: String(index), start: phrase.melody.start, end: phrase.melody.start + phrase.melody.text.length }]
+      : []),
     lyrics: [],
     parts,
     intervals,

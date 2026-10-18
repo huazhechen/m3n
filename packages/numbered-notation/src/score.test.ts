@@ -105,14 +105,19 @@ describe('jpFun numbered notation adapter', () => {
     return Number(digit.getAttribute('y'))
   })
 
-  it('keeps uniform music baselines despite different octaves, relations and section labels', () => {
-    const source = '{title=等行高} {4/4}\nN: 1 2 3 4 | {br} {lg}1ee 2ee 3ee 4ee{/} |\n===B\nN: {br} 1dd 2dd 3dd 4dd | {br} 1 2 3 4 |||'
+  it('shares music height within each paragraph without propagating its heading', () => {
+    const source = '{title=段内等行高} {4/4}\nN: {lg}1ee 2ee 3ee 4ee{/} | {br} 1 2 3 4 | {br} 1 2 3 4 |\n===B\nN: {br} 1 2 3 4 | {br} 1 2 3 4 | {br} 1 2 3 4 |||'
     const natural = render(source)
     const uniform = render(source, { uniformSystemHeight: true })
     const axes = systemBaselines(uniform.root)
-    expect(axes).toHaveLength(4)
-    for (let i = 2; i < axes.length; i++) expect(axes[i]! - axes[i - 1]!).toBeCloseTo(axes[1]! - axes[0]!, 2)
-    expect(new Set(systemBaselines(natural.root).slice(1).map((y, i) => (y - systemBaselines(natural.root)[i]!).toFixed(2))).size).toBeGreaterThan(1)
+    expect(axes).toHaveLength(6)
+    expect(axes[2]! - axes[1]!).toBeCloseTo(axes[1]! - axes[0]!, 2)
+    expect(axes[5]! - axes[4]!).toBeCloseTo(axes[4]! - axes[3]!, 2)
+    expect(axes[1]! - axes[0]!).toBeGreaterThan(axes[4]! - axes[3]! + 5)
+    const groups = [...uniform.root.querySelectorAll('g.system')].map(node => node.getAttribute('data-m3n-paragraph'))
+    expect(new Set(groups.slice(0, 3)).size).toBe(1)
+    expect(new Set(groups.slice(3)).size).toBe(1)
+    expect(groups[0]).not.toBe(groups[3])
     expect([...uniform.root.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-id')))
       .toEqual([...natural.root.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-id')))
     expect(uniform.score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
@@ -137,12 +142,14 @@ describe('jpFun numbered notation adapter', () => {
     const bands = new Map<string, number>()
     const systems = [...root.querySelectorAll('g.system')]
     for (let i = 1; i < axes.length; i++) {
-      const band = systems[i]!.getAttribute('data-m3n-volta')!
+      const paragraph = systems[i]!.getAttribute('data-m3n-paragraph')!
+      if (paragraph !== systems[i - 1]!.getAttribute('data-m3n-paragraph')) continue
+      const band = `${paragraph}:${systems[i]!.getAttribute('data-m3n-volta')}`
       const step = axes[i]! - axes[i - 1]!
       if (bands.has(band)) expect(step).toBeCloseTo(bands.get(band)!, 2)
       else bands.set(band, step)
     }
-    expect(bands.size).toBeLessThanOrEqual(2)
+    expect(bands.size).toBeGreaterThan(0)
   })
 
   it.each([false, true])('keeps plain systems compact around a cross-system volta, lyrics=%s', withLyrics => {

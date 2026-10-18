@@ -60,6 +60,8 @@ export type ScoreLyricBlock = {
 
 /** Canonical musical meaning of a source document, independent of textual layout. */
 export type ScoreDocument = {
+  /** Written phrase ranges for local engraving; they do not change playback. */
+  paragraphs?: ReadonlyArray<{ id: string; start: number; end: number }>
   title: string
   subtitle: string
   singer: string

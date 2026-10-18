@@ -56,12 +56,21 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const parentheses: string[] = []
   // Registered after musical relations, from inner to outer: harmony, directions, section names.
   const annotations: string[][] = [[], [], []]
+  // Explicit sections and phrases are local height paragraphs. A named
+  // training exercise also starts a paragraph; automatic wraps do not.
+  const paragraphOf = (position: number) => document.paragraphs?.find(range => range.start <= position && position < range.end)?.id ?? '0'
   let serial = 0
   const warn = (event: ScoreEvent, value: string) => diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${value}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
 
   const voicesForPart = (melody: ScoreMeasure[], bass: ScoreMeasure[], partIndex: number) => {
     const renderVoice = (measures: ScoreMeasure[], staff: 'melody' | 'bass') => {
-      const pieces: string[] = []
+      let pieces: string[] = []
+      const paragraphs: string[] = []
+      let paragraph: string | undefined
+      const flushParagraph = () => {
+        if (pieces.length) paragraphs.push(`@spacing({${pieces.join(' ')}},group=${quote(paragraph ?? '0')})`)
+        pieces = []
+      }
       const lyricTargets: EventBinding[] = []
       const firsts = new Map<number, string>(), lasts = new Map<number, string>()
       let activeKey = document.key, activeTempo = document.tempo
@@ -89,6 +98,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       visibleMeasures.forEach((measure, measureIndex) => {
         const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
         const melodyMeasure = melody[measureIndex]
+        const firstEvent = melodyMeasure?.events[0] ?? measure.events[0]
+        const nextParagraph = firstEvent ? `${partIndex}:${paragraphOf(firstEvent.sourceStart)}` : paragraph
+        if (paragraph !== nextParagraph) { flushParagraph(); paragraph = nextParagraph }
         // Parallel voices must share every bar anchor, including the opening repeat.
         // B: bars are alignment syntax; structural repetition belongs to N:.
         const structure = staff === 'bass' ? melodyMeasure ?? measure : measure
@@ -104,6 +116,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           firsts.set(measureIndex, item.label); lasts.set(measureIndex, item.label)
         }
         for (const event of measure.events) {
+          const eventParagraph = `${partIndex}:${paragraphOf(staff === 'bass' ? firstEvent?.sourceStart ?? event.sourceStart : event.sourceStart)}`
+          if (paragraph !== eventParagraph) { flushParagraph(); paragraph = eventParagraph }
           const controls: string[] = []
           if (event.key !== activeKey) { controls.push(`@key(${quote(keyName(event.key))},size=16px)`); activeKey = event.key }
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
@@ -175,7 +189,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const first = children[0], last = children.at(-1)
           if (first && last) {
             for (const [level, text] of [event.chord, event.text, event.sectionLabel].entries()) {
-              if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first}${level === 2 ? ',weight=700' : ''})`)
+              if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first}${level === 2 ? ',weight=700' : ''}${level > 0 ? ',local=true' : ''})`)
             }
             const head = continuations.get(event)
             const tieStart = head ? endpointLabels.get(head)!.tieStart : event.tieFromTupletIndex === undefined ? first : children[event.tieFromTupletIndex]!
@@ -236,7 +250,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const annotation = target.lyrics.get(row)?.annotation
         return annotation ? [[`${rowIndex}:${slot}`, annotation]] : []
       }))
-      return `@voice({${pieces.join(' ')}},""${lyricArguments.length ? `,${lyricArguments.join(',')},compactlyrics=true` : ''}${underlines.length ? `,lyricunderlines=${quote(underlines.join(','))}` : ''}${prefixes.length ? `,lyricprefixes=${quote(JSON.stringify(Object.fromEntries(prefixes)))}` : ''})`
+      flushParagraph()
+      return `@voice({${paragraphs.join(' ')}},""${lyricArguments.length ? `,${lyricArguments.join(',')},compactlyrics=true` : ''}${underlines.length ? `,lyricunderlines=${quote(underlines.join(','))}` : ''}${prefixes.length ? `,lyricprefixes=${quote(JSON.stringify(Object.fromEntries(prefixes)))}` : ''})`
     }
     const voices = [renderVoice(melody, 'melody')]
     if (options.includeBass !== false && bass.some(measure => measure.events.length || measure.multiRest)) voices.push(renderVoice(bass, 'bass'))
