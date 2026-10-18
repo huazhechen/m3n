@@ -15,7 +15,7 @@ describe('Ode to Joy voice connectors', () => {
       const document = parseM3NDocument(source);
       const settings = { width, paged };
       const projection = projectNumberedScore(document, settings);
-      const result = compileScore(projection.source, { autoWrap: true });
+      const result = compileScore(projection.source, { autoWrap: true, alignRelations: true, equalMeasures: document.equalMeasures });
       const notes = result.layout.objects.filter(node => !node.T.isZero());
       const lines = new Set(notes.map(node => node.layoutLine));
       expect(lines.size).toBeGreaterThan(1);

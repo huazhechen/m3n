@@ -235,6 +235,8 @@ export interface HorizontalLayoutHookEntry {
     readonly hook: HorizontalLayoutHook;
 }
 
+export interface EqualMeasureRange { start: number; end: number; bar?: number }
+
 /** 不处理 fixed 和写回，只求一组普通列的 anchor 坐标；返回自然布局是否有余量 */
 function solveHorizontal(
     mat: LayoutElement[][],
@@ -462,6 +464,7 @@ export function layoutHorizontal(
     options: SolverOptions = {},
     horizontalLayoutHooks: readonly HorizontalLayoutHookEntry[] = [],
     fillMinRatio?: number,
+    equalMeasures?: readonly EqualMeasureRange[],
 ): LayoutElement[][] {
     const normalizedOptions = normalizeSolverOptions(options);
     const { mat, rows } = fillPlaceholders(columns, normalizedOptions.globalC);
@@ -482,7 +485,28 @@ export function layoutHorizontal(
             options: normalizedOptions,
         });
     }
-    layoutHorizontalRegion(mat, rows, X, fixed, limit, normalizedOptions, fillMinRatio);
+    if (equalMeasures && equalMeasures.length > 1 && Number.isFinite(limit)) {
+        // Hooks run once over the complete line, so lyrics, parentheses and
+        // parallel voices retain their normal horizontal reservations.
+        const rightOf = (column: number) => Math.max(...mat[column].map(el => el.WR));
+        const leftOf = (column: number) => Math.max(...mat[column].map(el => el.WL));
+        const tail = equalMeasures.at(-1)!.bar;
+        const width = (limit - (tail === undefined ? 0 : rightOf(tail))) / equalMeasures.length;
+        const gap = 4;
+        equalMeasures.forEach((range, index) => {
+            const previous = equalMeasures[index - 1]?.bar;
+            const left = index * width + (previous === undefined ? 0 : rightOf(previous) + gap);
+            const right = (index + 1) * width - (range.bar === undefined ? 0 : leftOf(range.bar) + gap);
+            const localX = X.subarray(range.start, range.end);
+            layoutHorizontalRegion(mat.slice(range.start, range.end), rows, localX,
+                fixed.subarray(range.start, Math.max(range.start, range.end - 1)),
+                Math.max(1, right - left), normalizedOptions, 0);
+            for (let i = range.start; i < range.end; i++) X[i] += left;
+            if (range.bar !== undefined) X[range.bar] = (index + 1) * width;
+        });
+    } else {
+        layoutHorizontalRegion(mat, rows, X, fixed, limit, normalizedOptions, fillMinRatio);
+    }
 
     // 坐标写回
     for (let c = 0; c < mat.length; c++) {

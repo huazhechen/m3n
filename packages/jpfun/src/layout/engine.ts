@@ -24,6 +24,7 @@ import { isLayoutAttachment } from "./types.js";
 import { liftInto, rangeColumns, resolveRange, type QueryLine } from "./range.js";
 import { TranslatingPainter } from "../render/translate.js";
 import { adjacentRelationGroups } from './relation-alignment.js';
+import { equalMeasureRanges } from './equal-measures.js';
 import type {
     AttachmentGeometry,
     AttachmentLayoutContext,
@@ -41,6 +42,7 @@ import type {
 export interface DocumentLayoutOptions extends SolverOptions {
     rowGap?: number;    // 强制覆盖每行的轨道间距；缺省按该行最大字号推导
     uniformSystemHeight?: boolean;
+    equalMeasures?: boolean;
 }
 
 // 兼容旧导入路径；布局入口会把正常页面溢出转换为 ErrorDiagnostic
@@ -251,7 +253,7 @@ export function layoutDocument(
     const documentAttachments = layoutAttachments.filter(attachment => !subdomainItems.has(attachment));
 
     // 2. 横向弹簧布局，得到 box.x
-    const horizontal = lines.map((line, index) => prepareHorizontalLine(line.columns, index, options));
+    const horizontal = lines.map((line, index) => prepareHorizontalLine(line.columns, index, options, false, options.equalMeasures));
     const views = horizontal.map(line => line.view);
     for (const attachment of documentAttachments) attachment.prepareHorizontal?.(views, context);
     const horizontalBounds = new Map<VisualTemporalNode, { x: number; w: number }>();
@@ -517,6 +519,7 @@ export function prepareHorizontalLine(
     index: number,
     options: SolverOptions = {},
     compact = false,
+    equalMeasures = false,
 ) {
     const hooks: HorizontalLayoutHookEntry[] = [];
     const columnIndex = new Map<LayoutHost, number>();
@@ -555,7 +558,7 @@ export function prepareHorizontalLine(
                 if (compact) element.margin_L = element.margin_R = 0;
                 return element;
             }));
-            layoutHorizontal(elements, limit, options, hooks, fillMinRatio);
+            layoutHorizontal(elements, limit, options, hooks, fillMinRatio, equalMeasures ? equalMeasureRanges(columns) : undefined);
             return elements;
         },
     };

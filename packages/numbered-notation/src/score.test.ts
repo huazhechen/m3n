@@ -23,7 +23,7 @@ function lyrics(root: Document, id: string, row = 1) {
 }
 function geometry(document: ScoreDocument, settings: NumberedNotationRenderOptions = options) {
   const projection = projectNumberedScore(document, settings)
-  return compileScore(projection.source, { autoWrap: true, alignRelations: true, uniformSystemHeight: settings.uniformSystemHeight })
+  return compileScore(projection.source, { autoWrap: true, alignRelations: true, uniformSystemHeight: settings.uniformSystemHeight, equalMeasures: settings.equalMeasures ?? document.equalMeasures })
 }
 
 function mainPitches(node: VisualTemporalNode): { name: string; acc: string; octave: number }[] {
@@ -36,6 +36,17 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it('applies the equal-measures source switch and permits an explicit rendering override', () => {
+    const source = '{equal-measures=true}\n{4/4}\nN: 1^^ | (1 2 3 4 5 6 7 1e) | 1 2 3 4 |||'
+    const document = parseM3NDocument(source)
+    const equal = render(document, { width: 1200 })
+    const disabled = render(document, { width: 1200, equalMeasures: false })
+    expect(equal.pages).not.toEqual(disabled.pages)
+    expect(disabled.pages).toEqual(render({ ...document, equalMeasures: false }, { width: 1200 }).pages)
+    expect([...equal.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
+      .toEqual([...disabled.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
+    expect(equal.score.diagnostics).toEqual([])
+  })
   it('preserves every performed measure, lyric and tie in the compact Slow Like You arrangement', () => {
     const original = readFileSync(resolve(process.cwd(), 'test/fixtures/man-man-original.m3n'), 'utf8')
     const compact = readFileSync(resolve(process.cwd(), '../../src/scores/man_man_xi_huan_ni_01.m3n'), 'utf8')

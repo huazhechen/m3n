@@ -255,6 +255,13 @@ describe('validateM3N', () => {
     expect(messages('{2/4}\nN: {ending=1}1 2{/} |||')).toContain('未知指令：{ending=1}')
   })
 
+  it('validates the equal-measures boolean, header placement and uniqueness', () => {
+    for (const value of ['true', 'false']) expect(validateM3N(`{equal-measures=${value}}\nN: 1 2 3 4 |||`)).toEqual([])
+    expect(messages('{equal-measures=yes}\nN: 1 2 3 4 |||')).toContain('equal-measures 必须为 true 或 false')
+    expect(messages('N: {equal-measures=true}1 2 3 4 |||')).toContain('equal-measures 只能写在文档首部')
+    expect(messages('{equal-measures=true} {equal-measures=false}\nN: 1 2 3 4 |||')).toContain('重复声明')
+  })
+
   it('enforces metadata placement, uniqueness, and non-empty values', () => {
     const result = messages('{title=} {title=A}\n1 {composer=B} 2 3 4 |||')
     expect(result).toContain('乐谱信息值不能为空')

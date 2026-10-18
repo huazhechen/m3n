@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十八版",
+  "edition": "第十九版",
   "sourceCount": 81,
   "baseWidth": 780,
   "widthCandidates": [
@@ -65,7 +65,7 @@
       "pageBreaks": [
         19
       ],
-      "reviewNote": "28项练习原顺序与全部音符保留；各段独立统一音乐行高，标题只占所在行；允许练习内换行及跨页，按19+21行分两页，20.31px，各页99.989% / 98.005%，两页内优先放大字号。",
+      "reviewNote": "28项练习原顺序与全部音符保留；各段独立统一音乐行高，标题只占所在行；允许练习内换行及跨页，按19+21行分两页，20.31px，各页99.989% / 98.005%，两页内优先放大字号。 开启行内小节等宽，保留原音符字号与页数。",
       "uniformSystemHeight": true,
       "pageCount": 2,
       "systemGap": 3.5
@@ -81,7 +81,7 @@
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
       "systemGap": 18,
@@ -98,7 +98,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "includeBass": false,
       "widthLocked": true,
       "pageCount": 1,
@@ -116,7 +116,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
       "systemGap": 18,
@@ -133,7 +133,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
       "systemGap": 18,
@@ -150,10 +150,10 @@
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
-      "systemGap": 18,
+      "systemGap": 13.5,
       "uniformSystemHeight": true
     },
     {
@@ -167,10 +167,10 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
-      "systemGap": 18,
+      "systemGap": 13.5,
       "uniformSystemHeight": true
     },
     {
@@ -184,13 +184,13 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthCandidates": [
         618
       ],
       "widthLocked": true,
       "pageCount": 1,
-      "systemGap": 18,
+      "systemGap": 13.5,
       "uniformSystemHeight": true
     },
     {
@@ -204,13 +204,13 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthCandidates": [
         618
       ],
       "widthLocked": true,
       "pageCount": 1,
-      "systemGap": 18,
+      "systemGap": 13.5,
       "uniformSystemHeight": true
     },
     {
@@ -224,7 +224,7 @@
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthCandidates": [
         542,
         544,
@@ -239,7 +239,7 @@
       ],
       "widthLocked": true,
       "pageCount": 1,
-      "systemGap": 18,
+      "systemGap": 11.5,
       "uniformSystemHeight": true
     },
     {
@@ -253,13 +253,13 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthCandidates": [
         588
       ],
       "widthLocked": true,
       "pageCount": 1,
-      "systemGap": 18,
+      "systemGap": 11.5,
       "uniformSystemHeight": true
     },
     {
@@ -273,7 +273,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthCandidates": [
         542,
         544,
@@ -288,7 +288,7 @@
       ],
       "widthLocked": true,
       "pageCount": 1,
-      "systemGap": 18,
+      "systemGap": 11.5,
       "uniformSystemHeight": true
     },
     {
@@ -302,8 +302,8 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
-      "systemGap": 18,
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
+      "systemGap": 14,
       "pageCount": 1,
       "widthLocked": true
     },
@@ -318,8 +318,8 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
-      "systemGap": 18,
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
+      "systemGap": 14,
       "pageCount": 1,
       "widthLocked": true
     },
@@ -334,8 +334,8 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
-      "systemGap": 18,
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
+      "systemGap": 14,
       "pageCount": 1,
       "widthLocked": true
     },
@@ -350,7 +350,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -366,7 +366,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -382,7 +382,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -398,7 +398,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -414,7 +414,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -430,7 +430,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -510,7 +510,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -589,7 +589,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthCandidates": [
         742,
         744,
@@ -652,7 +652,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
       "systemGap": 18,
@@ -686,7 +686,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -1045,7 +1045,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
       "systemGap": 18,
@@ -1192,7 +1192,7 @@
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
       "systemGap": 20,
@@ -1209,7 +1209,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "widthLocked": true,
       "pageCount": 1,
       "systemGap": 20,
@@ -1226,8 +1226,8 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "段内统一音乐行高，标题只占所在行；18行，22.79px，各页高度利用率 94.08%。",
-      "systemGap": 18,
+      "reviewNote": "段内统一音乐行高，标题只占所在行；16行，22.79px，额外行间留白22px，高度利用率93.51%。 开启行内小节等宽，保留原音符字号与页数。",
+      "systemGap": 22,
       "pageCount": 1,
       "widthLocked": true
     },
@@ -1242,7 +1242,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -1258,7 +1258,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 18,
       "pageCount": 1,
       "widthLocked": true
@@ -1392,7 +1392,7 @@
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "段内统一音乐行高，标题只占所在行；14行，23.93px，各页高度利用率 98.54%。",
+      "reviewNote": "段内统一音乐行高，标题只占所在行；14行，23.93px，各页高度利用率 98.54%。 开启行内小节等宽，保留原音符字号与页数。",
       "systemGap": 24,
       "pageCount": 1,
       "widthLocked": true
@@ -1482,8 +1482,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v18.pdf",
-  "outputKey": "scorebook-v18",
+  "outputPdf": "循序渐进简谱集-v19.pdf",
+  "outputKey": "scorebook-v19",
   "page": {
     "width": 744,
     "height": 1133,

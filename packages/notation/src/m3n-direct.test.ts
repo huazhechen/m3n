@@ -3,6 +3,13 @@ import { parseM3NDocument } from './m3n-direct.js'
 import { measurePlaybackPasses } from './notation/repeats.js'
 
 describe('direct M3N parser', () => {
+  it('reads the equal-measures header switch without changing musical events', () => {
+    expect(parseM3NDocument('N: 1 2 3 4 |||').equalMeasures).toBe(false)
+    expect(parseM3NDocument('{equal-measures=false}\nN: 1 2 3 4 |||').equalMeasures).toBe(false)
+    expect(parseM3NDocument('// {equal-measures=true}\nN: 1 2 3 4 |||').equalMeasures).toBe(false)
+    expect(parseM3NDocument('{equal-measures=true}\nN: 1 2 3 4 |||').equalMeasures).toBe(true)
+    expect(parseM3NDocument('N: 1 2 3 4 |||\nL: {equal-measures=true}').equalMeasures).toBe(false)
+  })
   it('starts with defaults until a later key or tempo change is reached', () => {
     const score = parseM3NDocument('N: 1 2 3 4 | {key=G}{90qpm}1 2 3 4 |||')
     expect(score).toMatchObject({ key: 'C', tempo: 120, hasExplicitTempo: false })

@@ -33,7 +33,7 @@ const m3nLanguage = StreamLanguage.define({
     stream.next(); return null
   },
 })
-const directives = ['key=C', '4/4', '6/8', '120qpm', 'title=', 'subtitle=', 'composer=', 'lyricist=', 'singer=', 'cresc', 'decres', 'lg', 'inst', '8va', '8vb', 'accel=120', 'rit=80', '/']
+const directives = ['key=C', '4/4', '6/8', '120qpm', 'title=', 'subtitle=', 'composer=', 'lyricist=', 'singer=', 'equal-measures=true', 'equal-measures=false', 'cresc', 'decres', 'lg', 'inst', '8va', '8vb', 'accel=120', 'rit=80', '/']
 const readonlyConfig = new Compartment()
 
 export function SourceEditor(props: SourceEditorProps) {

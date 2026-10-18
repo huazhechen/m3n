@@ -75,7 +75,7 @@ export function measure(source, width, spacing = {}) {
     const b = node.getBBox()
     if (b.y < cut - 0.2 && b.y+b.height > cut + 0.2) clipped.push({ cut, tag: node.tagName, text:node.textContent, box:[b.x,b.y,b.width,b.height], parent:node.parentElement.outerHTML.slice(0,250) })
   }
-  return { width, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps,
+  return { width, equalMeasures: renderOptions.equalMeasures ?? scoreDocument.equalMeasures ?? false, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps,
     voltaSystems: systems.map(({node}) => node.getAttribute('data-m3n-volta') === 'true'),
     paragraphSystems: systems.map(({node}) => node.getAttribute('data-m3n-paragraph')),
     diagnostics: score.diagnostics, markup }

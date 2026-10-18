@@ -15,6 +15,14 @@ export function validateM3NSyntaxTree(tree: M3NSyntaxTree): ScoreDiagnostic[] {
     }))
   }
   for (const directive of tree.directives) {
+    if (directive.name === 'equal-measures') {
+      if (directive.closing || !['true', 'false'].includes(directive.value ?? '')) {
+        report('M3N_DIRECTIVE_INVALID_LAYOUT', 'equal-measures 必须为 true 或 false', directive)
+      }
+      if (!tree.lines.some(line => line.line === directive.line && line.kind === 'header')) {
+        report('M3N_DIRECTIVE_INVALID_LAYOUT', 'equal-measures 只能写在文档首部', directive)
+      }
+    }
     if ((directive.name === 'cresc' || directive.name === 'decres' || directive.name === 'dim')
       && directive.value !== undefined && directive.value !== 'text') {
       report('M3N_DIRECTIVE_INVALID_DISPLAY', '渐强渐弱只支持 text 显示参数', directive)

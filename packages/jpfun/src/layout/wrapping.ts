@@ -15,7 +15,7 @@ function barAst(node: VisualTemporalNode) {
 const isOpeningRepeat = (node: VisualTemporalNode) => barAst(node)?.type === 3;
 
 /** Source positions for explicit breaks; all parallel members at a boundary share one break. */
-export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number, preferredTimes: ReadonlySet<string> = new Set()): number[] {
+export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number, preferredTimes: ReadonlySet<string> = new Set(), equalMeasures = false): number[] {
     const insertions = new Set<number>();
     const leftOf = (node: VisualTemporalNode) => layout.horizontalBounds?.get(node)?.x ?? node.box.x;
     const rightOf = (node: VisualTemporalNode) => { const box = layout.horizontalBounds?.get(node) ?? node.box; return box.x + box.w; };
@@ -96,8 +96,10 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
         const previous = new Array<number>(measures.length + 1).fill(0);
         best[0] = 0;
         for (let end = 1; end <= measures.length; end++) {
+            let widest = 0;
             for (let start = end - 1; start >= Math.max(0, end - 48); start--) {
-                const width = measures[end - 1].end - measures[start].start;
+                widest = Math.max(widest, measures[start].end - measures[start].start);
+                const width = equalMeasures ? widest * (end - start) : measures[end - 1].end - measures[start].start;
                 if (width > contentWidth * 0.94 && start < end - 1) break;
                 const slack = Math.max(0, contentWidth * 0.94 - width);
                 const first = measures[start].nodes.find(node => node.T.compare(0) > 0)!;

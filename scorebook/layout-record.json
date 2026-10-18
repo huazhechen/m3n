@@ -1,9 +1,9 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第十八版",
+  "edition": "第十九版",
   "showCredits": false,
   "uniformSystemHeight": true,
-  "rendererSha256": "bdac8bd058a367fd512bb19c16c492edb6cacee7e57a060e1da4f080f4abce79",
+  "rendererSha256": "b3482c66f9a5c3cf924285bba5f77f8d10afabfc03bd6558e2f333f42f58cf46",
   "sourceCount": 81,
   "entryCount": 81,
   "pageCount": 78,
@@ -33,6 +33,7 @@
       "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         60.25,
         39.25,
@@ -178,7 +179,7 @@
         19,
         21
       ],
-      "sourceSha256": "004c5f7cbf5f67903dd7ae6d8369183345acfa933484058c5eaa8160d78765f8",
+      "sourceSha256": "ed9f207ef0a4853571b356baa903c5c234e4e7d1167cc0a8bac375c8a5f386df",
       "candidates": [
         {
           "width": 754,
@@ -190,7 +191,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "28项练习原顺序与全部音符保留；各段独立统一音乐行高，标题只占所在行；允许练习内换行及跨页，按19+21行分两页，20.31px，各页99.989% / 98.005%，两页内优先放大字号。"
+      "reviewNote": "28项练习原顺序与全部音符保留；各段独立统一音乐行高，标题只占所在行；允许练习内换行及跨页，按19+21行分两页，20.31px，各页99.989% / 98.005%，两页内优先放大字号。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 2,
@@ -199,6 +200,7 @@
       "file": "xiao_xing_xing_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         45.5
       ],
@@ -232,7 +234,7 @@
       "systemsPerPage": [
         2
       ],
-      "sourceSha256": "e9311ebf2b8550af96ee447481c64f90d54195e5830b86c7a3d8a1103b366c3d",
+      "sourceSha256": "0e25903c7a855989e36c137e4af40e388c625011b8cea736d4f0f950b549cc05",
       "candidates": [
         {
           "width": 766,
@@ -244,7 +246,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 3,
@@ -253,22 +255,20 @@
       "file": "huan_le_song_01.m3n",
       "includeBass": false,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        53.75,
-        53.75,
-        53.75
+        53.733,
+        53.733
       ],
       "voltaSystems": [
-        false,
         false,
         false,
         false
       ],
       "paragraphSystems": [
-        "0:0",
+        "0:0,0:1",
         "0:1,0:2",
-        "0:2,0:3",
-        "0:3"
+        "0:2,0:3"
       ],
       "section": "basics",
       "group": "入门旋律与长音",
@@ -288,23 +288,23 @@
       "pages": [
         6
       ],
-      "systems": 4,
+      "systems": 3,
       "systemsPerPage": [
-        4
+        3
       ],
-      "sourceSha256": "7902cdd1f64ea929fa3ebc9ca2bf503e4f18edbe108e23f20901608bc1e53bce",
+      "sourceSha256": "3e1c9afbc4149607a0f6b0e9edf808e5deba73f2e7a34893995aca3cfdf9149a",
       "candidates": [
         {
           "width": 766,
           "systemGap": 18,
-          "rows": 4,
+          "rows": 3,
           "pages": 1,
           "cost": 1459.6
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 4,
@@ -313,6 +313,7 @@
       "file": "wo_he_ni_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         45.5,
         45.5
@@ -349,7 +350,7 @@
       "systemsPerPage": [
         3
       ],
-      "sourceSha256": "6a0ba5722b509019746e40b810a0a65efbc2d03ff21bb93ec31cdf30380dfa7d",
+      "sourceSha256": "abb4aa150ff15a14682e5380f67e2047ad11673e726e26c21d641128d3e8f3b2",
       "candidates": [
         {
           "width": 766,
@@ -361,7 +362,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 5,
@@ -370,10 +371,11 @@
       "file": "long_long_ago_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        52.653,
-        52.652,
-        52.653
+        54.527,
+        54.526,
+        54.527
       ],
       "voltaSystems": [
         false,
@@ -409,7 +411,7 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "5f4f53cbc46c6ccf284f3b6f9b31ce2bb1f2b138b4210a3ff5557178b3fcd6c4",
+      "sourceSha256": "d14b57b017cce3e9c3288d885e770e24ac2cef554a53f471f54ebd3aac0b336a",
       "candidates": [
         {
           "width": 766,
@@ -421,7 +423,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 6,
@@ -430,10 +432,11 @@
       "file": "song_bie_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        49.57,
-        49.57,
-        49.57
+        45.07,
+        45.07,
+        45.07
       ],
       "voltaSystems": [
         false,
@@ -451,7 +454,7 @@
       "group": "歌唱性与八分音符",
       "reason": "长短时值与连贯乐句",
       "width": 704,
-      "systemGap": 18,
+      "systemGap": 13.5,
       "relativeScalePercent": 110.8,
       "screenNotePx": 21.75,
       "versusV1Percent": 125.89,
@@ -469,11 +472,11 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "704fd6af553756b24d8c9e76688e1304c6971115d77b70eb29b089b06e108a19",
+      "sourceSha256": "8199b8ddad34a7f6f63e27fc8c9f4f3bfc179ba52c2a927baa2dd5a163567c22",
       "candidates": [
         {
           "width": 704,
-          "systemGap": 18,
+          "systemGap": 13.5,
           "rows": 4,
           "pages": 1,
           "cost": 1422.4
@@ -481,7 +484,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 7,
@@ -490,14 +493,18 @@
       "file": "hong_he_gu_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        52.181
+        50.112,
+        50.112
       ],
       "voltaSystems": [
+        false,
         false,
         false
       ],
       "paragraphSystems": [
+        "0:0",
         "0:0",
         "0:0"
       ],
@@ -505,7 +512,7 @@
       "group": "歌唱性与八分音符",
       "reason": "弱起与规整乐句",
       "width": 704,
-      "systemGap": 18,
+      "systemGap": 13.5,
       "relativeScalePercent": 110.8,
       "screenNotePx": 21.75,
       "versusV1Percent": 125.89,
@@ -519,23 +526,23 @@
       "pages": [
         7
       ],
-      "systems": 2,
+      "systems": 3,
       "systemsPerPage": [
-        2
+        3
       ],
-      "sourceSha256": "c7c5f5b2be9d0bf8ade72c7969c8599c056ccaa28550e4272d0fbfe178f7e664",
+      "sourceSha256": "a818c91c5a53b6cc51e2184016e2e80502943ebf7c83eb0824574c3eb02a7fce",
       "candidates": [
         {
           "width": 704,
-          "systemGap": 18,
-          "rows": 2,
+          "systemGap": 13.5,
+          "rows": 3,
           "pages": 1,
           "cost": 1422.4
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 8,
@@ -544,9 +551,10 @@
       "file": "su_shan_na_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        45.5,
-        45.5
+        41,
+        41
       ],
       "voltaSystems": [
         false,
@@ -562,7 +570,7 @@
       "group": "歌唱性与八分音符",
       "reason": "重复节奏与八分音符",
       "width": 704,
-      "systemGap": 18,
+      "systemGap": 13.5,
       "relativeScalePercent": 110.8,
       "screenNotePx": 21.75,
       "versusV1Percent": 125.89,
@@ -580,11 +588,11 @@
       "systemsPerPage": [
         3
       ],
-      "sourceSha256": "450472cb5e96ece049172b1248f49950b46bdf5b1ae3a5086a0c9f16aa858049",
+      "sourceSha256": "3c8e41f74f5c5b7352b1bc0d1f863d626190bd075159f2bbb6df13c997f8a832",
       "candidates": [
         {
           "width": 704,
-          "systemGap": 18,
+          "systemGap": 13.5,
           "rows": 3,
           "pages": 1,
           "cost": 1422.4
@@ -592,7 +600,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 9,
@@ -601,10 +609,11 @@
       "file": "xiao_hong_mao_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        47.81,
-        47.81,
-        47.81
+        43.31,
+        43.31,
+        43.31
       ],
       "voltaSystems": [
         false,
@@ -622,7 +631,7 @@
       "group": "歌唱性与八分音符",
       "reason": "连续八分音符与跳进",
       "width": 704,
-      "systemGap": 18,
+      "systemGap": 13.5,
       "relativeScalePercent": 110.8,
       "screenNotePx": 21.75,
       "versusV1Percent": 125.89,
@@ -640,11 +649,11 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "1704a2257ea68f13f1f891fdb338d06ce630ff8847d14c06468278bef2adc124",
+      "sourceSha256": "9027ad97d588aab6fcd673d85d18f9aefbf291f4f987a575a3ac1d50b48c75d9",
       "candidates": [
         {
           "width": 704,
-          "systemGap": 18,
+          "systemGap": 13.5,
           "rows": 4,
           "pages": 1,
           "cost": 1422.4
@@ -652,7 +661,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 10,
@@ -661,10 +670,11 @@
       "file": "chong_er_fei_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        54.41,
-        54.41,
-        54.41
+        47.91,
+        47.91,
+        47.91
       ],
       "voltaSystems": [
         false,
@@ -682,7 +692,7 @@
       "group": "音阶与连奏",
       "reason": "附点节奏和连奏",
       "width": 722,
-      "systemGap": 18,
+      "systemGap": 11.5,
       "relativeScalePercent": 108.03,
       "screenNotePx": 21.21,
       "versusV1Percent": 122.75,
@@ -700,11 +710,11 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "0e98b7a8bcb155c2f3424a8fc04896f6e1e427be86c53221d7e9a169f79d3704",
+      "sourceSha256": "50aa49b90f1fc3ca59d6306301d3e0a56791753dd0e28e89e191234e278a2044",
       "candidates": [
         {
           "width": 722,
-          "systemGap": 18,
+          "systemGap": 11.5,
           "rows": 4,
           "pages": 1,
           "cost": 1433.2
@@ -712,7 +722,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 11,
@@ -721,13 +731,16 @@
       "file": "duo_lai_mi_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        53.75,
-        53.75,
-        77.295,
-        80.755
+        47.25,
+        47.25,
+        47.25,
+        74.255,
+        74.255
       ],
       "voltaSystems": [
+        false,
         false,
         false,
         false,
@@ -737,15 +750,16 @@
       "paragraphSystems": [
         "0:0",
         "0:0",
+        "0:0,0:1",
         "0:1",
-        "0:1,0:2",
+        "0:1,0:2,0:3",
         "0:3"
       ],
       "section": "basics",
       "group": "音阶与连奏",
       "reason": "音阶进行与节奏变化",
       "width": 722,
-      "systemGap": 18,
+      "systemGap": 11.5,
       "relativeScalePercent": 108.03,
       "screenNotePx": 21.21,
       "versusV1Percent": 122.75,
@@ -759,23 +773,23 @@
       "pages": [
         8
       ],
-      "systems": 5,
+      "systems": 6,
       "systemsPerPage": [
-        5
+        6
       ],
-      "sourceSha256": "7792d33a07c54149d82c61b359f11f8bc78ebd4988e3da15fd4b224d4f4ce51b",
+      "sourceSha256": "986ed19cf1c81f546e74e5367a2a7618e21822b0011db332ad186ac2fffa87ca",
       "candidates": [
         {
           "width": 722,
-          "systemGap": 18,
-          "rows": 5,
+          "systemGap": 11.5,
+          "rows": 6,
           "pages": 1,
           "cost": 1433.2
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 12,
@@ -784,12 +798,15 @@
       "file": "rang_wo_men_dang_qi_shuang_jiang_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        55.51,
-        56.078,
-        56.079
+        49.01,
+        49.01,
+        49.01,
+        49.01
       ],
       "voltaSystems": [
+        false,
         false,
         false,
         false,
@@ -799,13 +816,14 @@
         "0:0",
         "0:0",
         "0:0,0:1",
+        "0:1",
         "0:1"
       ],
       "section": "basics",
       "group": "音阶与连奏",
       "reason": "弱起、附点与短连奏",
       "width": 722,
-      "systemGap": 18,
+      "systemGap": 11.5,
       "relativeScalePercent": 108.03,
       "screenNotePx": 21.21,
       "versusV1Percent": 122.75,
@@ -819,23 +837,23 @@
       "pages": [
         8
       ],
-      "systems": 4,
+      "systems": 5,
       "systemsPerPage": [
-        4
+        5
       ],
-      "sourceSha256": "c1f943e782179b549c83a4d35ca6c5f0207caee1679a949b981b6dc8bce4b78b",
+      "sourceSha256": "95182b3f043dff3d06917d1c97683c0eae7a1fbc099fbc91e4d9298f436a8976",
       "candidates": [
         {
           "width": 722,
-          "systemGap": 18,
-          "rows": 4,
+          "systemGap": 11.5,
+          "rows": 5,
           "pages": 1,
           "cost": 1433.2
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 13,
@@ -844,9 +862,10 @@
       "file": "auld_lang_syne_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        52.65,
-        52.65
+        48.65,
+        48.65
       ],
       "voltaSystems": [
         false,
@@ -862,7 +881,7 @@
       "group": "民歌与抒情",
       "reason": "弱起与八分音符",
       "width": 680,
-      "systemGap": 18,
+      "systemGap": 14,
       "relativeScalePercent": 114.71,
       "screenNotePx": 22.52,
       "versusV1Percent": 130.33,
@@ -880,11 +899,11 @@
       "systemsPerPage": [
         3
       ],
-      "sourceSha256": "d40a3489ba3c31a8924d43c4c3dbb4922ddce80bdbc37615a40bdd3289d9b019",
+      "sourceSha256": "0b1baae31e2e0a245741bec1a940c6f5d47412cd2f02cbd531aae45176eef527",
       "candidates": [
         {
           "width": 680,
-          "systemGap": 18,
+          "systemGap": 14,
           "rows": 3,
           "pages": 1,
           "cost": 1408
@@ -892,7 +911,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 14,
@@ -901,10 +920,11 @@
       "file": "mo_si_ke_jiao_wai_de_wan_shang_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        55.51,
-        55.51,
-        55.51
+        51.51,
+        51.51,
+        51.51
       ],
       "voltaSystems": [
         false,
@@ -922,7 +942,7 @@
       "group": "民歌与抒情",
       "reason": "小调旋律与连贯气息",
       "width": 680,
-      "systemGap": 18,
+      "systemGap": 14,
       "relativeScalePercent": 114.71,
       "screenNotePx": 22.52,
       "versusV1Percent": 130.33,
@@ -940,11 +960,11 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "44f07778abe4a58cfd7685efa29d5ecc76051cefc02d00bfe339902464989f1d",
+      "sourceSha256": "4c9dc7b52e9ad9df4562a1110936bc0d0642f8331062770c78067048e0cbaa53",
       "candidates": [
         {
           "width": 680,
-          "systemGap": 18,
+          "systemGap": 14,
           "rows": 4,
           "pages": 1,
           "cost": 1408
@@ -952,7 +972,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 15,
@@ -961,13 +981,16 @@
       "file": "san_tao_che_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        55.51,
-        61.67,
-        61.67,
-        61.67
+        57.67,
+        57.67,
+        57.67,
+        57.67,
+        57.67
       ],
       "voltaSystems": [
+        false,
         false,
         false,
         false,
@@ -977,6 +1000,7 @@
       "paragraphSystems": [
         "0:0,0:1",
         "0:1",
+        "0:1",
         "0:1,0:2",
         "0:2",
         "0:2"
@@ -985,7 +1009,7 @@
       "group": "民歌与抒情",
       "reason": "低音区与附点节奏",
       "width": 680,
-      "systemGap": 18,
+      "systemGap": 14,
       "relativeScalePercent": 114.71,
       "screenNotePx": 22.52,
       "versusV1Percent": 130.33,
@@ -999,23 +1023,23 @@
       "pages": [
         9
       ],
-      "systems": 5,
+      "systems": 6,
       "systemsPerPage": [
-        5
+        6
       ],
-      "sourceSha256": "7f9cf6b6bd7c9c1377d1c0e34060582266b4525b58e0be8b5ea922e119bd41db",
+      "sourceSha256": "be8d276d3ac975aec453bf2125ca7befcc7abcba7b255e3ca80dc17cb686f801",
       "candidates": [
         {
           "width": 680,
-          "systemGap": 18,
-          "rows": 5,
+          "systemGap": 14,
+          "rows": 6,
           "pages": 1,
           "cost": 1408
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 16,
@@ -1024,6 +1048,7 @@
       "file": "scarborough_fair_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         55.51,
         55.51,
@@ -1063,7 +1088,7 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "217693dec3eca3506a8cceb3cb2921e05d481cb017990507f29da71eebdf1b55",
+      "sourceSha256": "8a1ef157eec3d3429fcd3048ec9a819e625389790f870d47382d8c17adca176d",
       "candidates": [
         {
           "width": 660,
@@ -1075,7 +1100,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 17,
@@ -1084,6 +1109,7 @@
       "file": "sound_of_silence_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         55.51,
         55.51,
@@ -1123,7 +1149,7 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "20e0313677fa5d0c23982a9ed1c41eabe7bfe38266d3fa351e3d7195b6ad7b75",
+      "sourceSha256": "61fbfee8bc661decb9936622b8d7db96e2e44c06c387638c47427e2a22db6adc",
       "candidates": [
         {
           "width": 660,
@@ -1135,7 +1161,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 18,
@@ -1144,6 +1170,7 @@
       "file": "ai_er_lan_hua_mei_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         47.81,
         47.81,
@@ -1186,7 +1213,7 @@
       "systemsPerPage": [
         5
       ],
-      "sourceSha256": "a9584381752d2d1136c39623d83445cf60cf6d2b1c3140f06cfdbe8dbce5f0a9",
+      "sourceSha256": "34b62e11c479f17d89407616234fea19371b3cf22ce2e3e3a2398eec6239bd4d",
       "candidates": [
         {
           "width": 660,
@@ -1198,7 +1225,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 19,
@@ -1207,10 +1234,11 @@
       "file": "mo_li_hua_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        56.548,
-        56.548,
-        57.698
+        58.678,
+        58.679,
+        60.438
       ],
       "voltaSystems": [
         false,
@@ -1246,7 +1274,7 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "2390f561bb74d5f757889175a4fec77431f669ccda6d4c25f1aec93004e5208d",
+      "sourceSha256": "e37060b29ebc49189e82057bb3b9cc7b0be266a8baf7e01e0ae7ecfaf2509ef4",
       "candidates": [
         {
           "width": 700,
@@ -1258,7 +1286,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 20,
@@ -1267,6 +1295,7 @@
       "file": "katyusha_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         50.34,
         50.34,
@@ -1306,7 +1335,7 @@
       "systemsPerPage": [
         4
       ],
-      "sourceSha256": "93af49bd7fca60724e611714f94ce22a0e76ed5cb165062ac6e7f04d57b94243",
+      "sourceSha256": "7af445dfd853537f122d9900439d399b381989b3ab966b90a952708109dda4bc",
       "candidates": [
         {
           "width": 700,
@@ -1318,7 +1347,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 21,
@@ -1327,12 +1356,15 @@
       "file": "wo_niu_yu_huang_li_niao_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        53.476,
-        53.476,
+        57.088,
+        57.088,
+        58.59,
         58.59
       ],
       "voltaSystems": [
+        false,
         false,
         false,
         false,
@@ -1342,6 +1374,7 @@
         "0:0",
         "0:0",
         "0:0",
+        "0:0,0:1",
         "0:1"
       ],
       "section": "folk",
@@ -1362,23 +1395,23 @@
       "pages": [
         11
       ],
-      "systems": 4,
+      "systems": 5,
       "systemsPerPage": [
-        4
+        5
       ],
-      "sourceSha256": "5e8b591eb1000e275bd1a3db6aad314fef280e617505bfc1cd48177bbc0e73b8",
+      "sourceSha256": "76eccc4c3637f4098c8652d3c68b0b70e32bf10ff9034e7f7ab93989a8bb7dba",
       "candidates": [
         {
           "width": 700,
           "systemGap": 18,
-          "rows": 4,
+          "rows": 5,
           "pages": 1,
           "cost": 1420
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 22,
@@ -1387,6 +1420,7 @@
       "file": "hong_mei_hua_er_kai_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         53.75,
         130.31,
@@ -1459,6 +1493,7 @@
       "file": "the_internationale_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         134.62,
         134.62,
@@ -1534,6 +1569,7 @@
       "file": "wo_de_zu_guo_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         133.756,
         133.756,
@@ -1603,6 +1639,7 @@
       "file": "wo_he_wo_de_zu_guo_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         114.54,
         114.54,
@@ -1678,6 +1715,7 @@
       "file": "yue_liang_dai_biao_wo_de_xin_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         80.59,
         80.59,
@@ -1738,7 +1776,7 @@
       "systemsPerPage": [
         11
       ],
-      "sourceSha256": "6300d5e4f45e1e3ff694e351758016ba827177a83344634862bc864f368953ae",
+      "sourceSha256": "7f678588cba7d724f8faf99d1c31a98213178bed518bcbfb8c9f66053c342848",
       "candidates": [
         {
           "width": 660,
@@ -1750,7 +1788,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 27,
@@ -1759,6 +1797,7 @@
       "file": "li_hua_you_kai_fang_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         91.59,
         91.59,
@@ -1834,6 +1873,7 @@
       "file": "bai_hua_lin_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         95.66,
         95.66,
@@ -1915,6 +1955,7 @@
       "file": "guang_yin_de_gu_shi_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         131.63,
         131.63,
@@ -1966,7 +2007,7 @@
       "systemsPerPage": [
         8
       ],
-      "sourceSha256": "695e24d2673cd08f236f684003f3fe568427db6a8d1ae25b6384c5ec16487f1e",
+      "sourceSha256": "c0464dfaaf7b621205ccf74480a153245359052938295189af65b90a80580e2a",
       "candidates": [
         {
           "width": 762,
@@ -1978,7 +2019,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 30,
@@ -1987,6 +2028,7 @@
       "file": "tong_zhuo_de_ni_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         146.998,
         142.85,
@@ -2065,6 +2107,7 @@
       "file": "xiang_si_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         80.59,
         80.59,
@@ -2074,9 +2117,11 @@
         78.83,
         78.83,
         78.83,
+        78.83,
         78.83
       ],
       "voltaSystems": [
+        false,
         false,
         false,
         false,
@@ -2094,6 +2139,7 @@
         "0:0",
         "0:0",
         "0:0,0:1",
+        "0:1",
         "0:1",
         "0:1",
         "0:1",
@@ -2118,23 +2164,23 @@
       "pages": [
         21
       ],
-      "systems": 10,
+      "systems": 11,
       "systemsPerPage": [
-        10
+        11
       ],
-      "sourceSha256": "809c2055770745c8fd762127f4b2de6cb467013e0c3960fd64ef3bad1f599b32",
+      "sourceSha256": "d1fcab437bfd4f74642947a66a47a25696e728b787b6367c2b331dccaca99470",
       "candidates": [
         {
           "width": 640,
           "systemGap": 18,
-          "rows": 10,
+          "rows": 11,
           "pages": 1,
           "cost": 1384
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 32,
@@ -2143,6 +2189,7 @@
       "file": "bei_jia_er_hu_pan_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         116.505,
         124.755,
@@ -2221,17 +2268,18 @@
       "file": "yu_jian_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        80.59,
-        80.59,
-        80.59,
-        55.51,
-        80.59,
-        86.75,
-        110.07,
-        110.07,
-        110.07,
-        103.91
+        79.71,
+        79.71,
+        79.71,
+        79.49,
+        79.49,
+        83.56,
+        106.879,
+        106.88,
+        106.88,
+        102.81
       ],
       "voltaSystems": [
         false,
@@ -2250,7 +2298,7 @@
         "0:0",
         "0:0",
         "0:0",
-        "0:0",
+        "0:0,0:1",
         "0:1",
         "0:1",
         "0:1,0:2",
@@ -2281,7 +2329,7 @@
       "systemsPerPage": [
         11
       ],
-      "sourceSha256": "a69c45d0e18bde8c984b34aa5054468c028b3211b2bf3598c55f79b7b2da7869",
+      "sourceSha256": "f9323ac404ac6c383b665f5e6b45da66621b8a4f707f8af3da4dc37efb21b72a",
       "candidates": [
         {
           "width": 740,
@@ -2293,7 +2341,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 34,
@@ -2302,6 +2350,7 @@
       "file": "huang_hun_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         72.34,
         79.49,
@@ -2380,6 +2429,7 @@
       "file": "an_xiang_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         86.75,
         86.75,
@@ -2461,6 +2511,7 @@
       "file": "mei_li_de_shen_hua_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         72.34,
         72.34,
@@ -2545,6 +2596,7 @@
       "file": "dang_nian_qing_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         101.525,
         114.745,
@@ -2623,6 +2675,7 @@
       "file": "qian_nv_you_hun_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         86.733,
         86.734,
@@ -2686,6 +2739,7 @@
       "file": "tie_xue_dan_xin_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         77.9,
         77.9,
@@ -2752,6 +2806,7 @@
       "file": "qiu_ying_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         79.57,
         79.57,
@@ -2833,6 +2888,7 @@
       "file": "man_bu_ren_sheng_lu_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         106.99,
         106.99,
@@ -2911,6 +2967,7 @@
       "file": "wo_zhi_zai_hu_ni_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         100.402,
         100.403,
@@ -2986,6 +3043,7 @@
       "file": "guo_huo_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         82.169,
         82.169,
@@ -3070,6 +3128,7 @@
       "file": "yue_ding_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         78.34,
         78.34,
@@ -3151,6 +3210,7 @@
       "file": "hou_lai_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         84.99,
         84.99,
@@ -3265,6 +3325,7 @@
       "file": "tong_hua_zhen_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         103.91,
         103.91,
@@ -3373,6 +3434,7 @@
       "file": "lao_nan_hai_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         110.31,
         110.31,
@@ -3472,6 +3534,7 @@
       "file": "liang_liang_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         110.99,
         110.99,
@@ -3551,6 +3614,7 @@
       "file": "qian_si_xi_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         96.83,
         96.83,
@@ -3644,6 +3708,7 @@
       "file": "ren_shi_jian_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         64.57,
         64.57,
@@ -3728,6 +3793,7 @@
       "file": "shi_jie_zeng_yu_wo_de_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         106.946,
         123.895,
@@ -3806,6 +3872,7 @@
       "file": "ming_tian_hui_geng_hao_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         129.561,
         144.552,
@@ -3878,6 +3945,7 @@
       "file": "man_man_xi_huan_ni_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         106.167,
         106.168,
@@ -3956,6 +4024,7 @@
       "file": "xin_bu_liao_qing_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         91.81,
         91.81,
@@ -4031,6 +4100,7 @@
       "file": "wo_yao_ni_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         114.91,
         114.91,
@@ -4082,7 +4152,7 @@
       "systemsPerPage": [
         8
       ],
-      "sourceSha256": "701304fbe0f510a012e3f02457907e3f946a9433a0f6b8d4ee320b6a7de339f2",
+      "sourceSha256": "1b5b14e800d7f70fd88d207126952a540b564126283eae4c93d887b53875a04e",
       "candidates": [
         {
           "width": 640,
@@ -4094,7 +4164,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 56,
@@ -4103,6 +4173,7 @@
       "file": "annie_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         58.11,
         83.191,
@@ -4187,6 +4258,7 @@
       "file": "yi_qian_ge_shang_xin_de_li_you_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         111.082,
         133.835,
@@ -4265,6 +4337,7 @@
       "file": "yue_ban_xiao_ye_qu_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         84.99,
         84.99,
@@ -4349,6 +4422,7 @@
       "file": "andy_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         58.59,
         130.31,
@@ -4427,6 +4501,7 @@
       "file": "ting_hai_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         86.75,
         88.51,
@@ -4511,6 +4586,7 @@
       "file": "ru_yuan_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         103.91,
         103.91,
@@ -4616,6 +4692,7 @@
       "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         55.51,
         55.51,
@@ -4676,6 +4753,7 @@
       "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         66.73,
         66.73,
@@ -4751,6 +4829,7 @@
       "file": "liang_zhu_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         57.51,
         57.51,
@@ -4793,7 +4872,7 @@
       "systemsPerPage": [
         5
       ],
-      "sourceSha256": "28abc471eb20e0d1db5a2a33de78be1bb50447f3bb95729240c75ec0c99db894",
+      "sourceSha256": "75d68af5554ec6e64d6791ff9da8994129506d98e3d92e7077dcec46afe96fc4",
       "candidates": [
         {
           "width": 640,
@@ -4805,7 +4884,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 65,
@@ -4814,13 +4893,14 @@
       "file": "wen_rou_de_qing_su_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        57.4,
-        57.401,
-        57.4,
-        57.4,
-        57.4,
-        57.4
+        56.997,
+        56.997,
+        56.998,
+        56.997,
+        56.997,
+        56.922
       ],
       "voltaSystems": [
         false,
@@ -4862,7 +4942,7 @@
       "systemsPerPage": [
         7
       ],
-      "sourceSha256": "c69fa8876ac1e9b28e000c3dcc44ab10bdbe81661caae999bcad8fa18355d4b4",
+      "sourceSha256": "f1eefa97802acd31d1d3364a92de8d658d64fb9fc0b7022cfd02c4d50ad75a33",
       "candidates": [
         {
           "width": 640,
@@ -4874,7 +4954,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 66,
@@ -4883,28 +4963,25 @@
       "file": "castle_in_the_sky_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
-        47.26,
-        47.26,
-        47.26,
-        55.51,
-        55.51,
-        47.26,
-        47.26,
-        47.26,
-        47.26,
-        47.26,
-        47.26,
-        47.26,
-        47.26,
-        47.26,
-        47.26,
-        47.26,
-        47.26
+        51.26,
+        51.26,
+        59.51,
+        59.51,
+        59.51,
+        59.51,
+        59.51,
+        51.26,
+        51.26,
+        51.26,
+        51.26,
+        51.26,
+        51.26,
+        51.26,
+        51.26
       ],
       "voltaSystems": [
-        false,
-        false,
         false,
         false,
         false,
@@ -4926,18 +5003,16 @@
         "0:0",
         "0:0",
         "0:0",
-        "0:0",
+        "0:0,0:1",
         "0:1",
-        "0:1",
+        "0:1,0:2",
         "0:2",
         "0:2,0:3",
-        "0:3",
         "0:3",
         "0:3",
         "0:3,0:4",
         "0:4",
         "0:4,0:5",
-        "0:5",
         "0:5",
         "0:5",
         "0:5,0:6"
@@ -4946,7 +5021,7 @@
       "group": "短主题与歌唱性旋律",
       "reason": "长线条与高音区",
       "width": 672,
-      "systemGap": 18,
+      "systemGap": 22,
       "relativeScalePercent": 116.07,
       "screenNotePx": 22.79,
       "versusV1Percent": 131.88,
@@ -4960,23 +5035,23 @@
       "pages": [
         58
       ],
-      "systems": 18,
+      "systems": 16,
       "systemsPerPage": [
-        18
+        16
       ],
-      "sourceSha256": "dbe2a712a93474409f596a6fbfab215dd67a37055c5a1c52d6e799d5282e3894",
+      "sourceSha256": "cc2161dc0ebfac0e621f114673eb1eeee036f8c9d00669c97183f041b0c774c8",
       "candidates": [
         {
           "width": 672,
-          "systemGap": 18,
-          "rows": 18,
+          "systemGap": 22,
+          "rows": 16,
           "pages": 1,
           "cost": 1403.2
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "段内统一音乐行高，标题只占所在行；18行，22.79px，各页高度利用率 94.08%。"
+      "reviewNote": "段内统一音乐行高，标题只占所在行；16行，22.79px，额外行间留白22px，高度利用率93.51%。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 67,
@@ -4985,6 +5060,7 @@
       "file": "xia_yu_de_shi_hou_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         55.51,
         55.51,
@@ -4996,11 +5072,13 @@
         55.51,
         55.51,
         55.51,
-        61.67,
-        61.67,
-        61.67
+        57.452,
+        57.452,
+        57.452,
+        57.452
       ],
       "voltaSystems": [
+        false,
         false,
         false,
         false,
@@ -5020,7 +5098,7 @@
         "0:0",
         "0:0",
         "0:0",
-        "0:1",
+        "0:0,0:1",
         "0:1",
         "0:1",
         "0:1",
@@ -5028,6 +5106,7 @@
         "0:2",
         "0:2",
         "0:2",
+        "0:2,0:3",
         "0:3",
         "0:3",
         "0:3"
@@ -5050,23 +5129,23 @@
       "pages": [
         59
       ],
-      "systems": 14,
+      "systems": 15,
       "systemsPerPage": [
-        14
+        15
       ],
-      "sourceSha256": "f049ab9327b8223d0b27695cc62daa25eb3f06344a5542f8a6041ec55064239d",
+      "sourceSha256": "b9819f640ea65a1562acdd87850ef04748a0d253ec2762bb4a54f7eb13403aa6",
       "candidates": [
         {
           "width": 640,
           "systemGap": 18,
-          "rows": 14,
+          "rows": 15,
           "pages": 1,
           "cost": 1384
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 68,
@@ -5075,6 +5154,7 @@
       "file": "second_waltz_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         53.75,
         59.91,
@@ -5082,8 +5162,8 @@
         59.91,
         59.91,
         78.445,
-        53.75,
-        53.75,
+        58.899,
+        58.898,
         59.91,
         59.91,
         59.91,
@@ -5147,7 +5227,7 @@
       "systemsPerPage": [
         15
       ],
-      "sourceSha256": "18c400f9400998eddc6e9d18f1cdc00d8ecda4cb1a204589b4e02d615d99f08f",
+      "sourceSha256": "c14c9c7357c3ce6a503e092071dc1b7282d20bd1e20b32d5c88c54030f19fbd6",
       "candidates": [
         {
           "width": 700,
@@ -5159,7 +5239,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 69,
@@ -5168,6 +5248,7 @@
       "file": "doraemon_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         84.73,
         84.73,
@@ -5278,6 +5359,7 @@
       "file": "yun_gong_xun_yin_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         59.91,
         59.91,
@@ -5371,6 +5453,7 @@
       "file": "super_mario_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         70.59,
         68.51,
@@ -5455,6 +5538,7 @@
       "file": "qing_niao_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         59.91,
         61.67,
@@ -5548,6 +5632,7 @@
       "file": "ju_ci_lang_de_xia_tian_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         78.73,
         78.73,
@@ -5661,6 +5746,7 @@
       "file": "por_una_cabeza_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         61.91,
         61.91,
@@ -5727,6 +5813,7 @@
       "file": "san_bu_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         63.65,
         63.65,
@@ -5802,6 +5889,7 @@
       "file": "beer_barrel_polka_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": true,
       "baselineSteps": [
         53.81,
         53.81,
@@ -5871,7 +5959,7 @@
       "systemsPerPage": [
         14
       ],
-      "sourceSha256": "1cf04890ac87b654171671c79cb18cc68ff72e94b19d94eff9856a3fd4d14283",
+      "sourceSha256": "d5be55b168ba38e977a20d01578c0f78917229ba7fdd14430b519e13ed2f3c28",
       "candidates": [
         {
           "width": 640,
@@ -5883,7 +5971,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "段内统一音乐行高，标题只占所在行；14行，23.93px，各页高度利用率 98.54%。"
+      "reviewNote": "段内统一音乐行高，标题只占所在行；14行，23.93px，各页高度利用率 98.54%。 开启行内小节等宽，保留原音符字号与页数。"
     },
     {
       "order": 77,
@@ -5892,6 +5980,7 @@
       "file": "canon_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         57.206,
         57.207,
@@ -5994,6 +6083,7 @@
       "file": "xi_yang_yang_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         66.59,
         66.59,
@@ -6075,6 +6165,7 @@
       "file": "flower_dance_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         74.028,
         67.79,
@@ -6264,6 +6355,7 @@
       "file": "turkish_march_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         50.388,
         56.09,
@@ -6411,6 +6503,7 @@
       "file": "valsentino_01.m3n",
       "includeBass": true,
       "uniformSystemHeight": true,
+      "equalMeasures": false,
       "baselineSteps": [
         65.51,
         63.43,
@@ -6585,7 +6678,7 @@
     {
       "page": 6,
       "section": "basics",
-      "fillPercent": 95.3,
+      "fillPercent": 91.3,
       "items": [
         {
           "id": "xiao_xing_xing",
@@ -6604,12 +6697,12 @@
           "title": "欢乐颂",
           "systems": [
             1,
-            4
+            3
           ],
           "width": 766,
           "systemGap": 18,
           "top": 189.15,
-          "height": 291.4
+          "height": 242.53
         },
         {
           "id": "wo_he_ni",
@@ -6620,7 +6713,7 @@
           ],
           "width": 766,
           "systemGap": 18,
-          "top": 502.55,
+          "top": 453.68,
           "height": 208.49
         },
         {
@@ -6632,15 +6725,15 @@
           ],
           "width": 766,
           "systemGap": 18,
-          "top": 733.04,
-          "height": 274.23
+          "top": 684.17,
+          "height": 281.04
         }
       ]
     },
     {
       "page": 7,
       "section": "basics",
-      "fillPercent": 100,
+      "fillPercent": 99.7,
       "items": [
         {
           "id": "song_bie",
@@ -6650,21 +6743,21 @@
             4
           ],
           "width": 704,
-          "systemGap": 18,
+          "systemGap": 13.5,
           "top": 0,
-          "height": 287.93
+          "height": 270.14
         },
         {
           "id": "hong_he_gu",
           "title": "红河谷",
           "systems": [
             1,
-            2
+            3
           ],
           "width": 704,
-          "systemGap": 18,
-          "top": 309.93,
-          "height": 195.08
+          "systemGap": 13.5,
+          "top": 292.14,
+          "height": 240.53
         },
         {
           "id": "su_shan_na",
@@ -6674,9 +6767,9 @@
             3
           ],
           "width": 704,
-          "systemGap": 18,
-          "top": 527.01,
-          "height": 226.85
+          "systemGap": 13.5,
+          "top": 554.67,
+          "height": 213.51
         },
         {
           "id": "xiao_hong_mao",
@@ -6686,16 +6779,16 @@
             4
           ],
           "width": 704,
-          "systemGap": 18,
-          "top": 775.86,
-          "height": 280.97
+          "systemGap": 13.5,
+          "top": 790.17,
+          "height": 263.17
         }
       ]
     },
     {
       "page": 8,
       "section": "basics",
-      "fillPercent": 98.8,
+      "fillPercent": 99.9,
       "items": [
         {
           "id": "chong_er_fei",
@@ -6705,40 +6798,40 @@
             4
           ],
           "width": 722,
-          "systemGap": 18,
+          "systemGap": 11.5,
           "top": 0,
-          "height": 297.72
+          "height": 272.65
         },
         {
           "id": "duo_lai_mi",
           "title": "哆唻咪",
           "systems": [
             1,
-            5
+            6
           ],
           "width": 722,
-          "systemGap": 18,
-          "top": 319.72,
-          "height": 397.41
+          "systemGap": 11.5,
+          "top": 294.65,
+          "height": 414.97
         },
         {
           "id": "rang_wo_men_dang_qi_shuang_jiang",
           "title": "让我们荡起双桨",
           "systems": [
             1,
-            4
+            5
           ],
           "width": 722,
-          "systemGap": 18,
-          "top": 739.13,
-          "height": 304.75
+          "systemGap": 11.5,
+          "top": 731.62,
+          "height": 324.14
         }
       ]
     },
     {
       "page": 9,
       "section": "folk",
-      "fillPercent": 96.5,
+      "fillPercent": 98.6,
       "items": [
         {
           "id": "auld_lang_syne",
@@ -6748,9 +6841,9 @@
             3
           ],
           "width": 680,
-          "systemGap": 18,
+          "systemGap": 14,
           "top": 0,
-          "height": 256.81
+          "height": 244.53
         },
         {
           "id": "mo_si_ke_jiao_wai_de_wan_shang",
@@ -6760,21 +6853,21 @@
             4
           ],
           "width": 680,
-          "systemGap": 18,
-          "top": 278.81,
-          "height": 320.61
+          "systemGap": 14,
+          "top": 266.53,
+          "height": 304.23
         },
         {
           "id": "san_tao_che",
           "title": "三套车",
           "systems": [
             1,
-            5
+            6
           ],
           "width": 680,
-          "systemGap": 18,
-          "top": 621.42,
-          "height": 398.14
+          "systemGap": 14,
+          "top": 592.77,
+          "height": 449.31
         }
       ]
     },
@@ -6824,7 +6917,7 @@
     {
       "page": 11,
       "section": "folk",
-      "fillPercent": 90.7,
+      "fillPercent": 98.1,
       "items": [
         {
           "id": "mo_li_hua",
@@ -6836,7 +6929,7 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 320.22
+          "height": 329.3
         },
         {
           "id": "katyusha",
@@ -6847,7 +6940,7 @@
           ],
           "width": 700,
           "systemGap": 18,
-          "top": 342.22,
+          "top": 351.3,
           "height": 289.58
         },
         {
@@ -6855,12 +6948,12 @@
           "title": "蜗牛与黄鹂鸟",
           "systems": [
             1,
-            4
+            5
           ],
           "width": 700,
           "systemGap": 18,
-          "top": 653.8,
-          "height": 305.38
+          "top": 662.88,
+          "height": 374.41
         }
       ]
     },
@@ -7038,19 +7131,19 @@
     {
       "page": 21,
       "section": "pop",
-      "fillPercent": 91.5,
+      "fillPercent": 99.6,
       "items": [
         {
           "id": "xiang_si",
           "title": "相思",
           "systems": [
             1,
-            10
+            11
           ],
           "width": 640,
           "systemGap": 18,
           "top": 0,
-          "height": 967.28
+          "height": 1053.01
         }
       ]
     },
@@ -7076,7 +7169,7 @@
     {
       "page": 23,
       "section": "pop",
-      "fillPercent": 95.2,
+      "fillPercent": 95.6,
       "items": [
         {
           "id": "yu_jian",
@@ -7088,7 +7181,7 @@
           "width": 740,
           "systemGap": 18,
           "top": 0,
-          "height": 1006.31
+          "height": 1010.54
         }
       ]
     },
@@ -7746,7 +7839,7 @@
     {
       "page": 57,
       "section": "instrumental",
-      "fillPercent": 91.8,
+      "fillPercent": 91.5,
       "items": [
         {
           "id": "liang_zhu",
@@ -7770,52 +7863,52 @@
           "width": 640,
           "systemGap": 20,
           "top": 435.8,
-          "height": 534.7
+          "height": 531.55
         }
       ]
     },
     {
       "page": 58,
       "section": "instrumental",
-      "fillPercent": 94.1,
+      "fillPercent": 93.5,
       "items": [
         {
           "id": "castle_in_the_sky",
           "title": "天空之城",
           "systems": [
             1,
-            18
+            16
           ],
           "width": 672,
-          "systemGap": 18,
+          "systemGap": 22,
           "top": 0,
-          "height": 994.43
+          "height": 988.45
         }
       ]
     },
     {
       "page": 59,
       "section": "instrumental",
-      "fillPercent": 91.4,
+      "fillPercent": 96,
       "items": [
         {
           "id": "xia_yu_de_shi_hou",
           "title": "下雨的时候",
           "systems": [
             1,
-            14
+            15
           ],
           "width": 640,
           "systemGap": 18,
           "top": 0,
-          "height": 966.33
+          "height": 1015.05
         }
       ]
     },
     {
       "page": 60,
       "section": "instrumental",
-      "fillPercent": 93.7,
+      "fillPercent": 94.6,
       "items": [
         {
           "id": "second_waltz",
@@ -7827,7 +7920,7 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 989.88
+          "height": 1000.12
         }
       ]
     },

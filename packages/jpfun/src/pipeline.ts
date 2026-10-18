@@ -49,7 +49,7 @@ export function compileScore(
     const natural = compileRaw(source, options, true);
     const page = normalizePageConfig(natural.lowering.page);
     const preferred = natural.lowering.columns.flat().filter(node => node.addon?.preferredBreakBefore).map(node => node.t.toString());
-    const positions = automaticBreakPositions(natural.layout, page.width - page.marginLeft - page.marginRight, new Set(preferred));
+    const positions = automaticBreakPositions(natural.layout, page.width - page.marginLeft - page.marginRight, new Set(preferred), options.equalMeasures);
     if (!positions.length) return compileRaw(source, options);
     const inserted = insertAutomaticBreaks(source, positions, natural.layout);
     const result = compileRaw(inserted.source, options);
@@ -90,6 +90,7 @@ function compileRaw(source: string, options: CompileScoreOptions, natural = fals
     const layoutContext = createLayoutPrepareContext(functions, { textMeasurer, alignRelations });
     const configuredPage = lowering.page;
     if (natural) lowering.page = { ...normalizePageConfig(configuredPage), width: 100_000_000, height: Infinity, fillRatio: 1 };
+    if (natural) layoutOptions.equalMeasures = false;
     const layout = layoutDocument(lowering, layoutContext, layoutOptions);
     lowering.page = configuredPage;
 
