@@ -33,7 +33,11 @@ export function measure(source, width, spacing = {}) {
   // The browser's generic serif is pinned to the export font by prepare().
   const systems = [...svg.querySelectorAll('g.system')].map(node => {
     const b = node.getBBox()
-    return { top: b.y, bottom: b.y + b.height, node }
+    return {
+      top: Math.min(b.y, Number(node.getAttribute('data-m3n-top') ?? Infinity)),
+      bottom: Math.max(b.y + b.height, Number(node.getAttribute('data-m3n-bottom') ?? -Infinity)),
+      node,
+    }
   })
   if (!systems.length) throw new Error('Empty score')
   let bottom = 0

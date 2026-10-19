@@ -1,4 +1,4 @@
-import { ASTFunctionNode, ANCHOR_KEY, isLayoutAttachment, renderLayoutPagesToSvg, type ASTNodeBase, type CompileScoreResult, type VisualTemporalNode } from '@m3n/jpfun'
+import { ASTFunctionNode, ANCHOR_KEY, getLayoutBounds, isLayoutAttachment, renderLayoutPagesToSvg, type ASTNodeBase, type CompileScoreResult, type VisualTemporalNode } from '@m3n/jpfun'
 import { parse, stringify, type TNode } from 'txml/txml'
 import { NUMBER_FONT_CSS } from './font-data.js'
 import type { EventBinding, ProjectedScore } from './projection.js'
@@ -24,6 +24,17 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
     .map(attachment => spanKey(attachment.sourceSpan!)))
   const voltaLines = new Set(result.layout.attachments.filter(attachment => attachment.sourceSpan && voltaSpans.has(spanKey(attachment.sourceSpan)))
     .flatMap(attachment => attachment.regions.flatMap(region => region.line === undefined ? [] : [region.line])))
+  // Global relationships are painted outside g.system; retain their native line
+  // ownership so external pagination cannot leave an ending above the wrong page.
+  const systemBounds = new Map<number, { top: number; bottom: number }>()
+  const include = (line: number, box: { y: number; h: number }) => {
+    const bounds = systemBounds.get(line)
+    systemBounds.set(line, { top: Math.min(bounds?.top ?? Infinity, box.y), bottom: Math.max(bounds?.bottom ?? -Infinity, box.y + box.h) })
+  }
+  for (const node of result.layout.objects) include(node.layoutLine, getLayoutBounds(node))
+  for (const attachment of result.layout.attachments) for (const region of attachment.regions) {
+    if (region.line !== undefined) include(region.line, region)
+  }
   const located = new Map<VisualTemporalNode, Located>()
   const sourceTargets = new Map<string, Located>()
   for (const node of result.layout.objects) {
@@ -95,7 +106,8 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       let system = systems.get(systemIndex)
       if (!system) {
         const paragraphs = [...new Set(result.layout.objects.filter(node => node.layoutLine === Number(systemIndex) && !node.T.isZero()).map(node => node.addon?.systemHeightGroup ?? ''))]
-        system = { tagName: 'g', attributes: { class: 'system', id: `m3n-system-${pageIndex + 1}-${systemIndex}`, 'data-m3n-volta': String(voltaLines.has(Number(systemIndex))), 'data-m3n-paragraph': paragraphs.join(',') }, children: [] }
+        const bounds = systemBounds.get(Number(systemIndex))!
+        system = { tagName: 'g', attributes: { class: 'system', id: `m3n-system-${pageIndex + 1}-${systemIndex}`, 'data-m3n-volta': String(voltaLines.has(Number(systemIndex))), 'data-m3n-paragraph': paragraphs.join(','), 'data-m3n-top': String(bounds.top), 'data-m3n-bottom': String(bounds.bottom) }, children: [] }
         systems.set(systemIndex, system)
       }
       let measure = measures.get(key)

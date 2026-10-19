@@ -1,0 +1,1384 @@
+{
+  "edition": "第二十五版",
+  "pageCount": 79,
+  "sourceCount": 81,
+  "unchangedSourceCount": 79,
+  "unchangedSourceAndLayoutCount": 75,
+  "changedScores": [
+    {
+      "id": "tong_hua_zhen",
+      "title": "童话镇",
+      "beforePages": [
+        36
+      ],
+      "afterPages": [
+        36,
+        37
+      ],
+      "beforeNotePx": 19,
+      "afterNotePx": 23.2,
+      "noteIncreasePercent": 22.10526315789474,
+      "beforeGap": 1,
+      "afterGap": 18,
+      "systemsPerPage": [
+        8,
+        10
+      ],
+      "beforeMedianBaselinePx": 73.53863636363636,
+      "afterMedianBaselinePx": 109.57781818181819,
+      "minimumBaselinePx": 76.28581818181819,
+      "fillPercent": [
+        {
+          "page": 36,
+          "fillPercent": 91.9579599208738
+        },
+        {
+          "page": 37,
+          "fillPercent": 98.04768233364463
+        }
+      ]
+    },
+    {
+      "id": "qian_si_xi",
+      "title": "牵丝戏",
+      "beforePages": [
+        40
+      ],
+      "afterPages": [
+        41,
+        42
+      ],
+      "beforeNotePx": 19.859922178988327,
+      "afterNotePx": 23.925,
+      "noteIncreasePercent": 20.468749999999993,
+      "beforeGap": 8,
+      "afterGap": 30,
+      "systemsPerPage": [
+        8,
+        8
+      ],
+      "beforeMedianBaselinePx": 86.93049027237353,
+      "afterMedianBaselinePx": 130.0269375,
+      "minimumBaselinePx": 98.777625,
+      "fillPercent": [
+        {
+          "page": 41,
+          "fillPercent": 96.67894136161249
+        },
+        {
+          "page": 42,
+          "fillPercent": 99.12784697869711
+        }
+      ]
+    },
+    {
+      "id": "ren_shi_jian",
+      "title": "人世间",
+      "beforePages": [
+        41
+      ],
+      "afterPages": [
+        43
+      ],
+      "beforeNotePx": 20.804347826086957,
+      "afterNotePx": 20.804347826086957,
+      "noteIncreasePercent": 0,
+      "beforeGap": 0,
+      "afterGap": 5,
+      "systemsPerPage": [
+        12
+      ],
+      "beforeMedianBaselinePx": 85.40184782608696,
+      "afterMedianBaselinePx": 90.13010869565217,
+      "minimumBaselinePx": 65.78902173913043,
+      "fillPercent": [
+        {
+          "page": 43,
+          "fillPercent": 99.8483501767922
+        }
+      ]
+    },
+    {
+      "id": "man_man_xi_huan_ni",
+      "title": "慢慢喜欢你",
+      "beforePages": [
+        44
+      ],
+      "afterPages": [
+        46
+      ],
+      "beforeNotePx": 20.804347826086957,
+      "afterNotePx": 20.804347826086957,
+      "noteIncreasePercent": 0,
+      "beforeGap": 0,
+      "afterGap": 8,
+      "systemsPerPage": [
+        10
+      ],
+      "beforeMedianBaselinePx": 93.51554347826087,
+      "afterMedianBaselinePx": 101.08076086956522,
+      "minimumBaselinePx": 63.17902173913044,
+      "fillPercent": [
+        {
+          "page": 46,
+          "fillPercent": 98.51825866002527
+        }
+      ]
+    },
+    {
+      "id": "ru_yuan",
+      "title": "如愿",
+      "beforePages": [
+        52
+      ],
+      "afterPages": [
+        54,
+        55
+      ],
+      "beforeNotePx": 19.09226932668329,
+      "afterNotePx": 23.2,
+      "noteIncreasePercent": 21.51515151515151,
+      "beforeGap": 0,
+      "afterGap": 24,
+      "systemsPerPage": [
+        8,
+        10
+      ],
+      "beforeMedianBaselinePx": 72.07331670822943,
+      "afterMedianBaselinePx": 95.9530909090909,
+      "minimumBaselinePx": 92.71247272727274,
+      "fillPercent": [
+        {
+          "page": 54,
+          "fillPercent": 93.26435749192751
+        },
+        {
+          "page": 55,
+          "fillPercent": 97.6894849638143
+        }
+      ]
+    },
+    {
+      "id": "canon",
+      "title": "卡农",
+      "beforePages": [
+        67
+      ],
+      "afterPages": [
+        70,
+        71
+      ],
+      "beforeNotePx": 19.630769230769232,
+      "afterNotePx": 23.925,
+      "noteIncreasePercent": 21.875,
+      "beforeGap": 18,
+      "afterGap": 42,
+      "systemsPerPage": [
+        11,
+        12
+      ],
+      "beforeMedianBaselinePx": 50.53495384615385,
+      "afterMedianBaselinePx": 87.0358875,
+      "minimumBaselinePx": 78.09337500000001,
+      "fillPercent": [
+        {
+          "page": 70,
+          "fillPercent": 99.22321106649956
+        },
+        {
+          "page": 71,
+          "fillPercent": 97.382587515868
+        }
+      ]
+    }
+  ],
+  "musicValidation": [
+    {
+      "id": "tong_hua_zhen",
+      "performedSegments": 99,
+      "notesRhythmLyricsTiesEqual": true,
+      "notationAndRelationTokensEqual": true
+    },
+    {
+      "id": "ru_yuan",
+      "performedSegments": 104,
+      "notesRhythmLyricsTiesEqual": true,
+      "notationAndRelationTokensEqual": true
+    }
+  ],
+  "contentsEntriesChecked": 81,
+  "existingPairingsPreserved": true,
+  "onlyExercisesUseEqualMeasures": true,
+  "nativeSystemBoundsMetadataAdded": true,
+  "engravingUnchangedOutsideEditedScores": true,
+  "exactPageFill": [
+    {
+      "page": 4,
+      "fillPercent": 96.40560905824222
+    },
+    {
+      "page": 5,
+      "fillPercent": 99.54331188793013
+    },
+    {
+      "page": 6,
+      "fillPercent": 95.29543718575815
+    },
+    {
+      "page": 7,
+      "fillPercent": 94.5124801221078
+    },
+    {
+      "page": 8,
+      "fillPercent": 91.05278359584857
+    },
+    {
+      "page": 9,
+      "fillPercent": 91.81053971572885
+    },
+    {
+      "page": 10,
+      "fillPercent": 99.96473846261658
+    },
+    {
+      "page": 11,
+      "fillPercent": 90.74553823284175
+    },
+    {
+      "page": 12,
+      "fillPercent": 95.07590891542826
+    },
+    {
+      "page": 13,
+      "fillPercent": 94.32731849398903
+    },
+    {
+      "page": 14,
+      "fillPercent": 99.09178885243838
+    },
+    {
+      "page": 15,
+      "fillPercent": 98.36516116553396
+    },
+    {
+      "page": 16,
+      "fillPercent": 97.65689905956829
+    },
+    {
+      "page": 17,
+      "fillPercent": 98.18077649952897
+    },
+    {
+      "page": 18,
+      "fillPercent": 92.9700026101624
+    },
+    {
+      "page": 19,
+      "fillPercent": 99.10297016560423
+    },
+    {
+      "page": 20,
+      "fillPercent": 96.3009514023056
+    },
+    {
+      "page": 21,
+      "fillPercent": 91.51174876638032
+    },
+    {
+      "page": 22,
+      "fillPercent": 97.53244397001303
+    },
+    {
+      "page": 23,
+      "fillPercent": 95.20388119435749
+    },
+    {
+      "page": 24,
+      "fillPercent": 96.73804016323258
+    },
+    {
+      "page": 25,
+      "fillPercent": 98.21562075005913
+    },
+    {
+      "page": 26,
+      "fillPercent": 99.97153412991237
+    },
+    {
+      "page": 27,
+      "fillPercent": 95.46538271923365
+    },
+    {
+      "page": 28,
+      "fillPercent": 98.00573379480318
+    },
+    {
+      "page": 29,
+      "fillPercent": 91.6156478636425
+    },
+    {
+      "page": 30,
+      "fillPercent": 95.72915542503185
+    },
+    {
+      "page": 31,
+      "fillPercent": 93.85206019610789
+    },
+    {
+      "page": 32,
+      "fillPercent": 98.47287991564946
+    },
+    {
+      "page": 33,
+      "fillPercent": 96.05124977507798
+    },
+    {
+      "page": 34,
+      "fillPercent": 92.74261311046045
+    },
+    {
+      "page": 35,
+      "fillPercent": 95.56041886970118
+    },
+    {
+      "page": 36,
+      "fillPercent": 91.9579599208738
+    },
+    {
+      "page": 37,
+      "fillPercent": 98.04768233364463
+    },
+    {
+      "page": 38,
+      "fillPercent": 98.88384739777332
+    },
+    {
+      "page": 39,
+      "fillPercent": 93.10861760764143
+    },
+    {
+      "page": 40,
+      "fillPercent": 97.72360570115744
+    },
+    {
+      "page": 41,
+      "fillPercent": 96.67894136161249
+    },
+    {
+      "page": 42,
+      "fillPercent": 99.12784697869711
+    },
+    {
+      "page": 43,
+      "fillPercent": 99.8483501767922
+    },
+    {
+      "page": 44,
+      "fillPercent": 93.8293028363018
+    },
+    {
+      "page": 45,
+      "fillPercent": 96.45717373758102
+    },
+    {
+      "page": 46,
+      "fillPercent": 98.51825866002527
+    },
+    {
+      "page": 47,
+      "fillPercent": 92.76130393919519
+    },
+    {
+      "page": 48,
+      "fillPercent": 94.38224251358264
+    },
+    {
+      "page": 49,
+      "fillPercent": 97.30163386746604
+    },
+    {
+      "page": 50,
+      "fillPercent": 92.75501462707231
+    },
+    {
+      "page": 51,
+      "fillPercent": 99.01408427650514
+    },
+    {
+      "page": 52,
+      "fillPercent": 99.88942273792591
+    },
+    {
+      "page": 53,
+      "fillPercent": 97.25825656937786
+    },
+    {
+      "page": 54,
+      "fillPercent": 93.26435749192751
+    },
+    {
+      "page": 55,
+      "fillPercent": 97.6894849638143
+    },
+    {
+      "page": 56,
+      "fillPercent": 98.88662682678172
+    },
+    {
+      "page": 57,
+      "fillPercent": 91.81719168527238
+    },
+    {
+      "page": 58,
+      "fillPercent": 97.60798421207674
+    },
+    {
+      "page": 59,
+      "fillPercent": 91.42201659723396
+    },
+    {
+      "page": 60,
+      "fillPercent": 93.65005069572324
+    },
+    {
+      "page": 61,
+      "fillPercent": 91.07324195652495
+    },
+    {
+      "page": 62,
+      "fillPercent": 96.30393099897631
+    },
+    {
+      "page": 63,
+      "fillPercent": 97.28456033437796
+    },
+    {
+      "page": 64,
+      "fillPercent": 91.31089847185979
+    },
+    {
+      "page": 65,
+      "fillPercent": 96.33386129651262
+    },
+    {
+      "page": 66,
+      "fillPercent": 91.99920791438309
+    },
+    {
+      "page": 67,
+      "fillPercent": 90.38843153102735
+    },
+    {
+      "page": 68,
+      "fillPercent": 93.18468626197375
+    },
+    {
+      "page": 69,
+      "fillPercent": 98.54046412876673
+    },
+    {
+      "page": 70,
+      "fillPercent": 99.22321106649956
+    },
+    {
+      "page": 71,
+      "fillPercent": 97.382587515868
+    },
+    {
+      "page": 72,
+      "fillPercent": 90.82322208776492
+    },
+    {
+      "page": 73,
+      "fillPercent": 99.65582017386144
+    },
+    {
+      "page": 74,
+      "fillPercent": 96.69025841889834
+    },
+    {
+      "page": 75,
+      "fillPercent": 93.29574006375056
+    },
+    {
+      "page": 76,
+      "fillPercent": 93.63396342941279
+    },
+    {
+      "page": 77,
+      "fillPercent": 97.5377691359747
+    },
+    {
+      "page": 78,
+      "fillPercent": 95.92171042798867
+    },
+    {
+      "page": 79,
+      "fillPercent": 92.39901970709145
+    }
+  ],
+  "validation": {
+    "sourceCoverage": true,
+    "trainingSourcePreserved": true,
+    "geometryCandidates": 81,
+    "minimumMusicPageFillPercent": 90.388,
+    "underfilledMusicPages": 0,
+    "outside": 0,
+    "overlaps": 0,
+    "unsafeCuts": 0,
+    "orphanContinuationPages": 0,
+    "maximumMusicNotePx": 23.925,
+    "oversizedNoteEntries": 0,
+    "outlinedPages": 79,
+    "outlinedPageOverflow": 0
+  },
+  "visualReview": {
+    "previousEditionPages": 75,
+    "finalEditionPages": 79,
+    "finalContactSheets": 14,
+    "detailedPages": [
+      36,
+      37,
+      41,
+      42,
+      43,
+      46,
+      54,
+      55,
+      70,
+      71
+    ],
+    "method": "实际精简PDF由Poppler转为1000px宽PNG；逐页总览，并放大重点页面。",
+    "compactSha256": "ac713c68b60fe78074493835d2916930790d38b81d2d67770ee8b61821d66ecb",
+    "pages": [
+      {
+        "page": 1,
+        "kind": "cover",
+        "titles": [],
+        "observation": "封面层级和留白清楚，版次已更新。",
+        "detailed": false
+      },
+      {
+        "page": 2,
+        "kind": "contents",
+        "titles": [],
+        "observation": "目录左右两栏顺序清楚，编号、曲名与页码分离。",
+        "detailed": false
+      },
+      {
+        "page": 3,
+        "kind": "contents",
+        "titles": [],
+        "observation": "目录续页与正文新页码一致，四首拆页条目标为页码范围。",
+        "detailed": false
+      },
+      {
+        "page": 4,
+        "kind": "music",
+        "titles": [
+          "半音阶口琴基本功"
+        ],
+        "observation": "基本功较密；28项训练次序保持，标题贴近本行，小节边界清楚。保留两页要求。",
+        "detailed": false
+      },
+      {
+        "page": 5,
+        "kind": "music",
+        "titles": [
+          "半音阶口琴基本功"
+        ],
+        "observation": "基本功续页快速音型与三连音密集，分组清楚；未进一步挤压行距。",
+        "detailed": false
+      },
+      {
+        "page": 6,
+        "kind": "music",
+        "titles": [
+          "小星星",
+          "欢乐颂",
+          "我和你",
+          "很久以前"
+        ],
+        "observation": "四首入门曲合页，标题区分明确，欢乐颂只有旋律，字号协调。",
+        "detailed": false
+      },
+      {
+        "page": 7,
+        "kind": "music",
+        "titles": [
+          "送别",
+          "红河谷",
+          "苏珊娜",
+          "小红帽"
+        ],
+        "observation": "标题与各曲边界明确，音符及行间分隔清楚，保留既有合页。",
+        "detailed": false
+      },
+      {
+        "page": 8,
+        "kind": "music",
+        "titles": [
+          "虫儿飞",
+          "哆唻咪",
+          "让我们荡起双桨"
+        ],
+        "observation": "标题与各曲边界明确，音符及行间分隔清楚，保留既有合页。",
+        "detailed": false
+      },
+      {
+        "page": 9,
+        "kind": "music",
+        "titles": [
+          "友谊地久天长",
+          "莫斯科郊外的晚上",
+          "三套车"
+        ],
+        "observation": "标题与各曲边界明确，音符及行间分隔清楚，保留既有合页。",
+        "detailed": false
+      },
+      {
+        "page": 10,
+        "kind": "music",
+        "titles": [
+          "斯卡布罗集市",
+          "寂静之声",
+          "爱尔兰画眉"
+        ],
+        "observation": "标题与各曲边界明确，音符及行间分隔清楚，保留既有合页。",
+        "detailed": false
+      },
+      {
+        "page": 11,
+        "kind": "music",
+        "titles": [
+          "茉莉花",
+          "喀秋莎",
+          "蜗牛与黄鹂鸟"
+        ],
+        "observation": "标题与各曲边界明确，音符及行间分隔清楚，保留既有合页。",
+        "detailed": false
+      },
+      {
+        "page": 12,
+        "kind": "music",
+        "titles": [
+          "红莓花儿开"
+        ],
+        "observation": "三段歌词上下区分清楚；末段房子线与对应音符同行。",
+        "detailed": false
+      },
+      {
+        "page": 13,
+        "kind": "music",
+        "titles": [
+          "国际歌"
+        ],
+        "observation": "多段歌词完整，行间仍有留白；保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 14,
+        "kind": "music",
+        "titles": [
+          "我的祖国"
+        ],
+        "observation": "三段歌词与房子线区分清楚，末尾未裁切。",
+        "detailed": false
+      },
+      {
+        "page": 15,
+        "kind": "music",
+        "titles": [
+          "我和我的祖国"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 16,
+        "kind": "music",
+        "titles": [
+          "月亮代表我的心"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 17,
+        "kind": "music",
+        "titles": [
+          "梨花又开放"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 18,
+        "kind": "music",
+        "titles": [
+          "白桦林"
+        ],
+        "observation": "字号偏小且有两段歌词、导航记号，行间尚清楚；保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 19,
+        "kind": "music",
+        "titles": [
+          "光阴的故事"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 20,
+        "kind": "music",
+        "titles": [
+          "同桌的你"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 21,
+        "kind": "music",
+        "titles": [
+          "相思"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 22,
+        "kind": "music",
+        "titles": [
+          "贝加尔湖畔"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 23,
+        "kind": "music",
+        "titles": [
+          "遇见"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 24,
+        "kind": "music",
+        "titles": [
+          "黄昏"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 25,
+        "kind": "music",
+        "titles": [
+          "暗香"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 26,
+        "kind": "music",
+        "titles": [
+          "美丽的神话"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 27,
+        "kind": "music",
+        "titles": [
+          "当年情"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 28,
+        "kind": "music",
+        "titles": [
+          "倩女幽魂",
+          "铁血丹心"
+        ],
+        "observation": "标题与各曲边界明确，音符及行间分隔清楚，保留既有合页。",
+        "detailed": false
+      },
+      {
+        "page": 29,
+        "kind": "music",
+        "titles": [
+          "秋樱"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 30,
+        "kind": "music",
+        "titles": [
+          "漫步人生路"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 31,
+        "kind": "music",
+        "titles": [
+          "我只在乎你"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 32,
+        "kind": "music",
+        "titles": [
+          "过火"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 33,
+        "kind": "music",
+        "titles": [
+          "约定"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 34,
+        "kind": "music",
+        "titles": [
+          "后来"
+        ],
+        "observation": "后来首页音符与歌词分隔清楚，页底完整。",
+        "detailed": false
+      },
+      {
+        "page": 35,
+        "kind": "music",
+        "titles": [
+          "后来"
+        ],
+        "observation": "后来续页标题与首行分开，行距与首页协调。",
+        "detailed": false
+      },
+      {
+        "page": 36,
+        "kind": "music",
+        "titles": [
+          "童话镇"
+        ],
+        "observation": "童话镇放大至23.20px，两段歌词更易区分；页底没有孤立房子线。",
+        "detailed": true
+      },
+      {
+        "page": 37,
+        "kind": "music",
+        "titles": [
+          "童话镇"
+        ],
+        "observation": "童话镇续页首行包含第一、第二房子及音符；尾声反复完整，行间更宽。",
+        "detailed": true
+      },
+      {
+        "page": 38,
+        "kind": "music",
+        "titles": [
+          "老男孩"
+        ],
+        "observation": "老男孩两段歌词清楚，第一页页底完整。",
+        "detailed": false
+      },
+      {
+        "page": 39,
+        "kind": "music",
+        "titles": [
+          "老男孩"
+        ],
+        "observation": "老男孩续页导航、房子线与歌词对应清楚。",
+        "detailed": false
+      },
+      {
+        "page": 40,
+        "kind": "music",
+        "titles": [
+          "凉凉"
+        ],
+        "observation": "凉凉是本版最小字号19.04px；两行歌词和谱行仍可区分，保持单页。",
+        "detailed": false
+      },
+      {
+        "page": 41,
+        "kind": "music",
+        "titles": [
+          "牵丝戏"
+        ],
+        "observation": "牵丝戏放大至23.925px，单行及双行歌词分段明确，房子线留白充足。",
+        "detailed": true
+      },
+      {
+        "page": 42,
+        "kind": "music",
+        "titles": [
+          "牵丝戏"
+        ],
+        "observation": "牵丝戏续页三种结尾区分清楚，D.S.与末尾音符完整。",
+        "detailed": true
+      },
+      {
+        "page": 43,
+        "kind": "music",
+        "titles": [
+          "人世间"
+        ],
+        "observation": "人世间仍12行单页，增加5px额外留白；仍较密，但歌词没有压到下一行。",
+        "detailed": true
+      },
+      {
+        "page": 44,
+        "kind": "music",
+        "titles": [
+          "世界赠予我的"
+        ],
+        "observation": "世界赠予我的19.09px，双行歌词与房子线仍有清楚分隔，保持单页。",
+        "detailed": false
+      },
+      {
+        "page": 45,
+        "kind": "music",
+        "titles": [
+          "明天会更好"
+        ],
+        "observation": "明天会更好多段歌词和房子较复杂，段落留白尚可，保留原编排。",
+        "detailed": false
+      },
+      {
+        "page": 46,
+        "kind": "music",
+        "titles": [
+          "慢慢喜欢你"
+        ],
+        "observation": "慢慢喜欢你三段歌词、第一及第二第三房子完整，额外留白增加8px后层次更清楚。",
+        "detailed": true
+      },
+      {
+        "page": 47,
+        "kind": "music",
+        "titles": [
+          "新不了情"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 48,
+        "kind": "music",
+        "titles": [
+          "我要你"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 49,
+        "kind": "music",
+        "titles": [
+          "安妮"
+        ],
+        "observation": "安妮的多种结尾和导航位于所属行，歌词未见裁切。",
+        "detailed": false
+      },
+      {
+        "page": 50,
+        "kind": "music",
+        "titles": [
+          "一千个伤心的理由"
+        ],
+        "observation": "一千个伤心的理由字号偏小，但歌词及房子线分隔清楚；保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 51,
+        "kind": "music",
+        "titles": [
+          "月半小夜曲"
+        ],
+        "observation": "月半小夜曲多种结尾在下半页清楚分开，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 52,
+        "kind": "music",
+        "titles": [
+          "ANDY"
+        ],
+        "observation": "ANDY多段歌词与导航复杂，现有行间留白足够，保持。",
+        "detailed": false
+      },
+      {
+        "page": 53,
+        "kind": "music",
+        "titles": [
+          "听海"
+        ],
+        "observation": "听海字号偏小，但三连音、歌词及谱行仍有间隔，保持单页。",
+        "detailed": false
+      },
+      {
+        "page": 54,
+        "kind": "music",
+        "titles": [
+          "如愿"
+        ],
+        "observation": "如愿放大至23.20px，双行歌词清楚；第一房子跨行延续完整，页底留白。",
+        "detailed": true
+      },
+      {
+        "page": 55,
+        "kind": "music",
+        "titles": [
+          "如愿"
+        ],
+        "observation": "如愿续页包含第一房子收束和第二房子起点；转调、延音与末尾歌词完整。",
+        "detailed": true
+      },
+      {
+        "page": 56,
+        "kind": "music",
+        "titles": [
+          "太阳照常升起",
+          "直到世界的尽头"
+        ],
+        "observation": "标题与各曲边界明确，音符及行间分隔清楚，保留既有合页。",
+        "detailed": false
+      },
+      {
+        "page": 57,
+        "kind": "music",
+        "titles": [
+          "梁祝",
+          "温柔的倾诉"
+        ],
+        "observation": "标题与各曲边界明确，音符及行间分隔清楚，保留既有合页。",
+        "detailed": false
+      },
+      {
+        "page": 58,
+        "kind": "music",
+        "titles": [
+          "天空之城"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 59,
+        "kind": "music",
+        "titles": [
+          "下雨的时候"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 60,
+        "kind": "music",
+        "titles": [
+          "第二圆舞曲"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 61,
+        "kind": "music",
+        "titles": [
+          "哆啦A梦"
+        ],
+        "observation": "哆啦A梦首页段落名、三连音和器乐括号清楚。",
+        "detailed": false
+      },
+      {
+        "page": 62,
+        "kind": "music",
+        "titles": [
+          "哆啦A梦"
+        ],
+        "observation": "哆啦A梦续页段落衔接完整，首尾未裁切。",
+        "detailed": false
+      },
+      {
+        "page": 63,
+        "kind": "music",
+        "titles": [
+          "云宫迅音"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 64,
+        "kind": "music",
+        "titles": [
+          "超级玛丽"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 65,
+        "kind": "music",
+        "titles": [
+          "青鸟"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 66,
+        "kind": "music",
+        "titles": [
+          "菊次郎的夏天"
+        ],
+        "observation": "菊次郎的夏天连续快速音型较密，但23.925px音符与稳定行距可读，保持。",
+        "detailed": false
+      },
+      {
+        "page": 67,
+        "kind": "music",
+        "titles": [
+          "菊次郎的夏天"
+        ],
+        "observation": "菊次郎的夏天续页密集音型与首页协调，页底完整。",
+        "detailed": false
+      },
+      {
+        "page": 68,
+        "kind": "music",
+        "titles": [
+          "一步之遥",
+          "散步"
+        ],
+        "observation": "一步之遥／散步仍合页，19.14px、快速音型偏密；标题和两曲边界清楚，保留合页。",
+        "detailed": false
+      },
+      {
+        "page": 69,
+        "kind": "music",
+        "titles": [
+          "啤酒桶波尔卡"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 70,
+        "kind": "music",
+        "titles": [
+          "卡农"
+        ],
+        "observation": "卡农放大至23.925px，快速音型之间留白明显增加；首页11行。",
+        "detailed": true
+      },
+      {
+        "page": 71,
+        "kind": "music",
+        "titles": [
+          "卡农"
+        ],
+        "observation": "卡农续页12行，短音群与长音均清楚，反复和结尾完整。",
+        "detailed": true
+      },
+      {
+        "page": 72,
+        "kind": "music",
+        "titles": [
+          "喜洋洋"
+        ],
+        "observation": "音符、谱行与文字分隔清楚，总览未见新的拥挤或裁切，保留原布局。",
+        "detailed": false
+      },
+      {
+        "page": 73,
+        "kind": "music",
+        "titles": [
+          "花之舞"
+        ],
+        "observation": "花之舞第一页快速音型密集但字号足够，段落名清楚。",
+        "detailed": false
+      },
+      {
+        "page": 74,
+        "kind": "music",
+        "titles": [
+          "花之舞"
+        ],
+        "observation": "花之舞中页行距稳定，上下八度点及减时线分隔清楚。",
+        "detailed": false
+      },
+      {
+        "page": 75,
+        "kind": "music",
+        "titles": [
+          "花之舞"
+        ],
+        "observation": "花之舞末页快速音型和收束完整，保持现有三页。",
+        "detailed": false
+      },
+      {
+        "page": 76,
+        "kind": "music",
+        "titles": [
+          "土耳其进行曲"
+        ],
+        "observation": "土耳其进行曲奏法、倚音和力度较多，现有行距可读；保留两页。",
+        "detailed": false
+      },
+      {
+        "page": 77,
+        "kind": "music",
+        "titles": [
+          "土耳其进行曲"
+        ],
+        "observation": "土耳其进行曲续页力度及装饰完整，页底未裁切。",
+        "detailed": false
+      },
+      {
+        "page": 78,
+        "kind": "music",
+        "titles": [
+          "Valsentino(快速圆舞曲)"
+        ],
+        "observation": "快速圆舞曲首页段落与三连音清楚，现有两页字号和行距保持。",
+        "detailed": false
+      },
+      {
+        "page": 79,
+        "kind": "music",
+        "titles": [
+          "Valsentino(快速圆舞曲)"
+        ],
+        "observation": "快速圆舞曲续页房子、Coda及终止完整，最后一页留白正常。",
+        "detailed": false
+      }
+    ]
+  },
+  "checks": {
+    "adapterTests": 311,
+    "paginationTests": 7,
+    "browserLayouts": 672,
+    "browserLayoutIssues": 0,
+    "typecheck": true,
+    "productionBuild": true,
+    "lint": "通过；保留既有警告"
+  },
+  "pdfValidation": {
+    "edition": "第二十五版",
+    "sourcePdf": "循序渐进简谱集-v25.pdf",
+    "compactPdf": "循序渐进简谱集-v25-精简.pdf",
+    "pageCount": 79,
+    "originalBytes": 16188554,
+    "compactBytes": 3898964,
+    "reductionPercent": 75.92,
+    "embeddedFontSubsets": 117,
+    "images": 0,
+    "positionedGlyphs": 27356,
+    "glyphsPerPage": [
+      129,
+      402,
+      445,
+      536,
+      715,
+      339,
+      322,
+      285,
+      275,
+      261,
+      294,
+      342,
+      445,
+      351,
+      372,
+      304,
+      266,
+      446,
+      426,
+      455,
+      240,
+      379,
+      365,
+      318,
+      311,
+      414,
+      333,
+      331,
+      259,
+      338,
+      344,
+      426,
+      364,
+      314,
+      345,
+      334,
+      311,
+      390,
+      291,
+      491,
+      259,
+      284,
+      472,
+      449,
+      521,
+      484,
+      302,
+      278,
+      361,
+      390,
+      430,
+      416,
+      463,
+      320,
+      318,
+      283,
+      240,
+      291,
+      234,
+      243,
+      228,
+      226,
+      222,
+      307,
+      349,
+      277,
+      296,
+      423,
+      258,
+      264,
+      245,
+      271,
+      338,
+      435,
+      459,
+      363,
+      349,
+      373,
+      327
+    ],
+    "outsidePages": 0,
+    "sourceSha256": "48d7a0a3be51a75ec373806042e4e6a286bc0fc15fd8f777682051a07e415c3e",
+    "compactSha256": "ac713c68b60fe78074493835d2916930790d38b81d2d67770ee8b61821d66ecb"
+  }
+}

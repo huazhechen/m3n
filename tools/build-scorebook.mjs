@@ -231,7 +231,7 @@ try {
   md+=`| |**${section.title}**| | | | | | | |${section.description}|\n`
   for(const e of records.filter(e=>e.section===section.id))md+=`|${String(e.order).padStart(3,'0')}|${e.title}|${e.pages.join('、')}|${e.width}|${e.relativeScalePercent}%|${e.systemsPerPage.join(' + ')}|${e.systemGap}|${e.versusV1Percent===null?'—':e.versusV1Percent+'%'}|${e.versusV2Percent===null?'—':e.versusV2Percent+'%'}|${e.reason}${e.reviewNote?'；'+e.reviewNote:''}|\n`
  }
- md+='\n每页项目位置与谱行范围见 `layout-record.json`；PDF 内容由用户亲自检查，反馈记录见 `逐页校阅.md`。后续可按编号或 PDF 页码提出调序、合页、字号与分页意见。\n'
+ md+='\n每页项目位置与谱行范围见 `layout-record.json`；视觉审视与反馈记录见 `逐页校阅.md`。后续可按编号或 PDF 页码提出调序、合页、字号与分页意见。\n'
  writeFileSync(join(staged,'排序与缩放记录.md'),md)
  report.validation.outlinedPages=total
  report.validation.outlinedPageOverflow=0

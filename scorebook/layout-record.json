@@ -1,12 +1,12 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第二十四版",
+  "edition": "第二十五版",
   "showCredits": false,
   "uniformSystemHeight": true,
-  "rendererSha256": "32023adfae17cb875eacfc4f111a72362e6bb3b1fab7522286222bcebb0c1211",
+  "rendererSha256": "51d6910328755f2f1a7c99933314addf09b603b1714732ee44898d57c81d53eb",
   "sourceCount": 81,
   "entryCount": 81,
-  "pageCount": 75,
+  "pageCount": 79,
   "frontPages": 3,
   "baseWidth": 780,
   "page": {
@@ -3349,19 +3349,23 @@
       "equalMeasures": false,
       "wrap": "normal",
       "baselineSteps": [
-        86.91,
-        86.91,
-        86.91,
-        86.91,
-        85.15,
-        105.995,
-        82.675,
-        82.952,
-        99.505,
-        78.66,
-        53.58,
-        55.34,
-        74.425
+        103.91,
+        103.91,
+        103.91,
+        103.91,
+        103.91,
+        103.91,
+        102.15,
+        122.995,
+        99.675,
+        102.232,
+        123.655,
+        116.505,
+        95.66,
+        72.34,
+        72.34,
+        72.34,
+        93.185
       ],
       "voltaSystems": [
         false,
@@ -3370,10 +3374,14 @@
         false,
         false,
         false,
+        false,
+        false,
         true,
         true,
         false,
         true,
+        true,
+        false,
         false,
         false,
         false,
@@ -3384,26 +3392,30 @@
         "0:0",
         "0:0,0:1",
         "0:1",
-        "0:2,0:3",
-        "0:3",
+        "0:1",
+        "0:1,0:2",
+        "0:2",
+        "0:2",
+        "0:3,0:4",
         "0:4,0:5",
+        "0:5",
         "0:5,0:6",
-        "0:6,0:7",
-        "0:7,0:8,0:9,0:10",
+        "0:7,0:8,0:9",
+        "0:9",
+        "0:9",
+        "0:9,0:10",
         "0:11",
-        "0:12,0:13",
-        "0:13,0:14",
-        "0:14,0:15,0:16,0:17"
+        "0:11,0:12,0:13"
       ],
       "section": "pop",
       "group": "十六分与变拍",
       "reason": "反复歌词、切分与长句",
-      "width": 805.8947368421053,
-      "systemGap": 1,
-      "relativeScalePercent": 96.79,
-      "screenNotePx": 19,
-      "versusV1Percent": 109.97,
-      "versusV2Percent": 109.14,
+      "width": 660,
+      "systemGap": 18,
+      "relativeScalePercent": 118.18,
+      "screenNotePx": 23.2,
+      "versusV1Percent": 134.28,
+      "versusV2Percent": 133.27,
       "previousPages": [
         40,
         41
@@ -3412,25 +3424,27 @@
         39
       ],
       "pages": [
-        36
+        36,
+        37
       ],
-      "systems": 14,
+      "systems": 18,
       "systemsPerPage": [
-        14
+        8,
+        10
       ],
-      "sourceSha256": "af666aac8df383cabd1aa79f471f60ce88f2de0c35b963b0c717f73448658ff4",
+      "sourceSha256": "e6392bee01e4db372410deab4f32b335afca2794e5d303f9aa9b731d991b20f0",
       "candidates": [
         {
-          "width": 805.8947368421053,
-          "systemGap": 1,
-          "rows": 14,
-          "pages": 1,
-          "cost": 1483.54
+          "width": 660,
+          "systemGap": 18,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2396
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "尾声五小节共用反复与两种结尾，书写61→56个片段；细分乐句行高范围，14行单页，19.00px，完整展开仍99个片段。"
+      "reviewNote": "逐页审视后改为两页，恢复自然乐句分组；保留尾声五小节反复与完整歌词，23.20px，8+10行。"
     },
     {
       "order": 47,
@@ -3511,8 +3525,8 @@
         40
       ],
       "pages": [
-        37,
-        38
+        38,
+        39
       ],
       "systems": 16,
       "systemsPerPage": [
@@ -3594,7 +3608,7 @@
         41
       ],
       "pages": [
-        39
+        40
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -3624,19 +3638,25 @@
       "equalMeasures": false,
       "wrap": "normal",
       "baselineSteps": [
-        68.827,
-        62.89,
-        107.055,
-        72.978,
-        96.298,
-        96.298,
-        96.298,
-        99.17,
-        99.17,
-        112.995,
-        89.675
+        90.83,
+        90.83,
+        90.83,
+        108.21,
+        129.055,
+        96.245,
+        119.565,
+        119.565,
+        119.565,
+        120.31,
+        120.31,
+        120.31,
+        134.995,
+        111.675,
+        111.675
       ],
       "voltaSystems": [
+        false,
+        false,
         false,
         false,
         false,
@@ -3647,32 +3667,38 @@
         false,
         false,
         false,
+        false,
+        true,
         true,
         true
       ],
       "paragraphSystems": [
         "0:0",
         "0:0",
+        "0:0",
+        "0:0,0:1",
         "0:1",
         "0:2,0:3",
         "0:4",
         "0:4",
         "0:4",
         "0:4",
+        "0:4,0:5",
         "0:5",
         "0:5",
-        "0:6,0:7",
-        "0:7,0:8"
+        "0:6",
+        "0:7",
+        "0:8"
       ],
       "section": "pop",
       "group": "密集节奏与反复",
       "reason": "切分、十六分与跳进",
-      "width": 771,
-      "systemGap": 8,
-      "relativeScalePercent": 101.17,
-      "screenNotePx": 19.86,
-      "versusV1Percent": 114.95,
-      "versusV2Percent": 101.68,
+      "width": 640,
+      "systemGap": 30,
+      "relativeScalePercent": 121.88,
+      "screenNotePx": 23.93,
+      "versusV1Percent": 138.48,
+      "versusV2Percent": 122.49,
       "previousPages": [
         46,
         47
@@ -3681,25 +3707,27 @@
         42
       ],
       "pages": [
-        40
+        41,
+        42
       ],
-      "systems": 12,
+      "systems": 16,
       "systemsPerPage": [
-        12
+        8,
+        8
       ],
       "sourceSha256": "ad708694a7a60373f319e62d1d4e0782f644cfcdb245624fd378958c80865f69",
       "candidates": [
         {
-          "width": 771,
-          "systemGap": 8,
-          "rows": 12,
-          "pages": 1,
-          "cost": 1462.6
+          "width": 640,
+          "systemGap": 30,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2384
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "房子边界两处强制换行，避免多段音乐预留与多行歌词混排；保留完整歌词及正常字号比例，12行合为一页。"
+      "reviewNote": "为改善多段歌词与房子阅读改为两页，23.925px，8+8行，歌词正常比例；保留既有反复。"
     },
     {
       "order": 50,
@@ -3711,17 +3739,17 @@
       "equalMeasures": false,
       "wrap": "normal",
       "baselineSteps": [
-        64.57,
-        64.57,
-        71.83,
-        95.15,
-        90.31,
-        90.31,
-        90.31,
-        66.99,
-        66.99,
-        90.31,
-        90.31
+        69.57,
+        69.57,
+        76.83,
+        100.15,
+        95.31,
+        95.31,
+        95.31,
+        71.99,
+        71.99,
+        95.31,
+        95.31
       ],
       "voltaSystems": [
         false,
@@ -3755,7 +3783,7 @@
       "group": "密集节奏与反复",
       "reason": "慢速密集节奏与高音区",
       "width": 736,
-      "systemGap": 0,
+      "systemGap": 5,
       "relativeScalePercent": 105.98,
       "screenNotePx": 20.8,
       "versusV1Percent": 129.02,
@@ -3767,7 +3795,7 @@
         43
       ],
       "pages": [
-        41
+        43
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -3777,7 +3805,7 @@
       "candidates": [
         {
           "width": 736,
-          "systemGap": 0,
+          "systemGap": 5,
           "rows": 12,
           "pages": 1,
           "cost": 1441.6
@@ -3785,7 +3813,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "完整单页与20.80px音符保持，额外行间留白0→5px，12行；未压缩歌词和音乐预留。"
     },
     {
       "order": 51,
@@ -3847,7 +3875,7 @@
         45
       ],
       "pages": [
-        42
+        44
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -3921,7 +3949,7 @@
         46
       ],
       "pages": [
-        43
+        45
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -3951,15 +3979,15 @@
       "equalMeasures": false,
       "wrap": "normal",
       "baselineSteps": [
-        106.167,
-        106.168,
-        130.075,
-        130.075,
-        98.89,
-        80.04,
-        80.04,
-        80.04,
-        58.81
+        114.167,
+        114.168,
+        138.075,
+        138.075,
+        106.89,
+        88.04,
+        88.04,
+        88.04,
+        66.81
       ],
       "voltaSystems": [
         false,
@@ -3989,7 +4017,7 @@
       "group": "密集节奏与反复",
       "reason": "跨拍、变拍与细分节奏",
       "width": 736,
-      "systemGap": 0,
+      "systemGap": 8,
       "relativeScalePercent": 105.98,
       "screenNotePx": 20.8,
       "versusV1Percent": 129.02,
@@ -4001,7 +4029,7 @@
         47
       ],
       "pages": [
-        44
+        46
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -4011,7 +4039,7 @@
       "candidates": [
         {
           "width": 736,
-          "systemGap": 0,
+          "systemGap": 8,
           "rows": 10,
           "pages": 1,
           "cost": 1441.6
@@ -4019,7 +4047,7 @@
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "保留三遍主歌歌词与既有精简反复，单页20.80px、10行，额外行间留白0→8px。"
     },
     {
       "order": 54,
@@ -4078,7 +4106,7 @@
         48
       ],
       "pages": [
-        45
+        47
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -4152,7 +4180,7 @@
         49
       ],
       "pages": [
-        46
+        48
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -4238,7 +4266,7 @@
         50
       ],
       "pages": [
-        47
+        49
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -4318,7 +4346,7 @@
         51
       ],
       "pages": [
-        48
+        50
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -4404,7 +4432,7 @@
         52
       ],
       "pages": [
-        49
+        51
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -4484,7 +4512,7 @@
         53
       ],
       "pages": [
-        50
+        52
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -4570,7 +4598,7 @@
         54
       ],
       "pages": [
-        51
+        53
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -4600,20 +4628,23 @@
       "equalMeasures": false,
       "wrap": "normal",
       "baselineSteps": [
-        85.91,
-        84.81,
-        83.05,
-        87.186,
-        85.046,
-        87.018,
-        87.019,
-        65.432,
-        65.89,
-        65.89,
-        65.89,
-        65.085,
-        66.99,
-        66.99
+        109.91,
+        109.91,
+        109.91,
+        112.997,
+        87.917,
+        109.371,
+        111.131,
+        111.368,
+        111.367,
+        90.99,
+        90.99,
+        90.99,
+        90.99,
+        90.99,
+        90.99,
+        90.99,
+        90.99
       ],
       "voltaSystems": [
         false,
@@ -4621,9 +4652,12 @@
         false,
         false,
         false,
+        false,
         true,
         true,
         true,
+        true,
+        false,
         false,
         false,
         false,
@@ -4635,29 +4669,32 @@
       "paragraphSystems": [
         "0:0,0:1",
         "0:1",
+        "0:1",
+        "0:1",
+        "0:2",
         "0:2",
         "0:2,0:3",
+        "0:3",
+        "0:3,0:4",
         "0:4",
-        "0:4,0:5",
+        "0:5",
+        "0:5",
         "0:5,0:6",
         "0:6",
-        "0:7,0:8",
-        "0:9,0:10",
-        "0:11,0:12,0:13,0:14",
-        "0:14,0:15",
-        "0:15,0:16,0:17",
-        "0:17,0:18,0:19",
-        "0:19,0:20,0:21"
+        "0:6",
+        "0:6",
+        "0:6",
+        "0:6"
       ],
       "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "变调、倚音与多段歌词",
-      "width": 802,
-      "systemGap": 0,
-      "relativeScalePercent": 97.26,
-      "screenNotePx": 19.09,
-      "versusV1Percent": 110.51,
-      "versusV2Percent": 109.67,
+      "width": 660,
+      "systemGap": 24,
+      "relativeScalePercent": 118.18,
+      "screenNotePx": 23.2,
+      "versusV1Percent": 134.28,
+      "versusV2Percent": 133.27,
       "previousPages": [
         60,
         61
@@ -4666,25 +4703,27 @@
         55
       ],
       "pages": [
-        52
+        54,
+        55
       ],
-      "systems": 15,
+      "systems": 18,
       "systemsPerPage": [
-        15
+        8,
+        10
       ],
-      "sourceSha256": "b6ce89ab63f76ab238a7119a7f5263a1a21ae021f06b6f6f5d8da4343b34acea",
+      "sourceSha256": "8ff832f5793242419658fb1dbd0cbd6e512831a34906cb9f396334eb9d63f700",
       "candidates": [
         {
-          "width": 802,
-          "systemGap": 0,
-          "rows": 15,
-          "pages": 1,
-          "cost": 1481.2
+          "width": 660,
+          "systemGap": 24,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2396
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "细分乐句行高范围，并在“我的甜”前换行；保留转调、大反复和歌词，15行单页，19.09px。"
+      "reviewNote": "逐页审视后改为两页，恢复自然乐句分组及自动换行；转调、反复、歌词与延音完整，23.20px，8+10行。"
     },
     {
       "order": 62,
@@ -4728,7 +4767,7 @@
         56
       ],
       "pages": [
-        53
+        56
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -4805,7 +4844,7 @@
         63
       ],
       "pages": [
-        53
+        56
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -4870,7 +4909,7 @@
         56
       ],
       "pages": [
-        54
+        57
       ],
       "systems": 5,
       "systemsPerPage": [
@@ -4941,7 +4980,7 @@
         56
       ],
       "pages": [
-        54
+        57
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -5045,7 +5084,7 @@
         57
       ],
       "pages": [
-        55
+        58
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -5137,7 +5176,7 @@
         58
       ],
       "pages": [
-        56
+        59
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -5232,7 +5271,7 @@
         59
       ],
       "pages": [
-        57
+        60
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -5342,8 +5381,8 @@
         60
       ],
       "pages": [
-        58,
-        59
+        61,
+        62
       ],
       "systems": 20,
       "systemsPerPage": [
@@ -5439,7 +5478,7 @@
         61
       ],
       "pages": [
-        60
+        63
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -5525,7 +5564,7 @@
         62
       ],
       "pages": [
-        61
+        64
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -5620,7 +5659,7 @@
         64
       ],
       "pages": [
-        62
+        65
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -5733,8 +5772,8 @@
         65
       ],
       "pages": [
-        63,
-        64
+        66,
+        67
       ],
       "systems": 21,
       "systemsPerPage": [
@@ -5803,7 +5842,7 @@
         66
       ],
       "pages": [
-        65
+        68
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -5880,7 +5919,7 @@
         32
       ],
       "pages": [
-        65
+        68
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -5972,7 +6011,7 @@
         67
       ],
       "pages": [
-        66
+        69
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -6002,25 +6041,35 @@
       "equalMeasures": false,
       "wrap": "normal",
       "baselineSteps": [
-        57.206,
-        57.207,
-        57.206,
-        56.375,
-        56.375,
-        49.231,
-        55.463,
-        55.462,
-        55.463,
-        55.463,
-        55.462,
-        57.081,
-        57.081,
-        57.081,
-        56.634,
-        56.634,
-        56.634
+        80.034,
+        80.033,
+        80.034,
+        80.033,
+        81.918,
+        81.918,
+        71.81,
+        71.81,
+        74.69,
+        74.691,
+        74.69,
+        74.691,
+        74.69,
+        74.691,
+        74.69,
+        81.871,
+        81.87,
+        81.871,
+        81.87,
+        80.4,
+        71.81,
+        71.81
       ],
       "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
         false,
         false,
         false,
@@ -6045,30 +6094,35 @@
         "0:0",
         "0:0",
         "0:0",
+        "0:0",
         "0:1",
-        "0:1,0:2",
+        "0:1",
+        "0:2",
         "0:2",
         "0:3",
         "0:3",
         "0:3",
         "0:3",
         "0:3",
-        "0:3,0:4",
+        "0:3",
+        "0:3",
         "0:4",
         "0:4",
+        "0:4",
+        "0:4,0:5",
         "0:5",
-        "0:5,0:6",
+        "0:6",
         "0:6"
       ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "从长音渐进到十六分音型",
-      "width": 780,
-      "systemGap": 18,
-      "relativeScalePercent": 100,
-      "screenNotePx": 19.63,
-      "versusV1Percent": 116.33,
-      "versusV2Percent": 95.6,
+      "width": 640,
+      "systemGap": 42,
+      "relativeScalePercent": 121.88,
+      "screenNotePx": 23.93,
+      "versusV1Percent": 141.78,
+      "versusV2Percent": 116.52,
       "previousPages": [
         74
       ],
@@ -6076,25 +6130,27 @@
         68
       ],
       "pages": [
-        67
+        70,
+        71
       ],
-      "systems": 18,
+      "systems": 23,
       "systemsPerPage": [
-        18
+        11,
+        12
       ],
       "sourceSha256": "892b0ef27739bcce4fc18663baead1fec880f4e9315267d35a105a17b99ae8a8",
       "candidates": [
         {
-          "width": 780,
-          "systemGap": 18,
-          "rows": 18,
-          "pages": 1,
-          "cost": 1468
+          "width": 640,
+          "systemGap": 42,
+          "rows": 23,
+          "pages": 2,
+          "cost": 2384
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。"
+      "reviewNote": "连续快速音型改为两页，23.925px，11+12行，增加行间留白，保留完整音乐与既有反复。"
     },
     {
       "order": 78,
@@ -6159,7 +6215,7 @@
         69
       ],
       "pages": [
-        68
+        72
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -6346,9 +6402,9 @@
         71
       ],
       "pages": [
-        69,
-        70,
-        71
+        73,
+        74,
+        75
       ],
       "systems": 45,
       "systemsPerPage": [
@@ -6488,8 +6544,8 @@
         72
       ],
       "pages": [
-        72,
-        73
+        76,
+        77
       ],
       "systems": 29,
       "systemsPerPage": [
@@ -6628,8 +6684,8 @@
         73
       ],
       "pages": [
-        74,
-        75
+        78,
+        79
       ],
       "systems": 29,
       "systemsPerPage": [
@@ -7417,7 +7473,7 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 979.99
+          "height": 980.29
         }
       ]
     },
@@ -7436,31 +7492,50 @@
           "width": 700,
           "systemGap": 18,
           "top": 0,
-          "height": 1010.38
+          "height": 1010.07
         }
       ]
     },
     {
       "page": 36,
       "section": "pop",
-      "fillPercent": 99.8,
+      "fillPercent": 92,
       "items": [
         {
           "id": "tong_hua_zhen",
           "title": "童话镇",
           "systems": [
             1,
-            14
+            8
           ],
-          "width": 805.8947368421053,
-          "systemGap": 1,
+          "width": 660,
+          "systemGap": 18,
           "top": 0,
-          "height": 1054.38
+          "height": 972
         }
       ]
     },
     {
       "page": 37,
+      "section": "pop",
+      "fillPercent": 98,
+      "items": [
+        {
+          "id": "tong_hua_zhen",
+          "title": "童话镇",
+          "systems": [
+            9,
+            18
+          ],
+          "width": 660,
+          "systemGap": 18,
+          "top": 0,
+          "height": 1036.36
+        }
+      ]
+    },
+    {
+      "page": 38,
       "section": "pop",
       "fillPercent": 98.9,
       "items": [
@@ -7474,12 +7549,12 @@
           "width": 650,
           "systemGap": 20,
           "top": 0,
-          "height": 1044.88
+          "height": 1045.2
         }
       ]
     },
     {
-      "page": 38,
+      "page": 39,
       "section": "pop",
       "fillPercent": 93.1,
       "items": [
@@ -7493,12 +7568,12 @@
           "width": 650,
           "systemGap": 20,
           "top": 0,
-          "height": 984.48
+          "height": 984.16
         }
       ]
     },
     {
-      "page": 39,
+      "page": 40,
       "section": "pop",
       "fillPercent": 97.7,
       "items": [
@@ -7517,28 +7592,47 @@
       ]
     },
     {
-      "page": 40,
+      "page": 41,
       "section": "pop",
-      "fillPercent": 99.3,
+      "fillPercent": 96.7,
       "items": [
         {
           "id": "qian_si_xi",
           "title": "牵丝戏",
           "systems": [
             1,
-            12
+            8
           ],
-          "width": 771,
-          "systemGap": 8,
+          "width": 640,
+          "systemGap": 30,
           "top": 0,
-          "height": 1049.72
+          "height": 1021.9
         }
       ]
     },
     {
-      "page": 41,
+      "page": 42,
       "section": "pop",
-      "fillPercent": 94.5,
+      "fillPercent": 99.1,
+      "items": [
+        {
+          "id": "qian_si_xi",
+          "title": "牵丝戏",
+          "systems": [
+            9,
+            16
+          ],
+          "width": 640,
+          "systemGap": 30,
+          "top": 0,
+          "height": 1047.78
+        }
+      ]
+    },
+    {
+      "page": 43,
+      "section": "pop",
+      "fillPercent": 99.8,
       "items": [
         {
           "id": "ren_shi_jian",
@@ -7548,14 +7642,14 @@
             12
           ],
           "width": 736,
-          "systemGap": 0,
+          "systemGap": 5,
           "top": 0,
-          "height": 998.66
+          "height": 1055.4
         }
       ]
     },
     {
-      "page": 42,
+      "page": 44,
       "section": "pop",
       "fillPercent": 93.8,
       "items": [
@@ -7574,7 +7668,7 @@
       ]
     },
     {
-      "page": 43,
+      "page": 45,
       "section": "pop",
       "fillPercent": 96.5,
       "items": [
@@ -7593,9 +7687,9 @@
       ]
     },
     {
-      "page": 44,
+      "page": 46,
       "section": "pop",
-      "fillPercent": 91.4,
+      "fillPercent": 98.5,
       "items": [
         {
           "id": "man_man_xi_huan_ni",
@@ -7605,14 +7699,14 @@
             10
           ],
           "width": 736,
-          "systemGap": 0,
+          "systemGap": 8,
           "top": 0,
-          "height": 965.69
+          "height": 1041.34
         }
       ]
     },
     {
-      "page": 45,
+      "page": 47,
       "section": "pop",
       "fillPercent": 92.8,
       "items": [
@@ -7631,7 +7725,7 @@
       ]
     },
     {
-      "page": 46,
+      "page": 48,
       "section": "pop",
       "fillPercent": 94.4,
       "items": [
@@ -7650,7 +7744,7 @@
       ]
     },
     {
-      "page": 47,
+      "page": 49,
       "section": "pop",
       "fillPercent": 97.3,
       "items": [
@@ -7669,7 +7763,7 @@
       ]
     },
     {
-      "page": 48,
+      "page": 50,
       "section": "pop",
       "fillPercent": 92.8,
       "items": [
@@ -7688,7 +7782,7 @@
       ]
     },
     {
-      "page": 49,
+      "page": 51,
       "section": "pop",
       "fillPercent": 99,
       "items": [
@@ -7707,7 +7801,7 @@
       ]
     },
     {
-      "page": 50,
+      "page": 52,
       "section": "pop",
       "fillPercent": 99.9,
       "items": [
@@ -7726,7 +7820,7 @@
       ]
     },
     {
-      "page": 51,
+      "page": 53,
       "section": "pop",
       "fillPercent": 97.3,
       "items": [
@@ -7745,26 +7839,45 @@
       ]
     },
     {
-      "page": 52,
+      "page": 54,
       "section": "pop",
-      "fillPercent": 99.7,
+      "fillPercent": 93.3,
       "items": [
         {
           "id": "ru_yuan",
           "title": "如愿",
           "systems": [
             1,
-            15
+            8
           ],
-          "width": 802,
-          "systemGap": 0,
+          "width": 660,
+          "systemGap": 24,
           "top": 0,
-          "height": 1053.88
+          "height": 985.8
         }
       ]
     },
     {
-      "page": 53,
+      "page": 55,
+      "section": "pop",
+      "fillPercent": 97.7,
+      "items": [
+        {
+          "id": "ru_yuan",
+          "title": "如愿",
+          "systems": [
+            9,
+            18
+          ],
+          "width": 660,
+          "systemGap": 24,
+          "top": 0,
+          "height": 1032.58
+        }
+      ]
+    },
+    {
+      "page": 56,
       "section": "instrumental",
       "fillPercent": 98.9,
       "items": [
@@ -7795,7 +7908,7 @@
       ]
     },
     {
-      "page": 54,
+      "page": 57,
       "section": "instrumental",
       "fillPercent": 91.8,
       "items": [
@@ -7826,7 +7939,7 @@
       ]
     },
     {
-      "page": 55,
+      "page": 58,
       "section": "instrumental",
       "fillPercent": 97.6,
       "items": [
@@ -7845,7 +7958,7 @@
       ]
     },
     {
-      "page": 56,
+      "page": 59,
       "section": "instrumental",
       "fillPercent": 91.4,
       "items": [
@@ -7864,7 +7977,7 @@
       ]
     },
     {
-      "page": 57,
+      "page": 60,
       "section": "instrumental",
       "fillPercent": 93.7,
       "items": [
@@ -7883,7 +7996,7 @@
       ]
     },
     {
-      "page": 58,
+      "page": 61,
       "section": "instrumental",
       "fillPercent": 91.1,
       "items": [
@@ -7902,7 +8015,7 @@
       ]
     },
     {
-      "page": 59,
+      "page": 62,
       "section": "instrumental",
       "fillPercent": 96.3,
       "items": [
@@ -7921,7 +8034,7 @@
       ]
     },
     {
-      "page": 60,
+      "page": 63,
       "section": "instrumental",
       "fillPercent": 97.3,
       "items": [
@@ -7940,7 +8053,7 @@
       ]
     },
     {
-      "page": 61,
+      "page": 64,
       "section": "instrumental",
       "fillPercent": 91.3,
       "items": [
@@ -7959,7 +8072,7 @@
       ]
     },
     {
-      "page": 62,
+      "page": 65,
       "section": "instrumental",
       "fillPercent": 96.3,
       "items": [
@@ -7978,7 +8091,7 @@
       ]
     },
     {
-      "page": 63,
+      "page": 66,
       "section": "instrumental",
       "fillPercent": 92,
       "items": [
@@ -7997,7 +8110,7 @@
       ]
     },
     {
-      "page": 64,
+      "page": 67,
       "section": "instrumental",
       "fillPercent": 90.4,
       "items": [
@@ -8016,7 +8129,7 @@
       ]
     },
     {
-      "page": 65,
+      "page": 68,
       "section": "instrumental",
       "fillPercent": 93.2,
       "items": [
@@ -8047,7 +8160,7 @@
       ]
     },
     {
-      "page": 66,
+      "page": 69,
       "section": "instrumental",
       "fillPercent": 98.5,
       "items": [
@@ -8066,26 +8179,45 @@
       ]
     },
     {
-      "page": 67,
+      "page": 70,
       "section": "instrumental",
-      "fillPercent": 93,
+      "fillPercent": 99.2,
       "items": [
         {
           "id": "canon",
           "title": "卡农",
           "systems": [
             1,
-            18
+            11
           ],
-          "width": 780,
-          "systemGap": 18,
+          "width": 640,
+          "systemGap": 42,
           "top": 0,
-          "height": 983.52
+          "height": 1048.79
         }
       ]
     },
     {
-      "page": 68,
+      "page": 71,
+      "section": "instrumental",
+      "fillPercent": 97.4,
+      "items": [
+        {
+          "id": "canon",
+          "title": "卡农",
+          "systems": [
+            12,
+            23
+          ],
+          "width": 640,
+          "systemGap": 42,
+          "top": 0,
+          "height": 1029.33
+        }
+      ]
+    },
+    {
+      "page": 72,
       "section": "instrumental",
       "fillPercent": 90.8,
       "items": [
@@ -8104,7 +8236,7 @@
       ]
     },
     {
-      "page": 69,
+      "page": 73,
       "section": "instrumental",
       "fillPercent": 99.7,
       "items": [
@@ -8123,7 +8255,7 @@
       ]
     },
     {
-      "page": 70,
+      "page": 74,
       "section": "instrumental",
       "fillPercent": 96.7,
       "items": [
@@ -8142,7 +8274,7 @@
       ]
     },
     {
-      "page": 71,
+      "page": 75,
       "section": "instrumental",
       "fillPercent": 93.3,
       "items": [
@@ -8161,7 +8293,7 @@
       ]
     },
     {
-      "page": 72,
+      "page": 76,
       "section": "instrumental",
       "fillPercent": 93.6,
       "items": [
@@ -8180,7 +8312,7 @@
       ]
     },
     {
-      "page": 73,
+      "page": 77,
       "section": "instrumental",
       "fillPercent": 97.5,
       "items": [
@@ -8199,7 +8331,7 @@
       ]
     },
     {
-      "page": 74,
+      "page": 78,
       "section": "instrumental",
       "fillPercent": 95.9,
       "items": [
@@ -8218,7 +8350,7 @@
       ]
     },
     {
-      "page": 75,
+      "page": 79,
       "section": "instrumental",
       "fillPercent": 92.4,
       "items": [
@@ -8249,7 +8381,7 @@
     "orphanContinuationPages": 0,
     "maximumMusicNotePx": 23.925,
     "oversizedNoteEntries": 0,
-    "outlinedPages": 75,
+    "outlinedPages": 79,
     "outlinedPageOverflow": 0
   }
 }

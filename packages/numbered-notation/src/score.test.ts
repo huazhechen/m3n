@@ -197,6 +197,24 @@ describe('jpFun numbered notation adapter', () => {
       .toEqual([...natural.root.querySelectorAll('g.note')].map(n => [n.getAttribute('data-m3n-id'), n.textContent]))
   })
 
+  it('exposes each ending envelope on its own system for external pagination', () => {
+    const source = '{4/4}\nN: ||: 1 2 3 4 | {br}\nL: 春风花开\nL2: 山间流水\n---V1\nN: 5 6 7 1e :|| {br}\n---V2\nN: 1e 7 6 5 |||'
+    const settings = { ...options, pageMargin: 8, systemGap: 18, uniformSystemHeight: true }
+    const { root, document } = render(source, settings)
+    const native = geometry(document, settings)
+    const projection = projectNumberedScore(document, settings)
+    const ending = native.layout.attachments.find(attachment => attachment.sourceSpan
+      && projection.source.slice(attachment.sourceSpan.start).startsWith('@volta('))!
+    expect(ending).toBeDefined()
+    expect(ending.regions.length).toBeGreaterThan(0)
+    for (const region of ending.regions) {
+      const system = root.querySelector(`#m3n-system-1-${region.line}`)!
+      expect(Number(system.getAttribute('data-m3n-top') ?? Infinity)).toBeLessThanOrEqual(region.y)
+      expect(Number(system.getAttribute('data-m3n-bottom') ?? -Infinity)).toBeGreaterThanOrEqual(region.y + region.h)
+    }
+    expect(root.querySelector('g.system')!.getAttribute('data-m3n-volta')).toBe('false')
+  })
+
   it('reduces system spacing without changing notes, lyrics or event identities', () => {
     const source = '{4/4}\nN: 1~ 1 2 3 | {br} 4 5 6 7 | {br} 1e 7 6 5 | {br} 4 3 2 1 |||\nL: 春天花开山间流水清风明月故乡'
     const normal = render(source)
