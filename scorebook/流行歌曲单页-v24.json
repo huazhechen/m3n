@@ -1,0 +1,64 @@
+{
+  "edition": "第二十四版",
+  "pageCount": 75,
+  "unchangedSourceAndLayoutCount": 79,
+  "changedScores": [
+    {
+      "id": "tong_hua_zhen",
+      "title": "童话镇",
+      "pages": [
+        36
+      ],
+      "notePx": 19,
+      "lyricPx": 15.579999999999998,
+      "systems": 14,
+      "fillPercent": 99.75237465380515
+    },
+    {
+      "id": "ru_yuan",
+      "title": "如愿",
+      "pages": [
+        52
+      ],
+      "notePx": 19.09226932668329,
+      "lyricPx": 15.655660847880297,
+      "systems": 15,
+      "fillPercent": 99.70509476218737
+    }
+  ],
+  "musicValidation": [
+    {
+      "id": "ru_yuan",
+      "performedBefore": 104,
+      "performedAfter": 104,
+      "musicLyricsDurationsAndTiesIdentical": true
+    },
+    {
+      "id": "tong_hua_zhen",
+      "performedBefore": 99,
+      "performedAfter": 99,
+      "musicLyricsDurationsAndTiesIdentical": true
+    }
+  ],
+  "allOtherSourceAndLayoutIdentical": true,
+  "contentsEntriesChecked": 81,
+  "pageNumbersUpdated": true,
+  "existingPairingsPreserved": true,
+  "onlyExercisesUseEqualMeasures": true,
+  "productionRendererUnchanged": true,
+  "validation": {
+    "sourceCoverage": true,
+    "trainingSourcePreserved": true,
+    "geometryCandidates": 81,
+    "minimumMusicPageFillPercent": 90.388,
+    "underfilledMusicPages": 0,
+    "outside": 0,
+    "overlaps": 0,
+    "unsafeCuts": 0,
+    "orphanContinuationPages": 0,
+    "maximumMusicNotePx": 23.925,
+    "oversizedNoteEntries": 0,
+    "outlinedPages": 75,
+    "outlinedPageOverflow": 0
+  }
+}

@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第二十三版",
+  "edition": "第二十四版",
   "sourceCount": 81,
   "baseWidth": 780,
   "widthCandidates": [
@@ -891,14 +891,15 @@
       "section": "pop",
       "group": "十六分与变拍",
       "reason": "反复歌词、切分与长句",
-      "width": 680,
+      "width": 805.8947368421053,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "按段落分别统一音乐行高，标题独立占位；保留完整音乐内容和既有合页组合。",
-      "pageCount": 2,
-      "systemGap": 18,
-      "widthLocked": true
+      "reviewNote": "尾声五小节共用反复与两种结尾，书写61→56个片段；细分乐句行高范围，14行单页，19.00px，完整展开仍99个片段。",
+      "pageCount": 1,
+      "systemGap": 1,
+      "widthLocked": true,
+      "uniformSystemHeight": true
     },
     {
       "id": "lao_nan_hai",
@@ -1139,14 +1140,15 @@
       "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "变调、倚音与多段歌词",
-      "width": 648,
+      "width": 802,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "段内统一音乐行高，标题只占所在行；18行，23.63px，各页高度利用率 90.474% / 93.735%。",
-      "pageCount": 2,
-      "systemGap": 18,
-      "widthLocked": true
+      "reviewNote": "细分乐句行高范围，并在“我的甜”前换行；保留转调、大反复和歌词，15行单页，19.09px。",
+      "pageCount": 1,
+      "systemGap": 0,
+      "widthLocked": true,
+      "uniformSystemHeight": true
     },
     {
       "id": "tai_yang_zhao_chang_sheng_qi",
@@ -1483,8 +1485,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v23.pdf",
-  "outputKey": "scorebook-v23",
+  "outputPdf": "循序渐进简谱集-v24.pdf",
+  "outputKey": "scorebook-v24",
   "page": {
     "width": 744,
     "height": 1133,
