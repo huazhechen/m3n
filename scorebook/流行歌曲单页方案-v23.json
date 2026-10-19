@@ -1,0 +1,266 @@
+{
+  "basisEdition": "第二十三版",
+  "scope": "当前流行歌曲篇中剩余四首两页曲目；候选分析，不改变正式谱集",
+  "bodyWidth": 696,
+  "bodyHeight": 1057,
+  "minimumNotePx": 19,
+  "maximumNotePx": 24,
+  "minimumFillPercent": 90,
+  "normalLyricRatio": 0.82,
+  "equalMeasures": false,
+  "rendererSha256": "32023adfae17cb875eacfc4f111a72362e6bb3b1fab7522286222bcebb0c1211",
+  "totalMeasuredTrials": 2737,
+  "ordinaryHeaderEligibleCandidates": 0,
+  "prototypeHeader": {
+    "description": "曲名、调号、拍号和拍速横排；当前标题与所有控制字号均保持",
+    "implementation": "临时打包原型将HeadBoundaryTemporal侧区的targetBottom从titleBottom + max(leftHeight,rightHeight)改为titleBottom，使侧区与曲名底部对齐；正式引擎未改，落地时必须做成可选模式",
+    "checks": "保持原标题字号32px、调号16px、拍号18px及原拍速字形；候选谱头文字两两实际字形相交为0，页面上沿与左右边界安全"
+  },
+  "scores": [
+    {
+      "id": "hou_lai",
+      "title": "后来",
+      "currentPages": [
+        34,
+        35
+      ],
+      "currentNotePx": 21.87,
+      "sourceSha256": "310d89d542d457a38ad5e86fcabea7d73920e2d523cc5784ee03b9318460f632",
+      "at19PxMinimumMeasuredSafeOriginal": {
+        "id": "hou_lai",
+        "variant": "original",
+        "mask": 0,
+        "width": 805.8947368421053,
+        "gap": 3,
+        "note": 19,
+        "rows": 18,
+        "height": 1238.4648935144596,
+        "safe": true,
+        "fill": 117.16791802407376,
+        "fits": false,
+        "zeroGapEstimate": 1194.4194389690051
+      },
+      "repeatReview": "开头与后段副歌的8个相同片段，重用需要重排跳转及长房子；本轮未得到完整一致的单页候选。"
+    },
+    {
+      "id": "tong_hua_zhen",
+      "title": "童话镇",
+      "currentPages": [
+        36,
+        37
+      ],
+      "currentNotePx": 22.52,
+      "sourceSha256": "9f4b8b1e269c1cb30d1e656d6c3813ec68c119b7b0a9ce04212154b8590d5c27",
+      "at19PxMinimumMeasuredSafeOriginal": {
+        "id": "tong_hua_zhen",
+        "variant": "original",
+        "mask": 0,
+        "width": 805.8947368421053,
+        "gap": 1,
+        "note": 19,
+        "rows": 15,
+        "height": 1096.4286486885765,
+        "safe": true,
+        "fill": 103.73024112474707,
+        "fits": false,
+        "zeroGapEstimate": 1084.3377395976675
+      },
+      "repeatReview": "尾声5个片段可用独立反复与不同结尾合并，完整99个演奏片段验证一致。"
+    },
+    {
+      "id": "lao_nan_hai",
+      "title": "老男孩",
+      "currentPages": [
+        38,
+        39
+      ],
+      "currentNotePx": 23.56,
+      "sourceSha256": "c7bfdb89ca21b9d1a21b6190a674ed7c6267d566b983e1c3f368299fbb2b7487",
+      "at19PxMinimumMeasuredSafeOriginal": {
+        "id": "lao_nan_hai",
+        "variant": "original",
+        "mask": 0,
+        "width": 805.8947368421053,
+        "gap": 1,
+        "note": 19,
+        "rows": 13,
+        "height": 1106.6230591860683,
+        "safe": true,
+        "fill": 104.69470758619379,
+        "fits": false,
+        "zeroGapEstimate": 1096.259422822432
+      },
+      "repeatReview": "已用四种结尾、D.S.和共享遍次歌词，本轮分组及紧凑谱头仍未达标。"
+    },
+    {
+      "id": "ru_yuan",
+      "title": "如愿",
+      "currentPages": [
+        53,
+        54
+      ],
+      "currentNotePx": 23.63,
+      "sourceSha256": "698c3016f0deed4cb95caf1a76956eea7615b1a4470629250ce06726f19006d0",
+      "at19PxMinimumMeasuredSafeOriginal": {
+        "id": "ru_yuan",
+        "variant": "original",
+        "mask": 0,
+        "width": 805.8947368421053,
+        "gap": 0,
+        "note": 19,
+        "rows": 15,
+        "height": 1081.8246831026943,
+        "safe": true,
+        "fill": 102.34859821217543,
+        "fits": false,
+        "zeroGapEstimate": 1081.8246831026943
+      },
+      "repeatReview": "现有大反复内的局部重复不宜再嵌套；本轮优先用行高分组及谱头改排。"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "ru_yuan",
+      "name": "原谱",
+      "file": "src/scores/ru_yuan_01.m3n",
+      "width": 804,
+      "gap": 0,
+      "note": 19.044776119402986,
+      "header": "同一行",
+      "rows": 15,
+      "height": 1052.2680914579933,
+      "safe": true,
+      "fill": 99.55232653339576,
+      "fits": true,
+      "headerIssues": [],
+      "candidateFile": "src/scores/ru_yuan_01.m3n",
+      "recommendation": "保留原谱组织，仅横排谱头；字形间距安全但额外留白为零。",
+      "bodyNotePx": 19.044776119402986,
+      "bodyLyricPx": 15.616716417910448,
+      "pageSlackPx": 4.7319085420067495,
+      "requiresHeaderLayoutImplementation": true,
+      "productionHeaderUnchanged": true
+    },
+    {
+      "id": "ru_yuan",
+      "name": "四小节细分",
+      "file": ".tmp/ru_yuan-split-4-v20.m3n",
+      "width": 800,
+      "gap": 0,
+      "note": 19.14,
+      "header": "同一行",
+      "rows": 15,
+      "height": 1043.4118910980224,
+      "safe": true,
+      "fill": 98.71446462611375,
+      "fits": true,
+      "headerIssues": [],
+      "candidateFile": "scorebook/单页候选-v23/如愿-段内分组.m3n",
+      "recommendation": "推荐字号19.14，留出约13.59px整页容量余量；正常歌词比例不变。",
+      "bodyNotePx": 19.14,
+      "bodyLyricPx": 15.694799999999999,
+      "pageSlackPx": 13.588108901977648,
+      "requiresHeaderLayoutImplementation": true,
+      "productionHeaderUnchanged": true
+    },
+    {
+      "id": "ru_yuan",
+      "name": "四小节细分",
+      "file": ".tmp/ru_yuan-split-4-v20.m3n",
+      "width": 790,
+      "gap": 0,
+      "note": 19.38227848101266,
+      "header": "同一行",
+      "rows": 15,
+      "height": 1056.2196631129784,
+      "safe": true,
+      "fill": 99.92617437208878,
+      "fits": true,
+      "headerIssues": [],
+      "candidateFile": "scorebook/单页候选-v23/如愿-段内分组.m3n",
+      "recommendation": "已测较大字号19.38，页底仅余约0.78px，不作为首选。",
+      "bodyNotePx": 19.38227848101266,
+      "bodyLyricPx": 15.893468354430379,
+      "pageSlackPx": 0.7803368870215763,
+      "requiresHeaderLayoutImplementation": true,
+      "productionHeaderUnchanged": true
+    },
+    {
+      "id": "tong_hua_zhen",
+      "name": "尾声五小节反复",
+      "file": ".tmp/pop-onepage-v23/tong-hua-tail-repeat.m3n",
+      "width": 804,
+      "gap": 2,
+      "note": 19.044776119402986,
+      "header": "同一行",
+      "rows": 14,
+      "height": 1049.2261065013372,
+      "safe": true,
+      "fill": 99.26453230854656,
+      "fits": true,
+      "headerIssues": [],
+      "candidateFile": "scorebook/单页候选-v23/童话镇-尾声反复.m3n",
+      "recommendation": "尾声由17个书写片段减至12个；主反复保持，新增尾声独立反复及两种结尾。",
+      "bodyNotePx": 19.044776119402986,
+      "bodyLyricPx": 15.616716417910448,
+      "pageSlackPx": 7.773893498662801,
+      "requiresHeaderLayoutImplementation": true,
+      "productionHeaderUnchanged": true
+    },
+    {
+      "id": "tong_hua_zhen",
+      "name": "四小节细分",
+      "file": ".tmp/tong_hua_zhen-split-4-v20.m3n",
+      "width": 805.8947368421053,
+      "gap": 1,
+      "note": 19,
+      "header": "同一行",
+      "rows": 15,
+      "height": 1055.2591954144564,
+      "safe": true,
+      "fill": 99.8353070401567,
+      "fits": true,
+      "headerIssues": [],
+      "candidateFile": "scorebook/单页候选-v23/童话镇-段内分组.m3n",
+      "recommendation": "不改反复结构的备选；仅19.00且页底约余1.74px，不作为首选。",
+      "bodyNotePx": 19,
+      "bodyLyricPx": 15.579999999999998,
+      "pageSlackPx": 1.7408045855436285,
+      "requiresHeaderLayoutImplementation": true,
+      "productionHeaderUnchanged": true
+    }
+  ],
+  "musicValidation": [
+    {
+      "id": "ru_yuan",
+      "file": "scorebook/单页候选-v23/如愿-段内分组.m3n",
+      "performedMeasures": 104,
+      "identicalPerformedMusicLyricsAndTies": true
+    },
+    {
+      "id": "lao_nan_hai",
+      "file": ".tmp/lao_nan_hai-split-4-v20.m3n",
+      "performedMeasures": 127,
+      "identicalPerformedMusicLyricsAndTies": true
+    },
+    {
+      "id": "tong_hua_zhen",
+      "file": "scorebook/单页候选-v23/童话镇-尾声反复.m3n",
+      "performedMeasures": 99,
+      "identicalPerformedMusicLyricsAndTies": true
+    },
+    {
+      "id": "tong_hua_zhen",
+      "file": "scorebook/单页候选-v23/童话镇-段内分组.m3n",
+      "performedMeasures": 99,
+      "identicalPerformedMusicLyricsAndTies": true
+    }
+  ],
+  "tailRepeatValidation": {
+    "writtenBefore": 61,
+    "writtenAfter": 56,
+    "performedBefore": 99,
+    "performedAfter": 99,
+    "identicalPerformedMusicLyricsAndTies": true
+  }
+}
