@@ -1,0 +1,19 @@
+{title=枫}
+{singer=周杰伦}
+{composer=周杰伦}
+{lyricist=方文山}
+{key=C} {4/4} {68qpm}
+===Intro
+N: [1e 3e 7e 7e 1e 7e 5e 5e:4] | [6e 1e 5e 5e 4e 4e 3e 3e 2e 3e:4] | [1e 2e 3e 3e 1e 7e 1e 1e 7e 1e:4] | {2/4}[1e 5e 6e 1e:2] | {4/4}2e^^ |
+===Verse
+N: [0 1e 1e 1e 1e 5e 1e 2e:4] | [2e 2e 2e 3e 2e 2e 5e:4] | [0 1e 1e 1e 1e 2e 3e 4e:4] | [4e 0 3e 3e 3e 0 3e:4] | [2e 1e 1e 1e 0 0 3e:4] |
+---
+N: [2e 1e 2e 3e 2e 2e 1e:4] | [1e 6e 1e 1e 6e 1e 1e 6e 1e 1e 6e 1e 2e 2e:4] | [2e 0 0:4] |
+===Chorus
+N: ||: [0 1e 1e 1e 1e 5e 1e 2e:4] | [2e 2e 2e 3e 2e 2e 5e:4] | [0 1e 1e 1e 1e 2e 3e 4e:4] | [4e 0 3e 3e 3e 0 3e:4] | [2e 1e 1e 1e 0 0 3e:4] | [2e 1e 2e 3e 2e 2e 1e:4] | [1e 6e 1e 1e 6e 1e 1e 6e 1e 1e 6e 1e 2e 2e:4] | [2e 0 0:4] :||
+---
+N: [1e 6e 1e 1e 6e 1e 1e 6e 1e 1e 6e 1e 3e 3e:4] | 2e^^ | [5e 1e 1e 5e 1e 2e:4] | [3e 2e 6e 6e 0 2e:4] | [2e 1e 1e 1e 7e 7e 7e 0 2e:4] | [2e 1e 1e 2e 1e 7e 7e:4] | [1e 5e 5e 4e 3e 3e 4e:4] | [5e 4e 1e 1e 0 2e 3e:4] | [4e 3e 3e 3e 2e 2e 2e 0 2e 3e:4] |
+===Bridge
+N: [4e 3e 3e 3e 2e 2e 1e 2e 2e 1e:4] | {key=Db}[6e 5e 5e 3e 7e 7e 1e 1e:4] | [0 0 0 0 3e 5e:4] | [5e 4e 4e 3e 3e 3e 2e 0 2e 3e:4] | [5e 4e 4e 3e 2e 1e 2e 1e 1e:4] |
+===Final
+N: [5e 1e 1e 5e 1e 2e:4] | [3e 2e 6e 6e 0 2e:4] | [2e 1e 1e 1e 7e 7e 7e 0 2e:4] | [2e 1e 1e 2e 1e 7e 7e:4] | [1e 5e 5e 4e 3e 3e 4e:4] | [5e 4e 1e 1e 0 2e 3e:4] | [4e 3e 3e 3e 2e 2e 2e 0 2e 3e:4] | [5e 4e 4e 3e 2e 1e 2e 1e 1e:4] | 1e^ 0^ |||
