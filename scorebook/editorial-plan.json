@@ -1,7 +1,7 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第三十二版",
-  "sourceCount": 82,
+  "edition": "第三十三版",
+  "sourceCount": 81,
   "baseWidth": 780,
   "widthCandidates": [
     590,
@@ -461,20 +461,6 @@
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18
-    },
-    {
-      "id": "bu_hui_gai_bian",
-      "file": "bu_hui_gai_bian_01.m3n",
-      "title": "不会改变",
-      "section": "pop",
-      "group": "流行歌曲",
-      "reason": "新增曲库歌曲，按原谱完整收入",
-      "width": 672,
-      "sharePage": false,
-      "breakBefore": true,
-      "pageBreaks": [],
-      "systemGap": 18,
-      "reviewNote": "移除和弦标记，在单页和最低行距约束下重新放大字号。"
     },
     {
       "id": "yue_liang_dai_biao_wo_de_xin",
@@ -1354,8 +1340,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v32.pdf",
-  "outputKey": "scorebook-v32",
+  "outputPdf": "循序渐进简谱集-v33.pdf",
+  "outputKey": "scorebook-v33",
   "page": {
     "width": 744,
     "height": 1133,

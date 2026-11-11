@@ -1,13 +1,13 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第三十二版",
+  "edition": "第三十三版",
   "showCredits": false,
   "uniformSystemHeight": true,
   "minimumSystemGapEm": 0.5,
   "rendererSha256": "2350875671b2d934541783889c3228131c49e37e1a906d9ba336472d58d7b538",
-  "sourceCount": 82,
-  "entryCount": 82,
-  "pageCount": 73,
+  "sourceCount": 81,
+  "entryCount": 81,
+  "pageCount": 72,
   "frontPages": 3,
   "baseWidth": 780,
   "page": {
@@ -17947,101 +17947,6 @@
     },
     {
       "order": 26,
-      "id": "bu_hui_gai_bian",
-      "title": "不会改变",
-      "file": "bu_hui_gai_bian_01.m3n",
-      "includeBass": true,
-      "uniformSystemHeight": true,
-      "equalMeasures": false,
-      "wrap": "normal",
-      "noteGapEm": 0.6,
-      "minimumNoteGapEm": 0.4,
-      "wrapWidthRatio": 1,
-      "systemDensities": [
-        0.5396266886746154,
-        0.6886956333268572,
-        0.83946747967869,
-        0.8015030668203811,
-        0.8388883751621766,
-        0.8377601776807506,
-        0.7358264709657483,
-        0.7999861959882433,
-        0.8523976724172634,
-        0.8380386463415701,
-        0.7113997894418258,
-        0.5893393690756484
-      ],
-      "baselineSteps": [
-        41.5,
-        45.312,
-        72.153,
-        68.34,
-        68.34,
-        70.65,
-        76.309,
-        74.549,
-        74.549,
-        89.185,
-        97.431
-      ],
-      "voltaSystems": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        true
-      ],
-      "paragraphSystems": [
-        "0:0,0:1",
-        "0:1,0:2",
-        "0:3,0:4",
-        "0:4,0:5",
-        "0:5,0:6",
-        "0:6,0:7",
-        "0:7,0:8",
-        "0:8,0:9",
-        "0:9,0:10",
-        "0:10,0:11",
-        "0:11,0:12",
-        "0:13"
-      ],
-      "section": "pop",
-      "group": "流行歌曲",
-      "reason": "新增曲库歌曲，按原谱完整收入",
-      "width": 622,
-      "systemGap": 14,
-      "relativeScalePercent": 125.4,
-      "screenNotePx": 24.62,
-      "pages": [
-        16
-      ],
-      "systems": 12,
-      "systemsPerPage": [
-        12
-      ],
-      "sourceSha256": "93be024d7796584b54fe3680d5954e65a6fb9182ef3fd45047ba596693bc0882",
-      "candidates": [
-        {
-          "width": 622,
-          "systemGap": 14,
-          "rows": 12,
-          "pages": 1,
-          "cost": 1373.4
-        }
-      ],
-      "rejectedCandidates": [],
-      "fillPage": true,
-      "reviewNote": "移除和弦标记，在单页和最低行距约束下重新放大字号。"
-    },
-    {
-      "order": 27,
       "id": "yue_liang_dai_biao_wo_de_xin",
       "title": "月亮代表我的心",
       "file": "yue_liang_dai_biao_wo_de_xin_01.m3n",
@@ -18103,7 +18008,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        17
+        16
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -18124,7 +18029,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 28,
+      "order": 27,
       "id": "li_hua_you_kai_fang",
       "title": "梨花又开放",
       "file": "li_hua_you_kai_fang_01.m3n",
@@ -18178,7 +18083,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        18
+        17
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -18199,7 +18104,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 29,
+      "order": 28,
       "id": "bai_hua_lin",
       "title": "白桦林",
       "file": "bai_hua_lin_01.m3n",
@@ -18265,7 +18170,7 @@
       "relativeScalePercent": 122.26,
       "screenNotePx": 24,
       "pages": [
-        19
+        18
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -18286,7 +18191,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 30,
+      "order": 29,
       "id": "guang_yin_de_gu_shi",
       "title": "光阴的故事",
       "file": "guang_yin_de_gu_shi_01.m3n",
@@ -18340,7 +18245,7 @@
       "relativeScalePercent": 128.71,
       "screenNotePx": 25.27,
       "pages": [
-        20
+        19
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -18361,7 +18266,7 @@
       "reviewNote": "末句三遍相同歌词合并为共用单行，保留整曲三遍反复，在单页约束下重新放大字号。"
     },
     {
-      "order": 31,
+      "order": 30,
       "id": "tong_zhuo_de_ni",
       "title": "同桌的你",
       "file": "tong_zhuo_de_ni_01.m3n",
@@ -18423,7 +18328,7 @@
       "relativeScalePercent": 128.71,
       "screenNotePx": 25.27,
       "pages": [
-        21
+        20
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -18444,7 +18349,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 32,
+      "order": 31,
       "id": "xiang_si",
       "title": "相思",
       "file": "xiang_si_01.m3n",
@@ -18502,7 +18407,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        22
+        21
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -18523,7 +18428,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 33,
+      "order": 32,
       "id": "bei_jia_er_hu_pan",
       "title": "贝加尔湖畔",
       "file": "bei_jia_er_hu_pan_01.m3n",
@@ -18585,7 +18490,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        23
+        22
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -18606,7 +18511,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 34,
+      "order": 33,
       "id": "yu_jian",
       "title": "遇见",
       "file": "yu_jian_01.m3n",
@@ -18668,7 +18573,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        24
+        23
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -18689,7 +18594,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 35,
+      "order": 34,
       "id": "huang_hun",
       "title": "黄昏",
       "file": "huang_hun_01.m3n",
@@ -18743,7 +18648,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        25
+        24
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -18764,7 +18669,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 36,
+      "order": 35,
       "id": "an_xiang",
       "title": "暗香",
       "file": "an_xiang_01.m3n",
@@ -18830,7 +18735,7 @@
       "relativeScalePercent": 128.71,
       "screenNotePx": 25.27,
       "pages": [
-        26
+        25
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -18851,7 +18756,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 37,
+      "order": 36,
       "id": "mei_li_de_shen_hua",
       "title": "美丽的神话",
       "file": "mei_li_de_shen_hua_01.m3n",
@@ -18921,7 +18826,7 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        27
+        26
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -18942,7 +18847,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 38,
+      "order": 37,
       "id": "dang_nian_qing",
       "title": "当年情",
       "file": "dang_nian_qing_01.m3n",
@@ -19004,7 +18909,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        28
+        27
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -19025,7 +18930,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 39,
+      "order": 38,
       "id": "qian_nv_you_hun",
       "title": "倩女幽魂",
       "file": "qian_nv_you_hun_01.m3n",
@@ -19071,7 +18976,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        29
+        28
       ],
       "systems": 5,
       "systemsPerPage": [
@@ -19897,7 +19802,7 @@
       "reviewNote": "同页采用相同字号、最小／自然音符间距及额外行距。"
     },
     {
-      "order": 40,
+      "order": 39,
       "id": "tie_xue_dan_xin",
       "title": "铁血丹心",
       "file": "tie_xue_dan_xin_01.m3n",
@@ -19943,7 +19848,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        29
+        28
       ],
       "systems": 5,
       "systemsPerPage": [
@@ -20769,7 +20674,7 @@
       "reviewNote": "同页采用相同字号、最小／自然音符间距及额外行距。"
     },
     {
-      "order": 41,
+      "order": 40,
       "id": "qiu_ying",
       "title": "秋樱",
       "file": "qiu_ying_01.m3n",
@@ -20839,7 +20744,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        30
+        29
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -20860,7 +20765,7 @@
       "reviewNote": "采用全册通用的页面余量反馈换行，保持页数、字号与行距，缓解末段密集。"
     },
     {
-      "order": 42,
+      "order": 41,
       "id": "man_bu_ren_sheng_lu",
       "title": "漫步人生路",
       "file": "man_bu_ren_sheng_lu_01.m3n",
@@ -20914,7 +20819,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        31
+        30
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -20935,7 +20840,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 43,
+      "order": 42,
       "id": "wo_zhi_zai_hu_ni",
       "title": "我只在乎你",
       "file": "wo_zhi_zai_hu_ni_01.m3n",
@@ -20993,7 +20898,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        32
+        31
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -21014,7 +20919,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 44,
+      "order": 43,
       "id": "guo_huo",
       "title": "过火",
       "file": "guo_huo_01.m3n",
@@ -21084,7 +20989,7 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        33
+        32
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -21105,7 +21010,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 45,
+      "order": 44,
       "id": "yue_ding",
       "title": "约定",
       "file": "yue_ding_01.m3n",
@@ -21171,7 +21076,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        34
+        33
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -21192,7 +21097,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 46,
+      "order": 45,
       "id": "hou_lai",
       "title": "后来",
       "file": "hou_lai_01.m3n",
@@ -21294,8 +21199,8 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        35,
-        36
+        34,
+        35
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -21317,7 +21222,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 47,
+      "order": 46,
       "id": "tong_hua_zhen",
       "title": "童话镇",
       "file": "tong_hua_zhen_01.m3n",
@@ -21387,7 +21292,7 @@
       "relativeScalePercent": 101.96,
       "screenNotePx": 20.02,
       "pages": [
-        37
+        36
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -21408,7 +21313,7 @@
       "reviewNote": "单曲试排：固定最小0.4em，将自然横向间距收至0.5em以争取原页码内增加字号。"
     },
     {
-      "order": 48,
+      "order": 47,
       "id": "lao_nan_hai",
       "title": "老男孩",
       "file": "lao_nan_hai_01.m3n",
@@ -21490,8 +21395,8 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        38,
-        39
+        37,
+        38
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -21513,7 +21418,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 49,
+      "order": 48,
       "id": "liang_liang",
       "title": "凉凉",
       "file": "liang_liang_01.m3n",
@@ -21575,7 +21480,7 @@
       "relativeScalePercent": 119.27,
       "screenNotePx": 23.41,
       "pages": [
-        40
+        39
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -21596,7 +21501,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 50,
+      "order": 49,
       "id": "qian_si_xi",
       "title": "牵丝戏",
       "file": "qian_si_xi_01.m3n",
@@ -21662,7 +21567,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        41
+        40
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -21683,7 +21588,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 51,
+      "order": 50,
       "id": "ren_shi_jian",
       "title": "人世间",
       "file": "ren_shi_jian_01.m3n",
@@ -21749,7 +21654,7 @@
       "relativeScalePercent": 118.9,
       "screenNotePx": 23.34,
       "pages": [
-        42
+        41
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -21770,7 +21675,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 52,
+      "order": 51,
       "id": "shi_jie_zeng_yu_wo_de",
       "title": "世界赠予我的",
       "file": "shi_jie_zeng_yu_wo_de_01.m3n",
@@ -21832,7 +21737,7 @@
       "relativeScalePercent": 119.27,
       "screenNotePx": 23.41,
       "pages": [
-        43
+        42
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -21853,7 +21758,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 53,
+      "order": 52,
       "id": "ming_tian_hui_geng_hao",
       "title": "明天会更好",
       "file": "ming_tian_hui_geng_hao_01.m3n",
@@ -21907,7 +21812,7 @@
       "relativeScalePercent": 119.27,
       "screenNotePx": 23.41,
       "pages": [
-        44
+        43
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -21928,7 +21833,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 54,
+      "order": 53,
       "id": "man_man_xi_huan_ni",
       "title": "慢慢喜欢你",
       "file": "man_man_xi_huan_ni_01.m3n",
@@ -21986,7 +21891,7 @@
       "relativeScalePercent": 123.81,
       "screenNotePx": 24.3,
       "pages": [
-        45
+        44
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -22007,7 +21912,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 55,
+      "order": 54,
       "id": "xin_bu_liao_qing",
       "title": "新不了情",
       "file": "xin_bu_liao_qing_01.m3n",
@@ -22065,7 +21970,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        46
+        45
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -22086,7 +21991,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 56,
+      "order": 55,
       "id": "wo_yao_ni",
       "title": "我要你",
       "file": "wo_yao_ni_01.m3n",
@@ -22144,7 +22049,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        47
+        46
       ],
       "systems": 8,
       "systemsPerPage": [
@@ -22165,7 +22070,7 @@
       "reviewNote": "均衡试排：缩小行间留白并放宽行内自然音符间距，尽量减少局部拥挤。"
     },
     {
-      "order": 57,
+      "order": 56,
       "id": "annie",
       "title": "安妮",
       "file": "annie_01.m3n",
@@ -22235,7 +22140,7 @@
       "relativeScalePercent": 125.4,
       "screenNotePx": 24.62,
       "pages": [
-        48
+        47
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -22256,7 +22161,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 58,
+      "order": 57,
       "id": "yi_qian_ge_shang_xin_de_li_you",
       "title": "一千个伤心的理由",
       "file": "yi_qian_ge_shang_xin_de_li_you_01.m3n",
@@ -22318,7 +22223,7 @@
       "relativeScalePercent": 123.81,
       "screenNotePx": 24.3,
       "pages": [
-        49
+        48
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -22339,7 +22244,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 59,
+      "order": 58,
       "id": "yue_ban_xiao_ye_qu",
       "title": "月半小夜曲",
       "file": "yue_ban_xiao_ye_qu_01.m3n",
@@ -22405,7 +22310,7 @@
       "relativeScalePercent": 122.26,
       "screenNotePx": 24,
       "pages": [
-        50
+        49
       ],
       "systems": 10,
       "systemsPerPage": [
@@ -22426,7 +22331,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 60,
+      "order": 59,
       "id": "andy",
       "title": "ANDY",
       "file": "andy_01.m3n",
@@ -22488,7 +22393,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        51
+        50
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -22509,7 +22414,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 61,
+      "order": 60,
       "id": "ting_hai",
       "title": "听海",
       "file": "ting_hai_01.m3n",
@@ -22579,7 +22484,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        52
+        51
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -22600,7 +22505,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 62,
+      "order": 61,
       "id": "ru_yuan",
       "title": "如愿",
       "file": "ru_yuan_01.m3n",
@@ -22674,7 +22579,7 @@
       "relativeScalePercent": 102.63,
       "screenNotePx": 20.15,
       "pages": [
-        53
+        52
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -22695,7 +22600,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 63,
+      "order": 62,
       "id": "tai_yang_zhao_chang_sheng_qi",
       "title": "太阳照常升起",
       "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
@@ -22737,7 +22642,7 @@
       "relativeScalePercent": 125.4,
       "screenNotePx": 24.62,
       "pages": [
-        54
+        53
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -23563,7 +23468,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 64,
+      "order": 63,
       "id": "zhi_dao_shi_jie_de_jin_tou",
       "title": "直到世界的尽头",
       "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
@@ -23625,7 +23530,7 @@
       "relativeScalePercent": 125.4,
       "screenNotePx": 24.62,
       "pages": [
-        54
+        53
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -24451,7 +24356,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 65,
+      "order": 64,
       "id": "liang_zhu",
       "title": "梁祝",
       "file": "liang_zhu_01.m3n",
@@ -24493,7 +24398,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        55
+        54
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -25319,7 +25224,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 66,
+      "order": 65,
       "id": "wen_rou_de_qing_su",
       "title": "温柔的倾诉",
       "file": "wen_rou_de_qing_su_01.m3n",
@@ -25373,7 +25278,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        55
+        54
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -26199,7 +26104,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 67,
+      "order": 66,
       "id": "castle_in_the_sky",
       "title": "天空之城",
       "file": "castle_in_the_sky_01.m3n",
@@ -26297,7 +26202,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        56
+        55
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -27123,7 +27028,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 68,
+      "order": 67,
       "id": "xia_yu_de_shi_hou",
       "title": "下雨的时候",
       "file": "xia_yu_de_shi_hou_01.m3n",
@@ -27201,7 +27106,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        57
+        56
       ],
       "systems": 13,
       "systemsPerPage": [
@@ -28027,7 +27932,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 69,
+      "order": 68,
       "id": "second_waltz",
       "title": "第二圆舞曲",
       "file": "second_waltz_01.m3n",
@@ -28117,7 +28022,7 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        58
+        57
       ],
       "systems": 16,
       "systemsPerPage": [
@@ -28138,7 +28043,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 70,
+      "order": 69,
       "id": "doraemon",
       "title": "哆啦A梦",
       "file": "doraemon_01.m3n",
@@ -28224,7 +28129,7 @@
       "relativeScalePercent": 115.04,
       "screenNotePx": 22.58,
       "pages": [
-        59
+        58
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -28245,7 +28150,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 71,
+      "order": 70,
       "id": "yun_gong_xun_yin",
       "title": "云宫迅音",
       "file": "yun_gong_xun_yin_01.m3n",
@@ -28331,7 +28236,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        60
+        59
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -28352,7 +28257,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 72,
+      "order": 71,
       "id": "super_mario",
       "title": "超级玛丽",
       "file": "super_mario_01.m3n",
@@ -28422,7 +28327,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        61
+        60
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -28443,7 +28348,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 73,
+      "order": 72,
       "id": "qing_niao",
       "title": "青鸟",
       "file": "qing_niao_01.m3n",
@@ -28529,7 +28434,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        62
+        61
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -28550,7 +28455,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 74,
+      "order": 73,
       "id": "ju_ci_lang_de_xia_tian",
       "title": "菊次郎的夏天",
       "file": "ju_ci_lang_de_xia_tian_01.m3n",
@@ -28644,7 +28549,7 @@
       "relativeScalePercent": 107.14,
       "screenNotePx": 21.03,
       "pages": [
-        63
+        62
       ],
       "systems": 17,
       "systemsPerPage": [
@@ -28665,7 +28570,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 75,
+      "order": 74,
       "id": "por_una_cabeza",
       "title": "一步之遥",
       "file": "por_una_cabeza_01.m3n",
@@ -28715,7 +28620,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        64
+        63
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -29541,7 +29446,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 76,
+      "order": 75,
       "id": "san_bu",
       "title": "散步",
       "file": "san_bu_01.m3n",
@@ -29603,7 +29508,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        64
+        63
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -30429,7 +30334,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 77,
+      "order": 76,
       "id": "beer_barrel_polka",
       "title": "啤酒桶波尔卡",
       "file": "beer_barrel_polka_01.m3n",
@@ -30511,7 +30416,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        65
+        64
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -30532,7 +30437,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 78,
+      "order": 77,
       "id": "canon",
       "title": "卡农",
       "file": "canon_01.m3n",
@@ -30634,7 +30539,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        66
+        65
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -30655,7 +30560,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 79,
+      "order": 78,
       "id": "xi_yang_yang",
       "title": "喜洋洋",
       "file": "xi_yang_yang_01.m3n",
@@ -30729,7 +30634,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        67
+        66
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -30750,7 +30655,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 80,
+      "order": 79,
       "id": "flower_dance",
       "title": "花之舞",
       "file": "flower_dance_01.m3n",
@@ -30912,8 +30817,8 @@
       "relativeScalePercent": 104.84,
       "screenNotePx": 20.58,
       "pages": [
-        68,
-        69
+        67,
+        68
       ],
       "systems": 34,
       "systemsPerPage": [
@@ -30935,7 +30840,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 81,
+      "order": 80,
       "id": "turkish_march",
       "title": "土耳其进行曲",
       "file": "turkish_march_01.m3n",
@@ -31077,8 +30982,8 @@
       "relativeScalePercent": 122.26,
       "screenNotePx": 24,
       "pages": [
-        70,
-        71
+        69,
+        70
       ],
       "systems": 29,
       "systemsPerPage": [
@@ -31100,7 +31005,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 82,
+      "order": 81,
       "id": "valsentino",
       "title": "Valsentino(快速圆舞曲)",
       "file": "valsentino_01.m3n",
@@ -31242,8 +31147,8 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        72,
-        73
+        71,
+        72
       ],
       "systems": 29,
       "systemsPerPage": [
@@ -31665,25 +31570,6 @@
     {
       "page": 16,
       "section": "pop",
-      "fillPercent": 99.4,
-      "items": [
-        {
-          "id": "bu_hui_gai_bian",
-          "title": "不会改变",
-          "systems": [
-            1,
-            12
-          ],
-          "width": 622,
-          "systemGap": 14,
-          "top": 0,
-          "height": 1050.73
-        }
-      ]
-    },
-    {
-      "page": 17,
-      "section": "pop",
       "fillPercent": 91.3,
       "items": [
         {
@@ -31701,7 +31587,7 @@
       ]
     },
     {
-      "page": 18,
+      "page": 17,
       "section": "pop",
       "fillPercent": 84.3,
       "items": [
@@ -31720,7 +31606,7 @@
       ]
     },
     {
-      "page": 19,
+      "page": 18,
       "section": "pop",
       "fillPercent": 99.5,
       "items": [
@@ -31739,7 +31625,7 @@
       ]
     },
     {
-      "page": 20,
+      "page": 19,
       "section": "pop",
       "fillPercent": 99.8,
       "items": [
@@ -31758,7 +31644,7 @@
       ]
     },
     {
-      "page": 21,
+      "page": 20,
       "section": "pop",
       "fillPercent": 98.3,
       "items": [
@@ -31777,7 +31663,7 @@
       ]
     },
     {
-      "page": 22,
+      "page": 21,
       "section": "pop",
       "fillPercent": 81.4,
       "items": [
@@ -31796,7 +31682,7 @@
       ]
     },
     {
-      "page": 23,
+      "page": 22,
       "section": "pop",
       "fillPercent": 99.5,
       "items": [
@@ -31815,7 +31701,7 @@
       ]
     },
     {
-      "page": 24,
+      "page": 23,
       "section": "pop",
       "fillPercent": 99.1,
       "items": [
@@ -31834,7 +31720,7 @@
       ]
     },
     {
-      "page": 25,
+      "page": 24,
       "section": "pop",
       "fillPercent": 79.2,
       "items": [
@@ -31853,7 +31739,7 @@
       ]
     },
     {
-      "page": 26,
+      "page": 25,
       "section": "pop",
       "fillPercent": 99.8,
       "items": [
@@ -31872,7 +31758,7 @@
       ]
     },
     {
-      "page": 27,
+      "page": 26,
       "section": "pop",
       "fillPercent": 99.5,
       "items": [
@@ -31891,7 +31777,7 @@
       ]
     },
     {
-      "page": 28,
+      "page": 27,
       "section": "pop",
       "fillPercent": 98.3,
       "items": [
@@ -31910,7 +31796,7 @@
       ]
     },
     {
-      "page": 29,
+      "page": 28,
       "section": "pop",
       "fillPercent": 99.3,
       "items": [
@@ -31941,7 +31827,7 @@
       ]
     },
     {
-      "page": 30,
+      "page": 29,
       "section": "pop",
       "fillPercent": 88.7,
       "items": [
@@ -31960,7 +31846,7 @@
       ]
     },
     {
-      "page": 31,
+      "page": 30,
       "section": "pop",
       "fillPercent": 81.5,
       "items": [
@@ -31979,7 +31865,7 @@
       ]
     },
     {
-      "page": 32,
+      "page": 31,
       "section": "pop",
       "fillPercent": 95.2,
       "items": [
@@ -31998,7 +31884,7 @@
       ]
     },
     {
-      "page": 33,
+      "page": 32,
       "section": "pop",
       "fillPercent": 99,
       "items": [
@@ -32017,7 +31903,7 @@
       ]
     },
     {
-      "page": 34,
+      "page": 33,
       "section": "pop",
       "fillPercent": 98,
       "items": [
@@ -32036,7 +31922,7 @@
       ]
     },
     {
-      "page": 35,
+      "page": 34,
       "section": "pop",
       "fillPercent": 95.6,
       "items": [
@@ -32055,7 +31941,7 @@
       ]
     },
     {
-      "page": 36,
+      "page": 35,
       "section": "pop",
       "fillPercent": 99.6,
       "items": [
@@ -32074,7 +31960,7 @@
       ]
     },
     {
-      "page": 37,
+      "page": 36,
       "section": "pop",
       "fillPercent": 99.6,
       "items": [
@@ -32093,7 +31979,7 @@
       ]
     },
     {
-      "page": 38,
+      "page": 37,
       "section": "pop",
       "fillPercent": 94.5,
       "items": [
@@ -32112,7 +31998,7 @@
       ]
     },
     {
-      "page": 39,
+      "page": 38,
       "section": "pop",
       "fillPercent": 88.7,
       "items": [
@@ -32131,7 +32017,7 @@
       ]
     },
     {
-      "page": 40,
+      "page": 39,
       "section": "pop",
       "fillPercent": 99.2,
       "items": [
@@ -32150,7 +32036,7 @@
       ]
     },
     {
-      "page": 41,
+      "page": 40,
       "section": "pop",
       "fillPercent": 99.4,
       "items": [
@@ -32169,7 +32055,7 @@
       ]
     },
     {
-      "page": 42,
+      "page": 41,
       "section": "pop",
       "fillPercent": 100,
       "items": [
@@ -32188,7 +32074,7 @@
       ]
     },
     {
-      "page": 43,
+      "page": 42,
       "section": "pop",
       "fillPercent": 98.5,
       "items": [
@@ -32207,7 +32093,7 @@
       ]
     },
     {
-      "page": 44,
+      "page": 43,
       "section": "pop",
       "fillPercent": 99.2,
       "items": [
@@ -32226,7 +32112,7 @@
       ]
     },
     {
-      "page": 45,
+      "page": 44,
       "section": "pop",
       "fillPercent": 99,
       "items": [
@@ -32245,7 +32131,7 @@
       ]
     },
     {
-      "page": 46,
+      "page": 45,
       "section": "pop",
       "fillPercent": 96.5,
       "items": [
@@ -32264,7 +32150,7 @@
       ]
     },
     {
-      "page": 47,
+      "page": 46,
       "section": "pop",
       "fillPercent": 96.1,
       "items": [
@@ -32283,7 +32169,7 @@
       ]
     },
     {
-      "page": 48,
+      "page": 47,
       "section": "pop",
       "fillPercent": 98.1,
       "items": [
@@ -32302,7 +32188,7 @@
       ]
     },
     {
-      "page": 49,
+      "page": 48,
       "section": "pop",
       "fillPercent": 99.5,
       "items": [
@@ -32321,7 +32207,7 @@
       ]
     },
     {
-      "page": 50,
+      "page": 49,
       "section": "pop",
       "fillPercent": 98.5,
       "items": [
@@ -32340,7 +32226,7 @@
       ]
     },
     {
-      "page": 51,
+      "page": 50,
       "section": "pop",
       "fillPercent": 99.4,
       "items": [
@@ -32359,7 +32245,7 @@
       ]
     },
     {
-      "page": 52,
+      "page": 51,
       "section": "pop",
       "fillPercent": 99.4,
       "items": [
@@ -32378,7 +32264,7 @@
       ]
     },
     {
-      "page": 53,
+      "page": 52,
       "section": "pop",
       "fillPercent": 98.2,
       "items": [
@@ -32397,7 +32283,7 @@
       ]
     },
     {
-      "page": 54,
+      "page": 53,
       "section": "instrumental",
       "fillPercent": 99.2,
       "items": [
@@ -32428,7 +32314,7 @@
       ]
     },
     {
-      "page": 55,
+      "page": 54,
       "section": "instrumental",
       "fillPercent": 90.1,
       "items": [
@@ -32459,7 +32345,7 @@
       ]
     },
     {
-      "page": 56,
+      "page": 55,
       "section": "instrumental",
       "fillPercent": 95.9,
       "items": [
@@ -32478,7 +32364,7 @@
       ]
     },
     {
-      "page": 57,
+      "page": 56,
       "section": "instrumental",
       "fillPercent": 93,
       "items": [
@@ -32497,7 +32383,7 @@
       ]
     },
     {
-      "page": 58,
+      "page": 57,
       "section": "instrumental",
       "fillPercent": 99.6,
       "items": [
@@ -32516,7 +32402,7 @@
       ]
     },
     {
-      "page": 59,
+      "page": 58,
       "section": "instrumental",
       "fillPercent": 99.5,
       "items": [
@@ -32535,7 +32421,7 @@
       ]
     },
     {
-      "page": 60,
+      "page": 59,
       "section": "instrumental",
       "fillPercent": 97.1,
       "items": [
@@ -32554,7 +32440,7 @@
       ]
     },
     {
-      "page": 61,
+      "page": 60,
       "section": "instrumental",
       "fillPercent": 90.8,
       "items": [
@@ -32573,7 +32459,7 @@
       ]
     },
     {
-      "page": 62,
+      "page": 61,
       "section": "instrumental",
       "fillPercent": 99.6,
       "items": [
@@ -32592,7 +32478,7 @@
       ]
     },
     {
-      "page": 63,
+      "page": 62,
       "section": "instrumental",
       "fillPercent": 99.2,
       "items": [
@@ -32611,7 +32497,7 @@
       ]
     },
     {
-      "page": 64,
+      "page": 63,
       "section": "instrumental",
       "fillPercent": 99.2,
       "items": [
@@ -32642,7 +32528,7 @@
       ]
     },
     {
-      "page": 65,
+      "page": 64,
       "section": "instrumental",
       "fillPercent": 97.5,
       "items": [
@@ -32661,7 +32547,7 @@
       ]
     },
     {
-      "page": 66,
+      "page": 65,
       "section": "instrumental",
       "fillPercent": 98.2,
       "items": [
@@ -32680,7 +32566,7 @@
       ]
     },
     {
-      "page": 67,
+      "page": 66,
       "section": "instrumental",
       "fillPercent": 94.3,
       "items": [
@@ -32699,7 +32585,7 @@
       ]
     },
     {
-      "page": 68,
+      "page": 67,
       "section": "instrumental",
       "fillPercent": 98.7,
       "items": [
@@ -32718,7 +32604,7 @@
       ]
     },
     {
-      "page": 69,
+      "page": 68,
       "section": "instrumental",
       "fillPercent": 95.1,
       "items": [
@@ -32737,7 +32623,7 @@
       ]
     },
     {
-      "page": 70,
+      "page": 69,
       "section": "instrumental",
       "fillPercent": 95.2,
       "items": [
@@ -32756,7 +32642,7 @@
       ]
     },
     {
-      "page": 71,
+      "page": 70,
       "section": "instrumental",
       "fillPercent": 99.6,
       "items": [
@@ -32775,7 +32661,7 @@
       ]
     },
     {
-      "page": 72,
+      "page": 71,
       "section": "instrumental",
       "fillPercent": 99.4,
       "items": [
@@ -32794,7 +32680,7 @@
       ]
     },
     {
-      "page": 73,
+      "page": 72,
       "section": "instrumental",
       "fillPercent": 95.4,
       "items": [
@@ -32816,7 +32702,7 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 3544,
+    "geometryCandidates": 3543,
     "minimumMusicPageFillPercent": 79.231,
     "underfilledMusicPages": 0,
     "outside": 0,
@@ -32835,7 +32721,7 @@
     "undersizedNoteEntries": 0,
     "maximumMusicNotePx": 25.953,
     "oversizedNoteEntries": 0,
-    "outlinedPages": 73,
+    "outlinedPages": 72,
     "outlinedPageOverflow": 0
   }
 }
