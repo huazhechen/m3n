@@ -1,0 +1,525 @@
+import { test } from "node:test";
+import { strictEqual } from "node:assert/strict";
+
+import { DEFAULT_VELOCITY, TemporalNodeBase } from "../src/functions/temporal.js";
+import { symbolBounds, type SymbolShape } from "../src/functions/symbol/shape.js";
+import { fermataSymbol } from "../src/functions/symbol/symbols/fermata.js";
+import { trSymbol } from "../src/functions/symbol/symbols/tr.js";
+import { analyzeScoreSyntax, compileScore } from "../src/pipeline.js";
+import { compilePlayback } from "../src/playback/compile.js";
+import { assert, compileValid, expectDiagnostic, layoutOf, lower, nearly, parse, playedNotes, recordCommands } from "./helpers.js";
+
+test("符号先精确查表，未命中才构造正则变体", () => {
+    for (const source of ["$TR", "@symbol(TR)"]) {
+        const node = parse(source).content[0];
+        assert("definition" in node, "解析结果应为符号节点");
+        strictEqual(node.definition, trSymbol, "查表应直接返回登记的定义");
+    }
+    for (const source of ["$TR+++", '@symbol("TR+++")']) {
+        const node = parse(source).content[0];
+        assert("definition" in node && node.definition !== null && typeof node.definition === "object",
+            "正则应构造变体定义");
+        assert("name" in node.definition, "变体应有名称");
+        strictEqual(node.definition.name, "tr+++", "构造函数仍接收小写名称");
+    }
+});
+
+test("符号连续文本完整识别，不拆出减时线或其他语法", () => {
+    for (const name of ["tr+++/", "tr+++/.", "tr+++oops", "tr+++$p", "tr+++^3", "123", "中文"]) {
+        const source = `$${name}`;
+        const result = compileScore(source);
+        strictEqual(result.diagnostics.length, 1);
+        strictEqual(result.diagnostics[0].code, "W_UNKNOWN_SYMBOL");
+        assert(result.diagnostics[0].message.includes(`$${name}`), "诊断必须包含完整符号名");
+        expectDiagnostic(() => parse(`@set(strict=true) 1^${source}`), "E_UNKNOWN_SYMBOL");
+        const { syntax } = analyzeScoreSyntax(source);
+        const token = syntax.tokens.find(token => token.span.start === 0);
+        assert(token?.kind === "atom" && token.span.end === source.length, "原子必须覆盖所有连续文本");
+    }
+    for (const separator of [" ", "\t", "\n"]) {
+        compileValid(`$tr+++${separator}$p`);
+    }
+    compileValid("1^$tr+++ / 2");
+    compileValid("@div($tr+++, 1)");
+    compileValid("{1^$tr+++}");
+});
+
+test("固定字形路径的边界只计算一次，重复片段仍计入各自偏移", () => {
+    let reads = 0;
+    const path: NonNullable<SymbolShape["path"]> = [
+        { op: "M", get x() { reads++; return 0; }, y: 0 },
+        { op: "L", x: 2, y: 1 },
+    ];
+    const shape: SymbolShape = { path, style: { fill: "#000" } };
+    const base = symbolBounds([shape]);
+    const initialReads = reads;
+    const repeated = symbolBounds([shape, { ...shape, dx: 3 }]);
+    assert(initialReads > 0 && reads === initialReads, "重复使用同一固定路径不应重新求曲线边界");
+    assert(nearly(base.w, 2) && nearly(repeated.w, 5) && nearly(repeated.h, base.h),
+        "路径缓存不能忽略重复片段的偏移");
+});
+
+test("symbol 名称及颤音尾巴由词法层识别为完整原子", () => {
+    for (const name of ["tr", "tr+", "tr++", "tr+++", "TR++++"]) {
+        const source = `$${name}`;
+        const { syntax, diagnostics } = analyzeScoreSyntax(source);
+        assert(diagnostics.length === 0 && syntax.tokens.length === 1,
+            `${source} 应无诊断地解析为单个 token`);
+        assert(syntax.tokens[0].kind === "atom" && syntax.tokens[0].span.start === 0
+            && syntax.tokens[0].span.end === source.length, "token 必须包含完整名称和所有尾巴加号");
+        compileValid(`@set(strict=true) 1^${source} / 2`);
+        compileValid(`@div(${source}, 1)`);
+    }
+});
+
+test("颤音每个加号增加一截 SVG 尾巴，显式调用与简写等价", () => {
+    const base = compileValid("$tr").layout;
+    const baseBox = base.objects[0].box;
+    let previousWidth = baseBox.w;
+    let step = 0;
+    for (let count = 1; count <= 5; count++) {
+        const name = `tr${"+".repeat(count)}`;
+        const layout = compileValid(`$${name}`).layout;
+        const box = layout.objects[0].box;
+        const commands = recordCommands(layout);
+        const paths = commands.filter(command => command.kind === "path");
+        assert(paths.length === count + 1, "每个加号必须添加且只添加一个波浪片段");
+        assert(nearly(box.h, baseBox.h) && box.w > previousWidth,
+            "尾巴只能增加宽度，不能拉伸 tr 的高度");
+        assert(nearly(box.anchor, baseBox.anchor), "尾巴不能移动原 tr 字形的对齐点");
+        if (count === 2) step = box.w - previousWidth;
+        if (count > 2) assert(nearly(box.w - previousWidth, step), "后续每截尾巴的步长应一致");
+        previousWidth = box.w;
+
+        const painted = symbolBounds(paths.map(command => ({ path: command.commands, style: command.style ?? {} })));
+        assert(nearly(painted.x, box.x) && nearly(painted.y, box.y)
+            && nearly(painted.w, box.w) && nearly(painted.h, box.h), "所有墨迹应恰好落在布局包围盒内");
+        const explicit = compileValid(`@symbol("${name}")`).layout;
+        assert(JSON.stringify(commands) === JSON.stringify(recordCommands(explicit)),
+            "显式名称和简写应产生相同绘制命令");
+
+        const doubled = compileValid(`@symbol("${name}", size=1em)`).layout.objects[0].box;
+        assert(nearly(doubled.w, box.w * 2) && nearly(doubled.h, box.h * 2),
+            "尾巴必须随 size 等比例缩放");
+        assert(nearly(doubled.anchor, box.anchor * 2), "对齐点必须随 size 等比例缩放");
+    }
+});
+
+test("带尾巴的颤音仍以原 tr 字形对齐宿主", () => {
+    for (const operator of ["^", "_"]) {
+        const base = recordCommands(compileValid(`1 ${operator} $tr`).layout)
+            .find(command => command.kind === "path");
+        const extended = recordCommands(compileValid(`1 ${operator} $tr+++`).layout)
+            .find(command => command.kind === "path");
+        assert(base?.kind === "path" && extended?.kind === "path", "颤音应绘制 tr 路径");
+        assert(JSON.stringify(base.commands) === JSON.stringify(extended.commands),
+            "增加尾巴后，宿主上方或下方的原 tr 字形都不应移动");
+    }
+});
+
+test("颤音尾巴不改变宿主时值、颤音密度或作用范围", () => {
+    for (const placement of ["1 ^", "1 _", ""]) {
+        const base = playedNotes(compilePlayback(lower(`${placement} $tr 2`)));
+        const extended = playedNotes(compilePlayback(lower(`${placement} $tr+++ 2`)));
+        const summary = (notes: typeof base) => notes.map(note =>
+            `${note.midi}:${note.start}:${note.duration}:${note.velocity}`).join(" ");
+        assert(summary(base) === summary(extended), "加号不能改变附属或独立颤音的播放行为");
+    }
+    expectDiagnostic(() => parse(`@set(strict=true) @symbol("prall+")`), "E_UNKNOWN_SYMBOL");
+    expectDiagnostic(() => parse(`@set(strict=true) @symbol("tr+oops")`), "E_UNKNOWN_SYMBOL");
+});
+
+test("未登记或形似已知名称的 symbol 在宽容模式报警，严格模式报错", () => {
+    for (const source of [
+        "$not-registered", "@symbol(not-registered)", "@div($tr_2)",
+        "$trouble", "$tr_2", '@symbol("tr+++oops")',
+    ]) {
+        const result = compileScore(source);
+        assert(result.diagnostics.length === 1 && result.diagnostics[0].code === "W_UNKNOWN_SYMBOL",
+            "宽容模式应只报告未知符号警告");
+
+        expectDiagnostic(() => parse(`@set(strict=true) ${source}`), "E_UNKNOWN_SYMBOL");
+    }
+
+    const fallback = compileScore(`@div($tr_2)`).lowering.columns[0]?.[0];
+    assert(fallback?.constructor === TemporalNodeBase && fallback.T.isZero() && !fallback.box,
+        "未知 symbol 应降级为零时值、不可见的基础 Temporal");
+});
+
+test("effect 类符号只影响同一 up 中位于其下方的成员", () => {
+    assert(playedNotes(compilePlayback(lower(`1 ^ $accent`)))[0].velocity === 100, "$accent 应增强下方音符力度");
+    assert(playedNotes(compilePlayback(lower(`$accent 1`)))[0].velocity === 80, "独立写出的 effect 不能泄漏到后继音符");
+
+    const split = playedNotes(compilePlayback(lower(`1 ^ $accent ^ 3`)));
+    assert(split[0].midi === 64 && split[0].velocity === 80,
+        "位于 symbol 上方的 up 成员不应受影响");
+    assert(split[1].midi === 60 && split[1].velocity === 100,
+        "位于 symbol 下方的 up 成员应接收 modifier");
+
+    // 大括号阻断展平，$accent 落在中间那层里；它下方还有外层自己的成员
+    const nested = playedNotes(compilePlayback(lower(`1 ^ {3 ^ $accent} ^ 5`)));
+    assert(nested.map(note => `${note.midi}:${note.velocity}`).join(" ") === "67:80 64:100 60:80",
+        "内层折叠体注册的 modifier 不能泄漏给外层的后续成员");
+
+    const composite = playedNotes(compilePlayback(lower(`@up({@up(1,3)}, $accent)`)));
+    assert(composite.length === 2 && composite.every(note => note.velocity === 100),
+        "作用于内部复合体的 modifier 对每个叶音只执行一次");
+});
+
+test("力度由记谱位置决定，持续到下一个力度记号", () => {
+    const run = playedNotes(compilePlayback(lower(`$p 1 2 $f 3 4`)));
+    assert(run.map(note => note.velocity).join(" ") === "48 48 96 96",
+        "力度应一直生效到被下一个力度记号改写");
+
+    // `$p ^ 1` 里符号是宿主，按“附属成员先、宿主最后”它轮不到同一折叠体里的本音，只影响后继音
+    const below = playedNotes(compilePlayback(lower(`$p ^ 1 2`)));
+    assert(below.map(note => `${note.midi}:${note.velocity}@${note.start}`).join(" ") === "60:80@0 62:48@1",
+        "符号写在下方成员之前时，宿主仍须发声且不得偷走时值");
+
+    // 力度按位置生效，所以反复回跳后不沿用上一遍演到的值
+    const repeated = playedNotes(compilePlayback(lower(`|: 1 $f 2 :|`)));
+    assert(repeated.map(note => note.velocity).join(" ") === "80 96 80 96",
+        "第二遍应与第一遍听起来完全一样");
+});
+
+test("力度属于声部，速度属于全篇", () => {
+    const parallel = playedNotes(compilePlayback(lower(`@stack({1 2 3}, {5 $p 6 7})`)));
+    assert(parallel.filter(note => note.track === 0).map(note => note.velocity).join(" ") === "80 80 80",
+        "并行音轨写下的 $p 不能压低另一条音轨");
+    assert(parallel.filter(note => note.track === 1).map(note => note.velocity).join(" ") === "80 48 48",
+        "$p 所在音轨仍须从记号处开始变弱");
+
+    const inherited = playedNotes(compilePlayback(lower(`$f 1 @voices(@voice({2 3}, 甲), @voice({6 7}, 乙))`)));
+    assert(inherited.every(note => note.velocity === 96),
+        "新分叉的声部继承分叉处父轨的力度");
+    const branched = playedNotes(compilePlayback(lower(`@stack({1 2}, {5 $p 6}) @voices(@voice({1}, 甲), @voice({3}, 乙))`)));
+    assert(branched.filter(note => note.start.compare(2) >= 0).every(note => note.velocity === 80),
+        "分支自己写下的 $p 不得传给之后从父轨分叉出来的声部");
+
+    const tempo = playedNotes(compilePlayback(lower(`@stack({1 2}, {5 @tempo(60) 6})`)));
+    assert(tempo.every(note => note.bpm === (note.start.isZero() ? 120 : 60)),
+        "速度是全篇共享的，写在任一音轨都影响所有声部");
+});
+
+test("延长记号调制速度，颤音和波音展开为点事件", () => {
+    const fermata = compilePlayback(lower(`1 ^ $fermata 2`));
+    const fermataNotes = playedNotes(fermata);
+    const tempos = fermata.events.filter(event => event.kind === "tempo");
+    assert(tempos.map(event => `${event.at}:${event.bpm}`).join(" ") === "0:60 1:120",
+        "$fermata 应在宿主区间把有效速度减半");
+    assert(fermataNotes[0].duration.equals(1) && fermataNotes[1].start.equals(1)
+        && nearly(fermata.durationSeconds, 1.5),
+    "$fermata 不改 QN 事件位置，只增加实际秒数");
+
+    const trill = playedNotes(compilePlayback(lower(`1 ^ $tr`)));
+    assert(trill.length === 8, "默认速度下四分音符上的 $tr 应展开为八个八分之一 QN 的子音");
+    for (let i = 0; i < trill.length; i++) {
+        assert(trill[i].midi === (i % 2 === 0 ? 60 : 62), "$tr 应在本音与调内上方二度间交替");
+        assert(trill[i].start.equals(i, 8)
+            && trill[i].duration.equals(1, 8), "$tr 子音必须连续填满宿主时值");
+    }
+
+    const prall = playedNotes(compilePlayback(lower(`1 ^ $prall`)));
+    assert(prall.length === 3, "$prall 应展开为三个音");
+    assert(prall.map(note => note.midi).join(",") === "60,62,60",
+        "$prall 应按本音、上方音、本音排列");
+    assert(prall.every(note => note.duration.equals(1, 3)),
+        "$prall 三个子音应均分宿主时值");
+
+    const mordent = playedNotes(compilePlayback(lower(`1 ^ $mordent`)));
+    assert(mordent.map(note => note.midi).join(",") === "60,59,60",
+        "$mordent 应按本音、下方音、本音排列");
+    assert(playedNotes(compilePlayback(lower(`4 ^ $mordent`))).map(note => note.midi).join(",") === "65,64,65",
+        "下方二度同样走调内音阶，C 调 4 的下方是 3");
+});
+
+test("fermata 通过速度控制影响所有重叠声部", () => {
+    const plan = compilePlayback(lower(`N: 1 2/.^$fermata 3//\nN: 3 4/ 5/`));
+    const tempos = plan.events.filter(event => event.kind === "tempo");
+    assert(tempos.length === 3
+        && tempos[0].at.equals(0) && tempos[0].bpm === 120
+        && tempos[1].at.equals(1) && tempos[1].bpm === 60
+        && tempos[2].at.equals(7, 4) && tempos[2].bpm === 120,
+    "fermata 应在附属音符区间把系统速度减半，并在末端恢复");
+
+    const fiveOn = plan.events.find(event => event.kind === "note-on" && event.midi === 67);
+    assert(fiveOn?.kind === "note-on", "下方声部的 5 应产生 NoteOn");
+    const noteId = fiveOn.noteId;
+    const fiveOff = plan.events.find(event => event.kind === "note-off" && event.noteId === noteId);
+    assert(fiveOff !== undefined && fiveOn.at.equals(3, 2) && fiveOff.at.equals(2),
+        "fermata 不应移动 5 的 QN 起止点");
+
+    const staggered = compilePlayback(lower(`N: 1 2^$fermata 3/\nN: 3/. 4/. 5/ 6.`));
+    const staggeredTempos = staggered.events.filter(event => event.kind === "tempo");
+    assert(staggeredTempos.map(event => `${event.at}:${event.bpm}`).join(" ") === "0:120 1:60 2:120",
+        "fermata 从另一声部音符中途开始、跨过下一音符后应在自身末端恢复速度");
+    const staggeredNotes = playedNotes(staggered);
+    const four = staggeredNotes.find(note => note.midi === 65);
+    const five = staggeredNotes.find(note => note.midi === 67);
+    assert(four?.start.equals(3, 4) && four.end.equals(3, 2)
+        && five?.start.equals(3, 2) && five.end.equals(2),
+    "复杂跨声部 fermata 不应移动任何音符的 QN 边界");
+    assert(staggered.performanceDuration.equals(7, 2) && nearly(staggered.durationSeconds, 9 / 4),
+        "复杂跨声部 fermata 应只通过速度积分增加实际时长");
+
+    const doubled = compilePlayback(lower(`1 ^ $fermata ^ $fermata`));
+    const doubledTempos = doubled.events.filter(event => event.kind === "tempo");
+    assert(doubledTempos.map(event => `${event.at}:${event.bpm}`).join(" ") === "0:60 1:120",
+        "同一区间的延长记号应只让系统速度减半一次");
+
+    const parallel = compilePlayback(lower(`@stack({1 ^ $fermata}, {3 ^ $fermata}, {5 ^ $fermata}, {7 ^ $fermata})`));
+    const parallelTempos = parallel.events.filter(event => event.kind === "tempo");
+    assert(parallelTempos.map(event => `${event.at}:${event.bpm}`).join(" ") === "0:60 1:120"
+        && nearly(parallel.durationSeconds, 1),
+    "多声部同刻的延长记号应作为同一个全局延长区间");
+
+    const sustained = compilePlayback(lower(`1 1@tie ^ $fermata -`));
+    const sustainedTempos = sustained.events.filter(event => event.kind === "tempo");
+    assert(sustainedTempos.map(event => `${event.at}:${event.bpm}`).join(" ") === "0:120 1:60 3:120"
+        && nearly(sustained.durationSeconds, 2.5),
+    "延长记号应覆盖目标音经 dash 延续后的完整发声区间");
+
+    const middleTie = compilePlayback(lower(`1@a 1@b ^ $fermata 1@c @tie(a,b,c)`));
+    assert(middleTie.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:120 1:60 3:120",
+    "tie 中间端点的延长记号应延伸到链尾，但不能向前覆盖链首");
+    const finalTie = compilePlayback(lower(`1@a 1@b 1@c ^ $fermata @tie(a,b,c)`));
+    assert(finalTie.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:120 2:60 3:120",
+    "tie 末端的延长记号应保持自身起点");
+
+    const adjacent = compilePlayback(lower(`1 ^ $fermata 2 ^ $fermata`));
+    assert(adjacent.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:60 2:120",
+    "相邻的同类速度区间应连续合并");
+    const repeated = compilePlayback(lower(`|: 1 ^ $fermata 2 :|`));
+    assert(repeated.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:60 1:120 2:60 3:120",
+    "反复中的每次延长记号访问应落在各自的演奏区间");
+});
+
+test("休止符上的 fermata 保留无声区间，并影响重叠声部", () => {
+    for (const [source, noteCount] of [
+        [`0 ^ $fermata`, 0],
+        [`Z ^ $fermata`, 0],
+        [`8 ^ $fermata`, 0],
+        [`@stack({0 ^ $fermata}, {1})`, 1],
+        [`@stack({0 ^ $fermata}, {1 ^ $fermata})`, 1],
+    ] as const) {
+        const plan = compilePlayback(lower(source));
+        assert(plan.events.filter(event => event.kind === "tempo")
+            .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:60 1:120",
+        "无声目标也应生成完整减速区间，与有声目标重叠时同 key 只生效一次");
+        assert(nearly(plan.durationSeconds, 1) && plan.performanceDuration.equals(1),
+            "休止符延长应只改变秒数，保持 QN 边界");
+        assert(playedNotes(plan).length === noteCount && plan.tracks.length === noteCount,
+            "无声目标不能产生音符事件或占用发声音轨");
+    }
+    const repeated = compilePlayback(lower(`|: 0 ^ $fermata 1 :|`));
+    assert(repeated.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:60 1:120 2:60 3:120",
+    "反复访问的无声效果区间应保持独立");
+});
+
+test("无声 fermata 的结构边界参与延音、琶音和跨声部颤音", () => {
+    const sustained = compilePlayback(lower(`0 ^ $fermata - 1`));
+    assert(sustained.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:60 2:120"
+        && nearly(sustained.durationSeconds, 2.5), "无声效果应覆盖增时线扩展后的完整两拍");
+    assert(sustained.diagnostics.length === 0 && playedNotes(sustained)[0].start.equals(2),
+        "休止符延音不能警告缺少目标，也不能产生或移动后继音");
+
+    const arpeggiated = compilePlayback(lower(`@arp({1 ^ {0 ^ $fermata}})`));
+    assert(arpeggiated.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:120 1/8:60 1:120"
+        && nearly(arpeggiated.durationSeconds, 15 / 16), "无声目标的效果边界应与琶音成员同步错开和缩放");
+
+    const trill = playedNotes(compilePlayback(lower(`@tempo(30) @stack({0 ^ $fermata}, {1 ^ $tr})`)));
+    assert(trill.length === 32 && trill.every(note => note.duration.equals(1, 32)),
+        "另一声部应根据无声目标产生的最终 15 BPM 展开颤音");
+});
+
+test("增时线上的 fermata 保留自身起点，并覆盖后续完整延音", () => {
+    for (const [source, tempos, seconds, firstEnd] of [
+        [`1 - ^ $fermata 2`, "0:120 1:60 2:120", 2, 2],
+        [`1 - ^ $fermata - 2`, "0:120 1:60 3:120", 3, 3],
+        [`1 - - ^ $fermata 2`, "0:120 2:60 3:120", 2.5, 3],
+        [`1 ^ $fermata - ^ $fermata - 2`, "0:60 3:120", 3.5, 3],
+        [`1^3 - ^ $fermata - 2`, "0:120 1:60 3:120", 3, 3],
+        [`1@a - ^ $fermata 1@b @tie(a,b) 2`, "0:120 1:60 3:120", 3, 3],
+    ] as const) {
+        const plan = compilePlayback(lower(source));
+        assert(plan.events.filter(event => event.kind === "tempo")
+            .map(event => `${event.at}:${event.bpm}`).join(" ") === tempos,
+        `${source} 应从标记所在增时线开始减速，并在完整逻辑延音末端恢复`);
+        assert(nearly(plan.durationSeconds, seconds) && playedNotes(plan)[0].end.equals(firstEnd),
+            "效果区间不能中断原音段的连续延音或重复起音");
+        assert(plan.diagnostics.length === 0, "合法延音组合不应产生播放诊断");
+    }
+    const silent = compilePlayback(lower(`0 - ^ $fermata - 1`));
+    assert(silent.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:120 1:60 3:120"
+        && nearly(silent.durationSeconds, 3) && playedNotes(silent).length === 1,
+    "休止符的增时线应保留效果区间并继续保持无声");
+
+    const repeated = compilePlayback(lower(`|: 1 - ^ $fermata :|`));
+    assert(repeated.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:120 1:60 2:120 3:60 4:120",
+    "反复中的增时线效果应保留各次访问自己的起点");
+
+    const parallel = compilePlayback(lower(`@tempo(30) @stack({1 - ^ $fermata}, {0 3 ^ $tr})`));
+    const lowerVoice = playedNotes(parallel).filter(note => note.track === 1);
+    assert(lowerVoice.length === 32 && lowerVoice.every(note => note.duration.equals(1, 32)),
+        "另一声部应根据增时线声明的最终 15 BPM 展开颤音");
+    for (const [content, onset] of [
+        [`1 - ^ $fermata`, "29/64"],
+        [`0 - ^ $fermata`, "29/64"],
+        [`1 - ^ $fermata -`, "11/32"],
+    ]) {
+        const arpeggiated = compilePlayback(lower(`@arp({3 ^ {{${content}}>2}})`));
+        assert(arpeggiated.events.filter(event => event.kind === "tempo")
+            .map(event => `${event.at}:${event.bpm}`).join(" ") === `0:120 ${onset}:60 25/32:120`,
+        "新增部分的效果起点应在连续延长时保持原位，随所属音段整体缩放");
+    }
+});
+
+test("fermata 的最终速度参与装饰音密度计算", () => {
+    const slow = playedNotes(compilePlayback(lower(`@tempo(20) 1 ^ $fermata ^ $tr`)));
+    const fast = playedNotes(compilePlayback(lower(`@tempo(600) 1 ^ $fermata ^ $tr`)));
+    assert(slow.length === 48, `20 BPM 再减半时应展开 48 个子音，实际 ${slow.length}`);
+    assert(fast.length === 8, `600 BPM 减半后应回到名义密度，实际 ${fast.length}`);
+});
+
+test("fermata 沿逻辑连接延续后再决定所有声部的颤音密度", () => {
+    const parallel = compilePlayback(lower(`@tempo(30) @stack({1@a ^ $fermata 1@b @tie(a,b)}, {0 3 ^ $tr})`));
+    assert(parallel.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:15 2:30",
+    "连音延续应在展开颤音前确定完整减速区间");
+    const lowerVoice = playedNotes(parallel).filter(note => note.track === 1);
+    assert(lowerVoice.length === 32 && lowerVoice.every(note => note.duration.equals(1, 32)),
+        "第二声部第二拍应按最终 15 BPM 展开为 32 个子音");
+
+    const intoTrill = compilePlayback(lower(`@tempo(30) 1@a ^ $fermata 1@b ^ $tr @tie(a,b)`));
+    assert(intoTrill.events.filter(event => event.kind === "tempo")
+        .map(event => `${event.at}:${event.bpm}`).join(" ") === "0:15 2:30",
+    "效果范围应到连接音段末端，与首个颤音子音的长度无关");
+    const notes = playedNotes(intoTrill);
+    assert(notes.length === 32 && notes[0].start.equals(0) && notes[0].end.equals(33, 32),
+        "普通音仅与颤音首个同音子音合并，其余子音保留最终速度下的密度");
+});
+
+test("颤音密度按发声速度而不是固定记谱时值", () => {
+    const slow = playedNotes(compilePlayback(lower(`@tempo(20) 1 ^ $tr`)));
+    const fast = playedNotes(compilePlayback(lower(`@tempo(600) 1 ^ $tr`)));
+    assert(slow.length === 24, `20 BPM 下四分音符长 3 秒，应展开为 24 个子音，实际 ${slow.length}`);
+    assert(fast.length === 6, `600 BPM 下应收敛到上限频率，实际 ${fast.length}`);
+    for (const plan of [slow, fast]) {
+        const last = plan[plan.length - 1];
+        assert(last.start.clone().add(last.duration).equals(1), "任何密度下子音都必须恰好填满宿主时值");
+    }
+});
+
+test("颤音从通用调内位置求每个音符自己的上方二度", () => {
+    const firstPair = (source: string) => playedNotes(compilePlayback(lower(source))).slice(0, 2).map(note => note.midi).join(",");
+    assert(firstPair(`3 ^ $tr`) === "64,65", "C 调 3 的上方二度是 4，只升一个半音");
+    assert(firstPair(`7 ^ $tr`) === "71,72", "C 调 7 的上方二度应跨八度到高音 1");
+    assert(firstPair(`@1(D4) 3 ^ $tr`) === "66,67", "D 调 3 的颤音应在 F# 与 G 间交替");
+    assert(firstPair(`#1 ^ $tr`) === "61,62", "主体临时升号不应传给调内上方二度");
+
+    const composed = playedNotes(compilePlayback(lower(`1 ^ $tr ^ $prall`)));
+    assert(composed.map(note => note.midi).join(",") === "60,62,62,64,60,62",
+        "装饰音继续展开派生音时，应以派生音自己的调内位置为基准");
+});
+
+test("内置 symbol 使用固定图形生成稳定几何和绘制命令", () => {
+    const names = ["tr", "fermata", "prall", "mordent", "accent", "dc", "ds", "segno", "fine",
+        "ppp", "pp", "p", "mp", "mf", "f", "ff", "fff"];
+    for (const name of names) {
+        const layout = layoutOf(`$${name}`);
+        assert(layout.objects.length === 1, `$${name} 应生成一个可见对象`);
+        const box = layout.objects[0].box;
+        assert(Number.isFinite(box.w) && Number.isFinite(box.h) && box.w > 0 && box.h > 0,
+            `$${name} 应生成有限的正尺寸盒子`);
+        assert(recordCommands(layout).length > 0, `$${name} 应产生 Painter 命令`);
+    }
+
+    const sugar = layoutOf(`$tr`).objects[0].box;
+    const explicit = layoutOf(`@symbol(tr)`).objects[0].box;
+    assert(nearly(sugar.w, explicit.w) && nearly(sugar.h, explicit.h), "$tr 与 @symbol(tr) 应完全等价");
+});
+
+test("包围盒取曲线真实极值，宽扁符号用 weight 修正视觉重量", () => {
+    // 延长记号的两段弧若按控制点求边界会把高度高估三分之一
+    const layout = layoutOf(`$fermata`);
+    const fermata = layout.objects[0].box;
+    const painted = symbolBounds(recordCommands(layout).flatMap<SymbolShape>(command => {
+        if (command.kind === "path") return [{ path: command.commands, style: command.style ?? {} }];
+        if (command.kind === "circle") return [{
+            circle: { cx: command.cx, cy: command.cy, r: command.r },
+            style: command.style ?? {},
+        }];
+        return [];
+    }));
+    const scale = 11 * 0.6 / symbolBounds(fermataSymbol.shapes!).h;
+    const padding = (fermataSymbol.paddingBottom ?? 0) * scale;
+    assert(nearly(painted.h, 11 * 0.6), "延长记号的图形高度应是 size 乘以自己的 weight");
+    assert(painted.w / painted.h > 2, "延长记号是宽扁字形，图形边界的宽高比应大于 2");
+    assert(padding > 0 && nearly(fermata.h, painted.h + padding), "占位应包含按图形比例缩放的底部留白");
+    assert(nearly(painted.y, fermata.y) && nearly(painted.w, fermata.w), "底部留白不应移动或拉伸图形");
+
+    const tr = layoutOf(`$tr`).objects[0].box;
+    assert(nearly(tr.h, 11), "未声明 weight 的符号高度应等于 size");
+});
+
+test("力度记号是三个字母的横向拼接，共用一条力度阶梯", () => {
+    const ladder = [["ppp", 16], ["pp", 32], ["p", 48], ["mp", 64],
+        ["mf", 80], ["f", 96], ["ff", 112], ["fff", 127]] as const;
+    for (const [name, velocity] of ladder) {
+        assert(playedNotes(compilePlayback(lower(`1 ^ $${name}`)))[0].velocity === velocity,
+            `$${name} 应把同位置的音符设为 ${velocity}`);
+    }
+    assert(ladder[4][1] === DEFAULT_VELOCITY, "mf 应恰好等于默认力度");
+
+    const box = (name: string) => layoutOf(`$${name}`).objects[0].box;
+    // 同族记号只是多拼几个字母，所以必须等高、逐个变宽
+    for (const family of [["p", "pp", "ppp"], ["f", "ff", "fff"]]) {
+        const boxes = family.map(box);
+        assert(boxes.every(item => nearly(item.h, boxes[0].h)), `${family.join("/")} 应等高`);
+        assert(boxes[0].w < boxes[1].w && boxes[1].w < boxes[2].w, `${family.join("/")} 应逐个变宽`);
+    }
+    assert(nearly(box("mf").h, box("f").h) && nearly(box("mp").h, box("p").h),
+        "带 m 的记号高度由后一个字母决定");
+    assert(box("p").h < box("f").h, "p 没有升部，盒子应比 f 矮");
+});
+
+test("$dc 跳回曲首再演一遍，它所在的时间列不发声", () => {
+    const played = (source: string) =>
+        playedNotes(compilePlayback(lower(source))).map(note => note.midi).join(" ");
+
+    assert(played("1 2 3") === "60 62 64", "没有 $dc 时只演奏一遍");
+    assert(played("1 2 3 $dc") === "60 62 64 60 62 64", "$dc 应跳回曲首再演一遍");
+    // 反复线每条只回跳一次，所以 D.C. 之后的那一遍不再重复曲中的反复段
+    assert(played("|: 1 :| 2 $dc") === "60 60 62 60 62", "D.C. 之后不再重复曲中的反复段");
+    // 跳转的定义是当前列不演奏，所以叠在音符上会吞掉第一遍的那个音
+    assert(played("1 2 3^$dc") === "60 62 60 62 64", "$dc 所在的列在跳转的那一遍不发声");
+});
+
+test("$ds 跳回记号处", () => {
+    const played = (source: string) =>
+        playedNotes(compilePlayback(lower(source))).map(note => note.midi).join(" ");
+
+    assert(played("1 $segno 2 3 $ds") === "60 62 64 62 64", "D.S. 应跳回 $segno 所在的列");
+    assert(played("1 2 3 $ds") === "60 62 64 60 62 64", "没有 $segno 时 D.S. 退回曲首");
+    assert(played("1 2 $ds 3 $segno 4") === "60 62 60 62 64 65", "写在 D.S. 之后的 $segno 不是回跳目标");
+});
+
+test("$fine 只在回跳之后生效，不被反复线提前触发", () => {
+    const played = (source: string) =>
+        playedNotes(compilePlayback(lower(source))).map(note => note.midi).join(" ");
+
+    assert(played("1 2 3 | _$fine 4 5 | _$dc") === "60 62 64 65 67 60 62 64", "回跳后经过 Fine 应收尾");
+    // 判据若是“第二次经过”，这两条会在反复的第二遍就静默地把曲子停掉
+    assert(played("|: 1 2 $fine :| 3 $dc") === "60 62 60 62 64 60 62", "反复段内的 Fine 不受反复线影响");
+    assert(played("|: 1 2 $fine 3 :| 4") === "60 62 64 60 62 64 65", "没有回跳记号时 Fine 不生效");
+    assert(played("1 $dc 2 $fine 3") === "60 60 62 64", "写在回跳点之后的 Fine 永远不生效");
+});

@@ -1,0 +1,193 @@
+import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, LengthValue, ParserContext, SourceSpan } from "../ASTtypes.js";
+import { WarningDiagnostic } from "../../diagnostic.js";
+import type { LoweringContext } from "../../lowering/loweringContext.js";
+import { isVisualTemporalNode, type VisualTemporalNode } from "../temporal.js";
+import type { LoweringGroup } from "../../lowering/types.js";
+import {
+    isLayoutAttachment,
+    AttachmentLayoutContext,
+    LayoutAttachment,
+    LayoutPrepareContext,
+    LayoutRegion,
+} from "../../layout/types.js";
+import { TranslatingPainter } from "../../render/translate.js";
+import type { Painter } from "../../render/types.js";
+
+class AdjustFunction extends ASTFunctionNode {
+    static override def = {
+        name: ["adjust", "adj"],
+        description: "微调目标的绘制位置与排版占位",
+        details: `\
+~~~jpfun
+@adjust(1, dx=2px, dy=-1px, dw=0.2em, dh=0px)
+~~~
+
+位置偏移在排版后应用，相邻对象保持原位；占位调整在排版前应用。只包裹关系对象时，平移作用于该关系对象本身。`,
+        allowExtraArgs: false,
+        args: [
+            {
+                type: "content" as const,
+                description: "要微调的内容或关系对象",
+                default: null,
+            },
+            {
+                name: "dx",
+                description: "排版后的水平偏移，正值向右，不改变占位",
+                type: "length" as const,
+                default: { value: 0, unit: "px" } as LengthValue,
+            },
+            {
+                name: "dy",
+                description: "排版后的垂直偏移，正值向下，不改变占位",
+                type: "length" as const,
+                default: { value: 0, unit: "px" } as LengthValue,
+            },
+            {
+                name: "dw",
+                description: "增减水平占位，按原左右比例分配，最终宽度不小于 0",
+                type: "length" as const,
+                default: { value: 0, unit: "px" } as LengthValue,
+            },
+            {
+                name: "dh",
+                description: "增减下方占位，最终高度不小于 0",
+                type: "length" as const,
+                default: { value: 0, unit: "px" } as LengthValue,
+            },
+        ],
+    };
+
+    target: ASTNodeBase;
+    readonly dx: number;
+    readonly dy: number;
+    readonly dw: number;
+    readonly dh: number;
+    override get children() { return [this.target]; }
+    override timeFlowModel() {
+        return {
+            children: [this.target],
+            mode: "sequence" as const,
+        };
+    }
+
+    /** 微调不创建时间事件，只收集作用域内的对象与关系对象 */
+    override loweringEnter(ctx: LoweringContext) {
+        const targets = { temporal: 0, attachment: 0 };
+        const group: AdjustGroup = {
+            targets,
+            onTemporal: node => {
+                if (!isVisualTemporalNode(node)) return;
+                targets.temporal++;
+                offsetTemporal(node, this);
+            },
+            onAttachment: attachment => {
+                if (!isLayoutAttachment(attachment)) return;
+                targets.attachment++;
+                offsetAttachment(attachment, targets, this.dx, this.dy);
+            },
+        };
+        ctx.beginLoweringGroup(this, group);
+        return [];
+    }
+
+    override loweringExit(ctx: LoweringContext) {
+        const group = ctx.endLoweringGroup(this) as AdjustGroup;
+        if (group.targets.temporal === 0 && group.targets.attachment === 0) {
+            ctx.diagnostics.push(new WarningDiagnostic(
+                "W_ADJUST_NO_TARGET",
+                "@adjust 没有找到可调整的对象",
+                this.sourceSpan,
+            ));
+        }
+        return [];
+    }
+
+    constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
+        super(sourceSpan, parent);
+        const [tgt, dx, dy, dw, dh] = this.getArgValue(args, ctx) as [ASTNodeBase, ...LengthValue[]];
+        tgt.parent = this;
+        this.target = tgt;
+        this.dx = ctx.length2px(dx);
+        this.dy = ctx.length2px(dy);
+        this.dw = ctx.length2px(dw);
+        this.dh = ctx.length2px(dh);
+    }
+
+    override toString(source: string) {
+        return `@adjust(${this.target.toString(source)}, dx=${this.dx}px, dy=${this.dy}px, dw=${this.dw}px, dh=${this.dh}px)`;
+    }
+}
+
+export const AdjustNode: ASTFunctionClass = AdjustFunction;
+
+/** loweringExit 据此判断这次微调是否落空 */
+interface AdjustGroup extends LoweringGroup {
+    readonly targets: AdjustTargets;
+}
+
+interface AdjustTargets {
+    temporal: number;
+    attachment: number;
+}
+
+/** 在原对象上组合布局生命周期，保持布局索引依赖的对象身份 */
+function offsetTemporal(node: VisualTemporalNode, owner: AdjustFunction) {
+    const { dx, dy, dw, dh } = owner;
+    if (dx === 0 && dy === 0 && dw === 0 && dh === 0) return;
+    if (dx !== 0 || dy !== 0) {
+        node.placementOffset = { x: (node.placementOffset?.x ?? 0) + dx, y: (node.placementOffset?.y ?? 0) + dy };
+    }
+
+    let placedX: number | undefined;
+    let placedY: number | undefined;
+    const finalize = node.finalizeLayout;
+    const onPlaced = node.onPlaced;
+    node.finalizeLayout = (context: LayoutPrepareContext) => {
+        finalize?.call(node, context);
+        const width = Math.max(0, node.box.w + dw);
+        node.box.anchor = node.box.w > 0 ? node.box.anchor * width / node.box.w : 0;
+        node.box.w = width;
+        node.box.h = Math.max(0, node.box.h + dh);
+    };
+    node.onPlaced = () => {
+        if (node.box.x !== placedX) node.box.x += dx;
+        if (node.box.y !== placedY) node.box.y += dy;
+        onPlaced?.call(node);
+        placedX = node.box.x;
+        placedY = node.box.y;
+    };
+}
+
+/**
+ * 平移一条关系对象
+ *
+ * 在原 Attachment 上组合 createGeometry，保留依赖查找与 instanceof 所需的对象身份
+ * 作用域里只要有对象被平移过，关系对象就已经跟着端点走了，这里不能再平移第二次
+ */
+function offsetAttachment(
+    attachment: LayoutAttachment,
+    targets: Readonly<AdjustTargets>,
+    dx: number,
+    dy: number,
+) {
+    if (targets.temporal > 0 || (dx === 0 && dy === 0)) return;
+    attachment.placementOffset = { x: (attachment.placementOffset?.x ?? 0) + dx, y: (attachment.placementOffset?.y ?? 0) + dy };
+    const createGeometry = attachment.createGeometry;
+    attachment.createGeometry = (context: AttachmentLayoutContext) => {
+        const geometry = createGeometry.call(attachment, context);
+        if (targets.temporal > 0 || context.layoutOnly) return geometry;
+
+        const shift = (region: LayoutRegion): LayoutRegion => region.line === void 0
+            ? { x: region.x + dx, y: region.y + dy, w: region.w, h: region.h }
+            : { x: region.x + dx, y: region.y + dy, w: region.w, h: region.h, line: region.line, track: region.track };
+
+        return {
+            regions: geometry.regions.map(shift),
+            occupancy: geometry.occupancy?.map(shift),
+            paint(painter: Painter) {
+                // attachment 的绘制大多用闭包存储了，所以只能代理 painter
+                geometry.paint(new TranslatingPainter(painter, dx, dy));
+            },
+        };
+    };
+}

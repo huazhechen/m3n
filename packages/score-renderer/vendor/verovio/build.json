@@ -1,0 +1,57 @@
+{
+  "version": "6.2.0",
+  "commit": "43f806031bfff2c64003fc8ddd9910820445f6ab",
+  "sourceSha256": "9ec55723381105f14453d5d182d09877d75d6f18c31ef4119164d74132a47eca",
+  "emscriptenVersion": "4.0.20",
+  "excludedFonts": [
+    "Gootville",
+    "Leland",
+    "Petaluma",
+    "Liberation"
+  ],
+  "excludedResources": [
+    "Bravura",
+    "Bravura.css"
+  ],
+  "supportedMusicFonts": [
+    "Leipzig"
+  ],
+  "disabledFeatures": [
+    "DARMS",
+    "PAE",
+    "ABC",
+    "GABC",
+    "MXL",
+    "HUMDRUM",
+    "MUSICXML",
+    "EDIT"
+  ],
+  "exportedFunctions": [
+    "_enableLog",
+    "_enableLogToBuffer",
+    "_vrvToolkit_constructor",
+    "_vrvToolkit_destructor",
+    "_vrvToolkit_getElementsAtTime",
+    "_vrvToolkit_getLog",
+    "_vrvToolkit_getPageCount",
+    "_vrvToolkit_getTimeForElement",
+    "_vrvToolkit_loadData",
+    "_vrvToolkit_renderToMIDI",
+    "_vrvToolkit_renderToSVG",
+    "_vrvToolkit_setOptions",
+    "_vrvToolkit_getVersion",
+    "_vrvToolkit_resetXmlIdSeed",
+    "_vrvToolkit_renderToTimemap",
+    "_vrvToolkit_getOptions",
+    "_vrvToolkit_getDefaultOptions",
+    "_vrvToolkit_getAvailableOptions"
+  ],
+  "compileOptimization": "-Os",
+  "linkOptimization": "-Oz",
+  "lto": true,
+  "binaryenCores": 1,
+  "externalWasm": true,
+  "sourcePatchSha256": "28677e3780a5aa9ef71f55b92eda2c07cf0805fe8879b4cc4a78053bab2dec47",
+  "moduleSha256": "bf683a2e922dd027852856eaf52074ce4bf3063e90929391c6a5df963bb1c5c7",
+  "wasmSha256": "d55396e6ccf6263eeda9ef4e4cd0c9ff9a291248200e981dd4f3c85ff8e6aa1b"
+}

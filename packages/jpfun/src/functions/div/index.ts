@@ -1,0 +1,242 @@
+import { ASTNodeBase, FunctionArgs, SourceSpan, ParserContext, ASTFunctionNode, ASTFunctionClass, functionAddonKey } from "../ASTtypes.js";
+import { GrammarNode, GrammarSugarNode } from "../../parser/grammarType.js";
+import type { LayoutDecorationHandler, LayoutHost, LayoutPoint } from "../../layout/types.js";
+import type { LoweringContext } from "../../lowering/loweringContext.js";
+import { WarningDiagnostic } from "../../diagnostic.js";
+
+const DIV_FUNC_NAME = "div";
+export const DIV_ADDON_KEY = functionAddonKey(DIV_FUNC_NAME);
+
+/** div 暴露自己的线段端口，不依赖任何关系函数 */
+export function divLinePortName(level: number, edge: "left" | "right"): string {
+    return `div.${level}.${edge}`;
+}
+
+interface DivLinePort extends LayoutPoint {
+    /** 当前 layout 中该级局部线的接管状态，由平移后的端口副本共享 */
+    state: { claimed: boolean };
+}
+
+export function claimDivLine(host: LayoutHost, level: number) {
+    const port = host.ports[divLinePortName(level, "left")] as DivLinePort | undefined;
+    if (port) port.state.claimed = true;
+}
+
+/** 接管绘制的函数必须用同一条公式，否则同一条减时线会因为谁画而粗细不一 */
+export function divLineWidth(size: number) {
+    return Math.max(1, size * 0.055);
+}
+
+/**
+ * 逐级产出连续提供该级端口的下标区间（含两端，长度至少为 2）
+ *
+ * 端口按级递增排布是 div 的内部约定，接管绘制的函数只按这里给出的区间连线
+ */
+export function* divLineRuns(hosts: readonly LayoutHost[]) {
+    for (let level = 0; ; level++) {
+        let hasPorts = false;
+        let from = -1;
+        // 多扫一位，让最后一段也走同一条收尾分支
+        for (let i = 0; i <= hosts.length; i++) {
+            const ports = hosts[i]?.ports;
+            const left = ports?.[divLinePortName(level, "left")];
+            const right = ports?.[divLinePortName(level, "right")];
+            if (left || right) hasPorts = true;
+            if (left && right) {
+                if (from < 0) from = i;
+                continue;
+            }
+            if (from >= 0 && i - from >= 2) yield { level, from, to: i - 1 };
+            from = -1;
+        }
+        if (!hasPorts) return;
+    }
+}
+
+class DivFunction extends ASTFunctionNode {
+    static override def = {
+        name: [DIV_FUNC_NAME, "/"],
+        description: "减时线",
+        details: `\
+~~~jpfun
+@div({1 2 -}, n=2, autobeam=true)
+~~~
+**简写**：在目标后加 \`/\`，可重复或作用于内容块。\`@div(1, 2)\` 等价于 \`1//\`，\`@div({1 2/ -}, 2)\` 等价于 \`{1 2/ -}//\`。默认参数使用 \`div.n\`、\`div.autobeam\` 设置。`,
+        allowExtraArgs: false,
+        args: [
+            {
+                type: "content" as const,
+                description: "要减时的内容，可包含多个音符或增时线",
+                default: null,
+            },
+            {
+                name: "n",
+                description: "减时层数，每级将时值减半，取非负整数",
+                type: "number" as const,
+                default: 1,
+            },
+            {
+                name: "autobeam",
+                description: "是否参与不同 div 之间的自动连线，同一 div 内部的连线不受影响",
+                type: "boolean" as const,
+                default: true,
+            },
+        ]
+    };
+
+    static override deSugarAtom(source: string, start: number, end: number) {
+        // 检查 / 的数量
+        let divCnt = 0;
+        let pos = start;
+        while (pos < end && source[pos] === '/') {
+            divCnt++;
+            pos++;
+        }
+        if (divCnt === 0) return null;
+        // 对前一个节点的探查放到 deSugarRelation 中
+        const node: GrammarSugarNode = {
+            kind: "sugar",
+            data: {
+                class: DivFunction,
+                n: divCnt,
+            },
+            span: { start, end: pos },
+        };
+        return { next: pos, node };
+    };
+
+    static override deSugarRelation(ctx: ParserContext, nodes: (GrammarNode | number)[], at: number) {
+        const n = nodes[at++] as GrammarSugarNode;
+        if (n.data?.class !== DivFunction) return null;
+        const prevIndex = ASTFunctionNode.findLastFuncContentIndex(ctx.nodes, ctx.nodes.length - 1);
+        if (prevIndex < 0) return at;   // 没有了 直接当作无效文本跳过
+        const prev = ctx.nodes[prevIndex];
+        if (prev instanceof DivFunction) {
+            // 已经是div了 继续加深
+            prev.n += n.data.n;
+            return at;
+        }
+        const argMap: FunctionArgs = new Map();
+        argMap.set(0, prev);
+        argMap.set("n", n.data.n);
+        const spanPrev = prev.sourceSpan;
+        const node = new DivFunction({
+            start: Math.min(spanPrev.start, n.span.start),
+            end: Math.max(spanPrev.end, n.span.end),
+        }, argMap, ctx, null);
+        ctx.nodes[prevIndex] = node;
+        return at;
+    }
+
+    /**
+     * 减时线是目标对象下方的通用装饰
+     * 多对象自动连线属于 beam 的关系排版，不在这里猜测相邻元素
+     */
+    static override layoutDecorationHandler: LayoutDecorationHandler = (host, value) => {
+        const count = Math.max(0, Math.floor(Number(value) || 0));
+        if (count === 0) return null;
+
+        const lineGap = host.ast.size * 0.14;
+        const strokeWidth = divLineWidth(host.ast.size);
+        const lineBlockHeight = (count - 1) * lineGap + strokeWidth;
+        let lineLeft = 0;
+        let lineRight = 0;
+        let firstLine = 0;
+
+        return {
+            below: {
+                order: 0,
+                // 画线沿用正文盒基准，间距换算到装饰排列起点。
+                gap: host.box.h - (host.ports["decoration.below"]?.y ?? host.box.h) - host.ast.size * 0.08,
+                height: lineBlockHeight,
+                place(y) {
+                    lineLeft = host.ports["body.left"]?.x ?? 0;
+                    lineRight = host.ports["body.right"]?.x ?? host.box.w;
+                    firstLine = y + strokeWidth / 2;
+
+                    // 每一级提供完整局部范围
+                    // 关系对象可以据此一次绘制整条连接线
+                    for (let i = 0; i < count; i++) {
+                        const lineY = firstLine + i * lineGap;
+                        host.ports[divLinePortName(i, "left")] = {
+                            x: lineLeft,
+                            y: lineY,
+                            state: { claimed: false },
+                        } as DivLinePort;
+                        host.ports[divLinePortName(i, "right")] = {
+                            x: lineRight,
+                            y: lineY,
+                        };
+                    }
+                },
+            },
+            paint(painter) {
+                // 未被关系对象接管的级别仍由本装饰独立绘制
+                for (let i = 0; i < count; i++) {
+                    const leftPort = host.ports[divLinePortName(i, "left")] as DivLinePort;
+                    if (leftPort.state.claimed) continue;
+                    const y = host.box.y + firstLine + i * lineGap;
+                    painter.drawLine(
+                        host.box.x + lineLeft,
+                        y,
+                        host.box.x + lineRight,
+                        y,
+                        { stroke: "#000", strokeWidth },
+                    );
+                }
+            },
+        };
+    };
+
+    override loweringEnter(ctx: LoweringContext) {
+        const count = this.n;
+        ctx.beginLoweringGroup(this, {
+            onTemporal(node) {
+                if (count === 0) return;
+                const addon = node.addon ??= {};
+                addon[DIV_ADDON_KEY] = (Number(addon[DIV_ADDON_KEY]) || 0) + count;
+                node.T.divPow2(count);
+            },
+        });
+        return [];
+    }
+    override loweringExit(ctx: LoweringContext) {
+        ctx.endLoweringGroup(this);
+        return [];
+    }
+
+    content: ASTNodeBase;
+    n: number;
+
+    /** parse 时冻结；只控制不同 div 之间的自动连接，不影响当前 div 内部连接 */
+    autoBeamEnabled: boolean;
+    override get children() { return [this.content]; }
+    override timeFlowModel() {
+        return {
+            children: [this.content],
+            mode: "sequence" as const,
+        }
+    }
+
+    constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
+        super(sourceSpan, parent);
+        [this.content, this.n, this.autoBeamEnabled] = this.getArgValue(args, ctx) as [ASTNodeBase, number, boolean];
+        // div 允许修饰任意 都会加下划线
+        this.content.parent = this;
+        const n = Math.max(0, Math.trunc(this.n));
+        if (n !== this.n) {
+            ctx.diagnostics.push(new WarningDiagnostic(
+                "W_DIV_INVALID_N",
+                `@div 的数量参数 n 必须为非负整数，已被修正为 ${n}`,
+                this.sourceSpan
+            ));
+            this.n = n;
+        }
+    }
+
+    override toString(source: string) {
+        return `@div(${this.content.toString(source)}, ${this.n})`;
+    }
+}
+
+export const DivNode = DivFunction satisfies ASTFunctionClass;

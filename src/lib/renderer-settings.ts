@@ -1,0 +1,79 @@
+export const SCORE_WIDTH_KEY = 'm3n:score-width'
+export const PLAYBACK_SPEED_KEY = 'm3n:playback-speed'
+export const METRONOME_ENABLED_KEY = 'm3n:metronome-enabled'
+export const RENDER_MODE_KEY = 'm3n:render-mode'
+export const NUMBERED_NOTATION_KEY = 'm3n:numbered-notation'
+export const TRANSPOSE_KEY = 'm3n:playback-transpose'
+
+export const SCORE_WIDTH_MIN = 320
+export const SCORE_WIDTH_MAX = 2560
+export const SCORE_WIDTH_STEP = 10
+export const DEFAULT_SCORE_WIDTH = 800
+
+export const PLAYBACK_SPEED_MIN = 50
+export const PLAYBACK_SPEED_MAX = 200
+export const PLAYBACK_SPEED_STEP = 5
+export const DEFAULT_PLAYBACK_SPEED = 100
+export const PLAYBACK_TRANSPOSE_MIN = -12
+export const PLAYBACK_TRANSPOSE_MAX = 12
+export const DEFAULT_PLAYBACK_TRANSPOSE = 0
+
+export type RenderMode = 'paged' | 'continuous'
+export const DEFAULT_RENDER_MODE: RenderMode = 'continuous'
+
+export function readRendererSetting(key: string, fallback: number, min?: number, max?: number) {
+  let value = fallback
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw !== null) {
+      const parsed = Number(raw)
+      if (Number.isFinite(parsed)) value = parsed
+    }
+  } catch {
+    // 本地存储不可用时使用默认值。
+  }
+  if (min !== undefined) value = Math.max(min, value)
+  if (max !== undefined) value = Math.min(max, value)
+  return value
+}
+
+export function writeRendererSetting(key: string, value: number) {
+  try {
+    localStorage.setItem(key, String(value))
+  } catch {
+    // 本地存储不可用时忽略写入。
+  }
+}
+
+export function readRenderMode(): RenderMode {
+  try {
+    const raw = localStorage.getItem(RENDER_MODE_KEY)
+    return raw === 'paged' || raw === 'continuous' ? raw : DEFAULT_RENDER_MODE
+  } catch {
+    return DEFAULT_RENDER_MODE
+  }
+}
+
+export function writeRenderMode(mode: RenderMode) {
+  try {
+    localStorage.setItem(RENDER_MODE_KEY, mode)
+  } catch {
+    // 本地存储不可用时忽略写入。
+  }
+}
+
+export function readNumberedNotation() {
+  try {
+    return localStorage.getItem(NUMBERED_NOTATION_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function writeNumberedNotation(enabled: boolean) {
+  try {
+    localStorage.setItem(NUMBERED_NOTATION_KEY, enabled ? '1' : '0')
+  } catch {
+    // 本地存储不可用时忽略写入。
+  }
+}

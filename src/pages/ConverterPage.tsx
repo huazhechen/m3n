@@ -1,0 +1,70 @@
+import { EditorSplit } from '../components/EditorSplit'
+import { useMemo, useState } from 'react'
+import { formatScoreDiagnostic } from '@m3n/notation'
+import { useM3NAnalysis } from '../hooks/useM3NAnalysis'
+import { ScoreRenderer } from '../components/ScoreRenderer'
+import { SourceEditor } from '../components/SourceEditor'
+import { happi123ToM3N } from '../lib/happi123-m3n'
+
+const sample = `{title:快乐123示例}\n{key_signature:C}\n{time_signature:4/4}\n{bpm:100}\n\n1 2 3 4 | 5 6 7 1' |||`
+
+export function ConverterPage() {
+  const [source, setSource] = useState(sample)
+  const [isResultOpen, setIsResultOpen] = useState(false)
+  const result = useMemo(() => happi123ToM3N(source), [source])
+  const [isComposing, setIsComposing] = useState(false)
+  const { analysis, isAnalyzing, error, retry } = useM3NAnalysis(result.output, { suspended: isComposing })
+
+  const copyResult = async () => {
+    await navigator.clipboard.writeText(result.output)
+    setIsResultOpen(false)
+  }
+
+  return (
+    <main>
+      <div className="editor-container">
+        <header className="editor-header">
+          <div className="editor-header-left">
+            <h1>Happi123 转 M3N</h1>
+          </div>
+          <div className="editor-header-right">
+            <button type="button" className="action-button" onClick={() => setIsResultOpen(true)}>转换</button>
+          </div>
+        </header>
+        <EditorSplit source={<SourceEditor
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            value={source}
+            ariaLabel="Happi123 source"
+            onChange={setSource}
+          />} preview={<ScoreRenderer
+            mei={analysis.getMei}
+            isSourceUpdating={isAnalyzing}
+            scoreDocument={analysis.score}
+            headerMetadata={analysis.interaction.headerMetadata}
+            sourceMap={analysis.interaction.sourceMap}
+          />}>
+          {result.diagnosticDetails.length > 0 && <ul className="diagnostics editor-source-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
+          {error && <p role="alert">{error} <button type="button" onClick={retry}>重试分析</button></p>}
+          {analysis.diagnostics.length > 0 && <ul className="diagnostics editor-render-diagnostics">{analysis.diagnostics.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}
+        </EditorSplit>
+      </div>
+      {isResultOpen && (
+        <div className="converter-dialog-overlay" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setIsResultOpen(false)
+        }}>
+          <section className="converter-dialog" role="dialog" aria-modal="true" aria-labelledby="converter-result-title">
+            <div className="converter-dialog-header">
+              <h2 id="converter-result-title">M3N 内容</h2>
+              <button type="button" className="action-button" aria-label="关闭" onClick={() => setIsResultOpen(false)}>关闭</button>
+            </div>
+            <textarea className="converter-result" readOnly spellCheck={false} value={result.output} aria-label="M3N 内容" />
+            <div className="converter-dialog-actions">
+              <button type="button" className="action-button" onClick={() => void copyResult()}>一键复制</button>
+            </div>
+          </section>
+        </div>
+      )}
+    </main>
+  )
+}
