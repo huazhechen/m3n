@@ -1,14 +1,14 @@
 {
-  "edition": "第三十一版",
+  "edition": "第三十二版",
   "sourcePdf": null,
-  "compactPdf": "循序渐进简谱集-v31.pdf",
+  "compactPdf": "循序渐进简谱集-v32.pdf",
   "pageCount": 73,
   "originalBytes": null,
-  "compactBytes": 3916138,
+  "compactBytes": 3914692,
   "reductionPercent": null,
   "embeddedFontSubsets": 119,
   "images": 0,
-  "positionedGlyphs": 27729,
+  "positionedGlyphs": 27611,
   "glyphsPerPage": [
     129,
     411,
@@ -25,11 +25,11 @@
     445,
     351,
     372,
-    513,
+    425,
     304,
     266,
     446,
-    426,
+    396,
     455,
     240,
     379,
@@ -86,5 +86,5 @@
   ],
   "outsidePages": 0,
   "sourceSha256": null,
-  "compactSha256": "ebed579c127c3d7b02b23bb3ae3007367a29d2c24889cca10e2bb2023bc5ecd2"
+  "compactSha256": "51fecf22183d17f2b0f87d21b2511c4023c2e20c5cf668efed2265e6f622da26"
 }

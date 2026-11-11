@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第三十一版",
+  "edition": "第三十二版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -474,7 +474,7 @@
       "breakBefore": true,
       "pageBreaks": [],
       "systemGap": 18,
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
+      "reviewNote": "移除和弦标记，在单页和最低行距约束下重新放大字号。"
     },
     {
       "id": "yue_liang_dai_biao_wo_de_xin",
@@ -560,7 +560,7 @@
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
+      "reviewNote": "末句三遍相同歌词合并为共用单行，保留整曲三遍反复，在单页约束下重新放大字号。",
       "widthCandidates": [
         742,
         744,
@@ -719,7 +719,7 @@
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
+      "reviewNote": "同页采用相同字号、最小／自然音符间距及额外行距。",
       "systemGap": 18
     },
     {
@@ -733,7 +733,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
+      "reviewNote": "同页采用相同字号、最小／自然音符间距及额外行距。",
       "systemGap": 18
     },
     {
@@ -1354,8 +1354,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v31.pdf",
-  "outputKey": "scorebook-v31",
+  "outputPdf": "循序渐进简谱集-v32.pdf",
+  "outputKey": "scorebook-v32",
   "page": {
     "width": 744,
     "height": 1133,

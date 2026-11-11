@@ -55,6 +55,7 @@ export function packScorebookGroup(group, { bodyHeight, shortGap, renderScale, m
           const choices=entry.sharedLayoutVariants?.get(width)??[entry.sharedLayouts.get(width)].filter(Boolean)
           const buckets=new Map()
           for(const state of states)for(const layout of choices) {
+            if(state.layouts.length&&(state.layouts[0].systemGap??18)!==(layout.systemGap??18))continue
             const used=state.used+layout.height*renderScale(width)+(state.layouts.length?shortGap:0)
             if(used>bodyHeight+EPSILON)continue
             const gapCost=state.gapCost+Math.abs((layout.systemGap??18)-18)
@@ -76,4 +77,28 @@ export function packScorebookGroup(group, { bodyHeight, shortGap, renderScale, m
     memo.set(start, best); return best
   }
   return pack(0)?.pages ?? null
+}
+
+// A shared page uses the book's common music style. Per-work spacing overrides
+// remain available to standalone pages, where they cannot conflict with a neighbour.
+export function scorebookPageStyle(entry, defaults) {
+ const style = {}
+ for (const key of ['noteGapEm','minimumNoteGapEm','uniformSystemHeight']) {
+  style[key] = entry.sharePage ? defaults[key] : entry[key] ?? defaults[key]
+ }
+ return style
+}
+
+export function validateScorebookStyles(pages) {
+ const byWork=new Map()
+ const keys=['width','systemGap','noteGapEm','minimumNoteGapEm','uniformSystemHeight']
+ for(const items of pages) {
+  let pageStyle
+  for(const {id,style} of items) {
+   const signature=JSON.stringify(keys.map(key=>style[key]))
+   if(pageStyle!==undefined&&pageStyle!==signature)throw new Error('All scores on one page must share one music style')
+   if(byWork.has(id)&&byWork.get(id)!==signature)throw new Error('All pages of one score must share one music style: '+id)
+   pageStyle=signature;byWork.set(id,signature)
+  }
+ }
 }

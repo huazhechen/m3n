@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { paginateScorebookLayout, packScorebookGroup } from './scorebook-pagination.mjs'
+import { paginateScorebookLayout, packScorebookGroup, scorebookPageStyle, validateScorebookStyles } from './scorebook-pagination.mjs'
 
 const page = { bodyHeight: 200, scale: 1, minimumFillPercent: 90 }
 const layout = cuts => ({ rows: cuts.length - 1, cuts })
@@ -80,4 +80,32 @@ test('fixed shared page keeps all works together while maximizing music size', (
  assert.equal(pages.length,1)
  assert(pages[0].layouts.every(l=>l.width===700))
  assert.equal(packScorebookGroup(group,{...settings,bodyHeight:90}),null)
+})
+
+test('shared works require one common system gap as well as one common music size',()=>{
+ const layout=systemGap=>({width:640,height:40,rows:3,systemGap})
+ const group=[18,11].map(gap=>({sharedLayouts:new Map([[640,layout(gap)]]),sharedLayoutVariants:new Map([[640,[layout(gap)]]])}))
+ assert.equal(packScorebookGroup(group,{bodyHeight:100,shortGap:5,renderScale:()=>1,keepTogether:true}),null)
+ group[1].sharedLayoutVariants.get(640).push(layout(18))
+ const packed=packScorebookGroup(group,{bodyHeight:100,shortGap:5,renderScale:()=>1,keepTogether:true})
+ assert.deepEqual(packed[0].layouts.map(l=>l.systemGap),[18,18])
+})
+
+
+test('shared pages use one spacing and row-height policy while standalone overrides remain available',()=>{
+ const defaults={noteGapEm:0.6,minimumNoteGapEm:0.4,uniformSystemHeight:true}
+ const overrides={noteGapEm:0.8,minimumNoteGapEm:0.5,uniformSystemHeight:false}
+ assert.deepEqual(scorebookPageStyle({...overrides,sharePage:true},defaults),defaults)
+ assert.deepEqual(scorebookPageStyle({...overrides,sharePage:false},defaults),overrides)
+})
+
+
+test('style validation covers both neighbours on one page and the same work across pages',()=>{
+ const style={width:640,systemGap:14,noteGapEm:0.6,minimumNoteGapEm:0.4,uniformSystemHeight:true}
+ const item=(id,overrides={})=>({id,style:{...style,...overrides}})
+ assert.doesNotThrow(()=>validateScorebookStyles([[item('a'),item('b')],[item('a')]]))
+ assert.throws(()=>validateScorebookStyles([[item('a'),item('b',{systemGap:18})]]),/one page/)
+ assert.throws(()=>validateScorebookStyles([[item('a')],[item('a',{width:646})]]),/pages of one score/)
+ assert.throws(()=>validateScorebookStyles([[item('a')],[item('a',{noteGapEm:0.8})]]),/pages of one score/)
+ assert.throws(()=>validateScorebookStyles([[item('a')],[item('a',{systemGap:18})]]),/pages of one score/)
 })

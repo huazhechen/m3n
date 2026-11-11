@@ -4,12 +4,14 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFile
 import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
-import { paginateScorebookLayout, packScorebookGroup } from './scorebook-pagination.mjs'
+import { paginateScorebookLayout, packScorebookGroup, scorebookPageStyle, validateScorebookStyles } from './scorebook-pagination.mjs'
 import { reflowScorebookLayout } from './scorebook-reflow.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const output = join(root, 'scorebook')
 const plan = JSON.parse(readFileSync(join(output,'editorial-plan.json'),'utf8'))
+// Optional editorial rebuild: keep the chosen size of unchanged standalone works.
+const retainedSizes=process.argv.includes('--retain-unchanged-sizes')?JSON.parse(readFileSync(join(output,'layout-record.json'),'utf8')):null
 const fixedPagination=plan.fixedPaginationFrom?JSON.parse(readFileSync(join(output,plan.fixedPaginationFrom),'utf8')):null
 const temp = join(root, '.tmp',plan.outputKey??'scorebook')
 const pdfFile=plan.outputPdf??'循序渐进简谱集-v1.pdf'
@@ -18,7 +20,7 @@ const sharedEntryIds=new Set(plan.entries.filter(entry=>entry.sharePage).map(ent
 mkdirSync(temp, { recursive: true })
 mkdirSync(join(temp,'pages'), { recursive: true })
 const staged=join(temp,'staged');mkdirSync(staged,{recursive:true})
-const sourceFiles = readdirSync(join(root,'src/scores')).filter(f=>f.endsWith('.m3n')).sort()
+const sourceFiles = readdirSync(join(root,'src/scores')).filter(f=>f.endsWith('.m3n')&&(!retainedSizes||retainedSizes.entries.some(entry=>entry.file===f))).sort()
 assert.deepEqual(plan.entries.map(e=>e.file).sort(), sourceFiles, 'Every original source must be included exactly once')
 assert.equal(new Set(plan.entries.map(e=>e.id)).size,plan.entries.length,'Entry IDs must be unique')
 const training = readFileSync(join(root,'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'),'utf8')
@@ -72,8 +74,19 @@ try {
  await page.evaluate(font=>window.scorebook.prepare(font),readFileSync(join(root,'public/fonts/NotoSerifCJKsc-Regular.otf')).toString('base64'))
  const cacheFolder=join(root,'.tmp',plan.layoutCacheKey??plan.outputKey??'scorebook','cache');mkdirSync(cacheFolder,{recursive:true})
  const rendererHash=createHash('sha256').update(readFileSync(join(temp,'bundle/bundle.js'))).update(readFileSync(join(root,'public/fonts/NotoSerifCJKsc-Regular.otf'))).digest('hex')
+ if(retainedSizes){assert.equal(rendererHash,retainedSizes.rendererSha256,'Retained sizes require the same renderer');assert.deepEqual(profile,retainedSizes.page,'Retained sizes require the same page geometry')}
  const measured=[]
  for(const [i,entry] of plan.entries.entries()) {
+  Object.assign(entry,scorebookPageStyle(entry,{...spacing,uniformSystemHeight:plan.uniformSystemHeight??false}))
+  const retained=retainedSizes?.entries.find(old=>old.id===entry.id&&old.sourceSha256===entry.sourceSha256&&!entry.sharePage)
+  if(retained){
+   assert.equal(entry.noteGapEm??spacing.noteGapEm,retained.noteGapEm)
+   assert.equal(entry.minimumNoteGapEm??spacing.minimumNoteGapEm,retained.minimumNoteGapEm)
+   assert.equal(entry.uniformSystemHeight??plan.uniformSystemHeight??false,retained.uniformSystemHeight)
+   assert.equal(entry.includeBass??true,retained.includeBass)
+   assert.equal(entry.wrap??'normal',retained.wrap)
+   entry.width=retained.width;entry.widthLocked=true;entry.systemGapCandidates=[retained.systemGap]
+  }
   let best,fillPage=Boolean(entry.pageCount)
   const summaries=[],rejectedCandidates=[],sharedLayouts=new Map(),sharedLayoutVariants=new Map()
   const entryOptions={...spacing,noteGapEm:entry.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:entry.minimumNoteGapEm??spacing.minimumNoteGapEm,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false,...(entry.wrap?{wrap:entry.wrap}:{})}
@@ -184,6 +197,7 @@ try {
   let y=0
   for(const [i,item] of target.items.entries()){item.y=y+(i?shortGap:0);y=item.y+item.height}
  }
+ validateScorebookStyles(musicPages.map(target=>target.items.map(({entry})=>({id:entry.id,style:{width:entry.layout.width,systemGap:entry.layout.systemGap,...scorebookPageStyle(entry,{...spacing,uniformSystemHeight:plan.uniformSystemHeight??false})}}))))
  assert(musicPages.every(p=>p.used/bodyHeight*100>minimumFillPercent),'Every music page must exceed the minimum page fill')
  assert(musicPages.every(p=>p.used<=bodyHeight+1e-6),'Every music page must fit the content area')
  // Keep each original score as one contents entry, including the full daily training.
