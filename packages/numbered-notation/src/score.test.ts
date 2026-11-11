@@ -516,8 +516,8 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('starts Andy’s 明白 tie on 6 instead of the sustain dash at width $width, paged=$paged', ({ width, paged }) => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/andy_01.m3n'), 'utf8')
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('starts a multi-measure lyric tie on 6 instead of the sustain dash at width $width, paged=$paged', ({ width, paged }) => {
+    const source = '{2/4}\nN: 1 2 | 6^~ | 6^ |||\nL: 甲乙白'
     const { root, document } = render(source, { width, paged })
     const event = [...document.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events))
       .find(event => event.sourceStart === source.indexOf('6^~ | 6^'))!
@@ -709,30 +709,20 @@ describe('jpFun numbered notation adapter', () => {
     else expect(compact.layout.pages.length).toBeLessThanOrEqual(original.layout.pages.length)
   })
 
-  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('labels each continuous ANDY passage once at width $width, paged=$paged', ({ width, paged }) => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/andy_01.m3n'), 'utf8')
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('labels continuous shared verses once at width $width, paged=$paged', ({ width, paged }) => {
+    const source = '{2/4}\nN: ||: 1 2 | 3 4 |\nL1: 甲乙丙丁\nL2: 春夏秋冬\nL3: {L2}\n---\nN: 5 6 | 7 1e :|||{x3}\nL1: 戊己庚辛\nL2: 风花雪月\nL3: {L2}'
     const { root, score } = render(source, { width, paged })
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
-    const allPrefixes = [...root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')]
-    expect(allPrefixes.map(node => [node.textContent, lyrics(root, node.getAttribute('data-m3n-id')!, Number(node.getAttribute('data-m3n-rendition')))])).toEqual([
-      ['1.', '多'], ['2.4.', '我'], ['3.', '真'], ['2.4.', '几'],
-    ])
-    for (const syllable of ['希', '暂', '躁']) {
-      const lyric = [...root.querySelectorAll('text[data-m3n-role="lyric"]')].find(node => node.textContent === syllable)!
-      expect(lyric.getAttribute('data-m3n-passes')).toBe('2-4')
-    }
-    const shared = allPrefixes.find(node => node.textContent === '2.4.')!
-    expect(shared).toBeDefined()
-    const eventId = shared.getAttribute('data-m3n-id')!
-    const prefixes = [...root.querySelectorAll(`text[data-m3n-role="lyric-prefix"][data-m3n-id="${eventId}"]`)]
-    expect(prefixes.map(node => node.textContent)).toEqual(['1.', '2.4.', '3.'])
-    const syllables = [1, 2, 3].map(row => root.querySelector(`text[data-m3n-role="lyric"][data-m3n-id="${eventId}"][data-m3n-rendition="${row}"]`)!)
-    expect(syllables.map(node => node.textContent)).toEqual(['多', '我', '真'])
+    const prefixes = [...root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')]
+    expect(prefixes.map(node => node.textContent)).toEqual(['1.', '2.3.'])
+    const id = prefixes[0]!.getAttribute('data-m3n-id')!
+    const syllables = [1, 2].map(row => root.querySelector(`text[data-m3n-role="lyric"][data-m3n-id="${id}"][data-m3n-rendition="${row}"]`)!)
+    expect(syllables.map(node => node.textContent)).toEqual(['甲', '春'])
     expect(new Set(syllables.map(node => node.getAttribute('x'))).size).toBe(1)
-    expect(shared.getAttribute('data-m3n-passes')).toBe('2-4')
-    for (const [index, prefix] of prefixes.entries()) {
-      expect(Number(prefix.getAttribute('x'))).toBeLessThan(Number(syllables[index]!.getAttribute('x')))
-      expect(prefix.getAttribute('y')).toBe(syllables[index]!.getAttribute('y'))
+    expect(prefixes[1]!.getAttribute('data-m3n-passes')).toBe('2-3')
+    for (const [i,prefix] of prefixes.entries()) {
+      expect(Number(prefix.getAttribute('x'))).toBeLessThan(Number(syllables[i]!.getAttribute('x')))
+      expect(prefix.getAttribute('y')).toBe(syllables[i]!.getAttribute('y'))
     }
   })
 
@@ -851,8 +841,8 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it.each([320, 600, 800, 1000])('clears the final D.S. below Andy’s last volta at width %s', width => {
-    const document = parseM3NDocument(readFileSync(resolve(process.cwd(), '../../src/scores/andy_01.m3n'), 'utf8'))
+  it.each([320, 600, 800, 1000])('clears the final D.S. below the final volta at width %s', width => {
+    const document = parseM3NDocument('{2/4}\nN: ||: {segno}1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6 {ds}|||')
     for (const paged of [false, true]) {
       const projection = projectNumberedScore(document, { width, paged })
       const { layout } = compileScore(projection.source, { autoWrap: true })

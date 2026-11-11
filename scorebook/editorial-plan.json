@@ -1,7 +1,7 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第三十三版",
-  "sourceCount": 81,
+  "edition": "第三十四版",
+  "sourceCount": 80,
   "baseWidth": 780,
   "widthCandidates": [
     590,
@@ -1003,20 +1003,6 @@
       "systemGap": 18
     },
     {
-      "id": "andy",
-      "file": "andy_01.m3n",
-      "title": "ANDY",
-      "section": "pop",
-      "group": "三连音与进阶抒情",
-      "reason": "反复导航与密集节奏",
-      "width": 640,
-      "sharePage": false,
-      "breakBefore": true,
-      "pageBreaks": [],
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
-      "systemGap": 18
-    },
-    {
       "id": "ting_hai",
       "file": "ting_hai_01.m3n",
       "title": "听海",
@@ -1163,20 +1149,6 @@
       "uniformSystemHeight": true
     },
     {
-      "id": "yun_gong_xun_yin",
-      "file": "yun_gong_xun_yin_01.m3n",
-      "title": "云宫迅音",
-      "section": "instrumental",
-      "group": "舞曲与动画主题",
-      "reason": "器乐反复与跳进",
-      "width": 640,
-      "sharePage": false,
-      "breakBefore": true,
-      "pageBreaks": [],
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
-      "systemGap": 18
-    },
-    {
       "id": "super_mario",
       "file": "super_mario_01.m3n",
       "title": "超级玛丽",
@@ -1216,6 +1188,21 @@
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
+      "systemGap": 18,
+      "uniformSystemHeight": true
+    },
+    {
+      "id": "besame_mucho",
+      "file": "besame_mucho_01.m3n",
+      "title": "深情的吻",
+      "section": "instrumental",
+      "group": "歌唱性器乐与舞曲",
+      "reason": "歌唱性旋律、低音区与乐句气息",
+      "width": 640,
+      "sharePage": false,
+      "breakBefore": true,
+      "pageBreaks": [],
+      "reviewNote": "Besame Mucho，完整收入现有谱源，使用全册统一间距与跨页样式规则。",
       "systemGap": 18,
       "uniformSystemHeight": true
     },
@@ -1340,8 +1327,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v33.pdf",
-  "outputKey": "scorebook-v33",
+  "outputPdf": "循序渐进简谱集-v34.pdf",
+  "outputKey": "scorebook-v34",
   "page": {
     "width": 744,
     "height": 1133,

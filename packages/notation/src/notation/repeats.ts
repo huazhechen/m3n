@@ -139,7 +139,7 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
         const maxPass = Math.max(0, ...sectionIndexes.flatMap((index) => [...(passesByMeasure.get(measures[index]!) ?? [])]))
         // Alternate endings whose highest written pass is already included in
         // the repeat group do not create an additional lyric pass on D.S.; the
-        // return is that final written pass (for example V2,V4 in andy_01).
+        // return is that final written pass (for example a shared V2,V4 ending).
         const returnPasses = remainingHouses.size > 0
           ? remainingHouses.size
           : measures[jumpIndex]?.ending ? 0 : 1

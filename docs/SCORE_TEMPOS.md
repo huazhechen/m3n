@@ -29,7 +29,6 @@
 | 曲谱 | 拍号 | 原速度 → 建议速度 | 网络参照 | 判断 |
 | --- | --- | --- | --- | --- |
 | [爱尔兰画眉](../src/scores/ai_er_lan_hua_mei_01.m3n) | 4/4 | 96 → **80** | [Joanie Madden · Down By the Salley Gardens（77 BPM）](https://songbpm.com/@joanie-madden/down-by-the-salley-gardens-N3yTK_YBDz) | 参照 Joanie Madden 的舒缓版本（检索另有 89），取适合当前单旋律编配的 80。 |
-| [ANDY](../src/scores/andy_01.m3n) | 2/4 | 80 → **68** | [A-do · Andy（136 BPM）](https://songbpm.com/@a-do/andy-RLfT6iILTJ) | 阿杜原唱记录 136；当前 2/4 谱的十六分音符歌词按半速 68 对应。 |
 | [安妮](../src/scores/annie_01.m3n) | 4/4 | 68 → **73** | [Dave Wong · 安妮（146 BPM）](https://songbpm.com/@dave-wong/an-ni-Q7BX_rPPmK) | 王杰录音 146；当前谱的十六分音符歌词对应 146÷2=73。 |
 | [白桦林](../src/scores/bai_hua_lin_01.m3n) | 3/4 | 112 → **120** | [Pu Shu · 白樺林（119 BPM）](https://songbpm.com/@pu-shu/bai-hua-lin-E83f6xMpXO) | 朴树录音约 119，取整为 120，保留三拍子的流动感。 |
 | [贝加尔湖畔](../src/scores/bei_jia_er_hu_pan_01.m3n) | 4/4 | 108 → **120** | [Li Jian · 贝加尔湖畔（119 BPM）](https://songbpm.com/@li-jian/bei-jia-er-hu-pan) | 李健原唱约 119；歌词时间戳支持当前谱四分音符约 120，不再误按半速解释。 |
@@ -76,7 +75,6 @@
 | [月半小夜曲](../src/scores/yue_ban_xiao_ye_qu_01.m3n) | 4/4 | 72 → **80** | [Hacken Lee · 月半小夜曲（80 BPM）](https://songbpm.com/@hacken-lee/yue-ban-xiao-ye-qu) | 李克勤原唱多条记录为 80；排除陈乐基等不同编曲。 |
 | [约定](../src/scores/yue_ding_01.m3n) | 4/4 | 72 → **80** | [Where Chou · 約定（80 BPM）](https://songbpm.com/@where-chou/yue-ding) | 歌词“远处的钟声”确认是周蕙版本（陈小霞作曲），原唱约 80；不混用王菲同名曲。 |
 | [月亮代表我的心](../src/scores/yue_liang_dai_biao_wo_de_xin_01.m3n) | 4/4 | 70 → **78** | [Teresa Teng · 月亮代表我的心（78 BPM）](https://songbpm.com/@teresa-teng/yue-liang-dai-biao-wo-de-xin-e33cc139-7bc9-4b87-8359-311a39cf7131) | 邓丽君原唱多条记录为 78；排除陈佳等翻唱速度。 |
-| [云宫迅音](../src/scores/yun_gong_xun_yin_01.m3n) | 4/4 | 140 → **124** | [許鏡清 · 雲宮迅音 (電視劇《西遊記》片頭曲)（124 BPM）](https://songbpm.com/@xu-jing-qing/yun-gong-xun-yin-dian-shi-ju-xi-you-ji-pian-tou-qu-cgrUuZ2W17) | 选择许镜清《西游记》原声条目的 124，排除 DJ 燃版 128 等改编。 |
 | [直到世界的尽头](../src/scores/zhi_dao_shi_jie_de_jin_tou_01.m3n) | 4/4 | 140 → **104** | [歌っちゃ王 · 世界が終るまでは・・・(オリジナルアーティスト:WANDS)[ガイドメロディ無しカラオケ]（104 BPM）](https://songbpm.com/@getutiya-wang/shi-jiega-zhongrumadeha-orizinaruateisuto-wands-gaidomerodei-wusikaraoke) | WANDS 原曲卡拉 OK 与乐队重录版本均约 104，当前 4/4 谱采用 104。 |
 
 ## 已核查并保留

@@ -1,13 +1,13 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第三十三版",
+  "edition": "第三十四版",
   "showCredits": false,
   "uniformSystemHeight": true,
   "minimumSystemGapEm": 0.5,
   "rendererSha256": "2350875671b2d934541783889c3228131c49e37e1a906d9ba336472d58d7b538",
-  "sourceCount": 81,
-  "entryCount": 81,
-  "pageCount": 72,
+  "sourceCount": 80,
+  "entryCount": 80,
+  "pageCount": 71,
   "frontPages": 3,
   "baseWidth": 780,
   "page": {
@@ -22332,89 +22332,6 @@
     },
     {
       "order": 59,
-      "id": "andy",
-      "title": "ANDY",
-      "file": "andy_01.m3n",
-      "includeBass": true,
-      "uniformSystemHeight": true,
-      "equalMeasures": false,
-      "wrap": "normal",
-      "noteGapEm": 0.6,
-      "minimumNoteGapEm": 0.4,
-      "wrapWidthRatio": 1,
-      "systemDensities": [
-        0.7059867619708791,
-        0.6685294455358427,
-        0.738743348162577,
-        0.8092884641100762,
-        0.6285402306192824,
-        0.5537423696353851,
-        0.6348666812371662,
-        0.6987700407947406,
-        0.7124944295847943
-      ],
-      "baselineSteps": [
-        51.59,
-        123.31,
-        133.375,
-        133.375,
-        96.108,
-        96.108,
-        88.651,
-        88.652
-      ],
-      "voltaSystems": [
-        false,
-        false,
-        false,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true
-      ],
-      "paragraphSystems": [
-        "0:0",
-        "0:0,0:1,0:2",
-        "0:2,0:3",
-        "0:3,0:4",
-        "0:4,0:5",
-        "0:6",
-        "0:6,0:7",
-        "0:8",
-        "0:8,0:9"
-      ],
-      "section": "pop",
-      "group": "三连音与进阶抒情",
-      "reason": "反复导航与密集节奏",
-      "width": 646,
-      "systemGap": 11,
-      "relativeScalePercent": 120.74,
-      "screenNotePx": 23.7,
-      "pages": [
-        50
-      ],
-      "systems": 9,
-      "systemsPerPage": [
-        9
-      ],
-      "sourceSha256": "82173dbcb962bb8c8f7d21d2a5f75c198ff1d96561dd00e4f6b2c8306d33a9d9",
-      "candidates": [
-        {
-          "width": 646,
-          "systemGap": 11,
-          "rows": 9,
-          "pages": 1,
-          "cost": 1387.95
-        }
-      ],
-      "rejectedCandidates": [],
-      "fillPage": true,
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
-    },
-    {
-      "order": 60,
       "id": "ting_hai",
       "title": "听海",
       "file": "ting_hai_01.m3n",
@@ -22484,7 +22401,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        51
+        50
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -22505,7 +22422,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 61,
+      "order": 60,
       "id": "ru_yuan",
       "title": "如愿",
       "file": "ru_yuan_01.m3n",
@@ -22579,7 +22496,7 @@
       "relativeScalePercent": 102.63,
       "screenNotePx": 20.15,
       "pages": [
-        52
+        51
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -22600,7 +22517,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 62,
+      "order": 61,
       "id": "tai_yang_zhao_chang_sheng_qi",
       "title": "太阳照常升起",
       "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
@@ -22642,7 +22559,7 @@
       "relativeScalePercent": 125.4,
       "screenNotePx": 24.62,
       "pages": [
-        53
+        52
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -23468,7 +23385,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 63,
+      "order": 62,
       "id": "zhi_dao_shi_jie_de_jin_tou",
       "title": "直到世界的尽头",
       "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
@@ -23530,7 +23447,7 @@
       "relativeScalePercent": 125.4,
       "screenNotePx": 24.62,
       "pages": [
-        53
+        52
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -24356,7 +24273,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 64,
+      "order": 63,
       "id": "liang_zhu",
       "title": "梁祝",
       "file": "liang_zhu_01.m3n",
@@ -24398,7 +24315,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        54
+        53
       ],
       "systems": 4,
       "systemsPerPage": [
@@ -25224,7 +25141,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 65,
+      "order": 64,
       "id": "wen_rou_de_qing_su",
       "title": "温柔的倾诉",
       "file": "wen_rou_de_qing_su_01.m3n",
@@ -25278,7 +25195,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        54
+        53
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -26104,7 +26021,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 66,
+      "order": 65,
       "id": "castle_in_the_sky",
       "title": "天空之城",
       "file": "castle_in_the_sky_01.m3n",
@@ -26202,7 +26119,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        55
+        54
       ],
       "systems": 18,
       "systemsPerPage": [
@@ -27028,7 +26945,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 67,
+      "order": 66,
       "id": "xia_yu_de_shi_hou",
       "title": "下雨的时候",
       "file": "xia_yu_de_shi_hou_01.m3n",
@@ -27106,7 +27023,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        56
+        55
       ],
       "systems": 13,
       "systemsPerPage": [
@@ -27932,7 +27849,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 68,
+      "order": 67,
       "id": "second_waltz",
       "title": "第二圆舞曲",
       "file": "second_waltz_01.m3n",
@@ -28022,7 +27939,7 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        57
+        56
       ],
       "systems": 16,
       "systemsPerPage": [
@@ -28043,7 +27960,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 69,
+      "order": 68,
       "id": "doraemon",
       "title": "哆啦A梦",
       "file": "doraemon_01.m3n",
@@ -28129,7 +28046,7 @@
       "relativeScalePercent": 115.04,
       "screenNotePx": 22.58,
       "pages": [
-        58
+        57
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -28150,114 +28067,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 70,
-      "id": "yun_gong_xun_yin",
-      "title": "云宫迅音",
-      "file": "yun_gong_xun_yin_01.m3n",
-      "includeBass": true,
-      "uniformSystemHeight": true,
-      "equalMeasures": false,
-      "wrap": "normal",
-      "noteGapEm": 0.6,
-      "minimumNoteGapEm": 0.4,
-      "wrapWidthRatio": 1,
-      "systemDensities": [
-        0.988978631001357,
-        0.7757980454797727,
-        0.7751665088360168,
-        0.4134656427332664,
-        0.4845788226494653,
-        0.44625819775157194,
-        0.3680187801171307,
-        0.41413498726968756,
-        0.4320370706524135,
-        0.43298279290766767,
-        0.45911386520102665,
-        0.485017759511154,
-        0.44625819775157194,
-        0.4591100056349395,
-        0.4178114187352571
-      ],
-      "baselineSteps": [
-        52.91,
-        52.91,
-        52.91,
-        52.91,
-        52.91,
-        52.91,
-        52.91,
-        52.91,
-        51.81,
-        51.81,
-        51.81,
-        51.81,
-        52.91,
-        52.91
-      ],
-      "voltaSystems": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "paragraphSystems": [
-        "0:0",
-        "0:0,0:1",
-        "0:1",
-        "0:1,0:2",
-        "0:2,0:3",
-        "0:3",
-        "0:3,0:4",
-        "0:4",
-        "0:4,0:5",
-        "0:5",
-        "0:5,0:6",
-        "0:6,0:7",
-        "0:7",
-        "0:7,0:8",
-        "0:8"
-      ],
-      "section": "instrumental",
-      "group": "舞曲与动画主题",
-      "reason": "器乐反复与跳进",
-      "width": 590,
-      "systemGap": 11,
-      "relativeScalePercent": 132.2,
-      "screenNotePx": 25.95,
-      "pages": [
-        59
-      ],
-      "systems": 15,
-      "systemsPerPage": [
-        15
-      ],
-      "sourceSha256": "d9033001b66c920bfbb5406279db324ca902bf439bed30b6439b7ebc32ab89a7",
-      "candidates": [
-        {
-          "width": 590,
-          "systemGap": 11,
-          "rows": 15,
-          "pages": 1,
-          "cost": 1354.35
-        }
-      ],
-      "rejectedCandidates": [],
-      "fillPage": true,
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
-    },
-    {
-      "order": 71,
+      "order": 69,
       "id": "super_mario",
       "title": "超级玛丽",
       "file": "super_mario_01.m3n",
@@ -28327,7 +28137,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        60
+        58
       ],
       "systems": 11,
       "systemsPerPage": [
@@ -28348,7 +28158,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 72,
+      "order": 70,
       "id": "qing_niao",
       "title": "青鸟",
       "file": "qing_niao_01.m3n",
@@ -28434,7 +28244,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        61
+        59
       ],
       "systems": 15,
       "systemsPerPage": [
@@ -28455,7 +28265,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 73,
+      "order": 71,
       "id": "ju_ci_lang_de_xia_tian",
       "title": "菊次郎的夏天",
       "file": "ju_ci_lang_de_xia_tian_01.m3n",
@@ -28549,7 +28359,7 @@
       "relativeScalePercent": 107.14,
       "screenNotePx": 21.03,
       "pages": [
-        62
+        60
       ],
       "systems": 17,
       "systemsPerPage": [
@@ -28570,7 +28380,236 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 74,
+      "order": 72,
+      "id": "besame_mucho",
+      "title": "深情的吻",
+      "file": "besame_mucho_01.m3n",
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0.6476885426762764,
+        0.49582879666826724,
+        0.6931256298301515,
+        0.5935310415647906,
+        0.8071856195693425,
+        0.8395023706071372,
+        0.5737491680127051,
+        0.6407604639645027,
+        0.5336373378541793,
+        0.7492059059318921,
+        0.6461745233268723,
+        0.5757041263668984,
+        0.35120764823342443,
+        0.35120764823342443
+      ],
+      "baselineSteps": [
+        45.57,
+        45.57,
+        66.415,
+        69.495,
+        69.495,
+        69.495,
+        69.495,
+        69.495,
+        69.495,
+        46.34,
+        46.34,
+        43.26,
+        43.26
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        "0:0",
+        "0:0",
+        "0:0",
+        "0:0,0:1,0:2",
+        "0:2",
+        "0:2",
+        "0:2",
+        "0:2",
+        "0:2",
+        "0:2,0:3",
+        "0:3,0:4",
+        "0:4,0:5",
+        "0:5",
+        "0:6"
+      ],
+      "section": "instrumental",
+      "group": "歌唱性器乐与舞曲",
+      "reason": "歌唱性旋律、低音区与乐句气息",
+      "width": 622,
+      "systemGap": 14,
+      "relativeScalePercent": 125.4,
+      "screenNotePx": 24.62,
+      "pages": [
+        61
+      ],
+      "systems": 14,
+      "systemsPerPage": [
+        14
+      ],
+      "sourceSha256": "095eec6a8d5903a0a51db8ba779b15d18310bc3954399cfa395609910dd395cd",
+      "candidates": [
+        {
+          "width": 590,
+          "systemGap": 18,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2354
+        },
+        {
+          "width": 590,
+          "systemGap": 16,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2354.1
+        },
+        {
+          "width": 590,
+          "systemGap": 14,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2354.2
+        },
+        {
+          "width": 590,
+          "systemGap": 11,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2354.35
+        },
+        {
+          "width": 598,
+          "systemGap": 18,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2358.8
+        },
+        {
+          "width": 598,
+          "systemGap": 16,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2358.9
+        },
+        {
+          "width": 598,
+          "systemGap": 14,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2359
+        },
+        {
+          "width": 598,
+          "systemGap": 11,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2359.15
+        },
+        {
+          "width": 606,
+          "systemGap": 18,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2363.6
+        },
+        {
+          "width": 606,
+          "systemGap": 16,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2363.7
+        },
+        {
+          "width": 606,
+          "systemGap": 14,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2363.8
+        },
+        {
+          "width": 606,
+          "systemGap": 11,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2363.95
+        },
+        {
+          "width": 614,
+          "systemGap": 18,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2368.4
+        },
+        {
+          "width": 614,
+          "systemGap": 16,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2368.5
+        },
+        {
+          "width": 614,
+          "systemGap": 14,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2368.6
+        },
+        {
+          "width": 614,
+          "systemGap": 11,
+          "rows": 15,
+          "pages": 2,
+          "cost": 2368.75
+        },
+        {
+          "width": 622,
+          "systemGap": 18,
+          "rows": 14,
+          "pages": 2,
+          "cost": 2373.2
+        },
+        {
+          "width": 622,
+          "systemGap": 16,
+          "rows": 14,
+          "pages": 2,
+          "cost": 2373.3
+        },
+        {
+          "width": 622,
+          "systemGap": 14,
+          "rows": 14,
+          "pages": 1,
+          "cost": 1373.4
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "Besame Mucho，完整收入现有谱源，使用全册统一间距与跨页样式规则。"
+    },
+    {
+      "order": 73,
       "id": "por_una_cabeza",
       "title": "一步之遥",
       "file": "por_una_cabeza_01.m3n",
@@ -28620,7 +28659,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        63
+        62
       ],
       "systems": 6,
       "systemsPerPage": [
@@ -29446,7 +29485,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 75,
+      "order": 74,
       "id": "san_bu",
       "title": "散步",
       "file": "san_bu_01.m3n",
@@ -29508,7 +29547,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        63
+        62
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -30334,7 +30373,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 76,
+      "order": 75,
       "id": "beer_barrel_polka",
       "title": "啤酒桶波尔卡",
       "file": "beer_barrel_polka_01.m3n",
@@ -30416,7 +30455,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        64
+        63
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -30437,7 +30476,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 77,
+      "order": 76,
       "id": "canon",
       "title": "卡农",
       "file": "canon_01.m3n",
@@ -30539,7 +30578,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        65
+        64
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -30560,7 +30599,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 78,
+      "order": 77,
       "id": "xi_yang_yang",
       "title": "喜洋洋",
       "file": "xi_yang_yang_01.m3n",
@@ -30634,7 +30673,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        66
+        65
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -30655,7 +30694,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 79,
+      "order": 78,
       "id": "flower_dance",
       "title": "花之舞",
       "file": "flower_dance_01.m3n",
@@ -30817,8 +30856,8 @@
       "relativeScalePercent": 104.84,
       "screenNotePx": 20.58,
       "pages": [
-        67,
-        68
+        66,
+        67
       ],
       "systems": 34,
       "systemsPerPage": [
@@ -30840,7 +30879,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 80,
+      "order": 79,
       "id": "turkish_march",
       "title": "土耳其进行曲",
       "file": "turkish_march_01.m3n",
@@ -30982,8 +31021,8 @@
       "relativeScalePercent": 122.26,
       "screenNotePx": 24,
       "pages": [
-        69,
-        70
+        68,
+        69
       ],
       "systems": 29,
       "systemsPerPage": [
@@ -31005,7 +31044,7 @@
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。"
     },
     {
-      "order": 81,
+      "order": 80,
       "id": "valsentino",
       "title": "Valsentino(快速圆舞曲)",
       "file": "valsentino_01.m3n",
@@ -31147,8 +31186,8 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        71,
-        72
+        70,
+        71
       ],
       "systems": 29,
       "systemsPerPage": [
@@ -32231,25 +32270,6 @@
       "fillPercent": 99.4,
       "items": [
         {
-          "id": "andy",
-          "title": "ANDY",
-          "systems": [
-            1,
-            9
-          ],
-          "width": 646,
-          "systemGap": 11,
-          "top": 0,
-          "height": 1050.84
-        }
-      ]
-    },
-    {
-      "page": 51,
-      "section": "pop",
-      "fillPercent": 99.4,
-      "items": [
-        {
           "id": "ting_hai",
           "title": "听海",
           "systems": [
@@ -32264,7 +32284,7 @@
       ]
     },
     {
-      "page": 52,
+      "page": 51,
       "section": "pop",
       "fillPercent": 98.2,
       "items": [
@@ -32283,7 +32303,7 @@
       ]
     },
     {
-      "page": 53,
+      "page": 52,
       "section": "instrumental",
       "fillPercent": 99.2,
       "items": [
@@ -32314,7 +32334,7 @@
       ]
     },
     {
-      "page": 54,
+      "page": 53,
       "section": "instrumental",
       "fillPercent": 90.1,
       "items": [
@@ -32345,7 +32365,7 @@
       ]
     },
     {
-      "page": 55,
+      "page": 54,
       "section": "instrumental",
       "fillPercent": 95.9,
       "items": [
@@ -32364,7 +32384,7 @@
       ]
     },
     {
-      "page": 56,
+      "page": 55,
       "section": "instrumental",
       "fillPercent": 93,
       "items": [
@@ -32383,7 +32403,7 @@
       ]
     },
     {
-      "page": 57,
+      "page": 56,
       "section": "instrumental",
       "fillPercent": 99.6,
       "items": [
@@ -32402,7 +32422,7 @@
       ]
     },
     {
-      "page": 58,
+      "page": 57,
       "section": "instrumental",
       "fillPercent": 99.5,
       "items": [
@@ -32421,26 +32441,7 @@
       ]
     },
     {
-      "page": 59,
-      "section": "instrumental",
-      "fillPercent": 97.1,
-      "items": [
-        {
-          "id": "yun_gong_xun_yin",
-          "title": "云宫迅音",
-          "systems": [
-            1,
-            15
-          ],
-          "width": 590,
-          "systemGap": 11,
-          "top": 0,
-          "height": 1026.43
-        }
-      ]
-    },
-    {
-      "page": 60,
+      "page": 58,
       "section": "instrumental",
       "fillPercent": 90.8,
       "items": [
@@ -32459,7 +32460,7 @@
       ]
     },
     {
-      "page": 61,
+      "page": 59,
       "section": "instrumental",
       "fillPercent": 99.6,
       "items": [
@@ -32478,7 +32479,7 @@
       ]
     },
     {
-      "page": 62,
+      "page": 60,
       "section": "instrumental",
       "fillPercent": 99.2,
       "items": [
@@ -32497,7 +32498,26 @@
       ]
     },
     {
-      "page": 63,
+      "page": 61,
+      "section": "instrumental",
+      "fillPercent": 98,
+      "items": [
+        {
+          "id": "besame_mucho",
+          "title": "深情的吻",
+          "systems": [
+            1,
+            14
+          ],
+          "width": 622,
+          "systemGap": 14,
+          "top": 0,
+          "height": 1036.21
+        }
+      ]
+    },
+    {
+      "page": 62,
       "section": "instrumental",
       "fillPercent": 99.2,
       "items": [
@@ -32528,7 +32548,7 @@
       ]
     },
     {
-      "page": 64,
+      "page": 63,
       "section": "instrumental",
       "fillPercent": 97.5,
       "items": [
@@ -32547,7 +32567,7 @@
       ]
     },
     {
-      "page": 65,
+      "page": 64,
       "section": "instrumental",
       "fillPercent": 98.2,
       "items": [
@@ -32566,7 +32586,7 @@
       ]
     },
     {
-      "page": 66,
+      "page": 65,
       "section": "instrumental",
       "fillPercent": 94.3,
       "items": [
@@ -32585,7 +32605,7 @@
       ]
     },
     {
-      "page": 67,
+      "page": 66,
       "section": "instrumental",
       "fillPercent": 98.7,
       "items": [
@@ -32604,7 +32624,7 @@
       ]
     },
     {
-      "page": 68,
+      "page": 67,
       "section": "instrumental",
       "fillPercent": 95.1,
       "items": [
@@ -32623,7 +32643,7 @@
       ]
     },
     {
-      "page": 69,
+      "page": 68,
       "section": "instrumental",
       "fillPercent": 95.2,
       "items": [
@@ -32642,7 +32662,7 @@
       ]
     },
     {
-      "page": 70,
+      "page": 69,
       "section": "instrumental",
       "fillPercent": 99.6,
       "items": [
@@ -32661,7 +32681,7 @@
       ]
     },
     {
-      "page": 71,
+      "page": 70,
       "section": "instrumental",
       "fillPercent": 99.4,
       "items": [
@@ -32680,7 +32700,7 @@
       ]
     },
     {
-      "page": 72,
+      "page": 71,
       "section": "instrumental",
       "fillPercent": 95.4,
       "items": [
@@ -32702,7 +32722,7 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 3543,
+    "geometryCandidates": 3560,
     "minimumMusicPageFillPercent": 79.231,
     "underfilledMusicPages": 0,
     "outside": 0,
@@ -32721,7 +32741,7 @@
     "undersizedNoteEntries": 0,
     "maximumMusicNotePx": 25.953,
     "oversizedNoteEntries": 0,
-    "outlinedPages": 72,
+    "outlinedPages": 71,
     "outlinedPageOverflow": 0
   }
 }

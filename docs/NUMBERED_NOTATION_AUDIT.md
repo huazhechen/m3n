@@ -31,7 +31,6 @@
 | --- | --- | ---: | --- |
 | 爱尔兰画眉 | [ai_er_lan_hua_mei_01.m3n](../src/scores/ai_er_lan_hua_mei_01.m3n) | 75 | 8/8 |
 | 暗香 | [an_xiang_01.m3n](../src/scores/an_xiang_01.m3n) | 174 | 8/8 |
-| ANDY | [andy_01.m3n](../src/scores/andy_01.m3n) | 170 | 8/8 |
 | 安妮 | [annie_01.m3n](../src/scores/annie_01.m3n) | 220 | 8/8 |
 | 友谊地久天长 | [auld_lang_syne_01.m3n](../src/scores/auld_lang_syne_01.m3n) | 59 | 8/8 |
 | 白桦林 | [bai_hua_lin_01.m3n](../src/scores/bai_hua_lin_01.m3n) | 273 | 8/8 |
@@ -108,5 +107,4 @@
 | 月半小夜曲 | [yue_ban_xiao_ye_qu_01.m3n](../src/scores/yue_ban_xiao_ye_qu_01.m3n) | 217 | 8/8 |
 | 约定 | [yue_ding_01.m3n](../src/scores/yue_ding_01.m3n) | 180 | 8/8 |
 | 月亮代表我的心 | [yue_liang_dai_biao_wo_de_xin_01.m3n](../src/scores/yue_liang_dai_biao_wo_de_xin_01.m3n) | 143 | 8/8 |
-| 云宫迅音 | [yun_gong_xun_yin_01.m3n](../src/scores/yun_gong_xun_yin_01.m3n) | 196 | 8/8 |
 | 直到世界的尽头 | [zhi_dao_shi_jie_de_jin_tou_01.m3n](../src/scores/zhi_dao_shi_jie_de_jin_tou_01.m3n) | 156 | 8/8 |

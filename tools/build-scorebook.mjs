@@ -20,7 +20,7 @@ const sharedEntryIds=new Set(plan.entries.filter(entry=>entry.sharePage).map(ent
 mkdirSync(temp, { recursive: true })
 mkdirSync(join(temp,'pages'), { recursive: true })
 const staged=join(temp,'staged');mkdirSync(staged,{recursive:true})
-const sourceFiles = readdirSync(join(root,'src/scores')).filter(f=>f.endsWith('.m3n')&&(!retainedSizes||retainedSizes.entries.some(entry=>entry.file===f))).sort()
+const sourceFiles = readdirSync(join(root,'src/scores')).filter(f=>f.endsWith('.m3n')&&(!retainedSizes||plan.entries.some(entry=>entry.file===f))).sort()
 assert.deepEqual(plan.entries.map(e=>e.file).sort(), sourceFiles, 'Every original source must be included exactly once')
 assert.equal(new Set(plan.entries.map(e=>e.id)).size,plan.entries.length,'Entry IDs must be unique')
 const training = readFileSync(join(root,'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'),'utf8')
