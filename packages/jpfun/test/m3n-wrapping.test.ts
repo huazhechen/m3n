@@ -240,3 +240,16 @@ test('minimum and natural references scale note, rest and bar clearances togethe
     }
     assert.ok(high.at(-1)!.x > low.at(-1)!.x);
 });
+
+test('page-feedback wrapping changes breaks without changing page width, event spans or playback', () => {
+    const source = '@page(width=600px)\n' + Array(12).fill('1 2 3 4 |').join(' ');
+    const original = compileScore(source, { autoWrap: true });
+    const reflowed = compileScore(source, { autoWrap: true, wrapWidthRatio: 0.6 });
+    assert.ok(reflowed.layout.lineCount > original.layout.lineCount);
+    assert.equal(reflowed.lowering.page.width, original.lowering.page.width);
+    const notes = (result: ReturnType<typeof compileScore>) => result.layout.objects.filter(node => node.T.compare(0) > 0)
+        .map(node => [node.ast.sourceSpan.start, node.ast.sourceSpan.end, node.box.w, node.box.h]);
+    assert.deepEqual(notes(reflowed), notes(original));
+    assert.deepEqual(playedNotes(compilePlayback(reflowed.lowering)), playedNotes(compilePlayback(original.lowering)));
+    for (const wrapWidthRatio of [0, -1, 1.1, NaN, Infinity]) assert.throws(() => compileScore(source, { autoWrap: true, wrapWidthRatio }), /wrapWidthRatio/);
+});

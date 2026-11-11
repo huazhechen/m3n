@@ -20,6 +20,8 @@ export type NumberedNotationRenderOptions = {
   equalMeasures?: boolean
   /** Pack natural-width measures more closely; equal-measure exercises only tighten sparse long notes. */
   wrap?: 'normal' | 'compact'
+  /** Choose breaks at this fraction of the available width without scaling music. */
+  wrapWidthRatio?: number
 }
 
 /** Pure frontend jpFun adapter; ScoreDocument is the only musical input. */
@@ -41,7 +43,7 @@ export class NumberedNotationScore {
     const canvas = typeof document === 'undefined' || typeof CanvasRenderingContext2D === 'undefined' ? null : document.createElement('canvas')
     const context = canvas?.getContext('2d')
     const textMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
-    const result = compileScore(projection.source, { autoWrap: true, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
+    const result = compileScore(projection.source, { autoWrap: true, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
     this.diagnostics = [...projection.diagnostics, ...result.diagnostics.map(item => ({ code: item.code, message: item.message, severity: item instanceof ErrorDiagnostic ? 'error' as const : 'warning' as const }))]
     const error = this.diagnostics.find(item => item.severity === 'error')
     if (error) throw new Error(`简谱排版失败：${error.message}`)

@@ -5,6 +5,7 @@ import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { paginateScorebookLayout, packScorebookGroup } from './scorebook-pagination.mjs'
+import { reflowScorebookLayout } from './scorebook-reflow.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const output = join(root, 'scorebook')
@@ -116,6 +117,32 @@ try {
   console.log(`${String(i+1).padStart(3)}/${plan.entries.length} ${entry.title}: ${best.width}px ${best.rows} systems [${best.ranges.map(([a,b])=>b-a)}]`)
  }
  writeFileSync(join(temp,'layouts.json'),JSON.stringify(measured))
+ // Feed page capacity back to horizontal breaking at the already selected
+ // music size. Reflow is deliberately after font/page selection and packing.
+ async function reflow(entry, fits, extraRows) {
+  const original=entry.layout
+  const options={...spacing,systemGap:original.systemGap,noteGapEm:entry.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:entry.minimumNoteGapEm??spacing.minimumNoteGapEm,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false,...(entry.wrap?{wrap:entry.wrap}:{})}
+  const selected=await reflowScorebookLayout(original,{extraRows,fits,measure:async wrapWidthRatio=>{
+   const trialOptions={...options,wrapWidthRatio}
+   const key=createHash('sha256').update(rendererHash+JSON.stringify(trialOptions)+entry.source+original.width).digest('hex'),cachePath=join(cacheFolder,key+'.json')
+   let trial=existsSync(cachePath)?JSON.parse(readFileSync(cachePath,'utf8')):null
+   if(!trial){
+    trial=await page.evaluate(({source,width,spacing})=>window.scorebook.measure(source,width,spacing),{source:entry.source,width:original.width,spacing:trialOptions}).catch(()=>null)
+    if(!trial||trial.diagnostics?.some(d=>d.severity==='error')||trial.outside.length||trial.overlaps.length||trial.clipped.length)return null
+    trial={...trial,systemGap:original.systemGap};writeFileSync(cachePath,JSON.stringify(trial))
+   }
+   return trial
+  }})
+  if(selected!==original){entry.layout={...selected,ranges:selected.ranges??original.ranges,cost:original.cost};console.log(`Reflow ${entry.title}: ${original.rows} → ${selected.rows} systems (wrap ${selected.wrapWidthRatio})`)}
+ }
+ for(const entry of measured.filter(e=>!e.sharePage)) {
+  const pages=entry.layout.ranges.length
+  await reflow(entry,trial=>{
+   const ranges=paginate(trial,{...entry,pageCount:pages})
+   if(!ranges)return false
+   trial.ranges=ranges;return true
+  },pages)
+ }
  const musicPages=[]
  // Pack each consecutive group of short works with balanced whitespace.
  for(let i=0;i<measured.length;) {
@@ -139,6 +166,23 @@ try {
    }
    i++
   }
+ }
+ // Shared works compete for the remaining space of their actual packed page.
+ // Their selected common font size and system gaps stay unchanged.
+ for(const target of musicPages.filter(p=>p.items.some(i=>i.entry.sharePage))) {
+  for(const item of target.items) {
+   const entry=item.entry,oldHeight=item.height
+   await reflow(entry,trial=>{
+    const used=target.used-oldHeight+trial.height*renderScale(trial.width)
+    trial.ranges=[[0,trial.rows]]
+    return used<=bodyHeight+1e-6&&used/bodyHeight*100>minimumFillPercent
+   },1)
+   const layout=entry.layout
+   item.end=layout.rows;item.cropBottom=layout.height;item.height=layout.height*renderScale(layout.width)
+   target.used+=item.height-oldHeight
+  }
+  let y=0
+  for(const [i,item] of target.items.entries()){item.y=y+(i?shortGap:0);y=item.y+item.height}
  }
  assert(musicPages.every(p=>p.used/bodyHeight*100>minimumFillPercent),'Every music page must exceed the minimum page fill')
  assert(musicPages.every(p=>p.used<=bodyHeight+1e-6),'Every music page must fit the content area')
@@ -211,7 +255,7 @@ try {
   pages.push({kind:'music',svg:pageSvg(content,num)})
  }
  const records=measured.map((e,i)=>{
-  return {order:i+1,id:e.id,title:e.title,file:e.file,includeBass:e.includeBass??true,uniformSystemHeight:e.uniformSystemHeight??plan.uniformSystemHeight??false,equalMeasures:e.layout.equalMeasures??false,wrap:e.wrap??'normal',noteGapEm:e.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:e.minimumNoteGapEm??spacing.minimumNoteGapEm,baselineSteps:e.layout.baselineSteps,voltaSystems:e.layout.voltaSystems,paragraphSystems:e.layout.paragraphSystems,section:e.section,group:e.group,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
+  return {order:i+1,id:e.id,title:e.title,file:e.file,includeBass:e.includeBass??true,uniformSystemHeight:e.uniformSystemHeight??plan.uniformSystemHeight??false,equalMeasures:e.layout.equalMeasures??false,wrap:e.wrap??'normal',noteGapEm:e.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:e.minimumNoteGapEm??spacing.minimumNoteGapEm,wrapWidthRatio:e.layout.wrapWidthRatio??1,systemDensities:e.layout.systemDensities,baselineSteps:e.layout.baselineSteps,voltaSystems:e.layout.voltaSystems,paragraphSystems:e.layout.paragraphSystems,section:e.section,group:e.group,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
  })
  if(fixedPagination){
   assert.equal(total,fixedPagination.pageCount,'Fixed edition page count must be preserved')

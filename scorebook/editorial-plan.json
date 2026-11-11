@@ -1,6 +1,6 @@
 {
   "title": "循序渐进简谱集",
-  "edition": "第三十版",
+  "edition": "第三十一版",
   "sourceCount": 82,
   "baseWidth": 780,
   "widthCandidates": [
@@ -747,7 +747,7 @@
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
+      "reviewNote": "采用全册通用的页面余量反馈换行，保持页数、字号与行距，缓解末段密集。",
       "systemGap": 18
     },
     {
@@ -1354,8 +1354,8 @@
       "uniformSystemHeight": true
     }
   ],
-  "outputPdf": "循序渐进简谱集-v30.pdf",
-  "outputKey": "scorebook-v30",
+  "outputPdf": "循序渐进简谱集-v31.pdf",
+  "outputKey": "scorebook-v31",
   "page": {
     "width": 744,
     "height": 1133,
@@ -1374,7 +1374,7 @@
   "noteGapEm": 0.6,
   "minimumNoteGapEm": 0.4,
   "replan": true,
-  "layoutCacheKey": "scorebook-v29",
+  "layoutCacheKey": "scorebook",
   "systemGapCandidates": [
     18,
     16,

@@ -36,6 +36,18 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it('reflows Qiu Ying independently of font size while retaining event identities', () => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/qiu_ying_01.m3n'), 'utf8')
+    const settings = { width: 590, pageMargin: 8, systemGap: 18, uniformSystemHeight: true }
+    const normal = render(source, settings)
+    const reflowed = render(source, { ...settings, wrapWidthRatio: 0.9 })
+    expect(reflowed.root.querySelectorAll('g.system').length).toBeGreaterThan(normal.root.querySelectorAll('g.system').length)
+    const notes = (root: Document) => [...root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent])
+    expect(notes(reflowed.root)).toEqual(notes(normal.root))
+    expect(reflowed.root.querySelector('g.note text')?.getAttribute('font-size')).toEqual(normal.root.querySelector('g.note text')?.getAttribute('font-size'))
+    expect(reflowed.score.diagnostics).toEqual([])
+    for (const wrapWidthRatio of [0, -1, 1.1, NaN, Infinity]) expect(() => render(source, { wrapWidthRatio })).toThrow('wrapWidthRatio')
+  })
   it.each([false, true])('uses the paired spacing by default in paged=%s layouts', paged => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
     for (const width of [320, 800]) {

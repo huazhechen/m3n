@@ -21,6 +21,8 @@ export interface CompileScoreOptions extends DocumentLayoutOptions {
     autoWrap?: boolean;
     /** Pack natural-width measures more closely; equal measures only tighten sparse long notes. */
     wrap?: 'normal' | 'compact';
+    /** Fraction of the content width used to choose breaks; final lines still fill the page. */
+    wrapWidthRatio?: number;
     functions?: ASTFunctionClass[];    // 替换默认函数注册表
     textMeasurer?: TextMeasurer;       // 替换默认文本测量来源
     variables?: Record<string, any>;
@@ -47,13 +49,14 @@ export function compileScore(
     source: string,
     options: CompileScoreOptions = {},
 ): CompileScoreResult {
+    if (options.wrapWidthRatio !== undefined && (!Number.isFinite(options.wrapWidthRatio) || options.wrapWidthRatio <= 0 || options.wrapWidthRatio > 1)) throw new RangeError('wrapWidthRatio must be greater than zero and at most one');
     if (!options.autoWrap) return compileRaw(source, options);
     const natural = compileRaw(source, options, true);
     const minimum = options.minimumNoteGap === undefined ? undefined
         : compileRaw(source, { ...options, noteGap: options.minimumNoteGap }, true);
     const page = normalizePageConfig(natural.lowering.page);
     const preferred = natural.lowering.columns.flat().filter(node => node.addon?.preferredBreakBefore).map(node => node.t.toString());
-    const positions = automaticBreakPositions(natural.layout, page.width - page.marginLeft - page.marginRight, new Set(preferred), options.equalMeasures, options.wrap, minimum?.layout);
+    const positions = automaticBreakPositions(natural.layout, (page.width - page.marginLeft - page.marginRight) * (options.wrapWidthRatio ?? 1), new Set(preferred), options.equalMeasures, options.wrap, minimum?.layout);
     if (!positions.length) return compileRaw(source, options);
     const inserted = insertAutomaticBreaks(source, positions, natural.layout);
     const result = compileRaw(inserted.source, options);
@@ -75,6 +78,7 @@ function compileRaw(source: string, options: CompileScoreOptions, natural = fals
     const {
         autoWrap: _autoWrap,
         wrap: _wrap,
+        wrapWidthRatio: _wrapWidthRatio,
         functions = defaultFunctions,
         textMeasurer,
         alignRelations,

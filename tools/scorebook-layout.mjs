@@ -79,7 +79,16 @@ export function measure(source, width, spacing = {}) {
     const b = node.getBBox()
     if (b.y < cut - 0.2 && b.y+b.height > cut + 0.2) clipped.push({ cut, tag: node.tagName, text:node.textContent, box:[b.x,b.y,b.width,b.height], parent:node.parentElement.outerHTML.slice(0,250) })
   }
-  return { width, equalMeasures: renderOptions.equalMeasures ?? scoreDocument.equalMeasures ?? false, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps,
+  // Count distinct main-note columns, not chord members or ornaments. A row's
+  // average head pitch measures crowding independently of its musical duration.
+  const systemDensities = systems.map(({node}) => {
+    const centers = [...node.querySelectorAll('g.note[data-m3n-id^="m3n-e-"] text')]
+      .filter(text => text.getAttribute('font-size') === '22' && /^[0-7]$/.test(text.textContent))
+      .map(text => { const b = text.getBBox(); return b.x + b.width / 2 }).sort((a,b)=>a-b)
+      .filter((x,i,all) => !i || x-all[i-1]>1)
+    return centers.length < 2 ? 0 : (centers.length-1)*22/(centers.at(-1)-centers[0])
+  })
+  return { width, wrapWidthRatio: renderOptions.wrapWidthRatio ?? 1, systemDensities, equalMeasures: renderOptions.equalMeasures ?? scoreDocument.equalMeasures ?? false, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps,
     voltaSystems: systems.map(({node}) => node.getAttribute('data-m3n-volta') === 'true'),
     paragraphSystems: systems.map(({node}) => node.getAttribute('data-m3n-paragraph')),
     diagnostics: score.diagnostics, markup }

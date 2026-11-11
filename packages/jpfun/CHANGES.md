@@ -44,3 +44,5 @@ The comparison base is the unmodified upstream import commit `d7c00a6`. See UPST
 - `@tempo(...,unit=4,dots=0)` selects the engraved beat unit independently of QPM. Compound meter uses a dotted beat; eighth-note marks include flags. Playback remains in quarter notes.
 
 Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, test/m3n-equal-measures.test.ts and test/m3n-uniform-spacing.test.ts. Application semantics and corpus tests live in @m3n/numbered-notation; real browser geometry checks are run by `npm run test:numbered-layout` at the workspace root.
+
+- 新增 `compileScore({wrapWidthRatio})`：仅缩小自动换行的参考宽度，最终版心、字形与源码身份保持；供谱集根据页面余量反馈试排。
