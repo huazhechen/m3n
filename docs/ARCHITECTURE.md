@@ -79,6 +79,8 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 ## 渲染资源与切换
 
+钢琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，播放器通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-Piano-*.sf3`。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
+
 生产渲染资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。Verovio 使用固定 6.2.0 版本的本地精简构建，保留的字体资源嵌入独立 WASM，JavaScript 通过模块相对 URL 加载它；npm 包仅提供同版本 toolkit 包装器。默认和回退音乐字体都固定为完整 Leipzig；Bravura 只保留初始化需要的符号名称与度量 XML，移除未使用的字形和 CSS。构建脚本还裁掉未使用的输入格式，源码、许可证、裁剪清单和重建方法见 [Verovio 构建说明](VEROVIO_BUILD.md)。jpFun 与数字字体也由本地构建提供。Cloudflare 的 `ASSETS` 绑定负责提供 `dist`，浏览器只请求本站 `/assets/*`；音源与 AudioWorklet 同样来自本站。文档中的参考链接和 SVG 的命名空间不是资源加载路径。
 
 冷启动需要下载并解析渲染包，再初始化 WASM 或准备字体。Verovio 经资源、输入格式、内部编辑器和接口裁剪，再配合跨文件优化与独立 WASM，生产 JS 与 WASM 合计由最初约 7.91MB 降到 3.04MB；分别压缩后合计 gzip（level 9）约 0.99MB，Brotli（quality 11）约 0.76MB。这些数字描述构建产物，不代表线上实际传输大小。模块与 WASM 初始化在当前页面内复用，切换谱式不应重复下载；纯简谱显示不请求 Verovio JS 或 WASM。

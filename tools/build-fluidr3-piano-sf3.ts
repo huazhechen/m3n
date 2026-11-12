@@ -1,12 +1,12 @@
-import { access, readFile, writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BasicSoundBank, SoundBankLoader } from 'spessasynth_core'
 import { encodeVorbis } from '../.tmp/SpessaSynth/src/externals/encode_vorbis.ts'
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const sourcePath = resolve(root, 'public/soundfonts/FluidR3_GM.sf2')
-const outputPath = resolve(root, 'public/soundfonts/FluidR3_GM-Piano.sf3')
+const outputPath = resolve(root, 'packages/score-renderer/vendor/soundfonts/FluidR3_GM-Piano.sf3')
 
 try {
   await access(sourcePath)
@@ -33,6 +33,7 @@ await bank.setSampleFormat({
   compressionFunction: (audioData, sampleRate) => encodeVorbis(audioData, sampleRate, 0.6),
 })
 bank.flush()
+await mkdir(dirname(outputPath), { recursive: true })
 await writeFile(outputPath, Buffer.from(bank.writeSF2({ software: 'SpessaSynth' })))
 
 console.log(`Wrote ${outputPath}: ${bank.presets.length} preset, ${bank.instruments.length} instrument, ${bank.samples.length} samples.`)

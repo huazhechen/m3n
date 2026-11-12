@@ -1,3 +1,8 @@
+declare module '*.sf3?url' {
+  const url: string
+  export default url
+}
+
 declare module 'verovio/wasm' {
   type VerovioModule = {
     cwrap: (...args: unknown[]) => (...args: unknown[]) => unknown

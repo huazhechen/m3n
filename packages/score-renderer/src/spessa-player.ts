@@ -1,9 +1,10 @@
 import { BasicMIDI } from 'spessasynth_core'
 import { Sequencer, WorkletSynthesizer } from 'spessasynth_lib' 
 import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
+import soundFontUrl from '../vendor/soundfonts/FluidR3_GM-Piano.sf3?url'
 import { Metronome, buildMetronomeBeats, initialBeatDurationSeconds } from './metronome.js'
 
-const soundFont = { name: 'FluidR3-GM-Piano-SF3', url: '/soundfonts/FluidR3_GM-Piano.sf3' } as const
+const soundFont = { name: 'FluidR3-GM-Piano-SF3', url: soundFontUrl } as const
 export function seekTimeAtProgress(duration: number, progress: number) {
   if (!Number.isFinite(duration) || duration <= 0) return 0
   const normalized = Math.max(0, Math.min(1, progress))
