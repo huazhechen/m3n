@@ -62,7 +62,7 @@ export function meiEventXml(
   if (event.kind === 'rest') return `<rest xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}/>`
   if (event.kind === 'chord') {
     const notes = event.pitches.map((pitch, index) => {
-      const tie = event.tie ? 'i' : tieTarget ? 't' : undefined
+      const tie = event.tie ? (tieTarget ? 'm' : 'i') : tieTarget ? 't' : undefined
       return `<note xml:id="${xmlId}-n${index + 1}" ${pitchXml(pitch, event.key, accidentals)}${tie ? ` tie="${tie}"` : ''}/>`
     }).join('')
     return `${graces}<chord xml:id="${xmlId}" ${meiDurationAttributes(event.beats)}>${notes}${articulations}${verse}</chord>`
@@ -77,11 +77,9 @@ export function meiEventXml(
       const childId = `${xmlId}-n${index + 1}`
       const childLyrics = [...lyricsByVerse.values()].map((items) => items[lyricTargetIndex]).filter((lyric): lyric is MeiVerseSyllable => lyric !== undefined)
       lyricTargetIndex += 1
-      const tie = index === 0 && tieTarget
-        ? ' tie="t"'
-        : event.tie && index === event.tieFromTupletIndex
-          ? ' tie="i"'
-          : ''
+      const incomingTie = index === 0 && tieTarget
+      const outgoingTie = event.tie && index === event.tieFromTupletIndex
+      const tie = outgoingTie ? (incomingTie ? ' tie="m"' : ' tie="i"') : incomingTie ? ' tie="t"' : ''
       const note = `<note xml:id="${childId}" ${pitchXml(pitch, event.key, accidentals)}${tie} ${meiDurationAttributes(childBeats)}`
       const childVerse = meiVerseXml(childLyrics, childId, visibleVerseIndexes)
       return childVerse ? `${note}>${childVerse}</note>` : `${note}/>`
@@ -89,7 +87,7 @@ export function meiEventXml(
     const content = childBeats <= 0.5 && !event.pitches.includes('0') ? `<beam>${children}</beam>` : children
     return `<tuplet xml:id="${xmlId}" num="${event.tuplet.num}" numbase="${event.tuplet.numbase}">${content}</tuplet>`
   }
-  const tie = event.tie ? ' tie="i"' : tieTarget ? ' tie="t"' : ''
+  const tie = event.tie ? (tieTarget ? ' tie="m"' : ' tie="i"') : tieTarget ? ' tie="t"' : ''
   return `${graces}<note xml:id="${xmlId}" ${pitchXml(event.pitches[0] ?? '1', event.key, accidentals)}${tie} ${meiDurationAttributes(event.beats)}>${articulations}${verse}</note>`
 }
 

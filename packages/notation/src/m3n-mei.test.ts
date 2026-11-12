@@ -488,6 +488,12 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<tie startid="#m3n-e-1-n1" endid="#m3n-e-2-n1"/>')
   })
 
+  it.each(['1', '[135:h]'])('marks the middle of a sustained %s chain as median', (atom) => {
+    const result = m3nToMei(`{4/4}\nN: ${atom}~ ${atom}~ ${atom} 0 |||`)
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toMatch(/xml:id="m3n-e-2(?:-n1)?"[^>]*tie="m"/)
+  })
+
   it('keeps rests inside sequential groups as rests', () => {
     const result = m3nToMei('{key=C} {2/4}\n[066:2] |||')
 
