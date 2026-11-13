@@ -2,9 +2,43 @@ import { describe, expect, it } from 'vitest'
 import { m3nToMei, parseM3NDocument, measurePlaybackPasses, validateM3NDiagnostics } from '@m3n/notation'
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
 import theSwan from '../scores/tian_e_01.m3n?raw'
+import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
 import { loadPresetScore, presetScores } from './samples'
 
 describe('bundled score corpus', () => {
+  it('includes K.545 as a complete single melody with both original repeats', async () => {
+    const entry = presetScores.find(score => score.sourcePath === 'mozart_k545_01.m3n')
+    expect(entry?.title).toBe('C大调奏鸣曲 K.545 第一乐章')
+    expect(await loadPresetScore(entry!.slug)).toBe(mozartK545)
+    expect(validateM3NDiagnostics(mozartK545)).toEqual([])
+    const document = parseM3NDocument(mozartK545)
+    expect(document).toMatchObject({ key: 'C', meterCount: 4, meterUnit: 4, hasExplicitTempo: false })
+    const part = document.parts.get('score')!
+    const measures = part.melody.filter(measure => measure.events.length)
+    expect(measures).toHaveLength(73)
+    expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
+      .toEqual(Array(73).fill(4))
+    expect(part.bass.flatMap(measure => measure.events)).toEqual([])
+    expect(measures.flatMap(measure => measure.events).every(event =>
+      event.kind !== 'chord' && event.postfixes.every(mark => !/^f[1-5]$/.test(mark)),
+    )).toBe(true)
+    expect(measures.flatMap((measure, index) => measure.right?.startsWith('rptend') ? [index + 1] : []))
+      .toEqual([28, 73])
+    expect(measures[28]!.left).toBe('rptstart')
+    const passes = measurePlaybackPasses(measures)
+    expect(measures.map(measure => [...passes.get(measure)!])).toEqual(Array.from({ length: 73 }, () => [1, 2]))
+    // Keep the original low thematic entries and the upper turn in the closing scale.
+    expect(measures[30]!.events[1]!.pitches).toEqual(['5dd'])
+    expect(measures[49]!.events[0]!.pitches).toEqual(['4d'])
+    expect(measures[52]!.events[0]!.pitches).toEqual(['1d'])
+    expect(measures[68]!.events.map(event => event.pitches[0])).toEqual([
+      '5=e', '6e', '7e', '1ee', '2ee', '3ee', '2ee', '1ee', '7e', '6e', '5e', '4e', '3e', '2e', '1e',
+    ])
+    expect(measures[22]!.events.map(event => event.beats)).toEqual([1.5, ...Array(4).fill(0.125), ...Array(4).fill(0.5)])
+    expect(measures[25]!.events[0]!.postfixes).toContain('ac((5e 6e))')
+    expect(measures[70]!.events[0]!.postfixes).toContain('ac((1e 2e))')
+  })
+
   it('includes The Swan with complete 6/4 bars and its final tied sustain', async () => {
     const entry = presetScores.find(score => score.sourcePath === 'tian_e_01.m3n')
     expect(entry?.title).toBe('天鹅')
