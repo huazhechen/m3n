@@ -90,7 +90,7 @@ describe('numbered full-beat sustain continuations', () => {
     const { projection } = inspect('{4/4}\nN: {cresc}{lg}2 1~ 1^{/}{/} |||')
     const bindings = [...projection.bindings.values()]
     expect(projection.source).toContain(`@tie(${bindings[0]!.label},${bindings[1]!.label})`)
-    expect(projection.source).toContain(`@dyn(${bindings[0]!.label},${bindings[3]!.label},24)`)
+    expect(projection.source).toContain(`@dyn(${bindings[0]!.label},${bindings[3]!.label},24,below=true)`)
   })
 
   it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('keeps Ting Hai 不相信 legato clear of a retained same-pitch tie at $width, paged=$paged', ({ width, paged }) => {

@@ -298,19 +298,12 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     }
     flush()
   }
-  const intervals = document.intervals.map(interval => ({ ...interval }))
-  for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {
-    const events = part[staff].flatMap(measure => measure.events)
-    const legato = intervals.filter(interval => interval.kind === 'lg' && interval.staff === staff && events.some(event => event.sourceStart === interval.start)).sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
-    for (let i = 1; i < legato.length; i++) {
-      const before = legato[i - 1]!, after = legato[i]!
-      const end = events.findIndex(event => event.sourceStart === before.endStart)
-      if (end >= 0 && events[end + 1]?.sourceStart === after.start) {
-        after.start = before.start
-        before.kind = 'inst' // consumed by the next merged interval
-      }
-    }
-  }
+  // Explicit phrase boundaries remain distinct, including adjacent slurs.
+  // Native arc clearance expects inner declarations before their outer slurs.
+  const intervals = [...document.intervals].sort((a, b) => {
+    if (a.kind !== 'lg' || b.kind !== 'lg') return Number(b.kind === 'lg') - Number(a.kind === 'lg')
+    return ((a.endStart ?? 0) - (a.start ?? 0)) - ((b.endStart ?? 0) - (b.start ?? 0))
+  })
   for (const interval of intervals) {
     if (interval.kind !== 'lg' && interval.kind !== 'cresc' && interval.kind !== 'decres') continue
     const events = [...document.parts.values()].flatMap(part => part[interval.staff].flatMap(measure => measure.events)).filter(event => interval.start !== undefined && interval.endStart !== undefined && event.sourceStart >= interval.start && event.sourceStart <= interval.endStart)
@@ -319,7 +312,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     const start = endpointLabels.get(first)?.first
     const end = interval.kind === 'lg' ? endpointLabels.get(last)?.legatoEnd : endpointLabels.get(last)?.last
     if (!start || !end || interval.display === 'text') continue
-    relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
+    relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''},below=true)`)
   }
   return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers }
 }

@@ -1054,13 +1054,32 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it('renders single-event hairpins and merges consecutive legato ranges', () => {
+  it('renders single-event hairpins and preserves explicit legato phrase boundaries', () => {
     const single = render('{4/4}\nN: {cresc}1{/} 2 3 4 |||')
     expect(single.score.diagnostics.filter(d => d.severity === 'error')).toEqual([])
     expect(geometry(single.document).layout.attachments.length).toBeGreaterThan(0)
-    const merged = geometry(parseM3NDocument('{4/4}\nN: {lg}1 2{/} {lg}3 4{/} |||'))
-    const whole = geometry(parseM3NDocument('{4/4}\nN: {lg}1 2 3 4{/} |||'))
-    expect(merged.layout.attachments.length).toBe(whole.layout.attachments.length)
+    const separate = projectNumberedScore(parseM3NDocument('{4/4}\nN: {lg}1 2{/} {lg}3 4{/} |||'), options)
+    expect(separate.source.match(/@tie\([^)]*\)/g)).toEqual(['@tie(m1,m2)', '@tie(m3,m4)'])
+    const nested = projectNumberedScore(parseM3NDocument('{4/4}\nN: {lg}{lg}1 2{/} {lg}3 4{/}{/} |||'), options)
+    expect(nested.source.match(/@tie\([^)]*\)/g)).toEqual(['@tie(m1,m2)', '@tie(m3,m4)', '@tie(m1,m4)'])
+  })
+
+  it('places The Swan hairpins below notes and away from its nested slurs', () => {
+    const source = readFileSync(resolve(process.cwd(), '../../src/scores/tian_e_01.m3n'), 'utf8')
+    for (const width of [320, 820]) {
+      const document = parseM3NDocument(source)
+      const projection = projectNumberedScore(document, { width, paged: false })
+      const result = geometry(document, { width, paged: false })
+      const hairpins = result.layout.attachments.filter(item => item.sourceSpan
+        && projection.source.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith('@dyn('))
+      expect(hairpins).toHaveLength(6)
+      for (const hairpin of hairpins) for (const region of hairpin.regions) {
+        const notes = result.layout.objects.filter(node => !node.T.isZero() && node.layoutLine === region.line
+          && node.box.x < region.x + region.w && node.box.x + node.box.w > region.x)
+        expect(notes.length).toBeGreaterThan(0)
+        for (const note of notes) expect(region.y - note.box.y - note.box.h).toBeGreaterThan(3)
+      }
+    }
   })
 
   it('reports unsupported marks instead of silently discarding them', () => {

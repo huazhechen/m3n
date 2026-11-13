@@ -1,5 +1,7 @@
 # Local changes
 
+- `@dyn(...,below=true)` places hairpins below their complete note range, including low octave dots, and reserves that space across systems. The default above-note placement and playback are unchanged; serialization preserves the option.
+
 - Automatic beams follow the active meter, grouping compound 6/8, 9/8 and 12/8 in threes. Meter changes and bar lines reset the beat grid; line breaks inside metered bars preserve its phase. Explicit beams and shared div scopes retain their specified groups.
 
 The comparison base is the unmodified upstream import commit `d7c00a6`. See UPSTREAM.md for the exact upstream revision. Modified upstream source files carry M3N notices.

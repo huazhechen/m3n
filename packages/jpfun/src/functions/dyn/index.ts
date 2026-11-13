@@ -1,4 +1,4 @@
-// M3N modification: opt-in single-event hairpins reuse native geometry.
+// M3N modification: opt-in single-event and below-staff hairpins reuse native geometry.
 import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import type { AttachmentLayoutContext, LayoutAttachment } from "../../layout/types.js";
 import type { LoweringContext } from "../../lowering/loweringContext.js";
@@ -43,6 +43,7 @@ class DynFunction extends ASTFunctionNode {
             { name: "to", description: "渐变终点的标签", type: "label" as const, default: null },
             { name: "dv", description: "力度变化量，正数渐强，负数渐弱", type: "number" as const, default: null },
             { name: "single", description: "允许单音符短发夹", type: "boolean" as const, default: false },
+            { name: "below", description: "将渐变线置于音符下方", type: "boolean" as const, default: false },
         ],
     };
 
@@ -115,6 +116,7 @@ class DynFunction extends ASTFunctionNode {
     readonly dv: number;
     readonly size: number;
     readonly single: boolean;
+    readonly below: boolean;
 
     override loweringEnter(ctx: LoweringContext) {
         const from = ctx.getTemporalNodes(this.from).at(0);
@@ -156,7 +158,7 @@ class DynFunction extends ASTFunctionNode {
 
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
-        const [from, to, inputDv, single] = this.getArgValue(args, ctx) as [ASTNodeBase, ASTNodeBase, number, boolean];
+        const [from, to, inputDv, single, below] = this.getArgValue(args, ctx) as [ASTNodeBase, ASTNodeBase, number, boolean, boolean];
         let dv = inputDv;
         if (!Number.isFinite(dv) || dv === 0) {
             throw new ErrorDiagnostic(
@@ -177,12 +179,13 @@ class DynFunction extends ASTFunctionNode {
         this.to = to;
         this.dv = dv;
         this.single = single;
+        this.below = below;
         this.size = ctx.variables.fontsize;
     }
 
     override toString(source: string) {
         const name = (node: ASTNodeBase) => (node as ASTFunctionNode).label ?? node.toString(source);
-        return `@dyn(${name(this.from)}, ${name(this.to)}, ${this.dv}${this.single ? ", single=true" : ""})`;
+        return `@dyn(${name(this.from)}, ${name(this.to)}, ${this.dv}${this.single ? ", single=true" : ""}${this.below ? ", below=true" : ""})`;
     }
 }
 
@@ -259,7 +262,9 @@ class DynAttachment implements LayoutAttachment {
                 line: range.line,
                 startX: range.startX,
                 endX: range.endX,
-                lineY: hostTop - size * 0.62,
+                lineY: this.ast.below
+                    ? axis + (extent?.bottom ?? 0) + size * 0.62
+                    : hostTop - size * 0.62,
                 startOpen: aperture * (this.dv > 0 ? start : 1 - start),
                 endOpen: aperture * (this.dv > 0 ? end : 1 - end),
             };

@@ -231,3 +231,22 @@ test("dyn 绘制单行楔形并申报上方占用", () => {
         `lines=${lines.map(line => `${line.x1.toFixed(2)},${line.y1.toFixed(2)}-${line.x2.toFixed(2)},${line.y2.toFixed(2)}`).join(";")}`,
     ].join("\n"));
 });
+
+test("below=true 将渐变线放在低八度点下方，跨行保留间距和播放", () => {
+    const source = `1,@a 2, @br() 3,, 4,@b @tie(a,b) @dyn(a,b,20,below=true)`;
+    const result = compileScore(source, { alignRelations: true });
+    const dynamic = result.layout.attachments.find(item => item.sourceSpan
+        && source.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith("@dyn("));
+    assert(dynamic?.regions.length === 2, "the hairpin must occupy both systems");
+    for (const region of dynamic.regions) {
+        const notes = result.layout.objects.filter(node => !node.T.isZero() && node.layoutLine === region.line);
+        assert(region.y > Math.max(...notes.map(node => node.box.y + node.box.h)) + 3,
+            "the complete hairpin must clear low octave dots and note underlines");
+    }
+    assert(velocities(source).join() === velocities(source.replace(",below=true", "")).join(),
+        "engraving placement must not change playback velocities");
+    const serialized = result.ast.toString(source);
+    assert(serialized.includes("below=true"), "serialization must preserve placement");
+    const restored = compileScore(serialized, { alignRelations: true });
+    assert(nearly(restored.layout.bounds.h, result.layout.bounds.h), "serialized placement must preserve layout height");
+});
