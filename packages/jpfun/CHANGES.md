@@ -1,5 +1,7 @@
 # Local changes
 
+- Automatic beams follow the active meter, grouping compound 6/8, 9/8 and 12/8 in threes. Meter changes and bar lines reset the beat grid; line breaks inside metered bars preserve its phase. Explicit beams and shared div scopes retain their specified groups.
+
 The comparison base is the unmodified upstream import commit `d7c00a6`. See UPSTREAM.md for the exact upstream revision. Modified upstream source files carry M3N notices.
 
 - Natural-width `compileScore({autoWrap:true,wrap:"compact"})` uses a tighter line-breaking budget, allowing more measures per system while retaining native glyph, lyric and relation layout. Equal-measure compact wrapping retains its sparse-long-note guard. Normal wrapping remains unchanged; compact exports require geometry review.

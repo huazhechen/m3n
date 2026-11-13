@@ -22,6 +22,11 @@ const changesByPosition = new WeakMap<TemporalNodeBase, {
     start: number; end: number; meter: MeterFunction;
 }>();
 
+/** Includes meter controls folded into a visible host at the same position. */
+export function meterChangeAt(node: TemporalNodeBase): Readonly<{ numerator: number; denominator: number }> | undefined {
+    return changesByPosition.get(node)?.meter;
+}
+
 function recordMeasureChange(state: TimeState, node: TemporalNodeBase, meter: MeterFunction) {
     const position = state.currentEvent ?? node;
     const span = node.ast.sourceSpan;

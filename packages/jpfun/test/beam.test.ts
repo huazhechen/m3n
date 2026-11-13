@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { deepStrictEqual } from "node:assert/strict";
 
 import { DivNode, divLinePortName } from "../src/functions/div/index.js";
 import {
@@ -85,6 +86,24 @@ test("自动连梁在拍点、换行、小节线与并行轨处分组", () => {
         "automatic beams must group parallel tracks independently");
     assert(layoutOf(`@div({@div({1 2}, 1) 3}, 1)`).attachments.length === 1,
         "nested div scopes must share one non-overlapping beam attachment");
+});
+
+test("复拍子的自动减时线按三个分母单位分组，并跟随拍号变化", () => {
+    const groups = (source: string) => layoutOf(source).attachments.map(attachment => {
+        const span = attachment.sourceSpan!;
+        return source.slice(span.start, span.end);
+    });
+    deepStrictEqual(groups(`@meter(6,8) 1/ 2/ 3/ 4/ 5/ 6/ |`), ["1/ 2/ 3/", "4/ 5/ 6/"]);
+    deepStrictEqual(groups(`@meter(9,8) 1/ 2/ 3/ 4/ 5/ 6/ 7/ 1'/ 2'/ |`),
+        ["1/ 2/ 3/", "4/ 5/ 6/", "7/ 1'/ 2'/"]);
+    deepStrictEqual(groups(`@meter(12,8) 1/ 2/ 3/ 4/ 5/ 6/ 7/ 1'/ 2'/ 3'/ 4'/ 5'/ |`),
+        ["1/ 2/ 3/", "4/ 5/ 6/", "7/ 1'/ 2'/", "3'/ 4'/ 5'/"]);
+    deepStrictEqual(groups(`@meter(6,8) 1/ 2/ 3/ 4/ 5/ 6/ | @meter(3,4) 1/ 2/ 3/ 4/ 5/ 6/ |`),
+        ["1/ 2/ 3/", "4/ 5/ 6/", "1/ 2/", "3/ 4/", "5/ 6/"]);
+    deepStrictEqual(groups(`@meter(6,8) 1/ 2/ @br() 3/ 4/ 5/ 6/ |`), ["1/ 2/", "4/ 5/ 6/"]);
+    deepStrictEqual(groups(`@meter(6,8) 1/ | 2/ 3/ 4/ 5/ 6/ 7/ |`), ["2/ 3/ 4/", "5/ 6/ 7/"]);
+    deepStrictEqual(groups(`@meter(6,8) @stack({1/ 2/ 3/ 4/ 5/ 6/ |}, {1'/ 2'/ 3'/ 4'/ 5'/ 6'/ |})`),
+        ["1/ 2/ 3/", "1'/ 2'/ 3'/", "4/ 5/ 6/", "4'/ 5'/ 6'/"]);
 });
 
 test("显式 @beam 只连接相邻端点，否则报错", () => {

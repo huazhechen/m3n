@@ -336,6 +336,13 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei.match(/<beam>/g)).toHaveLength(2)
   })
 
+  it.each([6, 9, 12])('beams %i/8 staff notation in groups of three eighth notes', count => {
+    const result = m3nToMei(`{${count}/8}\nN: (${Array.from({ length: count }, (_, index) => index % 7 + 1).join(' ')}) |||`)
+    const beams = [...result.mei.matchAll(/<beam>([\s\S]*?)<\/beam>/g)]
+    expect(beams).toHaveLength(count / 3)
+    expect(beams.map(beam => [...beam[1]!.matchAll(/<note\b/g)].length)).toEqual(Array(count / 3).fill(3))
+  })
+
   it('serializes acciaccaturas and appoggiaturas as grace notes', () => {
     const result = m3nToMei('{key=C} {4/4}\n1{ac(2)} 3{ap((45))} 5{ap(((6)))} 1e |||')
 

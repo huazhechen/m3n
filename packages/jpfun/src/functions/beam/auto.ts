@@ -6,6 +6,7 @@ import {
 } from "../temporal.js";
 import type { LoweringResult } from "../../lowering/types.js";
 import { Fraction } from "../../fraction.js";
+import { meterChangeAt } from "../meter/index.js";
 import type { LayoutAttachment } from "../../layout/types.js";
 import type { ASTNodeBase, SourceSpan } from "../ASTtypes.js";
 import {
@@ -169,7 +170,7 @@ function beatAt(time: Fraction): number {
  * 多个独立 div 的默认连接规则
  *
  * MuseScore 和 LilyPond 都以拍号的 beat structure 作为默认分组边界，并允许手工 beam 覆盖。
- * 当前语言没有拍号，暂以四分音符为拍单位。
+ * 有拍号时按分母单位分组，复拍子每三个分母单位一组；无拍号时按四分音符分组。
  * 分组不跨轨道、逻辑行、拍点、小节线、时间间隙、普通长事件、开关边界或显式 beam。
  */
 function createAdjacentBeams(
@@ -182,6 +183,8 @@ function createAdjacentBeams(
     const lineStarts = new Map<number, Fraction>();
     const measureStart = new Fraction();
     const beatTime = new Fraction();
+    const beatDuration = new Fraction(1);
+    let hasMeter = false;
 
     for (const column of result.columns) {
         for (const node of column) {
@@ -202,6 +205,15 @@ function createAdjacentBeams(
     };
 
     for (const column of result.columns) {
+        for (const node of column) {
+            const meter = meterChangeAt(node);
+            if (!meter) continue;
+            flushAll();
+            measureStart.copyFrom(node.t);
+            hasMeter = meter.numerator > 0 && meter.denominator > 0;
+            const compound = hasMeter && meter.denominator >= 8 && meter.numerator % 3 === 0;
+            beatDuration.set(hasMeter ? (compound ? 12 : 4) : 1, hasMeter ? meter.denominator : 1);
+        }
         const anchor = column.find(node => node.mergeKey === ANCHOR_KEY);
         if (anchor) {
             flushAll();
@@ -228,8 +240,9 @@ function createAdjacentBeams(
             }
 
             const lineStart = lineStarts.get(node.layoutLine) ?? node.t;
-            const activeStart = measureStart.compare(lineStart) >= 0 ? measureStart : lineStart;
-            const beat = beatAt(beatTime.copyFrom(node.t).sub(activeStart));
+            // A line break inside a metered bar does not restart its beat grid.
+            const activeStart = hasMeter || measureStart.compare(lineStart) >= 0 ? measureStart : lineStart;
+            const beat = beatAt(beatTime.copyFrom(node.t).sub(activeStart).div(beatDuration));
             const current = groups.get(node.track);
             const isContinuous = current && node.t.equals(current.endTime);
             if (!current || node.layoutLine !== current.line || beat !== current.beat || !isContinuous) {

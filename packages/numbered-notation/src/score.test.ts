@@ -8,6 +8,20 @@ import { NumberedNotationScore, type NumberedNotationRenderOptions } from './sco
 import { projectNumberedScore } from './projection.js'
 
 const options = { paged: false, width: 800 }
+
+it('renders compound-meter underlines in threes in melody and bass', () => {
+  const document = parseM3NDocument('{6/8}\nN: (1 2 3 4 5 6) |||\nB: (1d 2d 3d 4d 5d 6d) |')
+  const projection = projectNumberedScore(document, options)
+  const result = compileScore(projection.source, { autoWrap: true })
+  expect(result.diagnostics).toEqual([])
+  const beams = result.layout.attachments.flatMap(attachment => {
+    if (!attachment.sourceSpan) return []
+    const source = projection.source.slice(attachment.sourceSpan.start, attachment.sourceSpan.end)
+    return source.startsWith('@div(') ? [[...source.matchAll(/@note\("([^"]+)"\)/g)].map(match => match[1])] : []
+  })
+  expect(beams).toEqual([['1', '2', '3'], ['1,', '2,', '3,'], ['4', '5', '6'], ['4,', '5,', '6,']])
+})
+
 function render(source: string | ScoreDocument, settings: Partial<NumberedNotationRenderOptions> = {}) {
   const document = typeof source === 'string' ? parseM3NDocument(source) : source
   const score = NumberedNotationScore.create(document)
