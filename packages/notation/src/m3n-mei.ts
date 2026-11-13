@@ -45,6 +45,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const document = suppliedDocument ?? parseM3NDocument(source, projection)
   const { sourceMap, hasBassStaff, headerMetadata, lyricsByEvent, visibleVerseIndexes } = context.interaction ?? deriveScoreInteraction(document)
   const eventIds = new Map<string, string>()
+  const tupletNoteCounts = new Map<string, number>()
   const preassignedIds = scoreEventIds(document)
   const previousTiedByStaff = new Map<number, boolean>()
   const previousKeyByStaff = new Map<number, string>()
@@ -58,10 +59,12 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       for (const event of part.melody[measureIndex]?.events ?? []) {
         const xmlId = preassignedIds.get(event)!
         eventIds.set(`1:${event.sourceStart}`, xmlId)
+        if (event.kind === 'tuplet') tupletNoteCounts.set(xmlId, event.pitches.length)
       }
       for (const event of hasBassStaff ? part.bass[measureIndex]?.events ?? [] : []) {
         const xmlId = preassignedIds.get(event)!
         eventIds.set(`2:${event.sourceStart}`, xmlId)
+        if (event.kind === 'tuplet') tupletNoteCounts.set(xmlId, event.pitches.length)
       }
     }
   }
@@ -277,7 +280,12 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       }
       if (singleNote && interval.kind !== '8va' && interval.kind !== '8vb') return []
       if (staffNumber === 1 && (interval.kind === 'accel' || interval.kind === 'rit')) return [`<tempo staff="${staffNumber}" startid="#${startid}" endid="#${endid}" place="above" func="continuous">${interval.kind === 'rit' ? 'rit.' : 'accel.'}</tempo>`]
-      if (interval.kind === 'lg') return [`<slur startid="#${startid}" endid="#${endid}"/>`]
+      if (interval.kind === 'lg') {
+        const firstNote = tupletNoteCounts.has(startid) ? `${startid}-n1` : startid
+        const lastCount = tupletNoteCounts.get(endid)
+        const lastNote = lastCount === undefined ? endid : `${endid}-n${lastCount}`
+        return [`<slur startid="#${firstNote}" endid="#${lastNote}"/>`]
+      }
       if (interval.kind === 'cresc' || interval.kind === 'decres') {
         if (interval.display === 'text') {
           const label = interval.kind === 'cresc' ? 'cresc.' : 'dim.'

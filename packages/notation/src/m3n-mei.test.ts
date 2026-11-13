@@ -3,6 +3,25 @@ import { m3nPitch, parseM3NDocument } from './m3n-direct.js'
 import { m3nToMei } from './m3n-mei.js'
 
 describe('M3N to MEI conversion', () => {
+  it.each([['Db', '5f'], ['C#', '7s'], ['Gb', '6f'], ['F#', '6s'], ['Cb', '7f'], ['B', '5s'], ['Bbm', '5f'], ['Ddor', '0']])(
+    'preserves the written %s signature', (key, signature) => {
+      expect(m3nToMei(`{key=${key}}{2/4}\nN: 1 2 |||`).mei).toContain(`<keySig sig="${signature}"/>`)
+    },
+  )
+
+  it('anchors slurs to notes when either endpoint is a tuplet', () => {
+    const result = m3nToMei('{2/4}\nN: {lg}(([1 2 1:2])) ((7d 1)) ((2 1 7d 1)){/} | {lg}1 ([2 3 2:2]){/} |||')
+    expect(result.diagnostics).toEqual([])
+    const slurs = [...result.mei.matchAll(/<slur startid="#([^"]+)" endid="#([^"]+)"\/>/g)]
+    expect(slurs).toHaveLength(2)
+    expect(slurs[0]![1]).toMatch(/-n1$/)
+    expect(slurs[1]![2]).toMatch(/-n3$/)
+    for (const slur of slurs) {
+      expect(result.mei).toContain(`<note xml:id="${slur[1]}"`)
+      expect(result.mei).toContain(`<note xml:id="${slur[2]}"`)
+    }
+  })
+
   it('preserves an upper mordent without adding measured notes', () => {
     const result = m3nToMei('{4/4}\nN: 6{prall} 6 5 0 |||')
     expect(result.diagnostics).toEqual([])

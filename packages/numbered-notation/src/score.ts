@@ -1,5 +1,5 @@
 import { CanvasTextMeasurer, compileScore, ErrorDiagnostic, type TextMeasurer } from '@m3n/jpfun'
-import type { ScoreDocument } from '@m3n/notation'
+import { validateScoreDocument, type ScoreDocument } from '@m3n/notation'
 import { projectNumberedScore, type NumberedNotationDiagnostic } from './projection.js'
 import { renderInteractivePages } from './svg.js'
 
@@ -44,7 +44,13 @@ export class NumberedNotationScore {
     const context = canvas?.getContext('2d')
     const textMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
     const result = compileScore(projection.source, { autoWrap: true, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
-    this.diagnostics = [...projection.diagnostics, ...result.diagnostics.map(item => ({ code: item.code, message: item.message, severity: item instanceof ErrorDiagnostic ? 'error' as const : 'warning' as const }))]
+    // The score model understands complementary pickups and alternate endings;
+    // jpFun sees independent bars and otherwise reports these valid fragments.
+    const hasMeterWarning = result.diagnostics.some(item => item.code === 'W_METER_MISMATCH')
+    const validMeter = hasMeterWarning && !validateScoreDocument(this.document)
+      .some(item => item.code.startsWith('M3N_METER_'))
+    const diagnostics = result.diagnostics.filter(item => !(validMeter && item.code === 'W_METER_MISMATCH'))
+    this.diagnostics = [...projection.diagnostics, ...diagnostics.map(item => ({ code: item.code, message: item.message, severity: item instanceof ErrorDiagnostic ? 'error' as const : 'warning' as const }))]
     const error = this.diagnostics.find(item => item.severity === 'error')
     if (error) throw new Error(`简谱排版失败：${error.message}`)
     return renderInteractivePages(result, projection)

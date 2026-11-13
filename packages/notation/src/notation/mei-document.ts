@@ -6,11 +6,12 @@ import { parse, stringify, type TNode } from 'txml/txml'
 export type ScoreHeaderMetadata = { value: string; side: 'left' | 'right' | 'center'; priority: number }
 
 export function meiKeySignature(rawKey: string) {
-  const pitchClasses: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
   const { tonic, mode } = parseKey(rawKey)
-  const tonicPitch = (pitchClasses[tonic[0] ?? 'C'] ?? 0) + (tonic.endsWith('#') ? 1 : tonic.endsWith('b') ? -1 : 0)
-  const relativeMajor = (tonicPitch + ({ m: 3, dor: 10, phr: 8, lyd: 5, mix: 7, loc: 1 }[mode] ?? 0) + 12) % 12
-  const fifths = [0, 7, 2, -3, 4, -1, 6, 1, -4, 3, -2, 5][relativeMajor] ?? 0
+  // Preserve the written tonic: Db and C# share pitches, but have different signatures.
+  const naturalFifths: Record<string, number> = { C: 0, D: 2, E: 4, F: -1, G: 1, A: 3, B: 5 }
+  const accidental = tonic.endsWith('#') ? 7 : tonic.endsWith('b') ? -7 : 0
+  const modeOffset = { m: -3, dor: -2, phr: -4, lyd: 1, mix: -1, loc: -5 }[mode] ?? 0
+  const fifths = (naturalFifths[tonic[0] ?? 'C'] ?? 0) + accidental + modeOffset
   return fifths === 0 ? '0' : `${Math.abs(fifths)}${fifths > 0 ? 's' : 'f'}`
 }
 

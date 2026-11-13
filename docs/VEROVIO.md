@@ -109,6 +109,8 @@ Verovio 是将乐谱数据雕版为 SVG 的引擎。它不是所见即所得编�
 | 高音/低音谱号 | `<clef shape="G" line="2"/>` / `<clef shape="F" line="4"/>` | 初始值可写 `clef.shape`、`clef.line`。 |
 | 4/4、6/8 | `<meterSig count="4" unit="4"/>` / `<meterSig count="6" unit="8"/>` | 初始值可写 `scoreDef meter.count`、`meter.unit`。 |
 
+M3N 转换保留调号的拼写：降 D 大调写为 `5f`，升 C 大调写为 `7s`，等音调不能仅按音高类别合并。
+
 全局初始定义写在 `scoreDef/staffDef` 属性；中途变化以 `keySig`、`meterSig`、`clef` 事件置于变化发生处。不能只改后续音符而省略可见的调号、拍号或谱号。
 
 需要显示还原记号时（如从 A 大调回到 C 大调），用 `keyAccid accid="n"` 子元素列出前一调号的变音；此时不要再写 `sig` 属性，Verovio 会忽略与 `keyAccid` 子元素同时出现的 `sig` 并输出警告。
@@ -150,7 +152,7 @@ Verovio 是将乐谱数据雕版为 SVG 的引擎。它不是所见即所得编�
 | --- | --- | --- |
 | 符杠 | `<beam><note .../><note .../></beam>` | `beam` 包含连续事件。 |
 | 三连音 | `<tuplet num="3" numbase="2">...</tuplet>` | 3 个写作单位占 2 个同类单位。 |
-| 连线 | `<slur startid="#n1" endid="#n4"/>` | 乐句/不同音高；可加 `curvedir="above"`。 |
+| 连线 | `<slur startid="#n1" endid="#n4"/>` | 乐句/不同音高；可加 `curvedir="above"`。连音组作端点时，起点引用组内第一个音符，终点引用最后一个音符，不能引用 `tuplet` 容器。 |
 | 延音线 | `<tie startid="#n1" endid="#n2"/>` | 两端必须同音高；不要用 `slur` 代替。 |
 | 震音 | `<bTrem unitdur="16">...</bTrem>` | 双音或成组震音用 tremolo 元素。 |
 

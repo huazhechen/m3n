@@ -4,9 +4,73 @@ import besameMucho from '../scores/besame_mucho_01.m3n?raw'
 import theSwan from '../scores/tian_e_01.m3n?raw'
 import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
 import loveLikeTide from '../scores/ai_ru_chao_shui_01.m3n?raw'
+import maple from '../scores/feng_01.m3n?raw'
+import smoke from '../scores/yan_hua_yi_leng_01.m3n?raw'
+import polka from '../scores/dan_huang_guan_bo_er_ka_01.m3n?raw'
+import salut from '../scores/ai_de_li_zan_01.m3n?raw'
+import elise from '../scores/zhi_ai_li_si_01.m3n?raw'
 import { loadPresetScore, presetScores } from './samples'
 
 describe('bundled score corpus', () => {
+  it.each([
+    ['feng', '枫', maple, 76, 4],
+    ['yan_hua_yi_leng', '烟花易冷', smoke, 51, 4],
+    ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 78, 2],
+    ['ai_de_li_zan', '爱的礼赞', salut, 100, 2],
+    ['zhi_ai_li_si', '致爱丽丝', elise, 106, 1.5],
+  ] as const)('loads the complete PDF melody %s with its original bar durations', async (id, title, source, count, beats) => {
+    const entry = presetScores.find(score => score.sourcePath === `${id}_01.m3n`)
+    expect(entry?.title).toBe(title)
+    expect(await loadPresetScore(entry!.slug)).toBe(source)
+    expect(validateM3NDiagnostics(source)).toEqual([])
+    const part = parseM3NDocument(source).parts.get('score')!
+    const measures = part.melody.filter(measure => measure.events.length)
+    expect(measures).toHaveLength(count)
+    const expected = Array<number>(count).fill(beats)
+    if (id === 'feng') expected[4] = 2
+    if (id === 'zhi_ai_li_si') {
+      expected[0] = 0.5
+      expected[8] = 1
+      expected[105] = 1
+    }
+    expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
+      .toEqual(expected)
+    expect(part.bass.flatMap(measure => measure.events)).toEqual([])
+    expect(measures.flatMap(measure => measure.events).every(event =>
+      event.kind !== 'chord' && event.postfixes.every(mark => !/^f[1-5]$/.test(mark)),
+    )).toBe(true)
+  })
+
+  it('retains the PDF repeat scopes, modulation, ornaments and fast subdivisions', () => {
+    const bars = (source: string) => parseM3NDocument(source).parts.get('score')!.melody.filter(measure => measure.events.length)
+    const smokeBars = bars(smoke)
+    const passes = measurePlaybackPasses(smokeBars)
+    expect(smokeBars.map(measure => [...passes.get(measure)!])).toEqual([
+      ...Array.from({ length: 4 }, () => [1]),
+      ...Array.from({ length: 31 }, () => [1, 2]),
+      ...Array.from({ length: 2 }, () => [1]),
+      ...Array.from({ length: 14 }, () => [2]),
+    ])
+    const polkaBars = bars(polka)
+    expect(polkaBars.flatMap((measure, index) => measure.left === 'rptstart' ? [index + 1] : []))
+      .toEqual([3, 20, 45, 62])
+    expect(polkaBars.flatMap((measure, index) => measure.ending === '1' ? [index + 1] : []))
+      .toEqual([18, 27, 60, 77])
+    expect([19, 28, 44, 61].map(index => polkaBars[index]!.events[0]!.key)).toEqual(['G', 'C', 'F', 'C'])
+    const mapleBars = bars(maple)
+    expect(mapleBars[49]!.events[0]!.key).toBe('Db')
+    expect(mapleBars[1]!.events[0]!.beats).toBe(0.0625)
+    const salutBars = bars(salut)
+    expect(salutBars[9]!.events[1]!.pitches).toEqual(['2#e'])
+    expect(salutBars[32]!.events[0]!.tie).toBe(true)
+    expect([34, 48].map(index => salutBars[index]!.events[0]!.key)).toEqual(['G', 'E'])
+    const eliseBars = bars(elise)
+    expect(eliseBars.flatMap((measure, index) => measure.right === 'rptend' ? [index + 1] : []))
+      .toEqual([9, 24])
+    expect(eliseBars[79]!.events.map(event => event.beats)).toEqual([0.5, 0.5, 0.5])
+    expect(eliseBars[81]!.events[1]!.pitches).toEqual(['6ee', '1eee', '3eee'])
+  })
+
   it('includes Love Like Tide with both houses, upper mordents and no D.C.', async () => {
     const entry = presetScores.find(score => score.sourcePath === 'ai_ru_chao_shui_01.m3n')
     expect(entry?.title).toBe('爱如潮水')

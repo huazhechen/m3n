@@ -50,6 +50,13 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it('accepts complementary pickups at repeats without hiding invalid meter', () => {
+    const valid = render('{3/8}\nN: ||: ((3e 2#e)) | ((3e 2#e 3e 7 2=e 1e)) |\n---V1\nN: 6 :||\n---V2\nN: 6 |||')
+    expect(valid.score.diagnostics).toEqual([])
+    const invalid = render('{3/8}\nN: (1 2 3) | 4 | (5 6 7) |||')
+    expect(invalid.score.diagnostics.map(item => item.code)).toContain('W_METER_MISMATCH')
+  })
+
   it('reflows Qiu Ying independently of font size while retaining event identities', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/qiu_ying_01.m3n'), 'utf8')
     const settings = { width: 590, pageMargin: 8, systemGap: 18, uniformSystemHeight: true }
