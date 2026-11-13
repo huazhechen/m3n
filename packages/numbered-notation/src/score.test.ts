@@ -419,7 +419,7 @@ describe('jpFun numbered notation adapter', () => {
     expect(geometry(document).lowering.duration.toNumber()).toBeCloseTo(expected)
   })
 
-  it.each(['fermata', 'tip', 'str', 'hold', 'brk', 'breath', 'tr', 'f1', 'f5'])('retains the %s postfix', name => {
+  it.each(['fermata', 'tip', 'str', 'hold', 'brk', 'breath', 'tr', 'prall', 'f1', 'f5'])('retains the %s postfix', name => {
     const plain = render('{4/4}\nN: 1 2 3 4 |||').root.querySelector('#m3n-e-1')!.innerHTML
     const marked = render(`{4/4}\nN: 1{${name}} 2 3 4 |||`)
     expect(marked.root.querySelector('#m3n-e-1')!.innerHTML).not.toBe(plain)

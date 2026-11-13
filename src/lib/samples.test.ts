@@ -3,9 +3,38 @@ import { m3nToMei, parseM3NDocument, measurePlaybackPasses, validateM3NDiagnosti
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
 import theSwan from '../scores/tian_e_01.m3n?raw'
 import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
+import loveLikeTide from '../scores/ai_ru_chao_shui_01.m3n?raw'
 import { loadPresetScore, presetScores } from './samples'
 
 describe('bundled score corpus', () => {
+  it('includes Love Like Tide with both houses, upper mordents and no D.C.', async () => {
+    const entry = presetScores.find(score => score.sourcePath === 'ai_ru_chao_shui_01.m3n')
+    expect(entry?.title).toBe('爱如潮水')
+    expect(await loadPresetScore(entry!.slug)).toBe(loveLikeTide)
+    expect(validateM3NDiagnostics(loveLikeTide)).toEqual([])
+    const document = parseM3NDocument(loveLikeTide)
+    expect(document).toMatchObject({ key: 'E', meterCount: 4, meterUnit: 4, tempo: 75 })
+    const measures = document.parts.get('score')!.melody.filter(measure => measure.events.length)
+    expect(measures).toHaveLength(28)
+    expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
+      .toEqual(Array(28).fill(4))
+    expect(measures.flatMap((measure, index) => measure.ending === '1' ? [index + 1] : []))
+      .toEqual([13, 14, 15, 16])
+    expect(measures.flatMap((measure, index) => measure.ending === '2' ? [index + 1] : []))
+      .toEqual(Array.from({ length: 12 }, (_, index) => index + 17))
+    const passes = measurePlaybackPasses(measures)
+    expect(measures.map(measure => [...passes.get(measure)!])).toEqual([
+      ...Array.from({ length: 7 }, () => [1]),
+      ...Array.from({ length: 5 }, () => [1, 2]),
+      ...Array.from({ length: 4 }, () => [1]),
+      ...Array.from({ length: 12 }, () => [2]),
+    ])
+    expect(measures[15]!.events.filter(event => event.postfixes.includes('prall'))).toHaveLength(2)
+    expect(measures.flatMap(measure => measure.events).flatMap(event => event.navigation)).not.toContain('dc')
+    expect(loveLikeTide).not.toMatch(/D\.C\.|\{dc\}/)
+    expect(measures[0]!.events.filter(event => event.tie)).toHaveLength(2)
+  })
+
   it('includes K.545 as a complete single melody with both original repeats', async () => {
     const entry = presetScores.find(score => score.sourcePath === 'mozart_k545_01.m3n')
     expect(entry?.title).toBe('C大调奏鸣曲 K.545 第一乐章')

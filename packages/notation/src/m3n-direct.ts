@@ -192,7 +192,7 @@ function parseBody(
         const current = measure()
         current.navigation ??= []
         current.navigation.push(navigation)
-      } else if (/^(?:arp|tr|str|brk|tip|hold|fermata|breath|f[1-5])$/.test(value) || parseM3NGrace(value)) {
+      } else if (/^(?:arp|tr|prall|str|brk|tip|hold|fermata|breath|f[1-5])$/.test(value) || parseM3NGrace(value)) {
         if (lastEvent) lastEvent.postfixes.push(value)
       } else if (value === '/' || value.startsWith('/')) {
         const named = value.slice(1)

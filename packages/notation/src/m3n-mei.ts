@@ -206,6 +206,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     const postfix = (xmlId: string, value: string) => {
       if (value === 'arp') return `<arpeg startid="#${xmlId}"/>`
       if (value === 'tr') return `<trill startid="#${xmlId}"/>`
+      if (value === 'prall') return `<mordent startid="#${xmlId}" form="upper"/>`
       if (value === 'str' || value === 'tip') return ''
       if (value === 'fermata') return `<fermata startid="#${xmlId}"/>`
       if (value === 'breath') return `<breath startid="#${xmlId}"/>`

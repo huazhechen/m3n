@@ -3,6 +3,15 @@ import { m3nPitch, parseM3NDocument } from './m3n-direct.js'
 import { m3nToMei } from './m3n-mei.js'
 
 describe('M3N to MEI conversion', () => {
+  it('preserves an upper mordent without adding measured notes', () => {
+    const result = m3nToMei('{4/4}\nN: 6{prall} 6 5 0 |||')
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei).toContain('<mordent startid="#m3n-e-1" form="upper"/>')
+    const events = parseM3NDocument('{4/4}\nN: 6{prall} 6 5 0 |||').parts.get('score')!.melody[0]!.events
+    expect(events.map(event => event.beats)).toEqual([1, 1, 1, 1])
+    expect(events[0]!.postfixes).toEqual(['prall'])
+  })
+
   it.each(['Imaj7', 'Imaj9'])('keeps the documented %s chord whole', (chord) => {
     const result = m3nToMei(`{4/4}\nN: 1 2 3 4 |||\nC: ${chord} |`)
     expect(result.diagnostics).toEqual([])

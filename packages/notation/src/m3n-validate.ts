@@ -49,7 +49,7 @@ const INFO_FIELDS = new Set([
 const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'dim', 'lg', '8va', '8vb', 'inst'])
 const DYNAMICS = new Set(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff'])
 const POSTFIX_FLAGS = new Set([
-  'arp', 'tr', 'str', 'brk', 'tip', 'hold', 'fermata', 'breath', 'f1', 'f2', 'f3', 'f4', 'f5',
+  'arp', 'tr', 'prall', 'str', 'brk', 'tip', 'hold', 'fermata', 'breath', 'f1', 'f2', 'f3', 'f4', 'f5',
 ])
 
 const KEY_PATTERN = /^([A-G](?:#|b)?)(dor|phr|lyd|mix|m|loc)?$/

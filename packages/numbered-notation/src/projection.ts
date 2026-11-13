@@ -131,7 +131,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           for (const name of event.postfixes) {
             if (parseM3NGrace(name)) continue
             if (name === 'arp') continue
-            if (name === 'tr' || name === 'fermata') decorations.push(`@symbol(${name},size=12px)`)
+            if (name === 'tr' || name === 'prall' || name === 'fermata') decorations.push(`@symbol(${name},size=12px)`)
             else if (name === 'str') articulations.push('@symbol(accent,size=12px)')
             else if (name === 'tip') articulations.push('@symbol(staccatissimo,size=7px)')
             else if (name === 'hold') articulations.push('@symbol(tenuto,size=7px)')
