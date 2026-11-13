@@ -1,0 +1,13 @@
+{title=天鹅}
+{subtitle=Le Cygne}
+{composer=卡米耶·圣-桑}
+{key=Bb} {6/4} {72qpm}
+N: {pp}{text=富有表情地}{lg}((3 5 3e 1e)) ((3 5 3e 1e)) ((3 5 3e 1e)) ((3 5 3e 1e)) ((3 5 3e 1e)) ((3 5 3e 1e)){/} | {p}{lg}{lg}1e 7 3{/} {lg}6 5 1{/} | {br} 2^~ (2 3) 4^{/} 0 | 6d^ {lg}(7d{hold} 1{hold}) (2{hold} 3{hold}) (4{hold} 5{hold}) (6{hold} 7{hold}) | 3e^.~ (3e{/} 0) 0 0 | {br}
+---
+N: {lg}{lg}1e 7 3{/} {lg}6 5 1{/} | 2#^~ (2 3) 4#^.{breath}{/} | {lg}7d. (1#){/} {lg}(2#{hold} 3{hold}) (4#{hold} 5{hold}) (6{hold} 7{hold}) (1#e{hold} 2#e{hold}) | {br} 5e^.~ (5e{/} 0) 0 0 | {lg}{lg}5e 3e 1e{/} {lg}6 7 1e{/} | 5^~ (5 6) 7^{/} 0 | {br}
+---
+N: {lg}{lg}4e 2e 7b{/} {lg}5 6 7{/} | 4^~ (4 5) 6^{/} 0 | {cresc}{lg}6 2 3 4^ (5{hold} 6{hold}){/}{/} | {br} {decres}{lg}7^. 6^{/}{/} 0 | {lg}{cresc}{lg}6 2 3{/} {lg}4#^ (5{hold} 6{hold}){/}{/} | {decres}7b^. 7=^.{breath}{/}{/} | {br}
+---
+N: {p}{lg}{lg}1e 7 3{/} {lg}6 5 1{/} | 2^~ (2 3) 4^{/} 0 | 6d^ {lg}(7d{hold} 1{hold}) (2{hold} 3{hold}) (4{hold} 5{hold}) (6{hold} 7{hold}) | {br} {cresc}3e^.~ 3e^.{breath}{/}{/} | {mf}{lg}{lg}3e 2e 6{/} {lg}1e 7 4{/} | 6 5 {cresc}1 {lg}2 3 1{/}{/}{/} | {br}
+---
+N: 3^.{breath}{text=渐慢} {lg}4{hold} 5{hold} 3{hold}{/} | 6^. {lg}6{hold} 7{hold} 5{hold}{/} | 1e^^.~ | 1e^.~ (1e 0) 0 0 |||
