@@ -124,7 +124,7 @@ Fine、D.C.、D.S. 排在末音或休止符之后、小节线之前，与音符�
 
 `npm run build:scorebook` 默认只生成精简PDF，直接使用 `outputPdf` 文件名；不生成大体积轮廓PDF。`exportOutlinePdf: true` 可显式恢复轮廓PDF，此时再运行精简命令会另外生成 `-精简.pdf`。`npm run compact:scorebook` 可从最近一次构建保存的 `unoutlined-pages.json` 单独重建精简PDF。命令校验版次、渲染器摘要和全部谱源摘要，拒绝过期布局。导出先按原轮廓流程解析SVG的可寻址字符，处理空白、tspan、UTF-16索引和旋转，将每个字形固定到原来的基线位置；常规字形由Chromium嵌入并共用字体子集，粗体沿用原轮廓版的0.015倍字号描边，不另换粗体字体。使用同一Noto Serif CJK SC和Barlow字体资源，不重新排谱、缩小字号或转为图片。
 
-当前精简PDF共73页、3,915,697字节，纸张558 × 850.08 pt；未生成轮廓PDF。构建逐字检查基线误差不超过0.001px、逐页检查实际纸张边界，并用`pdfinfo`、`pdffonts`、`pdfimages`核实页数、纸张、字体Unicode映射及无栅格图片。本版有119个嵌入字体子集和27,728个定位字形；PDF摘要和逐页字形数量保存在`scorebook/PDF体积记录.json`。设置 `exportOutlinePdf: true` 可显式恢复轮廓PDF流程。
+当前精简PDF共87页、4,722,523字节，纸张558 × 850.08 pt；未生成轮廓PDF。构建逐字检查基线误差不超过0.001px、逐页检查实际纸张边界，并用`pdfinfo`、`pdffonts`、`pdfimages`核实页数、纸张、字体Unicode映射及无栅格图片。本版有120个嵌入字体子集和30,954个定位字形；PDF摘要和逐页字形数量保存在`scorebook/PDF体积记录.json`。设置 `exportOutlinePdf: true` 可显式恢复轮廓PDF流程。
 
 - `npm run test`：保留上游测试与快照；适配器为全部 82 份内置谱源分别建立用例，核对每个事件的音高、变音、八度、开始时间、时值、事件身份、控制记号同行及分页。
 - `npm run test:numbered-layout`：不启动服务器，在 Chromium 中检查全部曲库和三个复合谱例的 320/600/800/1000px、连续/分页组合，共 680 次布局，检查真实 SVG 边界、歌词相交及音符数字相交，输出 `.tmp/numbered-layout-report.json` 和示例截图。可用 `CHROMIUM_PATH` 指定浏览器。
