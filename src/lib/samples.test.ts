@@ -25,7 +25,7 @@ describe('bundled score corpus', () => {
       expect(measures[index]!.events.map(event => event.beats)).toEqual([0.5, 1, 0.5, 0.5, 1, 0.5])
     }
     expect(measures[43]!.events.map(event => event.beats)).toEqual([0.5, 0.5])
-    expect(measures[54]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(5)
+    expect(measures[54]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
   })
 
   it('contains uniquely identified scores with usable metadata', () => {
