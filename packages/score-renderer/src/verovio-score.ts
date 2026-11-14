@@ -22,6 +22,16 @@ type ScoreLayout = {
   pageHeight?: number
   scale?: number
   includeBass?: boolean
+  engraving?: {
+    staffLineWidth?: number
+    stemWidth?: number
+    barLineWidth?: number
+    slurMidpointThickness?: number
+    tieMidpointThickness?: number
+    spacingLinear?: number
+    spacingNonLinear?: number
+    spacingSystem?: number
+  }
 }
 
 type TimedScoreElement = { xmlId: string; rendition: number }
@@ -229,11 +239,12 @@ export class VerovioScore {
     return new VerovioScore(toolkit, mei)
   }
 
-  prepareLayout({ width, pageHeight, scale = 42, includeBass = true }: ScoreLayout) {
+  prepareLayout({ width, pageHeight, scale = 42, includeBass = true, engraving = {} }: ScoreLayout) {
     const effectiveScale = normalizeScale(scale)
     const fixedPageHeight = pageHeight !== undefined
     let layoutMei = includeBass ? this.mei : withoutBassStaff(this.mei)
     const layoutOptions = {
+      ...engraving,
       adjustPageHeight: !fixedPageHeight,
       footer: 'none',
       header: 'none',

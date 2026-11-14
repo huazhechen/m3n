@@ -8,7 +8,8 @@ import { build } from 'vite'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const read = file => JSON.parse(readFileSync(file, 'utf8'))
-const plan = read(join(output, 'editorial-plan.json')), record = read(join(output, 'layout-record.json'))
+const planFile=process.argv.find(arg=>arg.startsWith('--plan='))?.slice(7)??join(output,'editorial-plan.json')
+const plan = read(resolve(planFile)), record = read(join(output, plan.recordFile??'layout-record.json'))
 const temp = join(root, '.tmp', plan.outputKey), sourcePdf = join(output, plan.outputPdf)
 const pagesFile = join(temp, 'unoutlined-pages.json')
 const hasOutline=plan.exportOutlinePdf===true
@@ -58,12 +59,13 @@ if(hasOutline){
 }
 const fonts = execFileSync('pdffonts',[staged],{encoding:'utf8'}).trim().split('\n').slice(2)
 assert(fonts.length>0 && fonts.every(line=>/yes\s+yes\s+yes/.test(line)), 'Embed every used font with Unicode mappings')
-assert(fonts.some(line=>line.includes('NotoSerifCJKsc-Regular')) && fonts.some(line=>line.includes('BarlowSemiCondensed-Medium')))
+assert(fonts.some(line=>line.includes('NotoSerifCJKsc-Regular')))
+if(record.entries.some(entry=>entry.notation!=='staff'))assert(fonts.some(line=>line.includes('BarlowSemiCondensed-Medium')))
 const images = execFileSync('pdfimages',['-list',staged],{encoding:'utf8'}).trim().split('\n').slice(2)
 assert.equal(images.length,0,'Keep all score pages vector')
 const originalBytes=hasOutline?statSync(sourcePdf).size:null,compactBytes=statSync(staged).size
 if(hasOutline)assert(compactBytes<originalBytes,'The compact edition must be smaller')
 const report={edition:plan.edition,sourcePdf:hasOutline?plan.outputPdf:null,compactPdf:filename,pageCount:record.pageCount,originalBytes,compactBytes,reductionPercent:hasOutline?Number(((1-compactBytes/originalBytes)*100).toFixed(2)):null,embeddedFontSubsets:fonts.length,images:0,positionedGlyphs:results.reduce((sum,p)=>sum+p.glyphs,0),glyphsPerPage:results.map(p=>p.glyphs),outsidePages:0,sourceSha256:hasOutline?createHash('sha256').update(readFileSync(sourcePdf)).digest('hex'):null,compactSha256:createHash('sha256').update(readFileSync(staged)).digest('hex')}
 renameSync(staged,join(output,filename))
-writeFileSync(join(output,'PDF体积记录.json'),JSON.stringify(report,null,2)+'\n')
+writeFileSync(join(output,plan.sizeReportFile??'PDF体积记录.json'),JSON.stringify(report,null,2)+'\n')
 console.log(JSON.stringify(report))

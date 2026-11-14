@@ -1,0 +1,9052 @@
+{
+  "title": "循序渐进乐谱集",
+  "edition": "第四十版",
+  "showCredits": false,
+  "uniformSystemHeight": true,
+  "minimumSystemGapEm": 0.5,
+  "rendererSha256": "d8b1efa39842f72b25eaf7bb284eab1e441b86220d96e3ab0bb905b8efc0051c",
+  "sourceCount": 88,
+  "entryCount": 88,
+  "pageCount": 87,
+  "frontPages": 3,
+  "baseWidth": 780,
+  "page": {
+    "width": 744,
+    "height": 1133,
+    "outerMargin": 24,
+    "bodyTop": 38,
+    "bodyBottom": 1095,
+    "scoreMargin": 8,
+    "systemGap": 18,
+    "shortWorkGap": 22,
+    "minimumFillPercent": 0,
+    "maximumNotePx": 26,
+    "minimumNotePx": 20
+  },
+  "body": {
+    "width": 696,
+    "height": 1057
+  },
+  "entries": [
+    {
+      "order": 1,
+      "id": "ban_yin_jie_kou_qin_ji_ben_gong",
+      "title": "半音阶口琴基本功",
+      "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+      "notation": "staff",
+      "staffScale": 26,
+      "staffHeightPx": 18.728,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "compact",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        85.11334228515625,
+        62.00999450683594,
+        72.02157592773438,
+        67.93447875976562,
+        64.84234619140625,
+        64.84231567382812,
+        64.84231567382812,
+        64.84234619140625,
+        64.6630859375,
+        61.42333984375,
+        75.2813720703125,
+        64.84234619140625,
+        64.84234619140625,
+        62.79022216796875,
+        64.8424072265625,
+        64.63427734375,
+        67.1024169921875,
+        64.8421630859375,
+        64.8424072265625,
+        62.010009765625,
+        68.6397705078125,
+        67.36279296875,
+        64.4288330078125,
+        63.671875,
+        66.4261474609375,
+        62.7904052734375,
+        66.894287109375,
+        54.7532958984375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "每日训练",
+      "reason": "按原谱顺序连续进行机能与音阶模进训练",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        4,
+        5
+      ],
+      "systems": 29,
+      "systemsPerPage": [
+        13,
+        16
+      ],
+      "sourceSha256": "ed9f207ef0a4853571b356baa903c5c234e4e7d1167cc0a8bac375c8a5f386df",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 29,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 2,
+      "id": "xiao_xing_xing",
+      "title": "小星星",
+      "file": "xiao_xing_xing_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.923,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        88.95718383789062
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "入门旋律与长音",
+      "reason": "重复音、级进和二分音符",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        6
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "e9311ebf2b8550af96ee447481c64f90d54195e5830b86c7a3d8a1103b366c3d",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.46
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 3,
+      "id": "huan_le_song",
+      "title": "欢乐颂",
+      "file": "huan_le_song_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.924,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        88.95951843261719
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "入门旋律与长音",
+      "reason": "重复音与级进，逐步加入附点和八分音符",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        6
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "7902cdd1f64ea929fa3ebc9ca2bf503e4f18edbe108e23f20901608bc1e53bce",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.55
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 4,
+      "id": "wo_he_ni",
+      "title": "我和你",
+      "file": "wo_he_ni_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.923,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        92.4136734008789
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "入门旋律与长音",
+      "reason": "慢速长音和低音区转换",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        6
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "6a0ba5722b509019746e40b810a0a65efbc2d03ff21bb93ec31cdf30380dfa7d",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.36
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 5,
+      "id": "long_long_ago",
+      "title": "很久以前",
+      "file": "long_long_ago_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.923,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        88.95720672607422
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "入门旋律与长音",
+      "reason": "短句中的八分音符",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        6
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "5f4f53cbc46c6ccf284f3b6f9b31ce2bb1f2b138b4210a3ff5557178b3fcd6c4",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.19
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 6,
+      "id": "song_bie",
+      "title": "送别",
+      "file": "song_bie_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.392,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        96.63020324707031
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "歌唱性与八分音符",
+      "reason": "长短时值与连贯乐句",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        7
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "704fd6af553756b24d8c9e76688e1304c6971115d77b70eb29b089b06e108a19",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.05
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 7,
+      "id": "hong_he_gu",
+      "title": "红河谷",
+      "file": "hong_he_gu_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.392,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        94.49971008300781
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "歌唱性与八分音符",
+      "reason": "弱起与规整乐句",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        7
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "c7c5f5b2be9d0bf8ade72c7969c8599c056ccaa28550e4272d0fbfe178f7e664",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.19
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 8,
+      "id": "su_shan_na",
+      "title": "苏珊娜",
+      "file": "su_shan_na_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.392,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        92.93986511230469
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "歌唱性与八分音符",
+      "reason": "重复节奏与八分音符",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        7
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "450472cb5e96ece049172b1248f49950b46bdf5b1ae3a5086a0c9f16aa858049",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.24
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 9,
+      "id": "xiao_hong_mao",
+      "title": "小红帽",
+      "file": "xiao_hong_mao_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.392,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        92.93986511230469
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "歌唱性与八分音符",
+      "reason": "连续八分音符与跳进",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        7
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "1704a2257ea68f13f1f891fdb338d06ce630ff8847d14c06468278bef2adc124",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.24
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 10,
+      "id": "chong_er_fei",
+      "title": "虫儿飞",
+      "file": "chong_er_fei_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.362,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        99.9448013305664
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "音阶与连奏",
+      "reason": "附点节奏和连奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        8
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "0e98b7a8bcb155c2f3424a8fc04896f6e1e427be86c53221d7e9a169f79d3704",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1012.04
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 11,
+      "id": "duo_lai_mi",
+      "title": "哆唻咪",
+      "file": "duo_lai_mi_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.363,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        91.24937438964844,
+        95.86378479003906
+      ],
+      "voltaSystems": [
+        false,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "音阶与连奏",
+      "reason": "音阶进行与节奏变化",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        8
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "7792d33a07c54149d82c61b359f11f8bc78ebd4988e3da15fd4b224d4f4ce51b",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1009.33
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 12,
+      "id": "rang_wo_men_dang_qi_shuang_jiang",
+      "title": "让我们荡起双桨",
+      "file": "rang_wo_men_dang_qi_shuang_jiang_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.392,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        92.94098663330078,
+        91.38789367675781
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "basics",
+      "group": "音阶与连奏",
+      "reason": "弱起、附点与短连奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        8
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "c1f943e782179b549c83a4d35ca6c5f0207caee1679a949b981b6dc8bce4b78b",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1009.72
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 13,
+      "id": "auld_lang_syne",
+      "title": "友谊地久天长",
+      "file": "auld_lang_syne_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.698,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        105.55026245117188
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "民歌与抒情",
+      "reason": "弱起与八分音符",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        9
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "d40a3489ba3c31a8924d43c4c3dbb4922ddce80bdbc37615a40bdd3289d9b019",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.45
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 14,
+      "id": "mo_si_ke_jiao_wai_de_wan_shang",
+      "title": "莫斯科郊外的晚上",
+      "file": "mo_si_ke_jiao_wai_de_wan_shang_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.683,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        105.50141906738281,
+        102.08950805664062
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "民歌与抒情",
+      "reason": "小调旋律与连贯气息",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        9
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "44f07778abe4a58cfd7685efa29d5ecc76051cefc02d00bfe339902464989f1d",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1008.88
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 15,
+      "id": "san_tao_che",
+      "title": "三套车",
+      "file": "san_tao_che_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.683,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        105.50141906738281,
+        102.08950805664062
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "民歌与抒情",
+      "reason": "低音区与附点节奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        9
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "7f9cf6b6bd7c9c1377d1c0e34060582266b4525b58e0be8b5ea922e119bd41db",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1008.81
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 16,
+      "id": "scarborough_fair",
+      "title": "斯卡布罗集市",
+      "file": "scarborough_fair_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.241,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        101.60839080810547
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三拍子与调式",
+      "reason": "三拍子和调式色彩",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        10
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "217693dec3eca3506a8cceb3cb2921e05d481cb017990507f29da71eebdf1b55",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.63
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 17,
+      "id": "sound_of_silence",
+      "title": "寂静之声",
+      "file": "sound_of_silence_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.241,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        101.60839080810547
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三拍子与调式",
+      "reason": "弱起与旋律走向",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        10
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "20e0313677fa5d0c23982a9ed1c41eabe7bfe38266d3fa351e3d7195b6ad7b75",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.54
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 18,
+      "id": "ai_er_lan_hua_mei",
+      "title": "爱尔兰画眉",
+      "file": "ai_er_lan_hua_mei_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.242,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        101.60956573486328,
+        97.94444274902344
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三拍子与调式",
+      "reason": "八分音符与句尾长音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        10
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "a9584381752d2d1136c39623d83445cf60cf6d2b1c3140f06cfdbe8dbce5f0a9",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1009.17
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 19,
+      "id": "mo_li_hua",
+      "title": "茉莉花",
+      "file": "mo_li_hua_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.241,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        105.68221282958984,
+        97.94314575195312
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "民族旋律与节奏",
+      "reason": "五声性旋律与附点",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        11
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "2390f561bb74d5f757889175a4fec77431f669ccda6d4c25f1aec93004e5208d",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1008.96
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 20,
+      "id": "katyusha",
+      "title": "喀秋莎",
+      "file": "katyusha_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.241,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0
+      ],
+      "baselineSteps": [
+        105.6406478881836
+      ],
+      "voltaSystems": [
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "民族旋律与节奏",
+      "reason": "较快二拍子与小调",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        11
+      ],
+      "systems": 2,
+      "systemsPerPage": [
+        2
+      ],
+      "sourceSha256": "93af49bd7fca60724e611714f94ce22a0e76ed5cb165062ac6e7f04d57b94243",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 2,
+          "pages": 1,
+          "cost": 1011.68
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 21,
+      "id": "wo_niu_yu_huang_li_niao",
+      "title": "蜗牛与黄鹂鸟",
+      "file": "wo_niu_yu_huang_li_niao_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.242,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        101.60956573486328,
+        97.94444274902344
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "民族旋律与节奏",
+      "reason": "十六分与切分节奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        11
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "5e8b591eb1000e275bd1a3db6aad314fef280e617505bfc1cd48177bbc0e73b8",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1009.17
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 22,
+      "id": "hong_mei_hua_er_kai",
+      "title": "红莓花儿开",
+      "file": "hong_mei_hua_er_kai_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 35.999,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        183.6832275390625,
+        175.3355712890625,
+        180.64743041992188,
+        163.7977294921875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "节奏与多段歌词",
+      "reason": "弱起与多段歌词",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        12
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "2851a48e289b3386286527d625515d7f809767e77fc5a2d3bc705c1fbf0a2681",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 23,
+      "id": "the_internationale",
+      "title": "国际歌",
+      "file": "the_internationale_01.m3n",
+      "notation": "staff",
+      "staffScale": 46,
+      "staffHeightPx": 33.12,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        158.6160659790039,
+        155.5376434326172,
+        153.17752075195312,
+        155.687744140625,
+        151.31781005859375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "节奏与多段歌词",
+      "reason": "附点节奏、弱起与三段歌词",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        13
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "86f8db8ddf0fb77fe21b151df75513c6562dbad8ed39d6d1329cc49f71fe17fa",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 24,
+      "id": "wo_de_zu_guo",
+      "title": "我的祖国",
+      "file": "wo_de_zu_guo_01.m3n",
+      "notation": "staff",
+      "staffScale": 54,
+      "staffHeightPx": 38.913,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        192.85891723632812,
+        186.41229248046875,
+        179.77011108398438,
+        181.0390625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "宽广乐句",
+      "reason": "连奏、附点与多段歌词",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        14
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "6a2b5f5939e915002ce0f59ad63dfff8c8b7a74db4fe8c646f91f64493c0ce16",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 25,
+      "id": "wo_he_wo_de_zu_guo",
+      "title": "我和我的祖国",
+      "file": "wo_he_wo_de_zu_guo_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.56,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        160.19471740722656,
+        145.498779296875,
+        147.55828857421875,
+        138.642333984375,
+        146.59881591796875,
+        125.47845458984375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "宽广乐句",
+      "reason": "6/8与9/8变拍及连奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        15
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "07374d4fcfd105f2599f221aac14cf75bde18aa639f8f706b7f5eddd70195f19",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 26,
+      "id": "yue_liang_dai_biao_wo_de_xin",
+      "title": "月亮代表我的心",
+      "file": "yue_liang_dai_biao_wo_de_xin_01.m3n",
+      "notation": "staff",
+      "staffScale": 54,
+      "staffHeightPx": 38.889,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        135.24329376220703,
+        131.34088134765625,
+        126.85784912109375,
+        138.6326904296875,
+        133.77142333984375,
+        131.61102294921875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "抒情入门",
+      "reason": "附点与完整连奏乐句",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        16
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "6300d5e4f45e1e3ff694e351758016ba827177a83344634862bc864f368953ae",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 27,
+      "id": "li_hua_you_kai_fang",
+      "title": "梨花又开放",
+      "file": "li_hua_you_kai_fang_01.m3n",
+      "notation": "staff",
+      "staffScale": 54,
+      "staffHeightPx": 38.895,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        137.4246063232422,
+        129.8460235595703,
+        135.5181884765625,
+        134.7078857421875,
+        136.055908203125,
+        138.47564697265625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "抒情入门",
+      "reason": "歌唱性乐句与八分音符",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        17
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "48ad1e1a052e4ec91caa9cdc5eba7194a101977f6d09d90282c9a2f4e1415ce8",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 28,
+      "id": "bai_hua_lin",
+      "title": "白桦林",
+      "file": "bai_hua_lin_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.693,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        144.81934356689453,
+        137.84161376953125,
+        116.51129150390625,
+        136.23941040039062,
+        161.13067626953125,
+        156.06744384765625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三拍与复拍",
+      "reason": "三拍子与跨拍延音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        18
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "fa32e74374229fabf7fffbbad32f43e4ae9038d2ecd45967c931aea9c6ff6f97",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 29,
+      "id": "guang_yin_de_gu_shi",
+      "title": "光阴的故事",
+      "file": "guang_yin_de_gu_shi_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 35.999,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        176.22736358642578,
+        166.335693359375,
+        166.335693359375,
+        161.54779052734375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三拍与复拍",
+      "reason": "6/8拍中的连续八分音符",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        19
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "f37b2f684c0d8745ad7603934d8c41ac2908876d10b6333673ebe4f197f85d42",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 30,
+      "id": "tong_zhuo_de_ni",
+      "title": "同桌的你",
+      "file": "tong_zhuo_de_ni_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.56,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        193.01781463623047,
+        180.68185424804688,
+        135.24240112304688,
+        116.5987548828125,
+        119.6705322265625,
+        116.59869384765625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三拍与复拍",
+      "reason": "6/8拍与弱起、反复",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        20
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "4d08e246646a56aa2f00e764b4331456f6ebeb823c81aa411294a6e86d020f2f",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 31,
+      "id": "xiang_si",
+      "title": "相思",
+      "file": "xiang_si_01.m3n",
+      "notation": "staff",
+      "staffScale": 56,
+      "staffHeightPx": 40.336,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        163.34271240234375,
+        152.95877075195312,
+        132.95904541015625,
+        134.52764892578125,
+        132.958984375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三拍与复拍",
+      "reason": "三拍子、附点和跨小节延音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        21
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "809c2055770745c8fd762127f4b2de6cb467013e0c3960fd64ef3bad1f599b32",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 32,
+      "id": "bei_jia_er_hu_pan",
+      "title": "贝加尔湖畔",
+      "file": "bei_jia_er_hu_pan_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.56,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        139.66068267822266,
+        143.76226806640625,
+        150.89871215820312,
+        134.69439697265625,
+        135.3424072265625,
+        138.05877685546875
+      ],
+      "voltaSystems": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "切分与延音",
+      "reason": "器乐间奏与跨拍延音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        22
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "fd8a4b41072840df9ba8e1c0d0b5c8f7bd3efb451a3b31b156c33378f5eda8f6",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 33,
+      "id": "yu_jian",
+      "title": "遇见",
+      "file": "yu_jian_01.m3n",
+      "notation": "staff",
+      "staffScale": 46,
+      "staffHeightPx": 33.12,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        114.92466735839844,
+        127.97969055175781,
+        117.26864624023438,
+        111.1434326171875,
+        133.68804931640625,
+        133.1771240234375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "切分与延音",
+      "reason": "切分与高音区器乐间奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        23
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "a69c45d0e18bde8c984b34aa5054468c028b3211b2bf3598c55f79b7b2da7869",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 34,
+      "id": "huang_hun",
+      "title": "黄昏",
+      "file": "huang_hun_01.m3n",
+      "notation": "staff",
+      "staffScale": 54,
+      "staffHeightPx": 38.906,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        130.54611206054688,
+        128.6351776123047,
+        125.39303588867188,
+        128.6351318359375,
+        152.40399169921875,
+        152.40386962890625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "切分与延音",
+      "reason": "切分节奏与延音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        24
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "3dd621b636043f8d3ad7e69b11db9939ec76763e9e03547094e920184e6be6cc",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 35,
+      "id": "an_xiang",
+      "title": "暗香",
+      "file": "an_xiang_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.56,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        125.0604019165039,
+        123.07856750488281,
+        115.49462890625,
+        116.5986328125,
+        115.49468994140625,
+        115.37457275390625,
+        127.074951171875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "切分与延音",
+      "reason": "长音、跨拍与情绪层次",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        25
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "98dd6c4f0c99bf92dab02883ae36c28960a82668306a51183843850b0d6385c6",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 36,
+      "id": "mei_li_de_shen_hua",
+      "title": "美丽的神话",
+      "file": "mei_li_de_shen_hua_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.692,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        110.07726287841797,
+        107.41360473632812,
+        108.33349609375,
+        108.73837280273438,
+        128.97100830078125,
+        107.1361083984375,
+        116.80029296875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "切分与延音",
+      "reason": "切分、附点与长句",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        26
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "40c2d656f9696220ba9ec18c60bb1c419d98542d72b6eb8a800f33ea24132628",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 37,
+      "id": "dang_nian_qing",
+      "title": "当年情",
+      "file": "dang_nian_qing_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 36,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        148.59600067138672,
+        148.59823608398438,
+        139.74844360351562,
+        127.7484130859375,
+        135.3984375,
+        129.99847412109375
+      ],
+      "voltaSystems": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "切分与延音",
+      "reason": "弱起、附点与低音区",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        27
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "a4e870744f9e6587de6730e793f7904adf98e1eecf222e3f6cad8ceddd284e01",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 38,
+      "id": "qian_nv_you_hun",
+      "title": "倩女幽魂",
+      "file": "qian_nv_you_hun_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.559,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        116.51455688476562,
+        115.49295043945312
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "香港影视金曲",
+      "reason": "较规整的节奏与短篇幅",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        28
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "f906a6ab3dbb7980f20c6e9634ff6a95b6789a0eb2022ce5bc450ac7852857d7",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1007.19
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 39,
+      "id": "tie_xue_dan_xin",
+      "title": "铁血丹心",
+      "file": "tie_xue_dan_xin_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.559,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        129.37895965576172,
+        118.75741577148438,
+        115.4935302734375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "香港影视金曲",
+      "reason": "附点节奏与低音跳进",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        28
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "1959f1e6c89f5cde082ef7aa719969922501de4590a2343e7a4a4c89c1e75ceb",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1004.89
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 40,
+      "id": "qiu_ying",
+      "title": "秋樱",
+      "file": "qiu_ying_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 36,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        119.14634704589844,
+        114.49861145019531,
+        114.49862670898438,
+        114.49859619140625,
+        113.66082763671875,
+        114.8116455078125,
+        123.0732421875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "十六分与变拍",
+      "reason": "变拍与歌唱性乐句",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        29
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "d9a97b820de21919efe04df6036cb67ff3e9509b849d80c22804aa5424458cab",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 41,
+      "id": "man_bu_ren_sheng_lu",
+      "title": "漫步人生路",
+      "file": "man_bu_ren_sheng_lu_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.56,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        162.63717651367188,
+        152.31202697753906,
+        138.31600952148438,
+        121.57891845703125,
+        122.37908935546875,
+        119.54254150390625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "十六分与变拍",
+      "reason": "十六分节奏与低音区",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        30
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "50402494f15e6c29c73bb442cb651e041aabb08b1bff531d7511d78535ee61b2",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 42,
+      "id": "wo_zhi_zai_hu_ni",
+      "title": "我只在乎你",
+      "file": "wo_zhi_zai_hu_ni_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 36,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        156.59584045410156,
+        147.84814453125,
+        142.94821166992188,
+        116.8486328125,
+        120.16070556640625,
+        114.798583984375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "十六分与变拍",
+      "reason": "连续十六分与跨拍延音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        31
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "33d4ff1b7d9cbecdc5d58da1456e3f5c94ab65cf5c0d1f397791a816d63840b9",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 43,
+      "id": "guo_huo",
+      "title": "过火",
+      "file": "guo_huo_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.372,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        110.51324462890625,
+        107.37254333496094,
+        113.05499267578125,
+        107.33447265625,
+        106.21197509765625,
+        107.33453369140625,
+        109.6334228515625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "十六分与变拍",
+      "reason": "密集歌词和切分",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        32
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "50e24c46e31d6af4496f673161ef633588f27bcdfd779e49d8b335c440df551d",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 44,
+      "id": "yue_ding",
+      "title": "约定",
+      "file": "yue_ding_01.m3n",
+      "notation": "staff",
+      "staffScale": 46,
+      "staffHeightPx": 33.121,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        129.00823974609375,
+        124.85179138183594,
+        124.85183715820312,
+        124.85177612304688,
+        112.4315185546875,
+        124.85186767578125,
+        112.43170166015625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "十六分与变拍",
+      "reason": "切分、弱起与句尾装饰",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        33
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "bb52895962ee659e6ae4011ec4f375c7f46e620abccb188a68a8d7dd766d30c3",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 45,
+      "id": "hou_lai",
+      "title": "后来",
+      "file": "hou_lai_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 36,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        123.69715881347656,
+        125.49923706054688,
+        119.84930419921875,
+        116.74929809570312,
+        118.74920654296875,
+        123.249267578125,
+        128.64923095703125,
+        116.74932861328125,
+        118.7493896484375,
+        123.2490234375,
+        128.6492919921875,
+        123.2493896484375,
+        123.249267578125,
+        125.4990234375,
+        125.4993896484375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "十六分与变拍",
+      "reason": "多段歌词、切分和连奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        34,
+        35
+      ],
+      "systems": 16,
+      "systemsPerPage": [
+        8,
+        8
+      ],
+      "sourceSha256": "310d89d542d457a38ad5e86fcabea7d73920e2d523cc5784ee03b9318460f632",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 46,
+      "id": "tong_hua_zhen",
+      "title": "童话镇",
+      "file": "tong_hua_zhen_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.92,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.5,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        129.22015380859375,
+        126.09378051757812,
+        117.27389526367188,
+        113.49398803710938,
+        125.8677978515625,
+        114.87396240234375,
+        103.794677734375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "十六分与变拍",
+      "reason": "反复歌词、切分与长句",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        36
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "e6392bee01e4db372410deab4f32b335afca2794e5d303f9aa9b731d991b20f0",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 47,
+      "id": "lao_nan_hai",
+      "title": "老男孩",
+      "file": "lao_nan_hai_01.m3n",
+      "notation": "staff",
+      "staffScale": 54,
+      "staffHeightPx": 38.888,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        157.1192169189453,
+        153.91563415527344,
+        153.91555786132812,
+        157.227294921875,
+        153.28265380859375,
+        156.6771240234375,
+        149.544677734375,
+        151.9808349609375,
+        135.654296875,
+        139.28662109375,
+        144.5660400390625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "密集节奏与反复",
+      "reason": "较长结构与密集八分、十六分",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        37,
+        38
+      ],
+      "systems": 12,
+      "systemsPerPage": [
+        6,
+        6
+      ],
+      "sourceSha256": "c7bfdb89ca21b9d1a21b6190a674ed7c6267d566b983e1c3f368299fbb2b7487",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 12,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 48,
+      "id": "liang_liang",
+      "title": "凉凉",
+      "file": "liang_liang_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.242,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        126.89634704589844,
+        145.08998107910156,
+        123.23086547851562,
+        136.84967041015625,
+        121.888916015625,
+        134.71197509765625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "密集节奏与反复",
+      "reason": "器乐过门与密集节奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        39
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "a8c6261b1f5d28d8a86f6625c6246ce56056aa1a2a8b540b4e5291188360deeb",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 49,
+      "id": "qian_si_xi",
+      "title": "牵丝戏",
+      "file": "qian_si_xi_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.924,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        100.5599594116211,
+        108.09434509277344,
+        93.22552490234375,
+        112.73086547851562,
+        111.0145263671875,
+        105.9539794921875,
+        107.57659912109375,
+        116.551025390625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "密集节奏与反复",
+      "reason": "切分、十六分与跳进",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        40
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "ad708694a7a60373f319e62d1d4e0782f644cfcdb245624fd378958c80865f69",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 50,
+      "id": "ren_shi_jian",
+      "title": "人世间",
+      "file": "ren_shi_jian_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.24,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        102.23536682128906,
+        105.47598266601562,
+        121.095703125,
+        124.87576293945312,
+        118.1058349609375,
+        118.721923828125,
+        124.678955078125
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "密集节奏与反复",
+      "reason": "慢速密集节奏与高音区",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        41
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "ef232d10fef0d405082f9077d30bb3a2a3431701b4373e81d05597f448073892",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 51,
+      "id": "shi_jie_zeng_yu_wo_de",
+      "title": "世界赠予我的",
+      "file": "shi_jie_zeng_yu_wo_de_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.242,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        133.41486358642578,
+        137.55775451660156,
+        123.69415283203125,
+        128.7113037109375,
+        125.2828369140625,
+        129.34942626953125
+      ],
+      "voltaSystems": [
+        false,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "密集节奏与反复",
+      "reason": "密集节奏与长线条",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        42
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "66bb01a967e40319576a37bb2c20544e2b9799ef5f41d9a542938a82c2bc38b8",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 52,
+      "id": "ming_tian_hui_geng_hao",
+      "title": "明天会更好",
+      "file": "ming_tian_hui_geng_hao_01.m3n",
+      "notation": "staff",
+      "staffScale": 40,
+      "staffHeightPx": 28.8,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        140.56674194335938,
+        154.24826049804688,
+        167.10293579101562,
+        168.01776123046875,
+        102.59857177734375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        true,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "密集节奏与反复",
+      "reason": "变拍、器乐段与多段歌词",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        43
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "25be00bb334c99d07a31d438096a11e2f4af97a35a7302f99fa6685ee0db5e43",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 53,
+      "id": "man_man_xi_huan_ni",
+      "title": "慢慢喜欢你",
+      "file": "man_man_xi_huan_ni_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.7,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        152.40711212158203,
+        152.21426391601562,
+        158.21249389648438,
+        105.88031005859375,
+        106.36639404296875,
+        104.207275390625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "密集节奏与反复",
+      "reason": "跨拍、变拍与细分节奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        44
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "751374298750e357b36ec4bba4e49301e2ab914b7247b1a138870a5a4a4db570",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 54,
+      "id": "xin_bu_liao_qing",
+      "title": "新不了情",
+      "file": "xin_bu_liao_qing_01.m3n",
+      "notation": "staff",
+      "staffScale": 52,
+      "staffHeightPx": 37.453,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        150.43798065185547,
+        135.58197021484375,
+        135.06204223632812,
+        134.807861328125,
+        122.6043701171875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "三连音与复杂节奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        45
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "8fec122b86c490e72767e6fa2da99efa352a0d803954957be25d43ffdceb6a12",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 55,
+      "id": "wo_yao_ni",
+      "title": "我要你",
+      "file": "wo_yao_ni_01.m3n",
+      "notation": "staff",
+      "staffScale": 56,
+      "staffHeightPx": 40.325,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.8,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        175.10682678222656,
+        156.2982177734375,
+        171.42013549804688,
+        145.8092041015625,
+        144.0980224609375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "三连音、十六分与多段歌词",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        46
+      ],
+      "systems": 6,
+      "systemsPerPage": [
+        6
+      ],
+      "sourceSha256": "701304fbe0f510a012e3f02457907e3f946a9433a0f6b8d4ee320b6a7de339f2",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 6,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 56,
+      "id": "annie",
+      "title": "安妮",
+      "file": "annie_01.m3n",
+      "notation": "staff",
+      "staffScale": 46,
+      "staffHeightPx": 33.121,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        114.2879638671875,
+        115.74362182617188,
+        118.41171264648438,
+        114.27154541015625,
+        118.41168212890625,
+        104.92352294921875,
+        125.40380859375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "反复歌词、器乐段与跳房子",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        47
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "88e17fe24b0fde2228f672d24cb6fad454467fc18885ed5d97d286af8fa6382a",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 57,
+      "id": "yi_qian_ge_shang_xin_de_li_you",
+      "title": "一千个伤心的理由",
+      "file": "yi_qian_ge_shang_xin_de_li_you_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.702,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        138.5785140991211,
+        135.16102600097656,
+        136.37786865234375,
+        110.33819580078125,
+        105.1724853515625,
+        120.58917236328125,
+        134.688232421875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        true,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "十六分切分与跳房子",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        48
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "ff9a973b786838d7ef2a12a076907b3407e2c152bbdd159aac9b306281f2dd53",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 58,
+      "id": "yue_ban_xiao_ye_qu",
+      "title": "月半小夜曲",
+      "file": "yue_ban_xiao_ye_qu_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.68,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        108.14454650878906,
+        102.39999389648438,
+        104.333984375,
+        102.3541259765625,
+        113.1796875,
+        108.94781494140625,
+        118.9305419921875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "高音区、切分与跳进",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        49
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "770d83cea17c788734901d24b5ddd3f6673b4d598776c4c3f4959bfacc3e081f",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 59,
+      "id": "ting_hai",
+      "title": "听海",
+      "file": "ting_hai_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.242,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        114.2127685546875,
+        110.67329406738281,
+        110.67330932617188,
+        110.63128662109375,
+        112.1014404296875,
+        103.56005859375,
+        113.45745849609375,
+        98.1983642578125
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "三连音、细分节奏与双层连线",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        50
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "c37ceb48450b98779697fd9be9a3ad5453a1118b5dbf6af66034179db106013f",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 60,
+      "id": "ru_yuan",
+      "title": "如愿",
+      "file": "ru_yuan_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.924,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        116.11548614501953,
+        110.634765625,
+        92.414794921875,
+        110.23300170898438,
+        106.39056396484375,
+        87.13372802734375,
+        87.925537109375,
+        91.148681640625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "变调、倚音与多段歌词",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        51
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "8ff832f5793242419658fb1dbd0cbd6e512831a34906cb9f396334eb9d63f700",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 61,
+      "id": "ai_ru_chao_shui",
+      "title": "爱如潮水",
+      "file": "ai_ru_chao_shui_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.688,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        105.51705932617188,
+        136.0773162841797,
+        134.8798828125,
+        132.8155517578125,
+        108.7994384765625,
+        128.01153564453125,
+        114.1346435546875,
+        106.21258544921875,
+        119.6358642578125,
+        129.29248046875,
+        120.66162109375,
+        105.83447265625,
+        126.0615234375,
+        111.11572265625,
+        117.3170166015625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "附点、切分、波音与两房反复",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        52,
+        53
+      ],
+      "systems": 16,
+      "systemsPerPage": [
+        8,
+        8
+      ],
+      "sourceSha256": "fae63e0f42ac0d6123a61a7cf55705f2715efad3145478e68dae696e20a64ea3",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 16,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 62,
+      "id": "yan_hua_yi_leng",
+      "title": "烟花易冷",
+      "file": "yan_hua_yi_leng_01.m3n",
+      "notation": "staff",
+      "staffScale": 26,
+      "staffHeightPx": 18.739,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        66.84168243408203,
+        68.18983459472656,
+        64.87413024902344,
+        64.87411499023438,
+        64.87411499023438,
+        64.87411499023438,
+        64.87411499023438,
+        63.837158203125,
+        83.21148681640625,
+        89.67706298828125,
+        88.08941650390625,
+        74.84210205078125
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "长音、反复与高音区转换",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        54
+      ],
+      "systems": 13,
+      "systemsPerPage": [
+        13
+      ],
+      "sourceSha256": "1151c9264037c176acba19f1462597bb24e2808be88b615511f9ca726cc829f0",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 13,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 63,
+      "id": "feng",
+      "title": "枫",
+      "file": "feng_01.m3n",
+      "notation": "staff",
+      "staffScale": 40,
+      "staffHeightPx": 28.8,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        115.95758056640625,
+        93.79939270019531,
+        93.79937744140625,
+        93.7994384765625,
+        93.79940795898438,
+        93.79937744140625,
+        93.7994384765625,
+        93.7994384765625,
+        92.9290771484375,
+        108.6497802734375,
+        108.05908203125,
+        93.7994384765625,
+        93.7994384765625,
+        93.79931640625,
+        93.7994384765625,
+        93.7994384765625,
+        92.92919921875,
+        127.309326171875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "细分节奏、延音与降D调转换",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        55,
+        56
+      ],
+      "systems": 19,
+      "systemsPerPage": [
+        9,
+        10
+      ],
+      "sourceSha256": "b1c8f2970e2f07226d1c138810c70b80b9a934733d50c4e13db72a73fd4db0c2",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 19,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 64,
+      "id": "tai_yang_zhao_chang_sheng_qi",
+      "title": "太阳照常升起",
+      "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.721,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        113.86735534667969,
+        102.19734191894531
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "亚洲影视主题",
+      "reason": "短篇幅与长音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        57
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "ba68eef17fdbd66b4b1c8de59095ecedf59f2ac9e33b04047cadf537a2698a45",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1008.67
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 65,
+      "id": "zhi_dao_shi_jie_de_jin_tou",
+      "title": "直到世界的尽头",
+      "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.721,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        105.6298828125,
+        102.19831848144531,
+        102.19830322265625,
+        102.19833374023438
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "亚洲影视主题",
+      "reason": "高音区、切分与导航",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        57
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "7ba39d9aa0a6fcba68559fbf12c88dea1d00843aa79af52eeeedb6418072c767",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1004.49
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 66,
+      "id": "liang_zhu",
+      "title": "梁祝",
+      "file": "liang_zhu_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 35.999,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        119.1442642211914,
+        114.496826171875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "影视爱情主题",
+      "reason": "民族旋律与装饰、连奏",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        58
+      ],
+      "systems": 3,
+      "systemsPerPage": [
+        3
+      ],
+      "sourceSha256": "28abc471eb20e0d1db5a2a33de78be1bb50447f3bb95729240c75ec0c99db894",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 3,
+          "pages": 1,
+          "cost": 1008.03
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 67,
+      "id": "wen_rou_de_qing_su",
+      "title": "温柔的倾诉",
+      "file": "wen_rou_de_qing_su_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 35.999,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        119.14551544189453,
+        114.49789428710938,
+        114.49789428710938,
+        114.4979248046875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "影视爱情主题",
+      "reason": "小调、临时升音与切分",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        58
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "c69fa8876ac1e9b28e000c3dcc44ab10bdbe81661caae999bcad8fa18355d4b4",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1003.6
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 68,
+      "id": "castle_in_the_sky",
+      "title": "天空之城",
+      "file": "castle_in_the_sky_01.m3n",
+      "notation": "staff",
+      "staffScale": 40,
+      "staffHeightPx": 28.8,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        107.47692108154297,
+        101.19871520996094,
+        93.99887084960938,
+        101.19873046875,
+        103.55874633789062,
+        99.958740234375,
+        101.19866943359375,
+        103.558837890625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "短主题与歌唱性旋律",
+      "reason": "长线条与高音区",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        59
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "dbe2a712a93474409f596a6fbfab215dd67a37055c5a1c52d6e799d5282e3894",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1000.48
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 69,
+      "id": "xia_yu_de_shi_hou",
+      "title": "下雨的时候",
+      "file": "xia_yu_de_shi_hou_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.56,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        117.33240509033203,
+        110.35862731933594,
+        110.35858154296875,
+        110.358642578125,
+        110.35858154296875,
+        113.43060302734375,
+        110.35858154296875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "短主题与歌唱性旋律",
+      "reason": "长音、切分与器乐反复",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        60
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "f049ab9327b8223d0b27695cc62daa25eb3f06344a5542f8a6041ec55064239d",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1000.56
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 70,
+      "id": "second_waltz",
+      "title": "第二圆舞曲",
+      "file": "second_waltz_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.694,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        125.34458923339844,
+        104.84800720214844,
+        100.74758911132812,
+        120.08526611328125,
+        102.118896484375,
+        102.118896484375,
+        100.74749755859375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "舞曲与动画主题",
+      "reason": "三拍子、倚音与圆舞曲乐句",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        61
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "18c400f9400998eddc6e9d18f1cdc00d8ecda4cb1a204589b4e02d615d99f08f",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 71,
+      "id": "doraemon",
+      "title": "哆啦A梦",
+      "file": "doraemon_01.m3n",
+      "notation": "staff",
+      "staffScale": 40,
+      "staffHeightPx": 28.8,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        109.27873229980469,
+        89.87890625,
+        97.87890625,
+        93.79888916015625,
+        90.11892700195312,
+        93.9588623046875,
+        97.87896728515625,
+        93.798828125,
+        89.87896728515625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "舞曲与动画主题",
+      "reason": "反复结构与较快八分音符",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        62
+      ],
+      "systems": 10,
+      "systemsPerPage": [
+        10
+      ],
+      "sourceSha256": "978d6da06b8a9151db8ea3d3100fcc7f2a6d25b3b4b670c37a588db6d11b4f8c",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 10,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 72,
+      "id": "super_mario",
+      "title": "超级玛丽",
+      "file": "super_mario_01.m3n",
+      "notation": "staff",
+      "staffScale": 44,
+      "staffHeightPx": 31.721,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        122.21520233154297,
+        109.42436218261719,
+        102.85980224609375,
+        110.52584838867188,
+        109.42431640625,
+        102.595458984375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "reason": "休止切分、跳进与临时变音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        63
+      ],
+      "systems": 7,
+      "systemsPerPage": [
+        7
+      ],
+      "sourceSha256": "a698a42975838251bfdf7149c6596836d45f69322a8035a22b98d8643dae97dc",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 7,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 73,
+      "id": "qing_niao",
+      "title": "青鸟",
+      "file": "qing_niao_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.242,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        101.61180877685547,
+        97.94635009765625,
+        97.471435546875,
+        103.22360229492188,
+        103.41702270507812,
+        116.5535888671875,
+        116.5537109375,
+        117.8658447265625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "reason": "快速节奏与高音区",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        64
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "185af31948d14e58ee4b0c8ff414e9feba92f8caed45d597aa75d9de98ca930e",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 74,
+      "id": "ju_ci_lang_de_xia_tian",
+      "title": "菊次郎的夏天",
+      "file": "ju_ci_lang_de_xia_tian_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.924,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        88.96051788330078,
+        85.53182983398438,
+        85.53182983398438,
+        85.5318603515625,
+        84.84674072265625,
+        85.7479248046875,
+        86.43280029296875,
+        85.5318603515625,
+        84.84686279296875,
+        85.747802734375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "reason": "连续音型与跨小节延音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        65
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "33935ad4368386a17c24f7ed5fb7f3f143143914210bd4211203b57fec51d6d8",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 75,
+      "id": "besame_mucho",
+      "title": "深情的吻",
+      "file": "besame_mucho_01.m3n",
+      "notation": "staff",
+      "staffScale": 52,
+      "staffHeightPx": 37.445,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        138.0845718383789,
+        118.655517578125,
+        118.65557861328125,
+        116.57977294921875,
+        128.636474609375,
+        126.201171875,
+        126.82061767578125,
+        124.58441162109375,
+        125.4166259765625,
+        140.446533203125,
+        131.44482421875,
+        118.655517578125,
+        118.6556396484375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "歌唱性器乐与舞曲",
+      "reason": "歌唱性旋律、低音区与乐句气息",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        66,
+        67
+      ],
+      "systems": 14,
+      "systemsPerPage": [
+        7,
+        7
+      ],
+      "sourceSha256": "8feeec1f1e5183fd5b7349ff3baa2f760e5718d802f8aec3d8ba08019944fbac",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 14,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 76,
+      "id": "tian_e",
+      "title": "天鹅",
+      "file": "tian_e_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.924,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        125.87535858154297,
+        95.81365966796875,
+        91.113037109375,
+        104.726318359375,
+        101.69488525390625,
+        107.790771484375,
+        91.0704345703125,
+        115.88348388671875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "歌唱性器乐与舞曲",
+      "reason": "六拍子、长线条与气息控制",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        68
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "6a1ff4841f20840c633f31a2d64ea4b4df9929301beec85261b673c397b9f8db",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 77,
+      "id": "ai_de_li_zan",
+      "title": "爱的礼赞",
+      "file": "ai_de_li_zan_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.365,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        92.84786987304688,
+        89.67304992675781,
+        92.5260009765625,
+        99.02603149414062,
+        89.67303466796875,
+        91.1552734375,
+        89.67303466796875,
+        89.39434814453125,
+        96.71783447265625,
+        112.1337890625,
+        89.6729736328125,
+        89.673095703125,
+        89.394287109375,
+        105.0670166015625,
+        96.145263671875,
+        89.5860595703125,
+        96.145263671875,
+        91.1552734375,
+        89.6729736328125
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "歌唱性器乐与舞曲",
+      "reason": "歌唱性旋律、倚音、半音与转调",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        69,
+        70
+      ],
+      "systems": 20,
+      "systemsPerPage": [
+        10,
+        10
+      ],
+      "sourceSha256": "00228fb62ae1bbbed749c71ccf195f172ffc9ab7d81659baeefd573798f4bd70",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 20,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 78,
+      "id": "por_una_cabeza",
+      "title": "一步之遥",
+      "file": "por_una_cabeza_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.919,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        92.18257141113281,
+        89.08163452148438,
+        84.87832641601562
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "reason": "探戈切分、装饰与变调",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        71
+      ],
+      "systems": 4,
+      "systemsPerPage": [
+        4
+      ],
+      "sourceSha256": "bf12fc39b71a81f87fdc8973057a200dec6036e50927806b655cddbf582c66cb",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 4,
+          "pages": 1,
+          "cost": 1007.47
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 79,
+      "id": "san_bu",
+      "title": "散步",
+      "file": "san_bu_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.924,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        95.44034576416016,
+        85.53085327148438,
+        85.5308837890625,
+        85.5308837890625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "reason": "切分与器乐乐句",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        71
+      ],
+      "systems": 5,
+      "systemsPerPage": [
+        5
+      ],
+      "sourceSha256": "7861a95c63ac006188002685ba93cd977eba69f029008d44ea3d302e83215c0f",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 5,
+          "pages": 1,
+          "cost": 1005.94
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": false,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 80,
+      "id": "beer_barrel_polka",
+      "title": "啤酒桶波尔卡",
+      "file": "beer_barrel_polka_01.m3n",
+      "notation": "staff",
+      "staffScale": 48,
+      "staffHeightPx": 34.56,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        114.2605972290039,
+        110.3587646484375,
+        110.3587646484375,
+        110.35873413085938,
+        110.3587646484375,
+        110.3587646484375,
+        110.358642578125,
+        110.35882568359375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "快速音型与装饰",
+      "reason": "快速二拍子、倚音与变调",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        72
+      ],
+      "systems": 9,
+      "systemsPerPage": [
+        9
+      ],
+      "sourceSha256": "1cf04890ac87b654171671c79cb18cc68ff72e94b19d94eff9856a3fd4d14283",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 9,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 81,
+      "id": "canon",
+      "title": "卡农",
+      "file": "canon_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.924,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        89.28458404541016,
+        85.53181457519531,
+        85.5318603515625,
+        85.53179931640625,
+        85.53179931640625,
+        85.5318603515625,
+        85.5318603515625,
+        85.5318603515625,
+        85.53173828125,
+        85.5318603515625
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "综合进阶",
+      "reason": "从长音渐进到十六分音型",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        73
+      ],
+      "systems": 11,
+      "systemsPerPage": [
+        11
+      ],
+      "sourceSha256": "892b0ef27739bcce4fc18663baead1fec880f4e9315267d35a105a17b99ae8a8",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 11,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 82,
+      "id": "xi_yang_yang",
+      "title": "喜洋洋",
+      "file": "xi_yang_yang_01.m3n",
+      "notation": "staff",
+      "staffScale": 50,
+      "staffHeightPx": 36,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        127.54631805419922,
+        114.49868774414062,
+        112.34860229492188,
+        152.96044921875,
+        115.63641357421875,
+        113.660888671875,
+        115.636474609375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "综合进阶",
+      "reason": "快速十六分、连奏与装饰",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        74
+      ],
+      "systems": 8,
+      "systemsPerPage": [
+        8
+      ],
+      "sourceSha256": "cf50b781582c55acbf91692ed66c87362bccdf1e51b1476e8116120eb2d53135",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 8,
+          "pages": 1,
+          "cost": 1417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 83,
+      "id": "flower_dance",
+      "title": "花之舞",
+      "file": "flower_dance_01.m3n",
+      "notation": "staff",
+      "staffScale": 32,
+      "staffHeightPx": 23.04,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        89.11917877197266,
+        80.30381774902344,
+        77.24716186523438,
+        80.31149291992188,
+        80.31146240234375,
+        80.31149291992188,
+        80.30377197265625,
+        75.199462890625,
+        83.895263671875,
+        78.263671875,
+        83.895263671875,
+        78.07177734375,
+        83.89501953125,
+        80.3116455078125,
+        88.9512939453125,
+        94.71142578125,
+        94.70361328125,
+        77.74365234375,
+        76.7431640625,
+        83.19140625,
+        80.3115234375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "综合进阶",
+      "reason": "长篇幅、快速音型与高音区",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        75,
+        76
+      ],
+      "systems": 22,
+      "systemsPerPage": [
+        11,
+        11
+      ],
+      "sourceSha256": "532f6bb67573f1895dc5593051ab9645b305a3fcbe7c592f2f72beb366af435c",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 22,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 84,
+      "id": "turkish_march",
+      "title": "土耳其进行曲",
+      "file": "turkish_march_01.m3n",
+      "notation": "staff",
+      "staffScale": 38,
+      "staffHeightPx": 27.362,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        104.81024932861328,
+        89.66583251953125,
+        93.35433959960938,
+        105.3333740234375,
+        86.1971435546875,
+        105.32293701171875,
+        102.20458984375,
+        94.13848876953125,
+        85.95556640625,
+        98.482421875,
+        108.753662109375,
+        90.1219482421875,
+        90.413330078125,
+        89.6656494140625,
+        93.3543701171875,
+        105.3333740234375,
+        90.3924560546875,
+        101.0286865234375,
+        101.0286865234375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "综合进阶",
+      "reason": "快速半音、装饰与多次变调",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        77,
+        78
+      ],
+      "systems": 20,
+      "systemsPerPage": [
+        10,
+        10
+      ],
+      "sourceSha256": "8b268c6ea745628743742fd383581f6414bdfba32aabb4b198fed34b6d4a7859",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 20,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 85,
+      "id": "valsentino",
+      "title": "Valsentino(快速圆舞曲)",
+      "file": "valsentino_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.242,
+      "includeBass": true,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        113.75316619873047,
+        94.19081115722656,
+        102.0809326171875,
+        97.9468994140625,
+        97.94680786132812,
+        97.94696044921875,
+        94.23272705078125,
+        102.08087158203125,
+        94.19091796875,
+        102.0809326171875,
+        94.2327880859375,
+        102.0809326171875,
+        96.921142578125,
+        113.7969970703125,
+        110.0045166015625,
+        97.9468994140625,
+        97.4720458984375
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "综合进阶",
+      "reason": "快速三拍子、半音、三连音与变调",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        79,
+        80
+      ],
+      "systems": 18,
+      "systemsPerPage": [
+        9,
+        9
+      ],
+      "sourceSha256": "203ad9bd556ae74f25ee4efd219fe1b564ad5d4d4fcd716fb453b2dd5927dbbe",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 86,
+      "id": "zhi_ai_li_si",
+      "title": "致爱丽丝",
+      "file": "zhi_ai_li_si_01.m3n",
+      "notation": "staff",
+      "staffScale": 42,
+      "staffHeightPx": 30.243,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        95.08617401123047,
+        103.71650695800781,
+        100.99856567382812,
+        103.67782592773438,
+        101.2650146484375,
+        97.94720458984375,
+        97.94708251953125,
+        97.947265625,
+        97.48223876953125,
+        102.4443359375,
+        97.9471435546875,
+        97.9471435546875,
+        97.9471435546875,
+        97.482421875,
+        128.910400390625,
+        101.5975341796875,
+        97.482177734375,
+        102.444580078125
+      ],
+      "voltaSystems": [
+        false,
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "综合进阶",
+      "reason": "弱起、两房反复、快速音型与三连音",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        81,
+        82
+      ],
+      "systems": 19,
+      "systemsPerPage": [
+        9,
+        10
+      ],
+      "sourceSha256": "54c7b9b37239ae3ca65d6a3ee7c9339db1ebac8abedc9d14370e1ac84bb2bcb1",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 19,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 87,
+      "id": "mozart_k545",
+      "title": "C大调奏鸣曲 K.545 第一乐章",
+      "file": "mozart_k545_01.m3n",
+      "notation": "staff",
+      "staffScale": 36,
+      "staffHeightPx": 25.924,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        86.51921081542969,
+        86.98141479492188,
+        83.49630737304688,
+        102.20327758789062,
+        108.70327758789062,
+        87.27783203125,
+        103.47796630859375,
+        90.37811279296875,
+        137.222900390625,
+        115.08380126953125,
+        92.0849609375,
+        120.3543701171875,
+        129.1705322265625,
+        116.42529296875,
+        113.822998046875,
+        92.0238037109375,
+        88.6629638671875,
+        105.4439697265625,
+        106.908447265625,
+        133.396240234375,
+        93.021728515625,
+        84.85009765625,
+        85.375,
+        100.9453125,
+        101.514404296875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "综合进阶",
+      "reason": "长篇幅、快速音阶、主题交接与反复",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        83,
+        84,
+        85
+      ],
+      "systems": 26,
+      "systemsPerPage": [
+        9,
+        8,
+        9
+      ],
+      "sourceSha256": "bc322c09f4c67ef5168506e541580e1f4109ec8991b8238593b27545a6036a9b",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 26,
+          "pages": 3,
+          "cost": 3417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    },
+    {
+      "order": 88,
+      "id": "dan_huang_guan_bo_er_ka",
+      "title": "单簧管波尔卡",
+      "file": "dan_huang_guan_bo_er_ka_01.m3n",
+      "notation": "staff",
+      "staffScale": 40,
+      "staffHeightPx": 28.8,
+      "includeBass": false,
+      "uniformSystemHeight": true,
+      "equalMeasures": false,
+      "wrap": "normal",
+      "noteGapEm": 0.6,
+      "minimumNoteGapEm": 0.4,
+      "wrapWidthRatio": 1,
+      "systemDensities": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineSteps": [
+        100.59617614746094,
+        99.12257385253906,
+        93.15936279296875,
+        109.19940185546875,
+        116.78546142578125,
+        112.41302490234375,
+        122.31610107421875,
+        99.11932373046875,
+        99.11944580078125,
+        100.00244140625,
+        100.1072998046875,
+        94.45166015625,
+        95.079345703125,
+        118.43603515625,
+        99.119384765625,
+        99.119384765625,
+        98.482421875
+      ],
+      "voltaSystems": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        true
+      ],
+      "paragraphSystems": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "section": "instrumental",
+      "group": "综合进阶",
+      "reason": "快速二拍子、颤音、三连音与多组反复",
+      "width": 696,
+      "systemGap": 11,
+      "relativeScalePercent": 112.07,
+      "screenNotePx": 22,
+      "pages": [
+        86,
+        87
+      ],
+      "systems": 18,
+      "systemsPerPage": [
+        9,
+        9
+      ],
+      "sourceSha256": "171a404268219f5b6006e3e9caa6afd351297ac90a17bd96db7f838fd3a79f8c",
+      "candidates": [
+        {
+          "width": 696,
+          "systemGap": 11,
+          "rows": 18,
+          "pages": 2,
+          "cost": 2417.95
+        }
+      ],
+      "rejectedCandidates": [],
+      "fillPage": true,
+      "reviewNote": "与简谱版起止页码一致；逐曲选择能够安全容纳的最大五线谱比例。"
+    }
+  ],
+  "pages": [
+    {
+      "page": 4,
+      "section": "basics",
+      "fillPercent": 89.8,
+      "items": [
+        {
+          "id": "ban_yin_jie_kou_qin_ji_ben_gong",
+          "title": "半音阶口琴基本功",
+          "systems": [
+            1,
+            13
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 949.31
+        }
+      ]
+    },
+    {
+      "page": 5,
+      "section": "basics",
+      "fillPercent": 95.7,
+      "items": [
+        {
+          "id": "ban_yin_jie_kou_qin_ji_ben_gong",
+          "title": "半音阶口琴基本功",
+          "systems": [
+            14,
+            29
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1011.64
+        }
+      ]
+    },
+    {
+      "page": 6,
+      "section": "basics",
+      "fillPercent": 99.2,
+      "items": [
+        {
+          "id": "xiao_xing_xing",
+          "title": "小星星",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 234.37
+        },
+        {
+          "id": "huan_le_song",
+          "title": "欢乐颂",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 256.37,
+          "height": 266.13
+        },
+        {
+          "id": "wo_he_ni",
+          "title": "我和你",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 544.5,
+          "height": 238.02
+        },
+        {
+          "id": "long_long_ago",
+          "title": "很久以前",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 804.52,
+          "height": 243.84
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "section": "basics",
+      "fillPercent": 98.6,
+      "items": [
+        {
+          "id": "song_bie",
+          "title": "送别",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 248.57
+        },
+        {
+          "id": "hong_he_gu",
+          "title": "红河谷",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 270.57,
+          "height": 243.76
+        },
+        {
+          "id": "su_shan_na",
+          "title": "苏珊娜",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 536.34,
+          "height": 241.97
+        },
+        {
+          "id": "xiao_hong_mao",
+          "title": "小红帽",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 800.3,
+          "height": 241.97
+        }
+      ]
+    },
+    {
+      "page": 8,
+      "section": "basics",
+      "fillPercent": 92.2,
+      "items": [
+        {
+          "id": "chong_er_fei",
+          "title": "虫儿飞",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 248.9
+        },
+        {
+          "id": "duo_lai_mi",
+          "title": "哆唻咪",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 270.9,
+          "height": 348.62
+        },
+        {
+          "id": "rang_wo_men_dang_qi_shuang_jiang",
+          "title": "让我们荡起双桨",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 641.52,
+          "height": 333.53
+        }
+      ]
+    },
+    {
+      "page": 9,
+      "section": "melodies",
+      "fillPercent": 99.3,
+      "items": [
+        {
+          "id": "auld_lang_syne",
+          "title": "友谊地久天长",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 269.54
+        },
+        {
+          "id": "mo_si_ke_jiao_wai_de_wan_shang",
+          "title": "莫斯科郊外的晚上",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 291.54,
+          "height": 366.56
+        },
+        {
+          "id": "san_tao_che",
+          "title": "三套车",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 680.1,
+          "height": 369.57
+        }
+      ]
+    },
+    {
+      "page": 10,
+      "section": "melodies",
+      "fillPercent": 87.8,
+      "items": [
+        {
+          "id": "scarborough_fair",
+          "title": "斯卡布罗集市",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 263.22
+        },
+        {
+          "id": "sound_of_silence",
+          "title": "寂静之声",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 285.22,
+          "height": 266.4
+        },
+        {
+          "id": "ai_er_lan_hua_mei",
+          "title": "爱尔兰画眉",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 573.62,
+          "height": 354.95
+        }
+      ]
+    },
+    {
+      "page": 11,
+      "section": "melodies",
+      "fillPercent": 96.9,
+      "items": [
+        {
+          "id": "mo_li_hua",
+          "title": "茉莉花",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 363.63
+        },
+        {
+          "id": "katyusha",
+          "title": "喀秋莎",
+          "systems": [
+            1,
+            2
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 385.63,
+          "height": 261.41
+        },
+        {
+          "id": "wo_niu_yu_huang_li_niao",
+          "title": "蜗牛与黄鹂鸟",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 669.04,
+          "height": 354.95
+        }
+      ]
+    },
+    {
+      "page": 12,
+      "section": "melodies",
+      "fillPercent": 85.2,
+      "items": [
+        {
+          "id": "hong_mei_hua_er_kai",
+          "title": "红莓花儿开",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 900.46
+        }
+      ]
+    },
+    {
+      "page": 13,
+      "section": "melodies",
+      "fillPercent": 94.7,
+      "items": [
+        {
+          "id": "the_internationale",
+          "title": "国际歌",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1001.04
+        }
+      ]
+    },
+    {
+      "page": 14,
+      "section": "melodies",
+      "fillPercent": 93,
+      "items": [
+        {
+          "id": "wo_de_zu_guo",
+          "title": "我的祖国",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 983.02
+        }
+      ]
+    },
+    {
+      "page": 15,
+      "section": "melodies",
+      "fillPercent": 99,
+      "items": [
+        {
+          "id": "wo_he_wo_de_zu_guo",
+          "title": "我和我的祖国",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1046.55
+        }
+      ]
+    },
+    {
+      "page": 16,
+      "section": "melodies",
+      "fillPercent": 95,
+      "items": [
+        {
+          "id": "yue_liang_dai_biao_wo_de_xin",
+          "title": "月亮代表我的心",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1004.5
+        }
+      ]
+    },
+    {
+      "page": 17,
+      "section": "melodies",
+      "fillPercent": 98,
+      "items": [
+        {
+          "id": "li_hua_you_kai_fang",
+          "title": "梨花又开放",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1035.45
+        }
+      ]
+    },
+    {
+      "page": 18,
+      "section": "melodies",
+      "fillPercent": 98.8,
+      "items": [
+        {
+          "id": "bai_hua_lin",
+          "title": "白桦林",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1044.06
+        }
+      ]
+    },
+    {
+      "page": 19,
+      "section": "melodies",
+      "fillPercent": 85.6,
+      "items": [
+        {
+          "id": "guang_yin_de_gu_shi",
+          "title": "光阴的故事",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 905.1
+        }
+      ]
+    },
+    {
+      "page": 20,
+      "section": "melodies",
+      "fillPercent": 99.5,
+      "items": [
+        {
+          "id": "tong_zhuo_de_ni",
+          "title": "同桌的你",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1051.57
+        }
+      ]
+    },
+    {
+      "page": 21,
+      "section": "melodies",
+      "fillPercent": 87.5,
+      "items": [
+        {
+          "id": "xiang_si",
+          "title": "相思",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 925.12
+        }
+      ]
+    },
+    {
+      "page": 22,
+      "section": "melodies",
+      "fillPercent": 98.4,
+      "items": [
+        {
+          "id": "bei_jia_er_hu_pan",
+          "title": "贝加尔湖畔",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1040.09
+        }
+      ]
+    },
+    {
+      "page": 23,
+      "section": "melodies",
+      "fillPercent": 87,
+      "items": [
+        {
+          "id": "yu_jian",
+          "title": "遇见",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 919.16
+        }
+      ]
+    },
+    {
+      "page": 24,
+      "section": "melodies",
+      "fillPercent": 98.6,
+      "items": [
+        {
+          "id": "huang_hun",
+          "title": "黄昏",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1041.74
+        }
+      ]
+    },
+    {
+      "page": 25,
+      "section": "melodies",
+      "fillPercent": 97.1,
+      "items": [
+        {
+          "id": "an_xiang",
+          "title": "暗香",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1026.24
+        }
+      ]
+    },
+    {
+      "page": 26,
+      "section": "melodies",
+      "fillPercent": 92.8,
+      "items": [
+        {
+          "id": "mei_li_de_shen_hua",
+          "title": "美丽的神话",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 980.78
+        }
+      ]
+    },
+    {
+      "page": 27,
+      "section": "melodies",
+      "fillPercent": 97.6,
+      "items": [
+        {
+          "id": "dang_nian_qing",
+          "title": "当年情",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1031.74
+        }
+      ]
+    },
+    {
+      "page": 28,
+      "section": "melodies",
+      "fillPercent": 95.9,
+      "items": [
+        {
+          "id": "qian_nv_you_hun",
+          "title": "倩女幽魂",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 438.69
+        },
+        {
+          "id": "tie_xue_dan_xin",
+          "title": "铁血丹心",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 460.69,
+          "height": 553.18
+        }
+      ]
+    },
+    {
+      "page": 29,
+      "section": "melodies",
+      "fillPercent": 92.9,
+      "items": [
+        {
+          "id": "qiu_ying",
+          "title": "秋樱",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 982.17
+        }
+      ]
+    },
+    {
+      "page": 30,
+      "section": "melodies",
+      "fillPercent": 96.2,
+      "items": [
+        {
+          "id": "man_bu_ren_sheng_lu",
+          "title": "漫步人生路",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1016.86
+        }
+      ]
+    },
+    {
+      "page": 31,
+      "section": "melodies",
+      "fillPercent": 93.8,
+      "items": [
+        {
+          "id": "wo_zhi_zai_hu_ni",
+          "title": "我只在乎你",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 990.99
+        }
+      ]
+    },
+    {
+      "page": 32,
+      "section": "melodies",
+      "fillPercent": 89.6,
+      "items": [
+        {
+          "id": "guo_huo",
+          "title": "过火",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 946.94
+        }
+      ]
+    },
+    {
+      "page": 33,
+      "section": "melodies",
+      "fillPercent": 98.5,
+      "items": [
+        {
+          "id": "yue_ding",
+          "title": "约定",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1040.87
+        }
+      ]
+    },
+    {
+      "page": 34,
+      "section": "melodies",
+      "fillPercent": 99.2,
+      "items": [
+        {
+          "id": "hou_lai",
+          "title": "后来",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1048.29
+        }
+      ]
+    },
+    {
+      "page": 35,
+      "section": "melodies",
+      "fillPercent": 96.6,
+      "items": [
+        {
+          "id": "hou_lai",
+          "title": "后来",
+          "systems": [
+            9,
+            16
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1020.85
+        }
+      ]
+    },
+    {
+      "page": 36,
+      "section": "melodies",
+      "fillPercent": 95.1,
+      "items": [
+        {
+          "id": "tong_hua_zhen",
+          "title": "童话镇",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1005.31
+        }
+      ]
+    },
+    {
+      "page": 37,
+      "section": "melodies",
+      "fillPercent": 95.4,
+      "items": [
+        {
+          "id": "lao_nan_hai",
+          "title": "老男孩",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1007.9
+        }
+      ]
+    },
+    {
+      "page": 38,
+      "section": "melodies",
+      "fillPercent": 85.1,
+      "items": [
+        {
+          "id": "lao_nan_hai",
+          "title": "老男孩",
+          "systems": [
+            7,
+            12
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 899.87
+        }
+      ]
+    },
+    {
+      "page": 39,
+      "section": "melodies",
+      "fillPercent": 94.2,
+      "items": [
+        {
+          "id": "liang_liang",
+          "title": "凉凉",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 996
+        }
+      ]
+    },
+    {
+      "page": 40,
+      "section": "melodies",
+      "fillPercent": 98.6,
+      "items": [
+        {
+          "id": "qian_si_xi",
+          "title": "牵丝戏",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1042.24
+        }
+      ]
+    },
+    {
+      "page": 41,
+      "section": "melodies",
+      "fillPercent": 95.9,
+      "items": [
+        {
+          "id": "ren_shi_jian",
+          "title": "人世间",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1013.4
+        }
+      ]
+    },
+    {
+      "page": 42,
+      "section": "melodies",
+      "fillPercent": 90.8,
+      "items": [
+        {
+          "id": "shi_jie_zeng_yu_wo_de",
+          "title": "世界赠予我的",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 959.6
+        }
+      ]
+    },
+    {
+      "page": 43,
+      "section": "melodies",
+      "fillPercent": 89.6,
+      "items": [
+        {
+          "id": "ming_tian_hui_geng_hao",
+          "title": "明天会更好",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 946.59
+        }
+      ]
+    },
+    {
+      "page": 44,
+      "section": "melodies",
+      "fillPercent": 90.9,
+      "items": [
+        {
+          "id": "man_man_xi_huan_ni",
+          "title": "慢慢喜欢你",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 961.25
+        }
+      ]
+    },
+    {
+      "page": 45,
+      "section": "melodies",
+      "fillPercent": 87.5,
+      "items": [
+        {
+          "id": "xin_bu_liao_qing",
+          "title": "新不了情",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 924.61
+        }
+      ]
+    },
+    {
+      "page": 46,
+      "section": "melodies",
+      "fillPercent": 94.6,
+      "items": [
+        {
+          "id": "wo_yao_ni",
+          "title": "我要你",
+          "systems": [
+            1,
+            6
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1000.09
+        }
+      ]
+    },
+    {
+      "page": 47,
+      "section": "melodies",
+      "fillPercent": 95.5,
+      "items": [
+        {
+          "id": "annie",
+          "title": "安妮",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1008.99
+        }
+      ]
+    },
+    {
+      "page": 48,
+      "section": "melodies",
+      "fillPercent": 98.8,
+      "items": [
+        {
+          "id": "yi_qian_ge_shang_xin_de_li_you",
+          "title": "一千个伤心的理由",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1044.38
+        }
+      ]
+    },
+    {
+      "page": 49,
+      "section": "melodies",
+      "fillPercent": 90.3,
+      "items": [
+        {
+          "id": "yue_ban_xiao_ye_qu",
+          "title": "月半小夜曲",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 954.16
+        }
+      ]
+    },
+    {
+      "page": 50,
+      "section": "melodies",
+      "fillPercent": 99,
+      "items": [
+        {
+          "id": "ting_hai",
+          "title": "听海",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1046.52
+        }
+      ]
+    },
+    {
+      "page": 51,
+      "section": "melodies",
+      "fillPercent": 90.8,
+      "items": [
+        {
+          "id": "ru_yuan",
+          "title": "如愿",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 959.5
+        }
+      ]
+    },
+    {
+      "page": 52,
+      "section": "melodies",
+      "fillPercent": 98.6,
+      "items": [
+        {
+          "id": "ai_ru_chao_shui",
+          "title": "爱如潮水",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1041.9
+        }
+      ]
+    },
+    {
+      "page": 53,
+      "section": "melodies",
+      "fillPercent": 91.5,
+      "items": [
+        {
+          "id": "ai_ru_chao_shui",
+          "title": "爱如潮水",
+          "systems": [
+            9,
+            16
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 967.53
+        }
+      ]
+    },
+    {
+      "page": 54,
+      "section": "melodies",
+      "fillPercent": 95.1,
+      "items": [
+        {
+          "id": "yan_hua_yi_leng",
+          "title": "烟花易冷",
+          "systems": [
+            1,
+            13
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1004.71
+        }
+      ]
+    },
+    {
+      "page": 55,
+      "section": "melodies",
+      "fillPercent": 88.2,
+      "items": [
+        {
+          "id": "feng",
+          "title": "枫",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 932.25
+        }
+      ]
+    },
+    {
+      "page": 56,
+      "section": "melodies",
+      "fillPercent": 97.2,
+      "items": [
+        {
+          "id": "feng",
+          "title": "枫",
+          "systems": [
+            10,
+            19
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1027
+        }
+      ]
+    },
+    {
+      "page": 57,
+      "section": "instrumental",
+      "fillPercent": 92.1,
+      "items": [
+        {
+          "id": "tai_yang_zhao_chang_sheng_qi",
+          "title": "太阳照常升起",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 375.25
+        },
+        {
+          "id": "zhi_dao_shi_jie_de_jin_tou",
+          "title": "直到世界的尽头",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 397.25,
+          "height": 575.91
+        }
+      ]
+    },
+    {
+      "page": 58,
+      "section": "instrumental",
+      "fillPercent": 99.8,
+      "items": [
+        {
+          "id": "liang_zhu",
+          "title": "梁祝",
+          "systems": [
+            1,
+            3
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 401.87
+        },
+        {
+          "id": "wen_rou_de_qing_su",
+          "title": "温柔的倾诉",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 423.87,
+          "height": 630.87
+        }
+      ]
+    },
+    {
+      "page": 59,
+      "section": "instrumental",
+      "fillPercent": 91.8,
+      "items": [
+        {
+          "id": "castle_in_the_sky",
+          "title": "天空之城",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 970.64
+        }
+      ]
+    },
+    {
+      "page": 60,
+      "section": "instrumental",
+      "fillPercent": 89.7,
+      "items": [
+        {
+          "id": "xia_yu_de_shi_hou",
+          "title": "下雨的时候",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 948.18
+        }
+      ]
+    },
+    {
+      "page": 61,
+      "section": "instrumental",
+      "fillPercent": 89.7,
+      "items": [
+        {
+          "id": "second_waltz",
+          "title": "第二圆舞曲",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 948.51
+        }
+      ]
+    },
+    {
+      "page": 62,
+      "section": "instrumental",
+      "fillPercent": 96.3,
+      "items": [
+        {
+          "id": "doraemon",
+          "title": "哆啦A梦",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1018.17
+        }
+      ]
+    },
+    {
+      "page": 63,
+      "section": "instrumental",
+      "fillPercent": 79.8,
+      "items": [
+        {
+          "id": "super_mario",
+          "title": "超级玛丽",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 843.28
+        }
+      ]
+    },
+    {
+      "page": 64,
+      "section": "instrumental",
+      "fillPercent": 95.6,
+      "items": [
+        {
+          "id": "qing_niao",
+          "title": "青鸟",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1010.52
+        }
+      ]
+    },
+    {
+      "page": 65,
+      "section": "instrumental",
+      "fillPercent": 95.3,
+      "items": [
+        {
+          "id": "ju_ci_lang_de_xia_tian",
+          "title": "菊次郎的夏天",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1007.76
+        }
+      ]
+    },
+    {
+      "page": 66,
+      "section": "instrumental",
+      "fillPercent": 93,
+      "items": [
+        {
+          "id": "besame_mucho",
+          "title": "深情的吻",
+          "systems": [
+            1,
+            7
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 983.31
+        }
+      ]
+    },
+    {
+      "page": 67,
+      "section": "instrumental",
+      "fillPercent": 84.7,
+      "items": [
+        {
+          "id": "besame_mucho",
+          "title": "深情的吻",
+          "systems": [
+            8,
+            14
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 895.14
+        }
+      ]
+    },
+    {
+      "page": 68,
+      "section": "instrumental",
+      "fillPercent": 96.7,
+      "items": [
+        {
+          "id": "tian_e",
+          "title": "天鹅",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1022.24
+        }
+      ]
+    },
+    {
+      "page": 69,
+      "section": "instrumental",
+      "fillPercent": 98.9,
+      "items": [
+        {
+          "id": "ai_de_li_zan",
+          "title": "爱的礼赞",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1044.91
+        }
+      ]
+    },
+    {
+      "page": 70,
+      "section": "instrumental",
+      "fillPercent": 90.2,
+      "items": [
+        {
+          "id": "ai_de_li_zan",
+          "title": "爱的礼赞",
+          "systems": [
+            11,
+            20
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 953.52
+        }
+      ]
+    },
+    {
+      "page": 71,
+      "section": "instrumental",
+      "fillPercent": 89.5,
+      "items": [
+        {
+          "id": "por_una_cabeza",
+          "title": "一步之遥",
+          "systems": [
+            1,
+            4
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 426.25
+        },
+        {
+          "id": "san_bu",
+          "title": "散步",
+          "systems": [
+            1,
+            5
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 448.25,
+          "height": 498.25
+        }
+      ]
+    },
+    {
+      "page": 72,
+      "section": "instrumental",
+      "fillPercent": 99.6,
+      "items": [
+        {
+          "id": "beer_barrel_polka",
+          "title": "啤酒桶波尔卡",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1052.34
+        }
+      ]
+    },
+    {
+      "page": 73,
+      "section": "instrumental",
+      "fillPercent": 95,
+      "items": [
+        {
+          "id": "canon",
+          "title": "卡农",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1004.41
+        }
+      ]
+    },
+    {
+      "page": 74,
+      "section": "instrumental",
+      "fillPercent": 96.7,
+      "items": [
+        {
+          "id": "xi_yang_yang",
+          "title": "喜洋洋",
+          "systems": [
+            1,
+            8
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1021.69
+        }
+      ]
+    },
+    {
+      "page": 75,
+      "section": "instrumental",
+      "fillPercent": 91,
+      "items": [
+        {
+          "id": "flower_dance",
+          "title": "花之舞",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 961.42
+        }
+      ]
+    },
+    {
+      "page": 76,
+      "section": "instrumental",
+      "fillPercent": 89.8,
+      "items": [
+        {
+          "id": "flower_dance",
+          "title": "花之舞",
+          "systems": [
+            12,
+            22
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 948.77
+        }
+      ]
+    },
+    {
+      "page": 77,
+      "section": "instrumental",
+      "fillPercent": 97.8,
+      "items": [
+        {
+          "id": "turkish_march",
+          "title": "土耳其进行曲",
+          "systems": [
+            1,
+            10
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1034.11
+        }
+      ]
+    },
+    {
+      "page": 78,
+      "section": "instrumental",
+      "fillPercent": 95.2,
+      "items": [
+        {
+          "id": "turkish_march",
+          "title": "土耳其进行曲",
+          "systems": [
+            11,
+            20
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1006.6
+        }
+      ]
+    },
+    {
+      "page": 79,
+      "section": "instrumental",
+      "fillPercent": 91.5,
+      "items": [
+        {
+          "id": "valsentino",
+          "title": "Valsentino(快速圆舞曲)",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 967.52
+        }
+      ]
+    },
+    {
+      "page": 80,
+      "section": "instrumental",
+      "fillPercent": 90,
+      "items": [
+        {
+          "id": "valsentino",
+          "title": "Valsentino(快速圆舞曲)",
+          "systems": [
+            10,
+            18
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 951.31
+        }
+      ]
+    },
+    {
+      "page": 81,
+      "section": "instrumental",
+      "fillPercent": 94.7,
+      "items": [
+        {
+          "id": "zhi_ai_li_si",
+          "title": "致爱丽丝",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1000.45
+        }
+      ]
+    },
+    {
+      "page": 82,
+      "section": "instrumental",
+      "fillPercent": 98.9,
+      "items": [
+        {
+          "id": "zhi_ai_li_si",
+          "title": "致爱丽丝",
+          "systems": [
+            10,
+            19
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1045.02
+        }
+      ]
+    },
+    {
+      "page": 83,
+      "section": "instrumental",
+      "fillPercent": 91,
+      "items": [
+        {
+          "id": "mozart_k545",
+          "title": "C大调奏鸣曲 K.545 第一乐章",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 961.66
+        }
+      ]
+    },
+    {
+      "page": 84,
+      "section": "instrumental",
+      "fillPercent": 85,
+      "items": [
+        {
+          "id": "mozart_k545",
+          "title": "C大调奏鸣曲 K.545 第一乐章",
+          "systems": [
+            10,
+            17
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 898.79
+        }
+      ]
+    },
+    {
+      "page": 85,
+      "section": "instrumental",
+      "fillPercent": 89.4,
+      "items": [
+        {
+          "id": "mozart_k545",
+          "title": "C大调奏鸣曲 K.545 第一乐章",
+          "systems": [
+            18,
+            26
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 944.81
+        }
+      ]
+    },
+    {
+      "page": 86,
+      "section": "instrumental",
+      "fillPercent": 97.2,
+      "items": [
+        {
+          "id": "dan_huang_guan_bo_er_ka",
+          "title": "单簧管波尔卡",
+          "systems": [
+            1,
+            9
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1027.04
+        }
+      ]
+    },
+    {
+      "page": 87,
+      "section": "instrumental",
+      "fillPercent": 91.3,
+      "items": [
+        {
+          "id": "dan_huang_guan_bo_er_ka",
+          "title": "单簧管波尔卡",
+          "systems": [
+            10,
+            18
+          ],
+          "width": 696,
+          "systemGap": 11,
+          "top": 0,
+          "height": 965.53
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "sourceCoverage": true,
+    "trainingSourcePreserved": true,
+    "geometryCandidates": 88,
+    "minimumMusicPageFillPercent": 79.781,
+    "underfilledMusicPages": 0,
+    "outside": 0,
+    "overlaps": 0,
+    "unsafeCuts": 0,
+    "orphanContinuationPages": 0,
+    "belowTargetNoteEntries": [],
+    "minimumMusicNotePx": 22,
+    "undersizedNoteEntries": 0,
+    "maximumMusicNotePx": 22,
+    "oversizedNoteEntries": 0,
+    "outlinedPages": 87,
+    "outlinedPageOverflow": 0
+  }
+}

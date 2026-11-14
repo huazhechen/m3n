@@ -72,5 +72,26 @@ test('mixed export preserves staff glyphs, above-staff hairpins, crops and numbe
       return {outside:layout.outside,overlaps:layout.overlaps,clipped:layout.clipped}
     },readFileSync(join(root,'src/scores/hong_mei_hua_er_kai_01.m3n'),'utf8'))
     assert.deepEqual(numbered,{outside:[],overlaps:[],clipped:[]})
+    const engraving = await page.evaluate(async () => {
+      const source='{key=D}{4/4}\nN: 1 (2 3) 4 5 | 6^ 5^ |||'
+      const original=await window.scorebook.measure(source,696,{notation:'staff',staffScale:38})
+      const originalStroke=parseFloat(getComputedStyle(document.querySelector('#scratch g.staff > path')).strokeWidth)
+      const originalIds=[...document.querySelectorAll('#scratch g.note')].map(note=>note.id)
+      const adjusted=await window.scorebook.measure(source,696,{notation:'staff',staffScale:48,staffLineColor:'#666666',staffEngraving:{staffLineWidth:.1,stemWidth:.16,barLineWidth:.22,slurMidpointThickness:.35,tieMidpointThickness:.3,spacingLinear:.18,spacingNonLinear:.55,spacingSystem:3}})
+      const line=document.querySelector('#scratch g.staff > path')
+      return {originalStroke,adjustedStroke:parseFloat(getComputedStyle(line).strokeWidth),color:getComputedStyle(line).stroke,originalIds,adjustedIds:[...document.querySelectorAll('#scratch g.note')].map(note=>note.id),heightRatio:adjusted.staffHeight/original.staffHeight,outside:adjusted.outside,overlaps:adjusted.overlaps,clipped:adjusted.clipped}
+    })
+    assert(engraving.adjustedStroke<engraving.originalStroke)
+    assert.equal(engraving.color,'rgb(102, 102, 102)')
+    assert.deepEqual(engraving.originalIds,engraving.adjustedIds)
+    assert(engraving.heightRatio>1.2)
+    assert.deepEqual(engraving.outside,[])
+    assert.deepEqual(engraving.overlaps,[])
+    assert.deepEqual(engraving.clipped,[])
+    const lyrics = await page.evaluate(async source => {
+      const layout=await window.scorebook.measure(source,696,{notation:'staff',staffScale:40,showCredits:false})
+      return {outside:layout.outside,overlaps:layout.overlaps,clipped:layout.clipped}
+    },readFileSync(join(root,'src/scores/hong_mei_hua_er_kai_01.m3n'),'utf8'))
+    assert.deepEqual(lyrics,{outside:[],overlaps:[],clipped:[]})
   } finally { await browser?.close(); rmSync(temp,{recursive:true,force:true}) }
 })

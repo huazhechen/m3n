@@ -1,9 +1,23 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { paginateScorebookLayout, packScorebookGroup, scorebookPageStyle, validateScorebookStyles, scorebookPageCanReflow } from './scorebook-pagination.mjs'
+import { paginateScorebookLayout, packScorebookGroup, scorebookPageStyle, validateScorebookStyles, scorebookPageCanReflow, validatePairedScorebookPagination } from './scorebook-pagination.mjs'
 
 const page = { bodyHeight: 200, scale: 1, minimumFillPercent: 90 }
 const layout = cuts => ({ rows: cuts.length - 1, cuts })
+
+test('paired editions retain page ranges and sources while allowing different system breaks', () => {
+ const reference={pageCount:87,entries:[{id:'a',pages:[6],sourceSha256:'same',systems:2},{id:'b',pages:[7,8],sourceSha256:'source',systems:12}]}
+ const candidate=structuredClone(reference)
+ candidate.entries[0].systems=4
+ validatePairedScorebookPagination(reference,candidate)
+ candidate.entries[1].pages=[8,9]
+ assert.throws(()=>validatePairedScorebookPagination(reference,candidate),/page range differs/)
+ candidate.entries[1].pages=[7,8]
+ candidate.entries[1].sourceSha256='changed'
+ assert.throws(()=>validatePairedScorebookPagination(reference,candidate),/source differs/)
+ assert.throws(()=>validatePairedScorebookPagination(reference,{...candidate,pageCount:88}),/same page count/)
+ assert.throws(()=>validatePairedScorebookPagination(reference,{...candidate,entries:[candidate.entries[0]]}),/same works/)
+})
 
 test('the height floor is strict, including for a one-page score', () => {
   assert.equal(paginateScorebookLayout(layout([0, 180]), {}, page), null)

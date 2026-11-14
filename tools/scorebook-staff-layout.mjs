@@ -1,6 +1,6 @@
 import { m3nToMei } from '@m3n/notation'
 import { VerovioScore } from '@m3n/score-renderer/verovio'
-import { headerMarkup } from '@m3n/score-renderer/view'
+import { headerMarkup, avoidLabelCollisions, resolveLyricCollisions } from '@m3n/score-renderer/view'
 
 import smuflGlyphs from './scorebook-smufl-glyphs.json'
 
@@ -75,7 +75,7 @@ export async function measureStaff(source, scoreDocument, width, options) {
   const score = await VerovioScore.create(mei)
   let markup
   try {
-    const count = score.prepareLayout({ width, scale: 38, includeBass: options.includeBass ?? true })
+    const count = score.prepareLayout({ width, scale: options.staffScale ?? 38, includeBass: options.includeBass ?? true, engraving: options.staffEngraving })
     if (count !== 1) throw new Error('Continuous staff layout must contain one SVG')
     markup = score.renderPage(1)
   } finally { score.destroy() }
@@ -86,6 +86,7 @@ export async function measureStaff(source, scoreDocument, width, options) {
   svg.setAttribute('width', String(width))
   svg.setAttribute('height', String(view.height))
   svg.setAttribute('data-scorebook-notation', 'staff')
+  if(options.staffLineColor)for(const line of svg.querySelectorAll('g.staff > path'))line.style.stroke=options.staffLineColor
   // The inner viewport otherwise defaults to the cropped page's height.
   const engraving = svg.querySelector('svg.definition-scale')
   engraving.setAttribute('overflow', 'visible')
@@ -97,6 +98,10 @@ export async function measureStaff(source, scoreDocument, width, options) {
   }
   await document.fonts.load('720px Leipzig')
   resolveMusicText(svg)
+  avoidLabelCollisions(host)
+  resolveLyricCollisions(host)
+  // Continuous export derives its viewport from the final complete systems.
+  svg.style.removeProperty('height')
   const header = headerMarkup(conversion.headerMetadata, width)
   const container = document.createElementNS(ns, 'g')
   while (svg.firstChild) container.append(svg.firstChild)
@@ -115,9 +120,14 @@ export async function measureStaff(source, scoreDocument, width, options) {
   const systems = [...svg.querySelectorAll('g.system')].map(node => ({node, ...box(node)}))
   if (!systems.length) throw new Error('Empty staff score')
   // Reserve the requested extra gap without changing staff size or relations.
-  let offset = 0
+  let offset = 0, previousBottom
   systems.forEach((system, index) => {
-    if (index) offset += options.systemGap ?? 18
+    const gap=options.systemGap ?? 18
+    if (index) {
+      offset += gap
+      offset += Math.max(0, previousBottom+gap-system.y-offset)
+    }
+    previousBottom=system.y+system.height+offset
     const existing = system.node.getAttribute('transform') ?? ''
     // Convert CSS pixels to this system's local engraving units.
     const unit = system.node.getScreenCTM().d

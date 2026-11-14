@@ -91,7 +91,7 @@ export function scorebookPageStyle(entry, defaults) {
 
 export function validateScorebookStyles(pages) {
  const byWork=new Map()
- const keys=['width','systemGap','noteGapEm','minimumNoteGapEm','uniformSystemHeight']
+ const keys=['width','systemGap','noteGapEm','minimumNoteGapEm','uniformSystemHeight','staffScale']
  for(const items of pages) {
   let pageStyle
   for(const {id,style} of items) {
@@ -109,4 +109,18 @@ export function validateScorebookStyles(pages) {
 export function scorebookPageCanReflow(page) {
  return page.items.some(item=>item.entry.sharePage)
   && page.items.every(item=>item.start===0 && item.end===item.entry.layout.rows)
+}
+
+// Both editions may break systems differently, but every complete work must
+// occupy the same printed pages and originate from the same source document.
+export function validatePairedScorebookPagination(reference, candidate) {
+ if(reference.pageCount!==candidate.pageCount)throw new Error('Paired editions must have the same page count')
+ if(reference.entries.length!==candidate.entries.length)throw new Error('Paired editions must contain the same works')
+ const entries=new Map(candidate.entries.map(entry=>[entry.id,entry]))
+ if(entries.size!==candidate.entries.length)throw new Error('Paired edition contains duplicate works')
+ for(const entry of reference.entries){
+  const other=entries.get(entry.id)
+  if(!other||JSON.stringify(entry.pages)!==JSON.stringify(other.pages))throw new Error(`Paired page range differs: ${entry.id}`)
+  if(entry.sourceSha256!==other.sourceSha256)throw new Error(`Paired source differs: ${entry.id}`)
+ }
 }
