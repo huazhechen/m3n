@@ -1071,7 +1071,7 @@ describe('jpFun numbered notation adapter', () => {
     expect(nested.source.match(/@tie\([^)]*\)/g)).toEqual(['@tie(m1,m2)', '@tie(m3,m4)', '@tie(m1,m4)'])
   })
 
-  it('places The Swan hairpins below notes and away from its nested slurs', () => {
+  it('places The Swan hairpins above notes and clear of its nested slurs', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/tian_e_01.m3n'), 'utf8')
     for (const width of [320, 820]) {
       const document = parseM3NDocument(source)
@@ -1084,7 +1084,7 @@ describe('jpFun numbered notation adapter', () => {
         const notes = result.layout.objects.filter(node => !node.T.isZero() && node.layoutLine === region.line
           && node.box.x < region.x + region.w && node.box.x + node.box.w > region.x)
         expect(notes.length).toBeGreaterThan(0)
-        for (const note of notes) expect(region.y - note.box.y - note.box.h).toBeGreaterThan(3)
+        for (const note of notes) expect(note.box.y - region.y - region.h).toBeGreaterThan(3)
       }
     }
   })

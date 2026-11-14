@@ -1,5 +1,6 @@
 import { parseM3NDocument } from '@m3n/notation'
 import { NumberedNotationScore, prepareNumberedNotationFonts } from '@m3n/numbered-notation'
+import { measureStaff } from './scorebook-staff-layout.mjs'
 import { outlineSvgText } from '../src/lib/vector-export'
 
 export async function prepare(fontBase64) {
@@ -13,12 +14,13 @@ export async function prepare(fontBase64) {
   await prepareNumberedNotationFonts()
 }
 
-export function measure(source, width, spacing = {}) {
-  const { showCredits = true, ...renderOptions } = spacing
+export async function measure(source, width, spacing = {}) {
+  const { showCredits = true, notation = 'numbered', ...renderOptions } = spacing
   const scoreDocument = parseM3NDocument(source)
   if (!showCredits) {
     for (const field of ['lyricist', 'composer', 'arranger', 'singer']) scoreDocument[field] = ''
   }
+  if (notation === 'staff') return measureStaff(source, scoreDocument, width, renderOptions)
   const score = NumberedNotationScore.create(scoreDocument)
   // Inject the same text family for measurements and SVG text.
   const canvas = document.createElement('canvas'), context = canvas.getContext('2d')
@@ -99,6 +101,17 @@ export async function outlinePage() {
   // Remove complete off-page primitives before outlining; safe cuts never cross a glyph.
   for (const nested of svg.querySelectorAll('svg')) {
     const view = nested.viewBox.baseVal
+    if (nested.getAttribute('data-scorebook-notation') === 'staff') {
+      const matrix = nested.getScreenCTM().inverse()
+      for (const system of nested.querySelectorAll('g.system,g.m3n-score-header')) {
+        const b = system.getBoundingClientRect()
+        const top = new DOMPoint(b.left, b.top).matrixTransform(matrix).y
+        const bottom = new DOMPoint(b.right, b.bottom).matrixTransform(matrix).y
+        if (bottom < view.y || top > view.y + view.height) system.remove()
+      }
+      continue
+    }
+    if (nested.closest('[data-scorebook-notation=staff]')) continue
     for (const node of nested.querySelectorAll('text,path,line,circle,polygon,ellipse')) {
       if (node.closest('defs')) continue
       const b = node.getBBox()

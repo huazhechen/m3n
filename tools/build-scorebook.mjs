@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFile
 import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
-import { paginateScorebookLayout, packScorebookGroup, scorebookPageStyle, validateScorebookStyles } from './scorebook-pagination.mjs'
+import { paginateScorebookLayout, packScorebookGroup, scorebookPageStyle, validateScorebookStyles, scorebookPageCanReflow } from './scorebook-pagination.mjs'
 import { reflowScorebookLayout } from './scorebook-reflow.mjs'
 
 const root = resolve(import.meta.dirname, '..')
@@ -33,7 +33,7 @@ for(const entry of plan.entries) {
   entry.sourceSha256=createHash('sha256').update(entry.source).digest('hex')
 }
 assert.equal(trainingEntry.source,training,'Daily training preserves the complete original source and order')
-await build({configFile:false,logLevel:'error',build:{outDir:join(temp,'bundle'),emptyOutDir:true,minify:false,
+await build({configFile:false,logLevel:'error',define:{'import.meta.url':JSON.stringify('http://scorebook.local/bundle.js')},build:{outDir:join(temp,'bundle'),emptyOutDir:true,minify:false,
   lib:{entry:join(root,'tools/scorebook-layout.mjs'),name:'scorebook',formats:['iife'],fileName:()=>'bundle.js'}}})
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||['/usr/bin/chromium','/usr/sbin/chromium','/usr/bin/chromium-browser'].find(existsSync),headless:true})
 const escape=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')
@@ -65,12 +65,16 @@ function candidateCost(layout,ranges,width,preferred,fillPage) {
 }
 try {
  const page=await browser.newPage({viewport:{width:1000,height:1200},deviceScaleFactor:1})
- await page.route('**/*',route=>route.request().url().endsWith('/fonts/NotoSerifCJKsc-Regular.otf')
+ await page.route('**/*',route=>route.request().url().endsWith('/bundle.js')
+  ?route.fulfill({path:join(temp,'bundle/bundle.js'),contentType:'application/javascript; charset=utf-8'})
+  :route.request().url().endsWith('/fonts/NotoSerifCJKsc-Regular.otf')
   ?route.fulfill({path:join(root,'public/fonts/NotoSerifCJKsc-Regular.otf'),contentType:'font/otf'})
+  :new URL(route.request().url()).pathname.endsWith('.wasm')
+  ?route.fulfill({path:join(root,'packages/score-renderer/vendor/verovio/verovio-module.wasm'),contentType:'application/wasm'})
   :route.fulfill({contentType:'text/html',body:'<!doctype html><title>Offline scorebook</title>'}))
  await page.goto('http://scorebook.local/')
  await page.setContent(`<style>body{margin:0} #scratch{position:absolute;left:-20000px} #print-page{width:${pageWidth}px;background:white}</style><div id="scratch"></div><main id="print-page"></main>`)
- await page.addScriptTag({path:join(temp,'bundle/bundle.js')})
+ await page.addScriptTag({url:'http://scorebook.local/bundle.js'})
  await page.evaluate(font=>window.scorebook.prepare(font),readFileSync(join(root,'public/fonts/NotoSerifCJKsc-Regular.otf')).toString('base64'))
  const cacheFolder=join(root,'.tmp',plan.layoutCacheKey??plan.outputKey??'scorebook','cache');mkdirSync(cacheFolder,{recursive:true})
  const rendererHash=createHash('sha256').update(readFileSync(join(temp,'bundle/bundle.js'))).update(readFileSync(join(root,'public/fonts/NotoSerifCJKsc-Regular.otf'))).digest('hex')
@@ -89,7 +93,7 @@ try {
   }
   let best,fillPage=Boolean(entry.pageCount)
   const summaries=[],rejectedCandidates=[],sharedLayouts=new Map(),sharedLayoutVariants=new Map()
-  const entryOptions={...spacing,noteGapEm:entry.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:entry.minimumNoteGapEm??spacing.minimumNoteGapEm,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false,...(entry.wrap?{wrap:entry.wrap}:{})}
+  const entryOptions={...spacing,notation:entry.notation??'numbered',noteGapEm:entry.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:entry.minimumNoteGapEm??spacing.minimumNoteGapEm,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false,...(entry.wrap?{wrap:entry.wrap}:{})}
   const widths=(entry.widthLocked?[entry.width]:[...new Set([entry.width,...plan.widthCandidates,...(entry.widthCandidates??[])])]).filter(width=>width>=minimumScoreWidth&&width<=Math.min(entry.maximumWidth??Infinity,entry.minimumNotePx?22*bodyWidth/entry.minimumNotePx:maximumScoreWidth)).sort((a,b)=>a-b)
   assert(widths.length,`${entry.title}: no candidate meets the note size range`)
   fillPage=plan.replan?!entry.sharePage:fillPage
@@ -133,6 +137,7 @@ try {
  // Feed page capacity back to horizontal breaking at the already selected
  // music size. Reflow is deliberately after font/page selection and packing.
  async function reflow(entry, fits, extraRows) {
+  if(entry.notation==='staff')return
   const original=entry.layout
   const options={...spacing,systemGap:original.systemGap,noteGapEm:entry.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:entry.minimumNoteGapEm??spacing.minimumNoteGapEm,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false,...(entry.wrap?{wrap:entry.wrap}:{})}
   const selected=await reflowScorebookLayout(original,{extraRows,fits,measure:async wrapWidthRatio=>{
@@ -182,7 +187,7 @@ try {
  }
  // Shared works compete for the remaining space of their actual packed page.
  // Their selected common font size and system gaps stay unchanged.
- for(const target of musicPages.filter(p=>p.items.some(i=>i.entry.sharePage))) {
+ for(const target of musicPages.filter(scorebookPageCanReflow)) {
   for(const item of target.items) {
    const entry=item.entry,oldHeight=item.height
    await reflow(entry,trial=>{
@@ -219,8 +224,8 @@ try {
  const footer=num=>svgText(String(num),pageWidth-bodyX,pageHeight-16,9,'text-anchor="end" fill="#888"')
  const pageSvg=(content,num)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${pageWidth}" height="${pageHeight}" viewBox="0 0 ${pageWidth} ${pageHeight}"><rect width="${pageWidth}" height="${pageHeight}" fill="white"/>${content}${footer(num)}</svg>`
  const pages=[]
- let cover=svgText('循序渐进',74,250,58)+svgText('简谱集',74,333,72)+`<line x1="78" y1="375" x2="340" y2="375" stroke="#333" stroke-width="2"/>`
- cover+=svgText('基础练习 · 民歌经典 · 流行歌曲 · 影视与器乐',78,426,18)
+ let cover=svgText('循序渐进',74,250,58)+svgText('乐谱集',74,333,72)+`<line x1="78" y1="375" x2="340" y2="375" stroke="#333" stroke-width="2"/>`
+ cover+=svgText('每日训练 · 经典旋律与流行歌曲 · 影视与器乐',78,426,18)
  cover+=svgText(`${sourceFiles.length} 份完整原谱 · ${sourceFiles.length-1} 首乐曲与一套每日基本功`,78,468,16)
  cover+=svgText(plan.edition,78,506,16)
  for(const [i,section] of plan.sections.entries())cover+=svgText(section.title,78,620+i*43,18)
@@ -262,14 +267,14 @@ try {
    const label=`${String(measured.indexOf(e)+1).padStart(3,'0')} · ${e.group}`
    content+=svgText(label,bodyX+8,bodyTop+y-6,9,'fill="#666"')
    if(start)content+=svgText(`${e.title}（续）`,bodyX+8,bodyTop+y+22*s,20)
-   const markup=l.markup.replace(/<svg[^>]*>/,`<svg x="${bodyX}" y="${bodyTop+y+(start?36*s:0)}" width="${bodyWidth}" height="${(cropBottom-cropTop)*s}" viewBox="0 ${cropTop} ${l.width} ${cropBottom-cropTop}" overflow="hidden">`)
+   const markup=l.markup.replace(/<svg[^>]*>/,tag=>tag.replace(/\s(?:x|y|width|height|viewBox|overflow)="[^"]*"/g,'').replace(/>$/,` x="${bodyX}" y="${bodyTop+y+(start?36*s:0)}" width="${bodyWidth}" height="${(cropBottom-cropTop)*s}" viewBox="0 ${cropTop} ${l.width} ${cropBottom-cropTop}" overflow="hidden">`))
    content+=markup
    assert(end>start)
   }
   pages.push({kind:'music',svg:pageSvg(content,num)})
  }
  const records=measured.map((e,i)=>{
-  return {order:i+1,id:e.id,title:e.title,file:e.file,includeBass:e.includeBass??true,uniformSystemHeight:e.uniformSystemHeight??plan.uniformSystemHeight??false,equalMeasures:e.layout.equalMeasures??false,wrap:e.wrap??'normal',noteGapEm:e.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:e.minimumNoteGapEm??spacing.minimumNoteGapEm,wrapWidthRatio:e.layout.wrapWidthRatio??1,systemDensities:e.layout.systemDensities,baselineSteps:e.layout.baselineSteps,voltaSystems:e.layout.voltaSystems,paragraphSystems:e.layout.paragraphSystems,section:e.section,group:e.group,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
+  return {order:i+1,id:e.id,title:e.title,file:e.file,notation:e.notation??'numbered',includeBass:e.includeBass??true,uniformSystemHeight:e.uniformSystemHeight??plan.uniformSystemHeight??false,equalMeasures:e.layout.equalMeasures??false,wrap:e.wrap??'normal',noteGapEm:e.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:e.minimumNoteGapEm??spacing.minimumNoteGapEm,wrapWidthRatio:e.layout.wrapWidthRatio??1,systemDensities:e.layout.systemDensities,baselineSteps:e.layout.baselineSteps,voltaSystems:e.layout.voltaSystems,paragraphSystems:e.layout.paragraphSystems,section:e.section,group:e.group,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
  })
  if(fixedPagination){
   assert.equal(total,fixedPagination.pageCount,'Fixed edition page count must be preserved')
@@ -308,7 +313,7 @@ try {
  }
  const csv=['序号,编号,曲目,分类,分组,页码,版宽px,相对缩放%,适宽音符px,各页谱行数,额外行距px,排序依据,校阅备注',...records.map(e=>[e.order,e.id,e.title,plan.sections.find(s=>s.id===e.section).title,e.group,e.pages.join('/'),e.width,e.relativeScalePercent,e.screenNotePx,e.systemsPerPage.join('/'),e.systemGap,e.reason,e.reviewNote].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))].join('\n')
  writeFileSync(join(staged,'排序与缩放记录.csv'),'\uFEFF'+csv+'\n')
- let md=`# 简谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：${sourceFiles.length-1} 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按音乐风格、节奏、音域与练习目标组织曲目。基准版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的竖向比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px。横向间距默认最小 ${spacing.minimumNoteGapEm}em、自然 ${spacing.noteGapEm}em，音符、不同音值及小节弹簧按相同比例调整；条目可单独调整自然间距。额外行间留白至少为字号的${minimumSystemGapEm}倍。正文音符限定 ${minimumNotePx??'未设下限'}—${maximumNotePx??'未设上限'}px；${plan.layoutPriority==='font'?'优先放大字号，再减少页数':'优先减少页数，再放大字号'}。${minimumFillPercent?'正文页自然高度利用率严格高于 '+minimumFillPercent+'%；':'不设置正文页高度利用率下限。'}曲目采用分档等行高，歌词按实际行数增加高度；每日基本功保留等宽小节与两页安排。PDF统一隐藏右侧署名，《欢乐颂》仅显示旋律。\n\n|序号|曲目 / 练习|页码|版宽 px|相对缩放|谱行分配|额外行距 px|适宽音符 px|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|\n`
+ let md=`# 乐谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：${sourceFiles.length-1} 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按音乐风格、节奏、音域与练习目标组织曲目。基准版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的竖向比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px。横向间距默认最小 ${spacing.minimumNoteGapEm}em、自然 ${spacing.noteGapEm}em，音符、不同音值及小节弹簧按相同比例调整；条目可单独调整自然间距。额外行间留白至少为字号的${minimumSystemGapEm}倍。正文音符限定 ${minimumNotePx??'未设下限'}—${maximumNotePx??'未设上限'}px；${plan.layoutPriority==='font'?'优先放大字号，再减少页数':'优先减少页数，再放大字号'}。${minimumFillPercent?'正文页自然高度利用率严格高于 '+minimumFillPercent+'%；':'不设置正文页高度利用率下限。'}简谱曲目采用分档等行高，歌词按实际行数增加高度；五线谱采用Verovio原生音符间距与行高，表中字号为22px排版基准的适宽换算值，并非符头宽高；每日基本功保留等宽小节与两页安排。PDF统一隐藏右侧署名，《欢乐颂》仅显示旋律。每日基本功及第二篇使用简谱，其余使用五线谱；五线谱渐强、渐弱置于谱表上方。\n\n|序号|曲目 / 练习|页码|版宽 px|相对缩放|谱行分配|额外行距 px|适宽音符 px|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|\n`
  for(const section of plan.sections) {
   md+=`| |**${section.title}**| | | | | | | |${section.description}|\n`
   for(const e of records.filter(e=>e.section===section.id))md+=`|${String(e.order).padStart(3,'0')}|${e.title}|${e.pages.join('、')}|${e.width}|${e.relativeScalePercent}%|${e.systemsPerPage.join(' + ')}|${e.systemGap}|${e.screenNotePx}|${e.reason}${e.reviewNote?'；'+e.reviewNote:''}|\n`

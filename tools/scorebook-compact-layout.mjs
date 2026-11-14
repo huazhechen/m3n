@@ -8,6 +8,17 @@ export function compactPage(markup) {
   // Match outlinePage: drop primitives entirely outside each nested score slice.
   for (const nested of svg.querySelectorAll('svg')) {
     const view = nested.viewBox.baseVal
+    if (nested.getAttribute('data-scorebook-notation') === 'staff') {
+      const matrix = nested.getScreenCTM().inverse()
+      for (const system of nested.querySelectorAll('g.system,g.m3n-score-header')) {
+        const b = system.getBoundingClientRect()
+        const top = new DOMPoint(b.left, b.top).matrixTransform(matrix).y
+        const bottom = new DOMPoint(b.right, b.bottom).matrixTransform(matrix).y
+        if (bottom < view.y || top > view.y + view.height) system.remove()
+      }
+      continue
+    }
+    if (nested.closest('[data-scorebook-notation=staff]')) continue
     for (const node of nested.querySelectorAll('text,path,line,circle,polygon,ellipse')) {
       if (node.closest('defs')) continue
       const box = node.getBBox()
@@ -72,7 +83,12 @@ export function compactPage(markup) {
     text.replaceWith(group)
     for (const { glyph, position } of positions) {
       const actual = glyph.getStartPositionOfChar(0)
-      if (Math.abs(actual.x - position.x) > .001 || Math.abs(actual.y - position.y) > .001) throw new Error('A compact glyph moved from its original baseline')
+      // Verovio uses large engraving coordinates inside a scaled SVG. Check
+      // the baseline in paper pixels so float32 rounding in those local units
+      // does not falsely report visible movement on a later system.
+      const matrix = glyph.getScreenCTM()
+      const dx = actual.x - position.x, dy = actual.y - position.y
+      if (Math.abs(matrix.a * dx + matrix.c * dy) > .001 || Math.abs(matrix.b * dx + matrix.d * dy) > .001) throw new Error('A compact glyph moved from its original baseline')
     }
   }
   const outside = []

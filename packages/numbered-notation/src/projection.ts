@@ -312,7 +312,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     const start = endpointLabels.get(first)?.first
     const end = interval.kind === 'lg' ? endpointLabels.get(last)?.legatoEnd : endpointLabels.get(last)?.last
     if (!start || !end || interval.display === 'text') continue
-    relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''},below=true)`)
+    relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
   }
   return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers }
 }

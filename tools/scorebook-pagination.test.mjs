@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { paginateScorebookLayout, packScorebookGroup, scorebookPageStyle, validateScorebookStyles } from './scorebook-pagination.mjs'
+import { paginateScorebookLayout, packScorebookGroup, scorebookPageStyle, validateScorebookStyles, scorebookPageCanReflow } from './scorebook-pagination.mjs'
 
 const page = { bodyHeight: 200, scale: 1, minimumFillPercent: 90 }
 const layout = cuts => ({ rows: cuts.length - 1, cuts })
@@ -108,4 +108,16 @@ test('style validation covers both neighbours on one page and the same work acro
  assert.throws(()=>validateScorebookStyles([[item('a')],[item('a',{width:646})]]),/pages of one score/)
  assert.throws(()=>validateScorebookStyles([[item('a')],[item('a',{noteGapEm:0.8})]]),/pages of one score/)
  assert.throws(()=>validateScorebookStyles([[item('a')],[item('a',{systemGap:18})]]),/pages of one score/)
+})
+
+test('a former shared short score keeps its slices after growing across pages', () => {
+ const score = layout([0,40,80,120,160,200,240,280,320])
+ const entry = { sharePage:true, layout:score }
+ const ranges = paginateScorebookLayout(score,entry,{bodyHeight:200,scale:1})
+ assert.equal(ranges.length,2)
+ const pages = ranges.map(([start,end])=>({items:[{entry,start,end}]}))
+ assert(pages.every(page=>!scorebookPageCanReflow(page)), 'partial works must never expand back to the complete score during shared-page reflow')
+ const short = {sharePage:true,layout:layout([0,40,80])}
+ assert(scorebookPageCanReflow({items:[{entry:short,start:0,end:2}]}))
+ assert(!scorebookPageCanReflow({items:[{entry:{...short,sharePage:false},start:0,end:2}]}))
 })

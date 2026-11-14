@@ -102,3 +102,11 @@ export function validateScorebookStyles(pages) {
   }
  }
 }
+
+// Reflow a shared page only while it contains complete works. A score that
+// grows across pages (for example after switching to staff notation) keeps its
+// selected slices, even if its editorial entry still allows page sharing.
+export function scorebookPageCanReflow(page) {
+ return page.items.some(item=>item.entry.sharePage)
+  && page.items.every(item=>item.start===0 && item.end===item.entry.layout.rows)
+}

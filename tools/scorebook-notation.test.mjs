@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs'
+import { join, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
+import { build } from 'vite'
+import { chromium } from '@playwright/test'
+
+test('mixed export preserves staff glyphs, above-staff hairpins, crops and numbered lyrics', async () => {
+  const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-scorebook-'))
+  let browser
+  try {
+    const entry = join(temp, 'entry.mjs')
+    writeFileSync(entry, `export * from ${JSON.stringify(join(root,'tools/scorebook-layout.mjs'))}; export {compactPage} from ${JSON.stringify(join(root,'tools/scorebook-compact-layout.mjs'))}`)
+    await build({configFile:false,logLevel:'error',define:{'import.meta.url':JSON.stringify('http://scorebook.local/bundle.js')},build:{outDir:join(temp,'bundle'),lib:{entry,name:'scorebook',formats:['iife'],fileName:()=> 'bundle.js'}}})
+    browser = await chromium.launch({executablePath:['/usr/bin/chromium','/usr/sbin/chromium','/usr/bin/chromium-browser'].find(existsSync),headless:true})
+    const page = await browser.newPage()
+    await page.route('**/*', route => {
+      const path = new URL(route.request().url()).pathname
+      if(path==='/bundle.js')return route.fulfill({path:join(temp,'bundle/bundle.js'),contentType:'application/javascript; charset=utf-8'})
+      if(path.endsWith('.otf'))return route.fulfill({path:join(root,'public/fonts/NotoSerifCJKsc-Regular.otf'),contentType:'font/otf'})
+      return route.fulfill({contentType:'text/html',body:'<!doctype html><div id="scratch"></div><div id="print-page"></div>'})
+    })
+    await page.goto('http://scorebook.local/')
+    await page.addScriptTag({url:'http://scorebook.local/bundle.js'})
+    await page.evaluate(font=>window.scorebook.prepare(font),readFileSync(join(root,'public/fonts/NotoSerifCJKsc-Regular.otf')).toString('base64'))
+    const result = await page.evaluate(async () => {
+      const source = '{title=五线谱验证}{key=D}{96qpm}{4/4}\nN: ' + Array(30).fill('{lg}{cresc}1{p}{tr} 2# 3 4{/}{/} | {br}').join(' ') + '1^^ |||'
+      const layout = await window.scorebook.measure(source,680,{notation:'staff',showCredits:false,systemGap:18})
+      const host = document.querySelector('#scratch')
+      host.innerHTML=layout.markup
+      const svg=host.firstElementChild, systems=[...svg.querySelectorAll('g.system')]
+      const systemIndex=systems.length-2
+      const noteCount=systems[systemIndex].querySelectorAll('g.note').length
+      const secondHairpin=systems[systemIndex].querySelector('g.hairpin').getBoundingClientRect()
+      const secondStaff=systems[systemIndex].querySelector('g.staff > path').getBoundingClientRect()
+      const crop=layout.markup.replace(/<svg[^>]*>/,tag=>tag.replace(/\s(?:x|y|width|height|viewBox|overflow)="[^"]*"/g,'').replace(/>$/,` width="680" height="${layout.cuts[systemIndex+1]-layout.cuts[systemIndex]}" viewBox="0 ${layout.cuts[systemIndex]} 680 ${layout.cuts[systemIndex+1]-layout.cuts[systemIndex]}" overflow="hidden">`))
+      const paper=`<svg xmlns="http://www.w3.org/2000/svg" width="680" height="1000" viewBox="0 0 680 1000">${crop}</svg>`
+      document.querySelector('#print-page').innerHTML=paper
+      await window.scorebook.outlinePage()
+      const outlined=document.querySelector('#print-page')
+      const staffStroke=getComputedStyle(outlined.querySelector('g.staff > path')).stroke
+      const outlineNotes=outlined.querySelectorAll('g.note').length
+      const outlinePaths=outlined.querySelectorAll('g.note path').length
+      const compact=window.scorebook.compactPage(paper)
+      return {staffStroke,tempoPaths:svg.querySelectorAll('g.tempo [data-scorebook-smufl] path').length,compactOutside:compact.outside,overlaps:layout.overlaps,rows:layout.rows,outside:layout.outside,clipped:layout.clipped,hasUses:layout.markup.includes('<use'),noteCount,outlineNotes,outlinePaths,compactNotes:host.querySelectorAll('g.note').length,compactPaths:host.querySelectorAll('g.note path').length,hairpinBottom:secondHairpin.bottom,staffTop:secondStaff.top}
+    })
+    assert(result.rows>=3)
+    assert(result.tempoPaths>0)
+    assert.notEqual(result.staffStroke,'none')
+    assert.deepEqual(result.outside,[])
+    assert.deepEqual(result.clipped,[])
+    assert.deepEqual(result.overlaps,[])
+    assert.deepEqual(result.compactOutside,[])
+    assert.equal(result.hasUses,false)
+    assert.equal(result.outlineNotes,result.noteCount)
+    assert.equal(result.compactNotes,result.noteCount)
+    assert(result.outlinePaths>0 && result.compactPaths>0)
+    assert(result.hairpinBottom<result.staffTop)
+    const numbered = await page.evaluate(async source => {
+      const layout=await window.scorebook.measure(source,606,{notation:'numbered',showCredits:false,uniformSystemHeight:true,pageMargin:8,systemGap:18,noteGapEm:.6,minimumNoteGapEm:.4})
+      return {outside:layout.outside,overlaps:layout.overlaps,clipped:layout.clipped}
+    },readFileSync(join(root,'src/scores/hong_mei_hua_er_kai_01.m3n'),'utf8'))
+    assert.deepEqual(numbered,{outside:[],overlaps:[],clipped:[]})
+  } finally { await browser?.close(); rmSync(temp,{recursive:true,force:true}) }
+})
