@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第三十七版",
+  "edition": "第三十八版",
   "sourceCount": 88,
   "baseWidth": 780,
   "widthCandidates": [
@@ -85,13 +85,14 @@
       "section": "basics",
       "group": "入门旋律与长音",
       "reason": "重复音、级进和二分音符",
-      "width": 640,
+      "width": 736,
       "sharePage": true,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "huan_le_song",
@@ -103,7 +104,7 @@
       "width": 736,
       "sharePage": true,
       "breakBefore": false,
-      "reviewNote": "以每行4小节校准五线谱缩放，末行保留收尾长音小节。",
+      "reviewNote": "与全册五线谱采用同一缩放比例。",
       "includeBass": false,
       "systemGap": 18,
       "uniformSystemHeight": true,
@@ -117,13 +118,14 @@
       "section": "basics",
       "group": "入门旋律与长音",
       "reason": "慢速长音和低音区转换",
-      "width": 640,
+      "width": 720,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "long_long_ago",
@@ -132,13 +134,14 @@
       "section": "basics",
       "group": "入门旋律与长音",
       "reason": "短句中的八分音符",
-      "width": 640,
+      "width": 720,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "song_bie",
@@ -147,13 +150,14 @@
       "section": "basics",
       "group": "歌唱性与八分音符",
       "reason": "长短时值与连贯乐句",
-      "width": 640,
+      "width": 622,
       "sharePage": true,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "hong_he_gu",
@@ -162,13 +166,14 @@
       "section": "basics",
       "group": "歌唱性与八分音符",
       "reason": "弱起与规整乐句",
-      "width": 640,
+      "width": 622,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "su_shan_na",
@@ -177,7 +182,7 @@
       "section": "basics",
       "group": "歌唱性与八分音符",
       "reason": "重复节奏与八分音符",
-      "width": 640,
+      "width": 638,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
@@ -186,7 +191,8 @@
       ],
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "xiao_hong_mao",
@@ -195,7 +201,7 @@
       "section": "basics",
       "group": "歌唱性与八分音符",
       "reason": "连续八分音符与跳进",
-      "width": 640,
+      "width": 638,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
@@ -204,7 +210,8 @@
       ],
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "chong_er_fei",
@@ -213,7 +220,7 @@
       "section": "basics",
       "group": "音阶与连奏",
       "reason": "附点节奏和连奏",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
@@ -231,7 +238,8 @@
       ],
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "duo_lai_mi",
@@ -240,7 +248,7 @@
       "section": "basics",
       "group": "音阶与连奏",
       "reason": "音阶进行与节奏变化",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
@@ -249,7 +257,8 @@
       ],
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "rang_wo_men_dang_qi_shuang_jiang",
@@ -258,7 +267,7 @@
       "section": "basics",
       "group": "音阶与连奏",
       "reason": "弱起、附点与短连奏",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
@@ -276,7 +285,8 @@
       ],
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "auld_lang_syne",
@@ -1336,13 +1346,14 @@
       "section": "instrumental",
       "group": "亚洲影视主题",
       "reason": "短篇幅与长音",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "zhi_dao_shi_jie_de_jin_tou",
@@ -1351,13 +1362,14 @@
       "section": "instrumental",
       "group": "亚洲影视主题",
       "reason": "高音区、切分与导航",
-      "width": 640,
+      "width": 720,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "liang_zhu",
@@ -1366,13 +1378,14 @@
       "section": "instrumental",
       "group": "影视爱情主题",
       "reason": "民族旋律与装饰、连奏",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "wen_rou_de_qing_su",
@@ -1381,13 +1394,14 @@
       "section": "instrumental",
       "group": "影视爱情主题",
       "reason": "小调、临时升音与切分",
-      "width": 640,
+      "width": 630,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "castle_in_the_sky",
@@ -1401,7 +1415,8 @@
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "xia_yu_de_shi_hou",
@@ -1415,7 +1430,8 @@
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "second_waltz",
@@ -1424,12 +1440,14 @@
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "reason": "三拍子、倚音与圆舞曲乐句",
-      "width": 640,
+      "width": 765,
       "sharePage": false,
       "breakBefore": true,
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
+      "reviewNote": "以整曲一页为五线谱缩放基准，保留完整谱行和正常额外行距。",
       "systemGap": 18,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true,
+      "pageCount": 1
     },
     {
       "id": "doraemon",
@@ -1438,13 +1456,14 @@
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "reason": "反复结构与较快八分音符",
-      "width": 640,
+      "width": 688,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "super_mario",
@@ -1453,12 +1472,13 @@
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "休止切分、跳进与临时变音",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "qing_niao",
@@ -1467,12 +1487,13 @@
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "快速节奏与高音区",
-      "width": 640,
+      "width": 720,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "ju_ci_lang_de_xia_tian",
@@ -1481,13 +1502,14 @@
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "连续音型与跨小节延音",
-      "width": 680,
+      "width": 728,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "besame_mucho",
@@ -1496,13 +1518,14 @@
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "歌唱性旋律、低音区与乐句气息",
-      "width": 640,
+      "width": 704,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "Besame Mucho，完整收入现有谱源，使用全册统一间距与跨页样式规则。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "tian_e",
@@ -1511,14 +1534,15 @@
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "六拍子、长线条与气息控制",
-      "width": 640,
+      "width": 712,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "完整收录当前谱源；使用全册统一字号、间距与安全分页规则。",
       "systemGap": 18,
       "uniformSystemHeight": true,
       "includeBass": false,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "ai_de_li_zan",
@@ -1527,14 +1551,15 @@
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "歌唱性旋律、倚音、半音与转调",
-      "width": 640,
+      "width": 654,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "完整收录当前谱源；使用全册统一字号、间距与安全分页规则。",
       "systemGap": 18,
       "uniformSystemHeight": true,
       "includeBass": false,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "por_una_cabeza",
@@ -1543,14 +1568,15 @@
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "探戈切分、装饰与变调",
-      "width": 640,
+      "width": 680,
       "sharePage": true,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "maximumSharedWidth": 800,
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "san_bu",
@@ -1559,14 +1585,15 @@
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "切分与器乐乐句",
-      "width": 640,
+      "width": 728,
       "sharePage": true,
       "breakBefore": false,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "maximumSharedWidth": 800,
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "beer_barrel_polka",
@@ -1575,12 +1602,13 @@
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "快速二拍子、倚音与变调",
-      "width": 640,
+      "width": 614,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "canon",
@@ -1589,12 +1617,13 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "从长音渐进到十六分音型",
-      "width": 640,
+      "width": 760,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "xi_yang_yang",
@@ -1603,13 +1632,14 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速十六分、连奏与装饰",
-      "width": 640,
+      "width": 752,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "flower_dance",
@@ -1618,13 +1648,14 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "长篇幅、快速音型与高音区",
-      "width": 688,
+      "width": 765,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "turkish_march",
@@ -1633,13 +1664,14 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速半音、装饰与多次变调",
-      "width": 640,
+      "width": 720,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "valsentino",
@@ -1648,13 +1680,14 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速三拍子、半音、三连音与变调",
-      "width": 640,
+      "width": 744,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "zhi_ai_li_si",
@@ -1663,14 +1696,15 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "弱起、两房反复、快速音型与三连音",
-      "width": 640,
+      "width": 728,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "完整收录当前谱源；使用全册统一字号、间距与安全分页规则。",
       "systemGap": 18,
       "uniformSystemHeight": true,
       "includeBass": false,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "mozart_k545",
@@ -1679,14 +1713,15 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "长篇幅、快速音阶、主题交接与反复",
-      "width": 640,
+      "width": 760,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "完整收录当前谱源；使用全册统一字号、间距与安全分页规则。",
       "systemGap": 18,
       "uniformSystemHeight": true,
       "includeBass": false,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "dan_huang_guan_bo_er_ka",
@@ -1695,18 +1730,19 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速二拍子、颤音、三连音与多组反复",
-      "width": 640,
+      "width": 712,
       "sharePage": false,
       "breakBefore": true,
       "reviewNote": "完整收录当前谱源；使用全册统一字号、间距与安全分页规则。",
       "systemGap": 18,
       "uniformSystemHeight": true,
       "includeBass": false,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     }
   ],
-  "outputPdf": "循序渐进乐谱集-v37.pdf",
-  "outputKey": "scorebook-v37",
+  "outputPdf": "循序渐进乐谱集-v38.pdf",
+  "outputKey": "scorebook-v38",
   "page": {
     "width": 744,
     "height": 1133,

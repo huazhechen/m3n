@@ -78,7 +78,7 @@ const pages = score.render({ width: 800, paged: true, includeBass: true })
 
 该模式保留事件身份、时值和原生关系几何，不移动最终 SVG 图元。SVG 谱行以 `data-m3n-paragraph` 和 `data-m3n-volta` 标记段落及房子分类；谱集布局记录的 `paragraphSystems`、`voltaSystems` 与 `baselineSteps` 保存对应信息及实际节距。核对节距时需同时考虑相邻两行的段落、房子档位、实际歌词行数，以及仅在所在行出现的标题。网页默认仍按自然高度排版。
 
-独立电子谱集的构建工具读取 `scorebook/editorial-plan.json`。第三十七版按三篇编排：每日训练与入门短曲、经典旋律与流行歌曲、影视乐曲与经典器乐。每个条目的 `notation` 显式指定谱式：`numbered` 用于《半音阶口琴基本功》和第二篇，`staff` 用于其余曲目。五线谱从同一领域文档生成 MEI，由本站 Verovio 排版，渐强、渐弱置于谱表上方；导出前展开原生音乐字形引用，按完整谱行分页，保留矢量音符与同一套文字字体。五线谱采用引擎原生音符间距和行高，不套用简谱等宽小节或分档等行高。目录、页码和布局记录统一生成。五线谱采用48%的原生雕版缩放，以《欢乐颂》在736px版宽下每行4小节为基准（末行含收尾小节，共5小节）。布局记录保存实际的 `staffHeightPx`，约为简谱22px字号基准的1.6倍；谱表高度指最上至最下谱线的距离，不是相邻谱行的距离。`screenNotePx` 表示22px排版基准的适宽换算值，不是椭圆符头的宽或高。
+独立电子谱集的构建工具读取 `scorebook/editorial-plan.json`。第三十八版按三篇编排：每日训练与入门短曲、经典旋律与流行歌曲、影视乐曲与经典器乐。每个条目的 `notation` 显式指定谱式：`numbered` 用于《半音阶口琴基本功》和第二篇，`staff` 用于其余曲目。五线谱从同一领域文档生成 MEI，由本站 Verovio 排版，渐强、渐弱置于谱表上方；导出前展开原生音乐字形引用，按完整谱行分页，保留矢量音符与同一套文字字体。五线谱采用引擎原生音符间距和行高，不套用简谱等宽小节或分档等行高。目录、页码和布局记录统一生成。五线谱采用38%的原生雕版缩放，以《第二圆舞曲》在765px版宽、18px额外行距下完整容纳一页为基准；该曲固定一页，构建不满足时失败。布局记录保存实际的 `staffHeightPx`，谱表高度指最上至最下谱线的距离，不是相邻谱行的距离。`screenNotePx` 表示22px排版基准的适宽换算值，不是椭圆符头的宽或高。
 
 五线谱拍速等 SMuFL 文字音符在分页前按原始字形和字符基线转为矢量路径，避免普通文字字体替换掉音乐符号。`tools/scorebook-smufl-glyphs.json` 原样摘自本站 Verovio 源码归档中的 `data/Leipzig/`，采用1000单位/em；来源归档和 SIL OFL 声明见 `public/licenses/verovio/`。
 
@@ -128,7 +128,7 @@ Fine、D.C.、D.S. 排在末音或休止符之后、小节线之前，与音符�
 
 `npm run build:scorebook` 默认只生成精简PDF，直接使用 `outputPdf` 文件名；不生成大体积轮廓PDF。`exportOutlinePdf: true` 可显式恢复轮廓PDF，此时再运行精简命令会另外生成 `-精简.pdf`。`npm run compact:scorebook` 可从最近一次构建保存的 `unoutlined-pages.json` 单独重建精简PDF。命令校验版次、渲染器摘要和全部谱源摘要，拒绝过期布局。导出先按原轮廓流程解析SVG的可寻址字符，处理空白、tspan、UTF-16索引和旋转，将每个字形固定到原来的基线位置；常规字形由Chromium嵌入并共用字体子集，粗体沿用原轮廓版的0.015倍字号描边，不另换粗体字体。使用同一Noto Serif CJK SC和Barlow字体资源，不重新排谱、缩小字号或转为图片。
 
-当前精简PDF共114页、4,862,945字节，纸张558 × 850.08 pt；未生成轮廓PDF。构建逐字检查基线误差不超过0.001px、逐页检查实际纸张边界，并用`pdfinfo`、`pdffonts`、`pdfimages`核实页数、纸张、字体Unicode映射及无栅格图片。本版有270个嵌入字体子集和22,572个定位文字字形；音乐符号保留矢量路径。PDF摘要和逐页字形数量保存在`scorebook/PDF体积记录.json`。设置 `exportOutlinePdf: true` 可显式恢复轮廓PDF流程。
+当前精简PDF共105页、4,821,344字节，纸张558 × 850.08 pt；未生成轮廓PDF。构建逐字检查基线误差不超过0.001px、逐页检查实际纸张边界，并用`pdfinfo`、`pdffonts`、`pdfimages`核实页数、纸张、字体Unicode映射及无栅格图片。本版有270个嵌入字体子集和22,136个定位文字字形；音乐符号保留矢量路径。PDF摘要和逐页字形数量保存在`scorebook/PDF体积记录.json`。设置 `exportOutlinePdf: true` 可显式恢复轮廓PDF流程。
 
 - `npm run test`：保留上游测试与快照；适配器为全部 82 份内置谱源分别建立用例，核对每个事件的音高、变音、八度、开始时间、时值、事件身份、控制记号同行及分页。
 - `npm run test:numbered-layout`：不启动服务器，在 Chromium 中检查全部曲库和三个复合谱例的 320/600/800/1000px、连续/分页组合，共 680 次布局，检查真实 SVG 边界、歌词相交及音符数字相交，输出 `.tmp/numbered-layout-report.json` 和示例截图。可用 `CHROMIUM_PATH` 指定浏览器。

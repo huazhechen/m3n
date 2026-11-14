@@ -46,7 +46,7 @@ test('mixed export preserves staff glyphs, above-staff hairpins, crops and numbe
       return {staffHeight:layout.staffHeight,staffStroke,tempoPaths:svg.querySelectorAll('g.tempo [data-scorebook-smufl] path').length,compactOutside:compact.outside,overlaps:layout.overlaps,rows:layout.rows,outside:layout.outside,clipped:layout.clipped,hasUses:layout.markup.includes('<use'),noteCount,outlineNotes,outlinePaths,compactNotes:host.querySelectorAll('g.note').length,compactPaths:host.querySelectorAll('g.note path').length,hairpinBottom:secondHairpin.bottom,staffTop:secondStaff.top}
     })
     assert(result.rows>=3)
-    assert(result.staffHeight>=33 && result.staffHeight<=36, 'staff height must preserve the Ode to Joy calibrated scale')
+    assert(result.staffHeight>=26 && result.staffHeight<=29, 'staff height must preserve the single-page Second Waltz calibrated scale')
     assert(result.tempoPaths>0)
     assert.notEqual(result.staffStroke,'none')
     assert.deepEqual(result.outside,[])
@@ -58,11 +58,15 @@ test('mixed export preserves staff glyphs, above-staff hairpins, crops and numbe
     assert.equal(result.compactNotes,result.noteCount)
     assert(result.outlinePaths>0 && result.compactPaths>0)
     assert(result.hairpinBottom<result.staffTop)
-    const odeMeasures = await page.evaluate(async source => {
-      await window.scorebook.measure(source,736,{notation:'staff',showCredits:false,includeBass:false,systemGap:11})
-      return [...document.querySelectorAll('#scratch g.system')].map(system=>system.querySelectorAll('g.measure').length)
-    },readFileSync(join(root,'src/scores/huan_le_song_01.m3n'),'utf8'))
-    assert.deepEqual(odeMeasures,[4,4,4,5], 'Ode to Joy should fit four measures per phrase with its closing measure on the last line')
+    const waltz = await page.evaluate(async source => {
+      const layout=await window.scorebook.measure(source,765,{notation:'staff',showCredits:false,systemGap:18})
+      return {height:layout.height*696/765,rows:layout.rows,outside:layout.outside,overlaps:layout.overlaps,clipped:layout.clipped}
+    },readFileSync(join(root,'src/scores/second_waltz_01.m3n'),'utf8'))
+    assert(waltz.height<=1057, 'the complete Second Waltz must fit on one music page at the normal system gap')
+    assert.equal(waltz.rows,10)
+    assert.deepEqual(waltz.outside,[])
+    assert.deepEqual(waltz.overlaps,[])
+    assert.deepEqual(waltz.clipped,[])
     const numbered = await page.evaluate(async source => {
       const layout=await window.scorebook.measure(source,606,{notation:'numbered',showCredits:false,uniformSystemHeight:true,pageMargin:8,systemGap:18,noteGapEm:.6,minimumNoteGapEm:.4})
       return {outside:layout.outside,overlaps:layout.overlaps,clipped:layout.clipped}

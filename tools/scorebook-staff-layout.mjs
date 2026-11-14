@@ -75,7 +75,7 @@ export async function measureStaff(source, scoreDocument, width, options) {
   const score = await VerovioScore.create(mei)
   let markup
   try {
-    const count = score.prepareLayout({ width, scale: 48, includeBass: options.includeBass ?? true })
+    const count = score.prepareLayout({ width, scale: 38, includeBass: options.includeBass ?? true })
     if (count !== 1) throw new Error('Continuous staff layout must contain one SVG')
     markup = score.renderPage(1)
   } finally { score.destroy() }
