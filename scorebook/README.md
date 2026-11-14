@@ -1,6 +1,6 @@
 # 循序渐进乐谱集
 
-当前交付：[第三十六版 PDF](循序渐进乐谱集-v36.pdf)，共147页，约4.95 MB。收录87首乐曲和完整的《半音阶口琴基本功》，针对 iPad mini 排版。
+当前交付：[第三十七版 PDF](循序渐进乐谱集-v37.pdf)，共114页，约4.86 MB。收录87首乐曲和完整的《半音阶口琴基本功》，针对 iPad mini 排版。
 
 | 篇目 | 谱式 |
 | --- | --- |
@@ -10,7 +10,7 @@
 
 已删除所有乐谱副标题中的“单旋律版”字样；渐强、渐弱统一置于音符或谱表上方。
 
-在项目根目录运行 `npm run build:scorebook` 可重建 PDF、目录及逐曲分页记录。构建使用本地 Chromium、Verovio 和 Poppler，不启动开发服务器，中间文件保存在 `.tmp/scorebook-v36/`。
+在项目根目录运行 `npm run build:scorebook` 可重建 PDF、目录及逐曲分页记录。构建使用本地 Chromium、Verovio 和 Poppler，不启动开发服务器，中间文件保存在 `.tmp/scorebook-v37/`。
 
 `editorial-plan.json` 显式保存每首曲目的篇目、谱式及排版参数；`layout-record.json` 保存逐曲页码、谱式和几何检查结果。`排序与缩放记录.md`、`逐页校阅.md` 及 `PDF体积记录.json` 提供排版和文件验证记录。
 

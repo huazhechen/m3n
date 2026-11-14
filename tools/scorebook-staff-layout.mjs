@@ -9,9 +9,10 @@ const ns = 'http://www.w3.org/2000/svg'
 // Resolve SMuFL references before cropping or combining multiple scores: each
 // Verovio SVG owns its glyph definitions, while the final book shares one DOM.
 function inlineGlyphs(svg) {
+  const glyphs = new Map([...svg.querySelectorAll('defs [id]')].map(node => [node.id, node]))
   for (const use of [...svg.querySelectorAll('use')]) {
     const id = (use.getAttribute('href') ?? use.getAttribute('xlink:href') ?? '').slice(1)
-    const target = [...svg.querySelectorAll('[id]')].find(node => node.id === id)
+    const target = glyphs.get(id)
     if (!target) throw new Error(`Missing staff glyph: ${id}`)
     const group = document.createElementNS(ns, 'g')
     const transform = use.getAttribute('transform') ?? ''
@@ -74,7 +75,7 @@ export async function measureStaff(source, scoreDocument, width, options) {
   const score = await VerovioScore.create(mei)
   let markup
   try {
-    const count = score.prepareLayout({ width, scale: 60, includeBass: options.includeBass ?? true })
+    const count = score.prepareLayout({ width, scale: 48, includeBass: options.includeBass ?? true })
     if (count !== 1) throw new Error('Continuous staff layout must contain one SVG')
     markup = score.renderPage(1)
   } finally { score.destroy() }
@@ -109,6 +110,8 @@ export async function measureStaff(source, scoreDocument, width, options) {
     const b = node.getBoundingClientRect()
     return { x:b.left-paper.left, y:b.top-paper.top, width:b.width, height:b.height }
   }
+  const staffLines = [...svg.querySelector('g.staff').children].filter(node => node.tagName === 'path').slice(0,5).map(box)
+  const staffHeight = Math.max(...staffLines.map(line => line.y)) - Math.min(...staffLines.map(line => line.y))
   const systems = [...svg.querySelectorAll('g.system')].map(node => ({node, ...box(node)}))
   if (!systems.length) throw new Error('Empty staff score')
   // Reserve the requested extra gap without changing staff size or relations.
@@ -148,7 +151,7 @@ export async function measureStaff(source, scoreDocument, width, options) {
   cuts.push(bottom+8)
   svg.setAttribute('height', String(bottom+8))
   svg.setAttribute('viewBox', `0 0 ${width} ${bottom+8}`)
-  return {width, notation:'staff', height:bottom+8, rows:systems.length, cuts, outside, overlaps, clipped,
+  return {width, notation:'staff', staffHeight, height:bottom+8, rows:systems.length, cuts, outside, overlaps, clipped,
     systemDensities:systems.map(()=>0), baselineSteps:bounds.slice(1).map((b,i)=>b.y-bounds[i].y),
     voltaSystems:systems.map(({node})=>Boolean(node.querySelector('.ending'))),
     paragraphSystems:systems.map(()=>null), diagnostics:conversion.diagnostics, markup:svg.outerHTML}

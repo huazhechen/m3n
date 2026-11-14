@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第三十六版",
+  "edition": "第三十七版",
   "sourceCount": 88,
   "baseWidth": 780,
   "widthCandidates": [
@@ -75,7 +75,8 @@
       "systemGapCandidates": [
         11
       ],
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true
     },
     {
       "id": "xiao_xing_xing",
@@ -99,14 +100,15 @@
       "section": "basics",
       "group": "入门旋律与长音",
       "reason": "重复音与级进，逐步加入附点和八分音符",
-      "width": 640,
+      "width": 736,
       "sharePage": true,
       "breakBefore": false,
-      "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
+      "reviewNote": "以每行4小节校准五线谱缩放，末行保留收尾长音小节。",
       "includeBass": false,
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "staff"
+      "notation": "staff",
+      "widthLocked": true
     },
     {
       "id": "wo_he_ni",
@@ -283,13 +285,17 @@
       "section": "melodies",
       "group": "民歌与抒情",
       "reason": "弱起与八分音符",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        14
+      ]
     },
     {
       "id": "mo_si_ke_jiao_wai_de_wan_shang",
@@ -298,13 +304,17 @@
       "section": "melodies",
       "group": "民歌与抒情",
       "reason": "小调旋律与连贯气息",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        14
+      ]
     },
     {
       "id": "san_tao_che",
@@ -313,13 +323,17 @@
       "section": "melodies",
       "group": "民歌与抒情",
       "reason": "低音区与附点节奏",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        14
+      ]
     },
     {
       "id": "scarborough_fair",
@@ -328,13 +342,17 @@
       "section": "melodies",
       "group": "三拍子与调式",
       "reason": "三拍子和调式色彩",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "sound_of_silence",
@@ -343,13 +361,17 @@
       "section": "melodies",
       "group": "三拍子与调式",
       "reason": "弱起与旋律走向",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "ai_er_lan_hua_mei",
@@ -358,13 +380,17 @@
       "section": "melodies",
       "group": "三拍子与调式",
       "reason": "八分音符与句尾长音",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "mo_li_hua",
@@ -373,13 +399,17 @@
       "section": "melodies",
       "group": "民族旋律与节奏",
       "reason": "五声性旋律与附点",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "katyusha",
@@ -388,13 +418,17 @@
       "section": "melodies",
       "group": "民族旋律与节奏",
       "reason": "较快二拍子与小调",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "wo_niu_yu_huang_li_niao",
@@ -403,13 +437,17 @@
       "section": "melodies",
       "group": "民族旋律与节奏",
       "reason": "十六分与切分节奏",
-      "width": 640,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "hong_mei_hua_er_kai",
@@ -418,13 +456,17 @@
       "section": "melodies",
       "group": "节奏与多段歌词",
       "reason": "弱起与多段歌词",
-      "width": 640,
+      "width": 606,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "the_internationale",
@@ -433,13 +475,17 @@
       "section": "melodies",
       "group": "节奏与多段歌词",
       "reason": "附点节奏、弱起与三段歌词",
-      "width": 640,
+      "width": 646,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "wo_de_zu_guo",
@@ -448,13 +494,17 @@
       "section": "melodies",
       "group": "宽广乐句",
       "reason": "连奏、附点与多段歌词",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "wo_he_wo_de_zu_guo",
@@ -463,13 +513,17 @@
       "section": "melodies",
       "group": "宽广乐句",
       "reason": "6/8与9/8变拍及连奏",
-      "width": 640,
+      "width": 606,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "yue_liang_dai_biao_wo_de_xin",
@@ -478,13 +532,17 @@
       "section": "melodies",
       "group": "抒情入门",
       "reason": "附点与完整连奏乐句",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "li_hua_you_kai_fang",
@@ -493,7 +551,7 @@
       "section": "melodies",
       "group": "抒情入门",
       "reason": "歌唱性乐句与八分音符",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
@@ -530,7 +588,11 @@
         758
       ],
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "bai_hua_lin",
@@ -539,13 +601,17 @@
       "section": "melodies",
       "group": "三拍与复拍",
       "reason": "三拍子与跨拍延音",
-      "width": 640,
+      "width": 638,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "guang_yin_de_gu_shi",
@@ -554,7 +620,7 @@
       "section": "melodies",
       "group": "三拍与复拍",
       "reason": "6/8拍中的连续八分音符",
-      "width": 640,
+      "width": 606,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
@@ -591,7 +657,11 @@
         798
       ],
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "tong_zhuo_de_ni",
@@ -600,13 +670,17 @@
       "section": "melodies",
       "group": "三拍与复拍",
       "reason": "6/8拍与弱起、反复",
-      "width": 640,
+      "width": 606,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "xiang_si",
@@ -615,14 +689,18 @@
       "section": "melodies",
       "group": "三拍与复拍",
       "reason": "三拍子、附点和跨小节延音",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "bei_jia_er_hu_pan",
@@ -631,14 +709,18 @@
       "section": "melodies",
       "group": "切分与延音",
       "reason": "器乐间奏与跨拍延音",
-      "width": 640,
+      "width": 646,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "yu_jian",
@@ -647,13 +729,17 @@
       "section": "melodies",
       "group": "切分与延音",
       "reason": "切分与高音区器乐间奏",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        16
+      ]
     },
     {
       "id": "huang_hun",
@@ -662,13 +748,17 @@
       "section": "melodies",
       "group": "切分与延音",
       "reason": "切分节奏与延音",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "an_xiang",
@@ -677,13 +767,17 @@
       "section": "melodies",
       "group": "切分与延音",
       "reason": "长音、跨拍与情绪层次",
-      "width": 640,
+      "width": 606,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "mei_li_de_shen_hua",
@@ -692,13 +786,17 @@
       "section": "melodies",
       "group": "切分与延音",
       "reason": "切分、附点与长句",
-      "width": 640,
+      "width": 614,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "dang_nian_qing",
@@ -707,13 +805,17 @@
       "section": "melodies",
       "group": "切分与延音",
       "reason": "弱起、附点与低音区",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        16
+      ]
     },
     {
       "id": "qian_nv_you_hun",
@@ -722,13 +824,17 @@
       "section": "melodies",
       "group": "香港影视金曲",
       "reason": "较规整的节奏与短篇幅",
-      "width": 640,
+      "width": 646,
       "sharePage": true,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "同页采用相同字号、最小／自然音符间距及额外行距。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        14
+      ]
     },
     {
       "id": "tie_xue_dan_xin",
@@ -737,13 +843,17 @@
       "section": "melodies",
       "group": "香港影视金曲",
       "reason": "附点节奏与低音跳进",
-      "width": 640,
+      "width": 646,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "同页采用相同字号、最小／自然音符间距及额外行距。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        14
+      ]
     },
     {
       "id": "qiu_ying",
@@ -752,13 +862,17 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "变拍与歌唱性乐句",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "采用全册通用的页面余量反馈换行，保持页数、字号与行距，缓解末段密集。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "man_bu_ren_sheng_lu",
@@ -767,13 +881,17 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "十六分节奏与低音区",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "wo_zhi_zai_hu_ni",
@@ -782,13 +900,17 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "连续十六分与跨拍延音",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "guo_huo",
@@ -797,13 +919,17 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "密集歌词和切分",
-      "width": 640,
+      "width": 614,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "yue_ding",
@@ -812,13 +938,17 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "切分、弱起与句尾装饰",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        16
+      ]
     },
     {
       "id": "hou_lai",
@@ -827,13 +957,17 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "多段歌词、切分和连奏",
-      "width": 752,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        14
+      ]
     },
     {
       "id": "tong_hua_zhen",
@@ -842,7 +976,7 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "反复歌词、切分与长句",
-      "width": 760,
+      "width": 765,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
@@ -850,7 +984,11 @@
       "systemGap": 18,
       "uniformSystemHeight": true,
       "noteGapEm": 0.5,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "lao_nan_hai",
@@ -859,14 +997,18 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "较长结构与密集八分、十六分",
-      "width": 736,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "liang_liang",
@@ -875,14 +1017,18 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "器乐过门与密集节奏",
-      "width": 656,
+      "width": 654,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "qian_si_xi",
@@ -891,14 +1037,18 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "切分、十六分与跳进",
-      "width": 656,
+      "width": 670,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "ren_shi_jian",
@@ -907,14 +1057,18 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "慢速密集节奏与高音区",
-      "width": 640,
+      "width": 656,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "shi_jie_zeng_yu_wo_de",
@@ -923,14 +1077,18 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "密集节奏与长线条",
-      "width": 640,
+      "width": 654,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        14
+      ]
     },
     {
       "id": "ming_tian_hui_geng_hao",
@@ -939,14 +1097,18 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "变拍、器乐段与多段歌词",
-      "width": 640,
+      "width": 654,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "man_man_xi_huan_ni",
@@ -955,14 +1117,18 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "跨拍、变拍与细分节奏",
-      "width": 640,
+      "width": 630,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        14
+      ]
     },
     {
       "id": "xin_bu_liao_qing",
@@ -971,13 +1137,17 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "三连音与复杂节奏",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "wo_yao_ni",
@@ -986,7 +1156,7 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "三连音、十六分与多段歌词",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
@@ -997,7 +1167,8 @@
       "systemGapCandidates": [
         11
       ],
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true
     },
     {
       "id": "annie",
@@ -1006,13 +1177,17 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "反复歌词、器乐段与跳房子",
-      "width": 640,
+      "width": 622,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "yi_qian_ge_shang_xin_de_li_you",
@@ -1021,13 +1196,17 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "十六分切分与跳房子",
-      "width": 640,
+      "width": 630,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "yue_ban_xiao_ye_qu",
@@ -1036,13 +1215,17 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "高音区、切分与跳进",
-      "width": 640,
+      "width": 638,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        16
+      ]
     },
     {
       "id": "ting_hai",
@@ -1051,13 +1234,17 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "三连音、细分节奏与双层连线",
-      "width": 640,
+      "width": 670,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "ru_yuan",
@@ -1066,14 +1253,18 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "变调、倚音与多段歌词",
-      "width": 728,
+      "width": 760,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
       "reviewNote": "全册额外行距至少0.5倍字号，在此约束下优先保持较少页数并放大字号。",
       "systemGap": 18,
       "uniformSystemHeight": true,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "ai_ru_chao_shui",
@@ -1082,7 +1273,7 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "附点、切分、波音与两房反复",
-      "width": 640,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
@@ -1090,7 +1281,11 @@
       "systemGap": 18,
       "uniformSystemHeight": true,
       "includeBass": false,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "yan_hua_yi_leng",
@@ -1099,7 +1294,7 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "长音、反复与高音区转换",
-      "width": 640,
+      "width": 638,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
@@ -1107,7 +1302,11 @@
       "systemGap": 18,
       "uniformSystemHeight": true,
       "includeBass": false,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "feng",
@@ -1116,7 +1315,7 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "细分节奏、延音与降D调转换",
-      "width": 640,
+      "width": 654,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
@@ -1124,7 +1323,11 @@
       "systemGap": 18,
       "uniformSystemHeight": true,
       "includeBass": false,
-      "notation": "numbered"
+      "notation": "numbered",
+      "widthLocked": true,
+      "systemGapCandidates": [
+        18
+      ]
     },
     {
       "id": "tai_yang_zhao_chang_sheng_qi",
@@ -1502,8 +1705,8 @@
       "notation": "staff"
     }
   ],
-  "outputPdf": "循序渐进乐谱集-v36.pdf",
-  "outputKey": "scorebook-v36",
+  "outputPdf": "循序渐进乐谱集-v37.pdf",
+  "outputKey": "scorebook-v37",
   "page": {
     "width": 744,
     "height": 1133,
