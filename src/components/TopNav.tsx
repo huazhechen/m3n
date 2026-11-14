@@ -4,7 +4,7 @@ export function TopNav() {
   return (
     <header className="top-nav">
       <NavLink to="/" className="brand-mark">
-        <img src="/favicon.svg" width="28" height="28" alt="" aria-hidden="true" />
+        <img src={`${import.meta.env.BASE_URL}favicon.svg`} width="28" height="28" alt="" aria-hidden="true" />
         <span>M3N</span>
       </NavLink>
       <nav aria-label="主导航">

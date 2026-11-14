@@ -6,7 +6,7 @@ const numberFonts = new Map<string, Font>()
 async function exportFont() {
   textFont ??= (async () => {
     const { parse } = await import('opentype.js')
-    const response = await fetch('/fonts/NotoSerifCJKsc-Regular.otf')
+    const response = await fetch(`${import.meta.env.BASE_URL}fonts/NotoSerifCJKsc-Regular.otf`)
     if (!response.ok) throw new Error('无法加载导出中文字体，请重试。')
     return parse(await response.arrayBuffer())
   })().catch(error => { textFont = undefined; throw error })

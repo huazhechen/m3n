@@ -79,6 +79,8 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 ## 渲染资源与切换
 
+默认部署在 `/`；设置 `VITE_BASE_URL=/score/ npm run build` 可部署到子路径。React Router 的 `basename`、站点图标、导出字体和分享 API 均使用同一构建基路径，Vite 负责处理模块、WASM 和音源 URL。宿主应对该前缀下的页面路由返回 `index.html`，并把 `/score/api/*` 转给现有 Worker（转交前去掉 `/score` 前缀）；存储继续实现 `M3N_SCORES` 的 KV 接口。
+
 钢琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，播放器通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-Piano-*.sf3`。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
 
 生产渲染资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。Verovio 使用固定 6.2.0 版本的本地精简构建，保留的字体资源嵌入独立 WASM，JavaScript 通过模块相对 URL 加载它；npm 包仅提供同版本 toolkit 包装器。默认和回退音乐字体都固定为完整 Leipzig；Bravura 只保留初始化需要的符号名称与度量 XML，移除未使用的字形和 CSS。构建脚本还裁掉未使用的输入格式，源码、许可证、裁剪清单和重建方法见 [Verovio 构建说明](VEROVIO_BUILD.md)。jpFun 与数字字体也由本地构建提供。Cloudflare 的 `ASSETS` 绑定负责提供 `dist`，浏览器只请求本站 `/assets/*`；音源与 AudioWorklet 同样来自本站。文档中的参考链接和 SVG 的命名空间不是资源加载路径。

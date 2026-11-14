@@ -39,7 +39,7 @@ export async function submitScore(source: string) {
     saveSimulatedSubmission(id, source)
     return id
   }
-  const response = await fetch('/api/scores/submissions', {
+  const response = await fetch(`${import.meta.env.BASE_URL}api/scores/submissions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ source, id }),
@@ -53,7 +53,7 @@ export async function submitScore(source: string) {
 export async function loadSharedScore(id: string): Promise<SharedScore | null> {
   if (!isSharedScoreId(id)) return null
   if (isSimulatedSubmit()) return loadSimulatedSubmission(id)
-  const response = await fetch(`/api/scores/${encodeURIComponent(id)}`)
+  const response = await fetch(`${import.meta.env.BASE_URL}api/scores/${encodeURIComponent(id)}`)
   if (response.status === 404) return null
   if (!response.ok) throw new Error(await responseError(response))
   const payload = await response.json() as Partial<SharedScore>

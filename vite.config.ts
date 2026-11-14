@@ -4,6 +4,7 @@ import { scoreCatalogPlugin } from './tools/score-catalog-plugin.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: process.env.VITE_BASE_URL ?? '/',
   plugins: [react(), scoreCatalogPlugin()],
   build: {
     chunkSizeWarningLimit: 800,
