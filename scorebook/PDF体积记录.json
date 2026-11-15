@@ -1,18 +1,18 @@
 {
-  "edition": "第四十九版",
+  "edition": "第五十版",
   "sourcePdf": null,
-  "compactPdf": "循序渐进乐谱集-简谱-v49.pdf",
-  "pageCount": 78,
+  "compactPdf": "循序渐进乐谱集-简谱-v50.pdf",
+  "pageCount": 79,
   "originalBytes": null,
-  "compactBytes": 5950604,
+  "compactBytes": 5986911,
   "reductionPercent": null,
-  "embeddedFontSubsets": 356,
+  "embeddedFontSubsets": 359,
   "images": 0,
-  "positionedGlyphs": 27846,
+  "positionedGlyphs": 28032,
   "glyphsPerPage": [
-    129,
+    128,
     424,
-    457,
+    460,
     528,
     707,
     279,
@@ -59,7 +59,8 @@
     372,
     451,
     607,
-    454,
+    274,
+    364,
     278,
     384,
     219,
@@ -91,5 +92,5 @@
   ],
   "outsidePages": 0,
   "sourceSha256": null,
-  "compactSha256": "e0c0eb449da1e9f8b0fbc0101abb73edd5d22ca78299f567b36a4e83ecd831db"
+  "compactSha256": "a2038b70c733b3e68f955787c1ad1168a6e1a76d01c699e772b11f2c7949f1c3"
 }

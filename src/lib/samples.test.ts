@@ -68,28 +68,30 @@ describe('bundled score corpus', () => {
     expect(eliseBars[84]!.events[1]!.pitches).toEqual(['6ee', '1eee', '3eee'])
   })
 
-  it('includes Love Like Tide with an instrumental intro, unfolded verses and upper mordents', async () => {
-    const entry = presetScores.find(score => score.sourcePath === 'ai_ru_chao_shui_01.m3n')
-    expect(entry?.title).toBe('爱如潮水')
-    expect(await loadPresetScore(entry!.slug)).toBe(loveLikeTide)
+  it('uses the reference Love Like Tide melody and joins each chorus pickup correctly', async () => {
+    const entry=presetScores.find(score=>score.sourcePath==='ai_ru_chao_shui_01.m3n')!
+    expect(await loadPresetScore(entry.slug)).toBe(loveLikeTide)
     expect(validateM3NDiagnostics(loveLikeTide)).toEqual([])
-    const document = parseM3NDocument(loveLikeTide)
-    expect(document).toMatchObject({ key: 'E', meterCount: 4, meterUnit: 4, tempo: 75 })
-    const measures = document.parts.get('score')!.melody.filter(measure => measure.events.length)
-    expect(measures).toHaveLength(33)
-    expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
-      .toEqual(Array(33).fill(4))
-    expect(measures.some(measure => measure.ending)).toBe(false)
-    const passes = measurePlaybackPasses(measures)
-    expect(measures.map(measure => [...passes.get(measure)!])).toEqual(Array.from({length:33},()=>[1]))
-    const intro = document.intervals.find(interval => interval.kind === 'inst')!
-    expect(intro.start).toBe(measures[0]!.events[0]!.sourceStart)
-    expect(intro.endStart).toBe(measures[6]!.events.at(-1)!.sourceStart)
-    expect(measures[6]!.right).toBe('dbl')
-    expect(measures[15]!.events.filter(event => event.postfixes.includes('prall'))).toHaveLength(2)
-    expect(measures.flatMap(measure => measure.events).flatMap(event => event.navigation)).not.toContain('dc')
-    expect(loveLikeTide).not.toMatch(/D\.C\.|\{dc\}/)
-    expect(measures[0]!.events.filter(event => event.tie)).toHaveLength(2)
+    const document=parseM3NDocument(loveLikeTide)
+    expect(document).toMatchObject({key:'E',meterCount:4,meterUnit:4,tempo:80,order:['A','B','C1','B','C2']})
+    expect(document.sections!.map(section=>section.name)).toEqual(['A','B','C1','C2'])
+    const bars=document.parts.get('score')!.melody.filter(bar=>bar.events.length)
+    expect(bars).toHaveLength(37)
+    const beats=Array<number>(37).fill(4)
+    beats[17]=beats[35]=3
+    beats[18]=beats[27]=1
+    expect(bars.map(bar=>bar.events.reduce((sum,event)=>sum+event.beats,0))).toEqual(beats)
+    expect(bars[0]!.events.map(event=>[event.pitches,event.beats]))
+      .toEqual([[[],1],[['3'],0.25],[['5'],0.25],[['1e'],0.25],[['7'],0.25],[['7'],0.25],[['1e'],0.75],[['1e'],1]])
+    expect(document.intervals.some(interval=>interval.kind==='inst')).toBe(false)
+    expect(bars[27]!.left).toBe('rptstart')
+    expect(bars[35]!.right?.startsWith('rptend')).toBe(true)
+    expect(bars[35]!.ending).toBe('1')
+    expect(bars[36]!.ending).toBe('2')
+    expect(document.alternatives).toHaveLength(2)
+    expect(bars[24]!.events.find(event=>event.kind==='tuplet')!.pitches).toEqual(['7','5','5'])
+    expect(bars[33]!.events.find(event=>event.kind==='tuplet')!.pitches).toEqual(['7','5','5'])
+    expect(m3nToMei(loveLikeTide).diagnostics.filter(item=>item.severity==='error')).toEqual([])
   })
 
   it('uses the reference Salut melody with lower harmony and a shared six-beat A ending', async () => {
