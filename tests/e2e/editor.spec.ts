@@ -68,7 +68,7 @@ test('renders tied full beats as sustain dashes and maps a dash back to its own 
 
 test('highlights numbered notation during playback with tuplets and a bass voice', async ({ page }) => {
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nL: 春夏秋冬天\nB: 1 2 3 4 | 5 6 7 1e |||')
+  await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nL: 春夏秋冬天 | 山川天地\nB: 1 2 3 4 | 5 6 7 1e |')
   const play = page.getByRole('button', { name: '播放' })
   await expect(play).toBeVisible({ timeout: 30_000 })
   await play.click()

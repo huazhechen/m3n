@@ -193,3 +193,19 @@ describe('MIDI playback', () => {
       .resolves.toEqual([60, 62, 64, 65, 60, 62, 67, 69, 60, 62, 67, 69, 60, 62, 67, 69])
   })
 })
+
+// Fifteen hashes were captured before the editorial restructuring. 听海 uses
+// the corrected performance after removing its spurious first-verse repeat.
+const editorialMidi = JSON.parse(readFileSync(new URL('./fixtures/editorial-midi.json', import.meta.url),'utf8')) as {id:string;duration:number;sha256:string}[]
+it.each(editorialMidi)('preserves the complete editorial performance of $id', async expected => {
+ const source=readFileSync(new URL(`../../../src/scores/${expected.id}_01.m3n`,import.meta.url),'utf8')
+ const converted=m3nToMei(source)
+ expect(converted.diagnostics).toEqual([])
+ const score=await PlaybackScore.create(converted.mei)
+ try {
+  const midi=BasicMIDI.fromArrayBuffer(score.midi())
+  const events=midi.tracks.map(track=>track.events.filter(e=>[128,144].includes(e.statusByte&240)).map(e=>[e.ticks,e.statusByte,...e.data]))
+  expect(midi.duration).toBeCloseTo(expected.duration,6)
+  expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe(expected.sha256)
+ } finally {score.destroy()}
+})

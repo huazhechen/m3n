@@ -12,8 +12,9 @@ export function deriveScoreInteraction(document: ScoreDocument): {
   lyricsByEvent: Map<ScoreEvent, MeiVerseSyllable[]>; visibleVerseIndexes: Set<number>; sourceMap: ScoreSourceRange[]; hasBassStaff: boolean; headerMetadata: ReturnType<typeof scoreHeaderMetadata>
 } {
   if (document.alternatives?.length) {
-    const base = deriveScoreInteraction({...document,alternatives:undefined,lyrics:[]})
-    for (const block of alternativeLyricBlocks(document)) {
+    const affected = (block: typeof document.lyrics[number]) => document.alternatives!.some(item=>item.host.events.some(event=>(block.targetStart===undefined || block.targetStart<=event.sourceStart) && (block.targetEnd===undefined || event.sourceStart<block.targetEnd)))
+    const base = deriveScoreInteraction({...document,alternatives:undefined,lyrics:document.lyrics.filter(block=>!affected(block))})
+    for (const block of alternativeLyricBlocks(document).filter(affected)) {
       const measures = lyricMeasures(document,block).map(measure=>({...measure,orderPasses:Array.from({length:256},(_,i)=>i+1)}))
       const selected = deriveScoreInteraction({...document,alternatives:undefined,lyrics:[{...block,targetStart:undefined,targetEnd:undefined}],parts:new Map([['score',{melody:measures,bass:[]}]])})
       for (const [event,lyrics] of selected.lyricsByEvent) base.lyricsByEvent.set(event,[...(base.lyricsByEvent.get(event) ?? []),...lyrics])

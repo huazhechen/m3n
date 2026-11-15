@@ -19,7 +19,7 @@ export function scoreHeaderMetadata(document: ScoreDocument): ScoreHeaderMetadat
   return ([
     { value: document.title, side: 'center', priority: 0 },
     { value: document.subtitle, side: 'center', priority: 10 },
-    ...(document.order?.length ? [{value:`演奏顺序：${document.order.join(' → ')}`,side:'center' as const,priority:15,kind:'order' as const}] : []),
+    ...(document.order?.length ? [{value:`演奏顺序：${document.order.filter(Boolean).join(' → ')}`,side:'center' as const,priority:15,kind:'order' as const}] : []),
     ...scoreCreditLines(document).map((value, index) => ({ value, side: 'right' as const, priority: 20 + index })),
   ] satisfies ScoreHeaderMetadata[]).filter((item) => item.value)
 }

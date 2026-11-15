@@ -58,7 +58,7 @@ test('mobile editor switches panes without losing input; catalog fills and filte
 
 test('practice starts at the selected measure and loops with independent staff muting', async ({ page }) => {
   await page.goto('/editor')
-  await page.getByRole('textbox', { name: 'M3N source' }).fill('{4/4}{120qpm}\nN: 1 2 3 4 | 5 6 7 1e | 2e 3e 4e 5e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 | 2 3 4 5 |||')
+  await page.getByRole('textbox', { name: 'M3N source' }).fill('{4/4}{120qpm}\nN: 1 2 3 4 | 5 6 7 1e | 2e 3e 4e 5e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 | 2 3 4 5 |')
   const paper = page.locator('.score-paper')
   await expect(paper.locator('svg[data-engine="jpfun"]')).toBeVisible()
   await expect(paper).not.toHaveAttribute('aria-busy','true')

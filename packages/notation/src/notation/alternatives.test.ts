@@ -48,3 +48,16 @@ describe('alternative melodies',()=>{
   expect(a.diagnostics).toContainEqual(expect.objectContaining({code:'M3N_ALTERNATIVE',message:expect.stringContaining(word)}))
  })
 })
+
+it('allows a complete tied phrase within consecutive replacement bars', () => {
+ const a=analyzeM3N('{2/4}\nN: ||: 1 2~ | 2 3 :||\nNs[2]: 1: 4 5~ | 5 6 |')
+ expect(a.diagnostics).toEqual([])
+ expect(a.score.alternatives).toHaveLength(2)
+})
+
+it('keeps phrase boundaries inside a bar when another complete bar has an alternative', () => {
+ const a=analyzeM3N('{4/4}\nN: ||: 1 2\nL1: 甲乙\nL2: 丙丁\n---\nN: 3 4 | 5 6 7 1e :||\nL1: 戊己 | 庚辛壬癸\nL2: 子丑 | 寅卯辰巳\nNs[2]: 2: 2e 3e 4e 5e |')
+ expect(a.diagnostics).toEqual([])
+ const events=a.score.parts.get('score')!.melody[0]!.events
+ expect(events.map(e=>a.interaction.lyricsByEvent.get(e)?.filter(l=>l.text).map(l=>l.text))).toEqual([['甲','丙'],['乙','丁'],['戊','子'],['己','丑']])
+})

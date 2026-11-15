@@ -458,6 +458,8 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
       start: projection.syntaxTree.lines[section.line - 1]?.start ?? source.length,
       end: projection.syntaxTree.lines[(sections[index + 1]?.line ?? 0) - 1]?.start ?? source.length,
     }))
+    // An unlabelled opening is played once before the named itinerary.
+    if (document.sections.length > 1 && document.sections[0]?.name === '') document.order = ['', ...document.order]
     // Count each section's internal repeats before applying outer visits.
     const visitsBySection = new Map(document.sections.map(section => {
       const measures = document.parts.get('score')?.melody.filter(measure => {

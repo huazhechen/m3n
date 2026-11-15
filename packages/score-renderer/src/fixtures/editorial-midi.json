@@ -1,0 +1,82 @@
+[
+  {
+    "id": "huan_le_song",
+    "duration": 33.99583333333333,
+    "sha256": "c891da33fd660421ab9fdda5ae347f8e7db140b165c401b43be957a6cb95394d"
+  },
+  {
+    "id": "hou_lai",
+    "duration": 208.79333333333332,
+    "sha256": "d8ec4adc3b00d2869886d11b6c4e114e5d13de33fd0579412ce9c56150f05f01"
+  },
+  {
+    "id": "tong_hua_zhen",
+    "duration": 329.13576914166663,
+    "sha256": "b6708524d5c0911d6e42634bda317c9b96ec4a0b3a66d2c60d5533abd45d1d29"
+  },
+  {
+    "id": "bei_jia_er_hu_pan",
+    "duration": 137.99583333333334,
+    "sha256": "a3417fb34ee07a33380a496afeded07117cf673eb7e835b09fe8a89cb973a507"
+  },
+  {
+    "id": "lao_nan_hai",
+    "duration": 211.65963755833332,
+    "sha256": "b92e1eaff1971d779e017af311a2fbbf4573c13223be9bf307ac0c7e1614b54e"
+  },
+  {
+    "id": "man_man_xi_huan_ni",
+    "duration": 190.14616969166664,
+    "sha256": "1acf9b30ed656b2dd211c85e951743af46d07143a19a119f2f0efbb97f12e65c"
+  },
+  {
+    "id": "wo_yao_ni",
+    "duration": 152.71971224166666,
+    "sha256": "15eec1f69ecd00db5b7989b00552cd73abbd385971521176441e5ae289dbdbc6"
+  },
+  {
+    "id": "yi_qian_ge_shang_xin_de_li_you",
+    "duration": 239.99243331666668,
+    "sha256": "2e5d117b5d4eebd02dd232570ccae7bff7e8e16840d1d991047cd3067556ddc5"
+  },
+  {
+    "id": "yue_ban_xiao_ye_qu",
+    "duration": 212.99375,
+    "sha256": "f541fec4f108981d693eb880a34b90d0097a7c7fd1ea7fc52e37a1d990222c2a"
+  },
+  {
+    "id": "ting_hai",
+    "duration": 123.86291148333333,
+    "sha256": "1119ecd62a9ffd46c5c3b7482aca698df3fb930ae8735813e161ac596b9b2dc7"
+  },
+  {
+    "id": "ai_ru_chao_shui",
+    "duration": 105.59333333333333,
+    "sha256": "48776ed596b0978e3acdc99a8f290842675a24de2a8a04fce40eac85e575cb52"
+  },
+  {
+    "id": "castle_in_the_sky",
+    "duration": 155.16798965833334,
+    "sha256": "31e339e275588a9c427df9dec2e2097b27377b1d357196dd0c033c55814984c4"
+  },
+  {
+    "id": "beer_barrel_polka",
+    "duration": 152.723332125,
+    "sha256": "a20e4d68646b5e6b74ade7d8339750673f3a0966393790f6bf8c684b34434952"
+  },
+  {
+    "id": "ju_ci_lang_de_xia_tian",
+    "duration": 145.70839161666666,
+    "sha256": "095e068344f3bad435a2e25e26f6113e05153e2e56e51cec03084f78fed1799c"
+  },
+  {
+    "id": "super_mario",
+    "duration": 97.495,
+    "sha256": "04ed80dc549562f9a6bfeb463683d24c66f55fdd7d43949c181aea652f75d3c5"
+  },
+  {
+    "id": "besame_mucho",
+    "duration": 189.595,
+    "sha256": "2484c8536f0615d03df9ef87f1c988667b3c2653939cb1fb67f24b9ffbdc2278"
+  }
+]

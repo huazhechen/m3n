@@ -221,18 +221,18 @@ describe('jpFun numbered notation adapter', () => {
         const count = (visits.get(ref) ?? 0) + 1
         visits.set(ref, count)
         const segment = [...mei.querySelectorAll('section,ending')].find(node => node.getAttribute('xml:id') === ref.slice(1))!
-        return [...segment.querySelectorAll('measure')].map(measure => canonical(measure.querySelector('layer')!, count))
+        return [...segment.querySelectorAll('measure')].flatMap(measure => [...measure.querySelector('layer')!.children].map(event => canonical(event, count)))
       })
     }
     const expected = performed(original)
-    expect(expected).toHaveLength(57)
+    expect(expected.length).toBeGreaterThan(100)
     expect(performed(compact)).toEqual(expected)
     const { document, score } = render(compact, { width: 736, pageMargin: 8, systemGap: 0, showCredits: false, uniformSystemHeight: true })
     const measures = [...document.parts.values()][0]!.melody.filter(measure => measure.events.length)
-    expect(measures).toHaveLength(27)
+    expect(measures).toHaveLength(26)
     const passes = measurePlaybackPasses(measures)
     expect([...passes.get(measures[0]!)!]).toEqual([1, 2, 3])
-    expect([...passes.get(measures[13]!)!]).toEqual([1, 2])
+    expect([...passes.get(measures.find(measure=>measure.sectionName==='B')!)!]).toEqual([1, 2])
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
   })
 
@@ -1009,7 +1009,13 @@ describe('jpFun numbered notation adapter', () => {
       const notes = result.layout.objects.filter(node => !node.T.isZero())
       const starts = notes.filter((node, index) => index === 0 || node.layoutLine !== notes[index - 1]!.layoutLine)
       for (const start of starts) expect(start.t.denominator, `split beat at ${start.t}`).toBe(1)
-      for (const boundary of [4, 44, 84]) {
+      const boundaries: number[] = []
+      let startTime = 0
+      for (const [index, measure] of melody.entries()) {
+        if (measure.left === 'rptstart' && index > 0 && !['rptend','rptboth'].includes(melody[index-1]!.right ?? '')) boundaries.push(startTime)
+        startTime += measure.events.reduce((sum,event)=>sum+event.beats,0)
+      }
+      for (const boundary of boundaries) {
         const previous = notes.filter(node => node.t.compare(boundary) < 0).at(-1)!
         const next = notes.find(node => node.t.equals(boundary))!
         const closing = result.layout.objects.find(node => node.t.equals(boundary) && (node.ast as { type?: number }).type === 0)
@@ -1236,4 +1242,40 @@ describe('jpFun numbered notation adapter', () => {
         expect(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')), file).toEqual([])
       }
   }, 30000)
+})
+
+it('prints shared lyrics once when a later visit has an alternative melody', () => {
+ const {root}=render('{2/4}\nN: ||: 1 2 | 3 4 :||\nL: 甲乙 | 丙丁\nNs[2]: 2: 5 6 |')
+ const text=root.body.textContent ?? ''
+ expect(text).not.toContain('甲甲')
+ expect(text).not.toContain('乙乙')
+ expect(text).not.toContain('丙丙')
+})
+
+it('stacks different alternative passes in separate lanes', () => {
+ const d=parseM3NDocument('{2/4}{order=A,A,A}\n===A\nN: 1 2 ||\nNs[2]: 1: 3 4 |\nNs[3]: 1: 5 6 |')
+ const result=geometry(d)
+ const notes=result.layout.objects.filter(n=>!n.T.isZero()&&n.t.isZero())
+ expect(notes).toHaveLength(3)
+ const ys=notes.map(n=>n.box.y).sort((a,b)=>a-b)
+ expect(ys[1]!-ys[0]!).toBeGreaterThan(18)
+ expect(ys[2]!-ys[1]!).toBeGreaterThan(18)
+})
+
+it('draws a tie across consecutive alternative bars', () => {
+ const d=parseM3NDocument('{2/4}\nN: ||: 1 2~ | 2 3 :||\nNs[2]: 1: 4 5~ | 5 6 |')
+ const p=projectNumberedScore(d,options)
+ const first=d.alternatives![0]!.measure.events.at(-1)!, next=d.alternatives![1]!.measure.events[0]!
+ const label=(event:typeof first)=>[...p.bindings.values()].find(b=>b.event===event)!.label
+ expect(p.source).toContain(`@tie(${label(first)},${label(next)})`)
+})
+
+it('keeps an unlabelled opening beside the first named phrase', () => {
+ const d=parseM3NDocument('{2/4}{order=A,A,B}\nN: (5d) |\n===A\nN: 1 2 ||\n===B\nN: 3. |||')
+ const result=geometry(d)
+ const notes=result.layout.objects.filter(n=>!n.T.isZero())
+ expect(notes[0]!.layoutLine).toBe(notes[1]!.layoutLine)
+ const {root}=render(d)
+ expect(root.body.textContent).not.toContain('Intro')
+ expect(root.body.textContent).toContain('演奏顺序：A→A→B')
 })

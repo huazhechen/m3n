@@ -43,7 +43,7 @@ describe('explicit section order',()=>{
   ['{2/4}{order=A}\n===A\nN: 1 2 ||\n===A\nN: 3 4 |||','重复'],
   ['{2/4}{order=A,,A}\n===A\nN: 1 2 |||','非空'],
   ['{2/4}{order=A}{order=A}\n===A\nN: 1 2 |||','重复声明'],
-  ['{2/4}{order=A}\nN: 1 2 |||','都必须有名称'],
+  ['{2/4}{order=A}\nN: 1 2 |||','必须有名称'],
   ['{2/4}\n===A\nN: {order=A}1 2 |||','文档首部'],
   ['{2/4}{order=A}\n===A\nN: 1 2 {dc} |||','不与跳房子'],
   ['{2/4}{order=A,B}\n===A\nN: 1 |\n===B\nN: (2) |||','完整小节'],
@@ -90,4 +90,11 @@ describe('explicit section order',()=>{
   expect(result.score.order).toBeUndefined()
   expect(result.conversion.mei).not.toContain('m3n-order-section')
  })
+})
+
+it('plays an unlabelled opening once before the named itinerary', () => {
+ const result=analyzeM3N('{2/4}{order=A,A,B}\nN: (5d) |\n===A\nN: 1 2 ||\n===B\nN: 3. |||')
+ expect(result.diagnostics).toEqual([])
+ expect(result.score.order).toEqual(['','A','A','B'])
+ expect(result.conversion.mei).toContain('plist="#m3n-order-section-1 #m3n-order-section-2 #m3n-order-section-2 #m3n-order-section-3"')
 })

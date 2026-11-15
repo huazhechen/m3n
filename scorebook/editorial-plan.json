@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第四十三版",
+  "edition": "第四十四版",
   "sourceCount": 88,
   "baseWidth": 780,
   "widthCandidates": [
@@ -740,18 +740,29 @@
       "section": "melodies",
       "group": "切分与延音",
       "reason": "器乐间奏与跨拍延音",
-      "width": 646,
-      "sharePage": true,
+      "width": 654,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 646
+      "maximumWidth": 662,
+      "widthCandidates": [
+        644,
+        646,
+        648,
+        650,
+        652,
+        654,
+        658,
+        662
+      ],
+      "noteGapEm": 0.5
     },
     {
       "id": "yu_jian",
@@ -999,13 +1010,22 @@
       "pageBreaks": [],
       "reviewNote": "A/B/A/A/C复用，按实际行高排为单页；数字约22.58px，保留全部歌词和演奏时值。",
       "systemGap": 11,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
       "uniformSystemHeight": false,
       "noteGapEm": 0.35,
-      "minimumNoteGapEm": 0.2
+      "minimumNoteGapEm": 0.2,
+      "maximumWidth": 718,
+      "widthCandidates": [
+        678,
+        686,
+        694,
+        702,
+        710,
+        718
+      ]
     },
     {
       "id": "tong_hua_zhen",
@@ -1014,18 +1034,26 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "反复歌词、切分与长句",
-      "width": 765,
+      "width": 750,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "noteGapEm": 0.5,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "widthCandidates": [
+        726,
+        734,
+        742,
+        746,
+        750
+      ],
+      "maximumWidth": 750
     },
     {
       "id": "lao_nan_hai",
@@ -1034,17 +1062,26 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "较长结构与密集八分、十六分",
-      "width": 590,
-      "sharePage": true,
+      "width": 734,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "uniformSystemHeight": false,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "widthCandidates": [
+        710,
+        718,
+        726,
+        730,
+        734
+      ],
+      "maximumWidth": 734,
+      "noteGapEm": 0.5
     },
     {
       "id": "liang_liang",
@@ -1153,18 +1190,27 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "跨拍、变拍与细分节奏",
-      "width": 630,
+      "width": 614,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 630
+      "maximumWidth": 630,
+      "widthCandidates": [
+        590,
+        598,
+        606,
+        614,
+        622,
+        630
+      ],
+      "noteGapEm": 0.6
     },
     {
       "id": "xin_bu_liao_qing",
@@ -1196,14 +1242,18 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "uniformSystemHeight": false,
-      "noteGapEm": 0.8,
+      "noteGapEm": 0.6,
       "systemGapCandidates": [
         11
       ],
-      "widthLocked": true
+      "widthLocked": false,
+      "widthCandidates": [
+        590
+      ],
+      "maximumWidth": 590
     },
     {
       "id": "annie",
@@ -1232,18 +1282,29 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "十六分切分与跳房子",
-      "width": 630,
+      "width": 654,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
       "uniformSystemHeight": false,
-      "maximumWidth": 630
+      "maximumWidth": 686,
+      "widthCandidates": [
+        630,
+        638,
+        646,
+        654,
+        662,
+        670,
+        678,
+        686
+      ],
+      "noteGapEm": 0.5
     },
     {
       "id": "yue_ban_xiao_ye_qu",
@@ -1252,18 +1313,28 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "高音区、切分与跳进",
-      "width": 638,
+      "width": 614,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
       "uniformSystemHeight": false,
-      "maximumWidth": 638
+      "maximumWidth": 638,
+      "widthCandidates": [
+        590,
+        598,
+        606,
+        614,
+        622,
+        630,
+        638
+      ],
+      "noteGapEm": 0.6
     },
     {
       "id": "ting_hai",
@@ -1312,18 +1383,29 @@
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "附点、切分、波音与两房反复",
-      "width": 590,
+      "width": 662,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "widthCandidates": [
+        638,
+        646,
+        654,
+        662,
+        670,
+        678,
+        686
+      ],
+      "maximumWidth": 686,
+      "noteGapEm": 0.6
     },
     {
       "id": "yan_hua_yi_leng",
@@ -1456,13 +1538,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "uniformSystemHeight": false
+      "uniformSystemHeight": false,
+      "widthCandidates": [
+        590
+      ],
+      "maximumWidth": 590,
+      "noteGapEm": 0.6
     },
     {
       "id": "xia_yu_de_shi_hou",
@@ -1534,13 +1621,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "uniformSystemHeight": false
+      "uniformSystemHeight": false,
+      "widthCandidates": [
+        590
+      ],
+      "maximumWidth": 590,
+      "noteGapEm": 0.6
     },
     {
       "id": "qing_niao",
@@ -1569,18 +1661,22 @@
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "连续音型与跨小节延音",
-      "width": 728,
+      "width": 590,
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 728
+      "maximumWidth": 590,
+      "widthCandidates": [
+        590
+      ],
+      "noteGapEm": 0.6
     },
     {
       "id": "besame_mucho",
@@ -1589,19 +1685,31 @@
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "歌唱性旋律、低音区与乐句气息",
-      "width": 598,
+      "width": 686,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
       "uniformSystemHeight": false,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
       "minimumNoteGapEm": 0.3,
-      "noteGapEm": 0.45
+      "noteGapEm": 0.6,
+      "widthCandidates": [
+        646,
+        654,
+        662,
+        670,
+        678,
+        686,
+        694,
+        702,
+        710
+      ],
+      "maximumWidth": 710
     },
     {
       "id": "tian_e",
@@ -1696,13 +1804,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
       "systemGap": 11,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "uniformSystemHeight": false
+      "uniformSystemHeight": false,
+      "widthCandidates": [
+        590
+      ],
+      "maximumWidth": 590,
+      "noteGapEm": 0.6
     },
     {
       "id": "canon",
@@ -1866,8 +1979,8 @@
       "maximumWidth": 606
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v43.pdf",
-  "outputKey": "scorebook-v43-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v44.pdf",
+  "outputKey": "scorebook-v44-numbered",
   "page": {
     "width": 744,
     "height": 1133,

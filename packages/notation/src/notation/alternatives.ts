@@ -12,7 +12,10 @@ export function lyricMeasures(document: ScoreDocument, block: ScoreLyricBlock): 
   const pass = block.alternativePass ?? Number(block.range || 1)
   return [...document.parts.values()].flatMap(part => part.melody.filter(measure => measure.events.some(event =>
     (block.targetStart === undefined || block.targetStart <= event.sourceStart) && (block.targetEnd === undefined || event.sourceStart < block.targetEnd)))
-    .map(host => alternativeMeasure(document, host, pass)))
+    .map(host => {
+      const selected=alternativeMeasure(document,host,pass)
+      return selected!==host ? selected : {...host,events:host.events.filter(event=>(block.targetStart === undefined || block.targetStart <= event.sourceStart) && (block.targetEnd === undefined || event.sourceStart < block.targetEnd))}
+    }))
 }
 
 export function alternativeLyricBlocks(document: ScoreDocument): ScoreLyricBlock[] {
@@ -48,11 +51,15 @@ export function validateAlternatives(document: ScoreDocument, projection: M3NDoc
       if (Math.abs(sum(item.measure.events)-sum(item.host.events))>1e-8) report(row.start,row.start+row.text.length,'替代旋律与对应主旋律小节的总时值必须相同')
       if (row.passes.some(pass => !(passes.get(item.host)?.has(pass)))) report(row.start,row.start+row.text.length,'替代旋律的遍次超出该小节的实际演奏次数')
       if ((document.alternatives ?? []).some(other => other !== item && other.host === item.host && other.passes.some(pass => item.passes.includes(pass)))) report(row.start,row.start+row.text.length,'同一小节、同一遍次不能重复指定替代旋律')
-      const index = part.melody.indexOf(item.host)
-      if (part.melody[index-1]?.events.at(-1)?.tie || item.host.events.at(-1)?.tie || item.measure.events.at(-1)?.tie) report(row.start,row.start+row.text.length,'替代旋律边界暂不支持跨小节延音，请把完整延音写入同一替代小节')
+
+    }
+    const first = items[0], last = items.at(-1)
+    if (first && last) {
+      const index = part.melody.indexOf(first.host)
+      if (part.melody[index-1]?.events.at(-1)?.tie || last.host.events.at(-1)?.tie || last.measure.events.at(-1)?.tie) report(row.start,row.start+row.text.length,'替代旋律边界暂不支持跨小节延音，请把完整延音写入同一替代范围')
       if (document.intervals.some(interval => interval.staff==='melody' && interval.start!==undefined && interval.end!==undefined &&
-        interval.start <= (item.host.events.at(-1)?.sourceStart ?? -1) && interval.end >= (item.host.events[0]?.sourceStart ?? Infinity) &&
-        (interval.start < (item.host.events[0]?.sourceStart ?? 0) || interval.end > (item.host.events.at(-1)?.sourceEnd ?? 0)))) report(row.start,row.start+row.text.length,'替代小节不能截断主旋律的跨小节区间，请在替代范围内分别书写完整乐句')
+        interval.start <= (last.host.events.at(-1)?.sourceStart ?? -1) && interval.end >= (first.host.events[0]?.sourceStart ?? Infinity) &&
+        (interval.start < (first.host.events[0]?.sourceStart ?? 0) || interval.end > (last.host.events.at(-1)?.sourceEnd ?? 0)))) report(row.start,row.start+row.text.length,'替代范围不能截断主旋律的跨小节区间，请在替代范围内分别书写完整乐句')
     }
   }
   return diagnostics

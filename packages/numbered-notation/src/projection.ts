@@ -78,7 +78,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       const firsts = new Map<number, string>(), lasts = new Map<number, string>()
       let activeKey = document.key, activeTempo = document.tempo
       let activeMeter = `${document.meterCount}/${document.meterUnit}`
-      let previousTied: ScoreEvent | undefined
+      const precedingAlternative = alternative && document.alternatives?.find(item=>item.sourceStart===alternative.sourceStart && item.host===melody[hostIndex-1])
+      const precedingEvent = precedingAlternative?.measure.events.at(-1)
+      let previousTied: ScoreEvent | undefined = precedingEvent?.tie ? precedingEvent : undefined
       let previousMeasure: ScoreMeasure | undefined
       let dynamic = ''
       const bind = (expression: string, event: ScoreEvent | undefined, measureId: string, slot: number, suffix = '', lyricTarget = false) => {
@@ -94,10 +96,12 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       }
       const visibleMeasures = [...measures]
       while (visibleMeasures.length && !visibleMeasures.at(-1)?.events.length && !visibleMeasures.at(-1)?.multiRest) visibleMeasures.pop()
+      const followsOpening = (index: number) => document.order?.[0]==='' && Boolean(melody[index]?.sectionName)
+        && melody.slice(0,index).every(measure=>measure.sectionName==='')
       const breaksBefore = (index: number) => index > 0 && Boolean(
         visibleMeasures[index]?.breakBefore || visibleMeasures[index - 1]?.breakAfter
         || melody[index]?.breakBefore || melody[index - 1]?.breakAfter
-        || visibleMeasures[index]?.events.some(event => event.sectionLabel) || melody[index]?.events.some(event => event.sectionLabel),
+        || !followsOpening(index) && (visibleMeasures[index]?.events.some(event => event.sectionLabel) || melody[index]?.events.some(event => event.sectionLabel)),
       )
       visibleMeasures.forEach((measure, measureIndex) => {
         // Explicit accidental reminders carry their full pitch into jpFun;
@@ -243,7 +247,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const replacements = document.alternatives?.filter(item=>item.host===measure) ?? []
           if (replacements.length) {
             let main = pieces.splice(measureStart).join(' ')
-            for (const replacement of replacements) main = `@ossia({${main}},{@set(fontsize=18) ${renderVoice([replacement.measure],'melody',replacement,measureIndex)}})`
+            for (const replacement of replacements) main = `@ossia({${main}},{@set(fontsize=18) ${renderVoice([replacement.measure],'melody',replacement,measureIndex)}},lane=${quote(replacement.passes.join(','))})`
             pieces.push(main)
           }
         }
@@ -331,7 +335,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     const available = options.width - 2 * (options.pageMargin ?? 32)
     const measure = (text: string) => [...text].reduce((sum, char) => sum + (char.codePointAt(0)! > 127 ? 16 : 12), 0)
     let line: string[] = [], used = 100
-    for (const name of document.order) {
+    for (const name of document.order.filter(Boolean)) {
       const addition = measure(name) + 11 + (line.length ? 24 : 0)
       if (used + addition > available && line.length) {
         orderLines.push(line)

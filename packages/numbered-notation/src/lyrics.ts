@@ -90,6 +90,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     labeledRowsByPhrase.set(key, rows)
     previous = { signature, end, rows }
   }
+  const printedSyllables = new Map<LyricRowData, Set<object>>()
   alternativeLyricBlocks(document).forEach((block) => {
     const row = lyricRow(block)
     const blockPasses = lyricPasses(block)
@@ -118,7 +119,10 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const slots = result.get(target.event) ?? new Map<number, Map<number, LyricRowData>>()
       const rows = slots.get(target.slot) ?? new Map<number, LyricRowData>()
       const data = rows.get(row) ?? { texts: [], passes: undefined }
-      data.texts.push(syllable.text)
+      const printed = printedSyllables.get(data) ?? new Set<object>()
+      if (!printed.has(syllable)) data.texts.push(syllable.text)
+      printed.add(syllable)
+      printedSyllables.set(data, printed)
       data.underlined = syllable.underlined
       data.passes = new Set([...(data.passes ?? []),...(rowPasses(blockPasses, target.event) ?? [])])
       data.annotation = annotationPending ? annotation : undefined

@@ -12,7 +12,7 @@ const measure: MeasureFn = (members, gap) => {
         return { offset, extent };
     });
 };
-const place: PlaceFn = (host, group, gap) => host.bottom + gap * 0.4 - group.top;
+const place: PlaceFn = (host, group, gap) => host.bottom + gap * 0.15 - group.top;
 const arrangement = { laneKey: 'ossia', measure, place };
 
 class OssiaFunction extends ASTFunctionNode {
@@ -22,21 +22,26 @@ class OssiaFunction extends ASTFunctionNode {
         args: [
             { name: 'host', type: 'content' as const, default: null, description: '主旋律' },
             { name: 'alternative', type: 'content' as const, default: null, description: '替代旋律' },
+            { name: 'lane', type: 'string' as const, default: 'default', description: '独立替代行' },
         ],
     };
+    readonly lane: string;
+    readonly arrangement: typeof arrangement;
     readonly host: ASTNodeBase;
     readonly alternative: ASTNodeBase;
     override get children() { return [this.host, this.alternative]; }
-    override timeFlowModel() { return { children: this.children, mode: 'parallel' as const, tracks: arrangement }; }
+    override timeFlowModel() { return { children: this.children, mode: 'parallel' as const, tracks: this.arrangement }; }
     override loweringEnter(_ctx: LoweringContext, track: Track) {
-        track.group(arrangement, 1).members[0].alternative = true;
+        track.group(this.arrangement, 1).members[0].alternative = true;
         return [];
     }
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
-        [this.host, this.alternative] = this.getArgValue(args,ctx) as [ASTNodeBase,ASTNodeBase];
+        const [host,alternative,lane] = this.getArgValue(args,ctx) as [ASTNodeBase,ASTNodeBase,string];
+        this.host=host; this.alternative=alternative; this.lane=lane;
+        this.arrangement={...arrangement,laneKey:`ossia/${lane}`};
         this.host.parent = this; this.alternative.parent = this;
     }
-    override toString(source: string) { return `@ossia(${this.host.toString(source)},${this.alternative.toString(source)})`; }
+    override toString(source: string) { return `@ossia(${this.host.toString(source)},${this.alternative.toString(source)},lane=${JSON.stringify(this.lane)})`; }
 }
 export const OssiaNode: ASTFunctionClass = OssiaFunction;

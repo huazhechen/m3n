@@ -645,14 +645,14 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
       targets.set(pass, passMeasures)
     }
   }
-  if (document.alternatives?.length) {
+  if (document.alternatives?.some(item=>item.host.events.some(event=>start<=event.sourceStart && event.sourceStart<end))) {
     for (const [pass, original] of targets) {
       let previousTie = false
       const selected = part.melody.filter(measure => measure.events.some(event => start <= event.sourceStart && event.sourceStart < end))
-        .map(host => alternativeMeasure(document,host,pass).events.flatMap(event => {
+        .map(host => { const selected=alternativeMeasure(document,host,pass); return selected.events.filter(event=>selected!==host || start<=event.sourceStart && event.sourceStart<end).flatMap(event => {
           const tied = previousTie; previousTie=event.tie
           return event.kind==='rest' ? [] : Array.from({length:event.kind==='tuplet'?event.pitches.filter(pitch=>pitch!=='0').length:1},(_,index)=>({tied:tied&&index===0}))
-        }))
+        })})
       if (selected.length===original.length) targets.set(pass,selected)
     }
   }

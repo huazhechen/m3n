@@ -82,6 +82,8 @@ test('submit is simulated locally and opens the reader', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.getByText('本地模拟提交')).toBeVisible()
   await page.getByLabel('M3N source').fill(source)
+  await expect(page.locator('.score-paper').getByText('本地测试', { exact: true })).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy','true')
   await page.getByRole('button', { name: '临时分享' }).click()
 
   await expect(page).toHaveURL(/\/scores\/[a-z0-9_]+_[0-9]{13}/)
