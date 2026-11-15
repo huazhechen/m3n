@@ -17,7 +17,7 @@ describe('bundled score corpus', () => {
   it.each([
     ['feng', '枫', maple, 61, 4],
     ['yan_hua_yi_leng', '烟花易冷', smoke, 56, 4],
-    ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 78, 2],
+    ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 46, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
     ['yong_yuan_tong_zai', '永远同在', always, 62, 3],
   ] as const)('loads the complete reference melody %s with valid bar durations', async (id, title, source, count, beats) => {
@@ -34,6 +34,10 @@ describe('bundled score corpus', () => {
       for (const index of [16, 50]) expected[index] = 3
       for (const index of [17, 34, 51]) expected[index] = 1
     }
+    if (id === 'dan_huang_guan_bo_er_ka') {
+      for (const index of [1,18,27,44]) expected[index] = 1.5
+      for (const index of [2,19,28,45]) expected[index] = 0.5
+    }
     if (id === 'zhi_ai_li_si') { expected[0] = 1; expected[57] = 2 }
     expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
       .toEqual(expected)
@@ -47,11 +51,9 @@ describe('bundled score corpus', () => {
     const bars = (source: string) => parseM3NDocument(source).parts.get('score')!.melody.filter(measure => measure.events.length)
     expect(parseM3NDocument(smoke).order).toEqual(['A','B1','A','B2','B2','C'])
     const polkaBars = bars(polka)
-    expect(polkaBars.flatMap((measure, index) => measure.left === 'rptstart' ? [index + 1] : []))
-      .toEqual([3, 20, 45, 62])
-    expect(polkaBars.flatMap((measure, index) => measure.ending === '1' ? [index + 1] : []))
-      .toEqual([18, 27, 60, 77])
-    expect([19, 28, 44, 61].map(index => polkaBars[index]!.events[0]!.key)).toEqual(['G', 'C', 'F', 'C'])
+    expect(polkaBars.every(bar=>!bar.ending && bar.left!=='rptstart' && bar.right!=='rptend')).toBe(true)
+    expect(parseM3NDocument(polka).order).toEqual(['序','A','A','B','B','A','C','C','A','A','尾'])
+    expect([2,19,28,45].map(index=>polkaBars[index]!.events[0]!.key)).toEqual(['C','G','F','C'])
     const mapleBars = bars(maple)
     expect(mapleBars[35]!.events[0]!.key).toBe('Db')
     expect(mapleBars[0]!.events[0]!.beats).toBe(0.5)
@@ -194,12 +196,23 @@ describe('bundled score corpus', () => {
     const source=reference.id==='mozart_k545'?mozartK545:polka
     const document=parseM3NDocument(source)
     const bars=document.parts.get('score')!.melody.filter(bar=>bar.events.length)
-    expect(bars.map(bar=>({key:bar.events[0]!.key,notes:bar.events.map(event=>`${event.pitches.join('+')||'0'}:${event.beats}${event.tie?'~':''}`).join(' ')})))
-      .toEqual(reference.bars)
     if(reference.id==='dan_huang_guan_bo_er_ka') {
+      const expanded=alternativePerformance(document)
+      const measures=expanded.parts.get('score')!.melody
+      const pitches=resolveScorePitches(measures)
+      let dynamic='mf'
+      const playback=measures.flatMap(bar=>bar.events.map(event=>{
+        if(event.dynamic)dynamic=event.dynamic
+        return {pitches:pitches.get(event)?.map(pitch=>pitch.replace(/:n$/,':')),beats:event.beats,tie:event.tie,postfixes:event.postfixes,dynamic,kind:event.kind}
+      }))
+      expect(playback).toEqual(reference.playback)
+      expect(playback).toHaveLength(772)
+      expect(playback.reduce((sum,event)=>sum+event.beats,0)).toBe(260)
       expect(document).toMatchObject({tempo:120,hasExplicitTempo:true})
-      for(const index of [5,13,31,39,64,72]) expect(bars[index]!.events.slice(0,4).map(event=>event.pitches[0])).toEqual(['5e','4e','2e','7'])
-      expect(bars[77]!.events.map(event=>event.pitches)).toEqual([['1e'],['1e'],['1e'],[]])
+      expect(document.alternatives).toHaveLength(4)
+    } else {
+      expect(bars.map(bar=>({key:bar.events[0]!.key,notes:bar.events.map(event=>`${event.pitches.join('+')||'0'}:${event.beats}${event.tie?'~':''}`).join(' ')})))
+        .toEqual(reference.bars)
     }
   })
 

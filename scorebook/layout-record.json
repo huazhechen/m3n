@@ -1,13 +1,13 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十三版",
+  "edition": "第五十四版",
   "showCredits": false,
   "uniformSystemHeight": false,
   "minimumSystemGapEm": 0.5,
   "rendererSha256": "865df2eef46868d9b4fd69ef144b134ecf7a3efbee161ee2d4d202118268e746",
   "sourceCount": 86,
   "entryCount": 86,
-  "pageCount": 80,
+  "pageCount": 79,
   "frontPages": 3,
   "baseWidth": 780,
   "page": {
@@ -9927,45 +9927,29 @@
       "minimumNoteGapEm": 0.4,
       "wrapWidthRatio": 1,
       "systemDensities": [
-        0.7147768693670397,
-        0.5299485884050689,
-        0.7188680644539316,
-        0.9848299485757854,
-        1.061362428835375,
-        0.8710988581316239,
-        1.141650499222299,
-        0.9431888701885544,
-        1.2066204189838277,
-        1.2071517568001688,
-        1.061362428835375,
-        0.9790744878403664,
-        0.903737590437864,
-        0.9064428826174705,
-        0.90237733899021,
-        1.2066204189838277,
-        0.9853677586104254,
-        1.0234131363548966,
-        0.6121869366152782
+        0.14610722955535974,
+        1.0262389727047454,
+        0.837195808113871,
+        0.8690829127601164,
+        0.7778595371912727,
+        0.8039506152359565,
+        1.0719973949939567,
+        0.7978306064931211,
+        0.8645170731807862,
+        1.0021225140646104,
+        0
       ],
       "baselineSteps": [
-        66.831,
-        55.45,
+        78.831,
+        150.665,
         70.09,
-        66.831,
-        84.935,
+        64.09,
+        141.476,
         80.31,
-        84.935,
-        74.93,
-        70.09,
-        66.831,
-        73.481,
+        85.482,
         66.831,
         75.241,
-        84.935,
-        66.831,
-        70.09,
-        66.831,
-        84.935
+        50.5
       ],
       "voltaSystems": [
         false,
@@ -9973,130 +9957,68 @@
         false,
         false,
         false,
-        true,
-        false,
-        true,
         false,
         false,
         false,
         false,
         false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        true
+        false
       ],
       "paragraphSystems": [
-        "0:0,0:1",
+        "0:0",
+        "0:1,0:0",
         "0:1",
         "0:1",
-        "0:1",
-        "0:1",
-        "0:2,0:3,0:4",
-        "0:4",
-        "0:4,0:5,0:6,0:7",
-        "0:7",
-        "0:7",
-        "0:7",
-        "0:7,0:8",
-        "0:8",
-        "0:8",
-        "0:8,0:9,0:10,0:11",
-        "0:11",
-        "0:11",
-        "0:11",
-        "0:11,0:12,0:13"
+        "0:1,0:0",
+        "0:2",
+        "0:2",
+        "0:3",
+        "0:3",
+        "0:3",
+        "0:4"
       ],
-      "repeatRanges": [
-        {
-          "section": "",
-          "occurrence": 1,
-          "start": 0,
-          "end": 6
-        },
-        {
-          "section": "",
-          "occurrence": 2,
-          "start": 5,
-          "end": 8
-        },
-        {
-          "section": "",
-          "occurrence": 3,
-          "start": 11,
-          "end": 15
-        },
-        {
-          "section": "",
-          "occurrence": 4,
-          "start": 14,
-          "end": 19
-        }
-      ],
+      "repeatRanges": [],
       "flowRanges": [
         {
-          "start": 0,
+          "start": 1,
           "end": 5
         },
         {
           "start": 5,
-          "end": 8
+          "end": 7
         },
         {
           "start": 7,
-          "end": 12
-        },
-        {
-          "start": 11,
-          "end": 15
-        },
-        {
-          "start": 14,
-          "end": 19
-        },
-        {
-          "start": 12,
-          "end": 14
+          "end": 10
         }
       ],
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "快速二拍子、颤音、三连音与多组反复",
-      "width": 606,
+      "reason": "快速二拍子、颤音、三连音与弱起分段复用",
+      "width": 708,
       "systemGap": 11,
-      "relativeScalePercent": 128.71,
-      "screenNotePx": 25.27,
+      "relativeScalePercent": 110.17,
+      "screenNotePx": 21.63,
       "pages": [
-        79,
-        80
+        79
       ],
-      "systems": 19,
+      "systems": 11,
       "systemsPerPage": [
-        11,
-        8
+        11
       ],
-      "sourceSha256": "70f534bdc652c474106214e9d4c74e95a124a9fdd5dd60e11c91e10470b3aaba",
+      "sourceSha256": "addedcab057adac425b27a522d959e98d531e6213205e0a5304c0c3c1a865911",
       "candidates": [
         {
-          "width": 590,
+          "width": 708,
           "systemGap": 11,
-          "rows": 22,
-          "pages": 2,
-          "cost": 2010.11
-        },
-        {
-          "width": 606,
-          "systemGap": 11,
-          "rows": 19,
-          "pages": 2,
-          "cost": 2002.39
+          "rows": 11,
+          "pages": 1,
+          "cost": 1425.15
         }
       ],
       "rejectedCandidates": [],
-      "fillPage": false,
-      "reviewNote": "第五十一版：按新上传简谱核对78小节，主题5/4/2/7、F段1与5及末尾同八度1改正，保留全部反复房子，补120拍。"
+      "fillPage": true,
+      "reviewNote": "第五十四版：序/A/A/B/B/A/C/C/A/A/尾，78小节压为46个片段，去掉全部四组房子；A段按遍次保留原力度、顿音，C弱起转F调为同一个5，不再区分八度。完整MIDI指纹不变，708px单页。"
     }
   ],
   "pages": [
@@ -11744,7 +11666,7 @@
     {
       "page": 79,
       "section": "instrumental",
-      "fillPercent": 97.3,
+      "fillPercent": 99.9,
       "items": [
         {
           "id": "dan_huang_guan_bo_er_ka",
@@ -11753,29 +11675,10 @@
             1,
             11
           ],
-          "width": 606,
+          "width": 708,
           "systemGap": 11,
           "top": 0,
-          "height": 1028.36
-        }
-      ]
-    },
-    {
-      "page": 80,
-      "section": "instrumental",
-      "fillPercent": 68.2,
-      "items": [
-        {
-          "id": "dan_huang_guan_bo_er_ka",
-          "title": "单簧管波尔卡",
-          "systems": [
-            12,
-            19
-          ],
-          "width": 606,
-          "systemGap": 11,
-          "top": 0,
-          "height": 720.89
+          "height": 1055.96
         }
       ]
     }
@@ -11783,7 +11686,7 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 162,
+    "geometryCandidates": 161,
     "minimumMusicPageFillPercent": 59.154,
     "underfilledMusicPages": 0,
     "outside": 0,
@@ -11802,7 +11705,7 @@
     "undersizedNoteEntries": 0,
     "maximumMusicNotePx": 25.953,
     "oversizedNoteEntries": 0,
-    "outlinedPages": 80,
+    "outlinedPages": 79,
     "outlinedPageOverflow": 0
   }
 }

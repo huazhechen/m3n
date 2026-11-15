@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十三版",
+  "edition": "第五十四版",
   "sourceCount": 86,
   "baseWidth": 780,
   "widthCandidates": [
@@ -1936,24 +1936,25 @@
       "title": "单簧管波尔卡",
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "快速二拍子、颤音、三连音与多组反复",
-      "width": 606,
-      "sharePage": true,
+      "reason": "快速二拍子、颤音、三连音与弱起分段复用",
+      "width": 708,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第五十一版：按新上传简谱核对78小节，主题5/4/2/7、F段1与5及末尾同八度1改正，保留全部反复房子，补120拍。",
+      "reviewNote": "第五十四版：序/A/A/B/B/A/C/C/A/A/尾，78小节压为46个片段，去掉全部四组房子；A段按遍次保留原力度、顿音，C弱起转F调为同一个5，不再区分八度。完整MIDI指纹不变，708px单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 606
+      "maximumWidth": 708,
+      "pageCount": 1
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v53.pdf",
-  "outputKey": "scorebook-v53-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v54.pdf",
+  "outputKey": "scorebook-v54-numbered",
   "page": {
     "width": 744,
     "height": 1133,

@@ -615,6 +615,8536 @@
         "key": "C",
         "notes": "1e:0.5 1e:0.5 1e:0.5 0:0.5"
       }
+    ],
+    "playback": [
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "rest"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "ff",
+        "kind": "rest"
+      },
+      {
+        "pitches": [
+          "d:5:",
+          "e:5:",
+          "d:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:6:"
+        ],
+        "beats": 1,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:",
+          "e:5:",
+          "d:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:6:"
+        ],
+        "beats": 1,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "ff",
+        "kind": "rest"
+      },
+      {
+        "pitches": [
+          "d:5:",
+          "e:5:",
+          "d:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:6:"
+        ],
+        "beats": 1,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:",
+          "e:5:",
+          "d:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:6:"
+        ],
+        "beats": 1,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 1,
+        "tie": true,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 1,
+        "tie": true,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:",
+          "d:5:",
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.75,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.75,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 1,
+        "tie": true,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 1,
+        "tie": true,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 1,
+        "tie": true,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 1,
+        "tie": true,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:",
+          "d:5:",
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.75,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.75,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 1,
+        "tie": true,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:6:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:f"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 1,
+        "tie": true,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:f"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 1.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:s"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "p",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "f",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:",
+          "a:4:",
+          "g:4:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "tuplet"
+      },
+      {
+        "pitches": [
+          "f:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:4:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "tr"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [
+          "tip"
+        ],
+        "dynamic": "mp",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "b:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "a:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "g:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "f:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "e:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "d:5:"
+        ],
+        "beats": 0.25,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "mf",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [
+          "c:5:"
+        ],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [
+          "str"
+        ],
+        "dynamic": "ff",
+        "kind": "note"
+      },
+      {
+        "pitches": [],
+        "beats": 0.5,
+        "tie": false,
+        "postfixes": [],
+        "dynamic": "ff",
+        "kind": "rest"
+      }
     ]
   }
 ]
