@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { m3nToMei, parseM3NDocument, parseM3NDocumentStructure, measurePlaybackPasses, validateM3NDiagnostics } from '@m3n/notation'
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
-import theSwan from '../scores/tian_e_01.m3n?raw'
 import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
 import loveLikeTide from '../scores/ai_ru_chao_shui_01.m3n?raw'
 import maple from '../scores/feng_01.m3n?raw'
@@ -179,22 +178,6 @@ describe('bundled score corpus', () => {
     }
   })
 
-  it('includes The Swan with complete 6/4 bars and its final tied sustain', async () => {
-    const entry = presetScores.find(score => score.sourcePath === 'tian_e_01.m3n')
-    expect(entry?.title).toBe('天鹅')
-    expect(await loadPresetScore(entry!.slug)).toBe(theSwan)
-    expect(validateM3NDiagnostics(theSwan)).toEqual([])
-    const document = parseM3NDocument(theSwan)
-    expect(document).toMatchObject({ key: 'Bb', meterCount: 6, meterUnit: 4, tempo: 72 })
-    const measures = document.parts.get('score')!.melody.filter(measure => measure.events.length)
-    expect(measures).toHaveLength(27)
-    expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
-      .toEqual(Array(27).fill(6))
-    expect(measures[0]!.events.map(event => event.beats)).toEqual(Array(24).fill(0.25))
-    expect(measures[16]!.events.map(event => event.pitches)).toEqual([['7b'], ['7=']])
-    const ending = [...measures[25]!.events, ...measures[26]!.events]
-    expect(ending.slice(0, 3).map(event => [event.beats, event.tie])).toEqual([[6, true], [3, true], [0.5, false]])
-  })
 
   it('preserves Besame Mucho houses, repeat scope and reference rhythms', () => {
     expect(validateM3NDiagnostics(besameMucho)).toEqual([])

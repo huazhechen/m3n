@@ -1,7 +1,7 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十一版",
-  "sourceCount": 86,
+  "edition": "第五十二版",
+  "sourceCount": 85,
   "baseWidth": 780,
   "widthCandidates": [
     590
@@ -1693,26 +1693,6 @@
       "maximumWidth": 710
     },
     {
-      "id": "tian_e",
-      "file": "tian_e_01.m3n",
-      "title": "天鹅",
-      "section": "instrumental",
-      "group": "歌唱性器乐与舞曲",
-      "reason": "六拍子、长线条与气息控制",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ]
-    },
-    {
       "id": "ai_de_li_zan",
       "file": "ai_de_li_zan_01.m3n",
       "title": "爱的礼赞",
@@ -1959,8 +1939,8 @@
       "maximumWidth": 606
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v51.pdf",
-  "outputKey": "scorebook-v51-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v52.pdf",
+  "outputKey": "scorebook-v52-numbered",
   "page": {
     "width": 744,
     "height": 1133,

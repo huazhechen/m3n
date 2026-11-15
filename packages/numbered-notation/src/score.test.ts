@@ -1149,15 +1149,15 @@ describe('jpFun numbered notation adapter', () => {
     expect(nested.source.match(/@tie\([^)]*\)/g)).toEqual(['@tie(m1,m2)', '@tie(m3,m4)', '@tie(m1,m4)'])
   })
 
-  it('places The Swan hairpins above notes and clear of its nested slurs', () => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/tian_e_01.m3n'), 'utf8')
+  it('places hairpins above notes and clear of nested slurs', () => {
+    const source = '{4/4}\nN: {cresc}{lg}{lg}1 2{/} {lg}3 4{/}{/}{/} | {decres}{lg}{lg}5 4{/} {lg}3 2{/}{/}{/} |||'
     for (const width of [320, 820]) {
       const document = parseM3NDocument(source)
       const projection = projectNumberedScore(document, { width, paged: false })
       const result = geometry(document, { width, paged: false })
       const hairpins = result.layout.attachments.filter(item => item.sourceSpan
         && projection.source.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith('@dyn('))
-      expect(hairpins).toHaveLength(6)
+      expect(hairpins).toHaveLength(2)
       for (const hairpin of hairpins) for (const region of hairpin.regions) {
         const notes = result.layout.objects.filter(node => !node.T.isZero() && node.layoutLine === region.line
           && node.box.x < region.x + region.w && node.box.x + node.box.w > region.x)

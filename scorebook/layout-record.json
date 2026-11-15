@@ -1,13 +1,13 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十一版",
+  "edition": "第五十二版",
   "showCredits": false,
   "uniformSystemHeight": false,
   "minimumSystemGapEm": 0.5,
   "rendererSha256": "865df2eef46868d9b4fd69ef144b134ecf7a3efbee161ee2d4d202118268e746",
-  "sourceCount": 86,
-  "entryCount": 86,
-  "pageCount": 79,
+  "sourceCount": 85,
+  "entryCount": 85,
+  "pageCount": 78,
   "frontPages": 3,
   "baseWidth": 780,
   "page": {
@@ -8183,121 +8183,6 @@
     },
     {
       "order": 75,
-      "id": "tian_e",
-      "title": "天鹅",
-      "file": "tian_e_01.m3n",
-      "notation": "numbered",
-      "includeBass": false,
-      "uniformSystemHeight": false,
-      "equalMeasures": false,
-      "wrap": "normal",
-      "noteGapEm": 0.6,
-      "minimumNoteGapEm": 0.4,
-      "wrapWidthRatio": 1,
-      "systemDensities": [
-        1.1766312011102773,
-        0.7312885072945138,
-        0.765619726370862,
-        0.6129830372488482,
-        0.6510632886369201,
-        0.45001830540688054,
-        0.7698741969646175,
-        0.5329139390370576,
-        0.5313279269014534
-      ],
-      "baselineSteps": [
-        63.338,
-        65.77,
-        64.297,
-        69.075,
-        77.815,
-        64.159,
-        84.806,
-        70.25
-      ],
-      "voltaSystems": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "paragraphSystems": [
-        "0:0",
-        "0:0",
-        "0:1",
-        "0:1",
-        "0:2",
-        "0:2",
-        "0:3",
-        "0:3",
-        "0:4"
-      ],
-      "repeatRanges": [],
-      "flowRanges": [
-        {
-          "start": 0,
-          "end": 2
-        },
-        {
-          "start": 2,
-          "end": 4
-        },
-        {
-          "start": 4,
-          "end": 6
-        },
-        {
-          "start": 6,
-          "end": 8
-        },
-        {
-          "start": 0,
-          "end": 2
-        },
-        {
-          "start": 2,
-          "end": 4
-        },
-        {
-          "start": 6,
-          "end": 8
-        }
-      ],
-      "section": "instrumental",
-      "group": "歌唱性器乐与舞曲",
-      "reason": "六拍子、长线条与气息控制",
-      "width": 590,
-      "systemGap": 11,
-      "relativeScalePercent": 132.2,
-      "screenNotePx": 25.95,
-      "pages": [
-        64
-      ],
-      "systems": 9,
-      "systemsPerPage": [
-        9
-      ],
-      "sourceSha256": "6a1ff4841f20840c633f31a2d64ea4b4df9929301beec85261b673c397b9f8db",
-      "candidates": [
-        {
-          "width": 590,
-          "systemGap": 11,
-          "rows": 9,
-          "pages": 1,
-          "cost": 1000.87
-        }
-      ],
-      "rejectedCandidates": [],
-      "fillPage": false,
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
-    },
-    {
-      "order": 76,
       "id": "ai_de_li_zan",
       "title": "爱的礼赞",
       "file": "ai_de_li_zan_01.m3n",
@@ -8387,7 +8272,7 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        65
+        64
       ],
       "systems": 12,
       "systemsPerPage": [
@@ -8408,7 +8293,7 @@
       "reviewNote": "第四十九版：按快悦谱参考重写为D/F调4/4，双音取低音；六拍长音并入A段，删除间奏，采用A/B1/A/B2演奏顺序，单页。"
     },
     {
-      "order": 77,
+      "order": 76,
       "id": "por_una_cabeza",
       "title": "一步之遥",
       "file": "por_una_cabeza_01.m3n",
@@ -8481,7 +8366,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        66
+        65
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -8509,7 +8394,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 78,
+      "order": 77,
       "id": "san_bu",
       "title": "散步",
       "file": "san_bu_01.m3n",
@@ -8594,7 +8479,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        66
+        65
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -8622,7 +8507,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 79,
+      "order": 78,
       "id": "beer_barrel_polka",
       "title": "啤酒桶波尔卡",
       "file": "beer_barrel_polka_01.m3n",
@@ -8735,7 +8620,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        67
+        66
       ],
       "systems": 14,
       "systemsPerPage": [
@@ -8756,7 +8641,7 @@
       "reviewNote": "第四十八版：A 段末尾差异改为第一、第二房子，撤销替代旋律；顶部 ABCD 顺序不变。"
     },
     {
-      "order": 80,
+      "order": 79,
       "id": "canon",
       "title": "卡农",
       "file": "canon_01.m3n",
@@ -8903,7 +8788,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        68
+        67
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -8931,7 +8816,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 81,
+      "order": 80,
       "id": "flower_dance",
       "title": "花之舞",
       "file": "flower_dance_01.m3n",
@@ -9124,8 +9009,8 @@
       "relativeScalePercent": 124.6,
       "screenNotePx": 24.46,
       "pages": [
-        69,
-        70
+        68,
+        69
       ],
       "systems": 33,
       "systemsPerPage": [
@@ -9147,7 +9032,7 @@
       "reviewNote": "第四十九版：将版宽由744调至626，数字放大约19%，保留两页并提高两页使用率。"
     },
     {
-      "order": 82,
+      "order": 81,
       "id": "turkish_march",
       "title": "土耳其进行曲",
       "file": "turkish_march_01.m3n",
@@ -9346,8 +9231,8 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        71,
-        72
+        70,
+        71
       ],
       "systems": 22,
       "systemsPerPage": [
@@ -9369,7 +9254,7 @@
       "reviewNote": "第四十八版：段落名独占一行，C 段第一组反复结束后明确换页；前页优先填满，避免拆开完整反复。"
     },
     {
-      "order": 83,
+      "order": 82,
       "id": "valsentino",
       "title": "Valsentino(快速圆舞曲)",
       "file": "valsentino_01.m3n",
@@ -9523,8 +9408,8 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        73,
-        74
+        72,
+        73
       ],
       "systems": 24,
       "systemsPerPage": [
@@ -9553,7 +9438,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 84,
+      "order": 83,
       "id": "zhi_ai_li_si",
       "title": "致爱丽丝",
       "file": "zhi_ai_li_si_01.m3n",
@@ -9688,7 +9573,7 @@
       "relativeScalePercent": 109.86,
       "screenNotePx": 21.57,
       "pages": [
-        75
+        74
       ],
       "systems": 17,
       "systemsPerPage": [
@@ -9772,7 +9657,7 @@
       "reviewNote": "第四十七版：A、B 段采用成对反复与第一、第二房子，取消这两段的替代旋律；保留 D 段再现。具名段落增加额外留白。"
     },
     {
-      "order": 85,
+      "order": 84,
       "id": "mozart_k545",
       "title": "C大调奏鸣曲 K.545 第一乐章",
       "file": "mozart_k545_01.m3n",
@@ -9963,8 +9848,8 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        76,
-        77
+        75,
+        76
       ],
       "systems": 25,
       "systemsPerPage": [
@@ -9986,7 +9871,7 @@
       "reviewNote": "第五十一版：按新上传简谱逐小节核对73小节，修正混入的伴奏、休止、33小节6、9/54小节临时升音及31—41、50—53小节主旋律声部，保留两组原反复；排版重新验证。"
     },
     {
-      "order": 86,
+      "order": 85,
       "id": "dan_huang_guan_bo_er_ka",
       "title": "单簧管波尔卡",
       "file": "dan_huang_guan_bo_er_ka_01.m3n",
@@ -10141,8 +10026,8 @@
       "relativeScalePercent": 128.71,
       "screenNotePx": 25.27,
       "pages": [
-        78,
-        79
+        77,
+        78
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -11519,25 +11404,6 @@
     {
       "page": 64,
       "section": "instrumental",
-      "fillPercent": 83.9,
-      "items": [
-        {
-          "id": "tian_e",
-          "title": "天鹅",
-          "systems": [
-            1,
-            9
-          ],
-          "width": 590,
-          "systemGap": 11,
-          "top": 0,
-          "height": 887.08
-        }
-      ]
-    },
-    {
-      "page": 65,
-      "section": "instrumental",
       "fillPercent": 95.4,
       "items": [
         {
@@ -11555,7 +11421,7 @@
       ]
     },
     {
-      "page": 66,
+      "page": 65,
       "section": "instrumental",
       "fillPercent": 98.5,
       "items": [
@@ -11586,7 +11452,7 @@
       ]
     },
     {
-      "page": 67,
+      "page": 66,
       "section": "instrumental",
       "fillPercent": 91.8,
       "items": [
@@ -11605,7 +11471,7 @@
       ]
     },
     {
-      "page": 68,
+      "page": 67,
       "section": "instrumental",
       "fillPercent": 93.9,
       "items": [
@@ -11624,7 +11490,7 @@
       ]
     },
     {
-      "page": 69,
+      "page": 68,
       "section": "instrumental",
       "fillPercent": 94.7,
       "items": [
@@ -11643,7 +11509,7 @@
       ]
     },
     {
-      "page": 70,
+      "page": 69,
       "section": "instrumental",
       "fillPercent": 93.3,
       "items": [
@@ -11662,7 +11528,7 @@
       ]
     },
     {
-      "page": 71,
+      "page": 70,
       "section": "instrumental",
       "fillPercent": 95.4,
       "items": [
@@ -11681,7 +11547,7 @@
       ]
     },
     {
-      "page": 72,
+      "page": 71,
       "section": "instrumental",
       "fillPercent": 75.1,
       "items": [
@@ -11700,7 +11566,7 @@
       ]
     },
     {
-      "page": 73,
+      "page": 72,
       "section": "instrumental",
       "fillPercent": 99.7,
       "items": [
@@ -11719,7 +11585,7 @@
       ]
     },
     {
-      "page": 74,
+      "page": 73,
       "section": "instrumental",
       "fillPercent": 60.3,
       "items": [
@@ -11738,7 +11604,7 @@
       ]
     },
     {
-      "page": 75,
+      "page": 74,
       "section": "instrumental",
       "fillPercent": 99.7,
       "items": [
@@ -11757,7 +11623,7 @@
       ]
     },
     {
-      "page": 76,
+      "page": 75,
       "section": "instrumental",
       "fillPercent": 97.9,
       "items": [
@@ -11776,7 +11642,7 @@
       ]
     },
     {
-      "page": 77,
+      "page": 76,
       "section": "instrumental",
       "fillPercent": 85.4,
       "items": [
@@ -11795,7 +11661,7 @@
       ]
     },
     {
-      "page": 78,
+      "page": 77,
       "section": "instrumental",
       "fillPercent": 97.3,
       "items": [
@@ -11814,7 +11680,7 @@
       ]
     },
     {
-      "page": 79,
+      "page": 78,
       "section": "instrumental",
       "fillPercent": 68.2,
       "items": [
@@ -11836,7 +11702,7 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 173,
+    "geometryCandidates": 172,
     "minimumMusicPageFillPercent": 45.24,
     "underfilledMusicPages": 0,
     "outside": 0,
@@ -11855,7 +11721,7 @@
     "undersizedNoteEntries": 0,
     "maximumMusicNotePx": 25.953,
     "oversizedNoteEntries": 0,
-    "outlinedPages": 79,
+    "outlinedPages": 78,
     "outlinedPageOverflow": 0
   }
 }

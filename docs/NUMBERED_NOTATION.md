@@ -80,7 +80,7 @@ const pages = score.render({ width: 800, paged: true, includeBass: true })
 
 该模式保留事件身份、时值和原生关系几何，不移动最终 SVG 图元。SVG 谱行以 `data-m3n-paragraph` 和 `data-m3n-volta` 标记段落及房子分类；谱集布局记录的 `paragraphSystems`、`voltaSystems` 与 `baselineSteps` 保存对应信息及实际节距。核对节距时需同时考虑相邻两行的段落、房子档位、实际歌词行数，以及仅在所在行出现的标题。网页默认仍按自然高度排版。
 
-独立电子谱集的构建工具读取 `scorebook/editorial-plan.json`。第五十一版只维护和导出简谱，保留三篇编排和86个条目，解除原87页及逐曲页码约束。`compactPages: true` 允许相邻同篇、同版宽、同间距样式的完整短曲跨编辑分组合页；`maximumSharedWidth` 指定共页允许的最大版宽，仍受条目字号下限与几何检查约束。当前保留原字号为主，按实际谱行内容预留高度（`uniformSystemHeight: false`），减少不必要的空白；《后来》采用678px版宽、0.2/0.35横向间距排成单页。基本功保留等宽小节、等行高和两页安排。`pagination-reference.json` 仅保留为历史87页版参考，当前配置不再引用。所有副标题去掉“单旋律版”，渐强、渐弱置于音符上方。仅提供简谱导出。
+独立电子谱集的构建工具读取 `scorebook/editorial-plan.json`。第五十二版只维护和导出简谱，保留三篇编排和85个条目，解除原87页及逐曲页码约束。`compactPages: true` 允许相邻同篇、同版宽、同间距样式的完整短曲跨编辑分组合页；`maximumSharedWidth` 指定共页允许的最大版宽，仍受条目字号下限与几何检查约束。当前保留原字号为主，按实际谱行内容预留高度（`uniformSystemHeight: false`），减少不必要的空白；《后来》采用678px版宽、0.2/0.35横向间距排成单页。基本功保留等宽小节、等行高和两页安排。`pagination-reference.json` 仅保留为历史87页版参考，当前配置不再引用。所有副标题去掉“单旋律版”，渐强、渐弱置于音符上方。仅提供简谱导出。
 
 `npm run build:scorebook` 只构建简谱，已删除配对构建器和五线谱配置。
 
