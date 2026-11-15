@@ -16,7 +16,6 @@ describe('bundled score corpus', () => {
     ['feng', '枫', maple, 76, 4],
     ['yan_hua_yi_leng', '烟花易冷', smoke, 51, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 78, 2],
-    ['ai_de_li_zan', '爱的礼赞', salut, 100, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 87, 1.5],
   ] as const)('loads the complete PDF melody %s with its original bar durations', async (id, title, source, count, beats) => {
     const entry = presetScores.find(score => score.sourcePath === `${id}_01.m3n`)
@@ -59,10 +58,6 @@ describe('bundled score corpus', () => {
     const mapleBars = bars(maple)
     expect(mapleBars[49]!.events[0]!.key).toBe('Db')
     expect(mapleBars[1]!.events[0]!.beats).toBe(0.0625)
-    const salutBars = bars(salut)
-    expect(salutBars[9]!.events[1]!.pitches).toEqual(['2#e'])
-    expect(salutBars[32]!.events[0]!.tie).toBe(true)
-    expect([34, 48].map(index => salutBars[index]!.events[0]!.key)).toEqual(['G', 'E'])
     const eliseBars = bars(elise)
     expect(parseM3NDocument(elise).order).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'D'])
     const elisePasses = measurePlaybackPasses(eliseBars)
@@ -97,15 +92,33 @@ describe('bundled score corpus', () => {
     expect(measures[0]!.events.filter(event => event.tie)).toHaveLength(2)
   })
 
-  it('keeps Salut melody timing while leaving accompaniment-only slots silent', () => {
-    const bars=parseM3NDocument(salut).parts.get('score')!.melody.filter(measure=>measure.events.length)
-    for (const index of [0,1,17]) expect(bars[index]!.events.every(event=>event.kind==='rest')).toBe(true)
-    for (const index of [5,21,59]) {
-      expect(bars[index]!.events.map(event=>[event.pitches,event.beats])).toEqual([[['4e'],1],[[],1]])
-    }
-    expect(bars[88]!.events.map(event=>[event.pitches,event.beats])).toEqual([[['1e'],0.5],[[],0.5],[[],1]])
-    // The low fifth inside the theme is melodic, unlike the discarded fills.
-    expect(bars[2]!.events.map(event=>event.pitches)).toEqual([['3e'],['5'],['3e']])
+  it('uses the reference Salut melody with lower harmony and a shared six-beat A ending', async () => {
+    const entry=presetScores.find(score=>score.sourcePath==='ai_de_li_zan_01.m3n')!
+    expect(await loadPresetScore(entry.slug)).toBe(salut)
+    expect(validateM3NDiagnostics(salut)).toEqual([])
+    const document=parseM3NDocument(salut)
+    expect(document).toMatchObject({key:'D',meterCount:4,meterUnit:4,tempo:80,order:['A','B1','A','B2']})
+    expect(document.sections!.map(section=>section.name)).toEqual(['A','B1','B2'])
+    const part=document.parts.get('score')!
+    const bars=part.melody.filter(measure=>measure.events.length)
+    expect(bars).toHaveLength(38)
+    expect(bars.map(bar=>bar.events.reduce((sum,event)=>sum+event.beats,0))).toEqual(Array(38).fill(4))
+    expect(part.bass.flatMap(bar=>bar.events)).toEqual([])
+    expect(bars.flatMap(bar=>bar.events).every(event=>event.kind!=='chord')).toBe(true)
+    expect([0,16,25,32].map(i=>bars[i]!.events[0]!.key)).toEqual(['D','F','F','F'])
+    // The same 4+2 beat tied 6 ends both visits to A; two rests complete its last bar.
+    expect(bars[23]!.events.map(event=>[event.pitches,event.beats,event.tie])).toEqual([[['6e'],4,true]])
+    expect(bars[24]!.events.map(event=>[event.pitches,event.beats])).toEqual([[['6e'],2],[[],2]])
+    expect(bars[24]!.right).toBe('dbl')
+    // Both B variants begin after the removed interlude, without the old sustained 6.
+    expect(bars[25]!.events.map(event=>[event.pitches,event.beats])).toEqual([[[],1],[[],1],[[],1],[[],0.5],[['5'],0.5]])
+    expect(bars[32]!.events.map(event=>event.pitches)).toEqual([['3'],['5d'],['3'],['2'],['1'],['7d'],['1']])
+    // Choose the lower triplets and the four lower closing whole notes from the reference harmony.
+    expect(bars[31]!.events.map(event=>event.pitches)).toEqual([['4#','3','2'],['1#','2','3'],['3'],[]])
+    expect(bars.slice(34).map(bar=>bar.events.map(event=>[event.pitches,event.beats])))
+      .toEqual(['5d','6d','5d','4d'].map(pitch=>[[[pitch],4]]))
+    expect(salut).not.toMatch(/间奏|interlude|\{rest=/)
+    expect(m3nToMei(salut).diagnostics.filter(item=>item.severity==='error')).toEqual([])
   })
 
   it('includes K.545 as a complete single melody with both original repeats', async () => {
