@@ -1,16 +1,16 @@
 {
-  "edition": "第五十版",
+  "edition": "第五十一版",
   "sourcePdf": null,
-  "compactPdf": "循序渐进乐谱集-简谱-v50.pdf",
+  "compactPdf": "循序渐进乐谱集-简谱-v51.pdf",
   "pageCount": 79,
   "originalBytes": null,
-  "compactBytes": 5986911,
+  "compactBytes": 5961470,
   "reductionPercent": null,
   "embeddedFontSubsets": 359,
   "images": 0,
-  "positionedGlyphs": 28032,
+  "positionedGlyphs": 27945,
   "glyphsPerPage": [
-    128,
+    129,
     424,
     460,
     528,
@@ -85,12 +85,12 @@
     374,
     215,
     496,
-    405,
-    423,
-    316,
+    391,
+    345,
+    320,
     227
   ],
   "outsidePages": 0,
   "sourceSha256": null,
-  "compactSha256": "a2038b70c733b3e68f955787c1ad1168a6e1a76d01c699e772b11f2c7949f1c3"
+  "compactSha256": "65142cc69d043664788f18617f6c7e68fde7acd31dec8f28ed5f0ac8c5d02a36"
 }

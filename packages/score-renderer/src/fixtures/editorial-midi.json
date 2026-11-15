@@ -116,5 +116,15 @@
     "duration": 190.67812668333332,
     "sha256": "eee43956143fb526ff5505f61349056c462dcc9f4d2409651ea4ae20be3b8e7e",
     "reference": "第四十六版编排前捕获；保留全部 MIDI 事件和总时长。"
+  },
+  {
+    "id": "mozart_k545",
+    "duration": 291.49583333333334,
+    "sha256": "4b2f6b7e5a4e37b4b98d7329acc1a53137a0418479d841eda9967d25edb1d468"
+  },
+  {
+    "id": "dan_huang_guan_bo_er_ka",
+    "duration": 129.74583333333334,
+    "sha256": "9d954fd254fced9f6b4a5efe62e726f615411aa3ea6142ef017b91f9665f01be"
   }
 ]

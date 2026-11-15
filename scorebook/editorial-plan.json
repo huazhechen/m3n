@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十版",
+  "edition": "第五十一版",
   "sourceCount": 86,
   "baseWidth": 780,
   "widthCandidates": [
@@ -1927,7 +1927,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十九版：取消旧版强制换行，以两页保留全部73小节及原有反复、连奏和力度；段落复用分析见K545分段复用分析.md。",
+      "reviewNote": "第五十一版：按新上传简谱逐小节核对73小节，修正混入的伴奏、休止、33小节6、9/54小节临时升音及31—41、50—53小节主旋律声部，保留两组原反复；排版重新验证。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
@@ -1948,7 +1948,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第五十一版：按新上传简谱核对78小节，主题5/4/2/7、F段1与5及末尾同八度1改正，保留全部反复房子，补120拍。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
@@ -1959,8 +1959,8 @@
       "maximumWidth": 606
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v50.pdf",
-  "outputKey": "scorebook-v50-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v51.pdf",
+  "outputKey": "scorebook-v51-numbered",
   "page": {
     "width": 744,
     "height": 1133,

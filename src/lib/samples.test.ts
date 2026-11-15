@@ -10,6 +10,7 @@ import polka from '../scores/dan_huang_guan_bo_er_ka_01.m3n?raw'
 import salut from '../scores/ai_de_li_zan_01.m3n?raw'
 import elise from '../scores/zhi_ai_li_si_01.m3n?raw'
 import { loadPresetScore, presetScores } from './samples'
+import referenceMelodies from './fixtures/numbered-reference-melodies.json'
 
 describe('bundled score corpus', () => {
   it.each([
@@ -144,16 +145,38 @@ describe('bundled score corpus', () => {
     expect(measures[28]!.left).toBe('rptstart')
     const passes = measurePlaybackPasses(measures)
     expect(measures.map(measure => [...passes.get(measure)!])).toEqual(Array.from({ length: 73 }, () => [1, 2]))
-    // Keep the original low thematic entries and the upper turn in the closing scale.
-    expect(measures[30]!.events[1]!.pitches).toEqual(['5dd'])
-    expect(measures[49]!.events[0]!.pitches).toEqual(['4d'])
-    expect(measures[52]!.events[0]!.pitches).toEqual(['1d'])
+    // The uploaded numbered score identifies these as rests/chords in the melody, not bass runs.
+    expect(measures[30]!.events.map(event=>[event.pitches,event.beats])).toEqual([
+      [['5'],1],[[],1],[[],0.25],[['5e'],0.25],[['7be'],0.25],[['6e'],0.25],[['5e'],0.25],[['4e'],0.25],[['3e'],0.25],[['2e'],0.25],
+    ])
+    for(const index of [34,35,36,37,38,39]) {
+      expect(measures[index]!.events[0]!.kind).toBe('rest')
+      expect(measures[index]!.events.at(-1)!.kind).toBe('rest')
+      expect(measures[index]!.events[0]!.beats).toBe(1)
+      expect(measures[index]!.events.at(-1)!.beats).toBe(1)
+    }
+    for(const [index,pitch] of [[49,'6e'],[50,'5e'],[51,'4e'],[52,'3e']] as const) {
+      expect(measures[index]!.events.map(event=>[event.pitches,event.beats])).toEqual([[[pitch],1],[[],1],[[],1],[[pitch],1]])
+    }
     expect(measures[68]!.events.map(event => event.pitches[0])).toEqual([
       '5=e', '6e', '7e', '1ee', '2ee', '3ee', '2ee', '1ee', '7e', '6e', '5e', '4e', '3e', '2e', '1e',
     ])
     expect(measures[22]!.events.map(event => event.beats)).toEqual([1.5, ...Array(4).fill(0.125), ...Array(4).fill(0.5)])
     expect(measures[25]!.events[0]!.postfixes).toContain('ac((5e 6e))')
     expect(measures[70]!.events[0]!.postfixes).toContain('ac((1e 2e))')
+  })
+
+  it.each(referenceMelodies)('matches every melody bar checked against the uploaded numbered reference: $id', reference => {
+    const source=reference.id==='mozart_k545'?mozartK545:polka
+    const document=parseM3NDocument(source)
+    const bars=document.parts.get('score')!.melody.filter(bar=>bar.events.length)
+    expect(bars.map(bar=>({key:bar.events[0]!.key,notes:bar.events.map(event=>`${event.pitches.join('+')||'0'}:${event.beats}${event.tie?'~':''}`).join(' ')})))
+      .toEqual(reference.bars)
+    if(reference.id==='dan_huang_guan_bo_er_ka') {
+      expect(document).toMatchObject({tempo:120,hasExplicitTempo:true})
+      for(const index of [5,13,31,39,64,72]) expect(bars[index]!.events.slice(0,4).map(event=>event.pitches[0])).toEqual(['5e','4e','2e','7'])
+      expect(bars[77]!.events.map(event=>event.pitches)).toEqual([['1e'],['1e'],['1e'],[]])
+    }
   })
 
   it('includes The Swan with complete 6/4 bars and its final tied sustain', async () => {
