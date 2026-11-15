@@ -41,7 +41,7 @@ export function ConverterPage() {
             mei={analysis.getMei}
             isSourceUpdating={isAnalyzing}
             scoreDocument={analysis.score}
-            headerMetadata={analysis.interaction.headerMetadata}
+
             sourceMap={analysis.interaction.sourceMap}
           />}>
           {result.diagnosticDetails.length > 0 && <ul className="diagnostics editor-source-diagnostics">{result.diagnosticDetails.map((item) => <li key={`${item.code}:${item.message}`}>{formatScoreDiagnostic(item)}</li>)}</ul>}

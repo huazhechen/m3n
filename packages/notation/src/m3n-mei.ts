@@ -1,3 +1,4 @@
+import { alternativePerformance } from './notation/alternatives.js'
 import { parseM3NDocument } from './m3n-direct.js' 
 import { scoreEventIds } from './score-event-ids.js'
 import { m3nChord } from './m3n-harmony.js'
@@ -45,6 +46,10 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const projection = context.projection ?? projectM3NDocument(source, syntaxTree)
   const document = suppliedDocument ?? parseM3NDocument(source, projection)
   const { sourceMap, hasBassStaff, headerMetadata, lyricsByEvent, visibleVerseIndexes } = context.interaction ?? deriveScoreInteraction(document)
+  if (document.alternatives?.length) {
+    const result = m3nToMei(source, alternativePerformance(document), {...context, diagnostics: context.diagnostics ?? validateM3NDiagnostics(source,{},document,{syntaxTree,projection}), interaction:undefined})
+    return {...result,sourceMap,headerMetadata}
+  }
   const eventIds = new Map<string, string>()
   const tupletNoteCounts = new Map<string, number>()
   const preassignedIds = scoreEventIds(document)

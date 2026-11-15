@@ -970,7 +970,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
     prepareHorizontal(lines: HorizontalLineView[], context: LayoutPrepareContext) {
         const targets = this.temporalMembers
             .filter(isVisualTemporalNode)
-            .filter(node => node.ports?.["lyric"]);
+            .filter(node => node.ports?.["lyric"] && (!node.track.alternative || node.track === this.nameHost.track));
         const { lyrics, size } = this.nameHost.ast;
         if (targets.length === 0 || lyrics.length === 0) return;
 
@@ -1035,7 +1035,7 @@ class VoiceLyricsAttachment implements LayoutAttachment {
 
         const targets = this.temporalMembers
             .filter(isVisualTemporalNode)
-            .filter(node => node.ports?.["lyric"]);
+            .filter(node => node.ports?.["lyric"] && (!node.track.alternative || node.track === this.nameHost.track));
         if (targets.length === 0 || lyrics.length === 0) return preparedText;
 
         // 同一行、原始轨共用下沿，跨轨框外的占用可归属另一条轨

@@ -8,8 +8,6 @@ import { TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
 import {
   DEFAULT_SCORE_WIDTH,
-  readNumberedNotation,
-  writeNumberedNotation,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
@@ -30,7 +28,6 @@ export function ScoreReaderPage() {
     SCORE_WIDTH_MAX,
   ))
   const [exportError, setExportError] = useState('')
-  const [numberedNotation, setNumberedNotation] = useState(readNumberedNotation)
   const analysis = useMemo(() => analyzeM3N(scoreSource ?? ''), [scoreSource])
   const { invalidMeasureIds: invalidMeasures } = analysis
   const result = { ...analysis.score, ...analysis.interaction, diagnostics: analysis.diagnostics }
@@ -78,25 +75,17 @@ export function ScoreReaderPage() {
         <ScoreRenderer
           mei={analysis.getMei}
           scoreDocument={analysis.score}
-          headerMetadata={result.headerMetadata}
+
           sourceMap={result.sourceMap}
           invalidMeasureIds={invalidMeasures}
-          numberedNotation={numberedNotation}
-          onNumberedNotationChange={(enabled) => {
-            setNumberedNotation(enabled)
-            writeNumberedNotation(enabled)
-          }}
           onLayoutWidthChange={setExportWidth}
         />
         <ScoreExportDialog
           ref={exportDialogRef}
-          mei={analysis.getMei}
           scoreDocument={analysis.score}
-          numberedNotation={numberedNotation}
           title={result.title}
           width={exportWidth}
           hasBassStaff={result.hasBassStaff}
-          headerMetadata={result.headerMetadata}
           onError={setExportError}
         />
         {exportError && <p className="render-message" role="alert">{exportError}</p>}

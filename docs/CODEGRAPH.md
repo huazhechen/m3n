@@ -129,19 +129,13 @@ flowchart LR
   renderService --> screen
   renderService --> exporter
   numberedSvg --> vector["standalone vector SVG"]
-  mei["MEI XML"] --> verovio["VerovioScore"]
-  scheduler["RenderScheduler"] --> verovio
-  verovio --> svg["SVG score"]
+  mei["MEI XML"] --> verovio["PlaybackScore"]
   verovio --> midi["MIDI + time map"]
   midi --> player["SpessaPlayer"]
   soundfont["FluidR3 GM Piano SF3"] --> player
   coordinator["PlaybackCoordinator"] --> player
   player --> cursor["playback cursor events"]
-  svg --> collisions["lyric collision / rendition"]
-  collisions --> screen["ScoreRenderer"]
   cursor --> screen
-  svg --> header["score-header-svg"]
-  header --> exporter["score-export"]
   exporter --> png["PNG"]
   exporter --> outlines["vector-export / local fonts"]
   outlines --> pdf["vector PDF via svg2pdf / jsPDF"]
@@ -150,9 +144,9 @@ flowchart LR
 
 简谱由独立加载的 jpFun 渲染，事件身份与 MEI 共享 `scoreEventIds`；只有播放时才需要 Verovio。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
 
-`lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，谱式和宽度切换保留播放状态。
+`lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，宽度切换保留播放状态。
 
-Verovio WASM 的排版任务由 `RenderScheduler` 串行化；`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。播放使用 Verovio 的 MIDI 时间轴，`elementsAtTime` 返回的 ID 直接映射到 SVG DOM。标题信息经共享的 `score-header-svg` 写入五线谱，导出路径复用渲染 SVG。
+`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。`PlaybackScore` 仅生成 MIDI 与时间映射；返回的事件 ID 映射到简谱 SVG。替代旋律在播放序列中按遍次展开。
 
 ## 分享 API
 

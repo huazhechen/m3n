@@ -59,9 +59,9 @@ test('mobile editor switches panes without losing input; catalog fills and filte
 test('practice starts at the selected measure and loops with independent staff muting', async ({ page }) => {
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{4/4}{120qpm}\nN: 1 2 3 4 | 5 6 7 1e | 2e 3e 4e 5e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 | 2 3 4 5 |||')
-  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   const paper = page.locator('.score-paper')
   await expect(paper.locator('svg[data-engine="jpfun"]')).toBeVisible()
+  await expect(paper).not.toHaveAttribute('aria-busy','true')
   await paper.locator('[data-m3n-id="m3n-e-9"] text').first().click()
   await page.getByRole('button', { name: '练习设置', exact: true }).click()
   await page.getByRole('checkbox', { name: '旋律静音', exact: true }).check()
@@ -82,8 +82,7 @@ test('practice starts at the selected measure and loops with independent staff m
   // Outlast B (20% of this six-second score) to verify a real wrap, not just the toggle.
   await page.waitForTimeout(1700)
   expect(Number(await page.getByRole('slider', { name: '播放位置', exact: true }).inputValue())).toBeLessThan(210)
-  await page.getByRole('radio', { name: '五线谱', exact: true }).check()
-  await expect(paper.locator('svg[data-engine="jpfun"]')).toHaveCount(0)
+  await expect(paper.locator('svg[data-engine="jpfun"]')).toHaveCount(1)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '暂停', exact: true }).click()
@@ -91,7 +90,7 @@ test('practice starts at the selected measure and loops with independent staff m
   await expect(page.getByRole('checkbox', { name: '旋律静音', exact: true })).not.toBeChecked()
 })
 
-test('staff SVG and multipage PDF retain Chinese outlines and all written measures', async ({ page }, info) => {
+test('numbered SVG and multipage PDF retain Chinese outlines and all written measures', async ({ page }, info) => {
   test.setTimeout(90_000)
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 64 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
@@ -105,11 +104,9 @@ test('staff SVG and multipage PDF retain Chinese outlines and all written measur
     const count = await dialog.locator('.export-preview-page').count()
     if (format.startsWith('PDF')) {
       expect(count).toBeGreaterThan(1)
-      // Portable nested viewports are required on every page, including pages
-      // without a header; svg2pdf cannot infer Verovio's implicit percentages.
       const portable = await dialog.locator('.export-preview-page > svg').evaluateAll(pages => pages.every(page => {
-        const definition = page.querySelector(':scope > svg.definition-scale')
-        return definition && Number(definition.getAttribute('width')) > 500 && Number(definition.getAttribute('height')) > 500
+        const view=page.viewBox.baseVal
+        return view.width>0 && view.height>0 && Number(page.getAttribute('width'))>0 && Number(page.getAttribute('height'))>0 && (page.matches('[data-engine="jpfun"]') || Boolean(page.querySelector('[data-engine="jpfun"]')))
       }))
       expect(portable).toBe(true)
     }
@@ -138,14 +135,13 @@ test('staff SVG and multipage PDF retain Chinese outlines and all written measur
 })
 
 
-test('homepage plays both notations and documentation examples open as editable sources', async ({ page }) => {
+test('homepage plays numbered notation and documentation examples open as editable sources', async ({ page }) => {
   await page.goto('/')
   const sample = page.getByRole('region', { name: '可试听谱例' })
   await expect(sample.locator('svg[data-engine="jpfun"]')).toBeVisible()
   await sample.getByRole('button', { name: '播放', exact: true }).click()
   await expect(sample.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
-  await page.getByRole('switch', { name: '首页简谱', exact: true }).uncheck()
-  await expect(sample.locator('svg[data-engine="jpfun"]')).toHaveCount(0)
+  await expect(page.getByRole('switch', { name: '首页简谱', exact: true })).toHaveCount(0)
   await expect(sample.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await page.goto('/docs?doc=guide')
   const exampleSource = await page.locator('.document-example .cm-content').first().innerText()

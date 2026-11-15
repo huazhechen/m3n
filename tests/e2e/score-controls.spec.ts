@@ -27,7 +27,7 @@ async function expectUsableControls(bar: Locator) {
 
 test('reader controls stay usable from narrow phones to desktop, collapsed and expanded', async ({ page }, testInfo) => {
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
-  await page.goto('/scores/andy_01')
+  await page.goto('/scores/huan_le_song_01')
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
   for (const width of [320, 360, 390, 600, 768, 1280]) {
@@ -67,7 +67,7 @@ test('editor and embedded documentation controls fit their own narrow containers
 test('mobile practice settings persist and reset without changing score layout', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
-  await page.goto('/scores/andy_01')
+  await page.goto('/scores/huan_le_song_01')
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   const practice = bar.getByRole('button', { name: '练习设置', exact: true })
   const speed = bar.getByRole('slider', { name: '播放速度' })
@@ -102,10 +102,6 @@ test('mobile practice settings persist and reset without changing score layout',
   await dialog.getByRole('switch', { name: '分页', exact: true }).uncheck()
   await dialog.getByRole('button', { name: '关闭' }).click()
   await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'continuous')
-  await bar.getByRole('radio', { name: '五线谱', exact: true }).check()
-  await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'staff')
-  await bar.getByRole('radio', { name: '五线谱', exact: true }).press('ArrowLeft')
-  await expect(bar.getByRole('radio', { name: '简谱', exact: true })).toBeChecked()
   await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'numbered')
 })
 
@@ -113,11 +109,11 @@ test('returning to the beginning stops playback and clears the cursor without in
   const resources: string[] = []
   page.on('request', request => resources.push(request.url()))
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
-  await page.goto('/scores/andy_01')
+  await page.goto('/scores/huan_le_song_01')
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   const restart = bar.getByRole('button', { name: '回到开头' })
   await restart.click()
-  expect(resources.filter(url => /verovio-score-|\.wasm(?:\?|$)|spessa-player-|soundfonts\//.test(url))).toEqual([])
+  expect(resources.filter(url => /playback-score-|\.wasm(?:\?|$)|spessa-player-|soundfonts\//.test(url))).toEqual([])
   await bar.getByRole('button', { name: '播放', exact: true }).click()
   await expect(bar.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
   const position = bar.getByRole('slider', { name: '播放位置' })

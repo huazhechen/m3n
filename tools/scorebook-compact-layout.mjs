@@ -8,17 +8,6 @@ export function compactPage(markup) {
   // Match outlinePage: drop primitives entirely outside each nested score slice.
   for (const nested of svg.querySelectorAll('svg')) {
     const view = nested.viewBox.baseVal
-    if (nested.getAttribute('data-scorebook-notation') === 'staff') {
-      const matrix = nested.getScreenCTM().inverse()
-      for (const system of nested.querySelectorAll('g.system,g.m3n-score-header')) {
-        const b = system.getBoundingClientRect()
-        const top = new DOMPoint(b.left, b.top).matrixTransform(matrix).y
-        const bottom = new DOMPoint(b.right, b.bottom).matrixTransform(matrix).y
-        if (bottom < view.y || top > view.y + view.height) system.remove()
-      }
-      continue
-    }
-    if (nested.closest('[data-scorebook-notation=staff]')) continue
     for (const node of nested.querySelectorAll('text,path,line,circle,polygon,ellipse')) {
       if (node.closest('defs')) continue
       const box = node.getBBox()

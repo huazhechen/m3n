@@ -1,12 +1,13 @@
 # @m3n/score-renderer
 
-M3N 的浏览器乐谱渲染包，封装 Verovio 排版、SpessaSynth 播放、导出和多实例调度。
+M3N 的简谱页面、SpessaSynth 播放、导出和多实例调度。只提供简谱显示；Verovio 仅作为按需加载的 MIDI 与时间映射后端。
 
 ```ts
-import { SpessaPlayer, VerovioScore } from '@m3n/score-renderer'
+import { PlaybackScore } from '@m3n/score-renderer/playback'
+import { SpessaPlayer } from '@m3n/score-renderer/player'
 ```
 
-该包依赖 `@m3n/notation`，并要求消费方提供 DOM 和支持 `?url` 资源导入的浏览器构建环境。
+轻量页面工具通过 `@m3n/score-renderer/view` 导入。显示和导出不会下载播放引擎。
 
 ```sh
 npm run build -w @m3n/score-renderer

@@ -27,8 +27,8 @@ test('edits, renders, and maps a score note back to source', async ({ page }) =>
   const firstNote = page.locator('.score-paper [id^="m3n-e-"]').first()
   await expect(firstNote).toBeVisible({ timeout: 30_000 })
   await expect(page.locator('.score-paper .is-cursor-active-measure')).toHaveCount(1)
-  await expect(paper.locator('.is-cursor-active-measure .measure-cursor-highlight')).toBeVisible()
-  await firstNote.locator('use, path').first().click()
+  await expect(paper.locator('.is-cursor-active').first()).toBeVisible()
+  await firstNote.locator('text').first().click()
   await expect.poll(() => selectionStart(editor)).toBe(source.indexOf('1 2'))
 })
 
@@ -49,7 +49,6 @@ test('renders tied full beats as sustain dashes and maps a dash back to its own 
   await page.goto('/editor')
   const editor = page.getByLabel('M3N source')
   await editor.fill(source)
-  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   const paper = page.locator('.score-paper')
   await expect(paper).toContainText('Sustain Test', { timeout: 30_000 })
   await expect(paper.locator('g.note[data-m3n-role="sustain"]')).toHaveCount(3)
@@ -70,7 +69,6 @@ test('renders tied full beats as sustain dashes and maps a dash back to its own 
 test('highlights numbered notation during playback with tuplets and a bass voice', async ({ page }) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nL: 春夏秋冬天\nB: 1 2 3 4 | 5 6 7 1e |||')
-  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   const play = page.getByRole('button', { name: '播放' })
   await expect(play).toBeVisible({ timeout: 30_000 })
   await play.click()
@@ -118,28 +116,17 @@ test('keeps reading width and print width independent', async ({ page }) => {
 test('renders ScoreDocument through the vendored jpFun engine', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await expect(page.getByRole('button', { name: '排版设置' })).toBeVisible({ timeout: 30_000 })
-  const numbered = page.getByRole('radio', { name: '简谱', exact: true })
-  await expect(numbered).toBeEnabled()
-  await expect(numbered).not.toBeChecked()
-  await numbered.check()
-  await expect(numbered).toBeChecked()
   await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'numbered')
   await expect(page.locator('.score-paper svg[viewBox^="0 0"]').first()).toBeVisible()
   await expect(page.locator('.score-paper [data-m3n-id^="m3n-e-"]').first()).toBeVisible()
 })
 
-test('switches every embedded documentation score between staff and numbered notation', async ({ page }) => {
+test('all embedded documentation scores use numbered notation', async ({ page }) => {
   await page.goto('/docs?doc=guide')
-  const renderedScores = page.locator('.embedded-editor .score-paper')
-  await expect(renderedScores.first()).toHaveAttribute('data-notation', 'staff', { timeout: 30_000 })
-  expect(await renderedScores.count()).toBeGreaterThan(1)
-
-  const notationSwitch = page.getByRole('switch', { name: '简谱渲染' })
-  await notationSwitch.check()
-  await expect(renderedScores).toHaveCount(await renderedScores.count())
-  await expect.poll(() => renderedScores.evaluateAll((scores) => scores.map((score) => score.dataset.notation))).toEqual(
-    Array(await renderedScores.count()).fill('numbered'),
-  )
+  const papers=page.locator('.embedded-editor .score-paper')
+  await expect(papers.first()).toHaveAttribute('data-notation','numbered')
+  expect(await papers.count()).toBeGreaterThan(1)
+  await expect(page.getByRole('switch',{name:'简谱渲染'})).toHaveCount(0)
 })
 
 test('renders numbered scores and their embedded fonts without loading Verovio', async ({ page }) => {
@@ -162,10 +149,10 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
   const editor = page.getByLabel('M3N source')
   const text = '{2/4} {120qpm}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天来了\nL2: 花开满园'
   await editor.fill(text)
-  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   await expect(page.locator('.score-paper svg[data-engine="jpfun"]').first()).toBeVisible()
   const note = page.locator('.score-paper #m3n-e-2 text')
   await expect(note).toBeVisible()
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy','true')
   await note.click()
   await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1 2') + 2)
   await page.locator('.score-paper text[data-m3n-role="lyric"][data-m3n-id="m3n-e-1"]').first().click()
@@ -178,9 +165,8 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
 test('orders numbered annotations above music and maps their clicks back to the source event', async ({ page }) => {
   await page.goto('/editor')
   const editor = page.getByLabel('M3N source')
-  const text = '{4/4}\n===训练\nN: {text=练习说明} {cresc}1{tr} 2 3 4{/} |||'
+  const text = '{4/4}\n===训练{br}\nN: {text=练习说明} {cresc}1{tr} 2 3 4{/} |||'
   await editor.fill(text)
-  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   const annotations = page.locator('.score-paper text[data-m3n-role="annotation"]')
   await expect(annotations).toHaveCount(2)
   const section = annotations.filter({ hasText: '训练' })
@@ -196,7 +182,6 @@ test('uses the numbered layout for export and honors excluding bass in SVG, PNG 
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{title=导出验证} {2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了\nB: 1d 2d | 3d 4d |||')
   await page.getByRole('button', { name: '保存并预览' }).click()
-  await page.getByRole('radio', { name: '简谱', exact: true }).check()
   await expect(page.locator('.score-paper svg[data-engine="jpfun"]')).toBeVisible()
   for (const [format, signature] of [['SVG 矢量图（连续）', '<svg'], ['PNG 图片（连续）', 'PNG'], ['PDF（A4 分页）', '%PDF']] as const) {
     await page.getByRole('button', { name: '打印' }).click()

@@ -61,10 +61,12 @@ try {
       const texts = [...document.querySelectorAll('svg text')]
       for (const [text, size] of [[scoreDocument.title, '32'], [scoreDocument.subtitle, '16']]) {
         if (!text) continue
-        const heading = texts.find(node => node.textContent === text && node.getAttribute('font-size') === size)
-        const box = heading?.getBBox()
-        if (!box || Math.abs(box.x + box.width / 2 - width / 2) > 0.5) {
-          issues.push({ file, width, paged, heading: text, center: box ? box.x + box.width / 2 : null })
+        const headingLines = texts.filter(node => node.getAttribute('font-size') === size && node.getAttribute('text-anchor') === 'middle' && !node.hasAttribute('data-m3n-role'))
+        if (headingLines.map(node=>node.textContent).join('').replace(/\s/g,'') !== text.replace(/\s/g,'')) issues.push({file,width,paged,heading:text,missingHeading:true})
+        for(const heading of headingLines) {
+        const box = heading.getBBox()
+        if (Math.abs(box.x + box.width / 2 - width / 2) > 0.5) {
+          issues.push({ file, width, paged, heading: text, center: box.x + box.width / 2 })
         }
         if (scoreDocument.subtitle && box) for (const other of heading.ownerSVGElement.querySelectorAll('text')) {
           if (other === heading) continue
@@ -74,6 +76,7 @@ try {
             issues.push({ file, width, paged, heading: text, overlap: other.textContent })
           }
         }
+      }
       }
       for (const tempo of texts.filter(node => /^= \d+(?:\.\d+)?$/.test(node.textContent))) {
         if (tempo.getAttribute('font-family') !== 'M3N Numbers') {

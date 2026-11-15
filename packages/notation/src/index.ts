@@ -19,3 +19,5 @@ export * from './notation/syntax-tree.js'
 export * from './notation/score-interaction.js'
 export * from './notation/tempo.js'
 export { resolveScorePitches, validateScoreDocument } from './notation/score-rules.js'
+
+export * from './notation/alternatives.js'

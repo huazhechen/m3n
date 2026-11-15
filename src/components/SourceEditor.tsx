@@ -25,7 +25,7 @@ const m3nLanguage = StreamLanguage.define({
   token(stream) {
     if (stream.eatSpace()) return null
     if (stream.match('//')) { stream.skipToEnd(); return 'comment' }
-    if (stream.sol() && stream.match(/(?:N|B|C|L\d*|LW\d*):/)) return 'keyword'
+    if (stream.sol() && stream.match(/(?:Ns\[[1-9]\d*(?:,[1-9]\d*)*\]:\s*[1-9]\d*|N|B|C|L\d*|LW\d*):/)) return 'keyword'
     if (stream.match(/\{[^}]*\}/)) return 'attributeName'
     if (stream.match(/\|+|:\|+|\|+:/)) return 'operator'
     if (stream.match(/[0-7](?:[#bde^_.,~-])*/)) return 'number'

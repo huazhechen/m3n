@@ -70,8 +70,6 @@ try {
   ?route.fulfill({path:join(temp,'bundle/bundle.js'),contentType:'application/javascript; charset=utf-8'})
   :route.request().url().endsWith('/fonts/NotoSerifCJKsc-Regular.otf')
   ?route.fulfill({path:join(root,'public/fonts/NotoSerifCJKsc-Regular.otf'),contentType:'font/otf'})
-  :new URL(route.request().url()).pathname.endsWith('.wasm')
-  ?route.fulfill({path:join(root,'packages/score-renderer/vendor/verovio/verovio-module.wasm'),contentType:'application/wasm'})
   :route.fulfill({contentType:'text/html',body:'<!doctype html><title>Offline scorebook</title>'}))
  await page.goto('http://scorebook.local/')
  await page.setContent(`<style>body{margin:0} #scratch{position:absolute;left:-20000px} #print-page{width:${pageWidth}px;background:white}</style><div id="scratch"></div><main id="print-page"></main>`)
@@ -94,7 +92,7 @@ try {
   }
   let best,fillPage=Boolean(entry.pageCount)
   const summaries=[],rejectedCandidates=[],sharedLayouts=new Map(),sharedLayoutVariants=new Map()
-  const entryOptions={...spacing,notation:entry.notation??'numbered',noteGapEm:entry.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:entry.minimumNoteGapEm??spacing.minimumNoteGapEm,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,staffScale:entry.staffScale,staffEngraving:entry.staffEngraving,staffLineColor:entry.staffLineColor,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false,...(entry.wrap?{wrap:entry.wrap}:{})}
+  const entryOptions={...spacing,noteGapEm:entry.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:entry.minimumNoteGapEm??spacing.minimumNoteGapEm,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false,...(entry.wrap?{wrap:entry.wrap}:{})}
   const widths=(entry.widthLocked?[entry.width]:[...new Set([entry.width,...plan.widthCandidates,...(entry.widthCandidates??[])])]).filter(width=>width>=minimumScoreWidth&&width<=Math.min(entry.maximumWidth??Infinity,entry.minimumNotePx?22*bodyWidth/entry.minimumNotePx:maximumScoreWidth)).sort((a,b)=>a-b)
   assert(widths.length,`${entry.title}: no candidate meets the note size range`)
   fillPage=plan.replan?!entry.sharePage:fillPage
@@ -138,7 +136,6 @@ try {
  // Feed page capacity back to horizontal breaking at the already selected
  // music size. Reflow is deliberately after font/page selection and packing.
  async function reflow(entry, fits, extraRows) {
-  if(entry.notation==='staff')return
   const original=entry.layout
   const options={...spacing,systemGap:original.systemGap,noteGapEm:entry.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:entry.minimumNoteGapEm??spacing.minimumNoteGapEm,showCredits:plan.showCredits??true,includeBass:entry.includeBass??true,uniformSystemHeight:entry.uniformSystemHeight??plan.uniformSystemHeight??false,...(entry.wrap?{wrap:entry.wrap}:{})}
   const selected=await reflowScorebookLayout(original,{extraRows,fits,measure:async wrapWidthRatio=>{
@@ -203,7 +200,7 @@ try {
   let y=0
   for(const [i,item] of target.items.entries()){item.y=y+(i?shortGap:0);y=item.y+item.height}
  }
- validateScorebookStyles(musicPages.map(target=>target.items.map(({entry})=>({id:entry.id,style:{width:entry.layout.width,systemGap:entry.layout.systemGap,staffScale:entry.staffScale,...scorebookPageStyle(entry,{...spacing,uniformSystemHeight:plan.uniformSystemHeight??false})}}))))
+ validateScorebookStyles(musicPages.map(target=>target.items.map(({entry})=>({id:entry.id,style:{width:entry.layout.width,systemGap:entry.layout.systemGap,...scorebookPageStyle(entry,{...spacing,uniformSystemHeight:plan.uniformSystemHeight??false})}}))))
  assert(musicPages.every(p=>p.used/bodyHeight*100>minimumFillPercent),'Every music page must exceed the minimum page fill')
  assert(musicPages.every(p=>p.used<=bodyHeight+1e-6),'Every music page must fit the content area')
  // Keep each original score as one contents entry, including the full daily training.
@@ -276,7 +273,7 @@ try {
   pages.push({kind:'music',svg:pageSvg(content,num)})
  }
  const records=measured.map((e,i)=>{
-  return {order:i+1,id:e.id,title:e.title,file:e.file,notation:e.notation??'numbered',...(e.layout.staffHeight?{staffScale:e.staffScale??38,staffHeightPx:Number((e.layout.staffHeight*renderScale(e.layout.width)).toFixed(3))}:{}),includeBass:e.includeBass??true,uniformSystemHeight:e.uniformSystemHeight??plan.uniformSystemHeight??false,equalMeasures:e.layout.equalMeasures??false,wrap:e.wrap??'normal',noteGapEm:e.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:e.minimumNoteGapEm??spacing.minimumNoteGapEm,wrapWidthRatio:e.layout.wrapWidthRatio??1,systemDensities:e.layout.systemDensities,baselineSteps:e.layout.baselineSteps,voltaSystems:e.layout.voltaSystems,paragraphSystems:e.layout.paragraphSystems,section:e.section,group:e.group,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
+  return {order:i+1,id:e.id,title:e.title,file:e.file,notation:'numbered',includeBass:e.includeBass??true,uniformSystemHeight:e.uniformSystemHeight??plan.uniformSystemHeight??false,equalMeasures:e.layout.equalMeasures??false,wrap:e.wrap??'normal',noteGapEm:e.noteGapEm??spacing.noteGapEm,minimumNoteGapEm:e.minimumNoteGapEm??spacing.minimumNoteGapEm,wrapWidthRatio:e.layout.wrapWidthRatio??1,systemDensities:e.layout.systemDensities,baselineSteps:e.layout.baselineSteps,voltaSystems:e.layout.voltaSystems,paragraphSystems:e.layout.paragraphSystems,section:e.section,group:e.group,reason:e.reason,width:e.layout.width,systemGap:e.layout.systemGap,relativeScalePercent:Number((plan.baseWidth/e.layout.width*100).toFixed(2)),screenNotePx:Number((22*bodyWidth/e.layout.width).toFixed(2)),pages:entryPages.get(e.id),systems:e.layout.rows,systemsPerPage:e.layout.ranges.map(([a,b])=>b-a),sourceSha256:e.sourceSha256,candidates:e.candidates,rejectedCandidates:e.rejectedCandidates,fillPage:e.fillPage,reviewNote:e.reviewNote}
  })
  if(fixedPagination){
   assert.equal(total,fixedPagination.pageCount,'Fixed edition page count must be preserved')
@@ -287,8 +284,6 @@ try {
  assert.equal(undersizedNoteEntries,0,'Every score must meet the minimum note size')
  const oversizedNoteEntries=records.filter(e=>maximumNotePx!==null&&22*bodyWidth/e.width>maximumNotePx+1e-6).length
  assert.equal(oversizedNoteEntries,0,'Every score must meet the maximum note size')
- const staffSizes=records.filter(e=>e.notation==='staff')
- assert(staffSizes.every(e=>Math.abs(e.staffHeightPx/(e.staffScale*.72*bodyWidth/e.width)-1)<.05),'Staff height must preserve the selected engraving scale')
  const report={title:plan.title,edition:plan.edition,showCredits:plan.showCredits??true,uniformSystemHeight:plan.uniformSystemHeight??false,minimumSystemGapEm,rendererSha256:rendererHash,sourceCount:sourceFiles.length,entryCount:records.length,pageCount:total,frontPages:frontCount,baseWidth:plan.baseWidth,page:profile,body:{width:bodyWidth,height:bodyHeight},entries:records,pages:pageRecords,validation:{sourceCoverage:true,trainingSourcePreserved:true,geometryCandidates:records.reduce((s,e)=>s+e.candidates.length,0),minimumMusicPageFillPercent:Number(Math.min(...musicPages.map(p=>p.used/bodyHeight*100)).toFixed(3)),underfilledMusicPages:musicPages.filter(p=>p.used/bodyHeight*100<=minimumFillPercent).length,outside:0,overlaps:0,unsafeCuts:0,orphanContinuationPages:pageRecords.flatMap(p=>p.items).filter(item=>item.systems[0]>1&&item.systems[1]-item.systems[0]+1<3).length}}
  report.validation.belowTargetNoteEntries=records.filter(e=>minimumNotePx!==null&&22*bodyWidth/e.width<minimumNotePx-1e-6).map(e=>({id:e.id,title:e.title,notePx:e.screenNotePx,allowedMinimumNotePx:plan.entries.find(p=>p.id===e.id).minimumNotePx??minimumNotePx}))
  report.validation.minimumMusicNotePx=Number(Math.min(...records.map(e=>22*bodyWidth/e.width)).toFixed(3))
@@ -317,7 +312,7 @@ try {
  }
  const csv=['序号,编号,曲目,分类,分组,页码,版宽px,相对缩放%,适宽音符px,各页谱行数,额外行距px,排序依据,校阅备注',...records.map(e=>[e.order,e.id,e.title,plan.sections.find(s=>s.id===e.section).title,e.group,e.pages.join('/'),e.width,e.relativeScalePercent,e.screenNotePx,e.systemsPerPage.join('/'),e.systemGap,e.reason,e.reviewNote].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','))].join('\n')
  writeFileSync(join(staged,'排序与缩放记录.csv'),'\uFEFF'+csv+'\n')
- let md=`# 乐谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：${sourceFiles.length-1} 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按音乐风格、节奏、音域与练习目标组织曲目。基准版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的竖向比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px。横向间距默认最小 ${spacing.minimumNoteGapEm}em、自然 ${spacing.noteGapEm}em，音符、不同音值及小节弹簧按相同比例调整；条目可单独调整自然间距。额外行间留白至少为字号的${minimumSystemGapEm}倍。正文音符限定 ${minimumNotePx??'未设下限'}—${maximumNotePx??'未设上限'}px；${plan.layoutPriority==='font'?'优先放大字号，再减少页数':'优先减少页数，再放大字号'}。${minimumFillPercent?'正文页自然高度利用率严格高于 '+minimumFillPercent+'%；':'不设置正文页高度利用率下限。'}简谱曲目采用分档等行高，歌词按实际行数增加高度；五线谱采用Verovio原生音符间距与行高，表中字号为22px排版基准的适宽换算值，并非符头宽高；每日基本功保留等宽小节与两页安排。PDF统一隐藏右侧署名，《欢乐颂》仅显示旋律。${plan.notationLabel??'混合谱式'}；渐强、渐弱置于音符或谱表上方。\n\n|序号|曲目 / 练习|页码|版宽 px|相对缩放|谱行分配|额外行距 px|适宽音符 px|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|\n`
+ let md=`# 乐谱集排序与缩放记录\n\n${plan.edition}。收录 ${sourceFiles.length} 份原谱：${sourceFiles.length-1} 首乐曲，以及完整保留原顺序的《半音阶口琴基本功》每日训练，共 ${records.length} 个编号条目、${total} 页（含封面与目录 ${frontCount} 页）。\n\n按音乐风格、节奏、音域与练习目标组织曲目。基准版宽 ${plan.baseWidth}px 为 100%；数值越大，适宽显示的音符越小。页面采用 ${pageWidth}×${pageHeight} 的竖向比例，外边距 ${bodyX}px，谱内边距 ${profile.scoreMargin}px。横向间距默认最小 ${spacing.minimumNoteGapEm}em、自然 ${spacing.noteGapEm}em，音符、不同音值及小节弹簧按相同比例调整；条目可单独调整自然间距。额外行间留白至少为字号的${minimumSystemGapEm}倍。正文音符限定 ${minimumNotePx??'未设下限'}—${maximumNotePx??'未设上限'}px；${plan.layoutPriority==='font'?'优先放大字号，再减少页数':'优先减少页数，再放大字号'}。${minimumFillPercent?'正文页自然高度利用率严格高于 '+minimumFillPercent+'%；':'不设置正文页高度利用率下限。'}简谱按实际谱行内容预留高度，歌词按实际行数增加高度；每日基本功保留等宽小节与两页安排。PDF统一隐藏右侧署名，《欢乐颂》仅显示旋律。${plan.notationLabel??'简谱'}；渐强、渐弱置于音符上方。\n\n|序号|曲目 / 练习|页码|版宽 px|相对缩放|谱行分配|额外行距 px|适宽音符 px|排序与学习重点|\n|---|---|---|---|---|---|---|---|---|\n`
  for(const section of plan.sections) {
   md+=`| |**${section.title}**| | | | | | | |${section.description}|\n`
   for(const e of records.filter(e=>e.section===section.id))md+=`|${String(e.order).padStart(3,'0')}|${e.title}|${e.pages.join('、')}|${e.width}|${e.relativeScalePercent}%|${e.systemsPerPage.join(' + ')}|${e.systemGap}|${e.screenNotePx}|${e.reason}${e.reviewNote?'；'+e.reviewNote:''}|\n`

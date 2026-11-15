@@ -12,24 +12,20 @@ import { useM3NAnalysis } from '../hooks/useM3NAnalysis'
 type NotationEditorProps = {
   initialSource?: string
   embedded?: boolean
-  numberedNotation?: boolean
   simulatedSubmit?: boolean
   draftScope?: string
   scoreId?: string
   onBrowse?: (source: string) => Promise<void>
-  onNumberedNotationChange?: (enabled: boolean) => void
   onSubmit?: (source: string) => Promise<void>
 }
 
 export function NotationEditor({
   initialSource = defaultScore,
   embedded = false,
-  numberedNotation,
   simulatedSubmit = false,
   scoreId,
   draftScope,
   onBrowse,
-  onNumberedNotationChange,
   onSubmit,
 }: NotationEditorProps) {
   const { source, setSource, draftStatus, pauseDraft, resumeDraft, discardDraft } = useScoreDraft(initialSource, !embedded, draftScope ?? scoreId)
@@ -156,16 +152,14 @@ export function NotationEditor({
         />} preview={<ScoreRenderer
           mei={analysis.getMei}
           scoreDocument={analysis.score}
-          headerMetadata={result.headerMetadata}
+
           sourceMap={result.sourceMap}
           compact={embedded}
           isSourceUpdating={isAnalyzing}
-          numberedNotation={numberedNotation}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}
           onActiveXmlId={highlightSourceRange}
           onNoteClick={selectScoreNoteInSource}
-          onNumberedNotationChange={onNumberedNotationChange}
           onPaperBlur={() => setIsCursorHighlightActive(false)}
         />}>
         {analysis.diagnostics.length > 0 && (

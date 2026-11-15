@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { ASTFunctionNode } from "../src/functions/ASTtypes.js";
 import { analyzeScoreSyntax } from "../src/pipeline.js";
 import { quote } from "../src/parser/parse-utils/string-utils.js";
-import { assert, commandsOfKind, expectCompileError, layoutOf, nearly, parse, recordCommands } from "./helpers.js";
+import { assert, compileValid, commandsOfKind, expectCompileError, layoutOf, nearly, parse, recordCommands } from "./helpers.js";
 
 /** 只写一个 @text 时它就是唯一的可见对象 */
 function textBox(source: string) {
@@ -126,4 +126,13 @@ test("语法糖着色为字符串并覆盖两侧引号", () => {
     const tokens = analyzeScoreSyntax(source).syntax.tokens.filter(token => token.kind === "string");
     assert(tokens.length === 1 && source.slice(tokens[0].span.start, tokens[0].span.end) === `"渐强"`,
         "the string token must cover the quotes themselves");
+});
+
+// M3N: bearings differ from advance widths in real CJK fonts.
+test('centered text accounts for each line ink bearings without changing its font or box',()=>{
+ const result=compileValid('@text("甲乙\n丙",size=32px,align=center)',{textMeasurer:{measureText(text,style){return {w:text.length*style.fontSize,h:style.fontSize,baseline:style.fontSize*.8,centerOffset:text.length===2?.5:1}}}});
+ const box=result.layout.objects[0].box;
+ const commands=recordCommands(result.layout).filter(command=>command.kind==='text');
+ assert(nearly(commands[0].x,box.x+box.w/2-.5),'first line accounts for its ink bearings');
+ assert(nearly(commands[1].x,box.x+box.w/2-1),'second line accounts for its own ink bearings');
 });

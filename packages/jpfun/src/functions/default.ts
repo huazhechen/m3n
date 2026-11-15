@@ -16,6 +16,7 @@ import { HeadNode } from "./head/index.js";
 import { KeyNode } from "./key/index.js";
 import { MeterNode } from "./meter/index.js";
 import { BrNode } from "./br/index.js";
+import { OssiaNode } from './ossia/index.js';
 import { NoteNode } from "./note/index.js";
 import { RestNode } from "./rest/index.js";
 import { UpNode, DownNode } from "./up/index.js";
@@ -39,7 +40,7 @@ export const defaultFunctions: ASTFunctionClass[] = [
     VoiceNode, VoicesNode,  // 歌词和声部
     BrNode, PageBreakNode, SpacingNode,  // 排版
     PageNode, HeadNode,   // 文档页面与谱头
-    StackNode,  // 时间同步
+    StackNode, OssiaNode,  // 时间同步
     UpNode, DownNode,
     ArpeggioNode,
     GraceNode, SlideNode,  // 倚音与滑入滑出

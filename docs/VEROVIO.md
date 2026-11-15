@@ -4,7 +4,7 @@
 > 更新日期：2026-08-01  
 > 用途：供开发 Agent 离线查阅 Verovio 的范围、MEI 正式写法、WASM API 与排版规范。
 
-本文记录上游完整 API。M3N 生产环境使用同版本的精简 WASM，只输入 MEI；实际保留功能、字体与重建步骤见 [Verovio 精简构建](VEROVIO_BUILD.md)。下面的 npm 导入示例用于上游 API 参考，应用与 renderer 测试通过 `packages/score-renderer/vendor/verovio/verovio-module.mjs` 加载精简模块。
+本文记录上游完整 API，供 MEI 与 MIDI 后端维护参考；M3N 已删除五线谱显示与导出，不提供下文的上游雕版 API。M3N 生产环境使用同版本的精简 WASM，只输入 MEI；实际保留功能、字体与重建步骤见 [Verovio 精简构建](VEROVIO_BUILD.md)。下面的 npm 导入示例用于上游 API 参考，应用与 renderer 测试通过 `packages/score-renderer/vendor/verovio/verovio-module.mjs` 加载精简模块。
 
 ## 快速定位
 
@@ -349,4 +349,4 @@ Verovio 6.2 的 MIDI 生成从 `staffDef` 内的 `instrDef` 读取通道；直�
 <staffDef n="2"><instrDef midi.channel="1" midi.instrnum="0"/></staffDef>
 ```
 
-这里 MIDI 通道按 0 起始编码，分别对应用户通常称的通道 1、2。播放器的旋律／低音静音操作作用于这两个通道；`verovio-score.test.ts` 解码真实生成的 MIDI 验证声部、音高与通道。
+这里 MIDI 通道按 0 起始编码，分别对应用户通常称的通道 1、2。播放器的旋律／低音静音操作作用于这两个通道；`playback-score.test.ts` 解码真实生成的 MIDI 验证声部、音高与通道。

@@ -4,7 +4,7 @@
   "compactPdf": "循序渐进乐谱集-简谱-v43.pdf",
   "pageCount": 86,
   "originalBytes": null,
-  "compactBytes": 6171764,
+  "compactBytes": 6171784,
   "reductionPercent": null,
   "embeddedFontSubsets": 354,
   "images": 0,
@@ -99,5 +99,5 @@
   ],
   "outsidePages": 0,
   "sourceSha256": null,
-  "compactSha256": "128867d7df18177e59281e1a0c6d17138d5a6e86d9066d7051980a8332e60f24"
+  "compactSha256": "883242a7bf3b1303ad54eb43dc51022e2d5b3feca7dfe15ebdf9d0377e37b857"
 }

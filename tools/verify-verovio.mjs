@@ -35,29 +35,26 @@ samples.push({ file: 'text-and-symbol-fonts', mei: `<mei xmlns="http://www.music
 <dir startid="#n1"><rend fontweight="bold" fontstyle="italic">Allegro</rend> <rend glyph.auth="smufl">&#xECA2;</rend></dir></measure>
 </section></score></mdiv></body></music></mei>` })
 
-const report = { version: slim.getVersion(), scores: sources.length, checks: 0, pages: 0, fonts: ['Leipzig'], sizes: {} }
+const report = { version: slim.getVersion(), scores: sources.length, checks: 0, fonts: ['Leipzig'], sizes: {} }
 try {
   assert.equal(slim.getVersion(), original.getVersion())
   for (const { file, mei } of samples) for (const font of report.fonts) {
-    const options = { font, fontFallback: 'Leipzig', footer: 'none', header: 'none', pageWidth: 1905, pageHeight: 2694, scale: 42, svgViewBox: true }
+    const options = { font, fontFallback: 'Leipzig' }
     const results = [original, slim].map(toolkit => {
       toolkit.setOptions(options)
       toolkit.resetXmlIdSeed(1)
       assert.equal(toolkit.loadData(mei), 1, `${file}: ${font} load`)
-      const pages = Array.from({ length: toolkit.getPageCount() }, (_, page) => toolkit.renderToSVG(page + 1))
-      assert.ok(pages.length > 0)
       const midi = toolkit.renderToMIDI()
       assert.ok(midi.length > 0)
       const timemap = toolkit.renderToTimemap()
       const noteIds = [...mei.matchAll(/<(?:note|chord)\b[^>]*xml:id="([^"]+)"/g)].map(match => match[1])
       const times = noteIds.map(id => ({ id, time: toolkit.getTimeForElement(id) }))
       const elements = [...new Set(times.map(({ time }) => time))].map(time => toolkit.getElementsAtTime(time))
-      return { pages, midi, timemap, times, elements }
+      return { midi, timemap, times, elements }
     })
-    assert.deepEqual(results[1], results[0], `${file}: ${font} SVG/MIDI/playback differs`)
+    assert.deepEqual(results[1], results[0], `${file}: ${font} MIDI/playback differs`)
     report.checks += 1
-    report.pages += results[1].pages.length
-    console.log(`OK ${font} ${file} (${results[1].pages.length} pages)`)
+    console.log(`OK ${font} ${file} MIDI/playback`)
   }
 } finally {
   original.destroy()

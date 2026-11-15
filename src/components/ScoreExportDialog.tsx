@@ -1,24 +1,21 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import type { ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
+import type { ScoreDocument } from '@m3n/notation'
 import { a4ImagePlacement, downloadBlob, renderScoreCanvas, scoreFileName, stackScoreCanvases } from '@m3n/score-renderer/view'
 import { renderScoreInto } from '../lib/render-score'
 import { readRendererSetting, writeRendererSetting } from '../lib/renderer-settings'
 
 type ExportFormat = 'png' | 'pdf' | 'svg'
 type ScoreExportDialogProps = {
-  mei: string | (() => string)
-  scoreDocument?: ScoreDocument
-  numberedNotation: boolean
+  scoreDocument: ScoreDocument
   title: string
   width: number
   hasBassStaff: boolean
-  headerMetadata: ScoreHeaderMetadata[]
   onError: (message: string) => void
 }
 export type ScoreExportDialogRef = { open: () => void }
 
 export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDialogProps>(
-  function ScoreExportDialog({ mei, scoreDocument, numberedNotation, title, width, hasBassStaff, headerMetadata, onError }, ref) {
+  function ScoreExportDialog({ scoreDocument, title, width, hasBassStaff, onError }, ref) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const [format, setFormat] = useState<ExportFormat>('pdf')
@@ -36,12 +33,12 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       if (!isOpen || !preview) return
       const controller = new AbortController()
       setIsPreviewing(true); setPreviewError('')
-      void renderScoreInto(preview, { mei, scoreDocument, numberedNotation, headerMetadata, width: printWidth,
+      void renderScoreInto(preview, { scoreDocument, width: printWidth,
         paged: format === 'pdf', includeBass, sheetClass: 'export-preview-page', signal: controller.signal,
       }).catch((error: unknown) => { if (!controller.signal.aborted) setPreviewError(error instanceof Error ? error.message : '打印预览失败。') })
         .finally(() => { if (!controller.signal.aborted) setIsPreviewing(false) })
       return () => controller.abort()
-    }, [format, headerMetadata, includeBass, isOpen, mei, numberedNotation, printWidth, scoreDocument, previewAttempt])
+    }, [format, includeBass, isOpen, printWidth, scoreDocument, previewAttempt])
 
     const exportScore = async () => {
       setIsExporting(true); setExportError(''); onError('')
@@ -49,14 +46,14 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       paper.style.cssText = `position:fixed;left:-20000px;top:0;width:${printWidth}px;pointer-events:none;`
       document.body.append(paper)
       try {
-        await renderScoreInto(paper, { mei, scoreDocument, numberedNotation, headerMetadata, width: printWidth, paged: format === 'pdf', includeBass })
+        await renderScoreInto(paper, { scoreDocument, width: printWidth, paged: format === 'pdf', includeBass })
         const svgs = [...paper.querySelectorAll<SVGSVGElement>(':scope > svg')]
         if (!svgs.length) throw new Error('当前没有可导出的乐谱。')
         const { outlineSvgText } = await import('../lib/vector-export')
         for (const svg of svgs) await outlineSvgText(svg)
         const fileName = scoreFileName(title)
         if (format === 'svg') {
-          // Continuous layout produces a single complete SVG in both notations.
+          // Continuous layout produces a single complete SVG .
           if (svgs.length !== 1) throw new Error('连续 SVG 排版意外产生多页，请重试。')
           downloadBlob(new Blob([new XMLSerializer().serializeToString(svgs[0])], { type: 'image/svg+xml;charset=utf-8' }), `${fileName}.svg`)
         } else if (format === 'png') {
@@ -83,7 +80,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     }
     return <dialog ref={dialogRef} className="export-dialog" onClose={() => setIsOpen(false)}>
       <form onSubmit={event => { event.preventDefault(); void exportScore() }}>
-        <div className="export-header"><h2>打印{numberedNotation && scoreDocument ? '简谱' : '五线谱'}</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm · 矢量 PDF' : format === 'svg' ? 'SVG 矢量图片' : 'PNG 连续图片'}</span></div>
+        <div className="export-header"><h2>打印简谱</h2><span>{format === 'pdf' ? 'A4 纵向 · 页边距 10mm · 矢量 PDF' : format === 'svg' ? 'SVG 矢量图片' : 'PNG 连续图片'}</span></div>
         <div className="export-content">
           <div className="export-settings">
             <label>打印宽度 <input type="number" min={320} max={2560} step={10} aria-label="打印宽度" value={printWidth} onChange={event => { const value = Number(event.currentTarget.value); if (value >= 320 && value <= 2560) { setPrintWidth(value); writeRendererSetting('m3n:print-width', value) } }} /> px</label>

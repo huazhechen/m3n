@@ -8,9 +8,12 @@ export function scoreEventIds(document: ScoreDocument): Map<ScoreEvent, string> 
   for (const part of document.parts.values()) {
     const count = Math.max(part.melody.length, hasBass ? part.bass.length : 0)
     for (let index = 0; index < count; index += 1) {
-      for (const event of part.melody[index]?.events ?? []) ids.set(event, `m3n-e-${++ordinal}`)
-      for (const event of hasBass ? part.bass[index]?.events ?? [] : []) ids.set(event, `m3n-e-${++ordinal}`)
+      for (const event of part.melody[index]?.events ?? []) ids.set(event, event.playbackId ?? `m3n-e-${++ordinal}`)
+      for (const event of hasBass ? part.bass[index]?.events ?? [] : []) ids.set(event, event.playbackId ?? `m3n-e-${++ordinal}`)
     }
+  }
+  for (const [index, alternative] of (document.alternatives ?? []).entries()) {
+    alternative.measure.events.forEach((event, slot) => ids.set(event, `m3n-e-a${index + 1}-${slot + 1}`))
   }
   return ids
 }

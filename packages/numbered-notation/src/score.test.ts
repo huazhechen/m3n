@@ -50,6 +50,26 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it.each([320,800].flatMap(width=>[false,true].map(paged=>({width,paged}))))('engraves an alternative with its own lyrics and pass-specific note bindings at $width, paged=$paged', settings=>{
+    const source='{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 甲乙 | 丙丁\nL2: 戊己 | 庚辛壬\nNs[2]: 2: (5 6) 7 |'
+    const {root,score,document}=render(source,settings)
+    expect(score.diagnostics.filter(item=>item.severity==='error')).toEqual([])
+    const native=geometry(document,{...options,...settings})
+    expect(native.diagnostics.filter(item=>item.severity==='error')).toEqual([])
+    const alt=document.alternatives![0]!,ids=scoreEventIds(document)
+    for (const [index,event] of alt.measure.events.entries()) {
+      const id=ids.get(event)!
+      expect(root.querySelector(`g.note[data-m3n-id="${id}"]`)?.getAttribute('data-m3n-passes')).toBe('2')
+      expect(lyrics(root,id,2)).toBe(['庚','辛','壬'][index])
+    }
+    const first=alt.measure.events[0]!,host=alt.host.events[0]!
+    const note=(event:typeof first)=>native.layout.objects.find(node=>node.ast instanceof ASTFunctionNode && node.ast.label=== [...projectNumberedScore(document,{...options,...settings}).bindings.values()].find(b=>b.event===event)!.label)!
+    expect(note(first).box.y).toBeGreaterThan(note(host).box.y)
+    expect(root.body.textContent).toContain('2.')
+    expect(root.body.textContent).toContain('(')
+    expect(root.querySelectorAll('g.note')).toHaveLength(7)
+  })
+
   it('hides repeated accidental glyphs within a bar while retaining their full pitch and resetting at barlines', () => {
     const source = '{4/4}\nN: 4# 4# 4= 4= | 4# 4# 4#e 4#e | [4#4#4=:2] 4# 0 |||'
     const projection = projectNumberedScore(parseM3NDocument(source), options)
@@ -1091,20 +1111,22 @@ describe('jpFun numbered notation adapter', () => {
   it.each([
     ['新不了情', '电影《新不了情》主题曲'],
     ['很长很长的主标题', '短副标题'],
+    ['C大调奏鸣曲 K.545 第一乐章',''],
+    ['Valsentino(快速圆舞曲)',''],
   ])('centers title and subtitle independently: %s', (title, subtitle) => {
     const source = `{title=${title}} {subtitle=${subtitle}} {singer=演唱者} {key=D} {90qpm} {4/4}\nN: 1 2 3 4 |||`
     for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {
       const result = geometry(parseM3NDocument(source), { width, paged })
       const headings = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode
         && node.ast.callName === 'text' && 'lines' in node.ast
-        && [title, subtitle].includes((node.ast.lines as string[])[0]!))
-      expect(headings).toHaveLength(2)
+        && [title, subtitle].map(text=>text.replace(/\s/g,'')).includes((node.ast.lines as string[]).join('').replace(/\s/g,'')))
+      expect(headings).toHaveLength(subtitle ? 2 : 1)
       for (const heading of headings) expect(Math.abs(heading.box.x + heading.box.w / 2 - width / 2)).toBeLessThan(0.05)
-      expect(headings[0]!.box.y + headings[0]!.box.h).toBeLessThan(headings[1]!.box.y)
+      if(subtitle)expect(headings[0]!.box.y + headings[0]!.box.h).toBeLessThan(headings[1]!.box.y)
       const controls = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode
         && ['key', 'meter', 'tempo'].includes(node.ast.callName))
       expect(controls).toHaveLength(3)
-      for (const control of controls) expect(control.box.y).toBeGreaterThan(headings[1]!.box.y + headings[1]!.box.h)
+      for (const control of controls) expect(control.box.y).toBeGreaterThan(headings.at(-1)!.box.y + headings.at(-1)!.box.h)
     }
   })
 

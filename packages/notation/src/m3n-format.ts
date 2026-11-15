@@ -289,6 +289,8 @@ function formatLine(line: string) {
   const trimmed = line.trim()
   if (!trimmed || trimmed.startsWith('//')) return trimmed
 
+  const alternative = /^(Ns\[[1-9]\d*(?:,[1-9]\d*)*\]):\s*([1-9]\d*):\s*(.*)$/.exec(trimmed)
+  if (alternative) return `${alternative[1]}: ${alternative[2]}: ${formatContent(normalizeBeamGroups(alternative[3]!))}`
   const phraseLine = /^(N|B|C|L\d*):\s*(.*)$/.exec(trimmed)
   if (phraseLine) {
     const kind = phraseLine[1] ?? ''

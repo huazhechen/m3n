@@ -1,4 +1,4 @@
-import { measurePlaybackPasses, parsePassRange, type ScoreDocument, type ScoreEvent, type ScoreLyricBlock } from '@m3n/notation'
+import { measurePlaybackPasses, parsePassRange, lyricMeasures, alternativeLyricBlocks, type ScoreDocument, type ScoreEvent, type ScoreLyricBlock } from '@m3n/notation'
 type LyricTarget = { event: ScoreEvent; slot: number; tie: boolean }
 type LyricPosition = { index: number; passage: number }
 export type LyricRowData = { texts: string[]; passes: ReadonlySet<number> | undefined; annotation?: string; underlined?: boolean }
@@ -56,7 +56,8 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     }
   }
   const rowPasses = (blockPasses: ReadonlySet<number> | undefined, event: ScoreEvent) => {
-    const measurePasses = passesByEvent.get(event)
+    const alternative = document.alternatives?.find(item=>item.measure.events.includes(event))
+    const measurePasses = alternative ? new Set(alternative.passes) : passesByEvent.get(event)
     if (blockPasses === undefined) return measurePasses
     if (measurePasses === undefined) return blockPasses
     return new Set([...blockPasses].filter((pass) => measurePasses.has(pass)))
@@ -89,13 +90,16 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     labeledRowsByPhrase.set(key, rows)
     previous = { signature, end, rows }
   }
-  document.lyrics.forEach((block) => {
+  alternativeLyricBlocks(document).forEach((block) => {
     const row = lyricRow(block)
     const blockPasses = lyricPasses(block)
     const annotation = annotatedPhrases.has(phraseKey(block))
       ? `${[...(blockPasses ?? [row + 1])].sort((a, b) => a - b).join('.')}.`
       : undefined
-    const targets = targetEvents.filter(({ event }) => inPhrase(event, block))
+    const selectedEvents = new Set(lyricMeasures(document,block).flatMap(measure=>measure.events))
+    const allTargets = [...targetEvents, ...(document.alternatives ?? []).flatMap(item=>item.measure.events.filter(event=>event.kind!=='rest').flatMap(event=>event.kind==='tuplet'?event.pitches.flatMap((pitch,slot)=>pitch==='0'?[]:[{event,slot,tie:event.tie&&slot===event.tieFromTupletIndex}]):[{event,slot:0,tie:event.tie}]))]
+    const eventOrder = [...selectedEvents]
+    const targets = document.alternatives?.length ? allTargets.filter(({event})=>selectedEvents.has(event)).sort((a,b)=>eventOrder.indexOf(a.event)-eventOrder.indexOf(b.event)||a.slot-b.slot) : targetEvents.filter(({ event }) => inPhrase(event, block))
     const consumed = new Set<LyricTarget>()
     const labeledRows = labeledRowsByPhrase.get(phraseKey(block))!
     let annotationPending = annotation !== undefined && !labeledRows.has(row)
@@ -116,7 +120,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const data = rows.get(row) ?? { texts: [], passes: undefined }
       data.texts.push(syllable.text)
       data.underlined = syllable.underlined
-      data.passes = rowPasses(blockPasses, target.event)
+      data.passes = new Set([...(data.passes ?? []),...(rowPasses(blockPasses, target.event) ?? [])])
       data.annotation = annotationPending ? annotation : undefined
       if (annotationPending) {
         labeledRows.add(row)
@@ -134,7 +138,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const slots = result.get(target.event) ?? new Map<number, Map<number, LyricRowData>>()
       const rows = slots.get(target.slot) ?? new Map<number, LyricRowData>()
       const data = rows.get(row) ?? { texts: [], passes: undefined }
-      data.passes = rowPasses(blockPasses, target.event)
+      data.passes = new Set([...(data.passes ?? []),...(rowPasses(blockPasses, target.event) ?? [])])
       rows.set(row, data)
       slots.set(target.slot, rows)
       result.set(target.event, slots)

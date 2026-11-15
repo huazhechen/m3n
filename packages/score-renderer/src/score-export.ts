@@ -36,7 +36,7 @@ export function a4ImagePlacement(sourceWidth: number, sourceHeight: number, marg
 }
 
 export function stackScoreCanvases(canvases: readonly HTMLCanvasElement[]) {
-  if (canvases.length === 0) throw new Error('当前没有可导出的五线谱。')
+  if (canvases.length === 0) throw new Error('当前没有可导出的简谱。')
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(...canvases.map((page) => page.width))
   canvas.height = canvases.reduce((height, page) => height + page.height, 0)
@@ -55,7 +55,7 @@ export function stackScoreCanvases(canvases: readonly HTMLCanvasElement[]) {
 export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number, pixelRatio = 1) {
   const { width: sourceWidth, height: sourceHeight } = getSvgSize(svg)
   if (sourceWidth <= 0 || sourceHeight <= 0) {
-    throw new Error('五线谱尺寸无效。')
+    throw new Error('简谱尺寸无效。')
   }
 
   const safePixelRatio = Math.max(1, pixelRatio)

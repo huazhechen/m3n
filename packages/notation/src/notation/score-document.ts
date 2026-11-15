@@ -1,4 +1,6 @@
 export type ScoreEvent = { 
+  /** Stable event identity when unfolding an alternative performance. */
+  playbackId?: string
   sourceStart: number
   sourceEnd: number
   kind: 'note' | 'chord' | 'rest' | 'tuplet'
@@ -49,9 +51,20 @@ export type ScoreMeasure = {
   barEnd?: number
 }
 
+export type ScoreAlternative = {
+  passes: number[]
+  host: ScoreMeasure
+  measure: ScoreMeasure
+  intervals: ScoreInterval[]
+  sourceStart: number
+  sourceEnd: number
+}
+
 export type ScorePart = { melody: ScoreMeasure[]; bass: ScoreMeasure[] }
 export type ScoreLyricSyllable = { text: string; sourceStart: number; sourceEnd: number; forceTiedTarget: boolean; kind: 'text' | 'placeholder' | 'extender'; underlined: boolean; wordpos?: 'i' | 'm' | 't' }
 export type ScoreLyricBlock = {
+  /** Internal projection of shared lyrics onto a particular alternative visit. */
+  alternativePass?: number
   range: string
   mode: 'char' | 'word'
   syllables: ScoreLyricSyllable[]
@@ -64,6 +77,7 @@ export type ScoreLyricBlock = {
 
 /** Canonical musical meaning of a source document, independent of textual layout. */
 export type ScoreDocument = {
+  alternatives?: ScoreAlternative[]
   /** Equal visible measure widths within each numbered-notation system. */
   equalMeasures?: boolean
   /** Written sections are printed once; order determines performance visits. */

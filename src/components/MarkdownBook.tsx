@@ -1,11 +1,10 @@
 import type { ComponentPropsWithoutRef, FocusEvent, ReactElement, ReactNode } from 'react'
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { documentSections, searchForDocument, slugify } from '../lib/docs-navigation'
 import { escapeTableCodePipes } from '../lib/markdown-table'
-import { readNumberedNotation, writeNumberedNotation } from '../lib/renderer-settings'
 import { NotationEditor } from './NotationEditor'
 
 type DocumentSource = {
@@ -23,16 +22,11 @@ type MarkdownBookProps = {
   documents: DocumentSource[]
 }
 
-type DocumentNotation = { enabled: boolean; onChange: (enabled: boolean) => void }
-const DocumentNotationContext = createContext<DocumentNotation | null>(null)
-
-// Keep the renderer component identity stable when the shared notation changes.
 function MarkdownCode(props: ComponentPropsWithoutRef<'code'>) {
-  const notation = useContext(DocumentNotationContext)
   const className = props.className ?? ''
   const value = String(props.children ?? '').replace(/\n$/, '')
   if (className.includes('language-m3n')) {
-    return <div className="document-example"><NotationEditor embedded initialSource={value} numberedNotation={notation?.enabled} onNumberedNotationChange={notation?.onChange} /><Link className="action-button" to="/editor" state={{ exampleSource: value }}>在编辑器试改</Link></div>
+    return <div className="document-example"><NotationEditor embedded initialSource={value} /><Link className="action-button" to="/editor" state={{ exampleSource: value }}>在编辑器试改</Link></div>
   }
   return <code className={className}>{props.children}</code>
 }
@@ -51,7 +45,6 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   const navigate = useNavigate()
   const [isTocOpen, setIsTocOpen] = useState(false)
   const [activeHeadingId, setActiveHeadingId] = useState('')
-  const [numberedNotation, setNumberedNotation] = useState(readNumberedNotation)
   const tocRef = useRef<HTMLElement>(null)
   const tocToggleRef = useRef<HTMLButtonElement>(null)
   const activeHeadingIdRef = useRef('')
@@ -197,13 +190,6 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     return true
   }, [documentGroups, selectDocument])
 
-  const changeNumberedNotation = useCallback((enabled: boolean) => {
-    setNumberedNotation(enabled)
-    writeNumberedNotation(enabled)
-  }, [])
-
-  const notationContext = useMemo(() => ({ enabled: numberedNotation, onChange: changeNumberedNotation }), [numberedNotation, changeNumberedNotation])
-
   const markdownComponents = useMemo(() => ({
     h2(props: ComponentPropsWithoutRef<'h2'>) {
       const title = String(props.children ?? '')
@@ -305,29 +291,12 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
         </nav>
       </aside>
       <article ref={articleRef} className="markdown-panel">
-        <div className="document-notation-controls">
-          <label className="document-notation-toggle">
-            <span>简谱</span>
-            <span className="switch-control">
-              <input
-                type="checkbox"
-                role="switch"
-                aria-label="简谱渲染"
-                checked={numberedNotation}
-                onChange={(event) => changeNumberedNotation(event.currentTarget.checked)}
-              />
-              <span className="switch-track" aria-hidden="true"><span className="switch-thumb" /></span>
-            </span>
-          </label>
-        </div>
-        <DocumentNotationContext.Provider value={notationContext}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={markdownComponents}
           >
             {escapeTableCodePipes(activeDocument.source)}
           </ReactMarkdown>
-        </DocumentNotationContext.Provider>
         <button
           ref={tocToggleRef}
           type="button"

@@ -156,6 +156,7 @@ class TextTemporalNode extends TemporalNodeBase {
 
     private style: TextStyle;
     private textBaselineY = 0;
+    private centerOffsets: number[] = [];
 
     constructor(ast: TextFunction, host?: VisualTemporalNode) {
         super();
@@ -170,6 +171,7 @@ class TextTemporalNode extends TemporalNodeBase {
     override prepareLayout(context: LayoutPrepareContext) {
         const { lines, align, lineAdvance } = this.ast;
         const measure = (text: string) => context.textMeasurer.measureText(text, this.style);
+        this.centerOffsets = lines.map(line=>measure(line).centerOffset ?? 0);
         const first = measure(lines[0]);
         let width = first.w;
         for (let i = 1; i < lines.length; i++) width = Math.max(width, measure(lines[i]).w);
@@ -196,8 +198,8 @@ class TextTemporalNode extends TemporalNodeBase {
         if (this.ast.frame) painter.drawRect(this.box.x + 0.5, this.box.y + 0.5, this.box.w - 1, this.box.h - 1, { stroke: "#000", strokeWidth: 1 });
         const x = this.box.x + (align === "center" ? this.box.w / 2 : align === "right" ? this.box.w - inset : inset);
         let y = this.box.y + this.textBaselineY;
-        for (const line of lines) {
-            painter.drawText(line, x, y, this.style);
+        for (const [index,line] of lines.entries()) {
+            painter.drawText(line, x - (align === "center" ? this.centerOffsets[index] : 0), y, this.style);
             y += lineAdvance;
         }
     }

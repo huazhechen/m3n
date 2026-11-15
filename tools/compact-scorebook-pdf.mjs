@@ -60,7 +60,7 @@ if(hasOutline){
 const fonts = execFileSync('pdffonts',[staged],{encoding:'utf8'}).trim().split('\n').slice(2)
 assert(fonts.length>0 && fonts.every(line=>/yes\s+yes\s+yes/.test(line)), 'Embed every used font with Unicode mappings')
 assert(fonts.some(line=>line.includes('NotoSerifCJKsc-Regular')))
-if(record.entries.some(entry=>entry.notation!=='staff'))assert(fonts.some(line=>line.includes('BarlowSemiCondensed-Medium')))
+assert(fonts.some(line=>line.includes('BarlowSemiCondensed-Medium')))
 const images = execFileSync('pdfimages',['-list',staged],{encoding:'utf8'}).trim().split('\n').slice(2)
 assert.equal(images.length,0,'Keep all score pages vector')
 const originalBytes=hasOutline?statSync(sourcePdf).size:null,compactBytes=statSync(staged).size

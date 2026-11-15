@@ -1,13 +1,13 @@
 # M3N — Max's Markup Music Notation
 
-M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器端的 M3N 编辑器：在线编写、阅读、试听和导出简谱与五线谱，并在 `/docs` 提供 M3N 指南与手册。
+M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器端的 M3N 编辑器：在线编写、阅读、试听和导出简谱，并在 `/docs` 提供 M3N 指南与手册。
 
 ## 仓库结构
 
 | 目录 | 内容 |
 | --- | --- |
 | `packages/notation` | `@m3n/notation`：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换。 |
-| `packages/score-renderer` | `@m3n/score-renderer`：五线谱（Verovio）的浏览器渲染、播放、导出与资源调度。 |
+| `packages/score-renderer` | `@m3n/score-renderer`：简谱页面、播放、导出与资源调度；Verovio 仅用于 MIDI 和时间映射。 |
 | `packages/numbered-notation` | `ScoreDocument` 到简谱引擎的语义与交互适配。 |
 | `packages/jpfun` | 固定版本、保留补丁与许可记录的简谱排版核心。 |
 | `src` | React Web 应用、路由、曲库装载及分享服务。 |

@@ -10,6 +10,7 @@ export type M3NPhrase = {
   melody?: M3NSourceRow
   bass?: M3NSourceRow
   harmony?: M3NSourceRow
+  alternatives?: Array<M3NSourceRow & { passes: number[]; measure: number }>
   lyrics: Array<{ label: string; text: string; start: number }>
 }
 
@@ -93,7 +94,9 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
       const text = syntaxRow.content
       const start = syntaxRow.contentStart
       const row = { text, start, line, tokens: syntaxRow.tokens }
-      if (kind === 'N') {
+      if (syntaxRow.alternative) {
+        (current.alternatives ??= []).push({ ...row, ...syntaxRow.alternative })
+      } else if (kind === 'N') {
         if (current.melody) report(line, 'M3N_STRUCTURE_DUPLICATE_MELODY', '同一乐句只能有一个 N: 行')
         current.melody = row
       } else if (kind === 'B') {
@@ -105,7 +108,7 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
       } else {
         current.lyrics.push({ label: kind.slice(1), text, start })
       }
-      if (kind !== 'N' && nonAlignmentBar.test(text)) report(line, 'M3N_STRUCTURE_INVALID_ALIGNMENT_BAR', `${kind}: 只允许使用普通 | 作为小节对位标记`)
+      if (kind !== 'N' && !syntaxRow.alternative && nonAlignmentBar.test(text)) report(line, 'M3N_STRUCTURE_INVALID_ALIGNMENT_BAR', `${kind}: 只允许使用普通 | 作为小节对位标记`)
       continue
     }
     if (!musicSeen) header.push(rawLine)

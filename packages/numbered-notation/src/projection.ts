@@ -1,6 +1,7 @@
+import { DefaultTextMeasurer, type TextMeasurer } from '@m3n/jpfun'
 import {
   displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreCreditLines, scoreEventIds,
-  type ScoreDocument, type ScoreEvent, type ScoreMeasure,
+  measurePlaybackPasses, type ScoreDocument, type ScoreEvent, type ScoreMeasure, type ScoreAlternative,
 } from '@m3n/notation'
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
@@ -21,9 +22,10 @@ export type EventBinding = {
   slot: number
   lyrics: Map<number, LyricRowData>
   sustain: boolean
+  passes?: number[]
 }
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
-export type ProjectionOptions = { width: number; paged: boolean; includeBass?: boolean; pageMargin?: number; systemGap?: number }
+export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 const pitchName = (token: string, shift = 0) => {
   const match = /^([0-7])([#b=]*)([ed]*)$/.exec(token)
@@ -63,7 +65,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const warn = (event: ScoreEvent, value: string) => diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${value}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
 
   const voicesForPart = (melody: ScoreMeasure[], bass: ScoreMeasure[], partIndex: number) => {
-    const renderVoice = (measures: ScoreMeasure[], staff: 'melody' | 'bass') => {
+    const playbackPasses = document.alternatives?.length ? measurePlaybackPasses(melody) : new Map<ScoreMeasure, Set<number>>()
+    const renderVoice = (measures: ScoreMeasure[], staff: 'melody' | 'bass', alternative?: ScoreAlternative, hostIndex = 0): string => {
       let pieces: string[] = []
       const paragraphs: string[] = []
       let paragraph: string | undefined
@@ -82,7 +85,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const xmlId = event ? ids.get(event)! : `m3n-rest-${partIndex + 1}-${serial}`
         const label = `m${++serial}`
         const visualId = `${xmlId}${suffix}`
-        const binding: EventBinding = { label, xmlId, visualId, measureId, staff, event, slot, lyrics: suffix.includes('sustain') ? new Map() : lyrics.get(event!)?.get(slot) ?? new Map(), sustain: suffix.includes('sustain') || continuations.has(event!) }
+        const binding: EventBinding = { label, xmlId, visualId, measureId, staff, event, slot, passes: alternative?.passes ?? (staff==='melody' && document.alternatives?.length && event ? [...(playbackPasses.get(melody.find(measure=>measure.events.includes(event))!) ?? [1])].filter(pass=>!document.alternatives?.some(item=>item.host.events.includes(event)&&item.passes.includes(pass))) : undefined), lyrics: suffix.includes('sustain') ? new Map() : lyrics.get(event!)?.get(slot) ?? new Map(), sustain: suffix.includes('sustain') || continuations.has(event!) }
         bindings.set(label, binding)
         // Native dashes do not consume a lyric slot; their empty domain slots
         // stay in the binding without shifting lyrics on following notes.
@@ -112,7 +115,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           }
           return `@note(${quote(native)}${repeated ? ',showacc=false' : ''})`
         }
-        const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
+        const measureId = `m3n-measure-${partIndex + 1}-${hostIndex + measureIndex + 1}`
         const melodyMeasure = melody[measureIndex]
         const firstEvent = melodyMeasure?.events[0] ?? measure.events[0]
         const nextParagraph = firstEvent ? `${partIndex}:${paragraphOf(firstEvent.sourceStart)}` : paragraph
@@ -132,6 +135,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           pieces.push(item.expression)
           firsts.set(measureIndex, item.label); lasts.set(measureIndex, item.label)
         }
+        const measureStart = pieces.length
         for (const event of measure.events) {
           const eventParagraph = `${partIndex}:${paragraphOf(staff === 'bass' ? firstEvent?.sourceStart ?? event.sourceStart : event.sourceStart)}`
           if (paragraph !== eventParagraph) { flushParagraph(); paragraph = eventParagraph }
@@ -231,6 +235,18 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           previousTied = event.tie ? event : undefined
           pieces.push(content.join(' '))
         }
+        if (alternative) {
+          const first = firsts.get(measureIndex), last = lasts.get(measureIndex)
+          if (first && last) parentheses.push(`@paren(${first},${last})`)
+          if (first) annotations[1]!.push(`@text(${quote(alternative.passes.join('.')+'.')},size=12px,above=${first},local=true)`)
+        } else if (staff==='melody') {
+          const replacements = document.alternatives?.filter(item=>item.host===measure) ?? []
+          if (replacements.length) {
+            let main = pieces.splice(measureStart).join(' ')
+            for (const replacement of replacements) main = `@ossia({${main}},{@set(fontsize=18) ${renderVoice([replacement.measure],'melody',replacement,measureIndex)}})`
+            pieces.push(main)
+          }
+        }
         const next = staff === 'bass' ? melody[measureIndex + 1] : visibleMeasures[measureIndex + 1]
         const nextLine = breaksBefore(measureIndex + 1)
         const closesRepeat = structure.right === 'rptboth' || structure.right === 'rptend'
@@ -242,7 +258,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         if ((measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},@text("×${measure.repeatCount}",size=13px))`
         // Within a system the opening repeat supplies the shared boundary.
         // Across an explicit break both systems need their own boundary mark.
-        if (!((type === 0 || type === 1) && next?.left === 'rptstart' && !nextLine && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
+        if (!alternative && !((type === 0 || type === 1) && next?.left === 'rptstart' && !nextLine && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
         previousMeasure = structure
       })
       let endingStart = 0
@@ -277,9 +293,24 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     if (options.includeBass !== false && bass.some(measure => measure.events.length || measure.multiRest)) voices.push(renderVoice(bass, 'bass'))
     return voices.length > 1 ? `@voices(${voices.join(',')},connect="[-]",repeatconnect=true)` : voices[0]!
   }
+  const headingText = (text: string, size: number, weight: number) => {
+    const measurer=options.textMeasurer ?? new DefaultTextMeasurer()
+    const available=options.width-2*(options.pageMargin ?? 32)-2
+    const lines:string[]=[]
+    let line=''
+    for (const char of text) {
+      if (line && measurer.measureText(line+char,{fontSize:size,fontFamily:'serif',fontWeight:weight}).w>available) {
+        const boundary=Math.max(line.lastIndexOf(' '),line.lastIndexOf('('),line.lastIndexOf('（'))
+        if (boundary>line.length/3) { lines.push(line.slice(0,boundary).trimEnd()); line=line.slice(boundary+(line[boundary]===' '?1:0))+char }
+        else {lines.push(line.trimEnd());line=char.trimStart()}
+      } else line+=char
+    }
+    if(line)lines.push(line.trimEnd())
+    return lines.join('\n')
+  }
   const headings = [
-    document.title ? `@text(${quote(document.title)},size=32px,align=center,weight=700)` : '',
-    document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : '',
+    document.title ? `@text(${quote(headingText(document.title,32,700))},size=32px,align=center,weight=700)` : '',
+    document.subtitle ? `@text(${quote(headingText(document.subtitle,16,400))},size=16px,align=center)` : '',
   ].filter(Boolean).join(' ')
   const creditLines = scoreCreditLines(document).map(line => {
     const colon = line.indexOf('：')
@@ -336,13 +367,13 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   }
   // Explicit phrase boundaries remain distinct, including adjacent slurs.
   // Native arc clearance expects inner declarations before their outer slurs.
-  const intervals = [...document.intervals].sort((a, b) => {
+  const intervals = [...document.intervals, ...new Set((document.alternatives ?? []).flatMap(item=>item.intervals))].sort((a, b) => {
     if (a.kind !== 'lg' || b.kind !== 'lg') return Number(b.kind === 'lg') - Number(a.kind === 'lg')
     return ((a.endStart ?? 0) - (a.start ?? 0)) - ((b.endStart ?? 0) - (b.start ?? 0))
   })
   for (const interval of intervals) {
     if (interval.kind !== 'lg' && interval.kind !== 'cresc' && interval.kind !== 'decres') continue
-    const events = [...document.parts.values()].flatMap(part => part[interval.staff].flatMap(measure => measure.events)).filter(event => interval.start !== undefined && interval.endStart !== undefined && event.sourceStart >= interval.start && event.sourceStart <= interval.endStart)
+    const events = [...document.parts.values()].flatMap(part => part[interval.staff].flatMap(measure => measure.events)).concat(interval.staff==='melody'?(document.alternatives ?? []).flatMap(item=>item.measure.events):[]).filter(event => interval.start !== undefined && interval.endStart !== undefined && event.sourceStart >= interval.start && event.sourceStart <= interval.endStart)
     const first = events[0], last = events.at(-1)
     if (!first || !last) continue
     const start = endpointLabels.get(first)?.first

@@ -1,8 +1,8 @@
 import { renderScoreInto, type RenderPhase } from '../lib/render-score'
-import type { VerovioScore, SpessaPlayer } from '@m3n/score-renderer'
+import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { MeiSourceMapRange, ScoreDocument, ScoreHeaderMetadata } from '@m3n/notation'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { MeiSourceMapRange, ScoreDocument } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_SPEED,
   DEFAULT_PLAYBACK_TRANSPOSE,
@@ -15,9 +15,7 @@ import {
   PLAYBACK_TRANSPOSE_MIN,
   TRANSPOSE_KEY,
   readRenderMode,
-  readNumberedNotation,
   writeRenderMode,
-  writeNumberedNotation,
   type RenderMode,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
@@ -27,26 +25,21 @@ import {
   writeRendererSetting,
 } from '../lib/renderer-settings'
 import {
-  lyricVerseIndexForMeasureRendition,
   scorePlaybackCoordinator,
-  visibleLyricVerseNumbers,
   type PlaybackLease,
 } from '@m3n/score-renderer/view'
 
 type ScoreRendererProps = {
   mei: string | (() => string)
-  headerMetadata: ScoreHeaderMetadata[]
   sourceMap: MeiSourceMapRange[]
-  scoreDocument?: ScoreDocument
+  scoreDocument: ScoreDocument
   compact?: boolean
   isSourceUpdating?: boolean
-  numberedNotation?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
   onActiveXmlId?: (xmlId: string | null) => void
   onLayoutWidthChange?: (width: number) => void
   onNoteClick?: (xmlId: string) => void
-  onNumberedNotationChange?: (enabled: boolean) => void
   onPaperBlur?: () => void
 }
 
@@ -78,7 +71,7 @@ function queryPlaybackElements(paper: HTMLElement | null, xmlId: string, renditi
   if (hasPasses) {
     // Numbered notation marks every lyric with the playback passes its
     // measure participates in. Exact pass matches win; when no row belongs
-    // to this pass, cycle the visible rows like the staff renderer does for
+    // to this pass, cycle the visible rows for
     // repeated occurrences such as `L3: {L1}`.
     const matching = grouped.filter((element) => {
       const passes = element.getAttribute('data-m3n-passes')
@@ -121,14 +114,13 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   const system = measure.closest<SVGGElement>('g.system')
   const measureBounds = measure.getBBox()
   const systemBounds = system?.getBBox() ?? measureBounds
-  const numberedNotation = measure.closest<HTMLElement>('.score-paper')?.dataset.notation === 'numbered'
   const numberedMeasureStart = Number(measure.dataset.m3nMeasureStart)
   const numberedMeasureEnd = Number(measure.dataset.m3nMeasureEnd)
   // Native numbered bounds remain valid when a measure continues on another system.
-  const left = numberedNotation && Number.isFinite(numberedMeasureStart)
+  const left = Number.isFinite(numberedMeasureStart)
     ? numberedMeasureStart - 5
     : measureBounds.x
-  const right = numberedNotation && Number.isFinite(numberedMeasureEnd)
+  const right = Number.isFinite(numberedMeasureEnd)
     ? numberedMeasureEnd + 5
     : measureBounds.x + measureBounds.width
   const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
@@ -137,8 +129,7 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   band.setAttribute('y', String(systemBounds.y))
   band.setAttribute('width', String(Math.max(0, right - left)))
   band.setAttribute('height', String(systemBounds.height))
-  if (numberedNotation) measure.appendChild(band)
-  else measure.insertBefore(band, measure.firstChild)
+  measure.appendChild(band)
 }
 
 function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: readonly string[]) {
@@ -151,23 +142,20 @@ function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: read
 
 export function ScoreRenderer({
   mei,
-  headerMetadata,
   sourceMap,
   scoreDocument,
   compact = false,
   isSourceUpdating = false,
-  numberedNotation: numberedNotationOverride,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
   onActiveXmlId,
   onLayoutWidthChange,
   onNoteClick,
-  onNumberedNotationChange,
   onPaperBlur,
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement>(null)
   const renderGenerationRef = useRef(0)
-  const scoreRef = useRef<VerovioScore | null>(null)
+  const scoreRef = useRef<PlaybackScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
   const settingsDialogRef = useRef<HTMLDialogElement>(null)
   const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
@@ -210,23 +198,17 @@ export function ScoreRenderer({
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
-  const [storedNumberedNotation, setStoredNumberedNotation] = useState(() => !compact && readNumberedNotation())
-  const numberedNotation = numberedNotationOverride ?? storedNumberedNotation
   const speedRef = useRef(playbackSpeed)
   const transposeRef = useRef(playbackTranspose)
   const [fitWidth, setFitWidth] = useState(() => compact || readRendererSetting('m3n:fit-width', 1, 0, 1) === 1)
-  const [staffWidth, setStaffWidth] = useState(0)
+  const [contentWidth, setContentWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPlayerLoading, setIsPlayerLoading] = useState(false)
   const [hasAudioControls, setHasAudioControls] = useState(false)
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
-  const renderWidth = fitWidth ? Math.max(SCORE_WIDTH_MIN, staffWidth || layoutWidth) : layoutWidth
-  // At most one snapshot per notation, scoped to the current score and layout settings.
-  const renderCache = useMemo(() => new Map<boolean, { markup: string; message: string }>(),
-    [compact, headerMetadata, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument])
-
+  const renderWidth = fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth
   useEffect(() => { if (isSourceUpdating) stopPlaybackRef.current() }, [isSourceUpdating])
 
   useEffect(() => {
@@ -253,7 +235,7 @@ export function ScoreRenderer({
     if (!paper) return
     const updateWidth = () => {
       const width = Math.floor(paper.clientWidth)
-      setStaffWidth((current) => current === width ? current : width)
+      setContentWidth((current) => current === width ? current : width)
     }
     updateWidth()
     const observer = new ResizeObserver(updateWidth)
@@ -274,28 +256,18 @@ export function ScoreRenderer({
     setSelectedXmlId(null)
     void (async () => {
       try {
-        const cached = renderCache.get(numberedNotation)
-        paper.dataset.renderCache = cached ? 'hit' : 'miss'
-        if (cached) {
-          paper.innerHTML = cached.markup
-          setMessage(cached.message)
-          hasRenderedRef.current = true
-          setHasAudioControls(true)
-          return
-        }
         const { message } = await renderScoreInto(paper, {
-          mei, scoreDocument, numberedNotation, headerMetadata, width: renderWidth, paged: renderMode === 'paged',
-          scale: compact ? 38 : 42, sheetClass: 'score-page-sheet', signal: controller.signal,
+          scoreDocument, width: renderWidth, paged: renderMode === 'paged',
+          sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
         })
         if (cancelled) return
         addInvalidMeasureHighlights(paper, invalidMeasureIds)
-        renderCache.set(numberedNotation, { markup: paper.innerHTML, message })
         setMessage(message)
         hasRenderedRef.current = true
         setHasAudioControls(true)
       } catch (error: unknown) {
-        if (!cancelled) setMessage(error instanceof Error ? error.message : 'MEI 乐谱渲染失败。')
+        if (!cancelled) setMessage(error instanceof Error ? error.message : '简谱渲染失败。')
       } finally {
         if (!cancelled) {
           setIsRendering(false)
@@ -309,7 +281,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, headerMetadata, invalidMeasureIds, mei, numberedNotation, renderCache, renderMode, renderWidth, scoreDocument])
+  }, [compact, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -355,14 +327,7 @@ export function ScoreRenderer({
     const progress = duration > 0 ? Math.max(0, Math.min(1, seconds / duration)) : 0
     if (syncProgress) setPlaybackProgress(progress)
     const timedElements = scoreRef.current?.elementsAtTime(seconds * 1000) ?? []
-    const elements = timedElements.flatMap(({ xmlId, rendition }) => queryPlaybackElements(paperRef.current, xmlId, rendition).flatMap((note) => {
-      const verses = [...note.children].filter((element): element is SVGGElement => element.classList.contains('verse'))
-      if (note.children.length === 0) return [note]
-      const measure = note.closest<SVGGElement>('g.measure')
-      const visibleVerseNumbers = visibleLyricVerseNumbers(measure?.querySelectorAll<SVGGElement>('g.verse') ?? [])
-      const activeVerse = verses[lyricVerseIndexForMeasureRendition(verses, rendition, visibleVerseNumbers)]
-      return [...note.children].filter((element) => !element.classList.contains('verse') || element === activeVerse)
-    }))
+    const elements = timedElements.flatMap(({ xmlId, rendition }) => queryPlaybackElements(paperRef.current, xmlId, rendition))
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
     elements.forEach((element) => element.classList.add('is-playing'))
     highlightedElementsRef.current = elements
@@ -394,8 +359,8 @@ export function ScoreRenderer({
       try {
         let score = scoreRef.current
         if (!score) {
-          const { VerovioScore } = await import('@m3n/score-renderer/verovio')
-          score = await VerovioScore.create(typeof mei === 'function' ? mei() : mei)
+          const { PlaybackScore } = await import('@m3n/score-renderer/playback')
+          score = await PlaybackScore.create(typeof mei === 'function' ? mei() : mei)
           if (generation !== renderGenerationRef.current) { score.destroy(); throw new Error('乐谱已更新，请重新播放。') }
           scoreRef.current = score
         }
@@ -547,15 +512,6 @@ export function ScoreRenderer({
     if (!compact) writeRenderMode(mode)
   }
 
-  const changeNumberedNotation = (enabled: boolean) => {
-    if (numberedNotationOverride !== undefined) {
-      onNumberedNotationChange?.(enabled)
-      return
-    }
-    setStoredNumberedNotation(enabled)
-    if (!compact) writeNumberedNotation(enabled)
-  }
-
   useEffect(() => {
     window.addEventListener('pointerup', commitSeek)
     window.addEventListener('pointercancel', commitSeek)
@@ -587,8 +543,6 @@ export function ScoreRenderer({
         speed={playbackSpeed}
         transpose={playbackTranspose}
         metronomeEnabled={metronomeEnabled}
-        numberedNotation={numberedNotation}
-        canChangeNotation={Boolean(scoreDocument)}
         onTogglePlayback={() => void togglePlayback()}
         onRestart={() => {
           isSeekingRef.current = false
@@ -604,7 +558,6 @@ export function ScoreRenderer({
         onSpeedChange={changePlaybackSpeed}
         onTransposeChange={changePlaybackTranspose}
         onMetronomeChange={changeMetronomeEnabled}
-        onNotationChange={changeNumberedNotation}
         onResetPractice={() => {
           setLoop({ a: 0, b: 1, enabled: false }); playerRef.current?.setLoopRange(null)
           setMuted({ melody: false, bass: false }); playerRef.current?.setStaffMuted(1, false); playerRef.current?.setStaffMuted(2, false); setFollow(true)
@@ -669,12 +622,12 @@ export function ScoreRenderer({
       )}
       <div
         ref={paperRef}
-        className="score-paper verovio-score"
+        className="score-paper"
         data-render-phase={renderPhase ?? undefined}
         data-reading-fit={fitWidth}
         data-render-mode={renderMode}
-        data-notation={numberedNotation ? 'numbered' : 'staff'}
-        aria-busy={isRendering || undefined}
+        data-notation="numbered"
+        aria-busy={isRendering || isSourceUpdating || undefined}
         tabIndex={0}
         onClick={(event) => {
           const element = (event.target as Element).closest('[id^="m3n-e-"], [data-m3n-id^="m3n-e-"]')

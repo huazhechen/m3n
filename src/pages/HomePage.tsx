@@ -1,10 +1,8 @@
-import { useState } from 'react'
 import { NotationEditor } from '../components/NotationEditor'
 import { Link } from 'react-router-dom'
 import { TopNav } from '../components/TopNav'
 
 export function HomePage() {
-  const [numbered, setNumbered] = useState(true)
   return (
     <main>
       <TopNav />
@@ -13,7 +11,7 @@ export function HomePage() {
           <span className="eyebrow">Max&apos;s Markup Music Notation</span>
           <h1>M3N 是面向旋律制谱的文本记谱语言。</h1>
           <p>
-            使用首调记谱输入旋律，即时呈现为清晰的标准五线谱，让创作、校对与分享都更直接。
+            使用首调记谱输入旋律，即时呈现为清晰的简谱，让创作、校对与分享都更直接。
           </p>
           <div className="hero-actions">
             <Link to="/editor" className="primary-link">
@@ -34,7 +32,7 @@ export function HomePage() {
           </section>
           <section>
             <h2>即时渲染</h2>
-            <p>输入内容即时呈现为标准五线谱，便于校对、试听和打印。</p>
+            <p>输入内容即时呈现为简谱，便于校对、试听和打印。</p>
           </section>
           <section>
             <h2>随时创作</h2>
@@ -43,8 +41,8 @@ export function HomePage() {
         </div>
       </section>
       <section className="home-sample" aria-label="可试听谱例">
-        <div className="pane-toolbar"><h2>从一段旋律开始</h2><label><input type="checkbox" role="switch" aria-label="首页简谱" checked={numbered} onChange={event => setNumbered(event.currentTarget.checked)} />简谱</label></div>
-        <NotationEditor embedded initialSource={'{title=欢乐颂片段}{4/4}{108qpm}\nN: 3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 3. 2_ 2 - |||'} numberedNotation={numbered} onNumberedNotationChange={setNumbered} />
+        <div className="pane-toolbar"><h2>从一段旋律开始</h2></div>
+        <NotationEditor embedded initialSource={'{title=欢乐颂片段}{4/4}{108qpm}\nN: 3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 3. 2_ 2 - |||'} />
       </section>
     </main>
   )

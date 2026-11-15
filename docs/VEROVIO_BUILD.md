@@ -1,6 +1,6 @@
 # Verovio 精简构建
 
-M3N 的 Verovio 输入只有 MEI，用于五线谱 SVG、MIDI 和播放时间映射。简谱显示继续独立于 Verovio，只有五线谱显示或播放需要时才加载引擎。
+M3N 的 Verovio 输入只有 MEI，仅用于 MIDI 和播放时间映射。显示与导出完全由简谱引擎负责，播放时才加载 Verovio。
 
 ## 版本与裁剪范围
 
@@ -15,9 +15,9 @@ M3N 的 Verovio 输入只有 MEI，用于五线谱 SVG、MIDI 和播放时间映
 - WASM 导出限制为应用实际调用的 10 个方法、6 个诊断/验证方法和 2 个日志函数，完整名单记录在 `build.json`。MusicXML/ZIP 导入、PAE/MEI 导出、内部编辑与其他未调用接口不再成为链接入口。
 - C++ 使用 **`-Os`**，链接使用 **`-Oz`**，同时启用 **`-flto`**，以跨文件优化清除未使用代码。
 
-SVG、MEI 输入、MIDI、分页和播放时间查询均保留。应用与 renderer 测试直接导入同一份精简模块；`verovio/esm` 包装器仍使用精确固定的 npm `verovio@6.2.0`，以免二进制和包装器版本漂移；只调用裁剪清单内保留的方法。完整 npm WASM 仅供验证工具作基准，不进入应用构建。
+二进制保留上游内部依赖，应用公共接口只开放 MEI 输入、MIDI 和播放时间查询，不提供 SVG 或分页接口。应用与 renderer 测试直接导入同一份精简模块；`verovio/esm` 包装器仍使用精确固定的 npm `verovio@6.2.0`，以免二进制和包装器版本漂移；只调用裁剪清单内保留的方法。完整 npm WASM 仅供验证工具作基准，不进入应用构建。
 
-WASM 改为独立二进制，通过模块中的 `new URL('verovio-module.wasm', import.meta.url)` 引用。Vite 会生成带内容哈希的本站 `/assets/*.wasm` URL；Node 验证工具读取模块旁的同一文件。浏览器首次使用五线谱或播放时按需下载一次，随后复用已初始化模块；纯简谱显示不加载 JS 引擎或 WASM。没有 CDN 请求。
+WASM 改为独立二进制，通过模块中的 `new URL('verovio-module.wasm', import.meta.url)` 引用。Vite 会生成带内容哈希的本站 `/assets/*.wasm` URL；Node 验证工具读取模块旁的同一文件。浏览器首次播放时按需下载一次，随后复用已初始化模块；纯简谱显示不加载 JS 引擎或 WASM。没有 CDN 请求。
 
 ## 重建
 
@@ -48,7 +48,7 @@ LGPL 许可证、字体声明、完整原始源码压缩包、源码补丁和对
 
 ## 验证与体积
 
-`npm run test:verovio` 将精简引擎与原版 npm WASM 在相同参数、固定 XML ID seed 下对照：82 首内置曲目，加一份包含中英文、粗斜体和 SMuFL 文字符号的 MEI，均使用应用支持的 Leipzig。共 **83 组、98 页**，逐项验证完整 SVG、MIDI、timemap、音符起始时间和时刻对应元素完全一致。脚本同时核验两个产物、补丁 SHA-256 与 WASM 导出清单，并要求 JS 与 WASM **分别 gzip 后的合计大小**比原版模块至少下降 55%；报告输出在 `.tmp/verovio-verification.json`。
+`npm run test:verovio` 将精简引擎与原版 npm WASM 在相同参数、固定 XML ID seed 下对照：82 首内置曲目，加一份包含中英文、粗斜体和 SMuFL 文字符号的 MEI，均使用应用支持的 Leipzig。逐项验证 MIDI、timemap、音符起始时间和时刻对应元素完全一致，不再生成五线谱 SVG。脚本同时核验两个产物、补丁 SHA-256 与 WASM 导出清单，并要求 JS 与 WASM **分别 gzip 后的合计大小**比原版模块至少下降 55%；报告输出在 `.tmp/verovio-verification.json`。
 
 以下为 2026-10-16 的生产渲染资源，使用 Node `zlib` 的 gzip level 9 和 Brotli quality 11 测量；单位为字节。原版和上一轮只有 `verovio-score-*.js`，本轮为该 JS 与 `verovio-module-*.wasm` 分别压缩后的合计，不会遗漏拆出的下载量：
 
@@ -64,4 +64,4 @@ LGPL 许可证、字体声明、完整原始源码压缩包、源码补丁和对
 
 线上实际传输大小仍取决于服务器使用的编码。这里不把压缩算法差异计作裁剪收益；比较的每一行都使用相同编码参数。
 
-`npm run check` 还覆盖 renderer 的真实 WASM 测试、680 组简谱布局检查和浏览器端五线谱显示、播放高亮、分页与导出。资源端到端测试阻断外站请求，并验证切换与播放时 JS 引擎、独立 WASM 各只加载一次，简谱独立显示时两者均不加载。
+`npm run check` 还覆盖 renderer 的真实 WASM 测试、680 组简谱布局检查和浏览器端简谱显示、播放高亮、分页与导出。资源端到端测试阻断外站请求，并验证播放时 JS 引擎、独立 WASM 各只加载一次，简谱独立显示时两者均不加载。

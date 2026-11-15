@@ -1,3 +1,4 @@
+import { lyricMeasures, alternativeLyricBlocks } from './alternatives.js'
 import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './score-document.js'
 import { scoreEventIds } from '../score-event-ids.js'
 import { measurePlaybackPasses, parsePassRange } from './repeats.js'
@@ -7,7 +8,24 @@ import { scoreHeaderMetadata } from './mei-document.js'
 export type ScoreSourceRange = { xmlId: string; sourceStart: number; sourceEnd: number }
 
 /** Renderer-independent event/lyric interaction data. No XML is produced. */
-export function deriveScoreInteraction(document: ScoreDocument) {
+export function deriveScoreInteraction(document: ScoreDocument): {
+  lyricsByEvent: Map<ScoreEvent, MeiVerseSyllable[]>; visibleVerseIndexes: Set<number>; sourceMap: ScoreSourceRange[]; hasBassStaff: boolean; headerMetadata: ReturnType<typeof scoreHeaderMetadata>
+} {
+  if (document.alternatives?.length) {
+    const base = deriveScoreInteraction({...document,alternatives:undefined,lyrics:[]})
+    for (const block of alternativeLyricBlocks(document)) {
+      const measures = lyricMeasures(document,block).map(measure=>({...measure,orderPasses:Array.from({length:256},(_,i)=>i+1)}))
+      const selected = deriveScoreInteraction({...document,alternatives:undefined,lyrics:[{...block,targetStart:undefined,targetEnd:undefined}],parts:new Map([['score',{melody:measures,bass:[]}]])})
+      for (const [event,lyrics] of selected.lyricsByEvent) base.lyricsByEvent.set(event,[...(base.lyricsByEvent.get(event) ?? []),...lyrics])
+      for (const verse of selected.visibleVerseIndexes) base.visibleVerseIndexes.add(verse)
+    }
+    const ids=scoreEventIds(document)
+    for (const item of document.alternatives) for (const event of item.measure.events) {
+      base.sourceMap.push({xmlId:ids.get(event)!,sourceStart:event.sourceStart,sourceEnd:event.sourceEnd})
+    }
+    for (const [event,lyrics] of base.lyricsByEvent) for (const lyric of lyrics) base.sourceMap.push({xmlId:ids.get(event)!,sourceStart:lyric.sourceStart,sourceEnd:lyric.sourceEnd})
+    return base
+  }
   const lyricsByEvent = new Map<ScoreEvent, MeiVerseSyllable[]>()
   const lyricSyllables = document.lyrics.map((block) => {
     const numericRange = /^\d+$/.test(block.range)

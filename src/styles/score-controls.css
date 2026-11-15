@@ -46,10 +46,9 @@
 }
 
 .audio-controls button:focus-visible,
-.audio-controls input:focus-visible,
-.notation-selector input:focus-visible + span {
+.audio-controls input:focus-visible {
   outline: 2px solid #176e6e;
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 .audio-controls button:disabled {
@@ -155,59 +154,6 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-}
-
-.notation-selector {
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 2px;
-  min-width: 0;
-  margin: 0 auto 0 0;
-  padding: 3px;
-  border: 0;
-  border-radius: 12px;
-  background: #e8eeea;
-}
-
-.notation-selector label {
-  position: relative;
-  display: flex;
-  min-width: 52px;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-.notation-selector input {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.notation-selector span {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  padding: 0 12px;
-  border-radius: 9px;
-  color: #58706c;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.notation-selector input:checked + span {
-  color: #176e6e;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgb(36 78 80 / 10%);
-}
-
-.notation-selector input:disabled + span {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .practice-toggle[aria-expanded="true"] {
@@ -403,18 +349,6 @@
 
   .score-control-actions {
     gap: 6px;
-  }
-
-  .notation-selector {
-    padding: 2px;
-  }
-
-  .notation-selector label {
-    min-width: 44px;
-  }
-
-  .notation-selector span {
-    padding: 0 8px;
   }
 
   .practice-toggle {

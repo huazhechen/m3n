@@ -663,17 +663,11 @@ textarea::selection {
   content: "正在加载渲染库";
 }
 
-.score-paper[data-render-phase="initializing-engine"]:empty::before {
-  content: "正在初始化五线谱引擎";
-}
 
 .score-paper[data-render-phase="loading-fonts"]:empty::before {
   content: "正在准备简谱字体";
 }
 
-.score-paper[data-render-phase="waiting-layout"]:empty::before {
-  content: "等待排版乐谱";
-}
 
 .score-paper[data-render-phase="layout"]:empty::before {
   content: "正在排版乐谱";
@@ -1350,20 +1344,7 @@ a.action-button {
   overflow: hidden;
 }
 
-.document-notation-controls {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 18px;
-}
 
-.document-notation-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: #285b5c;
-  font-size: 13px;
-  white-space: nowrap;
-}
 
 .markdown-panel h1,
 .markdown-panel h2,

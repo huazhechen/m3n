@@ -68,6 +68,8 @@ export interface TrackGroup {
  * 两次出现要不要共用基线，完全由申请音轨时给出的 laneKey 决定（见 group）
  */
 export class Track {
+    /** Local ossia tracks own their lyric slots instead of consuming the parent voice. */
+    alternative = false;
     /**
      * 挂在本轨上的分组；无需宿主定位的先合并，其余按声明顺序向外放置
      * 一个 group 理解为时间线上的一次分叉，但分叉模式相同会直接复用

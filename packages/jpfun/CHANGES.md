@@ -1,5 +1,7 @@
 # Local changes
 
+- `@ossia(host, alternative)` creates a local parallel track below the main music and its lyrics. Empty systems collapse that track, and outer lyric collection excludes alternative notes. The adapter uses it for small parenthesized replacement melodies with independent lyric counts.
+
 - `@note(...,showacc=false)` hides only the accidental glyph and its reserved width. Resolved pitch, octave, timing and playback remain intact; serialization preserves the flag. The M3N adapter uses it for redundant same-degree, same-octave accidentals within a measure.
 
 - `@dyn(...,below=true)` places hairpins below their complete note range, including low octave dots, and reserves that space across systems. The default above-note placement and playback are unchanged; serialization preserves the option.
@@ -53,3 +55,5 @@ The comparison base is the unmodified upstream import commit `d7c00a6`. See UPST
 Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, test/m3n-equal-measures.test.ts and test/m3n-uniform-spacing.test.ts. Application semantics and corpus tests live in @m3n/numbered-notation; real browser geometry checks are run by `npm run test:numbered-layout` at the workspace root.
 
 - 新增 `compileScore({wrapWidthRatio})`：仅缩小自动换行的参考宽度，最终版心、字形与源码身份保持；供谱集根据页面余量反馈试排。
+
+- Centered text accounts for measured ink bearings instead of assuming its advance width is visually symmetric; the center slot remains independent of side widths. Long numbered-score titles wrap at the measured page width while preserving their font size.

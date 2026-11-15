@@ -18,8 +18,6 @@ type ScoreControlsProps = {
   speed: number
   transpose: number
   metronomeEnabled: boolean
-  numberedNotation: boolean
-  canChangeNotation: boolean
   onTogglePlayback: () => void
   onRestart: () => void
   onSeekStart: () => void
@@ -28,7 +26,6 @@ type ScoreControlsProps = {
   onSpeedChange: (speed: number) => void
   onTransposeChange: (transpose: number) => void
   onMetronomeChange: (enabled: boolean) => void
-  onNotationChange: (enabled: boolean) => void
   onResetPractice: () => void
   onLayoutSettings: () => void
 }
@@ -61,12 +58,6 @@ export function ScoreControls(props: ScoreControlsProps) {
         </div>
       </div>
       <div className="score-control-actions">
-        {!props.compact && (
-          <fieldset className="notation-selector" aria-label="谱式">
-            <label><input type="radio" name={`${id}-notation`} aria-label="简谱" checked={props.numberedNotation} disabled={!props.canChangeNotation} onChange={() => props.onNotationChange(true)} /><span>简谱</span></label>
-            <label><input type="radio" name={`${id}-notation`} aria-label="五线谱" checked={!props.numberedNotation} onChange={() => props.onNotationChange(false)} /><span>五线谱</span></label>
-          </fieldset>
-        )}
         <button type="button" className="control-button practice-toggle" aria-label="练习设置" aria-expanded={practiceOpen} aria-controls={`${id}-practice`} onClick={() => setPracticeOpen(!practiceOpen)}>
           <ControlIcon><path d="M4 7h9m4 0h3M4 17h3m4 0h9M13 4v6M7 14v6" /></ControlIcon>
           <span>练习设置</span>

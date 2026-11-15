@@ -8,6 +8,8 @@ import type { SourceSpan } from '../parser/types.js';
  * 数值来源由具体的 TextMeasurer 决定
  */
 export interface GlyphMetrics {
+    /** Ink center relative to the middle of the text advance; optional for deterministic measurers. */
+    centerOffset?: number;
     w: number;          // 字形实际占用宽度
     h: number;          // 字形实际占用高度
     baseline: number;   // 纵向基线到字形上边界的距离

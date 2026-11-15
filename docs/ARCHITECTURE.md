@@ -60,13 +60,12 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/notation/mei-document.ts`：通过 XML builder 组装 MEI 文档头、责任者元数据、`scoreDef` 和 section，统一处理文本转义与文档序列化。
 - `packages/notation/src/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
 - `packages/notation/src/notation/section-order.ts`：校验显式乐段顺序；ScoreDocument 保存分段范围与局部访问次数，MEI expansion、歌词映射和两种谱面共用该模型。
-- `packages/score-renderer/src/verovio-score.ts`：Verovio SVG 排版、MIDI 生成和时间映射。
+- `packages/score-renderer/src/playback-score.ts`：仅提供 MIDI 生成和时间映射，按播放操作动态加载。
 - `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
-- `packages/score-renderer/src/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `lib/render-score.ts`：屏幕、打印预览和最终导出的统一排版入口，负责引擎选择、串行调度、取消、分页和 SVG 后处理。
 - `components/ScoreRenderer.tsx`：独立管理布局、播放和光标生命周期；改变版宽或谱式不销毁播放器，更新音乐文档时释放旧播放资源。
-- `components/ScoreControls.tsx`：播放、回到开头与进度常驻；简谱／五线谱直接选择，速度、移调、节拍器与恢复默认收纳在可展开的练习面板中。控制栏按所在容器宽度调整布局，按钮与滑条的触控区域至少 44px；嵌入文档的谱例共用控制栏，练习设置互相独立。
+- `components/ScoreControls.tsx`：播放、回到开头与进度常驻；速度、移调、节拍器与恢复默认收纳在可展开的练习面板中。控制栏按所在容器宽度调整布局，按钮与滑条的触控区域至少 44px；嵌入文档的谱例共用控制栏，练习设置互相独立。
 - `components/ScoreExportDialog.tsx`：打印参数、预览与下载状态；两种谱式均提供连续 SVG、PNG 与多页矢量 PDF。打印宽度单独持久化。
 - `lib/vector-export.ts`：把 SVG 文字按字符位置转为 OpenType 字形路径；数字沿用内嵌 Barlow，文字使用按需加载的本地 Noto Serif CJK SC。字形缺失明确报错。
 - `components/SourceEditor.tsx`：CodeMirror 编辑适配，提供高亮、行号、括号匹配、指令补全、历史与范围诊断；领域层不依赖编辑器。
@@ -88,9 +87,9 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 冷启动需要下载并解析渲染包，再初始化 WASM 或准备字体。Verovio 经资源、输入格式、内部编辑器和接口裁剪，再配合跨文件优化与独立 WASM，生产 JS 与 WASM 合计由最初约 7.91MB 降到 3.04MB；分别压缩后合计 gzip（level 9）约 0.99MB，Brotli（quality 11）约 0.76MB。这些数字描述构建产物，不代表线上实际传输大小。模块与 WASM 初始化在当前页面内复用，切换谱式不应重复下载；纯简谱显示不请求 Verovio JS 或 WASM。
 
-`ScoreRenderer` 对当前乐谱及版宽、分页、页头和诊断设置保留最多两份排版快照，分别对应简谱和五线谱；切换可复用，编辑或布局参数变化时整体失效。快照仅缓存页面标记，不保留已销毁的 toolkit；从快照恢复后需要播放时，仍按需初始化播放实例。缓存不跨曲目积累，也不持久化 SVG 坐标到领域数据。
+`ScoreRenderer` 在编辑或布局参数变化时更新简谱排版。播放实例按需加载并独立销毁。
 
-文档页用稳定的 Markdown 组件及 Context 传播谱式设置，切换时保留已有谱例组件，避免所有谱例重新挂载。加载状态区分资源下载、五线谱引擎初始化、简谱字体准备、排版排队和实际排版。
+文档页所有谱例均使用简谱。加载状态分为渲染库、字体准备与排版。
 
 阅读默认采用连续布局并按容器重新排版，保留可读字号；分页的纸张装饰在适应阅读宽度时简化。固定阅读宽度与分页设置仍可选，打印版宽使用单独的 `m3n:print-width`。共享排版入口将每页 Verovio 内层 SVG 的尺寸明确为外层 viewBox 的坐标尺寸，避免 PDF 转换器把后续页的默认百分比尺寸解释为打印视口而二次缩放。
 
