@@ -1,7 +1,7 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十二版",
-  "sourceCount": 85,
+  "edition": "第五十三版",
+  "sourceCount": 86,
   "baseWidth": 780,
   "widthCandidates": [
     590
@@ -1420,14 +1420,14 @@
       "group": "三连音与进阶抒情",
       "reason": "长音、反复与高音区转换",
       "width": 640,
-      "sharePage": true,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第五十三版：按FtS8b1npO重抄旋律及两遍歌词；修正超拍与弱起衔接，演奏顺序A/B1/A/B2/B2/C，B1/B2仅收尾时值不同。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
@@ -1441,14 +1441,14 @@
       "group": "三连音与进阶抒情",
       "reason": "细分节奏、延音与降D调转换",
       "width": 654,
-      "sharePage": true,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第五十三版：按快悦谱zU2gc10gr重抄61小节及全部362字歌词，保留反复、房子与降D转调。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
@@ -1555,6 +1555,27 @@
       ],
       "maximumWidth": 590,
       "noteGapEm": 0.6
+    },
+    {
+      "id": "yong_yuan_tong_zai",
+      "file": "yong_yuan_tong_zai_01.m3n",
+      "title": "永远同在",
+      "section": "instrumental",
+      "group": "亚洲影视主题",
+      "reason": "三拍子、低音区衔接与抒情长音",
+      "width": 622,
+      "maximumWidth": 622,
+      "sharePage": false,
+      "breakBefore": false,
+      "pageBreaks": [],
+      "reviewNote": "第五十三版新增：按KCyua1xti完整抄录F调3/4、96拍，保留62小节、两组房子与结尾延音。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
+      "includeBass": false,
+      "widthLocked": true,
+      "systemGapCandidates": [
+        11
+      ]
     },
     {
       "id": "xia_yu_de_shi_hou",
@@ -1871,29 +1892,21 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "弱起、两房反复、快速音型与三连音",
-      "width": 686,
+      "width": 650,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十七版：A、B 段采用成对反复与第一、第二房子，取消这两段的替代旋律；保留 D 段再现。具名段落增加额外留白。",
+      "reviewNote": "第五十三版：按wRemd1amp的3/4改编重抄，补7处还原2及两处隐含小节线，保留原反复、房子与倚音。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 710,
+      "maximumWidth": 650,
       "widthCandidates": [
-        646,
-        654,
-        662,
-        670,
-        678,
-        686,
-        694,
-        702,
-        710
+        650
       ]
     },
     {
@@ -1939,8 +1952,8 @@
       "maximumWidth": 606
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v52.pdf",
-  "outputKey": "scorebook-v52-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v53.pdf",
+  "outputKey": "scorebook-v53-numbered",
   "page": {
     "width": 744,
     "height": 1133,

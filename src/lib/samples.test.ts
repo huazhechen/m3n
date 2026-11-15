@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { m3nToMei, parseM3NDocument, parseM3NDocumentStructure, measurePlaybackPasses, validateM3NDiagnostics } from '@m3n/notation'
+import { m3nToMei, parseM3NDocument, parseM3NDocumentStructure, measurePlaybackPasses, validateM3NDiagnostics, alternativePerformance, resolveScorePitches } from '@m3n/notation'
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
 import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
 import loveLikeTide from '../scores/ai_ru_chao_shui_01.m3n?raw'
@@ -8,16 +8,19 @@ import smoke from '../scores/yan_hua_yi_leng_01.m3n?raw'
 import polka from '../scores/dan_huang_guan_bo_er_ka_01.m3n?raw'
 import salut from '../scores/ai_de_li_zan_01.m3n?raw'
 import elise from '../scores/zhi_ai_li_si_01.m3n?raw'
+import always from '../scores/yong_yuan_tong_zai_01.m3n?raw'
 import { loadPresetScore, presetScores } from './samples'
 import referenceMelodies from './fixtures/numbered-reference-melodies.json'
+import webReferences from './fixtures/kuaiyuepu-reference-melodies.json'
 
 describe('bundled score corpus', () => {
   it.each([
-    ['feng', '枫', maple, 76, 4],
-    ['yan_hua_yi_leng', '烟花易冷', smoke, 51, 4],
+    ['feng', '枫', maple, 61, 4],
+    ['yan_hua_yi_leng', '烟花易冷', smoke, 56, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 78, 2],
-    ['zhi_ai_li_si', '致爱丽丝', elise, 87, 1.5],
-  ] as const)('loads the complete PDF melody %s with its original bar durations', async (id, title, source, count, beats) => {
+    ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
+    ['yong_yuan_tong_zai', '永远同在', always, 62, 3],
+  ] as const)('loads the complete reference melody %s with valid bar durations', async (id, title, source, count, beats) => {
     const entry = presetScores.find(score => score.sourcePath === `${id}_01.m3n`)
     expect(entry?.title).toBe(title)
     expect(await loadPresetScore(entry!.slug)).toBe(source)
@@ -26,11 +29,12 @@ describe('bundled score corpus', () => {
     const measures = part.melody.filter(measure => measure.events.length)
     expect(measures).toHaveLength(count)
     const expected = Array<number>(count).fill(beats)
-    if (id === 'feng') expected[4] = 2
-    if (id === 'zhi_ai_li_si') {
-      for (const index of [0, 10, 26, 64]) expected[index] = 0.5
-      for (const index of [8, 9, 24, 25, 63]) expected[index] = 1
+    if (id === 'yan_hua_yi_leng') {
+      for (const index of [0, 33, 55]) expected[index] = 2
+      for (const index of [16, 50]) expected[index] = 3
+      for (const index of [17, 34, 51]) expected[index] = 1
     }
+    if (id === 'zhi_ai_li_si') { expected[0] = 1; expected[57] = 2 }
     expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
       .toEqual(expected)
     expect(part.bass.flatMap(measure => measure.events)).toEqual([])
@@ -39,16 +43,9 @@ describe('bundled score corpus', () => {
     )).toBe(true)
   })
 
-  it('retains the PDF repeat scopes, modulation, ornaments and fast subdivisions', () => {
+  it('retains reference repeat scopes, modulation and fast subdivisions', () => {
     const bars = (source: string) => parseM3NDocument(source).parts.get('score')!.melody.filter(measure => measure.events.length)
-    const smokeBars = bars(smoke)
-    const passes = measurePlaybackPasses(smokeBars)
-    expect(smokeBars.map(measure => [...passes.get(measure)!])).toEqual([
-      ...Array.from({ length: 4 }, () => [1]),
-      ...Array.from({ length: 31 }, () => [1, 2]),
-      ...Array.from({ length: 2 }, () => [1]),
-      ...Array.from({ length: 14 }, () => [2]),
-    ])
+    expect(parseM3NDocument(smoke).order).toEqual(['A','B1','A','B2','B2','C'])
     const polkaBars = bars(polka)
     expect(polkaBars.flatMap((measure, index) => measure.left === 'rptstart' ? [index + 1] : []))
       .toEqual([3, 20, 45, 62])
@@ -56,16 +53,44 @@ describe('bundled score corpus', () => {
       .toEqual([18, 27, 60, 77])
     expect([19, 28, 44, 61].map(index => polkaBars[index]!.events[0]!.key)).toEqual(['G', 'C', 'F', 'C'])
     const mapleBars = bars(maple)
-    expect(mapleBars[49]!.events[0]!.key).toBe('Db')
-    expect(mapleBars[1]!.events[0]!.beats).toBe(0.0625)
+    expect(mapleBars[35]!.events[0]!.key).toBe('Db')
+    expect(mapleBars[0]!.events[0]!.beats).toBe(0.5)
     const eliseBars = bars(elise)
-    expect(parseM3NDocument(elise).order).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'D'])
-    const elisePasses = measurePlaybackPasses(eliseBars)
-    expect([...elisePasses.get(eliseBars[0]!)!]).toEqual([1, 2])
-    expect([...elisePasses.get(eliseBars[10]!)!]).toEqual([1, 2])
-    expect([...elisePasses.get(eliseBars[43]!)!]).toEqual([1, 2])
-    expect(eliseBars[82]!.events.map(event => event.beats)).toEqual([0.5, 0.5, 0.5])
-    expect(eliseBars[84]!.events[1]!.pitches).toEqual(['6ee', '1eee', '3eee'])
+    expect(parseM3NDocument(elise).order).toBeUndefined()
+    expect(elise.match(/2=e/g)).toHaveLength(7)
+    expect(eliseBars.filter(bar=>bar.ending === '2')).toHaveLength(2)
+  })
+
+  const sources: Record<string, string> = {feng:maple,yan_hua_yi_leng:smoke,zhi_ai_li_si:elise,yong_yuan_tong_zai:always}
+  const referenceEvents = (source: string, expand: boolean) => {
+    const parsed=parseM3NDocument(source)
+    const document=expand ? alternativePerformance(parsed) : parsed
+    const bars=document.parts.get('score')!.melody
+    const resolved=resolveScorePitches(bars)
+    return bars.flatMap(bar=>bar.events.map(event=>{
+      const pitch=resolved.get(event)?.[0]
+      const [name,octave,accidental]=pitch?.split(':') ?? []
+      const degree: Record<string,number>={c:0,d:2,e:4,f:5,g:7,a:9,b:11}
+      const alteration: Record<string,number>={s:1,f:-1,ss:2,ff:-2}
+      return {pitch:pitch ? 12*(Number(octave)+1)+degree[name]!+(alteration[accidental!]??0) : null, beats:event.beats,tie:event.tie??false}
+    }))
+  }
+  it.each(webReferences)('matches every written reference event for $id', reference=>{
+    const expected=reference.events.map(({pitch,beats,tie})=>({pitch,beats,tie}))
+    expect(referenceEvents(sources[reference.id]!,false)).toEqual(expected)
+  })
+  it.each(webReferences)('matches the reference playback itinerary for $id',reference=>{
+    const expected=reference.playbackEventIndexes.map(index=>{
+      const {pitch,beats,tie}=reference.events[index]!
+      return {pitch,beats,tie}
+    })
+    expect(referenceEvents(sources[reference.id]!,true)).toEqual(expected)
+  })
+
+  it.each(webReferences.filter(reference=>'lyricText' in reference))('preserves every reference lyric character for $id',reference=>{
+    const document=parseM3NDocument(sources[reference.id]!)
+    const lyrics=document.lyrics.flatMap(block=>block.syllables.filter(syllable=>syllable.kind==='text').map(syllable=>syllable.text)).join('')
+    expect(lyrics.replace(/[^\u3400-\u9fff]/g,'')).toBe(reference.lyricText)
   })
 
   it('uses the reference Love Like Tide melody and joins each chorus pickup correctly', async () => {

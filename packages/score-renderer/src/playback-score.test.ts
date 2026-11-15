@@ -54,7 +54,7 @@ describe('MIDI playback', () => {
     } finally {score.destroy()}
   })
 
-  // Captured before section reuse; includes note-offs, onset ticks and velocities.
+  // Captured reference performances, including note-offs, onset ticks and velocities.
   it.each([
     ['hou_lai', 'd8ec4adc3b00d2869886d11b6c4e114e5d13de33fd0579412ce9c56150f05f01', 208.79333333333332],
     ['castle_in_the_sky', '31e339e275588a9c427df9dec2e2097b27377b1d357196dd0c033c55814984c4', 155.16798965833334],
@@ -62,9 +62,9 @@ describe('MIDI playback', () => {
     ['flower_dance', '94c9ee30af0921b362395d95fcb7ea83245c693ce995443cb4824fdf9cea83d5', 251.995],
     ['tong_zhuo_de_ni', '9d2fa93f6ca1131f47a4932fbf681147b594785d9d11381b7ab4ec2a5db02b08', 149.99479166666666],
     ['valsentino', '74c715f2f522f14adce054815ec5a178f783ffab712c25fe22b700c97ad8b7c5', 159.54257109166667],
-    ['zhi_ai_li_si', '2a38ea6125aeff0aeb62f92a65b789407531067b08f7777438804021133b9403', 93.49583333333334],
+    ['zhi_ai_li_si', '1a20564e7fed4c53754d99e17c38f2a5659769daac94560192e80efdfb89a635', 173.24375],
     ['beer_barrel_polka', 'a20e4d68646b5e6b74ade7d8339750673f3a0966393790f6bf8c684b34434952', 152.723332125],
-  ])('preserves the complete original MIDI performance for %s', async (file, hash, duration) => {
+  ])('preserves the captured complete MIDI performance for %s', async (file, hash, duration) => {
     const source = readFileSync(new URL(`../../../src/scores/${file}_01.m3n`, import.meta.url), 'utf8')
     const conversion = m3nToMei(source)
     expect(conversion.diagnostics.filter(item => item.severity === 'error')).toEqual([])

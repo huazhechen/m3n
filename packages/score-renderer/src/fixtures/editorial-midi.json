@@ -95,9 +95,9 @@
   },
   {
     "id": "zhi_ai_li_si",
-    "duration": 93.49583333333334,
-    "sha256": "2a38ea6125aeff0aeb62f92a65b789407531067b08f7777438804021133b9403",
-    "reference": "第四十五版编排前捕获，重编后完整 MIDI 事件应保持一致。"
+    "duration": 173.24375,
+    "sha256": "1a20564e7fed4c53754d99e17c38f2a5659769daac94560192e80efdfb89a635",
+    "reference": "第五十三版：对照快悦谱逐音和完整演奏顺序核对后捕获；见 scorebook/四首快悦谱参考校订.md。"
   },
   {
     "id": "qian_si_xi",
@@ -126,5 +126,23 @@
     "id": "dan_huang_guan_bo_er_ka",
     "duration": 129.74583333333334,
     "sha256": "9d954fd254fced9f6b4a5efe62e726f615411aa3ea6142ef017b91f9665f01be"
+  },
+  {
+    "id": "feng",
+    "duration": 248.4296875,
+    "sha256": "917d5661837af4eee544171e891e4c6684300ec402cfee0e95f00ae2ecdb21f4",
+    "reference": "第五十三版：对照快悦谱逐音和完整演奏顺序核对后捕获；见 scorebook/四首快悦谱参考校订.md。"
+  },
+  {
+    "id": "yan_hua_yi_leng",
+    "duration": 251.99375,
+    "sha256": "6c5183a047f0c1650556d8dcc003741e09be25c500350b780797609a54358110",
+    "reference": "第五十三版：对照快悦谱逐音和完整演奏顺序核对后捕获；见 scorebook/四首快悦谱参考校订.md。"
+  },
+  {
+    "id": "yong_yuan_tong_zai",
+    "duration": 141.24479166666666,
+    "sha256": "b2315044ba4767881aa55f870ff7e4fa4f98a618318f6da5ccdbeb4f2788d543",
+    "reference": "第五十三版：对照快悦谱逐音和完整演奏顺序核对后捕获；见 scorebook/四首快悦谱参考校订.md。"
   }
 ]
