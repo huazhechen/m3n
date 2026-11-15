@@ -1,7 +1,7 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十五版",
-  "sourceCount": 86,
+  "edition": "第五十六版",
+  "sourceCount": 89,
   "baseWidth": 780,
   "widthCandidates": [
     590
@@ -1424,6 +1424,76 @@
       "pageCount": 1
     },
     {
+      "id": "zhui_meng_ren",
+      "file": "zhui_meng_ren_01.m3n",
+      "title": "追梦人",
+      "section": "melodies",
+      "group": "经典叙事与抒情",
+      "reason": "双段歌词、附点、十六分音符与跳房子",
+      "width": 640,
+      "sharePage": false,
+      "breakBefore": false,
+      "pageBreaks": [],
+      "reviewNote": "第五十六版新增：按用户指定参考谱录入，保留旋律和演奏结构；节拍校订详见本版校订记录。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
+      "includeBass": false,
+      "widthLocked": false,
+      "systemGapCandidates": [
+        11
+      ],
+      "maximumWidth": 765,
+      "widthCandidates": [
+        590,
+        614,
+        630,
+        646,
+        662,
+        678,
+        694,
+        710,
+        726,
+        742,
+        758,
+        765
+      ]
+    },
+    {
+      "id": "xing_xing_dian_deng",
+      "file": "xing_xing_dian_deng_01.m3n",
+      "title": "星星点灯",
+      "section": "melodies",
+      "group": "经典叙事与抒情",
+      "reason": "切分、替代旋律、器乐前奏与半音转调",
+      "width": 640,
+      "sharePage": false,
+      "breakBefore": false,
+      "pageBreaks": [],
+      "reviewNote": "第五十六版新增：按用户指定参考谱录入，保留旋律和演奏结构；节拍校订详见本版校订记录。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
+      "includeBass": false,
+      "widthLocked": false,
+      "systemGapCandidates": [
+        11
+      ],
+      "maximumWidth": 765,
+      "widthCandidates": [
+        590,
+        614,
+        630,
+        646,
+        662,
+        678,
+        694,
+        710,
+        726,
+        742,
+        758,
+        765
+      ]
+    },
+    {
       "id": "yan_hua_yi_leng",
       "file": "yan_hua_yi_leng_01.m3n",
       "title": "烟花易冷",
@@ -1658,6 +1728,41 @@
         11
       ],
       "maximumWidth": 678
+    },
+    {
+      "id": "ru_guo_you_ni_zai",
+      "file": "ru_guo_you_ni_zai_01.m3n",
+      "title": "如果有你在",
+      "section": "instrumental",
+      "group": "舞曲与动画主题",
+      "reason": "十六分音符、临时变音、顿音与延音",
+      "width": 640,
+      "sharePage": false,
+      "breakBefore": false,
+      "pageBreaks": [],
+      "reviewNote": "第五十六版新增：按用户指定参考谱录入，保留旋律和演奏结构；节拍校订详见本版校订记录。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
+      "includeBass": false,
+      "widthLocked": false,
+      "systemGapCandidates": [
+        11
+      ],
+      "maximumWidth": 765,
+      "widthCandidates": [
+        590,
+        614,
+        630,
+        646,
+        662,
+        678,
+        694,
+        710,
+        726,
+        742,
+        758,
+        765
+      ]
     },
     {
       "id": "super_mario",
@@ -1986,8 +2091,8 @@
       ]
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v55.pdf",
-  "outputKey": "scorebook-v55-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v56.pdf",
+  "outputKey": "scorebook-v56-numbered",
   "page": {
     "width": 744,
     "height": 1133,
