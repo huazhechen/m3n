@@ -1,13 +1,13 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第四十七版",
+  "edition": "第四十八版",
   "showCredits": false,
   "uniformSystemHeight": false,
   "minimumSystemGapEm": 0.5,
-  "rendererSha256": "266639a958f6c825db02fcf640dc943b2f96a9b551c1e02283c51a1330c37f57",
-  "sourceCount": 87,
-  "entryCount": 87,
-  "pageCount": 82,
+  "rendererSha256": "865df2eef46868d9b4fd69ef144b134ecf7a3efbee161ee2d4d202118268e746",
+  "sourceCount": 86,
+  "entryCount": 86,
+  "pageCount": 80,
   "frontPages": 3,
   "baseWidth": 780,
   "page": {
@@ -196,6 +196,45 @@
         "0:32",
         "0:33"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 15,
+          "end": 17
+        },
+        {
+          "start": 17,
+          "end": 19
+        },
+        {
+          "start": 19,
+          "end": 21
+        },
+        {
+          "start": 21,
+          "end": 23
+        },
+        {
+          "start": 23,
+          "end": 25
+        },
+        {
+          "start": 25,
+          "end": 27
+        },
+        {
+          "start": 27,
+          "end": 29
+        },
+        {
+          "start": 29,
+          "end": 31
+        }
+      ],
       "section": "basics",
       "group": "每日训练",
       "reason": "按原谱顺序连续进行机能与音阶模进训练",
@@ -253,6 +292,13 @@
       "paragraphSystems": [
         "0:0",
         "0:0"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        }
       ],
       "section": "basics",
       "group": "入门旋律与长音",
@@ -321,6 +367,17 @@
         "0:1,0:2",
         "0:2,0:3"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 3
+        }
+      ],
       "section": "basics",
       "group": "入门旋律与长音",
       "reason": "重复音与级进，逐步加入附点和八分音符",
@@ -387,6 +444,13 @@
         "0:0",
         "0:0",
         "0:0"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        }
       ],
       "section": "basics",
       "group": "入门旋律与长音",
@@ -459,6 +523,13 @@
         "0:0",
         "0:0"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        }
+      ],
       "section": "basics",
       "group": "入门旋律与长音",
       "reason": "短句中的八分音符",
@@ -530,6 +601,13 @@
         "0:0",
         "0:0"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        }
+      ],
       "section": "basics",
       "group": "歌唱性与八分音符",
       "reason": "长短时值与连贯乐句",
@@ -592,6 +670,13 @@
       "paragraphSystems": [
         "0:0",
         "0:0"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        }
       ],
       "section": "basics",
       "group": "歌唱性与八分音符",
@@ -659,6 +744,13 @@
         "0:0",
         "0:0",
         "0:0,0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        }
       ],
       "section": "basics",
       "group": "歌唱性与八分音符",
@@ -738,6 +830,17 @@
         "0:0,0:1",
         "0:1"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
+      ],
       "section": "basics",
       "group": "歌唱性与八分音符",
       "reason": "连续八分音符与跳进",
@@ -815,6 +918,17 @@
         "0:0",
         "0:0",
         "0:0,0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 1,
+          "end": 3
+        }
       ],
       "section": "basics",
       "group": "音阶与连奏",
@@ -898,6 +1012,24 @@
         "0:1,0:2",
         "0:3"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 5
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
+      ],
       "section": "basics",
       "group": "音阶与连奏",
       "reason": "音阶进行与节奏变化",
@@ -969,6 +1101,17 @@
         "0:0,0:1",
         "0:1"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
+      ],
       "section": "basics",
       "group": "音阶与连奏",
       "reason": "弱起、附点与短连奏",
@@ -1036,6 +1179,13 @@
         "0:0",
         "0:0,0:1"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        }
+      ],
       "section": "melodies",
       "group": "民歌与抒情",
       "reason": "弱起与八分音符",
@@ -1099,6 +1249,17 @@
         "0:0",
         "0:0,0:1",
         "0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
       ],
       "section": "melodies",
       "group": "民歌与抒情",
@@ -1164,6 +1325,24 @@
         "0:2",
         "0:2"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 2
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
+      ],
       "section": "melodies",
       "group": "民歌与抒情",
       "reason": "低音区与附点节奏",
@@ -1227,6 +1406,13 @@
         "0:0",
         "0:0",
         "0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        }
       ],
       "section": "melodies",
       "group": "三拍子与调式",
@@ -1292,6 +1478,20 @@
         "0:0",
         "0:0"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 4
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        }
+      ],
       "section": "melodies",
       "group": "三拍子与调式",
       "reason": "弱起与旋律走向",
@@ -1355,6 +1555,28 @@
         "0:1,0:2",
         "0:2,0:3",
         "0:3"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 4
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
       ],
       "section": "melodies",
       "group": "三拍子与调式",
@@ -1420,6 +1642,17 @@
         "0:0,0:1",
         "0:1"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
+      ],
       "section": "melodies",
       "group": "民族旋律与节奏",
       "reason": "五声性旋律与附点",
@@ -1483,6 +1716,24 @@
         "0:0",
         "0:0,0:1",
         "0:1"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 2,
+          "end": 4
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
       ],
       "section": "melodies",
       "group": "民族旋律与节奏",
@@ -1551,6 +1802,17 @@
         "0:0",
         "0:0,0:1",
         "0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 5
+        }
       ],
       "section": "melodies",
       "group": "民族旋律与节奏",
@@ -1631,6 +1893,32 @@
         "0:2,0:3",
         "0:3",
         "0:3"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 1,
+          "end": 6
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 8
+        }
       ],
       "section": "melodies",
       "group": "节奏与多段歌词",
@@ -1719,6 +2007,20 @@
         "0:0",
         "0:0"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 8
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 8
+        }
+      ],
       "section": "melodies",
       "group": "节奏与多段歌词",
       "reason": "附点节奏、弱起与三段歌词",
@@ -1740,7 +2042,7 @@
           "systemGap": 11,
           "rows": 9,
           "pages": 2,
-          "cost": 2041.71
+          "cost": 2044.72
         },
         {
           "width": 646,
@@ -1797,6 +2099,24 @@
         "0:0",
         "0:0,0:1",
         "0:1,0:2"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 6
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        }
       ],
       "section": "melodies",
       "group": "宽广乐句",
@@ -1877,6 +2197,24 @@
         "0:0",
         "0:0,0:1",
         "0:1"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 8
+        }
       ],
       "section": "melodies",
       "group": "宽广乐句",
@@ -1969,6 +2307,21 @@
         "0:1,0:2",
         "0:2"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 9
+        }
+      ],
       "section": "melodies",
       "group": "抒情入门",
       "reason": "附点与完整连奏乐句",
@@ -2044,6 +2397,20 @@
         "0:0",
         "0:0,0:1",
         "0:2"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 6
+        }
       ],
       "section": "melodies",
       "group": "抒情入门",
@@ -2129,6 +2496,25 @@
         "0:3",
         "0:3"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 5
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 7,
+          "end": 9
+        }
+      ],
       "section": "melodies",
       "group": "三拍与复拍",
       "reason": "三拍子与跨拍延音",
@@ -2204,6 +2590,40 @@
         "0:3,0:4",
         "0:4,0:5",
         "0:5"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 7
+        }
       ],
       "section": "melodies",
       "group": "三拍与复拍",
@@ -2283,6 +2703,28 @@
         "0:1",
         "0:2",
         "0:2"
+      ],
+      "repeatRanges": [
+        {
+          "section": "C",
+          "occurrence": 1,
+          "start": 4,
+          "end": 6
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 6
+        }
       ],
       "section": "melodies",
       "group": "三拍与复拍",
@@ -2371,6 +2813,32 @@
         "0:1",
         "0:2"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 3,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 7
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 5
+        }
+      ],
       "section": "melodies",
       "group": "三拍与复拍",
       "reason": "三拍子、附点和跨小节延音",
@@ -2450,6 +2918,30 @@
         "0:1",
         "0:1",
         "0:1,0:0,0:2"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 2,
+          "end": 8
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 8
+        }
       ],
       "section": "melodies",
       "group": "切分与延音",
@@ -2542,6 +3034,44 @@
         "0:2,0:3",
         "0:3"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 3,
+          "end": 8
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 3,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 3,
+          "end": 5
+        },
+        {
+          "start": 6,
+          "end": 8
+        }
+      ],
       "section": "melodies",
       "group": "切分与延音",
       "reason": "切分与高音区器乐间奏",
@@ -2617,6 +3147,28 @@
         "0:1,0:2",
         "0:2",
         "0:2"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 4,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 7
+        }
       ],
       "section": "melodies",
       "group": "切分与延音",
@@ -2705,6 +3257,48 @@
         "0:6,0:7",
         "0:7,0:8",
         "0:8"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 3,
+          "end": 10
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 3,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 8,
+          "end": 10
+        },
+        {
+          "start": 6,
+          "end": 8
+        },
+        {
+          "start": 3,
+          "end": 5
+        }
       ],
       "section": "melodies",
       "group": "切分与延音",
@@ -2805,6 +3399,38 @@
         "0:4,0:5,0:6",
         "0:6"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 7
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 7,
+          "end": 11
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 7
+        },
+        {
+          "start": 7,
+          "end": 10
+        },
+        {
+          "start": 9,
+          "end": 11
+        }
+      ],
       "section": "melodies",
       "group": "切分与延音",
       "reason": "切分、附点与长句",
@@ -2826,7 +3452,7 @@
           "systemGap": 11,
           "rows": 11,
           "pages": 2,
-          "cost": 2023.92
+          "cost": 2024.54
         },
         {
           "width": 614,
@@ -2896,6 +3522,28 @@
         "0:3",
         "0:3"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 4
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 9
+        }
+      ],
       "section": "melodies",
       "group": "切分与延音",
       "reason": "弱起、附点与低音区",
@@ -2963,6 +3611,17 @@
         "0:0",
         "0:0,0:1",
         "0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 5
+        }
       ],
       "section": "melodies",
       "group": "香港影视金曲",
@@ -3038,6 +3697,24 @@
         "0:0",
         "0:0,0:1",
         "0:1"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 5
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 5
+        }
       ],
       "section": "melodies",
       "group": "香港影视金曲",
@@ -3138,6 +3815,56 @@
         "0:11,0:12",
         "0:12"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 11
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 9,
+          "end": 11
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
+      ],
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "变拍与歌唱性乐句",
@@ -3213,6 +3940,24 @@
         "0:3",
         "0:3",
         "0:3"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 3
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 3,
+          "end": 7
+        }
       ],
       "section": "melodies",
       "group": "十六分与变拍",
@@ -3293,6 +4038,24 @@
         "0:1",
         "0:1",
         "0:1"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 8
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 8
+        }
       ],
       "section": "melodies",
       "group": "十六分与变拍",
@@ -3385,6 +4148,17 @@
         "0:1",
         "0:1",
         "0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 8
+        },
+        {
+          "start": 8,
+          "end": 11
+        }
       ],
       "section": "melodies",
       "group": "十六分与变拍",
@@ -3481,6 +4255,17 @@
         "0:1",
         "0:1,0:2"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 10
+        }
+      ],
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "切分、弱起与句尾装饰",
@@ -3572,6 +4357,25 @@
         "0:3",
         "0:3",
         "0:4"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 10
+        }
       ],
       "section": "melodies",
       "group": "十六分与变拍",
@@ -3675,6 +4479,42 @@
         "0:2,0:3,0:4",
         "0:4,0:5,0:6"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 9
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 8,
+          "end": 10
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 5
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 9
+        },
+        {
+          "start": 8,
+          "end": 10
+        },
+        {
+          "start": 1,
+          "end": 3
+        }
+      ],
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "反复歌词、切分与长句",
@@ -3776,6 +4616,36 @@
         "0:3",
         "0:3,0:4",
         "0:4,0:5"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 10
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 9
+        },
+        {
+          "start": 8,
+          "end": 10
+        },
+        {
+          "start": 8,
+          "end": 10
+        }
       ],
       "section": "melodies",
       "group": "密集节奏与反复",
@@ -3896,6 +4766,48 @@
         "0:3,0:4",
         "0:4,0:5"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 9
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 7,
+          "end": 9
+        }
+      ],
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "器乐过门与密集节奏",
@@ -3917,7 +4829,7 @@
           "systemGap": 11,
           "rows": 10,
           "pages": 2,
-          "cost": 2044.87
+          "cost": 2045.57
         },
         {
           "width": 654,
@@ -3987,6 +4899,32 @@
         "0:3,0:4",
         "0:5,0:6"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 2,
+          "end": 9
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 6
+        },
+        {
+          "start": 6,
+          "end": 8
+        }
+      ],
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "切分、十六分与跳进",
@@ -4008,7 +4946,7 @@
           "systemGap": 11,
           "rows": 11,
           "pages": 2,
-          "cost": 2053.55
+          "cost": 2054.77
         },
         {
           "width": 670,
@@ -4082,6 +5020,28 @@
         "0:1",
         "0:1"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 3,
+          "end": 10
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 3,
+          "end": 10
+        },
+        {
+          "start": 8,
+          "end": 10
+        }
+      ],
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "慢速密集节奏与高音区",
@@ -4103,7 +5063,7 @@
           "systemGap": 11,
           "rows": 11,
           "pages": 2,
-          "cost": 2046.68
+          "cost": 2049.39
         },
         {
           "width": 656,
@@ -4173,6 +5133,32 @@
         "0:4",
         "0:4"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 9
+        }
+      ],
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "密集节奏与长线条",
@@ -4194,7 +5180,7 @@
           "systemGap": 11,
           "rows": 10,
           "pages": 2,
-          "cost": 2045.84
+          "cost": 2049.41
         },
         {
           "width": 654,
@@ -4284,6 +5270,34 @@
         "0:5",
         "0:6"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 4
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 4,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 4,
+          "end": 6
+        }
+      ],
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "变拍、器乐段与多段歌词",
@@ -4305,7 +5319,7 @@
           "systemGap": 11,
           "rows": 8,
           "pages": 2,
-          "cost": 2045.84
+          "cost": 2048.57
         },
         {
           "width": 654,
@@ -4371,6 +5385,17 @@
         "0:1",
         "0:2"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 3,
+          "end": 7
+        }
+      ],
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "跨拍、变拍与细分节奏",
@@ -4392,21 +5417,21 @@
           "systemGap": 11,
           "rows": 9,
           "pages": 2,
-          "cost": 2022.11
+          "cost": 2022.27
         },
         {
           "width": 598,
           "systemGap": 11,
           "rows": 9,
           "pages": 2,
-          "cost": 2017.57
+          "cost": 2017.72
         },
         {
           "width": 606,
           "systemGap": 11,
           "rows": 9,
           "pages": 2,
-          "cost": 2013.03
+          "cost": 2013.18
         },
         {
           "width": 614,
@@ -4486,6 +5511,17 @@
         "0:1",
         "0:1"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 5
+        },
+        {
+          "start": 5,
+          "end": 8
+        }
+      ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "三连音与复杂节奏",
@@ -4561,6 +5597,17 @@
         "0:1",
         "0:1",
         "0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 3,
+          "end": 7
+        }
       ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
@@ -4654,6 +5701,21 @@
         "0:3",
         "0:3"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 1,
+          "end": 7
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 9,
+          "end": 11
+        }
+      ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "反复歌词、器乐段与跳房子",
@@ -4675,7 +5737,7 @@
           "systemGap": 11,
           "rows": 13,
           "pages": 2,
-          "cost": 2026.75
+          "cost": 2031.8
         },
         {
           "width": 622,
@@ -4745,6 +5807,46 @@
         "0:4,0:5,0:6",
         "0:6"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 4
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 3,
+          "end": 8
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 6
+        },
+        {
+          "start": 6,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
+      ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "十六分切分与跳房子",
@@ -4766,7 +5868,7 @@
           "systemGap": 11,
           "rows": 11,
           "pages": 2,
-          "cost": 2044.8
+          "cost": 2044.89
         },
         {
           "width": 630,
@@ -4888,6 +5990,25 @@
         "0:1",
         "0:1",
         "0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 6
+        },
+        {
+          "start": 6,
+          "end": 10
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 6,
+          "end": 8
+        }
       ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
@@ -5023,6 +6144,45 @@
         "0:6,0:7",
         "0:7"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 8,
+          "end": 10
+        },
+        {
+          "start": 9,
+          "end": 11
+        },
+        {
+          "start": 7,
+          "end": 9
+        }
+      ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "三连音、细分节奏与双层连线",
@@ -5044,7 +6204,7 @@
           "systemGap": 11,
           "rows": 13,
           "pages": 2,
-          "cost": 2053.12
+          "cost": 2057.58
         },
         {
           "width": 670,
@@ -5125,6 +6285,44 @@
         "0:6",
         "0:6",
         "0:6"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 9
+        },
+        {
+          "start": 8,
+          "end": 12
+        },
+        {
+          "start": 7,
+          "end": 9
+        }
       ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
@@ -5228,6 +6426,33 @@
         "0:2",
         "0:2",
         "0:2"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 12
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 7,
+          "end": 9
+        }
       ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
@@ -5390,6 +6615,40 @@
         "0:3",
         "0:3"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 1,
+          "end": 16
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 11
+        },
+        {
+          "start": 11,
+          "end": 16
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 6
+        }
+      ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "长音、反复与高音区转换",
@@ -5411,7 +6670,7 @@
           "systemGap": 11,
           "rows": 16,
           "pages": 2,
-          "cost": 2038.54
+          "cost": 2044.55
         },
         {
           "width": 640,
@@ -5545,6 +6804,25 @@
         "0:0",
         "0:0"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 25
+        },
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 20,
+          "end": 22
+        },
+        {
+          "start": 22,
+          "end": 24
+        }
+      ],
       "section": "melodies",
       "group": "三连音与进阶抒情",
       "reason": "细分节奏、延音与降D调转换",
@@ -5558,8 +6836,8 @@
       ],
       "systems": 25,
       "systemsPerPage": [
-        12,
-        13
+        17,
+        8
       ],
       "sourceSha256": "b1c8f2970e2f07226d1c138810c70b80b9a934733d50c4e13db72a73fd4db0c2",
       "candidates": [
@@ -5575,7 +6853,7 @@
           "systemGap": 11,
           "rows": 25,
           "pages": 2,
-          "cost": 2003.55
+          "cost": 2006.35
         }
       ],
       "rejectedCandidates": [],
@@ -5617,6 +6895,13 @@
         "0:0",
         "0:0",
         "0:0,0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        }
       ],
       "section": "instrumental",
       "group": "亚洲影视主题",
@@ -5709,6 +6994,44 @@
         "0:1",
         "0:2"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 9
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 8
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 8
+        }
+      ],
       "section": "instrumental",
       "group": "亚洲影视主题",
       "reason": "高音区、切分与导航",
@@ -5779,6 +7102,13 @@
         "0:0",
         "0:0",
         "0:0,0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        }
       ],
       "section": "instrumental",
       "group": "影视爱情主题",
@@ -5855,6 +7185,17 @@
         "0:0",
         "0:0,0:1",
         "0:1"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 7
+        }
       ],
       "section": "instrumental",
       "group": "影视爱情主题",
@@ -5939,6 +7280,21 @@
         "0:2",
         "0:2",
         "0:3"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 6,
+          "end": 8
+        }
       ],
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
@@ -6039,6 +7395,48 @@
         "0:2,0:3",
         "0:3",
         "0:3"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 3,
+          "end": 11
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 3,
+          "end": 7
+        },
+        {
+          "start": 7,
+          "end": 11
+        },
+        {
+          "start": 10,
+          "end": 13
+        },
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 3,
+          "end": 5
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 8,
+          "end": 10
+        }
       ],
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
@@ -6148,6 +7546,50 @@
         "0:7",
         "0:7,0:8,0:9"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 7
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 11,
+          "end": 15
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 9
+        },
+        {
+          "start": 9,
+          "end": 12
+        },
+        {
+          "start": 11,
+          "end": 15
+        },
+        {
+          "start": 1,
+          "end": 3
+        }
+      ],
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "reason": "三拍子、倚音与圆舞曲乐句",
@@ -6169,7 +7611,7 @@
           "systemGap": 11,
           "rows": 16,
           "pages": 2,
-          "cost": 2028.29
+          "cost": 2028.36
         },
         {
           "width": 622,
@@ -6254,6 +7696,21 @@
         "0:3",
         "0:3",
         "0:4"
+      ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 9
+        },
+        {
+          "start": 9,
+          "end": 12
+        }
       ],
       "section": "instrumental",
       "group": "舞曲与动画主题",
@@ -6341,6 +7798,40 @@
         "0:3",
         "0:4",
         "0:4"
+      ],
+      "repeatRanges": [
+        {
+          "section": "A",
+          "occurrence": 1,
+          "start": 1,
+          "end": 2
+        },
+        {
+          "section": "B",
+          "occurrence": 1,
+          "start": 2,
+          "end": 4
+        },
+        {
+          "section": "D",
+          "occurrence": 1,
+          "start": 6,
+          "end": 8
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 6,
+          "end": 8
+        }
       ],
       "section": "instrumental",
       "group": "快速音型与装饰",
@@ -6450,6 +7941,76 @@
         "0:6",
         "0:6"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 2,
+          "end": 13
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 7
+        },
+        {
+          "start": 6,
+          "end": 10
+        },
+        {
+          "start": 9,
+          "end": 12
+        },
+        {
+          "start": 11,
+          "end": 13
+        },
+        {
+          "start": 12,
+          "end": 15
+        },
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 1,
+          "end": 3
+        },
+        {
+          "start": 3,
+          "end": 5
+        },
+        {
+          "start": 5,
+          "end": 7
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 9,
+          "end": 11
+        },
+        {
+          "start": 10,
+          "end": 12
+        },
+        {
+          "start": 11,
+          "end": 13
+        },
+        {
+          "start": 12,
+          "end": 14
+        }
+      ],
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "快速节奏与高音区",
@@ -6471,7 +8032,7 @@
           "systemGap": 11,
           "rows": 16,
           "pages": 2,
-          "cost": 2041.34
+          "cost": 2046.31
         },
         {
           "width": 646,
@@ -6487,108 +8048,6 @@
     },
     {
       "order": 74,
-      "id": "ju_ci_lang_de_xia_tian",
-      "title": "菊次郎的夏天",
-      "file": "ju_ci_lang_de_xia_tian_01.m3n",
-      "notation": "numbered",
-      "includeBass": true,
-      "uniformSystemHeight": false,
-      "equalMeasures": false,
-      "wrap": "normal",
-      "noteGapEm": 0.6,
-      "minimumNoteGapEm": 0.4,
-      "wrapWidthRatio": 1,
-      "systemDensities": [
-        0.9725887856761226,
-        1.0092057938736512,
-        1.102055497206365,
-        0.8489324981132889,
-        1.0092057938736512,
-        1.0618095157697625,
-        0.7376392976744028,
-        0.7722748815335114,
-        0.7697959125414873,
-        0.9006515246686692,
-        0.6695798708074379,
-        1.0562481409511992,
-        0.9666525548127636
-      ],
-      "baselineSteps": [
-        48.144,
-        59.73,
-        60.863,
-        48.143,
-        59.73,
-        103.947,
-        66.14,
-        66.14,
-        61.395,
-        59.73,
-        57.87,
-        50.71
-      ],
-      "voltaSystems": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "paragraphSystems": [
-        "0:0",
-        "0:0",
-        "0:0",
-        "0:1",
-        "0:1",
-        "0:1,0:0",
-        "0:2",
-        "0:3",
-        "0:4",
-        "0:5",
-        "0:5",
-        "0:6",
-        "0:6"
-      ],
-      "section": "instrumental",
-      "group": "快速音型与装饰",
-      "reason": "连续音型与跨小节延音",
-      "width": 590,
-      "systemGap": 11,
-      "relativeScalePercent": 132.2,
-      "screenNotePx": 25.95,
-      "pages": [
-        62,
-        63
-      ],
-      "systems": 13,
-      "systemsPerPage": [
-        6,
-        7
-      ],
-      "sourceSha256": "a426c7a66f70e9a84171c4a86561dbb242aa9b03f6c53467f9b36359f11535a2",
-      "candidates": [
-        {
-          "width": 590,
-          "systemGap": 11,
-          "rows": 13,
-          "pages": 2,
-          "cost": 2009.15
-        }
-      ],
-      "rejectedCandidates": [],
-      "fillPage": false,
-      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。"
-    },
-    {
-      "order": 75,
       "id": "besame_mucho",
       "title": "深情的吻",
       "file": "besame_mucho_01.m3n",
@@ -6601,30 +8060,32 @@
       "minimumNoteGapEm": 0.3,
       "wrapWidthRatio": 1,
       "systemDensities": [
-        0.592712821176811,
-        0.4538061718171878,
-        0.7369185900094986,
-        0.6941552367755909,
-        0.6988774782094085,
-        0.7294901473075481,
-        0.6595887386995617,
-        0.5910062730867063,
-        0.6859139185862807,
-        0.5228849436230263,
-        0.5915606281455469,
-        0.5262201262246493,
-        0.3185214753028644
+        0.6228402139771073,
+        0.4768979237923307,
+        0.6662572076180678,
+        0.5487477134611976,
+        0.6987290061557627,
+        0.8064464833820931,
+        0.6225996714548673,
+        0.442182304238028,
+        0.590207889990992,
+        0.5767293881487703,
+        0.6154545948895569,
+        0.5904434892832049,
+        0.5532762975576738,
+        0.33492674887223334
       ],
       "baselineSteps": [
         48.51,
-        66.495,
+        59.345,
         69.355,
-        61.105,
-        72.435,
-        91.431,
-        87.691,
-        67.595,
-        69.355,
+        40.26,
+        48.51,
+        51.59,
+        68.606,
+        66.846,
+        54.23,
+        54.23,
         46.75,
         48.51,
         72.148
@@ -6634,12 +8095,13 @@
         false,
         true,
         true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
         false,
         false,
         false
@@ -6649,31 +8111,80 @@
         "0:0",
         "0:0,0:1",
         "0:1,0:2",
-        "0:2",
-        "0:2",
-        "0:2",
-        "0:2",
-        "0:2",
-        "0:2",
+        "0:3",
+        "0:3",
+        "0:3",
+        "0:3",
+        "0:3",
+        "0:3",
         "0:3,0:4",
         "0:4,0:5",
-        "0:5"
+        "0:5,0:6",
+        "0:6"
+      ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 4
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 11,
+          "end": 13
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 3
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 11
+        },
+        {
+          "start": 10,
+          "end": 12
+        },
+        {
+          "start": 11,
+          "end": 13
+        },
+        {
+          "start": 12,
+          "end": 14
+        },
+        {
+          "start": 10,
+          "end": 12
+        },
+        {
+          "start": 9,
+          "end": 11
+        }
       ],
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "歌唱性旋律、低音区与乐句气息",
-      "width": 678,
+      "width": 646,
       "systemGap": 11,
-      "relativeScalePercent": 115.04,
-      "screenNotePx": 22.58,
+      "relativeScalePercent": 120.74,
+      "screenNotePx": 23.7,
       "pages": [
-        64
+        62
       ],
-      "systems": 13,
+      "systems": 14,
       "systemsPerPage": [
-        13
+        14
       ],
-      "sourceSha256": "7cffcbfbeb3fa8f2a85b7dbf70e085824436517a332c7f58bbbded451cc652b6",
+      "sourceSha256": "6746f16e97d30e01d49b9f1807d441d55265fab3b780663364633a694412498f",
       "candidates": [
         {
           "width": 590,
@@ -6686,44 +8197,16 @@
           "width": 646,
           "systemGap": 11,
           "rows": 14,
-          "pages": 2,
-          "cost": 2387.95
-        },
-        {
-          "width": 654,
-          "systemGap": 11,
-          "rows": 14,
-          "pages": 2,
-          "cost": 2392.75
-        },
-        {
-          "width": 662,
-          "systemGap": 11,
-          "rows": 14,
-          "pages": 2,
-          "cost": 2397.55
-        },
-        {
-          "width": 670,
-          "systemGap": 11,
-          "rows": 14,
-          "pages": 2,
-          "cost": 2402.35
-        },
-        {
-          "width": 678,
-          "systemGap": 11,
-          "rows": 13,
           "pages": 1,
-          "cost": 1407.15
+          "cost": 1387.95
         }
       ],
       "rejectedCandidates": [],
       "fillPage": true,
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。"
+      "reviewNote": "第四十八版：第二房子仅保留第17—19小节，其余连续旋律取消房子线；演奏不变。"
     },
     {
-      "order": 76,
+      "order": 75,
       "id": "tian_e",
       "title": "天鹅",
       "file": "tian_e_01.m3n",
@@ -6778,6 +8261,37 @@
         "0:3",
         "0:4"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 6,
+          "end": 8
+        },
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 6,
+          "end": 8
+        }
+      ],
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "六拍子、长线条与气息控制",
@@ -6786,7 +8300,7 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        65
+        63
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -6807,7 +8321,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 77,
+      "order": 76,
       "id": "ai_de_li_zan",
       "title": "爱的礼赞",
       "file": "ai_de_li_zan_01.m3n",
@@ -6820,26 +8334,26 @@
       "minimumNoteGapEm": 0.4,
       "wrapWidthRatio": 1,
       "systemDensities": [
-        0.4983266527753506,
-        0.5367011689883361,
-        0.5345634134462173,
-        0.4943774030760917,
-        0.6143649778146392,
-        0.4963590628470373,
-        0.43975196138401706,
-        0.728298164831545,
-        0.5745005579178182,
-        0.579942710094857,
-        0.5733699087864345,
-        0.5003724545103393,
-        0.5340643038435405,
-        0.5749561364642827,
-        0.8147451055513381,
-        0.6165725248204819,
-        0.6160511050156214,
-        0.6149052879390238,
-        0.5747416096288098,
-        0.33497142263913293
+        0.41867356208905615,
+        0.49663550174841314,
+        0.5345633829544588,
+        0.4943773765889793,
+        0.5745293234600839,
+        0.4963590935519024,
+        0.4397519444086964,
+        0.7282980346505531,
+        0.5745005936861225,
+        0.5799426798941206,
+        0.5733699428871896,
+        0.5003723672312542,
+        0.49415247182524796,
+        0.5749561712657649,
+        0.8147451602245459,
+        0.61657249350931,
+        0.6160510734831903,
+        0.5771454521109841,
+        0.5747416449157313,
+        0.33497140333516273
       ],
       "baselineSteps": [
         40.81,
@@ -6859,7 +8373,7 @@
         38.5,
         65.25,
         47.911,
-        40.26,
+        38.5,
         62.207
       ],
       "voltaSystems": [
@@ -6906,6 +8420,13 @@
         "0:0",
         "0:0"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 20
+        }
+      ],
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "歌唱性旋律、倚音、半音与转调",
@@ -6914,30 +8435,30 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        66,
-        67
+        64,
+        65
       ],
       "systems": 20,
       "systemsPerPage": [
-        9,
-        11
+        16,
+        4
       ],
-      "sourceSha256": "00228fb62ae1bbbed749c71ccf195f172ffc9ab7d81659baeefd573798f4bd70",
+      "sourceSha256": "835eff7984783967bc383ab3a795f8464a2b04a0dfc6de78c9c2434651729919",
       "candidates": [
         {
           "width": 590,
           "systemGap": 11,
           "rows": 20,
           "pages": 2,
-          "cost": 2006.02
+          "cost": 2010.83
         }
       ],
       "rejectedCandidates": [],
       "fillPage": false,
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
+      "reviewNote": "第四十八版：核对上传钢琴谱与参考旋律，伴奏填充位置改为休止，保留旋律原有时值、重复音及转调。"
     },
     {
-      "order": 78,
+      "order": 77,
       "id": "por_una_cabeza",
       "title": "一步之遥",
       "file": "por_una_cabeza_01.m3n",
@@ -6984,6 +8505,24 @@
         "0:1",
         "0:2,0:3"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 4,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        }
+      ],
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "探戈切分、装饰与变调",
@@ -6992,7 +8531,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        68
+        66
       ],
       "systems": 7,
       "systemsPerPage": [
@@ -7020,7 +8559,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 79,
+      "order": 78,
       "id": "san_bu",
       "title": "散步",
       "file": "san_bu_01.m3n",
@@ -7075,6 +8614,28 @@
         "0:1",
         "0:2"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 8
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 8
+        },
+        {
+          "start": 2,
+          "end": 4
+        }
+      ],
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "切分与器乐乐句",
@@ -7083,7 +8644,7 @@
       "relativeScalePercent": 116.42,
       "screenNotePx": 22.85,
       "pages": [
-        68
+        66
       ],
       "systems": 9,
       "systemsPerPage": [
@@ -7111,7 +8672,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 80,
+      "order": 79,
       "id": "beer_barrel_polka",
       "title": "啤酒桶波尔卡",
       "file": "beer_barrel_polka_01.m3n",
@@ -7124,27 +8685,29 @@
       "minimumNoteGapEm": 0.4,
       "wrapWidthRatio": 1,
       "systemDensities": [
-        0.8843898660387911,
-        0.9284247463052457,
-        0.8113800282021264,
-        0.6877465149441392,
-        0.6102093031004364,
-        0.582868414584674,
-        0.40251019488787826,
-        0.30667517270648137,
-        0.30433098800477515,
-        0.43196290521187986,
-        0.3435809175432872,
-        0.4357566059479777,
-        0.3741588882792951
+        0.884389947572471,
+        0.7351915000468644,
+        0.6946573043781923,
+        0.6912498675530502,
+        0.6394059596821791,
+        0.5703724560140153,
+        0.4949436766539701,
+        0.40251020147206984,
+        0.3066751936736184,
+        0.3043309745263373,
+        0.4319628845860955,
+        0.3435808996329609,
+        0.435756586192998,
+        0.37415887681635723
       ],
       "baselineSteps": [
         40.81,
         40.81,
         40.81,
+        38.5,
         40.81,
-        40.81,
-        100.854,
+        61.655,
+        71.388,
         59.388,
         71.388,
         38.5,
@@ -7159,6 +8722,7 @@
         false,
         false,
         false,
+        true,
         false,
         false,
         false,
@@ -7173,14 +8737,45 @@
         "0:0",
         "0:0,0:1",
         "0:1",
-        "0:1,0:0",
-        "0:2",
-        "0:2",
-        "0:3",
-        "0:3",
-        "0:3",
+        "0:1",
+        "0:2,0:3",
         "0:4",
-        "0:4"
+        "0:4",
+        "0:5",
+        "0:5",
+        "0:5",
+        "0:6",
+        "0:6"
+      ],
+      "repeatRanges": [
+        {
+          "section": "A",
+          "occurrence": 1,
+          "start": 3,
+          "end": 7
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 6
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 9,
+          "end": 12
+        },
+        {
+          "start": 12,
+          "end": 14
+        }
       ],
       "section": "instrumental",
       "group": "快速音型与装饰",
@@ -7190,28 +8785,28 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        69
+        67
       ],
-      "systems": 13,
+      "systems": 14,
       "systemsPerPage": [
-        13
+        14
       ],
-      "sourceSha256": "0658facb3ea5003608724571da3094046a32d1c3caa3658900305baf83c626ed",
+      "sourceSha256": "5d3fb51a5ff63b2f02046ec7849e1a42daf9563c0e4c19ce47b8c30b936d20b4",
       "candidates": [
         {
           "width": 590,
           "systemGap": 11,
-          "rows": 13,
+          "rows": 14,
           "pages": 1,
-          "cost": 1000.62
+          "cost": 1000.48
         }
       ],
       "rejectedCandidates": [],
       "fillPage": false,
-      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。"
+      "reviewNote": "第四十八版：A 段末尾差异改为第一、第二房子，撤销替代旋律；顶部 ABCD 顺序不变。"
     },
     {
-      "order": 81,
+      "order": 80,
       "id": "canon",
       "title": "卡农",
       "file": "canon_01.m3n",
@@ -7306,6 +8901,50 @@
         "0:6",
         "0:6"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 5,
+          "end": 8
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 15,
+          "end": 17
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 5,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 13
+        },
+        {
+          "start": 13,
+          "end": 16
+        },
+        {
+          "start": 15,
+          "end": 17
+        },
+        {
+          "start": 17,
+          "end": 19
+        }
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "从长音渐进到十六分音型",
@@ -7314,7 +8953,7 @@
       "relativeScalePercent": 120.74,
       "screenNotePx": 23.7,
       "pages": [
-        70
+        68
       ],
       "systems": 19,
       "systemsPerPage": [
@@ -7327,7 +8966,7 @@
           "systemGap": 11,
           "rows": 21,
           "pages": 2,
-          "cost": 2040.94
+          "cost": 2041.28
         },
         {
           "width": 646,
@@ -7342,7 +8981,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 82,
+      "order": 81,
       "id": "flower_dance",
       "title": "花之舞",
       "file": "flower_dance_01.m3n",
@@ -7469,6 +9108,40 @@
         "0:7",
         "0:7"
       ],
+      "repeatRanges": [
+        {
+          "section": "Intro",
+          "occurrence": 1,
+          "start": 0,
+          "end": 1
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 1,
+          "end": 6
+        },
+        {
+          "start": 6,
+          "end": 8
+        },
+        {
+          "start": 8,
+          "end": 12
+        },
+        {
+          "start": 12,
+          "end": 19
+        },
+        {
+          "start": 19,
+          "end": 25
+        },
+        {
+          "start": 24,
+          "end": 27
+        }
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "长篇幅、快速音型与高音区",
@@ -7477,13 +9150,13 @@
       "relativeScalePercent": 104.84,
       "screenNotePx": 20.58,
       "pages": [
-        71,
-        72
+        69,
+        70
       ],
       "systems": 27,
       "systemsPerPage": [
-        12,
-        15
+        19,
+        8
       ],
       "sourceSha256": "6ceadb9c8dcb2e3281ad97f86d626947bb4384f8b574e7b61f4ddfadf739649e",
       "candidates": [
@@ -7492,14 +9165,14 @@
           "systemGap": 11,
           "rows": 34,
           "pages": 3,
-          "cost": 3098.39
+          "cost": 3098.76
         },
         {
           "width": 744,
           "systemGap": 11,
           "rows": 27,
           "pages": 2,
-          "cost": 2004.71
+          "cost": 2008.85
         }
       ],
       "rejectedCandidates": [],
@@ -7507,7 +9180,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 83,
+      "order": 82,
       "id": "turkish_march",
       "title": "土耳其进行曲",
       "file": "turkish_march_01.m3n",
@@ -7520,28 +9193,28 @@
       "minimumNoteGapEm": 0.4,
       "wrapWidthRatio": 1,
       "systemDensities": [
-        1.045013648636151,
-        0.6311814657763383,
-        0.7490350893223479,
-        0.7358078163763946,
-        0.9723502289862676,
-        0.6343542623760274,
-        0.6169767471175249,
-        0.6352381380867166,
-        0.8925634289441711,
-        0.9358152502742282,
-        0.6821678811147286,
-        0.8376920832685733,
-        0.8576312744917177,
-        1.129516634393335,
-        0.9479188057758331,
-        1.0072106529951939,
-        0.5752535772111136,
-        0.6214852876022857,
-        0.4269332476582402,
-        0.641469198927738,
-        0.5697446882527745,
-        0.5379812991412816
+        0.9896627744513669,
+        0.631181420011522,
+        0.7490351179353102,
+        0.7358078369123194,
+        0.9723501572628683,
+        0.6343542161499575,
+        0.5747176387071152,
+        0.6352380794870289,
+        0.8355053401954308,
+        0.9358151826015083,
+        0.6821678294226755,
+        0.8376921152886699,
+        0.8576312016130322,
+        1.1295165558803046,
+        0.9479187223696888,
+        1.0072106960552574,
+        0.5223274902603684,
+        0.6214852474185487,
+        0.42693326622624506,
+        0.6414692268728365,
+        0.5697446470436142,
+        0.5379813145827432
       ],
       "baselineSteps": [
         59.388,
@@ -7549,9 +9222,9 @@
         65.09,
         56.45,
         66.09,
-        79.95,
+        106.55,
         50.45,
-        64.971,
+        91.571,
         56.45,
         38.5,
         50.39,
@@ -7559,7 +9232,7 @@
         52.971,
         56.23,
         56.45,
-        67.45,
+        79.41,
         59.388,
         59.388,
         59.388,
@@ -7614,6 +9287,90 @@
         "0:13",
         "0:13"
       ],
+      "repeatRanges": [
+        {
+          "section": "A",
+          "occurrence": 1,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "section": "A",
+          "occurrence": 2,
+          "start": 2,
+          "end": 6
+        },
+        {
+          "section": "B",
+          "occurrence": 1,
+          "start": 6,
+          "end": 8
+        },
+        {
+          "section": "C",
+          "occurrence": 1,
+          "start": 8,
+          "end": 11
+        },
+        {
+          "section": "C",
+          "occurrence": 2,
+          "start": 11,
+          "end": 16
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 3,
+          "end": 5
+        },
+        {
+          "start": 4,
+          "end": 6
+        },
+        {
+          "start": 6,
+          "end": 8
+        },
+        {
+          "start": 8,
+          "end": 11
+        },
+        {
+          "start": 11,
+          "end": 13
+        },
+        {
+          "start": 12,
+          "end": 14
+        },
+        {
+          "start": 13,
+          "end": 16
+        },
+        {
+          "start": 16,
+          "end": 19
+        },
+        {
+          "start": 18,
+          "end": 22
+        }
+      ],
+      "pageBreakAfterRepeat": [
+        {
+          "section": "C",
+          "occurrence": 1
+        }
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速半音、装饰与多次变调",
@@ -7622,30 +9379,30 @@
       "relativeScalePercent": 132.2,
       "screenNotePx": 25.95,
       "pages": [
-        73,
-        74
+        71,
+        72
       ],
       "systems": 22,
       "systemsPerPage": [
-        10,
-        12
+        11,
+        11
       ],
-      "sourceSha256": "192a2fd0c8a989b9703bd736d5ee4e656494382e7d542d5899f33e74b3da147e",
+      "sourceSha256": "cd0be13b6a0c3bdc9054e761d9588056902296e90edb7805e9a9a0e047d0495c",
       "candidates": [
         {
           "width": 590,
           "systemGap": 11,
           "rows": 22,
           "pages": 2,
-          "cost": 2001.95
+          "cost": 2001.63
         }
       ],
       "rejectedCandidates": [],
       "fillPage": false,
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
+      "reviewNote": "第四十八版：段落名独占一行，C 段第一组反复结束后明确换页；前页优先填满，避免拆开完整反复。"
     },
     {
-      "order": 84,
+      "order": 83,
       "id": "valsentino",
       "title": "Valsentino(快速圆舞曲)",
       "file": "valsentino_01.m3n",
@@ -7760,6 +9517,37 @@
         "0:8",
         "0:8"
       ],
+      "repeatRanges": [],
+      "flowRanges": [
+        {
+          "start": 1,
+          "end": 5
+        },
+        {
+          "start": 5,
+          "end": 9
+        },
+        {
+          "start": 9,
+          "end": 13
+        },
+        {
+          "start": 14,
+          "end": 16
+        },
+        {
+          "start": 18,
+          "end": 24
+        },
+        {
+          "start": 10,
+          "end": 12
+        },
+        {
+          "start": 14,
+          "end": 16
+        }
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速三拍子、半音、三连音与变调",
@@ -7768,13 +9556,13 @@
       "relativeScalePercent": 127.04,
       "screenNotePx": 24.94,
       "pages": [
-        75,
-        76
+        73,
+        74
       ],
       "systems": 24,
       "systemsPerPage": [
-        11,
-        13
+        14,
+        10
       ],
       "sourceSha256": "19bfa51919ba4b0cd99d192efb65e20dd6a9450d6ad01f63d307e3b41b5b3983",
       "candidates": [
@@ -7783,14 +9571,14 @@
           "systemGap": 11,
           "rows": 26,
           "pages": 2,
-          "cost": 2015.27
+          "cost": 2015.47
         },
         {
           "width": 614,
           "systemGap": 11,
           "rows": 24,
           "pages": 2,
-          "cost": 2001.95
+          "cost": 2003.5
         }
       ],
       "rejectedCandidates": [],
@@ -7798,7 +9586,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 85,
+      "order": 84,
       "id": "zhi_ai_li_si",
       "title": "致爱丽丝",
       "file": "zhi_ai_li_si_01.m3n",
@@ -7885,6 +9673,46 @@
         "0:9",
         "0:9"
       ],
+      "repeatRanges": [
+        {
+          "section": "A",
+          "occurrence": 1,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "section": "B",
+          "occurrence": 1,
+          "start": 2,
+          "end": 5
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 2
+        },
+        {
+          "start": 2,
+          "end": 5
+        },
+        {
+          "start": 5,
+          "end": 9
+        },
+        {
+          "start": 9,
+          "end": 13
+        },
+        {
+          "start": 13,
+          "end": 15
+        },
+        {
+          "start": 15,
+          "end": 17
+        }
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "弱起、两房反复、快速音型与三连音",
@@ -7893,7 +9721,7 @@
       "relativeScalePercent": 109.86,
       "screenNotePx": 21.57,
       "pages": [
-        77
+        75
       ],
       "systems": 17,
       "systemsPerPage": [
@@ -7977,7 +9805,7 @@
       "reviewNote": "第四十七版：A、B 段采用成对反复与第一、第二房子，取消这两段的替代旋律；保留 D 段再现。具名段落增加额外留白。"
     },
     {
-      "order": 86,
+      "order": 85,
       "id": "mozart_k545",
       "title": "C大调奏鸣曲 K.545 第一乐章",
       "file": "mozart_k545_01.m3n",
@@ -8112,6 +9940,90 @@
         "0:1",
         "0:1"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 12
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 11,
+          "end": 29
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 12
+        },
+        {
+          "start": 11,
+          "end": 29
+        },
+        {
+          "start": 2,
+          "end": 4
+        },
+        {
+          "start": 6,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 9
+        },
+        {
+          "start": 10,
+          "end": 12
+        },
+        {
+          "start": 11,
+          "end": 13
+        },
+        {
+          "start": 12,
+          "end": 14
+        },
+        {
+          "start": 14,
+          "end": 16
+        },
+        {
+          "start": 15,
+          "end": 17
+        },
+        {
+          "start": 16,
+          "end": 18
+        },
+        {
+          "start": 17,
+          "end": 19
+        },
+        {
+          "start": 19,
+          "end": 21
+        },
+        {
+          "start": 21,
+          "end": 23
+        },
+        {
+          "start": 22,
+          "end": 24
+        },
+        {
+          "start": 25,
+          "end": 27
+        },
+        {
+          "start": 27,
+          "end": 29
+        }
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "长篇幅、快速音阶、主题交接与反复",
@@ -8120,15 +10032,15 @@
       "relativeScalePercent": 123.81,
       "screenNotePx": 24.3,
       "pages": [
-        78,
-        79,
-        80
+        76,
+        77,
+        78
       ],
       "systems": 29,
       "systemsPerPage": [
-        9,
-        10,
-        10
+        13,
+        12,
+        4
       ],
       "sourceSha256": "bc322c09f4c67ef5168506e541580e1f4109ec8991b8238593b27545a6036a9b",
       "candidates": [
@@ -8137,14 +10049,14 @@
           "systemGap": 11,
           "rows": 32,
           "pages": 3,
-          "cost": 3026.62
+          "cost": 3029.86
         },
         {
           "width": 630,
           "systemGap": 11,
           "rows": 29,
           "pages": 3,
-          "cost": 3005.86
+          "cost": 3010.22
         }
       ],
       "rejectedCandidates": [],
@@ -8152,7 +10064,7 @@
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。"
     },
     {
-      "order": 87,
+      "order": 86,
       "id": "dan_huang_guan_bo_er_ka",
       "title": "单簧管波尔卡",
       "file": "dan_huang_guan_bo_er_ka_01.m3n",
@@ -8247,6 +10159,58 @@
         "0:11",
         "0:11,0:12,0:13"
       ],
+      "repeatRanges": [
+        {
+          "section": "",
+          "occurrence": 1,
+          "start": 0,
+          "end": 6
+        },
+        {
+          "section": "",
+          "occurrence": 2,
+          "start": 5,
+          "end": 8
+        },
+        {
+          "section": "",
+          "occurrence": 3,
+          "start": 11,
+          "end": 15
+        },
+        {
+          "section": "",
+          "occurrence": 4,
+          "start": 14,
+          "end": 19
+        }
+      ],
+      "flowRanges": [
+        {
+          "start": 0,
+          "end": 5
+        },
+        {
+          "start": 5,
+          "end": 8
+        },
+        {
+          "start": 7,
+          "end": 12
+        },
+        {
+          "start": 11,
+          "end": 15
+        },
+        {
+          "start": 14,
+          "end": 19
+        },
+        {
+          "start": 12,
+          "end": 14
+        }
+      ],
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速二拍子、颤音、三连音与多组反复",
@@ -8255,13 +10219,13 @@
       "relativeScalePercent": 128.71,
       "screenNotePx": 25.27,
       "pages": [
-        81,
-        82
+        79,
+        80
       ],
       "systems": 19,
       "systemsPerPage": [
-        9,
-        10
+        11,
+        8
       ],
       "sourceSha256": "ddd606548db95b04b2f001328e305fc6919000f065c5660f024d4b0d19806b6a",
       "candidates": [
@@ -8277,7 +10241,7 @@
           "systemGap": 11,
           "rows": 19,
           "pages": 2,
-          "cost": 2001.54
+          "cost": 2002.39
         }
       ],
       "rejectedCandidates": [],
@@ -9381,38 +11345,38 @@
     {
       "page": 52,
       "section": "melodies",
-      "fillPercent": 71.3,
+      "fillPercent": 98.2,
       "items": [
         {
           "id": "feng",
           "title": "枫",
           "systems": [
             1,
-            12
+            17
           ],
           "width": 654,
           "systemGap": 11,
           "top": 0,
-          "height": 753.88
+          "height": 1037.95
         }
       ]
     },
     {
       "page": 53,
       "section": "melodies",
-      "fillPercent": 72.1,
+      "fillPercent": 45.2,
       "items": [
         {
           "id": "feng",
           "title": "枫",
           "systems": [
-            13,
+            18,
             25
           ],
           "width": 654,
           "systemGap": 11,
           "top": 0,
-          "height": 762.26
+          "height": 478.18
         }
       ]
     },
@@ -9595,62 +11559,24 @@
     {
       "page": 62,
       "section": "instrumental",
-      "fillPercent": 56.7,
-      "items": [
-        {
-          "id": "ju_ci_lang_de_xia_tian",
-          "title": "菊次郎的夏天",
-          "systems": [
-            1,
-            6
-          ],
-          "width": 590,
-          "systemGap": 11,
-          "top": 0,
-          "height": 599.14
-        }
-      ]
-    },
-    {
-      "page": 63,
-      "section": "instrumental",
-      "fillPercent": 49.8,
-      "items": [
-        {
-          "id": "ju_ci_lang_de_xia_tian",
-          "title": "菊次郎的夏天",
-          "systems": [
-            7,
-            13
-          ],
-          "width": 590,
-          "systemGap": 11,
-          "top": 0,
-          "height": 525.91
-        }
-      ]
-    },
-    {
-      "page": 64,
-      "section": "instrumental",
-      "fillPercent": 93.4,
+      "fillPercent": 90.7,
       "items": [
         {
           "id": "besame_mucho",
           "title": "深情的吻",
           "systems": [
             1,
-            13
+            14
           ],
-          "width": 678,
+          "width": 646,
           "systemGap": 11,
           "top": 0,
-          "height": 987.63
+          "height": 958.45
         }
       ]
     },
     {
-      "page": 65,
+      "page": 63,
       "section": "instrumental",
       "fillPercent": 83.9,
       "items": [
@@ -9669,45 +11595,45 @@
       ]
     },
     {
-      "page": 66,
+      "page": 64,
       "section": "instrumental",
-      "fillPercent": 61,
+      "fillPercent": 96.9,
       "items": [
         {
           "id": "ai_de_li_zan",
           "title": "爱的礼赞",
           "systems": [
             1,
-            9
+            16
           ],
           "width": 590,
           "systemGap": 11,
           "top": 0,
-          "height": 645
+          "height": 1024.23
         }
       ]
     },
     {
-      "page": 67,
+      "page": 65,
       "section": "instrumental",
-      "fillPercent": 63.7,
+      "fillPercent": 27.7,
       "items": [
         {
           "id": "ai_de_li_zan",
           "title": "爱的礼赞",
           "systems": [
-            10,
+            17,
             20
           ],
           "width": 590,
           "systemGap": 11,
           "top": 0,
-          "height": 673.77
+          "height": 292.47
         }
       ]
     },
     {
-      "page": 68,
+      "page": 66,
       "section": "instrumental",
       "fillPercent": 98.5,
       "items": [
@@ -9738,26 +11664,26 @@
       ]
     },
     {
-      "page": 69,
+      "page": 67,
       "section": "instrumental",
-      "fillPercent": 88.5,
+      "fillPercent": 91.8,
       "items": [
         {
           "id": "beer_barrel_polka",
           "title": "啤酒桶波尔卡",
           "systems": [
             1,
-            13
+            14
           ],
           "width": 590,
           "systemGap": 11,
           "top": 0,
-          "height": 935.06
+          "height": 970.3
         }
       ]
     },
     {
-      "page": 70,
+      "page": 68,
       "section": "instrumental",
       "fillPercent": 93.9,
       "items": [
@@ -9776,121 +11702,121 @@
       ]
     },
     {
-      "page": 71,
+      "page": 69,
       "section": "instrumental",
-      "fillPercent": 67.4,
+      "fillPercent": 99.2,
       "items": [
         {
           "id": "flower_dance",
           "title": "花之舞",
           "systems": [
             1,
-            12
+            19
           ],
           "width": 744,
           "systemGap": 11,
           "top": 0,
-          "height": 712.94
+          "height": 1048.14
+        }
+      ]
+    },
+    {
+      "page": 70,
+      "section": "instrumental",
+      "fillPercent": 34.8,
+      "items": [
+        {
+          "id": "flower_dance",
+          "title": "花之舞",
+          "systems": [
+            20,
+            27
+          ],
+          "width": 744,
+          "systemGap": 11,
+          "top": 0,
+          "height": 367.99
+        }
+      ]
+    },
+    {
+      "page": 71,
+      "section": "instrumental",
+      "fillPercent": 95.4,
+      "items": [
+        {
+          "id": "turkish_march",
+          "title": "土耳其进行曲",
+          "systems": [
+            1,
+            11
+          ],
+          "width": 590,
+          "systemGap": 11,
+          "top": 0,
+          "height": 1008.14
         }
       ]
     },
     {
       "page": 72,
       "section": "instrumental",
-      "fillPercent": 66.5,
+      "fillPercent": 75.1,
       "items": [
         {
-          "id": "flower_dance",
-          "title": "花之舞",
+          "id": "turkish_march",
+          "title": "土耳其进行曲",
           "systems": [
-            13,
-            27
+            12,
+            22
           ],
-          "width": 744,
+          "width": 590,
           "systemGap": 11,
           "top": 0,
-          "height": 703.19
+          "height": 793.63
         }
       ]
     },
     {
       "page": 73,
       "section": "instrumental",
-      "fillPercent": 82.1,
+      "fillPercent": 99.7,
       "items": [
         {
-          "id": "turkish_march",
-          "title": "土耳其进行曲",
+          "id": "valsentino",
+          "title": "Valsentino(快速圆舞曲)",
           "systems": [
             1,
-            10
+            14
           ],
-          "width": 590,
+          "width": 614,
           "systemGap": 11,
           "top": 0,
-          "height": 867.61
+          "height": 1053.94
         }
       ]
     },
     {
       "page": 74,
       "section": "instrumental",
-      "fillPercent": 78.1,
-      "items": [
-        {
-          "id": "turkish_march",
-          "title": "土耳其进行曲",
-          "systems": [
-            11,
-            22
-          ],
-          "width": 590,
-          "systemGap": 11,
-          "top": 0,
-          "height": 825.91
-        }
-      ]
-    },
-    {
-      "page": 75,
-      "section": "instrumental",
-      "fillPercent": 81,
+      "fillPercent": 60.3,
       "items": [
         {
           "id": "valsentino",
           "title": "Valsentino(快速圆舞曲)",
           "systems": [
-            1,
-            11
-          ],
-          "width": 614,
-          "systemGap": 11,
-          "top": 0,
-          "height": 856.34
-        }
-      ]
-    },
-    {
-      "page": 76,
-      "section": "instrumental",
-      "fillPercent": 79,
-      "items": [
-        {
-          "id": "valsentino",
-          "title": "Valsentino(快速圆舞曲)",
-          "systems": [
-            12,
+            15,
             24
           ],
           "width": 614,
           "systemGap": 11,
           "top": 0,
-          "height": 834.88
+          "height": 637.27
         }
       ]
     },
     {
-      "page": 77,
+      "page": 75,
       "section": "instrumental",
       "fillPercent": 99.7,
       "items": [
@@ -9909,97 +11835,97 @@
       ]
     },
     {
-      "page": 78,
+      "page": 76,
       "section": "instrumental",
-      "fillPercent": 68.7,
+      "fillPercent": 97.2,
       "items": [
         {
           "id": "mozart_k545",
           "title": "C大调奏鸣曲 K.545 第一乐章",
           "systems": [
             1,
-            9
+            13
           ],
           "width": 630,
           "systemGap": 11,
           "top": 0,
-          "height": 726.59
+          "height": 1027.74
+        }
+      ]
+    },
+    {
+      "page": 77,
+      "section": "instrumental",
+      "fillPercent": 78.8,
+      "items": [
+        {
+          "id": "mozart_k545",
+          "title": "C大调奏鸣曲 K.545 第一乐章",
+          "systems": [
+            14,
+            25
+          ],
+          "width": 630,
+          "systemGap": 11,
+          "top": 0,
+          "height": 833.02
+        }
+      ]
+    },
+    {
+      "page": 78,
+      "section": "instrumental",
+      "fillPercent": 33.1,
+      "items": [
+        {
+          "id": "mozart_k545",
+          "title": "C大调奏鸣曲 K.545 第一乐章",
+          "systems": [
+            26,
+            29
+          ],
+          "width": 630,
+          "systemGap": 11,
+          "top": 0,
+          "height": 349.67
         }
       ]
     },
     {
       "page": 79,
       "section": "instrumental",
-      "fillPercent": 70.6,
-      "items": [
-        {
-          "id": "mozart_k545",
-          "title": "C大调奏鸣曲 K.545 第一乐章",
-          "systems": [
-            10,
-            19
-          ],
-          "width": 630,
-          "systemGap": 11,
-          "top": 0,
-          "height": 745.78
-        }
-      ]
-    },
-    {
-      "page": 80,
-      "section": "instrumental",
-      "fillPercent": 69.8,
-      "items": [
-        {
-          "id": "mozart_k545",
-          "title": "C大调奏鸣曲 K.545 第一乐章",
-          "systems": [
-            20,
-            29
-          ],
-          "width": 630,
-          "systemGap": 11,
-          "top": 0,
-          "height": 738.06
-        }
-      ]
-    },
-    {
-      "page": 81,
-      "section": "instrumental",
-      "fillPercent": 82.4,
+      "fillPercent": 97.3,
       "items": [
         {
           "id": "dan_huang_guan_bo_er_ka",
           "title": "单簧管波尔卡",
           "systems": [
             1,
-            9
+            11
           ],
           "width": 606,
           "systemGap": 11,
           "top": 0,
-          "height": 871.1
+          "height": 1028.36
         }
       ]
     },
     {
-      "page": 82,
+      "page": 80,
       "section": "instrumental",
-      "fillPercent": 83.1,
+      "fillPercent": 68.2,
       "items": [
         {
           "id": "dan_huang_guan_bo_er_ka",
           "title": "单簧管波尔卡",
           "systems": [
-            10,
+            12,
             19
           ],
           "width": 606,
           "systemGap": 11,
           "top": 0,
-          "height": 878.15
+          "height": 720.89
         }
       ]
     }
@@ -10007,8 +11933,8 @@
   "validation": {
     "sourceCoverage": true,
     "trainingSourcePreserved": true,
-    "geometryCandidates": 187,
-    "minimumMusicPageFillPercent": 49.754,
+    "geometryCandidates": 182,
+    "minimumMusicPageFillPercent": 27.67,
     "underfilledMusicPages": 0,
     "outside": 0,
     "overlaps": 0,
@@ -10026,7 +11952,7 @@
     "undersizedNoteEntries": 0,
     "maximumMusicNotePx": 25.953,
     "oversizedNoteEntries": 0,
-    "outlinedPages": 82,
+    "outlinedPages": 80,
     "outlinedPageOverflow": 0
   }
 }

@@ -97,6 +97,17 @@ describe('bundled score corpus', () => {
     expect(measures[0]!.events.filter(event => event.tie)).toHaveLength(2)
   })
 
+  it('keeps Salut melody timing while leaving accompaniment-only slots silent', () => {
+    const bars=parseM3NDocument(salut).parts.get('score')!.melody.filter(measure=>measure.events.length)
+    for (const index of [0,1,17]) expect(bars[index]!.events.every(event=>event.kind==='rest')).toBe(true)
+    for (const index of [5,21,59]) {
+      expect(bars[index]!.events.map(event=>[event.pitches,event.beats])).toEqual([[['4e'],1],[[],1]])
+    }
+    expect(bars[88]!.events.map(event=>[event.pitches,event.beats])).toEqual([[['1e'],0.5],[[],0.5],[[],1]])
+    // The low fifth inside the theme is melodic, unlike the discarded fills.
+    expect(bars[2]!.events.map(event=>event.pitches)).toEqual([['3e'],['5'],['3e']])
+  })
+
   it('includes K.545 as a complete single melody with both original repeats', async () => {
     const entry = presetScores.find(score => score.sourcePath === 'mozart_k545_01.m3n')
     expect(entry?.title).toBe('C大调奏鸣曲 K.545 第一乐章')
@@ -155,14 +166,14 @@ describe('bundled score corpus', () => {
     expect(measures).toHaveLength(63)
     expect(measures.flatMap((measure, index) => measure.ending === '1' ? [index + 1] : [])).toEqual([14, 15, 16])
     expect(measures.flatMap((measure, index) => measure.ending === '2' ? [index + 1] : []))
-      .toEqual(Array.from({ length: 33 }, (_, index) => index + 17))
+      .toEqual(Array.from({ length: 3 }, (_, index) => index + 17))
     expect(measures.flatMap((measure, index) => measure.right === 'rptend' ? [index + 1] : [])).toEqual([16, 57])
     const passes = measurePlaybackPasses(measures)
     expect(measures.map(measure => [...passes.get(measure)!])).toEqual([
       ...Array.from({ length: 13 }, () => [1, 2]),
       ...Array.from({ length: 3 }, () => [1]),
-      ...Array.from({ length: 33 }, () => [2]),
-      ...Array.from({ length: 4 }, () => [1]),
+      ...Array.from({ length: 3 }, () => [2]),
+      ...Array.from({ length: 34 }, () => [1]),
       ...Array.from({ length: 4 }, () => [1, 2]),
       ...Array.from({ length: 6 }, () => [1]),
     ])

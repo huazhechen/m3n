@@ -1,4 +1,4 @@
-import { parseM3NDocument } from '@m3n/notation'
+import { parseM3NDocument, scoreEventIds } from '@m3n/notation'
 import { NumberedNotationScore, prepareNumberedNotationFonts } from '@m3n/numbered-notation'
 import { outlineSvgText } from '../src/lib/vector-export'
 
@@ -88,7 +88,45 @@ export async function measure(source, width, spacing = {}) {
       .filter((x,i,all) => !i || x-all[i-1]>1)
     return centers.length < 2 ? 0 : (centers.length-1)*22/(centers.at(-1)-centers[0])
   })
-  return { width, wrapWidthRatio: renderOptions.wrapWidthRatio ?? 1, systemDensities, equalMeasures: renderOptions.equalMeasures ?? scoreDocument.equalMeasures ?? false, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps,
+  // Resolve musical boundaries from event identities after wrapping, never
+  // from a fixed system number that changes with font size or heading layout.
+  const ids = scoreEventIds(scoreDocument), systemByEvent = new Map()
+  systems.forEach(({node}, index) => {
+    for (const note of node.querySelectorAll('g.note[data-m3n-id]')) {
+      const id = note.getAttribute('data-m3n-id')
+      const range = systemByEvent.get(id) ?? {start:index,end:index+1}
+      range.end = index + 1; systemByEvent.set(id,range)
+    }
+  })
+  const measures=scoreDocument.parts.get('score')?.melody.filter(measure=>measure.events.length || measure.multiRest) ?? []
+  const repeatRanges=[], sectionRepeats=new Map()
+  let repeatStart=0
+  for (let index=0; index<measures.length; index++) {
+    const measure=measures[index]
+    if (index===0 || measure.sectionName!==measures[index-1].sectionName) repeatStart=index
+    if (measure.left==='rptstart') repeatStart=index
+    if (measure.right!=='rptend') continue
+    let last=index
+    while (measures[last+1]?.ending) last++
+    const ranges=measures.slice(repeatStart,last+1).flatMap(bar=>bar.events.map(event=>systemByEvent.get(ids.get(event))).filter(Boolean))
+    const section=measure.sectionName ?? '', occurrence=(sectionRepeats.get(section) ?? 0)+1
+    sectionRepeats.set(section,occurrence)
+    if (ranges.length) repeatRanges.push({section,occurrence,start:Math.min(...ranges.map(range=>range.start)),end:Math.max(...ranges.map(range=>range.end))})
+    repeatStart=last+1
+  }
+  const events=measures.flatMap(measure=>measure.events), flowRanges=[]
+  const addFlowRange=members=>{
+    const ranges=members.map(event=>systemByEvent.get(ids.get(event))).filter(Boolean)
+    if (!ranges.length) return
+    const start=Math.min(...ranges.map(range=>range.start)),end=Math.max(...ranges.map(range=>range.end))
+    if (end>start+1) flowRanges.push({start,end})
+  }
+  for (const paragraph of scoreDocument.paragraphs ?? []) addFlowRange(events.filter(event=>paragraph.start<=event.sourceStart && event.sourceStart<paragraph.end))
+  for (const [index,event] of events.entries()) if (event.tie && events[index+1]) addFlowRange([event,events[index+1]])
+  for (const interval of scoreDocument.intervals.filter(interval=>interval.kind==='lg' && interval.staff==='melody')) {
+    addFlowRange(events.filter(event=>interval.start<=event.sourceStart && event.sourceEnd<=interval.end))
+  }
+  return { width, wrapWidthRatio: renderOptions.wrapWidthRatio ?? 1, systemDensities, equalMeasures: renderOptions.equalMeasures ?? scoreDocument.equalMeasures ?? false, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps, repeatRanges, flowRanges,
     voltaSystems: systems.map(({node}) => node.getAttribute('data-m3n-volta') === 'true'),
     paragraphSystems: systems.map(({node}) => node.getAttribute('data-m3n-paragraph')),
     diagnostics: score.diagnostics, markup }

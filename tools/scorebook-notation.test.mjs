@@ -42,5 +42,17 @@ test('numbered export preserves alternative notes, lyrics and outlines at narrow
       assert(result.rects.filter(note=>note.alternative).length>=3)
       assert(result.rects.filter(note=>note.alternative).every(note=>note.size==='22'))
     }
+    for (const width of [320,696]) {
+      const boundaries=await page.evaluate(async width=>{
+        const source='{2/4}{order=A,B,A}\n===A{br}\nN: ||: 1 2 | 3 4 | 5 6 | 7 1e |\n---V1\nN: 2e 3e :||\n---V2\nN: 4e 5e ||\n===B{br}\nN: ||: 6 7 | 1e 2e :||'
+        const layout=await window.scorebook.measure(source,width,{showCredits:false})
+        return {ranges:layout.repeatRanges,rows:layout.rows,outside:layout.outside,clipped:layout.clipped}
+      },width)
+      assert.deepEqual(boundaries.outside,[])
+      assert.deepEqual(boundaries.clipped,[])
+      assert.deepEqual(boundaries.ranges.map(({section,occurrence})=>({section,occurrence})),[{section:'A',occurrence:1},{section:'B',occurrence:1}])
+      assert(boundaries.ranges[0].end<=boundaries.ranges[1].start)
+      assert(boundaries.ranges[1].end<=boundaries.rows)
+    }
   } finally { await browser?.close(); rmSync(temp,{recursive:true,force:true}) }
 })

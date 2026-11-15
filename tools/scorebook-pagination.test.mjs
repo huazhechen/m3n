@@ -10,7 +10,7 @@ test('the height floor is strict, including for a one-page score', () => {
   assert.deepEqual(paginateScorebookLayout(layout([0, 181]), {}, page), [[0, 1]])
 })
 
-test('pagination balances complete systems and includes the continuation title', () => {
+test('pagination keeps complete systems and includes the continuation title', () => {
   const score = layout([0, 40, 80, 120, 185, 225, 265, 305, 335])
   assert.deepEqual(paginateScorebookLayout(score, { pageCount: 2 }, page), [[0, 4], [4, 8]])
   assert.equal(paginateScorebookLayout(score, { pageCount: 3 }, page), null)
@@ -120,4 +120,40 @@ test('a former shared short score keeps its slices after growing across pages', 
  const short = {sharePage:true,layout:layout([0,40,80])}
  assert(scorebookPageCanReflow({items:[{entry:short,start:0,end:2}]}))
  assert(!scorebookPageCanReflow({items:[{entry:{...short,sharePage:false},start:0,end:2}]}))
+})
+
+
+test('fills the first page instead of balancing two pages',()=>{
+ const score=layout([0,40,80,120,160,200,240,280,320])
+ assert.deepEqual(paginateScorebookLayout(score,{}, {bodyHeight:200,scale:1}),[[0,5],[5,8]])
+})
+
+test('keeps a fitting repeat together before maximizing first-page fill',()=>{
+ const score={...layout([0,40,80,120,160,200,240,280,320]),repeatRanges:[{section:'C',occurrence:1,start:4,end:7}]}
+ assert.deepEqual(paginateScorebookLayout(score,{}, {bodyHeight:200,scale:1}),[[0,4],[4,8]])
+ // A repeat taller than one page must still be allowed to continue.
+ score.repeatRanges[0].start=0;score.repeatRanges[0].end=8
+ assert.deepEqual(paginateScorebookLayout(score,{}, {bodyHeight:200,scale:1}),[[0,5],[5,8]])
+})
+
+test('resolves explicit repeat boundaries after layout rather than by fixed system index',()=>{
+ const settings={bodyHeight:200,scale:1}
+ const score={...layout([0,30,60,90,120,150,180,210,240]),repeatRanges:[{section:'C',occurrence:1,start:2,end:5}]}
+ const entry={pageBreakAfterRepeat:[{section:'C',occurrence:1}]}
+ assert.deepEqual(paginateScorebookLayout(score,entry,settings),[[0,5],[5,8]])
+ score.repeatRanges[0].end=4
+ assert.deepEqual(paginateScorebookLayout(score,entry,settings),[[0,4],[4,8]])
+ assert.throws(()=>paginateScorebookLayout(score,{pageBreakAfterRepeat:[{section:'Z',occurrence:1}]},settings),/Unknown/)
+})
+
+test('packs short scores toward the first page without balancing whitespace',()=>{
+ const group=[80,60,60].map(height=>entry([[600,height]]))
+ const pages=packScorebookGroup(group,{bodyHeight:200,shortGap:5,renderScale:()=>1})
+ assert.deepEqual(pages.map(page=>[page.start,page.end,page.used]),[[0,2,145],[2,3,60]])
+})
+
+
+test('prefers an intact short phrase or tie across systems when the page count stays unchanged',()=>{
+ const score={...layout([0,40,80,120,160,200,240,280,320]),flowRanges:[{start:4,end:6}]}
+ assert.deepEqual(paginateScorebookLayout(score,{}, {bodyHeight:200,scale:1}),[[0,4],[4,8]])
 })

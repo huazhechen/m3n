@@ -41,7 +41,6 @@
 | [过火](../src/scores/guo_huo_01.m3n) | 4/4 | 72 → **63** | [Jeff Chang · 過火（126 BPM）](https://songbpm.com/@jeff-chang/guo-huo) | 张信哲录音 126；谱中每小节的密集十六分音符歌词对应半速 63。 |
 | [后来](../src/scores/hou_lai_01.m3n) | 4/4 | 70 → **75** | [Rene Liu · 後來（150 BPM）](https://songbpm.com/@rene-liu/hou-lai) | 原唱录音出现 150 与 75 的倍拍关系；当前十六分音符谱用 75，不选择现场的 156。 |
 | [黄昏](../src/scores/huang_hun_01.m3n) | 4/4 | 72 → **78** | [Steve Chou · 黃昏（78 BPM）](https://songbpm.com/@steve-chou/huang-hun) | 周传雄录音 78；其他记录 156 属倍拍，当前谱取 78。 |
-| [菊次郎的夏天](../src/scores/ju_ci_lang_de_xia_tian_01.m3n) | 4/4 | 112 → **84** | [Joe Hisaishi · Summer（84 BPM）](https://songbpm.com/@joe-hisaishi/summer---from-kikujiro) | 参照久石让《菊次郎的夏天》原声 Summer 的 84，排除《千与千寻》的 One Summer Day。 |
 | [喀秋莎](../src/scores/katyusha_01.m3n) | 2/4 | 120 → **124** | [The Red Army Choir · Katyusha（124 BPM）](https://songbpm.com/@the-red-army-choir/katyusha-d6c89d92-659c-46f0-a1fc-6be6087071e6) | 参照红军合唱团 124–125 的进行性版本，取 124。 |
 | [凉凉](../src/scores/liang_liang_01.m3n) | 4/4 | 95 → **90** | [Aska Yang · 凉凉 - 電視劇《三生三世十里桃花》片尾曲（90 BPM）](https://songbpm.com/@aska-yang/5yej5yej-qzetc) | 杨宗纬主题曲版本与伴奏均约 90；排除现场倍拍 180。 |
 | [很久以前](../src/scores/long_long_ago_01.m3n) | 4/4 | 96 → **90** | [Thomas Haynes Bayly · Long, Long Ago (Arr. for Violin & Piano)（179 BPM）](https://songbpm.com/@thomas-haynes-bayly/long-long-ago-arr-for-violin-piano-ztfpr) | 小提琴主题录音记录 179，按当前谱取半速约 90；不以变奏的密度反推主题速度。 |

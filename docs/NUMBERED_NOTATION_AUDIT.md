@@ -51,7 +51,6 @@
 | 后来 | [hou_lai_01.m3n](../src/scores/hou_lai_01.m3n) | 352 | 8/8 |
 | 欢乐颂 | [huan_le_song_01.m3n](../src/scores/huan_le_song_01.m3n) | 88 | 8/8 |
 | 黄昏 | [huang_hun_01.m3n](../src/scores/huang_hun_01.m3n) | 136 | 8/8 |
-| 菊次郎的夏天 | [ju_ci_lang_de_xia_tian_01.m3n](../src/scores/ju_ci_lang_de_xia_tian_01.m3n) | 523 | 8/8 |
 | 喀秋莎 | [katyusha_01.m3n](../src/scores/katyusha_01.m3n) | 62 | 8/8 |
 | 老男孩 | [lao_nan_hai_01.m3n](../src/scores/lao_nan_hai_01.m3n) | 269 | 8/8 |
 | 梨花又开放 | [li_hua_you_kai_fang_01.m3n](../src/scores/li_hua_you_kai_fang_01.m3n) | 132 | 8/8 |

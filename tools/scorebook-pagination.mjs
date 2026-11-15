@@ -18,21 +18,36 @@ export function paginateScorebookLayout(layout, entry, { bodyHeight, scale, mini
     if (entry.pageCount && ranges.length !== entry.pageCount) return null
     return ranges
   }
+  const repeatRanges=layout.repeatRanges ?? []
+  const forced=(entry.pageBreakAfterRepeat ?? []).map(request=>{
+    const repeat=repeatRanges.find(range=>range.section===request.section && range.occurrence===request.occurrence)
+    if (!repeat) throw new Error('Unknown scorebook repeat page boundary')
+    return repeat.end
+  }).filter(end=>end>0 && end<n).sort((a,b)=>a-b)
+  const splitPenalty=end=>{
+    const crosses=range=>range.start<end && end<range.end
+      && cuts[range.end]-cuts[range.start]+36<=cap+EPSILON
+    return repeatRanges.filter(crosses).length*1000+(layout.flowRanges ?? []).filter(crosses).length
+  }
+  const prefer=(candidate,best)=>!best || candidate.pages<best.pages
+    || candidate.pages===best.pages && (candidate.splits<best.splits
+      || candidate.splits===best.splits && candidate.ranges[0][1]>best.ranges[0][1])
   const memo = new Map()
   function solve(start, remaining = entry.pageCount ?? null) {
-    if (start === n) return remaining === null || remaining === 0 ? { cost: 0, ranges: [] } : null
+    if (start === n) return remaining === null || remaining === 0 ? { pages: 0, splits: 0, ranges: [] } : null
     if (remaining !== null && remaining <= 0) return null
     const key = `${start}/${remaining}`
     if (memo.has(key)) return memo.get(key)
     let best = null
-    for (let end = start + 1; end <= n; end++) {
+    const nextForced=forced.find(end=>end>start) ?? n
+    for (let end = start + 1; end <= nextForced; end++) {
       const used = cuts[end] - cuts[start] + (start ? 36 : 0)
       if (used > cap + EPSILON) break
       if (start > 0 && end - start < 3 || !fits(start, end)) continue
       const next = solve(end, remaining === null ? null : remaining - 1)
       if (!next) continue
-      const cost = 100 + ((cap - used) / cap) ** 2 * 10 + next.cost
-      if (!best || cost < best.cost) best = { cost, ranges: [[start, end], ...next.ranges] }
+      const candidate={pages:next.pages+1,splits:next.splits+(end<n?splitPenalty(end):0),ranges:[[start,end],...next.ranges]}
+      if (prefer(candidate,best)) best=candidate
     }
     memo.set(key, best); return best
   }
@@ -70,8 +85,8 @@ export function packScorebookGroup(group, { bodyHeight, shortGap, renderScale, m
         const {used,layouts}=fitting
         const next = pack(end)
         if (!next) continue
-        const cost = (priority === 'font' ? width * (end-start) * 1e6 : width * 0.1) + 1000 + fitting.gapCost * 0.01 + ((bodyHeight - used) / bodyHeight) ** 2 * 10 + next.cost
-        if (!best || cost < best.cost) best = { cost, pages: [{ start, end, layouts, used }, ...next.pages] }
+        const cost = (priority === 'font' ? width * (end-start) * 1e6 : width * 0.1) + 1000 + fitting.gapCost * 0.01 + next.cost
+        if (!best || cost < best.cost || Math.abs(cost-best.cost)<EPSILON && used>best.pages[0].used) best = { cost, pages: [{ start, end, layouts, used }, ...next.pages] }
       }
     }
     memo.set(start, best); return best

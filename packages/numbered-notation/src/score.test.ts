@@ -293,7 +293,7 @@ describe('jpFun numbered notation adapter', () => {
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
   })
 
-  it.each(['turkish_march_01.m3n', 'ju_ci_lang_de_xia_tian_01.m3n', 'valsentino_01.m3n', 'second_waltz_01.m3n'])('keeps each music spacing band consistent in %s', file => {
+  it.each(['turkish_march_01.m3n', 'valsentino_01.m3n', 'second_waltz_01.m3n'])('keeps each music spacing band consistent in %s', file => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')
     const { root } = render(source, { uniformSystemHeight: true, includeBass: false })
     const axes = systemBaselines(root)
