@@ -1,7 +1,7 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十六版",
-  "sourceCount": 89,
+  "edition": "第五十七版",
+  "sourceCount": 88,
   "baseWidth": 780,
   "widthCandidates": [
     590
@@ -1842,27 +1842,6 @@
       "maximumWidth": 710
     },
     {
-      "id": "ai_de_li_zan",
-      "file": "ai_de_li_zan_01.m3n",
-      "title": "爱的礼赞",
-      "section": "instrumental",
-      "group": "歌唱性器乐与舞曲",
-      "reason": "歌唱性旋律、倚音、半音与转调",
-      "width": 614,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十九版：按快悦谱参考重写为D/F调4/4，双音取低音；六拍长音并入A段，删除间奏，采用A/B1/A/B2演奏顺序，单页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "pageCount": 1
-    },
-    {
       "id": "por_una_cabeza",
       "file": "por_una_cabeza_01.m3n",
       "title": "一步之遥",
@@ -2091,8 +2070,8 @@
       ]
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v56.pdf",
-  "outputKey": "scorebook-v56-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v57.pdf",
+  "outputKey": "scorebook-v57-numbered",
   "page": {
     "width": 744,
     "height": 1133,
