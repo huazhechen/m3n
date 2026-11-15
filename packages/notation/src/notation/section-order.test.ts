@@ -75,6 +75,15 @@ describe('explicit section order',()=>{
   expect(analyzeM3N(valid.replace('A,A1,A,A2', 'A,A1,A1,A,A2')).diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER'}))
  })
 
+ it('keeps a heading line break out of the order name and preserves it through formatting', () => {
+  const input = '{2/4}{order=A,B,A}\n===A{br}\nN: 1 2 |\n===B\nN: 3 4 |||'
+  const result = analyzeM3N(input)
+  expect(result.diagnostics).toEqual([])
+  expect(result.score.parts.get('score')!.melody[0]!.events[0]).toMatchObject({sectionLabel:'A',sectionLabelBreakAfter:true})
+  expect(analyzeM3N(formatM3N(input)).score.order).toEqual(['A','B','A'])
+  expect(formatM3N(input)).toContain('===A{br}')
+ })
+
  it('retains ordinary repeat behavior when order is absent',()=>{
   const result=analyzeM3N('{2/4}\n===A\nN: ||: 1 2 :||\n===B\nN: 3 4 |||')
   expect(result.diagnostics).toEqual([])

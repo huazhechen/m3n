@@ -88,9 +88,9 @@ try {
       }
       if (file === 'ban_yin_jie_kou_qin_ji_ben_gong_01.m3n') {
         for (const [section, instruction] of [['机能训练', '快速吹吸切换'], ['音阶模进训练', '音阶(替代音)']]) {
-          const a = [...document.querySelectorAll('g[data-m3n-role="section"]')].find(node => node.textContent === section)?.getBBox()
+          const a = annotations.find(node => node.textContent === section)?.getBBox()
           const b = annotations.find(node => node.textContent === instruction)?.getBBox()
-          if (!a || !b || b.y + b.height >= a.y) issues.push({ file, width, paged, section, instruction, order: 'incorrect' })
+          if (!a || !b || a.y + a.height >= b.y) issues.push({ file, width, paged, section, instruction, order: 'incorrect' })
         }
         if (width === 1000) for (const system of document.querySelectorAll('g.system')) {
           const right = Math.max(...[...system.querySelectorAll('g.measure')].map(measure => Number(measure.getAttribute('data-m3n-measure-end'))))

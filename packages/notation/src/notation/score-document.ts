@@ -15,6 +15,7 @@ export type ScoreEvent = {
   navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
   octaveShift: number
   sectionLabel?: string
+  sectionLabelBreakAfter?: boolean
   meterCount?: number
   meterUnit?: number
   tempo?: number

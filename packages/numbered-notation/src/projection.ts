@@ -97,6 +97,21 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         || visibleMeasures[index]?.events.some(event => event.sectionLabel) || melody[index]?.events.some(event => event.sectionLabel),
       )
       visibleMeasures.forEach((measure, measureIndex) => {
+        // Explicit accidental reminders carry their full pitch into jpFun;
+        // only redundant glyphs at the same degree/octave are hidden.
+        const accidentals = new Map<string, string>()
+        const noteExpression = (pitch: string, shift: number) => {
+          const native = pitchName(pitch, shift)
+          const match = /^([#bn]+)([1-7][',]*)$/.exec(native)
+          let repeated = false
+          if (match) {
+            const offset = [...match[1]!].reduce((sum, value) => value === 'n' ? 0 : sum + (value === '#' ? 1 : -1), 0)
+            const value = String(offset)
+            repeated = accidentals.get(match[2]!) === value
+            accidentals.set(match[2]!, value)
+          }
+          return `@note(${quote(native)}${repeated ? ',showacc=false' : ''})`
+        }
         const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
         const melodyMeasure = melody[measureIndex]
         const firstEvent = melodyMeasure?.events[0] ?? measure.events[0]
@@ -107,7 +122,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const structure = staff === 'bass' ? melodyMeasure ?? measure : measure
         if (breaksBefore(measureIndex)) pieces.push('@br()')
         const sectionLabel = measure.events.find(event => event.sectionLabel)?.sectionLabel
-        if (sectionLabel) pieces.push(`@text(${quote(sectionLabel)},size=14px,weight=700,frame=true)`)
+        if (sectionLabel && !measure.events.find(event => event.sectionLabel)?.sectionLabelBreakAfter) pieces.push(`@text(${quote(sectionLabel)},size=14px,weight=700,frame=true)`)
         if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) pieces.push('@bar(3)')
         // Navigation belongs to a measure, even when its directive follows a note.
         // Zero-time Segno stays on the music axis and wraps with the first event.
@@ -121,7 +136,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const eventParagraph = `${partIndex}:${paragraphOf(staff === 'bass' ? firstEvent?.sourceStart ?? event.sourceStart : event.sourceStart)}`
           if (paragraph !== eventParagraph) { flushParagraph(); paragraph = eventParagraph }
           const controls: string[] = []
-          if (event.key !== activeKey) { controls.push(`@key(${quote(keyName(event.key))},size=16px)`); activeKey = event.key }
+          if (event.key !== activeKey) { accidentals.clear(); controls.push(`@key(${quote(keyName(event.key))},size=16px)`); activeKey = event.key }
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
           if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(tempoMark(event.tempo, event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)); activeTempo = event.tempo }
@@ -167,14 +182,14 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const content: string[] = [...controls]
           if (event.kind === 'tuplet' && event.tuplet) {
             event.pitches.forEach((pitch, slot) => {
-              const expr = duration(`@note(${quote(pitchName(pitch, event.octaveShift))})`, event.tuplet!.unitBeats)
+              const expr = duration(noteExpression(pitch, event.octaveShift), event.tuplet!.unitBeats)
               const item = bind(slot === 0 ? decorate(expr) : expr, event, measureId, slot, `-n${slot + 1}`, true)
               content.push(item.expression); children.push(item.label)
             })
             const noteContent = content.splice(controls.length)
             content.push(`@tuplet({${noteContent.join(' ')}},${event.tuplet.numbase})`)
           } else {
-            const base = continuations.has(event) ? '@dash()' : event.kind === 'chord' ? `@up(${event.pitches.map(pitch => `@note(${quote(pitchName(pitch, event.octaveShift))})`).join(',')})` : `@note(${quote(pitchName(event.pitches[0] ?? '0', event.octaveShift))})`
+            const base = continuations.has(event) ? '@dash()' : event.kind === 'chord' ? `@up(${event.pitches.map(pitch => noteExpression(pitch, event.octaveShift)).join(',')})` : noteExpression(event.pitches[0] ?? '0', event.octaveShift)
             let remaining = event.beats
             let index = 0
             while (remaining > 1e-7) {
@@ -193,6 +208,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             for (const [level, text] of [event.chord, event.text].entries()) {
               if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first}${level === 2 ? ',weight=700' : ''}${level > 0 ? ',local=true' : ''})`)
             }
+            // A section heading followed by {br} stays above its first music
+            // as a native local attachment, including page breaks and lyrics.
+            if (event.sectionLabel && event.sectionLabelBreakAfter) annotations[2]!.push(`@text(${quote(event.sectionLabel)},size=14px,weight=700,frame=true,above=${first},local=true)`)
             const head = continuations.get(event)
             const tieStart = head ? endpointLabels.get(head)!.tieStart : event.tieFromTupletIndex === undefined ? first : children[event.tieFromTupletIndex]!
             // Legato ends on the last pitched glyph, even when its source
@@ -277,25 +295,26 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,
     document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : '',
   ].filter(Boolean).join(' ')
-  const orderLines: string[] = []
+  const orderLines: string[][] = []
   if (document.order) {
     const available = options.width - 2 * (options.pageMargin ?? 32)
-    const measure = (text: string) => [...text].reduce((sum, char) => sum + (char.codePointAt(0)! > 127 ? 16 : 9.3), 0)
-    let line = '演奏顺序：'
+    const measure = (text: string) => [...text].reduce((sum, char) => sum + (char.codePointAt(0)! > 127 ? 16 : 12), 0)
+    let line: string[] = [], used = 100
     for (const name of document.order) {
-      const next = `${line}${line.endsWith('：') ? '' : ' → '}${name}`
-      if (measure(next) > available && !line.endsWith('：')) {
+      const addition = measure(name) + 11 + (line.length ? 24 : 0)
+      if (used + addition > available && line.length) {
         orderLines.push(line)
-        line = `→ ${name}`
-      } else line = next
+        line = []; used = 24
+      }
+      line.push(name); used += addition
     }
-    orderLines.push(line)
+    if (line.length) orderLines.push(line)
   }
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,
     `@head(center={${headings}},right={${credits}},left={{${signatures}}},sidebelow=true,itemgap=16px${options.width < 600 ? ',sidestacked=true' : ''}) @br()`,
-    ...orderLines.map(line => `@text(${quote(line)},size=16px,align=left) @br()`),
+    ...orderLines.map((line, index) => `@head(left={{@text(${quote(index ? '→' : '演奏顺序：')},size=16px) ${line.map((name, i) => `${i ? '@text("→",size=16px) ' : ''}@text(${quote(name)},size=16px,weight=700,frame=true)`).join(' ')} }},itemgap=4px) @br()`),
   ]
   const parts = [...document.parts.values()].map((part, index) => voicesForPart(part.melody, part.bass, index))
   for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {

@@ -1,3 +1,4 @@
+// M3N modification: optional accidental visibility preserves resolved playback pitch.
 import { ASTNodeBase, ASTTextNode, FunctionArgs, SourceSpan, ParserContext, ASTFunctionNode, ASTFunctionClass } from "../ASTtypes.js";
 import { Diagnostic, ErrorDiagnostic } from "../../diagnostic.js";
 import { parseNoteName } from "./noteNameFSM.js";
@@ -64,6 +65,13 @@ class NoteFunction extends ASTFunctionNode {
                 description: "音符颜色，使用 CSS 颜色值",
                 type: "string" as const,
                 default: "#000",
+            },
+            {
+                name: "showacc",
+                description: "是否绘制升降号；隐藏时仍保留音高及播放语义",
+                type: "boolean" as const,
+                namedOnly: true,
+                default: true,
             }
         ]
     };
@@ -128,6 +136,7 @@ class NoteFunction extends ASTFunctionNode {
     octave: number;
     acc: string;
     color: string;
+    showAcc: boolean;
     size: number;
     readonly font: string;
 
@@ -139,7 +148,7 @@ class NoteFunction extends ASTFunctionNode {
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
         this.hasDefaultAcc = Boolean(ctx.variables["note.acc"]);
-        [this.name, this.acc, this.octave, this.color] = this.getArgValue(args, ctx) as [string, string, number, string];
+        [this.name, this.acc, this.octave, this.color, this.showAcc] = this.getArgValue(args, ctx) as [string, string, number, string, boolean];
         this.font = ctx.variables.numberfont;
         this.size = ctx.variables.fontsize;
         // 创建时就固化参数值
@@ -174,7 +183,7 @@ class NoteFunction extends ASTFunctionNode {
     }
 
     override toString() {
-        return `@n(${this.name}, ${this.acc || '""'}, ${this.octave}, ${this.color})`;
+        return `@n(${this.name}, ${this.acc || '""'}, ${this.octave}, ${this.color}${this.showAcc ? "" : ", showacc=false"})`;
     }
 }
 
@@ -238,7 +247,7 @@ class NoteTemporalNode extends TemporalNodeBase {
         // 升降号贴近数字左上角，按同一 baseline 排在数字左侧；
         // 缩小右侧间隔会在全局 anchor 不变时把升降号向右移动
         const accidentalGap = size * 0.01;
-        const { placed, right: mainX } = placeAccidentals(this.acc, size, 0, this.numberY, accidentalGap);
+        const { placed, right: mainX } = placeAccidentals(this.ast.showAcc ? this.acc : "", size, 0, this.numberY, accidentalGap);
         this.accidentals = placed;
 
         this.box.w = mainX + mainMetrics.w;

@@ -499,3 +499,15 @@ test("数字音名只在无歧义时兼容后置升降号", () => {
     assert(compatible.map(note => note.resolvedMidi).join() === "46,70",
         "6#,, 必须兼容为 #6,,，而 #6# 不能合并成 ##6");
 });
+
+
+test("hidden accidental glyphs preserve pitch, timing and serialization", () => {
+    strictAssert.deepEqual(noteFacts('@note("#4",showacc=false)'), noteFacts('@note("#4")'));
+    const hidden = compileScore('@note("#4",showacc=false)');
+    const shown = compileScore('@note("#4")');
+    strictAssert.deepEqual(hidden.diagnostics, []);
+    const note = hidden.layout.objects.find(node => !node.T.isZero())!;
+    const reference = shown.layout.objects.find(node => !node.T.isZero())!;
+    strictAssert.ok(note.box.w < reference.box.w);
+    strictAssert.ok(note.ast.toString('').includes('showacc=false'));
+});

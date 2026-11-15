@@ -50,11 +50,26 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it('hides repeated accidental glyphs within a bar while retaining their full pitch and resetting at barlines', () => {
+    const source = '{4/4}\nN: 4# 4# 4= 4= | 4# 4# 4#e 4#e | [4#4#4=:2] 4# 0 |||'
+    const projection = projectNumberedScore(parseM3NDocument(source), options)
+    expect(projection.source.match(/showacc=false/g)).toHaveLength(5)
+    const native = geometry(parseM3NDocument(source)).layout.objects.filter(node => !node.T.isZero())
+    expect(mainPitches(native[0]!)[0]!.acc).toBe('#')
+    expect(mainPitches(native[1]!)[0]!.acc).toBe('#')
+    expect(projection.source).toContain('@note("#4",showacc=false)')
+    expect(projection.source).toContain('@note("n4",showacc=false)')
+  })
+
   it.each([320, 800])('prints section order once and keeps local verse identities at width %s', width => {
     const source = '{2/4}{order=A,A,B,A,C1,B,A,C2}\n===A\nN: 1 2 ||\nL1: 甲乙\nL2: 丙丁\nL3: 戊己\nL4: 庚辛\n===B\nN: 3 4 ||\n===C1\nN: 5 6 ||\n===C2\nN: 7 1e |||'
     const { root, score, document } = render(source, { width })
     expect(score.diagnostics).toEqual([])
     expect(root.body.textContent).toContain('演奏顺序：')
+    // Eight ordered occurrences plus four section labels have native frames.
+    expect(root.querySelectorAll('rect[stroke="#000"]')).toHaveLength(12)
+    const framed = projectNumberedScore(document, { ...options, width }).source
+    expect(framed.match(/size=16px,weight=700,frame=true/g)).toHaveLength(8)
     expect(root.querySelectorAll('g.note')).toHaveLength(8)
     const first = [...document.parts.values()][0]!.melody[0]!.events[0]!
     const id = scoreEventIds(document).get(first)!
@@ -606,16 +621,30 @@ describe('jpFun numbered notation adapter', () => {
     for (const item of music) expect(direction.y + direction.h).toBeLessThan(item.box.y)
   })
 
+  it.each([320, 800])('places an explicitly separated boxed heading above its instruction without changing music or lyrics at %s', width => {
+    const source = '{2/4}\n===训练{br}\nN: {text=说明} ||: 1 2 :||\nL: 甲乙\n===A\nN: 3 4 |||'
+    const document = parseM3NDocument(source)
+    const result = geometry(document, {width, paged:true})
+    const heading = result.layout.attachments.find(item => item.sourceSpan && result.maskedSource.slice(item.sourceSpan.start,item.sourceSpan.end).startsWith('@text("训练"'))!
+    const instruction = result.layout.attachments.find(item => item.sourceSpan && result.maskedSource.slice(item.sourceSpan.start,item.sourceSpan.end).includes('说明'))!
+    expect(heading.box.y + heading.box.h).toBeLessThan(instruction.box.y)
+    const {root} = render(document, {width,paged:true})
+    const label = [...root.querySelectorAll('text')].find(text => text.textContent === '训练')!
+    expect(label.getAttribute('data-m3n-id')).toBe('m3n-e-1')
+    expect(lyrics(root,'m3n-e-1',1)).toBe('甲')
+    expect(projectNumberedScore(document, options).source).toContain('@text("A",size=14px,weight=700,frame=true)')
+  })
+
   it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('orders harmonica exercise annotations outside musical symbols at width $width, paged=$paged', settings => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), 'utf8')
     const document = parseM3NDocument(source)
     const result = geometry(document, settings)
     const labels = result.layout.attachments.filter(item => item.sourceSpan && result.maskedSource.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith('@text('))
-    expect(labels.length).toBe(28)
+    expect(labels.length).toBe(30)
     const text = (item: typeof labels[number]) => result.maskedSource.slice(item.sourceSpan!.start, item.sourceSpan!.end)
-    const section = result.layout.objects.find(node => 'frame' in node.ast && node.ast.frame)!.box
+    const section = labels.find(item => text(item).includes('"机能训练"'))!.box
     const instruction = labels.find(item => text(item).includes('"快速吹吸切换"'))!.box
-    expect(instruction.y + instruction.h).toBeLessThan(section.y)
+    expect(section.y + section.h).toBeLessThan(instruction.y)
     for (const label of labels) for (const symbol of result.layout.attachments.filter(item => !labels.includes(item))) {
       const overlaps = label.regions.some(a => symbol.regions.some(b => a.line === b.line && a.track === b.track
         && a.x < b.x + b.w && b.x < a.x + a.w))

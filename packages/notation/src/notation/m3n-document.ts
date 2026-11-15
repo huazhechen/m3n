@@ -14,6 +14,7 @@ export type M3NPhrase = {
 }
 
 export type M3NSection = {
+  breakAfterLabel?: boolean
   name: string
   line: number
   phrases: M3NPhrase[]
@@ -67,8 +68,10 @@ export function parseM3NDocumentStructure(source: string, syntaxTree: M3NSyntaxT
       musicSeen = true
       if (phrase && !phrase.melody) report(line, 'M3N_STRUCTURE_MISSING_MELODY', '=== 前的乐句缺少 N: 旋律行')
       phrase = undefined
-      const name = sectionMatch[1]?.trim() ?? ''
-      section = { name, line, phrases: [] }
+      const rawName = sectionMatch[1]?.trim() ?? ''
+      const breakAfterLabel = /\{br\}\s*$/.test(rawName)
+      const name = breakAfterLabel ? rawName.replace(/\s*\{br\}\s*$/, '') : rawName
+      section = { name, line, phrases: [], ...(breakAfterLabel ? { breakAfterLabel: true } : {}) }
       if (sections.length === 1 && sections[0]?.phrases.length === 0 && !sections[0]?.name) sections[0] = section
       else sections.push(section)
       continue

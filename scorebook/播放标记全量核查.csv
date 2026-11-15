@@ -1,5 +1,5 @@
 序号,曲目,PDF页码,建议,当前记谱单元数,代表性重复证据,谱源,sourceSha256
-1,半音阶口琴基本功,4、5,D 保留现状,110,—,ban_yin_jie_kou_qin_ji_ben_gong_01.m3n,ed9f207ef0a4853571b356baa903c5c234e4e7d1167cc0a8bac375c8a5f386df
+1,半音阶口琴基本功,4、5,D 保留现状,110,—,ban_yin_jie_kou_qin_ji_ben_gong_01.m3n,e45e4e2f85c816d22ad7cfed7e83fdf6ef81dc19fb3e847d9edc114de447ee6d
 2,小星星,6,C 暂不优先,12,1—4 ↔ 9—12（4小节）,xiao_xing_xing_01.m3n,e9311ebf2b8550af96ee447481c64f90d54195e5830b86c7a3d8a1103b366c3d
 3,欢乐颂,6,D 保留现状,17,—,huan_le_song_01.m3n,7902cdd1f64ea929fa3ebc9ca2bf503e4f18edbe108e23f20901608bc1e53bce
 4,我和你,6,C 暂不优先,16,4—8 ↔ 12—16（5小节）,wo_he_ni_01.m3n,6a0ba5722b509019746e40b810a0a65efbc2d03ff21bb93ec31cdf30380dfa7d
@@ -43,47 +43,47 @@
 42,我只在乎你,31,D 保留现状,21,—,wo_zhi_zai_hu_ni_01.m3n,33d4ff1b7d9cbecdc5d58da1456e3f5c94ab65cf5c0d1f397791a816d63840b9
 43,过火,32,D 保留现状,24,—,guo_huo_01.m3n,50e24c46e31d6af4496f673161ef633588f27bcdfd779e49d8b335c440df551d
 44,约定,33,B10,34,19—24 ↔ 27—32（6小节）,yue_ding_01.m3n,bb52895962ee659e6ae4011ec4f375c7f46e620abccb188a68a8d7dd766d30c3
-45,后来,34、35,已完成（B3）,50,演奏顺序：A → B → A → A → C,hou_lai_01.m3n,0d7de4b2d6709bb4f20ca8493e38f7bab2e62ec13bec68c66fa06a904d00f3f9
-46,童话镇,36,C 暂不优先,56,2—6 ↔ 10—14（5小节）,tong_hua_zhen_01.m3n,e6392bee01e4db372410deab4f32b335afca2794e5d303f9aa9b731d991b20f0
-47,老男孩,37、38,B17,63,1—6 ↔ 9—14（6小节）,lao_nan_hai_01.m3n,c7bfdb89ca21b9d1a21b6190a674ed7c6267d566b983e1c3f368299fbb2b7487
-48,凉凉,39,C 暂不优先,36,15—18 ↔ 23—26（4小节）,liang_liang_01.m3n,a8c6261b1f5d28d8a86f6625c6246ce56056aa1a2a8b540b4e5291188360deeb
-49,牵丝戏,40,C 暂不优先,37,1—4 ↔ 9—12（4小节）,qian_si_xi_01.m3n,ad708694a7a60373f319e62d1d4e0782f644cfcdb245624fd378958c80865f69
-50,人世间,41,D 保留现状,31,—,ren_shi_jian_01.m3n,ef232d10fef0d405082f9077d30bb3a2a3431701b4373e81d05597f448073892
-51,世界赠予我的,42,D 保留现状,32,—,shi_jie_zeng_yu_wo_de_01.m3n,66bb01a967e40319576a37bb2c20544e2b9799ef5f41d9a542938a82c2bc38b8
-52,明天会更好,43,D 保留现状,21,—,ming_tian_hui_geng_hao_01.m3n,25be00bb334c99d07a31d438096a11e2f4af97a35a7302f99fa6685ee0db5e43
-53,慢慢喜欢你,44,D 保留现状,27,—,man_man_xi_huan_ni_01.m3n,751374298750e357b36ec4bba4e49301e2ab914b7247b1a138870a5a4a4db570
-54,新不了情,45,D 保留现状,27,—,xin_bu_liao_qing_01.m3n,8fec122b86c490e72767e6fa2da99efa352a0d803954957be25d43ffdceb6a12
-55,我要你,46,D 保留现状,19,—,wo_yao_ni_01.m3n,701304fbe0f510a012e3f02457907e3f946a9433a0f6b8d4ee320b6a7de339f2
-56,安妮,47,D 保留现状,38,—,annie_01.m3n,88e17fe24b0fde2228f672d24cb6fad454467fc18885ed5d97d286af8fa6382a
-57,一千个伤心的理由,48,C 暂不优先,31,19—22 ↔ 27—30（4小节）,yi_qian_ge_shang_xin_de_li_you_01.m3n,ff9a973b786838d7ef2a12a076907b3407e2c152bbdd159aac9b306281f2dd53
-58,月半小夜曲,49,C 暂不优先,34,2—5 ↔ 10—13（4小节）,yue_ban_xiao_ye_qu_01.m3n,770d83cea17c788734901d24b5ddd3f6673b4d598776c4c3f4959bfacc3e081f
-59,听海,50,B18,34,19—23 ↔ 27—31（5小节）,ting_hai_01.m3n,c37ceb48450b98779697fd9be9a3ad5453a1118b5dbf6af66034179db106013f
-60,如愿,51,B16,78,17—23 ↔ 25—31（7小节）,ru_yuan_01.m3n,8ff832f5793242419658fb1dbd0cbd6e512831a34906cb9f396334eb9d63f700
-61,爱如潮水,52、53,D 保留现状,28,—,ai_ru_chao_shui_01.m3n,fae63e0f42ac0d6123a61a7cf55705f2715efad3145478e68dae696e20a64ea3
-62,烟花易冷,54,B12,51,21—27 ↔ 29—35（7小节）,yan_hua_yi_leng_01.m3n,1151c9264037c176acba19f1462597bb24e2808be88b615511f9ca726cc829f0
-63,枫,55、56,B6,76,22—28 ↔ 30—36（7小节）,feng_01.m3n,b1c8f2970e2f07226d1c138810c70b80b9a934733d50c4e13db72a73fd4db0c2
-64,太阳照常升起,57,D 保留现状,17,—,tai_yang_zhao_chang_sheng_qi_01.m3n,ba68eef17fdbd66b4b1c8de59095ecedf59f2ac9e33b04047cadf537a2698a45
-65,直到世界的尽头,57,C 暂不优先,35,17—20 ↔ 25—28（4小节）,zhi_dao_shi_jie_de_jin_tou_01.m3n,7ba39d9aa0a6fcba68559fbf12c88dea1d00843aa79af52eeeedb6418072c767
-66,梁祝,58,D 保留现状,17,—,liang_zhu_01.m3n,28abc471eb20e0d1db5a2a33de78be1bb50447f3bb95729240c75ec0c99db894
-67,温柔的倾诉,58,C 暂不优先,21,2—5 ↔ 14—17（4小节）,wen_rou_de_qing_su_01.m3n,c69fa8876ac1e9b28e000c3dcc44ab10bdbe81661caae999bcad8fa18355d4b4
-68,天空之城,59,已完成（A1）,38,演奏顺序：Intro → A → A1 → B → C → A → A2 → C → A → Coda,castle_in_the_sky_01.m3n,67c937c83824ad9b2257aa08bb698f01fe45df4ae091fa5ac9914da214a87944
-69,下雨的时候,60,C 暂不优先,53,2—5 ↔ 34—37（4小节）,xia_yu_de_shi_hou_01.m3n,f049ab9327b8223d0b27695cc62daa25eb3f06344a5542f8a6041ec55064239d
-70,第二圆舞曲,61,C 暂不优先,89,25—28 ↔ 29—32（4小节）,second_waltz_01.m3n,18c400f9400998eddc6e9d18f1cdc00d8ecda4cb1a204589b4e02d615d99f08f
-71,哆啦A梦,62,已完成（A2）,38,演奏顺序：A → B → C → B → D,doraemon_01.m3n,34ee86424fc4002c30ffe0088aa9d24cdf6866ba8a5ef4a6bb822af8e2c163d1
-72,超级玛丽,63,C 暂不优先,25,8—11 ↔ 18—21（4小节）,super_mario_01.m3n,a698a42975838251bfdf7149c6596836d45f69322a8035a22b98d8643dae97dc
-73,青鸟,64,B7,60,1—8 ↔ 26—33（8小节）,qing_niao_01.m3n,185af31948d14e58ee4b0c8ff414e9feba92f8caed45d597aa75d9de98ca930e
-74,菊次郎的夏天,65,已完成（A4）,29,演奏顺序：Intro → A → A1 → A → B → C → D → C → E → A → Coda,ju_ci_lang_de_xia_tian_01.m3n,a5e22f14253a6428648a2c041e1031660ba09ee9ab9083808963b4b22e81b0b9
-75,深情的吻,66、67,B15,63,5—9 ↔ 46—50（5小节）,besame_mucho_01.m3n,8feeec1f1e5183fd5b7349ff3baa2f760e5718d802f8aec3d8ba08019944fbac
-76,天鹅,68,D 保留现状,27,—,tian_e_01.m3n,6a1ff4841f20840c633f31a2d64ea4b4df9929301beec85261b673c397b9f8db
-77,爱的礼赞,69、70,B2,100,3—16 ↔ 19—32（14小节）,ai_de_li_zan_01.m3n,00228fb62ae1bbbed749c71ccf195f172ffc9ab7d81659baeefd573798f4bd70
-78,一步之遥,71,D 保留现状,27,—,por_una_cabeza_01.m3n,bf12fc39b71a81f87fdc8973057a200dec6036e50927806b655cddbf582c66cb
-79,散步,71,C 暂不优先,31,1—4 ↔ 5—8（4小节）,san_bu_01.m3n,7861a95c63ac006188002685ba93cd977eba69f029008d44ea3d302e83215c0f
-80,啤酒桶波尔卡,72,已完成（A8）,67,演奏顺序：Intro → A → A1 → A → A2 → B → C → D → C → Coda → Intro → A → A1 → A → A2 → B → C → D → C → Coda,beer_barrel_polka_01.m3n,80359d3dbd87ec512eaebab6a27f38ad4ab068e9ca3e4e2283542db8171bff04
-81,卡农,73,B14,61,13—20 ↔ 41—48（8小节）,canon_01.m3n,892b0ef27739bcce4fc18663baead1fec880f4e9315267d35a105a17b99ae8a8
-82,喜洋洋,74,B13,51,27—32 ↔ 43—48（6小节）,xi_yang_yang_01.m3n,cf50b781582c55acbf91692ed66c87362bccdf1e51b1476e8116120eb2d53135
-83,花之舞,75、76,已完成（A3）,75,演奏顺序：Intro → A → B → A → C → C → D → E,flower_dance_01.m3n,34dd1b511b036341d40451931cde5b3315c0b61e236ca8b4b06ce8d1335dfaad
-84,土耳其进行曲,77、78,已完成,94,演奏顺序：A → B → C → B → A → B → Coda,turkish_march_01.m3n,192a2fd0c8a989b9703bd736d5ee4e656494382e7d542d5899f33e74b3da147e
-85,Valsentino(快速圆舞曲),79、80,已完成（A6）,98,演奏顺序：Intro → A → A → B → B1 → A → B → B2 → C → C1 → C → C2 → Coda,valsentino_01.m3n,6c3566e909814123addbe430152c6312e742cb4b2c7f1fb0c308e31a6951ed5f
-86,致爱丽丝,81、82,已完成（A7）,85,演奏顺序：A → A1 → A → A2 → B → B1 → B → B2 → C → D → E → F → D → Coda,zhi_ai_li_si_01.m3n,69f153dc64c35067eeb8aed5f7663de48184f9393cca22db0bd4d2c79a2de4e5
-87,C大调奏鸣曲 K.545 第一乐章,83、84、85,C 暂不优先,73,10—13 ↔ 55—58（4小节）,mozart_k545_01.m3n,bc322c09f4c67ef5168506e541580e1f4109ec8991b8238593b27545a6036a9b
-88,单簧管波尔卡,86、87,B1,78,3—18 ↔ 62—77（16小节）,dan_huang_guan_bo_er_ka_01.m3n,171a404268219f5b6006e3e9caa6afd351297ac90a17bd96db7f838fd3a79f8c
+45,后来,34,已完成（B3）,50,演奏顺序：A → B → A → A → C,hou_lai_01.m3n,0d7de4b2d6709bb4f20ca8493e38f7bab2e62ec13bec68c66fa06a904d00f3f9
+46,童话镇,35,C 暂不优先,56,2—6 ↔ 10—14（5小节）,tong_hua_zhen_01.m3n,e6392bee01e4db372410deab4f32b335afca2794e5d303f9aa9b731d991b20f0
+47,老男孩,36、37,B17,63,1—6 ↔ 9—14（6小节）,lao_nan_hai_01.m3n,c7bfdb89ca21b9d1a21b6190a674ed7c6267d566b983e1c3f368299fbb2b7487
+48,凉凉,38,C 暂不优先,36,15—18 ↔ 23—26（4小节）,liang_liang_01.m3n,a8c6261b1f5d28d8a86f6625c6246ce56056aa1a2a8b540b4e5291188360deeb
+49,牵丝戏,39,C 暂不优先,37,1—4 ↔ 9—12（4小节）,qian_si_xi_01.m3n,ad708694a7a60373f319e62d1d4e0782f644cfcdb245624fd378958c80865f69
+50,人世间,40,D 保留现状,31,—,ren_shi_jian_01.m3n,ef232d10fef0d405082f9077d30bb3a2a3431701b4373e81d05597f448073892
+51,世界赠予我的,41,D 保留现状,32,—,shi_jie_zeng_yu_wo_de_01.m3n,66bb01a967e40319576a37bb2c20544e2b9799ef5f41d9a542938a82c2bc38b8
+52,明天会更好,42,D 保留现状,21,—,ming_tian_hui_geng_hao_01.m3n,25be00bb334c99d07a31d438096a11e2f4af97a35a7302f99fa6685ee0db5e43
+53,慢慢喜欢你,43,D 保留现状,27,—,man_man_xi_huan_ni_01.m3n,751374298750e357b36ec4bba4e49301e2ab914b7247b1a138870a5a4a4db570
+54,新不了情,44,D 保留现状,27,—,xin_bu_liao_qing_01.m3n,8fec122b86c490e72767e6fa2da99efa352a0d803954957be25d43ffdceb6a12
+55,我要你,45,D 保留现状,19,—,wo_yao_ni_01.m3n,701304fbe0f510a012e3f02457907e3f946a9433a0f6b8d4ee320b6a7de339f2
+56,安妮,46,D 保留现状,38,—,annie_01.m3n,88e17fe24b0fde2228f672d24cb6fad454467fc18885ed5d97d286af8fa6382a
+57,一千个伤心的理由,47,C 暂不优先,31,19—22 ↔ 27—30（4小节）,yi_qian_ge_shang_xin_de_li_you_01.m3n,ff9a973b786838d7ef2a12a076907b3407e2c152bbdd159aac9b306281f2dd53
+58,月半小夜曲,48,C 暂不优先,34,2—5 ↔ 10—13（4小节）,yue_ban_xiao_ye_qu_01.m3n,770d83cea17c788734901d24b5ddd3f6673b4d598776c4c3f4959bfacc3e081f
+59,听海,49,B18,34,19—23 ↔ 27—31（5小节）,ting_hai_01.m3n,c37ceb48450b98779697fd9be9a3ad5453a1118b5dbf6af66034179db106013f
+60,如愿,50,B16,78,17—23 ↔ 25—31（7小节）,ru_yuan_01.m3n,8ff832f5793242419658fb1dbd0cbd6e512831a34906cb9f396334eb9d63f700
+61,爱如潮水,51、52,D 保留现状,28,—,ai_ru_chao_shui_01.m3n,fae63e0f42ac0d6123a61a7cf55705f2715efad3145478e68dae696e20a64ea3
+62,烟花易冷,53,B12,51,21—27 ↔ 29—35（7小节）,yan_hua_yi_leng_01.m3n,1151c9264037c176acba19f1462597bb24e2808be88b615511f9ca726cc829f0
+63,枫,54、55,B6,76,22—28 ↔ 30—36（7小节）,feng_01.m3n,b1c8f2970e2f07226d1c138810c70b80b9a934733d50c4e13db72a73fd4db0c2
+64,太阳照常升起,56,D 保留现状,17,—,tai_yang_zhao_chang_sheng_qi_01.m3n,ba68eef17fdbd66b4b1c8de59095ecedf59f2ac9e33b04047cadf537a2698a45
+65,直到世界的尽头,56,C 暂不优先,35,17—20 ↔ 25—28（4小节）,zhi_dao_shi_jie_de_jin_tou_01.m3n,7ba39d9aa0a6fcba68559fbf12c88dea1d00843aa79af52eeeedb6418072c767
+66,梁祝,57,D 保留现状,17,—,liang_zhu_01.m3n,28abc471eb20e0d1db5a2a33de78be1bb50447f3bb95729240c75ec0c99db894
+67,温柔的倾诉,57,C 暂不优先,21,2—5 ↔ 14—17（4小节）,wen_rou_de_qing_su_01.m3n,c69fa8876ac1e9b28e000c3dcc44ab10bdbe81661caae999bcad8fa18355d4b4
+68,天空之城,58,已完成（A1）,38,演奏顺序：Intro → A → A1 → B → C → A → A2 → C → A → Coda,castle_in_the_sky_01.m3n,67c937c83824ad9b2257aa08bb698f01fe45df4ae091fa5ac9914da214a87944
+69,下雨的时候,59,C 暂不优先,53,2—5 ↔ 34—37（4小节）,xia_yu_de_shi_hou_01.m3n,f049ab9327b8223d0b27695cc62daa25eb3f06344a5542f8a6041ec55064239d
+70,第二圆舞曲,60,C 暂不优先,89,25—28 ↔ 29—32（4小节）,second_waltz_01.m3n,18c400f9400998eddc6e9d18f1cdc00d8ecda4cb1a204589b4e02d615d99f08f
+71,哆啦A梦,61,已完成（A2）,38,演奏顺序：A → B → C → B → D,doraemon_01.m3n,34ee86424fc4002c30ffe0088aa9d24cdf6866ba8a5ef4a6bb822af8e2c163d1
+72,超级玛丽,62,C 暂不优先,25,8—11 ↔ 18—21（4小节）,super_mario_01.m3n,a698a42975838251bfdf7149c6596836d45f69322a8035a22b98d8643dae97dc
+73,青鸟,63,B7,60,1—8 ↔ 26—33（8小节）,qing_niao_01.m3n,185af31948d14e58ee4b0c8ff414e9feba92f8caed45d597aa75d9de98ca930e
+74,菊次郎的夏天,64,已完成（A4）,29,演奏顺序：Intro → A → A1 → A → B → C → D → C → E → A → Coda,ju_ci_lang_de_xia_tian_01.m3n,a5e22f14253a6428648a2c041e1031660ba09ee9ab9083808963b4b22e81b0b9
+75,深情的吻,65、66,B15,63,5—9 ↔ 46—50（5小节）,besame_mucho_01.m3n,8feeec1f1e5183fd5b7349ff3baa2f760e5718d802f8aec3d8ba08019944fbac
+76,天鹅,67,D 保留现状,27,—,tian_e_01.m3n,6a1ff4841f20840c633f31a2d64ea4b4df9929301beec85261b673c397b9f8db
+77,爱的礼赞,68、69,B2,100,3—16 ↔ 19—32（14小节）,ai_de_li_zan_01.m3n,00228fb62ae1bbbed749c71ccf195f172ffc9ab7d81659baeefd573798f4bd70
+78,一步之遥,70,D 保留现状,27,—,por_una_cabeza_01.m3n,bf12fc39b71a81f87fdc8973057a200dec6036e50927806b655cddbf582c66cb
+79,散步,70,C 暂不优先,31,1—4 ↔ 5—8（4小节）,san_bu_01.m3n,7861a95c63ac006188002685ba93cd977eba69f029008d44ea3d302e83215c0f
+80,啤酒桶波尔卡,71,已完成（A8）,67,演奏顺序：Intro → A → A1 → A → A2 → B → C → D → C → Coda → Intro → A → A1 → A → A2 → B → C → D → C → Coda,beer_barrel_polka_01.m3n,80359d3dbd87ec512eaebab6a27f38ad4ab068e9ca3e4e2283542db8171bff04
+81,卡农,72,B14,61,13—20 ↔ 41—48（8小节）,canon_01.m3n,892b0ef27739bcce4fc18663baead1fec880f4e9315267d35a105a17b99ae8a8
+82,喜洋洋,73,B13,51,27—32 ↔ 43—48（6小节）,xi_yang_yang_01.m3n,cf50b781582c55acbf91692ed66c87362bccdf1e51b1476e8116120eb2d53135
+83,花之舞,74、75,已完成（A3）,75,演奏顺序：Intro → A → B → A → C → C → D → E,flower_dance_01.m3n,34dd1b511b036341d40451931cde5b3315c0b61e236ca8b4b06ce8d1335dfaad
+84,土耳其进行曲,76、77,已完成,94,演奏顺序：A → B → C → B → A → B → Coda,turkish_march_01.m3n,192a2fd0c8a989b9703bd736d5ee4e656494382e7d542d5899f33e74b3da147e
+85,Valsentino(快速圆舞曲),78、79,已完成（A6）,98,演奏顺序：Intro → A → A → B → B1 → A → B → B2 → C → C1 → C → C2 → Coda,valsentino_01.m3n,6c3566e909814123addbe430152c6312e742cb4b2c7f1fb0c308e31a6951ed5f
+86,致爱丽丝,80、81,已完成（A7）,85,演奏顺序：A → A1 → A → A2 → B → B1 → B → B2 → C → D → E → F → D → Coda,zhi_ai_li_si_01.m3n,69f153dc64c35067eeb8aed5f7663de48184f9393cca22db0bd4d2c79a2de4e5
+87,C大调奏鸣曲 K.545 第一乐章,82、83、84,C 暂不优先,73,10—13 ↔ 55—58（4小节）,mozart_k545_01.m3n,bc322c09f4c67ef5168506e541580e1f4109ec8991b8238593b27545a6036a9b
+88,单簧管波尔卡,85、86,B1,78,3—18 ↔ 62—77（16小节）,dan_huang_guan_bo_er_ka_01.m3n,171a404268219f5b6006e3e9caa6afd351297ac90a17bd96db7f838fd3a79f8c

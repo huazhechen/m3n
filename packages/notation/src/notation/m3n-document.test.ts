@@ -37,6 +37,14 @@ describe('M3N v0.4 document structure', () => {
     }))
   })
 
+  it('separates an optional heading line break from the section name', () => {
+    const document = parseM3NDocumentStructure('===机能训练{br}\nN: 1 2 |\n===B\nN: 3 4 |||')
+    expect(document.diagnostics).toEqual([])
+    expect(document.sections[0]).toMatchObject({name:'机能训练',breakAfterLabel:true})
+    expect(document.sections[1]?.name).toBe('B')
+    expect(document.sections[1]?.breakAfterLabel).toBeUndefined()
+  })
+
   it('starts a new independent phrase after a section marker', () => {
     const document = parseM3NDocumentStructure('===Verse\nN: 1 2 |\n===\nN: 3 4 |||')
 

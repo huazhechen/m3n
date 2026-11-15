@@ -1,38 +1,10 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第四十二版",
+  "edition": "第四十三版",
   "sourceCount": 88,
   "baseWidth": 780,
   "widthCandidates": [
-    590,
-    598,
-    606,
-    614,
-    622,
-    630,
-    638,
-    640,
-    646,
-    654,
-    656,
-    662,
-    670,
-    672,
-    678,
-    680,
-    686,
-    688,
-    694,
-    696,
-    704,
-    712,
-    720,
-    728,
-    736,
-    744,
-    752,
-    760,
-    765
+    590
   ],
   "sections": [
     {
@@ -87,16 +59,17 @@
       "reason": "重复音、级进和二分音符",
       "width": 640,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "huan_le_song",
@@ -109,15 +82,16 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "includeBass": false,
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "wo_he_ni",
@@ -130,14 +104,15 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "long_long_ago",
@@ -150,14 +125,15 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "song_bie",
@@ -168,16 +144,17 @@
       "reason": "长短时值与连贯乐句",
       "width": 640,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "hong_he_gu",
@@ -190,14 +167,15 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "su_shan_na",
@@ -210,17 +188,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "widthCandidates": [
         618
       ],
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "xiao_hong_mao",
@@ -233,17 +212,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "widthCandidates": [
         618
       ],
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "chong_er_fei",
@@ -254,9 +234,9 @@
       "reason": "附点节奏和连奏",
       "width": 662,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "widthCandidates": [
         542,
         544,
@@ -270,12 +250,13 @@
         618
       ],
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 662
     },
     {
       "id": "duo_lai_mi",
@@ -288,17 +269,18 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "widthCandidates": [
         588
       ],
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 662
     },
     {
       "id": "rang_wo_men_dang_qi_shuang_jiang",
@@ -311,7 +293,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "widthCandidates": [
         542,
         544,
@@ -325,12 +307,13 @@
         588
       ],
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 662
     },
     {
       "id": "auld_lang_syne",
@@ -341,15 +324,16 @@
       "reason": "弱起与八分音符",
       "width": 590,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "mo_si_ke_jiao_wai_de_wan_shang",
@@ -362,13 +346,14 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "san_tao_che",
@@ -381,13 +366,14 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "scarborough_fair",
@@ -398,15 +384,16 @@
       "reason": "三拍子和调式色彩",
       "width": 590,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "sound_of_silence",
@@ -419,13 +406,14 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "ai_er_lan_hua_mei",
@@ -438,13 +426,14 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "mo_li_hua",
@@ -455,15 +444,16 @@
       "reason": "五声性旋律与附点",
       "width": 590,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "katyusha",
@@ -476,13 +466,14 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "wo_niu_yu_huang_li_niao",
@@ -495,13 +486,14 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "hong_mei_hua_er_kai",
@@ -511,16 +503,18 @@
       "group": "节奏与多段歌词",
       "reason": "弱起与多段歌词",
       "width": 606,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 606
     },
     {
       "id": "the_internationale",
@@ -530,16 +524,18 @@
       "group": "节奏与多段歌词",
       "reason": "附点节奏、弱起与三段歌词",
       "width": 646,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 646
     },
     {
       "id": "wo_de_zu_guo",
@@ -549,16 +545,17 @@
       "group": "宽广乐句",
       "reason": "连奏、附点与多段歌词",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "wo_he_wo_de_zu_guo",
@@ -568,16 +565,18 @@
       "group": "宽广乐句",
       "reason": "6/8与9/8变拍及连奏",
       "width": 606,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 606
     },
     {
       "id": "yue_liang_dai_biao_wo_de_xin",
@@ -587,16 +586,17 @@
       "group": "抒情入门",
       "reason": "附点与完整连奏乐句",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "li_hua_you_kai_fang",
@@ -606,10 +606,10 @@
       "group": "抒情入门",
       "reason": "歌唱性乐句与八分音符",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "widthCandidates": [
         702,
         704,
@@ -641,12 +641,13 @@
         756,
         758
       ],
-      "systemGap": 18,
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "bai_hua_lin",
@@ -657,9 +658,9 @@
       "reason": "三拍子与跨拍延音",
       "width": 638,
       "sharePage": false,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "方框段标与强制分行；原字号不变，成对间距0.2/0.35，四行歌词保留。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
@@ -667,7 +668,8 @@
         11
       ],
       "minimumNoteGapEm": 0.2,
-      "noteGapEm": 0.35
+      "noteGapEm": 0.35,
+      "uniformSystemHeight": false
     },
     {
       "id": "guang_yin_de_gu_shi",
@@ -677,10 +679,10 @@
       "group": "三拍与复拍",
       "reason": "6/8拍中的连续八分音符",
       "width": 606,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "widthCandidates": [
         742,
         744,
@@ -714,10 +716,12 @@
       ],
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 606
     },
     {
       "id": "tong_zhuo_de_ni",
@@ -727,16 +731,18 @@
       "group": "三拍与复拍",
       "reason": "6/8拍与弱起、反复",
       "width": 606,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 606
     },
     {
       "id": "xiang_si",
@@ -746,16 +752,16 @@
       "group": "三拍与复拍",
       "reason": "三拍子、附点和跨小节延音",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
+        11
       ]
     },
     {
@@ -766,17 +772,18 @@
       "group": "切分与延音",
       "reason": "器乐间奏与跨拍延音",
       "width": 646,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 646
     },
     {
       "id": "yu_jian",
@@ -786,16 +793,17 @@
       "group": "切分与延音",
       "reason": "切分与高音区器乐间奏",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 16,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        16
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "huang_hun",
@@ -805,16 +813,17 @@
       "group": "切分与延音",
       "reason": "切分节奏与延音",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "an_xiang",
@@ -824,16 +833,18 @@
       "group": "切分与延音",
       "reason": "长音、跨拍与情绪层次",
       "width": 606,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 606
     },
     {
       "id": "mei_li_de_shen_hua",
@@ -843,16 +854,18 @@
       "group": "切分与延音",
       "reason": "切分、附点与长句",
       "width": 614,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 614
     },
     {
       "id": "dang_nian_qing",
@@ -862,16 +875,17 @@
       "group": "切分与延音",
       "reason": "弱起、附点与低音区",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 16,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        16
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "qian_nv_you_hun",
@@ -882,15 +896,17 @@
       "reason": "较规整的节奏与短篇幅",
       "width": 646,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 646
     },
     {
       "id": "tie_xue_dan_xin",
@@ -903,13 +919,15 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 646
     },
     {
       "id": "qiu_ying",
@@ -919,16 +937,17 @@
       "group": "十六分与变拍",
       "reason": "变拍与歌唱性乐句",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "man_bu_ren_sheng_lu",
@@ -938,16 +957,17 @@
       "group": "十六分与变拍",
       "reason": "十六分节奏与低音区",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "wo_zhi_zai_hu_ni",
@@ -957,16 +977,17 @@
       "group": "十六分与变拍",
       "reason": "连续十六分与跨拍延音",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "guo_huo",
@@ -976,16 +997,18 @@
       "group": "十六分与变拍",
       "reason": "密集歌词和切分",
       "width": 614,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 614
     },
     {
       "id": "yue_ding",
@@ -995,16 +1018,17 @@
       "group": "十六分与变拍",
       "reason": "切分、弱起与句尾装饰",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 16,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        16
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "hou_lai",
@@ -1013,17 +1037,20 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "多段歌词、切分和连奏",
-      "width": 590,
+      "width": 678,
       "sharePage": false,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
+      "reviewNote": "A/B/A/A/C复用，按实际行高排为单页；数字约22.58px，保留全部歌词和演奏时值。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "uniformSystemHeight": false,
+      "noteGapEm": 0.35,
+      "minimumNoteGapEm": 0.2
     },
     {
       "id": "tong_hua_zhen",
@@ -1034,11 +1061,11 @@
       "reason": "反复歌词、切分与长句",
       "width": 765,
       "sharePage": false,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "noteGapEm": 0.5,
       "notation": "numbered",
       "widthLocked": true,
@@ -1054,16 +1081,16 @@
       "group": "密集节奏与反复",
       "reason": "较长结构与密集八分、十六分",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
+        11
       ]
     },
     {
@@ -1074,17 +1101,18 @@
       "group": "密集节奏与反复",
       "reason": "器乐过门与密集节奏",
       "width": 654,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 654
     },
     {
       "id": "qian_si_xi",
@@ -1094,17 +1122,18 @@
       "group": "密集节奏与反复",
       "reason": "切分、十六分与跳进",
       "width": 670,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 670
     },
     {
       "id": "ren_shi_jian",
@@ -1114,17 +1143,18 @@
       "group": "密集节奏与反复",
       "reason": "慢速密集节奏与高音区",
       "width": 656,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 656
     },
     {
       "id": "shi_jie_zeng_yu_wo_de",
@@ -1134,17 +1164,18 @@
       "group": "密集节奏与反复",
       "reason": "密集节奏与长线条",
       "width": 654,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "maximumWidth": 654
     },
     {
       "id": "ming_tian_hui_geng_hao",
@@ -1154,17 +1185,18 @@
       "group": "密集节奏与反复",
       "reason": "变拍、器乐段与多段歌词",
       "width": 654,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 654
     },
     {
       "id": "man_man_xi_huan_ni",
@@ -1174,17 +1206,18 @@
       "group": "密集节奏与反复",
       "reason": "跨拍、变拍与细分节奏",
       "width": 630,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "maximumWidth": 630
     },
     {
       "id": "xin_bu_liao_qing",
@@ -1194,16 +1227,17 @@
       "group": "三连音与进阶抒情",
       "reason": "三连音与复杂节奏",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "wo_yao_ni",
@@ -1214,11 +1248,11 @@
       "reason": "三连音、十六分与多段歌词",
       "width": 590,
       "sharePage": false,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "noteGapEm": 0.8,
       "systemGapCandidates": [
         11
@@ -1234,16 +1268,18 @@
       "group": "三连音与进阶抒情",
       "reason": "反复歌词、器乐段与跳房子",
       "width": 622,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 622
     },
     {
       "id": "yi_qian_ge_shang_xin_de_li_you",
@@ -1253,16 +1289,18 @@
       "group": "三连音与进阶抒情",
       "reason": "十六分切分与跳房子",
       "width": 630,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 630
     },
     {
       "id": "yue_ban_xiao_ye_qu",
@@ -1272,16 +1310,18 @@
       "group": "三连音与进阶抒情",
       "reason": "高音区、切分与跳进",
       "width": 638,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 16,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        16
-      ]
+        11
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 638
     },
     {
       "id": "ting_hai",
@@ -1291,16 +1331,18 @@
       "group": "三连音与进阶抒情",
       "reason": "三连音、细分节奏与双层连线",
       "width": 670,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 670
     },
     {
       "id": "ru_yuan",
@@ -1310,17 +1352,18 @@
       "group": "三连音与进阶抒情",
       "reason": "变调、倚音与多段歌词",
       "width": 760,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 760
     },
     {
       "id": "ai_ru_chao_shui",
@@ -1330,17 +1373,17 @@
       "group": "三连音与进阶抒情",
       "reason": "附点、切分、波音与两房反复",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "includeBass": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
+        11
       ]
     },
     {
@@ -1351,18 +1394,19 @@
       "group": "三连音与进阶抒情",
       "reason": "长音、反复与高音区转换",
       "width": 640,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "includeBass": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 640
     },
     {
       "id": "feng",
@@ -1372,18 +1416,19 @@
       "group": "三连音与进阶抒情",
       "reason": "细分节奏、延音与降D调转换",
       "width": 654,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "includeBass": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "maximumWidth": 654
     },
     {
       "id": "tai_yang_zhao_chang_sheng_qi",
@@ -1394,16 +1439,17 @@
       "reason": "短篇幅与长音",
       "width": 622,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 622
     },
     {
       "id": "zhi_dao_shi_jie_de_jin_tou",
@@ -1416,14 +1462,15 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 622
     },
     {
       "id": "liang_zhu",
@@ -1434,15 +1481,15 @@
       "reason": "民族旋律与装饰、连奏",
       "width": 590,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
+        11
       ]
     },
     {
@@ -1456,13 +1503,13 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
+        11
       ]
     },
     {
@@ -1474,15 +1521,16 @@
       "reason": "长线条与高音区",
       "width": 590,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "xia_yu_de_shi_hou",
@@ -1493,15 +1541,16 @@
       "reason": "长音、切分与器乐反复",
       "width": 590,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "second_waltz",
@@ -1511,16 +1560,18 @@
       "group": "舞曲与动画主题",
       "reason": "三拍子、倚音与圆舞曲乐句",
       "width": 622,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 622
     },
     {
       "id": "doraemon",
@@ -1530,17 +1581,18 @@
       "group": "舞曲与动画主题",
       "reason": "反复结构与较快八分音符",
       "width": 678,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "maximumWidth": 678
     },
     {
       "id": "super_mario",
@@ -1550,16 +1602,17 @@
       "group": "快速音型与装饰",
       "reason": "休止切分、跳进与临时变音",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "qing_niao",
@@ -1569,16 +1622,18 @@
       "group": "快速音型与装饰",
       "reason": "快速节奏与高音区",
       "width": 646,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 646
     },
     {
       "id": "ju_ci_lang_de_xia_tian",
@@ -1588,17 +1643,18 @@
       "group": "快速音型与装饰",
       "reason": "连续音型与跨小节延音",
       "width": 728,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 728
     },
     {
       "id": "besame_mucho",
@@ -1609,15 +1665,15 @@
       "reason": "歌唱性旋律、低音区与乐句气息",
       "width": 598,
       "sharePage": false,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "具名段落强制分行，调整横向间距为0.3/0.45，保留原字号与两页页码。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
+        11
       ],
       "minimumNoteGapEm": 0.3,
       "noteGapEm": 0.45
@@ -1630,17 +1686,17 @@
       "group": "歌唱性器乐与舞曲",
       "reason": "六拍子、长线条与气息控制",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "includeBass": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
+        11
       ]
     },
     {
@@ -1651,12 +1707,12 @@
       "group": "歌唱性器乐与舞曲",
       "reason": "歌唱性旋律、倚音、半音与转调",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "includeBass": false,
       "notation": "numbered",
       "widthLocked": true,
@@ -1673,17 +1729,18 @@
       "reason": "探戈切分、装饰与变调",
       "width": 670,
       "sharePage": true,
-      "breakBefore": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "maximumSharedWidth": 800,
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 670
     },
     {
       "id": "san_bu",
@@ -1696,15 +1753,16 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "maximumSharedWidth": 800,
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 670
     },
     {
       "id": "beer_barrel_polka",
@@ -1714,16 +1772,17 @@
       "group": "快速音型与装饰",
       "reason": "快速二拍子、倚音与变调",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
-      ]
+        11
+      ],
+      "uniformSystemHeight": false
     },
     {
       "id": "canon",
@@ -1733,16 +1792,18 @@
       "group": "综合进阶",
       "reason": "从长音渐进到十六分音型",
       "width": 646,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "uniformSystemHeight": false,
+      "maximumWidth": 646
     },
     {
       "id": "xi_yang_yang",
@@ -1752,16 +1813,16 @@
       "group": "综合进阶",
       "reason": "快速十六分、连奏与装饰",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 18,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
-        18
+        11
       ]
     },
     {
@@ -1772,17 +1833,18 @@
       "group": "综合进阶",
       "reason": "长篇幅、快速音型与高音区",
       "width": 744,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 14,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        14
-      ]
+        11
+      ],
+      "maximumWidth": 744
     },
     {
       "id": "turkish_march",
@@ -1792,12 +1854,12 @@
       "group": "综合进阶",
       "reason": "快速半音、装饰与多次变调",
       "width": 590,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "参考Max 2.1版复用再现段，保留段内反复与弱起；版宽590px使数字增大至约26px。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
@@ -1812,17 +1874,18 @@
       "group": "综合进阶",
       "reason": "快速三拍子、半音、三连音与变调",
       "width": 614,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 614
     },
     {
       "id": "zhi_ai_li_si",
@@ -1832,18 +1895,19 @@
       "group": "综合进阶",
       "reason": "弱起、两房反复、快速音型与三连音",
       "width": 646,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "systemGap": 16,
-      "uniformSystemHeight": true,
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
       "includeBass": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
-        16
-      ]
+        11
+      ],
+      "maximumWidth": 646
     },
     {
       "id": "mozart_k545",
@@ -1853,18 +1917,19 @@
       "group": "综合进阶",
       "reason": "长篇幅、快速音阶、主题交接与反复",
       "width": 630,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "includeBass": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 630
     },
     {
       "id": "dan_huang_guan_bo_er_ka",
@@ -1874,22 +1939,23 @@
       "group": "综合进阶",
       "reason": "快速二拍子、颤音、三连音与多组反复",
       "width": 606,
-      "sharePage": false,
-      "breakBefore": true,
+      "sharePage": true,
+      "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
       "systemGap": 11,
-      "uniformSystemHeight": true,
+      "uniformSystemHeight": false,
       "includeBass": false,
       "notation": "numbered",
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "maximumWidth": 606
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v42.pdf",
-  "outputKey": "scorebook-v42-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v43.pdf",
+  "outputKey": "scorebook-v43-numbered",
   "page": {
     "width": 744,
     "height": 1133,
@@ -1904,7 +1970,7 @@
     "minimumNotePx": 20
   },
   "showCredits": false,
-  "uniformSystemHeight": true,
+  "uniformSystemHeight": false,
   "noteGapEm": 0.6,
   "minimumNoteGapEm": 0.4,
   "replan": true,
@@ -1919,7 +1985,6 @@
   "exportOutlinePdf": false,
   "minimumSystemGapEm": 0.5,
   "notationLabel": "简谱版",
-  "fixedPaginationFrom": "pagination-reference.json",
   "paired": {
     "staffPlanFile": "staff-editorial-plan.json",
     "staffPdf": "循序渐进乐谱集-五线谱-v41.pdf",
@@ -1939,5 +2004,7 @@
       "spacingSystem": 3
     },
     "enabled": false
-  }
+  },
+  "compactPages": true,
+  "maximumSharedWidth": 765
 }

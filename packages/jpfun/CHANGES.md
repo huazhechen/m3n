@@ -1,5 +1,7 @@
 # Local changes
 
+- `@note(...,showacc=false)` hides only the accidental glyph and its reserved width. Resolved pitch, octave, timing and playback remain intact; serialization preserves the flag. The M3N adapter uses it for redundant same-degree, same-octave accidentals within a measure.
+
 - `@dyn(...,below=true)` places hairpins below their complete note range, including low octave dots, and reserves that space across systems. The default above-note placement and playback are unchanged; serialization preserves the option.
 
 - Automatic beams follow the active meter, grouping compound 6/8, 9/8 and 12/8 in threes. Meter changes and bar lines reset the beat grid; line breaks inside metered bars preserve its phase. Explicit beams and shared div scopes retain their specified groups.

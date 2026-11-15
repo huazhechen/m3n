@@ -421,7 +421,10 @@ function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructur
     const melodyEnd = melody.start + melody.text.length
     const event = score.melody.flatMap((measure) => measure.events)
       .find((candidate) => melody.start <= candidate.sourceStart && candidate.sourceStart < melodyEnd)
-    if (event) event.sectionLabel = section.name
+    if (event) {
+      event.sectionLabel = section.name
+      if (section.breakAfterLabel) event.sectionLabelBreakAfter = true
+    }
   }
 }
 

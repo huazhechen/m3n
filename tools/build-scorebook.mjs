@@ -168,8 +168,8 @@ try {
   const entry=measured[i]
   if(entry.sharePage&&entry.layout.ranges.length===1) {
    const group=[entry];let j=i+1
-   while(j<measured.length) {const e=measured[j];if(e.breakBefore||!e.sharePage||e.layout.ranges.length!==1||e.section!==entry.section||e.group!==entry.group)break;group.push(e);j++}
-   const maximumSharedWidth=Math.min(...group.map(e=>e.maximumSharedWidth??plan.baseWidth))
+   while(j<measured.length) {const e=measured[j];if(e.breakBefore||!e.sharePage||e.layout.ranges.length!==1||e.section!==entry.section||(!plan.compactPages&&e.group!==entry.group))break;group.push(e);j++}
+   const maximumSharedWidth=Math.min(...group.map(e=>e.maximumSharedWidth??plan.maximumSharedWidth??plan.baseWidth))
    const packed=packScorebookGroup(group,{bodyHeight,shortGap,renderScale,minimumFillPercent,maximumSharedWidth,priority:plan.layoutPriority,keepTogether:Boolean(fixedPagination)})
    assert(packed,`No shared layout above ${minimumFillPercent}% for ${group.map(e=>e.title).join(' / ')}`)
    for(const {start:a,end:b,layouts} of packed) {
