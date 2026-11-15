@@ -3,7 +3,7 @@ import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './not
 import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure } from './notation/m3n-document.js'
 import type { M3NToken } from './notation/m3n-tokens.js'
 import { parseLyricItems } from './notation/lyrics.js'
-import { parsePassRange, measurePlaybackPasses } from './notation/repeats.js'
+import { parsePassRange, measurePlaybackPasses, hasVisitEndings } from './notation/repeats.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document.js'
 import { documentSettings } from './notation/document-settings.js'
 import { harmonyTokens, parseHarmonySymbol } from './notation/harmony-syntax.js'
@@ -464,7 +464,10 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
         const position = measure.events[0]?.sourceStart ?? (measure.barEnd === undefined ? undefined : measure.barEnd - 1)
         return position !== undefined && section.start <= position && position < section.end
       }) ?? []
-      return [section.name, [...measurePlaybackPasses(measures).values()].map(passes => passes.size)] as const
+      const visits = document.order!.filter(name => name === section.name).length
+      return [section.name, hasVisitEndings(measures)
+        ? measures.map(measure => measure.ending ? [...parsePassRange(measure.ending)].filter(pass => pass <= visits) : Array.from({length:visits}, (_, index) => index + 1))
+        : [...measurePlaybackPasses(measures).values()].map(passes => Array.from({length:passes.size * visits}, (_, index) => index + 1))] as const
     }))
     const hasDynamics = document.intervals.some(interval => interval.kind === 'cresc' || interval.kind === 'decres')
       || [...document.parts.values()].some(part => [...part.melody, ...part.bass].some(measure => measure.events.some(event => event.dynamic)))
@@ -478,9 +481,7 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
         if (section) {
           measure.sectionName = section.name
           if (previousSection !== section.name) sectionMeasureIndex = 0
-          const localCount = visitsBySection.get(section.name)?.[sectionMeasureIndex++] ?? 1
-          const count = document.order.filter(name => name === section.name).length * localCount
-          measure.orderPasses = Array.from({ length: count }, (_, index) => index + 1)
+          measure.orderPasses = visitsBySection.get(section.name)?.[sectionMeasureIndex++] ?? [1]
         }
         for (const event of measure.events) {
           if (event === measure.events[0] && measure.sectionName !== previousSection) {

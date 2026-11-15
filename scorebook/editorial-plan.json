@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十四版",
+  "edition": "第五十五版",
   "sourceCount": 86,
   "baseWidth": 780,
   "widthCandidates": [
@@ -740,14 +740,14 @@
       "section": "melodies",
       "group": "切分与延音",
       "reason": "器乐间奏与跨拍延音",
-      "width": 654,
+      "width": 644,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "第四十七版：替代旋律与主谱同字号，仍贴近对应小节实际歌词。",
       "systemGap": 11,
       "uniformSystemHeight": false,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
@@ -1004,13 +1004,13 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "多段歌词、切分和连奏",
-      "width": 678,
+      "width": 686,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "A/B/A/A/C复用，按实际行高排为单页；数字约22.58px，保留全部歌词和演奏时值。",
       "systemGap": 11,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
@@ -1034,7 +1034,7 @@
       "section": "melodies",
       "group": "十六分与变拍",
       "reason": "反复歌词、切分与长句",
-      "width": 750,
+      "width": 742,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
@@ -1042,7 +1042,7 @@
       "systemGap": 11,
       "uniformSystemHeight": false,
       "noteGapEm": 0.5,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
@@ -1072,7 +1072,7 @@
       "reviewNote": "第四十七版：恢复四组跳房子与 D.S.，保留第二房子“得”音修正，撤销 A—F 编排。",
       "systemGap": 11,
       "uniformSystemHeight": false,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
@@ -1262,7 +1262,7 @@
       "systemGapCandidates": [
         11
       ],
-      "widthLocked": false,
+      "widthLocked": true,
       "widthCandidates": [
         590
       ],
@@ -1400,17 +1400,28 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第五十版：按快悦谱DkXQe1IgW重写旋律、节奏及歌词；保留副歌弱起，修正参考谱两处超拍；A/B/C1/B/C2，C2段内反复呈现最后两遍副歌。638px版宽两页，数字24px。",
+      "reviewNote": "第五十五版：C1/C2合为C，顺序A/B/C/B/C/C；房子1、3四拍收尾，房子2三拍收尾；保留第三遍三连音变化。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 638,
+      "maximumWidth": 765,
       "noteGapEm": 0.6,
-      "pageCount": 2
+      "widthCandidates": [
+        638,
+        650,
+        666,
+        680,
+        700,
+        720,
+        740,
+        760,
+        765
+      ],
+      "pageCount": 1
     },
     {
       "id": "yan_hua_yi_leng",
@@ -1423,15 +1434,27 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第五十三版：按FtS8b1npO重抄旋律及两遍歌词；修正超拍与弱起衔接，演奏顺序A/B1/A/B2/B2/C，B1/B2仅收尾时值不同。",
+      "reviewNote": "第五十五版：B1/B2合为B，顺序A/B/A/B/B/C；房子1两拍收尾，房子2、3三拍收尾，全部旋律与歌词保留。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 640
+      "maximumWidth": 765,
+      "widthCandidates": [
+        638,
+        650,
+        666,
+        680,
+        700,
+        720,
+        740,
+        760,
+        765
+      ],
+      "pageCount": 1
     },
     {
       "id": "feng",
@@ -1687,14 +1710,14 @@
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "歌唱性旋律、低音区与乐句气息",
-      "width": 686,
+      "width": 646,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "第四十八版：第二房子仅保留第17—19小节，其余连续旋律取消房子线；演奏不变。",
       "systemGap": 11,
       "uniformSystemHeight": false,
-      "widthLocked": false,
+      "widthLocked": true,
       "systemGapCandidates": [
         11
       ],
@@ -1876,7 +1899,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第五十五版：恢复按演奏先后书写，取消14项顶部顺序；A1保留段内反复，C保留两房子。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
@@ -1941,20 +1964,30 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第五十四版：序/A/A/B/B/A/C/C/A/A/尾，78小节压为46个片段，去掉全部四组房子；A段按遍次保留原力度、顿音，C弱起转F调为同一个5，不再区分八度。完整MIDI指纹不变，708px单页。",
+      "reviewNote": "第五十五版：删除序与尾，只保留A/B/C；统一各遍力度，仅保留第四遍弱起顿音差异。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
-      "widthLocked": true,
+      "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
       "maximumWidth": 708,
-      "pageCount": 1
+      "pageCount": 1,
+      "widthCandidates": [
+        600,
+        614,
+        630,
+        646,
+        662,
+        680,
+        700,
+        708
+      ]
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v54.pdf",
-  "outputKey": "scorebook-v54-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v55.pdf",
+  "outputKey": "scorebook-v55-numbered",
   "page": {
     "width": 744,
     "height": 1133,

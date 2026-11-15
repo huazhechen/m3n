@@ -2,7 +2,7 @@ import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure } from './score-document.js'
 import { m3nPitch } from '../m3n-direct.js'
 import { parseM3NNote } from './m3n-primitives.js'
-import { measurePlaybackPasses } from './repeats.js'
+import { measurePlaybackPasses, hasVisitEndings, orderedMeasureIndexes } from './repeats.js'
 
 const EPSILON = 1e-9
 
@@ -110,6 +110,8 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   }
   for (const value of values.slice(1, -1)) {
     if (complementary.has(value.index)) continue
+    if (document.order && value.measure.ending && hasVisitEndings(measures.filter(measure => measure.sectionName === value.measure.sectionName))
+      && measures[value.index + 1]?.ending !== value.measure.ending) continue
     if (document.order && value.measure.sectionName && (measures[value.index - 1]?.sectionName !== value.measure.sectionName
       || measures[value.index + 1]?.sectionName !== value.measure.sectionName)) continue
     if (!equal(value.actual, value.expected)) {
@@ -119,8 +121,9 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   }
   // With an itinerary, the printed last section may be revisited earlier.
   // Check the actual performance endpoints, not their physical page order.
-  const first = document.order ? values.find(value => value.measure.sectionName === document.order![0]) : values[0]
-  const last = document.order ? [...values].reverse().find(value => value.measure.sectionName === document.order!.at(-1)) : values.at(-1)
+  const ordered = document.order ? orderedMeasureIndexes(measures, document.order) : undefined
+  const first = ordered ? values[ordered[0]!] : values[0]
+  const last = ordered ? values[ordered.at(-1)!] : values.at(-1)
   if (!first || !last) return diagnostics
   if (complementary.has(first.index) || complementary.has(last.index)) return diagnostics
   if (equal(first.actual, first.expected)) {

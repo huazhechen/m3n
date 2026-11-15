@@ -124,8 +124,9 @@
   },
   {
     "id": "dan_huang_guan_bo_er_ka",
-    "duration": 129.74583333333334,
-    "sha256": "9d954fd254fced9f6b4a5efe62e726f615411aa3ea6142ef017b91f9665f01be"
+    "duration": 127.99583333333334,
+    "sha256": "3a98ddac163ad6d71aad6e27214ee15c9f1bf3e898db16ce0b973b5ed4abafc1",
+    "reference": "第五十五版：按用户要求删除3.5拍序和末尾半拍休止，统一各遍力度，仅保留第四遍弱起顿音差异。"
   },
   {
     "id": "feng",

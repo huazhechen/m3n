@@ -1,4 +1,4 @@
-import { playbackMeasureIndexes } from './repeats.js'
+import { orderedMeasureIndexes, hasVisitEndings, parsePassRange } from './repeats.js'
 import type { ScoreDocument } from './score-document.js'
 import type { M3NDocumentProjection } from './m3n-document.js'
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
@@ -39,10 +39,7 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
         report('order 的乐段边界必须位于完整小节之间')
       }
     }
-    const ordered = (document.order ?? []).flatMap(name => {
-      const local = measures.filter(measure => measure.sectionName === name && (measure.events.length || measure.multiRest))
-      return playbackMeasureIndexes(local).map(index => local[index]!)
-    })
+    const ordered = orderedMeasureIndexes(measures, document.order ?? []).map(index => measures[index]!)
     const duration = (measure: typeof measures[number] | undefined) => measure?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
     const expected = (measure: typeof measures[number] | undefined) => {
       const first = measure?.events[0]
@@ -63,9 +60,20 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
       const segment = measures.filter(measure => measure.sectionName === section.name && (measure.events.length || measure.multiRest))
       // Multi-rests have no event snapshot from which to restore entry settings.
       if (segment[0]?.multiRest) report('order 乐段须以普通音符或休止符开头；多小节休止可放在乐段内部')
-      const boundary = [segment[0], segment.at(-1)]
+      const visitEndings = hasVisitEndings(segment)
+      if (visitEndings) {
+        const count = document.order!.filter(name => name === section.name).length
+        const groups = segment.filter((measure, index) => measure.ending && segment[index - 1]?.ending !== measure.ending)
+        for (let pass = 1; pass <= count; pass++) {
+          if (groups.filter(measure => parsePassRange(measure.ending!).has(pass)).length !== 1) report('order 的遍次房子须恰好覆盖该乐段的每次访问，不能缺漏或重叠')
+        }
+        if (groups.some(measure => [...parsePassRange(measure.ending!)].some(pass => pass > count))) report('order 的房子遍次超出乐段访问次数')
+        const firstHouse = segment.findIndex(measure => measure.ending)
+        if (segment.slice(firstHouse).some(measure => !measure.ending)) report('order 的遍次房子只能放在乐段结尾')
+      }
+      const boundary = visitEndings ? [segment[0], ...segment.filter((measure, index) => measure.ending && segment[index + 1]?.ending !== measure.ending)] : [segment[0], segment.at(-1)]
       const partial = boundary.filter(measure => measure?.events.length && Math.abs(duration(measure) - expected(measure)) > 1e-9)
-      const complementaryPickup = segment.length > 1 && partial.length === 2
+      const complementaryPickup = !visitEndings && segment.length > 1 && partial.length === 2
         && Math.abs(duration(boundary[0]) + duration(boundary[1]) - expected(boundary[0])) < 1e-9
       if (partial.length && !complementaryPickup && !partial.every(measure => measure && validBoundary(measure))) report('order 的乐段边界必须位于完整小节之间，弱起须在每次访问中与相邻小节或全曲首尾互补')
       let repeatOpen = false
@@ -76,14 +84,14 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
           repeatOpen = true
           hasLocalRepeat = true
         }
-        if (measure.ending && !hasLocalRepeat) report('order 段内跳房子须属于同一乐段的反复线')
+        if (measure.ending && !hasLocalRepeat && !visitEndings) report('order 段内跳房子须属于同一乐段的反复线')
         if (measure.right === 'rptend') {
           if (!repeatOpen) report('order 段内反复线须在同一乐段内成对出现')
           repeatOpen = false
         }
       }
       if (repeatOpen) report('order 段内反复线须在同一乐段内成对出现')
-      if (segment.at(-1)?.events.at(-1)?.tie) report('order 的乐段末尾不能延音到另一个乐段')
+      if (boundary.slice(1).some(measure => measure?.events.at(-1)?.tie)) report('order 的乐段末尾不能延音到另一个乐段')
     }
   }
   for (const interval of document.intervals) {

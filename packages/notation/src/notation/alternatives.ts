@@ -1,5 +1,5 @@
 import type { ScoreDocument, ScoreLyricBlock, ScoreMeasure, ScoreEvent } from './score-document.js'
-import { measurePlaybackPasses, playbackMeasureIndexes, parsePassRange } from './repeats.js'
+import { measurePlaybackPasses, playbackMeasureIndexes, orderedMeasureIndexes, parsePassRange } from './repeats.js'
 import { scoreEventIds } from '../score-event-ids.js'
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
 import type { M3NDocumentProjection } from './m3n-document.js'
@@ -75,10 +75,7 @@ export function alternativePerformance(document: ScoreDocument): ScoreDocument {
   const sourceStride = Math.max(1, ...[...ids.keys()].map(event => event.sourceEnd)) + 1
   let occurrence = 0
   for (const [name,part] of document.parts) {
-    const indexes = document.order ? document.order.flatMap(section => {
-      const entries = part.melody.map((measure,index)=>({measure,index})).filter(({measure})=>measure.sectionName===section)
-      return playbackMeasureIndexes(entries.map(item=>item.measure)).map(index=>entries[index]!.index)
-    }) : playbackMeasureIndexes(part.melody)
+    const indexes = document.order ? orderedMeasureIndexes(part.melody, document.order) : playbackMeasureIndexes(part.melody)
     const visits = new Map<ScoreMeasure,number>()
     const output = {melody:[] as ScoreMeasure[],bass:[] as ScoreMeasure[]}
     for (const index of indexes) {

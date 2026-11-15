@@ -75,6 +75,13 @@ class TextFunction extends ASTFunctionNode {
                 default: false,
             },
             {
+                name: "linestart",
+                description: "上方附件的左边缘对齐谱行左边缘",
+                type: "boolean" as const,
+                namedOnly: true,
+                default: false,
+            },
+            {
                 name: "frame",
                 description: "行内方框文字，原生预留内边距且不推进音乐时间",
                 type: "boolean" as const,
@@ -108,14 +115,16 @@ class TextFunction extends ASTFunctionNode {
     readonly weight: number;
     readonly local: boolean;
     readonly frame: boolean;
+    readonly linestart: boolean;
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [text, size, lineHeight, align, font, above, weight, local, frame] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number, boolean, boolean];
+        const [text, size, lineHeight, align, font, above, weight, local, linestart, frame] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number, boolean, boolean, boolean];
         this.font = font || ctx.variables.font;
         this.above = above instanceof ASTNodeBase ? above : null;
         this.weight = weight;
         this.local = local;
         this.frame = frame;
+        this.linestart = linestart;
         if (align !== "left" && align !== "center" && align !== "right") {
             throw new ErrorDiagnostic(
                 "E_TEXT_INVALID_ALIGN",
@@ -144,7 +153,7 @@ class TextFunction extends ASTFunctionNode {
         const lineHeight = this.size === 0 ? 1.25 : this.lineAdvance / this.size;
         const above = this.above ? `, above=${(this.above as ASTFunctionNode).label}` : "";
         const weight = this.weight === 400 ? "" : `, weight=${this.weight}`;
-        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight}${this.local ? ', local=true' : ''}${this.frame ? ', frame=true' : ''})`;
+        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight}${this.local ? ', local=true' : ''}${this.linestart ? ', linestart=true' : ''}${this.frame ? ', frame=true' : ''})`;
     }
 }
 
@@ -222,7 +231,7 @@ class TextAboveAttachment implements LayoutAttachment {
         text.prepareLayout(context);
         const box = text.box;
         const { host } = this;
-        box.x = Math.max(context.originX, Math.min(
+        box.x = this.ast.linestart ? context.originX : Math.max(context.originX, Math.min(
             host.box.x + host.box.anchor - box.anchor,
             context.originX + context.width - box.w,
         ));

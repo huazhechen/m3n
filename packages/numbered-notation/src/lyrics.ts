@@ -63,7 +63,10 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     return new Set([...blockPasses].filter((pass) => measurePasses.has(pass)))
   }
   const annotatedPhrases = new Set(document.lyrics
-    .filter(block => block.sharedPasses && parsePassRange(block.sharedPasses).size > 1)
+    .filter(block => block.sharedPasses && parsePassRange(block.sharedPasses).size > 1
+      // A generic lyric shared by an entire ordered house is already labeled
+      // by the bracket; do not print the visit numbers again under the note.
+      && !(document.order && !block.range && block.sharedPasses === block.phrasePasses))
     .map(phraseKey))
   const phrases = new Map<string, ScoreLyricBlock[]>()
   for (const block of document.lyrics) {

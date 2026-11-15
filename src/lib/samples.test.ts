@@ -16,8 +16,8 @@ import webReferences from './fixtures/kuaiyuepu-reference-melodies.json'
 describe('bundled score corpus', () => {
   it.each([
     ['feng', '枫', maple, 61, 4],
-    ['yan_hua_yi_leng', '烟花易冷', smoke, 56, 4],
-    ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 46, 2],
+    ['yan_hua_yi_leng', '烟花易冷', smoke, 40, 4],
+    ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 43, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
     ['yong_yuan_tong_zai', '永远同在', always, 62, 3],
   ] as const)('loads the complete reference melody %s with valid bar durations', async (id, title, source, count, beats) => {
@@ -30,13 +30,13 @@ describe('bundled score corpus', () => {
     expect(measures).toHaveLength(count)
     const expected = Array<number>(count).fill(beats)
     if (id === 'yan_hua_yi_leng') {
-      for (const index of [0, 33, 55]) expected[index] = 2
-      for (const index of [16, 50]) expected[index] = 3
-      for (const index of [17, 34, 51]) expected[index] = 1
+      for (const index of [0, 33, 39]) expected[index] = 2
+      for (const index of [16, 34]) expected[index] = 3
+      for (const index of [17, 35]) expected[index] = 1
     }
     if (id === 'dan_huang_guan_bo_er_ka') {
-      for (const index of [1,18,27,44]) expected[index] = 1.5
-      for (const index of [2,19,28,45]) expected[index] = 0.5
+      for (const index of [16,25,42]) expected[index] = 1.5
+      for (const index of [0,17,26]) expected[index] = 0.5
     }
     if (id === 'zhi_ai_li_si') { expected[0] = 1; expected[57] = 2 }
     expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
@@ -49,11 +49,11 @@ describe('bundled score corpus', () => {
 
   it('retains reference repeat scopes, modulation and fast subdivisions', () => {
     const bars = (source: string) => parseM3NDocument(source).parts.get('score')!.melody.filter(measure => measure.events.length)
-    expect(parseM3NDocument(smoke).order).toEqual(['A','B1','A','B2','B2','C'])
+    expect(parseM3NDocument(smoke).order).toEqual(['A','B','A','B','B','C'])
     const polkaBars = bars(polka)
     expect(polkaBars.every(bar=>!bar.ending && bar.left!=='rptstart' && bar.right!=='rptend')).toBe(true)
-    expect(parseM3NDocument(polka).order).toEqual(['序','A','A','B','B','A','C','C','A','A','尾'])
-    expect([2,19,28,45].map(index=>polkaBars[index]!.events[0]!.key)).toEqual(['C','G','F','C'])
+    expect(parseM3NDocument(polka).order).toEqual(['A','A','B','B','A','C','C','A','A'])
+    expect([0,17,26].map(index=>polkaBars[index]!.events[0]!.key)).toEqual(['C','G','F'])
     const mapleBars = bars(maple)
     expect(mapleBars[35]!.events[0]!.key).toBe('Db')
     expect(mapleBars[0]!.events[0]!.beats).toBe(0.5)
@@ -78,7 +78,12 @@ describe('bundled score corpus', () => {
     }))
   }
   it.each(webReferences)('matches every written reference event for $id', reference=>{
-    const expected=reference.events.map(({pitch,beats,tie})=>({pitch,beats,tie}))
+    const original=reference.events
+    const events=reference.id==='yan_hua_yi_leng'
+      // Original B1 (through event 205), B2's last bar (299–301), then C.
+      ? [...original.slice(0,206), ...original.slice(299)]
+      : original
+    const expected=events.map(({pitch,beats,tie})=>({pitch,beats,tie}))
     expect(referenceEvents(sources[reference.id]!,false)).toEqual(expected)
   })
   it.each(webReferences)('matches the reference playback itinerary for $id',reference=>{
@@ -92,7 +97,7 @@ describe('bundled score corpus', () => {
   it.each(webReferences.filter(reference=>'lyricText' in reference))('preserves every reference lyric character for $id',reference=>{
     const document=parseM3NDocument(sources[reference.id]!)
     const lyrics=document.lyrics.flatMap(block=>block.syllables.filter(syllable=>syllable.kind==='text').map(syllable=>syllable.text)).join('')
-    expect(lyrics.replace(/[^\u3400-\u9fff]/g,'')).toBe(reference.lyricText)
+    expect(lyrics.replace(/[^\u3400-\u9fff]/g,'')).toBe(reference.id==='yan_hua_yi_leng' ? reference.lyricText!.replace(/(雨纷纷旧故里[\s\S]*?是我们)([\s\S]*?)\1/, '$1$2们') : reference.lyricText)
   })
 
   it('uses the reference Love Like Tide melody and joins each chorus pickup correctly', async () => {
@@ -100,24 +105,23 @@ describe('bundled score corpus', () => {
     expect(await loadPresetScore(entry.slug)).toBe(loveLikeTide)
     expect(validateM3NDiagnostics(loveLikeTide)).toEqual([])
     const document=parseM3NDocument(loveLikeTide)
-    expect(document).toMatchObject({key:'E',meterCount:4,meterUnit:4,tempo:80,order:['A','B','C1','B','C2']})
-    expect(document.sections!.map(section=>section.name)).toEqual(['A','B','C1','C2'])
+    expect(document).toMatchObject({key:'E',meterCount:4,meterUnit:4,tempo:80,order:['A','B','C','B','C','C']})
+    expect(document.sections!.map(section=>section.name)).toEqual(['A','B','C'])
     const bars=document.parts.get('score')!.melody.filter(bar=>bar.events.length)
-    expect(bars).toHaveLength(37)
-    const beats=Array<number>(37).fill(4)
-    beats[17]=beats[35]=3
-    beats[18]=beats[27]=1
+    expect(bars).toHaveLength(28)
+    const beats=Array<number>(28).fill(4)
+    beats[17]=beats[27]=3
+    beats[18]=1
     expect(bars.map(bar=>bar.events.reduce((sum,event)=>sum+event.beats,0))).toEqual(beats)
     expect(bars[0]!.events.map(event=>[event.pitches,event.beats]))
       .toEqual([[[],1],[['3'],0.25],[['5'],0.25],[['1e'],0.25],[['7'],0.25],[['7'],0.25],[['1e'],0.75],[['1e'],1]])
     expect(document.intervals.some(interval=>interval.kind==='inst')).toBe(false)
-    expect(bars[27]!.left).toBe('rptstart')
-    expect(bars[35]!.right?.startsWith('rptend')).toBe(true)
-    expect(bars[35]!.ending).toBe('1')
-    expect(bars[36]!.ending).toBe('2')
+    expect(bars.every(bar=>bar.left!=='rptstart' && bar.right!=='rptend')).toBe(true)
+    expect(bars[26]!.ending).toBe('1,3')
+    expect(bars[27]!.ending).toBe('2')
     expect(document.alternatives).toHaveLength(2)
+    expect(document.alternatives![1]!.passes).toEqual([3])
     expect(bars[24]!.events.find(event=>event.kind==='tuplet')!.pitches).toEqual(['7','5','5'])
-    expect(bars[33]!.events.find(event=>event.kind==='tuplet')!.pitches).toEqual(['7','5','5'])
     expect(m3nToMei(loveLikeTide).diagnostics.filter(item=>item.severity==='error')).toEqual([])
   })
 
@@ -205,11 +209,14 @@ describe('bundled score corpus', () => {
         if(event.dynamic)dynamic=event.dynamic
         return {pitches:pitches.get(event)?.map(pitch=>pitch.replace(/:n$/,':')),beats:event.beats,tie:event.tie,postfixes:event.postfixes,dynamic,kind:event.kind}
       }))
-      expect(playback).toEqual(reference.playback)
-      expect(playback).toHaveLength(772)
-      expect(playback.reduce((sum,event)=>sum+event.beats,0)).toBe(260)
+      // User removed the 3.5-beat introduction and final half-beat rest,
+      // and explicitly unified dynamics; every remaining musical event stays intact.
+      const withoutDynamics = <T extends {dynamic: string}>({dynamic: _dynamic, ...event}: T) => event
+      expect(playback.map(withoutDynamics)).toEqual(reference.playback!.slice(4,-1).map(withoutDynamics))
+      expect(playback).toHaveLength(767)
+      expect(playback.reduce((sum,event)=>sum+event.beats,0)).toBe(256)
       expect(document).toMatchObject({tempo:120,hasExplicitTempo:true})
-      expect(document.alternatives).toHaveLength(4)
+      expect(document.alternatives).toHaveLength(1)
     } else {
       expect(bars.map(bar=>({key:bar.events[0]!.key,notes:bar.events.map(event=>`${event.pitches.join('+')||'0'}:${event.beats}${event.tie?'~':''}`).join(' ')})))
         .toEqual(reference.bars)

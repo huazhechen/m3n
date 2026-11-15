@@ -216,7 +216,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             }
             // A section heading followed by {br} stays above its first music
             // as a native local attachment, including page breaks and lyrics.
-            if (event.sectionLabel && event.sectionLabelBreakAfter) annotations[2]!.push(`@text(${quote(event.sectionLabel)},size=14px,weight=700,frame=true,above=${first},local=true)`)
+            if (event.sectionLabel && event.sectionLabelBreakAfter) annotations[2]!.push(`@text(${quote(event.sectionLabel)},size=14px,weight=700,frame=true,above=${first},local=true,linestart=true)`)
             const head = continuations.get(event)
             const tieStart = head ? endpointLabels.get(head)!.tieStart : event.tieFromTupletIndex === undefined ? first : children[event.tieFromTupletIndex]!
             // Legato ends on the last pitched glyph, even when its source

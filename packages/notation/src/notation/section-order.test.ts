@@ -117,3 +117,26 @@ it('rejects a house whose repeat starts in another named section', () => {
  const result=analyzeM3N('{2/4}{order=A,B}\n===A\nN: ||: 1 2 |\n===B\n---V1\nN: 3 4 :||\n---V2\nN: 5 6 |||')
  expect(result.diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER',message:expect.stringContaining('同一乐段')}))
 })
+
+it('selects trailing houses by section visit without replaying the common melody locally', () => {
+ const result=analyzeM3N('{2/4}{order=A,B,A,A}\n===A\nN: 1 2 |\nL: 甲乙\n---V1,V3\nN: 3 4 ||\nL: 丙丁\n---V2\nN: 5 6 ||\nL: 戊己\n===B\nN: 7 1e |||')
+ expect(result.diagnostics).toEqual([])
+ expect(result.score.parts.get('score')!.melody.filter(m=>m.events.length).map(m=>m.orderPasses)).toEqual([[1,2,3],[1,3],[2],[1]])
+ expect([...result.conversion.mei.matchAll(/<note[^>]*pname="([^"]+)"/g)].map(m=>m[1])).toEqual(['c','d','e','f','b','c','c','d','g','a','c','d','e','f'])
+})
+
+it.each([
+ ['---V1', '---V2', '缺漏'],
+ ['---V1,V2', '---V2,V3', '重叠'],
+ ['---V1,V3,V4', '---V2', '超出'],
+])('rejects invalid visit-ending coverage %s / %s', (first, second, message) => {
+ const result=analyzeM3N(`{2/4}{order=A,A,A}\n===A\nN: 1 2 |\n${first}\nN: 3 4 ||\n${second}\nN: 5 6 |||`)
+ expect(result.diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER',message:expect.stringContaining(message)}))
+})
+
+it('checks the pickup against every selected house and rejects an incomplete interior house bar', () => {
+ const valid='{2/4}{order=A,A}\n===A\nN: 1 | 2 3 |\n---V1\nN: 4 ||\n---V2\nN: 5 |||'
+ expect(analyzeM3N(valid).diagnostics).toEqual([])
+ expect(analyzeM3N(valid.replace('N: 5 |||','N: (5) |||')).diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER'}))
+ expect(analyzeM3N(valid.replace('N: 4 ||','N: (4) | 5 ||')).diagnostics).toContainEqual(expect.objectContaining({code:'M3N_METER_INCOMPLETE_MIDDLE'}))
+})

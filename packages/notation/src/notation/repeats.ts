@@ -53,6 +53,29 @@ export function playbackMeasureIndexes(measures: readonly PlaybackMeasure[]): nu
   return planPlayback(nodes).sequence.flatMap(id => groups[Number(id)]!)
 }
 
+/** Without local repeat bars, houses select the numbered visit in order. */
+export function hasVisitEndings(measures: readonly PlaybackMeasure[]) {
+  return measures.some(measure => measure.ending)
+    && !measures.some(measure => measure.left === 'rptstart' || measure.right === 'rptend')
+}
+
+export function sectionVisitMeasureIndexes(measures: readonly PlaybackMeasure[], visit: number) {
+  return hasVisitEndings(measures)
+    ? measures.flatMap((measure, index) => !measure.ending || parsePassRange(measure.ending).has(visit) ? [index] : [])
+    : playbackMeasureIndexes(measures)
+}
+
+/** Resolve the itinerary once, preserving original indexes for all consumers. */
+export function orderedMeasureIndexes<T extends PlaybackMeasure & { sectionName?: string }>(measures: readonly T[], order: readonly string[]) {
+  const visits = new Map<string, number>()
+  return order.flatMap(name => {
+    const visit = (visits.get(name) ?? 0) + 1
+    visits.set(name, visit)
+    const entries = measures.map((measure, index) => ({ measure, index })).filter(item => item.measure.sectionName === name)
+    return sectionVisitMeasureIndexes(entries.map(item => item.measure), visit).map(index => entries[index]!.index)
+  })
+}
+
 /** Returns the playback passes in which each written measure occurs. */
 export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: readonly T[]) {
   if(measures.some(measure=>measure.orderPasses))return new Map<T,Set<number>>(measures.map(measure=>[measure,new Set(measure.orderPasses ?? [1])]))

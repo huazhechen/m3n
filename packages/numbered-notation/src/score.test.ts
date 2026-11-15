@@ -648,6 +648,7 @@ describe('jpFun numbered notation adapter', () => {
     const heading = result.layout.attachments.find(item => item.sourceSpan && result.maskedSource.slice(item.sourceSpan.start,item.sourceSpan.end).startsWith('@text("训练"'))!
     const instruction = result.layout.attachments.find(item => item.sourceSpan && result.maskedSource.slice(item.sourceSpan.start,item.sourceSpan.end).includes('说明'))!
     expect(heading.box.y + heading.box.h).toBeLessThan(instruction.box.y)
+    expect(heading.box.x).toBeCloseTo(32)
     const {root} = render(document, {width,paged:true})
     const label = [...root.querySelectorAll('text')].find(text => text.textContent === '训练')!
     expect(label.getAttribute('data-m3n-id')).toBe('m3n-e-1')
@@ -1323,4 +1324,14 @@ it('adds extra space at named boundaries while ordinary phrase breaks retain the
   return notes[2]!.box.y-notes[0]!.box.y
  }
  expect(distance(named)-distance(named.replace('@br(gap=12)','@br()'))).toBeCloseTo(12,4)
+})
+
+it.each([320,800])('prints ordered houses once without duplicating their shared lyric labels at %s', width => {
+  const source='{2/4}{order=A,B,A,A}\n===A\nN: 1 2 |\nL: 甲乙\n---V1\nN: 3 4 ||\nL: 丙丁\n---V2,V3\nN: 5 6 ||\nL: 戊己\n===B\nN: 7 1e |||'
+  const {root,score}=render(source,{width})
+  expect(score.diagnostics).toEqual([])
+  expect(root.querySelectorAll('g.note')).toHaveLength(8)
+  expect(root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')).toHaveLength(0)
+  expect(root.body.textContent).toContain('2.3.') // The house bracket retains the visit labels.
+  expect([...root.querySelectorAll('text[data-m3n-role="lyric"]')].map(node=>node.textContent).join('')).toBe('甲乙丙丁戊己')
 })
