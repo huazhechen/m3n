@@ -38,6 +38,21 @@ export function parsePassRange(value: string) {
   return passes
 }
 
+/** Expand local repeats and multi-measure alternate endings within one section. */
+export function playbackMeasureIndexes(measures: readonly PlaybackMeasure[]): number[] {
+  const groups: number[][] = [], nodes: PlaybackNode[] = []
+  for (let index = 0; index < measures.length;) {
+    const first = measures[index]!, group = [index++]
+    if (first.ending) while (measures[index]?.ending === first.ending) group.push(index++)
+    const last = measures[group.at(-1)!]!
+    nodes.push({ id: String(groups.length), kind: first.ending ? 'ending' : 'section', n: first.ending,
+      repeatStart: first.left === 'rptstart', repeatCount: last.repeatCount ?? (last.right === 'rptend' ? 2 : undefined),
+      navigation: group.flatMap(index => navigationOf(measures[index]!)) })
+    groups.push(group)
+  }
+  return planPlayback(nodes).sequence.flatMap(id => groups[Number(id)]!)
+}
+
 /** Returns the playback passes in which each written measure occurs. */
 export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: readonly T[]) {
   if(measures.some(measure=>measure.orderPasses))return new Map<T,Set<number>>(measures.map(measure=>[measure,new Set(measure.orderPasses ?? [1])]))

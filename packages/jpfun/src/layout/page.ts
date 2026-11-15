@@ -87,6 +87,7 @@ export function paginateLayoutLines(
     page: PageConfig,
     pageBreaks: readonly (boolean | undefined)[] = [],
     justifyPages = true,
+    extraGaps: readonly number[] = [],
 ): { pages: DocumentLayoutPage[]; lineTops: number[] } {
     const availableHeight = page.height - page.marginTop - page.marginBottom;
     const pages: DocumentLayoutPage[] = [];
@@ -101,12 +102,13 @@ export function paginateLayoutLines(
     const closePage = (end: number, justify: boolean) => {
         const count = end - start;
         const remaining = justify
-            ? Math.max(0, availableHeight - contentHeight - page.lineGap * (count - 1))
+            ? Math.max(0, availableHeight - contentHeight - page.lineGap * (count - 1) - extraGaps.slice(start + 1, end).reduce((sum, gap) => sum + gap, 0))
             : 0;
         const gap = page.lineGap + remaining / count;
         let lineTop = pageTop + page.marginTop;
 
         for (let i = start; i < end; i++) {
+            if (i > start) lineTop += extraGaps[i] ?? 0;
             lineTops[i] = lineTop;
             lineTop += heights[i] + (i + 1 < end ? gap : 0);
         }
@@ -138,10 +140,10 @@ export function paginateLayoutLines(
         }
 
         // 强制边界与自然溢出统一封页；无限页高不分配余白
-        if (i > start && (pageBreaks[i] !== undefined || Number.isFinite(page.height) && used + page.lineGap + height > availableHeight + 1e-6)) {
+        if (i > start && (pageBreaks[i] !== undefined || Number.isFinite(page.height) && used + page.lineGap + (extraGaps[i] ?? 0) + height > availableHeight + 1e-6)) {
             closePage(i, justifyPages && Number.isFinite(page.height) && (pageBreaks[i] ?? true));
         }
-        used += (i > start ? page.lineGap : 0) + height;
+        used += (i > start ? page.lineGap + (extraGaps[i] ?? 0) : 0) + height;
         contentHeight += height;
     }
 

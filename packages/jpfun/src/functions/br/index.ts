@@ -20,6 +20,8 @@ class BrFunction extends ASTFunctionNode {
 
 \`@br(soft=true)\` 为自动分行提供优先边界；空间充足时可与前面的内容同行。
 
+\`@br(gap=12)\` 在新谱行前额外留白12px，页首不增加留白。
+
 **简写**：仅在顶层，连续至少两个换行表示换行`,
         allowExtraArgs: false,
         args: [
@@ -35,6 +37,7 @@ class BrFunction extends ASTFunctionNode {
                 type: "boolean" as const,
                 default: false,
             },
+            { name: "gap", description: "换行前额外留白（px）", type: "number" as const, default: 0 },
         ],
     };
 
@@ -57,12 +60,13 @@ class BrFunction extends ASTFunctionNode {
 
     readonly offset: number;
     readonly soft: boolean;
+    readonly gap: number;
 
     override loweringEnter() {
         const br = new TemporalNodeBase();
         br.ast = this;
         br.mergeKey = -1;
-        br.addon = this.soft ? { preferredBreakBefore: true } : { breakBefore: this.offset };
+        br.addon = this.soft ? { preferredBreakBefore: true } : { breakBefore: this.offset, ...(this.gap ? { systemGapBefore: this.gap } : {}) };
         return [br];
     }
 
@@ -92,7 +96,8 @@ class BrFunction extends ASTFunctionNode {
 
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
-        const [offset, soft] = this.getArgValue(args, ctx) as [number, boolean];
+        const [offset, soft, gap] = this.getArgValue(args, ctx) as [number, boolean, number];
+        this.gap = Number.isFinite(gap) ? Math.max(0, gap) : 0;
         this.soft = soft;
         this.offset = Number.isFinite(offset) ? Math.max(1, Math.floor(offset)) : 1;
         if (this.offset !== offset) {
@@ -104,7 +109,7 @@ class BrFunction extends ASTFunctionNode {
         }
     }
 
-    override toString() { return `@br(${this.offset}${this.soft ? ',soft=true' : ''})`; }
+    override toString() { return `@br(${this.offset}${this.soft ? ',soft=true' : ''}${this.gap ? `,gap=${this.gap}` : ''})`; }
 }
 
 export const BrNode: ASTFunctionClass = BrFunction;

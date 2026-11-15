@@ -1,18 +1,18 @@
 {
-  "edition": "第四十六版",
+  "edition": "第四十七版",
   "sourcePdf": null,
-  "compactPdf": "循序渐进乐谱集-简谱-v46.pdf",
-  "pageCount": 81,
+  "compactPdf": "循序渐进乐谱集-简谱-v47.pdf",
+  "pageCount": 82,
   "originalBytes": null,
-  "compactBytes": 6083122,
+  "compactBytes": 6077303,
   "reductionPercent": null,
-  "embeddedFontSubsets": 359,
+  "embeddedFontSubsets": 356,
   "images": 0,
-  "positionedGlyphs": 28298,
+  "positionedGlyphs": 28312,
   "glyphsPerPage": [
     129,
     431,
-    464,
+    467,
     528,
     707,
     279,
@@ -71,7 +71,8 @@
     340,
     205,
     338,
-    359,
+    213,
+    157,
     268,
     187,
     173,
@@ -94,5 +95,5 @@
   ],
   "outsidePages": 0,
   "sourceSha256": null,
-  "compactSha256": "33d2a97b02e0c805407664dec11314c739d6ab3f1ba6eff4abc1aadd389602a7"
+  "compactSha256": "531fdc53fd1f242cc008f0d77bba718b6f4a656de74fbc8ccbb94121a889049e"
 }

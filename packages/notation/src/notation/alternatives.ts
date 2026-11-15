@@ -1,5 +1,5 @@
 import type { ScoreDocument, ScoreLyricBlock, ScoreMeasure, ScoreEvent } from './score-document.js'
-import { measurePlaybackPasses, planPlayback, parsePassRange, type PlaybackNode } from './repeats.js'
+import { measurePlaybackPasses, playbackMeasureIndexes, parsePassRange } from './repeats.js'
 import { scoreEventIds } from '../score-event-ids.js'
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
 import type { M3NDocumentProjection } from './m3n-document.js'
@@ -65,20 +65,9 @@ export function validateAlternatives(document: ScoreDocument, projection: M3NDoc
   return diagnostics
 }
 
-/** Unfold only documents with alternatives; existing repeat/MIDI encoding stays unchanged. */
+/** Unfold alternatives or section-local houses for playback; the printed document stays compact. */
 export function alternativePerformance(document: ScoreDocument): ScoreDocument {
   const ids = scoreEventIds(document)
-  const sequence = (measures: ScoreMeasure[]) => {
-    const groups:number[][]=[], nodes:PlaybackNode[]=[]
-    for(let index=0;index<measures.length;) {
-      const first=measures[index]!, group=[index++]
-      if(first.ending)while(measures[index]?.ending===first.ending)group.push(index++)
-      const last=measures[group.at(-1)!]!
-      nodes.push({id:String(groups.length),kind:first.ending?'ending':'section',n:first.ending,repeatStart:first.left==='rptstart',repeatCount:last.repeatCount ?? (last.right==='rptend'?2:undefined),navigation:group.flatMap(index=>measures[index]!.navigation ?? measures[index]!.events.flatMap(event=>event.navigation))})
-      groups.push(group)
-    }
-    return planPlayback(nodes).sequence.flatMap(id=>groups[Number(id)]!)
-  }
 
   const intervals: ScoreDocument['intervals'] = []
   const copies: Array<{source:ScoreEvent;event:ScoreEvent;staff:'melody'|'bass'}> = []
@@ -88,8 +77,8 @@ export function alternativePerformance(document: ScoreDocument): ScoreDocument {
   for (const [name,part] of document.parts) {
     const indexes = document.order ? document.order.flatMap(section => {
       const entries = part.melody.map((measure,index)=>({measure,index})).filter(({measure})=>measure.sectionName===section)
-      return sequence(entries.map(item=>item.measure)).map(index=>entries[index]!.index)
-    }) : sequence(part.melody)
+      return playbackMeasureIndexes(entries.map(item=>item.measure)).map(index=>entries[index]!.index)
+    }) : playbackMeasureIndexes(part.melody)
     const visits = new Map<ScoreMeasure,number>()
     const output = {melody:[] as ScoreMeasure[],bass:[] as ScoreMeasure[]}
     for (const index of indexes) {

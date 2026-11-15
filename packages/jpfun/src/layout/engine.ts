@@ -256,7 +256,7 @@ export function layoutDocument(
     };
 
     // 1. 按 layoutLine 切行，并生成固有尺寸与装饰尺寸
-    const { lines, pageBreaks } = splitLayoutLines(result);
+    const { lines, pageBreaks, extraGaps } = splitLayoutLines(result);
     const objects: VisualTemporalNode[] = [];
     for (const line of lines) {
         for (const column of line.columns) {
@@ -335,7 +335,7 @@ export function layoutDocument(
         let pages: DocumentLayoutPage[];
         let lineTops: number[];
         try {
-            ({ pages, lineTops } = paginateLayoutLines(heights, page, pageBreaks, !options.uniformSystemHeight));
+            ({ pages, lineTops } = paginateLayoutLines(heights, page, pageBreaks, !options.uniformSystemHeight, extraGaps));
         } catch (error) {
             if (!(error instanceof PageLayoutError)) throw error;
             // 用溢出的元素的 span 构成 Error
@@ -484,6 +484,7 @@ function splitLayoutLines(result: LoweringResult) {
 
     const lines: LayoutLine[] = [];
     const pageBreaks: (boolean | undefined)[] = [];
+    const extraGaps: number[] = [];
     let currentLine = createLine();
 
     for (const column of result.columns) {
@@ -496,6 +497,7 @@ function splitLayoutLines(result: LoweringResult) {
         }
 
         for (const node of column) {
+            extraGaps[lines.length] = Math.max(extraGaps[lines.length] ?? 0, node.addon?.systemGapBefore ?? 0);
             const pageBreak = node.addon?.pageBreakBefore;
             if (pageBreak !== undefined) {
                 pageBreaks[lines.length] = (pageBreaks[lines.length] ?? true) && pageBreak;
@@ -506,7 +508,7 @@ function splitLayoutLines(result: LoweringResult) {
     }
     // 至少保留一行；强制换页新开的尾页也不能因没有可见内容而丢弃
     if (currentLine.columns.length > 0 || pageBreaks[lines.length] !== undefined || lines.length === 0) lines.push(currentLine);
-    return { lines, pageBreaks };
+    return { lines, pageBreaks, extraGaps };
 }
 
 /** 把新的上下界原地并入已有纵向占用范围 */

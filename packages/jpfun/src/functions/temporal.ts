@@ -48,6 +48,8 @@ export interface TemporalAddon {
     systemHeightGroup?: string;
     /** 请求在当前时间列之前换几行，缺省为 0 */
     breakBefore?: number;
+    /** Extra space before this system; omitted at a page start. */
+    systemGapBefore?: number;
     /** M3N: automatic wrapping may prefer this boundary without forcing a line. */
     preferredBreakBefore?: boolean;
     /** 在所属行之前强制换页；配合 breakBefore 使用，布尔值控制上一页的余白分配 */

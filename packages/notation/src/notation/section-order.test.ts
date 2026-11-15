@@ -45,7 +45,7 @@ describe('explicit section order',()=>{
   ['{2/4}{order=A}{order=A}\n===A\nN: 1 2 |||','重复声明'],
   ['{2/4}{order=A}\nN: 1 2 |||','必须有名称'],
   ['{2/4}\n===A\nN: {order=A}1 2 |||','文档首部'],
-  ['{2/4}{order=A}\n===A\nN: 1 2 {dc} |||','不与跳房子'],
+  ['{2/4}{order=A}\n===A\nN: 1 2 {dc} |||','不与 D.S.'],
   ['{2/4}{order=A,B}\n===A\nN: 1 |\n===B\nN: (2) |||','完整小节'],
   ['{2/4}{order=A,B}\n===A\nN: 1 2~ ||\n===B\nN: 2 1 |||','末尾不能延音'],
   ['{2/4}{order=A,B}\n===A\nN: {lg}1 2 ||\n===B\nN: 3 4{/} |||','不能跨越'],
@@ -101,4 +101,19 @@ it('requires pickups to belong to a named section', () => {
 it('validates pickup complements against itinerary endpoints rather than printed endpoints', () => {
  const result=analyzeM3N('{3/8}{order=A,B,C,B}\n===A\nN: ((1 2)) | 3 (4) ||\n===B\nN: 5 ||\n===C\nN: (6) | 7 (1e) ||')
  expect(result.diagnostics).toEqual([])
+})
+
+it('resets local houses on every outer visit and preserves complementary pickups', () => {
+ const result=analyzeM3N('{2/4}{order=A,B,A}\n===A\nN: ||: 1 | 2 3 |\n---V1\nN: 4 :||\n---V2\nN: 5 ||\n===B\nN: 6 7 |||')
+ expect(result.diagnostics).toEqual([])
+ expect(result.score.parts.get('score')!.melody.filter(m=>m.events.length).map(m=>m.orderPasses))
+  .toEqual([[1,2,3,4],[1,2,3,4],[1,2],[1,2],[1]])
+ // Playback is unfolded per named visit, with each house selected locally.
+ expect([...result.conversion.mei.matchAll(/<note[^>]*pname="([^"]+)"/g)].map(m=>m[1]))
+  .toEqual(['c','d','e','f','c','d','e','g','a','b','c','d','e','f','c','d','e','g'])
+})
+
+it('rejects a house whose repeat starts in another named section', () => {
+ const result=analyzeM3N('{2/4}{order=A,B}\n===A\nN: ||: 1 2 |\n===B\n---V1\nN: 3 4 :||\n---V2\nN: 5 6 |||')
+ expect(result.diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER',message:expect.stringContaining('同一乐段')}))
 })

@@ -46,7 +46,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const projection = context.projection ?? projectM3NDocument(source, syntaxTree)
   const document = suppliedDocument ?? parseM3NDocument(source, projection)
   const { sourceMap, hasBassStaff, headerMetadata, lyricsByEvent, visibleVerseIndexes } = context.interaction ?? deriveScoreInteraction(document)
-  if (document.alternatives?.length) {
+  if (document.alternatives?.length || document.order && [...document.parts.values()].some(part => part.melody.some(measure => measure.ending))) {
     const result = m3nToMei(source, alternativePerformance(document), {...context, diagnostics: context.diagnostics ?? validateM3NDiagnostics(source,{},document,{syntaxTree,projection}), interaction:undefined})
     return {...result,sourceMap,headerMetadata}
   }

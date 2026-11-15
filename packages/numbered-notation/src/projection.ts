@@ -125,7 +125,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         // Parallel voices must share every bar anchor, including the opening repeat.
         // B: bars are alignment syntax; structural repetition belongs to N:.
         const structure = staff === 'bass' ? melodyMeasure ?? measure : measure
-        if (breaksBefore(measureIndex)) pieces.push('@br()')
+        if (breaksBefore(measureIndex)) pieces.push(measure.events.some(event => event.sectionLabel) || melody[measureIndex]?.events.some(event => event.sectionLabel) ? '@br(gap=12)' : '@br()')
         const sectionLabel = measure.events.find(event => event.sectionLabel)?.sectionLabel
         if (sectionLabel && !measure.events.find(event => event.sectionLabel)?.sectionLabelBreakAfter) pieces.push(`@text(${quote(sectionLabel)},size=14px,weight=700,frame=true)`)
         if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) pieces.push('@bar(3)')
@@ -250,7 +250,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const replacements = document.alternatives?.filter(item=>item.host===measure) ?? []
           if (replacements.length) {
             let main = pieces.splice(measureStart).join(' ')
-            for (const replacement of [...replacements].reverse()) main = `@ossia({${main}},{@set(fontsize=18) ${renderVoice([replacement.measure],'melody',replacement,measureIndex)}},lane=${quote(replacement.passes.join(','))})`
+            for (const replacement of [...replacements].reverse()) main = `@ossia({${main}},{${renderVoice([replacement.measure],'melody',replacement,measureIndex)}},lane=${quote(replacement.passes.join(','))})`
             pieces.push(main)
           }
         }

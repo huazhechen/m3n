@@ -1301,3 +1301,26 @@ it.each([320,800].flatMap(width=>[false,true].map(paged=>({width,paged}))))('pla
  // between this bar's main lyrics and its alternative melody.
  expect(distance(source)).toBeCloseTo(distance(source.replace('L2: 戊己 |','L2: |')),4)
 })
+
+it('keeps alternative melody digits at the main melody font size', () => {
+ const {root,document}=render('{2/4}\nN: ||: 1 2 :||\nNs[2]: 1: 3 4 |')
+ const ids=scoreEventIds(document)
+ const alternative=document.alternatives![0]!
+ const size=(id:string)=>root.querySelector(`g.note[data-m3n-id="${id}"] text`)!.getAttribute('font-size')
+ expect(size(ids.get(alternative.measure.events[0]!)!)).toBe('22')
+ expect(size(ids.get(alternative.host.events[0]!)!)).toBe('22')
+})
+
+it('adds extra space at named boundaries while ordinary phrase breaks retain their spacing', () => {
+ const prefix='{2/4}\n===A\nN: 1 2 ||\n'
+ const named=projectNumberedScore(parseM3NDocument(prefix+'===B\nN: 3 4 |||'),options).source
+ const ordinary=projectNumberedScore(parseM3NDocument(prefix+'---\nN: 3 4 |||'),options).source
+ expect(named).toContain('@br(gap=12)')
+ expect(ordinary).not.toContain('gap=12')
+ const distance=(source:string)=>{
+  const result=compileScore(source,{autoWrap:true})
+  const notes=result.layout.objects.filter(node=>!node.T.isZero())
+  return notes[2]!.box.y-notes[0]!.box.y
+ }
+ expect(distance(named)-distance(named.replace('@br(gap=12)','@br()'))).toBeCloseTo(12,4)
+})

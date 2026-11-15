@@ -17,7 +17,7 @@ describe('bundled score corpus', () => {
     ['yan_hua_yi_leng', '烟花易冷', smoke, 51, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 78, 2],
     ['ai_de_li_zan', '爱的礼赞', salut, 100, 2],
-    ['zhi_ai_li_si', '致爱丽丝', elise, 85, 1.5],
+    ['zhi_ai_li_si', '致爱丽丝', elise, 87, 1.5],
   ] as const)('loads the complete PDF melody %s with its original bar durations', async (id, title, source, count, beats) => {
     const entry = presetScores.find(score => score.sourcePath === `${id}_01.m3n`)
     expect(entry?.title).toBe(title)
@@ -29,8 +29,8 @@ describe('bundled score corpus', () => {
     const expected = Array<number>(count).fill(beats)
     if (id === 'feng') expected[4] = 2
     if (id === 'zhi_ai_li_si') {
-      for (const index of [0, 9, 24, 62]) expected[index] = 0.5
-      for (const index of [8, 23, 61]) expected[index] = 1
+      for (const index of [0, 10, 26, 64]) expected[index] = 0.5
+      for (const index of [8, 9, 24, 25, 63]) expected[index] = 1
     }
     expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
       .toEqual(expected)
@@ -64,13 +64,13 @@ describe('bundled score corpus', () => {
     expect(salutBars[32]!.events[0]!.tie).toBe(true)
     expect([34, 48].map(index => salutBars[index]!.events[0]!.key)).toEqual(['G', 'E'])
     const eliseBars = bars(elise)
-    expect(parseM3NDocument(elise).order).toEqual(['A', 'A', 'B', 'B', 'C', 'D', 'E', 'F', 'D'])
+    expect(parseM3NDocument(elise).order).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'D'])
     const elisePasses = measurePlaybackPasses(eliseBars)
     expect([...elisePasses.get(eliseBars[0]!)!]).toEqual([1, 2])
     expect([...elisePasses.get(eliseBars[10]!)!]).toEqual([1, 2])
-    expect([...elisePasses.get(eliseBars[41]!)!]).toEqual([1, 2])
-    expect(eliseBars[80]!.events.map(event => event.beats)).toEqual([0.5, 0.5, 0.5])
-    expect(eliseBars[82]!.events[1]!.pitches).toEqual(['6ee', '1eee', '3eee'])
+    expect([...elisePasses.get(eliseBars[43]!)!]).toEqual([1, 2])
+    expect(eliseBars[82]!.events.map(event => event.beats)).toEqual([0.5, 0.5, 0.5])
+    expect(eliseBars[84]!.events[1]!.pitches).toEqual(['6ee', '1eee', '3eee'])
   })
 
   it('includes Love Like Tide with an instrumental intro, unfolded verses and upper mordents', async () => {

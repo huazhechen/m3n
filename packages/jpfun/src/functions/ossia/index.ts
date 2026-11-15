@@ -12,12 +12,12 @@ const measure: MeasureFn = (members, gap) => {
         return { offset, extent };
     });
 };
-const place: PlaceFn = (host, group, gap) => host.bottom + gap * 0.15 - group.top;
+const place: PlaceFn = (host, group, gap) => host.bottom + gap * 0.25 - group.top;
 const arrangement = { laneKey: 'ossia', measure, place, localHost: true };
 
 class OssiaFunction extends ASTFunctionNode {
     static override def = {
-        name: ['ossia'], description: '主旋律下方的局部替代旋律', details: '@ossia({1 2}, {@set(fontsize=16) 3 4})',
+        name: ['ossia'], description: '主旋律下方的局部替代旋律', details: '@ossia({1 2}, {3 4})',
         allowExtraArgs: false,
         args: [
             { name: 'host', type: 'content' as const, default: null, description: '主旋律' },

@@ -1,3 +1,4 @@
+import { playbackMeasureIndexes } from './repeats.js'
 import type { ScoreDocument } from './score-document.js'
 import type { M3NDocumentProjection } from './m3n-document.js'
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
@@ -29,9 +30,8 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
   for (const name of document.order ?? []) if (!names.has(name)) report(`order 引用了未定义的乐段：${name}`)
   for (const part of document.parts.values()) for (const measures of [part.melody, part.bass]) {
     for (const measure of measures) {
-      if (measure.ending
-        || measure.navigation?.length || measure.events.some(event => event.navigation.length)) {
-        report('order 模式不与跳房子或 D.S./D.C./Fine 混用；段内可使用成对反复线')
+      if (measure.navigation?.length || measure.events.some(event => event.navigation.length)) {
+        report('order 模式不与 D.S./D.C./Fine 混用；段内可使用成对反复线和跳房子')
         return diagnostics
       }
       const section = document.sections?.find(section => section.name === measure.sectionName)
@@ -39,7 +39,10 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
         report('order 的乐段边界必须位于完整小节之间')
       }
     }
-    const ordered = (document.order ?? []).flatMap(name => measures.filter(measure => measure.sectionName === name && (measure.events.length || measure.multiRest)))
+    const ordered = (document.order ?? []).flatMap(name => {
+      const local = measures.filter(measure => measure.sectionName === name && (measure.events.length || measure.multiRest))
+      return playbackMeasureIndexes(local).map(index => local[index]!)
+    })
     const duration = (measure: typeof measures[number] | undefined) => measure?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
     const expected = (measure: typeof measures[number] | undefined) => {
       const first = measure?.events[0]
@@ -66,11 +69,14 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
         && Math.abs(duration(boundary[0]) + duration(boundary[1]) - expected(boundary[0])) < 1e-9
       if (partial.length && !complementaryPickup && !partial.every(measure => measure && validBoundary(measure))) report('order 的乐段边界必须位于完整小节之间，弱起须在每次访问中与相邻小节或全曲首尾互补')
       let repeatOpen = false
+      let hasLocalRepeat = false
       for (const measure of segment) {
         if (measure.left === 'rptstart') {
           if (repeatOpen) report('order 段内不支持嵌套反复线')
           repeatOpen = true
+          hasLocalRepeat = true
         }
+        if (measure.ending && !hasLocalRepeat) report('order 段内跳房子须属于同一乐段的反复线')
         if (measure.right === 'rptend') {
           if (!repeatOpen) report('order 段内反复线须在同一乐段内成对出现')
           repeatOpen = false

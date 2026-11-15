@@ -577,3 +577,12 @@ test("pb 沿用跨持续事件、刚性复合体和单行溢出的校验", () =>
     const extra = compileScore("1 @pb(true, false) 2");
     assert(extra.diagnostics.some(item => item.code === "W_TOO_MANY_POS_ARGS"), "extra arguments must be diagnosed");
 });
+
+test('extra system gaps affect page capacity but disappear at page starts', () => {
+    const page = normalizePageConfig({ height: 100, marginTop: 10, marginBottom: 10, lineGap: 10 });
+    const natural = paginateLayoutLines([20, 20, 20], page, [], false);
+    deepStrictEqual(natural.lineTops, [10, 40, 70]);
+    const spaced = paginateLayoutLines([20, 20, 20], page, [], false, [12, 12, 12]);
+    deepStrictEqual(spaced.lineTops, [10, 52, 110]);
+    deepStrictEqual(spaced.pages.map(page => [page.lineStart, page.lineEnd]), [[0, 2], [2, 3]]);
+});

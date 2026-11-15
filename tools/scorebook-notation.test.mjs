@@ -29,7 +29,7 @@ test('numbered export preserves alternative notes, lyrics and outlines at narrow
         const layout=await window.scorebook.measure('{title=替代旋律}{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 甲乙 | 丙丁\nL2: 戊己 | 庚辛壬\nNs[2]: 2: (5 6) 7 |',width,{showCredits:false})
         document.querySelector('#print-page').innerHTML=layout.markup
         const svg=document.querySelector('#print-page svg')
-        const rects=[...svg.querySelectorAll('g.note text')].map(node=>{const b=node.getBoundingClientRect();return {text:node.textContent,y:b.y,bottom:b.bottom,size:node.getAttribute('font-size')}})
+        const rects=[...svg.querySelectorAll('g.note text')].map(node=>{const b=node.getBoundingClientRect();return {text:node.textContent,y:b.y,bottom:b.bottom,size:node.getAttribute('font-size'),alternative:node.closest('g.note').getAttribute('data-m3n-id')?.startsWith('m3n-e-a')}})
         await window.scorebook.outlinePage()
         return {outside:layout.outside,clipped:layout.clipped,overlaps:layout.overlaps,rects,alternatives:svg.querySelectorAll('[data-m3n-id^="m3n-e-a"]').length,text:svg.querySelectorAll('text').length,paths:svg.querySelectorAll('path[d]').length,outlined:svg.querySelectorAll('[data-outlined-text]').length}
       },width)
@@ -39,7 +39,8 @@ test('numbered export preserves alternative notes, lyrics and outlines at narrow
       assert(result.alternatives>=3)
       assert.equal(result.text,0)
       assert(result.paths>0 && result.outlined>0)
-      assert(result.rects.some(note=>note.size==='18'))
+      assert(result.rects.filter(note=>note.alternative).length>=3)
+      assert(result.rects.filter(note=>note.alternative).every(note=>note.size==='22'))
     }
   } finally { await browser?.close(); rmSync(temp,{recursive:true,force:true}) }
 })
