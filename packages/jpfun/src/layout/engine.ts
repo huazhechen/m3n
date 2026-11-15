@@ -64,7 +64,15 @@ export interface DocumentLayoutResult {
 }
 
 /** 一行的纵向占用；正文每行一份，子域只有自己所在的一行 */
+interface TrackExtentRange extends Extent {
+    track: Track;
+    left: number;
+    right: number;
+}
+
 interface LineExtents {
+    hostRanges?: TrackExtentRange[];
+    attachmentRanges?: Map<LayoutAttachment, TrackExtentRange[]>;
     /** 只包含可见主体的轴局部占用，整个纵向布局中不变 */
     hostExtents: Map<Track, Extent>;
     /**
@@ -281,7 +289,7 @@ export function layoutDocument(
     // 主体占用只依赖固有尺寸，整个纵向布局中保持不变
     for (const node of objects) {
         const line = lines[node.layoutLine];
-        includeHostExtent(line.hostExtents, node);
+        includeHostExtent(line.hostExtents, node, line.hostRanges ??= []);
     }
     // 根据配置得到行距
     const rowGaps = measureRowGaps(lines.length, objects, options.rowGap);
@@ -633,7 +641,7 @@ function layoutSubdomainBlock(
     const extents: LineExtents = { hostExtents: new Map(), attachmentExtents: new Map() };
     let gap = 0;
     for (const member of members) {
-        includeHostExtent(extents.hostExtents, member);
+        includeHostExtent(extents.hostExtents, member, extents.hostRanges ??= []);
         gap = Math.max(gap, member.ast.size * ROW_GAP_RATIO);
     }
     const positions = members.map(member => ({ x: member.box.x, y: 0 }));
@@ -933,6 +941,10 @@ function measureAttachmentPass(
         unionLayoutBoxes(box, geometry.regions);
         const item = { geometry, box };
         measured.set(attachment, item);
+        // Keep the latest horizontal occupancy for locally attached branches.
+        // Unlike the conservative global envelope, old iterations must not
+        // leave invisible lyric slots beneath an alternative melody.
+        if (reserve) for (const line of lines) line?.attachmentRanges?.delete(attachment);
         // 当前项立即登记，保证后注册的 attachment 能看到并避让它
         for (const region of geometry.occupancy ?? geometry.regions) {
             if (region.line === void 0) continue;
@@ -946,7 +958,12 @@ function measureAttachmentPass(
                 || bottom > Math.max(hostExtent?.bottom ?? -Infinity, attachmentExtent?.bottom ?? -Infinity))) {
                 needsRelayout = true;
             }
-            if (reserve) includeTrackExtent(line.attachmentExtents, track, top, bottom);
+            if (reserve) {
+                includeTrackExtent(line.attachmentExtents, track, top, bottom);
+                const ranges = (line.attachmentRanges ??= new Map()).get(attachment) ?? [];
+                ranges.push({ track, left: region.x, right: region.x + region.w, top, bottom });
+                line.attachmentRanges.set(attachment, ranges);
+            }
             if (reserve && baseContext.uniformSystemHeight && attachment.spacingRole !== 'lyrics' && attachment.spacingRole !== 'local') {
                 includeTrackExtent(line.musicAttachmentExtents ??= new Map(), track, top, bottom);
                 if (attachment.spacingRole === 'volta' && !line.hasVolta) {
@@ -970,12 +987,13 @@ function measureAttachmentPass(
 }
 
 /** 固有占用只需轴局部边界，不必创建全局矩形 */
-function includeHostExtent(extents: Map<Track, Extent>, host: LayoutHost) {
+function includeHostExtent(extents: Map<Track, Extent>, host: LayoutHost, ranges?: TrackExtentRange[]) {
     const decoration = decorationExtents.get(host);
     const top = decoration?.top ?? 0;
     const height = host.box.h - top + (decoration?.bottom ?? 0);
     const axisTop = top - host.box.visualAxis;
     includeTrackExtent(extents, host.track, axisTop, axisTop + height);
+    ranges?.push({ track: host.track, left: host.box.x, right: host.box.x + host.box.w, top: axisTop, bottom: axisTop + height });
 }
 
 /** 一条谱面行的纵向解 */
@@ -999,11 +1017,14 @@ function solveVerticalAxes(
 ): VerticalSolution {
     // 成员基线相对宿主基线的偏移；只属于当前这一行
     const offsets = new Map<Track, number>();
+    const resolvedRanges = new Map<Track, TrackExtentRange[]>();
+    const ranges = [...(line.hostRanges ?? []), ...[...(line.attachmentRanges?.values() ?? [])].flat()];
 
     /** 返回该音轨连同其全部分支的占用；null 表示本行完全没有内容 */
     const solveTrack = (track: Track): Extent | null => {
         const hostExtent = line.hostExtents.get(track);
         const attachmentExtent = line.attachmentExtents.get(track);
+        const trackRanges = ranges.filter(range => range.track === track);
         // 下面会原地并入分支占用，所以必须复制：hostExtents 在整个纵向布局中不变
         let extent: Extent | null = hostExtent ? { top: hostExtent.top, bottom: hostExtent.bottom } : null;
         if (attachmentExtent) {
@@ -1042,7 +1063,12 @@ function solveVerticalAxes(
             for (let i = 0; i < measurement.group.members.length; i++) {
                 const placement = measurement.placements[i];
                 if (!placement) continue;
-                offsets.set(measurement.group.members[i], groupOffset + placement.offset);
+                const member = measurement.group.members[i];
+                const offset = groupOffset + placement.offset;
+                offsets.set(member, offset);
+                for (const range of resolvedRanges.get(member) ?? []) {
+                    trackRanges.push({ ...range, top: range.top + offset, bottom: range.bottom + offset });
+                }
             }
             includeExtent(
                 extent,
@@ -1058,9 +1084,19 @@ function solveVerticalAxes(
         for (const measurement of measurements) {
             const place = measurement.group.place;
             if (!place) continue;
-            const host = extent ?? { top: 0, bottom: 0 };
+            let host = extent ?? { top: 0, bottom: 0 };
+            if (measurement.group.localHost) {
+                const footprint = measurement.group.members.flatMap(member => resolvedRanges.get(member) ?? []);
+                const nearby = trackRanges.filter(range => footprint.some(branch =>
+                    range.left < branch.right + 2 && range.right > branch.left - 2));
+                if (nearby.length) host = {
+                    top: Math.min(...nearby.map(range => range.top)),
+                    bottom: Math.max(...nearby.map(range => range.bottom)),
+                };
+            }
             applyPlacement(measurement, place(host, measurement.extent, gap));
         }
+        resolvedRanges.set(track, trackRanges);
         return extent;
     };
 

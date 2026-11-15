@@ -57,3 +57,5 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - 新增 `compileScore({wrapWidthRatio})`：仅缩小自动换行的参考宽度，最终版心、字形与源码身份保持；供谱集根据页面余量反馈试排。
 
 - Centered text accounts for measured ink bearings instead of assuming its advance width is visually symmetric; the center slot remains independent of side widths. Long numbered-score titles wrap at the measured page width while preserving their font size.
+
+- Alternative tracks use host occupancy within their own horizontal footprint. A second lyric row in another bar no longer reserves a blank row above a local alternative; nearby lyrics, relations and previously placed branches still participate in clearance. Other track arrangements retain their system-wide envelope.

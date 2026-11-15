@@ -47,6 +47,8 @@ export interface TrackArrangement {
     measure: MeasureFn;
     /** 需要完整宿主占用才能定位时声明；缺省表示分组直接落在宿主基线上 */
     place?: PlaceFn;
+    /** Place against host ink in the branch’s horizontal footprint, rather than the whole system. */
+    localHost?: boolean;
 }
 
 /** 一组由同一个 parallel 函数派生出来的分支音轨 */
@@ -56,6 +58,7 @@ export interface TrackGroup {
     readonly members: Track[];
     readonly measure: MeasureFn;
     readonly place?: PlaceFn;
+    readonly localHost?: boolean;
 }
 
 /**
@@ -91,7 +94,7 @@ export class Track {
     group(spec: TrackArrangement, count: number): TrackGroup {
         let group = this.groups.find(group => group.laneKey === spec.laneKey);
         if (!group) {
-            group = { laneKey: spec.laneKey, members: [], measure: spec.measure, place: spec.place };
+            group = { laneKey: spec.laneKey, members: [], measure: spec.measure, place: spec.place, localHost: spec.localHost };
             this.groups.push(group);
         }
         while (group.members.length < count) group.members.push(new Track(this));

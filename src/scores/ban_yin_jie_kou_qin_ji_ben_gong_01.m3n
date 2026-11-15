@@ -12,7 +12,7 @@ N: {text=震音} 1~1~ 1^{tr} | 2^^{tr} | 1^^{tr} | 2^^{tr} | {decres}1^^{tr}{/} 
 ---
 N: {text=断音} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} (1){tip} | ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} (2){tip} ||{br}
 ---
-N: {text=节奏} (1){tip} ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} | ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (1){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} | (1.){tip} ((1)){tip} (1.){tip} ((1)){tip} (2.){tip} ((2)){tip} (2.){tip} ((2)){tip} | ((1)){tip} (1.){tip} ((1)){tip} (1.){tip} ((2)){tip} (2.){tip} ((2)){tip} (2.){tip} ||
+N: {text=节奏} (1){tip} ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} | ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (1){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} | (1.){tip} ((1)){tip} (1.){tip} ((1)){tip} (2.){tip} ((2)){tip} (2.){tip} ((2)){tip} | ((1)){tip} (1.){tip} ((1)){tip} (1.){tip} ((2)){tip} (2.){tip} ((2)){tip} (2.){tip} |
 ---
 N: ((1)){tip} (1){tip} ((1)){tip} ((1)){tip} (1){tip} ((1)){tip} ((2)){tip} (2){tip} ((2)){tip} ((2)){tip} (2){tip} ((2)){tip} | ([111:2]) ([222:2]) ([111:2]) 1{tip} ||{br}
 ---

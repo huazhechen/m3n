@@ -109,5 +109,17 @@
     "duration": 178.59873005,
     "sha256": "753dec97fb4a3dee4248edbda5d3325b941f940a9f156d5c9ec069b4fa656e48",
     "reference": "替代旋律展开保留跨小节延音，消除原 MEI D.S. 再现处同音的重复开关事件。"
+  },
+  {
+    "id": "xin_bu_liao_qing",
+    "duration": 197.63971905833333,
+    "sha256": "fe54047a7aa678a06d738bae6c7a1c24c073d7ed0d6677ad494ccb1e4158c985",
+    "reference": "第四十六版编排前捕获；保留全部 MIDI 事件和总时长。"
+  },
+  {
+    "id": "ming_tian_hui_geng_hao",
+    "duration": 190.67812668333332,
+    "sha256": "eee43956143fb526ff5505f61349056c462dcc9f4d2409651ea4ae20be3b8e7e",
+    "reference": "第四十六版编排前捕获；保留全部 MIDI 事件和总时长。"
   }
 ]

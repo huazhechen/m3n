@@ -13,7 +13,7 @@ const measure: MeasureFn = (members, gap) => {
     });
 };
 const place: PlaceFn = (host, group, gap) => host.bottom + gap * 0.15 - group.top;
-const arrangement = { laneKey: 'ossia', measure, place };
+const arrangement = { laneKey: 'ossia', measure, place, localHost: true };
 
 class OssiaFunction extends ASTFunctionNode {
     static override def = {

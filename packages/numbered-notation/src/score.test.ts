@@ -1288,3 +1288,16 @@ it('omits the separate second-pass heading above alternative melodies', () => {
  expect(p.source).not.toContain('@text("2."')
  expect(p.source).toContain('@ossia(')
 })
+
+it.each([320,800].flatMap(width=>[false,true].map(paged=>({width,paged}))))('places alternatives below their own visible main lyrics at $width, paged=$paged', settings => {
+ const source='{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 甲乙 | 丙丁\nL2: 戊己 | 庚辛\nNs[2]: 2: 5 6 |'
+ const distance = (input: string) => {
+  const {root,document}=render(input,settings), ids=scoreEventIds(document)
+  const alternative=document.alternatives![0]!
+  const baseline=(id:string)=>Number(root.querySelector(`g.note[data-m3n-id="${id}"] text`)!.getAttribute('y'))
+  return baseline(ids.get(alternative.measure.events[0]!)!)-baseline(ids.get(alternative.host.events[0]!)!)
+ }
+ // A second verse in a different bar must not leave an empty verse row
+ // between this bar's main lyrics and its alternative melody.
+ expect(distance(source)).toBeCloseTo(distance(source.replace('L2: 戊己 |','L2: |')),4)
+})
