@@ -22,7 +22,8 @@
   {
     "id": "lao_nan_hai",
     "duration": 211.65963755833332,
-    "sha256": "b92e1eaff1971d779e017af311a2fbbf4573c13223be9bf307ac0c7e1614b54e"
+    "sha256": "67bb1388b30f4dfe2a70a1b025bb41288fdac0f41afa44f9de8e69682e155cff",
+    "reference": "第二房子“得”小节改为与第一房子相同；其余事件与第四十四版一致。"
   },
   {
     "id": "man_man_xi_huan_ni",
@@ -78,5 +79,35 @@
     "id": "besame_mucho",
     "duration": 189.595,
     "sha256": "2484c8536f0615d03df9ef87f1c988667b3c2653939cb1fb67f24b9ffbdc2278"
+  },
+  {
+    "id": "annie",
+    "duration": 223.55484668333332,
+    "sha256": "8be820b8d58a1fcfb027cafc1adbcc32eb3127c51bac2d3a3e66512fc5685552",
+    "reference": "第四十五版编排前捕获，重编后完整 MIDI 事件应保持一致。"
+  },
+  {
+    "id": "shi_jie_zeng_yu_wo_de",
+    "duration": 181.92743148333332,
+    "sha256": "62f794239726cc67c7a8575e6733649cb8d5068f3280e02ad46d732a11c72d29",
+    "reference": "第四十五版编排前捕获，重编后完整 MIDI 事件应保持一致。"
+  },
+  {
+    "id": "ru_yuan",
+    "duration": 183.57454731666667,
+    "sha256": "536a7b94c6d6446e38b9b6f4d3083d236ea7bfd1d278888510b6d000358fa75c",
+    "reference": "第四十五版编排前捕获，重编后完整 MIDI 事件应保持一致。"
+  },
+  {
+    "id": "zhi_ai_li_si",
+    "duration": 93.49583333333334,
+    "sha256": "2a38ea6125aeff0aeb62f92a65b789407531067b08f7777438804021133b9403",
+    "reference": "第四十五版编排前捕获，重编后完整 MIDI 事件应保持一致。"
+  },
+  {
+    "id": "qian_si_xi",
+    "duration": 178.59873005,
+    "sha256": "753dec97fb4a3dee4248edbda5d3325b941f940a9f156d5c9ec069b4fa656e48",
+    "reference": "替代旋律展开保留跨小节延音，消除原 MEI D.S. 再现处同音的重复开关事件。"
   }
 ]

@@ -1,7 +1,7 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第四十四版",
-  "sourceCount": 88,
+  "edition": "第四十五版",
+  "sourceCount": 87,
   "baseWidth": 780,
   "widthCandidates": [
     590
@@ -744,7 +744,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
@@ -1038,7 +1038,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "noteGapEm": 0.5,
@@ -1047,13 +1047,16 @@
         11
       ],
       "widthCandidates": [
-        726,
         734,
         742,
         746,
-        750
+        750,
+        754,
+        758,
+        765
       ],
-      "maximumWidth": 750
+      "maximumWidth": 765,
+      "minimumNoteGapEm": 0.35
     },
     {
       "id": "lao_nan_hai",
@@ -1062,11 +1065,11 @@
       "section": "melodies",
       "group": "密集节奏与反复",
       "reason": "较长结构与密集八分、十六分",
-      "width": 734,
+      "width": 765,
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
@@ -1074,14 +1077,15 @@
         11
       ],
       "widthCandidates": [
-        710,
-        718,
-        726,
-        730,
-        734
+        734,
+        742,
+        750,
+        758,
+        765
       ],
-      "maximumWidth": 734,
-      "noteGapEm": 0.5
+      "maximumWidth": 765,
+      "noteGapEm": 0.2,
+      "minimumNoteGapEm": 0.2
     },
     {
       "id": "liang_liang",
@@ -1114,7 +1118,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
@@ -1154,14 +1158,21 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 654
+      "maximumWidth": 686,
+      "widthCandidates": [
+        654,
+        662,
+        670,
+        678,
+        686
+      ]
     },
     {
       "id": "ming_tian_hui_geng_hao",
@@ -1266,7 +1277,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "widthLocked": false,
       "systemGapCandidates": [
@@ -1286,7 +1297,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "widthLocked": false,
       "systemGapCandidates": [
@@ -1317,7 +1328,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "widthLocked": false,
       "systemGapCandidates": [
@@ -1387,7 +1398,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
@@ -1538,7 +1549,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "widthLocked": false,
       "systemGapCandidates": [
@@ -1665,7 +1676,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,
@@ -1804,7 +1815,7 @@
       "sharePage": true,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "widthLocked": false,
       "systemGapCandidates": [
@@ -1836,25 +1847,6 @@
       ],
       "uniformSystemHeight": false,
       "maximumWidth": 646
-    },
-    {
-      "id": "xi_yang_yang",
-      "file": "xi_yang_yang_01.m3n",
-      "title": "喜洋洋",
-      "section": "instrumental",
-      "group": "综合进阶",
-      "reason": "快速十六分、连奏与装饰",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ]
     },
     {
       "id": "flower_dance",
@@ -1922,11 +1914,11 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "弱起、两房反复、快速音型与三连音",
-      "width": 646,
-      "sharePage": true,
+      "width": 686,
+      "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
@@ -1934,7 +1926,15 @@
       "systemGapCandidates": [
         11
       ],
-      "maximumWidth": 646
+      "maximumWidth": 686,
+      "widthCandidates": [
+        646,
+        654,
+        662,
+        670,
+        678,
+        686
+      ]
     },
     {
       "id": "mozart_k545",
@@ -1979,8 +1979,8 @@
       "maximumWidth": 606
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v44.pdf",
-  "outputKey": "scorebook-v44-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v45.pdf",
+  "outputKey": "scorebook-v45-numbered",
   "page": {
     "width": 744,
     "height": 1133,

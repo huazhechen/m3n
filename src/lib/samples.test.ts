@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { m3nToMei, parseM3NDocument, measurePlaybackPasses, validateM3NDiagnostics } from '@m3n/notation'
+import { m3nToMei, parseM3NDocument, parseM3NDocumentStructure, measurePlaybackPasses, validateM3NDiagnostics } from '@m3n/notation'
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
 import theSwan from '../scores/tian_e_01.m3n?raw'
 import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
@@ -29,9 +29,8 @@ describe('bundled score corpus', () => {
     const expected = Array<number>(count).fill(beats)
     if (id === 'feng') expected[4] = 2
     if (id === 'zhi_ai_li_si') {
-      expected[0] = 0.5
-      expected[8] = 1
-      expected[count - 1] = 1
+      for (const index of [0, 9, 24, 62]) expected[index] = 0.5
+      for (const index of [8, 23, 61]) expected[index] = 1
     }
     expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
       .toEqual(expected)
@@ -65,16 +64,16 @@ describe('bundled score corpus', () => {
     expect(salutBars[32]!.events[0]!.tie).toBe(true)
     expect([34, 48].map(index => salutBars[index]!.events[0]!.key)).toEqual(['G', 'E'])
     const eliseBars = bars(elise)
-    expect(parseM3NDocument(elise).order).toEqual(['A', 'A1', 'A', 'A2', 'B', 'B1', 'B', 'B2', 'C', 'D', 'E', 'F', 'D', 'Coda'])
+    expect(parseM3NDocument(elise).order).toEqual(['A', 'A', 'B', 'B', 'C', 'D', 'E', 'F', 'D'])
     const elisePasses = measurePlaybackPasses(eliseBars)
     expect([...elisePasses.get(eliseBars[0]!)!]).toEqual([1, 2])
     expect([...elisePasses.get(eliseBars[10]!)!]).toEqual([1, 2])
-    expect([...elisePasses.get(eliseBars[40]!)!]).toEqual([1, 2])
-    expect(eliseBars[79]!.events.map(event => event.beats)).toEqual([0.5, 0.5, 0.5])
-    expect(eliseBars[81]!.events[1]!.pitches).toEqual(['6ee', '1eee', '3eee'])
+    expect([...elisePasses.get(eliseBars[41]!)!]).toEqual([1, 2])
+    expect(eliseBars[80]!.events.map(event => event.beats)).toEqual([0.5, 0.5, 0.5])
+    expect(eliseBars[82]!.events[1]!.pitches).toEqual(['6ee', '1eee', '3eee'])
   })
 
-  it('includes Love Like Tide with both houses, upper mordents and no D.C.', async () => {
+  it('includes Love Like Tide with an instrumental intro, unfolded verses and upper mordents', async () => {
     const entry = presetScores.find(score => score.sourcePath === 'ai_ru_chao_shui_01.m3n')
     expect(entry?.title).toBe('爱如潮水')
     expect(await loadPresetScore(entry!.slug)).toBe(loveLikeTide)
@@ -82,20 +81,16 @@ describe('bundled score corpus', () => {
     const document = parseM3NDocument(loveLikeTide)
     expect(document).toMatchObject({ key: 'E', meterCount: 4, meterUnit: 4, tempo: 75 })
     const measures = document.parts.get('score')!.melody.filter(measure => measure.events.length)
-    expect(measures).toHaveLength(28)
+    expect(measures).toHaveLength(33)
     expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
-      .toEqual(Array(28).fill(4))
-    expect(measures.flatMap((measure, index) => measure.ending === '1' ? [index + 1] : []))
-      .toEqual([13, 14, 15, 16])
-    expect(measures.flatMap((measure, index) => measure.ending === '2' ? [index + 1] : []))
-      .toEqual(Array.from({ length: 12 }, (_, index) => index + 17))
+      .toEqual(Array(33).fill(4))
+    expect(measures.some(measure => measure.ending)).toBe(false)
     const passes = measurePlaybackPasses(measures)
-    expect(measures.map(measure => [...passes.get(measure)!])).toEqual([
-      ...Array.from({ length: 7 }, () => [1]),
-      ...Array.from({ length: 5 }, () => [1, 2]),
-      ...Array.from({ length: 4 }, () => [1]),
-      ...Array.from({ length: 12 }, () => [2]),
-    ])
+    expect(measures.map(measure => [...passes.get(measure)!])).toEqual(Array.from({length:33},()=>[1]))
+    const intro = document.intervals.find(interval => interval.kind === 'inst')!
+    expect(intro.start).toBe(measures[0]!.events[0]!.sourceStart)
+    expect(intro.endStart).toBe(measures[6]!.events.at(-1)!.sourceStart)
+    expect(measures[6]!.right).toBe('dbl')
     expect(measures[15]!.events.filter(event => event.postfixes.includes('prall'))).toHaveLength(2)
     expect(measures.flatMap(measure => measure.events).flatMap(event => event.navigation)).not.toContain('dc')
     expect(loveLikeTide).not.toMatch(/D\.C\.|\{dc\}/)
@@ -183,6 +178,7 @@ describe('bundled score corpus', () => {
 
   it('contains uniquely identified scores with usable metadata', () => {
     expect(presetScores.length).toBeGreaterThan(0)
+    expect(presetScores.map(score => score.sourcePath)).not.toContain('xi_yang_yang_01.m3n')
     expect(new Set(presetScores.map((score) => score.slug)).size).toBe(presetScores.length)
     expect(presetScores.every((score) => score.title)).toBe(true)
     expect(presetScores.every((score) => score.keySignature && score.timeSignature && score.tempo > 0)).toBe(true)
@@ -200,6 +196,10 @@ describe('bundled score corpus', () => {
       try {
         const source = await loadPresetScore(score.slug)
         if (source === null) throw new Error('Missing score body')
+        const sections = parseM3NDocumentStructure(source).sections
+        if (sections.some(section => section.name) && sections.some(section => !section.name && section.phrases.length)) {
+          failures.push(`${score.slug}: music outside a named section`)
+        }
         const result = m3nToMei(source)
         if (!result.mei.startsWith('<?xml') || !result.mei.includes('<scoreDef')) {
           failures.push(`${score.slug}: missing MEI score`)

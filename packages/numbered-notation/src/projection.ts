@@ -96,12 +96,10 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       }
       const visibleMeasures = [...measures]
       while (visibleMeasures.length && !visibleMeasures.at(-1)?.events.length && !visibleMeasures.at(-1)?.multiRest) visibleMeasures.pop()
-      const followsOpening = (index: number) => document.order?.[0]==='' && Boolean(melody[index]?.sectionName)
-        && melody.slice(0,index).every(measure=>measure.sectionName==='')
       const breaksBefore = (index: number) => index > 0 && Boolean(
         visibleMeasures[index]?.breakBefore || visibleMeasures[index - 1]?.breakAfter
         || melody[index]?.breakBefore || melody[index - 1]?.breakAfter
-        || !followsOpening(index) && (visibleMeasures[index]?.events.some(event => event.sectionLabel) || melody[index]?.events.some(event => event.sectionLabel)),
+        || (visibleMeasures[index]?.events.some(event => event.sectionLabel) || melody[index]?.events.some(event => event.sectionLabel)),
       )
       visibleMeasures.forEach((measure, measureIndex) => {
         // Explicit accidental reminders carry their full pitch into jpFun;
@@ -242,12 +240,17 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         if (alternative) {
           const first = firsts.get(measureIndex), last = lasts.get(measureIndex)
           if (first && last) parentheses.push(`@paren(${first},${last})`)
-          if (first) annotations[1]!.push(`@text(${quote(alternative.passes.join('.')+'.')},size=12px,above=${first},local=true)`)
+          // The usual second-pass alternative needs no separate pass heading.
+          // Distinguish other lanes inline without adding an annotation row.
+          const siblings = document.alternatives?.filter(item => item.host === alternative.host) ?? []
+          if (first && !precedingAlternative && (siblings.length > 1 || alternative.passes.join(',') !== '2')) {
+            pieces.splice(measureStart, 0, `@text(${quote(alternative.passes.join('.')+'.')},size=12px)`)
+          }
         } else if (staff==='melody') {
           const replacements = document.alternatives?.filter(item=>item.host===measure) ?? []
           if (replacements.length) {
             let main = pieces.splice(measureStart).join(' ')
-            for (const replacement of replacements) main = `@ossia({${main}},{@set(fontsize=18) ${renderVoice([replacement.measure],'melody',replacement,measureIndex)}},lane=${quote(replacement.passes.join(','))})`
+            for (const replacement of [...replacements].reverse()) main = `@ossia({${main}},{@set(fontsize=18) ${renderVoice([replacement.measure],'melody',replacement,measureIndex)}},lane=${quote(replacement.passes.join(','))})`
             pieces.push(main)
           }
         }

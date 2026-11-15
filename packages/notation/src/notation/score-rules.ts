@@ -117,8 +117,10 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
         { measure: value.index + 1, expected: value.expected, actual: value.actual })
     }
   }
-  const first = values[0]
-  const last = values.at(-1)
+  // With an itinerary, the printed last section may be revisited earlier.
+  // Check the actual performance endpoints, not their physical page order.
+  const first = document.order ? values.find(value => value.measure.sectionName === document.order![0]) : values[0]
+  const last = document.order ? [...values].reverse().find(value => value.measure.sectionName === document.order!.at(-1)) : values.at(-1)
   if (!first || !last) return diagnostics
   if (complementary.has(first.index) || complementary.has(last.index)) return diagnostics
   if (equal(first.actual, first.expected)) {

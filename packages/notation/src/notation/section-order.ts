@@ -21,7 +21,7 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
   if (directives.length > 1) report('order 不能重复声明')
   const names = new Set<string>()
   for (const section of document.sections ?? []) {
-    if (!section.name && !(section === document.sections?.[0] && (document.sections?.length ?? 0) > 1)) report('使用 order 时，除开头弱起外每个乐段都必须有名称')
+    if (!section.name) report('使用 order 时，每个乐段都必须有名称，弱起须写在所属乐段开头')
     if (names.has(section.name)) report(`乐段名称重复：${section.name}`)
     names.add(section.name)
     if (!document.order?.includes(section.name)) report(`order 未引用乐段：${section.name}`)

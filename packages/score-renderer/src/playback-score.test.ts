@@ -194,8 +194,9 @@ describe('MIDI playback', () => {
   })
 })
 
-// Fifteen hashes were captured before the editorial restructuring. 听海 uses
-// the corrected performance after removing its spurious first-verse repeat.
+// Fingerprints preserve editorial performances across structural changes.
+// The fixture records the authorised 老男孩 correction and the D.S. tie cleanup
+// in 牵丝戏; 听海 already excludes its spurious first-verse repeat.
 const editorialMidi = JSON.parse(readFileSync(new URL('./fixtures/editorial-midi.json', import.meta.url),'utf8')) as {id:string;duration:number;sha256:string}[]
 it.each(editorialMidi)('preserves the complete editorial performance of $id', async expected => {
  const source=readFileSync(new URL(`../../../src/scores/${expected.id}_01.m3n`,import.meta.url),'utf8')

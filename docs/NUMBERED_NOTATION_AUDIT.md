@@ -96,7 +96,6 @@
 | 蜗牛与黄鹂鸟 | [wo_niu_yu_huang_li_niao_01.m3n](../src/scores/wo_niu_yu_huang_li_niao_01.m3n) | 90 | 8/8 |
 | 我要你 | [wo_yao_ni_01.m3n](../src/scores/wo_yao_ni_01.m3n) | 97 | 8/8 |
 | 我只在乎你 | [wo_zhi_zai_hu_ni_01.m3n](../src/scores/wo_zhi_zai_hu_ni_01.m3n) | 144 | 8/8 |
-| 喜洋洋 | [xi_yang_yang_01.m3n](../src/scores/xi_yang_yang_01.m3n) | 241 | 8/8 |
 | 下雨的时候 | [xia_yu_de_shi_hou_01.m3n](../src/scores/xia_yu_de_shi_hou_01.m3n) | 219 | 8/8 |
 | 相思 | [xiang_si_01.m3n](../src/scores/xiang_si_01.m3n) | 121 | 8/8 |
 | 小红帽 | [xiao_hong_mao_01.m3n](../src/scores/xiao_hong_mao_01.m3n) | 72 | 8/8 |

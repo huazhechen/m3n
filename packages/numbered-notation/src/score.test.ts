@@ -65,7 +65,7 @@ describe('jpFun numbered notation adapter', () => {
     const first=alt.measure.events[0]!,host=alt.host.events[0]!
     const note=(event:typeof first)=>native.layout.objects.find(node=>node.ast instanceof ASTFunctionNode && node.ast.label=== [...projectNumberedScore(document,{...options,...settings}).bindings.values()].find(b=>b.event===event)!.label)!
     expect(note(first).box.y).toBeGreaterThan(note(host).box.y)
-    expect(root.body.textContent).toContain('2.')
+    expect(root.body.textContent).not.toContain('2.')
     expect(root.body.textContent).toContain('(')
     expect(root.querySelectorAll('g.note')).toHaveLength(7)
   })
@@ -1018,7 +1018,10 @@ describe('jpFun numbered notation adapter', () => {
       for (const boundary of boundaries) {
         const previous = notes.filter(node => node.t.compare(boundary) < 0).at(-1)!
         const next = notes.find(node => node.t.equals(boundary))!
-        const closing = result.layout.objects.find(node => node.t.equals(boundary) && (node.ast as { type?: number }).type === 0)
+        const boundaryIndex = melody.findIndex((_measure, index) => index > 0 && melody[index]!.left === 'rptstart' && melody.slice(0, index).reduce((sum, item) => sum + item.events.reduce((n, event) => n + event.beats, 0), 0) === boundary)
+        const previousMeasure = melody[boundaryIndex - 1]
+        const closingType = previousMeasure?.right === 'dbl' ? 1 : 0
+        const closing = result.layout.objects.find(node => node.t.equals(boundary) && (node.ast as { type?: number }).type === closingType)
         if (previous.layoutLine !== next.layoutLine) expect(closing, `missing preceding bar at beat ${boundary}`).toBeDefined()
         else expect(closing).toBeUndefined()
       }
@@ -1270,12 +1273,18 @@ it('draws a tie across consecutive alternative bars', () => {
  expect(p.source).toContain(`@tie(${label(first)},${label(next)})`)
 })
 
-it('keeps an unlabelled opening beside the first named phrase', () => {
- const d=parseM3NDocument('{2/4}{order=A,A,B}\nN: (5d) |\n===A\nN: 1 2 ||\n===B\nN: 3. |||')
+it('keeps a named pickup beside its phrase and closes the section with a double bar', () => {
+ const d=parseM3NDocument('{2/4}{order=A,A}\n===A\nN: (5d) | 1 2 | 3. ||')
  const result=geometry(d)
  const notes=result.layout.objects.filter(n=>!n.T.isZero())
  expect(notes[0]!.layoutLine).toBe(notes[1]!.layoutLine)
  const {root}=render(d)
- expect(root.body.textContent).not.toContain('Intro')
- expect(root.body.textContent).toContain('演奏顺序：A→A→B')
+ expect(root.body.textContent).toContain('演奏顺序：A→A')
+})
+
+it('omits the separate second-pass heading above alternative melodies', () => {
+ const d=parseM3NDocument('{2/4}\nN: ||: 1 2 :||\nNs[2]: 1: 3 4 |')
+ const p=projectNumberedScore(d,options)
+ expect(p.source).not.toContain('@text("2."')
+ expect(p.source).toContain('@ossia(')
 })

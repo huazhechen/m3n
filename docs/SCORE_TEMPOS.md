@@ -110,7 +110,6 @@
 | [我的祖国](../src/scores/wo_de_zu_guo_01.m3n) | 4/4 | 76 | [郭兰英 · 我的祖国（173 BPM）](https://songbpm.com/@guo-lan-ying/5oir55qe56ww5zu9-oxa98) | 郭兰英同名录音的自动测速分歧较大（93、108、173），原曲也有段落伸缩；保留抒情主题编配的 76。 |
 | [我和你](../src/scores/wo_he_ni_01.m3n) | 4/4 | 60 | 未确认同版本，或按练习用途判断 | 仅确认到刘欢现场版本而未确认奥运会原版测速，保留原谱舒缓的 60。 |
 | [我和我的祖国](../src/scores/wo_he_wo_de_zu_guo_01.m3n) | 6/8 | 80 | [李谷一 · 我和我的祖国（162 BPM）](https://songbpm.com/@5p2o6lc35lia/5oir5zkm5oir55qe56ww5zu9-qzk2s) | 李谷一版本记录 162 可按八分音符脉冲理解，当前 6/8、9/8 谱四分音符约 81；保留接近的 80，谱面显示八分音符 160，不把 162 直接写成 qpm。 |
-| [喜洋洋](../src/scores/xi_yang_yang_01.m3n) | 2/4 | 120 | [刘明源 · 喜洋洋（185 BPM）](https://songbpm.com/@liu-ming-yuan/xi-yang-yang-2frABcPKUX) | 民族器乐录音自动测速约 184–185，但本谱含密集十六分音符且结构不同；保留 120 的演奏建议，未据平均测速强行改成 185。 |
 | [下雨的时候](../src/scores/xia_yu_de_shi_hou_01.m3n) | 4/4 | 80 | 未确认同版本，或按练习用途判断 | 原谱未署名，检索到的小提琴及同名流行歌曲无法确认为同一编配；保留 80。 |
 | [小红帽](../src/scores/xiao_hong_mao_01.m3n) | 2/4 | 108 | [呂佩玉 · 小红帽 - 童謠：妹妹揹著洋娃娃（109 BPM）](https://songbpm.com/@lu-pei-yu/5bcp57qi5bi9ic0g56ul6kygouwmuewmueapueirla0iwogwogw-joxip) | 童谣版本约 109–120，保留接近、便于演奏的 108。 |
 | [小星星](../src/scores/xiao_xing_xing_01.m3n) | 4/4 | 100 | [Raffi · Twinkle, Twinkle, Little Star（98 BPM）](https://songbpm.com/@raffi/twinkle-twinkle-little-star-77f5554f-9033-44a4-b566-21aa82cb9fce) | Raffi 版本约 98；教学型单旋律编配保留接近的 100。 |

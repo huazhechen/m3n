@@ -92,9 +92,13 @@ describe('explicit section order',()=>{
  })
 })
 
-it('plays an unlabelled opening once before the named itinerary', () => {
+it('requires pickups to belong to a named section', () => {
  const result=analyzeM3N('{2/4}{order=A,A,B}\nN: (5d) |\n===A\nN: 1 2 ||\n===B\nN: 3. |||')
+ expect(result.diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER',message:expect.stringContaining('弱起须写在所属乐段开头')}))
+ expect(result.score.order).toEqual(['A','A','B'])
+})
+
+it('validates pickup complements against itinerary endpoints rather than printed endpoints', () => {
+ const result=analyzeM3N('{3/8}{order=A,B,C,B}\n===A\nN: ((1 2)) | 3 (4) ||\n===B\nN: 5 ||\n===C\nN: (6) | 7 (1e) ||')
  expect(result.diagnostics).toEqual([])
- expect(result.score.order).toEqual(['','A','A','B'])
- expect(result.conversion.mei).toContain('plist="#m3n-order-section-1 #m3n-order-section-2 #m3n-order-section-2 #m3n-order-section-3"')
 })

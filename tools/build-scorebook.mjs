@@ -263,8 +263,6 @@ try {
   let content=''
   for(const item of p.items) {
    const {entry:e,start,end,y,cropTop,cropBottom}=item,l=e.layout,s=renderScale(l.width)
-   const label=`${String(measured.indexOf(e)+1).padStart(3,'0')} · ${e.group}`
-   content+=svgText(label,bodyX+8,bodyTop+y-6,9,'fill="#666"')
    if(start)content+=svgText(`${e.title}（续）`,bodyX+8,bodyTop+y+22*s,20)
    const markup=l.markup.replace(/<svg[^>]*>/,tag=>tag.replace(/\s(?:x|y|width|height|viewBox|overflow)="[^"]*"/g,'').replace(/>$/,` x="${bodyX}" y="${bodyTop+y+(start?36*s:0)}" width="${bodyWidth}" height="${(cropBottom-cropTop)*s}" viewBox="0 ${cropTop} ${l.width} ${cropBottom-cropTop}" overflow="hidden">`))
    content+=markup
