@@ -1,7 +1,7 @@
 # 当前PDF
 
-第四十一版：[简谱版 PDF](循序渐进乐谱集-简谱-v41.pdf)（87页，6.36 MB）。五线谱已暂停导出，第四十版历史文件保留。
+第四十二版：[简谱版 PDF](循序渐进乐谱集-简谱-v42.pdf)（87页，6.16 MB）。五线谱继续暂停导出，第四十版历史文件保留。
 
 音符及音乐符号为原生矢量，文字嵌入字体，栅格图片为0。构建核验页数、纸张、字体嵌入与Unicode映射、逐页边界和逐曲页码，摘要见[PDF体积记录](PDF体积记录.json)。
 
-运行 `npm run build:scorebook` 只重建当前简谱，产物在 `scorebook/`，中间文件在 `.tmp/scorebook-v41-numbered/`。五线谱相关记录为历史版本，不随本次更新。
+运行 `npm run build:scorebook` 只重建当前简谱，产物在 `scorebook/`，中间文件在 `.tmp/scorebook-v42-numbered/`。五线谱相关记录为历史版本，不随本次更新。

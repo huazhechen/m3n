@@ -583,20 +583,25 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.body.textContent).toContain('3')
   })
 
-  it('places section names above directions, harmony and music while keeping annotations linked to their event', () => {
+  it('places boxed section names inline while directions and harmony stay above music', () => {
     const document = parseM3NDocument('{4/4}\n===训练\nN: {text=练习说明} {cresc}1{tr} 2 3 4{/} |||')
     document.parts.values().next().value!.melody[0]!.events[0]!.chord = 'Am'
     const { root } = render(document)
     const annotations = [...root.querySelectorAll('text[data-m3n-role="annotation"]')]
-    expect(annotations.map(node => node.textContent)).toEqual(['Am', '练习说明', '训练'])
-    expect(annotations.map(node => node.getAttribute('font-weight'))).toEqual(['normal', 'normal', '700'])
+    expect(annotations.map(node => node.textContent)).toEqual(['Am', '练习说明'])
+    expect(annotations.map(node => node.getAttribute('font-weight'))).toEqual(['normal', 'normal'])
     for (const node of annotations) expect(node.getAttribute('data-m3n-id')).toBe('m3n-e-1')
     const y = (text: string) => Number(annotations.find(node => node.textContent === text)!.getAttribute('y'))
-    expect(y('训练')).toBeLessThan(y('练习说明'))
     expect(y('练习说明')).toBeLessThan(y('Am'))
     const result = geometry(document)
-    const direction = result.layout.attachments.at(-2)!.box
-    const music = result.layout.attachments.slice(0, -3).filter(item => item.regions.length)
+    const label = result.layout.objects.find(node => 'frame' in node.ast && node.ast.frame)!
+    const first = result.layout.objects.find(node => !node.T.isZero())!
+    expect(label.T.isZero()).toBe(true)
+    expect(label.layoutLine).toBe(first.layoutLine)
+    expect(label.box.x + label.box.w).toBeLessThan(first.box.x)
+    expect(label.box.y + label.box.visualAxis).toBeCloseTo(first.box.y + first.box.visualAxis)
+    const direction = result.layout.attachments.at(-1)!.box
+    const music = result.layout.attachments.slice(0, -2).filter(item => item.regions.length)
     expect(music.length).toBeGreaterThan(0)
     for (const item of music) expect(direction.y + direction.h).toBeLessThan(item.box.y)
   })
@@ -606,11 +611,11 @@ describe('jpFun numbered notation adapter', () => {
     const document = parseM3NDocument(source)
     const result = geometry(document, settings)
     const labels = result.layout.attachments.filter(item => item.sourceSpan && result.maskedSource.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith('@text('))
-    expect(labels.length).toBe(30)
+    expect(labels.length).toBe(28)
     const text = (item: typeof labels[number]) => result.maskedSource.slice(item.sourceSpan!.start, item.sourceSpan!.end)
-    const section = labels.find(item => text(item).includes('"机能训练"'))!.box
+    const section = result.layout.objects.find(node => 'frame' in node.ast && node.ast.frame)!.box
     const instruction = labels.find(item => text(item).includes('"快速吹吸切换"'))!.box
-    expect(section.y + section.h).toBeLessThan(instruction.y)
+    expect(instruction.y + instruction.h).toBeLessThan(section.y)
     for (const label of labels) for (const symbol of result.layout.attachments.filter(item => !labels.includes(item))) {
       const overlaps = label.regions.some(a => symbol.regions.some(b => a.line === b.line && a.track === b.track
         && a.x < b.x + b.w && b.x < a.x + a.w))
@@ -965,23 +970,24 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it('fits Mario’s introduction and complete A section on a wide first system', () => {
+  it('starts Mario’s A section on its own system even on a wide page', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/super_mario_01.m3n'), 'utf8')
     const { root } = render(source, { width: 1000 })
     const measures = [...root.querySelector('g.system')!.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure'))
-    expect([...new Set(measures)]).toEqual(['m3n-measure-1-1', 'm3n-measure-1-2', 'm3n-measure-1-3'])
-    for (const label of ['P', 'A']) expect(root.querySelector('g.system')!.textContent).toContain(label)
+    expect([...new Set(measures)]).toEqual(['m3n-measure-1-1'])
+    expect(root.querySelector('g.system')!.textContent).toContain('P')
+    expect(root.querySelectorAll('g.system')[1]!.textContent).toContain('A')
   })
 
-  it('allows named sections to share a system in both staves while honoring an explicit break', () => {
+  it('forces every named section to a new system in both staves', () => {
     const source = '{4/4}\n===甲\nN: 1 2 3 4 |\nB: 1d^ 5d^ |\n===乙\nN: 5 6 7 1e |\nB: 4d^ 5d^ |\n===丙\nN: {br} 4 3 2 1 |||\nB: 5d^ 1d^ |||'
     const { layout } = geometry(parseM3NDocument(source), { width: 1000, paged: false })
     const before = layout.objects.filter(node => !node.T.isZero() && node.t.compare(8) < 0)
     const after = layout.objects.filter(node => !node.T.isZero() && node.t.compare(8) >= 0)
-    expect(new Set(before.map(node => node.layoutLine)).size).toBe(1)
+    expect(new Set(before.map(node => node.layoutLine)).size).toBe(2)
     expect(new Set(before.map(node => node.track)).size).toBe(2)
     expect(new Set(after.map(node => node.layoutLine)).size).toBe(1)
-    expect(after[0]!.layoutLine).toBe(before[0]!.layoutLine + 1)
+    expect(after[0]!.layoutLine).toBe(before[0]!.layoutLine + 2)
   })
 
   it('keeps first-verse L: after explicit numbered lyric rows', () => {

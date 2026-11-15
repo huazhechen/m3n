@@ -124,13 +124,14 @@ describe('numbered full-beat sustain continuations', () => {
     expect(tie.y - legato.y).toBeGreaterThanOrEqual(3)
   })
 
-  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('renders both Hou Lai 不再 endings as dashes with legato ending on 1 at $width, paged=$paged', ({ width, paged }) => {
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('renders the shared Hou Lai 不再 ending as dashes with legato ending on 1 at $width, paged=$paged', ({ width, paged }) => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/hou_lai_01.m3n'), 'utf8')
     const { document, projection, result, root } = inspect(source, width, paged)
     const events = [...document.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events))
     const ids = scoreEventIds(document)
     const endings = [...source.matchAll(/1e~ 1e\^\{\/\}/g)]
-    expect(endings).toHaveLength(2)
+    expect(endings).toHaveLength(1)
+    expect(document.order?.filter(name => name === 'A')).toHaveLength(3)
     for (const ending of endings) {
       const head = events.find(event => event.sourceStart === ending.index)!
       const continuation = events[events.indexOf(head) + 1]!

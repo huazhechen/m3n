@@ -34,6 +34,31 @@ async function renderedPitches(source: string) {
 }
 
 describe('VerovioScore layout', () => {
+  // Captured before section reuse; includes note-offs, onset ticks and velocities.
+  it.each([
+    ['hou_lai', 'd8ec4adc3b00d2869886d11b6c4e114e5d13de33fd0579412ce9c56150f05f01', 208.79333333333332],
+    ['castle_in_the_sky', '31e339e275588a9c427df9dec2e2097b27377b1d357196dd0c033c55814984c4', 155.16798965833334],
+    ['doraemon', '806e0a95302f8e75e51532d6109981155707986c9264bd42dd35a8cbc9acf96a', 111.99583333333334],
+    ['flower_dance', '94c9ee30af0921b362395d95fcb7ea83245c693ce995443cb4824fdf9cea83d5', 251.995],
+    ['ju_ci_lang_de_xia_tian', '095e068344f3bad435a2e25e26f6113e05153e2e56e51cec03084f78fed1799c', 145.70839161666666],
+    ['tong_zhuo_de_ni', '9d2fa93f6ca1131f47a4932fbf681147b594785d9d11381b7ab4ec2a5db02b08', 149.99479166666666],
+    ['valsentino', '74c715f2f522f14adce054815ec5a178f783ffab712c25fe22b700c97ad8b7c5', 159.54257109166667],
+    ['zhi_ai_li_si', '2a38ea6125aeff0aeb62f92a65b789407531067b08f7777438804021133b9403', 93.49583333333334],
+    ['beer_barrel_polka', 'a20e4d68646b5e6b74ade7d8339750673f3a0966393790f6bf8c684b34434952', 152.723332125],
+  ])('preserves the complete original MIDI performance for %s', async (file, hash, duration) => {
+    const source = readFileSync(new URL(`../../../src/scores/${file}_01.m3n`, import.meta.url), 'utf8')
+    const conversion = m3nToMei(source)
+    expect(conversion.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+    const toolkit = new VerovioToolkit(await createVerovioModule())
+    try {
+      expect(toolkit.loadData(conversion.mei)).toBe(1)
+      const midi = BasicMIDI.fromArrayBuffer(Uint8Array.from(atob(toolkit.renderToMIDI()), c => c.charCodeAt(0)).buffer)
+      const events = midi.tracks.map(track => track.events.filter(e => [128, 144].includes(e.statusByte & 240)).map(e => [e.ticks, e.statusByte, ...e.data]))
+      expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe(hash)
+      expect(midi.duration).toBeCloseTo(Number(duration), 6)
+    } finally { toolkit.destroy() }
+  })
+
   it('plays named sections in the declared order without duplicating the printed measures', async () => {
     const compact='{2/4}{order=A,A,B,A,C1,B,A,C2}\n===A\nN: 1 2 ||\nL1: 甲乙\nL2: 丙丁\nL3: 戊己\nL4: 庚辛\n===B\nN: 3 4 ||\n===C1\nN: 5 6 ||\n===C2\nN: 7 1e |||'
     const unfolded='{2/4}\nN: 1 2 | 1 2 | 3 4 | 1 2 | 5 6 | 3 4 | 1 2 | 7 1e |||'

@@ -74,6 +74,13 @@ class TextFunction extends ASTFunctionNode {
                 namedOnly: true,
                 default: false,
             },
+            {
+                name: "frame",
+                description: "行内方框文字，原生预留内边距且不推进音乐时间",
+                type: "boolean" as const,
+                namedOnly: true,
+                default: false,
+            },
         ],
     };
 
@@ -100,13 +107,15 @@ class TextFunction extends ASTFunctionNode {
     readonly above: ASTNodeBase | null;
     readonly weight: number;
     readonly local: boolean;
+    readonly frame: boolean;
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [text, size, lineHeight, align, font, above, weight, local] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number, boolean];
+        const [text, size, lineHeight, align, font, above, weight, local, frame] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number, boolean, boolean];
         this.font = font || ctx.variables.font;
         this.above = above instanceof ASTNodeBase ? above : null;
         this.weight = weight;
         this.local = local;
+        this.frame = frame;
         if (align !== "left" && align !== "center" && align !== "right") {
             throw new ErrorDiagnostic(
                 "E_TEXT_INVALID_ALIGN",
@@ -135,7 +144,7 @@ class TextFunction extends ASTFunctionNode {
         const lineHeight = this.size === 0 ? 1.25 : this.lineAdvance / this.size;
         const above = this.above ? `, above=${(this.above as ASTFunctionNode).label}` : "";
         const weight = this.weight === 400 ? "" : `, weight=${this.weight}`;
-        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight}${this.local ? ', local=true' : ''})`;
+        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight}${this.local ? ', local=true' : ''}${this.frame ? ', frame=true' : ''})`;
     }
 }
 
@@ -165,24 +174,27 @@ class TextTemporalNode extends TemporalNodeBase {
         let width = first.w;
         for (let i = 1; i < lines.length; i++) width = Math.max(width, measure(lines[i]).w);
 
-        this.box.w = width;
-        this.box.h = (lines.length - 1) * lineAdvance + first.h;
+        const inset = this.ast.frame ? 3.5 : 0;
+        this.box.w = width + 2 * inset;
+        this.box.h = (lines.length - 1) * lineAdvance + first.h + 2 * inset;
         this.box.visualAxis = this.box.h / 2;
-        this.textBaselineY = first.baseline;
-        if (align === "center") this.box.anchor = width / 2;
+        this.textBaselineY = first.baseline + inset;
+        if (align === "center") this.box.anchor = this.box.w / 2;
         else if (align === "right") {
             const lastChar = [...lines[0]].at(-1);
-            this.box.anchor = width - (lastChar ? measure(lastChar).w / 2 : 0);
+            this.box.anchor = inset + width - (lastChar ? measure(lastChar).w / 2 : 0);
         } else {
             // 左对齐时锚点落在首字符中心，单字标记才能像音符一样对准宿主
             const firstChar = [...lines[0]][0];
-            this.box.anchor = firstChar ? measure(firstChar).w / 2 : 0;
+            this.box.anchor = inset + (firstChar ? measure(firstChar).w / 2 : 0);
         }
     }
 
     override paint(painter: Painter) {
         const { lines, align, lineAdvance } = this.ast;
-        const x = this.box.x + (align === "center" ? this.box.w / 2 : align === "right" ? this.box.w : 0);
+        const inset = this.ast.frame ? 3.5 : 0;
+        if (this.ast.frame) painter.drawRect(this.box.x + 0.5, this.box.y + 0.5, this.box.w - 1, this.box.h - 1, { stroke: "#000", strokeWidth: 1 });
+        const x = this.box.x + (align === "center" ? this.box.w / 2 : align === "right" ? this.box.w - inset : inset);
         let y = this.box.y + this.textBaselineY;
         for (const line of lines) {
             painter.drawText(line, x, y, this.style);

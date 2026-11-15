@@ -39,20 +39,32 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
         report('order 的乐段边界必须位于完整小节之间')
       }
     }
+    const ordered = (document.order ?? []).flatMap(name => measures.filter(measure => measure.sectionName === name && (measure.events.length || measure.multiRest)))
+    const duration = (measure: typeof measures[number] | undefined) => measure?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
+    const expected = (measure: typeof measures[number] | undefined) => {
+      const first = measure?.events[0]
+      return (first?.meterCount ?? document.meterCount) * 4 / (first?.meterUnit ?? document.meterUnit)
+    }
+    const complements = (left: typeof measures[number] | undefined, right: typeof measures[number] | undefined) => Boolean(left && right
+      && duration(left) > 0 && duration(right) > 0
+      && duration(left) < expected(left) && duration(right) < expected(right)
+      && expected(left) === expected(right)
+      && Math.abs(duration(left) + duration(right) - expected(left)) < 1e-9)
+    // Validate every visit: partial bars may join across a named boundary,
+    // including the global pickup/coda pair, without changing their duration.
+    const validBoundary = (measure: typeof measures[number]) => ordered.every((entry, index) => entry !== measure
+      || complements(ordered[index - 1], entry) || complements(entry, ordered[index + 1])
+      || entry === ordered[0] && complements(entry, ordered.at(-1))
+      || index === ordered.length - 1 && complements(ordered[0], entry))
     for (const section of document.sections ?? []) {
       const segment = measures.filter(measure => measure.sectionName === section.name && (measure.events.length || measure.multiRest))
       // Multi-rests have no event snapshot from which to restore entry settings.
       if (segment[0]?.multiRest) report('order 乐段须以普通音符或休止符开头；多小节休止可放在乐段内部')
       const boundary = [segment[0], segment.at(-1)]
-      const duration = (measure: typeof segment[number] | undefined) => measure?.events.reduce((sum, event) => sum + event.beats, 0) ?? 0
-      const expected = (measure: typeof segment[number] | undefined) => {
-        const first = measure?.events[0]
-        return (first?.meterCount ?? document.meterCount) * 4 / (first?.meterUnit ?? document.meterUnit)
-      }
       const partial = boundary.filter(measure => measure?.events.length && Math.abs(duration(measure) - expected(measure)) > 1e-9)
       const complementaryPickup = segment.length > 1 && partial.length === 2
         && Math.abs(duration(boundary[0]) + duration(boundary[1]) - expected(boundary[0])) < 1e-9
-      if (partial.length && !complementaryPickup) report('order 的乐段边界必须位于完整小节之间，或同段互补的弱起边界')
+      if (partial.length && !complementaryPickup && !partial.every(measure => measure && validBoundary(measure))) report('order 的乐段边界必须位于完整小节之间，弱起须在每次访问中与相邻小节或全曲首尾互补')
       let repeatOpen = false
       for (const measure of segment) {
         if (measure.left === 'rptstart') {

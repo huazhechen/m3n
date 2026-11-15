@@ -110,6 +110,8 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   }
   for (const value of values.slice(1, -1)) {
     if (complementary.has(value.index)) continue
+    if (document.order && value.measure.sectionName && (measures[value.index - 1]?.sectionName !== value.measure.sectionName
+      || measures[value.index + 1]?.sectionName !== value.measure.sectionName)) continue
     if (!equal(value.actual, value.expected)) {
       report('M3N_METER_INCOMPLETE_MIDDLE', `第 ${value.index + 1} 小节：中间小节拍数不合规：期望 ${value.expected} 拍，实际 ${value.actual} 拍`, value.measure,
         { measure: value.index + 1, expected: value.expected, actual: value.actual })

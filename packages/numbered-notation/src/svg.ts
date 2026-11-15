@@ -65,11 +65,12 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       const openingRepeat = node.ast instanceof ASTFunctionNode && node.ast.callName === 'bar' && (node.ast as ASTFunctionNode & { type?: number }).type === 3
       const previous = candidates.filter(value => node.mergeKey === ANCHOR_KEY && !openingRepeat ? value.node.t.compare(node.t) < 0 : value.node.t.compare(node.t) <= 0).at(-1)
       const next = candidates.find(value => value.node.t.compare(node.t) >= 0 && value.node.ast.sourceSpan.start < node.ast.sourceSpan.end)
-      const related = previous ?? next
-      if (!related || node.ast.sourceSpan.start < Math.min(...candidates.map(value => value.node.ast.sourceSpan.start))) return undefined
+      const framedHeading = node.ast instanceof ASTFunctionNode && node.ast.callName === 'text' && 'frame' in node.ast && node.ast.frame
+      const related = framedHeading ? candidates.find(value => value.node.t.equals(node.t) && value.line === node.layoutLine) : previous ?? next
+      if (!related || !framedHeading && node.ast.sourceSpan.start < Math.min(...candidates.map(value => value.node.ast.sourceSpan.start))) return undefined
       const current = { ...related, node, line: node.layoutLine }
       objectLocations.set(node.order, current)
-      return { 'data-jpfun-object': String(node.order), 'data-m3n-system': String(node.layoutLine), 'data-m3n-measure': related.binding.measureId }
+      return { 'data-jpfun-object': String(node.order), 'data-m3n-system': String(node.layoutLine), 'data-m3n-measure': related.binding.measureId, ...(framedHeading ? { 'data-m3n-id': related.binding.xmlId, 'data-m3n-role': 'section' } : {}) }
     },
     textAttributes(style) {
       const semantic = style.semantic

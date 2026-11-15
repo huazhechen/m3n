@@ -88,9 +88,9 @@ try {
       }
       if (file === 'ban_yin_jie_kou_qin_ji_ben_gong_01.m3n') {
         for (const [section, instruction] of [['机能训练', '快速吹吸切换'], ['音阶模进训练', '音阶(替代音)']]) {
-          const a = annotations.find(node => node.textContent === section)?.getBBox()
+          const a = [...document.querySelectorAll('g[data-m3n-role="section"]')].find(node => node.textContent === section)?.getBBox()
           const b = annotations.find(node => node.textContent === instruction)?.getBBox()
-          if (!a || !b || a.y + a.height >= b.y) issues.push({ file, width, paged, section, instruction, order: 'incorrect' })
+          if (!a || !b || b.y + b.height >= a.y) issues.push({ file, width, paged, section, instruction, order: 'incorrect' })
         }
         if (width === 1000) for (const system of document.querySelectorAll('g.system')) {
           const right = Math.max(...[...system.querySelectorAll('g.measure')].map(measure => Number(measure.getAttribute('data-m3n-measure-end'))))
@@ -109,7 +109,14 @@ try {
       if (file === 'super_mario_01.m3n' && width >= 800) {
         const first = document.querySelector('g.system')
         const measures = [...new Set([...first.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure')))]
-        if (measures.join(',') !== 'm3n-measure-1-1,m3n-measure-1-2,m3n-measure-1-3') issues.push({ file, width, paged, shortIntroduction: measures })
+        if (measures.join(',') !== 'm3n-measure-1-1') issues.push({ file, width, paged, shortIntroduction: measures })
+      }
+      for (const frame of document.querySelectorAll('g[data-m3n-role="section"]')) {
+        const host = frame.ownerSVGElement.querySelector(`g.note[data-m3n-id="${frame.getAttribute('data-m3n-id')}"]`)
+        const a = frame.getBBox(), b = host?.getBBox()
+        if (!b || !frame.querySelector('rect') || frame.closest('g.system') !== host.closest('g.system') || a.x + a.width >= b.x) {
+          issues.push({ file, width, paged, section: frame.textContent, inlineFrame: 'incorrect' })
+        }
       }
       const outside = [], overlap = [], noteOverlap = []
       for (const svg of document.querySelectorAll('svg')) {

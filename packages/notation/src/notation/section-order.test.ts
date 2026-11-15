@@ -46,7 +46,7 @@ describe('explicit section order',()=>{
   ['{2/4}{order=A}\nN: 1 2 |||','都必须有名称'],
   ['{2/4}\n===A\nN: {order=A}1 2 |||','文档首部'],
   ['{2/4}{order=A}\n===A\nN: 1 2 {dc} |||','不与跳房子'],
-  ['{2/4}{order=A,B}\n===A\nN: 1 |\n===B\nN: 2 |||','完整小节'],
+  ['{2/4}{order=A,B}\n===A\nN: 1 |\n===B\nN: (2) |||','完整小节'],
   ['{2/4}{order=A,B}\n===A\nN: 1 2~ ||\n===B\nN: 2 1 |||','末尾不能延音'],
   ['{2/4}{order=A,B}\n===A\nN: {lg}1 2 ||\n===B\nN: 3 4{/} |||','不能跨越'],
  ])('diagnoses ambiguous or invalid orders: %s',(input,message)=>{
@@ -65,6 +65,14 @@ describe('explicit section order',()=>{
   expect(result.diagnostics).toEqual([])
   expect(result.score.parts.get('score')!.melody.filter(m => m.events.length).map(m => m.orderPasses)).toEqual([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4], [1]])
   expect(result.conversion.mei).toContain('plist="#m3n-order-section-1 #m3n-order-section-1 #m3n-order-section-2 #m3n-order-section-1 #m3n-order-section-1"')
+ })
+
+ it('accepts complementary global pickups and checks every visit across section boundaries', () => {
+  expect(analyzeM3N('{2/4}{order=Intro,A,A,Coda}\n===Intro\nN: (1) |\n===A\nN: 2 3 |\n===Coda\nN: 4. |||').diagnostics).toEqual([])
+  const valid = '{3/8}{order=A,A1,A,A2}\n===A\nN: ((3e 2#e)) | ((3e 2#e 3e 7 2e 1e)) |\n===A1\nN: 6 |\n===A2\nN: 6 |||'
+  expect(analyzeM3N(valid).diagnostics).toEqual([])
+  expect(analyzeM3N('{4/4}{order=A,B,A,A,C}\n===A\nN: 1 | 2 3 4 5 |\n===B\nN: 6 7 1e |\n===C\nN: 2e 1e 7 |||').diagnostics).toEqual([])
+  expect(analyzeM3N(valid.replace('A,A1,A,A2', 'A,A1,A1,A,A2')).diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER'}))
  })
 
  it('retains ordinary repeat behavior when order is absent',()=>{

@@ -17,7 +17,7 @@ describe('bundled score corpus', () => {
     ['yan_hua_yi_leng', '烟花易冷', smoke, 51, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 78, 2],
     ['ai_de_li_zan', '爱的礼赞', salut, 100, 2],
-    ['zhi_ai_li_si', '致爱丽丝', elise, 106, 1.5],
+    ['zhi_ai_li_si', '致爱丽丝', elise, 85, 1.5],
   ] as const)('loads the complete PDF melody %s with its original bar durations', async (id, title, source, count, beats) => {
     const entry = presetScores.find(score => score.sourcePath === `${id}_01.m3n`)
     expect(entry?.title).toBe(title)
@@ -31,7 +31,7 @@ describe('bundled score corpus', () => {
     if (id === 'zhi_ai_li_si') {
       expected[0] = 0.5
       expected[8] = 1
-      expected[105] = 1
+      expected[count - 1] = 1
     }
     expect(measures.map(measure => measure.events.reduce((sum, event) => sum + event.beats, 0)))
       .toEqual(expected)
@@ -65,8 +65,11 @@ describe('bundled score corpus', () => {
     expect(salutBars[32]!.events[0]!.tie).toBe(true)
     expect([34, 48].map(index => salutBars[index]!.events[0]!.key)).toEqual(['G', 'E'])
     const eliseBars = bars(elise)
-    expect(eliseBars.flatMap((measure, index) => measure.right === 'rptend' ? [index + 1] : []))
-      .toEqual([9, 24])
+    expect(parseM3NDocument(elise).order).toEqual(['A', 'A1', 'A', 'A2', 'B', 'B1', 'B', 'B2', 'C', 'D', 'E', 'F', 'D', 'Coda'])
+    const elisePasses = measurePlaybackPasses(eliseBars)
+    expect([...elisePasses.get(eliseBars[0]!)!]).toEqual([1, 2])
+    expect([...elisePasses.get(eliseBars[10]!)!]).toEqual([1, 2])
+    expect([...elisePasses.get(eliseBars[40]!)!]).toEqual([1, 2])
     expect(eliseBars[79]!.events.map(event => event.beats)).toEqual([0.5, 0.5, 0.5])
     expect(eliseBars[81]!.events[1]!.pitches).toEqual(['6ee', '1eee', '3eee'])
   })

@@ -93,7 +93,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       while (visibleMeasures.length && !visibleMeasures.at(-1)?.events.length && !visibleMeasures.at(-1)?.multiRest) visibleMeasures.pop()
       const breaksBefore = (index: number) => index > 0 && Boolean(
         visibleMeasures[index]?.breakBefore || visibleMeasures[index - 1]?.breakAfter
-        || melody[index]?.breakBefore || melody[index - 1]?.breakAfter,
+        || melody[index]?.breakBefore || melody[index - 1]?.breakAfter
+        || visibleMeasures[index]?.events.some(event => event.sectionLabel) || melody[index]?.events.some(event => event.sectionLabel),
       )
       visibleMeasures.forEach((measure, measureIndex) => {
         const measureId = `m3n-measure-${partIndex + 1}-${measureIndex + 1}`
@@ -105,7 +106,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         // B: bars are alignment syntax; structural repetition belongs to N:.
         const structure = staff === 'bass' ? melodyMeasure ?? measure : measure
         if (breaksBefore(measureIndex)) pieces.push('@br()')
-        else if (measureIndex && (measure.events.some(event => event.sectionLabel) || melodyMeasure?.events.some(event => event.sectionLabel))) pieces.push('@br(soft=true)')
+        const sectionLabel = measure.events.find(event => event.sectionLabel)?.sectionLabel
+        if (sectionLabel) pieces.push(`@text(${quote(sectionLabel)},size=14px,weight=700,frame=true)`)
         if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) pieces.push('@bar(3)')
         // Navigation belongs to a measure, even when its directive follows a note.
         // Zero-time Segno stays on the music axis and wraps with the first event.
@@ -188,7 +190,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           }
           const first = children[0], last = children.at(-1)
           if (first && last) {
-            for (const [level, text] of [event.chord, event.text, event.sectionLabel].entries()) {
+            for (const [level, text] of [event.chord, event.text].entries()) {
               if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first}${level === 2 ? ',weight=700' : ''}${level > 0 ? ',local=true' : ''})`)
             }
             const head = continuations.get(event)
