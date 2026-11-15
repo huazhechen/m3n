@@ -11,9 +11,9 @@ export type MeiLayoutNode = {
   navigation?: PlaybackNavigation[]
 }
 
-export function meiSectionContent(nodes: readonly MeiLayoutNode[], hasNavigation: boolean) {
-  const needsExpansion = hasNavigation || nodes.some((node) => node.kind === 'ending' || node.repeatCount)
-  const expansion = needsExpansion ? planPlayback(nodes).sequence : []
+export function meiSectionContent(nodes: readonly MeiLayoutNode[], hasNavigation: boolean, explicitOrder?: readonly string[]) {
+  const needsExpansion = Boolean(explicitOrder) || hasNavigation || nodes.some((node) => node.kind === 'ending' || node.repeatCount)
+  const expansion = explicitOrder ?? (needsExpansion ? planPlayback(nodes).sequence : [])
   return [
     ...(needsExpansion ? [`<expansion xml:id="m3n-expansion" plist="${expansion.map((id) => `#${id}`).join(' ')}"/>`] : []),
     ...nodes.map((node) => !needsExpansion ? node.content

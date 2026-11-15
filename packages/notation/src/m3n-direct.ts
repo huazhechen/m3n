@@ -3,7 +3,7 @@ import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './not
 import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure } from './notation/m3n-document.js'
 import type { M3NToken } from './notation/m3n-tokens.js'
 import { parseLyricItems } from './notation/lyrics.js'
-import { parsePassRange } from './notation/repeats.js'
+import { parsePassRange, measurePlaybackPasses } from './notation/repeats.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document.js'
 import { documentSettings } from './notation/document-settings.js'
 import { harmonyTokens, parseHarmonySymbol } from './notation/harmony-syntax.js'
@@ -449,5 +449,45 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
     intervals,
   }
   applyPhraseRows(document, projection.structure)
+  if (document.order) {
+    document.sections = projection.structure.sections.map((section, index, sections) => ({
+      name: section.name,
+      start: projection.syntaxTree.lines[section.line - 1]?.start ?? source.length,
+      end: projection.syntaxTree.lines[(sections[index + 1]?.line ?? 0) - 1]?.start ?? source.length,
+    }))
+    // Count each section's internal repeats before applying outer visits.
+    const visitsBySection = new Map(document.sections.map(section => {
+      const measures = document.parts.get('score')?.melody.filter(measure => {
+        const position = measure.events[0]?.sourceStart ?? (measure.barEnd === undefined ? undefined : measure.barEnd - 1)
+        return position !== undefined && section.start <= position && position < section.end
+      }) ?? []
+      return [section.name, [...measurePlaybackPasses(measures).values()].map(passes => passes.size)] as const
+    }))
+    const hasDynamics = document.intervals.some(interval => interval.kind === 'cresc' || interval.kind === 'decres')
+      || [...document.parts.values()].some(part => [...part.melody, ...part.bass].some(measure => measure.events.some(event => event.dynamic)))
+    for (const part of document.parts.values()) for (const measures of [part.melody, part.bass]) {
+      let dynamic: string | undefined
+      let previousSection: string | undefined
+      let sectionMeasureIndex = 0
+      for (const measure of measures) {
+        const position = measure.events[0]?.sourceStart ?? (measure.barEnd === undefined ? undefined : measure.barEnd - 1)
+        const section = document.sections.find(section => position !== undefined && section.start <= position && position < section.end)
+        if (section) {
+          measure.sectionName = section.name
+          if (previousSection !== section.name) sectionMeasureIndex = 0
+          const localCount = visitsBySection.get(section.name)?.[sectionMeasureIndex++] ?? 1
+          const count = document.order.filter(name => name === section.name).length * localCount
+          measure.orderPasses = Array.from({ length: count }, (_, index) => index + 1)
+        }
+        for (const event of measure.events) {
+          if (event === measure.events[0] && measure.sectionName !== previousSection) {
+            event.dynamic ??= dynamic ?? (hasDynamics ? 'mf' : undefined)
+          }
+          dynamic = event.dynamic ?? dynamic
+        }
+        previousSection = measure.sectionName
+      }
+    }
+  }
   return document
 }

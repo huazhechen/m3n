@@ -10,6 +10,7 @@ export type PlaybackNode = {
 }
 
 export type PlaybackMeasure = {
+  orderPasses?: readonly number[]
   events: ReadonlyArray<{ navigation: readonly PlaybackNavigation[] }>
   navigation?: readonly PlaybackNavigation[]
   left?: string
@@ -39,6 +40,7 @@ export function parsePassRange(value: string) {
 
 /** Returns the playback passes in which each written measure occurs. */
 export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: readonly T[]) {
+  if(measures.some(measure=>measure.orderPasses))return new Map<T,Set<number>>(measures.map(measure=>[measure,new Set(measure.orderPasses ?? [1])]))
   const endingRepeatIndex = measures.findIndex((measure) => measure.ending && measure.right === 'rptend')
   const commonRepeatAfterEndings = endingRepeatIndex >= 0 && measures.slice(endingRepeatIndex + 1)
     .some((measure) => !measure.ending && measure.right === 'rptend')

@@ -59,6 +59,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
 - `packages/notation/src/notation/mei-document.ts`：通过 XML builder 组装 MEI 文档头、责任者元数据、`scoreDef` 和 section，统一处理文本转义与文档序列化。
 - `packages/notation/src/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
+- `packages/notation/src/notation/section-order.ts`：校验显式乐段顺序；ScoreDocument 保存分段范围与局部访问次数，MEI expansion、歌词映射和两种谱面共用该模型。
 - `packages/score-renderer/src/verovio-score.ts`：Verovio SVG 排版、MIDI 生成和时间映射。
 - `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
 - `packages/score-renderer/src/render-scheduler.ts`：串行调度 Verovio WASM 排版任务。

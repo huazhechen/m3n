@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第四十版",
+  "edition": "第四十一版",
   "sourceCount": 88,
   "baseWidth": 780,
   "widthCandidates": [
@@ -659,13 +659,15 @@
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "参考Max 2.1版，A段四行歌词共用旋律；保留原24px数字与单页页码，用成对间距0.35/0.45排为八行。",
       "systemGap": 11,
       "notation": "numbered",
       "widthLocked": true,
       "systemGapCandidates": [
         11
-      ]
+      ],
+      "minimumNoteGapEm": 0.35,
+      "noteGapEm": 0.45
     },
     {
       "id": "guang_yin_de_gu_shi",
@@ -1787,11 +1789,11 @@
       "section": "instrumental",
       "group": "综合进阶",
       "reason": "快速半音、装饰与多次变调",
-      "width": 638,
+      "width": 590,
       "sharePage": false,
       "breakBefore": true,
       "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
+      "reviewNote": "参考Max 2.1版复用再现段，保留段内反复与弱起；版宽590px使数字增大至约26px。",
       "systemGap": 11,
       "uniformSystemHeight": true,
       "notation": "numbered",
@@ -1884,8 +1886,8 @@
       ]
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v40.pdf",
-  "outputKey": "scorebook-v40-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v41.pdf",
+  "outputKey": "scorebook-v41-numbered",
   "page": {
     "width": 744,
     "height": 1133,
@@ -1918,7 +1920,7 @@
   "fixedPaginationFrom": "pagination-reference.json",
   "paired": {
     "staffPlanFile": "staff-editorial-plan.json",
-    "staffPdf": "循序渐进乐谱集-五线谱-v40.pdf",
+    "staffPdf": "循序渐进乐谱集-五线谱-v41.pdf",
     "minimumScale": 18,
     "maximumScale": 60,
     "scaleStep": 2,
@@ -1933,6 +1935,7 @@
       "spacingLinear": 0.18,
       "spacingNonLinear": 0.55,
       "spacingSystem": 3
-    }
+    },
+    "enabled": false
   }
 }

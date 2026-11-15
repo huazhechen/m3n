@@ -10,10 +10,12 @@ export function documentSettings(tree: M3NSyntaxTree) {
   }
   const headerLines = new Set(tree.lines.filter(line => line.kind === 'header').map(line => line.line))
   let equalMeasures = false
+  let order: string[] | undefined
   for (const directive of tree.directives) {
     if (!headerLines.has(directive.line) || directive.closing) continue
     const name = metadataNames.find(name => name === directive.name)
     if (name) metadata[name] = directive.value?.trim() ?? ''
+    if (directive.name === 'order') order = (directive.value ?? '').split(',').map(name=>name.trim()).filter(Boolean)
     if (directive.name === 'equal-measures') equalMeasures = directive.value === 'true'
   }
 
@@ -39,5 +41,5 @@ export function documentSettings(tree: M3NSyntaxTree) {
       hasExplicitTempo = true
     }
   }
-  return { ...metadata, equalMeasures, key, meterCount, meterUnit, tempo, hasExplicitTempo }
+  return { ...metadata, ...(order ? {order} : {}), equalMeasures, key, meterCount, meterUnit, tempo, hasExplicitTempo }
 }

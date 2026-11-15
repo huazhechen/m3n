@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest' 
 import createVerovioModule from '../vendor/verovio/verovio-module.mjs'
 import { VerovioToolkit } from 'verovio/esm'
@@ -32,6 +34,74 @@ async function renderedPitches(source: string) {
 }
 
 describe('VerovioScore layout', () => {
+  it('plays named sections in the declared order without duplicating the printed measures', async () => {
+    const compact='{2/4}{order=A,A,B,A,C1,B,A,C2}\n===A\nN: 1 2 ||\nL1: 甲乙\nL2: 丙丁\nL3: 戊己\nL4: 庚辛\n===B\nN: 3 4 ||\n===C1\nN: 5 6 ||\n===C2\nN: 7 1e |||'
+    const unfolded='{2/4}\nN: 1 2 | 1 2 | 3 4 | 1 2 | 5 6 | 3 4 | 1 2 | 7 1e |||'
+    expect(await renderedPitches(compact)).toEqual(await renderedPitches(unfolded))
+    const toolkit=new VerovioToolkit(await createVerovioModule())
+    try {
+      toolkit.setOptions({font:'Leipzig',header:'none',footer:'none'})
+      expect(toolkit.loadData(m3nToMei(compact).mei)).toBe(1)
+      expect(toolkit.renderToSVG(1).match(/class="measure"/g)).toHaveLength(4)
+      toolkit.renderToMIDI()
+      expect(toolkit.getTimeForElement('m3n-e-1-rend2')).toBeGreaterThan(toolkit.getTimeForElement('m3n-e-1'))
+      expect(normalizePlaybackElementId('m3n-e-1-rend4')).toEqual({xmlId:'m3n-e-1',rendition:4})
+    } finally {toolkit.destroy()}
+  })
+
+  it('restores section key, tempo and dynamics when a section is revisited', async () => {
+    const compact='{3/4}{120qpm}{order=A,B,A}\n===A\nN: {p}4^ 1 ||\n===B\nN: {2/4}{key=G}{60qpm}{f}7^ |||'
+    const unfolded='{3/4}{120qpm}\nN: {p}4^ 1 | {2/4}{key=G}{60qpm}{f}7^ | {3/4}{key=C}{120qpm}{p}4^ 1 |||'
+    const performance=async (source:string)=>{
+      const toolkit=new VerovioToolkit(await createVerovioModule())
+      try {
+        toolkit.loadData(m3nToMei(source).mei)
+        const binary=atob(toolkit.renderToMIDI())
+        const midi=BasicMIDI.fromArrayBuffer(Uint8Array.from(binary,c=>c.charCodeAt(0)).buffer)
+        return {
+          notes: midi.tracks.flatMap(track => track.events.filter(e => (e.statusByte & 0xf0) === 144 && e.data[1]! > 0).map(e => ({ tick: e.ticks, pitch: e.data[0], velocity: e.data[1] }))),
+          duration: midi.duration,
+          tempos: midi.tempoChanges,
+        }
+      } finally {toolkit.destroy()}
+    }
+    expect(await performance(compact)).toEqual(await performance(unfolded))
+  })
+
+  it('plays all four White Birch stanzas and both endings from the compact source', async () => {
+    const source = readFileSync(new URL('../../../src/scores/bai_hua_lin_01.m3n', import.meta.url), 'utf8')
+    const sections = new Map([...source.matchAll(/^===(\w+)\nN: ([^\n]+)/gm)].map(match => [match[1], match[2]!.replace(/\|+$/, '|')]))
+    const order = ['A', 'A', 'B', 'A', 'C1', 'B', 'A', 'C2']
+    const unfolded = '{key=F}{3/4}{120qpm}\nN: ' + order.map(name => sections.get(name)).join(' ')
+    const expected = await renderedPitches(unfolded)
+    expect(expected).toHaveLength(313)
+    expect(await renderedPitches(source)).toEqual(expected)
+    expect(m3nToMei(source).mei.match(/<measure\b/g)).toHaveLength(48)
+  })
+
+  it('combines named visits with local repeats and complementary pickups', async () => {
+    const compact = '{2/4}{order=A,B,A}\n===A\nN: ||: 1 | 2 3 | 4 :||\n===B\nN: 5 6 |||'
+    const unfolded = '{2/4}\nN: 1 | 2 3 | 4 | 1 | 2 3 | 4 | 5 6 | 1 | 2 3 | 4 | 1 | 2 3 | 4 |||'
+    expect(await renderedPitches(compact)).toEqual(await renderedPitches(unfolded))
+  })
+
+  it('preserves the complete Turkish March performance while omitting its written reprises', async () => {
+    const source = readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8')
+    const result = m3nToMei(source)
+    expect(result.diagnostics).toEqual([])
+    expect(result.mei.match(/<measure\b/g)).toHaveLength(94)
+    const toolkit = new VerovioToolkit(await createVerovioModule())
+    try {
+      expect(toolkit.loadData(result.mei)).toBe(1)
+      const midi = BasicMIDI.fromArrayBuffer(Uint8Array.from(atob(toolkit.renderToMIDI()), c => c.charCodeAt(0)).buffer)
+      const notes = midi.tracks.flatMap(track => track.events.filter(event => (event.statusByte & 0xf0) === 144 && event.data[1]! > 0).map(event => [event.ticks, event.data[0], event.data[1]]))
+      expect(notes).toHaveLength(1110)
+      expect(midi.duration).toBeCloseTo(203.632372125, 6)
+      // Captured from the previous 138-measure source: pitches, onsets and velocities.
+      expect(createHash('sha256').update(JSON.stringify(notes)).digest('hex')).toBe('bf19c8c9bfb9ab4a4e9cf522f7e59e142b6e399c0ee7a74b38e4ea6238ae67aa')
+    } finally { toolkit.destroy() }
+  })
+
   it('assigns melody and bass to distinct MIDI channels for independent muting', async () => {
     const toolkit = new VerovioToolkit(await createVerovioModule())
     try {

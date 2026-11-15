@@ -3,7 +3,7 @@ import type { ScoreDocument } from './score-document.js'
 import { scoreCreditLines } from '../score-credits.js'
 import { parse, stringify, type TNode } from 'txml/txml'
 
-export type ScoreHeaderMetadata = { value: string; side: 'left' | 'right' | 'center'; priority: number }
+export type ScoreHeaderMetadata = { value: string; side: 'left' | 'right' | 'center'; priority: number; kind?: 'order' }
 
 export function meiKeySignature(rawKey: string) {
   const { tonic, mode } = parseKey(rawKey)
@@ -19,6 +19,7 @@ export function scoreHeaderMetadata(document: ScoreDocument): ScoreHeaderMetadat
   return ([
     { value: document.title, side: 'center', priority: 0 },
     { value: document.subtitle, side: 'center', priority: 10 },
+    ...(document.order?.length ? [{value:`演奏顺序：${document.order.join(' → ')}`,side:'center' as const,priority:15,kind:'order' as const}] : []),
     ...scoreCreditLines(document).map((value, index) => ({ value, side: 'right' as const, priority: 20 + index })),
   ] satisfies ScoreHeaderMetadata[]).filter((item) => item.value)
 }

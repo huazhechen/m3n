@@ -41,6 +41,21 @@ export function scoreHeaderLayout(metadata: readonly ScoreHeaderMetadata[], widt
   let y = 28
 
   for (const item of centered) {
+    if (item.kind === 'order') {
+      let value = ''
+      const maxWidth = Math.max(1, width - 56)
+      for (const segment of item.value.split(' → ')) {
+        const candidate = value ? `${value} → ${segment}` : segment
+        if (value && measureText(candidate, 16, 'ui-serif, serif') > maxWidth) {
+          lines.push({value,x:number(width/2),y:number(y+24),anchor:'middle',fill:'#30363e',font:'ui-serif, serif',size:16,bold:false})
+          y += 25
+          value = `→ ${segment}`
+        } else value = candidate
+      }
+      lines.push({value,x:number(width/2),y:number(y+24),anchor:'middle',fill:'#30363e',font:'ui-serif, serif',size:16,bold:false})
+      y += 33
+      continue
+    }
     const title = item.priority === 0
     const size = title ? 32 : 16
     if (!title) y += 8

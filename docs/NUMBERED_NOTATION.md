@@ -78,9 +78,9 @@ const pages = score.render({ width: 800, paged: true, includeBass: true })
 
 该模式保留事件身份、时值和原生关系几何，不移动最终 SVG 图元。SVG 谱行以 `data-m3n-paragraph` 和 `data-m3n-volta` 标记段落及房子分类；谱集布局记录的 `paragraphSystems`、`voltaSystems` 与 `baselineSteps` 保存对应信息及实际节距。核对节距时需同时考虑相邻两行的段落、房子档位、实际歌词行数，以及仅在所在行出现的标题。网页默认仍按自然高度排版。
 
-独立电子谱集的构建工具读取 `scorebook/editorial-plan.json`。第四十版同时发布全简谱与全五线谱两版，每版87页，保留三篇编排和88个条目。`pagination-reference.json` 固定原简谱版每首曲目的起止页码和谱源摘要；两版构建都必须逐曲通过该约束。页码一致指同一首曲目占用的PDF页码相同，谱行断点不要求相同。简谱恢复第三十五版的逐曲字号和额外行距，基本功保留等宽小节与两页安排。所有副标题去掉“单旋律版”，渐强、渐弱置于音符或谱表上方。
+独立电子谱集的构建工具读取 `scorebook/editorial-plan.json`。第四十一版只维护和导出简谱，保留87页、三篇编排和88个条目；五线谱导出暂停，第四十版文件与配对记录作为历史版本保留。`pagination-reference.json` 固定原简谱版每首曲目的起止页码和谱源摘要；当前简谱构建必须逐曲通过该约束。页码一致指同一首曲目占用的PDF页码相同，谱行断点不要求相同。简谱不缩小原字号，白桦林仅调整横向间距、土耳其进行曲复用再现段后放大数字；其余逐曲字号与额外行距保留，基本功保留等宽小节与两页安排。所有副标题去掉“单旋律版”，渐强、渐弱置于音符或谱表上方。
 
-`npm run build:scorebook` 调用配对构建器：先在固定页数内为五线谱逐曲试排，优先选择较大的合格 `staffScale`；同页短曲使用相同比例和额外行距。生成的 `staff-editorial-plan.json` 保存完整可复查参数，再分别导出两版。五线谱采用引擎原生横向间距选项和较细的谱线、符干、连线；谱线使用深灰色，符头保留黑色。中文字体加载后复用网页的说明文字及歌词避让，最后按完整谱行的实际边界预留行距和分页。固定87页意味着密集基本功及多段歌词页面仍可能使用较小尺寸。
+`npm run build:scorebook` 当前只构建简谱。恢复 `paired.enabled: true` 后，配对构建器才会先在固定页数内为五线谱逐曲试排，优先选择较大的合格 `staffScale`；同页短曲使用相同比例和额外行距。生成的 `staff-editorial-plan.json` 保存完整可复查参数，再分别导出两版。五线谱采用引擎原生横向间距选项和较细的谱线、符干、连线；谱线使用深灰色，符头保留黑色。中文字体加载后复用网页的说明文字及歌词避让，最后按完整谱行的实际边界预留行距和分页。固定87页意味着密集基本功及多段歌词页面仍可能使用较小尺寸。
 
 底层 `VerovioScore.prepareLayout` 支持可选 `engraving` 参数，仅开放谱线、符干、小节线、连线粗细及横向／谱行间距；网页不传该参数时沿用原默认值。谱集参数为 `staffScale`、`staffEngraving`、`staffLineColor`，都参与布局缓存键。`staffHeightPx` 是五条谱线最上至最下的高度，`screenNotePx` 是22px排版基准的适宽换算值，不能把后者当作五线谱符头大小。两个布局记录与 `paired-layout-record.json` 保存实际比例、页码和一致性核对。`build-scorebook.mjs`、`compact-scorebook-pdf.mjs` 也可用 `--plan=路径` 单独构建指定配置。
 
@@ -132,7 +132,7 @@ Fine、D.C.、D.S. 排在末音或休止符之后、小节线之前，与音符�
 
 `npm run build:scorebook` 默认只生成精简PDF，直接使用 `outputPdf` 文件名；不生成大体积轮廓PDF。`exportOutlinePdf: true` 可显式恢复轮廓PDF，此时再运行精简命令会另外生成 `-精简.pdf`。`npm run compact:scorebook` 可从最近一次构建保存的 `unoutlined-pages.json` 单独重建精简PDF。命令校验版次、渲染器摘要和全部谱源摘要，拒绝过期布局。导出先按原轮廓流程解析SVG的可寻址字符，处理空白、tspan、UTF-16索引和旋转，将每个字形固定到原来的基线位置；常规字形由Chromium嵌入并共用字体子集，粗体沿用原轮廓版的0.015倍字号描边，不另换粗体字体。使用同一Noto Serif CJK SC和Barlow字体资源，不重新排谱、缩小字号或转为图片。
 
-当前两份精简PDF各87页，简谱4,713,955字节、五线谱5,001,902字节；纸张均为558 × 850.08 pt。构建逐字检查基线误差不超过0.001px，逐页检查纸张边界，并用`pdfinfo`、`pdffonts`、`pdfimages`核实页数、字体Unicode映射和无栅格图片。两版的摘要及字形数量分别保存在`scorebook/PDF体积记录.json`、`scorebook/五线谱PDF体积记录.json`；页码一致性见`scorebook/paired-layout-record.json`。设置 `exportOutlinePdf: true` 可显式恢复轮廓PDF流程。
+当前简谱PDF共87页，6,361,586字节；纸张为558 × 850.08 pt。构建逐字检查基线误差不超过0.001px，并用`pdfinfo`、`pdffonts`、`pdfimages`核实页数、字体Unicode映射和无栅格图片。摘要保存在`scorebook/PDF体积记录.json`。`paired.enabled: false` 暂停五线谱导出，旧版相关记录不随当前简谱更新。设置 `exportOutlinePdf: true` 可显式恢复轮廓PDF流程。
 
 - `npm run test`：保留上游测试与快照；适配器为全部 82 份内置谱源分别建立用例，核对每个事件的音高、变音、八度、开始时间、时值、事件身份、控制记号同行及分页。
 - `npm run test:numbered-layout`：不启动服务器，在 Chromium 中检查全部曲库和三个复合谱例的 320/600/800/1000px、连续/分页组合，共 680 次布局，检查真实 SVG 边界、歌词相交及音符数字相交，输出 `.tmp/numbered-layout-report.json` 和示例截图。可用 `CHROMIUM_PATH` 指定浏览器。

@@ -258,7 +258,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     return voices.length > 1 ? `@voices(${voices.join(',')},connect="[-]",repeatconnect=true)` : voices[0]!
   }
   const headings = [
-    document.title ? `@text(${quote(document.title)},size=32px,align=center)` : '',
+    document.title ? `@text(${quote(document.title)},size=32px,align=center,weight=700)` : '',
     document.subtitle ? `@text(${quote(document.subtitle)},size=16px,align=center)` : '',
   ].filter(Boolean).join(' ')
   const creditLines = scoreCreditLines(document).map(line => {
@@ -275,10 +275,25 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,
     document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : '',
   ].filter(Boolean).join(' ')
+  const orderLines: string[] = []
+  if (document.order) {
+    const available = options.width - 2 * (options.pageMargin ?? 32)
+    const measure = (text: string) => [...text].reduce((sum, char) => sum + (char.codePointAt(0)! > 127 ? 16 : 9.3), 0)
+    let line = '演奏顺序：'
+    for (const name of document.order) {
+      const next = `${line}${line.endsWith('：') ? '' : ' → '}${name}`
+      if (measure(next) > available && !line.endsWith('：')) {
+        orderLines.push(line)
+        line = `→ ${name}`
+      } else line = next
+    }
+    orderLines.push(line)
+  }
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,
     `@head(center={${headings}},right={${credits}},left={{${signatures}}},sidebelow=true,itemgap=16px${options.width < 600 ? ',sidestacked=true' : ''}) @br()`,
+    ...orderLines.map(line => `@text(${quote(line)},size=16px,align=left) @br()`),
   ]
   const parts = [...document.parts.values()].map((part, index) => voicesForPart(part.melody, part.bass, index))
   for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {

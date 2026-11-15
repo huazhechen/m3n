@@ -50,6 +50,18 @@ function mainPitches(node: VisualTemporalNode): { name: string; acc: string; oct
 const corpusFiles = readdirSync(resolve(process.cwd(), '../../src/scores')).filter(name => name.endsWith('.m3n')).sort()
 
 describe('jpFun numbered notation adapter', () => {
+  it.each([320, 800])('prints section order once and keeps local verse identities at width %s', width => {
+    const source = '{2/4}{order=A,A,B,A,C1,B,A,C2}\n===A\nN: 1 2 ||\nL1: 甲乙\nL2: 丙丁\nL3: 戊己\nL4: 庚辛\n===B\nN: 3 4 ||\n===C1\nN: 5 6 ||\n===C2\nN: 7 1e |||'
+    const { root, score, document } = render(source, { width })
+    expect(score.diagnostics).toEqual([])
+    expect(root.body.textContent).toContain('演奏顺序：')
+    expect(root.querySelectorAll('g.note')).toHaveLength(8)
+    const first = [...document.parts.values()][0]!.melody[0]!.events[0]!
+    const id = scoreEventIds(document).get(first)!
+    expect([1, 2, 3, 4].map(row => lyrics(root, id, row))).toEqual(['甲', '丙', '戊', '庚'])
+    expect(geometry(document, { ...options, width }).diagnostics).toEqual([])
+  })
+
   it('accepts complementary pickups at repeats without hiding invalid meter', () => {
     const valid = render('{3/8}\nN: ||: ((3e 2#e)) | ((3e 2#e 3e 7 2=e 1e)) |\n---V1\nN: 6 :||\n---V2\nN: 6 |||')
     expect(valid.score.diagnostics).toEqual([])

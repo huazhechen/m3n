@@ -14,6 +14,7 @@ import { escapeXml } from './notation/mei-xml.js'
 import { projectM3NDocument, type M3NDocumentProjection } from './notation/m3n-document.js'
 import { parseM3NSyntaxTree, type M3NSyntaxTree } from './notation/syntax-tree.js'
 import { meiDocumentXml, meiKeySignature, type ScoreHeaderMetadata } from './notation/mei-document.js'
+import { planPlayback } from './notation/repeats.js'
 import { meiSectionContent, type MeiLayoutNode } from './notation/mei-layout.js'
 
 export type { ScoreHeaderMetadata } from './notation/mei-document.js'
@@ -51,7 +52,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const previousKeyByStaff = new Map<number, string>()
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
   let previousTempo = document.tempo
-  let tempoIndex = document.hasExplicitTempo ? 1 : 0
+  let tempoIndex = document.hasExplicitTempo || document.order ? 1 : 0
 
   for (const part of document.parts.values()) {
     const measureCount = Math.max(part.melody.length, hasBassStaff ? part.bass.length : 0)
@@ -247,13 +248,20 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       return `<repeatMark staff="${staffNumber}" ${anchor} place="above" func="${func}">${label}</repeatMark>`
     }) : []
     const tempoControls = staffNumber === 1 ? events.flatMap((event) => {
-      if (event.tempo === undefined || event.tempo === previousTempo) return []
+      if (document.order && event === document.parts.values().next().value?.melody[0]?.events[0]) return []
+      if (event.tempo === undefined || (event.tempo === previousTempo && !(document.order && event.sectionLabel))) return []
+      const unchanged = event.tempo === previousTempo
       previousTempo = event.tempo
       const followsRamp = document.intervals.some((interval) => interval.tempoTarget === event.tempo &&
         interval.end !== undefined && interval.end < event.sourceStart)
       if (followsRamp) return []
       const xmlId = idFor(event.sourceStart)
-      return xmlId ? [renderTempoXml(event.tempo, event.meterUnit ?? document.meterUnit, `startid="#${xmlId}"`, `m3n-tempo-${++tempoIndex}`, event.meterCount ?? document.meterCount)] : []
+      if (!xmlId) return []
+      const tempoId = `m3n-tempo-${++tempoIndex}`
+      // Restore playback state at a section entry without reprinting an unchanged metronome mark.
+      return [unchanged
+        ? `<tempo xml:id="${tempoId}" staff="1" startid="#${xmlId}" midi.bpm="${event.tempo}"/>`
+        : renderTempoXml(event.tempo, event.meterUnit ?? document.meterUnit, `startid="#${xmlId}"`, tempoId, event.meterCount ?? document.meterCount)]
     }) : []
     const first = events[0]?.sourceStart
     const last = events.at(-1)?.sourceEnd
@@ -301,10 +309,11 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
 
   let segmentIndex = 0
   let endingIndex = 0
+  const sectionSequences = new Map<string, string[]>()
   let measureNumber = 0
   const hasNavigation = [...document.parts.values()].some((part) => part.melody.some((measure) =>
     Boolean(measure.navigation?.length) || measure.events.some((event) => event.navigation.length > 0)))
-  const layoutNodes = [...document.parts.values()].flatMap((part, partIndex) => {
+  const layoutNodes = [...document.parts.values()].flatMap((part, partIndex): MeiLayoutNode[] => {
     while (part.melody.length > 1 && part.melody.at(-1)?.events.length === 0 && !part.melody.at(-1)?.multiRest) {
       const trailing = part.melody.pop()
       const previous = part.melody.at(-1)
@@ -332,11 +341,12 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       ]
         .filter(Boolean).map((staff) => staff.split('\n').map((line) => `  ${line}`).join('\n')).join('\n')
       const controls = [controlXml(melody, 1, meter), hasBassStaff ? controlXml(part.bass[measureIndex], 2, meter) : ''].filter(Boolean).join('\n')
-      const tempo = document.hasExplicitTempo && partIndex === 0 && measureIndex === 0
+      const tempo = (document.hasExplicitTempo || document.order) && partIndex === 0 && measureIndex === 0
         ? `  ${renderTempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1', document.meterCount)}\n`
         : ''
       const xml = `<measure xml:id="${measureId}" n="${measureNumber}"${metcon}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
       return {
+        sectionName: melody?.sectionName,
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',
         repeatCount: melody?.repeatCount ?? (melody?.right === 'rptend' ? 2 : undefined),
@@ -353,6 +363,30 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       measure.xml,
       measure.breakAfter ? '<sb/>' : '',
     ].filter(Boolean).join('\n')
+    if (document.order) {
+      return (document.sections ?? []).flatMap((section, sectionIndex): MeiLayoutNode[] => {
+        const written = measures.filter(measure => measure.sectionName === section.name)
+        const groups: MeiLayoutNode[] = []
+        let content: typeof measures = []
+        const flush = () => {
+          if (!content.length) return
+          groups.push({
+            kind: 'section', id: `m3n-order-section-${sectionIndex + 1}${groups.length ? `-${groups.length + 1}` : ''}`,
+            content: content.map(measureContent).join('\n'),
+            repeatStart: content[0]?.repeatStart, repeatCount: content.at(-1)?.repeatCount,
+          })
+          content = []
+        }
+        for (const measure of written) {
+          if (measure.repeatStart) flush()
+          content.push(measure)
+          if (measure.repeatCount) flush()
+        }
+        flush()
+        sectionSequences.set(section.name, planPlayback(groups).sequence)
+        return groups
+      })
+    }
     const nodes: MeiLayoutNode[] = []
     for (let index = 0; index < measures.length;) {
       const current = measures[index]
@@ -387,7 +421,8 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     }
     return nodes
   })
-  const sectionContent = meiSectionContent(layoutNodes, hasNavigation)
+  const order = document.order?.flatMap(name => sectionSequences.get(name) ?? [])
+  const sectionContent = meiSectionContent(layoutNodes, hasNavigation, order)
   const mei = meiDocumentXml(document, sectionContent, hasBassStaff)
   const diagnostics = context.diagnostics ?? validateM3NDiagnostics(source, {}, document, { syntaxTree, projection })
   return {

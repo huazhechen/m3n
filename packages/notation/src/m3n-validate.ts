@@ -1,3 +1,4 @@
+import { validateSectionOrder } from './notation/section-order.js'
 import { durationInBeats } from './notation/m3n-primitives.js' 
 import { parseM3NGrace } from './notation/m3n-groups.js'
 import { parseLyricItems } from './notation/lyrics.js'
@@ -43,7 +44,7 @@ type Block = {
 
 const INFO_FIELDS = new Set([
   'title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger',
-  'copyright', 'source', 'note', 'transpose', 'equal-measures',
+  'copyright', 'source', 'note', 'transpose', 'equal-measures', 'order',
 ])
 
 const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'dim', 'lg', '8va', '8vb', 'inst'])
@@ -910,7 +911,7 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
     ...harmonyDiagnostics,
     ...lyricDiagnostics,
   ]
-  return [...projected.structure.diagnostics, ...sourceDiagnostics, ...syntaxDiagnostics, ...scoreDiagnostics]
+  return [...projected.structure.diagnostics, ...sourceDiagnostics, ...syntaxDiagnostics, ...scoreDiagnostics, ...validateSectionOrder(parsed, projected)]
 }
 
 export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument, context: Omit<ValidationContext, 'document'> = {}): ScoreDiagnostic[] {

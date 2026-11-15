@@ -33,6 +33,9 @@ export type ScoreInterval = {
 }
 
 export type ScoreMeasure = {
+  /** Local visits from an explicit section order; absent for ordinary repeats. */
+  orderPasses?: number[]
+  sectionName?: string
   events: ScoreEvent[]
   navigation?: Array<'segno' | 'ds' | 'dc' | 'fine'>
   left?: string
@@ -62,6 +65,9 @@ export type ScoreLyricBlock = {
 export type ScoreDocument = {
   /** Equal visible measure widths within each numbered-notation system. */
   equalMeasures?: boolean
+  /** Written sections are printed once; order determines performance visits. */
+  order?: string[]
+  sections?: ReadonlyArray<{ name: string; start: number; end: number }>
   /** Written phrase ranges for local engraving; they do not change playback. */
   paragraphs?: ReadonlyArray<{ id: string; start: number; end: number }>
   title: string

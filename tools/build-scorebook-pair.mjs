@@ -11,12 +11,12 @@ const root=resolve(import.meta.dirname,'..'), output=join(root,'scorebook')
 const read=file=>JSON.parse(readFileSync(file,'utf8'))
 const plan=read(join(output,'editorial-plan.json'))
 const run=file=>execFileSync(process.execPath,[join(root,'tools/build-scorebook.mjs'),`--plan=${file}`],{stdio:'inherit',cwd:root})
-if(!plan.paired){run(join(output,'editorial-plan.json'));process.exit(0)}
+if(!plan.paired || plan.paired.enabled === false){run(join(output,'editorial-plan.json'));process.exit(0)}
 const reference=read(join(output,plan.fixedPaginationFrom)), byId=new Map(reference.entries.map(e=>[e.id,e]))
 assert.equal(reference.pageCount,87,'Both editions retain the 87-page numbered edition')
 const settings=plan.paired, staff=structuredClone(plan)
 delete staff.paired
-Object.assign(staff,{outputPdf:settings.staffPdf,outputKey:'scorebook-v40-staff',notationLabel:'五线谱版',recordFile:'staff-layout-record.json',sizeReportFile:'五线谱PDF体积记录.json',sortCsvFile:'五线谱排序与缩放记录.csv',sortMarkdownFile:'五线谱排序与缩放记录.md'})
+Object.assign(staff,{outputPdf:settings.staffPdf,outputKey:plan.outputKey.replace(/numbered$/, 'staff'),notationLabel:'五线谱版',recordFile:'staff-layout-record.json',sizeReportFile:'五线谱PDF体积记录.json',sortCsvFile:'五线谱排序与缩放记录.csv',sortMarkdownFile:'五线谱排序与缩放记录.md'})
 const temp=join(root,'.tmp',staff.outputKey), cache=join(temp,'calibration-cache')
 mkdirSync(cache,{recursive:true})
 await build({configFile:false,logLevel:'error',define:{'import.meta.url':JSON.stringify('http://scorebook.local/bundle.js')},build:{outDir:join(temp,'calibration'),emptyOutDir:true,minify:false,lib:{entry:join(root,'tools/scorebook-layout.mjs'),name:'scorebook',formats:['iife'],fileName:()=> 'bundle.js'}}})
