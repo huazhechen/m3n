@@ -11,6 +11,7 @@ export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
   time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativePitch[]
   lyrics: Map<number, LyricRowData>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]
+  musicLeft?: number; musicRight?: number; lyricLeft?: number; lyricRight?: number
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; paragraph: string
 }
 export type NativeColumn = { time: number; glyphs: NativeGlyph[]; left: number; right: number; gap: number; minimumGap: number; x: number }
@@ -87,18 +88,22 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const dotCount = Math.max(0, [1, 1.5, 1.75, 1.875].findIndex(ratio => Math.abs(writtenBeats / durationBase - ratio) < 1e-7))
           let left = pitchWidth / 2 + accidentalWidth + glyphGraces.length * 14, right = pitchWidth / 2 + dotCount * 22 * 0.27
           if (event.postfixes.includes('arp') && event.kind === 'chord') left += 8
+          let musicLeft = left, musicRight = right
+          let lyricLeft = 0, lyricRight = 0
           for (const row of rows.values()) {
             const width = textWidth(row.texts.join(''), 22 * 0.82)
+            lyricLeft = Math.max(lyricLeft, width / 2 + 1 + (row.annotation ? textWidth(row.annotation, 12) + 5 : 0))
+            lyricRight = Math.max(lyricRight, width / 2 + 1)
             left = Math.max(left, width / 2 + (row.annotation ? textWidth(row.annotation, 12) + 5 : 0))
             right = Math.max(right, width / 2)
           }
-          for (const annotation of glyphAnnotations) { const width = textWidth(annotation); left = Math.max(left, width / 2); right = Math.max(right, width / 2) }
+          for (const annotation of glyphAnnotations) { const width = textWidth(annotation); left = Math.max(left, width / 2); right = Math.max(right, width / 2); musicLeft = Math.max(musicLeft, width / 2); musicRight = Math.max(musicRight, width / 2) }
           const metrics = nativeNoteMetrics(pitches, writtenBeats, sustain)
           const top = metrics.top + glyphMarks.length * 14.64 + (glyphGraces.length ? 10 : 0)
           const bottom = metrics.bottom
           const id = ids.get(event)!
           const suffix = event.kind === 'tuplet' ? `-n${slot + 1}` : segment ? event.kind === 'rest' ? `-rest${segment + 1}` : `-sustain${segment + 1}` : ''
-          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
+          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, musicLeft, musicRight, lyricLeft, lyricRight, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
           result.glyphs.push(glyph); time += beats
         }
         if (event.kind === 'tuplet' && event.tuplet) event.pitches.forEach((pitch, slot) => append([pitch], event.beats / event.pitches.length, event.tuplet!.unitBeats, slot, 0, false))

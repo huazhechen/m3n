@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
+import { measureNativeHorizontal } from './native-horizontal.js'
+import { projectNativeScore } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
 
 // Stable reference music metrics, captured from the shipped Barlow font.
@@ -55,6 +57,23 @@ describe('native spacing compatibility with the frozen jpFun baseline', () => {
   it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
     const result = layout(readFileSync(new URL('../../../src/scores/huan_le_song_01.m3n', import.meta.url), 'utf8'), 600)
     expect(result.systems.map(system => system.measures.length)).toEqual([4, 4, 4, 5])
+  })
+
+  it('lets wide lyrics share the minimum note clearance instead of accumulating it', () => {
+    const textMeasurer: TextMeasurer = { measureText(text, style) {
+      return { w: text === '0' ? 11.154 : [...text].length * 20, h: style.fontSize, baseline: style.fontSize * 0.8 }
+    } }
+    const measure = (count: number) => {
+      const document = parseM3NDocument(`{4/4}\nN: ${Array(count).fill('1').join(' ')} |||\nL: ${Array(count).fill('(春风)').join(' ')}`)
+      const projection = projectNativeScore(document, { textMeasurer })
+      measureNativeHorizontal(projection.measures, { noteGapEm: 0.6, minimumNoteGapEm: 0.4 })
+      return projection.measures[0]!
+    }
+    const two = measure(2), three = measure(3)
+    // Each syllable needs 20px on either side, plus 1px safety. The
+    // remaining elastic margin is 2.2px; the reserved 4.4px fits inside it.
+    expect(three.natural - two.natural).toBeCloseTo(2 * (20 + 1 + 2.2), 5)
+    expect(three.minimum - two.minimum).toBeCloseTo(2 * (20 + 1), 5)
   })
 
 })

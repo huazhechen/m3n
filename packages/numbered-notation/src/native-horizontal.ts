@@ -43,7 +43,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions): Horizo
     for (const column of measure.columns) {
       const cells = column.glyphs.map(glyph => {
         const controls = glyph.controls.reduce((sum, control) => sum + control.width, 0)
-        return springCell(glyph.lane, glyph.left + controls, glyph.right, glyph.beats, 6, scale)
+        return springCell(glyph.lane, (glyph.musicLeft ?? glyph.left) + controls, glyph.musicRight ?? glyph.right, glyph.beats, 6, scale)
       })
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
@@ -66,6 +66,12 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions): Horizo
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
     const left = index === 0 ? 0 : cell.before * reserveRatio, right = index === items.length - 1 ? 0 : cell.after * reserveRatio
     cell.left += left; cell.right += right; cell.before -= left; cell.after -= right
+    const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
+    // Note clearance and lyric ink share physical space; do not add both widths.
+    if (glyph) {
+      cell.left = Math.max(cell.left, glyph.lyricLeft ?? 0)
+      cell.right = Math.max(cell.right, glyph.lyricRight ?? 0)
+    }
     if (!item.column) cell.beforeCollision = cell.afterCollision = 64
   }
   // Bar edges are hard boundaries for both neighbours, including each
