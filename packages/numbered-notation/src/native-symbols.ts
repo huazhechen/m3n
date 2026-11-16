@@ -3,6 +3,7 @@ import type { TextMeasurer } from './native-measure.js'
 import type { NativePitch, NativeControl } from './native-model.js'
 import { nativeKeyGeometry } from './native-key.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
+import { nativeOrnamentSvg } from './native-ornaments.js'
 
 export const xml = (value: string | number) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 export const n = (value: number) => Number(value.toFixed(4))
@@ -50,7 +51,8 @@ export class NativeSymbols {
 
   mark(mark: string, x: number, y: number): string {
     if (mark === 'fermata') return path(`M${n(x - em(7))} ${n(y - em(1))} Q${n(x)} ${n(y - em(15))} ${n(x + em(7))} ${n(y - em(1))}`) + circle(x, y - em(3))
-    if (mark === 'prall') return path(`M${n(x - em(7))} ${n(y - em(1))} ${nativeDesignPath('l3 -6 l4 6 l4 -6 l3 6')}`)
+    const ornament = nativeOrnamentSvg(mark)
+    if (ornament !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${ornament}</g>`
     if (mark === 'breath') return this.text('’', x, y, nativeStyle.text, 'serif', { 'text-anchor': 'middle' })
     return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? nativeStyle.music * 0.5 : nativeStyle.grace, 'serif', { 'text-anchor': 'middle', 'font-style': /^(p{1,3}|f{1,3}|mp|mf|sfz)$/.test(mark) ? 'italic' : undefined })
   }

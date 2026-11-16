@@ -28,18 +28,18 @@ describe('native articulation occupancy', () => {
     expect(stack.top).toBeCloseTo(-bottom)
   })
 
-  it('places a tuplet dynamic outside a later overlapping ornament', () => {
+  it('places a tuplet dynamic outside a later overlapping fingering', () => {
     const fallback = new DefaultTextMeasurer()
-    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 {p}([3 4 5:2]) (6{tr}) (7) |||'), {
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 {p}([3 4 5:2]) (6{f1}) (7) |||'), {
       width:320,paged:false,textMeasurer:{measureText(text,style) {
         const metrics = fallback.measureText(text,style)
-        return text === 'tr' ? {...metrics,w:220} : metrics
+        return text === '1' && style.fontFamily === 'serif' ? {...metrics,w:220} : metrics
       }},
     })
     const dynamicGlyph = score.projection.glyphs.find(g => g.markLayout?.some(m => m.name === 'p'))!
-    const ornamentGlyph = score.projection.glyphs.find(g => g.markLayout?.some(m => m.name === 'tr'))!
+    const ornamentGlyph = score.projection.glyphs.find(g => g.markLayout?.some(m => m.name === 'f1'))!
     const dynamic = dynamicGlyph.markLayout!.find(m => m.name === 'p')!
-    const ornament = ornamentGlyph.markLayout!.find(m => m.name === 'tr')!
+    const ornament = ornamentGlyph.markLayout!.find(m => m.name === 'f1')!
     expect(ornamentGlyph.x+ornament.left).toBeLessThan(dynamicGlyph.x+dynamic.right)
     expect(ornamentGlyph.x+ornament.right).toBeGreaterThan(dynamicGlyph.x+dynamic.left)
     expect(dynamic.top+dynamic.height).toBeLessThanOrEqual(ornament.top-nativeStyle.markGap+.001)
