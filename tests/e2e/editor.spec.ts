@@ -77,25 +77,27 @@ test('highlights numbered notation during playback with tuplets and a bass voice
   await page.getByRole('button', { name: '暂停' }).click()
 })
 
-test('keeps reading width and print width independent', async ({ page }) => {
+test('print reuses current display settings and offers three horizontal format buttons', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
-  await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'continuous')
-  await expect(page.locator('.score-paper svg').first()).toBeVisible({ timeout: 30_000 })
-  await expect(page.getByRole('slider', { name: '播放速度' })).toBeVisible()
-  const width = page.getByRole('slider', { name: '乐谱宽度' })
-  await width.fill('600')
-  await expect(width).toHaveValue('600')
-  await expect(page.locator('.control-slider-row').last().locator('output')).toHaveText('600px')
-
-  await page.getByRole('button', { name: '打印' }).click()
-  const exportDialog = page.getByRole('dialog')
-  await expect(exportDialog).toBeVisible()
-  await expect(exportDialog.getByRole('spinbutton', { name: '打印宽度' })).toHaveValue('800')
-  await exportDialog.getByRole('spinbutton', { name: '打印宽度' }).fill('700')
-  await expect(page.locator('.control-slider-row').last().locator('output')).toHaveText('600px')
-  await expect(exportDialog.locator('svg').first()).toBeVisible({ timeout: 30_000 })
-  await expect(exportDialog.getByRole('radio', { name: 'PDF（A4 分页）' })).toBeChecked()
-  await expect(exportDialog.locator('.export-preview-page').first()).toBeVisible({ timeout: 30_000 })
+  await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
+  await page.getByRole('slider', { name: '播放速度', exact: true }).fill('137')
+  for (const name of ['固定调记谱', '小节号', '分页']) await page.getByRole('switch', { name, exact: true }).click()
+  await page.getByRole('button', { name: '升高半音' }).click({ clickCount: 2 })
+  const paper = page.locator('.score-paper')
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await page.getByRole('button', { name: '打印', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
+  await expect(dialog.locator('input,select')).toHaveCount(0)
+  await expect(dialog.getByRole('group', { name: '导出格式' }).getByRole('button')).toHaveText(['SVG', 'PNG', 'PDF'])
+  await expect(dialog.locator('svg').first()).toHaveAttribute('width', '600')
+  expect(await dialog.locator('svg text').allTextContents()).toEqual(await paper.locator('svg text').allTextContents())
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 844 })
+    const rects = await dialog.locator('.export-actions button').evaluateAll(buttons => buttons.map(button => { const r = button.getBoundingClientRect(); return { y: r.y, left: r.left, right: r.right } }))
+    expect(new Set(rects.map(r => r.y)).size).toBe(1)
+    expect(rects.every(r => r.left >= 0 && r.right <= width)).toBe(true)
+  }
 })
 
 test('renders ScoreDocument through the vendored jpFun engine', async ({ page }) => {
@@ -162,22 +164,20 @@ test('orders numbered annotations above music and maps their clicks back to the 
   await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1{tr}'))
 })
 
-test('uses the numbered layout for export and honors excluding bass in SVG, PNG and PDF', async ({ page }, testInfo) => {
+test('uses the current numbered layout and includes visible bass in SVG, PNG and PDF', async ({ page }, testInfo) => {
   const { readFile } = await import('node:fs/promises')
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{title=导出验证} {2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了\nB: 1d 2d | 3d 4d |||')
   await page.getByRole('button', { name: '保存并预览' }).click()
   await expect(page.locator('.score-paper svg[data-engine="jpfun"]')).toBeVisible()
-  for (const [format, signature] of [['SVG 矢量图（连续）', '<svg'], ['PNG 图片（连续）', 'PNG'], ['PDF（A4 分页）', '%PDF']] as const) {
+  for (const [format, signature] of [['SVG', '<svg'], ['PNG', 'PNG'], ['PDF', '%PDF']] as const) {
     await page.getByRole('button', { name: '打印' }).click()
     const dialog = page.getByRole('dialog')
-    await dialog.getByRole('radio', { name: format, exact: true }).check()
-    await dialog.getByRole('checkbox', { name: '包含低音谱表' }).uncheck()
     await expect(dialog.locator('svg[data-engine="jpfun"]').first()).toBeVisible()
-    await expect(dialog.locator('[data-m3n-id="m3n-e-3"]')).toHaveCount(0)
+    await expect(dialog.locator('[data-m3n-id="m3n-e-3"]').first()).toBeVisible()
     await expect(dialog.locator('[data-m3n-id="m3n-e-5"]').first()).toBeVisible()
     const download = page.waitForEvent('download')
-    await dialog.getByRole('button', { name: '确认并下载' }).click()
+    await dialog.getByRole('button', { name: format }).click()
     const downloaded = await download
     const path = testInfo.outputPath(downloaded.suggestedFilename())
     await downloaded.saveAs(path)
@@ -186,7 +186,7 @@ test('uses the numbered layout for export and honors excluding bass in SVG, PNG 
     expect(bytes.subarray(0, 80).toString()).toContain(signature)
     if (format.startsWith('SVG')) {
       expect(bytes.toString()).toContain('data:font/ttf;base64,')
-      expect(bytes.toString()).not.toContain('data-m3n-id="m3n-e-3"')
+      expect(bytes.toString()).toContain('data-m3n-id="m3n-e-3"')
     }
   }
 })

@@ -74,11 +74,11 @@ test('numbered SVG and multipage PDF retain Chinese outlines and all written mea
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 64 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
   await page.getByRole('button', { name: '保存并预览', exact: true }).click()
-  for (const format of ['SVG 矢量图（连续）', 'PDF（A4 分页）']) {
+  for (const format of ['SVG', 'PDF']) {
+    await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
+    if (format === 'PDF') await page.getByRole('switch', { name: '分页', exact: true }).click()
     await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.getByRole('dialog')
-    await dialog.getByRole('radio', { name: format, exact: true }).check()
-    await dialog.getByRole('spinbutton', { name: '打印宽度' }).fill('600')
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
     const count = await dialog.locator('.export-preview-page').count()
     if (format.startsWith('PDF')) {
@@ -90,7 +90,7 @@ test('numbered SVG and multipage PDF retain Chinese outlines and all written mea
       expect(portable).toBe(true)
     }
     const downloading = page.waitForEvent('download')
-    await dialog.getByRole('button', { name: '确认并下载' }).click()
+    await dialog.getByRole('button', { name: format }).click()
     const download = await downloading
     const file = info.outputPath(download.suggestedFilename()); await download.saveAs(file)
     const bytes = await readFile(file)
@@ -149,12 +149,11 @@ test('mobile saving and export recover visibly from a failed local font request'
   })
   await page.getByRole('button', { name: '打印', exact: true }).click()
   const dialog = page.getByRole('dialog')
-  await dialog.getByRole('radio', { name: 'SVG 矢量图（连续）', exact: true }).check()
-  await dialog.getByRole('button', { name: '确认并下载', exact: true }).click()
+  await dialog.getByRole('button', { name: 'SVG', exact: true }).click()
   await expect(dialog.getByRole('alert')).toContainText('无法加载导出中文字体')
   await page.screenshot({ path: info.outputPath('mobile-export-retry.png') })
   const downloading = page.waitForEvent('download')
-  await dialog.getByRole('button', { name: '确认并下载', exact: true }).click()
+  await dialog.getByRole('button', { name: 'SVG', exact: true }).click()
   await (await downloading).saveAs(info.outputPath('手机保存导出.svg'))
   await expect(dialog).not.toBeVisible()
 })

@@ -26,7 +26,7 @@ export type EventBinding = {
   passes?: number[]
 }
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
-export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; transpose?: number; pageMargin?: number; systemGap?: number }
+export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; transpose?: number; tempoScale?: number; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 const pitchName = (token: string, shift = 0) => {
   const match = /^([0-7])([#b=]*)([ed]*)$/.exec(token)
@@ -156,7 +156,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           if (!options.fixedDo && event.key !== activeKey) { accidentals.clear(); controls.push(`@key(${quote(transposedKey(event.key, options.transpose))},size=16px)`); activeKey = event.key }
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
-          if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(tempoMark(event.tempo, event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)); activeTempo = event.tempo }
+          if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(tempoMark(event.tempo * (options.tempoScale ?? 1), event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)); activeTempo = event.tempo }
           // Native up members stack from the note outwards. Keep articulations
           // inside ornaments/fingerings, with expression marks outside both.
           const articulations: string[] = [], decorations: string[] = [], expressionMarks: string[] = []
@@ -355,7 +355,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const signatures = [
     `@key(${quote(options.fixedDo ? 'C4' : transposedKey(document.key, options.transpose))},size=16px)`,
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,
-    document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : '',
+    document.hasExplicitTempo ? tempoMark(document.tempo * (options.tempoScale ?? 1), document.meterCount, document.meterUnit) : '',
   ].filter(Boolean).join(' ')
   const orderLines: string[][] = []
   if (document.order) {

@@ -10,6 +10,8 @@ export type NumberedNotationRenderOptions = {
   fixedDo?: boolean
   /** Semitone shift for displayed keys or fixed-C pitches; leaves the source document intact. */
   transpose?: number
+  /** Display tempo marks at this ratio to the original score tempo. */
+  tempoScale?: number
   measureNumbers?: boolean
   includeBass?: boolean
   textMeasurer?: TextMeasurer
@@ -36,6 +38,7 @@ export class NumberedNotationScore {
   static create(document: ScoreDocument) { return new NumberedNotationScore(document) }
 
   render(options: NumberedNotationRenderOptions): string[] {
+    if (options.tempoScale !== undefined && (!Number.isFinite(options.tempoScale) || options.tempoScale <= 0)) throw new Error('显示速度倍率必须为正有限数值。')
     if (options.transpose !== undefined && !Number.isInteger(options.transpose)) throw new Error('谱面移调必须为整数半音数。')
     // All application layouts share the same minimum/natural spacing policy.
     options = { ...options, noteGapEm: options.noteGapEm ?? 0.6, minimumNoteGapEm: options.minimumNoteGapEm ?? (options.noteGapEm === undefined ? 0.4 : undefined) }

@@ -1,5 +1,5 @@
 import { presetScores, scorebookDefaultWidth } from '../lib/samples'
-import { renderScoreInto, type RenderPhase } from '../lib/render-score'
+import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
 import { loadSampledTone } from '@m3n/score-renderer/tones'
@@ -10,16 +10,13 @@ import {
   DEFAULT_PLAYBACK_TRANSPOSE,
   DEFAULT_SCORE_WIDTH,
   METRONOME_ENABLED_KEY,
-  PLAYBACK_BPM_KEY,
   clampPlaybackBpm,
-  readPlaybackBpm,
   PLAYBACK_TRANSPOSE_MAX,
   PLAYBACK_TRANSPOSE_MIN,
   TRANSPOSE_KEY,
   readRenderMode,
   writeRenderMode,
   type RenderMode,
-  SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
   readRendererSetting,
@@ -40,6 +37,7 @@ type ScoreRendererProps = {
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
   onActiveXmlId?: (xmlId: string | null) => void
+  onDisplaySettingsChange?: (settings: ScoreDisplaySettings) => void
   onLayoutWidthChange?: (width: number) => void
   onNoteClick?: (xmlId: string) => void
   onPaperBlur?: () => void
@@ -153,6 +151,7 @@ export function ScoreRenderer({
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
   onActiveXmlId,
   onLayoutWidthChange,
+  onDisplaySettingsChange,
   onNoteClick,
   onPaperBlur,
 }: ScoreRendererProps) {
@@ -179,11 +178,11 @@ export function ScoreRenderer({
   const [toneError, setToneError] = useState('')
   const [toneRetry, setToneRetry] = useState(0)
   const [playbackProgress, setPlaybackProgress] = useState(0)
-  const [layoutWidth, setLayoutWidth] = useState(() => (
-    playbackOnly ? DEFAULT_SCORE_WIDTH : compact ? 640 : readRendererSetting(SCORE_WIDTH_KEY, DEFAULT_SCORE_WIDTH, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX)
-  ))
-  const [bpmOverride, setBpmOverride] = useState<number | null>(() => compact ? null : readPlaybackBpm())
+  const defaultWidth = playbackOnly ? DEFAULT_SCORE_WIDTH : presetScores.find(score => score.slug === scoreId)?.scorebookWidth ?? scorebookDefaultWidth
+  const [layoutWidth, setLayoutWidth] = useState(defaultWidth)
+  const [bpmOverride, setBpmOverride] = useState<number | null>(null)
   const playbackBpm = bpmOverride ?? clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
+  const tempoScale = playbackBpm / (scoreDocument.tempo * scoreDocument.meterUnit / 4)
   const [playbackTranspose, setPlaybackTranspose] = useState(() => (
     compact ? DEFAULT_PLAYBACK_TRANSPOSE : readRendererSetting(
       TRANSPOSE_KEY,
@@ -199,7 +198,7 @@ export function ScoreRenderer({
   const bpmRef = useRef(playbackBpm)
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
-  const [fitWidth, setFitWidth] = useState(() => !playbackOnly && (compact || readRendererSetting('m3n:fit-width', 1, 0, 1) === 1))
+  const [fitWidth, setFitWidth] = useState(compact && !playbackOnly)
   const [fixedDo, setFixedDo] = useState(() => !playbackOnly && readRendererSetting('m3n:fixed-do', 0, 0, 1) === 1)
   const [measureNumbers, setMeasureNumbers] = useState(() => !playbackOnly && readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
   const [contentWidth, setContentWidth] = useState(0)
@@ -210,6 +209,14 @@ export function ScoreRenderer({
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
   const renderWidth = fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth
+  useEffect(() => {
+    setLayoutWidth(defaultWidth)
+    setBpmOverride(null)
+    setFitWidth(compact && !playbackOnly)
+  }, [scoreId, defaultWidth, compact, playbackOnly])
+  useEffect(() => {
+    onDisplaySettingsChange?.({ width: renderWidth, paged: renderMode === 'paged', fixedDo, measureNumbers, transpose: playbackTranspose, tempoScale })
+  }, [renderWidth, renderMode, fixedDo, measureNumbers, playbackTranspose, tempoScale, onDisplaySettingsChange])
   useEffect(() => { if (isSourceUpdating) stopPlaybackRef.current() }, [isSourceUpdating])
 
   useEffect(() => {
@@ -257,7 +264,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const { message } = await renderScoreInto(paper, {
-          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers, fixedDo, transpose: playbackTranspose,
+          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
         })
@@ -281,7 +288,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers, fixedDo, playbackTranspose])
+  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers, fixedDo, playbackTranspose, tempoScale])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -473,9 +480,7 @@ export function ScoreRenderer({
   const changeLayoutWidth = (value: number) => {
     const width = Math.max(SCORE_WIDTH_MIN, Math.min(SCORE_WIDTH_MAX, value))
     setFitWidth(false)
-    writeRendererSetting('m3n:fit-width', 0)
     setLayoutWidth(width)
-    if (!compact) writeRendererSetting(SCORE_WIDTH_KEY, width)
     onLayoutWidthChange?.(width)
   }
 
@@ -484,7 +489,6 @@ export function ScoreRenderer({
     const bpm = clampPlaybackBpm(value)
     bpmRef.current = bpm
     setBpmOverride(bpm)
-    if (!compact) writeRendererSetting(PLAYBACK_BPM_KEY, bpm)
     playerRef.current?.setTempo(bpm)
   }
 
@@ -527,7 +531,7 @@ export function ScoreRenderer({
         measureNumbers={measureNumbers}
         onMeasureNumbersChange={enabled => { setMeasureNumbers(enabled); writeRendererSetting('m3n:measure-numbers', enabled ? 1 : 0) }}
         onWidthChange={changeLayoutWidth}
-        onResetWidth={() => changeLayoutWidth(presetScores.find(score => score.slug === scoreId)?.scorebookWidth ?? scorebookDefaultWidth)}
+        onResetWidth={() => changeLayoutWidth(defaultWidth)}
         transpose={playbackTranspose}
         metronomeEnabled={metronomeEnabled}
         tone={playbackTone}
@@ -546,7 +550,6 @@ export function ScoreRenderer({
           setBpmOverride(null)
           const bpm = clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
           bpmRef.current = bpm
-          if (!compact) { try { localStorage.removeItem(PLAYBACK_BPM_KEY) } catch { /* Use the score tempo in memory. */ } }
           playerRef.current?.setTempo(bpm)
         }}
       />}

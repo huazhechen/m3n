@@ -36,7 +36,7 @@ test('three full-width slider rows and a fourth options row align on phones and 
   }
 })
 
-test('BPM and switches persist; speed reset leaves other settings intact', async ({ page }) => {
+test('BPM resets on reopening while switches persist; speed reset leaves other settings intact', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   const bpm = page.getByRole('slider', { name: '播放速度', exact: true })
   const speed = page.getByRole('slider', { name: '播放速度', exact: true })
@@ -53,7 +53,7 @@ test('BPM and switches persist; speed reset leaves other settings intact', async
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   expect(await page.locator('.score-paper text[font-size="10"]').count()).toBeGreaterThan(0)
   await page.reload()
-  await expect(bpm).toHaveValue('137')
+  await expect(bpm).toHaveValue(original)
   for (const name of ['节拍器', '小节号', '分页']) await expect(page.getByRole('switch', { name, exact: true })).toBeChecked()
   await page.getByRole('button', { name: '还原速度' }).click()
   await expect(bpm).toHaveValue(original)
@@ -208,4 +208,34 @@ test('transposition updates key signatures and fixed C notes without restarting 
   await expect.poll(digits).toEqual(['2', '4', '5', '5', '6', '1', '2', '2'])
   await expect(pause).toBeVisible()
   await pause.click()
+})
+
+
+test('switching songs restores each song’s original tempo and default width', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('m3n:playback-bpm', '137')
+    localStorage.setItem('m3n:score-width', '1000')
+  })
+  const originalUrl = '/scores/huan_le_song_01'
+  await page.goto(originalUrl)
+  const bpm = page.getByRole('slider', { name: '播放速度', exact: true })
+  const width = page.getByRole('slider', { name: '乐谱宽度', exact: true })
+  const originalBpm = await bpm.inputValue()
+  await expect(width).toHaveValue('640')
+  const nextUrl = await page.getByRole('link', { name: '下一曲', exact: true }).getAttribute('href')
+  await page.getByRole('link', { name: '下一曲', exact: true }).click()
+  const nextBpm = await bpm.inputValue()
+  const nextWidth = await width.inputValue()
+  await page.goto(originalUrl)
+  await bpm.fill('137')
+  await width.fill('1000')
+  await page.getByRole('link', { name: '下一曲', exact: true }).click()
+  await expect(page).toHaveURL(nextUrl!)
+  await expect(bpm).toHaveValue(nextBpm)
+  await expect(width).toHaveValue(nextWidth)
+  await bpm.fill('139')
+  await width.fill('1100')
+  await page.getByRole('link', { name: '上一曲', exact: true }).click()
+  await expect(bpm).toHaveValue(originalBpm)
+  await expect(width).toHaveValue('640')
 })

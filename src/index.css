@@ -964,9 +964,9 @@ a.action-button {
   background: rgb(31 35 38 / 38%);
 }
 
-.export-dialog form {
+.export-body {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr);
   height: 100%;
 }
 
@@ -983,64 +983,21 @@ a.action-button {
   font-size: 1.15rem;
 }
 
-.export-header span {
-  color: #5c6468;
-  font-size: 13px;
-}
-
 .export-content {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   min-height: 0;
 }
 
-.export-settings {
-  display: grid;
-  align-content: start;
-  gap: 20px;
-  padding: 20px;
-  border-right: 1px solid #d9e3df;
-}
-
-.export-width-summary {
-  margin: 0;
-  color: #5c6468;
-  font-size: 13px;
-}
-
-.export-width-summary output {
-  color: #285b5c;
-  font-weight: 600;
-}
-
-.export-dialog fieldset {
-  display: grid;
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.export-dialog legend {
-  margin-bottom: 8px;
-  color: #5c6468;
-  font-size: 13px;
-}
-
-.export-dialog label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #285b5c;
-  font-size: 14px;
-}
+.export-content > p { margin: 8px 20px; }
+.export-content .export-preview { flex: 1; }
 
 .export-actions {
-  display: flex;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  padding: 14px 20px;
-  border-top: 1px solid #d9e3df;
+  padding: 12px 20px;
+  border-bottom: 1px solid #d9e3df;
 }
 
 .export-preview {
@@ -1090,19 +1047,13 @@ a.action-button {
 }
 
 .export-actions button {
-  min-height: 34px;
+  min-height: 44px;
   border: 1px solid #b8cfca;
   border-radius: 4px;
   padding: 0 12px;
   color: #285b5c;
   background: #fffef9;
   cursor: pointer;
-}
-
-.export-actions button[type='submit'] {
-  border-color: #176e6e;
-  color: #ffffff;
-  background: #176e6e;
 }
 
 .export-actions button:disabled {
@@ -1181,18 +1132,7 @@ a.action-button {
     height: calc(100vh - 16px);
   }
 
-  .export-content {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
-  }
 
-  .export-settings {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    border-right: 0;
-    border-bottom: 1px solid #d9e3df;
-    padding: 14px 16px;
-  }
 }
 
 .render-message {

@@ -5,15 +5,9 @@ import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
 import { TopNav } from '../components/TopNav'
-import { presetScores } from '../lib/samples'
-import {
-  DEFAULT_SCORE_WIDTH,
-  SCORE_WIDTH_KEY,
-  SCORE_WIDTH_MAX,
-  SCORE_WIDTH_MIN,
-  readRendererSetting,
-} from '../lib/renderer-settings'
+import { presetScores, scorebookDefaultWidth } from '../lib/samples'
 import { useScoreSource } from '../hooks/useScoreSource'
+import type { ScoreDisplaySettings } from '../lib/render-score'
 import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
 
 export function ScoreReaderPage() {
@@ -21,12 +15,7 @@ export function ScoreReaderPage() {
   const score = presetScores.find((item) => item.slug === slug)
   const { source: scoreSource, status, error, retry } = useScoreSource(slug)
   const exportDialogRef = useRef<ScoreExportDialogRef>(null)
-  const [exportWidth, setExportWidth] = useState(() => readRendererSetting(
-    SCORE_WIDTH_KEY,
-    DEFAULT_SCORE_WIDTH,
-    SCORE_WIDTH_MIN,
-    SCORE_WIDTH_MAX,
-  ))
+  const [displaySettings, setDisplaySettings] = useState<ScoreDisplaySettings | null>(null)
   const [exportError, setExportError] = useState('')
   const analysis = useMemo(() => analyzeM3N(scoreSource ?? ''), [scoreSource])
   const { invalidMeasureIds: invalidMeasures } = analysis
@@ -78,14 +67,13 @@ export function ScoreReaderPage() {
 
           sourceMap={result.sourceMap}
           invalidMeasureIds={invalidMeasures}
-          onLayoutWidthChange={setExportWidth}
+          onDisplaySettingsChange={setDisplaySettings}
         />
         <ScoreExportDialog
           ref={exportDialogRef}
           scoreDocument={analysis.score}
           title={result.title}
-          width={exportWidth}
-          hasBassStaff={result.hasBassStaff}
+          settings={displaySettings ?? { width: score?.scorebookWidth ?? scorebookDefaultWidth, paged: false }}
           onError={setExportError}
         />
         {exportError && <p className="render-message" role="alert">{exportError}</p>}

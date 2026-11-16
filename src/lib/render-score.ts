@@ -9,6 +9,7 @@ export type ScoreRenderInput = {
   pageMargin?: number
   fixedDo?: boolean
   transpose?: number
+  tempoScale?: number
   measureNumbers?: boolean
   includeBass?: boolean
   sheetClass?: string
@@ -17,6 +18,8 @@ export type ScoreRenderInput = {
 }
 
 /** Screen, print preview and downloads use the same numbered engraving. */
+export type ScoreDisplaySettings = Pick<ScoreRenderInput, 'width' | 'paged' | 'fixedDo' | 'measureNumbers' | 'transpose' | 'tempoScale'>
+
 export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInput) {
   const check = () => input.signal?.throwIfAborted()
   check(); input.onPhase?.('loading-library')
@@ -25,7 +28,7 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   await prepareNumberedNotationFonts()
   check(); input.onPhase?.('layout')
   const score = NumberedNotationScore.create(input.scoreDocument)
-  const markup = score.render({ width: input.width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, pageMargin: input.pageMargin }).join('')
+  const markup = score.render({ width: input.width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin }).join('')
   check(); target.innerHTML = markup
   if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
   return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；') }

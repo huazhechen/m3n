@@ -57,3 +57,12 @@ it('transposes fixed C pitches including bass, grace and alternatives while keep
   expect(fixedDoPitch('b:4:n', 1)).toBe("n1'")
   expect(fixedDoPitch('c:4:n', -1)).toBe('n7,')
 })
+
+it('scales displayed tempo changes consistently without changing the performance', () => {
+  const document = parseM3NDocument('{4/4}{120qpm}\nN: 1 2 3 4 | {60qpm}5 6 7 1e |||')
+  const before = compileScorePerformance(document)
+  const projection = projectNumberedScore(document, { ...options, tempoScale: 0.5 })
+  expect(projection.source).toContain('@tempo(60,')
+  expect(projection.source).toContain('@tempo(30,')
+  expect(compileScorePerformance(document)).toEqual(before)
+})
