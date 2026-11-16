@@ -1,49 +1,81 @@
 import { BasicInstrument, BasicPreset, BasicSample, BasicSoundBank, GeneratorTypes, SampleTypes } from 'spessasynth_core'
 
 const SAMPLE_RATE = 28160
-const PERIOD = 256
-const PARTIALS = [1, 0.28, 0.14, 0.06, 0.025, 0.012]
 const timecents = (seconds: number) => Math.round(1200 * Math.log2(seconds))
+let cachedBank: ArrayBuffer | undefined
 
-/** Warm additive tone generated locally, with a gentle envelope and no downloaded samples. */
+/** Project a two-operator FM cycle onto safe harmonics before resampling it. */
+function fmCycle(period: number, index: number, ratio: number, harmonics: number) {
+  const resolution = 512
+  const fm = Float64Array.from({ length: resolution }, (_, i) => {
+    const phase = 2 * Math.PI * i / resolution
+    return Math.sin(phase + index * Math.sin(ratio * phase))
+  })
+  const cycle = new Float32Array(period)
+  for (let harmonic = 1; harmonic <= harmonics; harmonic++) {
+    const amplitude = fm.reduce((sum, value, i) => sum + value * Math.sin(2 * Math.PI * harmonic * i / resolution), 0) * 2 / resolution
+    if (Math.abs(amplitude) < 0.00001) continue
+    for (let i = 0; i < period; i++) cycle[i] = cycle[i]! + amplitude * Math.sin(2 * Math.PI * harmonic * i / period)
+  }
+  return cycle
+}
+
+/** Procedural FM electric piano: bright tine attack, mellow body, no downloaded samples. */
 export function createSyntheticSoundFont() {
+  if (cachedBank) return cachedBank.slice(0)
   const bank = new BasicSoundBank('sf2')
   const instrument = new BasicInstrument()
-  instrument.name = 'Warm additive'
+  instrument.name = 'Soft FM electric piano'
   instrument.globalZone.setGenerator(GeneratorTypes.sampleModes, 1)
-  instrument.globalZone.setGenerator(GeneratorTypes.attackVolEnv, timecents(0.012))
-  instrument.globalZone.setGenerator(GeneratorTypes.decayVolEnv, timecents(0.6))
-  instrument.globalZone.setGenerator(GeneratorTypes.sustainVolEnv, 30)
-  instrument.globalZone.setGenerator(GeneratorTypes.releaseVolEnv, timecents(0.12))
-  instrument.globalZone.setGenerator(GeneratorTypes.initialAttenuation, 100)
+  instrument.globalZone.setGenerator(GeneratorTypes.attackVolEnv, timecents(0.003))
+  instrument.globalZone.setGenerator(GeneratorTypes.decayVolEnv, timecents(2.5))
+  instrument.globalZone.setGenerator(GeneratorTypes.sustainVolEnv, 120)
+  instrument.globalZone.setGenerator(GeneratorTypes.releaseVolEnv, timecents(0.18))
+  instrument.globalZone.setGenerator(GeneratorTypes.initialAttenuation, 90)
 
-  // Reduce upper partials in the high registers to keep them below the Nyquist
-  // frequency at 44.1 kHz output. All bands keep the same fundamental and phase.
-  const bands = [
-    { min: 0, max: 83, partials: 6 },
-    { min: 84, max: 107, partials: 4 },
-    { min: 108, max: 119, partials: 2 },
-    { min: 120, max: 127, partials: 1 },
-  ]
-  for (const band of bands) {
-    const audio = Float32Array.from({ length: PERIOD }, (_, index) => {
-      const phase = index * Math.PI * 2 / PERIOD
-      return PARTIALS.slice(0, band.partials).reduce((sum, amplitude, harmonic) => sum + amplitude * Math.sin(phase * (harmonic + 1)), 0)
-    })
-    const peak = Math.max(...audio.map(Math.abs))
-    for (let index = 0; index < audio.length; index++) audio[index] = audio[index]! * 0.55 / peak
-    // 28160 / 256 = 110 Hz: A2, MIDI 45, with an exact periodic loop.
-    const sample = new BasicSample(`Warm additive ${band.partials}`, SAMPLE_RATE, 45, 0, SampleTypes.monoSample, 0, PERIOD)
-    sample.setAudioData(audio, SAMPLE_RATE)
-    bank.addSamples(sample)
-    instrument.createZone(sample).keyRange = { min: band.min, max: band.max }
+  // Octave-spaced A roots have exact integer periods at 28160 Hz. Each sample
+  // includes its changing attack, followed by two identical sustain-loop cycles.
+  for (let register = 0; register < 8; register++) {
+    const root = 33 + register * 12
+    const period = 512 / 2 ** register
+    const min = register === 0 ? 0 : root - 6
+    const max = register === 7 ? 127 : root + 5
+    const topFrequency = 440 * 2 ** ((max - 69) / 12)
+    const harmonics = Math.min(31, Math.floor(19845 / topFrequency), period / 2 - 1)
+    const sustain = fmCycle(period, 0.08, 1, harmonics)
+    const tine = fmCycle(period, 0.6, 14, harmonics)
+    const loopStart = Math.ceil(0.75 * SAMPLE_RATE / period) * period
+    const loopEnd = loopStart + 2 * period
+    const attackSeconds = loopStart / SAMPLE_RATE
+    for (const hard of [false, true]) {
+      const attack = fmCycle(period, hard ? 1.25 : 0.85, 1, harmonics)
+      const audio = Float32Array.from({ length: loopEnd }, (_, i) => {
+        const t = i / SAMPLE_RATE
+        const phase = i % period
+        // Finish the timbre transition before the loop, so there is no seam.
+        const gate = Math.max(0, Math.min(1, (attackSeconds - 0.12 - t) / 0.12))
+        const brightness = Math.exp(-t / 0.24) * gate
+        const bell = (hard ? 0.14 : 0.08) * Math.exp(-t / 0.15) * gate
+        return sustain[phase]! + brightness * (attack[phase]! - sustain[phase]!) + bell * tine[phase]!
+      })
+      const peak = audio.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0)
+      for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.55 / peak
+      const sample = new BasicSample(`FM EP ${root} ${hard ? 'hard' : 'soft'}`, SAMPLE_RATE, root, 0, SampleTypes.monoSample, loopStart, loopEnd)
+      sample.setAudioData(audio, SAMPLE_RATE)
+      bank.addSamples(sample)
+      const zone = instrument.createZone(sample)
+      zone.keyRange = { min, max }
+      zone.velRange = hard ? { min: 80, max: 127 } : { min: 0, max: 79 }
+    }
   }
   bank.addInstruments(instrument)
   const preset = new BasicPreset(bank)
-  preset.name = 'Warm additive'
+  preset.name = 'Soft FM electric piano'
   preset.createZone(instrument)
   bank.addPresets(preset)
-  bank.soundBankInfo.name = 'M3N Warm Additive Tone'
+  bank.soundBankInfo.name = 'M3N Soft FM Electric Piano'
   bank.flush()
-  return bank.writeSF2()
+  cachedBank = bank.writeSF2()
+  // AudioWorklet transfers can detach buffers, so keep the cached copy private.
+  return cachedBank.slice(0)
 }
