@@ -1,4 +1,5 @@
 import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeLyricInk } from './native-lyrics.js'
 import { measureNativeControl } from './native-controls.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeSvgInk } from './native-ink.js'
@@ -117,11 +118,11 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           let musicLeft = left, musicRight = right
           let lyricLeft = 0, lyricRight = 0
           for (const row of rows.values()) {
-            const width = textWidth(row.texts.join(''), nativeStyle.music * 0.82)
-            lyricLeft = Math.max(lyricLeft, width / 2 + 1 + (row.annotation ? textWidth(row.annotation, 12) + 5 : 0))
-            lyricRight = Math.max(lyricRight, width / 2 + 1)
-            left = Math.max(left, width / 2 + (row.annotation ? textWidth(row.annotation, 12) + 5 : 0))
-            right = Math.max(right, width / 2)
+            const ink = nativeLyricInk(row, options.textMeasurer)
+            lyricLeft = Math.max(lyricLeft, -ink.left + 1)
+            lyricRight = Math.max(lyricRight, ink.right + 1)
+            left = Math.max(left, -ink.left)
+            right = Math.max(right, ink.right)
           }
           const metrics = nativeNoteMetrics(pitches, writtenBeats, sustain, options.textMeasurer)
           const musicTop = metrics.top

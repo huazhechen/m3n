@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
-import { nativeLyricSvg } from './native-lyrics.js'
+import { nativeLyricInk, nativeLyricSvg } from './native-lyrics.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeSvgInk } from './native-ink.js'
 import { NativeSymbols, line } from './native-symbols.js'
@@ -52,6 +52,47 @@ describe('native lyric and music lower envelopes', () => {
     expect(underline).not.toBeNull()
     const top = Number(underline.getAttribute('y1')) - Number(underline.getAttribute('stroke-width')) / 2
     expect(top - size * 0.5).toBeCloseTo(size * 0.1, 4)
+  })
+
+  it('uses the lyric font for visit prefixes and reserves the complete painted fragment', () => {
+    const score = layoutNativeScore(parseM3NDocument('{2/4}\nN: ||: 1 2 :|||{x3}\nL1: 春天\nL2: 花开\nL3: {L2}'), options)
+    const glyph = score.projection.glyphs[0]!, measurer = new DefaultTextMeasurer()
+    const root = new DOMParser().parseFromString(nativeLyricSvg(glyph, 1, 0, 0, measurer), 'text/html')
+    const prefix = root.querySelector('[data-m3n-role="lyric-prefix"]')!
+    const lyric = root.querySelector('[data-m3n-role="lyric"]')!
+    expect(prefix.textContent).toBe('2.3.')
+    expect(prefix.getAttribute('font-size')).toBe(lyric.getAttribute('font-size'))
+    const ink = nativeSvgInk(root.body.innerHTML, measurer)
+    expect(glyph.lyricLeft).toBeGreaterThanOrEqual(glyph.x - ink.left + 1 - 0.001)
+    expect(glyph.lyricRight).toBeGreaterThanOrEqual(ink.right - glyph.x + 1 - 0.001)
+  })
+
+  it('aligns spoken text independently of surrounding punctuation and measures its asymmetry', () => {
+    const measurer = new DefaultTextMeasurer()
+    const plain = nativeLyricInk({ texts: ['春'], passes: undefined }, measurer)
+    const quoted = nativeLyricInk({ texts: ['“春！”'], passes: undefined }, measurer)
+    expect(quoted.left).toBeLessThan(plain.left)
+    expect(quoted.right).toBeGreaterThan(plain.right)
+    const score = layoutNativeScore(parseM3NDocument('{2/4}\nN: 1 2 |||\nL: 春 天'), { ...options, textMeasurer: measurer })
+    const glyph = score.projection.glyphs[0]!
+    glyph.lyrics.set(0, { texts: ['“春！”'], passes: undefined })
+    const root = new DOMParser().parseFromString(nativeLyricSvg(glyph, 0, 0, 0, measurer), 'text/html')
+    const lyric = root.querySelector('[data-m3n-role="lyric"]')!
+    const opening = measurer.measureText('“', { fontSize: 18.04 }).w
+    const body = measurer.measureText('春', { fontSize: 18.04 }).w
+    expect(Number(lyric.getAttribute('x')) + opening + body / 2).toBeCloseTo(glyph.x, 3)
+    const painted = nativeSvgInk(root.body.innerHTML, measurer)
+    expect(painted.left - glyph.x).toBeCloseTo(quoted.left, 3)
+    expect(painted.right - glyph.x).toBeCloseTo(quoted.right, 3)
+  })
+
+  it('reserves true text overhang and ignores empty alignment slots', () => {
+    const measurer = { measureText(text: string, style: { fontSize: number }) {
+      return { w: text.length * style.fontSize, advance: text.length * style.fontSize, inkLeft: -3, inkRight: text.length * style.fontSize + 4, h: 12, baseline: 10 }
+    } }
+    const ink = nativeLyricInk({ texts: ['gyp'], passes: undefined }, measurer)
+    expect(ink.right - ink.left).toBeCloseTo(3 * 18.04 + 7, 3)
+    expect(nativeLyricInk({ texts: [''], passes: undefined }, measurer)).toEqual({ left: 0, right: 0, top: 0, bottom: 0 })
   })
 
   it('unions the actually painted number and beams, including conservative offline font bounds', () => {
