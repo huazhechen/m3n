@@ -19,10 +19,10 @@ function inspect(source: string, width = 800, paged = false) {
 }
 
 describe('numbered full-beat sustain continuations', () => {
-  it('uses the same full-beat dashes in Maple alternatives as in the main melody', () => {
-    const source = readFileSync(resolve(import.meta.dirname, '../../../src/scores/feng_01.m3n'), 'utf8')
+  it('uses the same full-beat dashes in alternatives as in the main melody', () => {
+    const source = '{4/4}\nN: ||: (2e (1e 1e~)) 1e~ 1e (0 3e) :|||\nNs[2]: 1: (3e (2e 2e~)) 2e~ 2e (0 4e) |'
     const { document, projection, root } = inspect(source)
-    const alternative = document.alternatives![1]!.measure
+    const alternative = document.alternatives![0]!.measure
     const ids = scoreEventIds(document)
     // The two full beats after the sixteenth-note pickup sustain the same note.
     for (const event of alternative.events.slice(3, 5)) {

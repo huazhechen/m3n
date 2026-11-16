@@ -83,6 +83,8 @@ describe('bundled score corpus', () => {
       ? [...original.slice(0,61), ...original.slice(106,122), ...original.slice(260,276), ...original.slice(122,260), ...original.slice(276)]
         .filter(event=>event.referenceId!=='note6')
         .map(event=>event.referenceId==='note5' ? {...event,beats:0.5} : event)
+        // User unified the first verse's full-beat rest with the sustained later verses.
+        .map(event=>event.referenceId==='note35' ? {...event,tie:true} : event.referenceId==='note36' ? {...event,pitch:72} : event)
       : reference.id==='yan_hua_yi_leng'
       // Original B1 (through event 205), B2's last bar (299–301), then C.
       ? [...original.slice(0,206), ...original.slice(299)]
@@ -94,7 +96,11 @@ describe('bundled score corpus', () => {
     const indexes=reference.playbackEventIndexes.filter(index=>reference.id!=='feng' || index!==5)
     const expected=indexes.map(index=>{
       const {pitch,beats,tie}=reference.events[index]!
-      return {pitch,beats:reference.id==='feng' && index===4 ? 0.5 : beats,tie}
+      return {
+        pitch:reference.id==='feng' && index===35 ? 72 : pitch,
+        beats:reference.id==='feng' && index===4 ? 0.5 : beats,
+        tie:reference.id==='feng' && index===34 ? true : tie,
+      }
     })
     expect(referenceEvents(sources[reference.id]!,true)).toEqual(expected)
   })
@@ -129,7 +135,10 @@ describe('bundled score corpus', () => {
     expect(bars.flatMap((bar,index)=>bar.ending ? [[index,bar.ending]] : [])).toEqual([
       [6,'1'],[7,'1'],[8,'2'],[9,'2'],[10,'3'],[11,'3'],
     ])
-    expect(document.alternatives!.map(item=>item.passes)).toEqual([[2,3],[2,3]])
+    expect(document.alternatives!.map(item=>item.passes)).toEqual([[2,3]])
+    expect(bars[4]!.events.slice(2,5).map(event=>[event.pitches,event.beats,event.tie])).toEqual([
+      [['1e'],0.25,true],[['1e'],1,true],[['1e'],1,false],
+    ])
   })
 
   it('uses the reference Love Like Tide melody and joins each chorus pickup correctly', async () => {
