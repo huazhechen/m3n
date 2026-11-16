@@ -4,6 +4,7 @@ import { sustainContinuations } from './sustains.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { nativeAccidentalAdvance } from './native-accidentals.js'
+import { nativeMarkStack } from './native-marks.js'
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
@@ -119,7 +120,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           }
           for (const annotation of glyphAnnotations) { const width = textWidth(annotation); left = Math.max(left, width / 2); right = Math.max(right, width / 2); musicLeft = Math.max(musicLeft, width / 2); musicRight = Math.max(musicRight, width / 2) }
           const metrics = nativeNoteMetrics(pitches, writtenBeats, sustain)
-          const top = Math.max(metrics.top + glyphMarks.length * 14.64 + (glyphGraces.length ? 10 : 0), ...glyphControls.map(control => control.top))
+          const top = Math.max(nativeMarkStack(glyphMarks, metrics.top).top + (glyphGraces.length ? 10 : 0), ...glyphControls.map(control => control.top))
           const bottom = Math.max(metrics.bottom, ...glyphControls.map(control => control.bottom))
           const id = ids.get(event)!
           const suffix = event.kind === 'tuplet' ? `-n${slot + 1}` : segment ? event.kind === 'rest' ? `-rest${segment + 1}` : `-sustain${segment + 1}` : ''

@@ -2,7 +2,8 @@ import { displayedTempo, scoreCreditLines } from '@m3n/notation'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
-import { nativeBeamCount } from './native-note-metrics.js'
+import { nativeMarkStack } from './native-marks.js'
+import { nativeBeamCount, nativeNoteMetrics } from './native-note-metrics.js'
 import { nativeHeaderGeometry } from './native-header.js'
 import { nativeBarMetrics, nativeMeasureBars } from './native-horizontal.js'
 import { NUMBER_FONT_CSS } from './font-data.js'
@@ -73,9 +74,6 @@ class SvgPainter {
   }
 
   mark(mark: string, x: number, y: number): string {
-    if (mark === 'tip' || mark === 'brk') return path(`M${n(x - 3.5)} ${n(y - 7)} L${n(x + 3.5)} ${n(y - 7)} L${n(x)} ${n(y)} Z`, '#000')
-    if (mark === 'hold') return line(x - 4, y - 3, x + 4, y - 3, 1.5)
-    if (mark === 'str') return path(`M${n(x - 4)} ${n(y - 7)} L${n(x + 4)} ${n(y - 3.5)} L${n(x - 4)} ${n(y)}`)
     if (mark === 'fermata') return path(`M${n(x - 7)} ${n(y - 1)} Q${n(x)} ${n(y - 15)} ${n(x + 7)} ${n(y - 1)}`) + circle(x, y - 3)
     if (mark === 'prall') return path(`M${n(x - 7)} ${n(y - 1)} l3 -6 l4 6 l4 -6 l3 6`)
     if (mark === 'breath') return this.text('’', x, y, 16, 'serif', { 'text-anchor': 'middle' })
@@ -106,10 +104,16 @@ class SvgPainter {
       music += path(`M${n(start)} ${n(glyph.y - 29)} Q${n((start + glyph.x) / 2)} ${n(glyph.y - 39)} ${n(glyph.x - 4)} ${n(glyph.y - 22)}`)
       if (glyph.graces.length > 1) music += line(start - 4, glyph.y - 11, last + 4, glyph.y - 11, 1)
     }
-    let markY = glyph.y - 22 - Math.max(0, ...glyph.pitches.map(pitch => pitch.octave)) * 6 - (glyph.sustain ? 0 : (glyph.pitches.length - 1) * 29)
-    const inner = glyph.marks.filter(mark => ['tip', 'brk', 'hold', 'str'].includes(mark))
-    const outer = glyph.marks.filter(mark => !inner.includes(mark))
-    for (const mark of [...inner, ...outer]) { music += this.mark(mark, glyph.x, markY); markY -= 15 }
+    const markStack = nativeMarkStack(glyph.marks, nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain).top)
+    for (const mark of markStack.items) {
+      const x = glyph.x, y = glyph.y + mark.top
+      let shape: string
+      if (mark.name === 'tip' || mark.name === 'brk') shape = `<path${attrs({ d: `M${n(x - 2.5)} ${n(y)} h5 l-2.5 7 Z`, fill: '#000' })}/>`
+      else if (mark.name === 'hold') shape = `<rect${attrs({ x: x - 7.7538 / 2, y, width: 7.7538, height: mark.height, fill: '#000' })}/>`
+      else if (mark.name === 'str') shape = path(`M${n(x - 5.4)} ${n(y + 0.6)} L${n(x + 5.4)} ${n(y + 3)} L${n(x - 5.4)} ${n(y + 5.4)}`)
+      else shape = this.mark(mark.name, x, y + mark.height)
+      music += `<g${attrs({ 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${shape}</g>`
+    }
     if (glyph.event?.postfixes.includes('arp') && glyph.pitches.length > 1 && !glyph.sustain) {
       const x = glyph.x - 13, top = glyph.y - (glyph.pitches.length - 1) * 29 - 20
       let d = `M${n(x)} ${n(top)}`
