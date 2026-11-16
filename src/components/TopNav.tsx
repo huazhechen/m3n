@@ -20,11 +20,11 @@ export function TopNav({ actions }: { actions?: ReactNode }) {
       <div ref={menuRef} id={menuId} popover="auto" className="top-nav-menu" onToggle={event => setMenuOpen(event.newState === 'open')} onClick={event => {
         if ((event.target as Element).closest('a, button') && menuRef.current?.matches(':popover-open')) menuRef.current.hidePopover()
       }}>
-        {actions}
         <nav aria-label="主导航">
-        <NavLink to="/scores">乐谱库</NavLink>
-        <NavLink to="/docs">文档</NavLink>
+          <NavLink to="/scores">乐谱库</NavLink>
+          <NavLink to="/docs">文档</NavLink>
         </nav>
+        {actions}
       </div>
       <button type="button" className="top-nav-menu-toggle" aria-label="页面菜单" aria-expanded={menuOpen} aria-controls={menuId} popoverTarget={menuId}>
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
