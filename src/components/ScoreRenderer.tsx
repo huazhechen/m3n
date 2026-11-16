@@ -33,6 +33,7 @@ type ScoreRendererProps = {
   scoreId?: string
   compact?: boolean
   playbackOnly?: boolean
+  previewWidth?: number
   fitPagedToViewport?: boolean
   isSourceUpdating?: boolean
   activeXmlId?: string | null
@@ -147,6 +148,7 @@ export function ScoreRenderer({
   scoreId,
   compact = false,
   playbackOnly = false,
+  previewWidth,
   fitPagedToViewport = false,
   isSourceUpdating = false,
   activeXmlId,
@@ -204,7 +206,7 @@ export function ScoreRenderer({
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
-  const renderWidth = fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth
+  const renderWidth = previewWidth ?? (fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
   useEffect(() => {
     transposeRef.current = DEFAULT_PLAYBACK_TRANSPOSE
     setPlaybackTranspose(DEFAULT_PLAYBACK_TRANSPOSE)

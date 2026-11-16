@@ -21,6 +21,7 @@ type NotationEditorProps = {
   initialSource?: string
   embedded?: boolean
   playbackOnly?: boolean
+  previewWidth?: number
   simulatedSubmit?: boolean
   draftScope?: string
   scoreId?: string
@@ -32,6 +33,7 @@ export function NotationEditor({
   initialSource = defaultScore,
   embedded = false,
   playbackOnly = false,
+  previewWidth,
   simulatedSubmit = false,
   scoreId,
   draftScope,
@@ -154,6 +156,7 @@ export function NotationEditor({
           sourceMap={result.sourceMap}
           compact={embedded}
           playbackOnly={playbackOnly}
+          previewWidth={previewWidth}
           isSourceUpdating={isAnalyzing}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}

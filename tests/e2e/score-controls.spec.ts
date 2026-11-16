@@ -139,7 +139,7 @@ test('BPM controls actual playback; measure number changes preserve the player',
   expect(resources.filter(url => /\.sf3$/.test(url))).toHaveLength(0)
 })
 
-test('documentation examples use only transport and the default engraving width', async ({ page }) => {
+test('documentation examples reflow to a shared width with readable notes and no horizontal scrolling', async ({ page }) => {
   const fonts: string[] = []
   page.on('request', request => { if (/\.sf3/.test(request.url())) fonts.push(request.url()) })
   await page.addInitScript(() => {
@@ -165,8 +165,13 @@ test('documentation examples use only transport and the default engraving width'
   await controls.getByRole('switch', { name: '节拍器' }).click()
   await expect(controls.getByRole('switch', { name: '节拍器' })).toHaveAttribute('aria-checked', 'true')
   const paper = example.locator('.score-paper')
-  await expect(paper.locator('svg').first()).toHaveAttribute('width', '800')
-  await expect.poll(async () => (await paper.locator('svg').first().boundingBox())!.width).toBeCloseTo(800, 0)
+  await expect.poll(async () => paper.evaluate(element => {
+    const svg = element.querySelector('svg')!
+    const width = element.getBoundingClientRect().width
+    const renderedWidth = Number(svg.getAttribute('width'))
+    return Math.abs(renderedWidth - Math.max(320, Math.round(width)))
+  })).toBeLessThanOrEqual(1)
+  expect(await paper.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
   await expect(paper).toHaveAttribute('data-reading-fit', 'false')
   await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
   await expect(paper).toHaveAttribute('data-measure-numbers', 'false')
@@ -179,8 +184,13 @@ test('documentation examples use only transport and the default engraving width'
   await expect(controls.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
   await controls.getByRole('button', { name: '暂停', exact: true }).click()
   await page.setViewportSize({ width: 1280, height: 900 })
-  await expect(paper.locator('svg').first()).toHaveAttribute('width', '800')
-  await expect.poll(async () => (await paper.locator('svg').first().boundingBox())!.width).toBeCloseTo(800, 0)
+  await expect.poll(async () => paper.evaluate(element => {
+    const svg = element.querySelector('svg')!
+    const width = element.getBoundingClientRect().width
+    const renderedWidth = Number(svg.getAttribute('width'))
+    return Math.abs(renderedWidth - Math.max(320, Math.round(width)))
+  })).toBeLessThanOrEqual(1)
+  expect(await paper.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
   expect(fonts).toHaveLength(0)
 })
 

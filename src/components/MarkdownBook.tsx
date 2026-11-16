@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, FocusEvent, ReactElement, ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -22,11 +22,14 @@ type MarkdownBookProps = {
   documents: DocumentSource[]
 }
 
+const DocumentScoreWidth = createContext(800)
+
 function MarkdownCode(props: ComponentPropsWithoutRef<'code'>) {
+  const previewWidth = useContext(DocumentScoreWidth)
   const className = props.className ?? ''
   const value = String(props.children ?? '').replace(/\n$/, '')
   if (className.includes('language-m3n')) {
-    return <div className="document-example"><NotationEditor embedded playbackOnly initialSource={value} /><Link className="action-button" to="/editor" state={{ exampleSource: value }}>在编辑器试改</Link></div>
+    return <div className="document-example"><NotationEditor embedded playbackOnly previewWidth={previewWidth} initialSource={value} /><Link className="action-button" to="/editor" state={{ exampleSource: value }}>在编辑器试改</Link></div>
   }
   return <code className={className}>{props.children}</code>
 }
@@ -49,17 +52,16 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   const tocToggleRef = useRef<HTMLButtonElement>(null)
   const activeHeadingIdRef = useRef('')
   const articleRef = useRef<HTMLElement>(null)
+  const [scoreWidth, setScoreWidth] = useState(800)
   useEffect(() => {
     const article = articleRef.current
     if (!article) return
     const observer = new ResizeObserver(([entry]) => {
       const width = entry!.contentRect.width
       if (width <= 0) return
-      // All examples use an 800-unit score with 22-unit notes. Correct the
-      // viewport fit once for the whole document to keep notes at 22px.
-      const scale = 22 / (22 * width / 800)
-      article.style.setProperty('--document-score-width', `${width}px`)
-      article.style.setProperty('--document-score-scale', String(scale))
+      // Native notes are 22 units high: matching the layout width to the
+      // available width keeps the shared display scale near 1 (22px).
+      setScoreWidth(Math.max(320, Math.round(width)))
     })
     observer.observe(article)
     return () => observer.disconnect()
@@ -306,12 +308,14 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
         </nav>
       </aside>
       <article ref={articleRef} className="markdown-panel">
+          <DocumentScoreWidth.Provider value={scoreWidth}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={markdownComponents}
           >
             {escapeTableCodePipes(activeDocument.source)}
           </ReactMarkdown>
+          </DocumentScoreWidth.Provider>
         <button
           ref={tocToggleRef}
           type="button"

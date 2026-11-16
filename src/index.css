@@ -1568,8 +1568,3 @@ a.action-button {
   .editor-header-right .editor-action { width: 36px; height: 36px; padding: 0; }
   .editor-action span { display: none; }
 }
-
-.markdown-panel .document-example .score-paper > svg {
-  width: calc(var(--document-score-width, 800px) * var(--document-score-scale, 1));
-  max-width: none;
-}
