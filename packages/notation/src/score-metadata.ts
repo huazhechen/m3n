@@ -7,6 +7,7 @@ export type PresetScoreMetadata = {
   subtitle?: string
   singer?: string
   composer?: string
+  origin?: string
   keySignature: string
   timeSignature: string
   tempo: number
@@ -32,6 +33,7 @@ export function scoreMetadataFromSource(slug: string, source: string): PresetSco
     subtitle: score.subtitle || undefined,
     singer: score.singer || undefined,
     composer: score.composer || undefined,
+    origin: score.origin || undefined,
     keySignature: score.key,
     timeSignature: `${score.meterCount}/${score.meterUnit}`,
     tempo: score.tempo,
@@ -42,10 +44,10 @@ export function scoreMetadataFromSource(slug: string, source: string): PresetSco
       score.subtitle,
       score.singer,
       score.composer,
+      score.origin,
       score.lyricist,
       score.arranger,
       score.copyright,
-      score.source,
       score.note,
     ].filter(Boolean).join(' ')),
     diagnosticSeverity: scoreDiagnosticSeverity(analysis.diagnostics),

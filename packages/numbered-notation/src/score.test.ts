@@ -1367,3 +1367,10 @@ it('numbers the shared opening repeat without introducing a second barline', () 
   expect(numbered.source.match(/@bar\(/g)?.length).toBe(plain.source.match(/@bar\(/g)?.length)
   expect(render(document, { measureNumbers: true }).score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
 })
+
+it('renders a traditional tune origin without a composer label', () => {
+  const { root } = render('{title=民歌}{origin=爱尔兰传统民歌}{4/4}\nN: 1 2 3 4 |||')
+  const texts = [...root.querySelectorAll('text')].map(text => text.textContent)
+  expect(texts).toContain('爱尔兰传统民歌')
+  expect(texts).not.toContain('作曲：')
+})

@@ -91,8 +91,8 @@ export type ScoreDocument = {
   composer: string
   lyricist: string
   arranger: string
+  origin: string
   copyright: string
-  source: string
   note: string
   transpose: string
   key: string

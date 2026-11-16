@@ -2,7 +2,6 @@
 {singer=罗大佑}
 {composer=罗大佑}
 {lyricist=罗大佑}
-{source=https://mbd.baidu.com/newspage/data/dtlandingsuper?nid=dt_4205599030399202633}
 // 只保留人声旋律：两遍主歌后接副歌，再顺读末段与尾句；取消器乐和D.S.。
 {key=C} {2/4} {60qpm}
 N: ((3)) |

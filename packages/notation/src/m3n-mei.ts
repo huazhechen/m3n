@@ -30,6 +30,7 @@ export type MeiConversionResult = {
   subtitle: string
   singer: string
   composer: string
+  origin: string
   lyricist: string
   arranger: string
   hasBassStaff: boolean
@@ -432,7 +433,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const diagnostics = context.diagnostics ?? validateM3NDiagnostics(source, {}, document, { syntaxTree, projection })
   return {
     source, mei, diagnostics, sourceMap,
-    title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer,
+    title: document.title, subtitle: document.subtitle, singer: document.singer, composer: document.composer, origin: document.origin,
     lyricist: document.lyricist, arranger: document.arranger, hasBassStaff,
     headerMetadata,
     tempo: document.tempo,

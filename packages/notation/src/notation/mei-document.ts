@@ -52,7 +52,7 @@ export function meiDocumentXml(document: ScoreDocument, sectionContent: string, 
     xmlNode('titleStmt', {}, titleChildren),
     xmlNode('pubStmt'),
   ]
-  if (document.source) fileDescription.push(xmlNode('sourceDesc', {}, [xmlNode('source', {}, [xmlNode('bibl', {}, [document.source])])]))
+  if (document.origin) fileDescription.push(xmlNode('notesStmt', {}, [xmlNode('annot', { type: 'origin' }, [document.origin])]))
 
   const staffDefinitions: XmlChild[] = []
   const addStaff = (number: number, clefShape: string, clefLine: number) => staffDefinitions.push(

@@ -336,3 +336,8 @@ describe('validateM3N', () => {
     expect(result).toContain('多小节休止不能使用圆括号修饰')
   })
 })
+
+it('rejects the removed source metadata directive', () => {
+  expect(messages('{source=https://example.com}\nN: 1 2 3 4 |||')).toMatch(/source/)
+  expect(parseM3NDocument('N: 1 2 3 4 |||')).not.toHaveProperty('source')
+})

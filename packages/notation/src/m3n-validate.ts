@@ -45,7 +45,7 @@ type Block = {
 
 const INFO_FIELDS = new Set([
   'title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger',
-  'copyright', 'source', 'note', 'transpose', 'equal-measures', 'order',
+  'origin', 'copyright', 'note', 'transpose', 'equal-measures', 'order',
 ])
 
 const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'dim', 'lg', '8va', '8vb', 'inst'])

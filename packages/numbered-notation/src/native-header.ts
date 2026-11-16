@@ -43,7 +43,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const titleHeight = titleRows.at(-1)?.bottom ?? 0, subtitleHeight = subtitleRows.at(-1)?.bottom ?? 0
   const centerHeight = titleHeight + subtitleHeight + (titleHeight && subtitleHeight ? em(5) : 0)
   const credits = scoreCreditLines(document)
-  const creditRows = credits.map(text => { const colon = text.indexOf('：'); return { label: text.slice(0, colon + 1), name: text.slice(colon + 1) } })
+  const creditRows = credits.map(text => { const colon = text.match(/^(?:作词|作曲|编曲|演唱)：/) ? 2 : -1; return { label: text.slice(0, colon + 1), name: text.slice(colon + 1) } })
   const nameWidth = Math.max(0, ...creditRows.map(row => measurer.measureText(row.name, { fontSize: nativeStyle.annotation, fontFamily: 'serif' }).w))
   const labelWidth = Math.max(0, ...creditRows.map(row => measurer.measureText(row.label, { fontSize: nativeStyle.annotation, fontFamily: 'serif' }).w))
   let creditBottom = 0

@@ -19,6 +19,7 @@ type ScoreCardData = {
   hasBass: boolean
   singer?: string
   composer?: string
+  origin?: string
   searchText: string
   to: string
   onDelete?: () => void
@@ -35,6 +36,7 @@ function ScoreCard({
   hasBass,
   singer,
   composer,
+  origin,
   to,
   onDelete,
 }: ScoreCardData) {
@@ -55,8 +57,8 @@ function ScoreCard({
           {hasBass && <span className="score-tag">低</span>}
         </div>
       </div>
-      {(singer || composer) && <div className="score-card-footer">
-        <span className="score-composer">{singer || composer}</span>
+      {(singer || composer || origin) && <div className="score-card-footer">
+        <span className="score-composer">{singer || composer || origin}</span>
       </div>}
     </>
   )
@@ -114,6 +116,7 @@ function presetCardData(score: PresetScore): ScoreCardData {
     hasBass: score.hasBass,
     singer: score.singer,
     composer: score.composer,
+    origin: score.origin,
     searchText: score.searchText,
     to: `/scores/${score.slug}`,
   }
@@ -133,6 +136,7 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
     hasBass: metadata.hasBass,
     singer: metadata.singer,
     composer: metadata.composer,
+    origin: metadata.origin,
     searchText: metadata.searchText,
     to: `/scores/${score.id}`,
     onDelete,

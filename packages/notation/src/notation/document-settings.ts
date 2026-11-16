@@ -1,12 +1,12 @@
 import type { M3NSyntaxTree } from './syntax-tree.js'
 
-export const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'copyright', 'source', 'note', 'transpose'] as const
+export const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'origin', 'copyright', 'note', 'transpose'] as const
 
 /** Only opening directives establish defaults; subsequent directives belong to the event timeline. */
 export function documentSettings(tree: M3NSyntaxTree) {
   const metadata: Record<(typeof metadataNames)[number], string> = {
     title: '', subtitle: '', singer: '', composer: '', lyricist: '', arranger: '',
-    copyright: '', source: '', note: '', transpose: '',
+    origin: '', copyright: '', note: '', transpose: '',
   }
   const headerLines = new Set(tree.lines.filter(line => line.kind === 'header').map(line => line.line))
   let equalMeasures = false

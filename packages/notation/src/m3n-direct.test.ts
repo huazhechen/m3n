@@ -34,8 +34,8 @@ describe('direct M3N parser', () => {
     expect(event).toMatchObject({ tempo: 120 })
   })
 
-  it('retains the source information field', () => {
-    expect(parseM3NDocument('{source=First edition} {4/4} 1 2 3 4 |||').source).toBe('First edition')
+  it('retains the tune origin information field', () => {
+    expect(parseM3NDocument('{origin=爱尔兰传统民歌} {4/4} 1 2 3 4 |||').origin).toBe('爱尔兰传统民歌')
   })
 
   it('keeps lyrics scoped to their display section phrases', () => {

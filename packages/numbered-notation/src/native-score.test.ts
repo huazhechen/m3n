@@ -637,3 +637,10 @@ it.each([320,800])('prints ordered houses once without duplicating their shared 
   expect(root.body.textContent).toContain('2.3.') // The house bracket retains the visit labels.
   expect([...root.querySelectorAll('text[data-m3n-role="lyric"]')].map(node=>node.textContent).join('')).toBe('甲乙丙丁戊己')
 })
+
+it('renders a traditional tune origin without a composer label', () => {
+  const { root } = render('{title=民歌}{origin=爱尔兰传统民歌}{4/4}\nN: 1 2 3 4 |||')
+  const texts = [...root.querySelectorAll('text')].map(text => text.textContent)
+  expect(texts).toContain('爱尔兰传统民歌')
+  expect(texts).not.toContain('作曲：')
+})

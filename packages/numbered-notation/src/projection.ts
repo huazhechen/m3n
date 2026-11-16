@@ -347,7 +347,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     document.subtitle ? `@text(${quote(headingText(document.subtitle,16,400))},size=16px,align=center)` : '',
   ].filter(Boolean).join(' ')
   const creditLines = scoreCreditLines(document).map(line => {
-    const colon = line.indexOf('：')
+    const colon = line.match(/^(?:作词|作曲|编曲|演唱)：/) ? 2 : -1
     return { label: line.slice(0, colon + 1), name: line.slice(colon + 1) }
   })
   // Two native multiline text cells share their measured maximum widths.

@@ -17,4 +17,11 @@ describe('scoreMetadataFromSource', () => {
     expect(metadata.hasBass).toBe(true)
     expect(metadata.searchText).toBe('测试')
   })
+
+  it('indexes a tune origin independently of its composer', () => {
+    const metadata = scoreMetadataFromSource('folk', '{title=民歌}{origin=爱尔兰传统民歌}{composer=作曲者}\nN: 1 2 3 4 |||')
+    expect(metadata.origin).toBe('爱尔兰传统民歌')
+    expect(metadata.composer).toBe('作曲者')
+    expect(metadata.searchText).toContain('爱尔兰传统民歌')
+  })
 })

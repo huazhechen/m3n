@@ -163,7 +163,7 @@ describe('M3N to MEI conversion', () => {
   })
 
   it('creates a complete MEI score with source-linked notes', () => {
-    const result = m3nToMei('{title=Test} {subtitle=Sub} {composer=Composer} {lyricist=Lyricist} {arranger=Arranger} {copyright=Copyright} {source=First edition} {note=Note} {transpose=2}\n{key=D} {3/4} {90qpm}\n1 2 3 | 4^. |||')
+    const result = m3nToMei('{title=Test} {subtitle=Sub} {composer=Composer} {lyricist=Lyricist} {arranger=Arranger} {copyright=Copyright} {note=Note} {transpose=2}\n{key=D} {3/4} {90qpm}\n1 2 3 | 4^. |||')
 
     expect(result.diagnostics).toEqual([])
     expect(result.title).toBe('Test')
@@ -174,7 +174,6 @@ describe('M3N to MEI conversion', () => {
     expect(result.mei).toContain('<persName role="composer">Composer</persName>')
     expect(result.mei).toContain('<persName role="lyricist">Lyricist</persName>')
     expect(result.mei).toContain('<persName role="arranger">Arranger</persName>')
-    expect(result.mei).toContain('<source><bibl>First edition</bibl></source>')
     expect(result.subtitle).toBe('Sub')
     expect(result.composer).toBe('Composer')
     expect(result.lyricist).toBe('Lyricist')
@@ -625,4 +624,15 @@ describe('M3N to MEI conversion', () => {
 
     expect(result.mei).toContain('<expansion xml:id="m3n-expansion" plist="#m3n-segment-1 #m3n-segment-1 #m3n-segment-1 #m3n-segment-2 #m3n-segment-3 #m3n-segment-3 #m3n-segment-4 #m3n-segment-4"/>')
   })
+})
+
+it('exports tune origin separately from people', () => {
+  const result = m3nToMei('{title=民歌}{origin=爱尔兰传统民歌}{arranger=编配者}\nN: 1 2 3 4 |||')
+  expect(result.diagnostics).toEqual([])
+  expect(result.origin).toBe('爱尔兰传统民歌')
+  expect(result.composer).toBe('')
+  expect(result.mei).toContain('<annot type="origin">爱尔兰传统民歌</annot>')
+  expect(result.mei).not.toContain('<sourceDesc>')
+  expect(result.mei).not.toContain('role="composer"')
+  expect(result.headerMetadata.filter(item => item.side === 'right').map(item => item.value)).toEqual(['编曲：编配者', '爱尔兰传统民歌'])
 })

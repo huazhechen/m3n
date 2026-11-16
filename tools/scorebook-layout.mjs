@@ -17,7 +17,7 @@ export async function measure(source, width, spacing = {}) {
   const { showCredits = true, ...renderOptions } = spacing
   const scoreDocument = parseM3NDocument(source)
   if (!showCredits) {
-    for (const field of ['lyricist', 'composer', 'arranger', 'singer']) scoreDocument[field] = ''
+    for (const field of ['lyricist', 'composer', 'arranger', 'singer', 'origin']) scoreDocument[field] = ''
   }
   const score = NumberedNotationScore.create(scoreDocument)
   // Inject the same text family for measurements and SVG text.
