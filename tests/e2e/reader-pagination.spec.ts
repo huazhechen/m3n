@@ -77,3 +77,68 @@ test('narrow screens keep full-width vertical pages and mode changes restore con
   await expect(paper.locator('.score-page-sheet')).toHaveCount(0)
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '780')
 })
+
+test('a non-touch portrait window keeps desktop page fitting', async ({ page }) => {
+  await page.setViewportSize({ width: 744, height: 1133 })
+  await page.goto('/scores/local-pages-30')
+  await expect(page.locator('.score-paper')).toHaveAttribute('data-viewport-paged', 'true')
+  await expect(page.locator('.top-nav .nav-action-label').first()).toBeVisible()
+})
+
+test.describe('touch tablets', () => {
+  test.use({ hasTouch: true })
+
+  test('iPad mini pages use the full width in both orientations and in split view', async ({ page }, info) => {
+    await page.setViewportSize({ width: 744, height: 1133 })
+    await page.goto('/scores/local-pages-30')
+    const paper = page.locator('.score-paper')
+    await expect(paper.locator('.score-page-sheet')).toHaveCount(2)
+    for (const viewport of [
+      { width: 744, height: 1133 },
+      { width: 1133, height: 744 },
+      { width: 768, height: 1024 },
+      { width: 1024, height: 768 },
+      { width: 507, height: 1133 },
+    ]) {
+      await page.setViewportSize(viewport)
+      await expect(paper).not.toHaveAttribute('data-viewport-paged')
+      await expect(page.locator('.top-nav .nav-action-label').first()).toBeHidden()
+      await expect.poll(() => paper.evaluate(element => {
+        const sheets = [...element.querySelectorAll('.score-page-sheet')].map(sheet => sheet.getBoundingClientRect())
+        return {
+          fullWidth: Math.abs(sheets[0]!.width - (innerWidth - 18)) < 1,
+          stacked: sheets[1]!.top >= sheets[0]!.bottom + 15,
+          horizontalScroll: document.documentElement.scrollWidth > innerWidth,
+        }
+      })).toEqual({ fullWidth: true, stacked: true, horizontalScroll: false })
+    }
+    await page.setViewportSize({ width: 1133, height: 744 })
+    await page.screenshot({ path: info.outputPath('tablet-landscape-reader.png') })
+    await openScoreSettings(page)
+    await page.getByRole('switch', { name: '分页', exact: true }).click()
+    await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
+    await expect(paper.locator('svg').first()).toHaveAttribute('width', '780')
+    await expect.poll(async () => (await paper.locator('svg').first().boundingBox())!.width)
+      .toBeCloseTo(1133 - 18, 0)
+  })
+
+  test('tablet editor switches panes without losing input and library uses compact cards', async ({ page }) => {
+    await page.setViewportSize({ width: 1133, height: 744 })
+    await page.goto('/editor')
+    const editor = page.getByRole('textbox', { name: 'M3N source', exact: true })
+    const source = '{title=平板试改}{4/4}\nN: 1 2 3 4 |||'
+    await editor.fill(source)
+    await page.getByRole('tab', { name: '预览', exact: true }).click()
+    await expect(editor).toBeHidden()
+    await expect(page.locator('.editor-divider')).toBeHidden()
+    await expect(page.locator('.score-paper')).toContainText('平板试改')
+    await page.setViewportSize({ width: 744, height: 1133 })
+    await page.getByRole('tab', { name: '源码', exact: true }).click()
+    await expect(editor).toHaveText(source, { useInnerText: true })
+    await page.goto('/scores')
+    const card = page.locator('.score-list .score-card').first()
+    await expect(card).toBeVisible()
+    await expect(card.locator('.score-card-footer')).toBeHidden()
+    expect((await card.boundingBox())!.width).toBeCloseTo(744 - 18, 0)
+  })
+})

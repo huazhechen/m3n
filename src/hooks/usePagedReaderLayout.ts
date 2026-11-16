@@ -1,11 +1,12 @@
 import { useEffect, type RefObject } from 'react'
+import { MOBILE_LAYOUT_QUERY } from '../lib/responsive-layout'
 
 /** Fit printed pages into the desktop reader's remaining viewport without re-engraving. */
 export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>, enabled: boolean) {
   useEffect(() => {
     const paper = paperRef.current
     if (!paper || !enabled) return
-    const desktop = window.matchMedia('(min-width: 721px)')
+    const mobile = window.matchMedia(MOBILE_LAYOUT_QUERY)
     let frame = 0
     const clear = () => {
       delete paper.dataset.viewportPaged
@@ -13,7 +14,7 @@ export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>,
     }
     const update = () => {
       frame = 0
-      if (!desktop.matches) { clear(); return }
+      if (mobile.matches) { clear(); return }
       const pages = [...paper.querySelectorAll<SVGSVGElement>(':scope > .score-page-sheet > svg')]
       if (!pages.length) { clear(); return }
       const aspect = Math.max(...pages.map(page => page.viewBox.baseVal.height / page.viewBox.baseVal.width))
@@ -41,14 +42,14 @@ export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>,
     const mutation = new MutationObserver(schedule)
     mutation.observe(paper, { childList: true })
     window.addEventListener('resize', schedule)
-    desktop.addEventListener('change', schedule)
+    mobile.addEventListener('change', schedule)
     schedule()
     return () => {
       cancelAnimationFrame(frame)
       resize.disconnect()
       mutation.disconnect()
       window.removeEventListener('resize', schedule)
-      desktop.removeEventListener('change', schedule)
+      mobile.removeEventListener('change', schedule)
       clear()
     }
   }, [paperRef, enabled])

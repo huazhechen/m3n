@@ -44,7 +44,8 @@
   cursor: default;
 }
 
-@media (max-width: 720px) {
+/* Keep mobile queries in sync with MOBILE_LAYOUT_QUERY in lib/responsive-layout.ts. */
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .top-nav { min-height: 44px; margin-bottom: 6px; gap: 8px; }
   .top-nav nav,
   .top-nav .score-reader-actions,
@@ -1139,7 +1140,7 @@ a.action-button {
   text-align: right;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .editor-body {
     grid-template-columns: 1fr;
   }
@@ -1369,7 +1370,7 @@ a.action-button {
   backdrop-filter: blur(6px);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .book-layout {
     display: block;
     margin-top: 0;
@@ -1431,7 +1432,7 @@ a.action-button {
 
 }
 
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   main {
     width: min(100vw - 18px, 1440px);
     padding-top: 6px;
@@ -1502,7 +1503,7 @@ a.action-button {
 .embedded-editor .editor-tabs, .embedded-editor .editor-divider { display: none; }
 .embedded-editor .resizable-editor { display: flex; flex-direction: column; padding: 0; gap: 8px; }
 .embedded-editor .cm-content { min-height: 0; }
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .editor-tabs { display: flex; padding: 4px 8px; gap: 8px; }
   .editor-tabs button { min-height: 44px; flex: 1; background: #f0f2eb; border: 1px solid #d3d9ce; border-radius: 5px; }
   .editor-tabs [aria-selected="true"] { background: #dcece6; border-color: #2f6f73; }
@@ -1513,7 +1514,7 @@ a.action-button {
 }
 .score-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
 .score-list .score-card { max-width: none; }
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .score-list { grid-template-columns: 1fr; }
   .score-list .score-card { height: auto; min-height: 80px; align-items: center; }
   .score-list .score-card > div:first-child { width: 100%; }
@@ -1529,7 +1530,7 @@ a.action-button {
 .score-paper[data-reading-fit="true"][data-render-mode="paged"] { padding: 0; background: #f5f6f0; }
 .score-paper[data-reading-fit="true"] .score-page-sheet { aspect-ratio: auto; box-shadow: none; }
 .score-paper[data-reading-fit="true"] .score-page-sheet svg { position: relative; inset: auto; width: 100%; height: auto; }
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .editor-source-pane { height: 60vh; }
   .editor-container .resizable-editor[data-mobile-pane="source"] > .editor-preview-pane,
   .editor-container .resizable-editor[data-mobile-pane="preview"] > .editor-source-pane { display: none; }
@@ -1537,7 +1538,7 @@ a.action-button {
 .export-error { color: #9a3a25; padding: 8px 16px; margin: 0; }
 
 /* Mobile scores sit directly on the page; pagination remains in the engraving. */
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .score-reader > .score-renderer {
     margin-inline: 0;
   }
@@ -1564,7 +1565,7 @@ a.action-button {
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .editor-header-right .editor-action { width: 36px; height: 36px; padding: 0; }
   .editor-action span { display: none; }
 }

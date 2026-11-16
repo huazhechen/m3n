@@ -1,4 +1,5 @@
 import { EditorSplit } from './EditorSplit'
+import { MOBILE_LAYOUT_QUERY } from '../lib/responsive-layout'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatM3N, formatScoreDiagnostic } from '@m3n/notation'
 import defaultScore from '../scores/huan_le_song_01.m3n?raw'
@@ -74,7 +75,7 @@ export function NotationEditor({
     const textarea = textareaRef.current
     if (!mappedRange || !textarea) return
 
-    textarea.select(mappedRange.sourceStart, mappedRange.sourceEnd, !window.matchMedia('(max-width: 720px)').matches)
+    textarea.select(mappedRange.sourceStart, mappedRange.sourceEnd, !window.matchMedia(MOBILE_LAYOUT_QUERY).matches)
     updateCursorPosition(mappedRange.sourceEnd)
   }, [analysis.source, result.sourceMap, source, updateCursorPosition])
 
