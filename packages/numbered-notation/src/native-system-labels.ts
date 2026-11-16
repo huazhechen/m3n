@@ -1,4 +1,5 @@
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeStyle } from './native-style.js'
+import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import type { NativeSystem } from './native-layout.js'
 import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -17,19 +18,30 @@ export function placeNativeNavigation(system: NativeSystem) {
   }
 }
 
-export function placeNativeSystemLabels(system: NativeSystem, regions: NativeRegion[], measurer: TextMeasurer, measureNumbers: boolean) {
+/** Bar-owned labels are measured before endings, which must clear the whole
+ * bar attachment. The measure number stacks above an optional repeat count. */
+export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion[], measurer: TextMeasurer, measureNumbers: boolean) {
+  const lane = system.lanes.find(lane => lane.id === 'melody')
+  if (!lane) return
   const painter = new NativeSymbols(measurer)
-  const place = (laneId: string, svg: string, size: number) => {
-    const ink = nativeSvgInk(svg, measurer), lane = system.lanes.find(l => l.id === laneId)!
-    const top = Math.max(0, ...regions.filter(r => r.lane === laneId && r.right >= ink.left && r.left <= ink.right).map(r => r.top))
-    const y = -top - size * 0.4 - ink.bottom, measuredTop = -(y + ink.top)
-    lane.top = Math.max(lane.top, measuredTop)
-    regions.push({ lane: laneId, left: ink.left, right: ink.right, top: measuredTop })
-    system.decorationLayout ??= []; system.decorationLayout.push({ lane: laneId, svg: `<g transform="translate(0 ${n(y)})">${svg}</g>` })
-  }
-  for (const measure of system.measures) {
-    const glyphs = measure.columns.flatMap(c => c.glyphs), first = glyphs.find(g => g.lane === 'melody')
-    if (measureNumbers && !measure.continuation && first) place('melody', painter.text(String(measure.number ?? measure.index + 1), Math.max(measure.start + em(2), first.x - first.left), 0, nativeStyle.measureNumber, 'serif', { 'data-m3n-role': 'annotation', 'data-m3n-id': first.xmlId }), nativeStyle.measureNumber)
-    if (measure.lastFragment && (measure.source.repeatCount ?? 2) > 2) place('melody', painter.text(`×${measure.source.repeatCount}`, measure.end - em(3), 0, nativeStyle.small, 'serif', { 'text-anchor': 'end', 'data-m3n-role': 'repeat-count' }), nativeStyle.small)
+  for (const [index, measure] of system.measures.entries()) {
+    if (!measure.lastFragment) continue
+    const next = system.measures[index + 1]
+    const bar = nativeMeasureBarPositions(system.measures, index).filter(bar => bar.kind !== 'rptstart').at(-1)
+      ?? (next?.part === measure.part ? nativeMeasureBarPositions(system.measures, index + 1).find(bar => bar.kind === 'rptstart') : undefined)
+    if (!bar) continue
+    let top = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top
+    const place = (text: string, size: number, meta: Record<string, string>) => {
+      const raw = painter.text(text, bar.x, 0, size, 'serif', { 'text-anchor': 'middle', ...meta })
+      const ink = nativeSvgInk(raw, measurer), y = top - nativeStyle.music * 0.12 - ink.bottom
+      top = y + ink.top
+      lane.top = Math.max(lane.top, -top)
+      regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -top })
+      system.decorationLayout ??= []
+      system.decorationLayout.push({ lane: lane.id, svg: `<g transform="translate(0 ${n(y)})">${raw}</g>` })
+    }
+    if ((measure.source.repeatCount ?? 2) > 2) place(`×${measure.source.repeatCount}`, nativeStyle.repeatCount, { 'data-m3n-role': 'repeat-count' })
+    const first = measure.columns.flatMap(column => column.glyphs).find(glyph => glyph.lane === lane.id)
+    if (measureNumbers && first) place(String(measure.number ?? measure.index + 1), nativeStyle.measureNumber, { 'data-m3n-role': 'annotation', 'data-m3n-id': first.xmlId })
   }
 }

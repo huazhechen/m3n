@@ -12,6 +12,8 @@ import {
     type TemporalNodeBase,
     type VisualTemporalNode,
 } from "../temporal.js";
+import { RecordingPainter } from "../../render/recording.js";
+import { paintedCommandRegions } from "../../layout/painted-ink.js";
 import type { Painter, TextStyle } from "../../render/types.js";
 import type { PlaybackColumnOf, PlaybackFlow, PlaybackFlowHook } from "../../playback/types.js";
 import { repeatPass } from "../bar/index.js";
@@ -187,11 +189,11 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
         };
         const text = this.ast.passes.map(pass => `${pass}.`).join("");
         const metrics = context.textMeasurer.measureText(text, style);
-        const strokeWidth = Math.max(1, size * 0.055);
-        const halfStroke = strokeWidth / 2;
-        const hook = metrics.h * 1.2;
+        const strokeWidth = size * 0.055;
+        const labelHeight = metrics.inkBottom ?? metrics.h;
+        const hook = labelHeight * 1.2;
         // 标签在下折钩的高度里垂直居中
-        const textY = (hook - metrics.h) / 2 + metrics.baseline;
+        const textY = (hook - labelHeight) / 2 + metrics.baseline;
 
         // 中间行可能没有本房子的可见对象，仍要补满，所以按行号连续遍历
         const draws = Array.from({ length: lastLine - firstLine + 1 }, (_, offset) => {
@@ -214,24 +216,37 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
 
             // 换行断点跟随系统的视觉边界；空行没有主体时仍退到内容区页边
             const rawLeft = line !== firstLine ? this.lineEntryX(context, line, topTrack)
-                : leftBar?.layoutLine === line ? leftBar.box.x + leftBar.box.anchor + 5 // 5是防止前后房子竖线重合
+                : leftBar?.layoutLine === line ? leftBar.box.x + leftBar.box.anchor + size * (5 / 22) // 分离相邻房子的下折线
                     : head.box.x + (head.ports["body.left"]?.x ?? 0);
             const rawRight = line !== lastLine ? this.lineRightX(context, line)
                 : rightBar?.layoutLine === line ? rightBar.box.x + rightBar.box.anchor
                     : tail.box.x + (tail.ports["body.right"]?.x ?? tail.box.w);
             const left = Math.min(rawLeft, rawRight);
             const right = Math.max(rawLeft, rawRight);
-            return { left, right, lineY: hostTop - size * 0.2 - hook, line, track: topTrack };
+            const recording = new RecordingPainter();
+            const lineStyle = { stroke: "#000", strokeWidth };
+            recording.drawLine(left, 0, right, 0, lineStyle);
+            if (line === firstLine) {
+                recording.drawLine(left, 0, left, hook, lineStyle);
+                recording.drawText(text, left + size * 0.15, textY, style);
+            }
+            if (line === lastLine) recording.drawLine(right, 0, right, hook, lineStyle);
+            const pieces = recording.commands.flatMap(command => paintedCommandRegions(command, context.textMeasurer));
+            const inkLeft = Math.min(...pieces.map(piece => piece.x));
+            const inkTop = Math.min(...pieces.map(piece => piece.y));
+            const inkRight = Math.max(...pieces.map(piece => piece.x + piece.w));
+            const inkBottom = Math.max(...pieces.map(piece => piece.y + piece.h));
+            return { lineY: hostTop - size * 0.2 - inkBottom, line, track: topTrack,
+                recording, ink: { x: inkLeft, y: inkTop, w: inkRight - inkLeft, h: inkBottom - inkTop } };
         });
 
-        return { draws, style, text, strokeWidth, halfStroke, hook, textY, firstLine, lastLine };
+        return { draws };
     }
 
     createGeometry(context: AttachmentLayoutContext) {
         const measured = this.measure(context);
         if (!measured) return { regions: [], paint() {} };
-        const { draws, style, text, strokeWidth, halfStroke, hook, textY, firstLine, lastLine } = measured;
-        const size = this.ast.size;
+        const { draws } = measured;
         for (const draw of draws) {
             for (const peer of context.getAlignmentPeers?.(this, draw.line) ?? []) {
                 if (!(peer instanceof VoltaAttachment) || peer === this) continue;
@@ -240,24 +255,15 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
             }
         }
         return {
-            regions: draws.map(({ left, right, lineY, line, track }) => ({
-                x: left - halfStroke,
-                y: lineY - halfStroke,
-                w: right - left + strokeWidth,
-                h: hook + strokeWidth,
-                line,
-                track,
+            regions: draws.map(({ ink, lineY, line, track }) => ({
+                ...ink, y: lineY + ink.y, line, track,
             })),
             paint(painter: Painter) {
-                const lineStyle = { stroke: "#000", strokeWidth };
-                for (const { left, right, lineY, line } of draws) {
-                    painter.drawLine(left, lineY, right, lineY, lineStyle);
-                    // 只有房子真正开始和结束的那一端才下折
-                    if (line === firstLine) {
-                        painter.drawLine(left, lineY, left, lineY + hook, lineStyle);
-                        painter.drawText(text, left + size * 0.15, lineY + textY + 2, style);
+                for (const { recording, lineY } of draws) {
+                    for (const command of recording.commands) {
+                        if (command.kind === "line") painter.drawLine(command.x1, command.y1 + lineY, command.x2, command.y2 + lineY, command.style);
+                        else if (command.kind === "text") painter.drawText(command.text, command.x, command.y + lineY, command.style);
                     }
-                    if (line === lastLine) painter.drawLine(right, lineY, right, lineY + hook, lineStyle);
                 }
             },
         };

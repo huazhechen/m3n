@@ -2,6 +2,8 @@
 
 - Pagination always keeps natural system gaps, including full and explicitly closed pages. Removed the page-justification branch and the `@pagebreak` / `@pb` justification argument; page capacity determines breaks only. Repeated, parallel, blank-page, footer, playback and second-pass attachment behaviors remain covered.
 
+- Volta labels center their measured ink within the hooks, without the former fixed 2px baseline shift. Hooks derive from visible label height; strokes and the separation of adjacent hooks scale with the music size. Each fragment measures its actual line/hook/text commands, including label overhang and half strokes. Continuation fragments no longer reserve unpainted hooks or labels.
+
 - Header side-cell packing and collision prediction now share the union of layout advance and painted ink bounds. Measured overhang stays inside page margins and outside the configured item gap from either edge.
 
 - Automatic header side clearance reads individual painted primitives, including range octave dots and accidentals, instead of note-body boxes or whole composite rectangles. Text bearings and visible ink height participate in the same collision rule.
@@ -99,3 +101,5 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - Note digits center their measured ink on the musical anchor and octave dots after pitch resolution, including letter-name conversion and X. The shared zero-based note width and empty-note behavior remain intact.
 
 - Lyric visual tiers now share baselines derived from their actual token, prefix and row-name ink, rather than a surrogate M or nominal font-size advance. Complete descenders and measured underline strokes participate in inter-row clearance and frame-owned lyric stacking. Invisible compact slots and verse metadata retain their existing behavior.
+
+- Aligned ties and slurs clear painted zero-time controls and bar labels throughout their system, including text whose ink overlaps the arc from outside its temporal endpoint interval.

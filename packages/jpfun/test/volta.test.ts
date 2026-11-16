@@ -1,8 +1,10 @@
 import { test } from "node:test";
+import { paintedCommandRegions } from "../src/layout/painted-ink.js";
+import type { TextMeasurer } from "../src/render/types.js";
 
 import { compilePlayback } from "../src/playback/compile.js";
 import { secondsToScoreTime, scoreTimeToSeconds } from "../src/playback/time.js";
-import { assert, attachmentCommands, expectSnapshot, layoutOf, lower, nearly, playedNotes } from "./helpers.js";
+import { assert, attachmentCommands, compileValid, layoutOf, lower, nearly, playedNotes } from "./helpers.js";
 /** 用相对 C4 的半音数（C4 记作 1）表示演奏序列，断言失败时比 MIDI 号好读 */
 function played(source: string) {
     return playedNotes(compilePlayback(lower(source)))
@@ -243,9 +245,10 @@ test("跨谱面行时逐行补满，只有真正的首尾下折", () => {
     assert(blank.regions[1].w > blank.regions[0].w && blank.regions[1].w > blank.regions[2].w,
         "空白中间行仍应回退到完整内容区宽度");
 
-    expectSnapshot("volta-cross-line", house.regions.map(region =>
-        `line${region.line}=${region.x.toFixed(2)},${region.y.toFixed(2)},`
-        + `${region.w.toFixed(2)},${region.h.toFixed(2)}`).join("\n"));
+    const stroke = horizontal[1].style!.strokeWidth!;
+    assert(nearly(house.regions[1].h, stroke), "a middle fragment reserves only its visible horizontal stroke");
+    assert(house.regions[0].h > stroke && house.regions[2].h > stroke,
+        "endpoint fragments reserve their actual hooks and label");
 });
 
 test("后声明的跨行房子在空白中间行也排在外层", () => {
@@ -380,13 +383,38 @@ test("房子画出上方括线、两端下折和遍数标签", () => {
     const sharedLabel = attachmentCommands(shared.attachments[0]).find(command => command.kind === "text")!;
     assert(sharedLabel.text === "1.2.", `共用房子的标签应把遍数依次写出，实际 ${sharedLabel.text}`);
 
-    // 括线高度、下折长度、描边粗细和标签位置都是只能肘眼确认一次的视觉参数
-    const box = layout.attachments[0].box;
-    expectSnapshot("volta-bracket", [
-        `box=${box.x.toFixed(2)},${box.y.toFixed(2)},${box.w.toFixed(2)},${box.h.toFixed(2)}`,
-        `label=${labels[0].x.toFixed(2)},${labels[0].y.toFixed(2)},${labels[0].style.fontSize.toFixed(2)}`,
-        `lines=${lines.map(line =>
-            `${line.x1.toFixed(2)},${line.y1.toFixed(2)}-${line.x2.toFixed(2)},${line.y2.toFixed(2)}`)
-            .join(";")}`,
-    ].join("\n"));
+    assert(nearly(left.y2, right.y2), "endpoint hooks share the same length");
+    assert(nearly(layout.attachments[0].box.h, left.y2 - top.y1 + top.style!.strokeWidth!),
+        "the occupied height includes the hooks and their stroke");
+});
+
+
+const voltaMeasurer: TextMeasurer = { measureText(text, style) {
+    const size = style.fontSize;
+    return { w: text.length * size * .5, advance: text.length * size * .5,
+        h: size, baseline: size * .6, inkBottom: size * .7, inkLeft: -size * .2, inkRight: (text.length * .5 + .4) * size };
+} };
+
+test("volta label ink is centered inside measured hooks and wholly represented by occupancy", () => {
+    for (const fontsize of [11, 22, 44]) {
+        const { layout } = compileValid(`1@a @volta(a,a,1,2,3,4,5,6,7,8,9)`, {
+            variables: { fontsize, numberfont: "Fixture Numbers" }, textMeasurer: voltaMeasurer,
+        });
+        const house = layout.attachments[0], commands = attachmentCommands(house);
+        const label = commands.find(command => command.kind === "text")!;
+        const hook = commands.find(command => command.kind === "line" && command.x1 === command.x2)!;
+        const ink = paintedCommandRegions(label, voltaMeasurer)[0];
+        assert(label.style.fontFamily === "Fixture Numbers", "the label inherits the number font");
+        assert(nearly(ink.y + ink.h / 2, (hook.y1 + hook.y2) / 2), "center actual ink, without a fixed baseline correction");
+        const pieces = commands.flatMap(command => paintedCommandRegions(command, voltaMeasurer));
+        const region = house.regions[0];
+        for (const piece of pieces) {
+            assert(piece.x >= region.x - 1e-6 && piece.x + piece.w <= region.x + region.w + 1e-6
+                && piece.y >= region.y - 1e-6 && piece.y + piece.h <= region.y + region.h + 1e-6,
+                "every painted primitive, including long text overhang, belongs to occupancy");
+        }
+        assert(nearly(region.x, Math.min(...pieces.map(piece => piece.x)))
+            && nearly(region.x + region.w, Math.max(...pieces.map(piece => piece.x + piece.w))), "occupancy has no extra horizontal padding");
+        assert(nearly(hook.style!.strokeWidth! / fontsize, .055), "stroke scales with music size, including small sizes");
+    }
 });

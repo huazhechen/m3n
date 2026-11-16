@@ -14,6 +14,7 @@ export const nativeStyle = {
   subtitle: music * (16 / 22),
   credit: music * (14 / 22),
   small: music * (12 / 22),
+  repeatCount: music * (13 / 22),
   measureNumber: music * (10 / 22),
   stroke: music * (1.3 / 22),
   symbolStroke: music * (1.2 / 22),

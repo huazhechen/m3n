@@ -367,7 +367,9 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         // Endpoint ports stay on the musical head. Side ink, including endpoint
         // accidentals and grace groups, only moves a ribbon that actually meets it.
         const middle = segment.x + segment.w / 2;
-        const ink = columns.flat().filter(host => !host.T.isZero() && host.track === start.track)
+        // Zero-time controls and bar labels can extend into the ribbon even
+        // when their time column lies outside its endpoint interval.
+        const ink = context.lines[segment.line].columns.flat().filter(host => host.track === start.track)
             .flatMap(host => context.getHostInk?.(host) ?? []);
         const obstacles = ink.flatMap(piece => {
             const left = Math.max(segment.x, piece.x), right = Math.min(segment.x + segment.w, piece.x + piece.w);

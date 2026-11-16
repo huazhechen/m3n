@@ -1,8 +1,8 @@
 import { keyedDisplayPerformance } from './display-performance.js'
 import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
-import { placeNativeNavigation, placeNativeSystemLabels } from './native-system-labels.js'
-import { nativeVoltaSvg } from './native-volta.js'
+import { placeNativeNavigation, placeNativeBarLabels } from './native-system-labels.js'
+import { placeNativeVoltas } from './native-volta-layout.js'
 import { placeNativeLyrics } from './native-lyrics.js'
 import { placeNativeRelation, type NativeRelationLayout } from './native-relations.js'
 import { nativeMarkStack, nativeInnerMark, nativeMarkRank } from './native-marks.js'
@@ -224,6 +224,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
     relationBounds.set(system, regions)
   }
+  for (const system of systems) placeNativeBarLabels(system, relationBounds.get(system)!, measurer, Boolean(options.measureNumbers))
   // Populate peers before measuring any relation; adjacent groups share height.
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
@@ -274,32 +275,8 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
     relationBounds.set(system, regions)
   }
-  // A volta clears only its own horizontal range. Decorations outside
-  // that range must not raise the entire bracket and every following row.
-  for (const system of systems) if (system.volta) {
-    const lane = system.lanes.find(lane => lane.id === 'melody')
-    if (!lane) continue
-    const voltaBounds: NativeRegion[] = []
-    for (let begin = 0; begin < system.measures.length;) {
-      const ending = system.measures[begin]!.source.ending
-      if (!ending) { begin++; continue }
-      let end = begin + 1
-      while (end < system.measures.length && system.measures[end]!.source.ending === ending) end++
-      const measures = system.measures.slice(begin, end)
-      const glyphs = measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === lane.id)
-      const left = measures[0]!.start, right = measures.at(-1)!.end
-      const top = Math.max(barTop, ...glyphs.map(glyph => glyph.top),
-        ...(relationBounds.get(system) ?? []).filter(bound => bound.lane === lane.id && bound.right >= left && bound.left <= right).map(bound => bound.top))
-      const raw = nativeVoltaSvg(left + 2, right - 3, ending, measurer), ink = nativeSvgInk(raw, measurer)
-      const y = -top - nativeStyle.music * 0.2 - ink.bottom, measuredTop = -(y + ink.top)
-      lane.top = Math.max(lane.top, measuredTop)
-      system.voltas ??= []
-      system.voltas.push({ left: left + 2, right: right - 3, ending, top: measuredTop, svg: `<g transform="translate(0 ${y})">${raw}</g>` })
-      voltaBounds.push({ lane: lane.id, left: ink.left, right: ink.right, top: measuredTop })
-      begin = end
-    }
-    relationBounds.set(system, [...(relationBounds.get(system) ?? []), ...voltaBounds])
-  }
+  // Endings share measured geometry across wrapping and pagination.
+  placeNativeVoltas(systems, relationBounds, measurer)
   // Chord names participate in shared music height; local descriptions and
   // section headings are placed afterwards so they cannot enlarge peer rows.
   for (const system of systems) {
@@ -327,7 +304,6 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   }
   for (const system of systems) for (const lane of system.lanes) placeNativeLyrics(system, lane, measurer)
   for (const system of systems) placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true)
-  for (const system of systems) placeNativeSystemLabels(system, relationBounds.get(system)!, measurer, Boolean(options.measureNumbers))
   const gap = options.systemGap ?? nativeStyle.systemGap
   const blocks = [...header.blocks.map(block=>({height:block.height})), ...systems.map(system => ({
     height: placeNativeLanes(system, measurer, options.uniformSystemHeight),

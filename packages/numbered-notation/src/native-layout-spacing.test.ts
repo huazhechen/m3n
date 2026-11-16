@@ -36,9 +36,10 @@ describe('relation and ending clearance', () => {
     expect(plain.systems).toHaveLength(1)
     expect(outside.systems).toHaveLength(1)
     expect(inside.systems).toHaveLength(1)
-    const axis = (value: typeof plain) => value.systems[0]!.lanes[0]!.y
-    expect(axis(outside)).toBeCloseTo(axis(plain), 3)
-    expect(axis(inside)).toBeGreaterThan(axis(plain) + 10)
-    expect(outside.pages[0]!.height).toBeCloseTo(plain.pages[0]!.height, 3)
+    // The unrelated arc may itself set the system's top. Compare the ending's
+    // cached position relative to the music baseline, rather than page height.
+    const endingTop = (value: typeof plain) => value.systems[0]!.voltas![0]!.top
+    expect(endingTop(outside)).toBeCloseTo(endingTop(plain), 3)
+    expect(endingTop(inside)).toBeGreaterThan(endingTop(plain) + 10)
   })
 })
