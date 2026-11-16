@@ -570,3 +570,21 @@ test('head sideauto includes text overhang beyond its advance box', () => {
     const left = commands.find(c => c.text === 'L')!, right = commands.find(c => c.text === 'R')!;
     assert(nearly(left.y - 10 - (right.y + 4), 5), 'visible overhang must trigger the requested vertical clearance');
 });
+
+test('head side cells retain advance and measured overhang when packing from either edge', () => {
+    for (const side of ['left', 'right']) {
+        const result = compileScore(`@page(width=240px,left=20px,right=20px)
+            @head(${side}={{@text(A) @text(B)}},itemgap=5px)`, {
+            textMeasurer: { measureText(text) {
+                return { w: 10, advance: 10, h: 12, baseline: 9, inkBottom: 12,
+                    inkLeft: text === 'A' ? -3 : 0, inkRight: text === 'A' ? 15 : 10 };
+            } },
+        });
+        assert(result.diagnostics.length === 0, 'packing fixture must compile');
+        const texts = recordCommands(result.layout).filter(c => c.kind === 'text');
+        const a = texts.find(c => c.text === 'A')!, b = texts.find(c => c.text === 'B')!;
+        assert(nearly(b.x - (a.x + 15), 5), 'the requested gap belongs between painted edges');
+        if (side === 'left') assert(nearly(a.x - 3, 20), 'left overhang stays inside the margin');
+        else assert(nearly(b.x + 10, 220), 'rightmost ink meets the right margin');
+    }
+});

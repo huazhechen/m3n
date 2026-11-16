@@ -2,6 +2,8 @@
 
 - Pagination always keeps natural system gaps, including full and explicitly closed pages. Removed the page-justification branch and the `@pagebreak` / `@pb` justification argument; page capacity determines breaks only. Repeated, parallel, blank-page, footer, playback and second-pass attachment behaviors remain covered.
 
+- Header side-cell packing and collision prediction now share the union of layout advance and painted ink bounds. Measured overhang stays inside page margins and outside the configured item gap from either edge.
+
 - Automatic header side clearance reads individual painted primitives, including range octave dots and accidentals, instead of note-body boxes or whole composite rectangles. Text bearings and visible ink height participate in the same collision rule.
 
 - Grace wrappers explicitly forward the sounding host’s tie port even when that host has no specialized upper port. Aligned ties check measured paint primitives, including endpoint accidentals and grace groups, and recheck after outer-arc placement. Text ink bearings/advance are available independently of existing layout widths; stroke-only frames retain their empty interiors during collision measurement.

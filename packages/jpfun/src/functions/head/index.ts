@@ -218,6 +218,15 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
         return cells;
     }
 
+    /** Preserve text advance and any real ink outside the layout box. */
+    private cellBounds(members: readonly VisualTemporalNode[]) {
+        const pieces = members.flatMap(node => paintedNodeRegions(node, this.textMeasurer));
+        return {
+            left: Math.min(...members.map(node => node.box.x), ...pieces.map(piece => piece.x)),
+            right: Math.max(...members.map(node => node.box.x + node.box.w), ...pieces.map(piece => piece.x + piece.w)),
+        };
+    }
+
     /** Test individual painted lines, rather than the union of every author row. */
     private sideOffset() {
         const cells = this.sideCells();
@@ -233,8 +242,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
                 for (const cell of fromLeft ? rowCells : [...rowCells].reverse()) {
                     const members = cells.get(cell);
                     if (!members?.length) continue;
-                    const left = Math.min(...members.map(node => node.box.x));
-                    const right = Math.max(...members.map(node => node.box.x + node.box.w));
+                    const { left, right } = this.cellBounds(members);
                     const dx = cursor - (fromLeft ? left : right);
                     for (const node of members) {
                         const pieces = paintedNodeRegions(node, this.textMeasurer).map(piece => ({
@@ -296,12 +304,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
             ) {
                 const members = cells.get(rowCells[index]);
                 if (!members) continue;
-                let left = Infinity;
-                let right = -Infinity;
-                for (const member of members) {
-                    left = Math.min(left, member.box.x);
-                    right = Math.max(right, member.box.x + member.box.w);
-                }
+                const { left, right } = this.cellBounds(members);
                 const offset = cursor - (fromLeft ? left : right);
                 for (const member of members) member.box.x += offset;
                 // 复合单元先整体平移，再让其内部成员读取彼此的最终坐标
