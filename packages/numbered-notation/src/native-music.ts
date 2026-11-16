@@ -2,8 +2,14 @@ import { nativeStyle, nativeEm as em, nativeDesignPath } from './native-style.js
 import { NativeSymbols, attrs, n, line, path, circle } from './native-symbols.js'
 import { nativeGraceGeometry } from './native-grace.js'
 import { nativeMarkStack } from './native-marks.js'
-import { nativeNoteMetrics } from './native-note-metrics.js'
+import { nativeNoteMetrics, nativeBeamCount } from './native-note-metrics.js'
 import type { NativeGlyph } from './native-model.js'
+
+export function nativeBeamSvg(a: NativeGlyph, b: NativeGlyph): string {
+  let svg = ''
+  for (let beam = 0; beam < nativeBeamCount(a, b); beam++) svg += line(a.x + em(5.577), a.y + em(3.245) + beam * em(3.08), b.x - em(5.577), b.y + em(3.245) + beam * em(3.08), em(1.21))
+  return svg
+}
 
 export class NativeMusicPainter extends NativeSymbols {
   music(glyph: NativeGlyph): string {

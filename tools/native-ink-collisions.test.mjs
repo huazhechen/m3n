@@ -43,3 +43,18 @@ test('includes a section frame and consolidates a lyric fragment with its prefix
   assert.equal(lyric.labels, 1)
   assert.equal(lyric.collisions.length, 0)
 })
+
+test('checks music, beams, marks and relations across alternative lanes', async () => {
+  const main = '<g data-m3n-lane="melody"><g class="note"><rect x="20" y="20" width="20" height="20"/></g></g>'
+  for (const content of [
+    '<g class="note"><rect x="25" y="25" width="20" height="20"/></g>',
+    '<g data-m3n-role="beam"><line x1="15" y1="30" x2="60" y2="30" stroke="black" stroke-width="2"/></g>',
+    '<g data-m3n-role="mark" data-m3n-mark="tip"><circle cx="30" cy="30" r="3"/></g>',
+    '<g data-m3n-relation="slur"><path d="M20 35 Q30 15 40 35" fill="none" stroke="black" stroke-width="2"/></g>',
+  ]) {
+    const result = await check(main + `<g data-m3n-lane="alternative:2">${content}</g>`)
+    assert.equal(result.collisions.length, 1)
+  }
+  const clear = await check(main + '<g data-m3n-lane="alternative:2"><g class="note"><rect x="25" y="50" width="20" height="20"/></g></g>')
+  assert.equal(clear.collisions.length, 0)
+})

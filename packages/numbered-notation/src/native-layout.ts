@@ -17,6 +17,7 @@ export { wrapNativeText } from './native-header.js'
 import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
+import { placeNativeLanes } from './native-lanes.js'
 
 export type NativeRenderOptions = {
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
@@ -191,9 +192,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     for (const lane of laneNames) {
       const members = glyphs.filter(glyph => glyph.lane === lane)
       const rows = [...new Set(members.flatMap(glyph => [...glyph.lyrics].filter(([, row]) => row.texts.some(text => text.replaceAll('\u200B', '').trim())).map(([row]) => row)))].sort((a, b) => a - b)
-      const bodyBottom = Math.max(barBottom, ...members.map(glyph => glyph.bottom))
+      const hasBars = !lane.startsWith('alternative:')
+      const bodyBottom = Math.max(hasBars ? barBottom : 0, ...members.map(glyph => glyph.bottom))
       const lyricBottom = Math.max(...members.map(glyph => glyph.musicBottom ?? glyph.bottom))
-      system.lanes.push({ id: lane, y: 0, top: Math.max(barTop, ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
+      system.lanes.push({ id: lane, y: 0, top: Math.max(hasBars ? barTop : 0, ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
@@ -312,7 +314,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   for (const system of systems) placeNativeSystemLabels(system, relationBounds.get(system)!, measurer, Boolean(options.measureNumbers))
   const gap = options.systemGap ?? nativeStyle.systemGap
   const blocks = [{ height: headerHeight - gap }, ...systems.map(system => ({
-    height: system.lanes.reduce((sum, lane) => sum + lane.top + lane.bottom, (system.lanes.length - 1) * nativeStyle.laneGap),
+    height: placeNativeLanes(system, measurer, options.uniformSystemHeight),
     gapBefore: system.measures[0]?.extraGap ?? 0,
   }))]
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * 277 / 190) : Infinity,
@@ -321,13 +323,11 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   for (const [index, system] of systems.entries()) {
     const position = pagination.positions[index + 1]!
     system.top = position.top; system.page = position.page
-    let axis = position.top
     for (const lane of system.lanes) {
-      axis += lane.top; lane.y = axis
-      for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) if (glyph.lane === lane.id) glyph.y = axis
-      axis += lane.bottom + (lane === system.lanes.at(-1) ? 0 : nativeStyle.laneGap)
+      lane.y += position.top
+      for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) if (glyph.lane === lane.id) glyph.y = lane.y
     }
-    system.bottom = axis; pages[position.page]!.systems.push(system)
+    system.bottom = position.top + blocks[index + 1]!.height; pages[position.page]!.systems.push(system)
   }
   return { document, projection, systems, pages, relations, options, measurer, headerHeight, margin }
 }

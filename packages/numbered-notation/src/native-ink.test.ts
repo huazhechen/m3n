@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
-import { nativePathInk, nativeSvgInk } from './native-ink.js'
+import { nativePathInk, nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { NativeSymbols } from './native-symbols.js'
 import { layoutNativeScore } from './native-layout.js'
@@ -27,6 +27,10 @@ describe('native painted geometry', () => {
   it('unions translated primitives and their strokes', () => {
     expect(nativeSvgInk('<g transform="translate(10 20)"><circle cx="0" cy="0" r="2"/><path d="M0 0 L4 -6" stroke="black" stroke-width="2"/></g>', fallback))
       .toEqual({ left: 8, right: 15, top: 13, bottom: 22 })
+  })
+  it('preserves separate painted pieces through nested transforms', () => {
+    expect(nativeSvgPieces('<g transform="translate(10 20)"><circle cx="0" cy="0" r="2"/><g transform="translate(100 5)"><rect x="0" y="0" width="10" height="3" stroke="black" stroke-width="2"/></g></g>', fallback))
+      .toEqual([{ left: 8, right: 12, top: 18, bottom: 22 }, { left: 109, right: 121, top: 24, bottom: 29 }])
   })
   it('measures text style, baseline, advance, overhang, anchors and XML entities', () => {
     const painter = new NativeSymbols(measured)

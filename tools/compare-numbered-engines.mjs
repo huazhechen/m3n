@@ -11,9 +11,10 @@ import { createHash } from 'node:crypto'
 const root = resolve(import.meta.dirname, '..')
 const temp = mkdtempSync(join(tmpdir(), 'm3n-parity-'))
 const baselineRef = 'dbfda72'
+const candidateRef = process.argv.find(argument => argument.startsWith('--candidate-ref='))?.slice('--candidate-ref='.length)
 const baselineCommit = execFileSync('git', ['rev-parse', `${baselineRef}^{commit}`], { cwd: root, encoding: 'utf8' }).trim()
-const candidateCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()
-const candidateDirty = Boolean(execFileSync('git', ['status', '--porcelain', '--', 'packages/numbered-notation', 'tools/compare-numbered-engines.mjs'], { cwd: root, encoding: 'utf8' }).trim())
+const candidateCommit = execFileSync('git', ['rev-parse', `${candidateRef ?? 'HEAD'}^{commit}`], { cwd: root, encoding: 'utf8' }).trim()
+const candidateDirty = !candidateRef && Boolean(execFileSync('git', ['status', '--porcelain', '--', 'packages/numbered-notation', 'tools/compare-numbered-engines.mjs'], { cwd: root, encoding: 'utf8' }).trim())
 const runId = `${new Date().toISOString().replaceAll(':', '-')}-${process.pid}`
 const output = join(root, '.tmp', process.argv.includes('--self-check') ? 'numbered-parity-self-check' : 'numbered-parity', runId)
 const pixels = process.argv.includes('--pixels') || process.argv.includes('--require-parity')
@@ -34,11 +35,17 @@ try {
   writeFileSync(join(output, 'sources.json'), JSON.stringify(sources, null, 2))
   const archive = execFileSync('git', ['archive', baselineCommit, 'packages/jpfun', 'packages/numbered-notation', 'tsconfig.package.json'], { cwd: root, maxBuffer: 20 * 1024 * 1024 })
   execFileSync('tar', ['-xf', '-', '-C', temp], { input: archive })
+  const candidateRoot = candidateRef ? join(temp, 'candidate') : root
+  if (candidateRef) {
+    mkdirSync(candidateRoot)
+    const candidateArchive = execFileSync('git', ['archive', candidateCommit, 'packages/numbered-notation', 'tsconfig.package.json'], { cwd: root, maxBuffer: 20 * 1024 * 1024 })
+    execFileSync('tar', ['-xf', '-', '-C', candidateRoot], { input: candidateArchive })
+  }
   const entry = join(temp, 'entry.ts')
   writeFileSync(entry, [
     `export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
     `export {NumberedNotationScore,prepareNumberedNotationFonts} from ${JSON.stringify(join(temp, 'packages/numbered-notation/src/index.ts'))};`,
-    `export {NativeNumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/src/native-score.ts'))};`,
+    `export {NativeNumberedNotationScore} from ${JSON.stringify(join(candidateRoot, 'packages/numbered-notation/src/native-score.ts'))};`,
   ].join('\n'))
   await build({ configFile: false, logLevel: 'error', resolve: { alias: [
     { find: '@m3n/jpfun', replacement: join(temp, 'packages/jpfun/src/core.ts') },

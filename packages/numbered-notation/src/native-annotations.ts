@@ -1,9 +1,17 @@
-import { nativeStyle } from './native-style.js'
+import { nativeStyle, nativeEm as em } from './native-style.js'
+import { NativeSymbols, attrs } from './native-symbols.js'
 import type { NativeSystem } from './native-layout.js'
 import type { NativeAnnotation } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
 
 export type NativeRegion = { lane: string; left: number; right: number; top: number }
+
+/** Final annotation primitives, shared by painting and inter-lane clearance. */
+export function nativeAnnotationSvg(annotation: NativeAnnotation, y: number, painter: NativeSymbols, meta: Record<string, string | number | undefined> = {}): string {
+  const { text, x, baseline, width, height, top, kind } = annotation, framed = kind === 'section'
+  const label = painter.text(text, x, y + baseline, nativeStyle.annotation, 'serif', { 'text-anchor': 'middle', 'font-weight': framed ? 700 : 400, ...meta, 'data-m3n-role': 'annotation' })
+  return framed ? `<g data-m3n-role="annotation-frame"><rect${attrs({ x: x - width / 2 + em(0.5), y: y - top + em(0.5), width: width - em(1), height: height - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>${label}</g>` : label
+}
 
 /** Place attachments above only the music and earlier attachments they cover.
  * Coordinates are lane-relative; pagination and uniform spacing cannot move

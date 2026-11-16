@@ -35,18 +35,19 @@ export function auditNativeInkCollisions(system) {
     const nodes = node.matches(primitiveSelector) ? [node] : [...node.querySelectorAll(primitiveSelector)].filter(filter)
     const pieces = nodes.map(n => primitives.get(n)).filter(Boolean)
     if (!pieces.length) return
-    objects.push({ kind, label, id: node.getAttribute('data-m3n-id') ?? node.id, pieces,
+    objects.push({ kind, label, id: node.getAttribute('data-m3n-id') ?? node.id, lane: node.closest('[data-m3n-lane]')?.getAttribute('data-m3n-lane'), pieces,
       left: Math.min(...pieces.map(p => p.left)), right: Math.max(...pieces.map(p => p.right)), top: Math.min(...pieces.map(p => p.top)), bottom: Math.max(...pieces.map(p => p.bottom)) })
   }
   for (const node of system.querySelectorAll('g.note')) object(node, 'music', '', n => !n.closest('[data-m3n-role="mark"]'))
   for (const node of system.querySelectorAll('[data-m3n-role="bar"]')) object(node, 'bar', '')
+  for (const node of system.querySelectorAll('[data-m3n-role="beam"]')) object(node, 'music', 'beam')
   for (const node of system.querySelectorAll('[data-m3n-role="control"]')) object(node, 'control', node.getAttribute('data-m3n-control'))
   for (const node of system.querySelectorAll('[data-m3n-relation]')) {
     if (!node.parentElement.closest('[data-m3n-relation]')) object(node, 'relation', node.getAttribute('data-m3n-relation'))
   }
   for (const node of system.querySelectorAll('[data-m3n-role="mark"]')) {
     const name = node.getAttribute('data-m3n-mark')
-    if (!['tip', 'brk', 'hold', 'str'].includes(name)) object(node, 'label', name)
+    object(node, ['tip', 'brk', 'hold', 'str'].includes(name) ? 'music' : 'label', name)
   }
   const labels = new Set()
   for (const node of system.querySelectorAll('[data-m3n-role="annotation"],[data-m3n-role="lyric"],[data-m3n-role="lyric-prefix"],[data-m3n-role="navigation"],[data-m3n-role="repeat-count"],[data-m3n-role="alternative-passes"]')) {
@@ -76,7 +77,8 @@ export function auditNativeInkCollisions(system) {
   let candidates = 0
   for (let i = 0; i < objects.length; i++) for (let j = i + 1; j < objects.length; j++) {
     const a = objects[i], b = objects[j]
-    if (a.kind !== 'label' && b.kind !== 'label') continue
+    const crossLane = a.lane && b.lane && a.lane !== b.lane && (a.lane.startsWith('alternative:') || b.lane.startsWith('alternative:'))
+    if (a.kind !== 'label' && b.kind !== 'label' && !crossLane) continue
     const left = Math.max(a.left, b.left), right = Math.min(a.right, b.right), top = Math.max(a.top, b.top), bottom = Math.min(a.bottom, b.bottom)
     if (right <= left || bottom <= top) continue
     candidates++

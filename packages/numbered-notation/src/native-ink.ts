@@ -58,14 +58,13 @@ const decode = (text: string) => text.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|
  * primitives fail visibly rather than silently reserving a nominal font height.
  * Stroke expansion is conservative at corners (native paths use round joins).
  */
-export function nativeSvgInk(svg: string, measurer: TextMeasurer): NativeInk {
+export function nativeSvgPieces(svg: string, measurer: TextMeasurer): NativeInk[] {
   const visit = (node: TNode | string): NativeInk[] => {
     if (typeof node === 'string') return []
     const a = node.attributes, num = (key: string, fallback = 0) => Number(a[key] ?? fallback)
-    let b: NativeInk | undefined
+    let b: NativeInk | undefined, children: NativeInk[] = []
     if (node.tagName === 'g') {
-      const children = node.children.flatMap(visit)
-      if (children.length) b = unionNativeInk(children)
+      children = node.children.flatMap(visit)
     } else if (node.tagName === 'text') {
       const text = decode(node.children.filter(c => typeof c === 'string').join(''))
       const m = measurer.measureText(text, { fontSize: num('font-size', 16), fontFamily: a['font-family'] ?? 'serif', fontWeight: num('font-weight', 400), fontStyle: a['font-style'] === 'italic' ? 'italic' : 'normal' })
@@ -78,19 +77,24 @@ export function nativeSvgInk(svg: string, measurer: TextMeasurer): NativeInk {
       b = { left: num('cx') - rx, right: num('cx') + rx, top: num('cy') - ry, bottom: num('cy') + ry }
     } else if (node.tagName === 'line') b = { left: Math.min(num('x1'), num('x2')), right: Math.max(num('x1'), num('x2')), top: Math.min(num('y1'), num('y2')), bottom: Math.max(num('y1'), num('y2')) }
     else throw new Error(`Unsupported native primitive: ${node.tagName}`)
-    if (!b) return []
-    if (a.stroke && a.stroke !== 'none') {
-      const half = num('stroke-width', 1) / 2
-      b = { left: b.left - half, right: b.right + half, top: b.top - half, bottom: b.bottom + half }
-    }
-    if (a.transform) {
-      const match = /^translate\(\s*([-+.\deE]+)[ ,]+([-+.\deE]+)\s*\)$/.exec(a.transform)
-      if (!match) throw new Error(`Unsupported native transform: ${a.transform}`)
-      b = translateNativeInk(b, Number(match[1]), Number(match[2]))
-    }
-    return [b]
+    return (b ? [b] : children).map(b => {
+      if (a.stroke && a.stroke !== 'none') {
+        const half = num('stroke-width', 1) / 2
+        b = { left: b.left - half, right: b.right + half, top: b.top - half, bottom: b.bottom + half }
+      }
+      if (a.transform) {
+        const match = /^translate\(\s*([-+.\deE]+)[ ,]+([-+.\deE]+)\s*\)$/.exec(a.transform)
+        if (!match) throw new Error(`Unsupported native transform: ${a.transform}`)
+        b = translateNativeInk(b, Number(match[1]), Number(match[2]))
+      }
+      return b
+    })
   }
-  const boxes = parse(svg).flatMap(visit)
+  return parse(svg).flatMap(visit)
+}
+
+export function nativeSvgInk(svg: string, measurer: TextMeasurer): NativeInk {
+  const boxes = nativeSvgPieces(svg, measurer)
   if (!boxes.length) return { left: 0, right: 0, top: 0, bottom: 0 }
   return unionNativeInk(boxes)
 }

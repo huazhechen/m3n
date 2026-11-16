@@ -371,13 +371,14 @@ it('uses the native engine and embedded font with stable interactive measure str
 it('renders solely from ScoreDocument without reading its source text', () => {
     const document = parseM3NDocument('{2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了')
     const before = render(document).pages
-    document.source = 'unrelated content'
+    Object.defineProperty(document, 'source', { get() { throw new Error('engraving must not read source text') } })
     expect(render(document).pages).toEqual(before)
   })
 
 it('shares every MEI event ID, including bass and tuplet children', () => {
-    const { root, document } = render('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nB: 1 2 3 4 | 5 6 7 1e |||')
-    const mei = m3nToMei(document.source, document)
+    const source = '{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nB: 1 2 3 4 | 5 6 7 1e |||'
+    const { root, document } = render(source)
+    const mei = m3nToMei(source, document)
     for (const id of scoreEventIds(document).values()) {
       expect(mei.sourceMap.some(item => item.xmlId === id)).toBe(true)
       expect(root.querySelector(`[data-m3n-id="${id}"]`)).not.toBeNull()
