@@ -41,7 +41,6 @@
 | 天空之城 | [castle_in_the_sky_01.m3n](../src/scores/castle_in_the_sky_01.m3n) | 276 | 8/8 |
 | 虫儿飞 | [chong_er_fei_01.m3n](../src/scores/chong_er_fei_01.m3n) | 65 | 8/8 |
 | 当年情 | [dang_nian_qing_01.m3n](../src/scores/dang_nian_qing_01.m3n) | 151 | 8/8 |
-| 哆啦A梦 | [doraemon_01.m3n](../src/scores/doraemon_01.m3n) | 285 | 8/8 |
 | 哆唻咪 | [duo_lai_mi_01.m3n](../src/scores/duo_lai_mi_01.m3n) | 80 | 8/8 |
 | 花之舞 | [flower_dance_01.m3n](../src/scores/flower_dance_01.m3n) | 1155 | 8/8 |
 | 光阴的故事 | [guang_yin_de_gu_shi_01.m3n](../src/scores/guang_yin_de_gu_shi_01.m3n) | 112 | 8/8 |

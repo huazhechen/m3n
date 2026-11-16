@@ -1,7 +1,7 @@
 {
   "title": "循序渐进乐谱集",
   "edition": "第五十九版",
-  "sourceCount": 89,
+  "sourceCount": 88,
   "baseWidth": 780,
   "widthCandidates": [
     590
@@ -1728,26 +1728,6 @@
       ],
       "uniformSystemHeight": false,
       "maximumWidth": 622
-    },
-    {
-      "id": "doraemon",
-      "file": "doraemon_01.m3n",
-      "title": "哆啦A梦",
-      "section": "instrumental",
-      "group": "舞曲与动画主题",
-      "reason": "反复结构与较快八分音符",
-      "width": 678,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 678
     },
     {
       "id": "ru_guo_you_ni_zai",

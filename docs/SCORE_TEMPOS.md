@@ -86,7 +86,6 @@
 | [友谊地久天长](../src/scores/auld_lang_syne_01.m3n) | 2/4 | 92 | [Traditional · Auld Lang Syne（92 BPM）](https://songbpm.com/@traditional/auld-lang-syne-rU_NLDBXL_) | 传统歌曲有不同演奏速度；已有 92 与检索到的同名传统版本一致。 |
 | [半音阶口琴基本功](../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n) | 4/4 | 60 | 未确认同版本，或按练习用途判断 | 基本功练习起步速度，按训练用途保留，不以商业录音替换。 |
 | [啤酒桶波尔卡](../src/scores/beer_barrel_polka_01.m3n) | 2/4 | 132 | [Yvette Horner · Beer Barrel Polka（132 BPM）](https://songbpm.com/@yvette-horner/beer-barrel-polka--HUjkRgmi4) | Yvette Horner 版本 132，现有波尔卡速度合适。 |
-| [哆啦A梦](../src/scores/doraemon_01.m3n) | 4/4 | 120 | [カラオケまねきねこ · Doraemon no Uta - Karaoke Ōsugi Kumiko（123 BPM）](https://songbpm.com/@44kr44op44kq44kx44g44gt44gn44gt44gt/doraemon-no-uta-karaoke-osugi-kumiko-wap33) | 大杉久美子版卡拉 OK 约 123；保留接近原曲、便于演奏的 120。 |
 | [光阴的故事](../src/scores/guang_yin_de_gu_shi_01.m3n) | 6/8 | 95 | 快悦谱参考＋用户指定速度 | 按[牛有德在此制谱版](https://www.kuaiyuepu.com/jianpu/O7rJs1JtL.html)重抄演唱旋律；用户指定四分音符95 qpm，按现有显示规则谱面为八分音符=190。 |
 | [红河谷](../src/scores/hong_he_gu_01.m3n) | 4/4 | 92 | [Liu Fang · The Romance Of The Red River Valley（86 BPM）](https://songbpm.com/@liu-fang/the-romance-of-the-red-river-valley) | 传统民歌录音版本不同（本次检索 86、99 等）；保留适合当前编配的中慢速 92。 |
 | [红莓花儿开](../src/scores/hong_mei_hua_er_kai_01.m3n) | 2/4 | 96 | [Ирина Шведова · Ой цветёт калина（141 BPM）](https://songbpm.com/@irina-shvedova/oy-cvetyot-kalina-go7yAOQX_g) | 俄语版本测速 77–141，未确定与本谱相同的编配；保留已有歌唱性中速。 |
