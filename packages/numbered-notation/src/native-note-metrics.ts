@@ -25,3 +25,8 @@ export function nativeBeamCount(a: import('./native-model.js').NativeGlyph, b: i
   if (a.event?.kind === 'tuplet' ? a.event !== b.event : Math.floor((a.time + 1e-8) / group) !== Math.floor((b.time + 1e-8) / group)) return 0
   return Math.max(0, -Math.floor(Math.log2(Math.max(a.writtenBeats, b.writtenBeats))))
 }
+
+/** Octave dots need an extra 0.05em between their musical bounds and an arc port. */
+export function nativeTiePortTop(glyph: { top: number; sustain: boolean; pitches: NativePitch[] }): number {
+  return glyph.top + (!glyph.sustain && glyph.pitches.some(pitch => pitch.octave > 0) ? 22 * 0.05 : 0)
+}

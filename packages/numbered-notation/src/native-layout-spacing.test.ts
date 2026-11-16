@@ -18,6 +18,14 @@ describe('relation and ending clearance', () => {
     expect(slur.level).toBeGreaterThan(tie.level)
   })
 
+  it('leaves clearance above octave dots at arc endpoints without affecting bare notes', () => {
+    const layout = (notes: string) => layoutNativeScore(parseM3NDocument(`{2/4}\nN: {lg}${notes}{/} |||`), { width: 800, paged: false })
+    const plain = layout('1 2'), high = layout('1e 2e'), higher = layout('1ee 2ee')
+    const top = (value: typeof plain) => value.systems[0]!.lanes[0]!.top
+    expect(top(high) - top(plain)).toBeCloseTo(22 * (0.23 + 0.05), 3)
+    expect(top(higher) - top(high)).toBeCloseTo(22 * 0.23, 3)
+  })
+
   it.each([false, true])('raises an ending only for decorations in its own range, paged=%s', paged => {
     const layout = (before: string, ending: string) => layoutNativeScore(parseM3NDocument(
       `{2/4}\nN: ${before} |\n---V1\nN: ${ending} :||\n---V2\nN: 5 6 |||`,

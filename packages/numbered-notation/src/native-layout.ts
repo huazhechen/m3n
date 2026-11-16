@@ -1,3 +1,4 @@
+import { nativeTiePortTop } from './native-note-metrics.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
@@ -187,7 +188,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
         const ratio = Math.min(1, Math.abs(relation.last.x - relation.first.x) / 55)
         const height = relation.kind === 'tie' || relation.kind === 'slur' ? first !== last ? 9.9 : 11 * ratio * (2 - ratio) : relation.kind === 'tuplet' ? 19 : 14
         const covered = selected.length ? selected : members
-        const top = Math.max(0, ...covered.map(glyph => glyph.top)) + height + relation.level * 3.3 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22
+        const top = Math.max(0, ...covered.map(glyph => relation.kind === 'tie' || relation.kind === 'slur' ? nativeTiePortTop(glyph) : glyph.top)) + height + relation.level * 3.3 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22
         lane.top = Math.max(lane.top, top)
         const bounds = relationBounds.get(system) ?? []
         bounds.push({ lane: lane.id, left: Math.min(...covered.map(glyph => glyph.x)), right: Math.max(...covered.map(glyph => glyph.x)), top })
