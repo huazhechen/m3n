@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  min-height: 58px;
+  min-height: 48px;
   border-bottom: 1px solid #d9dbd4;
 }
 
@@ -14,10 +14,17 @@
 .top-nav.has-actions .score-reader-actions { margin: 0; justify-content: center; gap: 16px; }
 .top-nav.has-actions .score-reader-tools { margin-left: 0; }
 .top-nav.has-actions .score-reader-actions .action-button { min-height: 32px; padding: 0 10px; font-size: 13px; border-radius: 6px; }
+.top-nav-menu-toggle { display: none; }
+@media (min-width: 721px) { .top-nav-menu { display: contents; } }
 
 @media (max-width: 720px) {
-  .top-nav.has-actions { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0; }
-  .top-nav.has-actions .score-reader-actions { grid-column: 1 / -1; order: 1; justify-content: space-between; margin: 10px 0; }
+  .top-nav.has-actions { display: flex; }
+  .top-nav-menu-toggle { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 1px solid #cfd3ca; border-radius: 6px; color: #315b5d; background: #fff; cursor: pointer; }
+  .top-nav-menu-toggle:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
+  .top-nav-menu { inset: 68px 12px auto auto; width: min(300px, calc(100vw - 24px)); max-height: calc(100dvh - 84px); overflow: auto; box-sizing: border-box; margin: 0; padding: 10px; border: 1px solid #d3dfd9; border-radius: 10px; color: #244e50; background: #fff; box-shadow: 0 6px 24px rgb(31 35 38 / 18%); }
+  .top-nav-menu:popover-open { display: grid; gap: 8px; }
+  .top-nav.has-actions .score-reader-actions { display: grid; gap: 6px; margin: 0; }
+  .top-nav-menu .score-reader-navigation, .top-nav-menu .score-reader-tools, .top-nav .top-nav-menu nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .top-nav.has-actions .score-reader-actions .action-button { min-height: 36px; }
 }
 

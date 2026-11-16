@@ -1,0 +1,6 @@
+import type { Page } from '@playwright/test'
+
+export async function openScoreSettings(page: Page) {
+  const panel = page.getByRole('dialog', { name: '乐谱设置', exact: true })
+  if (!await panel.isVisible()) await page.getByRole('button', { name: '乐谱设置', exact: true }).click()
+}

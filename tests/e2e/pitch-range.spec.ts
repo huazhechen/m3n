@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { openScoreSettings } from './score-settings'
 
 test('header range uses numbered pitches and follows fixed do and transposition', async ({ page }, info) => {
   await page.goto('/editor')
@@ -11,20 +12,24 @@ test('header range uses numbered pitches and follows fixed do and transposition'
   await expect(low.locator('circle')).toHaveCount(1)
   await expect(high.locator('circle')).toHaveCount(1)
   await expect(paper).not.toContainText('音域')
+  await openScoreSettings(page)
   await page.getByRole('switch', { name: '固定调记谱' }).click()
   await expect(low).toHaveText('2')
   await expect(high).toHaveText('1')
   await expect(high.locator('circle')).toHaveCount(2)
+  await openScoreSettings(page)
   await page.getByRole('button', { name: /^移调，当前/ }).click()
   await page.getByRole('dialog', { name: '选择调性' }).getByRole('button', { name: 'C大调', exact: true }).click()
   await expect(low).toHaveText('1')
   await expect(high).toHaveText('7')
   await expect(high.locator('circle')).toHaveCount(1)
+  await openScoreSettings(page)
   await page.getByRole('switch', { name: '固定调记谱' }).click()
   await expect(low).toHaveText('1')
   await expect(high).toHaveText('7')
   await page.setViewportSize({ width: 320, height: 700 })
   await page.getByRole('tab', { name: '预览', exact: true }).click()
+  await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('320')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const svg = paper.locator('svg').first()

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { openScoreSettings } from './score-settings'
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -69,6 +70,7 @@ test('narrow screens keep full-width vertical pages and mode changes restore con
   }
   await page.setViewportSize({ width: 1280, height: 900 })
   await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
+  await openScoreSettings(page)
   await page.getByRole('switch', { name: '分页', exact: true }).click()
   await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
   await expect(paper).not.toHaveAttribute('data-viewport-paged')

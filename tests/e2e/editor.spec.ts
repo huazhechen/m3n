@@ -1,4 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test'
+import { openScoreSettings } from './score-settings'
 
 async function selectionStart(editor: Locator) {
   return editor.evaluate(element => {
@@ -79,9 +80,13 @@ test('highlights numbered notation during playback with tuplets and a bass voice
 
 test('print reuses current display settings and offers three horizontal format buttons', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
+  await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
+  await openScoreSettings(page)
   await page.getByRole('slider', { name: '播放速度', exact: true }).fill('137')
+  await openScoreSettings(page)
   for (const name of ['固定调记谱', '小节号', '分页']) await page.getByRole('switch', { name, exact: true }).click()
+  await openScoreSettings(page)
   await page.getByRole('button', { name: /^移调，当前/ }).click()
   await page.getByRole('dialog', { name: '选择调性' }).getByRole('button', { name: 'D大调', exact: true }).click()
   const paper = page.locator('.score-paper')
@@ -103,6 +108,7 @@ test('print reuses current display settings and offers three horizontal format b
 
 test('renders ScoreDocument through the vendored jpFun engine', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
+  await openScoreSettings(page)
   await expect(page.getByRole('slider', { name: '乐谱宽度' })).toBeVisible({ timeout: 30_000 })
   await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'numbered')
   await expect(page.locator('.score-paper svg[viewBox^="0 0"]').first()).toBeVisible()

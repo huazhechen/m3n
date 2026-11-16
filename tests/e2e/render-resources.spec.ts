@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { openScoreSettings } from './score-settings'
 
 test('numbered display ignores old staff preference and only loads playback resources on play', async ({ page, baseURL }) => {
   const external: string[] = [], requests: string[] = []
@@ -39,6 +40,7 @@ test('editing and changing width refresh numbered layout',async({page})=>{
  await editor.fill('{title=改谱}{4/4}\nN: 5 6 7 1e |||')
  await expect(paper).toContainText('改谱')
  await expect(paper.locator('[data-m3n-id="m3n-e-a1-1"]')).toHaveCount(0)
+ await openScoreSettings(page)
  await page.getByRole('slider',{name:'乐谱宽度'}).fill('600')
  await expect(paper.locator('svg[data-engine="jpfun"]')).toHaveAttribute('viewBox',/^0 0 600 /)
 })

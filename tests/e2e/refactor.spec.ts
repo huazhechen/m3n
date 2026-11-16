@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { openScoreSettings } from './score-settings'
 import { readFile } from 'node:fs/promises'
 
 test('editor provides highlighting, completions, diagnostic navigation and keyboard resizing', async ({ page }, info) => {
@@ -56,16 +57,21 @@ test('mobile editor switches panes without losing input; catalog fills and filte
   await page.screenshot({ path: info.outputPath('library-mobile.png') })
 })
 
-test('inline controls expose BPM, tone, transpose, metronome and measure numbers', async ({ page }) => {
+test('floating controls expose BPM, tone, transpose, metronome and measure numbers', async ({ page }) => {
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{6/8}{80qpm}\nN: 1s 2s 3s 4s 5s 6s |||')
   const controls = page.getByRole('group', { name: '乐谱控制', exact: true })
+  await openScoreSettings(page)
   await expect(controls.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('160')
+  await openScoreSettings(page)
   for (const name of ['钢琴音色', '小节号', '节拍器']) await expect(controls.getByRole('switch', { name, exact: true })).toBeVisible()
-  await expect(controls.getByRole('group', { name: '移调' })).toBeVisible()
+  await expect(controls.getByRole('button', { name: /^移调，当前/ })).toBeVisible()
   for (const name of ['设为 A', '设为 B', '从选中小节播放']) await expect(controls.getByRole('button', { name, exact: true })).toHaveCount(0)
+  await openScoreSettings(page)
   await controls.getByRole('slider', { name: '播放速度', exact: true }).fill('10')
+  await openScoreSettings(page)
   await controls.getByRole('button', { name: '还原速度' }).click()
+  await openScoreSettings(page)
   await expect(controls.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('160')
 })
 
@@ -75,6 +81,7 @@ test('numbered SVG and multipage PDF retain Chinese outlines and all written mea
   await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 64 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
   await page.getByRole('button', { name: '保存并预览', exact: true }).click()
   for (const format of ['SVG', 'PDF']) {
+    await openScoreSettings(page)
     await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
     if (format === 'PDF') await page.getByRole('switch', { name: '分页', exact: true }).click()
     await page.getByRole('button', { name: '打印', exact: true }).click()
@@ -118,10 +125,10 @@ test('homepage plays numbered notation and documentation examples open as editab
   await page.goto('/')
   const sample = page.getByRole('region', { name: '可试听谱例' })
   await expect(sample.locator('svg[data-engine="jpfun"]')).toBeVisible()
-  await sample.getByRole('button', { name: '播放', exact: true }).click()
-  await expect(sample.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await expect(page.getByRole('switch', { name: '首页简谱', exact: true })).toHaveCount(0)
-  await expect(sample.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await page.goto('/docs?doc=guide')
   const exampleSource = await page.locator('.document-example .cm-content').first().innerText()
   await page.getByRole('link', { name: '在编辑器试改', exact: true }).first().click()
@@ -147,6 +154,7 @@ test('mobile saving and export recover visibly from a failed local font request'
     if (!failed) { failed = true; await route.fulfill({ status: 503, body: '' }) }
     else await route.continue()
   })
+  await page.getByRole('button', { name: '页面菜单', exact: true }).click()
   await page.getByRole('button', { name: '打印', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('button', { name: 'SVG', exact: true }).click()
