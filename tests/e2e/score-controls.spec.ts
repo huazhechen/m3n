@@ -17,12 +17,14 @@ test('three full-width slider rows and a fourth options row align on phones and 
       const left = element.querySelector('.control-sliders')!.getBoundingClientRect()
       const right = element.querySelector('.control-options')!.getBoundingClientRect()
       const buttonSizes = [...element.querySelectorAll('button')].map(button => { const b = button.getBoundingClientRect(); return { width: b.width, height: b.height } })
-      return { columns, outside, buttonSizes, below: right.top >= left.bottom && Math.abs(left.left - right.left) < 1 && Math.abs(left.width - right.width) < 1 }
+      const optionCenters = [...element.querySelectorAll('.control-options button')].map(button => { const b = button.getBoundingClientRect(); return b.y + b.height / 2 })
+      return { columns, outside, buttonSizes, optionCenters, below: right.top >= left.bottom && Math.abs(left.left - right.left) < 1 && Math.abs(left.width - right.width) < 1 }
     })
     expect(geometry.outside).toBe(false)
     expect(geometry.below).toBe(true)
+    expect(Math.max(...geometry.optionCenters) - Math.min(...geometry.optionCenters)).toBeLessThan(1)
     if (width <= 390) for (const size of geometry.buttonSizes) {
-      expect(size.width).toBe(44)
+      expect(Math.abs(size.width - geometry.buttonSizes[0]!.width)).toBeLessThan(1)
       expect(size.height).toBe(44)
     }
     for (const row of geometry.columns) for (let col = 0; col < 3; col++) {

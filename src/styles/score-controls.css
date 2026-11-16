@@ -46,13 +46,13 @@
   .control-options > .control-button span { display: none; }
 }
 @container (max-width: 480px) {
-  .audio-controls { padding: 8px; gap: 8px; }
-  .control-slider-row { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 6px; }
-  .control-slider-row .control-button { width: 44px; height: 44px; padding: 0; }
-  .control-options { grid-template-columns: repeat(5, minmax(44px, 1fr)); grid-template-rows: none; grid-auto-rows: 48px; }
-  .control-options > .control-button { width: 44px; height: 44px; padding: 0; justify-self: center; }
-  .transpose-stepper { grid-column: 1 / -1; grid-template-columns: 44px 32px 44px; justify-self: end; gap: 6px; }
-  .transpose-stepper .control-button { width: 44px; height: 44px; }
+  .audio-controls { --mobile-control-width: clamp(24px, calc((100cqw - 84px) / 7), 44px); padding: 8px; gap: 8px; }
+  .control-slider-row { grid-template-columns: 44px minmax(0, 1fr) var(--mobile-control-width); gap: 6px; }
+  .control-slider-row .control-button { width: var(--mobile-control-width); height: 44px; padding: 0; }
+  .control-options { grid-template-columns: repeat(5, var(--mobile-control-width)) minmax(0, 1fr); }
+  .control-options > .control-button { width: var(--mobile-control-width); height: 44px; padding: 0; justify-self: center; }
+  .transpose-stepper { grid-template-columns: var(--mobile-control-width) 28px var(--mobile-control-width); justify-content: end; gap: 4px; }
+  .transpose-stepper .control-button { width: var(--mobile-control-width); height: 44px; }
   .control-slider-row .control-button span, .metronome-toggle span { display: none; }
   .control-row-label { font-size: 12px; }
   .control-row-label output { font-size: 10px; }
