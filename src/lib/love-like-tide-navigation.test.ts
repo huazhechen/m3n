@@ -3,7 +3,7 @@ import { expect, it } from 'vitest'
 import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds } from '@m3n/notation'
 import source from '../scores/ai_ru_chao_shui_01.m3n?raw'
 
-// Baselines captured before replacing A/B/C/B/C/C with local repeats and D.S.
+// Baselines captured from A/B/C/B/C/C before simplifying repeats and writing the final chorus out.
 it('preserves all performed pitches, durations, ties, articulations, dynamics and tempo', () => {
   const document = alternativePerformance(parseM3NDocument(source))
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
