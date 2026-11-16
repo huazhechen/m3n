@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
+import { nativeArcSlice } from './native-curve.js'
+import { nativeTiePortTop } from './native-note-metrics.js'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
@@ -42,7 +44,12 @@ describe('native musical arc geometry', () => {
     const layout = layoutNativeScore(parseM3NDocument('{3/4}\nN: {lg}1 2ee 3{/} |||'), options)
     const arc = nativeArcGeometry(layout.relations[0]!, layout.systems[0]!)
     const high = layout.projection.glyphs[1]!
-    expect(arc.top - arc.height).toBeGreaterThan(high.top)
+    // The high note clears the curved lower edge; the endpoints can stay lower.
+    expect(arc.top).toBeGreaterThan(high.top)
+    expect(arc.top - arc.height).toBeLessThan(high.top)
+    for (const x of [high.x - high.musicLeft!, high.x + high.musicRight!]) {
+      expect(nativeArcSlice(arc.commands, x)!.bottom).toBeLessThanOrEqual(-nativeTiePortTop(high) + 1e-7)
+    }
     expect(layout.systems[0]!.lanes[0]!.top).toBeCloseTo(arc.top)
   })
 
@@ -63,6 +70,30 @@ describe('native musical arc geometry', () => {
     const relation = layout.relations.find(relation => relation.kind === 'tie')!
     const arc = nativeArcGeometry(relation, layout.systems[0]!)
     expect(arc.top - arc.height).toBeCloseTo(17.6 + 5.06 + 7 + 2.64 + 1.1)
+  })
+
+  it('clears a marked intervening note in a cross-system fragment', () => {
+    const layout = layoutNativeScore(parseM3NDocument('{3/4}\nN: {lg}1 2ee{tip} 3 | {br}4 5 6{/} |||'), options)
+    const relation = layout.relations.find(relation => relation.kind === 'slur')!
+    const arc = nativeArcGeometry(relation, layout.systems[0]!)
+    const high = layout.projection.glyphs[1]!
+    expect(arc.height).toBe(9.9)
+    expect(arc.top - arc.height).toBeLessThan(nativeTiePortTop(high))
+    for (const x of [high.x - high.musicLeft!, high.x + high.musicRight!]) {
+      expect(nativeArcSlice(arc.commands, x)!.bottom).toBeLessThanOrEqual(-nativeTiePortTop(high) + 1e-7)
+    }
+    expect(layout.systems[0]!.lanes[0]!.top).toBeCloseTo(arc.top)
+  })
+
+  it('measures both ribbon edges at the cubic midpoint and the tapered tips', () => {
+    const layout = layoutNativeScore(parseM3NDocument('{2/4}\nN: {lg}1 2{/} |||'), options)
+    const arc = nativeArcGeometry(layout.relations[0]!, layout.systems[0]!)
+    const middle = nativeArcSlice(arc.commands, (arc.left + arc.right) / 2)!
+    expect(middle.top).toBeCloseTo(-arc.top)
+    expect(middle.bottom - middle.top).toBeCloseTo(1.98)
+    const tip = nativeArcSlice(arc.commands, arc.left)!
+    expect(tip.top).toBeCloseTo(tip.bottom)
+    expect(nativeArcSlice(arc.commands, arc.left - 1)).toBeUndefined()
   })
 
   it('starts a continued arc after the shared voice connector', () => {

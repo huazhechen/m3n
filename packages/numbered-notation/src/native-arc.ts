@@ -1,4 +1,5 @@
 import type { NativeRelation, NativeSystem } from './native-layout.js'
+import { nativeArcSlice } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
 
 export type NativeArcCommand =
@@ -19,10 +20,11 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   const covered = selected.length ? selected : members
   const ratio = Math.min(1, Math.abs(relation.last.x - relation.first.x) / 55)
   const height = firstHere && lastHere ? 11 * ratio * (2 - ratio) : 9.9
-  const port = -Math.max(0, ...covered.map(nativeTiePortTop)) - relation.level * 3.3
+  const endpoints = [firstHere ? relation.first : undefined, lastHere ? relation.last : undefined].filter(glyph => glyph !== undefined)
+  const port = -Math.max(0, ...(endpoints.length ? endpoints : covered).map(nativeTiePortTop)) - relation.level * 3.3
     - Math.max(0, ...members.map(glyph => glyph.annotations.length)) * 22
   const thickness = 22 * 0.09
-  const commands: NativeArcCommand[] = []
+  let commands: NativeArcCommand[] = []
   let left = firstHere ? relation.first.x : Math.min(...members.map(glyph => glyph.x - (glyph.musicLeft ?? glyph.left)))
   let right = lastHere ? relation.last.x : system.measures.at(-1)!.end
   if (firstHere && lastHere) {
@@ -47,7 +49,28 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
     } else commands.push({ op: 'M', x: left, y: top }, { op: 'L', x: right, y: top },
       { op: 'L', x: right, y: bottom }, { op: 'L', x: left, y: bottom }, { op: 'Z' })
   }
-  return { commands, left, right, top: height - port, height }
+  // An interior note only needs to clear the ribbon at its actual horizontal
+  // footprint. Its height must not become a new endpoint for the whole arc.
+  let lift = 0
+  for (const glyph of covered) {
+    if (glyph === relation.first || glyph === relation.last) continue
+    const a = Math.max(left, glyph.x - (glyph.musicLeft ?? glyph.left))
+    const b = Math.min(right, glyph.x + (glyph.musicRight ?? glyph.right))
+    if (a > b) continue
+    // Each lower edge is monotone or has a single minimum, so its maximum
+    // over a note's rectangle occurs at one of these two horizontal edges.
+    for (const x of [a, b]) {
+      const slice = nativeArcSlice(commands, x)
+      if (slice) lift = Math.max(lift, slice.bottom + nativeTiePortTop(glyph))
+    }
+  }
+  if (lift > 0) commands = commands.map(command => {
+    if (command.op === 'Z') return command
+    if (command.op === 'C') return { ...command, y: command.y - lift, cy1: command.cy1 - lift, cy2: command.cy2 - lift }
+    if (command.op === 'Q') return { ...command, y: command.y - lift, cy: command.cy - lift }
+    return { ...command, y: command.y - lift }
+  })
+  return { commands, left, right, top: height - port + lift, height }
 }
 
 export function nativeArcPath(arc: NativeArc): string {
