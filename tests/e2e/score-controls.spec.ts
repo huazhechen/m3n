@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test'
 
-test('three aligned rows keep the same layout on phones and desktop', async ({ page }, info) => {
+test('three full-width slider rows and a fourth options row align on phones and desktop', async ({ page }, info) => {
   await page.goto('/scores/huan_le_song_01')
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   await expect(bar).toBeVisible()
+  expect(await bar.locator('.control-options > [role="switch"]').evaluateAll(elements => elements.map(element => element.getAttribute('aria-label')))).toEqual(['节拍器', '钢琴音色', '分页', '小节号'])
   for (const width of [320, 360, 390, 600, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 })
     const geometry = await bar.evaluate(element => {
@@ -15,10 +16,10 @@ test('three aligned rows keep the same layout on phones and desktop', async ({ p
       const outside = [...element.querySelectorAll('button,input')].some(control => { const b = control.getBoundingClientRect(); return b.left < bounds.left || b.right > bounds.right })
       const left = element.querySelector('.control-sliders')!.getBoundingClientRect()
       const right = element.querySelector('.control-options')!.getBoundingClientRect()
-      return { columns, outside, alongside: right.left >= left.right && Math.abs(left.top - right.top) < 1 }
+      return { columns, outside, below: right.top >= left.bottom && Math.abs(left.left - right.left) < 1 && Math.abs(left.width - right.width) < 1 }
     })
     expect(geometry.outside).toBe(false)
-    expect(geometry.alongside).toBe(true)
+    expect(geometry.below).toBe(true)
     for (const row of geometry.columns) for (let col = 0; col < 3; col++) {
       expect(Math.abs(row[col]!.x - geometry.columns[0]![col]!.x)).toBeLessThan(1)
       expect(Math.abs(row[col]!.center - row[0]!.center)).toBeLessThan(1)
@@ -30,22 +31,23 @@ test('three aligned rows keep the same layout on phones and desktop', async ({ p
 
 test('BPM and switches persist; speed reset leaves other settings intact', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
-  const bpm = page.getByRole('spinbutton', { name: '播放速度（BPM）' })
+  const bpm = page.getByRole('slider', { name: '播放速度', exact: true })
   const speed = page.getByRole('slider', { name: '播放速度', exact: true })
   const original = await bpm.inputValue()
   for (const value of ['10', '240', '137']) { await bpm.fill(value); await expect(speed).toHaveValue(value) }
-  await bpm.fill(''); await bpm.pressSequentially('139'); await expect(speed).toHaveValue('139')
-  await bpm.fill('999'); await bpm.press('Tab'); await expect(bpm).toHaveValue('240')
+  await expect(page.locator('.audio-controls input:not([type=range])')).toHaveCount(0)
   await speed.fill('137')
   await page.getByRole('button', { name: '升高半音' }).click({ clickCount: 2 })
   await page.getByRole('switch', { name: '节拍器' }).click()
   await page.getByRole('switch', { name: '小节号', exact: true }).click()
+  await page.getByRole('switch', { name: '分页', exact: true }).click()
+  await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'paged')
   await expect(page.locator('.score-paper')).toHaveAttribute('data-measure-numbers', 'true')
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   expect(await page.locator('.score-paper text[font-size="10"]').count()).toBeGreaterThan(0)
   await page.reload()
   await expect(bpm).toHaveValue('137')
-  for (const name of ['节拍器', '小节号']) await expect(page.getByRole('switch', { name, exact: true })).toBeChecked()
+  for (const name of ['节拍器', '小节号', '分页']) await expect(page.getByRole('switch', { name, exact: true })).toBeChecked()
   await page.getByRole('button', { name: '还原速度' }).click()
   await expect(bpm).toHaveValue(original)
   await expect(page.getByRole('group', { name: '播放移调' }).locator('output')).toHaveText('+2')
@@ -77,9 +79,9 @@ test('BPM controls actual playback; measure number changes preserve the player',
   page.on('request', request => resources.push(request.url()))
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 2 3 4 | 5 6 7 1e |||')
-  await expect(page.getByRole('spinbutton', { name: '播放速度（BPM）' })).toHaveValue('60')
+  await expect(page.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('60')
   expect(resources.filter(url => /\.sf3$|\.wasm$/.test(url))).toHaveLength(0)
-  await page.getByRole('spinbutton', { name: '播放速度（BPM）' }).fill('240')
+  await page.getByRole('slider', { name: '播放速度', exact: true }).fill('240')
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
   await page.getByRole('switch', { name: '小节号', exact: true }).click()

@@ -60,13 +60,13 @@ test('inline controls expose BPM, tone, transpose, metronome and measure numbers
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{6/8}{80qpm}\nN: 1s 2s 3s 4s 5s 6s |||')
   const controls = page.getByRole('group', { name: '乐谱控制', exact: true })
-  await expect(controls.getByRole('spinbutton', { name: '播放速度（BPM）' })).toHaveValue('160')
+  await expect(controls.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('160')
   for (const name of ['钢琴音色', '小节号', '节拍器']) await expect(controls.getByRole('switch', { name, exact: true })).toBeVisible()
   await expect(controls.getByRole('group', { name: '播放移调' })).toBeVisible()
   for (const name of ['设为 A', '设为 B', '从选中小节播放']) await expect(controls.getByRole('button', { name, exact: true })).toHaveCount(0)
-  await controls.getByRole('spinbutton', { name: '播放速度（BPM）' }).fill('10')
+  await controls.getByRole('slider', { name: '播放速度', exact: true }).fill('10')
   await controls.getByRole('button', { name: '还原速度' }).click()
-  await expect(controls.getByRole('spinbutton', { name: '播放速度（BPM）' })).toHaveValue('160')
+  await expect(controls.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('160')
 })
 
 test('numbered SVG and multipage PDF retain Chinese outlines and all written measures', async ({ page }, info) => {

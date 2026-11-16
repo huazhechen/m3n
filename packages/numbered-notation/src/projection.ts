@@ -84,6 +84,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       let previousTied: ScoreEvent | undefined = precedingEvent?.tie ? precedingEvent : undefined
       let previousMeasure: ScoreMeasure | undefined
       let dynamic = ''
+      let pendingBarNumber: number | undefined
+      const numberBar = (bar: string, number: number) => `@up({${bar}},@text(${quote(String(number))},size=10px))`
       const bind = (expression: string, event: ScoreEvent | undefined, measureId: string, slot: number, suffix = '', lyricTarget = false) => {
         const xmlId = event ? ids.get(event)! : `m3n-rest-${partIndex + 1}-${serial}`
         const label = `m${++serial}`
@@ -129,7 +131,10 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         if (breaksBefore(measureIndex)) pieces.push(measure.events.some(event => event.sectionLabel) || melody[measureIndex]?.events.some(event => event.sectionLabel) ? '@br(gap=12)' : '@br()')
         const sectionLabel = measure.events.find(event => event.sectionLabel)?.sectionLabel
         if (sectionLabel && !measure.events.find(event => event.sectionLabel)?.sectionLabelBreakAfter) pieces.push(`@text(${quote(sectionLabel)},size=14px,weight=700,frame=true)`)
-        if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) pieces.push('@bar(3)')
+        if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) {
+          pieces.push(pendingBarNumber === undefined ? '@bar(3)' : numberBar('@bar(3)', pendingBarNumber))
+          pendingBarNumber = undefined
+        }
         // Navigation belongs to a measure, even when its directive follows a note.
         // Zero-time Segno stays on the music axis and wraps with the first event.
         if (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno'))) pieces.push('@symbol(segno,size=16px)')
@@ -238,11 +243,6 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           previousTied = event.tie ? event : undefined
           pieces.push(content.join(' '))
         }
-        if (staff === 'melody' && !alternative) {
-          const first = firsts.get(measureIndex)
-          if (first && options.measureNumbers) annotations[2]!.push(`@text(${quote(String(measureNumber + 1))},size=10px,above=${first},local=true)`)
-          measureNumber += measure.multiRest ?? 1
-        }
         if (alternative) {
           const first = firsts.get(measureIndex), last = lasts.get(measureIndex)
           if (first && last) parentheses.push(`@paren(${first},${last})`)
@@ -271,7 +271,16 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         if ((measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},@text("×${measure.repeatCount}",size=13px))`
         // Within a system the opening repeat supplies the shared boundary.
         // Across an explicit break both systems need their own boundary mark.
-        if (!alternative && !((type === 0 || type === 1) && next?.left === 'rptstart' && !nextLine && !navigation.length && (measure.repeatCount ?? 2) <= 2)) pieces.push(bar)
+        const sharedOpening = (type === 0 || type === 1) && next?.left === 'rptstart' && !nextLine && !navigation.length && (measure.repeatCount ?? 2) <= 2
+        if (staff === 'melody' && !alternative) {
+          const number = measureNumber + 1
+          measureNumber += measure.multiRest ?? 1
+          if (options.measureNumbers) {
+            if (sharedOpening) pendingBarNumber = number
+            else bar = numberBar(bar, number)
+          }
+        }
+        if (!alternative && !sharedOpening) pieces.push(bar)
         previousMeasure = structure
       })
       let endingStart = 0

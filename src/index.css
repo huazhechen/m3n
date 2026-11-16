@@ -686,7 +686,7 @@ textarea::selection {
   aspect-ratio: 210 / 297;
   box-sizing: border-box;
   overflow: hidden;
-  margin: 0 auto 14px;
+  margin: 0 auto 16px;
   background: #ffffff;
   box-shadow: 0 2px 8px rgb(31 35 38 / 22%);
 }
@@ -1562,7 +1562,7 @@ a.action-button {
 .editor-preview-pane { grid-area: render; min-width: 0; }
 .embedded-editor .editor-source-pane { height: auto; min-height: 0; max-height: 260px; }
 .embedded-editor .editor-preview-pane { order: -1; }
-.score-paper[data-reading-fit="true"][data-render-mode="paged"] { padding: 0; background: #fff; }
+.score-paper[data-reading-fit="true"][data-render-mode="paged"] { padding: 0; background: #f5f6f0; }
 .score-paper[data-reading-fit="true"] .score-page-sheet { aspect-ratio: auto; box-shadow: none; }
 .score-paper[data-reading-fit="true"] .score-page-sheet svg { position: relative; inset: auto; width: 100%; height: auto; }
 @media (max-width: 720px) {
@@ -1583,7 +1583,7 @@ a.action-button {
   }
 
   .score-reader > .score-renderer {
-    margin-inline: -9px;
+    margin-inline: 0;
   }
 
   .score-renderer > .audio-controls {
@@ -1596,10 +1596,18 @@ a.action-button {
     background: #fff;
   }
 
+  .score-renderer > .score-paper[data-render-mode="paged"] {
+    background: transparent;
+  }
+
   .score-renderer .score-paper .score-page-sheet {
-    margin-bottom: 8px;
+    margin-bottom: 16px;
     border: 0;
     border-radius: 0;
     box-shadow: none;
+  }
+
+  .score-renderer .score-paper .score-page-sheet:last-child {
+    margin-bottom: 0;
   }
 }

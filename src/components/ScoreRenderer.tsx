@@ -17,6 +17,7 @@ import {
   PLAYBACK_TRANSPOSE_MIN,
   TRANSPOSE_KEY,
   readRenderMode,
+  writeRenderMode,
   type RenderMode,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
@@ -155,22 +156,12 @@ export function ScoreRenderer({
   onNoteClick,
   onPaperBlur,
 }: ScoreRendererProps) {
-  const [mobileLayout, setMobileLayout] = useState(() => window.matchMedia('(max-width: 720px)').matches)
-  useEffect(() => {
-    const query = window.matchMedia('(max-width: 720px)')
-    const update = () => setMobileLayout(query.matches)
-    update()
-    query.addEventListener('change', update)
-    return () => query.removeEventListener('change', update)
-  }, [])
   const paperRef = useRef<HTMLDivElement>(null)
   const renderGenerationRef = useRef(0)
   const scoreRef = useRef<PlaybackScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
   const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
   const playerGenerationRef = useRef(0)
-  const playerStartProgressRef = useRef(0)
-  const getPlayerRef = useRef<() => Promise<SpessaPlayer>>(null)
   const stopPlaybackRef = useRef<() => void>(() => undefined)
   const playbackLeaseRef = useRef<PlaybackLease>({ stop: () => stopPlaybackRef.current() })
   const midiRef = useRef<ArrayBuffer | null>(null)
@@ -203,7 +194,7 @@ export function ScoreRenderer({
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => (
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
-  const [renderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
+  const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
   const bpmRef = useRef(playbackBpm)
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
@@ -221,7 +212,6 @@ export function ScoreRenderer({
 
   useEffect(() => {
     setPlaybackProgress(0)
-    playerStartProgressRef.current = 0
     setIsPlaying(false)
     setIsPlayerLoading(false)
     return () => {
@@ -265,7 +255,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const { message } = await renderScoreInto(paper, {
-          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers, pageMargin: mobileLayout ? 8 : undefined,
+          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
         })
@@ -289,7 +279,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument, measureNumbers, mobileLayout])
+  }, [compact, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument, measureNumbers])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -381,10 +371,17 @@ export function ScoreRenderer({
           onTime: onPlayerTime,
         }, transposeRef.current, playbackCountInBeats(scoreDocument), tone)
         if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
+        try {
+          let appliedTone = tone
+          while (appliedTone !== toneRef.current) {
+            appliedTone = toneRef.current
+            await player.setTone(appliedTone)
+          }
+        } catch (error) { player.destroy(); throw error }
+        if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱已更新，请重新播放。') }
+        player.setTranspose(transposeRef.current)
         player.setTempo(bpmRef.current)
         player.setMetronomeEnabled(metronomeEnabled)
-        if (playerStartProgressRef.current > 0) player.seek(playerStartProgressRef.current)
-        playerStartProgressRef.current = 0
         playerRef.current = player
         return player
       } finally {
@@ -402,34 +399,17 @@ export function ScoreRenderer({
     )
     return initialization
   }
-  getPlayerRef.current = getPlayer
 
   useEffect(() => {
     let cancelled = false
-    const generation = renderGenerationRef.current
-    const playerGeneration = ++playerGenerationRef.current
-    const wasPlaying = Boolean(playerRef.current && !playerRef.current.paused)
-    playerStartProgressRef.current = playbackProgress
-    stopPlaybackRef.current()
-    playerRef.current?.destroy()
-    playerRef.current = null
-    playerInitializationRef.current = null
-    setIsPlayerLoading(false)
     setToneError('')
     setToneLoading(playbackTone !== 'synth')
-    const stillCurrent = () => !cancelled && generation === renderGenerationRef.current && playerGeneration === playerGenerationRef.current
     void (async () => {
       try {
-        if (playbackTone !== 'synth') await loadSampledTone(playbackTone)
-        if (cancelled) return
-        setToneLoading(false)
-        if (wasPlaying && stillCurrent()) {
-          const player = await getPlayerRef.current!()
-          if (!stillCurrent()) return
-          scorePlaybackCoordinator.claim(playbackLeaseRef.current)
-          await player.play()
-          if (stillCurrent()) setIsPlaying(true)
-        }
+        const player = playerRef.current
+        if (player) await player.setTone(playbackTone)
+        else if (playbackTone !== 'synth') await loadSampledTone(playbackTone)
+        if (!cancelled) setToneLoading(false)
       } catch (error) {
         if (!cancelled) {
           setToneLoading(false)
@@ -438,8 +418,6 @@ export function ScoreRenderer({
       }
     })()
     return () => { cancelled = true }
-    // Progress is captured only when switching tone; playback updates must not reload it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playbackTone, toneRetry])
 
   const togglePlayback = async () => {
@@ -510,25 +488,10 @@ export function ScoreRenderer({
 
   const changePlaybackTranspose = (value: number) => {
     const transpose = Math.max(PLAYBACK_TRANSPOSE_MIN, Math.min(PLAYBACK_TRANSPOSE_MAX, Math.trunc(value)))
-    const wasPlaying = Boolean(playerRef.current && !playerRef.current.paused)
     transposeRef.current = transpose
     setPlaybackTranspose(transpose)
     if (!compact) writeRendererSetting(TRANSPOSE_KEY, transpose)
-    // MIDI note numbers are baked into the sequence. Rebuild it on the next
-    // play so an already-loaded player cannot keep the old pitch.
-    stopPlaybackRef.current()
-    playerRef.current?.destroy()
-    playerRef.current = null
-    midiRef.current = null
-    if (wasPlaying) {
-      void getPlayer().then(async (player) => {
-        scorePlaybackCoordinator.claim(playbackLeaseRef.current)
-        await player.play()
-        setIsPlaying(true)
-      }).catch((error: unknown) => {
-        setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
-      })
-    }
+    playerRef.current?.setTranspose(transpose)
   }
 
   const changeMetronomeEnabled = (enabled: boolean) => {
@@ -550,10 +513,12 @@ export function ScoreRenderer({
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
       {hasAudioControls && <ScoreControls
         isPlaying={isPlaying}
-        isLoading={isPlayerLoading || toneLoading || isSourceUpdating}
+        isLoading={isPlayerLoading || isSourceUpdating}
         progress={playbackProgress}
         bpm={playbackBpm}
         width={Math.round(renderWidth)}
+        paged={renderMode === 'paged'}
+        onPagedChange={paged => { const mode = paged ? 'paged' : 'continuous'; setRenderMode(mode); if (!compact) writeRenderMode(mode) }}
         measureNumbers={measureNumbers}
         onMeasureNumbersChange={enabled => { setMeasureNumbers(enabled); writeRendererSetting('m3n:measure-numbers', enabled ? 1 : 0) }}
         onWidthChange={changeLayoutWidth}

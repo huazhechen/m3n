@@ -51,3 +51,40 @@ test('old harmonica preferences fall back to synth without a download', async ({
   await expect(page.getByRole('switch', { name: '钢琴音色' })).not.toBeChecked()
   expect(samples).toHaveLength(0)
 })
+
+test('transpose and delayed tone downloads keep the same audio clock playing', async ({ page }) => {
+  await page.addInitScript(() => {
+    const NativeContext = window.AudioContext
+    const audit = { created: 0, closed: 0 }
+    Object.assign(window, { playbackAudit: audit })
+    window.AudioContext = class extends NativeContext {
+      constructor(options?: AudioContextOptions) { super(options); audit.created++ }
+      override close() { audit.closed++; return super.close() }
+    }
+  })
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill(`{4/4}{60qpm}\nN: ${'1 2 3 4 | '.repeat(16)}||`)
+  const progress = page.getByRole('slider', { name: '播放位置' })
+  const pause = page.getByRole('button', { name: '暂停', exact: true })
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(pause).toBeEnabled({ timeout: 30_000 })
+  await expect.poll(async () => Number(await progress.inputValue())).toBeGreaterThan(5)
+  const before = Number(await progress.inputValue())
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  await page.route('**/*Piano-*.sf3', async route => { await gate; await route.continue() })
+  const tone = page.getByRole('switch', { name: '钢琴音色' })
+  await tone.click()
+  await expect(page.getByRole('status').filter({ hasText: '正在下载钢琴音色' })).toBeVisible()
+  await expect(pause).toBeEnabled()
+  await page.getByRole('button', { name: '升高半音' }).click({ clickCount: 2 })
+  await expect(page.getByRole('group', { name: '播放移调' }).locator('output')).toHaveText('+2')
+  await expect.poll(async () => Number(await progress.inputValue())).toBeGreaterThan(before + 10)
+  release()
+  await expect(page.locator('.control-tone-status')).toHaveCount(0)
+  await expect(pause).toBeEnabled()
+  await tone.click()
+  await expect.poll(async () => Number(await progress.inputValue())).toBeGreaterThan(before + 15)
+  expect(await page.evaluate(() => (window as Window & { playbackAudit?: object }).playbackAudit)).toEqual({ created: 1, closed: 0 })
+  await pause.click()
+})

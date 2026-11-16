@@ -1,7 +1,7 @@
 .audio-controls {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(88px, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
   margin-bottom: 14px;
   padding: 12px;
   border: 1px solid #dce5df;
@@ -11,14 +11,11 @@
   font-size: 13px;
   min-width: 0;
 }
-.control-sliders, .control-options { display: grid; grid-template-rows: repeat(3, 48px); gap: 6px; min-width: 0; }
+.control-sliders { display: grid; grid-template-rows: repeat(3, 48px); gap: 6px; min-width: 0; }
+.control-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(88px, 1.5fr); grid-template-rows: 48px; gap: 6px; min-width: 0; align-items: center; }
 .control-slider-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) 86px; align-items: center; gap: 12px; min-width: 0; }
 .control-row-label { display: flex; flex-wrap: wrap; align-content: center; align-items: center; gap: 0 3px; font-weight: 600; min-width: 0; }
 .control-row-label output { width: 100%; font-size: 11px; color: #627b74; font-weight: 400; }
-.control-row-label input[type="number"] { order: 1; width: 40px; height: 23px; padding: 0; border: 0; border-bottom: 1px solid #cbd9cf; border-radius: 0; color: inherit; background: transparent; font: inherit; font-size: 11px; appearance: textfield; }
-.control-row-label input::-webkit-inner-spin-button { appearance: none; }
-.bpm-unit { order: 2; font-size: 9px; color: #627b74; font-weight: 400; }
-.control-row-label:has(input)::after { content: ''; width: 100%; order: 0; }
 .control-button {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-width: 0; min-height: 44px; padding: 0 8px;
@@ -29,8 +26,6 @@
 .control-button:disabled { opacity: .45; cursor: default; }
 .audio-controls button:focus-visible, .audio-controls input:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
 .audio-controls .playback-toggle, .audio-controls [role="switch"][aria-checked="true"] { border-color: #176e6e; color: white; background: #176e6e; }
-.control-toggle-pair { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 6px; min-width: 0; }
-.control-toggle-pair .control-button { padding: 0 4px; gap: 4px; font-size: 12px; }
 .transpose-stepper { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: center; gap: 4px; }
 .transpose-stepper .control-button { padding: 0; }
 .transpose-stepper output { text-align: center; font-size: 12px; }
@@ -44,15 +39,14 @@
 .control-tone-status { grid-column: 1 / -1; font-size: 12px; overflow-wrap: anywhere; }
 .control-tone-status button { margin-left: 8px; }
 @container (max-width: 720px) {
-  .control-toggle-pair .control-button span { display: none; }
+  .control-options > .control-button span { display: none; }
 }
 @container (max-width: 480px) {
   .audio-controls { padding: 8px; gap: 8px; }
   .control-slider-row { grid-template-columns: 44px minmax(0, 1fr) 34px; gap: 6px; }
   .control-slider-row .control-button { padding: 0; }
-  .control-slider-row .control-button span, .metronome-toggle span, .bpm-unit { display: none; }
+  .control-slider-row .control-button span, .metronome-toggle span { display: none; }
   .control-row-label { font-size: 12px; }
   .control-row-label output { font-size: 10px; }
   .transpose-stepper { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 0; }
-  .control-toggle-pair { gap: 4px; }
 }

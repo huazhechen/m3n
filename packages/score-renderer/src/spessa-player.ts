@@ -49,8 +49,12 @@ export class SpessaPlayer {
   private metronomeEnabled = false
   private countInPending = true
   private playToken = 0
+  private toneVersion = 0
+  private destroyed = false
+  private readonly soundBanks = new Map<PlaybackTone, Promise<void>>()
 
-  private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener, metronome: Metronome, private readonly initialBpm: number) {
+  private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener, metronome: Metronome, private readonly initialBpm: number, tone: PlaybackTone) {
+    this.soundBanks.set(tone, Promise.resolve())
     this.context = context
     this.synth = synth
     this.sequencer = sequencer
@@ -73,18 +77,19 @@ export class SpessaPlayer {
       synth.connect(context.destination)
       await synth.soundBankManager.addSoundBank(soundBank, tone)
       await synth.isReady
-      const midiSequence = transposeMidiData(midi, transpose)
       const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })
-      sequencer.loadNewSongList([{ binary: midiSequence, fileName: 'm3n-score.mid' }])
+      sequencer.loadNewSongList([{ binary: midi, fileName: 'm3n-score.mid' }])
       const parsedSequence = BasicMIDI.fromArrayBuffer(midi)
-      return new SpessaPlayer(
+      const player = new SpessaPlayer(
         context,
         synth,
         sequencer,
         listener,
         new Metronome(context, buildMetronomeBeats(parsedSequence), countInBeats, initialBeatDurationSeconds(parsedSequence)),
-        60 / initialBeatDurationSeconds(parsedSequence),
+        60 / initialBeatDurationSeconds(parsedSequence), tone,
       )
+      player.setTranspose(transpose)
+      return player
     } catch (error) {
       await context.close()
       throw error
@@ -129,6 +134,35 @@ export class SpessaPlayer {
     this.emitProgress()
   }
 
+  /** Tune active and future melodic voices without touching the MIDI clock or note-off keys. */
+  setTranspose(semitones: number) {
+    if (this.destroyed || !Number.isFinite(semitones)) return
+    const shift = Math.max(-12, Math.min(12, Math.trunc(semitones)))
+    // keyShift cuts sounding notes in SpessaSynth. System fineTune accepts cents
+    // beyond one semitone, updates held notes and leaves percussion untouched.
+    this.synth.setSystemParameter('fineTune', shift * 100)
+  }
+
+  /** Keep the current bank sounding while another bank downloads and decodes. */
+  async setTone(tone: PlaybackTone) {
+    const version = ++this.toneVersion
+    let preparation = this.soundBanks.get(tone)
+    if (!preparation) {
+      preparation = (async () => {
+        const data = tone === 'synth' ? createSyntheticSoundFont() : await loadSampledTone(tone)
+        if (this.destroyed) return
+        await this.synth.soundBankManager.addSoundBank(data, tone)
+      })()
+      this.soundBanks.set(tone, preparation)
+      void preparation.catch(() => { if (this.soundBanks.get(tone) === preparation) this.soundBanks.delete(tone) })
+    }
+    await preparation
+    if (this.destroyed || version !== this.toneVersion) return
+    const manager = this.synth.soundBankManager
+    // Existing voices keep their samples; subsequent notes use the selected bank.
+    manager.priorityOrder = [tone, ...manager.priorityOrder.filter(id => id !== tone)]
+  }
+
   setTempo(bpm: number) {
     this.sequencer.playbackRate = playbackRateAtBpm(bpm, this.initialBpm)
     if (this.metronomeEnabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
@@ -141,6 +175,8 @@ export class SpessaPlayer {
   }
 
   destroy() {
+    this.destroyed = true
+    this.toneVersion += 1
     this.playToken += 1
     this.stopProgressLoop()
     this.metronome.stop()

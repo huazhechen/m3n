@@ -1336,15 +1336,25 @@ it.each([320,800])('prints ordered houses once without duplicating their shared 
   expect([...root.querySelectorAll('text[data-m3n-role="lyric"]')].map(node=>node.textContent).join('')).toBe('甲乙丙丁戊己')
 })
 
-it('measure numbers attach once to melody starts and preserve note identities', () => {
+it('measure numbers attach once to closing melody barlines and preserve note identities', () => {
   const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | 5 6 7 1e |||\nB: 1d - - - | 5d - - - |||')
   const plain = projectNumberedScore(document, options)
   const numbered = projectNumberedScore(document, { ...options, measureNumbers: true })
-  expect(numbered.source.match(/size=10px,above=/g)).toHaveLength(2)
-  expect(numbered.source).toContain('@text("1",size=10px,above=')
-  expect(numbered.source).toContain('@text("2",size=10px,above=')
+  expect(numbered.source.match(/size=10px/g)).toHaveLength(2)
+  expect(numbered.source).toContain('@up({@bar(0)},@text("1",size=10px))')
+  expect(numbered.source).toContain('@up({@bar(2)},@text("2",size=10px))')
   expect([...numbered.bindings.values()]).toEqual([...plain.bindings.values()])
   const result = render(document, { measureNumbers: true })
   expect(result.score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
   expect([...result.root.querySelectorAll('text[font-size="10"]')].map(node => node.textContent)).toEqual(['1', '2'])
+})
+
+
+it('numbers the shared opening repeat without introducing a second barline', () => {
+  const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | ||: 5 6 7 1e :||')
+  const plain = projectNumberedScore(document, options)
+  const numbered = projectNumberedScore(document, { ...options, measureNumbers: true })
+  expect(numbered.source).toContain('@up({@bar(3)},@text("1",size=10px))')
+  expect(numbered.source.match(/@bar\(/g)?.length).toBe(plain.source.match(/@bar\(/g)?.length)
+  expect(render(document, { measureNumbers: true }).score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
 })
