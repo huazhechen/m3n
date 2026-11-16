@@ -170,7 +170,7 @@ describe('bundled score corpus', () => {
     ])
     expect(measures[22]!.events.map(event => event.beats)).toEqual([1.5, ...Array(4).fill(0.125), ...Array(4).fill(0.5)])
     expect(measures[25]!.events[0]!.postfixes).toContain('ac((5e 6e))')
-    expect(measures[70]!.events[0]!.postfixes).toContain('ac((1e 2e))')
+    expect(measures[70]!.events[0]!.postfixes.some(mark => mark.startsWith('ac('))).toBe(false)
   })
 
   it.each(referenceMelodies)('matches every melody bar checked against the uploaded numbered reference: $id', reference => {
