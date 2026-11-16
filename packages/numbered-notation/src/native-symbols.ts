@@ -8,6 +8,7 @@ import { nativeKeyGeometry } from './native-key.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
 import { nativeOrnamentSvg } from './native-ornaments.js'
 import { nativeTempoGeometry, type NativeTempoGeometry } from './native-tempo.js'
+import { nativeDynamicGlyph } from './native-dynamics.js'
 import { nativeNavigationGlyph } from './native-navigation-glyphs.js'
 
 export const xml = (value: string | number) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
@@ -61,10 +62,12 @@ export class NativeSymbols {
 
   mark(mark: string, x: number, y: number): string {
     if (mark === 'fermata') return path(`M${n(x - em(7))} ${n(y - em(1))} Q${n(x)} ${n(y - em(15))} ${n(x + em(7))} ${n(y - em(1))}`) + circle(x, y - em(3))
+    const dynamic = nativeDynamicGlyph(mark)
+    if (dynamic) return `<g transform="translate(${n(x)} ${n(y)})">${dynamic.paths.map(d => `<path d="${d}" fill="#000"/>`).join('')}</g>`
     const ornament = nativeOrnamentSvg(mark)
     if (ornament !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${ornament}</g>`
     if (mark === 'breath') return this.text('’', x, y, nativeStyle.text, 'serif', { 'text-anchor': 'middle' })
-    return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? nativeStyle.music * 0.5 : nativeStyle.grace, 'serif', { 'text-anchor': 'middle', 'font-style': /^(p{1,3}|f{1,3}|mp|mf|sfz)$/.test(mark) ? 'italic' : undefined })
+    return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? nativeStyle.music * 0.5 : nativeStyle.grace, 'serif', { 'text-anchor': 'middle' })
   }
 
   control(control: NativeControl, x = 0, y = 0): string {
