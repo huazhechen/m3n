@@ -63,7 +63,7 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
       }
       const bar = bars[index]!
       segments.at(-1)!.barBeats.push(bar.events.reduce((sum, event) => sum + event.beats, 0))
-      segments.at(-1)!.barMeters.push([bar.events[0]!.meterCount, bar.events[0]!.meterUnit])
+      segments.at(-1)!.barMeters.push([bar.events[0]!.meterCount!, bar.events[0]!.meterUnit!])
       previousGroup = group
       previousIndex = index
     }
