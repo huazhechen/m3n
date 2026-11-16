@@ -633,7 +633,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "reviewNote": "C1/C2合为C，顺序A/A/B/A/C/B/A/C；仅第4小节保留第二遍替代旋律，完整演奏与两套歌词不变。保留可读字号，按实际行高分页。",
       "systemGap": 11,
       "widthLocked": true,
       "systemGapCandidates": [
