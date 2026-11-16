@@ -154,7 +154,7 @@ describe('bundled score corpus', () => {
     expect(measures.map(measure => [...passes.get(measure)!])).toEqual(Array.from({ length: 73 }, () => [1, 2]))
     // The uploaded numbered score identifies these as rests/chords in the melody, not bass runs.
     expect(measures[30]!.events.map(event=>[event.pitches,event.beats])).toEqual([
-      [['5'],1],[[],1],[[],0.25],[['5e'],0.25],[['7be'],0.25],[['6e'],0.25],[['5e'],0.25],[['4e'],0.25],[['3e'],0.25],[['2e'],0.25],
+      [['5d'],1],[[],1],[[],0.25],[['5'],0.25],[['7b'],0.25],[['6'],0.25],[['5'],0.25],[['4'],0.25],[['3'],0.25],[['2'],0.25],
     ])
     for(const index of [34,35,36,37,38,39]) {
       expect(measures[index]!.events[0]!.kind).toBe('rest')
@@ -162,11 +162,11 @@ describe('bundled score corpus', () => {
       expect(measures[index]!.events.map(event => event.beats)).toEqual([...Array(8).fill(0.25), 1, 1])
       expect(measures[index]!.events.at(-1)!.beats).toBe(1)
     }
-    for(const [index,pitch] of [[49,'6e'],[50,'5e'],[51,'4e'],[52,'3e']] as const) {
+    for(const [index,pitch] of [[49,'6'],[50,'5'],[51,'4'],[52,'3']] as const) {
       expect(measures[index]!.events.map(event=>[event.pitches,event.beats])).toEqual([[[pitch],1],[[],1],[[],1],[[pitch],1]])
     }
     expect(measures[68]!.events.map(event => event.pitches[0])).toEqual([
-      '5=e', '6e', '7e', '1ee', '2ee', '3ee', '2ee', '1ee', '7e', '6e', '5e', '4e', '3e', '2e', '1e',
+      '5=', '6', '7', '1e', '2e', '3e', '2e', '1e', '7', '6', '5', '4', '3', '2', '1',
     ])
     expect(measures[22]!.events.map(event => event.beats)).toEqual([1.5, ...Array(4).fill(0.125), ...Array(4).fill(0.5)])
     expect(measures[25]!.events[0]!.postfixes.some(mark => mark.startsWith('ac('))).toBe(false)
