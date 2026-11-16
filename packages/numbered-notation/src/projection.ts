@@ -233,12 +233,13 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
                 return duration(`@note(${quote(native)}${options.fixedDo && native.startsWith('n') ? ',showacc=false' : ''})`, 4 / 2 ** (parsed.depth + 2))
               })
             })
+            // Arpeggio wraps the chord itself; grace and ornaments stay outside it.
+            if (event.postfixes.includes('arp') && event.kind === 'chord') value = `@arp({${value}})`
             // Articulations belong to the main note. A leading grace block sits
             // beside it, so stacking these marks above the entire block adds
             // unnecessary height. Grace forwards the main note's shoulder port.
             if (grace.length && articulations.length) value = `@up({${value}},${articulations.join(',')})`
             if (grace.length) value = `@grace({${value}},{${grace.join(' ')}})`
-            if (event.postfixes.includes('arp') && event.kind === 'chord') value = `@arp({${value}})`
             const outerMarks = event.kind === 'tuplet' ? articulations : grace.length ? [...decorations, ...expressionMarks] : marks
             return outerMarks.length ? `@up({${value}},${outerMarks.join(',')})` : value
           }

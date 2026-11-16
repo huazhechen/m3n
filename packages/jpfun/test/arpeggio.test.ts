@@ -146,3 +146,9 @@ test("琶音中的颤音与多倚音在剩余窗口内保持正时值", () => {
         "琶音应保留全部内部音符并将其排入剩余时值");
     }
 });
+
+test('琶音包装转发和弦标签供交互与关系端点读取', () => {
+    const layout = layoutOf('@arp({1 ^ 3 ^ 5})@chord 2@next @tie(chord,next)');
+    const arpeggio = layout.objects.find(node => node.ast.callName === 'arp')!;
+    assert(arpeggio.ast.labelable?.()?.label === 'chord', 'arpeggio must expose its labeled chord host');
+});

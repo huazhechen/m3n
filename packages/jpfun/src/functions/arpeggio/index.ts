@@ -65,6 +65,9 @@ class ArpeggioFunction extends ASTFunctionNode {
 
     override get children() { return [this.content]; }
 
+    // Forward the chord label to host interaction and relationship consumers.
+    override labelable() { return ASTFunctionNode.findLabelable(this.content); }
+
     constructor(span: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(span, parent);
         const [content, direction] = this.getArgValue(args, ctx) as [ASTNodeBase, string];

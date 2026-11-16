@@ -1,5 +1,7 @@
-import { nativeStyle, nativeEm as em, nativeDesignPath } from './native-style.js'
-import { NativeSymbols, attrs, n, line, path, circle } from './native-symbols.js'
+import { nativeArpeggioGeometry } from './native-arpeggio.js'
+import { nativeSvgInk } from './native-ink.js'
+import { nativeStyle, nativeEm as em } from './native-style.js'
+import { NativeSymbols, attrs, n, line, circle } from './native-symbols.js'
 import { nativeGraceGeometry } from './native-grace.js'
 import { nativeMarkStack } from './native-marks.js'
 import { nativeNoteMetrics, nativeBeamCount } from './native-note-metrics.js'
@@ -24,6 +26,22 @@ export class NativeMusicPainter extends NativeSymbols {
         + line(right - stroke / 2, axis - halfCap, right - stroke / 2, axis + halfCap, stroke)
         + this.text(text, left + width / 2, axis - metrics.h - size * 0.175 + metrics.baseline, size, 'M3N Numbers', { 'text-anchor': 'middle' }) + '</g>'
     }
+    let music = this.body(glyph)
+    if (glyph.graces.length) {
+      const grace = glyph.graceLayout ?? nativeGraceGeometry(glyph.graces, glyph.musicLeft ?? glyph.left, this.measurer)
+      music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y)})` })}>${grace.svg}</g>`
+    }
+    const markStack = glyph.markLayout ?? nativeMarkStack(glyph.marks, nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, this.measurer).top, this.measurer).items
+    for (const mark of markStack) music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`
+    if (glyph.event?.postfixes.includes('arp') && glyph.pitches.length > 1 && !glyph.sustain) {
+      const arpeggio = glyph.arpeggioLayout ?? nativeArpeggioGeometry(nativeSvgInk(this.body({ ...glyph, x: 0, y: 0 }), this.measurer), this.measurer)
+      music += `<g transform="translate(${n(glyph.x)} ${n(glyph.y)})">${arpeggio.svg}</g>`
+    }
+    return music
+  }
+
+  /** Main music only, before grace notes, ornaments and arpeggio. */
+  body(glyph: NativeGlyph): string {
     let music = ''
     if (glyph.sustain) music += line(glyph.x - em(4.62), glyph.y - em(6.6), glyph.x + em(4.62), glyph.y - em(6.6), em(2.2))
     else {
@@ -34,18 +52,6 @@ export class NativeMusicPainter extends NativeSymbols {
       for (let index = 0; index < dots; index++) music += circle(glyph.x + this.measurer.measureText('0',{fontSize: nativeStyle.music,fontFamily:'M3N Numbers'}).w / 2 + em(4.29) + index * em(5.94), glyph.y - em(3.52), em(1.65))
       const beams = Math.max(0, Math.round(-Math.log2(base)))
       for (let index = 0; index < beams; index++) music += line(glyph.x - em(6), glyph.y + em(3.245) + index * em(3.08), glyph.x + em(7), glyph.y + em(3.245) + index * em(3.08), em(1.21))
-    }
-    if (glyph.graces.length) {
-      const grace = glyph.graceLayout ?? nativeGraceGeometry(glyph.graces, glyph.musicLeft ?? glyph.left, this.measurer)
-      music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y)})` })}>${grace.svg}</g>`
-    }
-    const markStack = glyph.markLayout ?? nativeMarkStack(glyph.marks, nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, this.measurer).top, this.measurer).items
-    for (const mark of markStack) music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`
-    if (glyph.event?.postfixes.includes('arp') && glyph.pitches.length > 1 && !glyph.sustain) {
-      const x = glyph.x - em(13), top = glyph.y - nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, this.measurer).top
-      let d = `M${n(x)} ${n(top)}`
-      for (let y = top; y < glyph.y - em(4); y += em(8)) d += nativeDesignPath(' q-4 2 0 4 q4 2 0 4')
-      music += path(d)
     }
     return music
   }
