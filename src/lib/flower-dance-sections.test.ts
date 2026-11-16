@@ -3,13 +3,15 @@ import { expect, it } from 'vitest'
 import { alternativePerformance, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/flower_dance_01.m3n?raw'
 
-it('shares Flower Dance phrases and retains visit variants and local endings', () => {
+it('reuses complete Flower Dance sections and writes variations and the ending continuously', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
-  expect(document.order).toEqual(['Intro', 'A', 'B', 'A', 'A', 'B', 'C', 'C', 'C', 'D', 'Link', 'B', 'E', 'Outro'])
-  expect(document.parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(45)
-  expect(document.alternatives).toHaveLength(7)
-  expect(document.alternatives!.map(alternative => alternative.passes)).toEqual([[2], [3], [3], [3], [3], [3], [2]])
+  expect(document.order).toEqual(['Intro', 'A', 'B', 'A', 'C', 'D', 'E'])
+  expect(document.parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(75)
+  expect(document.alternatives ?? []).toHaveLength(0)
+  const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+  expect(bars.filter(bar => bar.left === 'rptstart').map(bar => bar.sectionName)).toEqual(['Intro', 'C'])
+  expect(bars.filter(bar => bar.ending?.length)).toHaveLength(0)
 })
 
 it('preserves every expanded pitch, duration, tie, articulation, dynamic and tempo from the previous arrangement', () => {
