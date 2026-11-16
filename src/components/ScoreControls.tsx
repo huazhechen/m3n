@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react'
+import { useId, useRef, type ReactNode } from 'react'
 import type { PlaybackTone } from '@m3n/score-renderer/tones'
-import { PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX, PLAYBACK_TRANSPOSE_MIN, PLAYBACK_TRANSPOSE_MAX, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX } from '../lib/renderer-settings'
+import { PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX } from '../lib/renderer-settings'
+
+import { TRANSPOSE_KEYS, currentKeyIndex, nearestKeyTranspose } from '../lib/transpose-key'
 
 type ScoreControlsProps = {
   playbackOnly?: boolean
@@ -9,6 +11,7 @@ type ScoreControlsProps = {
   progress: number
   bpm: number
   width: number
+  originalKey: string
   transpose: number
   metronomeEnabled: boolean
   paged: boolean
@@ -40,8 +43,11 @@ function Icon({ children }: { children: ReactNode }) {
 const resetIcon = <Icon><path d="M9 4 5 8l4 4M5 8h8a7 7 0 1 1-6.5 9.6" /></Icon>
 
 export function ScoreControls(props: ScoreControlsProps) {
+  const keyDialogRef = useRef<HTMLDialogElement>(null)
+  const keyTitleId = useId()
+  const selectedKey = currentKeyIndex(props.originalKey, props.transpose)
   const playLabel = props.isPlaying ? '暂停' : '播放'
-  return <div className={props.playbackOnly ? "audio-controls playback-only" : "audio-controls"} role="group" aria-label="乐谱控制">
+  return <><div className={props.playbackOnly ? "audio-controls playback-only" : "audio-controls"} role="group" aria-label="乐谱控制">
     <div className="control-sliders">
       <div className="control-slider-row">
         <span className="control-row-label">进度<output>{Math.round(props.progress * 100)}%</output></span>
@@ -82,12 +88,24 @@ export function ScoreControls(props: ScoreControlsProps) {
       <button type="button" role="switch" aria-label="小节号" aria-checked={props.measureNumbers} title="显示小节号" className="control-button" onClick={() => props.onMeasureNumbersChange(!props.measureNumbers)}>
           <Icon><path d="M4 4v16M20 4v16M4 8h16M4 16h16M10 10h2v4m-2 0h4" /></Icon><span>小节号</span>
         </button>
-      <div className="transpose-stepper" role="group" aria-label="移调">
-        <button type="button" className="control-button" aria-label="降低半音" title="降低半音" disabled={props.transpose <= PLAYBACK_TRANSPOSE_MIN || props.isLoading} onClick={() => props.onTransposeChange(props.transpose - 1)}><Icon><path d="M5 12h14" /></Icon></button>
-        <output aria-live="polite" title="移调（半音）">{props.transpose === 0 ? '原调' : props.transpose > 0 ? `+${props.transpose}` : props.transpose}</output>
-        <button type="button" className="control-button" aria-label="升高半音" title="升高半音" disabled={props.transpose >= PLAYBACK_TRANSPOSE_MAX || props.isLoading} onClick={() => props.onTransposeChange(props.transpose + 1)}><Icon><path d="M5 12h14M12 5v14" /></Icon></button>
-      </div>
+      <button type="button" className="control-button transpose-key-button" aria-label={`移调，当前${TRANSPOSE_KEYS[selectedKey]}调`} aria-haspopup="dialog" title="选择调性" disabled={props.isLoading} onClick={() => {
+        keyDialogRef.current?.showModal()
+        keyDialogRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus()
+      }}>{TRANSPOSE_KEYS[selectedKey]}</button>
     </div>}
     {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || '正在下载钢琴音色…'}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
   </div>
+    {!props.playbackOnly && <dialog ref={keyDialogRef} className="transpose-dialog" aria-labelledby={keyTitleId} onClick={event => {
+      if (event.target === event.currentTarget) {
+        const bounds = event.currentTarget.getBoundingClientRect()
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) event.currentTarget.close()
+      }
+    }}>
+      <div className="transpose-dialog-header"><h2 id={keyTitleId}>选择调性</h2><button type="button" className="control-button" aria-label="关闭调性选择" onClick={() => keyDialogRef.current?.close()}>×</button></div>
+      <div className="transpose-key-grid">{TRANSPOSE_KEYS.map((key, index) => <button type="button" key={key} className="control-button" aria-pressed={index === selectedKey} disabled={props.isLoading} onClick={() => {
+        props.onTransposeChange(nearestKeyTranspose(props.originalKey, index))
+        keyDialogRef.current?.close()
+      }}>{key}</button>)}</div>
+    </dialog>}
+  </>
 }

@@ -532,6 +532,7 @@ export function ScoreRenderer({
         onMeasureNumbersChange={enabled => { setMeasureNumbers(enabled); writeRendererSetting('m3n:measure-numbers', enabled ? 1 : 0) }}
         onWidthChange={changeLayoutWidth}
         onResetWidth={() => changeLayoutWidth(defaultWidth)}
+        originalKey={scoreDocument.key}
         transpose={playbackTranspose}
         metronomeEnabled={metronomeEnabled}
         tone={playbackTone}

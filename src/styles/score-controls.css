@@ -13,7 +13,7 @@
 }
 .control-sliders { display: grid; grid-template-rows: repeat(3, 48px); gap: 6px; min-width: 0; }
 .audio-controls.playback-only .control-sliders { grid-template-rows: 48px; }
-.control-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(88px, 1.5fr); grid-template-rows: 48px; gap: 6px; min-width: 0; align-items: center; }
+.control-options { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: 48px; gap: 6px; min-width: 0; align-items: center; }
 .control-slider-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) 86px; align-items: center; gap: 12px; min-width: 0; }
 .control-row-label { display: flex; flex-wrap: wrap; align-content: center; align-items: center; gap: 0 3px; font-weight: 600; min-width: 0; }
 .control-row-label output { width: 100%; font-size: 11px; color: #627b74; font-weight: 400; }
@@ -27,9 +27,6 @@
 .control-button:disabled { opacity: .45; cursor: default; }
 .audio-controls button:focus-visible, .audio-controls input:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
 .audio-controls .playback-toggle, .audio-controls [role="switch"][aria-checked="true"] { border-color: #176e6e; color: white; background: #176e6e; }
-.transpose-stepper { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: center; gap: 4px; }
-.transpose-stepper .control-button { padding: 0; }
-.transpose-stepper output { text-align: center; font-size: 12px; }
 .metronome-toggle { align-self: center; }
 .audio-controls output { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .audio-controls input[type="range"] { appearance: none; width: 100%; min-width: 0; height: 44px; margin: 0; background: transparent; accent-color: #176e6e; cursor: pointer; touch-action: pan-y; }
@@ -40,19 +37,15 @@
 .control-tone-status { grid-column: 1 / -1; font-size: 12px; overflow-wrap: anywhere; }
 .control-tone-status button { margin-left: 8px; }
 @container (max-width: 720px) {
-  .control-options { grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, calc((100% - 60px) / 3 + 24px)); }
-  .transpose-stepper { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 4px; }
   .control-options > .control-button { padding-inline: 3px; }
   .control-options > .control-button span { display: none; }
 }
 @container (max-width: 480px) {
-  .audio-controls { --mobile-control-width: clamp(24px, calc((100cqw - 84px) / 7), 44px); padding: 8px; gap: 8px; }
+  .audio-controls { --mobile-control-width: clamp(24px, calc((100cqw - 64px) / 6), 44px); padding: 8px; gap: 8px; }
   .control-slider-row { grid-template-columns: 44px minmax(0, 1fr) var(--mobile-control-width); gap: 6px; }
   .control-slider-row .control-button { width: var(--mobile-control-width); height: 44px; padding: 0; }
-  .control-options { grid-template-columns: repeat(5, var(--mobile-control-width)) minmax(0, 1fr); }
+  .control-options { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .control-options > .control-button { width: var(--mobile-control-width); height: 44px; padding: 0; justify-self: center; }
-  .transpose-stepper { grid-template-columns: var(--mobile-control-width) 28px var(--mobile-control-width); justify-content: end; gap: 4px; }
-  .transpose-stepper .control-button { width: var(--mobile-control-width); height: 44px; }
   .control-slider-row .control-button span, .metronome-toggle span { display: none; }
   .control-row-label { font-size: 12px; }
   .control-row-label output { font-size: 10px; }
@@ -68,3 +61,12 @@
 @media (prefers-reduced-motion: reduce) {
   .tone-loading-spinner { animation: none; }
 }
+
+.transpose-dialog { width: min(360px, calc(100vw - 32px)); box-sizing: border-box; padding: 20px; border: 1px solid #d3dfd9; border-radius: 14px; color: #244e50; background: #f8faf7; }
+.transpose-dialog::backdrop { background: rgb(0 0 0 / 35%); }
+.transpose-dialog-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+.transpose-dialog-header h2 { margin: 0; font-size: 18px; }
+.transpose-dialog-header button { width: 44px; font-size: 22px; }
+.transpose-key-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.transpose-key-grid [aria-pressed="true"] { border-color: #176e6e; color: white; background: #176e6e; }
+.transpose-dialog button:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
