@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { alternativePerformance, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
+import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import dream from '../scores/zhui_meng_ren_01.m3n?raw'
 import stars from '../scores/xing_xing_dian_deng_01.m3n?raw'
 import conan from '../scores/ru_guo_you_ni_zai_01.m3n?raw'
@@ -26,7 +27,37 @@ function events(source: string, expand = true) {
   }))
 }
 
+// Check lyrics at their performed note times, independent of source phrase boundaries.
+function performedLyrics(source: string) {
+  const document = parseM3NDocument(source)
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
+  return compileScorePerformance(document).elements
+    .filter(element => element.voice === 'score:melody')
+    .flatMap(element => (byId.get(element.xmlId) ?? [])
+      .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
+      .map(lyric => [element.start, element.end, lyric.text] as const))
+}
+
+function expectReferenceLyrics(source: string, reference: { lyricRows: string[]; playbackLyricRowIndexes: number[]; performedLyricsSha256: string }) {
+  const lyrics = performedLyrics(source)
+  const expectedText = reference.playbackLyricRowIndexes.map(index => reference.lyricRows[index]).join('')
+  expect(lyrics.map(([, , text]) => text).join('')).toBe(expectedText)
+  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe(reference.performedLyricsSha256)
+}
+
 describe('new reference scores', () => {
+  it('detects a shifted lyric even when the complete lyric text is unchanged', () => {
+    const shifted = dream.replace('花%朵', '%花朵')
+    expect(shifted).not.toBe(dream)
+    expect(validateM3NDiagnostics(shifted)).toEqual([])
+    const originalLyrics = performedLyrics(dream)
+    const shiftedLyrics = performedLyrics(shifted)
+    expect(shiftedLyrics.map(([, , text]) => text).join(''))
+      .toBe(originalLyrics.map(([, , text]) => text).join(''))
+    expect(shiftedLyrics).not.toEqual(originalLyrics)
+  })
+
   it('reserves named musical sections for scores that actually jump between them', () => {
     const scores = import.meta.glob<string>('../scores/*.m3n', { eager: true, query: '?raw', import: 'default' })
     for (const [path, source] of Object.entries(scores)) {
@@ -62,7 +93,7 @@ describe('new reference scores', () => {
     expect(document.intervals.some(interval => interval.kind === 'inst')).toBe(false)
     expect(bars.flatMap(bar => bar.events).some(event => event.navigation.length)).toBe(false)
     expect(dream).not.toMatch(/前奏|间奏/)
-    expect(document.lyrics.map(block => block.syllables.map(syllable => syllable.text).join('').replace(/[^\u3400-\u9fff]/g, '')).filter(Boolean)).toEqual(dreamReference.lyricRows)
+    expectReferenceLyrics(dream, dreamReference)
     expect(events(dream).reduce((sum, event) => sum + event.beats, 0)).toBe(dreamReference.performedBeats)
   })
 
@@ -85,7 +116,7 @@ describe('new reference scores', () => {
     expect(document.alternatives).toHaveLength(1)
     expect(document.alternatives![0]!.passes).toEqual([2])
     expect(document.alternatives![0]!.measure.events.map(event => `${event.pitches[0]}:${event.beats}`).join(' ')).toBe(starsReference.secondPassBar8.replace(/:\./g, ':0.'))
-    expect(document.lyrics.map(block => block.syllables.map(syllable => syllable.text).join('').replace(/[^\u3400-\u9fff]/g, '')).filter(Boolean)).toEqual(starsReference.lyricRows)
+    expectReferenceLyrics(stars, starsReference)
     // Five opening bars once, the 7-bar instrumental + 24-bar vocal repeat twice,
     // a 4-bar reprise + 8-bar third verse, and two complete 8-bar F choruses.
     expect(events(stars).reduce((sum, event) => sum + event.beats, 0)).toBe(380)
