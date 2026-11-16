@@ -1,4 +1,5 @@
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
+import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import { nativeLyricInk } from './native-lyrics.js'
 import { measureNativeControl } from './native-controls.js'
@@ -36,7 +37,7 @@ export type NativeMeasure = {
   breakBefore: boolean; breakAfter: boolean; extraGap: number; natural: number; minimum: number; label?: string
   start: number; end: number; continuation: boolean; lastFragment: boolean; number?: number
   naturalStart?: number; naturalEnd?: number; minimumStart?: number; minimumEnd?: number; barX?: number; openingBarX?: number
-  navigation?: { text: string; size: number; width: number; x?: number }[]
+  navigation?: NativeNavigation[]
 }
 export type NativeProjection = { measures: NativeMeasure[]; glyphs: NativeGlyph[]; diagnostics: NativeDiagnostic[]; hasBass: boolean }
 export type NativeModelOptions = { includeBass?: boolean; noteGapEm?: number; minimumNoteGapEm?: number; textMeasurer: TextMeasurer; fixedDo?: boolean; transpose?: number; tempoScale?: number; displayLyrics?: LyricsByEvent; expandedDisplay?: boolean }
@@ -230,10 +231,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: index > 0 && source.events.some(event => event.sectionLabel) ? em(12) : 0, natural: 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
       measure.number = ++measureNumber
       measureNumber += (source.multiRest ?? 1) - 1
-      measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])].filter(name => name !== 'segno').map(name => {
-        const text = name === 'fine' ? 'Fine.' : name === 'dc' ? 'D.C.' : 'D.S.', size = name === 'fine' ? 16.8 : 16
-        return { text, size, width: textWidth(text, size, '"Times New Roman", serif') }
-      })
+      measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]
+        .filter(name => name !== 'segno').map(name => measureNativeNavigation(name, options.textMeasurer))
       const first = result.glyphs.length
       const alternatives = document.alternatives?.filter(alternative => alternative.host === source) ?? []
       const primaryPasses = alternatives.length ? [...(passes.get(source) ?? [1])].filter(pass => !alternatives.some(alternative => alternative.passes.includes(pass))) : undefined

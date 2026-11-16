@@ -189,14 +189,15 @@ test("倚音序列和宿主都预留框占位，前后倚音与嵌套框共用�
         const node = layout.objects[0];
         assert(node instanceof GraceTemporal, "expected a grace composite");
         const frames = layout.attachments.filter(item => item.layer === "background");
+        const gap = 12 * 0.8 * Math.sqrt(0.5);
         const hostFrame = frames.find(item => nearly(item.box.w, node.host.box.w + 12))!;
         const graceFrame = frames.find(item => nearly(item.box.w,
-            node.graces[0].box.w + node.graces[1].box.w + 20))!;
+            node.graces[0].box.w + node.graces[1].box.w + gap + 20))!;
         assert(hostFrame && graceFrame, "host and nested grace frames must retain their own geometry");
-        assert(nearly(node.graces[1].box.x, node.graces[0].box.x + node.graces[0].box.w),
+        assert(nearly(node.graces[1].box.x, node.graces[0].box.x + node.graces[0].box.w + gap),
             "frame padding must not enter the enclosed internal gap");
-        assert(nearly(node.graces[2].box.x, graceFrame.box.x + graceFrame.box.w),
-            "the next local member touches the outer frame, not its content");
+        assert(nearly(node.graces[2].box.x, graceFrame.box.x + graceFrame.box.w + gap),
+            "the next local member retains clearance outside the outer frame");
         const left = side === "pre" ? graceFrame.box.x : hostFrame.box.x;
         const right = side === "pre" ? hostFrame.box.x + hostFrame.box.w
             : node.graces[2].box.x + node.graces[2].box.w;

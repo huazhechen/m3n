@@ -248,7 +248,7 @@ test("repeated placement synchronization and painting do not accumulate offsets"
     }
 });
 
-test("局部横排先完成全部尺寸，再注册约束、创建零间隙输入并执行 hook", () => {
+test("倚音局部横排先完成全部尺寸，再注册约束、创建自然间距输入并执行 hook", () => {
     const lowered = lower("@grace(1,{2 3})");
     const node = lowered.columns.flat().find(item => item instanceof GraceTemporal);
     assert(node instanceof GraceTemporal, "expected a grace composite");
@@ -266,9 +266,9 @@ test("局部横排先完成全部尺寸，再注册约束、创建零间隙输�
             assert(columns[start][0].config.alpha_R === 99,
                 "input creation must follow prepareHorizontal");
             assert(columns.every(column => column.every(element =>
-                element.margin_L === 0 && element.margin_R === 0
+                element.margin_L > 0 && element.margin_R > 0
                 && element.duration_L > 0 && element.duration_R > 0)),
-                "hooks must receive zero margins without zeroing duration or stiffness");
+                "hooks must receive natural margins and retain duration and stiffness");
             columns[start][0].WL += 7;
             columns[end][0].WR += 11;
         });
@@ -277,7 +277,7 @@ test("局部横排先完成全部尺寸，再注册约束、创建零间隙输�
     deepStrictEqual(calls, ["prepare", "hook"]);
     assert(nearly(first.box.x - node.box.x, 7), "the saved offset must retain the left hook inset");
     assert(nearly(node.box.w,
-        first.box.w + last.box.w + 18 + node.host.box.w + node.ast.size * 0.7 * 0.2),
+        first.box.w + last.box.w + 18 + Math.sqrt(0.5) * (99 + 6) * 0.8 + node.host.box.w + node.ast.size * 0.7 * 0.2),
         "the composite must measure both edges of the solved occupancy");
 });
 

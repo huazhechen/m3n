@@ -35,6 +35,21 @@ const preGraceNode = preGrace.result.objects[0] as VisualTemporalNode & {
     graces: readonly VisualTemporalNode[];
 };
 
+test("刚性倚音组仍保留随字号与书面时值变化的自然净空", () => {
+    for (const size of [16, 22, 32]) for (const side of ["pre", "post"]) {
+        for (const [music, expected] of [["2/ 3/", 4.8], ["2/ 3//", 4.8 * (0.5 + Math.sqrt(0.125))]] as const) {
+            const source = `@set(fontsize=${size}) @grace(1,{${music}},side=${side})`;
+            const result = layoutGrace(source).result;
+            const [left, right] = (result.objects[0] as GraceTemporal).graces;
+            const gap = right.box.x - left.box.x - left.box.w;
+            assert(nearly(gap, expected * size / 22), `grace clearance ${gap} at ${size}px, ${side}, ${music}`);
+            const played = playedNotes(compilePlayback(lower(source)));
+            assert(played.length === 3 && played.reduce((sum, note) => sum + note.duration.toNumber(), 0) === 1,
+                "visual clearance must not change grace borrowing or host duration");
+        }
+    }
+});
+
 test("倚音折叠成一个可见对象，但保留宿主的时值与端口", () => {
     assert(preGrace.result.objects.length === 1, "a grace note must fold into a single visible object");
     assert(preGraceNode.T.equals(plainNote.T), "the composite must keep the host duration");
@@ -239,20 +254,20 @@ test("grace 外部标签穿透宿主后仍保留完整关系左操作数", () =>
     }
 });
 
-test("倚音局部横排保持书写列序，混合时值和零时长标记使用零间隙", () => {
+test("倚音局部横排保持书写列序，混合时值和零时长标记保留自然净空", () => {
     for (const source of ["{2 3/ @text(A) 4}>1", "1<{2 3/ @text(A) 4}"]) {
         const node = layoutOf(source).objects[0];
         assert(node instanceof GraceTemporal, "expected a grace composite");
         for (let index = 1; index < node.graces.length; index++) {
             const previous = node.graces[index - 1].box;
-            assert(nearly(node.graces[index].box.x, previous.x + previous.w),
-                "local columns must remain distinct and touch without duration-dependent gaps");
+            assert(node.graces[index].box.x > previous.x + previous.w,
+                "local columns remain distinct with positive natural clearance");
         }
-        const width = node.graces.reduce((sum, grace) => sum + grace.box.w, 0);
+        const width = node.graces.at(-1)!.box.x + node.graces.at(-1)!.box.w - node.graces[0].box.x;
         assert(nearly(node.box.w, width + node.host.box.w + node.ast.size * 0.7 * 0.2),
             "the composite reserves the natural widths and its existing side gap");
         assert(node.graces.every(grace => (grace.springConfig.alpha_L ?? 0) > 0),
-            "zeroing temporary margins must not clear the members' spring configuration");
+            "local placement must retain the members' spring configuration");
     }
 });
 

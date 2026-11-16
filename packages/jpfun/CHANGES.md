@@ -1,5 +1,7 @@
 # Local changes
 
+- Grace subdomains retain natural rhythmic clearance scaled from the parent music size, using the joined-beam spacing ratio. Previously compact local layout forced every inter-note margin to zero. The group stays rigid; host composition, source order, local horizontal hooks, frame padding, nested relation ownership, repeat layout and playback remain intact.
+
 - Automatic measure wrapping resolves equal-energy partitions deterministically, preferring longer earlier rows within a normalized 1e-12 tolerance. A suffix dynamic program removes dependence on traversal order and cumulative-coordinate round-off; real cost differences, section preferences, minimum clearances and the 48-measure search limit remain intact.
 
 - `@bar(3,preceding=1)` preserves a shared preceding double bar through serialization. Automatic wrapping restores that closing style on the previous system when the opening repeat moves to a new system; same-line rendering and repeat playback are unchanged.

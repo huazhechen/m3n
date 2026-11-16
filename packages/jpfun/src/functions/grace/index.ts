@@ -496,7 +496,9 @@ export class GraceTemporal extends TemporalNodeBase {
         // lowering 期间修饰挂在复合体上（augmenter 要看到整体节奏），渲染时交给宿主：
         // 减时线要落在宿主数字与下八度点之间，而不是压在整个倚音盒下面
         transferFunctionAddons(this, this.host);
-        const block = context.layoutSubdomain!(this, this.graceColumns, this.root, this.attachments);
+        // A rigid group keeps the short natural clearance of joined grace
+        // beams. Host/other local composites continue to use zero margins.
+        const block = context.layoutSubdomain!(this, this.graceColumns, this.root, this.attachments, this.ast.size * (12 / 22) * 0.8);
         const hostWidth = layoutLocalSequence([this.host], context);
         this.springConfig = { ...this.host.springConfig, ...this.springConfig };
 

@@ -93,6 +93,8 @@ export interface LayoutPrepareContext {
         columns: readonly (readonly VisualTemporalNode[])[],
         root: Track,
         attachments: readonly LoweringAttachment[],
+        /** Natural internal clearance; omitted for compact local composition. */
+        noteGap?: number,
     ): SubdomainLayout;
 }
 

@@ -5,12 +5,12 @@ import type { TextMeasurer } from './native-measure.js'
 import { NativeSymbols, n } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 
-export function placeNativeNavigation(system: NativeSystem, measurer: TextMeasurer) {
-  const painter = new NativeSymbols(measurer), lane = system.lanes.find(l => l.id === 'melody')
+export function placeNativeNavigation(system: NativeSystem) {
+  const lane = system.lanes.find(l => l.id === 'melody')
   if (!lane) return
   for (const measure of system.measures) if (measure.lastFragment) for (const mark of measure.navigation ?? []) {
-    const svg = painter.text(mark.text, mark.x ?? measure.end - em(19), -nativeStyle.music * 0.3 + mark.size * 0.3, mark.size, '"Times New Roman", serif', { 'data-m3n-role': 'navigation' })
-    const ink = nativeSvgInk(svg, measurer)
+    const svg = `<g transform="translate(${n(mark.x!)} 0)">${mark.svg}</g>`
+    const ink = mark.ink
     lane.top = Math.max(lane.top, -ink.top); lane.bodyBottom = Math.max(lane.bodyBottom ?? 0, ink.bottom)
     lane.lyricBottom = Math.max(lane.lyricBottom ?? 0, ink.bottom)
     system.decorationLayout ??= []; system.decorationLayout.push({ lane: lane.id, svg })

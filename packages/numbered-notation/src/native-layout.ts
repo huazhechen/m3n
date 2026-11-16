@@ -306,7 +306,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     relationBounds.set(system, regions)
     placeNativeAnnotations(system, regions, measurer, options.width, margin, false)
   }
-  for (const system of systems) placeNativeNavigation(system, measurer)
+  for (const system of systems) placeNativeNavigation(system)
   if (options.uniformSystemHeight) {
     const envelopes = new Map<string, { top: number; bottom: number }>()
     for (const system of systems) for (const lane of system.lanes) {

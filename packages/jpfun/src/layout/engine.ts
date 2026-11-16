@@ -233,9 +233,9 @@ export function layoutDocument(
     context = {
         ...context,
         uniformSystemHeight: options.uniformSystemHeight,
-        layoutSubdomain(owner, columns, root, attachments) {
+        layoutSubdomain(owner, columns, root, attachments, noteGap) {
             // 横排时内层子域先排版并认领关系，这里只取剩下的
-            const line = layoutLocalLine(columns, context);
+            const line = layoutLocalLine(columns, context, noteGap);
             const members = new Set<TemporalNodeBase>(columns.flat());
             const within = (node: TemporalNodeBase) => {
                 for (let host: TemporalNodeBase | undefined = node; host && host !== owner; host = host.foldedInto) {
@@ -603,11 +603,12 @@ export function layoutLocalSequence(nodes: readonly VisualTemporalNode[], contex
 function layoutLocalLine(
     columns: readonly (readonly VisualTemporalNode[])[],
     context: LayoutPrepareContext,
+    noteGap?: number,
 ): { width: number; view: HorizontalLineView } {
     for (const column of columns) {
         for (const node of column) prepareLayoutHost(node, context);
     }
-    const line = prepareHorizontalLine(columns, columns[0][0].layoutLine, {}, true);
+    const line = prepareHorizontalLine(columns, columns[0][0].layoutLine, { noteGap }, noteGap === undefined);
     let left = Infinity;
     let right = -Infinity;
     for (const column of line.layout(Infinity)) {
