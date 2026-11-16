@@ -9,7 +9,7 @@ import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativePr
 export type NativeRenderOptions = {
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
   pageMargin?: number; systemGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; uniformSystemHeight?: boolean
-  /** Candidate policy override; omitted preserves jpFun page spacing for parity. */
+  /** Distribute complete-page surplus for jpFun compatibility; defaults to false. */
   justifyPages?: boolean
   equalMeasures?: boolean; wrap?: 'normal' | 'compact'; wrapWidthRatio?: number
   /** @internal Whether a separate minimum spacing policy was requested. */
@@ -205,7 +205,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     gapBefore: system.measures[0]?.extraGap ?? 0,
   }))]
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * 277 / 190) : Infinity,
-    margin, gap, justify: options.justifyPages ?? !options.uniformSystemHeight })
+    margin, gap, justify: Boolean(options.justifyPages) && !options.uniformSystemHeight })
   const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [] }))
   for (const [index, system] of systems.entries()) {
     const position = pagination.positions[index + 1]!

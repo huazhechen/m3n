@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { parseM3NDocument } from '@m3n/notation'
+import { layoutNativeScore } from './native-layout.js'
 import { paginateNativeBlocks } from './native-pagination.js'
 
 const options = { pageHeight: 400, margin: 20, gap: 10, justify: true }
@@ -23,4 +25,19 @@ describe('native measured-block pagination', () => {
     expect(paginateNativeBlocks([{ height: 60 }, { height: 100 }], { ...options, pageHeight: Infinity }).heights).toEqual([210])
     expect(() => paginateNativeBlocks([{ height: 361 }], options)).toThrow('单个谱行')
   })
+})
+
+it('defaults to natural page gaps and enables baseline page fill only explicitly', () => {
+  const document = parseM3NDocument('{4/4}\nN: ' + Array.from({ length: 30 }, () => '1 2 3 4 |').join(' '))
+  const options = { width: 320, paged: true }
+  const natural = layoutNativeScore(document, options)
+  const continuous = layoutNativeScore(document, { ...options, paged: false })
+  const compatible = layoutNativeScore(document, { ...options, justifyPages: true })
+  expect(natural.pages.length).toBeGreaterThan(1)
+  const step = (layout: ReturnType<typeof layoutNativeScore>) => layout.systems[1]!.top - layout.systems[0]!.bottom
+  expect(step(natural)).toBeCloseTo(24)
+  expect(step(continuous)).toBeCloseTo(step(natural))
+  expect(step(compatible)).toBeGreaterThan(step(natural))
+  const uniform = layoutNativeScore(document, { ...options, justifyPages: true, uniformSystemHeight: true })
+  expect(step(uniform)).toBeCloseTo(24)
 })
