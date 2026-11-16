@@ -170,7 +170,7 @@ test('documentation examples reflow to a shared width with readable notes and no
     const width = element.getBoundingClientRect().width
     const renderedWidth = Number(svg.getAttribute('width'))
     const mouse = matchMedia('(hover: hover) and (pointer: fine)').matches
-    const buttonSize = Math.min(mouse ? 40 : 48, Math.max(mouse ? 32 : 36, Math.min(window.innerWidth, window.innerHeight) / 16))
+    const buttonSize = Math.min(mouse ? 36 : 48, Math.max(mouse ? 24 : 36, Math.min(window.innerWidth, window.innerHeight) / 16))
     return Math.abs(renderedWidth - Math.max(320, Math.round(width * 22 / (buttonSize / 2))))
   })).toBeLessThanOrEqual(1)
   expect(await paper.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
@@ -191,7 +191,7 @@ test('documentation examples reflow to a shared width with readable notes and no
     const width = element.getBoundingClientRect().width
     const renderedWidth = Number(svg.getAttribute('width'))
     const mouse = matchMedia('(hover: hover) and (pointer: fine)').matches
-    const buttonSize = Math.min(mouse ? 40 : 48, Math.max(mouse ? 32 : 36, Math.min(window.innerWidth, window.innerHeight) / 16))
+    const buttonSize = Math.min(mouse ? 36 : 48, Math.max(mouse ? 24 : 36, Math.min(window.innerWidth, window.innerHeight) / 16))
     return Math.abs(renderedWidth - Math.max(320, Math.round(width * 22 / (buttonSize / 2))))
   })).toBeLessThanOrEqual(1)
   expect(await paper.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)

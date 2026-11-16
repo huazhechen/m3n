@@ -103,9 +103,10 @@ test.describe('desktop', () => {
     for (const width of [721, 744, 1280, 2560]) {
       await page.setViewportSize({ width, height: 1920 })
       await expect(page.locator('.top-nav .nav-action-label').first()).toBeVisible()
-      await expect(page.locator('.floating-controls .playback-toggle')).toHaveCSS('height', '40px')
-      await expect(page.locator('.floating-controls .playback-toggle svg')).toHaveCSS('width', '32px')
-      await expect(page.locator('.audio-controls')).toHaveCSS('font-size', '15px')
+      await expect(page.locator('.floating-controls .playback-toggle')).toHaveCSS('height', '36px')
+      expect((await page.locator('.floating-controls .playback-toggle svg').boundingBox())!.width).toBeCloseTo(28.8, 1)
+      await expect(page.locator('.audio-controls')).toHaveCSS('font-size', '13.5px')
+      await expect(page.locator('main')).toHaveCSS('padding-top', '4.5px')
       expect(await page.locator('.top-nav').evaluate(element => {
         const bounds = element.getBoundingClientRect()
         return [...element.querySelectorAll('nav a, nav button, nav [aria-disabled]')].every(button => {
