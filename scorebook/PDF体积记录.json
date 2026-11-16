@@ -1,14 +1,14 @@
 {
-  "edition": "第五十七版",
+  "edition": "第五十八版",
   "sourcePdf": null,
-  "compactPdf": "循序渐进乐谱集-简谱-v57.pdf",
+  "compactPdf": "循序渐进乐谱集-简谱-v58.pdf",
   "pageCount": 80,
   "originalBytes": null,
-  "compactBytes": 5910067,
+  "compactBytes": 5925806,
   "reductionPercent": null,
-  "embeddedFontSubsets": 368,
+  "embeddedFontSubsets": 371,
   "images": 0,
-  "positionedGlyphs": 29164,
+  "positionedGlyphs": 29263,
   "glyphsPerPage": [
     129,
     431,
@@ -61,8 +61,8 @@
     607,
     473,
     406,
-    406,
-    375,
+    484,
+    396,
     518,
     438,
     407,
@@ -93,5 +93,5 @@
   ],
   "outsidePages": 0,
   "sourceSha256": null,
-  "compactSha256": "e8a9cb4f1d8f0ce3fee4782b620427442b773b08898088bf3832e9c7a9300295"
+  "compactSha256": "c03f4e55805c8234fb6986bf5d34b4914266a9126ce16eed7c98f56b2f69dd8f"
 }

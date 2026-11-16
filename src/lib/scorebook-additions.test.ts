@@ -4,6 +4,7 @@ import dream from '../scores/zhui_meng_ren_01.m3n?raw'
 import stars from '../scores/xing_xing_dian_deng_01.m3n?raw'
 import conan from '../scores/ru_guo_you_ni_zai_01.m3n?raw'
 import references from './fixtures/kuaiyuepu-additions.json'
+import starsReference from './fixtures/xing-xing-dian-deng-jitapuji.json'
 
 const sources: Record<string, string> = { zhui_meng_ren: dream, xing_xing_dian_deng: stars, ru_guo_you_ni_zai: conan }
 function events(source: string, expand = true) {
@@ -40,24 +41,27 @@ describe('new reference scores', () => {
     expect(actual.reduce((sum, event) => sum + event.beats, 0)).toBe(112)
   })
 
-  it('preserves the Stars vocal melody while replacing the instrumental introduction', () => {
-    const reference = references[1]!
-    const expected = reference.playbackEventIndexes.map(index => reference.events[index]!).filter(event => !event.instrumental && event.pitch !== null)
-    const actual = events(stars).filter(event => !event.instrumental && event.pitch !== null)
-    expect(actual.map(musical)).toEqual(expected.map(musical))
-    expect(stars).toContain('Ns[2]: 1:')
-    expect(stars).toContain('{key=F}')
-  })
-
-  it('uses the image introduction with alternating low sixes, rests and low sharp five', () => {
-    const intro = events(stars, false).filter(event => event.instrumental)
-    expect(intro.slice(0, 11).map(musical)).toEqual([
-      [61,.5], [73,.5], [61,.5], [73,.5], [66,.25], [68,.25], [73,.25], [71,.25], [71,.25], [68,.25], [73,.5],
-    ].map(([pitch, beats], index) => ({ pitch, beats, tie: index === 7 })))
-    const bars = parseM3NDocument(stars).parts.get('score')!.melody.filter(bar => bar.events.length).slice(0, 12)
-    expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual(Array(12).fill(4))
-    expect(bars[6]!.events.filter(event => event.kind === 'rest')).toHaveLength(2)
-    expect(bars[7]!.events.some(event => stars.slice(event.sourceStart, event.sourceEnd).includes('5#d'))).toBe(true)
+  it('uses the exact user introduction and the new five-page reference', () => {
+    expect(stars.slice(stars.indexOf('===前奏'), stars.indexOf('===A')).trim()).toBe(starsReference.userIntroduction)
+    const document = parseM3NDocument(stars)
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    expect(bars).toHaveLength(57)
+    expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual(Array(57).fill(4))
+    const actual = bars.slice(12).map(bar => bar.events.map(event =>
+      `${event.pitches[0]}:${event.beats}${event.tie ? '~' : ''}${event.postfixes.filter(mark => mark.startsWith('ac(')).map(mark => '/' + mark.slice(3, -1)).join('')}`,
+    ))
+    const expected = starsReference.writtenBarsAfterIntroduction.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.')))
+    expect(actual).toEqual(expected)
+    expect(bars.slice(0, 49).flatMap(bar => bar.events).every(event => event.key === 'E')).toBe(true)
+    expect(bars.slice(49).flatMap(bar => bar.events).every(event => event.key === 'F')).toBe(true)
+    expect(document.alternatives).toHaveLength(1)
+    expect(document.alternatives![0]!.passes).toEqual([2])
+    expect(document.alternatives![0]!.measure.events.map(event => `${event.pitches[0]}:${event.beats}`).join(' ')).toBe(starsReference.secondPassBar8.replace(/:\./g, ':0.'))
+    expect(document.lyrics.map(block => block.syllables.map(syllable => syllable.text).join('').replace(/[^\u3400-\u9fff]/g, '')).filter(Boolean)).toEqual(starsReference.lyricRows)
+    // Five opening bars once, the 7-bar instrumental + 24-bar vocal repeat twice,
+    // a 4-bar reprise + 8-bar third verse, and two complete 8-bar F choruses.
+    expect(events(stars).reduce((sum, event) => sum + event.beats, 0)).toBe(380)
+    expect(stars).toContain('重复多次，渐弱结束')
   })
 
   it('keeps all Conan pitches and ties with only the eight authorized half-beat corrections', () => {

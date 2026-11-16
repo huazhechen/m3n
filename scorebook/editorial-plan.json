@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十七版",
+  "edition": "第五十八版",
   "sourceCount": 88,
   "baseWidth": 780,
   "widthCandidates": [
@@ -1469,7 +1469,7 @@
       "sharePage": false,
       "breakBefore": false,
       "pageBreaks": [],
-      "reviewNote": "第五十六版新增：按用户指定参考谱录入，保留旋律和演奏结构；节拍校订详见本版校订记录。",
+      "reviewNote": "第五十八版：前奏逐字采用用户修订，主歌、副歌、歌词和四小节器乐再现严格依老姚吉他五页谱；仅略去无数字主旋律的吉他伴奏间奏。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "includeBass": false,
@@ -2070,8 +2070,8 @@
       ]
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v57.pdf",
-  "outputKey": "scorebook-v57-numbered",
+  "outputPdf": "循序渐进乐谱集-简谱-v58.pdf",
+  "outputKey": "scorebook-v58-numbered",
   "page": {
     "width": 744,
     "height": 1133,
