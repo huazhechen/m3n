@@ -117,4 +117,4 @@
 
 | 曲目 | 拍号 | qpm | 参考 | 说明 |
 | --- | --- | --- | --- | --- |
-| [九儿](../src/scores/jiu_er_01.m3n) | 4/4 | 60 | [快悦谱：降B转C转F版](https://www.kuaiyuepu.com/jianpu/DPp3v1W6z.html) | 沿用参考四分音符=60，保留前奏、人声过渡及三级转调；共用谱段按访问标出演奏调。 |
+| [九儿](../src/scores/jiu_er_01.m3n) | 4/4 | 60 | [快悦谱：降B转C转F版](https://www.kuaiyuepu.com/jianpu/DPp3v1W6z.html) | 沿用参考四分音符=60，保留前奏、人声过渡及三级转调；全部顺读展开，实际转调处标普通调号。 |

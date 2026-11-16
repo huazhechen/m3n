@@ -1,23 +1,26 @@
+import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, sectionOrderLabels, validateM3NDiagnostics } from '@m3n/notation'
+import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/jiu_er_01.m3n?raw'
 import reference from './fixtures/jiu-er-kuaiyuepu.json'
 import { loadPresetScore, presetScores } from './samples'
 
-it('loads Jiu Er with shared phrases in B-flat, C and F', async () => {
+it('loads Jiu Er fully written out with a subtitle and inline key changes', async () => {
   const preset = presetScores.find(score => score.sourcePath === 'jiu_er_01.m3n')!
   expect(preset.title).toBe('九儿')
   expect(await loadPresetScore(preset.slug)).toBe(source)
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect([document.key, document.meterCount, document.meterUnit, document.tempo]).toEqual(['Bb', 4, 4, 60])
-  expect(document.order).toEqual(['Intro', 'A', 'B', 'A', 'B', 'Bridge', 'B', 'Coda'])
-  expect(document.orderKeys).toEqual([undefined, undefined, undefined, 'C', 'C', undefined, 'F', undefined])
-  expect(document.orderKeyOctaves).toEqual([undefined, undefined, undefined, 5, 5, undefined, 5, undefined])
-  expect(sectionOrderLabels(document)).toEqual(['Intro', 'A（1=B♭）', 'B（1=B♭）', 'A（1=C）', 'B（1=C）', 'Bridge', 'B（1=F）', 'Coda'])
-  expect(document.parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(23)
+  expect(document.subtitle).toBe('电视剧《红高粱》片尾曲')
+  expect(document.origin).toBe('')
+  expect(document.order).toBeUndefined()
+  expect(document.sections ?? []).toHaveLength(0)
+  const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+  expect(bars).toHaveLength(34)
   expect(document.alternatives).toBeUndefined()
-  expect(document.parts.get('score')!.melody.filter(bar => bar.ending).map(bar => bar.ending)).toEqual(['1,2', '3'])
+  expect(bars.every(bar => !bar.ending && bar.left !== 'rptstart' && bar.right !== 'rptend')).toBe(true)
+  expect([...new Set(bars.flatMap(bar => bar.events.map(event => event.key)))]).toEqual(['Bb', 'C', 'F'])
 })
 
 it('preserves every reference sounding pitch and duration, including the rising registers', () => {
@@ -35,7 +38,9 @@ it('retains all vocal lyrics and skips the instrumental introduction', () => {
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
   const lyrics = compileScorePerformance(document).elements.flatMap(element => (byId.get(element.xmlId) ?? [])
     .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
-    .map(lyric => [element.start, lyric.text] as const))
+    .map(lyric => [element.start, element.end, lyric.text] as const))
+  expect(lyrics).toHaveLength(80)
+  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('9feb89832887f332c72b96adb0ccb2db0895357433b834d6a40a9d2972d0c1b1')
   expect(lyrics[0]![0]).toBe(32)
-  expect(lyrics.map(([, text]) => text).join('')).toBe(reference.lyricText)
+  expect(lyrics.map(([, , text]) => text).join('')).toBe(reference.lyricText)
 })
