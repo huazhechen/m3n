@@ -1,6 +1,7 @@
 import { displayedTempo, scoreCreditLines } from '@m3n/notation'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
+import { nativeAccidentalGeometry } from './native-accidentals.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { nativeHeaderGeometry } from './native-header.js'
 import { nativeBarMetrics, nativeMeasureBars } from './native-horizontal.js'
@@ -45,7 +46,12 @@ class SvgPainter {
 
   pitch(pitch: NativePitch, x: number, y: number, size = 22, beams = 0): string {
     let svg = this.text(pitch.degree, x, y, size, 'M3N Numbers', { 'text-anchor': 'middle' })
-    if (pitch.accidental) svg += this.text(pitch.accidental, x - size * 0.44, y - size * 0.07, size * 0.68, 'serif', { 'text-anchor': 'end' })
+    if (pitch.accidental) {
+      const halfBody = this.layout.measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
+      const symbols = nativeAccidentalGeometry(pitch.accidental, size, halfBody)
+      svg += `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'accidental' })}>`
+        + symbols.paths.map(symbol => `<path${attrs({ d: symbol.d, fill: 'none', stroke: '#000', 'stroke-width': symbol.stroke, 'data-m3n-symbol': symbol.symbol })}/>`).join('') + '</g>'
+    }
     for (let index = 0; index < Math.abs(pitch.octave); index++) {
       const beamOffset = beams ? size * (0.92 + (beams - 1) * 0.14 + 0.055 - 0.84) : 0
       const offset = pitch.octave > 0 ? -size * (0.955 + index * 0.23) : size * (0.195 + index * 0.23) + beamOffset

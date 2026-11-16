@@ -3,6 +3,7 @@ import { lyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
+import { nativeAccidentalAdvance } from './native-accidentals.js'
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
@@ -102,7 +103,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const glyphGraces = segment === 0 && slot === 0 ? graces : []
           const glyphAnnotations = segment === 0 && slot === 0 ? [event.chord, event.text, event.sectionLabelBreakAfter ? event.sectionLabel : undefined].filter((value): value is string => Boolean(value)) : []
           const pitchWidth = sustain ? 22 * 0.42 : textWidth('0', 22, 'M3N Numbers')
-          const accidentalWidth = sustain ? 0 : [...(pitches[0]?.accidental ?? '')].reduce((width, symbol) => width + 22 * (0.72 * (symbol === '♯' ? 0.46 : symbol === '♭' ? 0.38 : 0.42) + 0.01), 0)
+          const accidentalWidth = sustain ? 0 : Math.max(0, ...pitches.map(pitch => nativeAccidentalAdvance(pitch.accidental, 22)))
           const durationBase = 2 ** Math.floor(Math.log2(writtenBeats))
           const dotCount = Math.max(0, [1, 1.5, 1.75, 1.875].findIndex(ratio => Math.abs(writtenBeats / durationBase - ratio) < 1e-7))
           let left = pitchWidth / 2 + accidentalWidth + glyphGraces.length * 14, right = pitchWidth / 2 + dotCount * 22 * 0.27
