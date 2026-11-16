@@ -46,6 +46,25 @@ describe('native musical arc geometry', () => {
     expect(layout.systems[0]!.lanes[0]!.top).toBeCloseTo(arc.top)
   })
 
+  it('keeps an inline meter above its own column without lifting the following tie port', () => {
+    const source = '{4/4}\nN: 1 2 3 4~ | {3/4}4 5 6 |||'
+    const layout = layoutNativeScore(parseM3NDocument(source), options)
+    const relation = layout.relations.find(relation => relation.kind === 'tie')!
+    const arc = nativeArcGeometry(relation, layout.systems[0]!)
+    expect(relation.last.controls.map(control => control.kind)).toContain('meter')
+    expect(relation.last.top).toBeCloseTo(26.58)
+    expect(relation.last.musicTop).toBeCloseTo(17.6)
+    expect(arc.top - arc.height).toBeCloseTo(17.6)
+    expect(layout.systems[0]!.lanes[0]!.top).toBeGreaterThanOrEqual(relation.last.top)
+  })
+
+  it('retains note marks and octave-dot clearance when a control shares the event', () => {
+    const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4e~ | {3/4}4e{tip} 5 6 |||'), options)
+    const relation = layout.relations.find(relation => relation.kind === 'tie')!
+    const arc = nativeArcGeometry(relation, layout.systems[0]!)
+    expect(arc.top - arc.height).toBeCloseTo(17.6 + 5.06 + 7 + 2.64 + 1.1)
+  })
+
   it('starts a continued arc after the shared voice connector', () => {
     const layout = layoutNativeScore(parseM3NDocument('{2/4}\nN: {lg}1 2 | {br}3 4{/} |||\nB: 1d^ | 5d^ |||'), options)
     const second = layout.systems[1]!, relation = layout.relations.find(relation => relation.kind === 'slur')!

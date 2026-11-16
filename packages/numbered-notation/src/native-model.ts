@@ -13,7 +13,7 @@ export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
   time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativePitch[]
   lyrics: Map<number, LyricRowData>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]
-  musicLeft?: number; musicRight?: number; lyricLeft?: number; lyricRight?: number
+  musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; paragraph: string
   instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number
 }
@@ -120,11 +120,12 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           }
           for (const annotation of glyphAnnotations) { const width = textWidth(annotation); left = Math.max(left, width / 2); right = Math.max(right, width / 2); musicLeft = Math.max(musicLeft, width / 2); musicRight = Math.max(musicRight, width / 2) }
           const metrics = nativeNoteMetrics(pitches, writtenBeats, sustain)
-          const top = Math.max(nativeMarkStack(glyphMarks, metrics.top).top + (glyphGraces.length ? 10 : 0), ...glyphControls.map(control => control.top))
+          const musicTop = nativeMarkStack(glyphMarks, metrics.top).top + (glyphGraces.length ? 10 : 0)
+          const top = Math.max(musicTop, ...glyphControls.map(control => control.top))
           const bottom = Math.max(metrics.bottom, ...glyphControls.map(control => control.bottom))
           const id = ids.get(event)!
           const suffix = event.kind === 'tuplet' ? `-n${slot + 1}` : segment ? event.kind === 'rest' ? `-rest${segment + 1}` : `-sustain${segment + 1}` : ''
-          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, musicLeft, musicRight, lyricLeft, lyricRight, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
+          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, musicLeft, musicRight, musicTop, lyricLeft, lyricRight, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
           if (document.intervals.some(interval => interval.kind === 'inst' && interval.staff === staff && interval.start !== undefined && interval.end !== undefined && interval.start <= event.sourceStart && event.sourceEnd <= interval.end)) {
             glyph.instrumental = true
             glyph.parenthesisLeft = textWidth('(', 22, 'M3N Numbers') + 1.1
