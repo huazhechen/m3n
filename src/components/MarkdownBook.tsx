@@ -59,9 +59,10 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
     const observer = new ResizeObserver(([entry]) => {
       const width = entry!.contentRect.width
       if (width <= 0) return
-      // Native notes are 22 units high: matching the layout width to the
-      // available width keeps the shared display scale near 1 (22px).
-      setScoreWidth(Math.max(320, Math.round(width)))
+      // Native notes are 22 units high; solve for the shared layout width
+      // before fitting every score to the document column.
+      const fontSize = Math.min(window.innerWidth / 20, 24)
+      setScoreWidth(Math.max(320, Math.round(width * 22 / fontSize)))
     })
     observer.observe(article)
     return () => observer.disconnect()
