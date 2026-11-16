@@ -19,8 +19,8 @@ for (const width of [320, 390, 1280]) {
       else await expect(action.locator('.nav-action-label')).toBeVisible()
     }
     const bounds = await header.boundingBox()
-    const iconSize = Math.min(width / 32, 24)
-    expect(bounds!.height).toBeCloseTo(Math.max(32, iconSize * 2) + iconSize / 2, 0)
+    const shortSide = Math.min(width, 900)
+    expect(bounds!.height).toBeCloseTo(Math.max(32, shortSide / 16) + Math.min(shortSide / 32, 24) / 2, 0)
     const buttons = await nav.locator('a, button, [aria-disabled="true"]').evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect()
       return { left: rect.left, right: rect.right, top: rect.top }

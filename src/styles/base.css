@@ -2,7 +2,9 @@
   --ui-unit: min(3.125vmin, 24px);
   --ui-space: calc(var(--ui-unit) / 4);
   --ui-text: max(12px, calc(var(--ui-unit) * .75));
-  --ui-control-size: max(32px, calc(var(--ui-unit) * 2));
+  --ui-control-size: max(32px, calc(100vmin / 16));
+  --ui-icon-size: calc(var(--ui-control-size) * .8);
+  --ui-transport-width: max(680px, calc(var(--ui-control-size) * 6));
   --ui-toolbar-height: calc(var(--ui-control-size) + var(--ui-space) * 2);
   --ui-controls-reserve: calc(var(--ui-control-size) + var(--ui-space) * 6 + 2px);
   color: #232629;

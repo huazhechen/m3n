@@ -28,7 +28,7 @@
   justify-content: center;
   gap: var(--ui-space);
   min-height: var(--ui-control-size);
-  padding: 0 calc(var(--ui-space) * 2);
+  padding: 0 var(--ui-space);
   border: 1px solid #cfd3ca;
   border-radius: 6px;
   background: #fff;
@@ -38,7 +38,7 @@
   white-space: nowrap;
 }
 
-.top-nav svg { flex: 0 0 auto; width: var(--ui-unit); height: var(--ui-unit); }
+.top-nav svg { flex: 0 0 auto; width: var(--ui-icon-size); height: var(--ui-icon-size); }
 .top-nav .action-button.is-disabled {
   color: #9aa2a6;
   background: #f4f5f1;
@@ -68,8 +68,8 @@
 }
 
 .brand-mark img {
-  width: var(--ui-unit);
-  height: var(--ui-unit);
+  width: var(--ui-icon-size);
+  height: var(--ui-icon-size);
   display: block;
   flex: 0 0 auto;
 }
@@ -227,7 +227,7 @@ h3 {
 }
 
 .editor-header-right .editor-action { display: inline-flex; align-items: center; justify-content: center; gap: var(--ui-space); }
-.editor-action svg { flex-shrink: 0; width: var(--ui-unit); height: var(--ui-unit); }
+.editor-action svg { flex-shrink: 0; width: var(--ui-icon-size); height: var(--ui-icon-size); }
 
 .editor-mode-note {
   padding: 3px 8px;
@@ -1366,7 +1366,8 @@ a.action-button {
   border: 1px solid rgb(255 255 255 / 58%);
   border-radius: 50%;
   color: #ffffff;
-  font-size: var(--ui-unit);
+  font-size: var(--ui-icon-size);
+  line-height: 1;
   font-weight: 700;
   cursor: pointer;
   place-items: center;

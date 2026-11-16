@@ -42,7 +42,7 @@ test('floating transport stays visible and settings open without shifting the sc
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
   const bounds = (await bar.boundingBox())!
   expect(bounds.y + bounds.height).toBeLessThanOrEqual(900)
-  expect(bounds.y).toBeGreaterThan(800)
+  expect(bounds.y + bounds.height).toBeGreaterThan(875)
   await settings.press('Enter')
   await expect(panel).toBeVisible()
   await page.getByRole('switch', { name: '节拍器' }).click()
