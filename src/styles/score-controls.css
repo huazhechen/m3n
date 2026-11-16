@@ -39,6 +39,8 @@
 .control-tone-status { grid-column: 1 / -1; font-size: 12px; overflow-wrap: anywhere; }
 .control-tone-status button { margin-left: 8px; }
 @container (max-width: 720px) {
+  .control-options { grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, calc((100% - 60px) / 3 + 36px)); }
+  .transpose-stepper { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 4px; }
   .control-options > .control-button span { display: none; }
 }
 @container (max-width: 480px) {
@@ -48,5 +50,4 @@
   .control-slider-row .control-button span, .metronome-toggle span { display: none; }
   .control-row-label { font-size: 12px; }
   .control-row-label output { font-size: 10px; }
-  .transpose-stepper { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 0; }
 }
