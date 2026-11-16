@@ -1,10 +1,10 @@
 import { BasicMIDI } from 'spessasynth_core'
 import { Sequencer, WorkletSynthesizer } from 'spessasynth_lib' 
 import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
-import soundFontUrl from '../vendor/soundfonts/FluidR3_GM-Piano.sf3?url'
+import { loadSampledTone, type PlaybackTone } from './playback-tones.js'
+import { createSyntheticSoundFont } from './synthetic-soundfont.js'
 import { Metronome, buildMetronomeBeats, initialBeatDurationSeconds } from './metronome.js'
 
-const soundFont = { name: 'FluidR3-GM-Piano-SF3', url: soundFontUrl } as const
 export function seekTimeAtProgress(duration: number, progress: number) {
   if (!Number.isFinite(duration) || duration <= 0) return 0
   const normalized = Math.max(0, Math.min(1, progress))
@@ -60,27 +60,30 @@ export class SpessaPlayer {
     })
   }
 
-  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0, countInBeats = 0) {
-    const response = await fetch(soundFont.url)
-    if (!response.ok) throw new Error(`无法加载 ${soundFont.name} 音色文件。`)
-    const soundBank = await response.arrayBuffer()
+  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0, countInBeats = 0, tone: PlaybackTone = 'synth') {
+    const soundBank = tone === 'synth' ? createSyntheticSoundFont() : await loadSampledTone(tone)
     const context = new AudioContext()
-    await context.audioWorklet.addModule(processorUrl)
-    const synth = new WorkletSynthesizer(context)
-    synth.connect(context.destination)
-    await synth.soundBankManager.addSoundBank(soundBank, soundFont.name)
-    await synth.isReady
-    const midiSequence = transposeMidiData(midi, transpose)
-    const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })
-    sequencer.loadNewSongList([{ binary: midiSequence, fileName: 'm3n-score.mid' }])
-    const parsedSequence = BasicMIDI.fromArrayBuffer(midi)
-    return new SpessaPlayer(
-      context,
-      synth,
-      sequencer,
-      listener,
-      new Metronome(context, buildMetronomeBeats(parsedSequence), countInBeats, initialBeatDurationSeconds(parsedSequence)),
-    )
+    try {
+      await context.audioWorklet.addModule(processorUrl)
+      const synth = new WorkletSynthesizer(context)
+      synth.connect(context.destination)
+      await synth.soundBankManager.addSoundBank(soundBank, tone)
+      await synth.isReady
+      const midiSequence = transposeMidiData(midi, transpose)
+      const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })
+      sequencer.loadNewSongList([{ binary: midiSequence, fileName: 'm3n-score.mid' }])
+      const parsedSequence = BasicMIDI.fromArrayBuffer(midi)
+      return new SpessaPlayer(
+        context,
+        synth,
+        sequencer,
+        listener,
+        new Metronome(context, buildMetronomeBeats(parsedSequence), countInBeats, initialBeatDurationSeconds(parsedSequence)),
+      )
+    } catch (error) {
+      await context.close()
+      throw error
+    }
   }
 
   get paused() {

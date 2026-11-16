@@ -1,6 +1,8 @@
 import { renderScoreInto, type RenderPhase } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
+import { loadSampledTone } from '@m3n/score-renderer/tones'
+import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MeiSourceMapRange, ScoreDocument } from '@m3n/notation'
 import {
@@ -159,6 +161,9 @@ export function ScoreRenderer({
   const playerRef = useRef<SpessaPlayer | null>(null)
   const settingsDialogRef = useRef<HTMLDialogElement>(null)
   const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
+  const playerGenerationRef = useRef(0)
+  const playerStartProgressRef = useRef(0)
+  const getPlayerRef = useRef<() => Promise<SpessaPlayer>>(null)
   const stopPlaybackRef = useRef<() => void>(() => undefined)
   const playbackLeaseRef = useRef<PlaybackLease>({ stop: () => stopPlaybackRef.current() })
   const midiRef = useRef<ArrayBuffer | null>(null)
@@ -168,6 +173,12 @@ export function ScoreRenderer({
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
   const [message, setMessage] = useState('')
+  const [playbackTone, changePlaybackTone] = usePlaybackTone()
+  const toneRef = useRef(playbackTone)
+  toneRef.current = playbackTone
+  const [toneLoading, setToneLoading] = useState(false)
+  const [toneError, setToneError] = useState('')
+  const [toneRetry, setToneRetry] = useState(0)
   const [playbackProgress, setPlaybackProgress] = useState(0)
   const [loop, setLoop] = useState({ a: 0, b: 1, enabled: false })
   const [muted, setMuted] = useState({ melody: false, bass: false })
@@ -213,12 +224,14 @@ export function ScoreRenderer({
 
   useEffect(() => {
     setPlaybackProgress(0)
+    playerStartProgressRef.current = 0
     setLoop({ a: 0, b: 1, enabled: false })
     followedSystem.current = null
     setIsPlaying(false)
     setIsPlayerLoading(false)
     return () => {
       renderGenerationRef.current += 1
+      playerGenerationRef.current += 1
       scorePlaybackCoordinator.release(playbackLeaseRef.current)
       playerRef.current?.destroy(); playerRef.current = null
       scoreRef.current?.destroy(); scoreRef.current = null
@@ -354,6 +367,8 @@ export function ScoreRenderer({
     if (playerRef.current) return Promise.resolve(playerRef.current)
     if (playerInitializationRef.current) return playerInitializationRef.current
     const generation = renderGenerationRef.current
+    const playerGeneration = playerGenerationRef.current
+    const tone = toneRef.current
     const initialization = (async () => {
       setIsPlayerLoading(true)
       try {
@@ -361,28 +376,31 @@ export function ScoreRenderer({
         if (!score) {
           const { PlaybackScore } = await import('@m3n/score-renderer/playback')
           score = await PlaybackScore.create(typeof mei === 'function' ? mei() : mei)
-          if (generation !== renderGenerationRef.current) { score.destroy(); throw new Error('乐谱已更新，请重新播放。') }
+          if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { score.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
           scoreRef.current = score
         }
         midiRef.current ??= score.midi()
         const { SpessaPlayer } = await import('@m3n/score-renderer/player')
+        if (playerGeneration !== playerGenerationRef.current) throw new Error('音色已切换，请重新播放。')
         const player = await SpessaPlayer.create(midiRef.current, {
           onEnded: () => {
             stopPlaybackRef.current()
           },
           onTime: onPlayerTime,
-        }, transposeRef.current, playbackCountInBeats(scoreDocument))
-        if (generation !== renderGenerationRef.current) { player.destroy(); throw new Error('乐谱已更新，请重新播放。') }
+        }, transposeRef.current, playbackCountInBeats(scoreDocument), tone)
+        if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
         player.setSpeed(speedRef.current)
         player.setMetronomeEnabled(metronomeEnabled)
         const practice = practiceRef.current
         player.setLoopRange(practice.loop.enabled ? [practice.loop.a, practice.loop.b] : null)
         player.setStaffMuted(1, practice.muted.melody)
         player.setStaffMuted(2, practice.muted.bass)
+        if (playerStartProgressRef.current > 0) player.seek(playerStartProgressRef.current)
+        playerStartProgressRef.current = 0
         playerRef.current = player
         return player
       } finally {
-        if (generation === renderGenerationRef.current) setIsPlayerLoading(false)
+        if (generation === renderGenerationRef.current && playerGeneration === playerGenerationRef.current) setIsPlayerLoading(false)
       }
     })()
     playerInitializationRef.current = initialization
@@ -396,6 +414,45 @@ export function ScoreRenderer({
     )
     return initialization
   }
+  getPlayerRef.current = getPlayer
+
+  useEffect(() => {
+    let cancelled = false
+    const generation = renderGenerationRef.current
+    const playerGeneration = ++playerGenerationRef.current
+    const wasPlaying = Boolean(playerRef.current && !playerRef.current.paused)
+    playerStartProgressRef.current = playbackProgress
+    stopPlaybackRef.current()
+    playerRef.current?.destroy()
+    playerRef.current = null
+    playerInitializationRef.current = null
+    setIsPlayerLoading(false)
+    setToneError('')
+    setToneLoading(playbackTone !== 'synth')
+    const stillCurrent = () => !cancelled && generation === renderGenerationRef.current && playerGeneration === playerGenerationRef.current
+    void (async () => {
+      try {
+        if (playbackTone !== 'synth') await loadSampledTone(playbackTone)
+        if (cancelled) return
+        setToneLoading(false)
+        if (wasPlaying && stillCurrent()) {
+          const player = await getPlayerRef.current!()
+          if (!stillCurrent()) return
+          scorePlaybackCoordinator.claim(playbackLeaseRef.current)
+          await player.play()
+          if (stillCurrent()) setIsPlaying(true)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setToneLoading(false)
+          setToneError(error instanceof Error ? error.message : '无法加载音色，请重试。')
+        }
+      }
+    })()
+    return () => { cancelled = true }
+    // Progress is captured only when switching tone; playback updates must not reload it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playbackTone, toneRetry])
 
   const playSelection = async () => {
     try {
@@ -538,11 +595,16 @@ export function ScoreRenderer({
         }}
         compact={compact}
         isPlaying={isPlaying}
-        isLoading={isPlayerLoading || isSourceUpdating}
+        isLoading={isPlayerLoading || toneLoading || isSourceUpdating}
         progress={playbackProgress}
         speed={playbackSpeed}
         transpose={playbackTranspose}
         metronomeEnabled={metronomeEnabled}
+        tone={playbackTone}
+        toneLoading={toneLoading}
+        toneError={toneError}
+        onToneChange={changePlaybackTone}
+        onToneRetry={() => setToneRetry(value => value + 1)}
         onTogglePlayback={() => void togglePlayback()}
         onRestart={() => {
           isSeekingRef.current = false
@@ -559,6 +621,7 @@ export function ScoreRenderer({
         onTransposeChange={changePlaybackTranspose}
         onMetronomeChange={changeMetronomeEnabled}
         onResetPractice={() => {
+          changePlaybackTone('synth')
           setLoop({ a: 0, b: 1, enabled: false }); playerRef.current?.setLoopRange(null)
           setMuted({ melody: false, bass: false }); playerRef.current?.setStaffMuted(1, false); playerRef.current?.setStaffMuted(2, false); setFollow(true)
           changePlaybackSpeed(DEFAULT_PLAYBACK_SPEED)

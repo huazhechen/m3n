@@ -1,14 +1,19 @@
 import { readFileSync } from 'node:fs'
 import { BasicSoundBank, SoundBankLoader, SpessaSynthProcessor } from 'spessasynth_core'
 import { expect, test } from 'vitest'
+import { createSyntheticSoundFont } from './synthetic-soundfont'
 
-test('shipped piano covers the keyboard and renders sustained notes and releases', async () => {
+test.each(['Piano', 'Harmonica', 'Synthetic'])('%s covers the keyboard and renders sustained notes and releases', async (tone) => {
   await BasicSoundBank.isSF3DecoderReady
-  const bytes = readFileSync(new URL('../vendor/soundfonts/FluidR3_GM-Piano.sf3', import.meta.url))
+  const bytes = tone === 'Synthetic' ? Buffer.from(createSyntheticSoundFont())
+    : readFileSync(new URL(`../vendor/soundfonts/FluidR3_GM-${tone}.sf3`, import.meta.url))
   expect(bytes.length).toBeLessThan(400_000)
   const bank = SoundBankLoader.fromArrayBuffer(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength))
   expect(bank.presets).toHaveLength(1)
-  expect(bank.samples).toHaveLength(20)
+  expect(bank.samples.length).toBeGreaterThan(0)
+  expect(bank.presets[0].program).toBe(0)
+  if (tone === 'Piano') expect(bank.samples).toHaveLength(20)
+  if (tone === 'Synthetic') expect(bytes.length).toBeLessThan(4096)
   for (let key = 21; key <= 108; key++) {
     for (const velocity of [1, 64, 127]) {
       expect(bank.presets[0].getVoiceParameters(key, velocity).length).toBeGreaterThan(0)

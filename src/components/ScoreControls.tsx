@@ -1,4 +1,5 @@
 import { useId, useState, type ReactNode } from 'react'
+import { PLAYBACK_TONES, type PlaybackTone } from '@m3n/score-renderer/tones'
 import {
   PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, PLAYBACK_SPEED_STEP,
   PLAYBACK_TRANSPOSE_MIN, PLAYBACK_TRANSPOSE_MAX,
@@ -18,6 +19,11 @@ type ScoreControlsProps = {
   speed: number
   transpose: number
   metronomeEnabled: boolean
+  tone: PlaybackTone
+  toneLoading: boolean
+  toneError: string
+  onToneChange: (tone: PlaybackTone) => void
+  onToneRetry: () => void
   onTogglePlayback: () => void
   onRestart: () => void
   onSeekStart: () => void
@@ -38,7 +44,7 @@ export function ScoreControls(props: ScoreControlsProps) {
   const id = useId()
   const [practiceOpen, setPracticeOpen] = useState(false)
   const playLabel = props.isPlaying ? '暂停' : '播放'
-  const practiceChanged = props.speed !== 100 || props.transpose !== 0 || props.metronomeEnabled || Boolean(props.practice && (props.practice.looping || props.practice.melodyMuted || props.practice.bassMuted || !props.practice.follow))
+  const practiceChanged = props.tone !== 'synth' || props.speed !== 100 || props.transpose !== 0 || props.metronomeEnabled || Boolean(props.practice && (props.practice.looping || props.practice.melodyMuted || props.practice.bassMuted || !props.practice.follow))
 
   return (
     <div className="audio-controls" role="group" aria-label="乐谱控制">
@@ -81,6 +87,18 @@ export function ScoreControls(props: ScoreControlsProps) {
           <label><input type="checkbox" aria-label="播放跟随" checked={props.practice.follow} onChange={event => props.practice?.onFollow(event.currentTarget.checked)} />播放跟随</label>
         </div>}
         <div className="practice-settings-grid">
+          <div className="playback-tone">
+            <label className="control-field-heading" htmlFor={`${id}-tone`}>播放音色</label>
+            <select id={`${id}-tone`} aria-label="播放音色" value={props.tone}
+              onChange={event => props.onToneChange(event.currentTarget.value as PlaybackTone)}>
+              {PLAYBACK_TONES.map(tone => <option key={tone.value} value={tone.value}>{tone.label}</option>)}
+            </select>
+            <p className="control-hint" role="status" aria-live="polite">
+              {props.toneError || (props.toneLoading ? '正在加载音色…' : props.tone === 'synth' ? '无需下载，立即播放' : '音色已就绪')}
+            </p>
+            {props.toneError && <button type="button" className="action-button" onClick={props.onToneRetry}>重试加载音色</button>}
+            <span className="control-hint">钢琴、口琴首次选择时下载，之后优先使用本地缓存。选择会自动保存。</span>
+          </div>
           <div className="playback-speed">
             <label className="control-field-heading" htmlFor={`${id}-speed`}><span>播放速度</span><output>{props.speed}%</output></label>
             <input id={`${id}-speed`} type="range" min={PLAYBACK_SPEED_MIN} max={PLAYBACK_SPEED_MAX} step={PLAYBACK_SPEED_STEP} value={props.speed} aria-label="播放速度" onChange={event => props.onSpeedChange(Number(event.currentTarget.value))} />

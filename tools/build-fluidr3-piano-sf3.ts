@@ -8,7 +8,7 @@ import { BasicSoundBank, GeneratorTypes, SoundBankLoader } from 'spessasynth_cor
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 // Requires Python 3 + libsndfile, or FFMPEG_PATH pointing to FFmpeg with libvorbis.
 // Input may be the full SF2 or original piano SF3.
-const sourcePath = resolve(process.argv[2] ?? resolve(root, 'public/soundfonts/FluidR3_GM.sf2'))
+const sourcePath = resolve(process.argv[2] ?? resolve(root, '.tmp/soundfonts/FluidR3_GM.sf2'))
 const outputPath = resolve(process.argv[3] ?? resolve(root, 'packages/score-renderer/vendor/soundfonts/FluidR3_GM-Piano.sf3'))
 assert.notEqual(sourcePath, outputPath, 'Keep the source bank separate from the output.')
 const ffmpeg = process.env.FFMPEG_PATH

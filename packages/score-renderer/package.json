@@ -20,6 +20,10 @@
       "types": "./dist/spessa-player.d.ts",
       "import": "./dist/spessa-player.js"
     },
+    "./tones": {
+      "types": "./dist/playback-tones.d.ts",
+      "import": "./dist/playback-tones.js"
+    },
     "./playback": {
       "types": "./dist/playback-score.d.ts",
       "import": "./dist/playback-score.js"

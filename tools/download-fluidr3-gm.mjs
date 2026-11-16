@@ -6,9 +6,9 @@ import { pipeline } from 'node:stream/promises'
 import { Readable } from 'node:stream'
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
-const outputPath = resolve(root, 'public/soundfonts/FluidR3_GM.sf2')
+const outputPath = resolve(root, '.tmp/soundfonts/FluidR3_GM.sf2')
 const temporaryPath = `${outputPath}.download`
-const sourceUrl = 'https://raw.githubusercontent.com/FluidSynth/fluidsynth/main/sf2/FluidR3_GM.sf2'
+const sourceUrl = 'https://raw.githubusercontent.com/urish/cinto/99e01e36cbede930215e01930f66d2b76ee97622/media/FluidR3%20GM.sf2'
 
 try {
   const existing = await stat(outputPath)

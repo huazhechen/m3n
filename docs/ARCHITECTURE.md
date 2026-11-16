@@ -61,11 +61,12 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
 - `packages/notation/src/notation/section-order.ts`：校验显式乐段顺序；ScoreDocument 保存分段范围与局部访问次数，MEI expansion、歌词映射和两种谱面共用该模型。
 - `packages/score-renderer/src/playback-score.ts`：仅提供 MIDI 生成和时间映射，按播放操作动态加载。
-- `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放与 FluidR3 钢琴 SF3 音色加载。
+- `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放，默认使用本地生成的合成音色；钢琴、口琴通过独立 SF3 按需加载。
+- `packages/score-renderer/src/playback-tones.ts`：轻量音色目录、下载去重、浏览器 Cache Storage 持久缓存与失败重试；不初始化合成器或下载未选音色。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `lib/render-score.ts`：屏幕、打印预览和最终导出的统一排版入口，负责引擎选择、串行调度、取消、分页和 SVG 后处理。
 - `components/ScoreRenderer.tsx`：独立管理布局、播放和光标生命周期；改变版宽或谱式不销毁播放器，更新音乐文档时释放旧播放资源。
-- `components/ScoreControls.tsx`：播放、回到开头与进度常驻；速度、移调、节拍器与恢复默认收纳在可展开的练习面板中。控制栏按所在容器宽度调整布局，按钮与滑条的触控区域至少 44px；嵌入文档的谱例共用控制栏，练习设置互相独立。
+- `components/ScoreControls.tsx`：播放、回到开头与进度常驻；音色、速度、移调、节拍器与恢复默认收纳在可展开的练习面板中。控制栏按所在容器宽度调整布局，按钮、音色选择与滑条的触控区域至少 44px。音色选择通过 `hooks/usePlaybackTone.ts` 同步阅读页、编辑页、文档谱例与同源标签页，以 `m3n:playback-tone` 长期保存在 localStorage；其他练习状态仍独立。
 - `components/ScoreExportDialog.tsx`：打印参数、预览与下载状态；两种谱式均提供连续 SVG、PNG 与多页矢量 PDF。打印宽度单独持久化。
 - `lib/vector-export.ts`：把 SVG 文字按字符位置转为 OpenType 字形路径；数字沿用内嵌 Barlow，文字使用按需加载的本地 Noto Serif CJK SC。字形缺失明确报错。
 - `components/SourceEditor.tsx`：CodeMirror 编辑适配，提供高亮、行号、括号匹配、指令补全、历史与范围诊断；领域层不依赖编辑器。
@@ -81,11 +82,17 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 默认部署在 `/`；设置 `VITE_BASE_URL=/score/ npm run build` 可部署到子路径。React Router 的 `basename`、站点图标、导出字体和分享 API 均使用同一构建基路径，Vite 负责处理模块、WASM 和音源 URL。宿主应对该前缀下的页面路由返回 `index.html`，并把 `/score/api/*` 转给现有 Worker（转交前去掉 `/score` 前缀）；存储继续实现 `M3N_SCORES` 的 KV 接口。
 
-钢琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，播放器通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-Piano-*.sf3`。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
+钢琴和口琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-{Piano,Harmonica}-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在内存中生成短周期波形，无需请求音源文件，继续使用同一套 MIDI、速度、移调、静音与节拍器逻辑。选择 `piano` 或 `harmonica` 时立即按需下载对应文件，显示加载状态、错误与重试；切换正在播放的音色时保留进度与练习参数，准备就绪后继续播放。旧请求不能覆盖更新后的选择。
+
+音源同时保存在页面内存和 `m3n-soundfonts-v1` Cache Storage，以完整哈希 URL 为键；刷新后先读缓存，不重新下载。存储不可用或配额不足时允许正常加载并保留内存副本，网络失败不缓存，损坏缓存重新下载。浏览器清理站点数据可能移除缓存和选择。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
 
 该音源只保留 GM Program 0 的 Yamaha Grand Piano。精简版将原来的 40 个左右声道采样合成为 20 个单声道采样，以 Ogg Vorbis quality 1 编码；保留原始 32 kHz 采样率、音区、力度映射和延音循环。文件由 1,365,672 字节降至约 357 KB，代价是立体声空间感和部分编码细节，单声道合成后的响度也可能略低。播放器入口与缓存策略不变。
 
-重建命令为 `npx tsx tools/build-fluidr3-piano-sf3.ts <原始钢琴.sf3或完整FluidR3_GM.sf2> [输出路径]`，默认输出到上述 vendor 文件；输入与输出必须分开保存。编码环境需要 Python 3 与支持 Vorbis 的系统 libsndfile（`tools/encode-vorbis.py`），或通过 `FFMPEG_PATH` 指定支持 libvorbis 的 FFmpeg。脚本不再依赖 `.tmp/SpessaSynth` 源码；写入前会重新解码全部采样并校验循环边界。使用完整 SF2 时可先执行 `npm run download:fluidr3` 获取源文件；不同 Vorbis 编码库版本的产物大小可能略有差异。
+钢琴重建命令为 `npx tsx tools/build-fluidr3-piano-sf3.ts <原始钢琴.sf3或完整FluidR3_GM.sf2> [输出路径]`，默认输出到上述 vendor 文件；输入与输出必须分开保存。编码环境需要 Python 3 与支持 Vorbis 的系统 libsndfile（`tools/encode-vorbis.py`），钢琴脚本也支持通过 `FFMPEG_PATH` 指定支持 libvorbis 的 FFmpeg。脚本不再依赖 `.tmp/SpessaSynth` 源码；写入前会重新解码全部采样并校验循环边界。使用完整 SF2 时可先执行 `npm run download:fluidr3` 获取源文件，下载保存在 `.tmp/soundfonts`，避免将完整版随站点发布；不同 Vorbis 编码库版本的产物大小可能略有差异。
+
+口琴通过 `node tools/build-fluidr3-harmonica-sf3.mjs [完整FluidR3_GM.sf2或FluidR3Mono_GM.sf3] [输出路径]` 提取：从 Bank 0 / Program 22 复制 Harmonica，保留采样率与循环，以 Vorbis quality 1 编码，独立文件中的 Program 改为 0，适配乐谱现有 MIDI。默认来源是 MuseScore v2.3.2 随附的 FluidR3Mono 2.312（FluidR3 GM 的单声道发行版），以 Git blob 哈希固定并验证输入。完整源库只用于构建，网站仅发布提取后的口琴文件。原作者信息与 MIT 许可证保存在 `vendor/soundfonts/FluidR3Mono-LICENSE.md`，并写入口琴文件的元数据。
+
+口琴文件为 47,932 字节，包含 8 个采样。原始映射只覆盖到 MIDI 96；提取时将最高采样的音区延伸到 MIDI 127，避免高音或移调后无声。常用音区的采样映射不变。
 
 生产渲染资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。Verovio 使用固定 6.2.0 版本的本地精简构建，保留的字体资源嵌入独立 WASM，JavaScript 通过模块相对 URL 加载它；npm 包仅提供同版本 toolkit 包装器。默认和回退音乐字体都固定为完整 Leipzig；Bravura 只保留初始化需要的符号名称与度量 XML，移除未使用的字形和 CSS。构建脚本还裁掉未使用的输入格式，源码、许可证、裁剪清单和重建方法见 [Verovio 构建说明](VEROVIO_BUILD.md)。jpFun 与数字字体也由本地构建提供。Cloudflare 的 `ASSETS` 绑定负责提供 `dist`，浏览器只请求本站 `/assets/*`；音源与 AudioWorklet 同样来自本站。文档中的参考链接和 SVG 的命名空间不是资源加载路径。
 

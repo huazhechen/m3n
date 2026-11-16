@@ -231,6 +231,25 @@
   background: #ffffff;
 }
 
+.playback-tone {
+  grid-column: 1 / -1;
+}
+
+.playback-tone select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #cbd9cf;
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.playback-tone p {
+  margin: 8px 0;
+}
+
 .speed-presets {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test'
 
-test('numbered display ignores old staff preference and only loads playback resources on play', async ({ page }) => {
+test('numbered display ignores old staff preference and only loads playback resources on play', async ({ page, baseURL }) => {
   const external: string[] = [], requests: string[] = []
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation','0'))
   await page.route('**/*', async route => {
     const url=new URL(route.request().url())
-    if (/^https?:$/.test(url.protocol) && url.origin!=='http://127.0.0.1:4173') {
+    if (/^https?:$/.test(url.protocol) && url.origin!==new URL(baseURL!).origin) {
       external.push(url.href); return route.abort()
     }
     requests.push(url.pathname); return route.continue()

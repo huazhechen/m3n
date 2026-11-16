@@ -3,7 +3,7 @@ import { expect, test, type Locator } from '@playwright/test'
 async function expectUsableControls(bar: Locator) {
   const issues = await bar.evaluate(element => {
     const bounds = element.getBoundingClientRect()
-    const targets = [...new Set([...element.querySelectorAll<HTMLElement>('button, input')].map(control =>
+    const targets = [...new Set([...element.querySelectorAll<HTMLElement>('button, input, select')].map(control =>
       control.matches('input[type="radio"], input[type="checkbox"], input[role="switch"]') ? control.closest('label')! : control,
     ))].filter(control => control.checkVisibility())
     const issues: string[] = []
