@@ -1,9 +1,10 @@
 import { DefaultTextMeasurer, type TextMeasurer } from '@m3n/jpfun'
 import {
-  displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreCreditLines, scoreEventIds,
+  resolveScorePitches, displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreCreditLines, scoreEventIds,
   measurePlaybackPasses, type ScoreDocument, type ScoreEvent, type ScoreMeasure, type ScoreAlternative,
 } from '@m3n/notation'
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
+import { fixedDoPitch, fixedDoGrace } from './fixed-do.js'
 import { sustainContinuations } from './sustains.js'
 
 function tempoMark(qpm: number, count: number, unit: number) {
@@ -25,7 +26,7 @@ export type EventBinding = {
   passes?: number[]
 }
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
-export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; pageMargin?: number; systemGap?: number }
+export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 const pitchName = (token: string, shift = 0) => {
   const match = /^([0-7])([#b=]*)([ed]*)$/.exec(token)
@@ -68,6 +69,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const voicesForPart = (melody: ScoreMeasure[], bass: ScoreMeasure[], partIndex: number) => {
     const playbackPasses = document.alternatives?.length ? measurePlaybackPasses(melody) : new Map<ScoreMeasure, Set<number>>()
     const renderVoice = (measures: ScoreMeasure[], staff: 'melody' | 'bass', alternative?: ScoreAlternative, hostIndex = 0): string => {
+      const resolvedPitches = options.fixedDo ? resolveScorePitches(measures) : undefined
       let pieces: string[] = []
       const paragraphs: string[] = []
       let paragraph: string | undefined
@@ -108,7 +110,11 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         // Explicit accidental reminders carry their full pitch into jpFun;
         // only redundant glyphs at the same degree/octave are hidden.
         const accidentals = new Map<string, string>()
-        const noteExpression = (pitch: string, shift: number) => {
+        const noteExpression = (pitch: string, shift: number, absolute?: string) => {
+          if (options.fixedDo && pitch !== '0' && absolute) {
+            const native = fixedDoPitch(absolute)
+            return `@note(${quote(native)}${native.startsWith('n') ? ',showacc=false' : ''})`
+          }
           const native = pitchName(pitch, shift)
           const match = /^([#bn]+)([1-7][',]*)$/.exec(native)
           let repeated = false
@@ -148,7 +154,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const eventParagraph = `${partIndex}:${paragraphOf(staff === 'bass' ? firstEvent?.sourceStart ?? event.sourceStart : event.sourceStart)}`
           if (paragraph !== eventParagraph) { flushParagraph(); paragraph = eventParagraph }
           const controls: string[] = []
-          if (event.key !== activeKey) { accidentals.clear(); controls.push(`@key(${quote(keyName(event.key))},size=16px)`); activeKey = event.key }
+          if (!options.fixedDo && event.key !== activeKey) { accidentals.clear(); controls.push(`@key(${quote(keyName(event.key))},size=16px)`); activeKey = event.key }
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
           if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(tempoMark(event.tempo, event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)); activeTempo = event.tempo }
@@ -179,7 +185,11 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             let value = expression
             const grace = event.postfixes.flatMap(value => {
               const parsed = parseM3NGrace(value)
-              return parsed ? (parseM3NGroupPitches(parsed.pitchSource) ?? []).map(pitch => duration(`@note(${quote(pitchName(pitch, event.octaveShift))})`, 4 / 2 ** (parsed.depth + 2))) : []
+              if (!parsed) return []
+              return (parseM3NGroupPitches(parsed.pitchSource) ?? []).map(pitch => {
+                const native = options.fixedDo ? fixedDoGrace(pitch, event.key, event.octaveShift) : pitchName(pitch, event.octaveShift)
+                return duration(`@note(${quote(native)}${options.fixedDo && native.startsWith('n') ? ',showacc=false' : ''})`, 4 / 2 ** (parsed.depth + 2))
+              })
             })
             // Articulations belong to the main note. A leading grace block sits
             // beside it, so stacking these marks above the entire block adds
@@ -194,14 +204,14 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const content: string[] = [...controls]
           if (event.kind === 'tuplet' && event.tuplet) {
             event.pitches.forEach((pitch, slot) => {
-              const expr = duration(noteExpression(pitch, event.octaveShift), event.tuplet!.unitBeats)
+              const expr = duration(noteExpression(pitch, event.octaveShift, resolvedPitches?.get(event)?.[slot]), event.tuplet!.unitBeats)
               const item = bind(slot === 0 ? decorate(expr) : expr, event, measureId, slot, `-n${slot + 1}`, true)
               content.push(item.expression); children.push(item.label)
             })
             const noteContent = content.splice(controls.length)
             content.push(`@tuplet({${noteContent.join(' ')}},${event.tuplet.numbase})`)
           } else {
-            const base = continuations.has(event) ? '@dash()' : event.kind === 'chord' ? `@up(${event.pitches.map(pitch => noteExpression(pitch, event.octaveShift)).join(',')})` : noteExpression(event.pitches[0] ?? '0', event.octaveShift)
+            const base = continuations.has(event) ? '@dash()' : event.kind === 'chord' ? `@up(${event.pitches.map((pitch, slot) => noteExpression(pitch, event.octaveShift, resolvedPitches?.get(event)?.[slot])).join(',')})` : noteExpression(event.pitches[0] ?? '0', event.octaveShift, resolvedPitches?.get(event)?.[0])
             let remaining = event.beats
             let index = 0
             while (remaining > 1e-7) {
@@ -344,7 +354,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     `@text(${quote(creditLines.map(credit => credit.name).join('\n'))},size=14px,lineheight=1.5,align=right)`,
   ].join(' ')}}` : ''
   const signatures = [
-    `@key(${quote(keyName(document.key))},size=16px)`,
+    `@key(${quote(keyName(options.fixedDo ? 'C' : document.key))},size=16px)`,
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,
     document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : '',
   ].filter(Boolean).join(' ')

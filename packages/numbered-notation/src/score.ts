@@ -6,6 +6,8 @@ import { renderInteractivePages } from './svg.js'
 export type NumberedNotationRenderOptions = {
   paged: boolean
   width: number
+  /** Display absolute pitches as C-based numbered notation with sharps. */
+  fixedDo?: boolean
   measureNumbers?: boolean
   includeBass?: boolean
   textMeasurer?: TextMeasurer

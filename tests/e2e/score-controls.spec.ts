@@ -4,7 +4,7 @@ test('three full-width slider rows and a fourth options row align on phones and 
   await page.goto('/scores/huan_le_song_01')
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   await expect(bar).toBeVisible()
-  expect(await bar.locator('.control-options > [role="switch"]').evaluateAll(elements => elements.map(element => element.getAttribute('aria-label')))).toEqual(['节拍器', '钢琴音色', '分页', '小节号'])
+  expect(await bar.locator('.control-options > [role="switch"]').evaluateAll(elements => elements.map(element => element.getAttribute('aria-label')))).toEqual(['节拍器', '钢琴音色', '分页', '固定调记谱', '小节号'])
   for (const width of [320, 360, 390, 600, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 })
     const geometry = await bar.evaluate(element => {
@@ -16,10 +16,15 @@ test('three full-width slider rows and a fourth options row align on phones and 
       const outside = [...element.querySelectorAll('button,input')].some(control => { const b = control.getBoundingClientRect(); return b.left < bounds.left || b.right > bounds.right })
       const left = element.querySelector('.control-sliders')!.getBoundingClientRect()
       const right = element.querySelector('.control-options')!.getBoundingClientRect()
-      return { columns, outside, below: right.top >= left.bottom && Math.abs(left.left - right.left) < 1 && Math.abs(left.width - right.width) < 1 }
+      const buttonSizes = [...element.querySelectorAll('button')].map(button => { const b = button.getBoundingClientRect(); return { width: b.width, height: b.height } })
+      return { columns, outside, buttonSizes, below: right.top >= left.bottom && Math.abs(left.left - right.left) < 1 && Math.abs(left.width - right.width) < 1 }
     })
     expect(geometry.outside).toBe(false)
     expect(geometry.below).toBe(true)
+    if (width <= 390) for (const size of geometry.buttonSizes) {
+      expect(size.width).toBe(44)
+      expect(size.height).toBe(44)
+    }
     for (const row of geometry.columns) for (let col = 0; col < 3; col++) {
       expect(Math.abs(row[col]!.x - geometry.columns[0]![col]!.x)).toBeLessThan(1)
       expect(Math.abs(row[col]!.center - row[0]!.center)).toBeLessThan(1)
@@ -148,4 +153,35 @@ test('clicking notes during playback seeks forward and backward and keeps playin
   await notes.nth(8).click()
   await expect(progress).toHaveValue(pausedPosition)
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
+})
+
+
+test('fixed C spelling and measure numbers toggle independently and persist', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill('{key=D}{4/4}\nN: 1 2 3 4 |||')
+  const paper = page.locator('.score-paper')
+  const fixed = page.getByRole('switch', { name: '固定调记谱' })
+  const measures = page.getByRole('switch', { name: '小节号', exact: true })
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  const digits = () => paper.locator('g.note[data-m3n-id] text').allTextContents()
+  await expect.poll(digits).toEqual(['1', '2', '3', '4'])
+  await expect(fixed.locator('svg')).toHaveText('♯')
+  await fixed.click()
+  await expect(paper).toHaveAttribute('data-fixed-do', 'true')
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await expect.poll(digits).toEqual(['2', '3', '4', '5'])
+  await expect(paper.locator('g.note[data-m3n-id] path')).toHaveCount(1)
+  await expect(measures).not.toBeChecked()
+  await measures.click()
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await expect(fixed).toBeChecked()
+  await expect(measures).toBeChecked()
+  await fixed.click()
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await expect.poll(digits).toEqual(['1', '2', '3', '4'])
+  await expect(measures).toBeChecked()
+  await fixed.click()
+  await page.reload()
+  await expect(fixed).toBeChecked()
+  await expect(measures).toBeChecked()
 })

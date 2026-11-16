@@ -13,6 +13,8 @@ type ScoreControlsProps = {
   metronomeEnabled: boolean
   paged: boolean
   onPagedChange: (enabled: boolean) => void
+  fixedDo: boolean
+  onFixedDoChange: (enabled: boolean) => void
   measureNumbers: boolean
   tone: PlaybackTone
   toneLoading: boolean
@@ -74,8 +76,11 @@ export function ScoreControls(props: ScoreControlsProps) {
       <button type="button" role="switch" aria-label="分页" aria-checked={props.paged} title="分页显示" className="control-button" onClick={() => props.onPagedChange(!props.paged)}>
           <Icon><rect x="3" y="3" width="14" height="17" rx="2" /><path d="M7 7h6M7 11h6M7 15h4M17 7h4v14H7" /></Icon><span>分页</span>
         </button>
+      <button type="button" role="switch" aria-label="固定调记谱" aria-checked={props.fixedDo} title="固定C调记谱，变化音统一用♯表示" className="control-button" onClick={() => props.onFixedDoChange(!props.fixedDo)}>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><text x="12" y="20" textAnchor="middle" fontSize="26" fill="currentColor">♯</text></svg><span>固定调</span>
+        </button>
       <button type="button" role="switch" aria-label="小节号" aria-checked={props.measureNumbers} title="显示小节号" className="control-button" onClick={() => props.onMeasureNumbersChange(!props.measureNumbers)}>
-          <Icon><path d="m10 3-4 18M18 3l-4 18M4 9h17M3 15h17" /></Icon><span>小节号</span>
+          <Icon><path d="M4 4v16M20 4v16M4 8h16M4 16h16M10 10h2v4m-2 0h4" /></Icon><span>小节号</span>
         </button>
       <div className="transpose-stepper" role="group" aria-label="播放移调">
         <button type="button" className="control-button" aria-label="降低半音" title="降低半音" disabled={props.transpose <= PLAYBACK_TRANSPOSE_MIN || props.isLoading} onClick={() => props.onTransposeChange(props.transpose - 1)}><Icon><path d="M5 12h14" /></Icon></button>

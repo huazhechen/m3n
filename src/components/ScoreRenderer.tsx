@@ -200,6 +200,7 @@ export function ScoreRenderer({
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
   const [fitWidth, setFitWidth] = useState(() => !playbackOnly && (compact || readRendererSetting('m3n:fit-width', 1, 0, 1) === 1))
+  const [fixedDo, setFixedDo] = useState(() => !playbackOnly && readRendererSetting('m3n:fixed-do', 0, 0, 1) === 1)
   const [measureNumbers, setMeasureNumbers] = useState(() => !playbackOnly && readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
   const [contentWidth, setContentWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -256,7 +257,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const { message } = await renderScoreInto(paper, {
-          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers,
+          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers, fixedDo,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
         })
@@ -280,7 +281,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers])
+  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers, fixedDo])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -521,6 +522,8 @@ export function ScoreRenderer({
         width={Math.round(renderWidth)}
         paged={renderMode === 'paged'}
         onPagedChange={paged => { const mode = paged ? 'paged' : 'continuous'; setRenderMode(mode); if (!compact) writeRenderMode(mode) }}
+        fixedDo={fixedDo}
+        onFixedDoChange={enabled => { setFixedDo(enabled); writeRendererSetting('m3n:fixed-do', enabled ? 1 : 0) }}
         measureNumbers={measureNumbers}
         onMeasureNumbersChange={enabled => { setMeasureNumbers(enabled); writeRendererSetting('m3n:measure-numbers', enabled ? 1 : 0) }}
         onWidthChange={changeLayoutWidth}
@@ -553,6 +556,7 @@ export function ScoreRenderer({
         data-render-phase={renderPhase ?? undefined}
         data-reading-fit={fitWidth}
         data-render-mode={renderMode}
+        data-fixed-do={fixedDo}
         data-measure-numbers={measureNumbers}
         data-notation="numbered"
         aria-busy={isRendering || isSourceUpdating || undefined}
