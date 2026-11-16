@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto'
 // No development server, runtime fallback, network request or baseline regeneration.
 const root = resolve(import.meta.dirname, '..')
 const temp = mkdtempSync(join(tmpdir(), 'm3n-parity-'))
-const baselineRef = 'dbfda72'
+const baselineRef = process.argv.find(argument => argument.startsWith('--baseline-ref='))?.slice('--baseline-ref='.length) ?? 'dbfda72'
 const candidateRef = process.argv.find(argument => argument.startsWith('--candidate-ref='))?.slice('--candidate-ref='.length)
 const baselineCommit = execFileSync('git', ['rev-parse', `${baselineRef}^{commit}`], { cwd: root, encoding: 'utf8' }).trim()
 const candidateCommit = execFileSync('git', ['rev-parse', `${candidateRef ?? 'HEAD'}^{commit}`], { cwd: root, encoding: 'utf8' }).trim()
@@ -92,10 +92,21 @@ try {
       if (pixels && !result.error) {
         const images = []
         for (const id of ['baseline', 'candidate']) {
+          // Rasterize at the same viewport origin. Translating vector paths
+          // across a wide side-by-side canvas can change Skia edge rounding,
+          // even for byte-identical SVGs; cropping afterwards cannot undo it.
+          await page.evaluate(id => {
+            document.querySelector('main').style.display = 'block'
+            for (const host of document.querySelectorAll('main > section')) host.style.display = host.id === id ? 'block' : 'none'
+          }, id)
           const buffer = await page.locator(`#${id}`).screenshot()
           writeFileSync(join(output, `${name}-${id}.png`), buffer)
           images.push(buffer.toString('base64'))
         }
+        await page.evaluate(() => {
+          document.querySelector('main').style.display = 'flex'
+          for (const host of document.querySelectorAll('main > section')) host.style.display = 'block'
+        })
         result.pixels = await page.evaluate(async images => {
           const decoded = await Promise.all(images.map(base64 => new Promise((resolve, reject) => {
             const image = new Image()
@@ -139,5 +150,5 @@ try {
   const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;')
   writeFileSync(join(output, 'index.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>jpFun 与自研排版对照</title><style>body{font:16px sans-serif;margin:24px}article{border-top:1px solid #aaa;margin:24px 0}img{max-width:100%;height:auto}pre{white-space:pre-wrap}</style><h1>jpFun（左）与自研候选（右，自然行距）</h1><p>${summary.checks} 组，${summary.matching} 组一致，${summary.differing} 组存在差异。像素审计：${pixels ? '已启用，逐通道零差异' : '未启用'}。自研分页不铺满页面，相关竖向差异按产品选择保留，报告照实记录。坐标容差 0.5px；几何一致不等于像素一致，仍须检查字形与关系线。</p>${reports.map(report => `<article><h2>${escape(report.title || report.file)} · ${report.width}px · ${report.paged ? '分页' : '连续'}</h2><pre>${escape(JSON.stringify({error:report.error,geometryMatches:report.geometryMatches,pixelMatches:report.pixelMatches,pixels:report.pixels,baselineSystems:report.baseline?.systems.length,candidateSystems:report.candidate?.systems.length,differingLines:report.differingLines,maxXShift:report.maxXShift,maxYShift:report.maxYShift,baselineLineGaps:report.baseline?.lineGaps,candidateLineGaps:report.candidate?.lineGaps},null,2))}</pre>${report.pixels ? `<p><a href="${escape(`${report.file}-${report.width}-${report.paged ? 'paged' : 'continuous'}`)}-diff.png">像素差异图</a></p>` : ''}${report.screenshot ? `<a href="${escape(report.screenshot)}"><img loading="lazy" src="${escape(report.screenshot)}"></a>` : ''}</article>`).join('')}</html>`)
   console.log(JSON.stringify({ checks: summary.checks, pixelAudit: pixels, geometryMatching: summary.geometryMatching, matching: summary.matching, differing: summary.differing, report: join(output, 'index.html') }, null, 2))
-  if (process.argv.includes('--require-parity') && summary.differing) process.exitCode = 1
+  if ((selfCheck || process.argv.includes('--require-parity')) && summary.differing) process.exitCode = 1
 } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }

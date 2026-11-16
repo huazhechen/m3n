@@ -204,4 +204,4 @@ Fine、D.C.、D.S. 排在末音或休止符之后、小节线之前，与音符�
 
 ## 自研排版候选的验收状态
 
-默认显示和导出继续使用 jpFun。`native-score.ts` 及相关模块仅用于开发对照，未从公共入口导出。几何边界和事件映射通过不代表视觉一致；必须逐曲核对行距、音符间距、换行、分页、歌词和关系线后才能替换。运行 `node tools/compare-numbered-engines.mjs --all-widths --screenshots --require-parity` 生成差异报告并在不一致时失败；报告位于 `.tmp/numbered-parity/index.html`。
+默认显示和导出继续使用 jpFun。`native-score.ts` 及相关模块仅用于开发对照，未从公共入口导出。几何边界和事件映射通过不代表视觉一致；必须逐曲核对行距、音符间距、换行、分页、歌词和关系线后才能替换。运行 `node tools/compare-numbered-engines.mjs --all-widths --screenshots --require-parity` 生成差异报告并在不一致时失败；报告按运行时间独立保存在 `.tmp/numbered-parity/<运行标识>/index.html`。显式传入 `--baseline-ref=<commit>` 可选择已核实的jpFun实现版本，省略时保留历史 `dbfda72`；报告记录完整提交哈希。涉及双方共同修正的行为时，另以包含该修正的当前jpFun提交比较，历史报告仍保留。`--self-check --pixels` 对基准自身做逐通道零差异自检，自检失败返回非零。像素截图逐一放在同一视口原点采集，随后恢复左右并排供人工查看，避免并排位移本身引入曲线光栅差异。
