@@ -19,7 +19,9 @@ for (const width of [390, 1280]) {
     await expect(page.locator('.hero-actions .primary-link')).toHaveCount(1)
 
     const sample = page.getByRole('region', { name: '可试听谱例' })
-    await expect(sample.getByRole('heading', { name: '示例', exact: true })).toBeVisible()
+    await expect(sample.getByRole('heading')).toHaveCount(0)
+    await expect(sample).toHaveClass(/markdown-panel/)
+    await expect(sample).toHaveCSS('background-color', 'rgb(255, 255, 255)')
     const cards = page.getByLabel('M3N 特性')
     const sampleBounds = await sample.boundingBox()
     const cardsBounds = await cards.boundingBox()
@@ -48,6 +50,7 @@ test('guide and manual open inside the home page and old document links redirect
   await page.locator('.hero-actions').getByRole('link', { name: '浏览指南' }).click()
   await expect(page).toHaveURL(/\/?\?doc=guide/)
   await expect(page.getByRole('heading', { name: 'M3N 指南', exact: true })).toBeVisible()
+  await expect(page.locator('.hero, .hero-actions')).toHaveCount(0)
   await expect(page.getByRole('region', { name: '可试听谱例' })).toHaveCount(0)
   await expect(page.locator('.top-nav')).toHaveCount(1)
   await page.getByRole('link', { name: '手册 §6', exact: true }).click()

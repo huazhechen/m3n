@@ -154,7 +154,6 @@ test('mobile saving and export recover visibly from a failed local font request'
     if (!failed) { failed = true; await route.fulfill({ status: 503, body: '' }) }
     else await route.continue()
   })
-  await page.getByRole('button', { name: '页面菜单', exact: true }).click()
   await page.getByRole('button', { name: '打印', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('button', { name: 'SVG', exact: true }).click()

@@ -16,7 +16,7 @@ export function HomePage() {
   return (
     <main>
       <TopNav />
-      <section className="hero">
+      {!isReading && <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">Max&apos;s Markup Music Notation</span>
           <h1>M3N 是面向旋律制谱的文本记谱语言。</h1>
@@ -38,10 +38,9 @@ export function HomePage() {
             </Link>
           </div>
         </div>
-      </section>
+      </section>}
       {isReading ? <Suspense fallback={<p role="status">正在加载...</p>}><HomeDocumentation /></Suspense> : <>
-      <section className="home-sample" aria-label="可试听谱例">
-        <div className="pane-toolbar"><h2>示例</h2></div>
+      <section className="home-sample markdown-panel" aria-label="可试听谱例">
         <ScoreRenderer compact playbackOnly scoreDocument={analysis.score} sourceMap={analysis.interaction.sourceMap} />
       </section>
         <div className="hero-summary" aria-label="M3N 特性">

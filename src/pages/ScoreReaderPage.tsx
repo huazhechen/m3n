@@ -4,7 +4,7 @@ import { analyzeM3N, formatScoreDiagnostic } from '@m3n/notation'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
-import { TopNav } from '../components/TopNav'
+import { NavActionContent, TopNav } from '../components/TopNav'
 import { presetScores, scorebookDefaultWidth } from '../lib/samples'
 import { useScoreSource } from '../hooks/useScoreSource'
 import type { ScoreDisplaySettings } from '../lib/render-score'
@@ -32,30 +32,32 @@ export function ScoreReaderPage() {
       <TopNav actions={<div className="score-reader-actions">
         <div className="score-reader-navigation" role="group" aria-label="切换曲目">
           {score && previousScore ? (
-            <Link className="action-button" to={`/scores/${previousScore.slug}`}>
-              上一曲
+            <Link className="action-button" aria-label="上一曲" title="上一曲" to={`/scores/${previousScore.slug}`}>
+              <NavActionContent action="previous" />
             </Link>
           ) : (
-            <span className="action-button is-disabled" aria-disabled="true">上一曲</span>
+            <span className="action-button is-disabled" role="link" aria-label="上一曲" title="上一曲" aria-disabled="true"><NavActionContent action="previous" /></span>
           )}
           {score && nextScore ? (
-            <Link className="action-button" to={`/scores/${nextScore.slug}`}>
-              下一曲
+            <Link className="action-button" aria-label="下一曲" title="下一曲" to={`/scores/${nextScore.slug}`}>
+              <NavActionContent action="next" />
             </Link>
           ) : (
-            <span className="action-button is-disabled" aria-disabled="true">下一曲</span>
+            <span className="action-button is-disabled" role="link" aria-label="下一曲" title="下一曲" aria-disabled="true"><NavActionContent action="next" /></span>
           )}
         </div>
         <div className="score-reader-tools" role="group" aria-label="乐谱操作">
           <button
             type="button"
             className="action-button"
+            aria-label="打印"
+            title="打印"
             onClick={() => exportDialogRef.current?.open()}
           >
-            打印
+            <NavActionContent action="print" />
           </button>
-          <Link className="action-button" to={`/editor/${slug}`}>
-            编辑
+          <Link className="action-button" aria-label="编辑" title="编辑" to={`/editor/${slug}`}>
+            <NavActionContent action="edit" />
           </Link>
         </div>
       </div>} />

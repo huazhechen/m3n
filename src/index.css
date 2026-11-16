@@ -5,33 +5,54 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 12px;
   min-height: 48px;
+  margin-bottom: 10px;
   border-bottom: 1px solid #d9dbd4;
 }
 
-.top-nav.has-actions { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; margin-bottom: 10px; }
-.top-nav.has-actions .score-reader-actions { margin: 0; justify-content: center; gap: 16px; }
-.top-nav.has-actions .score-reader-tools { margin-left: 0; }
-.top-nav.has-actions .score-reader-actions .action-button { min-height: 32px; padding: 0 10px; font-size: 13px; border-radius: 6px; }
-.top-nav-menu-toggle { display: none; }
-@media (min-width: 721px) {
-  .top-nav-menu { display: contents; }
-  .top-nav-menu nav { order: 1; }
+.top-nav nav,
+.score-reader-actions,
+.score-reader-navigation,
+.score-reader-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-nav nav a,
+.top-nav .action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid #cfd3ca;
+  border-radius: 6px;
+  background: #fff;
+  color: #285b5c;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.top-nav svg { flex: 0 0 auto; }
+.top-nav .action-button.is-disabled {
+  color: #9aa2a6;
+  background: #f4f5f1;
+  cursor: default;
 }
 
 @media (max-width: 720px) {
-  .top-nav { min-height: 44px; }
-  .top-nav.has-actions { display: flex; margin-bottom: 6px; }
-  .top-nav-menu-toggle { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 1px solid #cfd3ca; border-radius: 6px; color: #315b5d; background: #fff; cursor: pointer; }
-  .top-nav-menu-toggle:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
-  .top-nav-menu { inset: 56px 12px auto auto; width: min(300px, calc(100vw - 24px)); max-height: calc(100dvh - 68px); overflow: auto; box-sizing: border-box; margin: 0; padding: 10px; border: 1px solid #d3dfd9; border-radius: 10px; color: #244e50; background: #fff; box-shadow: 0 6px 24px rgb(31 35 38 / 18%); }
-  .top-nav-menu:popover-open { display: grid; gap: 8px; }
-  .top-nav.has-actions .score-reader-actions { display: grid; justify-content: stretch; align-items: stretch; gap: 6px; margin: 0; }
-  .top-nav-menu .score-reader-navigation, .top-nav-menu .score-reader-tools, .top-nav .top-nav-menu nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .top-nav.has-actions .top-nav-menu .action-button,
-  .top-nav .top-nav-menu nav a { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 10px; border: 1px solid #cfd3ca; border-radius: 6px; background: #fff; font-size: 14px; font-weight: 500; line-height: 1; }
-  .top-nav-menu .action-button:not(.is-disabled), .top-nav .top-nav-menu nav a { color: #285b5c; }
+  .top-nav { min-height: 44px; margin-bottom: 6px; gap: 8px; }
+  .top-nav nav,
+  .top-nav .score-reader-actions,
+  .top-nav .score-reader-navigation,
+  .top-nav .score-reader-tools { gap: 4px; }
+  .top-nav nav a,
+  .top-nav .action-button { width: 36px; height: 36px; min-width: 36px; padding: 0; }
+  .top-nav .nav-action-label { display: none; }
 }
 
 .brand-mark {
@@ -49,11 +70,6 @@
   flex: 0 0 auto;
 }
 
-.top-nav nav {
-  display: flex;
-  gap: 8px;
-}
-
 .top-nav nav a,
 .primary-link,
 .secondary-link,
@@ -62,10 +78,6 @@
   border: 1px solid #cfd3ca;
   border-radius: 6px;
   background: #ffffff;
-}
-
-.top-nav nav a {
-  padding: 8px 12px;
 }
 
 .top-nav nav a.active {
@@ -476,43 +488,7 @@ textarea::selection {
   color: #5c6468;
 }
 
-.score-reader-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin: 16px 0 12px;
-}
 
-.score-reader-navigation,
-.score-reader-tools {
-  display: flex;
-  gap: 8px;
-}
-
-.score-reader-actions .action-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: 10px;
-  font-weight: 500;
-}
-
-.score-reader-tools {
-  margin-left: auto;
-}
-
-.score-reader-actions .action-button.is-disabled {
-  display: inline-flex;
-  align-items: center;
-  border-color: #d9dbd4;
-  color: #9aa2a6;
-  background: #f4f5f1;
-  cursor: default;
-}
 
 .score-reader {
   min-height: 0;
