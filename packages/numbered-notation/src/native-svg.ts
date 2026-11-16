@@ -1,4 +1,4 @@
-import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { nativeLyricSvg } from './native-lyrics.js'
 import { NativeMusicPainter, nativeBeamSvg } from './native-music.js'
@@ -32,15 +32,13 @@ class SvgPainter extends NativeMusicPainter {
 
   measure(measure: NativeMeasure, system: NativeSystem): string {
     let content = ''
-    const bars = nativeMeasureBarPositions(system.measures, system.measures.indexOf(measure))
+    const index = system.measures.indexOf(measure)
     const glyphs = measure.columns.flatMap(column => column.glyphs)
     for (const lane of system.lanes) {
       const members = glyphs.filter(glyph => glyph.lane === lane.id)
       if (!members.length) continue
       let laneContent = members.map(glyph => this.glyph(glyph, system, lane)).join('')
-      if (!lane.id.startsWith('alternative:')) {
-        for (const bar of bars) laneContent += nativeBarSvg(bar.kind, bar.x, lane.y, this.layout.measurer)
-      }
+      for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) laneContent += nativeBarSvg(bar.kind, bar.x, lane.y, this.layout.measurer)
       content += `<g${attrs({ 'data-m3n-lane': lane.id })}>${laneContent}</g>`
     }
     return `<g${attrs({ class: 'measure', id: measure.continuation ? `${measure.id}-s${system.index}` : measure.id, 'data-m3n-measure-id': measure.id, 'data-m3n-measure-start': measure.start, 'data-m3n-measure-end': measure.end })}>${content}</g>`

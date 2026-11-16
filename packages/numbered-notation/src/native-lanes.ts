@@ -4,7 +4,7 @@ import { nativeSvgPieces, translateNativeInk, type NativeInk } from './native-in
 import { NativeMusicPainter, nativeBeamSvg } from './native-music.js'
 import { nativeLyricSvg } from './native-lyrics.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
-import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
 
 /** Final painted primitives in each lane's baseline coordinates. Keep separate
@@ -27,7 +27,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer): 
         }
       }
       for (let i = 1; i < glyphs.length; i++) add(nativeBeamSvg({ ...glyphs[i - 1]!, y: 0 }, { ...glyphs[i]!, y: 0 }, measurer))
-      if (glyphs.length && !lane.id.startsWith('alternative:')) for (const bar of nativeMeasureBarPositions(system.measures, index)) add(nativeBarSvg(bar.kind, bar.x, 0, measurer))
+      for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) add(nativeBarSvg(bar.kind, bar.x, 0, measurer))
     }
     for (const relation of system.relations.filter(relation => relation.first.lane === lane.id)) add(system.relationLayout!.get(relation)!.svg)
     for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id) add(decoration.svg)

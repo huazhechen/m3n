@@ -14,6 +14,12 @@ export function nativeMeasureBarPositions(measures: NativeMeasure[], index: numb
   return positions
 }
 
+/** A lane paints boundaries only in fragments containing its own music. */
+export function nativeLaneBarPositions(measures: NativeMeasure[], index: number, lane: string) {
+  if (lane.startsWith('alternative:') || !measures[index]!.columns.some(column => column.glyphs.some(glyph => glyph.lane === lane))) return []
+  return nativeMeasureBarPositions(measures, index)
+}
+
 /** The same bar primitives feed both local obstacle measurement and SVG output. */
 export function nativeBarSvg(kind: string, x: number, y: number, measurer: TextMeasurer): string {
   const geometry = nativeBarMetrics(kind), top = y + nativeMusicAxis(measurer) - geometry.size / 2

@@ -1,5 +1,5 @@
 import { keyedDisplayPerformance } from './display-performance.js'
-import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
 import { placeNativeNavigation, placeNativeBarLabels } from './native-system-labels.js'
 import { placeNativeVoltas } from './native-volta-layout.js'
@@ -186,8 +186,6 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
   }
   measurer ??= new DefaultTextMeasurer()
-  const barInk = nativeSvgInk(nativeBarSvg('single', 0, 0, measurer), measurer)
-  const barTop = -barInk.top, barBottom = barInk.bottom
   const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
   const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, options.systemGap ?? nativeStyle.systemGap, options)
@@ -205,19 +203,19 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     for (const lane of laneNames) {
       const members = glyphs.filter(glyph => glyph.lane === lane)
       const rows = [...new Set(members.flatMap(glyph => [...glyph.lyrics].filter(([, row]) => row.annotation || row.texts.some(text => text.replaceAll('\u200B', '').trim())).map(([row]) => row)))].sort((a, b) => a - b)
-      const hasBars = !lane.startsWith('alternative:')
-      const bodyBottom = Math.max(hasBars ? barBottom : 0, ...members.map(glyph => glyph.bottom))
+      const bars = system.measures.flatMap((_, index) => nativeLaneBarPositions(system.measures, index, lane))
+        .map(bar => nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer))
+      const bodyBottom = Math.max(0, ...bars.map(ink => ink.bottom), ...members.map(glyph => glyph.bottom))
       const lyricBottom = Math.max(...members.map(glyph => glyph.musicBottom ?? glyph.bottom))
-      system.lanes.push({ id: lane, y: 0, top: Math.max(hasBars ? barTop : 0, ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
+      system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
     const regions = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
       .flatMap(g => g.controls.filter(c => c.x !== undefined).map(c => ({ lane: g.lane, left: c.x!, right: c.x! + c.width, top: c.top })))
-    for (const [index, measure] of system.measures.entries()) for (const lane of system.lanes) {
-      if (lane.id.startsWith('alternative:') || !measure.columns.some(c => c.glyphs.some(g => g.lane === lane.id))) continue
-      for (const bar of nativeMeasureBarPositions(system.measures, index)) {
+    for (const [index] of system.measures.entries()) for (const lane of system.lanes) {
+      for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) {
         const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)
         regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top })
       }

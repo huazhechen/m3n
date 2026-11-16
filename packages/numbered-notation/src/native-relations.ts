@@ -1,6 +1,6 @@
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
-import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { NativeSymbols, attrs, n, line } from './native-symbols.js'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { nativeArcInkLift } from './native-curve.js'
@@ -61,15 +61,15 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     const labels = (system.decorationLayout ?? []).filter(label => label.lane === relation.first.lane)
       .flatMap(label => nativeSvgPieces(label.svg, measurer))
       .filter(label => label.right > ink.left && label.left < ink.right)
-    const bars = relation.first.lane.startsWith('alternative:') ? [] : system.measures.flatMap((_, index) =>
-      nativeMeasureBarPositions(system.measures, index).flatMap(bar => nativeSvgPieces(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)))
+    const bars = system.measures.flatMap((_, index) =>
+      nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar => nativeSvgPieces(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)))
     const isArc = relation.kind === 'tie' || relation.kind === 'slur'
     const blockers = isArc ? previous : relation.kind === 'tuplet' ? [...controls, ...previous, ...labels] : [...obstacles, ...controls, ...previous, ...labels]
     const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
     // Continuations reach the system boundary and therefore also cover bars.
     // Use their actual painted ink, not a nominal staff height.
     if (hairpin && !relation.first.lane.startsWith('alternative:')) {
-      for (const [index] of system.measures.entries()) for (const bar of nativeMeasureBarPositions(system.measures,index)) {
+      for (const [index] of system.measures.entries()) for (const bar of nativeLaneBarPositions(system.measures, index, relation.first.lane)) {
         const bounds = nativeSvgInk(nativeBarSvg(bar.kind,bar.x,0,measurer),measurer)
         if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
       }

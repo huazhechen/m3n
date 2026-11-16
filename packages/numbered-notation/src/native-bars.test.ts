@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
-import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarSvg, nativeMeasureBarPositions, nativeLaneBarPositions } from './native-bars.js'
 import { nativeSvgInk } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { nativeArcGeometry } from './native-arc.js'
@@ -72,5 +72,22 @@ describe('measured bar alignment', () => {
     const ink = nativeSvgInk(nativeBarSvg('rptend', 0, 0, unusual), unusual)
     expect(lane.top).toBeCloseTo(-ink.top, 4)
     expect(lane.bodyBottom).toBeCloseTo(ink.bottom, 4)
+  })
+  it.each([320, 800].flatMap(width => [false, true].map(paged => ({ width, paged }))))('reserves only visible bars in a split measure at $width (paged: $paged)', ({ width, paged }) => {
+    const document = parseM3NDocument(`{64/4}\nN: ${Array(64).fill('1').join(' ')} |||`)
+    const score = layoutNativeScore(document, { width, paged, textMeasurer: unusual, uniformSystemHeight: false })
+    const fragments = score.systems.filter(system => system.measures.every((_, index) => !nativeLaneBarPositions(system.measures, index, 'melody').length))
+    expect(fragments.length).toBeGreaterThan(0)
+    for (const system of fragments) {
+      const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === 'melody')
+      const lane = system.lanes.find(lane => lane.id === 'melody')!
+      expect(lane.top).toBeCloseTo(Math.max(...glyphs.map(glyph => glyph.top)), 4)
+      expect(lane.bodyBottom).toBeCloseTo(Math.max(...glyphs.map(glyph => glyph.bottom)), 4)
+    }
+    const last = score.systems.at(-1)!, lastLane = last.lanes.find(lane => lane.id === 'melody')!
+    const bar = nativeLaneBarPositions(last.measures, last.measures.length - 1, 'melody').at(-1)!
+    const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, unusual), unusual)
+    expect(lastLane.top).toBeCloseTo(-ink.top, 4)
+    expect(lastLane.bodyBottom).toBeCloseTo(ink.bottom, 4)
   })
 })
