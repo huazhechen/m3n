@@ -67,3 +67,5 @@ export class NativePlaybackScore {
   destroy() { this.destroyed = true; this.midiData = undefined; this.starts.clear(); this.voices.clear(); this.spans.length = 0 }
   private check() { if (this.destroyed) throw new Error('播放乐谱已释放。') }
 }
+
+export { NativePlaybackScore as PlaybackScore }

@@ -31,7 +31,6 @@ import {
 } from '@m3n/score-renderer/view'
 
 type ScoreRendererProps = {
-  mei: string | (() => string)
   sourceMap: MeiSourceMapRange[]
   scoreDocument: ScoreDocument
   scoreId?: string
@@ -144,7 +143,6 @@ function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: read
 }
 
 export function ScoreRenderer({
-  mei,
   sourceMap,
   scoreDocument,
   scoreId,
@@ -228,7 +226,7 @@ export function ScoreRenderer({
       highlightedElementsRef.current = []
       highlightedMeasuresRef.current = []
     }
-  }, [mei, scoreDocument])
+  }, [scoreDocument])
 
 
   useEffect(() => {
@@ -282,7 +280,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument, measureNumbers])
+  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -302,7 +300,7 @@ export function ScoreRenderer({
         measure.classList.add('is-cursor-active-measure')
       }
     }
-  }, [activeXmlId, isRendering, mei, selectedXmlId])
+  }, [activeXmlId, isRendering, selectedXmlId])
 
   const clearPlaybackHighlight = () => {
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
@@ -356,7 +354,7 @@ export function ScoreRenderer({
       try {
         const scorePreparation = scoreRef.current ? Promise.resolve(scoreRef.current) : (async () => {
           const { PlaybackScore } = await import('@m3n/score-renderer/playback')
-          const score = await PlaybackScore.create(typeof mei === 'function' ? mei() : mei)
+          const score = await PlaybackScore.create(scoreDocument)
           if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { score.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
           scoreRef.current = score
           return score

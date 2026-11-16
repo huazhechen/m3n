@@ -44,6 +44,24 @@ describe('native MIDI and playback index', () => {
     expect(() => score.elementsAtTime(0)).toThrow('释放')
   })
   const folder = new URL('../../../src/scores/', import.meta.url)
+  it.each([
+    ['huang_hun_01.m3n', 65, 187.5, 188.5, 188],
+    ['qing_niao_01.m3n', 78, 359.5, 362, 360],
+    ['san_bu_01.m3n', 67, 331.75, 336, 332],
+  ] as const)('keeps the written third-pass tie in %s instead of reattacking its continuation', (file, pitch, start, end, continuation) => {
+    const document = parseM3NDocument(readFileSync(new URL(file, folder), 'utf8'))
+    const performance = compileScorePerformance(document)
+    expect(performance.notes).toContainEqual({ pitch, start, end, channel: 0, velocity: 90 })
+    expect(performance.notes.some(note => note.pitch === pitch && note.start === continuation)).toBe(false)
+    expect(performance.elements.some(element => element.start === continuation && element.rendition === 3)).toBe(true)
+  })
+  it('plays all twelve written beats of the final Besame Mucho tied chain', () => {
+    const performance = compileScorePerformance(parseM3NDocument(readFileSync(new URL('besame_mucho_01.m3n', folder), 'utf8')))
+    expect(performance.beats).toBe(320)
+    expect(performance.notes.at(-1)!.pitch).toBe(72)
+    expect(performance.notes.at(-1)!.end).toBe(320)
+    expect(performance.elements.slice(-3).map(element => [element.start, element.end])).toEqual([[308, 312], [312, 316], [316, 320]])
+  })
   it.each(readdirSync(folder).filter(file => file.endsWith('.m3n')))('compiles every source event and independently decodes valid MIDI for %s', async file => {
     const document = parseM3NDocument(readFileSync(new URL(file, folder), 'utf8'))
     const performance = compileScorePerformance(document)

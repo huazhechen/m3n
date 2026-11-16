@@ -38,7 +38,6 @@ export function ConverterPage() {
             ariaLabel="Happi123 source"
             onChange={setSource}
           />} preview={<ScoreRenderer
-            mei={analysis.getMei}
             isSourceUpdating={isAnalyzing}
             scoreDocument={analysis.score}
 

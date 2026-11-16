@@ -153,7 +153,6 @@ export function NotationEditor({
           onCompositionEnd={() => setIsComposing(false)}
         />} preview={<ScoreRenderer
           scoreId={scoreId}
-          mei={analysis.getMei}
           scoreDocument={analysis.score}
 
           sourceMap={result.sourceMap}

@@ -23,7 +23,7 @@ test('numbered display ignores old staff preference and only loads playback reso
   await page.getByRole('button',{name:'暂停',exact:true}).click()
   expect(external).toEqual([])
   expect(requests.filter(path=>/playback-score-/.test(path))).toHaveLength(1)
-  expect(requests.filter(path=>/\.wasm$/.test(path))).toHaveLength(1)
+  expect(requests.filter(path=>/\.wasm$/.test(path))).toHaveLength(0)
 })
 
 test('editing and changing width refresh numbered layout',async({page})=>{
