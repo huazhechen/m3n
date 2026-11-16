@@ -69,8 +69,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       })
     })
   }
-  if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: 22,
-    cells: lanes.filter(lane => !lane.startsWith('alternative:')).map(lane => springCell(lane, 0, 22, 0, 0.45, options.pairedSpacing === false ? 1 : scale)) })
+  if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
+    cells: lanes.filter(lane => !lane.startsWith('alternative:')).map(lane => springCell(lane, 0, nativeStyle.music, 0, 0.45, options.pairedSpacing === false ? 1 : scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
     const geometry = nativeBarMetrics(kind)
     const prefix = !opening && measure.navigation?.length ? 4.4 + measure.navigation.reduce((sum, mark) => sum + mark.width + 4.4, 0) : 0

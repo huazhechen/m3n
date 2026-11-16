@@ -1,9 +1,9 @@
 import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { nativeLyricSvg } from './native-lyrics.js'
 import { NativeMusicPainter, nativeBeamSvg } from './native-music.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
-import { attrs, n, path } from './native-symbols.js'
+import { attrs, n } from './native-symbols.js'
 import { NUMBER_FONT_CSS } from './font-data.js'
 import { type NativeLayout, type NativeLane, type NativeSystem } from './native-layout.js'
 import type { NativeGlyph, NativeMeasure } from './native-model.js'
@@ -63,11 +63,7 @@ class SvgPainter extends NativeMusicPainter {
       svg += `<g data-m3n-lane="melody" data-m3n-relation="volta" transform="translate(0 ${n(lane.y)})">${volta.svg}</g>`
     }
     for (const decoration of system.decorationLayout ?? []) svg += `<g${attrs({ 'data-m3n-lane': decoration.lane, transform: `translate(0 ${n(system.lanes.find(lane => lane.id === decoration.lane)!.y)})` })}>${decoration.svg}</g>`
-    const melody = system.lanes.find(lane => lane.id === 'melody'), bass = system.lanes.find(lane => lane.id === 'bass')
-    if (melody && bass) {
-      const x = this.layout.margin + em(2), top = melody.y - melody.top + nativeStyle.symbolStroke / 2, bottom = bass.y + (bass.bodyBottom ?? bass.bottom) - nativeStyle.symbolStroke / 2
-      svg += path(`M${n(x + em(7))} ${n(top)} L${n(x)} ${n(top)} L${n(x)} ${n(bottom)} L${n(x + em(7))} ${n(bottom)}`, 'none', ' data-m3n-role="voice-connector"')
-    }
+    svg += nativeVoiceConnectorSvg(system, this.layout.margin)
     const paragraphs = [...new Set(system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.paragraph))))]
     return `<g${attrs({ class: 'system', id: `m3n-system-${system.page + 1}-${system.index}`, 'data-m3n-volta': String(system.volta), 'data-m3n-paragraph': paragraphs.join(','), 'data-m3n-top': system.top, 'data-m3n-bottom': system.bottom })}>${svg}</g>`
   }
