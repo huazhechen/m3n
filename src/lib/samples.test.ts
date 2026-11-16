@@ -154,7 +154,7 @@ describe('bundled score corpus', () => {
     expect(measures.map(measure => [...passes.get(measure)!])).toEqual(Array.from({ length: 73 }, () => [1, 2]))
     // The uploaded numbered score identifies these as rests/chords in the melody, not bass runs.
     expect(measures[30]!.events.map(event=>[event.pitches,event.beats])).toEqual([
-      [['5d'],1],[[],1],[[],0.25],[['5'],0.25],[['7b'],0.25],[['6'],0.25],[['5'],0.25],[['4'],0.25],[['3'],0.25],[['2'],0.25],
+      [[],1],[[],1],[[],0.25],[['5'],0.25],[['7b'],0.25],[['6'],0.25],[['5'],0.25],[['4'],0.25],[['3'],0.25],[['2'],0.25],
     ])
     for(const index of [34,35,36,37,38,39]) {
       expect(measures[index]!.events[0]!.kind).toBe('rest')
