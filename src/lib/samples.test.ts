@@ -14,7 +14,7 @@ import webReferences from './fixtures/kuaiyuepu-reference-melodies.json'
 
 describe('bundled score corpus', () => {
   it.each([
-    ['feng', '枫', maple, 55, 4],
+    ['feng', '枫', maple, 42, 4],
     ['yan_hua_yi_leng', '烟花易冷', smoke, 40, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 43, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
@@ -54,7 +54,7 @@ describe('bundled score corpus', () => {
     expect(parseM3NDocument(polka).order).toEqual(['A','A','B','B','A','C','C','A','A'])
     expect([0,17,26].map(index=>polkaBars[index]!.events[0]!.key)).toEqual(['C','G','F'])
     const mapleBars = bars(maple)
-    expect(mapleBars[29]!.events[0]!.key).toBe('Db')
+    expect(mapleBars[34]!.events[0]!.key).toBe('Db')
     expect(mapleBars[0]!.events[0]!.beats).toBe(0.5)
     const eliseBars = bars(elise)
     expect(parseM3NDocument(elise).order).toBeUndefined()
@@ -79,8 +79,9 @@ describe('bundled score corpus', () => {
   it.each(webReferences)('matches every written reference event for $id', reference=>{
     const original=reference.events
     const events=reference.id==='feng'
-      // Shared six-bar verse, three endings, then the unchanged choruses and bridge.
-      ? [...original.slice(0,61), ...original.slice(106,122), ...original.slice(260,276), ...original.slice(122,260), ...original.slice(276)]
+      // Shared verse and chorus, their visit endings, then the bridge.
+      ? [...original.slice(0,61), ...original.slice(106,122), ...original.slice(260,276), ...original.slice(122,260),
+        ...original.slice(442).map(event=>({...event,pitch:event.pitch===null ? null : event.pitch-1})), ...original.slice(276,338)]
         .filter(event=>event.referenceId!=='note6')
         .map(event=>event.referenceId==='note5' ? {...event,beats:0.5} : event)
         // User unified the first verse's full-beat rest with the sustained later verses.
@@ -115,9 +116,15 @@ describe('bundled score corpus', () => {
         .flatMap(range=>sectionBlocks.filter(block=>block.range===range))
     })
     const lyrics=blocks.flatMap(block=>block.syllables.filter(syllable=>syllable.kind==='text').map(syllable=>syllable.text)).join('')
+    const mapleWrittenLyrics = (text: string) => {
+      const chorus = text.indexOf('缓缓掉落的枫叶'), thirdEnding = text.indexOf('只剩挥散不去的难过',chorus)
+      const bridge = text.indexOf('在山腰间'), finalChorus = text.indexOf('缓缓掉落的枫叶',bridge)
+      const finalEnding = text.indexOf('自秋末的眼泪',finalChorus)
+      return text.slice(0,chorus).replace(/^(.*?)(总在回忆里才看的清)(.*?)(只剩挥散不去的难过)$/, '$1$3$2$4')
+        + text.slice(thirdEnding,bridge) + text.slice(chorus,thirdEnding) + text.slice(finalEnding) + text.slice(bridge,finalChorus)
+    }
     const expected=reference.id==='feng'
-      // The shared verse lyrics precede all three endings in the compact source.
-      ? reference.lyricText!.replace(/^(.*?)(总在回忆里才看的清)(.*?)(只剩挥散不去的难过)(.*?)(只剩挥散不去的难过)/, '$1$3$2$4$6$5')
+      ? mapleWrittenLyrics(reference.lyricText!)
       : reference.id==='yan_hua_yi_leng'
         ? reference.lyricText!.replace(/(雨纷纷旧故里[\s\S]*?是我们)([\s\S]*?)\1/, '$1$2们')
         : reference.lyricText
@@ -126,7 +133,8 @@ describe('bundled score corpus', () => {
 
   it('shares the Maple verses while retaining their rhythmic variants and three endings', () => {
     const document=parseM3NDocument(maple)
-    expect(document.order).toEqual(['A','A','B','A','C'])
+    expect(document.order).toEqual(['A','A','B','A','C','B'])
+    expect(document.orderKeys).toEqual([undefined,undefined,undefined,undefined,undefined,'Db'])
     const bars=document.parts.get('score')!.melody.filter(bar=>bar.events.length)
     expect(bars[0]!.events.map(event=>[event.pitches,event.beats])).toEqual([
       [[],0.5],[['1e'],0.5],[['1e'],0.5],[['1e'],0.5],
@@ -134,6 +142,8 @@ describe('bundled score corpus', () => {
     ])
     expect(bars.flatMap((bar,index)=>bar.ending ? [[index,bar.ending]] : [])).toEqual([
       [6,'1'],[7,'1'],[8,'2'],[9,'2'],[10,'3'],[11,'3'],
+      [25,'1'],[26,'1'],[27,'1'],[28,'1'],
+      [29,'2'],[30,'2'],[31,'2'],[32,'2'],[33,'2'],
     ])
     expect(document.alternatives!.map(item=>item.passes)).toEqual([[2,3]])
     expect(bars[4]!.events.slice(2,5).map(event=>[event.pitches,event.beats,event.tie])).toEqual([

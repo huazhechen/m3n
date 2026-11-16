@@ -3,7 +3,7 @@ import { NativeSymbols, attrs, n } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 import { measureNativeControl } from './native-controls.js'
 import { numberedKeyLabel } from './fixed-do.js'
-import { displayedTempo, scoreCreditLines, type ScoreDocument } from '@m3n/notation'
+import { displayedTempo, scoreCreditLines, sectionOrderLabels, type ScoreDocument } from '@m3n/notation'
 import type { TextMeasurer } from './native-measure.js'
 import { numberedOrderLines } from './order-lines.js'
 
@@ -70,7 +70,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const creditsTop = sideTop + (stacked ? 0 : sidesHeight - creditsHeight)
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
   let orderBottom = sideTop + sidesHeight
-  for (const [index, names] of numberedOrderLines(document.order, available).entries()) {
+  for (const [index, names] of numberedOrderLines(sectionOrderLabels(document), available).entries()) {
     const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
       ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
     ])]

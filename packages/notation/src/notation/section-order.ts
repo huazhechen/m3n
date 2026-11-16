@@ -2,6 +2,8 @@ import { orderedMeasureIndexes, hasVisitEndings, parsePassRange } from './repeat
 import type { ScoreDocument } from './score-document.js'
 import type { M3NDocumentProjection } from './m3n-document.js'
 import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
+import { parseSectionOrderEntry, sectionEntryKey } from './section-keys.js'
+import { M3N_KEY_MODES, parseKey } from './m3n-primitives.js'
 
 /** Explicit section order has one unambiguous source of playback navigation. */
 export function validateSectionOrder(document: ScoreDocument, projection: M3NDocumentProjection) {
@@ -15,8 +17,14 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
     if (directive.closing || !projection.syntaxTree.lines.some(line => line.line === directive.line && line.kind === 'header')) {
       report('order 只能在文档首部声明一次', directive.start, directive.end)
     }
-    const names = (directive.value ?? '').split(',').map(name => name.trim())
-    if (names.some(name => !name || /[{}=]/.test(name))) report('order 必须是逗号分隔的非空乐段名称', directive.start, directive.end)
+    const entries = (directive.value ?? '').split(',').map(parseSectionOrderEntry)
+    const names = entries.map(entry => entry.name)
+    if (names.some(name => !name || /[{}=@]/.test(name))) report('order 必须是逗号分隔的非空乐段名称，可用 段名@调性 指定本次演奏调', directive.start, directive.end)
+    for (const entry of entries) if (entry.key !== undefined) {
+      const match = /^([A-G][#b]?)([a-z]*)$/.exec(entry.key)
+      if (!match || !M3N_KEY_MODES.includes(match[2] as typeof M3N_KEY_MODES[number])) report(`order 演奏调性无效：${entry.key}`, directive.start, directive.end)
+      else if (parseKey(entry.key).mode !== parseKey(sectionEntryKey(document, entry.name)).mode) report('order 换调再现须保持乐段入口的调式', directive.start, directive.end)
+    }
     if (names.length > 256) report('order 最多允许256次乐段访问', directive.start, directive.end)
   }
   if (directives.length > 1) report('order 不能重复声明')

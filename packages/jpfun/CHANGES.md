@@ -1,5 +1,7 @@
 # Local changes
 
+- `@key(...,visits="1:C4;2:Db4")` displays visit-specific keys as a vertically centered, measured group of rows. It uses the ordinary key font, size and accidental glyphs, with a numeric visit prefix; only the supplied primary key sets timeline state. Rows participate in wrapping and system height, and serialization preserves them.
+
 - `@key(...,degree=6)` displays the minor tonic as `6=` while retaining the supplied pitch as the numbered `1` reference. The default remains `degree=1`; note spelling and timeline state use the same reference in both modes.
 
 - `@ossia(host, alternative)` creates a local parallel track below the main music and its lyrics. Empty systems collapse that track, and outer lyric collection excludes alternative notes. The adapter uses it for small parenthesized replacement melodies with independent lyric counts.

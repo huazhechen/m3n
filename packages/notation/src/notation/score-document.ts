@@ -84,6 +84,8 @@ export type ScoreDocument = {
   equalMeasures?: boolean
   /** Written sections are printed once; order determines performance visits. */
   order?: string[]
+  /** Optional target keys, indexed by outer section visit in order. */
+  orderKeys?: Array<string | undefined>
   sections?: ReadonlyArray<{ name: string; start: number; end: number }>
   /** Written phrase ranges for local engraving; they do not change playback. */
   paragraphs?: ReadonlyArray<{ id: string; start: number; end: number }>

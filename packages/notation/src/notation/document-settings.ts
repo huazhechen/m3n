@@ -1,4 +1,5 @@
 import type { M3NSyntaxTree } from './syntax-tree.js'
+import { parseSectionOrderEntry } from './section-keys.js'
 
 export const metadataNames = ['title', 'subtitle', 'singer', 'composer', 'lyricist', 'arranger', 'origin', 'copyright', 'note', 'transpose'] as const
 
@@ -11,11 +12,16 @@ export function documentSettings(tree: M3NSyntaxTree) {
   const headerLines = new Set(tree.lines.filter(line => line.kind === 'header').map(line => line.line))
   let equalMeasures = false
   let order: string[] | undefined
+  let orderKeys: Array<string | undefined> | undefined
   for (const directive of tree.directives) {
     if (!headerLines.has(directive.line) || directive.closing) continue
     const name = metadataNames.find(name => name === directive.name)
     if (name) metadata[name] = directive.value?.trim() ?? ''
-    if (directive.name === 'order') order = (directive.value ?? '').split(',').map(name=>name.trim()).filter(Boolean)
+    if (directive.name === 'order') {
+      const entries = (directive.value ?? '').split(',').map(parseSectionOrderEntry)
+      order = entries.map(entry => entry.name)
+      orderKeys = entries.some(entry => entry.key !== undefined) ? entries.map(entry => entry.key) : undefined
+    }
     if (directive.name === 'equal-measures') equalMeasures = directive.value === 'true'
   }
 
@@ -41,5 +47,5 @@ export function documentSettings(tree: M3NSyntaxTree) {
       hasExplicitTempo = true
     }
   }
-  return { ...metadata, ...(order ? {order} : {}), equalMeasures, key, meterCount, meterUnit, tempo, hasExplicitTempo }
+  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), equalMeasures, key, meterCount, meterUnit, tempo, hasExplicitTempo }
 }

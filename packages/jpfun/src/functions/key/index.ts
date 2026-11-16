@@ -33,6 +33,23 @@ function normalizeTonality(tonality: string): string | null {
     return (offset < 0 ? spellings.at(-1)! : spellings[0]) + (Math.floor(midi / 12) - 1);
 }
 
+
+type KeyDisplay = { prefix: string; displayName: string; displayAcc: string };
+
+function keyDisplay(tonality: string, degree: number, label = ""): KeyDisplay {
+    let displayName = tonality[0];
+    let displayAcc = tonality[1] === "#" || tonality[1] === "b" ? tonality[1] : "";
+    if (degree === 6) {
+        const letters = "CDEFGAB", naturals = [0, 2, 4, 5, 7, 9, 11];
+        const written = /^([A-G])([#b]*)(?:-?\d+)?$/.exec(tonality);
+        const index = letters.indexOf(written?.[1] ?? displayName), target = (index + 5) % 7;
+        const offset = (naturals[index] + acc2Offset(written?.[2] ?? displayAcc, false) + 9 - naturals[target] + 12) % 12;
+        displayName = letters[target];
+        displayAcc = offset <= 2 ? "#".repeat(offset) : "b".repeat(12 - offset);
+    }
+    return { prefix: `${label ? label + ". " : ""}${degree}=`, displayName, displayAcc };
+}
+
 class KeyFunction extends ASTFunctionNode {
     static override def = {
         name: ["key", "1"],
@@ -60,6 +77,7 @@ class KeyFunction extends ASTFunctionNode {
                 } as LengthValue,
             },
             { name: "degree", description: "谱面主音唱名（1 或 6），不改变 1 的音高基准", type: "number" as const, default: 1 },
+            { name: "visits", description: "各遍调号组成一个居中的多行块，例如 1:C4;2:Db4", type: "string" as const, default: "" },
         ],
     };
 
@@ -70,10 +88,12 @@ class KeyFunction extends ASTFunctionNode {
     readonly displayName: string;
     readonly displayAcc: string;
     readonly prefix: string;
+    readonly rows: KeyDisplay[];
+    readonly visits: string;
 
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [tonality, size, degree] = this.getArgValue(args, ctx) as [string, LengthValue, number];
+        const [tonality, size, degree, visits] = this.getArgValue(args, ctx) as [string, LengthValue, number, string];
         if (degree !== 1 && degree !== 6) throw new ErrorDiagnostic("E_KEY_DEGREE", "@key 的 degree 必须为 1 或 6", sourceSpan);
         this.prefix = `${degree}=`;
         this.font = ctx.variables.numberfont;
@@ -94,21 +114,15 @@ class KeyFunction extends ASTFunctionNode {
                 sourceSpan,
             ));
         }
-        // 归一化保证了格式是 [音名][最多一个 #b][八度]
-        this.displayName = this.tonality[0];
-        this.displayAcc = this.tonality[1] === "#" || this.tonality[1] === "b" ? this.tonality[1] : "";
-        if (degree === 6) {
-            const letters = "CDEFGAB";
-            const naturals = [0, 2, 4, 5, 7, 9, 11];
-            // Keep the written spelling even when normalization respells a
-            // double-accidental reference for the engine's timeline.
-            const written = /^([A-G])([#b]*)(?:-?\d+)?$/.exec(tonality);
-            const index = letters.indexOf(written?.[1] ?? this.displayName);
-            const target = (index + 5) % 7;
-            const offset = (naturals[index] + acc2Offset(written?.[2] ?? this.displayAcc, false) + 9 - naturals[target] + 12) % 12;
-            this.displayName = letters[target];
-            this.displayAcc = offset <= 2 ? "#".repeat(offset) : "b".repeat(12 - offset);
-        }
+        const display = keyDisplay(degree === 6 ? tonality : this.tonality, degree);
+        this.displayName = display.displayName;
+        this.displayAcc = display.displayAcc;
+        this.rows = visits ? visits.split(";").map(row => {
+            const match = /^([\d,–-]+):(.+)$/.exec(row);
+            if (!match || !normalizeTonality(match[2])) throw new ErrorDiagnostic("E_KEY_VISITS", "@key 的 visits 须为 遍次:调性，以分号分隔", sourceSpan);
+            return keyDisplay(match[2], degree, match[1]);
+        }) : [display];
+        this.visits = visits;
     }
 
     override loweringEnter() {
@@ -116,7 +130,7 @@ class KeyFunction extends ASTFunctionNode {
     }
 
     override toString() {
-        return `@1(${this.tonality}${this.prefix === '6=' ? ',degree=6' : ''})`;
+        return `@1(${this.tonality}${this.prefix === '6=' ? ',degree=6' : ''}${this.visits ? `,visits=${JSON.stringify(this.visits)}` : ''})`;
     }
 }
 
@@ -126,9 +140,7 @@ class KeyTemporalNode extends TemporalNodeBase {
     declare ast: KeyFunction;
     declare box: LayoutBox;
 
-    private accidentals: PlacedAccidental[] = [];
-    private nameX = 0;
-    private textBaselineY = 0;
+    private rows: Array<{ display: KeyDisplay; accidentals: PlacedAccidental[]; nameX: number; baseline: number; x: number; y: number; width: number; height: number }> = [];
 
     /** 字号在解析时已经固化，样式随之不再变 */
     private readonly style: TextStyle;
@@ -150,38 +162,34 @@ class KeyTemporalNode extends TemporalNodeBase {
 
     override prepareLayout(context: LayoutPrepareContext) {
         const size = this.ast.size;
-        const style = this.style;
-        const prefix = context.textMeasurer.measureText(this.ast.prefix, style);
-        const name = context.textMeasurer.measureText(this.ast.displayName, style);
-
-        const accidentalGap = size * 0.02;
-        const { placed, right, top } = placeAccidentals(
-            this.ast.displayAcc, size, prefix.w, prefix.baseline, accidentalGap,
-        );
-        this.accidentals = placed;
-
-        // 升降号抬高后可能高过文字，整块下移把它装回盒子里
-        const shift = -top;
-        for (const p of placed) p.y += shift;
-
-        this.nameX = right;
-        this.textBaselineY = shift + prefix.baseline;
-        this.box.w = right + name.w;
-        this.box.h = shift + Math.max(prefix.h, name.h);
-        // 与 @text 同规则：对齐点在第一个字符的中心
-        this.box.anchor = context.textMeasurer.measureText(this.ast.prefix[0], style).w / 2;
+        this.rows = this.ast.rows.map(display => {
+            const prefix = context.textMeasurer.measureText(display.prefix, this.style);
+            const name = context.textMeasurer.measureText(display.displayName, this.style);
+            const { placed, right, top } = placeAccidentals(display.displayAcc, size, prefix.w, prefix.baseline, size * 0.02);
+            const shift = -top;
+            for (const accidental of placed) accidental.y += shift;
+            return { display, accidentals: placed, nameX: right, baseline: shift + prefix.baseline,
+                x: 0, y: 0, width: right + name.w, height: shift + Math.max(prefix.h, name.h) };
+        });
+        this.box.w = Math.max(...this.rows.map(row => row.width));
+        let y = 0;
+        for (const row of this.rows) {
+            row.x = (this.box.w - row.width) / 2;
+            row.y = y;
+            y += row.height + size * 0.2;
+        }
+        this.box.h = y - size * 0.2;
+        this.box.anchor = this.rows.length > 1 ? this.box.w / 2
+            : context.textMeasurer.measureText(this.ast.prefix[0], this.style).w / 2;
         this.box.visualAxis = this.box.h / 2;
     }
 
     override paint(painter: Painter) {
-        const style = this.style;
-        painter.drawText(this.ast.prefix, this.box.x, this.box.y + this.textBaselineY, style);
-        for (const placed of this.accidentals) paintAccidental(painter, placed, this.box, "#000");
-        painter.drawText(
-            this.ast.displayName,
-            this.box.x + this.nameX,
-            this.box.y + this.textBaselineY,
-            style,
-        );
+        for (const row of this.rows) {
+            const box = { ...this.box, x: this.box.x + row.x, y: this.box.y + row.y };
+            painter.drawText(row.display.prefix, box.x, box.y + row.baseline, this.style);
+            for (const placed of row.accidentals) paintAccidental(painter, placed, box, "#000");
+            painter.drawText(row.display.displayName, box.x + row.nameX, box.y + row.baseline, this.style);
+        }
     }
 }

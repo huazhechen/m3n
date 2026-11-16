@@ -2,8 +2,9 @@ import { DefaultTextMeasurer, type TextMeasurer } from '@m3n/jpfun'
 import {
   resolveScorePitches, displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreCreditLines, scoreEventIds,
   measurePlaybackPasses, type ScoreDocument, type ScoreEvent, type ScoreMeasure, type ScoreAlternative,
+  alternativePerformance, sectionKeyVisits, sectionEntryKey, sectionVisitKey, sectionOrderLabels, keyLabel,
 } from '@m3n/notation'
-import { lyricsByEvent, type LyricRowData } from './lyrics.js'
+import { lyricsByEvent, type LyricsByEvent, type LyricRowData } from './lyrics.js'
 import { fixedDoPitch, fixedDoGrace, transposedKey } from './fixed-do.js'
 import { sustainContinuations } from './sustains.js'
 import { numberedPitchRange } from './pitch-range.js'
@@ -30,7 +31,7 @@ export type EventBinding = {
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
 export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; transpose?: number; tempoScale?: number; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
-const keyMark = (key: string, transpose?: number) => `@key(${quote(transposedKey(key, transpose))},size=16px${/^[A-G][#b]?m$/.test(key) ? ',degree=6' : ''})`
+const keyMark = (key: string, transpose?: number, visits?: string) => `@key(${quote(transposedKey(key, transpose))},size=16px${/^[A-G][#b]?m$/.test(key) ? ',degree=6' : ''}${visits ? `,visits=${quote(visits)}` : ''})`
 const pitchName = (token: string, shift = 0) => {
   const match = /^([0-7])([#b=]*)([ed]*)$/.exec(token)
   if (!match) return '0'
@@ -49,9 +50,29 @@ function duration(expression: string, beats: number): string {
   return result
 }
 
-export function projectNumberedScore(document: ScoreDocument, options: ProjectionOptions): ProjectedScore {
+export function projectNumberedScore(document: ScoreDocument, options: ProjectionOptions, context?: { lyrics: LyricsByEvent; header: ScoreDocument }): ProjectedScore {
+  // Absolute numbered pitches differ on each keyed visit. Expand the display,
+  // retaining canonical IDs and the lyric selected by each playback rendition.
+  if (options.fixedDo && document.orderKeys?.some(Boolean)) {
+    const originalLyrics = lyricsByEvent(document), originals = new Map([...scoreEventIds(document)].map(([event, id]) => [id, event]))
+    const performance = alternativePerformance(document), lyrics: LyricsByEvent = new Map()
+    for (const part of performance.parts.values()) for (const event of part.melody.flatMap(measure => measure.events)) {
+      const id = event.playbackId!, pass = Number(/-rend(\d+)$/.exec(id)?.[1] ?? 1)
+      const original = originals.get(id.replace(/-rend\d+$/, ''))
+      const slots = new Map<number, Map<number, LyricRowData>>()
+      for (const [slot, rows] of originalLyrics.get(original!) ?? []) {
+        const data = [...rows.values()].find(row => !row.passes || row.passes.has(pass))
+        if (data) slots.set(slot, new Map([[0, { ...data, annotation: undefined, passes: new Set([pass]) }]]))
+      }
+      if (slots.size) lyrics.set(event, slots)
+    }
+    return projectNumberedScore(performance, options, { lyrics, header: document })
+  }
   const ids = scoreEventIds(document)
-  const lyrics = lyricsByEvent(document)
+  const sectionKeys = new Map([...new Set(document.order ?? [])].map(name => [name, {
+    entry: sectionEntryKey(document, name), visits: sectionKeyVisits(document, name),
+  }]))
+  const lyrics = context?.lyrics ?? lyricsByEvent(document)
   const continuations = sustainContinuations(document, lyrics)
   const bindings = new Map<string, EventBinding>()
   const diagnostics: NumberedNotationDiagnostic[] = []
@@ -92,11 +113,13 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       let pendingBarNumber: number | undefined
       const numberBar = (bar: string, number: number) => `@up({${bar}},@text(${quote(String(number))},size=10px))`
       const bind = (expression: string, event: ScoreEvent | undefined, measureId: string, slot: number, suffix = '', lyricTarget = false) => {
-        const xmlId = event ? ids.get(event)! : `m3n-rest-${partIndex + 1}-${serial}`
+        const identity = event ? ids.get(event)! : `m3n-rest-${partIndex + 1}-${serial}`
+        const xmlId = context ? identity.replace(/-rend\d+$/, '') : identity
         const label = `m${++serial}`
-        const visualId = `${xmlId}${suffix}`
+        const visualId = `${identity}${suffix}`
         const binding: EventBinding = { label, xmlId, visualId, measureId, staff, event, slot, passes: alternative?.passes ?? (staff==='melody' && document.alternatives?.length && event ? [...(playbackPasses.get(melody.find(measure=>measure.events.includes(event))!) ?? [1])].filter(pass=>!document.alternatives?.some(item=>item.host.events.includes(event)&&item.passes.includes(pass))) : undefined), lyrics: suffix.includes('sustain') ? new Map() : lyrics.get(event!)?.get(slot) ?? new Map(), sustain: suffix.includes('sustain') || continuations.has(event!) }
         bindings.set(label, binding)
+        if (context && event) binding.passes = [Number(/-rend(\d+)$/.exec(identity)?.[1] ?? 1)]
         // Native dashes do not consume a lyric slot; their empty domain slots
         // stay in the binding without shifting lyrics on following notes.
         if (lyricTarget && staff === 'melody' && !continuations.has(event!)) lyricTargets.push(binding)
@@ -165,7 +188,26 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         for (const event of measure.events) {
           const eventParagraph = `${partIndex}:${paragraphOf(staff === 'bass' ? firstEvent?.sourceStart ?? event.sourceStart : event.sourceStart)}`
           if (paragraph !== eventParagraph) { flushParagraph(); paragraph = eventParagraph }
-          const controls = settingsControls(event)
+          const keys = sectionKeys.get((alternative?.host ?? measure).sectionName ?? '')
+          const visitKeys = keys?.visits ?? []
+          const entryKey = keys?.entry ?? event.key
+          const displayKey = visitKeys[0] ? sectionVisitKey(event.key, entryKey, visitKeys[0]) : event.key
+          const multiKeyControl = !alternative && new Set(visitKeys).size > 1 && (event.sectionLabel || displayKey !== activeKey)
+          const controls: string[] = []
+          if (!options.fixedDo && multiKeyControl) {
+            const groups = new Map<string, number[]>()
+            visitKeys.forEach((key, index) => {
+              const current = sectionVisitKey(event.key, entryKey, key)
+              groups.set(current, [...(groups.get(current) ?? []), index + 1])
+            })
+            const visits = [...groups].map(([key, passes]) => {
+              const label = passes.length > 1 && passes.at(-1)! - passes[0]! === passes.length - 1
+                ? `${passes[0]}–${passes.at(-1)}` : passes.join(',')
+              return `${label}:${transposedKey(key, options.transpose)}`
+            }).join(';')
+            controls.push(keyMark(displayKey, options.transpose, visits)); activeKey = displayKey; accidentals.clear()
+          }
+          controls.push(...settingsControls({ ...event, key: displayKey }))
           // Native up members stack from the note outwards. Keep articulations
           // inside ornaments/fingerings, with expression marks outside both.
           const articulations: string[] = [], decorations: string[] = [], expressionMarks: string[] = []
@@ -372,7 +414,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     document.hasExplicitTempo ? tempoMark(document.tempo * (options.tempoScale ?? 1), document.meterCount, document.meterUnit) : '',
     range,
   ].filter(Boolean).join(' ')
-  const orderLines = numberedOrderLines(document.order, options.width - 2 * (options.pageMargin ?? 32))
+  const displayLabel = (key: string) => keyLabel(options.transpose
+    ? sectionVisitKey(key, 'C', transposedKey('C', options.transpose).replace(/-?\d+$/, '')) : key)
+  const orderLines = numberedOrderLines(sectionOrderLabels(context?.header ?? document, displayLabel), options.width - 2 * (options.pageMargin ?? 32))
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,

@@ -67,12 +67,16 @@ export function sectionVisitMeasureIndexes(measures: readonly PlaybackMeasure[],
 
 /** Resolve the itinerary once, preserving original indexes for all consumers. */
 export function orderedMeasureIndexes<T extends PlaybackMeasure & { sectionName?: string }>(measures: readonly T[], order: readonly string[]) {
+  return orderedMeasureVisits(measures, order).map(visit => visit.index)
+}
+
+export function orderedMeasureVisits<T extends PlaybackMeasure & { sectionName?: string }>(measures: readonly T[], order: readonly string[]) {
   const visits = new Map<string, number>()
-  return order.flatMap(name => {
+  return order.flatMap((name, orderIndex) => {
     const visit = (visits.get(name) ?? 0) + 1
     visits.set(name, visit)
     const entries = measures.map((measure, index) => ({ measure, index })).filter(item => item.measure.sectionName === name)
-    return sectionVisitMeasureIndexes(entries.map(item => item.measure), visit).map(index => entries[index]!.index)
+    return sectionVisitMeasureIndexes(entries.map(item => item.measure), visit).map(index => ({ index: entries[index]!.index, orderIndex }))
   })
 }
 
