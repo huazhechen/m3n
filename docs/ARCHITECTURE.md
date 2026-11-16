@@ -82,13 +82,13 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 默认部署在 `/`；设置 `VITE_BASE_URL=/score/ npm run build` 可部署到子路径。React Router 的 `basename`、站点图标、导出字体和分享 API 均使用同一构建基路径，Vite 负责处理模块、WASM 和音源 URL。宿主应对该前缀下的页面路由返回 `index.html`，并把 `/score/api/*` 转给现有 Worker（转交前去掉 `/score` 前缀）；存储继续实现 `M3N_SCORES` 的 KV 接口。
 
-钢琴和口琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-{Piano,Harmonica}-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在内存中生成短周期波形，无需请求音源文件，继续使用同一套 MIDI、速度、移调与节拍器逻辑。选择 `piano` 或 `harmonica` 时立即按需下载对应文件，显示加载状态、错误与重试；播放中切换音色时继续使用当前音色，下载并解码完成后切换音源优先级，后续音符使用新音色，已发声音符自然结束；不重建播放器、不暂停或跳转。移调通过合成器系统调音实时更新当前与后续音符，打击乐保持原调，不重建MIDI。旧请求不能覆盖更新后的选择。
+钢琴和口琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-{Piano,Harmonica}-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在内存中以加法合成生成温暖的周期波形：基音与五层逐渐减弱的泛音叠加，配合12ms起音、600ms衰减、3dB持续衰减与120ms释音；高音区减少谐波以降低混叠，无需请求音源文件，继续使用同一套 MIDI、速度、移调与节拍器逻辑。选择 `piano` 或 `harmonica` 时立即按需下载对应文件，显示加载状态、错误与重试；钢琴按钮下载期间显示“加载中”与旋转图标，准备完成后才显示选中；播放中切换音色时继续使用当前音色，下载并解码完成后切换音源优先级，后续音符使用新音色，已发声音符自然结束；不重建播放器、不暂停或跳转。移调通过合成器系统调音实时更新当前与后续音符，打击乐保持原调，不重建MIDI。旧请求不能覆盖更新后的选择。
 
 音源同时保存在页面内存和 `m3n-soundfonts-v1` Cache Storage，以完整哈希 URL 为键；刷新后先读缓存，不重新下载。存储不可用或配额不足时允许正常加载并保留内存副本，网络失败不缓存，损坏缓存重新下载。浏览器清理站点数据可能移除缓存和选择。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
 
-该音源只保留 GM Program 0 的 Yamaha Grand Piano。精简版将原来的 40 个左右声道采样合成为 20 个单声道采样，以 Ogg Vorbis quality 1 编码；保留原始 32 kHz 采样率、音区、力度映射和延音循环。文件由 1,365,672 字节降至约 357 KB，代价是立体声空间感和部分编码细节，单声道合成后的响度也可能略低。播放器入口与缓存策略不变。
+该音源只保留 GM Program 0 的 Yamaha Grand Piano。当前发布文件恢复为原始1,365,672字节版本，保留40个左右声道采样、32kHz采样率、音区、力度映射与延音循环，不再使用后续357KB单声道重编码版本。仍在选择钢琴时下载，内容哈希URL变化后自动下载新版并缓存。
 
-钢琴重建命令为 `npx tsx tools/build-fluidr3-piano-sf3.ts <原始钢琴.sf3或完整FluidR3_GM.sf2> [输出路径]`，默认输出到上述 vendor 文件；输入与输出必须分开保存。编码环境需要 Python 3 与支持 Vorbis 的系统 libsndfile（`tools/encode-vorbis.py`），钢琴脚本也支持通过 `FFMPEG_PATH` 指定支持 libvorbis 的 FFmpeg。脚本不再依赖 `.tmp/SpessaSynth` 源码；写入前会重新解码全部采样并校验循环边界。使用完整 SF2 时可先执行 `npm run download:fluidr3` 获取源文件，下载保存在 `.tmp/soundfonts`，避免将完整版随站点发布；不同 Vorbis 编码库版本的产物大小可能略有差异。
+`tools/build-fluidr3-piano-sf3.ts` 与 `tools/encode-vorbis.py` 保留为历史压缩实验工具，不用于重建当前发布的原始钢琴文件；原始文件可从Git历史恢复。
 
 口琴通过 `node tools/build-fluidr3-harmonica-sf3.mjs [完整FluidR3_GM.sf2或FluidR3Mono_GM.sf3] [输出路径]` 提取：从 Bank 0 / Program 22 复制 Harmonica，保留采样率与循环，以 Vorbis quality 1 编码，独立文件中的 Program 改为 0，适配乐谱现有 MIDI。默认来源是 MuseScore v2.3.2 随附的 FluidR3Mono 2.312（FluidR3 GM 的单声道发行版），以 Git blob 哈希固定并验证输入。完整源库只用于构建，网站仅发布提取后的口琴文件。原作者信息与 MIT 许可证保存在 `vendor/soundfonts/FluidR3Mono-LICENSE.md`，并写入口琴文件的元数据。
 

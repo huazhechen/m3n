@@ -52,3 +52,14 @@
   .control-row-label { font-size: 12px; }
   .control-row-label output { font-size: 10px; }
 }
+
+.tone-loading-spinner { animation: tone-loading-spin .8s linear infinite; }
+@keyframes tone-loading-spin { to { transform: rotate(360deg); } }
+@container (max-width: 720px) {
+  .control-options > .control-button.is-loading { flex-direction: column; gap: 2px; padding-inline: 0; font-size: 10px; }
+  .control-options > .control-button.is-loading span { display: inline; }
+  .control-options > .control-button.is-loading svg { width: 14px; height: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tone-loading-spinner { animation: none; }
+}

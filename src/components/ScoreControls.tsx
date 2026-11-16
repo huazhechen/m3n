@@ -67,8 +67,9 @@ export function ScoreControls(props: ScoreControlsProps) {
       <button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
           <Icon><path d="m9 3-5 18h16L15 3ZM8 16h8M12 16l5-9" /></Icon><span>节拍器</span>
         </button>
-      <button type="button" role="switch" aria-label="钢琴音色" aria-checked={props.tone === 'piano'} title="钢琴音色（关闭使用合成音色）" className="control-button" onClick={() => props.onToneChange(props.tone === 'piano' ? 'synth' : 'piano')}>
-          <Icon><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7.5 13v7m4.5-7v7m4.5-7v7M7 4v8h3V4m4 0v8h3V4" /></Icon><span>钢琴</span>
+      <button type="button" role="switch" aria-label="钢琴音色" aria-checked={props.tone === 'piano' && !props.toneLoading && !props.toneError} aria-busy={props.toneLoading || undefined} title={props.toneLoading ? '钢琴音色加载中' : '钢琴音色（关闭使用合成音色）'} className={props.toneLoading ? 'control-button is-loading' : 'control-button'} onClick={() => props.onToneChange(props.tone === 'piano' ? 'synth' : 'piano')}>
+          {props.toneLoading ? <svg className="tone-loading-spinner" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="9" opacity=".2" /><path d="M12 3a9 9 0 0 1 9 9" strokeLinecap="round" /></svg> : <Icon><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7.5 13v7m4.5-7v7m4.5-7v7M7 4v8h3V4m4 0v8h3V4" /></Icon>}
+          <span>{props.toneLoading ? '加载中' : '钢琴'}</span>
         </button>
       <button type="button" role="switch" aria-label="分页" aria-checked={props.paged} title="分页显示" className="control-button" onClick={() => props.onPagedChange(!props.paged)}>
           <Icon><rect x="3" y="3" width="14" height="17" rx="2" /><path d="M7 7h6M7 11h6M7 15h4M17 7h4v14H7" /></Icon><span>分页</span>

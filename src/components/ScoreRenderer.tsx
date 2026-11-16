@@ -175,7 +175,7 @@ export function ScoreRenderer({
   const playbackTone = playbackOnly ? 'synth' : savedPlaybackTone
   const toneRef = useRef(playbackTone)
   toneRef.current = playbackTone
-  const [toneLoading, setToneLoading] = useState(false)
+  const [toneLoading, setToneLoading] = useState(playbackTone !== 'synth')
   const [toneError, setToneError] = useState('')
   const [toneRetry, setToneRetry] = useState(0)
   const [playbackProgress, setPlaybackProgress] = useState(0)
@@ -530,7 +530,7 @@ export function ScoreRenderer({
         tone={playbackTone}
         toneLoading={toneLoading}
         toneError={toneError}
-        onToneChange={changePlaybackTone}
+        onToneChange={tone => { setToneLoading(tone !== 'synth'); setToneError(''); changePlaybackTone(tone) }}
         onToneRetry={() => setToneRetry(value => value + 1)}
         onTogglePlayback={() => void togglePlayback()}
         onSeekStart={beginSeek}
