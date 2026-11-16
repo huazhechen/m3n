@@ -155,6 +155,14 @@ export function ScoreRenderer({
   onNoteClick,
   onPaperBlur,
 }: ScoreRendererProps) {
+  const [mobileLayout, setMobileLayout] = useState(() => window.matchMedia('(max-width: 720px)').matches)
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 720px)')
+    const update = () => setMobileLayout(query.matches)
+    update()
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
   const paperRef = useRef<HTMLDivElement>(null)
   const renderGenerationRef = useRef(0)
   const scoreRef = useRef<PlaybackScore | null>(null)
@@ -257,7 +265,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const { message } = await renderScoreInto(paper, {
-          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers,
+          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers, pageMargin: mobileLayout ? 8 : undefined,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
         })
@@ -281,7 +289,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument, measureNumbers])
+  }, [compact, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument, measureNumbers, mobileLayout])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -539,7 +547,7 @@ export function ScoreRenderer({
   }, [commitSeek])
 
   return (
-    <section className={compact ? 'score-card compact' : 'score-card'}>
+    <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
       {hasAudioControls && <ScoreControls
         isPlaying={isPlaying}
         isLoading={isPlayerLoading || toneLoading || isSourceUpdating}

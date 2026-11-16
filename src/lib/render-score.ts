@@ -6,6 +6,7 @@ export type ScoreRenderInput = {
   scoreDocument: ScoreDocument
   width: number
   paged: boolean
+  pageMargin?: number
   measureNumbers?: boolean
   includeBass?: boolean
   sheetClass?: string
@@ -22,7 +23,7 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   await prepareNumberedNotationFonts()
   check(); input.onPhase?.('layout')
   const score = NumberedNotationScore.create(input.scoreDocument)
-  const markup = score.render({ width: input.width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers }).join('')
+  const markup = score.render({ width: input.width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, pageMargin: input.pageMargin }).join('')
   check(); target.innerHTML = markup
   if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
   return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；') }

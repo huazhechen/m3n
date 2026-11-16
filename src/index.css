@@ -1571,3 +1571,35 @@ a.action-button {
   .editor-container .resizable-editor[data-mobile-pane="preview"] > .editor-source-pane { display: none; }
 }
 .export-error { color: #9a3a25; padding: 8px 16px; margin: 0; }
+
+/* Mobile scores sit directly on the page; pagination remains in the engraving. */
+@media (max-width: 720px) {
+  .score-renderer.score-card {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .score-reader > .score-renderer {
+    margin-inline: -9px;
+  }
+
+  .score-renderer > .audio-controls {
+    margin-inline: 8px;
+  }
+
+  .score-renderer > .score-paper {
+    padding: 0;
+    border-radius: 0;
+    background: #fff;
+  }
+
+  .score-renderer .score-paper .score-page-sheet {
+    margin-bottom: 8px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
