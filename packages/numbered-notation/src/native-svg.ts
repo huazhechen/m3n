@@ -249,7 +249,7 @@ class SvgPainter {
   header(): string {
     const { document, options, margin, measurer } = this.layout
     const geometry = nativeHeaderGeometry(document, options.width, margin, measurer, options.systemGap ?? 24)
-    let svg = '', y = geometry.sidesBottom
+    let svg = ''
     for (const [lines, size, top, step, weight] of [[geometry.title, 32, geometry.titleTop, 40, 700], [geometry.subtitle, 16, geometry.subtitleTop, 20, 400]] as const) for (const [index, text] of lines.entries()) {
       svg += this.text(text, options.width / 2, top + size * 0.8 + index * step, size, 'serif', { 'text-anchor': 'middle', 'font-weight': weight })
     }
@@ -281,17 +281,9 @@ class SvgPainter {
         x += measurer.measureText(signature, { fontSize: 16, fontFamily: 'M3N Numbers' }).w + 16
       }
     }
-    if (document.order) {
-      let x = margin
-      y += 24
-      svg += this.text('演奏顺序：', x, y, 16); x += 100
-      for (const [index, name] of document.order.entries()) {
-        const box = measurer.measureText(name, { fontSize: 16, fontWeight: 700 }).w + 12
-        if (x + box + 30 > options.width - margin) { y += 34; x = margin }
-        if (index) { svg += this.text('→', x, y, 16); x += 24 }
-        svg += `<rect${attrs({ x, y: y - 19, width: box, height: 25, fill: 'none', stroke: '#000' })}/>` + this.text(name, x + box / 2, y, 16, 'serif', { 'text-anchor': 'middle', 'font-weight': 700, 'data-m3n-role': 'order' })
-        x += box + 7
-      }
+    for (const row of geometry.orderRows) for (const item of row.items) {
+      if (item.framed) svg += `<rect${attrs({ x: item.x + 0.5, y: item.y + 0.5, width: item.width - 1, height: item.height - 1, fill: 'none', stroke: '#000' })}/>`
+      svg += this.text(item.text, item.x + (item.framed ? 3.5 : 0), item.baseline, 16, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
     }
     return svg
   }

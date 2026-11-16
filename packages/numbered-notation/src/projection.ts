@@ -7,6 +7,7 @@ import { lyricsByEvent, type LyricRowData } from './lyrics.js'
 import { fixedDoPitch, fixedDoGrace, transposedKey } from './fixed-do.js'
 import { sustainContinuations } from './sustains.js'
 import { numberedPitchRange } from './pitch-range.js'
+import { numberedOrderLines } from './order-lines.js'
 
 function tempoMark(qpm: number, count: number, unit: number) {
   const display = displayedTempo(qpm, count, unit)
@@ -361,21 +362,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     document.hasExplicitTempo ? tempoMark(document.tempo * (options.tempoScale ?? 1), document.meterCount, document.meterUnit) : '',
     range,
   ].filter(Boolean).join(' ')
-  const orderLines: string[][] = []
-  if (document.order) {
-    const available = options.width - 2 * (options.pageMargin ?? 32)
-    const measure = (text: string) => [...text].reduce((sum, char) => sum + (char.codePointAt(0)! > 127 ? 16 : 12), 0)
-    let line: string[] = [], used = 100
-    for (const name of document.order.filter(Boolean)) {
-      const addition = measure(name) + 11 + (line.length ? 24 : 0)
-      if (used + addition > available && line.length) {
-        orderLines.push(line)
-        line = []; used = 24
-      }
-      line.push(name); used += addition
-    }
-    if (line.length) orderLines.push(line)
-  }
+  const orderLines = numberedOrderLines(document.order, options.width - 2 * (options.pageMargin ?? 32))
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,

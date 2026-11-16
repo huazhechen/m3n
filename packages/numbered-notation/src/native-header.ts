@@ -1,5 +1,8 @@
 import { scoreCreditLines, type ScoreDocument } from '@m3n/notation'
 import type { TextMeasurer } from './native-measure.js'
+import { numberedOrderLines } from './order-lines.js'
+
+export type NativeOrderItem = { text: string; framed: boolean; x: number; y: number; width: number; height: number; baseline: number }
 
 export function wrapNativeText(text: string, width: number, size: number, measurer: TextMeasurer, weight = 400): string[] {
   const lines: string[] = []
@@ -32,7 +35,26 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const sidesHeight = stacked ? creditsHeight + 5 + signaturesHeight : Math.max(creditsHeight, signaturesHeight)
   const signaturesTop = sideTop + (stacked ? creditsHeight + 5 : sidesHeight - signaturesHeight)
   const creditsTop = sideTop + (stacked ? 0 : sidesHeight - creditsHeight)
-  const orderHeight = document.order?.length ? Math.ceil((100 + document.order.reduce((sum, name) => sum + measurer.measureText(name, { fontSize: 16 }).w + 43, 0)) / available) * 34 : 0
+  const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
+  let orderBottom = sideTop + sidesHeight
+  for (const [index, names] of numberedOrderLines(document.order, available).entries()) {
+    const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
+      ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
+    ])]
+    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: 16, fontFamily: 'serif', fontWeight: item.framed ? 700 : 400 }) }))
+    const height = Math.max(...measured.map(item => item.metrics.h + (item.framed ? 7 : 0)))
+    const top = orderBottom + systemGap
+    let x = margin
+    const items = measured.map(item => {
+      const padding = item.framed ? 3.5 : 0, itemHeight = item.metrics.h + padding * 2
+      const y = top + (height - itemHeight) / 2
+      const placed = { text: item.text, framed: item.framed, x, y, width: item.metrics.w + padding * 2, height: itemHeight, baseline: y + padding + item.metrics.baseline }
+      x += placed.width + 4
+      return placed
+    })
+    orderRows.push({ top, height, items }); orderBottom = top + height
+  }
+  const orderHeight = orderBottom - (sideTop + sidesHeight)
   return { title, subtitle, titleTop: margin, subtitleTop: margin + titleHeight + (titleHeight ? 5 : 0), signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
-    height: centerHeight + (centerHeight ? 5 : 0) + sidesHeight + systemGap + orderHeight }
+    orderRows, height: centerHeight + (centerHeight ? 5 : 0) + sidesHeight + systemGap + orderHeight }
 }
