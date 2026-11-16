@@ -19,8 +19,13 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   const selected = members.filter(glyph => relation.first.event && relation.last.event && glyph.event
     && relation.first.event.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event.sourceStart)
   const covered = selected.length ? selected : members
-  const ratio = Math.min(1, Math.abs(relation.last.x - relation.first.x) / em(55))
-  const height = firstHere && lastHere ? em(11) * ratio * (2 - ratio) : em(9.9)
+  const automaticHeight = (peer: NativeRelation) => {
+    const ratio = Math.min(1, Math.abs(peer.last.x - peer.first.x) / em(55))
+    return em(11) * ratio * (2 - ratio)
+  }
+  const peers = relation.arcGroup === undefined ? [relation] : system.relations.filter(peer =>
+    peer.arcGroup === relation.arcGroup && members.includes(peer.first) && members.includes(peer.last))
+  const height = firstHere && lastHere ? Math.max(automaticHeight(relation), ...peers.map(automaticHeight)) : em(9.9)
   const endpoints = [firstHere ? relation.first : undefined, lastHere ? relation.last : undefined].filter(glyph => glyph !== undefined)
   const port = -Math.max(0, ...(endpoints.length ? endpoints : covered).map(nativeTiePortTop))
   const thickness = nativeStyle.music * 0.09
