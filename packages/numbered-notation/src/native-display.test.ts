@@ -73,16 +73,16 @@ describe('native display options',()=>{
     expect(header.svg).toContain('>1=</text>')
     expect(compileScorePerformance(document)).toEqual(before)
   })
-  it('engraves the measured header range with the selected pitch spelling and vector accidentals',()=>{
+  it('engraves the measured header range with scientific pitch names',()=>{
     const document = parseM3NDocument('{key=Db}{2/4}\nN: [1 3 5:h] 6{ac(7d)} ||')
     const geometry = nativeHeaderGeometry(document,800,32,new DefaultTextMeasurer(),24,{fixedDo:true,transpose:-1})
     const root = new DOMParser().parseFromString(`<svg>${geometry.svg}</svg>`,'image/svg+xml')
     const range = root.querySelector('[data-m3n-role="pitch-range"]')!
-    expect([...range.querySelectorAll('text')].map(node=>node.textContent)).toEqual(['7','~','6'])
+    expect([...range.querySelectorAll('text')].map(node=>node.textContent)).toEqual(['B3~A4'])
     expect([...range.querySelectorAll('text')].every(node=>node.getAttribute('font-size')==='16')).toBe(true)
     const altered = nativeHeaderGeometry(document,800,32,new DefaultTextMeasurer(),24,{fixedDo:true})
     const shifted = new DOMParser().parseFromString(`<svg>${altered.svg}</svg>`,'image/svg+xml')
-    expect(shifted.querySelectorAll('[data-m3n-role="pitch-range"] path[data-m3n-symbol="♯"]')).toHaveLength(1)
+    expect(shifted.querySelector('[data-m3n-role="pitch-range"]')!.textContent).toBe('C4~Bb4')
   })
   it('paginates measured itinerary rows when the complete header exceeds a narrow page',()=>{
     const document = parseM3NDocument('{title=长演奏顺序}{origin=乐曲来源}{composer=作曲者}{lyricist=作词者}{key=Bb}{4/4}{60qpm}{order=Intro,A,B,A@C,B@C,Bridge,B@F,Coda,Intro,A,B,A@C,B@C,Bridge,B@F,Coda}\n===Intro\nN: 1 2 3 4 ||\n===A\nN: 1 2 3 4 ||\n===B\nN: 1 2 3 4 ||\n===Bridge\nN: 1 2 3 4 ||\n===Coda\nN: 1 2 3 4 |||')
