@@ -75,10 +75,9 @@
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 32px;
   align-items: stretch;
-  min-height: calc(100vh - 124px);
   padding: 48px 0 24px;
 }
 
@@ -144,6 +143,8 @@ h3 {
 
 .hero-summary {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 32px 0;
   align-content: center;
   gap: 14px;
 }
@@ -1478,6 +1479,10 @@ a.action-button {
 
   .hero {
     padding-top: 28px;
+  }
+
+  .hero-summary {
+    grid-template-columns: 1fr;
   }
 
   .markdown-panel {

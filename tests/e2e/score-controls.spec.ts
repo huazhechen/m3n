@@ -153,7 +153,7 @@ test('documentation examples use only transport and the default engraving width'
     localStorage.setItem('m3n:render-mode', 'paged')
   })
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/docs?doc=guide')
+  await page.goto('/?doc=guide')
   const example = page.locator('.document-example').first()
   const controls = example.locator('.audio-controls')
   await expect(controls.getByRole('slider')).toHaveCount(1)

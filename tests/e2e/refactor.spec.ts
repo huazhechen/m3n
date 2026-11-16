@@ -129,7 +129,7 @@ test('homepage plays numbered notation and documentation examples open as editab
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await expect(page.getByRole('switch', { name: '首页简谱', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
-  await page.goto('/docs?doc=guide')
+  await page.goto('/?doc=guide')
   const exampleSource = await page.locator('.document-example .cm-content').first().innerText()
   await page.getByRole('link', { name: '在编辑器试改', exact: true }).first().click()
   await expect(page).toHaveURL(/\/editor$/)

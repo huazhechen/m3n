@@ -2,9 +2,8 @@
 
 `docs/` 承载两类文档：
 
-**应用内文档**（由 `src/pages/DocsPage.tsx` 以 raw 导入，在 `/docs` 页面展示）：
+**应用内文档**（由 `src/components/HomeDocumentation.tsx` 以 raw 导入，集成在首页；使用“浏览指南”“查阅手册”切换）：
 
-- [HOME.md](HOME.md)：M3N 简介与快速体验。
 - [GUIDE.md](GUIDE.md)：M3N 使用指南。
 - [MANUAL.md](MANUAL.md)：完整语法与约束手册。
 

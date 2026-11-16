@@ -43,7 +43,8 @@ flowchart TD
   app --> editorPage["EditorPage"]
   app --> scoresPage["ScoresPage"]
   app --> readerPage["ScoreReaderPage"]
-  app --> docsPage["DocsPage"]
+  home --> homeDocumentation["HomeDocumentation"]
+  home --> scoreRenderer["ScoreRenderer"]
 
   editorPage --> notationEditor["NotationEditor"]
   notationEditor --> sourceEditor["SourceEditor"]
@@ -62,10 +63,10 @@ flowchart TD
   scoresPage --> samples
   samples --> corpus["scores/*.m3n"]
 
-  docsPage --> markdownBook["MarkdownBook"]
+  homeDocumentation --> markdownBook["MarkdownBook"]
   markdownBook --> docsNav["lib/docs-navigation"]
   markdownBook --> notationEditor
-  docsPage --> markdown["docs/*.md"]
+  homeDocumentation --> markdown["docs/*.md"]
 
   scoreRenderer --> rendererPkg["@m3n/score-renderer"]
   exportDialog --> rendererPkg

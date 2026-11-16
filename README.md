@@ -1,6 +1,6 @@
 # M3N — Max's Markup Music Notation
 
-M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器端的 M3N 编辑器：在线编写、阅读、试听和导出简谱，并在 `/docs` 提供 M3N 指南与手册。
+M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器端的 M3N 编辑器：在线编写、阅读、试听和导出简谱，并在首页集成 M3N 指南与手册。
 
 ## 仓库结构
 
@@ -41,5 +41,5 @@ npm run deploy   # 构建并部署到 Cloudflare
 
 ## 文档
 
-- 应用内文档由 `docs/HOME.md`、`docs/GUIDE.md`、`docs/MANUAL.md` 组成，面向 M3N 用户，在 `/docs` 页面展示。
+- 指南与手册分别由 `docs/GUIDE.md`、`docs/MANUAL.md` 提供，在首页通过“浏览指南”“查阅手册”切换阅读。
 - 开发内部文档包括 [ARCHITECTURE.md](docs/ARCHITECTURE.md)、[CODEGRAPH.md](docs/CODEGRAPH.md) 与 [NATIVE_ENGINES.md](docs/NATIVE_ENGINES.md)。

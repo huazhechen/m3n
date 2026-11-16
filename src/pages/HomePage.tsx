@@ -1,9 +1,18 @@
-import { NotationEditor } from '../components/NotationEditor'
-import { Link } from 'react-router-dom'
+import { lazy, Suspense, useMemo } from 'react'
+import { analyzeM3N } from '@m3n/notation'
+import { ScoreRenderer } from '../components/ScoreRenderer'
+import { Link, useLocation } from 'react-router-dom'
 import { TopNav } from '../components/TopNav'
-import homeExample from '../../docs/examples/home.m3n?raw'
+import homeExample from '../scores/huan_le_song_01.m3n?raw'
+
+const HomeDocumentation = lazy(() => import('../components/HomeDocumentation').then(({ HomeDocumentation }) => ({ default: HomeDocumentation })))
 
 export function HomePage() {
+  const analysis = useMemo(() => analyzeM3N(homeExample), [])
+  const location = useLocation()
+  const documentId = new URLSearchParams(location.search).get('doc')
+  const isReading = documentId === 'guide' || documentId === 'manual'
+
   return (
     <main>
       <TopNav />
@@ -15,17 +24,26 @@ export function HomePage() {
             使用首调记谱输入旋律，即时呈现为清晰的简谱，让创作、校对与分享都更直接。
           </p>
           <div className="hero-actions">
-            <Link to="/editor" className="primary-link">
-              打开在线编辑器
-            </Link>
-            <Link to="/scores" className="secondary-link">
+            <Link to="/scores" className="primary-link">
               浏览乐谱库
             </Link>
-            <Link to="/docs" className="secondary-link">
-              阅读文档
+            <Link to="/editor" className="secondary-link">
+              打开编辑器
+            </Link>
+            <Link to="/?doc=guide" className="secondary-link" aria-current={documentId === 'guide' ? 'page' : undefined}>
+              浏览指南
+            </Link>
+            <Link to="/?doc=manual" className="secondary-link" aria-current={documentId === 'manual' ? 'page' : undefined}>
+              查阅手册
             </Link>
           </div>
         </div>
+      </section>
+      {isReading ? <Suspense fallback={<p role="status">正在加载...</p>}><HomeDocumentation /></Suspense> : <>
+      <section className="home-sample" aria-label="可试听谱例">
+        <div className="pane-toolbar"><h2>示例</h2></div>
+        <ScoreRenderer compact playbackOnly scoreDocument={analysis.score} sourceMap={analysis.interaction.sourceMap} />
+      </section>
         <div className="hero-summary" aria-label="M3N 特性">
           <section>
             <h2>首调记谱</h2>
@@ -40,11 +58,7 @@ export function HomePage() {
             <p>直接在浏览器中完成记谱、播放与导出，无需安装额外软件。</p>
           </section>
         </div>
-      </section>
-      <section className="home-sample" aria-label="可试听谱例">
-        <div className="pane-toolbar"><h2>从一段旋律开始</h2></div>
-        <NotationEditor embedded initialSource={homeExample} />
-      </section>
+      </>}
     </main>
   )
 }

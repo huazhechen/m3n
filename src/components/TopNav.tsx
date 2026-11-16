@@ -22,7 +22,6 @@ export function TopNav({ actions }: { actions?: ReactNode }) {
       }}>
         <nav aria-label="主导航">
           <NavLink to="/scores">乐谱库</NavLink>
-          <NavLink to="/docs">文档</NavLink>
         </nav>
         {actions}
       </div>

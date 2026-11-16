@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import home from '../../docs/HOME.md?raw'
 import guide from '../../docs/GUIDE.md?raw'
 import manual from '../../docs/MANUAL.md?raw'
-import homeExample from '../../docs/examples/home.m3n?raw'
+import homeExample from '../scores/huan_le_song_01.m3n?raw'
 import { m3nToMei, validateM3NDiagnostics } from '@m3n/notation'
 import { documentSections } from './docs-navigation'
 
@@ -17,7 +16,6 @@ describe('documented M3N examples', () => {
   })
 
   for (const [name, markdown] of [
-    ['HOME', home],
     ['MANUAL', manual],
     ['GUIDE', guide],
   ] as const) {
@@ -35,7 +33,7 @@ describe('documented M3N examples', () => {
 
 describe('documentation links', () => {
   it('resolves section links to headings in the application', () => {
-    const documents = { HOME: home, GUIDE: guide, MANUAL: manual }
+    const documents = { GUIDE: guide, MANUAL: manual }
     for (const [name, markdown] of Object.entries(documents)) {
       for (const match of markdown.matchAll(/\]\((?:(HOME|GUIDE|MANUAL)\.md)?#([^)]*)\)/g)) {
         const target = match[1] ?? name

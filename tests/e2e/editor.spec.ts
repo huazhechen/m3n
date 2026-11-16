@@ -116,7 +116,7 @@ test('renders ScoreDocument through the vendored jpFun engine', async ({ page })
 })
 
 test('all embedded documentation scores use numbered notation', async ({ page }) => {
-  await page.goto('/docs?doc=guide')
+  await page.goto('/?doc=guide')
   const papers=page.locator('.embedded-editor .score-paper')
   await expect(papers.first()).toHaveAttribute('data-notation','numbered')
   expect(await papers.count()).toBeGreaterThan(1)
