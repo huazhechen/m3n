@@ -5,7 +5,7 @@ import { projectNumberedScore } from './projection.js'
 import { fixedDoPitch } from './fixed-do.js'
 
 const options = { width: 800, paged: false }
-const notes = (source: string) => [...source.matchAll(/@note\("([^"]+)"/g)].map(match => match[1])
+const notes = (source: string) => [...source.matchAll(/@note\("([^"]+)"(?!,displayonly=true)/g)].map(match => match[1])
 
 describe('fixed C numbered notation', () => {
   it('respells enharmonics and crosses octave boundaries using sharps only', () => {

@@ -52,6 +52,9 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
   const native = renderLayoutPagesToSvg(result.layout, {
     background: '#fff',
     objectAttributes(node): Record<string, string> | undefined {
+      if (node.ast instanceof ASTFunctionNode && (node.ast.label === 'rangeLow' || node.ast.label === 'rangeHigh')) {
+        return { 'data-m3n-role': node.ast.label === 'rangeLow' ? 'pitch-range-low' : 'pitch-range-high' }
+      }
       const value = located.get(node)
       if (value) {
         objectLocations.set(node.order, value)

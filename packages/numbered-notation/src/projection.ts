@@ -6,6 +6,7 @@ import {
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
 import { fixedDoPitch, fixedDoGrace, transposedKey } from './fixed-do.js'
 import { sustainContinuations } from './sustains.js'
+import { numberedPitchRange } from './pitch-range.js'
 
 function tempoMark(qpm: number, count: number, unit: number) {
   const display = displayedTempo(qpm, count, unit)
@@ -352,10 +353,13 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     `@text(${quote(creditLines.map(credit => credit.label).join('\n'))},size=14px,lineheight=1.5,align=left)`,
     `@text(${quote(creditLines.map(credit => credit.name).join('\n'))},size=14px,lineheight=1.5,align=right)`,
   ].join(' ')}}` : ''
+  const pitchRange = numberedPitchRange(document, options)
+  const range = pitchRange ? `{@set(fontsize=16) @note(${quote(pitchRange[0])},displayonly=true)@rangeLow @text("~",size=16px,font="M3N Numbers") @note(${quote(pitchRange[1])},displayonly=true)@rangeHigh}` : ''
   const signatures = [
     `@key(${quote(options.fixedDo ? 'C4' : transposedKey(document.key, options.transpose))},size=16px)`,
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,
     document.hasExplicitTempo ? tempoMark(document.tempo * (options.tempoScale ?? 1), document.meterCount, document.meterUnit) : '',
+    range,
   ].filter(Boolean).join(' ')
   const orderLines: string[][] = []
   if (document.order) {

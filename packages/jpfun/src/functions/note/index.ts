@@ -72,6 +72,13 @@ class NoteFunction extends ASTFunctionNode {
                 type: "boolean" as const,
                 namedOnly: true,
                 default: true,
+            },
+            {
+                name: "displayonly",
+                description: "仅绘制音符，不占时值或参与播放（用于谱头音域等说明）",
+                type: "boolean" as const,
+                namedOnly: true,
+                default: false,
             }
         ]
     };
@@ -137,6 +144,7 @@ class NoteFunction extends ASTFunctionNode {
     acc: string;
     color: string;
     showAcc: boolean;
+    displayOnly: boolean;
     size: number;
     readonly font: string;
 
@@ -148,7 +156,7 @@ class NoteFunction extends ASTFunctionNode {
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
         this.hasDefaultAcc = Boolean(ctx.variables["note.acc"]);
-        [this.name, this.acc, this.octave, this.color, this.showAcc] = this.getArgValue(args, ctx) as [string, string, number, string, boolean];
+        [this.name, this.acc, this.octave, this.color, this.showAcc, this.displayOnly] = this.getArgValue(args, ctx) as [string, string, number, string, boolean, boolean];
         this.font = ctx.variables.numberfont;
         this.size = ctx.variables.fontsize;
         // 创建时就固化参数值
@@ -183,7 +191,7 @@ class NoteFunction extends ASTFunctionNode {
     }
 
     override toString() {
-        return `@n(${this.name}, ${this.acc || '""'}, ${this.octave}, ${this.color}${this.showAcc ? "" : ", showacc=false"})`;
+        return `@n(${this.name}, ${this.acc || '""'}, ${this.octave}, ${this.color}${this.showAcc ? "" : ", showacc=false"}${this.displayOnly ? ", displayonly=true" : ""})`;
     }
 }
 
@@ -223,8 +231,8 @@ class NoteTemporalNode extends TemporalNodeBase {
     constructor(ast: NoteFunction) {
         super();
         this.ast = ast;
-        this.T.set(1);
-        this.mergeKey = DEFAULT_KEY;
+        this.T.set(ast.displayOnly ? 0 : 1);
+        if (!ast.displayOnly) this.mergeKey = DEFAULT_KEY;
         this.name = ast.name;
         this.acc = ast.acc;
         this.octave = ast.octave + ast.jeOctaveOffset;
@@ -352,6 +360,7 @@ class NoteTemporalNode extends TemporalNodeBase {
 
     /** 发布完整音段或无声区间，实际 NoteOn/NoteOff 留到声音展开完成后生成 */
     override emitPlayback(emitter: PlaybackEmitter) {
+        if (this.ast.displayOnly) return;
         const percussion = this.ast.name === "9";
         const midi = percussion ? 37 : this.resolvedMidi;
         if (emitter.end.compare(emitter.start) <= 0) return;

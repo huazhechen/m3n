@@ -61,3 +61,5 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - Alternative tracks use host occupancy within their own horizontal footprint. A second lyric row in another bar no longer reserves a blank row above a local alternative; nearby lyrics, relations and previously placed branches still participate in clearance. Other track arrangements retain their system-wide envelope.
 
 - `@br(gap=12)` 可设置换行前的额外像素间距；参与页面容量计算，页首不保留。
+
+- `@note(...,displayonly=true)` 绘制零时长的说明音符，保留数字、变音记号和八度点的原生布局，可用于谱头音域；不发声，序列化保留此选项。

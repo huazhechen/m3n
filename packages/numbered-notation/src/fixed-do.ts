@@ -1,6 +1,6 @@
 import { m3nPitch } from '@m3n/notation'
 
-function absoluteSemitones(absolute: string) {
+export function absoluteSemitones(absolute: string) {
   const [letter, octave, accidental = ''] = absolute.split(':')
   const naturals: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }
   const alterations: Record<string, number> = { s: 1, ss: 2, x: 2, f: -1, ff: -2, n: 0, '': 0 }

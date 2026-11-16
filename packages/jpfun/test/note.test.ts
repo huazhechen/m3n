@@ -8,8 +8,21 @@ import { layoutDocument } from "../src/layout/engine.js";
 import { isVisualTemporalNode, type VisualTemporalNode } from "../src/functions/temporal.js";
 import type { PathCommand } from "../src/render/types.js";
 import { compileScore } from "../src/pipeline.js";
+import { compilePlayback } from "../src/playback/compile.js";
 import { transformNotes, type NoteTransform } from "../src/functions/note/index.js";
-import { assert, expectCompileError, layoutContext, layoutOf, lower, nearly, parse, recordCommands } from "./helpers.js";
+import { assert, expectCompileError, layoutContext, layoutOf, lower, nearly, parse, playedNotes, recordCommands } from "./helpers.js";
+
+test("display-only range notes draw in headers without adding time or playback", () => {
+    const source = `@head(left={{@note("1,",displayonly=true) @text("~") @note("#5'",displayonly=true)}}) @br() 2 3`;
+    const result = compileScore(source);
+    strictAssert.deepEqual(result.diagnostics, []);
+    strictAssert.equal(result.lowering.duration.toString(), "2");
+    strictAssert.equal(compileScore(result.ast.toString()).lowering.duration.toString(), "2");
+    strictAssert.deepEqual(playedNotes(compilePlayback(result.lowering)).map(note => note.midi), [62, 64]);
+    const commands = recordCommands(result.layout);
+    assert(commands.some(command => command.kind === "text" && command.text === "1"), "the low endpoint must be drawn");
+    assert(commands.some(command => command.kind === "text" && command.text === "5"), "the high endpoint must be drawn");
+});
 
 function transformed(source: string, operation: NoteTransform, ranges?: { start: number; end: number }[]) {
     let result = source;
