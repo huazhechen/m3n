@@ -5,12 +5,13 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
   const base = 2 ** Math.floor(Math.log2(writtenBeats))
   const beamCount = sustain ? 0 : Math.max(0, Math.round(-Math.log2(base)))
   const beamBottom = size * 0.92 + (beamCount - 1) * size * 0.14 + Math.max(1, size * 0.055)
-  const bounds = pitches.map(pitch => {
+  const bounds = pitches.map((pitch, index) => {
     const above = sustain ? 0 : Math.max(0, pitch.octave), below = sustain ? 0 : Math.max(0, -pitch.octave)
     const top = baseline + above * size * 0.23
-    let decorationBottom = beamCount ? beamBottom : size * 0.84
+    const beamed = beamCount > 0 && index === 0
+    let decorationBottom = beamed ? beamBottom : size * 0.84
     if (below) decorationBottom += below * size * 0.23
-    return { top, bottom: Math.max(size, decorationBottom) - baseline }
+    return { top, bottom: (beamed ? decorationBottom : Math.max(size, decorationBottom)) - baseline }
   })
   const offsets = [0]
   if (!sustain) for (let index = 1; index < pitches.length; index++) offsets.push(offsets[index - 1]! - bounds[index - 1]!.top - gap - bounds[index]!.bottom)

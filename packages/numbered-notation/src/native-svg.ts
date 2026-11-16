@@ -133,7 +133,7 @@ class SvgPainter {
     const lyrics: string[] = []
     for (const [row, data] of glyph.lyrics) {
       const visible = lane.rows.indexOf(row), text = data.texts.join('')
-      const y = lane.y + (lane.bodyBottom ?? glyph.bottom) + 22 * (0.32 + 0.82 * 0.8) + Math.max(0, visible) * 22 * (0.82 + 0.24)
+      const y = lane.y + (lane.lyricBottom ?? lane.bodyBottom ?? glyph.bottom) + 22 * (0.32 + 0.82 * 0.8) + Math.max(0, visible) * 22 * (0.82 + 0.24)
       const meta = { 'data-m3n-id': glyph.xmlId, 'data-m3n-rendition': row + 1, 'data-m3n-passes': [...(data.passes ?? [row + 1])].join('-'), 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId }
       lyrics.push(this.text(text || '\u200B', glyph.x, y, 22 * 0.82, 'serif', { ...meta, 'text-anchor': 'middle', 'data-m3n-role': 'lyric', 'data-m3n-underlined': data.underlined ? 'true' : undefined }))
       const width = this.layout.measurer.measureText(text, { fontSize: 16 }).w

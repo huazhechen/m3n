@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
+import { createHash } from 'node:crypto'
 
 // jpFun remains the production baseline until this independent comparison passes.
 // No development server, runtime fallback, network request or baseline regeneration.
@@ -22,9 +23,15 @@ const selfCheck = process.argv.includes('--self-check')
 const widths = allWidths ? [320, 600, 800, 1000] : [800]
 const modes = allWidths ? [false, true] : [false]
 const scoreFilter = process.argv.find(argument => argument.startsWith('--score='))?.slice(8)
+const sourcesPath = process.argv.find(argument => argument.startsWith('--sources='))?.slice(10)
+// Snapshot inputs before asynchronous work, so concurrent score edits cannot
+// change a running matrix or invalidate a before/after comparison.
+const sources = sourcesPath ? JSON.parse(readFileSync(resolve(sourcesPath), 'utf8')) : Object.fromEntries(
+  readdirSync(join(root, 'src/scores')).filter(file => file.endsWith('.m3n')).map(file => [file, readFileSync(join(root, 'src/scores', file), 'utf8')]))
 let browser
 try {
   mkdirSync(output, { recursive: true })
+  writeFileSync(join(output, 'sources.json'), JSON.stringify(sources, null, 2))
   const archive = execFileSync('git', ['archive', baselineCommit, 'packages/jpfun', 'packages/numbered-notation', 'tsconfig.package.json'], { cwd: root, maxBuffer: 20 * 1024 * 1024 })
   execFileSync('tar', ['-xf', '-', '-C', temp], { input: archive })
   const entry = join(temp, 'entry.ts')
@@ -47,8 +54,7 @@ try {
   await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
   await page.evaluate(() => comparison.prepareNumberedNotationFonts())
   const reports = []
-  for (const file of readdirSync(join(root, 'src/scores')).filter(file => file.endsWith('.m3n') && (!scoreFilter || file.includes(scoreFilter)))) {
-    const source = readFileSync(join(root, 'src/scores', file), 'utf8')
+  for (const [file, source] of Object.entries(sources).filter(([file]) => !scoreFilter || file.includes(scoreFilter))) {
     for (const width of widths) for (const paged of modes) {
       const result = await page.evaluate(async ({ source, width, paged, selfCheck }) => {
         const score = comparison.parseM3NDocument(source)
@@ -89,6 +95,7 @@ try {
           matches: differingLines === 0 && shifts.length === oldNotes.size && candidate.systems.reduce((n, system) => n + system.notes.length, 0) === oldNotes.size && baseline.pageCount === candidate.pageCount && Math.abs(baseline.height - candidate.height) <= 0.5 && shifts.every(shift => Math.abs(shift.dx) <= 0.5 && Math.abs(shift.dy) <= 0.5) }
       }, { source, width, paged, selfCheck })
       const name = `${file}-${width}-${paged ? 'paged' : 'continuous'}`
+      result.sourceHash = createHash('sha256').update(source).digest('hex')
       result.geometryMatches = result.matches ?? false
       if (pixels && !result.error) {
         const images = []

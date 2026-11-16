@@ -1,5 +1,6 @@
 import { nativeArcGeometry } from './native-arc.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
+import { nativeNoteMetrics } from './native-note-metrics.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
@@ -17,7 +18,7 @@ export type NativeRenderOptions = {
   pairedSpacing?: boolean
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'octave' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number }
-export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; rows: number[] }
+export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
 export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[] }
 export type NativePage = { index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
@@ -175,8 +176,9 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       const members = glyphs.filter(glyph => glyph.lane === lane)
       const rows = [...new Set(members.flatMap(glyph => [...glyph.lyrics].filter(([, row]) => row.texts.some(text => text.replaceAll('\u200B', '').trim())).map(([row]) => row)))].sort((a, b) => a - b)
       const bodyBottom = Math.max(7.15, ...members.map(glyph => glyph.bottom))
+      const lyricBottom = Math.max(...members.map(glyph => nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain).bottom))
       const lyricsHeight = rows.length ? 22 * 0.32 + rows.length * 22 * 0.82 + (rows.length - 1) * 22 * 0.24 : 0
-      system.lanes.push({ id: lane, y: 0, top: Math.max(20.35, ...members.map(glyph => glyph.top + glyph.annotations.length * 22)), bodyBottom, bottom: bodyBottom + lyricsHeight, rows })
+      system.lanes.push({ id: lane, y: 0, top: Math.max(20.35, ...members.map(glyph => glyph.top + glyph.annotations.length * 22)), bodyBottom, lyricBottom, bottom: Math.max(bodyBottom, lyricBottom + lyricsHeight), rows })
     }
   }
   const relationBounds = new Map<NativeSystem, { lane: string; left: number; right: number; top: number }[]>()
@@ -235,7 +237,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     for (const system of systems) for (const lane of system.lanes) {
       const paragraph = system.measures[0]?.columns[0]?.glyphs[0]?.paragraph ?? '0'
       const envelope = envelopes.get(`${paragraph}:${lane.id}:${system.volta}`)!
-      lane.top = envelope.top; lane.bodyBottom = envelope.bottom; lane.bottom = envelope.bottom + (lane.rows.length ? 7.04 + lane.rows.length * 18.04 + (lane.rows.length - 1) * 5.28 : 0)
+      lane.top = envelope.top; lane.bodyBottom = envelope.bottom; lane.lyricBottom = envelope.bottom; lane.bottom = envelope.bottom + (lane.rows.length ? 7.04 + lane.rows.length * 18.04 + (lane.rows.length - 1) * 5.28 : 0)
     }
   }
   const gap = options.systemGap ?? 24
