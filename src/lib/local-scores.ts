@@ -77,7 +77,8 @@ export function loadLocalScore(id: string): LocalScore | null {
 }
 
 export function listLocalScores(): LocalScore[] {
-  return pruneExpiredLocalScores()
+  const modifiedAt = (score: LocalScore) => Date.parse(score.updatedAt ?? '') || Date.parse(score.createdAt) || 0
+  return pruneExpiredLocalScores().sort((left, right) => modifiedAt(right) - modifiedAt(left))
 }
 
 export function deleteLocalScore(id: string) {

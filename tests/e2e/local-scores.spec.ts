@@ -116,22 +116,36 @@ test('score library marks local scores, opens on click, and deletes', async ({ p
   await expect(card).toHaveCount(0)
 })
 
-test('library mixes local and built-in titles alphabetically and has no automatic ratings', async ({ page }) => {
+test('library puts recently modified local scores before alphabetized official scores', async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.setItem('m3n:local-scores', JSON.stringify(['Zzz 排序用例', 'Aaa 排序用例'].map((title, index) => ({
+    if (localStorage.getItem('m3n:local-scores')) return
+    localStorage.setItem('m3n:recent-edits', JSON.stringify([{ id: 'local-sort-0', title: '旧记录', updatedAt: Date.now() }]))
+    localStorage.setItem('m3n:local-scores', JSON.stringify(['Zzz 排序用例', 'Aaa 排序用例', '旧版排序用例'].map((title, index) => ({
       id: `local-sort-${index}`,
       source: `{title=${title}} {4/4}\nN: 1 2 3 4 |||`,
-      createdAt: new Date().toISOString(),
-      expiresAt: Date.now() + 86_400_000,
+      createdAt: '2020-01-01T00:00:00Z',
+      updatedAt: index < 2 ? `2021-01-0${2 - index}T00:00:00Z` : undefined,
+      expiresAt: null,
     }))))
   })
   await page.goto('/scores')
   const titles = page.locator('.score-list .score-card h3')
-  await expect(titles.first()).toHaveText('Aaa 排序用例')
-  await expect(titles.last()).toHaveText('Zzz 排序用例')
+  await expect(titles.nth(0)).toHaveText('Zzz 排序用例')
+  await expect(titles.nth(1)).toHaveText('Aaa 排序用例')
+  await expect(titles.nth(2)).toHaveText('旧版排序用例')
+  const isLocal = await page.locator('.score-list .score-card').evaluateAll(cards => cards.map(card => card.classList.contains('is-local-card')))
+  expect(isLocal.slice(0, 3)).toEqual([true, true, true])
+  expect(isLocal.slice(3).every(local => !local)).toBe(true)
+  await expect(page.getByRole('navigation', { name: '最近编辑' })).toHaveCount(0)
   await expect(page.locator('.score-list')).not.toContainText('评分')
   await page.getByRole('searchbox', { name: '搜索乐谱' }).fill('排序用例')
-  await expect(titles).toHaveText(['Aaa 排序用例', 'Zzz 排序用例'])
+  await expect(titles).toHaveText(['Zzz 排序用例', 'Aaa 排序用例', '旧版排序用例'])
+  await page.goto('/editor/local-sort-1')
+  await page.getByLabel('M3N source').fill('{title=Aaa 排序用例}{4/4}\nN: 4 3 2 1 |||')
+  await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page).toHaveURL(/\/scores\/local-sort-1$/)
+  await page.goto('/scores')
+  await expect(titles.first()).toHaveText('Aaa 排序用例')
   await page.goto('/editor')
   await expect(page.getByRole('button', { name: '格式化', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: '复杂度', exact: true })).toHaveCount(0)

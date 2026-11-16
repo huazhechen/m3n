@@ -43,7 +43,7 @@ test('mobile editor switches panes without losing input; catalog fills and filte
   await page.getByRole('tab', { name: '源码', exact: true }).click()
   await expect(editor).toHaveText('{title=手机试改}{4/4}\nN: 1 2 3 4 |||', { useInnerText: true })
   await page.goto('/scores')
-  await expect(page.getByRole('navigation', { name: '最近编辑' })).toContainText('手机试改')
+  await expect(page.getByRole('navigation', { name: '最近编辑' })).toHaveCount(0)
   const card = page.locator('.score-list .score-card').first()
   expect((await card.boundingBox())!.width).toBeGreaterThan(320)
   await page.getByRole('searchbox', { name: '搜索乐谱' }).fill('本地')

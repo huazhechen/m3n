@@ -1,6 +1,5 @@
-import { recordRecentEdit } from '../lib/recent-edits'
 import { EditorSplit } from './EditorSplit'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatM3N, formatScoreDiagnostic } from '@m3n/notation'
 import defaultScore from '../scores/huan_le_song_01.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
@@ -49,9 +48,7 @@ export function NotationEditor({
   useLayoutEffect(() => { latestSource.current = source }, [source])
   const [isComposing, setIsComposing] = useState(false)
   const { analysis, isAnalyzing, error: analysisError, retry: retryAnalysis } = useM3NAnalysis(source, { background: !embedded, suspended: isComposing })
-  useEffect(() => {
-    if (!embedded && !draftScope && analysis.source === source && source !== initialSource) recordRecentEdit(scoreId ?? '', analysis.score.title || '未命名草稿')
-  }, [analysis, draftScope, embedded, initialSource, scoreId, source])
+
   const { interaction: result, invalidMeasureIds } = analysis
   const cursorXmlId = useMemo(() => {
     if (analysis.source !== source) return null

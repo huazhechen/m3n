@@ -1,4 +1,3 @@
-import { recentEdits } from '../lib/recent-edits'
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/notation'
@@ -142,7 +141,6 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
 
 export function ScoresPage() {
   const [query, setQuery] = useState('')
-  const [recent] = useState(recentEdits)
   const [localScores, setLocalScores] = useState<LocalScore[]>(() => listLocalScores())
   const cards = useMemo(() => {
     const locals = localScores.map((score) => localCardData(score, () => {
@@ -151,7 +149,7 @@ export function ScoresPage() {
         setLocalScores(listLocalScores())
       }
     }))
-    return sortScoresByTitle([...locals, ...presetScores.map(presetCardData)])
+    return [...locals, ...sortScoresByTitle(presetScores.map(presetCardData))]
   }, [localScores])
   const scores = useMemo(
     () => cards.filter(card => matchesScoreSearch(card, query)),
@@ -176,7 +174,6 @@ export function ScoresPage() {
             />
           </label>
         </section>
-        {recent.length > 0 && <nav className="recent-edits" aria-label="最近编辑"><strong>最近编辑</strong>{recent.map(item => <Link key={item.id} to={item.id ? `/editor/${item.id}` : '/editor'}>{item.title}</Link>)}</nav>}
         {scores.length === 0 && (
           <p className="search-empty">没有找到匹配的乐谱。</p>
         )}

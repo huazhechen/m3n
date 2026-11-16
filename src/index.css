@@ -1513,8 +1513,6 @@ a.action-button {
 }
 .score-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
 .score-list .score-card { max-width: none; }
-.recent-edits { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
-.recent-edits a { padding: 8px; }
 @media (max-width: 720px) {
   .score-list { grid-template-columns: 1fr; }
   .score-list .score-card { height: auto; min-height: 80px; align-items: center; }
