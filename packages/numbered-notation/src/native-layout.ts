@@ -232,7 +232,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       const system = systems[index]!
       const lane = system.lanes.find(lane => lane.id === relation.first.lane)
       if (lane) {
-        const placed = placeNativeRelation(relation, system, measurer)
+        const placed = placeNativeRelation(relation, system, measurer, systems)
         system.relationLayout ??= new Map()
         system.relationLayout.set(relation, placed)
         const top = -placed.ink.top

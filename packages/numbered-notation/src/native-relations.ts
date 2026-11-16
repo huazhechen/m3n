@@ -1,4 +1,6 @@
 import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeHairpinSegments } from './native-hairpin.js'
+import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import { NativeSymbols, attrs, n, line } from './native-symbols.js'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
@@ -8,6 +10,7 @@ import type { TextMeasurer } from './native-measure.js'
 
 export type NativeRelationLayout = { svg: string; ink: NativeInk }
 class NativeRelationPainter extends NativeSymbols {
+  constructor(measurer: TextMeasurer, private readonly systems: readonly NativeSystem[]) { super(measurer) }
   relation(relation: NativeRelation, system: NativeSystem): string {
     const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === relation.first.lane)
     const lane = system.lanes.find(lane => lane.id === relation.first.lane)
@@ -29,8 +32,10 @@ class NativeRelationPainter extends NativeSymbols {
       return `<path${attrs({ d: nativeArcPath(arc), fill: '#000', transform: 'translate(0 0)', 'data-m3n-relation': relation.kind })}/>`
     }
     if (relation.kind === 'cresc' || relation.kind === 'decres') {
-      const end = Math.max(x1 + em(14), x2), openLeft = relation.kind === 'decres'
-      return line(x1, top - (openLeft ? em(4) : 0), end, top - (openLeft ? 0 : em(4))) + line(x1, top + (openLeft ? em(4) : 0), end, top + (openLeft ? 0 : em(4)))
+      const segment = nativeHairpinSegments(relation,this.systems).find(segment => segment.system === system)
+      if (!segment) return ''
+      const {left,right,startHalf,endHalf,stroke} = segment
+      return line(left,-startHalf,right,-endHalf,stroke)+line(left,startHalf,right,endHalf,stroke)
     }
     if (relation.kind === 'tuplet') {
       const bracket = nativeTupletGeometry(relation, system, this.measurer)
@@ -45,8 +50,8 @@ class NativeRelationPainter extends NativeSymbols {
 }
 
 /** Cache the final geometry, after clearing actual overlapping painted regions. */
-export function placeNativeRelation(relation: NativeRelation, system: NativeSystem, measurer: TextMeasurer): NativeRelationLayout {
-  const painter = new NativeRelationPainter(measurer)
+export function placeNativeRelation(relation: NativeRelation, system: NativeSystem, measurer: TextMeasurer, systems: readonly NativeSystem[] = [system]): NativeRelationLayout {
+  const painter = new NativeRelationPainter(measurer,systems)
   let svg = painter.relation(relation, system), ink = nativeSvgInk(svg, measurer)
   if (relation.kind !== 'inst') {
     const obstacles = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
@@ -59,7 +64,16 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
       .map(([, placed]) => placed.ink).filter(b => b.right > ink.left && b.left < ink.right)
     const isArc = relation.kind === 'tie' || relation.kind === 'slur'
     const blockers = isArc ? previous : relation.kind === 'tuplet' ? [...controls, ...previous] : [...obstacles, ...controls, ...previous]
-    const dy = Math.min(0, ...blockers.map(b => b.top - nativeStyle.markGap - ink.bottom))
+    const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
+    // Continuations reach the system boundary and therefore also cover bars.
+    // Use their actual painted ink, not a nominal staff height.
+    if (hairpin && !relation.first.lane.startsWith('alternative:')) {
+      for (const [index] of system.measures.entries()) for (const bar of nativeMeasureBarPositions(system.measures,index)) {
+        const bounds = nativeSvgInk(nativeBarSvg(bar.kind,bar.x,0),measurer)
+        if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
+      }
+    }
+    const dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.62 : b.top-nativeStyle.markGap-ink.bottom))
     if (dy) {
       svg = `<g transform="translate(0 ${n(dy)})">${svg}</g>`
       ink = nativeSvgInk(svg, measurer)
