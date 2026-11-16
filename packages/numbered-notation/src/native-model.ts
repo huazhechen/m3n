@@ -16,7 +16,7 @@ import { fixedDoPitch, fixedDoGrace, transposedNumberedKeyLabel } from './fixed-
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
-export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno'; text: string; keyRows?: NativeKeyRow[]; width: number; anchor: number; top: number; bottom: number; x?: number }
+export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno' | 'passes'; text: string; keyRows?: NativeKeyRow[]; width: number; anchor: number; top: number; bottom: number; x?: number }
 export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
@@ -92,6 +92,14 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         const controls: NativeControl[] = []
         const control = (kind: NativeControl['kind'], text: string) => {
           controls.push(measureNativeControl(kind, text, options.textMeasurer))
+        }
+        if (eventIndex === 0 && lane.startsWith('alternative:')) {
+          const alternative = document.alternatives?.find(item => item.measure === measure)
+          const preceding = alternative && document.alternatives?.some(item => item.sourceStart === alternative.sourceStart && item.host === part.melody[host.index - 1])
+          const siblings = alternative && document.alternatives?.filter(item => item.host === alternative.host)
+          if (alternative && !preceding && ((siblings?.length ?? 0) > 1 || alternative.passes.join(',') !== '2')) {
+            control('passes', `${alternative.passes.join('.')}.`)
+          }
         }
         if (staff === 'melody' && event.sectionLabel && !event.sectionLabelBreakAfter) control('section', event.sectionLabel)
         if (eventIndex === 0 && (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno')))) control('segno', '𝄋')

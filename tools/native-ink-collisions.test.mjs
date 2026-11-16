@@ -88,3 +88,14 @@ test('compares every simultaneous rest separately and rejects missing measure id
   assert.notDeepEqual(await restMetrics(), result)
   await assert.rejects(restMetrics('m3n-rest-1-0','12',30,40,''), /no measure identity/)
 })
+
+test('counts inline pass controls once and still detects their music collisions', async () => {
+  const control = '<g data-m3n-role="control" data-m3n-control="passes"><text data-m3n-role="alternative-passes" x="30" y="40" font-size="16">3.</text></g>'
+  const clear = await check(control)
+  assert.equal(clear.labels, 1)
+  assert.equal(clear.collisions.length, 0)
+  const crossed = await check(control + '<g class="note"><rect x="30" y="20" width="20" height="25"/></g>')
+  assert.equal(crossed.labels, 1)
+  assert.equal(crossed.collisions.length, 1)
+  assert.ok(crossed.collisions[0].opaquePixelsAt2x > 0)
+})

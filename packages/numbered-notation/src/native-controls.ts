@@ -8,8 +8,10 @@ import type { NativeControl } from './native-model.js'
 export function measureNativeControl(kind: NativeControl['kind'], text: string, measurer: TextMeasurer, keyRows?: NativeKeyRow[]): NativeControl {
   const painter = new NativeSymbols(measurer)
   const textWidth = (value: string, size: number, family: string) => measurer.measureText(value, { fontSize: size, fontFamily: family }).w
-  const m = measurer.measureText(text, { fontSize: kind === 'section' ? nativeStyle.annotation : nativeStyle.text, fontFamily: kind === 'section' ? 'serif' : 'M3N Numbers', fontWeight: kind === 'section' ? 700 : 400 })
-  let width = m.w, anchor = textWidth(text[0]!, nativeStyle.text, 'M3N Numbers') / 2
+  const size = kind === 'passes' ? nativeStyle.small : kind === 'section' ? nativeStyle.annotation : nativeStyle.text
+  const family = kind === 'section' || kind === 'passes' ? 'serif' : 'M3N Numbers'
+  const m = measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: kind === 'section' ? 700 : 400 })
+  let width = m.w, anchor = textWidth(text[0]!, size, family) / 2
   if (kind === 'key') { const geometry = nativeKeyGeometry(keyRows ?? [{key:text}],measurer); width = geometry.width; anchor = geometry.anchor }
   if (kind === 'segno') { width = nativeStyle.annotation; anchor = width / 2 }
   if (kind === 'meter') { width = Math.max(...text.split('/').map(value => textWidth(value, nativeStyle.meter, 'M3N Numbers'))) + nativeStyle.meter * 0.16; anchor = width / 2 }

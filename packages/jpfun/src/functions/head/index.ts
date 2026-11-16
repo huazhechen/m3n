@@ -7,6 +7,7 @@ import type { TrackArrangement } from "../../lowering/track.js";
 import {
     isVisualTemporalNode,
     TemporalNodeBase,
+    DEFAULT_KEY,
     type VisualTemporalNode,
 } from "../temporal.js";
 import type { GrammarNode, GrammarSugarNode } from "../../parser/grammarType.js";
@@ -126,7 +127,13 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
         if (this.slots.length > 0) this.alignHead();
     }
 
-    onTemporal(node: TemporalNodeBase) { this.members.push(node); }
+    onTemporal(node: TemporalNodeBase) {
+        // Header rows are parallel zero-duration blocks. Their text deliberately
+        // shares a column so titles of different widths remain centered together.
+        // Ordinary inline text retains its independent source-order column.
+        if (node.ast instanceof ASTFunctionNode && node.ast.callName === "text") node.mergeKey = DEFAULT_KEY;
+        this.members.push(node);
+    }
 
     createTracks(slot: HeadSlotNode): TrackArrangement {
         const { name, owner } = slot;

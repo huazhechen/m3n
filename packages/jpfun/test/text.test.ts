@@ -136,3 +136,20 @@ test('centered text accounts for each line ink bearings without changing its fon
  assert(nearly(commands[0].x,box.x+box.w/2-.5),'first line accounts for its ink bearings');
  assert(nearly(commands[1].x,box.x+box.w/2-1),'second line accounts for its own ink bearings');
 });
+
+test('parallel inline text reserves a control column without splitting simultaneous notes', () => {
+    const music = '@stack({1 2}, {@text("2.3.",size=12px) 3 4})';
+    for (const source of [music, parse(music).toString(music)]) {
+        const layout = layoutOf(source);
+        const label = layout.objects.find(object => object.ast.callName === 'text')!;
+        const notes = layout.objects.filter(object => object.T.toNumber() > 0);
+        assert(notes.length === 4);
+        const anchor = (object: typeof notes[number]) => object.box.x + object.box.anchor;
+        for (const time of [0, 1]) {
+            const simultaneous = notes.filter(object => object.t.toNumber() === time);
+            assert(simultaneous.length === 2);
+            assert(nearly(anchor(simultaneous[0]), anchor(simultaneous[1])), 'same-beat notes share an anchor');
+        }
+        assert(label.box.x + label.box.w < Math.min(...notes.map(object => object.box.x)), 'label clears the first music column');
+    }
+});

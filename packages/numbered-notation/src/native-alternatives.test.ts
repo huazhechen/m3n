@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
+import { compileScore, ErrorDiagnostic } from '@m3n/jpfun'
+import { projectNumberedScore } from './projection.js'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
@@ -47,5 +49,39 @@ describe('native alternative parentheses', () => {
       expect(Number(brackets[0]!.getAttribute('x'))).toBeGreaterThanOrEqual(32 - 0.01)
       expect(Number(brackets[1]!.getAttribute('x')) + 22 * 0.58).toBeLessThanOrEqual(288 + 0.01)
     }
+  })
+})
+
+
+describe('alternative pass labels share the musical time grid', () => {
+  it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({width, paged}))))('reserves inline labels at $width, paged=$paged', options => {
+    const document = parseM3NDocument('{2/4}{order=A,A,A}\n===A\nN: 1 2 | 3 4 ||\nNs[2]: 1: 5 6 | 7 1e |\nNs[3]: 1: 2e 3e | 4e 5e |')
+    const layout = layoutNativeScore(document, options)
+    const controls = layout.projection.glyphs.flatMap(g => g.controls.filter(c => c.kind === 'passes'))
+    expect(controls.map(c => c.text)).toEqual(['2.', '3.'])
+    expect(controls[0]!.x! + controls[0]!.width).toBeLessThan(controls[1]!.x!)
+    for (const measure of layout.projection.measures) for (const column of measure.columns) {
+      expect(new Set(column.glyphs.map(g => g.x)).size).toBe(1)
+    }
+    for (const control of controls) {
+      const host = layout.projection.glyphs.find(g => g.controls.includes(control))!
+      expect(control.x! + control.width).toBeLessThanOrEqual(host.x - host.left)
+    }
+    const root = new DOMParser().parseFromString(renderNativePages(layout).join(''), 'text/html')
+    expect([...root.querySelectorAll('[data-m3n-role="alternative-passes"]')].map(node => node.textContent)).toEqual(['2.', '3.'])
+    const projection = projectNumberedScore(document, options)
+    const result = compileScore(projection.source, {alignRelations:true, autoWrap:true})
+    expect(result.diagnostics.filter(d => d instanceof ErrorDiagnostic)).toEqual([])
+    const notes = result.layout.objects.filter(o => o.T.toNumber() > 0)
+    for (const note of notes) {
+      for (const peer of notes.filter(o => o.t.toNumber() === note.t.toNumber())) {
+        expect(note.box.x + note.box.anchor).toBeCloseTo(peer.box.x + peer.box.anchor, 5)
+      }
+    }
+  })
+
+  it('omits the ordinary sole second-pass label', () => {
+    const layout = layoutNativeScore(parseM3NDocument(source), {width:800, paged:false})
+    expect(layout.projection.glyphs.flatMap(g => g.controls).filter(c => c.kind === 'passes')).toEqual([])
   })
 })

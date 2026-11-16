@@ -84,6 +84,11 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const firstColumn = measure.columns[0]
     const controls = (column: NativeColumn, members: { control: NativeControl; lane: string }[]) => {
       if (!members.length) return
+      // Different pass labels are ordered controls, not one shared time column.
+      if (members.length > 1 && members.some(member => member.control.kind === 'passes')) {
+        for (const member of members) controls(column, [member])
+        return
+      }
       const cells = members.map(({ control, lane }) => springCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
       items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }

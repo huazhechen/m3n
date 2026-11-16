@@ -3,7 +3,7 @@ import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, ParserCon
 import { ErrorDiagnostic } from "../../diagnostic.js";
 import { findClosingQuote, quote, removeQuote } from "../../parser/parse-utils/string-utils.js";
 import type { GrammarCallNodeTyped } from "../../parser/grammarType.js";
-import { DEFAULT_KEY, isVisualTemporalNode, TemporalNodeBase, type VisualTemporalNode } from "../temporal.js";
+import { isVisualTemporalNode, TemporalNodeBase, type VisualTemporalNode } from "../temporal.js";
 import type { AttachmentLayoutContext, LayoutAttachment, LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
 import type { Painter, TextStyle } from "../../render/types.js";
 import type { LoweringContext } from "../../lowering/loweringContext.js";
@@ -170,7 +170,8 @@ class TextTemporalNode extends TemporalNodeBase {
     constructor(ast: TextFunction, host?: VisualTemporalNode) {
         super();
         this.ast = ast;
-        this.mergeKey = DEFAULT_KEY;
+        // Inline text is a zero-time control, not a positive-duration note column.
+        // Keep source order so parallel voices cannot merge a note into this control.
         this.style = { fontSize: ast.size, fontFamily: ast.font, fill: "#000", textAlign: ast.align };
         if (ast.weight !== 400) this.style.fontWeight = ast.weight;
         if (host) this.style.semantic = { role: 'annotation', sourceSpan: host.ast.sourceSpan };

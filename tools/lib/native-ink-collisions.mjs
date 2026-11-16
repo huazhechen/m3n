@@ -41,7 +41,7 @@ export function auditNativeInkCollisions(system) {
   for (const node of system.querySelectorAll('g.note')) object(node, 'music', '', n => !n.closest('[data-m3n-role="mark"]'))
   for (const node of system.querySelectorAll('[data-m3n-role="bar"]')) object(node, 'bar', '')
   for (const node of system.querySelectorAll('[data-m3n-role="beam"]')) object(node, 'music', 'beam')
-  for (const node of system.querySelectorAll('[data-m3n-role="control"]')) object(node, 'control', node.getAttribute('data-m3n-control'))
+  for (const node of system.querySelectorAll('[data-m3n-role="control"]')) object(node, node.getAttribute('data-m3n-control') === 'passes' ? 'label' : 'control', node.getAttribute('data-m3n-control'))
   for (const node of system.querySelectorAll('[data-m3n-relation]')) {
     if (!node.parentElement.closest('[data-m3n-relation]')) object(node, 'relation', node.getAttribute('data-m3n-relation'))
   }
@@ -51,6 +51,8 @@ export function auditNativeInkCollisions(system) {
   }
   const labels = new Set()
   for (const node of system.querySelectorAll('[data-m3n-role="annotation"],[data-m3n-role="lyric"],[data-m3n-role="lyric-prefix"],[data-m3n-role="navigation"],[data-m3n-role="repeat-count"],[data-m3n-role="alternative-passes"]')) {
+    // Inline pass text is already represented by its complete control group.
+    if (node.closest('[data-m3n-role="control"]')) continue
     const group = node.closest('[data-m3n-role="lyric-fragment"],[data-m3n-role="annotation-frame"]') ?? node
     if (!labels.has(group)) { object(group, 'label', group.textContent); labels.add(group) }
   }
