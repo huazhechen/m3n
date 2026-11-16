@@ -29,7 +29,7 @@ export function createSyntheticSoundFont() {
   instrument.globalZone.setGenerator(GeneratorTypes.sampleModes, 1)
   instrument.globalZone.setGenerator(GeneratorTypes.attackVolEnv, timecents(0.012))
   instrument.globalZone.setGenerator(GeneratorTypes.decayVolEnv, timecents(2.5))
-  instrument.globalZone.setGenerator(GeneratorTypes.sustainVolEnv, 30)
+  instrument.globalZone.setGenerator(GeneratorTypes.sustainVolEnv, 0)
   instrument.globalZone.setGenerator(GeneratorTypes.releaseVolEnv, timecents(0.18))
   instrument.globalZone.setGenerator(GeneratorTypes.initialAttenuation, 0)
 
@@ -65,7 +65,7 @@ export function createSyntheticSoundFont() {
         return sustain[phase]! + presence[phase]! + brightness * (attack[phase]! - sustain[phase]!)
       })
       const peak = audio.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0)
-      for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.7 / peak
+      for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.75 / peak
       const sample = new BasicSample(`FM EP ${root} ${hard ? 'hard' : 'soft'}`, SAMPLE_RATE, root, 0, SampleTypes.monoSample, loopStart, loopEnd)
       sample.setAudioData(audio, SAMPLE_RATE)
       bank.addSamples(sample)
