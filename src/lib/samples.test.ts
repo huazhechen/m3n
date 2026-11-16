@@ -187,13 +187,21 @@ describe('bundled score corpus', () => {
         return {pitches:pitches.get(event)?.map(pitch=>pitch.replace(/:n$/,':')),beats:event.beats,tie:event.tie,postfixes:event.postfixes,dynamic,kind:event.kind}
       }))
       // User removed the 3.5-beat introduction and final half-beat rest,
-      // and explicitly unified dynamics; every remaining musical event stays intact.
+      // unified dynamics, and normalized each A pickup to the fourth pass's staccato.
       const withoutDynamics = <T extends {dynamic: string}>({dynamic: _dynamic, ...event}: T) => event
-      expect(playback.map(withoutDynamics)).toEqual(reference.playback!.slice(4,-1).map(withoutDynamics))
+      const pickupOnsets = new Set([0, 32, 96, 192, 224].flatMap(beat => [beat, beat + 0.25]))
+      let onset = 0
+      const expectedPlayback = reference.playback!.slice(4,-1).map(event => {
+        const normalized = withoutDynamics(event)
+        if (pickupOnsets.has(onset)) normalized.postfixes = ['tip']
+        onset += event.beats
+        return normalized
+      })
+      expect(playback.map(withoutDynamics)).toEqual(expectedPlayback)
       expect(playback).toHaveLength(767)
       expect(playback.reduce((sum,event)=>sum+event.beats,0)).toBe(256)
       expect(document).toMatchObject({tempo:120,hasExplicitTempo:true})
-      expect(document.alternatives).toHaveLength(1)
+      expect(document.alternatives ?? []).toHaveLength(0)
     } else {
       expect(bars.map(bar=>({key:bar.events[0]!.key,notes:bar.events.map(event=>`${event.pitches.join('+')||'0'}:${event.beats}${event.tie?'~':''}`).join(' ')})))
         .toEqual(reference.bars)
