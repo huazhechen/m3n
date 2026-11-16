@@ -73,6 +73,7 @@ export function ScoreReaderPage() {
       </div>
       <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
+          scoreId={slug}
           mei={analysis.getMei}
           scoreDocument={analysis.score}
 

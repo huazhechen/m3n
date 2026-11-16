@@ -25,7 +25,7 @@ export type EventBinding = {
   passes?: number[]
 }
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
-export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; pageMargin?: number; systemGap?: number }
+export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 const pitchName = (token: string, shift = 0) => {
   const match = /^([0-7])([#b=]*)([ed]*)$/.exec(token)
@@ -62,6 +62,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   // training exercise also starts a paragraph; automatic wraps do not.
   const paragraphOf = (position: number) => document.paragraphs?.find(range => range.start <= position && position < range.end)?.id ?? '0'
   let serial = 0
+  let measureNumber = 0
   const warn = (event: ScoreEvent, value: string) => diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${value}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
 
   const voicesForPart = (melody: ScoreMeasure[], bass: ScoreMeasure[], partIndex: number) => {
@@ -236,6 +237,11 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           }
           previousTied = event.tie ? event : undefined
           pieces.push(content.join(' '))
+        }
+        if (staff === 'melody' && !alternative) {
+          const first = firsts.get(measureIndex)
+          if (first && options.measureNumbers) annotations[2]!.push(`@text(${quote(String(measureNumber + 1))},size=10px,above=${first},local=true)`)
+          measureNumber += measure.multiRest ?? 1
         }
         if (alternative) {
           const first = firsts.get(measureIndex), last = lasts.get(measureIndex)

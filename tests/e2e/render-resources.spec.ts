@@ -39,8 +39,6 @@ test('editing and changing width refresh numbered layout',async({page})=>{
  await editor.fill('{title=改谱}{4/4}\nN: 5 6 7 1e |||')
  await expect(paper).toContainText('改谱')
  await expect(paper.locator('[data-m3n-id="m3n-e-a1-1"]')).toHaveCount(0)
- await page.getByRole('button',{name:'排版设置',exact:true}).click()
  await page.getByRole('slider',{name:'乐谱宽度'}).fill('600')
- await page.getByRole('button',{name:'关闭',exact:true}).click()
  await expect(paper.locator('svg[data-engine="jpfun"]')).toHaveAttribute('viewBox',/^0 0 600 /)
 })

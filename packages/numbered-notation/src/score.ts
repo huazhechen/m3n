@@ -6,6 +6,7 @@ import { renderInteractivePages } from './svg.js'
 export type NumberedNotationRenderOptions = {
   paged: boolean
   width: number
+  measureNumbers?: boolean
   includeBass?: boolean
   textMeasurer?: TextMeasurer
   pageMargin?: number

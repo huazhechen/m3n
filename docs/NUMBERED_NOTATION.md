@@ -11,6 +11,8 @@ const pages = score.render({ width: 800, paged: true, includeBass: true })
 // score.diagnostics 包含投影与引擎诊断。
 ```
 
+渲染选项 `measureNumbers: true` 在主旋律每个书写小节的首音上方添加小节号，默认关闭。编号跨乐段连续，多小节休止按包含的小节数递增；低音与替代旋律不重复编号。数字使用引擎原生文字附件参与避让和行高计算，保留事件身份与播放时间轴。阅读控制面板的小节号开关长期保存到本地，不改变打印参数。
+
 唯一音乐输入是 `ScoreDocument`；适配器不读取 `document.source`、MEI、Verovio SVG 或 MIDI。`projection.ts` 负责领域语义到 jpFun 脚本的投影，`lyrics.ts` 负责歌词槽位与遍次，`svg.ts` 只添加交互分组和属性，不移动或重新绘制音符与关系线。
 
 简谱显示与导出不初始化 Verovio。播放时才按需加载 Verovio 与 SpessaSynth，继续沿用现有 MIDI、反复与导航时间轴。`@m3n/score-renderer/view` 提供轻量页面工具，`/playback` 和 `/player` 是独立的动态入口；生产打包不再把 Vite 的共享加载助手放入手工指定的 Verovio 块。渲染库、WASM、字体和音源必须来自本站构建产物，禁止使用第三方运行时资源外链。

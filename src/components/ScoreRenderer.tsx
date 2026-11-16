@@ -1,3 +1,4 @@
+import { presetScores, scorebookDefaultWidth } from '../lib/samples'
 import { renderScoreInto, type RenderPhase } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
@@ -16,12 +17,10 @@ import {
   PLAYBACK_TRANSPOSE_MIN,
   TRANSPOSE_KEY,
   readRenderMode,
-  writeRenderMode,
   type RenderMode,
   SCORE_WIDTH_KEY,
   SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
-  SCORE_WIDTH_STEP,
   readRendererSetting,
   writeRendererSetting,
 } from '../lib/renderer-settings'
@@ -34,6 +33,7 @@ type ScoreRendererProps = {
   mei: string | (() => string)
   sourceMap: MeiSourceMapRange[]
   scoreDocument: ScoreDocument
+  scoreId?: string
   compact?: boolean
   isSourceUpdating?: boolean
   activeXmlId?: string | null
@@ -145,6 +145,7 @@ export function ScoreRenderer({
   mei,
   sourceMap,
   scoreDocument,
+  scoreId,
   compact = false,
   isSourceUpdating = false,
   activeXmlId,
@@ -158,7 +159,6 @@ export function ScoreRenderer({
   const renderGenerationRef = useRef(0)
   const scoreRef = useRef<PlaybackScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
-  const settingsDialogRef = useRef<HTMLDialogElement>(null)
   const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
   const playerGenerationRef = useRef(0)
   const playerStartProgressRef = useRef(0)
@@ -195,11 +195,12 @@ export function ScoreRenderer({
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => (
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
-  const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
+  const [renderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
   const bpmRef = useRef(playbackBpm)
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
   const [fitWidth, setFitWidth] = useState(() => compact || readRendererSetting('m3n:fit-width', 1, 0, 1) === 1)
+  const [measureNumbers, setMeasureNumbers] = useState(() => readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
   const [contentWidth, setContentWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPlayerLoading, setIsPlayerLoading] = useState(false)
@@ -256,7 +257,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const { message } = await renderScoreInto(paper, {
-          scoreDocument, width: renderWidth, paged: renderMode === 'paged',
+          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
         })
@@ -280,7 +281,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument])
+  }, [compact, invalidMeasureIds, mei, renderMode, renderWidth, scoreDocument, measureNumbers])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -528,11 +529,6 @@ export function ScoreRenderer({
     playerRef.current?.setMetronomeEnabled(enabled)
   }
 
-  const changeRenderMode = (mode: RenderMode) => {
-    setRenderMode(mode)
-    if (!compact) writeRenderMode(mode)
-  }
-
   useEffect(() => {
     window.addEventListener('pointerup', commitSeek)
     window.addEventListener('pointercancel', commitSeek)
@@ -545,13 +541,15 @@ export function ScoreRenderer({
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
       {hasAudioControls && <ScoreControls
-        compact={compact}
         isPlaying={isPlaying}
         isLoading={isPlayerLoading || toneLoading || isSourceUpdating}
         progress={playbackProgress}
-        defaultBpm={clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)}
         bpm={playbackBpm}
-        beatUnit={scoreDocument.meterUnit}
+        width={Math.round(renderWidth)}
+        measureNumbers={measureNumbers}
+        onMeasureNumbersChange={enabled => { setMeasureNumbers(enabled); writeRendererSetting('m3n:measure-numbers', enabled ? 1 : 0) }}
+        onWidthChange={changeLayoutWidth}
+        onResetWidth={() => changeLayoutWidth(presetScores.find(score => score.slug === scoreId)?.scorebookWidth ?? scorebookDefaultWidth)}
         transpose={playbackTranspose}
         metronomeEnabled={metronomeEnabled}
         tone={playbackTone}
@@ -560,91 +558,27 @@ export function ScoreRenderer({
         onToneChange={changePlaybackTone}
         onToneRetry={() => setToneRetry(value => value + 1)}
         onTogglePlayback={() => void togglePlayback()}
-        onRestart={() => {
-          isSeekingRef.current = false
-          pendingSeekProgressRef.current = 0
-          stopPlaybackRef.current()
-          playerRef.current?.seek(0)
-          setPlaybackProgress(0)
-          clearPlaybackHighlight()
-        }}
         onSeekStart={beginSeek}
         onSeek={previewSeek}
         onSeekCommit={commitSeek}
         onBpmChange={changePlaybackBpm}
         onTransposeChange={changePlaybackTranspose}
         onMetronomeChange={changeMetronomeEnabled}
-        onResetPlayback={() => {
-          changePlaybackTone('synth')
+        onResetBpm={() => {
           setBpmOverride(null)
           const bpm = clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
           bpmRef.current = bpm
           if (!compact) { try { localStorage.removeItem(PLAYBACK_BPM_KEY) } catch { /* Use the score tempo in memory. */ } }
           playerRef.current?.setTempo(bpm)
-          changeMetronomeEnabled(false)
-          if (playbackTranspose !== DEFAULT_PLAYBACK_TRANSPOSE) changePlaybackTranspose(DEFAULT_PLAYBACK_TRANSPOSE)
         }}
-        onLayoutSettings={() => settingsDialogRef.current?.showModal()}
       />}
-      {!compact && (
-        <dialog ref={settingsDialogRef} className="renderer-settings-dialog" aria-labelledby="renderer-settings-title">
-          <div className="renderer-settings-header">
-            <h2 id="renderer-settings-title">排版设置</h2>
-            <button type="button" className="action-button" onClick={() => settingsDialogRef.current?.close()}>关闭</button>
-          </div>
-          <div className="renderer-settings-body">
-            <label className="renderer-settings-switch">
-              <span>适应阅读宽度</span>
-              <span className="switch-control">
-                <input
-                  type="checkbox"
-                  role="switch"
-                  aria-label="适应阅读宽度"
-                  checked={fitWidth}
-                  onChange={event => { setFitWidth(event.currentTarget.checked); writeRendererSetting('m3n:fit-width', event.currentTarget.checked ? 1 : 0) }}
-                />
-                <span className="switch-track" aria-hidden="true">
-                  <span className="switch-thumb" />
-                </span>
-              </span>
-            </label>
-            <div className="renderer-settings-row">
-              <span>乐谱宽度</span>
-              <input
-                type="range"
-                min={SCORE_WIDTH_MIN}
-                max={SCORE_WIDTH_MAX}
-                step={SCORE_WIDTH_STEP}
-                value={layoutWidth}
-                aria-label="乐谱宽度"
-                onChange={(event) => changeLayoutWidth(Number(event.currentTarget.value))}
-              />
-              <output>{layoutWidth}px</output>
-            </div>
-            <label className="renderer-settings-switch">
-              <span>分页</span>
-              <span className="switch-control">
-                <input
-                  type="checkbox"
-                  role="switch"
-                  aria-label="分页"
-                  checked={renderMode === 'paged'}
-                  onChange={(event) => changeRenderMode(event.currentTarget.checked ? 'paged' : 'continuous')}
-                />
-                <span className="switch-track" aria-hidden="true">
-                  <span className="switch-thumb" />
-                </span>
-              </span>
-            </label>
-          </div>
-        </dialog>
-      )}
       <div
         ref={paperRef}
         className="score-paper"
         data-render-phase={renderPhase ?? undefined}
         data-reading-fit={fitWidth}
         data-render-mode={renderMode}
+        data-measure-numbers={measureNumbers}
         data-notation="numbered"
         aria-busy={isRendering || isSourceUpdating || undefined}
         tabIndex={0}

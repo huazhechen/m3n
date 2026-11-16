@@ -1,3 +1,4 @@
+export { scorebookDefaultWidth } from 'virtual:m3n-score-catalog'
 import catalog from 'virtual:m3n-score-catalog'
 
 export type PresetScore = (typeof catalog)[number]

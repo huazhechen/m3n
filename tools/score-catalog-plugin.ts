@@ -10,24 +10,28 @@ const resolvedId = `\0${moduleId}`
 /** Only the generated index reaches the browser; score bodies remain independent lazy modules. */
 export function scoreCatalogPlugin(): Plugin {
   let scoreDirectory: string
+  let bookPath: string
   return {
     name: 'm3n-score-catalog',
-    configResolved(config) { scoreDirectory = resolve(config.root, 'src/scores') },
+    configResolved(config) { scoreDirectory = resolve(config.root, 'src/scores'); bookPath = resolve(config.root, 'scorebook/layout-record.json') },
     resolveId(id) { if (id === moduleId) return resolvedId },
     async load(id) {
       if (id !== resolvedId) return
+      this.addWatchFile(bookPath)
+      const book = JSON.parse(await readFile(bookPath, 'utf8')) as { baseWidth: number; entries: Array<{ file: string; width: number }> }
+      const widths = new Map(book.entries.map(entry => [entry.file, entry.width]))
       const files = (await readdir(scoreDirectory, { recursive: true })).filter(file => file.endsWith('.m3n')).sort()
       const scores = await Promise.all(files.map(async file => {
         const filePath = resolve(scoreDirectory, file)
         this.addWatchFile(filePath)
         const slug = file.split(/[\\/]/).at(-1)?.replace(/\.m3n$/, '') ?? file
-        return { ...scoreMetadataFromSource(slug, await readFile(filePath, 'utf8')), sourcePath: file.replaceAll('\\', '/') }
+        return { ...scoreMetadataFromSource(slug, await readFile(filePath, 'utf8')), scorebookWidth: widths.get(file.split(/[\\/]/).at(-1)!), sourcePath: file.replaceAll('\\', '/') }
       }))
       if (new Set(scores.map(score => score.slug)).size !== scores.length) throw new Error('内置曲库包含重复的乐谱 ID。')
-      return `export default ${JSON.stringify(sortScoresByTitle(scores))}`
+      return `export const scorebookDefaultWidth = ${book.baseWidth}; export default ${JSON.stringify(sortScoresByTitle(scores))}`
     },
     handleHotUpdate(context) {
-      if (!context.file.startsWith(scoreDirectory) || !context.file.endsWith('.m3n')) return
+      if (context.file !== bookPath && (!context.file.startsWith(scoreDirectory) || !context.file.endsWith('.m3n'))) return
       const index = context.server.moduleGraph.getModuleById(resolvedId)
       if (index) {
         context.server.moduleGraph.invalidateModule(index)
