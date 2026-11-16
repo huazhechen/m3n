@@ -1,6 +1,30 @@
 import { test } from "node:test";
 import { compileScore } from "../src/pipeline.js";
 import { assert, nearly, parse, recordCommands } from "./helpers.js";
+import { paintedCommandRegions } from "../src/layout/painted-ink.js";
+import { defaultTextMeasurer } from "../src/render/text.js";
+
+const overhang = { measureText(text, style) {
+    return text === 'WIDE' ? { w: 10, advance: 10, inkLeft: -80, inkRight: 90, centerOffset: 0, h: 14, baseline: 11 }
+        : defaultTextMeasurer.measureText(text, style);
+} } satisfies import('../src/render/types.js').TextMeasurer;
+
+for (const host of ['1@a 2 3 4', '1 2 3 4@a']) test(`anchored unframed overhang stays inside both margins: ${host}`, () => {
+    const result = compileScore(`@page(width=320px,left=32px,right=32px) ${host} @text(WIDE,size=14px,align=center,above=a)`, { textMeasurer: overhang });
+    const command = recordCommands(result.layout).find(command => command.kind === 'text' && command.text === 'WIDE')!;
+    const ink = paintedCommandRegions(command, overhang)[0], region = result.layout.attachments[0].regions[0];
+    assert(ink.x >= 32 && ink.x + ink.w <= 288, 'complete ink must stay inside the content area');
+    assert(region.x <= ink.x && region.x + region.w >= ink.x + ink.w, 'attachment occupancy must include overhang');
+});
+
+test('anchored overhang clears a neighboring high note beyond its logical advance', () => {
+    const result = compileScore('@page(width=320px,left=32px,right=32px) 1@a @note(2,octave=3) 3 4 @text(WIDE,size=14px,align=center,above=a,local=true)', { textMeasurer: overhang });
+    const high = result.layout.objects[1];
+    const command = recordCommands(result.layout).find(command => command.kind === 'text' && command.text === 'WIDE')!;
+    const ink = paintedCommandRegions(command, overhang)[0];
+    assert(high.box.x > 42 && high.box.x < ink.x + ink.w, 'the high neighbor is reached by ink overhang');
+    assert(ink.y + ink.h <= high.box.y - 5.6 + 1e-6, 'the annotation must clear the high neighbor');
+});
 
 test("anchored text sits outside tuplets, ties, hairpins and earlier annotations without consuming time", () => {
     const source = `@tuplet({@up(1, $p, @symbol(staccato,size=4px))@a 2 3@b},2)

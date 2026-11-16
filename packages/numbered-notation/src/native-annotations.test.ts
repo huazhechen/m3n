@@ -5,12 +5,43 @@ import { nativeArcGeometry } from './native-arc.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { nativeSvgInk } from './native-ink.js'
 import { NativeSymbols } from './native-symbols.js'
+import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 
 const options = { width: 800, paged: false }
 const layout = (music: string, extra = {}) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`), { ...options, ...extra })
 const annotations = (score: ReturnType<typeof layout>) => score.projection.glyphs.flatMap(glyph => glyph.annotationLayout ?? [])
 
 describe('native annotations', () => {
+  it.each(['chord', 'text'])('anchors the first character of a %s to its note', kind => {
+    const measurer = new DefaultTextMeasurer()
+    const score = layout(`1 {${kind}=G7}2 3 4`, { textMeasurer: measurer })
+    const item = annotations(score)[0]!, host = score.projection.glyphs[1]!
+    const first = measurer.measureText('G', { fontSize: 14, fontFamily: 'serif' })
+    expect(item.textX + first.w / 2).toBeCloseTo(host.x, 6)
+    expect(item.x).toBeGreaterThan(host.x)
+  })
+  const fallback = new DefaultTextMeasurer()
+  const overhang: TextMeasurer = { measureText(text, style) {
+    return text === 'WIDE' ? { w: 10, advance: 10, inkLeft: -80, inkRight: 90, centerOffset: 0, h: 14, baseline: 11 }
+      : fallback.measureText(text, style)
+  } }
+
+  it.each(['{text=WIDE}1 2 3 4', '1 2 3 {text=WIDE}4'])('clamps complete unframed ink to the page for %s', music => {
+    const score = layout(music, { width: 320, textMeasurer: overhang })
+    const item = annotations(score)[0]!, ink = nativeSvgInk(nativeAnnotationSvg(item, 0, new NativeSymbols(overhang)), overhang)
+    expect(ink.left).toBeGreaterThanOrEqual(32)
+    expect(ink.right).toBeLessThanOrEqual(288)
+  })
+
+  it('clears a high neighbor reached only by unframed overhang', () => {
+    const score = layout('{text=WIDE}1 2eee 3 4', { width: 320, textMeasurer: overhang })
+    const item = annotations(score)[0]!, high = score.projection.glyphs[1]!
+    const ink = nativeSvgInk(nativeAnnotationSvg(item, 0, new NativeSymbols(overhang)), overhang)
+    expect(high.x).toBeGreaterThan(32 + 10)
+    expect(high.x).toBeLessThan(ink.right)
+    expect(ink.bottom).toBeLessThanOrEqual(-high.top - 5.6 + 1e-8)
+  })
+
   it('keeps centered heading ink inside both measured frame insets', () => {
     const measurer = { measureText() { return { w: 8.5, advance: 8.5, h: 11, baseline: 9, inkLeft: -3, inkRight: 13, centerOffset: .75 }; } }
     const score = layoutNativeScore(parseM3NDocument('{4/4}\n===A{br}\nN: 1 2 3 4 |||'), { ...options, textMeasurer: measurer })

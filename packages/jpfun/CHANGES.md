@@ -1,5 +1,7 @@
 # Local changes
 
+- Anchored text clamps and clears the union of its logical advance and actual painted overhang. Per-line text occupancy uses measured bearings and the real advance for each alignment; inline text retains its logical spacing width.
+
 - Framed text preserves its inset outside the union of advance and painted ink, including negative bearings and right overhang. All three alignments and individual line positions share the measured geometry.
 
 - Pagination always keeps natural system gaps, including full and explicitly closed pages. Removed the page-justification branch and the `@pagebreak` / `@pb` justification argument; page capacity determines breaks only. Repeated, parallel, blank-page, footer, playback and second-pass attachment behaviors remain covered.

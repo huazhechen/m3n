@@ -210,8 +210,9 @@ export class TextTemporalNode extends TemporalNodeBase {
         this.lineBounds = lines.flatMap((line, index) => {
             if (!line) return [];
             const m = metrics[index];
-            const x = this.textXs[index] - (align === "right" ? m.w : align === "center" ? m.w / 2 : 0);
-            return [{ x, y: this.textBaselineY + index * lineAdvance - m.baseline, w: m.w, h: m.h }];
+            const x = this.textXs[index] - alignedAdvance(m) + (m.inkLeft ?? 0);
+            return [{ x, y: this.textBaselineY + index * lineAdvance - m.baseline,
+                w: (m.inkRight ?? m.w) - (m.inkLeft ?? 0), h: m.h }];
         });
         if (align === "center") this.box.anchor = this.box.w / 2;
         else if (align === "right") {
@@ -252,16 +253,20 @@ class TextAboveAttachment implements LayoutAttachment {
         text.prepareLayout(context);
         const box = text.box;
         const { host } = this;
-        box.x = this.ast.linestart ? context.originX : Math.max(context.originX, Math.min(
+        // Inline advance remains a logical spacing contract. Attachments must
+        // additionally clamp and clear the actual paint, including overhang.
+        const left = Math.min(0, ...text.lineBounds.map(region => region.x));
+        const right = Math.max(box.w, ...text.lineBounds.map(region => region.x + region.w));
+        box.x = this.ast.linestart ? context.originX - left : Math.max(context.originX - left, Math.min(
             host.box.x + host.box.anchor - box.anchor,
-            context.originX + context.width - box.w,
+            context.originX + context.width - right,
         ));
         const line = context.lines[host.layoutLine];
         let start = line.columnOf(host), end = start;
         // Include the complete text width so neighboring notes and brackets also stay below it.
         line.columns.forEach((column, index) => {
             if (column.some(node => node.track === host.track
-                && node.box.x <= box.x + box.w && node.box.x + node.box.w >= box.x)) {
+                && node.box.x <= box.x + right && node.box.x + node.box.w >= box.x + left)) {
                 start = Math.min(start, index); end = Math.max(end, index);
             }
         });
@@ -271,7 +276,7 @@ class TextAboveAttachment implements LayoutAttachment {
         const gap = this.ast.size * (this.ast.local ? 0.4 : 0.5);
         box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - gap - box.h;
         return {
-            regions: [{ x: box.x, y: box.y, w: box.w, h: box.h, line: host.layoutLine, track: host.track }],
+            regions: [{ x: box.x + left, y: box.y, w: right - left, h: box.h, line: host.layoutLine, track: host.track }],
             paint(painter: Painter) { text.paint(painter); },
         };
     }

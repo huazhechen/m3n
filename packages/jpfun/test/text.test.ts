@@ -4,7 +4,20 @@ import { ASTFunctionNode } from "../src/functions/ASTtypes.js";
 import { analyzeScoreSyntax } from "../src/pipeline.js";
 import { quote } from "../src/parser/parse-utils/string-utils.js";
 import { paintedCommandRegions } from "../src/layout/painted-ink.js";
+import { TextTemporalNode } from "../src/functions/text/index.js";
 import { assert, compileValid, commandsOfKind, expectCompileError, layoutOf, nearly, parse, recordCommands } from "./helpers.js";
+
+for (const align of ['left', 'center', 'right']) test(`unframed ${align} text reports actual per-line ink independently of advance`, () => {
+    const measurer = { measureText() { return { w: 20, advance: 18, h: 10, baseline: 8, inkLeft: -4, inkRight: 28, centerOffset: 3 }; } };
+    const { layout } = compileValid(`@text(A,align=${align})`, { textMeasurer: measurer });
+    const node = layout.objects[0] as TextTemporalNode;
+    const command = recordCommands(layout).find(command => command.kind === 'text')!;
+    const ink = paintedCommandRegions(command, measurer)[0];
+    assert(nearly(node.box.w, 20), 'inline advance remains independent of painted width');
+    const region = node.lineBounds[0];
+    assert(nearly(region.x + node.box.x, ink.x) && nearly(region.w, ink.w), 'line occupancy must cover actual overhang');
+    assert(nearly(region.y + node.box.y, ink.y) && nearly(region.h, ink.h), 'line occupancy must use the actual baseline');
+});
 
 for (const align of ['left', 'center', 'right']) test(`framed ${align} text preserves its inset outside measured overhang`, () => {
     const measurer = { measureText() { return { w: 20, advance: 20, h: 10, baseline: 8, inkLeft: -4, inkRight: 28, centerOffset: 2 }; } };

@@ -8,8 +8,8 @@ export type NativeRegion = { lane: string; left: number; right: number; top: num
 
 /** Final annotation primitives, shared by painting and inter-lane clearance. */
 export function nativeAnnotationSvg(annotation: NativeAnnotation, y: number, painter: NativeSymbols, meta: Record<string, string | number | undefined> = {}): string {
-  const { text, x, baseline, width, height, top, kind } = annotation, framed = kind === 'section'
-  const label = painter.text(text, x, y + baseline, nativeStyle.annotation, 'serif', { 'text-anchor': 'middle', 'font-weight': framed ? 700 : 400, ...meta, 'data-m3n-role': 'annotation' })
+  const { text, x, textX, baseline, width, height, top, kind } = annotation, framed = kind === 'section'
+  const label = painter.text(text, textX, y + baseline, nativeStyle.annotation, 'serif', { 'font-weight': framed ? 700 : 400, ...meta, 'data-m3n-role': 'annotation' })
   return framed ? `<g data-m3n-role="annotation-frame"><rect${attrs({ x: x - width / 2 + em(0.5), y: y - top + em(0.5), width: width - em(1), height: height - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>${label}</g>` : label
 }
 
@@ -27,12 +27,16 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
       if (!text || !glyph.annotations.includes(text)) continue
       const framed = kind === 'section', padding = framed ? nativeStyle.annotation * 0.25 : 0
       const metrics = measurer.measureText(text, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: framed ? 700 : 400 })
-      const w = (framed ? Math.max(metrics.w, (metrics.inkRight ?? metrics.w) - (metrics.inkLeft ?? 0)) : metrics.w) + 2 * padding, h = metrics.h + 2 * padding
-      const left = framed ? margin : Math.max(margin, Math.min(glyph.x - w / 2, width - margin - w))
+      const inkLeft = Math.min(0, metrics.inkLeft ?? 0), inkRight = Math.max(metrics.w, metrics.inkRight ?? metrics.w)
+      const w = inkRight - inkLeft + 2 * padding, h = metrics.h + 2 * padding
+      const first = measurer.measureText([...text][0]!, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: framed ? 700 : 400 })
+      // Match the text control's first-character anchor, while reserving the
+      // union of logical advance and actual paint for clamping and avoidance.
+      const left = framed ? margin : Math.max(margin, Math.min(glyph.x - first.w / 2 + inkLeft, width - margin - w))
       const right = left + w
       const obstacleTop = Math.max(glyph.musicTop ?? glyph.top, ...regions.filter(region => region.lane === glyph.lane && region.right >= left && region.left <= right).map(region => region.top))
       const top = obstacleTop + nativeStyle.annotation * (local ? 0.4 : 0.5) + h
-      const item: NativeAnnotation = { text, kind, x: left + w / 2, top, width: w, height: h, baseline: -top + padding + metrics.baseline }
+      const item: NativeAnnotation = { text, kind, x: left + w / 2, textX: left + padding - inkLeft, top, width: w, height: h, baseline: -top + padding + metrics.baseline }
       glyph.annotationLayout ??= []
       glyph.annotationLayout.push(item)
       regions.push({ lane: glyph.lane, left, right, top })
