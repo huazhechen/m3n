@@ -169,7 +169,9 @@ test('documentation examples reflow to a shared width with readable notes and no
     const svg = element.querySelector('svg')!
     const width = element.getBoundingClientRect().width
     const renderedWidth = Number(svg.getAttribute('width'))
-    return Math.abs(renderedWidth - Math.max(320, Math.round(width * 22 / (Math.min(48, Math.max(32, Math.min(window.innerWidth, window.innerHeight) / 16)) / 2))))
+    const mouse = matchMedia('(hover: hover) and (pointer: fine)').matches
+    const buttonSize = Math.min(mouse ? 40 : 48, Math.max(mouse ? 32 : 36, Math.min(window.innerWidth, window.innerHeight) / 16))
+    return Math.abs(renderedWidth - Math.max(320, Math.round(width * 22 / (buttonSize / 2))))
   })).toBeLessThanOrEqual(1)
   expect(await paper.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
   await expect(paper).toHaveAttribute('data-reading-fit', 'false')
@@ -188,7 +190,9 @@ test('documentation examples reflow to a shared width with readable notes and no
     const svg = element.querySelector('svg')!
     const width = element.getBoundingClientRect().width
     const renderedWidth = Number(svg.getAttribute('width'))
-    return Math.abs(renderedWidth - Math.max(320, Math.round(width * 22 / (Math.min(48, Math.max(32, Math.min(window.innerWidth, window.innerHeight) / 16)) / 2))))
+    const mouse = matchMedia('(hover: hover) and (pointer: fine)').matches
+    const buttonSize = Math.min(mouse ? 40 : 48, Math.max(mouse ? 32 : 36, Math.min(window.innerWidth, window.innerHeight) / 16))
+    return Math.abs(renderedWidth - Math.max(320, Math.round(width * 22 / (buttonSize / 2))))
   })).toBeLessThanOrEqual(1)
   expect(await paper.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
   expect(fonts).toHaveLength(0)

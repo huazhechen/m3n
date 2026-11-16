@@ -11,7 +11,7 @@ test('tablet settings fit their content and share the interface scale', async ({
     await page.setViewportSize({ width: width!, height: height! })
     await openScoreSettings(page)
     await expect(panel).toBeVisible()
-    const buttonSize = Math.min(48, Math.max(32, Math.min(width!, height!) / 16))
+    const buttonSize = Math.min(48, Math.max(36, Math.min(width!, height!) / 16))
     for (const name of ['还原速度', '还原宽度']) {
       const button = panel.getByRole('button', { name, exact: true })
       await expect(button.locator('span')).toHaveCount(0)
@@ -36,9 +36,9 @@ test('tablet settings fit their content and share the interface scale', async ({
 test('icons stay at eighty percent of buttons across phones, tablets and rotation', async ({ page }, info) => {
   await page.goto('/scores/huan_le_song_01')
   for (const [width, height, iconSize, buttonSize, barHeight] of [
-    [320, 900, 25.6, 32, 40],
-    [390, 844, 25.6, 32, 40],
-    [844, 390, 25.6, 32, 40],
+    [320, 900, 28.8, 36, 45],
+    [390, 844, 28.8, 36, 45],
+    [844, 390, 28.8, 36, 45],
     [744, 1133, 37.2, 46.5, 58.125],
     [1133, 744, 37.2, 46.5, 58.125],
     [1280, 900, 38.4, 48, 60],
@@ -81,12 +81,12 @@ test('icons stay at eighty percent of buttons across phones, tablets and rotatio
   expect(icon.width).toBeCloseTo(38.4, 1)
 })
 
-test('document notes use half the shared scale between sixteen and twenty-four', async ({ page }) => {
+test('touch document notes use half the shared scale between eighteen and twenty-four', async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 900 })
   await page.goto('/?doc=guide')
   const svg = page.locator('.document-example .score-paper svg').first()
   await expect(svg).toBeVisible({ timeout: 15_000 })
-  for (const [height, noteSize] of [[900, 24], [390, 16], [744, 23.25]]) {
+  for (const [height, noteSize] of [[900, 24], [390, 18], [744, 23.25]]) {
     await page.setViewportSize({ width: 844, height: height! })
     await expect(svg).toBeVisible()
     await expect.poll(() => svg.evaluate(element => {
@@ -103,6 +103,9 @@ test.describe('desktop', () => {
     for (const width of [721, 744, 1280, 2560]) {
       await page.setViewportSize({ width, height: 1920 })
       await expect(page.locator('.top-nav .nav-action-label').first()).toBeVisible()
+      await expect(page.locator('.floating-controls .playback-toggle')).toHaveCSS('height', '40px')
+      await expect(page.locator('.floating-controls .playback-toggle svg')).toHaveCSS('width', '32px')
+      await expect(page.locator('.audio-controls')).toHaveCSS('font-size', '15px')
       expect(await page.locator('.top-nav').evaluate(element => {
         const bounds = element.getBoundingClientRect()
         return [...element.querySelectorAll('nav a, nav button, nav [aria-disabled]')].every(button => {

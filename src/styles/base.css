@@ -1,5 +1,7 @@
 :root {
-  --ui-control-size: clamp(32px, calc(100vmin / 16), 48px);
+  --ui-control-min: 36px;
+  --ui-control-max: 48px;
+  --ui-control-size: clamp(var(--ui-control-min), calc(100vmin / 16), var(--ui-control-max));
   --ui-unit: calc(var(--ui-control-size) / 2);
   --ui-space: calc(var(--ui-control-size) / 8);
   --ui-text: calc(var(--ui-control-size) * .375);
@@ -18,6 +20,10 @@
   line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :root { --ui-control-min: 32px; --ui-control-max: 40px; }
 }
 
 * {
