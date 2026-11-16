@@ -103,22 +103,22 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
         }
         // Minimize squared unused space, never compress a normal measure to fit a preceding one.
         const best = new Array<number>(measures.length + 1).fill(Infinity);
-        const previous = new Array<number>(measures.length + 1).fill(0);
+        const next = new Array<number>(measures.length + 1).fill(0);
         const sparse = measures.map(measure => {
             const timed = measure.nodes.filter(node => node.T.compare(0) > 0);
             return timed.length <= 4 && timed.every(node => node.T.compare(1) >= 0
                 && rightOf(node) - leftOf(node) <= node.box.w * 1.5);
         });
-        best[0] = 0;
-        for (let end = 1; end <= measures.length; end++) {
+        best[measures.length] = 0;
+        for (let start = measures.length - 1; start >= 0; start--) {
             let widest = 0, minimumWidest = 0;
             let compact = wrap === 'compact' && equalMeasures;
-            for (let start = end - 1; start >= Math.max(0, end - 48); start--) {
-                widest = Math.max(widest, measures[start].end - measures[start].start);
+            for (let end = start + 1; end <= Math.min(measures.length, start + 48); end++) {
+                widest = Math.max(widest, measures[end - 1].end - measures[end - 1].start);
                 const minimumStart = Math.min(...measures[start].nodes.map(minimumLeft));
                 const minimumEnd = Math.max(...measures[end - 1].nodes.map(minimumRight));
-                minimumWidest = Math.max(minimumWidest, Math.max(...measures[start].nodes.map(minimumRight)) - minimumStart);
-                compact &&= sparse[start];
+                minimumWidest = Math.max(minimumWidest, Math.max(...measures[end - 1].nodes.map(minimumRight)) - Math.min(...measures[end - 1].nodes.map(minimumLeft)));
+                compact &&= sparse[end - 1];
                 const width = equalMeasures ? widest * (end - start) : measures[end - 1].end - measures[start].start;
                 // Sparse sustained notes can surrender some natural spring space.
                 // Equal-measure exercises keep their sparse-note guard. Natural measures
@@ -134,12 +134,18 @@ export function automaticBreakPositions(layout: DocumentLayoutResult, contentWid
                 // Natural spring width includes compressible clearance. Compact mode
                 // must not treat that clearance as a hard glyph/lyric boundary.
                 const compressionPenalty = minimumLayout || wrap === 'compact' && !equalMeasures ? 1 : 100;
-                const cost = best[start] + slack * slack + preference + Math.max(0, width - contentWidth) ** 2 * compressionPenalty;
-                if (cost < best[end]) { best[end] = cost; previous[end] = start; }
+                const cost = best[end] + slack * slack + preference + Math.max(0, width - contentWidth) ** 2 * compressionPenalty;
+                // Equal-energy partitions keep longer rows first, independently of
+                // subtraction round-off in cumulative measured coordinates. Compare
+                // normalized energy at the same tolerance as the native engine.
+                const tolerance = contentWidth ** 2 * 1e-12;
+                if (cost < best[start] - tolerance || Math.abs(cost - best[start]) <= tolerance && end > next[start]) {
+                    best[start] = cost; next[start] = end;
+                }
             }
         }
         const starts: number[] = [];
-        for (let end = measures.length; end > 0; end = previous[end]) starts.push(previous[end]);
+        for (let start = 0; start < measures.length; start = next[start]) starts.push(start);
         for (const start of starts.filter(index => index > 0)) {
             const members = measures[start].nodes;
             const first = members.filter(node => node.mergeKey !== ANCHOR_KEY).reduce((a, b) => a.t.compare(b.t) <= 0 ? a : b);

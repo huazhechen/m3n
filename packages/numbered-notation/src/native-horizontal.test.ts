@@ -59,11 +59,16 @@ describe('native spacing compatibility with the frozen jpFun baseline', () => {
     expect(result.systems.map(system => system.measures.length)).toEqual([4, 4, 4, 5])
   })
 
-  it('counts the repeat opening once when measuring and wrapping 青鸟', () => {
-    const result = layout(readFileSync(new URL('../../../src/scores/qing_niao_01.m3n', import.meta.url), 'utf8'))
+  it('counts the repeat opening once across a section boundary', () => {
+    // Keep this regression independent of song edits that remove local repeats.
+    const source = '{4/4}\nN: ' + Array(9).fill('(5 6) 6~ 6^ |').join(' ')
+      + '\n---\nN: ||: 0 0 (0 3) (6 7) | (1e 3) (1e 7~) (7 6) (5 6~) |'
+    const result = layout(source)
     const boundary = result.projection.measures[8]!
     expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(104.58733462914, 5)
-    expect(result.systems.slice(0, 2).map(system => system.measures.length)).toEqual([5, 5])
+    const opening = result.projection.measures[9]!
+    expect(opening.naturalEnd! - opening.naturalStart!).toBeCloseTo(191.376772428835, 5)
+    expect(result.systems.map(system => system.measures.length)).toEqual([6, 5])
   })
 
   it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {

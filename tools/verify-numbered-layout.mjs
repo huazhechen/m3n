@@ -34,6 +34,7 @@ try {
     .filter(file => file.endsWith('.m3n'))
     .map(file => ({ file, source: readFileSync(join(root, 'src/scores', file), 'utf8') }))
   scores.push(
+    { file: 'regression-subtitle-singer', source: '{title=多行副标题与演唱者}{subtitle=这是一段需要在窄版宽中自动换行并完整保留的副标题}{singer=歌手甲与歌手乙}{4/4}\nN: 1 2 3 4 |||' },
     { file: 'regression-lyrics', source: '{4/4}\nN: ' + Array(12).fill('(1 2) (3 4) 5 6 |').join(' ') + '\nL: ' + '“春天，花开！”'.repeat(12) + '\nL2: ' + 'internationalization '.repeat(12) },
     { file: 'regression-relations', source: '{6/8}\nN: ||: {lg}(1d 2d 3d) [1d3d5d:h]{hold} 1{ac(7d)}{/} | {cresc}1^.{/} :||\n---\nN: {rest=2} | 1{fermata} 2 3 |||' },
     { file: 'regression-multi-rest-settings', source: '{4/4}{120qpm}\nN: 1 2 3 4 | {segno}{key=G}{6/8}{60qpm}{rest=2} | 1 2 3 |||\nB: 1d^ 5d^ | {rest=2} | 1d 2d 3d |' },
@@ -60,7 +61,8 @@ try {
       await document.fonts.ready
       checks++
       const texts = [...document.querySelectorAll('svg text')]
-      for (const [text, size] of [[scoreDocument.title, '32'], [scoreDocument.subtitle, '16']]) {
+      const subtitle = [scoreDocument.subtitle, scoreDocument.singer ? `${scoreDocument.singer} 演唱` : ''].filter(Boolean).join('')
+      for (const [text, size] of [[scoreDocument.title, '32'], [subtitle, '16']]) {
         if (!text) continue
         // The pitch range uses centered 16px number glyphs too; those are not subtitle lines.
         const headingLines = texts.filter(node => node.getAttribute('font-size') === size && node.getAttribute('font-family') !== 'M3N Numbers' && node.getAttribute('text-anchor') === 'middle' && !node.hasAttribute('data-m3n-role'))
@@ -70,7 +72,7 @@ try {
         if (Math.abs(box.x + box.width / 2 - width / 2) > 0.5) {
           issues.push({ file, width, paged, heading: text, center: box.x + box.width / 2 })
         }
-        if (scoreDocument.subtitle && box) for (const other of heading.ownerSVGElement.querySelectorAll('text')) {
+        if (box) for (const other of heading.ownerSVGElement.querySelectorAll('text')) {
           if (other === heading) continue
           const otherBox = other.getBBox()
           if (Math.min(box.x + box.width, otherBox.x + otherBox.width) - Math.max(box.x, otherBox.x) > 0.5

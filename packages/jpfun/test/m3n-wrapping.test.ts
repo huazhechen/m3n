@@ -268,3 +268,48 @@ test('shared opening repeats restore the original double closing bar when wrappe
     assert.match(opening.ast.toString(source), /preceding=1/);
     assert.equal(narrow.lowering.duration.toNumber(), wide.lowering.duration.toNumber());
 });
+
+
+test('equal-energy wrapping keeps the longer row first across widths, scales and formatting', () => {
+    for (const scale of [0.75, 1, 1.5]) for (const width of [850, 900]) for (const separator of [' ', '\n  ']) {
+        const source = `@set(fontsize=${22 * scale}px) @page(width=${width * scale}px,left=${32 * scale}px,right=${32 * scale}px) `
+            + Array(9).fill('1 2 3 4 |').join(separator);
+        const result = compileScore(source, { autoWrap: true, noteGap: 13.2 * scale });
+        const notes = result.layout.objects.filter(node => !node.T.isZero());
+        assert.deepEqual([0, 1].map(line => notes.filter(node => node.layoutLine === line).length), [20, 16]);
+        assert.equal(result.layout.lineCount, 2);
+        const plain = compileScore(source);
+        assert.deepEqual(notes.map(node => node.ast.sourceSpan), plain.layout.objects.filter(node => !node.T.isZero()).map(node => node.ast.sourceSpan));
+        assert.deepEqual(playedNotes(compilePlayback(result.lowering)), playedNotes(compilePlayback(plain.lowering)));
+    }
+});
+
+test('equal-energy wrapping is invariant under translation of measured coordinates', () => {
+    const source = '@set(fontsize=22px) @page(width=100000px) ' + Array(9).fill('1 2 3 4 |').join(' ');
+    for (const offset of [-10000, 0, 10000]) {
+        const layouts = [13.2, 8.8].map(noteGap => {
+            const layout = compileScore(source, { noteGap }).layout;
+            for (const node of layout.objects) {
+                const bounds = layout.horizontalBounds?.get(node);
+                if (bounds) layout.horizontalBounds!.set(node, { ...bounds, x: bounds.x + offset });
+                else node.box.x += offset;
+            }
+            return layout;
+        });
+        const positions = automaticBreakPositions(layouts[0], 616, new Set(), false, 'normal', layouts[1]);
+        assert.equal(positions.length, 1);
+        assert.equal(positions[0], source.indexOf('1 2 3 4 |', source.indexOf('1 2 3 4 |') + 5 * '1 2 3 4 | '.length));
+    }
+});
+
+
+test('unequal-energy wrapping still chooses the better-balanced partition', () => {
+    // Paired spacing gives the first note less leading clearance. The first
+    // measure is genuinely shorter, so four then five has lower energy.
+    const source = '@set(fontsize=22px) @page(width=800px,left=32px,right=32px) '
+        + Array(9).fill('1 2 3 4 |').join(' ');
+    const result = compileScore(source, { autoWrap: true, noteGap: 13.2, minimumNoteGap: 8.8 });
+    const notes = result.layout.objects.filter(node => !node.T.isZero());
+    assert.deepEqual([0, 1].map(line => notes.filter(node => node.layoutLine === line).length), [16, 20]);
+    assert.equal(result.layout.lineCount, 2);
+});
