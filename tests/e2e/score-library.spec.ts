@@ -1,5 +1,27 @@
 import { expect, test } from '@playwright/test'
 
+test.describe('touch library columns', () => {
+  test.use({ hasTouch: true })
+  test('cards fill as many columns as the available width allows', async ({ page }) => {
+    await page.goto('/scores')
+    const list = page.locator('.score-list')
+    const cards = list.locator('.score-card')
+    await expect(cards.first()).toBeVisible()
+    for (const [width, height, columns] of [[390, 844, 1], [744, 1133, 2], [1133, 744, 3], [768, 1024, 2], [1024, 768, 3]]) {
+      await page.setViewportSize({ width: width!, height: height! })
+      expect(await list.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(columns)
+      await expect(cards.first().locator('.score-card-footer')).toBeHidden()
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      if (columns! > 1) {
+        const first = (await cards.nth(0).boundingBox())!
+        const second = (await cards.nth(1).boundingBox())!
+        expect(second.x).toBeGreaterThan(first.x)
+        expect(second.y).toBeCloseTo(first.y, 0)
+      }
+    }
+  })
+})
+
 const sources = [
   '{title=筛选样本甲}{composer=测试作者}{key=G}{2/4}\nN: 1 2 |||\nB: 1d^ |\nL: 春风',
   '{title=筛选样本乙}{composer=另一作者}{key=Gb}{2/4}\nN: 1 2 |||',

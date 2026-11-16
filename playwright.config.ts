@@ -6,6 +6,7 @@ const systemChromium = ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chr
 
 const previewPort = Number(process.env.M3N_E2E_PORT ?? 4173)
 const previewOutput = `.tmp/playwright-dist-${previewPort}`
+const browserName = process.env.M3N_E2E_BROWSER === 'webkit' ? 'webkit' : 'chromium'
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -14,9 +15,9 @@ export default defineConfig({
   timeout: 45_000,
   use: {
     baseURL: `http://127.0.0.1:${previewPort}`,
-    browserName: 'chromium',
-    channel: systemChromium ? undefined : 'msedge',
-    launchOptions: systemChromium ? { executablePath: systemChromium } : undefined,
+    browserName,
+    channel: browserName === 'chromium' && !systemChromium ? 'msedge' : undefined,
+    launchOptions: browserName === 'chromium' && systemChromium ? { executablePath: systemChromium } : undefined,
     headless: true,
   },
   webServer: {

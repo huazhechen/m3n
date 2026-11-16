@@ -77,12 +77,12 @@ export function ScoreControls(props: ScoreControlsProps) {
       <div className="control-slider-row">
         <span className="control-row-label">速度<output>{props.bpm} BPM</output></span>
         <input type="range" min={PLAYBACK_BPM_MIN} max={PLAYBACK_BPM_MAX} step="1" value={props.bpm} aria-label="播放速度" onChange={event => props.onBpmChange(Number(event.currentTarget.value))} />
-        <button type="button" className="control-button" aria-label="还原速度" title="还原乐谱原速" onClick={props.onResetBpm}>{resetIcon}<span>还原</span></button>
+        <button type="button" className="control-button" aria-label="还原速度" title="还原乐谱原速" onClick={props.onResetBpm}>{resetIcon}</button>
       </div>
       <div className="control-slider-row">
         <span className="control-row-label">宽度<output>{props.width}px</output></span>
         <input type="range" min={SCORE_WIDTH_MIN} max={SCORE_WIDTH_MAX} step="1" value={props.width} aria-label="乐谱宽度" onChange={event => props.onWidthChange(Number(event.currentTarget.value))} />
-        <button type="button" className="control-button" aria-label="还原宽度" title="还原谱集经典宽度" onClick={props.onResetWidth}>{resetIcon}<span>还原</span></button>
+        <button type="button" className="control-button" aria-label="还原宽度" title="还原谱集经典宽度" onClick={props.onResetWidth}>{resetIcon}</button>
       </div>
 
         </div>

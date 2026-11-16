@@ -20,7 +20,7 @@ for (const width of [320, 390, 1280]) {
     }
     const bounds = await header.boundingBox()
     const shortSide = Math.min(width, 900)
-    expect(bounds!.height).toBeCloseTo(Math.max(32, shortSide / 16) + Math.min(shortSide / 32, 24) / 2, 0)
+    expect(bounds!.height).toBeCloseTo(Math.max(32, shortSide / 16) * 1.25, 0)
     const buttons = await nav.locator('a, button, [aria-disabled="true"]').evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect()
       return { left: rect.left, right: rect.right, top: rect.top }

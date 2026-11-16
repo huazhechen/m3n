@@ -121,7 +121,7 @@ h3 {
 
 .hero h1 {
   margin-top: 14px;
-  font-size: clamp(2.6rem, 5vw, 5.6rem);
+  font-size: 3.5rem;
   max-width: 900px;
 }
 
@@ -234,7 +234,7 @@ h3 {
   border: 1px solid #b8cfca;
   border-radius: 10px;
   color: #285b5c;
-  font-size: 12px;
+  font-size: .875rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -612,7 +612,7 @@ textarea::selection {
   padding: 0 8px;
   color: #9a3a25;
   background: #fffef9;
-  font-size: 12px;
+  font-size: .875rem;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
@@ -934,7 +934,7 @@ textarea::selection {
   align-items: center;
   gap: 6px;
   color: #285b5c;
-  font-size: 13px;
+  font-size: 1rem;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -1138,7 +1138,7 @@ a.action-button {
 .renderer-settings-row output {
   min-width: 52px;
   color: #285b5c;
-  font-size: 13px;
+  font-size: 1rem;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -1438,7 +1438,7 @@ a.action-button {
 
 @media (max-width: 720px), (pointer: coarse) and (hover: none) {
   main {
-    width: min(100vw - 18px, 1440px);
+    width: min(100vw - 18px, var(--ui-content-width));
     padding-top: var(--ui-space);
   }
 
@@ -1495,7 +1495,7 @@ a.action-button {
 }
 
 /* Editor workspaces keep the input mounted when switching mobile panes. */
-.source-editor .cm-editor { width: 100%; min-width: 0; height: 100%; font-size: 15px; line-height: 1.7; background: #fbfcf8; }
+.source-editor .cm-editor { width: 100%; min-width: 0; height: 100%; font-size: 1rem; line-height: 1.7; background: #fbfcf8; }
 .source-editor .cm-scroller { overflow: auto; font-family: ui-monospace, monospace; }
 .source-editor .cm-content { min-height: 320px; padding: 12px 0; }
 .source-editor .cm-gutters { background: #f0f2eb; color: #6b756e; border-right: 1px solid #dce1d7; }
@@ -1516,10 +1516,9 @@ a.action-button {
   .editor-header { display: flex; flex-wrap: wrap; }
   .editor-header-right { flex-wrap: wrap; }
 }
-.score-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.score-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, max(260px, calc(var(--ui-text) * 16))), 1fr)); }
 .score-list .score-card { max-width: none; }
 @media (max-width: 720px), (pointer: coarse) and (hover: none) {
-  .score-list { grid-template-columns: 1fr; }
   .score-list .score-card { height: auto; min-height: 80px; align-items: center; }
   .score-list .score-card > div:first-child { width: 100%; }
   .score-list .score-card-footer { display: none; }

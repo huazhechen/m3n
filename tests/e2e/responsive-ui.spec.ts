@@ -3,17 +3,47 @@ import { openScoreSettings } from './score-settings'
 
 test.use({ hasTouch: true })
 
+test('tablet settings fit their content and share the interface scale', async ({ page }, info) => {
+  await page.goto('/scores/huan_le_song_01')
+  const panel = page.getByRole('dialog', { name: '乐谱设置', exact: true })
+  let portraitHeight = 0
+  for (const [width, height] of [[744, 1133], [744, 1400], [1133, 744], [768, 1024], [1024, 768], [844, 390]]) {
+    await page.setViewportSize({ width: width!, height: height! })
+    await openScoreSettings(page)
+    await expect(panel).toBeVisible()
+    const buttonSize = Math.max(32, Math.min(width!, height!) / 16)
+    for (const name of ['还原速度', '还原宽度']) {
+      const button = panel.getByRole('button', { name, exact: true })
+      await expect(button.locator('span')).toHaveCount(0)
+      const bounds = (await button.boundingBox())!
+      expect(bounds.width).toBeCloseTo(buttonSize, 1)
+      expect(bounds.height).toBeCloseTo(buttonSize, 1)
+      expect((await button.locator('svg').boundingBox())!.width).toBeCloseTo(buttonSize * .8, 1)
+    }
+    const bounds = (await panel.boundingBox())!
+    expect(bounds.height).toBeLessThan(buttonSize * 5 + 100)
+    expect(bounds.y).toBeGreaterThanOrEqual(0)
+    expect(bounds.y + bounds.height).toBeLessThan((await page.locator('.floating-controls').boundingBox())!.y)
+    const optionHeights = await panel.locator('.control-options button').evaluateAll(buttons => buttons.map(button => button.getBoundingClientRect().height))
+    expect(optionHeights.every(value => value >= buttonSize && value < buttonSize * 2 + 4)).toBe(true)
+    if (width === 744 && height === 1133) portraitHeight = bounds.height
+    if (width === 744 && height === 1400) expect(bounds.height).toBeCloseTo(portraitHeight, 0)
+    if (width === 744 || width === 1133) await page.screenshot({ path: info.outputPath(`tablet-settings-${width}-${height}.png`) })
+    await page.keyboard.press('Escape')
+  }
+})
+
 test('icons stay at eighty percent of buttons across phones, tablets and rotation', async ({ page }, info) => {
   await page.goto('/scores/huan_le_song_01')
   for (const [width, height, iconSize, buttonSize, barHeight] of [
-    [320, 900, 25.6, 32, 37],
-    [390, 844, 25.6, 32, 38.09375],
-    [844, 390, 25.6, 32, 38.09375],
+    [320, 900, 25.6, 32, 40],
+    [390, 844, 25.6, 32, 40],
+    [844, 390, 25.6, 32, 40],
     [744, 1133, 37.2, 46.5, 58.125],
     [1133, 744, 37.2, 46.5, 58.125],
-    [1280, 900, 45, 56.25, 68.25],
-    [2560, 1920, 96, 120, 132],
-    [3840, 2880, 144, 180, 192],
+    [1280, 900, 45, 56.25, 70.3125],
+    [2560, 1920, 96, 120, 150],
+    [3840, 2880, 144, 180, 225],
   ]) {
     await page.setViewportSize({ width: width!, height: height! })
     for (const selector of ['.top-nav svg', '.brand-mark img', '.floating-controls .control-button svg']) {
@@ -27,6 +57,8 @@ test('icons stay at eighty percent of buttons across phones, tablets and rotatio
     const panel = page.getByRole('dialog', { name: '乐谱设置', exact: true })
     const bounds = (await panel.boundingBox())!
     const bar = (await page.locator('.floating-controls').boundingBox())!
+    const fontSize = await panel.locator('.control-row-label').first().evaluate(element => parseFloat(getComputedStyle(element).fontSize))
+    expect(fontSize).toBeCloseTo(buttonSize! * .375, 1)
     expect(bounds.x).toBeGreaterThanOrEqual(0)
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(width!)
     expect(bounds.y).toBeGreaterThanOrEqual(0)
@@ -49,12 +81,12 @@ test('icons stay at eighty percent of buttons across phones, tablets and rotatio
   expect(icon.width).toBeCloseTo(144, 1)
 })
 
-test('document notes retain their own short-side scale during height-only window changes', async ({ page }) => {
+test('document notes use half the shared scale with a minimum of sixteen and no maximum', async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 900 })
   await page.goto('/?doc=guide')
   const svg = page.locator('.document-example .score-paper svg').first()
   await expect(svg).toBeVisible({ timeout: 15_000 })
-  for (const [height, noteSize] of [[900, 24], [390, 12.1875], [744, 23.25]]) {
+  for (const [height, noteSize] of [[900, 26.375], [390, 16], [744, 23.25]]) {
     await page.setViewportSize({ width: 844, height: height! })
     await expect(svg).toBeVisible()
     await expect.poll(() => svg.evaluate(element => {
@@ -77,7 +109,7 @@ test.describe('desktop', () => {
           const rect = button.getBoundingClientRect()
           return rect.left >= bounds.left && rect.right <= bounds.right
         })
-      })).toBe(true)
+      }), `navigation at ${width}px`).toBe(true)
     }
   })
 })

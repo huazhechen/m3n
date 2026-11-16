@@ -139,6 +139,6 @@ test.describe('touch tablets', () => {
     const card = page.locator('.score-list .score-card').first()
     await expect(card).toBeVisible()
     await expect(card.locator('.score-card-footer')).toBeHidden()
-    expect((await card.boundingBox())!.width).toBeCloseTo(744 - 18, 0)
+    expect(await page.locator('.score-list').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(2)
   })
 })

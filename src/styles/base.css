@@ -1,15 +1,19 @@
 :root {
-  --ui-unit: min(3.125vmin, 24px);
-  --ui-space: calc(var(--ui-unit) / 4);
-  --ui-text: max(12px, calc(var(--ui-unit) * .75));
   --ui-control-size: max(32px, calc(100vmin / 16));
+  --ui-unit: calc(var(--ui-control-size) / 2);
+  --ui-space: calc(var(--ui-control-size) / 8);
+  --ui-text: calc(var(--ui-control-size) * .375);
   --ui-icon-size: calc(var(--ui-control-size) * .8);
+  --ui-content-width: calc(var(--ui-text) * 90);
   --ui-transport-width: max(680px, calc(var(--ui-control-size) * 6));
   --ui-toolbar-height: calc(var(--ui-control-size) + var(--ui-space) * 2);
   --ui-controls-reserve: calc(var(--ui-control-size) + var(--ui-space) * 6 + 2px);
   color: #232629;
   background: #f5f6f0;
   font-family: system-ui, sans-serif;
+  font-size: var(--ui-text);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   font-synthesis: none;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
@@ -30,6 +34,8 @@ body {
 }
 
 button,
+input,
+select,
 textarea {
   font: inherit;
 }
@@ -50,7 +56,7 @@ textarea {
 }
 
 main {
-  width: min(1440px, calc(100vw - 32px));
+  width: min(var(--ui-content-width), calc(100vw - 32px));
   margin: 0 auto;
   padding: 18px 0 48px;
 }
