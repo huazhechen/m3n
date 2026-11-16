@@ -83,6 +83,18 @@ export function orderedMeasureVisits<T extends PlaybackMeasure & { sectionName?:
 /** Returns the playback passes in which each written measure occurs. */
 export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: readonly T[]) {
   if(measures.some(measure=>measure.orderPasses))return new Map<T,Set<number>>(measures.map(measure=>[measure,new Set(measure.orderPasses ?? [1])]))
+  if (measures.some(measure => navigationOf(measure).some(value => value === 'ds' || value === 'dc'))) {
+    const passes = new Map<T, Set<number>>(measures.map(measure => [measure, new Set()]))
+    for (const index of playbackMeasureIndexes(measures)) {
+      const measure = measures[index]!
+      if (measure.ending) passes.set(measure, parsePassRange(measure.ending))
+      else {
+        const visits = passes.get(measure)!
+        visits.add(visits.size + 1)
+      }
+    }
+    return passes
+  }
   const endingRepeatIndex = measures.findIndex((measure) => measure.ending && measure.right === 'rptend')
   const commonRepeatAfterEndings = endingRepeatIndex >= 0 && measures.slice(endingRepeatIndex + 1)
     .some((measure) => !measure.ending && measure.right === 'rptend')
@@ -119,7 +131,6 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
   if (measures.some((measure) => measure.ending)) {
     const passesByMeasure = new Map<T, Set<number>>(measures.map((measure) => [measure, new Set([1])]))
     let repeatStart = 0
-    const endingPassCounts = new Map<number, number>()
 
     for (const [index, measure] of measures.entries()) {
       if (measure.left === 'rptstart') repeatStart = index
@@ -137,7 +148,6 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
         const navigation = navigationOf(measures[endingIndex])
         if (navigation.some((value) => value === 'ds' || value === 'dc')) break
       }
-      if (measures[groupStart]?.ending) endingPassCounts.set(groupStart, passCount)
       for (let repeatedIndex = repeatStart; repeatedIndex <= index; repeatedIndex += 1) {
         const repeated = measures[repeatedIndex]
         if (repeated) passesByMeasure.set(repeated, new Set(Array.from({ length: passCount }, (_, pass) => pass + 1)))
@@ -148,51 +158,6 @@ export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: reado
       if (measure.ending) passesByMeasure.set(measure, parsePassRange(measure.ending))
     }
 
-    // D.S./D.C. jumps replay the section measures before the jump once per
-    // ending house that was not entered during the initial passes. Count those
-    // return passes so lyric requirements match the actual playback.
-    const segnoIndex = measures.findIndex((measure) => navigationOf(measure).includes('segno'))
-    const jumpIndex = measures.findIndex((measure) => {
-      const navigation = navigationOf(measure)
-      return navigation.includes('ds') || navigation.includes('dc')
-    })
-    if (jumpIndex >= 0) {
-      const jumpNavigation = navigationOf(measures[jumpIndex])
-      const destination = jumpNavigation.includes('ds') ? segnoIndex : 0
-      if (destination >= 0) {
-        const fineIndex = measures.findIndex((measure) => navigationOf(measure).includes('fine'))
-        const returnEnd = fineIndex >= 0 ? fineIndex : measures.length
-        const groupStart = [...endingPassCounts.keys()]
-          .filter((start) => start <= jumpIndex)
-          .sort((left, right) => right - left)[0]
-        const passCount = groupStart === undefined ? undefined : endingPassCounts.get(groupStart)
-        const remainingHouses = new Set<string>()
-        if (passCount !== undefined) {
-          for (let endingIndex = jumpIndex + 1; measures[endingIndex]?.ending; endingIndex += 1) {
-            const ending = measures[endingIndex]?.ending
-            if (ending && !remainingHouses.has(ending)
-              && [...parsePassRange(ending)].some((pass) => pass > passCount)) {
-              remainingHouses.add(ending)
-            }
-          }
-        }
-        const sectionIndexes: number[] = []
-        for (let index = destination; index < returnEnd; index += 1) {
-          if (measures[index] && !measures[index]?.ending) sectionIndexes.push(index)
-        }
-        const maxPass = Math.max(0, ...sectionIndexes.flatMap((index) => [...(passesByMeasure.get(measures[index]!) ?? [])]))
-        // Alternate endings whose highest written pass is already included in
-        // the repeat group do not create an additional lyric pass on D.S.; the
-        // return is that final written pass (for example a shared V2,V4 ending).
-        const returnPasses = remainingHouses.size > 0
-          ? remainingHouses.size
-          : measures[jumpIndex]?.ending ? 0 : 1
-        for (let offset = 1; offset <= returnPasses; offset += 1) {
-          const pass = maxPass + offset
-          for (const index of sectionIndexes) passesByMeasure.get(measures[index]!)?.add(pass)
-        }
-      }
-    }
     return passesByMeasure
   }
 
@@ -327,12 +292,13 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
   const played = initial.lastIndexOf(jump.id)
   if (played < 0) return initial
 
-  const sections = nodes
-    .slice(destination, fine >= 0 ? fine + 1 : nodes.length)
+  const jumpPass = jump.n === undefined ? undefined : Math.min(...parsePassRange(jump.n))
+  const firstEnding = jumpPass === undefined ? -1 : nodes.findIndex((node, index) => index >= destination && node.kind === 'ending')
+  const sectionEnd = Math.min(fine >= 0 ? fine + 1 : nodes.length, firstEnding >= 0 ? firstEnding : nodes.length)
+  const sections = nodes.slice(destination, sectionEnd)
     .filter((node) => node.kind === 'section')
     .map((node) => node.id)
   const endingNodes = nodes.filter((node) => node.kind === 'ending')
-  const jumpPass = jump.n === undefined ? undefined : Math.min(...parsePassRange(jump.n))
   if (jumpPass === undefined || !Number.isFinite(jumpPass)) {
     return [...initial.slice(0, played + 1), ...sections]
   }
@@ -348,7 +314,16 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
     if (house === undefined) break
     returnPart.push(house.id)
     if (house.navigation?.includes('fine')) break
-    if (!house.navigation?.some((value) => value === 'ds' || value === 'dc')) break
+    if (!house.navigation?.some((value) => value === 'ds' || value === 'dc')) {
+      // After the final return ending, continue into the ordinary tail once.
+      for (let index = nodes.indexOf(house) + 1; index < nodes.length; index += 1) {
+        const tail = nodes[index]!
+        if (tail.kind !== 'section') break
+        returnPart.push(tail.id)
+        if (tail.navigation?.includes('fine')) break
+      }
+      break
+    }
     nextPass += 1
   }
   return [...initial.slice(0, played + 1), ...returnPart]

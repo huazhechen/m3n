@@ -2,7 +2,7 @@ import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure } from './score-document.js'
 import { m3nPitch } from '../m3n-direct.js'
 import { parseM3NNote } from './m3n-primitives.js'
-import { measurePlaybackPasses, hasVisitEndings, orderedMeasureIndexes } from './repeats.js'
+import { measurePlaybackPasses, hasVisitEndings, orderedMeasureIndexes, playbackMeasureIndexes } from './repeats.js'
 
 const EPSILON = 1e-9
 
@@ -82,6 +82,26 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
       complementary.add(index + 1)
       index += 1
     }
+  }
+  // A navigation return may join a short ending to a pickup elsewhere in the
+  // source. Validate the actual neighbors at every occurrence of that bar.
+  if (measures.some(measure => [...(measure.navigation ?? []), ...measure.events.flatMap(event => event.navigation)]
+    .some(value => value === 'ds' || value === 'dc'))) {
+    const sequence = playbackMeasureIndexes(measures)
+    const occurrences = new Map<number, boolean[]>()
+    for (const [position, index] of sequence.entries()) {
+      const value = values[index]!
+      if (value.actual >= value.expected) continue
+      const matches = [sequence[position - 1], sequence[position + 1]].some(neighbor => {
+        const other = neighbor === undefined ? undefined : values[neighbor]
+        return other && other.actual < other.expected && equal(value.expected, other.expected)
+          && equal(value.actual + other.actual, value.expected)
+      })
+      const visits = occurrences.get(index) ?? []
+      visits.push(matches)
+      occurrences.set(index, visits)
+    }
+    for (const [index, matches] of occurrences) if (matches.every(Boolean)) complementary.add(index)
   }
   let repeatStartIndex: number | undefined
   for (const value of values) {

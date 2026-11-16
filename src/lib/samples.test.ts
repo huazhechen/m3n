@@ -15,7 +15,7 @@ import webReferences from './fixtures/kuaiyuepu-reference-melodies.json'
 describe('bundled score corpus', () => {
   it.each([
     ['feng', '枫', maple, 42, 4],
-    ['yan_hua_yi_leng', '烟花易冷', smoke, 40, 4],
+    ['yan_hua_yi_leng', '烟花易冷', smoke, 41, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 43, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
     ['yong_yuan_tong_zai', '永远同在', always, 62, 3],
@@ -29,9 +29,9 @@ describe('bundled score corpus', () => {
     expect(measures).toHaveLength(count)
     const expected = Array<number>(count).fill(beats)
     if (id === 'yan_hua_yi_leng') {
-      for (const index of [0, 33, 39]) expected[index] = 2
-      for (const index of [16, 34]) expected[index] = 3
-      for (const index of [17, 35]) expected[index] = 1
+      for (const index of [0, 33, 40]) expected[index] = 2
+      for (const index of [16, 34, 35]) expected[index] = 3
+      for (const index of [17, 36]) expected[index] = 1
     }
     if (id === 'dan_huang_guan_bo_er_ka') {
       for (const index of [16,25,42]) expected[index] = 1.5
@@ -48,7 +48,7 @@ describe('bundled score corpus', () => {
 
   it('retains reference repeat scopes, modulation and fast subdivisions', () => {
     const bars = (source: string) => parseM3NDocument(source).parts.get('score')!.melody.filter(measure => measure.events.length)
-    expect(parseM3NDocument(smoke).order).toEqual(['A','B','A','B','B','C'])
+    expect(parseM3NDocument(smoke).order).toBeUndefined()
     const polkaBars = bars(polka)
     expect(polkaBars.every(bar=>!bar.ending && bar.left!=='rptstart' && bar.right!=='rptend')).toBe(true)
     expect(parseM3NDocument(polka).order).toEqual(['A','A','B','B','A','C','C','A','A'])
@@ -87,8 +87,8 @@ describe('bundled score corpus', () => {
         // User unified the first verse's full-beat rest with the sustained later verses.
         .map(event=>event.referenceId==='note35' ? {...event,tie:true} : event.referenceId==='note36' ? {...event,pitch:72} : event)
       : reference.id==='yan_hua_yi_leng'
-      // Original B1 (through event 205), B2's last bar (299–301), then C.
-      ? [...original.slice(0,206), ...original.slice(299)]
+      // Keep separate second/third endings for D.S. and the continuation into C.
+      ? [...original.slice(0,206), ...original.slice(299,302), ...original.slice(299)]
       : original
     const expected=events.map(({pitch,beats,tie})=>({pitch,beats,tie}))
     expect(referenceEvents(sources[reference.id]!,false)).toEqual(expected)
@@ -126,7 +126,7 @@ describe('bundled score corpus', () => {
     const expected=reference.id==='feng'
       ? mapleWrittenLyrics(reference.lyricText!)
       : reference.id==='yan_hua_yi_leng'
-        ? reference.lyricText!.replace(/(雨纷纷旧故里[\s\S]*?是我们)([\s\S]*?)\1/, '$1$2们')
+        ? reference.lyricText!.replace(/(雨纷纷旧故里[\s\S]*?是我们)([\s\S]*?)\1/, '$1$2们们')
         : reference.lyricText
     expect(lyrics.replace(/[^\u3400-\u9fff]/g,'')).toBe(expected)
   })

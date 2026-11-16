@@ -1,0 +1,136 @@
+{
+  "baseline": "A/B/A/B/B/C before replacing the itinerary with local repeat and D.S.",
+  "eventCount": 530,
+  "eventsSha256": "cb66bd498bc08031a74c1cdbb5e70feb8e87ab0502a36cc121b25cae315b3159",
+  "lyricCount": 416,
+  "lyricsSha256": "c52cfcd55c7aff26c2d626c2bf0f86607277c14a0e3d82bc08637e118d73b859",
+  "beats": 336,
+  "segments": [
+    {
+      "name": "A",
+      "visit": 1,
+      "barBeats": [
+        2,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3
+      ]
+    },
+    {
+      "name": "B",
+      "visit": 1,
+      "barBeats": [
+        1,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        2
+      ]
+    },
+    {
+      "name": "A",
+      "visit": 2,
+      "barBeats": [
+        2,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3
+      ]
+    },
+    {
+      "name": "B",
+      "visit": 2,
+      "barBeats": [
+        1,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3
+      ]
+    },
+    {
+      "name": "B",
+      "visit": 3,
+      "barBeats": [
+        1,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3
+      ]
+    },
+    {
+      "name": "C",
+      "visit": 1,
+      "barBeats": [
+        1,
+        4,
+        4,
+        4,
+        2
+      ]
+    }
+  ]
+}

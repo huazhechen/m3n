@@ -13,6 +13,27 @@ describe('repeat planning', () => {
     expect([...plan.passesByNode.get('n1') ?? []]).toEqual([1, 2])
   })
 
+  it('plays the final return ending before the ordinary tail, and counts the tail once', () => {
+    const measures = [
+      { events: [], left: 'rptstart' },
+      { events: [], navigation: ['segno' as const] },
+      { events: [], ending: '1', right: 'rptend' },
+      { events: [], ending: '2', navigation: ['ds' as const] },
+      { events: [], ending: '3' },
+      { events: [] },
+    ]
+    const sequence = buildPlaybackSequence(measures.map((measure, index) => ({
+      id: String(index), kind: measure.ending ? 'ending' : 'section', n: measure.ending,
+      repeatStart: measure.left === 'rptstart', repeatCount: measure.right === 'rptend' ? 2 : undefined,
+      navigation: measure.navigation,
+    })))
+    expect(sequence).toEqual(['0', '1', '2', '0', '1', '3', '1', '4', '5'])
+    const passes = measurePlaybackPasses(measures)
+    expect(passes.get(measures[0]!)).toEqual(new Set([1, 2]))
+    expect(passes.get(measures[1]!)).toEqual(new Set([1, 2, 3]))
+    expect(passes.get(measures[5]!)).toEqual(new Set([1]))
+  })
+
   it('parses individual and ranged playback passes', () => {
     expect(parsePassRange('1,3~5,7')).toEqual(new Set([1, 3, 4, 5, 7]))
   })

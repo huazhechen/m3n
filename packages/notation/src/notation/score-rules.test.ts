@@ -30,6 +30,14 @@ describe('score document rules', () => {
       messageArgs: expect.objectContaining({ measure: 2, actual: 3 }),
     }))
   })
+  it('validates complementary fragments on D.S. return and continuation into a tail', () => {
+    const source = '{4/4}\nN: ||: 1 2 | 1 2 3 | {segno}1 | 1 2 3 4 |\n---V1\nN: 1 2 :||\n---V2\nN: 1 2 3 {ds} ||\n---V3\nN: 1 2 3 |\n---\nN: 1 | 1 2 3 4 | 1 2 |||'
+    expect(validateScoreDocument(parseM3NDocument(source), { source })).toEqual([])
+    const invalid = source.replace('1 2 3 {ds}', '1 2 {ds}')
+    expect(validateScoreDocument(parseM3NDocument(invalid), { source: invalid }))
+      .toContainEqual(expect.objectContaining({ code: 'M3N_METER_INCOMPLETE_MIDDLE' }))
+  })
+
   it('reports mismatched bass measure counts with a source range', () => {
     const source = '{2/4}\nN: 1 2 | 3 4 |||\nB: 1d 2d |||'
     expect(validateScoreDocument(parseM3NDocument(source))).toContainEqual(expect.objectContaining({
