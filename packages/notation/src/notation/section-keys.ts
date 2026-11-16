@@ -2,9 +2,13 @@ import type { ScoreDocument } from './score-document.js'
 import { parseKey } from './m3n-primitives.js'
 
 /** An optional target key belongs to this visit, never to the section's name. */
-export function parseSectionOrderEntry(value: string) {
+export function parseSectionOrderEntry(value: string): { name: string; key?: string; octave?: number } {
   const at = value.lastIndexOf('@')
-  return at < 0 ? { name: value.trim() } : { name: value.slice(0, at).trim(), key: value.slice(at + 1).trim() }
+  if (at < 0) return { name: value.trim() }
+  const target = value.slice(at + 1).trim()
+  const anchored = /^([A-G][#b]?[a-z]*)(-?\d+)$/.exec(target)
+  return { name: value.slice(0, at).trim(), key: anchored?.[1] ?? target,
+    ...(anchored ? { octave: Number(anchored[2]) } : {}) }
 }
 
 export function sectionEntryKey(document: ScoreDocument, name: string) {

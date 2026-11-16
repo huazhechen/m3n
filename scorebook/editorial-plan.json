@@ -1,7 +1,7 @@
 {
   "title": "循序渐进乐谱集",
   "edition": "第五十九版",
-  "sourceCount": 88,
+  "sourceCount": 89,
   "baseWidth": 780,
   "widthCandidates": [
     590
@@ -1381,6 +1381,26 @@
       "breakBefore": false,
       "pageBreaks": [],
       "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
+      "systemGap": 11,
+      "uniformSystemHeight": false,
+      "widthLocked": false,
+      "systemGapCandidates": [
+        11
+      ],
+      "maximumWidth": 760
+    },
+    {
+      "id": "jiu_er",
+      "file": "jiu_er_01.m3n",
+      "title": "九儿",
+      "section": "melodies",
+      "group": "三连音与进阶抒情",
+      "reason": "降B、C、F调的共用乐句及持续音",
+      "width": 760,
+      "sharePage": false,
+      "breakBefore": false,
+      "pageBreaks": [],
+      "reviewNote": "快悦谱降B转C转F版本；A/B换调再现共用，B末小节按访问遍次选房子。",
       "systemGap": 11,
       "uniformSystemHeight": false,
       "widthLocked": false,

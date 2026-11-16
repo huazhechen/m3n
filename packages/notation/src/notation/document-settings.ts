@@ -13,6 +13,7 @@ export function documentSettings(tree: M3NSyntaxTree) {
   let equalMeasures = false
   let order: string[] | undefined
   let orderKeys: Array<string | undefined> | undefined
+  let orderKeyOctaves: Array<number | undefined> | undefined
   for (const directive of tree.directives) {
     if (!headerLines.has(directive.line) || directive.closing) continue
     const name = metadataNames.find(name => name === directive.name)
@@ -20,6 +21,7 @@ export function documentSettings(tree: M3NSyntaxTree) {
     if (directive.name === 'order') {
       const entries = (directive.value ?? '').split(',').map(parseSectionOrderEntry)
       order = entries.map(entry => entry.name)
+      orderKeyOctaves = entries.some(entry => entry.octave !== undefined) ? entries.map(entry => entry.octave) : undefined
       orderKeys = entries.some(entry => entry.key !== undefined) ? entries.map(entry => entry.key) : undefined
     }
     if (directive.name === 'equal-measures') equalMeasures = directive.value === 'true'
@@ -47,5 +49,5 @@ export function documentSettings(tree: M3NSyntaxTree) {
       hasExplicitTempo = true
     }
   }
-  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), equalMeasures, key, meterCount, meterUnit, tempo, hasExplicitTempo }
+  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, key, meterCount, meterUnit, tempo, hasExplicitTempo }
 }

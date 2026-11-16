@@ -21,6 +21,7 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
     const names = entries.map(entry => entry.name)
     if (names.some(name => !name || /[{}=@]/.test(name))) report('order 必须是逗号分隔的非空乐段名称，可用 段名@调性 指定本次演奏调', directive.start, directive.end)
     for (const entry of entries) if (entry.key !== undefined) {
+      if (entry.octave !== undefined && (!Number.isInteger(entry.octave) || entry.octave < 0 || entry.octave > 8)) report('order 演奏调的八度基准须为0–8', directive.start, directive.end)
       const match = /^([A-G][#b]?)([a-z]*)$/.exec(entry.key)
       if (!match || !M3N_KEY_MODES.includes(match[2] as typeof M3N_KEY_MODES[number])) report(`order 演奏调性无效：${entry.key}`, directive.start, directive.end)
       else if (parseKey(entry.key).mode !== parseKey(sectionEntryKey(document, entry.name)).mode) report('order 换调再现须保持乐段入口的调式', directive.start, directive.end)

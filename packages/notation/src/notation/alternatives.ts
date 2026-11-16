@@ -83,13 +83,14 @@ export function alternativePerformance(document: ScoreDocument): ScoreDocument {
     for (const { index, orderIndex } of itinerary) {
       const host = part.melody[index]!
       const targetKey = document.orderKeys?.[orderIndex]
+      const octaveOffset = (document.orderKeyOctaves?.[orderIndex] ?? 4) - 4
       const entryKey = host.sectionName ? sectionEntryKey(document, host.sectionName) : document.key
       const visit = (measureVisits.get(host) ?? 0)+1; measureVisits.set(host,visit)
       const pass = host.ending ? [...parsePassRange(host.ending)][visit-1] ?? visit : visit
       const selected = alternativeMeasure(document,host,pass)
       const offset = ++occurrence * sourceStride
       const clone = (measure:ScoreMeasure|undefined, staff:'melody'|'bass'):ScoreMeasure => ({events:(measure?.events ?? []).map((event,index)=>{
-        const copy={...event,key:targetKey ? sectionVisitKey(event.key,entryKey,targetKey) : event.key,playbackId:`${ids.get(event)}${pass>1?`-rend${pass}`:''}`,sourceStart:event.sourceStart+offset,sourceEnd:event.sourceEnd+offset,navigation:[]}
+        const copy={...event,octaveShift:event.octaveShift+octaveOffset,key:targetKey ? sectionVisitKey(event.key,entryKey,targetKey) : event.key,playbackId:`${ids.get(event)}${pass>1?`-rend${pass}`:''}`,sourceStart:event.sourceStart+offset,sourceEnd:event.sourceEnd+offset,navigation:[]}
         if (staff==='melody' && index===0 && selected!==host) copy.dynamic ??= host.events[0]?.dynamic
         copies.push({source:event,event:copy,staff});return copy
       }),...(measure?.multiRest?{multiRest:measure.multiRest}:{}),...(measure?.multiRestState?{multiRestState:{...measure.multiRestState,
@@ -116,5 +117,5 @@ export function alternativePerformance(document: ScoreDocument): ScoreDocument {
   // Copy metadata without evaluating lazy fields such as a source getter.
   // Performance compilation consumes the semantic model only.
   const performance = Object.defineProperties({}, Object.getOwnPropertyDescriptors(document)) as ScoreDocument
-  return Object.assign(performance, {alternatives:undefined,order:undefined,orderKeys:undefined,sections:undefined,parts,intervals,lyrics:[]})
+  return Object.assign(performance, {alternatives:undefined,order:undefined,orderKeys:undefined,orderKeyOctaves:undefined,sections:undefined,parts,intervals,lyrics:[]})
 }

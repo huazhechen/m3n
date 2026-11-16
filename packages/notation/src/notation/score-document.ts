@@ -86,6 +86,8 @@ export type ScoreDocument = {
   order?: string[]
   /** Optional target keys, indexed by outer section visit in order. */
   orderKeys?: Array<string | undefined>
+  /** Optional target octave bases (4 by default), indexed by section visit. */
+  orderKeyOctaves?: Array<number | undefined>
   sections?: ReadonlyArray<{ name: string; start: number; end: number }>
   /** Written phrase ranges for local engraving; they do not change playback. */
   paragraphs?: ReadonlyArray<{ id: string; start: number; end: number }>

@@ -47,7 +47,25 @@ describe('keyed section visits', () => {
     expect(compileScorePerformance(parseM3NDocument(input)).notes.map(note => note.pitch)).toEqual([69,71,60,62,70,72,65,66])
   })
 
-  it.each(['A@','A@H','A@Cfoo','A@@Db','A@Cm'])('rejects an invalid key or mode change: %s', entry => {
+  it('keeps explicit octave bases when crossing B to C and resets unqualified visits', () => {
+    const input = '{key=Bb}{2/4}{order=A,A@C5,A@F5,A}\n===A\nN: 6{ac(5)} 2e ||\nB: 1d^ |'
+    expect(validateM3NDiagnostics(input)).toEqual([])
+    const document = parseM3NDocument(input)
+    expect(document.orderKeys).toEqual([undefined, 'C', 'F', undefined])
+    expect(document.orderKeyOctaves).toEqual([undefined, 5, 5, undefined])
+    expect(parseM3NDocument(formatM3N(input)).orderKeyOctaves).toEqual(document.orderKeyOctaves)
+    expect(sectionOrderLabels(document)).toEqual(['A（1=B♭）', 'A（1=C）', 'A（1=F）', 'A（1=B♭）'])
+    const performance = compileScorePerformance(document)
+    const original = performance.notes.filter(note => note.start < 2)
+    for (const [visit, shift] of [[1, 2], [2, 7], [3, 0]]) {
+      expect(performance.notes.filter(note => note.start >= visit! * 2 && note.start < (visit! + 1) * 2)
+        .map(note => [note.start - visit! * 2, note.end - visit! * 2, note.pitch, note.channel]))
+        .toEqual(original.map(note => [note.start, note.end, note.pitch + shift!, note.channel]))
+    }
+    expect(alternativePerformance(document).orderKeyOctaves).toBeUndefined()
+  })
+
+  it.each(['A@','A@H','A@Cfoo','A@@Db','A@Cm','A@C9','A@C-1','A@C5x'])('rejects an invalid key or mode change: %s', entry => {
     const diagnostics = validateM3NDiagnostics(`{2/4}{order=${entry}}\n===A\nN: 1 2 ||`)
     expect(diagnostics.some(item=>item.code==='M3N_SECTION_ORDER')).toBe(true)
   })

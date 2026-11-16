@@ -28,6 +28,17 @@ describe('numbered keyed section visits', () => {
     expect(document).toEqual(before)
   })
 
+  it('keeps standard key rows while fixed-do retains explicit visit octaves', () => {
+    const document = parseM3NDocument('{key=Bb}{2/4}{order=A,A@C5,A@F5}\n===A\nN: 6 2e ||')
+    const id = scoreEventIds(document).get(document.parts.get('score')!.melody[0]!.events[0]!)!
+    const compact = projectNumberedScore(document, {width:800,paged:false})
+    expect(compact.source).toContain('visits="1:Bb4;2:C4;3:F4"')
+    const fixed = projectNumberedScore(document, {width:800,paged:false,fixedDo:true})
+    const visits = [...fixed.bindings.values()].filter(binding => binding.xmlId === id)
+    expect(visits.map(binding => [binding.event!.key, binding.event!.octaveShift])).toEqual([['Bb',0],['C',1],['F',1]])
+    expect(fixed.source).not.toContain('visits=')
+  })
+
   it('groups equal-key visits and updates both entry and itinerary when transposed', () => {
     const document = parseM3NDocument(source.replace('A,B,A@Db','A,A,B,A@Db'))
     const projection = projectNumberedScore(document,{width:800,paged:false,transpose:2})

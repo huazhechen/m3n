@@ -23,7 +23,7 @@ function musicalMeaning(source: string) {
     })
   }
   return {
-    title: score.title, key: score.key, meter: [score.meterCount, score.meterUnit], tempo: score.tempo, order: score.order, orderKeys: score.orderKeys,
+    title: score.title, key: score.key, meter: [score.meterCount, score.meterUnit], tempo: score.tempo, order: score.order, orderKeys: score.orderKeys, orderKeyOctaves: score.orderKeyOctaves,
     parts: [...score.parts].map(([name, part]) => [name, staffMeaning(part.melody), staffMeaning(part.bass)]),
     alternatives: score.alternatives?.map((alternative) => [alternative.passes, staffMeaning([alternative.measure])]),
     intervals: score.intervals.map(({ kind, staff, start, endStart, tempoTarget, display }) =>

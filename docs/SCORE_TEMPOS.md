@@ -112,3 +112,9 @@
 | [下雨的时候](../src/scores/xia_yu_de_shi_hou_01.m3n) | 4/4 | 80 | 未确认同版本，或按练习用途判断 | 原谱未署名，检索到的小提琴及同名流行歌曲无法确认为同一编配；保留 80。 |
 | [小红帽](../src/scores/xiao_hong_mao_01.m3n) | 2/4 | 108 | [呂佩玉 · 小红帽 - 童謠：妹妹揹著洋娃娃（109 BPM）](https://songbpm.com/@lu-pei-yu/5bcp57qi5bi9ic0g56ul6kygouwmuewmueapueirla0iwogwogw-joxip) | 童谣版本约 109–120，保留接近、便于演奏的 108。 |
 | [小星星](../src/scores/xiao_xing_xing_01.m3n) | 4/4 | 100 | [Raffi · Twinkle, Twinkle, Little Star（98 BPM）](https://songbpm.com/@raffi/twinkle-twinkle-little-star-77f5554f-9033-44a4-b566-21aa82cb9fce) | Raffi 版本约 98；教学型单旋律编配保留接近的 100。 |
+
+## 后续新增
+
+| 曲目 | 拍号 | qpm | 参考 | 说明 |
+| --- | --- | --- | --- | --- |
+| [九儿](../src/scores/jiu_er_01.m3n) | 4/4 | 60 | [快悦谱：降B转C转F版](https://www.kuaiyuepu.com/jianpu/DPp3v1W6z.html) | 沿用参考四分音符=60，保留前奏、人声过渡及三级转调；共用谱段按访问标出演奏调。 |
