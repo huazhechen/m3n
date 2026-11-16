@@ -19,6 +19,34 @@ function inspect(source: string, width = 800, paged = false) {
 }
 
 describe('numbered full-beat sustain continuations', () => {
+  it('uses the same full-beat dashes in Maple alternatives as in the main melody', () => {
+    const source = readFileSync(resolve(import.meta.dirname, '../../../src/scores/feng_01.m3n'), 'utf8')
+    const { document, projection, root } = inspect(source)
+    const alternative = document.alternatives![1]!.measure
+    const ids = scoreEventIds(document)
+    // The two full beats after the sixteenth-note pickup sustain the same note.
+    for (const event of alternative.events.slice(3, 5)) {
+      const binding = [...projection.bindings.values()].find(binding => binding.event === event)!
+      expect(binding.sustain).toBe(true)
+      const group = root.getElementById(ids.get(event)!)!
+      expect(group.getAttribute('data-m3n-role')).toBe('sustain')
+      expect(group.querySelector('text')).toBeNull()
+      expect(group.querySelectorAll('line')).toHaveLength(1)
+    }
+  })
+
+  it.each([
+    ['an inherited accidental', '4#~ 4 0 0', true],
+    ['a new slur', '6~ {lg}6 7{/} 0', false],
+    ['an independent lyric', '6~ 6 7 0', false],
+  ])('retains alternative-specific semantics for %s', (name, melody, sustain) => {
+    const lyrics = name === 'an independent lyric' ? '\nL1: 春天\nL2: 春+啊天' : ''
+    const { document, projection } = inspect(`{4/4}\nN: ||: 1~ 1 2 0 :|||${lyrics}\nNs[2]: 1: ${melody} |`)
+    const event = document.alternatives![0]!.measure.events[1]!
+    const binding = [...projection.bindings.values()].find(binding => binding.event === event)!
+    expect(binding.sustain).toBe(sustain)
+  })
+
   it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('uses dashes for a tied chain with original event IDs and timing at $width, paged=$paged', ({ width, paged }) => {
     const { document, projection, result, root } = inspect('{4/4}\nN: 6~ 6~ 6~ 6 |||\nL: 白', width, paged)
     expect(projection.source).not.toContain('@tie(')
