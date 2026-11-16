@@ -227,6 +227,7 @@ class NoteTemporalNode extends TemporalNodeBase {
     private readonly numberStyle: TextStyle;
 
     private numberY = 0;
+    private numberCenterOffset = 0;
 
     constructor(ast: NoteFunction) {
         super();
@@ -251,6 +252,8 @@ class NoteTemporalNode extends TemporalNodeBase {
         const mainMetrics = context.textMeasurer.measureText("0", this.numberStyle);
 
         this.numberY = mainMetrics.baseline;
+        const glyph = NOTE_GLYPH[this.name] ?? this.name;
+        this.numberCenterOffset = glyph ? context.textMeasurer.measureText(glyph, this.numberStyle).centerOffset ?? 0 : 0;
 
         // 升降号贴近数字左上角，按同一 baseline 排在数字左侧；
         // 缩小右侧间隔会在全局 anchor 不变时把升降号向右移动
@@ -329,7 +332,7 @@ class NoteTemporalNode extends TemporalNodeBase {
         if (glyph) {
             painter.drawText(
                 glyph,
-                this.box.x + this.box.anchor,
+                this.box.x + this.box.anchor - this.numberCenterOffset,
                 this.box.y + this.numberY,
                 this.numberStyle,
             );

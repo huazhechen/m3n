@@ -1,3 +1,4 @@
+import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeMeterGeometry } from './native-meter.js'
 import { nativeStyle, nativeEm as em, nativeDesignPath } from './native-style.js'
@@ -36,9 +37,9 @@ export class NativeSymbols {
       svg += `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'accidental' })}>`
         + symbols.paths.map(symbol => `<path${attrs({ d: symbol.d, fill: 'none', stroke: '#000', 'stroke-width': symbol.stroke, 'data-m3n-symbol': symbol.symbol })}/>`).join('') + '</g>'
     }
+    const body = nativeNoteBody(this.measurer, size)
     for (let index = 0; index < Math.abs(pitch.octave); index++) {
-      const beamOffset = beams ? size * (0.92 + (beams - 1) * 0.14 + 0.055 - 0.84) : 0
-      const offset = pitch.octave > 0 ? -size * (0.955 + index * 0.23) : size * (0.195 + index * 0.23) + beamOffset
+      const offset = body.octaveY(pitch.octave > 0, index, beams)
       svg += circle(x, y + offset, size * 0.075)
     }
     return svg

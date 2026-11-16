@@ -1,3 +1,5 @@
+import { nativeNoteBody } from './native-note-body.js'
+import type { TextMeasurer } from './native-measure.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { nativeSvgInk } from './native-ink.js'
@@ -8,9 +10,10 @@ import { nativeMarkStack } from './native-marks.js'
 import { nativeNoteMetrics, nativeBeamCount } from './native-note-metrics.js'
 import type { NativeGlyph } from './native-model.js'
 
-export function nativeBeamSvg(a: NativeGlyph, b: NativeGlyph): string {
+export function nativeBeamSvg(a: NativeGlyph, b: NativeGlyph, measurer: TextMeasurer): string {
   let svg = ''
-  for (let beam = 0; beam < nativeBeamCount(a, b); beam++) svg += line(a.x + em(5.577), a.y + em(3.245) + beam * em(3.08), b.x - em(5.577), b.y + em(3.245) + beam * em(3.08), em(1.21))
+  const body = nativeNoteBody(measurer)
+  for (let beam = 0; beam < nativeBeamCount(a, b); beam++) svg += line(a.x + em(5.577), a.y + body.beamY(beam), b.x - em(5.577), b.y + body.beamY(beam), body.beamStroke)
   return svg
 }
 
@@ -46,13 +49,14 @@ export class NativeMusicPainter extends NativeSymbols {
     let music = ''
     if (glyph.sustain) music += this.sustain(glyph.x, glyph.y)
     else {
+      const body = nativeNoteBody(this.measurer)
       const beamCount = Math.max(0, -Math.floor(Math.log2(glyph.writtenBeats)))
       glyph.pitches.forEach((pitch, index) => { music += this.pitch(pitch, glyph.x, glyph.y + (glyph.pitchOffsets?.[index] ?? 0), nativeStyle.music, index === 0 ? beamCount : 0) })
       const base = 2 ** Math.floor(Math.log2(glyph.writtenBeats)), ratio = glyph.writtenBeats / base
       const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
-      for (let index = 0; index < dots; index++) music += circle(glyph.x + this.measurer.measureText('0',{fontSize: nativeStyle.music,fontFamily:'M3N Numbers'}).w / 2 + em(4.29) + index * em(5.94), glyph.y - em(3.52), em(1.65))
+      for (let index = 0; index < dots; index++) music += circle(glyph.x + body.width / 2 + em(4.29) + index * em(5.94), glyph.y + body.dotY, em(1.65))
       const beams = Math.max(0, Math.round(-Math.log2(base)))
-      for (let index = 0; index < beams; index++) music += line(glyph.x - em(6), glyph.y + em(3.245) + index * em(3.08), glyph.x + em(7), glyph.y + em(3.245) + index * em(3.08), em(1.21))
+      for (let index = 0; index < beams; index++) music += line(glyph.x - em(6), glyph.y + body.beamY(index), glyph.x + em(7), glyph.y + body.beamY(index), body.beamStroke)
     }
     return music
   }

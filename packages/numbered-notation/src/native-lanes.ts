@@ -26,7 +26,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer): 
           if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) add(nativeLyricSvg(glyph, row, baseline, system.index, measurer))
         }
       }
-      for (let i = 1; i < glyphs.length; i++) add(nativeBeamSvg({ ...glyphs[i - 1]!, y: 0 }, { ...glyphs[i]!, y: 0 }))
+      for (let i = 1; i < glyphs.length; i++) add(nativeBeamSvg({ ...glyphs[i - 1]!, y: 0 }, { ...glyphs[i]!, y: 0 }, measurer))
       if (glyphs.length && !lane.id.startsWith('alternative:')) for (const bar of nativeMeasureBarPositions(system.measures, index)) add(nativeBarSvg(bar.kind, bar.x, 0, measurer))
     }
     for (const relation of system.relations.filter(relation => relation.first.lane === lane.id)) add(system.relationLayout!.get(relation)!.svg)

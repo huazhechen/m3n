@@ -6,12 +6,13 @@ import { measureNativeHorizontal } from './native-horizontal.js'
 import { projectNativeScore } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
 
-// Stable reference music metrics, captured from the shipped Barlow font.
+// Barlow advance widths with deterministic offline em-height estimates.
+// inkBottom distinguishes that estimate's blank tail from a real descender.
 // Ordinary prose is irrelevant to these examples' horizontal music positions.
-const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fontSize === 22 && text === '0' ? 11.154037475585938 : text.length * style.fontSize * 0.58, h: style.fontSize, baseline: style.fontSize * 0.8 } } }
+const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fontSize === 22 && text === '0' ? 11.154037475585938 : text.length * style.fontSize * 0.58, h: style.fontSize, baseline: style.fontSize * 0.8, inkBottom: style.fontSize * 0.8 } } }
 const layout = (source: string, width = 800) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer })
 
-describe('native spacing compatibility with the frozen jpFun baseline', () => {
+describe('native spacing and measured note envelopes', () => {
   it('matches all four note centres and the flush final bar of an unadorned system', () => {
     const result = layout('{4/4}\nN: 1 2 3 4 |||')
     const expected = [37.57701873779297, 217.293893737793, 397.01076873779297, 576.727643737793]

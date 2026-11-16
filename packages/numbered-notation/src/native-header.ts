@@ -50,7 +50,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   let creditBottom = 0
   const creditSvg = headerContent.credits.map((text, index) => {
     const raw = painter.text(text, width - margin, 0, nativeStyle.annotation, 'serif', { 'text-anchor': 'end' })
-    const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? nativeStyle.credit * 0.5 : 0) - ink.top
+    const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? em(5) : 0) - ink.top
     creditBounds.push({ left: ink.left, right: ink.right, top: y + ink.top, bottom: y + ink.bottom })
     creditBottom = y + ink.bottom
     return `<g transform="translate(0 ${n(y)})">${raw}</g>`

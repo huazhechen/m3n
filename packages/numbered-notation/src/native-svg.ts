@@ -53,7 +53,7 @@ class SvgPainter extends NativeMusicPainter {
       const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id)
       for (let index = 1; index < glyphs.length; index++) {
         const a = glyphs[index - 1]!, b = glyphs[index]!
-        const beam = nativeBeamSvg(a, b)
+        const beam = nativeBeamSvg(a, b, this.layout.measurer)
         if (beam) svg += `<g${attrs({ 'data-m3n-lane': lane.id, 'data-m3n-role': 'beam' })}>${beam}</g>`
       }
     }

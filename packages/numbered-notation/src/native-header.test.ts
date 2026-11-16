@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { nativeHeaderGeometry } from './native-header.js'
+import { nativeSvgInk } from './native-ink.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
@@ -66,4 +67,21 @@ describe('native measured header order', () => {
     expect(sections.systems[0]!.top).toBe(plain.systems[0]!.top)
     expect(sections.systems[1]!.top - plain.systems[1]!.top).toBe(12)
   })
+})
+
+
+it('places each right credit row with the shared five-design-pixel ink clearance', () => {
+  const doc = { ...parseM3NDocument('{4/4}\nN: 1 2 3 4 |||'), lyricist: '甲', composer: '乙', origin: '来源' }
+  const varied = { measureText(text: string, style: { fontSize: number }) {
+    return { w: text.length * style.fontSize, h: text.includes('作曲') ? 21 : 11, baseline: 8 }
+  } }
+  const geometry = nativeHeaderGeometry(doc, 800, 32, varied)
+  const root = new DOMParser().parseFromString(`<svg>${geometry.svg}</svg>`, 'image/svg+xml')
+  const credits = [...root.querySelectorAll('text[text-anchor="end"]')].map(text => {
+    const ink = nativeSvgInk(text.outerHTML, varied)
+    const y = Number(text.parentElement!.getAttribute('transform')!.match(/translate\(0 ([^)]+)\)/)![1])
+    return { top: ink.top + y, bottom: ink.bottom + y }
+  })
+  expect(credits).toHaveLength(3)
+  for (let i = 1; i < credits.length; i++) expect(credits[i]!.top - credits[i - 1]!.bottom).toBeCloseTo(5, 4)
 })

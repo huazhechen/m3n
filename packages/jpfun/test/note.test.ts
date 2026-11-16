@@ -524,3 +524,25 @@ test("hidden accidental glyphs preserve pitch, timing and serialization", () => 
     strictAssert.ok(note.box.w < reference.box.w);
     strictAssert.ok(note.ast.toString('').includes('showacc=false'));
 });
+
+
+test("note ink centers on its anchor after pitch resolution without changing zero-based spacing", () => {
+    const offsets: Record<string, number> = { "0": 1, "1": -3, "3": 2, "X": 4 };
+    const source = `@note("1'") @note(E4) @note(9) @note(8)`;
+    const result = compileScore(source, { textMeasurer: { measureText(text, style) {
+        return { w: text === "0" ? 12 : 7, h: style.fontSize * .7, baseline: style.fontSize * .7,
+            centerOffset: offsets[text] ?? 0 };
+    } } });
+    strictAssert.deepEqual(result.diagnostics, []);
+    const texts = recordCommands(result.layout).filter(c => c.kind === "text");
+    strictAssert.deepEqual(texts.map(c => c.text), ["1", "3", "X"]);
+    for (const [index, command] of texts.entries()) {
+        const note = result.layout.objects[index];
+        assert(nearly(command.x + offsets[command.text], note.box.x + note.box.anchor),
+            "painted glyph ink must center on the musical anchor");
+        assert(nearly(note.box.w, 12), "uniform zero width must survive bearing correction");
+    }
+    const dot = recordCommands(result.layout).find(c => c.kind === "circle");
+    assert(dot?.kind === "circle" && nearly(dot.cx, texts[0].x + offsets["1"]),
+        "the octave dot and digit must share their ink center");
+});
