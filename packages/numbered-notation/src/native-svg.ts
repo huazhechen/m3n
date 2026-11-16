@@ -4,7 +4,6 @@ import { nativeLyricSvg } from './native-lyrics.js'
 import { NativeMusicPainter, nativeBeamSvg } from './native-music.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { attrs, n, path } from './native-symbols.js'
-import { nativeHeaderGeometry } from './native-header.js'
 import { NUMBER_FONT_CSS } from './font-data.js'
 import { type NativeLayout, type NativeLane, type NativeSystem } from './native-layout.js'
 import type { NativeGlyph, NativeMeasure } from './native-model.js'
@@ -72,17 +71,11 @@ class SvgPainter extends NativeMusicPainter {
     const paragraphs = [...new Set(system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.paragraph))))]
     return `<g${attrs({ class: 'system', id: `m3n-system-${system.page + 1}-${system.index}`, 'data-m3n-volta': String(system.volta), 'data-m3n-paragraph': paragraphs.join(','), 'data-m3n-top': system.top, 'data-m3n-bottom': system.bottom })}>${svg}</g>`
   }
-
-  header(): string {
-    const { document, options, margin, measurer } = this.layout
-    const geometry = nativeHeaderGeometry(document, options.width, margin, measurer, options.systemGap ?? nativeStyle.systemGap)
-    return geometry.svg
-  }
 }
 
 export function renderNativePages(layout: NativeLayout): string[] {
   const painter = new SvgPainter(layout)
   try {
-    return layout.pages.map(page => `<svg${attrs({ xmlns: 'http://www.w3.org/2000/svg', width: page.width, height: page.height, viewBox: `0 0 ${page.width} ${page.height}`, 'data-engine': 'm3n', role: 'img', 'aria-label': layout.document.title || '简谱' })}><defs><style>${NUMBER_FONT_CSS}</style></defs><rect width="100%" height="100%" fill="#fff"/>${page.index === 0 ? painter.header() : ''}${page.systems.map(system => painter.system(system)).join('')}</svg>`)
+    return layout.pages.map(page => `<svg${attrs({ xmlns: 'http://www.w3.org/2000/svg', width: page.width, height: page.height, viewBox: `0 0 ${page.width} ${page.height}`, 'data-engine': 'm3n', role: 'img', 'aria-label': layout.document.title || '简谱' })}><defs><style>${NUMBER_FONT_CSS}</style></defs><rect width="100%" height="100%" fill="#fff"/>${page.header ?? ''}${page.systems.map(system => painter.system(system)).join('')}</svg>`)
   } finally { painter.dispose() }
 }

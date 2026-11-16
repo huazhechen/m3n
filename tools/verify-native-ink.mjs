@@ -9,6 +9,8 @@ import { chromium } from '@playwright/test'
 const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-ink-'))
 const output = join(root, '.tmp/native-ink', new Date().toISOString().replaceAll(':', '-'))
 const supplied = process.argv.find(a => a.startsWith('--sources='))?.slice(10)
+const renderOptionsPath = process.argv.find(a => a.startsWith('--render-options='))?.slice(17)
+const renderOptions = renderOptionsPath ? JSON.parse(readFileSync(resolve(renderOptionsPath), 'utf8')) : {}
 const collisionAudit = process.argv.includes('--collisions')
 const filter = process.argv.find(a => a.startsWith('--score='))?.slice(8)
 const sources = supplied ? JSON.parse(readFileSync(resolve(supplied), 'utf8')) : Object.fromEntries(readdirSync(join(root, 'src/scores')).filter(f => f.endsWith('.m3n')).map(f => [f, readFileSync(join(root, 'src/scores', f), 'utf8')]))
@@ -33,9 +35,9 @@ try {
   const reports = []
   for (const [file, source] of Object.entries(sources).filter(([f]) => !filter || f.includes(filter))) {
     for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) for (const uniformSystemHeight of [false, true]) {
-      const result = await page.evaluate(({ source, width, paged, uniformSystemHeight, collisionAudit }) => {
+      const result = await page.evaluate(({ source, width, paged, uniformSystemHeight, collisionAudit, renderOptions }) => {
         try {
-          document.querySelector('main').innerHTML = audit.NativeNumberedNotationScore.create(audit.parseM3NDocument(source)).render({ width, paged, uniformSystemHeight, measureNumbers: true }).join('')
+          document.querySelector('main').innerHTML = audit.NativeNumberedNotationScore.create(audit.parseM3NDocument(source)).render({ ...renderOptions, width, paged, uniformSystemHeight, measureNumbers: true }).join('')
           const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), violations = [], collisions = [], clipping = []
           let primitives = 0, systems = 0, collisionCandidates = 0, collisionLabels = 0
           for (const system of document.querySelectorAll('g.system')) {
@@ -67,8 +69,8 @@ try {
           }
           return { systems, primitives, violations, clipping, ...(collisionAudit ? { collisions, collisionCandidates, collisionLabels } : {}) }
         } catch (e) { return { error: String(e) } }
-      }, { source, width, paged, uniformSystemHeight, collisionAudit })
-      reports.push({ file, width, paged, uniformSystemHeight, ...result })
+      }, { source, width, paged, uniformSystemHeight, collisionAudit, renderOptions })
+      reports.push({ file, width, paged, uniformSystemHeight, renderOptions, ...result })
     }
   }
   const summary = { cases: reports.length, clipping: reports.reduce((n, r) => n + (r.clipping?.length ?? 0), 0), errors: reports.filter(r => r.error).length, violations: reports.reduce((n, r) => n + (r.violations?.length ?? 0), 0), failingCases: reports.filter(r => r.violations?.length).length, ...(collisionAudit ? { collisionCandidates: reports.reduce((n, r) => n + (r.collisionCandidates ?? 0), 0), collisionLabels: reports.reduce((n, r) => n + (r.collisionLabels ?? 0), 0), collisions: reports.reduce((n, r) => n + (r.collisions?.length ?? 0), 0), collisionCases: reports.filter(r => r.collisions?.length).length } : {}) }

@@ -39,7 +39,7 @@ describe('native accidental geometry', () => {
     const svg = NativeNumberedNotationScore.create(parseM3NDocument(source)).render(options).join('')
     const root = new DOMParser().parseFromString(svg, 'text/html')
     expect([...root.querySelectorAll('g.note text')].some(node => /[♯♭♮]/.test(node.textContent ?? ''))).toBe(false)
-    const symbols = [...root.querySelectorAll('[data-m3n-role="accidental"] path')]
+    const symbols = [...root.querySelectorAll('g.system [data-m3n-role="accidental"] path')]
     expect(symbols.map(node => node.getAttribute('data-m3n-symbol'))).toEqual(['♯', '♭', '♮', '♯', '♯', '♭', '♭'])
     expect(symbols[0]!.getAttribute('stroke-width')).toBe('1.32')
     expect(symbols[1]!.getAttribute('stroke-width')).toBe('0.924')

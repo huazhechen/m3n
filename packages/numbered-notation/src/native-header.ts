@@ -2,7 +2,9 @@ import { nativeStyle, nativeEm as em } from './native-style.js'
 import { NativeSymbols, attrs, n } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 import { measureNativeControl } from './native-controls.js'
-import { numberedKeyLabel } from './fixed-do.js'
+import { nativeDisplayPitch } from './native-model.js'
+import { numberedPitchRange } from './pitch-range.js'
+import { transposedNumberedKeyLabel } from './fixed-do.js'
 import { displayedTempo, scoreCreditLines, sectionOrderLabels, type ScoreDocument } from '@m3n/notation'
 import type { TextMeasurer } from './native-measure.js'
 import { numberedOrderLines } from './order-lines.js'
@@ -25,7 +27,7 @@ export function wrapNativeText(text: string, width: number, size: number, measur
 }
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, systemGap = nativeStyle.systemGap) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, systemGap = nativeStyle.systemGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number} = {}) {
   const available = width - 2 * margin
   const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, measurer, 700)
   const subtitle = wrapNativeText(document.subtitle, available - em(2), nativeStyle.subtitle, measurer)
@@ -54,13 +56,31 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     return `<g transform="translate(0 ${n(y)})">${raw}</g>`
   }).join('')
   const creditsHeight = creditBottom
-  const signatures = [measureNativeControl('key', numberedKeyLabel(document.key), measurer), measureNativeControl('meter', `${document.meterCount}/${document.meterUnit}`, measurer)]
+  const signatures = [measureNativeControl('key', options.fixedDo ? '1=C' : transposedNumberedKeyLabel(document.key,options.transpose), measurer), measureNativeControl('meter', `${document.meterCount}/${document.meterUnit}`, measurer)]
   if (document.hasExplicitTempo) {
-    const tempo = displayedTempo(document.tempo, document.meterCount, document.meterUnit)
+    const tempo = displayedTempo(document.tempo * (options.tempoScale ?? 1), document.meterCount, document.meterUnit)
     signatures.push(measureNativeControl('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`, measurer))
   }
   let signatureX = margin
-  const signatureSvg = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw }).join('')
+  let signatureSvg = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw }).join('')
+  const range = numberedPitchRange(document,options)
+  if (range) {
+    const size = nativeStyle.text
+    const rawPitch = (value:string) => painter.pitch(nativeDisplayPitch(value),0,0,size)
+    const low = rawPitch(range[0]), high = rawPitch(range[1])
+    const lowInk = nativeSvgInk(low,measurer), highInk = nativeSvgInk(high,measurer)
+    const gap = size*.2, separator = painter.text('~',0,0,size,'M3N Numbers')
+    const separatorInk = nativeSvgInk(separator,measurer)
+    const place = (svg:string,x:number) => `<g transform="translate(${n(x)} 0)">${svg}</g>`
+    let rangeSvg = ''
+    let x = signatureX-lowInk.left
+    rangeSvg += place(low,x)
+    x += lowInk.right+gap-separatorInk.left
+    rangeSvg += place(separator,x)
+    x += separatorInk.right+gap-highInk.left
+    rangeSvg += place(high,x)
+    signatureSvg += `<g data-m3n-role="pitch-range">${rangeSvg}</g>`
+  }
   const signatureInk = nativeSvgInk(signatureSvg, measurer)
   const signaturesHeight = signatureInk.bottom - signatureInk.top
   const stacked = width < 600 && creditsHeight > 0
@@ -70,7 +90,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const creditsTop = sideTop + (stacked ? 0 : sidesHeight - creditsHeight)
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
   let orderBottom = sideTop + sidesHeight
-  for (const [index, names] of numberedOrderLines(sectionOrderLabels(document), available).entries()) {
+  for (const [index, names] of numberedOrderLines(sectionOrderLabels(document,key=>transposedNumberedKeyLabel(key,options.transpose).replaceAll('#','♯').replaceAll('b','♭')), available).entries()) {
     const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
       ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
     ])]
@@ -93,10 +113,16 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     + subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, 'serif', { 'text-anchor': 'middle' })).join('')
     + `<g transform="translate(0 ${n(creditsTop)})">${creditSvg}</g>`
     + `<g transform="translate(0 ${n(signaturesTop - signatureInk.top)})">${signatureSvg}</g>`
-  for (const row of orderRows) for (const item of row.items) {
-    if (item.framed) svg += `<rect${attrs({ x: item.x + em(0.5), y: item.y + em(0.5), width: item.width - em(1), height: item.height - em(1), fill: 'none', stroke: '#000', 'stroke-width': em(1) })}/>`
-    svg += painter.text(item.text, item.x + (item.framed ? nativeStyle.text * (3.5 / 16) : 0), item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
+  const blocks = [{height:sideTop+sidesHeight-margin,svg:`<g transform="translate(0 ${n(-margin)})">${svg}</g>`}]
+  for (const row of orderRows) {
+    let rowSvg = ''
+    for (const item of row.items) {
+      if (item.framed) rowSvg += `<rect${attrs({ x: item.x + em(0.5), y: item.y + em(0.5), width: item.width - em(1), height: item.height - em(1), fill: 'none', stroke: '#000', 'stroke-width': em(1) })}/>`
+      rowSvg += painter.text(item.text, item.x + (item.framed ? nativeStyle.text * (3.5 / 16) : 0), item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
+    }
+    svg += rowSvg
+    blocks.push({height:row.height,svg:`<g transform="translate(0 ${n(-row.top)})">${rowSvg}</g>`})
   }
-  return { svg, title, subtitle, titleTop: margin, subtitleTop: margin + titleHeight + (titleHeight ? em(5) : 0), signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
+  return { svg, blocks, title, subtitle, titleTop: margin, subtitleTop: margin + titleHeight + (titleHeight ? em(5) : 0), signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
     orderRows, height: centerHeight + (centerHeight ? em(5) : 0) + sidesHeight + systemGap + orderHeight }
 }

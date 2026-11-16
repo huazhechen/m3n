@@ -2,12 +2,13 @@ import { DefaultTextMeasurer, type TextMeasurer } from '@m3n/jpfun'
 import {
   resolveScorePitches, displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreCreditLines, scoreEventIds,
   measurePlaybackPasses, type ScoreDocument, type ScoreEvent, type ScoreMeasure, type ScoreAlternative,
-  alternativePerformance, sectionKeyVisits, sectionEntryKey, sectionVisitKey, sectionOrderLabels, keyLabel,
+  sectionKeyVisits, sectionEntryKey, sectionVisitKey, sectionOrderLabels, keyLabel,
 } from '@m3n/notation'
 import { lyricsByEvent, type LyricsByEvent, type LyricRowData } from './lyrics.js'
 import { fixedDoPitch, fixedDoGrace, transposedKey } from './fixed-do.js'
 import { sustainContinuations } from './sustains.js'
 import { numberedPitchRange } from './pitch-range.js'
+import { keyedDisplayPerformance } from './display-performance.js'
 import { numberedOrderLines } from './order-lines.js'
 
 function tempoMark(qpm: number, count: number, unit: number) {
@@ -54,19 +55,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   // Absolute numbered pitches differ on each keyed visit. Expand the display,
   // retaining canonical IDs and the lyric selected by each playback rendition.
   if (options.fixedDo && document.orderKeys?.some(Boolean)) {
-    const originalLyrics = lyricsByEvent(document), originals = new Map([...scoreEventIds(document)].map(([event, id]) => [id, event]))
-    const performance = alternativePerformance(document), lyrics: LyricsByEvent = new Map()
-    for (const part of performance.parts.values()) for (const event of part.melody.flatMap(measure => measure.events)) {
-      const id = event.playbackId!, pass = Number(/-rend(\d+)$/.exec(id)?.[1] ?? 1)
-      const original = originals.get(id.replace(/-rend\d+$/, ''))
-      const slots = new Map<number, Map<number, LyricRowData>>()
-      for (const [slot, rows] of originalLyrics.get(original!) ?? []) {
-        const data = [...rows.values()].find(row => !row.passes || row.passes.has(pass))
-        if (data) slots.set(slot, new Map([[0, { ...data, annotation: undefined, passes: new Set([pass]) }]]))
-      }
-      if (slots.size) lyrics.set(event, slots)
-    }
-    return projectNumberedScore(performance, options, { lyrics, header: document })
+    const expanded = keyedDisplayPerformance(document)
+    return projectNumberedScore(expanded.document, options, { lyrics: expanded.lyrics, header: document })
   }
   const ids = scoreEventIds(document)
   const sectionKeys = new Map([...new Set(document.order ?? [])].map(name => [name, {

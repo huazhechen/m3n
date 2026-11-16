@@ -19,7 +19,7 @@ export function captureNumberedGeometry(root) {
       const box = node.getBBox(), p = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2).matrixTransform(node.getCTM())
       const group = node.closest('.note')
       const head = [...group.querySelectorAll('text')].filter(isDigit).indexOf(node)
-      return { id: restIds.get(group) ?? group.id, head, x: p.x, y: p.y }
+      return { id: restIds.get(group) ?? group.id, head, digit: node.textContent, x: p.x, y: p.y }
     })
     const melody = notes.filter(note => !note.id.includes('bass'))
     return { ids: notes.map(note => `${note.id}:${note.head}`).sort(), notes, axis: melody[0]?.y ?? 0,

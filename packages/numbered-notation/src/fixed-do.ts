@@ -1,4 +1,4 @@
-import { m3nPitch } from '@m3n/notation'
+import { m3nPitch, sectionVisitKey } from '@m3n/notation'
 
 export function numberedKeyLabel(key: string) {
   const minor = /^([A-G][#b]?)m$/.exec(key)
@@ -37,4 +37,9 @@ export function transposedKey(key: string, transpose = 0) {
   const chroma = ((semitones % 12) + 12) % 12
   const tonic = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][chroma]!
   return `${tonic}${Math.floor(semitones / 12)}`
+}
+
+/** Transpose the printed tonic while preserving major/minor display convention. */
+export function transposedNumberedKeyLabel(key: string, transpose = 0) {
+  return numberedKeyLabel(transpose ? sectionVisitKey(key, 'C', transposedKey('C',transpose).replace(/-?\d+$/, '')) : key)
 }

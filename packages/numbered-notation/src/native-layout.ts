@@ -1,3 +1,4 @@
+import { keyedDisplayPerformance } from './display-performance.js'
 import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
 import { placeNativeNavigation, placeNativeSystemLabels } from './native-system-labels.js'
@@ -20,6 +21,7 @@ import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativePr
 import { placeNativeLanes } from './native-lanes.js'
 
 export type NativeRenderOptions = {
+  fixedDo?: boolean; transpose?: number; tempoScale?: number
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
   pageMargin?: number; systemGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; uniformSystemHeight?: boolean
   equalMeasures?: boolean; wrap?: 'normal' | 'compact'; wrapWidthRatio?: number
@@ -29,13 +31,15 @@ export type NativeRenderOptions = {
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'octave' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[]; lyricBaselines?: Map<number, number> }
 export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; decorationLayout?: { lane: string; svg: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
-export type NativePage = { index: number; width: number; height: number; systems: NativeSystem[] }
+export type NativePage = { header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
-  document: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
+  document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
   options: NativeRenderOptions; measurer: TextMeasurer; headerHeight: number; margin: number
 }
 
 function validate(options: NativeRenderOptions) {
+  if (options.transpose !== undefined && !Number.isInteger(options.transpose)) throw new Error('谱面移调必须为整数半音数。')
+  if (options.tempoScale !== undefined && (!Number.isFinite(options.tempoScale) || options.tempoScale <= 0)) throw new Error('显示速度倍率必须为正有限数值。')
   if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
   for (const value of [options.pageMargin, options.systemGap]) if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
   if (options.noteGapEm !== undefined && (!Number.isFinite(options.noteGapEm) || options.noteGapEm < 0)) throw new Error('音符间距比例必须为非负有限数值。')
@@ -164,6 +168,9 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
 
 export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions): NativeLayout {
   validate(supplied)
+  const headerDocument = document
+  const expanded = supplied.fixedDo && document.orderKeys?.some(Boolean) ? keyedDisplayPerformance(document) : undefined
+  if (expanded) document = expanded.document
   const options = { ...supplied, pairedSpacing: supplied.minimumNoteGapEm !== undefined || supplied.noteGapEm === undefined, width: Math.max(320, Math.round(supplied.width)), noteGapEm: supplied.noteGapEm ?? 0.6, minimumNoteGapEm: supplied.minimumNoteGapEm ?? (supplied.noteGapEm === undefined ? 0.4 : 0), equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
   const margin = options.pageMargin ?? 32
   if (margin * 2 + 40 > options.width) throw new Error('简谱页边距过大。')
@@ -176,9 +183,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   }
   measurer ??= new DefaultTextMeasurer()
   const barSize = nativeBarMetrics(undefined).size, barTop = nativeStyle.music * 0.3 + barSize / 2, barBottom = barSize / 2 - nativeStyle.music * 0.3
-  const projection = projectNativeScore(document, { ...options, textMeasurer: measurer })
+  const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
-  const headerHeight = nativeHeaderGeometry(document, options.width, margin, measurer, options.systemGap ?? nativeStyle.systemGap).height
+  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, options.systemGap ?? nativeStyle.systemGap, options)
+  const headerHeight = header.height
   measureNativeHorizontal(projection.measures, options)
   const lines = breakMeasures(projection.measures, available, options)
   const systems: NativeSystem[] = lines.map((measures, index) => ({ index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
@@ -318,21 +326,25 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   for (const system of systems) placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true)
   for (const system of systems) placeNativeSystemLabels(system, relationBounds.get(system)!, measurer, Boolean(options.measureNumbers))
   const gap = options.systemGap ?? nativeStyle.systemGap
-  const blocks = [{ height: headerHeight - gap }, ...systems.map(system => ({
+  const blocks = [...header.blocks.map(block=>({height:block.height})), ...systems.map(system => ({
     height: placeNativeLanes(system, measurer, options.uniformSystemHeight),
     gapBefore: system.measures[0]?.extraGap ?? 0,
   }))]
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * 277 / 190) : Infinity,
     margin, gap })
   const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [] }))
+  for (const [index,block] of header.blocks.entries()) {
+    const position = pagination.positions[index]!
+    pages[position.page]!.header = (pages[position.page]!.header ?? '') + `<g transform="translate(0 ${position.top})">${block.svg}</g>`
+  }
   for (const [index, system] of systems.entries()) {
-    const position = pagination.positions[index + 1]!
+    const position = pagination.positions[index + header.blocks.length]!
     system.top = position.top; system.page = position.page
     for (const lane of system.lanes) {
       lane.y += position.top
       for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) if (glyph.lane === lane.id) glyph.y = lane.y
     }
-    system.bottom = position.top + blocks[index + 1]!.height; pages[position.page]!.systems.push(system)
+    system.bottom = position.top + blocks[index + header.blocks.length]!.height; pages[position.page]!.systems.push(system)
   }
-  return { document, projection, systems, pages, relations, options, measurer, headerHeight, margin }
+  return { document, headerDocument, projection, systems, pages, relations, options, measurer, headerHeight, margin }
 }
