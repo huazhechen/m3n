@@ -562,6 +562,11 @@ export function ScoreRenderer({
           const xmlId = element?.getAttribute('id') ?? element?.getAttribute('data-m3n-id')
           if (!xmlId) return
           setSelectedXmlId(xmlId)
+          const player = playerRef.current
+          if (isPlaying && player && !player.paused && player.duration > 0) {
+            const milliseconds = scoreRef.current?.timeForElement(xmlId) ?? -1
+            if (milliseconds >= 0) player.seek(milliseconds / (player.duration * 1000))
+          }
           window.requestAnimationFrame(() => onNoteClick?.(xmlId))
         }}
         onBlurCapture={(event) => {

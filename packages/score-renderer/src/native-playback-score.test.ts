@@ -55,6 +55,14 @@ describe('native MIDI and playback index', () => {
     expect(performance.notes.some(note => note.pitch === pitch && note.start === continuation)).toBe(false)
     expect(performance.elements.some(element => element.start === continuation && element.rendition === 3)).toBe(true)
   })
+  it('sustains Annie’s closing 2 and cross-bar 7 without reattacking their continuations', () => {
+    const performance = compileScorePerformance(parseM3NDocument(readFileSync(new URL('annie_01.m3n', folder), 'utf8')))
+    for (const [pitch, start, end, continuation] of [[74, 137.75, 139, 138], [71, 139.75, 144, 140]]) {
+      expect(performance.notes).toContainEqual({ pitch, start, end, channel: 0, velocity: 90 })
+      expect(performance.notes.some(note => note.pitch === pitch && note.start === continuation)).toBe(false)
+      expect(performance.elements.some(element => element.start === continuation)).toBe(true)
+    }
+  })
   it('plays all twelve written beats of the final Besame Mucho tied chain', () => {
     const performance = compileScorePerformance(parseM3NDocument(readFileSync(new URL('besame_mucho_01.m3n', folder), 'utf8')))
     expect(performance.beats).toBe(320)
