@@ -1,5 +1,7 @@
 # Local changes
 
+- `@key(...,degree=6)` displays the minor tonic as `6=` while retaining the supplied pitch as the numbered `1` reference. The default remains `degree=1`; note spelling and timeline state use the same reference in both modes.
+
 - `@ossia(host, alternative)` creates a local parallel track below the main music and its lyrics. Empty systems collapse that track, and outer lyric collection excludes alternative notes. The adapter uses it for small parenthesized replacement melodies with independent lyric counts.
 
 - `@note(...,showacc=false)` hides only the accidental glyph and its reserved width. Resolved pitch, octave, timing and playback remain intact; serialization preserves the flag. The M3N adapter uses it for redundant same-degree, same-octave accidentals within a measure.

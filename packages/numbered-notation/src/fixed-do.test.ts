@@ -2,10 +2,25 @@ import { describe, expect, it } from 'vitest'
 import { parseM3NDocument, compileScorePerformance } from '@m3n/notation'
 import { compileScore } from '@m3n/jpfun'
 import { projectNumberedScore } from './projection.js'
-import { fixedDoPitch } from './fixed-do.js'
+import { fixedDoPitch, numberedKeyLabel } from './fixed-do.js'
 
 const options = { width: 800, paged: false }
 const notes = (source: string) => [...source.matchAll(/@note\("([^"]+)"(?!,displayonly=true)/g)].map(match => match[1])
+
+it('renders minor as 6=tonic while fixed C and playback use the same absolute pitches', () => {
+  const document = parseM3NDocument('{key=Am}{4/4}\nN: 6d 7d 1 2 | {key=Em}3 4 5# 6 |||')
+  const normal = projectNumberedScore(document, options)
+  expect(normal.source.match(/@key\([^)]*\)/g)).toEqual(['@key("C4",size=16px,degree=6)', '@key("G4",size=16px,degree=6)'])
+  const compiled = compileScore(normal.source, { autoWrap: true })
+  expect(compiled.diagnostics.filter(diagnostic => diagnostic.code.startsWith('E_'))).toEqual([])
+  const fixed = projectNumberedScore(document, { ...options, fixedDo: true })
+  expect(notes(fixed.source)).toEqual(['n6,', 'n7,', 'n1', 'n2', 'n7', "n1'", "#2'", "n3'"])
+  const shifted = projectNumberedScore(document, { ...options, transpose: 2 })
+  expect(shifted.source.match(/@key\([^)]*\)/g)).toEqual(['@key("D4",size=16px,degree=6)', '@key("A4",size=16px,degree=6)'])
+  expect(notes(shifted.source)).toEqual(notes(normal.source))
+  expect(numberedKeyLabel('Am')).toBe('6=A')
+  expect(numberedKeyLabel('Bbm')).toBe('6=Bb')
+})
 
 describe('fixed C numbered notation', () => {
   it('respells enharmonics and crosses octave boundaries using sharps only', () => {

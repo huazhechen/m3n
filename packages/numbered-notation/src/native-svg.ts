@@ -1,4 +1,5 @@
 import { displayedTempo, scoreCreditLines } from '@m3n/notation'
+import { numberedKeyLabel } from './fixed-do.js'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
@@ -278,7 +279,7 @@ class SvgPainter {
       svg += this.text(name, options.width - margin, baseline, 14, 'serif', { 'text-anchor': 'end' })
     }
     const signaturesY = geometry.signaturesTop + 24.78
-    const signatures = [`1=${document.key}`, `${document.meterCount}/${document.meterUnit}`]
+    const signatures = [numberedKeyLabel(document.key), `${document.meterCount}/${document.meterUnit}`]
     if (document.hasExplicitTempo) {
       const tempo = displayedTempo(document.tempo, document.meterCount, document.meterUnit)
       signatures.push(`${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`)

@@ -5,7 +5,7 @@ import { absoluteSemitones, fixedDoPitch } from './fixed-do.js'
 function relativePitch(absolute: string, key: string): string {
   const letters = 'cdefgab'
   const [letter, octave] = absolute.split(':')
-  const tonic = letters.indexOf(key[0]!.toLowerCase())
+  const tonic = letters.indexOf(m3nPitch('1', key).pname)
   const degree = (letters.indexOf(letter!) - tonic + 7) % 7 + 1
   const base = m3nPitch(String(degree), key)
   const shift = Number(octave) - base.oct

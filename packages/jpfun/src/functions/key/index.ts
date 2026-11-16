@@ -59,6 +59,7 @@ class KeyFunction extends ASTFunctionNode {
                     unit: "em",
                 } as LengthValue,
             },
+            { name: "degree", description: "谱面主音唱名（1 或 6），不改变 1 的音高基准", type: "number" as const, default: 1 },
         ],
     };
 
@@ -68,10 +69,13 @@ class KeyFunction extends ASTFunctionNode {
     /** 只用于绘制：音名与升降号，八度不上谱 */
     readonly displayName: string;
     readonly displayAcc: string;
+    readonly prefix: string;
 
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [tonality, size] = this.getArgValue(args, ctx) as [string, LengthValue];
+        const [tonality, size, degree] = this.getArgValue(args, ctx) as [string, LengthValue, number];
+        if (degree !== 1 && degree !== 6) throw new ErrorDiagnostic("E_KEY_DEGREE", "@key 的 degree 必须为 1 或 6", sourceSpan);
+        this.prefix = `${degree}=`;
         this.font = ctx.variables.numberfont;
         this.tonality = tonality;
         this.size = ctx.length2px(size);
@@ -93,6 +97,18 @@ class KeyFunction extends ASTFunctionNode {
         // 归一化保证了格式是 [音名][最多一个 #b][八度]
         this.displayName = this.tonality[0];
         this.displayAcc = this.tonality[1] === "#" || this.tonality[1] === "b" ? this.tonality[1] : "";
+        if (degree === 6) {
+            const letters = "CDEFGAB";
+            const naturals = [0, 2, 4, 5, 7, 9, 11];
+            // Keep the written spelling even when normalization respells a
+            // double-accidental reference for the engine's timeline.
+            const written = /^([A-G])([#b]*)(?:-?\d+)?$/.exec(tonality);
+            const index = letters.indexOf(written?.[1] ?? this.displayName);
+            const target = (index + 5) % 7;
+            const offset = (naturals[index] + acc2Offset(written?.[2] ?? this.displayAcc, false) + 9 - naturals[target] + 12) % 12;
+            this.displayName = letters[target];
+            this.displayAcc = offset <= 2 ? "#".repeat(offset) : "b".repeat(12 - offset);
+        }
     }
 
     override loweringEnter() {
@@ -100,13 +116,11 @@ class KeyFunction extends ASTFunctionNode {
     }
 
     override toString() {
-        return `@1(${this.tonality})`;
+        return `@1(${this.tonality}${this.prefix === '6=' ? ',degree=6' : ''})`;
     }
 }
 
 export const KeyNode: ASTFunctionClass = KeyFunction;
-
-const PREFIX = "1=";
 
 class KeyTemporalNode extends TemporalNodeBase {
     declare ast: KeyFunction;
@@ -137,7 +151,7 @@ class KeyTemporalNode extends TemporalNodeBase {
     override prepareLayout(context: LayoutPrepareContext) {
         const size = this.ast.size;
         const style = this.style;
-        const prefix = context.textMeasurer.measureText(PREFIX, style);
+        const prefix = context.textMeasurer.measureText(this.ast.prefix, style);
         const name = context.textMeasurer.measureText(this.ast.displayName, style);
 
         const accidentalGap = size * 0.02;
@@ -155,13 +169,13 @@ class KeyTemporalNode extends TemporalNodeBase {
         this.box.w = right + name.w;
         this.box.h = shift + Math.max(prefix.h, name.h);
         // 与 @text 同规则：对齐点在第一个字符的中心
-        this.box.anchor = context.textMeasurer.measureText(PREFIX[0], style).w / 2;
+        this.box.anchor = context.textMeasurer.measureText(this.ast.prefix[0], style).w / 2;
         this.box.visualAxis = this.box.h / 2;
     }
 
     override paint(painter: Painter) {
         const style = this.style;
-        painter.drawText(PREFIX, this.box.x, this.box.y + this.textBaselineY, style);
+        painter.drawText(this.ast.prefix, this.box.x, this.box.y + this.textBaselineY, style);
         for (const placed of this.accidentals) paintAccidental(painter, placed, this.box, "#000");
         painter.drawText(
             this.ast.displayName,

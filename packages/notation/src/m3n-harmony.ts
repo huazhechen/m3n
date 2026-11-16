@@ -1,5 +1,6 @@
 import { m3nPitch } from './m3n-direct.js' 
 import { parseHarmonySymbol } from './notation/harmony-syntax.js'
+import { parseKey } from './notation/m3n-primitives.js'
 
 export type M3NChord = { symbol: string }
 
@@ -9,7 +10,9 @@ export function m3nChord(value: string, key: string): M3NChord | null {
   if (!parsed.roman) return { symbol: value }
   const degrees: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7 }
   const roman = parsed.root
-  const root = m3nPitch(String(degrees[roman.toUpperCase()] ?? 1), key)
+  const degree = degrees[roman.toUpperCase()] ?? 1
+  // Roman numerals still count from the minor tonic, independently of solfege.
+  const root = m3nPitch(String(parseKey(key).mode === 'm' ? (degree + 4) % 7 + 1 : degree), key)
   const accidental = root.accidGes ? ({ s: '#', f: 'b', ss: '##', x: '##', ff: 'bb', n: '' } as Record<string, string>)[root.accidGes] ?? '' : ''
   const suffix = parsed.quality
   const minor = roman === roman.toLowerCase() || suffix.startsWith('m')

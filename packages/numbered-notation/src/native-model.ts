@@ -5,6 +5,7 @@ import type { TextMeasurer } from './native-measure.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { nativeAccidentalAdvance } from './native-accidentals.js'
 import { nativeMarkStack } from './native-marks.js'
+import { numberedKeyLabel } from './fixed-do.js'
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
@@ -71,7 +72,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         }
         if (staff === 'melody' && event.sectionLabel && !event.sectionLabelBreakAfter) control('section', event.sectionLabel)
         if (eventIndex === 0 && (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno')))) control('segno', '𝄋')
-        if (event.key !== state.key) { control('key', `1=${event.key}`); state.key = event.key; accidentals.clear() }
+        if (event.key !== state.key) { control('key', numberedKeyLabel(event.key)); state.key = event.key; accidentals.clear() }
         const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
         if (meter !== state.meter) { control('meter', meter); state.meter = meter }
         if (event.tempo !== undefined && event.tempo !== state.tempo) {

@@ -317,12 +317,14 @@ export function m3nPitch(pitch: string, key: string) {
   if (!parsed || parsed.degreeRaw === '0') return { pname: 'c', oct: 4, accid: '' }
   const letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
   const { tonic, mode } = parseKey(key)
-  const tonicIndex = Math.max(0, letters.indexOf(tonic.charAt(0) || 'C'))
+  const keyTonicIndex = Math.max(0, letters.indexOf(tonic.charAt(0) || 'C'))
+  // Minor uses la-based solfege: its relative major supplies numbered 1.
+  const tonicIndex = mode === 'm' ? (keyTonicIndex + 2) % 7 : keyTonicIndex
   const degree = Number(parsed.degreeRaw)
   const letterIndex = (tonicIndex + degree - 1) % 7
   const natural = [0, 2, 4, 5, 7, 9, 11]
-  const tonicPitch = (natural[tonicIndex] ?? 0) + (tonic.endsWith('#') ? 1 : tonic.endsWith('b') ? -1 : 0)
-  const target = (tonicPitch + (keyModeIntervals(mode)[degree - 1] ?? 0) + 12) % 12
+  const tonicPitch = (natural[keyTonicIndex] ?? 0) + (tonic.endsWith('#') ? 1 : tonic.endsWith('b') ? -1 : 0) + (mode === 'm' ? 3 : 0)
+  const target = (tonicPitch + (keyModeIntervals(mode === 'm' ? '' : mode)[degree - 1] ?? 0) + 12) % 12
   const difference = (target - (natural[letterIndex] ?? 0) + 12) % 12
   const keyAccid = difference === 1 ? 's' : difference === 2 ? 'ss'
     : difference === 11 ? 'f' : difference === 10 ? 'ff' : ''

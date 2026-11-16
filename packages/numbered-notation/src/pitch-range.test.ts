@@ -17,7 +17,7 @@ describe('melody pitch range', () => {
     expect(numberedPitchRange(parseM3NDocument('{key=D}{4/4}\nN: 1 2 3 4 | {key=C}1 2 3 4 |||'))).toEqual(['b7,', '4'])
     const minor = parseM3NDocument('{key=Am}{4/4}\nN: 1 3 5 7 |||')
     expect(numberedPitchRange(minor)).toEqual(['1', '7'])
-    expect(numberedPitchRange(minor, { fixedDo: true })).toEqual(['6', "5'"])
+    expect(numberedPitchRange(minor, { fixedDo: true })).toEqual(['1', '7'])
   })
 
   it('includes chords, tuplets, grace notes and alternative melodies', () => {

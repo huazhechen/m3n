@@ -30,6 +30,7 @@ export type EventBinding = {
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
 export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; transpose?: number; tempoScale?: number; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
+const keyMark = (key: string, transpose?: number) => `@key(${quote(transposedKey(key, transpose))},size=16px${/^[A-G][#b]?m$/.test(key) ? ',degree=6' : ''})`
 const pitchName = (token: string, shift = 0) => {
   const match = /^([0-7])([#b=]*)([ed]*)$/.exec(token)
   if (!match) return '0'
@@ -155,7 +156,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const eventParagraph = `${partIndex}:${paragraphOf(staff === 'bass' ? firstEvent?.sourceStart ?? event.sourceStart : event.sourceStart)}`
           if (paragraph !== eventParagraph) { flushParagraph(); paragraph = eventParagraph }
           const controls: string[] = []
-          if (!options.fixedDo && event.key !== activeKey) { accidentals.clear(); controls.push(`@key(${quote(transposedKey(event.key, options.transpose))},size=16px)`); activeKey = event.key }
+          if (!options.fixedDo && event.key !== activeKey) { accidentals.clear(); controls.push(keyMark(event.key, options.transpose)); activeKey = event.key }
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
           if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(tempoMark(event.tempo * (options.tempoScale ?? 1), event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)); activeTempo = event.tempo }
@@ -357,7 +358,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const pitchRange = numberedPitchRange(document, options)
   const range = pitchRange ? `{@set(fontsize=16) @note(${quote(pitchRange[0])},displayonly=true)@rangeLow @text("~",size=16px,font="M3N Numbers") @note(${quote(pitchRange[1])},displayonly=true)@rangeHigh}` : ''
   const signatures = [
-    `@key(${quote(options.fixedDo ? 'C4' : transposedKey(document.key, options.transpose))},size=16px)`,
+    options.fixedDo ? '@key("C4",size=16px)' : keyMark(document.key, options.transpose),
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,
     document.hasExplicitTempo ? tempoMark(document.tempo * (options.tempoScale ?? 1), document.meterCount, document.meterUnit) : '',
     range,
