@@ -52,4 +52,9 @@ describe('native spacing compatibility with the frozen jpFun baseline', () => {
     expect(result.pages[0]!.height).toBeCloseTo(363.02, 1)
   })
 
+  it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
+    const result = layout(readFileSync(new URL('../../../src/scores/huan_le_song_01.m3n', import.meta.url), 'utf8'), 600)
+    expect(result.systems.map(system => system.measures.length)).toEqual([4, 4, 4, 5])
+  })
+
 })

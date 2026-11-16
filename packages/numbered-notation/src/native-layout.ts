@@ -151,7 +151,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
   const headerHeight = nativeHeaderGeometry(document, options.width, margin, measurer, options.systemGap ?? 24).height
   measureNativeHorizontal(projection.measures, options)
-  const lines = breakMeasures(projection.measures, available - (projection.hasBass ? 22 : 0), options)
+  const lines = breakMeasures(projection.measures, available, options)
   const systems: NativeSystem[] = lines.map((measures, index) => ({ index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
   const systemOf = new Map<NativeGlyph, number>()
   for (const system of systems) {
