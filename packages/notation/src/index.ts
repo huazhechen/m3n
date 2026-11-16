@@ -21,3 +21,4 @@ export * from './notation/tempo.js'
 export { resolveScorePitches, validateScoreDocument } from './notation/score-rules.js'
 
 export * from './notation/alternatives.js'
+export * from './performance.js'

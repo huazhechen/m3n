@@ -108,5 +108,8 @@ export function alternativePerformance(document: ScoreDocument): ScoreDocument {
       }
     }
   }
-  return {...document,alternatives:undefined,order:undefined,sections:undefined,parts,intervals,lyrics:[]}
+  // Copy metadata without evaluating lazy fields such as a source getter.
+  // Performance compilation consumes the semantic model only.
+  const performance = Object.defineProperties({}, Object.getOwnPropertyDescriptors(document)) as ScoreDocument
+  return Object.assign(performance, {alternatives:undefined,order:undefined,sections:undefined,parts,intervals,lyrics:[]})
 }
