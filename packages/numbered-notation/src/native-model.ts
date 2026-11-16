@@ -2,13 +2,14 @@ import { displayedTempo, measurePlaybackPasses, parseM3NGrace, parseM3NGroupPitc
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
 import type { TextMeasurer } from './native-measure.js'
+import { nativeNoteMetrics } from './native-note-metrics.js'
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
 export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno'; text: string; width: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
-  time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; graces: NativePitch[]
+  time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativePitch[]
   lyrics: Map<number, LyricRowData>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; paragraph: string
 }
@@ -17,6 +18,7 @@ export type NativeMeasure = {
   id: string; source: ScoreMeasure; part: number; index: number; columns: NativeColumn[]; beats: number
   breakBefore: boolean; breakAfter: boolean; extraGap: number; natural: number; minimum: number; label?: string
   start: number; end: number; continuation: boolean; lastFragment: boolean
+  naturalStart?: number; naturalEnd?: number; minimumStart?: number; minimumEnd?: number; barX?: number; openingBarX?: number
 }
 export type NativeProjection = { measures: NativeMeasure[]; glyphs: NativeGlyph[]; diagnostics: NativeDiagnostic[]; hasBass: boolean }
 export type NativeModelOptions = { includeBass?: boolean; noteGapEm?: number; minimumNoteGapEm?: number; textMeasurer: TextMeasurer }
@@ -79,22 +81,24 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const glyphMarks = segment === 0 && slot === 0 ? marks : []
           const glyphGraces = segment === 0 && slot === 0 ? graces : []
           const glyphAnnotations = segment === 0 && slot === 0 ? [event.chord, event.text, event.sectionLabelBreakAfter ? event.sectionLabel : undefined].filter((value): value is string => Boolean(value)) : []
-          const pitchWidth = sustain ? 13 : Math.max(...pitches.map(pitch => textWidth(pitch.degree, 22, 'M3N Numbers') + (pitch.accidental ? textWidth(pitch.accidental, 14) + 3 : 0)), 12)
-          let left = pitchWidth / 2 + glyphGraces.length * 14, right = pitchWidth / 2 + (writtenBeats % 1 ? 8 : 0)
+          const pitchWidth = sustain ? 22 * 0.42 : textWidth('0', 22, 'M3N Numbers')
+          const accidentalWidth = sustain ? 0 : [...(pitches[0]?.accidental ?? '')].reduce((width, symbol) => width + 22 * (0.72 * (symbol === '♯' ? 0.46 : symbol === '♭' ? 0.38 : 0.42) + 0.01), 0)
+          const durationBase = 2 ** Math.floor(Math.log2(writtenBeats))
+          const dotCount = Math.max(0, [1, 1.5, 1.75, 1.875].findIndex(ratio => Math.abs(writtenBeats / durationBase - ratio) < 1e-7))
+          let left = pitchWidth / 2 + accidentalWidth + glyphGraces.length * 14, right = pitchWidth / 2 + dotCount * 22 * 0.27
           if (event.postfixes.includes('arp') && event.kind === 'chord') left += 8
           for (const row of rows.values()) {
-            const width = textWidth(row.texts.join(''), 16)
+            const width = textWidth(row.texts.join(''), 22 * 0.82)
             left = Math.max(left, width / 2 + (row.annotation ? textWidth(row.annotation, 12) + 5 : 0))
             right = Math.max(right, width / 2)
           }
           for (const annotation of glyphAnnotations) { const width = textWidth(annotation); left = Math.max(left, width / 2); right = Math.max(right, width / 2) }
-          const upperOctaves = Math.max(0, ...pitches.map(pitch => pitch.octave)), lowerOctaves = Math.max(0, ...pitches.map(pitch => -pitch.octave))
-          const chordHeight = sustain ? 0 : (pitches.length - 1) * 29
-          const top = 22 + chordHeight + upperOctaves * 6 + glyphMarks.length * 15 + (glyphGraces.length ? 10 : 0)
-          const bottom = 8 + lowerOctaves * 6 + Math.max(0, Math.ceil(-Math.log2(writtenBeats))) * 5
+          const metrics = nativeNoteMetrics(pitches, writtenBeats, sustain)
+          const top = metrics.top + glyphMarks.length * 14.64 + (glyphGraces.length ? 10 : 0)
+          const bottom = metrics.bottom
           const id = ids.get(event)!
           const suffix = event.kind === 'tuplet' ? `-n${slot + 1}` : segment ? event.kind === 'rest' ? `-rest${segment + 1}` : `-sustain${segment + 1}` : ''
-          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, graces: glyphGraces, lyrics: rows, passes: activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
+          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
           result.glyphs.push(glyph); time += beats
         }
         if (event.kind === 'tuplet' && event.tuplet) event.pitches.forEach((pitch, slot) => append([pitch], event.beats / event.pitches.length, event.tuplet!.unitBeats, slot, 0, false))

@@ -1,4 +1,7 @@
-import { scoreCreditLines, type ScoreDocument, type ScoreEvent } from '@m3n/notation'
+import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
+import { nativeHeaderGeometry } from './native-header.js'
+export { wrapNativeText } from './native-header.js'
+import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 
@@ -6,9 +9,11 @@ export type NativeRenderOptions = {
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
   pageMargin?: number; systemGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; uniformSystemHeight?: boolean
   equalMeasures?: boolean; wrap?: 'normal' | 'compact'; wrapWidthRatio?: number
+  /** @internal Whether a separate minimum spacing policy was requested. */
+  pairedSpacing?: boolean
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'octave' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number }
-export type NativeLane = { id: string; y: number; top: number; bottom: number; rows: number[] }
+export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; rows: number[] }
 export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[] }
 export type NativePage = { index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
@@ -22,18 +27,6 @@ function validate(options: NativeRenderOptions) {
   if (options.noteGapEm !== undefined && (!Number.isFinite(options.noteGapEm) || options.noteGapEm < 0)) throw new Error('音符间距比例必须为非负有限数值。')
   if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0 || options.minimumNoteGapEm > (options.noteGapEm ?? 0.6))) throw new Error('最小间距必须非负且不大于自然间距。')
   if (options.wrapWidthRatio !== undefined && (!Number.isFinite(options.wrapWidthRatio) || options.wrapWidthRatio <= 0 || options.wrapWidthRatio > 1)) throw new Error('wrapWidthRatio 必须大于 0 且不大于 1。')
-}
-
-export function wrapNativeText(text: string, width: number, size: number, measurer: TextMeasurer, weight = 400): string[] {
-  const lines: string[] = []
-  let line = ''
-  for (const character of text) {
-    if (character === '\n') { lines.push(line); line = ''; continue }
-    if (line && measurer.measureText(line + character, { fontSize: size, fontFamily: 'serif', fontWeight: weight }).w > width) { lines.push(line); line = character.trimStart() }
-    else line += character
-  }
-  if (line) lines.push(line)
-  return lines
 }
 
 function relationsFor(document: ScoreDocument, projection: NativeProjection): NativeRelation[] {
@@ -122,12 +115,13 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         natural += measure.natural; minimum += measure.minimum
         widestNatural = Math.max(widestNatural, measure.natural); widestMinimum = Math.max(widestMinimum, measure.minimum)
         const equal = options.equalMeasures
-        const minWidth = equal ? widestMinimum * count : minimum
-        const naturalWidth = equal ? widestNatural * count : natural
-        if (minWidth > width * ratio && count > 1) break
-        const slack = (width * ratio - naturalWidth) / (width * ratio)
-        const compressionCost = options.wrap === 'compact' && options.minimumNoteGapEm === 0 ? 1 : 100
-        const score = 1 + slack * slack * (slack < 0 ? compressionCost : 1) + cost[stop + 1]!
+        const minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
+        const naturalWidth = equal ? widestNatural * count : measure.naturalEnd !== undefined && group[index]!.naturalStart !== undefined ? measure.naturalEnd - group[index]!.naturalStart! : natural
+        const capacity = width * ratio * (options.pairedSpacing ? 1 : options.wrap === 'compact' ? 1.16 : 0.94)
+        if ((options.pairedSpacing ? minWidth : naturalWidth) > capacity && count > 1) break
+        const slack = (capacity - naturalWidth) / (width * ratio)
+        const compressionCost = options.pairedSpacing || options.wrap === 'compact' ? 1 : 100
+        const score = slack * slack * (slack < 0 ? compressionCost : 1) + cost[stop + 1]!
         if (score < cost[index]!) { cost[index] = score; next[index] = stop + 1 }
       }
     }
@@ -139,7 +133,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
 
 export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions): NativeLayout {
   validate(supplied)
-  const options = { ...supplied, width: Math.max(320, Math.round(supplied.width)), noteGapEm: supplied.noteGapEm ?? 0.6, minimumNoteGapEm: supplied.minimumNoteGapEm ?? (supplied.noteGapEm === undefined ? 0.4 : 0), equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
+  const options = { ...supplied, pairedSpacing: supplied.minimumNoteGapEm !== undefined || supplied.noteGapEm === undefined, width: Math.max(320, Math.round(supplied.width)), noteGapEm: supplied.noteGapEm ?? 0.6, minimumNoteGapEm: supplied.minimumNoteGapEm ?? (supplied.noteGapEm === undefined ? 0.4 : 0), equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
   const margin = options.pageMargin ?? 32
   if (margin * 2 + 40 > options.width) throw new Error('简谱页边距过大。')
   let measurer = options.textMeasurer
@@ -152,38 +146,25 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   measurer ??= new DefaultTextMeasurer()
   const projection = projectNativeScore(document, { ...options, textMeasurer: measurer })
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
-  const title = wrapNativeText(document.title, available - 2, 32, measurer, 700).length * 42
-  const subtitle = wrapNativeText(document.subtitle, available - 2, 16, measurer).length * 24
-  const credits = scoreCreditLines(document).length * 21
-  const order = document.order?.length ? Math.ceil((100 + document.order.reduce((sum, name) => sum + measurer.measureText(name, { fontSize: 16 }).w + 43, 0)) / available) * 34 : 0
-  const headerHeight = title + subtitle + Math.max(credits, options.width < 600 ? credits + 28 : 28) + order + 20
-  const lines = breakMeasures(projection.measures, available - (projection.hasBass ? 16 : 0), options)
+  const headerHeight = nativeHeaderGeometry(document, options.width, margin, measurer, options.systemGap ?? 24).height
+  measureNativeHorizontal(projection.measures, options)
+  const lines = breakMeasures(projection.measures, available - (projection.hasBass ? 22 : 0), options)
   const systems: NativeSystem[] = lines.map((measures, index) => ({ index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
   const systemOf = new Map<NativeGlyph, number>()
   for (const system of systems) {
-    let x = margin + (projection.hasBass ? 16 : 0)
-    const total = system.measures.reduce((sum, measure) => sum + measure.natural, 0)
+    const x = margin
     const width = options.width - margin - x
-    const minimum = system.measures.reduce((sum, measure) => sum + measure.minimum, 0)
-    for (const measure of system.measures) {
-      const share = options.equalMeasures ? width / system.measures.length : measure.minimum + (width - minimum) * (measure.natural / Math.max(1, total))
-      measure.start = x; measure.end = x + share
-      const fixed = measure.columns.reduce((sum, column) => sum + column.left + column.right, 24)
-      const springs = measure.columns.reduce((sum, column) => sum + column.gap, 0)
-      let cursor = x + 12
-      for (const column of measure.columns) {
-        column.x = cursor + column.left
-        for (const glyph of column.glyphs) { glyph.x = column.x; systemOf.set(glyph, system.index) }
-        cursor += column.left + column.right + Math.max(0, share - fixed) * column.gap / Math.max(1e-9, springs)
-      }
-      x += share
-    }
-    const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
+    const glyphs = options.equalMeasures
+      ? system.measures.flatMap((measure, index) => placeNativeHorizontal([measure], options, x + index * width / system.measures.length, width / system.measures.length))
+      : placeNativeHorizontal(system.measures, options, x, width)
+    for (const glyph of glyphs) systemOf.set(glyph, system.index)
     const laneNames = [...new Set(glyphs.map(glyph => glyph.lane))].sort((a, b) => a === 'melody' ? -1 : b === 'melody' ? 1 : a === 'bass' ? 1 : b === 'bass' ? -1 : a.localeCompare(b))
     for (const lane of laneNames) {
       const members = glyphs.filter(glyph => glyph.lane === lane)
       const rows = [...new Set(members.flatMap(glyph => [...glyph.lyrics].filter(([, row]) => row.texts.some(text => text.replaceAll('\u200B', '').trim())).map(([row]) => row)))].sort((a, b) => a - b)
-      system.lanes.push({ id: lane, y: 0, top: Math.max(28, ...members.map(glyph => glyph.top + glyph.annotations.length * 22)), bottom: Math.max(10, ...members.map(glyph => glyph.bottom)) + rows.length * 24 + (lane.startsWith('alternative:') ? 8 : 0), rows })
+      const bodyBottom = Math.max(7.15, ...members.map(glyph => glyph.bottom))
+      const lyricsHeight = rows.length ? 22 * 0.32 + rows.length * 22 * 0.82 + (rows.length - 1) * 22 * 0.24 : 0
+      system.lanes.push({ id: lane, y: 0, top: Math.max(20.35, ...members.map(glyph => glyph.top + glyph.annotations.length * 22)), bodyBottom, bottom: bodyBottom + lyricsHeight, rows })
     }
   }
   for (const relation of relations) {
@@ -195,7 +176,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       const lane = system.lanes.find(lane => lane.id === relation.first.lane)
       if (lane && relation.kind !== 'inst') {
         const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === lane.id)
-        lane.top = Math.max(lane.top, Math.max(...members.map(glyph => glyph.top)) + 32 + relation.level * 14 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22)
+        const selected = members.filter(glyph => relation.first.event && relation.last.event && glyph.event && relation.first.event.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event.sourceStart)
+        const ratio = Math.min(1, Math.abs(relation.last.x - relation.first.x) / 55)
+        const height = relation.kind === 'tie' || relation.kind === 'slur' ? 11 * ratio * (2 - ratio) : relation.kind === 'tuplet' ? 19 : 14
+        lane.top = Math.max(lane.top, Math.max(0, ...(selected.length ? selected : members).map(glyph => glyph.top)) + height + relation.level * 3.3 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22)
       }
     }
   }
@@ -204,18 +188,18 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     for (const system of systems) for (const lane of system.lanes) {
       const paragraph = system.measures[0]?.columns[0]?.glyphs[0]?.paragraph ?? '0'
       const key = `${paragraph}:${lane.id}:${system.volta}`, old = envelopes.get(key)
-      envelopes.set(key, { top: Math.max(lane.top, old?.top ?? 0), bottom: Math.max(lane.bottom - lane.rows.length * 24, old?.bottom ?? 0) })
+      envelopes.set(key, { top: Math.max(lane.top, old?.top ?? 0), bottom: Math.max(lane.bodyBottom ?? lane.bottom, old?.bottom ?? 0) })
     }
     for (const system of systems) for (const lane of system.lanes) {
       const paragraph = system.measures[0]?.columns[0]?.glyphs[0]?.paragraph ?? '0'
       const envelope = envelopes.get(`${paragraph}:${lane.id}:${system.volta}`)!
-      lane.top = envelope.top; lane.bottom = envelope.bottom + lane.rows.length * 24
+      lane.top = envelope.top; lane.bodyBottom = envelope.bottom; lane.bottom = envelope.bottom + (lane.rows.length ? 7.04 + lane.rows.length * 18.04 + (lane.rows.length - 1) * 5.28 : 0)
     }
   }
   const pageHeight = Math.floor(options.width * 277 / 190), pages: NativePage[] = [{ index: 0, width: options.width, height: 0, systems: [] }]
   let y = margin + headerHeight
   for (const system of systems) {
-    const height = system.lanes.reduce((sum, lane) => sum + lane.top + lane.bottom + 14, system.volta ? 28 : 0)
+    const height = system.lanes.reduce((sum, lane) => sum + lane.top + lane.bottom, (system.lanes.length - 1) * 20.625 + (system.volta ? 28 : 0))
     let page = pages.at(-1)!
     if (page.systems.length) y += system.measures[0]?.extraGap ?? 0
     if (options.paged && y + height > pageHeight - margin && page.systems.length) { page.height = pageHeight; page = { index: pages.length, width: options.width, height: 0, systems: [] }; pages.push(page); y = margin }
@@ -225,7 +209,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     for (const lane of system.lanes) {
       axis += lane.top; lane.y = axis
       for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) if (glyph.lane === lane.id) glyph.y = axis
-      axis += lane.bottom + 14
+      axis += lane.bottom + (lane === system.lanes.at(-1) ? 0 : 20.625)
     }
     system.bottom = axis; page.systems.push(system)
     y = axis + (options.systemGap ?? 24)

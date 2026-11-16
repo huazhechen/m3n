@@ -5,7 +5,7 @@ export type TextMeasurer = { measureText(text: string, style: TextStyle): TextMe
 
 export class DefaultTextMeasurer implements TextMeasurer {
   measureText(text: string, style: TextStyle): TextMetrics {
-    return { w: [...text].reduce((width, character) => width + style.fontSize * (/\s/.test(character) ? 0.3 : character.codePointAt(0)! > 255 ? 1 : 0.6), 0), h: style.fontSize, baseline: style.fontSize * 0.8 }
+    return { w: [...text].reduce((width, character) => width + style.fontSize * (character.codePointAt(0)! > 127 ? 1 : 0.58), 0), h: style.fontSize, baseline: style.fontSize * 0.8 }
   }
 }
 

@@ -1,6 +1,9 @@
 import { displayedTempo, scoreCreditLines } from '@m3n/notation'
+import { nativeBeamCount } from './native-note-metrics.js'
+import { nativeHeaderGeometry } from './native-header.js'
+import { nativeBarMetrics } from './native-horizontal.js'
 import { NUMBER_FONT_CSS } from './font-data.js'
-import { wrapNativeText, type NativeLayout, type NativeLane, type NativeRelation, type NativeSystem } from './native-layout.js'
+import { type NativeLayout, type NativeLane, type NativeRelation, type NativeSystem } from './native-layout.js'
 import type { NativeGlyph, NativePitch, NativeMeasure } from './native-model.js'
 
 const xml = (value: string | number) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
@@ -38,11 +41,14 @@ class SvgPainter {
     return `<text${attrs({ x: x - offset, y, 'font-size': size, 'font-family': family, fill: '#000', 'xml:space': 'preserve', ...extra })}>${xml(text)}</text>`
   }
 
-  pitch(pitch: NativePitch, x: number, y: number, size = 22): string {
-    const scale = size / 22
+  pitch(pitch: NativePitch, x: number, y: number, size = 22, beams = 0): string {
     let svg = this.text(pitch.degree, x, y, size, 'M3N Numbers', { 'text-anchor': 'middle' })
     if (pitch.accidental) svg += this.text(pitch.accidental, x - size * 0.44, y - size * 0.07, size * 0.68, 'serif', { 'text-anchor': 'end' })
-    for (let index = 0; index < Math.abs(pitch.octave); index++) svg += circle(x, y + (pitch.octave > 0 ? -size - (index + 0.3) * 6 * scale : (index + 1.2) * 6 * scale), 1.5 * scale)
+    for (let index = 0; index < Math.abs(pitch.octave); index++) {
+      const beamOffset = beams ? size * (0.92 + (beams - 1) * 0.14 + 0.055 - 0.84) : 0
+      const offset = pitch.octave > 0 ? -size * (0.955 + index * 0.23) : size * (0.195 + index * 0.23) + beamOffset
+      svg += circle(x, y + offset, size * 0.075)
+    }
     return svg
   }
 
@@ -70,15 +76,16 @@ class SvgPainter {
   glyph(glyph: NativeGlyph, system: NativeSystem, lane: NativeLane): string {
     let music = ''
     const role = glyph.sustain ? 'sustain' : undefined
-    if (glyph.sustain) music += line(glyph.x - 5, glyph.y - 7, glyph.x + 5, glyph.y - 7, 1.8)
+    if (glyph.sustain) music += line(glyph.x - 4.62, glyph.y - 6.6, glyph.x + 4.62, glyph.y - 6.6, 2.2)
     else {
-      glyph.pitches.forEach((pitch, index) => { music += this.pitch(pitch, glyph.x, glyph.y - index * 29) })
+      const beamCount = Math.max(0, -Math.floor(Math.log2(glyph.writtenBeats)))
+      glyph.pitches.forEach((pitch, index) => { music += this.pitch(pitch, glyph.x, glyph.y + (glyph.pitchOffsets?.[index] ?? -index * 29), 22, index === 0 ? beamCount : 0) })
       if (glyph.multiRest) music += this.text(String(glyph.multiRest), glyph.x, glyph.y - 26, 13, 'M3N Numbers', { 'text-anchor': 'middle' })
       const base = 2 ** Math.floor(Math.log2(glyph.writtenBeats)), ratio = glyph.writtenBeats / base
       const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
-      for (let index = 0; index < dots; index++) music += circle(glyph.x + 11 + index * 5, glyph.y - 7)
+      for (let index = 0; index < dots; index++) music += circle(glyph.x + this.layout.measurer.measureText('0',{fontSize:22,fontFamily:'M3N Numbers'}).w / 2 + 4.29 + index * 5.94, glyph.y - 3.52, 1.65)
       const beams = Math.max(0, Math.round(-Math.log2(base)))
-      for (let index = 0; index < beams; index++) music += line(glyph.x - 6, glyph.y + 7 + index * 4, glyph.x + 7, glyph.y + 7 + index * 4, 1.2)
+      for (let index = 0; index < beams; index++) music += line(glyph.x - 6, glyph.y + 3.245 + index * 3.08, glyph.x + 7, glyph.y + 3.245 + index * 3.08, 1.21)
     }
     if (glyph.graces.length) {
       const start = glyph.x - glyph.left + 3
@@ -113,9 +120,9 @@ class SvgPainter {
     const lyrics: string[] = []
     for (const [row, data] of glyph.lyrics) {
       const visible = lane.rows.indexOf(row), text = data.texts.join('')
-      const y = lane.y + Math.max(glyph.bottom, 12) + 22 + Math.max(0, visible) * 24
+      const y = lane.y + (lane.bodyBottom ?? glyph.bottom) + 22 * (0.32 + 0.82 * 0.8) + Math.max(0, visible) * 22 * (0.82 + 0.24)
       const meta = { 'data-m3n-id': glyph.xmlId, 'data-m3n-rendition': row + 1, 'data-m3n-passes': [...(data.passes ?? [row + 1])].join('-'), 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId }
-      lyrics.push(this.text(text || '\u200B', glyph.x, y, 16, 'serif', { ...meta, 'text-anchor': 'middle', 'data-m3n-role': 'lyric', 'data-m3n-underlined': data.underlined ? 'true' : undefined }))
+      lyrics.push(this.text(text || '\u200B', glyph.x, y, 22 * 0.82, 'serif', { ...meta, 'text-anchor': 'middle', 'data-m3n-role': 'lyric', 'data-m3n-underlined': data.underlined ? 'true' : undefined }))
       const width = this.layout.measurer.measureText(text, { fontSize: 16 }).w
       if (data.underlined) lyrics.push(line(glyph.x - width / 2, y + 3, glyph.x + width / 2, y + 3, 0.8))
       if (data.annotation) lyrics.push(this.text(data.annotation, glyph.x - width / 2 - 4, y, 12, 'serif', { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' }))
@@ -135,12 +142,11 @@ class SvgPainter {
   }
 
   bar(kind: string | undefined, x: number, y: number): string {
-    const top = y - 23, bottom = y + 8
-    if (kind === 'rptstart') return line(x, top, x, bottom, 3) + line(x + 5, top, x + 5, bottom) + circle(x + 10, y - 13) + circle(x + 10, y - 3)
-    if (kind === 'rptend' || kind === 'rptboth') return circle(x - 10, y - 13) + circle(x - 10, y - 3) + line(x - 5, top, x - 5, bottom) + line(x, top, x, bottom, 3)
-    if (kind === 'end') return line(x - 5, top, x - 5, bottom) + line(x, top, x, bottom, 3)
-    if (kind === 'dbl') return line(x - 4, top, x - 4, bottom) + line(x, top, x, bottom)
-    return line(x, top, x, bottom)
+    const geometry = nativeBarMetrics(kind), top = y - 6.6 - geometry.size / 2
+    let svg = ''
+    for (const bar of geometry.bars) svg += `<rect${attrs({ x: x - geometry.anchor + bar.x, y: top, width: bar.width, height: geometry.size, fill: '#000' })}/>`
+    for (const dot of geometry.dots) for (const ratio of [0.38, 0.62]) svg += circle(x - geometry.anchor + dot, top + geometry.size * ratio, geometry.radius)
+    return svg
   }
 
   measure(measure: NativeMeasure, system: NativeSystem): string {
@@ -151,10 +157,9 @@ class SvgPainter {
       if (!members.length) continue
       for (const glyph of members) content += this.glyph(glyph, system, lane)
       if (!lane.id.startsWith('alternative:')) {
-        if (!measure.continuation && measure.source.left === 'rptstart') content += this.bar('rptstart', measure.start + 2, lane.y)
+        if (!measure.continuation && measure.source.left === 'rptstart') content += this.bar('rptstart', measure.openingBarX ?? measure.start + 2, lane.y)
         const closed = measure.lastFragment ? measure.source.right : undefined
-        content += this.bar(closed, measure.end - 3, lane.y)
-        if (closed === 'rptboth' && system.measures.at(-1) !== measure) content += this.bar('rptstart', measure.end + 2, lane.y)
+        if (measure.lastFragment) content += this.bar(closed, measure.barX ?? measure.end - 3, lane.y)
       } else {
         content += this.text('(', members[0]!.x - members[0]!.left - 6, lane.y, 22, 'M3N Numbers')
         content += this.text(')', members.at(-1)!.x + members.at(-1)!.right + 2, lane.y, 22, 'M3N Numbers')
@@ -211,13 +216,8 @@ class SvgPainter {
       const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id)
       for (let index = 1; index < glyphs.length; index++) {
         const a = glyphs[index - 1]!, b = glyphs[index]!
-        if (a.sustain || b.sustain || a.pitches[0]?.degree === '0' || b.pitches[0]?.degree === '0') continue
-        const unit = a.event?.meterUnit ?? this.layout.document.meterUnit, count = a.event?.meterCount ?? this.layout.document.meterCount
-        const group = 4 / unit * (unit >= 8 && count % 3 === 0 ? 3 : 1)
-        if (a.event?.kind !== 'tuplet' && Math.floor((a.time + 1e-8) / group) !== Math.floor((b.time + 1e-8) / group)) continue
-        if (a.event?.kind === 'tuplet' && a.event !== b.event) continue
-        const beams = Math.max(0, -Math.floor(Math.log2(Math.max(a.writtenBeats, b.writtenBeats))))
-        for (let beam = 0; beam < beams; beam++) svg += line(a.x + 7, a.y + 7 + beam * 4, b.x - 6, b.y + 7 + beam * 4, 1.2)
+        const beams = nativeBeamCount(a, b)
+        for (let beam = 0; beam < beams; beam++) svg += line(a.x + 5.577, a.y + 3.245 + beam * 3.08, b.x - 5.577, b.y + 3.245 + beam * 3.08, 1.21)
       }
     }
     for (const relation of system.relations) svg += this.relation(relation, system)
@@ -240,21 +240,21 @@ class SvgPainter {
   }
 
   header(): string {
-    const { document, options, margin, measurer } = this.layout, width = options.width - 2 * margin
-    let svg = '', y = margin
-    for (const [value, size, step, weight] of [[document.title, 32, 42, 700], [document.subtitle, 16, 24, 400]] as const) for (const text of wrapNativeText(value, width - 2, size, measurer, weight)) {
-      y += step
-      svg += this.text(text, options.width / 2, y - 8, size, 'serif', { 'text-anchor': 'middle', 'font-weight': weight })
+    const { document, options, margin, measurer } = this.layout
+    const geometry = nativeHeaderGeometry(document, options.width, margin, measurer, options.systemGap ?? 24)
+    let svg = '', y = geometry.sidesBottom
+    for (const [lines, size, top, step, weight] of [[geometry.title, 32, geometry.titleTop, 40, 700], [geometry.subtitle, 16, geometry.subtitleTop, 20, 400]] as const) for (const [index, text] of lines.entries()) {
+      svg += this.text(text, options.width / 2, top + size * 0.8 + index * step, size, 'serif', { 'text-anchor': 'middle', 'font-weight': weight })
     }
     const credits = scoreCreditLines(document).map(text => { const colon = text.indexOf('：'); return [text.slice(0, colon + 1), text.slice(colon + 1)] as const })
     const nameWidth = Math.max(0, ...credits.map(([, name]) => measurer.measureText(name, { fontSize: 14 }).w))
     const labelWidth = Math.max(0, ...credits.map(([label]) => measurer.measureText(label, { fontSize: 14 }).w))
     for (const [index, [label, name]] of credits.entries()) {
-      const baseline = y + 21 * (index + 1)
+      const baseline = geometry.creditsTop + 14 * 0.8 + 21 * index
       svg += this.text(label, options.width - margin - nameWidth - labelWidth - 16, baseline, 14)
       svg += this.text(name, options.width - margin, baseline, 14, 'serif', { 'text-anchor': 'end' })
     }
-    const signaturesY = y + (options.width < 600 ? credits.length * 21 + 26 : 22)
+    const signaturesY = geometry.signaturesTop + 24.78
     const signatures = [`1=${document.key}`, `${document.meterCount}/${document.meterUnit}`]
     if (document.hasExplicitTempo) {
       const tempo = displayedTempo(document.tempo, document.meterCount, document.meterUnit)
@@ -262,10 +262,18 @@ class SvgPainter {
     }
     let x = margin
     for (const signature of signatures) {
-      svg += /^[♪♩]/.test(signature) ? this.tempo(signature, x, signaturesY) : this.text(signature, x, signaturesY, 16, 'M3N Numbers')
-      x += measurer.measureText(signature, { fontSize: 16, fontFamily: 'M3N Numbers' }).w + 16
+      if (signature === `${document.meterCount}/${document.meterUnit}`) {
+        const numerator = String(document.meterCount), denominator = String(document.meterUnit)
+        const meterWidth = Math.max(measurer.measureText(numerator, {fontSize:18,fontFamily:'M3N Numbers'}).w, measurer.measureText(denominator, {fontSize:18,fontFamily:'M3N Numbers'}).w) + 2.88
+        svg += this.text(numerator, x + meterWidth / 2, geometry.signaturesTop + 14.4, 18, 'M3N Numbers', {'text-anchor':'middle'})
+          + `<rect${attrs({x,y:geometry.signaturesTop+19.44,width:meterWidth,height:1.08,fill:'#000'})}/>`
+          + this.text(denominator, x + meterWidth / 2, geometry.signaturesTop + 36.36, 18, 'M3N Numbers', {'text-anchor':'middle'})
+        x += meterWidth + 16
+      } else {
+        svg += /^[♪♩]/.test(signature) ? this.tempo(signature, x, signaturesY) : this.text(signature, x, signaturesY, 16, 'M3N Numbers')
+        x += measurer.measureText(signature, { fontSize: 16, fontFamily: 'M3N Numbers' }).w + 16
+      }
     }
-    y += Math.max(credits.length * 21, options.width < 600 ? credits.length * 21 + 28 : 28) + 8
     if (document.order) {
       let x = margin
       y += 24
