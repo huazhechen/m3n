@@ -129,6 +129,14 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           }
           return `@note(${quote(native)}${repeated ? ',showacc=false' : ''})`
         }
+        const settingsControls = (settings: Pick<ScoreEvent, 'key' | 'meterCount' | 'meterUnit' | 'tempo'>) => {
+          const controls: string[] = []
+          if (!options.fixedDo && settings.key !== activeKey) { accidentals.clear(); controls.push(keyMark(settings.key, options.transpose)); activeKey = settings.key }
+          const meter = `${settings.meterCount ?? document.meterCount}/${settings.meterUnit ?? document.meterUnit}`
+          if (meter !== activeMeter) { controls.push(`@meter(${settings.meterCount},${settings.meterUnit},size=18px)`); activeMeter = meter }
+          if (settings.tempo !== undefined && settings.tempo !== activeTempo) { controls.push(tempoMark(settings.tempo * (options.tempoScale ?? 1), settings.meterCount ?? document.meterCount, settings.meterUnit ?? document.meterUnit)); activeTempo = settings.tempo }
+          return controls
+        }
         const measureId = `m3n-measure-${partIndex + 1}-${hostIndex + measureIndex + 1}`
         const melodyMeasure = melody[measureIndex]
         const firstEvent = melodyMeasure?.events[0] ?? measure.events[0]
@@ -148,6 +156,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         // Zero-time Segno stays on the music axis and wraps with the first event.
         if (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno'))) pieces.push('@symbol(segno,size=16px)')
         if (measure.multiRest) {
+          if (measure.multiRestState) pieces.push(...settingsControls(measure.multiRestState))
           const item = bind(`@rest(${measure.multiRest})`, undefined, measureId, 0)
           pieces.push(item.expression)
           firsts.set(measureIndex, item.label); lasts.set(measureIndex, item.label)
@@ -156,11 +165,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         for (const event of measure.events) {
           const eventParagraph = `${partIndex}:${paragraphOf(staff === 'bass' ? firstEvent?.sourceStart ?? event.sourceStart : event.sourceStart)}`
           if (paragraph !== eventParagraph) { flushParagraph(); paragraph = eventParagraph }
-          const controls: string[] = []
-          if (!options.fixedDo && event.key !== activeKey) { accidentals.clear(); controls.push(keyMark(event.key, options.transpose)); activeKey = event.key }
-          const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
-          if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
-          if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(tempoMark(event.tempo * (options.tempoScale ?? 1), event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)); activeTempo = event.tempo }
+          const controls = settingsControls(event)
           // Native up members stack from the note outwards. Keep articulations
           // inside ornaments/fingerings, with expression marks outside both.
           const articulations: string[] = [], decorations: string[] = [], expressionMarks: string[] = []

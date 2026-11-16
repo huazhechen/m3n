@@ -51,6 +51,18 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     notes: [], elements: [], tempos: [{ beat: 0, qpm: document.tempo }],
     meters: [{ beat: 0, count: document.meterCount, unit: document.meterUnit }], beats: 0,
   }
+  const meterFor = (settings: Pick<ScoreEvent, 'meterCount' | 'meterUnit'>) => {
+    const count = settings.meterCount ?? document.meterCount, unit = settings.meterUnit ?? document.meterUnit
+    if (!Number.isInteger(count) || count <= 0 || !Number.isInteger(Math.log2(unit))) throw new Error('播放拍号无效。')
+    return { count, unit }
+  }
+  const applySettings = (settings: Pick<ScoreEvent, 'tempo' | 'meterCount' | 'meterUnit'>, beat: number) => {
+    const tempo = settings.tempo ?? document.tempo
+    if (!Number.isFinite(tempo) || tempo <= 0) throw new Error('播放速度必须为正数。')
+    const meter = meterFor(settings)
+    if (result.tempos.at(-1)!.qpm !== tempo) result.tempos.push({ beat, qpm: tempo })
+    if (result.meters.at(-1)!.count !== meter.count || result.meters.at(-1)!.unit !== meter.unit) result.meters.push({ beat, ...meter })
+  }
   let partStart = 0
   for (const [partName, part] of unfolded.parts) {
     const pitches = { melody: resolveScorePitches(part.melody), bass: resolveScorePitches(part.bass) }
@@ -63,20 +75,14 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
         if (!measure) continue
         let cursor = measureStart
         if (measure.multiRest) {
-          const meter = result.meters.at(-1)!
+          if (staff === 'melody' && measure.multiRestState) applySettings(measure.multiRestState, cursor)
+          const meter = measure.multiRestState ? meterFor(measure.multiRestState) : result.meters.at(-1)!
           cursor += measure.multiRest * meter.count * 4 / meter.unit
           pendingTies[staff].clear()
         }
         for (const event of measure.events) {
           if (!Number.isFinite(event.beats) || event.beats <= 0) throw new Error('播放音符时值必须为正数。')
-          if (staff === 'melody') {
-            const tempo = event.tempo ?? document.tempo
-            if (!Number.isFinite(tempo) || tempo <= 0) throw new Error('播放速度必须为正数。')
-            if (result.tempos.at(-1)!.qpm !== tempo) result.tempos.push({ beat: cursor, qpm: tempo })
-            const count = event.meterCount ?? document.meterCount, unit = event.meterUnit ?? document.meterUnit
-            if (!Number.isInteger(count) || count <= 0 || !Number.isInteger(Math.log2(unit))) throw new Error('播放拍号无效。')
-            if (result.meters.at(-1)!.count !== count || result.meters.at(-1)!.unit !== unit) result.meters.push({ beat: cursor, count, unit })
-          }
+          if (staff === 'melody') applySettings(event, cursor)
           const id = ids.get(event)!
           const rendition = Number(/-rend(\d+)$/.exec(id)?.[1] ?? 1)
           const xmlId = id.replace(/-rend\d+$/, '')

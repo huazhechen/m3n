@@ -59,6 +59,19 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       const state = states.get(lane) ?? { key: document.key, tempo: document.tempo, meter: `${document.meterCount}/${document.meterUnit}`, dynamic: '' }
       states.set(lane, state)
       const accidentals = new Map<string, string>()
+      const settingsControls = (settings: Pick<ScoreEvent, 'key' | 'meterCount' | 'meterUnit' | 'tempo'>) => {
+        const controls: NativeControl[] = []
+        const control = (kind: NativeControl['kind'], text: string) => controls.push(measureNativeControl(kind, text, options.textMeasurer))
+        if (settings.key !== state.key) { control('key', numberedKeyLabel(settings.key)); state.key = settings.key; accidentals.clear() }
+        const meter = `${settings.meterCount ?? document.meterCount}/${settings.meterUnit ?? document.meterUnit}`
+        if (meter !== state.meter) { control('meter', meter); state.meter = meter }
+        if (settings.tempo !== undefined && settings.tempo !== state.tempo) {
+          const tempo = displayedTempo(settings.tempo, settings.meterCount ?? document.meterCount, settings.meterUnit ?? document.meterUnit)
+          control('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`); state.tempo = settings.tempo
+        }
+        return controls
+      }
+
       for (const [eventIndex, event] of measure.events.entries()) {
         if (!Number.isFinite(event.beats) || event.beats <= 0) throw new Error('简谱音符时值必须为正数。')
         const controls: NativeControl[] = []
@@ -67,13 +80,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         }
         if (staff === 'melody' && event.sectionLabel && !event.sectionLabelBreakAfter) control('section', event.sectionLabel)
         if (eventIndex === 0 && (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno')))) control('segno', '𝄋')
-        if (event.key !== state.key) { control('key', numberedKeyLabel(event.key)); state.key = event.key; accidentals.clear() }
-        const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
-        if (meter !== state.meter) { control('meter', meter); state.meter = meter }
-        if (event.tempo !== undefined && event.tempo !== state.tempo) {
-          const tempo = displayedTempo(event.tempo, event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)
-          control('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`); state.tempo = event.tempo
-        }
+        controls.push(...settingsControls(event))
         const graces = event.postfixes.flatMap(mark => { const grace = parseM3NGrace(mark); return grace ? (parseM3NGroupPitches(grace.pitchSource) ?? []).map(pitch => ({ ...numberedPitch(pitch, event.octaveShift), writtenBeats: 1 / 2 ** (grace.depth + 1) })) : [] })
         for (const mark of event.postfixes) if (!known.has(mark) && !parseM3NGrace(mark)) result.diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${mark}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
         const marks = event.postfixes.filter(mark => known.has(mark) && mark !== 'arp')
@@ -148,9 +155,10 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         }
       }
       if (measure.multiRest) {
+        const controls = measure.multiRestState ? settingsControls(measure.multiRestState) : []
         const [count, unit] = state.meter.split('/').map(Number)
-        const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.multiRest * count! * 4 / unit!, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls: [], marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest, paragraph: `${partIndex}:0` }
-        if (measure.navigation?.includes('segno')) glyph.controls.push(measureNativeControl('segno', '𝄋', options.textMeasurer))
+        const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.multiRest * count! * 4 / unit!, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls, marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest, paragraph: `${partIndex}:0` }
+        if (measure.navigation?.includes('segno')) glyph.controls.unshift(measureNativeControl('segno', '𝄋', options.textMeasurer))
         glyph.markLayout = []
         const ink = nativeSvgInk(painter.music(glyph), options.textMeasurer)
         glyph.musicTop = -ink.top

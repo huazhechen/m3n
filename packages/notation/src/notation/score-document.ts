@@ -47,6 +47,8 @@ export type ScoreMeasure = {
   breakBefore?: boolean
   breakAfter?: boolean
   multiRest?: number
+  /** Settings at the onset of a rest-only measure, which has no ScoreEvent. */
+  multiRestState?: { key: string; meterCount: number; meterUnit: number; tempo: number }
   repeatCount?: number
   barEnd?: number
 }

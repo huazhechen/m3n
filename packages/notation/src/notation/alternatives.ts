@@ -76,11 +76,11 @@ export function alternativePerformance(document: ScoreDocument): ScoreDocument {
   let occurrence = 0
   for (const [name,part] of document.parts) {
     const indexes = document.order ? orderedMeasureIndexes(part.melody, document.order) : playbackMeasureIndexes(part.melody)
-    const visits = new Map<ScoreMeasure,number>()
+    const measureVisits = new Map<ScoreMeasure,number>()
     const output = {melody:[] as ScoreMeasure[],bass:[] as ScoreMeasure[]}
     for (const index of indexes) {
       const host = part.melody[index]!
-      const visit = (visits.get(host) ?? 0)+1; visits.set(host,visit)
+      const visit = (measureVisits.get(host) ?? 0)+1; measureVisits.set(host,visit)
       const pass = host.ending ? [...parsePassRange(host.ending)][visit-1] ?? visit : visit
       const selected = alternativeMeasure(document,host,pass)
       const offset = ++occurrence * sourceStride
@@ -88,7 +88,7 @@ export function alternativePerformance(document: ScoreDocument): ScoreDocument {
         const copy={...event,playbackId:`${ids.get(event)}${pass>1?`-rend${pass}`:''}`,sourceStart:event.sourceStart+offset,sourceEnd:event.sourceEnd+offset,navigation:[]}
         if (staff==='melody' && index===0 && selected!==host) copy.dynamic ??= host.events[0]?.dynamic
         copies.push({source:event,event:copy,staff});return copy
-      }),...(measure?.multiRest?{multiRest:measure.multiRest}:{})})
+      }),...(measure?.multiRest?{multiRest:measure.multiRest}:{}),...(measure?.multiRestState?{multiRestState:{...measure.multiRestState}}:{})})
       output.melody.push(clone(selected,'melody')); output.bass.push(clone(part.bass[index],'bass'))
     }
     parts.set(name,output)

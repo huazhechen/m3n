@@ -205,7 +205,9 @@ class SymbolTemporal extends TemporalNodeBase implements PlaybackFlow {
     constructor(ast: ResolvedSymbolFunction) {
         super();
         this.ast = ast;
-        this.mergeKey = DEFAULT_KEY;
+        // Segno marks an onset. Consume it before shared rest insertion,
+        // including when only one of the parallel voices writes the mark.
+        this.mergeKey = ast.definition.name === "segno" ? Number.MAX_SAFE_INTEGER : DEFAULT_KEY;
         this.onTimeState = ast.definition.onTimeState;
         this.emitPlayback = ast.definition.emitPlayback;
         this.playbackMarks = ast.definition.playbackMarks;

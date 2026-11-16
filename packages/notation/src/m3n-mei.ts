@@ -149,6 +149,10 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
     const previousKey = key
     const changes = new Map<number, string>()
     let openingKey: string | undefined
+    if (measure?.multiRestState && measure.multiRestState.key !== key) {
+      openingKey = measure.multiRestState.key
+      key = openingKey
+    }
     for (const [eventIndex, event] of (measure?.events ?? []).entries()) {
       if (event.key !== key) {
         if (eventIndex === 0) openingKey = event.key
@@ -191,6 +195,11 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
   const meterChangeForMeasure = (measure: ScoreMeasure | undefined) => {
     let meter = previousMeter
     let openingMeter: typeof meter | undefined
+    if (measure?.multiRestState) {
+      const next = { count: measure.multiRestState.meterCount, unit: measure.multiRestState.meterUnit }
+      if (next.count !== meter.count || next.unit !== meter.unit) openingMeter = next
+      meter = next
+    }
     for (const [eventIndex, event] of (measure?.events ?? []).entries()) {
       const next = { count: event.meterCount ?? meter.count, unit: event.meterUnit ?? meter.unit }
       if (next.count !== meter.count || next.unit !== meter.unit) {
@@ -253,6 +262,12 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       const label = value === 'fine' ? 'Fine' : ''
       return `<repeatMark staff="${staffNumber}" ${anchor} place="above" func="${func}">${label}</repeatMark>`
     }) : []
+    const restTempoControls: string[] = []
+    if (staffNumber === 1 && measure?.multiRestState && measure.multiRestState.tempo !== previousTempo) {
+      const state = measure.multiRestState
+      previousTempo = state.tempo
+      restTempoControls.push(renderTempoXml(state.tempo, state.meterUnit, 'tstamp="1"', `m3n-tempo-${++tempoIndex}`, state.meterCount))
+    }
     const tempoControls = staffNumber === 1 ? events.flatMap((event) => {
       if (document.order && event === document.parts.values().next().value?.melody[0]?.events[0]) return []
       if (event.tempo === undefined || (event.tempo === previousTempo && !(document.order && event.sectionLabel))) return []
@@ -310,7 +325,7 @@ export function m3nToMei(source: string, suppliedDocument?: ScoreDocument, conte
       if (interval.kind === '8va' || interval.kind === '8vb') return [`<octave staff="${staffNumber}" dis="8" dis.place="${interval.kind === '8va' ? 'above' : 'below'}" startid="#${startid}" endid="#${endid}"/>`]
       return []
     })
-    return [...tempoControls, ...eventControls, ...navigationControls, ...intervalControls].map((xml) => `  ${xml}`).join('\n')
+    return [...restTempoControls, ...tempoControls, ...eventControls, ...navigationControls, ...intervalControls].map((xml) => `  ${xml}`).join('\n')
   }
 
   let segmentIndex = 0

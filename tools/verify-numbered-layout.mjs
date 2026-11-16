@@ -36,6 +36,7 @@ try {
   scores.push(
     { file: 'regression-lyrics', source: '{4/4}\nN: ' + Array(12).fill('(1 2) (3 4) 5 6 |').join(' ') + '\nL: ' + '“春天，花开！”'.repeat(12) + '\nL2: ' + 'internationalization '.repeat(12) },
     { file: 'regression-relations', source: '{6/8}\nN: ||: {lg}(1d 2d 3d) [1d3d5d:h]{hold} 1{ac(7d)}{/} | {cresc}1^.{/} :||\n---\nN: {rest=2} | 1{fermata} 2 3 |||' },
+    { file: 'regression-multi-rest-settings', source: '{4/4}{120qpm}\nN: 1 2 3 4 | {segno}{key=G}{6/8}{60qpm}{rest=2} | 1 2 3 |||\nB: 1d^ 5d^ | {rest=2} | 1d 2d 3d |' },
     { file: 'regression-controls-chords-lyrics', source: '{4/4}\nN: 1 2 3 4 | {key=G} {2/4} {80qpm} [1d3d5d:h]^~ | [1d3d5d:h]^ |\nB: 1d 2d 3d 4d | 5d^ | 5d^ |\n---\nN: ||: {4/4} 1 2 3 4 :|||\nB: 1d^ 5d^ |||\nL: (起来，)春(天里)好' },
   )
   const report = await page.evaluate(async (scores) => {

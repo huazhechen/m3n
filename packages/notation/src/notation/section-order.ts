@@ -58,7 +58,7 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
       || index === ordered.length - 1 && complements(ordered[0], entry))
     for (const section of document.sections ?? []) {
       const segment = measures.filter(measure => measure.sectionName === section.name && (measure.events.length || measure.multiRest))
-      // Multi-rests have no event snapshot from which to restore entry settings.
+      // Section labels still require a visible source event at entry.
       if (segment[0]?.multiRest) report('order 乐段须以普通音符或休止符开头；多小节休止可放在乐段内部')
       const visitEndings = hasVisitEndings(segment)
       if (visitEndings) {

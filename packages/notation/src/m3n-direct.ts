@@ -151,9 +151,11 @@ function parseBody(
       }
       const multiRest = /^rest=(\d+)$/.exec(value)
       if (multiRest) {
+        applyInheritedSettings()
         syncActiveEnding(sourceStart)
         ensureEndingMeasure()
         measure().multiRest = Number(multiRest[1])
+        measure().multiRestState = { key: currentKey, meterCount: currentMeterCount, meterUnit: currentMeterUnit, tempo: currentTempo }
         elapsedBeats += Number(multiRest[1]) * currentMeterCount * 4 / currentMeterUnit
       }
       if (value === 'br') {
