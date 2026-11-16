@@ -6,6 +6,7 @@ import { displayedTempo, measurePlaybackPasses, parseM3NGrace, parseM3NGroupPitc
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
 import type { TextMeasurer } from './native-measure.js'
+import { nativeGraceGeometry, type NativeGracePitch } from './native-grace.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { nativeAccidentalAdvance } from './native-accidentals.js'
 import { nativeMarkStack, nativeInnerMark, type NativeMarkPlacement } from './native-marks.js'
@@ -17,9 +18,9 @@ export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'seg
 export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
-  time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativePitch[]
+  time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativeGracePitch[]
   lyrics: Map<number, LyricRowData>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]
-  markLayout?: NativeMarkPlacement[]; annotationLayout?: NativeAnnotation[]; inkLeft?: number; inkRight?: number; musicBottom?: number; graceLeft?: number; musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number
+  markLayout?: NativeMarkPlacement[]; annotationLayout?: NativeAnnotation[]; inkLeft?: number; inkRight?: number; musicBottom?: number; graceLayout?: ReturnType<typeof nativeGraceGeometry>; musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; paragraph: string
   instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number
 }
@@ -73,7 +74,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const tempo = displayedTempo(event.tempo, event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)
           control('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`); state.tempo = event.tempo
         }
-        const graces = event.postfixes.flatMap(mark => { const grace = parseM3NGrace(mark); return grace ? (parseM3NGroupPitches(grace.pitchSource) ?? []).map(pitch => numberedPitch(pitch, event.octaveShift)) : [] })
+        const graces = event.postfixes.flatMap(mark => { const grace = parseM3NGrace(mark); return grace ? (parseM3NGroupPitches(grace.pitchSource) ?? []).map(pitch => ({ ...numberedPitch(pitch, event.octaveShift), writtenBeats: 1 / 2 ** (grace.depth + 1) })) : [] })
         for (const mark of event.postfixes) if (!known.has(mark) && !parseM3NGrace(mark)) result.diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${mark}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
         const marks = event.postfixes.filter(mark => known.has(mark) && mark !== 'arp')
         if (event.dynamic && event.dynamic !== state.dynamic) { marks.push(event.dynamic); state.dynamic = event.dynamic }
@@ -102,8 +103,10 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const accidentalWidth = sustain ? 0 : Math.max(0, ...pitches.map(pitch => nativeAccidentalAdvance(pitch.accidental, 22)))
           const durationBase = 2 ** Math.floor(Math.log2(writtenBeats))
           const dotCount = Math.max(0, [1, 1.5, 1.75, 1.875].findIndex(ratio => Math.abs(writtenBeats / durationBase - ratio) < 1e-7))
-          let left = pitchWidth / 2 + accidentalWidth + glyphGraces.length * nativeStyle.annotation, right = pitchWidth / 2 + dotCount * nativeStyle.music * 0.27
+          let left = pitchWidth / 2 + accidentalWidth, right = pitchWidth / 2 + dotCount * nativeStyle.music * 0.27
           if (event.postfixes.includes('arp') && event.kind === 'chord') left += em(8)
+          const graceLayout = glyphGraces.length ? nativeGraceGeometry(glyphGraces, left, options.textMeasurer) : undefined
+          if (graceLayout) left = graceLayout.left
           let musicLeft = left, musicRight = right
           let lyricLeft = 0, lyricRight = 0
           for (const row of rows.values()) {
@@ -119,7 +122,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const bottom = Math.max(metrics.bottom, ...glyphControls.map(control => control.bottom))
           const id = ids.get(event)!
           const suffix = event.kind === 'tuplet' ? `-n${slot + 1}` : segment ? event.kind === 'rest' ? `-rest${segment + 1}` : `-sustain${segment + 1}` : ''
-          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, graceLeft: musicLeft, musicLeft, musicRight, musicTop, lyricLeft, lyricRight, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
+          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, graceLayout, musicLeft, musicRight, musicTop, lyricLeft, lyricRight, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
           glyph.markLayout = nativeMarkStack(glyphMarks.filter(nativeInnerMark), metrics.top, options.textMeasurer).items
           const ink = nativeSvgInk(painter.music(glyph), options.textMeasurer)
           glyph.musicTop = -ink.top; glyph.top = Math.max(-ink.top, ...glyphControls.map(control => control.top))

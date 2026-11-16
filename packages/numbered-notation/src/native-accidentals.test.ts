@@ -42,7 +42,8 @@ describe('native accidental geometry', () => {
     const symbols = [...root.querySelectorAll('[data-m3n-role="accidental"] path')]
     expect(symbols.map(node => node.getAttribute('data-m3n-symbol'))).toEqual(['♯', '♭', '♮', '♯', '♯', '♭', '♭'])
     expect(symbols[0]!.getAttribute('stroke-width')).toBe('1.32')
-    expect(symbols[1]!.getAttribute('stroke-width')).toBe('0.78')
+    expect(symbols[1]!.getAttribute('stroke-width')).toBe('0.924')
+    expect(root.querySelector('[data-m3n-role="grace"] text')!.getAttribute('font-size')).toBe('15.4')
   })
 
   it('omits repeated explicit accidentals and resets display state at a barline', () => {

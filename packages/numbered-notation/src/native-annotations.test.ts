@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
-import { nativeGraceGeometry } from './native-grace.js'
 import { nativeArcGeometry } from './native-arc.js'
 
 const options = { width: 800, paged: false }
@@ -51,16 +50,12 @@ describe('native annotations', () => {
     expect(chord.systems[0]!.lanes[0]!.top).toBe(chord.systems[1]!.lanes[0]!.top)
   })
 
-  it('keeps descriptions above the actual grace slur rather than a fixed grace allowance', () => {
+  it('keeps descriptions above the measured grace block rather than a fixed allowance', () => {
     const score = layout('{text=cresc.}1{ac(2e 3e)} 2 3 4')
     const glyph = score.projection.glyphs[0]!, text = annotations(score)[0]!
-    const grace = nativeGraceGeometry(glyph.graces, glyph.musicLeft!)
-    expect(glyph.musicTop).toBeGreaterThan(32)
-    expect(text.top - text.height).toBeGreaterThanOrEqual(glyph.musicTop! + 5.6 - 1e-8)
-    const [a, c, b] = [grace.start, grace.control, grace.end]
-    const t = (a.y - c.y) / (a.y - 2 * c.y + b.y)
-    const peak = (1 - t) ** 2 * a.y + 2 * t * (1 - t) * c.y + t ** 2 * b.y
-    expect(glyph.musicTop).toBeCloseTo(-peak + 0.6)
+    const grace = glyph.graceLayout!
+    expect(glyph.musicTop).toBeCloseTo(-grace.ink.top, 4)
+    expect(text.top - text.height).toBeGreaterThanOrEqual(-grace.ink.top + 5.6 - 1e-8)
   })
 
   it('does not let annotation height move a volta back over the annotation', () => {

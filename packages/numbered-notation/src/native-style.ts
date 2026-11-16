@@ -8,6 +8,7 @@ export const nativeStyle = {
   annotation: music * (14 / 22),
   lyric: music * 0.82,
   grace: music * (13 / 22),
+  graceNote: music * 0.7,
   meter: music * (18 / 22),
   title: music * (32 / 22),
   subtitle: music * (16 / 22),
