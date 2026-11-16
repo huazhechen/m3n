@@ -29,8 +29,7 @@ export function ScoreReaderPage() {
 
   return (
     <main>
-      <TopNav />
-      <div className="score-reader-actions">
+      <TopNav actions={<div className="score-reader-actions">
         <div className="score-reader-navigation" role="group" aria-label="切换曲目">
           {score && previousScore ? (
             <Link className="action-button" to={`/scores/${previousScore.slug}`}>
@@ -59,9 +58,10 @@ export function ScoreReaderPage() {
             编辑
           </Link>
         </div>
-      </div>
+      </div>} />
       <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
+          fitPagedToViewport
           scoreId={slug}
           scoreDocument={analysis.score}
 

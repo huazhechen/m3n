@@ -4,6 +4,7 @@ import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
 import { loadSampledTone } from '@m3n/score-renderer/tones'
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
+import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MeiSourceMapRange, ScoreDocument } from '@m3n/notation'
 import {
@@ -32,6 +33,7 @@ type ScoreRendererProps = {
   scoreId?: string
   compact?: boolean
   playbackOnly?: boolean
+  fitPagedToViewport?: boolean
   isSourceUpdating?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
@@ -145,6 +147,7 @@ export function ScoreRenderer({
   scoreId,
   compact = false,
   playbackOnly = false,
+  fitPagedToViewport = false,
   isSourceUpdating = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
@@ -187,6 +190,7 @@ export function ScoreRenderer({
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
+  usePagedReaderLayout(paperRef, fitPagedToViewport && renderMode === 'paged')
   const bpmRef = useRef(playbackBpm)
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)

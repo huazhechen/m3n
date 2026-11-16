@@ -10,6 +10,17 @@
   border-bottom: 1px solid #d9dbd4;
 }
 
+.top-nav.has-actions { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; margin-bottom: 10px; }
+.top-nav.has-actions .score-reader-actions { margin: 0; justify-content: center; gap: 16px; }
+.top-nav.has-actions .score-reader-tools { margin-left: 0; }
+.top-nav.has-actions .score-reader-actions .action-button { min-height: 32px; padding: 0 10px; font-size: 13px; border-radius: 6px; }
+
+@media (max-width: 720px) {
+  .top-nav.has-actions { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0; }
+  .top-nav.has-actions .score-reader-actions { grid-column: 1 / -1; order: 1; justify-content: space-between; margin: 10px 0; }
+  .top-nav.has-actions .score-reader-actions .action-button { min-height: 36px; }
+}
+
 .brand-mark {
   display: inline-flex;
   align-items: center;
@@ -400,6 +411,14 @@ textarea::selection {
   padding: 10px;
 }
 
+.score-renderer.score-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .score-library {
   display: grid;
   gap: 20px;
@@ -482,7 +501,7 @@ textarea::selection {
 }
 
 .score-reader {
-  min-height: 360px;
+  min-height: 0;
 }
 
 .score-reader-diagnostics {
@@ -716,6 +735,23 @@ textarea::selection {
 .score-paper[data-render-mode="paged"] {
   background: #dfe3dd;
   padding: 16px 20px;
+}
+
+@media (min-width: 721px) {
+  .score-reader .score-paper[data-viewport-paged="true"] {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 16px;
+    overflow: visible;
+  }
+
+  .score-reader .score-paper[data-viewport-paged="true"] .score-page-sheet {
+    flex: 0 0 var(--reader-page-width);
+    width: var(--reader-page-width);
+    margin: 0;
+  }
 }
 
 .score-paper .measure-playback-highlight,
@@ -1514,14 +1550,6 @@ a.action-button {
 
 /* Mobile scores sit directly on the page; pagination remains in the engraving. */
 @media (max-width: 720px) {
-  .score-renderer.score-card {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
   .score-reader > .score-renderer {
     margin-inline: 0;
   }

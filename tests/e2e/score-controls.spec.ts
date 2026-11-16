@@ -1,37 +1,40 @@
 import { expect, test } from '@playwright/test'
 
-test('three full-width slider rows and a fourth options row align on phones and desktop', async ({ page }, info) => {
+test('compact controls use two desktop rows and four mobile rows without card padding', async ({ page }, info) => {
   await page.goto('/scores/huan_le_song_01')
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   await expect(bar).toBeVisible()
   expect(await bar.locator('.control-options > [role="switch"]').evaluateAll(elements => elements.map(element => element.getAttribute('aria-label')))).toEqual(['节拍器', '钢琴音色', '分页', '固定调记谱', '小节号'])
-  for (const width of [320, 360, 390, 600, 768, 1280]) {
+  for (const width of [320, 360, 390, 600, 721, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 })
     const geometry = await bar.evaluate(element => {
-      const rows = [...element.querySelectorAll('.control-slider-row')]
-      const columns = rows.map(row => [...row.children].map(child => {
-        const b = child.getBoundingClientRect(); return { x: b.x, center: b.y + b.height / 2, width: b.width }
-      }))
+      const rows = [...element.querySelectorAll('.control-slider-row')].map(row => row.getBoundingClientRect())
       const bounds = element.getBoundingClientRect()
       const outside = [...element.querySelectorAll('button,input')].some(control => { const b = control.getBoundingClientRect(); return b.left < bounds.left || b.right > bounds.right })
-      const left = element.querySelector('.control-sliders')!.getBoundingClientRect()
-      const right = element.querySelector('.control-options')!.getBoundingClientRect()
+      const options = element.querySelector('.control-options')!.getBoundingClientRect()
       const buttonSizes = [...element.querySelectorAll('button')].map(button => { const b = button.getBoundingClientRect(); return { width: b.width, height: b.height } })
       const optionCenters = [...element.querySelectorAll('.control-options button')].map(button => { const b = button.getBoundingClientRect(); return b.y + b.height / 2 })
-      return { columns, outside, buttonSizes, optionCenters, below: right.top >= left.bottom && Math.abs(left.left - right.left) < 1 && Math.abs(left.width - right.width) < 1 }
+      const style = getComputedStyle(element)
+      return { outside, buttonSizes, optionCenters, padding: style.padding, border: style.borderTopWidth, height: bounds.height,
+        desktop: Math.abs(rows[0]!.y - rows[1]!.y) < 1 && Math.abs(rows[2]!.y - options.y) < 1 && Math.abs(rows[2]!.x - rows[0]!.x) < 1 && Math.abs(rows[1]!.x - options.x) < 1,
+        mobile: rows[0]!.bottom <= rows[1]!.top && rows[1]!.bottom <= rows[2]!.top && rows[2]!.bottom <= options.top,
+      }
     })
     expect(geometry.outside).toBe(false)
-    expect(geometry.below).toBe(true)
+    expect(geometry.padding).toBe('0px')
+    expect(geometry.border).toBe('0px')
+    expect(width > 720 ? geometry.desktop : geometry.mobile).toBe(true)
+    expect(geometry.height).toBeLessThanOrEqual(width > 720 ? 76 : 156)
     expect(Math.max(...geometry.optionCenters) - Math.min(...geometry.optionCenters)).toBeLessThan(1)
-    if (width <= 390) for (const size of geometry.buttonSizes) {
-      expect(Math.abs(size.width - geometry.buttonSizes[0]!.width)).toBeLessThan(1)
-      expect(size.height).toBe(44)
-    }
-    for (const row of geometry.columns) for (let col = 0; col < 3; col++) {
-      expect(Math.abs(row[col]!.x - geometry.columns[0]![col]!.x)).toBeLessThan(1)
-      expect(Math.abs(row[col]!.center - row[0]!.center)).toBeLessThan(1)
-    }
+    for (const size of geometry.buttonSizes) expect(size.height).toBe(36)
+    if (width <= 390) for (const size of geometry.buttonSizes) expect(Math.abs(size.width - geometry.buttonSizes[0]!.width)).toBeLessThan(1)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    const actions = page.locator('.score-reader-actions')
+    expect(await actions.evaluate(element => Boolean(element.closest('.top-nav')))).toBe(true)
+    if (width > 720) {
+      const positions = await page.locator('.top-nav').evaluate(element => [...element.children].map(child => { const b = child.getBoundingClientRect(); return b.y + b.height / 2 }))
+      expect(Math.max(...positions) - Math.min(...positions)).toBeLessThan(1)
+    }
     if ([390, 1280].includes(width)) await bar.screenshot({ path: info.outputPath(`controls-${width}.png`) })
   }
 })
