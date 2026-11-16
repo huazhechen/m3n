@@ -11,7 +11,7 @@ test('tablet settings fit their content and share the interface scale', async ({
     await page.setViewportSize({ width: width!, height: height! })
     await openScoreSettings(page)
     await expect(panel).toBeVisible()
-    const buttonSize = Math.max(32, Math.min(width!, height!) / 16)
+    const buttonSize = Math.min(48, Math.max(32, Math.min(width!, height!) / 16))
     for (const name of ['还原速度', '还原宽度']) {
       const button = panel.getByRole('button', { name, exact: true })
       await expect(button.locator('span')).toHaveCount(0)
@@ -41,9 +41,9 @@ test('icons stay at eighty percent of buttons across phones, tablets and rotatio
     [844, 390, 25.6, 32, 40],
     [744, 1133, 37.2, 46.5, 58.125],
     [1133, 744, 37.2, 46.5, 58.125],
-    [1280, 900, 45, 56.25, 70.3125],
-    [2560, 1920, 96, 120, 150],
-    [3840, 2880, 144, 180, 225],
+    [1280, 900, 38.4, 48, 60],
+    [2560, 1920, 38.4, 48, 60],
+    [3840, 2880, 38.4, 48, 60],
   ]) {
     await page.setViewportSize({ width: width!, height: height! })
     for (const selector of ['.top-nav svg', '.brand-mark img', '.floating-controls .control-button svg']) {
@@ -78,15 +78,15 @@ test('icons stay at eighty percent of buttons across phones, tablets and rotatio
   }
   await page.goto('/editor')
   const icon = (await page.locator('.editor-action svg').first().boundingBox())!
-  expect(icon.width).toBeCloseTo(144, 1)
+  expect(icon.width).toBeCloseTo(38.4, 1)
 })
 
-test('document notes use half the shared scale with a minimum of sixteen and no maximum', async ({ page }) => {
+test('document notes use half the shared scale between sixteen and twenty-four', async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 900 })
   await page.goto('/?doc=guide')
   const svg = page.locator('.document-example .score-paper svg').first()
   await expect(svg).toBeVisible({ timeout: 15_000 })
-  for (const [height, noteSize] of [[900, 26.375], [390, 16], [744, 23.25]]) {
+  for (const [height, noteSize] of [[900, 24], [390, 16], [744, 23.25]]) {
     await page.setViewportSize({ width: 844, height: height! })
     await expect(svg).toBeVisible()
     await expect.poll(() => svg.evaluate(element => {

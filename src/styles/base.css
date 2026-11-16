@@ -1,5 +1,5 @@
 :root {
-  --ui-control-size: max(32px, calc(100vmin / 16));
+  --ui-control-size: clamp(32px, calc(100vmin / 16), 48px);
   --ui-unit: calc(var(--ui-control-size) / 2);
   --ui-space: calc(var(--ui-control-size) / 8);
   --ui-text: calc(var(--ui-control-size) * .375);
