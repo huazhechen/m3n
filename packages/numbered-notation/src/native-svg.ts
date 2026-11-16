@@ -2,7 +2,7 @@ import { displayedTempo, scoreCreditLines } from '@m3n/notation'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { nativeHeaderGeometry } from './native-header.js'
-import { nativeBarMetrics } from './native-horizontal.js'
+import { nativeBarMetrics, nativeMeasureBars } from './native-horizontal.js'
 import { NUMBER_FONT_CSS } from './font-data.js'
 import { type NativeLayout, type NativeLane, type NativeRelation, type NativeSystem } from './native-layout.js'
 import type { NativeGlyph, NativePitch, NativeMeasure } from './native-model.js'
@@ -152,15 +152,15 @@ class SvgPainter {
 
   measure(measure: NativeMeasure, system: NativeSystem): string {
     let content = ''
+    const marks = nativeMeasureBars(system.measures, system.measures.indexOf(measure))
     const glyphs = measure.columns.flatMap(column => column.glyphs)
     for (const lane of system.lanes) {
       const members = glyphs.filter(glyph => glyph.lane === lane.id)
       if (!members.length) continue
       for (const glyph of members) content += this.glyph(glyph, system, lane)
       if (!lane.id.startsWith('alternative:')) {
-        if (!measure.continuation && measure.source.left === 'rptstart') content += this.bar('rptstart', measure.openingBarX ?? measure.start + 2, lane.y)
-        const closed = measure.lastFragment ? measure.source.right : undefined
-        if (measure.lastFragment) content += this.bar(closed, measure.barX ?? measure.end - 3, lane.y)
+        if (marks.opening) content += this.bar('rptstart', measure.openingBarX ?? measure.start + 2, lane.y)
+        if (marks.closing !== undefined) content += this.bar(marks.closing, measure.barX ?? measure.end - 3, lane.y)
       } else {
         content += this.text('(', members[0]!.x - members[0]!.left - 6, lane.y, 22, 'M3N Numbers')
         content += this.text(')', members.at(-1)!.x + members.at(-1)!.right + 2, lane.y, 22, 'M3N Numbers')

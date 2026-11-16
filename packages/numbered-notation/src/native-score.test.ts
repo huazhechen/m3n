@@ -19,6 +19,28 @@ function render(source:string|ScoreDocument,settings:Partial<NumberedNotationRen
 function numbers(root:Document,id:string){return [...root.querySelectorAll('g.note[data-m3n-id="'+id+'"] text')].map(text=>text.textContent).join('')}
 function lyrics(root:Document,id:string,row=1){return [...root.querySelectorAll('text[data-m3n-role="lyric"][data-m3n-id="'+id+'"][data-m3n-rendition="'+row+'"]')].map(text=>text.textContent?.replaceAll('\u200B','')).join('')}
 
+describe('native repeat boundaries', () => {
+  it.each([false, true])('shares an opening repeat and restores both boundaries at a break (equal measures: %s)', equalMeasures => {
+    const joined = render('{4/4}\nN: 1 2 3 4 | ||: 5 6 7 1e :||', { equalMeasures })
+    const split = render('{4/4}\nN: 1 2 3 4 | {br} ||: 5 6 7 1e :||', { equalMeasures })
+    // No closing line before a shared opening; an explicit wrap needs that line.
+    const measures = [...joined.root.querySelectorAll('g.measure')]
+    expect(measures[0]!.querySelectorAll('rect')).toHaveLength(0)
+    expect(measures[1]!.querySelectorAll('rect')).toHaveLength(4)
+    const splitMeasures = [...split.root.querySelectorAll('g.measure')]
+    expect(split.root.querySelectorAll('g.system')).toHaveLength(2)
+    expect(splitMeasures[0]!.querySelectorAll('rect')).toHaveLength(1)
+    expect(splitMeasures[1]!.querySelectorAll('rect')).toHaveLength(4)
+  })
+
+  it('combines adjacent end and start repeats without drawing the opening twice', () => {
+    const result = render('{4/4}\nN: ||: 1 2 3 4 :|| ||: 5 6 7 1e :||')
+    const measures = [...result.root.querySelectorAll('g.measure')]
+    expect(measures[0]!.querySelectorAll(':scope > circle')).toHaveLength(6)
+    expect(measures[1]!.querySelectorAll(':scope > circle')).toHaveLength(2)
+  })
+})
+
 describe('native engraving acceptance', () => {
   const folder = resolve(process.cwd(), '../../src/scores')
   it.each(readdirSync(folder).filter(file => file.endsWith('.m3n')))('keeps every event, pitch slot and lyric in %s across narrow and paged layouts', file => {

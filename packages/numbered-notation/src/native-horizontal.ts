@@ -18,6 +18,24 @@ export function nativeBarMetrics(kind: string | undefined) {
 
 type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[] }
 type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; pairedSpacing?: boolean }
+
+/** A repeat opening supplies the shared boundary; a wrap restores both ends. */
+export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
+  const measure = measures[index]!, previous = measures[index - 1], next = measures[index + 1]
+  const joinsPrevious = previous?.lastFragment && !previous.breakAfter && !measure.breakBefore && previous.part === measure.part
+  const joinsNext = measure.lastFragment && next && !measure.breakAfter && !next.breakBefore && next.part === measure.part
+  const closesRepeat = (kind: string | undefined) => kind === 'rptend' || kind === 'rptboth'
+  const opening = !measure.continuation && (measure.source.left === 'rptstart' || previous?.part === measure.part && previous.source.right === 'rptboth')
+    && !(joinsPrevious && closesRepeat(previous.source.right))
+  let closing = measure.lastFragment ? measure.source.right ?? 'single' : undefined
+  if (closing === 'rptboth') closing = joinsNext ? 'rptboth' : 'rptend'
+  if (joinsNext && next.source.left === 'rptstart') {
+    if (closesRepeat(closing)) closing = 'rptboth'
+    else if ((closing === 'single' || closing === 'dbl') && !(measure.source.repeatCount && measure.source.repeatCount > 2)
+      && !measure.source.navigation?.length && !measure.source.events.some(event => event.navigation.some(name => name !== 'segno'))) closing = undefined
+  }
+  return { opening, closing }
+}
 const springCell = (lane: string, left: number, right: number, duration: number, alpha: number, gapScale: number): SpacingCell => {
   const durationScale = Math.sqrt(Math.max(0.01, duration))
   return { lane, left, right, before: durationScale * alpha * gapScale, after: durationScale * alpha * gapScale,
@@ -25,7 +43,7 @@ const springCell = (lane: string, left: number, right: number, duration: number,
 }
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
-function itemsFor(measures: NativeMeasure[], options: HorizontalOptions): HorizontalItem[] {
+function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
   const scale = 22 * (options.noteGapEm ?? 0.6) / 12
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
@@ -39,7 +57,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions): Horizo
       cells: lanes.map(lane => springCell(lane, geometry.anchor, geometry.width - geometry.anchor, 0, 128, barScale)) })
   }
   for (const measure of measures) {
-    if (!measure.continuation && measure.source.left === 'rptstart') bar(measure, 'rptstart', true)
+    const marks = nativeMeasureBars(surrounding, surrounding.indexOf(measure))
+    if (marks.opening) bar(measure, 'rptstart', true)
     for (const column of measure.columns) {
       const cells = column.glyphs.map(glyph => {
         const controls = glyph.controls.reduce((sum, control) => sum + control.width, 0)
@@ -48,7 +67,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions): Horizo
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
     // A split measure has no visible closing bar until its final fragment.
-    if (measure.lastFragment) bar(measure, measure.source.right)
+    if (marks.closing !== undefined) bar(measure, marks.closing)
   }
   for (let index = 1; index < items.length; index++) {
     const previous = items[index - 1]!, current = items[index]!
@@ -105,8 +124,8 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
 }
 
 /** Justify a complete system, then publish event and measure positions. */
-export function placeNativeHorizontal(measures: NativeMeasure[], options: HorizontalOptions, x: number, width: number): NativeGlyph[] {
-  const items = itemsFor(measures, options), result = solveNativeSpacing(items, width, true)
+export function placeNativeHorizontal(measures: NativeMeasure[], options: HorizontalOptions, x: number, width: number, surrounding = measures): NativeGlyph[] {
+  const items = itemsFor(measures, options, surrounding), result = solveNativeSpacing(items, width, true)
   for (const measure of measures) { measure.start = Infinity; measure.end = -Infinity }
   const glyphs: NativeGlyph[] = []
   items.forEach((item, index) => {

@@ -160,7 +160,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     const x = margin
     const width = options.width - margin - x
     const glyphs = options.equalMeasures
-      ? system.measures.flatMap((measure, index) => placeNativeHorizontal([measure], options, x + index * width / system.measures.length, width / system.measures.length))
+      ? system.measures.flatMap((measure, index) => placeNativeHorizontal([measure], options, x + index * width / system.measures.length, width / system.measures.length, system.measures))
       : placeNativeHorizontal(system.measures, options, x, width)
     for (const glyph of glyphs) systemOf.set(glyph, system.index)
     const laneNames = [...new Set(glyphs.map(glyph => glyph.lane))].sort((a, b) => a === 'melody' ? -1 : b === 'melody' ? 1 : a === 'bass' ? 1 : b === 'bass' ? -1 : a.localeCompare(b))

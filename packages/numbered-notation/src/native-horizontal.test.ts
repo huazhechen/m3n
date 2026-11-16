@@ -59,6 +59,13 @@ describe('native spacing compatibility with the frozen jpFun baseline', () => {
     expect(result.systems.map(system => system.measures.length)).toEqual([4, 4, 4, 5])
   })
 
+  it('counts the repeat opening once when measuring and wrapping 青鸟', () => {
+    const result = layout(readFileSync(new URL('../../../src/scores/qing_niao_01.m3n', import.meta.url), 'utf8'))
+    const boundary = result.projection.measures[8]!
+    expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(104.58733462914, 5)
+    expect(result.systems.slice(0, 2).map(system => system.measures.length)).toEqual([5, 5])
+  })
+
   it('lets wide lyrics share the minimum note clearance instead of accumulating it', () => {
     const textMeasurer: TextMeasurer = { measureText(text, style) {
       return { w: text === '0' ? 11.154 : [...text].length * 20, h: style.fontSize, baseline: style.fontSize * 0.8 }
