@@ -38,7 +38,7 @@ class NativeRelationPainter extends NativeSymbols {
       const bracket = nativeTupletGeometry(relation, system, this.measurer)
       return `<g${attrs({ 'data-m3n-relation': 'tuplet' })}>`
         + bracket.segments.map(([a, b, c, d]) => line(a, b, c, d, bracket.stroke)).join('')
-        + this.text(relation.label!, bracket.center, bracket.baseline, bracket.fontSize, 'serif', { 'text-anchor': 'middle' }) + '</g>'
+        + this.text(relation.label!, bracket.center, bracket.baseline, bracket.fontSize, 'M3N Numbers', { 'text-anchor': 'middle' }) + '</g>'
     }
     return ''
   }

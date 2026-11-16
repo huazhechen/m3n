@@ -54,7 +54,12 @@ test('alignment respects system and staff boundaries', () => {
             const region = item.regions[0];
             const hosts = layout.objects.filter(node => node.layoutLine === region.line && node.track === region.track && !node.T.isZero());
             const gap = Math.min(...hosts.map(node => getLayoutBounds(node, true).y)) - (item.box.y + item.box.h);
-            assert(gap < 6, 'other systems and staves must not lift this bracket');
+            const high = hosts.some(node => node.ast.sourceSpan && source.slice(node.ast.sourceSpan.start, node.ast.sourceSpan.end).includes("''"));
+            const isolated = relations(high ? "@tuplet({1'' 2'' 3''},2)" : "@tuplet({1 2 3},2)", 'tuplet');
+            const isolatedTop = Math.min(...isolated.layout.objects.map(node => getLayoutBounds(node, true).y));
+            const isolatedBracket = isolated.items[0];
+            assert(nearly(gap, isolatedTop - isolatedBracket.box.y - isolatedBracket.box.h),
+                'other systems and staves must not lift this bracket relative to its isolated layout');
         }
     }
 });

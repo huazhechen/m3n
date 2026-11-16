@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { paintedCommandRegions, paintedNodeRegions } from "../src/layout/painted-ink.js";
 import { compileScore } from "../src/pipeline.js";
 
 import type { TemporalNodeBase, VisualTemporalNode } from "../src/functions/temporal.js";
@@ -172,4 +173,48 @@ test("separate compressed grace groups do not stack their tuplet brackets", () =
     const repeated = layoutOf(Array(40).fill(source).join(" "));
     assert(Math.abs(single.bounds.h - repeated.bounds.h) < 1e-6,
         "independent local sequences must retain the same height under horizontal compression");
+});
+
+test("tuplet painted strokes and label clear accidental ink", () => {
+    const measurer = { measureText(text: string, style: import("../src/render/types.js").TextStyle) {
+        const size = style.fontSize, height = size * .68;
+        return { w: size * .5 * text.length, h: height, baseline: height, inkBottom: height };
+    } };
+    for (const accidental of ["b", "#", "="]) {
+        for (let index = 0; index < 3; index++) {
+            const notes = ["1", "2", "3"].map((n, i) => i === index ? accidental + n : n).join(" ");
+            const result = compileScore(`@tuplet({${notes}},2)`, { textMeasurer: measurer });
+            const bracket = result.layout.attachments.find(a => attachmentCommands(a).some(c => c.kind === "text" && c.text === "3"))!;
+            const marks = attachmentCommands(bracket).flatMap(c => paintedCommandRegions(c, measurer));
+            const music = result.layout.objects.flatMap(n => paintedNodeRegions(n, measurer));
+            for (const mark of marks) for (const note of music) {
+                if (mark.x + mark.w <= note.x || note.x + note.w <= mark.x) continue;
+                assert(note.y - mark.y - mark.h >= 22 * .14 - 1e-6,
+                    `tuplet must clear ${accidental} at member ${index}`);
+            }
+        }
+    }
+});
+
+test("tuplet centers asymmetric count ink and reserves its complete bounds", () => {
+    const measurer = { measureText(text: string, style: import("../src/render/types.js").TextStyle) {
+        const size = style.fontSize, advance = text.length * size * .5;
+        const left = -size * .3, right = advance + size * .2;
+        return { w: advance, advance, inkLeft: left, inkRight: right, centerOffset: (left + right - advance) / 2,
+            h: size * .7, baseline: size * .6, inkBottom: size * .7 };
+    } };
+    const result = compileScore("@tuplet({1 2 3},2)", { textMeasurer: measurer });
+    const bracket = result.layout.attachments.find(a => attachmentCommands(a).some(c => c.kind === "text" && c.text === "3"))!;
+    const commands = attachmentCommands(bracket);
+    const text = commands.find(c => c.kind === "text")!;
+    const ink = paintedCommandRegions(text, measurer)[0];
+    const hooks = commands.filter(c => c.kind === "line" && c.x1 === c.x2);
+    assert(hooks.length === 2, "both endpoint hooks remain visible");
+    assert(Math.abs(ink.x + ink.w / 2 - (hooks[0].x1 + hooks[1].x1) / 2) < 1e-6,
+        "count ink must stay centered despite asymmetric bearings");
+    for (const piece of commands.flatMap(c => paintedCommandRegions(c, measurer))) {
+        assert(piece.x >= bracket.box.x - 1e-6 && piece.x + piece.w <= bracket.box.x + bracket.box.w + 1e-6
+            && piece.y >= bracket.box.y - 1e-6 && piece.y + piece.h <= bracket.box.y + bracket.box.h + 1e-6,
+        "the reserved bracket bounds must contain every painted primitive");
+    }
 });

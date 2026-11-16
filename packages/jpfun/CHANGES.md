@@ -107,3 +107,5 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - Lyric visual tiers now share baselines derived from their actual token, prefix and row-name ink, rather than a surrogate M or nominal font-size advance. Complete descenders and measured underline strokes participate in inter-row clearance and frame-owned lyric stacking. Invisible compact slots and verse metadata retain their existing behavior.
 
 - Aligned ties and slurs clear painted zero-time controls and bar labels throughout their system, including text whose ink overlaps the arc from outside its temporal endpoint interval.
+
+- Tuplet brackets measure the actual count, rules and hooks separately, including stroke width and text bearings. Side accidentals only raise primitives that cross their ink; adjacent brackets share the required clearance. Count ink stays visually centered, and reserved bounds include all painted primitives. Nested brackets and enclosed content retain their inner-to-outer ordering.

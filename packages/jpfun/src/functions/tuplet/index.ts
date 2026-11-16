@@ -1,3 +1,4 @@
+import { paintedCommandRegions } from "../../layout/painted-ink.js";
 import { ErrorDiagnostic } from "../../diagnostic.js";
 import { Fraction } from "../../fraction.js";
 import type { AttachmentLayoutContext, LayoutAttachment } from "../../layout/types.js";
@@ -217,7 +218,7 @@ class TupletLayoutAttachment implements LayoutAttachment {
         }
     }
 
-    createGeometry(context: AttachmentLayoutContext) {
+    private bracketShape(context: AttachmentLayoutContext) {
         const first = this.endPoints[0];
         const last = this.endPoints[this.endPoints.length - 1];
 
@@ -233,42 +234,41 @@ class TupletLayoutAttachment implements LayoutAttachment {
         const center = (left + right) / 2;
         const textGap = this.size * 0.12;
         const hookHeight = this.size * 0.18;
-        // 范围避让与内容包含分别由系统查询，局部成员和正文使用同一入口。
         const strokeWidth = Math.max(1, this.size * 0.055);
-        const peers = context.getAlignmentPeers?.(this, first.layoutLine) ?? [this];
-        const lineY = Math.min(...peers.map(peer => peer instanceof TupletLayoutAttachment ? peer.bracketY(context) : Infinity));
-        const hookBottom = lineY + hookHeight;
-        const textBaseline = lineY - metrics.h / 2 + metrics.baseline;
+        const textBaseline = -metrics.h / 2 + metrics.baseline;
         const textLeft = center - metrics.w / 2 - textGap;
         const textRight = center + metrics.w / 2 + textGap;
         // 先记录左右横线，再记录两端向下的短钩；短跨度允许省略横线但保留端钩
         const lines: [x1: number, y1: number, x2: number, y2: number][] = [];
-        if (textLeft > left) lines.push([left, lineY, textLeft, lineY]);
-        if (textRight < right) lines.push([textRight, lineY, right, lineY]);
-        lines.push([left, lineY, left, hookBottom], [right, lineY, right, hookBottom]);
+        if (textLeft > left) lines.push([left, 0, textLeft, 0]);
+        if (textRight < right) lines.push([textRight, 0, right, 0]);
+        lines.push([left, 0, left, hookHeight], [right, 0, right, hookHeight]);
 
-        // region 同时包含文字与描边，并声明 line/track 让纵向求解为括线腾出空间
-        const halfStroke = strokeWidth / 2;
-        const top = Math.min(lineY - metrics.h / 2, lineY - halfStroke);
-        const bottom = Math.max(lineY + metrics.h / 2, hookBottom + halfStroke);
-        const regions = [{
-            x: left - halfStroke,
-            y: top,
-            w: right - left + strokeWidth,
-            h: bottom - top,
-            line: first.layoutLine,
-            track: first.track,
-        }];
-        const text = String(this.actual);
-        const style = this.style;
+        const textX = center - (metrics.centerOffset ?? 0);
+        const lineStyle = { stroke: "#000", strokeWidth };
+        const commands = [
+            ...lines.map(([x1, y1, x2, y2]) => ({ kind: "line" as const, x1, y1, x2, y2, style: lineStyle })),
+            { kind: "text" as const, text: String(this.actual), x: textX, y: textBaseline, style: this.style },
+        ];
+        return { commands, pieces: commands.flatMap(command => paintedCommandRegions(command, context.textMeasurer)) };
+    }
+
+    createGeometry(context: AttachmentLayoutContext) {
+        const first = this.endPoints[0];
+        const peers = context.getAlignmentPeers?.(this, first.layoutLine) ?? [this];
+        const lineY = Math.min(...peers.map(peer => peer instanceof TupletLayoutAttachment ? peer.bracketY(context) : Infinity));
+        const { commands, pieces } = this.bracketShape(context);
+        const left = Math.min(...pieces.map(piece => piece.x));
+        const right = Math.max(...pieces.map(piece => piece.x + piece.w));
+        const top = Math.min(...pieces.map(piece => piece.y));
+        const bottom = Math.max(...pieces.map(piece => piece.y + piece.h));
         return {
-            regions,
+            regions: [{ x: left, y: top + lineY, w: right - left, h: bottom - top, line: first.layoutLine, track: first.track }],
             paint(painter: Painter) {
-                const lineStyle = { stroke: "#000", strokeWidth };
-                for (const [x1, y1, x2, y2] of lines) {
-                    painter.drawLine(x1, y1, x2, y2, lineStyle);
+                for (const command of commands) {
+                    if (command.kind === "line") painter.drawLine(command.x1, command.y1 + lineY, command.x2, command.y2 + lineY, command.style);
+                    else painter.drawText(command.text, command.x, command.y + lineY, command.style);
                 }
-                painter.drawText(text, center, textBaseline, style);
             },
         };
     }
@@ -280,6 +280,16 @@ class TupletLayoutAttachment implements LayoutAttachment {
         const extent = context.getRangeExtents(first.layoutLine, [first, last], first.track);
         const bounds = context.getContentBounds(this.content);
         const hostTop = Math.min(axis + (extent?.top ?? 0), bounds?.y ?? Infinity);
-        return hostTop - this.size * 0.14 - Math.max(this.size * 0.18, metrics.h / 2);
+        const gap = this.size * 0.14;
+        let level = hostTop - gap - Math.max(this.size * 0.18, metrics.h / 2);
+        const { pieces } = this.bracketShape(context);
+        // Include controls and side ink from this track, even when their time
+        // column lies just outside the span. Test each painted primitive.
+        const hosts = context.lines[first.layoutLine].columns.flat().filter(host => host.track === first.track);
+        for (const host of hosts) for (const ink of context.getHostInk?.(host) ?? []) for (const mark of pieces) {
+            if (ink.x + ink.w <= mark.x || ink.x >= mark.x + mark.w) continue;
+            level = Math.min(level, ink.y - gap - mark.y - mark.h);
+        }
+        return level;
     }
 }

@@ -15,19 +15,37 @@ export function nativeTupletGeometry(relation: NativeRelation, system: NativeSys
   while (last >= 0 && last + 1 < spans.length && spans[last]!.end + 1 === spans[last + 1]!.start) last++
   const peers = current < 0 ? [relation] : spans.slice(first, last + 1).map(span => span.item)
   const size = nativeStyle.music, fontSize = size * 0.72, hook = size * 0.18, gap = size * 0.14
-  const metrics = measurer.measureText(relation.label ?? '', { fontSize, fontFamily: 'serif' })
+  const stroke = Math.max(1, size * 0.055), halfStroke = stroke / 2
+  const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
+  const shape = (peer: NativeRelation) => {
+    const text = measurer.measureText(peer.label ?? '', { fontSize, fontFamily: 'M3N Numbers', textAlign: 'center' })
+    const left = peer.first.x - halfBody, right = peer.last.x + halfBody, center = (left + right) / 2
+    const textLeft = center - text.w / 2 - size * 0.12, textRight = center + text.w / 2 + size * 0.12
+    const segments: [number, number, number, number][] = [[left, 0, left, hook], [right, 0, right, hook]]
+    if (textLeft > left) segments.push([left, 0, textLeft, 0])
+    if (textRight < right) segments.push([textRight, 0, right, 0])
+    const textX = center - (text.advance ?? text.w) / 2 - (text.centerOffset ?? 0)
+    const pieces = [{ left: textX + (text.inkLeft ?? 0), right: textX + (text.inkRight ?? text.w),
+      top: -text.h / 2, bottom: -text.h / 2 + (text.inkBottom ?? text.h) },
+    ...segments.map(([x1, y1, x2, y2]) => ({ left: Math.min(x1, x2) - halfStroke, right: Math.max(x1, x2) + halfStroke,
+      top: Math.min(y1, y2) - halfStroke, bottom: Math.max(y1, y2) + halfStroke }))]
+    return { text, center, segments, pieces }
+  }
   const y = Math.min(...peers.map(peer => {
     const covered = glyphs.slice(glyphs.indexOf(peer.first), glyphs.indexOf(peer.last) + 1)
-    const text = measurer.measureText(peer.label ?? '', { fontSize, fontFamily: 'serif' })
-    return -Math.max(0, ...covered.map(glyph => glyph.musicTop ?? glyph.top)) - gap - Math.max(hook, text.h / 2)
+    const { text, pieces } = shape(peer)
+    // The sounding heads establish the bracket level. Side ink only raises
+    // a primitive whose horizontal footprint actually crosses it.
+    let level = -Math.max(0, ...covered.map(glyph => glyph.tieTop ?? glyph.top)) - gap - Math.max(hook, text.h / 2)
+    for (const glyph of glyphs) for (const ink of glyph.musicInk ?? []) for (const mark of pieces) {
+      if (glyph.x + ink.right <= mark.left || glyph.x + ink.left >= mark.right) continue
+      level = Math.min(level, ink.top - gap - mark.bottom)
+    }
+    return level
   }))
-  const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
-  const left = relation.first.x - halfBody, right = relation.last.x + halfBody, center = (left + right) / 2
-  const textLeft = center - metrics.w / 2 - size * 0.12, textRight = center + metrics.w / 2 + size * 0.12
-  const segments: [number, number, number, number][] = [[left, y, left, y + hook], [right, y, right, y + hook]]
-  if (textLeft > left) segments.push([left, y, textLeft, y])
-  if (textRight < right) segments.push([textRight, y, right, y])
-  const stroke = Math.max(1, size * 0.055)
-  return { segments, stroke, center, baseline: y - metrics.h / 2 + metrics.baseline, fontSize,
-    left: left - stroke / 2, right: right + stroke / 2, top: -y + Math.max(metrics.h / 2, stroke / 2) }
+  const { text, center, segments, pieces } = shape(relation)
+  return { segments: segments.map(([x1, y1, x2, y2]): [number, number, number, number] => [x1, y1 + y, x2, y2 + y]),
+    stroke, center, baseline: y - text.h / 2 + text.baseline, fontSize,
+    left: Math.min(...pieces.map(piece => piece.left)), right: Math.max(...pieces.map(piece => piece.right)),
+    top: -y - Math.min(...pieces.map(piece => piece.top)) }
 }
