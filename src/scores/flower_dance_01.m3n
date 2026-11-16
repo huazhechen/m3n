@@ -3,7 +3,7 @@
 {key=C} {4/4} {100qpm}
 {order=Intro,A,B,A,C,C,D,E}
 ===Intro
-N: ||: (3e) (2e 6e) (2e 3e) (2e 6) (2e) :||{x7}
+N: ||: (3e 2e) (6e 2e) (3e 2e) (6 2e) :||{x7}
 ---
 N: 3ee^^ ||
 ===A

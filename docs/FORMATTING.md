@@ -45,3 +45,5 @@
 ## 验证
 
 `packages/notation/src/m3n-format.test.ts` 覆盖具体规则、已复现缺陷和多种拍号下的组合节奏，检查时值与重复格式化的稳定性。`src/lib/score-formatting.test.ts` 对全部内置 `.m3n` 乐谱逐一验证：诊断不增加、音高与发声时值一致、歌词及演奏结构保留、再次格式化结果不变。持续扩充规则时，应同时加入具体反例和整库检查。
+
+批量处理乐谱与文档谱例可运行 `npm run build -w @m3n/notation && npx tsx tools/format-m3n-sources.mts`。工具先检查全部改写，再写入文件，并检查诊断不增加、结果稳定。专门演示冗余写法或手动换行的教学谱例，可在代码块前添加 `<!-- m3n-format: preserve — 保留原因 -->`，避免其演示语法被规范化清理；这些谱例仍由文档合法性测试校验。

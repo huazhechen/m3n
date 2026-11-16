@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { soundingEvents, soundingBar } from './fixtures/sounding-events'
 import { m3nToMei, parseM3NDocument, parseM3NDocumentStructure, measurePlaybackPasses, validateM3NDiagnostics, alternativePerformance, resolveScorePitches } from '@m3n/notation'
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
 import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
@@ -83,14 +84,14 @@ describe('bundled score corpus', () => {
       ? [...original.slice(0,206), ...original.slice(299)]
       : original
     const expected=events.map(({pitch,beats,tie})=>({pitch,beats,tie}))
-    expect(referenceEvents(sources[reference.id]!,false)).toEqual(expected)
+    expect(soundingEvents(referenceEvents(sources[reference.id]!,false))).toEqual(soundingEvents(expected))
   })
   it.each(webReferences)('matches the reference playback itinerary for $id',reference=>{
     const expected=reference.playbackEventIndexes.map(index=>{
       const {pitch,beats,tie}=reference.events[index]!
       return {pitch,beats,tie}
     })
-    expect(referenceEvents(sources[reference.id]!,true)).toEqual(expected)
+    expect(soundingEvents(referenceEvents(sources[reference.id]!,true))).toEqual(soundingEvents(expected))
   })
 
   it.each(webReferences.filter(reference=>'lyricText' in reference))('preserves every reference lyric character for $id',reference=>{
@@ -188,8 +189,8 @@ describe('bundled score corpus', () => {
       expect(document).toMatchObject({tempo:120,hasExplicitTempo:true})
       expect(document.alternatives).toHaveLength(1)
     } else {
-      expect(bars.map(bar=>({key:bar.events[0]!.key,notes:bar.events.map(event=>`${event.pitches.join('+')||'0'}:${event.beats}${event.tie?'~':''}`).join(' ')})))
-        .toEqual(reference.bars)
+      expect(bars.map(bar=>({key:bar.events[0]!.key,notes:soundingBar(bar.events.map(event=>`${event.pitches.join('+')||'0'}:${event.beats}${event.tie?'~':''}`))})))
+        .toEqual(reference.bars.map(bar => ({ ...bar, notes: soundingBar(bar.notes.split(' ')) })))
     }
   })
 

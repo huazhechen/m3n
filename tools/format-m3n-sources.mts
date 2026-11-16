@@ -1,8 +1,6 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { formatM3N, validateM3N } from '@m3n/notation'
-
-type Candidate = { label: string; source: string; replace: (value: string) => void }
+import { formatM3N, validateM3NDiagnostics } from '@m3n/notation'
 
 async function markdownFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true })
@@ -15,10 +13,11 @@ async function markdownFiles(directory: string): Promise<string[]> {
 }
 
 function diagnosticSet(source: string) {
-  return new Set(validateM3N(source).map((message) => message.replace(/^\[[A-Z]+\] 第 \d+ 行：/, '')))
+  return new Set(validateM3NDiagnostics(source).map(({ code, message }) => `${code}: ${message.replace(/第 \d+ 行：/g, '')}`))
 }
 
 function assertEquivalent(label: string, before: string, after: string) {
+  if (formatM3N(after) !== after) throw new Error(`${label}: formatting is not stable`)
   const beforeDiagnostics = diagnosticSet(before)
   const afterDiagnostics = diagnosticSet(after)
   const added = [...afterDiagnostics].filter((message) => !beforeDiagnostics.has(message))
@@ -40,14 +39,13 @@ async function main() {
 
   for (const path of documents) {
     const document = await readFile(path, 'utf8')
-    const candidates: Candidate[] = []
-    const formatted = document.replace(/```m3n\r?\n([\s\S]*?)```/g, (block, source: string, offset: number) => {
+    const formatted = document.replace(/(<!-- m3n-format: preserve[^\n]*-->\r?\n)?```m3n\r?\n([\s\S]*?)```/g, (block, preserve: string | undefined, source: string, offset: number) => {
+      if (preserve) return block
       const next = formatM3N(source)
-      candidates.push({ label: `${path}:${offset}`, source, replace: () => undefined })
       assertEquivalent(`${path}:${offset}`, source, next)
       return `\`\`\`m3n\n${next}\`\`\``
     })
-    if (candidates.length > 0 && formatted !== document) updates.push({ path, value: formatted })
+    if (formatted !== document) updates.push({ path, value: formatted })
   }
 
   for (const update of updates) await writeFile(update.path, update.value, 'utf8')
