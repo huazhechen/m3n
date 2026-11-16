@@ -1,6 +1,7 @@
 import { nativeStyle, nativeEm as em, nativeDesignPath } from './native-style.js'
 import type { TextMeasurer } from './native-measure.js'
 import type { NativePitch, NativeControl } from './native-model.js'
+import { nativeKeyGeometry } from './native-key.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
 
 export const xml = (value: string | number) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
@@ -64,7 +65,16 @@ export class NativeSymbols {
         + `<rect${attrs({ x, y: y - em(7.14), width: control.width, height: em(1.08), fill: '#000' })}/>`
         + this.text(denominator!, x + control.width / 2, y + em(9.78), nativeStyle.meter, 'M3N Numbers', { 'text-anchor': 'middle' })
     }
-    return this.text(control.text, x, y - em(1.8), nativeStyle.text, 'M3N Numbers')
+    const geometry = nativeKeyGeometry(control.keyRows ?? [{key:control.text}],this.measurer)
+    const number = this.measurer.measureText('0',{fontSize:nativeStyle.music,fontFamily:'M3N Numbers'})
+    const axis = number.h/2-number.baseline
+    return geometry.rows.map(row => {
+      const left = x+row.x, baseline = y+axis-geometry.height/2+row.y+row.baseline
+      return this.text(row.prefix,left,baseline,nativeStyle.text,'M3N Numbers')
+        + `<g transform="translate(${n(left+row.accidentalX)} ${n(baseline)})">`
+        + row.paths.map(symbol=>`<path${attrs({d:symbol.d,fill:'none',stroke:'#000','stroke-width':symbol.stroke,'data-m3n-symbol':symbol.symbol})}/>`).join('') + '</g>'
+        + this.text(row.name,left+row.nameX,baseline,nativeStyle.text,'M3N Numbers')
+    }).join('')
   }
 
   rawMark(mark: string): string {

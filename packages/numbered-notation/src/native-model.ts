@@ -3,7 +3,7 @@ import { nativeLyricInk } from './native-lyrics.js'
 import { measureNativeControl } from './native-controls.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeSvgInk } from './native-ink.js'
-import { displayedTempo, measurePlaybackPasses, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
+import { displayedTempo, sectionEntryKey, sectionKeyVisits, sectionVisitKey, measurePlaybackPasses, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -11,11 +11,12 @@ import { nativeGraceGeometry, type NativeGracePitch } from './native-grace.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { nativeAccidentalAdvance } from './native-accidentals.js'
 import { nativeMarkStack, nativeInnerMark, type NativeMarkPlacement } from './native-marks.js'
+import type { NativeKeyRow } from './native-key.js'
 import { numberedKeyLabel } from './fixed-do.js'
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
-export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno'; text: string; width: number; anchor: number; top: number; bottom: number; x?: number }
+export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno'; text: string; keyRows?: NativeKeyRow[]; width: number; anchor: number; top: number; bottom: number; x?: number }
 export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
@@ -51,6 +52,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
   const result: NativeProjection = { measures: [], glyphs: [], diagnostics: [], hasBass: options.includeBass !== false && [...document.parts.values()].some(part => part.bass.some(measure => measure.events.length || measure.multiRest)) }
   const textWidth = (text: string, size = nativeStyle.annotation, family = 'serif') => options.textMeasurer.measureText(text, { fontSize: size, fontFamily: family }).w
   const known = new Set(['tr', 'prall', 'fermata', 'arp', 'str', 'tip', 'hold', 'brk', 'breath', 'sfz', 'f1', 'f2', 'f3', 'f4', 'f5'])
+  const sectionKeys = new Map((document.order ?? []).map(name => [name, {entry:sectionEntryKey(document,name),visits:sectionKeyVisits(document,name)}]))
   let partIndex = 0, measureNumber = 0
   for (const part of document.parts.values()) {
     const passes = measurePlaybackPasses(part.melody)
@@ -81,7 +83,21 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         }
         if (staff === 'melody' && event.sectionLabel && !event.sectionLabelBreakAfter) control('section', event.sectionLabel)
         if (eventIndex === 0 && (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno')))) control('segno', '𝄋')
-        controls.push(...settingsControls(event))
+        const keys = sectionKeys.get(host.source.sectionName ?? '')
+        const visits = keys?.visits ?? []
+        const entry = keys?.entry ?? event.key
+        const displayKey = visits[0] ? sectionVisitKey(event.key,entry,visits[0]) : event.key
+        if (!lane.startsWith('alternative:') && new Set(visits).size > 1 && (event.sectionLabel || displayKey !== state.key)) {
+          const groups = new Map<string,number[]>()
+          visits.forEach((key,index) => {
+            const current = sectionVisitKey(event.key,entry,key)
+            groups.set(current,[...(groups.get(current) ?? []),index+1])
+          })
+          const rows = [...groups].map(([key,passes]) => ({key:numberedKeyLabel(key),label:passes.length > 1 && passes.at(-1)!-passes[0]! === passes.length-1 ? `${passes[0]}–${passes.at(-1)}` : passes.join(',')}))
+          controls.push(measureNativeControl('key',numberedKeyLabel(displayKey),options.textMeasurer,rows))
+          state.key = displayKey; accidentals.clear()
+        }
+        controls.push(...settingsControls({...event,key:displayKey}))
         const graces = event.postfixes.flatMap(mark => { const grace = parseM3NGrace(mark); return grace ? (parseM3NGroupPitches(grace.pitchSource) ?? []).map(pitch => ({ ...numberedPitch(pitch, event.octaveShift), writtenBeats: 1 / 2 ** (grace.depth + 1) })) : [] })
         for (const mark of event.postfixes) if (!known.has(mark) && !parseM3NGrace(mark)) result.diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${mark}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
         const marks = event.postfixes.filter(mark => known.has(mark) && mark !== 'arp')
