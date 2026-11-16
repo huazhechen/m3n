@@ -24,8 +24,10 @@ export function measureNativeControl(kind: NativeControl['kind'], text: string, 
   if (meterGeometry) { width = meterGeometry.width; anchor = width / 2 }
   const tempoGeometry = kind === 'tempo' ? nativeTempoGeometry(text, measurer, tempoUnit) : undefined
   if (tempoGeometry) { width = tempoGeometry.width; anchor = tempoGeometry.anchor }
-  if (kind === 'section') { width += nativeStyle.annotation * 0.5; anchor = nativeStyle.annotation * 0.25 + measurer.measureText(text[0]!, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: 700 }).w / 2 }
+  const sectionLeft = Math.min(0, m.inkLeft ?? 0)
+  if (kind === 'section') { width = Math.max(m.w, m.inkRight ?? m.w) - sectionLeft + nativeStyle.annotation * 0.5; anchor = nativeStyle.annotation * 0.25 - sectionLeft + measurer.measureText(text[0]!, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: 700 }).w / 2 }
   const item: NativeControl = { kind, text, keyRows, meterGeometry, tempoGeometry, width, anchor, top: kind === 'section' ? m.baseline + em(2.4) + nativeStyle.annotation * 0.25 : 0, bottom: kind === 'section' ? m.h - m.baseline - em(2.4) + nativeStyle.annotation * 0.25 : 0 }
+  if (kind === 'section') item.textInset = nativeStyle.annotation * 0.25 - sectionLeft
   const ink = nativeSvgInk(painter.control(item), measurer)
   item.top = -ink.top; item.bottom = ink.bottom
   item.width = Math.max(width, ink.right) - Math.min(0, ink.left)

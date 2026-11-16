@@ -18,7 +18,7 @@ export class CanvasTextMeasurer implements TextMeasurer {
     this.context.font = `${style.fontStyle ?? 'normal'} ${style.fontWeight ?? 400} ${style.fontSize}px ${style.fontFamily ?? 'serif'}`
     const metrics = this.context.measureText(text)
     const ascent = metrics.actualBoundingBoxAscent, descent = metrics.actualBoundingBoxDescent
-    return { w: Math.max(metrics.width, metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight),
+    return { w: Math.max(metrics.width, style.fontSize * 0.25),
       h: ascent + descent, baseline: ascent, advance: metrics.width, inkLeft: -metrics.actualBoundingBoxLeft, inkRight: metrics.actualBoundingBoxRight,
       centerOffset: (metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft - metrics.width) / 2 }
   }

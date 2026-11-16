@@ -168,6 +168,7 @@ export class TextTemporalNode extends TemporalNodeBase {
     private style: TextStyle;
     private textBaselineY = 0;
     private centerOffsets: number[] = [];
+    private textXs: number[] = [];
 
     constructor(ast: TextFunction, host?: VisualTemporalNode) {
         super();
@@ -185,7 +186,16 @@ export class TextTemporalNode extends TemporalNodeBase {
         const measure = (text: string) => context.textMeasurer.measureText(text, this.style);
         this.centerOffsets = lines.map(line=>measure(line).centerOffset ?? 0);
         const metrics = lines.map(measure);
-        const width = Math.max(...metrics.map(m => m.w));
+        const advanceWidth = Math.max(...metrics.map(m => m.w));
+        const xs = metrics.map((_, index) => align === "right" ? advanceWidth
+            : align === "center" ? advanceWidth / 2 - this.centerOffsets[index] : 0);
+        const alignedAdvance = (m: typeof metrics[number]) => align === "right" ? m.advance ?? m.w
+            : align === "center" ? (m.advance ?? m.w) / 2 : 0;
+        // A frame must preserve its inset beyond painted overhang as well as
+        // logical advance. Keep each line's alignment and shift the whole cell.
+        const inkLeft = this.ast.frame ? Math.min(0, ...metrics.map((m, index) => xs[index] - alignedAdvance(m) + (m.inkLeft ?? 0))) : 0;
+        const inkRight = this.ast.frame ? Math.max(advanceWidth, ...metrics.map((m, index) => xs[index] - alignedAdvance(m) + (m.inkRight ?? m.w))) : advanceWidth;
+        const width = inkRight - inkLeft;
         // All lines share a baseline advance, but their ink need not have the
         // first line's ascent/descent (for example A / g / Chinese text).
         const top = Math.min(...metrics.map((m, index) => index * lineAdvance - m.baseline));
@@ -196,32 +206,30 @@ export class TextTemporalNode extends TemporalNodeBase {
         this.box.h = bottom - top + 2 * inset;
         this.box.visualAxis = this.box.h / 2;
         this.textBaselineY = -top + inset;
+        this.textXs = xs.map(x => inset + x - inkLeft);
         this.lineBounds = lines.flatMap((line, index) => {
             if (!line) return [];
             const m = metrics[index];
-            const x = align === "right" ? this.box.w - inset - m.w
-                : align === "center" ? (this.box.w - m.w) / 2 - this.centerOffsets[index] : inset;
+            const x = this.textXs[index] - (align === "right" ? m.w : align === "center" ? m.w / 2 : 0);
             return [{ x, y: this.textBaselineY + index * lineAdvance - m.baseline, w: m.w, h: m.h }];
         });
         if (align === "center") this.box.anchor = this.box.w / 2;
         else if (align === "right") {
             const lastChar = [...lines[0]].at(-1);
-            this.box.anchor = inset + width - (lastChar ? measure(lastChar).w / 2 : 0);
+            this.box.anchor = inset + advanceWidth - inkLeft - (lastChar ? measure(lastChar).w / 2 : 0);
         } else {
             // 左对齐时锚点落在首字符中心，单字标记才能像音符一样对准宿主
             const firstChar = [...lines[0]][0];
-            this.box.anchor = inset + (firstChar ? measure(firstChar).w / 2 : 0);
+            this.box.anchor = inset - inkLeft + (firstChar ? measure(firstChar).w / 2 : 0);
         }
     }
 
     override paint(painter: Painter) {
-        const { lines, align, lineAdvance } = this.ast;
-        const inset = this.ast.frame ? 3.5 : 0;
+        const { lines, lineAdvance } = this.ast;
         if (this.ast.frame) painter.drawRect(this.box.x + 0.5, this.box.y + 0.5, this.box.w - 1, this.box.h - 1, { stroke: "#000", strokeWidth: 1 });
-        const x = this.box.x + (align === "center" ? this.box.w / 2 : align === "right" ? this.box.w - inset : inset);
         let y = this.box.y + this.textBaselineY;
         for (const [index,line] of lines.entries()) {
-            painter.drawText(line, x - (align === "center" ? this.centerOffsets[index] : 0), y, this.style);
+            painter.drawText(line, this.box.x + this.textXs[index], y, this.style);
             y += lineAdvance;
         }
     }

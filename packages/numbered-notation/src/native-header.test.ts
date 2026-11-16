@@ -67,6 +67,17 @@ describe('native measured header order', () => {
     expect(sections.systems[0]!.top).toBe(plain.systems[0]!.top)
     expect(sections.systems[1]!.top - plain.systems[1]!.top).toBe(12)
   })
+
+  it('preserves order-frame padding beyond measured left and right ink overhang', () => {
+    const measured = { measureText() { return { w: 8.5, advance: 8.5, h: 11, baseline: 9, inkLeft: -3, inkRight: 13 }; } }
+    const geometry = nativeHeaderGeometry(parseM3NDocument(source), 800, 32, measured)
+    const item = geometry.orderRows[0]!.items.find(item => item.framed)!
+    const root = new DOMParser().parseFromString(geometry.svg, 'text/html')
+    const text = root.querySelector('[data-m3n-role="order"]')!
+    const ink = nativeSvgInk(text.outerHTML, measured)
+    expect(ink.left - item.x).toBeCloseTo(3.5, 4)
+    expect(item.x + item.width - ink.right).toBeCloseTo(3.5, 4)
+  })
 })
 
 

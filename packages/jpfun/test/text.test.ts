@@ -3,7 +3,19 @@ import { test } from "node:test";
 import { ASTFunctionNode } from "../src/functions/ASTtypes.js";
 import { analyzeScoreSyntax } from "../src/pipeline.js";
 import { quote } from "../src/parser/parse-utils/string-utils.js";
+import { paintedCommandRegions } from "../src/layout/painted-ink.js";
 import { assert, compileValid, commandsOfKind, expectCompileError, layoutOf, nearly, parse, recordCommands } from "./helpers.js";
+
+for (const align of ['left', 'center', 'right']) test(`framed ${align} text preserves its inset outside measured overhang`, () => {
+    const measurer = { measureText() { return { w: 20, advance: 20, h: 10, baseline: 8, inkLeft: -4, inkRight: 28, centerOffset: 2 }; } };
+    const { layout } = compileValid(`@text(A,frame=true,align=${align})`, { textMeasurer: measurer });
+    const commands = recordCommands(layout);
+    const text = commands.find(command => command.kind === 'text')!;
+    const frame = commands.find(command => command.kind === 'rect')!;
+    const ink = paintedCommandRegions(text, measurer)[0];
+    assert(nearly(ink.x - (frame.x - 0.5), 3.5), 'left ink must retain the requested frame inset');
+    assert(nearly(frame.x + frame.w + 0.5 - ink.x - ink.w, 3.5), 'right ink must retain the requested frame inset');
+});
 
 /** 只写一个 @text 时它就是唯一的可见对象 */
 function textBox(source: string) {

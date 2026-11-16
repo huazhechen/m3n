@@ -27,7 +27,7 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
       if (!text || !glyph.annotations.includes(text)) continue
       const framed = kind === 'section', padding = framed ? nativeStyle.annotation * 0.25 : 0
       const metrics = measurer.measureText(text, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: framed ? 700 : 400 })
-      const w = metrics.w + 2 * padding, h = metrics.h + 2 * padding
+      const w = (framed ? Math.max(metrics.w, (metrics.inkRight ?? metrics.w) - (metrics.inkLeft ?? 0)) : metrics.w) + 2 * padding, h = metrics.h + 2 * padding
       const left = framed ? margin : Math.max(margin, Math.min(glyph.x - w / 2, width - margin - w))
       const right = left + w
       const obstacleTop = Math.max(glyph.musicTop ?? glyph.top, ...regions.filter(region => region.lane === glyph.lane && region.right >= left && region.left <= right).map(region => region.top))

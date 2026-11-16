@@ -11,7 +11,7 @@ import { displayedTempo, sectionOrderLabels, type ScoreDocument } from '@m3n/not
 import type { TextMeasurer } from './native-measure.js'
 import { numberedOrderLines } from './order-lines.js'
 
-export type NativeOrderItem = { text: string; framed: boolean; x: number; y: number; width: number; height: number; baseline: number }
+export type NativeOrderItem = { text: string; framed: boolean; x: number; y: number; width: number; height: number; baseline: number; textInset: number }
 
 export function wrapNativeText(text: string, width: number, size: number, measurer: TextMeasurer, weight = 400): string[] {
   const lines: string[] = []
@@ -118,7 +118,9 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const items = measured.map(item => {
       const padding = item.framed ? nativeStyle.text * (3.5 / 16) : 0, itemHeight = item.metrics.h + padding * 2
       const y = top + (height - itemHeight) / 2
-      const placed = { text: item.text, framed: item.framed, x, y, width: item.metrics.w + padding * 2, height: itemHeight, baseline: y + padding + item.metrics.baseline }
+      const left = item.framed ? Math.min(0, item.metrics.inkLeft ?? 0) : 0
+      const contentWidth = item.framed ? Math.max(item.metrics.w, item.metrics.inkRight ?? item.metrics.w) - left : item.metrics.w
+      const placed = { text: item.text, framed: item.framed, x, y, width: contentWidth + padding * 2, height: itemHeight, baseline: y + padding + item.metrics.baseline, textInset: padding - left }
       x += placed.width + nativeStyle.text * 0.25
       return placed
     })
@@ -135,7 +137,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     let rowSvg = ''
     for (const item of row.items) {
       if (item.framed) rowSvg += `<rect${attrs({ x: item.x + em(0.5), y: item.y + em(0.5), width: item.width - em(1), height: item.height - em(1), fill: 'none', stroke: '#000', 'stroke-width': em(1) })}/>`
-      rowSvg += painter.text(item.text, item.x + (item.framed ? nativeStyle.text * (3.5 / 16) : 0), item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
+      rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
     }
     svg += rowSvg
     blocks.push({height:row.height,svg:`<g transform="translate(0 ${n(-row.top)})">${rowSvg}</g>`})

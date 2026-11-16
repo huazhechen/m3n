@@ -1,5 +1,7 @@
 # Local changes
 
+- Framed text preserves its inset outside the union of advance and painted ink, including negative bearings and right overhang. All three alignments and individual line positions share the measured geometry.
+
 - Pagination always keeps natural system gaps, including full and explicitly closed pages. Removed the page-justification branch and the `@pagebreak` / `@pb` justification argument; page capacity determines breaks only. Repeated, parallel, blank-page, footer, playback and second-pass attachment behaviors remain covered.
 
 - Volta labels center their measured ink within the hooks, without the former fixed 2px baseline shift. Hooks derive from visible label height; strokes and the separation of adjacent hooks scale with the music size. Each fragment measures its actual line/hook/text commands, including label overhang and half strokes. Continuation fragments no longer reserve unpainted hooks or labels.

@@ -2,12 +2,24 @@ import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { nativeArcGeometry } from './native-arc.js'
+import { nativeAnnotationSvg } from './native-annotations.js'
+import { nativeSvgInk } from './native-ink.js'
+import { NativeSymbols } from './native-symbols.js'
 
 const options = { width: 800, paged: false }
 const layout = (music: string, extra = {}) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`), { ...options, ...extra })
 const annotations = (score: ReturnType<typeof layout>) => score.projection.glyphs.flatMap(glyph => glyph.annotationLayout ?? [])
 
 describe('native annotations', () => {
+  it('keeps centered heading ink inside both measured frame insets', () => {
+    const measurer = { measureText() { return { w: 8.5, advance: 8.5, h: 11, baseline: 9, inkLeft: -3, inkRight: 13, centerOffset: .75 }; } }
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\n===A{br}\nN: 1 2 3 4 |||'), { ...options, textMeasurer: measurer })
+    const item = annotations(score).find(item => item.kind === 'section')!
+    const svg = nativeAnnotationSvg(item, 0, new NativeSymbols(measurer))
+    const ink = nativeSvgInk(svg.match(/<text[\s\S]*?<\/text>/)![0], measurer)
+    expect(ink.left - item.x + item.width / 2).toBeCloseTo(3.5, 4)
+    expect(item.x + item.width / 2 - ink.right).toBeCloseTo(3.5, 4)
+  })
   it('leaves note spacing, wrapping and arc geometry unchanged', () => {
     const bare = layout('{lg}1 2{/} 3 4')
     const labelled = layout('{text=Allegro}{lg}1 2{/} 3 4')
