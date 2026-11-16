@@ -8,7 +8,7 @@ import {
 import { lyricsByEvent, type LyricsByEvent, type LyricRowData } from './lyrics.js'
 import { fixedDoPitch, fixedDoGrace, transposedKey } from './fixed-do.js'
 import { sustainContinuations } from './sustains.js'
-import { scientificPitchRange } from './pitch-range.js'
+import { numberedPitchRange } from './pitch-range.js'
 import { keyedDisplayPerformance } from './display-performance.js'
 import { numberedOrderLines } from './order-lines.js'
 
@@ -391,8 +391,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     ...headerContent.subtitles.map(text => `@text(${quote(headingText(text,16,400))},size=16px,align=center)`),
   ].filter(Boolean).join(' ')
   const credits = headerContent.credits.map(text => `@text(${quote(text)},size=14px,align=right)`).join(' ')
-  const pitchRange = scientificPitchRange(document, options)
-  const range = pitchRange ? `@text(${quote(pitchRange.join('~'))},size=16px)` : ''
+  const pitchRange = numberedPitchRange(document, options)
+  const range = pitchRange ? `{@set(fontsize=16) @note(${quote(pitchRange[0])},displayonly=true)@rangeLow @text("~",size=16px,font="M3N Numbers") @note(${quote(pitchRange[1])},displayonly=true)@rangeHigh}` : ''
   const signatures = [
     options.fixedDo ? '@key("C4",size=16px)' : keyMark(document.key, options.transpose),
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,

@@ -3,7 +3,8 @@ import { nativeStyle, nativeEm as em } from './native-style.js'
 import { NativeSymbols, attrs, n } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 import { measureNativeControl } from './native-controls.js'
-import { scientificPitchRange } from './pitch-range.js'
+import { nativeDisplayPitch } from './native-model.js'
+import { numberedPitchRange } from './pitch-range.js'
 import { transposedNumberedKeyLabel } from './fixed-do.js'
 import { displayedTempo, sectionOrderLabels, type ScoreDocument } from '@m3n/notation'
 import type { TextMeasurer } from './native-measure.js'
@@ -62,9 +63,23 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   }
   let signatureX = margin
   const signaturePieces = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw })
-  const range = scientificPitchRange(document,options)
+  const range = numberedPitchRange(document,options)
   if (range) {
-    signaturePieces.push(`<g data-m3n-role="pitch-range">${painter.text(range.join('~'), signatureX, 0, nativeStyle.text, 'serif')}</g>`)
+    const size = nativeStyle.text
+    const rawPitch = (value:string) => painter.pitch(nativeDisplayPitch(value),0,0,size)
+    const low = rawPitch(range[0]), high = rawPitch(range[1])
+    const lowInk = nativeSvgInk(low,measurer), highInk = nativeSvgInk(high,measurer)
+    const gap = size*.2, separator = painter.text('~',0,0,size,'M3N Numbers')
+    const separatorInk = nativeSvgInk(separator,measurer)
+    const place = (svg:string,x:number) => `<g transform="translate(${n(x)} 0)">${svg}</g>`
+    let rangeSvg = ''
+    let x = signatureX-lowInk.left
+    rangeSvg += place(low,x)
+    x += lowInk.right+gap-separatorInk.left
+    rangeSvg += place(separator,x)
+    x += separatorInk.right+gap-highInk.left
+    rangeSvg += place(high,x)
+    signaturePieces.push(`<g data-m3n-role="pitch-range">${rangeSvg}</g>`)
   }
   const signatureSvg = signaturePieces.join('')
   const signatureInk = nativeSvgInk(signatureSvg, measurer)

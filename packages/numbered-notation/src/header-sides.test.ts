@@ -30,7 +30,7 @@ describe('measured header side arrangement in both engines', () => {
   })
 
   it('clears only truly intersecting credit ink on wide pages', () => {
-    const source = plain.replace('{4/4}', `{composer=甲${'很长的署名'.repeat(7)}}{120qpm}{4/4}`)
+    const source = plain.replace('{4/4}', `{composer=甲${'很长的署名'.repeat(9)}}{120qpm}{4/4}`)
     const document = parseM3NDocument(source)
     const projection = projectNumberedScore(document,{width:800,paged:false})
     const result = compileScore(projection.source)
