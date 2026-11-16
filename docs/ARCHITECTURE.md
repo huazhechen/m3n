@@ -76,7 +76,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `components/EditorSplit.tsx`：手机源码／预览标签切换，桌面拖动及方向键调整分栏，切换保留输入与分析。
 - `pages`：路由级组合，不承载领域算法。
 - `scores/*.m3n`：曲库正文的唯一来源；`tools/score-catalog-plugin.ts` 在构建时生成排序后的虚拟索引，`lib/samples.ts` 只消费索引并按曲目异步加载正文，浏览器不逐首解析内置曲库。乐谱库先显示本地作品，按最近修改时间倒序排列（旧记录缺少修改时间时使用创建时间）；官方曲目随后，使用 `lib/score-order.ts` 按标题拼音或英文字母 A–Z 排序。搜索沿用此顺序，不再提供或记录“最近编辑”。
-- `hooks/useScoreSource.ts`：编辑页、阅读页共用的来源加载与失效请求取消；缺失和失败有明确页面状态，不替换成默认谱。
+- `hooks/useScoreSource.ts`：编辑页、阅读页共用的来源加载与失效请求取消；缺失和失败有明确页面状态，不替换成默认谱。乐谱动态模块加载失败时提供“刷新页面”，重新获取当前构建的资源引用；普通加载错误仍提供“重试加载”。不自动刷新，以免打断编辑。
 - `hooks/useScoreDraft.ts`：草稿恢复、延迟保存与离开页面时写入；本地正式保存更新原 ID，持久化失败不得返回成功。
 - `hooks/useM3NAnalysis.ts` 与 `lib/analysis-client.ts`：编辑分析的合并、版本检查与线程生命周期；不把 Worker 通信逻辑放入领域包。
 - `notation/harmony-syntax.ts`：和弦符号的共享定义；和弦行解析、校验与 MEI 符号生成复用它，最长后缀优先匹配。
