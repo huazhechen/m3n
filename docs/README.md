@@ -9,6 +9,7 @@
 
 **开发内部文档**（不进入应用页面，供维护者与开发 Agent 查阅）：
 
+- [SPARKS_NMN_REVIEW.md](SPARKS_NMN_REVIEW.md)：Sparks NMN 功能与文档对照、口琴场景优先级和改进建议。
 - [ARCHITECTURE.md](ARCHITECTURE.md)：前端架构与工作区边界。
 - [REFACTOR_PLAN.md](REFACTOR_PLAN.md)：整体重构范围、验收记录与阶段状态。
 - [CODEGRAPH.md](CODEGRAPH.md)：模块依赖与数据流。
