@@ -85,3 +85,35 @@ it('places each right credit row with the shared five-design-pixel ink clearance
   expect(credits).toHaveLength(3)
   for (let i = 1; i < credits.length; i++) expect(credits[i]!.top - credits[i - 1]!.bottom).toBeCloseTo(5, 4)
 })
+
+it('aligns range numerals and separator to the measured music axis', () => {
+  const doc = parseM3NDocument('{4/4}\nN: 1 2 3 5 |||')
+  const varied = { measureText(text: string, style: { fontSize: number }) {
+    const h = text === '~' ? 4 : style.fontSize * 0.7
+    return { w: text.length * style.fontSize * 0.6, h, baseline: text === '~' ? 7 : h * 0.9 }
+  } }
+  const geometry = nativeHeaderGeometry(doc, 800, 32, varied)
+  const root = new DOMParser().parseFromString(`<svg>${geometry.svg}</svg>`, 'image/svg+xml')
+  const parts = [...root.querySelector('[data-m3n-role="pitch-range"]')!.children]
+  expect(parts).toHaveLength(3)
+  const zero = varied.measureText('0', { fontSize: 22 }), axis = zero.h / 2 - zero.baseline
+  for (const part of parts) {
+    const ink = nativeSvgInk(part.outerHTML, varied)
+    expect((ink.top + ink.bottom) / 2).toBeCloseTo(axis, 4)
+  }
+})
+
+it('reserves a complete numeral body for narrow range digits', () => {
+  const varied = { measureText(text: string, style: { fontSize: number }) {
+    const advance = style.fontSize * 0.6 * text.length
+    const width = text === '1' ? advance / 3 : advance
+    return { w: advance, advance, inkLeft: 0, inkRight: width, h: style.fontSize * 0.7,
+      baseline: style.fontSize * 0.7, centerOffset: (width - advance) / 2 }
+  } }
+  const separators = ['1', '2'].map(low => {
+    const geometry = nativeHeaderGeometry(parseM3NDocument(`{2/4}\nN: ${low} 5 |||`), 800, 32, varied)
+    const root = new DOMParser().parseFromString(`<svg>${geometry.svg}</svg>`, 'image/svg+xml')
+    return root.querySelector('[data-m3n-role="pitch-range"]')!.children[1]!.getAttribute('transform')
+  })
+  expect(separators[0]).toBe(separators[1])
+})

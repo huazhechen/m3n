@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { normalizePageConfig, paginateLayoutLines } from '@m3n/jpfun'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { paginateNativeBlocks } from './native-pagination.js'
@@ -48,5 +49,23 @@ it('keeps the same natural system gaps across page sizes and in continuous mode'
       const previous = paged.systems[index - 1]
       if (previous?.page === system.page) expect(system.top - previous.bottom).toBeCloseTo(24)
     })
+  }
+})
+
+
+it('shares natural block positions with jpFun across capacities and section gaps', () => {
+  const blocks = Array.from({ length: 25 }, (_, i) => ({ height: 18 + i * 17 % 70, gapBefore: i % 3 ? 0 : 12 }))
+  for (const height of [180, 240, 400, Infinity]) for (const gap of [0, 10, 24]) {
+    const native = paginateNativeBlocks(blocks, { pageHeight: height, margin: 20, gap })
+    const reference = paginateLayoutLines(blocks.map(b => b.height), normalizePageConfig({
+      height, marginTop: 20, marginBottom: 20, lineGap: gap,
+    }), [], blocks.map(b => b.gapBefore))
+    expect(reference.pages.map(p => p.bounds.h)).toEqual(native.heights)
+    for (const [index, position] of native.positions.entries()) {
+      const page = reference.pages[position.page]!
+      expect(index).toBeGreaterThanOrEqual(page.lineStart)
+      expect(index).toBeLessThan(page.lineEnd)
+      expect(reference.lineTops[index]! - page.bounds.y).toBeCloseTo(position.top, 8)
+    }
   }
 })

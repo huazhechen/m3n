@@ -336,7 +336,7 @@ export function layoutDocument(
         let pages: DocumentLayoutPage[];
         let lineTops: number[];
         try {
-            ({ pages, lineTops } = paginateLayoutLines(heights, page, pageBreaks, !options.uniformSystemHeight, extraGaps));
+            ({ pages, lineTops } = paginateLayoutLines(heights, page, pageBreaks, extraGaps));
         } catch (error) {
             if (!(error instanceof PageLayoutError)) throw error;
             // 用溢出的元素的 span 构成 Error
@@ -512,7 +512,7 @@ function splitLayoutLines(result: LoweringResult) {
             extraGaps[lines.length] = Math.max(extraGaps[lines.length] ?? 0, node.addon?.systemGapBefore ?? 0);
             const pageBreak = node.addon?.pageBreakBefore;
             if (pageBreak !== undefined) {
-                pageBreaks[lines.length] = (pageBreaks[lines.length] ?? true) && pageBreak;
+                pageBreaks[lines.length] = true;
             }
             if (isVisualTemporalNode(node)) visibleColumn.push(node);
         }

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { compileScore, ErrorDiagnostic } from '@m3n/jpfun'
+import { compileScore, ErrorDiagnostic, SvgPainter, defaultTextMeasurer, type VisualTemporalNode } from '@m3n/jpfun'
 import { parseM3NDocument } from '@m3n/notation'
 import { projectNumberedScore } from './projection.js'
 import { nativeHeaderGeometry } from './native-header.js'
 import { DefaultTextMeasurer } from './native-measure.js'
+import { nativeSvgPieces } from './native-ink.js'
 
 const plain = '{title=谱头}{4/4}\nN: 1 2 3 4 |||'
 const measure = new DefaultTextMeasurer()
@@ -46,11 +47,21 @@ describe('measured header side arrangement in both engines', () => {
       }
       return false
     })
+    const pieces = (node: VisualTemporalNode) => {
+      const painter = new SvgPainter()
+      node.paint(painter)
+      for (const decoration of node.decorations) decoration.paint?.(painter)
+      const svg = painter.toSvg(result.layout.bounds).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')
+      return nativeSvgPieces(svg, { measureText(text, style) {
+        const m = defaultTextMeasurer.measureText(text, style)
+        return { ...m, h: m.inkBottom ?? m.h }
+      } })
+    }
     let conflictingPairs = 0
-    for (const control of left) for (const credit of credits) {
-      if (control.box.x + control.box.w + 16 > credit.box.x && credit.box.x + credit.box.w > control.box.x) {
+    for (const control of left.flatMap(pieces)) for (const credit of credits.flatMap(pieces)) {
+      if (control.right + 16 > credit.left && credit.right > control.left) {
         conflictingPairs++
-        expect(control.box.y).toBeGreaterThanOrEqual(credit.box.y + credit.box.h + 5 - 1e-6)
+        expect(control.top).toBeGreaterThanOrEqual(credit.bottom + 5 - 1e-6)
       }
     }
     expect(conflictingPairs).toBeGreaterThan(0)

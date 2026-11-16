@@ -52,7 +52,7 @@ export interface TemporalAddon {
     systemGapBefore?: number;
     /** M3N: automatic wrapping may prefer this boundary without forcing a line. */
     preferredBreakBefore?: boolean;
-    /** 在所属行之前强制换页；配合 breakBefore 使用，布尔值控制上一页的余白分配 */
+    /** 在所属行之前强制换页；配合 breakBefore 使用，已定义的值仅表示边界 */
     pageBreakBefore?: boolean;
     [key: `@${string}`]: unknown;
 }

@@ -79,14 +79,13 @@ export function normalizePageConfig(source: Partial<PageConfig> = {}): PageConfi
 
 /**
  * 把已经测好自然高度的谱面行分页，并给出每行的全局顶部坐标。
- * pageBreaks 按行号索引：undefined 不强制换页，true/false 强制换页并指定上一页是否拉伸。
- * justifyPages=false 保留固定节距，不向完整页面的行间分配余白。
+ * pageBreaks 按行号索引：已定义的标记强制换页。
+ * 所有页面保留自然行距，余白留在页底。
  */
 export function paginateLayoutLines(
     heights: readonly number[],
     page: PageConfig,
     pageBreaks: readonly (boolean | undefined)[] = [],
-    justifyPages = true,
     extraGaps: readonly number[] = [],
 ): { pages: DocumentLayoutPage[]; lineTops: number[] } {
     const availableHeight = page.height - page.marginTop - page.marginBottom;
@@ -94,23 +93,17 @@ export function paginateLayoutLines(
     const lineTops = new Array<number>(heights.length).fill(0);
     let pageTop = 0;
     let start = 0;
-    // used 含最小行距，用于判断下一行能否装入；contentHeight 不含行距，用于封页后拉伸
+    // used 包含自然行距，用于判断下一行能否装入。
     let used = 0;
-    let contentHeight = 0;
 
-    /** 写出 [start, end) 这一页；完整页把剩余高度均分到每行下方，末页保留最小行距 */
-    const closePage = (end: number, justify: boolean) => {
-        const count = end - start;
-        const remaining = justify
-            ? Math.max(0, availableHeight - contentHeight - page.lineGap * (count - 1) - extraGaps.slice(start + 1, end).reduce((sum, gap) => sum + gap, 0))
-            : 0;
-        const gap = page.lineGap + remaining / count;
+    /** 写出 [start, end) 这一页，完整页与末页共用自然行距。 */
+    const closePage = (end: number) => {
         let lineTop = pageTop + page.marginTop;
 
         for (let i = start; i < end; i++) {
             if (i > start) lineTop += extraGaps[i] ?? 0;
             lineTops[i] = lineTop;
-            lineTop += heights[i] + (i + 1 < end ? gap : 0);
+            lineTop += heights[i] + (i + 1 < end ? page.lineGap : 0);
         }
 
         const height = Number.isFinite(page.height)
@@ -130,7 +123,6 @@ export function paginateLayoutLines(
         pageTop += height;
         start = end;
         used = 0;
-        contentHeight = 0;
     };
 
     for (let i = 0; i < heights.length; i++) {
@@ -139,14 +131,13 @@ export function paginateLayoutLines(
             throw new PageLayoutError(i, height, availableHeight);
         }
 
-        // 强制边界与自然溢出统一封页；无限页高不分配余白
+        // 强制边界与自然溢出统一封页。
         if (i > start && (pageBreaks[i] !== undefined || Number.isFinite(page.height) && used + page.lineGap + (extraGaps[i] ?? 0) + height > availableHeight + 1e-6)) {
-            closePage(i, justifyPages && Number.isFinite(page.height) && (pageBreaks[i] ?? true));
+            closePage(i);
         }
         used += (i > start ? page.lineGap + (extraGaps[i] ?? 0) : 0) + height;
-        contentHeight += height;
     }
 
-    if (heights.length > start) closePage(heights.length, false);
+    if (heights.length > start) closePage(heights.length);
     return { pages, lineTops };
 }

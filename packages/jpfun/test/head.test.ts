@@ -524,7 +524,7 @@ test('head sideauto stacks real horizontal conflicts even on a wide page', () =>
         const boxes = textObjects(input);
         const left = boxes.get('L'.repeat(50))!.box, right = boxes.get('R'.repeat(50))!.box;
         assert(left.x + left.w + 16 > right.x, 'the horizontal spans truly conflict');
-        assert(nearly(left.y - right.y - right.h, 5), 'only the conflicting sides stack');
+        assert(nearly(left.y - right.y - right.h * 0.8, 5), 'only the conflicting sides stack');
     }
 });
 
@@ -540,6 +540,33 @@ test('head sideauto shifts only past conflicting rows, retaining later shared sp
     const source = '@page(width=320px,left=32px,right=32px) @head(left=@text(LLLLLLLLLLLLLLLLLLLL,size=16px),right={@text(RRRRRRRRRRRRRRRR,size=14px) @text(A,size=14px) @text(B,size=14px)},sideauto=true,itemgap=16px,gap=5px)';
     const boxes = textObjects(source), left = boxes.get('LLLLLLLLLLLLLLLLLLLL')!.box;
     const first = boxes.get('RRRRRRRRRRRRRRRR')!.box, last = boxes.get('B')!.box;
-    assert(nearly(left.y, first.y + first.h + 5), 'clear only the first conflicting row');
+    assert(nearly(left.y, first.y + first.h * 0.8 + 5), 'clear only the first conflicting row');
     assert(left.y < last.y + last.h, 'remaining author rows still share vertical space');
+});
+
+test('head sideauto measures octave decorations instead of just the note body', () => {
+    const author = 'R'.repeat(24);
+    const result = compileScore(`@page(width=240px,left=32px,right=32px)
+        @head(left={{@note("7'",displayonly=true)}},right=@text(${author},size=14px,align=right),sideauto=true,itemgap=16px,gap=5px)`);
+    assert(result.diagnostics.length === 0, 'decorated header fixture must compile');
+    const commands = recordCommands(result.layout);
+    const dot = commands.find(c => c.kind === 'circle');
+    const right = commands.find(c => c.kind === 'text' && c.text === author);
+    assert(dot?.kind === 'circle' && right?.kind === 'text', 'fixture must paint octave dot and author');
+    // The offline measurer paints above the baseline only. Check actual ink,
+    // independently of the header's body/decoration layout rectangles.
+    assert(nearly(dot.cy - dot.r - right.y, 5), 'octave dot must retain the requested author clearance');
+});
+
+test('head sideauto includes text overhang beyond its advance box', () => {
+    const result = compileScore('@page(width=240px,left=20px,right=20px) @head(left=@text(L),right=@text(R,align=right),sideauto=true,gap=5px)', {
+        textMeasurer: { measureText(text) {
+            return { w: 10, advance: 10, h: 14, baseline: 10, inkBottom: 14,
+                inkLeft: text === 'R' ? -190 : 0, inkRight: 10 };
+        } },
+    });
+    assert(result.diagnostics.length === 0, 'overhang fixture must compile');
+    const commands = recordCommands(result.layout).filter(c => c.kind === 'text');
+    const left = commands.find(c => c.text === 'L')!, right = commands.find(c => c.text === 'R')!;
+    assert(nearly(left.y - 10 - (right.y + 4), 5), 'visible overhang must trigger the requested vertical clearance');
 });

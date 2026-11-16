@@ -1,4 +1,7 @@
 // M3N modification: optional side-slot stacking and configurable item spacing.
+import { paintedNodeRegions } from "../../layout/painted-ink.js";
+import type { TextMeasurer } from "../../render/types.js";
+import type { LayoutPrepareContext } from "../../layout/types.js";
 import { ErrorDiagnostic } from "../../diagnostic.js";
 import { layoutHorizontalRegion, type HorizontalLayoutHookContext } from "../../layout/model.js";
 import type { HorizontalLineView, LayoutBox, Extent } from "../../layout/types.js";
@@ -24,7 +27,7 @@ import {
 import { KeyNode } from "../key/index.js";
 import { MeterNode } from "../meter/index.js";
 import { TempoNode } from "../tempo/index.js";
-import { TextNode, TextTemporalNode } from "../text/index.js";
+import { TextNode } from "../text/index.js";
 
 // 语法糖的预设对齐
 type SlotName = "left" | "center" | "right";
@@ -96,6 +99,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
     members: TemporalNodeBase[] = [];
     slots: { ast: HeadSlotNode; start: HeadBoundaryTemporal; end: HeadBoundaryTemporal }[] = [];
     private titleBottom = 0;
+    private textMeasurer!: TextMeasurer;
     private sideRows: Partial<Record<SideName, readonly ({ offset: number; extent: Extent } | null)[]>> = {};
     private sideExtents: Record<SideName, Extent | null> = { left: null, right: null };
 
@@ -117,7 +121,10 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
         }
     }
 
-    override prepareLayout() { this.box.w = this.box.h = this.box.anchor = this.box.visualAxis = 0; }
+    override prepareLayout(context: LayoutPrepareContext) {
+        this.textMeasurer = context.textMeasurer;
+        this.box.w = this.box.h = this.box.anchor = this.box.visualAxis = 0;
+    }
 
     override prepareHorizontal(line: HorizontalLineView) {
         // 只由第一个边界协调一次整块 Head，避免六个边界重复改弹簧
@@ -230,8 +237,9 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
                     const right = Math.max(...members.map(node => node.box.x + node.box.w));
                     const dx = cursor - (fromLeft ? left : right);
                     for (const node of members) {
-                        const pieces = node instanceof TextTemporalNode && !node.ast.frame
-                            ? node.lineBounds : [{ x: 0, y: 0, w: node.box.w, h: node.box.h }];
+                        const pieces = paintedNodeRegions(node, this.textMeasurer).map(piece => ({
+                            ...piece, x: piece.x - node.box.x, y: piece.y - node.box.y,
+                        }));
                         for (const piece of pieces) {
                             const x = node.box.x + dx + piece.x;
                             const y = placement.offset - node.box.visualAxis + piece.y - this.sideExtents[slot.name as SideName]!.top;

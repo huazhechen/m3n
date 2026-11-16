@@ -166,7 +166,7 @@ test("非法页面参数指向它的声明，非正高度固化为无限", () =>
     assert(emPageResult.lowering.page?.lineGap === 30, "page gap em must solidify using the parse-time font size");
 });
 
-test("有限高度的页面把系统分页并分配行间距", () => {
+test("有限高度的页面分页但不分配余白", () => {
     const paged = layoutOf(`
 @page(width=200px, height=80px, top=10px, bottom=10px, left=20px, right=20px, gap=5px)
 1 @br() 2 @br() 3 @br() 4
@@ -182,11 +182,10 @@ test("有限高度的页面把系统分页并分配行间距", () => {
     const fullPageGap = pageLine1.box.y - pageLine0.box.y - pageLine0.box.h;
     const lastPageGap = pageLine3.box.y - pageLine2.box.y - pageLine2.box.h;
     const remaining = 80 - 10 - 10 - pageLine0.box.h - pageLine1.box.h - 5;
-    const share = remaining / 2;
     const fullPageBottom = 80 - 10 - pageLine1.box.y - pageLine1.box.h;
     assert(nearly(pageLine0.box.y, 10), "a closed full page must keep its first system at the top margin");
-    assert(nearly(fullPageGap, 5 + share), "a closed full page must add one share below each non-final system");
-    assert(nearly(fullPageBottom, share), "a closed full page must leave the final system's share at the bottom");
+    assert(nearly(fullPageGap, 5), "a closed full page must retain the configured natural gap");
+    assert(nearly(fullPageBottom, remaining), "all remaining space stays below the last system");
     assert(nearly(lastPageGap, 5), "the final page must retain the configured minimum system gap");
 
     const singlePerPage = layoutOf(`
@@ -289,7 +288,7 @@ test("pb 自动换行换页，不绘制内容也不改变播放时间", () => {
     assert(control && !isVisualTemporalNode(control) && control.T.isZero(), "pb must be an invisible zero-duration control");
     assert(control.addon?.breakBefore === 1 && control.layoutLine === 1, "pb must use the existing line offset");
     assert(!("breakBefore" in control) && !("pageBreakBefore" in control), "boundary declarations must live only in addon");
-    assert(control.ast.toString(source) === "@pagebreak(justify=true)", "pb must serialize using the primary name");
+    assert(control.ast.toString(source) === "@pagebreak()", "pb must serialize using the primary name");
     deepStrictEqual(result.layout.objects.map(node => node.layoutLine), [0, 0, 1, 1]);
     assert(result.layout.pages.length === 2, "pb must split even a natural-height document");
 
@@ -299,112 +298,78 @@ test("pb 自动换行换页，不绘制内容也不改变播放时间", () => {
     deepStrictEqual(playedNotes(playback), playedNotes(original));
     assert(playback.durationSeconds === original.durationSeconds, "pagination must preserve playback duration");
 
-    for (const name of ["pagebreak", "pb"]) {
-        const configured = compileValid(`@set(${name}.justify=false) 1 @pb() 2 @pagebreak(true) 3`);
-        deepStrictEqual(configured.lowering.columns.flat().filter(node => node.addon?.pageBreakBefore !== undefined)
-            .map(node => node.addon?.pageBreakBefore), [false, true]);
-    }
-    assert(compileValid(`1 @pb(false) 2`).lowering.columns.flat().some(node => node.addon?.pageBreakBefore === false),
-        "the single boolean argument must also accept positional syntax");
     assert(compileValid("1 @pagebreak() 2").layout.pages.length === 2, "the full function name must work like its alias");
 });
 
-test("分页器强制封页精确复用原来的空间分配，false 保留最小行距", () => {
+test("分页器的自动、强制与无限高页面均保留自然行距", () => {
     const page = normalizePageConfig({ height: 100, marginTop: 10, marginBottom: 10, lineGap: 5 });
-    for (const justify of [true, false]) {
-        const result = paginateLayoutLines([10, 10, 10, 10], page, [undefined, undefined, justify]);
-        deepStrictEqual(result.lineTops, [10, justify ? 52.5 : 25, 110, 125]);
-        deepStrictEqual(result.pages.map(item => [item.lineStart, item.lineEnd]), [[0, 2], [2, 4]]);
-    }
-
-    const natural = { ...page, height: Infinity };
-    for (const justify of [true, false]) {
-        const result = paginateLayoutLines([10, 10, 10], natural, [undefined, undefined, justify]);
-        deepStrictEqual(result.lineTops, [10, 25, 55]);
-        deepStrictEqual(result.pages.map(item => item.bounds.h), [45, 30]);
-    }
-
-    const overflow = paginateLayoutLines([40, 40, 10], page, [undefined, false]);
-    deepStrictEqual(overflow.pages.map(item => [item.lineStart, item.lineEnd]), [[0, 1], [1, 3]]);
-    deepStrictEqual(overflow.lineTops, [10, 110, 155]);
+    const forced = paginateLayoutLines([10, 10, 10, 10], page, [undefined, undefined, true]);
+    deepStrictEqual(forced.lineTops, [10, 25, 110, 125]);
+    deepStrictEqual(forced.pages.map(item => [item.lineStart, item.lineEnd]), [[0, 2], [2, 4]]);
+    const natural = paginateLayoutLines([10, 10, 10], { ...page, height: Infinity }, [undefined, undefined, true]);
+    deepStrictEqual(natural.lineTops, [10, 25, 55]);
+    deepStrictEqual(natural.pages.map(item => item.bounds.h), [45, 30]);
+    const overflow = paginateLayoutLines([30, 30, 30], page);
+    deepStrictEqual(overflow.pages.map(item => [item.lineStart, item.lineEnd]), [[0, 2], [2, 3]]);
+    deepStrictEqual(overflow.lineTops, [10, 45, 110]);
 });
 
-test("pb 的 justify 开关控制当前页，末页仍保持自然行距", () => {
-    for (const justify of [true, false]) {
-        const { layout } = compileValid(`
-@page(height=200px, top=10px, bottom=10px, gap=5px)
-1 @br() 2 @pb(justify=${justify}) 3 @br() 4`);
-        assert(layout.pages.length === 2, "the explicit boundary must close the underfilled first page");
+test("pb 前后的页面不分配页面余白", () => {
+    for (const height of [120, 200, 300]) {
+        const { layout } = compileValid(`@page(height=${height}px,top=10px,bottom=10px,gap=5px)
+            1 @br() 2 @pb() 3 @br() 4`);
+        assert(layout.pages.length === 2, "the explicit boundary closes the first page");
         const [first, second, third, fourth] = layout.objects;
-        const remaining = 180 - first.box.h - second.box.h - 5;
-        assert(nearly(first.box.y, 10) && nearly(third.box.y, 210), "both pages must start at their top margin");
-        assert(nearly(second.box.y - first.box.y - first.box.h, 5 + (justify ? remaining / 2 : 0)),
-            "the explicit boundary must preserve the original justification formula");
-        assert(nearly(fourth.box.y - third.box.y - third.box.h, 5), "the final page must remain unexpanded");
+        assert(nearly(first.box.y, 10) && nearly(third.box.y, height + 10), "both pages start at their margin");
+        assert(nearly(second.box.y - first.box.y - first.box.h, 5), "first page keeps natural spacing");
+        assert(nearly(fourth.box.y - third.box.y - third.box.h, 5), "last page keeps natural spacing");
     }
 });
 
 test("pb 严格保留开头、连续和末尾的空白页", () => {
     const cases = [
-        ["1 @pb() 2", 2],
-        ["@pb() 1", 2],
-        ["1 @pb()", 2],
-        ["1 @pb() @pb() 2", 3],
-        ["@pb()", 2],
-        ["@pb() @pb()", 3],
+        ["1 @pb() 2", 2], ["@pb() 1", 2], ["1 @pb()", 2],
+        ["1 @pb() @pb() 2", 3], ["@pb()", 2], ["@pb() @pb()", 3],
     ] as const;
-    for (const height of [-200, 0, 200]) {
-        for (const [source, expected] of cases) {
-            for (const justify of [true, false]) {
-                const { layout } = compileValid(
-                    `@page(height=${height}px, top=10px, bottom=10px, gap=5px) `
-                    + source.replaceAll("@pb()", `@pb(justify=${justify})`),
-                );
-                assert(layout.pages.length === expected, `${source} must produce ${expected} pages`);
-                for (const [index, page] of layout.pages.entries()) {
-                    assert(Number.isFinite(page.bounds.h) && Number.isFinite(page.bounds.y), "page bounds must be finite");
-                    if (index > 0) assert(nearly(page.bounds.y, layout.pages[index - 1].bounds.y + layout.pages[index - 1].bounds.h),
-                        "page bounds must be stacked without gaps");
-                    if (height > 0) assert(page.bounds.h === height, "even a blank finite page must keep its full height");
-                    else if (!layout.objects.some(node => node.layoutLine >= page.lineStart && node.layoutLine < page.lineEnd)) {
-                        assert(nearly(page.bounds.h, 20), "a blank natural page must contain margins only");
-                    }
-                }
+    for (const height of [-200, 0, 200]) for (const [source, expected] of cases) {
+        const { layout } = compileValid(`@page(height=${height}px,top=10px,bottom=10px,gap=5px) ${source}`);
+        assert(layout.pages.length === expected, `${source} must produce ${expected} pages`);
+        for (const [index, page] of layout.pages.entries()) {
+            assert(Number.isFinite(page.bounds.h) && Number.isFinite(page.bounds.y), "page bounds must be finite");
+            if (index > 0) assert(nearly(page.bounds.y, layout.pages[index - 1].bounds.y + layout.pages[index - 1].bounds.h),
+                "page bounds stack without gaps");
+            if (height > 0) assert(page.bounds.h === height, "blank finite pages retain full height");
+            else if (!layout.objects.some(node => node.layoutLine >= page.lineStart && node.layoutLine < page.lineEnd)) {
+                assert(nearly(page.bounds.h, 20), "blank natural pages contain margins only");
             }
         }
     }
-    assert(compileValid("1 @br()").layout.lineCount === 1, "ordinary trailing br must retain its existing behavior");
-    assert(compileValid("1 @pb() @br()").layout.pages.length === 2, "a trailing br must not discard a page already opened by pb");
+    assert(compileValid("1 @br()").layout.lineCount === 1, "trailing br does not add a page");
+    assert(compileValid("1 @pb() @br()").layout.pages.length === 2, "trailing br retains the page opened by pb");
 });
 
-test("并行 pb 只换一次页，justify 按 false 优先且不受声部顺序影响", () => {
-    for (const [left, right] of [[true, true], [true, false], [false, true], [false, false]]) {
-        const { lowering, layout } = compileValid(`
-@page(height=200px, top=10px, bottom=10px, gap=5px)
-@stack({1 @br() 2 @pb(justify=${left}) 3}, {4 @br() 5 @pb(justify=${right}) 6})`);
+test("并行 pb 只换一次页，行距不受声部顺序影响", () => {
+    for (const voices of ['{1 @br() 2 @pb() 3}, {4 @br() 5 @pb() 6}', '{4 @br() 5 @pb() 6}, {1 @br() 2 @pb() 3}']) {
+        const { lowering, layout } = compileValid(`@page(height=200px,top=10px,bottom=10px,gap=5px) @stack(${voices})`);
         const controls = lowering.columns.filter(column => column.some(node => node.addon?.pageBreakBefore !== undefined));
-        assert(controls.length === 1 && controls[0].length === 2, "simultaneous pb controls must merge into one column");
-        assert(layout.pages.length === 2 && layout.lineCount === 3, "parallel pb must create a single document boundary");
-        const lineTop = (line: number) => Math.min(...layout.objects.filter(node => node.layoutLine === line).map(node => node.box.y));
-        const lineBottom = Math.max(...layout.objects.filter(node => node.layoutLine === 0).map(node => node.box.y + node.box.h));
-        const gap = lineTop(1) - lineBottom;
-        assert(left && right ? gap > 5 : nearly(gap, 5), "any explicit false must suppress justification");
+        assert(controls.length === 1 && controls[0].length === 2, "simultaneous controls merge into one column");
+        assert(layout.pages.length === 2 && layout.lineCount === 3, "parallel pb creates a single boundary");
+        const top = Math.min(...layout.objects.filter(node => node.layoutLine === 1).map(node => node.box.y));
+        const bottom = Math.max(...layout.objects.filter(node => node.layoutLine === 0).map(node => node.box.y + node.box.h));
+        assert(nearly(top - bottom, 5), "parallel pages retain natural spacing");
     }
     assert(compileValid("@stack({1 @pb() 2 3}, {4 5 @pb() 6})").layout.pages.length === 3,
-        "pb at different times must create separate page boundaries");
-    assert(compileValid("@stack({1 @pb(false) 2}, {3 @br() 4})").layout.pages.length === 2,
-        "a simultaneous br must not overwrite pb options");
+        "different times create separate boundaries");
+    assert(compileValid("@stack({1 @pb() 2}, {3 @br() 4})").layout.pages.length === 2,
+        "simultaneous br cannot overwrite pb");
 });
 
-test("同轨连续 pb 分别使用自己的 justify 参数", () => {
-    const { layout } = compileValid(`
-@page(height=200px, top=10px, bottom=10px, gap=5px)
-1 @br() 2 @pb(false) 3 @br() 4 @pb() 5`);
-    assert(layout.pages.length === 3, "sequential pb controls must each open a page");
-    assert(nearly(layout.objects[1].box.y - layout.objects[0].box.y - layout.objects[0].box.h, 5),
-        "the first explicit page must remain compact");
-    assert(layout.objects[3].box.y - layout.objects[2].box.y - layout.objects[2].box.h > 5,
-        "the second explicit page must use its own default justification");
+test("同轨连续 pb 每页均保留自然行距", () => {
+    const { layout } = compileValid(`@page(height=200px,top=10px,bottom=10px,gap=5px)
+        1 @br() 2 @pb() 3 @br() 4 @pb() 5`);
+    assert(layout.pages.length === 3, "each sequential pb opens a page");
+    for (const [a, b] of [[0, 1], [2, 3]]) assert(nearly(layout.objects[b].box.y - layout.objects[a].box.y - layout.objects[a].box.h, 5),
+        "all pages keep the same natural gap");
 });
 
 test("分页信号不依赖具体函数名", () => {
@@ -424,12 +389,12 @@ test("复合节点只下放函数 addon，分页声明在重复布局后仍留�
         "@grace(@arp({2/ ^ 3}), {4 5})",
         "@arp({@grace(2/, {3 4}) ^ 5})",
     ]) {
-        for (const justify of [true, false]) {
+        for (const boundaryMarker of [true, false]) {
             const lowered = lower(`@page(height=200px) 1 @br() @div(${composite}, 1) @pb() 4`);
             const host = lowered.columns.flat().find(node => isVisualTemporalNode(node) && node.layoutLine === 1)!;
             const divisions = host.addon?.["@div"];
             assert(typeof divisions === "number" && divisions > 0, "the composite must initially carry rhythm semantics");
-            host.addon = { ...host.addon, breakBefore: 1, pageBreakBefore: justify };
+            host.addon = { ...host.addon, breakBefore: 1, pageBreakBefore: boundaryMarker };
             let handled = 0;
             host.addon["@test"] = { value: 1 };
             const context = {
@@ -445,7 +410,7 @@ test("复合节点只下放函数 addon，分页声明在重复布局后仍留�
             const pages = first.pages.map(page => ({ ...page.bounds }));
             const commands = recordCommands(first);
             for (let pass = 0; pass < 3; pass++) {
-                deepStrictEqual(host.addon, { breakBefore: 1, pageBreakBefore: justify },
+                deepStrictEqual(host.addon, { breakBefore: 1, pageBreakBefore: boundaryMarker },
                     "forwarding decorations must retain only the boundary declarations on the global event");
                 const again = layoutDocument(lowered, context);
                 deepStrictEqual(again.pages.map(page => page.bounds), pages);
@@ -502,7 +467,7 @@ test("仅注册 pagebreak 时仍校验跨持续事件，共享校验器每轮只
 
 test("折叠前校验可见成员的 addon 换行声明，不因清空 addon 而吞掉边界", () => {
     for (const source of ["@up(1, 3)", "@down(1, 3)", "@grace(1, {3})"]) {
-        for (const justify of [undefined, true, false]) {
+        for (const boundaryMarker of [undefined, true, false]) {
             const ast = parse(source);
             const composite = ast.children[0];
             const content = composite.children?.[1];
@@ -513,7 +478,7 @@ test("折叠前校验可见成员的 addon 换行声明，不因清空 addon 而
             const enter = member.loweringEnter.bind(member);
             member.loweringEnter = (...args) => {
                 const events = [...enter(...args)];
-                events[0].addon = { breakBefore: 1, pageBreakBefore: justify };
+                events[0].addon = { breakBefore: 1, pageBreakBefore: boundaryMarker };
                 return events;
             };
             expectDiagnostic(() => createLowering().lowerDocument(ast),
@@ -522,9 +487,9 @@ test("折叠前校验可见成员的 addon 换行声明，不因清空 addon 而
     }
 });
 
-test("附件扩张行高后的第二轮分页仍遵守 pb 及其 justify 参数", () => {
-    for (const justify of [true, false]) {
-        const lowered = lower(`@page(height=200px, top=10px, bottom=10px, gap=5px) 1 @br() 2 @pb(${justify}) 3`);
+test("附件扩张行高后的第二轮分页仍遵守 pb 和自然行距", () => {
+    for (const height of [140, 200]) {
+        const lowered = lower(`@page(height=${height}px, top=10px, bottom=10px, gap=5px) 1 @br() 2 @pb() 3`);
         const host = lowered.columns.flat().find(isVisualTemporalNode)!;
         let measurements = 0;
         const attachment: LayoutAttachment = {
@@ -542,17 +507,16 @@ test("附件扩张行高后的第二轮分页仍遵守 pb 及其 justify 参数"
         assert(measurements === 2, "the attachment must actually trigger a second vertical pass");
         assert(layout.pages.length === 2, "relayout must retain the explicit boundary");
         const [first, second, third] = layout.objects;
-        const remaining = 180 - 60 - second.box.h - 5;
-        assert(nearly(second.box.y - first.box.y - 60, 5 + (justify ? remaining / 2 : 0)),
-            "final justification must use the measured attachment height");
-        assert(nearly(third.box.y, 210), "the content after pb must stay on the new page");
+        assert(nearly(second.box.y - first.box.y - 60, 5),
+            "natural spacing must use the measured attachment height");
+        assert(nearly(third.box.y, height + 10), "the content after pb must stay on the new page");
     }
 });
 
 test("页码与分页面绘制包含 pb 产生的空白页和歌词", () => {
     const { layout } = compileValid(`
 @page(height=200px, top=10px, bottom=20px, numbering="1 / 1")
-@pb() N: 1 @pb(false) 2 @pb()
+@pb() N: 1 @pb() 2 @pb()
 L: 甲乙`);
     assert(layout.pages.length === 4, "leading and trailing blank pages must be counted");
     const painters = layout.pages.map(() => new RecordingPainter());
@@ -571,18 +535,18 @@ test("pb 沿用跨持续事件、刚性复合体和单行溢出的校验", () =>
     expectLoweringError("@grace(3, {1 @pb() 2})", "E_GRACE_INVALID_CONTENT");
     expectLoweringError("@head(center={@pb()})", "E_HEAD_INTERNAL_BREAK");
     expectLayoutError("@page(height=40px, top=10px, bottom=10px) @pb() 1", "E_PAGE_OVERFLOW");
-    assert(compileValid("{1 @pb(false) 2}").layout.pages.length === 2, "ordinary content blocks must support pb");
+    assert(compileValid("{1 @pb() 2}").layout.pages.length === 2, "ordinary content blocks must support pb");
     const invalid = compileScore("1 @pb(justify=invalid) 2");
-    assert(invalid.diagnostics.some(item => item.code === "W_INVALID_BOOL"), "invalid justify must be diagnosed");
+    assert(invalid.diagnostics.some(item => item.code === "W_TOO_MANY_POS_ARGS"), "removed justify argument must be diagnosed");
     const extra = compileScore("1 @pb(true, false) 2");
     assert(extra.diagnostics.some(item => item.code === "W_TOO_MANY_POS_ARGS"), "extra arguments must be diagnosed");
 });
 
 test('extra system gaps affect page capacity but disappear at page starts', () => {
     const page = normalizePageConfig({ height: 100, marginTop: 10, marginBottom: 10, lineGap: 10 });
-    const natural = paginateLayoutLines([20, 20, 20], page, [], false);
+    const natural = paginateLayoutLines([20, 20, 20], page, []);
     deepStrictEqual(natural.lineTops, [10, 40, 70]);
-    const spaced = paginateLayoutLines([20, 20, 20], page, [], false, [12, 12, 12]);
+    const spaced = paginateLayoutLines([20, 20, 20], page, [], [12, 12, 12]);
     deepStrictEqual(spaced.lineTops, [10, 52, 110]);
     deepStrictEqual(spaced.pages.map(page => [page.lineStart, page.lineEnd]), [[0, 2], [2, 3]]);
 });
