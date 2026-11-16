@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest' 
 import { formatM3N } from './m3n-format.js'
+import { parseM3NDocument } from './m3n-direct.js'
 import { validateM3NDiagnostics } from './m3n-validate.js'
 
 describe('formatM3N', () => {
@@ -107,4 +108,132 @@ describe('formatM3N', () => {
 
     expect(diagnostics.filter((item) => item.code === 'M3N_LYRIC_ALIGNMENT')).toEqual([])
   })
+})
+
+// Every fixture here exposed a semantic or stability regression in the old formatter.
+describe('formatter semantic guarantees', () => {
+  const valid = (source: string) => {
+    expect(validateM3NDiagnostics(source)).toEqual([])
+    const formatted = formatM3N(source)
+    expect(validateM3NDiagnostics(formatted)).toEqual([])
+    expect(formatM3N(formatted)).toBe(formatted)
+    return formatted
+  }
+
+  it('cancels redundant parentheses against duration multipliers', () => {
+    expect(valid('{4/4}\nN: (1^) (2^) 3 4 |||')).toContain('N: 1 2 3 4 |||')
+    expect(valid('{4/4}\nN: ((1^^)) ((2^^)) 3 4 |||')).toContain('N: 1 2 3 4 |||')
+  })
+
+  it('splits sustained values relative to their enclosing depth', () => {
+    expect(valid('{4/4}\nN: 1 (2^^.) |||')).toContain('N: 1 2~ 2^ |||')
+    valid('{6/8}\nN: (1 2^^ 3) |||')
+  })
+
+  it.each([6, 9, 12])('groups %i/8 in dotted beats', (count) => {
+    const notes = Array.from({ length: count }, (_, i) => `(${i % 7 + 1})`).join(' ')
+    const formatted = valid(`{${count}/8}\nN: ${notes} |||`)
+    const groups = Array.from({ length: count / 3 }, (_, group) =>
+      `(${Array.from({ length: 3 }, (_, i) => (group * 3 + i) % 7 + 1).join(' ')})`).join(' ')
+    expect(formatted).toContain(`N: ${groups} |||`)
+  })
+
+  it('respects offsets after quarter notes and inline meter changes', () => {
+    expect(valid('{6/8}\nN: 1 (2) (3) (4) (5) |||')).toContain('N: 1 (2) (3 4 5) |||')
+    expect(valid('{2/4}\nN: (1) (2) (3) (4) | {6/8}(1) (2) (3) (4) (5) (6) |||'))
+      .toContain('{6/8}(1 2 3) (4 5 6)')
+  })
+
+  it('uses compound grouping for bass and alternate melodies too', () => {
+    const source = '{6/8}\nN: ||: 1. 2. :|||\nB: (1) (2) (3) (4) (5) (6) |\nNs[2]: 1: (7) (6) (5) (4) (3) (2) |'
+    const formatted = valid(source)
+    expect(formatted).toContain('B: (1 2 3) (4 5 6) |')
+    expect(formatted).toContain('Ns[2]: 1: (7 6 5) (4 3 2) |')
+  })
+
+  it('preserves literal grouped lyric text', () => {
+    expect(valid('{2/4}\nN: (1 2) 3 |||\nL: (春 天)来风')).toContain('L: (春 天)来风')
+  })
+
+  it('retains ties crossing dotted beat boundaries', () => {
+    expect(valid('{9/8}\nN: (1) 2^~ 2^ |||')).not.toContain('2^^')
+    expect(valid('{12/8}\nN: (1) 2~ 2 3. 4 5 |||')).not.toContain('2^')
+  })
+
+  it('retains slur endpoints when simplifying ties', () => {
+    expect(valid('{4/4}\nN: {lg}1~ 1{/} 2 3 |||')).toContain('{lg}1~ 1{/}')
+  })
+
+  it('preserves English word boundaries across lyric barlines', () => {
+    expect(valid('{2/4}\nN: 1 2 | 3 4 |||\nL: Hello world | sing now'))
+      .toContain('L: Hello world | sing now')
+  })
+
+  it('protects literal barlines, break text and comments', () => {
+    const formatted = valid('{4/4}\nN: {br}{text=keep | | this}1 2 3 4 ||| // keep | | {br} %%')
+    expect(formatted).toContain('{text=keep | | this}')
+    expect(formatted).toContain('// keep | | {br} %%')
+    expect(formatted).not.toContain('N: {br}')
+    expect(formatM3N('{2/4}\nN: 1 2 |||\nL: Hello world // %% | | {br}'))
+      .toContain('// %% | | {br}')
+  })
+})
+
+describe('canonical note scopes', () => {
+  it('simplifies short tied notes and deeply nested rests', () => {
+    expect(formatM3N('{2/4}\nN: (1~ 1) 2 |||')).toContain('N: 1 2 |||')
+    expect(formatM3N('{2/4}\nN: ((0 0 0 0)) 1 |||')).toContain('N: 0 1 |||')
+    expect(formatM3N('{2/4}\nN: ((0 0)) (0) 0 |||')).toContain('N: 0^ |||')
+  })
+
+  it('preserves unsupported outer scopes and their nested duration scaling', () => {
+    const source = '{2/4}\nN: ({p}(1) (2) 3) 4 |||'
+    const formatted = formatM3N(source)
+    expect(validateM3NDiagnostics(formatted)).toEqual([])
+    expect(formatted).toContain('({p}(1) (2) 3)')
+    expect(parseM3NDocument(formatted).parts.get('score')!.melody[0]!.events.map(event => event.beats))
+      .toEqual([0.25, 0.25, 0.5, 1])
+  })
+
+  it('separates notes when removing adjacent scopes', () => {
+    expect(formatM3N('{4/4}\nN: 1(2^)3 4 |||')).toContain('N: 1 2 3 4 |||')
+  })
+})
+
+it('preserves timing and reaches a stable spelling across varied nested rhythms', () => {
+  let seed = 7341
+  const random = (size: number) => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed % size }
+  const spans = (source: string) => [...parseM3NDocument(source).parts.values()].flatMap(part => part.melody.map(measure => {
+    const result: Array<{ pitch: string; beats: number; tie: boolean }> = []
+    for (const event of measure.events) {
+      const pitch = event.pitches.join(',')
+      const last = result.at(-1)
+      if (last && last.pitch === pitch && (last.tie || !pitch)) { last.beats += event.beats; last.tie = event.tie }
+      else result.push({ pitch, beats: event.beats, tie: event.tie })
+    }
+    return result
+  }))
+  for (const [count, unit] of [[2, 4], [3, 4], [4, 4], [6, 8], [9, 8], [12, 8]]) {
+    for (let sample = 0; sample < 30; sample += 1) {
+      let remaining = count! * 16 / unit!
+      const notes: string[] = []
+      while (remaining) {
+        const choices = [1, 2, 4, 8].filter(ticks => ticks <= remaining)
+        const ticks = choices[random(choices.length)]!
+        const power = Math.log2(ticks) - 2
+        const extra = random(3)
+        const depth = Math.max(0, -power) + extra
+        const carets = Math.max(0, power) + extra
+        const pitch = random(4) === 0 ? '0' : '1'
+        const tied = pitch !== '0' && remaining > ticks && random(2) === 0
+        notes.push('('.repeat(depth) + pitch + '^'.repeat(carets) + (tied ? '~' : '') + ')'.repeat(depth))
+        remaining -= ticks
+      }
+      const source = `{${count}/${unit}}\nN: ${notes.join(' ')} |||`
+      const formatted = formatM3N(source)
+      expect(spans(formatted), source).toEqual(spans(source))
+      expect(validateM3NDiagnostics(formatted), source).toEqual(validateM3NDiagnostics(source))
+      expect(formatM3N(formatted), source).toBe(formatted)
+    }
+  }
 })
