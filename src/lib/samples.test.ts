@@ -18,7 +18,7 @@ describe('bundled score corpus', () => {
     ['yan_hua_yi_leng', '烟花易冷', smoke, 41, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 43, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
-    ['yong_yuan_tong_zai', '永远同在', always, 62, 3],
+    ['yong_yuan_tong_zai', '永远同在', always, 76, 3],
   ] as const)('loads the complete reference melody %s with valid bar durations', async (id, title, source, count, beats) => {
     const entry = presetScores.find(score => score.sourcePath === `${id}_01.m3n`)
     expect(entry?.title).toBe(title)
@@ -62,6 +62,25 @@ describe('bundled score corpus', () => {
     expect(eliseBars.filter(bar=>bar.ending === '2')).toHaveLength(2)
   })
 
+  it('writes Always With Me in performance order without repeats or endings', () => {
+    const document = parseM3NDocument(always)
+    expect(document.order).toBeUndefined()
+    expect(always).not.toMatch(/---V|:\|\||\|\|:|^===/m)
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    const reference = webReferences.find(reference => reference.id === 'yong_yuan_tong_zai')!
+    const itinerary = [
+      ...Array.from({ length: 35 }, (_, index) => index + 1),
+      ...Array.from({ length: 14 }, (_, index) => index + 1),
+      ...Array.from({ length: 27 }, (_, index) => index + 36),
+    ]
+    // Preserve every original bar boundary as well as the full event itinerary.
+    expect(bars.map(bar => bar.events.map(event => event.beats))).toEqual(
+      itinerary.map(number => reference.events.filter(event => event.bar === number).map(event => event.beats)),
+    )
+    expect(bars.every(bar => !bar.ending && bar.events.every(event => event.meterCount === 3 && event.meterUnit === 4))).toBe(true)
+    expect(bars.reduce((sum, bar) => sum + bar.events.reduce((n, event) => n + event.beats, 0), 0)).toBe(228)
+  })
+
   const sources: Record<string, string> = {feng:maple,yan_hua_yi_leng:smoke,zhi_ai_li_si:elise,yong_yuan_tong_zai:always}
   const referenceEvents = (source: string, expand: boolean) => {
     const parsed=parseM3NDocument(source)
@@ -89,6 +108,9 @@ describe('bundled score corpus', () => {
       : reference.id==='yan_hua_yi_leng'
       // Keep separate second/third endings for D.S. and the continuation into C.
       ? [...original.slice(0,206), ...original.slice(299,302), ...original.slice(299)]
+      : reference.id==='yong_yuan_tong_zai'
+      // Write the original repeat out in full, including its fourteen-bar return.
+      ? reference.playbackEventIndexes.map(index=>original[index]!)
       : original
     const expected=events.map(({pitch,beats,tie})=>({pitch,beats,tie}))
     expect(referenceEvents(sources[reference.id]!,false)).toEqual(expected)
