@@ -44,7 +44,7 @@
 .control-row-label { display: flex; flex-wrap: wrap; align-content: center; font-size: var(--ui-text); line-height: 1.35; font-weight: 600; }
 .control-row-label output { width: 100%; font-size: calc(var(--ui-text) * .85); color: #627b74; font-weight: 400; }
 .control-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: start; gap: var(--ui-space); min-width: 0; }
-.control-options .control-button { flex-direction: column; gap: calc(var(--ui-space) / 2); min-height: calc(var(--ui-control-size) + var(--ui-text) * 1.5); padding: var(--ui-space) 0; font-size: var(--ui-text); }
+.control-options .control-button { flex-direction: column; gap: calc(var(--ui-space) / 4); min-height: var(--ui-control-size); padding: calc(var(--ui-space) / 2) 0; font-size: var(--ui-text); line-height: 1; }
 .transpose-key-icon { display: inline-flex; align-items: center; justify-content: center; height: var(--ui-icon-size); font-size: var(--ui-icon-size); line-height: 1; }
 .control-tone-status { font-size: var(--ui-text); overflow-wrap: anywhere; }
 .control-tone-status button { margin-left: var(--ui-space); }
