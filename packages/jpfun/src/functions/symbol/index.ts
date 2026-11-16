@@ -1,8 +1,8 @@
 // M3N modification: register additional basic articulation symbols.
 import { articulationSymbols } from './symbols/articulations.js';
 import { ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
-import type { LayoutBox, LayoutPrepareContext, Rect } from "../../layout/types.js";
-import { DEFAULT_KEY, TemporalNodeBase, type TimeState } from "../temporal.js";
+import type { AttachmentLayoutContext, LayoutAttachment, LayoutBox, LayoutPrepareContext, Rect } from "../../layout/types.js";
+import { DEFAULT_KEY, isVisualTemporalNode, TemporalNodeBase, type TimeState, type VisualTemporalNode } from "../temporal.js";
 import type { GrammarCallNodeTyped } from "../../parser/grammarType.js";
 import type {
     PlaybackColumnOf, PlaybackCursor, PlaybackEmitter, PlaybackFlow, PlaybackFlowAction, PlaybackFlowHook,
@@ -17,6 +17,7 @@ import {
     type ParserContext,
     type SourceSpan,
 } from "../ASTtypes.js";
+import type { LoweringContext } from "../../lowering/loweringContext.js";
 import { paintSymbol, symbolBounds, type SymbolShape } from "./shape.js";
 
 import { accentSymbol } from "./symbols/accent.js";
@@ -107,6 +108,13 @@ ${[...symbolTable.values()].map(item => `- \`$${item.name}\`：${item.descriptio
                 type: "length" as const,
                 default: { value: 0.5, unit: "em" } as LengthValue,
             },
+            {
+                name: "above",
+                description: "可选宿主标签；在宿主及先前关系记号外侧排放符号，不增加时间列",
+                type: "label" as const,
+                namedOnly: true,
+                default: "",
+            },
         ],
     };
 
@@ -127,11 +135,13 @@ ${[...symbolTable.values()].map(item => `- \`$${item.name}\`：${item.descriptio
     }
 
     readonly size: number;
+    readonly above: ASTNodeBase | null;
     readonly definition?: SymbolDefinition;
 
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [name, size] = this.getArgValue(args, ctx) as [string, LengthValue];
+        const [name, size, above] = this.getArgValue(args, ctx) as [string, LengthValue, ASTNodeBase | string];
+        this.above = typeof above === "string" ? null : above;
         this.size = ctx.length2px(size);
         const normalized = name.toLowerCase();
         let definition = symbolTable.get(normalized);
@@ -154,13 +164,25 @@ ${[...symbolTable.values()].map(item => `- \`$${item.name}\`：${item.descriptio
         this.definition = definition;
     }
 
-    override loweringEnter(): TemporalNodeBase[] {
+    override loweringEnter(ctx: LoweringContext): TemporalNodeBase[] {
+        if (this.above && this.definition) {
+            let host = ctx.getTemporalNodes(this.above).at(-1);
+            while (host?.foldedInto) host = host.foldedInto;
+            if (!host || !isVisualTemporalNode(host)) throw new ErrorDiagnostic("E_SYMBOL_INVALID_HOST", "@symbol 的 above 标签必须指向可见对象", this.sourceSpan);
+            // Navigation/playback actions must remain temporal objects. Dynamics
+            // can attach to the host without losing their onset state change.
+            if (this.definition.emitPlayback || this.definition.onVisit || this.definition.playbackMarks) throw new ErrorDiagnostic("E_SYMBOL_INVALID_HOST", "导航或播放动作符号不能作为 above 附件", this.sourceSpan);
+            const previous = host.onTimeState?.bind(host), update = this.definition.onTimeState;
+            if (update) host.onTimeState = state => { update(state); return previous?.(state); };
+            ctx.addAttachment(new SymbolAboveAttachment(this as ResolvedSymbolFunction, host));
+            return [];
+        }
         return [this.definition
             ? new SymbolTemporal(this as ResolvedSymbolFunction)
             : new TemporalNodeBase()];
     }
     override toString(source: string) {
-        return this.definition ? `@symbol(${this.definition.name})` : super.toString(source);
+        return this.definition ? `@symbol(${this.definition.name}${this.above ? `,size=${this.size}px,above=${(this.above as ASTFunctionNode).label}` : ""})` : super.toString(source);
     }
 }
 
@@ -226,5 +248,36 @@ class SymbolTemporal extends TemporalNodeBase implements PlaybackFlow {
         if (!onVisit) return;
         const at = columnOf(this);
         return at === undefined ? undefined : { range: [at, at], run: cursor => onVisit(cursor, at) };
+    }
+}
+
+
+/** Expression symbols clear rhythm brackets and arcs declared before them. */
+class SymbolAboveAttachment implements LayoutAttachment {
+    readonly layer = "foreground" as const;
+    readonly endPoints: readonly VisualTemporalNode[];
+    readonly sourceSpan: SourceSpan;
+    constructor(private readonly ast: ResolvedSymbolFunction, private readonly host: VisualTemporalNode) {
+        this.endPoints = [host];
+        this.sourceSpan = { ...ast.sourceSpan };
+    }
+    createGeometry(context: AttachmentLayoutContext) {
+        const symbol = new SymbolTemporal(this.ast);
+        symbol.prepareLayout(context);
+        const { box } = symbol, { host } = this;
+        box.x = Math.max(context.originX, Math.min(host.box.x + host.box.anchor - box.anchor, context.originX + context.width - box.w));
+        const line = context.lines[host.layoutLine];
+        let start = line.columnOf(host), end = start;
+        line.columns.forEach((column, index) => {
+            if (column.some(node => node.track === host.track && node.box.x <= box.x + box.w && node.box.x + node.box.w >= box.x)) {
+                start = Math.min(start, index); end = Math.max(end, index);
+            }
+        });
+        const extent = context.getRangeExtents(host.layoutLine, [start, end], host.track);
+        box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - host.ast.size * 0.12 - box.h;
+        return {
+            regions: [{ x: box.x, y: box.y, w: box.w, h: box.h, line: host.layoutLine, track: host.track }],
+            paint(painter: Painter) { symbol.paint(painter); },
+        };
     }
 }

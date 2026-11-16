@@ -61,6 +61,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const parentheses: string[] = []
   // Registered after musical relations, from inner to outer: harmony, directions, section names.
   const annotations: string[][] = [[], [], []]
+  const tupletExpressions: string[] = []
   // Explicit sections and phrases are local height paragraphs. A named
   // training exercise also starts a paragraph; automatic wraps do not.
   const paragraphOf = (position: number) => document.paragraphs?.find(range => range.start <= position && position < range.end)?.id ?? '0'
@@ -199,7 +200,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
             if (grace.length && articulations.length) value = `@up({${value}},${articulations.join(',')})`
             if (grace.length) value = `@grace({${value}},{${grace.join(' ')}})`
             if (event.postfixes.includes('arp') && event.kind === 'chord') value = `@arp({${value}})`
-            const outerMarks = grace.length ? [...decorations, ...expressionMarks] : marks
+            const outerMarks = event.kind === 'tuplet' ? articulations : grace.length ? [...decorations, ...expressionMarks] : marks
             return outerMarks.length ? `@up({${value}},${outerMarks.join(',')})` : value
           }
           const children: string[] = []
@@ -229,6 +230,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           }
           const first = children[0], last = children.at(-1)
           if (first && last) {
+            if (event.kind === 'tuplet') for (const mark of [...decorations, ...expressionMarks]) {
+              tupletExpressions.push(`${mark.slice(0, -1)},above=${first})`)
+            }
             for (const [level, text] of [event.chord, event.text].entries()) {
               if (text) annotations[level]!.push(`@text(${quote(text)},size=14px,above=${first}${level === 2 ? ',weight=700' : ''}${level > 0 ? ',local=true' : ''})`)
             }
@@ -412,5 +416,5 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     if (!start || !end || interval.display === 'text') continue
     relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
   }
-  return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers }
+  return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...tupletExpressions, ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers }
 }

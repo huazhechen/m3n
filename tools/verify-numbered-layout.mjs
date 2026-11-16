@@ -61,7 +61,8 @@ try {
       const texts = [...document.querySelectorAll('svg text')]
       for (const [text, size] of [[scoreDocument.title, '32'], [scoreDocument.subtitle, '16']]) {
         if (!text) continue
-        const headingLines = texts.filter(node => node.getAttribute('font-size') === size && node.getAttribute('text-anchor') === 'middle' && !node.hasAttribute('data-m3n-role'))
+        // The pitch range uses centered 16px number glyphs too; those are not subtitle lines.
+        const headingLines = texts.filter(node => node.getAttribute('font-size') === size && node.getAttribute('font-family') !== 'M3N Numbers' && node.getAttribute('text-anchor') === 'middle' && !node.hasAttribute('data-m3n-role'))
         if (headingLines.map(node=>node.textContent).join('').replace(/\s/g,'') !== text.replace(/\s/g,'')) issues.push({file,width,paged,heading:text,missingHeading:true})
         for(const heading of headingLines) {
         const box = heading.getBBox()

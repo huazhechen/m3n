@@ -65,3 +65,7 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - `@br(gap=12)` 可设置换行前的额外像素间距；参与页面容量计算，页首不保留。
 
 - `@note(...,displayonly=true)` 绘制零时长的说明音符，保留数字、变音记号和八度点的原生布局，可用于谱头音域；不发声，序列化保留此选项。
+
+- `@symbol(...,above=host)` attaches a symbol above its labeled host and previously declared relations without adding a time column. Dynamic state changes apply at the host onset, including its tuplet siblings; navigation and playback-action symbols must remain temporal objects and are rejected as anchored decorations. Symbol size and the host label survive serialization. The numbered adapter uses these attachments for tuplet ornaments and dynamics so the bracket stays closer to the notes.
+
+- With relation alignment enabled, slurs also clear previously laid out tuplet brackets on the same track. Clearance uses the bracket's measured region and the ribbon's lower edge over their shared horizontal span; the rhythm bracket keeps its position nearer the notes.

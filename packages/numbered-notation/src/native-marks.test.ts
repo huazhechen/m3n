@@ -4,6 +4,8 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { nativeMarkStack } from './native-marks.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
+import { DefaultTextMeasurer } from './native-measure.js'
+import { nativeStyle } from './native-style.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
 const options = { width: 800, paged: false }
@@ -24,6 +26,23 @@ describe('native articulation occupancy', () => {
       bottom = mark.top
     }
     expect(stack.top).toBeCloseTo(-bottom)
+  })
+
+  it('places a tuplet dynamic outside a later overlapping ornament', () => {
+    const fallback = new DefaultTextMeasurer()
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 {p}([3 4 5:2]) (6{tr}) (7) |||'), {
+      width:320,paged:false,textMeasurer:{measureText(text,style) {
+        const metrics = fallback.measureText(text,style)
+        return text === 'tr' ? {...metrics,w:220} : metrics
+      }},
+    })
+    const dynamicGlyph = score.projection.glyphs.find(g => g.markLayout?.some(m => m.name === 'p'))!
+    const ornamentGlyph = score.projection.glyphs.find(g => g.markLayout?.some(m => m.name === 'tr'))!
+    const dynamic = dynamicGlyph.markLayout!.find(m => m.name === 'p')!
+    const ornament = ornamentGlyph.markLayout!.find(m => m.name === 'tr')!
+    expect(ornamentGlyph.x+ornament.left).toBeLessThan(dynamicGlyph.x+dynamic.right)
+    expect(ornamentGlyph.x+ornament.right).toBeGreaterThan(dynamicGlyph.x+dynamic.left)
+    expect(dynamic.top+dynamic.height).toBeLessThanOrEqual(ornament.top-nativeStyle.markGap+.001)
   })
 
   it('paints the triangle inside its measured box above a high stacked chord', () => {

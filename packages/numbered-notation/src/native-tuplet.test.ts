@@ -44,6 +44,15 @@ describe('native tuplet brackets', () => {
     expect(lanes[0]!.geometry.baseline).toBeGreaterThan(lanes[1]!.geometry.baseline)
   })
 
+  it('keeps a tuplet inside a shorter outgoing tie from its last child', () => {
+    const score = layout('[1 2 3~:2] (3) 0.')
+    const system = score.systems[0]!
+    const bracket = system.relations.find(r => r.kind === 'tuplet')!
+    const tie = system.relations.find(r => r.kind === 'tie')!
+    expect(system.relations.indexOf(bracket)).toBeLessThan(system.relations.indexOf(tie))
+    expect(system.relationLayout!.get(tie)!.ink.bottom).toBeLessThan(system.relationLayout!.get(bracket)!.ink.top)
+  })
+
   it('draws separated strokes without painting a white mask over other content', () => {
     const score = parseM3NDocument('{4/4}\nN: ([1 2 3:2]) 4 5 6 |||')
     const svg = NativeNumberedNotationScore.create(score).render(options).join('')

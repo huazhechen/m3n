@@ -15,6 +15,7 @@ import type {
     LayoutHost,
     LayoutPoint,
     Rect,
+    LayoutRegion,
 } from "../../layout/types.js";
 import type { Painter, PathCommand } from "../../render/types.js";
 import type {
@@ -209,7 +210,12 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         const first = this.endPoints.reduce((a, b) => a.t.compare(b.t) < 0 ? a : b);
         const last = this.endPoints.reduce((a, b) => a.t.compare(b.t) > 0 ? a : b);
         const obstacles: TieSegment[] = [];
+        const brackets: LayoutRegion[] = [];
         for (const peer of context.getPrecedingAttachments?.() ?? []) {
+            if (peer.alignmentKind === 'tuplet' && peer.endPoints?.every(node => node.track === track)) {
+                brackets.push(...(context.getAttachmentOccupancy(peer) ?? []));
+                continue;
+            }
             if (!(peer instanceof TieLayoutAttachment) || peer.endPoints.some(node => node.track !== track)) continue;
             const start = peer.endPoints.reduce((a, b) => a.t.compare(b.t) < 0 ? a : b);
             const end = peer.endPoints.reduce((a, b) => a.t.compare(b.t) > 0 ? a : b);
@@ -226,6 +232,17 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         for (let index = 0; index < segments.length; index++) {
             const segment = segments[index];
             let lift = 0;
+            for (const bracket of brackets) {
+                if (bracket.line !== segment.line) continue;
+                const left = Math.max(segment.x, bracket.x), right = Math.min(segment.x + segment.w, bracket.x + bracket.w);
+                if (right <= left) continue;
+                // A ribbon's lower edge is lowest at an interval endpoint.
+                // Use the actual bracket region, including its numeral/stroke.
+                for (const x of [left, right]) {
+                    const edge = ribbonAtX(segment.commands, x);
+                    if (edge) lift = Math.max(lift, edge.bottom - bracket.y + gap);
+                }
+            }
             for (const obstacle of obstacles) {
                 if (obstacle.line !== segment.line) continue;
                 const left = Math.max(segment.x, obstacle.x);

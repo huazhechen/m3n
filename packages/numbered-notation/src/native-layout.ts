@@ -5,7 +5,7 @@ import { nativeVoltaSvg } from './native-volta.js'
 import { placeNativeLyrics } from './native-lyrics.js'
 import { nativeBarMetrics } from './native-horizontal.js'
 import { placeNativeRelation, type NativeRelationLayout } from './native-relations.js'
-import { nativeMarkStack, nativeInnerMark } from './native-marks.js'
+import { nativeMarkStack, nativeInnerMark, nativeMarkRank } from './native-marks.js'
 import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 import { placeNativeAnnotations, type NativeRegion } from './native-annotations.js'
@@ -113,10 +113,12 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
     }
     flush()
   }
+  // Rhythm brackets precede arcs, including a short tie from their last child.
   // Inner arcs are placed first. A later overlapping relation occupies an
   // outer band; all fragments retain that band through wrapping/pagination.
   const order = new Map(projection.glyphs.map((glyph, index) => [glyph, index]))
-  relations.sort((a, b) => (order.get(a.last)! - order.get(a.first)!) - (order.get(b.last)! - order.get(b.first)!))
+  relations.sort((a, b) => Number(b.kind === 'tuplet') - Number(a.kind === 'tuplet')
+    || (order.get(a.last)! - order.get(a.first)!) - (order.get(b.last)! - order.get(b.first)!))
   for (const [index, relation] of relations.entries()) {
     if (relation.kind === 'inst') continue
     const start = order.get(relation.first)!, end = order.get(relation.last)!
@@ -241,20 +243,23 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const symbols = new NativeSymbols(measurer)
   for (const system of systems) {
     const regions = relationBounds.get(system) ?? []
-    for (const glyph of system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))) {
-      for (const name of glyph.marks.filter(name => !nativeInnerMark(name))) {
-        const ink = nativeSvgInk(symbols.rawMark(name), measurer)
-        const left = glyph.x + ink.left, right = glyph.x + ink.right
-        const top = Math.max(glyph.musicTop ?? glyph.top,
-          ...regions.filter(r => r.lane === glyph.lane && r.right >= left && r.left <= right).map(r => r.top),
-          ...system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === glyph.lane && g.x + (g.inkRight ?? g.musicRight ?? g.right) >= left && g.x - (g.inkLeft ?? g.musicLeft ?? g.left) <= right).map(g => g.musicTop ?? g.top))
-        const mark = nativeMarkStack([name], top, measurer).items[0]!
-        glyph.markLayout ??= []; glyph.markLayout.push(mark)
-        glyph.top = Math.max(glyph.top, -mark.top)
-        regions.push({ lane: glyph.lane, left, right, top: -mark.top })
-        const lane = system.lanes.find(l => l.id === glyph.lane)!
-        lane.top = Math.max(lane.top, -mark.top)
-      }
+    const outerMarks = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
+      .flatMap(glyph => glyph.marks.filter(name => !nativeInnerMark(name)).map(name => ({ glyph, name })))
+      .sort((a, b) => nativeMarkRank(a.name) - nativeMarkRank(b.name))
+    // Keep expression outside ornaments even when a neighboring note's wider
+    // ornament overlaps it. Tuplet brackets have already entered regions.
+    for (const { glyph, name } of outerMarks) {
+      const ink = nativeSvgInk(symbols.rawMark(name), measurer)
+      const left = glyph.x + ink.left, right = glyph.x + ink.right
+      const top = Math.max(glyph.musicTop ?? glyph.top,
+        ...regions.filter(r => r.lane === glyph.lane && r.right >= left && r.left <= right).map(r => r.top),
+        ...system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === glyph.lane && g.x + (g.inkRight ?? g.musicRight ?? g.right) >= left && g.x - (g.inkLeft ?? g.musicLeft ?? g.left) <= right).map(g => g.musicTop ?? g.top))
+      const mark = nativeMarkStack([name], top, measurer).items[0]!
+      glyph.markLayout ??= []; glyph.markLayout.push(mark)
+      glyph.top = Math.max(glyph.top, -mark.top)
+      regions.push({ lane: glyph.lane, left, right, top: -mark.top })
+      const lane = system.lanes.find(l => l.id === glyph.lane)!
+      lane.top = Math.max(lane.top, -mark.top)
     }
     relationBounds.set(system, regions)
   }
