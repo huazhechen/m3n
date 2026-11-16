@@ -5,6 +5,7 @@ import stars from '../scores/xing_xing_dian_deng_01.m3n?raw'
 import conan from '../scores/ru_guo_you_ni_zai_01.m3n?raw'
 import references from './fixtures/kuaiyuepu-additions.json'
 import starsReference from './fixtures/xing-xing-dian-deng-jitapuji.json'
+import dreamReference from './fixtures/zhui-meng-ren-baidu.json'
 
 const sources: Record<string, string> = { zhui_meng_ren: dream, xing_xing_dian_deng: stars, ru_guo_you_ni_zai: conan }
 function events(source: string, expand = true) {
@@ -24,25 +25,49 @@ function events(source: string, expand = true) {
     }
   }))
 }
-const musical = ({ pitch, beats, tie }: ReturnType<typeof events>[number]) => ({ pitch, beats, tie })
 
 describe('new reference scores', () => {
+  it('reserves named musical sections for scores that actually jump between them', () => {
+    const scores = import.meta.glob<string>('../scores/*.m3n', { eager: true, query: '?raw', import: 'default' })
+    for (const [path, source] of Object.entries(scores)) {
+      // Training category headings describe exercises rather than a performance route.
+      if (path.endsWith('/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n')) continue
+      const names = [...source.matchAll(/^===([^\n]+)/gm)].map(match => match[1]!.replace(/\{br\}/g, '').trim()).filter(Boolean)
+      if (!names.length) continue
+      const order = /\{order=([^}]+)\}/.exec(source)?.[1]?.split(',').map(name => name.trim())
+      expect(order, path).toBeDefined()
+      const visits = order ?? []
+      expect(visits.filter((name, index) => index === 0 || name !== visits[index - 1]), path).not.toEqual(names)
+    }
+  })
+
   it.each(references)('validates $id and keeps a melody-only score', reference => {
     const source = sources[reference.id]!
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(parseM3NDocument(source).parts.get('score')!.bass.flatMap(bar => bar.events)).toEqual([])
   })
 
-  it('preserves every pitched note of Dream Chaser, trimming only endpoint rests', () => {
-    const reference = references[0]!
-    const expected = reference.playbackEventIndexes.map(index => reference.events[index]!).filter(event => event.pitch !== null)
-    const actual = events(dream)
-    expect(actual.filter(event => event.pitch !== null).map(musical)).toEqual(expected.map(musical))
-    expect(actual.reduce((sum, event) => sum + event.beats, 0)).toBe(112)
+  it('uses the C-major 2/4 Dream Chaser reference without instrumental passages or navigation', () => {
+    const document = parseM3NDocument(dream)
+    expect(document).toMatchObject({ key: dreamReference.key, meterCount: 2, meterUnit: 4, tempo: 60 })
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    expect(bars).toHaveLength(50)
+    expect(bars.map(bar => bar.events.map(event => `${event.pitches[0] ?? '0'}:${event.beats}`)))
+      .toEqual(dreamReference.writtenBars.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
+    expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
+      .toEqual([.25, ...Array(48).fill(2), 1.75])
+    expect(bars.flatMap(bar => bar.events).some(event => event.sectionLabel)).toBe(false)
+    expect(document.order).toBeUndefined()
+    expect(bars.filter(bar => bar.ending).map(bar => bar.ending)).toEqual(['1', '1', '2', '2'])
+    expect(document.intervals.some(interval => interval.kind === 'inst')).toBe(false)
+    expect(bars.flatMap(bar => bar.events).some(event => event.navigation.length)).toBe(false)
+    expect(dream).not.toMatch(/前奏|间奏/)
+    expect(document.lyrics.map(block => block.syllables.map(syllable => syllable.text).join('').replace(/[^\u3400-\u9fff]/g, '')).filter(Boolean)).toEqual(dreamReference.lyricRows)
+    expect(events(dream).reduce((sum, event) => sum + event.beats, 0)).toBe(dreamReference.performedBeats)
   })
 
   it('uses the exact user introduction and the new five-page reference', () => {
-    expect(stars.slice(stars.indexOf('===前奏'), stars.indexOf('===A')).trim()).toBe(starsReference.userIntroduction)
+    expect(stars.slice(stars.indexOf('N:'), stars.indexOf('N: (6) ((6))')).trim().replace(/\n---$/, '').trim()).toBe(starsReference.userIntroduction.replace('===前奏\n', '').replace(/ \|\|$/, ' |'))
     const document = parseM3NDocument(stars)
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
     expect(bars).toHaveLength(57)
