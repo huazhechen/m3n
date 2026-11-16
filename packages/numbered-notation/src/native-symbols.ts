@@ -8,6 +8,7 @@ import { nativeKeyGeometry } from './native-key.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
 import { nativeOrnamentSvg } from './native-ornaments.js'
 import { nativeTempoGeometry, type NativeTempoGeometry } from './native-tempo.js'
+import { nativeNavigationGlyph } from './native-navigation-glyphs.js'
 
 export const xml = (value: string | number) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 export const n = (value: number) => Number(value.toFixed(4))
@@ -54,8 +55,8 @@ export class NativeSymbols {
   }
 
   segno(x: number, y: number): string {
-    const curve = path(nativeDesignPath('M10 2 C0 -2 -1 7 7 9 C15 11 14 20 4 17 M1 18 L13 0')) + circle(em(1.7), em(6), em(1)) + circle(em(12.3), em(12), em(1))
-    return `<g transform="translate(${n(x)} ${n(y - em(15.8))})">${curve}</g>`
+    const glyph = nativeNavigationGlyph('segno', nativeStyle.text * 1.15)
+    return `<g transform="translate(${n(x)} ${n(y + nativeMusicAxis(this.measurer) - glyph.height / 2)})"><path d="${glyph.path}" fill="#000"/></g>`
   }
 
   mark(mark: string, x: number, y: number): string {

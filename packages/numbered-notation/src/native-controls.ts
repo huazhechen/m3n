@@ -6,6 +6,7 @@ import type { TextMeasurer } from './native-measure.js'
 import { nativeKeyGeometry, type NativeKeyRow } from './native-key.js'
 import type { NativeControl } from './native-model.js'
 import { nativeTempoGeometry } from './native-tempo.js'
+import { nativeNavigationGlyph } from './native-navigation-glyphs.js'
 
 export function measureNativeTempo(tempo: { unit: number; bpm: number }, measurer: TextMeasurer): NativeControl {
   return measureNativeControl('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`, measurer, undefined, tempo.unit)
@@ -19,7 +20,7 @@ export function measureNativeControl(kind: NativeControl['kind'], text: string, 
   const m = measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: kind === 'section' ? 700 : 400 })
   let width = m.w, anchor = textWidth(text[0]!, size, family) / 2
   if (kind === 'key') { const geometry = nativeKeyGeometry(keyRows ?? [{key:text}],measurer); width = geometry.width; anchor = geometry.anchor }
-  if (kind === 'segno') { width = nativeStyle.annotation; anchor = width / 2 }
+  if (kind === 'segno') { width = nativeNavigationGlyph('segno', nativeStyle.text * 1.15).width; anchor = width / 2 }
   const meterGeometry = kind === 'meter' ? nativeMeterGeometry(text, measurer) : undefined
   if (meterGeometry) { width = meterGeometry.width; anchor = width / 2 }
   const tempoGeometry = kind === 'tempo' ? nativeTempoGeometry(text, measurer, tempoUnit) : undefined
