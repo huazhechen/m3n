@@ -20,18 +20,18 @@ function fmCycle(period: number, index: number, ratio: number, harmonics: number
   return cycle
 }
 
-/** Procedural FM electric piano: bright tine attack, mellow body, no downloaded samples. */
+/** Procedural FM electric piano: soft body without metallic tines or downloaded samples. */
 export function createSyntheticSoundFont() {
   if (cachedBank) return cachedBank.slice(0)
   const bank = new BasicSoundBank('sf2')
   const instrument = new BasicInstrument()
   instrument.name = 'Soft FM electric piano'
   instrument.globalZone.setGenerator(GeneratorTypes.sampleModes, 1)
-  instrument.globalZone.setGenerator(GeneratorTypes.attackVolEnv, timecents(0.003))
+  instrument.globalZone.setGenerator(GeneratorTypes.attackVolEnv, timecents(0.012))
   instrument.globalZone.setGenerator(GeneratorTypes.decayVolEnv, timecents(2.5))
-  instrument.globalZone.setGenerator(GeneratorTypes.sustainVolEnv, 120)
+  instrument.globalZone.setGenerator(GeneratorTypes.sustainVolEnv, 30)
   instrument.globalZone.setGenerator(GeneratorTypes.releaseVolEnv, timecents(0.18))
-  instrument.globalZone.setGenerator(GeneratorTypes.initialAttenuation, 90)
+  instrument.globalZone.setGenerator(GeneratorTypes.initialAttenuation, 0)
 
   // Octave-spaced A roots have exact integer periods at 28160 Hz. Each sample
   // includes its changing attack, followed by two identical sustain-loop cycles.
@@ -43,23 +43,21 @@ export function createSyntheticSoundFont() {
     const topFrequency = 440 * 2 ** ((max - 69) / 12)
     const harmonics = Math.min(31, Math.floor(19845 / topFrequency), period / 2 - 1)
     const sustain = fmCycle(period, 0.08, 1, harmonics)
-    const tine = fmCycle(period, 0.6, 14, harmonics)
     const loopStart = Math.ceil(0.75 * SAMPLE_RATE / period) * period
     const loopEnd = loopStart + 2 * period
     const attackSeconds = loopStart / SAMPLE_RATE
     for (const hard of [false, true]) {
-      const attack = fmCycle(period, hard ? 1.25 : 0.85, 1, harmonics)
+      const attack = fmCycle(period, hard ? 1.0 : 0.65, 1, harmonics)
       const audio = Float32Array.from({ length: loopEnd }, (_, i) => {
         const t = i / SAMPLE_RATE
         const phase = i % period
         // Finish the timbre transition before the loop, so there is no seam.
         const gate = Math.max(0, Math.min(1, (attackSeconds - 0.12 - t) / 0.12))
-        const brightness = Math.exp(-t / 0.24) * gate
-        const bell = (hard ? 0.14 : 0.08) * Math.exp(-t / 0.15) * gate
-        return sustain[phase]! + brightness * (attack[phase]! - sustain[phase]!) + bell * tine[phase]!
+        const brightness = Math.exp(-t / 0.32) * gate
+        return sustain[phase]! + brightness * (attack[phase]! - sustain[phase]!)
       })
       const peak = audio.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0)
-      for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.55 / peak
+      for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.7 / peak
       const sample = new BasicSample(`FM EP ${root} ${hard ? 'hard' : 'soft'}`, SAMPLE_RATE, root, 0, SampleTypes.monoSample, loopStart, loopEnd)
       sample.setAudioData(audio, SAMPLE_RATE)
       bank.addSamples(sample)
