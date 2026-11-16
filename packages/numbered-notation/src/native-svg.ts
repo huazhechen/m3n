@@ -19,7 +19,7 @@ class SvgPainter extends NativeMusicPainter {
       annotations.push(nativeAnnotationSvg(annotation, lane.y, this, { 'data-m3n-id': glyph.xmlId, 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId }))
     }
     const lyrics: string[] = []
-    for (const [row, baseline] of lane.lyricBaselines ?? []) if (glyph.lyrics.has(row)) lyrics.push(nativeLyricSvg(glyph, row, lane.y + baseline, system.index, this.layout.measurer))
+    for (const [row, baseline] of glyph.lyricBaselines ?? []) if (glyph.lyrics.has(row)) lyrics.push(nativeLyricSvg(glyph, row, lane.y + baseline, system.index, this.layout.measurer))
     let controls = '', cursor = glyph.x - glyph.left - glyph.controls.reduce((sum, control) => sum + control.width, 0)
     for (const control of glyph.controls) {
       const x = control.x ?? cursor

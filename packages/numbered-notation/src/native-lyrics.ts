@@ -55,17 +55,39 @@ export function nativeLyricSvg(glyph: NativeGlyph, row: number, baseline: number
   return `<g${attrs({ ...meta, 'data-m3n-role': 'lyric-fragment' })}>${lyricFragment(data, glyph.x, baseline, measurer, meta)}</g>`
 }
 
-/** Actual text/prefix/underline extents determine row baselines and total height. */
+/** Pack the rows present at each musical slot into measured visual tiers.
+ * Verse numbers remain semantic: missing verse 1 must not push verse 2 down,
+ * while an explicit zero-width token still holds its place at that slot.
+ * Painting and ossia clearance consume these same per-glyph baselines.
+ */
 export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measurer: TextMeasurer) {
   const glyphs = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === lane.id)
-  let bottom = lane.lyricBottom ?? lane.bodyBottom ?? 0
-  lane.lyricBaselines = new Map()
-  for (const [index, row] of lane.rows.entries()) {
-    const boxes = glyphs.filter(g => g.lyrics.has(row)).map(g => nativeSvgInk(nativeLyricSvg(g, row, 0, system.index, measurer), measurer))
-    const top = Math.min(...boxes.map(b => b.top)), height = Math.max(...boxes.map(b => b.bottom)) - top
-    const y = bottom + nativeStyle.music * (index ? 0.24 : 0.32) - top
-    lane.lyricBaselines.set(row, y)
-    bottom = y + top + height
+  const tiers: {glyph:NativeGlyph;row:number}[][] = []
+  const active = new Map<NativeGlyph,number[]>()
+  for (const glyph of glyphs) {
+    // An allocated empty slot is explicit alignment, just like a zero-width
+    // token. Only an absent row entry is eligible for local collapse.
+    const rows = lane.rows.filter(row => glyph.lyrics.has(row))
+    active.set(glyph,rows)
+    rows.forEach((row,index) => { (tiers[index] ??= []).push({glyph,row}) })
   }
+  let bottom = lane.lyricBottom ?? lane.bodyBottom ?? 0
+  const baselines: number[] = []
+  for (const [index, tier] of tiers.entries()) {
+    const boxes = tier.filter(({glyph,row}) => {
+      const data = glyph.lyrics.get(row)!
+      return data.annotation || data.texts.some(text => text.replaceAll('\u200B','').trim())
+    }).map(({glyph,row}) => nativeSvgInk(nativeLyricSvg(glyph,row,0,system.index,measurer),measurer))
+    // A placeholder-only tier still reserves an actual font row when a lower
+    // verse is present. Its invisible glyph has no ink to measure itself.
+    const fallback = boxes.length ? undefined : measurer.measureText('M',{fontSize:nativeStyle.lyric,fontFamily:'serif'})
+    const top = fallback ? -fallback.baseline : Math.min(...boxes.map(b => b.top))
+    const lower = fallback ? fallback.h-fallback.baseline : Math.max(...boxes.map(b => b.bottom))
+    const y = bottom + nativeStyle.music * (index ? .24 : .32) - top
+    baselines.push(y); bottom = y+lower
+  }
+  for (const glyph of glyphs) glyph.lyricBaselines = new Map(lane.rows.filter(row => glyph.lyrics.has(row)).map(row => [
+    row, baselines[Math.max(0,active.get(glyph)!.indexOf(row))] ?? bottom,
+  ]))
   lane.bottom = Math.max(lane.bodyBottom ?? 0, bottom)
 }

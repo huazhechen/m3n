@@ -21,7 +21,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer): 
         add(painter.music({ ...glyph, y: 0 }))
         for (const control of glyph.controls) add(painter.control(control, control.x!, 0))
         for (const annotation of glyph.annotationLayout ?? []) add(nativeAnnotationSvg(annotation, 0, painter))
-        for (const [row, baseline] of lane.lyricBaselines ?? []) {
+        for (const [row, baseline] of glyph.lyricBaselines ?? []) {
           const data = glyph.lyrics.get(row)
           if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) add(nativeLyricSvg(glyph, row, baseline, system.index, measurer))
         }

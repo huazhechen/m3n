@@ -29,7 +29,7 @@ export type NativeRenderOptions = {
   pairedSpacing?: boolean
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'octave' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number }
-export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[]; lyricBaselines?: Map<number, number> }
+export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
 export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; decorationLayout?: { lane: string; svg: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
@@ -199,7 +199,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     const laneNames = [...new Set(glyphs.map(glyph => glyph.lane))].sort((a, b) => a === 'melody' ? -1 : b === 'melody' ? 1 : a === 'bass' ? 1 : b === 'bass' ? -1 : a.localeCompare(b))
     for (const lane of laneNames) {
       const members = glyphs.filter(glyph => glyph.lane === lane)
-      const rows = [...new Set(members.flatMap(glyph => [...glyph.lyrics].filter(([, row]) => row.texts.some(text => text.replaceAll('\u200B', '').trim())).map(([row]) => row)))].sort((a, b) => a - b)
+      const rows = [...new Set(members.flatMap(glyph => [...glyph.lyrics].filter(([, row]) => row.annotation || row.texts.some(text => text.replaceAll('\u200B', '').trim())).map(([row]) => row)))].sort((a, b) => a - b)
       const hasBars = !lane.startsWith('alternative:')
       const bodyBottom = Math.max(hasBars ? barBottom : 0, ...members.map(glyph => glyph.bottom))
       const lyricBottom = Math.max(...members.map(glyph => glyph.musicBottom ?? glyph.bottom))
