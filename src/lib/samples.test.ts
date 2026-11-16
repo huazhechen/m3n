@@ -169,7 +169,7 @@ describe('bundled score corpus', () => {
       '5=e', '6e', '7e', '1ee', '2ee', '3ee', '2ee', '1ee', '7e', '6e', '5e', '4e', '3e', '2e', '1e',
     ])
     expect(measures[22]!.events.map(event => event.beats)).toEqual([1.5, ...Array(4).fill(0.125), ...Array(4).fill(0.5)])
-    expect(measures[25]!.events[0]!.postfixes).toContain('ac((5e 6e))')
+    expect(measures[25]!.events[0]!.postfixes.some(mark => mark.startsWith('ac('))).toBe(false)
     expect(measures[70]!.events[0]!.postfixes.some(mark => mark.startsWith('ac('))).toBe(false)
   })
 
