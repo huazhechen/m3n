@@ -1,0 +1,66 @@
+import { readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
+import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
+
+const original = readFileSync(new URL('./fixtures/hou-lai-original.m3n', import.meta.url), 'utf8')
+const source = readFileSync(new URL('../scores/hou_lai_01.m3n', import.meta.url), 'utf8')
+const before = parseM3NDocument(original), after = parseM3NDocument(source)
+const performedBars = (document: typeof before) => alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
+const oldBars = performedBars(before), newBars = performedBars(after)
+// The sole authorized correction: A's second ending loses one held beat;
+// A's third pickup moves into that bar. All other events remain in order.
+const changedIndex = oldBars.slice(0, 54).reduce((count, bar) => count + bar.events.length, 0) - 1
+const events = (bars: typeof oldBars) => {
+  const pitches = resolveScorePitches(bars)
+  return bars.flatMap(bar => bar.events.map(event => ({
+    pitches: pitches.get(event) ?? [], beats: event.beats, tie: event.tie ?? false,
+    postfixes: event.postfixes, dynamic: event.dynamic ?? null, tempo: event.tempo,
+  })))
+}
+const lyrics = (document: typeof before) => {
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
+  return compileScorePerformance(document).elements.filter(element => element.voice === 'score:melody')
+    .flatMap(element => (byId.get(element.xmlId) ?? [])
+      .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
+      .map(lyric => ({ start: element.start, end: element.end, text: lyric.text })))
+}
+
+describe('Hou Lai sequential score with the third pickup inside the preceding bar', () => {
+  it('removes sections and preserves every event except the authorized held beat', () => {
+    expect(validateM3NDiagnostics(source)).toEqual([])
+    expect(after.order).toBeUndefined()
+    expect(after.sections ?? []).toHaveLength(0)
+    const expected = events(oldBars)
+    expect(expected).toHaveLength(408)
+    expect(expected[changedIndex]!.beats).toBe(2)
+    expected[changedIndex]!.beats = 1
+    expect(events(newBars)).toEqual(expected)
+    expect(compileScorePerformance(before).beats).toBe(261)
+    expect(compileScorePerformance(after).beats).toBe(260)
+  })
+
+  it('merges only the boundary pickup and checks every remaining bar and meter', () => {
+    const snapshot = (bars: typeof oldBars) => bars.map(bar => ({
+      beats: bar.events.reduce((sum, event) => sum + event.beats, 0),
+      meter: [bar.events[0]!.meterCount, bar.events[0]!.meterUnit],
+    }))
+    const expected = snapshot(oldBars)
+    expect(expected).toHaveLength(68)
+    expect(expected.slice(53, 55).map(bar => bar.beats)).toEqual([4, 1])
+    expected.splice(54, 1)
+    expect(snapshot(newBars)).toEqual(expected)
+    expect(newBars[53]!.events).toHaveLength(oldBars[53]!.events.length + oldBars[54]!.events.length)
+  })
+
+  it('preserves every lyric, shifting only lyrics after the shortened hold by one beat', () => {
+    const cutoff = oldBars.slice(0, 54).reduce((sum, bar) => sum + bar.events.reduce((n, event) => n + event.beats, 0), 0)
+    const expected = lyrics(before).map(lyric => ({
+      ...lyric,
+      start: lyric.start >= cutoff ? lyric.start - 1 : lyric.start,
+      end: lyric.end >= cutoff ? lyric.end - 1 : lyric.end,
+    }))
+    expect(expected).toHaveLength(326)
+    expect(lyrics(after)).toEqual(expected)
+  })
+})
