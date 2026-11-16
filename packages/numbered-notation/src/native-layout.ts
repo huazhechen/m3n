@@ -24,6 +24,9 @@ export type NativeLayout = {
   options: NativeRenderOptions; measurer: TextMeasurer; headerHeight: number; margin: number
 }
 
+// Bracket hook, clearance, and half the stroke, measured at 22px music size.
+const voltaClearance = 22 * (0.2 + 0.6 * 1.2 + 0.055 / 2)
+
 function validate(options: NativeRenderOptions) {
   if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
   for (const value of [options.pageMargin, options.systemGap]) if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
@@ -82,7 +85,7 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
   for (const [index, relation] of relations.entries()) {
     if (relation.kind === 'inst') continue
     const start = order.get(relation.first)!, end = order.get(relation.last)!
-    relation.level = Math.max(-1, ...relations.slice(0, index).filter(other => other.kind !== 'inst' && other.first.lane === relation.first.lane && order.get(other.first)! <= end && order.get(other.last)! >= start).map(other => other.level)) + 1
+    relation.level = Math.max(-1, ...relations.slice(0, index).filter(other => other.kind !== 'inst' && other.first.lane === relation.first.lane && order.get(other.first)! < end && order.get(other.last)! > start).map(other => other.level)) + 1
   }
   return relations
 }
@@ -170,6 +173,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       system.lanes.push({ id: lane, y: 0, top: Math.max(20.35, ...members.map(glyph => glyph.top + glyph.annotations.length * 22)), bodyBottom, bottom: bodyBottom + lyricsHeight, rows })
     }
   }
+  const relationBounds = new Map<NativeSystem, { lane: string; left: number; right: number; top: number }[]>()
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
     if (first === undefined || last === undefined) continue
@@ -182,8 +186,32 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
         const selected = members.filter(glyph => relation.first.event && relation.last.event && glyph.event && relation.first.event.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event.sourceStart)
         const ratio = Math.min(1, Math.abs(relation.last.x - relation.first.x) / 55)
         const height = relation.kind === 'tie' || relation.kind === 'slur' ? first !== last ? 9.9 : 11 * ratio * (2 - ratio) : relation.kind === 'tuplet' ? 19 : 14
-        lane.top = Math.max(lane.top, Math.max(0, ...(selected.length ? selected : members).map(glyph => glyph.top)) + height + relation.level * 3.3 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22)
+        const covered = selected.length ? selected : members
+        const top = Math.max(0, ...covered.map(glyph => glyph.top)) + height + relation.level * 3.3 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22
+        lane.top = Math.max(lane.top, top)
+        const bounds = relationBounds.get(system) ?? []
+        bounds.push({ lane: lane.id, left: Math.min(...covered.map(glyph => glyph.x)), right: Math.max(...covered.map(glyph => glyph.x)), top })
+        relationBounds.set(system, bounds)
       }
+    }
+  }
+  // A volta clears only its own horizontal range. Decorations outside
+  // that range must not raise the entire bracket and every following row.
+  for (const system of systems) if (system.volta) {
+    const lane = system.lanes.find(lane => lane.id === 'melody')
+    if (!lane) continue
+    for (let begin = 0; begin < system.measures.length;) {
+      const ending = system.measures[begin]!.source.ending
+      if (!ending) { begin++; continue }
+      let end = begin + 1
+      while (end < system.measures.length && system.measures[end]!.source.ending === ending) end++
+      const measures = system.measures.slice(begin, end)
+      const glyphs = measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === lane.id)
+      const left = measures[0]!.start, right = measures.at(-1)!.end
+      const top = Math.max(20.35, ...glyphs.map(glyph => glyph.top + glyph.annotations.length * 22),
+        ...(relationBounds.get(system) ?? []).filter(bound => bound.lane === lane.id && bound.right >= left && bound.left <= right).map(bound => bound.top))
+      lane.top = Math.max(lane.top, top + voltaClearance)
+      begin = end
     }
   }
   if (options.uniformSystemHeight) {
@@ -201,7 +229,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   }
   const gap = options.systemGap ?? 24
   const blocks = [{ height: headerHeight - gap }, ...systems.map(system => ({
-    height: system.lanes.reduce((sum, lane) => sum + lane.top + lane.bottom, (system.lanes.length - 1) * 20.625 + (system.volta ? 28 : 0)),
+    height: system.lanes.reduce((sum, lane) => sum + lane.top + lane.bottom, (system.lanes.length - 1) * 20.625),
     gapBefore: system.measures[0]?.extraGap ?? 0,
   }))]
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * 277 / 190) : Infinity,
@@ -210,7 +238,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   for (const [index, system] of systems.entries()) {
     const position = pagination.positions[index + 1]!
     system.top = position.top; system.page = position.page
-    let axis = position.top + (system.volta ? 28 : 0)
+    let axis = position.top
     for (const lane of system.lanes) {
       axis += lane.top; lane.y = axis
       for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) if (glyph.lane === lane.id) glyph.y = axis
