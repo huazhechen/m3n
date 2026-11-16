@@ -5,16 +5,18 @@ import type { TextMeasurer } from './native-measure.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { nativeAccidentalAdvance } from './native-accidentals.js'
 import { nativeMarkStack } from './native-marks.js'
+import { nativeGraceGeometry } from './native-grace.js'
 import { numberedKeyLabel } from './fixed-do.js'
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
 export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno'; text: string; width: number; anchor: number; top: number; bottom: number; x?: number }
+export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
   time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativePitch[]
   lyrics: Map<number, LyricRowData>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]
-  musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number
+  annotationLayout?: NativeAnnotation[]; musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; paragraph: string
   instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number
 }
@@ -119,9 +121,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
             left = Math.max(left, width / 2 + (row.annotation ? textWidth(row.annotation, 12) + 5 : 0))
             right = Math.max(right, width / 2)
           }
-          for (const annotation of glyphAnnotations) { const width = textWidth(annotation); left = Math.max(left, width / 2); right = Math.max(right, width / 2); musicLeft = Math.max(musicLeft, width / 2); musicRight = Math.max(musicRight, width / 2) }
           const metrics = nativeNoteMetrics(pitches, writtenBeats, sustain)
-          const musicTop = nativeMarkStack(glyphMarks, metrics.top).top + (glyphGraces.length ? 10 : 0)
+          const musicTop = Math.max(nativeMarkStack(glyphMarks, metrics.top).top, nativeGraceGeometry(glyphGraces, musicLeft).top)
           const top = Math.max(musicTop, ...glyphControls.map(control => control.top))
           const bottom = Math.max(metrics.bottom, ...glyphControls.map(control => control.bottom))
           const id = ids.get(event)!

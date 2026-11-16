@@ -1,4 +1,5 @@
 import { displayedTempo, scoreCreditLines } from '@m3n/notation'
+import { nativeGraceGeometry } from './native-grace.js'
 import { numberedKeyLabel } from './fixed-do.js'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
@@ -96,14 +97,14 @@ class SvgPainter {
       for (let index = 0; index < beams; index++) music += line(glyph.x - 6, glyph.y + 3.245 + index * 3.08, glyph.x + 7, glyph.y + 3.245 + index * 3.08, 1.21)
     }
     if (glyph.graces.length) {
-      const start = glyph.x - glyph.left + 3
-      for (const [index, pitch] of glyph.graces.entries()) {
-        music += this.pitch(pitch, start + index * 14, glyph.y - 15, 13)
-        music += line(start + index * 14 - 4, glyph.y - 11, start + index * 14 + 4, glyph.y - 11, 1)
+      const grace = nativeGraceGeometry(glyph.graces, glyph.musicLeft ?? glyph.left)
+      for (const note of grace.notes) {
+        const x = glyph.x + note.x
+        music += this.pitch(note.pitch, x, glyph.y + note.y, 13)
+        music += line(x - 4, glyph.y + grace.beamY, x + 4, glyph.y + grace.beamY, 1)
       }
-      const last = start + (glyph.graces.length - 1) * 14
-      music += path(`M${n(start)} ${n(glyph.y - 29)} Q${n((start + glyph.x) / 2)} ${n(glyph.y - 39)} ${n(glyph.x - 4)} ${n(glyph.y - 22)}`)
-      if (glyph.graces.length > 1) music += line(start - 4, glyph.y - 11, last + 4, glyph.y - 11, 1)
+      music += path(`M${n(glyph.x + grace.start.x)} ${n(glyph.y + grace.start.y)} Q${n(glyph.x + grace.control.x)} ${n(glyph.y + grace.control.y)} ${n(glyph.x + grace.end.x)} ${n(glyph.y + grace.end.y)}`)
+      if (grace.notes.length > 1) music += line(glyph.x + grace.notes[0]!.x - 4, glyph.y + grace.beamY, glyph.x + grace.notes.at(-1)!.x + 4, glyph.y + grace.beamY, 1)
     }
     const markStack = nativeMarkStack(glyph.marks, nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain).top)
     for (const mark of markStack.items) {
@@ -123,14 +124,12 @@ class SvgPainter {
     }
     const group = `<g${attrs({ class: 'note', id: glyph.id, 'data-m3n-id': glyph.xmlId, 'data-m3n-role': role, 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId, 'data-m3n-passes': glyph.passes?.join('-') })}>${music}</g>`
     const annotations: string[] = []
-    glyph.annotations.forEach((annotation, index) => {
-      const isSection = glyph.event?.sectionLabel === annotation && glyph.event.sectionLabelBreakAfter
-      const textWidth = this.layout.measurer.measureText(annotation, { fontSize: 14 }).w
-      const x = isSection ? system.measures[0]!.start + textWidth / 2 + 5 : Math.max(this.layout.margin + textWidth / 2, Math.min(glyph.x, this.layout.options.width - this.layout.margin - textWidth / 2))
-      const y = lane.y - lane.top + 17 + (glyph.annotations.length - index - 1) * 22
-      if (isSection) annotations.push(`<rect${attrs({ x: x - textWidth / 2 - 4, y: y - 16, width: textWidth + 8, height: 21, stroke: '#000', fill: 'none' })}/>`)
-      annotations.push(this.text(annotation, x, y, 14, 'serif', { 'text-anchor': 'middle', 'font-weight': isSection ? 700 : 400, 'data-m3n-id': glyph.xmlId, 'data-m3n-role': 'annotation', 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId }))
-    })
+    for (const annotation of glyph.annotationLayout ?? []) {
+      const { text, x, baseline, width, height, top, kind } = annotation
+      const y = lane.y + baseline, isSection = kind === 'section'
+      if (isSection) annotations.push(`<rect${attrs({ x: x - width / 2 + 0.5, y: lane.y - top + 0.5, width: width - 1, height: height - 1, stroke: '#000', fill: 'none' })}/>`)
+      annotations.push(this.text(text, x, y, 14, 'serif', { 'text-anchor': 'middle', 'font-weight': isSection ? 700 : 400, 'data-m3n-id': glyph.xmlId, 'data-m3n-role': 'annotation', 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId }))
+    }
     const lyrics: string[] = []
     for (const [row, data] of glyph.lyrics) {
       const visible = lane.rows.indexOf(row), text = data.texts.join('')
@@ -245,14 +244,10 @@ class SvgPainter {
       }
     }
     for (const relation of system.relations) svg += this.relation(relation, system)
-    for (let index = 0; index < system.measures.length;) {
-      const measure = system.measures[index]!, ending = measure.source.ending
-      if (!ending) { index++; continue }
-      const first = index
-      while (system.measures[index + 1]?.source.ending === ending) index++
-      const x1 = system.measures[first]!.start + 2, x2 = system.measures[index]!.end - 3, y = system.top + 7
+    for (const volta of system.voltas ?? []) {
+      const lane = system.lanes.find(lane => lane.id === 'melody')!
+      const { left: x1, right: x2, ending } = volta, y = lane.y - volta.top + 7
       svg += line(x1, y + 6, x1, y) + line(x1, y, x2, y) + line(x2, y, x2, y + 6) + this.text(ending.replaceAll(',', '.') + '.', x1 + 5, y + 15, 12)
-      index++
     }
     const melody = system.lanes.find(lane => lane.id === 'melody'), bass = system.lanes.find(lane => lane.id === 'bass')
     if (melody && bass) {

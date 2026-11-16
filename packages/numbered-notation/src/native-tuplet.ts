@@ -18,7 +18,7 @@ export function nativeTupletGeometry(relation: NativeRelation, system: NativeSys
   const y = Math.min(...peers.map(peer => {
     const covered = glyphs.slice(glyphs.indexOf(peer.first), glyphs.indexOf(peer.last) + 1)
     const text = measurer.measureText(peer.label ?? '', { fontSize, fontFamily: 'serif' })
-    return -Math.max(0, ...covered.map(glyph => glyph.top + glyph.annotations.length * size)) - gap - Math.max(hook, text.h / 2)
+    return -Math.max(0, ...covered.map(glyph => glyph.musicTop ?? glyph.top)) - gap - Math.max(hook, text.h / 2)
   }))
   const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
   const left = relation.first.x - halfBody, right = relation.last.x + halfBody, center = (left + right) / 2

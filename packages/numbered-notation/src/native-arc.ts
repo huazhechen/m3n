@@ -22,7 +22,6 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   const height = firstHere && lastHere ? 11 * ratio * (2 - ratio) : 9.9
   const endpoints = [firstHere ? relation.first : undefined, lastHere ? relation.last : undefined].filter(glyph => glyph !== undefined)
   const port = -Math.max(0, ...(endpoints.length ? endpoints : covered).map(nativeTiePortTop)) - relation.level * 3.3
-    - Math.max(0, ...members.map(glyph => glyph.annotations.length)) * 22
   const thickness = 22 * 0.09
   let commands: NativeArcCommand[] = []
   let left = firstHere ? relation.first.x : Math.min(...members.map(glyph => glyph.x - (glyph.musicLeft ?? glyph.left)))
