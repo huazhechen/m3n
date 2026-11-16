@@ -4,6 +4,28 @@ import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, planPlayb
 const nodes = (...items: Omit<PlaybackNode, 'id'>[]) => items.map((item, index) => ({ id: `n${index + 1}`, ...item }))
 
 describe('repeat planning', () => {
+  it('continues into the ordinary tail after a D.S. return without a later house', () => {
+    const plan = planPlayback(nodes(
+      { kind: 'section', repeatStart: true, navigation: ['segno'] },
+      { kind: 'ending', n: '1', repeatCount: 2 },
+      { kind: 'ending', n: '2', navigation: ['ds'] },
+      { kind: 'section' },
+      { kind: 'section' },
+    ))
+    expect(plan.sequence).toEqual(['n1', 'n2', 'n1', 'n3', 'n1', 'n4', 'n5'])
+    expect(plan.passesByNode.get('n4')).toEqual(new Set([1]))
+  })
+
+  it('stops a D.S. return at Fine before an ordinary tail', () => {
+    expect(buildPlaybackSequence(nodes(
+      { kind: 'section', repeatStart: true, navigation: ['segno'] },
+      { kind: 'section', navigation: ['fine'] },
+      { kind: 'ending', n: '1', repeatCount: 2 },
+      { kind: 'ending', n: '2', navigation: ['ds'] },
+      { kind: 'section' },
+    ))).toEqual(['n1', 'n2', 'n3', 'n1', 'n2', 'n4', 'n1', 'n2'])
+  })
+
   it('reports playback order and node passes from one plan', () => {
     const plan = planPlayback(nodes(
       { kind: 'section', repeatStart: true },

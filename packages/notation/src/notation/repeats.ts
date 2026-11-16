@@ -307,21 +307,31 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
   // the next numbered house after each return, allowing a later DS to trigger
   // another pass, and stop when the return reaches Fine.
   const returnPart: string[] = []
+  const appendTail = (after: number) => {
+    // The jump's ending group can be followed by an ordinary coda even when
+    // there is no further numbered house for the navigation return.
+    let index = after + 1
+    while (nodes[index]?.kind === 'ending') index += 1
+    for (; index < nodes.length; index += 1) {
+      const tail = nodes[index]!
+      if (tail.kind !== 'section') break
+      returnPart.push(tail.id)
+      if (tail.navigation?.includes('fine')) break
+    }
+  }
   let nextPass = jumpPass + 1
   for (let iteration = 0; iteration < endingNodes.length + 1; iteration += 1) {
     const house = endingNodes.find((node) => parsePassRange(node.n ?? '').has(nextPass))
     returnPart.push(...sections)
-    if (house === undefined) break
+    if (house === undefined) {
+      if (fine < 0 || fine >= sectionEnd) appendTail(jumpIndex)
+      break
+    }
     returnPart.push(house.id)
     if (house.navigation?.includes('fine')) break
     if (!house.navigation?.some((value) => value === 'ds' || value === 'dc')) {
       // After the final return ending, continue into the ordinary tail once.
-      for (let index = nodes.indexOf(house) + 1; index < nodes.length; index += 1) {
-        const tail = nodes[index]!
-        if (tail.kind !== 'section') break
-        returnPart.push(tail.id)
-        if (tail.navigation?.includes('fine')) break
-      }
+      appendTail(nodes.indexOf(house))
       break
     }
     nextPass += 1
