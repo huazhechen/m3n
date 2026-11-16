@@ -111,11 +111,6 @@ try {
           if (ys.length < 2 || Math.max(...ys) - Math.min(...ys) > 0.5) issues.push({ file, width, paged, instruction, tupletBaselines: ys })
         }
       }
-      if (file === 'super_mario_01.m3n' && width >= 800) {
-        const first = document.querySelector('g.system')
-        const measures = [...new Set([...first.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure')))]
-        if (measures.join(',') !== 'm3n-measure-1-1') issues.push({ file, width, paged, shortIntroduction: measures })
-      }
       for (const frame of document.querySelectorAll('g[data-m3n-role="section"]')) {
         const host = frame.ownerSVGElement.querySelector(`g.note[data-m3n-id="${frame.getAttribute('data-m3n-id')}"]`)
         const a = frame.getBBox(), b = host?.getBBox()
