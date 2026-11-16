@@ -8,6 +8,10 @@ import type { SourceSpan } from '../parser/types.js';
  * 数值来源由具体的 TextMeasurer 决定
  */
 export interface GlyphMetrics {
+    /** Optional Canvas ink bearings and advance, relative to a left-aligned baseline. */
+    advance?: number;
+    inkLeft?: number;
+    inkRight?: number;
     /** Ink center relative to the middle of the text advance; optional for deterministic measurers. */
     centerOffset?: number;
     /** Painted bottom within the layout box; offline em estimates may include trailing blank space. */

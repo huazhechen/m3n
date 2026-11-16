@@ -111,6 +111,8 @@ export type LayoutRange = readonly [from: number, to: number]
 
 /** attachment 根据当前视觉轴生成几何时需要的完整页面信息 */
 export interface AttachmentLayoutContext extends LayoutPrepareContext {
+    /** Final primitive ink, measured by the scheduler without exposing paint lifecycle calls. */
+    getHostInk?(host: LayoutHost): readonly Rect[];
     /** Adjacent, non-nested peers on this system; peers do not obstruct one another. */
     getAlignmentPeers?(attachment: LayoutAttachment, line: number): readonly LayoutAttachment[];
     /** Earlier declarations in this layout domain, following the same visibility rule as getRangeExtents. */

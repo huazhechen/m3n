@@ -3,6 +3,7 @@ import { nativeHairpinSegments } from './native-hairpin.js'
 import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import { NativeSymbols, attrs, n, line } from './native-symbols.js'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
+import { nativeArcInkLift } from './native-curve.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
 import { nativeSvgInk, type NativeInk } from './native-ink.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
@@ -68,7 +69,14 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
         if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
       }
     }
-    const dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.62 : b.top-nativeStyle.markGap-ink.bottom))
+    let dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.62 : b.top-nativeStyle.markGap-ink.bottom))
+    if (isArc && dy < 0) {
+      const arc = nativeArcGeometry(relation, system)
+      const pieces = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
+        .filter(g => g.lane === relation.first.lane)
+        .flatMap(g => (g.musicInk ?? []).map(piece => ({ ...piece, left: g.x + piece.left, right: g.x + piece.right })))
+      dy = -nativeArcInkLift(arc.commands, arc.left, arc.right, pieces, -dy)
+    }
     if (dy) {
       svg = `<g transform="translate(0 ${n(dy)})">${svg}</g>`
       ink = nativeSvgInk(svg, measurer)

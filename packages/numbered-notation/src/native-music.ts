@@ -18,6 +18,17 @@ export function nativeBeamSvg(a: NativeGlyph, b: NativeGlyph, measurer: TextMeas
 }
 
 export class NativeMusicPainter extends NativeSymbols {
+  /** The connection belongs to the sounding head and its articulations. Side
+   * components retain their own ink for local curve clearance. */
+  tieBody(glyph: NativeGlyph): string {
+    return this.body({ ...glyph, pitches: glyph.pitches.map(pitch => ({ ...pitch, accidental: '' })) }) + this.articulations(glyph)
+  }
+
+  private articulations(glyph: NativeGlyph): string {
+    const markStack = glyph.markLayout ?? nativeMarkStack(glyph.marks, nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, this.measurer).top, this.measurer).items
+    return markStack.map(mark => `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`).join('')
+  }
+
   music(glyph: NativeGlyph): string {
     if (glyph.multiRest) {
       const size = nativeStyle.music, text = String(glyph.multiRest)
@@ -35,8 +46,7 @@ export class NativeMusicPainter extends NativeSymbols {
       const grace = glyph.graceLayout ?? nativeGraceGeometry(glyph.graces, glyph.musicLeft ?? glyph.left, this.measurer)
       music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y)})` })}>${grace.svg}</g>`
     }
-    const markStack = glyph.markLayout ?? nativeMarkStack(glyph.marks, nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, this.measurer).top, this.measurer).items
-    for (const mark of markStack) music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`
+    music += this.articulations(glyph)
     if (glyph.event?.postfixes.includes('arp') && glyph.pitches.length > 1 && !glyph.sustain) {
       const arpeggio = glyph.arpeggioLayout ?? nativeArpeggioGeometry(nativeSvgInk(this.body({ ...glyph, x: 0, y: 0 }), this.measurer), this.measurer)
       music += `<g transform="translate(${n(glyph.x)} ${n(glyph.y)})">${arpeggio.svg}</g>`

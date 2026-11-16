@@ -152,3 +152,35 @@ test('arc lower edges clear intervening octave dots in same-system and split fra
     assert(path.commands[0].op === 'M' && nearly(path.commands[0].y, result.layout.objects[0].box.y),
         'an arc that already clears middle dots must retain its original height above the endpoints');
 });
+
+test('arc ribbons clear side ink at endpoints and after outer-layer placement', async () => {
+    const { paintedNodeRegions } = await import('../src/layout/painted-ink.js');
+    const { defaultTextMeasurer } = await import('../src/render/text.js');
+    for (const source of [
+        '@grace({1},{3})@a 2@b @tie(a,b)',
+        '1@a @grace({2},{3})@b @tie(a,b)',
+        '1@a #2@b @tie(a,b)',
+        '1@a 2@b #3@c @tie(b,c) @tie(a,c)',
+        '1@a @br() #2@b @tie(a,b)',
+    ]) {
+        const result = compileScore(source, { alignRelations: true });
+        assert(result.diagnostics.length === 0, 'side-ink fixture must compile');
+        for (const arc of result.layout.attachments) {
+            const paths = attachmentCommands(arc).filter(command => command.kind === 'path');
+            for (const [index, region] of arc.regions.entries()) {
+                const points = outline(paths[index].commands);
+                for (const host of result.layout.objects) {
+                    if (host.T.isZero() || host.track !== region.track || host.layoutLine !== region.line) continue;
+                    for (const piece of paintedNodeRegions(host, defaultTextMeasurer)) {
+                        const left = Math.max(region.x, piece.x), right = Math.min(region.x + region.w, piece.x + piece.w);
+                        for (let x = left + 0.001; x < right; x += 0.1) {
+                            const band = boundsAt(points, x);
+                            assert(band.bottom <= piece.y + 0.002 || band.top >= piece.y + piece.h - 0.002,
+                                `arc must clear actual side ink at x=${x}: ${source}`);
+                        }
+                    }
+                }
+            }
+        }
+    }
+});

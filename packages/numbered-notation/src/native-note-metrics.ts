@@ -31,7 +31,7 @@ export function nativeBeamCount(a: import('./native-model.js').NativeGlyph, b: i
 }
 
 /** Octave dots need an extra 0.05em between their musical bounds and an arc port. */
-export function nativeTiePortTop(glyph: { top: number; musicTop?: number; sustain: boolean; pitches: NativePitch[] }): number {
+export function nativeTiePortTop(glyph: { top: number; musicTop?: number; tieTop?: number; sustain: boolean; pitches: NativePitch[] }): number {
   // Inline key/meter/tempo controls occupy their own columns, outside the note.
-  return (glyph.musicTop ?? glyph.top) + (!glyph.sustain && glyph.pitches.some(pitch => pitch.octave > 0) ? nativeStyle.music * 0.05 : 0)
+  return (glyph.tieTop ?? glyph.musicTop ?? glyph.top) + (!glyph.sustain && glyph.pitches.some(pitch => pitch.octave > 0) ? nativeStyle.music * 0.05 : 0)
 }

@@ -6,7 +6,7 @@ import { nativeLyricInk } from './native-lyrics.js'
 import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import type { NativeTempoGeometry } from './native-tempo.js'
 import { NativeMusicPainter } from './native-music.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
 import { resolveScorePitches, displayedTempo, sectionEntryKey, sectionKeyVisits, sectionVisitKey, measurePlaybackPasses, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
 import { lyricsByEvent, type LyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
@@ -27,6 +27,7 @@ export type NativeGlyph = {
   time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativeGracePitch[]
   lyrics: Map<number, LyricRowData>; lyricBaselines?: Map<number, number>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]
   arpeggioLayout?: ReturnType<typeof nativeArpeggioGeometry>; markLayout?: NativeMarkPlacement[]; annotationLayout?: NativeAnnotation[]; inkLeft?: number; inkRight?: number; musicBottom?: number; graceLayout?: ReturnType<typeof nativeGraceGeometry>; musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number
+  tieTop?: number; musicInk?: NativeInk[]
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; paragraph: string
   instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number
 }
@@ -185,7 +186,9 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
             glyph.right = Math.max(glyph.musicRight, lyricRight)
           }
           glyph.markLayout = nativeMarkStack(glyphMarks.filter(nativeInnerMark), metrics.top, options.textMeasurer).items
-          const ink = nativeSvgInk(painter.music(glyph), options.textMeasurer)
+          glyph.tieTop = -nativeSvgInk(painter.tieBody(glyph), options.textMeasurer).top
+          glyph.musicInk = nativeSvgPieces(painter.music(glyph), options.textMeasurer)
+          const ink = unionNativeInk(glyph.musicInk)
           glyph.musicTop = -ink.top; glyph.top = Math.max(-ink.top, ...glyphControls.map(control => control.top))
           glyph.musicBottom = ink.bottom; glyph.bottom = Math.max(ink.bottom, ...glyphControls.map(control => control.bottom))
           glyph.inkLeft = -ink.left; glyph.inkRight = ink.right

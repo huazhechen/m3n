@@ -66,6 +66,9 @@ export class CanvasTextMeasurer implements TextMeasurer {
             const hasInkMetrics = Number.isFinite(ascent) && Number.isFinite(descent)
                 && ascent + descent >= 0;
             metrics = {
+                advance: measured.width,
+                inkLeft: Number.isFinite(measured.actualBoundingBoxLeft) ? -measured.actualBoundingBoxLeft : 0,
+                inkRight: Number.isFinite(measured.actualBoundingBoxRight) ? measured.actualBoundingBoxRight : measured.width,
                 w: Math.max(measured.width, style.fontSize * 0.25),
                 h: hasInkMetrics ? ascent + descent : style.fontSize,
                 baseline: hasInkMetrics ? ascent : style.fontSize * 0.8,

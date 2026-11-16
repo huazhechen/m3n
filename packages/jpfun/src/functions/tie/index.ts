@@ -258,7 +258,11 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
                     if (outer && inner) lift = Math.max(lift, outer.bottom - inner.top + gap);
                 }
             }
-            if (lift > 0) segments[index] = shiftSegment(segment, -lift - this.fontSize * 0.02);
+            if (lift > 0) {
+                // An outer layer can move into previously separated side ink.
+                segments[index] = this.clearInterveningNotes(context,
+                    shiftSegment(segment, -lift - this.fontSize * 0.02), first, last);
+            }
         }
     }
 
@@ -359,6 +363,25 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
                 const edge = ribbonAtX(segment.commands, x);
                 if (edge) lift = Math.max(lift, edge.bottom - top);
             }
+        }
+        // Endpoint ports stay on the musical head. Side ink, including endpoint
+        // accidentals and grace groups, only moves a ribbon that actually meets it.
+        const middle = segment.x + segment.w / 2;
+        const ink = columns.flat().filter(host => !host.T.isZero() && host.track === start.track)
+            .flatMap(host => context.getHostInk?.(host) ?? []);
+        const obstacles = ink.flatMap(piece => {
+            const left = Math.max(segment.x, piece.x), right = Math.min(segment.x + segment.w, piece.x + piece.w);
+            if (right - left < 1e-8) return [];
+            const slices = [left, right, ...(middle > left && middle < right ? [middle] : [])]
+                .flatMap(x => { const edge = ribbonAtX(segment.commands, x); return edge ? [edge] : []; });
+            return slices.length ? [{ piece, top: Math.min(...slices.map(s => s.top)), bottom: Math.max(...slices.map(s => s.bottom)) }] : [];
+        });
+        for (let pass = 0; pass < obstacles.length; pass++) {
+            const previous = lift;
+            for (const { piece, top, bottom } of obstacles) {
+                if (bottom - lift > piece.y + 1e-7 && top - lift < piece.y + piece.h - 1e-7) lift = Math.max(lift, bottom - piece.y);
+            }
+            if (lift === previous) break;
         }
         return lift > 0 ? shiftSegment(segment, -lift) : segment;
     }

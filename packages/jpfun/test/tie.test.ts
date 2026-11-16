@@ -254,8 +254,8 @@ test("grace 内部标签连接成员，外部标签穿透到宿主", () => {
 
     const hostTie = tieStart(`@grace({1},{2})@x 3@y @tie(x,y)`);
     assert(nearly(hostTie.actual.x, hostTie.host.x) && nearly(hostTie.actual.y, hostTie.host.y)
-        && !nearly(hostTie.actual.y, hostTie.composite.y),
-    "a label after grace must delegate to the host's labelable node");
+        && nearly(hostTie.host.y, hostTie.composite.y),
+    "a label after grace and the composite port must both connect to the host");
 });
 
 test("跨系统连音线按首、中、尾分段绘制", () => {

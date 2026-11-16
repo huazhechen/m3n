@@ -1,5 +1,7 @@
 # Local changes
 
+- Grace wrappers explicitly forward the sounding host’s tie port even when that host has no specialized upper port. Aligned ties check measured paint primitives, including endpoint accidentals and grace groups, and recheck after outer-arc placement. Text ink bearings/advance are available independently of existing layout widths; stroke-only frames retain their empty interiors during collision measurement.
+
 - Metronome units 1 and 2 use hollow whole/half-note outlines with transparent counters instead of filled quarter notes. Tempo occupancy includes the complete lower flag edge for short measured text (notably unit 64), while alignment continues to use the measured text center. QPM playback and beat-unit/dot conversion are unchanged.
 
 - Grace subdomains retain natural rhythmic clearance scaled from the parent music size, using the joined-beam spacing ratio. Previously compact local layout forced every inter-note margin to zero. The group stays rigid; host composition, source order, local horizontal hooks, frame padding, nested relation ownership, repeat layout and playback remain intact.

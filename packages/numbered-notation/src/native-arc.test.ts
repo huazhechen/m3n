@@ -120,3 +120,52 @@ describe('native musical arc geometry', () => {
     expect(arcs[0]).toContain('transform="translate(0 ')
   })
 })
+
+it('keeps an initial accidental outside the arc from changing its musical port', () => {
+  const plain = layoutNativeScore(parseM3NDocument('{2/4}\nN: {lg}1 2{/} |||'), options)
+  const sharp = layoutNativeScore(parseM3NDocument('{2/4}\nN: {lg}1# 2{/} |||'), options)
+  const port = (layout: typeof plain) => nativeTiePortTop(layout.relations[0]!.first)
+  expect(port(sharp)).toBeCloseTo(port(plain))
+  expect(sharp.relations[0]!.first.musicTop).toBeGreaterThan(port(sharp))
+})
+
+it('resolves side ink to a fixed point without moving past already separated components', async () => {
+  const { nativeArcInkLift } = await import('./native-curve.js')
+  const ribbon = [
+    { op: 'M' as const, x: 0, y: -10 }, { op: 'L' as const, x: 100, y: -10 },
+    { op: 'L' as const, x: 100, y: -8 }, { op: 'L' as const, x: 0, y: -8 }, { op: 'Z' as const },
+  ]
+  const high = { left: 20, right: 30, top: -16, bottom: -13 }
+  const low = { left: 20, right: 30, top: -12, bottom: -9 }
+  expect(nativeArcInkLift(ribbon, 0, 100, [high])).toBe(0)
+  expect(nativeArcInkLift(ribbon, 0, 100, [high, low])).toBe(8)
+  expect(nativeArcInkLift(ribbon, 0, 100, [low, high])).toBe(8)
+  expect(nativeArcInkLift(ribbon, 0, 100, [high], 4)).toBe(8)
+})
+
+it('clears measured endpoint side ink through nesting and line breaks', () => {
+  for (const source of [
+    '{2/4}\nN: {lg}1 2#{/} |||',
+    '{2/4}\nN: {lg}1{ac(3)} 2{/} |||',
+    '{2/4}\nN: {lg}1 2{ac(3)}{/} |||',
+    '{3/4}\nN: {lg}1 {lg}2 3#{/}{/} |||',
+    '{2/4}\nN: {lg}1 2 | {br}3# 4{/} |||',
+  ]) for (const width of [320, 800]) {
+    const layout = layoutNativeScore(parseM3NDocument(source), { width, paged: false })
+    for (const system of layout.systems) for (const [relation, placed] of system.relationLayout!) {
+      if (relation.kind !== 'tie' && relation.kind !== 'slur') continue
+      const arc = nativeArcGeometry(relation, system)
+      const dy = placed.ink.top + arc.top
+      for (const glyph of system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))) {
+        if (glyph.lane !== relation.first.lane) continue
+        for (const piece of glyph.musicInk ?? []) {
+          const left = Math.max(arc.left, glyph.x + piece.left), right = Math.min(arc.right, glyph.x + piece.right)
+          for (let x = left + 0.001; x < right; x += 0.1) {
+            const band = nativeArcSlice(arc.commands, x)!
+            expect(band.bottom + dy <= piece.top + 0.002 || band.top + dy >= piece.bottom - 0.002, source).toBe(true)
+          }
+        }
+      }
+    }
+  }
+})

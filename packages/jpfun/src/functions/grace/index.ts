@@ -538,6 +538,10 @@ export class GraceTemporal extends TemporalNodeBase {
         }
         // 宿主没有肩线时它自己的盒顶就是肩线；有则上面那轮转发已经带偏移抬好了
         this.ports[SHOULDER_PORT] ??= { x: this.box.anchor, y: this.hostOffset.y };
+        this.ports['tie.top'] ??= {
+            x: this.box.anchor,
+            y: this.hostOffset.y + getLayoutBounds(this.host, true).y - this.host.box.y,
+        };
 
         // 钩形曲线挂在靠近宿主的那个倚音成员下方，零时长标记不承接它；高度取成员的最低下沿，不含块内附件
         const rhythmic = this.graces.filter(grace => !grace.T.isZero());

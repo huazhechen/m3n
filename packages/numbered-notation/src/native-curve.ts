@@ -1,4 +1,5 @@
 import type { NativeArcCommand } from './native-arc.js'
+import type { NativeInk } from './native-ink.js'
 
 type Point = { x: number; y: number }
 
@@ -40,4 +41,29 @@ export function nativeArcSlice(commands: readonly NativeArcCommand[], x: number)
     heights.push(curvePoint(points, (low + high) / 2).y)
   }
   return heights.length ? { top: Math.min(...heights), bottom: Math.max(...heights) } : undefined
+}
+
+/** Lift only when a real primitive intersects the ribbon. A side component
+ * already wholly above it can stay there; moving past one component can expose
+ * another, so resolve the finite set of candidate clearances to a fixed point. */
+export function nativeArcInkLift(commands: readonly NativeArcCommand[], left: number, right: number, pieces: readonly NativeInk[], initial = 0): number {
+  const middle = (left + right) / 2
+  const obstacles = pieces.flatMap(piece => {
+    const a = Math.max(left, piece.left), b = Math.min(right, piece.right)
+    if (b - a < 1e-8) return []
+    const edges = [a, b, ...(middle > a && middle < b ? [middle] : [])].flatMap(x => {
+      const slice = nativeArcSlice(commands, x)
+      return slice ? [slice] : []
+    })
+    return edges.length ? [{ piece, top: Math.min(...edges.map(e => e.top)), bottom: Math.max(...edges.map(e => e.bottom)) }] : []
+  })
+  let lift = initial
+  for (let pass = 0; pass < obstacles.length; pass++) {
+    const previous = lift
+    for (const { piece, top, bottom } of obstacles) {
+      if (bottom - lift > piece.top + 1e-7 && top - lift < piece.bottom - 1e-7) lift = Math.max(lift, bottom - piece.top)
+    }
+    if (lift === previous) break
+  }
+  return lift
 }

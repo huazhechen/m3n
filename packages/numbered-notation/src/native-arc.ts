@@ -1,6 +1,6 @@
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
-import { nativeArcSlice } from './native-curve.js'
+import { nativeArcSlice, nativeArcInkLift } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
 
 export type NativeArcCommand =
@@ -80,6 +80,8 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
       if (slice) lift = Math.max(lift, slice.bottom + control.top + nativeStyle.markGap)
     }
   }
+  lift = nativeArcInkLift(commands, left, right, covered.flatMap(glyph => (glyph.musicInk ?? []).map(piece =>
+    ({ ...piece, left: glyph.x + piece.left, right: glyph.x + piece.right }))), lift)
   if (lift > 0) commands = commands.map(command => {
     if (command.op === 'Z') return command
     if (command.op === 'C') return { ...command, y: command.y - lift, cy1: command.cy1 - lift, cy2: command.cy2 - lift }

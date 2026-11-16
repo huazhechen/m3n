@@ -25,6 +25,7 @@ import { liftInto, rangeColumns, resolveRange, type QueryLine } from "./range.js
 import { TranslatingPainter } from "../render/translate.js";
 import { adjacentRelationGroups } from './relation-alignment.js';
 import { equalMeasureRanges } from './equal-measures.js';
+import { paintedNodeRegions } from './painted-ink.js';
 import type {
     AttachmentGeometry,
     AttachmentLayoutContext,
@@ -364,6 +365,8 @@ export function layoutDocument(
             node.onPlaced?.();
         }
 
+        const visualHosts = new Map<LayoutHost, VisualTemporalNode>(objects.map(node => [node, node]));
+        const hostInk = new Map<LayoutHost, readonly Rect[]>();
         const attachmentContext: BaseAttachmentContext = {
             ...context,
             width: contentWidth,
@@ -374,6 +377,15 @@ export function layoutDocument(
             getVisualAxis: (line, track) => visualAxisOf(line, lift(track)),
             getHostExtent: (line, track) => hostExtents[line]?.get(lift(track)),
             getRangeColumns: (line, range, track) => rangeColumns(views[line], range, track, lift),
+            getHostInk(host) {
+                let regions = hostInk.get(host);
+                if (!regions) {
+                    const node = visualHosts.get(host);
+                    regions = node ? paintedNodeRegions(node, context.textMeasurer) : [];
+                    hostInk.set(host, regions);
+                }
+                return regions;
+            },
         };
 
         return { pages, attachmentContext };
