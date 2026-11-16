@@ -45,9 +45,6 @@ class SvgPainter extends NativeMusicPainter {
       for (const glyph of members) content += this.glyph(glyph, system, lane)
       if (!lane.id.startsWith('alternative:')) {
         for (const bar of bars) content += nativeBarSvg(bar.kind, bar.x, lane.y)
-      } else {
-        content += this.text('(', members[0]!.x - members[0]!.left - em(6), lane.y, nativeStyle.music, 'M3N Numbers')
-        content += this.text(')', members.at(-1)!.x + members.at(-1)!.right + em(2), lane.y, nativeStyle.music, 'M3N Numbers')
       }
     }
     return `<g${attrs({ class: 'measure', id: measure.continuation ? `${measure.id}-s${system.index}` : measure.id, 'data-m3n-measure-id': measure.id, 'data-m3n-measure-start': measure.start, 'data-m3n-measure-end': measure.end })}>${content}</g>`

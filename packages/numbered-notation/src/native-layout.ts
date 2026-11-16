@@ -85,10 +85,20 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
     const end = kind === 'slur' ? head.get(last.event!) ?? [...glyphs].reverse().find(glyph => !glyph.sustain && glyph.pitches.some(pitch => pitch.degree !== '0')) ?? last : last
     relations.push({ kind, first, last: end, level: 0, label: kind === 'octave' ? interval.kind : undefined })
   }
+  // Each alternative measure is a separate parenthesized phrase. Reuse the
+  // measured relation painter so wrapping and occupied bounds stay in sync.
+  for (const measure of projection.measures) {
+    const glyphs = measure.columns.flatMap(column => column.glyphs)
+    for (const lane of new Set(glyphs.filter(glyph => glyph.lane.startsWith('alternative:')).map(glyph => glyph.lane))) {
+      const members = glyphs.filter(glyph => glyph.lane === lane)
+      relations.push({ kind: 'inst', first: members[0]!, last: members.at(-1)!, level: 0 })
+    }
+  }
   // Adjacent instrumental declarations form one passage, just as their shared
   // horizontal occupancy does. Part and voice boundaries remain independent.
   const instrumentalLanes = new Map<string, NativeGlyph[]>()
   for (const measure of projection.measures) for (const column of measure.columns) for (const glyph of column.glyphs) {
+    if (glyph.lane.startsWith('alternative:')) continue
     const key = `${measure.part}:${glyph.lane}`
     const members = instrumentalLanes.get(key) ?? []
     members.push(glyph); instrumentalLanes.set(key, members)

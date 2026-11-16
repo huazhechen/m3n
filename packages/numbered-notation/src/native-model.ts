@@ -125,10 +125,10 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           glyph.musicTop = -ink.top; glyph.top = Math.max(-ink.top, ...glyphControls.map(control => control.top))
           glyph.musicBottom = ink.bottom; glyph.bottom = Math.max(ink.bottom, ...glyphControls.map(control => control.bottom))
           glyph.inkLeft = -ink.left; glyph.inkRight = ink.right
-          if (document.intervals.some(interval => interval.kind === 'inst' && interval.staff === staff && interval.start !== undefined && interval.end !== undefined && interval.start <= event.sourceStart && event.sourceEnd <= interval.end)) {
-            glyph.instrumental = true
-            glyph.parenthesisLeft = textWidth('(', nativeStyle.music, 'M3N Numbers') + 1.1
-            glyph.parenthesisRight = textWidth(')', nativeStyle.music, 'M3N Numbers') + 1.1
+          glyph.instrumental = document.intervals.some(interval => interval.kind === 'inst' && interval.staff === staff && interval.start !== undefined && interval.end !== undefined && interval.start <= event.sourceStart && event.sourceEnd <= interval.end)
+          if (glyph.instrumental || lane.startsWith('alternative:')) {
+            glyph.parenthesisLeft = textWidth('(', nativeStyle.music, 'M3N Numbers') + nativeStyle.music * 0.05
+            glyph.parenthesisRight = textWidth(')', nativeStyle.music, 'M3N Numbers') + nativeStyle.music * 0.05
           }
           result.glyphs.push(glyph); time += beats
         }

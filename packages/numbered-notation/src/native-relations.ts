@@ -20,8 +20,9 @@ class NativeRelationPainter extends NativeSymbols {
       const selected = members.filter(glyph => glyph.event && relation.first.event!.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event!.sourceStart)
       if (!selected.length) return ''
       const first = selected[0]!, last = selected.at(-1)!
-      return this.text('(', first.x - first.left - (first.parenthesisLeft ?? em(6)), 0, nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': 'instrument-parenthesis' })
-        + this.text(')', last.x + last.right + em(1.1), 0, nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': 'instrument-parenthesis' })
+      const role = first.lane.startsWith('alternative:') ? 'alternative-parenthesis' : 'instrument-parenthesis'
+      return this.text('(', first.x - first.left - (first.parenthesisLeft ?? em(6)), 0, nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+        + this.text(')', last.x + last.right + nativeStyle.music * 0.05, 0, nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = nativeArcGeometry(relation, system)

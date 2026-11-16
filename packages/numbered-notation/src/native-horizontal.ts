@@ -54,6 +54,13 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const joins = (left: typeof members[number] | undefined, right: typeof members[number] | undefined) => left && right
       && (left.measure === right.measure || !left.measure.breakAfter && !right.measure.breakBefore && left.measure.part === right.measure.part)
     members.forEach((member, index) => {
+      if (lane.startsWith('alternative:')) {
+        parentheses.set(member.glyph, {
+          left: members[index - 1]?.measure === member.measure ? 0 : member.glyph.parenthesisLeft ?? 0,
+          right: members[index + 1]?.measure === member.measure ? 0 : member.glyph.parenthesisRight ?? 0,
+        })
+        return
+      }
       if (!member.glyph.instrumental) return
       const previous = members[index - 1], next = members[index + 1]
       parentheses.set(member.glyph, {
