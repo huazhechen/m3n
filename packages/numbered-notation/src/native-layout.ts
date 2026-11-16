@@ -1,4 +1,5 @@
 import { nativeArcGeometry } from './native-arc.js'
+import { nativeTupletGeometry } from './native-tuplet.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
@@ -179,20 +180,25 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
   }
   const relationBounds = new Map<NativeSystem, { lane: string; left: number; right: number; top: number }[]>()
+  // Populate peers before measuring any relation; adjacent groups share height.
+  for (const relation of relations) {
+    const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
+    if (first === undefined || last === undefined) continue
+    for (let index = first; index <= last; index++) systems[index]!.relations.push(relation)
+  }
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
     if (first === undefined || last === undefined) continue
     for (let index = first; index <= last; index++) {
       const system = systems[index]!
-      system.relations.push(relation)
       const lane = system.lanes.find(lane => lane.id === relation.first.lane)
       if (lane && relation.kind !== 'inst') {
         const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === lane.id)
         const selected = members.filter(glyph => relation.first.event && relation.last.event && glyph.event && relation.first.event.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event.sourceStart)
-        const height = relation.kind === 'tuplet' ? 19 : 14
         const covered = selected.length ? selected : members
         const top = relation.kind === 'tie' || relation.kind === 'slur' ? nativeArcGeometry(relation, system).top
-          : Math.max(0, ...covered.map(glyph => glyph.top)) + height + relation.level * 3.3 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22
+          : relation.kind === 'tuplet' ? nativeTupletGeometry(relation, system, measurer).top
+          : Math.max(0, ...covered.map(glyph => glyph.top)) + 14 + relation.level * 3.3 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22
         lane.top = Math.max(lane.top, top)
         const bounds = relationBounds.get(system) ?? []
         bounds.push({ lane: lane.id, left: Math.min(...covered.map(glyph => glyph.x)), right: Math.max(...covered.map(glyph => glyph.x)), top })

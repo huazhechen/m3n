@@ -1,5 +1,6 @@
 import { displayedTempo, scoreCreditLines } from '@m3n/notation'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
+import { nativeTupletGeometry } from './native-tuplet.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { nativeHeaderGeometry } from './native-header.js'
 import { nativeBarMetrics, nativeMeasureBars } from './native-horizontal.js'
@@ -212,7 +213,12 @@ class SvgPainter {
       const end = Math.max(x1 + 14, x2), openLeft = relation.kind === 'decres'
       return line(x1, top - (openLeft ? 4 : 0), end, top - (openLeft ? 0 : 4)) + line(x1, top + (openLeft ? 4 : 0), end, top + (openLeft ? 0 : 4))
     }
-    if (relation.kind === 'tuplet') return line(x1 - 5, top, x1 - 5, top - 4) + line(x1 - 5, top - 4, x2 + 5, top - 4) + line(x2 + 5, top - 4, x2 + 5, top) + `<rect${attrs({ x: (x1 + x2) / 2 - 7, y: top - 18, width: 14, height: 18, fill: '#fff' })}/>` + this.text(relation.label!, (x1 + x2) / 2, top - 1, 22 * 0.72, 'M3N Numbers', { 'text-anchor': 'middle' })
+    if (relation.kind === 'tuplet') {
+      const bracket = nativeTupletGeometry(relation, system, this.layout.measurer)
+      return `<g${attrs({ transform: `translate(0 ${n(lane.y)})`, 'data-m3n-relation': 'tuplet' })}>`
+        + bracket.segments.map(([a, b, c, d]) => line(a, b, c, d, bracket.stroke)).join('')
+        + this.text(relation.label!, bracket.center, bracket.baseline, bracket.fontSize, 'serif', { 'text-anchor': 'middle' }) + '</g>'
+    }
     return this.text(relation.label!, x1, top - 3, 12) + line(x1 + 26, top - 5, Math.max(x1 + 26, x2), top - 5, 1, ' stroke-dasharray="4 3"') + line(x2, top - 5, x2, top + 1)
   }
 
