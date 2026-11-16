@@ -1,6 +1,22 @@
 /** One tonic for each chromatic pitch class, matching score rendering. */
 export const TRANSPOSE_KEYS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'] as const
 
+/** Clockwise fifths, with relative minors sharing each key signature. */
+export const CIRCLE_OF_FIFTHS = [
+  ['C', 'Am'], ['G', 'Em'], ['D', 'Bm'], ['A', 'F♯m'],
+  ['E', 'C♯m'], ['B', 'G♯m'], ['F♯', 'D♯m'], ['D♭', 'B♭m'],
+  ['A♭', 'Fm'], ['E♭', 'Cm'], ['B♭', 'Gm'], ['F', 'Dm'],
+] as const
+
+export function isMinorKey(key: string): boolean {
+  return /^[A-G][#b♯♭]?m(?:\d|$)/.test(key)
+}
+
+/** Both rings select a signature; transposition preserves the source mode. */
+export function circleKeyTarget(major: string, originalKey: string): number {
+  return (keyPitchClass(major) + (isMinorKey(originalKey) ? 9 : 0)) % 12
+}
+
 export function keyPitchClass(key: string): number {
   const match = /^([A-G])([#b♯♭]?)/.exec(key)
   if (!match) return 0

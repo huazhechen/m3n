@@ -2,7 +2,8 @@ import { useId, useRef, type ReactNode } from 'react'
 import type { PlaybackTone } from '@m3n/score-renderer/tones'
 import { PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX } from '../lib/renderer-settings'
 
-import { TRANSPOSE_KEYS, currentKeyIndex, nearestKeyTranspose } from '../lib/transpose-key'
+import { CIRCLE_OF_FIFTHS, TRANSPOSE_KEYS, currentKeyIndex, isMinorKey, keyPitchClass, nearestKeyTranspose } from '../lib/transpose-key'
+import { CircleOfFifths } from './CircleOfFifths'
 
 type ScoreControlsProps = {
   playbackOnly?: boolean
@@ -46,6 +47,9 @@ export function ScoreControls(props: ScoreControlsProps) {
   const keyDialogRef = useRef<HTMLDialogElement>(null)
   const keyTitleId = useId()
   const selectedKey = currentKeyIndex(props.originalKey, props.transpose)
+  const selectedKeyLabel = isMinorKey(props.originalKey)
+    ? CIRCLE_OF_FIFTHS.find(([, minor]) => keyPitchClass(minor) === selectedKey)![1]
+    : TRANSPOSE_KEYS[selectedKey]
   const playLabel = props.isPlaying ? '暂停' : '播放'
   return <><div className={props.playbackOnly ? "audio-controls playback-only" : "audio-controls"} role="group" aria-label="乐谱控制">
     <div className="control-sliders">
@@ -88,10 +92,10 @@ export function ScoreControls(props: ScoreControlsProps) {
       <button type="button" role="switch" aria-label="小节号" aria-checked={props.measureNumbers} title="显示小节号" className="control-button" onClick={() => props.onMeasureNumbersChange(!props.measureNumbers)}>
           <Icon><path d="M4 4v16M20 4v16M4 8h16M4 16h16M10 10h2v4m-2 0h4" /></Icon><span>小节号</span>
         </button>
-      <button type="button" className="control-button transpose-key-button" aria-label={`移调，当前${TRANSPOSE_KEYS[selectedKey]}调`} aria-haspopup="dialog" title="选择调性" disabled={props.isLoading} onClick={() => {
+      <button type="button" className="control-button transpose-key-button" aria-label={`移调，当前${selectedKeyLabel}调`} aria-haspopup="dialog" title="选择调性" disabled={props.isLoading} onClick={() => {
         keyDialogRef.current?.showModal()
-        keyDialogRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus()
-      }}>{TRANSPOSE_KEYS[selectedKey]}</button>
+        keyDialogRef.current?.querySelector<SVGElement>('[aria-pressed="true"]')?.focus()
+      }}>{selectedKeyLabel}</button>
     </div>}
     {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || '正在下载钢琴音色…'}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
   </div>
@@ -102,10 +106,11 @@ export function ScoreControls(props: ScoreControlsProps) {
       }
     }}>
       <div className="transpose-dialog-header"><h2 id={keyTitleId}>选择调性</h2><button type="button" className="control-button" aria-label="关闭调性选择" onClick={() => keyDialogRef.current?.close()}>×</button></div>
-      <div className="transpose-key-grid">{TRANSPOSE_KEYS.map((key, index) => <button type="button" key={key} className="control-button" aria-pressed={index === selectedKey} disabled={props.isLoading} onClick={() => {
-        props.onTransposeChange(nearestKeyTranspose(props.originalKey, index))
+      <CircleOfFifths originalKey={props.originalKey} selectedKey={selectedKey} disabled={props.isLoading} onSelect={target => {
+        props.onTransposeChange(nearestKeyTranspose(props.originalKey, target))
         keyDialogRef.current?.close()
-      }}>{key}</button>)}</div>
+      }} />
+      <p className="transpose-dialog-hint">同一扇区为关系大小调，移调保留原曲调式。</p>
     </dialog>}
   </>
 }

@@ -1,7 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { currentKeyIndex, keyPitchClass, nearestKeyTranspose, TRANSPOSE_KEYS } from './transpose-key'
+import { CIRCLE_OF_FIFTHS, circleKeyTarget, currentKeyIndex, isMinorKey, keyPitchClass, nearestKeyTranspose, TRANSPOSE_KEYS } from './transpose-key'
 
 describe('key selection', () => {
+  it('pairs relative keys in fifths and preserves the original mode for either ring', () => {
+    for (const [index, [major, minor]] of CIRCLE_OF_FIFTHS.entries()) {
+      expect(keyPitchClass(major)).toBe(index * 7 % 12)
+      expect(keyPitchClass(minor)).toBe((keyPitchClass(major) + 9) % 12)
+      for (const original of ['D', 'Am', 'F#m', 'Bbm']) {
+        const target = circleKeyTarget(major, original)
+        const shift = nearestKeyTranspose(original, target)
+        expect(currentKeyIndex(original, shift)).toBe(keyPitchClass(isMinorKey(original) ? minor : major))
+      }
+    }
+    expect(isMinorKey('Am')).toBe(true)
+    expect(isMinorKey('F♯m')).toBe(true)
+    expect(isMinorKey('Cmix')).toBe(false)
+    expect(isMinorKey('Ddor')).toBe(false)
+  })
   it('chooses the shortest shift for all 144 original and target keys', () => {
     for (const original of TRANSPOSE_KEYS) for (let target = 0; target < 12; target++) {
       const shift = nearestKeyTranspose(original, target)
