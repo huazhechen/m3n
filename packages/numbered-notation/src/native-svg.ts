@@ -1,7 +1,7 @@
 import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { nativeLyricSvg } from './native-lyrics.js'
-import { NativeMusicPainter, nativeBeamSvg } from './native-music.js'
+import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { attrs, n } from './native-symbols.js'
 import { NUMBER_FONT_CSS } from './font-data.js'
@@ -11,8 +11,8 @@ import type { NativeGlyph, NativeMeasure } from './native-model.js'
 class SvgPainter extends NativeMusicPainter {
   constructor(private readonly layout: NativeLayout) { super(layout.measurer) }
 
-  glyph(glyph: NativeGlyph, system: NativeSystem, lane: NativeLane): string {
-    const music = this.music(glyph), role = glyph.sustain ? 'sustain' : undefined
+  glyph(glyph: NativeGlyph, system: NativeSystem, lane: NativeLane, claimedBeams?: ReadonlySet<number>): string {
+    const music = this.music(glyph, claimedBeams), role = glyph.sustain ? 'sustain' : undefined
     const group = `<g${attrs({ class: 'note', id: glyph.id, 'data-m3n-id': glyph.xmlId, 'data-m3n-role': role, 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId, 'data-m3n-passes': glyph.passes?.join('-') })}>${music}</g>`
     const annotations: string[] = []
     for (const annotation of glyph.annotationLayout ?? []) {
@@ -37,7 +37,9 @@ class SvgPainter extends NativeMusicPainter {
     for (const lane of system.lanes) {
       const members = glyphs.filter(glyph => glyph.lane === lane.id)
       if (!members.length) continue
-      let laneContent = members.map(glyph => this.glyph(glyph, system, lane)).join('')
+      const beams = nativeBeamLayout(members, this.layout.measurer)
+      let laneContent = members.map(glyph => this.glyph(glyph, system, lane, beams.claimed.get(glyph))).join('')
+      if (beams.svg) laneContent += `<g data-m3n-role="beam">${beams.svg}</g>`
       for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) laneContent += nativeBarSvg(bar.kind, bar.x, lane.y, this.layout.measurer)
       content += `<g${attrs({ 'data-m3n-lane': lane.id })}>${laneContent}</g>`
     }
@@ -46,15 +48,6 @@ class SvgPainter extends NativeMusicPainter {
 
   system(system: NativeSystem): string {
     let svg = system.measures.map(measure => this.measure(measure, system)).join('')
-    // Join short-note underlines according to the active meter's beat grid.
-    for (const measure of system.measures) for (const lane of system.lanes) {
-      const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id)
-      for (let index = 1; index < glyphs.length; index++) {
-        const a = glyphs[index - 1]!, b = glyphs[index]!
-        const beam = nativeBeamSvg(a, b, this.layout.measurer)
-        if (beam) svg += `<g${attrs({ 'data-m3n-lane': lane.id, 'data-m3n-role': 'beam' })}>${beam}</g>`
-      }
-    }
     for (const relation of system.relations) svg += `<g${attrs({ 'data-m3n-lane': relation.first.lane, 'data-m3n-relation': relation.kind, transform: `translate(0 ${n(system.lanes.find(lane => lane.id === relation.first.lane)!.y)})` })}>${system.relationLayout?.get(relation)?.svg ?? ''}</g>`
     for (const volta of system.voltas ?? []) {
       const lane = system.lanes.find(lane => lane.id === 'melody')!

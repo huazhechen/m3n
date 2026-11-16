@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { NativeSymbols } from './native-symbols.js'
-import { NativeMusicPainter, nativeBeamSvg } from './native-music.js'
+import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
 import { nativeSvgInk } from './native-ink.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { layoutNativeScore } from './native-layout.js'
@@ -43,7 +43,7 @@ describe('note decorations clear measured font edges', () => {
         const ink = nativeSvgInk(svg.documentElement.innerHTML, measurer)
         expect(metrics.top).toBeCloseTo(-ink.top, 4)
         expect(metrics.bottom).toBeCloseTo(ink.bottom, 4)
-        const join = root(nativeBeamSvg(a, { ...a, x: 40, time: beats }, measurer))
+        const join = root(nativeBeamLayout([a, { ...a, x: 40, time: beats }], measurer).svg)
         expect([...join.querySelectorAll('line')].map(l => l.getAttribute('y1'))).toEqual(beams.map(l => l.getAttribute('y1')))
       }
       const dotted = root(painter.body({ ...glyph, pitches: [pitch], writtenBeats: 1.5 }))

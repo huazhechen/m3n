@@ -10,11 +10,29 @@ import { nativeMarkStack } from './native-marks.js'
 import { nativeNoteMetrics, nativeBeamCount } from './native-note-metrics.js'
 import type { NativeGlyph } from './native-model.js'
 
-export function nativeBeamSvg(a: NativeGlyph, b: NativeGlyph, measurer: TextMeasurer): string {
-  let svg = ''
+/** Claim complete continuous runs one level at a time. Call with one lane in
+ * one measure/system; the beat predicate remains shared with spacing. Local
+ * note footprints stay valid subsets of these runs for relation clearance. */
+export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextMeasurer) {
+  const claimed = new Map<NativeGlyph, Set<number>>()
+  const counts = glyphs.slice(1).map((glyph, i) => nativeBeamCount(glyphs[i]!, glyph))
   const body = nativeNoteBody(measurer)
-  for (let beam = 0; beam < nativeBeamCount(a, b); beam++) svg += line(a.x + em(5.577), a.y + body.beamY(beam), b.x - em(5.577), b.y + body.beamY(beam), body.beamStroke)
-  return svg
+  let svg = ''
+  for (let level = 0; level < Math.max(0, ...counts); level++) {
+    for (let i = 0; i < counts.length; i++) {
+      if (counts[i]! <= level) continue
+      const first = i
+      while (i + 1 < counts.length && counts[i + 1]! > level) i++
+      const a = glyphs[first]!, b = glyphs[i + 1]!
+      svg += line(a.x - body.width / 2, a.y + body.beamY(level), b.x + body.width / 2, a.y + body.beamY(level), body.beamStroke)
+      for (let member = first; member <= i + 1; member++) {
+        const glyph = glyphs[member]!, levels = claimed.get(glyph) ?? new Set<number>()
+        levels.add(level)
+        claimed.set(glyph, levels)
+      }
+    }
+  }
+  return { svg, claimed }
 }
 
 export class NativeMusicPainter extends NativeSymbols {
@@ -29,7 +47,7 @@ export class NativeMusicPainter extends NativeSymbols {
     return markStack.map(mark => `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`).join('')
   }
 
-  music(glyph: NativeGlyph): string {
+  music(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>): string {
     if (glyph.multiRest) {
       const size = nativeStyle.music, text = String(glyph.multiRest)
       const metrics = this.measurer.measureText(text, { fontSize: size, fontFamily: 'M3N Numbers' })
@@ -41,7 +59,7 @@ export class NativeMusicPainter extends NativeSymbols {
         + line(right - stroke / 2, axis - halfCap, right - stroke / 2, axis + halfCap, stroke)
         + this.text(text, left + width / 2, axis - metrics.h - size * 0.175 + metrics.baseline, size, 'M3N Numbers', { 'text-anchor': 'middle' }) + '</g>'
     }
-    let music = this.body(glyph)
+    let music = this.body(glyph, claimedBeams)
     if (glyph.graces.length) {
       const grace = glyph.graceLayout ?? nativeGraceGeometry(glyph.graces, glyph.musicLeft ?? glyph.left, this.measurer)
       music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y)})` })}>${grace.svg}</g>`
@@ -55,7 +73,7 @@ export class NativeMusicPainter extends NativeSymbols {
   }
 
   /** Main music only, before grace notes, ornaments and arpeggio. */
-  body(glyph: NativeGlyph): string {
+  body(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>): string {
     let music = ''
     if (glyph.sustain) music += this.sustain(glyph.x, glyph.y)
     else {
@@ -66,7 +84,7 @@ export class NativeMusicPainter extends NativeSymbols {
       const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
       for (let index = 0; index < dots; index++) music += circle(glyph.x + body.width / 2 + em(4.29) + index * em(5.94), glyph.y + body.dotY, em(1.65))
       const beams = Math.max(0, Math.round(-Math.log2(base)))
-      for (let index = 0; index < beams; index++) music += line(glyph.x - em(6), glyph.y + body.beamY(index), glyph.x + em(7), glyph.y + body.beamY(index), body.beamStroke)
+      for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) music += line(glyph.x - body.width / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2, glyph.y + body.beamY(index), body.beamStroke)
     }
     return music
   }

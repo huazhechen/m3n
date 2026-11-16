@@ -1,7 +1,7 @@
 import type { NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeSvgPieces, translateNativeInk, type NativeInk } from './native-ink.js'
-import { NativeMusicPainter, nativeBeamSvg } from './native-music.js'
+import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
 import { nativeLyricSvg } from './native-lyrics.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
@@ -16,9 +16,10 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer): 
     const pieces: NativeInk[] = []
     const add = (svg: string) => pieces.push(...nativeSvgPieces(svg, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top))
     for (const [index, measure] of system.measures.entries()) {
-      const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id)
+      const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id).map(glyph => ({ ...glyph, y: 0 }))
+      const beams = nativeBeamLayout(glyphs, measurer)
       for (const glyph of glyphs) {
-        add(painter.music({ ...glyph, y: 0 }))
+        add(painter.music(glyph, beams.claimed.get(glyph)))
         for (const control of glyph.controls) add(painter.control(control, control.x!, 0))
         for (const annotation of glyph.annotationLayout ?? []) add(nativeAnnotationSvg(annotation, 0, painter))
         for (const [row, baseline] of glyph.lyricBaselines ?? []) {
@@ -26,7 +27,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer): 
           if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) add(nativeLyricSvg(glyph, row, baseline, system.index, measurer))
         }
       }
-      for (let i = 1; i < glyphs.length; i++) add(nativeBeamSvg({ ...glyphs[i - 1]!, y: 0 }, { ...glyphs[i]!, y: 0 }, measurer))
+      add(beams.svg)
       for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) add(nativeBarSvg(bar.kind, bar.x, 0, measurer))
     }
     for (const relation of system.relations.filter(relation => relation.first.lane === lane.id)) add(system.relationLayout!.get(relation)!.svg)

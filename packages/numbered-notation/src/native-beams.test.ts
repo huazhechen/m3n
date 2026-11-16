@@ -1,0 +1,91 @@
+// @vitest-environment jsdom
+import { describe, expect, it } from 'vitest'
+import { compileScore, RecordingPainter, paintLayout } from '@m3n/jpfun'
+import { renderNativePages } from './native-svg.js'
+import { parseM3NDocument } from '@m3n/notation'
+import { layoutNativeScore } from './native-layout.js'
+import { nativeBeamLayout, NativeMusicPainter } from './native-music.js'
+import type { TextMeasurer } from './native-measure.js'
+
+const root = (svg: string) => new DOMParser().parseFromString(`<svg>${svg}</svg>`, 'image/svg+xml')
+const measurer: TextMeasurer = { measureText: () => ({ w: 19, h: 16, baseline: 16 }) }
+function glyphs(notes = '(1 (2 3)) 4 5 6', meter = '4/4') {
+  return layoutNativeScore(parseM3NDocument(`{${meter}}\nN: ${notes} |||`), { width: 800, paged: false, textMeasurer: measurer }).projection.glyphs
+}
+
+describe('measured reduction lines', () => {
+  it('centers standalone lines on measured body width', () => {
+    const glyph = { ...glyphs()[0]!, x: 40, y: 0 }
+    const lines = root(new NativeMusicPainter(measurer).body(glyph)).querySelectorAll('line')
+    expect(lines.length).toBe(1)
+    expect(Number(lines[0]!.getAttribute('x1'))).toBe(30.5)
+    expect(Number(lines[0]!.getAttribute('x2'))).toBe(49.5)
+  })
+  it('paints each connected level once and leaves isolated levels local', () => {
+    const notes = glyphs().slice(0, 3).map((g, i) => ({ ...g, x: 40 + i * 50, y: 0 }))
+    const beams = nativeBeamLayout(notes, measurer)
+    const painter = new NativeMusicPainter(measurer)
+    const local = notes.map(g => root(painter.music(g, beams.claimed.get(g))).querySelectorAll('line').length)
+    expect(local).toEqual([0, 0, 0])
+    const lines = [...root(beams.svg).querySelectorAll('line')]
+    expect(lines.map(l => [Number(l.getAttribute('x1')), Number(l.getAttribute('x2'))])).toEqual([[30.5, 149.5], [80.5, 149.5]])
+    const isolated = nativeBeamLayout([notes[1]!], measurer)
+    expect(isolated.svg).toBe('')
+    expect(root(painter.music(notes[1]!, isolated.claimed.get(notes[1]!))).querySelectorAll('line').length).toBe(2)
+  })
+  it('retains an unconnected deeper level and each interactive note identity', () => {
+    const notes = glyphs().slice(0, 3).map((g, i) => ({ ...g, writtenBeats: i === 1 ? .25 : .5, x: i * 50, y: 0 }))
+    const beams = nativeBeamLayout(notes, measurer), painter = new NativeMusicPainter(measurer)
+    expect(root(beams.svg).querySelectorAll('line').length).toBe(1)
+    expect(notes.map(g => root(painter.music(g, beams.claimed.get(g))).querySelectorAll('line').length)).toEqual([0, 1, 0])
+    const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: (1 (2 3)) 4 5 6 |||'), { width: 800, paged: false, textMeasurer: measurer })
+    const svg = root(renderNativePages(layout).join(''))
+    for (const glyph of layout.projection.glyphs) {
+      const groups = [...svg.querySelectorAll('[id]')].filter(group => group.id === glyph.id)
+      expect(groups).toHaveLength(1)
+      expect(groups[0]!.getAttribute('data-m3n-id')).toBe(glyph.xmlId)
+    }
+    expect(svg.querySelectorAll('[data-m3n-role="beam"] line').length).toBe(2)
+  })
+
+  it.each([7, 19, 31])('matches reference body ports with a measured width of %spx', width => {
+    const textMeasurer: TextMeasurer = { measureText: () => ({ w: width, h: 16, baseline: 16 }) }
+    const reference = compileScore('@div(1)', { textMeasurer }), painter = new RecordingPainter()
+    paintLayout(reference.layout, painter)
+    const lines = painter.commands.filter(command => command.kind === 'line')
+    expect(lines).toHaveLength(1)
+    const line = lines[0]!, host = reference.layout.objects[0]!
+    const glyph = { ...glyphs()[0]!, x: 0, y: 0 }
+    const native = root(new NativeMusicPainter(textMeasurer).body(glyph)).querySelector('line')!
+    const anchor = host.box.x + host.box.anchor
+    expect(Number(native.getAttribute('x1'))).toBeCloseTo(line.x1 - anchor, 3)
+    expect(Number(native.getAttribute('x2'))).toBeCloseTo(line.x2 - anchor, 3)
+  })
+
+  it.each([7, 19, 31])('matches every reference segment for mixed levels at %spx', width => {
+    const textMeasurer: TextMeasurer = { measureText: () => ({ w: width, h: 16, baseline: 16 }) }
+    const reference = compileScore('@div({1 @div({2 3})})', { textMeasurer }), recorded = new RecordingPainter()
+    paintLayout(reference.layout, recorded)
+    const hosts = reference.layout.objects.filter(host => !host.T.isZero())
+    expect(hosts).toHaveLength(3)
+    const notes = glyphs().slice(0, 3).map((glyph, i) => ({ ...glyph,
+      x: hosts[i]!.box.x + hosts[i]!.box.anchor, y: hosts[i]!.box.y + 16 }))
+    const beams = nativeBeamLayout(notes, textMeasurer), painter = new NativeMusicPainter(textMeasurer)
+    const svg = root(notes.map(g => painter.body(g, beams.claimed.get(g))).join('') + beams.svg)
+    const actual = [...svg.querySelectorAll('line')].map(line => ['x1', 'y1', 'x2', 'y2', 'stroke-width'].map(key => Number(line.getAttribute(key))))
+    const expected = recorded.commands.filter(command => command.kind === 'line').map(line => [line.x1, line.y1, line.x2, line.y2, line.style?.strokeWidth ?? 1])
+    const order = (a: readonly number[], b: readonly number[]) => a[1]! - b[1]! || a[0]! - b[0]!
+    actual.sort(order)
+    expected.sort(order)
+    expect(actual).toHaveLength(expected.length)
+    actual.forEach((line, i) => line.forEach((value, j) => expect(value).toBeCloseTo(expected[i]![j]!, 3)))
+  })
+
+  it('respects compound beats, rests, continuity and lane-local input', () => {
+    const notes = glyphs('(1 2 0 4 5 6)', '6/8').map((g, i) => ({ ...g, x: i * 40, y: 0 }))
+    expect(root(nativeBeamLayout(notes, measurer).svg).querySelectorAll('line').length).toBe(2)
+    const gap = [notes[0]!, { ...notes[1]!, time: 9 }]
+    expect(nativeBeamLayout(gap, measurer).svg).toBe('')
+    expect(nativeBeamLayout([], measurer).svg).toBe('')
+  })
+})

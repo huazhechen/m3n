@@ -1,5 +1,5 @@
 import { nativeNoteBody } from './native-note-body.js'
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import type { NativePitch } from './native-model.js'
 import { NativeSymbols, line } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
@@ -12,7 +12,7 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
   const beamCount = sustain ? 0 : Math.max(0, Math.round(-Math.log2(base)))
   const bounds = pitches.map((pitch, index) => {
     let svg = sustain ? painter.sustain(0, 0) : painter.pitch(pitch, 0, 0, size, index === 0 ? beamCount : 0)
-    if (index === 0) for (let beam = 0; beam < beamCount; beam++) svg += line(-em(6), body.beamY(beam), em(7), body.beamY(beam), body.beamStroke)
+    if (index === 0) for (let beam = 0; beam < beamCount; beam++) svg += line(-body.width / 2, body.beamY(beam), body.width / 2, body.beamY(beam), body.beamStroke)
     const ink = nativeSvgInk(svg, measurer)
     return { top: -ink.top, bottom: ink.bottom }
   })
