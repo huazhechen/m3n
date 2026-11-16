@@ -68,6 +68,16 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions): Horizo
     cell.left += left; cell.right += right; cell.before -= left; cell.after -= right
     if (!item.column) cell.beforeCollision = cell.afterCollision = 64
   }
+  // Bar edges are hard boundaries for both neighbours, including each
+  // voice sharing that boundary. Using the ordinary-note penalty here
+  // distorts compressed systems even when their line breaks agree.
+  for (let index = 1; index < items.length; index++) {
+    const previous = items[index - 1]!, current = items[index]!
+    if ((!previous.column && !previous.prefix) || (!current.column && !current.prefix)) {
+      for (const cell of previous.cells) cell.afterCollision = 64
+      for (const cell of current.cells) cell.beforeCollision = 64
+    }
+  }
   return items
 }
 

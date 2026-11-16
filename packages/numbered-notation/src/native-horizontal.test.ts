@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
@@ -6,7 +7,7 @@ import type { TextMeasurer } from './native-measure.js'
 // Stable reference music metrics, captured from the shipped Barlow font.
 // Ordinary prose is irrelevant to these examples' horizontal music positions.
 const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fontSize === 22 && text === '0' ? 11.154037475585938 : text.length * style.fontSize * 0.58, h: style.fontSize, baseline: style.fontSize * 0.8 } } }
-const layout = (source: string) => layoutNativeScore(parseM3NDocument(source), { width: 800, paged: false, textMeasurer: measurer })
+const layout = (source: string, width = 800) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer })
 
 describe('native spacing compatibility with the frozen jpFun baseline', () => {
   it('matches all four note centres and the flush final bar of an unadorned system', () => {
@@ -35,4 +36,20 @@ describe('native spacing compatibility with the frozen jpFun baseline', () => {
     const lanes = result.systems[0]!.lanes
     expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(97.735, 6)
   })
+  it('keeps a beamed eighth rest in the shared spacing group in 虫儿飞', () => {
+    const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'))
+    const rest = result.projection.glyphs.find(glyph => glyph.id === 'm3n-e-44')!
+    const next = result.projection.glyphs.find(glyph => glyph.id === 'm3n-e-45')!
+    expect(rest.x).toBeCloseTo(727.56542, 1)
+    expect(next.x).toBeCloseTo(744.89338, 1)
+  })
+
+  it('uses the cross-system tie height without adding 1.1px to each successive row', () => {
+    const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600)
+    const axes = result.systems.map(system => system.lanes[0]!.y)
+    expect(axes).toHaveLength(4)
+    for (const [index, gap] of [60.40926, 58.64932, 51.49935].entries()) expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1)
+    expect(result.pages[0]!.height).toBeCloseTo(363.02, 1)
+  })
+
 })

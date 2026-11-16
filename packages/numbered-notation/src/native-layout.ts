@@ -181,7 +181,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
         const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === lane.id)
         const selected = members.filter(glyph => relation.first.event && relation.last.event && glyph.event && relation.first.event.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event.sourceStart)
         const ratio = Math.min(1, Math.abs(relation.last.x - relation.first.x) / 55)
-        const height = relation.kind === 'tie' || relation.kind === 'slur' ? 11 * ratio * (2 - ratio) : relation.kind === 'tuplet' ? 19 : 14
+        const height = relation.kind === 'tie' || relation.kind === 'slur' ? first !== last ? 9.9 : 11 * ratio * (2 - ratio) : relation.kind === 'tuplet' ? 19 : 14
         lane.top = Math.max(lane.top, Math.max(0, ...(selected.length ? selected : members).map(glyph => glyph.top)) + height + relation.level * 3.3 + Math.max(...members.map(glyph => glyph.annotations.length)) * 22)
       }
     }

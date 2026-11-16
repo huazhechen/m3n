@@ -18,7 +18,7 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
 }
 
 export function nativeBeamCount(a: import('./native-model.js').NativeGlyph, b: import('./native-model.js').NativeGlyph) {
-  if (a.sustain || b.sustain || a.pitches[0]?.degree === '0' || b.pitches[0]?.degree === '0') return 0
+  if (a.sustain || b.sustain) return 0
   if (Math.abs(a.time + a.beats - b.time) > 1e-7) return 0
   const unit = a.event?.meterUnit ?? 4, count = a.event?.meterCount ?? 4
   const group = 4 / unit * (unit >= 8 && count % 3 === 0 ? 3 : 1)
