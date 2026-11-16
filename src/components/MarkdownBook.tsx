@@ -61,7 +61,7 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
       if (width <= 0) return
       // Native notes are 22 units high; solve for the shared layout width
       // before fitting every score to the document column.
-      const fontSize = Math.min(window.innerWidth / 24, 24)
+      const fontSize = Math.min(window.innerWidth / 32, 24)
       setScoreWidth(Math.max(320, Math.round(width * 22 / fontSize)))
     })
     observer.observe(article)
