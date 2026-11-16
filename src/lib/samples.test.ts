@@ -152,7 +152,7 @@ describe('bundled score corpus', () => {
     for(const index of [34,35,36,37,38,39]) {
       expect(measures[index]!.events[0]!.kind).toBe('rest')
       expect(measures[index]!.events.at(-1)!.kind).toBe('rest')
-      expect(measures[index]!.events[0]!.beats).toBe(1)
+      expect(measures[index]!.events.map(event => event.beats)).toEqual([...Array(8).fill(0.25), 1, 1])
       expect(measures[index]!.events.at(-1)!.beats).toBe(1)
     }
     for(const [index,pitch] of [[49,'6e'],[50,'5e'],[51,'4e'],[52,'3e']] as const) {
