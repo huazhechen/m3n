@@ -1,4 +1,5 @@
 import { displayedTempo, scoreCreditLines } from '@m3n/notation'
+import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { nativeHeaderGeometry } from './native-header.js'
 import { nativeBarMetrics } from './native-horizontal.js'
@@ -189,7 +190,6 @@ class SvgPainter {
     const firstHere = members.includes(relation.first), lastHere = members.includes(relation.last)
     const x1 = firstHere ? relation.first.x : system.measures[0]!.start + 4
     const x2 = lastHere ? relation.last.x : system.measures.at(-1)!.end - 5
-    const width = Math.max(12, x2 - x1)
     const top = Math.min(...members.map(glyph => glyph.y - glyph.top)) - 6 - relation.level * 14
     if (relation.kind === 'inst') {
       const selected = members.filter(glyph => glyph.event && relation.first.event!.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event!.sourceStart)
@@ -198,8 +198,8 @@ class SvgPainter {
       return this.text('(', first.x - first.left - 6, lane.y, 22, 'M3N Numbers') + this.text(')', last.x + last.right + 2, lane.y, 22, 'M3N Numbers')
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
-      const rise = Math.min(12, Math.max(5, width * 0.08)), y = top
-      return path(`M${n(x1)} ${n(y)} C${n(x1 + width / 3)} ${n(y - rise)} ${n(x2 - width / 3)} ${n(y - rise)} ${n(x2)} ${n(y)} C${n(x2 - width / 3)} ${n(y - rise - 2)} ${n(x1 + width / 3)} ${n(y - rise - 2)} ${n(x1)} ${n(y)} Z`, '#000', ` data-m3n-relation="${relation.kind}"`)
+      const arc = nativeArcGeometry(relation, system)
+      return `<path${attrs({ d: nativeArcPath(arc), fill: '#000', transform: `translate(0 ${n(lane.y)})`, 'data-m3n-relation': relation.kind })}/>`
     }
     if (relation.kind === 'cresc' || relation.kind === 'decres') {
       const end = Math.max(x1 + 14, x2), openLeft = relation.kind === 'decres'
