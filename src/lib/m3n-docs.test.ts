@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import home from '../../docs/HOME.md?raw'
 import guide from '../../docs/GUIDE.md?raw'
 import manual from '../../docs/MANUAL.md?raw'
+import homeExample from '../../docs/examples/home.m3n?raw'
 import { m3nToMei, validateM3NDiagnostics } from '@m3n/notation'
 import { documentSections } from './docs-navigation'
 
@@ -10,6 +11,11 @@ function m3nExamples(markdown: string) {
 }
 
 describe('documented M3N examples', () => {
+  it('validates the example used by the home page', () => {
+    expect(validateM3NDiagnostics(homeExample)).toEqual([])
+    expect(m3nToMei(homeExample).diagnostics).toEqual([])
+  })
+
   for (const [name, markdown] of [
     ['HOME', home],
     ['MANUAL', manual],

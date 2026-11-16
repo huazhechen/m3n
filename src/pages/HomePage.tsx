@@ -1,6 +1,7 @@
 import { NotationEditor } from '../components/NotationEditor'
 import { Link } from 'react-router-dom'
 import { TopNav } from '../components/TopNav'
+import homeExample from '../../docs/examples/home.m3n?raw'
 
 export function HomePage() {
   return (
@@ -42,7 +43,7 @@ export function HomePage() {
       </section>
       <section className="home-sample" aria-label="可试听谱例">
         <div className="pane-toolbar"><h2>从一段旋律开始</h2></div>
-        <NotationEditor embedded initialSource={'{title=欢乐颂片段}{4/4}{108qpm}\nN: 3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 3. 2_ 2 - |||'} />
+        <NotationEditor embedded initialSource={homeExample} />
       </section>
     </main>
   )
