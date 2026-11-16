@@ -7,6 +7,7 @@ import type { NativePitch, NativeControl } from './native-model.js'
 import { nativeKeyGeometry } from './native-key.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
 import { nativeOrnamentSvg } from './native-ornaments.js'
+import { nativeTempoGeometry, type NativeTempoGeometry } from './native-tempo.js'
 
 export const xml = (value: string | number) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 export const n = (value: number) => Number(value.toFixed(4))
@@ -45,11 +46,11 @@ export class NativeSymbols {
     return svg
   }
 
-  tempo(text: string, x: number, y: number): string {
-    const eighth = text.startsWith('♪'), value = text.replace(/^[♪♩]\s*/, '')
-    let svg = `<ellipse${attrs({ cx: x + em(4), cy: y - em(4), rx: em(4), ry: em(2.6), fill: '#000' })}/>` + line(x + em(7), y - em(5), x + em(7), y - em(21), nativeStyle.symbolStroke)
-    if (eighth) svg += path(`M${n(x + em(7))} ${n(y - em(21))} ${nativeDesignPath('q10 4 5 11 q2 -6 -5 -7')}`, '#000')
-    return svg + this.text(value, x + em(20), y, nativeStyle.text, 'M3N Numbers')
+  tempo(text: string, x: number, y: number, prepared?: NativeTempoGeometry): string {
+    const geometry = prepared ?? nativeTempoGeometry(text, this.measurer)
+    return `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'tempo', 'data-m3n-tempo-unit': geometry.unit })}>`
+      + `<path${attrs({ d: geometry.path, fill: '#000' })}/>`
+      + this.text(geometry.text, geometry.textX, geometry.baseline, nativeStyle.text, 'M3N Numbers') + '</g>'
   }
 
   segno(x: number, y: number): string {
@@ -71,7 +72,7 @@ export class NativeSymbols {
       const text = this.measurer.measureText(control.text, {fontSize:nativeStyle.small,fontFamily:'serif'})
       return this.text(control.text, x, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.small, 'serif', {'data-m3n-role':'alternative-passes'})
     }
-    if (control.kind === 'tempo') return this.tempo(control.text, x, y - em(2))
+    if (control.kind === 'tempo') return this.tempo(control.text, x, y, control.tempoGeometry)
     if (control.kind === 'segno') return this.segno(x, y)
     if (control.kind === 'meter') {
       const meter = control.meterGeometry ?? nativeMeterGeometry(control.text, this.measurer)

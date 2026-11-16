@@ -3,7 +3,8 @@ import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import { nativeLyricInk } from './native-lyrics.js'
-import { measureNativeControl } from './native-controls.js'
+import { measureNativeControl, measureNativeTempo } from './native-controls.js'
+import type { NativeTempoGeometry } from './native-tempo.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeSvgInk } from './native-ink.js'
 import { resolveScorePitches, displayedTempo, sectionEntryKey, sectionKeyVisits, sectionVisitKey, measurePlaybackPasses, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
@@ -19,7 +20,7 @@ import { fixedDoPitch, fixedDoGrace, transposedNumberedKeyLabel } from './fixed-
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
-export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno' | 'passes'; text: string; keyRows?: NativeKeyRow[]; meterGeometry?: NativeMeterGeometry; width: number; anchor: number; top: number; bottom: number; x?: number }
+export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno' | 'passes'; text: string; keyRows?: NativeKeyRow[]; meterGeometry?: NativeMeterGeometry; tempoGeometry?: NativeTempoGeometry; width: number; anchor: number; top: number; bottom: number; x?: number }
 export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
@@ -85,7 +86,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         if (meter !== state.meter) { control('meter', meter); state.meter = meter }
         if (settings.tempo !== undefined && settings.tempo !== state.tempo) {
           const tempo = displayedTempo(settings.tempo * (options.tempoScale ?? 1), settings.meterCount ?? document.meterCount, settings.meterUnit ?? document.meterUnit)
-          control('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`); state.tempo = settings.tempo
+          controls.push(measureNativeTempo(tempo, options.textMeasurer)); state.tempo = settings.tempo
         }
         return controls
       }

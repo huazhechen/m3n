@@ -112,7 +112,7 @@ class TempoTemporalNode extends TemporalNodeBase {
         this.glyphY = this.textBaselineY - glyph.h;
 
         this.box.w = this.textX + metrics.w;
-        this.box.h = textTop + metrics.h;
+        this.box.h = Math.max(textTop + metrics.h, this.glyphY + glyph.inkBottom);
         this.box.anchor = glyph.stemCenterX;
         // Tempo 与同轨文字按等号所在的文字行对齐；符干只向上扩展占用，不参与对齐轴。
         this.box.visualAxis = textTop + metrics.h / 2;

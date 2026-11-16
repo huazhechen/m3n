@@ -2,7 +2,7 @@ import { numberedHeaderContent } from './header-content.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import { NativeSymbols, attrs, n } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
-import { measureNativeControl } from './native-controls.js'
+import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import { nativeDisplayPitch } from './native-model.js'
 import { numberedPitchRange } from './pitch-range.js'
 import { transposedNumberedKeyLabel } from './fixed-do.js'
@@ -59,7 +59,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const signatures = [measureNativeControl('key', options.fixedDo ? '1=C' : transposedNumberedKeyLabel(document.key,options.transpose), measurer), measureNativeControl('meter', `${document.meterCount}/${document.meterUnit}`, measurer)]
   if (document.hasExplicitTempo) {
     const tempo = displayedTempo(document.tempo * (options.tempoScale ?? 1), document.meterCount, document.meterUnit)
-    signatures.push(measureNativeControl('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`, measurer))
+    signatures.push(measureNativeTempo(tempo, measurer))
   }
   let signatureX = margin
   const signaturePieces = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw })
