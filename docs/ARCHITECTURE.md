@@ -61,7 +61,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
 - `packages/notation/src/notation/section-order.ts`：校验显式乐段顺序；ScoreDocument 保存分段范围与局部访问次数，MEI expansion、歌词映射和两种谱面共用该模型。
 - `packages/score-renderer/src/playback-score.ts`：仅提供 MIDI 生成和时间映射，按播放操作动态加载。
-- `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放与 zPiano-SF3 音色加载。
+- `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放与 FluidR3 钢琴 SF3 音色加载。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `lib/render-score.ts`：屏幕、打印预览和最终导出的统一排版入口，负责引擎选择、串行调度、取消、分页和 SVG 后处理。
 - `components/ScoreRenderer.tsx`：独立管理布局、播放和光标生命周期；改变版宽或谱式不销毁播放器，更新音乐文档时释放旧播放资源。
@@ -82,6 +82,10 @@ web app -> @m3n/score-renderer -> @m3n/notation
 默认部署在 `/`；设置 `VITE_BASE_URL=/score/ npm run build` 可部署到子路径。React Router 的 `basename`、站点图标、导出字体和分享 API 均使用同一构建基路径，Vite 负责处理模块、WASM 和音源 URL。宿主应对该前缀下的页面路由返回 `index.html`，并把 `/score/api/*` 转给现有 Worker（转交前去掉 `/score` 前缀）；存储继续实现 `M3N_SCORES` 的 KV 接口。
 
 钢琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，播放器通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-Piano-*.sf3`。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
+
+该音源只保留 GM Program 0 的 Yamaha Grand Piano。精简版将原来的 40 个左右声道采样合成为 20 个单声道采样，以 Ogg Vorbis quality 1 编码；保留原始 32 kHz 采样率、音区、力度映射和延音循环。文件由 1,365,672 字节降至约 357 KB，代价是立体声空间感和部分编码细节，单声道合成后的响度也可能略低。播放器入口与缓存策略不变。
+
+重建命令为 `npx tsx tools/build-fluidr3-piano-sf3.ts <原始钢琴.sf3或完整FluidR3_GM.sf2> [输出路径]`，默认输出到上述 vendor 文件；输入与输出必须分开保存。编码环境需要 Python 3 与支持 Vorbis 的系统 libsndfile（`tools/encode-vorbis.py`），或通过 `FFMPEG_PATH` 指定支持 libvorbis 的 FFmpeg。脚本不再依赖 `.tmp/SpessaSynth` 源码；写入前会重新解码全部采样并校验循环边界。使用完整 SF2 时可先执行 `npm run download:fluidr3` 获取源文件；不同 Vorbis 编码库版本的产物大小可能略有差异。
 
 生产渲染资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。Verovio 使用固定 6.2.0 版本的本地精简构建，保留的字体资源嵌入独立 WASM，JavaScript 通过模块相对 URL 加载它；npm 包仅提供同版本 toolkit 包装器。默认和回退音乐字体都固定为完整 Leipzig；Bravura 只保留初始化需要的符号名称与度量 XML，移除未使用的字形和 CSS。构建脚本还裁掉未使用的输入格式，源码、许可证、裁剪清单和重建方法见 [Verovio 构建说明](VEROVIO_BUILD.md)。jpFun 与数字字体也由本地构建提供。Cloudflare 的 `ASSETS` 绑定负责提供 `dist`，浏览器只请求本站 `/assets/*`；音源与 AudioWorklet 同样来自本站。文档中的参考链接和 SVG 的命名空间不是资源加载路径。
 
