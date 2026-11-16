@@ -129,8 +129,8 @@ flowchart LR
   renderService --> screen
   renderService --> exporter
   numberedSvg --> vector["standalone vector SVG"]
-  mei["MEI XML"] --> verovio["PlaybackScore"]
-  verovio --> midi["MIDI + time map"]
+  document --> performance["compileScorePerformance / PlaybackScore"]
+  performance --> midi["MIDI + time map"]
   midi --> player["SpessaPlayer"]
   soundfont["FluidR3 GM Piano SF3"] --> player
   coordinator["PlaybackCoordinator"] --> player
@@ -142,7 +142,7 @@ flowchart LR
   outlines --> vector
 ```
 
-简谱由独立加载的 jpFun 渲染，事件身份与 MEI 共享 `scoreEventIds`；只有播放时才需要 Verovio。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
+简谱由独立加载的 jpFun 渲染，事件身份与 MEI 共享 `scoreEventIds`；播放使用项目内演奏编译器，不依赖 MEI 或 Verovio。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
 
 `lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，宽度切换保留播放状态。
 

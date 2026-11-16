@@ -1,10 +1,12 @@
+> 历史参考：Verovio 已从运行时、依赖和构建中移除。当前实现见 [NATIVE_ENGINES.md](NATIVE_ENGINES.md)。下文版本及集成说明仅供历史查询。
+
 # Verovio 本地参考手册
 
-> 适用版本：`verovio@6.2.0`（本仓库已安装版本）  
-> 更新日期：2026-08-01  
+> 适用版本：`verovio@6.2.0`（迁移前使用的版本）
+> 更新日期：2026-08-01
 > 用途：供开发 Agent 离线查阅 Verovio 的范围、MEI 正式写法、WASM API 与排版规范。
 
-本文记录上游完整 API，供 MEI 与 MIDI 后端维护参考；M3N 已删除五线谱显示与导出，不提供下文的上游雕版 API。M3N 生产环境使用同版本的精简 WASM，只输入 MEI；实际保留功能、字体与重建步骤见 [Verovio 精简构建](VEROVIO_BUILD.md)。下面的 npm 导入示例用于上游 API 参考，应用与 renderer 测试通过 `packages/score-renderer/vendor/verovio/verovio-module.mjs` 加载精简模块。
+本文保留原上游 API 作为历史参考。当前播放已使用自研演奏编译器、MIDI 写入和时间映射；不安装 Verovio，不发布或加载其 WASM。下文集成示例不适用于当前应用。
 
 ## 快速定位
 

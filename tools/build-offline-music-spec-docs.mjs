@@ -10,31 +10,6 @@ const snapshotDate = new Date().toISOString().slice(0, 10)
 
 const sources = [
   {
-    name: 'Verovio Reference Book',
-    version: '6.2',
-    seeds: ['https://book.verovio.org/'],
-    output: resolve(root, 'docs/VEROVIO_AGENT_REFERENCE.md'),
-    minimumPages: 40,
-    accepts: (url) => url.origin === 'https://book.verovio.org'
-      && !url.pathname.startsWith('/assets/')
-      && !url.pathname.startsWith('/images/')
-      && url.pathname !== '/search.html'
-      && (url.pathname === '/' || url.pathname.endsWith('/') || url.pathname.endsWith('.html')),
-    extract: extractVerovioContent,
-    group: verovioGroup,
-    searchTerms: [
-      'VerovioToolkit', 'loadData', 'setOptions', 'renderToSVG', 'renderToMIDI',
-      'renderToTimemap', 'getElementsAtTime', 'getTimeForElement', 'getMEI',
-      'MEI supported elements', 'Toolkit methods', 'Toolkit options',
-    ],
-    scope: [
-      'Installation and JavaScript/WebAssembly integration',
-      'Rendering, layout, SVG interaction, MIDI, timemaps, selection, editing, and transposition',
-      'Every documented input/output format, Toolkit method, Toolkit option, and MEI support table',
-      'Tutorials, advanced topics, troubleshooting, licensing, and contributor material',
-    ],
-  },
-  {
     name: 'MEI Guidelines',
     version: '5.1',
     seeds: [
@@ -93,15 +68,6 @@ function pageTitle(html, fallback) {
   const heading = /<h[12][^>]*>([\s\S]*?)<\/h[12]>/i.exec(html)?.[1]
   const title = heading ?? /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1]
   return cleanInline(title ?? fallback)
-}
-
-function extractVerovioContent(html) {
-  const marker = '<div class="col-md-9" id="content">'
-  const start = html.indexOf(marker)
-  if (start < 0) return extractBody(html)
-  const footer = html.indexOf('<footer', start)
-  return html.slice(start + marker.length, footer < 0 ? html.length : footer)
-    .replace(/<a\b[^>]*class=["'][^"']*hidden-print[^"']*["'][^>]*>[\s\S]*?<\/a>/gi, '')
 }
 
 function extractMeiContent(html) {
@@ -257,19 +223,6 @@ function markdownTitle(value) {
 
 function slug(value) {
   return value.toLowerCase().replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-}
-
-function verovioGroup(url) {
-  const path = new URL(url).pathname
-  if (path === '/') return 'Overview'
-  if (path.startsWith('/first-steps/')) return 'Tutorial: First Steps'
-  if (path.startsWith('/interactive-notation/')) return 'Tutorial: Interactive Notation'
-  if (path.startsWith('/advanced-topics/')) return 'Advanced Topics'
-  if (path.startsWith('/toolkit-reference/')) return 'Toolkit Reference'
-  if (path.startsWith('/installing-or-building-from-sources/')) return 'Installation and Bindings'
-  if (path.startsWith('/contributing/')) return 'Contributing'
-  if (path.startsWith('/tutorials/')) return 'Runnable Tutorials'
-  return 'Other Official Pages'
 }
 
 function meiGroup(url) {

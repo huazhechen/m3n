@@ -1,6 +1,6 @@
 # @m3n/score-renderer
 
-M3N 的简谱页面、SpessaSynth 播放、导出和多实例调度。只提供简谱显示；Verovio 仅作为按需加载的 MIDI 与时间映射后端。
+M3N 的简谱页面、SpessaSynth 播放、导出和多实例调度。只提供简谱显示；项目内演奏编译器和 MIDI 写入器作为按需加载的播放与时间映射后端。
 
 ```ts
 import { PlaybackScore } from '@m3n/score-renderer/playback'

@@ -7,7 +7,7 @@ M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器�
 | 目录 | 内容 |
 | --- | --- |
 | `packages/notation` | `@m3n/notation`：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换。 |
-| `packages/score-renderer` | `@m3n/score-renderer`：简谱页面、播放、导出与资源调度；Verovio 仅用于 MIDI 和时间映射。 |
+| `packages/score-renderer` | `@m3n/score-renderer`：简谱页面、播放、导出与资源调度；自研 MIDI 和时间映射。 |
 | `packages/numbered-notation` | `ScoreDocument` 到简谱引擎的语义与交互适配。 |
 | `packages/jpfun` | 固定版本、保留补丁与许可记录的简谱排版核心。 |
 | `src` | React Web 应用、路由、曲库装载及分享服务。 |
@@ -27,7 +27,7 @@ npm run check    # lint、类型检查、单元测试、构建与端到端测试
 npm run deploy   # 构建并部署到 Cloudflare
 ```
 
-编辑器提供语法高亮、补全、可定位诊断和后台分析；手机可切换源码／预览，桌面可调整分栏。阅读按容器宽度排版，打印版宽独立保存。两种谱式都可导出 SVG、PNG 和多页矢量 PDF；中文文字导出为轮廓，首次导出按需下载本站约 16 MB 字体。练习支持选中小节起播、A–B 循环、声部静音与播放跟随。
+编辑器提供语法高亮、补全、可定位诊断和后台分析；手机可切换源码／预览，桌面可调整分栏。阅读按容器宽度排版，打印版宽独立保存。简谱可导出 SVG、PNG 和多页矢量 PDF；中文文字导出为轮廓，首次导出按需下载本站约 16 MB 字体。播放支持进度定位、速度调整、移调与节拍器。
 
 常用脚本：`npm run build`、`npm run test`、`npm run test:e2e`、`npm run lint`、`npm run typecheck:packages`、`npm run check:boundaries`。
 
@@ -42,4 +42,4 @@ npm run deploy   # 构建并部署到 Cloudflare
 ## 文档
 
 - 应用内文档由 `docs/HOME.md`、`docs/GUIDE.md`、`docs/MANUAL.md` 组成，面向 M3N 用户，在 `/docs` 页面展示。
-- 开发内部文档包括 [ARCHITECTURE.md](docs/ARCHITECTURE.md)、[CODEGRAPH.md](docs/CODEGRAPH.md) 与 [VEROVIO.md](docs/VEROVIO.md)。
+- 开发内部文档包括 [ARCHITECTURE.md](docs/ARCHITECTURE.md)、[CODEGRAPH.md](docs/CODEGRAPH.md) 与 [NATIVE_ENGINES.md](docs/NATIVE_ENGINES.md)。

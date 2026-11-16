@@ -52,7 +52,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/m3n-direct.ts`：从源码构造 `ScoreDocument`；领域消费者统一使用 `Score*` 类型，不再暴露旧 `Direct*` 类型。
 - `packages/notation/src/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
 - `packages/notation/src/m3n-validate.ts`：语义校验，只依赖最小语法内核。
-- `packages/score-renderer/src`：播放段落展开、导出文档与 Verovio 画布适配。
+- `packages/score-renderer/src`：自研 MIDI 写入、时间索引、音频播放和导出文档。
 - `packages/numbered-notation/src`：`ScoreDocument` 到 jpFun 的投影与 SVG 事件适配；实际排版在 `packages/jpfun`。
 - `packages/notation/src/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
 - `packages/notation/src/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
@@ -60,7 +60,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/notation/mei-document.ts`：通过 XML builder 组装 MEI 文档头、责任者元数据、`scoreDef` 和 section，统一处理文本转义与文档序列化。
 - `packages/notation/src/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
 - `packages/notation/src/notation/section-order.ts`：校验显式乐段顺序；ScoreDocument 保存分段范围与局部访问次数，MEI expansion、歌词映射和两种谱面共用该模型。
-- `packages/score-renderer/src/playback-score.ts`：仅提供 MIDI 生成和时间映射，按播放操作动态加载。
+- `packages/score-renderer/src/native-playback-score.ts`：仅提供 MIDI 生成和时间映射，按播放操作动态加载。
 - `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放，默认使用本地生成的合成音色；钢琴、口琴通过独立 SF3 按需加载。
 - `packages/score-renderer/src/playback-tones.ts`：轻量音色目录、下载去重、浏览器 Cache Storage 持久缓存与失败重试；不初始化合成器或下载未选音色。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
@@ -82,7 +82,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 默认部署在 `/`；设置 `VITE_BASE_URL=/score/ npm run build` 可部署到子路径。React Router 的 `basename`、站点图标、导出字体和分享 API 均使用同一构建基路径，Vite 负责处理模块、WASM 和音源 URL。宿主应对该前缀下的页面路由返回 `index.html`，并把 `/score/api/*` 转给现有 Worker（转交前去掉 `/score` 前缀）；存储继续实现 `M3N_SCORES` 的 KV 接口。
 
-钢琴和口琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-{Piano,Harmonica}-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在本地生成柔和FM电钢琴：1:1调制的琴体叠加轻微14:1调制的金属起音，约750ms内从明亮起音过渡到柔和持续声；采用3ms起音、2.5s衰减、12dB持续衰减和180ms释音。八个音区各有轻／重两层力度，较重力度的起音更明亮；各音区按最高音限制谐波，循环区保留完整周期。约690KB的SF2只在内存中生成并缓存，传入AudioWorklet时复制缓冲区，不下载音源文件，也不增加部署的音源文件；沿用现有MIDI、速度、移调和节拍器。选择 `piano` 或 `harmonica` 时立即按需下载对应文件，显示加载状态、错误与重试；钢琴按钮下载期间显示“加载中”与旋转图标，准备完成后才显示选中；播放中切换音色时继续使用当前音色，下载并解码完成后切换音源优先级，后续音符使用新音色，已发声音符自然结束；不重建播放器、不暂停或跳转。移调通过合成器系统调音实时更新当前与后续音符，打击乐保持原调，不重建MIDI。旧请求不能覆盖更新后的选择。
+钢琴和口琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-{Piano,Harmonica}-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在本地生成柔和FM电钢琴：1:1调制的琴体叠加弱化的14:1金属泛音，金属层以20ms渐入，约750ms内过渡到柔和持续声；采用12ms起音、2.5s衰减、6dB持续衰减和180ms释音，输出衰减由9dB减至3dB以提高响度。八个音区各有轻／重两层力度，较重力度的起音更明亮；各音区按最高音限制谐波，循环区保留完整周期。约690KB的SF2只在内存中生成并缓存，传入AudioWorklet时复制缓冲区，不下载音源文件，也不增加部署的音源文件；沿用现有MIDI、速度、移调和节拍器。选择 `piano` 或 `harmonica` 时立即按需下载对应文件，显示加载状态、错误与重试；钢琴按钮下载期间显示“加载中”与旋转图标，准备完成后才显示选中；播放中切换音色时继续使用当前音色，下载并解码完成后切换音源优先级，后续音符使用新音色，已发声音符自然结束；不重建播放器、不暂停或跳转。移调通过合成器系统调音实时更新当前与后续音符，打击乐保持原调，不重建MIDI。旧请求不能覆盖更新后的选择。
 
 音源同时保存在页面内存和 `m3n-soundfonts-v1` Cache Storage，以完整哈希 URL 为键；刷新后先读缓存，不重新下载。存储不可用或配额不足时允许正常加载并保留内存副本，网络失败不缓存，损坏缓存重新下载。浏览器清理站点数据可能移除缓存和选择。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
 
@@ -94,23 +94,21 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 口琴文件为 47,932 字节，包含 8 个采样。原始映射只覆盖到 MIDI 96；提取时将最高采样的音区延伸到 MIDI 127，避免高音或移调后无声。常用音区的采样映射不变。
 
-生产渲染资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。Verovio 使用固定 6.2.0 版本的本地精简构建，保留的字体资源嵌入独立 WASM，JavaScript 通过模块相对 URL 加载它；npm 包仅提供同版本 toolkit 包装器。默认和回退音乐字体都固定为完整 Leipzig；Bravura 只保留初始化需要的符号名称与度量 XML，移除未使用的字形和 CSS。构建脚本还裁掉未使用的输入格式，源码、许可证、裁剪清单和重建方法见 [Verovio 构建说明](VEROVIO_BUILD.md)。jpFun 与数字字体也由本地构建提供。Cloudflare 的 `ASSETS` 绑定负责提供 `dist`，浏览器只请求本站 `/assets/*`；音源与 AudioWorklet 同样来自本站。文档中的参考链接和 SVG 的命名空间不是资源加载路径。
-
-冷启动需要下载并解析渲染包，再初始化 WASM 或准备字体。Verovio 经资源、输入格式、内部编辑器和接口裁剪，再配合跨文件优化与独立 WASM，生产 JS 与 WASM 合计由最初约 7.91MB 降到 3.04MB；分别压缩后合计 gzip（level 9）约 0.99MB，Brotli（quality 11）约 0.76MB。这些数字描述构建产物，不代表线上实际传输大小。模块与 WASM 初始化在当前页面内复用，切换谱式不应重复下载；纯简谱显示不请求 Verovio JS 或 WASM。
+生产资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。演奏编译和 MIDI 写入为项目内 TypeScript 实现，不加载 Verovio 或音乐引擎 WASM。简谱继续使用 jpFun，候选自研排版未通过全曲库视觉一致性验收，不进入应用或导出入口；差异审计见 [自研引擎](NATIVE_ENGINES.md)。字体、音源和 AudioWorklet 来自本站构建产物。
 
 `ScoreRenderer` 在编辑或布局参数变化时更新简谱排版。播放实例按需加载并独立销毁。
 
 文档页所有谱例均使用简谱。加载状态分为渲染库、字体准备与排版。
 
-阅读默认采用连续布局并按容器重新排版，保留可读字号；分页的纸张装饰在适应阅读宽度时简化。移动端（≤720px）移除渲染卡片边框、内边距和分页纸张阴影；阅读页保留屏幕两侧9px留白，谱内保留默认32px页边距；白底分页之间以16px透明间隔露出页面底色，保留分页及宽度设置。阅读宽度通过常驻滑条调整，打印版宽使用单独的 `m3n:print-width`。共享排版入口将每页 Verovio 内层 SVG 的尺寸明确为外层 viewBox 的坐标尺寸，避免 PDF 转换器把后续页的默认百分比尺寸解释为打印视口而二次缩放。
+阅读默认采用连续布局并按容器重新排版，保留可读字号；分页的纸张装饰在适应阅读宽度时简化。移动端（≤720px）移除渲染卡片边框、内边距和分页纸张阴影；阅读页保留屏幕两侧9px留白，谱内保留默认32px页边距；白底分页之间以16px透明间隔露出页面底色，保留分页及宽度设置。阅读宽度通过常驻滑条调整，打印版宽使用单独的 `m3n:print-width`。共享排版入口将每页内层 SVG 的尺寸明确为外层 viewBox 的坐标尺寸，避免 PDF 转换器把后续页的默认百分比尺寸解释为打印视口而二次缩放。
 
 播放设置不再提供选中小节播放、A–B 循环、声部静音和播放跟随，播放器同步移除循环和声部静音接口。速度以滑条在10–240整数BPM之间逐一调整；一拍与谱面拍速和节拍器一致，按初始拍号分母计拍。例如 6/8、80 qpm 的原速为 160 BPM。播放器按目标 BPM 与 MIDI 初始拍速的比率调整时间轴，保留谱中变速的相对关系，节拍器与预备拍同步。首次未调整时采用谱面原速（超出范围时截到边界），手动值使用新键 `m3n:playback-bpm` 持久化，不读取旧百分比速度。速度还原清除此覆盖值，不改变其他开关。
 
-首次播放仍需要动态加载 Verovio/WASM 生成 MIDI，并初始化 AudioWorklet；合成音色仅免去音源采样下载。MIDI 准备和音频播放器模块加载并行执行；同一乐谱的播放器与渲染工具在页面内复用。
+首次播放按需加载自研演奏编译和 MIDI 模块，并初始化 AudioWorklet；合成音色仅免去音源采样下载。MIDI 准备和音频播放器模块加载并行执行；同一乐谱的播放器与渲染工具在页面内复用。
 
 导出字体约 16 MB，只在下载时从本站加载。SVG 和 PDF 的文字转为轮廓以保存中文及字形；文字不再可选择或搜索。PNG 使用相同轮廓生成。字体来源、许可证、校验值与重建脚本见 `public/licenses/noto-serif/`。
 
-`tests/e2e/render-resources.spec.ts` 在阻断所有外站 HTTP 请求的条件下验证显示、切换和播放，检查渲染模块和独立 WASM 各只请求一次、谱例节点保留，以及编辑和版宽变化后的缓存失效。测试附件记录本机冷启动与切换耗时，性能数字不作为设备或网络的固定门槛。
+`tests/e2e/render-resources.spec.ts` 在阻断所有外站 HTTP 请求的条件下验证显示、切换和播放，检查播放不请求 Verovio 或 WASM、谱例节点保留，以及编辑和版宽变化后的缓存失效。端到端测试使用 `.tmp/playwright-dist-<port>` 独立构建，避免常规 `dist` 重建中断测试。`M3N_E2E_PORT` 可覆盖预览端口。测试附件记录本机冷启动与切换耗时，性能数字不作为设备或网络的固定门槛。
 
 ## 质量门禁
 
