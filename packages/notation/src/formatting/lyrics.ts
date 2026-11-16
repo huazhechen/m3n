@@ -4,13 +4,14 @@ import { parseLyricItems } from '../notation/lyrics.js'
 import { projectM3NDocument } from '../notation/m3n-document.js'
 import { phraseLyricTargets } from '../m3n-validate.js'
 import { splitInlineComment, appendComment, mapLiteralSafe } from './text.js'
+import { normalizeLyricWhitespace } from './layout.js'
 
 export function alignLyrics(source: string) {
   source = source.split('\n').map((line) => {
-    const match = /^(L\d*:\s*)(.*)$/.exec(line)
+    const match = /^(L\d*):\s*(.*)$/.exec(line)
     if (!match) return line
     const { content, comment } = splitInlineComment(match[2] ?? '')
-    let lyric = mapLiteralSafe(content, (text) => text.replace(/\s*\|\s*/g, ' '), true)
+    let lyric = normalizeLyricWhitespace(mapLiteralSafe(content, (text) => text.replace(/\s*\|\s*/g, ' '), true))
     // Only actual placeholder tokens expand; grouped lyric text may contain literal braces.
     const placeholders = new Map(parseLyricItems(lyric, 0).filter((item) => item.kind === 'placeholder')
       .map((item) => [item.sourceStart, item]))
@@ -19,7 +20,7 @@ export function alignLyrics(source: string) {
       if (count) lyric = lyric.slice(0, item.sourceStart) + '%'.repeat(Number(count)) + lyric.slice(item.sourceEnd)
     }
     lyric = lyric.trimEnd()
-    return appendComment(`${match[1]}${lyric}`, comment)
+    return appendComment(`${match[1]}: ${lyric}`, comment)
   }).join('\n')
   const syntaxTree = parseM3NSyntaxTree(source)
   const projection = projectM3NDocument(source, syntaxTree)

@@ -86,6 +86,15 @@ describe('formatM3N', () => {
     expect(formatM3N(middle)).toContain('L: 甲乙 | | 丙丁')
     expect(formatM3N(consecutive)).toContain('L: | | 甲乙')
     expect(formatM3N(formatM3N(middle))).toBe(formatM3N(middle))
+    expect(formatM3N(formatM3N(consecutive))).toBe(formatM3N(consecutive))
+  })
+
+  it('keeps CJK spacing stable when an explicit lyric bar cannot be reconstructed', () => {
+    const source = '{4/4}\nN: 1^^~ | 1^. 2 |||\nL: 甲 | 乙丙\n'
+    const formatted = formatM3N(source)
+    expect(formatM3N(formatted)).toBe(formatted)
+    expect(parseM3NDocument(formatted).lyrics.map(block => block.syllables.map(item => item.text)))
+      .toEqual(parseM3NDocument(source).lyrics.map(block => block.syllables.map(item => item.text)))
   })
 
   it('counts forced tied-target lyrics when rebuilding measure bars', () => {

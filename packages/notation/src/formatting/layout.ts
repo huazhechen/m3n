@@ -46,7 +46,7 @@ function normalizeWhitespaceOutsideDirectives(value: string) {
   return result + directive
 }
 
-function normalizeLyricWhitespace(value: string) {
+export function normalizeLyricWhitespace(value: string) {
   return mapLiteralSafe(value.trim(), (text) => text.replace(/[ \t]+/g, (whitespace, offset) => {
     const previous = text.slice(0, offset).at(-1) ?? ''
     const next = text[offset + whitespace.length] ?? ''
