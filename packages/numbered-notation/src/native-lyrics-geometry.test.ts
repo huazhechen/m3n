@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
+import { nativeLyricSvg } from './native-lyrics.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeSvgInk } from './native-ink.js'
 import { NativeSymbols, line } from './native-symbols.js'
@@ -38,6 +39,19 @@ describe('native lyric and music lower envelopes', () => {
       expect(lane.lyricBottom).toBe(lane.bodyBottom)
       expect(lane.bottom).toBeCloseTo(lane.bodyBottom! + 25.08)
     }
+  })
+
+  it('puts a lyric underline below the actual descenders, with measured clearance', () => {
+    const measurer = { measureText(text: string, style: { fontSize: number }) {
+      return { w: text.length * style.fontSize * 0.6, h: style.fontSize * 1.2, baseline: style.fontSize * 0.7 }
+    } }
+    const score = layoutNativeScore(parseM3NDocument('{2/4}\nN: 1 2 |||\nL: (gyp) (yo)'), { ...options, textMeasurer: measurer })
+    const glyph = score.projection.glyphs[0]!, size = 22 * 0.82
+    const root = new DOMParser().parseFromString(nativeLyricSvg(glyph, 0, 0, 0, measurer), 'text/html')
+    const underline = root.querySelector('line')!
+    expect(underline).not.toBeNull()
+    const top = Number(underline.getAttribute('y1')) - Number(underline.getAttribute('stroke-width')) / 2
+    expect(top - size * 0.5).toBeCloseTo(size * 0.1, 4)
   })
 
   it('unions the actually painted number and beams, including conservative offline font bounds', () => {

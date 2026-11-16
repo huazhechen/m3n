@@ -30,10 +30,10 @@ export function placeNativeSystemLabels(system: NativeSystem, regions: NativeReg
   for (const measure of system.measures) {
     const glyphs = measure.columns.flatMap(c => c.glyphs), first = glyphs.find(g => g.lane === 'melody')
     if (measureNumbers && !measure.continuation && first) place('melody', painter.text(String(measure.index + 1), Math.max(measure.start + em(2), first.x - first.left), 0, nativeStyle.measureNumber, 'serif', { 'data-m3n-role': 'annotation', 'data-m3n-id': first.xmlId }), nativeStyle.measureNumber)
-    if (measure.lastFragment && (measure.source.repeatCount ?? 2) > 2) place('melody', painter.text(`×${measure.source.repeatCount}`, measure.end - em(3), 0, nativeStyle.small, 'serif', { 'text-anchor': 'end' }), nativeStyle.small)
+    if (measure.lastFragment && (measure.source.repeatCount ?? 2) > 2) place('melody', painter.text(`×${measure.source.repeatCount}`, measure.end - em(3), 0, nativeStyle.small, 'serif', { 'text-anchor': 'end', 'data-m3n-role': 'repeat-count' }), nativeStyle.small)
     for (const lane of system.lanes.filter(l => l.id.startsWith('alternative:'))) {
       const member = glyphs.find(g => g.lane === lane.id)
-      if (member && member.passes?.join(',') !== '2') place(lane.id, painter.text(`${member.passes?.join('.')}.`, member.x, 0, nativeStyle.small), nativeStyle.small)
+      if (member && member.passes?.join(',') !== '2') place(lane.id, painter.text(`${member.passes?.join('.')}.`, member.x, 0, nativeStyle.small, 'serif', { 'data-m3n-role': 'alternative-passes' }), nativeStyle.small)
     }
   }
 }

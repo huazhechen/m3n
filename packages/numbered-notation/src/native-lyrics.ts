@@ -2,17 +2,20 @@ import { nativeStyle } from './native-style.js'
 import type { NativeLane, NativeSystem } from './native-layout.js'
 import type { NativeGlyph } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
-import { NativeSymbols, line } from './native-symbols.js'
+import { NativeSymbols, attrs, line } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 
 export function nativeLyricSvg(glyph: NativeGlyph, row: number, baseline: number, system: number, measurer: TextMeasurer): string {
   const data = glyph.lyrics.get(row)!, text = data.texts.join(''), painter = new NativeSymbols(measurer), size = nativeStyle.music * 0.82
   const meta = { 'data-m3n-id': glyph.xmlId, 'data-m3n-rendition': row + 1, 'data-m3n-passes': [...(data.passes ?? [row + 1])].join('-'), 'data-m3n-system': system, 'data-m3n-measure': glyph.measureId }
   let svg = painter.text(text || '\u200B', glyph.x, baseline, size, 'serif', { ...meta, 'text-anchor': 'middle', 'data-m3n-role': 'lyric', 'data-m3n-underlined': data.underlined ? 'true' : undefined })
-  const width = measurer.measureText(text, { fontSize: size, fontFamily: 'serif' }).w
-  if (data.underlined) svg += line(glyph.x - width / 2, baseline + size * (3 / 18.04), glyph.x + width / 2, baseline + size * (3 / 18.04), size * (0.8 / 18.04))
+  const metrics = measurer.measureText(text, { fontSize: size, fontFamily: 'serif' }), width = metrics.w
+  if (data.underlined) {
+    const stroke = size * (0.8 / 18.04), y = baseline + metrics.h - metrics.baseline + size * 0.1 + stroke / 2
+    svg += line(glyph.x - width / 2, y, glyph.x + width / 2, y, stroke)
+  }
   if (data.annotation) svg += painter.text(data.annotation, glyph.x - width / 2 - size * (4 / 18.04), baseline, size * (12 / 18.04), 'serif', { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' })
-  return svg
+  return `<g${attrs({ ...meta, 'data-m3n-role': 'lyric-fragment' })}>${svg}</g>`
 }
 
 /** Actual text/prefix/underline extents determine row baselines and total height. */

@@ -36,8 +36,8 @@ describe('native repeat boundaries', () => {
   it('combines adjacent end and start repeats without drawing the opening twice', () => {
     const result = render('{4/4}\nN: ||: 1 2 3 4 :|| ||: 5 6 7 1e :||')
     const measures = [...result.root.querySelectorAll('g.measure')]
-    expect(measures[0]!.querySelectorAll(':scope > circle')).toHaveLength(6)
-    expect(measures[1]!.querySelectorAll(':scope > circle')).toHaveLength(2)
+    expect(measures[0]!.querySelectorAll('[data-m3n-role="bar"] > circle')).toHaveLength(6)
+    expect(measures[1]!.querySelectorAll('[data-m3n-role="bar"] > circle')).toHaveLength(2)
   })
 })
 

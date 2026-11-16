@@ -1,3 +1,4 @@
+import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
 import { placeNativeNavigation, placeNativeSystemLabels } from './native-system-labels.js'
 import { nativeVoltaSvg } from './native-volta.js'
@@ -186,8 +187,18 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
   }
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
-  for (const system of systems) relationBounds.set(system, system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
-    .flatMap(g => g.controls.filter(c => c.x !== undefined).map(c => ({ lane: g.lane, left: c.x!, right: c.x! + c.width, top: c.top }))))
+  for (const system of systems) {
+    const regions = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
+      .flatMap(g => g.controls.filter(c => c.x !== undefined).map(c => ({ lane: g.lane, left: c.x!, right: c.x! + c.width, top: c.top })))
+    for (const [index, measure] of system.measures.entries()) for (const lane of system.lanes) {
+      if (lane.id.startsWith('alternative:') || !measure.columns.some(c => c.glyphs.some(g => g.lane === lane.id))) continue
+      for (const bar of nativeMeasureBarPositions(system.measures, index)) {
+        const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0), measurer)
+        regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top })
+      }
+    }
+    relationBounds.set(system, regions)
+  }
   // Populate peers before measuring any relation; adjacent groups share height.
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
