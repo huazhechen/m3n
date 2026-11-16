@@ -164,11 +164,22 @@ test("voice all measurement and attachment paths match painted styles", () => {
         strictEqual(command.style.fontFamily, "Wide");
         ok(measured.some(item => item.text === command.text && JSON.stringify(item.style) === JSON.stringify(command.style)), command.text);
     }
-    for (const label of ["hello", "(", "M"]) {
+    for (const label of ["hello", "("]) {
         const samples = measured.filter(item => item.text === label);
         ok(samples.length > 0, label);
         ok(samples.every(item => item.style.fontFamily === "Wide"), label);
     }
+    ok(!measured.some(item => item.text === "M"), "visible lyric tiers must use their own ink, not a surrogate M");
+    const placeholderMetrics: { text: string; style: TextStyle }[] = [];
+    compileScore('@set(font="Wide") @voice({1},Lead,"@","la")', { textMeasurer: {
+        measureText(text, style) {
+            placeholderMetrics.push({ text, style });
+            return { w: text.length * 30, h: style.fontSize, baseline: style.fontSize * 0.8 };
+        },
+    } });
+    const placeholders = placeholderMetrics.filter(item => item.text === "M");
+    ok(placeholders.length > 0 && placeholders.every(item => item.style.fontFamily === "Wide"),
+        "an explicitly blank tier still measures its fallback with the selected voice font");
     const name = compiled.layout.objects.find(object => object.ast instanceof ASTFunctionNode && object.ast.callName === "voice")!;
     strictEqual(name.box.anchor, "LongRow".length * 30);
 });

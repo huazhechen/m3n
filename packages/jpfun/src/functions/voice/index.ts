@@ -952,6 +952,7 @@ type PreparedLyricText = LayoutRegion & {
     text: string;          // 最终绘制的 token 或歌词行名称
     style: TextStyle;      // 当前文本使用的字体和颜色
     textBaselineY: number; // 字体 baseline 距文本盒顶部的距离
+    underline?: { y: number; stroke: number }; // 相对文本盒顶部的实绘下划线
 };
 
 class VoiceLyricsAttachment implements LayoutAttachment {
@@ -1020,9 +1021,9 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             paint(painter: Painter) {
                 for (const item of preparedText) {
                     painter.drawText(item.text, item.x, item.y + item.textBaselineY, item.style);
-                    if (item.style.semantic?.underlined) {
-                        const y = item.y + item.textBaselineY + item.style.fontSize * 0.12;
-                        painter.drawLine(item.x, y, item.x + item.w, y, { stroke: item.style.fill, strokeWidth: 1 });
+                    if (item.underline) {
+                        const y = item.y + item.underline.y;
+                        painter.drawLine(item.x, y, item.x + item.w, y, { stroke: item.style.fill, strokeWidth: item.underline.stroke });
                     }
                 }
             },
@@ -1039,11 +1040,18 @@ class VoiceLyricsAttachment implements LayoutAttachment {
         if (targets.length === 0 || lyrics.length === 0) return preparedText;
 
         // 同一行、原始轨共用下沿，跨轨框外的占用可归属另一条轨
-        const baselines = new Map<number, Map<Track, { bottom: number; owner: Track; rows: number[] }>>();
+        type LyricBaseline = { bottom: number; owner: Track; rows: number[]; tiers: Map<number, PreparedLyricText[]> };
+        const baselines = new Map<number, Map<Track, LyricBaseline>>();
+        const append = (item: PreparedLyricText, baseline: LyricBaseline, row: number) => {
+            preparedText.push(item);
+            const tier = baseline.tiers.get(row) ?? [];
+            tier.push(item);
+            baseline.tiers.set(row, tier);
+        };
         for (const target of targets) {
             let byTrack = baselines.get(target.layoutLine);
             if (!byTrack) baselines.set(target.layoutLine, byTrack = new Map());
-            const baseline = byTrack.get(target.track) ?? { bottom: -Infinity, owner: target.track, rows: [] };
+            const baseline = byTrack.get(target.track) ?? { bottom: -Infinity, owner: target.track, rows: [], tiers: new Map() };
             const bounds = getLayoutBounds(target);
             let bottom = bounds.y + bounds.h;
             if (context.uniformSystemHeight) {
@@ -1083,24 +1091,10 @@ class VoiceLyricsAttachment implements LayoutAttachment {
         const firstRowGap = size * 0.32;
         const lyricStyle: TextStyle = { fontSize, fontFamily: this.nameHost.ast.font, fill: "#000" };
         const nameStyle = lyricNameStyle(size, this.nameHost.ast.font);
-        const baselineOffset = context.textMeasurer.measureText("M", lyricStyle).baseline + firstRowGap;
-        const baselineOf = (bottom: number, row: number) => bottom + baselineOffset + row * (fontSize + rowGap);
         // Absent verse slots at a different ending must not reserve a blank row.
         // Zero-width placeholders still belong to their verse and keep alignment.
         const rowAtSlot = (rows: number[], row: number, slot: number) => Math.max(0,
             (this.nameHost.ast.compactLyrics ? rows.filter(index => Boolean(lyrics[index].tokens[slot])) : rows).indexOf(row));
-        // 跨轨框外的歌词由最下轨承担占用，各原始轨的歌词行依次排列
-        if (this.frames.length) for (const [line, byTrack] of baselines) {
-            if (byTrack.size < 2) continue;
-            const rows = new Map<Track, number>();
-            for (const [, baseline] of [...byTrack].sort(([left], [right]) =>
-                context.getVisualAxis(line, left) - context.getVisualAxis(line, right))) {
-                const row = rows.get(baseline.owner) ?? 0;
-                baseline.bottom += row * (fontSize + rowGap);
-                rows.set(baseline.owner, row + baseline.rows.length);
-            }
-        }
-
         // 歌词行名称与声部名共用左侧那一列，因此只出现在声部名所在的那一行
         const { box: labelBox, layoutLine: labelLine, track: labelTrack } = this.nameHost;
         const labelBaseline = baselines.get(labelLine)?.get(labelTrack);
@@ -1123,51 +1117,77 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                 const style = Object.defineProperty({ ...lyricStyle }, 'semantic', {
                     value: { role: 'lyric', sourceSpan: target.ast.sourceSpan, row, ...(underlined ? { underlined: true } : {}) }, enumerable: false,
                 });
-                preparedText.push({
+                const stroke = fontSize * (0.8 / 18.04);
+                append({
                     text,
                     style,
                     textBaselineY: metrics.baseline,
                     x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth,
-                    y: baselineOf(baseline.bottom, rowAtSlot(baseline.rows, row, i)) - metrics.baseline,
+                    y: -metrics.baseline,
                     w: metrics.w,
-                    h: underlined ? Math.max(metrics.h, metrics.baseline + fontSize * 0.12 + 0.5) : metrics.h,
+                    h: metrics.h + (underlined ? fontSize * 0.1 + stroke : 0),
+                    ...(underlined ? { underline: { y: metrics.h + fontSize * 0.1 + stroke / 2, stroke } } : {}),
                     line: target.layoutLine,
                     track: baseline.owner,
-                });
+                }, baseline, rowAtSlot(baseline.rows, row, i));
                 const annotation = this.nameHost.ast.lyricPrefixes.get(`${row}:${i}`);
                 if (annotation) {
                     const annotationMetrics = context.textMeasurer.measureText(annotation, lyricStyle);
                     const annotationStyle = Object.defineProperty({ ...lyricStyle }, 'semantic', {
                         value: { role: 'lyric-prefix', sourceSpan: target.ast.sourceSpan, row }, enumerable: false,
                     });
-                    preparedText.push({
+                    append({
                         text: annotation,
                         style: annotationStyle,
                         textBaselineY: annotationMetrics.baseline,
                         x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth - annotationMetrics.w - fontSize * 0.2,
-                        y: baselineOf(baseline.bottom, rowAtSlot(baseline.rows, row, i)) - annotationMetrics.baseline,
+                        y: -annotationMetrics.baseline,
                         w: annotationMetrics.w,
                         h: annotationMetrics.h,
                         line: target.layoutLine,
                         track: baseline.owner,
-                    });
+                    }, baseline, rowAtSlot(baseline.rows, row, i));
                 }
             }
 
             if (!lyric.name || !labelBox || !labelBaseline) continue;
 
             const metrics = context.textMeasurer.measureText(lyric.name, nameStyle);
-            preparedText.push({
+            append({
                 text: lyric.name,
                 style: nameStyle,
                 textBaselineY: metrics.baseline,
                 x: labelBox.x + labelBox.anchor - metrics.w,
-                y: baselineOf(labelBaseline.bottom, Math.max(0, labelBaseline.rows.indexOf(row))) - metrics.baseline,
+                y: -metrics.baseline,
                 w: metrics.w,
                 h: metrics.h,
                 line: labelLine,
                 track: labelBaseline.owner,
-            });
+            }, labelBaseline, Math.max(0, labelBaseline.rows.indexOf(row)));
+        }
+        // One baseline per visual tier, sized by the union of its actual ink.
+        // M supplies a row only for explicit placeholders; it never locates
+        // visible Chinese, descenders, row names or visit prefixes.
+        for (const [line, byTrack] of baselines) {
+            const ownerBottoms = new Map<Track, number>();
+            const ordered = [...byTrack].sort(([left], [right]) =>
+                context.getVisualAxis(line, left) - context.getVisualAxis(line, right));
+            for (const [, baseline] of ordered) {
+                const previous = this.frames.length ? ownerBottoms.get(baseline.owner) : undefined;
+                let bottom = Math.max(baseline.bottom, previous ?? -Infinity);
+                const count = baseline.tiers.size ? Math.max(...baseline.tiers.keys()) + 1 : 0;
+                for (let tier = 0; tier < count; tier++) {
+                    const items = baseline.tiers.get(tier) ?? [];
+                    const visible = items.filter(item => visibleLyricText(item.text));
+                    const fallback = visible.length ? undefined : context.textMeasurer.measureText("M", lyricStyle);
+                    const top = fallback ? -fallback.baseline : Math.min(...visible.map(item => item.y));
+                    const lower = fallback ? fallback.h - fallback.baseline : Math.max(...visible.map(item => item.y + item.h));
+                    const y = bottom + (tier || previous !== undefined ? rowGap : firstRowGap) - top;
+                    for (const item of items) item.y += y;
+                    bottom = y + lower;
+                }
+                if (count) ownerBottoms.set(baseline.owner, bottom);
+            }
         }
         return preparedText;
     }

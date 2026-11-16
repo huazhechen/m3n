@@ -87,3 +87,5 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - Fraction numerals center their measured ink on the meter rule independently; asymmetric bearings no longer shift the numerator or denominator away from its anchor.
 
 - Note digits center their measured ink on the musical anchor and octave dots after pitch resolution, including letter-name conversion and X. The shared zero-based note width and empty-note behavior remain intact.
+
+- Lyric visual tiers now share baselines derived from their actual token, prefix and row-name ink, rather than a surrogate M or nominal font-size advance. Complete descenders and measured underline strokes participate in inter-row clearance and frame-owned lyric stacking. Invisible compact slots and verse metadata retain their existing behavior.

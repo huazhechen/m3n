@@ -132,7 +132,8 @@ describe('native engraving acceptance', () => {
   it('renders instrumental parentheses and all interval families across systems', () => {
     const source = '{2/4}\nN: {inst}{8va}{cresc}{lg}1 2 | {br}3 4{/}{/}{/}{/} | {decres}5 6{/} |||'
     const { root } = render(source, { width: 320, paged: true })
-    expect(root.body.textContent).toContain('8va')
+    expect(root.body.textContent).not.toContain('8va')
+    expect(root.querySelector('#m3n-e-1 circle')).not.toBeNull()
     expect(root.querySelectorAll('[data-m3n-relation="slur"]').length).toBeGreaterThan(0)
     expect(root.body.textContent?.match(/\(/g)?.length).toBeGreaterThan(1)
     expect(root.body.textContent?.match(/\)/g)?.length).toBeGreaterThan(1)

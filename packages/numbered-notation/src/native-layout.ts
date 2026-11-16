@@ -27,7 +27,7 @@ export type NativeRenderOptions = {
   /** @internal Whether a separate minimum spacing policy was requested. */
   pairedSpacing?: boolean
 }
-export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'octave' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number }
+export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
 export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; decorationLayout?: { lane: string; svg: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
@@ -81,13 +81,16 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
   const intervals = [...document.intervals, ...new Set((document.alternatives ?? []).flatMap(alternative => alternative.intervals))]
   for (const interval of intervals) {
     if (interval.start === undefined || interval.endStart === undefined) continue
-    if (interval.display === 'text' || interval.kind === 'accel' || interval.kind === 'rit' || interval.kind === 'inst') continue
+    // Octave scopes are already resolved into each pitch's dots. A second
+    // ottava line would request the same transposition again.
+    if (interval.kind !== 'lg' && interval.kind !== 'cresc' && interval.kind !== 'decres') continue
+    if (interval.display === 'text') continue
     const glyphs = projection.glyphs.filter(glyph => glyph.event && glyph.staff === interval.staff && interval.start! <= glyph.event.sourceStart && glyph.event.sourceStart <= interval.endStart!)
     const first = glyphs[0], last = glyphs.at(-1)
     if (!first || !last) continue
-    const kind = interval.kind === 'lg' ? 'slur' : interval.kind === '8va' || interval.kind === '8vb' ? 'octave' : interval.kind
+    const kind = interval.kind === 'lg' ? 'slur' : interval.kind
     const end = kind === 'slur' ? head.get(last.event!) ?? [...glyphs].reverse().find(glyph => !glyph.sustain && glyph.pitches.some(pitch => pitch.degree !== '0')) ?? last : last
-    relations.push({ kind, first, last: end, level: 0, label: kind === 'octave' ? interval.kind : undefined })
+    relations.push({ kind, first, last: end, level: 0 })
   }
   // Each alternative measure is a separate parenthesized phrase. Reuse the
   // measured relation painter so wrapping and occupied bounds stay in sync.

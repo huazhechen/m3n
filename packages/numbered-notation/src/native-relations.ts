@@ -15,10 +15,6 @@ class NativeRelationPainter extends NativeSymbols {
     const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === relation.first.lane)
     const lane = system.lanes.find(lane => lane.id === relation.first.lane)
     if (!members.length || !lane) return ''
-    const firstHere = members.includes(relation.first), lastHere = members.includes(relation.last)
-    const x1 = firstHere ? relation.first.x : system.measures[0]!.start + em(4)
-    const x2 = lastHere ? relation.last.x : system.measures.at(-1)!.end - em(5)
-    const top = 0
     if (relation.kind === 'inst') {
       const selected = members.filter(glyph => glyph.event && relation.first.event!.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event!.sourceStart)
       if (!selected.length) return ''
@@ -43,8 +39,7 @@ class NativeRelationPainter extends NativeSymbols {
         + bracket.segments.map(([a, b, c, d]) => line(a, b, c, d, bracket.stroke)).join('')
         + this.text(relation.label!, bracket.center, bracket.baseline, bracket.fontSize, 'serif', { 'text-anchor': 'middle' }) + '</g>'
     }
-    const labelWidth = this.measurer.measureText(relation.label ?? '', { fontSize: nativeStyle.small, fontFamily: 'serif' }).w + nativeStyle.small * 0.3
-    return this.text(relation.label!, x1, top - em(3), nativeStyle.small) + line(x1 + labelWidth, top - em(5), Math.max(x1 + labelWidth, x2), top - em(5), em(1), ` stroke-dasharray="${em(4)} ${em(3)}"`) + line(x2, top - em(5), x2, top + em(1))
+    return ''
   }
 
 }
