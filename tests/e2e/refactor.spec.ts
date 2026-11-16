@@ -77,7 +77,7 @@ test('numbered SVG and multipage PDF retain Chinese outlines and all written mea
   test.setTimeout(90_000)
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 64 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
-  await page.getByRole('button', { name: '保存并预览', exact: true }).click()
+  await page.getByRole('button', { name: '保存', exact: true }).click()
   for (const format of ['SVG', 'PDF']) {
     await openScoreSettings(page)
     await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
@@ -142,7 +142,7 @@ test('mobile saving and export recover visibly from a failed local font request'
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=手机保存导出}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
-  await page.getByRole('button', { name: '保存并预览', exact: true }).click()
+  await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()

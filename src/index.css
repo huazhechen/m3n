@@ -222,12 +222,8 @@ h3 {
   gap: 8px;
 }
 
-.editor-save-status {
-  margin: 0;
-  padding: 0 12px 10px;
-  color: #5c6468;
-  font-size: 0.8rem;
-}
+.editor-header-right .editor-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.editor-action svg { flex-shrink: 0; }
 
 .editor-mode-note {
   padding: 3px 8px;
@@ -1568,4 +1564,9 @@ a.action-button {
   .score-renderer .score-paper .score-page-sheet:last-child {
     margin-bottom: 0;
   }
+}
+
+@media (max-width: 720px) {
+  .editor-header-right .editor-action { width: 36px; height: 36px; padding: 0; }
+  .editor-action span { display: none; }
 }
