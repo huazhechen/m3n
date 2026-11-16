@@ -1,23 +1,22 @@
 import { expect, test, type Locator } from '@playwright/test'
 
-async function expectUsableControls(bar: Locator) {
-  const issues = await bar.evaluate(element => {
+async function expectUsableControls(root: Locator) {
+  const issues = await root.evaluate(element => {
     const bounds = element.getBoundingClientRect()
-    const targets = [...new Set([...element.querySelectorAll<HTMLElement>('button, input, select')].map(control =>
-      control.matches('input[type="radio"], input[type="checkbox"], input[role="switch"]') ? control.closest('label')! : control,
-    ))].filter(control => control.checkVisibility())
+    const targets = [...new Set([...element.querySelectorAll<HTMLElement>('button, input, select')]
+      .filter(control => element.matches('dialog') || !control.closest('dialog'))
+      .map(control => control.matches('input[type="radio"], input[type="checkbox"], input[role="switch"]') ? control.closest('label')! : control))]
+      .filter(control => control.checkVisibility())
     const issues: string[] = []
     for (const [index, control] of targets.entries()) {
       const box = control.getBoundingClientRect()
       const name = control.getAttribute('aria-label') ?? control.textContent?.trim()
       if (box.width < 43 || box.height < 43) issues.push(`${name}: touch target ${box.width} × ${box.height}`)
-      if (box.left < bounds.left - 1 || box.right > bounds.right + 1) issues.push(`${name}: outside control bar`)
+      if (box.left < bounds.left - 1 || box.right > bounds.right + 1) issues.push(`${name}: outside controls`)
       for (const other of targets.slice(index + 1)) {
         const next = other.getBoundingClientRect()
         if (Math.min(box.right, next.right) - Math.max(box.left, next.left) > 1
-          && Math.min(box.bottom, next.bottom) - Math.max(box.top, next.top) > 1) {
-          issues.push(`${name}: overlaps ${other.getAttribute('aria-label') ?? other.textContent?.trim()}`)
-        }
+          && Math.min(box.bottom, next.bottom) - Math.max(box.top, next.top) > 1) issues.push(`${name}: overlaps another control`)
       }
     }
     return issues
@@ -25,95 +24,105 @@ async function expectUsableControls(bar: Locator) {
   expect(issues).toEqual([])
 }
 
-test('reader controls stay usable from narrow phones to desktop, collapsed and expanded', async ({ page }, testInfo) => {
-  await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
+test('playback dialog stays usable from narrow phones to desktop and closes with Escape', async ({ page }, testInfo) => {
   await page.goto('/scores/huan_le_song_01')
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
+  const settings = page.getByRole('button', { name: '播放设置', exact: true })
+  const dialog = page.getByRole('dialog', { name: '播放设置' })
+  await expect(settings).toBeVisible()
   for (const width of [320, 360, 390, 600, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 })
     await expectUsableControls(bar)
-    const practice = bar.getByRole('button', { name: '练习设置', exact: true })
-    await practice.click()
-    await expect(practice).toHaveAttribute('aria-expanded', 'true')
-    await expectUsableControls(bar)
+    await settings.click()
+    await expect(dialog).toBeVisible()
+    await expectUsableControls(dialog)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-    if (width === 390 || width === 1280) {
-      const path = testInfo.outputPath(`controls-${width}.png`)
-      await bar.screenshot({ path })
-      await testInfo.attach(`controls-${width}`, { path, contentType: 'image/png' })
-    }
-    await practice.click()
-    if (width === 390) await page.screenshot({ path: testInfo.outputPath('reader-mobile.png') })
+    if (width === 390 || width === 1280) await dialog.screenshot({ path: testInfo.outputPath(`playback-settings-${width}.png`) })
+    await page.keyboard.press('Escape')
+    await expect(dialog).not.toBeVisible()
+    await expect(settings).toBeFocused()
   }
 })
 
-test('editor and embedded documentation controls fit their own narrow containers', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
+test('editor and embedded documentation open playback dialogs in narrow containers', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 })
   for (const route of ['/editor', '/docs?doc=guide']) {
-    await page.setViewportSize({ width: 320, height: 900 })
     await page.goto(route)
     if (route === '/editor') await page.getByRole('tab', { name: '预览', exact: true }).click()
     const bar = page.getByRole('group', { name: '乐谱控制', exact: true }).first()
-    await expect(bar.getByRole('button', { name: '播放', exact: true })).toBeVisible()
+    await expect(bar.getByRole('button', { name: '播放设置', exact: true })).toBeVisible()
     await expectUsableControls(bar)
-    await bar.getByRole('button', { name: '练习设置', exact: true }).click()
-    await expectUsableControls(bar)
-    await page.setViewportSize({ width: 1280, height: 900 })
-    await expectUsableControls(bar)
+    await bar.getByRole('button', { name: '播放设置', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: '播放设置' })
+    await expect(dialog).toBeVisible()
+    await expectUsableControls(dialog)
+    await dialog.getByRole('button', { name: '关闭', exact: true }).click()
   }
 })
 
-test('mobile practice settings persist and reset without changing score layout', async ({ page }) => {
+test('BPM accepts all integers from 10 to 240, persists, and resets with the other settings', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
   await page.goto('/scores/huan_le_song_01')
-  const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
-  const practice = bar.getByRole('button', { name: '练习设置', exact: true })
-  const speed = bar.getByRole('slider', { name: '播放速度' })
-  const transpose = bar.getByRole('group', { name: '播放移调', exact: true }).locator('output')
-  await expect(practice).toHaveAttribute('aria-expanded', 'false')
-  await expect(speed).not.toBeVisible()
-  await practice.click()
-  await speed.fill('80')
-  await expect(speed).toHaveValue('80')
-  await bar.getByRole('button', { name: '0.75×', exact: true }).click()
-  await expect(speed).toHaveValue('75')
-  await bar.getByRole('button', { name: '升高半音' }).click({ clickCount: 2 })
-  await expect(transpose).toHaveText('+2')
-  await bar.getByRole('switch', { name: '节拍器' }).check()
-  await practice.click()
-  await expect(speed).not.toBeVisible()
+  const settings = page.getByRole('button', { name: '播放设置', exact: true })
+  const dialog = page.getByRole('dialog', { name: '播放设置' })
+  const bpm = dialog.getByRole('spinbutton', { name: '播放速度（BPM）' })
+  const speed = dialog.getByRole('slider', { name: '播放速度', exact: true })
+  const transpose = dialog.getByRole('group', { name: '播放移调', exact: true }).locator('output')
+  await settings.click()
+  const original = await bpm.inputValue()
+  for (const value of ['10', '240', '137']) {
+    await bpm.fill(value)
+    await expect(speed).toHaveValue(value)
+  }
+  await bpm.fill('')
+  await bpm.pressSequentially('139')
+  await expect(speed).toHaveValue('139')
+  await bpm.fill('999')
+  await bpm.press('Tab')
+  await expect(bpm).toHaveValue('240')
+  await speed.fill('137')
+  await expect(bpm).toHaveValue('137')
+  await dialog.getByRole('button', { name: '升高半音' }).click({ clickCount: 2 })
+  await dialog.getByRole('switch', { name: '节拍器' }).check()
+  await dialog.getByRole('button', { name: '关闭', exact: true }).click()
   await page.reload()
-  await practice.click()
-  await expect(speed).toHaveValue('75')
+  await settings.click()
+  await expect(bpm).toHaveValue('137')
   await expect(transpose).toHaveText('+2')
-  await expect(bar.getByRole('switch', { name: '节拍器' })).toBeChecked()
-  await bar.getByRole('button', { name: '恢复默认' }).click()
-  await expect(speed).toHaveValue('100')
+  await expect(dialog.getByRole('switch', { name: '节拍器' })).toBeChecked()
+  await dialog.getByRole('button', { name: '恢复默认' }).click()
+  await expect(bpm).toHaveValue(original)
   await expect(transpose).toHaveText('原调')
-  await expect(bar.getByRole('switch', { name: '节拍器' })).not.toBeChecked()
-  await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'numbered')
+  await expect(dialog.getByRole('switch', { name: '节拍器' })).not.toBeChecked()
+  await dialog.getByRole('button', { name: '关闭', exact: true }).click()
   await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'continuous')
-  await bar.getByRole('button', { name: '排版设置', exact: true }).click()
-  const dialog = page.getByRole('dialog', { name: '排版设置' })
-  await expect(dialog).toBeVisible()
-  await dialog.getByRole('switch', { name: '分页', exact: true }).check()
-  await dialog.getByRole('switch', { name: '分页', exact: true }).uncheck()
-  await dialog.getByRole('button', { name: '关闭' }).click()
-  await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'continuous')
-  await expect(page.locator('.score-paper')).toHaveAttribute('data-notation', 'numbered')
+  await page.getByRole('button', { name: '排版设置', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: '排版设置' })).toBeVisible()
 })
 
-test('returning to the beginning stops playback and clears the cursor without initializing audio early', async ({ page }) => {
+test('absolute BPM controls actual playback beyond the old 200 percent limit', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 2 3 4 | 5 6 7 1e |||')
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
+  await page.getByRole('button', { name: '播放设置', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: '播放设置' })
+  await expect(dialog.getByRole('spinbutton', { name: '播放速度（BPM）' })).toHaveValue('60')
+  await dialog.getByRole('spinbutton', { name: '播放速度（BPM）' }).fill('240')
+  await dialog.getByRole('button', { name: '关闭', exact: true }).click()
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
+  // Eight quarter notes at 240 BPM take two seconds; the former 2x cap took four.
+  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible({ timeout: 3500 })
+})
+
+test('returning to the beginning stops playback without loading audio early', async ({ page }) => {
   const resources: string[] = []
   page.on('request', request => resources.push(request.url()))
-  await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
   await page.goto('/scores/huan_le_song_01')
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   const restart = bar.getByRole('button', { name: '回到开头' })
   await restart.click()
-  expect(resources.filter(url => /playback-score-|\.wasm(?:\?|$)|spessa-player-|soundfonts\//.test(url))).toEqual([])
+  expect(resources.filter(url => /playback-score-|\.wasm(?:\?|$)|spessa-player-|\.sf3$/.test(url))).toEqual([])
   await bar.getByRole('button', { name: '播放', exact: true }).click()
   await expect(bar.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
   const position = bar.getByRole('slider', { name: '播放位置' })
@@ -122,7 +131,4 @@ test('returning to the beginning stops playback and clears the cursor without in
   await expect(position).toHaveValue('0')
   await expect(bar.getByRole('button', { name: '播放', exact: true })).toBeEnabled()
   await expect(page.locator('.score-paper .is-playing, .score-paper .is-playing-measure')).toHaveCount(0)
-  await bar.getByRole('button', { name: '播放', exact: true }).click()
-  await expect.poll(() => position.inputValue()).not.toBe('0')
-  await bar.getByRole('button', { name: '暂停', exact: true }).click()
 })

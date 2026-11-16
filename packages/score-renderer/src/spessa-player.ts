@@ -12,6 +12,12 @@ export function seekTimeAtProgress(duration: number, progress: number) {
   return Math.min(normalized * duration, Math.max(0, duration - 0.001))
 }
 
+/** BPM uses the MIDI time signature's denominator, matching the metronome. */
+export function playbackRateAtBpm(bpm: number, initialBpm: number) {
+  if (!Number.isFinite(bpm) || !Number.isFinite(initialBpm) || initialBpm <= 0) throw new Error('播放速度无效。')
+  return Math.max(10, Math.min(240, bpm)) / initialBpm
+}
+
 type PlayerListener = {
   onEnded: () => void
   onTime: (seconds: number, duration: number) => void
@@ -43,16 +49,14 @@ export class SpessaPlayer {
   private metronomeEnabled = false
   private countInPending = true
   private playToken = 0
-  private loopRange: [number, number] | null = null
 
-  private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener, metronome: Metronome) {
+  private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener, metronome: Metronome, private readonly initialBpm: number) {
     this.context = context
     this.synth = synth
     this.sequencer = sequencer
     this.listener = listener
     this.metronome = metronome
     this.sequencer.eventHandler.addEvent('songEnded', 'm3n-player', () => {
-      if (this.loopRange) { this.seek(this.loopRange[0]); void this.play(); return }
       this.stopProgressLoop()
       this.countInPending = true
       this.listener.onTime(this.sequencer.duration, this.sequencer.duration)
@@ -79,6 +83,7 @@ export class SpessaPlayer {
         sequencer,
         listener,
         new Metronome(context, buildMetronomeBeats(parsedSequence), countInBeats, initialBeatDurationSeconds(parsedSequence)),
+        60 / initialBeatDurationSeconds(parsedSequence),
       )
     } catch (error) {
       await context.close()
@@ -97,7 +102,6 @@ export class SpessaPlayer {
   async play() {
     await this.context.resume()
     const token = ++this.playToken
-    if (this.loopRange && (this.sequencer.currentHighResolutionTime < this.loopRange[0] * this.duration || this.sequencer.currentHighResolutionTime >= this.loopRange[1] * this.duration)) this.seek(this.loopRange[0])
     const startsAtBeginning = this.countInPending || this.sequencer.currentHighResolutionTime <= 0.01
     const countInSeconds = this.metronomeEnabled && startsAtBeginning
       ? this.metronome.countInDurationSeconds
@@ -125,17 +129,8 @@ export class SpessaPlayer {
     this.emitProgress()
   }
 
-  setLoopRange(range: [number, number] | null) {
-    if (range && (!Number.isFinite(range[0]) || !Number.isFinite(range[1]) || range[0] < 0 || range[1] > 1 || range[1] - range[0] < 0.001)) throw new Error('循环终点 B 必须在起点 A 之后。')
-    this.loopRange = range
-  }
-
-  setStaffMuted(staff: 1 | 2, muted: boolean) {
-    this.synth.midiChannels[staff - 1]?.setSystemParameter('isMuted', muted)
-  }
-
-  setSpeed(percent: number) {
-    this.sequencer.playbackRate = percent / 100
+  setTempo(bpm: number) {
+    this.sequencer.playbackRate = playbackRateAtBpm(bpm, this.initialBpm)
     if (this.metronomeEnabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
   }
 
@@ -155,12 +150,7 @@ export class SpessaPlayer {
   }
 
   private emitProgress = () => {
-    let playbackSeconds = this.sequencer.currentHighResolutionTime
-    if (this.loopRange && !this.sequencer.paused && playbackSeconds >= this.loopRange[1] * this.duration) {
-      this.sequencer.currentTime = seekTimeAtProgress(this.duration, this.loopRange[0])
-      playbackSeconds = this.sequencer.currentHighResolutionTime
-      if (this.metronomeEnabled) this.metronome.start(playbackSeconds, this.sequencer.playbackRate)
-    }
+    const playbackSeconds = this.sequencer.currentHighResolutionTime
     this.listener.onTime(playbackSeconds, this.sequencer.duration)
   }
 

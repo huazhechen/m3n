@@ -1557,10 +1557,7 @@ a.action-button {
 .score-list.is-compact-list .score-card { height: auto; min-height: 80px; flex-direction: row; align-items: center; gap: 16px; }
 .home-sample { max-width: 900px; margin: 32px auto; }
 .document-example > .action-button { display: inline-flex; margin: 8px 0 20px; }
-.practice-range-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
-.practice-range-controls label { display: inline-flex; min-height: 44px; align-items: center; gap: 4px; }
 .embedded-editor .resizable-editor { align-items: stretch; }
-.practice-range-controls button { min-height: 44px; }
 .editor-source-pane { grid-area: source; display: flex; min-width: 0; min-height: 420px; height: 65vh; max-height: 75vh; }
 .editor-preview-pane { grid-area: render; min-width: 0; }
 .embedded-editor .editor-source-pane { height: auto; min-height: 0; max-height: 260px; }

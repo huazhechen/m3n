@@ -6,13 +6,12 @@ import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MeiSourceMapRange, ScoreDocument } from '@m3n/notation'
 import {
-  DEFAULT_PLAYBACK_SPEED,
   DEFAULT_PLAYBACK_TRANSPOSE,
   DEFAULT_SCORE_WIDTH,
   METRONOME_ENABLED_KEY,
-  PLAYBACK_SPEED_KEY,
-  PLAYBACK_SPEED_MAX,
-  PLAYBACK_SPEED_MIN,
+  PLAYBACK_BPM_KEY,
+  clampPlaybackBpm,
+  readPlaybackBpm,
   PLAYBACK_TRANSPOSE_MAX,
   PLAYBACK_TRANSPOSE_MIN,
   TRANSPOSE_KEY,
@@ -58,7 +57,7 @@ function playbackCountInBeats(scoreDocument: ScoreDocument | undefined) {
   if (!Number.isFinite(expected) || expected <= 0) return 0
   // A complete opening measure gets one full bar; a pickup gets only the
   // missing beats needed to complete that first bar.
-  return actual > 0 && actual < expected ? expected - actual : expected
+  return (actual > 0 && actual < expected ? expected - actual : expected) * (event?.meterUnit ?? scoreDocument?.meterUnit ?? 4) / 4
 }
 
 function queryScoreElement(paper: HTMLElement | null, xmlId: string) {
@@ -180,23 +179,11 @@ export function ScoreRenderer({
   const [toneError, setToneError] = useState('')
   const [toneRetry, setToneRetry] = useState(0)
   const [playbackProgress, setPlaybackProgress] = useState(0)
-  const [loop, setLoop] = useState({ a: 0, b: 1, enabled: false })
-  const [muted, setMuted] = useState({ melody: false, bass: false })
-  const [follow, setFollow] = useState(true)
-  const practiceRef = useRef({ loop, muted, follow })
-  practiceRef.current = { loop, muted, follow }
-  const followedSystem = useRef<Element | null>(null)
   const [layoutWidth, setLayoutWidth] = useState(() => (
     compact ? 640 : readRendererSetting(SCORE_WIDTH_KEY, DEFAULT_SCORE_WIDTH, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX)
   ))
-  const [playbackSpeed, setPlaybackSpeed] = useState(() => (
-    compact ? DEFAULT_PLAYBACK_SPEED : readRendererSetting(
-      PLAYBACK_SPEED_KEY,
-      DEFAULT_PLAYBACK_SPEED,
-      PLAYBACK_SPEED_MIN,
-      PLAYBACK_SPEED_MAX,
-    )
-  ))
+  const [bpmOverride, setBpmOverride] = useState<number | null>(() => compact ? null : readPlaybackBpm())
+  const playbackBpm = bpmOverride ?? clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
   const [playbackTranspose, setPlaybackTranspose] = useState(() => (
     compact ? DEFAULT_PLAYBACK_TRANSPOSE : readRendererSetting(
       TRANSPOSE_KEY,
@@ -209,7 +196,8 @@ export function ScoreRenderer({
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
-  const speedRef = useRef(playbackSpeed)
+  const bpmRef = useRef(playbackBpm)
+  bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
   const [fitWidth, setFitWidth] = useState(() => compact || readRendererSetting('m3n:fit-width', 1, 0, 1) === 1)
   const [contentWidth, setContentWidth] = useState(0)
@@ -225,8 +213,6 @@ export function ScoreRenderer({
   useEffect(() => {
     setPlaybackProgress(0)
     playerStartProgressRef.current = 0
-    setLoop({ a: 0, b: 1, enabled: false })
-    followedSystem.current = null
     setIsPlaying(false)
     setIsPlayerLoading(false)
     return () => {
@@ -350,12 +336,6 @@ export function ScoreRenderer({
     })
     measures.forEach(highlightMeasure)
     highlightedMeasuresRef.current = measures
-    const system = measures[0]?.closest('g.system')
-    if (system && system !== followedSystem.current && practiceRef.current.follow && playerRef.current && !playerRef.current.paused && !isSeekingRef.current) {
-      followedSystem.current = system
-      const bounds = system.getBoundingClientRect()
-      if (bounds.top < 70 || bounds.bottom > window.innerHeight - 30) system.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    }
     onActiveXmlId?.(timedElements.map((element) => element.xmlId).find((id) => sourceMap.some((range) => range.xmlId === id)) ?? null)
   }
 
@@ -372,15 +352,18 @@ export function ScoreRenderer({
     const initialization = (async () => {
       setIsPlayerLoading(true)
       try {
-        let score = scoreRef.current
-        if (!score) {
+        const scorePreparation = scoreRef.current ? Promise.resolve(scoreRef.current) : (async () => {
           const { PlaybackScore } = await import('@m3n/score-renderer/playback')
-          score = await PlaybackScore.create(typeof mei === 'function' ? mei() : mei)
+          const score = await PlaybackScore.create(typeof mei === 'function' ? mei() : mei)
           if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { score.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
           scoreRef.current = score
-        }
+          return score
+        })()
+        const [score, { SpessaPlayer }] = await Promise.all([
+          scorePreparation,
+          import('@m3n/score-renderer/player'),
+        ])
         midiRef.current ??= score.midi()
-        const { SpessaPlayer } = await import('@m3n/score-renderer/player')
         if (playerGeneration !== playerGenerationRef.current) throw new Error('音色已切换，请重新播放。')
         const player = await SpessaPlayer.create(midiRef.current, {
           onEnded: () => {
@@ -389,12 +372,8 @@ export function ScoreRenderer({
           onTime: onPlayerTime,
         }, transposeRef.current, playbackCountInBeats(scoreDocument), tone)
         if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
-        player.setSpeed(speedRef.current)
+        player.setTempo(bpmRef.current)
         player.setMetronomeEnabled(metronomeEnabled)
-        const practice = practiceRef.current
-        player.setLoopRange(practice.loop.enabled ? [practice.loop.a, practice.loop.b] : null)
-        player.setStaffMuted(1, practice.muted.melody)
-        player.setStaffMuted(2, practice.muted.bass)
         if (playerStartProgressRef.current > 0) player.seek(playerStartProgressRef.current)
         playerStartProgressRef.current = 0
         playerRef.current = player
@@ -454,22 +433,6 @@ export function ScoreRenderer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playbackTone, toneRetry])
 
-  const playSelection = async () => {
-    try {
-      if (!selectedXmlId || !scoreDocument) return
-      const range = sourceMap.find(item => item.xmlId === selectedXmlId)
-      const measure = [...scoreDocument.parts.values()].flatMap(part => [...part.melody, ...part.bass]).find(item => item.events.some(event => event.sourceStart === range?.sourceStart))
-      const first = measure?.events[0]
-      const firstId = first && sourceMap.find(item => item.sourceStart === first.sourceStart)?.xmlId
-      if (!firstId) return
-      const player = await getPlayer()
-      const time = scoreRef.current?.timeForElement(firstId) ?? 0
-      player.seek(time / 1000 / player.duration)
-      scorePlaybackCoordinator.claim(playbackLeaseRef.current)
-      await player.play(); setIsPlaying(true)
-    } catch (error) { setMessage(error instanceof Error ? error.message : '无法播放选中小节。') }
-  }
-
   const togglePlayback = async () => {
     try {
       const player = await getPlayer()
@@ -527,12 +490,13 @@ export function ScoreRenderer({
     onLayoutWidthChange?.(width)
   }
 
-  const changePlaybackSpeed = (value: number) => {
-    const speed = Math.max(PLAYBACK_SPEED_MIN, Math.min(PLAYBACK_SPEED_MAX, value))
-    speedRef.current = speed
-    setPlaybackSpeed(speed)
-    if (!compact) writeRendererSetting(PLAYBACK_SPEED_KEY, speed)
-    playerRef.current?.setSpeed(speed)
+  const changePlaybackBpm = (value: number) => {
+    if (!Number.isFinite(value)) return
+    const bpm = clampPlaybackBpm(value)
+    bpmRef.current = bpm
+    setBpmOverride(bpm)
+    if (!compact) writeRendererSetting(PLAYBACK_BPM_KEY, bpm)
+    playerRef.current?.setTempo(bpm)
   }
 
   const changePlaybackTranspose = (value: number) => {
@@ -581,23 +545,13 @@ export function ScoreRenderer({
   return (
     <section className={compact ? 'score-card compact' : 'score-card'}>
       {hasAudioControls && <ScoreControls
-        practice={{
-          selected: Boolean(selectedXmlId), onPlaySelection: () => void playSelection(),
-          a: loop.a, b: loop.b, looping: loop.enabled,
-          onMark: point => { const next = { ...loop, [point]: playbackProgress, enabled: false }; setLoop(next); playerRef.current?.setLoopRange(null) },
-          onLoop: enabled => {
-            if (enabled && loop.b - loop.a < 0.001) { setMessage('循环终点 B 必须在起点 A 之后。'); return }
-            setLoop({ ...loop, enabled }); playerRef.current?.setLoopRange(enabled ? [loop.a, loop.b] : null)
-          },
-          melodyMuted: muted.melody, bassMuted: muted.bass, hasBass: Boolean(scoreDocument && [...scoreDocument.parts.values()].some(part => part.bass.length)),
-          onMute: (staff, value) => { setMuted({ ...muted, [staff === 1 ? 'melody' : 'bass']: value }); playerRef.current?.setStaffMuted(staff, value) },
-          follow, onFollow: setFollow,
-        }}
         compact={compact}
         isPlaying={isPlaying}
         isLoading={isPlayerLoading || toneLoading || isSourceUpdating}
         progress={playbackProgress}
-        speed={playbackSpeed}
+        defaultBpm={clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)}
+        bpm={playbackBpm}
+        beatUnit={scoreDocument.meterUnit}
         transpose={playbackTranspose}
         metronomeEnabled={metronomeEnabled}
         tone={playbackTone}
@@ -617,14 +571,16 @@ export function ScoreRenderer({
         onSeekStart={beginSeek}
         onSeek={previewSeek}
         onSeekCommit={commitSeek}
-        onSpeedChange={changePlaybackSpeed}
+        onBpmChange={changePlaybackBpm}
         onTransposeChange={changePlaybackTranspose}
         onMetronomeChange={changeMetronomeEnabled}
-        onResetPractice={() => {
+        onResetPlayback={() => {
           changePlaybackTone('synth')
-          setLoop({ a: 0, b: 1, enabled: false }); playerRef.current?.setLoopRange(null)
-          setMuted({ melody: false, bass: false }); playerRef.current?.setStaffMuted(1, false); playerRef.current?.setStaffMuted(2, false); setFollow(true)
-          changePlaybackSpeed(DEFAULT_PLAYBACK_SPEED)
+          setBpmOverride(null)
+          const bpm = clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
+          bpmRef.current = bpm
+          if (!compact) { try { localStorage.removeItem(PLAYBACK_BPM_KEY) } catch { /* Use the score tempo in memory. */ } }
+          playerRef.current?.setTempo(bpm)
           changeMetronomeEnabled(false)
           if (playbackTranspose !== DEFAULT_PLAYBACK_TRANSPOSE) changePlaybackTranspose(DEFAULT_PLAYBACK_TRANSPOSE)
         }}

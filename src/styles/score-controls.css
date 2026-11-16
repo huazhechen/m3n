@@ -46,7 +46,8 @@
 }
 
 .audio-controls button:focus-visible,
-.audio-controls input:focus-visible {
+.audio-controls input:focus-visible,
+.audio-controls select:focus-visible {
   outline: 2px solid #176e6e;
   outline-offset: 2px;
 }
@@ -91,7 +92,7 @@
 }
 
 .audio-controls output,
-.practice-summary {
+.playback-tempo-summary {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -156,54 +157,13 @@
   min-width: 0;
 }
 
-.practice-toggle[aria-expanded="true"] {
-  border-color: #a8c6bb;
-  color: #176e6e;
-  background: #e8f1eb;
-}
-
-.practice-summary {
+.playback-tempo-summary {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   color: #627b74;
   font-size: 12px;
   font-weight: 500;
-}
-
-.practice-changed {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #176e6e;
-}
-
-.practice-chevron {
-  display: flex;
-}
-
-.practice-toggle[aria-expanded="true"] .practice-chevron {
-  transform: rotate(180deg);
-}
-
-.practice-panel {
-  display: grid;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #dce5df;
-}
-
-.practice-panel[hidden] {
-  display: none;
-}
-
-.practice-panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .control-reset {
@@ -217,13 +177,13 @@
   cursor: pointer;
 }
 
-.practice-settings-grid {
+.playback-settings-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
 }
 
-.practice-settings-grid > div,
+.playback-settings-grid > div,
 .playback-metronome {
   padding: 12px;
   border: 1px solid #e0e7e1;
@@ -248,31 +208,6 @@
 
 .playback-tone p {
   margin: 8px 0;
-}
-
-.speed-presets {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.speed-presets button {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  border: 1px solid #e1e8e2;
-  border-radius: 8px;
-  color: #5b7470;
-  background: #f8faf7;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.speed-presets button[aria-pressed="true"] {
-  border-color: #b4d0c5;
-  color: #176e6e;
-  background: #eaf3ec;
-  font-weight: 600;
 }
 
 .transpose-stepper {
@@ -334,7 +269,7 @@
 }
 
 @container (max-width: 680px) {
-  .practice-settings-grid {
+  .playback-settings-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -359,9 +294,8 @@
   }
 
   .playback-progress .control-field-heading > span,
-  .practice-toggle > svg,
-  .practice-summary,
-  .practice-chevron,
+  .playback-tempo-summary,
+  .playback-settings-toggle > span,
   .settings-toggle > span {
     display: none;
   }
@@ -370,8 +304,9 @@
     gap: 6px;
   }
 
-  .practice-toggle {
-    padding: 0 8px;
+  .playback-settings-toggle {
+    width: 44px;
+    padding: 0;
   }
 
   .settings-toggle {
@@ -379,7 +314,7 @@
     padding: 0;
   }
 
-  .practice-settings-grid {
+  .playback-settings-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -394,4 +329,42 @@
   .playback-toggle > span {
     display: none;
   }
+}
+
+.playback-settings-dialog {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.playback-settings-dialog .playback-settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 16px;
+}
+
+.playback-settings-dialog .playback-speed {
+  grid-column: 1 / -1;
+}
+
+.playback-bpm-input {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #cbd9cf;
+  border-radius: 8px;
+  color: inherit;
+  background: #fff;
+  font: inherit;
+}
+
+@media (max-width: 480px) {
+  .playback-settings-dialog .playback-settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.playback-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px;
 }

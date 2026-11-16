@@ -66,7 +66,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `lib/render-score.ts`：屏幕、打印预览和最终导出的统一排版入口，负责引擎选择、串行调度、取消、分页和 SVG 后处理。
 - `components/ScoreRenderer.tsx`：独立管理布局、播放和光标生命周期；改变版宽或谱式不销毁播放器，更新音乐文档时释放旧播放资源。
-- `components/ScoreControls.tsx`：播放、回到开头与进度常驻；音色、速度、移调、节拍器与恢复默认收纳在可展开的练习面板中。控制栏按所在容器宽度调整布局，按钮、音色选择与滑条的触控区域至少 44px。音色选择通过 `hooks/usePlaybackTone.ts` 同步阅读页、编辑页、文档谱例与同源标签页，以 `m3n:playback-tone` 长期保存在 localStorage；其他练习状态仍独立。
+- `components/ScoreControls.tsx`：播放、回到开头与进度常驻；“播放设置”与排版设置一样使用原生模态弹出框，仅包含音色、速度、移调、节拍器与恢复默认按钮。设置按钮在桌面显示图标和文字，窄屏显示图标。控制栏按所在容器宽度调整布局，按钮、音色选择与滑条的触控区域至少 44px。音色选择通过 `hooks/usePlaybackTone.ts` 同步阅读页、编辑页、文档谱例与同源标签页，以 `m3n:playback-tone` 长期保存在 localStorage；其他练习状态仍独立。
 - `components/ScoreExportDialog.tsx`：打印参数、预览与下载状态；两种谱式均提供连续 SVG、PNG 与多页矢量 PDF。打印宽度单独持久化。
 - `lib/vector-export.ts`：把 SVG 文字按字符位置转为 OpenType 字形路径；数字沿用内嵌 Barlow，文字使用按需加载的本地 Noto Serif CJK SC。字形缺失明确报错。
 - `components/SourceEditor.tsx`：CodeMirror 编辑适配，提供高亮、行号、括号匹配、指令补全、历史与范围诊断；领域层不依赖编辑器。
@@ -82,7 +82,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 默认部署在 `/`；设置 `VITE_BASE_URL=/score/ npm run build` 可部署到子路径。React Router 的 `basename`、站点图标、导出字体和分享 API 均使用同一构建基路径，Vite 负责处理模块、WASM 和音源 URL。宿主应对该前缀下的页面路由返回 `index.html`，并把 `/score/api/*` 转给现有 Worker（转交前去掉 `/score` 前缀）；存储继续实现 `M3N_SCORES` 的 KV 接口。
 
-钢琴和口琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-{Piano,Harmonica}-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在内存中生成短周期波形，无需请求音源文件，继续使用同一套 MIDI、速度、移调、静音与节拍器逻辑。选择 `piano` 或 `harmonica` 时立即按需下载对应文件，显示加载状态、错误与重试；切换正在播放的音色时保留进度与练习参数，准备就绪后继续播放。旧请求不能覆盖更新后的选择。
+钢琴和口琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-{Piano,Harmonica}-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在内存中生成短周期波形，无需请求音源文件，继续使用同一套 MIDI、速度、移调与节拍器逻辑。选择 `piano` 或 `harmonica` 时立即按需下载对应文件，显示加载状态、错误与重试；切换正在播放的音色时保留进度与练习参数，准备就绪后继续播放。旧请求不能覆盖更新后的选择。
 
 音源同时保存在页面内存和 `m3n-soundfonts-v1` Cache Storage，以完整哈希 URL 为键；刷新后先读缓存，不重新下载。存储不可用或配额不足时允许正常加载并保留内存副本，网络失败不缓存，损坏缓存重新下载。浏览器清理站点数据可能移除缓存和选择。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
 
@@ -104,7 +104,9 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 阅读默认采用连续布局并按容器重新排版，保留可读字号；分页的纸张装饰在适应阅读宽度时简化。固定阅读宽度与分页设置仍可选，打印版宽使用单独的 `m3n:print-width`。共享排版入口将每页 Verovio 内层 SVG 的尺寸明确为外层 viewBox 的坐标尺寸，避免 PDF 转换器把后续页的默认百分比尺寸解释为打印视口而二次缩放。
 
-练习支持从选中小节首次出现的位置播放、按进度设置 A–B 循环、独立静音旋律与低音、按活跃系统跟随滚动。MEI 在 `instrDef` 明确分配两个谱表的 MIDI 通道（编码 0、1，即通常所称的通道 1、2）；静音不修改音乐文档。循环在播放器时间轴执行，节拍器随循环跳转同步。
+播放设置不再提供选中小节播放、A–B 循环、声部静音和播放跟随，播放器同步移除循环和声部静音接口。速度以 10–240 的整数 BPM 输入，也可用滑条逐一调整；一拍与谱面拍速和节拍器一致，按初始拍号分母计拍。例如 6/8、80 qpm 的原速为 160 BPM。播放器按目标 BPM 与 MIDI 初始拍速的比率调整时间轴，保留谱中变速的相对关系，节拍器与预备拍同步。首次未调整时采用谱面原速（超出范围时截到边界），手动值使用新键 `m3n:playback-bpm` 持久化，不读取旧百分比速度。恢复默认会清除此覆盖值，同时恢复合成音色、原调和关闭节拍器。
+
+首次播放仍需要动态加载 Verovio/WASM 生成 MIDI，并初始化 AudioWorklet；合成音色仅免去音源采样下载。MIDI 准备和音频播放器模块加载并行执行；同一乐谱的播放器与渲染工具在页面内复用。
 
 导出字体约 16 MB，只在下载时从本站加载。SVG 和 PDF 的文字转为轮廓以保存中文及字形；文字不再可选择或搜索。PNG 使用相同轮廓生成。字体来源、许可证、校验值与重建脚本见 `public/licenses/noto-serif/`。
 
