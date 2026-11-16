@@ -43,6 +43,14 @@ export function createSyntheticSoundFont() {
     const topFrequency = 440 * 2 ** ((max - 69) / 12)
     const harmonics = Math.min(31, Math.floor(19845 / topFrequency), period / 2 - 1)
     const sustain = fmCycle(period, 0.08, 1, harmonics)
+    // Low, integer harmonics add presence on small speakers without a metallic
+    // tine. Roll off upper partials gradually as the register gets higher.
+    const presence = new Float32Array(period)
+    for (const [harmonic, level] of [[2, 0.28], [3, 0.16], [4, 0.07], [5, 0.03]] as const) {
+      if (harmonic > harmonics) continue
+      const amplitude = level * Math.exp(-((harmonic * topFrequency / 2800) ** 2))
+      for (let i = 0; i < period; i++) presence[i] = presence[i]! + amplitude * Math.sin(2 * Math.PI * harmonic * i / period)
+    }
     const loopStart = Math.ceil(0.75 * SAMPLE_RATE / period) * period
     const loopEnd = loopStart + 2 * period
     const attackSeconds = loopStart / SAMPLE_RATE
@@ -54,7 +62,7 @@ export function createSyntheticSoundFont() {
         // Finish the timbre transition before the loop, so there is no seam.
         const gate = Math.max(0, Math.min(1, (attackSeconds - 0.12 - t) / 0.12))
         const brightness = Math.exp(-t / 0.32) * gate
-        return sustain[phase]! + brightness * (attack[phase]! - sustain[phase]!)
+        return sustain[phase]! + presence[phase]! + brightness * (attack[phase]! - sustain[phase]!)
       })
       const peak = audio.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0)
       for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.7 / peak

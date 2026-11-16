@@ -78,7 +78,11 @@ test('FM electric piano has a brighter attack, velocity layers, exact tuning and
   }
   const soft = bank.samples.find(sample => sample.originalKey === 69 && sample.name.includes('soft'))!
   const hard = bank.samples.find(sample => sample.originalKey === 69 && sample.name.includes('hard'))!
-  expect(brightness(soft, 0)).toBeGreaterThan(brightness(soft, soft.loopStart) * 10)
+  // Sustain retains audible low harmonics rather than fading to a near sine.
+  const sustainBrightness = brightness(soft, soft.loopStart)
+  expect(sustainBrightness).toBeGreaterThan(0.04)
+  expect(sustainBrightness).toBeLessThan(0.15)
+  expect(brightness(soft, 0)).toBeGreaterThan(sustainBrightness * 2)
   expect(brightness(hard, 0)).toBeGreaterThan(brightness(soft, 0))
 })
 
