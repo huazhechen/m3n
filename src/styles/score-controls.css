@@ -4,8 +4,8 @@
   display: grid; grid-template-columns: minmax(0, 1fr) 40px; align-items: center; gap: 8px;
   width: min(680px, calc(100vw - 24px));
 }
-.control-transport { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px; border: 1px solid #d3dfd9; border-radius: 10px; background: #fff; box-shadow: 0 3px 16px rgb(31 35 38 / 14%); }
-.control-transport .playback-toggle span { display: none; }
+.control-transport { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; align-items: center; gap: 8px; padding: 5px; border: 1px solid #d3dfd9; border-radius: 10px; background: #fff; box-shadow: 0 3px 16px rgb(31 35 38 / 14%); }
+.control-transport .playback-toggle span, .control-transport .metronome-toggle span { display: none; }
 .playback-only { position: sticky; top: 0; z-index: 2; margin-bottom: 8px; }
 .score-renderer:has(> .playback-only), .markdown-panel:has(.playback-only) { overflow: clip; }
 .control-button {
@@ -47,7 +47,6 @@
 .control-tone-status button { margin-left: 8px; }
 .tone-loading-spinner { animation: tone-loading-spin .8s linear infinite; }
 @keyframes tone-loading-spin { to { transform: rotate(360deg); } }
-@media (max-width: 480px) { .control-transport .metronome-toggle span { display: none; } }
 @media (prefers-reduced-motion: reduce) { .tone-loading-spinner { animation: none; } }
 body:has(> .floating-controls) main { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 
