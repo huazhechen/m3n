@@ -80,6 +80,8 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `hooks/useM3NAnalysis.ts` 与 `lib/analysis-client.ts`：编辑分析的合并、版本检查与线程生命周期；不把 Worker 通信逻辑放入领域包。
 - `notation/harmony-syntax.ts`：和弦符号的共享定义；和弦行解析、校验与 MEI 符号生成复用它，最长后缀优先匹配。
 
+乐谱库顶部仅保留同一行的“乐谱库”标题和搜索框。搜索支持曲名与署名等文本，以及词／歌词、低／低音、本地、内置、调号和拍号；空格分隔的多个条件同时满足，调号与拍号精确匹配，避免 G 命中其他调性或英文曲名。移动端（≤720px）自动使用紧凑列表，歌名与元信息居中并隐藏署名；桌面端使用普通卡片。词、低与调号、拍号、速度统一显示在歌名下方的标签区域，不提供下拉筛选或紧凑切换按钮。
+
 ## 渲染资源与切换
 
 默认部署在 `/`；设置 `VITE_BASE_URL=/score/ npm run build` 可部署到子路径。React Router 的 `basename`、站点图标、导出字体和分享 API 均使用同一构建基路径，Vite 负责处理模块、WASM 和音源 URL。宿主应对该前缀下的页面路由返回 `index.html`，并把 `/score/api/*` 转给现有 Worker（转交前去掉 `/score` 前缀）；存储继续实现 `M3N_SCORES` 的 KV 接口。
