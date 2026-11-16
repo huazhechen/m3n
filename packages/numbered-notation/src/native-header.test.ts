@@ -7,9 +7,55 @@ import { DefaultTextMeasurer } from './native-measure.js'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 import { numberedOrderLines } from './order-lines.js'
+import { compileScore, RecordingPainter } from '@m3n/jpfun'
+import { projectNumberedScore } from './projection.js'
+import type { TextMeasurer } from './native-measure.js'
+import { numberedHeadingLines } from './header-text.js'
 
 const measurer = new DefaultTextMeasurer()
 const source = '{title=演奏顺序}{4/4}{order=A,B,C,B,D}\n===A\nN: 1 2 3 4 |\n===B\nN: 5 6 7 1e |\n===C\nN: 1 2 3 4 |\n===D\nN: 5 6 7 1e |||'
+
+describe('header text blocks in both implementations', () => {
+  const characters = { measureText(text: string) { return { w: [...text].length } } }
+  it('resets line width at explicit newlines and preserves requested blank lines', () => {
+    expect(numberedHeadingLines('AB\nCD', 4, 1, characters)).toEqual(['AB', 'CD'])
+    expect(numberedHeadingLines('AB\r\n\r\nCD\n', 4, 1, characters)).toEqual(['AB', '', 'CD', ''])
+  })
+  it('does not strand a short first word when the following word needs hard wrapping', () => {
+    expect(numberedHeadingLines('A BCDEFGHIJ', 6, 1, characters)).toEqual(['A BCDE', 'FGHIJ'])
+  })
+  const varied: TextMeasurer = { measureText(text, style) {
+    const measured = measurer.measureText(text, style)
+    if (text === 'A') return { ...measured, h: 8, baseline: 5 }
+    if (text === 'g') return { ...measured, h: 15, baseline: 8 }
+    if (text === '深字') return { ...measured, h: 38, baseline: 34 }
+    return measured
+  } }
+  it.each([
+    { title: 'Title', subtitle: 'Subtitle', singer: 'Singer', width: 800 },
+    { title: 'A\n深字', subtitle: 'A\ng', singer: '歌手', width: 320 },
+    { title: 'A BCDEFGHIJKLMNO', subtitle: 'A long subtitle needing multiple lines', singer: '歌手', width: 220 },
+    { title: '标题', subtitle: '长副标题需要在窄页面中自动折行并保持自己的基线间距', singer: '歌手', width: 160 },
+  ])('paints matching measured blocks at $width px: $title', ({ title, subtitle, singer, width }) => {
+    const document = { ...parseM3NDocument('{4/4}\nN: 1 2 3 4 |||'), title, subtitle, singer }
+    const projection = projectNumberedScore(document, { width, paged: false, textMeasurer: varied })
+    const reference = compileScore(projection.source, { textMeasurer: varied })
+    const painter = new RecordingPainter()
+    for (const node of reference.layout.objects) node.paint(painter)
+    const expected = painter.commands.filter(command => command.kind === 'text' && command.style.fontFamily === 'serif')
+      .map(command => ({ text: command.text, baseline: command.y, size: command.style.fontSize }))
+    const native = nativeHeaderGeometry(document, width, 32, varied)
+    const root = new DOMParser().parseFromString(`<svg>${native.svg}</svg>`, 'image/svg+xml').documentElement
+    const actual = [...root.children].filter(node => node.tagName === 'text').map(node => ({
+      text: node.textContent, baseline: Number(node.getAttribute('y')), size: Number(node.getAttribute('font-size')),
+    }))
+    expect(actual.map(item => item.text)).toEqual(expected.map(item => item.text))
+    actual.forEach((item, index) => {
+      expect(item.size).toBe(expected[index]!.size)
+      expect(item.baseline).toBeCloseTo(expected[index]!.baseline, 4)
+    })
+  })
+})
 
 describe('native measured header order', () => {
   it.each([320, 800])('shares published line grouping and measures every frame at %spx', width => {

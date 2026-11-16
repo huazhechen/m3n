@@ -10,42 +10,36 @@ import { transposedNumberedKeyLabel } from './fixed-do.js'
 import { displayedTempo, sectionOrderLabels, type ScoreDocument } from '@m3n/notation'
 import type { TextMeasurer } from './native-measure.js'
 import { numberedOrderLines } from './order-lines.js'
+import { numberedHeadingLines as wrapNativeText } from './header-text.js'
 
 export type NativeOrderItem = { text: string; framed: boolean; x: number; y: number; width: number; height: number; baseline: number; textInset: number }
-
-export function wrapNativeText(text: string, width: number, size: number, measurer: TextMeasurer, weight = 400): string[] {
-  const lines: string[] = []
-  let line = ''
-  for (const character of text) {
-    if (character === '\n') { lines.push(line); line = ''; continue }
-    if (line && measurer.measureText(line + character, { fontSize: size, fontFamily: 'serif', fontWeight: weight }).w > width) {
-      const boundary = Math.max(line.lastIndexOf(' '), line.lastIndexOf('('), line.lastIndexOf('（'))
-      if (boundary > 0) { lines.push(line.slice(0, boundary).trimEnd()); line = line.slice(boundary).trimStart() + character }
-      else { lines.push(line); line = character.trimStart() }
-    } else line += character
-  }
-  if (line) lines.push(line)
-  return lines
-}
+export { wrapNativeText }
 
 /** Shared measured geometry for header painting and the first system's position. */
 export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, systemGap = nativeStyle.systemGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;noteGapEm?:number} = {}) {
   const available = width - 2 * margin
   const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, measurer, 700)
   const headerContent = numberedHeaderContent(document)
-  const subtitle = headerContent.subtitles.flatMap(text => wrapNativeText(text, available - em(2), nativeStyle.subtitle, measurer))
+  const subtitleBlocks = headerContent.subtitles.map(text => wrapNativeText(text, available - em(2), nativeStyle.subtitle, measurer))
+  const subtitle = subtitleBlocks.flat()
   const painter = new NativeSymbols(measurer)
-  const textRows = (lines: string[], size: number, weight = 400) => {
-    let bottom = 0
-    return lines.map((text, index) => {
-      const m = measurer.measureText(text, { fontSize: size, fontFamily: 'serif', fontWeight: weight })
-      const top = bottom + (index ? size * 0.25 : 0), baseline = top + m.baseline
-      bottom = top + m.h
-      return { text, baseline, bottom }
-    })
+  const textBlock = (lines: string[], size: number, weight = 400) => {
+    if (!lines.length) return { rows: [], height: 0 }
+    const metrics = lines.map(text => measurer.measureText(text, { fontSize: size, fontFamily: 'serif', fontWeight: weight }))
+    const advance = size * 1.25
+    const top = Math.min(...metrics.map((m, index) => index * advance - m.baseline))
+    const bottom = Math.max(...metrics.map((m, index) => index * advance - m.baseline + m.h))
+    return { rows: lines.map((text, index) => ({ text, baseline: index * advance - top })), height: bottom - top }
   }
-  const titleRows = textRows(title, nativeStyle.title, 700), subtitleRows = textRows(subtitle, nativeStyle.subtitle)
-  const titleHeight = titleRows.at(-1)?.bottom ?? 0, subtitleHeight = subtitleRows.at(-1)?.bottom ?? 0
+  const titleBlock = textBlock(title, nativeStyle.title, 700), titleRows = titleBlock.rows
+  let subtitleHeight = 0
+  const subtitleRows = subtitleBlocks.flatMap((lines, index) => {
+    const block = textBlock(lines, nativeStyle.subtitle)
+    const top = subtitleHeight + (index ? em(5) : 0)
+    subtitleHeight = top + block.height
+    return block.rows.map(row => ({ ...row, baseline: top + row.baseline }))
+  })
+  const titleHeight = titleBlock.height
   const centerHeight = titleHeight + subtitleHeight + (titleHeight && subtitleHeight ? em(5) : 0)
   const creditBounds: { left: number; right: number; top: number; bottom: number }[] = []
   let creditBottom = 0

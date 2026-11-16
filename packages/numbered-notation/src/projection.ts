@@ -1,4 +1,5 @@
 import { numberedHeaderContent } from './header-content.js'
+import { numberedHeadingLines } from './header-text.js'
 import { DefaultTextMeasurer, type TextMeasurer } from '@m3n/jpfun'
 import {
   resolveScorePitches, displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreEventIds,
@@ -374,17 +375,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const headingText = (text: string, size: number, weight: number) => {
     const measurer=options.textMeasurer ?? new DefaultTextMeasurer()
     const available=options.width-2*(options.pageMargin ?? 32)-2
-    const lines:string[]=[]
-    let line=''
-    for (const char of text) {
-      if (line && measurer.measureText(line+char,{fontSize:size,fontFamily:'serif',fontWeight:weight}).w>available) {
-        const boundary=Math.max(line.lastIndexOf(' '),line.lastIndexOf('('),line.lastIndexOf('（'))
-        if (boundary>line.length/3) { lines.push(line.slice(0,boundary).trimEnd()); line=line.slice(boundary+(line[boundary]===' '?1:0))+char }
-        else {lines.push(line.trimEnd());line=char.trimStart()}
-      } else line+=char
-    }
-    if(line)lines.push(line.trimEnd())
-    return lines.join('\n')
+    return numberedHeadingLines(text,available,size,measurer,weight).join('\n')
   }
   const headerContent = numberedHeaderContent(document)
   const headings = [
