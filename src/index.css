@@ -1586,10 +1586,6 @@ a.action-button {
     margin-inline: 0;
   }
 
-  .score-renderer > .audio-controls {
-    margin-inline: 8px;
-  }
-
   .score-renderer > .score-paper {
     padding: 0;
     border-radius: 0;

@@ -12,6 +12,7 @@ import { useM3NAnalysis } from '../hooks/useM3NAnalysis'
 type NotationEditorProps = {
   initialSource?: string
   embedded?: boolean
+  playbackOnly?: boolean
   simulatedSubmit?: boolean
   draftScope?: string
   scoreId?: string
@@ -22,6 +23,7 @@ type NotationEditorProps = {
 export function NotationEditor({
   initialSource = defaultScore,
   embedded = false,
+  playbackOnly = false,
   simulatedSubmit = false,
   scoreId,
   draftScope,
@@ -75,11 +77,11 @@ export function NotationEditor({
     const textarea = textareaRef.current
     if (!textarea) return
     if (!xmlId) {
-      textarea.select(textarea.selection())
+      textarea.select(textarea.selection(), undefined, false, { scrollIntoView: false })
       return
     }
     const mappedRange = result.sourceMap.find((item) => item.xmlId === xmlId)
-    if (mappedRange) textarea.select(mappedRange.sourceStart, mappedRange.sourceEnd)
+    if (mappedRange) textarea.select(mappedRange.sourceStart, mappedRange.sourceEnd, false, { scrollIntoView: false })
   }, [analysis.source, result.sourceMap])
 
   const copyMei = async () => {
@@ -156,6 +158,7 @@ export function NotationEditor({
 
           sourceMap={result.sourceMap}
           compact={embedded}
+          playbackOnly={playbackOnly}
           isSourceUpdating={isAnalyzing}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}

@@ -8,7 +8,7 @@ import { history, historyKeymap, defaultKeymap } from '@codemirror/commands'
 import { setDiagnostics } from '@codemirror/lint'
 import { formatScoreDiagnostic, type ScoreDiagnostic } from '@m3n/notation'
 
-export type SourceEditorHandle = { select: (start: number, end?: number, focus?: boolean) => void; selection: () => number }
+export type SourceEditorHandle = { select: (start: number, end?: number, focus?: boolean, options?: { scrollIntoView?: boolean }) => void; selection: () => number }
 type SourceEditorProps = {
   value: string
   ariaLabel: string
@@ -66,9 +66,9 @@ export function SourceEditor(props: SourceEditorProps) {
     ] }) })
     viewRef.current = view
     const handle: SourceEditorHandle = {
-      select(start, end = start, focus = false) {
+      select(start, end = start, focus = false, options) {
         const length = view.state.doc.length
-        view.dispatch({ selection: { anchor: Math.min(start, length), head: Math.min(end, length) }, effects: EditorView.scrollIntoView(Math.min(start, length), { y: 'center' }) })
+        view.dispatch({ selection: { anchor: Math.min(start, length), head: Math.min(end, length) }, effects: options?.scrollIntoView === false ? [] : EditorView.scrollIntoView(Math.min(start, length), { y: 'center' }) })
         if (focus) view.focus()
       },
       selection: () => view.state.selection.main.head,

@@ -36,6 +36,7 @@ type ScoreRendererProps = {
   scoreDocument: ScoreDocument
   scoreId?: string
   compact?: boolean
+  playbackOnly?: boolean
   isSourceUpdating?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
@@ -148,6 +149,7 @@ export function ScoreRenderer({
   scoreDocument,
   scoreId,
   compact = false,
+  playbackOnly = false,
   isSourceUpdating = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
@@ -171,7 +173,8 @@ export function ScoreRenderer({
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
   const [message, setMessage] = useState('')
-  const [playbackTone, changePlaybackTone] = usePlaybackTone()
+  const [savedPlaybackTone, changePlaybackTone] = usePlaybackTone()
+  const playbackTone = playbackOnly ? 'synth' : savedPlaybackTone
   const toneRef = useRef(playbackTone)
   toneRef.current = playbackTone
   const [toneLoading, setToneLoading] = useState(false)
@@ -179,7 +182,7 @@ export function ScoreRenderer({
   const [toneRetry, setToneRetry] = useState(0)
   const [playbackProgress, setPlaybackProgress] = useState(0)
   const [layoutWidth, setLayoutWidth] = useState(() => (
-    compact ? 640 : readRendererSetting(SCORE_WIDTH_KEY, DEFAULT_SCORE_WIDTH, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX)
+    playbackOnly ? DEFAULT_SCORE_WIDTH : compact ? 640 : readRendererSetting(SCORE_WIDTH_KEY, DEFAULT_SCORE_WIDTH, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX)
   ))
   const [bpmOverride, setBpmOverride] = useState<number | null>(() => compact ? null : readPlaybackBpm())
   const playbackBpm = bpmOverride ?? clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
@@ -198,8 +201,8 @@ export function ScoreRenderer({
   const bpmRef = useRef(playbackBpm)
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
-  const [fitWidth, setFitWidth] = useState(() => compact || readRendererSetting('m3n:fit-width', 1, 0, 1) === 1)
-  const [measureNumbers, setMeasureNumbers] = useState(() => readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
+  const [fitWidth, setFitWidth] = useState(() => !playbackOnly && (compact || readRendererSetting('m3n:fit-width', 1, 0, 1) === 1))
+  const [measureNumbers, setMeasureNumbers] = useState(() => !playbackOnly && readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
   const [contentWidth, setContentWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPlayerLoading, setIsPlayerLoading] = useState(false)
@@ -512,6 +515,7 @@ export function ScoreRenderer({
   return (
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
       {hasAudioControls && <ScoreControls
+        playbackOnly={playbackOnly}
         isPlaying={isPlaying}
         isLoading={isPlayerLoading || isSourceUpdating}
         progress={playbackProgress}

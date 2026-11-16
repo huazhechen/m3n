@@ -3,6 +3,7 @@ import type { PlaybackTone } from '@m3n/score-renderer/tones'
 import { PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX, PLAYBACK_TRANSPOSE_MIN, PLAYBACK_TRANSPOSE_MAX, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX } from '../lib/renderer-settings'
 
 type ScoreControlsProps = {
+  playbackOnly?: boolean
   isPlaying: boolean
   isLoading: boolean
   progress: number
@@ -38,7 +39,7 @@ const resetIcon = <Icon><path d="M9 4 5 8l4 4M5 8h8a7 7 0 1 1-6.5 9.6" /></Icon>
 
 export function ScoreControls(props: ScoreControlsProps) {
   const playLabel = props.isPlaying ? '暂停' : '播放'
-  return <div className="audio-controls" role="group" aria-label="乐谱控制">
+  return <div className={props.playbackOnly ? "audio-controls playback-only" : "audio-controls"} role="group" aria-label="乐谱控制">
     <div className="control-sliders">
       <div className="control-slider-row">
         <span className="control-row-label">进度<output>{Math.round(props.progress * 100)}%</output></span>
@@ -49,6 +50,7 @@ export function ScoreControls(props: ScoreControlsProps) {
           <Icon>{props.isPlaying ? <path d="M8 5v14M16 5v14" strokeWidth="4" /> : <path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none" />}</Icon><span>{props.isLoading ? '加载中' : playLabel}</span>
         </button>
       </div>
+      {!props.playbackOnly && <>
       <div className="control-slider-row">
         <span className="control-row-label">速度<output>{props.bpm} BPM</output></span>
         <input type="range" min={PLAYBACK_BPM_MIN} max={PLAYBACK_BPM_MAX} step="1" value={props.bpm} aria-label="播放速度" onChange={event => props.onBpmChange(Number(event.currentTarget.value))} />
@@ -59,8 +61,9 @@ export function ScoreControls(props: ScoreControlsProps) {
         <input type="range" min={SCORE_WIDTH_MIN} max={SCORE_WIDTH_MAX} step="1" value={props.width} aria-label="乐谱宽度" onChange={event => props.onWidthChange(Number(event.currentTarget.value))} />
         <button type="button" className="control-button" aria-label="还原宽度" title="还原谱集经典宽度" onClick={props.onResetWidth}>{resetIcon}<span>还原</span></button>
       </div>
+      </>}
     </div>
-    <div className="control-options">
+    {!props.playbackOnly && <div className="control-options">
       <button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
           <Icon><path d="m9 3-5 18h16L15 3ZM8 16h8M12 16l5-9" /></Icon><span>节拍器</span>
         </button>
@@ -78,7 +81,7 @@ export function ScoreControls(props: ScoreControlsProps) {
         <output aria-live="polite" title="移调（半音）">{props.transpose === 0 ? '原调' : props.transpose > 0 ? `+${props.transpose}` : props.transpose}</output>
         <button type="button" className="control-button" aria-label="升高半音" title="升高半音" disabled={props.transpose >= PLAYBACK_TRANSPOSE_MAX || props.isLoading} onClick={() => props.onTransposeChange(props.transpose + 1)}><Icon><path d="M5 12h14M12 5v14" /></Icon></button>
       </div>
-    </div>
+    </div>}
     {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || '正在下载钢琴音色…'}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
   </div>
 }

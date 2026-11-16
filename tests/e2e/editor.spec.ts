@@ -190,3 +190,28 @@ test('uses the numbered layout for export and honors excluding bass in SVG, PNG 
     }
   }
 })
+
+test('playback highlights notes without forcing page or source scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill(`{4/4}{240qpm}\n${'N: 1 2 3 4 |\n'.repeat(48)}`)
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  const pause = page.getByRole('button', { name: '暂停', exact: true })
+  await expect(pause).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('.score-paper .is-playing').first()).toBeVisible()
+  const position = page.getByRole('slider', { name: '播放位置' })
+  const before = Number(await position.inputValue())
+  const initial = await page.evaluate(() => {
+    window.scrollTo(0, 0)
+    const scroller = document.querySelector<HTMLElement>('.cm-scroller')!
+    scroller.scrollTop = 200
+    return { page: scrollY, source: scroller.scrollTop }
+  })
+  expect(initial.source).toBeGreaterThan(0)
+  await expect.poll(async () => Number(await position.inputValue())).toBeGreaterThan(before + 25)
+  expect(await page.evaluate(() => ({ page: scrollY, source: document.querySelector('.cm-scroller')!.scrollTop }))).toEqual(initial)
+  await expect(pause).toBeInViewport()
+  await pause.click()
+  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled()
+})

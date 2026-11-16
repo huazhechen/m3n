@@ -26,7 +26,7 @@ function MarkdownCode(props: ComponentPropsWithoutRef<'code'>) {
   const className = props.className ?? ''
   const value = String(props.children ?? '').replace(/\n$/, '')
   if (className.includes('language-m3n')) {
-    return <div className="document-example"><NotationEditor embedded initialSource={value} /><Link className="action-button" to="/editor" state={{ exampleSource: value }}>在编辑器试改</Link></div>
+    return <div className="document-example"><NotationEditor embedded playbackOnly initialSource={value} /><Link className="action-button" to="/editor" state={{ exampleSource: value }}>在编辑器试改</Link></div>
   }
   return <code className={className}>{props.children}</code>
 }
