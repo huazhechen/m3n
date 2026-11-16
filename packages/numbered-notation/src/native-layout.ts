@@ -1,4 +1,5 @@
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
+import { paginateNativeBlocks } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
 export { wrapNativeText } from './native-header.js'
 import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
@@ -8,6 +9,8 @@ import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativePr
 export type NativeRenderOptions = {
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
   pageMargin?: number; systemGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; uniformSystemHeight?: boolean
+  /** Candidate policy override; omitted preserves jpFun page spacing for parity. */
+  justifyPages?: boolean
   equalMeasures?: boolean; wrap?: 'normal' | 'compact'; wrapWidthRatio?: number
   /** @internal Whether a separate minimum spacing policy was requested. */
   pairedSpacing?: boolean
@@ -196,25 +199,24 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       lane.top = envelope.top; lane.bodyBottom = envelope.bottom; lane.bottom = envelope.bottom + (lane.rows.length ? 7.04 + lane.rows.length * 18.04 + (lane.rows.length - 1) * 5.28 : 0)
     }
   }
-  const pageHeight = Math.floor(options.width * 277 / 190), pages: NativePage[] = [{ index: 0, width: options.width, height: 0, systems: [] }]
-  let y = margin + headerHeight
-  for (const system of systems) {
-    const height = system.lanes.reduce((sum, lane) => sum + lane.top + lane.bottom, (system.lanes.length - 1) * 20.625 + (system.volta ? 28 : 0))
-    let page = pages.at(-1)!
-    if (page.systems.length) y += system.measures[0]?.extraGap ?? 0
-    if (options.paged && y + height > pageHeight - margin && page.systems.length) { page.height = pageHeight; page = { index: pages.length, width: options.width, height: 0, systems: [] }; pages.push(page); y = margin }
-    if (options.paged && height > pageHeight - 2 * margin) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
-    system.top = y; system.page = page.index
-    let axis = y + (system.volta ? 28 : 0)
+  const gap = options.systemGap ?? 24
+  const blocks = [{ height: headerHeight - gap }, ...systems.map(system => ({
+    height: system.lanes.reduce((sum, lane) => sum + lane.top + lane.bottom, (system.lanes.length - 1) * 20.625 + (system.volta ? 28 : 0)),
+    gapBefore: system.measures[0]?.extraGap ?? 0,
+  }))]
+  const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * 277 / 190) : Infinity,
+    margin, gap, justify: options.justifyPages ?? !options.uniformSystemHeight })
+  const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [] }))
+  for (const [index, system] of systems.entries()) {
+    const position = pagination.positions[index + 1]!
+    system.top = position.top; system.page = position.page
+    let axis = position.top + (system.volta ? 28 : 0)
     for (const lane of system.lanes) {
       axis += lane.top; lane.y = axis
       for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) if (glyph.lane === lane.id) glyph.y = axis
       axis += lane.bottom + (lane === system.lanes.at(-1) ? 0 : 20.625)
     }
-    system.bottom = axis; page.systems.push(system)
-    y = axis + (options.systemGap ?? 24)
-    page.height = options.paged ? pageHeight : axis + margin
+    system.bottom = axis; pages[position.page]!.systems.push(system)
   }
-  if (!systems.length) pages[0]!.height = Math.max(1, margin * 2 + headerHeight)
   return { document, projection, systems, pages, relations, options, measurer, headerHeight, margin }
 }
