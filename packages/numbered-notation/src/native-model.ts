@@ -30,7 +30,7 @@ export type NativeColumn = {
 export type NativeMeasure = {
   id: string; source: ScoreMeasure; part: number; index: number; columns: NativeColumn[]; beats: number
   breakBefore: boolean; breakAfter: boolean; extraGap: number; natural: number; minimum: number; label?: string
-  start: number; end: number; continuation: boolean; lastFragment: boolean
+  start: number; end: number; continuation: boolean; lastFragment: boolean; number?: number
   naturalStart?: number; naturalEnd?: number; minimumStart?: number; minimumEnd?: number; barX?: number; openingBarX?: number
   navigation?: { text: string; size: number; width: number; x?: number }[]
 }
@@ -49,7 +49,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
   const result: NativeProjection = { measures: [], glyphs: [], diagnostics: [], hasBass: options.includeBass !== false && [...document.parts.values()].some(part => part.bass.some(measure => measure.events.length || measure.multiRest)) }
   const textWidth = (text: string, size = nativeStyle.annotation, family = 'serif') => options.textMeasurer.measureText(text, { fontSize: size, fontFamily: family }).w
   const known = new Set(['tr', 'prall', 'fermata', 'arp', 'str', 'tip', 'hold', 'brk', 'breath', 'sfz', 'f1', 'f2', 'f3', 'f4', 'f5'])
-  let partIndex = 0
+  let partIndex = 0, measureNumber = 0
   for (const part of document.parts.values()) {
     const passes = measurePlaybackPasses(part.melody)
     const states = new Map<string, { key: string; tempo: number; meter: string; dynamic: string }>()
@@ -145,11 +145,18 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         }
       }
       if (measure.multiRest) {
-        const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.multiRest * document.meterCount * 4 / document.meterUnit, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls: [], marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest, paragraph: `${partIndex}:0` }
+        const [count, unit] = state.meter.split('/').map(Number)
+        const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.multiRest * count! * 4 / unit!, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls: [], marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest, paragraph: `${partIndex}:0` }
+        if (measure.navigation?.includes('segno')) glyph.controls.push(measureNativeControl('segno', '𝄋', options.textMeasurer))
         glyph.markLayout = []
         const ink = nativeSvgInk(painter.music(glyph), options.textMeasurer)
-        glyph.musicTop = glyph.top = -ink.top; glyph.bottom = ink.bottom
-        glyph.left = -ink.left; glyph.right = ink.right
+        glyph.musicTop = -ink.top
+        glyph.top = Math.max(-ink.top, ...glyph.controls.map(control => control.top))
+        glyph.bottom = Math.max(ink.bottom, ...glyph.controls.map(control => control.bottom))
+        glyph.inkLeft = -ink.left; glyph.inkRight = ink.right
+        glyph.left = glyph.musicLeft = nativeStyle.music * 0.4
+        glyph.right = glyph.musicRight = ink.right + nativeStyle.music * 0.25
+        glyph.musicBottom = ink.bottom
         result.glyphs.push(glyph); time = glyph.beats
       }
       return time
@@ -159,6 +166,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       const source = part.melody[index] ?? { events: [] }
       if (!source.events.length && !source.multiRest && !part.bass[index]?.events.length) continue
       const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: index > 0 && source.events.some(event => event.sectionLabel) ? em(12) : 0, natural: 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
+      measure.number = ++measureNumber
+      measureNumber += (source.multiRest ?? 1) - 1
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])].filter(name => name !== 'segno').map(name => {
         const text = name === 'fine' ? 'Fine.' : name === 'dc' ? 'D.C.' : 'D.S.', size = name === 'fine' ? 16.8 : 16
         return { text, size, width: textWidth(text, size, '"Times New Roman", serif') }

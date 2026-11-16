@@ -12,7 +12,7 @@ export type SpacingCell = {
   beforeCollision: number
   afterCollision: number
 }
-export type SpacingColumn = { cells: SpacingCell[] }
+export type SpacingColumn = { cells: SpacingCell[]; fixedAfter?: number }
 export type SpacingSolution = { positions: number[]; naturalWidth: number }
 
 /**
@@ -32,6 +32,26 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
       beforeCollision: 16, afterCollision: 16,
     })
   })
+  if (columns.some(column => column.fixedAfter !== undefined)) {
+    const groups: SpacingColumn[] = [], members: { group: number; offset: number }[] = []
+    for (let start = 0; start < columns.length;) {
+      let end = start, offset = 0
+      members[start] = { group: groups.length, offset }
+      while (end + 1 < columns.length && columns[end]!.fixedAfter !== undefined) {
+        offset += columns[end]!.fixedAfter!
+        members[++end] = { group: groups.length, offset }
+      }
+      groups.push({ cells: lanes.map((lane, row) => ({
+        ...rows[start]![row]!, lane,
+        left: Math.max(...rows.slice(start, end + 1).map((cells, i) => cells[row]!.left - members[start + i]!.offset)),
+        right: Math.max(...rows.slice(start, end + 1).map((cells, i) => members[start + i]!.offset + cells[row]!.right)),
+        after: rows[end]![row]!.after, afterStiffness: rows[end]![row]!.afterStiffness, afterCollision: rows[end]![row]!.afterCollision,
+      })) })
+      start = end + 1
+    }
+    const solved = solveNativeSpacing(groups, width, justify)
+    return { positions: members.map(member => solved.positions[member.group]! + member.offset), naturalWidth: solved.naturalWidth }
+  }
   const positions: number[] = [], ends = lanes.map(() => 0)
   rows.forEach(row => {
     const position = Math.max(...row.map((cell, lane) => ends[lane]! + cell.left + cell.before))

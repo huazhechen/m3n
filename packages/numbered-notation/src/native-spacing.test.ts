@@ -26,4 +26,20 @@ describe('native spacing constraints', () => {
     expect(()=>solveNativeSpacing([{cells:[cell()]}],0)).toThrow()
     expect(solveNativeSpacing([],100)).toEqual({positions:[],naturalWidth:0})
   })
+  it.each([52, 100, 300])('keeps rigid internal distances under compression and justification at %s', width => {
+    const result = solveNativeSpacing([{cells:[cell()], fixedAfter:20}, {cells:[cell()], fixedAfter:15}, {cells:[cell()]}, {cells:[cell()]}], width, true)
+    expect(result.positions[1]! - result.positions[0]!).toBeCloseTo(20, 8)
+    expect(result.positions[2]! - result.positions[1]!).toBeCloseTo(15, 8)
+    expect(result.positions[0]).toBeCloseTo(5, 8)
+    expect(result.positions.at(-1)).toBeCloseTo(width - 5, 8)
+  })
+  it('reserves interior ink of every simultaneous lane in a rigid group', () => {
+    const columns = [{cells:[cell(),cell('bass')],fixedAfter:20}, {cells:[cell(),cell('bass',{left:40,right:50})],fixedAfter:15}, {cells:[cell(),cell('bass')]}]
+    const result = solveNativeSpacing(columns)
+    expect(result.positions[1]! - 40).toBeGreaterThanOrEqual(0)
+    expect(result.positions[1]! + 50).toBeLessThanOrEqual(result.naturalWidth)
+    const followed = solveNativeSpacing([...columns,{cells:[cell(),cell('bass')]}])
+    expect(followed.positions[3]! - 5).toBeGreaterThanOrEqual(followed.positions[1]! + 50)
+  })
+
 })

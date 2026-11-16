@@ -17,7 +17,7 @@ export function nativeBarMetrics(kind: string | undefined) {
   return { size, width, anchor, bars, dots, radius }
 }
 
-type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[] }
+type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
 type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; pairedSpacing?: boolean }
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
@@ -89,7 +89,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
         items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
       }
       const cells = column.glyphs.map(glyph => {
-        return springCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.beats, 6, scale)
+        return springCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, 6, scale)
       })
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
@@ -130,6 +130,20 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     if (previous.boundary || current.boundary) {
       for (const cell of previous.cells) cell.afterCollision = 64
       for (const cell of current.cells) cell.beforeCollision = 64
+    }
+  }
+  // Multi-measure rest symbols form compact rigid blocks with adjacent bars.
+  // All simultaneous lanes still contribute their physical clearance.
+  for (const [index, item] of items.entries()) {
+    if (!item.column?.glyphs.some(glyph => glyph.multiRest)) continue
+    for (const edge of [index - 1, index]) {
+      const left = items[edge], right = items[edge + 1]
+      if (!left || !right || !(edge === index - 1 ? left.boundary : right.boundary)) continue
+      left.fixedAfter = Math.max(...lanes.map(lane => {
+        const a = left.cells.find(cell => cell.lane === lane), b = right.cells.find(cell => cell.lane === lane)
+        const padding = right.column?.glyphs.some(glyph => glyph.lane === lane && glyph.multiRest) ? nativeStyle.music * 0.25 : 0
+        return (a?.right ?? 0) + (b?.left ?? 0) + padding
+      }))
     }
   }
   return items

@@ -10,6 +10,7 @@ before(async () => {
   page = await browser.newPage()
   await page.setContent('<main></main>')
   await page.addScriptTag({ content: readFileSync(new URL('./lib/native-ink-collisions.mjs', import.meta.url), 'utf8').replace('export function', 'function') })
+  await page.addScriptTag({ content: readFileSync(new URL('./lib/numbered-svg-metrics.mjs', import.meta.url), 'utf8').replace('export function', 'function') })
 })
 after(async () => { await browser?.close() })
 const check = svg => page.evaluate(svg => {
@@ -57,4 +58,33 @@ test('checks music, beams, marks and relations across alternative lanes', async 
   }
   const clear = await check(main + '<g data-m3n-lane="alternative:2"><g class="note"><rect x="25" y="50" width="20" height="20"/></g></g>')
   assert.equal(clear.collisions.length, 0)
+})
+
+const restMetrics = (id = 'm3n-rest-1-0', count = '12', x = 30, y = 40, measure = 'm3n-measure-1-1', extra = '') => page.evaluate(({id,count,x,y,measure,extra}) => {
+  document.querySelector('main').innerHTML = `<svg viewBox="0 0 120 100"><g class="system"><g class="note" id="${id}" data-m3n-measure="${measure}"><text font-size="22" x="${x}" y="${y}">${count}</text></g>${extra}</g></svg>`
+  return captureNumberedGeometry(document.querySelector('main'))
+}, {id,count,x,y,measure,extra})
+
+test('rest comparison ignores engine serials while retaining the printed count and measured position', async () => {
+  const expected = await restMetrics()
+  assert.deepEqual(await restMetrics('m3n-rest-1-1-melody'), expected)
+  assert.equal(expected.systems[0].notes.length, 1)
+  for (const [id,count,x,y,measure] of [
+    ['m3n-rest-1-0','13',30,40,'m3n-measure-1-1'],
+    ['m3n-rest-1-0','12',31,40,'m3n-measure-1-1'],
+    ['m3n-rest-1-0','12',30,41,'m3n-measure-1-1'],
+    ['m3n-rest-1-0','12',30,40,'m3n-measure-1-2'],
+    ['m3n-rest-1-0','',30,40,'m3n-measure-1-1'],
+  ]) assert.notDeepEqual(await restMetrics(id,count,x,y,measure), expected)
+  assert.notDeepEqual(await restMetrics('m3n-rest-1-0','0'), expected)
+  assert.equal((await restMetrics('m3n-rest-1-0','8')).systems[0].notes.length, 1)
+})
+
+test('compares every simultaneous rest separately and rejects missing measure identity', async () => {
+  const extra = '<g class="note" id="m3n-rest-1-1-bass" data-m3n-measure="m3n-measure-1-1"><text font-size="22" x="30" y="80">12</text></g>'
+  const result = await restMetrics('m3n-rest-1-1-melody','12',30,40,'m3n-measure-1-1',extra)
+  assert.equal(new Set(result.systems[0].ids).size, 2)
+  assert.equal(result.systems[0].notes.length, 2)
+  assert.notDeepEqual(await restMetrics(), result)
+  await assert.rejects(restMetrics('m3n-rest-1-0','12',30,40,''), /no measure identity/)
 })

@@ -43,6 +43,7 @@ try {
   }
   const entry = join(temp, 'entry.ts')
   writeFileSync(entry, [
+    `export {captureNumberedGeometry} from ${JSON.stringify(join(root, 'tools/lib/numbered-svg-metrics.mjs'))};`,
     `export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
     `export {NumberedNotationScore,prepareNumberedNotationFonts} from ${JSON.stringify(join(temp, 'packages/numbered-notation/src/index.ts'))};`,
     `export {NativeNumberedNotationScore} from ${JSON.stringify(join(candidateRoot, 'packages/numbered-notation/src/native-score.ts'))};`,
@@ -65,23 +66,7 @@ try {
     for (const width of widths) for (const paged of modes) {
       const result = await page.evaluate(async ({ source, width, paged, selfCheck }) => {
         const score = comparison.parseM3NDocument(source)
-        const metrics = (root) => {
-          const pages = [...root.querySelectorAll('svg')]
-          const systems = [...root.querySelectorAll('g.system')].map(system => {
-            const digits = [...system.querySelectorAll('g.note text')].filter(node => node.getAttribute('font-size') === '22' && /^[0-7]$/.test(node.textContent))
-            const notes = digits.map(node => {
-              const box = node.getBBox(), p = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2).matrixTransform(node.getCTM())
-              const group = node.closest('.note')
-              const head = [...group.querySelectorAll('text')].filter(text => text.getAttribute('font-size') === '22' && /^[0-7]$/.test(text.textContent)).indexOf(node)
-              return { id: group.id, head, x: p.x, y: p.y }
-            })
-            const melody = notes.filter(note => !note.id.includes('bass'))
-            return { ids: notes.map(note => `${note.id}:${note.head}`).sort(), notes, axis: melody[0]?.y ?? 0,
-              measures: [...new Set([...system.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure')))] }
-          })
-          return { pageCount: pages.length, height: pages.reduce((sum, svg) => sum + svg.viewBox.baseVal.height, 0),
-            systems, lineGaps: systems.slice(1).map((system, i) => system.axis - systems[i].axis) }
-        }
+        const metrics = comparison.captureNumberedGeometry
         for (const [id, engine] of [['baseline', comparison.NumberedNotationScore], ['candidate', selfCheck ? comparison.NumberedNotationScore : comparison.NativeNumberedNotationScore]]) {
           const host = document.getElementById(id)
           host.style.width = `${width}px`
