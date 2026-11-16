@@ -26,6 +26,18 @@ test-results/
 playwright-report/
 *.tsbuildinfo
 
+# Locally generated scorebook exports and reports (keep sources/configuration).
+/scorebook/**/*.pdf
+/scorebook/**/*.svg
+/scorebook/**/*.png
+/scorebook/**/*.jpg
+/scorebook/**/*.jpeg
+/scorebook/**/*.csv
+/scorebook/layout-record*.json
+/scorebook/PDF体积记录*.json
+/scorebook/排序与缩放记录*.md
+/scorebook/pagination-reference.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

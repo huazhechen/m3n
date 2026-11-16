@@ -80,7 +80,7 @@ const pages = score.render({ width: 800, paged: true, includeBass: true })
 
 该模式保留事件身份、时值和原生关系几何，不移动最终 SVG 图元。SVG 谱行以 `data-m3n-paragraph` 和 `data-m3n-volta` 标记段落及房子分类；谱集布局记录的 `paragraphSystems`、`voltaSystems` 与 `baselineSteps` 保存对应信息及实际节距。核对节距时需同时考虑相邻两行的段落、房子档位、实际歌词行数，以及仅在所在行出现的标题。网页默认仍按自然高度排版。
 
-独立电子谱集的构建工具读取 `scorebook/editorial-plan.json`。第五十五版只维护和导出简谱，保留三篇编排和86个条目，解除原87页及逐曲页码约束。`compactPages: true` 允许相邻同篇、同版宽、同间距样式的完整短曲跨编辑分组合页；`maximumSharedWidth` 指定共页允许的最大版宽，仍受条目字号下限与几何检查约束。当前保留原字号为主，按实际谱行内容预留高度（`uniformSystemHeight: false`），减少不必要的空白；《后来》采用678px版宽、0.2/0.35横向间距排成单页。基本功保留等宽小节、等行高和两页安排。`pagination-reference.json` 仅保留为历史87页版参考，当前配置不再引用。所有副标题去掉“单旋律版”，渐强、渐弱置于音符上方。仅提供简谱导出。
+独立电子谱集的构建工具读取 `scorebook/editorial-plan.json`。第五十五版只维护和导出简谱，保留三篇编排和86个条目，解除原87页及逐曲页码约束。`compactPages: true` 允许相邻同篇、同版宽、同间距样式的完整短曲跨编辑分组合页；`maximumSharedWidth` 指定共页允许的最大版宽，仍受条目字号下限与几何检查约束。当前保留原字号为主，按实际谱行内容预留高度（`uniformSystemHeight: false`），减少不必要的空白；《后来》采用678px版宽、0.2/0.35横向间距排成单页。基本功保留等宽小节、等行高和两页安排。旧87页版的 `pagination-reference.json` 属于历史分页导出，不再随Git保存，当前配置不再引用。所有副标题去掉“单旋律版”，渐强、渐弱置于音符上方。仅提供简谱导出。
 
 `npm run build:scorebook` 只构建简谱，已删除配对构建器和五线谱配置。
 
@@ -175,3 +175,5 @@ Fine、D.C.、D.S. 排在末音或休止符之后、小节线之前，与音符�
 第五十八版《星星点灯》改按用户提供的前奏文本和老姚吉他五页参考重编主体旋律、歌词及器乐再现。只有一小节第二遍替代旋律，23行以24.30px排为两页，整册仍80页；参考与检查见[校订说明](../scorebook/星星点灯参考校订.md)。
 
 第五十九版按用户要求，全册顺读曲目不设置具名演奏段落和冗余顶部顺序；清除《追梦人》《星星点灯》《如果有你在》与Valsentino四首，保留实际回跳曲目的段名及基本功教学标题。《追梦人》同时依新C调2/4参考重校、去掉器乐并保留单页；全册80页。见[全册核查](../scorebook/顺读段落核查.md)及[参考校订](../scorebook/追梦人参考校订.md)。
+
+谱集版本控制只保存配置、构建脚本及人工校订资料；`scorebook/`下的PDF、布局／体积报告、排序导出及全量核查CSV均由本地构建产生并被Git忽略。全新检出先运行`npm run build:scorebook`，已有本地布局报告后才可使用`--retain-unchanged-sizes`。详见[构建说明](../scorebook/README.md)。
