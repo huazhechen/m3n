@@ -90,4 +90,29 @@ describe('native spacing compatibility with the frozen jpFun baseline', () => {
     expect(three.minimum - two.minimum).toBeCloseTo(2 * (20 + 1), 5)
   })
 
+  it.each(['before', 'after'])('measures each forced row independently of adjacent springs (%s break)', kind => {
+    const phrase = '||: 1 2 3 4 | 5 6 7 1e :||'
+    const document = parseM3NDocument(`{4/4}\nN: 1 2 3 4 | ${phrase}`)
+    const measures = [...document.parts.values()][0]!.melody
+    if (kind === 'before') measures[1]!.breakBefore = true
+    else measures[0]!.breakAfter = true
+    const combined = layoutNativeScore(document, {width:800,paged:false,textMeasurer:measurer})
+    const isolated = layout(`{4/4}\nN: ${phrase}`)
+    for (const [index, expected] of isolated.projection.measures.entries()) {
+      const actual = combined.projection.measures[index + 1]!
+      expect(actual.natural).toBeCloseTo(expected.natural, 8)
+      expect(actual.minimum).toBeCloseTo(expected.minimum, 8)
+      expect(actual.naturalStart).toBeCloseTo(expected.naturalStart!, 8)
+      expect(actual.minimumStart).toBeCloseTo(expected.minimumStart!, 8)
+    }
+  })
+
+  it('places the measured section frame before its repeat opening', () => {
+    const result = layout('{4/4}\n===Intro\nN: ||: 1 2 3 4 :||')
+    const measure = result.projection.measures[0]!, first = result.projection.glyphs[0]!
+    const heading = first.controls.find(control => control.kind === 'section')!
+    expect(heading.x! + heading.width).toBeLessThan(measure.openingBarX!)
+    expect(measure.openingBarX!).toBeLessThan(first.x - first.musicLeft!)
+  })
+
 })

@@ -81,12 +81,20 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   }
   for (const measure of measures) {
     const marks = nativeMeasureBars(surrounding, surrounding.indexOf(measure))
+    const firstColumn = measure.columns[0]
+    const controls = (column: NativeColumn, members: { control: NativeControl; lane: string }[]) => {
+      if (!members.length) return
+      const cells = members.map(({ control, lane }) => springCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
+      items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
+    }
+    // A section heading introduces the repeat, rather than belonging inside it.
+    // Its exterior spring must be measured in the same order as it is painted.
+    if (firstColumn) controls(firstColumn, firstColumn.glyphs.flatMap(glyph => glyph.controls.filter(control => control.kind === 'section').map(control => ({control, lane: glyph.lane}))))
     if (marks.opening) bar(measure, 'rptstart', true)
     for (const column of measure.columns) {
-      for (let index = 0; index < Math.max(...column.glyphs.map(glyph => glyph.controls.length)); index++) {
-        const members = column.glyphs.flatMap(glyph => glyph.controls[index] ? [{ control: glyph.controls[index]!, lane: glyph.lane }] : [])
-        const cells = members.map(({ control, lane }) => springCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
-        items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
+      const membersByLane = column.glyphs.map(glyph => ({ lane: glyph.lane, controls: glyph.controls.filter(control => column !== firstColumn || control.kind !== 'section') }))
+      for (let index = 0; index < Math.max(...membersByLane.map(member => member.controls.length)); index++) {
+        controls(column, membersByLane.flatMap(member => member.controls[index] ? [{control: member.controls[index]!, lane: member.lane}] : []))
       }
       const cells = column.glyphs.map(glyph => {
         return springCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, 6, scale)
@@ -151,6 +159,18 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
 
 /** Record natural/minimum spans before choosing line breaks. */
 export function measureNativeHorizontal(measures: NativeMeasure[], options: HorizontalOptions) {
+  // Forced breaks terminate the spring chain. Measuring across them keeps
+  // interior minimum margins at the two future exterior edges, and can even
+  // let a voice or lyric on another forced row constrain this row's width.
+  for (let begin = 0; begin < measures.length;) {
+    let end = begin + 1
+    while (end < measures.length && !measures[end]!.breakBefore && !measures[end - 1]!.breakAfter) end++
+    measureHorizontalGroup(measures.slice(begin, end), options)
+    begin = end
+  }
+}
+
+function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOptions) {
   for (const minimum of [false, true]) {
     const items = itemsFor(measures, minimum ? { ...options, noteGapEm: options.minimumNoteGapEm ?? options.noteGapEm } : options)
     const result = solveNativeSpacing(items)
