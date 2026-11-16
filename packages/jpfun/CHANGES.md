@@ -1,5 +1,7 @@
 # Local changes
 
+- `@head(...,sideauto=true)` measures the complete packed side rows and their item gap: fitting sides share a top edge, while actual horizontal conflicts put the right side above the left. It replaces viewport thresholds in the M3N header adapter and preserves the setting through serialization.
+
 - Inline `@text` uses an independent source-order zero-time column, preventing parallel music from merging into its column and separating simultaneous notes. Header text keeps shared columns within `@head` so parallel title rows remain centered.
 
 - `@key(...,visits="1:C4;2:Db4")` displays visit-specific keys as a vertically centered, measured group of rows. It uses the ordinary key font, size and accidental glyphs, with a numeric visit prefix; only the supplied primary key sets timeline state. Rows participate in wrapping and system height, and serialization preserves them.

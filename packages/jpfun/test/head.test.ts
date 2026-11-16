@@ -507,3 +507,23 @@ test("head 可以嵌套在内容作用域中", () => {
     assert(recordCommands(result.layout).some(command => command.kind === "text" && command.text === "A"),
         "nested head content must participate in normal layout");
 });
+
+test('head sideauto shares the top for measured fitting sides, regardless of author row count or page breakpoint', () => {
+    for (const width of [320, 599, 600, 800]) {
+        const source = `@page(width=${width}px,left=32px,right=32px) @head(center=@text(T),left={{@text(L)}},right=@text("A\nB\nC",size=14px),sidebelow=true,sideauto=true,itemgap=16px)`;
+        for (const input of [source, parse(source).toString(source)]) {
+            const boxes = textObjects(input);
+            assert(nearly(boxes.get('L')!.box.y, boxes.get('A')!.box.y), 'fitting sides share their top');
+        }
+    }
+});
+
+test('head sideauto stacks real horizontal conflicts even on a wide page', () => {
+    const source = `@page(width=800px,left=32px,right=32px) @head(center=@text(T),left=@text("${'L'.repeat(50)}",size=16px),right=@text("${'R'.repeat(50)}",size=14px),sidebelow=true,sideauto=true,itemgap=16px,gap=5px)`;
+    for (const input of [source, parse(source).toString(source)]) {
+        const boxes = textObjects(input);
+        const left = boxes.get('L'.repeat(50))!.box, right = boxes.get('R'.repeat(50))!.box;
+        assert(left.x + left.w + 16 > right.x, 'the horizontal spans truly conflict');
+        assert(nearly(left.y - right.y - right.h, 5), 'only the conflicting sides stack');
+    }
+});

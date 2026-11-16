@@ -83,11 +83,13 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   }
   const signatureInk = nativeSvgInk(signatureSvg, measurer)
   const signaturesHeight = signatureInk.bottom - signatureInk.top
-  const stacked = width < 600 && creditsHeight > 0
+  const creditInk = nativeSvgInk(creditSvg, measurer)
+  const stacked = creditsHeight > 0 && signatureInk.right + nativeStyle.text > creditInk.left
+
   const sideTop = margin + centerHeight + (centerHeight ? em(5) : 0)
   const sidesHeight = stacked ? creditsHeight + em(5) + signaturesHeight : Math.max(creditsHeight, signaturesHeight)
-  const signaturesTop = sideTop + (stacked ? creditsHeight + em(5) : sidesHeight - signaturesHeight)
-  const creditsTop = sideTop + (stacked ? 0 : sidesHeight - creditsHeight)
+  const signaturesTop = sideTop + (stacked ? creditsHeight + em(5) : 0)
+  const creditsTop = sideTop
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
   let orderBottom = sideTop + sidesHeight
   for (const [index, names] of numberedOrderLines(sectionOrderLabels(document,key=>transposedNumberedKeyLabel(key,options.transpose).replaceAll('#','♯').replaceAll('b','♭')), available).entries()) {

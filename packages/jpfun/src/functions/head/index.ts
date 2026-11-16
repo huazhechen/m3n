@@ -166,11 +166,12 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
                 const { left, right } = this.sideExtents;
                 const leftHeight = left ? left.bottom - left.top : 0;
                 const rightHeight = right ? right.bottom - right.top : 0;
-                if (owner.sideStacked && left && right) {
+                if ((owner.sideStacked || owner.sideAuto && !this.sidesFit()) && left && right) {
                     return name === "right"
                         ? this.titleBottom - extent.top
                         : this.titleBottom + rightHeight + owner.gap - extent.top;
                 }
+                if (owner.sideAuto) return this.titleBottom - extent.top;
                 // 两侧共享底边；以较高侧定总高度，使它的顶部恰好贴标题底边
                 const targetBottom = this.titleBottom + Math.max(leftHeight, rightHeight);
                 return targetBottom - extent.bottom;
@@ -195,9 +196,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
         }
     }
 
-    private alignHead() {
-        // 全局列已经完成求解；这里不改 TimeColumn，只覆盖 left/right 主体的最终 box.x
-        // center 不参与后置重排，继续使用全局列坐标
+    private sideCells() {
         const cells = new Map<ASTNodeBase, VisualTemporalNode[]>();
         for (const member of this.members) {
             if (!isVisualTemporalNode(member)) continue;
@@ -207,6 +206,27 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
             if (members) members.push(member);
             else cells.set(cell, [member]);
         }
+        return cells;
+    }
+
+    private sidesFit() {
+        const cells = this.sideCells();
+        const width = (slot: HeadSlotNode) => Math.max(0, ...slot.rows.map(row => {
+            const rowCells = row instanceof ASTBraceNode ? row.content : [row];
+            const widths = rowCells.flatMap(cell => {
+                const members = cells.get(cell);
+                if (!members?.length) return [];
+                return [Math.max(...members.map(node => node.box.x + node.box.w)) - Math.min(...members.map(node => node.box.x))];
+            });
+            return widths.reduce((sum, value) => sum + value, 0) + Math.max(0, widths.length - 1) * this.ast.owner.itemGap;
+        }));
+        const [left, , right] = this.slots;
+        return left.start.box.x + width(left.ast) + this.ast.owner.itemGap <= right.end.box.x - width(right.ast) + 1e-6;
+    }
+
+    private alignHead() {
+        // Side cells use their measured widths; title coordinates stay untouched.
+        const cells = this.sideCells();
         const [left, , right] = this.slots;
         this.packRows(left.ast, left.start.box.x, cells);
         this.packRows(right.ast, right.end.box.x, cells);
@@ -391,6 +411,7 @@ H.tempo: 94
             { name: "sidebelow", description: "将两侧内容放在整个中区下方，并保留 gap 间距", type: "boolean" as const, default: false },
             { name: "itemgap", description: "侧区同一行内相邻元素的水平间距", type: "length" as const, default: { value: ITEM_GAP_EM, unit: "em" as const } },
             { name: "sidestacked", description: "两侧纵向排列：右区在上，左区在下", type: "boolean" as const, default: false },
+            { name: "sideauto", description: "按两侧实测宽度自动并排顶端对齐，冲突时右区在上、左区在下", type: "boolean" as const, default: false },
         ],
     };
 
@@ -400,6 +421,7 @@ H.tempo: 94
     readonly sideBelow: boolean;
     readonly itemGap: number;
     readonly sideStacked: boolean;
+    readonly sideAuto: boolean;
     private createdBySugar = false;
 
     override get children() { return this.slots; }
@@ -527,6 +549,7 @@ H.tempo: 94
         this.sideBelow = values[4] as boolean;
         this.itemGap = ctx.length2px(values[5] as LengthValue);
         this.sideStacked = values[6] as boolean;
+        this.sideAuto = values[7] as boolean;
         const rows = (name: SlotName, index: number) => {
             const value = args.get(name) ?? args.get(index);
             if (!(value instanceof ASTNodeBase)) return [];
@@ -572,6 +595,7 @@ H.tempo: 94
         if (this.gap !== DEFAULT_GAP_PX) slots.push(`  gap=${this.gap}px`);
         if (this.sideBelow) slots.push("  sidebelow=true");
         if (this.itemGap !== this.size * ITEM_GAP_EM) slots.push(`  itemgap=${this.itemGap}px`);
+        if (this.sideAuto) slots.push("  sideauto=true");
         if (this.sideStacked) slots.push("  sidestacked=true");
         return `@head(\n${slots.join(",\n")}\n)`;
     }
