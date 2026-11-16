@@ -5,9 +5,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 48px;
-  margin-bottom: 10px;
+  gap: calc(var(--ui-space) * 2);
+  min-height: var(--ui-toolbar-height);
+  margin-bottom: var(--ui-space);
+  font-size: var(--ui-text);
   border-bottom: 1px solid #d9dbd4;
 }
 
@@ -17,7 +18,7 @@
 .score-reader-tools {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-space);
 }
 
 .top-nav nav a,
@@ -25,19 +26,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 0 10px;
+  gap: var(--ui-space);
+  min-height: var(--ui-control-size);
+  padding: 0 calc(var(--ui-space) * 2);
   border: 1px solid #cfd3ca;
   border-radius: 6px;
   background: #fff;
   color: #285b5c;
-  font-size: 13px;
+  font-size: var(--ui-text);
   font-weight: 500;
   white-space: nowrap;
 }
 
-.top-nav svg { flex: 0 0 auto; }
+.top-nav svg { flex: 0 0 auto; width: var(--ui-unit); height: var(--ui-unit); }
 .top-nav .action-button.is-disabled {
   color: #9aa2a6;
   background: #f4f5f1;
@@ -46,27 +47,29 @@
 
 /* Keep mobile queries in sync with MOBILE_LAYOUT_QUERY in lib/responsive-layout.ts. */
 @media (max-width: 720px), (pointer: coarse) and (hover: none) {
-  .top-nav { min-height: 44px; margin-bottom: 6px; gap: 8px; }
+  .top-nav { gap: var(--ui-space); }
   .top-nav nav,
   .top-nav .score-reader-actions,
   .top-nav .score-reader-navigation,
-  .top-nav .score-reader-tools { gap: 4px; }
+  .top-nav .score-reader-tools { gap: var(--ui-space); }
   .top-nav nav a,
-  .top-nav .action-button { width: 36px; height: 36px; min-width: 36px; padding: 0; }
+  .top-nav .action-button { width: var(--ui-control-size); height: var(--ui-control-size); min-width: var(--ui-control-size); padding: 0; }
   .top-nav .nav-action-label { display: none; }
 }
 
 .brand-mark {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--ui-space);
   color: #163f45;
-  font-size: 1.05rem;
+  font-size: var(--ui-text);
   font-weight: 800;
   letter-spacing: 0;
 }
 
 .brand-mark img {
+  width: var(--ui-unit);
+  height: var(--ui-unit);
   display: block;
   flex: 0 0 auto;
 }
@@ -200,7 +203,7 @@ h3 {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: 9px 12px;
+  padding: var(--ui-space) calc(var(--ui-space) * 2);
 }
 
 .editor-header-left {
@@ -220,11 +223,11 @@ h3 {
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
+  gap: var(--ui-space);
 }
 
-.editor-header-right .editor-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.editor-action svg { flex-shrink: 0; }
+.editor-header-right .editor-action { display: inline-flex; align-items: center; justify-content: center; gap: var(--ui-space); }
+.editor-action svg { flex-shrink: 0; width: var(--ui-unit); height: var(--ui-unit); }
 
 .editor-mode-note {
   padding: 3px 8px;
@@ -953,13 +956,13 @@ textarea::selection {
 }
 
 .action-button {
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: var(--ui-control-size);
+  padding: 0 calc(var(--ui-space) * 2);
   border: 1px solid #b8cfca;
   border-radius: 4px;
   background: #fffef9;
   color: #285b5c;
-  font-size: 13px;
+  font-size: var(--ui-text);
   font-weight: 700;
   cursor: pointer;
   line-height: 1;
@@ -1358,12 +1361,12 @@ a.action-button {
   right: 16px;
   bottom: 16px;
   z-index: 21;
-  width: 44px;
-  height: 44px;
+  width: var(--ui-control-size);
+  height: var(--ui-control-size);
   border: 1px solid rgb(255 255 255 / 58%);
   border-radius: 50%;
   color: #ffffff;
-  font-size: 1.2rem;
+  font-size: var(--ui-unit);
   font-weight: 700;
   cursor: pointer;
   place-items: center;
@@ -1435,7 +1438,7 @@ a.action-button {
 @media (max-width: 720px), (pointer: coarse) and (hover: none) {
   main {
     width: min(100vw - 18px, 1440px);
-    padding-top: 6px;
+    padding-top: var(--ui-space);
   }
 
   .pane-toolbar {
@@ -1505,7 +1508,7 @@ a.action-button {
 .embedded-editor .cm-content { min-height: 0; }
 @media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .editor-tabs { display: flex; padding: 4px 8px; gap: 8px; }
-  .editor-tabs button { min-height: 44px; flex: 1; background: #f0f2eb; border: 1px solid #d3d9ce; border-radius: 5px; }
+  .editor-tabs button { min-height: var(--ui-control-size); font-size: var(--ui-text); flex: 1; background: #f0f2eb; border: 1px solid #d3d9ce; border-radius: 5px; }
   .editor-tabs [aria-selected="true"] { background: #dcece6; border-color: #2f6f73; }
   .resizable-editor { display: flex; flex-direction: column; align-items: stretch; }
   .editor-divider { display: none; }
@@ -1566,6 +1569,6 @@ a.action-button {
 }
 
 @media (max-width: 720px), (pointer: coarse) and (hover: none) {
-  .editor-header-right .editor-action { width: 36px; height: 36px; padding: 0; }
+  .editor-header-right .editor-action { width: var(--ui-control-size); height: var(--ui-control-size); padding: 0; }
   .editor-action span { display: none; }
 }

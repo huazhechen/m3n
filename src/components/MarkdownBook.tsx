@@ -56,16 +56,23 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   useEffect(() => {
     const article = articleRef.current
     if (!article) return
-    const observer = new ResizeObserver(([entry]) => {
-      const width = entry!.contentRect.width
+    const updateWidth = () => {
+      const style = getComputedStyle(article)
+      const width = article.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
       if (width <= 0) return
       // Native notes are 22 units high; solve for the shared layout width
       // before fitting every score to the document column.
-      const fontSize = Math.min(window.innerWidth / 32, 24)
+      const fontSize = Math.min(Math.min(window.innerWidth, window.innerHeight) / 32, 24)
       setScoreWidth(Math.max(320, Math.round(width * 22 / fontSize)))
-    })
+    }
+    const observer = new ResizeObserver(updateWidth)
     observer.observe(article)
-    return () => observer.disconnect()
+    window.addEventListener('resize', updateWidth)
+    updateWidth()
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', updateWidth)
+    }
   }, [])
   const documentGroups = useMemo<DocumentGroup[]>(
     () =>

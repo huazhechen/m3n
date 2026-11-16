@@ -1,4 +1,10 @@
 :root {
+  --ui-unit: min(3.125vmin, 24px);
+  --ui-space: calc(var(--ui-unit) / 4);
+  --ui-text: max(12px, calc(var(--ui-unit) * .75));
+  --ui-control-size: max(32px, calc(var(--ui-unit) * 2));
+  --ui-toolbar-height: calc(var(--ui-control-size) + var(--ui-space) * 2);
+  --ui-controls-reserve: calc(var(--ui-control-size) + var(--ui-space) * 6 + 2px);
   color: #232629;
   background: #f5f6f0;
   font-family: system-ui, sans-serif;
