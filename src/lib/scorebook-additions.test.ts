@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { soundingEvents, soundingBar } from './fixtures/sounding-events'
 import { alternativePerformance, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import dream from '../scores/zhui_meng_ren_01.m3n?raw'
 import stars from '../scores/xing_xing_dian_deng_01.m3n?raw'
@@ -53,8 +52,8 @@ describe('new reference scores', () => {
     expect(document).toMatchObject({ key: dreamReference.key, meterCount: 2, meterUnit: 4, tempo: 60 })
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
     expect(bars).toHaveLength(50)
-    expect(bars.map(bar => soundingBar(bar.events.map(event => `${event.pitches[0] ?? '0'}:${event.beats}`))))
-      .toEqual(dreamReference.writtenBars.map(row => soundingBar(row.split(' '))))
+    expect(bars.map(bar => bar.events.map(event => `${event.pitches[0] ?? '0'}:${event.beats}`)))
+      .toEqual(dreamReference.writtenBars.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
     expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
       .toEqual([.25, ...Array(48).fill(2), 1.75])
     expect(bars.flatMap(bar => bar.events).some(event => event.sectionLabel)).toBe(false)
@@ -70,6 +69,7 @@ describe('new reference scores', () => {
   it('uses the exact user introduction and the new five-page reference', () => {
     const introduction = stars.slice(stars.indexOf('N:')).split('\n---\n').slice(0, 2).join('\n---\n')
     const referenceIntroduction = starsReference.userIntroduction.replace('===前奏\n', '').replace(/ \|\|$/, ' |')
+    // Equivalent parentheses may change; every note, duration, tie and mark must remain.
     expect(events('{key=E}\n' + introduction, false)).toEqual(events('{key=E}\n' + referenceIntroduction, false))
     const document = parseM3NDocument(stars)
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
@@ -97,10 +97,8 @@ describe('new reference scores', () => {
     const expected = reference.playbackEventIndexes.map(index => reference.events[index]!).filter(event => event.pitch !== null)
     const actual = events(conan)
     const pitched = actual.filter(event => event.pitch !== null)
-    const corrected = expected.map((event, index) => ({ ...event,
-      beats: event.beats - ([163,165,169,171,175,182,190,191].includes(index) ? .5 : 0),
-    }))
-    expect(soundingEvents(pitched)).toEqual(soundingEvents(corrected))
+    expect(pitched.map(({ pitch, tie }) => ({ pitch, tie }))).toEqual(expected.map(({ pitch, tie }) => ({ pitch, tie })))
+    expect(pitched.flatMap((event, index) => event.beats !== expected[index]!.beats ? [[index, event.beats - expected[index]!.beats]] : [])).toEqual([163,165,169,171,175,182,190,191].map(index => [index, -.5]))
     expect(actual.reduce((sum, event) => sum + event.beats, 0)).toBe(160)
     expect(parseM3NDocument(conan).title).toBe('如果有你在')
   })

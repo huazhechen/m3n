@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { formatM3N, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
+import { formatM3N, m3nToMei, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import type { ScoreMeasure } from '@m3n/notation'
 
 const sources = import.meta.glob<string>('../scores/*.m3n', { eager: true, query: '?raw', import: 'default' })
 
-/** Compare sounding spans, allowing tied notes and adjacent rests to change spelling. */
+/** Preserve every engraved event, including separate tied notes and rests. */
 function musicalMeaning(source: string) {
   const score = parseM3NDocument(source)
   const times = new Map<number, { start: number; end: number }>()
@@ -12,19 +12,14 @@ function musicalMeaning(source: string) {
     const pitches = resolveScorePitches(measures)
     let elapsed = 0
     return measures.map((measure) => {
-      const spans: Array<{ pitches: string[]; beats: number; tie: boolean; kind: string }> = []
+      const spans = []
       for (const event of measure.events) {
         times.set(event.sourceStart, { start: elapsed, end: elapsed + event.beats })
         elapsed += event.beats
-        const previous = spans.at(-1)
-        const resolved = pitches.get(event) ?? []
-        if (previous && ((previous.kind === 'rest' && event.kind === 'rest') ||
-          (previous.tie && JSON.stringify(previous.pitches) === JSON.stringify(resolved)))) {
-          previous.beats += event.beats
-          previous.tie = event.tie
-        } else spans.push({ pitches: resolved, beats: event.beats, tie: event.tie, kind: event.kind })
+        const { sourceStart: _start, sourceEnd: _end, ...engraved } = event
+        spans.push({ ...engraved, resolvedPitches: pitches.get(event) ?? [] })
       }
-      return { spans, left: measure.left, right: measure.right, ending: measure.ending, repeatCount: measure.repeatCount }
+      return { spans, left: measure.left, right: measure.right, ending: measure.ending, repeatCount: measure.repeatCount, breakBefore: measure.breakBefore, breakAfter: measure.breakAfter }
     })
   }
   return {
@@ -43,6 +38,7 @@ describe('score formatting corpus', () => {
     const formatted = formatM3N(source)
     expect(validateM3NDiagnostics(formatted).map(({ code, message }) => ({ code, message })))
       .toEqual(validateM3NDiagnostics(source).map(({ code, message }) => ({ code, message })))
+    expect(m3nToMei(formatted).mei).toBe(m3nToMei(source).mei)
     expect(musicalMeaning(formatted)).toEqual(musicalMeaning(source))
     expect(formatM3N(formatted)).toBe(formatted)
   })

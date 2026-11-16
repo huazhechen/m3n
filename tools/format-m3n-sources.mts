@@ -1,6 +1,6 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { formatM3N, validateM3NDiagnostics } from '@m3n/notation'
+import { formatM3N, m3nToMei, normalizeAdjacentBarlines, validateM3NDiagnostics } from '@m3n/notation'
 
 async function markdownFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true })
@@ -17,6 +17,9 @@ function diagnosticSet(source: string) {
 }
 
 function assertEquivalent(label: string, before: string, after: string) {
+  if (m3nToMei(normalizeAdjacentBarlines(before)).mei !== m3nToMei(after).mei) {
+    throw new Error(`${label}: formatting changed engraved events or score structure`)
+  }
   if (formatM3N(after) !== after) throw new Error(`${label}: formatting is not stable`)
   const beforeDiagnostics = diagnosticSet(before)
   const afterDiagnostics = diagnosticSet(after)

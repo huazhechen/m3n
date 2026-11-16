@@ -30,7 +30,7 @@ export function applyEdits(source: string, edits: SourceEdit[]) {
   return source
 }
 
-/** One spelling policy for both scope simplification and sustained-note rewrites. */
+/** Spell one event at its existing duration when simplifying scopes. */
 export function spellDuration(pitch: string, beats: number, tied = false, minimumDepth = 0, maximumDepth = minimumDepth + 16) {
   for (let depth = minimumDepth; depth <= maximumDepth; depth += 1) {
     for (let carets = 0; carets <= 6; carets += 1) for (let dots = 0; dots <= 4; dots += 1) {

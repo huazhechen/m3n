@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeGroups } from './groups.js'
-import { mergeRedundantDurations, splitAtStrongBeats } from './rhythm.js'
 import { normalizeLayout } from './layout.js'
 import { alignLyrics } from './lyrics.js'
 import { mapLiteralSafe } from './text.js'
@@ -10,16 +9,8 @@ describe('independent formatter stages', () => {
     expect(normalizeGroups('{2/4}\nN: (1^~) 1 |||')).toBe('{2/4}\nN: 1~ 1 |||')
   })
 
-  it('splits rhythm without formatting surrounding lines', () => {
-    expect(splitAtStrongBeats('{4/4}\nN:  1   2.  3. |||')).toBe('{4/4}\nN:  1   2~ (2)  3. |||')
-  })
-
-  it('merges redundancy without deleting manual layout', () => {
-    expect(mergeRedundantDurations('{4/4}\nN: {br}1~ 1 2 3 |||')).toBe('{4/4}\nN: {br}1^ 2 3 |||')
-  })
-
   it('formats layout without changing note spelling', () => {
-    expect(normalizeLayout('{2/4}\nN:  (1^)   2 |||')).toBe('{2/4}\nN: (1^) 2 |||\n')
+    expect(normalizeLayout('{2/4}\nN:  {br}(1^)   2 |||')).toBe('{2/4}\nN: {br}(1^) 2 |||\n')
   })
 
   it('aligns lyrics without normalizing music', () => {

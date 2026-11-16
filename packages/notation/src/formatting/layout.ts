@@ -21,7 +21,7 @@ function normalizeWhitespaceOutsideDirectives(value: string) {
     if (inDirective) {
       directive += character
       if (character === '}') {
-        result += directive.replace(/[ \t]{2,}/g, ' ')
+        result += directive
         directive = ''
         inDirective = false
       }
@@ -90,10 +90,10 @@ export function normalizeAdjacentBarlines(source: string) {
 }
 
 function normalizeMusic(source: string) {
-  // Remove only actual break directives, before processing the surrounding music.
+  // Directive contents, including manual breaks, are part of the rendered score.
   const { content, comment } = splitInlineComment(source)
   const music = content.split(/(\{[^}]*\})/g).map((chunk, index) => index % 2
-    ? chunk === '{br}' ? ' ' : chunk
+    ? chunk
     : collapseBarlines(chunk)).join('').replace(/^\s*\|{1,3}(?=\s|$)\s*/, '')
   return appendComment(music.trimEnd(), comment)
 }

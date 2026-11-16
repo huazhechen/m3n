@@ -13,13 +13,13 @@ describe('formatM3N', () => {
       'L1: 你好% | 世界',
       'L2: Hello world again | now',
       '---V1,V2',
-      'N: [135:h]{arp} 0 0^ |||',
+      'N: [135:h]{arp} 0 0 0 |||',
       '',
     ].join('\n'))
   })
 
-  it('merges a same-pitch tie only when it keeps its rhythmic boundary', () => {
-    expect(formatM3N('{4/4}\nN: 1~ 1 2 3 |||')).toContain('N: 1^ 2 3 |||')
+  it('preserves all tied event boundaries', () => {
+    expect(formatM3N('{4/4}\nN: 1~ 1 2 3 |||')).toContain('N: 1~ 1 2 3 |||')
     expect(formatM3N('{4/4}\nN: 2 1~ 1 3 |||')).toContain('N: 2 1~ 1 3 |||')
   })
 
@@ -27,8 +27,8 @@ describe('formatM3N', () => {
     const source = '{title=A  B}  {text=  dolce  } // heading\nN: {p}1{text=keep  spaces}  2  3  4  // phrase\n'
 
     expect(formatM3N(source)).toBe([
-      '{title=A B} {text= dolce }  // heading',
-      'N: {p}1{text=keep spaces} 2 3 4  // phrase',
+      '{title=A  B} {text=  dolce  }  // heading',
+      'N: {p}1{text=keep  spaces} 2 3 4  // phrase',
       '',
     ].join('\n'))
   })
@@ -42,20 +42,20 @@ describe('formatM3N', () => {
     expect(validateM3NDiagnostics(formatted)).toEqual([])
   })
 
-  it('normalizes directive whitespace without splitting long phrases', () => {
+  it('preserves directive text without splitting long phrases', () => {
     const source = `{title=A  B} {2/4}\nN: ${'1 2 | '.repeat(17)}\nL: ${'甲'.repeat(34)}`
     const formatted = formatM3N(source)
 
-    expect(formatted).toContain('{title=A B}')
+    expect(formatted).toContain('{title=A  B}')
     expect(formatted.match(/^N:/gm)).toHaveLength(1)
     expect(formatted).not.toContain('\n---\n')
     expect(formatted).toContain(`N: ${'1 2 | '.repeat(17).trim()}`)
   })
 
-  it('removes manual breaks and merges adjacent sixteenth-note groups by beat', () => {
+  it('preserves manual breaks and groups adjacent sixteenth notes by beat', () => {
     const source = '{4/4}\nN: {br} ((1)) ((2)) ((3)) ((4)) | ((5)) ((6)) ((7)) ((1e)) |||\n'
 
-    expect(formatM3N(source)).toBe('{4/4}\nN: ((1 2 3 4)) | ((5 6 7 1e)) |||\n')
+    expect(formatM3N(source)).toBe('{4/4}\nN: {br} ((1 2 3 4)) | ((5 6 7 1e)) |||\n')
   })
 
   it('removes a redundant ordinary bar at the start of a phrase', () => {
@@ -125,8 +125,9 @@ describe('formatter semantic guarantees', () => {
     expect(valid('{4/4}\nN: ((1^^)) ((2^^)) 3 4 |||')).toContain('N: 1 2 3 4 |||')
   })
 
-  it('splits sustained values relative to their enclosing depth', () => {
-    expect(valid('{4/4}\nN: 1 (2^^.) |||')).toContain('N: 1 2~ 2^ |||')
+  it('preserves sustained values as single events', () => {
+    expect(formatM3N('{4/4}\nN: 3 (4) 5. 3 |||')).toBe('{4/4}\nN: 3 (4) 5. 3 |||\n')
+    expect(valid('{4/4}\nN: 1 (2^^.) |||')).toContain('N: 1 2^. |||')
     valid('{6/8}\nN: (1 2^^ 3) |||')
   })
 
@@ -173,17 +174,17 @@ describe('formatter semantic guarantees', () => {
     const formatted = valid('{4/4}\nN: {br}{text=keep | | this}1 2 3 4 ||| // keep | | {br} %%')
     expect(formatted).toContain('{text=keep | | this}')
     expect(formatted).toContain('// keep | | {br} %%')
-    expect(formatted).not.toContain('N: {br}')
+    expect(formatted).toContain('N: {br}')
     expect(formatM3N('{2/4}\nN: 1 2 |||\nL: Hello world // %% | | {br}'))
       .toContain('// %% | | {br}')
   })
 })
 
 describe('canonical note scopes', () => {
-  it('simplifies short tied notes and deeply nested rests', () => {
-    expect(formatM3N('{2/4}\nN: (1~ 1) 2 |||')).toContain('N: 1 2 |||')
-    expect(formatM3N('{2/4}\nN: ((0 0 0 0)) 1 |||')).toContain('N: 0 1 |||')
-    expect(formatM3N('{2/4}\nN: ((0 0)) (0) 0 |||')).toContain('N: 0^ |||')
+  it('preserves short tied notes and separate rests', () => {
+    expect(formatM3N('{2/4}\nN: (1~ 1) 2 |||')).toContain('N: (1~ 1) 2 |||')
+    expect(formatM3N('{2/4}\nN: ((0 0 0 0)) 1 |||')).toContain('N: ((0 0 0 0)) 1 |||')
+    expect(formatM3N('{2/4}\nN: ((0 0)) (0) 0 |||')).toContain('N: ((0 0) 0) 0 |||')
   })
 
   it('preserves unsupported outer scopes and their nested duration scaling', () => {
@@ -204,14 +205,7 @@ it('preserves timing and reaches a stable spelling across varied nested rhythms'
   let seed = 7341
   const random = (size: number) => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed % size }
   const spans = (source: string) => [...parseM3NDocument(source).parts.values()].flatMap(part => part.melody.map(measure => {
-    const result: Array<{ pitch: string; beats: number; tie: boolean }> = []
-    for (const event of measure.events) {
-      const pitch = event.pitches.join(',')
-      const last = result.at(-1)
-      if (last && last.pitch === pitch && (last.tie || !pitch)) { last.beats += event.beats; last.tie = event.tie }
-      else result.push({ pitch, beats: event.beats, tie: event.tie })
-    }
-    return result
+    return measure.events.map(event => ({ pitches: event.pitches, kind: event.kind, beats: event.beats, tie: event.tie }))
   }))
   for (const [count, unit] of [[2, 4], [3, 4], [4, 4], [6, 8], [9, 8], [12, 8]]) {
     for (let sample = 0; sample < 30; sample += 1) {

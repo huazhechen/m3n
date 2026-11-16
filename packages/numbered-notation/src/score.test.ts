@@ -3,11 +3,20 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { ASTFunctionNode, compileScore, getLayoutBounds, isVisualTemporalNode, type VisualTemporalNode } from '@m3n/jpfun'
-import { measurePlaybackPasses, m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
+import { formatM3N, measurePlaybackPasses, m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
 import { NumberedNotationScore, type NumberedNotationRenderOptions } from './score.js'
 import { projectNumberedScore } from './projection.js'
 
 const options = { paged: false, width: 800 }
+
+it('keeps slur clearance and drawing order independent of source whitespace', () => {
+  const source = '{4/4}\nN: {lg}1             2{/} {lg}3 4{/} | {lg}((1)) ((2)) ((3)) ((4)){/} 5 6 7 |||'
+  const formatted = formatM3N(source)
+  expect(formatted).not.toBe(source)
+  for (const width of [320, 800]) for (const paged of [false, true]) {
+    expect(render(formatted, { width, paged }).pages).toEqual(render(source, { width, paged }).pages)
+  }
+})
 
 it('renders compound-meter underlines in threes in melody and bass', () => {
   const document = parseM3NDocument('{6/8}\nN: (1 2 3 4 5 6) |||\nB: (1d 2d 3d 4d 5d 6d) |')

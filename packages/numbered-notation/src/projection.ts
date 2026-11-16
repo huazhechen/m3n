@@ -389,9 +389,17 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   }
   // Explicit phrase boundaries remain distinct, including adjacent slurs.
   // Native arc clearance expects inner declarations before their outer slurs.
+  // Source character counts change with whitespace and equivalent note spelling.
+  // Order arcs by event distance so formatting cannot change their clearance.
+  const eventPositions = [...document.parts.values()].flatMap(part => [...part.melody, ...part.bass])
+    .concat((document.alternatives ?? []).map(item => item.measure))
+    .flatMap(measure => measure.events.map(event => event.sourceStart))
+  const eventOrder = new Map([...new Set(eventPositions)].sort((a, b) => a - b).map((position, index) => [position, index]))
+  const intervalLength = (interval: ScoreDocument['intervals'][number]) =>
+    (eventOrder.get(interval.endStart ?? -1) ?? 0) - (eventOrder.get(interval.start ?? -1) ?? 0)
   const intervals = [...document.intervals, ...new Set((document.alternatives ?? []).flatMap(item=>item.intervals))].sort((a, b) => {
     if (a.kind !== 'lg' || b.kind !== 'lg') return Number(b.kind === 'lg') - Number(a.kind === 'lg')
-    return ((a.endStart ?? 0) - (a.start ?? 0)) - ((b.endStart ?? 0) - (b.start ?? 0))
+    return intervalLength(a) - intervalLength(b)
   })
   for (const interval of intervals) {
     if (interval.kind !== 'lg' && interval.kind !== 'cresc' && interval.kind !== 'decres') continue
