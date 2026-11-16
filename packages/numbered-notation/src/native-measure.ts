@@ -1,8 +1,10 @@
 /** Platform-independent text measurement contract used by the native engine. */
-export type TextStyle = { fontFamily?: string; fontSize: number; fontWeight?: number; textAlign?: 'left' | 'center' | 'right' }
-export type TextMetrics = { w: number; h: number; baseline: number; centerOffset?: number }
+export type TextStyle = { fontFamily?: string; fontSize: number; fontWeight?: number; fontStyle?: 'normal' | 'italic'; textAlign?: 'left' | 'center' | 'right' }
+export type TextMetrics = { w: number; h: number; baseline: number; centerOffset?: number; advance?: number; inkLeft?: number; inkRight?: number }
 export type TextMeasurer = { measureText(text: string, style: TextStyle): TextMetrics }
 
+/** Approximate offline fallback. Browser engraving uses CanvasTextMeasurer;
+ * headless consumers should inject measured metrics for their actual fonts. */
 export class DefaultTextMeasurer implements TextMeasurer {
   measureText(text: string, style: TextStyle): TextMetrics {
     return { w: [...text].reduce((width, character) => width + style.fontSize * (character.codePointAt(0)! > 127 ? 1 : 0.58), 0), h: style.fontSize, baseline: style.fontSize * 0.8 }
@@ -12,9 +14,12 @@ export class DefaultTextMeasurer implements TextMeasurer {
 export class CanvasTextMeasurer implements TextMeasurer {
   constructor(private readonly context: CanvasRenderingContext2D) {}
   measureText(text: string, style: TextStyle): TextMetrics {
-    this.context.font = `${style.fontWeight ?? 400} ${style.fontSize}px ${style.fontFamily ?? 'serif'}`
+    this.context.textAlign = 'left'; this.context.textBaseline = 'alphabetic'
+    this.context.font = `${style.fontStyle ?? 'normal'} ${style.fontWeight ?? 400} ${style.fontSize}px ${style.fontFamily ?? 'serif'}`
     const metrics = this.context.measureText(text)
-    return { w: Math.max(metrics.width, metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight), h: style.fontSize, baseline: style.fontSize * 0.8,
+    const ascent = metrics.actualBoundingBoxAscent, descent = metrics.actualBoundingBoxDescent
+    return { w: Math.max(metrics.width, metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight),
+      h: ascent + descent, baseline: ascent, advance: metrics.width, inkLeft: -metrics.actualBoundingBoxLeft, inkRight: metrics.actualBoundingBoxRight,
       centerOffset: (metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft - metrics.width) / 2 }
   }
 }

@@ -1,3 +1,4 @@
+import { nativeStyle } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 
@@ -13,7 +14,7 @@ export function nativeTupletGeometry(relation: NativeRelation, system: NativeSys
   while (first > 0 && spans[first - 1]!.end + 1 === spans[first]!.start) first--
   while (last >= 0 && last + 1 < spans.length && spans[last]!.end + 1 === spans[last + 1]!.start) last++
   const peers = current < 0 ? [relation] : spans.slice(first, last + 1).map(span => span.item)
-  const size = 22, fontSize = size * 0.72, hook = size * 0.18, gap = size * 0.14
+  const size = nativeStyle.music, fontSize = size * 0.72, hook = size * 0.18, gap = size * 0.14
   const metrics = measurer.measureText(relation.label ?? '', { fontSize, fontFamily: 'serif' })
   const y = Math.min(...peers.map(peer => {
     const covered = glyphs.slice(glyphs.indexOf(peer.first), glyphs.indexOf(peer.last) + 1)

@@ -1,3 +1,4 @@
+import { nativeStyle } from './native-style.js'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { nativeArcSlice } from './native-curve.js'
@@ -53,7 +54,7 @@ describe('native musical arc geometry', () => {
     expect(layout.systems[0]!.lanes[0]!.top).toBeCloseTo(arc.top)
   })
 
-  it('keeps an inline meter above its own column without lifting the following tie port', () => {
+  it('keeps an inline meter separate from the note port while clearing its actual column', () => {
     const source = '{4/4}\nN: 1 2 3 4~ | {3/4}4 5 6 |||'
     const layout = layoutNativeScore(parseM3NDocument(source), options)
     const relation = layout.relations.find(relation => relation.kind === 'tie')!
@@ -61,7 +62,11 @@ describe('native musical arc geometry', () => {
     expect(relation.last.controls.map(control => control.kind)).toContain('meter')
     expect(relation.last.top).toBeCloseTo(26.58)
     expect(relation.last.musicTop).toBeCloseTo(17.6)
-    expect(arc.top - arc.height).toBeCloseTo(17.6)
+    const control = relation.last.controls.find(control => control.kind === 'meter')!
+    const gaps = [control.x!, control.x! + control.width].map(x => -control.top - nativeArcSlice(arc.commands, x)!.bottom)
+    expect(Math.min(...gaps)).toBeCloseTo(nativeStyle.markGap, 8)
+    // Lift only the overlap correction, rather than treating the meter as a note endpoint.
+    expect(arc.top - arc.height).toBeLessThan(control.top)
     expect(layout.systems[0]!.lanes[0]!.top).toBeGreaterThanOrEqual(relation.last.top)
   })
 

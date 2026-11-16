@@ -1,3 +1,4 @@
+import { nativeStyle } from './native-style.js'
 import type { NativeSystem } from './native-layout.js'
 import type { NativeAnnotation } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -16,13 +17,13 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
       const text = kind === 'chord' ? glyph.event?.chord : kind === 'text' ? glyph.event?.text
         : glyph.event?.sectionLabelBreakAfter ? glyph.event.sectionLabel : undefined
       if (!text || !glyph.annotations.includes(text)) continue
-      const framed = kind === 'section', padding = framed ? 3.5 : 0
-      const metrics = measurer.measureText(text, { fontSize: 14, fontFamily: 'serif', fontWeight: framed ? 700 : 400 })
+      const framed = kind === 'section', padding = framed ? nativeStyle.annotation * 0.25 : 0
+      const metrics = measurer.measureText(text, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: framed ? 700 : 400 })
       const w = metrics.w + 2 * padding, h = metrics.h + 2 * padding
       const left = framed ? margin : Math.max(margin, Math.min(glyph.x - w / 2, width - margin - w))
       const right = left + w
       const obstacleTop = Math.max(glyph.musicTop ?? glyph.top, ...regions.filter(region => region.lane === glyph.lane && region.right >= left && region.left <= right).map(region => region.top))
-      const top = obstacleTop + 14 * (local ? 0.4 : 0.5) + h
+      const top = obstacleTop + nativeStyle.annotation * (local ? 0.4 : 0.5) + h
       const item: NativeAnnotation = { text, kind, x: left + w / 2, top, width: w, height: h, baseline: -top + padding + metrics.baseline }
       glyph.annotationLayout ??= []
       glyph.annotationLayout.push(item)

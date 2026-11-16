@@ -1,21 +1,22 @@
+import { nativeStyle, nativeEm as em } from './native-style.js'
 import type { NativePitch } from './native-model.js'
-/** All vertical distances are relative to the principal number's text baseline. */
-export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, sustain: boolean) {
-  const size = 22, baseline = size * 0.8, gap = size * 0.12
+import { NativeSymbols, line } from './native-symbols.js'
+import { nativeSvgInk } from './native-ink.js'
+import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
+/** All vertical distances come from the primitives used to paint the note. */
+export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, sustain: boolean, measurer: TextMeasurer = new DefaultTextMeasurer()) {
+  const size = nativeStyle.music, gap = size * 0.12, painter = new NativeSymbols(measurer)
   const base = 2 ** Math.floor(Math.log2(writtenBeats))
   const beamCount = sustain ? 0 : Math.max(0, Math.round(-Math.log2(base)))
-  const beamBottom = size * 0.92 + (beamCount - 1) * size * 0.14 + Math.max(1, size * 0.055)
   const bounds = pitches.map((pitch, index) => {
-    const above = sustain ? 0 : Math.max(0, pitch.octave), below = sustain ? 0 : Math.max(0, -pitch.octave)
-    const top = baseline + above * size * 0.23
-    const beamed = beamCount > 0 && index === 0
-    let decorationBottom = beamed ? beamBottom : size * 0.84
-    if (below) decorationBottom += below * size * 0.23
-    return { top, bottom: (beamed ? decorationBottom : Math.max(size, decorationBottom)) - baseline }
+    let svg = sustain ? line(-em(4.62), -em(6.6), em(4.62), -em(6.6), em(2.2)) : painter.pitch(pitch, 0, 0, size, index === 0 ? beamCount : 0)
+    if (index === 0) for (let beam = 0; beam < beamCount; beam++) svg += line(-em(6), em(3.245) + beam * em(3.08), em(7), em(3.245) + beam * em(3.08), em(1.21))
+    const ink = nativeSvgInk(svg, measurer)
+    return { top: -ink.top, bottom: ink.bottom }
   })
   const offsets = [0]
   if (!sustain) for (let index = 1; index < pitches.length; index++) offsets.push(offsets[index - 1]! - bounds[index - 1]!.top - gap - bounds[index]!.bottom)
-  return { offsets, top: Math.max(...bounds.map((bound, index) => bound.top - (offsets[index] ?? 0))), bottom: bounds[0]?.bottom ?? size - baseline, beamCount }
+  return { offsets, top: Math.max(...bounds.map((bound, index) => bound.top - (offsets[index] ?? 0))), bottom: bounds[0]?.bottom ?? 0, beamCount }
 }
 
 export function nativeBeamCount(a: import('./native-model.js').NativeGlyph, b: import('./native-model.js').NativeGlyph) {
@@ -30,5 +31,5 @@ export function nativeBeamCount(a: import('./native-model.js').NativeGlyph, b: i
 /** Octave dots need an extra 0.05em between their musical bounds and an arc port. */
 export function nativeTiePortTop(glyph: { top: number; musicTop?: number; sustain: boolean; pitches: NativePitch[] }): number {
   // Inline key/meter/tempo controls occupy their own columns, outside the note.
-  return (glyph.musicTop ?? glyph.top) + (!glyph.sustain && glyph.pitches.some(pitch => pitch.octave > 0) ? 22 * 0.05 : 0)
+  return (glyph.musicTop ?? glyph.top) + (!glyph.sustain && glyph.pitches.some(pitch => pitch.octave > 0) ? nativeStyle.music * 0.05 : 0)
 }

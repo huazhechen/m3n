@@ -1,10 +1,11 @@
+import { nativeStyle } from './native-style.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
 
 /** Bar geometry uses the same music size and proportional strokes as the reference. */
 export function nativeBarMetrics(kind: string | undefined) {
-  const size = 27.5, thin = size * 0.065, thick = thin * 2.6, gap = thin * 1.8, radius = thin * 0.8
+  const size = nativeStyle.music * 1.25, thin = size * 0.065, thick = thin * 2.6, gap = thin * 1.8, radius = thin * 0.8
   const leftDots = kind === 'rptend' || kind === 'rptboth', rightDots = kind === 'rptstart' || kind === 'rptboth'
   const widths = kind === 'dbl' ? [thin, thin] : kind === 'end' || leftDots ? [thin, thick] : rightDots ? [thick, thin] : [thin]
   const prefix = leftDots ? radius * 3 + gap : 0
@@ -44,7 +45,7 @@ const springCell = (lane: string, left: number, right: number, duration: number,
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
 function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
-  const scale = 22 * (options.noteGapEm ?? 0.6) / 12
+  const scale = nativeStyle.music * (options.noteGapEm ?? 0.6) / 12
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
   const parentheses = new Map<NativeGlyph, { left: number; right: number }>()

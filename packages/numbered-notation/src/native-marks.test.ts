@@ -35,7 +35,8 @@ describe('native articulation occupancy', () => {
     const svg = NativeNumberedNotationScore.create(document).render(options).join('')
     const root = new DOMParser().parseFromString(svg, 'text/html')
     const triangle = root.querySelector('[data-m3n-mark="tip"] path')!
-    expect(triangle.getAttribute('d')).toContain(`M${Number((glyph.x - 2.5).toFixed(4))} ${Number((glyph.y + position.top).toFixed(4))}`)
+    expect(triangle.getAttribute('d')).toBe('M-2.5 0 h5 l-2.5 7 Z')
+    expect(triangle.parentElement!.getAttribute('transform')).toBe(`translate(${Number(glyph.x.toFixed(4))} ${Number((glyph.y + position.y).toFixed(4))})`)
     expect(triangle.hasAttribute('stroke')).toBe(false)
   })
 

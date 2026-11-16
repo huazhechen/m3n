@@ -1,16 +1,22 @@
-export type NativeMarkPlacement = { name: string; top: number; height: number }
+import { nativeStyle } from './native-style.js'
+import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
+import { NativeSymbols } from './native-symbols.js'
+import { nativeSvgInk } from './native-ink.js'
 
-/** Articulations sit nearest the note; ornaments precede expression marks. */
-export function nativeMarkStack(names: readonly string[], bodyTop: number) {
-  const articulation = (name: string) => ['tip', 'brk', 'hold', 'str'].includes(name)
+export type NativeMarkPlacement = { name: string; top: number; height: number; y: number; left: number; right: number }
+export const nativeInnerMark = (name: string) => ['tip', 'brk', 'hold', 'str'].includes(name)
+/** Articulations sit nearest the note; other decorations sit outside relations.
+ * Placement and SVG use the very same shapes, including italic text metrics. */
+export function nativeMarkStack(names: readonly string[], bodyTop: number, measurer: TextMeasurer = new DefaultTextMeasurer()) {
   const expression = (name: string) => /^(p{1,3}|f{1,3}|mp|mf|sfz)$/.test(name) || /^(cresc\.|dim\.|accel\.|rit\.)/.test(name)
-  const rank = (name: string) => articulation(name) ? 0 : expression(name) ? 2 : 1
-  const ordered = [...names].sort((a, b) => rank(a) - rank(b))
+  const rank = (name: string) => nativeInnerMark(name) ? 0 : expression(name) ? 2 : 1
+  const ordered = [...names].sort((a, b) => rank(a) - rank(b)), painter = new NativeSymbols(measurer)
   let top = bodyTop
-  const items: NativeMarkPlacement[] = ordered.map(name => {
-    const height = name === 'tip' || name === 'brk' ? 7 : name === 'hold' ? 7 * 0.18 : name === 'str' ? 6 : 12
-    top += 22 * 0.12 + height
-    return { name, top: -top, height }
+  const items = ordered.map(name => {
+    const ink = nativeSvgInk(painter.rawMark(name), measurer), height = ink.bottom - ink.top
+    const y = -top - nativeStyle.markGap - ink.bottom
+    top = height - (y + ink.bottom)
+    return { name, top: -top, height, y, left: ink.left, right: ink.right }
   })
   return { items, top }
 }

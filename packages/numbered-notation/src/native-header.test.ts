@@ -33,9 +33,9 @@ describe('native measured header order', () => {
       const geometry = nativeHeaderGeometry(document, 320, 32, measurer, gap)
       const without = nativeHeaderGeometry(plain, 320, 32, measurer, gap)
       expect(geometry.orderRows).toHaveLength(2)
-      expect(geometry.height - without.height).toBe(2 * (23 + gap))
-      expect(geometry.orderRows[0]!.top - geometry.sidesBottom).toBe(gap)
-      expect(geometry.orderRows[1]!.top - geometry.orderRows[0]!.top).toBe(23 + gap)
+      expect(geometry.height - without.height).toBeCloseTo(2 * (23 + gap), 12)
+      expect(geometry.orderRows[0]!.top - geometry.sidesBottom).toBeCloseTo(gap, 12)
+      expect(geometry.orderRows[1]!.top - geometry.orderRows[0]!.top).toBeCloseTo(23 + gap, 12)
     }
     const empty = nativeHeaderGeometry({ ...document, order: ['', ''] }, 320, 32, measurer)
     expect(empty.orderRows).toEqual([])

@@ -55,12 +55,12 @@ describe('native annotations', () => {
     const score = layout('{text=cresc.}1{ac(2e 3e)} 2 3 4')
     const glyph = score.projection.glyphs[0]!, text = annotations(score)[0]!
     const grace = nativeGraceGeometry(glyph.graces, glyph.musicLeft!)
-    expect(grace.top).toBeGreaterThan(32)
-    expect(text.top - text.height).toBeGreaterThanOrEqual(grace.top + 5.6 - 1e-8)
+    expect(glyph.musicTop).toBeGreaterThan(32)
+    expect(text.top - text.height).toBeGreaterThanOrEqual(glyph.musicTop! + 5.6 - 1e-8)
     const [a, c, b] = [grace.start, grace.control, grace.end]
     const t = (a.y - c.y) / (a.y - 2 * c.y + b.y)
     const peak = (1 - t) ** 2 * a.y + 2 * t * (1 - t) * c.y + t ** 2 * b.y
-    expect(grace.top).toBeCloseTo(-peak + 0.6)
+    expect(glyph.musicTop).toBeCloseTo(-peak + 0.6)
   })
 
   it('does not let annotation height move a volta back over the annotation', () => {

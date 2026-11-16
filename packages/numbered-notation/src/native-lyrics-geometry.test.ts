@@ -2,6 +2,9 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
+import { DefaultTextMeasurer } from './native-measure.js'
+import { nativeSvgInk } from './native-ink.js'
+import { NativeSymbols, line } from './native-symbols.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
@@ -37,13 +40,20 @@ describe('native lyric and music lower envelopes', () => {
     }
   })
 
-  it('uses short-note beam bounds without retaining the quarter-note lower padding', () => {
-    const pitch = { degree: '1', accidental: '', octave: 0 }
-    expect(nativeNoteMetrics([pitch], 1, false).bottom).toBeCloseTo(4.4)
-    expect(nativeNoteMetrics([pitch], 0.5, false).bottom).toBeCloseTo(3.85)
-    expect(nativeNoteMetrics([pitch], 0.25, false).bottom).toBeCloseTo(6.93)
+  it('unions the actually painted number and beams, including conservative offline font bounds', () => {
+    const pitch = { degree: '1', accidental: '', octave: 0 }, measurer = new DefaultTextMeasurer()
+    const painter = new NativeSymbols(measurer)
+    for (const beats of [1, 0.5, 0.25]) {
+      const metrics = nativeNoteMetrics([pitch], beats, false, measurer)
+      let svg = painter.pitch(pitch, 0, 0, 22, metrics.beamCount)
+      for (let beam = 0; beam < metrics.beamCount; beam++) svg += line(-6, 3.245 + beam * 3.08, 7, 3.245 + beam * 3.08, 1.21)
+      expect(metrics.bottom).toBeCloseTo(nativeSvgInk(svg, measurer).bottom, 8)
+    }
+    // A short real digit must not inherit the fallback font's nominal descent.
+    const shortInk = { measureText: () => ({ w: 11, h: 15, baseline: 15 }) }
+    expect(nativeNoteMetrics([pitch], 0.5, false, shortInk).bottom).toBeCloseTo(3.85)
+    expect(nativeNoteMetrics([pitch], 0.25, false, shortInk).bottom).toBeCloseTo(6.93)
     const chord = nativeNoteMetrics([pitch, pitch], 0.5, false)
     expect(chord.offsets).toEqual([0, -24.64])
-    expect(chord.bottom).toBeCloseTo(3.85)
   })
 })

@@ -1,4 +1,9 @@
-import { scoreCreditLines, type ScoreDocument } from '@m3n/notation'
+import { nativeStyle, nativeEm as em } from './native-style.js'
+import { NativeSymbols, attrs, n } from './native-symbols.js'
+import { nativeSvgInk } from './native-ink.js'
+import { measureNativeControl } from './native-controls.js'
+import { numberedKeyLabel } from './fixed-do.js'
+import { displayedTempo, scoreCreditLines, type ScoreDocument } from '@m3n/notation'
 import type { TextMeasurer } from './native-measure.js'
 import { numberedOrderLines } from './order-lines.js'
 
@@ -20,20 +25,48 @@ export function wrapNativeText(text: string, width: number, size: number, measur
 }
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, systemGap = 24) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, systemGap = nativeStyle.systemGap) {
   const available = width - 2 * margin
-  const title = wrapNativeText(document.title, available - 2, 32, measurer, 700)
-  const subtitle = wrapNativeText(document.subtitle, available - 2, 16, measurer)
-  const titleHeight = title.length ? 32 + (title.length - 1) * 40 : 0
-  const subtitleHeight = subtitle.length ? 16 + (subtitle.length - 1) * 20 : 0
-  const centerHeight = titleHeight + subtitleHeight + (titleHeight && subtitleHeight ? 5 : 0)
+  const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, measurer, 700)
+  const subtitle = wrapNativeText(document.subtitle, available - em(2), nativeStyle.subtitle, measurer)
+  const painter = new NativeSymbols(measurer)
+  const textRows = (lines: string[], size: number, weight = 400) => {
+    let bottom = 0
+    return lines.map((text, index) => {
+      const m = measurer.measureText(text, { fontSize: size, fontFamily: 'serif', fontWeight: weight })
+      const top = bottom + (index ? size * 0.25 : 0), baseline = top + m.baseline
+      bottom = top + m.h
+      return { text, baseline, bottom }
+    })
+  }
+  const titleRows = textRows(title, nativeStyle.title, 700), subtitleRows = textRows(subtitle, nativeStyle.subtitle)
+  const titleHeight = titleRows.at(-1)?.bottom ?? 0, subtitleHeight = subtitleRows.at(-1)?.bottom ?? 0
+  const centerHeight = titleHeight + subtitleHeight + (titleHeight && subtitleHeight ? em(5) : 0)
   const credits = scoreCreditLines(document)
-  const creditsHeight = credits.length ? 14 + (credits.length - 1) * 21 : 0
-  const signaturesHeight = 39.96
+  const creditRows = credits.map(text => { const colon = text.indexOf('：'); return { label: text.slice(0, colon + 1), name: text.slice(colon + 1) } })
+  const nameWidth = Math.max(0, ...creditRows.map(row => measurer.measureText(row.name, { fontSize: nativeStyle.annotation, fontFamily: 'serif' }).w))
+  const labelWidth = Math.max(0, ...creditRows.map(row => measurer.measureText(row.label, { fontSize: nativeStyle.annotation, fontFamily: 'serif' }).w))
+  let creditBottom = 0
+  const creditSvg = creditRows.map((row, index) => {
+    const raw = painter.text(row.label, width - margin - nameWidth - labelWidth - nativeStyle.text, 0, nativeStyle.credit) + painter.text(row.name, width - margin, 0, nativeStyle.annotation, 'serif', { 'text-anchor': 'end' })
+    const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? nativeStyle.credit * 0.5 : 0) - ink.top
+    creditBottom = y + ink.bottom
+    return `<g transform="translate(0 ${n(y)})">${raw}</g>`
+  }).join('')
+  const creditsHeight = creditBottom
+  const signatures = [measureNativeControl('key', numberedKeyLabel(document.key), measurer), measureNativeControl('meter', `${document.meterCount}/${document.meterUnit}`, measurer)]
+  if (document.hasExplicitTempo) {
+    const tempo = displayedTempo(document.tempo, document.meterCount, document.meterUnit)
+    signatures.push(measureNativeControl('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`, measurer))
+  }
+  let signatureX = margin
+  const signatureSvg = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw }).join('')
+  const signatureInk = nativeSvgInk(signatureSvg, measurer)
+  const signaturesHeight = signatureInk.bottom - signatureInk.top
   const stacked = width < 600 && creditsHeight > 0
-  const sideTop = margin + centerHeight + (centerHeight ? 5 : 0)
-  const sidesHeight = stacked ? creditsHeight + 5 + signaturesHeight : Math.max(creditsHeight, signaturesHeight)
-  const signaturesTop = sideTop + (stacked ? creditsHeight + 5 : sidesHeight - signaturesHeight)
+  const sideTop = margin + centerHeight + (centerHeight ? em(5) : 0)
+  const sidesHeight = stacked ? creditsHeight + em(5) + signaturesHeight : Math.max(creditsHeight, signaturesHeight)
+  const signaturesTop = sideTop + (stacked ? creditsHeight + em(5) : sidesHeight - signaturesHeight)
   const creditsTop = sideTop + (stacked ? 0 : sidesHeight - creditsHeight)
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
   let orderBottom = sideTop + sidesHeight
@@ -41,20 +74,29 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
       ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
     ])]
-    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: 16, fontFamily: 'serif', fontWeight: item.framed ? 700 : 400 }) }))
-    const height = Math.max(...measured.map(item => item.metrics.h + (item.framed ? 7 : 0)))
+    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: nativeStyle.text, fontFamily: 'serif', fontWeight: item.framed ? 700 : 400 }) }))
+    const height = Math.max(...measured.map(item => item.metrics.h + (item.framed ? nativeStyle.text * (7 / 16) : 0)))
     const top = orderBottom + systemGap
     let x = margin
     const items = measured.map(item => {
-      const padding = item.framed ? 3.5 : 0, itemHeight = item.metrics.h + padding * 2
+      const padding = item.framed ? nativeStyle.text * (3.5 / 16) : 0, itemHeight = item.metrics.h + padding * 2
       const y = top + (height - itemHeight) / 2
       const placed = { text: item.text, framed: item.framed, x, y, width: item.metrics.w + padding * 2, height: itemHeight, baseline: y + padding + item.metrics.baseline }
-      x += placed.width + 4
+      x += placed.width + nativeStyle.text * 0.25
       return placed
     })
     orderRows.push({ top, height, items }); orderBottom = top + height
   }
   const orderHeight = orderBottom - (sideTop + sidesHeight)
-  return { title, subtitle, titleTop: margin, subtitleTop: margin + titleHeight + (titleHeight ? 5 : 0), signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
-    orderRows, height: centerHeight + (centerHeight ? 5 : 0) + sidesHeight + systemGap + orderHeight }
+  const subtitleTop = margin + titleHeight + (titleHeight ? em(5) : 0)
+  let svg = titleRows.map(row => painter.text(row.text, width / 2, margin + row.baseline, nativeStyle.title, 'serif', { 'text-anchor': 'middle', 'font-weight': 700 })).join('')
+    + subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, 'serif', { 'text-anchor': 'middle' })).join('')
+    + `<g transform="translate(0 ${n(creditsTop)})">${creditSvg}</g>`
+    + `<g transform="translate(0 ${n(signaturesTop - signatureInk.top)})">${signatureSvg}</g>`
+  for (const row of orderRows) for (const item of row.items) {
+    if (item.framed) svg += `<rect${attrs({ x: item.x + em(0.5), y: item.y + em(0.5), width: item.width - em(1), height: item.height - em(1), fill: 'none', stroke: '#000', 'stroke-width': em(1) })}/>`
+    svg += painter.text(item.text, item.x + (item.framed ? nativeStyle.text * (3.5 / 16) : 0), item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
+  }
+  return { svg, title, subtitle, titleTop: margin, subtitleTop: margin + titleHeight + (titleHeight ? em(5) : 0), signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
+    orderRows, height: centerHeight + (centerHeight ? em(5) : 0) + sidesHeight + systemGap + orderHeight }
 }
