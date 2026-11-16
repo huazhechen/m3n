@@ -167,6 +167,8 @@ class MeterTemporal extends TemporalNodeBase {
     private readonly style: TextStyle;
     private numeratorBaseline = 0;
     private denominatorBaseline = 0;
+    private numeratorCenterOffset = 0;
+    private denominatorCenterOffset = 0;
     private lineY = 0;
     private lineHeight = 0;
 
@@ -210,6 +212,8 @@ class MeterTemporal extends TemporalNodeBase {
         const gap = this.ast.size * 0.08;
         const padding = this.ast.size * 0.08;
         this.lineHeight = Math.max(1, this.ast.size * 0.06);
+        this.numeratorCenterOffset = num.centerOffset ?? 0;
+        this.denominatorCenterOffset = den.centerOffset ?? 0;
         this.numeratorBaseline = num.baseline;
         this.lineY = num.h + gap;
         this.denominatorBaseline = this.lineY + this.lineHeight + gap + den.baseline;
@@ -226,8 +230,8 @@ class MeterTemporal extends TemporalNodeBase {
             return;
         }
         const center = this.box.x + this.box.anchor;
-        painter.drawText(String(this.ast.numerator), center, this.box.y + this.numeratorBaseline, this.style);
+        painter.drawText(String(this.ast.numerator), center - this.numeratorCenterOffset, this.box.y + this.numeratorBaseline, this.style);
         painter.drawRect(this.box.x, this.box.y + this.lineY, this.box.w, this.lineHeight, { fill: "#000" });
-        painter.drawText(String(this.ast.denominator), center, this.box.y + this.denominatorBaseline, this.style);
+        painter.drawText(String(this.ast.denominator), center - this.denominatorCenterOffset, this.box.y + this.denominatorBaseline, this.style);
     }
 }

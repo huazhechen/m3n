@@ -1,3 +1,4 @@
+import type { NativeMeterGeometry } from './native-meter.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
@@ -18,7 +19,7 @@ import { fixedDoPitch, fixedDoGrace, transposedNumberedKeyLabel } from './fixed-
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
-export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno' | 'passes'; text: string; keyRows?: NativeKeyRow[]; width: number; anchor: number; top: number; bottom: number; x?: number }
+export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno' | 'passes'; text: string; keyRows?: NativeKeyRow[]; meterGeometry?: NativeMeterGeometry; width: number; anchor: number; top: number; bottom: number; x?: number }
 export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number

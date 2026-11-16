@@ -4,7 +4,6 @@ import { nativeStyle } from './native-style.js'
 import { placeNativeNavigation, placeNativeSystemLabels } from './native-system-labels.js'
 import { nativeVoltaSvg } from './native-volta.js'
 import { placeNativeLyrics } from './native-lyrics.js'
-import { nativeBarMetrics } from './native-horizontal.js'
 import { placeNativeRelation, type NativeRelationLayout } from './native-relations.js'
 import { nativeMarkStack, nativeInnerMark, nativeMarkRank } from './native-marks.js'
 import { NativeSymbols } from './native-symbols.js'
@@ -182,7 +181,8 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
   }
   measurer ??= new DefaultTextMeasurer()
-  const barSize = nativeBarMetrics(undefined).size, barTop = nativeStyle.music * 0.3 + barSize / 2, barBottom = barSize / 2 - nativeStyle.music * 0.3
+  const barInk = nativeSvgInk(nativeBarSvg('single', 0, 0, measurer), measurer)
+  const barTop = -barInk.top, barBottom = barInk.bottom
   const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
   const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, options.systemGap ?? nativeStyle.systemGap, options)
@@ -213,7 +213,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     for (const [index, measure] of system.measures.entries()) for (const lane of system.lanes) {
       if (lane.id.startsWith('alternative:') || !measure.columns.some(c => c.glyphs.some(g => g.lane === lane.id))) continue
       for (const bar of nativeMeasureBarPositions(system.measures, index)) {
-        const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0), measurer)
+        const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)
         regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top })
       }
     }

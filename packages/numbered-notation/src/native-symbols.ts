@@ -1,3 +1,5 @@
+import { nativeMusicAxis } from './native-axis.js'
+import { nativeMeterGeometry } from './native-meter.js'
 import { nativeStyle, nativeEm as em, nativeDesignPath } from './native-style.js'
 import type { TextMeasurer } from './native-measure.js'
 import type { NativePitch, NativeControl } from './native-model.js'
@@ -19,6 +21,11 @@ export class NativeSymbols {
     const center = extra['text-anchor'] === 'middle'
     const offset = center ? this.measurer.measureText(text, { fontFamily: family, fontSize: size, fontWeight: Number(extra['font-weight'] ?? 400), fontStyle: extra['font-style'] === 'italic' ? 'italic' : 'normal', textAlign: 'center' }).centerOffset ?? 0 : 0
     return `<text${attrs({ x: x - offset, y, 'font-size': size, 'font-family': family, fill: '#000', 'xml:space': 'preserve', ...extra })}>${xml(text)}</text>`
+  }
+
+  sustain(x: number, y: number): string {
+    const axis = y + nativeMusicAxis(this.measurer)
+    return line(x - em(4.62), axis, x + em(4.62), axis, em(2.2))
   }
 
   pitch(pitch: NativePitch, x: number, y: number, size = nativeStyle.music, beams = 0): string {
@@ -60,21 +67,19 @@ export class NativeSymbols {
   control(control: NativeControl, x = 0, y = 0): string {
     if (control.kind === 'section') return `<rect${attrs({ x: x + em(0.5), y: y - control.top + em(0.5), width: control.width - em(1), height: control.top + control.bottom - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>` + this.text(control.text, x + em(3.5), y - em(2.4), nativeStyle.annotation, 'serif', { 'font-weight': 700 })
     if (control.kind === 'passes') {
-      const number = this.measurer.measureText('0', {fontSize:nativeStyle.music,fontFamily:'M3N Numbers'})
       const text = this.measurer.measureText(control.text, {fontSize:nativeStyle.small,fontFamily:'serif'})
-      return this.text(control.text, x, y + number.h / 2 - number.baseline + text.baseline - text.h / 2, nativeStyle.small, 'serif', {'data-m3n-role':'alternative-passes'})
+      return this.text(control.text, x, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.small, 'serif', {'data-m3n-role':'alternative-passes'})
     }
     if (control.kind === 'tempo') return this.tempo(control.text, x, y - em(2))
     if (control.kind === 'segno') return this.segno(x, y)
     if (control.kind === 'meter') {
-      const [numerator, denominator] = control.text.split('/')
-      return this.text(numerator!, x + control.width / 2, y - em(12.18), nativeStyle.meter, 'M3N Numbers', { 'text-anchor': 'middle' })
-        + `<rect${attrs({ x, y: y - em(7.14), width: control.width, height: em(1.08), fill: '#000' })}/>`
-        + this.text(denominator!, x + control.width / 2, y + em(9.78), nativeStyle.meter, 'M3N Numbers', { 'text-anchor': 'middle' })
+      const meter = control.meterGeometry ?? nativeMeterGeometry(control.text, this.measurer)
+      return this.text(meter.numerator, x + control.width / 2, y + meter.numeratorBaseline, nativeStyle.meter, 'M3N Numbers', { 'text-anchor': 'middle' })
+        + `<rect${attrs({ x, y: y + meter.lineY, width: control.width, height: meter.lineHeight, fill: '#000' })}/>`
+        + this.text(meter.denominator, x + control.width / 2, y + meter.denominatorBaseline, nativeStyle.meter, 'M3N Numbers', { 'text-anchor': 'middle' })
     }
     const geometry = nativeKeyGeometry(control.keyRows ?? [{key:control.text}],this.measurer)
-    const number = this.measurer.measureText('0',{fontSize:nativeStyle.music,fontFamily:'M3N Numbers'})
-    const axis = number.h/2-number.baseline
+    const axis = nativeMusicAxis(this.measurer)
     return geometry.rows.map(row => {
       const left = x+row.x, baseline = y+axis-geometry.height/2+row.y+row.baseline
       return this.text(row.prefix,left,baseline,nativeStyle.text,'M3N Numbers')

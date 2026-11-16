@@ -1,4 +1,6 @@
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeMusicAxis } from './native-axis.js'
+import type { TextMeasurer } from './native-measure.js'
+import { nativeEm as em } from './native-style.js'
 import { attrs, circle } from './native-symbols.js'
 import { nativeBarMetrics, nativeMeasureBars } from './native-horizontal.js'
 import type { NativeMeasure } from './native-model.js'
@@ -13,8 +15,8 @@ export function nativeMeasureBarPositions(measures: NativeMeasure[], index: numb
 }
 
 /** The same bar primitives feed both local obstacle measurement and SVG output. */
-export function nativeBarSvg(kind: string, x: number, y: number): string {
-  const geometry = nativeBarMetrics(kind), top = y - nativeStyle.music * 0.3 - geometry.size / 2
+export function nativeBarSvg(kind: string, x: number, y: number, measurer: TextMeasurer): string {
+  const geometry = nativeBarMetrics(kind), top = y + nativeMusicAxis(measurer) - geometry.size / 2
   let svg = ''
   for (const bar of geometry.bars) svg += `<rect${attrs({ x: x - geometry.anchor + bar.x, y: top, width: bar.width, height: geometry.size, fill: '#000' })}/>`
   for (const dot of geometry.dots) for (const ratio of [0.38, 0.62]) svg += circle(x - geometry.anchor + dot, top + geometry.size * ratio, geometry.radius)

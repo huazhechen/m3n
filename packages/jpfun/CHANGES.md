@@ -83,3 +83,5 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - With relation alignment enabled, slurs also clear previously laid out tuplet brackets on the same track. Clearance uses the bracket's measured region and the ribbon's lower edge over their shared horizontal span; the rhythm bracket keeps its position nearer the notes.
 
 - Canvas text measurement now caches actual ink ascent/descent and centering bearings together with advance, resets the Canvas alignment/baseline, and invalidates all metrics on font-resource changes. Offline or advance-only hosts retain an explicit estimate; a measured zero-height space remains empty. Multi-line text reserves the union of every line's ink while retaining its requested baseline advance. Division strokes clear the body's painted bottom by 0.12 music em; estimated em boxes expose their estimated ink bottom separately so offline trailing blank space is not counted twice.
+
+- Fraction numerals center their measured ink on the meter rule independently; asymmetric bearings no longer shift the numerator or denominator away from its anchor.

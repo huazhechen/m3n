@@ -1,3 +1,4 @@
+import { nativeMusicAxis } from './native-axis.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { nativeSvgInk } from './native-ink.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
@@ -19,7 +20,7 @@ export class NativeMusicPainter extends NativeSymbols {
       const size = nativeStyle.music, text = String(glyph.multiRest)
       const metrics = this.measurer.measureText(text, { fontSize: size, fontFamily: 'M3N Numbers' })
       const width = Math.max(size * 3, metrics.w + size * 0.5), left = glyph.x - size * 0.4, right = left + width
-      const axis = glyph.y - size * 0.3, stroke = size * 0.12, halfCap = (size * 0.65 - stroke) / 2
+      const axis = glyph.y + nativeMusicAxis(this.measurer), stroke = size * 0.12, halfCap = (size * 0.65 - stroke) / 2
       return `<g data-m3n-role="multi-rest">`
         + line(left + stroke, axis, right - stroke, axis, stroke * 2)
         + line(left + stroke / 2, axis - halfCap, left + stroke / 2, axis + halfCap, stroke)
@@ -43,7 +44,7 @@ export class NativeMusicPainter extends NativeSymbols {
   /** Main music only, before grace notes, ornaments and arpeggio. */
   body(glyph: NativeGlyph): string {
     let music = ''
-    if (glyph.sustain) music += line(glyph.x - em(4.62), glyph.y - em(6.6), glyph.x + em(4.62), glyph.y - em(6.6), em(2.2))
+    if (glyph.sustain) music += this.sustain(glyph.x, glyph.y)
     else {
       const beamCount = Math.max(0, -Math.floor(Math.log2(glyph.writtenBeats)))
       glyph.pitches.forEach((pitch, index) => { music += this.pitch(pitch, glyph.x, glyph.y + (glyph.pitchOffsets?.[index] ?? 0), nativeStyle.music, index === 0 ? beamCount : 0) })

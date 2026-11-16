@@ -9,7 +9,7 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
   const base = 2 ** Math.floor(Math.log2(writtenBeats))
   const beamCount = sustain ? 0 : Math.max(0, Math.round(-Math.log2(base)))
   const bounds = pitches.map((pitch, index) => {
-    let svg = sustain ? line(-em(4.62), -em(6.6), em(4.62), -em(6.6), em(2.2)) : painter.pitch(pitch, 0, 0, size, index === 0 ? beamCount : 0)
+    let svg = sustain ? painter.sustain(0, 0) : painter.pitch(pitch, 0, 0, size, index === 0 ? beamCount : 0)
     if (index === 0) for (let beam = 0; beam < beamCount; beam++) svg += line(-em(6), em(3.245) + beam * em(3.08), em(7), em(3.245) + beam * em(3.08), em(1.21))
     const ink = nativeSvgInk(svg, measurer)
     return { top: -ink.top, bottom: ink.bottom }

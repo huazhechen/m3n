@@ -69,7 +69,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     // Use their actual painted ink, not a nominal staff height.
     if (hairpin && !relation.first.lane.startsWith('alternative:')) {
       for (const [index] of system.measures.entries()) for (const bar of nativeMeasureBarPositions(system.measures,index)) {
-        const bounds = nativeSvgInk(nativeBarSvg(bar.kind,bar.x,0),measurer)
+        const bounds = nativeSvgInk(nativeBarSvg(bar.kind,bar.x,0,measurer),measurer)
         if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
       }
     }

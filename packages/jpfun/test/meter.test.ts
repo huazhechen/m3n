@@ -227,3 +227,17 @@ test("meter 散板只绘制路径，墨迹与布局盒按 size 缩放", () => {
         "painted ink must match the layout box");
     }
 });
+
+test("拍号数字按各自实测墨迹中心对齐分数线", () => {
+    const result = compileScore("@meter(12,8,size=18px)", { textMeasurer: { measureText(text) {
+        return { w: text.length * 10, h: text === "12" ? 17 : 12, baseline: text === "12" ? 14 : 8,
+            centerOffset: text === "12" ? 2 : -1 };
+    } } });
+    assert(result.diagnostics.length === 0, "the isolated meter must compile");
+    const node = result.layout.objects[0];
+    const texts = recordCommands(result.layout).filter(c => c.kind === "text");
+    assert(texts.length === 2, "both digits must be painted");
+    const center = node.box.x + node.box.anchor;
+    assert(nearly(texts[0].x + 2, center) && nearly(texts[1].x - 1, center),
+        "each number's ink center must match the fraction center");
+});

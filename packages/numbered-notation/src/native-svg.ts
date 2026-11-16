@@ -39,7 +39,7 @@ class SvgPainter extends NativeMusicPainter {
       if (!members.length) continue
       let laneContent = members.map(glyph => this.glyph(glyph, system, lane)).join('')
       if (!lane.id.startsWith('alternative:')) {
-        for (const bar of bars) laneContent += nativeBarSvg(bar.kind, bar.x, lane.y)
+        for (const bar of bars) laneContent += nativeBarSvg(bar.kind, bar.x, lane.y, this.layout.measurer)
       }
       content += `<g${attrs({ 'data-m3n-lane': lane.id })}>${laneContent}</g>`
     }
