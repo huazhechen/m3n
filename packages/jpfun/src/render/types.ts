@@ -10,6 +10,8 @@ import type { SourceSpan } from '../parser/types.js';
 export interface GlyphMetrics {
     /** Ink center relative to the middle of the text advance; optional for deterministic measurers. */
     centerOffset?: number;
+    /** Painted bottom within the layout box; offline em estimates may include trailing blank space. */
+    inkBottom?: number;
     w: number;          // 字形实际占用宽度
     h: number;          // 字形实际占用高度
     baseline: number;   // 纵向基线到字形上边界的距离

@@ -50,29 +50,9 @@ export class NumberedNotationScore {
     if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0 || options.noteGapEm === undefined || options.minimumNoteGapEm > options.noteGapEm)) throw new Error('最小间距必须非负且不大于自然间距。')
     const canvas = typeof document === 'undefined' || typeof CanvasRenderingContext2D === 'undefined' ? null : document.createElement('canvas')
     const context = canvas?.getContext('2d')
-    const baseMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
-    let measurementSvg: SVGSVGElement | undefined
-    const centerOffsets=new Map<string,number>()
-    const textMeasurer:TextMeasurer|undefined = baseMeasurer && typeof document !== 'undefined' && typeof SVGGraphicsElement !== 'undefined' && typeof SVGGraphicsElement.prototype.getBBox === 'function' ? {measureText(text,style){
-      const metrics=baseMeasurer.measureText(text,style)
-      if(style.textAlign!=='center')return metrics
-      const key=JSON.stringify([text,style.fontFamily,style.fontSize,style.fontWeight])
-      const cached=centerOffsets.get(key)
-      if(cached!==undefined)return {...metrics,centerOffset:cached}
-      measurementSvg ??= document.createElementNS('http://www.w3.org/2000/svg','svg')
-      measurementSvg.style.cssText='position:absolute;left:-20000px;top:0;visibility:hidden;pointer-events:none'
-      if(!measurementSvg.isConnected)document.body.append(measurementSvg)
-      const node=document.createElementNS('http://www.w3.org/2000/svg','text')
-      for(const [name,value] of Object.entries({'x':'0','y':'0','text-anchor':'middle','font-family':style.fontFamily ?? 'sans-serif','font-size':String(style.fontSize),'font-weight':String(style.fontWeight ?? 400),'xml:space':'preserve'}))node.setAttribute(name,value)
-      node.textContent=text;measurementSvg.append(node)
-      const box=node.getBBox();node.remove()
-      const offset=box.x+box.width/2
-      centerOffsets.set(key,offset)
-      return {...metrics,centerOffset:offset}
-    }} : baseMeasurer
+    const textMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
     const projection = projectNumberedScore(this.document, { ...options, textMeasurer, width: Math.max(320, Math.round(options.width)) })
-    const compile = () => compileScore(projection.source, { autoWrap: true, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
-    const result = (() => {try{return compile()}finally{measurementSvg?.remove()}})()
+    const result = compileScore(projection.source, { autoWrap: true, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
     // The score model understands complementary pickups and alternate endings;
     // jpFun sees independent bars and otherwise reports these valid fragments.
     const hasMeterWarning = result.diagnostics.some(item => item.code === 'W_METER_MISMATCH')

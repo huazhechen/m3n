@@ -14,6 +14,7 @@ let browser
 try {
   const entry = join(temp, 'entry.ts')
   writeFileSync(entry, [
+    `export {createSvgInkMeasurer} from ${JSON.stringify(join(root, 'tools/lib/svg-ink-bounds.mjs'))};`,
     `export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
     `export * from ${JSON.stringify(join(root, 'packages/numbered-notation/src/index.ts'))};`,
   ].join('\n'))
@@ -60,6 +61,7 @@ try {
       document.querySelector('main').innerHTML = pages.join('')
       await document.fonts.ready
       checks++
+      const inkBounds = m3n.createSvgInkMeasurer()
       const texts = [...document.querySelectorAll('svg text')]
       const subtitle = [scoreDocument.subtitle, scoreDocument.singer ? `${scoreDocument.singer} 演唱` : ''].filter(Boolean).join('')
       for (const [text, size] of [[scoreDocument.title, '32'], [subtitle, '16']]) {
@@ -68,13 +70,13 @@ try {
         const headingLines = texts.filter(node => node.getAttribute('font-size') === size && node.getAttribute('font-family') !== 'M3N Numbers' && node.getAttribute('text-anchor') === 'middle' && !node.hasAttribute('data-m3n-role'))
         if (headingLines.map(node=>node.textContent).join('').replace(/\s/g,'') !== text.replace(/\s/g,'')) issues.push({file,width,paged,heading:text,missingHeading:true})
         for(const heading of headingLines) {
-        const box = heading.getBBox()
+        const box = inkBounds(heading)
         if (Math.abs(box.x + box.width / 2 - width / 2) > 0.5) {
           issues.push({ file, width, paged, heading: text, center: box.x + box.width / 2 })
         }
         if (box) for (const other of heading.ownerSVGElement.querySelectorAll('text')) {
           if (other === heading) continue
-          const otherBox = other.getBBox()
+          const otherBox = inkBounds(other)
           if (Math.min(box.x + box.width, otherBox.x + otherBox.width) - Math.max(box.x, otherBox.x) > 0.5
             && Math.min(box.y + box.height, otherBox.y + otherBox.height) - Math.max(box.y, otherBox.y) > 0.5) {
             issues.push({ file, width, paged, heading: text, overlap: other.textContent })
@@ -90,13 +92,13 @@ try {
       const annotations = texts.filter(node => node.getAttribute('data-m3n-role') === 'annotation')
       for (const annotation of annotations) {
         const note = annotation.ownerSVGElement.querySelector(`g.note[data-m3n-id="${annotation.getAttribute('data-m3n-id')}"]`)
-        const box = annotation.getBBox(), host = note?.getBBox()
+        const box = inkBounds(annotation), host = inkBounds(note)
         if (!host || box.y + box.height > host.y + 1) issues.push({ file, width, paged, annotation: annotation.textContent, host: note?.id })
       }
       if (file === 'ban_yin_jie_kou_qin_ji_ben_gong_01.m3n') {
         for (const [section, instruction] of [['机能训练', '快速吹吸切换'], ['音阶模进训练', '音阶(替代音)']]) {
-          const a = annotations.find(node => node.textContent === section)?.getBBox()
-          const b = annotations.find(node => node.textContent === instruction)?.getBBox()
+          const a = inkBounds(annotations.find(node => node.textContent === section))
+          const b = inkBounds(annotations.find(node => node.textContent === instruction))
           if (!a || !b || a.y + a.height >= b.y) issues.push({ file, width, paged, section, instruction, order: 'incorrect' })
         }
         if (width === 1000) for (const system of document.querySelectorAll('g.system')) {
@@ -106,16 +108,16 @@ try {
         if (width === 1000) for (const instruction of ['音阶三连模进', '音阶三连模进倒扣', '音阶三连倒模进']) {
           const label = annotations.find(node => node.textContent === instruction)
           const host = label && label.ownerSVGElement.querySelector(`g.note[data-m3n-id="${label.getAttribute('data-m3n-id')}"] text`)
-          const top = label?.getBBox(), bottom = host?.getBBox()
+          const top = inkBounds(label), bottom = inkBounds(host)
           const numbers = top && bottom ? texts.filter(node => node.ownerSVGElement === label.ownerSVGElement && node.textContent === '3'
-            && node.getAttribute('font-size') === String(22 * 0.72) && node.getBBox().y >= top.y + top.height && node.getBBox().y + node.getBBox().height <= bottom.y) : []
+            && node.getAttribute('font-size') === String(22 * 0.72) && inkBounds(node).y >= top.y + top.height && inkBounds(node).y + inkBounds(node).height <= bottom.y) : []
           const ys = numbers.map(node => Number(node.getAttribute('y')))
           if (ys.length < 2 || Math.max(...ys) - Math.min(...ys) > 0.5) issues.push({ file, width, paged, instruction, tupletBaselines: ys })
         }
       }
       for (const frame of document.querySelectorAll('g[data-m3n-role="section"]')) {
         const host = frame.ownerSVGElement.querySelector(`g.note[data-m3n-id="${frame.getAttribute('data-m3n-id')}"]`)
-        const a = frame.getBBox(), b = host?.getBBox()
+        const a = frame.getBBox(), b = inkBounds(host)
         if (!b || !frame.querySelector('rect') || frame.closest('g.system') !== host.closest('g.system') || a.x + a.width >= b.x) {
           issues.push({ file, width, paged, section: frame.textContent, inlineFrame: 'incorrect' })
         }
@@ -125,7 +127,7 @@ try {
         const view = svg.viewBox.baseVal
         for (const element of svg.querySelectorAll('text,line,path,circle,rect')) {
           if (element.closest('defs') || element.parentNode === svg && element.tagName === 'rect') continue
-          const box = element.getBBox()
+          const box = inkBounds(element)
           if (box.width === 0 || box.height === 0) continue
           if (box.x < view.x - 1 || box.x + box.width > view.x + view.width + 1 || box.y < view.y - 1 || box.y + box.height > view.y + view.height + 1) {
             outside.push({ tag: element.tagName, text: element.textContent, id: element.closest('[data-m3n-id]')?.getAttribute('data-m3n-id'), box: [box.x, box.y, box.width, box.height] })
@@ -134,14 +136,14 @@ try {
         const lyrics = [...svg.querySelectorAll('text[data-m3n-role="lyric"],text[data-m3n-role="lyric-prefix"]')]
           .filter(element => element.textContent.trim().replaceAll('\u200B', ''))
         for (let i = 0; i < lyrics.length; i++) for (let j = i + 1; j < lyrics.length; j++) {
-          const a = lyrics[i].getBBox(), b = lyrics[j].getBBox()
+          const a = inkBounds(lyrics[i]), b = inkBounds(lyrics[j])
           if (Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0.5) {
             overlap.push([lyrics[i].textContent, lyrics[j].textContent])
           }
         }
         const digits = [...svg.querySelectorAll('g.note text')].filter(element => /^[0-7]$/.test(element.textContent))
         for (let i = 0; i < digits.length; i++) for (let j = i + 1; j < digits.length; j++) {
-          const a = digits[i].getBBox(), b = digits[j].getBBox()
+          const a = inkBounds(digits[i]), b = inkBounds(digits[j])
           if (Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0.5) {
             noteOverlap.push([digits[i].closest('.note').id, digits[j].closest('.note').id])
           }
@@ -159,7 +161,7 @@ try {
           for (const dot of svg.querySelectorAll('g.note circle')) {
             const x = Number(dot.getAttribute('cx')), y = Number(dot.getAttribute('cy')), r = Number(dot.getAttribute('r')) + 1
             for (const arc of arcs) {
-              const box = arc.getBBox()
+              const box = inkBounds(arc)
               if (x + r < box.x || x - r > box.x + box.width || y + r < box.y || y - r > box.y + box.height) continue
               let collision = false
               for (const radius of [0, r / 2, r]) for (let i = 0; i < 32; i++) {

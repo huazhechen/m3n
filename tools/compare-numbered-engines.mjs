@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, cpSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { chromium } from '@playwright/test'
@@ -10,9 +10,9 @@ import { createHash } from 'node:crypto'
 // No development server, runtime fallback, network request or baseline regeneration.
 const root = resolve(import.meta.dirname, '..')
 const temp = mkdtempSync(join(tmpdir(), 'm3n-parity-'))
-const baselineRef = process.argv.find(argument => argument.startsWith('--baseline-ref='))?.slice('--baseline-ref='.length) ?? 'dbfda72'
+const baselineRef = process.argv.find(argument => argument.startsWith('--baseline-ref='))?.slice('--baseline-ref='.length)
 const candidateRef = process.argv.find(argument => argument.startsWith('--candidate-ref='))?.slice('--candidate-ref='.length)
-const baselineCommit = execFileSync('git', ['rev-parse', `${baselineRef}^{commit}`], { cwd: root, encoding: 'utf8' }).trim()
+const baselineCommit = execFileSync('git', ['rev-parse', `${baselineRef ?? 'HEAD'}^{commit}`], { cwd: root, encoding: 'utf8' }).trim()
 const candidateCommit = execFileSync('git', ['rev-parse', `${candidateRef ?? 'HEAD'}^{commit}`], { cwd: root, encoding: 'utf8' }).trim()
 const candidateDirty = !candidateRef && Boolean(execFileSync('git', ['status', '--porcelain', '--', 'packages/numbered-notation', 'tools/compare-numbered-engines.mjs'], { cwd: root, encoding: 'utf8' }).trim())
 const runId = `${new Date().toISOString().replaceAll(':', '-')}-${process.pid}`
@@ -35,9 +35,23 @@ let browser
 try {
   mkdirSync(output, { recursive: true })
   writeFileSync(join(output, 'sources.json'), JSON.stringify(sources, null, 2))
-  const archive = execFileSync('git', ['archive', baselineCommit, 'packages/jpfun', 'packages/numbered-notation', 'tsconfig.package.json'], { cwd: root, maxBuffer: 20 * 1024 * 1024 })
-  execFileSync('tar', ['-xf', '-', '-C', temp], { input: archive })
-  const candidateRoot = candidateRef ? join(temp, 'candidate') : root
+  // Capture both implementations before building, without touching live scores.
+  const currentRoot = join(temp, 'current'), snapshotHashes = {}
+  for (const pkg of ['jpfun', 'numbered-notation', 'notation']) {
+    const target = join(currentRoot, 'packages', pkg, 'src')
+    mkdirSync(target, { recursive: true })
+    cpSync(join(root, 'packages', pkg, 'src'), target, { recursive: true })
+    for (const file of readdirSync(target, { recursive: true }).filter(file => file.endsWith('.ts') && !file.endsWith('.test.ts'))) {
+      snapshotHashes[`packages/${pkg}/src/${file}`] = createHash('sha256').update(readFileSync(join(target, file))).digest('hex')
+    }
+  }
+  const referenceRoot = baselineRef ? join(temp, 'baseline') : currentRoot
+  if (baselineRef) {
+    mkdirSync(referenceRoot)
+    const archive = execFileSync('git', ['archive', baselineCommit, 'packages/jpfun', 'packages/numbered-notation', 'tsconfig.package.json'], { cwd: root, maxBuffer: 20 * 1024 * 1024 })
+    execFileSync('tar', ['-xf', '-', '-C', referenceRoot], { input: archive })
+  }
+  const candidateRoot = candidateRef ? join(temp, 'candidate') : currentRoot
   if (candidateRef) {
     mkdirSync(candidateRoot)
     const candidateArchive = execFileSync('git', ['archive', candidateCommit, 'packages/numbered-notation', 'tsconfig.package.json'], { cwd: root, maxBuffer: 20 * 1024 * 1024 })
@@ -46,13 +60,13 @@ try {
   const entry = join(temp, 'entry.ts')
   writeFileSync(entry, [
     `export {captureNumberedGeometry} from ${JSON.stringify(join(root, 'tools/lib/numbered-svg-metrics.mjs'))};`,
-    `export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
-    `export {NumberedNotationScore,prepareNumberedNotationFonts} from ${JSON.stringify(join(temp, 'packages/numbered-notation/src/index.ts'))};`,
+    `export {parseM3NDocument} from ${JSON.stringify(join(currentRoot, 'packages/notation/src/index.ts'))};`,
+    `export {NumberedNotationScore,prepareNumberedNotationFonts} from ${JSON.stringify(join(referenceRoot, 'packages/numbered-notation/src/index.ts'))};`,
     `export {NativeNumberedNotationScore} from ${JSON.stringify(join(candidateRoot, 'packages/numbered-notation/src/native-score.ts'))};`,
   ].join('\n'))
   await build({ configFile: false, logLevel: 'error', resolve: { alias: [
-    { find: '@m3n/jpfun', replacement: join(temp, 'packages/jpfun/src/core.ts') },
-    { find: '@m3n/notation', replacement: join(root, 'packages/notation/src/index.ts') },
+    { find: '@m3n/jpfun', replacement: join(referenceRoot, 'packages/jpfun/src/core.ts') },
+    { find: '@m3n/notation', replacement: join(currentRoot, 'packages/notation/src/index.ts') },
     { find: 'txml/txml', replacement: join(root, 'node_modules/txml/dist/txml.mjs') },
     { find: 'txml', replacement: join(root, 'node_modules/txml/dist/index.mjs') },
   ] }, build: { outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
@@ -148,10 +162,10 @@ try {
     }
   }
   if (!reports.length) throw new Error('No scores matched the requested filter')
-  const summary = { renderOptions, baselineCommit, candidateCommit, candidateDirty, candidatePageSpacing: selfCheck ? 'baseline' : 'natural', pixelAudit: pixels, geometryMatching: reports.filter(report => report.geometryMatches).length, checks: reports.length, matching: reports.filter(report => report.matches).length, differing: reports.filter(report => !report.matches).length, reports }
+  const summary = { renderOptions, referenceImplementation: baselineRef ? `git:${baselineCommit}` : 'current-working-tree-snapshot', candidateImplementation: candidateRef ? `git:${candidateCommit}` : 'current-working-tree-snapshot', domainImplementation: 'current-working-tree-snapshot', snapshotHashes, baselineCommit, candidateCommit, candidateDirty, candidatePageSpacing: selfCheck ? 'baseline' : 'natural', pixelAudit: pixels, geometryMatching: reports.filter(report => report.geometryMatches).length, checks: reports.length, matching: reports.filter(report => report.matches).length, differing: reports.filter(report => !report.matches).length, reports }
   writeFileSync(join(output, 'report.json'), JSON.stringify(summary, null, 2))
   const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;')
-  writeFileSync(join(output, 'index.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>jpFun 与自研排版对照</title><style>body{font:16px sans-serif;margin:24px}article{border-top:1px solid #aaa;margin:24px 0}img{max-width:100%;height:auto}pre{white-space:pre-wrap}</style><h1>jpFun（左）与自研候选（右，自然行距）</h1><p>${summary.checks} 组，${summary.matching} 组一致，${summary.differing} 组存在差异。像素审计：${pixels ? '已启用，逐通道零差异' : '未启用'}。自研分页不铺满页面，相关竖向差异按产品选择保留，报告照实记录。坐标容差 0.5px；几何一致不等于像素一致，仍须检查字形与关系线。</p>${reports.map(report => `<article><h2>${escape(report.title || report.file)} · ${report.width}px · ${report.paged ? '分页' : '连续'}</h2><pre>${escape(JSON.stringify({error:report.error,geometryMatches:report.geometryMatches,digitMismatches:report.digitMismatches,pixelMatches:report.pixelMatches,pixels:report.pixels,baselineSystems:report.baseline?.systems.length,candidateSystems:report.candidate?.systems.length,differingLines:report.differingLines,maxXShift:report.maxXShift,maxYShift:report.maxYShift,baselineLineGaps:report.baseline?.lineGaps,candidateLineGaps:report.candidate?.lineGaps},null,2))}</pre>${report.pixels ? `<p><a href="${escape(`${report.file}-${report.width}-${report.paged ? 'paged' : 'continuous'}`)}-diff.png">像素差异图</a></p>` : ''}${report.screenshot ? `<a href="${escape(report.screenshot)}"><img loading="lazy" src="${escape(report.screenshot)}"></a>` : ''}</article>`).join('')}</html>`)
+  writeFileSync(join(output, 'index.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>jpFun 与自研排版对照</title><style>body{font:16px sans-serif;margin:24px}article{border-top:1px solid #aaa;margin:24px 0}img{max-width:100%;height:auto}pre{white-space:pre-wrap}</style><h1>jpFun（左）与自研候选（右，自然行距）</h1><p>${summary.checks} 组，${summary.matching} 组一致，${summary.differing} 组存在差异。像素审计：${pixels ? '已启用，逐通道零差异' : '未启用'}。两版均采用当前自然分页规则；指定历史参考版本时，旧行为的差异也照实记录。坐标容差 0.5px；几何一致不等于像素一致，仍须检查字形与关系线。</p>${reports.map(report => `<article><h2>${escape(report.title || report.file)} · ${report.width}px · ${report.paged ? '分页' : '连续'}</h2><pre>${escape(JSON.stringify({error:report.error,geometryMatches:report.geometryMatches,digitMismatches:report.digitMismatches,pixelMatches:report.pixelMatches,pixels:report.pixels,baselineSystems:report.baseline?.systems.length,candidateSystems:report.candidate?.systems.length,differingLines:report.differingLines,maxXShift:report.maxXShift,maxYShift:report.maxYShift,baselineLineGaps:report.baseline?.lineGaps,candidateLineGaps:report.candidate?.lineGaps},null,2))}</pre>${report.pixels ? `<p><a href="${escape(`${report.file}-${report.width}-${report.paged ? 'paged' : 'continuous'}`)}-diff.png">像素差异图</a></p>` : ''}${report.screenshot ? `<a href="${escape(report.screenshot)}"><img loading="lazy" src="${escape(report.screenshot)}"></a>` : ''}</article>`).join('')}</html>`)
   console.log(JSON.stringify({ checks: summary.checks, pixelAudit: pixels, geometryMatching: summary.geometryMatching, matching: summary.matching, differing: summary.differing, report: join(output, 'index.html') }, null, 2))
   if ((selfCheck || process.argv.includes('--require-parity')) && summary.differing) process.exitCode = 1
 } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }

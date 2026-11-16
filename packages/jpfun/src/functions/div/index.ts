@@ -146,8 +146,9 @@ class DivFunction extends ASTFunctionNode {
         return {
             below: {
                 order: 0,
-                // 画线沿用正文盒基准，间距换算到装饰排列起点。
-                gap: host.box.h - (host.ports["decoration.below"]?.y ?? host.box.h) - host.ast.size * 0.08,
+                // 从正文的实际下沿留出净空，再换算到装饰排列起点。
+                gap: (host.ports["body.bottom"]?.y ?? host.box.h) + host.ast.size * 0.12
+                    - (host.ports["decoration.below"]?.y ?? host.box.h),
                 height: lineBlockHeight,
                 place(y) {
                     lineLeft = host.ports["body.left"]?.x ?? 0;

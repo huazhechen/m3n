@@ -252,3 +252,19 @@ test("倚音钩线使用内容下沿，不包含下方纯留白", () => {
         assert(nearly(occupied.y + occupied.h - start.y, 15), "pure spacing stays outside the hook");
     }
 });
+
+
+test("下八度点从实测下伸部之后起排", () => {
+    for (const size of [10, 22, 40]) {
+        const descent = size * 0.3;
+        const result = compileValid("1,", { variables: { fontsize: size }, textMeasurer: {
+            measureText() { return { w: size / 2, h: size * 0.9, baseline: size * 0.6 }; },
+        } });
+        const commands = recordCommands(result.layout);
+        const number = commands.find(c => c.kind === "text");
+        const dot = commands.find(c => c.kind === "circle");
+        assert(number?.kind === "text" && dot?.kind === "circle", "the note and octave dot must be present");
+        assert(nearly(dot.cy - dot.r - number.y - descent, size * 0.12),
+            "actual descenders must retain the full octave clearance");
+    }
+});

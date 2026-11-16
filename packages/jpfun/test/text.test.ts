@@ -153,3 +153,28 @@ test('parallel inline text reserves a control column without splitting simultane
         assert(label.box.x + label.box.w < Math.min(...notes.map(object => object.box.x)), 'label clears the first music column');
     }
 });
+
+
+test("多行文字按所有行的实际升降部预留包络", () => {
+    for (const frame of [false, true]) {
+        const result = compileValid(`@text("A\nTall\ng",size=20px,lineheight=1,frame=${frame})`, {
+            textMeasurer: { measureText(text) {
+                const baseline = text === "Tall" ? 35 : text === "g" ? 5 : 8;
+                const descent = text === "g" ? 12 : 0;
+                return { w: text.length * 10, h: baseline + descent, baseline };
+            } },
+        });
+        const node = result.layout.objects[0];
+        const commands = recordCommands(result.layout).filter(command => command.kind === "text");
+        const inset = frame ? 3.5 : 0;
+        assert(nearly(node.box.h, 67 + inset * 2), "all lines must contribute to the total occupied height");
+        for (const command of commands) {
+            const ascent = command.text === "Tall" ? 35 : command.text === "g" ? 5 : 8;
+            const descent = command.text === "g" ? 12 : 0;
+            assert(command.y - ascent >= node.box.y + inset - 1e-6, "actual ascenders must fit");
+            assert(command.y + descent <= node.box.y + node.box.h - inset + 1e-6, "actual descenders must fit");
+        }
+        assert(nearly(commands[1].y - commands[0].y, 20)
+            && nearly(commands[2].y - commands[1].y, 20), "the requested baseline advance remains unchanged");
+    }
+});

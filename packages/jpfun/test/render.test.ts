@@ -229,11 +229,12 @@ test("综合样例的绘制规模基线", () => {
 
 test("CanvasTextMeasurer 用绘制时的同一份字体串测量", () => {
     const seen: string[] = [];
-    let width = 40;
+    let width = 40, ascent = 13, descent = 3;
     const context = {
         set font(value: string) { seen.push(value); },
         get font() { return seen.at(-1) ?? ""; },
-        measureText: () => ({ width }),
+        measureText: () => ({ width, actualBoundingBoxAscent: ascent, actualBoundingBoxDescent: descent,
+            actualBoundingBoxLeft: 2, actualBoundingBoxRight: width + 4 }),
     } as unknown as CanvasRenderingContext2D;
     const measurer = new CanvasTextMeasurer(context);
     const style: TextStyle = { fontSize: 20, fontFamily: "Cascadia Mono", fontWeight: "bold" };
@@ -242,8 +243,13 @@ test("CanvasTextMeasurer 用绘制时的同一份字体串测量", () => {
     assert(seen.length === 1 && seen[0] === canvasFont(style),
         "the measurer must select the exact font string CanvasPainter draws with");
     assert(nearly(metrics.w, 40), "width must come from the host font metrics");
-    assert(nearly(metrics.h, 20) && nearly(metrics.baseline, 16),
-        "height and baseline must keep the deterministic em-box convention");
+    assert(nearly(metrics.h, 16) && nearly(metrics.baseline, 13),
+        "height and baseline must use actual ink, independently of font size");
+    strictEqual(metrics.centerOffset, 1, "centering must use painted side bearings");
+    strictEqual(context.textAlign, "left");
+    strictEqual(context.textBaseline, "alphabetic");
+    metrics.h = 999;
+    assert(measurer.measureText("abc", style).h === 16, "callers cannot mutate cached metrics");
 
     measurer.measureText("abc", style);
     assert(seen.length === 1, "repeated measurements of one string must be cached");
@@ -254,18 +260,37 @@ test("CanvasTextMeasurer 用绘制时的同一份字体串测量", () => {
         ["abc", { ...style, fontFamily: "serif" }], ["abc", { ...style, fontWeight: "normal" }]] as const;
     for (const [text, sampleStyle] of samples) measurer.measureText(text, sampleStyle);
     strictEqual(seen.length, samples.length, "text, size, family and weight must have separate cache entries");
-    width = 60;
+    width = 60; ascent = 18; descent = 5;
     for (const [text, sampleStyle] of samples) {
-        assert(measurer.measureText(text, sampleStyle).w === 40, "cached widths remain until invalidated");
+        const cached = measurer.measureText(text, sampleStyle);
+        assert(cached.w === 40 && cached.h === 16 && cached.baseline === 13, "all cached metrics remain until invalidated");
     }
     measurer.clearCache();
     for (const [text, sampleStyle] of samples) {
         const refreshed = measurer.measureText(text, sampleStyle);
-        assert(refreshed.w === 60 && refreshed.h === sampleStyle.fontSize
-            && nearly(refreshed.baseline, sampleStyle.fontSize * 0.8), "clear must refresh all widths and preserve em metrics");
+        assert(refreshed.w === 60 && refreshed.h === 23
+            && refreshed.baseline === 18, "clear must refresh width, height and baseline");
     }
     strictEqual(seen.length, samples.length * 2, "clearing must invalidate every entry");
     width = 0;
     measurer.clearCache();
     assert(measurer.measureText("abc", style).w === 5, "refreshed widths retain the minimum width clamp");
+});
+
+
+test("CanvasTextMeasurer 保留空白、负升部，仅缺少实测指标时估算", () => {
+    const context = { font: "", textAlign: "right", textBaseline: "top", measureText: () => sample };
+    let sample: Partial<TextMetrics> = { width: 12, actualBoundingBoxAscent: 0, actualBoundingBoxDescent: 0 };
+    const measurer = new CanvasTextMeasurer(context as unknown as CanvasRenderingContext2D);
+    const style = { fontSize: 20 };
+    strictEqual(measurer.measureText(" ", style).h, 0, "spaces have no painted height");
+    sample = { width: 12, actualBoundingBoxAscent: -2, actualBoundingBoxDescent: 5 };
+    const below = measurer.measureText("_", style);
+    assert(below.h === 3 && below.baseline === -2, "ink entirely below the baseline must not be clamped");
+    for (const invalid of [undefined, NaN, Infinity]) {
+        sample = { width: 12, actualBoundingBoxAscent: invalid, actualBoundingBoxDescent: 5 };
+        measurer.clearCache();
+        const fallback = measurer.measureText("a", style);
+        assert(fallback.h === 20 && fallback.baseline === 16, "missing or invalid metrics use the offline estimate");
+    }
 });

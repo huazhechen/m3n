@@ -184,18 +184,21 @@ export class TextTemporalNode extends TemporalNodeBase {
         const { lines, align, lineAdvance } = this.ast;
         const measure = (text: string) => context.textMeasurer.measureText(text, this.style);
         this.centerOffsets = lines.map(line=>measure(line).centerOffset ?? 0);
-        const first = measure(lines[0]);
-        let width = first.w;
-        for (let i = 1; i < lines.length; i++) width = Math.max(width, measure(lines[i]).w);
+        const metrics = lines.map(measure);
+        const width = Math.max(...metrics.map(m => m.w));
+        // All lines share a baseline advance, but their ink need not have the
+        // first line's ascent/descent (for example A / g / Chinese text).
+        const top = Math.min(...metrics.map((m, index) => index * lineAdvance - m.baseline));
+        const bottom = Math.max(...metrics.map((m, index) => index * lineAdvance - m.baseline + m.h));
 
         const inset = this.ast.frame ? 3.5 : 0;
         this.box.w = width + 2 * inset;
-        this.box.h = (lines.length - 1) * lineAdvance + first.h + 2 * inset;
+        this.box.h = bottom - top + 2 * inset;
         this.box.visualAxis = this.box.h / 2;
-        this.textBaselineY = first.baseline + inset;
+        this.textBaselineY = -top + inset;
         this.lineBounds = lines.flatMap((line, index) => {
             if (!line) return [];
-            const m = measure(line);
+            const m = metrics[index];
             const x = align === "right" ? this.box.w - inset - m.w
                 : align === "center" ? (this.box.w - m.w) / 2 - this.centerOffsets[index] : inset;
             return [{ x, y: this.textBaselineY + index * lineAdvance - m.baseline, w: m.w, h: m.h }];

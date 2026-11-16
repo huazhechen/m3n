@@ -266,9 +266,10 @@ class NoteTemporalNode extends TemporalNodeBase {
         // 升降号和附点参与完整盒布局，但不计入数字主体范围，减时线因此只画在数字下
         this.ports["body.left"] = { x: this.box.anchor - mainMetrics.w / 2, y: this.box.visualAxis };
         this.ports["body.right"] = { x: this.box.anchor + mainMetrics.w / 2, y: this.box.visualAxis };
+        this.ports["body.bottom"] = { x: this.box.anchor, y: mainMetrics.inkBottom ?? mainMetrics.h };
         this.ports["shoulder"] = { x: this.box.anchor, y: 0 };
-        // 下方装饰从数字基线附近起排，不把 em 盒底部的留白算作可见正文。
-        this.ports["decoration.below"] = { x: this.box.anchor, y: this.numberY + size * 0.04 };
+        // 下方装饰从数字实际下沿起排，不把离线 em 盒的尾部留白算作可见正文。
+        this.ports["decoration.below"] = { x: this.box.anchor, y: this.ports["body.bottom"].y + size * 0.04 };
 
         // 覆盖 dot 的默认“右边界 + 视觉轴”，让附点贴合数字字形的视觉位置
         this.ports["dot"] = {

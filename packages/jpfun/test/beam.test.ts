@@ -4,6 +4,7 @@ import { deepStrictEqual } from "node:assert/strict";
 import { DivNode, divLinePortName } from "../src/functions/div/index.js";
 import {
     assert,
+    compileValid,
     attachmentCommands,
     commandsOfKind,
     expectLoweringError,
@@ -265,4 +266,23 @@ test("连梁线宽随端点字号缩放", () => {
         nearly(largeBeamLine.style?.strokeWidth ?? 0, (smallBeamLine.style?.strokeWidth ?? 0) * 2),
         "beam stroke width must scale with the largest endpoint font size",
     );
+});
+
+
+test("实测字体的减时线从实际下伸部之外起排", () => {
+    for (const source of ["1/", "@div({1 2}, 1)"]) {
+        for (const size of [10, 22, 40]) {
+            const descent = size * 0.3;
+            const result = compileValid(source, { variables: { fontsize: size }, textMeasurer: {
+                measureText(text) { return { w: text.length * size / 2, h: size * 0.9, baseline: size * 0.6 }; },
+            } });
+            const commands = recordCommands(result.layout);
+            const numbers = commands.filter(c => c.kind === "text");
+            const lines = commands.filter(c => c.kind === "line");
+            assert(lines.length === 1, "one division must paint one continuous stroke");
+            const lineTop = lines[0].y1 - Number(lines[0].style?.strokeWidth ?? 1) / 2;
+            for (const number of numbers) assert(nearly(lineTop - number.y - descent, size * 0.12),
+                "the actual glyph descent and the full natural clearance must precede the stroke");
+        }
+    }
 });
