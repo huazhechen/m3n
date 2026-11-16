@@ -4,7 +4,7 @@ import {
   measurePlaybackPasses, type ScoreDocument, type ScoreEvent, type ScoreMeasure, type ScoreAlternative,
 } from '@m3n/notation'
 import { lyricsByEvent, type LyricRowData } from './lyrics.js'
-import { fixedDoPitch, fixedDoGrace } from './fixed-do.js'
+import { fixedDoPitch, fixedDoGrace, transposedKey } from './fixed-do.js'
 import { sustainContinuations } from './sustains.js'
 
 function tempoMark(qpm: number, count: number, unit: number) {
@@ -26,7 +26,7 @@ export type EventBinding = {
   passes?: number[]
 }
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
-export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; pageMargin?: number; systemGap?: number }
+export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; transpose?: number; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 const pitchName = (token: string, shift = 0) => {
   const match = /^([0-7])([#b=]*)([ed]*)$/.exec(token)
@@ -34,7 +34,6 @@ const pitchName = (token: string, shift = 0) => {
   const octave = [...(match[3] ?? '')].reduce((n, value) => n + (value === 'e' ? 1 : -1), shift)
   return `${match[2]?.replaceAll('=', 'n') ?? ''}${match[1]}${octave > 0 ? "'".repeat(octave) : ','.repeat(-octave)}`
 }
-const keyName = (value: string) => `${/^([A-G][#b]?)/.exec(value)?.[1] ?? 'C'}4`
 
 /** Exact dyadic durations, including 64th notes and multiple augmentation dots. */
 function duration(expression: string, beats: number): string {
@@ -112,7 +111,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const accidentals = new Map<string, string>()
         const noteExpression = (pitch: string, shift: number, absolute?: string) => {
           if (options.fixedDo && pitch !== '0' && absolute) {
-            const native = fixedDoPitch(absolute)
+            const native = fixedDoPitch(absolute, options.transpose)
             return `@note(${quote(native)}${native.startsWith('n') ? ',showacc=false' : ''})`
           }
           const native = pitchName(pitch, shift)
@@ -154,7 +153,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
           const eventParagraph = `${partIndex}:${paragraphOf(staff === 'bass' ? firstEvent?.sourceStart ?? event.sourceStart : event.sourceStart)}`
           if (paragraph !== eventParagraph) { flushParagraph(); paragraph = eventParagraph }
           const controls: string[] = []
-          if (!options.fixedDo && event.key !== activeKey) { accidentals.clear(); controls.push(`@key(${quote(keyName(event.key))},size=16px)`); activeKey = event.key }
+          if (!options.fixedDo && event.key !== activeKey) { accidentals.clear(); controls.push(`@key(${quote(transposedKey(event.key, options.transpose))},size=16px)`); activeKey = event.key }
           const meter = `${event.meterCount ?? document.meterCount}/${event.meterUnit ?? document.meterUnit}`
           if (meter !== activeMeter) { controls.push(`@meter(${event.meterCount},${event.meterUnit},size=18px)`); activeMeter = meter }
           if (event.tempo !== undefined && event.tempo !== activeTempo) { controls.push(tempoMark(event.tempo, event.meterCount ?? document.meterCount, event.meterUnit ?? document.meterUnit)); activeTempo = event.tempo }
@@ -187,7 +186,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
               const parsed = parseM3NGrace(value)
               if (!parsed) return []
               return (parseM3NGroupPitches(parsed.pitchSource) ?? []).map(pitch => {
-                const native = options.fixedDo ? fixedDoGrace(pitch, event.key, event.octaveShift) : pitchName(pitch, event.octaveShift)
+                const native = options.fixedDo ? fixedDoGrace(pitch, event.key, event.octaveShift, options.transpose) : pitchName(pitch, event.octaveShift)
                 return duration(`@note(${quote(native)}${options.fixedDo && native.startsWith('n') ? ',showacc=false' : ''})`, 4 / 2 ** (parsed.depth + 2))
               })
             })
@@ -354,7 +353,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     `@text(${quote(creditLines.map(credit => credit.name).join('\n'))},size=14px,lineheight=1.5,align=right)`,
   ].join(' ')}}` : ''
   const signatures = [
-    `@key(${quote(keyName(options.fixedDo ? 'C' : document.key))},size=16px)`,
+    `@key(${quote(options.fixedDo ? 'C4' : transposedKey(document.key, options.transpose))},size=16px)`,
     `@meter(${document.meterCount},${document.meterUnit},size=18px)`,
     document.hasExplicitTempo ? tempoMark(document.tempo, document.meterCount, document.meterUnit) : '',
   ].filter(Boolean).join(' ')

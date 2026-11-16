@@ -257,7 +257,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const { message } = await renderScoreInto(paper, {
-          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers, fixedDo,
+          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers, fixedDo, transpose: playbackTranspose,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
         })
@@ -281,7 +281,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers, fixedDo])
+  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers, fixedDo, playbackTranspose])
 
   useEffect(() => {
     const paper = paperRef.current

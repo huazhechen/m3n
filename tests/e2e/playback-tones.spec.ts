@@ -88,7 +88,7 @@ test('transpose and delayed tone downloads keep the same audio clock playing', a
   await expect(tone.locator('.tone-loading-spinner')).toBeVisible()
   await expect(pause).toBeEnabled()
   await page.getByRole('button', { name: '升高半音' }).click({ clickCount: 2 })
-  await expect(page.getByRole('group', { name: '播放移调' }).locator('output')).toHaveText('+2')
+  await expect(page.getByRole('group', { name: '移调' }).locator('output')).toHaveText('+2')
   await expect.poll(async () => Number(await progress.inputValue())).toBeGreaterThan(before + 10)
   release()
   await expect(page.locator('.control-tone-status')).toHaveCount(0)

@@ -8,6 +8,8 @@ export type NumberedNotationRenderOptions = {
   width: number
   /** Display absolute pitches as C-based numbered notation with sharps. */
   fixedDo?: boolean
+  /** Semitone shift for displayed keys or fixed-C pitches; leaves the source document intact. */
+  transpose?: number
   measureNumbers?: boolean
   includeBass?: boolean
   textMeasurer?: TextMeasurer
@@ -34,6 +36,7 @@ export class NumberedNotationScore {
   static create(document: ScoreDocument) { return new NumberedNotationScore(document) }
 
   render(options: NumberedNotationRenderOptions): string[] {
+    if (options.transpose !== undefined && !Number.isInteger(options.transpose)) throw new Error('谱面移调必须为整数半音数。')
     // All application layouts share the same minimum/natural spacing policy.
     options = { ...options, noteGapEm: options.noteGapEm ?? 0.6, minimumNoteGapEm: options.minimumNoteGapEm ?? (options.noteGapEm === undefined ? 0.4 : undefined) }
     if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')

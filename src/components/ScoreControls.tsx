@@ -82,7 +82,7 @@ export function ScoreControls(props: ScoreControlsProps) {
       <button type="button" role="switch" aria-label="小节号" aria-checked={props.measureNumbers} title="显示小节号" className="control-button" onClick={() => props.onMeasureNumbersChange(!props.measureNumbers)}>
           <Icon><path d="M4 4v16M20 4v16M4 8h16M4 16h16M10 10h2v4m-2 0h4" /></Icon><span>小节号</span>
         </button>
-      <div className="transpose-stepper" role="group" aria-label="播放移调">
+      <div className="transpose-stepper" role="group" aria-label="移调">
         <button type="button" className="control-button" aria-label="降低半音" title="降低半音" disabled={props.transpose <= PLAYBACK_TRANSPOSE_MIN || props.isLoading} onClick={() => props.onTransposeChange(props.transpose - 1)}><Icon><path d="M5 12h14" /></Icon></button>
         <output aria-live="polite" title="移调（半音）">{props.transpose === 0 ? '原调' : props.transpose > 0 ? `+${props.transpose}` : props.transpose}</output>
         <button type="button" className="control-button" aria-label="升高半音" title="升高半音" disabled={props.transpose >= PLAYBACK_TRANSPOSE_MAX || props.isLoading} onClick={() => props.onTransposeChange(props.transpose + 1)}><Icon><path d="M5 12h14M12 5v14" /></Icon></button>
