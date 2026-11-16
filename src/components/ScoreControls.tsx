@@ -110,7 +110,6 @@ export function ScoreControls(props: ScoreControlsProps) {
         props.onTransposeChange(nearestKeyTranspose(props.originalKey, target))
         keyDialogRef.current?.close()
       }} />
-      <p className="transpose-dialog-hint">同一扇区为关系大小调，移调保留原曲调式。</p>
     </dialog>}
   </>
 }
