@@ -7,7 +7,7 @@ import type { DocumentLayoutResult } from './engine.js';
 function barAst(node: VisualTemporalNode) {
     let ast: ASTNodeBase | undefined = node.ast;
     while (ast) {
-        if (ast instanceof ASTFunctionNode && ast.callName === 'bar') return ast as ASTFunctionNode & { type: number; size: number };
+        if (ast instanceof ASTFunctionNode && ast.callName === 'bar') return ast as ASTFunctionNode & { type: number; size: number; preceding: number };
         ast = ast.children?.[0];
     }
     return undefined;
@@ -184,7 +184,8 @@ export function insertAutomaticBreaks(source: string, positions: readonly number
                 command += `@bar(3,${combined.size}px) `;
             } else if (isOpeningRepeat(following) && !bars.some(node => node !== following && !isOpeningRepeat(node))) {
                 // A new system still needs a closing bar on its preceding line.
-                command = ` @bar(0,${barAst(following)!.size}px)${command}`;
+                const opening = barAst(following)!;
+                command = ` @bar(${opening.preceding ?? 0},${opening.size}px)${command}`;
             }
         }
         edits.push({ start: at, end: at, text: command });

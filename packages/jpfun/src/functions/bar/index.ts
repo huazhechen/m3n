@@ -43,6 +43,12 @@ class BarFunction extends ASTFunctionNode {
                 type: "content" as const,
                 default: "",
             },
+            {
+                name: "preceding",
+                description: "与前一小节共享反复起点时，换行恢复的前置小节线样式（0 或 1）",
+                type: "number" as const,
+                default: 0,
+            },
         ]
     };
 
@@ -76,11 +82,16 @@ class BarFunction extends ASTFunctionNode {
     type: number;
     size: number;
     readonly before: ASTNodeBase | null;
+    readonly preceding: number;
     override get children() { return this.before ? [this.before] : []; }
 
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [type, size, before] = this.getArgValue(args, ctx) as [number, LengthValue, ASTNodeBase | string];
+        const [type, size, before, preceding] = this.getArgValue(args, ctx) as [number, LengthValue, ASTNodeBase | string, number];
+        if (preceding !== 0 && (preceding !== 1 || type !== 3)) {
+            throw new ErrorDiagnostic("E_BAR_PRECEDING", "preceding 仅允许反复起点使用 0 或 1", sourceSpan);
+        }
+        this.preceding = preceding;
         this.type = type;
         this.size = ctx.length2px(size);
         this.before = before instanceof ASTNodeBase ? before : null;
@@ -108,7 +119,7 @@ class BarFunction extends ASTFunctionNode {
 
     override toString(source: string) {
         const before = this.before ? `, before=${source.slice(this.before.sourceSpan.start, this.before.sourceSpan.end)}` : "";
-        return `@bar(${this.type}, ${this.size}px${before})`;
+        return `@bar(${this.type}, ${this.size}px${before}${this.preceding ? `, preceding=${this.preceding}` : ""})`;
     }
 }
 

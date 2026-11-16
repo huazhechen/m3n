@@ -18,7 +18,7 @@ export function nativeBarMetrics(kind: string | undefined) {
 }
 
 type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
-type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; pairedSpacing?: boolean }
+type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; pairedSpacing?: boolean; equalMeasures?: boolean }
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
 export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
@@ -198,13 +198,46 @@ function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOp
   }
 }
 
+/** Keep visible bar anchors fixed while solving each equal cell's interior.
+ * Build the complete system first: minimum clearance, parentheses and parallel
+ * voices must not be reset at every artificial cell edge. */
+function equalMeasurePositions(items: HorizontalItem[], options: HorizontalOptions, width: number): number[] {
+  const ranges: {start:number;end:number;bar?:number}[] = []
+  let start = 0, musical = false
+  for (const [index, item] of items.entries()) {
+    if (musical && item.boundary) {
+      ranges.push({start,end:index,bar:index})
+      start = index + 1; musical = false
+    }
+    if (item.column) musical = true
+  }
+  if (musical) ranges.push({start,end:items.length})
+  if (ranges.length < 2) return solveNativeSpacing(items,width,true).positions
+  const leftOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.left))
+  const rightOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.right))
+  const padding = options.pairedSpacing === false ? nativeStyle.music * 1.25 * .55 : 0
+  const tail = ranges.at(-1)!.bar
+  const cellWidth = (width - (tail === undefined ? 0 : rightOf(tail))) / ranges.length
+  const positions = Array<number>(items.length).fill(0)
+  for (const [index, range] of ranges.entries()) {
+    const previous = ranges[index-1]?.bar
+    const left = index*cellWidth + (previous === undefined ? 0 : rightOf(previous)+padding)
+    const right = (index+1)*cellWidth - (range.bar === undefined ? 0 : leftOf(range.bar)+padding)
+    const solved = solveNativeSpacing(items.slice(range.start,range.end),Math.max(1,right-left),true)
+    solved.positions.forEach((position,offset) => { positions[range.start+offset] = left+position })
+    if (range.bar !== undefined) positions[range.bar] = (index+1)*cellWidth
+  }
+  return positions
+}
+
 /** Justify a complete system, then publish event and measure positions. */
 export function placeNativeHorizontal(measures: NativeMeasure[], options: HorizontalOptions, x: number, width: number, surrounding = measures): NativeGlyph[] {
-  const items = itemsFor(measures, options, surrounding), result = solveNativeSpacing(items, width, true)
+  const items = itemsFor(measures, options, surrounding)
+  const positions = options.equalMeasures ? equalMeasurePositions(items,options,width) : solveNativeSpacing(items,width,true).positions
   for (const measure of measures) { measure.start = Infinity; measure.end = -Infinity }
   const glyphs: NativeGlyph[] = []
   items.forEach((item, index) => {
-    const position = x + result.positions[index]!
+    const position = x + positions[index]!
     item.measure.start = Math.min(item.measure.start, position - item.left)
     item.measure.end = Math.max(item.measure.end, position + item.right)
     if (item.column) {

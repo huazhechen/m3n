@@ -1,5 +1,7 @@
 # Local changes
 
+- `@bar(3,preceding=1)` preserves a shared preceding double bar through serialization. Automatic wrapping restores that closing style on the previous system when the opening repeat moves to a new system; same-line rendering and repeat playback are unchanged.
+
 - `@head(...,sideauto=true)` measures the complete packed side rows and their item gap: fitting sides share a top edge, while actual horizontal conflicts put the right side above the left. It replaces viewport thresholds in the M3N header adapter and preserves the setting through serialization.
 
 - Inline `@text` uses an independent source-order zero-time column, preventing parallel music from merging into its column and separating simultaneous notes. Header text keeps shared columns within `@head` so parallel title rows remain centered.

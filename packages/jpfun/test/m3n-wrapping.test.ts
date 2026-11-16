@@ -253,3 +253,18 @@ test('page-feedback wrapping changes breaks without changing page width, event s
     assert.deepEqual(playedNotes(compilePlayback(reflowed.lowering)), playedNotes(compilePlayback(original.lowering)));
     for (const wrapWidthRatio of [0, -1, 1.1, NaN, Infinity]) assert.throws(() => compileScore(source, { autoWrap: true, wrapWidthRatio }), /wrapWidthRatio/);
 });
+
+
+test('shared opening repeats restore the original double closing bar when wrapped', () => {
+    const music = '1 2 3 4 @bar(3,preceding=1) 5 6 7 1 :|';
+    const wide = compileScore('@page(width=1000px) ' + music, { autoWrap: true });
+    assert.equal(wide.layout.objects.filter(node => (node.ast as any).type === 1).length, 0);
+    const source = '@page(width=180px) ' + music;
+    const narrow = compileScore(source, { autoWrap: true });
+    const opening = narrow.layout.objects.find(node => (node.ast as any).type === 3)!;
+    const closing = narrow.layout.objects.find(node => (node.ast as any).type === 1 && node.t.equals(opening.t));
+    assert.ok(closing);
+    assert.equal(closing.layoutLine + 1, opening.layoutLine);
+    assert.match(opening.ast.toString(source), /preceding=1/);
+    assert.equal(narrow.lowering.duration.toNumber(), wide.lowering.duration.toNumber());
+});

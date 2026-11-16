@@ -540,13 +540,13 @@ it('retains repeat boundaries, navigation and volta numbers without phantom meas
     expect(root.body.textContent).toContain('Fine')
   })
 
-it('starts Mario’s A section on its own system even on a wide page', () => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/super_mario_01.m3n'), 'utf8')
+it('starts a named section after a one-measure introduction on a new system', () => {
+    const source = '{4/4}\n===序\nN:1 2 3 4 ||\n===主\nN:||:5 6 7 1e |1 2 3 4:|||'
     const { root } = render(source, { width: 1000 })
     const measures = [...root.querySelector('g.system')!.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-measure'))
     expect([...new Set(measures)]).toEqual(['m3n-measure-1-1'])
-    expect(root.querySelector('g.system')!.textContent).toContain('P')
-    expect(root.querySelectorAll('g.system')[1]!.textContent).toContain('A')
+    expect(root.querySelector('g.system')!.textContent).toContain('序')
+    expect(root.querySelectorAll('g.system')[1]!.textContent).toContain('主')
   })
 
 it('keeps first-verse L: after explicit numbered lyric rows', () => {

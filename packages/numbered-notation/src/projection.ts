@@ -162,7 +162,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const sectionLabel = measure.events.find(event => event.sectionLabel)?.sectionLabel
         if (sectionLabel && !measure.events.find(event => event.sectionLabel)?.sectionLabelBreakAfter) pieces.push(`@text(${quote(sectionLabel)},size=14px,weight=700,frame=true)`)
         if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) {
-          pieces.push(pendingBarNumber === undefined ? '@bar(3)' : numberBar('@bar(3)', pendingBarNumber))
+          const opening = previousMeasure?.right === 'dbl' ? '@bar(3,preceding=1)' : '@bar(3)'
+          pieces.push(pendingBarNumber === undefined ? opening : numberBar(opening, pendingBarNumber))
           pendingBarNumber = undefined
         }
         // Navigation belongs to a measure, even when its directive follows a note.
