@@ -69,13 +69,30 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
   const intervals = [...document.intervals, ...new Set((document.alternatives ?? []).flatMap(alternative => alternative.intervals))]
   for (const interval of intervals) {
     if (interval.start === undefined || interval.endStart === undefined) continue
-    if (interval.display === 'text' || interval.kind === 'accel' || interval.kind === 'rit') continue
+    if (interval.display === 'text' || interval.kind === 'accel' || interval.kind === 'rit' || interval.kind === 'inst') continue
     const glyphs = projection.glyphs.filter(glyph => glyph.event && glyph.staff === interval.staff && interval.start! <= glyph.event.sourceStart && glyph.event.sourceStart <= interval.endStart!)
     const first = glyphs[0], last = glyphs.at(-1)
     if (!first || !last) continue
     const kind = interval.kind === 'lg' ? 'slur' : interval.kind === '8va' || interval.kind === '8vb' ? 'octave' : interval.kind
     const end = kind === 'slur' ? head.get(last.event!) ?? [...glyphs].reverse().find(glyph => !glyph.sustain && glyph.pitches.some(pitch => pitch.degree !== '0')) ?? last : last
     relations.push({ kind, first, last: end, level: 0, label: kind === 'octave' ? interval.kind : undefined })
+  }
+  // Adjacent instrumental declarations form one passage, just as their shared
+  // horizontal occupancy does. Part and voice boundaries remain independent.
+  const instrumentalLanes = new Map<string, NativeGlyph[]>()
+  for (const measure of projection.measures) for (const column of measure.columns) for (const glyph of column.glyphs) {
+    const key = `${measure.part}:${glyph.lane}`
+    const members = instrumentalLanes.get(key) ?? []
+    members.push(glyph); instrumentalLanes.set(key, members)
+  }
+  for (const members of instrumentalLanes.values()) {
+    let first: NativeGlyph | undefined, last: NativeGlyph | undefined
+    const flush = () => { if (first && last) relations.push({ kind: 'inst', first, last, level: 0 }); first = last = undefined }
+    for (const glyph of members) {
+      if (!glyph.instrumental) { flush(); continue }
+      first ??= glyph; last = glyph
+    }
+    flush()
   }
   // Inner arcs are placed first. A later overlapping relation occupies an
   // outer band; all fragments retain that band through wrapping/pagination.

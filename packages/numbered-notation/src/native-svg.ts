@@ -61,7 +61,8 @@ class SvgPainter {
   }
 
   segno(x: number, y: number): string {
-    return path(`M${n(x + 12)} ${n(y - 23)} C${n(x - 6)} ${n(y - 24)} ${n(x + 18)} ${n(y)} ${n(x)} ${n(y - 1)} M${n(x - 1)} ${n(y - 1)} L${n(x + 13)} ${n(y - 23)}`) + circle(x, y - 16, 1.7) + circle(x + 12, y - 7, 1.7)
+    const curve = path('M10 2 C0 -2 -1 7 7 9 C15 11 14 20 4 17 M1 18 L13 0') + circle(1.7, 6, 1) + circle(12.3, 12, 1)
+    return `<g transform="translate(${n(x)} ${n(y - 15.8)})">${curve}</g>`
   }
 
   mark(mark: string, x: number, y: number): string {
@@ -130,13 +131,19 @@ class SvgPainter {
     }
     let controls = '', cursor = glyph.x - glyph.left - glyph.controls.reduce((sum, control) => sum + control.width, 0)
     for (const control of glyph.controls) {
-      const x = cursor + 3
+      const x = control.x ?? cursor
+      let mark = ''
       if (control.kind === 'section') {
-        const height = 23, width = control.width - 4
-        controls += `<g${attrs({ 'data-m3n-role': 'section', 'data-m3n-id': glyph.xmlId })}><rect${attrs({ x, y: glyph.y - 20, width, height, stroke: '#000', fill: 'none' })}/>${this.text(control.text, x + width / 2, glyph.y - 3, 14, 'serif', { 'font-weight': 700, 'text-anchor': 'middle' })}</g>`
-      } else if (control.kind === 'tempo') controls += this.tempo(control.text, x, glyph.y - 2)
-      else if (control.kind === 'segno') controls += this.segno(x, glyph.y)
-      else controls += this.text(control.text, x, glyph.y - 2, 16, 'serif')
+        mark += `<g${attrs({ 'data-m3n-role': 'section', 'data-m3n-id': glyph.xmlId })}><rect${attrs({ x: x + 0.5, y: glyph.y - control.top + 0.5, width: control.width - 1, height: control.top + control.bottom - 1, stroke: '#000', fill: 'none' })}/>${this.text(control.text, x + 3.5, glyph.y - 2.4, 14, 'serif', { 'font-weight': 700 })}</g>`
+      } else if (control.kind === 'tempo') mark += this.tempo(control.text, x, glyph.y - 2)
+      else if (control.kind === 'segno') mark += this.segno(x, glyph.y)
+      else if (control.kind === 'meter') {
+        const [numerator, denominator] = control.text.split('/')
+        mark += this.text(numerator!, x + control.width / 2, glyph.y - 12.18, 18, 'M3N Numbers', { 'text-anchor': 'middle' })
+          + `<rect${attrs({ x, y: glyph.y - 7.14, width: control.width, height: 1.08, fill: '#000' })}/>`
+          + this.text(denominator!, x + control.width / 2, glyph.y + 9.78, 18, 'M3N Numbers', { 'text-anchor': 'middle' })
+      } else mark += this.text(control.text, x, glyph.y - 1.8, 16, 'M3N Numbers')
+      controls += `<g${attrs({ 'data-m3n-role': 'control', 'data-m3n-control': control.kind, 'data-m3n-id': glyph.xmlId })}>${mark}</g>`
       cursor += control.width
     }
     return group + controls + annotations.join('') + lyrics.join('')
@@ -169,10 +176,9 @@ class SvgPainter {
       }
     }
     if (measure.lastFragment) {
-      const navigation = [...new Set([...(measure.source.navigation ?? []), ...measure.source.events.flatMap(event => event.navigation)])].filter(value => value !== 'segno')
-      if (navigation.length) {
+      if (measure.navigation?.length) {
         const lane = system.lanes.find(lane => lane.id === 'melody')!
-        content += this.text(navigation.map(value => value === 'fine' ? 'Fine' : value === 'dc' ? 'D.C.' : 'D.S.').join(' '), measure.end - 19, lane.y - 3, 12, 'serif', { 'text-anchor': 'end' })
+        for (const mark of measure.navigation) content += this.text(mark.text, mark.x ?? measure.end - 19, lane.y - 6.6 + mark.size * 0.3, mark.size, '"Times New Roman", serif', { 'data-m3n-role': 'navigation' })
       }
       if ((measure.source.repeatCount ?? 2) > 2) content += this.text(`×${measure.source.repeatCount}`, measure.end - 3, system.top + 14, 12, 'serif', { 'text-anchor': 'end' })
     }
@@ -195,7 +201,8 @@ class SvgPainter {
       const selected = members.filter(glyph => glyph.event && relation.first.event!.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event!.sourceStart)
       if (!selected.length) return ''
       const first = selected[0]!, last = selected.at(-1)!
-      return this.text('(', first.x - first.left - 6, lane.y, 22, 'M3N Numbers') + this.text(')', last.x + last.right + 2, lane.y, 22, 'M3N Numbers')
+      return this.text('(', first.x - first.left - (first.parenthesisLeft ?? 6), lane.y, 22, 'M3N Numbers', { 'data-m3n-role': 'instrument-parenthesis' })
+        + this.text(')', last.x + last.right + 1.1, lane.y, 22, 'M3N Numbers', { 'data-m3n-role': 'instrument-parenthesis' })
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = nativeArcGeometry(relation, system)

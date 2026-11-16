@@ -1,4 +1,4 @@
-import type { NativeColumn, NativeGlyph, NativeMeasure } from './native-model.js'
+import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
 
@@ -16,7 +16,7 @@ export function nativeBarMetrics(kind: string | undefined) {
   return { size, width, anchor, bars, dots, radius }
 }
 
-type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[] }
+type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[] }
 type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; pairedSpacing?: boolean }
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
@@ -47,22 +47,41 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   const scale = 22 * (options.noteGapEm ?? 0.6) / 12
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
+  const parentheses = new Map<NativeGlyph, { left: number; right: number }>()
+  for (const lane of lanes) {
+    const members = surrounding.flatMap(measure => measure.columns.flatMap(column => column.glyphs.filter(glyph => glyph.lane === lane).map(glyph => ({ glyph, measure }))))
+    const joins = (left: typeof members[number] | undefined, right: typeof members[number] | undefined) => left && right
+      && (left.measure === right.measure || !left.measure.breakAfter && !right.measure.breakBefore && left.measure.part === right.measure.part)
+    members.forEach((member, index) => {
+      if (!member.glyph.instrumental) return
+      const previous = members[index - 1], next = members[index + 1]
+      parentheses.set(member.glyph, {
+        left: previous?.glyph.instrumental && joins(previous, member) ? 0 : member.glyph.parenthesisLeft ?? 0,
+        right: next?.glyph.instrumental && joins(member, next) ? 0 : member.glyph.parenthesisRight ?? 0,
+      })
+    })
+  }
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: 22,
     cells: lanes.filter(lane => !lane.startsWith('alternative:')).map(lane => springCell(lane, 0, 22, 0, 0.45, options.pairedSpacing === false ? 1 : scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
     const geometry = nativeBarMetrics(kind)
+    const prefix = !opening && measure.navigation?.length ? 4.4 + measure.navigation.reduce((sum, mark) => sum + mark.width + 4.4, 0) : 0
     const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)).filter(lane => !lane.startsWith('alternative:')))]
     const barScale = options.pairedSpacing === false || options.minimumNoteGapEm === undefined ? 1 : scale
-    items.push({ measure, opening, left: geometry.anchor, right: geometry.width - geometry.anchor,
-      cells: lanes.map(lane => springCell(lane, geometry.anchor, geometry.width - geometry.anchor, 0, 128, barScale)) })
+    items.push({ measure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
+      cells: lanes.map(lane => springCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 0, 128, barScale)) })
   }
   for (const measure of measures) {
     const marks = nativeMeasureBars(surrounding, surrounding.indexOf(measure))
     if (marks.opening) bar(measure, 'rptstart', true)
     for (const column of measure.columns) {
+      for (let index = 0; index < Math.max(...column.glyphs.map(glyph => glyph.controls.length)); index++) {
+        const members = column.glyphs.flatMap(glyph => glyph.controls[index] ? [{ control: glyph.controls[index]!, lane: glyph.lane }] : [])
+        const cells = members.map(({ control, lane }) => springCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
+        items.push({ measure, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
+      }
       const cells = column.glyphs.map(glyph => {
-        const controls = glyph.controls.reduce((sum, control) => sum + control.width, 0)
-        return springCell(glyph.lane, (glyph.musicLeft ?? glyph.left) + controls, glyph.musicRight ?? glyph.right, glyph.beats, 6, scale)
+        return springCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.beats, 6, scale)
       })
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
@@ -90,15 +109,17 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     if (glyph) {
       cell.left = Math.max(cell.left, glyph.lyricLeft ?? 0)
       cell.right = Math.max(cell.right, glyph.lyricRight ?? 0)
+      const insets = parentheses.get(glyph)
+      cell.left += insets?.left ?? 0; cell.right += insets?.right ?? 0
     }
-    if (!item.column) cell.beforeCollision = cell.afterCollision = 64
+    if (item.boundary || item.prefix) cell.beforeCollision = cell.afterCollision = 64
   }
   // Bar edges are hard boundaries for both neighbours, including each
   // voice sharing that boundary. Using the ordinary-note penalty here
   // distorts compressed systems even when their line breaks agree.
   for (let index = 1; index < items.length; index++) {
     const previous = items[index - 1]!, current = items[index]!
-    if ((!previous.column && !previous.prefix) || (!current.column && !current.prefix)) {
+    if (previous.boundary || current.boundary) {
       for (const cell of previous.cells) cell.afterCollision = 64
       for (const cell of current.cells) cell.beforeCollision = 64
     }
@@ -135,9 +156,14 @@ export function placeNativeHorizontal(measures: NativeMeasure[], options: Horizo
     if (item.column) {
       item.column.x = position
       for (const glyph of item.column.glyphs) { glyph.x = position; glyphs.push(glyph) }
-    } else if (item.prefix) return
+    } else if (item.controls) item.controls.forEach(control => { control.x = position - control.anchor })
+    else if (item.prefix) return
     else if (item.opening) item.measure.openingBarX = position
-    else item.measure.barX = position
+    else {
+      item.measure.barX = position
+      let cursor = position - item.left + 4.4
+      for (const mark of item.measure.navigation ?? []) { mark.x = cursor; cursor += mark.width + 4.4 }
+    }
   })
   return glyphs
 }
