@@ -1,6 +1,7 @@
+import { numberedHeaderContent } from './header-content.js'
 import { DefaultTextMeasurer, type TextMeasurer } from '@m3n/jpfun'
 import {
-  resolveScorePitches, displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreCreditLines, scoreEventIds,
+  resolveScorePitches, displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreEventIds,
   measurePlaybackPasses, type ScoreDocument, type ScoreEvent, type ScoreMeasure, type ScoreAlternative,
   sectionKeyVisits, sectionEntryKey, sectionVisitKey, sectionOrderLabels, keyLabel,
 } from '@m3n/notation'
@@ -384,19 +385,12 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     if(line)lines.push(line.trimEnd())
     return lines.join('\n')
   }
+  const headerContent = numberedHeaderContent(document)
   const headings = [
     document.title ? `@text(${quote(headingText(document.title,32,700))},size=32px,align=center,weight=700)` : '',
-    document.subtitle ? `@text(${quote(headingText(document.subtitle,16,400))},size=16px,align=center)` : '',
+    ...headerContent.subtitles.map(text => `@text(${quote(headingText(text,16,400))},size=16px,align=center)`),
   ].filter(Boolean).join(' ')
-  const creditLines = scoreCreditLines(document).map(line => {
-    const colon = line.match(/^(?:作词|作曲|编曲|演唱)：/) ? 2 : -1
-    return { label: line.slice(0, colon + 1), name: line.slice(colon + 1) }
-  })
-  // Two native multiline text cells share their measured maximum widths.
-  const credits = creditLines.length ? `{${[
-    `@text(${quote(creditLines.map(credit => credit.label).join('\n'))},size=14px,lineheight=1.5,align=left)`,
-    `@text(${quote(creditLines.map(credit => credit.name).join('\n'))},size=14px,lineheight=1.5,align=right)`,
-  ].join(' ')}}` : ''
+  const credits = headerContent.credits.map(text => `@text(${quote(text)},size=14px,align=right)`).join(' ')
   const pitchRange = scientificPitchRange(document, options)
   const range = pitchRange ? `@text(${quote(pitchRange.join('~'))},size=16px)` : ''
   const signatures = [

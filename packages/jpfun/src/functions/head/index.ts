@@ -24,7 +24,7 @@ import {
 import { KeyNode } from "../key/index.js";
 import { MeterNode } from "../meter/index.js";
 import { TempoNode } from "../tempo/index.js";
-import { TextNode } from "../text/index.js";
+import { TextNode, TextTemporalNode } from "../text/index.js";
 
 // 语法糖的预设对齐
 type SlotName = "left" | "center" | "right";
@@ -96,6 +96,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
     members: TemporalNodeBase[] = [];
     slots: { ast: HeadSlotNode; start: HeadBoundaryTemporal; end: HeadBoundaryTemporal }[] = [];
     private titleBottom = 0;
+    private sideRows: Partial<Record<SideName, readonly ({ offset: number; extent: Extent } | null)[]>> = {};
     private sideExtents: Record<SideName, Extent | null> = { left: null, right: null };
 
     constructor(ast: HeadSlotNode) {
@@ -156,6 +157,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
                     return { offset, extent };
                 });
                 if (name !== "center") {
+                    this.sideRows[name] = placements;
                     this.sideExtents[name] = top === void 0 || bottom === void 0 ? null : { top, bottom };
                 }
                 return placements;
@@ -166,12 +168,12 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
                 const { left, right } = this.sideExtents;
                 const leftHeight = left ? left.bottom - left.top : 0;
                 const rightHeight = right ? right.bottom - right.top : 0;
-                if ((owner.sideStacked || owner.sideAuto && !this.sidesFit()) && left && right) {
+                if (owner.sideStacked && left && right) {
                     return name === "right"
                         ? this.titleBottom - extent.top
                         : this.titleBottom + rightHeight + owner.gap - extent.top;
                 }
-                if (owner.sideAuto) return this.titleBottom - extent.top;
+                if (owner.sideAuto) return this.titleBottom - extent.top + (name === "left" ? this.sideOffset() : 0);
                 // 两侧共享底边；以较高侧定总高度，使它的顶部恰好贴标题底边
                 const targetBottom = this.titleBottom + Math.max(leftHeight, rightHeight);
                 return targetBottom - extent.bottom;
@@ -209,19 +211,47 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
         return cells;
     }
 
-    private sidesFit() {
+    /** Test individual painted lines, rather than the union of every author row. */
+    private sideOffset() {
         const cells = this.sideCells();
-        const width = (slot: HeadSlotNode) => Math.max(0, ...slot.rows.map(row => {
-            const rowCells = row instanceof ASTBraceNode ? row.content : [row];
-            const widths = rowCells.flatMap(cell => {
-                const members = cells.get(cell);
-                if (!members?.length) return [];
-                return [Math.max(...members.map(node => node.box.x + node.box.w)) - Math.min(...members.map(node => node.box.x))];
+        const rectangles = (slot: HeadSlotNode, target: number) => {
+            const result: { left: number; right: number; top: number; bottom: number }[] = [];
+            const fromLeft = slot.name === "left";
+            const rows = this.sideRows[slot.name as SideName];
+            slot.rows.forEach((row, index) => {
+                const placement = rows?.[index];
+                if (!placement) return;
+                const rowCells = row instanceof ASTBraceNode ? row.content : [row];
+                let cursor = target;
+                for (const cell of fromLeft ? rowCells : [...rowCells].reverse()) {
+                    const members = cells.get(cell);
+                    if (!members?.length) continue;
+                    const left = Math.min(...members.map(node => node.box.x));
+                    const right = Math.max(...members.map(node => node.box.x + node.box.w));
+                    const dx = cursor - (fromLeft ? left : right);
+                    for (const node of members) {
+                        const pieces = node instanceof TextTemporalNode && !node.ast.frame
+                            ? node.lineBounds : [{ x: 0, y: 0, w: node.box.w, h: node.box.h }];
+                        for (const piece of pieces) {
+                            const x = node.box.x + dx + piece.x;
+                            const y = placement.offset - node.box.visualAxis + piece.y - this.sideExtents[slot.name as SideName]!.top;
+                            if (piece.w > 0 && piece.h > 0) result.push({ left: x, right: x + piece.w, top: y, bottom: y + piece.h });
+                        }
+                    }
+                    cursor += (fromLeft ? 1 : -1) * (right - left + this.ast.owner.itemGap);
+                }
             });
-            return widths.reduce((sum, value) => sum + value, 0) + Math.max(0, widths.length - 1) * this.ast.owner.itemGap;
-        }));
+            return result;
+        };
         const [left, , right] = this.slots;
-        return left.start.box.x + width(left.ast) + this.ast.owner.itemGap <= right.end.box.x - width(right.ast) + 1e-6;
+        const ls = rectangles(left.ast, left.start.box.x), rs = rectangles(right.ast, right.end.box.x);
+        // Each conflicting pair forbids an interval of left-side vertical offsets.
+        const intervals = ls.flatMap(l => rs.flatMap(r => l.right + this.ast.owner.itemGap > r.left + 1e-6 && r.right > l.left
+            ? [{ start: r.top - l.bottom, end: r.bottom + this.ast.owner.gap - l.top }] : []))
+            .sort((a, b) => a.start - b.start);
+        let offset = 0;
+        for (const interval of intervals) if (offset > interval.start + 1e-6 && offset < interval.end - 1e-6) offset = interval.end;
+        return offset;
     }
 
     private alignHead() {
@@ -411,7 +441,7 @@ H.tempo: 94
             { name: "sidebelow", description: "将两侧内容放在整个中区下方，并保留 gap 间距", type: "boolean" as const, default: false },
             { name: "itemgap", description: "侧区同一行内相邻元素的水平间距", type: "length" as const, default: { value: ITEM_GAP_EM, unit: "em" as const } },
             { name: "sidestacked", description: "两侧纵向排列：右区在上，左区在下", type: "boolean" as const, default: false },
-            { name: "sideauto", description: "按两侧实测宽度自动并排顶端对齐，冲突时右区在上、左区在下", type: "boolean" as const, default: false },
+            { name: "sideauto", description: "按各行实测占位顶端对齐，仅将左区下移至无碰撞的位置", type: "boolean" as const, default: false },
         ],
     };
 

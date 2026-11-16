@@ -159,7 +159,9 @@ class TextFunction extends ASTFunctionNode {
 
 export const TextNode: ASTFunctionClass = TextFunction;
 
-class TextTemporalNode extends TemporalNodeBase {
+export class TextTemporalNode extends TemporalNodeBase {
+    /** Per-line painted occupancy, relative to the text box (empty lines occupy no ink). */
+    lineBounds: { x: number; y: number; w: number; h: number }[] = [];
     declare ast: TextFunction;
     declare box: LayoutBox;
 
@@ -191,6 +193,13 @@ class TextTemporalNode extends TemporalNodeBase {
         this.box.h = (lines.length - 1) * lineAdvance + first.h + 2 * inset;
         this.box.visualAxis = this.box.h / 2;
         this.textBaselineY = first.baseline + inset;
+        this.lineBounds = lines.flatMap((line, index) => {
+            if (!line) return [];
+            const m = measure(line);
+            const x = align === "right" ? this.box.w - inset - m.w
+                : align === "center" ? (this.box.w - m.w) / 2 - this.centerOffsets[index] : inset;
+            return [{ x, y: this.textBaselineY + index * lineAdvance - m.baseline, w: m.w, h: m.h }];
+        });
         if (align === "center") this.box.anchor = this.box.w / 2;
         else if (align === "right") {
             const lastChar = [...lines[0]].at(-1);

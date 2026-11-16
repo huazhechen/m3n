@@ -574,14 +574,11 @@ it('paginates complete systems and keeps every final lyric inside the page', () 
     }
   })
 
-it('labels all declared credits and rejects invalid widths', () => {
+it('shows lyricist and composer on the right, singer as a subtitle, and rejects invalid widths', () => {
     const { root } = render('{title=曲名} {singer=演唱者} {composer=创作者} {lyricist=创作者} {arranger=编曲者} {4/4}\nN: 1 2 3 4 |||')
     const texts = [...root.querySelectorAll('text')]
-    for (const [label, name] of [['作词：', '创作者'], ['作曲：', '创作者'], ['编曲：', '编曲者'], ['演唱：', '演唱者']]) {
-      const role = texts.find(text => text.textContent === label)!
-      expect(role).toBeDefined()
-      expect(texts.some(text => text.textContent === name && text.getAttribute('y') === role.getAttribute('y'))).toBe(true)
-    }
+    expect(texts.map(text => text.textContent)).toEqual(expect.arrayContaining(['创作者 作词', '创作者 作曲', '演唱者 演唱']))
+    expect(texts.some(text => /编曲者|作词：|作曲：|演唱：/.test(text.textContent ?? ''))).toBe(false)
     expect(() => render('{4/4}\nN: 1 2 3 4 |||', { width: NaN })).toThrow()
   })
 

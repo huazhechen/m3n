@@ -527,3 +527,19 @@ test('head sideauto stacks real horizontal conflicts even on a wide page', () =>
         assert(nearly(left.y - right.y - right.h, 5), 'only the conflicting sides stack');
     }
 });
+
+test('head sideauto ignores wide later rows that never meet the left ink', () => {
+    const source = '@page(width=320px,left=32px,right=32px) @head(left=@text(L,size=16px),right=@text("A\nB\nRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",size=14px,align=right),sideauto=true,itemgap=16px)';
+    for (const input of [source, parse(source).toString(source)]) {
+        const boxes = textObjects(input);
+        assert(nearly(boxes.get('L')!.box.y, boxes.get('A')!.box.y), 'later wide text must not displace the first row');
+    }
+});
+
+test('head sideauto shifts only past conflicting rows, retaining later shared space', () => {
+    const source = '@page(width=320px,left=32px,right=32px) @head(left=@text(LLLLLLLLLLLLLLLLLLLL,size=16px),right={@text(RRRRRRRRRRRRRRRR,size=14px) @text(A,size=14px) @text(B,size=14px)},sideauto=true,itemgap=16px,gap=5px)';
+    const boxes = textObjects(source), left = boxes.get('LLLLLLLLLLLLLLLLLLLL')!.box;
+    const first = boxes.get('RRRRRRRRRRRRRRRR')!.box, last = boxes.get('B')!.box;
+    assert(nearly(left.y, first.y + first.h + 5), 'clear only the first conflicting row');
+    assert(left.y < last.y + last.h, 'remaining author rows still share vertical space');
+});

@@ -1,10 +1,11 @@
+import { numberedHeaderContent } from './header-content.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import { NativeSymbols, attrs, n } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 import { measureNativeControl } from './native-controls.js'
 import { scientificPitchRange } from './pitch-range.js'
 import { transposedNumberedKeyLabel } from './fixed-do.js'
-import { displayedTempo, scoreCreditLines, sectionOrderLabels, type ScoreDocument } from '@m3n/notation'
+import { displayedTempo, sectionOrderLabels, type ScoreDocument } from '@m3n/notation'
 import type { TextMeasurer } from './native-measure.js'
 import { numberedOrderLines } from './order-lines.js'
 
@@ -29,7 +30,8 @@ export function wrapNativeText(text: string, width: number, size: number, measur
 export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, systemGap = nativeStyle.systemGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number} = {}) {
   const available = width - 2 * margin
   const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, measurer, 700)
-  const subtitle = wrapNativeText(document.subtitle, available - em(2), nativeStyle.subtitle, measurer)
+  const headerContent = numberedHeaderContent(document)
+  const subtitle = headerContent.subtitles.flatMap(text => wrapNativeText(text, available - em(2), nativeStyle.subtitle, measurer))
   const painter = new NativeSymbols(measurer)
   const textRows = (lines: string[], size: number, weight = 400) => {
     let bottom = 0
@@ -43,14 +45,12 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const titleRows = textRows(title, nativeStyle.title, 700), subtitleRows = textRows(subtitle, nativeStyle.subtitle)
   const titleHeight = titleRows.at(-1)?.bottom ?? 0, subtitleHeight = subtitleRows.at(-1)?.bottom ?? 0
   const centerHeight = titleHeight + subtitleHeight + (titleHeight && subtitleHeight ? em(5) : 0)
-  const credits = scoreCreditLines(document)
-  const creditRows = credits.map(text => { const colon = text.match(/^(?:作词|作曲|编曲|演唱)：/) ? 2 : -1; return { label: text.slice(0, colon + 1), name: text.slice(colon + 1) } })
-  const nameWidth = Math.max(0, ...creditRows.map(row => measurer.measureText(row.name, { fontSize: nativeStyle.annotation, fontFamily: 'serif' }).w))
-  const labelWidth = Math.max(0, ...creditRows.map(row => measurer.measureText(row.label, { fontSize: nativeStyle.annotation, fontFamily: 'serif' }).w))
+  const creditBounds: { left: number; right: number; top: number; bottom: number }[] = []
   let creditBottom = 0
-  const creditSvg = creditRows.map((row, index) => {
-    const raw = painter.text(row.label, width - margin - nameWidth - labelWidth - nativeStyle.text, 0, nativeStyle.credit) + painter.text(row.name, width - margin, 0, nativeStyle.annotation, 'serif', { 'text-anchor': 'end' })
+  const creditSvg = headerContent.credits.map((text, index) => {
+    const raw = painter.text(text, width - margin, 0, nativeStyle.annotation, 'serif', { 'text-anchor': 'end' })
     const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? nativeStyle.credit * 0.5 : 0) - ink.top
+    creditBounds.push({ left: ink.left, right: ink.right, top: y + ink.top, bottom: y + ink.bottom })
     creditBottom = y + ink.bottom
     return `<g transform="translate(0 ${n(y)})">${raw}</g>`
   }).join('')
@@ -61,19 +61,28 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     signatures.push(measureNativeControl('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`, measurer))
   }
   let signatureX = margin
-  let signatureSvg = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw }).join('')
+  const signaturePieces = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw })
   const range = scientificPitchRange(document,options)
   if (range) {
-    signatureSvg += `<g data-m3n-role="pitch-range">${painter.text(range.join('~'), signatureX, 0, nativeStyle.text, 'serif')}</g>`
+    signaturePieces.push(`<g data-m3n-role="pitch-range">${painter.text(range.join('~'), signatureX, 0, nativeStyle.text, 'serif')}</g>`)
   }
+  const signatureSvg = signaturePieces.join('')
   const signatureInk = nativeSvgInk(signatureSvg, measurer)
   const signaturesHeight = signatureInk.bottom - signatureInk.top
-  const creditInk = nativeSvgInk(creditSvg, measurer)
-  const stacked = creditsHeight > 0 && signatureInk.right + nativeStyle.text > creditInk.left
+  const intervals = signaturePieces.flatMap(piece => {
+    const ink = nativeSvgInk(piece, measurer)
+    const top = ink.top - signatureInk.top, bottom = ink.bottom - signatureInk.top
+    return creditBounds.flatMap(credit => ink.right + nativeStyle.text > credit.left + 1e-6 && credit.right > ink.left
+      ? [{ start: credit.top - bottom, end: credit.bottom + em(5) - top }] : [])
+  }).sort((a, b) => a.start - b.start)
+  let signatureOffset = 0
+  for (const interval of intervals) {
+    if (signatureOffset > interval.start + 1e-6 && signatureOffset < interval.end - 1e-6) signatureOffset = interval.end
+  }
 
   const sideTop = margin + centerHeight + (centerHeight ? em(5) : 0)
-  const sidesHeight = stacked ? creditsHeight + em(5) + signaturesHeight : Math.max(creditsHeight, signaturesHeight)
-  const signaturesTop = sideTop + (stacked ? creditsHeight + em(5) : 0)
+  const sidesHeight = Math.max(creditsHeight, signatureOffset + signaturesHeight)
+  const signaturesTop = sideTop + signatureOffset
   const creditsTop = sideTop
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
   let orderBottom = sideTop + sidesHeight

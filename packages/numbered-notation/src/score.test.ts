@@ -203,7 +203,7 @@ describe('jpFun numbered notation adapter', () => {
     expect(paired.score.diagnostics).toEqual([])
     for (const minimumNoteGapEm of [-1, Infinity, NaN, 0.7]) expect(() => render(source, { minimumNoteGapEm, noteGapEm: 0.6 })).toThrow('最小间距')
   })
-  it('preserves every performed measure, lyric and tie in the compact Slow Like You arrangement', () => {
+  it('preserves every performed measure, lyric and tie in the local-repeat Slow Like You arrangement', () => {
     // Apply the corrected natural on 在 to both arrangements before comparing playback.
     const original = readFileSync(resolve(process.cwd(), 'test/fixtures/man-man-original.m3n'), 'utf8').replace('(6. (5))', '(6=. (5))')
     const compact = readFileSync(resolve(process.cwd(), '../../src/scores/man_man_xi_huan_ni_01.m3n'), 'utf8')
@@ -238,10 +238,11 @@ describe('jpFun numbered notation adapter', () => {
     expect(performed(compact)).toEqual(expected)
     const { document, score } = render(compact, { width: 736, pageMargin: 8, systemGap: 0, showCredits: false, uniformSystemHeight: true })
     const measures = [...document.parts.values()][0]!.melody.filter(measure => measure.events.length)
-    expect(measures).toHaveLength(26)
+    expect(document.order).toBeUndefined()
+    expect(document.sections ?? []).toEqual([])
+    expect(measures).toHaveLength(37)
     const passes = measurePlaybackPasses(measures)
-    expect([...passes.get(measures[0]!)!]).toEqual([1, 2, 3])
-    expect([...passes.get(measures.find(measure=>measure.sectionName==='B')!)!]).toEqual([1, 2])
+    expect([0, 11, 22, 33].map(index => [...passes.get(measures[index]!)!])).toEqual([[1], [1, 2], [1, 2], [1]])
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
   })
 
@@ -1084,14 +1085,11 @@ describe('jpFun numbered notation adapter', () => {
     }
   })
 
-  it('labels all declared credits and rejects invalid widths', () => {
+  it('shows lyricist and composer on the right, singer as a subtitle, and rejects invalid widths', () => {
     const { root } = render('{title=曲名} {singer=演唱者} {composer=创作者} {lyricist=创作者} {arranger=编曲者} {4/4}\nN: 1 2 3 4 |||')
     const texts = [...root.querySelectorAll('text')]
-    for (const [label, name] of [['作词：', '创作者'], ['作曲：', '创作者'], ['编曲：', '编曲者'], ['演唱：', '演唱者']]) {
-      const role = texts.find(text => text.textContent === label)!
-      expect(role).toBeDefined()
-      expect(texts.some(text => text.textContent === name && text.getAttribute('y') === role.getAttribute('y'))).toBe(true)
-    }
+    expect(texts.map(text => text.textContent)).toEqual(expect.arrayContaining(['创作者 作词', '创作者 作曲', '演唱者 演唱']))
+    expect(texts.some(text => /编曲者|作词：|作曲：|演唱：/.test(text.textContent ?? ''))).toBe(false)
     expect(() => render('{4/4}\nN: 1 2 3 4 |||', { width: NaN })).toThrow()
   })
 
@@ -1105,17 +1103,16 @@ describe('jpFun numbered notation adapter', () => {
         const before = controls[index - 1]!.box, after = controls[index]!.box
         expect(after.x - before.x - before.w).toBeCloseTo(16)
       }
-      const labels = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode && 'lines' in node.ast
-        && /^(作词|作曲|编曲|演唱)：/.test((node.ast.lines as string[])[0]!))
-      expect(labels).toHaveLength(1)
-      const names = result.layout.objects.find(node => node.ast instanceof ASTFunctionNode && 'lines' in node.ast
-        && (node.ast.lines as string[])[0] === '施人诚')!
-      expect(names).toBeDefined()
-      expect(names.box.x + names.box.w).toBeCloseTo(width - 32)
-      expect(names.box.x - labels[0]!.box.x - labels[0]!.box.w).toBeCloseTo(16)
-      expect(names.box.y).toBeCloseTo(labels[0]!.box.y)
-      for (const credit of [...labels, names]) {
-        if (width === 320) for (const control of controls) expect(control.box.y).toBeGreaterThan(credit.box.y + credit.box.h)
+      const credits = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode && 'lines' in node.ast
+        && / (作词|作曲)$/.test((node.ast.lines as string[])[0]!))
+      expect(credits).toHaveLength(2)
+      for (const credit of credits) {
+        expect(credit.box.x + credit.box.w).toBeCloseTo(width - 32)
+        for (const control of controls) {
+          if (control.box.x + control.box.w + 16 > credit.box.x) {
+            expect(control.box.y + control.box.h <= credit.box.y + 1e-6 || control.box.y >= credit.box.y + credit.box.h - 1e-6).toBe(true)
+          }
+        }
       }
     }
   })
