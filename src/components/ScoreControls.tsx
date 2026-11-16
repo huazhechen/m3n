@@ -63,11 +63,9 @@ export function ScoreControls(props: ScoreControlsProps) {
         <input type="range" min="0" max="1000" value={Math.round(props.progress * 1000)} aria-label="播放位置" aria-valuetext={`${Math.round(props.progress * 100)}%`}
           onPointerDown={props.onSeekStart} onKeyDown={props.onSeekStart} onKeyUp={props.onSeekCommit} onBlur={props.onSeekCommit}
           onInput={event => props.onSeek(Number(event.currentTarget.value) / 1000)} />
-      {!props.playbackOnly && <>
       <button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
           <Icon><path d="m9 3-5 18h16L15 3ZM8 16h8M12 16l5-9" /></Icon><span>节拍器</span>
         </button>
-      </>}
     </div>
     {!props.playbackOnly && <>
       <button type="button" className="control-button settings-toggle" aria-label="乐谱设置" aria-haspopup="dialog" aria-expanded={settingsOpen} aria-controls={settingsId} popoverTarget={settingsId} title="乐谱设置">
