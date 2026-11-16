@@ -3,6 +3,7 @@ import home from '../../docs/HOME.md?raw'
 import guide from '../../docs/GUIDE.md?raw'
 import manual from '../../docs/MANUAL.md?raw'
 import { m3nToMei, validateM3NDiagnostics } from '@m3n/notation'
+import { documentSections } from './docs-navigation'
 
 function m3nExamples(markdown: string) {
   return [...markdown.matchAll(/```m3n\r?\n([\s\S]*?)```/g)].map((match) => match[1].trim())
@@ -24,4 +25,19 @@ describe('documented M3N examples', () => {
       expect(failures).toEqual([])
     })
   }
+})
+
+describe('documentation links', () => {
+  it('resolves section links to headings in the application', () => {
+    const documents = { HOME: home, GUIDE: guide, MANUAL: manual }
+    for (const [name, markdown] of Object.entries(documents)) {
+      for (const match of markdown.matchAll(/\]\((?:(HOME|GUIDE|MANUAL)\.md)?#([^)]*)\)/g)) {
+        const target = match[1] ?? name
+        const headings = documentSections(documents[target as keyof typeof documents])
+          .flatMap(section => [section, ...section.children])
+        expect(headings.map(heading => heading.id), `${name}: ${match[0]}`)
+          .toContain(decodeURIComponent(match[2]))
+      }
+    }
+  })
 })
