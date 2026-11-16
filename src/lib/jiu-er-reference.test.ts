@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
 import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/jiu_er_01.m3n?raw'
@@ -19,6 +18,8 @@ it('loads Jiu Er fully written out with a subtitle and inline key changes', asyn
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   expect(bars).toHaveLength(34)
   expect(document.alternatives).toBeUndefined()
+  expect(bars.slice(0, -1).every(bar => bar.right === 'single')).toBe(true)
+  expect(bars.at(-1)!.right).toBe('end')
   expect(bars.every(bar => !bar.ending && bar.left !== 'rptstart' && bar.right !== 'rptend')).toBe(true)
   expect([...new Set(bars.flatMap(bar => bar.events.map(event => event.key)))]).toEqual(['Bb', 'C', 'F'])
 })
@@ -39,8 +40,15 @@ it('retains all vocal lyrics and skips the instrumental introduction', () => {
   const lyrics = compileScorePerformance(document).elements.flatMap(element => (byId.get(element.xmlId) ?? [])
     .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
     .map(lyric => [element.start, element.end, lyric.text] as const))
-  expect(lyrics).toHaveLength(80)
-  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('9feb89832887f332c72b96adb0ccb2db0895357433b834d6a40a9d2972d0c1b1')
+  expect(lyrics).toHaveLength(88)
+  for (const start of [55, 87, 119, 127]) {
+    const index = lyrics.findIndex(([beat, , text]) => beat === start && text === '九')
+    expect(index).toBeGreaterThanOrEqual(0)
+    expect(lyrics.slice(index, index + 8).map(([beat, , text]) => [beat, text])).toEqual([
+      [start, '九'], [start + .5, '儿'], [start + 1, '我'], [start + 2.5, '送'],
+      [start + 3, '你'], [start + 3.5, '去'], [start + 4, '远'], [start + 5, '方'],
+    ])
+  }
   expect(lyrics[0]![0]).toBe(32)
   expect(lyrics.map(([, , text]) => text).join('')).toBe(reference.lyricText)
 })
