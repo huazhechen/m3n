@@ -95,7 +95,14 @@ describe('bundled score corpus', () => {
 
   it.each(webReferences.filter(reference=>'lyricText' in reference))('preserves every reference lyric character for $id',reference=>{
     const document=parseM3NDocument(sources[reference.id]!)
-    const lyrics=document.lyrics.flatMap(block=>block.syllables.filter(syllable=>syllable.kind==='text').map(syllable=>syllable.text)).join('')
+    // Read each verse across source phrases instead of interleaving the verses of each phrase.
+    const blocks=parseM3NDocumentStructure(sources[reference.id]!).sections.flatMap(section=>{
+      const starts=new Set(section.phrases.map(phrase=>phrase.melody?.start))
+      const sectionBlocks=document.lyrics.filter(block=>starts.has(block.targetStart))
+      return [...new Set(sectionBlocks.map(block=>block.range))]
+        .flatMap(range=>sectionBlocks.filter(block=>block.range===range))
+    })
+    const lyrics=blocks.flatMap(block=>block.syllables.filter(syllable=>syllable.kind==='text').map(syllable=>syllable.text)).join('')
     expect(lyrics.replace(/[^\u3400-\u9fff]/g,'')).toBe(reference.id==='yan_hua_yi_leng' ? reference.lyricText!.replace(/(雨纷纷旧故里[\s\S]*?是我们)([\s\S]*?)\1/, '$1$2们') : reference.lyricText)
   })
 
