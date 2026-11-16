@@ -66,6 +66,13 @@ describe('native spacing compatibility with the frozen jpFun baseline', () => {
     expect(result.systems.slice(0, 2).map(system => system.measures.length)).toEqual([5, 5])
   })
 
+  it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
+    const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320)
+    expect(result.systems).toHaveLength(54)
+    expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
+      .toEqual([[53, 54], [55, 56], [57, 58], [59], [60, 61]])
+  })
+
   it('lets wide lyrics share the minimum note clearance instead of accumulating it', () => {
     const textMeasurer: TextMeasurer = { measureText(text, style) {
       return { w: text === '0' ? 11.154 : [...text].length * 20, h: style.fontSize, baseline: style.fontSize * 0.8 }

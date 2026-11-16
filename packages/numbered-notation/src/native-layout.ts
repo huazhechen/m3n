@@ -2,6 +2,7 @@ import { nativeArcGeometry } from './native-arc.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
+import { splitNativeMeasure } from './native-wrapping.js'
 export { wrapNativeText } from './native-header.js'
 import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
@@ -108,21 +109,7 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
 
 /** Break complete measures first, splitting oversized measures at time columns. */
 function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions): NativeMeasure[][] {
-  const fragments = measures.flatMap(measure => {
-    if (measure.minimum <= width || measure.columns.length < 2) return [measure]
-    const groups: typeof measure.columns[] = []
-    let group: typeof measure.columns = [], occupied = 24
-    for (const column of measure.columns) {
-      const addition = column.left + column.right + column.minimumGap
-      if (group.length && occupied + addition > width) { groups.push(group); group = []; occupied = 24 }
-      group.push(column); occupied += addition
-    }
-    if (group.length) groups.push(group)
-    return groups.map((columns, index) => ({ ...measure, columns, continuation: index > 0, lastFragment: index === groups.length - 1,
-      breakBefore: index === 0 ? measure.breakBefore : true, breakAfter: index === groups.length - 1 ? measure.breakAfter : true,
-      natural: columns.reduce((sum, column) => sum + column.left + column.right + column.gap, 24),
-      minimum: columns.reduce((sum, column) => sum + column.left + column.right + column.minimumGap, 24) }))
-  })
+  const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1), Boolean(options.pairedSpacing)))
   const lines: NativeMeasure[][] = []
   const ratio = options.wrapWidthRatio ?? 1
   for (let begin = 0; begin < fragments.length;) {
@@ -144,7 +131,9 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         const slack = (capacity - naturalWidth) / (width * ratio)
         const compressionCost = options.pairedSpacing || options.wrap === 'compact' ? 1 : 100
         const score = slack * slack * (slack < 0 ? compressionCost : 1) + cost[stop + 1]!
-        if (score < cost[index]!) { cost[index] = score; next[index] = stop + 1 }
+        // Equal-energy partitions should leave the shorter row at the end.
+        // Ignore round-off from subtracting cumulative measured coordinates.
+        if (score < cost[index]! - 1e-12 || Math.abs(score - cost[index]!) <= 1e-12 && stop + 1 > next[index]!) { cost[index] = score; next[index] = stop + 1 }
       }
     }
     for (let index = 0; index < group.length;) { const stop = Math.max(index + 1, next[index]!); lines.push(group.slice(index, stop)); index = stop }

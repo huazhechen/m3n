@@ -16,7 +16,7 @@ export function nativeBarMetrics(kind: string | undefined) {
   return { size, width, anchor, bars, dots, radius }
 }
 
-type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[] }
+type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[] }
 type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; pairedSpacing?: boolean }
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
@@ -78,7 +78,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       for (let index = 0; index < Math.max(...column.glyphs.map(glyph => glyph.controls.length)); index++) {
         const members = column.glyphs.flatMap(glyph => glyph.controls[index] ? [{ control: glyph.controls[index]!, lane: glyph.lane }] : [])
         const cells = members.map(({ control, lane }) => springCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
-        items.push({ measure, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
+        items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
       }
       const cells = column.glyphs.map(glyph => {
         return springCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.beats, 6, scale)
@@ -140,6 +140,13 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
       const right = result.positions[last.index]! + Math.max(...last.item.cells.map(cell => cell.right))
       if (minimum) { measure.minimumStart = left; measure.minimumEnd = right; measure.minimum = right - left }
       else { measure.naturalStart = left; measure.naturalEnd = right; measure.natural = right - left }
+      measure.columns.forEach((column, index) => {
+        const owned = selected.filter(({ item }) => item.column === column || item.controlColumn === column)
+        const left = index === 0 ? measure[minimum ? 'minimumStart' : 'naturalStart']! : Math.min(...owned.map(({ item, index }) => result.positions[index]! - Math.max(...item.cells.map(cell => cell.left))))
+        const right = index === measure.columns.length - 1 ? measure[minimum ? 'minimumEnd' : 'naturalEnd']! : Math.max(...owned.map(({ item, index }) => result.positions[index]! + Math.max(...item.cells.map(cell => cell.right))))
+        if (minimum) { column.minimumStart = left; column.minimumEnd = right }
+        else { column.naturalStart = left; column.naturalEnd = right }
+      })
     }
   }
 }

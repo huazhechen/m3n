@@ -15,7 +15,10 @@ export type NativeGlyph = {
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; paragraph: string
   instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number
 }
-export type NativeColumn = { time: number; glyphs: NativeGlyph[]; left: number; right: number; gap: number; minimumGap: number; x: number }
+export type NativeColumn = {
+  time: number; glyphs: NativeGlyph[]; left: number; right: number; gap: number; minimumGap: number; x: number
+  naturalStart?: number; naturalEnd?: number; minimumStart?: number; minimumEnd?: number
+}
 export type NativeMeasure = {
   id: string; source: ScoreMeasure; part: number; index: number; columns: NativeColumn[]; beats: number
   breakBefore: boolean; breakAfter: boolean; extraGap: number; natural: number; minimum: number; label?: string
