@@ -71,7 +71,7 @@ export function ScoreControls(props: ScoreControlsProps) {
           <Icon><rect x="3" y="3" width="14" height="17" rx="2" /><path d="M7 7h6M7 11h6M7 15h4M17 7h4v14H7" /></Icon><span>分页</span>
         </button>
       <button type="button" role="switch" aria-label="小节号" aria-checked={props.measureNumbers} title="显示小节号" className="control-button" onClick={() => props.onMeasureNumbersChange(!props.measureNumbers)}>
-          <Icon><path d="m10 3-4 18M18 3l-4 18M4 9h17M3 15h17" /></Icon><span>行号</span>
+          <Icon><path d="m10 3-4 18M18 3l-4 18M4 9h17M3 15h17" /></Icon><span>小节号</span>
         </button>
       <div className="transpose-stepper" role="group" aria-label="播放移调">
         <button type="button" className="control-button" aria-label="降低半音" title="降低半音" disabled={props.transpose <= PLAYBACK_TRANSPOSE_MIN || props.isLoading} onClick={() => props.onTransposeChange(props.transpose - 1)}><Icon><path d="M5 12h14" /></Icon></button>

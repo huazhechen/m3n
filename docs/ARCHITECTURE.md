@@ -66,7 +66,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `lib/render-score.ts`：屏幕、打印预览和最终导出的统一排版入口，负责引擎选择、串行调度、取消、分页和 SVG 后处理。
 - `components/ScoreRenderer.tsx`：独立管理布局、播放和光标生命周期；改变版宽或谱式不销毁播放器，更新音乐文档时释放旧播放资源。
-- `components/ScoreControls.tsx`：常驻四行控制面板，前三行依次为进度、BPM速度、宽度滑条，各自占满整栏；第四行从左到右为节拍器、钢琴、分页、小节号（按钮文字“行号”）开关和移调控件。进度旁为播放按钮，速度旁还原乐谱原速，宽度旁还原该曲在 `scorebook/layout-record.json` 中的最终版宽；未入谱集时使用谱集默认版宽。桌面与移动端保留相同结构，窄容器缩小间距并使用图标按钮。三个数值只读，均通过滑条调整；BPM支持10–240整数。合成音色默认无需下载，钢琴首次选择时下载并缓存；旧口琴设置回退到合成音色。音色通过 `hooks/usePlaybackTone.ts` 同步阅读页、编辑页、文档谱例与同源标签页，长期保存在localStorage；小节号、速度、宽度、移调与节拍器也保存到本地。小节号默认关闭，开启后按书写顺序在主旋律后小节线上方显示，不改变MIDI或播放顺序。
+- `components/ScoreControls.tsx`：常驻四行控制面板，前三行依次为进度、BPM速度、宽度滑条，各自占满整栏；第四行从左到右为节拍器、钢琴、分页、小节号开关和移调控件。进度旁为播放按钮，速度旁还原乐谱原速，宽度旁还原该曲在 `scorebook/layout-record.json` 中的最终版宽；未入谱集时使用谱集默认版宽。桌面与移动端保留相同结构，窄容器缩小间距并使用图标按钮。三个数值只读，均通过滑条调整；BPM支持10–240整数。合成音色默认无需下载，钢琴首次选择时下载并缓存；旧口琴设置回退到合成音色。音色通过 `hooks/usePlaybackTone.ts` 同步阅读页、编辑页、文档谱例与同源标签页，长期保存在localStorage；小节号、速度、宽度、移调与节拍器也保存到本地。小节号默认关闭，开启后按书写顺序在主旋律后小节线上方显示，不改变MIDI或播放顺序。
 - `components/ScoreExportDialog.tsx`：打印参数、预览与下载状态；两种谱式均提供连续 SVG、PNG 与多页矢量 PDF。打印宽度单独持久化。
 - `lib/vector-export.ts`：把 SVG 文字按字符位置转为 OpenType 字形路径；数字沿用内嵌 Barlow，文字使用按需加载的本地 Noto Serif CJK SC。字形缺失明确报错。
 - `components/SourceEditor.tsx`：CodeMirror 编辑适配，提供高亮、行号、括号匹配、指令补全、历史与范围诊断；领域层不依赖编辑器。
