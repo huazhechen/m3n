@@ -166,6 +166,7 @@ test('documentation examples use only transport and the default engraving width'
   await expect(controls.getByRole('switch', { name: '节拍器' })).toHaveAttribute('aria-checked', 'true')
   const paper = example.locator('.score-paper')
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '800')
+  await expect.poll(async () => (await paper.locator('svg').first().boundingBox())!.width).toBeCloseTo(800, 0)
   await expect(paper).toHaveAttribute('data-reading-fit', 'false')
   await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
   await expect(paper).toHaveAttribute('data-measure-numbers', 'false')
@@ -179,6 +180,7 @@ test('documentation examples use only transport and the default engraving width'
   await controls.getByRole('button', { name: '暂停', exact: true }).click()
   await page.setViewportSize({ width: 1280, height: 900 })
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '800')
+  await expect.poll(async () => (await paper.locator('svg').first().boundingBox())!.width).toBeCloseTo(800, 0)
   expect(fonts).toHaveLength(0)
 })
 

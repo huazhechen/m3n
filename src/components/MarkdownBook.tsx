@@ -49,6 +49,21 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
   const tocToggleRef = useRef<HTMLButtonElement>(null)
   const activeHeadingIdRef = useRef('')
   const articleRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const article = articleRef.current
+    if (!article) return
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry!.contentRect.width
+      if (width <= 0) return
+      // All examples use an 800-unit score with 22-unit notes. Correct the
+      // viewport fit once for the whole document to keep notes at 22px.
+      const scale = 22 / (22 * width / 800)
+      article.style.setProperty('--document-score-width', `${width}px`)
+      article.style.setProperty('--document-score-scale', String(scale))
+    })
+    observer.observe(article)
+    return () => observer.disconnect()
+  }, [])
   const documentGroups = useMemo<DocumentGroup[]>(
     () =>
       documents.map((document) => ({
