@@ -13,7 +13,6 @@ import {
   clampPlaybackBpm,
   PLAYBACK_TRANSPOSE_MAX,
   PLAYBACK_TRANSPOSE_MIN,
-  TRANSPOSE_KEY,
   readRenderMode,
   writeRenderMode,
   type RenderMode,
@@ -183,14 +182,7 @@ export function ScoreRenderer({
   const [bpmOverride, setBpmOverride] = useState<number | null>(null)
   const playbackBpm = bpmOverride ?? clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
   const tempoScale = playbackBpm / (scoreDocument.tempo * scoreDocument.meterUnit / 4)
-  const [playbackTranspose, setPlaybackTranspose] = useState(() => (
-    compact ? DEFAULT_PLAYBACK_TRANSPOSE : readRendererSetting(
-      TRANSPOSE_KEY,
-      DEFAULT_PLAYBACK_TRANSPOSE,
-      PLAYBACK_TRANSPOSE_MIN,
-      PLAYBACK_TRANSPOSE_MAX,
-    )
-  ))
+  const [playbackTranspose, setPlaybackTranspose] = useState(DEFAULT_PLAYBACK_TRANSPOSE)
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => (
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
   ))
@@ -209,6 +201,11 @@ export function ScoreRenderer({
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
   const renderWidth = fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth
+  useEffect(() => {
+    transposeRef.current = DEFAULT_PLAYBACK_TRANSPOSE
+    setPlaybackTranspose(DEFAULT_PLAYBACK_TRANSPOSE)
+    playerRef.current?.setTranspose(DEFAULT_PLAYBACK_TRANSPOSE)
+  }, [scoreId])
   useEffect(() => {
     setLayoutWidth(defaultWidth)
     setBpmOverride(null)
@@ -496,7 +493,6 @@ export function ScoreRenderer({
     const transpose = Math.max(PLAYBACK_TRANSPOSE_MIN, Math.min(PLAYBACK_TRANSPOSE_MAX, Math.trunc(value)))
     transposeRef.current = transpose
     setPlaybackTranspose(transpose)
-    if (!compact) writeRendererSetting(TRANSPOSE_KEY, transpose)
     playerRef.current?.setTranspose(transpose)
   }
 
