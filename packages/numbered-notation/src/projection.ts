@@ -407,7 +407,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   ].filter(Boolean).join(' ')
   const displayLabel = (key: string) => keyLabel(options.transpose
     ? sectionVisitKey(key, 'C', transposedKey('C', options.transpose).replace(/-?\d+$/, '')) : key)
-  const orderLines = numberedOrderLines(sectionOrderLabels(context?.header ?? document, displayLabel), options.width - 2 * (options.pageMargin ?? 32))
+  const orderLines = numberedOrderLines(sectionOrderLabels(context?.header ?? document, displayLabel), options.width - 2 * (options.pageMargin ?? 32), options.textMeasurer)
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,

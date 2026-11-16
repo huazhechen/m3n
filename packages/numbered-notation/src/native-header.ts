@@ -92,7 +92,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const creditsTop = sideTop
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
   let orderBottom = sideTop + sidesHeight
-  for (const [index, names] of numberedOrderLines(sectionOrderLabels(document,key=>transposedNumberedKeyLabel(key,options.transpose).replaceAll('#','♯').replaceAll('b','♭')), available).entries()) {
+  for (const [index, names] of numberedOrderLines(sectionOrderLabels(document,key=>transposedNumberedKeyLabel(key,options.transpose).replaceAll('#','♯').replaceAll('b','♭')), available, measurer, nativeStyle.text).entries()) {
     const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
       ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
     ])]
