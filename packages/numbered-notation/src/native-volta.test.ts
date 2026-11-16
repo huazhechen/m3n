@@ -66,7 +66,7 @@ describe('measured native volta fragments', () => {
   })
 
   it('keeps the label unique when one oversized ending measure is split', () => {
-    const score = layout(Array.from({ length: 64 }, () => '1/').join(' '), 320)
+    const score = layout(`{64/4} ${Array(64).fill('1').join(' ')}`, 320)
     const fragments = score.systems.flatMap(system => system.voltas ?? []).filter(volta => volta.ending === '1')
     expect(fragments.length).toBeGreaterThan(2)
     expect(fragments.flatMap(fragment => fragment.svg.match(/<text/g) ?? [])).toHaveLength(1)
@@ -75,5 +75,27 @@ describe('measured native volta fragments', () => {
     const owners = numbered.systems.filter(system => system.decorationLayout?.some(label => label.svg.includes('>2</text>')))
     expect(owners).toHaveLength(1)
     expect(owners[0]!.measures.some(measure => measure.source.ending === '1' && measure.lastFragment)).toBe(true)
+  })
+
+  it.each([320, 600, 800, 1000])('does not reserve an out-of-span meter above a split ending at %s', width => {
+    const score = layout(`{64/4} ${Array(64).fill('1').join(' ')}`, width)
+    const system = score.systems.find(system => system.voltas?.some(fragment => fragment.ending === '1'))!
+    const fragment = system.voltas!.find(fragment => fragment.ending === '1')!
+    const glyphs = system.measures.filter(measure => measure.source.ending === '1').flatMap(measure => measure.columns.flatMap(column => column.glyphs))
+    const meter = glyphs.flatMap(glyph => glyph.controls).find(control => control.kind === 'meter')!
+    expect(meter.x! + meter.width).toBeLessThan(fragment.left)
+    const musicTop = Math.max(...glyphs.map(glyph => glyph.musicTop!))
+    expect(meter.top).toBeGreaterThan(musicTop)
+    expect(nativeSvgInk(fragment.svg, measurer).bottom).toBeCloseTo(-musicTop - 4.4, 4)
+  })
+
+  it('still clears the painted meter when it lies inside the ending span', () => {
+    const score = layout('1 2 3 4 | {8/4}1 2 3 4 5 6 7 1', 1000)
+    const system = score.systems.find(system => system.voltas?.some(fragment => fragment.ending === '1'))!
+    const fragment = system.voltas!.find(fragment => fragment.ending === '1')!
+    const meter = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.flatMap(glyph => glyph.controls))).find(control => control.kind === 'meter')!
+    expect(meter.x!).toBeGreaterThan(fragment.left)
+    expect(meter.x! + meter.width).toBeLessThan(fragment.right)
+    expect(nativeSvgInk(fragment.svg, measurer).bottom).toBeLessThanOrEqual(-meter.top - 4.4 + .001)
   })
 })

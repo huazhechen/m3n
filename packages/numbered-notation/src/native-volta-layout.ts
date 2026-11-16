@@ -45,7 +45,9 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
         : Math.max(...system.measures.map(measure => measure.end))
       const left = Math.min(rawLeft, rawRight), right = Math.max(rawLeft, rawRight)
       const raw = nativeVoltaSvg(left, right, span.ending, measurer, first, last), ink = nativeSvgInk(raw, measurer)
-      const top = Math.max(...glyphs.map(glyph => glyph.top),
+      // Controls have independent horizontal bounds below; their height must
+      // not leak through the note's combined layout box into a remote bracket.
+      const top = Math.max(...glyphs.map(glyph => glyph.musicTop ?? glyph.top),
         ...(regions.get(system) ?? []).filter(bound => bound.lane === lane.id && bound.right > left && bound.left < right).map(bound => bound.top))
       return [{ left, right, ending: span.ending, group: span.group, raw, ink, y: -top - nativeStyle.music * 0.2 - ink.bottom }]
     })
