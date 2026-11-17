@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { cpSync, mkdirSync, readFileSync, readdirSync, statSync, symlinkSync, writeFileSync, createWriteStream } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, symlinkSync, writeFileSync, createWriteStream } from 'node:fs'
 import { spawn } from 'node:child_process'
 import { dirname, join, relative, resolve } from 'node:path'
 
@@ -18,9 +18,10 @@ const files = process.argv.slice(2).map(argument => {
   return argument.slice(7)
 })
 const hashes = {}
+const excluded = path => ['node_modules', 'dist'].includes(path.split('/').at(-1)) || path.endsWith('.tsbuildinfo')
 const hash = file => createHash('sha256').update(readFileSync(file)).digest('hex')
 const record = (file, base, target) => {
-  if (['node_modules', 'dist'].includes(file.split('/').at(-1))) return
+  if (excluded(file)) return
   if (statSync(file).isDirectory()) for (const entry of readdirSync(file)) record(join(file, entry), base, target)
   else target[relative(base, file)] = hash(file)
 }
@@ -29,7 +30,7 @@ for (const path of inputPaths) {
   const target = join(workspace, path)
   mkdirSync(dirname(target), { recursive: true })
   cpSync(join(root, path), target, { recursive: true,
-    filter: source => !['node_modules', 'dist'].includes(source.split('/').at(-1)) })
+    filter: source => !excluded(source) })
 }
 record(workspace, workspace, hashes)
 const modules = join(workspace, 'node_modules')
@@ -61,6 +62,10 @@ try {
   for (const pkg of packages) {
     if (!await run(`build-${pkg}`, process.execPath, [join(root, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.json'], join(workspace, 'packages', pkg))) {
       passed = false; break
+    }
+    const entry = pkg === 'jpfun' ? 'core' : 'index'
+    for (const extension of ['js', 'd.ts']) if (!existsSync(join(workspace, 'packages', pkg, 'dist', `${entry}.${extension}`))) {
+      throw new Error(`Fresh ${pkg} build did not emit ${entry}.${extension}; refusing workspace fallback`)
     }
   }
   if (passed) passed = await run('tests', process.execPath,
