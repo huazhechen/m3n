@@ -1,17 +1,36 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { parseM3NDocument } from '@m3n/notation'
+import { parseM3NDocument, validateM3NDiagnostics } from '@m3n/notation'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { measureNativeControl } from './native-controls.js'
 import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 import { nativeKeyGeometry } from './native-key.js'
 import { layoutNativeScore } from './native-layout.js'
+import { compileScore } from '@m3n/jpfun'
+import { projectNumberedScore } from './projection.js'
 
 const measurer = new DefaultTextMeasurer()
 const painter = new NativeSymbols(measurer)
 
 describe('native measured key signatures', () => {
+  it.each([320, 800])('matches reference spacing with measured tonic overhang at %spx', width => {
+    const overhang = { measureText(text: string, style: Parameters<typeof measurer.measureText>[1]) {
+      const metrics = measurer.measureText(text, style)
+      return text === 'A' ? { ...metrics, inkRight: metrics.w + 3 } : metrics
+    } }
+    const source = '{key=C}{2/4}\nN: ||: {key=A}(1e 2e 3e 4e) | 3e 4e :||'
+    expect(validateM3NDiagnostics(source)).toEqual([])
+    const document = parseM3NDocument(source)
+    const options = { width, paged: false, pageMargin: 11, textMeasurer: overhang }
+    const native = layoutNativeScore(document, options)
+    const projection = projectNumberedScore(document, options)
+    const reference = compileScore(projection.source, { textMeasurer: overhang, autoWrap: true, alignRelations: true, noteGap: 13.2, minimumNoteGap: 8.8 })
+    const notes = reference.layout.objects.filter(node => node.T.toNumber() > 0)
+    expect(notes).toHaveLength(native.projection.glyphs.length)
+    notes.forEach((note, index) => expect(native.projection.glyphs[index]!.x).toBeCloseTo(note.box.x + note.box.anchor, 5))
+  })
+
   it.each(['1=Bb','1=F#','6=Eb','6=C#'])('draws %s with vector accidentals before the tonic', key => {
     const control = measureNativeControl('key',key,measurer)
     const root = new DOMParser().parseFromString(`<svg>${painter.control(control)}</svg>`,'image/svg+xml')

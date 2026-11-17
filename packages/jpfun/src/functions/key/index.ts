@@ -4,7 +4,8 @@ import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic
 import { parseNoteName } from "../note/noteNameFSM.js";
 import { acc2Offset, NoteNameMap, tonality2Midi } from "../../parser/parse-utils/note-utils.js";
 import { paintAccidental, placeAccidentals, type PlacedAccidental } from "../note/accidentals.js";
-import type { LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
+import type { HorizontalLineView, LayoutBox, LayoutPrepareContext, Rect } from "../../layout/types.js";
+import { paintedNodeRegions } from "../../layout/painted-ink.js";
 import type { Painter, TextStyle } from "../../render/types.js";
 
 /**
@@ -140,6 +141,7 @@ class KeyTemporalNode extends TemporalNodeBase {
     override mergeKey = KEY_COLUMN;
     declare ast: KeyFunction;
     declare box: LayoutBox;
+    declare intrinsicInkBounds?: Rect;
 
     private rows: Array<{ display: KeyDisplay; accidentals: PlacedAccidental[]; nameX: number; baseline: number; x: number; y: number; width: number; height: number }> = [];
 
@@ -183,6 +185,24 @@ class KeyTemporalNode extends TemporalNodeBase {
         this.box.anchor = this.rows.length > 1 ? this.box.w / 2
             : context.textMeasurer.measureText(this.ast.prefix[0], this.style).w / 2;
         this.box.visualAxis = this.box.h / 2;
+        // Keep row centering and the first-digit anchor in advance coordinates,
+        // but reserve the actual tonic/accidental strokes in the spring chain.
+        const ink = paintedNodeRegions(this, context.textMeasurer);
+        const left = Math.min(0, ...ink.map(piece => piece.x - this.box.x));
+        const right = Math.max(this.box.w, ...ink.map(piece => piece.x + piece.w - this.box.x));
+        this.intrinsicInkBounds = { x: left, y: 0, w: right - left, h: this.box.h };
+    }
+
+    override prepareHorizontal(line: HorizontalLineView) {
+        line.registerHorizontalLayoutHook(this, this, ({ columns, start }) => {
+            const element = columns[start].find(element => element.time === this);
+            const ink = this.intrinsicInkBounds;
+            if (!element || !ink) return;
+            // The element already includes minimum clearance; ink extends the
+            // body before that clearance rather than consuming the same gap.
+            element.WL += -ink.x;
+            element.WR += ink.x + ink.w - this.box.w;
+        });
     }
 
     override paint(painter: Painter) {
