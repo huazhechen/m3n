@@ -11,13 +11,23 @@ const resolvedId = `\0${moduleId}`
 export function scoreCatalogPlugin(): Plugin {
   let scoreDirectory: string
   let bookPath: string
+  let planPath: string
   return {
     name: 'm3n-score-catalog',
-    configResolved(config) { scoreDirectory = resolve(config.root, 'src/scores'); bookPath = resolve(config.root, 'scorebook/layout-record.json') },
+    configResolved(config) { scoreDirectory = resolve(config.root, 'src/scores'); bookPath = resolve(config.root, 'scorebook/layout-record.json'); planPath = resolve(config.root, 'scorebook/library-categories.json') },
     resolveId(id) { if (id === moduleId) return resolvedId },
     async load(id) {
       if (id !== resolvedId) return
       this.addWatchFile(bookPath)
+      this.addWatchFile(planPath)
+      const categoriesConfig = JSON.parse(await readFile(planPath, 'utf8')) as Array<{ id: string; title: string; files: string[] }>
+      const categories = new Map<string, { id: string; title: string; order: number }>()
+      for (const [order, category] of categoriesConfig.entries()) {
+        for (const file of category.files) {
+          if (categories.has(file)) throw new Error(`曲库分类重复：${file}`)
+          categories.set(file, { id: category.id, title: category.title, order })
+        }
+      }
       const book = JSON.parse(await readFile(bookPath, 'utf8')) as { baseWidth: number; entries: Array<{ file: string; width: number }> }
       const widths = new Map(book.entries.map(entry => [entry.file, entry.width]))
       const files = (await readdir(scoreDirectory, { recursive: true })).filter(file => file.endsWith('.m3n')).sort()
@@ -25,13 +35,13 @@ export function scoreCatalogPlugin(): Plugin {
         const filePath = resolve(scoreDirectory, file)
         this.addWatchFile(filePath)
         const slug = file.split(/[\\/]/).at(-1)?.replace(/\.m3n$/, '') ?? file
-        return { ...scoreMetadataFromSource(slug, await readFile(filePath, 'utf8')), scorebookWidth: widths.get(file.split(/[\\/]/).at(-1)!), sourcePath: file.replaceAll('\\', '/') }
+        return { ...scoreMetadataFromSource(slug, await readFile(filePath, 'utf8')), category: categories.get(file.split(/[\\/]/).at(-1)!), scorebookWidth: widths.get(file.split(/[\\/]/).at(-1)!), sourcePath: file.replaceAll('\\', '/') }
       }))
       if (new Set(scores.map(score => score.slug)).size !== scores.length) throw new Error('内置曲库包含重复的乐谱 ID。')
       return `export const scorebookDefaultWidth = ${book.baseWidth}; export default ${JSON.stringify(sortScoresByTitle(scores))}`
     },
     handleHotUpdate(context) {
-      if (context.file !== bookPath && (!context.file.startsWith(scoreDirectory) || !context.file.endsWith('.m3n'))) return
+      if (context.file !== bookPath && context.file !== planPath && (!context.file.startsWith(scoreDirectory) || !context.file.endsWith('.m3n'))) return
       const index = context.server.moduleGraph.getModuleById(resolvedId)
       if (index) {
         context.server.moduleGraph.invalidateModule(index)

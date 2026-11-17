@@ -4,6 +4,8 @@
 
 谱源位于`src/scores/`，三篇编排、曲目顺序和排版选项由[editorial-plan.json](editorial-plan.json)配置。构建与校验脚本位于`tools/`。
 
+网站曲库的六类分组单独维护在 [library-categories.json](library-categories.json)，参考谱集分类并按选曲用途细分，不影响 PDF 的三篇编排。每首曲子只列入一类；新增谱源时同步补充，未配置的曲目在网站暂归“其他曲目”。
+
 首次构建或重新试排：
 
 ```sh

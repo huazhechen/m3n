@@ -66,3 +66,33 @@ test('letter rail stays inside a narrow landscape viewport', async ({ browser })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await context.close()
 })
+
+for (const width of [390, 1280]) {
+  test(`category view preserves every score and hides the letter index at ${width}px`, async ({ page }, info) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/scores')
+    await expect(page.locator('.score-list a').first()).toBeVisible()
+    const originalLinks = await page.locator('.score-list a').evaluateAll(links => links.map(link => link.getAttribute('href')).sort())
+    const toggle = page.getByRole('button', { name: '切换曲库展示方式' })
+    await expect(toggle).toHaveText('字母顺序')
+    await toggle.click()
+    await expect(toggle).toHaveText('分类展示')
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('navigation', { name: '乐谱首字母索引' })).toHaveCount(0)
+    await expect(page.locator('.library-group-heading')).toHaveText([
+      '基础练习与入门', '民歌与经典歌曲', '流行歌曲', '影视动漫与游戏', '古典与器乐', '舞曲与节奏',
+    ])
+    expect(await page.locator('.score-list a').evaluateAll(links => links.map(link => link.getAttribute('href')).sort())).toEqual(originalLinks)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: info.outputPath('library-categories.png'), fullPage: true })
+    await page.reload()
+    await expect(toggle).toHaveText('分类展示')
+    await page.getByRole('searchbox', { name: '搜索乐谱' }).fill('小星星')
+    await expect(page.locator('.library-group-heading')).toHaveText('基础练习与入门')
+    await expect(page.locator('.score-list a')).toHaveCount(1)
+    await toggle.click()
+    await expect(page.locator('.library-group-heading')).toHaveText('X')
+    await page.getByRole('searchbox', { name: '搜索乐谱' }).fill('')
+    await expect(page.getByRole('navigation', { name: '乐谱首字母索引' })).toBeVisible()
+  })
+}

@@ -10,6 +10,7 @@ import { matchesScoreSearch } from '../lib/score-search'
 
 type ScoreCardData = {
   key: string
+  category?: PresetScore['category']
   isLocal: boolean
   title: string
   severity: ScoreDiagnosticSeverity
@@ -107,6 +108,7 @@ function ScoreCard({
 function presetCardData(score: PresetScore): ScoreCardData {
   return {
     key: `preset:${score.slug}`,
+    category: score.category,
     isLocal: false,
     title: score.title,
     severity: score.diagnosticSeverity,
@@ -146,6 +148,9 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
 
 export function ScoresPage() {
   const [query, setQuery] = useState('')
+  const [categorized, setCategorized] = useState(() => {
+    try { return localStorage.getItem('m3n:library-view') === 'category' } catch { return false }
+  })
   const [localScores, setLocalScores] = useState<LocalScore[]>(() => listLocalScores())
   const cards = useMemo(() => {
     const locals = localScores.map((score) => localCardData(score, () => {
@@ -161,16 +166,19 @@ export function ScoresPage() {
     [cards, query],
   )
   const groups = useMemo(() => {
-    const grouped = new Map<string, ScoreCardData[]>()
+    const grouped = new Map<string, { initial: string; title: string; order: number; items: ScoreCardData[] }>()
     for (const card of scores) {
-      const initial = card.isLocal ? '☆' : scoreTitleInitial(card.title)
-      const group = grouped.get(initial) ?? []
-      group.push(card)
+      const initial = card.isLocal ? '☆' : categorized ? card.category?.id ?? 'other' : scoreTitleInitial(card.title)
+      const title = card.isLocal ? '本地作品' : categorized ? card.category?.title ?? '其他曲目' : initial
+      const order = card.isLocal ? -1 : card.category?.order ?? Number.MAX_SAFE_INTEGER
+      const group = grouped.get(initial) ?? { initial, title, order, items: [] }
+      group.items.push(card)
       grouped.set(initial, group)
     }
-    return [...grouped].map(([initial, items]) => ({ initial, items }))
-  }, [scores])
-  const showIndex = groups.length >= 3 && scores.length >= 12
+    const result = [...grouped.values()]
+    return categorized ? result.sort((a, b) => a.order - b.order) : result
+  }, [scores, categorized])
+  const showIndex = !categorized && groups.length >= 3 && scores.length >= 12
   useEffect(() => {
     setLocalScores(listLocalScores())
   }, [])
@@ -180,6 +188,11 @@ export function ScoresPage() {
       <div className={`score-library${showIndex ? ' has-letter-index' : ''}`}>
         <section className="library-toolbar">
           <h1>乐谱库</h1>
+          <button type="button" className="library-view-toggle secondary-link" aria-label="切换曲库展示方式" aria-pressed={categorized} title={categorized ? '切换为字母顺序' : '切换为分类展示'} onClick={() => {
+            const next = !categorized
+            setCategorized(next)
+            try { localStorage.setItem('m3n:library-view', next ? 'category' : 'alphabetical') } catch { /* Browsing still works without storage. */ }
+          }}>{categorized ? '分类展示' : '字母顺序'}</button>
           <label className="score-search">
             <input
               type="search"
@@ -193,10 +206,10 @@ export function ScoresPage() {
         {scores.length === 0 && (
           <p className="search-empty">没有找到匹配的乐谱。</p>
         )}
-        {groups.map(({ initial, items }) => (
+        {groups.map(({ initial, title, items }) => (
           <section className="library-group" id={`library-group-${initial}`} data-library-initial={initial} key={initial} aria-labelledby={`library-heading-${initial}`}>
             <h2 className="library-group-heading" id={`library-heading-${initial}`}>
-              {initial === '☆' ? '本地作品' : initial}
+              {title}
             </h2>
             <div className="score-list">
               {items.map(({ key, ...cardProps }) => <ScoreCard key={key} {...cardProps} />)}

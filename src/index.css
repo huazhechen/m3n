@@ -558,10 +558,21 @@ textarea::selection {
 
 .library-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 20px 0 4px;
+}
+
+.library-view-toggle {
+  min-height: var(--ui-control-size);
+  white-space: nowrap;
+}
+
+.library-view-toggle[aria-pressed="true"] {
+  border-color: #2f6f73;
+  background: #e6efea;
 }
 
 .library-toolbar h1 {
@@ -573,6 +584,7 @@ textarea::selection {
 
 .score-search {
   flex: 1;
+  flex-basis: 180px;
   min-width: 0;
   max-width: 440px;
 }
