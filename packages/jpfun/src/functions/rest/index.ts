@@ -240,6 +240,6 @@ class RestTemporal extends TemporalNodeBase {
         painter.drawLine(left + barStroke / 2, axis, right - barStroke / 2, axis, { strokeWidth: barStroke });
         painter.drawLine(left + stroke / 2, axis - halfCap, left + stroke / 2, axis + halfCap, { strokeWidth: stroke });
         painter.drawLine(right - stroke / 2, axis - halfCap, right - stroke / 2, axis + halfCap, { strokeWidth: stroke });
-        painter.drawText(String(count), left + this.lineWidth / 2, this.box.y + this.metrics.baseline, this.textStyle);
+        painter.drawText(String(count), left + this.lineWidth / 2 - (this.metrics.centerOffset ?? 0), this.box.y + this.metrics.baseline, this.textStyle);
     }
 }
