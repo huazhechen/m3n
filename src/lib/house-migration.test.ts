@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 
 // Performance fingerprints captured before migrating the written choices to houses.
-// 爱如潮水 includes the separately committed 醉→不 slide cleanup (62af603).
+// 爱如潮水 and 枫 include the requested instrumental slide cleanups.
 const cases = [
   {
     "file": "bei_jia_er_hu_pan_01.m3n",
@@ -29,9 +29,9 @@ const cases = [
   },
   {
     "file": "feng_01.m3n",
-    "music": "296a138b9cecf76ac822b44e6b9bc48679a7eb22f7fe43bb6a7e06b990e64c9e",
-    "lyrics": "4a61f66447e7d3d0f8116d78ebc980424b1aedec887e6890947e0aa19a426edc",
-    "events": 523,
+    "music": "ab778bb1cc9db25a8e32f85730840beabc3446f057ebd17f21ab92cac2178ce0",
+    "lyrics": "e490d359dfa09feeca4e23958fbe5535eb07fe7eb4c61a9d78deabba1bb061ec",
+    "events": 516,
     "syllables": 397
   },
   {
