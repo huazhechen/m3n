@@ -11,3 +11,7 @@
 
 - When a task is complete and verification is finished, create a Git commit immediately. Do not wait for a separate request to commit.
 - Do not start a development server for the user unless the user explicitly asks for one.
+
+## Hosted Build Output
+
+- This workspace is served by Code Shell from `dist/` at `/score/`. Read `docs/HOSTING.md` before building. Use `VITE_BASE_URL=/score/ VITE_SUBMIT_MODE=remote npm run build`, or an isolated output directory for build checks; never overwrite the hosted `dist/` with the default root-path build.

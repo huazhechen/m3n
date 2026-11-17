@@ -29,6 +29,8 @@ npm run deploy   # 构建并部署到 Cloudflare
 
 编辑器提供语法高亮、补全、可定位诊断和后台分析；手机可切换源码／预览，桌面可调整分栏。阅读按容器宽度排版，打印版宽独立保存。简谱可导出 SVG、PNG 和多页矢量 PDF；中文文字导出为轮廓，首次导出按需下载本站约 16 MB 字体。播放支持进度定位、速度调整、移调与节拍器。
 
+当前工作区由 Code Shell 托管于 `/score/`，构建时使用 `VITE_BASE_URL=/score/ VITE_SUBMIT_MODE=remote npm run build`；默认构建会覆盖托管目录并生成错误的资源路径。详见[托管说明](docs/HOSTING.md)。
+
 常用脚本：`npm run build`、`npm run test`、`npm run test:e2e`、`npm run lint`、`npm run typecheck:packages`、`npm run check:boundaries`。
 
 ### 本地乐谱与提交
