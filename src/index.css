@@ -241,6 +241,8 @@ h3 {
 .home-control-hint {
   display: inline-flex;
   align-items: center;
+  height: 1.65em;
+  line-height: 1;
   gap: .25em;
   padding: 0 .35em;
   border: 1px solid #cfd3ca;
@@ -249,7 +251,7 @@ h3 {
   color: #174f54;
   font-size: .9em;
   white-space: nowrap;
-  vertical-align: baseline;
+  vertical-align: middle;
 }
 
 .home-control-hint svg,
