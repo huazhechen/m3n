@@ -1,5 +1,7 @@
 # Local changes
 
+- Tuplet system spacing uses the individually measured count and bracket strokes instead of their enclosing rectangle. The complete bracket envelope still controls same-system slur and expression ordering, and its attachment box retains the union of all visible pieces.
+
 - SVG coordinates and stroke widths retain six decimal places so serialization preserves the measured subpixel geometry instead of introducing visible edge differences through coarse rounding.
 
 - Automatic header layout shares subtitle rows with fitting side content. With `sidebelow=true,sideauto=true`, the first center block remains above the sides; later center lines use their painted bounds as collision obstacles. Each side moves only as far as needed, then the left side clears the final right-side position. Center text keeps its horizontal position, and multiline text is measured line by line.

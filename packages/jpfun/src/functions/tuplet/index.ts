@@ -262,8 +262,17 @@ class TupletLayoutAttachment implements LayoutAttachment {
         const right = Math.max(...pieces.map(piece => piece.x + piece.w));
         const top = Math.min(...pieces.map(piece => piece.y));
         const bottom = Math.max(...pieces.map(piece => piece.y + piece.h));
+        // Within the same system the whole rhythm bracket stays below slurs
+        // and expression marks, even beside its count. That ordering envelope
+        // is separate from the real ink used to pack different systems.
+        const occupancy = [{ x: left, y: top + lineY, w: right - left, h: bottom - top, line: first.layoutLine, track: first.track }];
         return {
-            regions: [{ x: left, y: top + lineY, w: right - left, h: bottom - top, line: first.layoutLine, track: first.track }],
+            // The count is taller than the bracket strokes. Keep their painted
+            // envelopes separate so empty space beside it cannot move a nearby
+            // system. The attachment box still unions all pieces.
+            regions: pieces.map(piece => ({ ...piece, y: piece.y + lineY, line: first.layoutLine, track: first.track })),
+            occupancy,
+            getInkRegions: () => occupancy,
             paint(painter: Painter) {
                 for (const command of commands) {
                     if (command.kind === "line") painter.drawLine(command.x1, command.y1 + lineY, command.x2, command.y2 + lineY, command.style);
