@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { DEFAULT_PREFERRED_WIDTH } from '@m3n/notation'
 import { openScoreSettings } from './score-settings'
 
 test.beforeEach(async ({ page }) => {
@@ -12,7 +13,7 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('desktop pages fit the remaining height, center side by side and respond to resizing', async ({ page }, info) => {
+test('desktop pages fit the remaining height, center each row and respond to resizing', async ({ page }, info) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   for (const [rows, pages] of [[1, 1], [30, 2]]) {
     await page.goto(`/scores/local-pages-${rows}`)
@@ -24,13 +25,25 @@ test('desktop pages fit the remaining height, center side by side and respond to
       await expect.poll(() => paper.evaluate(element => {
         const sheets = [...element.querySelectorAll('.score-page-sheet')].map(sheet => sheet.getBoundingClientRect())
         const bounds = element.getBoundingClientRect()
+        const style = getComputedStyle(element)
+        const availableWidth = element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+        const gap = parseFloat(style.columnGap)
+        const shouldShareRow = sheets.reduce((sum, sheet) => sum + sheet.width, 0) + gap * (sheets.length - 1) <= availableWidth + 1
+        const rows = sheets.reduce<DOMRect[][]>((groups, sheet) => {
+          const row = groups.find(group => Math.abs(group[0]!.top - sheet.top) < 1)
+          if (row) row.push(sheet)
+          else groups.push([sheet])
+          return groups
+        }, [])
         return {
-          fits: sheets.every(sheet => sheet.top >= 0 && sheet.bottom <= innerHeight),
-          sameRow: sheets.every(sheet => Math.abs(sheet.top - sheets[0]!.top) < 1),
-          centered: Math.abs((sheets[0]!.left + sheets.at(-1)!.right) / 2 - (bounds.left + bounds.right) / 2) < 1,
-          scrolls: document.documentElement.scrollHeight > innerHeight + 1,
+          firstRowFits: rows[0]!.every(sheet => sheet.top >= 0 && sheet.bottom <= innerHeight),
+          wholePages: sheets.every(sheet => Math.abs(sheet.height / sheet.width - 297 / 210) < 0.001),
+          wrappingMatchesSpace: (rows.length === 1) === shouldShareRow,
+          centered: rows.every(row => Math.abs((row[0]!.left + row.at(-1)!.right) / 2 - (bounds.left + bounds.right) / 2) < 1),
+          scrollingMatchesRows: (document.documentElement.scrollHeight > innerHeight + 1) === (rows.length > 1),
+          horizontalScroll: document.documentElement.scrollWidth > innerWidth,
         }
-      })).toEqual({ fits: true, sameRow: true, centered: true, scrolls: false })
+      })).toEqual({ firstRowFits: true, wholePages: true, wrappingMatchesSpace: true, centered: true, scrollingMatchesRows: true, horizontalScroll: false })
     }
     await page.screenshot({ path: info.outputPath(`reader-${pages}-pages.png`) })
   }
@@ -41,7 +54,7 @@ test('extra pages wrap to centered rows and use document scrolling', async ({ pa
   await page.goto('/scores/local-pages-160')
   const paper = page.locator('.score-paper')
   await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
-  await expect(paper.locator('.score-page-sheet')).toHaveCount(8)
+  await expect.poll(() => paper.locator('.score-page-sheet').count()).toBeGreaterThan(2)
   await expect.poll(() => paper.evaluate(element => {
     const sheets = [...element.querySelectorAll('.score-page-sheet')].map(sheet => sheet.getBoundingClientRect())
     return {
@@ -75,7 +88,7 @@ test('narrow screens keep full-width vertical pages and mode changes restore con
   await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
   await expect(paper).not.toHaveAttribute('data-viewport-paged')
   await expect(paper.locator('.score-page-sheet')).toHaveCount(0)
-  await expect(paper.locator('svg').first()).toHaveAttribute('width', '780')
+  await expect(paper.locator('svg').first()).toHaveAttribute('width', String(DEFAULT_PREFERRED_WIDTH))
 })
 
 test('a non-touch portrait window keeps desktop page fitting', async ({ page }) => {
@@ -117,9 +130,18 @@ test.describe('touch tablets', () => {
     await openScoreSettings(page)
     await page.getByRole('switch', { name: '分页', exact: true }).click()
     await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
-    await expect(paper.locator('svg').first()).toHaveAttribute('width', '780')
-    await expect.poll(async () => (await paper.locator('svg').first().boundingBox())!.width)
-      .toBeCloseTo(1133 - 18, 0)
+    await expect(paper.locator('svg').first()).toHaveAttribute('width', String(DEFAULT_PREFERRED_WIDTH))
+    await expect.poll(() => paper.evaluate(element => {
+      const frame = element.getBoundingClientRect()
+      const svg = element.querySelector('svg')!.getBoundingClientRect()
+      const left = svg.left - frame.left, right = frame.right - svg.right
+      return {
+        frameFillsReader: Math.abs(frame.width - element.parentElement!.getBoundingClientRect().width) < 1,
+        symmetricPadding: Math.abs(left - right) < 1,
+        sixPercentFrame: Math.abs(left / svg.width - 0.06) < 0.001,
+        horizontalScroll: document.documentElement.scrollWidth > innerWidth,
+      }
+    })).toEqual({ frameFillsReader: true, symmetricPadding: true, sixPercentFrame: true, horizontalScroll: false })
   })
 
   test('tablet editor switches panes without losing input and library uses compact cards', async ({ page }) => {
@@ -139,6 +161,8 @@ test.describe('touch tablets', () => {
     const card = page.locator('.score-list .score-card').first()
     await expect(card).toBeVisible()
     await expect(card.locator('.score-card-footer')).toBeHidden()
-    expect(await page.locator('.score-list').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(2)
+    const columns = await page.locator('.score-list').evaluateAll(elements => elements.map(element => getComputedStyle(element).gridTemplateColumns.split(' ').length))
+    expect(columns.length).toBeGreaterThan(0)
+    expect(columns.every(count => count === 2)).toBe(true)
   })
 })

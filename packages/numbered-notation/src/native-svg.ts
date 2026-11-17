@@ -1,4 +1,4 @@
-import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
+import { nativeBarSvg, nativeLaneBarPositions, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { nativeLyricSvg } from './native-lyrics.js'
 import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
@@ -43,7 +43,12 @@ class SvgPainter extends NativeMusicPainter {
       for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) laneContent += nativeBarSvg(bar.kind, bar.x, lane.y, this.layout.measurer)
       content += `<g${attrs({ 'data-m3n-lane': lane.id })}>${laneContent}</g>`
     }
-    return `<g${attrs({ class: 'measure', id: measure.continuation ? `${measure.id}-s${system.index}` : measure.id, 'data-m3n-measure-id': measure.id, 'data-m3n-measure-start': measure.start, 'data-m3n-measure-end': measure.end })}>${content}</g>`
+    // Elastic space after a closing bar belongs to the following interaction
+    // region. An opening repeat owns its own left edge; reset on every row.
+    const previous = system.measures[index - 1]
+    const opening = nativeMeasureBarPositions(system.measures, index).some(bar => bar.kind === 'rptstart')
+    const start = previous && !opening ? Math.min(measure.start, previous.end) : measure.start
+    return `<g${attrs({ class: 'measure', id: measure.continuation ? `${measure.id}-s${system.index}` : measure.id, 'data-m3n-measure-id': measure.id, 'data-m3n-measure-start': start, 'data-m3n-measure-end': measure.end })}>${content}</g>`
   }
 
   system(system: NativeSystem): string {

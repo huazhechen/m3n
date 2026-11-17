@@ -71,14 +71,14 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const zero = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' })
     const gap = nativeStyle.music * (options.noteGapEm ?? 0.5) * 0.1
     const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,'M3N Numbers')
-    const place = (svg:string,x:number) => `<g transform="translate(${n(x)} 0)">${svg}</g>`
+    const place = (svg:string,x:number,role?:string) => `<g${role ? ` data-m3n-role="pitch-range-${role}"` : ''} transform="translate(${n(x)} 0)">${svg}</g>`
     let rangeSvg = ''
     let x = signatureX-Math.min(lowInk.left, -zero.w / 2)
-    rangeSvg += place(low,x)
+    rangeSvg += place(low,x,'low')
     x += Math.max(lowInk.right, zero.w / 2)+gap
     rangeSvg += place(separator,x)
     x += (separatorMetrics.advance ?? separatorMetrics.w)+gap-Math.min(highInk.left, -zero.w / 2)
-    rangeSvg += place(high,x)
+    rangeSvg += place(high,x,'high')
     signaturePieces.push(`<g data-m3n-role="pitch-range">${rangeSvg}</g>`)
   }
   const signatureSvg = signaturePieces.join('')
