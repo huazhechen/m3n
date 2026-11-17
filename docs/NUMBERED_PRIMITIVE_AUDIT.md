@@ -56,3 +56,16 @@ JSON与HTML报告增加 `primitiveMatches`、`primitiveAudit`，包括两版数�
 完整应用候选构建也已通过：使用原Vite配置，仅在临时构建中将简谱公共入口及工作区包映射到当前源码；685个有输出模块、114个代码块，含`native-playback-score.ts`，没有jpFun、Verovio或旧渲染适配器。报告及模块哈希`.tmp/native-app-readiness-report.json`，构建日志`.tmp/native-app-readiness.log`。产物只写`.tmp/native-app-readiness/dist`，保留`/score/`和remote提交模式，不改正式dist；本次禁用public目录复制，只验代码构建，不当作可部署产物或浏览器交互验收。
 
 应用与包源码合并的严格类型检查通过，临时配置`.tmp/tsconfig.native-app.json`、日志`.tmp/native-app-readiness-types.log`。首次直接继承应用的`erasableSyntaxOnly`时，8处包内合法参数属性被拒绝；包本身经TypeScript编译后再交给应用，这不是接口错误。临时合并检查仅关闭该语法限制，保留严格类型检查，未改变应用或包的正式配置。根目录oxlint退出0，既有警告保留，日志`.tmp/native-final-root-lint.log`。
+
+## 等行高与小节号完整复验（2026-11-18）
+
+修正后使用同一份234输入（88首当前曲库、141份当前功能样例及5份专项），覆盖320／600／800／1000px和连续／分页。234份领域校验全部无诊断，报告`.tmp/final-current-domain-validation.json`；141份功能输入及88首曲库均逐文件核对与当前源码相同。两轮完整结束时运行源码哈希均无漂移。
+
+| 配置 | 几何通过 | 严格图元通过 | 严格零像素 | 缺失／多出图元 | 最大图元坐标差 |
+| --- | --- | --- | --- | --- | --- |
+| 等行高 | 1872/1872 | 1718/1872 | 1331/1872 | 0/0 | 0.00077px |
+| 小节号 | 1872/1872 | 1718/1872 | 1322/1872 | 0/0 | 0.00077px |
+
+两轮截图尺寸均一致；剩余差异像素合计分别16045和10246。严格命令均退出1，不记作零像素通过。报告为`.tmp/numbered-parity/2026-11-17T17-16-42.086Z-2500703/`、`.tmp/numbered-parity/2026-11-17T17-16-42.086Z-2500704/`，汇总`.tmp/final-engine-matrix-summary.json`。等行高差异像素最多的`parallel-forced-settings`1000px截图为659像素，仅位于连线边缘的646×10px范围，几何和严格图元均一致；已查看上下对照及差图`.tmp/final-uniform-largest-residual.png`，不为栅格边缘差异改动排版规则。
+
+88首当前曲库子集，两配置各704组几何全通过、630组严格图元通过、图元缺失／多出均0；严格零像素分别425和382组，详细输入哈希`.tmp/final-library-option-summary.json`。这次完整复验覆盖此前等行高8组及小节号10组真实几何失败，未重现旧的断行或行距问题。独立实绘3744组已启动，单参数间距64组及修后全包测试仍在队列中；默认入口保持jpFun。
