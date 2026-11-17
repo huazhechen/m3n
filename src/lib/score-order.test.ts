@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { sortScoresByTitle } from './score-order'
+import { sortScoresByTitle, scoreTitleInitial } from './score-order'
 
 describe('score title ordering', () => {
+  it('groups titles by the same normalized pinyin used for sorting', () => {
+    expect(['《小星星》', '爱尔兰画眉', 'Hello 2', 'Été', '123', ''].map(scoreTitleInitial))
+      .toEqual(['X', 'A', 'H', 'E', '#', '#'])
+  })
+
   it('interleaves Chinese pinyin and English titles alphabetically', () => {
     const scores = ['小星星', 'Zulu', '欢乐颂', '春天', 'apple', '爱尔兰画眉'].map(title => ({ title }))
     expect(sortScoresByTitle(scores).map(score => score.title)).toEqual([

@@ -1572,3 +1572,69 @@ a.action-button {
   .editor-header-right .editor-action { width: var(--ui-control-size); height: var(--ui-control-size); padding: 0; }
   .editor-action span { display: none; }
 }
+
+.score-library.has-letter-index { padding-right: calc(var(--ui-control-size) + var(--ui-space)); }
+.library-group { margin-bottom: calc(var(--ui-unit) * 2); scroll-margin-top: var(--ui-space); }
+.library-group-heading {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-unit);
+  margin: 0 0 var(--ui-unit);
+  padding: var(--ui-space) 0;
+  background: #f5f6f0;
+  color: #42675b;
+  font-size: 1.1rem;
+}
+.library-group-heading::after { content: ''; flex: 1; height: 1px; background: #cddbd3; }
+.library-letter-index {
+  position: fixed;
+  z-index: 10;
+  right: max(env(safe-area-inset-right), var(--ui-space));
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  width: var(--ui-control-size);
+  max-height: 75dvh;
+  padding: var(--ui-space) 0;
+  border-radius: var(--ui-unit);
+  background: #f5f6f0ed;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.library-letter-index button {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 1.65em;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-space);
+  background: transparent;
+  color: #42675b;
+  font-size: .85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.library-letter-index button[aria-current] { background: #d5e7dc; color: #185638; font-weight: 700; }
+.library-letter-index button:focus-visible { outline: 2px solid #1683ff; outline-offset: -2px; }
+.library-index-preview {
+  position: fixed;
+  right: calc(var(--ui-control-size) * 1.6 + env(safe-area-inset-right));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 11;
+  display: grid;
+  place-items: center;
+  width: calc(var(--ui-control-size) * 1.8);
+  aspect-ratio: 1;
+  border-radius: var(--ui-unit);
+  background: #245f47;
+  color: white;
+  font-size: 2rem;
+  pointer-events: none;
+}

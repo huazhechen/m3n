@@ -16,3 +16,9 @@ export function sortScoresByTitle<T extends { title: string }>(scores: readonly 
       || a.score.title.localeCompare(b.score.title, 'zh-Hans-CN'))
     .map(({ score }) => score)
 }
+
+/** Use the same normalized pinyin as sorting, including punctuation handling. */
+export function scoreTitleInitial(title: string): string {
+  const initial = titleSortKey(title).charAt(0).toUpperCase()
+  return /^[A-Z]$/.test(initial) ? initial : '#'
+}

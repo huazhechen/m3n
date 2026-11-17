@@ -4,7 +4,8 @@ import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/nota
 import { TopNav } from '../components/TopNav'
 import { deleteLocalScore, listLocalScores, type LocalScore } from '../lib/local-scores'
 import { presetScores, type PresetScore } from '../lib/samples'
-import { sortScoresByTitle } from '../lib/score-order'
+import { sortScoresByTitle, scoreTitleInitial } from '../lib/score-order'
+import { LibraryIndex } from '../components/LibraryIndex'
 import { matchesScoreSearch } from '../lib/score-search'
 
 type ScoreCardData = {
@@ -159,13 +160,24 @@ export function ScoresPage() {
     () => cards.filter(card => matchesScoreSearch(card, query)),
     [cards, query],
   )
+  const groups = useMemo(() => {
+    const grouped = new Map<string, ScoreCardData[]>()
+    for (const card of scores) {
+      const initial = card.isLocal ? '☆' : scoreTitleInitial(card.title)
+      const group = grouped.get(initial) ?? []
+      group.push(card)
+      grouped.set(initial, group)
+    }
+    return [...grouped].map(([initial, items]) => ({ initial, items }))
+  }, [scores])
+  const showIndex = groups.length >= 3 && scores.length >= 12
   useEffect(() => {
     setLocalScores(listLocalScores())
   }, [])
   return (
     <main>
       <TopNav />
-      <div className="score-library">
+      <div className={`score-library${showIndex ? ' has-letter-index' : ''}`}>
         <section className="library-toolbar">
           <h1>乐谱库</h1>
           <label className="score-search">
@@ -181,12 +193,18 @@ export function ScoresPage() {
         {scores.length === 0 && (
           <p className="search-empty">没有找到匹配的乐谱。</p>
         )}
-        <div className="score-list">
-          {scores.map((card) => {
-            const { key, ...cardProps } = card
-            return <ScoreCard key={key} {...cardProps} />
-          })}
-        </div>
+        {groups.map(({ initial, items }) => (
+          <section className="library-group" id={`library-group-${initial}`} data-library-initial={initial} key={initial} aria-labelledby={`library-heading-${initial}`}>
+            <h2 className="library-group-heading" id={`library-heading-${initial}`}>
+              {initial === '☆' ? '本地作品' : initial}
+            </h2>
+            <div className="score-list">
+              {items.map(({ key, ...cardProps }) => <ScoreCard key={key} {...cardProps} />)}
+            </div>
+          </section>
+        ))}
+        {showIndex && <LibraryIndex initials={groups.map(group => group.initial)} />}
+
       </div>
     </main>
   )
