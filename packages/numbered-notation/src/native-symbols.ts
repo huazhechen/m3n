@@ -75,7 +75,10 @@ export class NativeSymbols {
   }
 
   control(control: NativeControl, x = 0, y = 0): string {
-    if (control.kind === 'section') return `<rect${attrs({ x: x + em(0.5), y: y - control.top + em(0.5), width: control.width - em(1), height: control.top + control.bottom - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>` + this.text(control.text, x + (control.textInset ?? em(3.5)), y - em(2.4), nativeStyle.annotation, 'serif', { 'font-weight': 700 })
+    if (control.kind === 'section') {
+      const text = this.measurer.measureText(control.text, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: 700 })
+      return `<rect${attrs({ x: x + em(0.5), y: y - control.top + em(0.5), width: control.width - em(1), height: control.top + control.bottom - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>` + this.text(control.text, x + (control.textInset ?? em(3.5)), y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.annotation, 'serif', { 'font-weight': 700 })
+    }
     if (control.kind === 'passes') {
       const text = this.measurer.measureText(control.text, {fontSize:nativeStyle.small,fontFamily:'serif'})
       return this.text(control.text, x, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.small, 'serif', {'data-m3n-role':'alternative-passes'})
