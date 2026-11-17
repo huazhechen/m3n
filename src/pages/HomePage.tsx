@@ -26,7 +26,7 @@ export function HomePage() {
           <span className="eyebrow">Max&apos;s Markup Music Notation</span>
           <h1>让喜欢的旋律，<br />成为手边的乐谱。</h1>
           <p>
-            找一首想唱的歌，换一个顺手的调，跟着节拍慢慢练。
+            找一首想唱的歌，换成适合自己的调，跟着节拍慢慢练。
             在 M3N，浏览曲库、看谱、播放、打印和在线写谱，都可以在浏览器里完成。
           </p>
           <div className="hero-actions">
@@ -44,14 +44,14 @@ export function HomePage() {
           <section className="home-feature" aria-labelledby="home-library">
             <div><span className="eyebrow">01 / 浏览曲库</span><h2 id="home-library">从一首喜欢的歌开始</h2></div>
             <div className="home-feature-copy">
-              <p>想重温熟悉的旋律，还是找一首新曲子练练手？逛逛曲库，找到乐谱就能直接打开，接着看、接着听。</p>
+              <p>想重温熟悉的旋律，还是挑一首新曲子练习？到曲库选一首，打开乐谱就能试听，也可以跟着练。</p>
               <Link to="/scores" className="home-text-link"><NavActionIcon action="library" /> 去曲库找一首 →</Link>
             </div>
           </section>
           <section className="home-feature" aria-labelledby="home-reading">
             <div><span className="eyebrow">02 / 看谱</span><h2 id="home-reading">让谱面合你的习惯</h2></div>
             <div className="home-feature-copy">
-              <p>唱得偏高，就移到舒服的调；习惯固定调，就切换数字的显示方式。练到哪一小节，也能一眼找到。</p>
+              <p>调太高唱不上去，可以移低一点；习惯固定调，也能切换显示。打开小节号，排练时更方便找到同一句。</p>
               <ul className="home-feature-details">
                 <li><strong>移调与固定调</strong>：打开 <ControlHint icon="settings" label="设置" /> → <ControlHint musicalKey label="调号" /> 选择调性，谱面与播放一起移调；用 <ControlHint icon="fixedDo" label="固定调" /> 切换数字的显示方式。</li>
                 <li><strong>分页与页面宽度</strong>：在 <ControlHint icon="settings" label="设置" /> 中用 <ControlHint icon="paged" label="分页" /> 切换连续或分页阅读，拖动 <ControlHint slider label="宽度" /> 滑条，让每行乐谱疏密合宜。</li>
@@ -62,7 +62,7 @@ export function HomePage() {
           <section className="home-feature" aria-labelledby="home-playback">
             <div><span className="eyebrow">03 / 播放</span><h2 id="home-playback">先听一遍，再跟上节拍</h2></div>
             <div className="home-feature-copy">
-              <p>点 <ControlHint icon="play" label="播放" />，先听一遍旋律；节奏拿不准，打开 <ControlHint icon="metronome" label="节拍器" />，让每一拍都落得稳稳的。</p>
+              <p>点 <ControlHint icon="play" label="播放" />，先听一遍旋律；节奏拿不准，打开 <ControlHint icon="metronome" label="节拍器" />，跟着节拍练习。</p>
               <p>打开 <ControlHint icon="settings" label="设置" />，用 <ControlHint icon="piano" label="钢琴" /> 切换音色，拖动 <ControlHint slider label="速度" /> 滑条，把不熟的乐句放慢练；也可以用 <ControlHint musicalKey label="调号" /> 移调试听，找到适合自己嗓音或乐器的调。</p>
             </div>
           </section>
@@ -70,7 +70,7 @@ export function HomePage() {
             <div><span className="eyebrow">04 / 打印与导出</span><h2 id="home-print">把调好的谱，带到谱架上</h2></div>
             <div className="home-feature-copy">
               <p>选好调、排好版，点击 <span className="home-control-hint"><NavActionIcon action="print" />打印</span> 打开预览，导出就沿用当前的移调、固定调、小节号、页面宽度与分页设置。</p>
-              <p><strong>SVG</strong> 适合后续排版，<strong>PNG</strong> 方便作为图片分享，<strong>PDF</strong> 适合保存和打印。屏幕前练过的旋律，也能带到下一次排练。</p>
+              <p><strong>SVG</strong> 适合后续排版，<strong>PNG</strong> 方便作为图片分享，<strong>PDF</strong> 适合保存和打印。打印出来，排练时随手就能翻看。</p>
             </div>
           </section>
           <section className="home-feature" aria-labelledby="home-editing">
