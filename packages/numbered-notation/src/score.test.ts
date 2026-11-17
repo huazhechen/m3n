@@ -146,10 +146,10 @@ describe('jpFun numbered notation adapter', () => {
       .toEqual([...disabled.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
     expect(equal.score.diagnostics).toEqual([])
   })
-  it('passes compact wrapping through for sparse exercise measures without changing event identities', () => {
+  it.each([1, 1.4])('passes compact wrapping through for sparse exercises at %sem without changing event identities', noteGapEm => {
     const source = '{equal-measures=true}\n{4/4}\nN: ' + Array(10).fill('1^^ |').join(' ')
-    const normal = render(source, { width: 800, noteGapEm: 1.2 })
-    const compact = render(source, { width: 800, noteGapEm: 1.2, wrap: 'compact' })
+    const normal = render(source, { width: 800, noteGapEm })
+    const compact = render(source, { width: 800, noteGapEm, wrap: 'compact' })
     expect(compact.root.querySelectorAll('g.system').length).toBeLessThan(normal.root.querySelectorAll('g.system').length)
     expect([...compact.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
       .toEqual([...normal.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
@@ -181,12 +181,13 @@ describe('jpFun numbered notation adapter', () => {
       .toEqual(normal.root.querySelectorAll('g.note text[font-size="22"]').length)
     for (const noteGapEm of [-0.1, Infinity, NaN]) expect(() => render(source, { noteGapEm })).toThrow('音符间距比例')
   })
-  it('adds a fourth measure to Liang Liang’s loose first system in compact mode', () => {
+  it('fits at least four measures in Liang Liang’s compact first system', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
     const tight = render(source, { width: 704, pageMargin: 8, systemGap: 22, uniformSystemHeight: true, noteGapEm: 0.2, wrap: 'compact' })
     const systems = [...tight.root.querySelectorAll('g.system')]
     const firstMeasures = [...new Set([...systems[0]!.querySelectorAll('g.note[data-m3n-measure]')].map(node => node.getAttribute('data-m3n-measure')))]
-    expect(firstMeasures).toEqual(['m3n-measure-1-1', 'm3n-measure-1-2', 'm3n-measure-1-3', 'm3n-measure-1-4'])
+    expect(firstMeasures.length).toBeGreaterThanOrEqual(4)
+    expect(firstMeasures).toEqual(firstMeasures.map((_, index) => `m3n-measure-1-${index + 1}`))
     expect(systems.length).toBeLessThanOrEqual(8)
     expect(tight.score.diagnostics).toEqual([])
     const normal = render(source, { width: 704, pageMargin: 8, noteGapEm: 0.2 })

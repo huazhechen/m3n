@@ -181,10 +181,10 @@ it('applies the equal-measures source switch and permits an explicit rendering o
     expect(equal.score.diagnostics).toEqual([])
   })
 
-it('passes compact wrapping through for sparse exercise measures without changing event identities', () => {
+it.each([1, 1.4])('passes compact wrapping through for sparse exercises at %sem without changing event identities', noteGapEm => {
     const source = '{equal-measures=true}\n{4/4}\nN: ' + Array(10).fill('1^^ |').join(' ')
-    const normal = render(source, { width: 800, noteGapEm: 1.2 })
-    const compact = render(source, { width: 800, noteGapEm: 1.2, wrap: 'compact' })
+    const normal = render(source, { width: 800, noteGapEm })
+    const compact = render(source, { width: 800, noteGapEm, wrap: 'compact' })
     expect(compact.root.querySelectorAll('g.system').length).toBeLessThan(normal.root.querySelectorAll('g.system').length)
     expect([...compact.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
       .toEqual([...normal.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
