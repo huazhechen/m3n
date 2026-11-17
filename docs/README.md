@@ -14,6 +14,7 @@
 - [REFACTOR_PLAN.md](REFACTOR_PLAN.md)：整体重构范围、验收记录与阶段状态。
 - [CODEGRAPH.md](CODEGRAPH.md)：模块依赖与数据流。
 - [NATIVE_ENGINES.md](NATIVE_ENGINES.md)：自研简谱与演奏引擎、迁移与验收。
+- [NATIVE_ACTIVATION.md](NATIVE_ACTIVATION.md)：当前自研公共入口、依赖与最终验证范围。
 - [VEROVIO.md](VEROVIO.md)：已移除引擎的历史参考。
 - [NUMBERED_NOTATION.md](NUMBERED_NOTATION.md)：当前简谱渲染的模型、页面与分行行为。
 - [NUMBERED_NOTATION_REMEDIATION.md](NUMBERED_NOTATION_REMEDIATION.md)：简谱质量审视、第三方引擎比较与整改方案。
