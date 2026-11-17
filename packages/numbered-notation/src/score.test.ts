@@ -424,6 +424,26 @@ describe('jpFun numbered notation adapter', () => {
     expect(root.body.textContent).toContain('测试曲')
   })
 
+  it('anchors measure interaction bounds to the preceding bar instead of the next note', () => {
+    const source = '{4/4}\nN: 1 2 3 4 | 5 6 7 1e | {br}1 2 3 4 | 5 6 7 1e |||\nB: 1d^^ | 5d^^ | 1d^^ | 5d^^ |'
+    for (const width of [320, 800]) for (const paged of [false, true]) {
+      const { root } = render(source, { width, paged })
+      let checked = 0
+      for (const system of root.querySelectorAll('g.system')) {
+        const measures = [...system.querySelectorAll('g.measure')]
+        expect(Number(measures[0]?.getAttribute('data-m3n-measure-start'))).toBeGreaterThanOrEqual(0)
+        for (let index = 1; index < measures.length; index++) {
+          const previous = measures[index - 1]!
+          const bars = [...previous.querySelectorAll('rect')].filter(rect => Number(rect.getAttribute('width')) < 10 && Number(rect.getAttribute('height')) > 20)
+          const barRight = Math.max(...bars.map(rect => Number(rect.getAttribute('x')) + Number(rect.getAttribute('width'))))
+          expect(Number(measures[index]!.getAttribute('data-m3n-measure-start'))).toBeCloseTo(barRight, 2)
+          checked++
+        }
+      }
+      expect(checked).toBeGreaterThan(0)
+    }
+  })
+
   it('renders solely from ScoreDocument without reading its source text', () => {
     const document = parseM3NDocument('{2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了')
     const before = render(document).pages

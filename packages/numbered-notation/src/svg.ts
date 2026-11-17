@@ -181,6 +181,22 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       }
       measure.children.push(child)
     }
+    // Justification leaves elastic space between a closing bar and the next
+    // note. It belongs to the following measure's interaction area, so anchor
+    // that area to the preceding bar rather than the first note's glyph box.
+    // Reset at every system: a wrapped measure must keep its local bounds.
+    for (const system of systems.values()) {
+      const rowMeasures = system.children.filter((child): child is TNode => typeof child !== 'string').sort((a, b) =>
+        Number(a.attributes['data-m3n-measure-start']) - Number(b.attributes['data-m3n-measure-start']))
+      for (let index = 1; index < rowMeasures.length; index++) {
+        const previousEnd = Number(rowMeasures[index - 1]!.attributes['data-m3n-measure-end'])
+        const measure = rowMeasures[index]!
+        const start = Number(measure.attributes['data-m3n-measure-start'])
+        if (Number.isFinite(previousEnd) && Number.isFinite(start)) {
+          measure.attributes['data-m3n-measure-start'] = String(Math.min(start, previousEnd))
+        }
+      }
+    }
     const defs: TNode = { tagName: 'defs', attributes: {}, children: [{ tagName: 'style', attributes: {}, children: [NUMBER_FONT_CSS] }] }
     // Relationships retain their original global coordinates and paint over the music layer.
     const background = remaining.filter(child => typeof child !== 'string' && child.tagName === 'rect')
