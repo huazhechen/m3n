@@ -94,6 +94,12 @@ describe('bundled score corpus', () => {
       return {pitch:pitch ? 12*(Number(octave)+1)+degree[name]!+(alteration[accidental!]??0) : null, beats:event.beats,tie:event.tie??false}
     }))
   }
+  // 城→门 and 笛→声: keep the historical reference IDs, extend high 3
+  // and remove only the following high 2 passing attack on every visit.
+  const smokeSlides = new Map<string, { pitch: number; beats: number; tie: boolean } | null>([
+    ['note143', { pitch: 76, beats: 0.5, tie: false }], ['note144', null],
+    ['note191', { pitch: 76, beats: 0.5, tie: false }], ['note192', null],
+  ])
   it.each(webReferences.filter(reference => reference.id !== 'feng'))('matches every written reference event for $id', reference=>{
     const original=reference.events
     const events=reference.id==='yan_hua_yi_leng'
@@ -103,7 +109,13 @@ describe('bundled score corpus', () => {
       // User selected the complete first 35 bars for the solo excerpt.
       ? original.filter(event=>event.bar<=35)
       : original
-    const expected=events.map(({pitch,beats,tie})=>({pitch,beats,tie}))
+    const expected=events.flatMap(event=>{
+      if(reference.id==='yan_hua_yi_leng' && smokeSlides.has(event.referenceId)) {
+        return smokeSlides.get(event.referenceId) ? [smokeSlides.get(event.referenceId)!] : []
+      }
+      const {pitch,beats,tie}=event
+      return [{pitch,beats,tie}]
+    })
     expect(referenceEvents(sources[reference.id]!,false)).toEqual(expected)
   })
   // Requested seven written vocal-slide simplifications, including the transposed final chorus.
@@ -128,6 +140,10 @@ describe('bundled score corpus', () => {
       : indexes
     const expected=selectedIndexes.flatMap(index=>{
       if(reference.id==='feng' && mapleSlides.has(index)) return mapleSlides.get(index) ? [mapleSlides.get(index)!] : []
+      const event=reference.events[index]!
+      if(reference.id==='yan_hua_yi_leng' && smokeSlides.has(event.referenceId)) {
+        return smokeSlides.get(event.referenceId) ? [smokeSlides.get(event.referenceId)!] : []
+      }
       const {pitch,beats,tie}=reference.events[index]!
       return [{
         pitch:reference.id==='feng' && index===35 ? 72 : pitch,

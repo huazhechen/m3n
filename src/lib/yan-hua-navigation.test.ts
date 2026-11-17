@@ -4,31 +4,54 @@ import { alternativePerformance, compileScorePerformance, deriveScoreInteraction
 import source from '../scores/yan_hua_yi_leng_01.m3n?raw'
 
 import reference from './fixtures/yan-hua-navigation-baseline.json'
+import beforeCleanup from './fixtures/yan-hua-before-slide-cleanup.m3n?raw'
 
-// Captured before changing the itinerary; these baselines include bar boundaries.
-it('preserves all performed pitches, durations, ties, articulations, dynamics and tempo', () => {
-  const document = alternativePerformance(parseM3NDocument(source))
+// Preserve the independent historical source and its navigation fingerprints.
+const correctedReference = beforeCleanup
+  .replaceAll('{lg}((3e 2e)){/}', '(3e)')
+  .replace('城%', '城')
+  .replace('笛%', '笛')
+
+function performedEvents(text: string) {
+  const document = alternativePerformance(parseM3NDocument(text))
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
-  const events = bars.flatMap(bar => bar.events.map(event => [
+  return bars.flatMap(bar => bar.events.map(event => [
     pitches.get(event) ?? [], event.beats, event.tie ?? false,
     event.postfixes, event.dynamic ?? null, event.tempo,
   ]))
-  expect(events).toHaveLength(reference.eventCount)
-  expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe(reference.eventsSha256)
-})
+}
 
-it('preserves every performed lyric and its note timing across the repeat and the final chorus return', () => {
-  const document = parseM3NDocument(source)
+function performedLyrics(text: string) {
+  const document = parseM3NDocument(text)
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-  const lyrics = compileScorePerformance(document).elements
+  return compileScorePerformance(document).elements
     .filter(element => element.voice === 'score:melody')
     .flatMap(element => (byId.get(element.xmlId) ?? [])
       .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
       .map(lyric => [element.start, element.end, lyric.text]))
-  expect(lyrics).toHaveLength(reference.lyricCount)
-  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe(reference.lyricsSha256)
+}
+
+it('merges only 城 and 笛 into their preceding high 3 across all three chorus visits', () => {
+  const original = performedEvents(beforeCleanup)
+  expect(original).toHaveLength(reference.eventCount)
+  expect(createHash('sha256').update(JSON.stringify(original)).digest('hex')).toBe(reference.eventsSha256)
+  const actual = performedEvents(source)
+  expect(actual).toEqual(performedEvents(correctedReference))
+  expect(actual).toHaveLength(reference.eventCount - 6)
+  expect(compileScorePerformance(parseM3NDocument(beforeCleanup)).notes.length
+    - compileScorePerformance(parseM3NDocument(source)).notes.length).toBe(6)
+})
+
+it('preserves every lyric onset while extending 城 and 笛 through the removed passing notes', () => {
+  const original = performedLyrics(beforeCleanup)
+  expect(original).toHaveLength(reference.lyricCount)
+  expect(createHash('sha256').update(JSON.stringify(original)).digest('hex')).toBe(reference.lyricsSha256)
+  const actual = performedLyrics(source)
+  expect(actual).toEqual(performedLyrics(correctedReference))
+  expect(actual.map(([start, , text]) => [start, text]))
+    .toEqual(original.map(([start, , text]) => [start, text]))
 })
 
 it('uses the AB repeat, D.S. to B and an ordinary continuation into C', () => {
