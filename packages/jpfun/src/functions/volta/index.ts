@@ -121,6 +121,17 @@ function barIn(column: readonly LayoutHost[] | undefined) {
     return column[0];
 }
 
+/** Controls at the same musical boundary belong inside the ending. */
+function boundaryBar(columns: readonly (readonly LayoutHost[])[], index: number, direction: -1 | 1) {
+    for (; index >= 0 && index < columns.length; index += direction) {
+        const column = columns[index];
+        const bar = barIn(column);
+        if (bar) return bar;
+        if (column.some(host => !host.T.isZero())) break;
+    }
+    return undefined;
+}
+
 class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
     readonly alignmentKind = 'volta';
     readonly spacingRole = 'volta' as const;
@@ -171,8 +182,8 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
 
         const head = from.view.columns[from.column][0];
         const tail = to.view.columns[to.column][0];
-        const leftBar = barIn(from.view.columns[from.column - 1]);
-        const rightBar = barIn(to.view.columns[to.column + 1]);
+        const leftBar = boundaryBar(from.view.columns, from.column - 1, -1);
+        const rightBar = boundaryBar(to.view.columns, to.column + 1, 1);
 
         const firstLine = head.layoutLine;
         const lastLine = tail.layoutLine;
