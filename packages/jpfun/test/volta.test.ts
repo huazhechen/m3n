@@ -430,3 +430,20 @@ test("房子下折与小节线留2px净空，遇到高音自动上移", () => {
     assert(nearly(gap("3'"), 2), "内部空白能容纳高八度点时不抬高房子");
     assert(gap("@n(3,octave=4)") > 2, "碰到顶部横线的高八度点应自动抬高房子");
 });
+
+test("房子逐图元避让复合力度，不将远侧最高笔画扩展到下折线", () => {
+    for (const fontsize of [16, 22, 32]) {
+        const { layout } = compileValid(`1@a 2@b @symbol(mf,size=${fontsize * 12 / 22}px,above=a) @volta(a,b,1)`, {
+            variables: { fontsize }, textMeasurer: voltaMeasurer,
+        });
+        const [dynamic, house] = layout.attachments;
+        const obstacles = attachmentCommands(dynamic).flatMap(command => paintedCommandRegions(command, voltaMeasurer));
+        const marks = attachmentCommands(house).flatMap(command => paintedCommandRegions(command, voltaMeasurer));
+        assert(obstacles.length > 1, "mf must retain separate painted letter paths");
+        const gaps = marks.flatMap(mark => obstacles.filter(obstacle =>
+            obstacle.x < mark.x + mark.w && obstacle.x + obstacle.w > mark.x)
+            .map(obstacle => obstacle.y - mark.y - mark.h));
+        assert(gaps.length > 0 && gaps.every(gap => gap >= 2 - 1e-6), "every overlapping primitive needs 2px clearance");
+        assert(nearly(Math.min(...gaps), 2), `the nearest real primitive determines placement at ${fontsize}px`);
+    }
+});

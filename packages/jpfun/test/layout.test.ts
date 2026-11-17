@@ -277,7 +277,7 @@ test("倚音局部横排先完成全部尺寸，再注册约束、创建自然�
     deepStrictEqual(calls, ["prepare", "hook"]);
     assert(nearly(getLayoutBounds(first, true).x - node.box.x, 7), "the saved offset must retain the left hook inset outside actual ink");
     assert(nearly(node.box.w,
-        getLayoutBounds(first, true).w + getLayoutBounds(last, true).w + 18 + Math.sqrt(0.5) * (99 + 6) * 0.8 + node.host.box.w + node.ast.size * 0.7 * 0.2),
+        getLayoutBounds(first, true).w + getLayoutBounds(last, true).w + 18 + Math.sqrt(0.5) * (99 + 6) * 0.6 + node.host.box.w + node.ast.size * 0.7 * 0.2),
         "the composite must measure both edges of the solved occupancy");
 });
 

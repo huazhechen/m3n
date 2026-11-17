@@ -316,6 +316,9 @@ class SymbolAboveAttachment implements LayoutAttachment {
         box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - host.ast.size * 0.12 - ink.bottom;
         return {
             regions: [{ x: box.x + ink.left, y: box.y + ink.top, w: width, h: ink.bottom - ink.top, line: host.layoutLine, track: host.track }],
+            getInkRegions: (left: number, right: number) => pieces
+                .filter(piece => box.x + piece.x < right && box.x + piece.x + piece.w > left)
+                .map(piece => ({ ...piece, x: box.x + piece.x, y: box.y + piece.y, line: host.layoutLine, track: host.track })),
             paint(painter: Painter) { symbol.paint(painter); },
         };
     }
