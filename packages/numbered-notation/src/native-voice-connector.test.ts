@@ -19,7 +19,7 @@ it.each([320,600,800,1000])('keeps complete brackets inside the measured music a
     const layout = layoutNativeScore(document,{width,paged,textMeasurer})
     expect(layout.projection.glyphs.some(glyph => glyph.lane === 'bass' && glyph.pitches.length === 3)).toBe(true)
     for (const system of layout.systems) {
-      const svg = nativeVoiceConnectorSvg(system,layout.margin)
+      const svg = nativeVoiceConnectorSvg(system,layout.margin,textMeasurer)
       const ink = nativeSvgInk(svg,textMeasurer)
       const melody = system.lanes.find(lane => lane.id === 'melody')!
       const bass = system.lanes.find(lane => lane.id === 'bass')!
@@ -41,5 +41,23 @@ it.each([320,600,800,1000])('keeps complete brackets inside the measured music a
 
 it('omits the bracket and joining rule when the bass is hidden', () => {
   const layout = layoutNativeScore(parseM3NDocument(source),{width:600,paged:false,textMeasurer,includeBass:false})
-  expect(layout.systems.every(system => nativeVoiceConnectorSvg(system,layout.margin)==='')).toBe(true)
+  expect(layout.systems.every(system => nativeVoiceConnectorSvg(system,layout.margin,textMeasurer)==='')).toBe(true)
+})
+
+it.each([
+  ['a high grace group', '1{ac(2e3e)}'],
+  ['an accidental grace', '1{ac(4#d)}'],
+  ['an outer dynamic', '{fff}1'],
+])('keeps connector endpoints on the sounding music when adding %s', (_name, first) => {
+  const bounds = (start: string) => {
+    const document = parseM3NDocument(`{4/4}\nN: ${start} 2 3 4 |||\nB: 1d 2d 3d 4d |`)
+    const layout = layoutNativeScore(document, { width: 800, paged: false, textMeasurer })
+    const system = layout.systems[0]!
+    const ink = nativeSvgInk(nativeVoiceConnectorSvg(system, layout.margin, textMeasurer), textMeasurer)
+    return { top: ink.top - system.lanes.find(lane => lane.id === 'melody')!.y,
+      bottom: ink.bottom - system.lanes.find(lane => lane.id === 'bass')!.y }
+  }
+  const plain = bounds('1'), decorated = bounds(first)
+  expect(decorated.top).toBeCloseTo(plain.top, 5)
+  expect(decorated.bottom).toBeCloseTo(plain.bottom, 5)
 })

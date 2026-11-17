@@ -54,7 +54,7 @@ class SvgPainter extends NativeMusicPainter {
       svg += `<g data-m3n-lane="melody" data-m3n-relation="volta" transform="translate(0 ${n(lane.y)})">${volta.svg}</g>`
     }
     for (const decoration of system.decorationLayout ?? []) svg += `<g${attrs({ 'data-m3n-lane': decoration.lane, transform: `translate(0 ${n(system.lanes.find(lane => lane.id === decoration.lane)!.y)})` })}>${decoration.svg}</g>`
-    svg += nativeVoiceConnectorSvg(system, this.layout.margin)
+    svg += nativeVoiceConnectorSvg(system, this.layout.margin, this.layout.measurer)
     const paragraphs = [...new Set(system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.paragraph))))]
     return `<g${attrs({ class: 'system', id: `m3n-system-${system.page + 1}-${system.index}`, 'data-m3n-volta': String(system.volta), 'data-m3n-paragraph': paragraphs.join(','), 'data-m3n-top': system.top, 'data-m3n-bottom': system.bottom })}>${svg}</g>`
   }
