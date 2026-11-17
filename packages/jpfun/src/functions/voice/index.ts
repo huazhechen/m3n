@@ -868,7 +868,14 @@ class VoicesBraceAttachment implements LayoutAttachment {
                 if (!(host instanceof TemporalNodeBase) || !isVisualTemporalNode(host)
                     || host.track !== name.track || host.T.isZero()) return [];
                 for (let ast: ASTNodeBase | null = host.ast; ast; ast = ast.parent) {
-                    if (ast === this.ast) return paintedNodeRegions(host, context.textMeasurer, true);
+                    if (ast === this.ast) return [
+                        ...paintedNodeRegions(host, context.textMeasurer, true),
+                        // Joined beams claim the local decoration's paint, but
+                        // its own stroke still belongs to this voice's body.
+                        ...host.decorations.filter(decoration => decoration.systemCore)
+                            .flatMap(decoration => (decoration.getIntrinsicInk?.() ?? [])
+                                .map(ink => ({ ...ink, x: ink.x + host.box.x, y: ink.y + host.box.y }))),
+                    ];
                 }
                 return [];
             });
