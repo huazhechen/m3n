@@ -2,6 +2,29 @@ import { test } from "node:test";
 
 import { assert, commandsOfKind, nearly, parse, compileValid, recordCommands } from "./helpers.js";
 import { prepareQuarterNote } from "../src/functions/tempo/glyph.js";
+import { DefaultTextMeasurer } from "../src/core.js";
+import { paintedCommandRegions } from "../src/layout/painted-ink.js";
+import { RecordingPainter } from "../src/render/recording.js";
+
+for (const size of [16, 22, 32]) for (const noteGap of [0, 11]) test(`tempo reserves measured text overhang at ${size}px, gap=${noteGap}`, () => {
+    const fallback = new DefaultTextMeasurer();
+    const overhang = size * .2;
+    const textMeasurer = { measureText(text: string, style: Parameters<typeof fallback.measureText>[1]) {
+        const metrics = fallback.measureText(text, style);
+        return text.startsWith('= ') ? { ...metrics, inkRight: metrics.w + overhang } : metrics;
+    } };
+    const source = `@tempo(72,size=${size}px) 1`;
+    const options = { noteGap, minimumNoteGap: noteGap * .6 };
+    const result = compileValid(source, { ...options, textMeasurer });
+    const [tempo, note] = result.layout.objects;
+    const painter = new RecordingPainter();
+    tempo.paint(painter);
+    const right = Math.max(...painter.commands.flatMap(command => paintedCommandRegions(command, textMeasurer)).map(piece => piece.x + piece.w));
+    assert(right > tempo.box.x + tempo.box.w, 'fixture paints beyond the logical tempo width');
+    assert(note.box.x >= right - 1e-9, 'the following note clears actual tempo ink');
+    const ordinary = compileValid(source, { ...options, textMeasurer: fallback });
+    assert(nearly(note.box.x - ordinary.layout.objects[1].box.x, overhang), 'overhang is reserved in addition to the configured clearance');
+});
 
 test("tempo 忽略音符高度并与同轨文字对齐", () => {
     const commands = commandsOfKind(`@tempo(96) @text("96", size=1em)`, "text");

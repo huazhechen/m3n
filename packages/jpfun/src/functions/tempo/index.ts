@@ -1,7 +1,8 @@
 // M3N modification: font override and metronome unit/dot display; playback retains QPM.
 import { TEMPO_COLUMN, TemporalNodeBase, type TimeState } from "../temporal.js";
 import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, LengthValue, ParserContext, SourceSpan } from "../ASTtypes.js";
-import type { LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
+import type { HorizontalLineView, LayoutBox, LayoutPrepareContext, Rect } from "../../layout/types.js";
+import { paintedNodeRegions } from "../../layout/painted-ink.js";
 import type { Painter, TextStyle } from "../../render/types.js";
 import { quote } from "../../parser/parse-utils/string-utils.js";
 import { prepareQuarterNote, type PreparedQuarterNote } from "./glyph.js";
@@ -76,6 +77,7 @@ class TempoTemporalNode extends TemporalNodeBase {
     override mergeKey = TEMPO_COLUMN;
     declare ast: TempoFunction;
     declare box: LayoutBox;
+    declare intrinsicInkBounds?: Rect;
 
     /** 字号和 bpm 在解析时已经固化，字形、文本、样式随之不再变 */
     private readonly glyph: PreparedQuarterNote;
@@ -117,6 +119,20 @@ class TempoTemporalNode extends TemporalNodeBase {
         this.box.anchor = glyph.stemCenterX;
         // Tempo 与同轨文字按等号所在的文字行对齐；符干只向上扩展占用，不参与对齐轴。
         this.box.visualAxis = textTop + metrics.h / 2;
+        const ink = paintedNodeRegions(this, context.textMeasurer);
+        const left = Math.min(0, ...ink.map(piece => piece.x - this.box.x));
+        const right = Math.max(this.box.w, ...ink.map(piece => piece.x + piece.w - this.box.x));
+        this.intrinsicInkBounds = { x: left, y: 0, w: right - left, h: this.box.h };
+    }
+
+    override prepareHorizontal(line: HorizontalLineView) {
+        line.registerHorizontalLayoutHook(this, this, ({ columns, start }) => {
+            const element = columns[start].find(element => element.time === this);
+            const ink = this.intrinsicInkBounds;
+            if (!element || !ink) return;
+            element.WL += -ink.x;
+            element.WR += ink.x + ink.w - this.box.w;
+        });
     }
 
     override paint(painter: Painter) {
