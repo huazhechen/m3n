@@ -26,7 +26,7 @@ import { placedNativeControlInk } from './native-controls.js'
 export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
-  pageMargin?: number; systemGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; uniformSystemHeight?: boolean
+  pageMargin?: number; systemGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; uniformSystemHeight?: boolean
   equalMeasures?: boolean; wrap?: 'normal' | 'compact'; wrapWidthRatio?: number
   /** @internal Whether a separate minimum spacing policy was requested. */
   pairedSpacing?: boolean
@@ -178,7 +178,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const headerDocument = document
   const expanded = supplied.fixedDo && document.orderKeys?.some(Boolean) ? keyedDisplayPerformance(document) : undefined
   if (expanded) document = expanded.document
-  const options = { ...supplied, pairedSpacing: supplied.minimumNoteGapEm !== undefined || supplied.noteGapEm === undefined, width: Math.max(320, Math.round(supplied.width)), noteGapEm: supplied.noteGapEm ?? 0.6, minimumNoteGapEm: supplied.minimumNoteGapEm ?? (supplied.noteGapEm === undefined ? 0.4 : 0), equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
+  const minimumNoteGapEm = supplied.minimumNoteGapEm ?? (supplied.noteGapEm === undefined ? 0.4 : 0)
+  const minimumNoteGapFloorEm = supplied.minimumNoteGapFloorEm ?? Math.min(0.1, minimumNoteGapEm)
+  if (!Number.isFinite(minimumNoteGapFloorEm) || minimumNoteGapFloorEm < 0 || minimumNoteGapFloorEm > minimumNoteGapEm) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
+  const options = { ...supplied, pairedSpacing: supplied.minimumNoteGapEm !== undefined || supplied.noteGapEm === undefined, width: Math.max(320, Math.round(supplied.width)), noteGapEm: supplied.noteGapEm ?? 0.6, minimumNoteGapEm, minimumNoteGapFloorEm, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
   const margin = options.pageMargin ?? 32
   if (margin * 2 + 40 > options.width) throw new Error('简谱页边距过大。')
   let measurer = options.textMeasurer
@@ -318,7 +321,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     const coreInk = system.lanes.flatMap(lane => (corePieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
     const core = options.uniformSystemHeight || !coreInk.length ? { top: 0, bottom: height } : { top: Math.min(...coreInk.map(piece => piece.top)), bottom: Math.max(...coreInk.map(piece => piece.bottom)) }
     const ink = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
-    ink.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin), measurer))
+    ink.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
     if (options.uniformSystemHeight) ink.push({ left: margin, right: options.width - margin, top: 0, bottom: height })
     return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, gapBefore: system.measures[0]?.extraGap ?? 0 }
   })]

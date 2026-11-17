@@ -48,6 +48,8 @@ export interface DocumentLayoutOptions extends SolverOptions {
     noteGap?: number;
     /** Reserved minimum clearance, scaled with the same rhythmic and bar ratios. */
     minimumNoteGap?: number;
+    /** Absolute minimum timed-object clearance after rhythmic/beam scaling. */
+    minimumNoteGapFloor?: number;
     rowGap?: number;    // 强制覆盖每行的轨道间距；缺省按该行最大字号推导
     uniformSystemHeight?: boolean;
     equalMeasures?: boolean;
@@ -221,6 +223,7 @@ export function layoutDocument(
         throw new RangeError('noteGap must be a finite non-negative number');
     }
     if (options.minimumNoteGap !== undefined && (!Number.isFinite(options.minimumNoteGap) || options.minimumNoteGap < 0 || options.noteGap === undefined || options.minimumNoteGap > options.noteGap)) throw new RangeError('minimumNoteGap must be finite, non-negative and no greater than noteGap');
+    if (options.minimumNoteGapFloor !== undefined && (!Number.isFinite(options.minimumNoteGapFloor) || options.minimumNoteGapFloor < 0 || options.minimumNoteGap === undefined || options.minimumNoteGapFloor > options.minimumNoteGap)) throw new RangeError('minimumNoteGapFloor must be finite, non-negative and no greater than minimumNoteGap');
     const layoutAttachments = result.attachments.filter(isLayoutAttachment);
     const page = normalizePageConfig(result.page);
     const contentWidth = page.width - page.marginLeft - page.marginRight;
@@ -444,6 +447,13 @@ export function layoutDocument(
                 const line = placement.lineTops.findIndex((top, i) => region.y >= top - 1e-6 && region.y + region.h <= top + placement.heights[i] + 1e-6);
                 if (line >= 0) include(line, region);
             }
+        // Grace subdomains keep their internal beams/brackets out of the
+        // core, but their complete painted ink must still clear other systems.
+        for (const item of subdomainItems.values()) {
+            let owner: TemporalNodeBase = item.reference;
+            while (owner.foldedInto) owner = owner.foldedInto;
+            for (const region of moveSubdomainItem(item).geometry.regions) include(owner.layoutLine, region);
+        }
         // Explicit uniform-height layouts retain their shared whole-line
         // envelopes. Default engraving uses the local painted primitives.
         if (options.uniformSystemHeight) for (const [i, regions] of profiles.entries()) {
@@ -650,8 +660,11 @@ export function prepareHorizontalLine(
                 if (options.minimumNoteGap !== undefined) {
                     const ratio = options.noteGap ? options.minimumNoteGap / options.noteGap : 0;
                     // The clearance is internal: keep the native flush outer line edges.
-                    const left = columnIndex === 0 ? 0 : element.margin_L * ratio;
-                    const right = columnIndex === columns.length - 1 ? 0 : element.margin_R * ratio;
+                    const floor = node.T.compare(0) > 0 ? (options.minimumNoteGapFloor ?? 0) / 2 : 0;
+                    element.margin_L = Math.max(element.margin_L, floor);
+                    element.margin_R = Math.max(element.margin_R, floor);
+                    const left = columnIndex === 0 ? 0 : Math.max(element.margin_L * ratio, floor);
+                    const right = columnIndex === columns.length - 1 ? 0 : Math.max(element.margin_R * ratio, floor);
                     element.WL += left;
                     element.WR += right;
                     element.margin_L -= left;
@@ -826,7 +839,7 @@ function moveSubdomainItem(item: SubdomainItem, layoutOnly = false): AttachmentI
         geometry: {
             regions: geometry.regions.map(move),
             occupancy: geometry.occupancy?.map(move),
-            getInkRegions: geometry.getInkRegions && ((left, right) => geometry.getInkRegions!(left - dx, right - dx).map(move)),
+            getInkRegions: geometry.getInkRegions && ((left, right, paintedOnly) => geometry.getInkRegions!(left - dx, right - dx, paintedOnly).map(move)),
             paint: painter => geometry.paint(new TranslatingPainter(painter, dx, dy)),
         },
     };
@@ -1005,7 +1018,7 @@ function measureAttachmentPass(
             });
         },
         getRangeExtents,
-        getInkExtents(line, left, right, track) {
+        getInkExtents(line, left, right, track, paintedOnly = false) {
             let extent: Extent | undefined;
             const axis = baseContext.getVisualAxis(line, track), target = lift(track);
             const include = (region: Rect) => {
@@ -1018,9 +1031,10 @@ function measureAttachmentPass(
                 if (host.track === target) for (const ink of baseContext.getHostInk?.(host) ?? []) include(ink);
             }
             for (const peer of attachments.slice(0, attachments.indexOf(currentAttachment))) {
+                if (alignmentGroups.get(currentAttachment)?.includes(peer)) continue;
                 const geometry = resolveAttachment(peer)?.geometry;
                 if (!geometry) continue;
-                for (const region of geometry.getInkRegions?.(left, right) ?? geometry.regions) {
+                for (const region of geometry.getInkRegions?.(left, right, paintedOnly) ?? geometry.regions) {
                     if (region.line === line && lift(region.track) === target) include(region);
                 }
             }

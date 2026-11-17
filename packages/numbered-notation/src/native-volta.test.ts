@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
+import { placedNativeControlInk } from './native-controls.js'
+import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeVoltaSvg } from './native-volta.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { layoutNativeScore } from './native-layout.js'
@@ -32,11 +34,24 @@ describe('measured native volta fragments', () => {
     expect(count.svg).toContain('font-size="13"')
     expect(count.svg).toContain('text-anchor="middle"')
     const first = system.voltas![0]!, firstInk = nativeSvgInk(first.svg, measurer)
-    expect(firstInk.bottom).toBeLessThanOrEqual(countInk.top - 4.4 + .001)
+    expect(firstInk.bottom).toBeLessThanOrEqual(countInk.top - 2 + .001)
     if (measureNumbers) {
       const number = system.decorationLayout!.find(decoration => decoration.svg.includes('>2</text>'))!
       expect(nativeSvgInk(number.svg, measurer).bottom).toBeLessThanOrEqual(countInk.top - 2.64 + .001)
     }
+  })
+
+  it('keeps the ending hook 2px above the bar and raises it for high notes', () => {
+    const gap = (note: string) => {
+      const score = layout(`${note} 2 3 4`), system = score.systems[0]!
+      const fragment = system.voltas![0]!
+      const index = system.measures.findIndex(measure => measure.source.ending === '1')
+      const bar = nativeMeasureBarPositions(system.measures, index).at(-1)!
+      return nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top - nativeSvgInk(fragment.svg, measurer).bottom
+    }
+    expect(gap('1')).toBeCloseTo(2, 4)
+    expect(gap('1ee')).toBeCloseTo(2, 4)
+    expect(gap('1eeeeee')).toBeGreaterThan(2)
   })
 
   it('shows one label and two hooks across forced system breaks', () => {
@@ -86,7 +101,7 @@ describe('measured native volta fragments', () => {
     expect(meter.x! + meter.width).toBeLessThan(fragment.left)
     const musicTop = Math.max(...glyphs.map(glyph => glyph.musicTop!))
     expect(meter.top).toBeGreaterThan(musicTop)
-    expect(nativeSvgInk(fragment.svg, measurer).bottom).toBeCloseTo(-musicTop - 4.4, 4)
+    expect(nativeSvgInk(fragment.svg, measurer).bottom).toBeCloseTo(-musicTop - 2, 4)
   })
 
   it('still clears the painted meter when it lies inside the ending span', () => {
@@ -96,6 +111,9 @@ describe('measured native volta fragments', () => {
     const meter = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.flatMap(glyph => glyph.controls))).find(control => control.kind === 'meter')!
     expect(meter.x!).toBeGreaterThan(fragment.left)
     expect(meter.x! + meter.width).toBeLessThan(fragment.right)
-    expect(nativeSvgInk(fragment.svg, measurer).bottom).toBeLessThanOrEqual(-meter.top - 4.4 + .001)
+    for (const mark of nativeSvgPieces(fragment.svg, measurer)) for (const obstacle of placedNativeControlInk(meter)) {
+      if (mark.right <= obstacle.left || mark.left >= obstacle.right) continue
+      expect(mark.bottom).toBeLessThanOrEqual(obstacle.top - 2 + .001)
+    }
   })
 })

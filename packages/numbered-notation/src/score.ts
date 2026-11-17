@@ -21,6 +21,8 @@ export type NumberedNotationRenderOptions = {
   noteGapEm?: number
   /** Minimum clearance for testing line capacity (default 0.4 when natural spacing is omitted), using the same spacing ratios. */
   minimumNoteGapEm?: number
+  /** Absolute minimum after duration and beam scaling (default 0.1em). */
+  minimumNoteGapFloorEm?: number
   /** Fixed music spacing within each paragraph; headings and lyrics stay local. */
   uniformSystemHeight?: boolean
   /** Override the document's equal-measure layout setting. */
@@ -41,18 +43,21 @@ export class NumberedNotationScore {
     if (options.tempoScale !== undefined && (!Number.isFinite(options.tempoScale) || options.tempoScale <= 0)) throw new Error('显示速度倍率必须为正有限数值。')
     if (options.transpose !== undefined && !Number.isInteger(options.transpose)) throw new Error('谱面移调必须为整数半音数。')
     // All application layouts share the same minimum/natural spacing policy.
-    options = { ...options, noteGapEm: options.noteGapEm ?? 0.6, minimumNoteGapEm: options.minimumNoteGapEm ?? (options.noteGapEm === undefined ? 0.4 : undefined) }
+    const minimumNoteGapEm = options.minimumNoteGapEm ?? (options.noteGapEm === undefined ? 0.4 : undefined)
+    options = { ...options, noteGapEm: options.noteGapEm ?? 0.6, minimumNoteGapEm,
+      minimumNoteGapFloorEm: options.minimumNoteGapFloorEm ?? Math.min(0.1, minimumNoteGapEm ?? 0) }
     if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
     for (const value of [options.pageMargin, options.systemGap]) {
       if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
     }
     if (options.noteGapEm !== undefined && (!Number.isFinite(options.noteGapEm) || options.noteGapEm < 0)) throw new Error('音符间距比例必须为非负有限数值。')
     if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0 || options.noteGapEm === undefined || options.minimumNoteGapEm > options.noteGapEm)) throw new Error('最小间距必须非负且不大于自然间距。')
+    if (!Number.isFinite(options.minimumNoteGapFloorEm) || options.minimumNoteGapFloorEm! < 0 || options.minimumNoteGapFloorEm! > (options.minimumNoteGapEm ?? 0)) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
     const canvas = typeof document === 'undefined' || typeof CanvasRenderingContext2D === 'undefined' ? null : document.createElement('canvas')
     const context = canvas?.getContext('2d')
     const textMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
     const projection = projectNumberedScore(this.document, { ...options, textMeasurer, width: Math.max(320, Math.round(options.width)) })
-    const result = compileScore(projection.source, { systemSpacing: { coreGap: options.systemGap ?? 24, inkGap: (options.systemGap ?? 24) / 2 }, autoWrap: true, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
+    const result = compileScore(projection.source, { systemSpacing: { coreGap: options.systemGap ?? 24, inkGap: (options.systemGap ?? 24) / 2 }, autoWrap: true, minimumNoteGapFloor: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapFloorEm!, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
     // The score model understands complementary pickups and alternate endings;
     // jpFun sees independent bars and otherwise reports these valid fragments.
     const hasMeterWarning = result.diagnostics.some(item => item.code === 'W_METER_MISMATCH')

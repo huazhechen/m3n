@@ -111,8 +111,9 @@ export type LayoutRange = readonly [from: number, to: number]
 
 /** attachment 根据当前视觉轴生成几何时需要的完整页面信息 */
 export interface AttachmentLayoutContext extends LayoutPrepareContext {
-    /** Actual ink intersecting a horizontal footprint, relative to the track axis. */
-    getInkExtents?(line: number, left: number, right: number, track: Track): Readonly<Extent> | undefined;
+    /** Ink intersecting a footprint, relative to the track axis. paintedOnly
+     * bypasses optional ordering envelopes when a hollow mark can share space. */
+    getInkExtents?(line: number, left: number, right: number, track: Track, paintedOnly?: boolean): Readonly<Extent> | undefined;
     /** Final primitive ink, measured by the scheduler without exposing paint lifecycle calls. */
     getHostInk?(host: LayoutHost): readonly Rect[];
     /** Adjacent, non-nested peers on this system; peers do not obstruct one another. */
@@ -263,7 +264,7 @@ export interface LayoutDecorationSpace {
  */
 export interface AttachmentGeometry {
     /** Optional local curve bounds; returned regions retain line and track identity. */
-    getInkRegions?(left: number, right: number): readonly LayoutRegion[];
+    getInkRegions?(left: number, right: number, paintedOnly?: boolean): readonly LayoutRegion[];
     /** 绘制与命中的真实边界；同时是外接盒和缺省的 Track 占用 */
     readonly regions: readonly LayoutRegion[];
     /** 可选的 Track 占用；缺省时直接使用 regions */

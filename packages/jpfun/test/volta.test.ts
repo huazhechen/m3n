@@ -418,3 +418,15 @@ test("volta label ink is centered inside measured hooks and wholly represented b
         assert(nearly(hook.style!.strokeWidth! / fontsize, .055), "stroke scales with music size, including small sizes");
     }
 });
+
+test("房子下折与小节线留2px净空，遇到高音自动上移", () => {
+    const gap = (note: string) => {
+        const layout = layoutOf(`|: 1 2 | ${note}@a 4@b :| @volta(a,b,1)`);
+        const house = layout.attachments[0];
+        const bar = layout.objects.at(-1)!;
+        return bar.box.y - (house.box.y + house.box.h);
+    };
+    assert(nearly(gap("3"), 2), "普通房子的下折墨迹应距小节线上沿2px");
+    assert(nearly(gap("3'"), 2), "内部空白能容纳高八度点时不抬高房子");
+    assert(gap("@n(3,octave=4)") > 2, "碰到顶部横线的高八度点应自动抬高房子");
+});

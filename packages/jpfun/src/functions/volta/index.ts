@@ -236,7 +236,16 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
             const inkTop = Math.min(...pieces.map(piece => piece.y));
             const inkRight = Math.max(...pieces.map(piece => piece.x + piece.w));
             const inkBottom = Math.max(...pieces.map(piece => piece.y + piece.h));
-            return { lineY: hostTop - size * 0.2 - inkBottom, line, track: topTrack,
+            // Start with the top stroke above the ordinary music body. Hooks
+            // and text constrain only their own painted horizontal footprints;
+            // the empty interior of a house is available to the music below.
+            let lineY = context.getVisualAxis(line, topTrack) - size / 2 - 2 - strokeWidth / 2;
+            for (const track of new Set([topTrack, ...extents.keys()])) for (const piece of pieces) {
+                const obstacle = context.getInkExtents?.(line, piece.x, piece.x + piece.w, track, true);
+                if (obstacle) lineY = Math.min(lineY,
+                    context.getVisualAxis(line, track) + obstacle.top - 2 - piece.y - piece.h);
+            }
+            return { lineY, line, track: topTrack, pieces,
                 recording, ink: { x: inkLeft, y: inkTop, w: inkRight - inkLeft, h: inkBottom - inkTop } };
         });
 
@@ -258,6 +267,9 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
             regions: draws.map(({ ink, lineY, line, track }) => ({
                 ...ink, y: lineY + ink.y, line, track,
             })),
+            getInkRegions: (left: number, right: number) => draws.flatMap(({ pieces, lineY, line, track }) =>
+                pieces.filter(piece => piece.x < right && piece.x + piece.w > left)
+                    .map(piece => ({ ...piece, y: piece.y + lineY, line, track }))),
             paint(painter: Painter) {
                 for (const { recording, lineY } of draws) {
                     for (const command of recording.commands) {

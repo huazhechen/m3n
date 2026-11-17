@@ -45,7 +45,7 @@ describe('measured native grace blocks', () => {
     const body = nativeNoteBody(normal,grace.size)
     const logicalLeft = -body.width / 2 - nativeAccidentalAdvance(accidental,grace.size)
     const [first, second] = grace.notes
-    const gap = nativeStyle.music * (6 / 22) * .8
+    const gap = nativeStyle.music * (6 / 22) * .6
     expect(second!.x + logicalLeft - (first!.x + Math.max(body.width / 2,first!.ink.right))).toBeCloseTo(gap,3)
     expect(-grace.left).toBeLessThanOrEqual(first!.x + logicalLeft + .0001)
     expect(grace.left - 6 - grace.sideGap).toBeCloseTo(grace.width,3)

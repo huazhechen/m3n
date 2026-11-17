@@ -41,7 +41,7 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
   let end = 0
   for (const [index, note] of notes.entries()) {
     const previous = notes[index - 1]
-    const gap = previous ? nativeStyle.music * (6 / 22) * 0.8 * (Math.sqrt(previous.beats) + Math.sqrt(note.beats)) : 0
+    const gap = previous ? nativeStyle.music * (6 / 22) * 0.6 * (Math.sqrt(previous.beats) + Math.sqrt(note.beats)) : 0
     note.x = end + gap - note.footprint.left
     end = note.x + note.footprint.right
   }

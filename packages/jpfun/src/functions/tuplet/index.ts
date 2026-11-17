@@ -272,7 +272,8 @@ class TupletLayoutAttachment implements LayoutAttachment {
             // system. The attachment box still unions all pieces.
             regions: pieces.map(piece => ({ ...piece, y: piece.y + lineY, line: first.layoutLine, track: first.track })),
             occupancy,
-            getInkRegions: () => occupancy,
+            getInkRegions: (_left: number, _right: number, paintedOnly = false) => paintedOnly
+                ? pieces.map(piece => ({ ...piece, y: piece.y + lineY, line: first.layoutLine, track: first.track })) : occupancy,
             paint(painter: Painter) {
                 for (const command of commands) {
                     if (command.kind === "line") painter.drawLine(command.x1, command.y1 + lineY, command.x2, command.y2 + lineY, command.style);

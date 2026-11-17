@@ -53,3 +53,36 @@ test('all lyric rows are part of the full-width core, including initial and inte
     assert.ok(Math.abs(one - plain - (22 * .32 + 22 * .82)) < 1e-6);
     assert.ok(Math.abs(two - one - (22 * .24 + 22 * .82)) < 1e-6);
 });
+
+for (const music of ['3@a 4@b @tie(a,b)', '@tuplet({3 4 5},2)']) test(`curve and tuplet ink use collision clearance outside the core: ${music}`, () => {
+    const result = compileScore(`@page(width=400px,height=0px,top=10px,bottom=10px) 1 2 @br() ${music}`, { systemSpacing: { coreGap: 24, inkGap: 12 } });
+    assert.equal(result.diagnostics.filter(d => d.severity === 'error').length, 0);
+    const first = result.layout.objects.filter(n => n.layoutLine === 0 && !n.T.isZero()).flatMap(n => paintedNodeRegions(n, defaultTextMeasurer, true));
+    const next = result.layout.objects.filter(n => n.layoutLine === 1 && !n.T.isZero()).flatMap(n => paintedNodeRegions(n, defaultTextMeasurer, true));
+    const marks = result.layout.attachments.flatMap(a => a.regions).filter(r => r.line === 1);
+    assert.ok(marks.length > 0);
+    assert.ok(Math.min(...marks.map(r => r.y)) < Math.min(...next.map(r => r.y)));
+    const clearance = Math.min(...marks.map(r => r.y)) - Math.max(...first.map(r => r.y + r.h));
+    assert.ok(clearance >= 12 - 1e-6 && clearance < 24);
+});
+test('grace notes and their internal tuplets stay outside the core but retain collision clearance', () => {
+    const result = compileScore('@page(width=400px,height=0px,top=10px,bottom=10px) 1 2 @br() @grace(1,@tuplet({2 3 4},2)) 5', { systemSpacing: { coreGap: 24, inkGap: 12 } });
+    assert.equal(result.diagnostics.filter(d => d.severity === 'error').length, 0);
+    const node = result.layout.objects.find(n => n.layoutLine === 1 && !n.T.isZero())!;
+    const core = paintedNodeRegions(node, defaultTextMeasurer, true);
+    const all = paintedNodeRegions(node, defaultTextMeasurer);
+    assert.ok(Math.min(...all.map(r => r.y)) < Math.min(...core.map(r => r.y)));
+    const reference = compileScore('1').layout.objects[0];
+    assert.ok(Math.abs(Math.min(...core.map(r => r.y)) - node.box.y - node.box.visualAxis
+        - (Math.min(...paintedNodeRegions(reference, defaultTextMeasurer, true).map(r => r.y)) - reference.box.y - reference.box.visualAxis)) < 1e-6);
+    const previous = result.layout.objects.filter(n => n.layoutLine === 0 && !n.T.isZero()).flatMap(n => paintedNodeRegions(n, defaultTextMeasurer));
+    const brackets = result.layout.attachments.flatMap(a => a.regions).filter(r => r.line === 1);
+    assert.ok(brackets.length > 0);
+    let checked = 0;
+    for (const upper of previous) for (const lower of brackets) {
+        if (Math.min(upper.x + upper.w, lower.x + lower.w) <= Math.max(upper.x, lower.x)) continue;
+        assert.ok(lower.y - upper.y - upper.h >= 12 - 1e-6);
+        checked++;
+    }
+    assert.ok(checked > 0);
+});

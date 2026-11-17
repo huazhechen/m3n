@@ -18,7 +18,7 @@ export function nativeBarMetrics(kind: string | undefined) {
 }
 
 type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
-type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; pairedSpacing?: boolean; equalMeasures?: boolean }
+type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; pairedSpacing?: boolean; equalMeasures?: boolean }
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
 export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
@@ -117,8 +117,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const left = previous?.item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const right = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     if (previous?.item.measure === item.measure && left && right && nativeBeamCount(left, right)) {
-      previous.cell.after *= 0.8
-      cell.before *= 0.8
+      previous.cell.after *= 0.6
+      cell.before *= 0.6
     }
     previousByLane.set(cell.lane, { item, cell })
   }
@@ -126,9 +126,12 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   // the remaining clearance elastic. Exterior ink stays flush with the line.
   const reserveRatio = options.minimumNoteGapEm === undefined ? 0 : options.minimumNoteGapEm / (options.noteGapEm || 1)
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
-    const left = index === 0 ? 0 : cell.before * reserveRatio, right = index === items.length - 1 ? 0 : cell.after * reserveRatio
-    cell.left += left; cell.right += right; cell.before -= left; cell.after -= right
     const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
+    const floor = glyph ? nativeStyle.music * (options.minimumNoteGapFloorEm ?? 0) / 2 : 0
+    cell.before = Math.max(cell.before, floor); cell.after = Math.max(cell.after, floor)
+    const left = index === 0 ? 0 : Math.max(cell.before * reserveRatio, floor)
+    const right = index === items.length - 1 ? 0 : Math.max(cell.after * reserveRatio, floor)
+    cell.left += left; cell.right += right; cell.before -= left; cell.after -= right
     // Note clearance and lyric ink share physical space; do not add both widths.
     if (glyph) {
       // An absent voice gets music-only elastic clearance. Lyrics and

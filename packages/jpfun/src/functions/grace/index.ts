@@ -566,11 +566,10 @@ export class GraceTemporal extends TemporalNodeBase {
     }
 
     override paintCore(painter: Painter) {
-        for (const member of [this.host, ...this.graces]) {
-            if (member.T.isZero()) continue;
-            member.paintCore(painter);
-            for (const decoration of member.decorations) if (decoration.systemCore) decoration.paint?.(painter);
-        }
+        // The sounding host belongs to the system core. The small grace
+        // notes, their beams, brackets and hook only participate in collisions.
+        this.host.paintCore(painter);
+        for (const decoration of this.host.decorations) if (decoration.systemCore) decoration.paint?.(painter);
     }
 
     override paint(painter: Painter) {

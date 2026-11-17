@@ -1,8 +1,8 @@
 import { chooseBestWidth } from './scorebook-width.mjs'
 
 export const sharedScoreGap = 22
-export const sharedScoreWidth = 720
-export const sharedPreferredWidth = 640
+export const sharedScoreWidth = 640
+export const sharedPreferredWidth = 540
 const safe = candidate => !candidate.error && candidate.stable !== false && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length
 
 /** Preserve order and whole works. Minimize pages, then summed source widths. */

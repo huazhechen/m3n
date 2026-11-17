@@ -1,4 +1,5 @@
 import {build} from 'vite'
+import {widthCandidates} from './scorebook-width.mjs'
 import {chromium} from '@playwright/test'
 import {resolve, basename} from 'node:path'
 import assert from 'node:assert/strict'
@@ -23,7 +24,7 @@ async function cachedProbe(width){
  cache.set(width,result)
  return result
 }
-for(let width=640;width<=800;width+=10){
+for(const width of widthCandidates){
  const cases=[]
  for(const offset of widthOffsets)cases.push(await cachedProbe(width+offset))
  assert.ok(cases.every(c=>c.identical),`Every trial must match the normal web renderer near ${width}px`)

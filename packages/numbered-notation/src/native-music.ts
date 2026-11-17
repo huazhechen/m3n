@@ -60,11 +60,11 @@ export class NativeMusicPainter extends NativeSymbols {
         + this.text(text, left + width / 2, axis - (metrics.inkBottom ?? metrics.h) - size * 0.175 + metrics.baseline, size, 'M3N Numbers', { 'text-anchor': 'middle' }) + '</g>'
     }
     let music = this.body(glyph, claimedBeams)
+    if (coreOnly) return music
     if (glyph.graces.length) {
       const grace = glyph.graceLayout ?? nativeGraceGeometry(glyph.graces, glyph.musicLeft ?? glyph.left, this.measurer)
       music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y)})` })}>${grace.svg}</g>`
     }
-    if (coreOnly) return music
     music += this.articulations(glyph)
     if (glyph.event?.postfixes.includes('arp') && glyph.pitches.length > 1 && !glyph.sustain) {
       const arpeggio = glyph.arpeggioLayout ?? nativeArpeggioGeometry(nativeSvgInk(this.body({ ...glyph, x: 0, y: 0 }), this.measurer), this.measurer)

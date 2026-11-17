@@ -28,6 +28,7 @@ describe('native equal-measure interior spacing', () => {
       const minimum = spacing.minimumNoteGapEm ?? (spacing.noteGapEm === undefined ? .4 : undefined)
       const reference = compileScore(projection.source, {
         textMeasurer:measurer,autoWrap:true,alignRelations:true,equalMeasures:true,
+        minimumNoteGapFloor:minimum===undefined ? undefined : 22*Math.min(.1,minimum),
         noteGap:22*(spacing.noteGapEm??.6),minimumNoteGap:minimum===undefined ? undefined : 22*minimum,
       })
       expect(reference.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])

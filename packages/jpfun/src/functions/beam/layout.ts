@@ -137,8 +137,8 @@ class BeamLayoutAttachment implements LayoutAttachment {
                     const left = run[i - 1];
                     const right = run[i];
                     if (!endPoints.has(left) || !endPoints.has(right)) continue;
-                    left.springConfig.alpha_R = (left.springConfig.alpha_R as number) * 0.8;
-                    right.springConfig.alpha_L = (right.springConfig.alpha_L as number) * 0.8;
+                    left.springConfig.alpha_R = (left.springConfig.alpha_R as number) * 0.6;
+                    right.springConfig.alpha_L = (right.springConfig.alpha_L as number) * 0.6;
                 }
             }
         }

@@ -111,7 +111,7 @@ for (const [index, page] of pages.entries()) writeFileSync(join(temp, 'pages', `
 writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))
 const report = { title: plan.title, edition: plan.edition, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
   entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile,
-  widthSearch: { minimum: 640, maximum: 800, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: .5, a4MarginMm: 12,
+  widthSearch: { minimum: 540, maximum: 720, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: .5, a4MarginMm: 12,
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedScoreWidth, sharedPreferredWidth,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')

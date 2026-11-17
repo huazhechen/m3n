@@ -5,8 +5,11 @@ import { nativeStyle } from './native-style.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeMeasureBarPositions } from './native-bars.js'
 import { nativeVoltaSvg } from './native-volta.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { n } from './native-symbols.js'
+import { nativeLanePieces } from './native-lanes.js'
+import { nativeMusicAxis } from './native-axis.js'
+import { nativeRibbonRange } from './native-curve.js'
 
 /** Span identity survives both automatic wrapping and split source measures. */
 export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSystem, NativeRegion[]>, measurer: TextMeasurer) {
@@ -25,6 +28,8 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
   for (const system of systems) {
     const lane = system.lanes.find(lane => lane.id === 'melody')
     if (!lane) continue
+    const obstacles = nativeLanePieces(system, measurer, false, false).get(lane.id) ?? []
+    const relations = [...(system.relationLayout ?? [])].filter(([relation]) => relation.first.lane === lane.id)
     const fragments = spans.flatMap(span => {
       const members = entries.slice(span.begin, span.end).filter(entry => entry.system === system)
       if (!members.length) return []
@@ -45,11 +50,17 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
         : Math.max(...system.measures.map(measure => measure.end))
       const left = Math.min(rawLeft, rawRight), right = Math.max(rawLeft, rawRight)
       const raw = nativeVoltaSvg(left, right, span.ending, measurer, first, last), ink = nativeSvgInk(raw, measurer)
-      // Controls have independent horizontal bounds below; their height must
-      // not leak through the note's combined layout box into a remote bracket.
-      const top = Math.max(...glyphs.map(glyph => glyph.musicTop ?? glyph.top),
-        ...(regions.get(system) ?? []).filter(bound => bound.lane === lane.id && bound.right > left && bound.left < right).map(bound => bound.top))
-      return [{ left, right, ending: span.ending, group: span.group, raw, ink, y: -top - nativeStyle.music * 0.2 - ink.bottom }]
+      let y = nativeMusicAxis(measurer) - nativeStyle.music / 2 - 2 - nativeStyle.music * 0.055 / 2
+      for (const mark of nativeSvgPieces(raw, measurer)) {
+        const overlaps = obstacles.filter(bound => bound.right > mark.left && bound.left < mark.right)
+        for (const bound of overlaps) y = Math.min(y, bound.top - 2 - mark.bottom)
+        for (const [, relation] of relations) {
+          const pieces = relation.arc ? [nativeRibbonRange(relation.arc, mark.left, mark.right)].filter(bound => bound !== undefined)
+            : nativeSvgPieces(relation.svg, measurer).filter(bound => bound.right > mark.left && bound.left < mark.right)
+          for (const bound of pieces) y = Math.min(y, bound.top - 2 - mark.bottom)
+        }
+      }
+      return [{ left, right, ending: span.ending, group: span.group, raw, ink, y }]
     })
     // Consecutive endings share a line, independent of the height of each host.
     for (const fragment of fragments) {

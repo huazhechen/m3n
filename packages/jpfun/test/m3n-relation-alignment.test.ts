@@ -73,7 +73,7 @@ test('alignment respects system and staff boundaries', () => {
 });
 
 test('adjacent alternate endings share their top rule without obscuring their labels', () => {
-    const source = "|: 1@a 2@b :| 3'@c 4'@d | @volta(a,b,1) @volta(c,d,2)";
+    const source = "|: 1@a 2@b :| 3''''@c 4''''@d | @volta(a,b,1) @volta(c,d,2)";
     const aligned = relations(source, 'volta');
     const ordinary = relations(source, 'volta', false);
     assert(aligned.items.length === 2 && nearly(aligned.items[0].box.y, aligned.items[1].box.y), 'adjacent endings must align');

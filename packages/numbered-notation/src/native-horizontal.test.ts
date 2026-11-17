@@ -70,8 +70,8 @@ describe('native spacing and measured note envelopes', () => {
     const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'))
     const rest = result.projection.glyphs.find(glyph => glyph.id === 'm3n-e-44')!
     const next = result.projection.glyphs.find(glyph => glyph.id === 'm3n-e-45')!
-    expect(rest.x).toBeCloseTo(727.56542, 1)
-    expect(next.x).toBeCloseTo(744.89338, 1)
+    expect(rest.x).toBeCloseTo(728.89046, 1)
+    expect(next.x).toBeCloseTo(744.54647, 1)
   })
 
   it('uses the cross-system tie height without adding 1.1px to each successive row', () => {
@@ -93,15 +93,15 @@ describe('native spacing and measured note envelopes', () => {
       + '\n---\nN: ||: 0 0 (0 3) (6 7) | (1e 3) (1e 7~) (7 6) (5 6~) |'
     const result = layout(source)
     const boundary = result.projection.measures[8]!
-    expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(104.58733462914, 5)
+    expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(102.72057272681, 5)
     const opening = result.projection.measures[9]!
-    expect(opening.naturalEnd! - opening.naturalStart!).toBeCloseTo(191.376772428835, 5)
+    expect(opening.naturalEnd! - opening.naturalStart!).toBeCloseTo(187.64324862417, 5)
     expect(result.systems.map(system => system.measures.length)).toEqual([6, 5])
   })
 
   it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
     const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320)
-    expect(result.systems).toHaveLength(54)
+    expect(result.systems).toHaveLength(53)
     expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
       .toEqual([[53, 54], [55, 56], [57, 58], [59], [60, 61]])
   })
