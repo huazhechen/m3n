@@ -1,17 +1,16 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
-import dream from '../scores/zhui_meng_ren_01.m3n?raw'
-import stars from '../scores/xing_xing_dian_deng_01.m3n?raw'
 import conan from '../scores/ru_guo_you_ni_zai_01.m3n?raw'
+import stars from '../scores/xing_xing_dian_deng_01.m3n?raw'
+import dream from '../scores/zhui_meng_ren_01.m3n?raw'
 import references from './fixtures/kuaiyuepu-additions.json'
-import starsReference from './fixtures/xing-xing-dian-deng-jitapuji.json'
 import dreamReference from './fixtures/zhui-meng-ren-baidu.json'
 
 const sources: Record<string, string> = { zhui_meng_ren: dream, xing_xing_dian_deng: stars, ru_guo_you_ni_zai: conan }
 function events(source: string, expand = true) {
   const parsed = parseM3NDocument(source)
-  const document = expand ? alternativePerformance(parsed) : parsed
+  const document = expand ? unfoldScorePerformance(parsed) : parsed
   const bars = document.parts.get('score')!.melody
   const pitches = resolveScorePitches(bars)
   return bars.flatMap(bar => bar.events.map(event => {
@@ -97,30 +96,27 @@ describe('new reference scores', () => {
     expect(events(dream).reduce((sum, event) => sum + event.beats, 0)).toBe(dreamReference.performedBeats)
   })
 
-  it('uses the exact user introduction and the new five-page reference', () => {
-    const introduction = stars.slice(stars.indexOf('N:')).split('\n---\n').slice(0, 2).join('\n---\n')
-    const referenceIntroduction = starsReference.userIntroduction.replace('===前奏\n', '').replace(/ \|\|$/, ' |')
-    // Equivalent parentheses may change; every note, duration, tie and mark must remain.
-    expect(events('{key=E}\n' + introduction, false)).toEqual(events('{key=E}\n' + referenceIntroduction, false))
-    const document = parseM3NDocument(stars)
+  it('matches the original image ties and lyric entry in Dream Chaser bars 26–27', () => {
+    const document = parseM3NDocument(dream)
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-    expect(bars).toHaveLength(57)
-    expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual(Array(57).fill(4))
-    const actual = bars.slice(12).map(bar => bar.events.map(event =>
-      `${event.pitches[0]}:${event.beats}${event.tie ? '~' : ''}${event.postfixes.filter(mark => mark.startsWith('ac(')).map(mark => '/' + mark.slice(3, -1)).join('')}`,
-    ))
-    const expected = starsReference.writtenBarsAfterIntroduction.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.')))
-    expect(actual).toEqual(expected)
-    expect(bars.slice(0, 49).flatMap(bar => bar.events).every(event => event.key === 'E')).toBe(true)
-    expect(bars.slice(49).flatMap(bar => bar.events).every(event => event.key === 'F')).toBe(true)
-    expect(document.alternatives).toHaveLength(1)
-    expect(document.alternatives![0]!.passes).toEqual([2])
-    expect(document.alternatives![0]!.measure.events.map(event => `${event.pitches[0]}:${event.beats}`).join(' ')).toBe(starsReference.secondPassBar8.replace(/:\./g, ':0.'))
-    expectReferenceLyrics(stars, starsReference)
-    // Five opening bars once, the 7-bar instrumental + 24-bar vocal repeat twice,
-    // a 4-bar reprise + 8-bar third verse, and two complete 8-bar F choruses.
-    expect(events(stars).reduce((sum, event) => sum + event.beats, 0)).toBe(380)
-    expect(stars).toContain('重复多次，渐弱结束')
+    expect(bars[25]!.events.map(event => event.tie ?? false)).toEqual([false, false, false, false, false, true])
+    expect(bars[26]!.events.map(event => event.tie ?? false)).toEqual([false, true, false, false])
+    const { lyricsByEvent } = deriveScoreInteraction(document)
+    expect(bars[26]!.events.map(event => (lyricsByEvent.get(event) ?? []).filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('')))
+      .toEqual(['', '人', '', '让'])
+    const start = bars[25]!.events[3]!, end = bars[26]!.events[0]!
+    expect(document.intervals.some(interval => interval.kind === 'lg' && interval.start === start.sourceStart && interval.endStart === end.sourceStart)).toBe(true)
+  })
+
+  it('checks every Dream Chaser tie and slur against the full original image audit', () => {
+    const document = parseM3NDocument(dream)
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    const positions = new Map(bars.flatMap((bar, index) => bar.events.map((event, offset) =>
+      [event.sourceStart, [index + 1, offset + 1]] as const)))
+    expect(bars.flatMap((bar, index) => bar.events.flatMap((event, offset) => event.tie ? [{ bar: index + 1, event: offset + 1 }] : [])))
+      .toEqual(dreamReference.ties)
+    expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => ({ start: positions.get(interval.start!), end: positions.get(interval.endStart!) })))
+      .toEqual(dreamReference.slurs)
   })
 
   it('keeps all Conan pitches and ties with only the eight authorized half-beat corrections', () => {

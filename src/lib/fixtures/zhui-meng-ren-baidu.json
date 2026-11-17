@@ -25,7 +25,7 @@
     "5e:.5 5e:.25 3e:.25 3e:.75 2e:.25",
     "1e:2",
     "3e:.5 1e:.5 2e:.5 7:.5",
-    "1e:.375 2e:.125 1e:.25 7:.25 6:.5 1e:.5",
+    "1e:.25 2e:.25 1e:.25 7:.25 6:.5 1e:.5",
     "7:.5 5:.5 5:.25 6:.25 7:.5",
     "6:1.5 3:.5",
     "7:.5 5:.5 5:.25 6:.25 7:.5",
@@ -51,13 +51,13 @@
     "5e:.5 5e:.25 3e:.25 3e:.75 2e:.25",
     "1e:2",
     "3e:.5 1e:.5 2e:.5 7:.5",
-    "1e:.375 2e:.125 1e:.25 7:.25 6:.5 1e:.5",
+    "1e:.25 2e:.25 1e:.25 7:.25 6:.5 1e:.5",
     "7:.5 5:.5 5:.25 6:.25 7:.5",
     "6:2",
     "7:.5 5:.5 5:.25 6:.25 7:.5",
     "6:2",
     "3e:.5 1e:.5 2e:.5 7:.5",
-    "1e:.375 2e:.125 1e:.25 7:.25 6:.5 1e:.5",
+    "1e:.25 2e:.25 1e:.25 7:.25 6:.5 1e:.5",
     "7:.5 5:.5 5:.25 6:.25 7:.5",
     "6:2",
     "0:1 0:.75"
@@ -73,8 +73,8 @@
     "流浪的足迹在荒漠里写下永久的回忆飘去飘来的笔迹是深藏的记取了你的心语前尘后世轮回中谁在声音里徘徊痴情笑我凡俗的人世终难解的关怀",
     "空独眠的日子春雨不眠隔夜的你曾空无眠的日子"
   ],
-  "performedLyricsSha256": "cf822c2521057d987adcaac48fbaca73f59b27528cc0085b8e20b4b327f103a4",
-  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order.",
+  "performedLyricsSha256": "5849a7668cec8bf6c5e9214d5da00562461fd244acb75f746b7bbb636affb03b",
+  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-17 rechecked bars 26–27 against the original image: 人 begins on the first 7; added the cross-bar high-1 tie and repeated-7 tie. Full-image audit also corrects bars 15, 41, 47 to four equal sixteenths and a two-note slur.",
   "playbackLyricRowIndexes": [
     0,
     1,
@@ -84,5 +84,97 @@
     5,
     6,
     7
+  ],
+  "ties": [
+    {
+      "bar": 26,
+      "event": 6
+    },
+    {
+      "bar": 27,
+      "event": 2
+    }
+  ],
+  "slurs": [
+    {
+      "start": [
+        6,
+        3
+      ],
+      "end": [
+        6,
+        4
+      ]
+    },
+    {
+      "start": [
+        12,
+        2
+      ],
+      "end": [
+        12,
+        3
+      ]
+    },
+    {
+      "start": [
+        15,
+        1
+      ],
+      "end": [
+        15,
+        2
+      ]
+    },
+    {
+      "start": [
+        26,
+        4
+      ],
+      "end": [
+        27,
+        1
+      ]
+    },
+    {
+      "start": [
+        32,
+        3
+      ],
+      "end": [
+        32,
+        4
+      ]
+    },
+    {
+      "start": [
+        38,
+        2
+      ],
+      "end": [
+        38,
+        3
+      ]
+    },
+    {
+      "start": [
+        41,
+        1
+      ],
+      "end": [
+        41,
+        2
+      ]
+    },
+    {
+      "start": [
+        47,
+        1
+      ],
+      "end": [
+        47,
+        2
+      ]
+    }
   ]
 }
