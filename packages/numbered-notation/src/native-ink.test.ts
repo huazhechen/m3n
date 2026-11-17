@@ -7,6 +7,7 @@ import { NativeSymbols } from './native-symbols.js'
 import { layoutNativeScore } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
 import { nativeStyle } from './native-style.js'
+import { nativeArcSlice } from './native-curve.js'
 
 const fallback = new DefaultTextMeasurer()
 // Deliberately taller/uneven ink, italic overhang and nonstandard descenders.
@@ -69,7 +70,13 @@ describe('native painted geometry', () => {
     const system = layout.systems[0]!, glyph = layout.projection.glyphs[0]!
     const relations = [...system.relationLayout!.values()]
     expect(relations).toHaveLength(2)
-    expect(relations[1]!.ink.bottom).toBeLessThanOrEqual(relations[0]!.ink.top - nativeStyle.markGap + 0.001)
+    const inner = relations[0]!.arc!, outer = relations[1]!.arc!
+    const left = Math.max(inner.left, outer.left), right = Math.min(inner.right, outer.right)
+    for (let i = 0; i <= 1000; i++) {
+      const x = left + (right - left) * i / 1000
+      expect(nativeArcSlice(inner.commands, x)!.top - nativeArcSlice(outer.commands, x)!.bottom)
+        .toBeGreaterThanOrEqual(nativeStyle.music * .15 - 0.001)
+    }
     const mark = glyph.markLayout!.find(m => m.name === 'tr')!
     expect(mark.top + mark.height).toBeLessThanOrEqual(Math.min(...relations.map(r => r.ink.top)) - nativeStyle.markGap + 0.001)
     // Expression/ornament placement must not feed back into note arc ports.

@@ -184,3 +184,26 @@ test('arc ribbons clear side ink at endpoints and after outer-layer placement', 
         }
     }
 });
+
+test('nested ribbons use only their measured font-relative clearance without a raster margin', () => {
+    for (const fontSize of [11, 22, 44]) for (const source of [
+        '1@a 2@b 3@c 4@d @tie(c,d) @tie(a,d)',
+        '1@a 2@b 3@c 4@d @tie(a,b) @tie(a,d)',
+        '1@a 2@b 3@c 4@d @tie(b,c) @tie(a,d)',
+    ]) {
+        const result = compileScore(source, { alignRelations: true, variables: { fontsize: fontSize } });
+        assert(result.diagnostics.length === 0, 'nested ribbon fixture must compile');
+        const [inner, outer] = result.layout.attachments;
+        const inside = outline(attachmentCommands(inner).find(command => command.kind === 'path')!.commands);
+        const outside = outline(attachmentCommands(outer).find(command => command.kind === 'path')!.commands);
+        const a = inner.regions[0], b = outer.regions[0];
+        const left = Math.max(a.x, b.x), right = Math.min(a.x + a.w, b.x + b.w);
+        let gap = Infinity;
+        for (let step = 1; step < 1000; step++) {
+            const x = left + (right - left) * step / 1000;
+            gap = Math.min(gap, boundsAt(inside, x).top - boundsAt(outside, x).bottom);
+        }
+        assert(Math.abs(gap - fontSize * .15) < fontSize * 1e-4,
+            `nested clearance should be the design gap alone, got ${gap} at ${fontSize}px`);
+    }
+});

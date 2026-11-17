@@ -16,9 +16,9 @@ function curvePoint(points: Point[], t: number): Point {
 /** Vertical slice of a closed ribbon whose individual edges are monotone in x.
  * Includes both edges and vertical joins, independent of drawing direction.
  */
-export function nativeArcSlice(commands: readonly NativeArcCommand[], x: number) {
+export function nativeArcSlice(commands: readonly NativeArcCommand[], x: number, slopes = false) {
   let cursor: Point = { x: 0, y: 0 }
-  const heights: number[] = []
+  const edges: { y: number; slope: number }[] = []
   for (const command of commands) {
     if (command.op === 'Z') continue
     if (command.op === 'M') { cursor = command; continue }
@@ -26,7 +26,7 @@ export function nativeArcSlice(commands: readonly NativeArcCommand[], x: number)
     cursor = command
     if (x < Math.min(start.x, command.x) - 1e-8 || x > Math.max(start.x, command.x) + 1e-8) continue
     if (Math.abs(start.x - command.x) < 1e-8) {
-      heights.push(start.y, command.y)
+      edges.push({ y: start.y, slope: 0 }, { y: command.y, slope: 0 })
       continue
     }
     const points = command.op === 'C' ? [start, { x: command.cx1, y: command.cy1 }, { x: command.cx2, y: command.cy2 }, command]
@@ -38,9 +38,22 @@ export function nativeArcSlice(commands: readonly NativeArcCommand[], x: number)
       if ((curvePoint(points, t).x < x) === forward) low = t
       else high = t
     }
-    heights.push(curvePoint(points, (low + high) / 2).y)
+    const t = x === start.x ? 0 : x === command.x ? 1 : (low + high) / 2
+    if (!slopes) { edges.push({ y: curvePoint(points, t).y, slope: 0 }); continue }
+    const degree = points.length - 1
+    const derivatives = points.slice(1).map((point, i) => ({ x: degree * (point.x - points[i]!.x), y: degree * (point.y - points[i]!.y) }))
+    const derivative = derivatives.length === 1 ? derivatives[0]! : curvePoint(derivatives, t)
+    edges.push({ y: curvePoint(points, t).y, slope: derivative.y / derivative.x })
   }
-  return heights.length ? { top: Math.min(...heights), bottom: Math.max(...heights) } : undefined
+  if (!edges.length) return undefined
+  const top = Math.min(...edges.map(edge => edge.y)), bottom = Math.max(...edges.map(edge => edge.y))
+  if (!slopes) return { top, bottom, topSlope: 0, bottomSlope: 0 }
+  const xs = commands.flatMap(command => command.op === 'Z' ? [] : [command.x])
+  const onLeft = x <= (Math.min(...xs) + Math.max(...xs)) / 2
+  const topSlopes = edges.filter(edge => Math.abs(edge.y - top) < 1e-9).map(edge => edge.slope)
+  const bottomSlopes = edges.filter(edge => Math.abs(edge.y - bottom) < 1e-9).map(edge => edge.slope)
+  return { top, bottom, topSlope: onLeft ? Math.min(...topSlopes) : Math.max(...topSlopes),
+    bottomSlope: onLeft ? Math.max(...bottomSlopes) : Math.min(...bottomSlopes) }
 }
 
 /** Lift only when a real primitive intersects the ribbon. A side component
@@ -66,4 +79,51 @@ export function nativeArcInkLift(commands: readonly NativeArcCommand[], left: nu
     if (lift === previous) break
   }
   return lift
+}
+
+export type NativeRibbon = { commands: readonly NativeArcCommand[]; left: number; right: number }
+
+/** Our bows have a single y extremum at the horizontal midpoint; opening,
+ * closing and plateau edges are monotone. Thus the ends and that extremum
+ * give exact interval bounds, independent of viewport width. */
+export function nativeRibbonRange(ribbon: NativeRibbon, left: number, right: number) {
+  const a = Math.max(left, ribbon.left), b = Math.min(right, ribbon.right)
+  if (a > b) return undefined
+  const middle = (ribbon.left + ribbon.right) / 2
+  const slices = [a, b, ...(middle > a && middle < b ? [middle] : [])]
+    .flatMap(x => { const slice = nativeArcSlice(ribbon.commands, x); return slice ? [slice] : [] })
+  return slices.length ? { top: Math.min(...slices.map(s => s.top)), bottom: Math.max(...slices.map(s => s.bottom)) } : undefined
+}
+
+/** Bound the maximum difference between the real facing edges. Each interval
+ * has a certified upper bound from its curve extrema; refine only intervals
+ * that can improve the maximum. No screen-pixel sampling or extra lift. */
+export function nativeRibbonClearance(outer: NativeRibbon, inner: NativeRibbon, gap: number, precision: number) {
+  const left = Math.max(outer.left, inner.left), right = Math.min(outer.right, inner.right)
+  if (right <= left) return 0
+  const pending = [[left, right]]
+  let best = 0, bound = 0
+  while (pending.length) {
+    const [a, b] = pending.pop()!, middle = (a! + b!) / 2
+    for (const x of [a!, middle, b!]) {
+      const outside = nativeArcSlice(outer.commands, x), inside = nativeArcSlice(inner.commands, x)
+      if (outside && inside) best = Math.max(best, outside.bottom - inside.top + gap)
+    }
+    const outside = nativeRibbonRange(outer, a!, b!), inside = nativeRibbonRange(inner, a!, b!)
+    if (!outside || !inside) continue
+    let upper = outside.bottom - inside.top + gap
+    const al = nativeArcSlice(outer.commands, a!, true)!, ar = nativeArcSlice(outer.commands, b!, true)!
+    const bl = nativeArcSlice(inner.commands, a!, true)!, br = nativeArcSlice(inner.commands, b!, true)!
+    // Both facing edges are convex, so their derivative bounds are given by
+    // interval endpoints. Prove monotonic intervals or tighten the envelope
+    // near a stationary point instead of subdividing broad flat spans.
+    const lowSlope = al.bottomSlope - br.topSlope, highSlope = ar.bottomSlope - bl.topSlope
+    const first = al.bottom - bl.top + gap, last = ar.bottom - br.top + gap
+    if (lowSlope >= 0) upper = Math.min(upper, last)
+    else if (highSlope <= 0) upper = Math.min(upper, first)
+    else upper = Math.min(upper, first + highSlope * (b! - a!), last - lowSlope * (b! - a!))
+    if (upper <= best + precision || middle === a || middle === b) bound = Math.max(bound, upper)
+    else pending.push([a!, middle], [middle, b!])
+  }
+  return Math.max(best, bound)
 }

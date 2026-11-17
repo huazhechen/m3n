@@ -7,6 +7,7 @@ import {
     isVisualTemporalNode,
     type VisualTemporalNode,
 } from "../temporal.js";
+import { ribbonAtX, ribbonClearance } from "./ribbon.js";
 import { pathBounds } from "../../layout/path.js";
 import { getLayoutBounds } from "../../layout/engine.js";
 import type {
@@ -248,20 +249,12 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
                 const left = Math.max(segment.x, obstacle.x);
                 const right = Math.min(segment.x + segment.w, obstacle.x + obstacle.w);
                 if (right <= left) continue;
-                // Sample at most one pixel apart, including both endpoints. A small
-                // extra margin covers interpolation between samples and rasterization.
-                const steps = Math.max(1, Math.ceil(right - left));
-                for (let step = 0; step <= steps; step++) {
-                    const x = left + (right - left) * step / steps;
-                    const outer = ribbonAtX(segment.commands, x);
-                    const inner = ribbonAtX(obstacle.commands, x);
-                    if (outer && inner) lift = Math.max(lift, outer.bottom - inner.top + gap);
-                }
+                lift = Math.max(lift, ribbonClearance(segment, obstacle, gap, this.fontSize * 1e-6));
             }
             if (lift > 0) {
                 // An outer layer can move into previously separated side ink.
                 segments[index] = this.clearInterveningNotes(context,
-                    shiftSegment(segment, -lift - this.fontSize * 0.02), first, last);
+                    shiftSegment(segment, -lift), first, last);
             }
         }
     }
@@ -545,33 +538,4 @@ function shiftSegment(segment: TieSegment, dy: number): TieSegment {
         return { ...command, y: command.y + dy };
     });
     return { ...segment, y: segment.y + dy, commands };
-}
-
-/** Tie ribbon edges are monotone in x, including the opening/closing cross-system curves. */
-function ribbonAtX(commands: readonly PathCommand[], x: number) {
-    let cursor: LayoutPoint = { x: 0, y: 0 };
-    let top = Infinity, bottom = -Infinity;
-    for (const command of commands) {
-        if (command.op === 'Z') continue;
-        if (command.op === 'M') { cursor = command; continue; }
-        const start = cursor;
-        cursor = command;
-        if (x < Math.min(start.x, command.x) - 1e-7 || x > Math.max(start.x, command.x) + 1e-7) continue;
-        const at = (t: number, axis: 'x' | 'y') => {
-            const u = 1 - t;
-            if (command.op === 'C') return u ** 3 * start[axis] + 3 * u * u * t * command[axis === 'x' ? 'cx1' : 'cy1']
-                + 3 * u * t * t * command[axis === 'x' ? 'cx2' : 'cy2'] + t ** 3 * command[axis];
-            if (command.op === 'Q') return u * u * start[axis] + 2 * u * t * command[axis === 'x' ? 'cx' : 'cy'] + t * t * command[axis];
-            return u * start[axis] + t * command[axis];
-        };
-        let low = 0, high = 1;
-        for (let iteration = 0; iteration < 28; iteration++) {
-            const middle = (low + high) / 2;
-            if ((at(middle, 'x') < x) === (command.x >= start.x)) low = middle;
-            else high = middle;
-        }
-        const y = at((low + high) / 2, 'y');
-        top = Math.min(top, y); bottom = Math.max(bottom, y);
-    }
-    return Number.isFinite(top) ? { top, bottom } : undefined;
 }
