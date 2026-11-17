@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 const navActions = {
+  sort: { label: '排序', path: 'M4 6h12M4 12h8M4 18h4M18 10v10m-3-3 3 3 3-3' },
   previous: { label: '上一曲', path: 'm14 6-6 6 6 6M5 6v12' },
   next: { label: '下一曲', path: 'm10 6 6 6-6 6M19 6v12' },
   print: { label: '打印', path: 'M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7ZM16 11h1' },

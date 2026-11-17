@@ -565,14 +565,32 @@ textarea::selection {
   padding: 20px 0 4px;
 }
 
-.library-view-toggle {
-  min-height: var(--ui-control-size);
-  white-space: nowrap;
+.library-search-actions {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: calc(440px + var(--ui-control-size) + 8px);
 }
 
-.library-view-toggle[aria-pressed="true"] {
-  border-color: #2f6f73;
-  background: #e6efea;
+.library-view-toggle {
+  display: inline-flex;
+  flex: 0 0 var(--ui-control-size);
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-control-size);
+  height: var(--ui-control-size);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #285b5c;
+  cursor: pointer;
+}
+
+.library-view-toggle svg {
+  width: 80%;
+  height: 80%;
 }
 
 .library-toolbar h1 {
@@ -584,7 +602,6 @@ textarea::selection {
 
 .score-search {
   flex: 1;
-  flex-basis: 180px;
   min-width: 0;
   max-width: 440px;
 }

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/notation'
-import { TopNav } from '../components/TopNav'
+import { NavActionIcon, TopNav } from '../components/TopNav'
 import { deleteLocalScore, listLocalScores, type LocalScore } from '../lib/local-scores'
 import { presetScores, type PresetScore } from '../lib/samples'
 import { sortScoresByTitle, scoreTitleInitial } from '../lib/score-order'
@@ -188,20 +188,22 @@ export function ScoresPage() {
       <div className={`score-library${showIndex ? ' has-letter-index' : ''}`}>
         <section className="library-toolbar">
           <h1>乐谱库</h1>
-          <button type="button" className="library-view-toggle secondary-link" aria-label="切换曲库展示方式" aria-pressed={categorized} title={categorized ? '切换为字母顺序' : '切换为分类展示'} onClick={() => {
-            const next = !categorized
-            setCategorized(next)
-            try { localStorage.setItem('m3n:library-view', next ? 'category' : 'alphabetical') } catch { /* Browsing still works without storage. */ }
-          }}>{categorized ? '分类展示' : '字母顺序'}</button>
-          <label className="score-search">
-            <input
-              type="search"
-              aria-label="搜索乐谱"
-              value={query}
-              onChange={(event) => setQuery(event.currentTarget.value)}
-              placeholder="搜索曲名、词、低、本地、调号、拍号…"
-            />
-          </label>
+          <div className="library-search-actions">
+            <label className="score-search">
+              <input
+                type="search"
+                aria-label="搜索乐谱"
+                value={query}
+                onChange={(event) => setQuery(event.currentTarget.value)}
+                placeholder="搜索曲名、词、低、本地、调号、拍号…"
+              />
+            </label>
+            <button type="button" className="library-view-toggle" aria-label="切换曲库展示方式" title={categorized ? '切换为字母顺序' : '切换为分类展示'} onClick={() => {
+              const next = !categorized
+              setCategorized(next)
+              try { localStorage.setItem('m3n:library-view', next ? 'category' : 'alphabetical') } catch { /* Browsing still works without storage. */ }
+            }}><NavActionIcon action="sort" /></button>
+          </div>
         </section>
         <div className="library-groups">
           {scores.length === 0 && (
