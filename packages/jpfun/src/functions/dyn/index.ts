@@ -255,7 +255,12 @@ class DynAttachment implements LayoutAttachment {
             const start = covered / total;
             const end = (covered + width) / total;
             covered += width;
-            const extent = context.getRangeExtents(range.line, endpoints, this.track);
+            // The shared digit-zero box contains font-dependent blank space.
+            // Query actual overlapping paint, including preceding attachments.
+            const extent = context.getInkExtents
+                ? context.getInkExtents(range.line, Math.min(range.startX, range.endX) - halfStroke,
+                    Math.max(range.startX, range.endX) + halfStroke, this.track)
+                : context.getRangeExtents(range.line, endpoints, this.track);
             const axis = context.getVisualAxis(range.line, this.track);
             const hostTop = extent ? axis + extent.top : axis;
             return {

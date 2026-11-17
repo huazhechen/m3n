@@ -1,6 +1,9 @@
 import { test } from "node:test";
 
 import type { VisualTemporalNode } from "../src/functions/temporal.js";
+import { paintedNodeRegions } from "../src/layout/painted-ink.js";
+import { defaultTextMeasurer } from "../src/render/text.js";
+import type { TextMeasurer } from "../src/render/types.js";
 import { compileScore } from "../src/pipeline.js";
 import { compilePlayback } from "../src/playback/compile.js";
 import {
@@ -249,4 +252,28 @@ test("below=true 将渐变线放在低八度点下方，跨行保留间距和播
     assert(serialized.includes("below=true"), "serialization must preserve placement");
     const restored = compileScore(serialized, { alignRelations: true });
     assert(nearly(restored.layout.bounds.h, result.layout.bounds.h), "serialized placement must preserve layout height");
+});
+
+
+test("dyn uses painted digits instead of the shared digit-zero layout box", () => {
+    const textMeasurer: TextMeasurer = { measureText(text, style) {
+        if (/^[012]$/.test(text)) return { w: 11, h: text === "0" ? 22 : 16,
+            baseline: text === "0" ? 19 : 16, inkBottom: text === "0" ? 22 : 16 };
+        return defaultTextMeasurer.measureText(text, style);
+    } };
+    for (const below of [false, true]) for (const broken of [false, true]) {
+        const source = `1@a ${broken ? "@br()" : ""} 2@b @dyn(a,b,24${below ? ",below=true" : ""})`;
+        const { layout } = compileScore(source, { alignRelations: true, textMeasurer });
+        const dyn = layout.attachments[0];
+        const strokes = attachmentCommands(dyn).filter(command => command.kind === "line");
+        for (let i = 0; i < dyn.regions.length; i++) {
+            const region = dyn.regions[i];
+            const hosts = layout.objects.filter(host => host.layoutLine === region.line);
+            const ink = hosts.flatMap(host => paintedNodeRegions(host, textMeasurer));
+            const edge = below ? Math.max(...ink.map(box => box.y + box.h)) : Math.min(...ink.map(box => box.y));
+            const center = (strokes[i * 2].y1 + strokes[i * 2 + 1].y1) / 2;
+            const expected = edge + (below ? 1 : -1) * hosts[0].ast.size * .62;
+            assert(nearly(center, expected), `line ${region.line}: ${center} must equal measured ${expected}`);
+        }
+    }
 });
