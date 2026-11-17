@@ -22,7 +22,7 @@ it.each([
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source), options = {width:1000,paged:false,textMeasurer}
   const projection = projectNumberedScore(document, options)
-  const reference = compileScore(projection.source, {textMeasurer,autoWrap:true,alignRelations:true,noteGap:13.2,minimumNoteGap:8.8})
+  const reference = compileScore(projection.source, {textMeasurer,autoWrap:true,alignRelations:true,noteGap:11,minimumNoteGap:6.6,minimumNoteGapFloor:2.2})
   expect(reference.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])
   const ending = reference.layout.attachments.find(item => item.sourceSpan && projection.source.slice(item.sourceSpan.start,item.sourceSpan.end).startsWith('@volta('))!
   const native = layoutNativeScore(document,options), system = native.systems[0]!

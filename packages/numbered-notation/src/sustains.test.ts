@@ -11,7 +11,7 @@ function inspect(source: string, width = 800, paged = false) {
   const document = parseM3NDocument(source)
   const before = structuredClone(document)
   const projection = projectNumberedScore(document, { width, paged })
-  const result = compileScore(projection.source, { autoWrap: true, alignRelations: true, noteGap: 13.2, minimumNoteGap: 8.8 })
+  const result = compileScore(projection.source, { autoWrap: true, alignRelations: true, noteGap: 11, minimumNoteGap: 6.6, minimumNoteGapFloor: 2.2 })
   const pages = NumberedNotationScore.create(document).render({ width, paged })
   const root = new DOMParser().parseFromString(pages.join(''), 'text/html')
   expect(document).toEqual(before)

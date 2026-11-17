@@ -14,6 +14,30 @@ function glyphs(notes = '(1 (2 3)) 4 5 6', meter = '4/4') {
 }
 
 describe('measured reduction lines', () => {
+  it.each(['{key=G}', '{90qpm}', '{2/4}'])('breaks reduction lines at an inline control: %s', control => {
+    const notes = glyphs(`(1 ${control}2) 3 4`, '3/4').slice(0, 2)
+    expect(notes[1]!.controls.length).toBeGreaterThan(0)
+    const beams = nativeBeamLayout(notes, measurer)
+    expect(beams.svg).toBe('')
+    expect(beams.claimed.size).toBe(0)
+    const painter = new NativeMusicPainter(measurer)
+    for (const note of notes) expect(root(painter.music(note, beams.claimed.get(note))).querySelectorAll('line')).toHaveLength(1)
+  })
+
+  it('breaks both voices at a shared key while keeping each side connected', () => {
+    const layout = layoutNativeScore(parseM3NDocument('{3/4}\nN: (1 {key=G}2) 3 4 |||\nB: ((1d 2d 3d 4d)) 5d 6d |'),
+      { width: 800, paged: false, textMeasurer: measurer })
+    const notes = layout.projection.glyphs.filter(glyph => glyph.lane === 'bass')
+    const key = notes[2]!.controls.find(control => control.kind === 'key')!
+    expect(key).toBeDefined()
+    const lines = [...root(nativeBeamLayout(notes, measurer).svg).querySelectorAll('line')]
+    expect(lines).toHaveLength(4)
+    for (const line of lines) {
+      const left = Number(line.getAttribute('x1')), right = Number(line.getAttribute('x2'))
+      expect(right <= key.x! || left >= key.x! + key.width).toBe(true)
+    }
+  })
+
   it.each([
     { source: '([1 2 3:1]) ((4 5)) 6', deeper: [3, 4] },
     { source: '((1 2)) ([3 4 5:1]) 6', deeper: [0, 1] },

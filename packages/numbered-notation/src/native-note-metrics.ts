@@ -24,6 +24,9 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
 
 export function nativeBeamCount(a: import('./native-model.js').NativeGlyph, b: import('./native-model.js').NativeGlyph) {
   if (a.sustain || b.sustain) return 0
+  // Controls occupy separate zero-time columns before their host. They split
+  // the painted run even when the surrounding notes share a metrical beat.
+  if (b.controls.length) return 0
   if (Math.abs(a.time + a.beats - b.time) > 1e-7) return 0
   const unit = a.event?.meterUnit ?? 4, count = a.event?.meterCount ?? 4
   const group = 4 / unit * (unit >= 8 && count % 3 === 0 ? 3 : 1)

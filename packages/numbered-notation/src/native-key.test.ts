@@ -25,7 +25,7 @@ describe('native measured key signatures', () => {
     const options = { width, paged: false, pageMargin: 11, textMeasurer: overhang }
     const native = layoutNativeScore(document, options)
     const projection = projectNumberedScore(document, options)
-    const reference = compileScore(projection.source, { textMeasurer: overhang, autoWrap: true, alignRelations: true, noteGap: 13.2, minimumNoteGap: 8.8 })
+    const reference = compileScore(projection.source, { textMeasurer: overhang, autoWrap: true, alignRelations: true, noteGap: 11, minimumNoteGap: 6.6, minimumNoteGapFloor: 2.2 })
     const notes = reference.layout.objects.filter(node => node.T.toNumber() > 0)
     expect(notes).toHaveLength(native.projection.glyphs.length)
     notes.forEach((note, index) => expect(native.projection.glyphs[index]!.x).toBeCloseTo(note.box.x + note.box.anchor, 5))

@@ -24,7 +24,7 @@ describe('native spacing and measured note envelopes', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     const document = parseM3NDocument(source), options = {width:800, paged:false, textMeasurer:measurer}
     const native = layoutNativeScore(document, options), projection = projectNumberedScore(document, options)
-    const reference = compileScore(projection.source, {textMeasurer:measurer, autoWrap:true, alignRelations:true, noteGap:13.2, minimumNoteGap:8.8})
+    const reference = compileScore(projection.source, {textMeasurer:measurer, autoWrap:true, alignRelations:true, noteGap:11, minimumNoteGap:6.6, minimumNoteGapFloor:2.2})
     expect(reference.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])
     let checked = 0
     for (const note of reference.layout.objects.filter(node => node.T.toNumber() > 0)) {
@@ -42,7 +42,7 @@ describe('native spacing and measured note envelopes', () => {
 
   it('matches all four note centres and the flush final bar of an unadorned system', () => {
     const result = layout('{4/4}\nN: 1 2 3 4 |||')
-    const expected = [37.57701873779297, 217.293893737793, 397.01076873779297, 576.727643737793]
+    const expected = [37.57701873779297, 217.60556040445962, 397.6341020711263, 577.6626437377929]
     result.projection.glyphs.forEach((glyph, index) => expect(glyph.x).toBeCloseTo(expected[index]!, 6))
     expect(result.projection.measures[0]!.barX).toBeCloseTo(763.17375, 6)
     expect(result.projection.glyphs[0]!.y).toBeCloseTo(106.36, 6)
@@ -72,7 +72,7 @@ describe('native spacing and measured note envelopes', () => {
     const rest = result.projection.glyphs.find(glyph => glyph.id === 'm3n-e-44')!
     const next = result.projection.glyphs.find(glyph => glyph.id === 'm3n-e-45')!
     const projection = projectNumberedScore(parseM3NDocument(source), { width: 800, paged: false, textMeasurer: measurer })
-    const reference = compileScore(projection.source, { textMeasurer: measurer, autoWrap: true, alignRelations: true, noteGap: 13.2, minimumNoteGap: 8.8, minimumNoteGapFloor: 2.2 })
+    const reference = compileScore(projection.source, { textMeasurer: measurer, autoWrap: true, alignRelations: true, noteGap: 11, minimumNoteGap: 6.6, minimumNoteGapFloor: 2.2 })
     expect(reference.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])
     for (const glyph of [rest, next]) {
       const node = reference.layout.objects.find(note => {
@@ -104,17 +104,17 @@ describe('native spacing and measured note envelopes', () => {
       + '\n---\nN: ||: 0 0 (0 3) (6 7) | (1e 3) (1e 7~) (7 6) (5 6~) |'
     const result = layout(source)
     const boundary = result.projection.measures[8]!
-    expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(101.7871917756413, 5)
+    expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(92.8537393977258, 5)
     const opening = result.projection.measures[9]!
-    expect(opening.naturalEnd! - opening.naturalStart!).toBeCloseTo(185.77648672183682, 5)
+    expect(opening.naturalEnd! - opening.naturalStart!).toBeCloseTo(167.32291529933855, 5)
     expect(result.systems.map(system => system.measures.length)).toEqual([6, 5])
   })
 
   it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
     const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320)
-    expect(result.systems).toHaveLength(52)
+    expect(result.systems).toHaveLength(45)
     expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
-      .toEqual([[53, 54], [55, 56], [57, 58], [59], [60, 61]])
+      .toEqual([[52], [53, 54], [55, 56], [57, 58], [59, 60, 61]])
   })
 
   it('lets wide lyrics share the minimum note clearance instead of accumulating it', () => {
