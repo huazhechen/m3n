@@ -108,7 +108,8 @@ class ParenAttachment implements LayoutAttachment {
                 const x = text === '(' ? bounds[0].x - this.gap - metrics.w : bounds.at(-1)!.x + bounds.at(-1)!.w + this.gap;
                 const y = axis - metrics.h / 2;
                 glyphs.push({ text, x, y: y + metrics.baseline });
-                regions.push({ x, y, w: metrics.w, h: metrics.h, line: line.index, track });
+                const inkLeft = metrics.inkLeft ?? 0, inkRight = metrics.inkRight ?? metrics.w;
+                regions.push({ x: x + inkLeft, y, w: inkRight - inkLeft, h: metrics.h, line: line.index, track });
             }
         }
         const style = this.style;

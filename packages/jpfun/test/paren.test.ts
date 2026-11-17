@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { compileScore, type CompileScoreResult } from '../src/pipeline.js';
 import { getLayoutBounds } from '../src/layout/engine.js';
+import { paintedCommandRegions } from '../src/layout/painted-ink.js';
 import { compilePlayback } from '../src/playback/compile.js';
 import { renderLayoutPagesToSvg } from '../src/render/svg.js';
 import { attachmentCommands, compileValid, expectCompileError, nearly, playedNotes, recordCommands } from './helpers.js';
@@ -94,4 +95,21 @@ test('parentheses stay on their own staff and reject cross-track endpoints', () 
     const bass = notes.filter(node => node.track !== attachment.regions[0].track);
     assert.ok(attachment.box.y + attachment.box.h < Math.min(...bass.map(node => node.box.y)));
     expectCompileError('@voices(@voice({1@a}),@voice({3@b})) @paren(a,b)', 'E_PAREN_CROSS_TRACK');
+});
+
+
+test('parenthesis occupancy retains painted left bearings and right overhang', () => {
+    const source = '1@a 2@b @paren(a,b)';
+    const textMeasurer = { measureText(text: string, style: {fontSize: number}) {
+        return {w: 8, h: style.fontSize, baseline: style.fontSize * .7,
+            inkLeft: text === '(' ? -2 : 1, inkRight: text === ')' ? 11 : 8};
+    } };
+    const result = compileValid(source, {textMeasurer}), [attachment] = parens(result, source);
+    const painted = attachmentCommands(attachment).flatMap(command => paintedCommandRegions(command, textMeasurer));
+    assert.equal(painted.length, 2);
+    attachment.regions.forEach((region, index) => {
+        for (const coordinate of ['x','y','w','h'] as const) {
+            assert.ok(nearly(region[coordinate], painted[index][coordinate]), `painted ${coordinate} must be fully reserved`);
+        }
+    });
 });

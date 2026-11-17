@@ -39,7 +39,12 @@ class OssiaFunction extends ASTFunctionNode {
         super(span, parent);
         const [host,alternative,lane] = this.getArgValue(args,ctx) as [ASTNodeBase,ASTNodeBase,string];
         this.host=host; this.alternative=alternative; this.lane=lane;
-        this.arrangement={...arrangement,laneKey:`ossia/${lane}`};
+        const fontSize = ctx.variables.fontsize;
+        this.arrangement={...arrangement,laneKey:`ossia/${lane}`,
+            // This local clearance follows the music font, independently of
+            // taller bars, headings, or text elsewhere on the system.
+            place: (host, group) => host.bottom + fontSize * 0.32 - group.top,
+        };
         this.host.parent = this; this.alternative.parent = this;
     }
     override toString(source: string) { return `@ossia(${this.host.toString(source)},${this.alternative.toString(source)},lane=${JSON.stringify(this.lane)})`; }

@@ -26,6 +26,7 @@ import { TranslatingPainter } from "../render/translate.js";
 import { adjacentRelationGroups } from './relation-alignment.js';
 import { equalMeasureRanges } from './equal-measures.js';
 import { paintedNodeRegions } from './painted-ink.js';
+import type { TextMeasurer } from '../render/types.js';
 import type {
     AttachmentGeometry,
     AttachmentLayoutContext,
@@ -286,11 +287,12 @@ export function layoutDocument(
         }
     }
 
+    const localInkMeasurer = hasLocalBranches(result.rootTrack) ? context.textMeasurer : undefined;
     // host 申报纵向占用
     // 主体占用只依赖固有尺寸，整个纵向布局中保持不变
     for (const node of objects) {
         const line = lines[node.layoutLine];
-        includeHostExtent(line.hostExtents, node, line.hostRanges ??= []);
+        includeHostExtent(line.hostExtents, node, line.hostRanges ??= [], localInkMeasurer);
     }
     // 根据配置得到行距
     const rowGaps = measureRowGaps(lines.length, objects, options.rowGap);
@@ -655,8 +657,9 @@ function layoutSubdomainBlock(
     const members = columns.flat();
     const extents: LineExtents = { hostExtents: new Map(), attachmentExtents: new Map() };
     let gap = 0;
+    const localInkMeasurer = hasLocalBranches(root) ? context.textMeasurer : undefined;
     for (const member of members) {
-        includeHostExtent(extents.hostExtents, member, extents.hostRanges ??= []);
+        includeHostExtent(extents.hostExtents, member, extents.hostRanges ??= [], localInkMeasurer);
         gap = Math.max(gap, member.ast.size * ROW_GAP_RATIO);
     }
     const positions = members.map(member => ({ x: member.box.x, y: 0 }));
@@ -1023,14 +1026,30 @@ function measureAttachmentPass(
     return { items, needsRelayout };
 }
 
+/** Only local branches need primitive footprints in addition to normal boxes. */
+function hasLocalBranches(track: Track): boolean {
+    return track.groups.some(group => group.localHost || group.members.some(hasLocalBranches));
+}
+
 /** 固有占用只需轴局部边界，不必创建全局矩形 */
-function includeHostExtent(extents: Map<Track, Extent>, host: LayoutHost, ranges?: TrackExtentRange[]) {
+function includeHostExtent(extents: Map<Track, Extent>, host: VisualTemporalNode, ranges?: TrackExtentRange[], measurer?: TextMeasurer) {
     const decoration = decorationExtents.get(host);
     const top = decoration?.top ?? 0;
     const height = host.box.h - top + (decoration?.bottom ?? 0);
     const axisTop = top - host.box.visualAxis;
     includeTrackExtent(extents, host.track, axisTop, axisTop + height);
-    ranges?.push({ track: host.track, left: host.box.x, right: host.box.x + host.box.w, top: axisTop, bottom: axisTop + height });
+    if (!ranges) return;
+    if (!measurer) {
+        ranges.push({ track: host.track, left: host.box.x, right: host.box.x + host.box.w, top: axisTop, bottom: axisTop + height });
+        return;
+    }
+    // Local branches clear actual primitives; nominal note boxes contain
+    // typography padding and must not become invisible collision obstacles.
+    for (const region of paintedNodeRegions(host, measurer)) {
+        if (region.w <= 0 || region.h <= 0) continue;
+        const top = region.y - host.box.y - host.box.visualAxis;
+        ranges.push({ track: host.track, left: region.x, right: region.x + region.w, top, bottom: top + region.h });
+    }
 }
 
 /** 一条谱面行的纵向解 */
@@ -1123,13 +1142,23 @@ function solveVerticalAxes(
             if (!place) continue;
             let host = extent ?? { top: 0, bottom: 0 };
             if (measurement.group.localHost) {
-                const footprint = measurement.group.members.flatMap(member => resolvedRanges.get(member) ?? []);
-                const nearby = trackRanges.filter(range => footprint.some(branch =>
-                    range.left < branch.right + 2 && range.right > branch.left - 2));
-                if (nearby.length) host = {
-                    top: Math.min(...nearby.map(range => range.top)),
-                    bottom: Math.max(...nearby.map(range => range.bottom)),
-                };
+                const footprint = measurement.group.members.flatMap((member, index) => {
+                    const placement = measurement.placements[index];
+                    return placement ? (resolvedRanges.get(member) ?? []).map(range => ({
+                        ...range, top: range.top + placement.offset, bottom: range.bottom + placement.offset,
+                    })) : [];
+                });
+                // Keep the member axes at least level with their host when
+                // no primitives overlap. Each overlapping pair supplies only
+                // its own clearance, rather than combining remote extrema.
+                let offset = Math.max(...measurement.placements.filter(placement => placement !== null).map(placement => -placement.offset));
+                for (const upper of trackRanges) for (const lower of footprint) {
+                    if (upper.left <= lower.right && upper.right >= lower.left) {
+                        offset = Math.max(offset, place(upper, lower, gap));
+                    }
+                }
+                applyPlacement(measurement, offset);
+                continue;
             }
             applyPlacement(measurement, place(host, measurement.extent, gap));
         }

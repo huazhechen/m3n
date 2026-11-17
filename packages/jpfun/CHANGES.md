@@ -1,5 +1,9 @@
 # Local changes
 
+- Range-parenthesis occupancy includes measured left bearings and right overhang.
+
+- Local ossia lanes clear horizontally overlapping painted primitives pair by pair. Music-font-relative clearance is independent of tall bars or surrounding text; nominal glyph padding and remote extrema no longer create invisible obstacles. Ordinary track envelopes and paint order remain unchanged.
+
 - Anchored text clamps and clears the union of its logical advance and actual painted overhang. Per-line text occupancy uses measured bearings and the real advance for each alignment; inline text retains its logical spacing width.
 
 - Framed text preserves its inset outside the union of advance and painted ink, including negative bearings and right overhang. All three alignments and individual line positions share the measured geometry.

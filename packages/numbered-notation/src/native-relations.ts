@@ -1,4 +1,5 @@
 import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
 import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { NativeSymbols, attrs, n, line } from './native-symbols.js'
@@ -21,8 +22,12 @@ class NativeRelationPainter extends NativeSymbols {
       if (!selected.length) return ''
       const first = selected[0]!, last = selected.at(-1)!
       const role = first.lane.startsWith('alternative:') ? 'alternative-parenthesis' : 'instrument-parenthesis'
-      return this.text('(', first.x - first.left - (first.parenthesisLeft ?? em(6)), 0, nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
-        + this.text(')', last.x + last.right + nativeStyle.music * 0.05, 0, nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+      const baseline = (text: string) => {
+        const metrics = this.measurer.measureText(text, {fontSize:nativeStyle.music, fontFamily:'M3N Numbers'})
+        return nativeMusicAxis(this.measurer) + metrics.baseline - metrics.h / 2
+      }
+      return this.text('(', first.x - (first.musicLeft ?? first.left) - (first.parenthesisLeft ?? em(6)), baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+        + this.text(')', last.x + (last.musicRight ?? last.right) + nativeStyle.music * 0.05, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = nativeArcGeometry(relation, system)

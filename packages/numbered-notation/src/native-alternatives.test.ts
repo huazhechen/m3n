@@ -6,10 +6,26 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
 import { nativeStyle } from './native-style.js'
+import { nativeSvgInk } from './native-ink.js'
+import type { TextMeasurer } from './native-measure.js'
 
 const source = '{4/4}\nN: ||: 1 2 3 4 | 1 2 3 4 :||\nNs[2]: 1: 1 2 3 4 | 1 2 3 4 |'
 
 describe('native alternative parentheses', () => {
+  it.each(['春风', '(春风)(秋雨)'])('centres parentheses on the music axis and brackets music rather than lyrics: %s', lyrics => {
+    const textMeasurer: TextMeasurer = { measureText(text, style) {
+      const parenthesis = text === '(' || text === ')'
+      return { w: [...text].length * style.fontSize * .6, h: style.fontSize * (parenthesis ? .95 : .7), baseline: style.fontSize * (parenthesis ? .86 : .7) }
+    } }
+    const layout = layoutNativeScore(parseM3NDocument(`{2/4}\nN: ||: 1 2 :||\nL1: 春风\nL2: ${lyrics}\nNs[2]: 1: 3 4 |`), {width:800, paged:false, textMeasurer})
+    const system = layout.systems[0]!, first = system.measures[0]!.columns.flatMap(column => column.glyphs).find(glyph => glyph.lane === 'alternative:2')!
+    const root = new DOMParser().parseFromString(renderNativePages(layout).join(''), 'text/html')
+    const bracket = root.querySelector('[data-m3n-role="alternative-parenthesis"]')!
+    expect(Number(bracket.getAttribute('x')) - first.x).toBeCloseTo(-first.musicLeft! - first.parenthesisLeft!, 3)
+    const ink = nativeSvgInk(bracket.outerHTML, textMeasurer), zero = textMeasurer.measureText('0', {fontSize:22, fontFamily:'M3N Numbers'})
+    expect((ink.top + ink.bottom) / 2).toBeCloseTo(zero.h / 2 - zero.baseline, 3)
+  })
+
   it('includes both measured parentheses in each alternative measure’s natural and minimum width', () => {
     const plain = layoutNativeScore(parseM3NDocument(source.split('\nNs')[0]!), { width: 800, paged: false })
     const layout = layoutNativeScore(parseM3NDocument(source), { width: 800, paged: false })
