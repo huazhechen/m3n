@@ -15,6 +15,7 @@ export type PresetScoreMetadata = {
   hasBass: boolean
   searchText: string
   diagnosticSeverity: ScoreDiagnosticSeverity
+  preferredWidth?: number
 }
 
 function normalizeSearchText(value: string) {
@@ -30,6 +31,7 @@ export function scoreMetadataFromSource(slug: string, source: string): PresetSco
   return {
     slug,
     title,
+    preferredWidth: score.preferredWidth,
     subtitle: score.subtitle || undefined,
     singer: score.singer || undefined,
     composer: score.composer || undefined,

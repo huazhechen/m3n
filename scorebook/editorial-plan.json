@@ -1,11 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "edition": "第五十九版",
   "sourceCount": 88,
-  "baseWidth": 780,
-  "widthCandidates": [
-    590
-  ],
   "sections": [
     {
       "id": "basics",
@@ -30,24 +25,7 @@
       "title": "半音阶口琴基本功",
       "section": "basics",
       "group": "每日训练",
-      "reason": "按原谱顺序连续进行机能与音阶模进训练",
-      "width": 792,
-      "sharePage": false,
-      "breakBefore": true,
-      "pageBreaks": [],
-      "reviewNote": "恢复第三十五版简谱字号与行距，保留三篇编排。",
-      "uniformSystemHeight": true,
-      "systemGap": 11,
-      "wrap": "compact",
-      "minimumNotePx": 19,
-      "pageCount": 2,
-      "widthCandidates": [
-        792
-      ],
-      "systemGapCandidates": [
-        11
-      ],
-      "widthLocked": true
+      "reason": "按原谱顺序连续进行机能与音阶模进训练"
     },
     {
       "id": "xiao_xing_xing",
@@ -55,19 +33,7 @@
       "title": "小星星",
       "section": "basics",
       "group": "入门旋律与长音",
-      "reason": "重复音、级进和二分音符",
-      "width": 640,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 640
+      "reason": "重复音、级进和二分音符"
     },
     {
       "id": "huan_le_song",
@@ -75,20 +41,7 @@
       "title": "欢乐颂",
       "section": "basics",
       "group": "入门旋律与长音",
-      "reason": "重复音与级进，逐步加入附点和八分音符",
-      "width": 640,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "includeBass": false,
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 640
+      "reason": "重复音与级进，逐步加入附点和八分音符"
     },
     {
       "id": "wo_he_ni",
@@ -96,19 +49,7 @@
       "title": "我和你",
       "section": "basics",
       "group": "入门旋律与长音",
-      "reason": "慢速长音和低音区转换",
-      "width": 640,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 640
+      "reason": "慢速长音和低音区转换"
     },
     {
       "id": "long_long_ago",
@@ -116,19 +57,7 @@
       "title": "很久以前",
       "section": "basics",
       "group": "入门旋律与长音",
-      "reason": "短句中的八分音符",
-      "width": 640,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 640
+      "reason": "短句中的八分音符"
     },
     {
       "id": "song_bie",
@@ -136,19 +65,7 @@
       "title": "送别",
       "section": "basics",
       "group": "歌唱性与八分音符",
-      "reason": "长短时值与连贯乐句",
-      "width": 640,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 640
+      "reason": "长短时值与连贯乐句"
     },
     {
       "id": "hong_he_gu",
@@ -156,19 +73,7 @@
       "title": "红河谷",
       "section": "basics",
       "group": "歌唱性与八分音符",
-      "reason": "弱起与规整乐句",
-      "width": 640,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 640
+      "reason": "弱起与规整乐句"
     },
     {
       "id": "su_shan_na",
@@ -176,22 +81,7 @@
       "title": "苏珊娜",
       "section": "basics",
       "group": "歌唱性与八分音符",
-      "reason": "重复节奏与八分音符",
-      "width": 640,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "widthCandidates": [
-        618
-      ],
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 640
+      "reason": "重复节奏与八分音符"
     },
     {
       "id": "xiao_hong_mao",
@@ -199,22 +89,7 @@
       "title": "小红帽",
       "section": "basics",
       "group": "歌唱性与八分音符",
-      "reason": "连续八分音符与跳进",
-      "width": 640,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "widthCandidates": [
-        618
-      ],
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 640
+      "reason": "连续八分音符与跳进"
     },
     {
       "id": "chong_er_fei",
@@ -222,31 +97,7 @@
       "title": "虫儿飞",
       "section": "basics",
       "group": "音阶与连奏",
-      "reason": "附点节奏和连奏",
-      "width": 662,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "widthCandidates": [
-        542,
-        544,
-        546,
-        548,
-        550,
-        552,
-        554,
-        556,
-        558,
-        618
-      ],
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 662
+      "reason": "附点节奏和连奏"
     },
     {
       "id": "duo_lai_mi",
@@ -254,22 +105,7 @@
       "title": "哆唻咪",
       "section": "basics",
       "group": "音阶与连奏",
-      "reason": "音阶进行与节奏变化",
-      "width": 662,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "widthCandidates": [
-        588
-      ],
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 662
+      "reason": "音阶进行与节奏变化"
     },
     {
       "id": "rang_wo_men_dang_qi_shuang_jiang",
@@ -277,31 +113,7 @@
       "title": "让我们荡起双桨",
       "section": "basics",
       "group": "音阶与连奏",
-      "reason": "弱起、附点与短连奏",
-      "width": 662,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "widthCandidates": [
-        542,
-        544,
-        546,
-        548,
-        550,
-        552,
-        554,
-        556,
-        558,
-        588
-      ],
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 662
+      "reason": "弱起、附点与短连奏"
     },
     {
       "id": "auld_lang_syne",
@@ -309,18 +121,7 @@
       "title": "友谊地久天长",
       "section": "melodies",
       "group": "民歌与抒情",
-      "reason": "弱起与八分音符",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "弱起与八分音符"
     },
     {
       "id": "mo_si_ke_jiao_wai_de_wan_shang",
@@ -328,18 +129,7 @@
       "title": "莫斯科郊外的晚上",
       "section": "melodies",
       "group": "民歌与抒情",
-      "reason": "小调旋律与连贯气息",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "小调旋律与连贯气息"
     },
     {
       "id": "san_tao_che",
@@ -347,18 +137,7 @@
       "title": "三套车",
       "section": "melodies",
       "group": "民歌与抒情",
-      "reason": "低音区与附点节奏",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "低音区与附点节奏"
     },
     {
       "id": "scarborough_fair",
@@ -366,18 +145,7 @@
       "title": "斯卡布罗集市",
       "section": "melodies",
       "group": "三拍子与调式",
-      "reason": "三拍子和调式色彩",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "三拍子和调式色彩"
     },
     {
       "id": "sound_of_silence",
@@ -385,18 +153,7 @@
       "title": "寂静之声",
       "section": "melodies",
       "group": "三拍子与调式",
-      "reason": "弱起与旋律走向",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "弱起与旋律走向"
     },
     {
       "id": "ai_er_lan_hua_mei",
@@ -404,18 +161,7 @@
       "title": "爱尔兰画眉",
       "section": "melodies",
       "group": "三拍子与调式",
-      "reason": "八分音符与句尾长音",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "八分音符与句尾长音"
     },
     {
       "id": "mo_li_hua",
@@ -423,18 +169,7 @@
       "title": "茉莉花",
       "section": "melodies",
       "group": "民族旋律与节奏",
-      "reason": "五声性旋律与附点",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "五声性旋律与附点"
     },
     {
       "id": "katyusha",
@@ -442,18 +177,7 @@
       "title": "喀秋莎",
       "section": "melodies",
       "group": "民族旋律与节奏",
-      "reason": "较快二拍子与小调",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "较快二拍子与小调"
     },
     {
       "id": "wo_niu_yu_huang_li_niao",
@@ -461,18 +185,7 @@
       "title": "蜗牛与黄鹂鸟",
       "section": "melodies",
       "group": "民族旋律与节奏",
-      "reason": "十六分与切分节奏",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "十六分与切分节奏"
     },
     {
       "id": "hong_mei_hua_er_kai",
@@ -480,19 +193,7 @@
       "title": "红莓花儿开",
       "section": "melodies",
       "group": "节奏与多段歌词",
-      "reason": "弱起与多段歌词",
-      "width": 606,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 606
+      "reason": "弱起与多段歌词"
     },
     {
       "id": "the_internationale",
@@ -500,19 +201,7 @@
       "title": "国际歌",
       "section": "melodies",
       "group": "节奏与多段歌词",
-      "reason": "附点节奏、弱起与三段歌词",
-      "width": 646,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 646
+      "reason": "附点节奏、弱起与三段歌词"
     },
     {
       "id": "wo_de_zu_guo",
@@ -520,18 +209,7 @@
       "title": "我的祖国",
       "section": "melodies",
       "group": "宽广乐句",
-      "reason": "连奏、附点与多段歌词",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "连奏、附点与多段歌词"
     },
     {
       "id": "wo_he_wo_de_zu_guo",
@@ -539,19 +217,7 @@
       "title": "我和我的祖国",
       "section": "melodies",
       "group": "宽广乐句",
-      "reason": "6/8与9/8变拍及连奏",
-      "width": 606,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 606
+      "reason": "6/8与9/8变拍及连奏"
     },
     {
       "id": "yue_liang_dai_biao_wo_de_xin",
@@ -559,18 +225,7 @@
       "title": "月亮代表我的心",
       "section": "melodies",
       "group": "抒情入门",
-      "reason": "附点与完整连奏乐句",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "附点与完整连奏乐句"
     },
     {
       "id": "li_hua_you_kai_fang",
@@ -578,49 +233,7 @@
       "title": "梨花又开放",
       "section": "melodies",
       "group": "抒情入门",
-      "reason": "歌唱性乐句与八分音符",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "widthCandidates": [
-        702,
-        704,
-        706,
-        708,
-        710,
-        712,
-        714,
-        716,
-        718,
-        720,
-        722,
-        724,
-        726,
-        728,
-        730,
-        732,
-        734,
-        736,
-        738,
-        740,
-        742,
-        744,
-        746,
-        748,
-        750,
-        752,
-        754,
-        756,
-        758
-      ],
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "歌唱性乐句与八分音符"
     },
     {
       "id": "bai_hua_lin",
@@ -628,20 +241,7 @@
       "title": "白桦林",
       "section": "melodies",
       "group": "三拍与复拍",
-      "reason": "三拍子与跨拍延音",
-      "width": 638,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "C1/C2合为C，顺序A/A/B/A/C/B/A/C；仅第4小节保留第二遍替代旋律，完整演奏与两套歌词不变。保留可读字号，按实际行高分页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "minimumNoteGapEm": 0.2,
-      "noteGapEm": 0.35,
-      "uniformSystemHeight": false
+      "reason": "三拍子与跨拍延音"
     },
     {
       "id": "guang_yin_de_gu_shi",
@@ -649,50 +249,7 @@
       "title": "光阴的故事",
       "section": "melodies",
       "group": "三拍与复拍",
-      "reason": "6/8拍中的连续八分音符",
-      "width": 606,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "widthCandidates": [
-        742,
-        744,
-        746,
-        748,
-        750,
-        752,
-        754,
-        756,
-        758,
-        760,
-        762,
-        764,
-        766,
-        768,
-        770,
-        772,
-        774,
-        776,
-        778,
-        780,
-        782,
-        784,
-        786,
-        788,
-        790,
-        792,
-        794,
-        796,
-        798
-      ],
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 606
+      "reason": "6/8拍中的连续八分音符"
     },
     {
       "id": "tong_zhuo_de_ni",
@@ -700,19 +257,7 @@
       "title": "同桌的你",
       "section": "melodies",
       "group": "三拍与复拍",
-      "reason": "6/8拍与弱起、反复",
-      "width": 606,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 606
+      "reason": "6/8拍与弱起、反复"
     },
     {
       "id": "xiang_si",
@@ -720,18 +265,7 @@
       "title": "相思",
       "section": "melodies",
       "group": "三拍与复拍",
-      "reason": "三拍子、附点和跨小节延音",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ]
+      "reason": "三拍子、附点和跨小节延音"
     },
     {
       "id": "bei_jia_er_hu_pan",
@@ -739,30 +273,7 @@
       "title": "贝加尔湖畔",
       "section": "melodies",
       "group": "切分与延音",
-      "reason": "器乐间奏与跨拍延音",
-      "width": 644,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十七版：替代旋律与主谱同字号，仍贴近对应小节实际歌词。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 662,
-      "widthCandidates": [
-        644,
-        646,
-        648,
-        650,
-        652,
-        654,
-        658,
-        662
-      ],
-      "noteGapEm": 0.5
+      "reason": "器乐间奏与跨拍延音"
     },
     {
       "id": "yu_jian",
@@ -770,18 +281,7 @@
       "title": "遇见",
       "section": "melodies",
       "group": "切分与延音",
-      "reason": "切分与高音区器乐间奏",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "切分与高音区器乐间奏"
     },
     {
       "id": "huang_hun",
@@ -789,18 +289,7 @@
       "title": "黄昏",
       "section": "melodies",
       "group": "切分与延音",
-      "reason": "切分节奏与延音",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "切分节奏与延音"
     },
     {
       "id": "an_xiang",
@@ -808,19 +297,7 @@
       "title": "暗香",
       "section": "melodies",
       "group": "切分与延音",
-      "reason": "长音、跨拍与情绪层次",
-      "width": 606,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 606
+      "reason": "长音、跨拍与情绪层次"
     },
     {
       "id": "mei_li_de_shen_hua",
@@ -828,19 +305,7 @@
       "title": "美丽的神话",
       "section": "melodies",
       "group": "切分与延音",
-      "reason": "切分、附点与长句",
-      "width": 614,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 614
+      "reason": "切分、附点与长句"
     },
     {
       "id": "dang_nian_qing",
@@ -848,18 +313,7 @@
       "title": "当年情",
       "section": "melodies",
       "group": "切分与延音",
-      "reason": "弱起、附点与低音区",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "弱起、附点与低音区"
     },
     {
       "id": "qian_nv_you_hun",
@@ -867,19 +321,7 @@
       "title": "倩女幽魂",
       "section": "melodies",
       "group": "香港影视金曲",
-      "reason": "较规整的节奏与短篇幅",
-      "width": 646,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 646
+      "reason": "较规整的节奏与短篇幅"
     },
     {
       "id": "tie_xue_dan_xin",
@@ -887,19 +329,7 @@
       "title": "铁血丹心",
       "section": "melodies",
       "group": "香港影视金曲",
-      "reason": "附点节奏与低音跳进",
-      "width": 646,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 646
+      "reason": "附点节奏与低音跳进"
     },
     {
       "id": "qiu_ying",
@@ -907,18 +337,7 @@
       "title": "秋樱",
       "section": "melodies",
       "group": "十六分与变拍",
-      "reason": "变拍与歌唱性乐句",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "变拍与歌唱性乐句"
     },
     {
       "id": "man_bu_ren_sheng_lu",
@@ -926,18 +345,7 @@
       "title": "漫步人生路",
       "section": "melodies",
       "group": "十六分与变拍",
-      "reason": "十六分节奏与低音区",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "十六分节奏与低音区"
     },
     {
       "id": "wo_zhi_zai_hu_ni",
@@ -945,18 +353,7 @@
       "title": "我只在乎你",
       "section": "melodies",
       "group": "十六分与变拍",
-      "reason": "连续十六分与跨拍延音",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "连续十六分与跨拍延音"
     },
     {
       "id": "guo_huo",
@@ -964,19 +361,7 @@
       "title": "过火",
       "section": "melodies",
       "group": "十六分与变拍",
-      "reason": "密集歌词和切分",
-      "width": 614,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 614
+      "reason": "密集歌词和切分"
     },
     {
       "id": "yue_ding",
@@ -984,18 +369,7 @@
       "title": "约定",
       "section": "melodies",
       "group": "十六分与变拍",
-      "reason": "切分、弱起与句尾装饰",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "切分、弱起与句尾装饰"
     },
     {
       "id": "hou_lai",
@@ -1003,29 +377,7 @@
       "title": "后来",
       "section": "melodies",
       "group": "十六分与变拍",
-      "reason": "多段歌词、切分和连奏",
-      "width": 686,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "A/B/A/A/C复用，按实际行高排为单页；数字约22.58px，保留全部歌词和演奏时值。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "noteGapEm": 0.35,
-      "minimumNoteGapEm": 0.2,
-      "maximumWidth": 718,
-      "widthCandidates": [
-        678,
-        686,
-        694,
-        702,
-        710,
-        718
-      ]
+      "reason": "多段歌词、切分和连奏"
     },
     {
       "id": "tong_hua_zhen",
@@ -1033,30 +385,7 @@
       "title": "童话镇",
       "section": "melodies",
       "group": "十六分与变拍",
-      "reason": "反复歌词、切分与长句",
-      "width": 742,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "noteGapEm": 0.5,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "widthCandidates": [
-        734,
-        742,
-        746,
-        750,
-        754,
-        758,
-        765
-      ],
-      "maximumWidth": 765,
-      "minimumNoteGapEm": 0.35
+      "reason": "反复歌词、切分与长句"
     },
     {
       "id": "lao_nan_hai",
@@ -1064,30 +393,7 @@
       "title": "老男孩",
       "section": "melodies",
       "group": "密集节奏与反复",
-      "reason": "较长结构与密集八分、十六分",
-      "width": 734,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十七版：恢复四组跳房子与 D.S.，保留第二房子“得”音修正，撤销 A—F 编排。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "widthCandidates": [
-        710,
-        718,
-        726,
-        730,
-        734,
-        742,
-        750
-      ],
-      "maximumWidth": 750,
-      "noteGapEm": 0.5,
-      "minimumNoteGapEm": 0.4
+      "reason": "较长结构与密集八分、十六分"
     },
     {
       "id": "liang_liang",
@@ -1095,19 +401,7 @@
       "title": "凉凉",
       "section": "melodies",
       "group": "密集节奏与反复",
-      "reason": "器乐过门与密集节奏",
-      "width": 654,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 654
+      "reason": "器乐过门与密集节奏"
     },
     {
       "id": "qian_si_xi",
@@ -1115,19 +409,7 @@
       "title": "牵丝戏",
       "section": "melodies",
       "group": "密集节奏与反复",
-      "reason": "切分、十六分与跳进",
-      "width": 670,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 670
+      "reason": "切分、十六分与跳进"
     },
     {
       "id": "ren_shi_jian",
@@ -1135,19 +417,7 @@
       "title": "人世间",
       "section": "melodies",
       "group": "密集节奏与反复",
-      "reason": "慢速密集节奏与高音区",
-      "width": 656,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 656
+      "reason": "慢速密集节奏与高音区"
     },
     {
       "id": "shi_jie_zeng_yu_wo_de",
@@ -1155,26 +425,7 @@
       "title": "世界赠予我的",
       "section": "melodies",
       "group": "密集节奏与反复",
-      "reason": "密集节奏与长线条",
-      "width": 654,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "按用户要求全部展开为47小节顺读谱；各遍歌词和第二遍替代旋律直接写出，取消反复与房子，保留全部演奏内容。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 686,
-      "widthCandidates": [
-        654,
-        662,
-        670,
-        678,
-        686
-      ]
+      "reason": "密集节奏与长线条"
     },
     {
       "id": "ming_tian_hui_geng_hao",
@@ -1182,19 +433,7 @@
       "title": "明天会更好",
       "section": "melodies",
       "group": "密集节奏与反复",
-      "reason": "变拍、器乐段与多段歌词",
-      "width": 654,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十七版：“唱出你的热情伸出你的双手”第三遍统一沿用第一、二遍歌词，不改变音符。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 654
+      "reason": "变拍、器乐段与多段歌词"
     },
     {
       "id": "man_man_xi_huan_ni",
@@ -1202,28 +441,7 @@
       "title": "慢慢喜欢你",
       "section": "melodies",
       "group": "密集节奏与反复",
-      "reason": "跨拍、变拍与细分节奏",
-      "width": 614,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 630,
-      "widthCandidates": [
-        590,
-        598,
-        606,
-        614,
-        622,
-        630
-      ],
-      "noteGapEm": 0.6
+      "reason": "跨拍、变拍与细分节奏"
     },
     {
       "id": "xin_bu_liao_qing",
@@ -1231,18 +449,7 @@
       "title": "新不了情",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "三连音与复杂节奏",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十七版：A/B 两段各含一拍弱起和三拍收尾，A/B/A/B/B 代替全部房子、反复与 D.S.，保持完整演奏。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "三连音与复杂节奏"
     },
     {
       "id": "wo_yao_ni",
@@ -1250,23 +457,7 @@
       "title": "我要你",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "三连音、十六分与多段歌词",
-      "width": 590,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "noteGapEm": 0.6,
-      "systemGapCandidates": [
-        11
-      ],
-      "widthLocked": true,
-      "widthCandidates": [
-        590
-      ],
-      "maximumWidth": 590
+      "reason": "三连音、十六分与多段歌词"
     },
     {
       "id": "annie",
@@ -1274,19 +465,7 @@
       "title": "安妮",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "反复歌词、器乐段与跳房子",
-      "width": 622,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 622
+      "reason": "反复歌词、器乐段与跳房子"
     },
     {
       "id": "yi_qian_ge_shang_xin_de_li_you",
@@ -1294,30 +473,7 @@
       "title": "一千个伤心的理由",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "十六分切分与跳房子",
-      "width": 654,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 686,
-      "widthCandidates": [
-        630,
-        638,
-        646,
-        654,
-        662,
-        670,
-        678,
-        686
-      ],
-      "noteGapEm": 0.5
+      "reason": "十六分切分与跳房子"
     },
     {
       "id": "yue_ban_xiao_ye_qu",
@@ -1325,29 +481,7 @@
       "title": "月半小夜曲",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "高音区、切分与跳进",
-      "width": 614,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 638,
-      "widthCandidates": [
-        590,
-        598,
-        606,
-        614,
-        622,
-        630,
-        638
-      ],
-      "noteGapEm": 0.6
+      "reason": "高音区、切分与跳进"
     },
     {
       "id": "ting_hai",
@@ -1355,19 +489,7 @@
       "title": "听海",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "三连音、细分节奏与双层连线",
-      "width": 670,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 670
+      "reason": "三连音、细分节奏与双层连线"
     },
     {
       "id": "ru_yuan",
@@ -1375,19 +497,7 @@
       "title": "如愿",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "变调、倚音与多段歌词",
-      "width": 760,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 760
+      "reason": "变调、倚音与多段歌词"
     },
     {
       "id": "jiu_er",
@@ -1395,19 +505,7 @@
       "title": "九儿",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "降B、C、F调的顺读转调及持续音",
-      "width": 760,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "适配半音阶口琴音域，降E→F→降B，音域E♭4–D6；24小节完整顺读，无演奏顺序或跳房子。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 760
+      "reason": "降B、C、F调的顺读转调及持续音"
     },
     {
       "id": "ai_ru_chao_shui",
@@ -1415,33 +513,7 @@
       "title": "爱如潮水",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "附点、切分、波音与两房反复",
-      "width": 638,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十五版：C1/C2合为C，顺序A/B/C/B/C/C；房子1、3四拍收尾，房子2三拍收尾；保留第三遍三连音变化。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 765,
-      "noteGapEm": 0.6,
-      "widthCandidates": [
-        638,
-        650,
-        666,
-        680,
-        700,
-        720,
-        740,
-        760,
-        765
-      ],
-      "pageCount": 1
+      "reason": "附点、切分、波音与两房反复"
     },
     {
       "id": "zhui_meng_ren",
@@ -1449,34 +521,7 @@
       "title": "追梦人",
       "section": "melodies",
       "group": "经典叙事与抒情",
-      "reason": "双段歌词、附点、十六分音符与跳房子",
-      "width": 640,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十九版：依指定C调2/4谱保留三套主歌、副歌及尾句，删去器乐与D.S.，顺读结构不设具名段落。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 765,
-      "widthCandidates": [
-        590,
-        614,
-        630,
-        646,
-        662,
-        678,
-        694,
-        710,
-        726,
-        742,
-        758,
-        765
-      ]
+      "reason": "双段歌词、附点、十六分音符与跳房子"
     },
     {
       "id": "xing_xing_dian_deng",
@@ -1484,34 +529,7 @@
       "title": "星星点灯",
       "section": "melodies",
       "group": "经典叙事与抒情",
-      "reason": "切分、替代旋律、器乐前奏与半音转调",
-      "width": 640,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十九版：顺读曲目去掉无跳转作用的全部段名及人为双小节线；如果有你在另去掉A→B→C顺序，保留音符、歌词、反复与房子。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 765,
-      "widthCandidates": [
-        590,
-        614,
-        630,
-        646,
-        662,
-        678,
-        694,
-        710,
-        726,
-        742,
-        758,
-        765
-      ]
+      "reason": "切分、替代旋律、器乐前奏与半音转调"
     },
     {
       "id": "yan_hua_yi_leng",
@@ -1519,32 +537,7 @@
       "title": "烟花易冷",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "长音、反复与高音区转换",
-      "width": 640,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十五版：B1/B2合为B，顺序A/B/A/B/B/C；房子1两拍收尾，房子2、3三拍收尾，全部旋律与歌词保留。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 765,
-      "widthCandidates": [
-        638,
-        650,
-        666,
-        680,
-        700,
-        720,
-        740,
-        760,
-        765
-      ],
-      "pageCount": 1
+      "reason": "长音、反复与高音区转换"
     },
     {
       "id": "feng",
@@ -1552,20 +545,7 @@
       "title": "枫",
       "section": "melodies",
       "group": "三连音与进阶抒情",
-      "reason": "细分节奏、延音与降D调转换",
-      "width": 654,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十三版：按快悦谱zU2gc10gr重抄61小节及全部362字歌词，保留反复、房子与降D转调。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 654
+      "reason": "细分节奏、延音与降D调转换"
     },
     {
       "id": "tai_yang_zhao_chang_sheng_qi",
@@ -1573,19 +553,7 @@
       "title": "太阳照常升起",
       "section": "instrumental",
       "group": "亚洲影视主题",
-      "reason": "短篇幅与长音",
-      "width": 622,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 622
+      "reason": "短篇幅与长音"
     },
     {
       "id": "zhi_dao_shi_jie_de_jin_tou",
@@ -1593,19 +561,7 @@
       "title": "直到世界的尽头",
       "section": "instrumental",
       "group": "亚洲影视主题",
-      "reason": "高音区、切分与导航",
-      "width": 622,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 622
+      "reason": "高音区、切分与导航"
     },
     {
       "id": "liang_zhu",
@@ -1613,18 +569,7 @@
       "title": "梁祝",
       "section": "instrumental",
       "group": "影视爱情主题",
-      "reason": "民族旋律与装饰、连奏",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ]
+      "reason": "民族旋律与装饰、连奏"
     },
     {
       "id": "wen_rou_de_qing_su",
@@ -1632,18 +577,7 @@
       "title": "温柔的倾诉",
       "section": "instrumental",
       "group": "影视爱情主题",
-      "reason": "小调、临时升音与切分",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ]
+      "reason": "小调、临时升音与切分"
     },
     {
       "id": "castle_in_the_sky",
@@ -1651,23 +585,7 @@
       "title": "天空之城",
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
-      "reason": "长线条与高音区",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十五版：统一段尾双线、简化演奏结构，核对替代旋律与弱起归属；无越界和重叠前提下优先保持单页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "widthCandidates": [
-        590
-      ],
-      "maximumWidth": 590,
-      "noteGapEm": 0.6
+      "reason": "长线条与高音区"
     },
     {
       "id": "yong_yuan_tong_zai",
@@ -1675,20 +593,7 @@
       "title": "永远同在",
       "section": "instrumental",
       "group": "亚洲影视主题",
-      "reason": "三拍子、低音区衔接与抒情长音",
-      "width": 622,
-      "maximumWidth": 622,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "按用户要求保留前35小节作为独奏短版，在主音长音后以终止线结束；保留F调3/4、96拍及保留部分的全部音符与连线。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ]
+      "reason": "三拍子、低音区衔接与抒情长音"
     },
     {
       "id": "xia_yu_de_shi_hou",
@@ -1696,18 +601,7 @@
       "title": "下雨的时候",
       "section": "instrumental",
       "group": "短主题与歌唱性旋律",
-      "reason": "长音、切分与器乐反复",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false
+      "reason": "长音、切分与器乐反复"
     },
     {
       "id": "second_waltz",
@@ -1715,19 +609,7 @@
       "title": "第二圆舞曲",
       "section": "instrumental",
       "group": "舞曲与动画主题",
-      "reason": "三拍子、倚音与圆舞曲乐句",
-      "width": 622,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 622
+      "reason": "三拍子、倚音与圆舞曲乐句"
     },
     {
       "id": "ru_guo_you_ni_zai",
@@ -1735,34 +617,7 @@
       "title": "如果有你在",
       "section": "instrumental",
       "group": "舞曲与动画主题",
-      "reason": "十六分音符、临时变音、顿音与延音",
-      "width": 640,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十九版：顺读曲目去掉无跳转作用的全部段名及人为双小节线；如果有你在另去掉A→B→C顺序，保留音符、歌词、反复与房子。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 765,
-      "widthCandidates": [
-        590,
-        614,
-        630,
-        646,
-        662,
-        678,
-        694,
-        710,
-        726,
-        742,
-        758,
-        765
-      ]
+      "reason": "十六分音符、临时变音、顿音与延音"
     },
     {
       "id": "super_mario",
@@ -1770,23 +625,7 @@
       "title": "超级玛丽",
       "section": "instrumental",
       "group": "快速音型与装饰",
-      "reason": "休止切分、跳进与临时变音",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十四版逐曲校订：按实际演奏复用乐段，优先减少页数，并在无重叠、无越界前提下选择可读字号。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "widthCandidates": [
-        590
-      ],
-      "maximumWidth": 590,
-      "noteGapEm": 0.6
+      "reason": "休止切分、跳进与临时变音"
     },
     {
       "id": "qing_niao",
@@ -1794,19 +633,7 @@
       "title": "青鸟",
       "section": "instrumental",
       "group": "快速音型与装饰",
-      "reason": "快速节奏与高音区",
-      "width": 646,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "参考快悦谱cueIb1f4L，按A→B→C→D→B→C→E→C→D演奏；保留完整小节及连线，D为长收尾、E含短收尾与间奏，删除反复、房子及D.S./Fine，补回末次八小节收尾。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 646
+      "reason": "快速节奏与高音区"
     },
     {
       "id": "besame_mucho",
@@ -1814,32 +641,7 @@
       "title": "深情的吻",
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
-      "reason": "歌唱性旋律、低音区与乐句气息",
-      "width": 646,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十八版：第二房子仅保留第17—19小节，其余连续旋律取消房子线；演奏不变。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "minimumNoteGapEm": 0.3,
-      "noteGapEm": 0.6,
-      "widthCandidates": [
-        646,
-        654,
-        662,
-        670,
-        678,
-        686,
-        694,
-        702,
-        710
-      ],
-      "maximumWidth": 710
+      "reason": "歌唱性旋律、低音区与乐句气息"
     },
     {
       "id": "por_una_cabeza",
@@ -1847,20 +649,7 @@
       "title": "一步之遥",
       "section": "instrumental",
       "group": "快速音型与装饰",
-      "reason": "探戈切分、装饰与变调",
-      "width": 670,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "maximumSharedWidth": 800,
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 670
+      "reason": "探戈切分、装饰与变调"
     },
     {
       "id": "san_bu",
@@ -1868,20 +657,7 @@
       "title": "散步",
       "section": "instrumental",
       "group": "快速音型与装饰",
-      "reason": "切分与器乐乐句",
-      "width": 670,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "maximumSharedWidth": 800,
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 670
+      "reason": "切分与器乐乐句"
     },
     {
       "id": "beer_barrel_polka",
@@ -1889,23 +665,7 @@
       "title": "啤酒桶波尔卡",
       "section": "instrumental",
       "group": "快速音型与装饰",
-      "reason": "快速二拍子、倚音与变调",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十八版：A 段末尾差异改为第一、第二房子，撤销替代旋律；顶部 ABCD 顺序不变。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "widthCandidates": [
-        590
-      ],
-      "maximumWidth": 590,
-      "noteGapEm": 0.6
+      "reason": "快速二拍子、倚音与变调"
     },
     {
       "id": "canon",
@@ -1913,19 +673,7 @@
       "title": "卡农",
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "从长音渐进到十六分音型",
-      "width": 646,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "解除固定页码；保留可读字号，按实际行高分页并允许相邻同样式短曲共页。",
-      "systemGap": 11,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "uniformSystemHeight": false,
-      "maximumWidth": 646
+      "reason": "从长音渐进到十六分音型"
     },
     {
       "id": "flower_dance",
@@ -1933,19 +681,7 @@
       "title": "花之舞",
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "长篇幅、快速音型与高音区",
-      "width": 626,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十九版：将版宽由744调至626，数字放大约19%，保留两页并提高两页使用率。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "pageCount": 2
+      "reason": "长篇幅、快速音型与高音区"
     },
     {
       "id": "turkish_march",
@@ -1953,24 +689,7 @@
       "title": "土耳其进行曲",
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "快速半音、装饰与多次变调",
-      "width": 590,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第四十八版：段落名独占一行，C 段第一组反复结束后明确换页；前页优先填满，避免拆开完整反复。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "pageBreakAfterRepeat": [
-        {
-          "section": "C",
-          "occurrence": 1
-        }
-      ]
+      "reason": "快速半音、装饰与多次变调"
     },
     {
       "id": "valsentino",
@@ -1978,19 +697,7 @@
       "title": "Valsentino(快速圆舞曲)",
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "快速三拍子、半音、三连音与变调",
-      "width": 614,
-      "sharePage": true,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十九版：顺读曲目去掉无跳转作用的全部段名及人为双小节线；如果有你在另去掉A→B→C顺序，保留音符、歌词、反复与房子。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 614
+      "reason": "快速三拍子、半音、三连音与变调"
     },
     {
       "id": "zhi_ai_li_si",
@@ -1998,23 +705,7 @@
       "title": "致爱丽丝",
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "弱起、两房反复、快速音型与三连音",
-      "width": 650,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十三版：按wRemd1amp的3/4改编重抄，补7处还原2及两处隐含小节线，保留原反复、房子与倚音。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 650,
-      "widthCandidates": [
-        650
-      ]
+      "reason": "弱起、两房反复、快速音型与三连音"
     },
     {
       "id": "mozart_k545",
@@ -2022,20 +713,7 @@
       "title": "C大调奏鸣曲 K.545 第一乐章",
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "长篇幅、快速音阶、主题交接与反复",
-      "width": 614,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十一版：按新上传简谱逐小节核对73小节，修正混入的伴奏、休止、33小节6、9/54小节临时升音及31—41、50—53小节主旋律声部，保留两组原反复；排版重新验证。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": true,
-      "systemGapCandidates": [
-        11
-      ],
-      "pageCount": 2
+      "reason": "长篇幅、快速音阶、主题交接与反复"
     },
     {
       "id": "dan_huang_guan_bo_er_ka",
@@ -2043,64 +721,15 @@
       "title": "单簧管波尔卡",
       "section": "instrumental",
       "group": "综合进阶",
-      "reason": "快速二拍子、颤音、三连音与弱起分段复用",
-      "width": 708,
-      "sharePage": false,
-      "breakBefore": false,
-      "pageBreaks": [],
-      "reviewNote": "第五十五版：删除序与尾，只保留A/B/C；统一各遍力度，仅保留第四遍弱起顿音差异。",
-      "systemGap": 11,
-      "uniformSystemHeight": false,
-      "includeBass": false,
-      "widthLocked": false,
-      "systemGapCandidates": [
-        11
-      ],
-      "maximumWidth": 708,
-      "pageCount": 1,
-      "widthCandidates": [
-        600,
-        614,
-        630,
-        646,
-        662,
-        680,
-        700,
-        708
-      ]
+      "reason": "快速二拍子、颤音、三连音与弱起分段复用"
     }
   ],
-  "outputPdf": "循序渐进乐谱集-简谱-v59.pdf",
-  "outputKey": "scorebook-v59-numbered",
+  "edition": "第六十版",
+  "baseWidth": 720,
+  "outputPdf": "循序渐进乐谱集-简谱-v60.pdf",
+  "outputKey": "scorebook-v60-web",
   "page": {
-    "width": 744,
-    "height": 1133,
-    "outerMargin": 24,
-    "bodyTop": 38,
-    "bodyBottom": 1095,
-    "scoreMargin": 8,
-    "systemGap": 18,
-    "shortWorkGap": 22,
-    "minimumFillPercent": 0,
-    "maximumNotePx": 26,
-    "minimumNotePx": 20
-  },
-  "showCredits": false,
-  "uniformSystemHeight": false,
-  "noteGapEm": 0.6,
-  "minimumNoteGapEm": 0.4,
-  "replan": true,
-  "layoutCacheKey": "scorebook",
-  "systemGapCandidates": [
-    18,
-    16,
-    14,
-    11
-  ],
-  "layoutPriority": "page",
-  "exportOutlinePdf": false,
-  "minimumSystemGapEm": 0.5,
-  "notationLabel": "简谱版",
-  "compactPages": true,
-  "maximumSharedWidth": 765
+    "width": 793.7007874015749,
+    "height": 1122.5196850393702
+  }
 }

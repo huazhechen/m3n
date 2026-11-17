@@ -161,3 +161,12 @@ describe('direct M3N parser', () => {
     expect(measures?.flatMap((measure) => measure.events).flatMap((event) => event.navigation)).toEqual([])
   })
 })
+
+describe('preferred engraving width', () => {
+  it('defaults to720, reads the header, and ignores comments or misplaced fields', () => {
+    expect(parseM3NDocument('N: 1 2 3 4 |||').preferredWidth).toBe(720)
+    expect(parseM3NDocument('{preferred-width=680}\nN: 1 2 3 4 |||').preferredWidth).toBe(680)
+    expect(parseM3NDocument('// {preferred-width=800}\nN: 1 2 3 4 |||').preferredWidth).toBe(720)
+    expect(parseM3NDocument('N: 1 2 3 4 |||\nL: {preferred-width=800}').preferredWidth).toBe(720)
+  })
+})

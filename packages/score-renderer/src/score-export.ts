@@ -1,3 +1,5 @@
+import { A4_MARGIN_MM } from '@m3n/notation'
+
 export function downloadBlob(blob: Blob, fileName: string) { 
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -15,13 +17,13 @@ function getSvgSize(svg: SVGSVGElement) {
   return { width, height }
 }
 
-export function a4SourcePageHeight(sourceWidth: number, margin = 10) {
+export function a4SourcePageHeight(sourceWidth: number, margin = A4_MARGIN_MM) {
   const pageWidth = 210 - margin * 2
   const pageHeight = 297 - margin * 2
   return Math.floor(sourceWidth * pageHeight / pageWidth)
 }
 
-export function a4ImagePlacement(sourceWidth: number, sourceHeight: number, margin = 10) {
+export function a4ImagePlacement(sourceWidth: number, sourceHeight: number, margin = A4_MARGIN_MM) {
   const contentWidth = 210 - margin * 2
   const contentHeight = 297 - margin * 2
   const scale = Math.min(contentWidth / sourceWidth, contentHeight / sourceHeight)

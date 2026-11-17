@@ -2,7 +2,7 @@ import { numberedHeaderContent } from './header-content.js'
 import { numberedHeadingLines } from './header-text.js'
 import { DefaultTextMeasurer, type TextMeasurer } from '@m3n/jpfun'
 import {
-  resolveScorePitches, displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreEventIds,
+  A4_CONTENT_ASPECT_RATIO, resolveScorePitches, displayedTempo, parseM3NGrace, parseM3NGroupPitches, scoreEventIds,
   measurePlaybackPasses, type ScoreDocument, type ScoreEvent, type ScoreMeasure, type ScoreAlternative,
   sectionKeyVisits, sectionEntryKey, sectionVisitKey, sectionOrderLabels, keyLabel,
 } from '@m3n/notation'
@@ -398,7 +398,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const orderLines = numberedOrderLines(sectionOrderLabels(context?.header ?? document, displayLabel), options.width - 2 * (options.pageMargin ?? 32), options.textMeasurer)
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
-    `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,
+    `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,
     `@head(center={${headings}},right={${credits}},left={{${signatures}}},sidebelow=${Boolean(document.title)},sideauto=true,itemgap=16px) @br()`,
     ...orderLines.map((line, index) => `@head(left={{@text(${quote(index ? '→' : '演奏顺序：')},size=16px) ${line.map((name, i) => `${i ? '@text("→",size=16px) ' : ''}@text(${quote(name)},size=16px,weight=700,frame=true)`).join(' ')} }},itemgap=4px) @br()`),
   ]

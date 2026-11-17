@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { ScoreDocument } from '@m3n/notation'
-import { a4ImagePlacement, downloadBlob, renderScoreCanvas, scoreFileName, stackScoreCanvases } from '@m3n/score-renderer/view'
+import { a4ImagePlacement, downloadBlob, renderScoreCanvas, scoreFileName, frameScoreImage } from '@m3n/score-renderer/view'
 import { renderScoreInto, type ScoreDisplaySettings } from '../lib/render-score'
 
 type ExportFormat = 'png' | 'pdf' | 'svg'
@@ -46,22 +46,11 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         for (const svg of svgs) await outlineSvgText(svg)
         const fileName = scoreFileName(title)
         if (format === 'svg') {
-          const root = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-          const sizes = svgs.map(svg => ({ width: svg.viewBox.baseVal.width, height: svg.viewBox.baseVal.height }))
-          const width = Math.max(...sizes.map(size => size.width))
-          const height = sizes.reduce((total, size) => total + size.height, 0)
-          root.setAttribute('width', String(width)); root.setAttribute('height', String(height))
-          root.setAttribute('viewBox', `0 0 ${width} ${height}`)
-          let y = 0
-          for (const [index, svg] of svgs.entries()) {
-            svg.setAttribute('x', '0'); svg.setAttribute('y', String(y))
-            root.append(svg); y += sizes[index]!.height
-          }
+          const root = frameScoreImage(svgs)
           downloadBlob(new Blob([new XMLSerializer().serializeToString(root)], { type: 'image/svg+xml;charset=utf-8' }), `${fileName}.svg`)
         } else if (format === 'png') {
-          const canvases = []
-          for (const svg of svgs) canvases.push(await renderScoreCanvas(svg, settings.width, 2))
-          const canvas = stackScoreCanvases(canvases)
+          const framed = frameScoreImage(svgs)
+          const canvas = await renderScoreCanvas(framed, framed.viewBox.baseVal.width, 2)
           const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
           if (!blob) throw new Error('PNG 生成失败。')
           downloadBlob(blob, `${fileName}.png`)

@@ -1,3 +1,4 @@
+import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
 import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
@@ -313,7 +314,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     height: placeNativeLanes(system, measurer, options.uniformSystemHeight),
     gapBefore: system.measures[0]?.extraGap ?? 0,
   }))]
-  const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * 277 / 190) : Infinity,
+  const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
     margin, gap })
   const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [] }))
   for (const [index,block] of header.blocks.entries()) {

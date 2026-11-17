@@ -1,17 +1,20 @@
 // Keep the same font preparation and resolved glyph positions as the outlined edition.
 export { prepare } from './scorebook-layout.mjs'
+import { createSvgInkMeasurer } from './lib/svg-ink-bounds.mjs'
 
 export function compactPage(markup) {
   const host = document.querySelector('#scratch')
   host.innerHTML = markup
   const svg = host.firstElementChild
-  // Match outlinePage: drop primitives entirely outside each nested score slice.
+  // Native routing may emit boundary primitives on both pages. Drop only
+  // those entirely outside their own page before packaging the export font.
+  const ink = createSvgInkMeasurer()
   for (const nested of svg.querySelectorAll('svg')) {
     const view = nested.viewBox.baseVal
-    for (const node of nested.querySelectorAll('text,path,line,circle,polygon,ellipse')) {
+    for (const node of nested.querySelectorAll('text,path,line,circle,rect,polygon,ellipse')) {
       if (node.closest('defs')) continue
-      const box = node.getBBox()
-      if (box.y + box.height < view.y || box.y > view.y + view.height) node.remove()
+      const box = ink(node)
+      if (box.y + box.height <= view.y || box.y >= view.y + view.height) node.remove()
     }
   }
   let glyphs = 0

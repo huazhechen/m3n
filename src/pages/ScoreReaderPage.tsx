@@ -5,7 +5,7 @@ import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
 import { NavActionContent, TopNav } from '../components/TopNav'
-import { presetScores, scorebookDefaultWidth } from '../lib/samples'
+import { presetScores } from '../lib/samples'
 import { useScoreSource } from '../hooks/useScoreSource'
 import type { ScoreDisplaySettings } from '../lib/render-score'
 import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
@@ -75,7 +75,7 @@ export function ScoreReaderPage() {
           ref={exportDialogRef}
           scoreDocument={analysis.score}
           title={result.title}
-          settings={displaySettings ?? { width: score?.scorebookWidth ?? scorebookDefaultWidth, paged: false }}
+          settings={displaySettings ?? { width: result.preferredWidth ?? 720, paged: false }}
           onError={setExportError}
         />
         {exportError && <p className="render-message" role="alert">{exportError}</p>}

@@ -84,6 +84,8 @@ export type ScoreDocument = {
   alternatives?: ScoreAlternative[]
   /** Equal visible measure widths within each numbered-notation system. */
   equalMeasures?: boolean
+  /** Suggested logical engraving width; explicit view settings may override it. */
+  preferredWidth?: number
   /** Written sections are printed once; order determines performance visits. */
   order?: string[]
   /** Optional target keys, indexed by outer section visit in order. */

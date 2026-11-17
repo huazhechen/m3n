@@ -1,4 +1,3 @@
-import { presetScores, scorebookDefaultWidth } from '../lib/samples'
 import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
@@ -188,7 +187,7 @@ export function ScoreRenderer({
   const [toneError, setToneError] = useState('')
   const [toneRetry, setToneRetry] = useState(0)
   const [playbackProgress, setPlaybackProgress] = useState(0)
-  const defaultWidth = playbackOnly ? DEFAULT_SCORE_WIDTH : presetScores.find(score => score.slug === scoreId)?.scorebookWidth ?? scorebookDefaultWidth
+  const defaultWidth = scoreDocument.preferredWidth ?? DEFAULT_SCORE_WIDTH
   const [layoutWidth, setLayoutWidth] = useState(defaultWidth)
   const [bpmOverride, setBpmOverride] = useState<number | null>(null)
   const playbackBpm = bpmOverride ?? clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)

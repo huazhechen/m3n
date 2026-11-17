@@ -1,3 +1,5 @@
+import { DEFAULT_PREFERRED_WIDTH } from '@m3n/notation'
+
 export const SCORE_WIDTH_KEY = 'm3n:score-width'
 export const PLAYBACK_BPM_KEY = 'm3n:playback-bpm'
 export const METRONOME_ENABLED_KEY = 'm3n:metronome-enabled'
@@ -6,7 +8,7 @@ export const RENDER_MODE_KEY = 'm3n:render-mode'
 export const SCORE_WIDTH_MIN = 320
 export const SCORE_WIDTH_MAX = 2560
 export const SCORE_WIDTH_STEP = 10
-export const DEFAULT_SCORE_WIDTH = 800
+export const DEFAULT_SCORE_WIDTH = DEFAULT_PREFERRED_WIDTH
 
 export const PLAYBACK_BPM_MIN = 10
 export const PLAYBACK_BPM_MAX = 240

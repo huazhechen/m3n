@@ -15,6 +15,15 @@ export function validateM3NSyntaxTree(tree: M3NSyntaxTree): ScoreDiagnostic[] {
     }))
   }
   for (const directive of tree.directives) {
+    if (directive.name === 'preferred-width') {
+      const width = Number(directive.value)
+      if (directive.closing || !/^\d+$/.test(directive.value ?? '') || width < 320 || width > 2560) {
+        report('M3N_DIRECTIVE_INVALID_LAYOUT', 'preferred-width 必须为320～2560之间的整数', directive)
+      }
+      if (!tree.lines.some(line => line.line === directive.line && line.kind === 'header')) {
+        report('M3N_DIRECTIVE_INVALID_LAYOUT', 'preferred-width 只能写在文档首部', directive)
+      }
+    }
     if (directive.name === 'equal-measures') {
       if (directive.closing || !['true', 'false'].includes(directive.value ?? '')) {
         report('M3N_DIRECTIVE_INVALID_LAYOUT', 'equal-measures 必须为 true 或 false', directive)

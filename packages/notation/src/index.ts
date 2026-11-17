@@ -23,3 +23,5 @@ export { resolveScorePitches, validateScoreDocument } from './notation/score-rul
 
 export * from './notation/alternatives.js'
 export * from './performance.js'
+
+export * from './page-format.js'

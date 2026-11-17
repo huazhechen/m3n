@@ -1,150 +1,64 @@
-import { parseM3NDocument, scoreEventIds } from '@m3n/notation'
-import { NumberedNotationScore, prepareNumberedNotationFonts } from '@m3n/numbered-notation'
-import { outlineSvgText } from '../src/lib/vector-export'
+import { parseM3NDocument } from '@m3n/notation'
+import { prepareNumberedNotationFonts } from '@m3n/numbered-notation'
+import { a4ImagePlacement } from '@m3n/score-renderer/view'
+import { renderScoreInto } from '../src/lib/render-score'
+import { createSvgInkMeasurer } from './lib/svg-ink-bounds.mjs'
 
 export async function prepare(fontBase64) {
-  const font = new FontFace('Scorebook Text', `url(data:font/otf;base64,${fontBase64})`, {ascentOverride:"88%",descentOverride:"12%",lineGapOverride:"0%"})
+  // This family is only used when packaging export glyphs. Engraving keeps the
+  // web renderer's system serif and CanvasTextMeasurer, without CSS overrides.
+  const font = new FontFace('Scorebook Text', `url(data:font/otf;base64,${fontBase64})`)
   await font.load()
   document.fonts.add(font)
-  // Layout and final outlines must use the same CJK metrics on every machine.
-  const style = document.createElement('style')
-  style.textContent = 'svg text[font-family="serif"]{font-family:"Scorebook Text",serif} body{font-family:"Scorebook Text",serif}'
-  document.head.append(style)
   await prepareNumberedNotationFonts()
 }
 
-export async function measure(source, width, spacing = {}) {
-  const { showCredits = true, ...renderOptions } = spacing
-  const scoreDocument = parseM3NDocument(source)
-  if (!showCredits) {
-    for (const field of ['lyricist', 'composer', 'arranger', 'singer', 'origin']) scoreDocument[field] = ''
-  }
-  const score = NumberedNotationScore.create(scoreDocument)
-  // Inject the same text family for measurements and SVG text.
-  const canvas = document.createElement('canvas'), context = canvas.getContext('2d')
-  const textMeasurer = { measureText(text, style) {
-    context.font = `${style.fontWeight ?? ''} ${style.fontSize ?? 22}px ${style.fontFamily === 'serif' ? '"Scorebook Text"' : style.fontFamily ?? '"Scorebook Text"'}`.trim()
-    return { w: Math.max(context.measureText(text).width, style.fontSize * 0.25), h: style.fontSize, baseline: style.fontSize * 0.8 }
-  } }
-  const [markup] = score.render({ width, paged: false, includeBass: true, textMeasurer, ...renderOptions })
+export async function render(source, width) {
   const host = document.querySelector('#scratch')
-  host.innerHTML = markup
-  const svg = host.firstElementChild
-  // The browser's generic serif is pinned to the export font by prepare().
-  const systems = [...svg.querySelectorAll('g.system')].map(node => {
-    const b = node.getBBox()
-    return {
-      top: Math.min(b.y, Number(node.getAttribute('data-m3n-top') ?? Infinity)),
-      bottom: Math.max(b.y + b.height, Number(node.getAttribute('data-m3n-bottom') ?? -Infinity)),
-      node,
-    }
-  })
-  if (!systems.length) throw new Error('Empty score')
-  let bottom = 0
-  const shapes = [...svg.querySelectorAll('text,path,line,circle,rect,polygon,ellipse')].filter(node => !node.closest('defs') && !(node.parentElement === svg && node.tagName === 'rect'))
-  const outside = []
-  for (const node of shapes) {
-    const b = node.getBBox()
-    if (!b.width && !b.height) continue
-    bottom = Math.max(bottom, b.y + b.height)
-    if (b.x < -0.8 || b.x + b.width > width + 0.8) outside.push({ text: node.textContent, x: b.x, right: b.x + b.width })
-    if (node.closest('g.system')) continue
-    if (node.tagName === 'text' && !node.hasAttribute('data-m3n-role') && b.y + b.height < systems[0].top) continue // score header
-    const near = [...systems].sort((a, c) => Math.max(a.top - b.y - b.height, b.y - a.bottom, 0) - Math.max(c.top - b.y - b.height, b.y - c.bottom, 0))[0]
-    near.top = Math.min(near.top, b.y)
-    near.bottom = Math.max(near.bottom, b.y + b.height)
-  }
-  const cuts = [0]
-  for (let i = 1; i < systems.length; i++) {
-    if (systems[i - 1].bottom > systems[i].top + 0.2) throw new Error(`Overlapping systems at ${i}: ${JSON.stringify(systems.slice(i-1,i+1).map(({top,bottom})=>({top,bottom})))}`)
-    cuts.push((systems[i - 1].bottom + systems[i].top) / 2)
-  }
-  cuts.push(bottom + 8)
-  const baselines = systems.map(({node}) => {
-    const digit = [...node.querySelectorAll('g.note[data-m3n-id^="m3n-e-"] text')].find(text => text.getAttribute('font-size') === '22' && /^[0-7]$/.test(text.textContent))
-    return digit ? Number(digit.getAttribute('y')) : null
-  })
-  const baselineSteps = baselines.slice(1).map((axis,i) => axis === null || baselines[i] === null ? null : Number((axis-baselines[i]).toFixed(3)))
-  const overlaps = []
-  for (const selector of ['text[data-m3n-role="lyric"],text[data-m3n-role="lyric-prefix"]', 'g.note text']) {
-    const nodes = [...svg.querySelectorAll(selector)].filter(n => n.textContent.trim() && (selector[0] !== 'g' || /^[0-7]$/.test(n.textContent)))
-    for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
-      const a = nodes[i].getBBox(), b = nodes[j].getBBox()
-      if (Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)>0.5 && Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)>0.5) overlaps.push({a:nodes[i].textContent,b:nodes[j].textContent,boxA:[a.x,a.y,a.width,a.height],boxB:[b.x,b.y,b.width,b.height]})
-    }
-  }
-  // A cut must not intersect any rendered glyph, relation or lyric.
-  const clipped = []
-  for (const cut of cuts.slice(1,-1)) for (const node of shapes) {
-    const b = node.getBBox()
-    if (b.y < cut - 0.2 && b.y+b.height > cut + 0.2) clipped.push({ cut, tag: node.tagName, text:node.textContent, box:[b.x,b.y,b.width,b.height], parent:node.parentElement.outerHTML.slice(0,250) })
-  }
-  // Count distinct main-note columns, not chord members or ornaments. A row's
-  // average head pitch measures crowding independently of its musical duration.
-  const systemDensities = systems.map(({node}) => {
-    const centers = [...node.querySelectorAll('g.note[data-m3n-id^="m3n-e-"] text')]
-      .filter(text => text.getAttribute('font-size') === '22' && /^[0-7]$/.test(text.textContent))
-      .map(text => { const b = text.getBBox(); return b.x + b.width / 2 }).sort((a,b)=>a-b)
-      .filter((x,i,all) => !i || x-all[i-1]>1)
-    return centers.length < 2 ? 0 : (centers.length-1)*22/(centers.at(-1)-centers[0])
-  })
-  // Resolve musical boundaries from event identities after wrapping, never
-  // from a fixed system number that changes with font size or heading layout.
-  const ids = scoreEventIds(scoreDocument), systemByEvent = new Map()
-  systems.forEach(({node}, index) => {
-    for (const note of node.querySelectorAll('g.note[data-m3n-id]')) {
-      const id = note.getAttribute('data-m3n-id')
-      const range = systemByEvent.get(id) ?? {start:index,end:index+1}
-      range.end = index + 1; systemByEvent.set(id,range)
-    }
-  })
-  const measures=scoreDocument.parts.get('score')?.melody.filter(measure=>measure.events.length || measure.multiRest) ?? []
-  const repeatRanges=[], sectionRepeats=new Map()
-  let repeatStart=0
-  for (let index=0; index<measures.length; index++) {
-    const measure=measures[index]
-    if (index===0 || measure.sectionName!==measures[index-1].sectionName) repeatStart=index
-    if (measure.left==='rptstart') repeatStart=index
-    if (measure.right!=='rptend') continue
-    let last=index
-    while (measures[last+1]?.ending) last++
-    const ranges=measures.slice(repeatStart,last+1).flatMap(bar=>bar.events.map(event=>systemByEvent.get(ids.get(event))).filter(Boolean))
-    const section=measure.sectionName ?? '', occurrence=(sectionRepeats.get(section) ?? 0)+1
-    sectionRepeats.set(section,occurrence)
-    if (ranges.length) repeatRanges.push({section,occurrence,start:Math.min(...ranges.map(range=>range.start)),end:Math.max(...ranges.map(range=>range.end))})
-    repeatStart=last+1
-  }
-  const events=measures.flatMap(measure=>measure.events), flowRanges=[]
-  const addFlowRange=members=>{
-    const ranges=members.map(event=>systemByEvent.get(ids.get(event))).filter(Boolean)
-    if (!ranges.length) return
-    const start=Math.min(...ranges.map(range=>range.start)),end=Math.max(...ranges.map(range=>range.end))
-    if (end>start+1) flowRanges.push({start,end})
-  }
-  for (const paragraph of scoreDocument.paragraphs ?? []) addFlowRange(events.filter(event=>paragraph.start<=event.sourceStart && event.sourceStart<paragraph.end))
-  for (const [index,event] of events.entries()) if (event.tie && events[index+1]) addFlowRange([event,events[index+1]])
-  for (const interval of scoreDocument.intervals.filter(interval=>interval.kind==='lg' && interval.staff==='melody')) {
-    addFlowRange(events.filter(event=>interval.start<=event.sourceStart && event.sourceEnd<=interval.end))
-  }
-  return { width, wrapWidthRatio: renderOptions.wrapWidthRatio ?? 1, systemDensities, equalMeasures: renderOptions.equalMeasures ?? scoreDocument.equalMeasures ?? false, height: bottom + 8, rows: systems.length, cuts, outside, overlaps, clipped, baselineSteps, repeatRanges, flowRanges,
-    voltaSystems: systems.map(({node}) => node.getAttribute('data-m3n-volta') === 'true'),
-    paragraphSystems: systems.map(({node}) => node.getAttribute('data-m3n-paragraph')),
-    diagnostics: score.diagnostics, markup }
+  await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged: true })
+  return [...host.querySelectorAll(':scope > svg')]
 }
 
-export async function outlinePage() {
-  const svg = document.querySelector('#print-page > svg')
-  // Remove complete off-page primitives before outlining; safe cuts never cross a glyph.
-  for (const nested of svg.querySelectorAll('svg')) {
-    const view = nested.viewBox.baseVal
-    for (const node of nested.querySelectorAll('text,path,line,circle,polygon,ellipse')) {
+export async function measure(source, width) {
+  const pages = await render(source, width)
+  const outside = [], overlaps = []
+  const ink = createSvgInkMeasurer()
+  let rows = 0
+  for (const [index, svg] of pages.entries()) {
+    const view = svg.viewBox.baseVal
+    const paper = { left: view.x, top: view.y, right: view.x + view.width, bottom: view.y + view.height }
+    rows += svg.querySelectorAll('g.system').length
+    for (const node of svg.querySelectorAll('text,path,line,circle,rect,polygon,ellipse')) {
       if (node.closest('defs')) continue
-      const b = node.getBBox()
-      if (b.y + b.height < view.y || b.y > view.y + view.height) node.remove()
+      const box = ink(node)
+      // Native page routing can include a primitive touching a page boundary
+      // but wholly visible on the neighbouring page. It is clipped here.
+      if (box.y >= paper.bottom || box.y + box.height <= paper.top) continue
+      if (box.width && box.height && (box.x < paper.left - .75 || box.x + box.width > paper.right + .75 || box.y < paper.top - .75 || box.y + box.height > paper.bottom + .75)) {
+        outside.push({ page: index + 1, tag: node.tagName, text: node.textContent, box: [box.x - paper.left, box.y - paper.top, box.width, box.height] })
+      }
+    }
+    for (const selector of ['text[data-m3n-role="lyric"],text[data-m3n-role="lyric-prefix"]', 'g.note text']) {
+      const nodes = [...svg.querySelectorAll(selector)].filter(node => node.textContent.trim() && (selector[0] !== 'g' || /^[0-7]$/.test(node.textContent)))
+      for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+        const a = ink(nodes[i]), b = ink(nodes[j])
+        if (Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > .5 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > .5) {
+          overlaps.push({ page: index + 1, a: nodes[i].textContent, b: nodes[j].textContent })
+        }
+      }
     }
   }
-  await outlineSvgText(svg)
-  // Fonts are no longer needed once every character has become a path.
-  for (const defs of svg.querySelectorAll('defs')) defs.remove()
-  return svg.outerHTML
+  return { width, pageCount: pages.length, rows, outside, overlaps }
+}
+
+/** The same 12mm A4 placement used by the web PDF download, without cropping. */
+export async function a4Pages(source, width) {
+  const pages = await render(source, width)
+  const pxPerMm = 96 / 25.4
+  return pages.map(svg => {
+    const { width: sourceWidth, height: sourceHeight } = svg.viewBox.baseVal
+    const placement = a4ImagePlacement(sourceWidth, sourceHeight)
+    for (const key of ['x', 'y', 'width', 'height']) svg.setAttribute(key, String(placement[key] * pxPerMm))
+    return { markup: svg.outerHTML, sourceWidth, sourceHeight, placement }
+  })
 }

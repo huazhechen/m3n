@@ -4,3 +4,5 @@ export * from './playback-coordinator'
 export * from './score-document'
 export * from './score-export'
 export * from './score-pages'
+
+export * from './score-image-frame'
