@@ -9,9 +9,12 @@ const navActions = {
   library: { label: '乐谱库', path: 'M3 4h5v16H3ZM10 4h5v16h-5ZM17 5l4-1 3 15-4 1Z' },
 }
 
+export function NavActionIcon({ action }: { action: keyof typeof navActions }) {
+  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={navActions[action].path} /></svg>
+}
+
 export function NavActionContent({ action }: { action: keyof typeof navActions }) {
-  const { label, path } = navActions[action]
-  return <><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={path} /></svg><span className="nav-action-label">{label}</span></>
+  return <><NavActionIcon action={action} /><span className="nav-action-label">{navActions[action].label}</span></>
 }
 
 export function TopNav({ actions }: { actions?: ReactNode }) {

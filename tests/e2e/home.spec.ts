@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 for (const width of [390, 1280]) {
-  test(`home page presents the complete score with document controls at ${width}px`, async ({ page }, info) => {
+  test(`home page introduces features before the playable score at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 })
     await page.addInitScript(() => {
       localStorage.setItem('m3n:score-width', '1000')
@@ -9,23 +9,33 @@ for (const width of [390, 1280]) {
     })
     await page.goto('/')
     const actions = page.locator('.hero-actions a')
-    await expect(actions).toHaveText(['浏览乐谱库', '打开编辑器', '浏览指南', '查阅手册'])
+    await expect(actions).toHaveText(['浏览乐谱库', '打开编辑器'])
     await expect(actions.nth(0)).toHaveAttribute('href', '/scores')
     await expect(actions.nth(0)).toHaveClass('primary-link')
     await expect(actions.nth(1)).toHaveAttribute('href', '/editor')
-    await expect(actions.nth(2)).toHaveAttribute('href', '/?doc=guide')
-    await expect(actions.nth(3)).toHaveAttribute('href', '/?doc=manual')
     await expect(page.locator('.top-nav').getByRole('link', { name: '文档', exact: true })).toHaveCount(0)
     await expect(page.locator('.hero-actions .primary-link')).toHaveCount(1)
 
-    const sample = page.getByRole('region', { name: '可试听谱例' })
-    await expect(sample.getByRole('heading')).toHaveCount(0)
+    const sample = page.getByRole('region', { name: '用一首《欢乐颂》，开始今天的练习' })
+    await expect(sample.getByRole('heading', { level: 2 })).toBeVisible()
     await expect(sample).toHaveClass(/markdown-panel/)
     await expect(sample).toHaveCSS('background-color', 'rgb(255, 255, 255)')
-    const cards = page.getByLabel('M3N 特性')
+    const features = page.getByLabel('M3N 功能')
+    await expect(features.locator('h2')).toHaveText([
+      '从一首喜欢的歌开始', '让谱面合你的习惯', '先听一遍，再跟上节拍',
+      '把调好的谱，带到谱架上', '把脑海里的旋律写下来',
+    ])
+    for (const feature of ['固定调', '分页', '小节号', '页面宽度', '音色', '节拍器', '速度', '移调', 'SVG', 'PNG', 'PDF']) {
+      await expect(features).toContainText(feature)
+    }
+    await expect(features.getByRole('link', { name: '浏览指南' })).toHaveAttribute('href', '/?doc=guide')
+    await expect(features.getByRole('link', { name: '查阅手册' })).toHaveAttribute('href', '/?doc=manual')
+    await expect(features.locator('.home-control-hint svg').first()).toBeVisible()
+    await expect(features.getByRole('button')).toHaveCount(0)
     const sampleBounds = await sample.boundingBox()
-    const cardsBounds = await cards.boundingBox()
-    expect(cardsBounds!.y).toBeGreaterThanOrEqual(sampleBounds!.y + sampleBounds!.height)
+    const featureBounds = await features.boundingBox()
+    expect(sampleBounds!.y).toBeGreaterThanOrEqual(featureBounds!.y + featureBounds!.height)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     const paper = sample.locator('.score-paper')
     await expect(paper.locator('svg').first()).toHaveAttribute('width', '800')
     await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
@@ -42,24 +52,27 @@ for (const width of [390, 1280]) {
     await expect(controls.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
     await controls.getByRole('button', { name: '暂停', exact: true }).click()
     await page.screenshot({ path: info.outputPath('home.png'), fullPage: true })
+    await sample.getByRole('link', { name: '打开《欢乐颂》完整乐谱' }).click()
+    await expect(page).toHaveURL(/\/scores\/huan_le_song_01$/)
+    await expect(page.getByRole('button', { name: '乐谱设置', exact: true })).toBeVisible()
   })
 }
 
 test('guide and manual open inside the home page and old document links redirect', async ({ page }) => {
   await page.goto('/')
-  await page.locator('.hero-actions').getByRole('link', { name: '浏览指南' }).click()
+  await page.locator('.home-feature-links').getByRole('link', { name: '浏览指南' }).click()
   await expect(page).toHaveURL(/\/?\?doc=guide/)
   await expect(page.getByRole('heading', { name: 'M3N 指南', exact: true })).toBeVisible()
   await expect(page.locator('.hero, .hero-actions')).toHaveCount(0)
-  await expect(page.getByRole('region', { name: '可试听谱例' })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: '用一首《欢乐颂》，开始今天的练习' })).toHaveCount(0)
   await expect(page.locator('.top-nav')).toHaveCount(1)
   await page.getByRole('link', { name: '手册 §6', exact: true }).click()
   await expect(page).toHaveURL(/\?doc=manual#6/)
   await expect(page.getByRole('heading', { name: 'M3N 手册', exact: true })).toBeAttached()
   await expect(page.locator('.toc-root')).toHaveCount(2)
   await page.locator('.brand-mark').click()
-  await expect(page.getByRole('region', { name: '可试听谱例' })).toBeVisible()
-  await page.locator('.hero-actions').getByRole('link', { name: '查阅手册' }).click()
+  await expect(page.getByRole('region', { name: '用一首《欢乐颂》，开始今天的练习' })).toBeVisible()
+  await page.locator('.home-feature-links').getByRole('link', { name: '查阅手册' }).click()
   await expect(page).toHaveURL(/\?doc=manual$/)
   await expect(page.getByRole('heading', { name: 'M3N 手册', exact: true })).toBeVisible()
   await page.goto('/docs?doc=guide')
