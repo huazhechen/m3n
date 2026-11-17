@@ -22,7 +22,7 @@ export function nativeKeyGeometry(rows: NativeKeyRow[], measurer: TextMeasurer) 
     const nameX = a.w + advance + extraGap
     const bounds = accidental.paths.map(path => ({ink:nativePathInk(path.d),stroke:path.stroke/2}))
     const top = Math.min(-a.baseline,-b.baseline,...bounds.map(({ink,stroke})=>ink.top-stroke))
-    const bottom = Math.max(a.h-a.baseline,b.h-b.baseline,...bounds.map(({ink,stroke})=>ink.bottom+stroke))
+    const bottom = Math.max((a.inkBottom ?? a.h)-a.baseline,(b.inkBottom ?? b.h)-b.baseline,...bounds.map(({ink,stroke})=>ink.bottom+stroke))
     return {prefix,name,paths:accidental.paths,accidentalX:a.w,baseline:-top,
       width:nameX+b.w,nameX,height:bottom-top,x:0,y:0}
   })

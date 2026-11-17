@@ -14,13 +14,17 @@ const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||\nL: 春
 describe('native lyric and music lower envelopes', () => {
   it('places lyrics after the musical body without adding barline height', () => {
     const score = layoutNativeScore(document, options), first = score.systems[0]!.lanes[0]!
+    const measurer = new DefaultTextMeasurer()
+    const numeral = measurer.measureText('0', { fontSize: 22 })
+    const lyricMetrics = measurer.measureText('春', { fontSize: 18.04 })
+    const bodyBottom = numeral.inkBottom! - numeral.baseline
     expect(first.bodyBottom).toBeCloseTo(7.15)
-    expect(first.lyricBottom).toBeCloseTo(4.4)
-    expect(first.bottom).toBeCloseTo(4.4 + 7.04 + 18.04)
+    expect(first.lyricBottom).toBeCloseTo(bodyBottom)
+    expect(first.bottom).toBeCloseTo(bodyBottom + 7.04 + lyricMetrics.inkBottom!)
     const svg = NativeNumberedNotationScore.create(document).render(options).join('')
     const root = new DOMParser().parseFromString(svg, 'text/html')
     const lyric = root.querySelector('[data-m3n-role="lyric"]')!
-    expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(4.4 + 7.04 + 18.04 * 0.8, 4)
+    expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(bodyBottom + 7.04 + lyricMetrics.baseline, 4)
     const second = score.systems[1]!.lanes[0]!
     expect(second.y - first.y).toBeCloseTo(first.bottom + 24 + second.top)
   })
@@ -37,7 +41,7 @@ describe('native lyric and music lower envelopes', () => {
     for (const system of score.systems) {
       const lane = system.lanes[0]!
       expect(lane.lyricBottom).toBe(lane.bodyBottom)
-      expect(lane.bottom).toBeCloseTo(lane.bodyBottom! + 25.08)
+      expect(lane.bottom).toBeCloseTo(lane.bodyBottom! + 7.04 + 18.04 * .8)
     }
   })
 
@@ -95,7 +99,7 @@ describe('native lyric and music lower envelopes', () => {
     expect(nativeLyricInk({ texts: [''], passes: undefined }, measurer)).toEqual({ left: 0, right: 0, top: 0, bottom: 0 })
   })
 
-  it('unions the actually painted number and beams, including conservative offline font bounds', () => {
+  it('unions the actually painted number and beams, respecting the explicit offline ink bottom', () => {
     const pitch = { degree: '1', accidental: '', octave: 0 }, measurer = new DefaultTextMeasurer()
     const painter = new NativeSymbols(measurer)
     for (const beats of [1, 0.5, 0.25]) {
@@ -109,6 +113,8 @@ describe('native lyric and music lower envelopes', () => {
     expect(nativeNoteMetrics([pitch], 0.5, false, shortInk).bottom).toBeCloseTo(3.85)
     expect(nativeNoteMetrics([pitch], 0.25, false, shortInk).bottom).toBeCloseTo(6.93)
     const chord = nativeNoteMetrics([pitch, pitch], 0.5, false)
-    expect(chord.offsets).toEqual([0, -24.64])
+    const numeral = measurer.measureText('0', { fontSize: 22 })
+    expect(chord.offsets[0]).toBe(0)
+    expect(-chord.offsets[1]!).toBeCloseTo(numeral.inkBottom! + 22 * .12, 6)
   })
 })

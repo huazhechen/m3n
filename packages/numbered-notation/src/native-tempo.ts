@@ -15,7 +15,7 @@ export function nativeTempoGeometry(text: string, measurer: TextMeasurer, unit =
   const size = nativeStyle.text, scale = size / 11
   const value = text.replace(/^[♪♩]\s*/, '')
   const metrics = measurer.measureText(value, { fontSize: size, fontFamily: 'M3N Numbers' })
-  const baseline = nativeMusicAxis(measurer) + metrics.baseline - metrics.h / 2
+  const baseline = nativeMusicAxis(measurer) + metrics.baseline - (metrics.inkBottom ?? metrics.h) / 2
   const flags = Math.max(0, Math.log2(unit / 4))
   const textX = (unit === 1 ? 6 : 3.864 + (flags ? 4 : 0)) * scale + size * .26
   let outline = 'M3.864 8.5 Q3.864 9.228 3.5 9.76 Q3.136 10.292 2.555 10.586 Q1.974 10.88 1.302 10.88 Q.826 10.88 .413 10.621 Q0 10.362 0 9.844 Q0 9.34 .364 8.899 Q.728 8.458 1.288 8.185 Q1.848 7.912 2.422 7.912 Q2.968 7.912 3.304 8.094 L3.304 0 L3.864 0 Z'

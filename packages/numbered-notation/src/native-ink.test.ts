@@ -50,6 +50,11 @@ describe('native painted geometry', () => {
     const ink = nativeSvgInk('<text x="0" y="0" font-size="22" font-family="serif" font-style="italic" font-weight="700">A</text>', new CanvasTextMeasurer(context as unknown as CanvasRenderingContext2D))
     expect(ink.right - ink.left).toBe(16)
   })
+  it('uses the explicit painted text bottom instead of trailing layout space', () => {
+    const measurer: TextMeasurer = { measureText: () => ({ w: 10, h: 20, baseline: 12, inkBottom: 15 }) }
+    expect(nativeSvgInk('<text x="5" y="30">g</text>', measurer))
+      .toEqual({ left: 5, right: 15, top: 18, bottom: 33 })
+  })
   it.each(['<polygon/>', '<path d="M0 0 A1 1 0 0 0 2 2"/>', '<g transform="rotate(30)"><circle r="1"/></g>'])('rejects unimplemented geometry: %s', svg => {
     expect(() => nativeSvgInk(svg, fallback)).toThrow(/Unsupported/)
   })

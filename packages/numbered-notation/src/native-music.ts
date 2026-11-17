@@ -57,7 +57,7 @@ export class NativeMusicPainter extends NativeSymbols {
         + line(left + stroke, axis, right - stroke, axis, stroke * 2)
         + line(left + stroke / 2, axis - halfCap, left + stroke / 2, axis + halfCap, stroke)
         + line(right - stroke / 2, axis - halfCap, right - stroke / 2, axis + halfCap, stroke)
-        + this.text(text, left + width / 2, axis - metrics.h - size * 0.175 + metrics.baseline, size, 'M3N Numbers', { 'text-anchor': 'middle' }) + '</g>'
+        + this.text(text, left + width / 2, axis - (metrics.inkBottom ?? metrics.h) - size * 0.175 + metrics.baseline, size, 'M3N Numbers', { 'text-anchor': 'middle' }) + '</g>'
     }
     let music = this.body(glyph, claimedBeams)
     if (glyph.graces.length) {

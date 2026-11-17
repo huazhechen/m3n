@@ -69,7 +69,7 @@ export function nativeSvgPieces(svg: string, measurer: TextMeasurer): NativeInk[
       const text = decode(node.children.filter(c => typeof c === 'string').join(''))
       const m = measurer.measureText(text, { fontSize: num('font-size', 16), fontFamily: a['font-family'] ?? 'serif', fontWeight: num('font-weight', 400), fontStyle: a['font-style'] === 'italic' ? 'italic' : 'normal' })
       const advance = m.advance ?? m.w, anchor = a['text-anchor'] === 'middle' ? advance / 2 : a['text-anchor'] === 'end' ? advance : 0
-      b = { left: num('x') - anchor + (m.inkLeft ?? 0), right: num('x') - anchor + (m.inkRight ?? m.w), top: num('y') - m.baseline, bottom: num('y') - m.baseline + m.h }
+      b = { left: num('x') - anchor + (m.inkLeft ?? 0), right: num('x') - anchor + (m.inkRight ?? m.w), top: num('y') - m.baseline, bottom: num('y') - m.baseline + (m.inkBottom ?? m.h) }
     } else if (node.tagName === 'path') b = nativePathInk(a.d!)
     else if (node.tagName === 'rect') b = { left: num('x'), right: num('x') + num('width'), top: num('y'), bottom: num('y') + num('height') }
     else if (node.tagName === 'circle' || node.tagName === 'ellipse') {

@@ -16,6 +16,6 @@ export function nativeMeterGeometry(text: string, measurer: TextMeasurer): Nativ
   const gap = size * 0.08, lineHeight = Math.max(1, size * 0.06)
   const lineY = nativeMusicAxis(measurer) - lineHeight / 2
   return { numerator, denominator, width: Math.max(num.w, den.w) + size * 0.16, lineY, lineHeight,
-    numeratorBaseline: lineY - gap - num.h + num.baseline,
+    numeratorBaseline: lineY - gap - (num.inkBottom ?? num.h) + num.baseline,
     denominatorBaseline: lineY + lineHeight + gap + den.baseline }
 }

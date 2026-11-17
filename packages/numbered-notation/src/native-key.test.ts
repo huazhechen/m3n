@@ -50,6 +50,16 @@ describe('native measured key signatures', () => {
     expect((ink.top+ink.bottom)/2).toBeCloseTo(digit.h/2-digit.baseline,3)
   })
 
+  it('does not count the fallback font trailing em space as painted key ink', () => {
+    const rows = [{key:'1=C',label:'1'},{key:'1=Db',label:'2'}]
+    const geometry = nativeKeyGeometry(rows,measurer)
+    const control = measureNativeControl('key','1=C',measurer,rows)
+    const ink = nativeSvgInk(painter.control(control),measurer)
+    expect(ink.bottom-ink.top).toBeCloseTo(geometry.height,6)
+    const digit = measurer.measureText('0',{fontSize:22,fontFamily:'M3N Numbers'})
+    expect((ink.top+ink.bottom)/2).toBeCloseTo(digit.h/2-digit.baseline,6)
+  })
+
   it('shows a single first-visit override without redundant pass labels', () => {
     const document = parseM3NDocument('{key=C}{2/4}{order=A@D,A@D}\n===A\nN: 1 2 ||')
     const keys = layoutNativeScore(document,{width:320,paged:false}).projection.glyphs.flatMap(glyph=>glyph.controls).filter(control=>control.kind==='key')
