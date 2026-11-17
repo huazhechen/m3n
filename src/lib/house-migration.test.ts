@@ -5,6 +5,7 @@ import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, reso
 
 // Performance fingerprints captured before migrating the written choices to houses.
 // 星星点灯 includes the subsequent five-page tie/lyric audit and requested removal of all grace notes.
+// 童话镇 now has a dedicated uploaded-image/2/4 reference test.
 // 爱如潮水 and 枫 include the requested instrumental slide cleanups.
 const cases = [
   {
@@ -13,13 +14,6 @@ const cases = [
     "lyrics": "f5fbdc915e40553a53dc35c82f10ac1af45e393f2f5b7373ff1d216ee0fb52c5",
     "events": 271,
     "syllables": 186
-  },
-  {
-    "file": "tong_hua_zhen_01.m3n",
-    "music": "abab557f69007cf4211f829e9147ab5cc233120d6dfccc951ee1fa6348252a59",
-    "lyrics": "a3fbb57e26372b394140d8196aae40f741562a6b131fb3b77eed35be6c966d30",
-    "events": 473,
-    "syllables": 365
   },
   {
     "file": "bai_hua_lin_01.m3n",
