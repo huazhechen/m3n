@@ -10,7 +10,7 @@ for (const level of [0, 1, 2, 3, 4]) test(`minimum rhythmic clearance retains it
         const boxes = result.layout.objects.map(node => getLayoutBounds(node));
         return boxes.slice(1).map((box, index) => box.x - boxes[index].x - boxes[index].w);
     };
-    const rhythm = Math.sqrt(2 ** -level) * (level ? .6 : 1);
+    const rhythm = Math.sqrt(2 ** -level) * (level ? .5 : 1);
     for (const base of [8.8, 13.2]) for (const gap of measure(base, 2.2))
         assert.ok(Math.abs(gap - Math.max(base * rhythm, 2.2)) < 1e-6);
     for (const gap of measure(8.8, 0)) assert.ok(Math.abs(gap - 8.8 * rhythm) < 1e-6);
@@ -29,5 +29,5 @@ test('justification surplus retains the beam grouping ratio', () => {
     const growth = (i: number) => justified[i + 1] - justified[i] - natural[i + 1] + natural[i];
     assert.ok(growth(3) > 0);
     for (const i of [0, 1, 2, 4, 5, 6])
-        assert.ok(Math.abs(growth(i) / growth(3) - 0.6) < 1e-8);
+        assert.ok(Math.abs(growth(i) / growth(3) - 0.5) < 1e-8);
 });

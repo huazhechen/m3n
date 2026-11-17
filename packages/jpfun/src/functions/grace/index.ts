@@ -498,7 +498,7 @@ export class GraceTemporal extends TemporalNodeBase {
         transferFunctionAddons(this, this.host);
         // A rigid group keeps the short natural clearance of joined grace
         // beams. Host/other local composites continue to use zero margins.
-        const block = context.layoutSubdomain!(this, this.graceColumns, this.root, this.attachments, this.ast.size * (12 / 22) * 0.6);
+        const block = context.layoutSubdomain!(this, this.graceColumns, this.root, this.attachments, this.ast.size * (12 / 22) * 0.5);
         const hostWidth = layoutLocalSequence([this.host], context);
         this.springConfig = { ...this.host.springConfig, ...this.springConfig };
 

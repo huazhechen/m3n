@@ -104,15 +104,15 @@ describe('native spacing and measured note envelopes', () => {
       + '\n---\nN: ||: 0 0 (0 3) (6 7) | (1e 3) (1e 7~) (7 6) (5 6~) |'
     const result = layout(source)
     const boundary = result.projection.measures[8]!
-    expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(102.72057272681, 5)
+    expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(101.7871917756413, 5)
     const opening = result.projection.measures[9]!
-    expect(opening.naturalEnd! - opening.naturalStart!).toBeCloseTo(187.64324862417, 5)
+    expect(opening.naturalEnd! - opening.naturalStart!).toBeCloseTo(185.77648672183682, 5)
     expect(result.systems.map(system => system.measures.length)).toEqual([6, 5])
   })
 
   it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
     const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320)
-    expect(result.systems).toHaveLength(53)
+    expect(result.systems).toHaveLength(52)
     expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
       .toEqual([[53, 54], [55, 56], [57, 58], [59], [60, 61]])
   })

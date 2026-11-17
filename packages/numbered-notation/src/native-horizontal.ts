@@ -117,10 +117,10 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const left = previous?.item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const right = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     if (previous?.item.measure === item.measure && left && right && nativeBeamCount(left, right)) {
-      previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * 0.6
-      cell.beforeStretch = (cell.beforeStretch ?? 1) * 0.6
-      previous.cell.after *= 0.6
-      cell.before *= 0.6
+      previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * 0.5
+      cell.beforeStretch = (cell.beforeStretch ?? 1) * 0.5
+      previous.cell.after *= 0.5
+      cell.before *= 0.5
     }
     previousByLane.set(cell.lane, { item, cell })
   }

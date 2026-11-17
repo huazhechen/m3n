@@ -27,10 +27,10 @@ test("相邻分割音符自动连梁，并按比例缩短内侧弹簧", () => {
     assert(adjacentAutoBeamResult.attachments.length === 1, "separate divided notes must auto-connect by default");
     const [beamFirst, beamMiddle, beamLast] = adjacentAutoBeamResult.objects;
     assert(beamFirst.springConfig.alpha_L === 6, "a beam must not shorten the outside left spring");
-    assert(nearly(beamFirst.springConfig.alpha_R as number, 3.6), "a beam must shorten its first inside spring to 60%");
-    assert(nearly(beamMiddle.springConfig.alpha_L as number, 3.6), "a middle beam element must shorten its left spring");
-    assert(nearly(beamMiddle.springConfig.alpha_R as number, 3.6), "a middle beam element must shorten its right spring");
-    assert(nearly(beamLast.springConfig.alpha_L as number, 3.6), "a beam must shorten its final inside spring");
+    assert(nearly(beamFirst.springConfig.alpha_R as number, 3), "a beam must shorten its first inside spring to 50%");
+    assert(nearly(beamMiddle.springConfig.alpha_L as number, 3), "a middle beam element must shorten its left spring");
+    assert(nearly(beamMiddle.springConfig.alpha_R as number, 3), "a middle beam element must shorten its right spring");
+    assert(nearly(beamLast.springConfig.alpha_L as number, 3), "a beam must shorten its final inside spring");
     assert(beamLast.springConfig.alpha_R === 6, "a beam must not shorten the outside right spring");
     assert(nearly(beamMiddle.springConfig.beta_L as number, 1 / 6), "beam alpha changes must not implicitly recompute completed beta");
     assert(recordCommands(adjacentAutoBeamResult).filter(command => command.kind === "line").length === 2,
@@ -60,8 +60,8 @@ test("autobeam=false 只断开分写的 div，不断开一个作用域内部", (
 
     const disabledScopeBeamResult = layoutOf(`@set(div.autobeam=false) @div({1 2}, 1)`);
     assert(disabledScopeBeamResult.attachments.length === 1, "autobeam=false must not disable connections inside one div");
-    assert(nearly(disabledScopeBeamResult.objects[0].springConfig.alpha_R as number, 3.6), "one div scope must shorten its inside right spring");
-    assert(nearly(disabledScopeBeamResult.objects[1].springConfig.alpha_L as number, 3.6), "one div scope must shorten its inside left spring");
+    assert(nearly(disabledScopeBeamResult.objects[0].springConfig.alpha_R as number, 3), "one div scope must shorten its inside right spring");
+    assert(nearly(disabledScopeBeamResult.objects[1].springConfig.alpha_L as number, 3), "one div scope must shorten its inside left spring");
     assert(recordCommands(disabledScopeBeamResult).filter(command => command.kind === "line").length === 1,
         "one div scope must keep one merged line while auto beam is disabled");
 });

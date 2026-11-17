@@ -460,7 +460,7 @@ test("MIDI 默认自动换行，barsPerLine 正数可强制覆盖", () => {
     const naturalWidths = naturalSystemWidths(defaulted);
     const contentWidth = DEFAULT_PAGE_CONFIG.width
         - DEFAULT_PAGE_CONFIG.marginLeft - DEFAULT_PAGE_CONFIG.marginRight;
-    assert(naturalWidths.every(width => width >= contentWidth * 0.85)
+    assert(naturalWidths.every(width => width >= contentWidth * 0.8)
         && Math.max(...naturalWidths) - Math.min(...naturalWidths) < 1e-6,
     `离散小节无法撑满时应保持均衡且不得留下极短尾行，实际 ${naturalWidths}：${defaulted}`);
     assert(systemCount(chord) === systemCount(defaulted),

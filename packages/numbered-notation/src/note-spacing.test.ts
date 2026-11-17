@@ -21,7 +21,7 @@ it.each([0, 1, 2, 3, 4])('retains the 0.1em floor after rhythmic and beam scalin
     const [first, second] = projection.glyphs
     return second!.x - first!.x - first!.right - second!.left
   }
-  const expected = 8.8 * Math.sqrt(2 ** -level) * (level ? .6 : 1)
+  const expected = 8.8 * Math.sqrt(2 ** -level) * (level ? .5 : 1)
   // The native iterative solver retains its existing subpixel tolerance.
   expect(gap(.1)).toBeCloseTo(Math.max(expected, 2.2), 1)
   if (level >= 3) expect(gap(.1)).toBeGreaterThan(gap(0))
