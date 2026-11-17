@@ -17,7 +17,7 @@ export function captureNumberedPrimitives(root) {
             dy += Number(m[2]);
         }
         let inkEmpty = false;
-        const s = getComputedStyle(e), num = a => Number(e.getAttribute(a) || 0), kind = e.tagName === 'line' ? 'path' : e.tagName, ops = [], coordinates = [];
+        const s = getComputedStyle(e), num = a => { const value = Number(e.getAttribute(a) || 0); if (!Number.isFinite(value)) throw Error('unsupported numeric attribute ' + a); return value; }, kind = e.tagName === 'line' ? 'path' : e.tagName, ops = [], coordinates = [];
         let key = { page, kind, fill: kind === 'line' ? 'none' : s.fill, stroke: s.stroke, strokeWidth: s.stroke === 'none' ? 0 : parseFloat(s.strokeWidth), cap: s.stroke === 'none' ? '' : s.strokeLinecap, join: s.stroke === 'none' ? '' : s.strokeLinejoin, fillRule: s.fillRule, opacity: s.opacity, fillOpacity: s.fillOpacity, strokeOpacity: s.strokeOpacity, dash: s.stroke === 'none' ? '' : s.strokeDasharray, dashOffset: s.stroke === 'none' ? '' : s.strokeDashoffset, visibility: s.visibility, display: s.display };
         if (e.tagName === 'text') {
             ctx.font = `${s.fontStyle} ${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
@@ -82,7 +82,13 @@ export function captureNumberedPrimitives(root) {
         }
         else if (e.tagName === 'rect') {
             const r = e.getBBox(), dimension = a => e.getAttribute(a)?.includes('%') ? r[a] : num(a);
-            coordinates.push(num('x') + dx, num('y') + dy, dimension('width'), dimension('height'), num('rx'), num('ry'));
+            const x = num('x') + dx, y = num('y') + dy, width = dimension('width'), height = dimension('height');
+            if (!num('rx') && !num('ry')) {
+                // The same filled/stroked rectangle may be emitted as a path.
+                key.kind = 'path';
+                ops.push('M', 'L', 'L', 'L', 'Z');
+                coordinates.push(x, y, x + width, y, x + width, y + height, x, y + height);
+            } else coordinates.push(x, y, width, height, num('rx'), num('ry'));
         }
         else if (e.tagName === 'circle' || e.tagName === 'ellipse') {
             coordinates.push(num('cx') + dx, num('cy') + dy, num(e.tagName === 'circle' ? 'r' : 'rx'), num(e.tagName === 'circle' ? 'r' : 'ry'));

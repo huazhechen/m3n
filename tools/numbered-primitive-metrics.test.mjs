@@ -15,6 +15,9 @@ for (const [name, ref, native, expected] of [
     ['relative curves', '<svg><path d="M10.25 20.5 L11.25 20.5 L11.25 22.5 Q12.25 23.5 13.25 22.5 C14.25 21.5 15.25 23.5 16.25 22.5 Z"/></svg>', '<svg><g transform="translate(10 20)"><path d="m.25 .5 h1 v2 q1 1 2 0 c1 -1 2 1 3 0 z"/></g></svg>', 'equal'],
     ['viewport origin', '<svg viewBox="0 100 100 100"><circle cx="10" cy="120" r="2"/></svg>', '<svg viewBox="0 0 100 100"><circle cx="10" cy="20" r="2"/></svg>', 'equal'],
     ['no-ink text', '<svg><text>\u200b</text></svg>', '<svg/>', 'equal'],
+    ['rectangle as closed path', '<svg><rect x="10" y="20" width="8" height="2"/></svg>', '<svg><path d="M10 20 H18 V22 H10 Z"/></svg>', 'equal'],
+    ['changed rectangle width', '<svg><rect x="10" y="20" width="8" height="2"/></svg>', '<svg><path d="M10 20 H18.1 V22 H10 Z"/></svg>', 'different'],
+    ['rounded rectangle is different', '<svg><rect x="10" y="20" width="8" height="2" rx=".5"/></svg>', '<svg><path d="M10 20 H18 V22 H10 Z"/></svg>', 'different'],
     ['changed radius', '<svg><circle cx="10" cy="20" r="2"/></svg>', '<svg><circle cx="10" cy="20" r="2.01"/></svg>', 'different'],
     ['changed paint', '<svg><circle cx="10" cy="20" r="2" fill="red"/></svg>', '<svg><circle cx="10" cy="20" r="2" fill="blue"/></svg>', 'different'],
     ['missing primitive', '<svg><circle r="2"/></svg>', '<svg/>', 'different'],
@@ -30,7 +33,7 @@ for (const [name, ref, native, expected] of [
         }, { ref, native });
         assert.equal(!result.missing.length && !result.extra.length && !result.different.length, expected === 'equal');
     });
-for (const svg of ['<svg><g transform="scale(2)"><circle r="2"/></g></svg>', '<svg><path d="M0 0 A2 2 0 0 1 3 3"/></svg>', '<svg><polygon points="0,0 10,0 0,10"/></svg>'])
+for (const svg of ['<svg><g transform="scale(2)"><circle r="2"/></g></svg>', '<svg><path d="M0 0 A2 2 0 0 1 3 3"/></svg>', '<svg><polygon points="0,0 10,0 0,10"/></svg>', '<svg><text x="1 2">AB</text></svg>'])
     test('rejects unsupported geometry: ' + svg, async () => {
         await assert.rejects(page.evaluate(svg => {
             const root = document.getElementById('ref');
