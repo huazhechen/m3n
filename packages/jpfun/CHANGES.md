@@ -1,5 +1,7 @@
 # Local changes
 
+- Lyric columns and painting share baseline-relative measured fragments. Spoken text centers by actual ink; punctuation and visit prefixes retain their own bearings and logical advances. Underlines follow the painted text and reserve their round half-strokes rather than the nominal advance box. Explicit hanging punctuation still uses the spoken column.
+
 - Simultaneous key signatures, meters and tempos share one column per setting kind across tracks. Their own ordered groups stay separate from notes; successive settings within a track retain declaration order and separate columns. This removes duplicated horizontal reservation and inconsistent wrapping in parallel voices.
 
 - Range-parenthesis occupancy includes measured left bearings and right overhang.

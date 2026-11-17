@@ -1,5 +1,6 @@
 // M3N modification: lyric metadata/spacing and optional connectors on every system.
 import { ASTNodeBase, ASTBraceNode, FunctionArgs, SourceSpan, ASTFunctionNode, ASTFunctionClass, ASTTextNode } from "../ASTtypes.js";
+import { measureLyricFragment, lyricSilentPunctuation as LYRIC_SILENT_PUNCTUATION, type LyricPiece } from "./lyric-fragment.js";
 import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import { findRightParen } from "../../parser/parse-utils/call-utils.js";
 import { findClosingQuote, quote, removeQuote } from "../../parser/parse-utils/string-utils.js";
@@ -36,20 +37,6 @@ const MIN_CONNECTOR_STEM = 2.5;
 const CONNECTOR_LABEL_GAP_RATIO = 0.3;
 // 分词跟后面的标点
 const LYRIC_OPENING_PUNCTUATION = new Set("（([［｛〈《「『【〔〖〘〚‘“");
-// 不发声的标点；位于歌词槽首尾时只渲染，不占位，也不参与对齐中心计算
-const LYRIC_SILENT_PUNCTUATION = new Set([
-    ...LYRIC_OPENING_PUNCTUATION,
-    ..."，。！？；：、,.!?;:）)]］｝〉》」』】〕〗〙〛’”\"'…—–",
-]);
-// 分词
-function splitLyricText(text: string) {
-    let start = 0;
-    let end = text.length;
-    while (start < end && LYRIC_SILENT_PUNCTUATION.has(text[start])) start++;
-    while (end > start && LYRIC_SILENT_PUNCTUATION.has(text[end - 1])) end--;
-    return { prefix: text.slice(0, start), body: text.slice(start, end) };
-}
-
 const visibleLyricText = (text: string) => text.replaceAll('\u200B', '').trim().length > 0;
 
 /**
@@ -952,7 +939,8 @@ type PreparedLyricText = LayoutRegion & {
     text: string;          // 最终绘制的 token 或歌词行名称
     style: TextStyle;      // 当前文本使用的字体和颜色
     textBaselineY: number; // 字体 baseline 距文本盒顶部的距离
-    underline?: { y: number; stroke: number }; // 相对文本盒顶部的实绘下划线
+    textOffsetX?: number; // 实际文本起点相对墨迹盒左缘
+    underline?: { left: number; right: number; y: number; stroke: number };
 };
 
 class VoiceLyricsAttachment implements LayoutAttachment {
@@ -982,22 +970,16 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             for (const [row, lyric] of lyrics.entries()) {
                 const text = lyric.tokens[i];
                 if (text && (!this.nameHost.ast.compactLyrics || visibleLyricText(text))) {
-                    const { prefix, body } = splitLyricText(text);
-                    const half = body ? context.textMeasurer.measureText(body, style).w / 2 : 0;
-                    if (this.nameHost.ast.reserveLyricPunctuation) {
-                        const prefixWidth = prefix ? context.textMeasurer.measureText(prefix, style).w : 0;
-                        const full = context.textMeasurer.measureText(text, style).w;
-                        leftWidth = Math.max(leftWidth, half + prefixWidth + 1);
-                        rightWidth = Math.max(rightWidth, full - half - prefixWidth + 1);
-                    } else {
-                        leftWidth = Math.max(leftWidth, half);
-                        rightWidth = Math.max(rightWidth, half);
-                    }
                     const annotation = this.nameHost.ast.lyricPrefixes.get(`${row}:${i}`);
-                    if (annotation) {
-                        const prefixWidth = prefix ? context.textMeasurer.measureText(prefix, style).w : 0;
-                        const annotationWidth = context.textMeasurer.measureText(annotation, style).w;
-                        leftWidth = Math.max(leftWidth, half + prefixWidth + annotationWidth + style.fontSize * 0.2 + 1);
+                    const fragment = measureLyricFragment(text, annotation,
+                        this.nameHost.ast.underlinedLyricSlots.has(`${row}:${i}`), style, context.textMeasurer);
+                    if (this.nameHost.ast.reserveLyricPunctuation) {
+                        leftWidth = Math.max(leftWidth, -fragment.left + 1);
+                        rightWidth = Math.max(rightWidth, fragment.right + 1);
+                    } else {
+                        leftWidth = Math.max(leftWidth, fragment.bodyHalf);
+                        rightWidth = Math.max(rightWidth, fragment.bodyHalf);
+                        if (annotation) leftWidth = Math.max(leftWidth, -fragment.left + 1);
                     }
                 }
             }
@@ -1020,10 +1002,10 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             regions: this.nameHost.ast.compactLyrics ? preparedText.filter(item => visibleLyricText(item.text)) : preparedText,
             paint(painter: Painter) {
                 for (const item of preparedText) {
-                    painter.drawText(item.text, item.x, item.y + item.textBaselineY, item.style);
+                    painter.drawText(item.text, item.x + (item.textOffsetX ?? 0), item.y + item.textBaselineY, item.style);
                     if (item.underline) {
                         const y = item.y + item.underline.y;
-                        painter.drawLine(item.x, y, item.x + item.w, y, { stroke: item.style.fill, strokeWidth: item.underline.stroke });
+                        painter.drawLine(item.x + item.underline.left, y, item.x + item.underline.right, y, { stroke: item.style.fill, strokeWidth: item.underline.stroke });
                     }
                 }
             },
@@ -1108,46 +1090,35 @@ class VoiceLyricsAttachment implements LayoutAttachment {
                 const baseline = baselines.get(target.layoutLine)?.get(target.track);
                 if (!text || !baseline) continue;
 
-                const metrics = context.textMeasurer.measureText(text, lyricStyle);
-                const { prefix, body } = splitLyricText(text);
-                const bodyWidth = body ? context.textMeasurer.measureText(body, lyricStyle).w : 0;
-                const prefixWidth = prefix ? context.textMeasurer.measureText(prefix, lyricStyle).w : 0;
                 const underlined = this.nameHost.ast.underlinedLyricSlots.has(`${row}:${i}`);
-                // Semantic metadata does not change visual style equality or upstream recordings.
-                const style = Object.defineProperty({ ...lyricStyle }, 'semantic', {
-                    value: { role: 'lyric', sourceSpan: target.ast.sourceSpan, row, ...(underlined ? { underlined: true } : {}) }, enumerable: false,
-                });
-                const stroke = fontSize * (0.8 / 18.04);
-                append({
-                    text,
-                    style,
-                    textBaselineY: metrics.baseline,
-                    x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth,
-                    y: -metrics.baseline,
-                    w: metrics.w,
-                    h: metrics.h + (underlined ? fontSize * 0.1 + stroke : 0),
-                    ...(underlined ? { underline: { y: metrics.h + fontSize * 0.1 + stroke / 2, stroke } } : {}),
-                    line: target.layoutLine,
-                    track: baseline.owner,
-                }, baseline, rowAtSlot(baseline.rows, row, i));
                 const annotation = this.nameHost.ast.lyricPrefixes.get(`${row}:${i}`);
-                if (annotation) {
-                    const annotationMetrics = context.textMeasurer.measureText(annotation, lyricStyle);
-                    const annotationStyle = Object.defineProperty({ ...lyricStyle }, 'semantic', {
-                        value: { role: 'lyric-prefix', sourceSpan: target.ast.sourceSpan, row }, enumerable: false,
+                const fragment = measureLyricFragment(text, annotation, underlined, lyricStyle, context.textMeasurer);
+                const addPiece = (piece: LyricPiece, role: 'lyric' | 'lyric-prefix') => {
+                    // Semantic metadata does not change style equality or upstream recordings.
+                    const style = Object.defineProperty({ ...lyricStyle }, 'semantic', {
+                        value: { role, sourceSpan: target.ast.sourceSpan, row, ...(role === 'lyric' && underlined ? { underlined: true } : {}) }, enumerable: false,
                     });
                     append({
-                        text: annotation,
-                        style: annotationStyle,
-                        textBaselineY: annotationMetrics.baseline,
-                        x: target.box.x + target.ports["lyric"].x - bodyWidth / 2 - prefixWidth - annotationMetrics.w - fontSize * 0.2,
-                        y: -annotationMetrics.baseline,
-                        w: annotationMetrics.w,
-                        h: annotationMetrics.h,
+                        text: piece.text,
+                        style,
+                        textOffsetX: piece.origin - piece.left,
+                        textBaselineY: -piece.top,
+                        x: target.box.x + target.ports["lyric"].x + piece.left,
+                        y: piece.top,
+                        w: piece.right - piece.left,
+                        h: piece.bottom - piece.top,
+                        ...(piece.underline ? { underline: {
+                            left: piece.underline.left - piece.left,
+                            right: piece.underline.right - piece.left,
+                            y: piece.underline.y - piece.top,
+                            stroke: piece.underline.stroke,
+                        } } : {}),
                         line: target.layoutLine,
                         track: baseline.owner,
                     }, baseline, rowAtSlot(baseline.rows, row, i));
-                }
+                };
+                addPiece(fragment.lyric, 'lyric');
+                if (fragment.label) addPiece(fragment.label, 'lyric-prefix');
             }
 
             if (!lyric.name || !labelBox || !labelBaseline) continue;
