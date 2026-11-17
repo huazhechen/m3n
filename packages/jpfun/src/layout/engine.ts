@@ -125,12 +125,18 @@ const decorationExtents = new WeakMap<LayoutHost, Extent & { contentTop: number 
 
 /** 内容边界不含纯留白，完整占用还包含装饰预留的上下空间 */
 export function getLayoutBounds(host: LayoutHost, contentOnly = false): Rect {
+    return hostBounds(host, contentOnly, true);
+}
+
+function hostBounds(host: LayoutHost, contentOnly: boolean, includeSideInk: boolean): Rect {
     const { box } = host;
     const extent = decorationExtents.get(host);
-    if (!extent) return box;
-    const top = contentOnly ? extent.contentTop : extent.top;
-    const bottom = contentOnly ? 0 : extent.bottom;
-    return { x: box.x, y: box.y + top, w: box.w, h: box.h - top + bottom };
+    const ink = includeSideInk ? host.intrinsicInkBounds : undefined;
+    const top = Math.min(extent ? contentOnly ? extent.contentTop : extent.top : 0, ink?.y ?? 0);
+    const bottom = Math.max(box.h + (extent && !contentOnly ? extent.bottom : 0), ink ? ink.y + ink.h : 0);
+    const left = Math.min(0, ink?.x ?? 0);
+    const right = Math.max(box.w, ink ? ink.x + ink.w : 0);
+    return { x: box.x + left, y: box.y + top, w: right - left, h: bottom - top };
 }
 
 /**
@@ -180,6 +186,7 @@ export function prepareLayoutHost(node: VisualTemporalNode, context: LayoutPrepa
     node.decorations = [];
     node.ports = {};
     node.box.x = node.box.y = 0;
+    node.intrinsicInkBounds = undefined;
     node.prepareLayout(context); // 计算大小等 layout 需要的参数
 
     // 把 lowering 固化在 addon 中的语义交给已注册 handler，生成本轮函数装饰
@@ -956,10 +963,10 @@ function measureAttachmentPass(
             if (!resolved) throw new Error("Layout attachment dependency has not been measured");
             return resolved.box;
         },
-        getContentBounds(content) {
+        getContentBounds(content, options) {
             const boxes: Rect[] = [];
             for (const node of content.nodes) {
-                if (isVisualTemporalNode(node) && (node.box.w > 0 || node.box.h > 0)) boxes.push(getLayoutBounds(node, true));
+                if (isVisualTemporalNode(node) && (node.box.w > 0 || node.box.h > 0)) boxes.push(hostBounds(node, true, !options?.bodyOnly));
             }
             for (const attachment of content.attachments) {
                 if (!isLayoutAttachment(attachment)) continue;
@@ -1033,9 +1040,9 @@ function hasLocalBranches(track: Track): boolean {
 
 /** 固有占用只需轴局部边界，不必创建全局矩形 */
 function includeHostExtent(extents: Map<Track, Extent>, host: VisualTemporalNode, ranges?: TrackExtentRange[], measurer?: TextMeasurer) {
-    const decoration = decorationExtents.get(host);
-    const top = decoration?.top ?? 0;
-    const height = host.box.h - top + (decoration?.bottom ?? 0);
+    const bounds = getLayoutBounds(host);
+    const top = bounds.y - host.box.y;
+    const height = bounds.h;
     const axisTop = top - host.box.visualAxis;
     includeTrackExtent(extents, host.track, axisTop, axisTop + height);
     if (!ranges) return;

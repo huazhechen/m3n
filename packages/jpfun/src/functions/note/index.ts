@@ -3,8 +3,10 @@ import { ASTNodeBase, ASTTextNode, FunctionArgs, SourceSpan, ParserContext, ASTF
 import { Diagnostic, ErrorDiagnostic } from "../../diagnostic.js";
 import { parseNoteName } from "./noteNameFSM.js";
 import { GrammarCallNodeTyped, type GrammarNode, type GrammarSugarNode } from "../../parser/grammarType.js";
-import type { LayoutBox, LayoutDecoration, LayoutPrepareContext } from "../../layout/types.js";
-import { getLayoutBounds } from "../../layout/engine.js";
+import type { LayoutBox, LayoutDecoration, LayoutPrepareContext, Rect } from "../../layout/types.js";
+import { unionLayoutBoxes } from "../../layout/engine.js";
+import { RecordingPainter } from "../../render/recording.js";
+import { paintedCommandRegions, paintedNodeRegions } from "../../layout/painted-ink.js";
 import type { Painter, TextStyle } from "../../render/types.js";
 import { paintAccidental, placeAccidentals, type PlacedAccidental } from "./accidentals.js";
 import type { LoweringResult } from "../../lowering/types.js";
@@ -211,6 +213,7 @@ const NOTE_GLYPH: Record<string, string> = { "8": "", "9": "X" };
 class NoteTemporalNode extends TemporalNodeBase {
     declare ast: NoteFunction;
     declare box: LayoutBox;
+    intrinsicInkBounds?: Rect;
 
     // 时间固化后的参数
     resolvedMidi: number | null = null; // MIDI音高 name是数字则需要在onTimeState中基于当前调性偏移 播放的音高
@@ -260,6 +263,15 @@ class NoteTemporalNode extends TemporalNodeBase {
         const accidentalGap = size * 0.01;
         const { placed, right: mainX } = placeAccidentals(this.ast.showAcc ? this.acc : "", size, 0, this.numberY, accidentalGap);
         this.accidentals = placed;
+        // Accidentals can rise beyond the numeral shoulder. Reserve their actual
+        // curves and stroke without moving octave dots, beams or the music axis.
+        if (placed.length) {
+            const painter = new RecordingPainter();
+            for (const accidental of placed) paintAccidental(painter, accidental, { x: 0, y: 0 }, color);
+            const ink = { x: 0, y: 0, w: 0, h: 0 };
+            unionLayoutBoxes(ink, painter.commands.flatMap(command => paintedCommandRegions(command, context.textMeasurer)));
+            this.intrinsicInkBounds = ink;
+        }
 
         this.box.w = mainX + mainMetrics.w;
         this.box.h = mainMetrics.h;
@@ -314,14 +326,18 @@ class NoteTemporalNode extends TemporalNodeBase {
         this.decorations.push(dots);
     }
 
-    override finalizeLayout() {
+    override finalizeLayout(context: LayoutPrepareContext) {
         this.ports["lyric"] = { x: this.box.anchor, y: this.box.h };
-        if (this.octave > 0) {  // 八度点上方留空间
-            this.ports["tie.top"] = {
-                x: this.box.anchor,
-                y: getLayoutBounds(this, true).y - this.box.y - this.ast.size * 0.05,
-            };
-        }
+        if (this.octave <= 0 && !this.accidentals.length) return;
+        // Side accidentals reserve system height, but the arc still joins the
+        // numeral/central decorations. Do not turn that side ink into a head.
+        const center = this.box.x + this.box.anchor;
+        const top = Math.min(this.box.y, ...paintedNodeRegions(this, context.textMeasurer)
+            .filter(ink => ink.x <= center && center <= ink.x + ink.w).map(ink => ink.y));
+        this.ports["tie.top"] = {
+            x: this.box.anchor,
+            y: top - this.box.y - (this.octave > 0 ? this.ast.size * 0.05 : 0),
+        };
     }
 
     override paint(painter: Painter) {

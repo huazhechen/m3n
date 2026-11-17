@@ -427,6 +427,17 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
     }
 
     private hostTop(context: AttachmentLayoutContext, line: number, track: Track) {
+        if (context.alignRelations) {
+            const heads = context.getRangeColumns(line, undefined, track).flat()
+                .filter(host => host.track === track && !host.T.isZero());
+            if (heads.length) return Math.min(...heads.map(host => {
+                if (host.ports["tie.top"]) return this.tiePort(host).y;
+                const center = host.box.x + host.box.anchor;
+                const ink = (context.getHostInk?.(host) ?? [])
+                    .filter(piece => piece.x <= center && center <= piece.x + piece.w);
+                return ink.length ? Math.min(...ink.map(piece => piece.y)) : this.tiePort(host).y;
+            }));
+        }
         return context.getVisualAxis(line, track) + (context.getHostExtent(line, track)?.top ?? 0);
     }
 

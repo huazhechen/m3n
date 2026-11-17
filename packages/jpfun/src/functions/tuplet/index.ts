@@ -277,9 +277,11 @@ class TupletLayoutAttachment implements LayoutAttachment {
         const first = this.endPoints[0], last = this.endPoints[this.endPoints.length - 1];
         const metrics = context.textMeasurer.measureText(String(this.actual), this.style);
         const axis = context.getVisualAxis(first.layoutLine, first.track);
-        const extent = context.getRangeExtents(first.layoutLine, [first, last], first.track);
-        const bounds = context.getContentBounds(this.content);
-        const hostTop = Math.min(axis + (extent?.top ?? 0), bounds?.y ?? Infinity);
+        // Start from the musical bodies and nested content. Side accidentals
+        // reserve system height, but only their intersections with the final
+        // bracket primitives may raise this bracket (checked below).
+        const bounds = context.getContentBounds(this.content, { bodyOnly: true });
+        const hostTop = bounds?.y ?? axis;
         const gap = this.size * 0.14;
         let level = hostTop - gap - Math.max(this.size * 0.18, metrics.h / 2);
         const { pieces } = this.bracketShape(context);

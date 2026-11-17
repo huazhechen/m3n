@@ -154,7 +154,7 @@ export interface AttachmentLayoutContext extends LayoutPrepareContext {
     /** 读取已测附件的有效占用，保留显式空数组；尚未测量时返回 undefined */
     getAttachmentOccupancy(attachment: LayoutAttachment): readonly LayoutRegion[] | undefined;
     /** 内容的实际几何并集；只包含作用域内主体与此前已测附件，不代表撑行占用 */
-    getContentBounds(content: LoweringContent): Readonly<Rect> | undefined;
+    getContentBounds(content: LoweringContent, options?: { bodyOnly?: boolean }): Readonly<Rect> | undefined;
 }
 
 
@@ -169,6 +169,8 @@ export interface AttachmentLayoutContext extends LayoutPrepareContext {
  */
 export interface LayoutHost extends TimeLineEvent {
     box: LayoutBox;
+    /** Local painted footprint beyond the nominal body; does not move body ports or decorations. */
+    intrinsicInkBounds?: Rect;
     springConfig: HorizontalSpringConfig;
     /**
      * 内置端口：body.left / body.right、decoration.below、shoulder、tie.top、

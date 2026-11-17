@@ -113,3 +113,7 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - Aligned ties and slurs clear painted zero-time controls and bar labels throughout their system, including text whose ink overlaps the arc from outside its temporal endpoint interval.
 
 - Tuplet brackets measure the actual count, rules and hooks separately, including stroke width and text bearings. Side accidentals only raise primitives that cross their ink; adjacent brackets share the required clearance. Count ink stays visually centered, and reserved bounds include all painted primitives. Nested brackets and enclosed content retain their inner-to-outer ordering.
+
+- Note accidentals reserve their actual path extrema and stroke through local intrinsic ink bounds. Complete host/track and subdomain occupancy includes this footprint without moving the numeral axis, shoulder, octave decorations or beam ports; grace and folded chords inherit it through normal measured bounds. Each preparation resets the footprint.
+- Arc endpoints use the painted musical center rather than accidental side ink. Tuplets establish their initial level from body/nested-content bounds, then clear side ink against each actual bracket primitive; full system and page occupancy still includes all accidental ink.
+- With relation alignment enabled, middle-system arc continuations start from musical ports/central painted heads rather than the system envelope. Bar lines and side accidentals remain real collision obstacles; empty systems retain their track-envelope fallback.
