@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
+import { nativeRibbonRange } from './native-curve.js'
 import { nativeArcGeometry } from './native-arc.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { nativeSvgInk } from './native-ink.js'
@@ -59,7 +60,7 @@ describe('native annotations', () => {
     const arc = nativeArcGeometry(labelled.relations[0]!, labelled.systems[0]!)
     expect(arc).toEqual(nativeArcGeometry(bare.relations[0]!, bare.systems[0]!))
     const text = annotations(labelled)[0]!
-    expect(text.top - text.height).toBeGreaterThanOrEqual(arc.top + 5.6 - 1e-8)
+    expect(text.top - text.height).toBeGreaterThanOrEqual(-nativeRibbonRange(arc, text.x - text.width / 2, text.x + text.width / 2)!.top + 5.6 - 1e-8)
   })
 
   it('clears neighboring high notes covered by the text width', () => {
@@ -93,12 +94,14 @@ describe('native annotations', () => {
     expect(chord.systems[0]!.lanes[0]!.top).toBe(chord.systems[1]!.lanes[0]!.top)
   })
 
-  it('keeps descriptions above the measured grace block rather than a fixed allowance', () => {
-    const score = layout('{text=cresc.}1{ac(2e 3e)} 2 3 4')
+  it.each([false, true])('clears only the grace ink reached by the actual description footprint: overhang=%s', wide => {
+    const score = layout(`{text=${wide ? 'WIDE' : 'cresc.'}}1{ac(2e 3e)} 2 3 4`, wide ? { textMeasurer: overhang } : {})
     const glyph = score.projection.glyphs[0]!, text = annotations(score)[0]!
-    const grace = glyph.graceLayout!
-    expect(glyph.musicTop).toBeCloseTo(-grace.ink.top, 4)
-    expect(text.top - text.height).toBeGreaterThanOrEqual(-grace.ink.top + 5.6 - 1e-8)
+    const pieces = glyph.musicInk!.filter(ink => glyph.x + ink.right > text.x - text.width / 2 && glyph.x + ink.left < text.x + text.width / 2)
+    const top = Math.max(...pieces.map(ink => -ink.top))
+    expect(text.top - text.height).toBeCloseTo(top + 5.6, 5)
+    if (wide) expect(top).toBeCloseTo(-glyph.graceLayout!.ink.top, 4)
+    else expect(top).toBeLessThan(-glyph.graceLayout!.ink.top)
   })
 
   it('does not let annotation height move a volta back over the annotation', () => {

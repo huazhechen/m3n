@@ -7,7 +7,7 @@ import { NativeSymbols } from './native-symbols.js'
 import { layoutNativeScore } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
 import { nativeStyle } from './native-style.js'
-import { nativeArcSlice } from './native-curve.js'
+import { nativeArcSlice, nativeRibbonRange } from './native-curve.js'
 
 const fallback = new DefaultTextMeasurer()
 // Deliberately taller/uneven ink, italic overhang and nonstandard descenders.
@@ -78,7 +78,7 @@ describe('native painted geometry', () => {
         .toBeGreaterThanOrEqual(nativeStyle.music * .15 - 0.001)
     }
     const mark = glyph.markLayout!.find(m => m.name === 'tr')!
-    expect(mark.top + mark.height).toBeLessThanOrEqual(Math.min(...relations.map(r => r.ink.top)) - nativeStyle.markGap + 0.001)
+    expect(mark.top + mark.height).toBeLessThanOrEqual(Math.min(...relations.map(r => r.arc ? (nativeRibbonRange(r.arc, glyph.x + mark.left, glyph.x + mark.right)?.top ?? Infinity) : r.ink.top)) - nativeStyle.markGap + 0.001)
     // Expression/ornament placement must not feed back into note arc ports.
     expect(glyph.musicTop).toBeLessThan(-mark.top)
   })

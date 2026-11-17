@@ -3,8 +3,13 @@ import { NativeSymbols, attrs } from './native-symbols.js'
 import type { NativeSystem } from './native-layout.js'
 import type { NativeAnnotation } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
+import type { NativeArc } from './native-arc.js'
+import { nativeRibbonRange } from './native-curve.js'
 
-export type NativeRegion = { lane: string; left: number; right: number; top: number }
+export type NativeRegion = { lane: string; left: number; right: number; top: number; arc?: NativeArc }
+export function nativeRegionTop(region: NativeRegion, left: number, right: number) {
+  return region.arc ? -(nativeRibbonRange(region.arc, left, right)?.top ?? -region.top) : region.top
+}
 
 /** Final annotation primitives, shared by painting and inter-lane clearance. */
 export function nativeAnnotationSvg(annotation: NativeAnnotation, y: number, painter: NativeSymbols, meta: Record<string, string | number | undefined> = {}): string {
@@ -34,7 +39,9 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
       // union of logical advance and actual paint for clamping and avoidance.
       const left = framed ? margin : Math.max(margin, Math.min(glyph.x - first.w / 2 + inkLeft, width - margin - w))
       const right = left + w
-      const obstacleTop = Math.max(glyph.musicTop ?? glyph.top, ...regions.filter(region => region.lane === glyph.lane && region.right >= left && region.left <= right).map(region => region.top))
+      const queryLeft = framed ? Math.min(left, glyph.x - (glyph.inkLeft ?? glyph.left)) : left
+      const queryRight = framed ? Math.max(right, glyph.x + (glyph.inkRight ?? glyph.right)) : right
+      const obstacleTop = Math.max(0, ...regions.filter(region => region.lane === glyph.lane && region.right >= queryLeft && region.left <= queryRight).map(region => nativeRegionTop(region, queryLeft, queryRight)))
       const top = obstacleTop + nativeStyle.annotation * (local ? 0.4 : 0.5) + h
       const item: NativeAnnotation = { text, kind, x: left + w / 2, textX: left + padding - inkLeft, top, width: w, height: h, baseline: -top + padding + metrics.baseline }
       glyph.annotationLayout ??= []

@@ -3,7 +3,7 @@ import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 
-export type NativeMarkPlacement = { name: string; top: number; height: number; y: number; left: number; right: number }
+export type NativeMarkPlacement = { name: string; top: number; height: number; y: number; left: number; right: number; x?: number }
 export const nativeInnerMark = (name: string) => ['tip', 'brk', 'hold', 'str'].includes(name)
 export const nativeMarkRank = (name: string) => nativeInnerMark(name) ? 0
   : /^(p{1,3}|f{1,3}|mp|mf|sfz)$/.test(name) || /^(cresc\.|dim\.|accel\.|rit\.)/.test(name) ? 2 : 1
@@ -12,7 +12,7 @@ export const nativeMarkRank = (name: string) => nativeInnerMark(name) ? 0
 export function nativeMarkStack(names: readonly string[], bodyTop: number, measurer: TextMeasurer = new DefaultTextMeasurer()) {
   const ordered = [...names].sort((a, b) => nativeMarkRank(a) - nativeMarkRank(b)), painter = new NativeSymbols(measurer)
   let top = bodyTop
-  const items = ordered.map(name => {
+  const items: NativeMarkPlacement[] = ordered.map(name => {
     const ink = nativeSvgInk(painter.rawMark(name), measurer), height = ink.bottom - ink.top
     const y = -top - nativeStyle.markGap - ink.bottom
     top = height - (y + ink.bottom)

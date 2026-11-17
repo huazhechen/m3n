@@ -37,6 +37,8 @@ import { trSymbol } from "./symbols/tr.js";
  * 每个符号自成一个文件、彼此没有依赖，新增一个符号就是新增一个对象字面量
  */
 export interface SymbolDefinition {
+    /** Close articulations participate in the musical arc endpoint. */
+    readonly tiePort?: boolean;
     readonly name: string;
     readonly description: string;
     /** 查表未命中时使用；忽略大小写，从名称开头匹配，不允许 g/y */
@@ -171,9 +173,21 @@ ${[...symbolTable.values()].map(item => `- \`$${item.name}\`：${item.descriptio
             if (!host || !isVisualTemporalNode(host)) throw new ErrorDiagnostic("E_SYMBOL_INVALID_HOST", "@symbol 的 above 标签必须指向可见对象", this.sourceSpan);
             // Navigation/playback actions must remain temporal objects. Dynamics
             // can attach to the host without losing their onset state change.
-            if (this.definition.emitPlayback || this.definition.onVisit || this.definition.playbackMarks) throw new ErrorDiagnostic("E_SYMBOL_INVALID_HOST", "导航或播放动作符号不能作为 above 附件", this.sourceSpan);
+            if (this.definition.onVisit || this.definition.playbackMarks) throw new ErrorDiagnostic("E_SYMBOL_INVALID_HOST", "导航符号不能作为 above 附件", this.sourceSpan);
             const previous = host.onTimeState?.bind(host), update = this.definition.onTimeState;
             if (update) host.onTimeState = state => { update(state); return previous?.(state); };
+            if (this.definition.emitPlayback) {
+                // Match an up group's local playback sequence: publish the
+                // zero-time effect before visiting the timed host. A direct
+                // call on the host emitter would affect its following sibling.
+                const target = Object.create(host) as VisualTemporalNode;
+                target.emitPlayback = host.emitPlayback?.bind(host);
+                const effect = new SymbolTemporal(this as ResolvedSymbolFunction);
+                host.emitPlayback = emitter => {
+                    emitter.play(effect, emitter.start, emitter.start.clone().sub(emitter.start));
+                    emitter.play(target);
+                };
+            }
             ctx.addAttachment(new SymbolAboveAttachment(this as ResolvedSymbolFunction, host));
             return [];
         }
@@ -202,7 +216,7 @@ class SymbolTemporal extends TemporalNodeBase implements PlaybackFlow {
     private scale = 1;
     private baseline = 0;
 
-    constructor(ast: ResolvedSymbolFunction) {
+    constructor(ast: ResolvedSymbolFunction, private readonly semanticHost?: VisualTemporalNode) {
         super();
         this.ast = ast;
         // Segno marks an onset. Consume it before shared rest insertion,
@@ -217,7 +231,8 @@ class SymbolTemporal extends TemporalNodeBase implements PlaybackFlow {
         // 文字记号的字号也是 size × weight，所以与图形记号视觉等高
         this.label = text && {
             content: text.content,
-            style: { fontSize: this.height, fontFamily: text.fontFamily },
+            style: { fontSize: this.height, fontFamily: text.fontFamily,
+                ...(semanticHost ? { semantic: { role: 'mark' as const, sourceSpan: semanticHost.ast.sourceSpan } } : {}) },
         };
         this.initLayoutBox();
     }
@@ -237,11 +252,13 @@ class SymbolTemporal extends TemporalNodeBase implements PlaybackFlow {
             ? (this.ast.definition.anchor - this.bounds.x) * this.scale
             : this.box.w / 2;
         this.box.visualAxis = this.box.h / 2;
+        if (this.ast.definition.tiePort) this.ports["tie.top"] = { x: this.box.anchor, y: 0 };
     }
 
     override paint(painter: Painter) {
         if (this.label) painter.drawText(this.label.content, this.box.x, this.box.y + this.baseline, this.label.style);
-        else paintSymbol(painter, this.ast.definition.shapes ?? [], this.bounds, this.box, this.scale);
+        else paintSymbol(painter, this.ast.definition.shapes ?? [], this.bounds, this.box, this.scale,
+            this.semanticHost ? { role: 'mark', sourceSpan: this.semanticHost.ast.sourceSpan } : undefined);
     }
 
     /** 控制流在生成事件之前展开，emitPlayback 够不到，所以单独接一次 */
@@ -264,7 +281,7 @@ class SymbolAboveAttachment implements LayoutAttachment {
         this.sourceSpan = { ...ast.sourceSpan };
     }
     createGeometry(context: AttachmentLayoutContext) {
-        const symbol = new SymbolTemporal(this.ast);
+        const symbol = new SymbolTemporal(this.ast, this.host);
         symbol.prepareLayout(context);
         const { box } = symbol, { host } = this;
         box.x = Math.max(context.originX, Math.min(host.box.x + host.box.anchor - box.anchor, context.originX + context.width - box.w));
@@ -275,7 +292,8 @@ class SymbolAboveAttachment implements LayoutAttachment {
                 start = Math.min(start, index); end = Math.max(end, index);
             }
         });
-        const extent = context.getRangeExtents(host.layoutLine, [start, end], host.track);
+        const extent = context.getInkExtents ? context.getInkExtents(host.layoutLine, box.x, box.x + box.w, host.track)
+            : context.getRangeExtents(host.layoutLine, [start, end], host.track);
         box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - host.ast.size * 0.12 - box.h;
         return {
             regions: [{ x: box.x, y: box.y, w: box.w, h: box.h, line: host.layoutLine, track: host.track }],

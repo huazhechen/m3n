@@ -92,7 +92,7 @@ interface LayoutLine extends LineExtents {
     columns: VisualTemporalNode[][];
 }
 
-type BaseAttachmentContext = Omit<AttachmentLayoutContext, "getAttachmentBox" | "getAttachmentOccupancy" | "getRangeExtents" | "getContentBounds">;
+type BaseAttachmentContext = Omit<AttachmentLayoutContext, "getAttachmentBox" | "getAttachmentOccupancy" | "getRangeExtents" | "getInkExtents" | "getContentBounds">;
 
 interface AttachmentItem {
     geometry: AttachmentGeometry;
@@ -744,6 +744,7 @@ function moveSubdomainItem(item: SubdomainItem, layoutOnly = false): AttachmentI
         geometry: {
             regions: geometry.regions.map(move),
             occupancy: geometry.occupancy?.map(move),
+            getInkRegions: geometry.getInkRegions && ((left, right) => geometry.getInkRegions!(left - dx, right - dx).map(move)),
             paint: painter => geometry.paint(new TranslatingPainter(painter, dx, dy)),
         },
     };
@@ -922,6 +923,27 @@ function measureAttachmentPass(
             });
         },
         getRangeExtents,
+        getInkExtents(line, left, right, track) {
+            let extent: Extent | undefined;
+            const axis = baseContext.getVisualAxis(line, track), target = lift(track);
+            const include = (region: Rect) => {
+                if (region.x + region.w <= left || region.x >= right) return;
+                const top = region.y - axis, bottom = top + region.h;
+                if (extent) includeExtent(extent, top, bottom);
+                else extent = { top, bottom };
+            };
+            for (const host of baseContext.lines[line]?.columns.flat() ?? []) {
+                if (host.track === target) for (const ink of baseContext.getHostInk?.(host) ?? []) include(ink);
+            }
+            for (const peer of attachments.slice(0, attachments.indexOf(currentAttachment))) {
+                const geometry = resolveAttachment(peer)?.geometry;
+                if (!geometry) continue;
+                for (const region of geometry.getInkRegions?.(left, right) ?? geometry.regions) {
+                    if (region.line === line && lift(region.track) === target) include(region);
+                }
+            }
+            return extent;
+        },
         getAttachmentOccupancy(dependency) {
             const geometry = resolveAttachment(dependency)?.geometry;
             return geometry && (geometry.occupancy ?? geometry.regions);

@@ -1,3 +1,6 @@
+import { RecordingPainter } from '../src/render/recording.js';
+import { ribbonAtX } from '../src/functions/tie/ribbon.js';
+import { deepStrictEqual } from 'node:assert';
 import { test } from 'node:test';
 import { compileScore } from '../src/pipeline.js';
 import { compilePlayback } from '../src/playback/compile.js';
@@ -40,5 +43,45 @@ test('tuplets stay inside slurs and dynamics stay outside both', () => {
     const result = compileScore('@tuplet({1@a 2 3},2) 4 5@b @tie(a,b) @symbol(mf,size=12px,above=a)', {alignRelations:true});
     const [bracket, slur, dynamic] = result.layout.attachments;
     assert(slur.box.y + slur.box.h < bracket.box.y, 'the slur must clear the rhythm bracket');
-    assert(dynamic.box.y + dynamic.box.h < Math.min(bracket.box.y,slur.box.y), 'the expression must clear both relations');
+    assert(dynamic.box.y + dynamic.box.h < bracket.box.y);
+    const painter = new RecordingPainter(); slur.paint(painter);
+    const curve = painter.commands.find(c => c.kind === 'path');
+    assert(curve?.kind === 'path');
+    for (let i = 0; i <= 100; i++) {
+        const x = dynamic.box.x + dynamic.box.w * i / 100;
+        const edge = ribbonAtX(curve.commands, x);
+        if (edge) assert(dynamic.box.y + dynamic.box.h <= edge.top - 22 * .12 + 1e-5);
+    }
+});
+
+
+test('anchored ornaments and fermatas preserve the folded host playback without leaking to its next note', () => {
+    const notes = (source: string) => playedNotes(compilePlayback(lower(source))).map(n => ({
+        midi: n.midi, velocity: n.velocity, start: n.start.toString(), end: n.end.toString(), bpm: n.bpm,
+    }));
+    for (const symbol of ['tr', 'prall', 'mordent', 'fermata', 'accent']) {
+        for (const host of ['1', '0', '@up(1,3,5)', '@grace({1},{7})']) {
+            const source = `${host}@a 2 @symbol(${symbol},above=a)`;
+            const expected = notes(`@up({${host}},@symbol(${symbol})) 2`);
+            deepStrictEqual(notes(source), expected);
+            deepStrictEqual(notes(parse(source).toString(source)), expected);
+        }
+    }
+    deepStrictEqual(notes('1@a 1@b 2 @tie(a,b) @symbol(fermata,above=a)'), notes('@up(1,$fermata)@a 1@b 2 @tie(a,b)'));
+    deepStrictEqual(notes('1@a 2@b @symbol(tr,above=a) @symbol(p,above=a) @symbol(f,above=b)'), notes('@up(1,$tr,$p) @up(2,$f)'));
+});
+
+test('an anchored dynamic clears the local bow footprint without reserving its remote apex', () => {
+    const result = compileScore('1@a 2 3 4@b @tie(a,b) @symbol(p,size=12px,above=a)', { alignRelations: true });
+    const [slur, dynamic] = result.layout.attachments;
+    const painter = new RecordingPainter(); slur.paint(painter);
+    const curve = painter.commands.find(c => c.kind === 'path');
+    assert(curve?.kind === 'path');
+    let gap = Infinity;
+    for (let i = 0; i <= 2000; i++) {
+        const edge = ribbonAtX(curve.commands, dynamic.box.x + dynamic.box.w * i / 2000);
+        if (edge) gap = Math.min(gap, edge.top - dynamic.box.y - dynamic.box.h);
+    }
+    assert(nearly(gap, result.layout.objects[0].ast.size * .12), 'use only the measured local curve clearance');
+    assert(dynamic.box.y + dynamic.box.h > slur.box.y, 'the remote apex must not become a rectangular obstacle');
 });

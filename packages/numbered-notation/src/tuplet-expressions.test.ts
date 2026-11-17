@@ -17,7 +17,7 @@ describe('tuplet expressions remain outside rhythm brackets in both renderers', 
     const projection = projectNumberedScore(document,options)
     const result = compileScore(projection.source,{alignRelations:true,autoWrap:true})
     expect(result.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])
-    const outer = result.layout.attachments.filter(item => item.sourceSpan && /^@symbol\([^)]*above=/.test(projection.source.slice(item.sourceSpan.start,item.sourceSpan.end)))
+    const outer = result.layout.attachments.filter(item => item.sourceSpan && projection.bindings.get(/above=(\w+)/.exec(projection.source.slice(item.sourceSpan.start,item.sourceSpan.end))?.[1] ?? '')?.event?.kind === 'tuplet')
     expect(outer.length).toBeGreaterThan(0)
     for (const mark of outer) {
       const overlapping = result.layout.attachments.filter(item => item.sourceSpan && projection.source.slice(item.sourceSpan.start,item.sourceSpan.end).startsWith('@tuplet(')

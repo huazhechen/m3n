@@ -9,19 +9,27 @@ function relations(source: string, kind: string, alignRelations = true) {
         && source.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith(`@${kind}(`)) };
 }
 
-test('ties attach to musical members while trills stay above their arcs', () => {
-    for (const notes of ['1@a {1^$tr}@b', '{1^$tr}@a 1@b', "1'@a {1'^$tr}@b", '{1^3^$tr}@a {1^3^$tr}@b']) {
-        const { layout, items } = relations(`${notes} @tie(a,b)`, 'tie');
+test('ties attach to musical members while anchored trills clear their local arc', () => {
+    for (const notes of ['1@a 1@b', "1'@a 1'@b", '@up(1,3)@a @up(1,3)@b']) {
+        const { layout, items } = relations(`${notes} @tie(a,b) @symbol(tr,above=a) @symbol(tr,above=b)`, 'tie');
         const path = attachmentCommands(items[0]).find(command => command.kind === 'path');
         assert(path?.kind === 'path' && path.commands[0].op === 'M' && path.commands[1].op === 'C', 'expected tie endpoints');
         for (const [index, point] of [path.commands[0], path.commands[1]].entries()) {
             const host = layout.objects[index] as typeof layout.objects[number] & { members?: typeof layout.objects };
             const note = host.members?.filter(node => !node.T.isZero()).at(-1) ?? host;
             assert(nearly(point.y, note.box.y + (note.ports['tie.top']?.y ?? 0)), 'each endpoint must stay on the uppermost musical member');
-            const trill = host.members?.find(node => node.T.isZero());
-            if (trill) assert(trill.box.y + trill.box.h < items[0].box.y, 'trill must clear the entire arc');
         }
     }
+});
+
+test('ties do not inject a nominal height between a note and its close articulation', () => {
+    const source = '@up(1,$tenuto)@a 2@b';
+    const bare = compileScore(source), marked = compileScore(source + ' @tie(a,b)', {alignRelations:true});
+    const offset = (result: typeof bare) => {
+        const host = result.layout.objects[0] as typeof result.layout.objects[number] & { members: typeof result.layout.objects };
+        return host.members[1].box.y - host.members[0].box.y;
+    };
+    assert(nearly(offset(bare), offset(marked)), 'close articulation clearance must not depend on the presence or height of a tie');
 });
 
 test('adjacent tuplets share a baseline across bars, with the tallest group determining clearance', () => {

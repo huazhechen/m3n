@@ -81,11 +81,13 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       if (!semantic) return undefined
       const target = sourceTargets.get(spanKey(semantic.sourceSpan))
       if (!target) return undefined
-      if (semantic.role === 'annotation') return {
+      if (semantic.role === 'annotation' || semantic.role === 'mark') return {
         'data-m3n-id': target.binding.xmlId, 'data-m3n-role': semantic.role,
         'data-m3n-system': String(target.line), 'data-m3n-measure': target.binding.measureId,
       }
-      const row = projection.rows[semantic.row] ?? semantic.row
+      const rowIndex = semantic.row
+      if (rowIndex === undefined) return undefined
+      const row = projection.rows[rowIndex] ?? rowIndex
       const data = target.binding.lyrics.get(row)
       return {
         'data-m3n-id': target.binding.xmlId, 'data-m3n-role': semantic.role, 'data-m3n-rendition': String(row + 1),
@@ -93,6 +95,14 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
         'data-m3n-system': String(target.line), 'data-m3n-measure': target.binding.measureId,
         ...(semantic.underlined ? { 'data-m3n-underlined': 'true' } : {}),
       }
+    },
+    paintAttributes(style) {
+      const semantic = style.semantic
+      const target = semantic?.role === 'mark' && sourceTargets.get(spanKey(semantic.sourceSpan))
+      return target ? {
+        'data-m3n-id': target.binding.xmlId, 'data-m3n-role': 'mark',
+        'data-m3n-system': String(target.line), 'data-m3n-measure': target.binding.measureId,
+      } : undefined
     },
   })
   const seenMeasures = new Set<string>()

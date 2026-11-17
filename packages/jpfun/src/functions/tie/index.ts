@@ -100,11 +100,6 @@ class TieFunction extends ASTFunctionNode {
             ctx.diagnostics.push(Diagnostic.warning.UnresolvedEndpoint("tie", this.sourceSpan));
             return [];
         }
-        // M3N: folded zero-time marks need space outside the note's tie arc.
-        for (const node of endPoints) {
-            node.addon ??= {};
-            node.addon['@tie'] = Math.max(Number(node.addon['@tie'] ?? 0), this.height || this.fontSize * AUTO_HEIGHT_RATIO);
-        }
         ctx.addAttachment(new TieLayoutAttachment(endPoints, this.height, this.fontSize, this.sourceSpan));
         return [];
     }
@@ -195,6 +190,15 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         return {
             regions,
             occupancy,
+            getInkRegions: context.alignRelations ? (left: number, right: number) => segments.flatMap(segment => {
+                const a = Math.max(left, segment.x), b = Math.min(right, segment.x + segment.w);
+                if (b <= a) return [];
+                const center = segment.x + segment.w / 2;
+                const edges = [a, b, ...(center > a && center < b ? [center] : [])]
+                    .map(x => ribbonAtX(segment.commands, x)!);
+                const y = Math.min(...edges.map(edge => edge.top));
+                return [{ x: a, y, w: b - a, h: Math.max(...edges.map(edge => edge.bottom)) - y, line: segment.line, track: segment.track }];
+            }) : undefined,
             paint(painter: Painter) {
                 for (const segment of segments) {
                     // 弧带本身就是闭合轮廓，直接填充就能得到两端收尖、中部较粗的乐谱弧线

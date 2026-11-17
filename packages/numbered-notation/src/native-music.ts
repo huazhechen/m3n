@@ -44,7 +44,7 @@ export class NativeMusicPainter extends NativeSymbols {
 
   private articulations(glyph: NativeGlyph): string {
     const markStack = glyph.markLayout ?? nativeMarkStack(glyph.marks, nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, this.measurer).top, this.measurer).items
-    return markStack.map(mark => `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`).join('')
+    return markStack.map(mark => `<g${attrs({ transform: `translate(${n(glyph.x + (mark.x ?? 0))} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`).join('')
   }
 
   music(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>): string {

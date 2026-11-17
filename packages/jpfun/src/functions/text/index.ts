@@ -88,6 +88,13 @@ class TextFunction extends ASTFunctionNode {
                 namedOnly: true,
                 default: false,
             },
+            {
+                name: "gap",
+                description: "上方附件的净空；负值按文字类型自动确定",
+                type: "length" as const,
+                namedOnly: true,
+                default: { value: -1, unit: "px" } as LengthValue,
+            },
         ],
     };
 
@@ -116,9 +123,11 @@ class TextFunction extends ASTFunctionNode {
     readonly local: boolean;
     readonly frame: boolean;
     readonly linestart: boolean;
+    readonly gap: number;
     constructor(sourceSpan: SourceSpan, args: FunctionArgs, ctx: ParserContext, parent: ASTNodeBase | null = null) {
         super(sourceSpan, parent);
-        const [text, size, lineHeight, align, font, above, weight, local, linestart, frame] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number, boolean, boolean, boolean];
+        const [text, size, lineHeight, align, font, above, weight, local, linestart, frame, gap] = this.getArgValue(args, ctx) as [string, LengthValue, number, TextAlign, string | null, ASTNodeBase | string, number, boolean, boolean, boolean, LengthValue];
+        this.gap = ctx.length2px(gap);
         this.font = font || ctx.variables.font;
         this.above = above instanceof ASTNodeBase ? above : null;
         this.weight = weight;
@@ -153,7 +162,7 @@ class TextFunction extends ASTFunctionNode {
         const lineHeight = this.size === 0 ? 1.25 : this.lineAdvance / this.size;
         const above = this.above ? `, above=${(this.above as ASTFunctionNode).label}` : "";
         const weight = this.weight === 400 ? "" : `, weight=${this.weight}`;
-        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight}${this.local ? ', local=true' : ''}${this.linestart ? ', linestart=true' : ''}${this.frame ? ', frame=true' : ''})`;
+        return `@text(${quote(this.lines.join("\n"))}, size=${this.size}px, lineheight=${lineHeight}, align=${this.align}, font=${quote(this.font)}${above}${weight}${this.local ? ', local=true' : ''}${this.linestart ? ', linestart=true' : ''}${this.frame ? ', frame=true' : ''}${this.gap >= 0 ? `, gap=${this.gap}px` : ""})`;
     }
 }
 
@@ -270,10 +279,15 @@ class TextAboveAttachment implements LayoutAttachment {
                 start = Math.min(start, index); end = Math.max(end, index);
             }
         });
-        const extent = context.getRangeExtents(host.layoutLine, [start, end], host.track);
+        // A standalone heading also owns its first music column, even when
+        // an opening repeat separates its frame from the host's instruction.
+        const queryLeft = this.ast.linestart ? Math.min(box.x + left, host.box.x) : box.x + left;
+        const queryRight = this.ast.linestart ? Math.max(box.x + right, host.box.x + host.box.w) : box.x + right;
+        const extent = context.getInkExtents ? context.getInkExtents(host.layoutLine, queryLeft, queryRight, host.track)
+            : context.getRangeExtents(host.layoutLine, [start, end], host.track);
         // Local headings belong to the following music, so keep their inner gap
         // smaller than the separation between successive systems.
-        const gap = this.ast.size * (this.ast.local ? 0.4 : 0.5);
+        const gap = this.ast.gap >= 0 ? this.ast.gap : this.ast.size * (this.ast.local ? 0.4 : 0.5);
         box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - gap - box.h;
         return {
             regions: [{ x: box.x + left, y: box.y, w: right - left, h: box.h, line: host.layoutLine, track: host.track }],

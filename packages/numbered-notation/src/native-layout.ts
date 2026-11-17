@@ -8,7 +8,7 @@ import { placeNativeRelation, type NativeRelationLayout } from './native-relatio
 import { nativeMarkStack, nativeInnerMark, nativeMarkRank } from './native-marks.js'
 import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
-import { placeNativeAnnotations, type NativeRegion } from './native-annotations.js'
+import { placeNativeAnnotations, nativeRegionTop, type NativeRegion } from './native-annotations.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
@@ -213,7 +213,11 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
     const regions = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
-      .flatMap(g => g.controls.filter(c => c.x !== undefined).map(c => ({ lane: g.lane, left: c.x!, right: c.x! + c.width, top: c.top })))
+      .flatMap(g => [
+        ...(g.musicInk ?? [{ left: -(g.inkLeft ?? g.left), right: g.inkRight ?? g.right, top: -(g.musicTop ?? g.top), bottom: g.musicBottom ?? g.bottom }])
+          .map(ink => ({ lane: g.lane, left: g.x + ink.left, right: g.x + ink.right, top: -ink.top })),
+        ...g.controls.filter(c => c.x !== undefined).map(c => ({ lane: g.lane, left: c.x!, right: c.x! + c.width, top: c.top })),
+      ])
     for (const [index] of system.measures.entries()) for (const lane of system.lanes) {
       for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) {
         const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)
@@ -243,7 +247,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
         lane.top = Math.max(lane.top, top)
         lane.bodyBottom = Math.max(lane.bodyBottom ?? 0, placed.ink.bottom)
         const bounds = relationBounds.get(system) ?? []
-        bounds.push({ lane: lane.id, left: placed.ink.left, right: placed.ink.right, top })
+        bounds.push({ lane: lane.id, left: placed.ink.left, right: placed.ink.right, top, arc: placed.arc })
         relationBounds.set(system, bounds)
       }
     }
@@ -260,11 +264,12 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     // ornament overlaps it. Tuplet brackets have already entered regions.
     for (const { glyph, name } of outerMarks) {
       const ink = nativeSvgInk(symbols.rawMark(name), measurer)
-      const left = glyph.x + ink.left, right = glyph.x + ink.right
-      const top = Math.max(glyph.musicTop ?? glyph.top,
-        ...regions.filter(r => r.lane === glyph.lane && r.right >= left && r.left <= right).map(r => r.top),
-        ...system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === glyph.lane && g.x + (g.inkRight ?? g.musicRight ?? g.right) >= left && g.x - (g.inkLeft ?? g.musicLeft ?? g.left) <= right).map(g => g.musicTop ?? g.top))
+      const x = Math.max(margin - ink.left, Math.min(glyph.x, options.width - margin - ink.right))
+      const left = x + ink.left, right = x + ink.right
+      const top = Math.max(0, ...regions.filter(r => r.lane === glyph.lane && r.right >= left && r.left <= right).map(r => nativeRegionTop(r, left, right)))
       const mark = nativeMarkStack([name], top, measurer).items[0]!
+      mark.x = x - glyph.x
+      mark.left += mark.x; mark.right += mark.x
       glyph.markLayout ??= []; glyph.markLayout.push(mark)
       glyph.top = Math.max(glyph.top, -mark.top)
       regions.push({ lane: glyph.lane, left, right, top: -mark.top })
@@ -279,10 +284,6 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   // section headings are placed afterwards so they cannot enlarge peer rows.
   for (const system of systems) {
     const regions = relationBounds.get(system) ?? []
-    for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) {
-      regions.push({ lane: glyph.lane, left: glyph.x - (glyph.inkLeft ?? glyph.musicLeft ?? glyph.left), right: glyph.x + (glyph.inkRight ?? glyph.musicRight ?? glyph.right), top: glyph.musicTop ?? glyph.top })
-      for (const control of glyph.controls) if (control.x !== undefined) regions.push({ lane: glyph.lane, left: control.x, right: control.x + control.width, top: control.top })
-    }
     relationBounds.set(system, regions)
     placeNativeAnnotations(system, regions, measurer, options.width, margin, false)
   }

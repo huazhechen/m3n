@@ -2,10 +2,11 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { ASTFunctionNode, compileScore, getLayoutBounds, isVisualTemporalNode, type VisualTemporalNode } from '@m3n/jpfun'
+import { ASTFunctionNode, RecordingPainter, compileScore, getLayoutBounds, isVisualTemporalNode, type VisualTemporalNode } from '@m3n/jpfun'
 import { formatM3N, measurePlaybackPasses, m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
 import { NumberedNotationScore, type NumberedNotationRenderOptions } from './score.js'
 import { projectNumberedScore } from './projection.js'
+import { nativeArcSlice } from './native-curve.js'
 
 const options = { paged: false, width: 800 }
 
@@ -499,16 +500,17 @@ describe('jpFun numbered notation adapter', () => {
     const source = `{2/4}\nN: {p} {dim=text} ${pitch}{tr}{f1}{tip} 2{/} |||`
     const { document, root } = render(source)
     const note = geometry(document).layout.objects.find(node => !node.T.isZero())!
-    const members = (note as VisualTemporalNode & { members: readonly VisualTemporalNode[] }).members
-    const grace = members[0] as VisualTemporalNode & { host?: VisualTemporalNode & { members?: readonly VisualTemporalNode[] } }
-    const articulations = grace.host?.members ?? members
-    const wedge = articulations.find(member => (member.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccatissimo')!
+    const descendants = (node: VisualTemporalNode): VisualTemporalNode[] => {
+      const group = node as VisualTemporalNode & { host?: VisualTemporalNode; members?: readonly VisualTemporalNode[] }
+      return [node, ...[...(group.host ? [group.host] : []), ...(group.members ?? [])].flatMap(descendants)]
+    }
+    const wedge = descendants(note).find(member => (member.ast as ASTFunctionNode & { definition?: { name: string } }).definition?.name === 'staccatissimo')!
     expect(wedge).toBeDefined()
     const wedgeBox = getLayoutBounds(wedge)
-    for (const member of members.slice(1).filter(member => member !== wedge)) {
-      const box = getLayoutBounds(member)
-      expect(box.y + box.h).toBeLessThan(wedgeBox.y)
-    }
+    const result = geometry(document)
+    const outer = result.layout.attachments.filter(item => item.sourceSpan && /^@(symbol|text)\(/.test(result.maskedSource.slice(item.sourceSpan.start, item.sourceSpan.end)) && item.regions.some(r => r.line === note.layoutLine && r.x < wedgeBox.x + wedgeBox.w && r.x + r.w > wedgeBox.x))
+    expect(outer.length).toBeGreaterThan(0)
+    for (const item of outer) expect(item.box.y + item.box.h).toBeLessThan(wedgeBox.y)
     const circles = [...root.querySelectorAll('#m3n-e-1 circle')]
     const octaveDots = circles.filter(circle => Number(circle.getAttribute('r')) === 22 * 0.075)
     expect(octaveDots).toHaveLength(pitch === '1e' ? 1 : 2)
@@ -576,7 +578,7 @@ describe('jpFun numbered notation adapter', () => {
   it.each([
     ['two-beat notes', '{2/4}\nN: 6^~ | 6^ |||', 'note'],
     ['four-beat notes across an explicit break', '{4/4}\nN: 6^^^~ | {br}6^^^ |||', 'note'],
-    ['a decorated sustained note', '{2/4}\nN: 6e^~{fermata} | 6e^ |||', 'up'],
+    ['a decorated sustained note', '{2/4}\nN: 6e^~{fermata} | 6e^ |||', 'note'],
     ['a tuplet ending in a rest', '{2/4}\nN: [660:2]~ | 6^ |||', 'note'],
   ])('anchors sustained-note ties on the pitched glyph: %s', (_name, source, kind) => {
     const document = parseM3NDocument(source)
@@ -678,9 +680,17 @@ describe('jpFun numbered notation adapter', () => {
     const instruction = labels.find(item => text(item).includes('"快速吹吸切换"'))!.box
     expect(section.y + section.h).toBeLessThan(instruction.y)
     for (const label of labels) for (const symbol of result.layout.attachments.filter(item => !labels.includes(item))) {
-      const overlaps = label.regions.some(a => symbol.regions.some(b => a.line === b.line && a.track === b.track
-        && a.x < b.x + b.w && b.x < a.x + a.w))
-      if (overlaps) expect(label.box.y + label.box.h).toBeLessThan(symbol.box.y)
+      const isArc = symbol.sourceSpan && result.maskedSource.slice(symbol.sourceSpan.start, symbol.sourceSpan.end).startsWith('@tie(')
+      const painter = new RecordingPainter(); if (isArc) symbol.paint(painter)
+      const paths = painter.commands.filter(c => c.kind === 'path')
+      for (const a of label.regions) for (const [index, b] of symbol.regions.entries()) {
+        if (a.line !== b.line || a.track !== b.track || a.x >= b.x + b.w || b.x >= a.x + a.w) continue
+        if (!isArc) expect(a.y + a.h).toBeLessThan(b.y)
+        else {
+          const left = Math.max(a.x, b.x), right = Math.min(a.x + a.w, b.x + b.w)
+          for (let i = 0; i <= 1000; i++) expect(a.y + a.h).toBeLessThan(nativeArcSlice(paths[index]!.commands, left + (right - left) * i / 1000)!.top)
+        }
+      }
     }
     const { root } = render(document, settings)
     expect(root.querySelectorAll('text[data-m3n-role="annotation"]')).toHaveLength(labels.length)

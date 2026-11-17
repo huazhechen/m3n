@@ -5,6 +5,7 @@ const MAX_VELOCITY = 127;
 
 export const accentSymbol: SymbolDefinition = {
     name: "accent",
+    tiePort: true,
     description: "重音",
     weight: 0.5,
     shapes: [

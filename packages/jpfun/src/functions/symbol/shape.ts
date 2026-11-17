@@ -58,11 +58,12 @@ export function paintSymbol(
     bounds: Rect,
     box: Readonly<LayoutBox>,
     scale: number,
+    semantic?: PaintStyle['semantic'],
 ) {
     const originX = box.x - bounds.x * scale;
     const originY = box.y - bounds.y * scale;
     for (const shape of shapes) {
-        const style = shape.style;
+        const style = semantic ? { ...shape.style, semantic } : shape.style;
         const scaled = style.strokeWidth === undefined
             ? style
             : { ...style, strokeWidth: style.strokeWidth * scale };

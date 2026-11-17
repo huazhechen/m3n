@@ -27,6 +27,7 @@ export interface GlyphMetrics {
  * fill 和 stroke 都为空时由具体后端选择默认值
  */
 export interface PaintStyle {
+    semantic?: TextStyle['semantic'];
     fill?: string;          // 填充颜色，不设置时由命令选择默认值
     stroke?: string;        // 描边颜色，不设置时不描边或使用命令默认值
     strokeWidth?: number;   // 描边宽度，单位为布局坐标像素
@@ -41,7 +42,7 @@ export interface PaintStyle {
  */
 export interface TextStyle {
     semantic?: { role: 'lyric' | 'lyric-prefix'; sourceSpan: SourceSpan; row: number; underlined?: boolean }
-        | { role: 'annotation'; sourceSpan: SourceSpan; row?: never; underlined?: never };
+        | { role: 'annotation' | 'mark'; sourceSpan: SourceSpan; row?: never; underlined?: never };
     fontSize: number;        // 字号，单位为布局坐标像素
     fontFamily?: string;     // Painter 原样使用的字体族列表
     fontWeight?: string | number; // CSS 或 Canvas 可接受的字重

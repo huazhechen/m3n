@@ -203,6 +203,7 @@ describe('numbered full-beat sustain continuations', () => {
     expect(root.querySelectorAll('g.note[data-m3n-role="sustain"]')).toHaveLength(name === 'a tuplet' ? 1 : 0)
     if (name !== 'separate attacks') expect(projection.source).toContain('@tie(')
     if (name === 'forced lyric syllables') expect([...root.querySelectorAll('text[data-m3n-role="lyric"]')].map(node => node.textContent).join('')).toBe('白啊')
-    if (name === 'independent articulations') expect(root.querySelector('#m3n-e-2 path')).not.toBeNull()
+    if (name === 'independent articulations') expect(root.querySelector('path[data-m3n-id="m3n-e-2"][data-m3n-role="mark"]')).not.toBeNull()
+    expect(root.querySelectorAll('#m3n-e-2')).toHaveLength(1)
   })
 })

@@ -8,6 +8,7 @@ import type { PaintStyle, Painter, PathCommand, PathTransform, TextStyle } from 
 export interface SvgRenderOptions {
     objectAttributes?: (node: VisualTemporalNode) => Readonly<Record<string, string>> | undefined;
     textAttributes?: (style: TextStyle) => Readonly<Record<string, string>> | undefined;
+    paintAttributes?: (style: PaintStyle) => Readonly<Record<string, string>> | undefined;
     padding?: number;       // viewBox 四周额外保留的空间
     background?: string;    // 可选背景颜色，默认透明
 }
@@ -97,6 +98,10 @@ export class SvgPainter implements Painter {
             return ` ${name}="${escapeXml(value)}"`;
         }).join('');
     }
+    private paintAttributes(style?: PaintStyle) {
+        const attrs = style && this.options.paintAttributes?.(style);
+        return attrs ? this.attributes(attrs) : '';
+    }
 
     drawText(text: string, x: number, y: number, style: TextStyle) {
         const semantic = this.options.textAttributes?.(style);
@@ -119,7 +124,7 @@ export class SvgPainter implements Painter {
         const stroke = style?.stroke ?? style?.fill ?? "#000";
         const strokeWidth = style?.strokeWidth ?? 1;
         this.body.push(
-            `<line x1="${number(x1)}" y1="${number(y1)}" `
+            `<line${this.paintAttributes(style)} x1="${number(x1)}" y1="${number(y1)}" `
             + `x2="${number(x2)}" y2="${number(y2)}" `
             + `stroke="${escapeXml(stroke)}" stroke-width="${number(strokeWidth)}" stroke-linecap="round"`
             + `${opacityAttribute(style)} />`,
@@ -131,7 +136,7 @@ export class SvgPainter implements Painter {
         const stroke = style?.stroke ?? "none";
         const strokeWidth = style?.strokeWidth ?? 1;
         this.body.push(
-            `<rect x="${number(x)}" y="${number(y)}" `
+            `<rect${this.paintAttributes(style)} x="${number(x)}" y="${number(y)}" `
             + `width="${number(Math.max(0, w))}" height="${number(Math.max(0, h))}" `
             + `fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}" stroke-width="${number(strokeWidth)}"`
             + `${opacityAttribute(style)} />`,
@@ -143,7 +148,7 @@ export class SvgPainter implements Painter {
         const stroke = style?.stroke ?? "none";
         const strokeWidth = style?.strokeWidth ?? 1;
         this.body.push(
-            `<circle cx="${number(cx)}" cy="${number(cy)}" `
+            `<circle${this.paintAttributes(style)} cx="${number(cx)}" cy="${number(cy)}" `
             + `r="${number(Math.max(0, r))}" fill="${escapeXml(fill)}" `
             + `stroke="${escapeXml(stroke)}" stroke-width="${number(strokeWidth)}"`
             + `${opacityAttribute(style)} />`,
@@ -158,7 +163,7 @@ export class SvgPainter implements Painter {
         const stroke = style?.stroke ?? "none";
         const strokeWidth = style?.strokeWidth ?? 1;
         this.body.push(
-            `<path d="${d}" fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}" `
+            `<path${this.paintAttributes(style)} d="${d}" fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}" `
             + `stroke-width="${number(strokeWidth)}" stroke-linecap="round" stroke-linejoin="round"`
             + `${opacityAttribute(style)} />`,
         );

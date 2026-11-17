@@ -384,7 +384,6 @@ class FoldTemporal extends TemporalNodeBase {
     override prepareLayout(context: LayoutPrepareContext) {
         // lowering 期间修饰挂在折叠体上（augmenter 要看到整体节奏），渲染时交给宿主：
         // 减时线要落在它的数字与下八度点之间，而不是压在整个盒子下面
-        const tieClearance = Number(this.addon?.['@tie'] ?? 0);
         if (this.members[0]) transferFunctionAddons(this, this.members[0]);
         const first = this.members[0];
         if (!first) {
@@ -409,10 +408,8 @@ class FoldTemporal extends TemporalNodeBase {
         let top = firstBounds.y;
         for (let i = 1; i < this.aboveCount; i++) {
             const bounds = getLayoutBounds(this.members[i]);
-            // M3N: zero-time marks sit above a tie, while chord tones remain its endpoints.
-            const clearance = this.members[i].T.isZero() && !this.members[i - 1].T.isZero() ? tieClearance : 0;
-            this.verticalOffsets[i] = top - gap - clearance - bounds.y - bounds.h;
-            top -= gap + clearance + bounds.h;
+            this.verticalOffsets[i] = top - gap - bounds.y - bounds.h;
+            top -= gap + bounds.h;
         }
         let bottom = firstBounds.y + firstBounds.h;
         for (let i = this.aboveCount; i < this.members.length; i++) {
@@ -441,7 +438,7 @@ class FoldTemporal extends TemporalNodeBase {
 
         // M3N: connect to the highest musical member, not a trill/dynamic above it.
         let topIndex = this.aboveCount - 1;
-        while (topIndex > 0 && this.members[topIndex].T.isZero()) topIndex--;
+        while (topIndex > 0 && this.members[topIndex].T.isZero() && !this.members[topIndex].ports["tie.top"]) topIndex--;
         const topOffset = this.verticalOffsets[topIndex];
         this.ports["tie.top"] = {
             x: anchor,
