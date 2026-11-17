@@ -4,6 +4,7 @@ import { expect, it } from 'vitest'
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 
 // Performance fingerprints captured before migrating the written choices to houses.
+// 星星点灯 includes the subsequent five-page tie/lyric audit and requested removal of all grace notes.
 // 爱如潮水 and 枫 include the requested instrumental slide cleanups.
 const cases = [
   {
@@ -57,9 +58,9 @@ const cases = [
   },
   {
     "file": "xing_xing_dian_deng_01.m3n",
-    "music": "4ce044db58e46b8a2a904d68a4456410145163e593a0439fe4f031d475059075",
-    "lyrics": "1ff60c533601e318f3e268617cdeff11a8ce60d6ecac9306c99e5e50ff42b896",
-    "events": 718,
+    "music": "646cffc94477475ad6f5423e69c81b8461db3bb9a49963bff42bfdf388199052",
+    "lyrics": "4952963072692acbc6765ea8b2a7cdd8b8b57dd672137fc485f11e144e040628",
+    "events": 719,
     "syllables": 444
   }
 ]

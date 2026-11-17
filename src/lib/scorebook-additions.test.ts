@@ -6,6 +6,7 @@ import stars from '../scores/xing_xing_dian_deng_01.m3n?raw'
 import dream from '../scores/zhui_meng_ren_01.m3n?raw'
 import references from './fixtures/kuaiyuepu-additions.json'
 import dreamReference from './fixtures/zhui-meng-ren-baidu.json'
+import starsReference from './fixtures/xing-xing-dian-deng-jitapuji.json'
 
 const sources: Record<string, string> = { zhui_meng_ren: dream, xing_xing_dian_deng: stars, ru_guo_you_ni_zai: conan }
 function events(source: string, expand = true) {
@@ -117,6 +118,39 @@ describe('new reference scores', () => {
       .toEqual(dreamReference.ties)
     expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => ({ start: positions.get(interval.start!), end: positions.get(interval.endStart!) })))
       .toEqual(dreamReference.slurs)
+  })
+
+  it('matches all Star Lighting melody events and ties from the five-page audit, without grace notes', () => {
+    const document = parseM3NDocument(stars)
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    expect(bars).toHaveLength(59)
+    const tokens = (bar: typeof bars[number]) => bar.events.map(event => `${event.pitches[0] ?? '0'}:${event.beats}${event.tie ? '~' : ''}`)
+    const introduction = parseM3NDocument(starsReference.userIntroduction).parts.get('score')!.melody.filter(bar => bar.events.length)
+    expect(bars.slice(0, 12).map(tokens)).toEqual(introduction.map(tokens))
+    const reference = starsReference.writtenBarsAfterIntroduction
+    const expected = [...reference.slice(0, 8), reference[6]!, starsReference.secondPassBar8, ...reference.slice(8)]
+    expect(bars.slice(12).map(tokens)).toEqual(expected.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
+    expect(bars.every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 4)).toBe(true)
+    expect(stars).not.toMatch(/\{a[cp]\(/)
+    expect(bars.flatMap(bar => bar.events).every(event => event.postfixes.every(mark => !/^(ac|ap)\(/.test(mark)))).toBe(true)
+    expectReferenceLyrics(stars, starsReference)
+    expect(events(stars).reduce((sum, event) => sum + event.beats, 0)).toBe(380)
+  })
+
+  it('places Star Lighting lyrics on their original notes, including bars 20 and 31', () => {
+    const document = parseM3NDocument(stars)
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    const { lyricsByEvent } = deriveScoreInteraction(document)
+    const words = (number: number) => bars[number - 1]!.events.map(event => (lyricsByEvent.get(event) ?? [])
+      .filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('/'))
+    expect(words(20)).toEqual(['海', '角', '', '天', '', '边'])
+    for (const number of [31, 35, 52, 56]) expect(words(number)).toEqual(['星', '星', '点', '灯', '', '照', '亮'])
+    for (const number of [32, 53]) expect(words(number)).toEqual(['我', '的', '家', '门', '', '让'])
+    for (const number of [34, 55]) expect(words(number)).toEqual(['来', '时', '的', '路', ''])
+    expect(words(49)).toEqual(['偷', '偷', '探', '出', '了', '头', '', '是'])
+    const positions = new Map(bars.flatMap((bar, index) => bar.events.map((event, offset) => [event.sourceStart, [index + 1, offset + 1]] as const)))
+    expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => [positions.get(interval.start!), positions.get(interval.endStart!)]))
+      .toEqual([[[17, 5], [17, 6]], [[20, 4], [20, 5]], [[37, 9], [37, 10]], [[58, 9], [59, 1]]])
   })
 
   it('keeps all Conan pitches and ties with only the eight authorized half-beat corrections', () => {
