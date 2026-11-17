@@ -52,3 +52,7 @@ JSON与HTML报告增加 `primitiveMatches`、`primitiveAudit`，包括两版数�
 在`2e9b0d7`的零时值间距修正及当前并行重构之上，重新从网页实际`src/lib/render-score.ts`打包隔离自研候选。90个有输出的模块、411989字节；运行图中没有jpFun、Verovio或旧score／svg／projection适配器。保存本次模块清单及源码哈希为`.tmp/2026-11-18-native-public-bundle-probe.json`、`.tmp/2026-11-18-native-public-bundle-metafile.json`。原候选接口探针以TS6严格模式重跑通过，包边界检查通过。这些结果只证明当前候选的接口与依赖边界，正式公共入口仍导出jpFun实现，不是部署或整库视觉验收。
 
 当前234份输入包含全部88首曲库和专项样例；启动时保存的谱源与本次检查时曲库逐文件一致。等行高及小节号两轮各1872组仍在运行，最终图元／像素／实绘结论以完整终态为准。
+
+完整应用候选构建也已通过：使用原Vite配置，仅在临时构建中将简谱公共入口及工作区包映射到当前源码；685个有输出模块、114个代码块，含`native-playback-score.ts`，没有jpFun、Verovio或旧渲染适配器。报告及模块哈希`.tmp/native-app-readiness-report.json`，构建日志`.tmp/native-app-readiness.log`。产物只写`.tmp/native-app-readiness/dist`，保留`/score/`和remote提交模式，不改正式dist；本次禁用public目录复制，只验代码构建，不当作可部署产物或浏览器交互验收。
+
+应用与包源码合并的严格类型检查通过，临时配置`.tmp/tsconfig.native-app.json`、日志`.tmp/native-app-readiness-types.log`。首次直接继承应用的`erasableSyntaxOnly`时，8处包内合法参数属性被拒绝；包本身经TypeScript编译后再交给应用，这不是接口错误。临时合并检查仅关闭该语法限制，保留严格类型检查，未改变应用或包的正式配置。根目录oxlint退出0，既有警告保留，日志`.tmp/native-final-root-lint.log`。
