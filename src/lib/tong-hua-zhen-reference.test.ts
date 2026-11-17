@@ -24,6 +24,28 @@ it('reads every introduction duration directly from the image, including the pic
   ])
 })
 
+it('ties the repeated 6s in the introduction without slurring 7 into 6', () => {
+  expect(written.slice(0, 9).map(bar => bar.events.map(event => event.tie ?? false))).toEqual([
+    [false, false, false],
+    [false, true, true],
+    [false, false, false, false],
+    [false, true, false, false],
+    [false, false, false, false],
+    [false, true, true],
+    [false, false, false, false],
+    [false, false],
+    [false],
+  ])
+  const introEnd = written[8]!.events[0]!.sourceStart
+  expect(document.intervals.filter(interval => interval.kind === 'lg' && interval.start < introEnd)).toEqual([])
+  // Fourth fragment starts at beat 5: dotted eighth 7, then the two 6s
+  // form one 3/16-note sustain, followed by an eighth-note 5.
+  const notes = compileScorePerformance(document).notes.filter(note => note.start >= 5 && note.start < 7)
+  expect(notes.map(note => [note.start, note.end, note.pitch])).toEqual([
+    [5, 5.75, 71], [5.75, 6.5, 69], [6.5, 7, 67],
+  ])
+})
+
 it('starts the phrase slur on 2 after the ornamented 3, as printed above 话镇', () => {
   const position = source.indexOf('{lg}(2 1)')
   const slur = document.intervals.find(interval => interval.kind === 'lg' && interval.start === position + 5)
