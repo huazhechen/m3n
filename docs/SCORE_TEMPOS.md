@@ -116,4 +116,4 @@
 
 | 曲目 | 拍号 | qpm | 参考 | 说明 |
 | --- | --- | --- | --- | --- |
-| [九儿](../src/scores/jiu_er_01.m3n) | 4/4 | 80 | [快悦谱：上善若水版](https://www.kuaiyuepu.com/jianpu/lVN3b1xt8.html) | 沿用参考播放四分音符=80；原A→B→E整体升半音为降B→C→F，24小节顺读。 |
+| [九儿](../src/scores/jiu_er_01.m3n) | 4/4 | 80 | [快悦谱：上善若水版](https://www.kuaiyuepu.com/jianpu/lVN3b1xt8.html) | 沿用参考播放四分音符=80；适配半音阶口琴音域，原A→B→E整体降低六个半音为降E→F→降B，音域E♭4–D6，24小节顺读。 |

@@ -7,9 +7,9 @@
     "B",
     "E"
   ],
-  "transposeSemitones": 1,
+  "transposeSemitones": -6,
   "tempo": 80,
-  "scope": "Reference melody nodes with a sounding pitch and positive playDuration; omit accompaniment. Tuples are [quarter-beat start, quarter-beat end, original MIDI pitch]. Score transposes all pitches up one semitone. Playback milliseconds are rounded to the nearest notated sixteenth-note grid (quarter beat).",
+  "scope": "Reference melody nodes with a sounding pitch and positive playDuration; omit accompaniment. Tuples are [quarter-beat start, quarter-beat end, original MIDI pitch]. Score transposes all pitches down six semitones to start in E-flat, preserving the rising key changes. Playback milliseconds are rounded to the nearest notated sixteenth-note grid (quarter beat).",
   "lyricText": "身边的那片田野啊手边的稻花儿香高粱熟了红满天啦九儿我送你去远方身边的那片田野啊手边的稻花儿香高粱熟来红满天啦九儿我送你去远方啊高粱熟了红满天啦九儿我送你去远方九儿我送你去远方",
   "notes": [
     [

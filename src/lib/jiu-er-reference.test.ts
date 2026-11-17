@@ -10,7 +10,7 @@ it('loads Jiu Er fully written out with a subtitle and inline key changes', asyn
   expect(await loadPresetScore(preset.slug)).toBe(source)
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
-  expect([document.key, document.meterCount, document.meterUnit, document.tempo]).toEqual(['Bb', 4, 4, reference.tempo])
+  expect([document.key, document.meterCount, document.meterUnit, document.tempo]).toEqual(['Eb', 4, 4, reference.tempo])
   expect(document.subtitle).toBe('电视剧《红高粱》片尾曲')
   expect(document.origin).toBe('')
   expect(document.order).toBeUndefined()
@@ -21,13 +21,15 @@ it('loads Jiu Er fully written out with a subtitle and inline key changes', asyn
   expect(bars.slice(0, -1).every(bar => bar.right === 'single')).toBe(true)
   expect(bars.at(-1)!.right).toBe('end')
   expect(bars.every(bar => !bar.ending && bar.left !== 'rptstart' && bar.right !== 'rptend')).toBe(true)
-  expect([...new Set(bars.flatMap(bar => bar.events.map(event => event.key)))]).toEqual(['Bb', 'C', 'F'])
+  expect([...new Set(bars.flatMap(bar => bar.events.map(event => event.key)))]).toEqual(['Eb', 'F', 'Bb'])
 })
 
-it('preserves every reference sounding pitch and duration, transposed up one semitone including the rising registers', () => {
+it('preserves every reference sounding pitch and duration, transposed to E-flat with rising key changes within the harmonica range', () => {
   const document = parseM3NDocument(source)
   const performance = compileScorePerformance(document)
   expect(performance.beats).toBe(96)
+  const pitches = performance.notes.map(note => note.pitch)
+  expect([Math.min(...pitches), Math.max(...pitches)]).toEqual([63, 86])
   expect(alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(24)
   expect(performance.notes.filter(note => note.channel === 0).map(note => [note.start, note.end, note.pitch])).toEqual(reference.notes.map(([start, end, pitch]) => [start, end, pitch! + reference.transposeSemitones]))
   expect(performance.notes.filter(note => note.channel !== 0)).toEqual([])
