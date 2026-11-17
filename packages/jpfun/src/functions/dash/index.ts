@@ -81,6 +81,11 @@ class DashTemporalNode extends TemporalNodeBase {
         this.box.anchor = this.lineWidth / 2;
         this.lineY = size * 0.5;
         this.box.visualAxis = this.lineY;
+        // Keep the full rhythmic cell, but connect arcs to the painted stroke.
+        this.ports["tie.top"] = {
+            x: this.box.anchor,
+            y: this.lineY - Math.max(1, size * 0.1) / 2,
+        };
     }
 
     /**
