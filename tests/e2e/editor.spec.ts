@@ -106,7 +106,7 @@ test('print reuses current display settings and offers three horizontal format b
   }
 })
 
-test('renders ScoreDocument through the vendored jpFun engine', async ({ page }) => {
+test('renders ScoreDocument through the native numbered engine', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await openScoreSettings(page)
   await expect(page.getByRole('slider', { name: '乐谱宽度' })).toBeVisible({ timeout: 30_000 })
@@ -131,7 +131,7 @@ test('renders numbered scores and their embedded fonts without loading Verovio',
     return route.abort()
   })
   await page.goto('/scores/tong_hua_zhen_01')
-  await expect(page.locator('.score-paper svg[data-engine="jpfun"]').first()).toBeVisible()
+  await expect(page.locator('.score-paper svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled()
   expect(await page.evaluate(() => document.fonts.check('22px "M3N Numbers"'))).toBe(true)
   expect(await page.locator('.score-paper svg').first().innerHTML()).toContain('data:font/ttf;base64,')
@@ -143,7 +143,7 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
   const editor = page.getByLabel('M3N source')
   const text = '{2/4} {120qpm}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天来了\nL2: 花开满园'
   await editor.fill(text)
-  await expect(page.locator('.score-paper svg[data-engine="jpfun"]').first()).toBeVisible()
+  await expect(page.locator('.score-paper svg[data-engine="m3n"]').first()).toBeVisible()
   const note = page.locator('.score-paper #m3n-e-2 text')
   await expect(note).toBeVisible()
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy','true')
@@ -176,11 +176,11 @@ test('uses the current numbered layout and includes visible bass in SVG, PNG and
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{title=导出验证} {2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了\nB: 1d 2d | 3d 4d |||')
   await page.getByRole('button', { name: '保存' }).click()
-  await expect(page.locator('.score-paper svg[data-engine="jpfun"]')).toBeVisible()
+  await expect(page.locator('.score-paper svg[data-engine="m3n"]')).toBeVisible()
   for (const [format, signature] of [['SVG', '<svg'], ['PNG', 'PNG'], ['PDF', '%PDF']] as const) {
     await page.getByRole('button', { name: '打印' }).click()
     const dialog = page.getByRole('dialog')
-    await expect(dialog.locator('svg[data-engine="jpfun"]').first()).toBeVisible()
+    await expect(dialog.locator('svg[data-engine="m3n"]').first()).toBeVisible()
     await expect(dialog.locator('[data-m3n-id="m3n-e-3"]').first()).toBeVisible()
     await expect(dialog.locator('[data-m3n-id="m3n-e-5"]').first()).toBeVisible()
     const download = page.waitForEvent('download')

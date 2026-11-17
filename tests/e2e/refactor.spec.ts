@@ -90,7 +90,7 @@ test('numbered SVG and multipage PDF retain Chinese outlines and all written mea
       expect(count).toBeGreaterThan(1)
       const portable = await dialog.locator('.export-preview-page > svg').evaluateAll(pages => pages.every(page => {
         const view=page.viewBox.baseVal
-        return view.width>0 && view.height>0 && Number(page.getAttribute('width'))>0 && Number(page.getAttribute('height'))>0 && (page.matches('[data-engine="jpfun"]') || Boolean(page.querySelector('[data-engine="jpfun"]')))
+        return view.width>0 && view.height>0 && Number(page.getAttribute('width'))>0 && Number(page.getAttribute('height'))>0 && (page.matches('[data-engine="m3n"]') || Boolean(page.querySelector('[data-engine="m3n"]')))
       }))
       expect(portable).toBe(true)
     }
@@ -122,7 +122,7 @@ test('numbered SVG and multipage PDF retain Chinese outlines and all written mea
 test('homepage plays numbered notation and documentation examples open as editable sources', async ({ page }) => {
   await page.goto('/')
   const sample = page.getByRole('region', { name: '可试听谱例' })
-  await expect(sample.locator('svg[data-engine="jpfun"]')).toBeVisible()
+  await expect(sample.locator('svg[data-engine="m3n"]')).toBeVisible()
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await expect(page.getByRole('switch', { name: '首页简谱', exact: true })).toHaveCount(0)
