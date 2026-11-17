@@ -13,6 +13,18 @@ const measurer: TextMeasurer = { measureText(text, style) {
 const layout = (music: string, width = 800) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ||: 1 2 3 4 |\n---V1\nN: ${music} :||\n---V2\nN: 1 2 3 4 |||`), { width, paged: false, textMeasurer: measurer })
 
 describe('measured native volta fragments', () => {
+  it.each([1.5, 2, 4])('centers the painted label independently of a nominal text box scaled by %s', nominalScale => {
+    const measured: TextMeasurer = { measureText(text, style) {
+      const metrics = measurer.measureText(text, style)
+      return { ...metrics, h: metrics.h * nominalScale, inkBottom: metrics.h }
+    } }
+    const pieces = nativeSvgPieces(nativeVoltaSvg(10, 100, '1', measured), measured)
+    const hook = pieces[1]!, label = pieces[2]!
+    expect((label.top + label.bottom) / 2).toBeCloseTo((hook.top + hook.bottom) / 2, 4)
+    // The label's measured ink, rather than its nominal box, sets both hooks.
+    expect(hook.bottom - hook.top - 22 * .055).toBeCloseTo((label.bottom - label.top) * 1.2, 4)
+  })
+
   it.each([[true, true, 4], [true, false, 3], [false, true, 2], [false, false, 1]])(
     'draws only the real endpoint hooks and first label: first=%s last=%s', (first, last, count) => {
       const svg = nativeVoltaSvg(10, 100, '3,1,2,1', measurer, first, last)
