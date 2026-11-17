@@ -54,3 +54,20 @@ it('retains all vocal lyrics from the first bar', () => {
   expect(lyrics[0]![0]).toBe(0)
   expect(lyrics.map(([, , text]) => text).join('')).toBe(reference.lyricText)
 })
+
+
+it('extends both Er syllable slurs across the barline through the next 6', () => {
+  const document = parseM3NDocument(source)
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  const events = document.parts.get('score')!.melody.flatMap(bar => bar.events)
+  const slurs = document.intervals.filter(interval => interval.kind === 'lg' &&
+    events.some(event => event.sourceStart === interval.start &&
+      lyricsByEvent.get(event)?.some(lyric => lyric.kind === 'text' && lyric.text === '儿')))
+  expect(slurs).toHaveLength(2)
+  for (const slur of slurs) {
+    const start = events.findIndex(event => event.sourceStart === slur.start)
+    expect(slur.endStart).toBe(events[start + 2]!.sourceStart)
+    expect(lyricsByEvent.get(events[start + 2]!)?.some(lyric => lyric.kind === 'text')).toBeFalsy()
+    expect(lyricsByEvent.get(events[start + 3]!)?.some(lyric => lyric.kind === 'text' && lyric.text === '香')).toBe(true)
+  }
+})
