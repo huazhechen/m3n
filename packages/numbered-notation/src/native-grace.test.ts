@@ -7,6 +7,7 @@ import { nativeGraceGeometry } from './native-grace.js'
 import { nativeSvgInk } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { nativeNoteBody } from './native-note-body.js'
+import { nativeAccidentalAdvance } from './native-accidentals.js'
 import { nativeStyle } from './native-style.js'
 
 const normal = new DefaultTextMeasurer()
@@ -35,6 +36,20 @@ describe('measured native grace blocks', () => {
     const hook=root.querySelector('path')!
     expect(hook.getAttribute('stroke-linecap')).toBe('round')
     expect(hook.getAttribute('stroke-linejoin')).toBe('round')
+  })
+
+
+  it.each(['♭', '♮'])('keeps the logical accidental margin as well as actual grace paint: %s', accidental => {
+    const pitches = ['4', '5'].map(degree => ({degree, accidental, octave:-1}))
+    const grace = nativeGraceGeometry(pitches,6,normal)
+    const body = nativeNoteBody(normal,grace.size)
+    const logicalLeft = -body.width / 2 - nativeAccidentalAdvance(accidental,grace.size)
+    const [first, second] = grace.notes
+    const gap = nativeStyle.music * (6 / 22) * .8
+    expect(second!.x + logicalLeft - (first!.x + Math.max(body.width / 2,first!.ink.right))).toBeCloseTo(gap,3)
+    expect(-grace.left).toBeLessThanOrEqual(first!.x + logicalLeft + .0001)
+    expect(grace.left - 6 - grace.sideGap).toBeCloseTo(grace.width,3)
+    for (const note of grace.notes) expect(note.x + note.ink.left).toBeGreaterThanOrEqual(-grace.left - .0001)
   })
 
   it('retains subdivisions and joins the common levels of a mixed-depth group', () => {
