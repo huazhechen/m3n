@@ -31,7 +31,10 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   const port = -Math.max(0, ...(endpoints.length ? endpoints : covered).map(nativeTiePortTop))
   const thickness = nativeStyle.music * 0.09
   let commands: NativeArcCommand[] = []
-  let left = firstHere ? relation.first.x : Math.min(...members.map(glyph => glyph.x - (glyph.inkLeft ?? glyph.musicLeft ?? glyph.left)))
+  // A continuation begins at the music cell's allocated edge, just as its
+  // open right end reaches the system boundary. Glyph side bearings must not
+  // indent this edge; the real ink still participates in collision checks.
+  let left = firstHere ? relation.first.x : Math.min(...members.map(glyph => glyph.x - (glyph.musicLeft ?? glyph.left)))
   let right = lastHere ? relation.last.x : system.measures.at(-1)!.end
   if (firstHere && lastHere) {
     const run = (right - left) / 4, outer = height * 4 / 3, inner = Math.max(0, height - thickness) * 4 / 3

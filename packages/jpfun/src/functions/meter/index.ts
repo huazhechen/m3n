@@ -1,7 +1,7 @@
 import { ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import { Fraction } from "../../fraction.js";
 import type { LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
-import { ANCHOR_KEY, TemporalNodeBase, type TimeState } from "../temporal.js";
+import { ANCHOR_KEY, METER_COLUMN, TemporalNodeBase, type TimeState } from "../temporal.js";
 import type { LoweringResult } from "../../lowering/types.js";
 import type { Painter, TextStyle } from "../../render/types.js";
 import type { PlaybackEmitter } from "../../playback/types.js";
@@ -161,6 +161,7 @@ class MeterFunction extends ASTFunctionNode {
 export const MeterNode: ASTFunctionClass = MeterFunction;
 
 class MeterTemporal extends TemporalNodeBase {
+    override mergeKey = METER_COLUMN;
     declare ast: MeterFunction;
     declare box: LayoutBox;
 

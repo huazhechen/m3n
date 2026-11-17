@@ -1,4 +1,4 @@
-import { DEFAULT_TONALITY, TemporalNodeBase, type TimeState } from "../temporal.js";
+import { DEFAULT_TONALITY, KEY_COLUMN, TemporalNodeBase, type TimeState } from "../temporal.js";
 import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, LengthValue, ParserContext, SourceSpan } from "../ASTtypes.js";
 import { Diagnostic, ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import { parseNoteName } from "../note/noteNameFSM.js";
@@ -137,6 +137,7 @@ class KeyFunction extends ASTFunctionNode {
 export const KeyNode: ASTFunctionClass = KeyFunction;
 
 class KeyTemporalNode extends TemporalNodeBase {
+    override mergeKey = KEY_COLUMN;
     declare ast: KeyFunction;
     declare box: LayoutBox;
 

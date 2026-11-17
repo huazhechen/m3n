@@ -67,6 +67,11 @@ export interface TemporalAddon {
 export const ANCHOR_KEY = -Infinity;
 /** 普通事件的公共组 */
 export const DEFAULT_KEY = Infinity;
+/** Simultaneous settings share columns across tracks, never within a track.
+ * Distinct groups preserve key/meter/tempo order without absorbing notes. */
+export const KEY_COLUMN = -0.75;
+export const METER_COLUMN = -0.5;
+export const TEMPO_COLUMN = -0.25;
 
 /** 
  * 时间线事件

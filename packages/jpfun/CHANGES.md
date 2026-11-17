@@ -1,5 +1,7 @@
 # Local changes
 
+- Simultaneous key signatures, meters and tempos share one column per setting kind across tracks. Their own ordered groups stay separate from notes; successive settings within a track retain declaration order and separate columns. This removes duplicated horizontal reservation and inconsistent wrapping in parallel voices.
+
 - Range-parenthesis occupancy includes measured left bearings and right overhang.
 
 - Local ossia lanes clear horizontally overlapping painted primitives pair by pair. Music-font-relative clearance is independent of tall bars or surrounding text; nominal glyph padding and remote extrema no longer create invisible obstacles. Ordinary track envelopes and paint order remain unchanged.

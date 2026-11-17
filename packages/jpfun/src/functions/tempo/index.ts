@@ -1,5 +1,5 @@
 // M3N modification: font override and metronome unit/dot display; playback retains QPM.
-import { TemporalNodeBase, type TimeState } from "../temporal.js";
+import { TEMPO_COLUMN, TemporalNodeBase, type TimeState } from "../temporal.js";
 import { ASTFunctionClass, ASTFunctionNode, ASTNodeBase, FunctionArgs, LengthValue, ParserContext, SourceSpan } from "../ASTtypes.js";
 import type { LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
 import type { Painter, TextStyle } from "../../render/types.js";
@@ -73,6 +73,7 @@ class TempoFunction extends ASTFunctionNode {
 export const TempoNode: ASTFunctionClass = TempoFunction;
 
 class TempoTemporalNode extends TemporalNodeBase {
+    override mergeKey = TEMPO_COLUMN;
     declare ast: TempoFunction;
     declare box: LayoutBox;
 
