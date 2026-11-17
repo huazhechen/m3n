@@ -1,5 +1,7 @@
 // M3N modification: register additional basic articulation symbols.
 import { articulationSymbols } from './symbols/articulations.js';
+import { paintedCommandRegions } from "../../layout/painted-ink.js";
+import { RecordingPainter } from "../../render/recording.js";
 import { ErrorDiagnostic, WarningDiagnostic } from "../../diagnostic.js";
 import type { AttachmentLayoutContext, LayoutAttachment, LayoutBox, LayoutPrepareContext, Rect } from "../../layout/types.js";
 import { DEFAULT_KEY, isVisualTemporalNode, TemporalNodeBase, type TimeState, type VisualTemporalNode } from "../temporal.js";
@@ -284,19 +286,29 @@ class SymbolAboveAttachment implements LayoutAttachment {
         const symbol = new SymbolTemporal(this.ast, this.host);
         symbol.prepareLayout(context);
         const { box } = symbol, { host } = this;
-        box.x = Math.max(context.originX, Math.min(host.box.x + host.box.anchor - box.anchor, context.originX + context.width - box.w));
+        // Attached marks reserve their complete paint, including scaled strokes,
+        // rather than the temporal symbol's optional internal layout padding.
+        const recording = new RecordingPainter(); symbol.paint(recording);
+        const pieces = recording.commands.flatMap(command => paintedCommandRegions(command, context.textMeasurer));
+        const ink = pieces.length ? {
+            left: Math.min(...pieces.map(r => r.x)), top: Math.min(...pieces.map(r => r.y)),
+            right: Math.max(...pieces.map(r => r.x + r.w)), bottom: Math.max(...pieces.map(r => r.y + r.h)),
+        } : { left: 0, top: 0, right: box.w, bottom: box.h };
+        const width = ink.right - ink.left;
+        box.x = Math.max(context.originX, Math.min(host.box.x + host.box.anchor - box.anchor + ink.left,
+            context.originX + context.width - width)) - ink.left;
         const line = context.lines[host.layoutLine];
         let start = line.columnOf(host), end = start;
         line.columns.forEach((column, index) => {
-            if (column.some(node => node.track === host.track && node.box.x <= box.x + box.w && node.box.x + node.box.w >= box.x)) {
+            if (column.some(node => node.track === host.track && node.box.x <= box.x + ink.right && node.box.x + node.box.w >= box.x + ink.left)) {
                 start = Math.min(start, index); end = Math.max(end, index);
             }
         });
-        const extent = context.getInkExtents ? context.getInkExtents(host.layoutLine, box.x, box.x + box.w, host.track)
+        const extent = context.getInkExtents ? context.getInkExtents(host.layoutLine, box.x + ink.left, box.x + ink.right, host.track)
             : context.getRangeExtents(host.layoutLine, [start, end], host.track);
-        box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - host.ast.size * 0.12 - box.h;
+        box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - host.ast.size * 0.12 - ink.bottom;
         return {
-            regions: [{ x: box.x, y: box.y, w: box.w, h: box.h, line: host.layoutLine, track: host.track }],
+            regions: [{ x: box.x + ink.left, y: box.y + ink.top, w: width, h: ink.bottom - ink.top, line: host.layoutLine, track: host.track }],
             paint(painter: Painter) { symbol.paint(painter); },
         };
     }

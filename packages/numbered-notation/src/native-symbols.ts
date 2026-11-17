@@ -6,6 +6,7 @@ import type { TextMeasurer } from './native-measure.js'
 import type { NativePitch, NativeControl } from './native-model.js'
 import { nativeKeyGeometry } from './native-key.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
+import { nativeFermataSvg } from './native-fermata.js'
 import { nativeOrnamentSvg } from './native-ornaments.js'
 import { nativeTempoGeometry, type NativeTempoGeometry } from './native-tempo.js'
 import { nativeDynamicGlyph } from './native-dynamics.js'
@@ -61,7 +62,7 @@ export class NativeSymbols {
   }
 
   mark(mark: string, x: number, y: number): string {
-    if (mark === 'fermata') return path(`M${n(x - em(7))} ${n(y - em(1))} Q${n(x)} ${n(y - em(15))} ${n(x + em(7))} ${n(y - em(1))}`) + circle(x, y - em(3))
+    if (mark === 'fermata') return `<g transform="translate(${n(x)} ${n(y)})">${nativeFermataSvg()}</g>`
     const dynamic = nativeDynamicGlyph(mark)
     if (dynamic) return `<g transform="translate(${n(x)} ${n(y)})">${dynamic.paths.map(d => `<path d="${d}" fill="#000"/>`).join('')}</g>`
     const ornament = nativeOrnamentSvg(mark)

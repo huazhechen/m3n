@@ -1,3 +1,5 @@
+import { paintedCommandRegions, paintedNodeRegions } from '../src/layout/painted-ink.js';
+import { defaultTextMeasurer } from '../src/render/text.js';
 import { RecordingPainter } from '../src/render/recording.js';
 import { ribbonAtX } from '../src/functions/tie/ribbon.js';
 import { deepStrictEqual } from 'node:assert';
@@ -84,4 +86,20 @@ test('an anchored dynamic clears the local bow footprint without reserving its r
     }
     assert(nearly(gap, result.layout.objects[0].ast.size * .12), 'use only the measured local curve clearance');
     assert(dynamic.box.y + dynamic.box.h > slur.box.y, 'the remote apex must not become a rectangular obstacle');
+});
+
+
+test('anchored fermatas clear the note by their scaled painted stroke, without temporal padding', () => {
+    for (const size of [6,12,24]) {
+        const result = compileScore(`1@a 2 @symbol(fermata,size=${size}px,above=a)`, { alignRelations: true });
+        const host = result.layout.objects[0], attachment = result.layout.attachments[0];
+        const hostTop = Math.min(...paintedNodeRegions(host,defaultTextMeasurer).map(r=>r.y));
+        const painter = new RecordingPainter(); attachment.paint(painter);
+        const ink = painter.commands.flatMap(c=>paintedCommandRegions(c,defaultTextMeasurer));
+        const left = Math.min(...ink.map(r=>r.x)), right = Math.max(...ink.map(r=>r.x+r.w));
+        const top = Math.min(...ink.map(r=>r.y)), bottom = Math.max(...ink.map(r=>r.y+r.h));
+        assert(nearly(hostTop-bottom,host.ast.size*.12), 'actual stroke must retain exactly the common mark gap');
+        assert(nearly(attachment.box.x,left)&&nearly(attachment.box.y,top));
+        assert(nearly(attachment.box.w,right-left)&&nearly(attachment.box.h,bottom-top));
+    }
 });
