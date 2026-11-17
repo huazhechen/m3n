@@ -1,6 +1,7 @@
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeStyle } from './native-style.js'
-import type { NativePitch } from './native-model.js'
+import type { NativeGlyph, NativePitch } from './native-model.js'
+import { nativeInnerMark } from './native-marks.js'
 import { NativeSymbols, line } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
@@ -30,8 +31,10 @@ export function nativeBeamCount(a: import('./native-model.js').NativeGlyph, b: i
   return Math.max(0, -Math.floor(Math.log2(Math.max(a.writtenBeats, b.writtenBeats))))
 }
 
-/** Octave dots need an extra 0.05em between their musical bounds and an arc port. */
-export function nativeTiePortTop(glyph: { top: number; musicTop?: number; tieTop?: number; sustain: boolean; pitches: NativePitch[] }): number {
+/** Only exposed octave dots at the top of the musical stack need an extra gap. */
+export function nativeTiePortTop(glyph: Pick<NativeGlyph, 'top' | 'musicTop' | 'tieTop' | 'sustain' | 'pitches' | 'markLayout'>): number {
   // Inline key/meter/tempo controls occupy their own columns, outside the note.
-  return (glyph.tieTop ?? glyph.musicTop ?? glyph.top) + (!glyph.sustain && glyph.pitches.some(pitch => pitch.octave > 0) ? nativeStyle.music * 0.05 : 0)
+  const exposedDots = !glyph.sustain && (glyph.pitches.at(-1)?.octave ?? 0) > 0
+    && !glyph.markLayout?.some(mark => nativeInnerMark(mark.name))
+  return (glyph.tieTop ?? glyph.musicTop ?? glyph.top) + (exposedDots ? nativeStyle.music * 0.05 : 0)
 }

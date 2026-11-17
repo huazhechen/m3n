@@ -70,11 +70,13 @@ describe('native musical arc geometry', () => {
     expect(layout.systems[0]!.lanes[0]!.top).toBeGreaterThanOrEqual(relation.last.top)
   })
 
-  it('retains note marks and octave-dot clearance when a control shares the event', () => {
+  it('connects above a marked high note without duplicating its covered octave-dot gap beside a control', () => {
     const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4e~ | {3/4}4e{tip} 5 6 |||'), options)
     const relation = layout.relations.find(relation => relation.kind === 'tie')!
     const arc = nativeArcGeometry(relation, layout.systems[0]!)
-    expect(arc.top - arc.height).toBeCloseTo(17.6 + 5.06 + 7 + 2.64 + 1.1)
+    expect(nativeTiePortTop(relation.first) - relation.first.tieTop!).toBeCloseTo(22 * 0.05)
+    const mark = relation.last.markLayout!.find(value => value.name === 'tip')!
+    expect(arc.top - arc.height).toBeCloseTo(-mark.top)
   })
 
   it('clears a marked intervening note in a cross-system fragment', () => {
