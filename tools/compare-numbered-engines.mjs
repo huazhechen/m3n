@@ -135,21 +135,27 @@ try {
           const canvases = decoded.map(image => {
             const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height
             const context = canvas.getContext('2d'); context.fillStyle = 'white'; context.fillRect(0, 0, width, height); context.drawImage(image, 0, 0)
-            return context.getImageData(0, 0, width, height)
+            const data = context.getImageData(0, 0, width, height)
+            canvas.width = canvas.height = 0
+            return data
           })
           const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height
           const context = canvas.getContext('2d'), diff = context.createImageData(width, height)
           let changed = 0, maxChannelDifference = 0
+          const before = canvases[0].data, after = canvases[1].data, output = diff.data
           for (let i = 0; i < diff.data.length; i += 4) {
-            const delta = Math.max(...[0, 1, 2, 3].map(c => Math.abs(canvases[0].data[i + c] - canvases[1].data[i + c])))
+            const delta = Math.max(Math.abs(before[i] - after[i]), Math.abs(before[i + 1] - after[i + 1]),
+              Math.abs(before[i + 2] - after[i + 2]), Math.abs(before[i + 3] - after[i + 3]))
             maxChannelDifference = Math.max(maxChannelDifference, delta)
             if (delta) changed++
-            diff.data.set(delta ? [255, 0, 100, 255] : [255, 255, 255, 255], i)
+            output[i] = 255; output[i + 1] = delta ? 0 : 255; output[i + 2] = delta ? 100 : 255; output[i + 3] = 255
           }
           context.putImageData(diff, 0, 0)
+          const heatmap = canvas.toDataURL('image/png').split(',')[1]
+          canvas.width = canvas.height = 0
           return { width, height, changed, ratio: changed / (width * height), maxChannelDifference,
             sameSize: decoded[0].width === decoded[1].width && decoded[0].height === decoded[1].height,
-            heatmap: canvas.toDataURL('image/png').split(',')[1] }
+            heatmap }
         }, images)
         writeFileSync(join(output, `${name}-diff.png`), Buffer.from(result.pixels.heatmap, 'base64'))
         delete result.pixels.heatmap

@@ -30,7 +30,7 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
       const offset = gap + radius + index * (2 * radius + gap)
       svg += circle(0, pitch.octave > 0 ? digit.top - offset : bottom + offset, radius)
     }
-    for (let beam = 0; beam < beams; beam++) svg += line(-half, beamY + beam * beamStep, half, beamY + beam * beamStep, stroke, ' stroke-linecap="round"')
+    for (let beam = 0; beam < beams; beam++) svg += line(-half, beamY + beam * beamStep, half, beamY + beam * beamStep, stroke)
     const ink = nativeSvgInk(svg, measurer)
     // Keep the measured body/accidental advance as a minimum footprint,
     // while retaining overhang and round caps from the actual paint.
@@ -58,7 +58,7 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
   // Join every common beam level, including deeper subgroups of mixed runs.
   for (let index = 1; index < notes.length; index++) {
     const previous = notes[index - 1]!, note = notes[index]!
-    for (let beam = 0; beam < Math.min(previous.beams, note.beams); beam++) svg += line(previous.x + half, y + beamY + beam * beamStep, note.x - half, y + beamY + beam * beamStep, stroke, ' stroke-linecap="round"')
+    for (let beam = 0; beam < Math.min(previous.beams, note.beams); beam++) svg += line(previous.x + half, y + beamY + beam * beamStep, note.x - half, y + beamY + beam * beamStep, stroke)
   }
   const near = notes.at(-1)!, hook = { x: near.x, y: y + block.bottom }
   const p = (a: number, b: number) => `${n(hook.x + a * size)} ${n(hook.y + b * size)}`

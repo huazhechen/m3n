@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { compileScore, RecordingPainter, paintLayout } from '@m3n/jpfun'
+import { compileScore, RecordingPainter, SvgPainter, paintLayout } from '@m3n/jpfun'
 import { renderNativePages } from './native-svg.js'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
@@ -90,6 +90,9 @@ describe('measured reduction lines', () => {
     const anchor = host.box.x + host.box.anchor
     expect(Number(native.getAttribute('x1'))).toBeCloseTo(line.x1 - anchor, 3)
     expect(Number(native.getAttribute('x2'))).toBeCloseTo(line.x2 - anchor, 3)
+    const svg = new SvgPainter()
+    paintLayout(reference.layout, svg)
+    expect(native.getAttribute('stroke-linecap')).toBe(root(svg.toSvg(reference.layout.bounds)).querySelector('line')!.getAttribute('stroke-linecap'))
   })
 
   it.each([7, 19, 31])('matches every reference segment for mixed levels at %spx', width => {
@@ -109,6 +112,10 @@ describe('measured reduction lines', () => {
     expected.sort(order)
     expect(actual).toHaveLength(expected.length)
     actual.forEach((line, i) => line.forEach((value, j) => expect(value).toBeCloseTo(expected[i]![j]!, 3)))
+    const referenceSvg = new SvgPainter()
+    paintLayout(reference.layout, referenceSvg)
+    const cap = root(referenceSvg.toSvg(reference.layout.bounds)).querySelector('line')!.getAttribute('stroke-linecap')
+    for (const line of svg.querySelectorAll('line')) expect(line.getAttribute('stroke-linecap')).toBe(cap)
   })
 
   it('respects compound beats, rests, continuity and lane-local input', () => {
@@ -118,4 +125,17 @@ describe('measured reduction lines', () => {
     expect(nativeBeamLayout(gap, measurer).svg).toBe('')
     expect(nativeBeamLayout([], measurer).svg).toBe('')
   })
+})
+
+
+it.each([false, true])('keeps round line caps and valid XML through compound notation, paged=%s', paged => {
+  const source = '{4/4}\nN: {cresc}(1 (2 3)) 4{ac((5 6))} 5 6{/} |\nL: (春风)吹过山谷间\nB: 1d^ 5d^ |\n---\nN: ([1 2 3:2]) 4 5 6 | 1~ 1~ 1 0 | {rest=2} | 1 2 3 4 |||\nB: 1d^ 5d^ | 1d^ 5d^ | {rest=2} | 1d^ 5d^ |||'
+  const layout = layoutNativeScore(parseM3NDocument(source), { width: 800, paged })
+  for (const page of renderNativePages(layout)) {
+    const document = new DOMParser().parseFromString(page, 'image/svg+xml')
+    expect(document.querySelector('parsererror')).toBeNull()
+    const lines = [...document.querySelectorAll('line')]
+    expect(lines.length).toBeGreaterThan(0)
+    for (const line of lines) expect(line.getAttribute('stroke-linecap')).toBe('round')
+  }
 })
