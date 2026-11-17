@@ -577,7 +577,7 @@ export class GraceTemporal extends TemporalNodeBase {
         const dir = this.side === "pre" ? 1 : -1;
         painter.drawPath(
             HOOK_COMMANDS,
-            { stroke: "#000", strokeWidth: Math.max(0.8, graceEm * HOOK_WIDTH) },
+            { stroke: "#000", strokeWidth: graceEm * HOOK_WIDTH },
             {
                 x: this.box.x + hookOrigin.x,
                 y: this.box.y + hookOrigin.y,

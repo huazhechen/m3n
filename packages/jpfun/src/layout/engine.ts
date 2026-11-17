@@ -630,6 +630,27 @@ function layoutLocalLine(
         for (const node of column) prepareLayoutHost(node, context);
     }
     const line = prepareHorizontalLine(columns, columns[0][0].layoutLine, { noteGap }, noteGap === undefined);
+    if (noteGap !== undefined) for (const column of columns) for (const node of column) {
+        // A naturally spaced rigid subdomain reserves its actual paint, including
+        // numeral overhang and round beam caps. Compact host composition keeps
+        // its existing body-port geometry. Rebase composite children before paint.
+        node.onPlaced?.();
+        const ink = paintedNodeRegions(node, context.textMeasurer);
+        if (!ink.length) continue;
+        // Frames and vertical subdomain layout must see the same physical
+        // edges as the solver, otherwise their insets get counted twice.
+        const bounds = { x: 0, y: 0, w: 0, h: 0 };
+        unionLayoutBoxes(bounds, ink.map(piece => ({ ...piece, x: piece.x - node.box.x, y: piece.y - node.box.y })));
+        node.intrinsicInkBounds = bounds;
+        const left = Math.min(...ink.map(piece => piece.x)) - node.box.x;
+        const right = Math.max(...ink.map(piece => piece.x + piece.w)) - node.box.x;
+        line.view.registerHorizontalLayoutHook(node, node, ({ columns, start }) => {
+            const element = columns[start].find(element => element.time === node);
+            if (!element) return;
+            element.WL = Math.max(element.WL, node.box.anchor - left);
+            element.WR = Math.max(element.WR, right - node.box.anchor);
+        });
+    }
     let left = Infinity;
     let right = -Infinity;
     for (const column of line.layout(Infinity)) {

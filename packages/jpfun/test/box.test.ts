@@ -2,7 +2,7 @@ import { test } from "node:test";
 
 import { GraceTemporal } from "../src/functions/grace/index.js";
 import { compileScore } from "../src/pipeline.js";
-import type { DocumentLayoutResult } from "../src/layout/engine.js";
+import { getLayoutBounds, type DocumentLayoutResult } from "../src/layout/engine.js";
 import type { Rect } from "../src/layout/types.js";
 import { assert, expectLayoutError, expectSnapshot, layoutOf, nearly } from "./helpers.js";
 
@@ -190,17 +190,18 @@ test("倚音序列和宿主都预留框占位，前后倚音与嵌套框共用�
         assert(node instanceof GraceTemporal, "expected a grace composite");
         const frames = layout.attachments.filter(item => item.layer === "background");
         const gap = 12 * 0.8 * Math.sqrt(0.5);
+        const [firstInk, secondInk, lastInk] = node.graces.map(grace => getLayoutBounds(grace, true));
         const hostFrame = frames.find(item => nearly(item.box.w, node.host.box.w + 12))!;
         const graceFrame = frames.find(item => nearly(item.box.w,
-            node.graces[0].box.w + node.graces[1].box.w + gap + 20))!;
+            firstInk.w + secondInk.w + gap + 20))!;
         assert(hostFrame && graceFrame, "host and nested grace frames must retain their own geometry");
-        assert(nearly(node.graces[1].box.x, node.graces[0].box.x + node.graces[0].box.w + gap),
+        assert(nearly(secondInk.x, firstInk.x + firstInk.w + gap),
             "frame padding must not enter the enclosed internal gap");
-        assert(nearly(node.graces[2].box.x, graceFrame.box.x + graceFrame.box.w + gap),
+        assert(nearly(lastInk.x, graceFrame.box.x + graceFrame.box.w + gap),
             "the next local member retains clearance outside the outer frame");
         const left = side === "pre" ? graceFrame.box.x : hostFrame.box.x;
         const right = side === "pre" ? hostFrame.box.x + hostFrame.box.w
-            : node.graces[2].box.x + node.graces[2].box.w;
+            : lastInk.x + lastInk.w;
         assert(nearly(node.box.x, left) && nearly(node.box.x + node.box.w, right),
             "both external frame edges must be included in the composite width");
         assert(nearly(node.box.x + node.ports.lyric.x, node.host.box.x + node.host.ports.lyric.x),

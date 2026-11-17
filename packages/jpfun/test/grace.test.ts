@@ -39,9 +39,11 @@ test("刚性倚音组仍保留随字号与书面时值变化的自然净空", ()
     for (const size of [16, 22, 32]) for (const side of ["pre", "post"]) {
         for (const [music, expected] of [["2/ 3/", 4.8], ["2/ 3//", 4.8 * (0.5 + Math.sqrt(0.125))]] as const) {
             const source = `@set(fontsize=${size}) @grace(1,{${music}},side=${side})`;
-            const result = layoutGrace(source).result;
+            const {result,commands} = layoutGrace(source);
             const [left, right] = (result.objects[0] as GraceTemporal).graces;
-            const gap = right.box.x - left.box.x - left.box.w;
+            const stroke = commands.find(command => command.kind === "line")!;
+            assert(stroke.kind === "line", "the grace must paint reduction lines");
+            const gap = right.box.x - left.box.x - left.box.w - stroke.style!.strokeWidth!;
             assert(nearly(gap, expected * size / 22), `grace clearance ${gap} at ${size}px, ${side}, ${music}`);
             const played = playedNotes(compilePlayback(lower(source)));
             assert(played.length === 3 && played.reduce((sum, note) => sum + note.duration.toNumber(), 0) === 1,
@@ -264,7 +266,9 @@ test("倚音局部横排保持书写列序，混合时值和零时长标记保�
                 "local columns remain distinct with positive natural clearance");
         }
         const width = node.graces.at(-1)!.box.x + node.graces.at(-1)!.box.w - node.graces[0].box.x;
-        assert(nearly(node.box.w, width + node.host.box.w + node.ast.size * 0.7 * 0.2),
+        const stroke = recordCommands(layoutOf(source)).find(command => command.kind === 'line')!;
+        assert(stroke.kind === 'line', 'expected grace beams');
+        assert(nearly(node.box.w, width + stroke.style!.strokeWidth! + node.host.box.w + node.ast.size * 0.7 * 0.2),
             "the composite reserves the natural widths and its existing side gap");
         assert(node.graces.every(grace => (grace.springConfig.alpha_L ?? 0) > 0),
             "local placement must retain the members' spring configuration");

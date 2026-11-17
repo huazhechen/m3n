@@ -1,1 +1,1 @@
-w=26.27 anchor=19.45 steal=0.5
+w=27.11 anchor=20.29 steal=0.5

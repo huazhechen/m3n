@@ -24,7 +24,7 @@ export function claimDivLine(host: LayoutHost, level: number) {
 
 /** 接管绘制的函数必须用同一条公式，否则同一条减时线会因为谁画而粗细不一 */
 export function divLineWidth(size: number) {
-    return Math.max(1, size * 0.055);
+    return size * 0.055;
 }
 
 /**

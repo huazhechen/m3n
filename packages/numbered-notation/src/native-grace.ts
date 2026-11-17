@@ -1,3 +1,4 @@
+import { nativeNoteBody } from './native-note-body.js'
 import { nativeStyle } from './native-style.js'
 import { NativeSymbols, attrs, circle, line, n } from './native-symbols.js'
 import { nativeSvgInk, unionNativeInk, translateNativeInk } from './native-ink.js'
@@ -12,7 +13,8 @@ export type NativeGracePitch = NativePitch & { writtenBeats?: number }
 export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLeft: number, measurer: TextMeasurer = new DefaultTextMeasurer()) {
   const size = nativeStyle.graceNote, painter = new NativeSymbols(measurer)
   const number = measurer.measureText('0', {fontSize: size, fontFamily: 'M3N Numbers'})
-  const stroke = size * 0.065, half = number.w / 2, beamStep = size * 0.14
+  const { beamStroke: stroke } = nativeNoteBody(measurer, size)
+  const half = number.w / 2, beamStep = size * 0.14
   const digits = pitches.map(pitch => nativeSvgInk(painter.text(pitch.degree, 0, 0, size, 'M3N Numbers', { 'text-anchor': 'middle' }), measurer))
   const beamY = Math.max(...digits.map(digit => digit.bottom)) + size * 0.12 + stroke / 2
   const notes = pitches.map((pitch, index) => {
@@ -27,7 +29,7 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
       const offset = gap + radius + index * (2 * radius + gap)
       svg += circle(0, pitch.octave > 0 ? digit.top - offset : bottom + offset, radius)
     }
-    for (let beam = 0; beam < beams; beam++) svg += line(-half + stroke / 2, beamY + beam * beamStep, half - stroke / 2, beamY + beam * beamStep, stroke)
+    for (let beam = 0; beam < beams; beam++) svg += line(-half, beamY + beam * beamStep, half, beamY + beam * beamStep, stroke, ' stroke-linecap="round"')
     const ink = nativeSvgInk(svg, measurer)
     return { pitch, beats, beams, svg, ink, x: 0, y: 0 }
   })
@@ -52,11 +54,11 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
   // Join every common beam level, including deeper subgroups of mixed runs.
   for (let index = 1; index < notes.length; index++) {
     const previous = notes[index - 1]!, note = notes[index]!
-    for (let beam = 0; beam < Math.min(previous.beams, note.beams); beam++) svg += line(previous.x + half - stroke / 2, y + beamY + beam * beamStep, note.x - half + stroke / 2, y + beamY + beam * beamStep, stroke)
+    for (let beam = 0; beam < Math.min(previous.beams, note.beams); beam++) svg += line(previous.x + half, y + beamY + beam * beamStep, note.x - half, y + beamY + beam * beamStep, stroke, ' stroke-linecap="round"')
   }
   const near = notes.at(-1)!, hook = { x: near.x, y: y + block.bottom }
   const p = (a: number, b: number) => `${n(hook.x + a * size)} ${n(hook.y + b * size)}`
-  svg += `<path${attrs({ d: `M${p(0,0)} C${p(-0.01,0.26)} ${p(0.14,0.42)} ${p(0.29,0.36)}`, fill: 'none', stroke: '#000', 'stroke-width': size * 0.07 })}/>`
+  svg += `<path${attrs({ d: `M${p(0,0)} C${p(-0.01,0.26)} ${p(0.14,0.42)} ${p(0.29,0.36)}`, fill: 'none', stroke: '#000', 'stroke-width': size * 0.07, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })}/>`
   svg = `<g data-m3n-role="grace">${svg}</g>`
   const ink = nativeSvgInk(svg, measurer)
   return { notes, hook, size, sideGap, svg, ink, width: block.right - block.left, left: Math.max(mainLeft, -ink.left) }

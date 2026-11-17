@@ -6,6 +6,7 @@ import { renderNativePages } from './native-svg.js'
 import { nativeGraceGeometry } from './native-grace.js'
 import { nativeSvgInk } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
+import { nativeNoteBody } from './native-note-body.js'
 import { nativeStyle } from './native-style.js'
 
 const normal = new DefaultTextMeasurer()
@@ -17,6 +18,25 @@ const unusual: TextMeasurer = { measureText(text, style) {
 const layout = (music: string, textMeasurer: TextMeasurer = normal, width = 800, noteGapEm?: number) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`),{width,paged:false,textMeasurer,noteGapEm})
 
 describe('measured native grace blocks', () => {
+  it('uses the ordinary font-relative beam stroke and reserves both round caps', () => {
+    const grace = nativeGraceGeometry([{degree:'4',accidental:'',octave:0}],6,normal)
+    const root = new DOMParser().parseFromString(`<svg>${grace.svg}</svg>`,'image/svg+xml')
+    const beam = root.querySelector('line')!
+    const body = nativeNoteBody(normal,grace.size)
+    expect(Number(beam.getAttribute('stroke-width'))).toBeCloseTo(body.beamStroke,4)
+    expect(beam.getAttribute('stroke-linecap')).toBe('round')
+    expect(grace.width).toBeCloseTo(body.width+body.beamStroke,3)
+  })
+
+  it('paints connected grace beams and the hook with their measured round ends', () => {
+    const grace = nativeGraceGeometry(['2','3'].map(degree=>({degree,accidental:'',octave:0})),6,normal)
+    const root = new DOMParser().parseFromString(`<svg>${grace.svg}</svg>`,'image/svg+xml')
+    for (const beam of root.querySelectorAll('line')) expect(beam.getAttribute('stroke-linecap')).toBe('round')
+    const hook=root.querySelector('path')!
+    expect(hook.getAttribute('stroke-linecap')).toBe('round')
+    expect(hook.getAttribute('stroke-linejoin')).toBe('round')
+  })
+
   it('retains subdivisions and joins the common levels of a mixed-depth group', () => {
     const score = layout('1{ac(2)}{ap((3 4))} 2 3 4')
     const glyph = score.projection.glyphs[0]!
