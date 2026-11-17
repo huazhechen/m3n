@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { build } from 'vite'
@@ -15,14 +16,30 @@ const collisionAudit = process.argv.includes('--collisions')
 const filter = process.argv.find(a => a.startsWith('--score='))?.slice(8)
 const sources = supplied ? JSON.parse(readFileSync(resolve(supplied), 'utf8')) : Object.fromEntries(readdirSync(join(root, 'src/scores')).filter(f => f.endsWith('.m3n')).map(f => [f, readFileSync(join(root, 'src/scores', f), 'utf8')]))
 let browser
+const reports = []
 try {
   mkdirSync(output, { recursive: true })
   writeFileSync(join(output, 'sources.json'), JSON.stringify(sources, null, 2))
+  // Keep all packages from the same input revision while scores/code remain editable.
+  const snapshotRoot = join(temp, 'workspace'), snapshotHashes = {}
+  for (const pkg of ['jpfun', 'notation', 'numbered-notation']) {
+    const target = join(snapshotRoot, 'packages', pkg, 'src')
+    mkdirSync(target, { recursive: true })
+    cpSync(join(root, 'packages', pkg, 'src'), target, { recursive: true })
+    for (const file of readdirSync(target, { recursive: true }).filter(file => file.endsWith('.ts') && !file.endsWith('.test.ts'))) {
+      snapshotHashes[`packages/${pkg}/src/${file}`] = createHash('sha256').update(readFileSync(join(target, file))).digest('hex')
+    }
+  }
+  const collisionModule = join(temp, 'native-ink-collisions.mjs')
+  cpSync(join(root, 'tools/lib/native-ink-collisions.mjs'), collisionModule)
+  snapshotHashes['tools/lib/native-ink-collisions.mjs'] = createHash('sha256').update(readFileSync(collisionModule)).digest('hex')
+  writeFileSync(join(output, 'implementation.json'), JSON.stringify({ snapshotHashes, renderOptions, collisionAudit,
+    toolHash: createHash('sha256').update(readFileSync(import.meta.filename)).digest('hex') }, null, 2))
   const entry = join(temp, 'entry.ts')
-  writeFileSync(entry, `export {auditNativeInkCollisions} from ${JSON.stringify(join(root, 'tools/lib/native-ink-collisions.mjs'))};\nexport {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};\nexport {prepareNumberedNotationFonts} from ${JSON.stringify(join(root, 'packages/numbered-notation/src/index.ts'))};\nexport {NativeNumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/src/native-score.ts'))};`)
+  writeFileSync(entry, `export {auditNativeInkCollisions} from ${JSON.stringify(collisionModule)};\nexport {parseM3NDocument} from ${JSON.stringify(join(snapshotRoot, 'packages/notation/src/index.ts'))};\nexport {prepareNumberedNotationFonts} from ${JSON.stringify(join(snapshotRoot, 'packages/numbered-notation/src/index.ts'))};\nexport {NativeNumberedNotationScore} from ${JSON.stringify(join(snapshotRoot, 'packages/numbered-notation/src/native-score.ts'))};`)
   await build({ configFile: false, logLevel: 'error', resolve: { alias: [
-    { find: '@m3n/notation', replacement: join(root, 'packages/notation/src/index.ts') },
-    { find: '@m3n/jpfun', replacement: join(root, 'packages/jpfun/src/core.ts') },
+    { find: '@m3n/notation', replacement: join(snapshotRoot, 'packages/notation/src/index.ts') },
+    { find: '@m3n/jpfun', replacement: join(snapshotRoot, 'packages/jpfun/src/core.ts') },
     { find: 'txml/txml', replacement: join(root, 'node_modules/txml/dist/txml.mjs') },
     { find: 'txml', replacement: join(root, 'node_modules/txml/dist/index.mjs') },
   ] }, build: { outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false, lib: { entry, name: 'audit', formats: ['iife'], fileName: () => 'bundle.js' } } })
@@ -32,7 +49,6 @@ try {
   await page.setContent('<main></main>')
   await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
   await page.evaluate(async () => { await audit.prepareNumberedNotationFonts(); await document.fonts.ready })
-  const reports = []
   for (const [file, source] of Object.entries(sources).filter(([f]) => !filter || f.includes(filter))) {
     for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) for (const uniformSystemHeight of [false, true]) {
       const result = await page.evaluate(({ source, width, paged, uniformSystemHeight, collisionAudit, renderOptions }) => {
@@ -71,10 +87,15 @@ try {
         } catch (e) { return { error: String(e) } }
       }, { source, width, paged, uniformSystemHeight, collisionAudit, renderOptions })
       reports.push({ file, width, paged, uniformSystemHeight, renderOptions, ...result })
+      appendFileSync(join(output, 'cases.jsonl'), `${JSON.stringify(reports.at(-1))}\n`)
     }
   }
   const summary = { cases: reports.length, clipping: reports.reduce((n, r) => n + (r.clipping?.length ?? 0), 0), errors: reports.filter(r => r.error).length, violations: reports.reduce((n, r) => n + (r.violations?.length ?? 0), 0), failingCases: reports.filter(r => r.violations?.length).length, ...(collisionAudit ? { collisionCandidates: reports.reduce((n, r) => n + (r.collisionCandidates ?? 0), 0), collisionLabels: reports.reduce((n, r) => n + (r.collisionLabels ?? 0), 0), collisions: reports.reduce((n, r) => n + (r.collisions?.length ?? 0), 0), collisionCases: reports.filter(r => r.collisions?.length).length } : {}) }
   writeFileSync(join(output, 'report.json'), JSON.stringify({ summary, reports }, null, 2))
+  writeFileSync(join(output, 'run-status.json'), JSON.stringify({ complete: true, checks: reports.length }))
   console.log(JSON.stringify({ output, ...summary }))
   if (summary.errors || summary.violations || summary.clipping || summary.collisions) process.exitCode = 1
+} catch (error) {
+  writeFileSync(join(output, 'run-status.json'), JSON.stringify({ complete: false, checks: reports.length, error: String(error) }))
+  throw error
 } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }
