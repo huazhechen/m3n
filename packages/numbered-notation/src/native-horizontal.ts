@@ -70,14 +70,13 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     })
   }
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
-    cells: lanes.filter(lane => !lane.startsWith('alternative:')).map(lane => springCell(lane, 0, nativeStyle.music, 0, 0.45, options.pairedSpacing === false ? 1 : scale)) })
+    cells: lanes.filter(lane => !lane.startsWith('alternative:')).map(lane => springCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
     const geometry = nativeBarMetrics(kind)
     const prefix = !opening && measure.navigation?.length ? 4.4 + measure.navigation.reduce((sum, mark) => sum + mark.width + 4.4, 0) : 0
     const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)).filter(lane => !lane.startsWith('alternative:')))]
-    const barScale = options.pairedSpacing === false || options.minimumNoteGapEm === undefined ? 1 : scale
     items.push({ measure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
-      cells: lanes.map(lane => springCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 0, 128, barScale)) })
+      cells: lanes.map(lane => springCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 0, 128, scale)) })
   }
   for (const measure of measures) {
     const marks = nativeMeasureBars(surrounding, surrounding.indexOf(measure))

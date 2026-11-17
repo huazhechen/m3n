@@ -655,8 +655,7 @@ export function prepareHorizontalLine(
         layout(limit: number, fillMinRatio?: number) {
             const elements = columns.map((column, columnIndex) => column.map(node => {
                 // Scale the native margins, preserving duration and beam tightening.
-                const element = layoutElement(node.springConfig, node.box, node, options.globalC,
-                    options.minimumNoteGap !== undefined || node.T.compare(0) > 0 ? options.noteGap : undefined);
+                const element = layoutElement(node.springConfig, node.box, node, options.globalC, options.noteGap);
                 if (options.minimumNoteGap !== undefined) {
                     const ratio = options.noteGap ? options.minimumNoteGap / options.noteGap : 0;
                     // The clearance is internal: keep the native flush outer line edges.
