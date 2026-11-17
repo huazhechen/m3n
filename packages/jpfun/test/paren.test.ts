@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { compileScore, type CompileScoreResult } from '../src/pipeline.js';
 import { getLayoutBounds } from '../src/layout/engine.js';
-import { paintedCommandRegions } from '../src/layout/painted-ink.js';
+import { paintedCommandRegions, paintedNodeRegions } from '../src/layout/painted-ink.js';
 import { compilePlayback } from '../src/playback/compile.js';
 import { renderLayoutPagesToSvg } from '../src/render/svg.js';
 import { attachmentCommands, compileValid, expectCompileError, nearly, playedNotes, recordCommands } from './helpers.js';
@@ -29,11 +29,12 @@ test('ordinary range parentheses bracket single notes, rests, folded chords and 
 });
 
 test('parentheses share the numeric font, size and baseline without stretching around decorations', () => {
+    const textMeasurer = {
+        measureText: (text, style) => ({ w: text === '(' ? 7 : text === ')' ? 9 : 15, h: style.fontSize, baseline: style.fontSize * 0.7 }),
+    } satisfies import('../src/render/types.js').TextMeasurer;
     for (const content of ['1@a 2@b', "1''@a 2,,@b", '@div({1,,},4)@a 2@b', '@up(1,3,5)@a 2@b']) {
         const source = `@set(fontsize=30,numberfont="Test Numbers") ${content} @paren(a,b)`;
-        const result = compileValid(source, { textMeasurer: {
-            measureText: (text, style) => ({ w: text === '(' ? 7 : text === ')' ? 9 : 15, h: style.fontSize, baseline: style.fontSize * 0.7 }),
-        } });
+        const result = compileValid(source, { textMeasurer });
         const [attachment] = parens(result, source);
         const commands = recordCommands(result.layout).filter(command => command.kind === 'text');
         const number = commands.find(command => command.text === '2')!;
@@ -48,9 +49,17 @@ test('parentheses share the numeric font, size and baseline without stretching a
         const [left, right] = attachment.regions;
         assert.equal(left.w, 7);
         assert.equal(right.w, 9);
-        assert.ok(nearly(getLayoutBounds(notes[0], true).x - left.x - left.w, 1.5));
+        const ink = (node: (typeof notes)[number]) => [
+            ...paintedNodeRegions(node, textMeasurer),
+            ...node.decorations.flatMap(decoration => (decoration.getIntrinsicInk?.() ?? [])
+                .map(region => ({ ...region, x: node.box.x + region.x, y: node.box.y + region.y }))),
+        ];
+        const first = getLayoutBounds(notes[0], true);
+        const firstInkLeft = Math.min(first.x, ...ink(notes[0]).map(region => region.x));
+        assert.ok(nearly(firstInkLeft - left.x - left.w, 1.5));
         const last = getLayoutBounds(notes.at(-1)!, true);
-        assert.ok(nearly(right.x - last.x - last.w, 1.5));
+        const lastInkRight = Math.max(last.x + last.w, ...ink(notes.at(-1)!).map(region => region.x + region.w));
+        assert.ok(nearly(right.x - lastInkRight, 1.5));
     }
 });
 

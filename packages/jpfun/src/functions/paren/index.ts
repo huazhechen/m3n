@@ -1,6 +1,7 @@
 // M3N addition: native range parentheses with per-system spacing and pagination.
 import { Diagnostic, ErrorDiagnostic } from '../../diagnostic.js';
-import { getLayoutBounds } from '../../layout/engine.js';
+import { getLayoutBounds, unionLayoutBoxes } from '../../layout/engine.js';
+import { paintedNodeRegions } from '../../layout/painted-ink.js';
 import type { AttachmentLayoutContext, HorizontalLineView, LayoutAttachment, LayoutHost, LayoutPrepareContext, LayoutRegion } from '../../layout/types.js';
 import type { LoweringContext } from '../../lowering/loweringContext.js';
 import type { Painter, TextStyle } from '../../render/types.js';
@@ -102,7 +103,18 @@ class ParenAttachment implements LayoutAttachment {
         for (const line of context.lines) {
             const members = this.members(line);
             if (!members.length) continue;
-            const bounds = members.map(node => getLayoutBounds(node, true));
+            const bounds = members.map(node => {
+                const box = getLayoutBounds(node, true);
+                // Joined beams delegate painting, but retain their local
+                // footprint. Clear both that ink and the host's own paint.
+                if ('paint' in node && typeof node.paint === 'function' && 'decorations' in node) {
+                    const host = node as VisualTemporalNode;
+                    const intrinsic = host.decorations.flatMap(decoration =>
+                        (decoration.getIntrinsicInk?.() ?? []).map(region => ({ ...region, x: region.x + host.box.x, y: region.y + host.box.y })));
+                    unionLayoutBoxes(box, [box, ...intrinsic, ...paintedNodeRegions(host, context.textMeasurer)]);
+                }
+                return box;
+            });
             const track = members[0].track;
             const axis = context.getVisualAxis(line.index, track);
             for (const text of ['(', ')']) {

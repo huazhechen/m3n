@@ -30,8 +30,13 @@ class NativeRelationPainter extends NativeSymbols {
       // The text origin uses advance width; reservation also includes any ink
       // outside that advance. Subtracting the reservation would lose it again.
       const leftWidth = this.measurer.measureText('(', {fontSize:nativeStyle.music, fontFamily:'M3N Numbers'}).w
-      return this.text('(', first.x - (first.musicLeft ?? first.left) - leftWidth - nativeStyle.music * 0.05, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
-        + this.text(')', last.x + (last.musicRight ?? last.right) + nativeStyle.music * 0.05, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+      // Stroke caps, accidentals and stacked music can extend beyond the
+      // rhythmic advance. Use the already measured music ink at both ends;
+      // lyric padding remains independent of the instrumental enclosure.
+      const left = Math.max(first.musicLeft ?? first.left, first.inkLeft ?? 0)
+      const right = Math.max(last.musicRight ?? last.right, last.inkRight ?? 0)
+      return this.text('(', first.x - left - leftWidth - nativeStyle.music * 0.05, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+        + this.text(')', last.x + right + nativeStyle.music * 0.05, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = nativeArcGeometry(relation, system)
