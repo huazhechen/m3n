@@ -447,3 +447,17 @@ test("房子逐图元避让复合力度，不将远侧最高笔画扩展到下�
         assert(nearly(Math.min(...gaps), 2), `the nearest real primitive determines placement at ${fontsize}px`);
     }
 });
+
+
+test('跨行房子的偏移起始钩仍须高于起始小节线2px', () => {
+    const layout = layoutOf('1 | 2@a 3 @br() 4@b | @volta(a,b,1)');
+    const house = layout.attachments[0];
+    const bar = layout.objects[1];
+    const hooks = attachmentCommands(house).filter(command => command.kind === 'line' && command.x1 === command.x2);
+    const first = hooks[0];
+    assert(first.kind === 'line');
+    assert(first.x1 > bar.box.x + bar.box.anchor, '起始钩保留向右偏移');
+    const bottom = Math.max(...paintedCommandRegions(first, voltaMeasurer).map(region => region.y + region.h));
+    const barTop = bar.box.y + bar.box.visualAxis - bar.ast.size / 2;
+    assert(barTop - bottom >= 2 - 1e-6, '偏移不应绕过端点的2px净空');
+});

@@ -66,6 +66,17 @@ describe('measured native volta fragments', () => {
     expect(gap('1eeeeee')).toBeGreaterThan(2)
   })
 
+  it('clears the preceding bar even when a wrapped opening hook is offset to its right', () => {
+    const score = layout('1 2 3 4 | {br}1 2 3 4')
+    const system = score.systems.find(system => system.voltas?.some(volta => volta.svg.includes('<text')))!
+    const fragment = system.voltas!.find(volta => volta.svg.includes('<text'))!
+    const index = system.measures.findIndex(measure => measure.source.ending === '1')
+    const bar = nativeMeasureBarPositions(system.measures, index - 1).at(-1)!
+    const hook = nativeSvgPieces(fragment.svg, measurer)[1]!
+    const barTop = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top
+    expect(barTop - hook.bottom).toBeGreaterThanOrEqual(2 - .001)
+  })
+
   it('shows one label and two hooks across forced system breaks', () => {
     const score = layout('1 2 3 4 | {br}1 2 3 4 | {br}1 2 3 4')
     const fragments = score.systems.flatMap(system => system.voltas ?? []).filter(volta => volta.ending === '1')

@@ -240,6 +240,13 @@ class VoltaAttachment implements LayoutAttachment, PlaybackFlow {
             // and text constrain only their own painted horizontal footprints;
             // the empty interior of a house is available to the music below.
             let lineY = context.getVisualAxis(line, topTrack) - size / 2 - 2 - strokeWidth / 2;
+            // The opening hook is offset horizontally from its bar. Keep the
+            // endpoint clearance even when their painted footprints do not overlap.
+            for (const bar of [line === firstLine ? leftBar : undefined, line === lastLine ? rightBar : undefined]) {
+                if (bar?.layoutLine !== line) continue;
+                const barTop = bar.box.y + bar.box.visualAxis - bar.ast.size / 2;
+                lineY = Math.min(lineY, barTop - 2 - hook - strokeWidth / 2);
+            }
             for (const track of new Set([topTrack, ...extents.keys()])) for (const piece of pieces) {
                 const obstacle = context.getInkExtents?.(line, piece.x, piece.x + piece.w, track, true);
                 if (obstacle) lineY = Math.min(lineY,

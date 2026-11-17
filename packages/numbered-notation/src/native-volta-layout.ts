@@ -3,7 +3,7 @@ import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeStyle } from './native-style.js'
 import { nativeNoteBody } from './native-note-body.js'
-import { nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeVoltaSvg } from './native-volta.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { n } from './native-symbols.js'
@@ -51,7 +51,14 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
       const left = Math.min(rawLeft, rawRight), right = Math.max(rawLeft, rawRight)
       const raw = nativeVoltaSvg(left, right, span.ending, measurer, first, last), ink = nativeSvgInk(raw, measurer)
       let y = nativeMusicAxis(measurer) - nativeStyle.music / 2 - 2 - nativeStyle.music * 0.055 / 2
-      for (const mark of nativeSvgPieces(raw, measurer)) {
+      const pieces = nativeSvgPieces(raw, measurer)
+      for (const bar of [first ? precedingBar : undefined, last ? followingBar : undefined]) {
+        if (!bar) continue
+        const barTop = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top
+        const hookBottom = Math.max(...pieces.filter(mark => mark.right - mark.left <= nativeStyle.music * .055 + .001).map(mark => mark.bottom))
+        y = Math.min(y, barTop - 2 - hookBottom)
+      }
+      for (const mark of pieces) {
         const overlaps = obstacles.filter(bound => bound.right > mark.left && bound.left < mark.right)
         for (const bound of overlaps) y = Math.min(y, bound.top - 2 - mark.bottom)
         for (const [, relation] of relations) {
