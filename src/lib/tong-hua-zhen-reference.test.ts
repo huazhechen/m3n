@@ -9,6 +9,30 @@ const written = document.parts.get('score')!.melody.filter(bar => bar.events.len
 const performed = unfoldScorePerformance(document).parts.get('score')!.melody
 const tokens = (bars: typeof written) => bars.map(bar => bar.events.map(event => [event.pitches, event.beats, event.tie ?? false, event.postfixes]))
 
+it('reads every introduction duration directly from the image, including the pickup', () => {
+  // Each entry is a written fragment; the first is the one-beat pickup.
+  expect(written.slice(0, 9).map(bar => bar.events.map(event => event.beats))).toEqual([
+    [.5, .25, .25],
+    [.75, .25, 1],
+    [1, .5, .25, .25],
+    [.75, .25, .5, .5], // 7· 6 6 5
+    [1, .5, .25, .25], // 3 0 7 1
+    [.75, .25, 1],
+    [1, .5, .25, .25],
+    [1.5, .5],
+    [1],
+  ])
+})
+
+it('starts the phrase slur on 2 after the ornamented 3, as printed above 话镇', () => {
+  const position = source.indexOf('{lg}(2 1)')
+  const slur = document.intervals.find(interval => interval.kind === 'lg' && interval.start === position + 5)
+  expect(slur).toBeDefined()
+  const notes = written.flatMap(bar => bar.events)
+  expect(notes.find(event => event.sourceStart === slur!.start)?.pitches).toEqual(['2'])
+  expect(notes.find(event => event.sourceStart === slur!.endStart)?.pitches).toEqual(['1'])
+})
+
 it('matches the uploaded first page and converts the existing second page to 2/4', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(document).toMatchObject({ key: 'C', meterCount: 2, meterUnit: 4, tempo: 70 })
