@@ -17,9 +17,9 @@ export type NumberedNotationRenderOptions = {
   textMeasurer?: TextMeasurer
   pageMargin?: number
   systemGap?: number
-  /** Natural note clearance as a fraction of the 22px music size (default 0.6); lyrics and justification may enlarge it. */
+  /** Natural note clearance as a fraction of the 22px music size (default 0.5); lyrics and justification may enlarge it. */
   noteGapEm?: number
-  /** Minimum clearance for testing line capacity (default 0.4 when natural spacing is omitted), using the same spacing ratios. */
+  /** Minimum clearance for testing line capacity (default 0.3 when natural spacing is omitted), using the same spacing ratios. */
   minimumNoteGapEm?: number
   /** Absolute minimum after duration and beam scaling (default 0.1em). */
   minimumNoteGapFloorEm?: number
@@ -43,8 +43,8 @@ export class NumberedNotationScore {
     if (options.tempoScale !== undefined && (!Number.isFinite(options.tempoScale) || options.tempoScale <= 0)) throw new Error('显示速度倍率必须为正有限数值。')
     if (options.transpose !== undefined && !Number.isInteger(options.transpose)) throw new Error('谱面移调必须为整数半音数。')
     // All application layouts share the same minimum/natural spacing policy.
-    const minimumNoteGapEm = options.minimumNoteGapEm ?? (options.noteGapEm === undefined ? 0.4 : undefined)
-    options = { ...options, noteGapEm: options.noteGapEm ?? 0.6, minimumNoteGapEm,
+    const minimumNoteGapEm = options.minimumNoteGapEm ?? (options.noteGapEm === undefined ? 0.3 : undefined)
+    options = { ...options, noteGapEm: options.noteGapEm ?? 0.5, minimumNoteGapEm,
       minimumNoteGapFloorEm: options.minimumNoteGapFloorEm ?? Math.min(0.1, minimumNoteGapEm ?? 0) }
     if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
     for (const value of [options.pageMargin, options.systemGap]) {

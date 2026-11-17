@@ -47,7 +47,7 @@ function lyrics(root: Document, id: string, row = 1) {
 }
 function geometry(document: ScoreDocument, settings: NumberedNotationRenderOptions = options) {
   const projection = projectNumberedScore(document, settings)
-  return compileScore(projection.source, { systemSpacing: { coreGap: settings.systemGap ?? 24, inkGap: (settings.systemGap ?? 24) / 2 }, autoWrap: true, alignRelations: true, minimumNoteGapFloor: settings.minimumNoteGapFloorEm === undefined ? (settings.minimumNoteGapEm !== undefined || settings.noteGapEm === undefined ? Math.min(2.2, 22 * (settings.minimumNoteGapEm ?? 0.4)) : undefined) : 22 * settings.minimumNoteGapFloorEm, noteGap: 22 * (settings.noteGapEm ?? 0.6), minimumNoteGap: settings.minimumNoteGapEm === undefined ? (settings.noteGapEm === undefined ? 8.8 : undefined) : 22 * settings.minimumNoteGapEm, uniformSystemHeight: settings.uniformSystemHeight, equalMeasures: settings.equalMeasures ?? document.equalMeasures })
+  return compileScore(projection.source, { systemSpacing: { coreGap: settings.systemGap ?? 24, inkGap: (settings.systemGap ?? 24) / 2 }, autoWrap: true, alignRelations: true, minimumNoteGapFloor: settings.minimumNoteGapFloorEm === undefined ? (settings.minimumNoteGapEm !== undefined || settings.noteGapEm === undefined ? Math.min(2.2, 22 * (settings.minimumNoteGapEm ?? 0.3)) : undefined) : 22 * settings.minimumNoteGapFloorEm, noteGap: 22 * (settings.noteGapEm ?? 0.5), minimumNoteGap: settings.minimumNoteGapEm === undefined ? (settings.noteGapEm === undefined ? 6.6 : undefined) : 22 * settings.minimumNoteGapEm, uniformSystemHeight: settings.uniformSystemHeight, equalMeasures: settings.equalMeasures ?? document.equalMeasures })
 }
 
 function mainPitches(node: VisualTemporalNode): { name: string; acc: string; octave: number }[] {
@@ -130,7 +130,7 @@ describe('jpFun numbered notation adapter', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
     for (const width of [320, 800]) {
       const defaults = render(source, { width, paged })
-      expect(defaults.pages).toEqual(render(source, { width, paged, minimumNoteGapEm: 0.4, noteGapEm: 0.6, minimumNoteGapFloorEm: 0.1 }).pages)
+      expect(defaults.pages).toEqual(render(source, { width, paged, minimumNoteGapEm: 0.3, noteGapEm: 0.5, minimumNoteGapFloorEm: 0.1 }).pages)
       expect(defaults.pages).toEqual(render(source, { width, paged, wrap: 'compact' }).pages)
       expect(defaults.score.diagnostics).toEqual([])
     }

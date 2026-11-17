@@ -25,11 +25,11 @@ describe('native equal-measure interior spacing', () => {
       const options = {width:1200,paged:false,textMeasurer:measurer,...spacing}
       const native = layoutNativeScore(document,options)
       const projection = projectNumberedScore(document, options)
-      const minimum = spacing.minimumNoteGapEm ?? (spacing.noteGapEm === undefined ? .4 : undefined)
+      const minimum = spacing.minimumNoteGapEm ?? (spacing.noteGapEm === undefined ? .3 : undefined)
       const reference = compileScore(projection.source, {
         textMeasurer:measurer,autoWrap:true,alignRelations:true,equalMeasures:true,
         minimumNoteGapFloor:minimum===undefined ? undefined : 22*Math.min(.1,minimum),
-        noteGap:22*(spacing.noteGapEm??.6),minimumNoteGap:minimum===undefined ? undefined : 22*minimum,
+        noteGap:22*(spacing.noteGapEm??.5),minimumNoteGap:minimum===undefined ? undefined : 22*minimum,
       })
       expect(reference.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])
       let checked = 0

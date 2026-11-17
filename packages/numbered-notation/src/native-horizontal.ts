@@ -45,7 +45,7 @@ const springCell = (lane: string, left: number, right: number, duration: number,
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
 function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
-  const scale = nativeStyle.music * (options.noteGapEm ?? 0.6) / 12
+  const scale = nativeStyle.music * (options.noteGapEm ?? 0.5) / 12
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
   const parentheses = new Map<NativeGlyph, { left: number; right: number }>()

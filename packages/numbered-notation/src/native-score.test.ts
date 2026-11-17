@@ -163,7 +163,7 @@ it.each([false, true])('uses the paired spacing by default in paged=%s layouts',
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
     for (const width of [320, 800]) {
       const defaults = render(source, { width, paged })
-      expect(defaults.pages).toEqual(render(source, { width, paged, minimumNoteGapEm: 0.4, noteGapEm: 0.6, minimumNoteGapFloorEm: 0.1 }).pages)
+      expect(defaults.pages).toEqual(render(source, { width, paged, minimumNoteGapEm: 0.3, noteGapEm: 0.5, minimumNoteGapFloorEm: 0.1 }).pages)
       expect(defaults.pages).toEqual(render(source, { width, paged, wrap: 'compact' }).pages)
       expect(defaults.score.diagnostics).toEqual([])
     }

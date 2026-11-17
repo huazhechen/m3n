@@ -69,7 +69,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     // Display-only notes reserve the measured numeral body, including its
     // advance bearings; zero-duration cells use the natural spring clearance.
     const zero = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' })
-    const gap = nativeStyle.music * (options.noteGapEm ?? 0.6) * 0.1
+    const gap = nativeStyle.music * (options.noteGapEm ?? 0.5) * 0.1
     const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,'M3N Numbers')
     const place = (svg:string,x:number) => `<g transform="translate(${n(x)} 0)">${svg}</g>`
     let rangeSvg = ''
