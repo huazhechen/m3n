@@ -13,14 +13,15 @@ export async function prepare(fontBase64) {
   await prepareNumberedNotationFonts()
 }
 
-export async function render(source, width) {
+export async function render(source, width, paged = true) {
   const host = document.querySelector('#scratch')
-  await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged: true })
+  await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged })
   return [...host.querySelectorAll(':scope > svg')]
 }
 
-export async function measure(source, width) {
-  const pages = await render(source, width)
+export async function measure(source, width, paged = true) {
+  const pages = await render(source, width, paged)
+  const naturalHeight = !paged && pages.length === 1 ? pages[0].viewBox.baseVal.height : undefined
   const outside = [], overlaps = []
   const ink = createSvgInkMeasurer()
   let rows = 0
@@ -48,7 +49,37 @@ export async function measure(source, width) {
       }
     }
   }
-  return { width, pageCount: pages.length, rows, outside, overlaps }
+  const result = { width, pageCount: pages.length, rows, outside, overlaps }
+  if (!paged) return { ...result, naturalHeight }
+  if (pages.length === 1 && !outside.length && !overlaps.length) {
+    const markup = pages[0].outerHTML
+    const continuous = await measure(source, width, false)
+    if (!continuous.outside.length && !continuous.overlaps.length) result.naturalHeight = continuous.naturalHeight
+    document.querySelector('#scratch').innerHTML = markup
+  }
+  return result
+}
+
+/** Stack complete continuous web SVGs at one common scale, without cropping. */
+export async function sharedA4Page(sources, width, gap = 22) {
+  if (sources.length < 2) throw new Error('A shared page needs at least two scores')
+  const pxPerMm = 96 / 25.4, scale = 186 / width
+  const items = []
+  let top = 0
+  for (const source of sources) {
+    const pages = await render(source, width, false)
+    if (pages.length !== 1) throw new Error('A shared score must be continuous')
+    const svg = pages[0], view = svg.viewBox.baseVal
+    if (view.width !== width) throw new Error('Shared scores must have the same width')
+    const height = view.height
+    const placement = { x: 12, y: 12 + top * scale, width: 186, height: height * scale }
+    for (const key of ['x', 'y', 'width', 'height']) svg.setAttribute(key, String(placement[key] * pxPerMm))
+    items.push({ markup: svg.outerHTML, sourceWidth: width, sourceHeight: height, top, placement })
+    top += height + gap
+  }
+  const usedHeight = top - gap
+  if (usedHeight > Math.floor(width * 273 / 186) + .001) throw new Error('Shared page exceeds A4 content height')
+  return { markup: items.map(item => item.markup).join(''), items, width, usedHeight }
 }
 
 /** The same 12mm A4 placement used by the web PDF download, without cropping. */

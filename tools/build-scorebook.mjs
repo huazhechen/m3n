@@ -7,6 +7,7 @@ import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { chooseBestWidth, widthCandidates } from './scorebook-width.mjs'
 import { writePreferredWidths } from './scorebook-source.mjs'
+import { packScorebook, sharedScoreGap } from './scorebook-packing.mjs'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(output, 'editorial-plan.json'))
@@ -28,7 +29,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
 const text = (value, x, y, size = 16, attrs = '') => `<text x="${x}" y="${y}" font-size="${size}" font-family="Scorebook Text" ${attrs}>${escape(value)}</text>`
 const pageSvg = content => `<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}"><rect width="100%" height="100%" fill="white"/>${content}</svg>`
-const records = [], music = []
+const records = [], music = [], sources = new Map(), musicGroups = []
 try {
   const page = await browser.newPage({ viewport: { width: 1000, height: 1300 } })
   await page.route('**/*', route => route.request().url().endsWith('/bundle.js')
@@ -40,6 +41,7 @@ try {
   await page.evaluate(font => window.scorebook.prepare(font), font.toString('base64'))
   for (const [index, entry] of plan.entries.entries()) {
     const source = readFileSync(join(root, 'src/scores', entry.file), 'utf8')
+    sources.set(entry.id, source)
     const candidates = []
     for (const width of widthCandidates) {
       candidates.push(await page.evaluate(async ({ source, width }) => {
@@ -49,12 +51,28 @@ try {
     }
     const best = chooseBestWidth(candidates)
     assert(best, `${entry.title}: no safe web layout: ${JSON.stringify(candidates)}`)
-    const pages = await page.evaluate(({ source, width }) => window.scorebook.a4Pages(source, width), { source, width: best.width })
-    assert.equal(pages.length, best.pageCount)
-    const start = music.length
-    for (const rendered of pages) music.push({ kind: 'music', id: entry.id, svg: pageSvg(rendered.markup) })
-    records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, musicStart: start, candidates })
+    records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates })
     console.log(`${index + 1}/${plan.entries.length} ${entry.title}: ${best.width}px, ${best.pageCount} pages`)
+  }
+  for (const group of packScorebook(records)) {
+    const entries = records.slice(group.start, group.end), start = music.length
+    if (entries.length > 1) {
+      const rendered = await page.evaluate(({ sources, width, gap }) => window.scorebook.sharedA4Page(sources, width, gap),
+        { sources: entries.map(entry => sources.get(entry.id)), width: group.width, gap: sharedScoreGap })
+      music.push({ kind: 'music', ids: entries.map(entry => entry.id), svg: pageSvg(rendered.markup) })
+      musicGroups.push({ musicStart: start, width: group.width, usedHeight: rendered.usedHeight,
+        items: entries.map((entry, index) => ({ id: entry.id, top: rendered.items[index].top, height: rendered.items[index].sourceHeight })) })
+      console.log(`Shared ${group.width}px: ${entries.map(entry => entry.title).join(' / ')}`)
+    } else {
+      const entry = entries[0]
+      const pages = await page.evaluate(({ source, width }) => window.scorebook.a4Pages(source, width), { source: sources.get(entry.id), width: group.width })
+      assert.equal(pages.length, group.pageCount)
+      for (const rendered of pages) music.push({ kind: 'music', id: entry.id, svg: pageSvg(rendered.markup) })
+    }
+    for (const entry of entries) {
+      const candidate = entry.candidates.find(candidate => candidate.width === group.width)
+      Object.assign(entry, { width: group.width, systems: candidate.rows, pageCount: group.pageCount, musicStart: start })
+    }
   }
 } finally { await browser.close() }
 
@@ -97,6 +115,7 @@ writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))
 const report = { title: plan.title, edition: plan.edition, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
   entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile,
   widthSearch: { minimum: 640, maximum: 800, step: 10, priority: ['pageCount', 'width'] }, pageMarginEm: .5, a4MarginMm: 12,
+  sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')
 writeFileSync(join(temp, 'index.html'), '<!doctype html><meta charset="utf-8"><title>谱集预览</title><style>body{background:#ddd}figure{display:inline-block;width:380px;margin:10px;vertical-align:top}img{width:100%}</style>'

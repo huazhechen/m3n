@@ -102,7 +102,7 @@ const pages = score.render({ width: 800, paged: true, includeBass: true })
 
 该模式保留事件身份、时值和原生关系几何，不移动最终 SVG 图元。SVG 谱行以 `data-m3n-paragraph` 和 `data-m3n-volta` 标记段落及房子分类，开发检查可读取这些属性。核对节距时需考虑相邻两行的段落、房子档位、实际歌词行数及局部标题。当前网页和谱集默认按自然高度排版。
 
-第六十版谱集读取 `scorebook/editorial-plan.json` 的三篇编排和曲目顺序，直接调用网页 `renderScoreInto`；只遍历640～800px、步长10px的版宽，先减少原生页数、同页数再选更窄版宽，逐页等比缩放进A4。逐曲间距、合页、固定页数、等行高特例和回流已删除。基本功的等宽小节来自谱源 `{equal-measures=true}`。PDF生成成功后，最佳宽度写回谱源的 `{preferred-width=…}`；网页默认读取该字段，缺省720。详细规则见[谱集构建说明](SCOREBOOK.md)。
+第六十版谱集读取 `scorebook/editorial-plan.json` 的三篇编排和曲目顺序，直接调用网页 `renderScoreInto`；只遍历640～800px、步长10px的版宽，同篇内相邻短曲可按共同宽度合页，以全谱集页数最少、曲目宽度之和最小为选择顺序，整页等比缩放进A4。长曲沿用原生分页；不拆曲合页，不改变内部图元。逐曲间距、固定页数、等行高特例和回流已删除。基本功的等宽小节来自谱源 `{equal-measures=true}`。PDF生成成功后，最佳宽度写回谱源的 `{preferred-width=…}`；网页默认读取该字段，缺省720。详细规则见[谱集构建说明](SCOREBOOK.md)。
 
 `npm run build:scorebook` 只构建简谱，已删除配对构建器和五线谱配置。
 
