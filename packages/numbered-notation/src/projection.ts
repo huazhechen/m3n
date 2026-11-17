@@ -327,7 +327,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const navigation = [...new Set([...(measure.navigation ?? []), ...measure.events.flatMap(event => event.navigation)].filter(name => name !== 'segno'))]
         const beforeBar = navigation.map(name => `@symbol(${name},size=${name === 'fine' ? 12 : 16}px)`).join(' ')
         let bar = `@bar(${type}${beforeBar ? `,before={${beforeBar}}` : ''})`
-        if ((measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},@text("×${measure.repeatCount}",size=13px))`
+        if ((measure.repeatCount ?? 2) > 2) bar = `@up({${bar}},@text("×${measure.repeatCount}",size=13px,align=center))`
         // Within a system the opening repeat supplies the shared boundary.
         // Across an explicit break both systems need their own boundary mark.
         const sharedOpening = (type === 0 || type === 1) && next?.left === 'rptstart' && !nextLine && !navigation.length && (measure.repeatCount ?? 2) <= 2
