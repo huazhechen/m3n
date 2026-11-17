@@ -24,14 +24,21 @@ it('loads Jiu Er fully written out with a subtitle and inline key changes', asyn
   expect([...new Set(bars.flatMap(bar => bar.events.map(event => event.key)))]).toEqual(['Eb', 'F', 'Bb'])
 })
 
-it('preserves every reference sounding pitch and duration, transposed to E-flat with rising key changes within the harmonica range', () => {
+it('preserves the arrangement while applying the uploaded core melody ties within the harmonica range', () => {
   const document = parseM3NDocument(source)
+  expect(validateM3NDiagnostics(source)).toEqual([])
   const performance = compileScorePerformance(document)
   expect(performance.beats).toBe(96)
   const pitches = performance.notes.map(note => note.pitch)
   expect([Math.min(...pitches), Math.max(...pitches)]).toEqual([63, 86])
   expect(alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(24)
-  expect(performance.notes.filter(note => note.channel === 0).map(note => [note.start, note.end, note.pitch])).toEqual(reference.notes.map(([start, end, pitch]) => [start, end, pitch! + reference.transposeSemitones]))
+  // 876f8e578231bd05047dab26a00e1914.png: the 7 across 花's barline and the
+  // two 5s on 天 are tied. Keep the historical web reference and arrangement.
+  const removedAttacks = new Set([12, 44, 21, 53, 77])
+  const tiedEnds = new Map([[11.75, 12.5], [43.75, 44.5], [20.5, 23], [52.5, 55], [76.5, 79]])
+  const expected = reference.notes.filter(([start]) => !removedAttacks.has(start!))
+    .map(([start, end, pitch]) => [start, tiedEnds.get(start!) ?? end, pitch! + reference.transposeSemitones])
+  expect(performance.notes.filter(note => note.channel === 0).map(note => [note.start, note.end, note.pitch])).toEqual(expected)
   expect(performance.notes.filter(note => note.channel !== 0)).toEqual([])
 })
 
@@ -56,7 +63,7 @@ it('retains all vocal lyrics from the first bar', () => {
 })
 
 
-it('extends both Er syllable slurs across the barline through the next 6', () => {
+it('extends both Er syllable slurs across the barline through a tied 7', () => {
   const document = parseM3NDocument(source)
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const events = document.parts.get('score')!.melody.flatMap(bar => bar.events)
@@ -67,6 +74,9 @@ it('extends both Er syllable slurs across the barline through the next 6', () =>
   for (const slur of slurs) {
     const start = events.findIndex(event => event.sourceStart === slur.start)
     expect(slur.endStart).toBe(events[start + 2]!.sourceStart)
+    expect(events[start + 1]!.pitches).toEqual(['7'])
+    expect(events[start + 1]!.tie).toBe(true)
+    expect(events[start + 2]!.pitches).toEqual(['7'])
     expect(lyricsByEvent.get(events[start + 2]!)?.some(lyric => lyric.kind === 'text')).toBeFalsy()
     expect(lyricsByEvent.get(events[start + 3]!)?.some(lyric => lyric.kind === 'text' && lyric.text === '香')).toBe(true)
   }
