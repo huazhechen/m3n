@@ -14,7 +14,8 @@ export function placeNativeNavigation(system: NativeSystem) {
     const ink = mark.ink
     lane.top = Math.max(lane.top, -ink.top); lane.bodyBottom = Math.max(lane.bodyBottom ?? 0, ink.bottom)
     lane.lyricBottom = Math.max(lane.lyricBottom ?? 0, ink.bottom)
-    system.decorationLayout ??= []; system.decorationLayout.push({ lane: lane.id, svg })
+    const paragraph = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id).at(-1)?.paragraph
+    system.decorationLayout ??= []; system.decorationLayout.push({ lane: lane.id, svg, paragraph })
   }
 }
 
@@ -30,6 +31,7 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
     const bar = nativeMeasureBarPositions(system.measures, index).filter(bar => bar.kind !== 'rptstart').at(-1)
       ?? (next?.part === measure.part ? nativeMeasureBarPositions(system.measures, index + 1).find(bar => bar.kind === 'rptstart') : undefined)
     if (!bar) continue
+    const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id)
     let top = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top
     const place = (text: string, size: number, meta: Record<string, string>) => {
       const raw = painter.text(text, bar.x, 0, size, 'serif', { 'text-anchor': 'middle', ...meta })
@@ -38,10 +40,10 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
       lane.top = Math.max(lane.top, -top)
       regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -top })
       system.decorationLayout ??= []
-      system.decorationLayout.push({ lane: lane.id, svg: `<g transform="translate(0 ${n(y)})">${raw}</g>` })
+      system.decorationLayout.push({ lane: lane.id, paragraph: glyphs.at(-1)?.paragraph, svg: `<g transform="translate(0 ${n(y)})">${raw}</g>` })
     }
     if ((measure.source.repeatCount ?? 2) > 2) place(`×${measure.source.repeatCount}`, nativeStyle.repeatCount, { 'data-m3n-role': 'repeat-count' })
-    const first = measure.columns.flatMap(column => column.glyphs).find(glyph => glyph.lane === lane.id)
+    const first = glyphs[0]
     if (measureNumbers && first && index === system.measures.length - 1) place(String(measure.number ?? measure.index + 1), nativeStyle.measureNumber, { 'data-m3n-role': 'measure-number', 'data-m3n-id': first.xmlId })
   }
 }

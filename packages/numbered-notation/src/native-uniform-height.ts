@@ -13,7 +13,7 @@ function include(envelopes: Envelopes, id: string, top: number, bottom: number) 
   envelopes.set(id, { top: Math.max(0, top, previous?.top ?? 0), bottom: Math.max(0, bottom, previous?.bottom ?? 0) })
 }
 
-/** Capture hosts before outer expressions and relations enlarge their envelopes.
+/** Capture intrinsic hosts before later attachments are placed.
  * A mixed-paragraph row must not give every paragraph its tallest host. */
 export function nativeUniformHosts(systems: NativeSystem[], measurer: TextMeasurer): Envelopes {
   const hosts: Envelopes = new Map()
@@ -56,7 +56,13 @@ export function shareNativeUniformHeight(systems: NativeSystem[], hosts: Envelop
       for (const annotation of glyph.annotationLayout ?? []) if (annotation.kind === 'chord') add(annotation.top, annotation.height - annotation.top)
     }
     for (const [relation, placement] of system.relationLayout ?? []) if (relation.first.lane === lane.id) add(-placement.ink.top, placement.ink.bottom)
-    for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id) svg(decoration.svg)
+    for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id) {
+      if (decoration.paragraph === undefined) svg(decoration.svg)
+      else {
+        const ink = nativeSvgInk(decoration.svg, measurer)
+        include(ordinary, key(decoration.paragraph, lane.id), -ink.top, ink.bottom)
+      }
+    }
     if (lane.id === 'melody') for (const volta of system.voltas ?? []) svg(volta.svg)
     for (const paragraph of paragraphs[index]!) {
       const id = key(paragraph, lane.id)
