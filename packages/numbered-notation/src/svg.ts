@@ -4,6 +4,14 @@ import { NUMBER_FONT_CSS } from './font-data.js'
 import type { EventBinding, ProjectedScore } from './projection.js'
 
 type Located = { binding: EventBinding; line: number; node: VisualTemporalNode }
+function isOpeningRepeat(node: VisualTemporalNode): boolean {
+  if (node.ast instanceof ASTFunctionNode && node.ast.callName === 'bar') {
+    return (node.ast as ASTFunctionNode & { type?: number }).type === 3
+  }
+  if (!(node.ast instanceof ASTFunctionNode) || !['up', 'down'].includes(node.ast.callName)) return false
+  const host = (node as VisualTemporalNode & { members?: readonly VisualTemporalNode[] }).members?.[0]
+  return host && host !== node ? isOpeningRepeat(host) : false
+}
 const spanKey = (span: { start: number; end: number }) => `${span.start}:${span.end}`
 function labelBinding(node: VisualTemporalNode, projection: ProjectedScore) {
   const selected = node.ast instanceof ASTFunctionNode && node.ast.labelable ? node.ast.labelable() : null
@@ -66,7 +74,7 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
         }
       }
       const candidates = objectsByTrack.get(node.track) ?? []
-      const openingRepeat = node.ast instanceof ASTFunctionNode && node.ast.callName === 'bar' && (node.ast as ASTFunctionNode & { type?: number }).type === 3
+      const openingRepeat = isOpeningRepeat(node)
       const previous = candidates.filter(value => node.mergeKey === ANCHOR_KEY && !openingRepeat ? value.node.t.compare(node.t) < 0 : value.node.t.compare(node.t) <= 0).at(-1)
       const next = candidates.find(value => value.node.t.compare(node.t) >= 0 && value.node.ast.sourceSpan.start < node.ast.sourceSpan.end)
       const framedHeading = node.ast instanceof ASTFunctionNode && node.ast.callName === 'text' && 'frame' in node.ast && node.ast.frame
@@ -152,6 +160,7 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
     }).filter(child => typeof child === 'string' || !claimedFrames.has(child))
     const systems = new Map<string, TNode>()
     const measures = new Map<string, TNode>()
+    const openingRepeatMeasures = new Set<TNode>()
     const remaining: Array<TNode | string> = []
     for (const child of root.children) {
       if (typeof child === 'string') { remaining.push(child); continue }
@@ -175,6 +184,7 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       }
       const object = objectLocations.get(Number(child.attributes['data-jpfun-object']))
       if (object) {
+        if (isOpeningRepeat(object.node)) openingRepeatMeasures.add(measure)
         const left = object.node.box.x, right = left + object.node.box.w
         measure.attributes['data-m3n-measure-start'] = String(Math.min(Number(measure.attributes['data-m3n-measure-start'] ?? Infinity), left))
         measure.attributes['data-m3n-measure-end'] = String(Math.max(Number(measure.attributes['data-m3n-measure-end'] ?? -Infinity), right))
@@ -191,6 +201,10 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
       for (let index = 1; index < rowMeasures.length; index++) {
         const previousEnd = Number(rowMeasures[index - 1]!.attributes['data-m3n-measure-end'])
         const measure = rowMeasures[index]!
+        // A shared opening repeat belongs to this measure. The preceding
+        // measure ends at its last note box, not at a separately owned bar.
+        // Keep the repeat's own left edge instead of reaching back to that note.
+        if (openingRepeatMeasures.has(measure)) continue
         const start = Number(measure.attributes['data-m3n-measure-start'])
         if (Number.isFinite(previousEnd) && Number.isFinite(start)) {
           measure.attributes['data-m3n-measure-start'] = String(Math.min(start, previousEnd))

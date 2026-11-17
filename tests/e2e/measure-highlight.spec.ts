@@ -7,9 +7,9 @@ for (const width of [390, 1280]) {
       await page.addInitScript(mode => localStorage.setItem('m3n:render-mode', mode), mode)
       await page.goto('/editor')
       await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 2 3 4 | 5 6 7 1e |||\nL: 一二三四五六七八')
-      await expect(page.locator('.score-paper g.note')).toHaveCount(8)
       const preview = page.getByRole('tab', { name: '预览', exact: true })
       if (await preview.isVisible()) await preview.click()
+      await expect(page.locator('.score-paper g.note')).toHaveCount(8)
       await expect(page.locator('.score-paper')).toBeVisible()
       await page.getByRole('button', { name: '播放', exact: true }).click()
       const second = page.locator('.score-paper g.measure').nth(1)
@@ -33,3 +33,22 @@ for (const width of [390, 1280]) {
     })
   }
 }
+
+test('Super Mario second measure starts at its own opening repeat during playback', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: ((3) 3 (3)) ((0 1) 3) (5 0) (5d 0) ||\n---\nN: ||: (1 (0 5d)) (0 3d) ((0) 6d (7d)) ((0 7bd) 6d) | ([5d35:2]) (6 (4 5)) ((0) 3 (1)) ((2) 7d (0)) :||')
+  const preview = page.getByRole('tab', { name: '预览', exact: true })
+  if (await preview.isVisible()) await preview.click()
+  await expect(page.locator('.score-paper g.measure')).toHaveCount(3)
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  const second = page.locator('.score-paper g.measure').nth(1)
+  await expect(second).toHaveClass(/is-playing-measure/, { timeout: 20_000 })
+  const bounds = await second.evaluate(element => {
+    const band = element.querySelector<SVGRectElement>('.measure-playback-highlight')!.getBBox()
+    const opening = element.firstElementChild!
+    const bars = [...opening.querySelectorAll<SVGRectElement>('rect')].filter(rect => rect.height.baseVal.value > 20)
+    return { bandLeft: band.x, barLeft: Math.min(...bars.map(rect => rect.x.baseVal.value)) }
+  })
+  expect(bounds.bandLeft).toBeCloseTo(bounds.barLeft - 5, 2)
+  await page.getByRole('button', { name: '暂停', exact: true }).click()
+})

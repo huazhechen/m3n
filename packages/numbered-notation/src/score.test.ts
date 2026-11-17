@@ -1423,3 +1423,15 @@ it('identifies each top order occurrence across wrapped header rows', () => {
   expect(cells.map(cell => cell.textContent)).toEqual(['A', 'B', 'A', 'B', 'A', 'B', 'A', 'B'])
   expect(cells.every(cell => cell.querySelector('rect') && cell.querySelector('[data-m3n-role="order"]'))).toBe(true)
 })
+
+it.each([600, 800, 1000].flatMap(width => [false, true].flatMap(paged => [false, true].map(measureNumbers => ({ width, paged, measureNumbers })))))('keeps Super Mario second-measure highlight at its opening repeat at $width, paged=$paged, numbers=$measureNumbers', settings => {
+  const source = readFileSync(resolve(process.cwd(), '../../src/scores/super_mario_01.m3n'), 'utf8')
+  const { root } = render(source, settings)
+  const measure = root.querySelector('g.measure[data-m3n-measure-id="m3n-measure-1-2"]')!
+  const opening = measure.firstElementChild!
+  expect(opening.matches('g.note')).toBe(false)
+  const bars = [...opening.querySelectorAll('rect')].filter(rect => Number(rect.getAttribute('height')) > 20)
+  expect(bars.length).toBeGreaterThan(0)
+  const barLeft = Math.min(...bars.map(rect => Number(rect.getAttribute('x'))))
+  expect(Number(measure.getAttribute('data-m3n-measure-start'))).toBeCloseTo(barLeft, 2)
+})
