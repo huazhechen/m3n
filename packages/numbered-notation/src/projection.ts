@@ -122,12 +122,16 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       }
       const visibleMeasures = [...measures]
       while (visibleMeasures.length && !visibleMeasures.at(-1)?.events.length && !visibleMeasures.at(-1)?.multiRest) visibleMeasures.pop()
-      const breaksBefore = (index: number) => index > 0 && Boolean(
+      const breaksBefore = (index: number) => index > 0
+        && visibleMeasures.slice(0, index).some(measure => measure.events.length || measure.multiRest) && Boolean(
         visibleMeasures[index]?.breakBefore || visibleMeasures[index - 1]?.breakAfter
         || melody[index]?.breakBefore || melody[index - 1]?.breakAfter
         || (visibleMeasures[index]?.events.some(event => event.sectionLabel) || melody[index]?.events.some(event => event.sectionLabel)),
       )
       visibleMeasures.forEach((measure, measureIndex) => {
+        // A leading ordinary separator is syntax, not a bar-only music system.
+        if (!measure.events.length && !measure.multiRest && measure.right === 'single'
+          && !measure.left && !measure.navigation?.length) return
         // Explicit accidental reminders carry their full pitch into jpFun;
         // only redundant glyphs at the same degree/octave are hidden.
         const accidentals = new Map<string, string>()

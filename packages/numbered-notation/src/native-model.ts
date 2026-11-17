@@ -235,7 +235,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
     for (let index = 0; index < count; index++) {
       const source = part.melody[index] ?? { events: [] }
       if (!source.events.length && !source.multiRest && !part.bass[index]?.events.length) continue
-      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: index > 0 && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? em(12) : 0, natural: 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
+      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? em(12) : 0, natural: 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
       measure.number = ++measureNumber
       measureNumber += (source.multiRest ?? 1) - 1
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]
