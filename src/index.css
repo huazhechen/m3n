@@ -796,6 +796,13 @@ textarea::selection {
   background: #ffffff;
 }
 
+/* The frame is 112% of the SVG width: 6% of the score on each side. */
+.score-renderer > .score-paper[data-render-mode="continuous"] {
+  box-sizing: border-box;
+  width: 100%;
+  padding: calc(100% * 6 / 112);
+}
+
 .score-paper[aria-busy="true"] {
   min-height: 1.5rem;
 }
