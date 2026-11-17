@@ -80,8 +80,8 @@ export function HomePage() {
               <p>第一次写谱？跟着指南写出第一条乐句；想查某个符号怎么用，随时翻开手册。</p>
               <div className="home-feature-links">
                 <Link to="/editor" className="home-text-link"><NavActionIcon action="edit" /> 打开编辑器 →</Link>
-                <Link to="/?doc=guide" className="home-text-link"><NavActionIcon action="library" /> 浏览指南 →</Link>
-                <Link to="/?doc=manual" className="home-text-link"><NavActionIcon action="library" /> 查阅手册 →</Link>
+                <Link to="/?doc=guide" className="home-text-link"><NavActionIcon action="guide" /> 浏览指南 →</Link>
+                <Link to="/?doc=manual" className="home-text-link"><NavActionIcon action="manual" /> 查阅手册 →</Link>
               </div>
             </div>
           </section>
