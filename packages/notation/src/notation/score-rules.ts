@@ -151,7 +151,8 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
       report('M3N_METER_INCOMPLETE_FINAL', `第 ${last.index + 1} 小节：没有弱起时末小节拍数必须满拍：期望 ${last.expected} 拍，实际 ${last.actual} 拍`, last.measure,
         { measure: last.index + 1, expected: last.expected, actual: last.actual })
     }
-  } else if (!equal(first.expected, last.expected) || !equal(first.actual + last.actual, first.expected)) {
+  } else if (!equal(last.actual, last.expected)
+    && (!equal(first.expected, last.expected) || !equal(first.actual + last.actual, first.expected))) {
     report('M3N_METER_PICKUP_MISMATCH', `首末小节拍数不互补：首 ${first.actual} 拍 + 末 ${last.actual} 拍，完整小节为 ${first.expected} 拍`, first.measure,
       { first: first.actual, last: last.actual, expected: first.expected })
   }

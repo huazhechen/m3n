@@ -57,10 +57,10 @@ describe('score document rules', () => {
   })
 
   it('validates ordinary measure durations without the legacy token state', () => {
-    const source = '{4/4}\n1 2 3 | 1 2 3 4 |||'
+    const source = '{4/4}\n1 2 3 | 1 2 |||'
     expect(validateScoreDocument(parseM3NDocument(source))).toContainEqual(expect.objectContaining({
       code: 'M3N_METER_PICKUP_MISMATCH',
-      messageArgs: { first: 3, last: 4, expected: 4 },
+      messageArgs: { first: 3, last: 2, expected: 4 },
     }))
   })
 

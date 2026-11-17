@@ -20,6 +20,12 @@ describe('validateM3N', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
   })
 
+  it('accepts an opening pickup followed by a full final bar, including an instrumental coda', () => {
+    expect(validateM3NDiagnostics('{4/4}\nN: (0 3) (1e 7) | 1e 7 6 5 | {inst}6^^{/} |||')).toEqual([])
+    expect(messages('{4/4}\nN: 1 | 2 3 4 5 | 6 7 |||')).toContain('首末小节拍数不互补')
+    expect(messages('{4/4}\nN: 1 | 2 3 4 5 | 6^.. |||')).toContain('首末小节拍数不互补')
+  })
+
   it('validates bar-aligned v0.3 lyrics measure by measure', () => {
     expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁')).toEqual([])
     expect(validateM3N('{2/4}\nN: 1 2 | 3 4 |||\nL: 甲乙 | 丙丁 |')).toEqual([])

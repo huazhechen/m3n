@@ -8,7 +8,7 @@ const ranges: Record<string, Array<[number, number, string]>> = {
   man_man_xi_huan_ni: [[0, 11, 'A'], [11, 22, 'A'], [22, 33, 'B'], [33, 37, 'C']],
   wo_yao_ni: [[0, 9, 'A'], [9, 19, 'B']],
   xin_bu_liao_qing: [[0, 17, 'A'], [17, 26, 'B']],
-  yue_ban_xiao_ye_qu: [[0, 17, 'A'], [17, 31, 'B']],
+  // 月半小夜曲已按上传参考重编，由 yue-ban-reference.test.ts 校验。
 }
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 
