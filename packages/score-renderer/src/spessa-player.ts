@@ -22,7 +22,7 @@ export function playbackRateAtBpm(bpm: number, initialBpm: number) {
 type PlayerListener = {
   onEnded: () => void
   onTime: (seconds: number, duration: number) => void
-  onStartupBeat?: (beat: StartupBeat | null) => void
+  onStartupBeat?: (beat: StartupBeat | null, seconds: number) => void
 }
 
 /** Transpose melodic MIDI channels while leaving percussion (channel 10) intact. */
@@ -49,7 +49,6 @@ export class SpessaPlayer {
   private readonly listener: PlayerListener
   private readonly metronome: Metronome
   private metronomeEnabled = false
-  private startupPending = true
   private playToken = 0
   private toneVersion = 0
   private destroyed = false
@@ -66,7 +65,6 @@ export class SpessaPlayer {
     this.metronome = metronome
     this.sequencer.eventHandler.addEvent('songEnded', 'm3n-player', () => {
       this.stopProgressLoop()
-      this.startupPending = true
       this.listener.onTime(this.sequencer.duration, this.sequencer.duration)
       this.listener.onEnded()
     })
@@ -113,12 +111,9 @@ export class SpessaPlayer {
     await this.context.resume()
     if (token !== this.playToken || this.destroyed) return
     if (this.sequencer.currentTime >= this.sequencer.duration - 0.02) this.seek(0)
-    const startsAtBeginning = this.startupPending && (this.sequencer.currentTime < 0.02 || this.sequencer.currentTime >= this.sequencer.duration - 0.02)
-    if (startsAtBeginning) {
-      await this.startup.play(this.initialBpm * this.sequencer.playbackRate, beat => this.listener.onStartupBeat?.(beat))
-    }
+    const cuePosition = Math.max(0, this.sequencer.currentTime)
+    await this.startup.play(this.initialBpm * this.sequencer.playbackRate, beat => this.listener.onStartupBeat?.(beat, cuePosition))
     if (token !== this.playToken || this.destroyed) return
-    this.startupPending = false
     this.listener.onTime(Math.max(0, this.sequencer.currentTime), this.sequencer.duration)
     this.sequencer.play()
     if (this.metronomeEnabled) this.metronome.start(this.sequencer.currentTime, this.sequencer.playbackRate)

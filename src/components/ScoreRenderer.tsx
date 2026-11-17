@@ -98,6 +98,23 @@ function queryPlaybackElements(paper: HTMLElement | null, xmlId: string, renditi
   })
 }
 
+function drawStartupBeat(paper: HTMLElement | null, score: PlaybackScore | null, beat: 1 | 2 | 3, milliseconds: number) {
+  const first = score?.nextElementAtTime(milliseconds) ?? score?.elementsAtTime(milliseconds)[0]
+  if (!first) return
+  const note = queryPlaybackElements(paper, first.xmlId, first.rendition)
+    .find(element => element.matches('g.note')) as SVGGElement | undefined
+  if (!note) return
+  const numeral = [...note.querySelectorAll<SVGTextElement>('text')].find(text => /^[0-7]$/.test(text.textContent ?? ''))
+  const bounds = (numeral ?? note).getBBox()
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+  circle.classList.add('startup-beat-highlight')
+  circle.setAttribute('data-beat', String(beat))
+  circle.setAttribute('cx', String(bounds.x + bounds.width / 2))
+  circle.setAttribute('cy', String(bounds.y + bounds.height / 2))
+  circle.setAttribute('r', String(Math.max(bounds.width, bounds.height) / 2 + 5))
+  note.insertBefore(circle, note.firstChild)
+}
+
 function addMeasureHighlight(measure: SVGGElement, className: string) {
   if (measure.querySelector(`:scope > .${className}`)) return
   const system = measure.closest<SVGGElement>('g.system')
@@ -158,6 +175,7 @@ export function ScoreRenderer({
   const isSeekingRef = useRef(false)
   const pendingSeekProgressRef = useRef(0)
   const highlightedElementsRef = useRef<Element[]>([])
+  const startupPositionRef = useRef(0)
   const startupBeatRef = useRef<1 | 2 | 3 | null>(null)
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
@@ -261,7 +279,7 @@ export function ScoreRenderer({
         })
         if (cancelled) return
         addInvalidMeasureHighlights(paper, invalidMeasureIds)
-        if (startupBeatRef.current !== null) showStartupBeat(startupBeatRef.current)
+        if (startupBeatRef.current !== null) drawStartupBeat(paper, scoreRef.current, startupBeatRef.current, startupPositionRef.current * 1000)
         setMessage(message)
         hasRenderedRef.current = true
         setHasAudioControls(true)
@@ -324,24 +342,12 @@ export function ScoreRenderer({
     scorePlaybackCoordinator.release(playbackLeaseRef.current)
   }
 
-  const showStartupBeat = (beat: 1 | 2 | 3 | null) => {
+  const showStartupBeat = (beat: 1 | 2 | 3 | null, seconds: number) => {
+    startupPositionRef.current = seconds
     clearPlaybackHighlight()
     startupBeatRef.current = beat
     if (beat === null) return
-    const first = scoreRef.current?.elementsAtTime(0)[0]
-    if (!first) return
-    const note = queryPlaybackElements(paperRef.current, first.xmlId, first.rendition)
-      .find(element => element.matches('g.note')) as SVGGElement | undefined
-    if (!note) return
-    const numeral = [...note.querySelectorAll<SVGTextElement>('text')].find(text => /^[0-7]$/.test(text.textContent ?? ''))
-    const bounds = (numeral ?? note).getBBox()
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-    circle.classList.add('startup-beat-highlight')
-    circle.setAttribute('data-beat', String(beat))
-    circle.setAttribute('cx', String(bounds.x + bounds.width / 2))
-    circle.setAttribute('cy', String(bounds.y + bounds.height / 2))
-    circle.setAttribute('r', String(Math.max(bounds.width, bounds.height) / 2 + 5))
-    note.insertBefore(circle, note.firstChild)
+    drawStartupBeat(paperRef.current, scoreRef.current, beat, seconds * 1000)
   }
 
   const updatePlaybackHighlight = (seconds: number, duration: number, syncProgress = true) => {

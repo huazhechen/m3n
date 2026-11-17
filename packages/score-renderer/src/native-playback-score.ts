@@ -63,6 +63,23 @@ export class NativePlaybackScore {
       ...(orderIndex === undefined ? {} : { orderIndex }) }))
   }
 
+  /** Next written melody event at or after the transport position, preserving repeats. */
+  nextElementAtTime(milliseconds: number): TimedScoreElement | undefined {
+    this.check()
+    if (!Number.isFinite(milliseconds) || milliseconds < 0) return undefined
+    let next: (TimedScoreElement & { start: number }) | undefined
+    for (const [voice, spans] of this.voices) {
+      if (!voice.endsWith(':melody')) continue
+      let low = 0, high = spans.length
+      while (low < high) { const mid = (low + high) >>> 1; if (spans[mid]!.start < milliseconds) low = mid + 1; else high = mid }
+      const candidate = spans[low]
+      if (candidate && (!next || candidate.start < next.start)) next = candidate
+    }
+    if (!next) return undefined
+    const { xmlId, rendition, orderIndex } = next
+    return { xmlId, rendition, ...(orderIndex === undefined ? {} : { orderIndex }) }
+  }
+
   timeForElement(xmlId: string) { this.check(); return this.starts.get(xmlId) ?? -1 }
 
   destroy() { this.destroyed = true; this.midiData = undefined; this.starts.clear(); this.voices.clear(); this.spans.length = 0 }

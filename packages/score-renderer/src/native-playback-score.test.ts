@@ -43,6 +43,19 @@ describe('native MIDI and playback index', () => {
     expect(score.elementsAtTime(3000)[0]).toMatchObject({ xmlId: opening[0]!.xmlId, orderIndex: 2 })
     score.destroy()
   })
+  it('locates the next melody cue through rests, tempo changes and repeated occurrences', async () => {
+    const score = await prepare('{2/4}{120qpm}{order=A,B,A}\n===A\nN: 0 1 ||\nB: (1d 2d) 3d |\n===B\nN: {60qpm}2 3 |||')
+    expect(score.nextElementAtTime(0)).toEqual(score.elementsAtTime(0)[0])
+    // A bass onset at 250 ms must not take the melody cue away from the next 1.
+    expect(score.nextElementAtTime(100)).toEqual(score.elementsAtTime(500).find(element => element.xmlId === 'm3n-e-2'))
+    expect(score.nextElementAtTime(501)).toEqual(score.elementsAtTime(1000).find(element => element.orderIndex === 1))
+    expect(score.nextElementAtTime(2001)).toMatchObject({ orderIndex: 2, rendition: 2 })
+    expect(score.nextElementAtTime(4000)).toBeUndefined()
+    expect(score.nextElementAtTime(-1)).toBeUndefined()
+    expect(score.nextElementAtTime(Infinity)).toBeUndefined()
+    score.destroy()
+    expect(() => score.nextElementAtTime(0)).toThrow('释放')
+  })
   it('returns independent MIDI buffers and rejects operations after disposal', async () => {
     const score = await prepare('{2/4}\nN: 1 2 |||')
     const first = score.midi(), second = score.midi()
