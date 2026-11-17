@@ -6,6 +6,7 @@ import { nativeTiePortTop } from './native-note-metrics.js'
 import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
+import { DefaultTextMeasurer } from './native-measure.js'
 
 const options = { width: 800, paged: false }
 describe('native musical arc geometry', () => {
@@ -58,7 +59,14 @@ describe('native musical arc geometry', () => {
 
   it('keeps an inline meter separate from the note port while clearing its actual column', () => {
     const source = '{4/4}\nN: 1 2 3 4~ | {3/4}4 5 6 |||'
-    const layout = layoutNativeScore(parseM3NDocument(source), options)
+    const fallback = new DefaultTextMeasurer()
+    // This fixture needs tall fraction digits to obstruct the ribbon. Declare
+    // their ink explicitly rather than using the fallback em box's blank tail.
+    const textMeasurer = { measureText(text: string, style: Parameters<typeof fallback.measureText>[1]) {
+      const metrics = fallback.measureText(text, style)
+      return style.fontSize === 18 ? { ...metrics, inkBottom: metrics.h } : metrics
+    } }
+    const layout = layoutNativeScore(parseM3NDocument(source), { ...options, textMeasurer })
     const relation = layout.relations.find(relation => relation.kind === 'tie')!
     const arc = nativeArcGeometry(relation, layout.systems[0]!)
     expect(relation.last.controls.map(control => control.kind)).toContain('meter')

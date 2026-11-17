@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout'
 import { nativeTiePortTop } from './native-note-metrics.js'
+import { nativeSvgPieces } from './native-ink.js'
+import { DefaultTextMeasurer } from './native-measure.js'
+import { nativeArcSlice } from './native-curve.js'
 
 describe('relation and ending clearance', () => {
   it('keeps adjacent ties at the same height when they only share an endpoint', () => {
@@ -65,6 +68,19 @@ describe('relation and ending clearance', () => {
     // cached position relative to the music baseline, rather than page height.
     const endingTop = (value: typeof plain) => value.systems[0]!.voltas![0]!.top
     expect(endingTop(outside)).toBeCloseTo(endingTop(plain), 3)
-    expect(endingTop(inside)).toBeGreaterThan(endingTop(plain) + 10)
+    expect(endingTop(inside)).toBeGreaterThan(endingTop(plain))
+    const system = inside.systems[0]!
+    const arc = [...system.relationLayout!.values()].find(relation => relation.arc)!.arc!
+    let intersections = 0
+    for (const mark of nativeSvgPieces(system.voltas![0]!.svg, new DefaultTextMeasurer())) {
+      const left = Math.max(mark.left, arc.left), right = Math.min(mark.right, arc.right)
+      if (left > right) continue
+      for (let i = 0; i <= 100; i++) {
+        const edge = nativeArcSlice(arc.commands, left + (right - left) * i / 100)!
+        expect(edge.top - mark.bottom).toBeGreaterThanOrEqual(2 - .0001)
+        intersections++
+      }
+    }
+    expect(intersections).toBeGreaterThan(0)
   })
 })

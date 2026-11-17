@@ -30,7 +30,12 @@ describe('painted control footprints', () => {
   })
 
   it('does not lift an arc for the empty upper corner of a meter column', () => {
-    const measurer = new DefaultTextMeasurer()
+    const fallback = new DefaultTextMeasurer()
+    // Keep the numerator tall enough to cross the ribbon after moving it.
+    const measurer = { measureText(text: string, style: Parameters<typeof fallback.measureText>[1]) {
+      const metrics = fallback.measureText(text, style)
+      return style.fontSize === 18 ? { ...metrics, inkBottom: metrics.h } : metrics
+    } }
     const layout = layoutNativeScore(parseM3NDocument('{2/4}\nN: {lg}1 2{/} |||'), { width: 800, paged: false, textMeasurer: measurer })
     const relation = layout.relations[0]!, system = layout.systems[0]!
     const plain = nativeArcGeometry(relation, system)
