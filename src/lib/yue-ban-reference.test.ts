@@ -8,12 +8,13 @@ const document = parseM3NDocument(source)
 const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
 const range = (start: number, end: number) => Array.from({ length: end - start }, (_, index) => start + index)
 
-it('matches the uploaded main melody, grace notes and ties on every pass', () => {
+it('matches the simplified main melody and ties on every pass', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(document).toMatchObject({ key: 'Bb', meterCount: 4, meterUnit: 4, tempo: 80 })
   expect(bars.map(bar => bar.events.map(event => `${event.pitches.join(',') || '0'}:${event.beats}${event.tie ? '~' : ''}`).join(' ')))
     .toEqual(reference.writtenBars)
   expect(document.alternatives ?? []).toHaveLength(0)
+  expect(bars.flatMap(bar => bar.events).flatMap(event => event.postfixes).some(mark => /^(ac|ap)\(/.test(mark))).toBe(false)
   const expanded = alternativePerformance(document).parts.get('score')!.melody
   const pitches = resolveScorePitches(expanded)
   const events = expanded.flatMap(bar => bar.events.map(event => [pitches.get(event) ?? [], event.beats, event.tie ?? false, event.postfixes]))
