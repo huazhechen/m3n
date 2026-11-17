@@ -1,7 +1,7 @@
 import { CanvasTextMeasurer, compileScore, ErrorDiagnostic, type TextMeasurer } from '@m3n/jpfun'
 import { validateScoreDocument, type ScoreDocument } from '@m3n/notation'
 import { projectNumberedScore, type NumberedNotationDiagnostic } from './projection.js'
-import { renderInteractivePages } from './svg.js'
+import { numberedRowEndMeasures, renderInteractivePages } from './svg.js'
 
 export type NumberedNotationRenderOptions = {
   paged: boolean
@@ -56,8 +56,17 @@ export class NumberedNotationScore {
     const canvas = typeof document === 'undefined' || typeof CanvasRenderingContext2D === 'undefined' ? null : document.createElement('canvas')
     const context = canvas?.getContext('2d')
     const textMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
-    const projection = projectNumberedScore(this.document, { ...options, textMeasurer, width: Math.max(320, Math.round(options.width)) })
-    const result = compileScore(projection.source, { systemSpacing: { coreGap: options.systemGap ?? 24, inkGap: (options.systemGap ?? 24) / 2 }, autoWrap: true, minimumNoteGapFloor: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapFloorEm!, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
+    const projectionOptions = { ...options, textMeasurer, width: Math.max(320, Math.round(options.width)) }
+    let projection = projectNumberedScore(this.document, { ...projectionOptions, measureNumbers: options.measureNumbers ? false : options.measureNumbers })
+    const compile = (source: string) => compileScore(source, { systemSpacing: { coreGap: options.systemGap ?? 24, inkGap: (options.systemGap ?? 24) / 2 }, autoWrap: true, minimumNoteGapFloor: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapFloorEm!, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
+    let result = compile(projection.source)
+    if (options.measureNumbers) {
+      // Hidden interior numbers must never become layout obstacles. Horizontal
+      // bar widths do not depend on their zero-time overhanging labels.
+      const numberedMeasures = numberedRowEndMeasures(result, projection)
+      projection = projectNumberedScore(this.document, { ...projectionOptions, numberedMeasures })
+      result = compile(projection.source)
+    }
     // The score model understands complementary pickups and alternate endings;
     // jpFun sees independent bars and otherwise reports these valid fragments.
     const hasMeterWarning = result.diagnostics.some(item => item.code === 'W_METER_MISMATCH')

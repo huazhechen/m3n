@@ -25,6 +25,21 @@ function labelBinding(node: VisualTemporalNode, projection: ProjectedScore) {
   return undefined
 }
 
+/** Resolve visible closing-bar labels from unnumbered horizontal breaks.
+ * Split measures qualify only on the row containing their final music host. */
+export function numberedRowEndMeasures(result: CompileScoreResult, projection: ProjectedScore): Set<string> {
+  const rows = new Map<number, Located>(), measures = new Map<string, Located>()
+  for (const node of result.layout.objects) {
+    const binding = labelBinding(node, projection)
+    if (!binding || binding.staff !== 'melody' || node.T.isZero()) continue
+    const located = { binding, line: node.layoutLine, node }
+    const row = rows.get(node.layoutLine), measure = measures.get(binding.measureId)
+    if (!row || node.t.compare(row.node.t) > 0) rows.set(node.layoutLine, located)
+    if (!measure || node.t.compare(measure.node.t) > 0) measures.set(binding.measureId, located)
+  }
+  return new Set([...rows.values()].filter(value => value.node === measures.get(value.binding.measureId)?.node).map(value => value.binding.measureId))
+}
+
 /** Adds interaction structure around jpFun output; never draws or moves music glyphs. */
 export function renderInteractivePages(result: CompileScoreResult, projection: ProjectedScore): string[] {
   const voltaSpans = new Set(result.lowering.attachments.filter(isLayoutAttachment)
@@ -127,7 +142,7 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
     if (projection.measureNumbers) for (const child of root.children) {
       if (typeof child === 'string') continue
       const object = objectLocations.get(Number(child.attributes['data-jpfun-object']))
-      if (!object || !/@text\("\d+",size=10px\)/.test(projection.source.slice(object.node.ast.sourceSpan.start, object.node.ast.sourceSpan.end))) continue
+      if (!object || !/@text\("\d+",size=10px(?:,align=center)?\)/.test(projection.source.slice(object.node.ast.sourceSpan.start, object.node.ast.sourceSpan.end))) continue
       const last = lineEnds.get(object.line)
       const closing = last && object.node.t.compare(last.t) > 0
       const filter = (node: TNode) => {

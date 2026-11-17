@@ -17,7 +17,7 @@ JSON与HTML报告增加 `primitiveMatches`、`primitiveAudit`，包括两版数�
 
 2026-11-17验证：13项浏览器自检通过，覆盖等价平移、相对曲线、分页原点、零墨迹、半径／颜色／图元缺失、房子3px偏移、文字0.1px偏移、继承文字锚点和不支持语法的报错。《第二圆舞曲》参考对参考800px连续的CLI自检，几何／严格像素／图元全部一致，报告 `.tmp/numbered-parity-self-check/2026-11-17T15-50-22.499Z-2399644/`。这只验证工具链，不作为两版全库验收。
 
-当前88首曲库加141份专项已启动默认11px与固定调升半音两轮各1832组检查；结果尚未完成。初段已检出作者文字约0.000061px的真实坐标差，保留为图元不一致，后续按原始图元与截图归因。未据局部自检宣称完整复刻，继续保留jpFun默认显示及自研播放。
+初始阶段为88首曲库加141份专项启动默认11px与固定调升半音两轮各1832组检查，完整阶段结果见下文。初段已检出作者文字约0.000061px的真实坐标差，保留为图元不一致，后续按原始图元与截图归因。未据局部自检宣称完整复刻，继续保留jpFun默认显示及自研播放。
 
 参考引擎固定从 `packages/numbered-notation/src/score.ts` 加载，字体单独从 `fonts.ts` 加载，不通过以后将切换到自研的公共 `index.ts`。浏览器启动后检查参考与候选的类身份，二者相同立即拒绝运行，避免公共入口切换后误把自研对自身作为跨引擎验收。独立打包探针模拟公共入口改为自研，仍能保留不同的jpFun参考类；同类身份被守护条件拒绝，记录 `.tmp/reference-independence-probe.json`。这项入口修正不改变此前已启动矩阵的排版源码或输入快照。
 
@@ -41,6 +41,8 @@ JSON与HTML报告增加 `primitiveMatches`、`primitiveAudit`，包括两版数�
 
 ## 公开入口的隔离候选
 
-保持正式 `src/index.ts` 使用jpFun，另在 `.tmp/native-public-entry.ts` 准备与现有导出同名的自研候选。以阅读页实际 `src/lib/render-score.ts` 为入口，通过esbuild仅为本次隔离构建将 `@m3n/numbered-notation` 指向候选；其他源码仍取当前工作区，不写托管dist，不改用户导出代码。生成代码89个有输出的模块、407401字节，包含的运行模块中没有jpFun、Verovio或旧score／svg／projection适配器。完整模块清单、输入哈希和构建元数据保存 `.tmp/native-public-bundle-probe.json`、`.tmp/native-public-bundle-metafile.json`；这不是已部署产物的验收。
+保持正式 `packages/numbered-notation/src/index.ts` 使用jpFun，另在 `.tmp/native-public-entry.ts` 准备与现有导出同名的自研候选。以阅读页实际 `src/lib/render-score.ts` 为入口，通过esbuild仅为本次隔离构建将 `@m3n/numbered-notation` 指向候选；其他源码仍取当前工作区，不写托管dist，不改用户导出代码。生成代码89个有输出的模块、407401字节，包含的运行模块中没有jpFun、Verovio或旧score／svg／projection适配器。完整模块清单、输入哈希和构建元数据保存 `.tmp/native-public-bundle-probe.json`、`.tmp/native-public-bundle-metafile.json`；这不是已部署产物的验收。
 
 另用 `.tmp/native-public-api-probe.ts` 将旧渲染参数（包括注入测量器）传给候选，将候选诊断赋给原诊断类型；TypeScript严格检查通过，日志 `.tmp/native-public-api-probe.log`。命令使用TS6的 `--ignoreConfig --noEmit --target ES2023 --module ESNext --moduleResolution Bundler --allowImportingTsExtensions --strict --skipLibCheck`，仅验证隔离契约，不替代应用完整类型／构建／交互检查。正式公共入口、依赖清单和默认显示均未切换；仍等待全部视觉与实绘验收。
+
+完整自研实绘3664组已结束并退出0：裁切、渲染错误、包络违规及受检碰撞均0，768个碰撞候选、167072个标签；报告 `.tmp/native-ink/2026-11-17T16-07-30.499Z/`。这仍不是任意图元两两无碰撞的证明。随后七类选项448组补验发现实际缺口：编号42／64组几何通过、等行高44／64、单值间距60／64；隐藏低音、折行比例、等宽覆盖及配对间距各64组几何与图元通过。编号已修正并另验，见[行末编号](ROW_END_MEASURE_NUMBERS.md)；其余缺口不能据默认矩阵通过而忽略。

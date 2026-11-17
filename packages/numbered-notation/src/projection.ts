@@ -32,7 +32,7 @@ export type EventBinding = {
   passes?: number[]
 }
 export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[]; measureNumbers?: boolean; orderLabels?: string[] }
-export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; transpose?: number; tempoScale?: number; pageMargin?: number; systemGap?: number }
+export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; numberedMeasures?: ReadonlySet<string>; fixedDo?: boolean; transpose?: number; tempoScale?: number; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 const keyMark = (key: string, transpose?: number, visits?: string) => `@key(${quote(transposedKey(key, transpose))},size=16px${/^[A-G][#b]?m$/.test(key) ? ',degree=6' : ''}${visits ? `,visits=${quote(visits)}` : ''})`
 const pitchName = (token: string, shift = 0) => {
@@ -106,7 +106,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       let previousMeasure: ScoreMeasure | undefined
       let dynamic = ''
       let pendingBarNumber: number | undefined
-      const numberBar = (bar: string, number: number) => `@up({${bar}},@text(${quote(String(number))},size=10px))`
+      const numberBar = (bar: string, number: number) => `@up({${bar}},@text(${quote(String(number))},size=10px,align=center))`
       const bind = (expression: string, event: ScoreEvent | undefined, measureId: string, slot: number, suffix = '', lyricTarget = false) => {
         const identity = event ? ids.get(event)! : `m3n-rest-${partIndex + 1}-${serial}`
         const xmlId = context ? identity.replace(/-rend\d+$/, '') : identity
@@ -125,6 +125,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
       const breaksBefore = (index: number) => index > 0
         && visibleMeasures.slice(0, index).some(measure => measure.events.length || measure.multiRest) && Boolean(
         visibleMeasures[index]?.breakBefore || visibleMeasures[index - 1]?.breakAfter
+        || Boolean(visibleMeasures[index] && options.numberedMeasures?.has(`m3n-measure-${partIndex + 1}-${index}`))
         || melody[index]?.breakBefore || melody[index - 1]?.breakAfter
         || (visibleMeasures[index]?.events.some(event => event.sectionLabel) || melody[index]?.events.some(event => event.sectionLabel)),
       )
@@ -341,7 +342,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         if (staff === 'melody' && !alternative) {
           const number = measureNumber + 1
           measureNumber += measure.multiRest ?? 1
-          if (options.measureNumbers) {
+          if (options.measureNumbers && (!options.numberedMeasures || options.numberedMeasures.has(measureId))) {
             if (sharedOpening) pendingBarNumber = number
             else bar = numberBar(bar, number)
           }
