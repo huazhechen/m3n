@@ -155,7 +155,9 @@ describe('numbered full-beat sustain continuations', () => {
   it.each([false, true])('renders the corrected Ting Hai 信 as three sustain dashes, paged=%s', (paged) => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/ting_hai_01.m3n'), 'utf8')
     const { document, projection, root } = inspect(source, 640, paged)
-    const bar = document.parts.get('score')!.melody[31]!
+    const bar = document.parts.get('score')!.melody.find(bar => bar.events.length === 3
+      && bar.events[0]!.pitches[0] === '1e' && bar.events[1]!.pitches[0] === '2e'
+      && bar.events[2]!.pitches[0] === '2e')!
     expect(bar.events.map(event => [event.pitches, event.beats, event.tie])).toEqual([
       [['1e'], .5, false], [['2e'], .5, true], [['2e'], 3, false],
     ])

@@ -3,6 +3,12 @@ import { describe, expect, it } from 'vitest'
 import source from '../scores/ting_hai_01.m3n?raw'
 import reference from './fixtures/ting-hai-upload-reference.json'
 
+// Keep the full uploaded transcription intact. The user subsequently removed
+// all instrumental introduction notes, retaining only the one-beat vocal pickup.
+const expectedBars = reference.bars.slice(7).map((bar, index) => index ? bar : {
+  ...bar, events: bar.events.slice(1), lyrics: bar.lyrics.slice(1),
+})
+
 const document = parseM3NDocument(source)
 const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
 const events = (bar: typeof bars[number]) => bar.events.map(event => [
@@ -10,15 +16,27 @@ const events = (bar: typeof bars[number]) => bar.events.map(event => [
 ])
 
 describe('Ting Hai uploaded reference d72b', () => {
-  it('matches every printed pitch, octave, duration, rest and tie, including the eight-bar introduction', () => {
+  it('matches every printed pitch, octave, duration, rest and tie, after removing the instrumental introduction', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(document.key).toBe(reference.key)
     expect(document.tempo).toBe(reference.tempo)
-    expect(bars).toHaveLength(43)
+    expect(bars).toHaveLength(36)
     for (const [index, bar] of bars.entries()) {
-      expect(events(bar), `written bar ${index + 1}`).toEqual(reference.bars[index]!.events)
-      expect(bar.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
+      expect(events(bar), `written bar ${index + 1}`).toEqual(expectedBars[index]!.events)
+      expect(bar.events.reduce((sum, event) => sum + event.beats, 0)).toBe(index === 0 ? 1 : 4)
     }
+  })
+
+  it('aligns the first syllable 写 with 1 and 信 with 2 after the pickup rest', () => {
+    const { lyricsByEvent } = deriveScoreInteraction(document)
+    const pickup = bars[0]!.events
+    expect(events(bars[0]!)).toEqual([['0', .5, false], ['1', .25, false], ['2', .25, false]])
+    expect(pickup.map(event => (lyricsByEvent.get(event) ?? [])
+      .filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join(''))).toEqual(['', '写', '信'])
+    const firstNote = compileScorePerformance(document).notes[0]!
+    expect(firstNote.start).toBe(.5)
+    expect(firstNote.end).toBe(.75)
+    expect(firstNote.pitch).toBe(71) // B4, scale degree 1 in B.
   })
 
   it('matches all lyric placements, including triplets, tied continuations and repeat pickups', () => {
@@ -26,24 +44,24 @@ describe('Ting Hai uploaded reference d72b', () => {
     for (const [index, bar] of bars.entries()) {
       expect(bar.events.map(event => (lyricsByEvent.get(event) ?? [])
         .filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('')),
-      `lyrics in written bar ${index + 1}`).toEqual(reference.bars[index]!.lyrics)
+      `lyrics in written bar ${index + 1}`).toEqual(expectedBars[index]!.lyrics)
     }
   })
 
-  it('plays the introduction once and the indicated verse and chorus twice with their respective endings', () => {
+  it('starts with the vocal pickup and plays the indicated verse and chorus twice with their respective endings', () => {
     expect(document.order).toBeUndefined()
-    expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index + 1] : [])).toEqual([reference.repeatStart])
-    expect(bars.flatMap((bar, index) => bar.right === 'rptend' ? [index + 1] : [])).toEqual([41])
-    expect(bars.flatMap((bar, index) => bar.ending === '1' ? [index + 1] : [])).toEqual(reference.firstEnding)
-    expect(bars.flatMap((bar, index) => bar.ending === '2' ? [index + 1] : [])).toEqual(reference.secondEnding)
+    expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index + 1] : [])).toEqual([reference.repeatStart - 7])
+    expect(bars.flatMap((bar, index) => bar.right === 'rptend' ? [index + 1] : [])).toEqual([34])
+    expect(bars.flatMap((bar, index) => bar.ending === '1' ? [index + 1] : [])).toEqual(reference.firstEnding.map(bar => bar - 7))
+    expect(bars.flatMap((bar, index) => bar.ending === '2' ? [index + 1] : [])).toEqual(reference.secondEnding.map(bar => bar - 7))
     const played = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
     const expected = [
-      ...reference.bars.slice(0, 41),
+      ...expectedBars.slice(0, 34),
       ...reference.bars.slice(16, 39),
       ...reference.bars.slice(41, 43),
     ]
     expect(played.map(events)).toEqual(expected.map(bar => bar.events))
-    expect(played).toHaveLength(66)
-    expect(compileScorePerformance(document).beats).toBe(264)
+    expect(played).toHaveLength(59)
+    expect(compileScorePerformance(document).beats).toBe(233)
   })
 })
