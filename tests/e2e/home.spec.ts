@@ -64,7 +64,7 @@ for (const width of [390, 1280]) {
     await expect(controls.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
     await controls.getByRole('button', { name: '暂停', exact: true }).click()
     await page.screenshot({ path: info.outputPath('home.png'), fullPage: true })
-    await sample.getByRole('link', { name: '打开《欢乐颂》完整乐谱' }).click()
+    await sample.getByRole('link', { name: '查看曲库中的高音版' }).click()
     await expect(page).toHaveURL(/\/scores\/huan_le_song_01$/)
     await expect(page.getByRole('button', { name: '乐谱设置', exact: true })).toBeVisible()
   })

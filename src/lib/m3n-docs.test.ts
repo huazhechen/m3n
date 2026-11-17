@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import guide from '../../docs/GUIDE.md?raw'
 import manual from '../../docs/MANUAL.md?raw'
-import homeExample from '../scores/huan_le_song_01.m3n?raw'
+import homeExample from '../examples/huan_le_song.m3n?raw'
 import { m3nToMei, validateM3NDiagnostics } from '@m3n/notation'
 import { documentSections } from './docs-navigation'
 
