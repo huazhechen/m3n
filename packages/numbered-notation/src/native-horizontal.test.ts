@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { parseM3NDocument } from '@m3n/notation'
+import { parseM3NDocument, validateM3NDiagnostics } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { measureNativeHorizontal } from './native-horizontal.js'
 import { projectNativeScore } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
+import { compileScore, ErrorDiagnostic } from '@m3n/jpfun'
+import { projectNumberedScore } from './projection.js'
 
 // Barlow advance widths with deterministic offline em-height estimates.
 // inkBottom distinguishes that estimate's blank tail from a real descender.
@@ -13,6 +15,31 @@ const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fo
 const layout = (source: string, width = 800) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer })
 
 describe('native spacing and measured note envelopes', () => {
+  it.each([
+    '{3/4}\nN: (1 2) 3 4 |||\nB: ((1d 2d 3d 4d)) 5d 6d |',
+    '{3/4}\nN: ((1 2 3 4)) 5 6 |||\nB: (1d 2d) 3d 4d |',
+    '{3/4}{order=A,A,A}\n===A\nN: (1 2) 3 4 |||\nNs[2,3]: 1: ((1 2 3 4)) 5 6 |',
+    '{4/4}{order=A,A,A}\n===A\nN: 4e (0 (3e 3e~)) 3e (0 3e) |||\nL1: 的心情清\nL2: 的心情清明\nL3: 的心情清明\nNs[2,3]: 1: 4e ((0 3e 2e 3e~)) 3e (0 3e) |',
+  ])('retains each voice’s beam spacing when another voice inserts finer time columns: %s', source => {
+    expect(validateM3NDiagnostics(source)).toEqual([])
+    const document = parseM3NDocument(source), options = {width:800, paged:false, textMeasurer:measurer}
+    const native = layoutNativeScore(document, options), projection = projectNumberedScore(document, options)
+    const reference = compileScore(projection.source, {textMeasurer:measurer, autoWrap:true, alignRelations:true, noteGap:13.2, minimumNoteGap:8.8})
+    expect(reference.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])
+    let checked = 0
+    for (const note of reference.layout.objects.filter(node => node.T.toNumber() > 0)) {
+      let ast: typeof note.ast | null = note.ast
+      while (ast && !projection.bindings.has(ast.label ?? '')) ast = ast.parent
+      const binding = ast && projection.bindings.get(ast.label!)
+      if (!binding) continue
+      const glyph = native.projection.glyphs.find(value => value.id === binding.visualId)!
+      expect(glyph, binding.visualId).toBeDefined()
+      expect(Math.abs(glyph.x - note.box.x - note.box.anchor), binding.visualId).toBeLessThan(.05)
+      checked++
+    }
+    expect(checked).toBe(native.projection.glyphs.length)
+  })
+
   it('matches all four note centres and the flush final bar of an unadorned system', () => {
     const result = layout('{4/4}\nN: 1 2 3 4 |||')
     const expected = [37.57701873779297, 217.293893737793, 397.01076873779297, 576.727643737793]

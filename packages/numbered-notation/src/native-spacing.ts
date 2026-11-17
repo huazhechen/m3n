@@ -11,6 +11,9 @@ export type SpacingCell = {
   /** Penalty for intruding into physical ink or reserved lyric space. */
   beforeCollision: number
   afterCollision: number
+  /** Music reservation before voice-local lyrics and parentheses are added. */
+  placeholderLeft?: number
+  placeholderRight?: number
 }
 export type SpacingColumn = { cells: SpacingCell[]; fixedAfter?: number }
 export type SpacingSolution = { positions: number[]; naturalWidth: number }
@@ -25,7 +28,8 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
   const lanes = [...new Set(columns.flatMap(column => column.cells.map(cell => cell.lane)))]
   const rows = columns.map(column => {
-    const maxLeft = Math.max(0, ...column.cells.map(cell => cell.left)), maxRight = Math.max(0, ...column.cells.map(cell => cell.right))
+    const maxLeft = Math.max(0, ...column.cells.map(cell => cell.placeholderLeft ?? cell.left))
+    const maxRight = Math.max(0, ...column.cells.map(cell => cell.placeholderRight ?? cell.right))
     return lanes.map(lane => column.cells.find(cell => cell.lane === lane) ?? {
       lane, left: 0, right: 0, before: maxLeft, after: maxRight,
       beforeStiffness: maxLeft ? 1 / maxLeft : 1e6, afterStiffness: maxRight ? 1 / maxRight : 1e6,

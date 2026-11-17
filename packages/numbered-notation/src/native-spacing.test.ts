@@ -20,6 +20,15 @@ describe('native spacing constraints', () => {
     expect(result.positions).toEqual([26,58])
     expect(result.naturalWidth).toBe(69)
   })
+  it('does not copy another voice’s lyric expansion into an absent voice’s elastic placeholder', () => {
+    const result = solveNativeSpacing([
+      {cells:[cell('melody',{right:30}),cell('bass',{right:1})]},
+      {cells:[cell('bass',{left:20,right:20,placeholderLeft:5,placeholderRight:5})]},
+      {cells:[cell('melody'),cell('bass')]},
+    ])
+    expect(result.positions).toEqual([11,52,89])
+    expect(result.naturalWidth).toBe(100)
+  })
   it('preserves asymmetric attachment clearance and validates width', () => {
     const result=solveNativeSpacing([{cells:[cell('melody',{left:25})]},{cells:[cell()]}],100,true)
     expect(result.positions).toEqual([25,95])

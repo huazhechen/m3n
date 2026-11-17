@@ -109,15 +109,18 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     // A split measure has no visible closing bar until its final fragment.
     if (marks.closing !== undefined) bar(measure, marks.closing)
   }
-  for (let index = 1; index < items.length; index++) {
-    const previous = items[index - 1]!, current = items[index]!
-    if (!previous.column || !current.column || previous.measure !== current.measure) continue
-    for (const left of previous.column.glyphs) {
-      const right = current.column.glyphs.find(glyph => glyph.lane === left.lane)
-      if (!right || !nativeBeamCount(left, right)) continue
-      previous.cells.find(cell => cell.lane === left.lane)!.after *= 0.8
-      current.cells.find(cell => cell.lane === left.lane)!.before *= 0.8
+  // Adjacency belongs to a voice. Finer notes or controls in another voice
+  // do not interrupt its beam; its own controls and bars still do.
+  const previousByLane = new Map<string, { item: HorizontalItem; cell: SpacingCell }>()
+  for (const item of items) for (const cell of item.cells) {
+    const previous = previousByLane.get(cell.lane)
+    const left = previous?.item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
+    const right = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
+    if (previous?.item.measure === item.measure && left && right && nativeBeamCount(left, right)) {
+      previous.cell.after *= 0.8
+      cell.before *= 0.8
     }
+    previousByLane.set(cell.lane, { item, cell })
   }
   // Preserve the minimum clearance as physical reservation, leaving only
   // the remaining clearance elastic. Exterior ink stays flush with the line.
@@ -128,6 +131,9 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     // Note clearance and lyric ink share physical space; do not add both widths.
     if (glyph) {
+      // An absent voice gets music-only elastic clearance. Lyrics and
+      // parentheses belong to their real voice, not its neighbours' blanks.
+      cell.placeholderLeft = cell.left; cell.placeholderRight = cell.right
       cell.left = Math.max(cell.left, glyph.lyricLeft ?? 0)
       cell.right = Math.max(cell.right, glyph.lyricRight ?? 0)
       const insets = parentheses.get(glyph)
