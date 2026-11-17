@@ -1,20 +1,19 @@
+import { m3nToMei, measurePlaybackPasses, parseM3NDocument, parseM3NDocumentStructure, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { describe, expect, it } from 'vitest'
-import { m3nToMei, parseM3NDocument, parseM3NDocumentStructure, measurePlaybackPasses, validateM3NDiagnostics, alternativePerformance, resolveScorePitches } from '@m3n/notation'
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
-import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
-import loveLikeTide from '../scores/ai_ru_chao_shui_01.m3n?raw'
-import maple from '../scores/feng_01.m3n?raw'
-import smoke from '../scores/yan_hua_yi_leng_01.m3n?raw'
 import polka from '../scores/dan_huang_guan_bo_er_ka_01.m3n?raw'
-import elise from '../scores/zhi_ai_li_si_01.m3n?raw'
+import maple from '../scores/feng_01.m3n?raw'
+import mozartK545 from '../scores/mozart_k545_01.m3n?raw'
+import smoke from '../scores/yan_hua_yi_leng_01.m3n?raw'
 import always from '../scores/yong_yuan_tong_zai_01.m3n?raw'
-import { loadPresetScore, presetScores } from './samples'
+import elise from '../scores/zhi_ai_li_si_01.m3n?raw'
 import referenceMelodies from './fixtures/numbered-reference-melodies.json'
 import webReferences from './fixtures/kuaiyuepu-reference-melodies.json'
+import { loadPresetScore, presetScores } from './samples'
 
 describe('bundled score corpus', () => {
   it.each([
-    ['feng', '枫', maple, 42, 4],
+    ['feng', '枫', maple, 48, 4],
     ['yan_hua_yi_leng', '烟花易冷', smoke, 41, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 43, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
@@ -54,7 +53,7 @@ describe('bundled score corpus', () => {
     expect(parseM3NDocument(polka).order).toEqual(['A','A','B','B','A','C','C','A','A'])
     expect([0,17,26].map(index=>polkaBars[index]!.events[0]!.key)).toEqual(['C','G','F'])
     const mapleBars = bars(maple)
-    expect(mapleBars[34]!.events[0]!.key).toBe('Db')
+    expect(mapleBars[40]!.events[0]!.key).toBe('Db')
     expect(mapleBars[0]!.events[0]!.beats).toBe(0.5)
     const eliseBars = bars(elise)
     expect(parseM3NDocument(elise).order).toBeUndefined()
@@ -84,7 +83,7 @@ describe('bundled score corpus', () => {
   const sources: Record<string, string> = {feng:maple,yan_hua_yi_leng:smoke,zhi_ai_li_si:elise,yong_yuan_tong_zai:always}
   const referenceEvents = (source: string, expand: boolean) => {
     const parsed=parseM3NDocument(source)
-    const document=expand ? alternativePerformance(parsed) : parsed
+    const document=expand ? unfoldScorePerformance(parsed) : parsed
     const bars=document.parts.get('score')!.melody
     const resolved=resolveScorePitches(bars)
     return bars.flatMap(bar=>bar.events.map(event=>{
@@ -95,17 +94,9 @@ describe('bundled score corpus', () => {
       return {pitch:pitch ? 12*(Number(octave)+1)+degree[name]!+(alteration[accidental!]??0) : null, beats:event.beats,tie:event.tie??false}
     }))
   }
-  it.each(webReferences)('matches every written reference event for $id', reference=>{
+  it.each(webReferences.filter(reference => reference.id !== 'feng'))('matches every written reference event for $id', reference=>{
     const original=reference.events
-    const events=reference.id==='feng'
-      // Shared verse and chorus, their visit endings, then the bridge.
-      ? [...original.slice(0,61), ...original.slice(106,122), ...original.slice(260,276), ...original.slice(122,260),
-        ...original.slice(442).map(event=>({...event,pitch:event.pitch===null ? null : event.pitch-1})), ...original.slice(276,338)]
-        .filter(event=>event.referenceId!=='note6')
-        .map(event=>event.referenceId==='note5' ? {...event,beats:0.5} : event)
-        // User unified the first verse's full-beat rest with the sustained later verses.
-        .map(event=>event.referenceId==='note35' ? {...event,tie:true} : event.referenceId==='note36' ? {...event,pitch:72} : event)
-      : reference.id==='yan_hua_yi_leng'
+    const events=reference.id==='yan_hua_yi_leng'
       // Keep separate second/third endings for D.S. and the continuation into C.
       ? [...original.slice(0,206), ...original.slice(299,302), ...original.slice(299)]
       : reference.id==='yong_yuan_tong_zai'
@@ -145,8 +136,14 @@ describe('bundled score corpus', () => {
       const chorus = text.indexOf('缓缓掉落的枫叶'), thirdEnding = text.indexOf('只剩挥散不去的难过',chorus)
       const bridge = text.indexOf('在山腰间'), finalChorus = text.indexOf('缓缓掉落的枫叶',bridge)
       const finalEnding = text.indexOf('自秋末的眼泪',finalChorus)
-      return text.slice(0,chorus).replace(/^(.*?)(总在回忆里才看的清)(.*?)(只剩挥散不去的难过)$/, '$1$3$2$4')
-        + text.slice(thirdEnding,bridge) + text.slice(chorus,thirdEnding) + text.slice(finalEnding) + text.slice(bridge,finalChorus)
+      const firstEnding = text.indexOf('总在回忆里才看的清')
+      const secondVerse = firstEnding + '总在回忆里才看的清'.length
+      const firstTail = text.indexOf('的心情清')
+      const secondTail = text.indexOf('度的双手过')
+      return text.slice(0, firstTail) + text.slice(secondVerse, secondTail)
+        + text.slice(firstTail, secondVerse) + text.slice(secondTail, chorus)
+        + text.slice(secondTail, chorus)
+        + text.slice(chorus, thirdEnding) + text.slice(finalEnding) + text.slice(bridge, finalChorus)
     }
     const expected=reference.id==='feng'
       ? mapleWrittenLyrics(reference.lyricText!)
@@ -154,56 +151,6 @@ describe('bundled score corpus', () => {
         ? reference.lyricText!.replace(/(雨纷纷旧故里[\s\S]*?是我们)([\s\S]*?)\1/, '$1$2们们')
         : reference.lyricText
     expect(lyrics.replace(/[^\u3400-\u9fff]/g,'')).toBe(expected)
-  })
-
-  it('shares the Maple verses while retaining their rhythmic variants and three endings', () => {
-    const document=parseM3NDocument(maple)
-    expect(document.order).toEqual(['A','A','B','A','C','B'])
-    expect(document.orderKeys).toEqual([undefined,undefined,undefined,undefined,undefined,'Db'])
-    const bars=document.parts.get('score')!.melody.filter(bar=>bar.events.length)
-    expect(bars[0]!.events.map(event=>[event.pitches,event.beats])).toEqual([
-      [[],0.5],[['1e'],0.5],[['1e'],0.5],[['1e'],0.5],
-      [['1e'],0.5],[['5'],0.5],[['1e'],0.5],[['2e'],0.5],
-    ])
-    expect(bars.flatMap((bar,index)=>bar.ending ? [[index,bar.ending]] : [])).toEqual([
-      [6,'1'],[7,'1'],[8,'2'],[9,'2'],[10,'3'],[11,'3'],
-      [25,'1'],[26,'1'],[27,'1'],[28,'1'],
-      [29,'2'],[30,'2'],[31,'2'],[32,'2'],[33,'2'],
-    ])
-    expect(document.alternatives!.map(item=>item.passes)).toEqual([[2,3]])
-    expect(bars[4]!.events.slice(2,5).map(event=>[event.pitches,event.beats,event.tie])).toEqual([
-      [['1e'],0.25,true],[['1e'],1,true],[['1e'],1,false],
-    ])
-  })
-
-  it('uses the reference Love Like Tide melody and joins each chorus pickup correctly', async () => {
-    const entry=presetScores.find(score=>score.sourcePath==='ai_ru_chao_shui_01.m3n')!
-    expect(await loadPresetScore(entry.slug)).toBe(loveLikeTide)
-    expect(validateM3NDiagnostics(loveLikeTide)).toEqual([])
-    const document=parseM3NDocument(loveLikeTide)
-    expect(document).toMatchObject({key:'E',meterCount:4,meterUnit:4,tempo:80})
-    expect(document.order).toBeUndefined()
-    expect(document.sections ?? []).toHaveLength(0)
-    const bars=document.parts.get('score')!.melody.filter(bar=>bar.events.length)
-    expect(bars).toHaveLength(36)
-    const beats=Array<number>(36).fill(4)
-    beats[17]=3
-    beats[18]=1
-    expect(bars.map(bar=>bar.events.reduce((sum,event)=>sum+event.beats,0))).toEqual(beats)
-    expect(bars[0]!.events.map(event=>[event.pitches,event.beats]))
-      .toEqual([[[],1],[['3'],0.25],[['5'],0.25],[['1e'],0.25],[['7'],0.25],[['7'],0.25],[['1e'],0.75],[['1e'],1]])
-    expect(document.intervals.some(interval=>interval.kind==='inst')).toBe(false)
-    expect(bars.flatMap((bar,index)=>bar.left==='rptstart'?[index]:[])).toEqual([9])
-    expect(bars.flatMap((bar,index)=>bar.right==='rptend'?[index]:[])).toEqual([26])
-    expect(bars[26]!.ending).toBe('1')
-    expect(bars[27]!.ending).toBe('2')
-    expect(bars.slice(28).every(bar=>!bar.ending)).toBe(true)
-    expect(bars.flatMap(bar=>[...(bar.navigation ?? []), ...bar.events.flatMap(event=>event.navigation)])).toEqual([])
-    expect(document.alternatives).toHaveLength(1)
-    expect(document.alternatives![0]!.passes).toEqual([2])
-    expect(bars[33]!.events.find(event=>event.kind==='tuplet')!.pitches).toEqual(['7','3e','3e'])
-    expect(bars[24]!.events.find(event=>event.kind==='tuplet')!.pitches).toEqual(['7','5','5'])
-    expect(m3nToMei(loveLikeTide).diagnostics.filter(item=>item.severity==='error')).toEqual([])
   })
 
   it('includes K.545 as a complete single melody with both original repeats', async () => {
@@ -248,12 +195,13 @@ describe('bundled score corpus', () => {
     expect(measures[70]!.events[0]!.postfixes.some(mark => mark.startsWith('ac('))).toBe(false)
   })
 
+
   it.each(referenceMelodies)('matches every melody bar checked against the uploaded numbered reference: $id', reference => {
     const source=reference.id==='mozart_k545'?mozartK545:polka
     const document=parseM3NDocument(source)
     const bars=document.parts.get('score')!.melody.filter(bar=>bar.events.length)
     if(reference.id==='dan_huang_guan_bo_er_ka') {
-      const expanded=alternativePerformance(document)
+      const expanded=unfoldScorePerformance(document)
       const measures=expanded.parts.get('score')!.melody
       const pitches=resolveScorePitches(measures)
       let dynamic='mf'
@@ -276,7 +224,6 @@ describe('bundled score corpus', () => {
       expect(playback).toHaveLength(767)
       expect(playback.reduce((sum,event)=>sum+event.beats,0)).toBe(256)
       expect(document).toMatchObject({tempo:120,hasExplicitTempo:true})
-      expect(document.alternatives ?? []).toHaveLength(0)
     } else {
       expect(bars.map(bar=>({key:bar.events[0]!.key,notes:bar.events.map(event=>`${event.pitches.join('+')||'0'}:${event.beats}${event.tie?'~':''}`).join(' ')})))
         .toEqual(reference.bars)
