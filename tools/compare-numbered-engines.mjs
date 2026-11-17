@@ -17,6 +17,7 @@ const candidateCommit = execFileSync('git', ['rev-parse', `${candidateRef ?? 'HE
 const candidateDirty = !candidateRef && Boolean(execFileSync('git', ['status', '--porcelain', '--', 'packages/numbered-notation', 'tools/compare-numbered-engines.mjs'], { cwd: root, encoding: 'utf8' }).trim())
 const runId = `${new Date().toISOString().replaceAll(':', '-')}-${process.pid}`
 const output = join(root, '.tmp', process.argv.includes('--self-check') ? 'numbered-parity-self-check' : 'numbered-parity', runId)
+const primitives = process.argv.includes('--primitives')
 const pixels = process.argv.includes('--pixels') || process.argv.includes('--require-parity')
 const allWidths = process.argv.includes('--all-widths')
 const screenshots = process.argv.includes('--screenshots')
@@ -64,6 +65,7 @@ try {
   }
   const entry = join(temp, 'entry.ts')
   writeFileSync(entry, [
+    `export {captureNumberedPrimitives,compareNumberedPrimitives} from ${JSON.stringify(join(root, 'tools/lib/numbered-primitive-metrics.mjs'))};`,
     `export {captureNumberedGeometry} from ${JSON.stringify(join(root, 'tools/lib/numbered-svg-metrics.mjs'))};`,
     `export {parseM3NDocument} from ${JSON.stringify(join(currentRoot, 'packages/notation/src/index.ts'))};`,
     `export {NumberedNotationScore,prepareNumberedNotationFonts} from ${JSON.stringify(join(referenceRoot, 'packages/numbered-notation/src/index.ts'))};`,
@@ -81,7 +83,8 @@ try {
   writeFileSync(join(output, 'implementation.json'), JSON.stringify({ snapshotHashes, browserBatchSize,
     verifierHash: createHash('sha256').update(readFileSync(import.meta.filename)).digest('hex'),
     metricsHash: createHash('sha256').update(readFileSync(join(root, 'tools/lib/numbered-svg-metrics.mjs'))).digest('hex'),
-    renderOptions, baselineCommit, candidateCommit, pixels, selfCheck }, null, 2))
+    primitiveMetricsHash: createHash('sha256').update(readFileSync(join(root, 'tools/lib/numbered-primitive-metrics.mjs'))).digest('hex'),
+    primitives, renderOptions, baselineCommit, candidateCommit, pixels, selfCheck }, null, 2))
   const openBrowser = async () => {
     browser = await chromium.launch({ executablePath, headless: true })
     const page = await browser.newPage({ viewport: { width: 2040, height: 900 }, deviceScaleFactor: 1 })
@@ -99,7 +102,7 @@ try {
         await browser.close()
         page = await openBrowser()
       }
-      const result = await page.evaluate(async ({ source, width, paged, selfCheck, renderOptions }) => {
+      const result = await page.evaluate(async ({ source, width, paged, selfCheck, renderOptions, primitives }) => {
         const score = comparison.parseM3NDocument(source)
         const metrics = comparison.captureNumberedGeometry
         for (const [id, engine] of [['baseline', comparison.NumberedNotationScore], ['candidate', selfCheck ? comparison.NumberedNotationScore : comparison.NativeNumberedNotationScore]]) {
@@ -116,12 +119,20 @@ try {
           const old = oldNotes.get(`${note.id}:${note.head}`)
           return old ? [{ id: note.id, dx: note.x - old.x, dy: note.y - old.y, digitMatches: note.digit === old.digit }] : []
         })
-        return { title: score.title, baseline, candidate, differingLines,
+        let primitiveAudit
+        if (primitives) {
+          const captured = ['baseline', 'candidate'].map(id => comparison.captureNumberedPrimitives(document.getElementById(id)))
+          const audit = comparison.compareNumberedPrimitives(...captured)
+          primitiveAudit = { ...audit, missing: audit.missing.length, extra: audit.extra.length, different: audit.different.length,
+            samples: { missing: audit.missing.slice(0, 3), extra: audit.extra.slice(0, 3), different: audit.different.slice(0, 3) } }
+        }
+        return { title: score.title, baseline, candidate, differingLines, primitiveAudit,
+          primitiveMatches: primitiveAudit ? !primitiveAudit.missing && !primitiveAudit.extra && !primitiveAudit.different : undefined,
           digitMismatches: shifts.filter(shift => !shift.digitMatches).length,
           maxXShift: Math.max(0, ...shifts.map(shift => Math.abs(shift.dx))), maxYShift: Math.max(0, ...shifts.map(shift => Math.abs(shift.dy))),
           sampleShifts: shifts.filter(shift => Math.abs(shift.dx) > 0.5 || Math.abs(shift.dy) > 0.5).slice(0, 6),
           matches: differingLines === 0 && shifts.length === oldNotes.size && candidate.systems.reduce((n, system) => n + system.notes.length, 0) === oldNotes.size && baseline.pageCount === candidate.pageCount && Math.abs(baseline.height - candidate.height) <= 0.5 && shifts.every(shift => shift.digitMatches && Math.abs(shift.dx) <= 0.5 && Math.abs(shift.dy) <= 0.5) }
-      }, { source, width, paged, selfCheck, renderOptions })
+      }, { source, width, paged, selfCheck, renderOptions, primitives })
       const name = `${file}-${width}-${paged ? 'paged' : 'continuous'}`
       result.sourceHash = createHash('sha256').update(source).digest('hex')
       result.geometryMatches = result.matches ?? false
@@ -188,12 +199,13 @@ try {
     }
   }
   if (!reports.length) throw new Error('No scores matched the requested filter')
-  const summary = { renderOptions, referenceImplementation: baselineRef ? `git:${baselineCommit}` : 'current-working-tree-snapshot', candidateImplementation: candidateRef ? `git:${candidateCommit}` : 'current-working-tree-snapshot', domainImplementation: 'current-working-tree-snapshot', snapshotHashes, baselineCommit, candidateCommit, candidateDirty, candidatePageSpacing: selfCheck ? 'baseline' : 'natural', pixelAudit: pixels, geometryMatching: reports.filter(report => report.geometryMatches).length, checks: reports.length, matching: reports.filter(report => report.matches).length, differing: reports.filter(report => !report.matches).length, reports }
+  const summary = { renderOptions, referenceImplementation: baselineRef ? `git:${baselineCommit}` : 'current-working-tree-snapshot', candidateImplementation: candidateRef ? `git:${candidateCommit}` : 'current-working-tree-snapshot', domainImplementation: 'current-working-tree-snapshot', snapshotHashes, baselineCommit, candidateCommit, candidateDirty, candidatePageSpacing: selfCheck ? 'baseline' : 'natural', primitiveAudit: primitives, primitiveMatching: primitives ? reports.filter(report => report.primitiveMatches).length : undefined, pixelAudit: pixels, geometryMatching: reports.filter(report => report.geometryMatches).length, checks: reports.length, matching: reports.filter(report => report.matches).length, differing: reports.filter(report => !report.matches).length, reports }
   writeFileSync(join(output, 'report.json'), JSON.stringify(summary, null, 2))
   writeFileSync(join(output, 'run-status.json'), JSON.stringify({ complete: true, checks: reports.length }))
   const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;')
-  writeFileSync(join(output, 'index.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>jpFun 与自研排版对照</title><style>body{font:16px sans-serif;margin:24px}article{border-top:1px solid #aaa;margin:24px 0}img{max-width:100%;height:auto}pre{white-space:pre-wrap}</style><h1>jpFun（左）与自研候选（右，自然行距）</h1><p>${summary.checks} 组，${summary.matching} 组一致，${summary.differing} 组存在差异。像素审计：${pixels ? '已启用，逐通道零差异' : '未启用'}。两版均采用当前自然分页规则；指定历史参考版本时，旧行为的差异也照实记录。坐标容差 0.5px；几何一致不等于像素一致，仍须检查字形与关系线。</p>${reports.map(report => `<article><h2>${escape(report.title || report.file)} · ${report.width}px · ${report.paged ? '分页' : '连续'}</h2><pre>${escape(JSON.stringify({error:report.error,geometryMatches:report.geometryMatches,digitMismatches:report.digitMismatches,pixelMatches:report.pixelMatches,pixels:report.pixels,baselineSystems:report.baseline?.systems.length,candidateSystems:report.candidate?.systems.length,differingLines:report.differingLines,maxXShift:report.maxXShift,maxYShift:report.maxYShift,baselineLineGaps:report.baseline?.lineGaps,candidateLineGaps:report.candidate?.lineGaps},null,2))}</pre>${report.pixels ? `<p><a href="${escape(`${report.file}-${report.width}-${report.paged ? 'paged' : 'continuous'}`)}-diff.png">像素差异图</a></p>` : ''}${report.screenshot ? `<a href="${escape(report.screenshot)}"><img loading="lazy" src="${escape(report.screenshot)}"></a>` : ''}</article>`).join('')}</html>`)
+  writeFileSync(join(output, 'index.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>jpFun 与自研排版对照</title><style>body{font:16px sans-serif;margin:24px}article{border-top:1px solid #aaa;margin:24px 0}img{max-width:100%;height:auto}pre{white-space:pre-wrap}</style><h1>jpFun（左）与自研候选（右，自然行距）</h1><p>${summary.checks} 组，${summary.matching} 组一致，${summary.differing} 组存在差异。像素审计：${pixels ? '已启用，逐通道零差异' : '未启用'}。两版均采用当前自然分页规则；指定历史参考版本时，旧行为的差异也照实记录。坐标容差 0.5px；几何一致不等于像素一致，仍须检查字形与关系线。</p>${reports.map(report => `<article><h2>${escape(report.title || report.file)} · ${report.width}px · ${report.paged ? '分页' : '连续'}</h2><pre>${escape(JSON.stringify({error:report.error,geometryMatches:report.geometryMatches,primitiveMatches:report.primitiveMatches,primitiveAudit:report.primitiveAudit,digitMismatches:report.digitMismatches,pixelMatches:report.pixelMatches,pixels:report.pixels,baselineSystems:report.baseline?.systems.length,candidateSystems:report.candidate?.systems.length,differingLines:report.differingLines,maxXShift:report.maxXShift,maxYShift:report.maxYShift,baselineLineGaps:report.baseline?.lineGaps,candidateLineGaps:report.candidate?.lineGaps},null,2))}</pre>${report.pixels ? `<p><a href="${escape(`${report.file}-${report.width}-${report.paged ? 'paged' : 'continuous'}`)}-diff.png">像素差异图</a></p>` : ''}${report.screenshot ? `<a href="${escape(report.screenshot)}"><img loading="lazy" src="${escape(report.screenshot)}"></a>` : ''}</article>`).join('')}</html>`)
   console.log(JSON.stringify({ checks: summary.checks, pixelAudit: pixels, geometryMatching: summary.geometryMatching, matching: summary.matching, differing: summary.differing, report: join(output, 'index.html') }, null, 2))
+  if (primitives && reports.some(report => !report.primitiveMatches)) process.exitCode = 1
   if ((selfCheck || process.argv.includes('--require-parity')) && summary.differing) process.exitCode = 1
 } catch (error) {
   writeFileSync(join(output, 'run-status.json'), JSON.stringify({ complete: false, checks: reports.length, error: String(error) }))
