@@ -38,3 +38,9 @@ JSON与HTML报告增加 `primitiveMatches`、`primitiveAudit`，包括两版数�
 固定调、升半音、速度1.25倍、11px页边距的1832组也完整结束：几何全通过、旧表示规则图元1676组通过、717组严格零像素，共22970差异像素，尺寸均一致；最大配对坐标差仍为0.00077px，无超过0.001px的配对差。相同十份保持音谱例的80组仍各保留104对表示差异，其余76组为数值差；命令退出1。曲库子集704组几何全过、628组图元通过、35组严格零像素，共19040差异像素。报告 `.tmp/numbered-parity/2026-11-17T15-50-45.757Z-2400178/`、统计 `.tmp/primitives-fixed-full-summary.json`，运行源码无变化。不可将图元数值接近表述为本轮严格像素通过。
 
 降调完整矩阵已实际启动，目录 `.tmp/numbered-parity/2026-11-17T16-05-50.841Z-2422615/`；新工具包含矩形规范化，须按其独立工具哈希解读。完整实绘3664组也已实际启动，目录 `.tmp/native-ink/2026-11-17T16-07-30.499Z/`。上述路径仍为运行中结果，不预先记通过。
+
+## 公开入口的隔离候选
+
+保持正式 `src/index.ts` 使用jpFun，另在 `.tmp/native-public-entry.ts` 准备与现有导出同名的自研候选。以阅读页实际 `src/lib/render-score.ts` 为入口，通过esbuild仅为本次隔离构建将 `@m3n/numbered-notation` 指向候选；其他源码仍取当前工作区，不写托管dist，不改用户导出代码。生成代码89个有输出的模块、407401字节，包含的运行模块中没有jpFun、Verovio或旧score／svg／projection适配器。完整模块清单、输入哈希和构建元数据保存 `.tmp/native-public-bundle-probe.json`、`.tmp/native-public-bundle-metafile.json`；这不是已部署产物的验收。
+
+另用 `.tmp/native-public-api-probe.ts` 将旧渲染参数（包括注入测量器）传给候选，将候选诊断赋给原诊断类型；TypeScript严格检查通过，日志 `.tmp/native-public-api-probe.log`。命令使用TS6的 `--ignoreConfig --noEmit --target ES2023 --module ESNext --moduleResolution Bundler --allowImportingTsExtensions --strict --skipLibCheck`，仅验证隔离契约，不替代应用完整类型／构建／交互检查。正式公共入口、依赖清单和默认显示均未切换；仍等待全部视觉与实绘验收。
