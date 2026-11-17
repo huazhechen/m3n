@@ -27,7 +27,10 @@ export function nativeBeamCount(a: import('./native-model.js').NativeGlyph, b: i
   if (Math.abs(a.time + a.beats - b.time) > 1e-7) return 0
   const unit = a.event?.meterUnit ?? 4, count = a.event?.meterCount ?? 4
   const group = 4 / unit * (unit >= 8 && count % 3 === 0 ? 3 : 1)
-  if (a.event?.kind === 'tuplet' ? a.event !== b.event : Math.floor((a.time + 1e-8) / group) !== Math.floor((b.time + 1e-8) / group)) return 0
+  // A tuplet is an internal beam group. Its boundaries can also join ordinary
+  // subdivisions within the same beat, in either direction.
+  const sameTuplet = a.event?.kind === 'tuplet' && a.event === b.event
+  if (!sameTuplet && Math.floor((a.time + 1e-8) / group) !== Math.floor((b.time + 1e-8) / group)) return 0
   return Math.max(0, -Math.floor(Math.log2(Math.max(a.writtenBeats, b.writtenBeats))))
 }
 

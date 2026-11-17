@@ -14,6 +14,36 @@ function glyphs(notes = '(1 (2 3)) 4 5 6', meter = '4/4') {
 }
 
 describe('measured reduction lines', () => {
+  it.each([
+    { source: '([1 2 3:1]) ((4 5)) 6', deeper: [3, 4] },
+    { source: '((1 2)) ([3 4 5:1]) 6', deeper: [0, 1] },
+    { source: '([1 2 3:1]) ([4 5 6:1]) 7', deeper: [] },
+  ])('keeps the common beam continuous within the beat: $source', ({ source, deeper }) => {
+    const notes = glyphs(source, '2/4')
+    const short = notes.slice(0, -1)
+    const beams = nativeBeamLayout(notes, measurer)
+    const lines = [...root(beams.svg).querySelectorAll('line')]
+    expect(lines).toHaveLength(deeper.length ? 2 : 1)
+    // A shared first level spans the whole first beat. The extra level
+    // belongs only to the ordinary sixteenths, not the written eighths.
+    expect(Number(lines[0]!.getAttribute('x1'))).toBeCloseTo(short[0]!.x - 19 / 2, 3)
+    expect(Number(lines[0]!.getAttribute('x2'))).toBeCloseTo(short.at(-1)!.x + 19 / 2, 3)
+    if (deeper.length) {
+      expect(Number(lines[1]!.getAttribute('x1'))).toBeCloseTo(notes[deeper[0]!]!.x - 19 / 2, 3)
+      expect(Number(lines[1]!.getAttribute('x2'))).toBeCloseTo(notes[deeper[1]!]!.x + 19 / 2, 3)
+    }
+    expect(short.every(note => beams.claimed.get(note)?.has(0))).toBe(true)
+    expect(beams.claimed.has(notes.at(-1)!)).toBe(false)
+  })
+
+  it('separates adjacent tuplets that occupy different beats', () => {
+    const notes = glyphs('([1 2 3:2]) ([4 5 6:2])', '2/4')
+    const lines = [...root(nativeBeamLayout(notes, measurer).svg).querySelectorAll('line')]
+    expect(lines).toHaveLength(2)
+    expect(Number(lines[0]!.getAttribute('x2'))).toBeCloseTo(notes[2]!.x + 19 / 2, 3)
+    expect(Number(lines[1]!.getAttribute('x1'))).toBeCloseTo(notes[3]!.x - 19 / 2, 3)
+  })
+
   it('centers standalone lines on measured body width', () => {
     const glyph = { ...glyphs()[0]!, x: 40, y: 0 }
     const lines = root(new NativeMusicPainter(measurer).body(glyph)).querySelectorAll('line')
