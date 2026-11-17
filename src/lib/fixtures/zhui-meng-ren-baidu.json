@@ -28,7 +28,6 @@
     "1e:.25 2e:.25 1e:.25 7:.25 6:.5 1e:.5",
     "7:.5 5:.5 5:.25 6:.25 7:.5",
     "6:1.5 3:.5",
-    "7:.5 5:.5 5:.25 6:.25 7:.5",
     "6:2",
     "7:.75 3:.25 7:.5 1e:.5",
     "7:.75 7:.25 1e:.5 2e:.5",
@@ -73,7 +72,7 @@
     "空独眠的日子春雨不眠隔夜的你曾空无眠的日子"
   ],
   "performedLyricsSha256": "53aae23f7be2f5c75fe4c2742ede51c977e6016bb9a875decdf3f45910d30f4f",
-  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-17 rechecked bars 26–27 against the original image: 人 begins on the first 7; added the cross-bar high-1 tie and repeated-7 tie. Full-image audit also corrects bars 15, 41, 47 to four equal sixteenths and a two-note slur. User-authorized simplification: remove the high 1 at bar 27, extend the first 7 backward by .25 beats, and end the preceding slur at bar 26. User extends the initial pickup to .5 beats and shortens the final rest to 1.5 beats; total performance remains 126 beats. User moves the final 1.5-beat rest before the first note; all written measures are now full 2/4 bars, and sung events start 1.5 beats later.",
+  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-17 rechecked bars 26–27 against the original image: 人 begins on the first 7; added the cross-bar high-1 tie and repeated-7 tie. Full-image audit also corrects bars 15, 41, 47 to four equal sixteenths and a two-note slur. User-authorized simplification: remove the high 1 at bar 27, extend the first 7 backward by .25 beats, and end the preceding slur at bar 26. User extends the initial pickup to .5 beats and shortens the final rest to 1.5 beats; total performance remains 126 beats. User moves the final 1.5-beat rest before the first note; all written measures are now full 2/4 bars, and sung events start 1.5 beats later. Shared bar before the two endings is written once with two lyric verses; performance timing and lyric fingerprint are unchanged.",
   "playbackLyricRowIndexes": [
     0,
     1,
@@ -86,7 +85,7 @@
   ],
   "ties": [
     {
-      "bar": 27,
+      "bar": 26,
       "event": 1
     }
   ],
@@ -123,51 +122,51 @@
     },
     {
       "start": [
-        26,
+        25,
         4
       ],
       "end": [
-        26,
+        25,
         6
       ]
     },
     {
       "start": [
-        32,
+        31,
         3
       ],
       "end": [
-        32,
+        31,
         4
       ]
     },
     {
       "start": [
-        38,
+        37,
         2
       ],
       "end": [
-        38,
+        37,
         3
       ]
     },
     {
       "start": [
-        41,
+        40,
         1
       ],
       "end": [
-        41,
+        40,
         2
       ]
     },
     {
       "start": [
-        47,
+        46,
         1
       ],
       "end": [
-        47,
+        46,
         2
       ]
     }

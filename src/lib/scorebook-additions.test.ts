@@ -81,14 +81,14 @@ describe('new reference scores', () => {
     const document = parseM3NDocument(dream)
     expect(document).toMatchObject({ key: dreamReference.key, meterCount: 2, meterUnit: 4, tempo: 60 })
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-    expect(bars).toHaveLength(49)
+    expect(bars).toHaveLength(48)
     expect(bars.map(bar => bar.events.map(event => `${event.pitches[0] ?? '0'}:${event.beats}`)))
       .toEqual(dreamReference.writtenBars.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
     expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
-      .toEqual(Array(49).fill(2))
+      .toEqual(Array(48).fill(2))
     expect(bars.flatMap(bar => bar.events).some(event => event.sectionLabel)).toBe(false)
     expect(document.order).toBeUndefined()
-    expect(bars.filter(bar => bar.ending).map(bar => bar.ending)).toEqual(['1', '1', '2', '2'])
+    expect(bars.filter(bar => bar.ending).map(bar => bar.ending)).toEqual(['1', '2'])
     expect(document.intervals.some(interval => interval.kind === 'inst')).toBe(false)
     expect(bars.flatMap(bar => bar.events).some(event => event.navigation.length)).toBe(false)
     expect(dream).not.toMatch(/前奏|间奏/)
@@ -96,15 +96,15 @@ describe('new reference scores', () => {
     expect(events(dream).reduce((sum, event) => sum + event.beats, 0)).toBe(dreamReference.performedBeats)
   })
 
-  it('keeps the requested bar 27 simplification with an earlier sustained 7', () => {
+  it('keeps the requested sustained 7 after compacting the endings', () => {
     const document = parseM3NDocument(dream)
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-    expect(bars[25]!.events.map(event => event.tie ?? false)).toEqual([false, false, false, false, false, false])
-    expect(bars[26]!.events.map(event => event.tie ?? false)).toEqual([true, false, false])
+    expect(bars[24]!.events.map(event => event.tie ?? false)).toEqual([false, false, false, false, false, false])
+    expect(bars[25]!.events.map(event => event.tie ?? false)).toEqual([true, false, false])
     const { lyricsByEvent } = deriveScoreInteraction(document)
-    expect(bars[26]!.events.map(event => (lyricsByEvent.get(event) ?? []).filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('')))
+    expect(bars[25]!.events.map(event => (lyricsByEvent.get(event) ?? []).filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('')))
       .toEqual(['人', '', '让'])
-    const start = bars[25]!.events[3]!, end = bars[25]!.events[5]!
+    const start = bars[24]!.events[3]!, end = bars[24]!.events[5]!
     expect(document.intervals.some(interval => interval.kind === 'lg' && interval.start === start.sourceStart && interval.endStart === end.sourceStart)).toBe(true)
   })
 
