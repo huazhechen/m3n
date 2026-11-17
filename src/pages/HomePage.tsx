@@ -51,7 +51,7 @@ export function HomePage() {
           <section className="home-feature" aria-labelledby="home-reading">
             <div><span className="eyebrow">02 / 看谱</span><h2 id="home-reading">让谱面合你的习惯</h2></div>
             <div className="home-feature-copy">
-              <p>调太高唱不上去，可以移低一点；习惯固定调，也能切换显示。打开小节号，排练时更方便找到同一句。</p>
+              <p>调不合适，可以换个调；习惯固定调，也能切换显示。打开小节号，排练时更方便找到同一句。</p>
               <ul className="home-feature-details">
                 <li><strong>移调与固定调</strong>：打开 <ControlHint icon="settings" label="设置" /> → <ControlHint musicalKey label="调号" /> 选择调性，谱面与播放一起移调；用 <ControlHint icon="fixedDo" label="固定调" /> 切换数字的显示方式。</li>
                 <li><strong>分页与页面宽度</strong>：在 <ControlHint icon="settings" label="设置" /> 中用 <ControlHint icon="paged" label="分页" /> 切换连续或分页阅读，拖动 <ControlHint slider label="宽度" /> 滑条，让每行乐谱疏密合宜。</li>
@@ -90,10 +90,10 @@ export function HomePage() {
           <div className="home-sample-intro">
             <span className="eyebrow">现在，听听看</span>
             <h2 id="home-sample-title">用一首《欢乐颂》，开始今天的练习</h2>
-            <p>点 <ControlHint icon="play" label="播放" />，听一遍这段熟悉的旋律。想换个调、放慢速度或调整谱面？打开完整乐谱，试试上面的功能。</p>
+            <p>点 <ControlHint icon="play" label="播放" />，听一遍这段熟悉的旋律。用下方的播放控件试听，打开设置，就能试试移调、速度和谱面调整。</p>
             <Link to="/scores/huan_le_song_01" className="home-text-link"><NavActionIcon action="library" /> 打开《欢乐颂》完整乐谱 →</Link>
           </div>
-          <ScoreRenderer compact playbackOnly scoreDocument={analysis.score} sourceMap={analysis.interaction.sourceMap} />
+          <ScoreRenderer scoreId="huan_le_song_01" scoreDocument={analysis.score} sourceMap={analysis.interaction.sourceMap} />
         </section>
       </>}
     </main>
