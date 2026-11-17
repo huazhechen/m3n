@@ -22,6 +22,25 @@ it('matches the uploaded melody, grace notes, ties and third-chorus variation', 
   expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe(reference.performedEventsSha256)
 })
 
+it('keeps the reference subdivisions and sustained notes from bar 26 onward', () => {
+  const rhythm = (index: number) => bars[index]!.events.map(event => [event.pitches[0], event.beats, event.tie ?? false])
+  // The second beam covers 6 and 5, not 7 and 6.
+  expect(rhythm(25)).toEqual([
+    ['1e', 2, false], ['2e', 1, false], ['7', .5, false], ['6', .25, false], ['5', .25, true],
+  ])
+  // The first 5 continues the previous bar for a full beat; 5 and 6 are sixteenths.
+  expect(rhythm(26)).toEqual([
+    ['5', 1, false], ['3', .5, false], ['5', .25, false], ['6', .25, true],
+    ['6', 1, false], ['6', .5, false], ['7', .5, false],
+  ])
+  expect(rhythm(32)).toEqual([
+    ['2e', .5, false], ['1e', .5, false], ['7', .5, false], ['6', .25, false], ['5', .25, true],
+    ['5', .5, false], ['5', .5, false], ['6', .5, false], ['7', .5, false],
+  ])
+  expect(document.alternatives![0]!.measure.events.slice(0, 5).map(event => [event.pitches[0], event.beats, event.tie ?? false]))
+    .toEqual(rhythm(32).slice(0, 5))
+})
+
 it('plays the introduction once, the interlude once, all three chorus endings and the complete coda', () => {
   expect(playbackMeasureIndexes(bars)).toEqual([
     ...range(0, 48), ...range(9, 36), 48, 49, ...range(25, 36), ...range(50, 57),
