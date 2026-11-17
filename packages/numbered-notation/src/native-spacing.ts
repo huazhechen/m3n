@@ -25,8 +25,9 @@ export type SpacingSolution = { positions: number[]; naturalWidth: number }
  * Minimise a chain's convex, piecewise-quadratic compression energy.
  * Each voice contributes constraints to the same time-column coordinates.
  * This is deliberately independent of source syntax, SVG and music objects.
+ * fillEdges gives free bar-adjacent boundaries weight 1 in positive justification.
  */
-export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false): SpacingSolution {
+export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean } = {}): SpacingSolution {
   if (!columns.length) return { positions: [], naturalWidth: 0 }
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
   const lanes = [...new Set(columns.flatMap(column => column.cells.map(cell => cell.lane)))]
@@ -57,7 +58,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
       })) })
       start = end + 1
     }
-    const solved = solveNativeSpacing(groups, width, justify)
+    const solved = solveNativeSpacing(groups, width, justify, fillEdges)
     return { positions: members.map(member => solved.positions[member.group]! + member.offset), naturalWidth: solved.naturalWidth }
   }
   const positions: number[] = [], ends = lanes.map(() => 0)
@@ -109,13 +110,13 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     const left = Math.max(...rows[0]!.map(cell => cell.left)), right = Math.max(...rows.at(-1)!.map(cell => cell.right))
     const occupied = positions.at(-1)! + right - positions[0]! + left
     const shift = left - positions[0]!, free = width - occupied
-    const cumulative = [0]
+    const cumulative = [free > 0 && fillEdges.left ? 1 : 0]
     for (let index = 1; index < positions.length; index++) {
       const weight = free > 0 ? Math.max(...rows[index]!.map((cell, lane) =>
         ((rows[index - 1]![lane]!.afterStretch ?? 1) + (cell.beforeStretch ?? 1)) / 2)) : 1
       cumulative.push(cumulative[index - 1]! + weight)
     }
-    const total = cumulative.at(-1)!
+    const total = cumulative.at(-1)! + (free > 0 && fillEdges.right ? 1 : 0)
     positions.forEach((position, index) => { positions[index] = position + shift + (total > 0 ? free * cumulative[index]! / total : 0) })
   }
   return { positions, naturalWidth }

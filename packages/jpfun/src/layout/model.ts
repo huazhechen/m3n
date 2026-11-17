@@ -358,6 +358,7 @@ function solveHorizontal(
  * @param fixed 当前区间的 gap 是否已经固定，长度必须为 X.length - 1；通常是全行 fixed 的 subarray。fixed[i]==1 表示第 i、i+1 列只能整体移动。既是输入也是输出
  * @param limit 当前区间左右墙之间的可用宽度
  * @param options 已补齐默认值的求解参数
+ * @param fillEdges 指定小节线旁的自由边界间隙，以权重1分配正向撑满余量；默认首尾贴墙
  * @param fillMinRatio 自然宽度至少占可用宽度的比例时才 fill；省略表示不 fill，0 表示无条件 fill。fill 表示是否精确将左右拉到可用宽度，包括宽度不足和弹簧导致的溢出
  */
 export function layoutHorizontalRegion(
@@ -368,6 +369,7 @@ export function layoutHorizontalRegion(
     limit: number,
     options: Required<SolverOptions>,
     fillMinRatio?: number,
+    fillEdges: { left?: boolean; right?: boolean } = {},
 ): void {
     if (X.length !== columns.length || fixed.length !== Math.max(0, X.length - 1)) {
         throw new Error("Horizontal region state does not match its columns");
@@ -444,13 +446,13 @@ export function layoutHorizontalRegion(
             // 压缩仍沿用原规则，不改变碰撞求解器的行为。
             const shift = leftWidth - solvedX[0];
             const extra = limit - naturalWidth;
-            const cumulative = [0];
+            const cumulative = [extra > 0 && fillEdges.left ? 1 : 0];
             for (let i = 1; i < solvedX.length; i++) {
                 const weight = extra > 0 ? Math.max(...solvedColumns[i].map((cell, row) =>
                     (solvedColumns[i - 1][row].config.stretch_R + cell.config.stretch_L) / 2)) : 1;
                 cumulative.push(cumulative[i - 1] + weight);
             }
-            const total = cumulative[cumulative.length - 1];
+            const total = cumulative[cumulative.length - 1] + (extra > 0 && fillEdges.right ? 1 : 0);
             for (let i = 0; i < solvedX.length; i++) {
                 solvedX[i] += shift + (total > 0 ? extra * cumulative[i] / total : 0);
             }
@@ -513,7 +515,9 @@ export function layoutHorizontal(
             const localX = X.subarray(range.start, range.end);
             layoutHorizontalRegion(mat.slice(range.start, range.end), rows, localX,
                 fixed.subarray(range.start, Math.max(range.start, range.end - 1)),
-                Math.max(1, right - left), normalizedOptions, 0);
+                Math.max(1, right - left), normalizedOptions, 0,
+                { left: previous?.bar !== undefined && !fixed[range.start - 1],
+                  right: range.bar !== undefined && !fixed[range.end - 1] });
             for (let i = range.start; i < range.end; i++) X[i] += left;
             if (range.bar !== undefined) X[range.bar] = (index + 1) * width;
         });

@@ -31,6 +31,23 @@ describe('native spacing constraints', () => {
     ]
     expect(solveNativeSpacing(columns, 100, true).positions).toEqual([5, 50, 95])
   })
+  it('shares surplus with bar edges while preserving rigid interiors', () => {
+    const columns = [
+      { cells: [cell()], fixedAfter: 10 },
+      { cells: [cell('melody', { afterStretch: .5 })] },
+      { cells: [cell('melody', { beforeStretch: .5 })] },
+      { cells: [cell()] },
+    ]
+    const solve = (width: number) => solveNativeSpacing(columns, width, true, {left:true,right:true}).positions
+    const a = solve(200), b = solve(300)
+    const leftGrowth = b[0]! - a[0]!
+    const growth = (i: number) => b[i+1]! - b[i]! - a[i+1]! + a[i]!
+    expect(b[1]! - b[0]!).toBe(10)
+    expect(growth(1) / leftGrowth).toBeCloseTo(.5, 10)
+    expect(growth(2) / leftGrowth).toBeCloseTo(1, 10)
+    expect((100 - (b.at(-1)! - a.at(-1)!)) / leftGrowth).toBeCloseTo(1, 10)
+    expect(solveNativeSpacing([{cells:[cell()]}], 100, true, {left:true,right:true}).positions).toEqual([50])
+  })
   it('compresses elastic space before intruding into ink', () => {
     const positions = solveNativeSpacing(Array.from({length:4},()=>({cells:[cell()]})),52).positions
     expect(positions[0]).toBeGreaterThanOrEqual(4.9)

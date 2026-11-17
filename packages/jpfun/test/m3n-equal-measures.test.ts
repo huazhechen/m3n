@@ -51,7 +51,7 @@ test('paired clearances tighten bar insets while keeping equal cells and playbac
         const before = notes.filter(note => note.t.compare(bar.t) < 0).at(-1)!;
         const b = getLayoutBounds(before);
         const clearance = box.x - b.x - b.w;
-        assert.ok(clearance >= 8.8 && clearance < 15.125);
+        assert.ok(clearance >= 8.8);
         const after = notes.find(note => note.t.compare(bar.t) >= 0);
         if (after) assert.ok(getLayoutBounds(after).x - box.x - box.w >= 8.8 - 0.01);
     }
@@ -121,4 +121,23 @@ test('compact wrapping joins sparse long notes while leaving fast passages and p
     const played = (result: typeof compact) => playedNotes(compilePlayback(result.lowering)).map(note => [note.midi, note.start, note.duration]);
     assert.deepEqual(played(compact), played(normal));
     assert.deepEqual(compact.diagnostics, []);
+});
+
+
+test('equal cells share surplus with both bar clearances at weight one', () => {
+    const measure = (width: number) => {
+        const result = compileScore('@page(width=' + width + 'px,left=20px,right=20px,fillRatio=0) {1 1}// {1 1}// | {1 1}// {1 1}// |',
+            { equalMeasures: true, noteGap: 11, minimumNoteGap: 6.6, minimumNoteGapFloor: 2.2 });
+        assert.deepEqual(result.diagnostics, []);
+        const bars = result.layout.objects.filter(node => node.mergeKey === ANCHOR_KEY).map(getLayoutBounds);
+        const notes = result.layout.objects.filter(node => !node.T.isZero()).map(getLayoutBounds).slice(4);
+        return [notes[0].x - bars[0].x - bars[0].w,
+            ...notes.slice(1).map((note, i) => note.x - notes[i].x - notes[i].w),
+            bars[1].x - notes[3].x - notes[3].w];
+    };
+    const narrow = measure(600), wide = measure(800);
+    const growth = wide.map((gap, i) => gap - narrow[i]);
+    assert.ok(growth[0] > 0);
+    for (const i of [0, 2, 4]) assert.ok(Math.abs(growth[i] / growth[0] - 1) < 1e-8);
+    for (const i of [1, 3]) assert.ok(Math.abs(growth[i] / growth[0] - .5) < 1e-8);
 });

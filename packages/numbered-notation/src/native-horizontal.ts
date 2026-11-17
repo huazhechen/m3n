@@ -234,7 +234,9 @@ function equalMeasurePositions(items: HorizontalItem[], options: HorizontalOptio
     const previous = ranges[index-1]?.bar
     const left = index*cellWidth + (previous === undefined ? 0 : rightOf(previous)+padding)
     const right = (index+1)*cellWidth - (range.bar === undefined ? 0 : leftOf(range.bar)+padding)
-    const solved = solveNativeSpacing(items.slice(range.start,range.end),Math.max(1,right-left),true)
+    const solved = solveNativeSpacing(items.slice(range.start,range.end),Math.max(1,right-left),true,
+      { left: previous !== undefined && items[previous]!.fixedAfter === undefined,
+        right: range.bar !== undefined && items[range.end - 1]?.fixedAfter === undefined })
     solved.positions.forEach((position,offset) => { positions[range.start+offset] = left+position })
     if (range.bar !== undefined) positions[range.bar] = (index+1)*cellWidth
   }
