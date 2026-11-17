@@ -1,6 +1,6 @@
 // M3N modification: optional automatic wrapping with original source spans preserved.
 import { ASTBraceNode, type ASTFunctionClass, type ASTNodeBase } from "./functions/ASTtypes.js";
-import { automaticBreakPositions, insertAutomaticBreaks } from './layout/wrapping.js';
+import { automaticBreakPositions, resolvedBreakPositions, insertAutomaticBreaks } from './layout/wrapping.js';
 import { normalizePageConfig } from './layout/page.js';
 import { defaultFunctions } from "./functions/default.js";
 import { createLayoutPrepareContext } from "./layout/default.js";
@@ -19,6 +19,8 @@ import type { TextMeasurer } from "./render/types.js";
 export interface CompileScoreOptions extends DocumentLayoutOptions {
     alignRelations?: boolean;
     autoWrap?: boolean;
+    /** Reuse previously resolved music row starts, encoded as exact beat fractions. */
+    resolvedLineStarts?: readonly string[];
     /** Pack natural-width measures more closely; equal measures only tighten sparse long notes. */
     wrap?: 'normal' | 'compact';
     /** Fraction of the content width used to choose breaks; final lines still fill the page. */
@@ -52,11 +54,13 @@ export function compileScore(
     if (options.wrapWidthRatio !== undefined && (!Number.isFinite(options.wrapWidthRatio) || options.wrapWidthRatio <= 0 || options.wrapWidthRatio > 1)) throw new RangeError('wrapWidthRatio must be greater than zero and at most one');
     if (!options.autoWrap) return compileRaw(source, options);
     const natural = compileRaw(source, options, true);
-    const minimum = options.minimumNoteGap === undefined ? undefined
+    const minimum = options.minimumNoteGap === undefined || options.resolvedLineStarts !== undefined ? undefined
         : compileRaw(source, { ...options, noteGap: options.minimumNoteGap }, true);
     const page = normalizePageConfig(natural.lowering.page);
     const preferred = natural.lowering.columns.flat().filter(node => node.addon?.preferredBreakBefore).map(node => node.t.toString());
-    const positions = automaticBreakPositions(natural.layout, (page.width - page.marginLeft - page.marginRight) * (options.wrapWidthRatio ?? 1), new Set(preferred), options.equalMeasures, options.wrap, minimum?.layout);
+    const positions = options.resolvedLineStarts === undefined
+        ? automaticBreakPositions(natural.layout, (page.width - page.marginLeft - page.marginRight) * (options.wrapWidthRatio ?? 1), new Set(preferred), options.equalMeasures, options.wrap, minimum?.layout)
+        : resolvedBreakPositions(natural.layout, new Set(options.resolvedLineStarts));
     if (!positions.length) return compileRaw(source, options);
     const inserted = insertAutomaticBreaks(source, positions, natural.layout);
     const result = compileRaw(inserted.source, options);
@@ -77,6 +81,7 @@ export function compileScore(
 function compileRaw(source: string, options: CompileScoreOptions, natural = false): CompileScoreResult {
     const {
         autoWrap: _autoWrap,
+        resolvedLineStarts: _resolvedLineStarts,
         wrap: _wrap,
         wrapWidthRatio: _wrapWidthRatio,
         functions = defaultFunctions,

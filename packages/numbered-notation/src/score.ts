@@ -58,14 +58,19 @@ export class NumberedNotationScore {
     const textMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
     const projectionOptions = { ...options, textMeasurer, width: Math.max(320, Math.round(options.width)) }
     let projection = projectNumberedScore(this.document, { ...projectionOptions, measureNumbers: options.measureNumbers ? false : options.measureNumbers })
-    const compile = (source: string) => compileScore(source, { systemSpacing: { coreGap: options.systemGap ?? 24, inkGap: (options.systemGap ?? 24) / 2 }, autoWrap: true, minimumNoteGapFloor: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapFloorEm!, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
+    const compile = (source: string, resolvedLineStarts?: readonly string[]) => compileScore(source, { systemSpacing: { coreGap: options.systemGap ?? 24, inkGap: (options.systemGap ?? 24) / 2 }, autoWrap: true, resolvedLineStarts, minimumNoteGapFloor: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapFloorEm!, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
     let result = compile(projection.source)
     if (options.measureNumbers) {
       // Hidden interior numbers must never become layout obstacles. Horizontal
       // bar widths do not depend on their zero-time overhanging labels.
       const numberedMeasures = numberedRowEndMeasures(result, projection)
+      const rowStarts = new Map<number, typeof result.layout.objects[number]>()
+      for (const node of result.layout.objects) if (!node.T.isZero()) {
+        const first = rowStarts.get(node.layoutLine)
+        if (!first || node.t.compare(first.t) < 0) rowStarts.set(node.layoutLine, node)
+      }
       projection = projectNumberedScore(this.document, { ...projectionOptions, numberedMeasures })
-      result = compile(projection.source)
+      result = compile(projection.source, [...rowStarts.values()].map(node => node.t.toString()))
     }
     // The score model understands complementary pickups and alternate endings;
     // jpFun sees independent bars and otherwise reports these valid fragments.

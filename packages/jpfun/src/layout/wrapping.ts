@@ -14,6 +14,32 @@ function barAst(node: VisualTemporalNode) {
 }
 const isOpeningRepeat = (node: VisualTemporalNode) => barAst(node)?.type === 3;
 
+/** Reuse musical row starts after adding vertical-only annotations. Explicit
+ * source breaks already present in the natural layout need no second command. */
+export function resolvedBreakPositions(layout: DocumentLayoutResult, starts: ReadonlySet<string>): number[] {
+    const lines = new Map<number, VisualTemporalNode[]>();
+    for (const node of layout.objects) {
+        const nodes = lines.get(node.layoutLine) ?? [];
+        nodes.push(node); lines.set(node.layoutLine, nodes);
+    }
+    const positions = new Set<number>();
+    for (const nodes of lines.values()) {
+        const musical = nodes.filter(node => !node.T.isZero());
+        if (!musical.length) continue;
+        const first = musical.reduce((a, b) => a.t.compare(b.t) <= 0 ? a : b);
+        const byTrack = new Map<VisualTemporalNode['track'], Map<string, number>>();
+        for (const node of nodes) {
+            const time = node.t.toString();
+            if (!starts.has(time) || node.t.compare(first.t) <= 0 || node.mergeKey === ANCHOR_KEY && !isOpeningRepeat(node)) continue;
+            let track = byTrack.get(node.track);
+            if (!track) byTrack.set(node.track, track = new Map());
+            track.set(time, Math.min(track.get(time) ?? Infinity, breakPosition(node.ast)));
+        }
+        for (const track of byTrack.values()) for (const position of track.values()) positions.add(position);
+    }
+    return [...positions].sort((a, b) => a - b);
+}
+
 /** Source positions for explicit breaks; all parallel members at a boundary share one break. */
 export function automaticBreakPositions(layout: DocumentLayoutResult, contentWidth: number, preferredTimes: ReadonlySet<string> = new Set(), equalMeasures = false, wrap: 'normal' | 'compact' = 'normal', minimumLayout?: DocumentLayoutResult): number[] {
     const insertions = new Set<number>();
