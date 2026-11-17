@@ -1,7 +1,7 @@
 import { nativeMeterGeometry } from './native-meter.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import { NativeSymbols } from './native-symbols.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces, translateNativeInk } from './native-ink.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeKeyGeometry, type NativeKeyRow } from './native-key.js'
 import type { NativeControl } from './native-model.js'
@@ -27,10 +27,16 @@ export function measureNativeControl(kind: NativeControl['kind'], text: string, 
   if (tempoGeometry) { width = tempoGeometry.width; anchor = tempoGeometry.anchor }
   const sectionLeft = Math.min(0, m.inkLeft ?? 0)
   if (kind === 'section') { width = Math.max(m.w, m.inkRight ?? m.w) - sectionLeft + nativeStyle.annotation * 0.5; anchor = nativeStyle.annotation * 0.25 - sectionLeft + measurer.measureText(text[0]!, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: 700 }).w / 2 }
-  const item: NativeControl = { kind, text, keyRows, meterGeometry, tempoGeometry, width, anchor, top: kind === 'section' ? m.baseline + em(2.4) + nativeStyle.annotation * 0.25 : 0, bottom: kind === 'section' ? m.h - m.baseline - em(2.4) + nativeStyle.annotation * 0.25 : 0 }
+  const item: NativeControl = { kind, text, keyRows, meterGeometry, tempoGeometry, width, anchor, ink: [], top: kind === 'section' ? m.baseline + em(2.4) + nativeStyle.annotation * 0.25 : 0, bottom: kind === 'section' ? m.h - m.baseline - em(2.4) + nativeStyle.annotation * 0.25 : 0 }
   if (kind === 'section') item.textInset = nativeStyle.annotation * 0.25 - sectionLeft
   const ink = nativeSvgInk(painter.control(item), measurer)
   item.top = -ink.top; item.bottom = ink.bottom
   item.width = Math.max(width, ink.right) - Math.min(0, ink.left)
+  item.ink = nativeSvgPieces(painter.control(item), measurer)
   return item
+}
+
+/** Final control primitives, in system/lane coordinates after horizontal placement. */
+export function placedNativeControlInk(control: NativeControl) {
+  return control.x === undefined ? [] : control.ink.map(ink => translateNativeInk(ink, control.x!, 0))
 }

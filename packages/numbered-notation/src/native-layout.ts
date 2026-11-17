@@ -19,6 +19,7 @@ import { CanvasTextMeasurer, DefaultTextMeasurer, type TextMeasurer } from './na
 import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes } from './native-lanes.js'
 import { alignNativeArcs } from './native-relation-alignment.js'
+import { placedNativeControlInk } from './native-controls.js'
 
 export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
@@ -216,7 +217,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       .flatMap(g => [
         ...(g.musicInk ?? [{ left: -(g.inkLeft ?? g.left), right: g.inkRight ?? g.right, top: -(g.musicTop ?? g.top), bottom: g.musicBottom ?? g.bottom }])
           .map(ink => ({ lane: g.lane, left: g.x + ink.left, right: g.x + ink.right, top: -ink.top })),
-        ...g.controls.filter(c => c.x !== undefined).map(c => ({ lane: g.lane, left: c.x!, right: c.x! + c.width, top: c.top })),
+        ...g.controls.flatMap(placedNativeControlInk).map(ink => ({ lane: g.lane, left: ink.left, right: ink.right, top: -ink.top })),
       ])
     for (const [index] of system.measures.entries()) for (const lane of system.lanes) {
       for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) {

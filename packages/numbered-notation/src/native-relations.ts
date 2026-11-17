@@ -6,6 +6,7 @@ import { NativeSymbols, attrs, n, line } from './native-symbols.js'
 import { nativeArcGeometry, nativeArcPath, type NativeArc } from './native-arc.js'
 import { nativeArcInkLift, nativeRibbonClearance, nativeRibbonRange } from './native-curve.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
+import { placedNativeControlInk } from './native-controls.js'
 import { nativeSvgInk, nativeSvgPieces, type NativeInk } from './native-ink.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -60,7 +61,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
       .filter(g => g.lane === relation.first.lane && g.x + (g.inkRight ?? g.musicRight ?? g.right) >= ink.left && g.x - (g.inkLeft ?? g.musicLeft ?? g.left) <= ink.right)
       .map(g => ({ left: g.x - (g.inkLeft ?? g.musicLeft ?? g.left), right: g.x + (g.inkRight ?? g.musicRight ?? g.right), top: -(g.musicTop ?? g.top) }))
     const controls = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === relation.first.lane)
-      .flatMap(g => g.controls.filter(c => c.x !== undefined).map(c => ({ left: c.x!, right: c.x! + c.width, top: -c.top })))
+      .flatMap(g => g.controls.flatMap(placedNativeControlInk))
       .filter(b => b.right > ink.left && b.left < ink.right)
     const preceding = [...(system.relationLayout ?? [])].filter(([r, placed]) => r.kind !== 'inst' && r.first.lane === relation.first.lane && placed.ink.right > ink.left && placed.ink.left < ink.right)
     const previous = preceding.map(([, placed]) => placed.ink)
@@ -70,7 +71,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     const bars = system.measures.flatMap((_, index) =>
       nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar => nativeSvgPieces(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)))
     const isArc = relation.kind === 'tie' || relation.kind === 'slur'
-    const blockers = relation.kind === 'tuplet' ? [...controls, ...previous, ...labels] : [...obstacles, ...controls, ...previous, ...labels]
+    const blockers = relation.kind === 'tuplet' ? [...previous, ...labels] : [...obstacles, ...controls, ...previous, ...labels]
     const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
     // Continuations reach the system boundary and therefore also cover bars.
     // Use their actual painted ink, not a nominal staff height.
@@ -85,7 +86,10 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
       const arc = nativeArcGeometry(relation, system)
       const pieces = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
         .filter(g => g.lane === relation.first.lane)
-        .flatMap(g => (g.musicInk ?? []).map(piece => ({ ...piece, left: g.x + piece.left, right: g.x + piece.right })))
+        .flatMap(g => [
+          ...(g.musicInk ?? []).map(piece => ({ ...piece, left: g.x + piece.left, right: g.x + piece.right })),
+          ...g.controls.flatMap(placedNativeControlInk),
+        ])
       let lift = 0
       const compare = (a: typeof relation.first, b: typeof relation.first) => (a.event?.sourceStart ?? 0) - (b.event?.sourceStart ?? 0) || a.slot - b.slot || a.time - b.time
       for (const [peer, placed] of preceding) {

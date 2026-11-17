@@ -63,8 +63,11 @@ describe('native musical arc geometry', () => {
     expect(relation.last.top).toBeCloseTo(26.58)
     expect(relation.last.musicTop).toBeCloseTo(17.6)
     const control = relation.last.controls.find(control => control.kind === 'meter')!
-    const gaps = [control.x!, control.x! + control.width].map(x => -control.top - nativeArcSlice(arc.commands, x)!.bottom)
-    expect(Math.min(...gaps)).toBeCloseTo(nativeStyle.markGap, 8)
+    const gaps = control.ink.flatMap(piece => {
+      const left = Math.max(arc.left, control.x! + piece.left), right = Math.min(arc.right, control.x! + piece.right)
+      return left > right ? [] : [left, right].map(x => piece.top - nativeArcSlice(arc.commands, x)!.bottom)
+    })
+    expect(Math.min(...gaps)).toBeCloseTo(0, 8)
     // Lift only the overlap correction, rather than treating the meter as a note endpoint.
     expect(arc.top - arc.height).toBeLessThan(control.top)
     expect(layout.systems[0]!.lanes[0]!.top).toBeGreaterThanOrEqual(relation.last.top)

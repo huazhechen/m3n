@@ -1,6 +1,7 @@
 import { nativeStyle } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
+import { placedNativeControlInk } from './native-controls.js'
 
 /** Brackets use lane-relative coordinates so pagination only translates them. */
 export function nativeTupletGeometry(relation: NativeRelation, system: NativeSystem, measurer: TextMeasurer) {
@@ -37,8 +38,12 @@ export function nativeTupletGeometry(relation: NativeRelation, system: NativeSys
     // The sounding heads establish the bracket level. Side ink only raises
     // a primitive whose horizontal footprint actually crosses it.
     let level = -Math.max(0, ...covered.map(glyph => glyph.tieTop ?? glyph.top)) - gap - Math.max(hook, text.h / 2)
-    for (const glyph of glyphs) for (const ink of glyph.musicInk ?? []) for (const mark of pieces) {
-      if (glyph.x + ink.right <= mark.left || glyph.x + ink.left >= mark.right) continue
+    const obstacles = glyphs.flatMap(glyph => [
+      ...(glyph.musicInk ?? []).map(ink => ({ ...ink, left: glyph.x + ink.left, right: glyph.x + ink.right })),
+      ...glyph.controls.flatMap(placedNativeControlInk),
+    ])
+    for (const ink of obstacles) for (const mark of pieces) {
+      if (ink.right <= mark.left || ink.left >= mark.right) continue
       level = Math.min(level, ink.top - gap - mark.bottom)
     }
     return level

@@ -2,6 +2,7 @@ import { nativeStyle, nativeEm as em } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 import { nativeArcSlice, nativeArcInkLift } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
+import { placedNativeControlInk } from './native-controls.js'
 
 export type NativeArcCommand =
   | { op: 'M' | 'L'; x: number; y: number }
@@ -69,19 +70,12 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
       if (slice) lift = Math.max(lift, slice.bottom + nativeTiePortTop(glyph))
     }
   }
-  // Controls occupy separate columns and are never arc ports. A control
-  // inside the horizontal span still has to clear the actual ribbon there.
-  for (const glyph of members) for (const control of glyph.controls) {
-    if (control.x === undefined) continue
-    const a = Math.max(left, control.x), b = Math.min(right, control.x + control.width)
-    if (a > b) continue
-    for (const x of [a, b]) {
-      const slice = nativeArcSlice(commands, x)
-      if (slice) lift = Math.max(lift, slice.bottom + control.top + nativeStyle.markGap)
-    }
-  }
-  lift = nativeArcInkLift(commands, left, right, covered.flatMap(glyph => (glyph.musicInk ?? []).map(piece =>
-    ({ ...piece, left: glyph.x + piece.left, right: glyph.x + piece.right }))), lift)
+  // Controls and side music clear only the actual ribbon intersections. A
+  // meter's empty corners must not become a tall rectangular obstacle.
+  lift = nativeArcInkLift(commands, left, right, members.flatMap(glyph => [
+    ...(glyph.musicInk ?? []).map(piece => ({ ...piece, left: glyph.x + piece.left, right: glyph.x + piece.right })),
+    ...glyph.controls.flatMap(placedNativeControlInk),
+  ]), lift)
   if (lift > 0) commands = commands.map(command => {
     if (command.op === 'Z') return command
     if (command.op === 'C') return { ...command, y: command.y - lift, cy1: command.cy1 - lift, cy2: command.cy2 - lift }
