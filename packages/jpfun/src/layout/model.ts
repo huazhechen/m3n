@@ -183,7 +183,7 @@ function calcLeftWall(e: LayoutElement, x: number, crossPunish: number = DEFAULT
     if (dis >= 0) return { force: k * (m0 - dis), stiffness: k };
 
     const stiffness = e.config.mu_L * crossPunish;
-    const force = e.config.alpha_L * e.config.beta_L - stiffness * dis;
+    const force = m0 * k - stiffness * dis;
     return { force, stiffness };
 }
 
@@ -196,7 +196,7 @@ function calcRightWall(e: LayoutElement, x: number, limit: number, crossPunish: 
     if (dis >= 0) return { force: k * (m0 - dis), stiffness: k };
 
     const stiffness = e.config.mu_R * crossPunish;
-    const force = e.config.alpha_R * e.config.beta_R - stiffness * dis;
+    const force = m0 * k - stiffness * dis;
     return { force, stiffness };
 }
 

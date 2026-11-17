@@ -144,7 +144,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       const insets = parentheses.get(glyph)
       cell.left += insets?.left ?? 0; cell.right += insets?.right ?? 0
     }
-    if (item.boundary || item.prefix) cell.beforeCollision = cell.afterCollision = 64
+    // A voice introduction is compressible space, not a hard bar boundary.
+    if (item.boundary) cell.beforeCollision = cell.afterCollision = 64
   }
   // Bar edges are hard boundaries for both neighbours, including each
   // voice sharing that boundary. Using the ordinary-note penalty here

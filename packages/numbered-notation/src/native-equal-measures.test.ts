@@ -19,6 +19,32 @@ const cases = [
 ] as const
 
 describe('native equal-measure interior spacing', () => {
+  it.each([[320, .5], [440, .5], [340, .58]])('keeps the voice introduction compressible at %spx with digit width %sem', (width, factor) => {
+    const source = cases.find(([name]) => name === 'parallel bass')![1]
+    const document = parseM3NDocument(`{equal-measures=true}\n${source}`)
+    const textMeasurer: TextMeasurer = { measureText(text, style) {
+      return { w: [...text].length * style.fontSize * factor, h: style.fontSize, baseline: style.fontSize * .8 }
+    } }
+    const options = { width, paged: false, textMeasurer, pageMargin: 11 }
+    const native = layoutNativeScore(document, options)
+    const projection = projectNumberedScore(document, options)
+    const reference = compileScore(projection.source, { textMeasurer, autoWrap: true, alignRelations: true,
+      equalMeasures: true, noteGap: 11, minimumNoteGap: 6.6, minimumNoteGapFloor: 2.2 })
+    expect(reference.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])
+    let checked = 0
+    for (const note of reference.layout.objects.filter(node => node.T.toNumber() > 0)) {
+      let ast: typeof note.ast | null = note.ast
+      while (ast && !projection.bindings.has(ast.label ?? '')) ast = ast.parent
+      const binding = ast && projection.bindings.get(ast.label!)
+      if (!binding) continue
+      const glyph = native.projection.glyphs.find(g => g.id === binding.visualId)!
+      expect(glyph, binding.visualId).toBeDefined()
+      expect(Math.abs(glyph.x - note.box.x - note.box.anchor), binding.visualId).toBeLessThan(.001)
+      checked++
+    }
+    expect(checked).toBe(native.projection.glyphs.length)
+  })
+
   it.each(cases)('matches time-column anchors with fixed measure boundaries: %s', (_name, source) => {
     const document = parseM3NDocument(`{equal-measures=true}\n${source}`)
     for (const spacing of [{}, {noteGapEm:1.2}, {noteGapEm:.6,minimumNoteGapEm:.3}]) {
