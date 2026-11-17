@@ -6,10 +6,11 @@ import type { Rect } from './types.js';
 
 /** Measure the final read-only paint commands. Keep separate primitive regions:
  * a tall grace/accidental at the left must not raise an unrelated arc endpoint. */
-export function paintedNodeRegions(node: VisualTemporalNode, measurer: TextMeasurer): Rect[] {
+export function paintedNodeRegions(node: VisualTemporalNode, measurer: TextMeasurer, coreOnly = false): Rect[] {
     const painter = new RecordingPainter();
-    node.paint(painter);
-    for (const decoration of node.decorations) decoration.paint?.(painter);
+    if (coreOnly) node.paintCore(painter);
+    else node.paint(painter);
+    for (const decoration of node.decorations) if (!coreOnly || decoration.systemCore) decoration.paint?.(painter);
     return painter.commands.flatMap(command => paintedCommandRegions(command, measurer));
 }
 

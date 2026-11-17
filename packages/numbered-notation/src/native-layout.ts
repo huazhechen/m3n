@@ -18,7 +18,8 @@ export { wrapNativeText } from './native-header.js'
 import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
-import { placeNativeLanes } from './native-lanes.js'
+import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
+import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { alignNativeArcs } from './native-relation-alignment.js'
 import { placedNativeControlInk } from './native-controls.js'
 
@@ -310,12 +311,19 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   for (const system of systems) for (const lane of system.lanes) placeNativeLyrics(system, lane, measurer)
   for (const system of systems) placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true)
   const gap = options.systemGap ?? nativeStyle.systemGap
-  const blocks = [...header.blocks.map(block=>({height:block.height})), ...systems.map(system => ({
-    height: placeNativeLanes(system, measurer, options.uniformSystemHeight),
-    gapBefore: system.measures[0]?.extraGap ?? 0,
-  }))]
+  const blocks = [...header.blocks.map(block=>({height:block.height, ink: nativeSvgPieces(block.svg, measurer)})), ...systems.map(system => {
+    const height = placeNativeLanes(system, measurer, options.uniformSystemHeight)
+    const pieces = nativeLanePieces(system, measurer)
+    const corePieces = nativeLanePieces(system, measurer, true)
+    const coreInk = system.lanes.flatMap(lane => (corePieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
+    const core = options.uniformSystemHeight || !coreInk.length ? { top: 0, bottom: height } : { top: Math.min(...coreInk.map(piece => piece.top)), bottom: Math.max(...coreInk.map(piece => piece.bottom)) }
+    const ink = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
+    ink.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin), measurer))
+    if (options.uniformSystemHeight) ink.push({ left: margin, right: options.width - margin, top: 0, bottom: height })
+    return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, gapBefore: system.measures[0]?.extraGap ?? 0 }
+  })]
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap })
+    margin, gap, elastic: true })
   const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [] }))
   for (const [index,block] of header.blocks.entries()) {
     const position = pagination.positions[index]!

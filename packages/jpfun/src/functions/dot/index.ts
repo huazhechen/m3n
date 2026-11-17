@@ -108,6 +108,7 @@ class DotFunction extends ASTFunctionNode {
         host.box.w = Math.max(host.box.w, right);
 
         return {
+            systemCore: true,
             paint(painter) {
                 const centerY = host.box.y + anchor.y;
                 for (let i = 0; i < count; i++) {

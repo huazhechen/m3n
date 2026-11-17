@@ -230,6 +230,14 @@ class ArpeggioTemporal extends TemporalNodeBase {
         });
     }
 
+    override paintCore(painter: Painter) {
+        for (const member of [this.host]) {
+            if (member.T.isZero()) continue;
+            member.paintCore(painter);
+            for (const decoration of member.decorations) if (decoration.systemCore) decoration.paint?.(painter);
+        }
+    }
+
     override paint(painter: Painter) {
         const originX = this.box.x;
         const originY = getLayoutBounds(this.host, true).y;

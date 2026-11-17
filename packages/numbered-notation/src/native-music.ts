@@ -47,7 +47,7 @@ export class NativeMusicPainter extends NativeSymbols {
     return markStack.map(mark => `<g${attrs({ transform: `translate(${n(glyph.x + (mark.x ?? 0))} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`).join('')
   }
 
-  music(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>): string {
+  music(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>, coreOnly = false): string {
     if (glyph.multiRest) {
       const size = nativeStyle.music, text = String(glyph.multiRest)
       const metrics = this.measurer.measureText(text, { fontSize: size, fontFamily: 'M3N Numbers' })
@@ -64,6 +64,7 @@ export class NativeMusicPainter extends NativeSymbols {
       const grace = glyph.graceLayout ?? nativeGraceGeometry(glyph.graces, glyph.musicLeft ?? glyph.left, this.measurer)
       music += `<g${attrs({ transform: `translate(${n(glyph.x)} ${n(glyph.y)})` })}>${grace.svg}</g>`
     }
+    if (coreOnly) return music
     music += this.articulations(glyph)
     if (glyph.event?.postfixes.includes('arp') && glyph.pitches.length > 1 && !glyph.sustain) {
       const arpeggio = glyph.arpeggioLayout ?? nativeArpeggioGeometry(nativeSvgInk(this.body({ ...glyph, x: 0, y: 0 }), this.measurer), this.measurer)

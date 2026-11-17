@@ -302,6 +302,7 @@ class NoteTemporalNode extends TemporalNodeBase {
         let dotY = 0;
         const height = dotCount * dotRadius * 2 + (dotCount - 1) * dotGap;
         const dots: LayoutDecoration = {
+            systemCore: true,
             [above ? "above" : "below"]: {
                 // order 只表达通用的由近到远顺序
                 // 时值类装饰可以选择较小 order，下八度点选择较大 order

@@ -5,9 +5,9 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
-import { chooseBestWidth, widthCandidates } from './scorebook-width.mjs'
+import { chooseBestWidth, probeWidthCandidates } from './scorebook-width.mjs'
 import { writePreferredWidths } from './scorebook-source.mjs'
-import { packScorebook, sharedScoreGap } from './scorebook-packing.mjs'
+import { packScorebook, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth } from './scorebook-packing.mjs'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(output, 'editorial-plan.json'))
@@ -42,16 +42,13 @@ try {
   for (const [index, entry] of plan.entries.entries()) {
     const source = readFileSync(join(root, 'src/scores', entry.file), 'utf8')
     sources.set(entry.id, source)
-    const candidates = []
-    for (const width of widthCandidates) {
-      candidates.push(await page.evaluate(async ({ source, width }) => {
-        try { return await window.scorebook.measure(source, width) }
-        catch (error) { return { width, error: error.message } }
-      }, { source, width }))
-    }
+    const { candidates, renderCache } = await probeWidthCandidates(width => page.evaluate(async ({ source, width }) => {
+      try { return await window.scorebook.measure(source, width) }
+      catch (error) { return { width, error: error.message } }
+    }, { source, width }))
     const best = chooseBestWidth(candidates)
     assert(best, `${entry.title}: no safe web layout: ${JSON.stringify(candidates)}`)
-    records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates })
+    records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache })
     console.log(`${index + 1}/${plan.entries.length} ${entry.title}: ${best.width}px, ${best.pageCount} pages`)
   }
   for (const group of packScorebook(records)) {
@@ -71,7 +68,7 @@ try {
     }
     for (const entry of entries) {
       const candidate = entry.candidates.find(candidate => candidate.width === group.width)
-      Object.assign(entry, { width: group.width, systems: candidate.rows, pageCount: group.pageCount, musicStart: start })
+      Object.assign(entry, { width: entries.length > 1 ? sharedPreferredWidth : group.width, bookWidth: group.width, systems: candidate.rows, pageCount: group.pageCount, musicStart: start })
     }
   }
 } finally { await browser.close() }
@@ -114,8 +111,8 @@ for (const [index, page] of pages.entries()) writeFileSync(join(temp, 'pages', `
 writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))
 const report = { title: plan.title, edition: plan.edition, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
   entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile,
-  widthSearch: { minimum: 640, maximum: 800, step: 10, priority: ['pageCount', 'width'] }, pageMarginEm: .5, a4MarginMm: 12,
-  sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap,
+  widthSearch: { minimum: 640, maximum: 800, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: .5, a4MarginMm: 12,
+  sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedScoreWidth, sharedPreferredWidth,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')
 writeFileSync(join(temp, 'index.html'), '<!doctype html><meta charset="utf-8"><title>谱集预览</title><style>body{background:#ddd}figure{display:inline-block;width:380px;margin:10px;vertical-align:top}img{width:100%}</style>'
@@ -126,7 +123,7 @@ execFileSync(process.execPath, [join(root, 'tools/compact-scorebook-pdf.mjs'), `
 // first so an edit made during the search cannot be silently overwritten.
 writePreferredWidths(records, join(root, 'src/scores'))
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')
-const csv = [['曲目', '最佳宽度px', '页码'], ...records.map(entry => [entry.title, entry.width, entry.pages.join('/')])]
+const csv = [['曲目', '最佳宽度px', '谱集版宽px', '页码'], ...records.map(entry => [entry.title, entry.width, entry.bookWidth, entry.pages.join('/')])]
   .map(row => row.map(value => '"' + String(value).replaceAll('"', '""') + '"').join(',')).join('\n')
 writeFileSync(join(output, '排序与缩放记录.csv'), csv + '\n')
 console.log(JSON.stringify({ entries: records.length, pages: pages.length, widths: 'preferred-width headers', pdf: join(output, plan.outputPdf) }))

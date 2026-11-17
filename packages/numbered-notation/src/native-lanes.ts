@@ -10,7 +10,7 @@ import { nativeStyle } from './native-style.js'
 /** Final painted primitives in each lane's baseline coordinates. Keep separate
  * objects separate: a remote verse or the empty span between parentheses must
  * not become an obstacle across the whole system. */
-export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer): Map<string, NativeInk[]> {
+export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, coreOnly = false): Map<string, NativeInk[]> {
   const painter = new NativeMusicPainter(measurer), result = new Map<string, NativeInk[]>()
   for (const lane of system.lanes) {
     const pieces: NativeInk[] = []
@@ -19,20 +19,20 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer): 
       const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id).map(glyph => ({ ...glyph, y: 0 }))
       const beams = nativeBeamLayout(glyphs, measurer)
       for (const glyph of glyphs) {
-        add(painter.music(glyph, beams.claimed.get(glyph)))
-        for (const control of glyph.controls) add(painter.control(control, control.x!, 0))
-        for (const annotation of glyph.annotationLayout ?? []) add(nativeAnnotationSvg(annotation, 0, painter))
+        add(painter.music(glyph, beams.claimed.get(glyph), coreOnly))
+        for (const control of coreOnly ? [] : glyph.controls) add(painter.control(control, control.x!, 0))
+        for (const annotation of coreOnly ? [] : glyph.annotationLayout ?? []) add(nativeAnnotationSvg(annotation, 0, painter))
         for (const [row, baseline] of glyph.lyricBaselines ?? []) {
           const data = glyph.lyrics.get(row)
           if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) add(nativeLyricSvg(glyph, row, baseline, system.index, measurer))
         }
       }
       add(beams.svg)
-      for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) add(nativeBarSvg(bar.kind, bar.x, 0, measurer))
+      if (!coreOnly) for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) add(nativeBarSvg(bar.kind, bar.x, 0, measurer))
     }
-    for (const relation of system.relations.filter(relation => relation.first.lane === lane.id)) add(system.relationLayout!.get(relation)!.svg)
-    for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id) add(decoration.svg)
-    if (lane.id === 'melody') for (const volta of system.voltas ?? []) add(volta.svg)
+    if (!coreOnly) for (const relation of system.relations.filter(relation => relation.first.lane === lane.id)) add(system.relationLayout!.get(relation)!.svg)
+    if (!coreOnly) for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id) add(decoration.svg)
+    if (!coreOnly && lane.id === 'melody') for (const volta of system.voltas ?? []) add(volta.svg)
     result.set(lane.id, pieces)
   }
   return result

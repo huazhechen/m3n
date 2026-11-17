@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
+import { nativeLanePieces } from './native-lanes.js'
 import { nativeHeaderGeometry } from './native-header.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
@@ -103,17 +104,28 @@ describe('native measured header order', () => {
       expect(Number(label.getAttribute('x'))).toBeCloseTo(items[index]!.x + 3.5, 4)
       expect(Number(label.getAttribute('y'))).toBeCloseTo(items[index]!.baseline, 4)
     })
-    const first = layoutNativeScore(document, { width: 320, paged: false }).systems[0]!
-    const last = geometry.orderRows.at(-1)!
-    expect(first.top - last.top - last.height).toBeGreaterThanOrEqual(24)
+    const score = layoutNativeScore(document, { width: 320, paged: false })
+    const first = score.systems[0]!
+    const headerInk = nativeSvgPieces(score.pages[0]!.header!, score.measurer)
+    const musicInk = nativeLanePieces(first, score.measurer).get(first.lanes[0]!.id)!
+    let checked = 0
+    for (const upper of headerInk) for (const lower of musicInk) {
+      if (Math.min(upper.right, lower.right) <= Math.max(upper.left, lower.left)) continue
+      expect(first.lanes[0]!.y + lower.top - upper.bottom).toBeGreaterThanOrEqual(12 - 1e-6)
+      checked++
+    }
+    expect(checked).toBeGreaterThan(0)
   })
 
   it('adds a section gap between musical sections, without adding one after the header', () => {
     const layout = (source: string) => layoutNativeScore(parseM3NDocument(source), { width: 800, paged: false })
     const plain = layout('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||')
     const sections = layout('{4/4}\n===A\nN: 1 2 3 4 |\n===B\nN: 5 6 7 1e |||')
-    expect(sections.systems[0]!.top).toBe(plain.systems[0]!.top)
-    expect(sections.systems[1]!.top - plain.systems[1]!.top).toBe(12)
+    const stride = (score: ReturnType<typeof layout>) => score.systems[1]!.lanes[0]!.y - score.systems[0]!.lanes[0]!.y
+    expect(stride(sections) - stride(plain)).toBeCloseTo(12)
+    // The first section has no extra 12px gap below the header. Its frame
+    // changes the local ink clearance by only half a pixel.
+    expect(Math.abs(sections.systems[0]!.lanes[0]!.y - plain.systems[0]!.lanes[0]!.y)).toBeLessThan(1)
   })
 
   it('preserves order-frame padding beyond measured left and right ink overhang', () => {

@@ -234,6 +234,8 @@ export type LayoutDecorationHandler = (
  * LayoutDecoration 不是 addon 语义本身。实例可以用闭包保存本次测量参数和 place 结果，因此必须由 Temporal.decorations 持有到当前 paint 结束。
  */
 export interface LayoutDecoration {
+    /** Note-body ink (octave dots, duration dots and beams) belongs to the system core. */
+    systemCore?: boolean;
     paint?(painter: Painter): void; // 只读取冻结几何
     above?: LayoutDecorationSpace;
     below?: LayoutDecorationSpace;
@@ -274,7 +276,7 @@ export interface AttachmentGeometry {
  */
 export interface LayoutAttachment extends LoweringAttachment {
     /** Lyrics and local headings do not join music envelopes; volta headroom stays in its band. */
-    readonly spacingRole?: 'lyrics' | 'volta' | 'local';
+    readonly spacingRole?: 'core' | 'lyrics' | 'volta' | 'local';
     /** M3N: independent alignment families, with nesting and track boundaries preserved. */
     readonly alignmentKind?: string;
     /** 后置平移仅影响绘制，不参与占用求解 */

@@ -26,6 +26,7 @@ import { TranslatingPainter } from "../render/translate.js";
 import { adjacentRelationGroups } from './relation-alignment.js';
 import { equalMeasureRanges } from './equal-measures.js';
 import { paintedNodeRegions } from './painted-ink.js';
+import { paginateInkSystems, type SystemInkProfile } from './system-spacing.js';
 import type { TextMeasurer } from '../render/types.js';
 import type {
     AttachmentGeometry,
@@ -42,6 +43,7 @@ import type {
 } from "./types.js";
 
 export interface DocumentLayoutOptions extends SolverOptions {
+    systemSpacing?: { coreGap: number; inkGap: number };
     /** Natural clearance between timed objects, in px; justification and lyrics may enlarge it. */
     noteGap?: number;
     /** Reserved minimum clearance, scaled with the same rhythmic and bar ratios. */
@@ -213,6 +215,8 @@ export function layoutDocument(
     context: LayoutPrepareContext,
     options: DocumentLayoutOptions = {},
 ): DocumentLayoutResult {
+    if (options.systemSpacing && Object.values(options.systemSpacing).some(value => !Number.isFinite(value) || value < 0))
+        throw new RangeError('systemSpacing values must be finite non-negative numbers');
     if (options.noteGap !== undefined && (!Number.isFinite(options.noteGap) || options.noteGap < 0)) {
         throw new RangeError('noteGap must be a finite non-negative number');
     }
@@ -305,7 +309,8 @@ export function layoutDocument(
     const rowGaps = measureRowGaps(lines.length, objects, options.rowGap);
 
     /** 按当前主体与 attachment 占用求轴、分页并放置所有主体 */
-    const placeVertically = () => {
+    const anchors = lines.map(line => line.columns.flat().find(node => !node.T.isZero())?.track ?? line.columns[0]?.[0]?.track ?? result.rootTrack);
+    const placeVertically = (profiles?: readonly SystemInkProfile[], coreExtents: readonly Extent[] = []) => {
         // Share the music body and lower edge within each paragraph. Only systems carrying a
         // volta share its upper envelope, including annotations above the bracket.
         // Header-only lines keep their natural height; lyrics remain local.
@@ -345,7 +350,11 @@ export function layoutDocument(
         let pages: DocumentLayoutPage[];
         let lineTops: number[];
         try {
-            ({ pages, lineTops } = paginateLayoutLines(heights, page, pageBreaks, extraGaps));
+            if (profiles && options.systemSpacing) {
+                const packed = paginateInkSystems(profiles, page, options.systemSpacing.coreGap, options.systemSpacing.inkGap, pageBreaks, extraGaps, coreExtents);
+                pages = packed.pages;
+                lineTops = packed.baselines.map((baseline, i) => baseline - (axes[i].get(lift(anchors[i])) ?? 0));
+            } else ({ pages, lineTops } = paginateLayoutLines(heights, page, pageBreaks, extraGaps));
         } catch (error) {
             if (!(error instanceof PageLayoutError)) throw error;
             // 用溢出的元素的 span 构成 Error
@@ -397,7 +406,7 @@ export function layoutDocument(
             },
         };
 
-        return { pages, attachmentContext };
+        return { pages, attachmentContext, lineTops, heights };
     };
 
     // 3. 首次纵向放置后测量 attachment；只有有效轨道占用扩张时才重新求解
@@ -408,6 +417,48 @@ export function layoutDocument(
     // Remeasure those local lyric reservations before final pagination.
     for (let pass = 0; measured.needsRelayout && pass < (options.uniformSystemHeight ? 4 : 1); pass++) {
         placement = placeVertically();
+        measured = measureAttachments(documentAttachments, placement.attachmentContext, lines, lift, subdomainGeometry, hosts);
+    }
+    if (options.systemSpacing) {
+        const offsets = anchors.map((track, line) => placement.attachmentContext.getVisualAxis(line, track));
+        const profiles: Rect[][] = lines.map(() => []);
+        const cores: Rect[][] = lines.map(() => []);
+        const include = (line: number, region: Rect) => {
+            if (profiles[line] && region.w > 0 && region.h > 0)
+                profiles[line].push({ ...region, y: region.y - offsets[line] });
+        };
+        for (const node of objects) {
+            for (const region of paintedNodeRegions(node, context.textMeasurer)) include(node.layoutLine, region);
+            if (!node.T.isZero()) for (const region of paintedNodeRegions(node, context.textMeasurer, true))
+                cores[node.layoutLine].push({ ...region, y: region.y - offsets[node.layoutLine] });
+        }
+        for (const [index, item] of measured.items.entries()) for (const region of item.geometry.regions)
+            if (region.line !== undefined) {
+                include(region.line, region);
+                const role = documentAttachments[index].spacingRole;
+                if (role === 'core' || role === 'lyrics') cores[region.line].push({ ...region, y: region.y - offsets[region.line] });
+            }
+            else {
+                // Voice connectors have no track reservation of their own;
+                // associate their ink with the one existing line containing it.
+                const line = placement.lineTops.findIndex((top, i) => region.y >= top - 1e-6 && region.y + region.h <= top + placement.heights[i] + 1e-6);
+                if (line >= 0) include(line, region);
+            }
+        // Explicit uniform-height layouts retain their shared whole-line
+        // envelopes. Default engraving uses the local painted primitives.
+        if (options.uniformSystemHeight) for (const [i, regions] of profiles.entries()) {
+            const envelope = { x: originX, y: placement.lineTops[i] - offsets[i], w: contentWidth, h: placement.heights[i] };
+            regions.push(envelope);
+            cores[i].push(envelope);
+        }
+        const coreExtents = cores.map((regions, i) => {
+            // Header-only lines retain their full painted body as the core.
+            const ink = regions.length ? regions : profiles[i];
+            return ink.length ? { top: Math.min(...ink.map(r => r.y)), bottom: Math.max(...ink.map(r => r.y + r.h)) } : { top: 0, bottom: 0 };
+        });
+        placement = placeVertically(profiles, coreExtents);
+        // Recreate cross-system relations and lyrics against the new axes and
+        // page ownership; never translate already rendered SVG fragments.
         measured = measureAttachments(documentAttachments, placement.attachmentContext, lines, lift, subdomainGeometry, hosts);
     }
     const pages = placement.pages;

@@ -203,6 +203,9 @@ export class TemporalNodeBase implements TimeLineEvent {
 
     /** 只执行绘制，不允许在这里重新测量或改变 LayoutBox */
     paint(_painter: Painter): void {}
+
+    /** Music body without outer expressions and articulations. */
+    paintCore(painter: Painter): void { this.paint(painter); }
 }
 
 /** 复合体下放函数语义时，核心声明仍留在全局事件上 */

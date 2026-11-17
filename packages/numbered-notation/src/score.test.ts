@@ -47,7 +47,7 @@ function lyrics(root: Document, id: string, row = 1) {
 }
 function geometry(document: ScoreDocument, settings: NumberedNotationRenderOptions = options) {
   const projection = projectNumberedScore(document, settings)
-  return compileScore(projection.source, { autoWrap: true, alignRelations: true, noteGap: 22 * (settings.noteGapEm ?? 0.6), minimumNoteGap: settings.minimumNoteGapEm === undefined ? (settings.noteGapEm === undefined ? 8.8 : undefined) : 22 * settings.minimumNoteGapEm, uniformSystemHeight: settings.uniformSystemHeight, equalMeasures: settings.equalMeasures ?? document.equalMeasures })
+  return compileScore(projection.source, { systemSpacing: { coreGap: settings.systemGap ?? 24, inkGap: (settings.systemGap ?? 24) / 2 }, autoWrap: true, alignRelations: true, noteGap: 22 * (settings.noteGapEm ?? 0.6), minimumNoteGap: settings.minimumNoteGapEm === undefined ? (settings.noteGapEm === undefined ? 8.8 : undefined) : 22 * settings.minimumNoteGapEm, uniformSystemHeight: settings.uniformSystemHeight, equalMeasures: settings.equalMeasures ?? document.equalMeasures })
 }
 
 function mainPitches(node: VisualTemporalNode): { name: string; acc: string; octave: number }[] {
@@ -506,9 +506,9 @@ describe('jpFun numbered notation adapter', () => {
   })
 
   it.each(['fermata', 'tip', 'str', 'hold', 'brk', 'breath', 'tr', 'prall', 'f1', 'f5'])('retains the %s postfix', name => {
-    const plain = render('{4/4}\nN: 1 2 3 4 |||').root.querySelector('#m3n-e-1')!.innerHTML
+    const plain = render('{4/4}\nN: 1 2 3 4 |||').root.querySelector('svg')!.innerHTML
     const marked = render(`{4/4}\nN: 1{${name}} 2 3 4 |||`)
-    expect(marked.root.querySelector('#m3n-e-1')!.innerHTML).not.toBe(plain)
+    expect(marked.root.querySelector('svg')!.innerHTML).not.toBe(plain)
     expect(marked.score.diagnostics.filter(item => item.code === 'NUMBERED_UNSUPPORTED_MARK')).toEqual([])
     for (const object of geometry(marked.document).layout.objects) {
       const box = getLayoutBounds(object)

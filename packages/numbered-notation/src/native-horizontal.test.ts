@@ -45,7 +45,7 @@ describe('native spacing and measured note envelopes', () => {
     const expected = [37.57701873779297, 217.293893737793, 397.01076873779297, 576.727643737793]
     result.projection.glyphs.forEach((glyph, index) => expect(glyph.x).toBeCloseTo(expected[index]!, 6))
     expect(result.projection.measures[0]!.barX).toBeCloseTo(763.17375, 6)
-    expect(result.projection.glyphs[0]!.y).toBeCloseTo(116.31, 6)
+    expect(result.projection.glyphs[0]!.y).toBeCloseTo(113.56, 6)
   })
   it('reserves dots for dotted values and gives a plain eighth no phantom dot space', () => {
     const result = layout('{4/4}\nN: (1 2) 3. (4) 5 |||')
@@ -78,8 +78,8 @@ describe('native spacing and measured note envelopes', () => {
     const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600)
     const axes = result.systems.map(system => system.lanes[0]!.y)
     expect(axes).toHaveLength(4)
-    for (const [index, gap] of [60.40926, 58.64932, 51.49935].entries()) expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1)
-    expect(result.pages[0]!.height).toBeCloseTo(363.02, 1)
+    for (const [index, gap] of [50.51, 47.54, 47.54].entries()) expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1)
+    expect(result.pages[0]!.height).toBeCloseTo(335.30, 1)
   })
 
   it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {

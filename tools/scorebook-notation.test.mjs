@@ -95,7 +95,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     })
     assert.deepEqual(defaults, [720, 680, 800], 'Source preference supplies the default, while explicit width wins')
     const shared = await page.evaluate(async () => {
-      const api = window.scorebook, width = 680
+      const api = window.scorebook, width = 720
       const sources = ['{title=合页甲}{4/4}\nN: 1 2 3 4 |||', '{title=合页乙}{4/4}\nN: 5 6 7 1 |||']
       const originals = []
       for (const source of sources) originals.push((await api.render(source, width, false))[0].innerHTML)
@@ -111,7 +111,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
         measuredHeight: summary.naturalHeight, overflowRejected }
     })
     assert.deepEqual(shared.identical, [true, true], 'Sharing changes only outer SVG placement')
-    assert.deepEqual(shared.widths, [680, 680])
+    assert.deepEqual(shared.widths, [720, 720])
     assert.equal(shared.items[0].sourceHeight, shared.measuredHeight)
     assert.equal(shared.items[1].top, shared.items[0].sourceHeight + 22)
     assert.equal(shared.items[0].placement.width, shared.items[1].placement.width)

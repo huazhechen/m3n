@@ -565,6 +565,14 @@ export class GraceTemporal extends TemporalNodeBase {
         });
     }
 
+    override paintCore(painter: Painter) {
+        for (const member of [this.host, ...this.graces]) {
+            if (member.T.isZero()) continue;
+            member.paintCore(painter);
+            for (const decoration of member.decorations) if (decoration.systemCore) decoration.paint?.(painter);
+        }
+    }
+
     override paint(painter: Painter) {
         for (const member of [this.host, ...this.graces]) {
             member.paint(painter);

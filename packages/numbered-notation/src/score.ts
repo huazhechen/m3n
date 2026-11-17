@@ -52,7 +52,7 @@ export class NumberedNotationScore {
     const context = canvas?.getContext('2d')
     const textMeasurer = options.textMeasurer ?? (context ? new CanvasTextMeasurer(context) : undefined)
     const projection = projectNumberedScore(this.document, { ...options, textMeasurer, width: Math.max(320, Math.round(options.width)) })
-    const result = compileScore(projection.source, { autoWrap: true, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
+    const result = compileScore(projection.source, { systemSpacing: { coreGap: options.systemGap ?? 24, inkGap: (options.systemGap ?? 24) / 2 }, autoWrap: true, minimumNoteGap: options.minimumNoteGapEm === undefined ? undefined : 22 * options.minimumNoteGapEm, noteGap: options.noteGapEm === undefined ? undefined : 22 * options.noteGapEm, wrap: options.wrap, wrapWidthRatio: options.wrapWidthRatio, alignRelations: true, uniformSystemHeight: options.uniformSystemHeight, equalMeasures: options.equalMeasures ?? this.document.equalMeasures, textMeasurer })
     // The score model understands complementary pickups and alternate endings;
     // jpFun sees independent bars and otherwise reports these valid fragments.
     const hasMeterWarning = result.diagnostics.some(item => item.code === 'W_METER_MISMATCH')

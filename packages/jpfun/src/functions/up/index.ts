@@ -456,6 +456,14 @@ class FoldTemporal extends TemporalNodeBase {
         }
     }
 
+    override paintCore(painter: Painter) {
+        for (const member of this.members) {
+            if (member.T.isZero()) continue;
+            member.paintCore(painter);
+            for (const decoration of member.decorations) if (decoration.systemCore) decoration.paint?.(painter);
+        }
+    }
+
     override paint(painter: Painter) {
         for (const member of this.members) {
             member.paint(painter);

@@ -144,6 +144,7 @@ class DivFunction extends ASTFunctionNode {
         let firstLine = 0;
 
         return {
+            systemCore: true,
             below: {
                 order: 0,
                 // 从正文的实际下沿留出净空，再换算到装饰排列起点。
