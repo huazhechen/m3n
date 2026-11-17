@@ -40,7 +40,7 @@ export class NativeSymbols {
       const halfBody = this.measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
       const symbols = nativeAccidentalGeometry(pitch.accidental, size, halfBody)
       svg += `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'accidental' })}>`
-        + symbols.paths.map(symbol => `<path${attrs({ d: symbol.d, fill: 'none', stroke: '#000', 'stroke-width': symbol.stroke, 'data-m3n-symbol': symbol.symbol })}/>`).join('') + '</g>'
+        + symbols.paths.map(symbol => `<path${attrs({ d: symbol.d, fill: 'none', stroke: '#000', 'stroke-width': symbol.stroke, 'data-m3n-symbol': symbol.symbol, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })}/>`).join('') + '</g>'
     }
     const body = nativeNoteBody(this.measurer, size)
     for (let index = 0; index < Math.abs(pitch.octave); index++) {
@@ -93,7 +93,7 @@ export class NativeSymbols {
       const left = x+row.x, baseline = y+axis-geometry.height/2+row.y+row.baseline
       return this.text(row.prefix,left,baseline,nativeStyle.text,'M3N Numbers')
         + `<g transform="translate(${n(left+row.accidentalX)} ${n(baseline)})">`
-        + row.paths.map(symbol=>`<path${attrs({d:symbol.d,fill:'none',stroke:'#000','stroke-width':symbol.stroke,'data-m3n-symbol':symbol.symbol})}/>`).join('') + '</g>'
+        + row.paths.map(symbol=>`<path${attrs({d:symbol.d,fill:'none',stroke:'#000','stroke-width':symbol.stroke,'data-m3n-symbol':symbol.symbol,'stroke-linecap':'round','stroke-linejoin':'round'})}/>`).join('') + '</g>'
         + this.text(row.name,left+row.nameX,baseline,nativeStyle.text,'M3N Numbers')
     }).join('')
   }

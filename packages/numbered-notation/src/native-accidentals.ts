@@ -24,18 +24,16 @@ export function nativeAccidentalGeometry(symbols: string, size: number, numberHa
     const segments: string[] = []
     const stroke = (x1: number, y1: number, x2: number, y2: number) => segments.push(`M${p(x1, y1)} L${p(x2, y2)}`)
     if (symbol === '♯') {
-      // Parallel leaning stems crossed by two rising bars.
-      for (const stem of [0.31, 0.69]) stroke(stem + 0.035, 0.05, stem - 0.035, 0.95)
-      for (const bar of [0.33, 0.67]) stroke(0.065, bar + 0.05, 0.885, bar - 0.05)
+      stroke(0.34, 0.05, 0.27, 0.95)
+      stroke(0.72, 0.05, 0.65, 0.95)
+      stroke(0.08, 0.38, 0.9, 0.28)
+      stroke(0.05, 0.72, 0.87, 0.62)
     } else if (symbol === '♭') {
       stroke(0.3, 0.04, 0.3, 0.94)
-      segments.push(`M${p(0.3, 0.5)} C${p(0.95, 0.35)} ${p(0.95, 0.75)} ${p(0.3, 0.86)}`)
+      segments.push(`M${p(0.3, 0.5)} Q${p(0.92, 0.36)} ${p(0.76, 0.68)} Q${p(0.63, 0.87)} ${p(0.3, 0.86)}`)
     } else {
-      const stemLeft = 0.28, stemRight = 1 - stemLeft
-      stroke(stemLeft, 0.05, stemLeft, 0.82)
-      stroke(stemRight, 0.18, stemRight, 0.95)
-      stroke(stemLeft, 0.32, stemRight, 0.18)
-      stroke(stemLeft, 0.82, stemRight, 0.68)
+      segments.push(`M${p(0.28, 0.05)} L${p(0.28, 0.82)} L${p(0.72, 0.68)} L${p(0.72, 0.95)}`)
+      segments.push(`M${p(0.72, 0.95)} L${p(0.72, 0.18)} L${p(0.28, 0.32)}`)
     }
     paths.push({ symbol, d: segments.join(' '), stroke: size * 0.06 })
     left += width + size * 0.01
