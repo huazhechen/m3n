@@ -1,13 +1,13 @@
+import { parseM3NDocument, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
-import { alternativePerformance, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/guang_yin_de_gu_shi_01.m3n?raw'
 import reference from './fixtures/guang-yin-kuaiyuepu.json'
 
-it('plays the Kuaiyuepu 6/8 vocal melody three times at the requested 95 qpm', () => {
+it('plays the 6/8 reference with five requested instrumental slide simplifications three times at 95 qpm', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect([document.key, document.meterCount, document.meterUnit, document.tempo]).toEqual(['G', 6, 8, 95])
-  const bars = alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
+  const bars = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
   expect(bars).toHaveLength(72)
   expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual(Array(72).fill(3))
   const pitches = resolveScorePitches(bars)
@@ -24,6 +24,11 @@ it('plays the Kuaiyuepu 6/8 vocal melody three times at the requested 95 qpm', (
     continuation = event.tie ?? false
     beat += event.beats
   }
-  const expected = [0, 72, 144].flatMap(offset => reference.events.map(([onset, pitch, duration]) => [onset! + offset, pitch, duration]))
+  // Keep the original vocal reference; simplify only the five audited passing notes.
+  const removedOnsets = new Set([32.75, 50, 53, 62, 65])
+  const extendedDurations = new Map([[32.5, 0.5], [49.5, 1], [52.5, 1], [61.5, 1], [64.5, 1]])
+  const instrumental = reference.events.filter(([onset]) => !removedOnsets.has(onset!))
+    .map(([onset, pitch, duration]) => [onset!, pitch, extendedDurations.get(onset!) ?? duration])
+  const expected = [0, 72, 144].flatMap(offset => instrumental.map(([onset, pitch, duration]) => [onset! + offset, pitch, duration]))
   expect(events).toEqual(expected)
 })
