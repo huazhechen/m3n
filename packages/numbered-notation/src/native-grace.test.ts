@@ -38,6 +38,22 @@ describe('measured native grace blocks', () => {
     expect(hook.getAttribute('stroke-linejoin')).toBe('round')
   })
 
+  it.each([[.25, .125, .125, 3], [.125, .25, .125, 4]])(
+    'paints each connected grace beam once for durations %s, %s, %s', (a, b, c, count) => {
+      const grace = nativeGraceGeometry([a, b, c].map((writtenBeats, index) => ({ degree: String(index + 2), accidental: '', octave: 0, writtenBeats })), 6, normal)
+      const root = new DOMParser().parseFromString(`<svg>${grace.svg}</svg>`, 'image/svg+xml')
+      const beams = [...root.querySelectorAll('line')]
+      expect(beams).toHaveLength(count)
+      const ink = beams.map(beam => {
+        const transform = beam.parentElement?.getAttribute('transform')
+        return nativeSvgInk(transform ? `<g transform="${transform}">${beam.outerHTML}</g>` : beam.outerHTML, normal)
+      })
+      for (const [index, beam] of ink.entries()) for (const other of ink.slice(index + 1)) {
+        if (Math.abs(beam.top - other.top) > .001) continue
+        expect(Math.min(beam.right, other.right) - Math.max(beam.left, other.left)).toBeLessThanOrEqual(.001)
+      }
+    })
+
 
   it.each(['♭', '♮'])('keeps the logical accidental margin as well as actual grace paint: %s', accidental => {
     const pitches = ['4', '5'].map(degree => ({degree, accidental, octave:-1}))
@@ -59,8 +75,9 @@ describe('measured native grace blocks', () => {
     const root = new DOMParser().parseFromString(renderNativePages(score).join(''),'text/html')
     const grace = root.querySelector('[data-m3n-role="grace"]')!
     const notes = [...grace.querySelectorAll('[data-m3n-role="grace-note"]')]
-    expect(notes.map(n => n.querySelectorAll('line').length)).toEqual([2,3,3])
-    expect(grace.querySelectorAll(':scope > line')).toHaveLength(5)
+    expect(notes.map(n => n.getAttribute('data-m3n-beams'))).toEqual(['2','3','3'])
+    expect(notes.map(n => n.querySelectorAll('line').length)).toEqual([0,0,0])
+    expect(grace.querySelectorAll(':scope > line')).toHaveLength(3)
     expect([...grace.querySelectorAll('text')].map(n => n.getAttribute('font-size'))).toEqual(['15.4','15.4','15.4'])
     expect(grace.querySelector('path:not([data-m3n-symbol])')!.getAttribute('d')).toContain(' C')
   })
@@ -105,11 +122,11 @@ describe('measured native grace blocks', () => {
     const grace = nativeGraceGeometry(['2','3'].map(degree => ({degree,accidental:'',octave:0})),6,varied)
     const root = new DOMParser().parseFromString(`<svg>${grace.svg}</svg>`,'image/svg+xml')
     const notes = [...root.querySelectorAll('[data-m3n-role="grace-note"]')]
-    const beams = notes.map(note => nativeSvgInk(note.querySelector('line')!.outerHTML,varied))
-    expect(beams[0]!.top).toEqual(beams[1]!.top)
-    for (const [i,note] of notes.entries()) {
-      const digit = nativeSvgInk(note.querySelector('text')!.outerHTML,varied)
-      expect(beams[i]!.top - digit.bottom).toBeGreaterThanOrEqual(grace.size * .12 - .0001)
+    const beams = [...root.querySelectorAll('[data-m3n-role="grace"] > line')].map(beam => nativeSvgInk(beam.outerHTML,varied))
+    expect(beams).toHaveLength(2)
+    for (const note of notes) {
+      const digit = nativeSvgInk(note.outerHTML,varied)
+      expect(beams[0]!.top - digit.bottom).toBeGreaterThanOrEqual(grace.size * .12 - .0001)
     }
   })
 

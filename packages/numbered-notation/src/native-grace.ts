@@ -30,12 +30,13 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
       const offset = gap + radius + index * (2 * radius + gap)
       svg += circle(0, pitch.octave > 0 ? digit.top - offset : bottom + offset, radius)
     }
+    const bodySvg = svg
     for (let beam = 0; beam < beams; beam++) svg += line(-half, beamY + beam * beamStep, half, beamY + beam * beamStep, stroke)
     const ink = nativeSvgInk(svg, measurer)
     // Keep the measured body/accidental advance as a minimum footprint,
     // while retaining overhang and round caps from the actual paint.
     const footprint = { ...ink, left: Math.min(ink.left, -half - nativeAccidentalAdvance(pitch.accidental, size)), right: Math.max(ink.right, half) }
-    return { pitch, beats, beams, svg, ink, footprint, x: 0, y: 0 }
+    return { pitch, beats, beams, svg, bodySvg, ink, footprint, x: 0, y: 0 }
   })
   if (!notes.length) throw new Error('倚音块不能为空。')
   let end = 0
@@ -50,16 +51,30 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
   const main = measurer.measureText('0', {fontSize: nativeStyle.music, fontFamily: 'M3N Numbers'})
   const x = -mainLeft - sideGap - block.right
   const y = -main.baseline - size * 0.18 - block.bottom
-  let svg = ''
   for (const note of notes) {
     note.x += x; note.y = y
-    svg += `<g${attrs({ transform: `translate(${n(note.x)} ${n(note.y)})`, 'data-m3n-role': 'grace-note', 'data-m3n-beams': note.beams })}>${note.svg}</g>`
   }
-  // Join every common beam level, including deeper subgroups of mixed runs.
-  for (let index = 1; index < notes.length; index++) {
-    const previous = notes[index - 1]!, note = notes[index]!
-    for (let beam = 0; beam < Math.min(previous.beams, note.beams); beam++) svg += line(previous.x + half, y + beamY + beam * beamStep, note.x - half, y + beamY + beam * beamStep, stroke)
+  const claimed = notes.map(() => new Set<number>())
+  let joined = ''
+  // Paint a common level as one stroke, including mixed-depth subgroups.
+  // Overlapping round caps at internal joins otherwise darken the raster.
+  for (let beam = 0; beam < Math.max(...notes.map(note => note.beams)); beam++) {
+    for (let start = 0; start < notes.length;) {
+      if (notes[start]!.beams <= beam) { start++; continue }
+      let end = start + 1
+      while (end < notes.length && notes[end]!.beams > beam) end++
+      if (end - start > 1) {
+        for (let index = start; index < end; index++) claimed[index]!.add(beam)
+        joined += line(notes[start]!.x - half, y + beamY + beam * beamStep, notes[end - 1]!.x + half, y + beamY + beam * beamStep, stroke)
+      }
+      start = end
+    }
   }
+  let svg = notes.map((note, index) => {
+    let paint = note.bodySvg
+    for (let beam = 0; beam < note.beams; beam++) if (!claimed[index]!.has(beam)) paint += line(-half, beamY + beam * beamStep, half, beamY + beam * beamStep, stroke)
+    return `<g${attrs({ transform: `translate(${n(note.x)} ${n(note.y)})`, 'data-m3n-role': 'grace-note', 'data-m3n-beams': note.beams })}>${paint}</g>`
+  }).join('') + joined
   const near = notes.at(-1)!, hook = { x: near.x, y: y + block.bottom }
   const p = (a: number, b: number) => `${n(hook.x + a * size)} ${n(hook.y + b * size)}`
   svg += `<path${attrs({ d: `M${p(0,0)} C${p(-0.01,0.26)} ${p(0.14,0.42)} ${p(0.29,0.36)}`, fill: 'none', stroke: '#000', 'stroke-width': size * 0.07, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })}/>`
