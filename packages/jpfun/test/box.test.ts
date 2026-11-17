@@ -189,7 +189,7 @@ test("倚音序列和宿主都预留框占位，前后倚音与嵌套框共用�
         const node = layout.objects[0];
         assert(node instanceof GraceTemporal, "expected a grace composite");
         const frames = layout.attachments.filter(item => item.layer === "background");
-        const gap = 12 * 0.6 * Math.sqrt(0.5);
+        const gap = 12 * 0.5 * Math.sqrt(0.5);
         const [firstInk, secondInk, lastInk] = node.graces.map(grace => getLayoutBounds(grace, true));
         const hostFrame = frames.find(item => nearly(item.box.w, node.host.box.w + 12))!;
         const graceFrame = frames.find(item => nearly(item.box.w,

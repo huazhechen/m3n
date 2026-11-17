@@ -10,6 +10,8 @@ import type { LoweringContext } from "../../lowering/loweringContext.js";
 import type { LoweringResult } from "../../lowering/types.js";
 import { isLayoutAttachment } from "../../layout/types.js";
 import { getLayoutBounds } from "../../layout/engine.js";
+import { paintedCommandRegions, paintedNodeRegions } from "../../layout/painted-ink.js";
+import { RecordingPainter } from "../../render/recording.js";
 import {
     isVisualTemporalNode,
     TemporalNodeBase,
@@ -24,17 +26,14 @@ import type {
     LayoutPrepareContext,
     LayoutRegion,
 } from "../../layout/types.js";
-import type { Painter, PathCommand, PathTransform, TextStyle } from "../../render/types.js";
+import type { Painter, PathCommand, TextStyle } from "../../render/types.js";
 import {
-    BRACKET_HOOK_COMMANDS, BRACKET_HOOK_DROP, BRACKET_HOOK_REACH,
     CURVED_BRACE_BOUNDS, CURVED_BRACE_COMMANDS,
     parseConnections, resolveConnections, serializeConnections,
     type ConnectionSpec, type VoiceConnection,
 } from "./connections.js";
 
 const WHITEPACE_RE = /\s/;
-const MIN_CONNECTOR_STEM = 2.5;
-const CONNECTOR_LABEL_GAP_RATIO = 0.3;
 // 分词跟后面的标点
 const LYRIC_OPENING_PUNCTUATION = new Set("（([［｛〈《「『【〔〖〘〚‘“");
 const visibleLyricText = (text: string) => text.replaceAll('\u200B', '').trim().length > 0;
@@ -690,9 +689,7 @@ N(女低): 1 2 3
         super(span, parent);
         this.voices = [];
         this.size = ctx.variables.fontsize;
-        // 端钩有最小线宽，极小字号也要给它保留足够的横向空间
-        this.braceSpace = Math.max(ctx.variables.fontsize,
-            (MIN_CONNECTOR_STEM * (BRACKET_HOOK_REACH + 0.5) + 0.5) / (1 - CONNECTOR_LABEL_GAP_RATIO));
+        this.braceSpace = this.size;
         this.measure = makeVoicesMeasure(ctx.variables.fontsize);
         [this.connect, this.repeatconnect] = this.getArgValue(args, ctx) as [string, boolean];
         for (const [key, value] of args) {
@@ -818,8 +815,7 @@ class VoiceNameTemporal extends TemporalNodeBase {
  * 画在声部名与音符之间的多声部括线
  *
  * 共享一条细竖线，按连接范围添加粗括线或弯曲大括号
- * 纵向跨度直接取首末声部名事件的视觉轴（无名声部的占位盒高度为 0，其 y 就是轨道视觉轴），
- * 因此不需要反查任何轨道信息
+ * 端点按对应谱行首末声部的音乐主体实绘包络定位；所有尺寸随音乐字号缩放。
  */
 class VoicesBraceAttachment implements LayoutAttachment {
     layer = "background" as const;
@@ -862,74 +858,68 @@ class VoicesBraceAttachment implements LayoutAttachment {
         }
     }
 
-    createGeometry() {
+    createGeometry(context: AttachmentLayoutContext) {
         if (this.names.length < 2) return { regions: [], paint() {} };
-
-        const first = this.names[0].box;
-        const last = this.names[this.names.length - 1].box;
         const em = this.ast.size;
-        const top = first.y + first.visualAxis - em * 0.5;
-        const bottom = last.y + last.visualAxis + em * 0.5;
+        // Measure only timed music in this voices block. Grace notes, labels,
+        // lyrics and outer expressions must not lengthen a remote connector.
+        const bodies = this.names.map(name => {
+            const pieces = (context.lines[name.layoutLine]?.columns.flat() ?? []).flatMap(host => {
+                if (!(host instanceof TemporalNodeBase) || !isVisualTemporalNode(host)
+                    || host.track !== name.track || host.T.isZero()) return [];
+                for (let ast: ASTNodeBase | null = host.ast; ast; ast = ast.parent) {
+                    if (ast === this.ast) return paintedNodeRegions(host, context.textMeasurer, true);
+                }
+                return [];
+            });
+            const axis = name.box.y + name.box.visualAxis;
+            return pieces.length ? { top: Math.min(...pieces.map(piece => piece.y)),
+                bottom: Math.max(...pieces.map(piece => piece.y + piece.h)) }
+                : { top: axis - em / 2, bottom: axis + em / 2 };
+        });
+        const top = bodies[0].top, bottom = bodies.at(-1)!.bottom;
         if (bottom - top < 1e-6) return { regions: [], paint() {} };
-
-        // 各部分尺寸都以粗竖线宽度为单位，比例取自常见简谱软件的括线
-        const stem = Math.max(MIN_CONNECTOR_STEM, em * 0.19);
-        const reach = stem * BRACKET_HOOK_REACH;
-        const drop = stem * BRACKET_HOOK_DROP;
-        const x = first.x + first.anchor + this.ast.braceSpace * CONNECTOR_LABEL_GAP_RATIO + stem / 2;
-
-        const inset = Math.min(stem * 0.67, em * 0.25);
-        const line = {
-            x: x + stem * 1.33 - stem * 0.165,
-            y: top + inset,
-            w: stem * 0.33,
-            h: bottom - top - inset * 2,
-        };
-        const bars: LayoutRegion[] = [];
-        const paths: { commands: readonly PathCommand[]; transform: PathTransform }[] = [];
-        const regions: LayoutRegion[] = [line];
+        const first = this.names[0].box;
+        const x = first.x + first.anchor + em * .3;
+        const thickness = em * .17, reach = em * .56;
+        const recording = new RecordingPainter();
         for (const connection of this.connections) {
-            const first = this.names[connection.from - 1].box;
-            const last = this.names[connection.to - 1].box;
-            const groupTop = first.y + first.visualAxis - em * 0.5;
-            const groupBottom = last.y + last.visualAxis + em * 0.5;
+            const groupTop = bodies[connection.from - 1].top;
+            const groupBottom = bodies[connection.to - 1].bottom;
             if (connection.kind === "bracket") {
-                bars.push({ x: x - stem / 2, y: groupTop, w: stem, h: groupBottom - groupTop });
-                paths.push(
-                    { commands: BRACKET_HOOK_COMMANDS, transform: { x, y: groupTop, scaleX: stem, scaleY: -stem } },
-                    { commands: BRACKET_HOOK_COMMANDS, transform: { x, y: groupBottom, scaleX: stem, scaleY: stem } },
-                );
-                regions.push({
-                    x: x - stem / 2, y: groupTop - drop,
-                    w: reach + stem / 2, h: groupBottom - groupTop + drop * 2,
-                });
+                const rise = Math.min(em * .2, (groupBottom - groupTop) / 4);
+                recording.drawRect(x, groupTop + rise * .65, thickness,
+                    groupBottom - groupTop - rise * 1.3, { fill: "#000" });
+                const hook = (y: number, direction: number) => {
+                    const point = (dx: number, dy: number) => ({ x: x + dx, y: y + direction * dy });
+                    const a = point(thickness, rise * .6), b = point(reach * .65, rise * .35);
+                    const c = point(reach * .5, rise * .12), d = point(thickness * .5, rise * .4);
+                    const commands: PathCommand[] = [
+                        { op: "M", ...point(0, rise) }, { op: "L", ...point(thickness, rise) },
+                        { op: "C", cx1: a.x, cy1: a.y, cx2: b.x, cy2: b.y, ...point(reach, 0) },
+                        { op: "L", ...point(reach - em * .025, 0) },
+                        { op: "C", cx1: c.x, cy1: c.y, cx2: d.x, cy2: d.y, ...point(0, rise * .65) },
+                        { op: "Z" },
+                    ];
+                    recording.drawPath(commands, { fill: "#000" });
+                };
+                hook(groupTop, 1); hook(groupBottom, -1);
             } else {
-                const width = em * 0.35;
-                const left = line.x - em * 0.12 - width;
+                const width = em * .35, left = x + em * .32 - em * .12 - width;
                 const scaleX = width / CURVED_BRACE_BOUNDS.w;
                 const scaleY = (groupBottom - groupTop) / CURVED_BRACE_BOUNDS.h;
-                paths.push({
-                    commands: CURVED_BRACE_COMMANDS,
-                    transform: {
-                        x: left - CURVED_BRACE_BOUNDS.x * scaleX,
-                        y: groupTop - CURVED_BRACE_BOUNDS.y * scaleY,
-                        scaleX, scaleY,
-                    },
+                recording.drawPath(CURVED_BRACE_COMMANDS, { fill: "#000" }, {
+                    x: left - CURVED_BRACE_BOUNDS.x * scaleX,
+                    y: groupTop - CURVED_BRACE_BOUNDS.y * scaleY, scaleX, scaleY,
                 });
-                regions.push({ x: left, y: groupTop, w: width, h: groupBottom - groupTop });
             }
         }
-        bars.push(line);
+        const rise = Math.min(em * .2, (bottom - top) / 4);
+        recording.drawLine(x + em * .32, top + rise * .4, x + em * .32,
+            bottom - rise * .4, { stroke: "#000", strokeWidth: em * .055 });
         return {
-            regions,
-            paint(painter: Painter) {
-                for (const bar of bars) {
-                    painter.drawRect(bar.x, bar.y, bar.w, bar.h, { fill: "#000" });
-                }
-                for (const path of paths) {
-                    painter.drawPath(path.commands, { fill: "#000" }, path.transform);
-                }
-            },
+            regions: recording.commands.flatMap(command => paintedCommandRegions(command, context.textMeasurer)),
+            paint(painter: Painter) { recording.replay(painter); },
         };
     }
 }

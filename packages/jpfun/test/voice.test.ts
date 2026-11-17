@@ -3,6 +3,8 @@ import { deepStrictEqual, strictEqual } from "node:assert";
 
 import { compileScore } from "../src/pipeline.js";
 import { pathBounds } from "../src/layout/path.js";
+import { paintedCommandRegions, paintedNodeRegions } from "../src/layout/painted-ink.js";
+import { defaultTextMeasurer } from "../src/render/text.js";
 import { ASTFunctionNode, ASTNodeBase } from "../src/functions/ASTtypes.js";
 import { parseConnections } from "../src/functions/voice/connections.js";
 import { quote, removeQuote } from "../src/parser/parse-utils/string-utils.js";
@@ -325,6 +327,22 @@ test("多声部括线画在声部名与音符之间，纵向跨足首末声部",
 });
 
 const fourVoices = '@voice({1 2}, A), @voice({3 4}, B), @voice({5 6}, C), @voice({7 1}, D)';
+
+test("连谱括线的完整墨迹贴合主音本体，不延伸到倚音与外层表情", () => {
+    for (const size of [8, 22, 40]) for (const lead of ["1", "1''", "@grace(1,{2''' 3'''})", "1 ^ $fff"]) {
+        const result = layoutOf(`@voices(@voice({${lead} 2}),@voice({@n(3,octave=-2)/ @n(4,octave=-3)/}),connect="[-]")`, size);
+        const connector = result.attachments.find(attachment => attachment.layer === "background")!;
+        const ink = attachmentCommands(connector).flatMap(command => paintedCommandRegions(command, defaultTextMeasurer));
+        const notes = result.objects.filter(object => !object.T.isZero());
+        const body = (track: typeof notes[number]['track']) => notes.filter(note => note.track === track)
+            .flatMap(note => paintedNodeRegions(note, defaultTextMeasurer, true));
+        assert(nearly(Math.min(...ink.map(r => r.y)), Math.min(...body(notes[0].track).map(r => r.y))),
+            `top must follow main-note ink at ${size}px, ${lead}`);
+        const bass = notes.find(note => note.track !== notes[0].track)!;
+        assert(nearly(Math.max(...ink.map(r => r.y + r.h)), Math.max(...body(bass.track).map(r => r.y + r.h))),
+            `bottom must include the bass octave dots and beams at ${size}px`);
+    }
+});
 const connectionSpecsOf = (source: string) => parseConnections(source, { start: 0, end: source.length });
 
 test("voice connections preserve variadic voices and serialize frozen defaults", () => {
@@ -378,7 +396,7 @@ test("empty voice connections retain exactly one shared thin line", () => {
     const connector = result.attachments.find(attachment => attachment.layer === "background")!;
     const commands = attachmentCommands(connector);
     strictEqual(commands.length, 1);
-    strictEqual(commands[0].kind, "rect");
+    strictEqual(commands[0].kind, "line");
     const notes = result.objects.filter(object => !object.T.isZero());
     assert(connector.box.y < axisOf(notes[0])
         && connector.box.y + connector.box.h > axisOf(notes.at(-1)!),
@@ -464,17 +482,19 @@ test("partial braces cover only their range while the shared line spans every vo
         const result = layoutOf(`@voices(${members}, connect="{3-5}")`, size);
         const connector = result.attachments.find(attachment => attachment.layer === "background")!;
         const commands = attachmentCommands(connector);
-        const bars = commands.filter(command => command.kind === "rect");
+        const bars = commands.filter(command => command.kind === "line");
         const curves = commands.filter(command => command.kind === "path");
         strictEqual(bars.length, 1);
         strictEqual(curves.length, 1);
         const notes = result.objects.filter(object => !object.T.isZero());
         const curveBounds = pathBounds(curves[0].commands);
-        assert(nearly(curveBounds.y, axisOf(notes[2]) - size / 2),
+        const topInk = paintedNodeRegions(notes[2], defaultTextMeasurer, true);
+        const bottomInk = paintedNodeRegions(notes[4], defaultTextMeasurer, true);
+        assert(nearly(curveBounds.y, Math.min(...topInk.map(piece => piece.y))),
             "brace must begin at voice 3");
-        assert(nearly(curveBounds.y + curveBounds.h, axisOf(notes[4]) + size / 2),
+        assert(nearly(curveBounds.y + curveBounds.h, Math.max(...bottomInk.map(piece => piece.y + piece.h))),
             "brace must end at voice 5");
-        assert(bars[0].y < axisOf(notes[0]) && bars[0].y + bars[0].h > axisOf(notes[6]),
+        assert(bars[0].y1 < axisOf(notes[0]) && bars[0].y2 > axisOf(notes[6]),
             "unconfigured voices must remain connected by the shared line");
         const names = result.objects.filter(object => object.T.isZero());
         const labelRight = Math.max(...names.map(name => name.box.x + name.box.anchor));
@@ -488,8 +508,8 @@ test("overlapping connectors do not duplicate the common line or add tracks", ()
     const connector = result.layout.attachments.find(attachment => attachment.layer === "background")!;
     const commands = attachmentCommands(connector);
     const bars = commands.filter(command => command.kind === "rect");
-    strictEqual(bars.length, 3);
-    strictEqual(bars.filter(bar => nearly(bar.w, 22 * 0.19 * 0.33)).length, 1);
+    strictEqual(bars.length, 2);
+    strictEqual(commands.filter(command => command.kind === "line" && nearly(command.style!.strokeWidth!, 22 * .055)).length, 1);
     strictEqual(commands.filter(command => command.kind === "path").length, 5);
     strictEqual(new Set(result.layout.objects.filter(object => !object.T.isZero()).map(object => object.track)).size, 4);
 });

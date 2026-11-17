@@ -148,10 +148,10 @@ test("颤音尾巴在 SVG 与 Canvas 中都逐截绘制", () => {
 test("voice connectors use the same finite paths in SVG and Canvas", () => {
     const voices = '@voice({1}, A), @voice({2}, B), @voice({3}, C)';
     for (const [connect, paths, curves, rectangles] of [
-        ["", 0, 0, 1],
-        ["{-}", 1, 20, 1],
-        ["[-]", 2, 4, 2],
-        ["[-]{-}", 3, 24, 2],
+        ["", 0, 0, 0],
+        ["{-}", 1, 20, 0],
+        ["[-]", 2, 4, 1],
+        ["[-]{-}", 3, 24, 1],
     ] as const) {
         const result = layoutOf(`@voices(${voices}, connect="${connect}")`);
         assert(recordCommands(result).every(allNumbersFinite), "all connector coordinates must be finite");
@@ -159,6 +159,7 @@ test("voice connectors use the same finite paths in SVG and Canvas", () => {
         const canvas = recordCanvasCalls(result);
         strictEqual((svg.match(/<path d=/g) ?? []).length, paths, connect);
         strictEqual((svg.match(/<rect /g) ?? []).length, rectangles, connect);
+        strictEqual((svg.match(/<line /g) ?? []).length, 1, "one shared round-ended rule");
         strictEqual(canvas.filter(call => call === "bezierCurveTo").length, curves, connect);
         strictEqual(canvas.filter(call => call === "fillRect").length, rectangles, connect);
     }

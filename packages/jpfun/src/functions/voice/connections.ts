@@ -30,29 +30,6 @@ export const CURVED_BRACE_COMMANDS: readonly PathCommand[] = [
 
 export const CURVED_BRACE_BOUNDS = pathBounds(CURVED_BRACE_COMMANDS);
 
-/** 方括线端钩，以粗竖线宽度为单位，绘制时上下镜像 */
-export const BRACKET_HOOK_REACH = 2.33;
-export const BRACKET_HOOK_DROP = 1.17;
-const BRACKET_HOOK_BASE = 0.34;
-export const BRACKET_HOOK_COMMANDS: readonly PathCommand[] = [
-    { op: "M", x: 0, y: 0 },
-    { op: "L", x: 0, y: -BRACKET_HOOK_BASE },
-    {
-        op: "C",
-        cx1: BRACKET_HOOK_REACH * 0.421, cy1: -BRACKET_HOOK_BASE + BRACKET_HOOK_DROP * 0.077,
-        cx2: BRACKET_HOOK_REACH * 0.733, cy2: -BRACKET_HOOK_BASE + BRACKET_HOOK_DROP * 0.346,
-        x: BRACKET_HOOK_REACH, y: -BRACKET_HOOK_BASE + BRACKET_HOOK_DROP,
-    },
-    { op: "L", x: BRACKET_HOOK_REACH * 0.929, y: -BRACKET_HOOK_BASE + BRACKET_HOOK_DROP },
-    {
-        op: "C",
-        cx1: BRACKET_HOOK_REACH * 0.696, cy1: -BRACKET_HOOK_BASE + BRACKET_HOOK_DROP * 0.535,
-        cx2: BRACKET_HOOK_REACH * 0.328, cy2: -BRACKET_HOOK_BASE + BRACKET_HOOK_DROP * 0.352,
-        x: 0, y: 0,
-    },
-    { op: "Z" },
-];
-
 export type ConnectionKind = "brace" | "bracket";
 
 export interface ConnectionSpec {
