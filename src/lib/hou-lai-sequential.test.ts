@@ -9,7 +9,7 @@ const source = readFileSync(new URL('../scores/hou_lai_01.m3n', import.meta.url)
 const instrumentalReference = original
   .replaceAll('((2e) 1e.) 1e~', '((2e) 1e.~) 1e~').replaceAll('再{%2}', '再%')
   .replace('{lg}((2e) 1e){/} ((1e~))', '(2e.) ((1e~))').replace('星%光', '星光')
-  .replace('{lg}((5 6)){/} 6^', '(5) 6^').replace('年少%时', '年少时')
+  .replace('{lg}((5 6)){/} 6^', '(6) 6^').replace('年少%时', '年少时')
 const before = parseM3NDocument(instrumentalReference), after = parseM3NDocument(source)
 const performedBars = (document: typeof before) => alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
 const oldBars = performedBars(before), newBars = performedBars(after)
