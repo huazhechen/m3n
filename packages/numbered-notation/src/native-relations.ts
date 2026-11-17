@@ -1,4 +1,4 @@
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
 import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
@@ -27,7 +27,10 @@ class NativeRelationPainter extends NativeSymbols {
         const metrics = this.measurer.measureText(text, {fontSize:nativeStyle.music, fontFamily:'M3N Numbers'})
         return nativeMusicAxis(this.measurer) + metrics.baseline - metrics.h / 2
       }
-      return this.text('(', first.x - (first.musicLeft ?? first.left) - (first.parenthesisLeft ?? em(6)), baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+      // The text origin uses advance width; reservation also includes any ink
+      // outside that advance. Subtracting the reservation would lose it again.
+      const leftWidth = this.measurer.measureText('(', {fontSize:nativeStyle.music, fontFamily:'M3N Numbers'}).w
+      return this.text('(', first.x - (first.musicLeft ?? first.left) - leftWidth - nativeStyle.music * 0.05, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
         + this.text(')', last.x + (last.musicRight ?? last.right) + nativeStyle.music * 0.05, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {

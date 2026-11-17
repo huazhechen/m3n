@@ -194,8 +194,10 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           glyph.inkLeft = -ink.left; glyph.inkRight = ink.right
           glyph.instrumental = document.intervals.some(interval => interval.kind === 'inst' && interval.staff === staff && interval.start !== undefined && interval.end !== undefined && interval.start <= event.sourceStart && event.sourceEnd <= interval.end)
           if (glyph.instrumental || lane.startsWith('alternative:')) {
-            glyph.parenthesisLeft = textWidth('(', nativeStyle.music, 'M3N Numbers') + nativeStyle.music * 0.05
-            glyph.parenthesisRight = textWidth(')', nativeStyle.music, 'M3N Numbers') + nativeStyle.music * 0.05
+            const style = { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }
+            const left = options.textMeasurer.measureText('(', style), right = options.textMeasurer.measureText(')', style)
+            glyph.parenthesisLeft = left.w - Math.min(0, left.inkLeft ?? 0) + nativeStyle.music * 0.05
+            glyph.parenthesisRight = Math.max(right.w, right.inkRight ?? right.w) + nativeStyle.music * 0.05
           }
           result.glyphs.push(glyph); time += beats
         }
