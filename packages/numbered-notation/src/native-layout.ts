@@ -148,21 +148,31 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
     let end = begin + 1
     while (end < fragments.length && !fragments[end]!.breakBefore && !fragments[end - 1]!.breakAfter) end++
     const group = fragments.slice(begin, end), cost = Array<number>(group.length + 1).fill(Infinity), next = Array<number>(group.length).fill(0)
+    const sparse = group.map(measure => {
+      const glyphs = measure.columns.flatMap(column => column.glyphs)
+      return glyphs.length <= 4 && glyphs.every(glyph => glyph.beats >= 1
+        && Math.max(glyph.musicLeft ?? glyph.left, glyph.lyricLeft ?? 0) + Math.max(glyph.musicRight ?? glyph.right, glyph.lyricRight ?? 0)
+          <= ((glyph.musicLeft ?? glyph.left) + (glyph.musicRight ?? glyph.right)) * 1.5)
+    })
     cost[group.length] = 0
     for (let index = group.length - 1; index >= 0; index--) {
       let natural = 0, minimum = 0, widestNatural = 0, widestMinimum = 0
+      let compactEqual = options.wrap === 'compact' && options.equalMeasures
       for (let stop = index; stop < group.length; stop++) {
         const measure = group[stop]!, count = stop - index + 1
         natural += measure.natural; minimum += measure.minimum
         widestNatural = Math.max(widestNatural, measure.natural); widestMinimum = Math.max(widestMinimum, measure.minimum)
         const equal = options.equalMeasures
+        compactEqual &&= sparse[stop]
         const minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
         const naturalWidth = equal ? widestNatural * count : measure.naturalEnd !== undefined && group[index]!.naturalStart !== undefined ? measure.naturalEnd - group[index]!.naturalStart! : natural
-        const capacity = width * ratio * (options.pairedSpacing ? 1 : options.wrap === 'compact' ? 1.16 : 0.94)
+        const available = width * ratio
+        const capacity = available * (options.pairedSpacing ? 1 : equal ? compactEqual ? 1.16 : 0.94 : options.wrap === 'compact' ? 1.16 : 0.94)
         if ((options.pairedSpacing ? minWidth : naturalWidth) > capacity && count > 1) break
-        const slack = (capacity - naturalWidth) / (width * ratio)
-        const compressionCost = options.pairedSpacing || options.wrap === 'compact' ? 1 : 100
-        const score = slack * slack * (slack < 0 ? compressionCost : 1) + cost[stop + 1]!
+        const slack = Math.max(0, capacity - naturalWidth) / available
+        const compression = Math.max(0, naturalWidth - available) / available
+        const compressionCost = options.pairedSpacing || options.wrap === 'compact' && !equal ? 1 : 100
+        const score = slack * slack + compression * compression * compressionCost + cost[stop + 1]!
         // Equal-energy partitions should leave the shorter row at the end.
         // Ignore round-off from subtracting cumulative measured coordinates.
         if (score < cost[index]! - 1e-12 || Math.abs(score - cost[index]!) <= 1e-12 && stop + 1 > next[index]!) { cost[index] = score; next[index] = stop + 1 }
