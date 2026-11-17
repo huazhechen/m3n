@@ -5,6 +5,19 @@ import { getLayoutBounds } from '../src/layout/engine.js';
 import { paintedNodeRegions } from '../src/layout/painted-ink.js';
 import { attachmentCommands, layoutContext, recordCommands } from './helpers.js';
 
+for (const acc of ['b', '#', 'n', 'bb']) test(`display-only ${acc} note reserves painted side ink and the complete numeral body`, () => {
+    const measurer = { measureText: (text: string, style: import('../src/render/types.js').TextStyle) =>
+        ({ w: style.fontSize * .5, h: style.fontSize * .7, baseline: style.fontSize * .7 }) };
+    const result = compileScore(`@note("${acc}2''",displayonly=true)`, { textMeasurer: measurer });
+    assert.deepEqual(result.diagnostics, []);
+    const node = result.layout.objects[0];
+    const ink = paintedNodeRegions(node, measurer);
+    const left = Math.min(node.box.x + node.ports['body.left'].x, ...ink.map(piece => piece.x));
+    assert.ok(Math.abs(left - node.box.x) < 1e-6, 'no unused accidental design bearing before a display-only note');
+    assert.ok(Math.abs(node.ports['body.right'].x - node.ports['body.left'].x - 11) < 1e-6,
+        'preserve the complete numeral body rather than fitting a narrow visible digit');
+});
+
 test('a side accidental outside a tuplet does not raise the whole bracket', () => {
     const measurer = { measureText(text: string, style: import('../src/render/types.js').TextStyle) {
         const height = style.fontSize * .68;

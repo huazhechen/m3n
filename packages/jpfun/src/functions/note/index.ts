@@ -273,9 +273,18 @@ class NoteTemporalNode extends TemporalNodeBase {
             this.intrinsicInkBounds = ink;
         }
 
-        this.box.w = mainX + mainMetrics.w;
+        // Display-only notes in headers have no rhythmic cell: reserve the
+        // actual accidental strokes plus the full numeral advance, without
+        // carrying the accidental design's unused leading bearing into a gap.
+        const inset = this.ast.displayOnly && this.intrinsicInkBounds
+            ? Math.min(mainX, this.intrinsicInkBounds.x) : 0;
+        if (inset) {
+            for (const accidental of placed) accidental.x -= inset;
+            this.intrinsicInkBounds!.x -= inset;
+        }
+        this.box.w = mainX - inset + mainMetrics.w;
         this.box.h = mainMetrics.h;
-        this.box.anchor = mainX + mainMetrics.w / 2;
+        this.box.anchor = mainX - inset + mainMetrics.w / 2;
         this.box.visualAxis = mainMetrics.h / 2;
 
         // 升降号和附点参与完整盒布局，但不计入数字主体范围，减时线因此只画在数字下

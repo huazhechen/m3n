@@ -26,3 +26,27 @@ for (const visits of ['', ',visits="1:C4;2:A4"']) for (const noteGap of [0, 13.2
     assert(Math.abs(note.box.x - withoutOverhang.layout.objects[1].box.x - 3) < 1e-9,
         'the measured overhang must preserve the configured minimum clearance');
 });
+
+for (const key of ['C4', 'Db4', 'F#4']) for (const size of [16, 22, 32]) {
+    test(`key ${key} at ${size}px centers the complete text and accidental ink on its axis`, () => {
+        const measurer = {
+            measureText(text: string, style: Parameters<typeof fallback.measureText>[1]) {
+                const size = style.fontSize;
+                return /^[A-G]$/.test(text)
+                    ? { w: size * .6, h: size * 1.06, baseline: size * .8 }
+                    : { w: text.length * size * .5, h: size * .78, baseline: size * .42 };
+            },
+        };
+        const result = compileScore(`@key(${key},size=${size}px) 1`, { textMeasurer: measurer });
+        assert.deepEqual(result.diagnostics, []);
+        const node = result.layout.objects[0], painter = new RecordingPainter();
+        node.paint(painter);
+        const regions = painter.commands.flatMap(command => paintedCommandRegions(command, measurer));
+        const top = Math.min(...regions.map(region => region.y));
+        const bottom = Math.max(...regions.map(region => region.y + region.h));
+        assert.ok(Math.abs(top - node.box.y) < 1e-6, 'no invisible space or ink overflow at the top');
+        assert.ok(Math.abs(bottom - node.box.y - node.box.h) < 1e-6, 'reserve every painted descender and stroke');
+        assert.ok(Math.abs((top + bottom) / 2 - node.box.y - node.box.visualAxis) < 1e-6,
+            'the actual ink center must coincide with the music alignment axis');
+    });
+}

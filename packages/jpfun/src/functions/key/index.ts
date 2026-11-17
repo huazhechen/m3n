@@ -5,7 +5,8 @@ import { parseNoteName } from "../note/noteNameFSM.js";
 import { acc2Offset, NoteNameMap, tonality2Midi } from "../../parser/parse-utils/note-utils.js";
 import { paintAccidental, placeAccidentals, type PlacedAccidental } from "../note/accidentals.js";
 import type { HorizontalLineView, LayoutBox, LayoutPrepareContext, Rect } from "../../layout/types.js";
-import { paintedNodeRegions } from "../../layout/painted-ink.js";
+import { paintedCommandRegions, paintedNodeRegions } from "../../layout/painted-ink.js";
+import { RecordingPainter } from "../../render/recording.js";
 import type { Painter, TextStyle } from "../../render/types.js";
 
 /**
@@ -168,11 +169,18 @@ class KeyTemporalNode extends TemporalNodeBase {
         this.rows = this.ast.rows.map(display => {
             const prefix = context.textMeasurer.measureText(display.prefix, this.style);
             const name = context.textMeasurer.measureText(display.displayName, this.style);
-            const { placed, right, top } = placeAccidentals(display.displayAcc, size, prefix.w, prefix.baseline, size * 0.02);
+            const { placed, right } = placeAccidentals(display.displayAcc, size, prefix.w, 0, size * 0.02);
+            const painter = new RecordingPainter();
+            painter.drawText(display.prefix, 0, 0, this.style);
+            for (const accidental of placed) paintAccidental(painter, accidental, { x: 0, y: 0 }, "#000");
+            painter.drawText(display.displayName, right, 0, this.style);
+            const ink = painter.commands.flatMap(command => paintedCommandRegions(command, context.textMeasurer));
+            const top = Math.min(...ink.map(piece => piece.y));
+            const bottom = Math.max(...ink.map(piece => piece.y + piece.h));
             const shift = -top;
             for (const accidental of placed) accidental.y += shift;
-            return { display, accidentals: placed, nameX: right, baseline: shift + prefix.baseline,
-                x: 0, y: 0, width: right + name.w, height: shift + Math.max(prefix.h, name.h) };
+            return { display, accidentals: placed, nameX: right, baseline: shift,
+                x: 0, y: 0, width: right + name.w, height: bottom - top };
         });
         this.box.w = Math.max(...this.rows.map(row => row.width));
         let y = 0;
