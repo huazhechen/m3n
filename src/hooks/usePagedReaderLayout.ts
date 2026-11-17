@@ -17,7 +17,8 @@ export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>,
       if (mobile.matches) { clear(); return }
       const pages = [...paper.querySelectorAll<SVGSVGElement>(':scope > .score-page-sheet > svg')]
       if (!pages.length) { clear(); return }
-      const aspect = Math.max(...pages.map(page => page.viewBox.baseVal.height / page.viewBox.baseVal.width))
+      // Fit the complete A4 sheet, including its 12mm paper margins.
+      const aspect = 297 / 210
       if (!Number.isFinite(aspect) || aspect <= 0) return
       let bottomSpace = 0
       for (let ancestor = paper.parentElement; ancestor; ancestor = ancestor.parentElement) {
