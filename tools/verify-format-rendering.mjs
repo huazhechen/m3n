@@ -12,7 +12,7 @@ let browser
 try {
   const entry = join(temp, 'entry.ts')
   writeFileSync(entry, [
-    `export {formatM3N,parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
+    `export {formatM3N,parseM3NDocument,normalizeSectionBarlines} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
     `export {NumberedNotationScore,prepareNumberedNotationFonts} from ${JSON.stringify(join(root, 'packages/numbered-notation/src/index.ts'))};`,
     `export {NativeNumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/src/native-score.ts'))};`,
   ].join('\n'))
@@ -37,6 +37,7 @@ try {
   // Explicitly exercise the regressions as well as current music.
   sources['regression:ties-rests-breaks-text'] = '{title=A  B} {4/4}\nN: {text=keep  spaces}1~ 1 0 0 | {br}3 (4) 5. 3 |||'
   sources['regression:equivalent-groups'] = '{4/4}\nN: ((1)) ((2)) ((3)) ((4)) (5^) 6 7 |||'
+  sources['regression:ordinary-double-bar'] = '{2/4}\nN: 1 2 || // ordinary phrase\n---\nN: 3 4 |||'
   const output = join(root, '.tmp/format-rendering')
   mkdirSync(output, { recursive: true })
   writeFileSync(join(output, 'sources.json'), JSON.stringify(sources, null, 2))
@@ -45,7 +46,7 @@ try {
   for (const [file, source] of Object.entries(sources).filter(([file]) => !scoreFilter || file.includes(scoreFilter))) {
     const result = await page.evaluate(({ source }) => {
       const formatted = formatAudit.formatM3N(source)
-      const before = formatAudit.parseM3NDocument(source), after = formatAudit.parseM3NDocument(formatted)
+      const before = formatAudit.parseM3NDocument(formatAudit.normalizeSectionBarlines(source)), after = formatAudit.parseM3NDocument(formatted)
       const failures = []
       for (const name of ['NumberedNotationScore', 'NativeNumberedNotationScore']) {
         for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {

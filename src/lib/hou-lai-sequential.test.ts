@@ -4,7 +4,13 @@ import { alternativePerformance, compileScorePerformance, deriveScoreInteraction
 
 const original = readFileSync(new URL('./fixtures/hou-lai-original.m3n', import.meta.url), 'utf8')
 const source = readFileSync(new URL('../scores/hou_lai_01.m3n', import.meta.url), 'utf8')
-const before = parseM3NDocument(original), after = parseM3NDocument(source)
+// Apply the separately requested musical corrections to the historical arrangement,
+// then continue checking that the sequential rewrite preserves it event by event.
+const instrumentalReference = original
+  .replaceAll('((2e) 1e.) 1e~', '((2e) 1e.~) 1e~').replaceAll('再{%2}', '再%')
+  .replace('{lg}((2e) 1e){/} ((1e~))', '(2e.) ((1e~))').replace('星%光', '星光')
+  .replace('{lg}((5 6)){/} 6^', '(5) 6^').replace('年少%时', '年少时')
+const before = parseM3NDocument(instrumentalReference), after = parseM3NDocument(source)
 const performedBars = (document: typeof before) => alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
 const oldBars = performedBars(before), newBars = performedBars(after)
 // The sole authorized correction: A's second ending loses one held beat;
@@ -32,7 +38,7 @@ describe('Hou Lai sequential score with the third pickup inside the preceding ba
     expect(after.order).toBeUndefined()
     expect(after.sections ?? []).toHaveLength(0)
     const expected = events(oldBars)
-    expect(expected).toHaveLength(408)
+    expect(expected).toHaveLength(406)
     expect(expected[changedIndex]!.beats).toBe(2)
     expected[changedIndex]!.beats = 1
     expect(events(newBars)).toEqual(expected)

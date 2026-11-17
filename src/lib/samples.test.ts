@@ -106,18 +106,34 @@ describe('bundled score corpus', () => {
     const expected=events.map(({pitch,beats,tie})=>({pitch,beats,tie}))
     expect(referenceEvents(sources[reference.id]!,false)).toEqual(expected)
   })
+  // Requested seven written vocal-slide simplifications, including the transposed final chorus.
+  // Keys are event indexes in the unchanged web reference; null removes a passing attack.
+  const mapleSlides = new Map<number, { pitch: number; beats: number; tie: boolean } | null>([
+    [144, { pitch: 77, beats: 0.5, tie: true }], [145, { pitch: 77, beats: 0.5, tie: false }],
+    [152, { pitch: 81, beats: 1, tie: false }], [153, null],
+    [211, { pitch: 77, beats: 0.5, tie: true }], [212, { pitch: 77, beats: 0.5, tie: false }],
+    [219, { pitch: 81, beats: 1, tie: false }], [220, null],
+    [253, { pitch: 74, beats: 0.75, tie: false }], [254, null],
+    [301, { pitch: 73, beats: 1, tie: false }], [302, null],
+    [360, { pitch: 78, beats: 0.5, tie: true }], [361, { pitch: 78, beats: 0.5, tie: false }],
+    [368, { pitch: 82, beats: 1, tie: false }], [369, null],
+    [427, { pitch: 78, beats: 0.5, tie: true }], [428, { pitch: 78, beats: 0.5, tie: false }],
+    [435, { pitch: 82, beats: 1, tie: false }], [436, null],
+    [472, { pitch: 75, beats: 0.75, tie: false }], [473, null],
+  ])
   it.each(webReferences)('matches the reference playback itinerary for $id',reference=>{
     const indexes=reference.playbackEventIndexes.filter(index=>reference.id!=='feng' || index!==5)
     const selectedIndexes=reference.id==='yong_yuan_tong_zai'
       ? reference.events.flatMap((event,index)=>event.bar<=35 ? [index] : [])
       : indexes
-    const expected=selectedIndexes.map(index=>{
+    const expected=selectedIndexes.flatMap(index=>{
+      if(reference.id==='feng' && mapleSlides.has(index)) return mapleSlides.get(index) ? [mapleSlides.get(index)!] : []
       const {pitch,beats,tie}=reference.events[index]!
-      return {
+      return [{
         pitch:reference.id==='feng' && index===35 ? 72 : pitch,
         beats:reference.id==='feng' && index===4 ? 0.5 : beats,
         tie:reference.id==='feng' && index===34 ? true : tie,
-      }
+      }]
     })
     expect(referenceEvents(sources[reference.id]!,true)).toEqual(expected)
   })

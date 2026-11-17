@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest' 
-import { formatM3N } from './m3n-format.js'
+import { formatM3N, normalizeSectionBarlines } from './m3n-format.js'
 import { parseM3NDocument } from './m3n-direct.js'
 import { validateM3NDiagnostics } from './m3n-validate.js'
 
@@ -239,4 +239,44 @@ it('preserves timing and reaches a stable spelling across varied nested rhythms'
       expect(formatM3N(formatted), source).toBe(formatted)
     }
   }
+})
+
+
+describe('ordinary phrase double barlines', () => {
+  it('normalizes internal phrase endings and synchronized bass/chord rows only', () => {
+    const source = '{2/4}\nN: 1 2 || // ending\nB: 1d 2d ||\nC: C G ||\nL: 甲乙\n---\nN: 3 4 |||\n'
+    const expected = source.replaceAll('|| //', '| //').replace('2d ||', '2d |').replace('G ||', 'G |')
+    expect(normalizeSectionBarlines(source)).toBe(expected)
+    expect(formatM3N(formatM3N(source))).toBe(formatM3N(source))
+  })
+  it.each([
+    '===B\nN: 3 4 |||',
+    '---V1\nN: 3 4 :||',
+    '---\nN: {text=新练习}3 4 |||',
+    '---\nN: {key=D}3 4 |||',
+    '---\nN: {3/4}3 4 5 |||',
+    '---\nN: {inst}3 4{/} |||',
+    '---\nN: ||: 3 4 :||',
+  ])('preserves explicit structure before %s', tail => {
+    const source = `{2/4}\nN: 1 2 ||\n${tail}`
+    expect(normalizeSectionBarlines(source)).toBe(source)
+  })
+  it.each(['{ds}', '{dc}', '{fine}', '{inst}'])('preserves navigation and instrumental rows: %s', directive => {
+    const source = `{2/4}\nN: ${directive}1 2 ||\n---\nN: 3 4 |||`
+    expect(normalizeSectionBarlines(source)).toBe(source)
+  })
+  it('preserves final, internal, repeated and manual-break bars and literal text', () => {
+    const source = '{title=keep ||}\nN: {text=keep ||}1 2 || 3 4 ||{br} // keep ||\n---\nN: 5 6 ||'
+    expect(normalizeSectionBarlines(source)).toBe(source)
+  })
+  it('preserves house-ending bars', () => {
+    const source = '{2/4}\n---V2\nN: 1 2 ||\n---\nN: 3 4 |||'
+    expect(normalizeSectionBarlines(source)).toBe(source)
+  })
+})
+
+
+it('keeps the end of an instrumental interval opened in an earlier phrase', () => {
+  const source = '{2/4}\nN: {inst}1 2 |\n---\nN: 3 4{/} ||\n---\nN: 5 6 |||\nL: 甲乙'
+  expect(normalizeSectionBarlines(source)).toBe(source)
 })
