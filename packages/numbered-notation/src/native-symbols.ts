@@ -1,3 +1,4 @@
+import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeMeterGeometry } from './native-meter.js'
@@ -14,7 +15,7 @@ import { nativeDynamicGlyph } from './native-dynamics.js'
 import { nativeNavigationGlyph } from './native-navigation-glyphs.js'
 
 export const xml = (value: string | number) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
-export const n = (value: number) => Number(value.toFixed(4))
+export { nativeSvgNumber as n } from './native-svg-number.js'
 export function attrs(values: Record<string, string | number | undefined>) { return Object.entries(values).filter(([, value]) => value !== undefined).map(([name, value]) => ` ${name}="${xml(typeof value === 'number' ? n(value) : value!)}"`).join('') }
 export const line = (x1: number, y1: number, x2: number, y2: number, width = nativeStyle.stroke) => `<line${attrs({ x1, y1, x2, y2, stroke: '#000', 'stroke-width': width, 'stroke-linecap': 'round' })}/>`
 export const circle = (x: number, y: number, radius = em(1.6)) => `<circle${attrs({ cx: x, cy: y, r: radius, fill: '#000' })}/>`

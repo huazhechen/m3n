@@ -1,3 +1,4 @@
+import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 import { nativeArcSlice, nativeArcInkLift } from './native-curve.js'
@@ -89,7 +90,6 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
 }
 
 export function nativeArcPath(arc: NativeArc): string {
-  const n = (value: number) => Number(value.toFixed(4))
   return arc.commands.map(command => {
     if (command.op === 'Z') return 'Z'
     if (command.op === 'C') return `C${n(command.cx1)} ${n(command.cy1)} ${n(command.cx2)} ${n(command.cy2)} ${n(command.x)} ${n(command.y)}`

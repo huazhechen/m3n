@@ -91,6 +91,18 @@ test("SVG 路径把平移与正负缩放烘进最终几何", () => {
         "SVG paths must bake translation and positive or negative scaling into final geometry");
 });
 
+test("SVG serialization preserves subpixel line coordinates and stroke widths", () => {
+    for (const coordinate of [.123456789, -.123456789, 1234.56789123]) {
+        const painter = new SvgPainter();
+        painter.drawLine(coordinate, coordinate, coordinate + 1, coordinate + 2, { strokeWidth: .123456789 });
+        const svg = painter.toSvg({ x: 0, y: 0, w: 2000, h: 2000 });
+        for (const [name, expected] of Object.entries({ x1: coordinate, y1: coordinate, x2: coordinate + 1, y2: coordinate + 2, 'stroke-width': .123456789 })) {
+            const actual = Number(new RegExp(` ${name}="([^"]+)"`).exec(svg)![1]);
+            assert(Math.abs(actual - expected) <= .000000501, `Serialized ${name} must preserve measured geometry`);
+        }
+    }
+});
+
 test("动态与固定图形各自使用一个 SVG 元素", () => {
     const [dynamicPathSvg] = renderLayoutPagesToSvg(layoutOf(`1@a 2@b @tie(a,b)`));
     assert((dynamicPathSvg.match(/<path d=/g) ?? []).length === 1,

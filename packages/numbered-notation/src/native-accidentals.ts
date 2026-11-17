@@ -1,3 +1,4 @@
+import { nativeSvgNumber as n } from './native-svg-number.js'
 /** Font-independent music symbols, positioned relative to a number's baseline.
  * A common stroke grid keeps small grace notes and full-size notes consistent.
  */
@@ -20,7 +21,7 @@ export function nativeAccidentalGeometry(symbols: string, size: number, numberHa
     if (!shape) continue
     const width = shape.width * size * 0.72, height = shape.height * size * 0.72
     const top = -size * 0.42 - shape.baseline * size * 0.72
-    const p = (x: number, y: number) => `${Number((left + x * width).toFixed(4))} ${Number((top + y * height).toFixed(4))}`
+    const p = (x: number, y: number) => `${n(left + x * width)} ${n(top + y * height)}`
     const segments: string[] = []
     const stroke = (x1: number, y1: number, x2: number, y2: number) => segments.push(`M${p(x1, y1)} L${p(x2, y2)}`)
     if (symbol === '♯') {

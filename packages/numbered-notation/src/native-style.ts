@@ -1,3 +1,4 @@
+import { nativeSvgNumber as n } from './native-svg-number.js'
 /** One engraving scale. Ratios below are design choices, never occupied bounds.
  * Text and symbol ink is measured separately. Page dimensions are independent.
  */
@@ -26,5 +27,5 @@ export const nativeStyle = {
 /** Convert a symbol's authored 22-unit grid into the current music scale. */
 export const nativeEm = (units: number) => units * (nativeStyle.music / 22)
 export function nativeDesignPath(d: string): string {
-  return d.replace(/[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?/g, value => String(Number(nativeEm(Number(value)).toFixed(4))))
+  return d.replace(/[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?/g, value => String(n(nativeEm(Number(value)))))
 }

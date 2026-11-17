@@ -1,3 +1,4 @@
+import { nativeSvgNumber as n } from './native-svg-number.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeStyle } from './native-style.js'
@@ -29,7 +30,7 @@ export function nativeTempoGeometry(text: string, measurer: TextMeasurer, unit =
   let coordinate = 0
   const path = outline.replace(/[MLQCZ]|[-+]?(?:\d*\.\d+|\d+\.?\d*)/g, token => {
     if (/^[MLQCZ]$/.test(token)) { coordinate = 0; return token }
-    return String(Number((Number(token) * scale + (coordinate++ % 2 ? baseline - (unit === 1 ? 3.6 : 10.88) * scale : 0)).toFixed(4)))
+    return String(n(Number(token) * scale + (coordinate++ % 2 ? baseline - (unit === 1 ? 3.6 : 10.88) * scale : 0)))
   })
   return { unit, text: value, path, textX, baseline, width: textX + metrics.w, anchor: (unit === 1 ? 3 : (3.304 + 3.864) / 2) * scale }
 }

@@ -29,7 +29,7 @@ describe('native accidental geometry', () => {
     expect(actual.d.match(/[MLCQZ]/g)).toEqual(reference.commands.map(c=>c.op))
     const coordinates = actual.d.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
     expect(coordinates).toHaveLength(expected.length)
-    coordinates.forEach((value,index)=>expect(value).toBeCloseTo(expected[index]!,3))
+    coordinates.forEach((value,index)=>expect(Math.abs(value - expected[index]!)).toBeLessThanOrEqual(.000000501))
     expect(actual.stroke).toBeCloseTo(reference.style!.strokeWidth!,12)
   })
 
