@@ -83,7 +83,7 @@ describe('native spacing and measured note envelopes', () => {
   })
 
   it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
-    const result = layout(readFileSync(new URL('../../../src/scores/huan_le_song_01.m3n', import.meta.url), 'utf8'), 600)
+    const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600)
     expect(result.systems.map(system => system.measures.length)).toEqual([4, 4, 4, 5])
   })
 

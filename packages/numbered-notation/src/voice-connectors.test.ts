@@ -7,7 +7,8 @@ import { parseM3NDocument } from '@m3n/notation';
 import { projectNumberedScore } from './projection.js';
 import { NumberedNotationScore } from './score.js';
 
-const source = readFileSync(resolve(import.meta.dirname, '../../../src/scores/huan_le_song_01.m3n'), 'utf8');
+// The library edition is melody-only; the homepage example has both voices.
+const source = readFileSync(resolve(import.meta.dirname, '../../../src/examples/huan_le_song.m3n'), 'utf8');
 
 describe('Ode to Joy voice connectors', () => {
   for (const width of [320, 800]) for (const paged of [false, true]) {
