@@ -72,6 +72,9 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const endpointLabels = new Map<ScoreEvent, { first: string; last: string; children: string[]; tieStart: string; legatoEnd: string }>()
   const relations: string[] = []
   const parentheses: string[] = []
+  // Endings enclose all musical relations and expressions, including explicit
+  // slurs declared after the source measures. Text annotations stay outside.
+  const endings: string[] = []
   // Registered after musical relations, from inner to outer: harmony, directions, section names.
   const annotations: string[][] = [[], [], []]
   const outerExpressions: string[][] = [[], []]
@@ -347,7 +350,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         while (visibleMeasures[end + 1]?.ending === ending) end += 1
         const startLabel = firsts.get(endingStart), endLabel = lasts.get(end)
         const passes = [...ending.matchAll(/\d+/g)].map(match => Number(match[0]))
-        if (startLabel && endLabel && passes.length) relations.push(`@volta(${startLabel},${endLabel},${passes.join(',')})`)
+        if (startLabel && endLabel && passes.length) endings.push(`@volta(${startLabel},${endLabel},${passes.join(',')})`)
         endingStart = end + 1
       }
       const lyricArguments = staff === 'melody' ? rowNumbers.map(row => {
@@ -441,6 +444,6 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     if (!start || !end || interval.display === 'text') continue
     relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
   }
-  return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...outerExpressions.flat(), ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers,
+  return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...outerExpressions.flat(), ...endings, ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers,
     measureNumbers: options.measureNumbers, orderLabels: orderLines.flat() }
 }
