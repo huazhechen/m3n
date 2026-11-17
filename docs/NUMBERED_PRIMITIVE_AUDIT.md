@@ -69,3 +69,9 @@ JSON与HTML报告增加 `primitiveMatches`、`primitiveAudit`，包括两版数�
 两轮截图尺寸均一致；剩余差异像素合计分别16045和10246。严格命令均退出1，不记作零像素通过。报告为`.tmp/numbered-parity/2026-11-17T17-16-42.086Z-2500703/`、`.tmp/numbered-parity/2026-11-17T17-16-42.086Z-2500704/`，汇总`.tmp/final-engine-matrix-summary.json`。等行高差异像素最多的`parallel-forced-settings`1000px截图为659像素，仅位于连线边缘的646×10px范围，几何和严格图元均一致；已查看上下对照及差图`.tmp/final-uniform-largest-residual.png`，不为栅格边缘差异改动排版规则。
 
 88首当前曲库子集，两配置各704组几何全通过、630组严格图元通过、图元缺失／多出均0；严格零像素分别425和382组，详细输入哈希`.tmp/final-library-option-summary.json`。这次完整复验覆盖此前等行高8组及小节号10组真实几何失败，未重现旧的断行或行距问题。独立实绘3744组已启动，单参数间距64组及修后全包测试仍在队列中；默认入口保持jpFun。
+
+## 网页入口浏览器检查（2026-11-18）
+
+从真实`src/lib/render-score.ts`构建临时自研入口IIFE，直接注入浏览器运行，不启动服务器。7项通过：五种当前谱源／显示设置渲染（含固定调升半音、编号、双声部控制、房子及320px四页《致爱丽丝》），加上调用前取消和layout阶段取消。验证字体在SVG插入并等待`document.fonts.ready`后已加载、事件与小节身份完整、页面宽度及每页容器正确；两种取消均抛出AbortError并保留先前谱面。报告`.tmp/native-render-entry-smoke-report.json`含运行源码、输入和bundle哈希，日志`.tmp/native-render-entry-smoke.log`。这验证网页入口集成，不替代整库视觉对照或完整UI交互测试。
+
+最终范围审计发现，早先默认／固定调／降调完整矩阵与当前源码有10个运行文件、8首谱源不同；不能直接称为当前实现的完整验收。已在单参数浏览器和修后全包测试之后排队三轮最新显示矩阵，状态`.tmp/final-display-matrix-state.json`，最多两个浏览器并发；启动时重新读取当前88首曲库，不冻结谱源。
