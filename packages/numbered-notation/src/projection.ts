@@ -163,7 +163,10 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         // Parallel voices must share every bar anchor, including the opening repeat.
         // B: bars are alignment syntax; structural repetition belongs to N:.
         const structure = staff === 'bass' ? melodyMeasure ?? measure : measure
-        if (breaksBefore(measureIndex)) pieces.push(measure.events.some(event => event.sectionLabel) || melody[measureIndex]?.events.some(event => event.sectionLabel) ? '@br(gap=12)' : '@br()')
+        const boundaryLabel = measure.events.find(event => event.sectionLabel)
+          ?? melody[measureIndex]?.events.find(event => event.sectionLabel)
+        // Standalone headings are local decorations; only inline labels add section space.
+        if (breaksBefore(measureIndex)) pieces.push(boundaryLabel && !boundaryLabel.sectionLabelBreakAfter ? '@br(gap=12)' : '@br()')
         const sectionLabel = measure.events.find(event => event.sectionLabel)?.sectionLabel
         if (sectionLabel && !measure.events.find(event => event.sectionLabel)?.sectionLabelBreakAfter) pieces.push(`@text(${quote(sectionLabel)},size=14px,weight=700,frame=true)`)
         if (structure.left === 'rptstart' && (breaksBefore(measureIndex) || previousMeasure?.right !== 'rptend' && previousMeasure?.right !== 'rptboth')) {
