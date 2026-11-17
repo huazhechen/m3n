@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, playbackMeasureIndexes, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import baselines from './fixtures/linear-song-baselines.json'
+import xinBeforeCleanup from './fixtures/xin-bu-liao-qing-before-slide-cleanup.m3n?raw'
 
 const ranges: Record<string, Array<[number, number, string]>> = {
   man_man_xi_huan_ni: [[0, 11, 'A'], [11, 22, 'A'], [22, 33, 'B'], [33, 37, 'C']],
@@ -15,10 +16,13 @@ const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(valu
 // Captured from each original itinerary before changing notation or lyric rows.
 describe.each(baselines.filter(baseline => baseline.id in ranges))('$title without named sections', reference => {
   const source = readFileSync(new URL(`../scores/${reference.id}_01.m3n`, import.meta.url), 'utf8')
+  // Preserve the historical fingerprints; Xin's authorized 明→了 change is
+  // checked against this source, with explicit performed timing, below.
+  const fingerprintSource = reference.id === 'xin_bu_liao_qing' ? xinBeforeCleanup : source
 
   it('has valid local navigation and preserves the complete performed event sequence', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
-    const document = parseM3NDocument(source)
+    const document = parseM3NDocument(fingerprintSource)
     expect(document.order).toBeUndefined()
     expect(document.sections ?? []).toHaveLength(0)
     const bars = alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
@@ -33,7 +37,7 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
   })
 
   it('preserves every lyric and its performed note timing', () => {
-    const document = parseM3NDocument(source)
+    const document = parseM3NDocument(fingerprintSource)
     const { lyricsByEvent } = deriveScoreInteraction(document)
     const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
     const lyrics = compileScorePerformance(document).elements
@@ -71,4 +75,31 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
       .toEqual(reference.segments.map(segment => [segment.name, segment.visit, segment.barBeats.length]))
     expect(segments).toEqual(reference.segments)
   })
+})
+
+
+it('simplifies only Xin Bu Liao Qing 明→了 while retaining 朝→朝 and all navigation', () => {
+  const source = readFileSync(new URL('../scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
+  const before = parseM3NDocument(xinBeforeCleanup), after = parseM3NDocument(source)
+  const original = compileScorePerformance(before), actual = compileScorePerformance(after)
+  const removedStarts = new Set([86.75, 182.75, 214.75])
+  const extendedEnds = new Map([[86.5, 87], [182.5, 183], [214.5, 215]])
+  expect(actual.notes.map(note => [note.start, note.end, note.pitch, note.channel])).toEqual(
+    original.notes.filter(note => !removedStarts.has(note.start))
+      .map(note => [note.start, extendedEnds.get(note.start) ?? note.end, note.pitch, note.channel]),
+  )
+  expect(original.notes.length - actual.notes.length).toBe(3)
+  expect(actual.beats).toBe(224)
+  expect(source).toContain('{lg}3. (2){/} 2')
+  const lyrics = (document: typeof before) => {
+    const { lyricsByEvent } = deriveScoreInteraction(document)
+    const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
+    return compileScorePerformance(document).elements.filter(element => element.voice === 'score:melody')
+      .flatMap(element => (byId.get(element.xmlId) ?? [])
+        .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
+        .map(lyric => [element.start, element.end, lyric.text]))
+  }
+  expect(lyrics(after)).toEqual(lyrics(before).map(([start, end, text]) => [
+    start, extendedEnds.get(start as number) ?? end, text,
+  ]))
 })
