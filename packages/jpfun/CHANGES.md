@@ -131,3 +131,5 @@ Local regression tests: test/m3n-wrapping.test.ts, test/m3n-metadata.test.ts, te
 - Key signatures reserve measured tonic and accidental ink in horizontal spacing, including overhang beyond text advances. Single and visit-specific rows retain their original centering and first-digit anchor; physical overhang no longer consumes configured minimum note clearance.
 
 - Multi-measure rest counts center their actual numeral ink on the rest beam, consistent with note and meter numerals; asymmetric text bearings no longer shift the count visually.
+
+- Intervening-note slur clearance uses the actual highest central musical primitive, keeping the octave-dot port gap without promoting lower beam widths or accidental padding to that height. Other painted ink retains its collision checks.

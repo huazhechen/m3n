@@ -64,14 +64,20 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   let lift = 0
   for (const glyph of covered) {
     if (glyph === relation.first || glyph === relation.last) continue
-    const a = Math.max(left, glyph.x - (glyph.inkLeft ?? glyph.musicLeft ?? glyph.left))
-    const b = Math.min(right, glyph.x + (glyph.inkRight ?? glyph.musicRight ?? glyph.right))
-    if (a > b) continue
-    // Each lower edge is monotone or has a single minimum, so its maximum
-    // over a note's rectangle occurs at one of these two horizontal edges.
-    for (const x of [a, b]) {
-      const slice = nativeArcSlice(commands, x)
-      if (slice) lift = Math.max(lift, slice.bottom + nativeTiePortTop(glyph))
+    // The port belongs to the highest central musical primitive. Lower beams,
+    // accidental padding and leading graces must not acquire that same height.
+    const top = -(glyph.tieTop ?? glyph.musicTop ?? glyph.top)
+    const tips = glyph.musicInk?.filter(piece => piece.left <= 0 && piece.right >= 0
+      && Math.abs(piece.top - top) <= nativeStyle.music * 1e-6)
+    const ranges = tips?.length ? tips.map(piece => ({ left: glyph.x + piece.left, right: glyph.x + piece.right }))
+      : [{ left: glyph.x - (glyph.inkLeft ?? glyph.musicLeft ?? glyph.left), right: glyph.x + (glyph.inkRight ?? glyph.musicRight ?? glyph.right) }]
+    for (const range of ranges) {
+      const a = Math.max(left, range.left), b = Math.min(right, range.right)
+      if (a > b) continue
+      for (const x of [a, b]) {
+        const slice = nativeArcSlice(commands, x)
+        if (slice) lift = Math.max(lift, slice.bottom + nativeTiePortTop(glyph))
+      }
     }
   }
   // Controls and side music clear only the actual ribbon intersections. A

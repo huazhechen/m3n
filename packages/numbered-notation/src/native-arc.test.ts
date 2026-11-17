@@ -48,7 +48,9 @@ describe('native musical arc geometry', () => {
     // The high note clears the curved lower edge; the endpoints can stay lower.
     expect(arc.top).toBeGreaterThan(high.top)
     expect(arc.top - arc.height).toBeLessThan(high.top)
-    for (const x of [high.x - high.musicLeft!, high.x + high.musicRight!]) {
+    const tips = high.musicInk!.filter(piece => Math.abs(piece.top + high.tieTop!) < 1e-6)
+    expect(tips).toHaveLength(1)
+    for (const x of tips.flatMap(piece => [high.x + piece.left, high.x + piece.right])) {
       expect(nativeArcSlice(arc.commands, x)!.bottom).toBeLessThanOrEqual(-nativeTiePortTop(high) + 1e-7)
     }
     expect(layout.systems[0]!.lanes[0]!.top).toBeCloseTo(arc.top)

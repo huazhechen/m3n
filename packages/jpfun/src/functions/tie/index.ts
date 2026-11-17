@@ -350,15 +350,24 @@ class TieLayoutAttachment implements LayoutAttachment, PlaybackRelation {
         const columns = context.getRangeColumns(segment.line, [start, end], start.track);
         for (const host of columns.flat()) {
             if (host.T.isZero() || host.track !== start.track || host === start || host === end) continue;
-            const bounds = getLayoutBounds(host, true);
-            const left = Math.max(segment.x, bounds.x), right = Math.min(segment.x + segment.w, bounds.x + bounds.w);
-            if (right < left) continue;
+            const center = host.box.x + host.box.anchor;
+            const core = context.getHostInk?.(host).filter(piece => piece.x <= center && piece.x + piece.w >= center) ?? [];
+            const highest = Math.min(...core.map(piece => piece.y));
             const top = this.tiePort(host).y;
+            // Preserve the port's designed gap over the highest central ink,
+            // without promoting lower beams or side-bearing space to its top.
+            const tips = highest >= top - this.fontSize * 1e-6 && highest - top <= this.fontSize * .05 + this.fontSize * 1e-6
+                ? core.filter(piece => Math.abs(piece.y - highest) <= this.fontSize * 1e-6) : [];
+            const ranges = tips.length ? tips : [getLayoutBounds(host, true)];
             // These arc edges have their highest lower-edge value at an end of
             // the tested interval; octave dots are included in the musical port.
-            for (const x of [left, right]) {
-                const edge = ribbonAtX(segment.commands, x);
-                if (edge) lift = Math.max(lift, edge.bottom - top);
+            for (const range of ranges) {
+                const left = Math.max(segment.x, range.x), right = Math.min(segment.x + segment.w, range.x + range.w);
+                if (right < left) continue;
+                for (const x of [left, right]) {
+                    const edge = ribbonAtX(segment.commands, x);
+                    if (edge) lift = Math.max(lift, edge.bottom - top);
+                }
             }
         }
         // Endpoint ports stay on the musical head. Side ink, including endpoint
