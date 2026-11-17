@@ -163,7 +163,8 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
         const measureId = `m3n-measure-${partIndex + 1}-${hostIndex + measureIndex + 1}`
         const melodyMeasure = melody[measureIndex]
         const firstEvent = melodyMeasure?.events[0] ?? measure.events[0]
-        const nextParagraph = firstEvent ? `${partIndex}:${paragraphOf(firstEvent.sourceStart)}` : paragraph
+        const paragraphPosition = firstEvent?.sourceStart ?? (measure.barEnd === undefined ? undefined : measure.barEnd - 1)
+        const nextParagraph = paragraphPosition === undefined ? paragraph : `${partIndex}:${paragraphOf(paragraphPosition)}`
         if (paragraph !== nextParagraph) { flushParagraph(); paragraph = nextParagraph }
         // Parallel voices must share every bar anchor, including the opening repeat.
         // B: bars are alignment syntax; structural repetition belongs to N:.

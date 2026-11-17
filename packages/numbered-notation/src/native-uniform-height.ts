@@ -3,6 +3,7 @@ import type { TextMeasurer } from './native-measure.js'
 import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { nativeSvgInk } from './native-ink.js'
 import { nativeInnerMark } from './native-marks.js'
+import { nativeBeamLayout } from './native-music.js'
 
 type Extent = { top: number; bottom: number }
 type Envelopes = Map<string, Extent>
@@ -44,6 +45,11 @@ export function shareNativeUniformHeight(systems: NativeSystem[], hosts: Envelop
     let top = 0, bottom = 0
     const add = (upper: number, lower: number) => { top = Math.max(top, upper); bottom = Math.max(bottom, lower) }
     const svg = (source: string) => { const ink = nativeSvgInk(source, measurer); add(-ink.top, ink.bottom) }
+    for (const measure of system.measures) {
+      const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id).map(glyph => ({ ...glyph, y: 0 }))
+      const beams = nativeBeamLayout(glyphs, measurer)
+      if (beams.svg) svg(beams.svg)
+    }
     for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) {
       if (glyph.lane !== lane.id) continue
       for (const mark of glyph.markLayout ?? []) if (!nativeInnerMark(mark.name)) add(-mark.top, mark.top + mark.height)

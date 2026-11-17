@@ -216,7 +216,9 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       if (measure.multiRest) {
         const controls = measure.multiRestState ? settingsControls(measure.multiRestState) : []
         const [count, unit] = state.meter.split('/').map(Number)
-        const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.multiRest * count! * 4 / unit!, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls, marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest, paragraph: `${partIndex}:0` }
+        const position = measure.barEnd === undefined ? undefined : measure.barEnd - 1
+        const paragraph = position === undefined ? '0' : document.paragraphs?.find(range => range.start <= position && position < range.end)?.id ?? '0'
+        const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.multiRest * count! * 4 / unit!, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls, marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest, paragraph: `${partIndex}:${paragraph}` }
         if (measure.navigation?.includes('segno')) glyph.controls.unshift(measureNativeControl('segno', '𝄋', options.textMeasurer))
         glyph.markLayout = []
         const ink = nativeSvgInk(painter.music(glyph), options.textMeasurer)
