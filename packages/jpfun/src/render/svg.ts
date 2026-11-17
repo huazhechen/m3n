@@ -196,5 +196,15 @@ export function renderLayoutPagesToSvg(
     const bounds = layoutPageBounds(result);
     const painters = bounds.map(() => new SvgPainter(options));
     paintLayoutPages(result, painters);
-    return painters.map((painter, index) => painter.toSvg(bounds[index], options));
+    const padding = Math.max(0, options.padding ?? 0);
+    return painters.map((painter, index) => {
+        const measured = bounds[index];
+        // Fractional CSS viewport heights can shrink the complete SVG under
+        // preserveAspectRatio. Extend only auto-sized output, keeping measured
+        // coordinates, page routing and explicitly configured paper unchanged.
+        const viewport = result.pages[index]?.autoHeight
+            ? { ...measured, h: Math.ceil(Number(number(measured.h + padding * 2))) - padding * 2 }
+            : measured;
+        return painter.toSvg(viewport, options);
+    });
 }

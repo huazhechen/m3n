@@ -103,6 +103,27 @@ test("SVG serialization preserves subpixel line coordinates and stroke widths", 
     }
 });
 
+test("continuous SVG viewport contains the measured fractional height without rescaling", () => {
+    const layout = layoutOf('@page(width=320px,height=0px,top=0px,bottom=0px) @text("fractional",size=13.37px)');
+    const height = layout.pages[0].bounds.h;
+    assert(!Number.isInteger(height), "the regression needs a measured fractional height");
+    const before = recordCommands(layout);
+    const [svg] = renderLayoutPagesToSvg(layout);
+    const rootHeight = Number(/ height="([^"]+)"/.exec(svg)![1]);
+    const viewBox = / viewBox="([^"]+)"/.exec(svg)![1].split(' ').map(Number);
+    strictEqual(rootHeight, Math.ceil(height));
+    strictEqual(viewBox[3], rootHeight);
+    strictEqual(layout.pages[0].bounds.h, height, "rendering must preserve measured page bounds");
+    strictEqual(JSON.stringify(recordCommands(layout)), JSON.stringify(before), "rendering must preserve all paint coordinates");
+});
+
+test("fixed SVG paper preserves a fractional configured height", () => {
+    const layout = layoutOf('@page(width=320px,height=123.37px,top=0px,bottom=0px) 1 2');
+    const [svg] = renderLayoutPagesToSvg(layout);
+    strictEqual(Number(/ height="([^"]+)"/.exec(svg)![1]), 123.37);
+    strictEqual(Number(/ viewBox="([^"]+)"/.exec(svg)![1].split(' ')[3]), 123.37);
+});
+
 test("动态与固定图形各自使用一个 SVG 元素", () => {
     const [dynamicPathSvg] = renderLayoutPagesToSvg(layoutOf(`1@a 2@b @tie(a,b)`));
     assert((dynamicPathSvg.match(/<path d=/g) ?? []).length === 1,

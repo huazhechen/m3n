@@ -3,6 +3,8 @@ import type { Rect, PageConfig } from "./types.js";
 /** 全局坐标中的页面边界与所含谱面行范围 */
 export interface DocumentLayoutPage {
     bounds: Rect;
+    /** Natural content height; the SVG viewport may extend its blank bottom. */
+    autoHeight?: boolean;
     lineStart: number;  // 包含
     lineEnd: number;    // 不包含
 }
@@ -111,6 +113,7 @@ export function paginateLayoutLines(
             // 无限高配置只生成自然高度页面，不把 Infinity 写入布局结果
             : lineTop - pageTop + page.marginBottom;
         pages.push({
+            autoHeight: !Number.isFinite(page.height),
             bounds: {
                 x: 0,
                 y: pageTop,
