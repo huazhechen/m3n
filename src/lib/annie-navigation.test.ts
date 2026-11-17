@@ -3,7 +3,7 @@ import { expect, it } from 'vitest'
 import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/annie_01.m3n?raw'
 
-// Baselines captured from the A/B/C/D/B/C/C arrangement before restoring local navigation.
+// Baselines include the requested 命→运 and 痛→苦 instrumental simplifications.
 it('preserves all performed pitches, durations, ties, articulations, dynamics and tempo', () => {
   const document = alternativePerformance(parseM3NDocument(source))
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
@@ -12,8 +12,8 @@ it('preserves all performed pitches, durations, ties, articulations, dynamics an
     pitches.get(event) ?? [], event.beats, event.tie ?? false,
     event.postfixes, event.dynamic ?? null, event.tempo,
   ]))
-  expect(events).toHaveLength(415)
-  expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe('8ec990e9821b7f45a6723c679d4009590ba38dd2009ebbebfcee783eb0e78094')
+  expect(events).toHaveLength(411)
+  expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe('bd9f77cf00538fd4d5a552fcff1647a368b8c4fa5aca4e466b77ad3bb0193007')
 })
 
 it('preserves every performed lyric and its note timing while skipping the interlude on returns', () => {
@@ -26,7 +26,7 @@ it('preserves every performed lyric and its note timing while skipping the inter
       .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
       .map(lyric => [element.start, element.end, lyric.text]))
   expect(lyrics).toHaveLength(234)
-  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('50d5b692fe98d0fd101291dbdefcefe7acc815bfcb3cc4bbfe4c507688f32ed5')
+  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('00045c8b71c4e67efb5f3d1571e211de3f7a86d3033bff69c82e4745a700eff5')
 })
 
 it('uses the first ending for the interlude, the second for D.S. and the third for Fine', () => {
