@@ -13,16 +13,27 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||[
 try{
 const page=await browser.newPage();await page.route('**/*',r=>r.fulfill({body:'<!doctype html><html lang="zh-CN"><body><div id="scratch"></div></body></html>',contentType:'text/html'}));await page.goto('http://local');await page.addScriptTag({path:folder+'/bundle/bundle.js'});await page.evaluate(()=>window.probeFonts.prepareNumberedNotationFonts());
 const source=readFileSync(scorePath,'utf8'),results=[]
+// This cache belongs to one source and one set of display settings per run.
+const cache=new Map(),widthOffsets=[-5,0,5]
+let probeRequests=0,cacheHits=0
+async function cachedProbe(width){
+ probeRequests++
+ if(cache.has(width)){cacheHits++;return cache.get(width)}
+ const result=await page.evaluate(({source,width})=>window.probeFonts.probe(source,width),{source,width})
+ cache.set(width,result)
+ return result
+}
 for(let width=640;width<=800;width+=10){
  const cases=[]
- for(const offset of [-2,0,2])cases.push(await page.evaluate(({source,width})=>window.probeFonts.probe(source,width),{source,width:width+offset}))
+ for(const offset of widthOffsets)cases.push(await cachedProbe(width+offset))
  assert.ok(cases.every(c=>c.identical),`Every trial must match the normal web renderer near ${width}px`)
  const stable=cases.every(c=>c.identical&&!c.outside.length&&!c.overlaps.length&&c.pageCount===cases[1].pageCount)
  results.push({width,stable,cases})
  console.log(JSON.stringify({width,stable,cases:cases.map(c=>({width:c.width,pages:c.pageCount,rows:c.systemsPerPage,outside:c.outside.length,overlaps:c.overlaps.length,identical:c.identical}))}))
 }
 const best=results.filter(r=>r.stable).sort((a,b)=>a.cases[1].pageCount-b.cases[1].pageCount||a.width-b.width)[0]
-writeFileSync(folder+'/report.json',JSON.stringify({score:file,baseFontSize:22,widthOffsets:[-2,0,2],criterion:'pageCount',sharedPageCheck:'not-applicable: single-score trial',bestWidth:best?.width,results:results.map(r=>({...r,cases:r.cases.map(({markup:_markup,...c})=>c)}))},null,2))
+const renderCache={requests:probeRequests,uniqueWidths:cache.size,hits:cacheHits}
+writeFileSync(folder+'/report.json',JSON.stringify({score:file,baseFontSize:22,widthOffsets,renderCache,criterion:'pageCount',sharedPageCheck:'not-applicable: single-score trial',bestWidth:best?.width,results:results.map(r=>({...r,cases:r.cases.map(({markup:_markup,...c})=>c)}))},null,2))
 for(const r of results.filter(r=>r.width===650||r.width===best?.width))for(const c of r.cases)for(const [i,svg]of c.markup.entries())writeFileSync(`${folder}/${r.width}-${c.width}-${i+1}.svg`,svg)
 const selected=results.filter(r=>r.width===650||r.width===best?.width)
 const gallery='<!doctype html><meta charset="utf-8"><title>宽度稳定性试排</title><style>body{background:#ddd}figure{display:inline-block;vertical-align:top;width:380px;margin:12px}figure img{width:100%;background:white}</style>'+selected.flatMap(r=>r.cases.flatMap(c=>c.markup.map((_,i)=>`<figure><figcaption>候选${r.width}px · 实际${c.width}px · 第${i+1}页</figcaption><img src="${r.width}-${c.width}-${i+1}.svg"></figure>`))).join('')
@@ -32,5 +43,5 @@ if(best){
  await page.evaluate(()=>document.fonts.ready)
  await page.pdf({path:folder+'/trial.pdf',format:'A4',printBackground:true,preferCSSPageSize:true})
 }
-console.log(JSON.stringify({bestWidth:best?.width,report:folder+'/report.json',preview:folder+'/index.html',pdf:best?folder+'/trial.pdf':undefined}))
+console.log(JSON.stringify({bestWidth:best?.width,renderCache,report:folder+'/report.json',preview:folder+'/index.html',pdf:best?folder+'/trial.pdf':undefined}))
 }finally{await browser.close()}
