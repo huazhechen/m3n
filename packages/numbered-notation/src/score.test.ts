@@ -1363,7 +1363,7 @@ it('measure numbers attach once to closing melody barlines and preserve note ide
   expect([...numbered.bindings.values()]).toEqual([...plain.bindings.values()])
   const result = render(document, { measureNumbers: true })
   expect(result.score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
-  expect([...result.root.querySelectorAll('text[font-size="10"]')].map(node => node.textContent)).toEqual(['1', '2'])
+  expect([...result.root.querySelectorAll('text[font-size="10"]')].map(node => node.textContent)).toEqual(['2'])
 })
 
 
@@ -1381,4 +1381,25 @@ it('renders a traditional tune origin without a composer label', () => {
   const texts = [...root.querySelectorAll('text')].map(text => text.textContent)
   expect(texts).toContain('爱尔兰传统民歌')
   expect(texts).not.toContain('作曲：')
+})
+
+// Row ownership is decided after automatic wrapping and pagination.
+it.each([320, 800].flatMap(width => [false, true].map(paged => ({ width, paged }))))('keeps only row-end measure numbers at $width, paged=$paged', settings => {
+  const source = '{4/4}\nN: ' + Array(12).fill('1 2 3 4').join(' | ') + ' |||'
+  const { root } = render(source, { ...settings, measureNumbers: true })
+  const systems = [...root.querySelectorAll('g.system')].filter(system => system.querySelector('g.note'))
+  expect(systems.length).toBeGreaterThan(1)
+  for (const system of systems) {
+    const measures = [...system.querySelectorAll('g.measure')]
+    const labels = [...system.querySelectorAll('[data-m3n-role="measure-number"]')]
+    expect(labels).toHaveLength(1)
+    expect(labels[0]!.closest('g.measure')).toBe(measures.at(-1))
+  }
+})
+it('identifies each top order occurrence across wrapped header rows', () => {
+  const { root } = render('{4/4}{order=A,B,A,B,A,B,A,B}\n===A\nN: 0 1 2 3 |\n===B\nN: 4 5 6 7 |||', { width: 320 })
+  const cells = [...root.querySelectorAll('[data-m3n-order-index]')]
+  expect(cells.map(cell => cell.getAttribute('data-m3n-order-index'))).toEqual(['0', '1', '2', '3', '4', '5', '6', '7'])
+  expect(cells.map(cell => cell.textContent)).toEqual(['A', 'B', 'A', 'B', 'A', 'B', 'A', 'B'])
+  expect(cells.every(cell => cell.querySelector('rect') && cell.querySelector('[data-m3n-role="order"]'))).toBe(true)
 })

@@ -32,6 +32,17 @@ describe('native MIDI and playback index', () => {
     expect(score.elementsAtTime(900)).toContainEqual({ xmlId: 'm3n-e-1', rendition: 2 })
     expect(score.timeForElement('m3n-e-1-rend2')).toBe(800)
   })
+  it('keeps a leading rest active at zero and distinguishes repeated order entries', async () => {
+    const score = await prepare('{2/4}{120qpm}{order=A,B,A}\n===A\nN: ||: 0 1 :||\n===B\nN: 2 3 |||')
+    const opening = score.elementsAtTime(0)
+    expect(opening).toHaveLength(1)
+    expect(opening[0]).toMatchObject({ orderIndex: 0 })
+    expect(score.elementsAtTime(499)).toEqual(opening)
+    expect(score.elementsAtTime(1000)[0]).toMatchObject({ xmlId: opening[0]!.xmlId, orderIndex: 0 })
+    expect(score.elementsAtTime(2000)[0]).toMatchObject({ orderIndex: 1 })
+    expect(score.elementsAtTime(3000)[0]).toMatchObject({ xmlId: opening[0]!.xmlId, orderIndex: 2 })
+    score.destroy()
+  })
   it('returns independent MIDI buffers and rejects operations after disposal', async () => {
     const score = await prepare('{2/4}\nN: 1 2 |||')
     const first = score.midi(), second = score.midi()

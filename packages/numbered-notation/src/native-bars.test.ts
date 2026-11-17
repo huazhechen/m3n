@@ -22,17 +22,17 @@ describe('measured bar obstacles', () => {
     expect(label.left).toBeLessThan(ink.right)
     expect(label.bottom).toBeCloseTo(ink.top - nativeStyle.music * 0.12, 4)
   })
-  it('places each measure number at its closing boundary, including a shared repeat opening', () => {
+  it('places only the row-end measure number at its closing boundary', () => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4 | ||: 5 6 7 1e :||'), { width: 800, paged: false, textMeasurer: measurer, measureNumbers: true })
     const system = score.systems[0]!
-    const opening = nativeMeasureBarPositions(system.measures, 1).find(bar => bar.kind === 'rptstart')!
-    const first = system.decorationLayout!.find(label => label.svg.includes('>1</text>'))!
+    const closing = nativeMeasureBarPositions(system.measures, 1).at(-1)!
+    const first = system.decorationLayout!.find(label => label.svg.includes('>2</text>'))!
     const ink = nativeSvgInk(first.svg, measurer)
-    expect((ink.left + ink.right) / 2).toBeCloseTo(opening.x, 4)
-    expect(system.decorationLayout!.filter(label => label.svg.includes('data-m3n-role="annotation"'))).toHaveLength(2)
+    expect((ink.left + ink.right) / 2).toBeCloseTo(closing.x, 4)
+    expect(system.decorationLayout!.filter(label => label.svg.includes('data-m3n-role="measure-number"'))).toHaveLength(1)
   })
   it('clears measured bar-label ink with the arc ribbon instead of drawing through the number', () => {
-    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: {lg}1 2 3 4 | 5 6 7 1e{/} |||'), { width: 800, paged: false, textMeasurer: measurer, measureNumbers: true })
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: {lg}1 2 3 4 | {br}5 6 7 1e{/} |||'), { width: 800, paged: false, textMeasurer: measurer, measureNumbers: true })
     const system = score.systems[0]!, relation = system.relations.find(relation => relation.kind === 'slur')!
     const label = system.decorationLayout!.find(label => label.svg.includes('>1</text>'))!
     const ink = nativeSvgInk(label.svg, measurer), arc = nativeArcGeometry(relation, system)

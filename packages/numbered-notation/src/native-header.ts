@@ -127,11 +127,14 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     + `<g transform="translate(0 ${n(creditsTop)})">${creditSvg}</g>`
     + `<g transform="translate(0 ${n(signaturesTop - signatureInk.top)})">${signatureSvg}</g>`
   const blocks = [{height:sideTop+sidesHeight-margin,svg:`<g transform="translate(0 ${n(-margin)})">${svg}</g>`}]
+  let orderIndex = 0
   for (const row of orderRows) {
     let rowSvg = ''
     for (const item of row.items) {
+      if (item.framed) rowSvg += `<g data-m3n-order-index="${orderIndex++}">`
       if (item.framed) rowSvg += `<rect${attrs({ x: item.x + em(0.5), y: item.y + em(0.5), width: item.width - em(1), height: item.height - em(1), fill: 'none', stroke: '#000', 'stroke-width': em(1) })}/>`
       rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
+      if (item.framed) rowSvg += '</g>'
     }
     svg += rowSvg
     blocks.push({height:row.height,svg:`<g transform="translate(0 ${n(-row.top)})">${rowSvg}</g>`})

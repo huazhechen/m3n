@@ -26,7 +26,7 @@ describe('measured native volta fragments', () => {
     })
 
   it.each([false, true])('keeps bar-owned counts below the ending and stacks measure numbers above counts, numbers=%s', measureNumbers => {
-    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: ||: 1 2 3 4 |\n---V1,V3\nN: 1 2 3 4 :||{x4}\n---V2,V4\nN: 1 2 3 4 |||'), { width: 800, paged: false, textMeasurer: measurer, measureNumbers })
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: ||: 1 2 3 4 |\n---V1,V3\nN: 1 2 3 4 :||{x4}{br}\n---V2,V4\nN: 1 2 3 4 |||'), { width: 800, paged: false, textMeasurer: measurer, measureNumbers })
     const system = score.systems[0]!, count = system.decorationLayout!.find(decoration => decoration.svg.includes('repeat-count'))!
     const countInk = nativeSvgInk(count.svg, measurer)
     expect(count.svg).toContain('font-size="13"')

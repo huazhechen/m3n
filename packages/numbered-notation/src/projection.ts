@@ -31,7 +31,7 @@ export type EventBinding = {
   sustain: boolean
   passes?: number[]
 }
-export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[] }
+export type ProjectedScore = { source: string; bindings: Map<string, EventBinding>; diagnostics: NumberedNotationDiagnostic[]; rows: number[]; measureNumbers?: boolean; orderLabels?: string[] }
 export type ProjectionOptions = { textMeasurer?: TextMeasurer; width: number; paged: boolean; includeBass?: boolean; measureNumbers?: boolean; fixedDo?: boolean; transpose?: number; tempoScale?: number; pageMargin?: number; systemGap?: number }
 const quote = (value: string) => `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 const keyMark = (key: string, transpose?: number, visits?: string) => `@key(${quote(transposedKey(key, transpose))},size=16px${/^[A-G][#b]?m$/.test(key) ? ',degree=6' : ''}${visits ? `,visits=${quote(visits)}` : ''})`
@@ -441,5 +441,6 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
     if (!start || !end || interval.display === 'text') continue
     relations.push(interval.kind === 'lg' ? `@tie(${start},${end})` : `@dyn(${start},${end},${interval.kind === 'cresc' ? 24 : -24}${start === end ? ',single=true' : ''})`)
   }
-  return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...outerExpressions.flat(), ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers }
+  return { source: [...header, parts.join(' @br() '), ...relations, ...parentheses, ...outerExpressions.flat(), ...annotations.flat()].join('\n'), bindings, diagnostics, rows: rowNumbers,
+    measureNumbers: options.measureNumbers, orderLabels: orderLines.flat() }
 }

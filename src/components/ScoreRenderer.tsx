@@ -47,19 +47,6 @@ type ScoreRendererProps = {
 
 
 const EMPTY_INVALID_MEASURE_IDS: string[] = []
-function playbackCountInBeats(scoreDocument: ScoreDocument | undefined) {
-  const measure = scoreDocument?.parts.get('score')?.melody[0]
-  const event = measure?.events[0]
-  const expected = (event?.meterCount ?? scoreDocument?.meterCount ?? 4) * 4 /
-    (event?.meterUnit ?? scoreDocument?.meterUnit ?? 4)
-  const actual = measure?.multiRest
-    ? expected
-    : measure?.events.reduce((total, item) => total + item.beats, 0) ?? 0
-  if (!Number.isFinite(expected) || expected <= 0) return 0
-  // A complete opening measure gets one full bar; a pickup gets only the
-  // missing beats needed to complete that first bar.
-  return (actual > 0 && actual < expected ? expected - actual : expected) * (event?.meterUnit ?? scoreDocument?.meterUnit ?? 4) / 4
-}
 
 function queryScoreElement(paper: HTMLElement | null, xmlId: string) {
   return paper?.querySelector(`#${xmlId}`) ?? paper?.querySelector(`[data-m3n-id="${xmlId}"]`) ?? null
@@ -171,6 +158,7 @@ export function ScoreRenderer({
   const isSeekingRef = useRef(false)
   const pendingSeekProgressRef = useRef(0)
   const highlightedElementsRef = useRef<Element[]>([])
+  const startupBeatRef = useRef<1 | 2 | 3 | null>(null)
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
   const [message, setMessage] = useState('')
@@ -273,6 +261,7 @@ export function ScoreRenderer({
         })
         if (cancelled) return
         addInvalidMeasureHighlights(paper, invalidMeasureIds)
+        if (startupBeatRef.current !== null) showStartupBeat(startupBeatRef.current)
         setMessage(message)
         hasRenderedRef.current = true
         setHasAudioControls(true)
@@ -316,6 +305,8 @@ export function ScoreRenderer({
   const clearPlaybackHighlight = () => {
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
     highlightedElementsRef.current = []
+    paperRef.current?.querySelectorAll('.startup-beat-highlight').forEach(element => element.remove())
+    startupBeatRef.current = null
     highlightedMeasuresRef.current.forEach((measure) => measure.classList.remove('is-playing-measure'))
     highlightedMeasuresRef.current = []
     onActiveXmlId?.(null)
@@ -333,11 +324,33 @@ export function ScoreRenderer({
     scorePlaybackCoordinator.release(playbackLeaseRef.current)
   }
 
+  const showStartupBeat = (beat: 1 | 2 | 3 | null) => {
+    clearPlaybackHighlight()
+    startupBeatRef.current = beat
+    if (beat === null) return
+    const first = scoreRef.current?.elementsAtTime(0)[0]
+    if (!first) return
+    const note = queryPlaybackElements(paperRef.current, first.xmlId, first.rendition)
+      .find(element => element.matches('g.note')) as SVGGElement | undefined
+    if (!note) return
+    const numeral = [...note.querySelectorAll<SVGTextElement>('text')].find(text => /^[0-7]$/.test(text.textContent ?? ''))
+    const bounds = (numeral ?? note).getBBox()
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    circle.classList.add('startup-beat-highlight')
+    circle.setAttribute('data-beat', String(beat))
+    circle.setAttribute('cx', String(bounds.x + bounds.width / 2))
+    circle.setAttribute('cy', String(bounds.y + bounds.height / 2))
+    circle.setAttribute('r', String(Math.max(bounds.width, bounds.height) / 2 + 5))
+    note.insertBefore(circle, note.firstChild)
+  }
+
   const updatePlaybackHighlight = (seconds: number, duration: number, syncProgress = true) => {
     const progress = duration > 0 ? Math.max(0, Math.min(1, seconds / duration)) : 0
     if (syncProgress) setPlaybackProgress(progress)
     const timedElements = scoreRef.current?.elementsAtTime(seconds * 1000) ?? []
     const elements = timedElements.flatMap(({ xmlId, rendition }) => queryPlaybackElements(paperRef.current, xmlId, rendition))
+    const orderIndex = timedElements.find(element => element.orderIndex !== undefined)?.orderIndex
+    if (orderIndex !== undefined) elements.push(...paperRef.current?.querySelectorAll(`[data-m3n-order-index="${orderIndex}"]`) ?? [])
     highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
     elements.forEach((element) => element.classList.add('is-playing'))
     highlightedElementsRef.current = elements
@@ -351,7 +364,7 @@ export function ScoreRenderer({
   }
 
   const onPlayerTime = (seconds: number, duration: number) => {
-    if (!isSeekingRef.current) updatePlaybackHighlight(seconds, duration)
+    if (!isSeekingRef.current && startupBeatRef.current === null) updatePlaybackHighlight(seconds, duration)
   }
 
   const getPlayer = () => {
@@ -381,7 +394,8 @@ export function ScoreRenderer({
             stopPlaybackRef.current()
           },
           onTime: onPlayerTime,
-        }, transposeRef.current, playbackCountInBeats(scoreDocument), tone)
+          onStartupBeat: showStartupBeat,
+        }, transposeRef.current, tone)
         if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
         try {
           let appliedTone = tone
@@ -437,8 +451,9 @@ export function ScoreRenderer({
       const player = await getPlayer()
       if (player.paused) {
         scorePlaybackCoordinator.claim(playbackLeaseRef.current)
-        await player.play()
         setIsPlaying(true)
+        await player.play()
+        setIsPlaying(!player.paused)
       } else {
         stopPlaybackRef.current()
       }

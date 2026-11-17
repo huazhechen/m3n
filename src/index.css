@@ -918,6 +918,15 @@ textarea::selection {
   stroke: #d95f2a !important;
 }
 
+.score-paper .startup-beat-highlight {
+  stroke: none !important;
+  pointer-events: none;
+}
+
+.score-paper .startup-beat-highlight[data-beat="1"] { fill: #ef5350 !important; }
+.score-paper .startup-beat-highlight[data-beat="2"] { fill: #fdd835 !important; }
+.score-paper .startup-beat-highlight[data-beat="3"] { fill: #66bb6a !important; }
+
 .renderer-settings-dialog {
   width: min(440px, calc(100vw - 32px));
   border: 1px solid #cfd3ca;

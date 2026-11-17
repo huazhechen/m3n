@@ -97,6 +97,8 @@ describe('native measured header order', () => {
     const labels = [...root.querySelectorAll('[data-m3n-role="order"]')]
     const items = geometry.orderRows.flatMap(row => row.items.filter(item => item.framed))
     expect(labels.map(label => label.textContent)).toEqual(['A', 'B', 'C', 'B', 'D'])
+    expect(labels.map(label => label.parentElement!.getAttribute('data-m3n-order-index'))).toEqual(['0', '1', '2', '3', '4'])
+    expect(labels.every(label => label.parentElement!.querySelector('rect'))).toBe(true)
     labels.forEach((label, index) => {
       expect(Number(label.getAttribute('x'))).toBeCloseTo(items[index]!.x + 3.5, 4)
       expect(Number(label.getAttribute('y'))).toBeCloseTo(items[index]!.baseline, 4)

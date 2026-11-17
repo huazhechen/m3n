@@ -95,7 +95,9 @@ export function alternativePerformance(document: ScoreDocument): ScoreDocument {
         copies.push({source:event,event:copy,staff});return copy
       }),...(measure?.multiRest?{multiRest:measure.multiRest}:{}),...(measure?.multiRestState?{multiRestState:{...measure.multiRestState,
         key:targetKey ? sectionVisitKey(measure.multiRestState.key,entryKey,targetKey) : measure.multiRestState.key}}:{})})
-      output.melody.push(clone(selected,'melody')); output.bass.push(clone(part.bass[index],'bass'))
+      const melody = clone(selected,'melody'), bass = clone(part.bass[index],'bass')
+      if (orderIndex >= 0) { melody.orderIndex = orderIndex; bass.orderIndex = orderIndex }
+      output.melody.push(melody); output.bass.push(bass)
     }
     parts.set(name,output)
   }

@@ -4,6 +4,7 @@ import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
 import { loadSampledTone, type PlaybackTone } from './playback-tones.js'
 import { createSyntheticSoundFont } from './synthetic-soundfont.js'
 import { Metronome, buildMetronomeBeats, initialBeatDurationSeconds } from './metronome.js'
+import { StartupCue, type StartupBeat } from './startup-cue.js'
 
 export function seekTimeAtProgress(duration: number, progress: number) {
   if (!Number.isFinite(duration) || duration <= 0) return 0
@@ -21,6 +22,7 @@ export function playbackRateAtBpm(bpm: number, initialBpm: number) {
 type PlayerListener = {
   onEnded: () => void
   onTime: (seconds: number, duration: number) => void
+  onStartupBeat?: (beat: StartupBeat | null) => void
 }
 
 /** Transpose melodic MIDI channels while leaving percussion (channel 10) intact. */
@@ -47,14 +49,16 @@ export class SpessaPlayer {
   private readonly listener: PlayerListener
   private readonly metronome: Metronome
   private metronomeEnabled = false
-  private countInPending = true
+  private startupPending = true
   private playToken = 0
   private toneVersion = 0
   private destroyed = false
+  private readonly startup: StartupCue
   private readonly soundBanks = new Map<PlaybackTone, Promise<void>>()
 
   private constructor(context: AudioContext, synth: WorkletSynthesizer, sequencer: Sequencer, listener: PlayerListener, metronome: Metronome, private readonly initialBpm: number, tone: PlaybackTone) {
     this.soundBanks.set(tone, Promise.resolve())
+    this.startup = new StartupCue(context)
     this.context = context
     this.synth = synth
     this.sequencer = sequencer
@@ -62,13 +66,13 @@ export class SpessaPlayer {
     this.metronome = metronome
     this.sequencer.eventHandler.addEvent('songEnded', 'm3n-player', () => {
       this.stopProgressLoop()
-      this.countInPending = true
+      this.startupPending = true
       this.listener.onTime(this.sequencer.duration, this.sequencer.duration)
       this.listener.onEnded()
     })
   }
 
-  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0, countInBeats = 0, tone: PlaybackTone = 'synth') {
+  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0, tone: PlaybackTone = 'synth') {
     const soundBank = tone === 'synth' ? createSyntheticSoundFont() : await loadSampledTone(tone)
     const context = new AudioContext()
     try {
@@ -85,7 +89,7 @@ export class SpessaPlayer {
         synth,
         sequencer,
         listener,
-        new Metronome(context, buildMetronomeBeats(parsedSequence), countInBeats, initialBeatDurationSeconds(parsedSequence)),
+        new Metronome(context, buildMetronomeBeats(parsedSequence)),
         60 / initialBeatDurationSeconds(parsedSequence), tone,
       )
       player.setTranspose(transpose)
@@ -97,7 +101,7 @@ export class SpessaPlayer {
   }
 
   get paused() {
-    return this.sequencer.paused
+    return this.sequencer.paused && !this.startup.active
   }
 
   get duration() {
@@ -105,30 +109,32 @@ export class SpessaPlayer {
   }
 
   async play() {
-    await this.context.resume()
     const token = ++this.playToken
-    const startsAtBeginning = this.countInPending || this.sequencer.currentHighResolutionTime <= 0.01
-    const countInSeconds = this.metronomeEnabled && startsAtBeginning
-      ? this.metronome.countInDurationSeconds
-      : 0
-    if (this.metronomeEnabled) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate, countInSeconds > 0)
-    if (countInSeconds > 0) {
-      await new Promise<void>((resolve) => window.setTimeout(resolve, countInSeconds * 1000 / Math.max(0.01, this.sequencer.playbackRate)))
-      if (token !== this.playToken) return
+    await this.context.resume()
+    if (token !== this.playToken || this.destroyed) return
+    if (this.sequencer.currentTime >= this.sequencer.duration - 0.02) this.seek(0)
+    const startsAtBeginning = this.startupPending && (this.sequencer.currentTime < 0.02 || this.sequencer.currentTime >= this.sequencer.duration - 0.02)
+    if (startsAtBeginning) {
+      await this.startup.play(this.initialBpm * this.sequencer.playbackRate, beat => this.listener.onStartupBeat?.(beat))
     }
-    this.countInPending = false
+    if (token !== this.playToken || this.destroyed) return
+    this.startupPending = false
+    this.listener.onTime(Math.max(0, this.sequencer.currentTime), this.sequencer.duration)
     this.sequencer.play()
+    if (this.metronomeEnabled) this.metronome.start(this.sequencer.currentTime, this.sequencer.playbackRate)
     this.startProgressLoop()
   }
 
   pause() {
     this.playToken += 1
+    this.startup.cancel()
     this.sequencer.pause()
     this.metronome.stop()
     this.stopProgressLoop()
   }
 
   seek(progress: number) {
+    this.startup.cancel()
     this.sequencer.currentTime = seekTimeAtProgress(this.sequencer.duration, progress)
     if (this.metronomeEnabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
     this.emitProgress()
@@ -165,6 +171,7 @@ export class SpessaPlayer {
 
   setTempo(bpm: number) {
     this.sequencer.playbackRate = playbackRateAtBpm(bpm, this.initialBpm)
+    this.startup.setTempo(this.initialBpm * this.sequencer.playbackRate)
     if (this.metronomeEnabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
   }
 
@@ -178,6 +185,7 @@ export class SpessaPlayer {
     this.destroyed = true
     this.toneVersion += 1
     this.playToken += 1
+    this.startup.cancel()
     this.stopProgressLoop()
     this.metronome.stop()
     this.sequencer.pause()
@@ -186,7 +194,8 @@ export class SpessaPlayer {
   }
 
   private emitProgress = () => {
-    const playbackSeconds = this.sequencer.currentHighResolutionTime
+    if (this.startup.active) return
+    const playbackSeconds = Math.max(0, this.sequencer.currentHighResolutionTime)
     this.listener.onTime(playbackSeconds, this.sequencer.duration)
   }
 

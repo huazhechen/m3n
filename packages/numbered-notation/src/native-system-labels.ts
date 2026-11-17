@@ -42,6 +42,6 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
     }
     if ((measure.source.repeatCount ?? 2) > 2) place(`×${measure.source.repeatCount}`, nativeStyle.repeatCount, { 'data-m3n-role': 'repeat-count' })
     const first = measure.columns.flatMap(column => column.glyphs).find(glyph => glyph.lane === lane.id)
-    if (measureNumbers && first) place(String(measure.number ?? measure.index + 1), nativeStyle.measureNumber, { 'data-m3n-role': 'annotation', 'data-m3n-id': first.xmlId })
+    if (measureNumbers && first && index === system.measures.length - 1) place(String(measure.number ?? measure.index + 1), nativeStyle.measureNumber, { 'data-m3n-role': 'measure-number', 'data-m3n-id': first.xmlId })
   }
 }

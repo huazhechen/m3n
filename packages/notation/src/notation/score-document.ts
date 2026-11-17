@@ -36,6 +36,8 @@ export type ScoreInterval = {
 }
 
 export type ScoreMeasure = {
+  /** Zero-based occurrence in the explicit order, on unfolded measures only. */
+  orderIndex?: number
   /** Local visits from an explicit section order; absent for ordinary repeats. */
   orderPasses?: number[]
   sectionName?: string

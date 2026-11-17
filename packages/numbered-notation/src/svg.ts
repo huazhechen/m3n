@@ -106,9 +106,50 @@ export function renderInteractivePages(result: CompileScoreResult, projection: P
     },
   })
   const seenMeasures = new Set<string>()
+  const lineEnds = new Map<number, VisualTemporalNode>()
+  for (const { node, binding } of located.values()) if (binding.staff === 'melody' && !node.T.isZero()) {
+    const previous = lineEnds.get(node.layoutLine)
+    if (!previous || node.t.compare(previous.t) > 0) lineEnds.set(node.layoutLine, node)
+  }
   return native.map((svg, pageIndex) => {
     const root = parse(svg).find((item): item is TNode => typeof item !== 'string' && item.tagName === 'svg')!
     root.attributes['data-engine'] = 'jpfun'
+    // Numbers belong to closing bars; automatic wrapping is known only after
+    // layout. Retain the number only when no melody event follows on that row.
+    if (projection.measureNumbers) for (const child of root.children) {
+      if (typeof child === 'string') continue
+      const object = objectLocations.get(Number(child.attributes['data-jpfun-object']))
+      if (!object || !/@text\("\d+",size=10px\)/.test(projection.source.slice(object.node.ast.sourceSpan.start, object.node.ast.sourceSpan.end))) continue
+      const last = lineEnds.get(object.line)
+      const closing = last && object.node.t.compare(last.t) > 0
+      const filter = (node: TNode) => {
+        node.children = node.children.filter(item => {
+          if (typeof item === 'string') return true
+          if (item.tagName === 'text' && item.attributes['font-size'] === '10' && /^\d+$/.test(item.children.join(''))) {
+            item.attributes['data-m3n-role'] = 'measure-number'
+            return Boolean(closing)
+          }
+          filter(item); return true
+        })
+      }
+      filter(child)
+    }
+    // Header cells are painted by @head as separate frame/text primitives.
+    // Group each pair without moving either primitive, and identify the order
+    // occurrence rather than its (possibly repeated) section name.
+    let orderIndex = 0
+    const claimedFrames = new Set<TNode>()
+    root.children = root.children.map(child => {
+      if (typeof child === 'string' || child.tagName !== 'text' || child.attributes['font-size'] !== '16'
+        || child.attributes['font-weight'] !== '700' || child.children.join('') !== projection.orderLabels?.[orderIndex]) return child
+      const x = Number(child.attributes.x), y = Number(child.attributes.y)
+      const frame = root.children.find((item): item is TNode => typeof item !== 'string' && item.tagName === 'rect' && item.attributes.fill === 'none'
+        && Number(item.attributes.x) <= x && Number(item.attributes.x) + Number(item.attributes.width) >= x
+        && Number(item.attributes.y) < y && Number(item.attributes.y) + Number(item.attributes.height) > y)
+      if (!frame) return child
+      claimedFrames.add(frame); child.attributes['data-m3n-role'] = 'order'
+      return { tagName: 'g', attributes: { 'data-m3n-order-index': String(orderIndex++) }, children: [frame, child] } satisfies TNode
+    }).filter(child => typeof child === 'string' || !claimedFrames.has(child))
     const systems = new Map<string, TNode>()
     const measures = new Map<string, TNode>()
     const remaining: Array<TNode | string> = []

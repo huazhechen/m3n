@@ -7,7 +7,7 @@ import type { ScoreDocument, ScoreEvent } from './notation/score-document.js'
 
 /** Positions and durations are quarter-note beats, independent of audio devices. */
 export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number }
-export type PerformanceElement = { start: number; end: number; xmlId: string; rendition: number; voice: string }
+export type PerformanceElement = { start: number; end: number; xmlId: string; rendition: number; voice: string; orderIndex?: number }
 export type PerformanceTempo = { beat: number; qpm: number }
 export type PerformanceMeter = { beat: number; count: number; unit: number }
 export type ScorePerformance = {
@@ -86,7 +86,8 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
           const id = ids.get(event)!
           const rendition = Number(/-rend(\d+)$/.exec(id)?.[1] ?? 1)
           const xmlId = id.replace(/-rend\d+$/, '')
-          result.elements.push({ start: cursor, end: cursor + event.beats, xmlId, rendition, voice: `${partName}:${staff}` })
+          result.elements.push({ start: cursor, end: cursor + event.beats, xmlId, rendition, voice: `${partName}:${staff}`,
+            ...(measure.orderIndex === undefined ? {} : { orderIndex: measure.orderIndex }) })
           const resolved = pitches[staff].get(event) ?? []
           const channel = staff === 'melody' ? 0 : 1
           const previous = pendingTies[staff]
