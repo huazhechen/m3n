@@ -251,7 +251,9 @@ h3 {
   color: #174f54;
   font-size: .9em;
   white-space: nowrap;
+  /* Align with Chinese text; `middle` uses the Latin x-height and sits too low. */
   vertical-align: middle;
+  transform: translateY(-.1em);
 }
 
 .home-control-hint svg,
