@@ -1037,6 +1037,16 @@ class VoiceLyricsAttachment implements LayoutAttachment {
             const baseline = byTrack.get(target.track) ?? { bottom: -Infinity, owner: target.track, rows: [], tiers: new Map() };
             const bounds = getLayoutBounds(target);
             let bottom = bounds.y + bounds.h;
+            // Adjacent @voice scopes (notably replacement measures in one
+            // ossia lane) share a musical baseline across the complete system.
+            // Exclude zero-duration controls and other tracks from this envelope.
+            if (!byTrack.has(target.track)) {
+                for (const host of context.lines[target.layoutLine].trackRuns.get(target.track) ?? []) {
+                    if (host.T.isZero() || !host.ports["lyric"]) continue;
+                    const music = getLayoutBounds(host, true);
+                    bottom = Math.max(bottom, music.y + music.h);
+                }
+            }
             if (context.uniformSystemHeight) {
                 const reserved = context.getHostExtent(target.layoutLine, target.track);
                 if (reserved) bottom = Math.max(bottom, context.getVisualAxis(target.layoutLine, target.track) + reserved.bottom);
