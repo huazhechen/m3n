@@ -4,6 +4,7 @@ import { attachmentCommands, assert, compileValid, layoutOf, nearly, recordComma
 for (const size of [16, 22, 32]) {
     test(`an interior sustain clears an arc by its painted stroke at ${size}px`, () => {
         const layout = compileValid('1@a - 1@b @tie(a,b,height=0.1em)', {
+            alignRelations: true,
             variables: { fontsize: size },
             textMeasurer: { measureText(_text, style) {
                 return { w: style.fontSize * 0.5, h: style.fontSize * 0.6,
