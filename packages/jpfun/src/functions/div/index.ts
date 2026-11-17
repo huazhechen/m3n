@@ -172,6 +172,12 @@ class DivFunction extends ASTFunctionNode {
                     }
                 },
             },
+            // Painting may be delegated to a joined beam. Frames still need
+            // this member's complete round stroke as intrinsic content.
+            getIntrinsicInk() {
+                return [{ x: lineLeft - strokeWidth / 2, y: firstLine - strokeWidth / 2,
+                    w: lineRight - lineLeft + strokeWidth, h: lineBlockHeight }];
+            },
             paint(painter) {
                 // 未被关系对象接管的级别仍由本装饰独立绘制
                 for (let i = 0; i < count; i++) {

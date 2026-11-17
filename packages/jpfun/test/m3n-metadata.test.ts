@@ -21,8 +21,9 @@ test('compact lyrics collapse blank rows per system while preserving row metadat
     assert.ok(compact.layout.bounds.h < original.layout.bounds.h);
     const visible = commands.find(command => command.text === '好')!;
     assert.equal(visible.style.semantic?.row, 2);
-    const placeholder = commands.find(command => command.text === '\u200B' && command.style.semantic?.row === 0)!;
-    assert.equal(placeholder.y, visible.y);
+    assert.ok(!commands.some(command => command.text === '\u200B'));
+    const singleVisible = recordCommands(single.layout).find(command => command.kind === 'text' && command.text === '好')!;
+    assert.ok(Math.abs((visible.y - notes(compact)[2].box.y) - (singleVisible.y - notes(single)[2].box.y)) < 1e-6);
     const serialized = compact.ast.toString(source);
     assert.match(serialized, /compactlyrics=true/);
     assert.equal(compileScore(serialized).layout.bounds.h, compact.layout.bounds.h);

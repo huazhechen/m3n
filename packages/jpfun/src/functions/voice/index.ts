@@ -996,10 +996,11 @@ class VoiceLyricsAttachment implements LayoutAttachment {
     }
 
     createGeometry(context: AttachmentLayoutContext) {
-        const preparedText = this.prepareGeometry(context);
+        const text = this.prepareGeometry(context);
+        const preparedText = this.nameHost.ast.compactLyrics ? text.filter(item => visibleLyricText(item.text)) : text;
         // 同一行同一轨的多行歌词由引擎合并成一段占用
         return {
-            regions: this.nameHost.ast.compactLyrics ? preparedText.filter(item => visibleLyricText(item.text)) : preparedText,
+            regions: preparedText,
             paint(painter: Painter) {
                 for (const item of preparedText) {
                     painter.drawText(item.text, item.x + (item.textOffsetX ?? 0), item.y + item.textBaselineY, item.style);

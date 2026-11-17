@@ -147,11 +147,11 @@ class BeamLayoutAttachment implements LayoutAttachment {
     createGeometry(context: AttachmentLayoutContext) {
         const lines = this.collectLines(context);
         const strokeWidth = this.strokeWidth;
-        // 减时线永远水平，butt 端帽只在纵向占半个描边
+        // SVG draws round caps: both ends extend by half the stroke width.
         const regions = lines.map(line => ({
-            x: Math.min(line.start.x, line.end.x),
+            x: Math.min(line.start.x, line.end.x) - strokeWidth / 2,
             y: line.start.y - strokeWidth / 2,
-            w: Math.abs(line.end.x - line.start.x),
+            w: Math.abs(line.end.x - line.start.x) + strokeWidth,
             h: strokeWidth,
             line: line.line,
             track: line.track,

@@ -1,5 +1,9 @@
 # Local changes
 
+- Joined-beam regions include the half-stroke extension of both round caps. Duration decorations expose host-local intrinsic ink for enclosing frames even when joined attachments paint their strokes; frame measurement uses that ink without changing horizontal spring references.
+
+- Compact lyric placeholders are filtered consistently from occupancy and painting. Their lyric slots and verse metadata remain intact, while zero-ink text no longer creates phantom systems across page boundaries.
+
 - Tuplet system spacing uses the individually measured count and bracket strokes instead of their enclosing rectangle. The complete bracket envelope still controls same-system slur and expression ordering, and its attachment box retains the union of all visible pieces.
 
 - SVG coordinates and stroke widths retain six decimal places so serialization preserves the measured subpixel geometry instead of introducing visible edge differences through coarse rounding.

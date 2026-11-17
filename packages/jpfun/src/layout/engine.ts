@@ -1039,6 +1039,9 @@ function measureAttachmentPass(
             const boxes: Rect[] = [];
             for (const node of content.nodes) {
                 if (isVisualTemporalNode(node) && (node.box.w > 0 || node.box.h > 0)) boxes.push(hostBounds(node, true, !options?.bodyOnly));
+                if (isVisualTemporalNode(node) && !options?.bodyOnly) for (const decoration of node.decorations)
+                    for (const ink of decoration.getIntrinsicInk?.() ?? [])
+                        boxes.push({ ...ink, x: ink.x + node.box.x, y: ink.y + node.box.y });
             }
             for (const attachment of content.attachments) {
                 if (!isLayoutAttachment(attachment)) continue;

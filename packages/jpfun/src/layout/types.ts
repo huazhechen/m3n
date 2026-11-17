@@ -239,6 +239,8 @@ export interface LayoutDecoration {
     paint?(painter: Painter): void; // 只读取冻结几何
     above?: LayoutDecorationSpace;
     below?: LayoutDecorationSpace;
+    /** Host-local visible content, even when an attachment takes over paint. */
+    getIntrinsicInk?(): readonly Rect[];
 }
 
 /** 上下装饰共用由内向外的排列协议 */
