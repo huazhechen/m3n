@@ -7,7 +7,7 @@ import { placeNativeLyrics } from './native-lyrics.js'
 import { placeNativeRelation, type NativeRelationLayout } from './native-relations.js'
 import { nativeMarkStack, nativeInnerMark, nativeMarkRank } from './native-marks.js'
 import { NativeSymbols } from './native-symbols.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { placeNativeAnnotations, nativeRegionTop, type NativeRegion } from './native-annotations.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks } from './native-pagination.js'
@@ -247,7 +247,11 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
         lane.top = Math.max(lane.top, top)
         lane.bodyBottom = Math.max(lane.bodyBottom ?? 0, placed.ink.bottom)
         const bounds = relationBounds.get(system) ?? []
-        bounds.push({ lane: lane.id, left: placed.ink.left, right: placed.ink.right, top, arc: placed.arc })
+        // Parentheses are two separate endpoints, not a painted obstacle
+        // across the enclosed music. Tuplets retain their complete rhythm
+        // group for expression ordering; curves keep local ribbon queries.
+        const pieces = relation.kind === 'inst' ? nativeSvgPieces(placed.svg, measurer) : [placed.ink]
+        bounds.push(...pieces.map(ink => ({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top, arc: placed.arc })))
         relationBounds.set(system, bounds)
       }
     }
