@@ -63,7 +63,7 @@ export function HomePage() {
             <div><span className="eyebrow">03 / 播放</span><h2 id="home-playback">先听一遍，再跟上节拍</h2></div>
             <div className="home-feature-copy">
               <p>点 <ControlHint icon="play" label="播放" />，先听一遍旋律；节奏拿不准，打开 <ControlHint icon="metronome" label="节拍器" />，跟着节拍练习。</p>
-              <p>打开 <ControlHint icon="settings" label="设置" />，用 <ControlHint icon="piano" label="钢琴" /> 切换音色，拖动 <ControlHint slider label="速度" /> 滑条，把不熟的乐句放慢练；也可以用 <ControlHint musicalKey label="调号" /> 移调试听，找到适合自己嗓音或乐器的调。</p>
+              <p>打开 <ControlHint icon="settings" label="设置" />，用 <ControlHint icon="piano" label="钢琴" /> 切换音色，拖动 <ControlHint slider label="速度" /> 滑条，把不熟的乐句放慢练，熟悉后再恢复原速。</p>
             </div>
           </section>
           <section className="home-feature" aria-labelledby="home-print">
