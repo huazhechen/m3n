@@ -22,6 +22,7 @@ import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { alignNativeArcs } from './native-relation-alignment.js'
 import { placedNativeControlInk } from './native-controls.js'
+import { nativeUniformHosts, shareNativeUniformHeight } from './native-uniform-height.js'
 
 export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
@@ -216,6 +217,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
+  const uniformHosts = options.uniformSystemHeight ? nativeUniformHosts(systems, measurer) : undefined
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
     const regions = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
@@ -298,19 +300,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     placeNativeAnnotations(system, regions, measurer, options.width, margin, false)
   }
   for (const system of systems) placeNativeNavigation(system)
-  if (options.uniformSystemHeight) {
-    const envelopes = new Map<string, { top: number; bottom: number }>()
-    for (const system of systems) for (const lane of system.lanes) {
-      const paragraph = system.measures[0]?.columns[0]?.glyphs[0]?.paragraph ?? '0'
-      const key = `${paragraph}:${lane.id}:${system.volta}`, old = envelopes.get(key)
-      envelopes.set(key, { top: Math.max(lane.top, old?.top ?? 0), bottom: Math.max(lane.bodyBottom ?? lane.bottom, old?.bottom ?? 0) })
-    }
-    for (const system of systems) for (const lane of system.lanes) {
-      const paragraph = system.measures[0]?.columns[0]?.glyphs[0]?.paragraph ?? '0'
-      const envelope = envelopes.get(`${paragraph}:${lane.id}:${system.volta}`)!
-      lane.top = envelope.top; lane.bodyBottom = envelope.bottom; lane.lyricBottom = envelope.bottom
-    }
-  }
+  if (uniformHosts) shareNativeUniformHeight(systems, uniformHosts, measurer)
   for (const system of systems) for (const lane of system.lanes) placeNativeLyrics(system, lane, measurer)
   for (const system of systems) placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true)
   const gap = options.systemGap ?? nativeStyle.systemGap
