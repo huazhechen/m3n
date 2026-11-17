@@ -1412,3 +1412,9 @@ nativeSvgPieces原读取文本h，忽略测量器单独提供的inkBottom，离�
 新增16／22／32px回归从最终绘制命令独立检查每对横向相交图元均有至少2px净空，且最近一对恰好2px；旧实现失败，修后通过。相关50项通过。首次参考全量863／865通过，另两项倚音框／局部hook回归仍写死旧0.8系数，已按既定0.6规则同步，保持原几何断言和容差；最终参考865项全量通过。日志`.tmp/volta-symbol-pieces-{red,green,reference-full,reference-final,types,lint,build}.log`。专项八组几何全部通过，严格零像素四组；另四组各仅1个像素、最大通道差1，报告`.tmp/numbered-parity/2026-11-17T11-20-19.033Z-2040367/report.json`。
 
 修后137例四宽／连续分页1096组几何全部通过，报告`.tmp/numbered-parity/2026-11-17T11-20-39.660Z-2041659/report.json`。报告完整结束，逐个核对快照运行文件哈希与工作树一致；该矩阵未启用像素检查。全曲库704组像素及自研全量测试已另行启动，以上结果不替代其最终验收，默认显示及导出未切换。
+
+### 半音阶练习的括线栅格化复查（2026-11-17）
+
+全库像素运行`.tmp/numbered-parity/2026-11-17T11-22-03.780Z-2048102/`在浏览器重建时发生`page.setContent: Target page, context or browser has been closed`，进程退出1，run-status明确记录complete=false、checks=192；本轮不计为全库完成。已落盘192组均几何通过，114组严格零像素一致，最大横差0.014679px、纵差0.000244px。保留`.tmp/volta-symbol-pieces-library-pixels.log`，待当前自研全量测试结束后单独重跑浏览器矩阵；浏览器关闭原因尚未确认。
+
+其中《半音阶口琴基本功》600px分页有465个差异像素、最大通道差90，聚集于同一排三连音横线。只读探针`.tmp/chromatic-lines-probe.{mjs,json}`核对28根线：参考直接绘制页面坐标2298.23，自研局部坐标−29.64经平移后，浏览器两者测得同一屏幕纵坐标2298.22998046875。仅在诊断副本中将这些线合并为所属SVG的绝对坐标，整页差异降为71像素、最大通道差1；截图`.tmp/chromatic-{ref,native,native-flat}.png`。与此前三连音数字同属坐标变换的栅格化残差，不据此修改排版规则、谱源或比较阈值。《枫》1000px当前21个高对比像素集中于第一房子的遍次文字，已查看裁剪`.tmp/feng-latest-crops.png`，其成因仍待单独确认。
