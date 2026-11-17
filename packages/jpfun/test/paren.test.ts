@@ -113,3 +113,17 @@ test('parenthesis occupancy retains painted left bearings and right overhang', (
         }
     });
 });
+
+test('parenthesis horizontal reservation includes ink outside the advance box', () => {
+    const source = '@page(width=320px,height=400px,left=0px,right=0px,top=0px,bottom=0px) 1@a 2 3@b | @paren(a,b)';
+    const result = compileValid(source, { noteGap: 0, minimumNoteGap: 0, textMeasurer: {
+        measureText: (text, style) => ({ w: 12, h: style.fontSize, baseline: style.fontSize * .8,
+            inkLeft: text === '(' ? -3 : 0, inkRight: text === ')' ? 16 : 12 }),
+    } });
+    const [attachment] = parens(result, source);
+    assert.equal(attachment.regions.length, 2);
+    for (const region of attachment.regions) {
+        assert.ok(region.x >= -1e-6, 'Bracket ink must fit the left page boundary');
+        assert.ok(region.x + region.w <= 320 + 1e-6, 'Bracket ink must fit the right page boundary');
+    }
+});

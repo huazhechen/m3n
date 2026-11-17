@@ -79,8 +79,10 @@ class ParenAttachment implements LayoutAttachment {
     }
 
     prepareHorizontal(lines: HorizontalLineView[], context: LayoutPrepareContext) {
-        const leftInset = this.gap + context.textMeasurer.measureText('(', this.style).w;
-        const rightInset = this.gap + context.textMeasurer.measureText(')', this.style).w;
+        const left = context.textMeasurer.measureText('(', this.style);
+        const right = context.textMeasurer.measureText(')', this.style);
+        const leftInset = this.gap + left.w - Math.min(0, left.inkLeft ?? 0);
+        const rightInset = this.gap + Math.max(right.w, right.inkRight ?? right.w);
         for (const line of lines) {
             const members = this.members(line);
             const first = members[0], last = members.at(-1);
