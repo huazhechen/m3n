@@ -1,0 +1,6 @@
+{
+  "volta-rest-opening-3.m3n": "{4/4}\nN: ||: 1 2 3 4 |{br}\n---V1\nN: {rest=3} :||\n---V2\nN: {4/4}1 2 3 4 |||",
+  "volta-rest-opening-3-meter.m3n": "{4/4}\nN: ||: 1 2 3 4 |{br}\n---V1\nN: {6/8}{rest=3} :||\n---V2\nN: {4/4}1 2 3 4 |||",
+  "volta-rest-opening-12.m3n": "{4/4}\nN: ||: 1 2 3 4 |{br}\n---V1\nN: {rest=12} :||\n---V2\nN: {4/4}1 2 3 4 |||",
+  "volta-rest-opening-12-meter.m3n": "{4/4}\nN: ||: 1 2 3 4 |{br}\n---V1\nN: {6/8}{rest=12} :||\n---V2\nN: {4/4}1 2 3 4 |||"
+}
