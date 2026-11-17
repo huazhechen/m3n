@@ -1418,3 +1418,11 @@ nativeSvgPieces原读取文本h，忽略测量器单独提供的inkBottom，离�
 全库像素运行`.tmp/numbered-parity/2026-11-17T11-22-03.780Z-2048102/`在浏览器重建时发生`page.setContent: Target page, context or browser has been closed`，进程退出1，run-status明确记录complete=false、checks=192；本轮不计为全库完成。已落盘192组均几何通过，114组严格零像素一致，最大横差0.014679px、纵差0.000244px。保留`.tmp/volta-symbol-pieces-library-pixels.log`，待当前自研全量测试结束后单独重跑浏览器矩阵；浏览器关闭原因尚未确认。
 
 其中《半音阶口琴基本功》600px分页有465个差异像素、最大通道差90，聚集于同一排三连音横线。只读探针`.tmp/chromatic-lines-probe.{mjs,json}`核对28根线：参考直接绘制页面坐标2298.23，自研局部坐标−29.64经平移后，浏览器两者测得同一屏幕纵坐标2298.22998046875。仅在诊断副本中将这些线合并为所属SVG的绝对坐标，整页差异降为71像素、最大通道差1；截图`.tmp/chromatic-{ref,native,native-flat}.png`。与此前三连音数字同属坐标变换的栅格化残差，不据此修改排版规则、谱源或比较阈值。《枫》1000px当前21个高对比像素集中于第一房子的遍次文字，已查看裁剪`.tmp/feng-latest-crops.png`，其成因仍待单独确认。
+
+### 两版依赖与测试使用同一份构建输入（2026-11-17）
+
+自研全量运行`.tmp/volta-symbol-pieces-native-full.log`已退出1：64文件、1103项中1102通过，唯一失败为《虫儿飞》休止符坐标的旧数值断言。运行期间并行会话完成d4f6b1b的连梁撑满规则及测试修改，日志栈展示的源码已不同于实际执行的断言；该轮不能作为最新源码完整验收。浏览器像素矩阵已于其结束后独立重跑，结果另记。
+
+新增`node tools/test-numbered-snapshot.mjs`：把启动时最新的三个排版／领域包、曲库和示例复制到独立临时工作区，按依赖顺序构建，再运行自研包全量测试；工作区的@m3n依赖指向同一副本，不读取或覆盖编辑区旧dist。它不锁定或恢复编辑区文件；结束时逐文件比较输入哈希，连同新增／删除文件记录changedSinceSnapshot，避免把有后续变动的结果当作最新验收。输入清单、构建／测试日志及退出码保存到`.tmp/numbered-tests/`。可重复传入`--file=src/name.test.ts`运行专项；测试断言、时限与并发策略保持原配置，单进程执行。
+
+最终工具针对当前native-horizontal及native-spacing的29项测试通过，三个包均重新构建成功，changedSinceSnapshot为空；报告`.tmp/numbered-tests/2026-11-17T11-30-42.593Z-2056846/`，调度日志`.tmp/numbered-snapshot-focused-final.log`，lint及diff检查通过。这仅验证相关测试及同源构建流程，不冒充完整1103项重跑，也不替代全曲库浏览器对照。
