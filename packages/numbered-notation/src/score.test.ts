@@ -733,8 +733,21 @@ describe('jpFun numbered notation adapter', () => {
     const brackets = result.layout.attachments.filter(item => item.sourceSpan
       && result.maskedSource.slice(item.sourceSpan.start, item.sourceSpan.end).startsWith('@tuplet('))
     expect(brackets.length).toBeGreaterThan(20)
-    for (const line of new Set(brackets.flatMap(item => item.regions.map(region => region.line)))) {
-      const tops = brackets.flatMap(item => item.regions.filter(region => region.line === line).map(region => region.y))
+    const strokes = brackets.flatMap(item => {
+      const painter = new RecordingPainter()
+      item.paint(painter)
+      return painter.commands.flatMap(command => {
+        if (command.kind !== 'line' || command.y1 !== command.y2 || command.x1 === command.x2) return []
+        const x = (command.x1 + command.x2) / 2
+        const region = item.regions.find(region => x >= region.x && x <= region.x + region.w
+          && command.y1 >= region.y && command.y1 <= region.y + region.h)
+        expect(region).toBeDefined()
+        return [{ line: region!.line, y: command.y1 }]
+      })
+    })
+    expect(strokes.length).toBeGreaterThan(20)
+    for (const line of new Set(strokes.map(stroke => stroke.line))) {
+      const tops = strokes.filter(stroke => stroke.line === line).map(stroke => stroke.y)
       expect(Math.max(...tops) - Math.min(...tops), `system ${line} tuplet alignment`).toBeLessThan(0.01)
     }
   })
@@ -808,8 +821,15 @@ describe('jpFun numbered notation adapter', () => {
   })
 
   it('retains empty lyric slots and playback pass metadata across repeat verses', () => {
-    const { root } = render('{2/4}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天\nL2: 花开满园')
-    expect(root.querySelector('text[data-m3n-id="m3n-e-3"][data-m3n-rendition="1"]')).not.toBeNull()
+    const source = '{2/4}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天\nL2: 花开满园'
+    const { root } = render(source)
+    const projection = projectNumberedScore(parseM3NDocument(source), options)
+    const binding = [...projection.bindings.values()].find(binding => binding.xmlId === 'm3n-e-3')!
+    expect(binding.lyrics.get(0)?.texts.join('').replaceAll('\u200B', '')).toBe('')
+    expect([...binding.lyrics.get(0)!.passes!]).toContain(1)
+    expect(binding.lyrics.get(1)?.texts.join('')).toBe('满')
+    expect([...binding.lyrics.get(1)!.passes!]).toContain(2)
+    expect(root.querySelector('text[data-m3n-id="m3n-e-3"][data-m3n-rendition="1"]')).toBeNull()
     expect(lyrics(root, 'm3n-e-3', 1)).toBe('')
     expect(lyrics(root, 'm3n-e-3', 2)).toBe('满')
     expect(root.querySelector('text[data-m3n-rendition="2"]')?.getAttribute('data-m3n-passes')).toContain('2')
