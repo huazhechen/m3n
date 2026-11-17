@@ -32,11 +32,12 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
       if (!text || !glyph.annotations.includes(text)) continue
       const framed = kind === 'section', padding = framed ? nativeStyle.annotation * 0.25 : 0
       const metrics = measurer.measureText(text, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: framed ? 700 : 400 })
-      const inkLeft = Math.min(0, metrics.inkLeft ?? 0), inkRight = Math.max(metrics.w, metrics.inkRight ?? metrics.w)
+      const inkLeft = framed ? Math.min(0, metrics.inkLeft ?? 0) : metrics.inkLeft ?? 0
+      const inkRight = framed ? Math.max(metrics.w, metrics.inkRight ?? metrics.w) : metrics.inkRight ?? metrics.w
       const w = inkRight - inkLeft + 2 * padding, h = metrics.h + 2 * padding
       const first = measurer.measureText([...text][0]!, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: framed ? 700 : 400 })
-      // Match the text control's first-character anchor, while reserving the
-      // union of logical advance and actual paint for clamping and avoidance.
+      // Keep the first-character anchor, but only painted text or a visible
+      // frame can touch a margin or require clearance over nearby music.
       const left = framed ? margin : Math.max(margin, Math.min(glyph.x - first.w / 2 + inkLeft, width - margin - w))
       const right = left + w
       const queryLeft = framed ? Math.min(left, glyph.x - (glyph.inkLeft ?? glyph.left)) : left

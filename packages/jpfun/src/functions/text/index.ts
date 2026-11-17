@@ -264,10 +264,13 @@ class TextAboveAttachment implements LayoutAttachment {
         text.prepareLayout(context);
         const box = text.box;
         const { host } = this;
-        // Inline advance remains a logical spacing contract. Attachments must
-        // additionally clamp and clear the actual paint, including overhang.
-        const left = Math.min(0, ...text.lineBounds.map(region => region.x));
-        const right = Math.max(box.w, ...text.lineBounds.map(region => region.x + region.w));
+        // Anchored text clears and clamps its painted footprint. Empty side
+        // bearings are inline advance, not obstacles above the music.
+        const inkLeft = text.lineBounds.length ? Math.min(...text.lineBounds.map(region => region.x)) : 0;
+        const inkRight = text.lineBounds.length ? Math.max(...text.lineBounds.map(region => region.x + region.w)) : box.w;
+        const left = this.ast.frame ? Math.min(0, inkLeft) : inkLeft;
+        const right = this.ast.frame ? Math.max(box.w, inkRight) : inkRight;
+        const reservedLeft = Math.min(0, left), reservedRight = Math.max(box.w, right);
         box.x = this.ast.linestart ? context.originX - left : Math.max(context.originX - left, Math.min(
             host.box.x + host.box.anchor - box.anchor,
             context.originX + context.width - right,
@@ -298,7 +301,7 @@ class TextAboveAttachment implements LayoutAttachment {
         return {
             // Logical advance still reserves the attachment's layout cell.
             // Empty bearings and space between lines are not painted obstacles.
-            occupancy: [{ x: box.x + left, y: box.y, w: right - left, h: box.h, line: host.layoutLine, track: host.track }],
+            occupancy: [{ x: box.x + reservedLeft, y: box.y, w: reservedRight - reservedLeft, h: box.h, line: host.layoutLine, track: host.track }],
             regions,
             paint(painter: Painter) { text.paint(painter); },
         };
