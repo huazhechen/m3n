@@ -1,0 +1,796 @@
+{
+  "title": "半音阶口琴基本功",
+  "trialOnly": true,
+  "source": {
+    "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
+    "sourceSha256": "ff7ad8b400c46208fc7b0ce7a5d78b5eb4c1a3abf94f487c1871a9c134a3c3a9",
+    "width": 760
+  },
+  "rendererSha256": "38814a1fd1ee9de9d0d380f8e926846565e585177d18a6a640bbc552858988a6",
+  "widthSearch": {
+    "minimum": 540,
+    "maximum": 760,
+    "step": 10,
+    "stabilityOffsets": [
+      -5,
+      0,
+      5
+    ]
+  },
+  "spacing": {
+    "minimumNoteGapEm": 0.3,
+    "noteGapEm": 0.5,
+    "beamCoefficient": 0.5,
+    "minimumNoteGapFloorEm": 0.1,
+    "coreGap": 24,
+    "inkGap": 12,
+    "standaloneHeadingExtraGap": 0
+  },
+  "selected": {
+    "width": 760,
+    "pageCount": 2,
+    "rows": 33,
+    "outside": [],
+    "overlaps": [],
+    "stable": true,
+    "stabilityCases": [
+      {
+        "width": 755,
+        "pageCount": 2,
+        "rows": 33,
+        "outside": [],
+        "overlaps": []
+      },
+      {
+        "width": 760,
+        "pageCount": 2,
+        "rows": 33,
+        "outside": [],
+        "overlaps": []
+      },
+      {
+        "width": 765,
+        "pageCount": 2,
+        "rows": 33,
+        "outside": [],
+        "overlaps": []
+      }
+    ]
+  },
+  "renderCache": {
+    "requests": 69,
+    "uniqueWidths": 47,
+    "hits": 22
+  },
+  "candidates": [
+    {
+      "width": 540,
+      "pageCount": 4,
+      "rows": 49,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 535,
+          "pageCount": 4,
+          "rows": 49,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 540,
+          "pageCount": 4,
+          "rows": 49,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 545,
+          "pageCount": 4,
+          "rows": 49,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 550,
+      "pageCount": 4,
+      "rows": 49,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 545,
+          "pageCount": 4,
+          "rows": 49,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 550,
+          "pageCount": 4,
+          "rows": 49,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 555,
+          "pageCount": 4,
+          "rows": 41,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 560,
+      "pageCount": 4,
+      "rows": 41,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 555,
+          "pageCount": 4,
+          "rows": 41,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 560,
+          "pageCount": 4,
+          "rows": 41,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 565,
+          "pageCount": 4,
+          "rows": 41,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 570,
+      "pageCount": 4,
+      "rows": 41,
+      "outside": [],
+      "overlaps": [],
+      "stable": false,
+      "stabilityCases": [
+        {
+          "width": 565,
+          "pageCount": 4,
+          "rows": 41,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 570,
+          "pageCount": 4,
+          "rows": 41,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 575,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 580,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 575,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 580,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 585,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 590,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 585,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 590,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 595,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 600,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 595,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 600,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 605,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 610,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 605,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 610,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 615,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 620,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 615,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 620,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 625,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 630,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 625,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 630,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 635,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 640,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 635,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 640,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 645,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 650,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 645,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 650,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 655,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 660,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 655,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 660,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 665,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 670,
+      "pageCount": 3,
+      "rows": 40,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 665,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 670,
+          "pageCount": 3,
+          "rows": 40,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 675,
+          "pageCount": 3,
+          "rows": 38,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 680,
+      "pageCount": 3,
+      "rows": 38,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 675,
+          "pageCount": 3,
+          "rows": 38,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 680,
+          "pageCount": 3,
+          "rows": 38,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 685,
+          "pageCount": 3,
+          "rows": 38,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 690,
+      "pageCount": 3,
+      "rows": 37,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 685,
+          "pageCount": 3,
+          "rows": 38,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 690,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 695,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 700,
+      "pageCount": 3,
+      "rows": 37,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 695,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 700,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 705,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 710,
+      "pageCount": 3,
+      "rows": 37,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 705,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 710,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 715,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 720,
+      "pageCount": 3,
+      "rows": 37,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 715,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 720,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 725,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 730,
+      "pageCount": 3,
+      "rows": 37,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 725,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 730,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 735,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 740,
+      "pageCount": 3,
+      "rows": 37,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 735,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 740,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 745,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 750,
+      "pageCount": 3,
+      "rows": 37,
+      "outside": [],
+      "overlaps": [],
+      "stable": false,
+      "stabilityCases": [
+        {
+          "width": 745,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 750,
+          "pageCount": 3,
+          "rows": 37,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 755,
+          "pageCount": 2,
+          "rows": 33,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "width": 760,
+      "pageCount": 2,
+      "rows": 33,
+      "outside": [],
+      "overlaps": [],
+      "stable": true,
+      "stabilityCases": [
+        {
+          "width": 755,
+          "pageCount": 2,
+          "rows": 33,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 760,
+          "pageCount": 2,
+          "rows": 33,
+          "outside": [],
+          "overlaps": []
+        },
+        {
+          "width": 765,
+          "pageCount": 2,
+          "rows": 33,
+          "outside": [],
+          "overlaps": []
+        }
+      ]
+    }
+  ],
+  "pdf": {
+    "edition": "基本功独立试排：0.3／0.5em，独立标题无额外段间距",
+    "compactPdf": "半音阶口琴基本功-两页试排.pdf",
+    "pageCount": 2,
+    "compactBytes": 257645,
+    "embeddedFontSubsets": 50,
+    "images": 0,
+    "positionedGlyphs": 1225,
+    "glyphsPerPage": [
+      530,
+      695
+    ],
+    "outsidePages": 0,
+    "compactSha256": "69a3625eca935ee9474dd88c71e4043b0bca59dde9465dbe02153088cb79e317"
+  },
+  "preferredWidthWritten": false
+}
