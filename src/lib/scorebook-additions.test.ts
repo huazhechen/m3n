@@ -85,7 +85,7 @@ describe('new reference scores', () => {
     expect(bars.map(bar => bar.events.map(event => `${event.pitches[0] ?? '0'}:${event.beats}`)))
       .toEqual(dreamReference.writtenBars.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
     expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
-      .toEqual([.25, ...Array(48).fill(2), 1.75])
+      .toEqual([.5, ...Array(48).fill(2), 1.5])
     expect(bars.flatMap(bar => bar.events).some(event => event.sectionLabel)).toBe(false)
     expect(document.order).toBeUndefined()
     expect(bars.filter(bar => bar.ending).map(bar => bar.ending)).toEqual(['1', '1', '2', '2'])
