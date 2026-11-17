@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, cpSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, cpSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { chromium } from '@playwright/test'
@@ -21,6 +21,10 @@ const pixels = process.argv.includes('--pixels') || process.argv.includes('--req
 const allWidths = process.argv.includes('--all-widths')
 const screenshots = process.argv.includes('--screenshots')
 const selfCheck = process.argv.includes('--self-check')
+const batchOption = '--browser-batch-size='
+const batchArgument = process.argv.find(argument => argument.startsWith(batchOption))?.slice(batchOption.length)
+const browserBatchSize = batchArgument === undefined ? 32 : Number(batchArgument)
+if (!Number.isSafeInteger(browserBatchSize) || browserBatchSize < 1) throw new Error('browser-batch-size must be a positive integer')
 const widths = allWidths ? [320, 600, 800, 1000] : [800]
 const modes = allWidths ? [false, true] : [false]
 const scoreFilter = process.argv.find(argument => argument.startsWith('--score='))?.slice(8)
@@ -32,6 +36,7 @@ const sourcesPath = process.argv.find(argument => argument.startsWith('--sources
 const sources = sourcesPath ? JSON.parse(readFileSync(resolve(sourcesPath), 'utf8')) : Object.fromEntries(
   readdirSync(join(root, 'src/scores')).filter(file => file.endsWith('.m3n')).map(file => [file, readFileSync(join(root, 'src/scores', file), 'utf8')]))
 let browser
+const reports = []
 try {
   mkdirSync(output, { recursive: true })
   writeFileSync(join(output, 'sources.json'), JSON.stringify(sources, null, 2))
@@ -72,14 +77,27 @@ try {
   ] }, build: { outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
     lib: { entry, name: 'comparison', formats: ['iife'], fileName: () => 'bundle.js' } } })
   const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)
-  browser = await chromium.launch({ executablePath, headless: true })
-  const page = await browser.newPage({ viewport: { width: 2040, height: 900 }, deviceScaleFactor: 1 })
-  await page.setContent('<style>body{margin:0;background:white}main{display:flex;align-items:flex-start;gap:20px}section{flex:none}svg{display:block}</style><main><section id="baseline"></section><section id="candidate"></section></main>')
-  await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
-  await page.evaluate(() => comparison.prepareNumberedNotationFonts())
-  const reports = []
+  writeFileSync(join(output, 'implementation.json'), JSON.stringify({ snapshotHashes, browserBatchSize,
+    verifierHash: createHash('sha256').update(readFileSync(import.meta.filename)).digest('hex'),
+    metricsHash: createHash('sha256').update(readFileSync(join(root, 'tools/lib/numbered-svg-metrics.mjs'))).digest('hex'),
+    renderOptions, baselineCommit, candidateCommit, pixels, selfCheck }, null, 2))
+  const openBrowser = async () => {
+    browser = await chromium.launch({ executablePath, headless: true })
+    const page = await browser.newPage({ viewport: { width: 2040, height: 900 }, deviceScaleFactor: 1 })
+    await page.setContent('<style>body{margin:0;background:white}main{display:flex;align-items:flex-start;gap:20px}section{flex:none}svg{display:block}</style><main><section id="baseline"></section><section id="candidate"></section></main>')
+    await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
+    await page.evaluate(() => comparison.prepareNumberedNotationFonts())
+    return page
+  }
+  let page = await openBrowser()
   for (const [file, source] of Object.entries(sources).filter(([file]) => !scoreFilter || file.includes(scoreFilter))) {
     for (const width of widths) for (const paged of modes) {
+      // Release browser/font/raster caches between bounded batches. Every
+      // batch still uses the same immutable runtime bundle and source inputs.
+      if (reports.length && reports.length % browserBatchSize === 0) {
+        await browser.close()
+        page = await openBrowser()
+      }
       const result = await page.evaluate(async ({ source, width, paged, selfCheck, renderOptions }) => {
         const score = comparison.parseM3NDocument(source)
         const metrics = comparison.captureNumberedGeometry
@@ -164,14 +182,19 @@ try {
       }
       if (screenshots && !result.error) await page.locator('main').screenshot({ path: join(output, `${name}.png`) })
       reports.push({ file, width, paged, screenshot: screenshots && !result.error ? `${name}.png` : undefined, ...result })
+      appendFileSync(join(output, 'cases.jsonl'), `${JSON.stringify(reports.at(-1))}\n`)
       if (reports.length % 88 === 0) console.log(`Compared ${reports.length} cases`)
     }
   }
   if (!reports.length) throw new Error('No scores matched the requested filter')
   const summary = { renderOptions, referenceImplementation: baselineRef ? `git:${baselineCommit}` : 'current-working-tree-snapshot', candidateImplementation: candidateRef ? `git:${candidateCommit}` : 'current-working-tree-snapshot', domainImplementation: 'current-working-tree-snapshot', snapshotHashes, baselineCommit, candidateCommit, candidateDirty, candidatePageSpacing: selfCheck ? 'baseline' : 'natural', pixelAudit: pixels, geometryMatching: reports.filter(report => report.geometryMatches).length, checks: reports.length, matching: reports.filter(report => report.matches).length, differing: reports.filter(report => !report.matches).length, reports }
   writeFileSync(join(output, 'report.json'), JSON.stringify(summary, null, 2))
+  writeFileSync(join(output, 'run-status.json'), JSON.stringify({ complete: true, checks: reports.length }))
   const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;')
   writeFileSync(join(output, 'index.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>jpFun 与自研排版对照</title><style>body{font:16px sans-serif;margin:24px}article{border-top:1px solid #aaa;margin:24px 0}img{max-width:100%;height:auto}pre{white-space:pre-wrap}</style><h1>jpFun（左）与自研候选（右，自然行距）</h1><p>${summary.checks} 组，${summary.matching} 组一致，${summary.differing} 组存在差异。像素审计：${pixels ? '已启用，逐通道零差异' : '未启用'}。两版均采用当前自然分页规则；指定历史参考版本时，旧行为的差异也照实记录。坐标容差 0.5px；几何一致不等于像素一致，仍须检查字形与关系线。</p>${reports.map(report => `<article><h2>${escape(report.title || report.file)} · ${report.width}px · ${report.paged ? '分页' : '连续'}</h2><pre>${escape(JSON.stringify({error:report.error,geometryMatches:report.geometryMatches,digitMismatches:report.digitMismatches,pixelMatches:report.pixelMatches,pixels:report.pixels,baselineSystems:report.baseline?.systems.length,candidateSystems:report.candidate?.systems.length,differingLines:report.differingLines,maxXShift:report.maxXShift,maxYShift:report.maxYShift,baselineLineGaps:report.baseline?.lineGaps,candidateLineGaps:report.candidate?.lineGaps},null,2))}</pre>${report.pixels ? `<p><a href="${escape(`${report.file}-${report.width}-${report.paged ? 'paged' : 'continuous'}`)}-diff.png">像素差异图</a></p>` : ''}${report.screenshot ? `<a href="${escape(report.screenshot)}"><img loading="lazy" src="${escape(report.screenshot)}"></a>` : ''}</article>`).join('')}</html>`)
   console.log(JSON.stringify({ checks: summary.checks, pixelAudit: pixels, geometryMatching: summary.geometryMatching, matching: summary.matching, differing: summary.differing, report: join(output, 'index.html') }, null, 2))
   if ((selfCheck || process.argv.includes('--require-parity')) && summary.differing) process.exitCode = 1
+} catch (error) {
+  writeFileSync(join(output, 'run-status.json'), JSON.stringify({ complete: false, checks: reports.length, error: String(error) }))
+  throw error
 } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }
