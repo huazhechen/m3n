@@ -7,6 +7,8 @@ import { isVisualTemporalNode, TemporalNodeBase, type VisualTemporalNode } from 
 import type { AttachmentLayoutContext, LayoutAttachment, LayoutBox, LayoutPrepareContext } from "../../layout/types.js";
 import type { Painter, TextStyle } from "../../render/types.js";
 import type { LoweringContext } from "../../lowering/loweringContext.js";
+import { RecordingPainter } from "../../render/recording.js";
+import { paintedCommandRegions } from "../../layout/painted-ink.js";
 
 type TextAlign = "left" | "center" | "right";
 
@@ -289,8 +291,15 @@ class TextAboveAttachment implements LayoutAttachment {
         // smaller than the separation between successive systems.
         const gap = this.ast.gap >= 0 ? this.ast.gap : this.ast.size * (this.ast.local ? 0.4 : 0.5);
         box.y = context.getVisualAxis(host.layoutLine, host.track) + (extent?.top ?? 0) - gap - box.h;
+        const recording = new RecordingPainter();
+        text.paint(recording);
+        const regions = recording.commands.flatMap(command => paintedCommandRegions(command, context.textMeasurer))
+            .map(region => ({ ...region, line: host.layoutLine, track: host.track }));
         return {
-            regions: [{ x: box.x + left, y: box.y, w: right - left, h: box.h, line: host.layoutLine, track: host.track }],
+            // Logical advance still reserves the attachment's layout cell.
+            // Empty bearings and space between lines are not painted obstacles.
+            occupancy: [{ x: box.x + left, y: box.y, w: right - left, h: box.h, line: host.layoutLine, track: host.track }],
+            regions,
             paint(painter: Painter) { text.paint(painter); },
         };
     }

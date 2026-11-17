@@ -9,6 +9,22 @@ const overhang = { measureText(text, style) {
         : defaultTextMeasurer.measureText(text, style);
 } } satisfies import('../src/render/types.js').TextMeasurer;
 
+for (const [label, extra] of [['PAD', ''], ['PAD\nPAD', ''], ['PAD', ',frame=true']]) {
+    test(`anchored text publishes painted pieces separately from advance reservation: ${label}${extra}`, () => {
+        const measurer = { measureText(text, style) {
+            return text === 'PAD' ? { w: 40, advance: 40, inkLeft: 10, inkRight: 30, h: 14, baseline: 11 }
+                : defaultTextMeasurer.measureText(text, style);
+        } } satisfies import('../src/render/types.js').TextMeasurer;
+        const result = compileScore(`1@a 2 3 4 @text("${label}",size=14px,above=a${extra})`, { textMeasurer: measurer });
+        const geometry = result.layout.attachments[0];
+        const painted = recordCommands(result.layout).filter(command => command.kind === 'text' && command.text === 'PAD'
+            || command.kind === 'rect').flatMap(command => paintedCommandRegions(command, measurer));
+        assert(geometry.regions.length === painted.length, 'each painted text line and frame edge owns its own footprint');
+        for (const ink of painted) assert(geometry.regions.some(region => nearly(region.x, ink.x) && nearly(region.y, ink.y)
+            && nearly(region.w, ink.w) && nearly(region.h, ink.h)), 'published ink must match the final drawing');
+    });
+}
+
 for (const host of ['1@a 2 3 4', '1 2 3 4@a']) test(`anchored unframed overhang stays inside both margins: ${host}`, () => {
     const result = compileScore(`@page(width=320px,left=32px,right=32px) ${host} @text(WIDE,size=14px,align=center,above=a)`, { textMeasurer: overhang });
     const command = recordCommands(result.layout).find(command => command.kind === 'text' && command.text === 'WIDE')!;
