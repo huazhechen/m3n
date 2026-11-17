@@ -99,6 +99,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
     members: TemporalNodeBase[] = [];
     slots: { ast: HeadSlotNode; start: HeadBoundaryTemporal; end: HeadBoundaryTemporal }[] = [];
     private titleBottom = 0;
+    private centerRows: readonly ({ offset: number; extent: Extent } | null)[] = [];
     private textMeasurer!: TextMeasurer;
     private sideRows: Partial<Record<SideName, readonly ({ offset: number; extent: Extent } | null)[]>> = {};
     private sideExtents: Record<SideName, Extent | null> = { left: null, right: null };
@@ -149,20 +150,26 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
             laneKey: `head/rows/${owner.sourceSpan.start}/${name}`,
             hostIndex: null,
             measure: members => {
-                // 行从上到下排列；sidebelow 可选择完整中区底边，否则沿用首行底边。
+                // 居中块依次排列；自动避让时主标题独占，其余行允许与两侧共用高度。
                 let top: number | undefined;
                 let bottom: number | undefined;
                 if (name === "center") this.titleBottom = 0;
                 const placements = members.map(extent => {
                     if (!extent) return null;
                     const offset = bottom === void 0 ? 0 : bottom + owner.gap - extent.top;
-                    if (name === "center" && (bottom === void 0 || owner.sideBelow)) {
-                        this.titleBottom = offset + extent.bottom + (owner.sideBelow ? owner.gap : 0);
+                    if (name === "center") {
+                        if (owner.sideAuto) {
+                            if (bottom === void 0) this.titleBottom = owner.sideBelow
+                                ? offset + extent.bottom + owner.gap : offset + extent.top;
+                        } else if (bottom === void 0 || owner.sideBelow) {
+                            this.titleBottom = offset + extent.bottom + (owner.sideBelow ? owner.gap : 0);
+                        }
                     }
                     top ??= offset + extent.top;
                     bottom = offset + extent.bottom;
                     return { offset, extent };
                 });
+                if (name === "center") this.centerRows = placements;
                 if (name !== "center") {
                     this.sideRows[name] = placements;
                     this.sideExtents[name] = top === void 0 || bottom === void 0 ? null : { top, bottom };
@@ -180,7 +187,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
                         ? this.titleBottom - extent.top
                         : this.titleBottom + rightHeight + owner.gap - extent.top;
                 }
-                if (owner.sideAuto) return this.titleBottom - extent.top + (name === "left" ? this.sideOffset() : 0);
+                if (owner.sideAuto) return this.titleBottom - extent.top + this.sideOffsets()[name];
                 // 两侧共享底边；以较高侧定总高度，使它的顶部恰好贴标题底边
                 const targetBottom = this.titleBottom + Math.max(leftHeight, rightHeight);
                 return targetBottom - extent.bottom;
@@ -205,11 +212,11 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
         }
     }
 
-    private sideCells() {
+    private headerCells() {
         const cells = new Map<ASTNodeBase, VisualTemporalNode[]>();
         for (const member of this.members) {
             if (!isVisualTemporalNode(member)) continue;
-            const cell = this.sideCellOf(member.ast);
+            const cell = this.headerCellOf(member.ast);
             if (!cell) continue;
             const members = cells.get(cell);
             if (members) members.push(member);
@@ -227,30 +234,31 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
         };
     }
 
-    /** Test individual painted lines, rather than the union of every author row. */
-    private sideOffset() {
-        const cells = this.sideCells();
-        const rectangles = (slot: HeadSlotNode, target: number) => {
-            const result: { left: number; right: number; top: number; bottom: number }[] = [];
+    /** Place side blocks around actual subtitle lines, then clear left/right conflicts. */
+    private sideOffsets(): Record<SideName, number> {
+        const cells = this.headerCells();
+        type Rectangle = { left: number; right: number; top: number; bottom: number };
+        const [left, center, right] = this.slots;
+        const rectangles = (slot: HeadSlotNode, target: number): Rectangle[] => {
+            const result: Rectangle[] = [];
             const fromLeft = slot.name === "left";
-            const rows = this.sideRows[slot.name as SideName];
+            const isCenter = slot.name === "center";
+            const rows = isCenter ? this.centerRows : this.sideRows[slot.name as SideName];
             slot.rows.forEach((row, index) => {
                 const placement = rows?.[index];
-                if (!placement) return;
+                if (!placement || (isCenter && this.ast.owner.sideBelow && index === 0)) return;
                 const rowCells = row instanceof ASTBraceNode ? row.content : [row];
                 let cursor = target;
-                for (const cell of fromLeft ? rowCells : [...rowCells].reverse()) {
+                for (const cell of fromLeft || isCenter ? rowCells : [...rowCells].reverse()) {
                     const members = cells.get(cell);
                     if (!members?.length) continue;
                     const { left, right } = this.cellBounds(members);
-                    const dx = cursor - (fromLeft ? left : right);
+                    const dx = isCenter ? 0 : cursor - (fromLeft ? left : right);
                     for (const node of members) {
-                        const pieces = paintedNodeRegions(node, this.textMeasurer).map(piece => ({
-                            ...piece, x: piece.x - node.box.x, y: piece.y - node.box.y,
-                        }));
-                        for (const piece of pieces) {
-                            const x = node.box.x + dx + piece.x;
-                            const y = placement.offset - node.box.visualAxis + piece.y - this.sideExtents[slot.name as SideName]!.top;
+                        for (const piece of paintedNodeRegions(node, this.textMeasurer)) {
+                            const x = dx + piece.x;
+                            const y = placement.offset - node.box.visualAxis + piece.y - node.box.y
+                                - (isCenter ? this.titleBottom : this.sideExtents[slot.name as SideName]!.top);
                             if (piece.w > 0 && piece.h > 0) result.push({ left: x, right: x + piece.w, top: y, bottom: y + piece.h });
                         }
                     }
@@ -259,20 +267,27 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
             });
             return result;
         };
-        const [left, , right] = this.slots;
+        const centerInk = rectangles(center.ast, 0);
         const ls = rectangles(left.ast, left.start.box.x), rs = rectangles(right.ast, right.end.box.x);
-        // Each conflicting pair forbids an interval of left-side vertical offsets.
-        const intervals = ls.flatMap(l => rs.flatMap(r => l.right + this.ast.owner.itemGap > r.left + 1e-6 && r.right > l.left
-            ? [{ start: r.top - l.bottom, end: r.bottom + this.ast.owner.gap - l.top }] : []))
-            .sort((a, b) => a.start - b.start);
-        let offset = 0;
-        for (const interval of intervals) if (offset > interval.start + 1e-6 && offset < interval.end - 1e-6) offset = interval.end;
-        return offset;
+        const clearance = (moving: Rectangle[], obstacles: Rectangle[], centered = false) => moving.flatMap(l => obstacles.flatMap(r =>
+            l.right + this.ast.owner.itemGap > r.left + 1e-6 && r.right + (centered ? this.ast.owner.itemGap : 0) > l.left + 1e-6
+                ? [{ start: r.top - l.bottom - (centered ? this.ast.owner.gap : 0), end: r.bottom + this.ast.owner.gap - l.top }] : []));
+        const minimum = (intervals: { start: number; end: number }[]) => {
+            let offset = 0;
+            for (const interval of intervals.sort((a, b) => a.start - b.start)) {
+                if (offset > interval.start + 1e-6 && offset < interval.end - 1e-6) offset = interval.end;
+            }
+            return offset;
+        };
+        const rightOffset = minimum(clearance(rs, centerInk, true));
+        const leftOffset = minimum([...clearance(ls, centerInk, true),
+            ...clearance(ls, rs.map(r => ({ ...r, top: r.top + rightOffset, bottom: r.bottom + rightOffset })))]);
+        return { left: leftOffset, right: rightOffset };
     }
 
     private alignHead() {
         // Side cells use their measured widths; title coordinates stay untouched.
-        const cells = this.sideCells();
+        const cells = this.headerCells();
         const [left, , right] = this.slots;
         this.packRows(left.ast, left.start.box.x, cells);
         this.packRows(right.ast, right.end.box.x, cells);
@@ -314,8 +329,8 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
         }
     }
 
-    /** 找到成员所属侧栏行的顶层单元；复合节点内部成员会归回同一个直接子节点 */
-    private sideCellOf(ast: ASTNodeBase): ASTNodeBase | null {
+    /** 找到成员所属页眉行的顶层单元；复合节点内部成员会归回同一个直接子节点 */
+    private headerCellOf(ast: ASTNodeBase): ASTNodeBase | null {
         let cell = ast;
         while (cell.parent) {
             const parent = cell.parent;
@@ -324,7 +339,7 @@ class HeadBoundaryTemporal extends TemporalNodeBase {
                 : parent instanceof ASTBraceNode && parent.parent instanceof HeadSlotNode
                     ? parent.parent
                     : null;
-            if (slot?.owner === this.ast.owner) return slot.name === "center" ? null : cell;
+            if (slot?.owner === this.ast.owner) return cell;
             cell = parent;
         }
         return null;
@@ -412,8 +427,8 @@ class HeadSlotNode extends ASTNodeBase {
  * 4. 于是链形如 `点 - 强弹簧 - center - 强弹簧 - 点`。两根强弹簧参数相同、压缩量
  *    必然相等，两个点又被自由的墙对称顶在纸面两侧，因此 center 的几何中心精确落在
  *    内容区中线，与两侧内容多宽、多少行无关。center 的求解坐标即最终坐标，不参与
- *    后置重排。两个代价是刻意接受的：侧槽不占横向流，所以内容过宽时会与 center 的
- *    第二行及以后重叠，引擎不再阻止；强弹簧靠“把整行撑到必然过满”成立，所以同一
+ *    后置重排。两个代价是刻意接受的：侧槽不占横向流，未启用 sideauto 时过宽内容可能与 center 的
+ *    第二行及以后重叠；启用后按每行实绘避让；强弹簧靠“把整行撑到必然过满”成立，所以同一
  *    谱面行上的普通内容会被挤到几乎没有间隙，行内 head 只适合极短的内容。
  * 5. 纵向放置完成后，left.start 以两个点为准，按顶层 AST 单元重新写入两侧成员的
  *    box.x：left 向右、right 向左紧凑排列，单元间留 0.25em。因此 TimeColumn 拓扑
@@ -421,7 +436,7 @@ class HeadSlotNode extends ASTNodeBase {
  *    成员的 `onPlaced`，使折叠成员同步最终坐标，attachment 再读取这些坐标生成几何。
  *
  * Head 只协调布局，不建立局部列或局部 attachment 系统。内部内容须为零时长，且不能主动换谱面行。
- * sidebelow=true 时，两侧从完整 center 块底部再加 gap 处开始，避免与副标题重叠。
+ * sidebelow=true 时，两侧从完整 center 块底部再加 gap 处开始；同时启用 sideauto 时，只保留首个 center 块独占高度，其余居中行按实绘逐行避让并共享空白。
  * sidestacked=true 时，右区先于左区纵向排列，适用于窄版署名与调拍速避让。
  * itemgap 控制侧栏一行内各项的水平间隔，默认仍为 0.25em。
  */
@@ -452,7 +467,7 @@ H.tempo: 94
             { name: "sidebelow", description: "将两侧内容放在整个中区下方，并保留 gap 间距", type: "boolean" as const, default: false },
             { name: "itemgap", description: "侧区同一行内相邻元素的水平间距", type: "length" as const, default: { value: ITEM_GAP_EM, unit: "em" as const } },
             { name: "sidestacked", description: "两侧纵向排列：右区在上，左区在下", type: "boolean" as const, default: false },
-            { name: "sideauto", description: "按各行实测占位顶端对齐，仅将左区下移至无碰撞的位置", type: "boolean" as const, default: false },
+            { name: "sideauto", description: "两侧按实绘避让居中行，再将左区下移至与右区无碰撞的位置", type: "boolean" as const, default: false },
         ],
     };
 

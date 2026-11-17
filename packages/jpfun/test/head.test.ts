@@ -588,3 +588,26 @@ test('head side cells retain advance and measured overhang when packing from eit
         else assert(nearly(b.x + 10, 220), 'rightmost ink meets the right margin');
     }
 });
+
+test('head sideauto reuses subtitle space and preserves it through serialization', () => {
+    const source = '@page(width=800px,left=32px,right=32px) @head(center={@text(Title,size=32px) @text(Subtitle,size=16px)},left=@text(L,size=16px),right=@text(R,size=16px),sidebelow=true,sideauto=true,itemgap=16px,gap=5px)';
+    for (const input of [source, parse(source).toString(source)]) {
+        const boxes = textObjects(input);
+        const subtitle = boxes.get('Subtitle')!.box;
+        assert(nearly(boxes.get('L')!.box.y, subtitle.y), 'fitting left ink shares subtitle height');
+        assert(nearly(boxes.get('R')!.box.y, subtitle.y), 'fitting right ink shares subtitle height');
+        assert(subtitle.y > boxes.get('Title')!.box.y, 'main title stays above all three columns');
+    }
+});
+
+test('head sideauto only lowers the side that intersects a subtitle', () => {
+    const left = 'L'.repeat(36), subtitle = 'S'.repeat(12);
+    const source = `@page(width=400px,left=32px,right=32px) @head(center={@text(Title,size=32px) @text(${subtitle},size=16px)},left=@text(${left},size=16px),right=@text(R,size=16px),sidebelow=true,sideauto=true,itemgap=16px,gap=5px)`;
+    for (const input of [source, parse(source).toString(source)]) {
+        const boxes = textObjects(input);
+        const center = boxes.get(subtitle)!.box, l = boxes.get(left)!.box, r = boxes.get('R')!.box;
+        assert(l.x + l.w + 16 > center.x, 'fixture has a real left/center conflict');
+        assert(nearly(r.y, center.y), 'the fitting right side still shares subtitle height');
+        assert(nearly(l.y - center.y - center.h * 0.8, 5), 'the conflicting side clears actual subtitle ink');
+    }
+});

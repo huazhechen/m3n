@@ -1173,7 +1173,8 @@ describe('jpFun numbered notation adapter', () => {
       const controls = result.layout.objects.filter(node => node.ast instanceof ASTFunctionNode
         && ['key', 'meter', 'tempo'].includes(node.ast.callName))
       expect(controls).toHaveLength(3)
-      for (const control of controls) expect(control.box.y).toBeGreaterThan(headings.at(-1)!.box.y + headings.at(-1)!.box.h)
+      // The main title stays exclusive; subtitle clearance is checked per painted line in header-sides.test.ts.
+      for (const control of controls) expect(control.box.y).toBeGreaterThan(headings[0]!.box.y + headings[0]!.box.h)
     }
   })
 

@@ -1,5 +1,7 @@
 # Local changes
 
+- Automatic header layout shares subtitle rows with fitting side content. With `sidebelow=true,sideauto=true`, the first center block remains above the sides; later center lines use their painted bounds as collision obstacles. Each side moves only as far as needed, then the left side clears the final right-side position. Center text keeps its horizontal position, and multiline text is measured line by line.
+
 - Naturally spaced rigid subdomains reserve actual painted numeral overhang and round beam caps alongside their logical boxes. Their intrinsic paint bounds also feed nested frame geometry, so solver gaps and frame insets use the same edges. Beam strokes scale as 0.055 of music size and grace hooks as 0.07 of grace size, without fixed pixel minima.
 
 - Lyric columns and painting share baseline-relative measured fragments. Spoken text centers by actual ink; punctuation and visit prefixes retain their own bearings and logical advances. Underlines follow the painted text and reserve their round half-strokes rather than the nominal advance box. Explicit hanging punctuation still uses the spoken column.

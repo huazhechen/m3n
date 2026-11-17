@@ -399,7 +399,7 @@ export function projectNumberedScore(document: ScoreDocument, options: Projectio
   const header = [
     `@set(fontsize=22,lyricspacing="reserve",numberfont="M3N Numbers",font="serif")`,
     `@page(width=${options.width}px,height=${options.paged ? Math.floor(options.width * 277 / 190) : 0}px,top=${options.pageMargin ?? 32}px,bottom=${options.pageMargin ?? 32}px,left=${options.pageMargin ?? 32}px,right=${options.pageMargin ?? 32}px,gap=${options.systemGap ?? 24}px,fillRatio=0)`,
-    `@head(center={${headings}},right={${credits}},left={{${signatures}}},sidebelow=true,sideauto=true,itemgap=16px) @br()`,
+    `@head(center={${headings}},right={${credits}},left={{${signatures}}},sidebelow=${Boolean(document.title)},sideauto=true,itemgap=16px) @br()`,
     ...orderLines.map((line, index) => `@head(left={{@text(${quote(index ? '→' : '演奏顺序：')},size=16px) ${line.map((name, i) => `${i ? '@text("→",size=16px) ' : ''}@text(${quote(name)},size=16px,weight=700,frame=true)`).join(' ')} }},itemgap=4px) @br()`),
   ]
   const parts = [...document.parts.values()].map((part, index) => voicesForPart(part.melody, part.bass, index))

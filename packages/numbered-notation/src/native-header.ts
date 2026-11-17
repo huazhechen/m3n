@@ -40,7 +40,6 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     return block.rows.map(row => ({ ...row, baseline: top + row.baseline }))
   })
   const titleHeight = titleBlock.height
-  const centerHeight = titleHeight + subtitleHeight + (titleHeight && subtitleHeight ? em(5) : 0)
   const creditBounds: { left: number; right: number; top: number; bottom: number }[] = []
   let creditBottom = 0
   const creditSvg = headerContent.credits.map((text, index) => {
@@ -85,20 +84,30 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const signatureSvg = signaturePieces.join('')
   const signatureInk = nativeSvgInk(signatureSvg, measurer)
   const signaturesHeight = signatureInk.bottom - signatureInk.top
-  const intervals = signaturePieces.flatMap(piece => nativeSvgPieces(piece, measurer)).flatMap(ink => {
-    const top = ink.top - signatureInk.top, bottom = ink.bottom - signatureInk.top
-    return creditBounds.flatMap(credit => ink.right + nativeStyle.text > credit.left + 1e-6 && credit.right > ink.left
-      ? [{ start: credit.top - bottom, end: credit.bottom + em(5) - top }] : [])
-  }).sort((a, b) => a.start - b.start)
-  let signatureOffset = 0
-  for (const interval of intervals) {
-    if (signatureOffset > interval.start + 1e-6 && signatureOffset < interval.end - 1e-6) signatureOffset = interval.end
+  const sideTop = margin + titleHeight + (titleHeight ? em(5) : 0)
+  const subtitleTop = sideTop
+  const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, 'serif', { 'text-anchor': 'middle' })).join('')
+  const centerBounds = nativeSvgPieces(subtitleSvg, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top).map(ink => ({ ...ink, top: ink.top - sideTop, bottom: ink.bottom - sideTop }))
+  const signatureBounds = signaturePieces.flatMap(piece => nativeSvgPieces(piece, measurer)).map(ink => ({
+    ...ink, top: ink.top - signatureInk.top, bottom: ink.bottom - signatureInk.top,
+  }))
+  type Bounds = { left: number; right: number; top: number; bottom: number }
+  const forbidden = (moving: Bounds[], obstacles: Bounds[], centered = false) => moving.flatMap(ink => obstacles.flatMap(other =>
+    ink.right + nativeStyle.text > other.left + 1e-6 && other.right + (centered ? nativeStyle.text : 0) > ink.left + 1e-6
+      ? [{ start: other.top - ink.bottom - (centered ? em(5) : 0), end: other.bottom + em(5) - ink.top }] : []))
+  const minimumOffset = (intervals: { start: number; end: number }[]) => {
+    let offset = 0
+    for (const interval of intervals.sort((a, b) => a.start - b.start)) {
+      if (offset > interval.start + 1e-6 && offset < interval.end - 1e-6) offset = interval.end
+    }
+    return offset
   }
-
-  const sideTop = margin + centerHeight + (centerHeight ? em(5) : 0)
-  const sidesHeight = Math.max(creditsHeight, signatureOffset + signaturesHeight)
+  const creditOffset = minimumOffset(forbidden(creditBounds, centerBounds, true))
+  const signatureOffset = minimumOffset([...forbidden(signatureBounds, centerBounds, true),
+    ...forbidden(signatureBounds, creditBounds.map(ink => ({ ...ink, top: ink.top + creditOffset, bottom: ink.bottom + creditOffset })))])
+  const sidesHeight = Math.max(subtitleHeight, creditOffset + creditsHeight, signatureOffset + signaturesHeight)
   const signaturesTop = sideTop + signatureOffset
-  const creditsTop = sideTop
+  const creditsTop = sideTop + creditOffset
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
   let orderBottom = sideTop + sidesHeight
   for (const [index, names] of numberedOrderLines(sectionOrderLabels(document,key=>transposedNumberedKeyLabel(key,options.transpose).replaceAll('#','♯').replaceAll('b','♭')), available, measurer, nativeStyle.text).entries()) {
@@ -121,9 +130,8 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     orderRows.push({ top, height, items }); orderBottom = top + height
   }
   const orderHeight = orderBottom - (sideTop + sidesHeight)
-  const subtitleTop = margin + titleHeight + (titleHeight ? em(5) : 0)
   let svg = titleRows.map(row => painter.text(row.text, width / 2, margin + row.baseline, nativeStyle.title, 'serif', { 'text-anchor': 'middle', 'font-weight': 700 })).join('')
-    + subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, 'serif', { 'text-anchor': 'middle' })).join('')
+    + subtitleSvg
     + `<g transform="translate(0 ${n(creditsTop)})">${creditSvg}</g>`
     + `<g transform="translate(0 ${n(signaturesTop - signatureInk.top)})">${signatureSvg}</g>`
   const blocks = [{height:sideTop+sidesHeight-margin,svg:`<g transform="translate(0 ${n(-margin)})">${svg}</g>`}]
@@ -139,6 +147,6 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     svg += rowSvg
     blocks.push({height:row.height,svg:`<g transform="translate(0 ${n(-row.top)})">${rowSvg}</g>`})
   }
-  return { svg, blocks, title, subtitle, titleTop: margin, subtitleTop: margin + titleHeight + (titleHeight ? em(5) : 0), signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
-    orderRows, height: centerHeight + (centerHeight ? em(5) : 0) + sidesHeight + systemGap + orderHeight }
+  return { svg, blocks, title, subtitle, titleTop: margin, subtitleTop, signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
+    orderRows, height: sideTop - margin + sidesHeight + systemGap + orderHeight }
 }
