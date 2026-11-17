@@ -96,15 +96,15 @@ describe('new reference scores', () => {
     expect(events(dream).reduce((sum, event) => sum + event.beats, 0)).toBe(dreamReference.performedBeats)
   })
 
-  it('matches the original image ties and lyric entry in Dream Chaser bars 26–27', () => {
+  it('keeps the requested bar 27 simplification with an earlier sustained 7', () => {
     const document = parseM3NDocument(dream)
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-    expect(bars[25]!.events.map(event => event.tie ?? false)).toEqual([false, false, false, false, false, true])
-    expect(bars[26]!.events.map(event => event.tie ?? false)).toEqual([false, true, false, false])
+    expect(bars[25]!.events.map(event => event.tie ?? false)).toEqual([false, false, false, false, false, false])
+    expect(bars[26]!.events.map(event => event.tie ?? false)).toEqual([true, false, false])
     const { lyricsByEvent } = deriveScoreInteraction(document)
     expect(bars[26]!.events.map(event => (lyricsByEvent.get(event) ?? []).filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('')))
-      .toEqual(['', '人', '', '让'])
-    const start = bars[25]!.events[3]!, end = bars[26]!.events[0]!
+      .toEqual(['人', '', '让'])
+    const start = bars[25]!.events[3]!, end = bars[25]!.events[5]!
     expect(document.intervals.some(interval => interval.kind === 'lg' && interval.start === start.sourceStart && interval.endStart === end.sourceStart)).toBe(true)
   })
 
