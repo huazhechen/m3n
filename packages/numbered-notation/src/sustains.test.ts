@@ -161,19 +161,27 @@ describe('numbered full-beat sustain continuations', () => {
     expect(endings).toHaveLength(3)
     expect(document.order).toBeUndefined()
     for (const ending of endings) {
-      const head = events.find(event => event.sourceStart === ending.index)!
-      const continuation = events[events.indexOf(head) + 1]!
+      const firstContinuation = events.find(event => event.sourceStart === ending.index)!
+      // The current score ties the preceding dotted eighth into both full beats.
+      // The legato must end on that written pitch, before either sustain dash.
+      const head = events[events.indexOf(firstContinuation) - 1]!
+      const continuation = events[events.indexOf(firstContinuation) + 1]!
+      expect(source.slice(head.sourceStart)).toMatch(/^1e\.~/)
+      expect(head.tie).toBe(true)
       const interval = document.intervals.find(interval => interval.kind === 'lg' && interval.endStart === continuation.sourceStart)!
       const start = events.find(event => event.sourceStart === interval.start)!
       const label = (event: typeof head) => [...projection.bindings.values()].find(binding => binding.event === event)!.label
       expect(projection.source).toContain(`@tie(${label(start)},${label(head)})`)
       expect(projection.source).not.toContain(`@tie(${label(head)},${label(continuation)})`)
-      const groups = [...root.querySelectorAll(`g.note[data-m3n-id="${ids.get(continuation)}"]`)]
-      expect(groups).toHaveLength(continuation.beats)
-      for (const group of groups) {
-        expect(group.getAttribute('data-m3n-role')).toBe('sustain')
-        expect(group.querySelector('text')).toBeNull()
-        expect(group.querySelectorAll('line')).toHaveLength(1)
+      expect(projection.source).not.toContain(`@tie(${label(firstContinuation)},${label(continuation)})`)
+      for (const event of [firstContinuation, continuation]) {
+        const groups = [...root.querySelectorAll(`g.note[data-m3n-id="${ids.get(event)}"]`)]
+        expect(groups).toHaveLength(event.beats)
+        for (const group of groups) {
+          expect(group.getAttribute('data-m3n-role')).toBe('sustain')
+          expect(group.querySelector('text')).toBeNull()
+          expect(group.querySelectorAll('line')).toHaveLength(1)
+        }
       }
       const tie = (result.lowering.attachments as unknown as { endPoints?: VisualTemporalNode[] }[])
         .find(attachment => (attachment.endPoints?.[0]?.ast as ASTFunctionNode | undefined)?.labelable?.()?.label === label(start))!
