@@ -68,7 +68,8 @@ try {
     `export {captureNumberedPrimitives,compareNumberedPrimitives} from ${JSON.stringify(join(root, 'tools/lib/numbered-primitive-metrics.mjs'))};`,
     `export {captureNumberedGeometry} from ${JSON.stringify(join(root, 'tools/lib/numbered-svg-metrics.mjs'))};`,
     `export {parseM3NDocument} from ${JSON.stringify(join(currentRoot, 'packages/notation/src/index.ts'))};`,
-    `export {NumberedNotationScore,prepareNumberedNotationFonts} from ${JSON.stringify(join(referenceRoot, 'packages/numbered-notation/src/index.ts'))};`,
+    `export {NumberedNotationScore} from ${JSON.stringify(join(referenceRoot, 'packages/numbered-notation/src/score.ts'))};`,
+    `export {prepareNumberedNotationFonts} from ${JSON.stringify(join(referenceRoot, 'packages/numbered-notation/src/fonts.ts'))};`,
     `export {NativeNumberedNotationScore} from ${JSON.stringify(join(candidateRoot, 'packages/numbered-notation/src/native-score.ts'))};`,
   ].join('\n'))
   await build({ configFile: false, logLevel: 'error', resolve: { alias: [
@@ -90,7 +91,10 @@ try {
     const page = await browser.newPage({ viewport: { width: 2040, height: 900 }, deviceScaleFactor: 1 })
     await page.setContent('<style>body{margin:0;background:white}main{display:flex;align-items:flex-start;gap:20px}section{flex:none}svg{display:block}</style><main><section id="baseline"></section><section id="candidate"></section></main>')
     await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
-    await page.evaluate(() => comparison.prepareNumberedNotationFonts())
+    await page.evaluate(() => {
+      if (comparison.NumberedNotationScore === comparison.NativeNumberedNotationScore) throw new Error('Reference and candidate must be independent engraving engines')
+      return comparison.prepareNumberedNotationFonts()
+    })
     return page
   }
   let page = await openBrowser()
