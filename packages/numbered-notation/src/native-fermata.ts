@@ -16,6 +16,6 @@ export function nativeFermataSvg(size = nativeStyle.small): string {
     if (/^[MLC]$/.test(token)) { coordinate = 0; return token }
     return String(n((Number(token) - (coordinate++ % 2 ? top : center)) * scale))
   })
-  return `<path d="${d}" fill="#000" stroke="#000" stroke-width="${n(scale)}"/>`
+  return `<path d="${d}" fill="#000" stroke="#000" stroke-width="${n(scale)}" stroke-linecap="round" stroke-linejoin="round"/>`
     + `<circle cx="${n((6.09723-center)*scale)}" cy="${n((6.26666-top)*scale)}" r="${n(1.2*scale)}" fill="#000"/>`
 }

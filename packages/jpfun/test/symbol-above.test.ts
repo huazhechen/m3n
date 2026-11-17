@@ -103,3 +103,17 @@ test('anchored fermatas clear the note by their scaled painted stroke, without t
         assert(nearly(attachment.box.w,right-left)&&nearly(attachment.box.h,bottom-top));
     }
 });
+
+
+test('close accents reserve their complete stroke and keep the common gap from the note', () => {
+    const result=compileScore('@up(1,@symbol(accent,size=12px))', {alignRelations:true});
+    const node=result.layout.objects[0], recording=new RecordingPainter();node.paint(recording);
+    const ink=recording.commands.flatMap(c=>paintedCommandRegions(c,defaultTextMeasurer));
+    const top=Math.min(...ink.map(r=>r.y));
+    assert(nearly(node.box.y,top),'fold top must include the complete stroke');
+    const note=recording.commands.find(c=>c.kind==='text'&&c.text==='1')!;
+    const accent=recording.commands.find(c=>c.kind==='path')!;
+    const noteTop=paintedCommandRegions(note,defaultTextMeasurer)[0].y;
+    const accentBottom=Math.max(...paintedCommandRegions(accent,defaultTextMeasurer).map(r=>r.y+r.h));
+    assert(nearly(noteTop-accentBottom,22*.12),'close accent must retain the common measured gap');
+});

@@ -13,6 +13,7 @@ it.each([6,12,24])('preserves the reference fermata curves, dot and scaled strok
   const result = compileScore(`@symbol(fermata,size=${size}px)`), node = result.layout.objects[0]!
   const painter = new RecordingPainter(); node.paint(painter)
   const svg = size === 12 ? new NativeSymbols(new DefaultTextMeasurer()).rawMark('fermata') : nativeFermataSvg(size)
+  const ink = nativeSvgInk(svg,new DefaultTextMeasurer())
   const root = new DOMParser().parseFromString(`<svg>${svg}</svg>`, 'image/svg+xml')
   const path = root.querySelector('path')!, circle = root.querySelector('circle')!
   const reference = painter.commands.find(c => c.kind === 'path')!
@@ -20,18 +21,19 @@ it.each([6,12,24])('preserves the reference fermata curves, dot and scaled strok
   if (reference.kind !== 'path') return
   expect(path.getAttribute('d')!.match(/[MLCQZ]/g)).toEqual(reference.commands.map(c => c.op))
   const expected = reference.commands.flatMap(c => c.op === 'Z' ? [] : c.op === 'C'
-    ? [c.cx1-node.box.x-node.box.w/2,c.cy1-node.box.y,c.cx2-node.box.x-node.box.w/2,c.cy2-node.box.y,c.x-node.box.x-node.box.w/2,c.y-node.box.y]
-    : 'x' in c ? [c.x-node.box.x-node.box.w/2,c.y-node.box.y] : [])
+    ? [c.cx1-node.box.x-node.box.w/2,c.cy1-node.box.y+ink.top,c.cx2-node.box.x-node.box.w/2,c.cy2-node.box.y+ink.top,c.x-node.box.x-node.box.w/2,c.y-node.box.y+ink.top]
+    : 'x' in c ? [c.x-node.box.x-node.box.w/2,c.y-node.box.y+ink.top] : [])
   const actual = path.getAttribute('d')!.match(/[-+]?(?:\d*\.\d+|\d+\.?\d*)/g)!.map(Number)
   expect(actual).toHaveLength(expected.length)
   actual.forEach((value,i) => expect(value).toBeCloseTo(expected[i]!,4))
+  expect(path.getAttribute('stroke-linecap')).toBe('round')
+  expect(path.getAttribute('stroke-linejoin')).toBe('round')
   expect(Number(path.getAttribute('stroke-width'))).toBeCloseTo(reference.style!.strokeWidth!,4)
   const dot = painter.commands.find(c=>c.kind==='circle')!
   if (dot.kind !== 'circle') throw new Error('missing fermata dot')
   expect(Number(circle.getAttribute('cx'))).toBeCloseTo(dot.cx-node.box.x-node.box.w/2,4)
-  expect(Number(circle.getAttribute('cy'))).toBeCloseTo(dot.cy-node.box.y,4)
+  expect(Number(circle.getAttribute('cy'))).toBeCloseTo(dot.cy-node.box.y+ink.top,4)
   expect(Number(circle.getAttribute('r'))).toBeCloseTo(dot.r,4)
-  const ink = nativeSvgInk(svg,new DefaultTextMeasurer())
   expect(ink.left+ink.right).toBeCloseTo(0,4)
 })
 

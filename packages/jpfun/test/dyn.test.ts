@@ -277,3 +277,14 @@ test("dyn uses painted digits instead of the shared digit-zero layout box", () =
         }
     }
 });
+
+
+test('bar height is an obstacle, not the music size of a spanning hairpin', () => {
+    for (const bar of ['|','@bar(0,length=4em)']) {
+        const source=`1@a 2 ${bar} 3@b @dyn(a,b,24)`;
+        const {layout}=compileScore(source,{alignRelations:true});
+        const recording=attachmentCommands(layout.attachments[0]).filter(c=>c.kind==='line');
+        assert(nearly(Math.abs(recording[0].y2-recording[1].y2),22*.4),'bar length must not enlarge the opening');
+        assert(nearly(recording[0].style!.strokeWidth!,22*.035),'bar length must not enlarge the stroke');
+    }
+});

@@ -2,6 +2,8 @@ import { test } from "node:test";
 import { strictEqual } from "node:assert/strict";
 
 import { DEFAULT_VELOCITY, TemporalNodeBase } from "../src/functions/temporal.js";
+import { paintedCommandRegions } from "../src/layout/painted-ink.js";
+import { defaultTextMeasurer } from "../src/render/text.js";
 import { symbolBounds, type SymbolShape } from "../src/functions/symbol/shape.js";
 import { fermataSymbol } from "../src/functions/symbol/symbols/fermata.js";
 import { trSymbol } from "../src/functions/symbol/symbols/tr.js";
@@ -464,8 +466,11 @@ test("包围盒取曲线真实极值，宽扁符号用 weight 修正视觉重量
     const padding = (fermataSymbol.paddingBottom ?? 0) * scale;
     assert(nearly(painted.h, 11 * 0.6), "延长记号的图形高度应是 size 乘以自己的 weight");
     assert(painted.w / painted.h > 2, "延长记号是宽扁字形，图形边界的宽高比应大于 2");
-    assert(padding > 0 && nearly(fermata.h, painted.h + padding), "占位应包含按图形比例缩放的底部留白");
-    assert(nearly(painted.y, fermata.y) && nearly(painted.w, fermata.w), "底部留白不应移动或拉伸图形");
+    const regions=recordCommands(layout).flatMap(c=>paintedCommandRegions(c,defaultTextMeasurer));
+    const left=Math.min(...regions.map(r=>r.x)),right=Math.max(...regions.map(r=>r.x+r.w));
+    const top=Math.min(...regions.map(r=>r.y)),bottom=Math.max(...regions.map(r=>r.y+r.h));
+    assert(padding > 0 && nearly(fermata.h, bottom-top + padding), "占位应包含完整描边和同比底部留白");
+    assert(nearly(top,fermata.y)&&nearly(left,fermata.x)&&nearly(right-left,fermata.w), "完整墨迹必须落在符号占位内");
 
     const tr = layoutOf(`$tr`).objects[0].box;
     assert(nearly(tr.h, 11), "未声明 weight 的符号高度应等于 size");

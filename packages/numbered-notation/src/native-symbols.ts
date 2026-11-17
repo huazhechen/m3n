@@ -6,6 +6,7 @@ import type { TextMeasurer } from './native-measure.js'
 import type { NativePitch, NativeControl } from './native-model.js'
 import { nativeKeyGeometry } from './native-key.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
+import { nativeArticulationSvg } from './native-articulations.js'
 import { nativeFermataSvg } from './native-fermata.js'
 import { nativeOrnamentSvg } from './native-ornaments.js'
 import { nativeTempoGeometry, type NativeTempoGeometry } from './native-tempo.js'
@@ -67,7 +68,8 @@ export class NativeSymbols {
     if (dynamic) return `<g transform="translate(${n(x)} ${n(y)})">${dynamic.paths.map(d => `<path d="${d}" fill="#000"/>`).join('')}</g>`
     const ornament = nativeOrnamentSvg(mark)
     if (ornament !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${ornament}</g>`
-    if (mark === 'breath') return this.text('’', x, y, nativeStyle.text, 'serif', { 'text-anchor': 'middle' })
+    const articulation = nativeArticulationSvg(mark)
+    if (articulation !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${articulation}</g>`
     return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? nativeStyle.music * 0.5 : nativeStyle.grace, 'serif', { 'text-anchor': 'middle' })
   }
 
@@ -99,7 +101,6 @@ export class NativeSymbols {
   rawMark(mark: string): string {
     if (mark === 'tip' || mark === 'brk') return `<path${attrs({ d: nativeDesignPath('M-2.5 0 h5 l-2.5 7 Z'), fill: '#000' })}/>`
     if (mark === 'hold') return `<rect${attrs({ x: -em(7.7538) / 2, y: 0, width: em(7.7538), height: em(1.26), fill: '#000' })}/>`
-    if (mark === 'str') return path(nativeDesignPath('M-5.4 0.6 L5.4 3 L-5.4 5.4'))
     return this.mark(mark, 0, 0)
   }
 }

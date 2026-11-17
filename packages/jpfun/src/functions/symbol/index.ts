@@ -217,6 +217,7 @@ class SymbolTemporal extends TemporalNodeBase implements PlaybackFlow {
     private readonly label?: { content: string; style: TextStyle };
     private scale = 1;
     private baseline = 0;
+    private paintOffset = { x: 0, y: 0 };
 
     constructor(ast: ResolvedSymbolFunction, private readonly semanticHost?: VisualTemporalNode) {
         super();
@@ -247,11 +248,17 @@ class SymbolTemporal extends TemporalNodeBase implements PlaybackFlow {
             this.baseline = metrics.baseline;
         } else {
             this.scale = this.height / this.bounds.h;
-            this.box.w = this.bounds.w * this.scale;
-            this.box.h = this.height + (this.ast.definition.paddingBottom ?? 0) * this.scale;
+            const recording = new RecordingPainter();
+            paintSymbol(recording, this.ast.definition.shapes ?? [], this.bounds, { ...this.box, x: 0, y: 0 }, this.scale);
+            const ink = recording.commands.flatMap(command => paintedCommandRegions(command, context.textMeasurer));
+            const left = Math.min(...ink.map(r => r.x)), top = Math.min(...ink.map(r => r.y));
+            const right = Math.max(...ink.map(r => r.x + r.w)), bottom = Math.max(...ink.map(r => r.y + r.h));
+            this.paintOffset = ink.length ? { x: -left, y: -top } : { x: 0, y: 0 };
+            this.box.w = ink.length ? right - left : this.bounds.w * this.scale;
+            this.box.h = (ink.length ? bottom - top : this.height) + (this.ast.definition.paddingBottom ?? 0) * this.scale;
         }
         this.box.anchor = !this.label && this.ast.definition.anchor !== undefined
-            ? (this.ast.definition.anchor - this.bounds.x) * this.scale
+            ? (this.ast.definition.anchor - this.bounds.x) * this.scale + this.paintOffset.x
             : this.box.w / 2;
         this.box.visualAxis = this.box.h / 2;
         if (this.ast.definition.tiePort) this.ports["tie.top"] = { x: this.box.anchor, y: 0 };
@@ -259,7 +266,7 @@ class SymbolTemporal extends TemporalNodeBase implements PlaybackFlow {
 
     override paint(painter: Painter) {
         if (this.label) painter.drawText(this.label.content, this.box.x, this.box.y + this.baseline, this.label.style);
-        else paintSymbol(painter, this.ast.definition.shapes ?? [], this.bounds, this.box, this.scale,
+        else paintSymbol(painter, this.ast.definition.shapes ?? [], this.bounds, { ...this.box, x: this.box.x + this.paintOffset.x, y: this.box.y + this.paintOffset.y }, this.scale,
             this.semanticHost ? { role: 'mark', sourceSpan: this.semanticHost.ast.sourceSpan } : undefined);
     }
 

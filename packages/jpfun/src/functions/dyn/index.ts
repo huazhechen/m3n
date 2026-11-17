@@ -224,7 +224,8 @@ class DynAttachment implements LayoutAttachment {
             if (!columns.some(column => column.length > 0)) continue;
             for (const column of columns) {
                 for (const host of column) {
-                    size = Math.max(size, host.ast.size);
+                    // A bar's size is its length, not a music font size.
+                    if (!host.T.isZero()) size = Math.max(size, host.ast.size);
                 }
             }
 
