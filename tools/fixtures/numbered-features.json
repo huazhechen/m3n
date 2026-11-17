@@ -132,8 +132,8 @@
   "header-singer-only.m3n": "{title=标题}{singer=歌手}{composer=甲}{4/4}\nN: 1 2 3 4 | 5 6 7 1e |||",
   "header-wide-range.m3n": "{title=标题}{subtitle=副标题}{singer=歌手}{composer=甲}{key=Db}{4/4}{80qpm}\nN: 1 2 3 4 | 5 6 7 1e |||\n---\nN: 1dd 2e 3ee 4bb |||",
   "equal-mixed-densities.m3n": "{equal-measures=true}\n{4/4}\nN: (1 2 3 4 5 6 7 1e) | 2 3 4 5 | 1^^ |||",
-  "equal-repeat-boundary.m3n": "{equal-measures=true}\n{4/4}\nN: 1 2 3 4 | ||: 5 6 7 1e | 2 3 4 5 :||",
+  "equal-repeat-boundary.m3n": "{equal-measures=true}\n{4/4}\nN: 1 2 3 4 |\n---\nN: ||: 5 6 7 1e | 2 3 4 5 :||",
   "equal-navigation.m3n": "{equal-measures=true}\n{4/4}\nN: 1 2 3 4 | 5 6 7 1e {fine} |||",
-  "equal-parallel-bass.m3n": "{equal-measures=true}\n{4/4}\nN: 1 2 3 4 | (5 6 7 1e 2e 3e 4e 5e) | 1^^ |||\nB: 1d^^ | 5d^^ | 1d^^ |||",
-  "equal-parentheses-lyrics.m3n": "{equal-measures=true}\n{4/4}\nN: {inst}1 2 3 4 | (5 6 7 1e 2e 3e 4e 5e){/} | 1^^ |||\nL: 春风吹过山林间的花儿开了"
+  "equal-parallel-bass.m3n": "{equal-measures=true}\n{4/4}\nN: 1 2 3 4 | (5 6 7 1e 2e 3e 4e 5e) | 1^^ |||\nB: 1d^^ | 5d^^ | 1d^^ |",
+  "equal-parentheses-lyrics.m3n": "{equal-measures=true}\n{4/4}\nN: {inst}1 2 3 4 | (5 6 7 1e 2e 3e 4e 5e){/} | 1^^ |||\nL: 花"
 }

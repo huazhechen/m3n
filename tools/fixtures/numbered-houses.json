@@ -1,0 +1,9 @@
+{
+  "house-shared-label.m3n": "{3/4}{order=A,A,A}\n===A\n---V1\nN: (1 2) 3 4 ||\n---V2,V3\nN: ((1 2 3 4)) 5 6 |||",
+  "house-single-visit.m3n": "{3/4}{order=A,A,A}\n===A\n---V1,V3\nN: (1 2) 3 4 ||\n---V2\nN: ((1 2 3 4)) 5 6 |||",
+  "house-tied-lyrics.m3n": "{4/4}{order=A,A,A}\n===A\n---V1\nN: 1~ (1 2) 3 4 ||\nL: 春风又绿\n---V2,V3\nN: 1~ ((1 2 3 4)) 5 6 |||\nL: 春风又绿山林",
+  "house-verse-rows.m3n": "{4/4}{order=A,A,A}\n===A\n---V1\nN: 1~ (1 2) 3 4 ||\nL: 春风又绿\n---V2,V3\nN: 1~ ((1 2 3 4)) 5 6 |||\nL2: 春风又绿山林\nL3: 此刻雨后天晴",
+  "house-dynamics-visit.m3n": "{3/4}{order=A,A}\n===A\n---V1\nN: (1 2) 3 4 ||\n---V2\nN: ((1 {p}2 3 4)) 5 6 |||",
+  "house-instrumental-lyrics.m3n": "{4/4}\nN: ||: 1 2 3 4 |\nL1: 春风秋雨\nL2: 海角天涯\n---V1\nN: {inst}1 2 3 4{/} :||\n---V2\nN: {inst}1 {mf}2 3 4{/} |||",
+  "house-control-visits.m3n": "{3/4}{order=A,A,A}\n===A\n---V1\nN: {lg}(1 2) 3 4{/} ||\n---V2,V3\nN: {lg}1 (2 3) 4{/} |||"
+}
