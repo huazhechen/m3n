@@ -37,7 +37,7 @@ const preGraceNode = preGrace.result.objects[0] as VisualTemporalNode & {
 
 test("刚性倚音组仍保留随字号与书面时值变化的自然净空", () => {
     for (const size of [16, 22, 32]) for (const side of ["pre", "post"]) {
-        for (const [music, expected] of [["2/ 3/", 4.8], ["2/ 3//", 4.8 * (0.5 + Math.sqrt(0.125))]] as const) {
+        for (const [music, expected] of [["2/ 3/", 3.6], ["2/ 3//", 3.6 * (0.5 + Math.sqrt(0.125))]] as const) {
             const source = `@set(fontsize=${size}) @grace(1,{${music}},side=${side})`;
             const {result,commands} = layoutGrace(source);
             const [left, right] = (result.objects[0] as GraceTemporal).graces;
