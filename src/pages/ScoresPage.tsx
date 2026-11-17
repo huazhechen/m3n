@@ -203,19 +203,21 @@ export function ScoresPage() {
             />
           </label>
         </section>
-        {scores.length === 0 && (
-          <p className="search-empty">没有找到匹配的乐谱。</p>
-        )}
-        {groups.map(({ initial, title, items }) => (
-          <section className="library-group" id={`library-group-${initial}`} data-library-initial={initial} key={initial} aria-labelledby={`library-heading-${initial}`}>
-            <h2 className="library-group-heading" id={`library-heading-${initial}`}>
-              {title}
-            </h2>
-            <div className="score-list">
-              {items.map(({ key, ...cardProps }) => <ScoreCard key={key} {...cardProps} />)}
-            </div>
-          </section>
-        ))}
+        <div className="library-groups">
+          {scores.length === 0 && (
+            <p className="search-empty">没有找到匹配的乐谱。</p>
+          )}
+          {groups.map(({ initial, title, items }) => (
+            <section className="library-group" id={`library-group-${initial}`} data-library-initial={initial} key={initial} aria-labelledby={`library-heading-${initial}`}>
+              <h2 className="library-group-heading" id={`library-heading-${initial}`}>
+                {title}
+              </h2>
+              <div className="score-list">
+                {items.map(({ key, ...cardProps }) => <ScoreCard key={key} {...cardProps} />)}
+              </div>
+            </section>
+          ))}
+        </div>
         {showIndex && <LibraryIndex initials={groups.map(group => group.initial)} />}
 
       </div>

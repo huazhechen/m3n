@@ -1702,7 +1702,7 @@ a.action-button {
   .editor-action span { display: none; }
 }
 
-.score-library.has-letter-index { padding-right: calc(var(--ui-control-size) + var(--ui-space)); }
+.score-library.has-letter-index .library-groups { padding-right: calc(var(--ui-control-size) + var(--ui-space)); }
 .library-group { margin-bottom: calc(var(--ui-unit) * 2); scroll-margin-top: var(--ui-space); }
 .library-group-heading {
   position: sticky;
