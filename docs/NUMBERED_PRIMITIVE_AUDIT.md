@@ -46,3 +46,9 @@ JSON与HTML报告增加 `primitiveMatches`、`primitiveAudit`，包括两版数�
 另用 `.tmp/native-public-api-probe.ts` 将旧渲染参数（包括注入测量器）传给候选，将候选诊断赋给原诊断类型；TypeScript严格检查通过，日志 `.tmp/native-public-api-probe.log`。命令使用TS6的 `--ignoreConfig --noEmit --target ES2023 --module ESNext --moduleResolution Bundler --allowImportingTsExtensions --strict --skipLibCheck`，仅验证隔离契约，不替代应用完整类型／构建／交互检查。正式公共入口、依赖清单和默认显示均未切换；仍等待全部视觉与实绘验收。
 
 完整自研实绘3664组已结束并退出0：裁切、渲染错误、包络违规及受检碰撞均0，768个碰撞候选、167072个标签；报告 `.tmp/native-ink/2026-11-17T16-07-30.499Z/`。这仍不是任意图元两两无碰撞的证明。随后七类选项448组补验发现实际缺口：编号42／64组几何通过、等行高44／64、单值间距60／64；隐藏低音、折行比例、等宽覆盖及配对间距各64组几何与图元通过。编号已修正并另验，见[行末编号](ROW_END_MEASURE_NUMBERS.md)；其余缺口不能据默认矩阵通过而忽略。
+
+## 当前工作区入口复核（2026-11-18）
+
+在`2e9b0d7`的零时值间距修正及当前并行重构之上，重新从网页实际`src/lib/render-score.ts`打包隔离自研候选。90个有输出的模块、411989字节；运行图中没有jpFun、Verovio或旧score／svg／projection适配器。保存本次模块清单及源码哈希为`.tmp/2026-11-18-native-public-bundle-probe.json`、`.tmp/2026-11-18-native-public-bundle-metafile.json`。原候选接口探针以TS6严格模式重跑通过，包边界检查通过。这些结果只证明当前候选的接口与依赖边界，正式公共入口仍导出jpFun实现，不是部署或整库视觉验收。
+
+当前234份输入包含全部88首曲库和专项样例；启动时保存的谱源与本次检查时曲库逐文件一致。等行高及小节号两轮各1872组仍在运行，最终图元／像素／实绘结论以完整终态为准。
