@@ -111,7 +111,7 @@ function drawStartupBeat(paper: HTMLElement | null, score: PlaybackScore | null,
   circle.setAttribute('data-beat', String(beat))
   circle.setAttribute('cx', String(bounds.x + bounds.width / 2))
   circle.setAttribute('cy', String(bounds.y + bounds.height / 2))
-  circle.setAttribute('r', String(Math.max(bounds.width, bounds.height) / 2 + 5))
+  circle.setAttribute('r', String(Math.max(bounds.width, bounds.height) * 0.6))
   note.insertBefore(circle, note.firstChild)
 }
 
