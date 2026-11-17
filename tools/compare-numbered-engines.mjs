@@ -70,7 +70,8 @@ try {
     `export {NativeNumberedNotationScore} from ${JSON.stringify(join(candidateRoot, 'packages/numbered-notation/src/native-score.ts'))};`,
   ].join('\n'))
   await build({ configFile: false, logLevel: 'error', resolve: { alias: [
-    { find: '@m3n/jpfun', replacement: join(referenceRoot, 'packages/jpfun/src/core.ts') },
+    { find: '@m3n/jpfun/music-brace', replacement: join(currentRoot, 'packages/jpfun/src/render/music-brace.ts') },
+    { find: /^@m3n\/jpfun$/, replacement: join(referenceRoot, 'packages/jpfun/src/core.ts') },
     { find: '@m3n/notation', replacement: join(currentRoot, 'packages/notation/src/index.ts') },
     { find: 'txml/txml', replacement: join(root, 'node_modules/txml/dist/txml.mjs') },
     { find: 'txml', replacement: join(root, 'node_modules/txml/dist/index.mjs') },

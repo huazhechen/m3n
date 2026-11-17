@@ -396,9 +396,16 @@ class FoldTemporal extends TemporalNodeBase {
 
         this.springConfig = { ...first.springConfig, ...this.springConfig };
 
-        // 横向完全等于宿主：上下的标记（变速、注释、力度）常常比音符宽得多，
-        // 让它们撑宽盒子会把右邻推开一大截；它们画在基线外侧，伸出盒外也不会碰撞
-        const anchor = first.box.x + first.box.anchor;
+        // Musical members share the anchor but can have wider accidentals than
+        // the lead note. Reserve the complete chord for enclosing composites,
+        // especially leading grace blocks. Zero-time labels remain overhang.
+        let anchor = first.box.x + first.box.anchor;
+        const music = this.members.filter(member => !member.T.isZero());
+        const left = Math.min(0, ...music.map(member => anchor - member.box.anchor));
+        const right = Math.max(this.box.w, ...music.map(member => anchor - member.box.anchor + member.box.w));
+        this.box.w = right - left;
+        anchor -= left;
+        first.box.x -= left;
         const gap = this.ast.size * 0.12;
         this.verticalOffsets.length = this.members.length;
         this.verticalOffsets[0] = 0;
