@@ -20,3 +20,14 @@ test('the absolute floor rejects invalid values and a floor larger than the base
     for (const floor of [-1, NaN, Infinity, 7])
         assert.throws(() => compileScore('1 2', { noteGap: 11, minimumNoteGap: 6.6, minimumNoteGapFloor: floor }), /minimumNoteGapFloor/);
 });
+
+test('justification surplus retains the beam grouping ratio', () => {
+    const measure = (fillRatio: number) => compileScore(
+        '@page(width=640px,height=0px,fillRatio=' + fillRatio + ') {1 1 1 1}// {1 1 1 1}//',
+    ).layout.objects.map(node => getLayoutBounds(node).x);
+    const natural = measure(1), justified = measure(0);
+    const growth = (i: number) => justified[i + 1] - justified[i] - natural[i + 1] + natural[i];
+    assert.ok(growth(3) > 0);
+    for (const i of [0, 1, 2, 4, 5, 6])
+        assert.ok(Math.abs(growth(i) / growth(3) - 0.6) < 1e-8);
+});

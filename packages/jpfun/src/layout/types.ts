@@ -39,6 +39,8 @@ export interface LayoutBox extends Rect {
  * 横向弹簧的物理属性 含义见排版模型的文档
  */
 export interface HorizontalSpringConfig {
+    stretch_L?: number; // 撑满新增空间的左侧权重，默认 1
+    stretch_R?: number; // 撑满新增空间的右侧权重，默认 1
     alpha_L?: number;   // 左侧固有弹性间距系数
     alpha_R?: number;   // 增加该值会增加弹簧长度
     mu_L?: number;      // 左侧重叠阻尼惩罚系数

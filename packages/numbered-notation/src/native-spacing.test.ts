@@ -8,6 +8,29 @@ describe('native spacing constraints', () => {
   it('spreads surplus equally across free columns and keeps outer ink flush', () => {
     expect(solveNativeSpacing(Array.from({length:3},()=>({cells:[cell()]})),100,true).positions).toEqual([5,50,95])
   })
+  it('allocates positive surplus by beam weights and preserves rigid offsets', () => {
+    const columns = [
+      { cells: [cell()], fixedAfter: 10 },
+      { cells: [cell('melody', { afterStretch: .6 })] },
+      { cells: [cell('melody', { beforeStretch: .6 })] },
+      { cells: [cell()] },
+    ]
+    const natural = solveNativeSpacing(columns).positions
+    const filled = solveNativeSpacing(columns, 200, true).positions
+    const growth = (i: number) => filled[i + 1]! - filled[i]! - natural[i + 1]! + natural[i]!
+    expect(filled[1]! - filled[0]!).toBe(10)
+    expect(growth(1) / growth(2)).toBeCloseTo(.6, 10)
+    expect(filled[0]).toBe(5)
+    expect(filled.at(-1)).toBe(195)
+  })
+  it('uses the largest voice weight for a shared gap', () => {
+    const columns = [
+      { cells: [cell('melody', { afterStretch: .6 }), cell('bass')] },
+      { cells: [cell('melody', { beforeStretch: .6 }), cell('bass')] },
+      { cells: [cell(), cell('bass')] },
+    ]
+    expect(solveNativeSpacing(columns, 100, true).positions).toEqual([5, 50, 95])
+  })
   it('compresses elastic space before intruding into ink', () => {
     const positions = solveNativeSpacing(Array.from({length:4},()=>({cells:[cell()]})),52).positions
     expect(positions[0]).toBeGreaterThanOrEqual(4.9)

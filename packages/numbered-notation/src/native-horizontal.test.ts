@@ -67,11 +67,22 @@ describe('native spacing and measured note envelopes', () => {
     expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(97.735, 6)
   })
   it('keeps a beamed eighth rest in the shared spacing group in 虫儿飞', () => {
-    const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'))
+    const source = readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8')
+    const result = layout(source)
     const rest = result.projection.glyphs.find(glyph => glyph.id === 'm3n-e-44')!
     const next = result.projection.glyphs.find(glyph => glyph.id === 'm3n-e-45')!
-    expect(rest.x).toBeCloseTo(728.89046, 1)
-    expect(next.x).toBeCloseTo(744.54647, 1)
+    const projection = projectNumberedScore(parseM3NDocument(source), { width: 800, paged: false, textMeasurer: measurer })
+    const reference = compileScore(projection.source, { textMeasurer: measurer, autoWrap: true, alignRelations: true, noteGap: 13.2, minimumNoteGap: 8.8, minimumNoteGapFloor: 2.2 })
+    expect(reference.diagnostics.filter(item => item instanceof ErrorDiagnostic)).toEqual([])
+    for (const glyph of [rest, next]) {
+      const node = reference.layout.objects.find(note => {
+        let ast: typeof note.ast | null = note.ast
+        while (ast && !projection.bindings.has(ast.label ?? '')) ast = ast.parent
+        return ast && projection.bindings.get(ast.label!)?.visualId === glyph.id
+      })!
+      expect(node).toBeDefined()
+      expect(glyph.x).toBeCloseTo(node.box.x + node.box.anchor, 1)
+    }
   })
 
   it('uses the cross-system tie height without adding 1.1px to each successive row', () => {

@@ -38,6 +38,8 @@ export function completeSpringConfig(
     config: HorizontalSpringConfig,
     F: number = DEFAULT_F,
 ): asserts config is Required<HorizontalSpringConfig> {
+    config.stretch_L ??= 1;
+    config.stretch_R ??= 1;
     const defaultAlpha = config.alpha_L ?? config.alpha_R ?? DEFAULT_ALPHA;
     config.alpha_L ??= defaultAlpha;
     config.alpha_R ??= defaultAlpha;
@@ -400,6 +402,8 @@ export function layoutHorizontalRegion(
                     const right = columns[end][row];
                     return {
                         config: {
+                            stretch_L: left.config.stretch_L,
+                            stretch_R: right.config.stretch_R,
                             alpha_L: left.config.alpha_L,
                             alpha_R: right.config.alpha_R,
                             mu_L: left.config.mu_L,
@@ -436,13 +440,19 @@ export function layoutHorizontalRegion(
         }
         const naturalWidth = solvedX[solvedX.length - 1] + rightWidth - solvedX[0] + leftWidth;
         if (!hasRoom || naturalWidth >= limit * fillMinRatio) {
-            // 让首尾贴墙，并把余量平均分到自由间隙
+            // 首尾贴墙；新增空间按各声部中最大的间隙权重分配。
+            // 压缩仍沿用原规则，不改变碰撞求解器的行为。
             const shift = leftWidth - solvedX[0];
             const extra = limit - naturalWidth;
+            const cumulative = [0];
+            for (let i = 1; i < solvedX.length; i++) {
+                const weight = extra > 0 ? Math.max(...solvedColumns[i].map((cell, row) =>
+                    (solvedColumns[i - 1][row].config.stretch_R + cell.config.stretch_L) / 2)) : 1;
+                cumulative.push(cumulative[i - 1] + weight);
+            }
+            const total = cumulative[cumulative.length - 1];
             for (let i = 0; i < solvedX.length; i++) {
-                solvedX[i] += shift + (solvedX.length > 1
-                    ? extra * i / (solvedX.length - 1)
-                    : 0);
+                solvedX[i] += shift + (total > 0 ? extra * cumulative[i] / total : 0);
             }
         }
     }

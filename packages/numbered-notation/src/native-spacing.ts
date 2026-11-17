@@ -5,6 +5,9 @@ export type SpacingCell = {
   right: number
   before: number
   after: number
+  /** Relative share of positive justification surplus; defaults to 1. */
+  beforeStretch?: number
+  afterStretch?: number
   /** Compression stiffness of the two elastic clearances. */
   beforeStiffness: number
   afterStiffness: number
@@ -49,6 +52,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
         ...rows[start]![row]!, lane,
         left: Math.max(...rows.slice(start, end + 1).map((cells, i) => cells[row]!.left - members[start + i]!.offset)),
         right: Math.max(...rows.slice(start, end + 1).map((cells, i) => members[start + i]!.offset + cells[row]!.right)),
+        afterStretch: rows[end]![row]!.afterStretch,
         after: rows[end]![row]!.after, afterStiffness: rows[end]![row]!.afterStiffness, afterCollision: rows[end]![row]!.afterCollision,
       })) })
       start = end + 1
@@ -105,7 +109,14 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     const left = Math.max(...rows[0]!.map(cell => cell.left)), right = Math.max(...rows.at(-1)!.map(cell => cell.right))
     const occupied = positions.at(-1)! + right - positions[0]! + left
     const shift = left - positions[0]!, free = width - occupied
-    positions.forEach((position, index) => { positions[index] = position + shift + (positions.length > 1 ? free * index / (positions.length - 1) : 0) })
+    const cumulative = [0]
+    for (let index = 1; index < positions.length; index++) {
+      const weight = free > 0 ? Math.max(...rows[index]!.map((cell, lane) =>
+        ((rows[index - 1]![lane]!.afterStretch ?? 1) + (cell.beforeStretch ?? 1)) / 2)) : 1
+      cumulative.push(cumulative[index - 1]! + weight)
+    }
+    const total = cumulative.at(-1)!
+    positions.forEach((position, index) => { positions[index] = position + shift + (total > 0 ? free * cumulative[index]! / total : 0) })
   }
   return { positions, naturalWidth }
 }
