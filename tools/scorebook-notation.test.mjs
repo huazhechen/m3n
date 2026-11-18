@@ -55,12 +55,12 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
         const framed = api.frameScoreImage([...web.querySelectorAll(':scope > svg')])
         const image = await api.renderScoreCanvas(framed, framed.viewBox.baseVal.width, 2)
         const imageInfo = { width: framed.viewBox.baseVal.width, height: framed.viewBox.baseVal.height, x: Number(framed.querySelector('svg').getAttribute('x')), y: Number(framed.querySelector('svg').getAttribute('y')), pngWidth: image.width, whiteCorner: [...image.getContext('2d').getImageData(0, 0, 1, 1).data], unchanged: JSON.stringify(webPages) === JSON.stringify([...web.querySelectorAll(':scope > svg')].map(svg => svg.outerHTML)) }
-        const compact = api.compactPage(`<svg xmlns="http://www.w3.org/2000/svg" width="793.7007874" height="1122.519685" viewBox="0 0 793.7007874 1122.519685">${a4[0].markup}</svg>`)
+        const compact = api.compactPage(`<svg xmlns="http://www.w3.org/2000/svg" width="793.7007874" height="1122.519685" viewBox="0 0 793.7007874 1122.519685">${a4[0].markup}</svg>`, ['https://score.cheesefans.com/scores/test_01'])
         return { layout, imageInfo, sharedMargin: JSON.stringify(original) === JSON.stringify(direct), equalMeasures: doc.equalMeasures, identical: JSON.stringify(original) === JSON.stringify(webPages), unchanged: JSON.stringify(restored) === JSON.stringify(originalXml),
           placements: a4.map(page => page.placement), credits: web.textContent.includes('测试作者'),
           bass: bassIds.length > 0 && bassIds.every(id => web.querySelector(`[data-m3n-id="${id}"]`)),
           houses: doc.parts.get('score').melody.filter(measure => measure.ending).length,
-          compactOutside: compact.outside, glyphs: compact.glyphs }
+          compactOutside: compact.outside, glyphs: compact.glyphs, links: compact.links }
       }, { source, width })
       // SVG viewBox uses float32 values; 6% framing produces fractional pixels.
       assert(Math.abs(result.imageInfo.width - width * 1.12) < 1e-4)
@@ -80,6 +80,10 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       assert.deepEqual(result.layout.overlaps, [])
       assert.deepEqual(result.compactOutside, [])
       assert(result.glyphs > 0)
+      assert.equal(result.links.length, 1)
+      assert.equal(result.links[0].url, 'https://score.cheesefans.com/scores/test_01')
+      assert.equal(result.links[0].label, '统一排版')
+      assert(result.links[0].width > 0 && result.links[0].height > 0)
       for (const placement of result.placements) {
         assert(placement.x >= 12 && placement.y === 12)
         assert(placement.width <= 186 && placement.height <= 273)
@@ -105,11 +109,12 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       const host = document.createElement('div')
       host.innerHTML = packed.markup
       const svgs = [...host.querySelectorAll(':scope > svg')]
+      const compact = api.compactPage(`<svg xmlns="http://www.w3.org/2000/svg" width="793.7007874" height="1122.519685" viewBox="0 0 793.7007874 1122.519685">${packed.markup}</svg>`, ['https://score.cheesefans.com/scores/a', 'https://score.cheesefans.com/scores/b'])
       let overflowRejected = false
       try { await api.sharedA4Page(Array(20).fill(sources[0]), width) } catch { overflowRejected = true }
       return { identical: svgs.map((svg, index) => svg.innerHTML === originals[index]),
         widths: svgs.map(svg => svg.viewBox.baseVal.width), items: packed.items.map(({ top, sourceHeight, placement }) => ({ top, sourceHeight, placement })),
-        measuredHeight: summary.naturalHeight, overflowRejected }
+        measuredHeight: summary.naturalHeight, overflowRejected, links: compact.links }
     })
     assert.deepEqual(shared.identical, [true, true], 'Sharing changes only outer SVG placement')
     assert.deepEqual(shared.widths, [720, 720])
@@ -118,6 +123,10 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     assert.equal(shared.items[0].placement.width, shared.items[1].placement.width)
     assert(shared.items[1].placement.y + shared.items[1].placement.height <= 285)
     assert(shared.overflowRejected)
+    assert.deepEqual(shared.links.map(link => [link.label, link.url]), [['合页甲', 'https://score.cheesefans.com/scores/a'], ['合页乙', 'https://score.cheesefans.com/scores/b']])
+    assert(shared.links[1].y > shared.links[0].y, 'Shared titles must link at their own page position')
+    const cover = await page.evaluate(() => window.scorebook.compactPage('<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123"><text x="40" y="100" data-scorebook-url="https://score.cheesefans.com/">访问网站</text></svg>'))
+    assert.equal(cover.links[0].url, 'https://score.cheesefans.com/')
     const longSource = '{title=多页测试}{4/4}\nN: ' + Array.from({ length: 100 }, () => '1 2 3 4 |{br}').join(' ')
     const long = await page.evaluate(async source => {
       const summary = await window.scorebook.measure(source, 640)

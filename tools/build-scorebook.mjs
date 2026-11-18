@@ -107,7 +107,8 @@ for (const entry of records) {
   entry.pages = Array.from({ length: entry.pageCount }, (_, index) => frontCount + entry.musicStart + index + 1)
   delete entry.musicStart
 }
-const pages = [{ kind: 'cover', svg: pageSvg(text(plan.title, profile.width / 2, 350, 40, 'text-anchor="middle"')) }]
+const pages = [{ kind: 'cover', svg: pageSvg(text(plan.title, profile.width / 2, 350, 40, 'text-anchor="middle" data-scorebook-url="https://score.cheesefans.com/"')
+  + text('https://score.cheesefans.com/', profile.width / 2, 410, 18, 'text-anchor="middle" data-scorebook-url="https://score.cheesefans.com/"')) }]
 for (let index = 0; index < tocCount; index++) {
   let content = text('目录', 40, 65, 30)
   for (let side = 0; side < 2; side++) {

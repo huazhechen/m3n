@@ -2,10 +2,25 @@
 export { prepare } from './scorebook-layout.mjs'
 import { createSvgInkMeasurer } from './lib/svg-ink-bounds.mjs'
 
-export function compactPage(markup) {
+export function compactPage(markup, scoreUrls = []) {
   const host = document.querySelector('#scratch')
   host.innerHTML = markup
   const svg = host.firstElementChild
+  const paperBounds = svg.getBoundingClientRect()
+  const links = []
+  const addLink = (node, url) => {
+    const box = node.getBoundingClientRect()
+    if (!box.width || !box.height) return
+    links.push({ url, label: node.textContent, x: box.left - paperBounds.left, y: box.top - paperBounds.top, width: box.width, height: box.height })
+  }
+  for (const node of svg.querySelectorAll('[data-scorebook-url]')) addLink(node, node.getAttribute('data-scorebook-url'))
+  const scores = [...svg.querySelectorAll('svg[data-engine="m3n"]')]
+  if (scoreUrls.length && scores.length !== scoreUrls.length) throw new Error('Every engraved score needs its own URL')
+  for (const [index, score] of scores.entries()) {
+    if (!scoreUrls[index]) continue
+    // Centered bold header text identifies title rows; musical annotations carry a role.
+    for (const title of score.querySelectorAll('text[font-weight="700"][text-anchor="middle"]:not([data-m3n-role])')) addLink(title, scoreUrls[index])
+  }
   // Native routing may emit boundary primitives on both pages. Drop only
   // those entirely outside their own page before packaging the export font.
   const ink = createSvgInkMeasurer()
@@ -90,5 +105,5 @@ export function compactPage(markup) {
     const box = node.getBoundingClientRect(), paper = svg.getBoundingClientRect()
     if (box.width && box.height && (box.left < paper.left - .5 || box.right > paper.left + width + .5 || box.top < paper.top - .5 || box.bottom > paper.top + height + .5)) outside.push(node.outerHTML.slice(0,160))
   }
-  return { markup: svg.outerHTML, glyphs, outside }
+  return { markup: svg.outerHTML, glyphs, outside, links }
 }
