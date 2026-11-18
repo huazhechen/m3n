@@ -109,13 +109,18 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     if (marks.closing !== undefined) bar(measure, marks.closing)
   }
   // Adjacency belongs to a voice. Finer notes or controls in another voice
-  // do not interrupt its beam; its own controls and bars still do.
+  // do not interrupt its beam or sustain; its own controls and bars still do.
   const previousByLane = new Map<string, { item: HorizontalItem; cell: SpacingCell }>()
   for (const item of items) for (const cell of item.cells) {
     const previous = previousByLane.get(cell.lane)
     const left = previous?.item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const right = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
-    if (previous?.item.measure === item.measure && left && right && nativeBeamCount(left, right)) {
+    // A displayed sustain dash continues the preceding sound, including a
+    // fractional tied head. Keep actual durations in the square-root springs.
+    // The measure identity and intervening control items keep bars/settings out.
+    const sustain = left && right?.sustain && !right.controls.length
+      && Math.abs(left.time + left.beats - right.time) < 1e-7
+    if (previous?.item.measure === item.measure && left && right && (sustain || nativeBeamCount(left, right))) {
       previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * 0.5
       cell.beforeStretch = (cell.beforeStretch ?? 1) * 0.5
       previous.cell.after *= 0.5

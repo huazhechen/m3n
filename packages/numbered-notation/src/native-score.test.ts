@@ -183,8 +183,10 @@ it('applies the equal-measures source switch and permits an explicit rendering o
 
 it.each([1, 1.4])('passes compact wrapping through for sparse exercises at %sem without changing event identities', noteGapEm => {
     const source = '{equal-measures=true}\n{4/4}\nN: ' + Array(10).fill('1^^ |').join(' ')
-    const normal = render(source, { width: 800, noteGapEm })
-    const compact = render(source, { width: 800, noteGapEm, wrap: 'compact' })
+    // Sustain groups now fit more tightly; 600px still exercises a distinct
+    // normal/compact wrapping transition for both explicit spacing values.
+    const normal = render(source, { width: 600, noteGapEm })
+    const compact = render(source, { width: 600, noteGapEm, wrap: 'compact' })
     expect(compact.root.querySelectorAll('g.system').length).toBeLessThan(normal.root.querySelectorAll('g.system').length)
     expect([...compact.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))
       .toEqual([...normal.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))

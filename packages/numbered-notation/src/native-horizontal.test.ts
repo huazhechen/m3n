@@ -57,17 +57,18 @@ describe('native spacing and measured note envelopes', () => {
         const source = '{4/4}\nN: ' + Array(9).fill('(5 6) 6~ 6^ |').join(' ')
             + '\n---\nN: ||: 0 0 (0 3) (6 7) | (1e 3) (1e 7~) (7 6) (5 6~) |';
         const result = layout(source, 800, historicalSpacing);
+        // Two sustain boundaries now save 11px of natural clearance.
         const boundary = result.projection.measures[8]!;
-        expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(92.8537393977258, 5);
+        expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(81.8537393977258, 5);
         const opening = result.projection.measures[9]!;
         expect(opening.naturalEnd! - opening.naturalStart!).toBeCloseTo(167.32291529933855, 5);
         expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320, historicalSpacing);
-        expect(result.systems).toHaveLength(45);
+        expect(result.systems).toHaveLength(44);
         expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
-            .toEqual([[52], [53, 54], [55, 56], [57, 58], [59, 60, 61]]);
+            .toEqual([[51], [52], [53, 54, 55], [56, 57, 58], [59, 60, 61]]);
     });
     it('lets wide lyrics share the minimum note clearance instead of accumulating it', () => {
         const textMeasurer: TextMeasurer = { measureText(text, style) {
