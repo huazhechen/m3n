@@ -44,7 +44,7 @@ const springCell = (lane: string, left: number, right: number, duration: number,
 }
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
-function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
+function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures, minimum = false): HorizontalItem[] {
   const scale = nativeStyle.music * (options.noteGapEm ?? 0.6) / 12
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
@@ -110,6 +110,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   }
   // Adjacency belongs to a voice. Finer notes or controls in another voice
   // do not interrupt its beam or sustain; its own controls and bars still do.
+  const groupStarts = new Set<SpacingCell>(), groupEnds = new Set<SpacingCell>()
   const previousByLane = new Map<string, { item: HorizontalItem; cell: SpacingCell }>()
   for (const item of items) for (const cell of item.cells) {
     const previous = previousByLane.get(cell.lane)
@@ -125,6 +126,11 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       cell.beforeStretch = (cell.beforeStretch ?? 1) * 0.5
       previous.cell.after *= 0.5
       cell.before *= 0.5
+    } else if (previous?.item.measure === item.measure && left && right) {
+      // Group boundaries reserve an absolute clearance, independent of duration.
+      const natural = (previous.cell.after + cell.before) / 2
+      previous.cell.after = natural; cell.before = natural
+      groupEnds.add(previous.cell); groupStarts.add(cell)
     }
     previousByLane.set(cell.lane, { item, cell })
   }
@@ -134,9 +140,12 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
     const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const floor = glyph ? nativeStyle.music * (options.minimumNoteGapFloorEm ?? 0) / 2 : 0
+    const groupGap = nativeStyle.music * (options.minimumNoteGapEm ?? 0) / 2
+    if (groupStarts.has(cell)) cell.before = minimum ? groupGap : Math.max(cell.before, groupGap)
+    if (groupEnds.has(cell)) cell.after = minimum ? groupGap : Math.max(cell.after, groupGap)
     cell.before = Math.max(cell.before, floor); cell.after = Math.max(cell.after, floor)
-    const left = index === 0 ? 0 : Math.max(cell.before * reserveRatio, floor)
-    const right = index === items.length - 1 ? 0 : Math.max(cell.after * reserveRatio, floor)
+    const left = index === 0 ? 0 : Math.max(groupStarts.has(cell) ? groupGap : cell.before * reserveRatio, floor)
+    const right = index === items.length - 1 ? 0 : Math.max(groupEnds.has(cell) ? groupGap : cell.after * reserveRatio, floor)
     cell.left += left; cell.right += right; cell.before -= left; cell.after -= right
     // Note clearance and lyric ink share physical space; do not add both widths.
     if (glyph) {
@@ -193,7 +202,7 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
 
 function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOptions) {
   for (const minimum of [false, true]) {
-    const items = itemsFor(measures, minimum ? { ...options, noteGapEm: options.minimumNoteGapEm ?? options.noteGapEm } : options)
+    const items = itemsFor(measures, minimum ? { ...options, noteGapEm: options.minimumNoteGapEm ?? options.noteGapEm } : options, measures, minimum)
     const result = solveNativeSpacing(items)
     for (const measure of measures) {
       const selected = items.map((item, index) => ({ item, index })).filter(({ item }) => item.measure === measure)

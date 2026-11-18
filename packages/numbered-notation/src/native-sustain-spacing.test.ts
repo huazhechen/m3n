@@ -13,7 +13,7 @@ describe('sustain group spacing', () => {
     ['eighth head', '(0 1~) 1^.', .5],
     ['sixteenth head', '(0 (0 1~)) 1^.', .25],
     ['dotted head', '1^.. (0)', 1.5],
-  ])('halves square-root clearances for a %s into a dash', (_name, notes, duration) => {
+  ])('retains square-root group clearances for a %s into a dash', (_name, notes, duration) => {
     const { measures } = project(`{4/4}\nN: ${notes} |||`)
     const measure = measures[0]!
     const glyphs = measure.columns.flatMap(column => column.glyphs)
@@ -31,7 +31,9 @@ describe('sustain group spacing', () => {
     measureNativeHorizontal([pair], options)
     const roots = Math.sqrt(duration) + 1
     expect(pair.natural - pairGrouped.natural).toBeCloseTo(22 * .6 / 4 * roots, 8)
-    expect(pair.minimum - pairGrouped.minimum).toBeCloseTo(22 * .4 / 4 * roots, 8)
+    // The independent attack now reserves a fixed 0.4em, while the
+    // sustain pair still uses its original duration-scaled half clearance.
+    expect(pair.minimum - pairGrouped.minimum).toBeCloseTo(22 * .4 - 22 * .4 / 4 * roots, 8)
   })
 
   it('gives head/dash and dash/dash gaps half the justification surplus of a new attack', () => {
