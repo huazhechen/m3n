@@ -29,6 +29,10 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
       <main className="page-status page-error" role="alert">
         <h1>页面加载失败</h1>
         <p>请刷新页面后重试。</p>
+        <details>
+          <summary>错误详情</summary>
+          <p style={{ overflowWrap: 'anywhere' }}>{this.state.error.message || String(this.state.error)}</p>
+        </details>
         <button type="button" className="action-button" onClick={() => window.location.reload()}>
           刷新页面
         </button>
