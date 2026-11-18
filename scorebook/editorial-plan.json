@@ -234,6 +234,14 @@
       "reason": "20个半音的音域、八度跳进、慢速连奏与长音气息控制，含局部十六分音符"
     },
     {
+      "id": "over_the_rainbow",
+      "file": "over_the_rainbow_01.m3n",
+      "title": "飞越彩虹",
+      "section": "advanced",
+      "group": "大跨度与完整曲式",
+      "reason": "八度跳进、连续八分、临时升音及分遍结尾"
+    },
+    {
       "id": "wo_niu_yu_huang_li_niao",
       "file": "wo_niu_yu_huang_li_niao_01.m3n",
       "title": "蜗牛与黄鹂鸟",
@@ -368,14 +376,6 @@
       "section": "classic",
       "group": "三连音与抒情分句",
       "reason": "三连音、同音起音、临时升音及长音气息"
-    },
-    {
-      "id": "over_the_rainbow",
-      "file": "over_the_rainbow_01.m3n",
-      "title": "飞越彩虹",
-      "section": "classic",
-      "group": "大跨度与完整曲式",
-      "reason": "八度跳进、连续八分、临时升音及分遍结尾"
     },
     {
       "id": "wo_he_wo_de_zu_guo",
