@@ -1,7 +1,7 @@
 import { parseM3NDocument } from '@m3n/notation';
 import { readFileSync } from 'node:fs';
 import { describe,expect,it } from 'vitest';
-import { measureNativeHorizontal } from './native-horizontal.js';
+import { measureNativeHorizontal, nativeBarMetrics } from './native-horizontal.js';
 import { layoutNativeScore } from './native-layout.js';
 import type { TextMeasurer } from './native-measure.js';
 import { projectNativeScore } from './native-model.js';
@@ -100,11 +100,37 @@ describe('native spacing and measured note envelopes', () => {
             expect(actual.minimumStart).toBeCloseTo(expected.minimumStart!, 8);
         }
     });
-    it('places the measured section frame before its repeat opening', () => {
-        const result = layout('{4/4}\n===Intro\nN: ||: 1 2 3 4 :||');
-        const measure = result.projection.measures[0]!, first = result.projection.glyphs[0]!;
-        const heading = first.controls.find(control => control.kind === 'section')!;
-        expect(heading.x! + heading.width).toBeLessThan(measure.openingBarX!);
-        expect(measure.openingBarX!).toBeLessThan(first.x - first.musicLeft!);
+    it.each([320, 600, 700, 800])('keeps section frame clearance rigid at %ipx, including equal measures', width => {
+        for (const equalMeasures of [false, true]) for (const next of ['repeat', 'key', 'note']) {
+            const prefix = next === 'repeat' ? '||: ' : next === 'key' ? '{key=A} ' : '';
+            const source = `{4/4}\nN: 1 2 3 4 |\n===Intro\nN: ${prefix}1 2 3 4 | 5 6 7 1e |`;
+            const result = layout(source, width, { equalMeasures });
+            const measure = result.projection.measures[1]!, first = measure.columns[0]!.glyphs[0]!;
+            const heading = first.controls.find(control => control.kind === 'section')!;
+            const key = first.controls.find(control => control.kind === 'key');
+            const left = next === 'repeat' ? measure.openingBarX! - nativeBarMetrics('rptstart').anchor
+                : next === 'key' ? key!.x! + Math.min(...key!.ink.map(ink => ink.left))
+                : first.x - first.inkLeft!;
+            expect(left - heading.x! - heading.width).toBeCloseTo(12, 8);
+            // Minimum-width measurement must reserve the same rigid edge.
+            const projection = projectNativeScore(parseM3NDocument(source), { textMeasurer: measurer });
+            measureNativeHorizontal(projection.measures, {});
+            expect(projection.measures[1]!.minimum).toBeCloseTo(measure.minimum, 8);
+        }
+    });
+    it('keeps all Turkish March inline labels 12px from their following symbol', () => {
+        const source = readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8');
+        for (const width of [600, 700, 800]) {
+            const result = layout(source, width);
+            const headings = result.projection.glyphs.flatMap(glyph => glyph.controls.filter(control => control.kind === 'section').map(control => ({ glyph, control })));
+            expect(headings.map(({ control }) => control.text)).toEqual(['A', 'B', 'C', 'Coda']);
+            for (const { glyph, control } of headings) {
+                const measure = result.projection.measures.find(measure => measure.columns.some(column => column.glyphs.includes(glyph)))!;
+                const key = glyph.controls.find(control => control.kind === 'key');
+                const left = measure.openingBarX !== undefined ? measure.openingBarX - nativeBarMetrics('rptstart').anchor
+                    : key ? key.x! + Math.min(...key.ink.map(ink => ink.left)) : glyph.x - glyph.inkLeft!;
+                expect(left - control.x! - control.width).toBeCloseTo(12, 8);
+            }
+        }
     });
 });

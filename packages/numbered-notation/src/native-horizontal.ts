@@ -1,4 +1,4 @@
-import { nativeStyle } from './native-style.js'
+import { nativeEm, nativeStyle } from './native-style.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
@@ -85,7 +85,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
     // A section heading introduces the repeat, rather than belonging inside it.
-    // Its exterior spring must be measured in the same order as it is painted.
+    // Its exterior clearance must be measured in the same order as it is painted.
     if (firstColumn) controls(firstColumn, firstColumn.glyphs.flatMap(glyph => glyph.controls.filter(control => control.kind === 'section').map(control => ({control, lane: glyph.lane}))))
     if (marks.opening) bar(measure, 'rptstart', true)
     for (const column of measure.columns) {
@@ -161,6 +161,17 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
         return (a?.right ?? 0) + (b?.left ?? 0) + padding
       }))
     }
+  }
+  // Inline section frames keep a rigid clearance to the next visible symbol.
+  // Collapse this edge for both minimum-width measurement and justification.
+  for (const [index, item] of items.entries()) {
+    if (!item.controls?.some(control => control.kind === 'section')) continue
+    const next = items[index + 1]
+    if (!next) continue
+    const left = next.controls ? Math.max(...next.controls.map(control =>
+      control.anchor - (control.ink.length ? Math.min(...control.ink.map(ink => ink.left)) : 0)))
+      : next.column ? Math.max(...next.column.glyphs.map(glyph => glyph.inkLeft ?? glyph.musicLeft ?? glyph.left)) : next.left
+    item.fixedAfter = item.right + nativeEm(12) + left
   }
   return items
 }
