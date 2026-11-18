@@ -2,6 +2,7 @@ import { build } from 'vite'
 import { cp, mkdir, mkdtemp, readdir, rename, rm } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { parseArgs } from 'node:util'
+import { randomUUID } from 'node:crypto'
 
 const { values } = parseArgs({ options: { outDir: { type: 'string' }, base: { type: 'string' } } })
 const hosted = !values.outDir && process.env.VITE_BASE_URL === '/score/' && process.env.VITE_SUBMIT_MODE === 'remote'
@@ -14,7 +15,17 @@ if (!hosted) {
   const staging = await mkdtemp(resolve('.tmp/hosted-build-'))
   const destination = resolve('dist')
   try {
-    await build({ build: { outDir: staging, emptyOutDir: true } })
+    // A release must never reuse URLs that an edge cached as missing while
+    // an earlier deployment was rebuilding. Version the entire dependency graph.
+    const release = randomUUID().slice(0, 8)
+    await build({ worker: { rolldownOptions: { output: {
+      entryFileNames: `assets/[name]-[hash]-${release}.js`,
+      chunkFileNames: `assets/[name]-[hash]-${release}.js`,
+    } } }, build: { outDir: staging, emptyOutDir: true, rolldownOptions: { output: {
+      entryFileNames: `assets/[name]-[hash]-${release}.js`,
+      chunkFileNames: `assets/[name]-[hash]-${release}.js`,
+      assetFileNames: `assets/[name]-[hash]-${release}.[ext]`,
+    } } } })
     await mkdir(destination, { recursive: true })
     for (const entry of await readdir(staging)) {
       if (entry !== 'index.html') await cp(join(staging, entry), join(destination, entry), { recursive: true, force: true })
