@@ -29,3 +29,6 @@ journalctl -u codesh-sites-sync.service -n 30 --no-pager
 
 
 Cloudflare 根域名部署保留 SPA 页面回退，但 `/assets/*` 必须先经过 Worker：`wrangler.jsonc` 的 `assets.run_worker_first` 指定该路径。Worker 对不存在的资源以及静态绑定误回退的 HTML 返回 `404 text/plain` 和 `Cache-Control: no-store`，防止旧哈希脚本地址得到带一年 immutable 缓存的 HTML，触发 JavaScript MIME 错误。正常脚本保留原有内容类型和缓存，`/scores/<id>` 等页面仍可直接访问。已打开的旧页面仍需刷新以取得最新资源引用；这项修复需要发布 Cloudflare Worker 配置和代码后才会在线上生效。
+
+
+此前 HTTPS 浏览器可能已经把 `/assets/<哈希>.js` 的错误 HTML 按 immutable 长期缓存，服务器修复无法直接删除客户端旧缓存。静态资源现统一迁移到稳定的 `/assets/v2/` 命名空间，入口、动态模块、Worker 和音源由 Vite 一起更新引用，绕开原 URL；仍按内容哈希命名，不增加每次构建的随机参数。根首页和 `/scores/*` 页面显式使用 `Cache-Control: no-store`，避免重新打开 PDF 深链接时复用旧 HTML。无需更改 PDF 的 HTTPS 链接。

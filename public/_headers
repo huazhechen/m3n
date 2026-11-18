@@ -1,2 +1,8 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+/
+  Cache-Control: no-store
+
+/scores/*
+  Cache-Control: no-store

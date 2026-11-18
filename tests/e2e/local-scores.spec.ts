@@ -73,7 +73,7 @@ test('does not substitute a default score for a missing local work', async ({ pa
 test('loads only the selected built-in score body', async ({ page }) => {
   const bodies: string[] = []
   page.on('request', request => {
-    if (/\/assets\/[a-z_]+_01-[^/]+\.js$/.test(new URL(request.url()).pathname)) bodies.push(request.url())
+    if (/\/assets\/v2\/[a-z_]+_01-[^/]+\.js$/.test(new URL(request.url()).pathname)) bodies.push(request.url())
   })
   await page.goto('/scores')
   await expect(page.getByRole('heading', { name: '乐谱库', exact: true })).toBeVisible()

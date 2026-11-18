@@ -24,7 +24,7 @@ test('numbered display ignores old staff preference and loads only the selected 
   await page.getByRole('button',{name:'播放',exact:true}).click()
   await page.getByRole('button',{name:'暂停',exact:true}).click()
   expect(external).toEqual([])
-  expect(requests.filter(path=>/assets\/[a-z_]+_01-[^/]+\.js$/.test(path))).toEqual([expect.stringMatching(/^\/assets\/huan_le_song_01-[^/]+\.js$/)])
+  expect(requests.filter(path=>/assets\/v2\/[a-z_]+_01-[^/]+\.js$/.test(path))).toEqual([expect.stringMatching(/^\/assets\/v2\/huan_le_song_01-[^/]+\.js$/)])
   expect(requests.filter(path=>/\.wasm$/.test(path))).toHaveLength(0)
 })
 
