@@ -26,3 +26,6 @@ journalctl -u codesh-sites-sync.service -n 30 --no-pager
 托管构建先在 `.tmp/` 完整生成新版本，再发布资源、最后替换HTML入口，随后立即清理旧资源。这样在构建期间继续提供当前版本，避免资源被提前清空后由CDN缓存404；发布后不保留旧版本。
 
 其余独立资源使用Vite默认的内容哈希命名，不追加每次发布的随机版本后缀；相同内容沿用相同URL。HTML内的代码和样式随入口原子替换，不存在入口与脚本的跨版本请求窗口。
+
+
+Cloudflare 根域名部署保留 SPA 页面回退，但 `/assets/*` 必须先经过 Worker：`wrangler.jsonc` 的 `assets.run_worker_first` 指定该路径。Worker 对不存在的资源以及静态绑定误回退的 HTML 返回 `404 text/plain` 和 `Cache-Control: no-store`，防止旧哈希脚本地址得到带一年 immutable 缓存的 HTML，触发 JavaScript MIME 错误。正常脚本保留原有内容类型和缓存，`/scores/<id>` 等页面仍可直接访问。已打开的旧页面仍需刷新以取得最新资源引用；这项修复需要发布 Cloudflare Worker 配置和代码后才会在线上生效。

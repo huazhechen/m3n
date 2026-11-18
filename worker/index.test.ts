@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createWorker, isSharedScoreId, type Env } from './index'
 
-function testWorker() {
+function testWorker(assetResponse?: () => Response) {
   const values = new Map<string, unknown>()
   const puts: Array<{ key: string; options: { expirationTtl: number } }> = []
   const env: Env = {
@@ -12,12 +12,39 @@ function testWorker() {
         puts.push({ key, options })
       },
     },
-    ASSETS: { async fetch() { return new Response('asset') } },
+    ASSETS: { async fetch() { return assetResponse?.() ?? new Response('asset') } },
   }
   return { worker: createWorker(env), puts }
 }
 
 describe('Cloudflare KV score API', () => {
+  it.each(['GET', 'HEAD'])('rejects SPA HTML returned for a missing module (%s)', async method => {
+    const { worker } = testWorker(() => new Response('<html>SPA</html>', {
+      headers: { 'content-type': 'text/html', 'cache-control': 'public, max-age=31536000, immutable' },
+    }))
+    const response = await worker.fetch(new Request('https://m3n.example/assets/old-build.js', { method }))
+    expect(response.status).toBe(404)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('content-type')).toContain('text/plain')
+    if (method === 'HEAD') expect(await response.text()).toBe('')
+  })
+
+  it('preserves valid JavaScript, immutable caching and deep-link HTML', async () => {
+    const script = 'export default 1'
+    const { worker } = testWorker(() => new Response(script, {
+      headers: { 'content-type': 'text/javascript', 'cache-control': 'public, max-age=31536000, immutable' },
+    }))
+    const response = await worker.fetch(new Request('https://m3n.example/assets/current.js'))
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toBe('text/javascript')
+    expect(response.headers.get('cache-control')).toContain('immutable')
+    expect(await response.text()).toBe(script)
+    const page = testWorker(() => new Response('<html>SPA</html>', { headers: { 'content-type': 'text/html' } }))
+    const deepLink = await page.worker.fetch(new Request('https://m3n.example/scores/huan_le_song_01'))
+    expect(deepLink.status).toBe(200)
+    expect(await deepLink.text()).toBe('<html>SPA</html>')
+  })
+
   it('creates a temporary content-hash score record and retrieves it by ID', async () => {
     const { worker, puts } = testWorker()
     const created = await worker.fetch(new Request('https://m3n.example/api/scores', {

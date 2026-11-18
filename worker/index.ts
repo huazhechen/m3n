@@ -111,7 +111,16 @@ export function createWorker(env: Env) {
         return json(score, { headers: { 'cache-control': 'public, max-age=300' } })
       }
 
-      return env.ASSETS.fetch(request)
+      const asset = await env.ASSETS.fetch(request)
+      // A removed hashed module must not become a cacheable SPA document.
+      if (url.pathname.startsWith('/assets/') &&
+        (asset.status === 404 || asset.headers.get('content-type')?.includes('text/html'))) {
+        return new Response(request.method === 'HEAD' ? null : 'Asset not found. Refresh the page to load the current version.', {
+          status: 404,
+          headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' },
+        })
+      }
+      return asset
     },
   }
 }
