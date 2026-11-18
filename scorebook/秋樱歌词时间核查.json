@@ -1,0 +1,728 @@
+{
+  "date": "2026-11-18",
+  "source": "src/scores/qiu_ying_01.m3n",
+  "sourceSha256": "1c875d205a2fad4d2f1cd925e71d5656f1ff6c1dd25bb4ef3438f4bc23c33837",
+  "references": [
+    {
+      "provider": "LRCLIB",
+      "id": 3445273,
+      "url": "https://lrclib.net/api/get/3445273",
+      "artist": "山口百恵",
+      "album": "GOLDEN☆BEST 山口百恵 コンプリート・シングルコレクション",
+      "durationSeconds": 217,
+      "granularity": "line",
+      "hasWordSync": false
+    },
+    {
+      "provider": "NetEase Music",
+      "id": 669905,
+      "url": "https://music.163.com/#/song?id=669905",
+      "api": "https://music.163.com/api/song/lyric/v1?id=669905&lv=-1&kv=-1&tv=-1&rv=-1&yv=-1",
+      "artist": "山口百恵",
+      "album": "GOLDEN☆BEST/PLAYBACK MOMOE part2",
+      "durationMilliseconds": 218332,
+      "granularity": "YRC displayed-text units, not guaranteed phonemes"
+    },
+    {
+      "provider": "NetEase Music",
+      "id": 2706343626,
+      "url": "https://music.163.com/#/song?id=2706343626",
+      "granularity": "line"
+    }
+  ],
+  "method": "Compile current score performance, expand tuplet lyric slots, respect lyric rendition. Fit one offset and tempo per verse; no per-line warping. Comparison section fits first nine starts, withholds last four. Full-first-verse fit is reported separately. Orthographic variants normalized only for text matching. No audio forced alignment performed.",
+  "fullFirstVerseFit": {
+    "lrclib-3445273": {
+      "offset": 25.779358473483647,
+      "qpm": 76.81561764219025,
+      "rmse": 0.052677700532811796,
+      "maxResidual": 0.08752677150582144
+    },
+    "netease-2706343626": {
+      "offset": 25.971538877504464,
+      "qpm": 76.75541713491256,
+      "rmse": 0.07023690494960964,
+      "maxResidual": 0.14769463631927238
+    }
+  },
+  "lineComparisons": [
+    {
+      "reference": "lrclib-3445273",
+      "verse": 1,
+      "calibration": "first nine line onsets only; subsequent onsets held out",
+      "offsetSeconds": 25.800822783025517,
+      "qpm": 76.89455699715533,
+      "points": [
+        {
+          "label": "淡紅の秋桜が秋の日",
+          "scoreBeatWithinVerse": 0,
+          "referenceSeconds": 25.83,
+          "predictedSeconds": 25.800822783025517,
+          "residualSeconds": 0.029177216974481723
+        },
+        {
+          "label": "何気ない陽溜りに揺",
+          "scoreBeatWithinVerse": 7.5,
+          "referenceSeconds": 31.62,
+          "predictedSeconds": 31.652992527844354,
+          "residualSeconds": -0.03299252784435147
+        },
+        {
+          "label": "此頃涙脆くなった母",
+          "scoreBeatWithinVerse": 15,
+          "referenceSeconds": 37.48,
+          "predictedSeconds": 37.505162272663185,
+          "residualSeconds": -0.025162272663191487
+        },
+        {
+          "label": "庭先でひとつ咳をす",
+          "scoreBeatWithinVerse": 23.5,
+          "referenceSeconds": 44.19,
+          "predictedSeconds": 44.137621316791204,
+          "residualSeconds": 0.052378683208793575
+        },
+        {
+          "label": "縁側でアルバムを開",
+          "scoreBeatWithinVerse": 32,
+          "referenceSeconds": 50.7,
+          "predictedSeconds": 50.770080360919216,
+          "residualSeconds": -0.07008036091921355
+        },
+        {
+          "label": "私の幼い日の思い出",
+          "scoreBeatWithinVerse": 39.5,
+          "referenceSeconds": 56.6,
+          "predictedSeconds": 56.622250105738054,
+          "residualSeconds": -0.02225010573805264
+        },
+        {
+          "label": "何度も同じ話くりか",
+          "scoreBeatWithinVerse": 47,
+          "referenceSeconds": 62.57,
+          "predictedSeconds": 62.47441985055689,
+          "residualSeconds": 0.09558014944310855
+        },
+        {
+          "label": "独言みたいに小さな",
+          "scoreBeatWithinVerse": 55.5,
+          "referenceSeconds": 69.13,
+          "predictedSeconds": 69.10687889468491,
+          "residualSeconds": 0.023121105315091484
+        },
+        {
+          "label": "こんな小春日和の穏",
+          "scoreBeatWithinVerse": 65.5,
+          "referenceSeconds": 76.86,
+          "predictedSeconds": 76.90977188777669,
+          "residualSeconds": -0.04977188777668573
+        },
+        {
+          "label": "あなたの優しさが浸",
+          "scoreBeatWithinVerse": 74.5,
+          "referenceSeconds": 83.92,
+          "predictedSeconds": 83.93237558155928,
+          "residualSeconds": -0.012375581559282978
+        },
+        {
+          "label": "明日嫁ぐ私に苦労は",
+          "scoreBeatWithinVerse": 81.5,
+          "referenceSeconds": 89.45,
+          "predictedSeconds": 89.39440067672354,
+          "residualSeconds": 0.05559932327646777
+        },
+        {
+          "label": "笑い話に時が変える",
+          "scoreBeatWithinVerse": 90.25,
+          "referenceSeconds": 96.25999999999999,
+          "predictedSeconds": 96.22193204567884,
+          "residualSeconds": 0.038067954321135744
+        },
+        {
+          "label": "心配いらないと笑っ",
+          "scoreBeatWithinVerse": 94.5,
+          "referenceSeconds": 99.68,
+          "predictedSeconds": 99.53816156774286,
+          "residualSeconds": 0.14183843225714554
+        }
+      ]
+    },
+    {
+      "reference": "lrclib-3445273",
+      "verse": 2,
+      "calibration": "first nine line onsets only; subsequent onsets held out",
+      "offsetSeconds": 118.86003242633585,
+      "qpm": 76.58614186377969,
+      "points": [
+        {
+          "label": "あれこれと思い出を",
+          "scoreBeatWithinVerse": 0,
+          "referenceSeconds": 118.87,
+          "predictedSeconds": 118.86003242633585,
+          "residualSeconds": 0.009967573664155793
+        },
+        {
+          "label": "いつの日もひとりで",
+          "scoreBeatWithinVerse": 7.5,
+          "referenceSeconds": 124.76,
+          "predictedSeconds": 124.73576906809532,
+          "residualSeconds": 0.02423093190467629
+        },
+        {
+          "label": "今更乍ら我儘な私に",
+          "scoreBeatWithinVerse": 15,
+          "referenceSeconds": 130.58,
+          "predictedSeconds": 130.6115057098548,
+          "residualSeconds": -0.03150570985479639
+        },
+        {
+          "label": "唇かんでいます",
+          "scoreBeatWithinVerse": 23.5,
+          "referenceSeconds": 137.26,
+          "predictedSeconds": 137.2706739038489,
+          "residualSeconds": -0.01067390384889677
+        },
+        {
+          "label": "明日への荷造りに手",
+          "scoreBeatWithinVerse": 32,
+          "referenceSeconds": 143.93,
+          "predictedSeconds": 143.92984209784296,
+          "residualSeconds": 0.0001579021570421446
+        },
+        {
+          "label": "しばらくは楽し気に",
+          "scoreBeatWithinVerse": 39.5,
+          "referenceSeconds": 149.82,
+          "predictedSeconds": 149.80557873960245,
+          "residualSeconds": 0.014421260397547542
+        },
+        {
+          "label": "突然涙こぼし元気で",
+          "scoreBeatWithinVerse": 47,
+          "referenceSeconds": 155.66,
+          "predictedSeconds": 155.6813153813619,
+          "residualSeconds": -0.021315381361930008
+        },
+        {
+          "label": "何度も何度もくりか",
+          "scoreBeatWithinVerse": 55.5,
+          "referenceSeconds": 162.34,
+          "predictedSeconds": 162.34048357535602,
+          "residualSeconds": -0.00048357535600018764
+        },
+        {
+          "label": "ありがとうの言葉を",
+          "scoreBeatWithinVerse": 65.5,
+          "referenceSeconds": 170.19,
+          "predictedSeconds": 170.17479909770196,
+          "residualSeconds": 0.015200902298019514
+        },
+        {
+          "label": "生きてみます私なり",
+          "scoreBeatWithinVerse": 74.75,
+          "referenceSeconds": 177.25,
+          "predictedSeconds": 177.421540955872,
+          "residualSeconds": -0.17154095587200402
+        },
+        {
+          "label": "こんな小春日和の穏",
+          "scoreBeatWithinVerse": 81.5,
+          "referenceSeconds": 182.59,
+          "predictedSeconds": 182.70970393345553,
+          "residualSeconds": -0.11970393345553276
+        },
+        {
+          "label": "もう少しあなたの子",
+          "scoreBeatWithinVerse": 90.25,
+          "referenceSeconds": 189.83,
+          "predictedSeconds": 189.56473001550825,
+          "residualSeconds": 0.2652699844917521
+        },
+        {
+          "label": "いさせてください",
+          "scoreBeatWithinVerse": 94.5,
+          "referenceSeconds": 194.19,
+          "predictedSeconds": 192.8943141125053,
+          "residualSeconds": 1.2956858874946988
+        }
+      ]
+    },
+    {
+      "reference": "netease-2706343626",
+      "verse": 1,
+      "calibration": "first nine line onsets only; subsequent onsets held out",
+      "offsetSeconds": 25.965532419286625,
+      "qpm": 76.71905493978831,
+      "points": [
+        {
+          "label": "淡紅の秋桜が秋の日",
+          "scoreBeatWithinVerse": 0,
+          "referenceSeconds": 25.886,
+          "predictedSeconds": 25.965532419286625,
+          "residualSeconds": -0.07953241928662536
+        },
+        {
+          "label": "何気ない陽溜りに揺",
+          "scoreBeatWithinVerse": 7.5,
+          "referenceSeconds": 31.827,
+          "predictedSeconds": 31.831089553080506,
+          "residualSeconds": -0.004089553080503627
+        },
+        {
+          "label": "此頃涙脆くなった母",
+          "scoreBeatWithinVerse": 15,
+          "referenceSeconds": 37.71,
+          "predictedSeconds": 37.69664668687439,
+          "residualSeconds": 0.013353313125614719
+        },
+        {
+          "label": "庭先でひとつ咳をす",
+          "scoreBeatWithinVerse": 23.5,
+          "referenceSeconds": 44.397,
+          "predictedSeconds": 44.34427810517412,
+          "residualSeconds": 0.05272189482587919
+        },
+        {
+          "label": "縁側でアルバムを開",
+          "scoreBeatWithinVerse": 32,
+          "referenceSeconds": 51.093,
+          "predictedSeconds": 50.99190952347385,
+          "residualSeconds": 0.10109047652615288
+        },
+        {
+          "label": "私の幼い日の思い出",
+          "scoreBeatWithinVerse": 39.5,
+          "referenceSeconds": 56.811,
+          "predictedSeconds": 56.857466657267736,
+          "residualSeconds": -0.04646665726773236
+        },
+        {
+          "label": "何度も同じ話くりか",
+          "scoreBeatWithinVerse": 47,
+          "referenceSeconds": 62.732,
+          "predictedSeconds": 62.723023791061614,
+          "residualSeconds": 0.008976208938385355
+        },
+        {
+          "label": "独言みたいに小さな",
+          "scoreBeatWithinVerse": 55.5,
+          "referenceSeconds": 69.392,
+          "predictedSeconds": 69.37065520936135,
+          "residualSeconds": 0.02134479063865058
+        },
+        {
+          "label": "こんな小春日和の穏",
+          "scoreBeatWithinVerse": 65.5,
+          "referenceSeconds": 77.124,
+          "predictedSeconds": 77.19139805441985,
+          "residualSeconds": -0.06739805441985425
+        },
+        {
+          "label": "あなたの優しさが浸",
+          "scoreBeatWithinVerse": 74.5,
+          "referenceSeconds": 84.114,
+          "predictedSeconds": 84.23006661497251,
+          "residualSeconds": -0.11606661497250315
+        },
+        {
+          "label": "明日嫁ぐ私に苦労は",
+          "scoreBeatWithinVerse": 81.5,
+          "referenceSeconds": 89.64,
+          "predictedSeconds": 89.70458660651346,
+          "residualSeconds": -0.06458660651346548
+        },
+        {
+          "label": "笑い話に時が変える",
+          "scoreBeatWithinVerse": 90.25,
+          "referenceSeconds": 96.668,
+          "predictedSeconds": 96.54773659593965,
+          "residualSeconds": 0.12026340406033853
+        },
+        {
+          "label": "心配いらないと笑っ",
+          "scoreBeatWithinVerse": 94.5,
+          "referenceSeconds": 99.77799999999999,
+          "predictedSeconds": 99.87155230508952,
+          "residualSeconds": -0.09355230508954548
+        }
+      ]
+    },
+    {
+      "reference": "netease-2706343626",
+      "verse": 2,
+      "calibration": "first nine line onsets only; subsequent onsets held out",
+      "offsetSeconds": 119.02342164810376,
+      "qpm": 76.33886974597388,
+      "points": [
+        {
+          "label": "あれこれと思い出を",
+          "scoreBeatWithinVerse": 0,
+          "referenceSeconds": 119.00999999999999,
+          "predictedSeconds": 119.02342164810376,
+          "residualSeconds": -0.013421648103772554
+        },
+        {
+          "label": "いつの日もひとりで",
+          "scoreBeatWithinVerse": 7.5,
+          "referenceSeconds": 124.915,
+          "predictedSeconds": 124.91819061046101,
+          "residualSeconds": -0.0031906104610106567
+        },
+        {
+          "label": "今更乍ら我儘な私に",
+          "scoreBeatWithinVerse": 15,
+          "referenceSeconds": 130.824,
+          "predictedSeconds": 130.81295957281827,
+          "residualSeconds": 0.011040427181741919
+        },
+        {
+          "label": "唇かんでいます",
+          "scoreBeatWithinVerse": 23.5,
+          "referenceSeconds": 137.507,
+          "predictedSeconds": 137.4936977301565,
+          "residualSeconds": 0.013302269843514125
+        },
+        {
+          "label": "明日への荷造りに手",
+          "scoreBeatWithinVerse": 32,
+          "referenceSeconds": 144.257,
+          "predictedSeconds": 144.17443588749472,
+          "residualSeconds": 0.08256411250529183
+        },
+        {
+          "label": "しばらくは楽し気に",
+          "scoreBeatWithinVerse": 39.5,
+          "referenceSeconds": 150.002,
+          "predictedSeconds": 150.06920484985196,
+          "residualSeconds": -0.06720484985195796
+        },
+        {
+          "label": "突然涙こぼし元気で",
+          "scoreBeatWithinVerse": 47,
+          "referenceSeconds": 155.9,
+          "predictedSeconds": 155.96397381220922,
+          "residualSeconds": -0.06397381220921261
+        },
+        {
+          "label": "何度も何度もくりか",
+          "scoreBeatWithinVerse": 55.5,
+          "referenceSeconds": 162.656,
+          "predictedSeconds": 162.64471196954744,
+          "residualSeconds": 0.01128803045256177
+        },
+        {
+          "label": "ありがとうの言葉を",
+          "scoreBeatWithinVerse": 65.5,
+          "referenceSeconds": 170.534,
+          "predictedSeconds": 170.50440391935712,
+          "residualSeconds": 0.029596080642875222
+        },
+        {
+          "label": "生きてみます私なり",
+          "scoreBeatWithinVerse": 74.75,
+          "referenceSeconds": 177.591,
+          "predictedSeconds": 177.77461897293105,
+          "residualSeconds": -0.18361897293105045
+        },
+        {
+          "label": "こんな小春日和の穏",
+          "scoreBeatWithinVerse": 81.5,
+          "referenceSeconds": 182.973,
+          "predictedSeconds": 183.0799110390526,
+          "residualSeconds": -0.10691103905257648
+        },
+        {
+          "label": "もう少しあなたの子",
+          "scoreBeatWithinVerse": 90.25,
+          "referenceSeconds": 190.055,
+          "predictedSeconds": 189.95714149513606,
+          "residualSeconds": 0.0978585048639502
+        },
+        {
+          "label": "いさせてください",
+          "scoreBeatWithinVerse": 94.5,
+          "referenceSeconds": 194.455,
+          "predictedSeconds": 193.29751057380514,
+          "residualSeconds": 1.1574894261948572
+        }
+      ]
+    },
+    {
+      "reference": "netease-669905",
+      "verse": 1,
+      "calibration": "first nine line onsets only; subsequent onsets held out",
+      "offsetSeconds": 25.705430001409837,
+      "qpm": 76.59592849030896,
+      "points": [
+        {
+          "label": "淡紅の秋桜が秋の日",
+          "scoreBeatWithinVerse": 0,
+          "referenceSeconds": 25.72,
+          "predictedSeconds": 25.705430001409837,
+          "residualSeconds": 0.014569998590161504
+        },
+        {
+          "label": "何気ない陽溜りに揺",
+          "scoreBeatWithinVerse": 7.5,
+          "referenceSeconds": 31.53,
+          "predictedSeconds": 31.580415903002958,
+          "residualSeconds": -0.05041590300295695
+        },
+        {
+          "label": "此頃涙脆くなった母",
+          "scoreBeatWithinVerse": 15,
+          "referenceSeconds": 37.48,
+          "predictedSeconds": 37.45540180459608,
+          "residualSeconds": 0.024598195403918055
+        },
+        {
+          "label": "庭先でひとつ咳をす",
+          "scoreBeatWithinVerse": 23.5,
+          "referenceSeconds": 44.12,
+          "predictedSeconds": 44.11371915973495,
+          "residualSeconds": 0.006280840265048937
+        },
+        {
+          "label": "縁側でアルバムを開",
+          "scoreBeatWithinVerse": 32,
+          "referenceSeconds": 50.81,
+          "predictedSeconds": 50.77203651487382,
+          "residualSeconds": 0.03796348512618408
+        },
+        {
+          "label": "私の幼い日の思い出",
+          "scoreBeatWithinVerse": 39.5,
+          "referenceSeconds": 56.6,
+          "predictedSeconds": 56.64702241646694,
+          "residualSeconds": -0.0470224164669375
+        },
+        {
+          "label": "何度も同じ話くりか",
+          "scoreBeatWithinVerse": 47,
+          "referenceSeconds": 62.55,
+          "predictedSeconds": 62.52200831806006,
+          "residualSeconds": 0.027991681939937507
+        },
+        {
+          "label": "独言みたいに小さな",
+          "scoreBeatWithinVerse": 55.5,
+          "referenceSeconds": 69.17,
+          "predictedSeconds": 69.18032567319892,
+          "residualSeconds": -0.010325673198927632
+        },
+        {
+          "label": "こんな小春日和の穏",
+          "scoreBeatWithinVerse": 65.5,
+          "referenceSeconds": 77.01,
+          "predictedSeconds": 77.01364020865643,
+          "residualSeconds": -0.0036402086564208957
+        },
+        {
+          "label": "あなたの優しさが浸",
+          "scoreBeatWithinVerse": 74.5,
+          "referenceSeconds": 83.7,
+          "predictedSeconds": 84.06362329056816,
+          "residualSeconds": -0.3636232905681638
+        },
+        {
+          "label": "明日嫁ぐ私に苦労は",
+          "scoreBeatWithinVerse": 81.5,
+          "referenceSeconds": 89.61,
+          "predictedSeconds": 89.54694346538841,
+          "residualSeconds": 0.063056534611583
+        },
+        {
+          "label": "笑い話に時が変える",
+          "scoreBeatWithinVerse": 90.25,
+          "referenceSeconds": 96.52000000000001,
+          "predictedSeconds": 96.40109368391371,
+          "residualSeconds": 0.11890631608629576
+        },
+        {
+          "label": "心配いらないと笑っ",
+          "scoreBeatWithinVerse": 94.5,
+          "referenceSeconds": 99.50999999999999,
+          "predictedSeconds": 99.73025236148315,
+          "residualSeconds": -0.22025236148316196
+        }
+      ]
+    },
+    {
+      "reference": "netease-669905",
+      "verse": 2,
+      "calibration": "first nine line onsets only; subsequent onsets held out",
+      "offsetSeconds": 118.81380262230368,
+      "qpm": 76.48148507570515,
+      "points": [
+        {
+          "label": "あれこれと思い出を",
+          "scoreBeatWithinVerse": 0,
+          "referenceSeconds": 118.77000000000001,
+          "predictedSeconds": 118.81380262230368,
+          "residualSeconds": -0.04380262230367293
+        },
+        {
+          "label": "いつの日もひとりで",
+          "scoreBeatWithinVerse": 7.5,
+          "referenceSeconds": 124.74,
+          "predictedSeconds": 124.69757958550684,
+          "residualSeconds": 0.042420414493155256
+        },
+        {
+          "label": "今更乍ら我儘な私に",
+          "scoreBeatWithinVerse": 15,
+          "referenceSeconds": 130.64,
+          "predictedSeconds": 130.58135654871,
+          "residualSeconds": 0.05864345128999027
+        },
+        {
+          "label": "唇かんでいます",
+          "scoreBeatWithinVerse": 23.5,
+          "referenceSeconds": 137.19,
+          "predictedSeconds": 137.24963710700692,
+          "residualSeconds": -0.059637107006910384
+        },
+        {
+          "label": "明日への荷造りに手",
+          "scoreBeatWithinVerse": 32,
+          "referenceSeconds": 143.95,
+          "predictedSeconds": 143.91791766530383,
+          "residualSeconds": 0.03208233469617028
+        },
+        {
+          "label": "しばらくは楽し気に",
+          "scoreBeatWithinVerse": 39.5,
+          "referenceSeconds": 149.73,
+          "predictedSeconds": 149.80169462850697,
+          "residualSeconds": -0.07169462850698594
+        },
+        {
+          "label": "突然涙こぼし元気で",
+          "scoreBeatWithinVerse": 47,
+          "referenceSeconds": 155.76,
+          "predictedSeconds": 155.68547159171013,
+          "residualSeconds": 0.07452840828985785
+        },
+        {
+          "label": "何度も何度もくりか",
+          "scoreBeatWithinVerse": 55.5,
+          "referenceSeconds": 162.29,
+          "predictedSeconds": 162.35375215000704,
+          "residualSeconds": -0.0637521500070477
+        },
+        {
+          "label": "ありがとうの言葉を",
+          "scoreBeatWithinVerse": 65.5,
+          "referenceSeconds": 170.23,
+          "predictedSeconds": 170.19878810094457,
+          "residualSeconds": 0.03121189905540689
+        },
+        {
+          "label": "生きてみます私なり",
+          "scoreBeatWithinVerse": 74.75,
+          "referenceSeconds": 177.25,
+          "predictedSeconds": 177.4554463555618,
+          "residualSeconds": -0.20544635556181134
+        },
+        {
+          "label": "こんな小春日和の穏",
+          "scoreBeatWithinVerse": 81.5,
+          "referenceSeconds": 182.44,
+          "predictedSeconds": 182.75084562244464,
+          "residualSeconds": -0.31084562244465275
+        },
+        {
+          "label": "もう少しあなたの子",
+          "scoreBeatWithinVerse": 90.25,
+          "referenceSeconds": 189.87,
+          "predictedSeconds": 189.61525207951502,
+          "residualSeconds": 0.25474792048500206
+        },
+        {
+          "label": "いさせてください",
+          "scoreBeatWithinVerse": 94.5,
+          "referenceSeconds": 194.24,
+          "predictedSeconds": 192.94939235866346,
+          "residualSeconds": 1.2906076413365497
+        }
+      ]
+    }
+  ],
+  "lastLineWordComparison": [
+    {
+      "text": "い",
+      "referenceSeconds": 194.18,
+      "referenceDurationSeconds": 0.18,
+      "scoreBeatWithinVerse": 94.5,
+      "predictedSeconds": 192.8943141125053,
+      "referenceToNextSeconds": 0.18000000000000682,
+      "scoreToNextSeconds": 0.39171577611728026
+    },
+    {
+      "text": "さ",
+      "referenceSeconds": 194.36,
+      "referenceDurationSeconds": 0.24,
+      "scoreBeatWithinVerse": 95,
+      "predictedSeconds": 193.28602988862258,
+      "referenceToNextSeconds": 0.23999999999998067,
+      "scoreToNextSeconds": 0.7834315522346174
+    },
+    {
+      "text": "せ",
+      "referenceSeconds": 194.6,
+      "referenceDurationSeconds": 0.25,
+      "scoreBeatWithinVerse": 96,
+      "predictedSeconds": 194.0694614408572,
+      "referenceToNextSeconds": 0.25,
+      "scoreToNextSeconds": 0.39171577611728026
+    },
+    {
+      "text": "て",
+      "referenceSeconds": 194.85,
+      "referenceDurationSeconds": 0.81,
+      "scoreBeatWithinVerse": 96.5,
+      "predictedSeconds": 194.46117721697448,
+      "referenceToNextSeconds": 0.8100000000000023,
+      "scoreToNextSeconds": 0.19585788805866855
+    },
+    {
+      "text": "く",
+      "referenceSeconds": 195.66,
+      "referenceDurationSeconds": 0.28,
+      "scoreBeatWithinVerse": 96.75,
+      "predictedSeconds": 194.65703510503315,
+      "referenceToNextSeconds": 0.28000000000000114,
+      "scoreToNextSeconds": 0.19585788805866855
+    },
+    {
+      "text": "だ",
+      "referenceSeconds": 195.94,
+      "referenceDurationSeconds": 0.16,
+      "scoreBeatWithinVerse": 97,
+      "predictedSeconds": 194.8528929930918,
+      "referenceToNextSeconds": 0.1599999999999966,
+      "scoreToNextSeconds": 0.7834315522345605
+    },
+    {
+      "text": "さ",
+      "referenceSeconds": 196.1,
+      "referenceDurationSeconds": 0.32,
+      "scoreBeatWithinVerse": 98,
+      "predictedSeconds": 195.63632454532637,
+      "referenceToNextSeconds": 0.3199999999999932,
+      "scoreToNextSeconds": 0.19585788805866855
+    },
+    {
+      "text": "い",
+      "referenceSeconds": 196.42,
+      "referenceDurationSeconds": 3.19,
+      "scoreBeatWithinVerse": 98.25,
+      "predictedSeconds": 195.83218243338504
+    }
+  ],
+  "limitations": [
+    "LRC/YRC may be edited or automatically aligned and are not independent ground truth.",
+    "YRC kanji units can contain several syllables and do not prove one syllable per event.",
+    "YRC third line starts at 36.00 seconds while ordinary LRC starts about 37.48 seconds; that YRC onset was not used as a calibration anchor.",
+    "No full-score verification or score correction claimed."
+  ]
+}
