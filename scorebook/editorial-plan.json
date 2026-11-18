@@ -170,6 +170,14 @@
       "reason": "三拍子、跨小节延音与临时变音"
     },
     {
+      "id": "moon_river",
+      "file": "moon_river_01.m3n",
+      "title": "月亮河",
+      "section": "advanced",
+      "group": "三拍子与抒情长句",
+      "reason": "三拍子、九度跳进、附点与跨小节延音"
+    },
+    {
       "id": "sound_of_silence",
       "file": "sound_of_silence_01.m3n",
       "title": "寂静之声",
@@ -192,6 +200,14 @@
       "section": "advanced",
       "group": "影视爱情主题",
       "reason": "小调、临时升音与切分"
+    },
+    {
+      "id": "autumn_leaves",
+      "file": "autumn_leaves_01.m3n",
+      "title": "枯叶",
+      "section": "advanced",
+      "group": "爵士旋律与变化音",
+      "reason": "三拍弱起、小调旋律、临时升音与跨小节延音"
     },
     {
       "id": "yong_yuan_tong_zai",
@@ -272,14 +288,6 @@
       "section": "classic",
       "group": "抒情入门",
       "reason": "附点与完整连奏乐句"
-    },
-    {
-      "id": "moon_river",
-      "file": "moon_river_01.m3n",
-      "title": "月亮河",
-      "section": "classic",
-      "group": "三拍子与抒情长句",
-      "reason": "三拍子、九度跳进、附点与跨小节延音"
     },
     {
       "id": "hong_mei_hua_er_kai",
@@ -504,14 +512,6 @@
       "section": "golden",
       "group": "三连音与进阶抒情",
       "reason": "十六分切分与跳房子"
-    },
-    {
-      "id": "autumn_leaves",
-      "file": "autumn_leaves_01.m3n",
-      "title": "枯叶",
-      "section": "golden",
-      "group": "爵士旋律与变化音",
-      "reason": "三拍弱起、小调旋律、临时升音与跨小节延音"
     },
     {
       "id": "fly_me_to_the_moon",
