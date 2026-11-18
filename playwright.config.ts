@@ -11,6 +11,7 @@ const browserName = process.env.M3N_E2E_BROWSER === 'webkit' ? 'webkit' : 'chrom
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
+  workers: 1,
   retries: 0,
   timeout: 45_000,
   use: {

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
 
-test('numbered display ignores old staff preference and plays without downloading application scripts', async ({ page, baseURL }) => {
+test('numbered display ignores old staff preference and loads only the selected score without external resources', async ({ page, baseURL }) => {
   const external: string[] = [], requests: string[] = []
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation','0'))
   await page.route('**/*', async route => {
@@ -24,7 +24,7 @@ test('numbered display ignores old staff preference and plays without downloadin
   await page.getByRole('button',{name:'播放',exact:true}).click()
   await page.getByRole('button',{name:'暂停',exact:true}).click()
   expect(external).toEqual([])
-  expect(requests.filter(path=>/assets\/[a-z_]+_01-[^/]+\.js$/.test(path))).toEqual(['/assets/huan_le_song_01-bhlngC7F.js'])
+  expect(requests.filter(path=>/assets\/[a-z_]+_01-[^/]+\.js$/.test(path))).toEqual([expect.stringMatching(/^\/assets\/huan_le_song_01-[^/]+\.js$/)])
   expect(requests.filter(path=>/\.wasm$/.test(path))).toHaveLength(0)
 })
 

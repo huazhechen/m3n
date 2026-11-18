@@ -89,7 +89,17 @@ test('touch document notes use half the shared scale between eighteen and twenty
   for (const [height] of [[900], [390], [744]]) {
     await page.setViewportSize({ width: 844, height: height! })
     await expect(svg).toBeVisible()
-    await expect.poll(() => svg.evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(300)
+    await expect.poll(() => svg.evaluate(element => {
+      const displayedWidth = element.getBoundingClientRect().width
+      if (displayedWidth <= 0) return Infinity
+      const targetSize = Math.min(48, Math.max(36, Math.min(innerWidth, innerHeight) / 16)) / 2
+      const article = element.closest('article')!
+      const style = getComputedStyle(article)
+      const columnWidth = article.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+      const expectedSize = displayedWidth / Math.max(320, Math.round(columnWidth * 22 / targetSize)) * 22
+      const actualSize = displayedWidth / Number(element.getAttribute('width')) * 22
+      return Math.abs(actualSize - expectedSize)
+    })).toBeLessThan(0.5)
   }
 })
 
