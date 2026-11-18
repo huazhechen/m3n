@@ -5,11 +5,11 @@ import { dirname, join, relative, resolve } from 'node:path'
 
 // Build workspace dependencies from the same sources as the tests. The editor
 // remains live; the manifest makes later changes explicit instead of mixing a
-// new native module with an old jpFun dist halfway through a long test run.
+// native module with stale dependency output halfway through a long test run.
 const root = resolve(import.meta.dirname, '..')
 const output = join(root, '.tmp/numbered-tests', `${new Date().toISOString().replaceAll(':', '-')}-${process.pid}`)
 const workspace = join(output, 'workspace')
-const packages = ['jpfun', 'notation', 'numbered-notation']
+const packages = ['notation', 'numbered-notation']
 const inputPaths = ['package.json', 'tsconfig.package.json', ...packages.map(pkg => `packages/${pkg}`), 'src/scores', 'src/examples']
 const files = process.argv.slice(2).map(argument => {
   if (!argument.startsWith('--file=') || !/^src\/[\w./-]+\.test\.ts$/.test(argument.slice(7)) || argument.includes('..')) {
@@ -63,7 +63,7 @@ try {
     if (!await run(`build-${pkg}`, process.execPath, [join(root, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.json'], join(workspace, 'packages', pkg))) {
       passed = false; break
     }
-    const entry = pkg === 'jpfun' ? 'core' : 'index'
+    const entry = 'index'
     for (const extension of ['js', 'd.ts']) if (!existsSync(join(workspace, 'packages', pkg, 'dist', `${entry}.${extension}`))) {
       throw new Error(`Fresh ${pkg} build did not emit ${entry}.${extension}; refusing workspace fallback`)
     }

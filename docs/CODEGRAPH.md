@@ -10,8 +10,7 @@ flowchart LR
   app["src<br/>React Web App"]
   renderer["@m3n/score-renderer<br/>render / playback / export"]
   notation["@m3n/notation<br/>syntax / domain / MEI"]
-  numbered["@m3n/numbered-notation<br/>semantic / interaction adapter"]
-  jpfun["@m3n/jpfun<br/>vendored engraving core"]
+  numbered["@m3n/numbered-notation<br/>native engraving / interaction"]
   scores["src/scores/*.m3n<br/>built-in score corpus"]
   docs["docs/*.md<br/>guide and manual"]
   worker["worker<br/>Cloudflare Worker"]
@@ -24,7 +23,6 @@ flowchart LR
   app --> renderer
   app --> numbered
   numbered --> notation
-  numbered --> jpfun
   renderer --> notation
   scores --> app
   docs --> app
@@ -32,7 +30,7 @@ flowchart LR
   worker --> assets
 ```
 
-允许的包依赖方向为 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / jpfun`。jpFun 不依赖 M3N 领域类型。`worker` 是独立部署入口，不依赖 React 或这些业务包。
+允许的包依赖方向为 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / txml`。旧jpFun源码和适配器已删除。`worker` 是独立部署入口，不依赖 React 或这些业务包。
 
 ## Web 应用
 
@@ -124,8 +122,8 @@ flowchart LR
 ```mermaid
 flowchart LR
   document["ScoreDocument"] --> adapter["numbered-notation projection"]
-  adapter --> jpfun["jpFun layout / paint"]
-  jpfun --> numberedSvg["interactive numbered SVG"]
+  adapter --> native["native layout / paint"]
+  native --> numberedSvg["interactive numbered SVG"]
   numberedSvg --> renderService["lib/render-score"]
   renderService --> screen
   renderService --> exporter
@@ -143,7 +141,7 @@ flowchart LR
   outlines --> vector
 ```
 
-简谱由独立加载的 jpFun 渲染，事件身份与 MEI 共享 `scoreEventIds`；播放使用项目内演奏编译器，不依赖 MEI 或 Verovio。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
+简谱由项目内自研引擎渲染，事件身份与 MEI 共享 `scoreEventIds`；播放使用项目内演奏编译器，不依赖 MEI 或 Verovio。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
 
 `lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，宽度切换保留播放状态。
 

@@ -22,7 +22,7 @@ try {
   writeFileSync(join(output, 'sources.json'), JSON.stringify(sources, null, 2))
   // Keep all packages from the same input revision while scores/code remain editable.
   const snapshotRoot = join(temp, 'workspace'), snapshotHashes = {}
-  for (const pkg of ['jpfun', 'notation', 'numbered-notation']) {
+  for (const pkg of ['notation', 'numbered-notation']) {
     const target = join(snapshotRoot, 'packages', pkg, 'src')
     mkdirSync(target, { recursive: true })
     cpSync(join(root, 'packages', pkg, 'src'), target, { recursive: true })
@@ -39,8 +39,6 @@ try {
   writeFileSync(entry, `export {auditNativeInkCollisions} from ${JSON.stringify(collisionModule)};\nexport {parseM3NDocument} from ${JSON.stringify(join(snapshotRoot, 'packages/notation/src/index.ts'))};\nexport {prepareNumberedNotationFonts} from ${JSON.stringify(join(snapshotRoot, 'packages/numbered-notation/src/index.ts'))};\nexport {NativeNumberedNotationScore} from ${JSON.stringify(join(snapshotRoot, 'packages/numbered-notation/src/native-score.ts'))};`)
   await build({ configFile: false, logLevel: 'error', resolve: { alias: [
     { find: '@m3n/notation', replacement: join(snapshotRoot, 'packages/notation/src/index.ts') },
-    { find: '@m3n/jpfun/music-brace', replacement: join(snapshotRoot, 'packages/jpfun/src/render/music-brace.ts') },
-    { find: /^@m3n\/jpfun$/, replacement: join(snapshotRoot, 'packages/jpfun/src/core.ts') },
     { find: 'txml/txml', replacement: join(root, 'node_modules/txml/dist/txml.mjs') },
     { find: 'txml', replacement: join(root, 'node_modules/txml/dist/index.mjs') },
   ] }, build: { outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false, lib: { entry, name: 'audit', formats: ['iife'], fileName: () => 'bundle.js' } } })

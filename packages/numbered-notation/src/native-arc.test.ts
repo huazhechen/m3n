@@ -1,4 +1,3 @@
-import { nativeStyle } from './native-style.js'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { nativeArcSlice } from './native-curve.js'

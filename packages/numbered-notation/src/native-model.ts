@@ -50,7 +50,7 @@ export function numberedPitch(token: string, shift = 0): NativePitch {
   return { degree: match?.[1] ?? '0', accidental: (match?.[2] ?? '').replaceAll('#', '♯').replaceAll('b', '♭').replaceAll('=', '♮'), octave: match?.[1] === '0' ? 0 : [...(match?.[3] ?? '')].reduce((value, char) => value + (char === 'e' ? 1 : -1), shift) }
 }
 
-/** Display-only jpFun-style pitch spelling, already resolved to an absolute or header pitch. */
+/** Display-only numbered pitch spelling, already resolved to an absolute or header pitch. */
 export function nativeDisplayPitch(spelling: string): NativePitch {
   const match = /^([#bn]*)([0-7])([',]*)$/.exec(spelling)
   if (!match) throw new Error(`无法显示简谱音高 ${spelling}`)

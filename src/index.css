@@ -926,7 +926,7 @@ textarea::selection {
   stroke: #d95f2a;
 }
 
-/* Preserve jpFun's open paths and stroke widths when recoloring symbols. */
+/* Preserve music glyph open paths and stroke widths when recoloring symbols. */
 .score-paper[data-notation="numbered"] :is(.is-playing, .is-cursor-active) text,
 .score-paper[data-notation="numbered"] text:is(.is-playing, .is-cursor-active) {
   stroke: none;

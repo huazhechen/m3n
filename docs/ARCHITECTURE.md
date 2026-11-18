@@ -35,11 +35,10 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation`（`@m3n/notation`）：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换；可独立生成 JavaScript 与类型声明。
 - `packages/score-renderer`（`@m3n/score-renderer`）：浏览器渲染、播放、导出与资源调度；只通过 `@m3n/notation` 的公共入口访问领域类型。
 - `packages/numbered-notation`：从领域文档完成自研测量、排版、分页、歌词遍次与交互SVG绘制。
-- `packages/jpfun`：保留的jpFun参考实现，仅用于开发期独立对照与回归，不进入正式显示运行链路。
 - `src`：React Web 应用、路由、曲库装载及分享服务；通过包名消费子包，不跨入其内部目录。
 - `worker`：部署边缘入口，不依赖 Web UI。
 
-包依赖为 `score-renderer -> notation`、`numbered-notation -> notation / txml`；jpFun为numbered-notation的开发依赖，供参考测试使用。根应用可以组合这些包，但子包不得反向导入根应用。每个包在自身 `package.json` 中声明运行依赖，并提供独立的 `build`、`test`、`typecheck` 命令；根脚本显式按依赖顺序执行。
+包依赖为 `score-renderer -> notation`、`numbered-notation -> notation / txml`。根应用可以组合这些包，但子包不得反向导入根应用。每个包在自身 `package.json` 中声明运行依赖，并提供独立的 `build`、`test`、`typecheck` 命令；根脚本显式按依赖顺序执行。
 
 ## 内部职责
 
@@ -55,7 +54,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
 - `packages/notation/src/m3n-validate.ts`：语义校验，只依赖最小语法内核。
 - `packages/score-renderer/src`：自研 MIDI 写入、时间索引、音频播放和导出文档。
-- `packages/numbered-notation/src`：`ScoreDocument` 的自研投影、横纵布局、实绘测量、分页与SVG交互；公共入口导出`native-score.ts`。旧`score.ts`／`projection.ts`／`svg.ts`仅作独立参考。
+- `packages/numbered-notation/src`：`ScoreDocument` 的自研投影、横纵布局、实绘测量、分页与SVG交互；公共入口导出`native-score.ts`。旧引擎、适配器及跨引擎对照工具已删除。
 - `packages/notation/src/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
 - `packages/notation/src/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
 - `packages/notation/src/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
@@ -99,7 +98,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 口琴文件为 47,932 字节，包含 8 个采样。原始映射只覆盖到 MIDI 96；提取时将最高采样的音区延伸到 MIDI 127，避免高音或移调后无声。常用音区的采样映射不变。
 
-生产资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。演奏编译和 MIDI 写入为项目内 TypeScript 实现，不加载 Verovio 或音乐引擎 WASM。简谱继续使用 jpFun，候选自研排版未通过全曲库视觉一致性验收，不进入应用或导出入口；差异审计见 [自研引擎](NATIVE_ENGINES.md)。字体、音源和 AudioWorklet 来自本站构建产物。
+生产资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。演奏编译和 MIDI 写入为项目内 TypeScript 实现，不加载 Verovio 或音乐引擎 WASM。简谱采用项目内自研排版，旧引擎和依赖已删除；验收及移除记录见[自研入口](NATIVE_ACTIVATION.md)与[旧引擎清理](JPFUN_REMOVAL.md)。字体、音源和 AudioWorklet 来自本站构建产物。
 
 `ScoreRenderer` 在编辑或布局参数变化时更新简谱排版。播放实例按需加载并独立销毁。
 

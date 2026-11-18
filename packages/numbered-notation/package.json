@@ -22,7 +22,6 @@
     "txml": "^6.0.0"
   },
   "devDependencies": {
-    "@m3n/jpfun": "*",
     "typescript": "~6.0.2",
     "vitest": "^4.1.10"
   }

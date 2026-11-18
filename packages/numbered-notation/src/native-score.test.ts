@@ -247,7 +247,7 @@ it('uses minimum 0.4 and natural 0.6 clearances without changing score content',
 
 it('keeps four verses and three compact chorus passes in Tomorrow Will Be Better', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/ming_tian_hui_geng_hao_01.m3n'), 'utf8')
-    const { document, root, score } = render(source, { width: 786, pageMargin: 8, systemGap: 18, showCredits: false, uniformSystemHeight: true })
+    const { document, root, score } = render(source, { width: 786, pageMargin: 8, systemGap: 18, uniformSystemHeight: true })
     const measures = [...document.parts.values()][0]!.melody.filter(measure => measure.events.length)
     const passes = measurePlaybackPasses(measures)
     expect([...passes.get(measures[0]!)!]).toEqual([1, 2, 3, 4])

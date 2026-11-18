@@ -20,7 +20,7 @@ describe('painted control footprints', () => {
   it.each([new DefaultTextMeasurer(), measured])('caches the final drawing for all control kinds', measurer => {
     const controls = [measureNativeControl('meter', '12/8', measurer),
       measureNativeControl('key', '1=F#', measurer), measureNativeControl('section', 'AB', measurer),
-      measureNativeControl('passes', '2.3.', measurer), measureNativeControl('segno', '𝄋', measurer),
+      measureNativeControl('segno', '𝄋', measurer),
       ...[1, 2, 4, 8, 16].map(unit => measureNativeTempo({ unit, bpm: 96 }, measurer))]
     const painter = new NativeSymbols(measurer)
     for (const control of controls) {

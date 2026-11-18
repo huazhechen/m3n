@@ -14,11 +14,8 @@ try {
   writeFileSync(entry, [
     `export {formatM3N,parseM3NDocument,normalizeSectionBarlines} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
     `export {NumberedNotationScore,prepareNumberedNotationFonts} from ${JSON.stringify(join(root, 'packages/numbered-notation/src/index.ts'))};`,
-    `export {NativeNumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/src/native-score.ts'))};`,
   ].join('\n'))
   await build({ configFile: false, logLevel: 'error', resolve: { alias: [
-    { find: '@m3n/jpfun/music-brace', replacement: join(root, 'packages/jpfun/src/render/music-brace.ts') },
-    { find: /^@m3n\/jpfun$/, replacement: join(root, 'packages/jpfun/src/core.ts') },
     { find: '@m3n/notation', replacement: join(root, 'packages/notation/src/index.ts') },
     { find: 'txml/txml', replacement: join(root, 'node_modules/txml/dist/txml.mjs') },
     { find: 'txml', replacement: join(root, 'node_modules/txml/dist/index.mjs') },
@@ -48,7 +45,7 @@ try {
       const formatted = formatAudit.formatM3N(source)
       const before = formatAudit.parseM3NDocument(formatAudit.normalizeSectionBarlines(source)), after = formatAudit.parseM3NDocument(formatted)
       const failures = []
-      for (const name of ['NumberedNotationScore', 'NativeNumberedNotationScore']) {
+      for (const name of ['NumberedNotationScore']) {
         for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {
           const options = { width, paged }
           const original = formatAudit[name].create(before).render(options)
@@ -63,7 +60,7 @@ try {
       }
       return failures
     }, { source })
-    checks += 16
+    checks += 8
     console.log(`${file}: ${result.length ? `${result.length} differences` : 'identical'}`)
     failures.push(...result.map(item => ({ file, ...item })))
   }
