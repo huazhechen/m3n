@@ -33,7 +33,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
         const original = [...document.querySelectorAll('#scratch > svg')].map(svg => svg.outerHTML)
         const doc = api.parseM3NDocument(source)
         const directHost = document.createElement('div')
-        directHost.innerHTML = api.NumberedNotationScore.create(doc).render({ width, paged: true, pageMargin: 11 }).join('')
+        directHost.innerHTML = api.NumberedNotationScore.create(doc).render({ width, paged: true, pageMargin: 0 }).join('')
         const direct = [...directHost.querySelectorAll(':scope > svg')].map(svg => svg.outerHTML)
         const ids = api.scoreEventIds(doc)
         const bassIds = [...doc.parts.values()].flatMap(part => part.bass.flatMap(measure => measure.events.map(event => ids.get(event))))
@@ -56,7 +56,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
         const image = await api.renderScoreCanvas(framed, framed.viewBox.baseVal.width, 2)
         const imageInfo = { width: framed.viewBox.baseVal.width, height: framed.viewBox.baseVal.height, x: Number(framed.querySelector('svg').getAttribute('x')), y: Number(framed.querySelector('svg').getAttribute('y')), pngWidth: image.width, whiteCorner: [...image.getContext('2d').getImageData(0, 0, 1, 1).data], unchanged: JSON.stringify(webPages) === JSON.stringify([...web.querySelectorAll(':scope > svg')].map(svg => svg.outerHTML)) }
         const compact = api.compactPage(`<svg xmlns="http://www.w3.org/2000/svg" width="793.7007874" height="1122.519685" viewBox="0 0 793.7007874 1122.519685">${a4[0].markup}</svg>`)
-        return { layout, imageInfo, halfEmMargin: JSON.stringify(original) === JSON.stringify(direct), equalMeasures: doc.equalMeasures, identical: JSON.stringify(original) === JSON.stringify(webPages), unchanged: JSON.stringify(restored) === JSON.stringify(originalXml),
+        return { layout, imageInfo, sharedMargin: JSON.stringify(original) === JSON.stringify(direct), equalMeasures: doc.equalMeasures, identical: JSON.stringify(original) === JSON.stringify(webPages), unchanged: JSON.stringify(restored) === JSON.stringify(originalXml),
           placements: a4.map(page => page.placement), credits: web.textContent.includes('测试作者'),
           bass: bassIds.length > 0 && bassIds.every(id => web.querySelector(`[data-m3n-id="${id}"]`)),
           alternatives: web.querySelectorAll('[data-m3n-id^="m3n-e-a"]').length,
@@ -73,7 +73,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       assert(result.credits)
       assert(result.bass, 'All bass events must remain visible')
       assert(result.equalMeasures, 'Equal measures must come from source syntax')
-      assert(result.halfEmMargin, 'The shared renderer must use half-em page margins')
+      assert(result.sharedMargin, 'The shared renderer must use zero page margins')
       assert(result.alternatives > 0)
       assert.deepEqual(result.layout.outside, [])
       assert.deepEqual(result.layout.overlaps, [])

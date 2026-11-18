@@ -21,7 +21,7 @@ describe('visible row-end measure numbers', () => {
         expect([...root.querySelectorAll('[data-m3n-role="measure-number"]')].map(node => node.textContent)).toEqual(['2']);
         expect(hiddenMeasurements).toBe(0);
     });
-    it.each(settings)('centers the whole two-digit number on its visible bar at $width, paged=$paged', options => {
+    it.each(settings)('right-aligns the whole two-digit number to its visible bar at $width, paged=$paged', options => {
         const textMeasurer = new DefaultTextMeasurer();
         const source = '{4/4}\nN: ' + Array(12).fill('1 2 3 4 |').join(' ');
         const pages = NumberedNotationScore.create(parseM3NDocument(source)).render({ ...options, pageMargin: 11, textMeasurer, measureNumbers: true });
@@ -31,6 +31,6 @@ describe('visible row-end measure numbers', () => {
         const bar = [...label.closest('g.system')!.querySelectorAll('g.measure')].at(-1)!.querySelector('[data-m3n-role="bar"] rect')!;
         expect(bar).not.toBeNull();
         const ink = nativeSvgInk(label.outerHTML, textMeasurer);
-        expect((ink.left + ink.right) / 2).toBeCloseTo(Number(bar.getAttribute('x')) + Number(bar.getAttribute('width')) / 2, 4);
+        expect(ink.right).toBeCloseTo(Number(bar.getAttribute('x')) + Number(bar.getAttribute('width')) / 2, 4);
     });
 });

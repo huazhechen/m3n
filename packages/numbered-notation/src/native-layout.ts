@@ -244,7 +244,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
     relationBounds.set(system, regions)
   }
-  for (const system of systems) placeNativeBarLabels(system, relationBounds.get(system)!, measurer, Boolean(options.measureNumbers))
+  for (const system of systems) placeNativeBarLabels(system, relationBounds.get(system)!, measurer, Boolean(options.measureNumbers), options.width)
   // Populate peers before measuring any relation; adjacent groups share height.
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)

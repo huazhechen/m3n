@@ -28,7 +28,7 @@ describe('measured bar obstacles', () => {
     const closing = nativeMeasureBarPositions(system.measures, 1).at(-1)!
     const first = system.decorationLayout!.find(label => label.svg.includes('>2</text>'))!
     const ink = nativeSvgInk(first.svg, measurer)
-    expect((ink.left + ink.right) / 2).toBeCloseTo(closing.x, 4)
+    expect(ink.right).toBeCloseTo(closing.x, 4)
     expect(system.decorationLayout!.filter(label => label.svg.includes('data-m3n-role="measure-number"'))).toHaveLength(1)
   })
   it('clears measured bar-label ink with the arc ribbon instead of drawing through the number', () => {
