@@ -54,7 +54,7 @@ it('checks the new dotted and syncopated rhythms and removes old-image ornaments
     ['(3 5 3) {lg}((2 1)){/}', [.5, .5, .5, .25, .25]],
     ['(6 5) ((5) 5 (3))', [.5, .5, .25, .5, .25]],
     ['((6) 5 (4)) (5 4)', [.25, .5, .25, .5, .5]],
-    ['((7d) 7d (7d~)) ((7d) 7d (6d))', [.25, .5, .25, .25, .5, .25]],
+    ['((7d) 7d (7d) (7d) 1 (6d))', [.25, .5, .25, .25, .5, .25]],
   ] as const
   for (const [phrase, beats] of patterns) {
     const offset = source.indexOf(phrase)
@@ -100,16 +100,21 @@ it('keeps both lyric verses aligned, including the shared rhythms and corrected 
   expect(lyrics.join('')).toContain('睡美人逃避了生活的煎熬小人鱼把阳光抹成眼影投进泡沫的怀抱')
   expect(lyrics.join('').match(/幸福结局的时刻/g)).toHaveLength(2)
   // Preserve the original one-beat ending plus the next one-beat pickup.
-  const ending = written.find(bar => bar.events.map(event => event.pitches.join()).join(' ') === '6d 7d' && bar.events.every(event => event.beats === .5))
+  const ending = written.find(bar => bar.events.length === 1 && bar.events[0]!.pitches[0] === '7d' && bar.events[0]!.beats === 1)
   expect(ending).toBeDefined()
-  expect(tokens(performed)).toHaveLength(504)
+  expect(tokens(performed)).toHaveLength(502)
   expect(performed.reduce((sum, bar) => sum + bar.events.reduce((sum, event) => sum + event.beats, 0), 0)).toBe(210)
 })
 
-it('uses the image ending pitches and coda figure within the original short coda', () => {
-  const ending = written.find(bar => bar.events.map(event => event.pitches.join()).join(' ') === '7d 7d 7d 7d 7d 6d')
+it('uses the requested ending pitches and lyric alignment within the original short coda', () => {
+  const ending = written.find(bar => bar.events.map(event => event.pitches.join()).join(' ') === '7d 7d 7d 7d 1 6d')
   expect(ending).toBeDefined()
-  expect(ending!.events.map(event => event.tie ?? false)).toEqual([false, false, true, false, false, false])
+  expect(ending!.events.map(event => event.tie ?? false)).toEqual([false, false, false, false, false, false])
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  expect(ending!.events.map(event => lyricsByEvent.get(event)?.find(lyric => lyric.kind === 'text')?.text)).toEqual(['幸', '福', '结', '局', '的', '时'])
+  const next = written[written.indexOf(ending!) + 1]!
+  expect(next.events.map(event => [event.pitches, event.beats])).toEqual([[['7d'], 1]])
+  expect(lyricsByEvent.get(next.events[0]!)?.find(lyric => lyric.kind === 'text')?.text).toBe('刻')
   const figures = performed.filter(bar => bar.events.map(event => event.pitches.join()).join(' ') === '6 5 3 5 3 2 3 5')
   expect(figures).toHaveLength(2)
   for (const bar of figures) expect(bar.events.map(event => event.beats)).toEqual(Array(8).fill(.25))
