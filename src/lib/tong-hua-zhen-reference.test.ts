@@ -50,7 +50,7 @@ it('plays the introduction repeated 6s as sustains, with the extra opening rest 
 
 it('checks the new dotted and syncopated rhythms and removes old-image ornaments', () => {
   const patterns = [
-    ['3 ((0 3) 5)', [1, .25, .25, .5]],
+    ['3 (0 (3 5))', [1, .5, .25, .25]],
     ['(5 3) (0 (3 3))', [.5, .5, .5, .25, .25]],
     ['(3 5 3) {lg}((2 1)){/}', [.5, .5, .5, .25, .25]],
     ['(6 5) ((5) 5 (3))', [.5, .5, .25, .5, .25]],
