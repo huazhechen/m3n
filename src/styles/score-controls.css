@@ -77,3 +77,10 @@ body:has(> .floating-controls) main { padding-bottom: calc(var(--ui-controls-res
 .fifths-key[aria-disabled="true"] { cursor: default; opacity: .5; }
 .fifths-original-outline { fill: none; stroke: #244e50; stroke-width: 3.5; pointer-events: none; }
 .transpose-dialog button:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
+
+.playback-loading-dialog { width: min(28em, calc(100vw - var(--ui-space) * 4)); box-sizing: border-box; padding: calc(var(--ui-space) * 3); border: 1px solid #d3dfd9; border-radius: 14px; color: #244e50; background: #f8faf7; box-shadow: 0 12px 48px rgb(0 0 0 / 18%); }
+.playback-loading-dialog::backdrop { background: rgb(0 0 0 / 35%); }
+.playback-loading-dialog h2 { margin: 0; font-size: 1.25em; }
+.playback-loading-dialog p { margin: 1em 0; }
+.playback-loading-dialog progress { display: block; width: 100%; height: 1em; accent-color: #176e6e; }
+.playback-loading-dialog button { display: block; margin: 1.5em 0 0 auto; }

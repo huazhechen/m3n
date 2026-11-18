@@ -134,3 +134,37 @@ test('transpose and delayed tone downloads keep the same audio clock playing', a
   expect(await page.evaluate(() => (window as Window & { playbackAudit?: object }).playbackAudit)).toEqual({ created: 1, closed: 0 })
   await pause.click()
 })
+
+
+test('cold playback shows a modal progress bar until audio modules are ready', async ({ page }) => {
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  await page.route('**/*spessa-player-*.js', async route => { await gate; await route.continue() })
+  await page.goto('/scores/huan_le_song_01')
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: '准备播放', exact: true })
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toHaveJSProperty('open', true)
+  await expect(dialog.getByRole('progressbar', { name: '播放准备进度' })).not.toHaveAttribute('value')
+  release()
+  await expect(dialog).toHaveCount(0, { timeout: 30_000 })
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled()
+})
+
+test('piano selection shows a modal download progress bar and closes when ready', async ({ page }, info) => {
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  await page.route('**/*Piano-*.sf3', async route => { await gate; await route.continue() })
+  await page.goto('/scores/huan_le_song_01')
+  await openScoreSettings(page)
+  await page.getByRole('switch', { name: '钢琴音色' }).click()
+  const dialog = page.getByRole('dialog', { name: '加载钢琴音色', exact: true })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('progressbar', { name: '音色下载进度' })).toBeVisible()
+  await expect(dialog.getByRole('status')).toContainText('正在下载钢琴音色')
+  await dialog.screenshot({ path: info.outputPath('piano-loading-dialog.png') })
+  release()
+  await expect(dialog).toHaveCount(0)
+  await openScoreSettings(page)
+  await expect(page.getByRole('switch', { name: '钢琴音色' })).toBeChecked()
+})

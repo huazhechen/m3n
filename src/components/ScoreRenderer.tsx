@@ -1,7 +1,8 @@
 import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
-import { loadSampledTone } from '@m3n/score-renderer/tones'
+import { PlaybackLoadingDialog } from './PlaybackLoadingDialog'
+import { loadSampledTone, subscribeToneDownloadProgress, type ToneDownloadProgress } from '@m3n/score-renderer/tones'
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -187,6 +188,8 @@ export function ScoreRenderer({
   const toneRef = useRef(playbackTone)
   toneRef.current = playbackTone
   const [toneLoading, setToneLoading] = useState(playbackTone !== 'synth')
+  const [toneDownload, setToneDownload] = useState<ToneDownloadProgress>({ loaded: 0, total: null })
+  useEffect(() => subscribeToneDownloadProgress(setToneDownload), [])
   const [toneError, setToneError] = useState('')
   const [toneRetry, setToneRetry] = useState(0)
   const [playbackProgress, setPlaybackProgress] = useState(0)
@@ -442,8 +445,9 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const player = playerRef.current
+        if (playbackTone !== 'synth') await loadSampledTone(playbackTone)
+        if (cancelled) return
         if (player) await player.setTone(playbackTone)
-        else if (playbackTone !== 'synth') await loadSampledTone(playbackTone)
         if (!cancelled) setToneLoading(false)
       } catch (error) {
         if (!cancelled) {
@@ -543,6 +547,10 @@ export function ScoreRenderer({
 
   return (
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
+      {(isPlayerLoading || toneLoading) && <PlaybackLoadingDialog
+        downloading={toneLoading}
+        progress={toneDownload}
+      />}
       {hasAudioControls && <ScoreControls
         playbackOnly={playbackOnly}
         contained={containedControls}

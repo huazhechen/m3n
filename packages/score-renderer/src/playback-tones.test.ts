@@ -77,3 +77,23 @@ test('plays with memory caching when browser storage is unavailable or full', as
   const { loadSampledTone: loadWithoutStorage } = await import('./playback-tones')
   await expect(loadWithoutStorage('piano')).resolves.toBeInstanceOf(ArrayBuffer)
 })
+
+test('reports received bytes to subscribers throughout a streamed download', async () => {
+  setupCache()
+  let controller!: ReadableStreamDefaultController<Uint8Array>
+  const stream = new ReadableStream<Uint8Array>({ start(value) { controller = value } })
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(stream, {
+    headers: { 'Content-Length': String(valid.byteLength) },
+  })))
+  const { loadSampledTone, subscribeToneDownloadProgress } = await import('./playback-tones')
+  const updates: { loaded: number; total: number | null }[] = []
+  const unsubscribe = subscribeToneDownloadProgress(value => updates.push(value))
+  const request = loadSampledTone('piano')
+  controller.enqueue(valid.slice(0, 12))
+  await vi.waitFor(() => expect(updates).toContainEqual({ loaded: 12, total: valid.byteLength }))
+  controller.enqueue(valid.slice(12))
+  controller.close()
+  await request
+  expect(updates.at(-1)).toEqual({ loaded: valid.byteLength, total: valid.byteLength })
+  unsubscribe()
+})

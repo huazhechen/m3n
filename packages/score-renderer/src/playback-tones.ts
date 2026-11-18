@@ -14,6 +14,21 @@ export function isPlaybackTone(value: unknown): value is PlaybackTone {
 
 const urls = { piano: pianoUrl }
 const pending = new Map<SampledTone, Promise<ArrayBuffer>>()
+export type ToneDownloadProgress = { loaded: number; total: number | null }
+const progressListeners = new Set<(progress: ToneDownloadProgress) => void>()
+let downloadProgress: ToneDownloadProgress = { loaded: 0, total: null }
+
+export function subscribeToneDownloadProgress(listener: (progress: ToneDownloadProgress) => void) {
+  progressListeners.add(listener)
+  listener(downloadProgress)
+  return () => { progressListeners.delete(listener) }
+}
+
+function reportProgress(loaded: number, total: number | null) {
+  downloadProgress = { loaded, total }
+  progressListeners.forEach(listener => listener(downloadProgress))
+}
+
 const CACHE_NAME = 'm3n-soundfonts-v1'
 
 function validateSoundFont(data: ArrayBuffer) {
@@ -26,13 +41,18 @@ function validateSoundFont(data: ArrayBuffer) {
 }
 
 async function download(tone: SampledTone) {
+  reportProgress(0, null)
   const url = urls[tone]
   let cache: Cache | undefined
   try {
     cache = await globalThis.caches?.open(CACHE_NAME)
     const cached = await cache?.match(url)
     if (cached) {
-      try { return validateSoundFont(await cached.arrayBuffer()) } catch { await cache?.delete(url) }
+      try {
+        const data = validateSoundFont(await cached.arrayBuffer())
+        reportProgress(data.byteLength, data.byteLength)
+        return data
+      } catch { await cache?.delete(url) }
     }
   } catch {
     // Private browsing or exhausted storage must not prevent playback.
@@ -42,7 +62,30 @@ async function download(tone: SampledTone) {
   let response: Response
   try { response = await fetch(url) } catch { throw new Error(failure) }
   if (!response.ok) throw new Error(failure)
-  const data = validateSoundFont(await response.arrayBuffer())
+  const length = Number(response.headers.get('Content-Length'))
+  const total = Number.isFinite(length) && length > 0 ? length : null
+  reportProgress(0, total)
+  let buffer: ArrayBuffer
+  try {
+    if (response.body) {
+      const reader = response.body.getReader()
+      const chunks: Uint8Array[] = []
+      let loaded = 0
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        chunks.push(value)
+        loaded += value.byteLength
+        reportProgress(loaded, total)
+      }
+      const bytes = new Uint8Array(loaded)
+      let offset = 0
+      for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength }
+      buffer = bytes.buffer
+    } else buffer = await response.arrayBuffer()
+  } catch { throw new Error(failure) }
+  const data = validateSoundFont(buffer)
+  reportProgress(data.byteLength, data.byteLength)
   try { await cache?.put(url, new Response(data, { headers: { 'Content-Type': 'application/octet-stream' } })) } catch {
     // Keep the in-memory copy when persistent caching is unavailable.
   }
