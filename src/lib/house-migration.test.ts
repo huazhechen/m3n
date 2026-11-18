@@ -25,9 +25,9 @@ const cases = [
   },
   {
     "file": "feng_01.m3n",
-    "music": "a662e55ba5dbaab3c29c3b229e4d3db7fe1839dafa0f4a9bf30e44d1cfddecfa",
-    "lyrics": "bd942eba5e3e8d377c0cf9de4d95e3d6a1488a450a1cdc42852e8d51a75228e0",
-    "events": 517,
+    "music": "d091634778a6e230f4f3163c7d0b763c5bf2ab53f3e5c49f862878bd8eff878e",
+    "lyrics": "e4b769544da6a374e27b3e6d8cdaa49d06d0e657e18dd84d20d7b751572df5ce",
+    "events": 512,
     "syllables": 397
   },
   {

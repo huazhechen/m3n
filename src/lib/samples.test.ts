@@ -126,12 +126,14 @@ describe('bundled score corpus', () => {
     [211, { pitch: 77, beats: 0.5, tie: true }], [212, { pitch: 77, beats: 0.5, tie: false }],
     [219, { pitch: 81, beats: 1, tie: false }], [220, null],
     [253, { pitch: 74, beats: 0.75, tie: false }], [254, null],
+    [256, { pitch: 72, beats: 4, tie: false }], [257, null], [258, null], [259, null],
     [301, { pitch: 73, beats: 1, tie: false }], [302, null],
     [360, { pitch: 78, beats: 0.5, tie: true }], [361, { pitch: 78, beats: 0.5, tie: false }],
     [368, { pitch: 82, beats: 1, tie: false }], [369, null],
     [427, { pitch: 78, beats: 0.5, tie: true }], [428, { pitch: 78, beats: 0.5, tie: false }],
     [435, { pitch: 82, beats: 1, tie: false }], [436, null],
     [472, { pitch: 75, beats: 0.75, tie: false }], [473, null],
+    [475, { pitch: 73, beats: 4, tie: false }], [476, null], [477, null], [478, null],
   ])
   it.each(webReferences)('matches the reference playback itinerary for $id',reference=>{
     const indexes=reference.playbackEventIndexes.filter(index=>reference.id!=='feng' || index!==5)
@@ -139,6 +141,7 @@ describe('bundled score corpus', () => {
       ? reference.events.flatMap((event,index)=>event.bar<=35 ? [index] : [])
       : indexes
     const expected=selectedIndexes.flatMap(index=>{
+      if(reference.id==='feng' && index===467) return [{pitch:78,beats:0.25,tie:false},{pitch:78,beats:0.25,tie:true}]
       if(reference.id==='feng' && index===25) return [{pitch:null,beats:0.25,tie:false},{pitch:76,beats:0.25,tie:false}]
       if(reference.id==='feng' && index===26) return [{pitch:74,beats:0.25,tie:false}]
       if(reference.id==='feng' && mapleSlides.has(index)) return mapleSlides.get(index) ? [mapleSlides.get(index)!] : []
