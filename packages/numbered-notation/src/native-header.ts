@@ -16,7 +16,7 @@ export type NativeOrderItem = { text: string; framed: boolean; x: number; y: num
 export { wrapNativeText }
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, systemGap = nativeStyle.systemGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;noteGapEm?:number} = {}) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeStyle.minimumCoreGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGapEm?:number} = {}) {
   const available = width - 2 * margin
   const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, measurer, 700)
   const headerContent = numberedHeaderContent(document)
@@ -67,9 +67,9 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const lowInk = nativeSvgInk(low,measurer), highInk = nativeSvgInk(high,measurer)
     const separatorMetrics = measurer.measureText('~', { fontSize: size, fontFamily: 'M3N Numbers' })
     // Display-only notes reserve the measured numeral body, including its
-    // advance bearings; zero-duration cells use the natural spring clearance.
+    // advance bearings; zero-duration cells use the minimum clearance.
     const zero = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' })
-    const gap = nativeStyle.music * (options.noteGapEm ?? 0.5) * 0.1
+    const gap = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) * 0.1
     const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,'M3N Numbers')
     const place = (svg:string,x:number,role?:string) => `<g${role ? ` data-m3n-role="pitch-range-${role}"` : ''} transform="translate(${n(x)} 0)">${svg}</g>`
     let rangeSvg = ''
@@ -116,7 +116,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     ])]
     const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: nativeStyle.text, fontFamily: 'serif', fontWeight: item.framed ? 700 : 400 }) }))
     const height = Math.max(...measured.map(item => item.metrics.h + (item.framed ? nativeStyle.text * (7 / 16) : 0)))
-    const top = orderBottom + systemGap
+    const top = orderBottom + minimumCoreGap
     let x = margin
     const items = measured.map(item => {
       const padding = item.framed ? nativeStyle.text * (3.5 / 16) : 0, itemHeight = item.metrics.h + padding * 2
@@ -148,5 +148,5 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     blocks.push({height:row.height,svg:`<g transform="translate(0 ${n(-row.top)})">${rowSvg}</g>`})
   }
   return { svg, blocks, title, subtitle, titleTop: margin, subtitleTop, signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
-    orderRows, height: sideTop - margin + sidesHeight + systemGap + orderHeight }
+    orderRows, height: sideTop - margin + sidesHeight + minimumCoreGap + orderHeight }
 }

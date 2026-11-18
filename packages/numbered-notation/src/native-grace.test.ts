@@ -16,7 +16,7 @@ const unusual: TextMeasurer = { measureText(text, style) {
   const overhang = style.fontSize * 0.15
   return {w: advance + overhang, h:style.fontSize * 1.1, baseline:style.fontSize * 0.85, advance, inkLeft:-overhang, inkRight:advance, centerOffset:-overhang / 2}
 } }
-const layout = (music: string, textMeasurer: TextMeasurer = normal, width = 800, noteGapEm?: number) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`),{width,paged:false,textMeasurer,noteGapEm})
+const layout = (music: string, textMeasurer: TextMeasurer = normal, width = 800, minimumNoteGapEm?: number) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`),{width,paged:false,textMeasurer,minimumNoteGapEm})
 
 describe('measured native grace blocks', () => {
   it('uses the ordinary font-relative beam stroke and reserves both round caps', () => {

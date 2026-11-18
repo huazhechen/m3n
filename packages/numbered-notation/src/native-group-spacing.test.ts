@@ -1,10 +1,10 @@
 import { parseM3NDocument } from '@m3n/notation'
 import { describe, expect, it } from 'vitest'
-import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
+import { measureNativeHorizontal, nativeBarMetrics, placeNativeHorizontal } from './native-horizontal.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { projectNativeScore } from './native-model.js'
 
-const options = { noteGapEm: .6, minimumNoteGapEm: .4, minimumNoteGapFloorEm: 0, pairedSpacing: true }
+const options = { minimumNoteGapEm: .4, minimumNoteGapFloorEm: 0}
 const project = (notes: string) => {
   const result = projectNativeScore(parseM3NDocument(`{4/4}\nN: ${notes} |||`), { textMeasurer: new DefaultTextMeasurer() })
   return { ...result.measures[0]!, lastFragment: false }
@@ -39,5 +39,47 @@ describe('absolute group boundary clearance', () => {
     }
     const small = gaps(500), large = gaps(700)
     expect((large[0]! - small[0]!) / (large[1]! - small[1]!)).toBeCloseTo(.5, 8)
+  })
+
+  it('allocates surplus using square-root durations even when attack minima are equal', () => {
+    const measure = project('1. (2) 3 4')
+    const gaps = (width: number) => {
+      placeNativeHorizontal([measure], options, 0, width)
+      return [clearance(measure, 0), clearance(measure, 2)]
+    }
+    const small = gaps(500), large = gaps(700)
+    expect((large[0]! - small[0]!) / (large[1]! - small[1]!))
+      .toBeCloseTo((Math.sqrt(1.5) + Math.sqrt(.5)) / 2, 8)
+  })
+
+  it('does not increase rhythm weights for lyrics, accidentals or parentheses', () => {
+    const growth = (source: string) => {
+      const projection = projectNativeScore(parseM3NDocument(source), { textMeasurer: new DefaultTextMeasurer() })
+      const gaps = (width: number) => {
+        placeNativeHorizontal(projection.measures, options, 0, width)
+        return projection.measures[0]!.columns.slice(1).map((column, index) => column.x - projection.measures[0]!.columns[index]!.x)
+      }
+      const small = gaps(700), large = gaps(900)
+      return large.map((gap, index) => gap - small[index]!)
+    }
+    const plain = growth('{4/4}\nN: 1. (2) 3 4 |||')
+    const decorated = growth('{4/4}\nN: {inst}1#. (2) 3 4{/} |||\nL: (春风吹过山间) 花 开 了')
+    decorated.forEach((gap, index) => expect(gap).toBeCloseTo(plain[index]!, 8))
+  })
+
+  it('gives a zero-time bar the same minimum clearance and stretch as a quarter note', () => {
+    const { measures } = projectNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4 | 5 6 7 1e |||'), { textMeasurer: new DefaultTextMeasurer() })
+    measureNativeHorizontal(measures, options)
+    const gaps = (width: number) => {
+      placeNativeHorizontal(measures, options, 0, width)
+      const measure = measures[0]!, last = measure.columns.at(-1)!.glyphs[0]!
+      return [clearance(measure, 2), measure.barX! - last.x - last.musicRight! - nativeBarMetrics('single').anchor]
+    }
+    const minimum = gaps(measures.reduce((sum, measure) => sum + measure.minimum, 0))
+    expect(minimum[0]).toBeCloseTo(8.8, 8)
+    expect(minimum[1]).toBeCloseTo(8.8, 8)
+    const small = gaps(700), large = gaps(900)
+    expect(large[1]! - small[1]!).toBeCloseTo(large[0]! - small[0]!, 8)
+    expect(measures[0]!.beats).toBe(4)
   })
 })

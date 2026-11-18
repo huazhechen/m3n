@@ -32,18 +32,18 @@ export type NativeGlyph = {
   instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number
 }
 export type NativeColumn = {
-  time: number; glyphs: NativeGlyph[]; left: number; right: number; gap: number; minimumGap: number; x: number
-  naturalStart?: number; naturalEnd?: number; minimumStart?: number; minimumEnd?: number
+  time: number; glyphs: NativeGlyph[]; left: number; right: number; x: number
+  minimumStart?: number; minimumEnd?: number
 }
 export type NativeMeasure = {
   id: string; source: ScoreMeasure; part: number; index: number; columns: NativeColumn[]; beats: number
-  breakBefore: boolean; breakAfter: boolean; extraGap: number; natural: number; minimum: number; label?: string
+  breakBefore: boolean; breakAfter: boolean; extraGap: number; minimum: number; label?: string
   start: number; end: number; continuation: boolean; lastFragment: boolean; number?: number
-  naturalStart?: number; naturalEnd?: number; minimumStart?: number; minimumEnd?: number; barX?: number; openingBarX?: number
+  minimumStart?: number; minimumEnd?: number; barX?: number; openingBarX?: number
   navigation?: NativeNavigation[]
 }
 export type NativeProjection = { measures: NativeMeasure[]; glyphs: NativeGlyph[]; diagnostics: NativeDiagnostic[]; hasBass: boolean }
-export type NativeModelOptions = { includeBass?: boolean; noteGapEm?: number; minimumNoteGapEm?: number; textMeasurer: TextMeasurer; fixedDo?: boolean; transpose?: number; tempoScale?: number; displayLyrics?: LyricsByEvent; expandedDisplay?: boolean }
+export type NativeModelOptions = { includeBass?: boolean; textMeasurer: TextMeasurer; fixedDo?: boolean; transpose?: number; tempoScale?: number; displayLyrics?: LyricsByEvent; expandedDisplay?: boolean }
 
 export function numberedPitch(token: string, shift = 0): NativePitch {
   const match = /^([0-7])([#b=]*)([ed]*)/.exec(token)
@@ -227,7 +227,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
     for (let index = 0; index < count; index++) {
       const source = part.melody[index] ?? { events: [] }
       if (!source.events.length && !source.multiRest && !part.bass[index]?.events.length) continue
-      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? em(12) : 0, natural: 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
+      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? em(12) : 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
       measure.number = ++measureNumber
       measureNumber += (source.multiRest ?? 1) - 1
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]
@@ -238,13 +238,10 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       const byTime = new Map<number, NativeGlyph[]>()
       for (const glyph of result.glyphs.slice(first)) { const time = Math.round(glyph.time * 1e9) / 1e9; byTime.set(time, [...(byTime.get(time) ?? []), glyph]) }
       const times = [...byTime.keys()].sort((a, b) => a - b)
-      measure.columns = times.map((time, index) => {
-        const glyphs = byTime.get(time)!, duration = (times[index + 1] ?? measure.beats) - time
-        const factor = Math.sqrt(Math.max(1 / 64, duration))
-        return { time, glyphs, left: Math.max(...glyphs.map(glyph => glyph.left + glyph.controls.reduce((sum, control) => sum + control.width, 0))), right: Math.max(...glyphs.map(glyph => glyph.right)), gap: nativeStyle.music * (options.noteGapEm ?? 0.6) * factor, minimumGap: nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) * factor, x: 0 }
+      measure.columns = times.map(time => {
+        const glyphs = byTime.get(time)!
+        return { time, glyphs, left: Math.max(...glyphs.map(glyph => glyph.left + glyph.controls.reduce((sum, control) => sum + control.width, 0))), right: Math.max(...glyphs.map(glyph => glyph.right)), x: 0 }
       })
-      measure.natural = measure.columns.reduce((sum, column) => sum + column.left + column.right + column.gap, 0) + 24
-      measure.minimum = measure.columns.reduce((sum, column) => sum + column.left + column.right + column.minimumGap, 0) + 24
       result.measures.push(measure)
     }
     partIndex++

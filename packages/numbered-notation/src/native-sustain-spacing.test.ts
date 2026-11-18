@@ -4,7 +4,7 @@ import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizon
 import { DefaultTextMeasurer } from './native-measure.js'
 import { projectNativeScore } from './native-model.js'
 
-const options = { noteGapEm: .6, minimumNoteGapEm: .4, minimumNoteGapFloorEm: 0, pairedSpacing: true }
+const options = { minimumNoteGapEm: .4, minimumNoteGapFloorEm: 0}
 const project = (source: string) => projectNativeScore(parseM3NDocument(source), { textMeasurer: new DefaultTextMeasurer() })
 
 describe('sustain group spacing', () => {
@@ -23,17 +23,16 @@ describe('sustain group spacing', () => {
     expect(dash.beats).toBe(1)
     // Retain identical ink, lyrics and boundaries; change only this grouping.
     // A chain has two affected gaps if the selected dash is followed by a dash,
-    // so isolate the head/dash pair before comparing the exact spring lengths.
+    // so isolate the head/dash pair before comparing the minimum clearances.
     const pair = { ...measure, columns: measure.columns.filter(column => column.glyphs.includes(head) || column.glyphs.includes(dash)), lastFragment: false }
     measureNativeHorizontal([pair], options)
-    const pairGrouped = { natural: pair.natural, minimum: pair.minimum }
+    const groupedMinimum = pair.minimum
     dash.sustain = false
     measureNativeHorizontal([pair], options)
     const roots = Math.sqrt(duration) + 1
-    expect(pair.natural - pairGrouped.natural).toBeCloseTo(22 * .6 / 4 * roots, 8)
     // The independent attack now reserves a fixed 0.4em, while the
     // sustain pair still uses its original duration-scaled half clearance.
-    expect(pair.minimum - pairGrouped.minimum).toBeCloseTo(22 * .4 - 22 * .4 / 4 * roots, 8)
+    expect(pair.minimum - groupedMinimum).toBeCloseTo(22 * .4 - 22 * .4 / 4 * roots, 8)
   })
 
   it('gives head/dash and dash/dash gaps half the justification surplus of a new attack', () => {
@@ -53,10 +52,10 @@ describe('sustain group spacing', () => {
   it('keeps barlines as group boundaries even if the next bar starts with a dash', () => {
     const { measures } = project('{1/4}\nN: 1~ | 1 |||')
     measureNativeHorizontal(measures, options)
-    const widths = measures.map(measure => [measure.natural, measure.minimum])
+    const widths = measures.map(measure => measure.minimum)
     measures[1]!.columns[0]!.glyphs[0]!.sustain = true
     measureNativeHorizontal(measures, options)
-    expect(measures.map(measure => [measure.natural, measure.minimum])).toEqual(widths)
+    expect(measures.map(measure => measure.minimum)).toEqual(widths)
   })
 
   it('keeps repeated same-pitch attacks outside sustain groups', () => {

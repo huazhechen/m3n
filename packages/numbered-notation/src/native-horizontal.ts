@@ -18,7 +18,7 @@ export function nativeBarMetrics(kind: string | undefined) {
 }
 
 type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
-type HorizontalOptions = { noteGapEm?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; pairedSpacing?: boolean; equalMeasures?: boolean }
+type HorizontalOptions = { minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; equalMeasures?: boolean }
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
 export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
@@ -37,15 +37,19 @@ export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
   }
   return { opening, closing }
 }
-const springCell = (lane: string, left: number, right: number, duration: number, alpha: number, gapScale: number): SpacingCell => {
+const minimumCell = (lane: string, left: number, right: number, duration: number, alpha: number, gapScale: number): SpacingCell => {
   const durationScale = Math.sqrt(Math.max(0.01, duration))
+  // Rhythm alone determines stretch; ink and lyrics only constrain minima.
+  // Zero-time controls have a neutral weight, as do quarter-clearance bars.
+  const stretch = duration > 0 ? durationScale : 1
   return { lane, left, right, before: durationScale * alpha * gapScale, after: durationScale * alpha * gapScale,
-    beforeStiffness: 1 / (alpha * durationScale), afterStiffness: 1 / (alpha * durationScale), beforeCollision: 16, afterCollision: 16 }
+    beforeStretch: stretch, afterStretch: stretch,
+  }
 }
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
-function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures, minimum = false): HorizontalItem[] {
-  const scale = nativeStyle.music * (options.noteGapEm ?? 0.6) / 12
+function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
+  const scale = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) / 12
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
   const parentheses = new Map<NativeGlyph, { left: number; right: number }>()
@@ -63,20 +67,21 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     })
   }
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
-    cells: lanes.map(lane => springCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
+    cells: lanes.map(lane => minimumCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
     const geometry = nativeBarMetrics(kind)
     const prefix = !opening && measure.navigation?.length ? 4.4 + measure.navigation.reduce((sum, mark) => sum + mark.width + 4.4, 0) : 0
     const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)))]
     items.push({ measure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
-      cells: lanes.map(lane => springCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 0, 128, scale)) })
+      // A bar has no musical duration; only its clearance matches a quarter note.
+      cells: lanes.map(lane => minimumCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 1, 6, scale)) })
   }
   for (const measure of measures) {
     const marks = nativeMeasureBars(surrounding, surrounding.indexOf(measure))
     const firstColumn = measure.columns[0]
     const controls = (column: NativeColumn, members: { control: NativeControl; lane: string }[]) => {
       if (!members.length) return
-      const cells = members.map(({ control, lane }) => springCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
+      const cells = members.map(({ control, lane }) => minimumCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
       items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
     // A section heading introduces the repeat, rather than belonging inside it.
@@ -89,7 +94,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
         controls(column, membersByLane.flatMap(member => member.controls[index] ? [{control: member.controls[index]!, lane: member.lane}] : []))
       }
       const cells = column.glyphs.map(glyph => {
-        return springCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, 6, scale)
+        return minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, 6, scale)
       })
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
@@ -116,46 +121,31 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       cell.before *= 0.5
     } else if (previous?.item.measure === item.measure && left && right) {
       // Group boundaries reserve an absolute clearance, independent of duration.
-      const natural = (previous.cell.after + cell.before) / 2
-      previous.cell.after = natural; cell.before = natural
       groupEnds.add(previous.cell); groupStarts.add(cell)
     }
     previousByLane.set(cell.lane, { item, cell })
   }
-  // Preserve the minimum clearance as physical reservation, leaving only
-  // the remaining clearance elastic. Exterior ink stays flush with the line.
-  const reserveRatio = options.minimumNoteGapEm === undefined ? 0 : options.minimumNoteGapEm / (options.noteGapEm || 1)
+  // Reserve only minimum clearance. Surplus is allocated separately by weight.
+  // Exterior ink stays flush with the line.
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
     const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const floor = glyph ? nativeStyle.music * (options.minimumNoteGapFloorEm ?? 0) / 2 : 0
-    const groupGap = nativeStyle.music * (options.minimumNoteGapEm ?? 0) / 2
-    if (groupStarts.has(cell)) cell.before = minimum ? groupGap : Math.max(cell.before, groupGap)
-    if (groupEnds.has(cell)) cell.after = minimum ? groupGap : Math.max(cell.after, groupGap)
+    const groupGap = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) / 2
+    if (groupStarts.has(cell)) cell.before = groupGap
+    if (groupEnds.has(cell)) cell.after = groupGap
     cell.before = Math.max(cell.before, floor); cell.after = Math.max(cell.after, floor)
-    const left = index === 0 ? 0 : Math.max(groupStarts.has(cell) ? groupGap : cell.before * reserveRatio, floor)
-    const right = index === items.length - 1 ? 0 : Math.max(groupEnds.has(cell) ? groupGap : cell.after * reserveRatio, floor)
-    cell.left += left; cell.right += right; cell.before -= left; cell.after -= right
+    const left = index === 0 ? 0 : Math.max(groupStarts.has(cell) ? groupGap : cell.before, floor)
+    const right = index === items.length - 1 ? 0 : Math.max(groupEnds.has(cell) ? groupGap : cell.after, floor)
+    cell.left += left; cell.right += right; cell.before = cell.after = 0
     // Note clearance and lyric ink share physical space; do not add both widths.
     if (glyph) {
-      // An absent voice gets music-only elastic clearance. Lyrics and
+      // An absent voice gets music-only minimum clearance. Lyrics and
       // parentheses belong to their real voice, not its neighbours' blanks.
       cell.placeholderLeft = cell.left; cell.placeholderRight = cell.right
       cell.left = Math.max(cell.left, glyph.lyricLeft ?? 0)
       cell.right = Math.max(cell.right, glyph.lyricRight ?? 0)
       const insets = parentheses.get(glyph)
       cell.left += insets?.left ?? 0; cell.right += insets?.right ?? 0
-    }
-    // A voice introduction is compressible space, not a hard bar boundary.
-    if (item.boundary) cell.beforeCollision = cell.afterCollision = 64
-  }
-  // Bar edges are hard boundaries for both neighbours, including each
-  // voice sharing that boundary. Using the ordinary-note penalty here
-  // distorts compressed systems even when their line breaks agree.
-  for (let index = 1; index < items.length; index++) {
-    const previous = items[index - 1]!, current = items[index]!
-    if (previous.boundary || current.boundary) {
-      for (const cell of previous.cells) cell.afterCollision = 64
-      for (const cell of current.cells) cell.beforeCollision = 64
     }
   }
   // Multi-measure rest symbols form compact rigid blocks with adjacent bars.
@@ -175,7 +165,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   return items
 }
 
-/** Record natural/minimum spans before choosing line breaks. */
+/** Record minimum spans before choosing line breaks. */
 export function measureNativeHorizontal(measures: NativeMeasure[], options: HorizontalOptions) {
   // Forced breaks terminate the spring chain. Measuring across them keeps
   // interior minimum margins at the two future exterior edges, and can even
@@ -189,32 +179,27 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
 }
 
 function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOptions) {
-  for (const minimum of [false, true]) {
-    const items = itemsFor(measures, minimum ? { ...options, noteGapEm: options.minimumNoteGapEm ?? options.noteGapEm } : options, measures, minimum)
-    const result = solveNativeSpacing(items)
-    for (const measure of measures) {
-      const selected = items.map((item, index) => ({ item, index })).filter(({ item }) => item.measure === measure)
-      const first = selected[0], last = selected.at(-1)
-      if (!first || !last) continue
-      const left = result.positions[first.index]! - Math.max(...first.item.cells.map(cell => cell.left))
-      const right = result.positions[last.index]! + Math.max(...last.item.cells.map(cell => cell.right))
-      if (minimum) { measure.minimumStart = left; measure.minimumEnd = right; measure.minimum = right - left }
-      else { measure.naturalStart = left; measure.naturalEnd = right; measure.natural = right - left }
-      measure.columns.forEach((column, index) => {
-        const owned = selected.filter(({ item }) => item.column === column || item.controlColumn === column)
-        const left = index === 0 ? measure[minimum ? 'minimumStart' : 'naturalStart']! : Math.min(...owned.map(({ item, index }) => result.positions[index]! - Math.max(...item.cells.map(cell => cell.left))))
-        const right = index === measure.columns.length - 1 ? measure[minimum ? 'minimumEnd' : 'naturalEnd']! : Math.max(...owned.map(({ item, index }) => result.positions[index]! + Math.max(...item.cells.map(cell => cell.right))))
-        if (minimum) { column.minimumStart = left; column.minimumEnd = right }
-        else { column.naturalStart = left; column.naturalEnd = right }
-      })
-    }
+  const items = itemsFor(measures, options)
+  const result = solveNativeSpacing(items)
+  for (const measure of measures) {
+    const selected = items.map((item, index) => ({ item, index })).filter(({ item }) => item.measure === measure)
+    const first = selected[0], last = selected.at(-1)
+    if (!first || !last) continue
+    const left = result.positions[first.index]! - Math.max(...first.item.cells.map(cell => cell.left))
+    const right = result.positions[last.index]! + Math.max(...last.item.cells.map(cell => cell.right))
+    measure.minimumStart = left; measure.minimumEnd = right; measure.minimum = right - left
+    measure.columns.forEach((column, index) => {
+      const owned = selected.filter(({ item }) => item.column === column || item.controlColumn === column)
+      column.minimumStart = index === 0 ? measure.minimumStart! : Math.min(...owned.map(({ item, index }) => result.positions[index]! - Math.max(...item.cells.map(cell => cell.left))))
+      column.minimumEnd = index === measure.columns.length - 1 ? measure.minimumEnd! : Math.max(...owned.map(({ item, index }) => result.positions[index]! + Math.max(...item.cells.map(cell => cell.right))))
+    })
   }
 }
 
 /** Keep visible bar anchors fixed while solving each equal cell's interior.
  * Build the complete system first: minimum clearance, parentheses and parallel
  * voices must not be reset at every artificial cell edge. */
-function equalMeasurePositions(items: HorizontalItem[], options: HorizontalOptions, width: number): number[] {
+function equalMeasurePositions(items: HorizontalItem[], width: number): number[] {
   const ranges: {start:number;end:number;bar?:number}[] = []
   let start = 0, musical = false
   for (const [index, item] of items.entries()) {
@@ -228,14 +213,13 @@ function equalMeasurePositions(items: HorizontalItem[], options: HorizontalOptio
   if (ranges.length < 2) return solveNativeSpacing(items,width,true).positions
   const leftOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.left))
   const rightOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.right))
-  const padding = options.pairedSpacing === false ? nativeStyle.music * 1.25 * .55 : 0
   const tail = ranges.at(-1)!.bar
   const cellWidth = (width - (tail === undefined ? 0 : rightOf(tail))) / ranges.length
   const positions = Array<number>(items.length).fill(0)
   for (const [index, range] of ranges.entries()) {
     const previous = ranges[index-1]?.bar
-    const left = index*cellWidth + (previous === undefined ? 0 : rightOf(previous)+padding)
-    const right = (index+1)*cellWidth - (range.bar === undefined ? 0 : leftOf(range.bar)+padding)
+    const left = index*cellWidth + (previous === undefined ? 0 : rightOf(previous))
+    const right = (index+1)*cellWidth - (range.bar === undefined ? 0 : leftOf(range.bar))
     const solved = solveNativeSpacing(items.slice(range.start,range.end),Math.max(1,right-left),true,
       { left: previous !== undefined && items[previous]!.fixedAfter === undefined,
         right: range.bar !== undefined && items[range.end - 1]?.fixedAfter === undefined })
@@ -248,7 +232,7 @@ function equalMeasurePositions(items: HorizontalItem[], options: HorizontalOptio
 /** Justify a complete system, then publish event and measure positions. */
 export function placeNativeHorizontal(measures: NativeMeasure[], options: HorizontalOptions, x: number, width: number, surrounding = measures): NativeGlyph[] {
   const items = itemsFor(measures, options, surrounding)
-  const positions = options.equalMeasures ? equalMeasurePositions(items,options,width) : solveNativeSpacing(items,width,true).positions
+  const positions = options.equalMeasures ? equalMeasurePositions(items,width) : solveNativeSpacing(items,width,true).positions
   for (const measure of measures) { measure.start = Infinity; measure.end = -Infinity }
   const glyphs: NativeGlyph[] = []
   items.forEach((item, index) => {

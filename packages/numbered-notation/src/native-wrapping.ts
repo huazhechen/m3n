@@ -1,9 +1,9 @@
 import type { NativeMeasure } from './native-model.js'
 
 /** Split a dense bar into balanced musical groups, preserving every tuplet. */
-export function splitNativeMeasure(measure: NativeMeasure, width: number, pairedSpacing: boolean): NativeMeasure[] {
-  const capacity = width * (pairedSpacing ? 1 : 0.94)
-  if ((pairedSpacing ? measure.minimum : measure.natural) <= capacity || measure.columns.length < 2) return [measure]
+export function splitNativeMeasure(measure: NativeMeasure, width: number): NativeMeasure[] {
+  const capacity = width
+  if (measure.minimum <= capacity || measure.columns.length < 2) return [measure]
   const tuplets = new Map<object, { start: number; end: number }>()
   for (const column of measure.columns) for (const glyph of column.glyphs) {
     if (glyph.event?.kind !== 'tuplet') continue
@@ -15,7 +15,7 @@ export function splitNativeMeasure(measure: NativeMeasure, width: number, paired
   const groups = boundaries.map((start, index) => {
     const stop = boundaries[index + 1] ?? measure.columns.length
     const columns = measure.columns.slice(start, stop)
-    return { columns, left: Math.min(...columns.map(column => column[pairedSpacing ? 'minimumStart' : 'naturalStart']!)), right: Math.max(...columns.map(column => column[pairedSpacing ? 'minimumEnd' : 'naturalEnd']!)) }
+    return { columns, left: Math.min(...columns.map(column => column.minimumStart!)), right: Math.max(...columns.map(column => column.minimumEnd!)) }
   })
   const costs = Array<number>(groups.length + 1).fill(Infinity), previous = Array<number>(groups.length + 1).fill(0)
   costs[0] = 0
@@ -48,7 +48,6 @@ export function splitNativeMeasure(measure: NativeMeasure, width: number, paired
       // final fragment and shift the rest of the score's global line plan.
       breakBefore: true, breakAfter: true,
       extraGap: index === 0 ? measure.extraGap : 0,
-      naturalStart: first.naturalStart!, naturalEnd: last.naturalEnd!, natural: last.naturalEnd! - first.naturalStart!,
       minimumStart: first.minimumStart!, minimumEnd: last.minimumEnd!, minimum: last.minimumEnd! - first.minimumStart! }
   })
 }

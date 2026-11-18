@@ -8,17 +8,17 @@ import type { NativeMeasure } from './native-model.js'
 // and tuplet protection independently of platform font metrics.
 const measured = (count: number): NativeMeasure => ({
   id: 'dense', source: { events: [] }, part: 0, index: 0, beats: count / 2,
-  columns: Array.from({ length: count }, (_, index) => ({ time: index / 2, glyphs: [], left: 10, right: 10, gap: 0, minimumGap: 0, x: 0,
-    naturalStart: index * 20, naturalEnd: (index + 1) * 20, minimumStart: index * 20, minimumEnd: (index + 1) * 20 })),
-  breakBefore: true, breakAfter: false, extraGap: 12, natural: count * 20, minimum: count * 20,
-  naturalStart: 0, naturalEnd: count * 20, minimumStart: 0, minimumEnd: count * 20,
+  columns: Array.from({ length: count }, (_, index) => ({ time: index / 2, glyphs: [], left: 10, right: 10, x: 0,
+    minimumStart: index * 20, minimumEnd: (index + 1) * 20 })),
+  breakBefore: true, breakAfter: false, extraGap: 12, minimum: count * 20,
+  minimumStart: 0, minimumEnd: count * 20,
   start: 0, end: 0, continuation: false, lastFragment: true,
 })
 
 describe('native dense-measure wrapping', () => {
   it('balances the complete bar instead of greedily filling its first line', () => {
     const measure = measured(20), before = structuredClone(measure)
-    const fragments = splitNativeMeasure(measure, 256, true)
+    const fragments = splitNativeMeasure(measure, 256)
     expect(fragments.map(fragment => fragment.columns.length)).toEqual([10, 10])
     expect(fragments.map(fragment => fragment.extraGap)).toEqual([12, 0])
     expect(fragments.map(fragment => fragment.continuation)).toEqual([false, true])
@@ -28,15 +28,15 @@ describe('native dense-measure wrapping', () => {
   })
 
   it('prefers an integer beat over an equally balanced off-beat break', () => {
-    expect(splitNativeMeasure(measured(17), 220, true).map(fragment => fragment.columns.length)).toEqual([8, 9])
+    expect(splitNativeMeasure(measured(17), 220).map(fragment => fragment.columns.length)).toEqual([8, 9])
   })
 
-  it('uses natural capacity when no minimum spacing policy was requested', () => {
+  it('uses the measured minimum width as the sole capacity limit', () => {
     const measure = measured(20)
     measure.minimum = 200
     measure.columns.forEach((column, index) => { column.minimumStart = index * 10; column.minimumEnd = (index + 1) * 10 })
-    expect(splitNativeMeasure(measure, 256, true)).toEqual([measure])
-    expect(splitNativeMeasure(measure, 256, false)).toHaveLength(2)
+    expect(splitNativeMeasure(measure, 256)).toEqual([measure])
+    expect(splitNativeMeasure(measure, 160)).toHaveLength(2)
   })
 
   it('keeps a following short bar out of the last dense-bar fragment', () => {

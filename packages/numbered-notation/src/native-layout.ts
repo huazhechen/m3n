@@ -27,10 +27,8 @@ import { nativeUniformHosts, shareNativeUniformHeight } from './native-uniform-h
 export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
-  pageMargin?: number; systemGap?: number; coreGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; uniformSystemHeight?: boolean
-  equalMeasures?: boolean; wrap?: 'normal' | 'compact'; wrapWidthRatio?: number
-  /** @internal Whether a separate minimum spacing policy was requested. */
-  pairedSpacing?: boolean
+  pageMargin?: number; coreGap?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; uniformSystemHeight?: boolean
+  equalMeasures?: boolean; wrapWidthRatio?: number
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
@@ -46,9 +44,8 @@ function validate(options: NativeRenderOptions) {
   if (options.transpose !== undefined && !Number.isInteger(options.transpose)) throw new Error('谱面移调必须为整数半音数。')
   if (options.tempoScale !== undefined && (!Number.isFinite(options.tempoScale) || options.tempoScale <= 0)) throw new Error('显示速度倍率必须为正有限数值。')
   if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
-  for (const value of [options.pageMargin, options.systemGap, options.coreGap]) if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
-  if (options.noteGapEm !== undefined && (!Number.isFinite(options.noteGapEm) || options.noteGapEm < 0)) throw new Error('音符间距比例必须为非负有限数值。')
-  if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0 || options.minimumNoteGapEm > (options.noteGapEm ?? 0.6))) throw new Error('最小间距必须非负且不大于自然间距。')
+  for (const value of [options.pageMargin, options.coreGap]) if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
+  if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0)) throw new Error('最小音符间距必须为非负有限数值。')
   if (options.wrapWidthRatio !== undefined && (!Number.isFinite(options.wrapWidthRatio) || options.wrapWidthRatio <= 0 || options.wrapWidthRatio > 1)) throw new Error('wrapWidthRatio 必须大于 0 且不大于 1。')
 }
 
@@ -121,38 +118,27 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
 
 /** Break complete measures first, splitting oversized measures at time columns. */
 function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0): NativeMeasure[][] {
-  const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1), Boolean(options.pairedSpacing)))
+  const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1)))
   const lines: NativeMeasure[][] = []
   const ratio = options.wrapWidthRatio ?? 1
   for (let begin = 0; begin < fragments.length;) {
     let end = begin + 1
     while (end < fragments.length && !fragments[end]!.breakBefore && !fragments[end - 1]!.breakAfter) end++
     const group = fragments.slice(begin, end), cost = Array<number>(group.length + 1).fill(Infinity), next = Array<number>(group.length).fill(0)
-    const sparse = group.map(measure => {
-      const glyphs = measure.columns.flatMap(column => column.glyphs)
-      return glyphs.length <= 4 && glyphs.every(glyph => glyph.beats >= 1
-        && Math.max(glyph.musicLeft ?? glyph.left, glyph.lyricLeft ?? 0) + Math.max(glyph.musicRight ?? glyph.right, glyph.lyricRight ?? 0)
-          <= ((glyph.musicLeft ?? glyph.left) + (glyph.musicRight ?? glyph.right)) * 1.5)
-    })
     cost[group.length] = 0
     for (let index = group.length - 1; index >= 0; index--) {
-      let natural = 0, minimum = 0, widestNatural = 0, widestMinimum = 0
-      let compactEqual = options.wrap === 'compact' && options.equalMeasures
+      let minimum = 0, widestMinimum = 0
       const available = Math.max(1, width * ratio - leading([group[index]!]))
       for (let stop = index; stop < group.length; stop++) {
         const measure = group[stop]!, count = stop - index + 1
-        natural += measure.natural; minimum += measure.minimum
-        widestNatural = Math.max(widestNatural, measure.natural); widestMinimum = Math.max(widestMinimum, measure.minimum)
+        minimum += measure.minimum
+        widestMinimum = Math.max(widestMinimum, measure.minimum)
         const equal = options.equalMeasures
-        compactEqual &&= sparse[stop]
         const minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
-        const naturalWidth = equal ? widestNatural * count : measure.naturalEnd !== undefined && group[index]!.naturalStart !== undefined ? measure.naturalEnd - group[index]!.naturalStart! : natural
-        const capacity = available * (options.pairedSpacing ? 1 : equal ? compactEqual ? 1.16 : 0.94 : options.wrap === 'compact' ? 1.16 : 0.94)
-        if ((options.pairedSpacing ? minWidth : naturalWidth) > capacity && count > 1) break
-        const slack = Math.max(0, capacity - naturalWidth) / available
-        const compression = Math.max(0, naturalWidth - available) / available
-        const compressionCost = options.pairedSpacing || options.wrap === 'compact' && !equal ? 1 : 100
-        const score = slack * slack + compression * compression * compressionCost + cost[stop + 1]!
+        if (minWidth > available && count > 1) break
+        const slack = Math.max(0, available - minWidth) / available
+        const overflow = Math.max(0, minWidth - available) / available
+        const score = slack * slack + overflow * overflow * 100 + cost[stop + 1]!
         // Equal-energy partitions should leave the shorter row at the end.
         // Ignore round-off from subtracting cumulative measured coordinates.
         if (score < cost[index]! - 1e-12 || Math.abs(score - cost[index]!) <= 1e-12 && stop + 1 > next[index]!) { cost[index] = score; next[index] = stop + 1 }
@@ -169,10 +155,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const headerDocument = document
   const expanded = supplied.fixedDo && document.orderKeys?.some(Boolean) ? keyedDisplayPerformance(document) : undefined
   if (expanded) document = expanded.document
-  const minimumNoteGapEm = supplied.minimumNoteGapEm ?? (supplied.noteGapEm === undefined ? 0.4 : 0)
+  const minimumNoteGapEm = supplied.minimumNoteGapEm ?? 0.4
   const minimumNoteGapFloorEm = supplied.minimumNoteGapFloorEm ?? 0
   if (!Number.isFinite(minimumNoteGapFloorEm) || minimumNoteGapFloorEm < 0 || minimumNoteGapFloorEm > minimumNoteGapEm) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
-  const options = { ...supplied, pairedSpacing: supplied.minimumNoteGapEm !== undefined || supplied.noteGapEm === undefined, width: Math.max(320, Math.round(supplied.width)), noteGapEm: supplied.noteGapEm ?? 0.6, minimumNoteGapEm, minimumNoteGapFloorEm, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
+  const options = { ...supplied, width: Math.max(320, Math.round(supplied.width)), minimumNoteGapEm, minimumNoteGapFloorEm, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
   const margin = options.pageMargin ?? 32
   if (margin * 2 + 40 > options.width) throw new Error('简谱页边距过大。')
   let measurer = options.textMeasurer
@@ -185,7 +171,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   measurer ??= new DefaultTextMeasurer()
   const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
-  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, options.systemGap ?? nativeStyle.systemGap, options)
+  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, options.coreGap ?? nativeStyle.minimumCoreGap, options)
   const headerHeight = header.height
   measureNativeHorizontal(projection.measures, options)
   // A closing cross-row arc needs a full horizontal turn before its first
@@ -323,9 +309,9 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     verticalBlocks: blocks, headerBlocks: header.blocks }
-  const gap = options.coreGap ?? options.systemGap ?? (options.paged ? 16 : nativeStyle.systemGap)
+  const gap = options.coreGap ?? (options.paged ? 16 : nativeStyle.minimumCoreGap)
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, maxGap: options.coreGap ?? options.systemGap ?? (options.paged ? 32 : gap), elastic: true })
+    margin, gap, maxGap: options.coreGap ?? (options.paged ? 32 : gap), elastic: true })
   positionNativeLayout(layout, pagination)
   return layout
 }

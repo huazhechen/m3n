@@ -23,7 +23,7 @@ export const nativeStyle = {
   symbolStroke: music * (1.2 / 22),
   markGap: music * 0.12,
   laneGap: music * 0.9375,
-  systemGap: music * (24 / 22),
+  minimumCoreGap: music * (24 / 22),
 }
 
 /** Convert a symbol's authored 22-unit grid into the current music scale. */

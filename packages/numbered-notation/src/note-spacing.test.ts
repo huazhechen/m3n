@@ -13,7 +13,7 @@ it.each([0, 1, 2, 3, 4])('retains the 0.1em floor after rhythmic and beam scalin
     const document = parseM3NDocument(source);
     const gap = (floor: number) => {
         const projection = projectNativeScore(document, { textMeasurer });
-        const options = { noteGapEm: .4, minimumNoteGapEm: .4, minimumNoteGapFloorEm: floor, pairedSpacing: true };
+        const options = { minimumNoteGapEm: .4, minimumNoteGapFloorEm: floor};
         measureNativeHorizontal(projection.measures, options);
         placeNativeHorizontal(projection.measures, options, 0, projection.measures[0]!.minimum);
         const [first, second] = projection.glyphs;

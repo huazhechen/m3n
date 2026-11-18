@@ -70,7 +70,7 @@ describe('native instrumental parentheses', () => {
     const added = first.parenthesisLeft! + last.parenthesisRight!
     expect(added).toBeGreaterThan(0)
     const before = plain.projection.measures[0]!, after = instrumental.projection.measures[0]!
-    expect(after.natural - before.natural).toBeCloseTo(added, 6)
+    expect(after.minimum - before.minimum).toBeCloseTo(added, 6)
     expect(after.minimum - before.minimum).toBeCloseTo(added, 6)
     expect(first.x - first.musicLeft! - first.parenthesisLeft!).toBeCloseTo(32, 6)
   })

@@ -27,9 +27,9 @@ describe('native multi-measure rests', () => {
   })
   it('does not expand springs with the number of silent measures, but measures wide counts', () => {
     const rest = (n: number) => layoutRest(n).projection.measures[1]!
-    expect(rest(4).natural).toBeCloseTo(rest(1).natural, 8)
     expect(rest(4).minimum).toBeCloseTo(rest(1).minimum, 8)
-    expect(rest(123456789).natural).toBeGreaterThan(rest(4).natural)
+    expect(rest(4).minimum).toBeCloseTo(rest(1).minimum, 8)
+    expect(rest(123456789).minimum).toBeGreaterThan(rest(4).minimum)
   })
   it('keeps the actual bar-to-rest clearance unchanged as the system expands', () => {
     const clearances = [320,800].map(width => {

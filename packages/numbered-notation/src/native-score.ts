@@ -19,7 +19,7 @@ export class NativeNumberedNotationScore {
 export type { NativeRenderOptions as NumberedNotationRenderOptions } from './native-layout.js'
 
 /** Whole scores on one page, sharing one core parameter and one logical width. */
-export function renderSharedNumberedNotationScores(documents: readonly ScoreDocument[], options: Omit<NativeRenderOptions, 'paged' | 'coreGap' | 'systemGap'>, scoreGap = 22) {
+export function renderSharedNumberedNotationScores(documents: readonly ScoreDocument[], options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, scoreGap = 22) {
   if (documents.length < 2) throw new Error('A shared page needs at least two scores')
   if (!Number.isFinite(scoreGap) || scoreGap < 0) throw new Error('曲间留白必须为非负有限数值。')
   const layouts = documents.map(document => layoutNativeScore(document, { ...options, paged: false, coreGap: 16 }))

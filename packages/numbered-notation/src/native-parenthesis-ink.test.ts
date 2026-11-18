@@ -11,13 +11,12 @@ const measurer = (overhang: boolean): TextMeasurer => ({ measureText(text, style
 } })
 
 describe('parenthesis ink beyond the text advance', () => {
-  it('includes both overhangs in natural and minimum measure width', () => {
+  it('includes both overhangs in minimum measure width', () => {
     const document = parseM3NDocument('{4/4}\nN: {inst}1 2 3 4{/} |||')
     const layouts = [false, true].map(overhang => layoutNativeScore(document, {
       width: 800, paged: false, pageMargin: 0, textMeasurer: measurer(overhang),
     }))
     const [before, after] = layouts.map(layout => layout.projection.measures[0]!)
-    expect(after!.natural - before!.natural).toBeCloseTo(7, 6)
     expect(after!.minimum - before!.minimum).toBeCloseTo(7, 6)
   })
 })
