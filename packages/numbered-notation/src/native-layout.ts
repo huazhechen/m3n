@@ -281,7 +281,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     relationBounds.set(system, regions)
   }
   // Endings share measured geometry across wrapping and pagination.
-  placeNativeVoltas(systems, relationBounds, measurer)
+  placeNativeVoltas(systems, relationBounds, measurer, options.width)
   // Chord names participate in shared music height; local descriptions and
   // section headings are placed afterwards so they cannot enlarge peer rows.
   for (const system of systems) {

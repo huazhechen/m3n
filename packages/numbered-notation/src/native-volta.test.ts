@@ -140,3 +140,19 @@ describe('measured native volta fragments', () => {
     }
   })
 })
+
+it.each([320, 540, 720].flatMap(width => [false, true].map(paged => ({ width, paged }))))(
+  'keeps the full ending stroke inside a zero-margin canvas at $width, paged=$paged',
+  ({ width, paged }) => {
+    const score = layoutNativeScore(parseM3NDocument(
+      '{4/4}\nN: ||: 1 2 3 4 |{br}\n---V1\nN: 1 2 3 4 | {br}1 2 3 4 :||{br}\n---V2\nN: 1 2 3 4 |||',
+    ), { width, paged, pageMargin: 0 })
+    const fragments = score.systems.flatMap(system => system.voltas ?? [])
+    expect(fragments.filter(fragment => fragment.ending === '1')).toHaveLength(2)
+    for (const fragment of fragments) {
+      const ink = nativeSvgInk(fragment.svg, score.measurer)
+      expect(ink.left).toBeGreaterThanOrEqual(-1e-6)
+      expect(ink.right).toBeLessThanOrEqual(width + 1e-6)
+    }
+  },
+)

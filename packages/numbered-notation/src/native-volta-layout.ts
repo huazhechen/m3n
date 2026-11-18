@@ -12,7 +12,7 @@ import { nativeMusicAxis } from './native-axis.js'
 import { nativeRibbonRange } from './native-curve.js'
 
 /** Span identity survives both automatic wrapping and split source measures. */
-export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSystem, NativeRegion[]>, measurer: TextMeasurer) {
+export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSystem, NativeRegion[]>, measurer: TextMeasurer, canvasWidth: number) {
   const entries = systems.flatMap(system => system.measures.map((measure, index) => ({ system, measure, index })))
   const spans: { begin: number; end: number; ending: string; group: number }[] = []
   for (let begin = 0; begin < entries.length;) {
@@ -51,7 +51,11 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
         : firstGlyph.x - bodyLeft : firstGlyph.x - (firstGlyph.musicLeft ?? firstGlyph.left)
       const rawRight = last ? followingBar?.x ?? lastGlyph.x + (lastGlyph.sustain ? nativeStyle.music * 0.21 : halfBody)
         : Math.max(...system.measures.map(measure => measure.end))
-      const left = Math.min(rawLeft, rawRight), right = Math.max(rawLeft, rawRight)
+      // Round line caps and hooks extend half a stroke beyond their anchors.
+      // Keep that ink inside the canvas, including zero-margin row starts.
+      const halfStroke = nativeStyle.music * .055 / 2
+      const left = Math.max(halfStroke, Math.min(rawLeft, rawRight))
+      const right = Math.min(canvasWidth - halfStroke, Math.max(rawLeft, rawRight))
       const raw = nativeVoltaSvg(left, right, span.ending, measurer, first, last), ink = nativeSvgInk(raw, measurer)
       let y = nativeMusicAxis(measurer) - nativeStyle.music / 2 - 2 - nativeStyle.music * 0.055 / 2
       const pieces = nativeSvgPieces(raw, measurer)
