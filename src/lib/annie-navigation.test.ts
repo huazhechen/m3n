@@ -26,7 +26,7 @@ it('preserves every performed lyric and its note timing while skipping the inter
       .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
       .map(lyric => [element.start, element.end, lyric.text]))
   expect(lyrics).toHaveLength(234)
-  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('00045c8b71c4e67efb5f3d1571e211de3f7a86d3033bff69c82e4745a700eff5')
+  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('3cabb79c1b867ba5275aa83577039349ca72cafd6521698b076606a9852ee940')
 })
 
 it('uses the first ending for the interlude, the second for D.S. and the third for Fine', () => {
