@@ -34,9 +34,9 @@ for (const width of [390, 1280]) {
   }
 }
 
-test('Super Mario second measure starts at its own opening repeat during playback', async ({ page }) => {
+test('a measure after a section break starts at its own opening repeat during playback', async ({ page }) => {
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: ((3) 3 (3)) ((0 1) 3) (5 0) (5d 0) ||\n---\nN: ||: (1 (0 5d)) (0 3d) ((0) 6d (7d)) ((0 7bd) 6d) | ([5d35:2]) (6 (4 5)) ((0) 3 (1)) ((2) 7d (0)) :||')
+  await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: 1 2 3 4 ||\n---\nN: ||: 5 6 7 1e | 4 3 2 1 :||')
   const preview = page.getByRole('tab', { name: '预览', exact: true })
   if (await preview.isVisible()) await preview.click()
   await expect(page.locator('.score-paper g.measure')).toHaveCount(3)

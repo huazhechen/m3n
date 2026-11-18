@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "sourceCount": 88,
+  "sourceCount": 87,
   "sections": [
     {
       "id": "basics",
@@ -633,14 +633,6 @@
       "section": "animation",
       "group": "快速音型与装饰",
       "reason": "快速节奏与高音区"
-    },
-    {
-      "id": "super_mario",
-      "file": "super_mario_01.m3n",
-      "title": "超级玛丽",
-      "section": "animation",
-      "group": "快速音型与装饰",
-      "reason": "休止切分、跳进与临时变音"
     },
     {
       "id": "second_waltz",
