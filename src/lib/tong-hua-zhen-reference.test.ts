@@ -11,7 +11,9 @@ const tokens = (bars: typeof written) => bars.flatMap(bar => bar.events.map(even
 it('matches the c33d transcription through 都走到 in the original first-pass arrangement', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(document).toMatchObject({ key: 'C', meterCount: 2, meterUnit: 4, tempo: 69 })
-  const reference = tokens(parseM3NDocument(imageMelody).parts.get('score')!.melody)
+  // User-requested simplification: bar 17 adopts bar 15's even sixteenths.
+  const simplified = imageMelody.replace('((2. (1) 2. (1)))', '((2 1 2 1))')
+  const reference = tokens(parseM3NDocument(simplified).parts.get('score')!.melody)
   expect(tokens(performed).slice(0, reference.length)).toEqual(reference)
 })
 
@@ -46,7 +48,6 @@ it('plays the introduction repeated 6s as sustains, with the extra opening rest 
 
 it('checks the new dotted and syncopated rhythms and removes old-image ornaments', () => {
   const patterns = [
-    ['((2. (1) 2. (1)))', [.375, .125, .375, .125]],
     ['(5 3) (0 (3 3))', [.5, .5, .5, .25, .25]],
     ['(3 5 3 2)', [.5, .5, .5, .5]],
     ['(6 5) ((5) 5 (3))', [.5, .5, .25, .5, .25]],
@@ -60,6 +61,12 @@ it('checks the new dotted and syncopated rhythms and removes old-image ornaments
     expect(events.map(event => event.beats), phrase).toEqual(beats)
   }
   expect(written.flatMap(bar => bar.events.flatMap(event => event.postfixes))).not.toContain('prall')
+})
+
+it('simplifies bar 17 to bar 15 rhythm while keeping its pitches and outgoing tie', () => {
+  expect(written[16]!.events.map(event => event.beats)).toEqual(written[14]!.events.map(event => event.beats))
+  expect(written[16]!.events.map(event => event.pitches)).toEqual([['2'], ['1'], ['2'], ['1'], ['2'], ['1'], ['7d']])
+  expect(written[16]!.events.at(-1)!.tie).toBe(true)
 })
 
 it('keeps both lyric verses aligned, including the shared rhythms and corrected ending', () => {
