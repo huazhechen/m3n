@@ -45,7 +45,19 @@ for (const width of [390, 1280]) {
     await expect(sample.locator('.cm-editor, textarea, .editor-source-pane')).toHaveCount(0)
     await expect(sample.locator('.diagnostics')).toHaveCount(0)
     const controls = page.getByRole('group', { name: '乐谱控制', exact: true })
-    await expect(controls).toHaveCSS('position', 'fixed')
+    await expect(controls).toHaveCSS('position', 'sticky')
+    await expect(sample.getByRole('group', { name: '乐谱控制', exact: true })).toHaveCount(1)
+    await expect(page.locator('body > .floating-controls')).toHaveCount(0)
+    await expect(sample.getByRole('link', { name: '查看曲库中的高音版' })).toHaveCount(0)
+    const initialControls = (await controls.boundingBox())!
+    expect(initialControls.y).toBeGreaterThanOrEqual(sampleBounds!.y)
+    await sample.scrollIntoViewIfNeeded()
+    const cardBounds = (await sample.boundingBox())!
+    const controlBounds = (await controls.boundingBox())!
+    expect(controlBounds.x).toBeGreaterThanOrEqual(cardBounds.x)
+    expect(controlBounds.x + controlBounds.width).toBeLessThanOrEqual(cardBounds.x + cardBounds.width)
+    expect(controlBounds.y).toBeGreaterThanOrEqual(cardBounds.y)
+    expect(controlBounds.y + controlBounds.height).toBeLessThanOrEqual(cardBounds.y + cardBounds.height)
     await controls.getByRole('button', { name: '乐谱设置', exact: true }).click()
     const settings = page.getByRole('dialog', { name: '乐谱设置', exact: true })
     await expect(settings.getByRole('switch', { name: '钢琴音色' })).toBeVisible()
@@ -64,9 +76,8 @@ for (const width of [390, 1280]) {
     await expect(controls.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
     await controls.getByRole('button', { name: '暂停', exact: true }).click()
     await page.screenshot({ path: info.outputPath('home.png'), fullPage: true })
-    await sample.getByRole('link', { name: '查看曲库中的高音版' }).click()
-    await expect(page).toHaveURL(/\/scores\/huan_le_song_01$/)
-    await expect(page.getByRole('button', { name: '乐谱设置', exact: true })).toBeVisible()
+    await page.evaluate(() => window.scrollTo(0, 0))
+    expect((await controls.boundingBox())!.y).toBeGreaterThanOrEqual((await sample.boundingBox())!.y)
   })
 }
 

@@ -9,6 +9,7 @@ import { ScoreControlIcon } from './ScoreControlIcon'
 
 type ScoreControlsProps = {
   playbackOnly?: boolean
+  contained?: boolean
   isPlaying: boolean
   isLoading: boolean
   progress: number
@@ -51,7 +52,7 @@ export function ScoreControls(props: ScoreControlsProps) {
     ? CIRCLE_OF_FIFTHS.find(([, minor]) => keyPitchClass(minor) === selectedKey)![1]
     : TRANSPOSE_KEYS[selectedKey]
   const playLabel = props.isPlaying ? '暂停' : '播放'
-  const controls = <div className={props.playbackOnly ? 'audio-controls playback-only' : 'audio-controls floating-controls'} role="group" aria-label="乐谱控制">
+  const controls = <div className={props.playbackOnly ? 'audio-controls playback-only' : `audio-controls floating-controls${props.contained ? ' contained-controls' : ''}`} role="group" aria-label="乐谱控制">
     <div className="control-transport">
         <button type="button" className="control-button playback-toggle" aria-label={playLabel} title={props.isLoading ? '加载中' : playLabel} aria-busy={props.isLoading || undefined} disabled={props.isLoading} onClick={props.onTogglePlayback}>
           <ScoreControlIcon name={props.isPlaying ? 'pause' : 'play'} /><span>{props.isLoading ? '加载中' : playLabel}</span>
@@ -117,5 +118,5 @@ export function ScoreControls(props: ScoreControlsProps) {
       </div>
     </>}
   </div>
-  return props.playbackOnly ? controls : createPortal(controls, document.body)
+  return props.playbackOnly || props.contained ? controls : createPortal(controls, document.body)
 }

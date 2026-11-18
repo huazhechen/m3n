@@ -91,9 +91,8 @@ export function HomePage() {
             <span className="eyebrow">现在，听听看</span>
             <h2 id="home-sample-title">用一首《欢乐颂》，开始今天的练习</h2>
             <p>点 <ControlHint icon="play" label="播放" />，听一遍这段熟悉的旋律。用下方的播放控件试听，打开设置，就能试试移调、速度和谱面调整。</p>
-            <Link to="/scores/huan_le_song_01" className="home-text-link"><NavActionIcon action="library" /> 查看曲库中的高音版 →</Link>
           </div>
-          <ScoreRenderer scoreId="home-huan-le-song" scoreDocument={analysis.score} sourceMap={analysis.interaction.sourceMap} />
+          <ScoreRenderer scoreId="home-huan-le-song" containedControls scoreDocument={analysis.score} sourceMap={analysis.interaction.sourceMap} />
         </section>
       </>}
     </main>

@@ -32,6 +32,7 @@ type ScoreRendererProps = {
   scoreId?: string
   compact?: boolean
   playbackOnly?: boolean
+  containedControls?: boolean
   previewWidth?: number
   fitPagedToViewport?: boolean
   isSourceUpdating?: boolean
@@ -152,6 +153,7 @@ export function ScoreRenderer({
   scoreId,
   compact = false,
   playbackOnly = false,
+  containedControls = false,
   previewWidth,
   fitPagedToViewport = false,
   isSourceUpdating = false,
@@ -543,6 +545,7 @@ export function ScoreRenderer({
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
       {hasAudioControls && <ScoreControls
         playbackOnly={playbackOnly}
+        contained={containedControls}
         isPlaying={isPlaying}
         isLoading={isPlayerLoading || isSourceUpdating}
         progress={playbackProgress}
