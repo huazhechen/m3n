@@ -10,11 +10,13 @@ const removedSlides = new Set([207, 218, 225, 281, 292, 306])
 const authorizedReferenceEvents = reference.events.flatMap((event, index) => {
   if (index === 198 || removedSlides.has(index)) return []
   const adjusted = [...event]
+  // Bar 41, 次: restore scale degree 5 (C5 in F major) after the earlier sharps.
+  if (index === 334) adjusted[0] = 72
   if (removedSlides.has(index + 1)) adjusted[1] = Number(event[1]) + Number(reference.events[index + 1]![1])
   return [{ index, event: adjusted }]
 })
 
-it('matches the reference with the authorized shortening, six merged lyric tails and tempo 72', () => {
+it('matches the reference with the authorized shortening, six merged lyric tails, the bar 41 natural and tempo 72', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document).toMatchObject({ title: reference.title, singer: reference.singer, composer: reference.composer, lyricist: reference.lyricist, key: reference.key, meterCount: 4, meterUnit: 4, tempo: 72 })
