@@ -398,7 +398,7 @@ function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructur
         mode: 'char',
         syllables: parseLyricItems(lyric.text.replace(/\s*\|\s*/g, ' '), lyric.start),
         phrasePasses,
-        sharedPasses: explicitSharedPasses,
+        sharedPasses: phrase.lyrics.length === 1 ? explicitSharedPasses : undefined,
         targetStart: phrase.melody.start,
         targetEnd: phrase.melody.start + phrase.melody.text.length,
       }
@@ -412,7 +412,7 @@ function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructur
         ...(target.sharedPasses ? parsePassRange(target.sharedPasses) : []),
         ...(target.range ? parsePassRange(target.range) : []),
         ...(reference.label ? parsePassRange(reference.label) : []),
-        ...(phrasePasses ? parsePassRange(phrasePasses) : []),
+        ...(phrasePasses && blocksByLabel.size === 1 ? parsePassRange(phrasePasses) : []),
       ])
       if (passes.size > 1) target.sharedPasses = [...passes].sort((a, b) => a - b).join(',')
     }

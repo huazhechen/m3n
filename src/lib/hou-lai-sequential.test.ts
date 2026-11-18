@@ -32,15 +32,16 @@ const lyrics = (document: typeof before) => {
       .map(lyric => ({ start: element.start, end: element.end, text: lyric.text })))
 }
 
-describe('Hou Lai with named sections and a shared three-visit chorus', () => {
-  it('uses two single-bar endings and preserves every event except the previously authorized held beat', () => {
+describe('Hou Lai written as A, B, repeated A, C', () => {
+  it('uses a written chorus and a two-pass chorus with single-bar endings and preserves every event except the previously authorized held beat', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
-    expect(after.order).toEqual(['A', 'B', 'A', 'A', 'C'])
-    expect(after.sections?.map(section => section.name)).toEqual(['A', 'B', 'C'])
+    expect(after.order).toBeUndefined()
+    expect(after.sections ?? []).toEqual([])
     const printed = after.parts.get('score')!.melody.filter(bar => bar.events.length)
-    expect(printed).toHaveLength(51)
-    expect(printed.some(bar => bar.left === 'rptstart' || bar.right === 'rptend')).toBe(false)
-    expect(printed.flatMap((bar, index) => bar.ending ? [[index + 1, bar.ending]] : [])).toEqual([[9, '1,3'], [10, '2']])
+    expect(printed).toHaveLength(60)
+    expect(printed.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
+    expect(printed.filter(bar => bar.right === 'rptend')).toHaveLength(1)
+    expect(printed.flatMap((bar, index) => bar.ending ? [[index + 1, bar.ending]] : [])).toEqual([[54, '1'], [55, '2']])
     const expected = events(oldBars)
     expect(expected).toHaveLength(406)
     expect(expected[changedIndex]!.beats).toBe(2)

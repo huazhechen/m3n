@@ -14,7 +14,7 @@ it.each(['ai_ru_chao_shui', 'bai_hua_lin', 'bei_jia_er_hu_pan', 'qian_si_xi', 't
     if (name === 'qian_si_xi') {
       expect(source).toContain('{segno}')
       expect(source).toContain('{ds}')
-      expect(source).toMatch(/^---V3$/m)
+      expect(source).toMatch(/^---V1,V3$/m)
     }
   },
 )

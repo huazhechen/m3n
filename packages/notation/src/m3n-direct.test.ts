@@ -86,6 +86,14 @@ describe('direct M3N parser', () => {
     expect(document.lyrics[0]).toMatchObject({ range: '1', sharedPasses: '2,4' })
   })
 
+  it('keeps distinct verses and their references separate in a shared house', () => {
+    const document = parseM3NDocument('{2/4}\n---V1,V2,V4\nN: 1 2 :||\nL1: 甲乙\nL2: 丙丁\nL4: {L2}')
+    expect(document.lyrics).toMatchObject([
+      { range: '1', sharedPasses: undefined },
+      { range: '2', sharedPasses: '2,4' },
+    ])
+  })
+
   it('inherits melody setting changes in the bass staff', () => {
     const document = parseM3NDocument([
       '{key=C} {2/4} {120qpm}',

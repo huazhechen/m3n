@@ -69,7 +69,7 @@ it('aligns the first available verse in adjacent repeat endings without renumber
         const first = root.querySelector('text[data-m3n-role="lyric"][data-m3n-rendition="1"]')!;
         const second = root.querySelector('text[data-m3n-role="lyric"][data-m3n-rendition="2"]')!;
         expect(Number(second.getAttribute('y'))).toBeCloseTo(Number(first.getAttribute('y')), 3);
-        expect(second.getAttribute('data-m3n-passes')).toBe('2-3');
+        expect(second.getAttribute('data-m3n-passes')).toBe('2');
     }
 });
 it('measures packed tiers including underlines and font descenders', () => {
