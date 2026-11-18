@@ -1,0 +1,16 @@
+{preferred-width=540}
+{title=彩云追月}
+{subtitle=考级版}
+{composer=任光}
+// 参考：https://www.kuaiyuepu.com/jianpu/u4AJh1vqD.html
+// 保留源谱装饰音、连奏及换气记号；版本与核对记录见 scorebook/六首半音阶口琴曲目来源与校订.md。
+{key=F} {4/4} {80qpm}
+N: {lg}5d. (6d){/} {lg}(1 2){/} {lg}(3 5){/} | 6^^{breath} | (6) 1e (6){prall} {lg}(5 3){/} 5 | (6) 1e (6){prall} {lg}(5 3){/} 5{breath} |
+---
+N: (6) 1e (6){prall} {lg}(5 3){/} {lg}(5 6){/} | 3~{ac(5)} 3^.{breath} | (3) 5{prall} (3) {lg}(2 1){/} 2{breath} | (3) 5{prall} (3) {lg}(2 1){/} 2{breath} |
+---
+N: (3) 5{prall} (3) {lg}(2 1){/} {lg}(5d 6d){/} | 1~{ac(6d)} 1^.{breath} | (1) {lg}2 (3){/} {lg}(6 5){/} 3 | {lg}1e. (5){/} 6^{breath} |
+---
+N: (1e) 5 (7) 6 5{prall} | 3^^{breath} | {lg}(2 3){/} {lg}(5 2){/} 3. (5) | 3. (2) 6d^{breath} |
+---
+N: {lg}(5. (6)){/} {lg}(5 3){/} {lg}(3 5){/} 2{prall} | 1^^ |||

@@ -1,0 +1,27 @@
+{preferred-width=540}
+{title=带我飞向月球}
+{subtitle=Fly Me to the Moon}
+{composer=Bart Howard}
+{lyricist=Bart Howard}
+// 主参考：OpenBook fly_me_to_the_moon.ly.tera，VoiceFake 版本。
+// https://github.com/veltzer/book-openbook/blob/master/src/openbook/fly_me_to_the_moon.ly.tera
+// 保留两遍反复与六小节不同结尾；不混用快悦谱 EVA 版的调性和演奏路线。
+// 版本与核对记录见 scorebook/六首半音阶口琴曲目来源与校订.md。
+{key=C} {4/4} {130qpm}
+N: ||: 1e 7 (6) 5. | 4. (5) 6 1e | 7 6 (5) 4. | 3^^ |
+---
+N: 6 5 (4) 3. | 2. (3) 4 6 | 5# 4 (3) 2. | 1^. 1# |
+---
+N: (2) 6 (6~) 6^~ | 6 1e^ 7 | 5^^~ | 5^. 7d |
+---
+N: (1) 4 (4~) 4^~ | 4 6^ 5 | 4^ 3^~ | 3^^ |
+---
+N: 1e 7 (6) 5. | 4. (5) 6 1e | 7 6 (5) 4. | 3^^ |
+---
+N: 6 5 (4) 3. | 2 3 4 6 | 5# 4 (3) 2. | 1^. 1# |
+---
+N: (2) 6 (6~) 6^~ | 6 1e^ 7 |
+---V1
+N: 5^^~ | 5^. 5# | (6) 1 (1~) 1^~ | 1 1^ 2 | 1^^ | 0^^ :||
+---V2
+N: 3e^^~ | 3e^. 1e | (2e) 6 (6~) 6^~ | 6 7^ 2e | 1e^^~ | 1e^. 0 |||

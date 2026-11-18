@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 89,
+  "sourceCount": 95,
   "sections": [
     {
       "id": "basics",
@@ -274,6 +274,14 @@
       "reason": "附点与完整连奏乐句"
     },
     {
+      "id": "moon_river",
+      "file": "moon_river_01.m3n",
+      "title": "月亮河",
+      "section": "classic",
+      "group": "三拍子与抒情长句",
+      "reason": "三拍子、九度跳进、附点与跨小节延音"
+    },
+    {
       "id": "hong_mei_hua_er_kai",
       "file": "hong_mei_hua_er_kai_01.m3n",
       "title": "红莓花儿开",
@@ -344,6 +352,22 @@
       "section": "classic",
       "group": "十六分与变拍",
       "reason": "连续十六分与跨拍延音"
+    },
+    {
+      "id": "what_a_wonderful_world",
+      "file": "what_a_wonderful_world_01.m3n",
+      "title": "多么美好的世界",
+      "section": "classic",
+      "group": "三连音与抒情分句",
+      "reason": "三连音、同音起音、临时升音及长音气息"
+    },
+    {
+      "id": "over_the_rainbow",
+      "file": "over_the_rainbow_01.m3n",
+      "title": "飞越彩虹",
+      "section": "classic",
+      "group": "大跨度与完整曲式",
+      "reason": "八度跳进、连续八分、临时升音及分遍结尾"
     },
     {
       "id": "wo_he_wo_de_zu_guo",
@@ -480,6 +504,22 @@
       "section": "golden",
       "group": "三连音与进阶抒情",
       "reason": "十六分切分与跳房子"
+    },
+    {
+      "id": "autumn_leaves",
+      "file": "autumn_leaves_01.m3n",
+      "title": "枯叶",
+      "section": "golden",
+      "group": "爵士旋律与变化音",
+      "reason": "三拍弱起、小调旋律、临时升音与跨小节延音"
+    },
+    {
+      "id": "fly_me_to_the_moon",
+      "file": "fly_me_to_the_moon_01.m3n",
+      "title": "带我飞向月球",
+      "section": "golden",
+      "group": "爵士切分与反复",
+      "reason": "切分、附点、半音衔接及两遍不同结尾"
     },
     {
       "id": "xin_bu_liao_qing",
@@ -672,6 +712,14 @@
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "reason": "三拍子、倚音与圆舞曲乐句"
+    },
+    {
+      "id": "cai_yun_zhui_yue",
+      "file": "cai_yun_zhui_yue_01.m3n",
+      "title": "彩云追月",
+      "section": "instrumental",
+      "group": "民族器乐与装饰",
+      "reason": "附点、十六分、短倚音、上波音及换气"
     },
     {
       "id": "por_una_cabeza",
