@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sortScoresByTitle, scoreTitleInitial } from './score-order'
+import { sortScoresByTitle, sortScoresByModifiedTime, scoreTitleInitial } from './score-order'
 
 describe('score title ordering', () => {
   it('groups titles by the same normalized pinyin used for sorting', () => {
@@ -21,4 +21,15 @@ describe('score title ordering', () => {
       'Hello 2', 'hello 10', '花海', '欢乐颂', '《小星星》',
     ])
   })
+})
+
+it('sorts local and preset scores together from newest to oldest without mutating input', () => {
+  const scores = [
+    { title: 'old local', modifiedAt: 10 },
+    { title: 'new preset', modifiedAt: 30 },
+    { title: 'same time', modifiedAt: 30 },
+    { title: 'older preset', modifiedAt: 0 },
+  ]
+  expect(sortScoresByModifiedTime(scores).map(score => score.title)).toEqual(['new preset', 'same time', 'old local', 'older preset'])
+  expect(scores[0]!.title).toBe('old local')
 })

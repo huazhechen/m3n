@@ -22,3 +22,8 @@ export function scoreTitleInitial(title: string): string {
   const initial = titleSortKey(title).charAt(0).toUpperCase()
   return /^[A-Z]$/.test(initial) ? initial : '#'
 }
+
+/** Latest edits first; retain the existing order when timestamps match. */
+export function sortScoresByModifiedTime<T extends { modifiedAt: number }>(scores: readonly T[]): T[] {
+  return [...scores].sort((a, b) => b.modifiedAt - a.modifiedAt)
+}

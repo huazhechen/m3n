@@ -4,11 +4,16 @@ import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/nota
 import { NavActionIcon, TopNav } from '../components/TopNav'
 import { deleteLocalScore, listLocalScores, type LocalScore } from '../lib/local-scores'
 import { presetScores, type PresetScore } from '../lib/samples'
-import { sortScoresByTitle, scoreTitleInitial } from '../lib/score-order'
+import { sortScoresByTitle, sortScoresByModifiedTime, scoreTitleInitial } from '../lib/score-order'
 import { LibraryIndex } from '../components/LibraryIndex'
 import { matchesScoreSearch } from '../lib/score-search'
 
+type LibraryView = 'alphabetical' | 'category' | 'modified'
+const nextLibraryView: Record<LibraryView, LibraryView> = { alphabetical: 'category', category: 'modified', modified: 'alphabetical' }
+const viewTitle: Record<LibraryView, string> = { alphabetical: '切换为分类展示', category: '切换为最后修改时间', modified: '切换为字母顺序' }
+
 type ScoreCardData = {
+  modifiedAt: number
   key: string
   category?: PresetScore['category']
   isLocal: boolean
@@ -109,6 +114,7 @@ function presetCardData(score: PresetScore): ScoreCardData {
   return {
     key: `preset:${score.slug}`,
     category: score.category,
+    modifiedAt: score.modifiedAt,
     isLocal: false,
     title: score.title,
     severity: score.diagnosticSeverity,
@@ -129,6 +135,7 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
   const metadata = scoreMetadataFromSource(score.id, score.source)
   return {
     key: `local:${score.id}`,
+    modifiedAt: Date.parse(score.updatedAt ?? '') || Date.parse(score.createdAt) || 0,
     isLocal: true,
     title: metadata.title,
     severity: metadata.diagnosticSeverity,
@@ -148,9 +155,13 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
 
 export function ScoresPage() {
   const [query, setQuery] = useState('')
-  const [categorized, setCategorized] = useState(() => {
-    try { return localStorage.getItem('m3n:library-view') === 'category' } catch { return false }
+  const [view, setView] = useState<LibraryView>(() => {
+    try {
+      const stored = localStorage.getItem('m3n:library-view')
+      return stored === 'category' || stored === 'modified' ? stored : 'alphabetical'
+    } catch { return 'alphabetical' }
   })
+  const categorized = view === 'category'
   const [localScores, setLocalScores] = useState<LocalScore[]>(() => listLocalScores())
   const cards = useMemo(() => {
     const locals = localScores.map((score) => localCardData(score, () => {
@@ -162,8 +173,11 @@ export function ScoresPage() {
     return [...locals, ...sortScoresByTitle(presetScores.map(presetCardData))]
   }, [localScores])
   const scores = useMemo(
-    () => cards.filter(card => matchesScoreSearch(card, query)),
-    [cards, query],
+    () => {
+      const matching = cards.filter(card => matchesScoreSearch(card, query))
+      return view === 'modified' ? sortScoresByModifiedTime(matching) : matching
+    },
+    [cards, query, view],
   )
   const groups = useMemo(() => {
     const grouped = new Map<string, { initial: string; title: string; order: number; items: ScoreCardData[] }>()
@@ -184,7 +198,7 @@ export function ScoresPage() {
     }
     return result
   }, [scores, categorized])
-  const showIndex = !categorized && groups.length >= 3 && scores.length >= 12
+  const showIndex = view === 'alphabetical' && groups.length >= 3 && scores.length >= 12
   useEffect(() => {
     setLocalScores(listLocalScores())
   }, [])
@@ -204,10 +218,10 @@ export function ScoresPage() {
                 placeholder="搜索曲名、词、低、本地、调号、拍号…"
               />
             </label>
-            <button type="button" className="library-view-toggle" aria-label="切换曲库展示方式" title={categorized ? '切换为字母顺序' : '切换为分类展示'} onClick={() => {
-              const next = !categorized
-              setCategorized(next)
-              try { localStorage.setItem('m3n:library-view', next ? 'category' : 'alphabetical') } catch { /* Browsing still works without storage. */ }
+            <button type="button" className="library-view-toggle" aria-label="切换曲库展示方式" title={viewTitle[view]} onClick={() => {
+              const next = nextLibraryView[view]
+              setView(next)
+              try { localStorage.setItem('m3n:library-view', next) } catch { /* Browsing still works without storage. */ }
             }}><NavActionIcon action="sort" /></button>
           </div>
         </section>
@@ -215,7 +229,11 @@ export function ScoresPage() {
           {scores.length === 0 && (
             <p className="search-empty">没有找到匹配的乐谱。</p>
           )}
-          {groups.map(({ initial, title, items }) => (
+          {view === 'modified' && scores.length > 0 ? (
+            <div className="score-list">
+              {scores.map(({ key, ...cardProps }) => <ScoreCard key={key} {...cardProps} />)}
+            </div>
+          ) : groups.map(({ initial, title, items }) => (
             <section className="library-group" id={`library-group-${initial}`} data-library-initial={initial} key={initial} aria-labelledby={`library-heading-${initial}`}>
               <h2 className="library-group-heading" id={`library-heading-${initial}`}>
                 {title}
