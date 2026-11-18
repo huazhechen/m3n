@@ -50,7 +50,7 @@ it('plays the introduction repeated 6s as sustains, with the extra opening rest 
 
 it('checks the new dotted and syncopated rhythms and removes old-image ornaments', () => {
   const patterns = [
-    ['3 (0 (3 5))', [1, .5, .25, .25]],
+    ['3 ((0 3) 5)', [1, .25, .25, .5]],
     ['(5 3) (0 (3 3))', [.5, .5, .5, .25, .25]],
     ['(3 5 3) {lg}((2 1)){/}', [.5, .5, .5, .25, .25]],
     ['(6 5) ((5) 5 (3))', [.5, .5, .25, .5, .25]],
@@ -125,7 +125,7 @@ it('uses the requested ending pitches and lyric alignment within the original sh
   const next = written[written.indexOf(ending!) + 1]!
   expect(next.events.map(event => [event.pitches, event.beats])).toEqual([[['7d'], 1]])
   expect(lyricsByEvent.get(next.events[0]!)?.find(lyric => lyric.kind === 'text')?.text).toBe('刻')
-  const figures = performed.filter(bar => bar.events.map(event => event.pitches.join()).join(' ') === '6 5 3 5 3 2 3 5')
+  const figures = performed.filter(bar => bar.events.map(event => event.pitches.join()).join(' ') === '6 5 3 5 5 3 2 5')
   expect(figures).toHaveLength(2)
   for (const bar of figures) expect(bar.events.map(event => event.beats)).toEqual(Array(8).fill(.25))
   const final = performed.flatMap(bar => bar.events).at(-1)!
