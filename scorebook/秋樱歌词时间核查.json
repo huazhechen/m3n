@@ -1212,6 +1212,166 @@
       }
     ],
     "notation": "Separate V1/V2 endings. Sustained same-pitch syllables use ties; V2 has no explicit % lyric slots. 供 is expanded to ども with separate short notes, an editorial subdivision within the available YRC group duration; internal timing is not independently verified.",
-    "maxReferenceUnitOnsetErrorSeconds": 0.1976963203157709
+    "maxReferenceUnitOnsetErrorSeconds": 0.1976963203157709,
+    "status": "Provisional timestamp comparison only; not an acceptance test."
+  },
+  "verificationStatus": "NOT VERIFIED: v71 lyric alignment and tied-note edits remain provisional. The <0.20 s criterion is withdrawn.",
+  "strictTimingReview": {
+    "sourceSha256": "168de0b5fa0124a87ab1b648e6383721c2a00c7efd673def17461e2716c74ce1",
+    "nominalQpm": 76,
+    "sixteenthSecondsAtNominalTempo": 0.19736842105263158,
+    "finding": "Maximum absolute onset error is approximately one sixteenth note, not proof of alignment. Relative onset intervals also disagree.",
+    "relativeIntervals": [
+      {
+        "from": "も",
+        "to": "う",
+        "referenceIntervalSeconds": 0.2300000000000182,
+        "scoreIntervalSeconds": 0.19585788805864013,
+        "scoreMinusReferenceSeconds": -0.03414211194137806
+      },
+      {
+        "from": "う",
+        "to": "す",
+        "referenceIntervalSeconds": 0.23999999999998067,
+        "scoreIntervalSeconds": 0.19585788805866855,
+        "scoreMinusReferenceSeconds": -0.04414211194131212
+      },
+      {
+        "from": "す",
+        "to": "こ",
+        "referenceIntervalSeconds": 0.0800000000000125,
+        "scoreIntervalSeconds": 0.19585788805864013,
+        "scoreMinusReferenceSeconds": 0.11585788805862762
+      },
+      {
+        "from": "こ",
+        "to": "し",
+        "referenceIntervalSeconds": 0.1699999999999875,
+        "scoreIntervalSeconds": 0.19585788805864013,
+        "scoreMinusReferenceSeconds": 0.025857888058652634
+      },
+      {
+        "from": "し",
+        "to": "あ",
+        "referenceIntervalSeconds": 0.9000000000000057,
+        "scoreIntervalSeconds": 0.9792894402932575,
+        "scoreMinusReferenceSeconds": 0.0792894402932518
+      },
+      {
+        "from": "あ",
+        "to": "な",
+        "referenceIntervalSeconds": 0.13999999999998636,
+        "scoreIntervalSeconds": 0.19585788805864013,
+        "scoreMinusReferenceSeconds": 0.05585788805865377
+      },
+      {
+        "from": "な",
+        "to": "た",
+        "referenceIntervalSeconds": 0.17000000000001592,
+        "scoreIntervalSeconds": 0.19585788805864013,
+        "scoreMinusReferenceSeconds": 0.025857888058624212
+      },
+      {
+        "from": "た",
+        "to": "の",
+        "referenceIntervalSeconds": 0.18999999999999773,
+        "scoreIntervalSeconds": 0.19585788805866855,
+        "scoreMinusReferenceSeconds": 0.005857888058670824
+      },
+      {
+        "from": "の",
+        "to": "こ",
+        "referenceIntervalSeconds": 0.9000000000000057,
+        "scoreIntervalSeconds": 0.7834315522345889,
+        "scoreMinusReferenceSeconds": -0.11656844776541675
+      },
+      {
+        "from": "こ",
+        "to": "ども",
+        "referenceIntervalSeconds": 0.29999999999998295,
+        "scoreIntervalSeconds": 0.39171577611728026,
+        "scoreMinusReferenceSeconds": 0.09171577611729731
+      },
+      {
+        "from": "ども",
+        "to": "で",
+        "referenceIntervalSeconds": 0.36000000000001364,
+        "scoreIntervalSeconds": 0.3917157761173371,
+        "scoreMinusReferenceSeconds": 0.03171577611732346
+      },
+      {
+        "from": "で",
+        "to": "い",
+        "referenceIntervalSeconds": 0.6200000000000045,
+        "scoreIntervalSeconds": 0.5875736641759204,
+        "scoreMinusReferenceSeconds": -0.03242633582408416
+      },
+      {
+        "from": "い",
+        "to": "さ",
+        "referenceIntervalSeconds": 0.18000000000000682,
+        "scoreIntervalSeconds": 0.19585788805864013,
+        "scoreMinusReferenceSeconds": 0.015857888058633307
+      },
+      {
+        "from": "さ",
+        "to": "せ",
+        "referenceIntervalSeconds": 0.23999999999998067,
+        "scoreIntervalSeconds": 0.19585788805866855,
+        "scoreMinusReferenceSeconds": -0.04414211194131212
+      },
+      {
+        "from": "せ",
+        "to": "て",
+        "referenceIntervalSeconds": 0.25,
+        "scoreIntervalSeconds": 0.19585788805866855,
+        "scoreMinusReferenceSeconds": -0.05414211194133145
+      },
+      {
+        "from": "て",
+        "to": "く",
+        "referenceIntervalSeconds": 0.8100000000000023,
+        "scoreIntervalSeconds": 0.7834315522345605,
+        "scoreMinusReferenceSeconds": -0.02656844776544176
+      },
+      {
+        "from": "く",
+        "to": "だ",
+        "referenceIntervalSeconds": 0.28000000000000114,
+        "scoreIntervalSeconds": 0.19585788805866855,
+        "scoreMinusReferenceSeconds": -0.08414211194133259
+      },
+      {
+        "from": "だ",
+        "to": "さ",
+        "referenceIntervalSeconds": 0.1599999999999966,
+        "scoreIntervalSeconds": 0.19585788805864013,
+        "scoreMinusReferenceSeconds": 0.03585788805864354
+      },
+      {
+        "from": "さ",
+        "to": "い",
+        "referenceIntervalSeconds": 0.3199999999999932,
+        "scoreIntervalSeconds": 0.19585788805866855,
+        "scoreMinusReferenceSeconds": -0.12414211194132463
+      }
+    ],
+    "lastEightDiagnosticFit": {
+      "qpm": 68.06722689075676,
+      "offsetSeconds": 109.31930555555613,
+      "maximumAbsoluteResidualSeconds": 0.05439814814815236,
+      "rmsResidualSeconds": 0.03311473460784491,
+      "purpose": "In-sample diagnostic for tempo drift only, NOT independent verification, NOT permission to change score tempo. Tempo and lyric timestamps can both cause this pattern."
+    },
+    "audioEvidence": {
+      "provider": "NetEase Music",
+      "songId": 669905,
+      "downloadedBytes": 3494600,
+      "durationSeconds": 218.332,
+      "localExcerpt": ".tmp/qiu-ying-timed-lyrics/ending-188-201.wav",
+      "excerptOriginalStartSeconds": 188,
+      "state": "Retrieved and decoded; no claim of listening-based or acoustic phoneme onset annotation."
+    },
+    "decision": "No further musical changes or new PDF edition from timestamp-only evidence. Need reliable sung melody reference or independently annotated audio syllable AND pitch boundaries. v71 does not satisfy that standard."
   }
 }
