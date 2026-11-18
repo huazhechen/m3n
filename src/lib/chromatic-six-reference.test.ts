@@ -16,15 +16,14 @@ it.each(references.scores)('preserves the independent reference melody and playb
   expect(document.sections ?? []).toEqual([])
   const performance = compileScorePerformance(document)
   expect(performance.beats).toBe(reference.beats)
-  expect(performance.notes).toHaveLength(reference.events.length)
-  reference.events.forEach(([start, end, pitch, grace], index) => {
+  // The reviewed Cai Yun Zhui Yue arrangement omits the two upstream grace notes.
+  const events = reference.slug === 'cai_yun_zhui_yue'
+    ? reference.events.filter(event => !event[3])
+    : reference.events
+  expect(performance.notes).toHaveLength(events.length)
+  events.forEach(([start, end, pitch], index) => {
     const actual = performance.notes[index]!
-    let expectedStart = start as number, expectedEnd = end as number
-    // The upstream grace anticipates the beat; M3N steals 1/16 beat from its host.
-    if (grace) {
-      expectedStart = end as number
-      expectedEnd = expectedStart + 1 / 16
-    } else if (reference.events[index - 1]?.[3]) expectedStart += 1 / 16
+    const expectedStart = start as number, expectedEnd = end as number
     expect(actual.pitch, `attack ${index + 1}`).toBe(pitch)
     expect(actual.start, `attack ${index + 1} onset`).toBeCloseTo(expectedStart, 6)
     expect(actual.end, `attack ${index + 1} release`).toBeCloseTo(expectedEnd, 6)
