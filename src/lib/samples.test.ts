@@ -13,7 +13,7 @@ import { loadPresetScore, presetScores } from './samples'
 
 describe('bundled score corpus', () => {
   it.each([
-    ['feng', '枫', maple, 42, 4],
+    ['feng', '枫', maple, 39, 4],
     ['yan_hua_yi_leng', '烟花易冷', smoke, 41, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 43, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
@@ -170,16 +170,19 @@ describe('bundled score corpus', () => {
     })
     const lyrics=blocks.flatMap(block=>block.syllables.filter(syllable=>syllable.kind==='text').map(syllable=>syllable.text)).join('')
     const mapleWrittenLyrics = (text: string) => {
-      const chorus = text.indexOf('缓缓掉落的枫叶'), thirdEnding = text.indexOf('只剩挥散不去的难过',chorus)
+      const chorus = text.indexOf('缓缓掉落的枫叶')
       const bridge = text.indexOf('在山腰间'), finalChorus = text.indexOf('缓缓掉落的枫叶',bridge)
       const finalEnding = text.indexOf('自秋末的眼泪',finalChorus)
       const firstEnding = text.indexOf('总在回忆里才看的清')
       const secondVerse = firstEnding + '总在回忆里才看的清'.length
       const secondEnding = text.indexOf('只剩挥散不去的难过')
+      const sharedTail = text.indexOf('渗透了地面')
+      const finalSharedTail = text.indexOf('渗透了地面', finalEnding)
       return text.slice(0, firstEnding) + text.slice(secondVerse, secondEnding)
         + text.slice(firstEnding, secondVerse) + text.slice(secondEnding, chorus)
         + text.slice(secondEnding, chorus)
-        + text.slice(chorus, thirdEnding) + text.slice(finalEnding) + text.slice(bridge, finalChorus)
+        + text.slice(chorus, sharedTail) + text.slice(finalEnding, finalSharedTail)
+        + text.slice(finalSharedTail) + text.slice(bridge, finalChorus)
     }
     const expected=reference.id==='feng'
       ? mapleWrittenLyrics(reference.lyricText!)

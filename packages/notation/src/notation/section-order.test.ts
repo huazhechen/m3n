@@ -130,3 +130,21 @@ it('checks the pickup against every selected house and rejects an incomplete int
  expect(analyzeM3N(valid.replace('N: 5 |||','N: (5) |||')).diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER'}))
  expect(analyzeM3N(valid.replace('N: 4 ||','N: (4) | 5 ||')).diagnostics).toContainEqual(expect.objectContaining({code:'M3N_METER_INCOMPLETE_MIDDLE'}))
 })
+
+it('plays a shared tail after each visit-selected house and keeps tail lyrics on both visits', () => {
+ const input='{2/4}{order=A,A}\n===A\nN: 1 2 |\n---V1\nN: 3 4 |\n---V2\nN: 5 6 |\n---\nN: 7 1e |||\nL: 甲乙'
+ const result=analyzeM3N(input)
+ expect(result.diagnostics).toEqual([])
+ expect(compileScorePerformance(result.score).notes.map(note=>note.pitch)).toEqual([60,62,64,65,71,72,60,62,67,69,71,72])
+ const measures=result.score.parts.get('score')!.melody.filter(measure=>measure.events.length)
+ expect(measures.map(measure=>measure.orderPasses)).toEqual([[1,2],[1],[2],[1,2]])
+ expect(result.interaction.lyricsByEvent.get(measures[3]!.events[0]!)!.map(lyric=>lyric.text)).toEqual(['甲'])
+ expect(analyzeM3N(formatM3N(input)).diagnostics).toEqual([])
+ expect(analyzeM3N(input.replace('N: 7 1e |||','N: 7 1e~ |||')).diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER',message:expect.stringContaining('末尾不能延音')}))
+ expect(analyzeM3N(input.replace('N: 7 1e |||','N: 7 |||')).diagnostics).not.toEqual([])
+})
+
+it('rejects visit houses resumed after their common tail', () => {
+ const input='{2/4}{order=A,A}\n===A\nN: 1 2 |\n---V1\nN: 3 4 |\n---\nN: 5 6 |\n---V2\nN: 7 1e |||'
+ expect(analyzeM3N(input).diagnostics).toContainEqual(expect.objectContaining({code:'M3N_SECTION_ORDER',message:expect.stringContaining('公共尾段')}))
+})

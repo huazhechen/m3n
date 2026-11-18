@@ -78,9 +78,14 @@ export function validateSectionOrder(document: ScoreDocument, projection: M3NDoc
         }
         if (groups.some(measure => [...parsePassRange(measure.ending!)].some(pass => pass > count))) report('order 的房子遍次超出乐段访问次数')
         const firstHouse = segment.findIndex(measure => measure.ending)
-        if (segment.slice(firstHouse).some(measure => !measure.ending)) report('order 的遍次房子只能放在乐段结尾')
+        const tail = segment.findIndex((measure, index) => index > firstHouse && !measure.ending)
+        if (tail >= 0 && segment.slice(tail).some(measure => measure.ending)) report('order 的遍次房子须连续，公共尾段放在全部房子之后')
       }
-      const boundary = visitEndings ? [segment[0], ...segment.filter((measure, index) => measure.ending && segment[index + 1]?.ending !== measure.ending)] : [segment[0], segment.at(-1)]
+      const ends = visitEndings
+        ? document.order!.filter(name => name === section.name).map((_, index) =>
+          segment.filter(measure => !measure.ending || parsePassRange(measure.ending).has(index + 1)).at(-1))
+        : [segment.at(-1)]
+      const boundary = [segment[0], ...ends]
       const partial = boundary.filter(measure => measure?.events.length && Math.abs(duration(measure) - expected(measure)) > 1e-9)
       const complementaryPickup = !visitEndings && segment.length > 1 && partial.length === 2
         && Math.abs(duration(boundary[0]) + duration(boundary[1]) - expected(boundary[0])) < 1e-9
