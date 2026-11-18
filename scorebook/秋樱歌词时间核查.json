@@ -1,7 +1,7 @@
 {
   "date": "2026-11-18",
   "source": "src/scores/qiu_ying_01.m3n",
-  "sourceSha256": "1c875d205a2fad4d2f1cd925e71d5656f1ff6c1dd25bb4ef3438f4bc23c33837",
+  "sourceSha256": "957aaa1712e037fac27b1996f70800d2eca5cc2026d5a27d5526c2ce4ed8ab5b",
   "references": [
     {
       "provider": "LRCLIB",
@@ -239,10 +239,10 @@
         },
         {
           "label": "いさせてください",
-          "scoreBeatWithinVerse": 94.5,
+          "scoreBeatWithinVerse": 96.25,
           "referenceSeconds": 194.19,
-          "predictedSeconds": 192.8943141125053,
-          "residualSeconds": 1.2956858874946988
+          "predictedSeconds": 194.26531932891584,
+          "residualSeconds": -0.07531932891585313
         }
       ]
     },
@@ -439,10 +439,10 @@
         },
         {
           "label": "いさせてください",
-          "scoreBeatWithinVerse": 94.5,
+          "scoreBeatWithinVerse": 96.25,
           "referenceSeconds": 194.455,
-          "predictedSeconds": 193.29751057380514,
-          "residualSeconds": 1.1574894261948572
+          "predictedSeconds": 194.67295666502184,
+          "residualSeconds": -0.21795666502184474
         }
       ]
     },
@@ -639,10 +639,10 @@
         },
         {
           "label": "いさせてください",
-          "scoreBeatWithinVerse": 94.5,
+          "scoreBeatWithinVerse": 96.25,
           "referenceSeconds": 194.24,
-          "predictedSeconds": 192.94939235866346,
-          "residualSeconds": 1.2906076413365497
+          "predictedSeconds": 194.32227365007753,
+          "residualSeconds": -0.08227365007752496
         }
       ]
     }
@@ -652,44 +652,44 @@
       "text": "い",
       "referenceSeconds": 194.18,
       "referenceDurationSeconds": 0.18,
-      "scoreBeatWithinVerse": 94.5,
-      "predictedSeconds": 192.8943141125053,
+      "scoreBeatWithinVerse": 96.25,
+      "predictedSeconds": 194.26531932891584,
       "referenceToNextSeconds": 0.18000000000000682,
-      "scoreToNextSeconds": 0.39171577611728026
+      "scoreToNextSeconds": 0.19585788805864013
     },
     {
       "text": "さ",
       "referenceSeconds": 194.36,
       "referenceDurationSeconds": 0.24,
-      "scoreBeatWithinVerse": 95,
-      "predictedSeconds": 193.28602988862258,
+      "scoreBeatWithinVerse": 96.5,
+      "predictedSeconds": 194.46117721697448,
       "referenceToNextSeconds": 0.23999999999998067,
-      "scoreToNextSeconds": 0.7834315522346174
+      "scoreToNextSeconds": 0.19585788805866855
     },
     {
       "text": "せ",
       "referenceSeconds": 194.6,
       "referenceDurationSeconds": 0.25,
-      "scoreBeatWithinVerse": 96,
-      "predictedSeconds": 194.0694614408572,
+      "scoreBeatWithinVerse": 96.75,
+      "predictedSeconds": 194.65703510503315,
       "referenceToNextSeconds": 0.25,
-      "scoreToNextSeconds": 0.39171577611728026
+      "scoreToNextSeconds": 0.19585788805866855
     },
     {
       "text": "て",
       "referenceSeconds": 194.85,
       "referenceDurationSeconds": 0.81,
-      "scoreBeatWithinVerse": 96.5,
-      "predictedSeconds": 194.46117721697448,
+      "scoreBeatWithinVerse": 97,
+      "predictedSeconds": 194.8528929930918,
       "referenceToNextSeconds": 0.8100000000000023,
-      "scoreToNextSeconds": 0.19585788805866855
+      "scoreToNextSeconds": 0.7834315522345605
     },
     {
       "text": "く",
       "referenceSeconds": 195.66,
       "referenceDurationSeconds": 0.28,
-      "scoreBeatWithinVerse": 96.75,
-      "predictedSeconds": 194.65703510503315,
+      "scoreBeatWithinVerse": 98,
+      "predictedSeconds": 195.63632454532637,
       "referenceToNextSeconds": 0.28000000000000114,
       "scoreToNextSeconds": 0.19585788805866855
     },
@@ -697,17 +697,17 @@
       "text": "だ",
       "referenceSeconds": 195.94,
       "referenceDurationSeconds": 0.16,
-      "scoreBeatWithinVerse": 97,
-      "predictedSeconds": 194.8528929930918,
+      "scoreBeatWithinVerse": 98.25,
+      "predictedSeconds": 195.83218243338504,
       "referenceToNextSeconds": 0.1599999999999966,
-      "scoreToNextSeconds": 0.7834315522345605
+      "scoreToNextSeconds": 0.19585788805864013
     },
     {
       "text": "さ",
       "referenceSeconds": 196.1,
       "referenceDurationSeconds": 0.32,
-      "scoreBeatWithinVerse": 98,
-      "predictedSeconds": 195.63632454532637,
+      "scoreBeatWithinVerse": 98.5,
+      "predictedSeconds": 196.02804032144368,
       "referenceToNextSeconds": 0.3199999999999932,
       "scoreToNextSeconds": 0.19585788805866855
     },
@@ -715,14 +715,118 @@
       "text": "い",
       "referenceSeconds": 196.42,
       "referenceDurationSeconds": 3.19,
-      "scoreBeatWithinVerse": 98.25,
-      "predictedSeconds": 195.83218243338504
+      "scoreBeatWithinVerse": 98.75,
+      "predictedSeconds": 196.22389820950235
     }
   ],
   "limitations": [
     "LRC/YRC may be edited or automatically aligned and are not independent ground truth.",
     "YRC kanji units can contain several syllables and do not prove one syllable per event.",
     "YRC third line starts at 36.00 seconds while ordinary LRC starts about 37.48 seconds; that YRC onset was not used as a calibration anchor.",
-    "No full-score verification or score correction claimed."
-  ]
+    "Only second-verse final-line lyric slots corrected against collected timestamp data; no full-score syllable verification or audio transcription claimed."
+  ],
+  "correction": {
+    "beforeSourceSha256": "1c875d205a2fad4d2f1cd925e71d5656f1ff6c1dd25bb4ef3438f4bc23c33837",
+    "beforeLyrics": "い% | さ%せ%てください{%2} |",
+    "afterLyrics": "{%2} | {%3}いさせてください |",
+    "scope": "Only second-verse final-line lyric slots changed; melody and first-verse lyrics unchanged.",
+    "beforeLastLineWordComparison": [
+      {
+        "text": "い",
+        "referenceSeconds": 194.18,
+        "referenceDurationSeconds": 0.18,
+        "scoreBeatWithinVerse": 94.5,
+        "predictedSeconds": 192.8943141125053,
+        "referenceToNextSeconds": 0.18000000000000682,
+        "scoreToNextSeconds": 0.39171577611728026
+      },
+      {
+        "text": "さ",
+        "referenceSeconds": 194.36,
+        "referenceDurationSeconds": 0.24,
+        "scoreBeatWithinVerse": 95,
+        "predictedSeconds": 193.28602988862258,
+        "referenceToNextSeconds": 0.23999999999998067,
+        "scoreToNextSeconds": 0.7834315522346174
+      },
+      {
+        "text": "せ",
+        "referenceSeconds": 194.6,
+        "referenceDurationSeconds": 0.25,
+        "scoreBeatWithinVerse": 96,
+        "predictedSeconds": 194.0694614408572,
+        "referenceToNextSeconds": 0.25,
+        "scoreToNextSeconds": 0.39171577611728026
+      },
+      {
+        "text": "て",
+        "referenceSeconds": 194.85,
+        "referenceDurationSeconds": 0.81,
+        "scoreBeatWithinVerse": 96.5,
+        "predictedSeconds": 194.46117721697448,
+        "referenceToNextSeconds": 0.8100000000000023,
+        "scoreToNextSeconds": 0.19585788805866855
+      },
+      {
+        "text": "く",
+        "referenceSeconds": 195.66,
+        "referenceDurationSeconds": 0.28,
+        "scoreBeatWithinVerse": 96.75,
+        "predictedSeconds": 194.65703510503315,
+        "referenceToNextSeconds": 0.28000000000000114,
+        "scoreToNextSeconds": 0.19585788805866855
+      },
+      {
+        "text": "だ",
+        "referenceSeconds": 195.94,
+        "referenceDurationSeconds": 0.16,
+        "scoreBeatWithinVerse": 97,
+        "predictedSeconds": 194.8528929930918,
+        "referenceToNextSeconds": 0.1599999999999966,
+        "scoreToNextSeconds": 0.7834315522345605
+      },
+      {
+        "text": "さ",
+        "referenceSeconds": 196.1,
+        "referenceDurationSeconds": 0.32,
+        "scoreBeatWithinVerse": 98,
+        "predictedSeconds": 195.63632454532637,
+        "referenceToNextSeconds": 0.3199999999999932,
+        "scoreToNextSeconds": 0.19585788805866855
+      },
+      {
+        "text": "い",
+        "referenceSeconds": 196.42,
+        "referenceDurationSeconds": 3.19,
+        "scoreBeatWithinVerse": 98.25,
+        "predictedSeconds": 195.83218243338504
+      }
+    ],
+    "beforeFinalLineOnsets": [
+      {
+        "reference": "lrclib-3445273",
+        "label": "いさせてください",
+        "scoreBeatWithinVerse": 94.5,
+        "referenceSeconds": 194.19,
+        "predictedSeconds": 192.8943141125053,
+        "residualSeconds": 1.2956858874946988
+      },
+      {
+        "reference": "netease-2706343626",
+        "label": "いさせてください",
+        "scoreBeatWithinVerse": 94.5,
+        "referenceSeconds": 194.455,
+        "predictedSeconds": 193.29751057380514,
+        "residualSeconds": 1.1574894261948572
+      },
+      {
+        "reference": "netease-669905",
+        "label": "いさせてください",
+        "scoreBeatWithinVerse": 94.5,
+        "referenceSeconds": 194.24,
+        "predictedSeconds": 192.94939235866346,
+        "residualSeconds": 1.2906076413365497
+      }
+    ]
+  }
 }
