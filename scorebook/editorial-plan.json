@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 88,
+  "sourceCount": 89,
   "sections": [
     {
       "id": "basics",
@@ -552,6 +552,14 @@
       "section": "pop",
       "group": "密集节奏与反复",
       "reason": "跨拍、变拍与细分节奏"
+    },
+    {
+      "id": "na_xie_nian",
+      "file": "na_xie_nian_01.m3n",
+      "title": "那些年",
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "reason": "十六分弱起、切分、跨小节延音、临时升音与主副歌复用"
     },
     {
       "id": "tong_hua_zhen",
