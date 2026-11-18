@@ -45,7 +45,7 @@ it('plays the introduction repeated 6s as sustains, with the extra opening rest 
   expect(notes.map(note => [note.start, note.end, note.pitch])).toEqual([
     [6, 6.75, 71], [6.75, 7.5, 69], [7.5, 8, 67],
   ])
-  expect(document.intervals.filter(interval => interval.kind === 'lg' && interval.start < written[8]!.events[0]!.sourceStart)).toEqual([])
+  expect(document.intervals.filter(interval => interval.kind === 'lg' && interval.start !== undefined && interval.start < written[8]!.events[0]!.sourceStart)).toEqual([])
 })
 
 it('checks the new dotted and syncopated rhythms and removes old-image ornaments', () => {
