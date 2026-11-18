@@ -5,7 +5,7 @@ import { alternativePerformance, compileScorePerformance, deriveScoreInteraction
 const original = readFileSync(new URL('./fixtures/hou-lai-original.m3n', import.meta.url), 'utf8')
 const source = readFileSync(new URL('../scores/hou_lai_01.m3n', import.meta.url), 'utf8')
 // Apply the separately requested musical corrections to the historical arrangement,
-// then continue checking that the sequential rewrite preserves it event by event.
+// then check that the repeat notation preserves it event by event.
 const instrumentalReference = original
   .replaceAll('((2e) 1e.) 1e~', '((2e) 1e.~) 1e~').replaceAll('再{%2}', '再%')
   .replace('{lg}((2e) 1e){/} ((1e~))', '(2e.) ((1e~))').replace('星%光', '星光')
@@ -14,7 +14,7 @@ const before = parseM3NDocument(instrumentalReference), after = parseM3NDocument
 const performedBars = (document: typeof before) => alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
 const oldBars = performedBars(before), newBars = performedBars(after)
 // The sole authorized correction: A's second ending loses one held beat;
-// A's third pickup moves into that bar. All other events remain in order.
+// The third pickup follows that three-beat ending. All other events remain in order.
 const changedIndex = oldBars.slice(0, 54).reduce((count, bar) => count + bar.events.length, 0) - 1
 const events = (bars: typeof oldBars) => {
   const pitches = resolveScorePitches(bars)
@@ -32,11 +32,18 @@ const lyrics = (document: typeof before) => {
       .map(lyric => ({ start: element.start, end: element.end, text: lyric.text })))
 }
 
-describe('Hou Lai sequential score with the third pickup inside the preceding bar', () => {
-  it('removes sections and preserves every event except the authorized held beat', () => {
+describe('Hou Lai with a shared three-pass chorus', () => {
+  it('uses local repeats and preserves every event except the previously authorized held beat', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(after.order).toBeUndefined()
     expect(after.sections ?? []).toHaveLength(0)
+    const printed = after.parts.get('score')!.melody.filter(bar => bar.events.length)
+    expect(printed).toHaveLength(52)
+    expect(printed[0]!.left).toBe('rptstart')
+    expect(printed.filter(bar => bar.right === 'rptend').map(bar => bar.repeatCount)).toEqual([3, 3])
+    expect(printed.map(bar => bar.ending)).toEqual([
+      ...Array(8).fill(undefined), ...Array(37).fill('1'), '2', '3', ...Array(5).fill(undefined),
+    ])
     const expected = events(oldBars)
     expect(expected).toHaveLength(406)
     expect(expected[changedIndex]!.beats).toBe(2)
@@ -46,7 +53,7 @@ describe('Hou Lai sequential score with the third pickup inside the preceding ba
     expect(compileScorePerformance(after).beats).toBe(260)
   })
 
-  it('merges only the boundary pickup and checks every remaining bar and meter', () => {
+  it('preserves every performed bar and meter, with a three-beat second ending before the pickup', () => {
     const snapshot = (bars: typeof oldBars) => bars.map(bar => ({
       beats: bar.events.reduce((sum, event) => sum + event.beats, 0),
       meter: [bar.events[0]!.meterCount, bar.events[0]!.meterUnit],
@@ -54,9 +61,9 @@ describe('Hou Lai sequential score with the third pickup inside the preceding ba
     const expected = snapshot(oldBars)
     expect(expected).toHaveLength(68)
     expect(expected.slice(53, 55).map(bar => bar.beats)).toEqual([4, 1])
-    expected.splice(54, 1)
+    expected[53]!.beats = 3
     expect(snapshot(newBars)).toEqual(expected)
-    expect(newBars[53]!.events).toHaveLength(oldBars[53]!.events.length + oldBars[54]!.events.length)
+    expect(snapshot(newBars).slice(53, 55).map(bar => bar.beats)).toEqual([3, 1])
   })
 
   it('preserves every lyric, shifting only lyrics after the shortened hold by one beat', () => {
