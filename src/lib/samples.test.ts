@@ -200,7 +200,7 @@ describe('bundled score corpus', () => {
     expect(await loadPresetScore(entry!.slug)).toBe(mozartK545)
     expect(validateM3NDiagnostics(mozartK545)).toEqual([])
     const document = parseM3NDocument(mozartK545)
-    expect(document).toMatchObject({ key: 'C', meterCount: 4, meterUnit: 4, hasExplicitTempo: false })
+    expect(document).toMatchObject({ key: 'C', meterCount: 4, meterUnit: 4, hasExplicitTempo: true, tempo: 120 })
     const part = document.parts.get('score')!
     const measures = part.melody.filter(measure => measure.events.length)
     expect(measures).toHaveLength(73)
