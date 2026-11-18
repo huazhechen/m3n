@@ -11,6 +11,7 @@ import { packScorebook, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth }
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(output, 'editorial-plan.json'))
+const probeOnly = process.argv.includes('--probe-only')
 const plan = JSON.parse(readFileSync(planFile, 'utf8'))
 assert(!process.argv.includes('--retain-unchanged-sizes'), 'Every build now selects widths from the web renderer; remove --retain-unchanged-sizes')
 const temp = join(root, '.tmp', plan.outputKey), profile = plan.page
@@ -25,6 +26,10 @@ await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url':
 } })
 const font = readFileSync(join(root, 'public/fonts/NotoSerifCJKsc-Regular.otf'))
 const rendererSha256 = createHash('sha256').update(readFileSync(join(temp, 'bundle/bundle.js'))).update(font).digest('hex')
+// Reorder or regroup a validated edition without repeating identical width probes.
+const reuseFile = process.argv.find(arg => arg.startsWith('--reuse-widths='))?.slice(15)
+const reused = reuseFile ? JSON.parse(readFileSync(resolve(reuseFile), 'utf8')) : undefined
+if (reused) assert.equal(reused.rendererSha256, rendererSha256, 'Cached width probes must match the renderer and fonts')
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
 const text = (value, x, y, size = 16, attrs = '') => `<text x="${x}" y="${y}" font-size="${size}" font-family="Scorebook Text" ${attrs}>${escape(value)}</text>`
@@ -42,22 +47,24 @@ try {
   for (const [index, entry] of plan.entries.entries()) {
     const source = readFileSync(join(root, 'src/scores', entry.file), 'utf8')
     sources.set(entry.id, source)
-    const { candidates, renderCache } = await probeWidthCandidates(width => page.evaluate(async ({ source, width }) => {
+    const cached = reused?.entries.find(item => item.file === entry.file && item.sourceSha256 === hash(source))
+    const { candidates, renderCache } = cached ?? await probeWidthCandidates(width => page.evaluate(async ({ source, width }) => {
       try { return await window.scorebook.measure(source, width) }
       catch (error) { return { width, error: error.message } }
     }, { source, width }))
     const best = chooseBestWidth(candidates)
     assert(best, `${entry.title}: no safe web layout: ${JSON.stringify(candidates)}`)
     records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache })
-    console.log(`${index + 1}/${plan.entries.length} ${entry.title}: ${best.width}px, ${best.pageCount} pages`)
+    writeFileSync(join(temp, 'width-probes.json'), JSON.stringify({ rendererSha256, entries: records }))
+    console.log(`${index + 1}/${plan.entries.length} ${entry.title}: ${best.width}px, ${best.pageCount} pages${cached ? ' (reused)' : ''}`)
   }
-  for (const group of packScorebook(records)) {
+  if (!probeOnly) for (const group of packScorebook(records)) {
     const entries = records.slice(group.start, group.end), start = music.length
     if (entries.length > 1) {
       const rendered = await page.evaluate(({ sources, width, gap }) => window.scorebook.sharedA4Page(sources, width, gap),
         { sources: entries.map(entry => sources.get(entry.id)), width: group.width, gap: sharedScoreGap })
       music.push({ kind: 'music', ids: entries.map(entry => entry.id), svg: pageSvg(rendered.markup) })
-      musicGroups.push({ musicStart: start, width: group.width, usedHeight: rendered.usedHeight,
+      musicGroups.push({ musicStart: start, width: group.width, usedHeight: rendered.usedHeight, coreGap: rendered.coreGap,
         items: entries.map((entry, index) => ({ id: entry.id, top: rendered.items[index].top, height: rendered.items[index].sourceHeight })) })
       console.log(`Shared ${group.width}px: ${entries.map(entry => entry.title).join(' / ')}`)
     } else {
@@ -72,6 +79,7 @@ try {
     }
   }
 } finally { await browser.close() }
+if (probeOnly) { console.log(`Width probes complete: ${records.length} scores`); process.exit(0) }
 
 // Book furniture does not alter the engraved score pages.
 const tocRows = plan.sections.flatMap(section => [{ section }, ...records.filter(entry => entry.section === section.id).map(entry => ({ entry }))])
@@ -111,7 +119,7 @@ for (const [index, page] of pages.entries()) writeFileSync(join(temp, 'pages', `
 writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))
 const report = { title: plan.title, edition: plan.edition, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
   entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile,
-  widthSearch: { minimum: 540, maximum: 720, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: .5, a4MarginMm: 12,
+  widthSearch: { minimum: 540, maximum: 720, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 24, pagedMinimum: 16, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedScoreWidth, sharedPreferredWidth,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')

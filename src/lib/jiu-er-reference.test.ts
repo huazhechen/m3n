@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest'
 import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/jiu_er_01.m3n?raw'
+import vocalSource from './fixtures/jiu-er-before-instrumental.m3n?raw'
 import reference from './fixtures/jiu-er-kuaiyuepu.json'
 import { loadPresetScore, presetScores } from './samples'
 
@@ -42,8 +43,8 @@ it('preserves the arrangement while applying the uploaded core melody ties withi
   expect(performance.notes.filter(note => note.channel !== 0)).toEqual([])
 })
 
-it('retains all vocal lyrics from the first bar', () => {
-  const document = parseM3NDocument(source)
+it('retains the historical vocal reference from the first bar', () => {
+  const document = parseM3NDocument(vocalSource)
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
   const lyrics = compileScorePerformance(document).elements.flatMap(element => (byId.get(element.xmlId) ?? [])
@@ -63,21 +64,29 @@ it('retains all vocal lyrics from the first bar', () => {
 })
 
 
-it('extends both Er syllable slurs across the barline through a tied 7', () => {
+it('removes lyrics while preserving the vocal arrangement and all key changes', () => {
   const document = parseM3NDocument(source)
-  const { lyricsByEvent } = deriveScoreInteraction(document)
+  expect([...deriveScoreInteraction(document).lyricsByEvent.values()].flat()).toEqual([])
+  expect(compileScorePerformance(document).notes).toEqual(compileScorePerformance(parseM3NDocument(vocalSource)).notes)
+  expect(source).toBe(vocalSource.replace(/^L:.*\n/gm, ''))
+})
+
+it('keeps both cross-bar slurs through the tied 7 after removing lyrics', () => {
+  const document = parseM3NDocument(source), vocal = parseM3NDocument(vocalSource)
+  const { lyricsByEvent } = deriveScoreInteraction(vocal)
+  const previous = vocal.parts.get('score')!.melody.flatMap(bar => bar.events)
   const events = document.parts.get('score')!.melody.flatMap(bar => bar.events)
-  const slurs = document.intervals.filter(interval => interval.kind === 'lg' &&
-    events.some(event => event.sourceStart === interval.start &&
+  const referenceSlurs = vocal.intervals.filter(interval => interval.kind === 'lg' &&
+    previous.some(event => event.sourceStart === interval.start &&
       lyricsByEvent.get(event)?.some(lyric => lyric.kind === 'text' && lyric.text === '儿')))
-  expect(slurs).toHaveLength(2)
-  for (const slur of slurs) {
-    const start = events.findIndex(event => event.sourceStart === slur.start)
+  expect(referenceSlurs).toHaveLength(2)
+  for (const reference of referenceSlurs) {
+    const start = previous.findIndex(event => event.sourceStart === reference.start)
+    const slur = document.intervals.find(interval => interval.kind === 'lg' && interval.start === events[start]!.sourceStart)!
+    expect(slur).toBeDefined()
     expect(slur.endStart).toBe(events[start + 2]!.sourceStart)
     expect(events[start + 1]!.pitches).toEqual(['7'])
     expect(events[start + 1]!.tie).toBe(true)
     expect(events[start + 2]!.pitches).toEqual(['7'])
-    expect(lyricsByEvent.get(events[start + 2]!)?.some(lyric => lyric.kind === 'text')).toBeFalsy()
-    expect(lyricsByEvent.get(events[start + 3]!)?.some(lyric => lyric.kind === 'text' && lyric.text === '香')).toBe(true)
   }
 })

@@ -35,23 +35,23 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   // A continuation begins at the music cell's allocated edge, just as its
   // open right end reaches the system boundary. Glyph side bearings must not
   // indent this edge; the real ink still participates in collision checks.
-  let left = firstHere ? relation.first.x : Math.min(...members.map(glyph => glyph.x - (glyph.musicLeft ?? glyph.left)))
-  let right = lastHere ? relation.last.x : system.measures.at(-1)!.end
+  const left = firstHere ? relation.first.x : Math.min(...members.map(glyph => glyph.x - (glyph.musicLeft ?? glyph.left)))
+  const right = lastHere ? relation.last.x : system.measures.at(-1)!.end
   if (firstHere && lastHere) {
     const run = (right - left) / 4, outer = height * 4 / 3, inner = Math.max(0, height - thickness) * 4 / 3
     commands.push({ op: 'M', x: left, y: port },
       { op: 'C', cx1: left + run, cy1: port - outer, cx2: right - run, cy2: port - outer, x: right, y: port },
       { op: 'C', cx1: right - run, cy1: port - inner, cx2: left + run, cy2: port - inner, x: left, y: port }, { op: 'Z' })
   } else {
-    const top = port - height, bottom = top + thickness, run = height * 1.2
+    // A closing continuation can end on the first note at a zero margin.
+    // Shorten its horizontal turn instead of extending outside the canvas.
+    const top = port - height, bottom = top + thickness, run = Math.min(height * 1.2, Math.max(0, right - left))
     if (firstHere) {
-      right = Math.max(right, left + run)
       commands.push({ op: 'M', x: left, y: port },
         { op: 'Q', cx: left + run * 0.45, cy: top, x: left + run, y: top },
         { op: 'L', x: right, y: top }, { op: 'L', x: right, y: bottom }, { op: 'L', x: left + run, y: bottom },
         { op: 'Q', cx: left + run * 0.45, cy: bottom, x: left, y: port }, { op: 'Z' })
     } else if (lastHere) {
-      left = Math.min(left, right - run)
       commands.push({ op: 'M', x: left, y: top }, { op: 'L', x: right - run, y: top },
         { op: 'Q', cx: right - run * 0.45, cy: top, x: right, y: port },
         { op: 'Q', cx: right - run * 0.45, cy: bottom, x: right - run, y: bottom },

@@ -4,18 +4,28 @@
   "sections": [
     {
       "id": "basics",
-      "title": "第一篇　每日训练与入门短曲",
-      "description": "完整保留半音阶口琴基本功作为每日训练，再用简谱练习入门短曲。"
+      "title": "第一章　基础练习",
+      "description": "单音、基本时值、级进与跳进、长音和连奏的入门训练。"
     },
     {
-      "id": "melodies",
-      "title": "第二篇　经典旋律与流行歌曲",
-      "description": "使用简谱练习经典旋律、流行歌曲、节奏与音乐表现。"
+      "id": "advanced",
+      "title": "第二章　进阶练习",
+      "description": "由附点与切分的节奏综合，逐步进入临时变音、快速音型与主题转调。"
+    },
+    {
+      "id": "pop",
+      "title": "第三章　流行歌曲",
+      "description": "完整流行歌曲与经典歌曲的旋律、歌词和表现练习。"
+    },
+    {
+      "id": "screen",
+      "title": "第四章　动漫影视与游戏",
+      "description": "动漫、影视和游戏主题，以及相关歌曲的完整演奏。"
     },
     {
       "id": "instrumental",
-      "title": "第三篇　影视乐曲与经典器乐",
-      "description": "使用简谱练习影视主题、舞曲与经典器乐。"
+      "title": "第五章　古典与器乐",
+      "description": "古典作品、器乐主题、现代器乐与舞曲的综合练习。"
     }
   ],
   "entries": [
@@ -25,205 +35,197 @@
       "title": "半音阶口琴基本功",
       "section": "basics",
       "group": "每日训练",
-      "reason": "按原谱顺序连续进行机能与音阶模进训练"
+      "reason": "吹吸切换、长音、力度控制、断音及音阶音型的日常综合训练"
     },
     {
       "id": "xiao_xing_xing",
       "file": "xiao_xing_xing_01.m3n",
       "title": "小星星",
       "section": "basics",
-      "group": "入门旋律与长音",
-      "reason": "重复音、级进和二分音符"
-    },
-    {
-      "id": "huan_le_song",
-      "file": "huan_le_song_01.m3n",
-      "title": "欢乐颂",
-      "section": "basics",
-      "group": "入门旋律与长音",
-      "reason": "重复音与级进，逐步加入附点和八分音符"
+      "group": "基础旋律与连奏",
+      "reason": "稳定拍点、四分与二分时值、同音重复起音和简单跳进"
     },
     {
       "id": "wo_he_ni",
       "file": "wo_he_ni_01.m3n",
       "title": "我和你",
       "section": "basics",
-      "group": "入门旋律与长音",
-      "reason": "慢速长音和低音区转换"
+      "group": "基础旋律与连奏",
+      "reason": "慢速长音气息、低中音区跳进与完整乐句"
+    },
+    {
+      "id": "huan_le_song",
+      "file": "huan_le_song_01.m3n",
+      "title": "欢乐颂",
+      "section": "basics",
+      "group": "基础旋律与连奏",
+      "reason": "级进、附点四分与八分音符、延音"
     },
     {
       "id": "long_long_ago",
       "file": "long_long_ago_01.m3n",
       "title": "很久以前",
       "section": "basics",
-      "group": "入门旋律与长音",
-      "reason": "短句中的八分音符"
-    },
-    {
-      "id": "song_bie",
-      "file": "song_bie_01.m3n",
-      "title": "送别",
-      "section": "basics",
-      "group": "歌唱性与八分音符",
-      "reason": "长短时值与连贯乐句"
-    },
-    {
-      "id": "hong_he_gu",
-      "file": "hong_he_gu_01.m3n",
-      "title": "红河谷",
-      "section": "basics",
-      "group": "歌唱性与八分音符",
-      "reason": "弱起与规整乐句"
-    },
-    {
-      "id": "su_shan_na",
-      "file": "su_shan_na_01.m3n",
-      "title": "苏珊娜",
-      "section": "basics",
-      "group": "歌唱性与八分音符",
-      "reason": "重复节奏与八分音符"
+      "group": "基础旋律与连奏",
+      "reason": "四分八分交替、休止收音和局部附点八分与十六分"
     },
     {
       "id": "xiao_hong_mao",
       "file": "xiao_hong_mao_01.m3n",
       "title": "小红帽",
       "section": "basics",
-      "group": "歌唱性与八分音符",
-      "reason": "连续八分音符与跳进"
+      "group": "基础旋律与连奏",
+      "reason": "连续八分音符、级进跳进交替与吹吸衔接"
     },
     {
-      "id": "chong_er_fei",
-      "file": "chong_er_fei_01.m3n",
-      "title": "虫儿飞",
+      "id": "song_bie",
+      "file": "song_bie_01.m3n",
+      "title": "送别",
       "section": "basics",
-      "group": "音阶与连奏",
-      "reason": "附点节奏和连奏"
-    },
-    {
-      "id": "duo_lai_mi",
-      "file": "duo_lai_mi_01.m3n",
-      "title": "哆唻咪",
-      "section": "basics",
-      "group": "音阶与连奏",
-      "reason": "音阶进行与节奏变化"
-    },
-    {
-      "id": "rang_wo_men_dang_qi_shuang_jiang",
-      "file": "rang_wo_men_dang_qi_shuang_jiang_01.m3n",
-      "title": "让我们荡起双桨",
-      "section": "basics",
-      "group": "音阶与连奏",
-      "reason": "弱起、附点与短连奏"
-    },
-    {
-      "id": "auld_lang_syne",
-      "file": "auld_lang_syne_01.m3n",
-      "title": "友谊地久天长",
-      "section": "melodies",
-      "group": "民歌与抒情",
-      "reason": "弱起与八分音符"
-    },
-    {
-      "id": "mo_si_ke_jiao_wai_de_wan_shang",
-      "file": "mo_si_ke_jiao_wai_de_wan_shang_01.m3n",
-      "title": "莫斯科郊外的晚上",
-      "section": "melodies",
-      "group": "民歌与抒情",
-      "reason": "小调旋律与连贯气息"
-    },
-    {
-      "id": "san_tao_che",
-      "file": "san_tao_che_01.m3n",
-      "title": "三套车",
-      "section": "melodies",
-      "group": "民歌与抒情",
-      "reason": "低音区与附点节奏"
-    },
-    {
-      "id": "scarborough_fair",
-      "file": "scarborough_fair_01.m3n",
-      "title": "斯卡布罗集市",
-      "section": "melodies",
-      "group": "三拍子与调式",
-      "reason": "三拍子和调式色彩"
-    },
-    {
-      "id": "sound_of_silence",
-      "file": "sound_of_silence_01.m3n",
-      "title": "寂静之声",
-      "section": "melodies",
-      "group": "三拍子与调式",
-      "reason": "弱起与旋律走向"
+      "group": "基础旋律与连奏",
+      "reason": "长乐句换气、附点与较大跳进、高低音区转换"
     },
     {
       "id": "ai_er_lan_hua_mei",
       "file": "ai_er_lan_hua_mei_01.m3n",
       "title": "爱尔兰画眉",
-      "section": "melodies",
-      "group": "三拍子与调式",
-      "reason": "八分音符与句尾长音"
+      "section": "basics",
+      "group": "基础旋律与连奏",
+      "reason": "弱起、四分八分交替与中高音区连贯演奏"
     },
     {
       "id": "mo_li_hua",
       "file": "mo_li_hua_01.m3n",
       "title": "茉莉花",
-      "section": "melodies",
-      "group": "民族旋律与节奏",
-      "reason": "五声性旋律与附点"
+      "section": "basics",
+      "group": "基础旋律与连奏",
+      "reason": "二拍律动、短连奏与高低音区衔接"
+    },
+    {
+      "id": "hong_he_gu",
+      "file": "hong_he_gu_01.m3n",
+      "title": "红河谷",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "弱起、跨拍延音与切分、附点八分与十六分组合"
+    },
+    {
+      "id": "auld_lang_syne",
+      "file": "auld_lang_syne_01.m3n",
+      "title": "友谊地久天长",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "附点八分与十六分组合及乐句节奏变化"
+    },
+    {
+      "id": "chong_er_fei",
+      "file": "chong_er_fei_01.m3n",
+      "title": "虫儿飞",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "同音起音、附点、跨拍延音与切分综合"
+    },
+    {
+      "id": "rang_wo_men_dang_qi_shuang_jiang",
+      "file": "rang_wo_men_dang_qi_shuang_jiang_01.m3n",
+      "title": "让我们荡起双桨",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "休止进入、附点连奏、局部十六分与音区转换"
+    },
+    {
+      "id": "scarborough_fair",
+      "file": "scarborough_fair_01.m3n",
+      "title": "斯卡布罗集市",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "三拍子、跨小节延音与临时变音"
+    },
+    {
+      "id": "sound_of_silence",
+      "file": "sound_of_silence_01.m3n",
+      "title": "寂静之声",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "切分、跨拍延音与休止进入"
+    },
+    {
+      "id": "tai_yang_zhao_chang_sheng_qi",
+      "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
+      "title": "太阳照常升起",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "重复音与持续音、切分及附点八分与十六分综合"
+    },
+    {
+      "id": "liang_zhu",
+      "file": "liang_zhu_01.m3n",
+      "title": "梁祝",
+      "section": "advanced",
+      "group": "音区转换与连奏控制",
+      "reason": "20个半音的音域、八度跳进、慢速连奏与长音气息控制，含局部十六分音符"
+    },
+    {
+      "id": "su_shan_na",
+      "file": "su_shan_na_01.m3n",
+      "title": "苏珊娜",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "休止后的十六分弱起、附点八分与十六分及轻快起音"
+    },
+    {
+      "id": "mo_si_ke_jiao_wai_de_wan_shang",
+      "file": "mo_si_ke_jiao_wai_de_wan_shang_01.m3n",
+      "title": "莫斯科郊外的晚上",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "临时变音、低中音区转换与延音"
+    },
+    {
+      "id": "duo_lai_mi",
+      "file": "duo_lai_mi_01.m3n",
+      "title": "哆唻咪",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "音阶移位、附点、较快速度下的临时升降音"
+    },
+    {
+      "id": "san_tao_che",
+      "file": "san_tao_che_01.m3n",
+      "title": "三套车",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "临时变音与连续十六分音符"
     },
     {
       "id": "katyusha",
       "file": "katyusha_01.m3n",
       "title": "喀秋莎",
-      "section": "melodies",
-      "group": "民族旋律与节奏",
-      "reason": "较快二拍子与小调"
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "较快速度下的附点与十六分音符"
     },
     {
       "id": "wo_niu_yu_huang_li_niao",
       "file": "wo_niu_yu_huang_li_niao_01.m3n",
       "title": "蜗牛与黄鹂鸟",
-      "section": "melodies",
-      "group": "民族旋律与节奏",
-      "reason": "十六分与切分节奏"
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "十六分音符、切分与重复节奏型"
     },
     {
-      "id": "hong_mei_hua_er_kai",
-      "file": "hong_mei_hua_er_kai_01.m3n",
-      "title": "红莓花儿开",
-      "section": "melodies",
-      "group": "节奏与多段歌词",
-      "reason": "弱起与多段歌词"
-    },
-    {
-      "id": "the_internationale",
-      "file": "the_internationale_01.m3n",
-      "title": "国际歌",
-      "section": "melodies",
-      "group": "节奏与多段歌词",
-      "reason": "附点节奏、弱起与三段歌词"
-    },
-    {
-      "id": "wo_de_zu_guo",
-      "file": "wo_de_zu_guo_01.m3n",
-      "title": "我的祖国",
-      "section": "melodies",
-      "group": "宽广乐句",
-      "reason": "连奏、附点与多段歌词"
-    },
-    {
-      "id": "wo_he_wo_de_zu_guo",
-      "file": "wo_he_wo_de_zu_guo_01.m3n",
-      "title": "我和我的祖国",
-      "section": "melodies",
-      "group": "宽广乐句",
-      "reason": "6/8与9/8变拍及连奏"
+      "id": "jiu_er",
+      "file": "jiu_er_01.m3n",
+      "title": "九儿",
+      "section": "advanced",
+      "group": "节奏、变音与转调",
+      "reason": "无歌词主题转调练习，保持降E、F、降B调转换时的节奏、乐句和音区定位"
     },
     {
       "id": "yue_liang_dai_biao_wo_de_xin",
       "file": "yue_liang_dai_biao_wo_de_xin_01.m3n",
       "title": "月亮代表我的心",
-      "section": "melodies",
+      "section": "pop",
       "group": "抒情入门",
       "reason": "附点与完整连奏乐句"
     },
@@ -231,7 +233,7 @@
       "id": "li_hua_you_kai_fang",
       "file": "li_hua_you_kai_fang_01.m3n",
       "title": "梨花又开放",
-      "section": "melodies",
+      "section": "pop",
       "group": "抒情入门",
       "reason": "歌唱性乐句与八分音符"
     },
@@ -239,7 +241,7 @@
       "id": "bai_hua_lin",
       "file": "bai_hua_lin_01.m3n",
       "title": "白桦林",
-      "section": "melodies",
+      "section": "pop",
       "group": "三拍与复拍",
       "reason": "三拍子与跨拍延音"
     },
@@ -247,7 +249,7 @@
       "id": "guang_yin_de_gu_shi",
       "file": "guang_yin_de_gu_shi_01.m3n",
       "title": "光阴的故事",
-      "section": "melodies",
+      "section": "pop",
       "group": "三拍与复拍",
       "reason": "6/8拍中的连续八分音符"
     },
@@ -255,87 +257,31 @@
       "id": "tong_zhuo_de_ni",
       "file": "tong_zhuo_de_ni_01.m3n",
       "title": "同桌的你",
-      "section": "melodies",
+      "section": "pop",
       "group": "三拍与复拍",
       "reason": "6/8拍与弱起、反复"
-    },
-    {
-      "id": "xiang_si",
-      "file": "xiang_si_01.m3n",
-      "title": "相思",
-      "section": "melodies",
-      "group": "三拍与复拍",
-      "reason": "三拍子、附点和跨小节延音"
     },
     {
       "id": "bei_jia_er_hu_pan",
       "file": "bei_jia_er_hu_pan_01.m3n",
       "title": "贝加尔湖畔",
-      "section": "melodies",
+      "section": "pop",
       "group": "切分与延音",
       "reason": "器乐间奏与跨拍延音"
-    },
-    {
-      "id": "yu_jian",
-      "file": "yu_jian_01.m3n",
-      "title": "遇见",
-      "section": "melodies",
-      "group": "切分与延音",
-      "reason": "切分与高音区器乐间奏"
     },
     {
       "id": "huang_hun",
       "file": "huang_hun_01.m3n",
       "title": "黄昏",
-      "section": "melodies",
+      "section": "pop",
       "group": "切分与延音",
       "reason": "切分节奏与延音"
-    },
-    {
-      "id": "an_xiang",
-      "file": "an_xiang_01.m3n",
-      "title": "暗香",
-      "section": "melodies",
-      "group": "切分与延音",
-      "reason": "长音、跨拍与情绪层次"
-    },
-    {
-      "id": "mei_li_de_shen_hua",
-      "file": "mei_li_de_shen_hua_01.m3n",
-      "title": "美丽的神话",
-      "section": "melodies",
-      "group": "切分与延音",
-      "reason": "切分、附点与长句"
-    },
-    {
-      "id": "dang_nian_qing",
-      "file": "dang_nian_qing_01.m3n",
-      "title": "当年情",
-      "section": "melodies",
-      "group": "切分与延音",
-      "reason": "弱起、附点与低音区"
-    },
-    {
-      "id": "qian_nv_you_hun",
-      "file": "qian_nv_you_hun_01.m3n",
-      "title": "倩女幽魂",
-      "section": "melodies",
-      "group": "香港影视金曲",
-      "reason": "较规整的节奏与短篇幅"
-    },
-    {
-      "id": "tie_xue_dan_xin",
-      "file": "tie_xue_dan_xin_01.m3n",
-      "title": "铁血丹心",
-      "section": "melodies",
-      "group": "香港影视金曲",
-      "reason": "附点节奏与低音跳进"
     },
     {
       "id": "qiu_ying",
       "file": "qiu_ying_01.m3n",
       "title": "秋樱",
-      "section": "melodies",
+      "section": "pop",
       "group": "十六分与变拍",
       "reason": "变拍与歌唱性乐句"
     },
@@ -343,7 +289,7 @@
       "id": "man_bu_ren_sheng_lu",
       "file": "man_bu_ren_sheng_lu_01.m3n",
       "title": "漫步人生路",
-      "section": "melodies",
+      "section": "pop",
       "group": "十六分与变拍",
       "reason": "十六分节奏与低音区"
     },
@@ -351,7 +297,7 @@
       "id": "wo_zhi_zai_hu_ni",
       "file": "wo_zhi_zai_hu_ni_01.m3n",
       "title": "我只在乎你",
-      "section": "melodies",
+      "section": "pop",
       "group": "十六分与变拍",
       "reason": "连续十六分与跨拍延音"
     },
@@ -359,7 +305,7 @@
       "id": "guo_huo",
       "file": "guo_huo_01.m3n",
       "title": "过火",
-      "section": "melodies",
+      "section": "pop",
       "group": "十六分与变拍",
       "reason": "密集歌词和切分"
     },
@@ -367,7 +313,7 @@
       "id": "yue_ding",
       "file": "yue_ding_01.m3n",
       "title": "约定",
-      "section": "melodies",
+      "section": "pop",
       "group": "十六分与变拍",
       "reason": "切分、弱起与句尾装饰"
     },
@@ -375,7 +321,7 @@
       "id": "hou_lai",
       "file": "hou_lai_01.m3n",
       "title": "后来",
-      "section": "melodies",
+      "section": "pop",
       "group": "十六分与变拍",
       "reason": "多段歌词、切分和连奏"
     },
@@ -383,47 +329,23 @@
       "id": "tong_hua_zhen",
       "file": "tong_hua_zhen_01.m3n",
       "title": "童话镇",
-      "section": "melodies",
+      "section": "pop",
       "group": "十六分与变拍",
       "reason": "反复歌词、切分与长句"
-    },
-    {
-      "id": "lao_nan_hai",
-      "file": "lao_nan_hai_01.m3n",
-      "title": "老男孩",
-      "section": "melodies",
-      "group": "密集节奏与反复",
-      "reason": "较长结构与密集八分、十六分"
-    },
-    {
-      "id": "liang_liang",
-      "file": "liang_liang_01.m3n",
-      "title": "凉凉",
-      "section": "melodies",
-      "group": "密集节奏与反复",
-      "reason": "器乐过门与密集节奏"
     },
     {
       "id": "qian_si_xi",
       "file": "qian_si_xi_01.m3n",
       "title": "牵丝戏",
-      "section": "melodies",
+      "section": "pop",
       "group": "密集节奏与反复",
       "reason": "切分、十六分与跳进"
-    },
-    {
-      "id": "ren_shi_jian",
-      "file": "ren_shi_jian_01.m3n",
-      "title": "人世间",
-      "section": "melodies",
-      "group": "密集节奏与反复",
-      "reason": "慢速密集节奏与高音区"
     },
     {
       "id": "shi_jie_zeng_yu_wo_de",
       "file": "shi_jie_zeng_yu_wo_de_01.m3n",
       "title": "世界赠予我的",
-      "section": "melodies",
+      "section": "pop",
       "group": "密集节奏与反复",
       "reason": "密集节奏与长线条"
     },
@@ -431,7 +353,7 @@
       "id": "ming_tian_hui_geng_hao",
       "file": "ming_tian_hui_geng_hao_01.m3n",
       "title": "明天会更好",
-      "section": "melodies",
+      "section": "pop",
       "group": "密集节奏与反复",
       "reason": "变拍、器乐段与多段歌词"
     },
@@ -439,31 +361,15 @@
       "id": "man_man_xi_huan_ni",
       "file": "man_man_xi_huan_ni_01.m3n",
       "title": "慢慢喜欢你",
-      "section": "melodies",
+      "section": "pop",
       "group": "密集节奏与反复",
       "reason": "跨拍、变拍与细分节奏"
-    },
-    {
-      "id": "xin_bu_liao_qing",
-      "file": "xin_bu_liao_qing_01.m3n",
-      "title": "新不了情",
-      "section": "melodies",
-      "group": "三连音与进阶抒情",
-      "reason": "三连音与复杂节奏"
-    },
-    {
-      "id": "wo_yao_ni",
-      "file": "wo_yao_ni_01.m3n",
-      "title": "我要你",
-      "section": "melodies",
-      "group": "三连音与进阶抒情",
-      "reason": "三连音、十六分与多段歌词"
     },
     {
       "id": "annie",
       "file": "annie_01.m3n",
       "title": "安妮",
-      "section": "melodies",
+      "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "反复歌词、器乐段与跳房子"
     },
@@ -471,7 +377,7 @@
       "id": "yi_qian_ge_shang_xin_de_li_you",
       "file": "yi_qian_ge_shang_xin_de_li_you_01.m3n",
       "title": "一千个伤心的理由",
-      "section": "melodies",
+      "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "十六分切分与跳房子"
     },
@@ -479,7 +385,7 @@
       "id": "yue_ban_xiao_ye_qu",
       "file": "yue_ban_xiao_ye_qu_01.m3n",
       "title": "月半小夜曲",
-      "section": "melodies",
+      "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "高音区、切分与跳进"
     },
@@ -487,47 +393,23 @@
       "id": "ting_hai",
       "file": "ting_hai_01.m3n",
       "title": "听海",
-      "section": "melodies",
+      "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "三连音、细分节奏与双层连线"
-    },
-    {
-      "id": "ru_yuan",
-      "file": "ru_yuan_01.m3n",
-      "title": "如愿",
-      "section": "melodies",
-      "group": "三连音与进阶抒情",
-      "reason": "变调、倚音与多段歌词"
-    },
-    {
-      "id": "jiu_er",
-      "file": "jiu_er_01.m3n",
-      "title": "九儿",
-      "section": "melodies",
-      "group": "三连音与进阶抒情",
-      "reason": "降B、C、F调的顺读转调及持续音"
     },
     {
       "id": "ai_ru_chao_shui",
       "file": "ai_ru_chao_shui_01.m3n",
       "title": "爱如潮水",
-      "section": "melodies",
+      "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "附点、切分、波音与两房反复"
-    },
-    {
-      "id": "zhui_meng_ren",
-      "file": "zhui_meng_ren_01.m3n",
-      "title": "追梦人",
-      "section": "melodies",
-      "group": "经典叙事与抒情",
-      "reason": "双段歌词、附点、十六分音符与跳房子"
     },
     {
       "id": "xing_xing_dian_deng",
       "file": "xing_xing_dian_deng_01.m3n",
       "title": "星星点灯",
-      "section": "melodies",
+      "section": "pop",
       "group": "经典叙事与抒情",
       "reason": "切分、替代旋律、器乐前奏与半音转调"
     },
@@ -535,7 +417,7 @@
       "id": "yan_hua_yi_leng",
       "file": "yan_hua_yi_leng_01.m3n",
       "title": "烟花易冷",
-      "section": "melodies",
+      "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "长音、反复与高音区转换"
     },
@@ -543,47 +425,47 @@
       "id": "feng",
       "file": "feng_01.m3n",
       "title": "枫",
-      "section": "melodies",
+      "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "细分节奏、延音与降D调转换"
     },
     {
-      "id": "tai_yang_zhao_chang_sheng_qi",
-      "file": "tai_yang_zhao_chang_sheng_qi_01.m3n",
-      "title": "太阳照常升起",
-      "section": "instrumental",
-      "group": "亚洲影视主题",
-      "reason": "短篇幅与长音"
+      "id": "hong_mei_hua_er_kai",
+      "file": "hong_mei_hua_er_kai_01.m3n",
+      "title": "红莓花儿开",
+      "section": "pop",
+      "group": "节奏与多段歌词",
+      "reason": "弱起与多段歌词"
     },
     {
-      "id": "zhi_dao_shi_jie_de_jin_tou",
-      "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
-      "title": "直到世界的尽头",
-      "section": "instrumental",
-      "group": "亚洲影视主题",
-      "reason": "高音区、切分与导航"
+      "id": "the_internationale",
+      "file": "the_internationale_01.m3n",
+      "title": "国际歌",
+      "section": "pop",
+      "group": "节奏与多段歌词",
+      "reason": "附点节奏、弱起与三段歌词"
     },
     {
-      "id": "liang_zhu",
-      "file": "liang_zhu_01.m3n",
-      "title": "梁祝",
-      "section": "instrumental",
-      "group": "影视爱情主题",
-      "reason": "民族旋律与装饰、连奏"
+      "id": "wo_de_zu_guo",
+      "file": "wo_de_zu_guo_01.m3n",
+      "title": "我的祖国",
+      "section": "pop",
+      "group": "宽广乐句",
+      "reason": "连奏、附点与多段歌词"
     },
     {
-      "id": "wen_rou_de_qing_su",
-      "file": "wen_rou_de_qing_su_01.m3n",
-      "title": "温柔的倾诉",
-      "section": "instrumental",
-      "group": "影视爱情主题",
-      "reason": "小调、临时升音与切分"
+      "id": "wo_he_wo_de_zu_guo",
+      "file": "wo_he_wo_de_zu_guo_01.m3n",
+      "title": "我和我的祖国",
+      "section": "pop",
+      "group": "宽广乐句",
+      "reason": "6/8与9/8变拍及连奏"
     },
     {
       "id": "castle_in_the_sky",
       "file": "castle_in_the_sky_01.m3n",
       "title": "天空之城",
-      "section": "instrumental",
+      "section": "screen",
       "group": "短主题与歌唱性旋律",
       "reason": "长线条与高音区"
     },
@@ -591,17 +473,169 @@
       "id": "yong_yuan_tong_zai",
       "file": "yong_yuan_tong_zai_01.m3n",
       "title": "永远同在",
-      "section": "instrumental",
+      "section": "screen",
       "group": "亚洲影视主题",
       "reason": "三拍子、低音区衔接与抒情长音"
     },
     {
-      "id": "xia_yu_de_shi_hou",
-      "file": "xia_yu_de_shi_hou_01.m3n",
-      "title": "下雨的时候",
-      "section": "instrumental",
-      "group": "短主题与歌唱性旋律",
-      "reason": "长音、切分与器乐反复"
+      "id": "wen_rou_de_qing_su",
+      "file": "wen_rou_de_qing_su_01.m3n",
+      "title": "温柔的倾诉",
+      "section": "screen",
+      "group": "影视爱情主题",
+      "reason": "小调、临时升音与切分"
+    },
+    {
+      "id": "yu_jian",
+      "file": "yu_jian_01.m3n",
+      "title": "遇见",
+      "section": "screen",
+      "group": "切分与延音",
+      "reason": "切分与高音区器乐间奏"
+    },
+    {
+      "id": "xiang_si",
+      "file": "xiang_si_01.m3n",
+      "title": "相思",
+      "section": "screen",
+      "group": "三拍与复拍",
+      "reason": "三拍子、附点和跨小节延音"
+    },
+    {
+      "id": "an_xiang",
+      "file": "an_xiang_01.m3n",
+      "title": "暗香",
+      "section": "screen",
+      "group": "切分与延音",
+      "reason": "长音、跨拍与情绪层次"
+    },
+    {
+      "id": "mei_li_de_shen_hua",
+      "file": "mei_li_de_shen_hua_01.m3n",
+      "title": "美丽的神话",
+      "section": "screen",
+      "group": "切分与延音",
+      "reason": "切分、附点与长句"
+    },
+    {
+      "id": "dang_nian_qing",
+      "file": "dang_nian_qing_01.m3n",
+      "title": "当年情",
+      "section": "screen",
+      "group": "切分与延音",
+      "reason": "弱起、附点与低音区"
+    },
+    {
+      "id": "qian_nv_you_hun",
+      "file": "qian_nv_you_hun_01.m3n",
+      "title": "倩女幽魂",
+      "section": "screen",
+      "group": "香港影视金曲",
+      "reason": "较规整的节奏与短篇幅"
+    },
+    {
+      "id": "tie_xue_dan_xin",
+      "file": "tie_xue_dan_xin_01.m3n",
+      "title": "铁血丹心",
+      "section": "screen",
+      "group": "香港影视金曲",
+      "reason": "附点节奏与低音跳进"
+    },
+    {
+      "id": "lao_nan_hai",
+      "file": "lao_nan_hai_01.m3n",
+      "title": "老男孩",
+      "section": "screen",
+      "group": "密集节奏与反复",
+      "reason": "较长结构与密集八分、十六分"
+    },
+    {
+      "id": "liang_liang",
+      "file": "liang_liang_01.m3n",
+      "title": "凉凉",
+      "section": "screen",
+      "group": "密集节奏与反复",
+      "reason": "器乐过门与密集节奏"
+    },
+    {
+      "id": "ren_shi_jian",
+      "file": "ren_shi_jian_01.m3n",
+      "title": "人世间",
+      "section": "screen",
+      "group": "密集节奏与反复",
+      "reason": "慢速密集节奏与高音区"
+    },
+    {
+      "id": "xin_bu_liao_qing",
+      "file": "xin_bu_liao_qing_01.m3n",
+      "title": "新不了情",
+      "section": "screen",
+      "group": "三连音与进阶抒情",
+      "reason": "三连音与复杂节奏"
+    },
+    {
+      "id": "wo_yao_ni",
+      "file": "wo_yao_ni_01.m3n",
+      "title": "我要你",
+      "section": "screen",
+      "group": "三连音与进阶抒情",
+      "reason": "三连音、十六分与多段歌词"
+    },
+    {
+      "id": "ru_yuan",
+      "file": "ru_yuan_01.m3n",
+      "title": "如愿",
+      "section": "screen",
+      "group": "三连音与进阶抒情",
+      "reason": "变调、倚音与多段歌词"
+    },
+    {
+      "id": "zhui_meng_ren",
+      "file": "zhui_meng_ren_01.m3n",
+      "title": "追梦人",
+      "section": "screen",
+      "group": "经典叙事与抒情",
+      "reason": "双段歌词、附点、十六分音符与跳房子"
+    },
+    {
+      "id": "zhi_dao_shi_jie_de_jin_tou",
+      "file": "zhi_dao_shi_jie_de_jin_tou_01.m3n",
+      "title": "直到世界的尽头",
+      "section": "screen",
+      "group": "亚洲影视主题",
+      "reason": "高音区、切分与导航"
+    },
+    {
+      "id": "ru_guo_you_ni_zai",
+      "file": "ru_guo_you_ni_zai_01.m3n",
+      "title": "如果有你在",
+      "section": "screen",
+      "group": "舞曲与动画主题",
+      "reason": "十六分音符、临时变音、顿音与延音"
+    },
+    {
+      "id": "san_bu",
+      "file": "san_bu_01.m3n",
+      "title": "散步",
+      "section": "screen",
+      "group": "快速音型与装饰",
+      "reason": "切分与器乐乐句"
+    },
+    {
+      "id": "qing_niao",
+      "file": "qing_niao_01.m3n",
+      "title": "青鸟",
+      "section": "screen",
+      "group": "快速音型与装饰",
+      "reason": "快速节奏与高音区"
+    },
+    {
+      "id": "super_mario",
+      "file": "super_mario_01.m3n",
+      "title": "超级玛丽",
+      "section": "screen",
+      "group": "快速音型与装饰",
+      "reason": "休止切分、跳进与临时变音"
     },
     {
       "id": "second_waltz",
@@ -612,30 +646,6 @@
       "reason": "三拍子、倚音与圆舞曲乐句"
     },
     {
-      "id": "ru_guo_you_ni_zai",
-      "file": "ru_guo_you_ni_zai_01.m3n",
-      "title": "如果有你在",
-      "section": "instrumental",
-      "group": "舞曲与动画主题",
-      "reason": "十六分音符、临时变音、顿音与延音"
-    },
-    {
-      "id": "super_mario",
-      "file": "super_mario_01.m3n",
-      "title": "超级玛丽",
-      "section": "instrumental",
-      "group": "快速音型与装饰",
-      "reason": "休止切分、跳进与临时变音"
-    },
-    {
-      "id": "qing_niao",
-      "file": "qing_niao_01.m3n",
-      "title": "青鸟",
-      "section": "instrumental",
-      "group": "快速音型与装饰",
-      "reason": "快速节奏与高音区"
-    },
-    {
       "id": "besame_mucho",
       "file": "besame_mucho_01.m3n",
       "title": "深情的吻",
@@ -644,20 +654,20 @@
       "reason": "歌唱性旋律、低音区与乐句气息"
     },
     {
+      "id": "xia_yu_de_shi_hou",
+      "file": "xia_yu_de_shi_hou_01.m3n",
+      "title": "下雨的时候",
+      "section": "instrumental",
+      "group": "短主题与歌唱性旋律",
+      "reason": "长音、切分与器乐反复"
+    },
+    {
       "id": "por_una_cabeza",
       "file": "por_una_cabeza_01.m3n",
       "title": "一步之遥",
       "section": "instrumental",
       "group": "快速音型与装饰",
       "reason": "探戈切分、装饰与变调"
-    },
-    {
-      "id": "san_bu",
-      "file": "san_bu_01.m3n",
-      "title": "散步",
-      "section": "instrumental",
-      "group": "快速音型与装饰",
-      "reason": "切分与器乐乐句"
     },
     {
       "id": "beer_barrel_polka",
@@ -724,10 +734,10 @@
       "reason": "快速二拍子、颤音、三连音与弱起分段复用"
     }
   ],
-  "edition": "第六十五版",
+  "edition": "第六十六版",
   "baseWidth": 720,
-  "outputPdf": "循序渐进乐谱集-简谱-v65.pdf",
-  "outputKey": "scorebook-v65-web",
+  "outputPdf": "循序渐进乐谱集-简谱-v66.pdf",
+  "outputKey": "scorebook-v66-web",
   "page": {
     "width": 793.7007874015749,
     "height": 1122.5196850393702
