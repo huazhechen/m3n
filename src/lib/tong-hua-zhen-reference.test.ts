@@ -24,7 +24,7 @@ it('retains only the three original pairs of houses and the original repeat stru
   const houses = source.split(/^---V[12]\n/gm).slice(1).map(part => part.split(/^---/m)[0]!)
   expect(houses.map(house => house.match(/^L: (.*)$/m)?.[1])).toEqual([
     '帽有件抑制自己 | 变成', '鱼把阳光抹成眼 | 影投进',
-    '在爱里曲 | 折川流', '前方的山口汇 | 合川流',
+    '在爱里曲', '前方的山口汇',
     '% | 呜{%2} | {%2}', '%',
   ])
   expect(source.match(/\|\|:/g)).toHaveLength(2)
