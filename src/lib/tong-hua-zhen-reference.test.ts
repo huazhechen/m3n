@@ -89,6 +89,15 @@ it('uses 2 for the third eighth note in bar 43', () => {
   ])
 })
 
+it('places 睡美 on adjacent notes and extends 美 over the next note in bar 11', () => {
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  const bar = written[10]!
+  const secondVerse = bar.events.map(event => (lyricsByEvent.get(event) ?? [])
+    .filter(lyric => lyric.kind === 'text' && lyric.passes?.has(2)).map(lyric => lyric.text))
+  expect(secondVerse).toEqual([['睡'], ['美'], [], ['人'], ['被'], ['埋'], ['藏']])
+  expect(bar.events.map(event => event.beats)).toEqual([.25, .25, .25, .25, .5, .25, .25])
+})
+
 it('keeps both lyric verses aligned, including the shared rhythms and corrected ending', () => {
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
