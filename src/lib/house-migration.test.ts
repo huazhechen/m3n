@@ -7,6 +7,7 @@ import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, reso
 // 星星点灯 includes the subsequent five-page tie/lyric audit and requested removal of all grace notes.
 // 童话镇 now has a dedicated uploaded-image/2/4 reference test.
 // 爱如潮水 and 枫 include the requested instrumental slide cleanups.
+// 枫 also shares the first three ending bars using the later visits' rhythm.
 const cases = [
   {
     "file": "bei_jia_er_hu_pan_01.m3n",
@@ -24,9 +25,9 @@ const cases = [
   },
   {
     "file": "feng_01.m3n",
-    "music": "ab778bb1cc9db25a8e32f85730840beabc3446f057ebd17f21ab92cac2178ce0",
-    "lyrics": "e490d359dfa09feeca4e23958fbe5535eb07fe7eb4c61a9d78deabba1bb061ec",
-    "events": 516,
+    "music": "a662e55ba5dbaab3c29c3b229e4d3db7fe1839dafa0f4a9bf30e44d1cfddecfa",
+    "lyrics": "bd942eba5e3e8d377c0cf9de4d95e3d6a1488a450a1cdc42852e8d51a75228e0",
+    "events": 517,
     "syllables": 397
   },
   {

@@ -13,7 +13,7 @@ import { loadPresetScore, presetScores } from './samples'
 
 describe('bundled score corpus', () => {
   it.each([
-    ['feng', '枫', maple, 48, 4],
+    ['feng', '枫', maple, 42, 4],
     ['yan_hua_yi_leng', '烟花易冷', smoke, 41, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 43, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],
@@ -139,6 +139,8 @@ describe('bundled score corpus', () => {
       ? reference.events.flatMap((event,index)=>event.bar<=35 ? [index] : [])
       : indexes
     const expected=selectedIndexes.flatMap(index=>{
+      if(reference.id==='feng' && index===25) return [{pitch:null,beats:0.25,tie:false},{pitch:76,beats:0.25,tie:false}]
+      if(reference.id==='feng' && index===26) return [{pitch:74,beats:0.25,tie:false}]
       if(reference.id==='feng' && mapleSlides.has(index)) return mapleSlides.get(index) ? [mapleSlides.get(index)!] : []
       const event=reference.events[index]!
       if(reference.id==='yan_hua_yi_leng' && smokeSlides.has(event.referenceId)) {
@@ -170,11 +172,10 @@ describe('bundled score corpus', () => {
       const finalEnding = text.indexOf('自秋末的眼泪',finalChorus)
       const firstEnding = text.indexOf('总在回忆里才看的清')
       const secondVerse = firstEnding + '总在回忆里才看的清'.length
-      const firstTail = text.indexOf('的心情清')
-      const secondTail = text.indexOf('度的双手过')
-      return text.slice(0, firstTail) + text.slice(secondVerse, secondTail)
-        + text.slice(firstTail, secondVerse) + text.slice(secondTail, chorus)
-        + text.slice(secondTail, chorus)
+      const secondEnding = text.indexOf('只剩挥散不去的难过')
+      return text.slice(0, firstEnding) + text.slice(secondVerse, secondEnding)
+        + text.slice(firstEnding, secondVerse) + text.slice(secondEnding, chorus)
+        + text.slice(secondEnding, chorus)
         + text.slice(chorus, thirdEnding) + text.slice(finalEnding) + text.slice(bridge, finalChorus)
     }
     const expected=reference.id==='feng'
