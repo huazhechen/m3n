@@ -42,9 +42,9 @@ it('plays the introduction and all three vocal endings while skipping the interl
   expect(playbackMeasureIndexes(bars)).toEqual([
     ...range(0, 39), ...range(9, 36), 39, 40, ...range(25, 36), 41, 42,
   ])
-  expect(compileScorePerformance(document).beats).toBe(322)
+  expect(compileScorePerformance(document).beats).toBe(324)
   expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
-    .toEqual([2, ...Array(42).fill(4)])
+    .toEqual(Array(43).fill(4))
 })
 
 it('pads the return pickup with rests and preserves the vocal ending before stopping', () => {

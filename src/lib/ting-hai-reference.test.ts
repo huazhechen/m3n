@@ -5,7 +5,10 @@ import reference from './fixtures/ting-hai-upload-reference.json'
 
 // Keep the full uploaded transcription intact. The user subsequently removed
 // all instrumental introduction notes, retaining only the one-beat vocal pickup.
-const expectedBars = reference.bars.slice(7).map((bar, index) => index ? bar : {
+// The final sustained note is shortened by one beat to complement that pickup.
+const expectedBars = reference.bars.slice(7).map((bar, index) => index === reference.bars.length - 8 ? {
+  ...bar, events: [['1e', 3, false]],
+} : index ? bar : {
   ...bar, events: bar.events.slice(1), lyrics: bar.lyrics.slice(1),
 })
 
@@ -23,7 +26,7 @@ describe('Ting Hai uploaded reference d72b', () => {
     expect(bars).toHaveLength(36)
     for (const [index, bar] of bars.entries()) {
       expect(events(bar), `written bar ${index + 1}`).toEqual(expectedBars[index]!.events)
-      expect(bar.events.reduce((sum, event) => sum + event.beats, 0)).toBe(index === 0 ? 1 : 4)
+      expect(bar.events.reduce((sum, event) => sum + event.beats, 0)).toBe(index === 0 ? 1 : index === bars.length - 1 ? 3 : 4)
     }
   })
 
@@ -58,10 +61,10 @@ describe('Ting Hai uploaded reference d72b', () => {
     const expected = [
       ...expectedBars.slice(0, 34),
       ...reference.bars.slice(16, 39),
-      ...reference.bars.slice(41, 43),
+      ...expectedBars.slice(34, 36),
     ]
     expect(played.map(events)).toEqual(expected.map(bar => bar.events))
     expect(played).toHaveLength(59)
-    expect(compileScorePerformance(document).beats).toBe(233)
+    expect(compileScorePerformance(document).beats).toBe(232)
   })
 })
