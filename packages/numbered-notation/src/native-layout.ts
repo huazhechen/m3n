@@ -14,6 +14,7 @@ import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks, type NativePageBlock } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
+import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
 import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
@@ -124,8 +125,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
   for (let begin = 0; begin < fragments.length;) {
     let end = begin + 1
     while (end < fragments.length && !fragments[end]!.breakBefore && !fragments[end - 1]!.breakAfter) end++
-    const group = fragments.slice(begin, end), cost = Array<number>(group.length + 1).fill(Infinity), next = Array<number>(group.length).fill(0)
-    cost[group.length] = 0
+    const group = fragments.slice(begin, end), candidates: NativeLineCandidate[][] = Array.from({ length: group.length }, () => [])
     for (let index = group.length - 1; index >= 0; index--) {
       let minimum = 0, widestMinimum = 0
       const available = Math.max(1, width * ratio - leading([group[index]!]))
@@ -136,15 +136,11 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         const equal = options.equalMeasures
         const minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
         if (minWidth > available && count > 1) break
-        const slack = Math.max(0, available - minWidth) / available
-        const overflow = Math.max(0, minWidth - available) / available
-        const score = slack * slack + overflow * overflow * 100 + cost[stop + 1]!
-        // Equal-energy partitions should leave the shorter row at the end.
-        // Ignore round-off from subtracting cumulative measured coordinates.
-        if (score < cost[index]! - 1e-12 || Math.abs(score - cost[index]!) <= 1e-12 && stop + 1 > next[index]!) { cost[index] = score; next[index] = stop + 1 }
+        candidates[index]!.push({ end: stop + 1, density: minWidth / available })
       }
     }
-    for (let index = 0; index < group.length;) { const stop = Math.max(index + 1, next[index]!); lines.push(group.slice(index, stop)); index = stop }
+    let index = 0
+    for (const stop of planNativeLines(candidates)) { lines.push(group.slice(index, stop)); index = stop }
     begin = end
   }
   return lines

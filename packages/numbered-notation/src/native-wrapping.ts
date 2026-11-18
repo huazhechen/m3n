@@ -1,4 +1,5 @@
 import type { NativeMeasure } from './native-model.js'
+import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 
 /** Split a dense bar into balanced musical groups, preserving every tuplet. */
 export function splitNativeMeasure(measure: NativeMeasure, width: number): NativeMeasure[] {
@@ -17,28 +18,22 @@ export function splitNativeMeasure(measure: NativeMeasure, width: number): Nativ
     const columns = measure.columns.slice(start, stop)
     return { columns, left: Math.min(...columns.map(column => column.minimumStart!)), right: Math.max(...columns.map(column => column.minimumEnd!)) }
   })
-  const costs = Array<number>(groups.length + 1).fill(Infinity), previous = Array<number>(groups.length + 1).fill(0)
-  costs[0] = 0
-  for (let stop = 1; stop <= groups.length; stop++) {
+  const candidates: NativeLineCandidate[][] = Array.from({ length: groups.length }, () => [])
+  for (let start = 0; start < groups.length; start++) {
     let right = -Infinity
-    for (let start = stop - 1; start >= 0; start--) {
-      right = Math.max(right, groups[start]!.right)
+    const beat = groups[start]!.columns[0]!.time - measure.columns[0]!.time
+    const offBeat = start > 0 && Math.abs(beat - Math.round(beat)) > 1e-7
+    for (let stop = start; stop < groups.length; stop++) {
+      right = Math.max(right, groups[stop]!.right)
       const occupied = right - groups[start]!.left
-      if (occupied > capacity && start < stop - 1) break
-      const slack = Math.max(0, capacity - occupied) / width
-      const beat = groups[start]!.columns[0]!.time - measure.columns[0]!.time
-      const offBeat = start > 0 && Math.abs(beat - Math.round(beat)) > 1e-7
-      // One line costs one unit. Off-beat starts cost another; the squared
-      // slack balances the whole bar instead of leaving a sparse final row.
-      const overflow = Math.max(0, occupied - width) / width
-      const cost = costs[start]! + 1 + slack * slack + (offBeat ? 1 : 0) + overflow * overflow * 100
-      if (cost < costs[stop]!) { costs[stop] = cost; previous[stop] = start }
+      if (occupied > capacity && stop > start) break
+      candidates[start]!.push({ end: stop + 1, density: occupied / capacity, penalty: offBeat ? 1 : 0 })
     }
   }
   const fragments: typeof measure.columns[] = []
-  for (let stop = groups.length; stop > 0;) {
-    const start = previous[stop]!
-    fragments.unshift(groups.slice(start, stop).flatMap(group => group.columns)); stop = start
+  let start = 0
+  for (const stop of planNativeLines(candidates)) {
+    fragments.push(groups.slice(start, stop).flatMap(group => group.columns)); start = stop
   }
   if (fragments.length < 2) return [measure]
   return fragments.map((columns, index) => {
