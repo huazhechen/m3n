@@ -254,7 +254,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       measure.columns = times.map((time, index) => {
         const glyphs = byTime.get(time)!, duration = (times[index + 1] ?? measure.beats) - time
         const factor = Math.sqrt(Math.max(1 / 64, duration))
-        return { time, glyphs, left: Math.max(...glyphs.map(glyph => glyph.left + glyph.controls.reduce((sum, control) => sum + control.width, 0))), right: Math.max(...glyphs.map(glyph => glyph.right)), gap: nativeStyle.music * (options.noteGapEm ?? 0.5) * factor, minimumGap: nativeStyle.music * (options.minimumNoteGapEm ?? 0.3) * factor, x: 0 }
+        return { time, glyphs, left: Math.max(...glyphs.map(glyph => glyph.left + glyph.controls.reduce((sum, control) => sum + control.width, 0))), right: Math.max(...glyphs.map(glyph => glyph.right)), gap: nativeStyle.music * (options.noteGapEm ?? 0.6) * factor, minimumGap: nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) * factor, x: 0 }
       })
       measure.natural = measure.columns.reduce((sum, column) => sum + column.left + column.right + column.gap, 0) + 24
       measure.minimum = measure.columns.reduce((sum, column) => sum + column.left + column.right + column.minimumGap, 0) + 24

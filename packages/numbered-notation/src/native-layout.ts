@@ -47,7 +47,7 @@ function validate(options: NativeRenderOptions) {
   if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
   for (const value of [options.pageMargin, options.systemGap]) if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
   if (options.noteGapEm !== undefined && (!Number.isFinite(options.noteGapEm) || options.noteGapEm < 0)) throw new Error('音符间距比例必须为非负有限数值。')
-  if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0 || options.minimumNoteGapEm > (options.noteGapEm ?? 0.5))) throw new Error('最小间距必须非负且不大于自然间距。')
+  if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0 || options.minimumNoteGapEm > (options.noteGapEm ?? 0.6))) throw new Error('最小间距必须非负且不大于自然间距。')
   if (options.wrapWidthRatio !== undefined && (!Number.isFinite(options.wrapWidthRatio) || options.wrapWidthRatio <= 0 || options.wrapWidthRatio > 1)) throw new Error('wrapWidthRatio 必须大于 0 且不大于 1。')
 }
 
@@ -189,10 +189,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const headerDocument = document
   const expanded = supplied.fixedDo && document.orderKeys?.some(Boolean) ? keyedDisplayPerformance(document) : undefined
   if (expanded) document = expanded.document
-  const minimumNoteGapEm = supplied.minimumNoteGapEm ?? (supplied.noteGapEm === undefined ? 0.3 : 0)
-  const minimumNoteGapFloorEm = supplied.minimumNoteGapFloorEm ?? Math.min(0.1, minimumNoteGapEm)
+  const minimumNoteGapEm = supplied.minimumNoteGapEm ?? (supplied.noteGapEm === undefined ? 0.4 : 0)
+  const minimumNoteGapFloorEm = supplied.minimumNoteGapFloorEm ?? 0
   if (!Number.isFinite(minimumNoteGapFloorEm) || minimumNoteGapFloorEm < 0 || minimumNoteGapFloorEm > minimumNoteGapEm) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
-  const options = { ...supplied, pairedSpacing: supplied.minimumNoteGapEm !== undefined || supplied.noteGapEm === undefined, width: Math.max(320, Math.round(supplied.width)), noteGapEm: supplied.noteGapEm ?? 0.5, minimumNoteGapEm, minimumNoteGapFloorEm, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
+  const options = { ...supplied, pairedSpacing: supplied.minimumNoteGapEm !== undefined || supplied.noteGapEm === undefined, width: Math.max(320, Math.round(supplied.width)), noteGapEm: supplied.noteGapEm ?? 0.6, minimumNoteGapEm, minimumNoteGapFloorEm, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
   const margin = options.pageMargin ?? 32
   if (margin * 2 + 40 > options.width) throw new Error('简谱页边距过大。')
   let measurer = options.textMeasurer

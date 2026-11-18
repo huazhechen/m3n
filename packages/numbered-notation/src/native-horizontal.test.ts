@@ -9,10 +9,13 @@ import { projectNativeScore } from './native-model.js';
 // inkBottom distinguishes that estimate's blank tail from a real descender.
 // Ordinary prose is irrelevant to these examples' horizontal music positions.
 const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fontSize === 22 && text === '0' ? 11.154037475585938 : text.length * style.fontSize * 0.58, h: style.fontSize, baseline: style.fontSize * 0.8, inkBottom: style.fontSize * 0.8 }; } };
-const layout = (source: string, width = 800) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer });
+// Exact historic coordinates and line counts below use the spacing they were
+// recorded with. Other geometry regressions exercise the current defaults.
+const historicalSpacing = { minimumNoteGapEm: 0.3, noteGapEm: 0.5, minimumNoteGapFloorEm: 0.1 };
+const layout = (source: string, width = 800, spacing = {}) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, ...spacing });
 describe('native spacing and measured note envelopes', () => {
     it('matches all four note centres and the flush final bar of an unadorned system', () => {
-        const result = layout('{4/4}\nN: 1 2 3 4 |||');
+        const result = layout('{4/4}\nN: 1 2 3 4 |||', 800, historicalSpacing);
         const expected = [37.57701873779297, 217.60556040445962, 397.6341020711263, 577.6626437377929];
         result.projection.glyphs.forEach((glyph, index) => expect(glyph.x).toBeCloseTo(expected[index]!, 6));
         expect(result.projection.measures[0]!.barX).toBeCloseTo(763.17375, 6);
@@ -53,7 +56,7 @@ describe('native spacing and measured note envelopes', () => {
         // Keep this regression independent of song edits that remove local repeats.
         const source = '{4/4}\nN: ' + Array(9).fill('(5 6) 6~ 6^ |').join(' ')
             + '\n---\nN: ||: 0 0 (0 3) (6 7) | (1e 3) (1e 7~) (7 6) (5 6~) |';
-        const result = layout(source);
+        const result = layout(source, 800, historicalSpacing);
         const boundary = result.projection.measures[8]!;
         expect(boundary.naturalEnd! - boundary.naturalStart!).toBeCloseTo(92.8537393977258, 5);
         const opening = result.projection.measures[9]!;
@@ -61,7 +64,7 @@ describe('native spacing and measured note envelopes', () => {
         expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
-        const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320);
+        const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320, historicalSpacing);
         expect(result.systems).toHaveLength(45);
         expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
             .toEqual([[52], [53, 54], [55, 56], [57, 58], [59, 60, 61]]);
