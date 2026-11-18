@@ -12,7 +12,7 @@
     "build": "npm run build:packages && tsc -b && node tools/build-web.mjs",
     "lint": "oxlint",
     "test:packages": "npm run test -w @m3n/notation && npm run test -w @m3n/numbered-notation && npm run test -w @m3n/score-renderer",
-    "test:hosting": "node --import tsx --test tools/standalone-web.test.mjs",
+    "test:hosting": "node --import tsx --test tools/hosting-build.test.mjs",
     "test": "npm run build:packages && npm run test:packages && npm run test:scorebook && npm run test:hosting && vitest run",
     "test:scorebook": "node --test tools/scorebook-width.test.mjs tools/scorebook-source.test.mjs tools/scorebook-notation.test.mjs",
     "test:e2e": "playwright test",

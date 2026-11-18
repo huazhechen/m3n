@@ -105,7 +105,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 导出字体约 16 MB，只在下载时从本站加载。SVG 和 PDF 的文字转为轮廓以保存中文及字形；文字不再可选择或搜索。PNG 使用相同轮廓生成。字体来源、许可证、校验值与重建脚本见 `public/licenses/noto-serif/`。
 
-`tests/e2e/render-resources.spec.ts` 在阻断所有外站 HTTP 请求的条件下验证显示、切换和播放，检查播放不请求 Verovio 或 WASM、谱例节点保留，以及编辑和版宽变化后的缓存失效。端到端测试使用 `.tmp/playwright-dist-<port>` 独立构建，避免常规 `dist` 重建中断测试。`M3N_E2E_PORT` 可覆盖预览端口。设置 `M3N_E2E_BROWSER=webkit` 可用 WebKit 执行同一套端到端测试（需安装 Playwright WebKit 浏览器及其系统依赖），覆盖 iPad 设置弹层高度与按钮尺寸；默认仍为 Chromium。测试附件记录本机冷启动与切换耗时，性能数字不作为设备或网络的固定门槛。
+`tests/e2e/render-resources.spec.ts` 在阻断所有外站 HTTP 请求的条件下验证显示、切换和播放，检查播放不请求 Verovio 或 WASM、谱例节点保留，以及编辑和版宽变化后的缓存失效。生产构建使用 Vite 默认的按需分包。端到端测试使用 `.tmp/playwright-dist-<port>` 独立构建，避免常规 `dist` 重建中断测试。`M3N_E2E_PORT` 可覆盖预览端口。设置 `M3N_E2E_BROWSER=webkit` 可用 WebKit 执行同一套端到端测试（需安装 Playwright WebKit 浏览器及其系统依赖），覆盖 iPad 设置弹层高度与按钮尺寸；默认仍为 Chromium。测试附件记录本机冷启动与切换耗时，性能数字不作为设备或网络的固定门槛。
 
 ## 质量门禁
 
