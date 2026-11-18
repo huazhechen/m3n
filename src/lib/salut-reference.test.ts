@@ -5,7 +5,7 @@ import reference from './fixtures/salut-reference.json'
 import plan from '../../scorebook/editorial-plan.json'
 import categories from '../../scorebook/library-categories.json'
 
-it('preserves the Kuaiyuepu Salut main melody, modulation and both endings', () => {
+it('preserves the reviewed Salut melody, shared ending measures and playback route', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
   const document = parseM3NDocument(source)
@@ -15,6 +15,7 @@ it('preserves the Kuaiyuepu Salut main melody, modulation and both endings', () 
   const events = reference.events as [number, number, number, boolean][]
   expect(performance.beats).toBe(reference.beats)
   expect(performance.notes).toHaveLength(events.length)
+  expect(source).not.toContain('{breath}')
   events.forEach(([start, end, pitch, grace], index) => {
     let expectedStart = start, expectedEnd = end
     // Upstream anticipates the host; M3N plays each short grace on the beat.
@@ -29,6 +30,9 @@ it('preserves the Kuaiyuepu Salut main melody, modulation and both endings', () 
       while (previous >= 0 && events[previous]![3]) previous--
       expectedStart += (index - previous - 1) / 16
     }
+    // Review edit: sustain the second-pass B5 for six beats (220–226),
+    // borrowing one beat from the following silence; later onsets stay fixed.
+    if (!grace && start === 220 && pitch === 86) expectedEnd += 1
     const actual = performance.notes[index]!
     expect(actual.pitch, `attack ${index + 1}`).toBe(pitch)
     expect(actual.start, `attack ${index + 1} onset`).toBeCloseTo(expectedStart, 6)
