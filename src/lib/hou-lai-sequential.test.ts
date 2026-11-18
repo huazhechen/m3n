@@ -41,6 +41,12 @@ describe('Hou Lai written as A, B, repeated A, C', () => {
     expect(printed).toHaveLength(60)
     expect(printed.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
     expect(printed.filter(bar => bar.right === 'rptend')).toHaveLength(1)
+    expect(printed.some(bar => bar.right === 'double')).toBe(false)
+    const repeatStart = printed.find(bar => bar.left === 'rptstart')!
+    expect(repeatStart.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
+    const firstEnding = printed.find(bar => bar.ending === '1')!
+    expect(firstEnding.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
+    expect(firstEnding.events.slice(-3).map(event => event.pitches)).toEqual([['3e'], ['2e'], ['1e']])
     expect(printed.flatMap((bar, index) => bar.ending ? [[index + 1, bar.ending]] : [])).toEqual([[54, '1'], [55, '2']])
     const expected = events(oldBars)
     expect(expected).toHaveLength(406)
@@ -51,7 +57,7 @@ describe('Hou Lai written as A, B, repeated A, C', () => {
     expect(compileScorePerformance(after).beats).toBe(260)
   })
 
-  it('preserves every performed bar and meter, with a three-beat second ending before the pickup', () => {
+  it('joins the first ending and the next pickup into one full bar without changing the performance', () => {
     const snapshot = (bars: typeof oldBars) => bars.map(bar => ({
       beats: bar.events.reduce((sum, event) => sum + event.beats, 0),
       meter: [bar.events[0]!.meterCount, bar.events[0]!.meterUnit],
@@ -60,8 +66,9 @@ describe('Hou Lai written as A, B, repeated A, C', () => {
     expect(expected).toHaveLength(68)
     expect(expected.slice(53, 55).map(bar => bar.beats)).toEqual([4, 1])
     expected[53]!.beats = 3
+    expected.splice(53, 2, { ...expected[53]!, beats: 4 })
     expect(snapshot(newBars)).toEqual(expected)
-    expect(snapshot(newBars).slice(53, 55).map(bar => bar.beats)).toEqual([3, 1])
+    expect(newBars).toHaveLength(67)
   })
 
   it('preserves every lyric, shifting only lyrics after the shortened hold by one beat', () => {
