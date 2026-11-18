@@ -7,7 +7,7 @@ import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates } from './scorebook-width.mjs'
 import { writePreferredWidths } from './scorebook-source.mjs'
-import { packScorebook, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth } from './scorebook-packing.mjs'
+import { packScorebook, reorderForSharing, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth } from './scorebook-packing.mjs'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(output, 'editorial-plan.json'))
@@ -35,6 +35,7 @@ const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '
 const text = (value, x, y, size = 16, attrs = '') => `<text x="${x}" y="${y}" font-size="${size}" font-family="Scorebook Text" ${attrs}>${escape(value)}</text>`
 const pageSvg = content => `<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}"><rect width="100%" height="100%" fill="white"/>${content}</svg>`
 const records = [], music = [], sources = new Map(), musicGroups = []
+let orderOptimization
 try {
   const page = await browser.newPage({ viewport: { width: 1000, height: 1300 } })
   await page.route('**/*', route => route.request().url().endsWith('/bundle.js')
@@ -57,6 +58,15 @@ try {
     records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache })
     writeFileSync(join(temp, 'width-probes.json'), JSON.stringify({ rendererSha256, entries: records }))
     console.log(`${index + 1}/${plan.entries.length} ${entry.title}: ${best.width}px, ${best.pageCount} pages${cached ? ' (reused)' : ''}`)
+  }
+  if (!probeOnly) {
+    const before = [...records]
+    const pagesBefore = packScorebook(before).reduce((sum, group) => sum + group.pageCount, 0)
+    const reordered = reorderForSharing(records, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
+    records.splice(0, records.length, ...reordered)
+    orderOptimization = { pagesBefore, pagesAfter: packScorebook(records).reduce((sum, group) => sum + group.pageCount, 0),
+      moved: records.flatMap((entry, index) => before[index] === entry ? [] : [{ file: entry.file, title: entry.title, from: before.indexOf(entry) + 1, to: index + 1 }]) }
+    console.log(`Chapter packing: ${orderOptimization.pagesBefore} -> ${orderOptimization.pagesAfter} music pages`)
   }
   if (!probeOnly) for (const group of packScorebook(records)) {
     const entries = records.slice(group.start, group.end), start = music.length
@@ -96,9 +106,7 @@ for (const entry of records) {
   entry.pages = Array.from({ length: entry.pageCount }, (_, index) => frontCount + entry.musicStart + index + 1)
   delete entry.musicStart
 }
-const pages = [{ kind: 'cover', svg: pageSvg(text(plan.title, 60, 290, 48) + text(plan.edition, 60, 350, 22)
-  + text('网页统一排版 · A4 简谱', 60, 410, 22) + text(`${records.length} 份完整曲谱`, 60, 450, 18)
-  + plan.sections.map((section, index) => text(section.title, 60, 600 + index * 50, 20)).join('')) }]
+const pages = [{ kind: 'cover', svg: pageSvg(text(plan.title, profile.width / 2, 350, 40, 'text-anchor="middle"')) }]
 for (let index = 0; index < tocCount; index++) {
   let content = text('目录', 40, 65, 30)
   for (let side = 0; side < 2; side++) {
@@ -118,7 +126,7 @@ pages.push(...music)
 for (const [index, page] of pages.entries()) writeFileSync(join(temp, 'pages', `${String(index + 1).padStart(3, '0')}.svg`), page.svg)
 writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))
 const report = { title: plan.title, edition: plan.edition, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
-  entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile,
+  entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile, orderOptimization,
   widthSearch: { minimum: 540, maximum: 720, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 24, pagedMinimum: 16, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedScoreWidth, sharedPreferredWidth,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }

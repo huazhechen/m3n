@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { chooseBestWidth, widthCandidates, probeWidthCandidates } from './scorebook-width.mjs'
-import { packScorebook, sharedPreferredWidth } from './scorebook-packing.mjs'
+import { packScorebook, reorderForSharing, sharedPreferredWidth } from './scorebook-packing.mjs'
 
 test('the search includes both ends of the 540–720 range in 10px steps', () => {
   assert.deepEqual(widthCandidates, Array.from({ length: 19 }, (_, index) => 540 + index * 10))
@@ -61,4 +61,19 @@ test('shared pages must fit at 635 and 645 during stability verification', () =>
   const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 440), { ...candidate(640, 440), stable: true,
     stabilityCases: [candidate(635, 530), candidate(640, 440), candidate(645, 440)] }]))
   assert.equal(packScorebook(entries).length, 2)
+})
+
+test('chapter works can share across distant positions while preserving chapter boundaries and anchors', () => {
+  const entries = [200, 900, 900, 900, 900, 900, 200].map((height, index) => entry(String(index), [candidate(540, height), candidate(640, height)]))
+  assert.equal(packScorebook(entries).length, 7)
+  const ordered = reorderForSharing(entries)
+  assert.equal(packScorebook(ordered).length, 6)
+  assert.equal(new Set(ordered).size, entries.length)
+  assert(ordered.some((work, index) => Math.abs(entries.indexOf(work) - index) > 3))
+  assert.deepEqual(reorderForSharing(entries, new Set(['classic', 'golden', 'pop', 'instrumental'])), entries)
+  for (const extra of [{ section: 'next' }, { breakBefore: true }, { sharePage: false }]) {
+    const blocked = entries.map(work => ({ ...work }))
+    Object.assign(blocked[1], extra)
+    assert.deepEqual(reorderForSharing(blocked), blocked)
+  }
 })

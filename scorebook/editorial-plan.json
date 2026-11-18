@@ -1,36 +1,42 @@
 {
-  "title": "循序渐进乐谱集",
+  "title": "Max的半音阶口琴乐谱集",
   "sourceCount": 88,
   "sections": [
     {
       "id": "basics",
       "title": "第一章　基础练习",
-      "description": "常规基本功贯穿全程；旋律由稳定拍点、基本时值与连奏，逐步进入弱起、附点、切分及十六分音符。"
+      "description": "常规基本功贯穿全程；旋律由稳定拍点、基本时值与连奏，逐步进入弱起、附点、切分及十六分音符。",
+      "reorderForSharing": false
     },
     {
       "id": "advanced",
       "title": "第二章　进阶练习",
-      "description": "由节奏综合、临时变音与音区转换，进入快速音型和转调；章末为综合挑战。"
+      "description": "由节奏综合、临时变音与音区转换，进入快速音型和转调；章末为综合挑战。",
+      "reorderForSharing": false
     },
     {
       "id": "classic",
       "title": "第三章　经典旋律",
-      "description": "传统经典与较早的流行、影视歌曲；由规整短句进入复拍、密集节奏与变拍。"
+      "description": "传统经典与较早的流行、影视歌曲；由规整短句进入复拍、密集节奏与变拍。",
+      "reorderForSharing": true
     },
     {
       "id": "golden",
       "title": "第四章　流行金曲",
-      "description": "成熟流行作品与影视金曲；由三拍、复拍和抒情长句，进入切分、三连音与完整长篇演奏。"
+      "description": "成熟流行作品与影视金曲；由三拍、复拍和抒情长句，进入切分、三连音与完整长篇演奏。",
+      "reorderForSharing": true
     },
     {
       "id": "pop",
       "title": "第五章　现代流行",
-      "description": "较新的流行作品与部分延续曲目；由长音、连奏与切分，进入密集节奏、变调和快速动漫主题。"
+      "description": "较新的流行作品与部分延续曲目；由长音、连奏与切分，进入密集节奏、变调和快速动漫主题。",
+      "reorderForSharing": true
     },
     {
       "id": "instrumental",
       "title": "第六章　古典与器乐",
-      "description": "由歌唱性旋律和舞曲，进入持续快速音型、装饰、半音及长篇结构的综合挑战。"
+      "description": "由歌唱性旋律和舞曲，进入持续快速音型、装饰、半音及长篇结构的综合挑战。",
+      "reorderForSharing": true
     }
   ],
   "entries": [
@@ -40,7 +46,8 @@
       "title": "半音阶口琴基本功",
       "section": "basics",
       "group": "每日训练",
-      "reason": "吹吸切换、长音、力度控制、断音及音阶音型的日常综合训练"
+      "reason": "吹吸切换、长音、力度控制、断音及音阶音型的日常综合训练",
+      "breakBefore": true
     },
     {
       "id": "xiao_xing_xing",
@@ -739,10 +746,10 @@
       "reason": "长篇幅、快速音阶、主题交接与反复"
     }
   ],
-  "edition": "第六十七版",
+  "edition": "第六十八版",
   "baseWidth": 720,
-  "outputPdf": "循序渐进乐谱集-简谱-v67.pdf",
-  "outputKey": "scorebook-v67-web",
+  "outputPdf": "Max的半音阶口琴乐谱集-简谱-v68.pdf",
+  "outputKey": "scorebook-v68-web",
   "page": {
     "width": 793.7007874015749,
     "height": 1122.5196850393702

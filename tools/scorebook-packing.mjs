@@ -5,6 +5,50 @@ export const sharedScoreWidth = 640
 export const sharedPreferredWidth = 540
 const safe = candidate => !candidate.error && candidate.stable !== false && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length
 
+/** Improve chapter packing with insertions, respecting explicit anchors. */
+export function reorderForSharing(entries, movableSections = new Set(entries.map(entry => entry.section))) {
+  const original = new Map(entries.map((entry, index) => [entry, index]))
+  const score = ordered => {
+    const groups = packScorebook(ordered)
+    let sparse = 0, widths = 0
+    for (const group of groups) {
+      widths += group.width * (group.end - group.start)
+      if (group.end !== group.start + 1 || group.pageCount !== 1) continue
+      const candidate = ordered[group.start].candidates.find(item => item.width === group.width)
+      if (Number.isFinite(candidate.naturalHeight)) {
+        const fill = candidate.naturalHeight / (group.width * 273 / 186)
+        sparse += Math.max(0, .6 - fill) ** 2
+      }
+    }
+    return [groups.reduce((sum, group) => sum + group.pageCount, 0), sparse, widths,
+      ordered.reduce((sum, entry, index) => sum + Math.abs(original.get(entry) - index), 0)]
+  }
+  const better = (a, b) => {
+    for (let index = 0; index < a.length; index++) {
+      if (Math.abs(a[index] - b[index]) > 1e-9) return a[index] < b[index]
+    }
+    return false
+  }
+  let ordered = [...entries], quality = score(ordered)
+  for (;;) {
+    let chosen, chosenQuality = quality
+    for (let from = 0; from < ordered.length; from++) {
+      if (!movableSections.has(ordered[from].section)) continue
+      for (let to = 0; to < ordered.length; to++) {
+        if (to === from) continue
+        const affected = ordered.slice(Math.min(from, to), Math.max(from, to) + 1)
+        if (affected.some(entry => entry.section !== ordered[from].section || entry.breakBefore || entry.sharePage === false)) continue
+        const option = [...ordered]
+        option.splice(to, 0, option.splice(from, 1)[0])
+        const candidateQuality = score(option)
+        if (better(candidateQuality, chosenQuality)) { chosen = option; chosenQuality = candidateQuality }
+      }
+    }
+    if (!chosen) return ordered
+    ordered = chosen; quality = chosenQuality
+  }
+}
+
 /** Preserve order and whole works. Minimize pages, then summed source widths. */
 export function packScorebook(entries) {
   const best = Array(entries.length + 1)
