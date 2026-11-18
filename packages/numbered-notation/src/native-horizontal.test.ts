@@ -81,11 +81,11 @@ describe('native spacing and measured note envelopes', () => {
             return projection.measures[0]!;
         };
         const two = measure(2), three = measure(3);
-        // Each underlined syllable needs 20px plus a 0.4px stroke envelope
+        // Each underlined syllable needs 20px plus its scaled stroke envelope
         // on either side, plus 1px safety. The
         // remaining elastic margin is 2.2px; the reserved 4.4px fits inside it.
-        expect(three.natural - two.natural).toBeCloseTo(2 * (20.4 + 1 + 2.2), 5);
-        expect(three.minimum - two.minimum).toBeCloseTo(2 * (20.4 + 1), 5);
+        expect(three.natural - two.natural).toBeCloseTo(2 * (20 + 0.4 * 16 / 18.04 + 1 + 2.2), 5);
+        expect(three.minimum - two.minimum).toBeCloseTo(2 * (20 + 0.4 * 16 / 18.04 + 1), 5);
     });
     it.each(['before', 'after'])('measures each forced row independently of adjacent springs (%s break)', kind => {
         const phrase = '||: 1 2 3 4 | 5 6 7 1e :||';

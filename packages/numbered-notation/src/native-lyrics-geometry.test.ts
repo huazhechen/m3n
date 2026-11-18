@@ -16,15 +16,15 @@ describe('native lyric and music lower envelopes', () => {
     const score = layoutNativeScore(document, options), first = score.systems[0]!.lanes[0]!
     const measurer = new DefaultTextMeasurer()
     const numeral = measurer.measureText('0', { fontSize: 22 })
-    const lyricMetrics = measurer.measureText('春', { fontSize: 18.04 })
+    const lyricMetrics = measurer.measureText('春', { fontSize: 16 })
     const bodyBottom = numeral.inkBottom! - numeral.baseline
     expect(first.bodyBottom).toBeCloseTo(7.15)
     expect(first.lyricBottom).toBeCloseTo(bodyBottom)
-    expect(first.bottom).toBeCloseTo(bodyBottom + 7.04 + lyricMetrics.inkBottom!)
+    expect(first.bottom).toBeCloseTo(bodyBottom + 5 + lyricMetrics.inkBottom!)
     const svg = NativeNumberedNotationScore.create(document).render(options).join('')
     const root = new DOMParser().parseFromString(svg, 'text/html')
     const lyric = root.querySelector('[data-m3n-role="lyric"]')!
-    expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(bodyBottom + 7.04 + lyricMetrics.baseline, 4)
+    expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(bodyBottom + 5 + lyricMetrics.baseline, 4)
     const second = score.systems[1]!.lanes[0]!
     expect(second.y - first.y).toBeCloseTo(first.bottom + 24 + second.top)
   })
@@ -41,7 +41,7 @@ describe('native lyric and music lower envelopes', () => {
     for (const system of score.systems) {
       const lane = system.lanes[0]!
       expect(lane.lyricBottom).toBe(lane.bodyBottom)
-      expect(lane.bottom).toBeCloseTo(lane.bodyBottom! + 7.04 + 18.04 * .8)
+      expect(lane.bottom).toBeCloseTo(lane.bodyBottom! + 5 + 16 * .8)
     }
   })
 
@@ -50,7 +50,7 @@ describe('native lyric and music lower envelopes', () => {
       return { w: text.length * style.fontSize * 0.6, h: style.fontSize * 1.2, baseline: style.fontSize * 0.7 }
     } }
     const score = layoutNativeScore(parseM3NDocument('{2/4}\nN: 1 2 |||\nL: (gyp) (yo)'), { ...options, textMeasurer: measurer })
-    const glyph = score.projection.glyphs[0]!, size = 22 * 0.82
+    const glyph = score.projection.glyphs[0]!, size = 16
     const root = new DOMParser().parseFromString(nativeLyricSvg(glyph, 0, 0, 0, measurer), 'text/html')
     const underline = root.querySelector('line')!
     expect(underline).not.toBeNull()
@@ -82,8 +82,8 @@ describe('native lyric and music lower envelopes', () => {
     glyph.lyrics.set(0, { texts: ['“春！”'], passes: undefined })
     const root = new DOMParser().parseFromString(nativeLyricSvg(glyph, 0, 0, 0, measurer), 'text/html')
     const lyric = root.querySelector('[data-m3n-role="lyric"]')!
-    const opening = measurer.measureText('“', { fontSize: 18.04 }).w
-    const body = measurer.measureText('春', { fontSize: 18.04 }).w
+    const opening = measurer.measureText('“', { fontSize: 16 }).w
+    const body = measurer.measureText('春', { fontSize: 16 }).w
     expect(Number(lyric.getAttribute('x')) + opening + body / 2).toBeCloseTo(glyph.x, 3)
     const painted = nativeSvgInk(root.body.innerHTML, measurer)
     expect(painted.left - glyph.x).toBeCloseTo(quoted.left, 3)
@@ -95,7 +95,7 @@ describe('native lyric and music lower envelopes', () => {
       return { w: text.length * style.fontSize, advance: text.length * style.fontSize, inkLeft: -3, inkRight: text.length * style.fontSize + 4, h: 12, baseline: 10 }
     } }
     const ink = nativeLyricInk({ texts: ['gyp'], passes: undefined }, measurer)
-    expect(ink.right - ink.left).toBeCloseTo(3 * 18.04 + 7, 3)
+    expect(ink.right - ink.left).toBeCloseTo(3 * 16 + 7, 3)
     expect(nativeLyricInk({ texts: [''], passes: undefined }, measurer)).toEqual({ left: 0, right: 0, top: 0, bottom: 0 })
   })
 

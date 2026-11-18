@@ -64,6 +64,6 @@ it('measures packed tiers including underlines and font descenders', () => {
     glyph.lyrics.get(1)!.underlined = true;
     placeNativeLyrics(system, lane, measurer);
     const boxes = [1, 2].map(row => nativeSvgInk(nativeLyricSvg(glyph, row, glyph.lyricBaselines!.get(row)!, system.index, measurer), measurer));
-    expect(boxes[1]!.top - boxes[0]!.bottom).toBeCloseTo(nativeStyle.music * .24, 3);
+    expect(boxes[1]!.top - boxes[0]!.bottom).toBeCloseTo(nativeStyle.lyricGap, 3);
     expect(lane.bottom).toBeGreaterThanOrEqual(boxes[1]!.bottom - .001);
 });
