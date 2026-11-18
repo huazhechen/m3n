@@ -13,7 +13,7 @@ it('preserves all performed pitches, durations, ties, articulations, dynamics an
     event.postfixes, event.dynamic ?? null, event.tempo,
   ]))
   expect(events).toHaveLength(408)
-  expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe('06502e9caaf1cb05f1d0ee6736203c2d4d7ff761f3820f9f3c7dbee2377a6e56')
+  expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe('75be399245f79d05b28605a2e871c721cf369d6427a287bab77fb366d49b9353')
 })
 
 it('preserves every performed lyric and its note timing while skipping the interlude on returns', () => {
@@ -26,21 +26,21 @@ it('preserves every performed lyric and its note timing while skipping the inter
       .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
       .map(lyric => [element.start, element.end, lyric.text]))
   expect(lyrics).toHaveLength(234)
-  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('448a66e026c865f4512fee9babbaa195fbd987ec373fd7c8347d6ac640676ee7')
+  expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('fe867455954738ed6c7ba728239cc8efe31bf165c34a0a4ec6a5b77882750f33')
 })
 
-it('uses the first ending for the interlude, the second for D.S. and the third for Fine', () => {
+it('uses the first ending for the interlude, a shared second/third ending for D.S. and Fine', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document.order).toBeUndefined()
   expect(document.sections ?? []).toHaveLength(0)
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-  expect(bars).toHaveLength(38)
+  expect(bars).toHaveLength(37)
   expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index] : [])).toEqual([4])
   expect(bars.flatMap((bar, index) => bar.right === 'rptend' ? [index] : [])).toEqual([35])
-  expect(bars.slice(27).map(bar => bar.ending)).toEqual([...Array(9).fill('1'), '2', '3'])
+  expect(bars.slice(27).map(bar => bar.ending)).toEqual([...Array(9).fill('1'), '2,3'])
   expect(bars[20]!.navigation).toContain('segno')
   expect(bars[36]!.navigation).toContain('ds')
-  expect(bars[37]!.navigation).toContain('fine')
+  expect(bars[36]!.navigation).toContain('fine')
   expect(compileScorePerformance(document).beats).toBe(272)
 })
