@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
 
-test('numbered display ignores old staff preference and only loads playback resources on play', async ({ page, baseURL }) => {
+test('numbered display ignores old staff preference and plays without downloading application scripts', async ({ page, baseURL }) => {
   const external: string[] = [], requests: string[] = []
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation','0'))
   await page.route('**/*', async route => {
@@ -9,7 +9,9 @@ test('numbered display ignores old staff preference and only loads playback reso
     if (/^https?:$/.test(url.protocol) && url.origin!==new URL(baseURL!).origin) {
       external.push(url.href); return route.abort()
     }
-    requests.push(url.pathname); return route.continue()
+    requests.push(url.pathname)
+    if (url.pathname.endsWith('.js')) return route.abort()
+    return route.continue()
   })
   await page.goto('/scores/huan_le_song_01')
   const paper=page.locator('.score-paper')
@@ -23,7 +25,7 @@ test('numbered display ignores old staff preference and only loads playback reso
   await page.getByRole('button',{name:'播放',exact:true}).click()
   await page.getByRole('button',{name:'暂停',exact:true}).click()
   expect(external).toEqual([])
-  expect(requests.filter(path=>/playback-score-/.test(path))).toHaveLength(1)
+  expect(requests.filter(path=>/\.js$/.test(path))).toHaveLength(0)
   expect(requests.filter(path=>/\.wasm$/.test(path))).toHaveLength(0)
 })
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { analyzeM3N } from '@m3n/notation'
 import { AnalysisClient } from '../lib/analysis-client'
+import AnalysisWorker from '../lib/analysis.worker?worker&inline'
 
 export function useM3NAnalysis(source: string, { background = true, suspended = false } = {}) {
   const [analysis, setAnalysis] = useState(() => analyzeM3N(source))
@@ -17,7 +18,7 @@ export function useM3NAnalysis(source: string, { background = true, suspended = 
     let cancelled = false
     const timer = window.setTimeout(() => {
       try {
-        client.current ??= new AnalysisClient(new Worker(new URL('../lib/analysis.worker.ts', import.meta.url), { type: 'module' }))
+        client.current ??= new AnalysisClient(new AnalysisWorker())
         void client.current.analyze(source).then(snapshot => {
           if (!cancelled) { setAnalysis(snapshot); setError('') }
         }).catch((error: unknown) => {
