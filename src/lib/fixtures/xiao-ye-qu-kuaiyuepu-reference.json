@@ -1,0 +1,563 @@
+{
+  "referenceImage": "Screenshot_2026-11-18-12-49-52-595_com.kuaiyuepu.app.android-edit.jpg",
+  "imageSha256": "9e99c66cd2615b06aaa6d6a65be9311337fbac76200c8c908814c36d3eb6de46",
+  "referenceUrl": "https://www.kuaiyuepu.com/jianpu/UXcve1HW4.html",
+  "description": "Uploaded 快乐谱 vocal arrangement: F then D from printed bar 19. Main-note MIDI pitches and durations independently transcribed from the screenshot. Printed bars 24–25 are the tied first ending; bar 26 is the second ending.",
+  "tempo": 75,
+  "bars": [
+    {
+      "number": 1,
+      "key": "F",
+      "pitches": [
+        69,
+        70,
+        69,
+        74,
+        69
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 2,
+      "key": "F",
+      "pitches": [
+        67,
+        69,
+        67,
+        74,
+        67
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1,
+        1
+      ]
+    },
+    {
+      "number": 3,
+      "key": "F",
+      "pitches": [
+        69,
+        67,
+        67,
+        65,
+        64
+      ],
+      "durations": [
+        1.5,
+        0.5,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    },
+    {
+      "number": 4,
+      "key": "F",
+      "pitches": [
+        65
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 5,
+      "key": "F",
+      "pitches": [],
+      "durations": []
+    },
+    {
+      "number": 6,
+      "key": "F",
+      "pitches": [],
+      "durations": []
+    },
+    {
+      "number": 7,
+      "key": "F",
+      "pitches": [
+        69,
+        70,
+        69,
+        77,
+        69
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 8,
+      "key": "F",
+      "pitches": [
+        67,
+        69,
+        67,
+        76,
+        74
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 9,
+      "key": "F",
+      "pitches": [
+        72,
+        70,
+        70,
+        69,
+        67
+      ],
+      "durations": [
+        1.5,
+        0.5,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    },
+    {
+      "number": 10,
+      "key": "F",
+      "pitches": [
+        69
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 11,
+      "key": "F",
+      "pitches": [],
+      "durations": []
+    },
+    {
+      "number": 12,
+      "key": "F",
+      "pitches": [],
+      "durations": []
+    },
+    {
+      "number": 13,
+      "key": "F",
+      "pitches": [
+        69,
+        73,
+        77,
+        76
+      ],
+      "durations": [
+        0.75,
+        0.25,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 14,
+      "key": "F",
+      "pitches": [
+        74,
+        69,
+        65,
+        62
+      ],
+      "durations": [
+        0.75,
+        0.25,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 15,
+      "key": "F",
+      "pitches": [
+        70,
+        69,
+        70,
+        74,
+        70
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ],
+      "gracePitches": [
+        70,
+        72
+      ]
+    },
+    {
+      "number": 16,
+      "key": "F",
+      "pitches": [
+        69
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 17,
+      "key": "F",
+      "pitches": [
+        67,
+        66,
+        67,
+        70,
+        67
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ],
+      "gracePitches": [
+        67,
+        69
+      ]
+    },
+    {
+      "number": 18,
+      "key": "F",
+      "pitches": [
+        65
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 19,
+      "key": "D",
+      "pitches": [
+        69,
+        73,
+        77,
+        76
+      ],
+      "durations": [
+        0.75,
+        0.25,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 20,
+      "key": "D",
+      "pitches": [
+        74,
+        69,
+        66,
+        62
+      ],
+      "durations": [
+        0.75,
+        0.25,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 21,
+      "key": "D",
+      "pitches": [
+        71,
+        70,
+        71,
+        74,
+        71
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ],
+      "gracePitches": [
+        71,
+        73
+      ]
+    },
+    {
+      "number": 22,
+      "key": "D",
+      "pitches": [
+        69
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 23,
+      "key": "D",
+      "pitches": [
+        76,
+        75,
+        76,
+        79,
+        73
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 24,
+      "key": "D",
+      "pitches": [
+        74
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 25,
+      "key": "D",
+      "pitches": [
+        74
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 26,
+      "key": "D",
+      "pitches": [
+        74
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 27,
+      "key": "D",
+      "pitches": [
+        69,
+        69,
+        73,
+        73,
+        76,
+        76
+      ],
+      "durations": [
+        0.75,
+        0.25,
+        0.75,
+        0.25,
+        0.75,
+        0.25
+      ]
+    },
+    {
+      "number": 28,
+      "key": "D",
+      "pitches": [
+        74,
+        73
+      ],
+      "durations": [
+        1,
+        2
+      ]
+    },
+    {
+      "number": 29,
+      "key": "D",
+      "pitches": [
+        69,
+        73,
+        76,
+        74
+      ],
+      "durations": [
+        1.5,
+        0.5,
+        0.75,
+        0.25
+      ]
+    },
+    {
+      "number": 30,
+      "key": "D",
+      "pitches": [
+        73
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 31,
+      "key": "D",
+      "pitches": [
+        78,
+        76,
+        76,
+        74,
+        73
+      ],
+      "durations": [
+        1.5,
+        0.5,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    },
+    {
+      "number": 32,
+      "key": "D",
+      "pitches": [
+        71,
+        73,
+        74,
+        71
+      ],
+      "durations": [
+        0.75,
+        0.25,
+        1,
+        1
+      ]
+    },
+    {
+      "number": 33,
+      "key": "D",
+      "pitches": [
+        71,
+        70,
+        71,
+        74,
+        71
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ],
+      "gracePitches": [
+        71,
+        73
+      ]
+    },
+    {
+      "number": 34,
+      "key": "D",
+      "pitches": [
+        69
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 35,
+      "key": "D",
+      "pitches": [
+        76,
+        75,
+        76,
+        79,
+        73
+      ],
+      "durations": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "number": 36,
+      "key": "D",
+      "pitches": [
+        74
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 37,
+      "key": "D",
+      "pitches": [
+        74,
+        74
+      ],
+      "durations": [
+        2,
+        1
+      ]
+    },
+    {
+      "number": 38,
+      "key": "D",
+      "pitches": [
+        70
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 39,
+      "key": "D",
+      "pitches": [
+        69
+      ],
+      "durations": [
+        3
+      ]
+    },
+    {
+      "number": 40,
+      "key": "D",
+      "pitches": [
+        66
+      ],
+      "durations": [
+        3
+      ]
+    }
+  ]
+}
