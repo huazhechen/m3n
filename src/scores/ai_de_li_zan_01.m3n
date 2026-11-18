@@ -1,0 +1,21 @@
+{preferred-width=540}
+{title=爱的礼赞}
+{subtitle=Salut d’amour · Op.12}
+{composer=Edward Elgar}
+// 参考：https://www.kuaiyuepu.com/jianpu/DDWml1tVr.html
+{key=D} {4/4} {80qpm}
+N: ||: 3e {lg}(5 3e){/} {lg}(2e 1e) (7 1e){/} | 4e^^{breath} | 3e{breath} {lg}(5# 3e){/} {lg}(2e 1e) (7 1e){/} | 2e^~ 2e~ (2e 2#e) |
+---
+N: 3e{breath} {lg}(5 3e){/} {lg}(2e 1e) (7 1e){/} | 6e{ac(5e)} 6e 6e{breath} {lg}(5e{ac(4#e)} 4=e){/} | 3e{breath} {lg}(2e 1e){/} {lg}6 7{/} | 1e^~{ac(7)} 1e{breath} (0 5) |
+---
+N: ((3e 3e) 0) {lg}(5 3e){/} {lg}(2e 1e){/} ((7 1e) 0) | 4e^^{ac(3e)}{breath} | (0 3e) ((5# 3e) 0) {lg}(2e 1e){/} ((7 1e) 0) | 2e^~ 2e~ (2e 2#e) |
+---
+N: ((3e 3e) 0) {lg}(5 3e){/} {lg}(2e 1e){/} ((7 1e) 0) | 6e{ac(5e)} 6e 6e{breath} {lg}(5e{ac(4#e)} 4=e){/} | 3e. {lg}((2e 1e)){/} {lg}6 7{/} | 1e^~{ac(7)} 1e{breath} 0 |
+---
+N: {key=F} 1e{ac(6 7)} ((7 6) 0) (4. (4)) (5 6) | 7{ac(6#)} ((6= 5) 0) (3. (3)) (4 5) | (6.{ac(5#)} (6 7 1e) 0) (2e.{ac(1e)} (2e 3e 4e) 0) | (5e{ac(4e)} 5e (7e 6e) 0) 5e. (4e) |
+---
+N: (3e{ac(2e)} 3e (2e 1e) 0) (6. (6)) (7 1e) | (3e{ac(2e)} 2e (1e 7) 0) ((0) 5# (5 6 7{breath}) 0) | (1e.{ac(7)} (1e) 2e 3e 4e.{ac(3e)} (4e) 1ee{ac(7e)} 7e) |
+---V1
+N: 6e^^~ | 6e^ 0^ | 0 0 0 (0 5) | (1e) {lg}((1e. (2e))) ((1e 7)){/} ((0 6)){breath} (0) 6 (6) | (2e) {lg}((2e. (3e))) ((2e 1e)){/} ((0 7)){breath} (0) 5 (5) | (3e) {lg}((3e. (4e))) ((3e 2e)){/} ((0 1#e)){breath} (0 6) ((6. (7))) {lg}((1e. (2e))){/} | 4#e{ac(3e)} (4e (4e 4e{breath})) 0 {lg}(3e{ac(2e)} 2e){/} | 1#e (7) {lg}((6 4#~)) 4#^{/} | [6e 5e 4e:1] [3e 4e 5e:1] 5e 0 :||
+---V2
+N: 6e^^~ | 6e 0 0 0 | 3 {lg}(5d 3){/} {lg}(2 1) (7d 1){/} | 6{ac(5)} 6 6{breath} {lg}(5{ac(4)} 4){/} | 3^^{breath} | 4^^{breath} | 3^^{breath} | 2^^ |||
