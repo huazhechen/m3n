@@ -14,6 +14,7 @@ it('matches the c33d transcription through 都走到 in the original first-pass 
   // User-requested simplification: bar 17 adopts bar 15's even sixteenths.
   const simplified = imageMelody.replace('((2. (1) 2. (1)))', '((2 1 2 1))')
     .replace('(3 5 3 2)', '(3 5 3) {lg}((2 1)){/}')
+    .replace('(1 1 1 6d)', '(1 1 2 6d)')
   const reference = tokens(parseM3NDocument(simplified).parts.get('score')!.melody)
   expect(tokens(performed).slice(0, reference.length)).toEqual(reference)
 })
@@ -80,6 +81,12 @@ it('sets 镇 in bar 38 to two slurred sixteenths in both verses', () => {
   const { lyricsByEvent } = deriveScoreInteraction(document)
   expect(lyricsByEvent.get(bar.events[3]!)?.filter(lyric => lyric.kind === 'text').map(lyric => lyric.text)).toEqual(['镇', '镇'])
   expect(lyricsByEvent.get(bar.events[4]!)?.filter(lyric => lyric.kind === 'text') ?? []).toEqual([])
+})
+
+it('uses 2 for the third eighth note in bar 43', () => {
+  expect(written[42]!.events.map(event => [event.pitches, event.beats])).toEqual([
+    [['1'], .5], [['1'], .5], [['2'], .5], [['6d'], .5],
+  ])
 })
 
 it('keeps both lyric verses aligned, including the shared rhythms and corrected ending', () => {
