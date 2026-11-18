@@ -1,6 +1,6 @@
 # Max的半音阶口琴乐谱集
 
-最新生成与合页规则见[第六十八版记录](../docs/SCOREBOOK_V68.md)。
+最新生成与合页规则见[第六十九版记录](../docs/SCOREBOOK_V69.md)。
 
 第六十三版直接复用网页的 `renderScoreInto`。`editorial-plan.json` 只维护三篇编排、曲目顺序和输出文件，不再包含逐曲行距、页边距、隐藏署名／低音、固定页数或基本功特例。
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { chooseBestWidth, widthCandidates, probeWidthCandidates } from './scorebook-width.mjs'
-import { packScorebook, reorderForSharing, sharedPreferredWidth } from './scorebook-packing.mjs'
+import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap } from './scorebook-packing.mjs'
 
 test('the search includes both ends of the 540–720 range in 10px steps', () => {
   assert.deepEqual(widthCandidates, Array.from({ length: 19 }, (_, index) => 540 + index * 10))
@@ -76,4 +76,37 @@ test('chapter works can share across distant positions while preserving chapter 
     Object.assign(blocked[1], extra)
     assert.deepEqual(reorderForSharing(blocked), blocked)
   }
+})
+
+test('fixed-order pagination balances the whole chapter instead of leaving a short solo between packed pages', () => {
+  const entries = Array.from({ length: 9 }, (_, index) => entry(String(index), [candidate(540, 200), candidate(640, 200)]))
+  const result = optimizeScorebook(entries)
+  assert.deepEqual(result.entries, entries)
+  assert.deepEqual(result.groups.map(group => group.end - group.start), [3, 3, 3])
+  assert(result.metrics.pageGroups.every(group => group.naturalFill >= .65 && group.naturalFill < .85))
+})
+
+test('inter-work whitespace is a hard capacity constraint at central and perturbation widths', () => {
+  assert.equal(sharedScoreGap, 32)
+  const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 455), candidate(640, 455)]))
+  // 455 + 455 + the old 22px gap would fit the 939px content box.
+  assert.equal(packScorebook(entries).length, 2)
+  for (const work of entries) work.candidates[1] = { ...candidate(640, 450), stable: true,
+    stabilityCases: [candidate(635, 451), candidate(640, 450), candidate(645, 450)] }
+  assert.equal(packScorebook(entries).length, 2) // 934px exceeds the 635px probe's 932px capacity.
+})
+
+test('exact chapter set partitioning matches exhaustive permutation search', () => {
+  const entries = [480, 420, 330, 280, 220, 170].map((height, index) => entry(String(index), [candidate(540, height), candidate(640, height)]))
+  const result = optimizeScorebook(entries, new Set(['basics']))
+  let minimum = Infinity
+  function permute(prefix, remaining) {
+    if (!remaining.length) { minimum = Math.min(minimum, optimizeScorebook(prefix).metrics.cost); return }
+    for (let index = 0; index < remaining.length; index++) permute([...prefix, remaining[index]], remaining.filter((_, other) => other !== index))
+  }
+  permute([], entries)
+  assert(Math.abs(result.metrics.cost - minimum) < 1e-9)
+  assert.equal(new Set(result.entries).size, entries.length)
+  const locked = optimizeScorebook(entries, new Set(['classic']))
+  assert.deepEqual(locked.entries, entries)
 })

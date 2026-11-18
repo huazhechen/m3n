@@ -7,7 +7,7 @@ import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates } from './scorebook-width.mjs'
 import { writePreferredWidths } from './scorebook-source.mjs'
-import { packScorebook, reorderForSharing, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth } from './scorebook-packing.mjs'
+import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth } from './scorebook-packing.mjs'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(output, 'editorial-plan.json'))
@@ -36,6 +36,7 @@ const text = (value, x, y, size = 16, attrs = '') => `<text x="${x}" y="${y}" fo
 const pageSvg = content => `<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}"><rect width="100%" height="100%" fill="white"/>${content}</svg>`
 const records = [], music = [], sources = new Map(), musicGroups = []
 let orderOptimization
+let optimizedPacking
 try {
   const page = await browser.newPage({ viewport: { width: 1000, height: 1300 } })
   await page.route('**/*', route => route.request().url().endsWith('/bundle.js')
@@ -61,14 +62,14 @@ try {
   }
   if (!probeOnly) {
     const before = [...records]
-    const pagesBefore = packScorebook(before).reduce((sum, group) => sum + group.pageCount, 0)
-    const reordered = reorderForSharing(records, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
-    records.splice(0, records.length, ...reordered)
-    orderOptimization = { pagesBefore, pagesAfter: packScorebook(records).reduce((sum, group) => sum + group.pageCount, 0),
+    const baseline = optimizeScorebook(before)
+    optimizedPacking = optimizeScorebook(records, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
+    records.splice(0, records.length, ...optimizedPacking.entries)
+    orderOptimization = { pagesBefore: baseline.metrics.pages, pagesAfter: optimizedPacking.metrics.pages,
       moved: records.flatMap((entry, index) => before[index] === entry ? [] : [{ file: entry.file, title: entry.title, from: before.indexOf(entry) + 1, to: index + 1 }]) }
     console.log(`Chapter packing: ${orderOptimization.pagesBefore} -> ${orderOptimization.pagesAfter} music pages`)
   }
-  if (!probeOnly) for (const group of packScorebook(records)) {
+  if (!probeOnly) for (const group of optimizedPacking.groups) {
     const entries = records.slice(group.start, group.end), start = music.length
     if (entries.length > 1) {
       const rendered = await page.evaluate(({ sources, width, gap }) => window.scorebook.sharedA4Page(sources, width, gap),
@@ -127,6 +128,7 @@ for (const [index, page] of pages.entries()) writeFileSync(join(temp, 'pages', `
 writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))
 const report = { title: plan.title, edition: plan.edition, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
   entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile, orderOptimization,
+  packing: { policy: packingPolicy, ...optimizedPacking.metrics },
   widthSearch: { minimum: 540, maximum: 720, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 24, pagedMinimum: 16, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedScoreWidth, sharedPreferredWidth,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }

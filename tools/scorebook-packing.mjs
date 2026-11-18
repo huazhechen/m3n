@@ -1,91 +1,149 @@
 import { chooseBestWidth } from './scorebook-width.mjs'
 
-export const sharedScoreGap = 22
+// 32 logical px at 640px A4 width = 9.3mm, never compressed to fit more works.
+export const sharedScoreGap = 32
 export const sharedScoreWidth = 640
 export const sharedPreferredWidth = 540
+export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, crowdedAbove: .85,
+  sparseWeight: 8, crowdedWeight: 6, balanceWeight: 1, pageWeight: 1 })
 const safe = candidate => !candidate.error && candidate.stable !== false && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length
+const capacity = width => Math.floor(width * 273 / 186)
 
-/** Improve chapter packing with insertions, respecting explicit anchors. */
-export function reorderForSharing(entries, movableSections = new Set(entries.map(entry => entry.section))) {
-  const original = new Map(entries.map((entry, index) => [entry, index]))
-  const score = ordered => {
-    const groups = packScorebook(ordered)
-    let sparse = 0, widths = 0
-    for (const group of groups) {
-      widths += group.width * (group.end - group.start)
-      if (group.end !== group.start + 1 || group.pageCount !== 1) continue
-      const candidate = ordered[group.start].candidates.find(item => item.width === group.width)
-      if (Number.isFinite(candidate.naturalHeight)) {
-        const fill = candidate.naturalHeight / (group.width * 273 / 186)
-        sparse += Math.max(0, .6 - fill) ** 2
-      }
-    }
-    return [groups.reduce((sum, group) => sum + group.pageCount, 0), sparse, widths,
-      ordered.reduce((sum, entry, index) => sum + Math.abs(original.get(entry) - index), 0)]
-  }
-  const better = (a, b) => {
-    for (let index = 0; index < a.length; index++) {
-      if (Math.abs(a[index] - b[index]) > 1e-9) return a[index] < b[index]
-    }
-    return false
-  }
-  let ordered = [...entries], quality = score(ordered)
-  for (;;) {
-    let chosen, chosenQuality = quality
-    for (let from = 0; from < ordered.length; from++) {
-      if (!movableSections.has(ordered[from].section)) continue
-      for (let to = 0; to < ordered.length; to++) {
-        if (to === from) continue
-        const affected = ordered.slice(Math.min(from, to), Math.max(from, to) + 1)
-        if (affected.some(entry => entry.section !== ordered[from].section || entry.breakBefore || entry.sharePage === false)) continue
-        const option = [...ordered]
-        option.splice(to, 0, option.splice(from, 1)[0])
-        const candidateQuality = score(option)
-        if (better(candidateQuality, chosenQuality)) { chosen = option; chosenQuality = candidateQuality }
-      }
-    }
-    if (!chosen) return ordered
-    ordered = chosen; quality = chosenQuality
-  }
+/** Score natural content at the same 16px core gap, before stretching page spacing. */
+export function pageDensityPenalty(fill) {
+  if (!Number.isFinite(fill)) return 0 // Multi-page solos have no continuous height measurement.
+  const p = packingPolicy
+  return p.sparseWeight * Math.max(0, p.sparseBelow - fill) ** 2
+    + p.crowdedWeight * Math.max(0, fill - p.crowdedAbove) ** 2
+    + p.balanceWeight * (fill - p.targetFill) ** 2
 }
 
-/** Preserve order and whole works. Minimize pages, then summed source widths. */
-export function packScorebook(entries) {
+function soloOption(entry, index) {
+  const solo = chooseBestWidth(entry.candidates)
+  if (!solo) throw new Error(`No safe layout: ${entry.title}`)
+  const fill = solo.pageCount === 1 && Number.isFinite(solo.naturalHeight) ? solo.naturalHeight / capacity(solo.width) : undefined
+  return { members: [index], width: solo.width, pageCount: solo.pageCount, fill }
+}
+
+function sharedOption(entries, members) {
+  if (members.length < 2) return null
+  const candidates = members.map(index => entries[index].candidates.find(candidate => candidate.width === sharedScoreWidth))
+  if (members.some(index => entries[index].sharePage === false) || candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
+  const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
+  if (usedHeight > capacity(sharedScoreWidth) + .001) return null
+  // Every member must fit together at all three perturbation widths.
+  const probeWidths = new Set(candidates.flatMap(candidate => (candidate.stabilityCases ?? [candidate]).map(probe => probe.width)))
+  for (const width of probeWidths) {
+    let height = sharedScoreGap * (members.length - 1)
+    for (const candidate of candidates) {
+      const probe = (candidate.stabilityCases ?? [candidate]).find(item => item.width === width)
+      if (!probe || !safe(probe) || probe.pageCount !== 1 || !Number.isFinite(probe.naturalHeight)) return null
+      height += probe.naturalHeight
+    }
+    if (height > capacity(width) + .001) return null
+  }
+  return { members, width: sharedScoreWidth, pageCount: 1, fill: usedHeight / capacity(sharedScoreWidth) }
+}
+
+const empty = () => ({ cost: 0, pages: 0, density: 0, widthCost: 0, groups: [] })
+function prepend(group, tail) {
+  const density = pageDensityPenalty(group.fill)
+  return { cost: packingPolicy.pageWeight * group.pageCount + density + tail.cost,
+    pages: group.pageCount + tail.pages, density: density + tail.density,
+    widthCost: group.width * group.members.length + tail.widthCost, groups: [group, ...tail.groups] }
+}
+function better(a, b) {
+  if (!b) return true
+  for (const key of ['cost', 'pages', 'widthCost']) {
+    if (Math.abs(a[key] - b[key]) > 1e-9) return a[key] < b[key]
+  }
+  // Deterministic ties: preserve earlier works and prefer smaller first groups.
+  const x = a.groups.flatMap(group => group.members), y = b.groups.flatMap(group => group.members)
+  for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i]
+  return false
+}
+
+/** Knuth–Plass-style whole-sequence DP; works remain complete and ordered. */
+function orderedPacking(entries) {
   const best = Array(entries.length + 1)
-  best[entries.length] = { pages: 0, widthCost: 0, groups: [] }
+  best[entries.length] = empty()
   for (let start = entries.length - 1; start >= 0; start--) {
-    const solo = chooseBestWidth(entries[start].candidates)
-    if (!solo) throw new Error(`No safe layout: ${entries[start].title}`)
-    const next = best[start + 1]
-    best[start] = { pages: solo.pageCount + next.pages, widthCost: solo.width + next.widthCost,
-      groups: [{ start, end: start + 1, width: solo.width, pageCount: solo.pageCount }, ...next.groups] }
-    if (entries[start].sharePage === false) continue
-    for (const width of [sharedScoreWidth]) {
-      let height = 0
-      const probeHeights = new Map()
-      for (let end = start; end < entries.length; end++) {
-        const entry = entries[end]
-        if (entry.section !== entries[start].section || entry.sharePage === false || end > start && entry.breakBefore) break
-        const candidate = entry.candidates.find(item => item.width === width && safe(item) && item.pageCount === 1 && Number.isFinite(item.naturalHeight))
-        if (!candidate) break
-        height += candidate.naturalHeight + (end > start ? sharedScoreGap : 0)
-        if (height > Math.floor(width * 273 / 186) + .001) break
-        let stableGroup = true
-        for (const probe of candidate.stabilityCases ?? [candidate]) {
-          const used = (probeHeights.get(probe.width) ?? 0) + probe.naturalHeight + (end > start ? sharedScoreGap : 0)
-          probeHeights.set(probe.width, used)
-          if (!safe(probe) || probe.pageCount !== 1 || !Number.isFinite(used) || used > Math.floor(probe.width * 273 / 186) + .001) stableGroup = false
-        }
-        if (!stableGroup) break
-        if (end === start) continue
-        const tail = best[end + 1]
-        const option = { pages: 1 + tail.pages, widthCost: width * (end - start + 1) + tail.widthCost,
-          groups: [{ start, end: end + 1, width, pageCount: 1 }, ...tail.groups] }
-        const current = best[start]
-        if (option.pages < current.pages || option.pages === current.pages && (option.widthCost < current.widthCost
-          || option.widthCost === current.widthCost && option.groups[0].end > current.groups[0].end)) best[start] = option
-      }
+    best[start] = prepend(soloOption(entries[start], start), best[start + 1])
+    for (let end = start + 2; end <= entries.length; end++) {
+      const next = entries[end - 1]
+      if (next.section !== entries[start].section || next.breakBefore || next.sharePage === false || entries[start].sharePage === false) break
+      const group = sharedOption(entries, Array.from({ length: end - start }, (_, index) => start + index))
+      if (!group) break // Positive heights mean adding further works cannot repair capacity or safety.
+      const option = prepend(group, best[end])
+      if (better(option, best[start])) best[start] = option
     }
   }
-  return best[0].groups
+  return best[0]
+}
+
+/** Exact set partitioning via subset DP, equivalent to choosing one covering group per work. */
+function unorderedPacking(entries) {
+  if (entries.length > 20) throw new Error('Exact chapter packing supports at most 20 works per anchor segment')
+  const size = 1 << entries.length, choices = Array.from({ length: entries.length }, (_, index) => [soloOption(entries[index], index)])
+  const eligible = entries.flatMap((entry, index) => {
+    const candidate = entry.candidates.find(item => item.width === sharedScoreWidth)
+    return entry.sharePage !== false && candidate && safe(candidate) && candidate.pageCount === 1 && Number.isFinite(candidate.naturalHeight) ? [index] : []
+  })
+  // Only enumerate feasible groups; oversized prefixes need no supersets.
+  function enumerate(members, from) {
+    for (let i = from; i < eligible.length; i++) {
+      const next = [...members, eligible[i]]
+      const group = next.length > 1 ? sharedOption(entries, next) : null
+      if (next.length > 1 && !group) continue
+      if (group) choices[next[0]].push({ ...group, mask: next.reduce((mask, index) => mask | 1 << index, 0) })
+      enumerate(next, i + 1)
+    }
+  }
+  enumerate([], 0)
+  for (let index = 0; index < entries.length; index++) choices[index][0].mask = 1 << index
+  const best = Array(size); best[0] = empty()
+  function solve(mask) {
+    if (best[mask]) return best[mask]
+    const first = 31 - Math.clz32(mask & -mask)
+    for (const group of choices[first]) {
+      if ((group.mask & mask) !== group.mask) continue
+      const option = prepend(group, solve(mask ^ group.mask))
+      if (better(option, best[mask])) best[mask] = option
+    }
+    return best[mask]
+  }
+  return solve(size - 1)
+}
+
+/** Chapters and explicit anchors bound independently optimized segments. */
+export function optimizeScorebook(entries, movableSections = new Set()) {
+  const selected = []
+  for (let start = 0; start < entries.length;) {
+    let end = start + 1
+    if (entries[start].sharePage !== false) {
+      while (end < entries.length && entries[end].section === entries[start].section && !entries[end].breakBefore && entries[end].sharePage !== false) end++
+    }
+    const segment = entries.slice(start, end)
+    const result = movableSections.has(entries[start].section) ? unorderedPacking(segment) : orderedPacking(segment)
+    selected.push(...result.groups.map(group => ({ ...group, members: group.members.map(index => index + start) })))
+    start = end
+  }
+  const ordered = selected.flatMap(group => group.members.map(index => entries[index]))
+  let start = 0
+  const groups = selected.map(group => {
+    const packed = { start, end: start + group.members.length, width: group.width, pageCount: group.pageCount }
+    start = packed.end
+    return packed
+  })
+  return { entries: ordered, groups, metrics: {
+    cost: selected.reduce((sum, group) => sum + group.pageCount + pageDensityPenalty(group.fill), 0),
+    pages: selected.reduce((sum, group) => sum + group.pageCount, 0),
+    densityPenalty: selected.reduce((sum, group) => sum + pageDensityPenalty(group.fill), 0),
+    pageGroups: selected.map(group => ({ titles: group.members.map(index => entries[index].title), width: group.width, pageCount: group.pageCount, naturalFill: group.fill ?? null })),
+  } }
+}
+
+export function packScorebook(entries) { return optimizeScorebook(entries).groups }
+export function reorderForSharing(entries, movableSections = new Set(entries.map(entry => entry.section))) {
+  return optimizeScorebook(entries, movableSections).entries
 }
