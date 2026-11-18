@@ -99,9 +99,9 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       const api = window.scorebook, width = 720
       const sources = ['{title=合页甲}{4/4}\nN: 1 2 3 4 |||', '{title=合页乙}{4/4}\nN: 5 6 7 1 |||']
       const originals = []
-      for (const source of sources) originals.push((await api.render(source, width, false))[0].innerHTML)
       const summary = await api.measure(sources[0], width)
       const packed = await api.sharedA4Page(sources, width)
+      for (const source of sources) originals.push((await api.render(source, width, false, packed.coreGap))[0].innerHTML)
       const host = document.createElement('div')
       host.innerHTML = packed.markup
       const svgs = [...host.querySelectorAll(':scope > svg')]
@@ -113,7 +113,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     })
     assert.deepEqual(shared.identical, [true, true], 'Sharing changes only outer SVG placement')
     assert.deepEqual(shared.widths, [720, 720])
-    assert.equal(shared.items[0].sourceHeight, shared.measuredHeight)
+    assert(shared.items[0].sourceHeight >= shared.measuredHeight)
     assert.equal(shared.items[1].top, shared.items[0].sourceHeight + 22)
     assert.equal(shared.items[0].placement.width, shared.items[1].placement.width)
     assert(shared.items[1].placement.y + shared.items[1].placement.height <= 285)

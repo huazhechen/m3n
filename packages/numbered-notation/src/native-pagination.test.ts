@@ -26,7 +26,7 @@ describe('native measured-block pagination', () => {
         expect(() => paginateNativeBlocks([{ height: 361 }], options)).toThrow('单个谱行');
     });
 });
-it('keeps the same natural system gaps across page sizes and in continuous mode', () => {
+it('fits paged core gaps while keeping continuous core gaps at 24px', () => {
     const document = parseM3NDocument('{4/4}\nN: ' + Array.from({ length: 30 }, () => '1 2 3 4 |').join(' '));
     const options = { width: 320, paged: true };
     const natural = layoutNativeScore(document, options);
@@ -38,10 +38,14 @@ it('keeps the same natural system gaps across page sizes and in continuous mode'
         const after = nativeLanePieces(second!, layout.measurer, true).get(second!.lanes[0]!.id)!;
         return second!.lanes[0]!.y + Math.min(...after.map(r => r.top)) - first!.lanes[0]!.y - Math.max(...before.map(r => r.bottom));
     };
-    expect(step(natural)).toBeCloseTo(24);
-    expect(step(continuous)).toBeCloseTo(step(natural));
+    expect(step(natural)).toBeGreaterThanOrEqual(natural.pages[0]!.coreGap! - 1e-6);
+    for (const page of natural.pages) {
+        expect(page.coreGap).toBeGreaterThanOrEqual(16);
+        expect(page.coreGap).toBeLessThanOrEqual(32);
+    }
+    expect(step(continuous)).toBeCloseTo(24);
     const uniform = layoutNativeScore(document, { ...options, uniformSystemHeight: true });
-    expect(step(uniform)).toBeGreaterThanOrEqual(24);
+    expect(step(uniform)).toBeGreaterThanOrEqual(16);
     for (const width of [320, 600, 800, 1000]) {
         const paged = layoutNativeScore(document, { width, paged: true });
         const continuous = layoutNativeScore(document, { width, paged: false });
@@ -51,7 +55,7 @@ it('keeps the same natural system gaps across page sizes and in continuous mode'
             expect(system.bottom - system.top).toBeCloseTo(counterpart.bottom - counterpart.top);
             const previous = paged.systems[index - 1];
             if (previous?.page === system.page)
-                expect(system.lanes[0]!.y - previous.lanes[0]!.y).toBeGreaterThanOrEqual(24 - 1e-6);
+                expect(system.lanes[0]!.y - previous.lanes[0]!.y).toBeGreaterThanOrEqual(16 - 1e-6);
         });
     }
 });

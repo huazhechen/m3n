@@ -1,5 +1,5 @@
 import { parseM3NDocument } from '@m3n/notation'
-import { prepareNumberedNotationFonts } from '@m3n/numbered-notation'
+import { prepareNumberedNotationFonts, renderSharedNumberedNotationScores } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { renderScoreInto } from '../src/lib/render-score'
 import { createSvgInkMeasurer } from './lib/svg-ink-bounds.mjs'
@@ -13,14 +13,14 @@ export async function prepare(fontBase64) {
   await prepareNumberedNotationFonts()
 }
 
-export async function render(source, width, paged = true) {
+export async function render(source, width, paged = true, coreGap) {
   const host = document.querySelector('#scratch')
-  await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged })
+  await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged, coreGap })
   return [...host.querySelectorAll(':scope > svg')]
 }
 
-export async function measure(source, width, paged = true) {
-  const pages = await render(source, width, paged)
+export async function measure(source, width, paged = true, coreGap) {
+  const pages = await render(source, width, paged, coreGap)
   const naturalHeight = !paged && pages.length === 1 ? pages[0].viewBox.baseVal.height : undefined
   const outside = [], overlaps = []
   const ink = createSvgInkMeasurer()
@@ -53,23 +53,26 @@ export async function measure(source, width, paged = true) {
   if (!paged) return { ...result, naturalHeight }
   if (pages.length === 1 && !outside.length && !overlaps.length) {
     const markup = pages[0].outerHTML
-    const continuous = await measure(source, width, false)
+    const continuous = await measure(source, width, false, 16)
     if (!continuous.outside.length && !continuous.overlaps.length) result.naturalHeight = continuous.naturalHeight
     document.querySelector('#scratch').innerHTML = markup
   }
   return result
 }
 
-/** Stack complete continuous web SVGs at one common scale, without cropping. */
+/** Fit whole scores at one shared core parameter before A4 placement. */
 export async function sharedA4Page(sources, width, gap = 22) {
   if (sources.length < 2) throw new Error('A shared page needs at least two scores')
   const pxPerMm = 96 / 25.4, scale = 186 / width
+  await prepareNumberedNotationFonts()
+  const fitted = renderSharedNumberedNotationScores(sources.map(source => parseM3NDocument(source)), { width, pageMargin: 0 }, gap)
+  const host = document.querySelector('#scratch')
+  host.innerHTML = fitted.markup.join('')
+  const pages = [...host.querySelectorAll(':scope > svg')]
   const items = []
   let top = 0
-  for (const source of sources) {
-    const pages = await render(source, width, false)
-    if (pages.length !== 1) throw new Error('A shared score must be continuous')
-    const svg = pages[0], view = svg.viewBox.baseVal
+  for (const svg of pages) {
+    const view = svg.viewBox.baseVal
     if (view.width !== width) throw new Error('Shared scores must have the same width')
     const height = view.height
     const placement = { x: 12, y: 12 + top * scale, width: 186, height: height * scale }
@@ -79,7 +82,7 @@ export async function sharedA4Page(sources, width, gap = 22) {
   }
   const usedHeight = top - gap
   if (usedHeight > Math.floor(width * 273 / 186) + .001) throw new Error('Shared page exceeds A4 content height')
-  return { markup: items.map(item => item.markup).join(''), items, width, usedHeight }
+  return { markup: items.map(item => item.markup).join(''), items, width, usedHeight, coreGap: fitted.coreGap }
 }
 
 /** The same 12mm A4 placement used by the web PDF download, without cropping. */

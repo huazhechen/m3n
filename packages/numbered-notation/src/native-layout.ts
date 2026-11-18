@@ -11,7 +11,7 @@ import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { placeNativeAnnotations, nativeRegionTop, type NativeRegion } from './native-annotations.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
-import { paginateNativeBlocks } from './native-pagination.js'
+import { paginateNativeBlocks, type NativePageBlock } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
 export { wrapNativeText } from './native-header.js'
@@ -27,7 +27,7 @@ import { nativeUniformHosts, shareNativeUniformHeight } from './native-uniform-h
 export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
-  pageMargin?: number; systemGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; uniformSystemHeight?: boolean
+  pageMargin?: number; systemGap?: number; coreGap?: number; noteGapEm?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; uniformSystemHeight?: boolean
   equalMeasures?: boolean; wrap?: 'normal' | 'compact'; wrapWidthRatio?: number
   /** @internal Whether a separate minimum spacing policy was requested. */
   pairedSpacing?: boolean
@@ -35,17 +35,18 @@ export type NativeRenderOptions = {
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
 export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; decorationLayout?: { lane: string; svg: string; paragraph?: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
-export type NativePage = { header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
+export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
   options: NativeRenderOptions; measurer: TextMeasurer; headerHeight: number; margin: number
+  verticalBlocks: NativePageBlock[]; headerBlocks: { height: number; svg: string }[]
 }
 
 function validate(options: NativeRenderOptions) {
   if (options.transpose !== undefined && !Number.isInteger(options.transpose)) throw new Error('谱面移调必须为整数半音数。')
   if (options.tempoScale !== undefined && (!Number.isFinite(options.tempoScale) || options.tempoScale <= 0)) throw new Error('显示速度倍率必须为正有限数值。')
   if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
-  for (const value of [options.pageMargin, options.systemGap]) if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
+  for (const value of [options.pageMargin, options.systemGap, options.coreGap]) if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
   if (options.noteGapEm !== undefined && (!Number.isFinite(options.noteGapEm) || options.noteGapEm < 0)) throw new Error('音符间距比例必须为非负有限数值。')
   if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0 || options.minimumNoteGapEm > (options.noteGapEm ?? 0.6))) throw new Error('最小间距必须非负且不大于自然间距。')
   if (options.wrapWidthRatio !== undefined && (!Number.isFinite(options.wrapWidthRatio) || options.wrapWidthRatio <= 0 || options.wrapWidthRatio > 1)) throw new Error('wrapWidthRatio 必须大于 0 且不大于 1。')
@@ -313,7 +314,6 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   if (uniformHosts) shareNativeUniformHeight(systems, uniformHosts, measurer)
   for (const system of systems) for (const lane of system.lanes) placeNativeLyrics(system, lane, measurer)
   for (const system of systems) placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true)
-  const gap = options.systemGap ?? nativeStyle.systemGap
   const blocks = [...header.blocks.map(block=>({height:block.height, ink: nativeSvgPieces(block.svg, measurer)})), ...systems.map(system => {
     const height = placeNativeLanes(system, measurer, options.uniformSystemHeight)
     const pieces = nativeLanePieces(system, measurer)
@@ -325,21 +325,43 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     if (options.uniformSystemHeight) ink.push({ left: margin, right: options.width - margin, top: 0, bottom: height })
     return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, gapBefore: system.measures[0]?.extraGap ?? 0 }
   })]
+  const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
+    verticalBlocks: blocks, headerBlocks: header.blocks }
+  const gap = options.coreGap ?? options.systemGap ?? (options.paged ? 16 : nativeStyle.systemGap)
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, elastic: true })
-  const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [] }))
-  for (const [index,block] of header.blocks.entries()) {
+    margin, gap, maxGap: options.coreGap ?? options.systemGap ?? (options.paged ? 32 : gap), elastic: true })
+  positionNativeLayout(layout, pagination)
+  return layout
+}
+
+/** Reuse measured rows and ink; only vertical coordinates change. */
+function positionNativeLayout(layout: NativeLayout, pagination: ReturnType<typeof paginateNativeBlocks>) {
+  const { options, systems, headerBlocks, verticalBlocks } = layout
+  const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [], coreGap: pagination.coreGaps?.[index] }))
+  for (const [index, block] of headerBlocks.entries()) {
     const position = pagination.positions[index]!
     pages[position.page]!.header = (pages[position.page]!.header ?? '') + `<g transform="translate(0 ${position.top})">${block.svg}</g>`
   }
   for (const [index, system] of systems.entries()) {
-    const position = pagination.positions[index + header.blocks.length]!
+    const position = pagination.positions[index + headerBlocks.length]!
+    const dy = position.top - system.top
     system.top = position.top; system.page = position.page
     for (const lane of system.lanes) {
-      lane.y += position.top
+      lane.y += dy
       for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) if (glyph.lane === lane.id) glyph.y = lane.y
     }
-    system.bottom = position.top + blocks[index + header.blocks.length]!.height; pages[position.page]!.systems.push(system)
+    system.bottom = position.top + verticalBlocks[index + headerBlocks.length]!.height
+    pages[position.page]!.systems.push(system)
   }
-  return { document, headerDocument, projection, systems, pages, relations, options, measurer, headerHeight, margin }
+  layout.pages = pages
+}
+
+export function nativeContinuousPagination(layout: NativeLayout, coreGap: number) {
+  return paginateNativeBlocks(layout.verticalBlocks, { pageHeight: Infinity, margin: layout.margin, gap: coreGap, elastic: true })
+}
+
+export function reflowNativeContinuousLayout(layout: NativeLayout, coreGap: number) {
+  if (layout.options.paged) throw new Error('Only continuous layouts can be reflowed as a shared page')
+  positionNativeLayout(layout, nativeContinuousPagination(layout, coreGap))
+  layout.options = { ...layout.options, coreGap }
 }
