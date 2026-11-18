@@ -3,11 +3,11 @@ import { BasicSoundBank, SoundBankLoader, SpessaSynthProcessor } from 'spessasyn
 import { expect, test } from 'vitest'
 import { createSyntheticSoundFont } from './synthetic-soundfont'
 
-test.each(['Piano', 'Harmonica', 'Synthetic'])('%s covers the keyboard and renders sustained notes and releases', async (tone) => {
+test.each(['Piano', 'Synthetic'])('%s covers the keyboard and renders sustained notes and releases', async (tone) => {
   await BasicSoundBank.isSF3DecoderReady
   const bytes = tone === 'Synthetic' ? Buffer.from(createSyntheticSoundFont())
     : readFileSync(new URL(`../vendor/soundfonts/FluidR3_GM-${tone}.sf3`, import.meta.url))
-  expect(bytes.length).toBeLessThan(tone === 'Piano' ? 1_400_000 : tone === 'Synthetic' ? 800_000 : 400_000)
+  expect(bytes.length).toBeLessThan(tone === 'Piano' ? 1_400_000 : 800_000)
   const bank = SoundBankLoader.fromArrayBuffer(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength))
   expect(bank.presets).toHaveLength(1)
   expect(bank.samples.length).toBeGreaterThan(0)

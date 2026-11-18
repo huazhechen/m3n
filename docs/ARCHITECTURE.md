@@ -57,7 +57,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/numbered-notation/src`：`ScoreDocument` 的自研投影、横纵布局、实绘测量、分页与SVG交互；公共入口导出`native-score.ts`。旧引擎、适配器及跨引擎对照工具已删除。
 - `packages/notation/src/notation/section-order.ts`：校验显式乐段顺序；ScoreDocument 保存分段范围与局部访问次数，演奏展开、歌词映射和简谱排版共用该模型。
 - `packages/score-renderer/src/native-playback-score.ts`：仅提供 MIDI 生成和时间映射，按播放操作动态加载。
-- `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放，默认使用本地生成的合成音色；钢琴、口琴通过独立 SF3 按需加载。
+- `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放，默认使用本地生成的合成音色；钢琴通过独立 SF3 按需加载。
 - `packages/score-renderer/src/playback-tones.ts`：轻量音色目录、下载去重、浏览器 Cache Storage 持久缓存与失败重试；不初始化合成器或下载未选音色。
 - `packages/score-renderer/src/playback-coordinator.ts`：显式管理多个乐谱实例间的播放互斥。
 - `lib/render-score.ts`：屏幕、打印预览和最终导出的统一排版入口，负责引擎选择、串行调度、取消、分页和 SVG 后处理。
@@ -81,17 +81,13 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 默认部署在 `/`；设置 `VITE_BASE_URL=/score/ npm run build` 可部署到子路径。React Router 的 `basename`、站点图标、导出字体和分享 API 均使用同一构建基路径，Vite 负责处理模块、WASM 和音源 URL。宿主应对该前缀下的页面路由返回 `index.html`，并把 `/score/api/*` 转给现有 Worker（转交前去掉 `/score` 前缀）；存储继续实现 `M3N_SCORES` 的 KV 接口。
 
-钢琴和口琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-{Piano,Harmonica}-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在本地生成柔和FM电钢琴：保留1:1调制的柔和琴体，移除14:1金属泛音层；补入温和的第2至第5次整数泛音，并随音区升高平滑削弱高频，以改善小扬声器上的清晰度；约750ms内过渡到保留低次泛音的柔和持续声；采用12ms起音和180ms释音，取消延音阶段和初始输出的额外衰减，采样峰值归一化至0.75以提高响度。八个音区各有轻／重两层力度，较重力度的起音更明亮；各音区按最高音限制谐波，循环区保留完整周期。约690KB的SF2只在内存中生成并缓存，传入AudioWorklet时复制缓冲区，不下载音源文件，也不增加部署的音源文件；沿用现有MIDI、速度、移调和节拍器。选择 `piano` 或 `harmonica` 时立即按需下载对应文件，显示加载状态、错误与重试；钢琴按钮下载期间显示“加载中”与旋转图标，准备完成后才显示选中；播放中切换音色时继续使用当前音色，下载并解码完成后切换音源优先级，后续音符使用新音色，已发声音符自然结束；不重建播放器、不暂停或跳转。移调通过合成器系统调音实时更新当前与后续音符，打击乐保持原调，不重建MIDI；同时更新谱面调号，固定调模式按移调后的实际音高重新显示数字与升号。旧请求不能覆盖更新后的选择。
+钢琴 SF3 音源保存在 `packages/score-renderer/vendor/soundfonts`，轻量 `/tones` 入口通过 `?url` 导入，Vite 构建时输出带内容哈希的 `/assets/FluidR3_GM-Piano-*.sf3`。默认 `synth` 音色由 `synthetic-soundfont.ts` 在本地生成柔和FM电钢琴：保留1:1调制的柔和琴体，移除14:1金属泛音层；补入温和的第2至第5次整数泛音，并随音区升高平滑削弱高频，以改善小扬声器上的清晰度；约750ms内过渡到保留低次泛音的柔和持续声；采用12ms起音和180ms释音，取消延音阶段和初始输出的额外衰减，采样峰值归一化至0.75以提高响度。八个音区各有轻／重两层力度，较重力度的起音更明亮；各音区按最高音限制谐波，循环区保留完整周期。约690KB的SF2只在内存中生成并缓存，传入AudioWorklet时复制缓冲区，不下载音源文件，也不增加部署的音源文件；沿用现有MIDI、速度、移调和节拍器。选择 `piano` 时立即按需下载对应文件，显示加载状态、错误与重试；钢琴按钮下载期间显示“加载中”与旋转图标，准备完成后才显示选中；播放中切换音色时继续使用当前音色，下载并解码完成后切换音源优先级，后续音符使用新音色，已发声音符自然结束；不重建播放器、不暂停或跳转。移调通过合成器系统调音实时更新当前与后续音符，打击乐保持原调，不重建MIDI；同时更新谱面调号，固定调模式按移调后的实际音高重新显示数字与升号。旧请求不能覆盖更新后的选择。
 
 音源同时保存在页面内存和 `m3n-soundfonts-v1` Cache Storage，以完整哈希 URL 为键；刷新后先读缓存，不重新下载。存储不可用或配额不足时允许正常加载并保留内存副本，网络失败不缓存，损坏缓存重新下载。浏览器清理站点数据可能移除缓存和选择。`public/_headers` 为 `/assets/*` 配置 `Cache-Control: public, max-age=31536000, immutable`，由 Cloudflare 静态资源服务应用；音源更新时哈希 URL 自动变化。HTML 和不带哈希的公共文件不使用此长期缓存规则。
 
 该音源只保留 GM Program 0 的 Yamaha Grand Piano。当前发布文件恢复为原始1,365,672字节版本，保留40个左右声道采样、32kHz采样率、音区、力度映射与延音循环，不再使用后续357KB单声道重编码版本。仍在选择钢琴时下载，内容哈希URL变化后自动下载新版并缓存。
 
 `tools/build-fluidr3-piano-sf3.ts` 与 `tools/encode-vorbis.py` 保留为历史压缩实验工具，不用于重建当前发布的原始钢琴文件；原始文件可从Git历史恢复。
-
-口琴通过 `node tools/build-fluidr3-harmonica-sf3.mjs [完整FluidR3_GM.sf2或FluidR3Mono_GM.sf3] [输出路径]` 提取：从 Bank 0 / Program 22 复制 Harmonica，保留采样率与循环，以 Vorbis quality 1 编码，独立文件中的 Program 改为 0，适配乐谱现有 MIDI。默认来源是 MuseScore v2.3.2 随附的 FluidR3Mono 2.312（FluidR3 GM 的单声道发行版），以 Git blob 哈希固定并验证输入。完整源库只用于构建，网站仅发布提取后的口琴文件。原作者信息与 MIT 许可证保存在 `vendor/soundfonts/FluidR3Mono-LICENSE.md`，并写入口琴文件的元数据。
-
-口琴文件为 47,932 字节，包含 8 个采样。原始映射只覆盖到 MIDI 96；提取时将最高采样的音区延伸到 MIDI 127，避免高音或移调后无声。常用音区的采样映射不变。
 
 生产资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。演奏编译和 MIDI 写入为项目内 TypeScript 实现，不加载 Verovio 或音乐引擎 WASM。简谱采用项目内自研排版，旧引擎和依赖已删除；实现见[自研引擎](NATIVE_ENGINES.md)。字体、音源和 AudioWorklet 来自本站构建产物。
 

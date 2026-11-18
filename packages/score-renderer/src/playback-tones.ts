@@ -1,20 +1,18 @@
 import pianoUrl from '../vendor/soundfonts/FluidR3_GM-Piano.sf3?url'
-import harmonicaUrl from '../vendor/soundfonts/FluidR3_GM-Harmonica.sf3?url'
 
-export type PlaybackTone = 'synth' | 'piano' | 'harmonica'
+export type PlaybackTone = 'synth' | 'piano'
 export type SampledTone = Exclude<PlaybackTone, 'synth'>
 
 export const PLAYBACK_TONES = [
   { value: 'synth', label: '合成音色' },
   { value: 'piano', label: '钢琴' },
-  { value: 'harmonica', label: '口琴' },
 ] as const
 
 export function isPlaybackTone(value: unknown): value is PlaybackTone {
   return PLAYBACK_TONES.some(tone => tone.value === value)
 }
 
-const urls = { piano: pianoUrl, harmonica: harmonicaUrl }
+const urls = { piano: pianoUrl }
 const pending = new Map<SampledTone, Promise<ArrayBuffer>>()
 const CACHE_NAME = 'm3n-soundfonts-v1'
 
@@ -40,7 +38,7 @@ async function download(tone: SampledTone) {
     // Private browsing or exhausted storage must not prevent playback.
     cache = undefined
   }
-  const failure = `无法下载${tone === 'piano' ? '钢琴' : '口琴'}音色，请检查网络后重试。`
+  const failure = '无法下载钢琴音色，请检查网络后重试。'
   let response: Response
   try { response = await fetch(url) } catch { throw new Error(failure) }
   if (!response.ok) throw new Error(failure)
