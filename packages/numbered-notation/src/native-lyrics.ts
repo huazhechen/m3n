@@ -60,7 +60,7 @@ export function nativeLyricSvg(glyph: NativeGlyph, row: number, baseline: number
 /** Pack the rows present at each musical slot into measured visual tiers.
  * Verse numbers remain semantic: missing verse 1 must not push verse 2 down,
  * while an explicit zero-width token still holds its place at that slot.
- * Painting and ossia clearance consume these same per-glyph baselines.
+ * Painting and lane spacing consume these same per-glyph baselines.
  */
 export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measurer: TextMeasurer) {
   const glyphs = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === lane.id)

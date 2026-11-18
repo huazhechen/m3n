@@ -12,8 +12,5 @@ export function scoreEventIds(document: ScoreDocument): Map<ScoreEvent, string> 
       for (const event of hasBass ? part.bass[index]?.events ?? [] : []) ids.set(event, event.playbackId ?? `m3n-e-${++ordinal}`)
     }
   }
-  for (const [index, alternative] of (document.alternatives ?? []).entries()) {
-    alternative.measure.events.forEach((event, slot) => ids.set(event, `m3n-e-a${index + 1}-${slot + 1}`))
-  }
   return ids
 }

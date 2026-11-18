@@ -54,13 +54,6 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const joins = (left: typeof members[number] | undefined, right: typeof members[number] | undefined) => left && right
       && (left.measure === right.measure || !left.measure.breakAfter && !right.measure.breakBefore && left.measure.part === right.measure.part)
     members.forEach((member, index) => {
-      if (lane.startsWith('alternative:')) {
-        parentheses.set(member.glyph, {
-          left: members[index - 1]?.measure === member.measure ? 0 : member.glyph.parenthesisLeft ?? 0,
-          right: members[index + 1]?.measure === member.measure ? 0 : member.glyph.parenthesisRight ?? 0,
-        })
-        return
-      }
       if (!member.glyph.instrumental) return
       const previous = members[index - 1], next = members[index + 1]
       parentheses.set(member.glyph, {
@@ -70,11 +63,11 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     })
   }
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
-    cells: lanes.filter(lane => !lane.startsWith('alternative:')).map(lane => springCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
+    cells: lanes.map(lane => springCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
     const geometry = nativeBarMetrics(kind)
     const prefix = !opening && measure.navigation?.length ? 4.4 + measure.navigation.reduce((sum, mark) => sum + mark.width + 4.4, 0) : 0
-    const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)).filter(lane => !lane.startsWith('alternative:')))]
+    const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)))]
     items.push({ measure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
       cells: lanes.map(lane => springCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 0, 128, scale)) })
   }
@@ -83,11 +76,6 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const firstColumn = measure.columns[0]
     const controls = (column: NativeColumn, members: { control: NativeControl; lane: string }[]) => {
       if (!members.length) return
-      // Different pass labels are ordered controls, not one shared time column.
-      if (members.length > 1 && members.some(member => member.control.kind === 'passes')) {
-        for (const member of members) controls(column, [member])
-        return
-      }
       const cells = members.map(({ control, lane }) => springCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
       items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }

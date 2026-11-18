@@ -10,7 +10,6 @@ export const EPSILON = 1e-9
 export function scoreMeasures(score: ScoreDocument) {
   return [...new Set([
     ...[...score.parts.values()].flatMap((part) => [...part.melody, ...part.bass]),
-    ...(score.alternatives ?? []).map((alternative) => alternative.measure),
   ])]
 }
 

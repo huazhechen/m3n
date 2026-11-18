@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { formatM3N,  normalizeSectionBarlines, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import type { ScoreMeasure } from '@m3n/notation'
+import { formatM3N, normalizeSectionBarlines, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
+import { describe, expect, it } from 'vitest'
 
 const sources = import.meta.glob<string>('../scores/*.m3n', { eager: true, query: '?raw', import: 'default' })
 
@@ -25,7 +25,6 @@ function musicalMeaning(source: string) {
   return {
     title: score.title, key: score.key, meter: [score.meterCount, score.meterUnit], tempo: score.tempo, order: score.order, orderKeys: score.orderKeys, orderKeyOctaves: score.orderKeyOctaves,
     parts: [...score.parts].map(([name, part]) => [name, staffMeaning(part.melody), staffMeaning(part.bass)]),
-    alternatives: score.alternatives?.map((alternative) => [alternative.passes, staffMeaning([alternative.measure])]),
     intervals: score.intervals.map(({ kind, staff, start, endStart, tempoTarget, display }) =>
       ({ kind, staff, start: times.get(start!)?.start, end: times.get(endStart!)?.end, tempoTarget, display })),
     lyrics: score.lyrics.map((block) => block.syllables.map(({ text, kind, underlined, forceTiedTarget, wordpos }) =>

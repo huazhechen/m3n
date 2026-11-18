@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
 import { compileScorePerformance, parseM3NDocument } from '@m3n/notation'
+import { describe, expect, it } from 'vitest'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
@@ -10,8 +10,7 @@ const examples = [
     '{4/4}\nN: 1e 2 3ee 4 | 5dd 6d 7d 1d |||'],
   ['{2/4}\nN: {8va}[135:h] 2 | {br}3 4{/} |||\nB: {8vb}1d^ | 5d^{/} |||',
     '{2/4}\nN: [1e3e5e:h] 2e | {br}3e 4e |||\nB: 1dd^ | 5dd^ |||'],
-  ['{2/4}\nN: ||: 1 2 | 3 4 :||\nNs[2]: 2: {8va}5 6{/} |',
-    '{2/4}\nN: ||: 1 2 | 3 4 :||\nNs[2]: 2: 5e 6e |'],
+
 ]
 
 describe('octave scopes are resolved once into pitch dots', () => {

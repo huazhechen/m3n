@@ -76,7 +76,7 @@ test('floating controls expose BPM, tone, transpose, metronome and measure numbe
 test('numbered SVG and multipage PDF retain Chinese outlines and all written measures', async ({ page }, info) => {
   test.setTimeout(90_000)
   await page.goto('/editor')
-  await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 64 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
+  await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 128 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
   await page.getByRole('button', { name: '保存', exact: true }).click()
   for (const format of ['SVG', 'PDF']) {
     await openScoreSettings(page)
@@ -102,7 +102,7 @@ test('numbered SVG and multipage PDF retain Chinese outlines and all written mea
     if (format.startsWith('SVG')) {
       const svg = bytes.toString()
       expect(svg).toContain('data-outlined-text="中文矢量验证"')
-      expect(svg).toContain('m3n-e-256')
+      expect(svg).toContain('m3n-e-512')
       expect(svg).not.toContain('<text')
       const lyricOutlines = await page.evaluate(svg => {
         const document = new DOMParser().parseFromString(svg, 'image/svg+xml')
@@ -121,7 +121,7 @@ test('numbered SVG and multipage PDF retain Chinese outlines and all written mea
 
 test('homepage plays numbered notation and documentation examples open as editable sources', async ({ page }) => {
   await page.goto('/')
-  const sample = page.getByRole('region', { name: '可试听谱例' })
+  const sample = page.locator('.home-sample')
   await expect(sample.locator('svg[data-engine="m3n"]')).toBeVisible()
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()

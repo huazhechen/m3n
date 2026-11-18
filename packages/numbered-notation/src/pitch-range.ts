@@ -1,4 +1,4 @@
-import { m3nPitch, parseM3NGrace, parseM3NGroupPitches, resolveScorePitches, alternativePerformance, type ScoreDocument, type ScoreMeasure } from '@m3n/notation'
+import { m3nPitch, parseM3NGrace, parseM3NGroupPitches, resolveScorePitches, unfoldScorePerformance, type ScoreDocument, type ScoreMeasure } from '@m3n/notation'
 import { absoluteSemitones, fixedDoPitch } from './fixed-do.js'
 
 /** Spell a resolved pitch against the opening key, including inherited accidentals. */
@@ -38,9 +38,8 @@ export function numberedPitchRange(document: ScoreDocument, options: { fixedDo?:
       }
     }
   }
-  const performance = document.orderKeys?.some(Boolean) ? alternativePerformance(document) : document
+  const performance = document.orderKeys?.some(Boolean) ? unfoldScorePerformance(document) : document
   for (const part of performance.parts.values()) visit(part.melody)
-  for (const alternative of performance.alternatives ?? []) visit([alternative.measure])
   if (low === undefined || high === undefined) return undefined
   const spell = (pitch: string) => options.fixedDo ? fixedDoPitch(pitch, options.transpose).replace(/^n/, '') : relativePitch(pitch, document.key)
   return [spell(low), spell(high)]

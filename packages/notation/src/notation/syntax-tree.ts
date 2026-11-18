@@ -7,12 +7,11 @@ export type SourceSpan = {
   column: number
 }
 
-export type M3NRowKind = 'melody' | 'bass' | 'harmony' | 'lyrics' | 'alternative'
+export type M3NRowKind = 'melody' | 'bass' | 'harmony' | 'lyrics'
 
 export type M3NSyntaxRow = SourceSpan & {
   kind: M3NRowKind
   label: string
-  alternative?: { passes: number[]; measure: number }
   content: string
   contentStart: number
   tokens: M3NToken[]
@@ -75,8 +74,7 @@ export function parseM3NSyntaxTree(source: string): M3NSyntaxTree {
     const leading = raw.length - raw.trimStart().length
     const trimmed = raw.trim()
     const span = { start: offset, end: offset + raw.length, line, column: 1 }
-    const alternative = /^(Ns\[([1-9]\d*(?:,[1-9]\d*)*)\]):[ \t]*([1-9]\d*):[ \t]*(.*)$/.exec(raw.trimStart())
-    const match = alternative ? [alternative[0], alternative[1], alternative[4]] : rowPattern.exec(raw.trimStart())
+    const match = rowPattern.exec(raw.trimStart())
     if (!trimmed) lines.push({ ...span, raw, kind: 'blank' })
     else if (trimmed.startsWith('//')) lines.push({ ...span, raw, kind: 'comment' })
     else if (/^===/.test(trimmed)) {
@@ -89,9 +87,9 @@ export function parseM3NSyntaxTree(source: string): M3NSyntaxTree {
       musicSeen = true
       const label = match[1] ?? ''
       const content = match[2] ?? ''
-      const contentStart = offset + leading + (alternative ? alternative[0].length - content.length : raw.trimStart().indexOf(content))
+      const contentStart = offset + leading + raw.trimStart().indexOf(content)
       const contentEnd = contentStart + content.length
-      const kind: M3NRowKind = alternative ? 'alternative' : label === 'N' ? 'melody' : label === 'B' ? 'bass' : label === 'C' ? 'harmony' : 'lyrics'
+      const kind: M3NRowKind = label === 'N' ? 'melody' : label === 'B' ? 'bass' : label === 'C' ? 'harmony' : 'lyrics'
       while (tokenIndex < tokens.length && (tokens[tokenIndex]?.start ?? Infinity) < contentStart) tokenIndex += 1
       const rowTokens: M3NToken[] = []
       while (tokenIndex < tokens.length && (tokens[tokenIndex]?.start ?? Infinity) < contentEnd) {
@@ -106,7 +104,6 @@ export function parseM3NSyntaxTree(source: string): M3NSyntaxTree {
         column: leading + 1,
         kind,
         label,
-        ...(alternative ? { alternative: { passes: alternative[2]!.split(',').map(Number), measure: Number(alternative[3]) } } : {}),
         content,
         contentStart,
         tokens: rowTokens,

@@ -21,7 +21,7 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: `VITE_SUBMIT_MODE=local npm run build -- --outDir ${previewOutput} && npm run preview -- --outDir ${previewOutput} --host 127.0.0.1 --port ${previewPort}`,
+    command: `VITE_BASE_URL=/ VITE_SUBMIT_MODE=local npm run build -- --outDir ${previewOutput} && VITE_BASE_URL=/ VITE_SUBMIT_MODE=local npm run preview -- --outDir ${previewOutput} --host 127.0.0.1 --port ${previewPort}`,
     url: `http://127.0.0.1:${previewPort}`,
     reuseExistingServer: true,
     timeout: 60_000,

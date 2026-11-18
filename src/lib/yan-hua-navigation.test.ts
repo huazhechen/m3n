@@ -1,6 +1,6 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, playbackMeasureIndexes, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics, playbackMeasureIndexes } from '@m3n/notation'
 import source from '../scores/yan_hua_yi_leng_01.m3n?raw'
 
 import reference from './fixtures/yan-hua-navigation-baseline.json'
@@ -13,7 +13,7 @@ const correctedReference = beforeCleanup
   .replace('笛%', '笛')
 
 function performedEvents(text: string) {
-  const document = alternativePerformance(parseM3NDocument(text))
+  const document = unfoldScorePerformance(parseM3NDocument(text))
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
   return bars.flatMap(bar => bar.events.map(event => [

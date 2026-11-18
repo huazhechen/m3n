@@ -1,5 +1,6 @@
-import { afterEach, expect, it, vi } from 'vitest'
 import { MIDIBuilder } from 'spessasynth_core'
+import { afterEach, expect, it, vi } from 'vitest'
+import { SpessaPlayer } from './spessa-player'
 
 const mocks = vi.hoisted(() => ({
   tune: vi.fn(), pause: vi.fn(), load: vi.fn(), close: vi.fn(), download: vi.fn(),
@@ -13,8 +14,12 @@ vi.mock('spessasynth_lib', () => ({
     setSystemParameter = mocks.tune
   },
   Sequencer: class {
-    eventHandler = { addEvent() {} }
-    loadNewSongList = mocks.load
+    ready: (() => void) | undefined
+    eventHandler = {
+      addEvent: (name: string, _id: string, callback: () => void) => { if (name === 'timeChange') this.ready = callback },
+      removeEvent() {},
+    }
+    loadNewSongList = (...args: unknown[]) => { mocks.load(...args); void Promise.resolve().then(() => this.ready?.()) }
     pause = mocks.pause
     currentHighResolutionTime = 5
     paused = false
@@ -23,7 +28,6 @@ vi.mock('spessasynth_lib', () => ({
 }))
 vi.mock('./playback-tones.js', () => ({ loadSampledTone: mocks.download }))
 vi.mock('./synthetic-soundfont.js', () => ({ createSyntheticSoundFont: () => new ArrayBuffer(1) }))
-import { SpessaPlayer } from './spessa-player'
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); mocks.manager.priorityOrder = ['synth'] })
 async function player() {

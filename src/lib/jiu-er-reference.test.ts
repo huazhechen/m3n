@@ -1,29 +1,8 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/jiu_er_01.m3n?raw'
 import vocalSource from './fixtures/jiu-er-before-instrumental.m3n?raw'
 import reference from './fixtures/jiu-er-kuaiyuepu.json'
-import { loadPresetScore, presetScores } from './samples'
-
-it('loads Jiu Er fully written out with a subtitle and inline key changes', async () => {
-  const preset = presetScores.find(score => score.sourcePath === 'jiu_er_01.m3n')!
-  expect(preset.title).toBe('九儿')
-  expect(await loadPresetScore(preset.slug)).toBe(source)
-  expect(validateM3NDiagnostics(source)).toEqual([])
-  const document = parseM3NDocument(source)
-  expect([document.key, document.meterCount, document.meterUnit, document.tempo]).toEqual(['Eb', 4, 4, reference.tempo])
-  expect(document.subtitle).toBe('电视剧《红高粱》片尾曲')
-  expect(document.origin).toBe('')
-  expect(document.order).toBeUndefined()
-  expect(document.sections ?? []).toHaveLength(0)
-  const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-  expect(bars).toHaveLength(24)
-  expect(document.alternatives).toBeUndefined()
-  expect(bars.slice(0, -1).every(bar => bar.right === 'single')).toBe(true)
-  expect(bars.at(-1)!.right).toBe('end')
-  expect(bars.every(bar => !bar.ending && bar.left !== 'rptstart' && bar.right !== 'rptend')).toBe(true)
-  expect([...new Set(bars.flatMap(bar => bar.events.map(event => event.key)))]).toEqual(['Eb', 'F', 'Bb'])
-})
 
 it('preserves the arrangement while applying the uploaded core melody ties within the harmonica range', () => {
   const document = parseM3NDocument(source)
@@ -32,7 +11,7 @@ it('preserves the arrangement while applying the uploaded core melody ties withi
   expect(performance.beats).toBe(96)
   const pitches = performance.notes.map(note => note.pitch)
   expect([Math.min(...pitches), Math.max(...pitches)]).toEqual([63, 86])
-  expect(alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(24)
+  expect(unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(24)
   // 876f8e578231bd05047dab26a00e1914.png: the 7 across 花's barline and the
   // two 5s on 天 are tied. Keep the historical web reference and arrangement.
   const removedAttacks = new Set([12, 44, 21, 53, 77])

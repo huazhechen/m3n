@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest' 
-import { formatM3N, normalizeSectionBarlines } from './m3n-format.js'
+import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from './m3n-direct.js'
+import { formatM3N, normalizeSectionBarlines } from './m3n-format.js'
 import { validateM3NDiagnostics } from './m3n-validate.js'
 
 describe('formatM3N', () => {
@@ -152,13 +152,6 @@ describe('formatter semantic guarantees', () => {
     expect(valid('{6/8}\nN: 1 (2) (3) (4) (5) |||')).toContain('N: 1 (2) (3 4 5) |||')
     expect(valid('{2/4}\nN: (1) (2) (3) (4) | {6/8}(1) (2) (3) (4) (5) (6) |||'))
       .toContain('{6/8}(1 2 3) (4 5 6)')
-  })
-
-  it('uses compound grouping for bass and alternate melodies too', () => {
-    const source = '{6/8}\nN: ||: 1. 2. :|||\nB: (1) (2) (3) (4) (5) (6) |\nNs[2]: 1: (7) (6) (5) (4) (3) (2) |'
-    const formatted = valid(source)
-    expect(formatted).toContain('B: (1 2 3) (4 5 6) |')
-    expect(formatted).toContain('Ns[2]: 1: (7 6 5) (4 3 2) |')
   })
 
   it('preserves literal grouped lyric text', () => {

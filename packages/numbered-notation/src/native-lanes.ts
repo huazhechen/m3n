@@ -1,6 +1,6 @@
 import type { NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
-import { nativeSvgPieces, translateNativeInk, type NativeInk } from './native-ink.js'
+import { nativeSvgPieces, type NativeInk } from './native-ink.js'
 import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
 import { nativeLyricSvg } from './native-lyrics.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
@@ -38,36 +38,12 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
   return result
 }
 
-/** Pack ossia lanes against only horizontally overlapping painted ink. Other
- * full voices retain their ordinary gap; an explicit uniform-height request
- * retains the full lane envelope. Publish offsets before paginating. */
-export function placeNativeLanes(system: NativeSystem, measurer: TextMeasurer, uniform = false): number {
-  if (uniform || !system.lanes.some(lane => lane.id.startsWith('alternative:'))) {
-    let bottom = 0
-    for (const [index, lane] of system.lanes.entries()) {
-      lane.y = bottom + (index ? nativeStyle.laneGap : 0) + lane.top
-      bottom = lane.y + lane.bottom
-    }
-    return bottom
-  }
-  const pieces = nativeLanePieces(system, measurer), placed: NativeInk[] = []
+/** Stack the complete melody and bass envelopes with their ordinary gap. */
+export function placeNativeLanes(system: NativeSystem): number {
   let bottom = 0
   for (const [index, lane] of system.lanes.entries()) {
-    const own = pieces.get(lane.id)!
-    let y = index ? bottom + nativeStyle.laneGap + lane.top : lane.top
-    if (index && lane.id.startsWith('alternative:')) {
-      y = system.lanes[0]!.y
-      for (const upper of placed) for (const lower of own) {
-        if (upper.right >= lower.left && upper.left <= lower.right) y = Math.max(y, upper.bottom + nativeStyle.music * 0.32 - lower.top)
-      }
-    }
-    lane.y = y
-    placed.push(...own.map(ink => translateNativeInk(ink, 0, y)))
-    bottom = Math.max(bottom, y + lane.bottom)
+    lane.y = bottom + (index ? nativeStyle.laneGap : 0) + lane.top
+    bottom = lane.y + lane.bottom
   }
-  // A tall ornament outside the main voice's horizontal range may extend above
-  // its top. Preserve the true outer envelope as the pagination block.
-  const top = Math.min(0, ...system.lanes.map(lane => lane.y - lane.top))
-  for (const lane of system.lanes) lane.y -= top
-  return bottom - top
+  return bottom
 }

@@ -12,9 +12,6 @@ export function sustainContinuations(document: ScoreDocument, lyrics: LyricsByEv
   for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {
     const tracks = [
       { measures: part[staff], intervals: document.intervals },
-      ...(staff === 'melody' ? (document.alternatives ?? [])
-        .filter(alternative => part.melody.includes(alternative.host))
-        .map(alternative => ({ measures: [alternative.measure], intervals: alternative.intervals })) : []),
     ]
     for (const { measures, intervals } of tracks) {
       const absolutePitches = resolveScorePitches(measures)

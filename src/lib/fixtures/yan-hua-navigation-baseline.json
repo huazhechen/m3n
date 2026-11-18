@@ -1,7 +1,7 @@
 {
-  "baseline": "A/B/A/B/B/C before replacing the itinerary with local repeat and D.S.",
+  "baseline": "A/B/A/B/B/C preserved by local repeat and D.S.; updated after the intentional removal of all grace notes in 6d72e02. Main pitches, durations, ties, other marks and lyrics are unchanged.",
   "eventCount": 530,
-  "eventsSha256": "cb66bd498bc08031a74c1cdbb5e70feb8e87ab0502a36cc121b25cae315b3159",
+  "eventsSha256": "aa7fa067ff3703225c44967533d20e18d4550107aad81a52ec089d8433987952",
   "lyricCount": 416,
   "lyricsSha256": "c52cfcd55c7aff26c2d626c2bf0f86607277c14a0e3d82bc08637e118d73b859",
   "beats": 336,

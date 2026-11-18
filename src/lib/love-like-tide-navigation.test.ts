@@ -1,11 +1,11 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds } from '@m3n/notation'
 import source from '../scores/ai_ru_chao_shui_01.m3n?raw'
 
 // Performance baselines include the bar 17 rhythm simplification and two written 醉→不 slide cleanups and the restored 3→2 endings in bars 21 and 30.
 it('preserves all performed pitches, durations, ties, articulations, dynamics and tempo', () => {
-  const document = alternativePerformance(parseM3NDocument(source))
+  const document = unfoldScorePerformance(parseM3NDocument(source))
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
   const events = bars.flatMap(bar => bar.events.map(event => [

@@ -139,7 +139,7 @@ flowchart LR
 
 `lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，宽度切换保留播放状态。
 
-`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。`PlaybackScore` 仅生成 MIDI 与时间映射；返回的事件 ID 映射到简谱 SVG。替代旋律在播放序列中按遍次展开。
+`PlaybackCoordinator` 保证多个乐谱实例之间播放互斥。`PlaybackScore` 仅生成 MIDI 与时间映射；返回的事件 ID 映射到简谱 SVG。房子按遍次选择演奏内容。
 
 ## 分享 API
 

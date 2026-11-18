@@ -50,7 +50,7 @@ export function auditNativeInkCollisions(system) {
     object(node, ['tip', 'brk', 'hold', 'str'].includes(name) ? 'music' : 'label', name)
   }
   const labels = new Set()
-  for (const node of system.querySelectorAll('[data-m3n-role="annotation"],[data-m3n-role="lyric"],[data-m3n-role="lyric-prefix"],[data-m3n-role="navigation"],[data-m3n-role="repeat-count"],[data-m3n-role="alternative-passes"]')) {
+  for (const node of system.querySelectorAll('[data-m3n-role="annotation"],[data-m3n-role="lyric"],[data-m3n-role="lyric-prefix"],[data-m3n-role="navigation"],[data-m3n-role="repeat-count"]')) {
     // Inline pass text is already represented by its complete control group.
     if (node.closest('[data-m3n-role="control"]')) continue
     const group = node.closest('[data-m3n-role="lyric-fragment"],[data-m3n-role="annotation-frame"]') ?? node
@@ -79,8 +79,7 @@ export function auditNativeInkCollisions(system) {
   let candidates = 0
   for (let i = 0; i < objects.length; i++) for (let j = i + 1; j < objects.length; j++) {
     const a = objects[i], b = objects[j]
-    const crossLane = a.lane && b.lane && a.lane !== b.lane && (a.lane.startsWith('alternative:') || b.lane.startsWith('alternative:'))
-    if (a.kind !== 'label' && b.kind !== 'label' && !crossLane) continue
+    if (a.kind !== 'label' && b.kind !== 'label') continue
     const left = Math.max(a.left, b.left), right = Math.min(a.right, b.right), top = Math.max(a.top, b.top), bottom = Math.min(a.bottom, b.bottom)
     if (right <= left || bottom <= top) continue
     candidates++

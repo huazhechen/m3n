@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
+import { deriveScoreInteraction, measurePlaybackPasses, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { measurePlaybackPasses, deriveScoreInteraction, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
-import { NativeNumberedNotationScore } from './native-score.js'
+import { describe, expect, it } from 'vitest'
 import type { NativeRenderOptions as NumberedNotationRenderOptions } from './native-layout.js'
 import { layoutNativeScore } from './native-layout.js'
+import { NativeNumberedNotationScore } from './native-score.js'
 const options = {paged:false,width:800}
 const systemBaselines = (root:Document) => [...root.querySelectorAll('g.system')].map(system => Number([...system.querySelectorAll('g.note text')].find(node => node.getAttribute('font-size')==='22' && /^[0-7]$/.test(node.textContent ?? ''))!.getAttribute('y')))
 
@@ -94,20 +94,6 @@ describe('native engraving acceptance', () => {
     glyphs.forEach((glyph, index) => expect(glyph.time).toBeCloseTo([0, 0.75, 1, 1 + 2 / 3, 1 + 4 / 3, 3][index]!))
     expect(glyphs.map(glyph => glyph.beats)).toEqual([0.75, 0.25, 2 / 3, 2 / 3, 2 / 3, 1])
     expect(glyphs.map(glyph => glyph.pitches.map(pitch => pitch.degree).join(''))).toEqual(['1', '2', '3', '4', '5', '6'])
-  })
-
-  it.each([320, 800])('retains alternative passes, own lyrics and full-size digits at %spx', width => {
-    const { root, document } = render('{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 甲乙丙丁\nL2: 戊己庚辛壬\nNs[2]: 2: (5 6) 7 |', { width, paged: true })
-    const alternative = document.alternatives![0]!, ids = scoreEventIds(document)
-    const host = root.querySelector(`#${ids.get(alternative.host.events[0]!)!} text`)!
-    for (const [index, event] of alternative.measure.events.entries()) {
-      const note = root.querySelector(`g.note[data-m3n-id="${ids.get(event)}"]`)!
-      expect(note.getAttribute('data-m3n-passes')).toBe('2')
-      const number = note.querySelector('text')!
-      expect(number.getAttribute('font-size')).toBe('22')
-      expect(Number(number.getAttribute('y'))).toBeGreaterThan(Number(host.getAttribute('y')))
-      expect(lyrics(root, ids.get(event)!, 2)).toBe(['庚', '辛', '壬'][index])
-    }
   })
 
   it('separates nested ties from slurs and ends the slur on the pitched head', () => {
@@ -220,9 +206,6 @@ it('supports 0.2em note gaps without changing Liang Liang content or font sizes'
       .toEqual(normal.root.querySelectorAll('g.note text[font-size="22"]').length)
     for (const noteGapEm of [-0.1, Infinity, NaN]) expect(() => render(source, { noteGapEm })).toThrow('音符间距比例')
   })
-    const slots = (root: Document) => [...root.querySelectorAll('g[data-m3n-role="lyric-fragment"]')]
-      .map(node => [node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.getAttribute('data-m3n-passes')])
-    expect(slots(tight.root)).toEqual(slots(normal.root))
 
 it('packs Liang Liang into eight complete systems in compact mode', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
@@ -237,6 +220,9 @@ it('packs Liang Liang into eight complete systems in compact mode', () => {
     const content = (root: Document) => [...root.querySelectorAll('g.note,text[data-m3n-role="lyric"]')]
       .map(node => [node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.textContent])
     expect(content(tight.root)).toEqual(content(normal.root))
+    const slots = (root: Document) => [...root.querySelectorAll('g[data-m3n-role="lyric-fragment"]')]
+      .map(node => [node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.getAttribute('data-m3n-passes')])
+    expect(slots(tight.root)).toEqual(slots(normal.root))
   })
 
 it('uses minimum 0.4 and natural 0.6 clearances without changing score content', () => {
@@ -596,36 +582,6 @@ it('reports unsupported marks instead of silently discarding them', () => {
     document.parts.values().next().value!.melody[0]!.events[0]!.postfixes.push('unknown')
     expect(render(document).score.diagnostics.some(item => item.code === 'NUMBERED_UNSUPPORTED_MARK')).toBe(true)
   })
-
-it('prints shared lyrics once when a later visit has an alternative melody', () => {
- const {root}=render('{2/4}\nN: ||: 1 2 | 3 4 :||\nL: 甲乙 | 丙丁\nNs[2]: 2: 5 6 |')
- const text=root.body.textContent ?? ''
- expect(text).not.toContain('甲甲')
- expect(text).not.toContain('乙乙')
- expect(text).not.toContain('丙丙')
-})
-
-it.each([320,800].flatMap(width=>[false,true].map(paged=>({width,paged}))))('places alternatives below their own visible main lyrics at $width, paged=$paged', settings => {
- const source='{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 甲乙 | 丙丁\nL2: 戊己 | 庚辛\nNs[2]: 2: 5 6 |'
- const distance = (input: string) => {
-  const {root,document}=render(input,settings), ids=scoreEventIds(document)
-  const alternative=document.alternatives![0]!
-  const baseline=(id:string)=>Number(root.querySelector(`g.note[data-m3n-id="${id}"] text`)!.getAttribute('y'))
-  return baseline(ids.get(alternative.measure.events[0]!)!)-baseline(ids.get(alternative.host.events[0]!)!)
- }
- // A second verse in a different bar must not leave an empty verse row
- // between this bar's main lyrics and its alternative melody.
- expect(distance(source)).toBeCloseTo(distance(source.replace('L2: 戊己 |','L2: |')),4)
-})
-
-it('keeps alternative melody digits at the main melody font size', () => {
- const {root,document}=render('{2/4}\nN: ||: 1 2 :||\nNs[2]: 1: 3 4 |')
- const ids=scoreEventIds(document)
- const alternative=document.alternatives![0]!
- const size=(id:string)=>root.querySelector(`g.note[data-m3n-id="${id}"] text`)!.getAttribute('font-size')
- expect(size(ids.get(alternative.measure.events[0]!)!)).toBe('22')
- expect(size(ids.get(alternative.host.events[0]!)!)).toBe('22')
-})
 
 it.each([320,800])('prints ordered houses once without duplicating their shared lyric labels at %s', width => {
   const source='{2/4}{order=A,B,A,A}\n===A\nN: 1 2 |\nL: 甲乙\n---V1\nN: 3 4 ||\nL: 丙丁\n---V2,V3\nN: 5 6 ||\nL: 戊己\n===B\nN: 7 1e |||'

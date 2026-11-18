@@ -27,11 +27,6 @@ describe('la-based minor solfege', () => {
     expect(pitches('{key=Am}{4/4}\nN: 6d 1 3 6 |||')).toEqual([57, 60, 64, 69])
   })
 
-  it('keeps ties valid across relative major/minor changes and selects repeat alternatives', () => {
-    expect(pitches('{key=C}{2/4}\nN: 1^~ | {key=Am}1^ |||')).toEqual([60])
-    expect(pitches('{key=Am}{2/4}\nN: ||: 6d 7d :|||\nNs[2]: 1: 1 6 |')).toEqual([57, 59, 60, 69])
-  })
-
   it('keeps Roman chord degrees relative to the minor tonic', () => {
     expect(['i', 'III', 'iv', 'V', 'VI', 'VII'].map(chord => m3nChord(chord, 'Am')?.symbol))
       .toEqual(['Am', 'C', 'Dm', 'E', 'F', 'G'])

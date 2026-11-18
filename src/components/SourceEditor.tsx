@@ -73,8 +73,9 @@ export function SourceEditor(props: SourceEditorProps) {
       },
       selection: () => view.state.selection.main.head,
     }
-    if (props.editorRef) props.editorRef.current = handle
-    return () => { view.destroy(); viewRef.current = null; if (props.editorRef) props.editorRef.current = null }
+    const editorRef = props.editorRef
+    if (editorRef) editorRef.current = handle
+    return () => { view.destroy(); viewRef.current = null; if (editorRef) editorRef.current = null }
     // The view lives for this component's lifetime; updates go through transactions below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

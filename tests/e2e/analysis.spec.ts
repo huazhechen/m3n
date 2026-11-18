@@ -8,7 +8,7 @@ test('analyzes edits in a worker and waits for composition to finish', async ({ 
   const workerCreated = page.waitForEvent('worker')
   await input.fill(source)
   const worker = await workerCreated
-  expect(worker.url()).toContain('analysis.worker-')
+  expect(worker.url()).toMatch(/^blob:/)
   await expect(paper).toContainText('后台分析')
   await paper.locator('svg').first().evaluate(svg => svg.setAttribute('data-composition-preserved', 'true'))
 

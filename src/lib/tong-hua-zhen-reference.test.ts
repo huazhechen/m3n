@@ -58,10 +58,10 @@ it('checks the new dotted and syncopated rhythms and removes old-image ornaments
     ['((7d) 7d (7d) (7d) 1 (6d))', [.25, .5, .25, .25, .5, .25]],
   ] as const
   for (const [phrase, beats] of patterns) {
-    const offset = source.indexOf(phrase)
-    const events = written.flatMap(bar => bar.events).filter(event => event.sourceStart >= offset && event.sourceStart < offset + phrase.length)
-    expect(offset, phrase).toBeGreaterThan(-1)
-    expect(events.map(event => event.beats), phrase).toEqual(beats)
+    const reference = parseM3NDocument(`{2/4}\nN: ${phrase}`).parts.get('score')!.melody
+    expect(reference.flatMap(bar => bar.events.map(event => event.beats)), phrase).toEqual(beats)
+    // Equivalent bracket grouping after formatting retains the complete bar.
+    expect(written.map(bar => tokens([bar])), phrase).toContainEqual(tokens(reference))
   }
   expect(written.flatMap(bar => bar.events.flatMap(event => event.postfixes))).not.toContain('prall')
 })

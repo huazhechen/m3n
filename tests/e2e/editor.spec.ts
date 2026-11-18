@@ -27,6 +27,7 @@ test('edits, renders, and maps a score note back to source', async ({ page }) =>
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const firstNote = page.locator('.score-paper [id^="m3n-e-"]').first()
   await expect(firstNote).toBeVisible({ timeout: 30_000 })
+  await editor.press('ControlOrMeta+End')
   await expect(page.locator('.score-paper .is-cursor-active-measure')).toHaveCount(1)
   await expect(paper.locator('.is-cursor-active').first()).toBeVisible()
   await firstNote.locator('text').first().click()

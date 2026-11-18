@@ -1,4 +1,3 @@
-import { validateAlternatives, alternativeMeasure } from './notation/alternatives.js'
 import { validateSectionOrder } from './notation/section-order.js'
 import { durationInBeats } from './notation/m3n-primitives.js' 
 import { parseM3NGrace } from './notation/m3n-groups.js'
@@ -645,17 +644,6 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
       targets.set(pass, passMeasures)
     }
   }
-  if (document.alternatives?.some(item=>item.host.events.some(event=>start<=event.sourceStart && event.sourceStart<end))) {
-    for (const [pass, original] of targets) {
-      let previousTie = false
-      const selected = part.melody.filter(measure => measure.events.some(event => start <= event.sourceStart && event.sourceStart < end))
-        .map(host => { const selected=alternativeMeasure(document,host,pass); return selected.events.filter(event=>selected!==host || start<=event.sourceStart && event.sourceStart<end).flatMap(event => {
-          const tied = previousTie; previousTie=event.tie
-          return event.kind==='rest' ? [] : Array.from({length:event.kind==='tuplet'?event.pitches.filter(pitch=>pitch!=='0').length:1},(_,index)=>({tied:tied&&index===0}))
-        })})
-      if (selected.length===original.length) targets.set(pass,selected)
-    }
-  }
   const section = structure.sections.find((candidate) => candidate.name === sectionName)
   const phraseIndex = section?.phrases.indexOf(phrase) ?? -1
   const contiguousHouses = (phrases: readonly M3NPhrase[]) => {
@@ -883,7 +871,7 @@ function structureTokens(tree: M3NSyntaxTree, structure: M3NDocumentStructure, s
   return [...header, ...rows.flatMap(row => row.tokens)]
 }
 
-function validateSourceRules(tree: M3NSyntaxTree, structure: M3NDocumentStructure, document: ScoreDocument): ScoreDiagnostic[] {
+function validateSourceRules(tree: M3NSyntaxTree, structure: M3NDocumentStructure): ScoreDiagnostic[] {
   const diagnostics: ScoreDiagnostic[] = []
   const mainResult = validateBody(structureTokens(tree, structure, 'melody'), diagnostics, {
     requireTerminal: structure.sections.length === 0,
@@ -896,10 +884,6 @@ function validateSourceRules(tree: M3NSyntaxTree, structure: M3NDocumentStructur
       inheritedSettingEvents: mainResult.settingEvents,
     })
   }
-  for (const phrase of structure.sections.flatMap(section=>section.phrases)) for (const row of phrase.alternatives ?? []) {
-    const first = document.alternatives?.find(item => item.sourceStart === row.start)?.host.events[0]
-    validateBody(row.tokens, diagnostics, {requireTerminal:false, initial:first ? {key:first.key,meter:{beats:first.meterCount ?? document.meterCount,beatValue:first.meterUnit ?? document.meterUnit},tempo:first.tempo ?? document.tempo} : mainResult.initial})
-  }
   return [...new Map(diagnostics.map((diagnostic) => [`${diagnostic.code}:${diagnostic.message}`, diagnostic])).values()]
 }
 type ValidationContext = { document?: ScoreDocument; projection?: M3NDocumentProjection; syntaxTree?: M3NSyntaxTree }
@@ -907,7 +891,7 @@ type ValidationContext = { document?: ScoreDocument; projection?: M3NDocumentPro
 function validationResult(source: string, options: { skipBeatValidation?: boolean }, context: ValidationContext = {}) {
   const projected = context.projection ?? projectM3NDocument(source, context.syntaxTree)
   const parsed = context.document ?? parseM3NDocument(source, projected)
-  const typedSourceRuleDiagnostics = validateSourceRules(projected.syntaxTree, projected.structure, parsed)
+  const typedSourceRuleDiagnostics = validateSourceRules(projected.syntaxTree, projected.structure)
   const phraseDiagnostics = projected.structure.sections.length > 0
     ? validatePhrasePlaybackPasses(parsed, projected.structure)
     : []
@@ -927,7 +911,7 @@ function validationResult(source: string, options: { skipBeatValidation?: boolea
     ...harmonyDiagnostics,
     ...lyricDiagnostics,
   ]
-  return [...projected.structure.diagnostics, ...sourceDiagnostics, ...syntaxDiagnostics, ...scoreDiagnostics, ...validateSectionOrder(parsed, projected), ...validateAlternatives(parsed, projected)]
+  return [...projected.structure.diagnostics, ...sourceDiagnostics, ...syntaxDiagnostics, ...scoreDiagnostics, ...validateSectionOrder(parsed, projected)]
 }
 
 export function validateM3NDiagnostics(source: string, options: { skipBeatValidation?: boolean } = {}, document?: ScoreDocument, context: Omit<ValidationContext, 'document'> = {}): ScoreDiagnostic[] {

@@ -229,13 +229,14 @@ export function ScoreRenderer({
   useEffect(() => { if (isSourceUpdating) stopPlaybackRef.current() }, [isSourceUpdating])
 
   useEffect(() => {
+    const playbackLease = playbackLeaseRef.current
     setPlaybackProgress(0)
     setIsPlaying(false)
     setIsPlayerLoading(false)
     return () => {
       renderGenerationRef.current += 1
       playerGenerationRef.current += 1
-      scorePlaybackCoordinator.release(playbackLeaseRef.current)
+      scorePlaybackCoordinator.release(playbackLease)
       playerRef.current?.destroy(); playerRef.current = null
       scoreRef.current?.destroy(); scoreRef.current = null
       playerInitializationRef.current = null

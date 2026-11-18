@@ -132,7 +132,7 @@ export function normalizeGroups(source: string, context?: FormatContext) {
     }
   }
   const edits = (context?.syntaxTree ?? parseM3NSyntaxTree(source)).lines.flatMap(({ row }) => {
-    if (!row || !['melody', 'bass', 'alternative'].includes(row.kind)) return []
+    if (!row || !['melody', 'bass'].includes(row.kind)) return []
     return [{ start: row.contentStart, end: row.contentStart + row.content.length,
       value: normalizeBeamGroups(row.content, positions, row.contentStart) }]
   })

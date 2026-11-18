@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { compileScorePerformance, parseM3NDocument } from '@m3n/notation'
 import { readFileSync, readdirSync } from 'node:fs'
 import { BasicMIDI } from 'spessasynth_core'
-import { parseM3NDocument, compileScorePerformance } from '@m3n/notation'
-import { NativePlaybackScore } from './native-playback-score.js'
+import { describe, expect, it } from 'vitest'
 import { buildMetronomeBeats } from './metronome.js'
+import { NativePlaybackScore } from './native-playback-score.js'
 
 const prepare = (source: string) => NativePlaybackScore.create(parseM3NDocument(source))
 
@@ -25,12 +25,6 @@ describe('native MIDI and playback index', () => {
     expect(score.elementsAtTime(Infinity)).toEqual([])
     expect(score.elementsAtTime(3000)).toEqual([])
     expect(score.timeForElement('missing')).toBe(-1)
-  })
-  it('indexes alternative occurrences and keeps the compact event identity', async () => {
-    const score = await prepare('{2/4}{300qpm}\nN: ||: 1 2 | 3 4 :||\nNs[2]: 2: (5 6) 7 |')
-    expect(score.elementsAtTime(1250)).toContainEqual({ xmlId: 'm3n-e-a1-1', rendition: 2 })
-    expect(score.elementsAtTime(900)).toContainEqual({ xmlId: 'm3n-e-1', rendition: 2 })
-    expect(score.timeForElement('m3n-e-1-rend2')).toBe(800)
   })
   it('keeps a leading rest active at zero and distinguishes repeated order entries', async () => {
     const score = await prepare('{2/4}{120qpm}{order=A,B,A}\n===A\nN: ||: 0 1 :||\n===B\nN: 2 3 |||')

@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
 import { compileScorePerformance, parseM3NDocument } from '@m3n/notation'
-import { layoutNativeScore, type NativeLayout } from './native-layout.js'
+import { describe, expect, it } from 'vitest'
 import { nativeArcGeometry } from './native-arc.js'
+import { layoutNativeScore, type NativeLayout } from './native-layout.js'
 
 const arcs = (layout: NativeLayout) => layout.relations.filter(r => r.kind === 'tie' || r.kind === 'slur')
 const heights = (layout: NativeLayout) => arcs(layout).map(relation => {
@@ -65,14 +65,6 @@ describe('semantic automatic arc alignment', () => {
     expect(melody).toHaveLength(2)
     expect(melody[0]!.arcGroup).toBe(melody[1]!.arcGroup)
     expect(melody[0]!.arcGroup).not.toBe(bass.arcGroup)
-  })
-
-  it('does not join alternative phrases across a silent host measure', () => {
-    const result = layout('{2/4}\nN: 1 2 | 3 4 | 5 6 |||\nNs[2]: 1: {lg}7 1e{/} |\nNs[2]: 3: {lg}2e 3e{/} |')
-    const alternatives = arcs(result).filter(r => r.first.lane.startsWith('alternative:'))
-    expect(alternatives).toHaveLength(2)
-    expect(alternatives[0]!.first.lane).toBe(alternatives[1]!.first.lane)
-    expect(alternatives[0]!.arcGroup).not.toBe(alternatives[1]!.arcGroup)
   })
 
   it('retains source and performance while alignment is recomputed for each width', () => {

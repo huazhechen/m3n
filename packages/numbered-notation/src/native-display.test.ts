@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
 import { compileScorePerformance, parseM3NDocument, scoreEventIds } from '@m3n/notation'
-import { layoutNativeScore } from './native-layout.js'
-import { NativeNumberedNotationScore } from './native-score.js'
+import { describe, expect, it } from 'vitest'
 import { nativeHeaderGeometry } from './native-header.js'
+import { layoutNativeScore } from './native-layout.js'
 import { DefaultTextMeasurer } from './native-measure.js'
+import { NativeNumberedNotationScore } from './native-score.js'
 
 const options = {width:800,paged:false}
 const spell = (pitch:{degree:string;accidental:string;octave:number}) => pitch.accidental+pitch.degree+(pitch.octave>0 ? "'".repeat(pitch.octave) : ','.repeat(-pitch.octave))
@@ -20,14 +20,6 @@ describe('native display options',()=>{
   it('keeps minor pitch convention and crosses octave boundaries when transposed',()=>{
     const glyphs = heads('{key=Am}{4/4}\nN: 6d 7d 1 2 | {key=Em}3 4 5# 6 |||',{fixedDo:true,transpose:1})
     expect(glyphs.map(glyph=>spell(glyph.pitches[0]!))).toEqual(['♯6,','1','♯1','♯2',"1'","♯1'","3'","4'"])
-  })
-  it('covers bass, chords, tuplets, grace notes and alternate melodies',()=>{
-    const glyphs = heads('{key=Db}{2/4}\nN: ||: [1 3 5:h] 2 | [3 4 5:1] 6{ac(1)} :||\nB: 1d^ | 5d^ |\nNs[2]: 2: 7 1e |',{fixedDo:true,transpose:-1})
-    expect(glyphs.find(glyph=>glyph.event?.kind==='chord')!.pitches.map(spell)).toEqual(['1','3','5'])
-    expect(glyphs.filter(glyph=>glyph.event?.kind==='tuplet').map(glyph=>spell(glyph.pitches[0]!))).toEqual(['3','4','5'])
-    expect(glyphs.filter(glyph=>glyph.staff==='bass').map(glyph=>spell(glyph.pitches[0]!))).toEqual(['1,','5,'])
-    expect(glyphs.flatMap(glyph=>glyph.graces).map(spell)).toEqual(['1'])
-    expect(glyphs.filter(glyph=>glyph.lane.startsWith('alternative:')).map(glyph=>spell(glyph.pitches[0]!))).toEqual(['7',"1'"])
   })
   it('transposes relative keys and visit rows while preserving notes and playback identity',()=>{
     const document = parseM3NDocument('{key=C}{2/4}{order=A,A@Db}\n===A\nN: 1 2 | {key=Am}3 4 ||')

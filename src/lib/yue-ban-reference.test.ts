@@ -1,6 +1,6 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, playbackMeasureIndexes, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, playbackMeasureIndexes, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/yue_ban_xiao_ye_qu_01.m3n?raw'
 import reference from './fixtures/yue-ban-upload-reference.json'
 
@@ -13,9 +13,8 @@ it('matches the simplified main melody and ties on every pass', () => {
   expect(document).toMatchObject({ key: 'Bb', meterCount: 4, meterUnit: 4, tempo: 80 })
   expect(bars.map(bar => bar.events.map(event => `${event.pitches.join(',') || '0'}:${event.beats}${event.tie ? '~' : ''}`).join(' ')))
     .toEqual(reference.writtenBars)
-  expect(document.alternatives ?? []).toHaveLength(0)
   expect(bars.flatMap(bar => bar.events).flatMap(event => event.postfixes).some(mark => /^(ac|ap)\(/.test(mark))).toBe(false)
-  const expanded = alternativePerformance(document).parts.get('score')!.melody
+  const expanded = unfoldScorePerformance(document).parts.get('score')!.melody
   const pitches = resolveScorePitches(expanded)
   const events = expanded.flatMap(bar => bar.events.map(event => [pitches.get(event) ?? [], event.beats, event.tie ?? false, event.postfixes]))
   expect(events).toHaveLength(reference.performedEventCount)

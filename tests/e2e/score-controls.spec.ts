@@ -97,8 +97,8 @@ test('BPM resets on reopening while switches persist; speed reset leaves other s
   await expect(page.locator('.score-paper text[font-size="10"]')).toHaveCount(0)
 })
 
-test('width resets to final scorebook widths, including non-round widths', async ({ page }) => {
-  for (const [slug, width] of [['huan_le_song_01', '640'], ['ban_yin_jie_kou_qin_ji_ben_gong_01', '792']]) {
+test('width resets to the preferred width declared by each score', async ({ page }) => {
+  for (const [slug, width] of [['huan_le_song_01', '540'], ['ban_yin_jie_kou_qin_ji_ben_gong_01', '720']]) {
     await page.goto(`/scores/${slug}`)
     await openScoreSettings(page)
     const slider = page.getByRole('slider', { name: '乐谱宽度' })
@@ -118,7 +118,7 @@ test('width resets to final scorebook widths, including non-round widths', async
   await openScoreSettings(page)
   await page.getByRole('button', { name: '还原宽度' }).click()
   await openScoreSettings(page)
-  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('780')
+  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('540')
 })
 
 test('BPM controls actual playback; measure number changes preserve the player', async ({ page }) => {
@@ -309,7 +309,7 @@ test('switching songs restores each song’s original tempo and default width', 
   await openScoreSettings(page)
   const originalBpm = await bpm.inputValue()
   await openScoreSettings(page)
-  await expect(width).toHaveValue('640')
+  await expect(width).toHaveValue('540')
   const nextUrl = await page.getByRole('link', { name: '下一曲', exact: true }).getAttribute('href')
   await page.getByRole('link', { name: '下一曲', exact: true }).click()
   await openScoreSettings(page)
@@ -335,5 +335,5 @@ test('switching songs restores each song’s original tempo and default width', 
   await openScoreSettings(page)
   await expect(bpm).toHaveValue(originalBpm)
   await openScoreSettings(page)
-  await expect(width).toHaveValue('640')
+  await expect(width).toHaveValue('540')
 })

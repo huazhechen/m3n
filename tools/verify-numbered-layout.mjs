@@ -93,7 +93,8 @@ try {
       for (const annotation of annotations) {
         const note = annotation.ownerSVGElement.querySelector(`g.note[data-m3n-id="${annotation.getAttribute('data-m3n-id')}"]`)
         const box = inkBounds(annotation), host = inkBounds(note)
-        if (!host || box.y + box.height > host.y + 1) issues.push({ file, width, paged, annotation: annotation.textContent, host: note?.id })
+        const overlapsHost = host && Math.min(box.x + box.width, host.x + host.width) > Math.max(box.x, host.x) + 0.5
+        if (!host || (overlapsHost && box.y + box.height > host.y + 1)) issues.push({ file, width, paged, annotation: annotation.textContent, host: note?.id })
       }
       if (file === 'ban_yin_jie_kou_qin_ji_ben_gong_01.m3n') {
         for (const [section, instruction] of [['机能训练', '快速吹吸切换'], ['音阶模进训练', '音阶(替代音)']]) {

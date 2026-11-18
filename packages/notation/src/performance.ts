@@ -1,4 +1,4 @@
-import { alternativePerformance } from './notation/alternatives.js'
+import { unfoldScorePerformance } from './notation/performance-order.js'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups.js'
 import { resolveScorePitches } from './notation/score-rules.js'
 import { scoreEventIds } from './score-event-ids.js'
@@ -36,7 +36,7 @@ function gracePitch(token: string, event: ScoreEvent) {
 /** Compile the domain's itinerary once. No XML, third-party music engine or DOM. */
 export function compileScorePerformance(document: ScoreDocument): ScorePerformance {
   if (!Number.isFinite(document.tempo) || document.tempo <= 0) throw new Error('播放速度必须为正数。')
-  const unfolded = alternativePerformance(document)
+  const unfolded = unfoldScorePerformance(document)
   const ids = scoreEventIds(unfolded)
   const writtenIds = scoreEventIds(document)
   const tieTargets = new Map<string, string>()
@@ -44,9 +44,6 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     const events = part[staff].flatMap(measure => measure.events)
     events.forEach((event, index) => { const next = events[index + 1]; if (next) tieTargets.set(writtenIds.get(event)!, writtenIds.get(next)!) })
   }
-  const alternatives = new Map<number, ScoreEvent[]>()
-  for (const alternative of document.alternatives ?? []) alternatives.set(alternative.sourceStart, [...(alternatives.get(alternative.sourceStart) ?? []), ...alternative.measure.events])
-  for (const events of alternatives.values()) events.forEach((event, index) => { const next = events[index + 1]; if (next) tieTargets.set(writtenIds.get(event)!, writtenIds.get(next)!) })
   const result: ScorePerformance = {
     notes: [], elements: [], tempos: [{ beat: 0, qpm: document.tempo }],
     meters: [{ beat: 0, count: document.meterCount, unit: document.meterUnit }], beats: 0,

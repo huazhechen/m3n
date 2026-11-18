@@ -1,6 +1,6 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 
 const original = readFileSync(new URL('./fixtures/world-gift-original.m3n', import.meta.url), 'utf8')
 const source = readFileSync(new URL('../scores/shi_jie_zeng_yu_wo_de_01.m3n', import.meta.url), 'utf8')
@@ -14,7 +14,7 @@ const simplifiedOriginal = original
   .replace(/([追星听翻恩合愿])%/g, '$1')
 const before = parseM3NDocument(simplifiedOriginal), after = parseM3NDocument(source)
 const performedBars = (document: typeof before) => {
-  const bars = alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
+  const bars = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
   return bars.map(bar => ({
     beats: bar.events.reduce((sum, event) => sum + event.beats, 0),
@@ -39,7 +39,6 @@ describe('World Gift sequential score', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(source).not.toMatch(/---V|:\|\||\|\|:|^===|^L\d+:|^Ns?\[/m)
     expect(after.order).toBeUndefined()
-    expect(after.alternatives ?? []).toHaveLength(0)
   })
 
   it('preserves the arrangement with only the seven authorized pitch and duration merges', () => {

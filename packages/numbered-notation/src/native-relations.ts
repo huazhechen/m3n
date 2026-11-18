@@ -22,7 +22,7 @@ class NativeRelationPainter extends NativeSymbols {
       const selected = members.filter(glyph => glyph.event && relation.first.event!.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event!.sourceStart)
       if (!selected.length) return ''
       const first = selected[0]!, last = selected.at(-1)!
-      const role = first.lane.startsWith('alternative:') ? 'alternative-parenthesis' : 'instrument-parenthesis'
+      const role = 'instrument-parenthesis'
       const baseline = (text: string) => {
         const metrics = this.measurer.measureText(text, {fontSize:nativeStyle.music, fontFamily:'M3N Numbers'})
         return nativeMusicAxis(this.measurer) + metrics.baseline - metrics.h / 2
@@ -83,7 +83,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
     // Continuations reach the system boundary and therefore also cover bars.
     // Use their actual painted ink, not a nominal staff height.
-    if (hairpin && !relation.first.lane.startsWith('alternative:')) {
+    if (hairpin) {
       for (const [index] of system.measures.entries()) for (const bar of nativeLaneBarPositions(system.measures, index, relation.first.lane)) {
         const bounds = nativeSvgInk(nativeBarSvg(bar.kind,bar.x,0,measurer),measurer)
         if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)

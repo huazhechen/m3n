@@ -52,6 +52,9 @@ export class SpessaPlayer {
   private playToken = 0
   private toneVersion = 0
   private destroyed = false
+  private requestedSeek: number | undefined
+  private inFlightSeek: number | undefined
+  private readonly seekWaiters = new Set<() => void>()
   private readonly startup: StartupCue
   private readonly soundBanks = new Map<PlaybackTone, Promise<void>>()
 
@@ -63,8 +66,26 @@ export class SpessaPlayer {
     this.sequencer = sequencer
     this.listener = listener
     this.metronome = metronome
+    this.sequencer.eventHandler.addEvent('timeChange', 'm3n-transport', time => {
+      if (this.destroyed) return
+      if (this.inFlightSeek !== undefined) {
+        // setTime is asynchronous. Only its acknowledgement can establish a
+        // new audio-clock anchor; coalesce further drags while it is pending.
+        if (Math.abs(time - this.inFlightSeek) > 0.005) return
+        this.inFlightSeek = undefined
+        if (this.requestedSeek !== undefined && Math.abs(this.requestedSeek - time) > 0.005) {
+          this.dispatchSeek(); return
+        }
+        this.requestedSeek = undefined
+        for (const resolve of this.seekWaiters) resolve()
+        this.seekWaiters.clear()
+      }
+      this.syncMetronome()
+      this.emitProgress()
+    })
     this.sequencer.eventHandler.addEvent('songEnded', 'm3n-player', () => {
       this.stopProgressLoop()
+      this.metronome.stop()
       this.listener.onTime(this.sequencer.duration, this.sequencer.duration)
       this.listener.onEnded()
     })
@@ -80,7 +101,15 @@ export class SpessaPlayer {
       await synth.soundBankManager.addSoundBank(soundBank, tone)
       await synth.isReady
       const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })
-      sequencer.loadNewSongList([{ binary: midi, fileName: 'm3n-score.mid' }])
+      await new Promise<void>((resolve, reject) => {
+        const clean = () => {
+          sequencer.eventHandler.removeEvent('timeChange', 'm3n-ready')
+          sequencer.eventHandler.removeEvent('midiError', 'm3n-ready')
+        }
+        sequencer.eventHandler.addEvent('timeChange', 'm3n-ready', () => { clean(); resolve() })
+        sequencer.eventHandler.addEvent('midiError', 'm3n-ready', error => { clean(); reject(new Error(String(error))) })
+        sequencer.loadNewSongList([{ binary: midi, fileName: 'm3n-score.mid' }])
+      })
       const parsedSequence = BasicMIDI.fromArrayBuffer(midi)
       const player = new SpessaPlayer(
         context,
@@ -111,28 +140,50 @@ export class SpessaPlayer {
     await this.context.resume()
     if (token !== this.playToken || this.destroyed) return
     if (this.sequencer.currentTime >= this.sequencer.duration - 0.02) this.seek(0)
+    await this.waitForSeek()
+    if (token !== this.playToken || this.destroyed) return
     const cuePosition = Math.max(0, this.sequencer.currentTime)
     await this.startup.play(this.initialBpm * this.sequencer.playbackRate, beat => this.listener.onStartupBeat?.(beat, cuePosition))
+    await this.waitForSeek()
     if (token !== this.playToken || this.destroyed) return
     this.listener.onTime(Math.max(0, this.sequencer.currentTime), this.sequencer.duration)
     this.sequencer.play()
-    if (this.metronomeEnabled) this.metronome.start(this.sequencer.currentTime, this.sequencer.playbackRate)
+    this.syncMetronome()
     this.startProgressLoop()
   }
 
   pause() {
     this.playToken += 1
     this.startup.cancel()
-    this.sequencer.pause()
     this.metronome.stop()
+    this.sequencer.pause()
     this.stopProgressLoop()
   }
 
   seek(progress: number) {
+    if (this.destroyed) return
     this.startup.cancel()
-    this.sequencer.currentTime = seekTimeAtProgress(this.sequencer.duration, progress)
-    if (this.metronomeEnabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
+    this.metronome.stop()
+    this.requestedSeek = seekTimeAtProgress(this.sequencer.duration, progress)
+    if (this.inFlightSeek === undefined) this.dispatchSeek()
     this.emitProgress()
+  }
+
+  private dispatchSeek() {
+    this.inFlightSeek = this.requestedSeek
+    if (this.inFlightSeek !== undefined) this.sequencer.currentTime = this.inFlightSeek
+  }
+
+  private waitForSeek() {
+    return this.requestedSeek === undefined ? Promise.resolve() : new Promise<void>(resolve => this.seekWaiters.add(resolve))
+  }
+
+  private syncMetronome() {
+    if (this.destroyed || this.requestedSeek !== undefined || !this.metronomeEnabled || this.sequencer.paused) {
+      this.metronome.stop(); return
+    }
+    this.metronome.start(this.sequencer.currentTime, this.sequencer.playbackRate, false,
+      () => ({ time: this.sequencer.currentTime, rate: this.sequencer.playbackRate }))
   }
 
   /** Tune active and future melodic voices without touching the MIDI clock or note-off keys. */
@@ -167,13 +218,12 @@ export class SpessaPlayer {
   setTempo(bpm: number) {
     this.sequencer.playbackRate = playbackRateAtBpm(bpm, this.initialBpm)
     this.startup.setTempo(this.initialBpm * this.sequencer.playbackRate)
-    if (this.metronomeEnabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
+    this.syncMetronome()
   }
 
   setMetronomeEnabled(enabled: boolean) {
     this.metronomeEnabled = enabled
-    if (enabled && !this.sequencer.paused) this.metronome.start(this.sequencer.currentHighResolutionTime, this.sequencer.playbackRate)
-    else this.metronome.stop()
+    this.syncMetronome()
   }
 
   destroy() {
@@ -181,6 +231,9 @@ export class SpessaPlayer {
     this.toneVersion += 1
     this.playToken += 1
     this.startup.cancel()
+    this.requestedSeek = this.inFlightSeek = undefined
+    for (const resolve of this.seekWaiters) resolve()
+    this.seekWaiters.clear()
     this.stopProgressLoop()
     this.metronome.stop()
     this.sequencer.pause()
@@ -190,7 +243,7 @@ export class SpessaPlayer {
 
   private emitProgress = () => {
     if (this.startup.active) return
-    const playbackSeconds = Math.max(0, this.sequencer.currentHighResolutionTime)
+    const playbackSeconds = this.requestedSeek ?? Math.max(0, this.sequencer.currentHighResolutionTime)
     this.listener.onTime(playbackSeconds, this.sequencer.duration)
   }
 

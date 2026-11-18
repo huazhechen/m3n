@@ -1,11 +1,11 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/tong_zhuo_de_ni_01.m3n?raw'
 
 // Baselines captured from A/A/B/A/A/B/A/B/C before grouping complete verses.
 it('preserves all performed pitches, durations, ties, articulations, dynamics and tempo', () => {
-  const document = alternativePerformance(parseM3NDocument(source))
+  const document = unfoldScorePerformance(parseM3NDocument(source))
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
   const events = bars.flatMap(bar => bar.events.map(event => [
@@ -40,5 +40,5 @@ it('repeats the complete 24-bar verse and chorus, then writes the final verse an
   expect(bars.flatMap((bar, index) => bar.right === 'rptend' ? [index] : [])).toEqual([23, 47])
   expect(bars.every(bar => !bar.ending && !bar.navigation?.length && bar.events.every(event => !event.navigation.length))).toBe(true)
   expect(compileScorePerformance(document).beats).toBe(240)
-  expect(alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(80)
+  expect(unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(80)
 })

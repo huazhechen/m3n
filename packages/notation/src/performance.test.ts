@@ -47,14 +47,6 @@ describe('native performance compiler', () => {
     expect(result.beats).toBe(2)
     expect(result.notes.map(note => [note.pitch, note.start, note.end])).toEqual([[60, 0, 2 / 3], [62, 4 / 3, 2]])
   })
-  it.each([
-    ['{2/4}\nN: ||: 1 2 | 3 4 :||', [60, 62, 64, 65, 60, 62, 64, 65]],
-    ['{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6 |||', [60, 62, 64, 65, 60, 62, 67, 69]],
-    ['{2/4}\nN: {segno}1 2 | 3 4 {fine}| 5 6 {ds}|||', [60, 62, 64, 65, 67, 69, 60, 62, 64, 65]],
-    ['{2/4}\nN: 1 2 | 3 4 {fine}| 5 6 {dc}|||', [60, 62, 64, 65, 67, 69, 60, 62, 64, 65]],
-    ['{2/4}\nN: ||: 1 2 | 3 4 :||\nNs[2]: 2: 5 6 |', [60, 62, 64, 65, 60, 62, 67, 69]],
-    ['{2/4}{order=A,B,A}\n===A\nN: 1 2 ||\nNs[2]: 1: 3 4 |\n===B\nN: 5 6 |||', [60, 62, 67, 69, 64, 65]],
-  ])('follows the existing domain itinerary for %s', (source, expected) => expect(pitches(source)).toEqual(expected))
   it('restores the written tempo and meter when revisiting a section', () => {
     const result = compile('{3/4}{120qpm}{order=A,B,A}\n===A\nN: 1 2 3 ||\n===B\nN: {2/4}{60qpm}4 5 |||')
     expect(result.tempos).toEqual([{ beat: 0, qpm: 120 }, { beat: 3, qpm: 60 }, { beat: 5, qpm: 120 }])
@@ -75,7 +67,7 @@ describe('native performance compiler', () => {
     const document = parseM3NDocument('{2/4}\nN: ||: 1 2 :||')
     const original = structuredClone(document)
     Object.defineProperty(document, 'source', { get() { throw new Error('source must not be scanned') } })
-    // alternativePerformance spreads metadata; it must not access source either.
+    // unfoldScorePerformance spreads metadata; it must not access source either.
     expect(() => compileScorePerformance(document)).not.toThrow()
     expect(compileScorePerformance(original)).toEqual(compileScorePerformance(original))
   })

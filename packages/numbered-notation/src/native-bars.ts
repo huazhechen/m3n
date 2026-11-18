@@ -16,7 +16,7 @@ export function nativeMeasureBarPositions(measures: NativeMeasure[], index: numb
 
 /** A lane paints boundaries only in fragments containing its own music. */
 export function nativeLaneBarPositions(measures: NativeMeasure[], index: number, lane: string) {
-  if (lane.startsWith('alternative:') || !measures[index]!.columns.some(column => column.glyphs.some(glyph => glyph.lane === lane))) return []
+  if (!measures[index]!.columns.some(column => column.glyphs.some(glyph => glyph.lane === lane))) return []
   return nativeMeasureBarPositions(measures, index)
 }
 

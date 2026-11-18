@@ -45,20 +45,6 @@ test('includes a section frame and consolidates a lyric fragment with its prefix
   assert.equal(lyric.collisions.length, 0)
 })
 
-test('checks music, beams, marks and relations across alternative lanes', async () => {
-  const main = '<g data-m3n-lane="melody"><g class="note"><rect x="20" y="20" width="20" height="20"/></g></g>'
-  for (const content of [
-    '<g class="note"><rect x="25" y="25" width="20" height="20"/></g>',
-    '<g data-m3n-role="beam"><line x1="15" y1="30" x2="60" y2="30" stroke="black" stroke-width="2"/></g>',
-    '<g data-m3n-role="mark" data-m3n-mark="tip"><circle cx="30" cy="30" r="3"/></g>',
-    '<g data-m3n-relation="slur"><path d="M20 35 Q30 15 40 35" fill="none" stroke="black" stroke-width="2"/></g>',
-  ]) {
-    const result = await check(main + `<g data-m3n-lane="alternative:2">${content}</g>`)
-    assert.equal(result.collisions.length, 1)
-  }
-  const clear = await check(main + '<g data-m3n-lane="alternative:2"><g class="note"><rect x="25" y="50" width="20" height="20"/></g></g>')
-  assert.equal(clear.collisions.length, 0)
-})
 
 const restMetrics = (id = 'm3n-rest-1-0', count = '12', x = 30, y = 40, measure = 'm3n-measure-1-1', extra = '') => page.evaluate(({id,count,x,y,measure,extra}) => {
   document.querySelector('main').innerHTML = `<svg viewBox="0 0 120 100"><g class="system"><g class="note" id="${id}" data-m3n-measure="${measure}"><text font-size="22" x="${x}" y="${y}">${count}</text></g>${extra}</g></svg>`
@@ -87,15 +73,4 @@ test('compares every simultaneous rest separately and rejects missing measure id
   assert.equal(result.systems[0].notes.length, 2)
   assert.notDeepEqual(await restMetrics(), result)
   await assert.rejects(restMetrics('m3n-rest-1-0','12',30,40,''), /no measure identity/)
-})
-
-test('counts inline pass controls once and still detects their music collisions', async () => {
-  const control = '<g data-m3n-role="control" data-m3n-control="passes"><text data-m3n-role="alternative-passes" x="30" y="40" font-size="16">3.</text></g>'
-  const clear = await check(control)
-  assert.equal(clear.labels, 1)
-  assert.equal(clear.collisions.length, 0)
-  const crossed = await check(control + '<g class="note"><rect x="30" y="20" width="20" height="25"/></g>')
-  assert.equal(crossed.labels, 1)
-  assert.equal(crossed.collisions.length, 1)
-  assert.ok(crossed.collisions[0].opaquePixelsAt2x > 0)
 })

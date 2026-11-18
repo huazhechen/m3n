@@ -497,21 +497,5 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
       }
     }
   }
-  for (const phrase of phrases) for (const row of phrase.alternatives ?? []) {
-    const main = phrase.melody
-    if (!main) continue
-    const hosts = document.parts.get('score')?.melody.filter(measure => measure.events.some(event => main.start <= event.sourceStart && event.sourceStart < main.start + main.text.length)) ?? []
-    const first = hosts[row.measure - 1]?.events[0]
-    if (!first) continue
-    const alternativeParts = new Map<string, ScorePart>()
-    const alternativeIntervals: ScoreInterval[] = []
-    parseBody(row.tokens, 'melody', alternativeParts, first.key, first.meterCount ?? meterCount, first.meterUnit ?? meterUnit, first.tempo ?? initialTempo, alternativeIntervals)
-    const measures = alternativeParts.get('score')?.melody.filter(measure => measure.events.length || measure.multiRest) ?? []
-    for (const measure of measures) for (const event of measure.events) event.octaveShift += first.octaveShift
-    measures.forEach((measure, index) => {
-      const host = hosts[row.measure - 1 + index]
-      if (host) (document.alternatives ??= []).push({ passes: row.passes, host, measure, intervals: alternativeIntervals, sourceStart: row.start, sourceEnd: row.start + row.text.length })
-    })
-  }
   return document
 }

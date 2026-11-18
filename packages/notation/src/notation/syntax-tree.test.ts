@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest' 
+import { validateM3NDiagnostics } from '../m3n-validate.js'
 import { parseM3NSyntaxTree } from './syntax-tree.js'
 
 describe('M3N syntax tree', () => {
@@ -24,4 +25,12 @@ describe('M3N syntax tree', () => {
       expect.objectContaining({ name: 'rit', value: '72', closing: false }),
     ])
   })
+})
+
+it('rejects removed melody replacement rows instead of silently playing the main notes', () => {
+  const source = '{2/4}\nN: ||: 1 2 :|||\nNs[2]: 1: 3 4 |'
+  expect(parseM3NSyntaxTree(source).lines.at(-1)?.kind).toBe('unknown')
+  expect(validateM3NDiagnostics(source)).toEqual(expect.arrayContaining([
+    expect.objectContaining({ code: 'M3N_STRUCTURE_UNKNOWN_ROW', severity: 'error' }),
+  ]))
 })

@@ -79,6 +79,8 @@ export class Metronome {
   private anchorAudioTime = 0
   private anchorPlaybackTime = 0
   private playbackRate = 1
+  private readClock: (() => { time: number; rate: number }) | undefined
+  private countInOnly = false
   private readonly scheduled = new Set<OscillatorNode>()
 
   constructor(
@@ -101,8 +103,10 @@ export class Metronome {
   private readonly beats: readonly MetronomeBeat[]
   private readonly countInSeconds: number
 
-  start(playbackTime: number, playbackRate: number, includeCountIn = false) {
+  start(playbackTime: number, playbackRate: number, includeCountIn = false, readClock?: () => { time: number; rate: number }) {
     this.stop()
+    this.readClock = readClock
+    this.countInOnly = includeCountIn
     this.anchorAudioTime = this.context.currentTime
     this.anchorPlaybackTime = Math.max(0, playbackTime) - (includeCountIn ? this.countInSeconds : 0)
     this.playbackRate = Math.max(0.01, playbackRate)
@@ -135,10 +139,12 @@ export class Metronome {
   private schedule = () => {
     const now = this.context.currentTime
     const horizon = now + LOOK_AHEAD_SECONDS
+    const clock = this.readClock?.()
     while (this.nextBeatIndex < this.beats.length) {
       const beat = this.beats[this.nextBeatIndex]
-      if (!beat) break
-      const at = this.anchorAudioTime + (beat.time - this.anchorPlaybackTime) / this.playbackRate
+      if (!beat || this.countInOnly && beat.time >= 0) return
+      const at = clock ? now + (beat.time - clock.time) / Math.max(0.01, clock.rate)
+        : this.anchorAudioTime + (beat.time - this.anchorPlaybackTime) / this.playbackRate
       if (at > horizon) break
       this.nextBeatIndex += 1
       if (at >= now - 0.003) this.click(beat.accent, Math.max(now, at))

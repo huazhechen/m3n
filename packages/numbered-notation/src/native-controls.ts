@@ -16,8 +16,8 @@ export function measureNativeTempo(tempo: { unit: number; bpm: number }, measure
 export function measureNativeControl(kind: NativeControl['kind'], text: string, measurer: TextMeasurer, keyRows?: NativeKeyRow[], tempoUnit?: number): NativeControl {
   const painter = new NativeSymbols(measurer)
   const textWidth = (value: string, size: number, family: string) => measurer.measureText(value, { fontSize: size, fontFamily: family }).w
-  const size = kind === 'passes' ? nativeStyle.small : kind === 'section' ? nativeStyle.annotation : nativeStyle.text
-  const family = kind === 'section' || kind === 'passes' ? 'serif' : 'M3N Numbers'
+  const size = kind === 'section' ? nativeStyle.annotation : nativeStyle.text
+  const family = kind === 'section' ? 'serif' : 'M3N Numbers'
   const m = measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: kind === 'section' ? 700 : 400 })
   let width = m.w, anchor = textWidth(text[0]!, size, family) / 2
   if (kind === 'key') { const geometry = nativeKeyGeometry(keyRows ?? [{key:text}],measurer); width = geometry.width; anchor = geometry.anchor }

@@ -1,7 +1,7 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, playbackMeasureIndexes, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, playbackMeasureIndexes, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import baselines from './fixtures/linear-song-baselines.json'
 import xinBeforeCleanup from './fixtures/xin-bu-liao-qing-before-slide-cleanup.m3n?raw'
 
@@ -25,7 +25,7 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
     const document = parseM3NDocument(fingerprintSource)
     expect(document.order).toBeUndefined()
     expect(document.sections ?? []).toHaveLength(0)
-    const bars = alternativePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
+    const bars = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
     const pitches = resolveScorePitches(bars)
     const events = bars.flatMap(bar => bar.events.map(event => [
       pitches.get(event) ?? [], event.beats, event.tie ?? false,

@@ -1,11 +1,11 @@
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/annie_01.m3n?raw'
 
 // Baselines include the requested 命→运 and 痛→苦 instrumental simplifications, plus the sustained 爱 in bar 27.
 it('preserves all performed pitches, durations, ties, articulations, dynamics and tempo', () => {
-  const document = alternativePerformance(parseM3NDocument(source))
+  const document = unfoldScorePerformance(parseM3NDocument(source))
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
   const events = bars.flatMap(bar => bar.events.map(event => [

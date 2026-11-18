@@ -79,10 +79,6 @@ export class NativeSymbols {
       const text = this.measurer.measureText(control.text, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: 700 })
       return `<rect${attrs({ x: x + em(0.5), y: y - control.top + em(0.5), width: control.width - em(1), height: control.top + control.bottom - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>` + this.text(control.text, x + (control.textInset ?? em(3.5)), y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.annotation, 'serif', { 'font-weight': 700 })
     }
-    if (control.kind === 'passes') {
-      const text = this.measurer.measureText(control.text, {fontSize:nativeStyle.small,fontFamily:'serif'})
-      return this.text(control.text, x, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.small, 'serif', {'data-m3n-role':'alternative-passes'})
-    }
     if (control.kind === 'tempo') return this.tempo(control.text, x, y, control.tempoGeometry)
     if (control.kind === 'segno') return this.segno(x, y)
     if (control.kind === 'meter') {

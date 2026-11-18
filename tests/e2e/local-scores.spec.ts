@@ -40,7 +40,8 @@ test('recovers the latest draft after reload without file actions or a save noti
       await expect(button.locator('svg')).toBeVisible()
       if (width <= 720) {
         await expect(button.locator('span')).not.toBeVisible()
-        expect((await button.boundingBox())!.width).toBe(36)
+        const expectedSize = await page.evaluate(() => Math.min(36, Math.max(24, Math.min(innerWidth, innerHeight) / 16)))
+        expect((await button.boundingBox())!.width).toBeCloseTo(expectedSize, 1)
       } else await expect(button.locator('span')).toBeVisible()
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

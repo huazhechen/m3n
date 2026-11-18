@@ -7,7 +7,7 @@ import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import type { NativeTempoGeometry } from './native-tempo.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
-import { resolveScorePitches, displayedTempo, sectionEntryKey, sectionKeyVisits, sectionVisitKey, measurePlaybackPasses, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
+import { resolveScorePitches, displayedTempo, sectionEntryKey, sectionKeyVisits, sectionVisitKey, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
 import { lyricsByEvent, type LyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -20,7 +20,7 @@ import { fixedDoPitch, fixedDoGrace, transposedNumberedKeyLabel } from './fixed-
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
-export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno' | 'passes'; text: string; keyRows?: NativeKeyRow[]; meterGeometry?: NativeMeterGeometry; tempoGeometry?: NativeTempoGeometry; width: number; anchor: number; top: number; bottom: number; ink: NativeInk[]; x?: number; textInset?: number }
+export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno'; text: string; keyRows?: NativeKeyRow[]; meterGeometry?: NativeMeterGeometry; tempoGeometry?: NativeTempoGeometry; width: number; anchor: number; top: number; bottom: number; ink: NativeInk[]; x?: number; textInset?: number }
 export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; textX: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
@@ -69,12 +69,10 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
   for (const part of document.parts.values()) {
     const resolved = options.fixedDo ? new Map([
       ...resolveScorePitches(part.melody), ...resolveScorePitches(part.bass),
-      ...(document.alternatives ?? []).flatMap(item=>[...resolveScorePitches([item.measure])]),
     ]) : undefined
     const keyLabel = (key:string) => transposedNumberedKeyLabel(key,options.transpose)
-    const passes = measurePlaybackPasses(part.melody)
     const states = new Map<string, { key: string; tempo: number; meter: string; dynamic: string }>()
-    const projectMeasure = (measure: ScoreMeasure, staff: 'melody' | 'bass', lane: string, host: NativeMeasure, activePasses?: number[]) => {
+    const projectMeasure = (measure: ScoreMeasure, staff: 'melody' | 'bass', lane: string, host: NativeMeasure) => {
       let time = 0
       const state = states.get(lane) ?? { key: document.key, tempo: document.tempo, meter: `${document.meterCount}/${document.meterUnit}`, dynamic: '' }
       states.set(lane, state)
@@ -98,21 +96,13 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         const control = (kind: NativeControl['kind'], text: string) => {
           controls.push(measureNativeControl(kind, text, options.textMeasurer))
         }
-        if (eventIndex === 0 && lane.startsWith('alternative:')) {
-          const alternative = document.alternatives?.find(item => item.measure === measure)
-          const preceding = alternative && document.alternatives?.some(item => item.sourceStart === alternative.sourceStart && item.host === part.melody[host.index - 1])
-          const siblings = alternative && document.alternatives?.filter(item => item.host === alternative.host)
-          if (alternative && !preceding && ((siblings?.length ?? 0) > 1 || alternative.passes.join(',') !== '2')) {
-            control('passes', `${alternative.passes.join('.')}.`)
-          }
-        }
         if (staff === 'melody' && event.sectionLabel && !event.sectionLabelBreakAfter) control('section', event.sectionLabel)
         if (eventIndex === 0 && (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno')))) control('segno', '𝄋')
         const keys = sectionKeys.get(host.source.sectionName ?? '')
         const visits = keys?.visits ?? []
         const entry = keys?.entry ?? event.key
         const displayKey = visits[0] ? sectionVisitKey(event.key,entry,visits[0]) : event.key
-        if (!options.fixedDo && !lane.startsWith('alternative:') && new Set(visits).size > 1 && (event.sectionLabel || displayKey !== state.key)) {
+        if (!options.fixedDo && new Set(visits).size > 1 && (event.sectionLabel || displayKey !== state.key)) {
           const groups = new Map<string,number[]>()
           visits.forEach((key,index) => {
             const current = sectionVisitKey(event.key,entry,key)
@@ -174,7 +164,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const bottom = Math.max(metrics.bottom, ...glyphControls.map(control => control.bottom))
           const id = ids.get(event)!
           const suffix = event.kind === 'tuplet' ? `-n${slot + 1}` : segment ? event.kind === 'rest' ? `-rest${segment + 1}` : `-sustain${segment + 1}` : ''
-          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: options.expandedDisplay ? id.replace(/-rend\d+$/, '') : id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: options.expandedDisplay ? [Number(/-rend(\d+)$/.exec(id)?.[1] ?? 1)] : activePasses, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, graceLayout, musicLeft, musicRight, musicTop, lyricLeft, lyricRight, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
+          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: options.expandedDisplay ? id.replace(/-rend\d+$/, '') : id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: options.expandedDisplay ? [Number(/-rend(\d+)$/.exec(id)?.[1] ?? 1)] : undefined, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, graceLayout, musicLeft, musicRight, musicTop, lyricLeft, lyricRight, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
           if (event.postfixes.includes('arp') && event.kind === 'chord' && !sustain) {
             const body = nativeSvgInk(painter.body(glyph), options.textMeasurer)
             glyph.arpeggioLayout = nativeArpeggioGeometry(body, options.textMeasurer)
@@ -193,7 +183,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           glyph.musicBottom = ink.bottom; glyph.bottom = Math.max(ink.bottom, ...glyphControls.map(control => control.bottom))
           glyph.inkLeft = -ink.left; glyph.inkRight = ink.right
           glyph.instrumental = document.intervals.some(interval => interval.kind === 'inst' && interval.staff === staff && interval.start !== undefined && interval.end !== undefined && interval.start <= event.sourceStart && event.sourceEnd <= interval.end)
-          if (glyph.instrumental || lane.startsWith('alternative:')) {
+          if (glyph.instrumental) {
             const style = { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }
             const left = options.textMeasurer.measureText('(', style), right = options.textMeasurer.measureText(')', style)
             glyph.parenthesisLeft = left.w - Math.min(0, left.inkLeft ?? 0) + nativeStyle.music * 0.05
@@ -243,11 +233,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]
         .filter(name => name !== 'segno').map(name => measureNativeNavigation(name, options.textMeasurer))
       const first = result.glyphs.length
-      const alternatives = document.alternatives?.filter(alternative => alternative.host === source) ?? []
-      const primaryPasses = alternatives.length ? [...(passes.get(source) ?? [1])].filter(pass => !alternatives.some(alternative => alternative.passes.includes(pass))) : undefined
-      measure.beats = projectMeasure(source, 'melody', 'melody', measure, primaryPasses)
+      measure.beats = projectMeasure(source, 'melody', 'melody', measure)
       if (result.hasBass && part.bass[index]) measure.beats = Math.max(measure.beats, projectMeasure(part.bass[index]!, 'bass', 'bass', measure))
-      for (const alternative of alternatives) projectMeasure(alternative.measure, 'melody', `alternative:${alternative.passes.join(',')}`, measure, alternative.passes)
       const byTime = new Map<number, NativeGlyph[]>()
       for (const glyph of result.glyphs.slice(first)) { const time = Math.round(glyph.time * 1e9) / 1e9; byTime.set(time, [...(byTime.get(time) ?? []), glyph]) }
       const times = [...byTime.keys()].sort((a, b) => a - b)

@@ -25,7 +25,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     await page.goto('http://scorebook.local/')
     await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
     await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, 'public/fonts/NotoSerifCJKsc-Regular.otf')).toString('base64'))
-    const source = '{title=统一排版}{composer=测试作者}{equal-measures=true}{2/4}\nN: ||: 1 2 | 3 4 :||\nL1: 甲乙 | 丙丁\nL2: 戊己 | 庚辛\nB: 1, 2, | 3, 4,\nNs[2]: 2: (5 6) 7 |'
+    const source = '{title=统一排版}{composer=测试作者}{equal-measures=true}{2/4}\nN: ||: 1 2 |\nB: 1d 2d |\nL1: 甲乙\nL2: 戊己\n---V1\nN: 3 4 :||\nB: 3d 4d |\nL: 丙丁\n---V2\nN: (5 6) 7 |||\nB: 3d 4d |\nL: 庚辛壬'
     for (const width of [640, 800]) {
       const result = await page.evaluate(async ({ source, width }) => {
         const api = window.scorebook
@@ -59,7 +59,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
         return { layout, imageInfo, sharedMargin: JSON.stringify(original) === JSON.stringify(direct), equalMeasures: doc.equalMeasures, identical: JSON.stringify(original) === JSON.stringify(webPages), unchanged: JSON.stringify(restored) === JSON.stringify(originalXml),
           placements: a4.map(page => page.placement), credits: web.textContent.includes('测试作者'),
           bass: bassIds.length > 0 && bassIds.every(id => web.querySelector(`[data-m3n-id="${id}"]`)),
-          alternatives: web.querySelectorAll('[data-m3n-id^="m3n-e-a"]').length,
+          houses: doc.parts.get('score').melody.filter(measure => measure.ending).length,
           compactOutside: compact.outside, glyphs: compact.glyphs }
       }, { source, width })
       // SVG viewBox uses float32 values; 6% framing produces fractional pixels.
@@ -75,7 +75,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       assert(result.bass, 'All bass events must remain visible')
       assert(result.equalMeasures, 'Equal measures must come from source syntax')
       assert(result.sharedMargin, 'The shared renderer must use zero page margins')
-      assert(result.alternatives > 0)
+      assert(result.houses > 0)
       assert.deepEqual(result.layout.outside, [])
       assert.deepEqual(result.layout.overlaps, [])
       assert.deepEqual(result.compactOutside, [])

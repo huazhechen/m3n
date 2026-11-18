@@ -1,6 +1,6 @@
+import { compileScorePerformance, parseM3NDocument, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { alternativePerformance, compileScorePerformance, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 
 const original = readFileSync(new URL('./fixtures/qing-niao-original.m3n', import.meta.url), 'utf8')
 const source = readFileSync(new URL('../scores/qing_niao_01.m3n', import.meta.url), 'utf8')
@@ -26,7 +26,6 @@ describe('Blue Bird with five named sections', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(after.order).toEqual(order)
     expect(source).not.toMatch(/---V|:\|\||\|\|:|\{(?:segno|ds|dc|fine)\}/)
-    expect(after.alternatives ?? []).toHaveLength(0)
     const bars = written(after)
     expect(bars).toHaveLength(60)
     expect(snapshot(bars)).toEqual(snapshot(oldBars))
@@ -44,7 +43,7 @@ describe('Blue Bird with five named sections', () => {
       const [start, end] = ranges[name]
       return snapshot(oldBars.slice(start, end))
     })
-    const actual = alternativePerformance(after).parts.get('score')!.melody.filter(bar => bar.events.length)
+    const actual = unfoldScorePerformance(after).parts.get('score')!.melody.filter(bar => bar.events.length)
     expect(order.map(name => ranges[name][1] - ranges[name][0])).toEqual([9, 17, 12, 8, 17, 12, 14, 12, 8])
     expect(actual).toHaveLength(109)
     expect(snapshot(actual)).toEqual(expected)

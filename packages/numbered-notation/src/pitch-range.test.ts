@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
+import { describe, expect, it } from 'vitest'
 import { numberedPitchRange } from './pitch-range.js'
 
 describe('melody pitch range', () => {
@@ -18,12 +18,6 @@ describe('melody pitch range', () => {
     const minor = parseM3NDocument('{key=Am}{4/4}\nN: 1 3 5 7 |||')
     expect(numberedPitchRange(minor)).toEqual(['1', '7'])
     expect(numberedPitchRange(minor, { fixedDo: true })).toEqual(['1', '7'])
-  })
-
-  it('includes chords, tuplets, grace notes and alternative melodies', () => {
-    const document = parseM3NDocument('{4/4}\nN: ||: [135] [3 4 5:1] 6{ac(1dd)} 1 :||\nNs[2]: 1: 1 2 3 7ee |')
-    expect(numberedPitchRange(document)).toEqual(['1,,', "7''"])
-    expect(numberedPitchRange(parseM3NDocument('{4/4}\nN: [1d 3 5e:h] [1 2 7e:1] 0 0 |||'))).toEqual(['1,', "7'"])
   })
 
   it('omits the range for silence and ignores accompaniment', () => {

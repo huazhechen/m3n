@@ -4,7 +4,7 @@ test.describe('touch library columns', () => {
   test.use({ hasTouch: true })
   test('cards fill as many columns as the available width allows', async ({ page }) => {
     await page.goto('/scores')
-    const list = page.locator('.score-list')
+    const list = page.locator('.score-list').first()
     const cards = list.locator('.score-card')
     await expect(cards.first()).toBeVisible()
     for (const [width, height, columns] of [[390, 844, 1], [744, 1133, 2], [1133, 744, 3], [768, 1024, 2], [1024, 768, 3]]) {

@@ -18,7 +18,7 @@ export * from './notation/score-interaction.js'
 export * from './notation/tempo.js'
 export { resolveScorePitches, validateScoreDocument } from './notation/score-rules.js'
 
-export * from './notation/alternatives.js'
+export * from './notation/performance-order.js'
 export * from './performance.js'
 
 export * from './page-format.js'

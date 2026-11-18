@@ -7,6 +7,8 @@ import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, reso
 // 星星点灯 includes the subsequent five-page tie/lyric audit and requested removal of all grace notes.
 // 童话镇 now has a dedicated uploaded-image/2/4 reference test.
 // 爱如潮水 and 枫 include the requested instrumental slide cleanups.
+// 爱如潮水 also includes the restored 3→2 endings in bars 21 and 30,
+// independently covered by love-like-tide-navigation.test.ts.
 // 枫 also shares the first three ending bars using the later visits' rhythm.
 const cases = [
   {
@@ -46,9 +48,9 @@ const cases = [
   },
   {
     "file": "ai_ru_chao_shui_01.m3n",
-    "music": "59c9af2c95ce497e0e929be441e8012d340676bc10b830dc49542993335ff307",
-    "lyrics": "ac189b92ab239b282cfff89f81e30241d2ab42c875018f0d886b53e0c0161351",
-    "events": 454,
+    "music": "04b5626936ce1fcca55a7fd60d074823e83624ea7f61698a6b3d1e23ee37ea66",
+    "lyrics": "e0217427a9c36dd441e64fbf54ec02cddd14f9da2ef6c265cb9d9fedc7af8540",
+    "events": 457,
     "syllables": 356
   },
   {
