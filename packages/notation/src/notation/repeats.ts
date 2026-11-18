@@ -191,9 +191,11 @@ function navigationOf<T extends PlaybackMeasure>(measure: T | undefined) {
   return measure?.navigation ?? measure?.events.flatMap((event) => event.navigation) ?? []
 }
 
-function chooseEndings(nodes: readonly PlaybackNode[], start: number, end: number, pass: number) {
-  return nodes.slice(start, end + 1).flatMap((node, offset) =>
-    parsePassRange(node.n ?? '').has(pass) ? [start + offset] : [])
+function chooseEnding(nodes: readonly PlaybackNode[], start: number, end: number, pass: number) {
+  for (let index = start; index <= end; index += 1) {
+    if (parsePassRange(nodes[index]?.n ?? '').has(pass)) return index
+  }
+  return undefined
 }
 
 function expandInitialPasses(nodes: readonly PlaybackNode[]) {
@@ -243,17 +245,12 @@ function expandInitialPasses(nodes: readonly PlaybackNode[]) {
     if (endingGroup) {
       const visit = (repeatVisits.get(index) ?? 0) + 1
       repeatVisits.set(index, visit)
-      const selectedIndexes = chooseEndings(nodes, index, endingGroup.end, Math.min(visit, endingGroup.passCount))
-      let repeat = false
-      // A shared house can be followed by a continuation for the same pass.
-      // Execute a taken repeat/jump before visiting any later continuation.
-      for (const selectedIndex of selectedIndexes) {
-        const selected = nodes[selectedIndex]!
-        sequence.push(selected.id)
-        if (selected.repeatCount && visit < selected.repeatCount) { repeat = true; break }
-        if (selected.navigation?.some(value => value === 'ds' || value === 'dc' || value === 'fine')) break
-      }
-      if (repeat) {
+      const selectedIndex = chooseEnding(nodes, index, endingGroup.end, Math.min(visit, endingGroup.passCount))
+      const selectedNode = selectedIndex === undefined ? undefined : nodes[selectedIndex]
+      if (selectedNode) sequence.push(selectedNode.id)
+
+      const selected = selectedIndex === undefined ? undefined : nodes[selectedIndex]
+      if (selected?.repeatCount && visit < selected.repeatCount) {
         if (!endingGroup.hasExplicitRepeatStart) {
           for (const endingIndex of endingGroups.keys()) {
             if (endingIndex < index) repeatVisits.delete(endingIndex)
@@ -307,7 +304,7 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
   }
 
   // A D.S. may appear in more than one alternate ending. Continue through
-  // the next numbered houses after each return, allowing a later DS to trigger
+  // the next numbered house after each return, allowing a later DS to trigger
   // another pass, and stop when the return reaches Fine.
   const returnPart: string[] = []
   const appendTail = (after: number) => {
@@ -324,18 +321,13 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
   }
   let nextPass = jumpPass + 1
   for (let iteration = 0; iteration < endingNodes.length + 1; iteration += 1) {
-    const houses = endingNodes.filter((node) => parsePassRange(node.n ?? '').has(nextPass))
+    const house = endingNodes.find((node) => parsePassRange(node.n ?? '').has(nextPass))
     returnPart.push(...sections)
-    if (!houses.length) {
+    if (house === undefined) {
       if (fine < 0 || fine >= sectionEnd) appendTail(jumpIndex)
       break
     }
-    let house = houses[0]!
-    for (const selected of houses) {
-      house = selected
-      returnPart.push(house.id)
-      if (house.navigation?.some(value => value === 'ds' || value === 'dc' || value === 'fine')) break
-    }
+    returnPart.push(house.id)
     if (house.navigation?.includes('fine')) break
     if (!house.navigation?.some((value) => value === 'ds' || value === 'dc')) {
       // After the final return ending, continue into the ordinary tail once.
