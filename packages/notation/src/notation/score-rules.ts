@@ -236,6 +236,9 @@ function validateIntervalSpans(document: ScoreDocument, source?: string) {
     if (interval.start === undefined || interval.endStart === undefined || interval.start !== interval.endStart) continue
     if (interval.kind === '8va' || interval.kind === '8vb' || interval.kind === 'inst'
       || interval.kind === 'cresc' || interval.kind === 'decres') continue
+    // A tuplet contains several successive notes even when its source is one event.
+    if (interval.kind === 'lg' && [...document.parts.values()].some(part => [...part.melody, ...part.bass]
+      .some(measure => measure.events.some(event => event.sourceStart === interval.start && event.kind === 'tuplet' && event.pitches.length > 1)))) continue
     const message = `${intervalLabels[interval.kind]}区间只覆盖一个音符，无法渲染标记`
     const line = sourceLine(source, interval.start)
     diagnostics.push(createScoreDiagnostic({

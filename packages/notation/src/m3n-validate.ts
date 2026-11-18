@@ -170,7 +170,7 @@ function validateBody(
   let firstMusicSeen = false
   let terminalCount = 0
   let fineBeforeTerminal = false
-  let postfixTarget: 'note' | 'harmony' | false = false
+  let postfixTarget: 'note' | 'harmony' | 'tuplet' | false = false
   let pendingSfz: Token | null = null
   let repeatOpen: { line: number } | null = null
   let repeatCountTarget = false
@@ -247,7 +247,7 @@ function validateBody(
       pendingSfz = null
     }
 
-    postfixTarget = atom.kind === 'note' || atom.kind === 'harmony' ? atom.kind : false
+    postfixTarget = atom.kind === 'rest' ? false : atom.kind
   }
 
   const handleBar = (token: Token) => {
@@ -329,7 +329,7 @@ function validateBody(
       const isInfo = INFO_FIELDS.has(name)
       const isPostfix = POSTFIX_FLAGS.has(content) || /^(?:ac|ap)\(/.test(content)
       if (isPostfix) {
-        if (!postfixTarget) diagnostics.push(lineMessage(token, '后置指令必须紧跟有音高的普通音符、和音组或同目标的后置指令'))
+        if (!postfixTarget || (postfixTarget === 'tuplet' && !/^(?:ac|ap)\(/.test(content))) diagnostics.push(lineMessage(token, '后置指令必须紧跟有音高的普通音符、和音组或同目标的后置指令'))
         else if (content === 'arp' && postfixTarget !== 'harmony') diagnostics.push(lineMessage(token, '琶音只能附在和音组之后'))
       } else if (content === 'sfz') {
         invalidatePostfix()

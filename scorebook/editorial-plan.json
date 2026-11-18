@@ -1,6 +1,6 @@
 {
   "title": "循序渐进乐谱集",
-  "sourceCount": 87,
+  "sourceCount": 88,
   "sections": [
     {
       "id": "basics",
@@ -641,6 +641,14 @@
       "section": "instrumental",
       "group": "歌唱性器乐与舞曲",
       "reason": "歌唱性旋律、低音区与乐句气息"
+    },
+    {
+      "id": "xiao_ye_qu",
+      "file": "xiao_ye_qu_01.m3n",
+      "title": "小夜曲",
+      "section": "instrumental",
+      "group": "歌唱性器乐与舞曲",
+      "reason": "三拍子、三连音、倚音、半音变化与歌唱性连奏"
     },
     {
       "id": "second_waltz",

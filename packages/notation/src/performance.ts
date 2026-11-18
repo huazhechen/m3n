@@ -105,19 +105,17 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
             }
             if (outgoing) next.set(pitch, { note: tied.note, target: tieTargets.get(xmlId) })
           }
-          if (event.kind === 'tuplet') {
-            const duration = event.beats / event.pitches.length
-            event.pitches.forEach((token, slot) => addNote(token, slot, cursor + slot * duration, cursor + (slot + 1) * duration, event.tie && slot === (event.tieFromTupletIndex ?? event.pitches.length - 1)))
-          } else if (event.kind !== 'rest') {
+          if (event.kind !== 'rest') {
             // Preserve the old renderer's on-beat grace convention: short
             // acciaccaturas steal 1/16 quarter beat, appoggiaturas half the host.
             const graces = event.postfixes.flatMap(mark => {
               const grace = parseM3NGrace(mark)
               return grace ? [{ ...grace, pitches: (parseM3NGroupPitches(grace.pitchSource) ?? []).filter(pitch => pitch !== '0') }] : []
             })
-            const requested = graces.map(grace => grace.kind === 'ap' ? event.beats / 2 : grace.pitches.length / 16)
+            const hostBeats = event.kind === 'tuplet' ? event.beats / event.pitches.length : event.beats
+            const requested = graces.map(grace => grace.kind === 'ap' ? hostBeats / 2 : grace.pitches.length / 16)
             const total = requested.reduce((sum, value) => sum + value, 0)
-            const scale = total > event.beats / 2 ? event.beats / (2 * total) : 1
+            const scale = total > hostBeats / 2 ? hostBeats / (2 * total) : 1
             let onset = cursor
             graces.forEach((grace, group) => {
               const duration = requested[group]! * scale / Math.max(1, grace.pitches.length)
@@ -126,7 +124,9 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
                 onset += duration
               }
             })
-            event.pitches.forEach((token, slot) => {
+            if (event.kind === 'tuplet') {
+              event.pitches.forEach((token, slot) => addNote(token, slot, slot === 0 ? onset : cursor + slot * hostBeats, cursor + (slot + 1) * hostBeats, event.tie && slot === (event.tieFromTupletIndex ?? event.pitches.length - 1)))
+            } else event.pitches.forEach((token, slot) => {
               const spread = event.postfixes.includes('arp') ? Math.min(slot / 16, (cursor + event.beats - onset) / 2) : 0
               addNote(token, slot, onset + spread, cursor + event.beats, event.tie)
             })
