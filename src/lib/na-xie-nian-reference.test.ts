@@ -5,11 +5,8 @@ import categories from '../../scorebook/library-categories.json'
 import source from '../scores/na_xie_nian_01.m3n?raw'
 import reference from './fixtures/na-xie-nian-kuaiyuepu.json'
 
-it('matches every original written note, duration, tie and printed lyric', () => {
-  // The original inserts a one-beat pickup before the chorus after a full bar.
-  // Preserve that source issue instead of hiding it behind an itinerary.
-  expect(validateM3NDiagnostics(source).map(({ code, messageArgs }) => [code, messageArgs?.actual, messageArgs?.expected]))
-    .toEqual([['M3N_METER_INCOMPLETE_MIDDLE', 1, 4]])
+it('matches the reference except for the authorized one-beat shortening before the chorus', () => {
+  expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document).toMatchObject({ title: reference.title, singer: reference.singer, composer: reference.composer, lyricist: reference.lyricist, key: reference.key, meterCount: 4, meterUnit: 4, tempo: reference.tempo })
   const part = document.parts.get('score')!
@@ -24,7 +21,8 @@ it('matches every original written note, duration, tie and printed lyric', () =>
     const lyric = (lyricsByEvent.get(event) ?? []).filter(item => item.kind === 'text').map(item => item.text).join('')
     return [midi, event.beats, event.tie ?? false, lyric]
   }))
-  expect(actual).toEqual(reference.events)
+  // Drop only one tied continuation of 她, keeping the original reference intact.
+  expect(actual).toEqual(reference.events.filter((_, index) => index !== 198))
   expect(part.bass.flatMap(bar => bar.events)).toEqual([])
 })
 
@@ -32,6 +30,7 @@ it('uses repeat bars and DC to preserve all 783 attacks without an itinerary or 
   const document = parseM3NDocument(source)
   expect(document.order).toBeUndefined()
   expect(document.sections ?? []).toEqual([])
+  expect(source).not.toMatch(/\{text=|^===|\{order=/m)
   const bars = document.parts.get('score')!.melody
   expect(bars.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
   expect(bars.filter(bar => bar.right === 'rptend')).toHaveLength(1)
@@ -39,7 +38,9 @@ it('uses repeat bars and DC to preserve all 783 attacks without an itinerary or 
   const expected: number[][] = []
   let time = 0, tied = false
   for (const [start, end] of reference.playbackRanges) {
-    for (const [pitch, beats, tie] of reference.events.slice(start, end)) {
+    for (const [index, event] of reference.events.entries()) {
+      if (index < start || index >= end || index === 198) continue
+      const [pitch, beats, tie] = event
       const duration = beats as number
       if (pitch !== null) {
         if (tied) expected.at(-1)![1] = time + duration
@@ -50,8 +51,8 @@ it('uses repeat bars and DC to preserve all 783 attacks without an itinerary or 
     }
   }
   const performance = compileScorePerformance(document)
-  expect(time).toBe(reference.performedBeats)
-  expect(performance.beats).toBe(reference.performedBeats)
+  expect(time).toBe(reference.performedBeats - 3)
+  expect(performance.beats).toBe(460)
   expect(expected).toHaveLength(783)
   expect(performance.notes.filter(note => note.channel === 0).map(note => [note.start, note.end, note.pitch])).toEqual(expected)
   expect(performance.notes.filter(note => note.channel !== 0)).toEqual([])
