@@ -1,7 +1,7 @@
 {
   "date": "2026-11-18",
   "source": "src/scores/qiu_ying_01.m3n",
-  "sourceSha256": "168de0b5fa0124a87ab1b648e6383721c2a00c7efd673def17461e2716c74ce1",
+  "sourceSha256": "9bff305fdebf9c343cfe9f01c93e1b9c34c782615ab7a77dfe5377e2df2e2fcc",
   "references": [
     {
       "provider": "LRCLIB",
@@ -1215,7 +1215,7 @@
     "maxReferenceUnitOnsetErrorSeconds": 0.1976963203157709,
     "status": "Provisional timestamp comparison only; not an acceptance test."
   },
-  "verificationStatus": "NOT VERIFIED: v71 lyric alignment and tied-note edits remain provisional. The <0.20 s criterion is withdrawn.",
+  "verificationStatus": "Source ending corrected against readable published melody sample; v70/v71 timestamp-only verification withdrawn. PDF rebuild cancelled by user; existing v71 PDF has not been updated. Full-score certification not claimed.",
   "strictTimingReview": {
     "sourceSha256": "168de0b5fa0124a87ab1b648e6383721c2a00c7efd673def17461e2716c74ce1",
     "nominalQpm": 76,
@@ -1373,5 +1373,64 @@
       "state": "Retrieved and decoded; no claim of listening-based or acoustic phoneme onset annotation."
     },
     "decision": "No further musical changes or new PDF edition from timestamp-only evidence. Need reliable sung melody reference or independently annotated audio syllable AND pitch boundaries. v71 does not satisfy that standard."
+  },
+  "historicalTimingComparisonSourceSha256": "168de0b5fa0124a87ab1b648e6383721c2a00c7efd673def17461e2716c74ce1",
+  "timingComparisonScope": "All earlier time/beat comparisons and endingKanaAudit describe v71 and earlier sources, not the v72 source. Retained as history only. PublishedScoreCorrection is the current correction authority.",
+  "publishedScoreCorrection": {
+    "publisher": "ドレミ楽譜出版社",
+    "artist": "山口 百恵",
+    "title": "秋桜",
+    "productUrl": "https://www.at-elise.com/elise/JPDPDO00361/",
+    "sampleUrl": "https://www.at-elise.com/html/Data/Samples/gif/JPGPDO05487.gif",
+    "sampleSha256": "5316b6fb172e520f6ecb8baf5c98d6545b84aa3a09a5994e281dea46b8755494",
+    "listedPdf": "JPPPDO05487.pdf",
+    "scoreKey": "G / Em",
+    "projectKey": "Ab / Fm",
+    "transposition": "Preserve project key; compare scale degrees and rhythm, not raw absolute pitch. Published score one semitone lower.",
+    "scope": "Readable ending of the public sample, including two lyric rows; not the diagonally masked portion.",
+    "corrections": [
+      {
+        "item": "Approach to final bar",
+        "before": "((2e 2e 2e 2e)) (0 (2e 2e))",
+        "after": "((2e 2e 2e 2e~)) (2e (2e 2e))",
+        "reason": "Published last sixteenth ties to following eighth; no eighth rest."
+      },
+      {
+        "item": "Final bar first beat",
+        "before": "(1e 1e)",
+        "after": "((1e) 1e.)",
+        "reason": "Published sixteenth followed by dotted eighth."
+      },
+      {
+        "item": "Final bar third beat",
+        "before": "(7 0)",
+        "after": "7",
+        "reason": "Published quarter note, not eighth plus eighth rest."
+      },
+      {
+        "item": "Final four sixteenths",
+        "before": "((5 6 5 6~))",
+        "after": "((5 6 6 6~))",
+        "reason": "Published third note equals second and fourth; no drop back to degree 5."
+      },
+      {
+        "item": "Second-verse last phrase",
+        "before": "こ | どもでいさせてください (v71)",
+        "after": "こど | もでいさせて%ください",
+        "reason": "Published こ/ど under pickup, も/で under short-long pair; て continues onto following degree 7."
+      },
+      {
+        "item": "Verse structure",
+        "before": "Separate V1 and V2 with inferred ties",
+        "after": "Shared melody with L1/L2",
+        "reason": "Follow published shared melody and two lyric rows; discard timestamp-only alternate ending."
+      }
+    ],
+    "remainingLimitations": [
+      "Public sample has diagonal masking; no claim that the whole score has been read or verified.",
+      "No audio-based phoneme recognition or isolated vocal melody transcription claimed.",
+      "Blank lyric slots in shared melody express publisher dash continuations; they do not mean wordless singing."
+    ],
+    "exportStatus": "Cancelled by user after 62/88 probes. No v72 PDF, no width writeback, no v71 cleanup."
   }
 }

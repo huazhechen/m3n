@@ -1,6 +1,6 @@
 # Max的半音阶口琴乐谱集
 
-最新生成见[第七十一版记录](../docs/SCOREBOOK_V71.md)，合页规则见[第六十九版记录](../docs/SCOREBOOK_V69.md)。
+最新完整PDF见[第七十一版记录](../docs/SCOREBOOK_V71.md)；《秋樱》谱源的出版谱校订见[校订记录](../docs/SCOREBOOK_V72.md)，用户已停止PDF重排，尚未同步至整册，合页规则见[第六十九版记录](../docs/SCOREBOOK_V69.md)。
 
 第六十三版直接复用网页的 `renderScoreInto`。`editorial-plan.json` 只维护三篇编排、曲目顺序和输出文件，不再包含逐曲行距、页边距、隐藏署名／低音、固定页数或基本功特例。
 
