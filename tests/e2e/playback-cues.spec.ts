@@ -11,17 +11,28 @@ test('three tempo pulses color the opening rest, then playback highlights it; pa
     const events: { beat: number; at: number }[] = []
     Object.assign(window, { cueEvents: events })
     new MutationObserver(() => {
-      const circle = document.querySelector('.startup-beat-highlight')
-      const beat = Number(circle?.getAttribute('data-beat'))
+      const background = document.querySelector('.startup-beat-highlight')
+      const beat = Number(background?.getAttribute('data-beat'))
       if (beat && events.at(-1)?.beat !== beat) events.push({ beat, at: performance.now() })
     }).observe(document.querySelector('.score-paper')!, { subtree: true, childList: true })
   })
   await page.getByRole('button', { name: '播放', exact: true }).click()
   for (const [beat, color] of [[1, 'rgb(239, 83, 80)'], [2, 'rgb(253, 216, 53)'], [3, 'rgb(102, 187, 106)']] as const) {
-    await expect(first.locator('circle')).toHaveAttribute('data-beat', String(beat))
-    await expect(first.locator('circle')).toHaveCSS('fill', color)
+    await expect(first.locator('rect.startup-beat-highlight')).toHaveAttribute('data-beat', String(beat))
+    await expect(first.locator('rect.startup-beat-highlight')).toHaveCSS('fill', color)
+    const geometry = await first.evaluate(note => {
+      const background = note.querySelector<SVGRectElement>('rect.startup-beat-highlight')!
+      const numeral = [...note.querySelectorAll<SVGTextElement>('text')].find(text => /^[0-7]$/.test(text.textContent ?? ''))!
+      const rect = background.getBBox(), text = numeral.getBBox()
+      const canvas = note.ownerSVGElement!.getBoundingClientRect(), visible = background.getBoundingClientRect()
+      return { rect: [rect.x,rect.y,rect.width,rect.height], text: [text.x,text.y,text.width,text.height],
+        left: visible.left-canvas.left, right: canvas.right-visible.right }
+    })
+    geometry.rect.forEach((value,index) => expect(value).toBeCloseTo(geometry.text[index]!,5))
+    expect(geometry.left).toBeGreaterThanOrEqual(-0.01)
+    expect(geometry.right).toBeGreaterThanOrEqual(-0.01)
   }
-  await expect(first.locator('circle')).toHaveCount(0)
+  await expect(first.locator('rect.startup-beat-highlight')).toHaveCount(0)
   await expect(first).toHaveClass(/is-playing/)
   expect(await first.textContent()).toBe('0')
   const pulses = await page.evaluate(() => (window as unknown as { cueEvents: { beat: number; at: number }[] }).cueEvents)

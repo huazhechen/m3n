@@ -105,13 +105,14 @@ function drawStartupBeat(paper: HTMLElement | null, score: PlaybackScore | null,
   if (!note) return
   const numeral = [...note.querySelectorAll<SVGTextElement>('text')].find(text => /^[0-7]$/.test(text.textContent ?? ''))
   const bounds = (numeral ?? note).getBBox()
-  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-  circle.classList.add('startup-beat-highlight')
-  circle.setAttribute('data-beat', String(beat))
-  circle.setAttribute('cx', String(bounds.x + bounds.width / 2))
-  circle.setAttribute('cy', String(bounds.y + bounds.height / 2))
-  circle.setAttribute('r', String(Math.max(bounds.width, bounds.height) * 0.5))
-  note.insertBefore(circle, note.firstChild)
+  const background = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+  background.classList.add('startup-beat-highlight')
+  background.setAttribute('data-beat', String(beat))
+  background.setAttribute('x', String(bounds.x))
+  background.setAttribute('y', String(bounds.y))
+  background.setAttribute('width', String(bounds.width))
+  background.setAttribute('height', String(bounds.height))
+  note.insertBefore(background, note.firstChild)
 }
 
 function addMeasureHighlight(measure: SVGGElement, className: string) {
