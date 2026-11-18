@@ -220,6 +220,9 @@ it('supports 0.2em note gaps without changing Liang Liang content or font sizes'
       .toEqual(normal.root.querySelectorAll('g.note text[font-size="22"]').length)
     for (const noteGapEm of [-0.1, Infinity, NaN]) expect(() => render(source, { noteGapEm })).toThrow('音符间距比例')
   })
+    const slots = (root: Document) => [...root.querySelectorAll('g[data-m3n-role="lyric-fragment"]')]
+      .map(node => [node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.getAttribute('data-m3n-passes')])
+    expect(slots(tight.root)).toEqual(slots(normal.root))
 
 it('packs Liang Liang into eight complete systems in compact mode', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
@@ -472,7 +475,10 @@ it('keeps lyrics on the first tied event and skips instrumental passages', () =>
 
 it('retains empty lyric slots and playback pass metadata across repeat verses', () => {
     const { root } = render('{2/4}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天\nL2: 花开满园')
-    expect(root.querySelector('text[data-m3n-id="m3n-e-3"][data-m3n-rendition="1"]')).not.toBeNull()
+    expect(root.querySelector('text[data-m3n-id="m3n-e-3"][data-m3n-rendition="1"]')).toBeNull()
+    const empty = root.querySelector('g[data-m3n-role="lyric-fragment"][data-m3n-id="m3n-e-3"][data-m3n-rendition="1"]')!
+    expect(empty.getAttribute('data-m3n-passes')).toBe('1')
+    expect(empty.childElementCount).toBe(0)
     expect(lyrics(root, 'm3n-e-3', 1)).toBe('')
     expect(lyrics(root, 'm3n-e-3', 2)).toBe('满')
     expect(root.querySelector('text[data-m3n-rendition="2"]')?.getAttribute('data-m3n-passes')).toContain('2')

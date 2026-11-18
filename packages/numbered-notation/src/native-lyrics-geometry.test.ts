@@ -97,6 +97,7 @@ describe('native lyric and music lower envelopes', () => {
     const ink = nativeLyricInk({ texts: ['gyp'], passes: undefined }, measurer)
     expect(ink.right - ink.left).toBeCloseTo(3 * 16 + 7, 3)
     expect(nativeLyricInk({ texts: [''], passes: undefined }, measurer)).toEqual({ left: 0, right: 0, top: 0, bottom: 0 })
+    expect(nativeLyricInk({ texts: ['\u200B'], passes: undefined }, measurer)).toEqual({ left: 0, right: 0, top: 0, bottom: 0 })
   })
 
   it('unions the actually painted number and beams, respecting the explicit offline ink bottom', () => {

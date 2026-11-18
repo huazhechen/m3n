@@ -18,14 +18,16 @@ function lyricParts(text: string) {
 
 function lyricFragment(data: LyricRowData, x: number, baseline: number, measurer: TextMeasurer, meta: Record<string, string | number | undefined> = {}) {
   const text = data.texts.join(''), painter = new NativeSymbols(measurer), size = nativeStyle.lyric
+  const visible = Boolean(text.replaceAll('\u200B', '').trim())
+  if (!visible && !data.annotation) return ''
   const measure = (value: string) => measurer.measureText(value, { fontSize: size, fontFamily: 'serif' })
   const advance = (value: string) => { const m = measure(value); return m.advance ?? m.w }
   const { prefix, body } = lyricParts(text)
   const bodyMetrics = measurer.measureText(body, { fontSize: size, fontFamily: 'serif', textAlign: 'center' })
   const left = x - advance(body) / 2 - (bodyMetrics.centerOffset ?? 0) - advance(prefix)
-  let svg = painter.text(text || '\u200B', left, baseline, size, 'serif', { ...meta, 'data-m3n-role': 'lyric', 'data-m3n-underlined': data.underlined ? 'true' : undefined })
+  let svg = visible ? painter.text(text, left, baseline, size, 'serif', { ...meta, 'data-m3n-role': 'lyric', 'data-m3n-underlined': data.underlined ? 'true' : undefined }) : ''
   const metrics = measure(text)
-  if (data.underlined) {
+  if (data.underlined && visible) {
     const stroke = size * (0.8 / 18.04), y = baseline + metrics.h - metrics.baseline + size * 0.1 + stroke / 2
     const ink = nativeSvgInk(svg, measurer)
     svg += line(ink.left, y, ink.right, y, stroke)
@@ -37,7 +39,7 @@ function lyricFragment(data: LyricRowData, x: number, baseline: number, measurer
 /** The same fragment supplies horizontal reservation and the final painting. */
 export function nativeLyricInk(data: LyricRowData, measurer: TextMeasurer) {
   // Empty alignment slots remain semantic objects without visible ink.
-  if (!data.texts.join('') && !data.annotation) return { left: 0, right: 0, top: 0, bottom: 0 }
+  if (!data.texts.some(text => text.replaceAll('\u200B', '').trim()) && !data.annotation) return { left: 0, right: 0, top: 0, bottom: 0 }
   const ink = nativeSvgInk(lyricFragment(data, 0, 0, measurer), measurer)
   const text = data.texts.join(''), size = nativeStyle.lyric
   const advance = (value: string) => { const m = measurer.measureText(value, { fontSize: size, fontFamily: 'serif' }); return m.advance ?? m.w }
@@ -86,7 +88,9 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
     const y = bottom + (index ? nativeStyle.lyricGap : nativeStyle.lyricTopGap) - top
     baselines.push(y); bottom = y+lower
   }
-  for (const glyph of glyphs) glyph.lyricBaselines = new Map(lane.rows.filter(row => glyph.lyrics.has(row)).map(row => [
+  // Empty slots retain their rendition metadata even when the whole system
+  // has no visible text in that verse. Reuse a tier without adding blank height.
+  for (const glyph of glyphs) glyph.lyricBaselines = new Map([...glyph.lyrics.keys()].sort((a, b) => a - b).map(row => [
     row, baselines[Math.max(0,active.get(glyph)!.indexOf(row))] ?? bottom,
   ]))
   lane.bottom = Math.max(lane.bodyBottom ?? 0, bottom)

@@ -8,6 +8,25 @@ import { nativeLyricSvg,placeNativeLyrics } from './native-lyrics.js';
 import { DefaultTextMeasurer } from './native-measure.js';
 import { nativeStyle } from './native-style.js';
 const source = '{2/4}\nN: 1 2 |\nL1: 甲乙\n---\nN: 3 4 |||\nL2: 丙丁\nL3: 戊己';
+it('preserves empty verse slots across wrapping without adding a blank lyric tier', () => {
+    const joined = '{2/4}\nN: ||: 1 2 |\nL1: 甲乙\nL2: 丙丁\n---\nN: 3 4 :|||\nL1: 戊己\nL2: %%';
+    const wrapped = joined.replace('N: 3 4', 'N: {br}3 4');
+    const roots = [joined, wrapped].map(text => new DOMParser().parseFromString(NumberedNotationScore.create(parseM3NDocument(text)).render({ width: 800, paged: false }).join(''), 'text/html'));
+    const slots = (root: Document) => [...root.querySelectorAll('g[data-m3n-role="lyric-fragment"]')].map(node => [
+        node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.getAttribute('data-m3n-passes'), node.textContent,
+    ]);
+    expect(roots[0]!.querySelectorAll('g.system')).toHaveLength(1);
+    expect(roots[1]!.querySelectorAll('g.system')).toHaveLength(2);
+    expect(slots(roots[1]!)).toEqual(slots(roots[0]!));
+    expect(roots[1]!.querySelectorAll('text[data-m3n-role="lyric"]')).toHaveLength(6);
+    for (const id of ['m3n-e-3', 'm3n-e-4']) {
+        const empty = roots[1]!.querySelector(`g[data-m3n-role="lyric-fragment"][data-m3n-id="${id}"][data-m3n-rendition="2"]`)!;
+        expect(empty.getAttribute('data-m3n-passes')).toBe('2');
+        expect(empty.childElementCount).toBe(0);
+    }
+    const layout = layoutNativeScore(parseM3NDocument(wrapped), { width: 800, paged: false });
+    for (const glyph of layout.projection.glyphs.slice(2)) expect(glyph.lyricBaselines!.get(1)).toBe(glyph.lyricBaselines!.get(0));
+});
 it.each([320, 600, 800, 1000])('packs absent lyric rows locally in the native engine at width %s', width => {
     for (const paged of [false, true])
         for (const Engine of [NumberedNotationScore]) {
