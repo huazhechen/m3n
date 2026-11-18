@@ -14,7 +14,7 @@
     },
     {
       "id": "classic",
-      "title": "第三章　经典老歌",
+      "title": "第三章　经典旋律",
       "description": "传统经典与较早的流行、影视歌曲；由规整短句进入复拍、密集节奏与变拍。"
     },
     {
@@ -435,6 +435,14 @@
       "reason": "双段歌词、附点、十六分音符与跳房子"
     },
     {
+      "id": "hou_lai",
+      "file": "hou_lai_01.m3n",
+      "title": "后来",
+      "section": "golden",
+      "group": "十六分与变拍",
+      "reason": "多段歌词、切分和连奏"
+    },
+    {
       "id": "guo_huo",
       "file": "guo_huo_01.m3n",
       "title": "过火",
@@ -475,6 +483,14 @@
       "reason": "三连音与复杂节奏"
     },
     {
+      "id": "ting_hai",
+      "file": "ting_hai_01.m3n",
+      "title": "听海",
+      "section": "golden",
+      "group": "三连音与进阶抒情",
+      "reason": "三连音、细分节奏与双层连线"
+    },
+    {
       "id": "xing_xing_dian_deng",
       "file": "xing_xing_dian_deng_01.m3n",
       "title": "星星点灯",
@@ -513,14 +529,6 @@
       "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "反复歌词、器乐段与跳房子"
-    },
-    {
-      "id": "hou_lai",
-      "file": "hou_lai_01.m3n",
-      "title": "后来",
-      "section": "pop",
-      "group": "十六分与变拍",
-      "reason": "多段歌词、切分和连奏"
     },
     {
       "id": "yan_hua_yi_leng",
@@ -593,14 +601,6 @@
       "section": "pop",
       "group": "密集节奏与反复",
       "reason": "切分、十六分与跳进"
-    },
-    {
-      "id": "ting_hai",
-      "file": "ting_hai_01.m3n",
-      "title": "听海",
-      "section": "pop",
-      "group": "三连音与进阶抒情",
-      "reason": "三连音、细分节奏与双层连线"
     },
     {
       "id": "feng",
@@ -731,10 +731,10 @@
       "reason": "长篇幅、快速音阶、主题交接与反复"
     }
   ],
-  "edition": "第六十六版",
+  "edition": "第六十七版",
   "baseWidth": 720,
-  "outputPdf": "循序渐进乐谱集-简谱-v66.pdf",
-  "outputKey": "scorebook-v66-web",
+  "outputPdf": "循序渐进乐谱集-简谱-v67.pdf",
+  "outputKey": "scorebook-v67-web",
   "page": {
     "width": 793.7007874015749,
     "height": 1122.5196850393702
