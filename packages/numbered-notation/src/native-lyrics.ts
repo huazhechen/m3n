@@ -73,7 +73,7 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
   }
   let bottom = lane.lyricBottom ?? lane.bodyBottom ?? 0
   const baselines: number[] = []
-  for (const tier of tiers) {
+  for (const [index, tier] of tiers.entries()) {
     const boxes = tier.filter(({glyph,row}) => {
       const data = glyph.lyrics.get(row)!
       return data.annotation || data.texts.some(text => text.replaceAll('\u200B','').trim())
@@ -83,7 +83,7 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
     const fallback = boxes.length ? undefined : measurer.measureText('M',{fontSize:nativeStyle.lyric,fontFamily:'serif'})
     const top = fallback ? -fallback.baseline : Math.min(...boxes.map(b => b.top))
     const lower = fallback ? fallback.h-fallback.baseline : Math.max(...boxes.map(b => b.bottom))
-    const y = bottom + nativeStyle.lyricGap - top
+    const y = bottom + (index ? nativeStyle.lyricGap : nativeStyle.lyricTopGap) - top
     baselines.push(y); bottom = y+lower
   }
   for (const glyph of glyphs) glyph.lyricBaselines = new Map(lane.rows.filter(row => glyph.lyrics.has(row)).map(row => [
