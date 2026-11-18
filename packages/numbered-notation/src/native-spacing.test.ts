@@ -3,7 +3,7 @@ import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
 const cell = (lane = 'melody', overrides: Partial<SpacingCell> = {}): SpacingCell => ({ lane, left: 5, right: 5, before: 6, after: 6, ...overrides })
 describe('native spacing constraints', () => {
   it('retains each side clearance in unconstrained layout', () => {
-    expect(solveNativeSpacing([{cells:[cell()]},{cells:[cell()]},{cells:[cell()]}])).toEqual({positions:[11,33,55],minimumWidth:66})
+    expect(solveNativeSpacing([{cells:[cell()]},{cells:[cell()]},{cells:[cell()]}])).toEqual({positions:[11,33,55],minimumWidth:66,stretchWeight:2})
   })
   it('spreads surplus equally across free columns and keeps outer ink flush', () => {
     expect(solveNativeSpacing(Array.from({length:3},()=>({cells:[cell()]})),100,true).positions).toEqual([5,50,95])
@@ -60,7 +60,7 @@ describe('native spacing constraints', () => {
   it('keeps minimum clearances even when a supplied width cannot fit them', () => {
     const columns = Array.from({length:4},()=>({cells:[cell()]}))
     const result = solveNativeSpacing(columns,52)
-    expect(result).toEqual({positions:[11,33,55,77],minimumWidth:88})
+    expect(result).toEqual({positions:[11,33,55,77],minimumWidth:88,stretchWeight:3})
     const filled = solveNativeSpacing(columns,52,true)
     expect(filled.positions).toEqual([5,27,49,71])
     expect(filled.positions.at(-1)! + 5).toBeGreaterThan(52)
@@ -83,7 +83,7 @@ describe('native spacing constraints', () => {
     const result=solveNativeSpacing([{cells:[cell('melody',{left:25})]},{cells:[cell()]}],100,true)
     expect(result.positions).toEqual([25,95])
     expect(()=>solveNativeSpacing([{cells:[cell()]}],0)).toThrow()
-    expect(solveNativeSpacing([],100)).toEqual({positions:[],minimumWidth:0})
+    expect(solveNativeSpacing([],100)).toEqual({positions:[],minimumWidth:0,stretchWeight:0})
   })
   it.each([52, 100, 300])('keeps rigid internal distances under minimum spacing and justification at %s', width => {
     const result = solveNativeSpacing([{cells:[cell()], fixedAfter:20}, {cells:[cell()], fixedAfter:15}, {cells:[cell()]}, {cells:[cell()]}], width, true)

@@ -16,7 +16,7 @@ import { nativeHeaderGeometry } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
-import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
+import { measureNativeHorizontal, nativeHorizontalSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
@@ -119,7 +119,7 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
 
 /** Break complete measures first, splitting oversized measures at time columns. */
 function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0): NativeMeasure[][] {
-  const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1)))
+  const fragments = measures.flatMap((measure, index) => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1), index === measures.length - 1))
   const lines: NativeMeasure[][] = []
   const ratio = options.wrapWidthRatio ?? 1
   for (let begin = 0; begin < fragments.length;) {
@@ -140,7 +140,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
       }
     }
     let index = 0
-    for (const stop of planNativeLines(candidates)) { lines.push(group.slice(index, stop)); index = stop }
+    for (const stop of planNativeLines(candidates, { relaxLastLine: end === fragments.length })) { lines.push(group.slice(index, stop)); index = stop }
     begin = end
   }
   return lines
@@ -182,12 +182,18 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   }
   const lines = breakMeasures(projection.measures, available, options, arcLeading)
   const systems: NativeSystem[] = lines.map((measures, index) => ({ index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
+  let lastWidth: number | undefined
+  const last = systems.at(-1), previous = systems.at(-2)
+  if (last && previous && last.measures[0]?.part === previous.measures.at(-1)?.part) {
+    lastWidth = nativeLastLineWidth(nativeHorizontalSpacing(last.measures, options), available - arcLeading(last.measures),
+      nativeHorizontalSpacing(previous.measures, options), available - arcLeading(previous.measures))
+  }
   const systemOf = new Map<NativeGlyph, number>()
   for (const system of systems) {
     const leading = arcLeading(system.measures)
     const x = margin + leading
     if (leading > 0) system.arcContinuationLeft = margin
-    const width = options.width - margin - x
+    const width = system === last && lastWidth !== undefined ? lastWidth : options.width - margin - x
     const glyphs = placeNativeHorizontal(system.measures, options, x, width)
     for (const glyph of glyphs) systemOf.set(glyph, system.index)
     const laneNames = [...new Set(glyphs.map(glyph => glyph.lane))].sort((a, b) => a === 'melody' ? -1 : b === 'melody' ? 1 : a === 'bass' ? 1 : b === 'bass' ? -1 : a.localeCompare(b))

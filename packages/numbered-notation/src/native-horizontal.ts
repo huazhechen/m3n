@@ -199,7 +199,7 @@ function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOp
 /** Keep visible bar anchors fixed while solving each equal cell's interior.
  * Build the complete system first: minimum clearance, parentheses and parallel
  * voices must not be reset at every artificial cell edge. */
-function equalMeasurePositions(items: HorizontalItem[], width: number): number[] {
+function equalMeasureRanges(items: HorizontalItem[]) {
   const ranges: {start:number;end:number;bar?:number}[] = []
   let start = 0, musical = false
   for (const [index, item] of items.entries()) {
@@ -210,6 +210,11 @@ function equalMeasurePositions(items: HorizontalItem[], width: number): number[]
     if (item.column) musical = true
   }
   if (musical) ranges.push({start,end:items.length})
+  return ranges
+}
+
+function equalMeasurePositions(items: HorizontalItem[], width: number): number[] {
+  const ranges = equalMeasureRanges(items)
   if (ranges.length < 2) return solveNativeSpacing(items,width,true).positions
   const leftOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.left))
   const rightOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.right))
@@ -227,6 +232,48 @@ function equalMeasurePositions(items: HorizontalItem[], width: number): number[]
     if (range.bar !== undefined) positions[range.bar] = (index+1)*cellWidth
   }
   return positions
+}
+
+export type NativeHorizontalSpacing = {
+  minimumWidth: number; stretchWeight: number
+  equalCells?: { count: number; tailRight: number }
+}
+
+/** Measure the exact chain used for placement, including rigid groups, voice
+ * placeholders, lyrics and visible boundary ink. Only needed for the last pair. */
+export function nativeHorizontalSpacing(measures: NativeMeasure[], options: HorizontalOptions): NativeHorizontalSpacing {
+  const items = itemsFor(measures, options), solved = solveNativeSpacing(items)
+  if (!options.equalMeasures) return solved
+  const ranges = equalMeasureRanges(items)
+  if (!ranges.length) return solved
+  const leftOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.left))
+  const rightOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.right))
+  const tail = ranges.at(-1)!.bar, tailRight = tail === undefined ? 0 : rightOf(tail)
+  const minimumCellWidth = Math.max(...ranges.map((range, index) => {
+    const previous = ranges[index - 1]?.bar
+    return (previous === undefined ? 0 : rightOf(previous))
+      + solveNativeSpacing(items.slice(range.start, range.end)).minimumWidth
+      + (range.bar === undefined ? 0 : leftOf(range.bar))
+  }))
+  return { minimumWidth: minimumCellWidth * ranges.length + tailRight, stretchWeight: solved.stretchWeight,
+    equalCells: { count: ranges.length, tailRight } }
+}
+
+/** Inherit the preceding row's spacing only for a genuinely short final row.
+ * Overlong trials fall back to the current capacity; hard minima never shrink. */
+export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: number, previous: NativeHorizontalSpacing, previousWidth: number) {
+  let inherited: number
+  if (current.equalCells && previous.equalCells) {
+    const cellWidth = Math.max(0, previousWidth - previous.equalCells.tailRight) / previous.equalCells.count
+    inherited = Math.max(current.minimumWidth, cellWidth * current.equalCells.count + current.equalCells.tailRight)
+  } else {
+    const stretch = previous.stretchWeight > 0 ? Math.max(0, previousWidth - previous.minimumWidth) / previous.stretchWeight : 0
+    inherited = current.minimumWidth + stretch * current.stretchWeight
+  }
+  // Check capacity BEFORE the short-row threshold. A high previous stretch or
+  // wider lyrics here must never carry an overlong inherited row into placement.
+  if (inherited > width) return width
+  return inherited <= width * .6 ? inherited : width
 }
 
 /** Justify a complete system, then publish event and measure positions. */

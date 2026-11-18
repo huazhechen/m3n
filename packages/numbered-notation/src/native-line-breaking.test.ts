@@ -16,12 +16,13 @@ function candidatesFor(widths: number[], capacity = 100): NativeLineCandidate[][
 
 // Independent exhaustive oracle: score complete partitions, without DP states
 // or pruning. Including only pair differences deliberately omits the window.
-function score(rows: NativeLineCandidate[], windows = true) {
+function score(rows: NativeLineCandidate[], windows = true, relaxLastLine = false) {
   return rows.reduce((sum, row, i) => {
     const difference = i ? row.density - rows[i - 1]!.density : 0
     const curvature = windows && i > 1 ? rows[i - 2]!.density - 2 * rows[i - 1]!.density + row.density : 0
-    return sum + 1 + Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2
-      + (row.penalty ?? 0) + difference ** 2 + curvature ** 2
+    const factor = relaxLastLine && i === rows.length - 1 && row.density <= .6 ? .5 : 1
+    return sum + 1 + factor * Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2
+      + (row.penalty ?? 0) + factor * (difference ** 2 + curvature ** 2)
   }, 0)
 }
 
@@ -52,16 +53,24 @@ describe('sliding three-row density planning', () => {
     expect(planNativeLines(candidatesFor([30, 30, 40, 40, 40, 40]))).toEqual([2, 4, 6])
   })
 
+  it('still balances avoidable short tails and does not add rows just to obtain a relaxed ending', () => {
+    expect(planNativeLines(candidatesFor([30, 30, 40, 40, 40, 40]), { relaxLastLine: true })).toEqual([2, 4, 6])
+    expect(planNativeLines(candidatesFor([90, 90, 30, 30]), { relaxLastLine: true })).toEqual([1, 2, 4])
+  })
+
   it('matches exhaustive global scoring across varied widths and beat penalties', () => {
     let seed = 17
     const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32 }
     for (let trial = 0; trial < 100; trial++) {
       const candidates = candidatesFor(Array.from({ length: 4 + trial % 7 }, () => 10 + Math.floor(random() * 100)), 70 + trial % 4 * 10)
       for (let start = 1; start < candidates.length; start++) if (random() < .3) for (const row of candidates[start]!) row.penalty = 1
-      const before = structuredClone(candidates), result = planNativeLines(candidates)
-      const optimum = Math.min(...enumerate(candidates).map(rows => score(rows)))
-      expect(score(selected(candidates, result)), `trial ${trial}`).toBeCloseTo(optimum, 10)
-      expect(result.at(-1)).toBe(candidates.length)
+      const before = structuredClone(candidates)
+      for (const relaxLastLine of [false, true]) {
+        const result = planNativeLines(candidates, { relaxLastLine })
+        const optimum = Math.min(...enumerate(candidates).map(rows => score(rows, true, relaxLastLine)))
+        expect(score(selected(candidates, result), true, relaxLastLine), `trial ${trial}, relaxed=${relaxLastLine}`).toBeCloseTo(optimum, 10)
+        expect(result.at(-1)).toBe(candidates.length)
+      }
       expect(candidates).toEqual(before)
     }
   })

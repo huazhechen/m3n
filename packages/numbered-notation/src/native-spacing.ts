@@ -13,7 +13,7 @@ export type SpacingCell = {
   placeholderRight?: number
 }
 export type SpacingColumn = { cells: SpacingCell[]; fixedAfter?: number }
-export type SpacingSolution = { positions: number[]; minimumWidth: number }
+export type SpacingSolution = { positions: number[]; minimumWidth: number; stretchWeight: number }
 
 /**
  * Place columns at their minimum clearances, then distribute positive surplus.
@@ -22,7 +22,7 @@ export type SpacingSolution = { positions: number[]; minimumWidth: number }
  * fillEdges gives free bar-adjacent boundaries weight 1 in positive justification.
  */
 export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean } = {}): SpacingSolution {
-  if (!columns.length) return { positions: [], minimumWidth: 0 }
+  if (!columns.length) return { positions: [], minimumWidth: 0, stretchWeight: 0 }
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
   const lanes = [...new Set(columns.flatMap(column => column.cells.map(cell => cell.lane)))]
   const rows = columns.map(column => {
@@ -52,7 +52,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
       start = end + 1
     }
     const solved = solveNativeSpacing(groups, width, justify, fillEdges)
-    return { positions: members.map(member => solved.positions[member.group]! + member.offset), minimumWidth: solved.minimumWidth }
+    return { ...solved, positions: members.map(member => solved.positions[member.group]! + member.offset) }
   }
   const positions: number[] = [], ends = lanes.map(() => 0)
   rows.forEach(row => {
@@ -61,18 +61,18 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     row.forEach((cell, lane) => { ends[lane] = position + cell.right + cell.after })
   })
   const minimumWidth = Math.max(...ends)
+  const cumulative = [fillEdges.left ? 1 : 0]
+  for (let index = 1; index < positions.length; index++) {
+    const weight = Math.max(...rows[index]!.map((cell, lane) =>
+      ((rows[index - 1]![lane]!.afterStretch ?? 1) + (cell.beforeStretch ?? 1)) / 2))
+    cumulative.push(cumulative[index - 1]! + weight)
+  }
+  const stretchWeight = cumulative.at(-1)! + (fillEdges.right ? 1 : 0)
   if (justify && width !== Infinity) {
     const left = Math.max(...rows[0]!.map(cell => cell.left)), right = Math.max(...rows.at(-1)!.map(cell => cell.right))
     const occupied = positions.at(-1)! + right - positions[0]! + left
     const shift = left - positions[0]!, free = Math.max(0, width - occupied)
-    const cumulative = [free > 0 && fillEdges.left ? 1 : 0]
-    for (let index = 1; index < positions.length; index++) {
-      const weight = Math.max(...rows[index]!.map((cell, lane) =>
-        ((rows[index - 1]![lane]!.afterStretch ?? 1) + (cell.beforeStretch ?? 1)) / 2))
-      cumulative.push(cumulative[index - 1]! + weight)
-    }
-    const total = cumulative.at(-1)! + (free > 0 && fillEdges.right ? 1 : 0)
-    positions.forEach((position, index) => { positions[index] = position + shift + (total > 0 ? free * cumulative[index]! / total : 0) })
+    positions.forEach((position, index) => { positions[index] = position + shift + (stretchWeight > 0 ? free * cumulative[index]! / stretchWeight : 0) })
   }
-  return { positions, minimumWidth }
+  return { positions, minimumWidth, stretchWeight }
 }

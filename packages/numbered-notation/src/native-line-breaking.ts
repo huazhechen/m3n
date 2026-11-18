@@ -1,6 +1,6 @@
 /** One legal row starting at its index in the candidate table. */
 export type NativeLineCandidate = { end: number; density: number; penalty?: number }
-type Row = NativeLineCandidate & { id: number; cost: number }
+type Row = NativeLineCandidate & { id: number; cost: number; densityPenalty: number }
 type Plan = { row: Row; cost: number; previous?: Plan }
 const epsilon = 1e-12
 
@@ -22,19 +22,22 @@ function better(candidate: Plan, current: Plan | undefined) {
 function transition(previous: Row, current: Row, beforePrevious?: Row) {
   const difference = current.density - previous.density
   const curvature = beforePrevious ? beforePrevious.density - 2 * previous.density + current.density : 0
-  return difference * difference + curvature * curvature
+  return current.densityPenalty * (difference * difference + curvature * curvature)
 }
 
 /** Minimise row costs plus sliding three-row density penalties over a whole
  * forced-break region. Only states with the same last TWO rows may be merged:
  * the next window still depends on both. No invented neighbours at the ends. */
-export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[]): number[] {
+export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], options: { relaxLastLine?: boolean } = {}): number[] {
   const count = candidates.length
   if (!count) return []
   let id = 0
-  const rows: Row[][] = candidates.map(list => list.map(row => ({ ...row, id: id++,
-    cost: 1 + Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2 + (row.penalty ?? 0),
-  })))
+  const rows: Row[][] = candidates.map(list => list.map(row => {
+    const densityPenalty = options.relaxLastLine && row.end === count && row.density <= .6 ? .5 : 1
+    return { ...row, id: id++, densityPenalty,
+      cost: 1 + densityPenalty * Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2 + (row.penalty ?? 0),
+    }
+  }))
   // An optimistic suffix cost and a feasible plan bound the exact search.
   // They prune states, never discard a possible improvement to the optimum.
   const lower = Array<number>(count + 1).fill(Infinity), baseline: (Row | undefined)[] = Array(count)

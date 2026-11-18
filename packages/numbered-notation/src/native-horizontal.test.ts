@@ -62,7 +62,7 @@ describe('native spacing and measured note envelopes', () => {
         expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(73.10901718258879, 5);
         const opening = result.projection.measures[9]!;
         expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(127.74208198726205, 5);
-        expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);
+        expect(result.systems.map(system => system.measures.length)).toEqual([7, 4]);
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320, narrowSpacing);
