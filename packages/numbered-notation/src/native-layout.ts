@@ -243,7 +243,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const uniformHosts = options.uniformSystemHeight ? nativeUniformHosts(systems, measurer) : undefined
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
-    const regions = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
+    const regions: NativeRegion[] = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
       .flatMap(g => [
         ...(g.musicInk ?? [{ left: -(g.inkLeft ?? g.left), right: g.inkRight ?? g.right, top: -(g.musicTop ?? g.top), bottom: g.musicBottom ?? g.bottom }])
           .map(ink => ({ lane: g.lane, left: g.x + ink.left, right: g.x + ink.right, top: -ink.top })),
@@ -252,7 +252,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     for (const [index] of system.measures.entries()) for (const lane of system.lanes) {
       for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) {
         const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)
-        regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top })
+        regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top, headingClearance: nativeStyle.music * (2 / 22) })
       }
     }
     relationBounds.set(system, regions)
@@ -325,7 +325,12 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   for (const system of systems) placeNativeNavigation(system)
   if (uniformHosts) shareNativeUniformHeight(systems, uniformHosts, measurer)
   for (const system of systems) for (const lane of system.lanes) placeNativeLyrics(system, lane, measurer)
-  for (const system of systems) placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true)
+  for (const system of systems) {
+    const hasHeading = system.measures.some(measure => measure.columns.some(column => column.glyphs.some(glyph => glyph.event?.sectionLabelBreakAfter)))
+    const coreTops = hasHeading ? new Map([...nativeLanePieces(system, measurer, true)]
+      .map(([lane, pieces]) => [lane, Math.max(0, ...pieces.map(piece => -piece.top))])) : undefined
+    placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true, coreTops)
+  }
   const blocks = [...header.blocks.map(block=>({height:block.height, ink: nativeSvgPieces(block.svg, measurer)})), ...systems.map(system => {
     const height = placeNativeLanes(system, measurer, options.uniformSystemHeight)
     const pieces = nativeLanePieces(system, measurer)

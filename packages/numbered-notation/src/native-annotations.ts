@@ -6,7 +6,7 @@ import type { TextMeasurer } from './native-measure.js'
 import type { NativeArc } from './native-arc.js'
 import { nativeRibbonRange } from './native-curve.js'
 
-export type NativeRegion = { lane: string; left: number; right: number; top: number; arc?: NativeArc }
+export type NativeRegion = { lane: string; left: number; right: number; top: number; arc?: NativeArc; headingClearance?: number }
 export function nativeRegionTop(region: NativeRegion, left: number, right: number) {
   return region.arc ? -(nativeRibbonRange(region.arc, left, right)?.top ?? -region.top) : region.top
 }
@@ -18,12 +18,12 @@ export function nativeAnnotationSvg(annotation: NativeAnnotation, y: number, pai
   return framed ? `<g data-m3n-role="annotation-frame"><rect${attrs({ x: x - width / 2 + em(0.5), y: y - top + em(0.5), width: width - em(1), height: height - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>${label}</g>` : label
 }
 
-/** Place attachments above only the music and earlier attachments they cover.
- * Coordinates are lane-relative; pagination and uniform spacing cannot move
- * a label relative to its own note or feed its height back into an arc.
+/** Local descriptions clear covered ink; standalone headings share the lane's
+ * core reference. Coordinates are lane-relative, independent of pagination;
+ * annotation height cannot feed back into an arc.
  */
 export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegion[], measurer: TextMeasurer,
-  width: number, margin: number, local: boolean) {
+  width: number, margin: number, local: boolean, coreTops?: ReadonlyMap<string, number>) {
   const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
   for (const kind of local ? ['text', 'section'] as const : ['chord'] as const) {
     for (const glyph of glyphs) {
@@ -40,10 +40,13 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
       // frame can touch a margin or require clearance over nearby music.
       const left = framed ? margin : Math.max(margin, Math.min(glyph.x - first.w / 2 + inkLeft, width - margin - w))
       const right = left + w
-      const queryLeft = framed ? Math.min(left, glyph.x - (glyph.inkLeft ?? glyph.left)) : left
-      const queryRight = framed ? Math.max(right, glyph.x + (glyph.inkRight ?? glyph.right)) : right
-      const obstacleTop = Math.max(0, ...regions.filter(region => region.lane === glyph.lane && region.right >= queryLeft && region.left <= queryRight).map(region => nativeRegionTop(region, queryLeft, queryRight)))
-      const top = obstacleTop + nativeStyle.annotation * (local ? 0.4 : 0.5) + h
+      // A standalone heading clears the whole lane's core, then only those
+      // decorations its frame actually covers; the first note is not its footprint.
+      const gap = nativeStyle.annotation * (local ? 0.4 : 0.5)
+      const bottom = Math.max((framed ? coreTops?.get(glyph.lane) ?? 0 : 0) + gap,
+        ...regions.filter(region => region.lane === glyph.lane && region.right >= left && region.left <= right)
+          .map(region => nativeRegionTop(region, left, right) + (framed ? region.headingClearance ?? gap : gap)))
+      const top = bottom + h
       const item: NativeAnnotation = { text, kind, x: left + w / 2, textX: left + padding - inkLeft, top, width: w, height: h, baseline: -top + padding + metrics.baseline }
       glyph.annotationLayout ??= []
       glyph.annotationLayout.push(item)

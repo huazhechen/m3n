@@ -6,6 +6,7 @@ import { nativeArcGeometry } from './native-arc.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { nativeSvgInk } from './native-ink.js'
 import { NativeSymbols } from './native-symbols.js'
+import { nativeLanePieces } from './native-lanes.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 
 const options = { width: 800, paged: false }
@@ -13,6 +14,26 @@ const layout = (music: string, extra = {}) => layoutNativeScore(parseM3NDocument
 const annotations = (score: ReturnType<typeof layout>) => score.projection.glyphs.flatMap(glyph => glyph.annotationLayout ?? [])
 
 describe('native annotations', () => {
+  it.each(['', '{p}', '{f}'])('keeps standalone headings at the same core gap with a nonoverlapping first-note mark: %s', mark => {
+    const measurer = new DefaultTextMeasurer()
+    const score = layoutNativeScore(parseM3NDocument(`{4/4}\n===A{br}\nN: ||: ${mark}1 2 3 4eee :|||`), { ...options, textMeasurer: measurer })
+    const system = score.systems[0]!, heading = annotations(score).find(item => item.kind === 'section')!
+    const coreTop = Math.max(...nativeLanePieces(system, measurer, true).get('melody')!.map(piece => -piece.top))
+    expect(heading.top - heading.height - coreTop).toBeCloseTo(5.6, 6)
+  })
+
+  it('keeps the core gap when a repeat bar slightly exceeds the measured octave-note height', () => {
+    const fallback = new DefaultTextMeasurer()
+    const measurer: TextMeasurer = { measureText(text, style) {
+      const metrics = fallback.measureText(text, style)
+      return style.fontFamily === 'M3N Numbers' ? { ...metrics, h: style.fontSize * .65, baseline: style.fontSize * .65, inkBottom: style.fontSize * .65 } : metrics
+    } }
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\n===B{br}\nN: ||: {f}(1e){tip} (2e){tip} 3e 4e :|||'), { ...options, textMeasurer: measurer })
+    const heading = annotations(score).find(item => item.kind === 'section')!
+    const coreTop = Math.max(...nativeLanePieces(score.systems[0]!, measurer, true).get('melody')!.map(piece => -piece.top))
+    expect(heading.top - heading.height - coreTop).toBeCloseTo(5.6, 6)
+  })
+
   it.each(['chord', 'text'])('anchors the first character of a %s to its note', kind => {
     const measurer = new DefaultTextMeasurer()
     const score = layout(`1 {${kind}=G7}2 3 4`, { textMeasurer: measurer })
