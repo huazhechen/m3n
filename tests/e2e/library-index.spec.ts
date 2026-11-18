@@ -91,15 +91,16 @@ for (const width of [390, 1280]) {
     await expect(toggle).not.toHaveAttribute('aria-pressed')
     await expect(page.getByRole('navigation', { name: '乐谱首字母索引' })).toHaveCount(0)
     await expect(page.locator('.library-group-heading')).toHaveText([
-      '基础练习与入门', '民歌与经典歌曲', '流行歌曲', '影视动漫与游戏', '古典与器乐', '舞曲与节奏',
+      '基础练习', '进阶练习', '经典老歌', '流行金曲', '现代流行', '古典与器乐',
     ])
+    await expect(page.locator('.score-list a').first()).toContainText('半音阶口琴基本功')
     expect(await page.locator('.score-list a').evaluateAll(links => links.map(link => link.getAttribute('href')).sort())).toEqual(originalLinks)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: info.outputPath('library-categories.png'), fullPage: true })
     await page.reload()
     await expect(toggle).toHaveAttribute('title', '切换为字母顺序')
     await page.getByRole('searchbox', { name: '搜索乐谱' }).fill('小星星')
-    await expect(page.locator('.library-group-heading')).toHaveText('基础练习与入门')
+    await expect(page.locator('.library-group-heading')).toHaveText('基础练习')
     await expect(page.locator('.score-list a')).toHaveCount(1)
     await toggle.click()
     await expect(page.locator('.library-group-heading')).toHaveText('X')

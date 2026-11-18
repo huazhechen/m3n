@@ -19,11 +19,11 @@ export function scoreCatalogPlugin(): Plugin {
       if (id !== resolvedId) return
       this.addWatchFile(planPath)
       const categoriesConfig = JSON.parse(await readFile(planPath, 'utf8')) as Array<{ id: string; title: string; files: string[] }>
-      const categories = new Map<string, { id: string; title: string; order: number }>()
+      const categories = new Map<string, { id: string; title: string; order: number; itemOrder: number }>()
       for (const [order, category] of categoriesConfig.entries()) {
-        for (const file of category.files) {
+        for (const [itemOrder, file] of category.files.entries()) {
           if (categories.has(file)) throw new Error(`曲库分类重复：${file}`)
-          categories.set(file, { id: category.id, title: category.title, order })
+          categories.set(file, { id: category.id, title: category.title, order, itemOrder })
         }
       }
       const files = (await readdir(scoreDirectory, { recursive: true })).filter(file => file.endsWith('.m3n')).sort()

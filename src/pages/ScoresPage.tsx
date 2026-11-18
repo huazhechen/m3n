@@ -176,7 +176,13 @@ export function ScoresPage() {
       grouped.set(initial, group)
     }
     const result = [...grouped.values()]
-    return categorized ? result.sort((a, b) => a.order - b.order) : result
+    if (categorized) {
+      for (const group of result) if (group.initial !== '☆') {
+        group.items.sort((a, b) => (a.category?.itemOrder ?? Number.MAX_SAFE_INTEGER) - (b.category?.itemOrder ?? Number.MAX_SAFE_INTEGER))
+      }
+      result.sort((a, b) => a.order - b.order)
+    }
+    return result
   }, [scores, categorized])
   const showIndex = !categorized && groups.length >= 3 && scores.length >= 12
   useEffect(() => {
