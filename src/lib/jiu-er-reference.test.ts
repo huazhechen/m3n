@@ -47,8 +47,9 @@ it('removes lyrics while preserving the vocal arrangement and all key changes', 
   const document = parseM3NDocument(source)
   expect([...deriveScoreInteraction(document).lyricsByEvent.values()].flat()).toEqual([])
   expect(compileScorePerformance(document).notes).toEqual(compileScorePerformance(parseM3NDocument(vocalSource)).notes)
-  // The approved metadata and 60 qpm update do not alter the historical melody.
+  // The approved metadata, omitted instrumental lyricist and tempo preserve the melody.
   expect(source).toBe(vocalSource.replace(/^L:.*\n/gm, '')
+    .replace(/^\{lyricist=[^}]*\}\n/gm, '')
     .replace('{title=九儿}', '{title=九儿}\n{singer=韩红}')
     .replace('{80qpm}', '{60qpm}'))
 })
