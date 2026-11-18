@@ -2,6 +2,7 @@ import { createScoreDiagnostic, type ScoreDiagnostic } from './diagnostics.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreMeasure } from './score-document.js'
 import { m3nPitch } from '../m3n-direct.js'
 import { parseM3NNote } from './m3n-primitives.js'
+import { parseM3NGrace, parseM3NGroupPitches } from './m3n-groups.js'
 import { measurePlaybackPasses, hasVisitEndings, orderedMeasureIndexes, playbackMeasureIndexes } from './repeats.js'
 
 const EPSILON = 1e-9
@@ -169,6 +170,17 @@ export function resolveScorePitches(measures: readonly ScoreMeasure[]) {
       if (activeKey !== event.key) {
         accidentals.clear()
         activeKey = event.key
+      }
+      // Graces precede their host: their written accidentals also apply to
+      // following notes of the same pitch and octave within this measure.
+      for (const mark of event.postfixes) {
+        const grace = parseM3NGrace(mark)
+        if (!grace) continue
+        for (const pitch of parseM3NGroupPitches(grace.pitchSource) ?? []) {
+          if (!parseM3NNote(pitch)?.accidentals) continue
+          const value = m3nPitch(pitch, event.key)
+          accidentals.set(`${value.pname}:${value.oct}`, value.accidGes ?? value.accid)
+        }
       }
       resolved.set(event, event.pitches.map((pitch) => {
         const parsed = parseM3NNote(pitch)
