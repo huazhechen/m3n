@@ -62,9 +62,10 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
           alternatives: web.querySelectorAll('[data-m3n-id^="m3n-e-a"]').length,
           compactOutside: compact.outside, glyphs: compact.glyphs }
       }, { source, width })
-      assert(Math.abs(result.imageInfo.width - width * 1.1) < 1e-6)
-      assert.equal(result.imageInfo.x, width * .05)
-      assert.equal(result.imageInfo.y, width * .05)
+      // SVG viewBox uses float32 values; 6% framing produces fractional pixels.
+      assert(Math.abs(result.imageInfo.width - width * 1.12) < 1e-4)
+      assert.equal(result.imageInfo.x, width * .06)
+      assert.equal(result.imageInfo.y, width * .06)
       assert.equal(result.imageInfo.pngWidth, Math.ceil(result.imageInfo.width * 2))
       assert.deepEqual(result.imageInfo.whiteCorner, [255, 255, 255, 255])
       assert(result.imageInfo.unchanged, 'Framing must leave the engraved source untouched')

@@ -1,5 +1,5 @@
 /** Combine the unchanged SVG pages, with a width-relative frame around the image. */
-export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .05): SVGSVGElement {
+export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .06): SVGSVGElement {
   if (!pages.length) throw new Error('当前没有可导出的乐谱。')
   if (!Number.isFinite(marginRatio) || marginRatio < 0) throw new Error('图片外边距比例必须是非负有限数值。')
   const sizes = pages.map(page => ({ width: page.viewBox.baseVal.width, height: page.viewBox.baseVal.height }))
