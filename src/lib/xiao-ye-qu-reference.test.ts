@@ -2,6 +2,7 @@ import { compileScorePerformance, deriveScoreInteraction, formatM3N, parseM3NDoc
 import { expect, it } from 'vitest'
 import source from '../scores/xiao_ye_qu_01.m3n?raw'
 import reference from './fixtures/xiao-ye-qu-kuaiyuepu-reference.json'
+import fixedPitches from './fixtures/xiao-ye-qu-fixed-pitches.json'
 import categories from '../../scorebook/library-categories.json'
 import plan from '../../scorebook/editorial-plan.json'
 
@@ -11,7 +12,7 @@ function midi(value: string) {
     + ({ '': 0, n: 0, s: 1, ss: 2, f: -1, ff: -2 }[accidental]!)
 }
 
-it('matches every printed main pitch and duration in the new 快乐谱 screenshot, including F to D', () => {
+it('preserves every screenshot pitch and duration while writing the whole melody in F', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
   const document = parseM3NDocument(source)
@@ -22,7 +23,7 @@ it('matches every printed main pitch and duration in the new 快乐谱 screensho
   expect(bars).toHaveLength(reference.bars.length)
   for (const [index, expected] of reference.bars.entries()) {
     const bar = bars[index]!
-    expect(bar.events[0]!.key, `bar ${index + 1}`).toBe(expected.key)
+    expect(bar.events[0]!.key, `bar ${index + 1}`).toBe('F')
     expect(bar.events.flatMap(event => (pitches.get(event) ?? []).map(midi)), `bar ${index + 1} pitches`).toEqual(expected.pitches)
     const durations = bar.events.flatMap(event => event.kind === 'rest' ? [] : event.kind === 'tuplet'
       ? event.pitches.map(() => event.beats / event.pitches.length) : [event.beats])
@@ -32,7 +33,7 @@ it('matches every printed main pitch and duration in the new 快乐谱 screensho
   expect(bars[23]!.events[0]!.tie).toBe(true)
   expect(bars[35]!.events[0]!.tie).toBe(true)
   expect(bars.flatMap(bar => bar.events.flatMap(event => event.postfixes)))
-    .toEqual(['ac(4 5)', 'ac(2 3)', 'ac(6 7)', 'ac(6 7)'])
+    .toEqual(['ac(4 5)', 'ac(2 3)', 'ac(4# 5#)', 'ac(4# 5#)'])
 })
 
 it('matches the performed screenshot melody through both endings and the complete coda', () => {
@@ -70,7 +71,11 @@ it('matches the performed screenshot melody through both endings and the complet
   }
   const unfolded = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
   expect(unfolded).toHaveLength(63)
-  expect(unfolded.map(bar => bar.events[0]!.key)).toEqual(order.map(number => reference.bars[number - 1]!.key))
+  expect(unfolded.map(bar => bar.events[0]!.key)).toEqual(order.map(() => 'F'))
+  expect(source.match(/\{key=[^}]+\}/g)).toEqual(['{key=F}'])
+  expect(performance.beats).toBe(fixedPitches.beats)
+  expect(performance.tempos).toEqual(fixedPitches.tempos)
+  expect(performance.notes).toEqual(fixedPitches.notes.map(({ name: _name, ...note }) => note))
 })
 
 it('keeps only the melody, without lyrics, violin credits or bow symbols', () => {

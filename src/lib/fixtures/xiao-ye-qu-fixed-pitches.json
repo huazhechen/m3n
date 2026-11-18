@@ -1,0 +1,1581 @@
+{
+  "description": "User-approved sounding pitches captured before rewriting the F/D notation entirely in F. Names use fixed concert pitches and scientific octave numbers; times are quarter-note beats, including grace notes and ties.",
+  "sourceSha256": "c688c41a9da785ee9e69c4be793c85159ae5363a57962b3f77aa974e989ff6be",
+  "beats": 189,
+  "tempos": [
+    {
+      "beat": 0,
+      "qpm": 75
+    }
+  ],
+  "notes": [
+    {
+      "start": 0,
+      "end": 0.3333333333333333,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 0.3333333333333333,
+      "end": 0.6666666666666666,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 0.6666666666666666,
+      "end": 1,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 1,
+      "end": 2.5,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 2.5,
+      "end": 3,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 3,
+      "end": 3.3333333333333335,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 3.3333333333333335,
+      "end": 3.6666666666666665,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 3.6666666666666665,
+      "end": 4,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 4,
+      "end": 5,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 5,
+      "end": 6,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 6,
+      "end": 7.5,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 7.5,
+      "end": 8,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 8,
+      "end": 8.333333333333334,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 8.333333333333334,
+      "end": 8.666666666666666,
+      "pitch": 65,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F4"
+    },
+    {
+      "start": 8.666666666666666,
+      "end": 9,
+      "pitch": 64,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E4"
+    },
+    {
+      "start": 9,
+      "end": 12,
+      "pitch": 65,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F4"
+    },
+    {
+      "start": 18,
+      "end": 18.333333333333332,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 18.333333333333332,
+      "end": 18.666666666666668,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 18.666666666666668,
+      "end": 19,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 19,
+      "end": 20.5,
+      "pitch": 77,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F5"
+    },
+    {
+      "start": 20.5,
+      "end": 21,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 21,
+      "end": 21.333333333333332,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 21.333333333333332,
+      "end": 21.666666666666668,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 21.666666666666668,
+      "end": 22,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 22,
+      "end": 23.5,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 23.5,
+      "end": 24,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 24,
+      "end": 25.5,
+      "pitch": 72,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C5"
+    },
+    {
+      "start": 25.5,
+      "end": 26,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 26,
+      "end": 26.333333333333332,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 26.333333333333332,
+      "end": 26.666666666666668,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 26.666666666666668,
+      "end": 27,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 27,
+      "end": 30,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 36,
+      "end": 36.75,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 36.75,
+      "end": 37,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 37,
+      "end": 38.5,
+      "pitch": 77,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F5"
+    },
+    {
+      "start": 38.5,
+      "end": 39,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 39,
+      "end": 39.75,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 39.75,
+      "end": 40,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 40,
+      "end": 41.5,
+      "pitch": 65,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F4"
+    },
+    {
+      "start": 41.5,
+      "end": 42,
+      "pitch": 62,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D4"
+    },
+    {
+      "start": 42,
+      "end": 42.0625,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 42.0625,
+      "end": 42.125,
+      "pitch": 72,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C5"
+    },
+    {
+      "start": 42.125,
+      "end": 42.333333333333336,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 42.333333333333336,
+      "end": 42.666666666666664,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 42.666666666666664,
+      "end": 43,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 43,
+      "end": 44.5,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 44.5,
+      "end": 45,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 45,
+      "end": 48,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 48,
+      "end": 48.0625,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 48.0625,
+      "end": 48.125,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 48.125,
+      "end": 48.333333333333336,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 48.333333333333336,
+      "end": 48.666666666666664,
+      "pitch": 66,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F#4"
+    },
+    {
+      "start": 48.666666666666664,
+      "end": 49,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 49,
+      "end": 50.5,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 50.5,
+      "end": 51,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 51,
+      "end": 54,
+      "pitch": 65,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F4"
+    },
+    {
+      "start": 54,
+      "end": 54.75,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 54.75,
+      "end": 55,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 55,
+      "end": 56.5,
+      "pitch": 77,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F5"
+    },
+    {
+      "start": 56.5,
+      "end": 57,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 57,
+      "end": 57.75,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 57.75,
+      "end": 58,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 58,
+      "end": 59.5,
+      "pitch": 66,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F#4"
+    },
+    {
+      "start": 59.5,
+      "end": 60,
+      "pitch": 62,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D4"
+    },
+    {
+      "start": 60,
+      "end": 60.0625,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 60.0625,
+      "end": 60.125,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 60.125,
+      "end": 60.333333333333336,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 60.333333333333336,
+      "end": 60.666666666666664,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 60.666666666666664,
+      "end": 61,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 61,
+      "end": 62.5,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 62.5,
+      "end": 63,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 63,
+      "end": 66,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 66,
+      "end": 66.33333333333333,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 66.33333333333333,
+      "end": 66.66666666666667,
+      "pitch": 75,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D#5"
+    },
+    {
+      "start": 66.66666666666667,
+      "end": 67,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 67,
+      "end": 68.5,
+      "pitch": 79,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G5"
+    },
+    {
+      "start": 68.5,
+      "end": 69,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 69,
+      "end": 75,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 75,
+      "end": 75.33333333333333,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 75.33333333333333,
+      "end": 75.66666666666667,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 75.66666666666667,
+      "end": 76,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 76,
+      "end": 77.5,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 77.5,
+      "end": 78,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 78,
+      "end": 78.33333333333333,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 78.33333333333333,
+      "end": 78.66666666666667,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 78.66666666666667,
+      "end": 79,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 79,
+      "end": 80,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 80,
+      "end": 81,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 81,
+      "end": 82.5,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 82.5,
+      "end": 83,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 83,
+      "end": 83.33333333333333,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 83.33333333333333,
+      "end": 83.66666666666667,
+      "pitch": 65,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F4"
+    },
+    {
+      "start": 83.66666666666667,
+      "end": 84,
+      "pitch": 64,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E4"
+    },
+    {
+      "start": 84,
+      "end": 87,
+      "pitch": 65,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F4"
+    },
+    {
+      "start": 93,
+      "end": 93.33333333333333,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 93.33333333333333,
+      "end": 93.66666666666667,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 93.66666666666667,
+      "end": 94,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 94,
+      "end": 95.5,
+      "pitch": 77,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F5"
+    },
+    {
+      "start": 95.5,
+      "end": 96,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 96,
+      "end": 96.33333333333333,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 96.33333333333333,
+      "end": 96.66666666666667,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 96.66666666666667,
+      "end": 97,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 97,
+      "end": 98.5,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 98.5,
+      "end": 99,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 99,
+      "end": 100.5,
+      "pitch": 72,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C5"
+    },
+    {
+      "start": 100.5,
+      "end": 101,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 101,
+      "end": 101.33333333333333,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 101.33333333333333,
+      "end": 101.66666666666667,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 101.66666666666667,
+      "end": 102,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 102,
+      "end": 105,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 111,
+      "end": 111.75,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 111.75,
+      "end": 112,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 112,
+      "end": 113.5,
+      "pitch": 77,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F5"
+    },
+    {
+      "start": 113.5,
+      "end": 114,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 114,
+      "end": 114.75,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 114.75,
+      "end": 115,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 115,
+      "end": 116.5,
+      "pitch": 65,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F4"
+    },
+    {
+      "start": 116.5,
+      "end": 117,
+      "pitch": 62,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D4"
+    },
+    {
+      "start": 117,
+      "end": 117.0625,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 117.0625,
+      "end": 117.125,
+      "pitch": 72,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C5"
+    },
+    {
+      "start": 117.125,
+      "end": 117.33333333333333,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 117.33333333333333,
+      "end": 117.66666666666667,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 117.66666666666667,
+      "end": 118,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 118,
+      "end": 119.5,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 119.5,
+      "end": 120,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 120,
+      "end": 123,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 123,
+      "end": 123.0625,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 123.0625,
+      "end": 123.125,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 123.125,
+      "end": 123.33333333333333,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 123.33333333333333,
+      "end": 123.66666666666667,
+      "pitch": 66,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F#4"
+    },
+    {
+      "start": 123.66666666666667,
+      "end": 124,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 124,
+      "end": 125.5,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 125.5,
+      "end": 126,
+      "pitch": 67,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G4"
+    },
+    {
+      "start": 126,
+      "end": 129,
+      "pitch": 65,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F4"
+    },
+    {
+      "start": 129,
+      "end": 129.75,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 129.75,
+      "end": 130,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 130,
+      "end": 131.5,
+      "pitch": 77,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F5"
+    },
+    {
+      "start": 131.5,
+      "end": 132,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 132,
+      "end": 132.75,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 132.75,
+      "end": 133,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 133,
+      "end": 134.5,
+      "pitch": 66,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F#4"
+    },
+    {
+      "start": 134.5,
+      "end": 135,
+      "pitch": 62,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D4"
+    },
+    {
+      "start": 135,
+      "end": 135.0625,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 135.0625,
+      "end": 135.125,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 135.125,
+      "end": 135.33333333333334,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 135.33333333333334,
+      "end": 135.66666666666666,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 135.66666666666666,
+      "end": 136,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 136,
+      "end": 137.5,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 137.5,
+      "end": 138,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 138,
+      "end": 141,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 141,
+      "end": 141.33333333333334,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 141.33333333333334,
+      "end": 141.66666666666666,
+      "pitch": 75,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D#5"
+    },
+    {
+      "start": 141.66666666666666,
+      "end": 142,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 142,
+      "end": 143.5,
+      "pitch": 79,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G5"
+    },
+    {
+      "start": 143.5,
+      "end": 144,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 144,
+      "end": 147,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 147,
+      "end": 147.75,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 147.75,
+      "end": 148,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 148,
+      "end": 148.75,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 148.75,
+      "end": 149,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 149,
+      "end": 149.75,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 149.75,
+      "end": 150,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 150,
+      "end": 151,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 151,
+      "end": 153,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 153,
+      "end": 154.5,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 154.5,
+      "end": 155,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 155,
+      "end": 155.75,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 155.75,
+      "end": 156,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 156,
+      "end": 159,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 159,
+      "end": 160.5,
+      "pitch": 78,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F#5"
+    },
+    {
+      "start": 160.5,
+      "end": 161,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 161,
+      "end": 161.33333333333334,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 161.33333333333334,
+      "end": 161.66666666666666,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 161.66666666666666,
+      "end": 162,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 162,
+      "end": 162.75,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 162.75,
+      "end": 163,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 163,
+      "end": 164,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 164,
+      "end": 165,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 165,
+      "end": 165.0625,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 165.0625,
+      "end": 165.125,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 165.125,
+      "end": 165.33333333333334,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 165.33333333333334,
+      "end": 165.66666666666666,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 165.66666666666666,
+      "end": 166,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 166,
+      "end": 167.5,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 167.5,
+      "end": 168,
+      "pitch": 71,
+      "channel": 0,
+      "velocity": 90,
+      "name": "B4"
+    },
+    {
+      "start": 168,
+      "end": 171,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 171,
+      "end": 171.33333333333334,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 171.33333333333334,
+      "end": 171.66666666666666,
+      "pitch": 75,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D#5"
+    },
+    {
+      "start": 171.66666666666666,
+      "end": 172,
+      "pitch": 76,
+      "channel": 0,
+      "velocity": 90,
+      "name": "E5"
+    },
+    {
+      "start": 172,
+      "end": 173.5,
+      "pitch": 79,
+      "channel": 0,
+      "velocity": 90,
+      "name": "G5"
+    },
+    {
+      "start": 173.5,
+      "end": 174,
+      "pitch": 73,
+      "channel": 0,
+      "velocity": 90,
+      "name": "C#5"
+    },
+    {
+      "start": 174,
+      "end": 179,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 179,
+      "end": 180,
+      "pitch": 74,
+      "channel": 0,
+      "velocity": 90,
+      "name": "D5"
+    },
+    {
+      "start": 180,
+      "end": 183,
+      "pitch": 70,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A#4"
+    },
+    {
+      "start": 183,
+      "end": 186,
+      "pitch": 69,
+      "channel": 0,
+      "velocity": 90,
+      "name": "A4"
+    },
+    {
+      "start": 186,
+      "end": 189,
+      "pitch": 66,
+      "channel": 0,
+      "velocity": 90,
+      "name": "F#4"
+    }
+  ]
+}
