@@ -34,7 +34,7 @@ export type NativeRenderOptions = {
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
-export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; decorationLayout?: { lane: string; svg: string; paragraph?: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
+export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; paragraph?: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
@@ -141,7 +141,7 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
 }
 
 /** Break complete measures first, splitting oversized measures at time columns. */
-function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions): NativeMeasure[][] {
+function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0): NativeMeasure[][] {
   const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1), Boolean(options.pairedSpacing)))
   const lines: NativeMeasure[][] = []
   const ratio = options.wrapWidthRatio ?? 1
@@ -159,6 +159,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
     for (let index = group.length - 1; index >= 0; index--) {
       let natural = 0, minimum = 0, widestNatural = 0, widestMinimum = 0
       let compactEqual = options.wrap === 'compact' && options.equalMeasures
+      const available = Math.max(1, width * ratio - leading([group[index]!]))
       for (let stop = index; stop < group.length; stop++) {
         const measure = group[stop]!, count = stop - index + 1
         natural += measure.natural; minimum += measure.minimum
@@ -167,7 +168,6 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         compactEqual &&= sparse[stop]
         const minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
         const naturalWidth = equal ? widestNatural * count : measure.naturalEnd !== undefined && group[index]!.naturalStart !== undefined ? measure.naturalEnd - group[index]!.naturalStart! : natural
-        const available = width * ratio
         const capacity = available * (options.pairedSpacing ? 1 : equal ? compactEqual ? 1.16 : 0.94 : options.wrap === 'compact' ? 1.16 : 0.94)
         if ((options.pairedSpacing ? minWidth : naturalWidth) > capacity && count > 1) break
         const slack = Math.max(0, capacity - naturalWidth) / available
@@ -209,11 +209,23 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, options.systemGap ?? nativeStyle.systemGap, options)
   const headerHeight = header.height
   measureNativeHorizontal(projection.measures, options)
-  const lines = breakMeasures(projection.measures, available, options)
+  // A closing cross-row arc needs a full horizontal turn before its first
+  // note. Reserve that space while choosing rows, rather than flattening it.
+  const arcLeading = (measures: NativeMeasure[]) => {
+    const glyphs = measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
+    const firstByLane = new Map<string, NativeGlyph>()
+    for (const glyph of glyphs) if (!firstByLane.has(glyph.lane)) firstByLane.set(glyph.lane,glyph)
+    return Math.max(0,...relations.filter(relation => (relation.kind === 'tie' || relation.kind === 'slur')
+      && firstByLane.get(relation.last.lane) === relation.last && !glyphs.includes(relation.first))
+      .map(relation => nativeStyle.music * .45 * 1.2 - (relation.last.musicLeft ?? relation.last.left)))
+  }
+  const lines = breakMeasures(projection.measures, available, options, arcLeading)
   const systems: NativeSystem[] = lines.map((measures, index) => ({ index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
   const systemOf = new Map<NativeGlyph, number>()
   for (const system of systems) {
-    const x = margin
+    const leading = arcLeading(system.measures)
+    const x = margin + leading
+    if (leading > 0) system.arcContinuationLeft = margin
     const width = options.width - margin - x
     const glyphs = placeNativeHorizontal(system.measures, options, x, width)
     for (const glyph of glyphs) systemOf.set(glyph, system.index)

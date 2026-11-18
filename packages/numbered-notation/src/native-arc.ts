@@ -35,7 +35,7 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   // A continuation begins at the music cell's allocated edge, just as its
   // open right end reaches the system boundary. Glyph side bearings must not
   // indent this edge; the real ink still participates in collision checks.
-  const left = firstHere ? relation.first.x : Math.min(...members.map(glyph => glyph.x - (glyph.musicLeft ?? glyph.left)))
+  const left = firstHere ? relation.first.x : system.arcContinuationLeft ?? Math.min(...members.map(glyph => glyph.x - (glyph.musicLeft ?? glyph.left)))
   const right = lastHere ? relation.last.x : system.measures.at(-1)!.end
   if (firstHere && lastHere) {
     const run = (right - left) / 4, outer = height * 4 / 3, inner = Math.max(0, height - thickness) * 4 / 3
