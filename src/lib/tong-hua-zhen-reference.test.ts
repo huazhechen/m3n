@@ -13,6 +13,7 @@ it('matches the c33d transcription through 都走到 in the original first-pass 
   expect(document).toMatchObject({ key: 'C', meterCount: 2, meterUnit: 4, tempo: 69 })
   // User-requested simplification: bar 17 adopts bar 15's even sixteenths.
   const simplified = imageMelody.replace('((2. (1) 2. (1)))', '((2 1 2 1))')
+    .replace('(3 5 3 2)', '(3 5 3) {lg}((2 1)){/}')
   const reference = tokens(parseM3NDocument(simplified).parts.get('score')!.melody)
   expect(tokens(performed).slice(0, reference.length)).toEqual(reference)
 })
@@ -43,13 +44,13 @@ it('plays the introduction repeated 6s as sustains, with the extra opening rest 
   expect(notes.map(note => [note.start, note.end, note.pitch])).toEqual([
     [6, 6.75, 71], [6.75, 7.5, 69], [7.5, 8, 67],
   ])
-  expect(document.intervals.filter(interval => interval.kind === 'lg')).toEqual([])
+  expect(document.intervals.filter(interval => interval.kind === 'lg' && interval.start < written[8]!.events[0]!.sourceStart)).toEqual([])
 })
 
 it('checks the new dotted and syncopated rhythms and removes old-image ornaments', () => {
   const patterns = [
     ['(5 3) (0 (3 3))', [.5, .5, .5, .25, .25]],
-    ['(3 5 3 2)', [.5, .5, .5, .5]],
+    ['(3 5 3) {lg}((2 1)){/}', [.5, .5, .5, .25, .25]],
     ['(6 5) ((5) 5 (3))', [.5, .5, .25, .5, .25]],
     ['((6) 5 (4)) (5 4)', [.25, .5, .25, .5, .5]],
     ['((7d) 7d (7d~)) ((7d) 7d (6d))', [.25, .5, .25, .25, .5, .25]],
@@ -69,6 +70,18 @@ it('simplifies bar 17 to bar 15 rhythm while keeping its pitches and outgoing ti
   expect(written[16]!.events.at(-1)!.tie).toBe(true)
 })
 
+it('sets 镇 in bar 38 to two slurred sixteenths in both verses', () => {
+  const bar = written[37]!
+  expect(bar.events.map(event => [event.pitches, event.beats])).toEqual([
+    [['3'], .5], [['5'], .5], [['3'], .5], [['2'], .25], [['1'], .25],
+  ])
+  const slur = document.intervals.find(interval => interval.kind === 'lg' && interval.start === bar.events[3]!.sourceStart)
+  expect(slur?.endStart).toBe(bar.events[4]!.sourceStart)
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  expect(lyricsByEvent.get(bar.events[3]!)?.filter(lyric => lyric.kind === 'text').map(lyric => lyric.text)).toEqual(['镇', '镇'])
+  expect(lyricsByEvent.get(bar.events[4]!)?.filter(lyric => lyric.kind === 'text') ?? []).toEqual([])
+})
+
 it('keeps both lyric verses aligned, including the shared rhythms and corrected ending', () => {
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
@@ -82,7 +95,7 @@ it('keeps both lyric verses aligned, including the shared rhythms and corrected 
   // Preserve the original one-beat ending plus the next one-beat pickup.
   const ending = written.find(bar => bar.events.map(event => event.pitches.join()).join(' ') === '6d 7d' && bar.events.every(event => event.beats === .5))
   expect(ending).toBeDefined()
-  expect(tokens(performed)).toHaveLength(502)
+  expect(tokens(performed)).toHaveLength(504)
   expect(performed.reduce((sum, bar) => sum + bar.events.reduce((sum, event) => sum + event.beats, 0), 0)).toBe(210)
 })
 
