@@ -1,4 +1,4 @@
-import type { M3NAnalysisSnapshot } from '@m3n/notation'
+import type { M3NAnalysis } from '@m3n/notation'
 import type { AnalysisRequest, AnalysisResponse } from './analysis-worker-protocol'
 
 export type AnalysisWorkerPort = {
@@ -8,7 +8,7 @@ export type AnalysisWorkerPort = {
   terminate: () => void
 }
 type PendingAnalysis = AnalysisRequest & {
-  resolve: (snapshot: M3NAnalysisSnapshot) => void
+  resolve: (snapshot: M3NAnalysis) => void
   reject: (error: Error) => void
 }
 
@@ -39,7 +39,7 @@ export class AnalysisClient {
     }
   }
 
-  analyze(source: string): Promise<M3NAnalysisSnapshot> {
+  analyze(source: string): Promise<M3NAnalysis> {
     if (this.destroyed) return Promise.reject(new Error('分析线程已关闭。'))
     this.pending?.reject(new DOMException('Superseded by a newer edit', 'AbortError'))
     return new Promise((resolve, reject) => {

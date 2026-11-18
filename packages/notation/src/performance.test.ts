@@ -15,7 +15,7 @@ describe('native performance compiler', () => {
     expect(result.notes.filter(note => note.channel === 1).map(note => [note.pitch, note.start, note.end])).toEqual([[48, 0, 2], [55, 2, 4]])
     expect(result.beats).toBe(4)
   })
-  it('preserves long and dotted durations without serializing MEI', () => {
+  it('preserves long and dotted durations from the semantic document', () => {
     const result = compile('{4/4}\nN: 1^^^ | 2.. ((3)) 0^ |||')
     expect(result.notes.map(note => [note.start, note.end])).toEqual([[0, 8], [8, 9.75], [9.75, 10]])
     expect(result.beats).toBe(12)

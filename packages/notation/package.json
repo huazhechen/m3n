@@ -15,9 +15,6 @@
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "txml": "^6.0.0"
-  },
   "devDependencies": {
     "typescript": "~6.0.2",
     "vitest": "^4.1.10"

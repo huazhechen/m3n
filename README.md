@@ -6,7 +6,7 @@ M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器�
 
 | 目录 | 内容 |
 | --- | --- |
-| `packages/notation` | `@m3n/notation`：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换。 |
+| `packages/notation` | `@m3n/notation`：无平台依赖的语法、领域模型、诊断、格式化、分析及演奏编译。 |
 | `packages/score-renderer` | `@m3n/score-renderer`：简谱页面、播放、导出与资源调度；自研 MIDI 和时间映射。 |
 | `packages/numbered-notation` | 消费`ScoreDocument`的自研简谱测量、排版、分页及交互SVG绘制。 |
 | `src` | React Web 应用、路由、曲库装载及分享服务。 |
@@ -15,7 +15,7 @@ M3N 是一种面向旋律制谱的文本记谱语言。本仓库实现浏览器�
 | `tools` | 构建与辅助脚本。 |
 | `tests` | 端到端测试（Playwright）。 |
 
-包依赖方向保持 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / txml`；`notation` 不依赖 React、DOM 或渲染器。旧jpFun引擎、适配器及依赖已删除，正式渲染入口采用自研引擎，切换及验收见[自研入口切换](docs/NATIVE_ACTIVATION.md)。详细约定见[前端架构](docs/ARCHITECTURE.md)与[代码图谱](docs/CODEGRAPH.md)。
+包依赖方向保持 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / txml`；`notation` 不依赖 React、DOM 或渲染器。渲染与演奏直接消费 `ScoreDocument`。详细约定见[前端架构](docs/ARCHITECTURE.md)与[代码图谱](docs/CODEGRAPH.md)。
 
 ## 开发
 

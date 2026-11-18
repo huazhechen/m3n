@@ -15,7 +15,7 @@ export function invalidMeasureBarEnds(source: string, document: ScoreDocument, d
   return [...invalidBarEnds].sort((left, right) => left - right)
 }
 
-/** Returns stable MEI measure IDs for meter-invalid measures. */
+/** Returns stable measure IDs for meter-invalid measures. */
 export function invalidMeasureIds(source: string, document: ScoreDocument, diagnostics?: readonly ScoreDiagnostic[]) {
   const invalidEnds = new Set(invalidMeasureBarEnds(source, document, diagnostics))
   const renderedMeasureCount = (measures: Array<{ events: unknown[]; multiRest?: number }>) => {

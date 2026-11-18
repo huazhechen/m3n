@@ -49,8 +49,7 @@
     "react-router-dom": "^7.18.1",
     "remark-gfm": "^4.0.1",
     "spessasynth_lib": "^4.3.12",
-    "svg2pdf.js": "^2.8.1",
-    "txml": "^6.0.0"
+    "svg2pdf.js": "^2.8.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

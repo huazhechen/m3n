@@ -1,15 +1,15 @@
 import { lyricMeasures, alternativeLyricBlocks } from './alternatives.js'
-import type { ScoreDocument, ScoreEvent, ScoreMeasure } from './score-document.js'
+import type { ScoreDocument, ScoreEvent, ScoreMeasure, ScoreLyricSyllable } from './score-document.js'
 import { scoreEventIds } from '../score-event-ids.js'
 import { measurePlaybackPasses, parsePassRange } from './repeats.js'
-import { needsCjkSpacingCompensation, type MeiVerseSyllable } from './mei-lyrics.js'
-import { scoreHeaderMetadata } from './mei-document.js'
+
+export type ScoreEventLyric = ScoreLyricSyllable & { n: string; verseIndex: number; passes?: ReadonlySet<number> }
 
 export type ScoreSourceRange = { xmlId: string; sourceStart: number; sourceEnd: number }
 
 /** Renderer-independent event/lyric interaction data. No XML is produced. */
 export function deriveScoreInteraction(document: ScoreDocument): {
-  lyricsByEvent: Map<ScoreEvent, MeiVerseSyllable[]>; visibleVerseIndexes: Set<number>; sourceMap: ScoreSourceRange[]; hasBassStaff: boolean; headerMetadata: ReturnType<typeof scoreHeaderMetadata>
+  lyricsByEvent: Map<ScoreEvent, ScoreEventLyric[]>; sourceMap: ScoreSourceRange[]
 } {
   if (document.alternatives?.length) {
     const affected = (block: typeof document.lyrics[number]) => document.alternatives!.some(item=>item.host.events.some(event=>(block.targetStart===undefined || block.targetStart<=event.sourceStart) && (block.targetEnd===undefined || event.sourceStart<block.targetEnd)))
@@ -18,7 +18,6 @@ export function deriveScoreInteraction(document: ScoreDocument): {
       const measures = lyricMeasures(document,block).map(measure=>({...measure,orderPasses:Array.from({length:256},(_,i)=>i+1)}))
       const selected = deriveScoreInteraction({...document,alternatives:undefined,lyrics:[{...block,targetStart:undefined,targetEnd:undefined}],parts:new Map([['score',{melody:measures,bass:[]}]])})
       for (const [event,lyrics] of selected.lyricsByEvent) base.lyricsByEvent.set(event,[...(base.lyricsByEvent.get(event) ?? []),...lyrics])
-      for (const verse of selected.visibleVerseIndexes) base.visibleVerseIndexes.add(verse)
     }
     const ids=scoreEventIds(document)
     for (const item of document.alternatives) for (const event of item.measure.events) {
@@ -27,7 +26,7 @@ export function deriveScoreInteraction(document: ScoreDocument): {
     for (const [event,lyrics] of base.lyricsByEvent) for (const lyric of lyrics) base.sourceMap.push({xmlId:ids.get(event)!,sourceStart:lyric.sourceStart,sourceEnd:lyric.sourceEnd})
     return base
   }
-  const lyricsByEvent = new Map<ScoreEvent, MeiVerseSyllable[]>()
+  const lyricsByEvent = new Map<ScoreEvent, ScoreEventLyric[]>()
   const lyricSyllables = document.lyrics.map((block) => {
     const numericRange = /^\d+$/.test(block.range)
     const passRange = block.sharedPasses || block.range || block.phrasePasses
@@ -42,16 +41,10 @@ export function deriveScoreInteraction(document: ScoreDocument): {
       syllables: block.syllables.map((syllable) => ({
         ...syllable,
         passes,
-        cjkSpacingCompensation: needsCjkSpacingCompensation(syllable.text),
       })),
     }
   })
   const melodyIndices = lyricSyllables.map(() => 0)
-  const visibleVerseIndexes = new Set(lyricSyllables
-    .filter((block) => block.syllables.some((syllable) => (
-      syllable.kind === 'text' && syllable.text.replaceAll('~', '').trim() !== ''
-    )))
-    .map((block) => block.verseIndex))
   const lyricPassesByMeasure = new Map<ScoreMeasure, Set<number>>()
   for (const part of document.parts.values()) {
     for (const [measure, passes] of measurePlaybackPasses(part.melody)) lyricPassesByMeasure.set(measure, passes)
@@ -88,7 +81,6 @@ export function deriveScoreInteraction(document: ScoreDocument): {
     let tieEnd = false
     for (const measure of part.melody) {
       for (const event of measure.events) {
-        const staffNumber = 1
         const lyricTargetCount = event.kind === 'tuplet'
           ? event.pitches.filter((pitch) => pitch !== '0').length
           : 1
@@ -105,7 +97,7 @@ export function deriveScoreInteraction(document: ScoreDocument): {
           .filter((block) => block.syllables.some(hasVisibleLyricText))
           .map((block) => block.verseIndex))
         const activeLyricBlocks = lyricBlocksAtEvent.filter((block) => textRowsAtEvent.has(block.verseIndex))
-        const hasLyricTarget = staffNumber === 1 && event.kind !== 'rest' && !isInstrumentalEvent(event)
+        const hasLyricTarget = event.kind !== 'rest' && !isInstrumentalEvent(event)
         const assignedLyrics = hasLyricTarget
           ? activeLyricBlocks.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
             const index = lyricSyllables.indexOf(block)
@@ -131,18 +123,11 @@ export function deriveScoreInteraction(document: ScoreDocument): {
               n: block.n,
               verseIndex: block.verseIndex,
               passes: block.passes,
-              cjkSpacingCompensation: false,
             }]
           })
           : []
         if (hasLyricTarget && !measure?.ending) {
           const occupiedRows = new Set(lyrics.map((lyric) => lyric.verseIndex))
-          const reservesForcedCjkSpace = lyrics.some((lyric) => lyric.forceTiedTarget && needsCjkSpacingCompensation(lyric.text))
-          if (reservesForcedCjkSpace) {
-            for (const lyric of lyrics) {
-              if (lyric.kind === 'placeholder') lyric.cjkSpacingCompensation = true
-            }
-          }
           const partLyricRowCount = Math.max(0, ...textRowsAtEvent)
           for (let row = 1; row <= partLyricRowCount; row += 1) {
             if (occupiedRows.has(row)) continue
@@ -156,7 +141,6 @@ export function deriveScoreInteraction(document: ScoreDocument): {
               n: String(row),
               verseIndex: row,
               passes: undefined,
-              cjkSpacingCompensation: reservesForcedCjkSpace,
             })
           }
           lyrics.sort((left, right) => left.verseIndex - right.verseIndex)
@@ -191,6 +175,6 @@ export function deriveScoreInteraction(document: ScoreDocument): {
       }
     }
   }
-  return { lyricsByEvent, visibleVerseIndexes, sourceMap, hasBassStaff, headerMetadata: scoreHeaderMetadata(document) }
+  return { lyricsByEvent, sourceMap }
 }
 export type ScoreInteraction = ReturnType<typeof deriveScoreInteraction>

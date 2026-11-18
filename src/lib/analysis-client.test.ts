@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeM3NSnapshot, restoreM3NAnalysis } from '@m3n/notation'
+import { analyzeM3N } from '@m3n/notation'
 import { AnalysisClient, type AnalysisWorkerPort } from './analysis-client'
 import type { AnalysisRequest, AnalysisResponse } from './analysis-worker-protocol'
 
@@ -22,15 +22,15 @@ describe('background score analysis', () => {
     const latest = client.analyze('N: 3 4 5 6 |||')
     expect(worker.requests.map(request => request.source)).toEqual(['N: 1 2 3 4 |||'])
     expect((await superseded).name).toBe('AbortError')
-    const initialSnapshot = structuredClone(analyzeM3NSnapshot(worker.requests[0]!.source))
+    const initialSnapshot = structuredClone(analyzeM3N(worker.requests[0]!.source))
     worker.reply({ revision: 1, snapshot: initialSnapshot })
     expect((await first).source).toBe('N: 1 2 3 4 |||')
     expect(worker.requests.map(request => request.source)).toEqual(['N: 1 2 3 4 |||', 'N: 3 4 5 6 |||'])
     worker.reply({ revision: 1, snapshot: initialSnapshot }) // A late stale reply cannot replace request 3.
-    worker.reply({ revision: 3, snapshot: structuredClone(analyzeM3NSnapshot(worker.requests[1]!.source)) })
-    const restored = restoreM3NAnalysis(await latest)
+    worker.reply({ revision: 3, snapshot: structuredClone(analyzeM3N(worker.requests[1]!.source)) })
+    const restored = await latest
     expect(restored.score.parts.get('score')?.melody[0]?.events[0]?.pitches).toEqual(['3'])
-    expect(restored.conversion.mei).toContain('xml:id="m3n-e-1"')
+    expect(restored.interaction.sourceMap[0]).toMatchObject({ xmlId: 'm3n-e-1' })
     client.destroy()
   })
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { analyzeM3N, restoreM3NAnalysis } from '@m3n/notation'
+import { analyzeM3N } from '@m3n/notation'
 import { AnalysisClient } from '../lib/analysis-client'
 
 export function useM3NAnalysis(source: string, { background = true, suspended = false } = {}) {
@@ -19,7 +19,7 @@ export function useM3NAnalysis(source: string, { background = true, suspended = 
       try {
         client.current ??= new AnalysisClient(new Worker(new URL('../lib/analysis.worker.ts', import.meta.url), { type: 'module' }))
         void client.current.analyze(source).then(snapshot => {
-          if (!cancelled) { setAnalysis(restoreM3NAnalysis(snapshot)); setError('') }
+          if (!cancelled) { setAnalysis(snapshot); setError('') }
         }).catch((error: unknown) => {
           if (!cancelled && !(error instanceof DOMException && error.name === 'AbortError')) {
             client.current?.destroy()

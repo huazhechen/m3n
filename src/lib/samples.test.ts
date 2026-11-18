@@ -1,4 +1,4 @@
-import { m3nToMei, measurePlaybackPasses, parseM3NDocument, parseM3NDocumentStructure, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
+import { analyzeM3N, measurePlaybackPasses, parseM3NDocument, parseM3NDocumentStructure, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { describe, expect, it } from 'vitest'
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
 import polka from '../scores/dan_huang_guan_bo_er_ka_01.m3n?raw'
@@ -305,7 +305,7 @@ describe('bundled score corpus', () => {
     expect(presetScores.every(score => !('source' in score))).toBe(true)
   })
 
-  it('converts every lazy score with valid source mappings', async () => {
+  it('analyzes every lazy score with valid source mappings', async () => {
     const failures: string[] = []
 
     for (const score of presetScores) {
@@ -316,11 +316,8 @@ describe('bundled score corpus', () => {
         if (sections.some(section => section.name) && sections.some(section => !section.name && section.phrases.length)) {
           failures.push(`${score.slug}: music outside a named section`)
         }
-        const result = m3nToMei(source)
-        if (!result.mei.startsWith('<?xml') || !result.mei.includes('<scoreDef')) {
-          failures.push(`${score.slug}: missing MEI score`)
-        }
-        for (const range of result.sourceMap) {
+        const result = analyzeM3N(source)
+        for (const range of result.interaction.sourceMap) {
           if (
             range.sourceStart < 0 ||
             range.sourceEnd > source.length ||

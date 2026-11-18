@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import guide from '../../docs/GUIDE.md?raw'
 import manual from '../../docs/MANUAL.md?raw'
 import homeExample from '../examples/huan_le_song.m3n?raw'
-import { m3nToMei, validateM3NDiagnostics } from '@m3n/notation'
+import { analyzeM3N, compileScorePerformance } from '@m3n/notation'
 import { documentSections } from './docs-navigation'
 
 function m3nExamples(markdown: string) {
@@ -11,8 +11,8 @@ function m3nExamples(markdown: string) {
 
 describe('documented M3N examples', () => {
   it('validates the example used by the home page', () => {
-    expect(validateM3NDiagnostics(homeExample)).toEqual([])
-    expect(m3nToMei(homeExample).diagnostics).toEqual([])
+    expect(analyzeM3N(homeExample).diagnostics).toEqual([])
+    expect(compileScorePerformance(analyzeM3N(homeExample).score).notes.length).toBeGreaterThan(0)
   })
 
   for (const [name, markdown] of [
@@ -23,7 +23,7 @@ describe('documented M3N examples', () => {
       const failures = m3nExamples(markdown)
         .map((source, index) => ({
           index: index + 1,
-          diagnostics: [...validateM3NDiagnostics(source), ...m3nToMei(source).diagnostics],
+          diagnostics: analyzeM3N(source).diagnostics,
         }))
         .filter((result) => result.diagnostics.length > 0)
       expect(failures).toEqual([])

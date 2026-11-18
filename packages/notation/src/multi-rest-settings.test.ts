@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from './m3n-direct.js'
-import { m3nToMei } from './m3n-mei.js'
 import { compileScorePerformance } from './performance.js'
 
 const source = '{4/4}{120qpm}\nN: 1 2 3 4 | {key=G}{6/8}{60qpm}{rest=2} | 1 2 3 |||\nB: 1d^ 5d^ | {rest=2} | 1d 2d 3d |'
@@ -41,18 +40,5 @@ describe('settings at multi-measure rest onset', () => {
     expect(compileScorePerformance(document).beats).toBe(12)
     rest.multiRestState = { key: 'C', meterCount: 6, meterUnit: 0, tempo: 120 }
     expect(() => compileScorePerformance(document)).toThrow('播放拍号无效')
-  })
-  it('writes key and meter changes before the rest measure and anchors tempo to its first beat', () => {
-    const { mei, diagnostics } = m3nToMei(source)
-    expect(diagnostics).toEqual([])
-    const restStart = mei.indexOf('<measure xml:id="m3n-measure-1-2"')
-    expect(restStart).toBeGreaterThan(0)
-    expect(mei.slice(0, restStart)).toMatch(/<keySig sig="1s"\/>/)
-    expect(mei.slice(0, restStart)).toContain('meter.count="6" meter.unit="8"')
-    const rest = mei.slice(restStart, mei.indexOf('</measure>', restStart))
-    expect(rest).toContain('<multiRest num="2"/>')
-    expect(rest).toMatch(/<tempo[^>]*tstamp="1"[^>]*midi.bpm="60"/)
-    expect(rest).not.toMatch(/<note\b/)
-    expect(mei.match(/midi.bpm="60"/g)).toHaveLength(1)
   })
 })

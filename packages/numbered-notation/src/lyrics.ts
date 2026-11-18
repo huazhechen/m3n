@@ -13,7 +13,7 @@ const lyricPasses = (block: ScoreLyricBlock) => {
 const lyricRow = (block: ScoreLyricBlock) => {
   const numbered = /^\d+$/.exec(block.range)
   const pass = numbered ? undefined : /V(\d+)/.exec(block.phrasePasses ?? '')
-  // This mirrors the MEI projection: generic L: is verse 1, while L2: and
+  // Generic L: is verse 1, while L2: and
   // lyrics limited to V2 use their explicit pass row.
   return Math.max(0, Number(numbered?.[0] ?? pass?.[1] ?? 1) - 1)
 }

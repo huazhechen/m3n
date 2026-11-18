@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { m3nPitch, parseM3NDocument } from './m3n-direct.js'
 import { m3nChord } from './m3n-harmony.js'
-import { m3nToMei } from './m3n-mei.js'
 import { compileScorePerformance } from './performance.js'
 
 const pitches = (source: string) => compileScorePerformance(parseM3NDocument(source)).notes.map(note => note.pitch)
@@ -25,11 +24,7 @@ describe('la-based minor solfege', () => {
   it('shares the convention across bass, chords, tuplets and grace notes', () => {
     const source = '{key=Am}{4/4}\nN: [6d 1 3:h] ([6d 7d 1:2]) 6{ac(5#)} 0 |||\nB: 6dd^^ |'
     expect(pitches(source)).toEqual(pitches(source.replace('{key=Am}', '{key=C}')))
-    const result = m3nToMei('{key=Am}{4/4}\nN: 6d 1 3 6 |||')
-    expect(result.diagnostics).toEqual([])
-    expect(result.mei).toContain('<keySig sig="0"/>')
-    expect(result.mei).toContain('pname="a" oct="3"')
-    expect(result.mei).toContain('pname="c" oct="4"')
+    expect(pitches('{key=Am}{4/4}\nN: 6d 1 3 6 |||')).toEqual([57, 60, 64, 69])
   })
 
   it('keeps ties valid across relative major/minor changes and selects repeat alternatives', () => {

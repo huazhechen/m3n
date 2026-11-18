@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatM3N, m3nToMei, normalizeSectionBarlines, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
+import { formatM3N,  normalizeSectionBarlines, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import type { ScoreMeasure } from '@m3n/notation'
 
 const sources = import.meta.glob<string>('../scores/*.m3n', { eager: true, query: '?raw', import: 'default' })
@@ -39,7 +39,6 @@ describe('score formatting corpus', () => {
     expect(validateM3NDiagnostics(formatted).map(({ code, message }) => ({ code, message })))
       .toEqual(validateM3NDiagnostics(source).map(({ code, message }) => ({ code, message })))
     const canonical = normalizeSectionBarlines(source)
-    expect(m3nToMei(formatted).mei).toBe(m3nToMei(canonical).mei)
     expect(musicalMeaning(formatted)).toEqual(musicalMeaning(canonical))
     expect(formatM3N(formatted)).toBe(formatted)
   })

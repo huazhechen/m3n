@@ -5,7 +5,7 @@ describe('happi current compatibility', () => {
   it('output parses as structured m3n', () => {
     const output = happi123ToM3N('{title:测试}\n{key_signature:C}\n{time_signature:4/4}\n1 2 3 4 |||').output
     const analysis = analyzeM3N(output)
-    expect(analysis.conversion.diagnostics).toEqual([])
+    expect(analysis.diagnostics).toEqual([])
     expect([...analysis.score.parts.values()][0]?.melody.flatMap((measure) => measure.events)).toHaveLength(4)
   })
 

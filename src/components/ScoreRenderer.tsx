@@ -5,7 +5,7 @@ import { loadSampledTone } from '@m3n/score-renderer/tones'
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { MeiSourceMapRange, ScoreDocument } from '@m3n/notation'
+import type { ScoreSourceRange, ScoreDocument } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_TRANSPOSE,
   DEFAULT_SCORE_WIDTH,
@@ -27,7 +27,7 @@ import {
 } from '@m3n/score-renderer/view'
 
 type ScoreRendererProps = {
-  sourceMap: MeiSourceMapRange[]
+  sourceMap: ScoreSourceRange[]
   scoreDocument: ScoreDocument
   scoreId?: string
   compact?: boolean

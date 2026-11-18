@@ -17,8 +17,6 @@ try {
   ].join('\n'))
   await build({ configFile: false, logLevel: 'error', resolve: { alias: [
     { find: '@m3n/notation', replacement: join(root, 'packages/notation/src/index.ts') },
-    { find: 'txml/txml', replacement: join(root, 'node_modules/txml/dist/txml.mjs') },
-    { find: 'txml', replacement: join(root, 'node_modules/txml/dist/index.mjs') },
   ] }, build: { outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
     lib: { entry, name: 'formatAudit', formats: ['iife'], fileName: () => 'bundle.js' } } })
   const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)

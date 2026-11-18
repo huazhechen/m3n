@@ -1,6 +1,6 @@
 import type { ScoreDocument, ScoreEvent } from './notation/score-document.js'
 
-/** Shared identity contract for MEI, numbered notation and playback. */
+/** Shared event identity for numbered notation, source mapping and playback. */
 export function scoreEventIds(document: ScoreDocument): Map<ScoreEvent, string> {
   const ids = new Map<ScoreEvent, string>()
   const hasBass = [...document.parts.values()].some((part) => part.bass.some((measure) => measure.events.length > 0))

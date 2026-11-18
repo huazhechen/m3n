@@ -20,19 +20,19 @@ web app -> @m3n/score-renderer -> @m3n/notation
 领域层明确使用两个模型：
 
 - `M3NSyntaxTree` 是无损且可容错的语法模型，保留原始行、token 与绝对源码范围，服务格式化、诊断和编辑器定位。
-- `ScoreDocument` 是规范化音乐语义模型，不承载排版空白等文本细节，服务校验、播放计划与 MEI 序列化。
+- `ScoreDocument` 是规范化音乐语义模型，不承载排版空白等文本细节，服务校验、简谱排版与演奏编译。
 
 交互调用方通过 `analyzeM3N` 建立一次分析会话并消费其派生结果，不应在同一次编辑更新中自行重复解析。
 
 格式化器将乐谱中指令值以外的连续空白规范为一个空格，删除音乐行开头或连续小节线产生的空音乐小节，并依据旋律对位目标重建歌词小节线；没有歌词目标的小节仍保留为空歌词小节，例如 `甲乙 | | 丙丁`。格式化保留逐个音符、延音、休止符与手动换行，按等价括号分组、布局和歌词对齐分阶段执行，模块职责与规则见[格式化器](FORMATTING.md)。此为编辑器格式化行为，原始输入的语法与校验规则见[手册](MANUAL.md)。
 
-分析会话直接提供 `diagnostics`；`interaction` 独立提供源码映射、歌词分配、页头和低音存在性，不生成 XML。`getMei()` 与兼容的 `conversion` 在首次读取时才生成并缓存 MEI，复用同一份交互数据与校验结果。纯简谱显示不做 MEI 序列化。元数据提取消费语义文档和诊断，不生成 MEI。初始设置从语法树首音之前的状态指令建立，信息字段仅来自文档首部，注释不参与解析。
+分析会话直接提供 `score`、`diagnostics`、`invalidMeasureIds` 和 `interaction`。交互数据包含源码映射与歌词分配，元数据从领域文档提取。初始设置从语法树首音之前的状态指令建立，信息字段仅来自文档首部，注释不参与解析。
 
-结构投影、领域 builder 与源码规则复用语法树中的原始 token，保留绝对位置和 CRLF 偏移，不拼接正文后重新分词。`analyzeM3NSnapshot` 返回可结构化克隆的数据；`restoreM3NAnalysis` 恢复延迟转换入口。可编辑页面通过 `useM3NAnalysis` 在模块 Worker 中分析后续输入，一次只运行一个请求并保留最新待处理编辑；过时响应不能替换当前结果。中文组合输入期间保留原预览并暂停分析，等待更新时禁用播放，线程错误有重试入口；只读文档谱例使用同步分析，不为每个示例创建线程。
+结构投影、领域 builder 与源码规则复用语法树中的原始 token，保留绝对位置和 CRLF 偏移，不拼接正文后重新分词。`analyzeM3N` 返回完整且可结构化克隆的数据，Worker结果直接交给页面。可编辑页面通过 `useM3NAnalysis` 在模块 Worker 中分析后续输入，一次只运行一个请求并保留最新待处理编辑；过时响应不能替换当前结果。中文组合输入期间保留原预览并暂停分析，等待更新时禁用播放，线程错误有重试入口；只读文档谱例使用同步分析，不为每个示例创建线程。
 
 ## Workspace 边界
 
-- `packages/notation`（`@m3n/notation`）：无平台依赖的语法、领域模型、诊断、格式化、分析和 MEI 转换；可独立生成 JavaScript 与类型声明。
+- `packages/notation`（`@m3n/notation`）：无平台依赖的语法、领域模型、诊断、格式化、分析及演奏编译；可独立生成 JavaScript 与类型声明。
 - `packages/score-renderer`（`@m3n/score-renderer`）：浏览器渲染、播放、导出与资源调度；只通过 `@m3n/notation` 的公共入口访问领域类型。
 - `packages/numbered-notation`：从领域文档完成自研测量、排版、分页、歌词遍次与交互SVG绘制。
 - `src`：React Web 应用、路由、曲库装载及分享服务；通过包名消费子包，不跨入其内部目录。
@@ -48,19 +48,14 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/notation/analysis.ts`：交互调用方的统一分析入口。
 - `packages/notation/src/notation/diagnostics.ts`：结构化诊断契约；规则在产生诊断的位置直接提供稳定 code、严重级别和源码范围，不保留字符串诊断模式。
 - `packages/notation/src/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
-- `packages/notation/src/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；Direct、MEI 和歌词对位共享其语义。
+- `packages/notation/src/notation/repeats.ts`：反复次数、跳房子及 D.S./D.C. 的纯播放计划；演奏编译和歌词对位共享其语义。
 - `packages/notation/src/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；负责小节时值、延音目标和双谱表对齐。
 - `packages/notation/src/m3n-direct.ts`：从源码构造 `ScoreDocument`；领域消费者统一使用 `Score*` 类型，不再暴露旧 `Direct*` 类型。
 - `packages/notation/src/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。
 - `packages/notation/src/m3n-validate.ts`：语义校验，只依赖最小语法内核。
 - `packages/score-renderer/src`：自研 MIDI 写入、时间索引、音频播放和导出文档。
 - `packages/numbered-notation/src`：`ScoreDocument` 的自研投影、横纵布局、实绘测量、分页与SVG交互；公共入口导出`native-score.ts`。旧引擎、适配器及跨引擎对照工具已删除。
-- `packages/notation/src/m3n-mei.ts`：M3N 到 MEI 中间文档、稳定 `xml:id` 与源码映射。
-- `packages/notation/src/notation/mei-xml.ts`：MEI XML 转义与时值属性序列化。
-- `packages/notation/src/notation/mei-lyrics.ts`：歌词、下划线、CJK 补偿和 verse 序列化。
-- `packages/notation/src/notation/mei-document.ts`：通过 XML builder 组装 MEI 文档头、责任者元数据、`scoreDef` 和 section，统一处理文本转义与文档序列化。
-- `packages/notation/src/notation/mei-layout.ts`：MEI section、ending 和 expansion 布局序列化。
-- `packages/notation/src/notation/section-order.ts`：校验显式乐段顺序；ScoreDocument 保存分段范围与局部访问次数，MEI expansion、歌词映射和两种谱面共用该模型。
+- `packages/notation/src/notation/section-order.ts`：校验显式乐段顺序；ScoreDocument 保存分段范围与局部访问次数，演奏展开、歌词映射和简谱排版共用该模型。
 - `packages/score-renderer/src/native-playback-score.ts`：仅提供 MIDI 生成和时间映射，按播放操作动态加载。
 - `packages/score-renderer/src/spessa-player.ts`：SpessaSynth 播放，默认使用本地生成的合成音色；钢琴、口琴通过独立 SF3 按需加载。
 - `packages/score-renderer/src/playback-tones.ts`：轻量音色目录、下载去重、浏览器 Cache Storage 持久缓存与失败重试；不初始化合成器或下载未选音色。
@@ -70,7 +65,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `components/ScoreControls.tsx`：阅读页、编辑页与转换页使用固定在窗口底部的悬浮播放条，从左到右为播放／暂停、进度滑条和节拍器开关；旁边的设置悬浮按钮打开原生非模态 popover。设置弹层含速度、宽度两条滑条及钢琴、分页、固定调、小节号、调号五个按钮；两条滑条的还原按钮只显示图标，保留可访问名称和悬停提示。弹层内外使用同一个界面缩放基准，按钮基础高度统一采用 `clamp(var(--ui-control-min), 100vmin / 16, var(--ui-control-max))`，图标为该高度的80%。弹层明确使用自动高度、零最小高度及内容尺寸网格行，内容向顶部对齐，防止 Safari 默认弹层高度和网格拉伸把按钮撑满窗口；空间不足时弹层内部滚动。五个功能按钮采用紧凑的上下图文布局，沿用统一的图标与字号比例；文字行高为1，图文间距为常规间距的1/4，上下内边距为常规间距的1/2，高度按内容计算且不低于基础按钮高度，不再额外叠加文字最小高度；调号以当前调性为图标，附“调号”文字。点击空白或 Escape 关闭设置，五度圈作为设置内的模态对话框，关闭后回到调号按钮。弹层不占文档流，开关不改变谱面尺寸或播放实例；悬浮条通过 portal 放到 body，避免渲染容器截断或改变固定定位，页面底部按播放条尺寸动态预留空间及设备安全区。文档谱例沿用同款播放条（播放／进度／节拍器），不显示设置按钮，在各自乐谱渲染区域顶部吸附，滚出该谱例后随之离开。界面只使用按钮基础高度这一缩放基准：`clamp(var(--ui-control-min), 100vmin / 16, var(--ui-control-max))`（视口窄边的1/16，默认范围36～48px；可悬停且主要输入为精细指针时范围24～36px），纯图标按钮采用同样的宽度；顶部导航、品牌标志、编辑操作、播放和设置图标统一采用按钮基础高度的80%，默认28.8～38.4px、鼠标设备19.2～28.8px。纯图标按钮不加内边距，图文按钮按图标及文字实际尺寸预留空间。顶部栏高为按钮基础高度的1.25倍；间距为按钮高度的1/8，界面基础字号为按钮高度的3/8（默认13.5～18px、鼠标设备9～13.5px），页面和控件文字按同一字号使用相对比例，主内容区最大宽度也随字号增长，关闭 Safari 的额外文字自动放大。滑条交互区与按钮等高、轨道高为按钮高度的1/16；设置功能按钮通过收紧行高、图文间距和留白容纳文字，播放条和设置面板的宽度随大尺寸按钮扩展，底部留白和设置弹层位置随控件尺寸变化。渲染器与原控制区均无卡片边框及内边距。顶部操作直接在栏内展开，不使用折叠菜单。乐谱阅读页从左到右为上一曲、下一曲、打印、编辑、乐谱库；桌面端使用图标与文字，移动端（≤720px，或主要输入为粗指针且不支持悬停）只显示按统一尺寸基准派生的等宽图标按钮，保留可访问名称与悬停提示。首页、指南和手册顶部只显示乐谱库；页面顶部留白统一为按钮高度的1/8，桌面不再使用固定18px留白，导航栏按统一尺寸基准派生。三个数值只读，均通过滑条调整；BPM支持10–240整数。合成音色默认无需下载，钢琴首次选择时下载并缓存；旧口琴设置回退到合成音色。音色通过 `hooks/usePlaybackTone.ts` 同步阅读页、编辑页、文档谱例与同源标签页，长期保存在localStorage；固定调记谱、小节号与节拍器也保存到本地。移调、速度和宽度只在当前乐曲页面内调整，切换乐曲或重新打开时恢复原调、该曲原速及谱集默认版宽，不读取旧的全局移调／速度／宽度缓存。小节号默认关闭，开启后按书写顺序在每行主旋律末尾小节线上方显示，不改变MIDI或播放顺序。文档谱例提供播放／暂停、进度滑条与节拍器，节拍器默认关闭且仅在该谱例临时切换；固定使用合成音色和谱面原速，关闭移调、小节号及分页，不读取这些个人偏好；文档谱例的目标音符字号采用同一按钮基础高度的1/2（默认18～24px、鼠标设备12～18px），由界面根字号反算，避免另设视口缩放公式或独立上限；再根据文档可用宽度与引擎原始22px字号反算排版宽度（引擎最小版宽320px）；所有谱例先按该宽度重新排版，再缩放至容器全宽；窄屏不提供横向滚动，播放栏按同一界面尺寸基准独立布局，不缩放整个DOM；正文尺寸不参与谱面缩放。
 - `components/ScoreExportDialog.tsx`：预览与下载状态；复用阅读页当前版宽、速度、移调、固定调、小节号与分页，只提供横排SVG、PNG、PDF三个下载按钮，不再单独设置宽度或低音谱表。
 - `lib/vector-export.ts`：把 SVG 文字按字符位置转为 OpenType 字形路径；数字沿用内嵌 Barlow，文字使用按需加载的本地 Noto Serif CJK SC。字形缺失明确报错。
-- `components/NotationEditor.tsx`：顶部仅保留格式化、保存、分享三个操作，桌面显示图标与文字，移动端显示按统一尺寸基准派生的等宽图标按钮并保留可访问名称；不显示浏览器保存提示、文件导入／下载或 MEI 入口，草稿恢复与自动保存继续生效。
+- `components/NotationEditor.tsx`：顶部仅保留格式化、保存、分享三个操作，桌面显示图标与文字，移动端显示按统一尺寸基准派生的等宽图标按钮并保留可访问名称；不显示浏览器保存提示、文件导入／下载入口，草稿恢复与自动保存继续生效。
 - `components/SourceEditor.tsx`：CodeMirror 编辑适配，提供高亮、行号、括号匹配、指令补全、历史与范围诊断；领域层不依赖编辑器。
 - `components/EditorSplit.tsx`：手机源码／预览标签切换，桌面拖动及方向键调整分栏，切换保留输入与分析。
 - `pages`：路由级组合，不承载领域算法。
@@ -78,7 +73,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `hooks/useScoreSource.ts`：编辑页、阅读页共用的来源加载与失效请求取消；缺失和失败有明确页面状态，不替换成默认谱。乐谱动态模块加载失败时提供“刷新页面”，重新获取当前构建的资源引用；普通加载错误仍提供“重试加载”。不自动刷新，以免打断编辑。
 - `hooks/useScoreDraft.ts`：草稿恢复、延迟保存与离开页面时写入；本地正式保存更新原 ID，持久化失败不得返回成功。
 - `hooks/useM3NAnalysis.ts` 与 `lib/analysis-client.ts`：编辑分析的合并、版本检查与线程生命周期；不把 Worker 通信逻辑放入领域包。
-- `notation/harmony-syntax.ts`：和弦符号的共享定义；和弦行解析、校验与 MEI 符号生成复用它，最长后缀优先匹配。
+- `notation/harmony-syntax.ts`：和弦符号的共享定义；和弦行解析、校验与显示名称生成复用它，最长后缀优先匹配。
 
 乐谱库顶部仅保留同一行的“乐谱库”标题和搜索框。搜索支持曲名与署名等文本，以及词／歌词、低／低音、本地、内置、调号和拍号；空格分隔的多个条件同时满足，调号与拍号精确匹配，避免 G 命中其他调性或英文曲名。乐谱库的网格列数始终按容器宽度自动计算，单列最小宽度为260px与16倍界面基础字号中的较大值，可用宽度足够时自动排多列，不因触屏或窄屏强制单列。移动端（≤720px，或主要输入为粗指针且不支持悬停）自动使用紧凑卡片，歌名与元信息居中并隐藏署名；桌面端使用普通卡片。词、低与调号、拍号、速度统一显示在歌名下方的标签区域，不提供下拉筛选或紧凑切换按钮。
 
@@ -98,7 +93,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 口琴文件为 47,932 字节，包含 8 个采样。原始映射只覆盖到 MIDI 96；提取时将最高采样的音区延伸到 MIDI 127，避免高音或移调后无声。常用音区的采样映射不变。
 
-生产资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。演奏编译和 MIDI 写入为项目内 TypeScript 实现，不加载 Verovio 或音乐引擎 WASM。简谱采用项目内自研排版，旧引擎和依赖已删除；验收及移除记录见[自研入口](NATIVE_ACTIVATION.md)与[旧引擎清理](JPFUN_REMOVAL.md)。字体、音源和 AudioWorklet 来自本站构建产物。
+生产资源必须随本站发布，禁止使用第三方 CDN 或远程渲染资源 URL。演奏编译和 MIDI 写入为项目内 TypeScript 实现，不加载 Verovio 或音乐引擎 WASM。简谱采用项目内自研排版，旧引擎和依赖已删除；实现见[自研引擎](NATIVE_ENGINES.md)。字体、音源和 AudioWorklet 来自本站构建产物。
 
 `ScoreRenderer` 在编辑或布局参数变化时更新简谱排版。播放实例按需加载并独立销毁。
 
@@ -128,7 +123,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 ## 继续维护时的约束
 
-- 新语法同时验证领域、MEI 与简谱投影，公共转换 API 保持兼容。
+- 新语法同时验证领域、自研演奏与简谱投影。
 - 原文只在分析边界分词；元数据、诊断、格式化和交互消费已有模型。不要在界面组件中追加指令正则解释器。
 - 播放顺序及遍次使用 `notation/repeats`；谱式特有的歌词行视觉标签由各适配器维护。
 - 不将 SVG 坐标或具体编辑器对象放进领域模型，不为缩短文件制造单行转发层。

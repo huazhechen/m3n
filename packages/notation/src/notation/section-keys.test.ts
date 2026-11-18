@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '../m3n-direct.js'
 import { formatM3N } from '../m3n-format.js'
-import { m3nToMei } from '../m3n-mei.js'
 import { validateM3NDiagnostics } from '../m3n-validate.js'
 import { compileScorePerformance } from '../performance.js'
 import { alternativePerformance } from './alternatives.js'
@@ -25,9 +24,7 @@ describe('keyed section visits', () => {
     expect(document).toEqual(before)
     const formatted = parseM3NDocument(formatM3N(source))
     expect(formatted.orderKeys).toEqual(document.orderKeys)
-    const conversion = m3nToMei(source)
-    expect(conversion.mei).toContain('<keySig sig="5f"/>')
-    expect(conversion.headerMetadata).toContainEqual(expect.objectContaining({value:'演奏顺序：A（1=C） → B → A（1=D♭） → A（1=C）'}))
+
   })
 
   it('transposes local repeats, alternatives, chords, grace notes and internal modulations', () => {

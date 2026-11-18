@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { measurePlaybackPasses, m3nToMei, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
+import { measurePlaybackPasses, deriveScoreInteraction, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
 import { NativeNumberedNotationScore } from './native-score.js'
 import type { NativeRenderOptions as NumberedNotationRenderOptions } from './native-layout.js'
 import { layoutNativeScore } from './native-layout.js'
@@ -252,14 +252,6 @@ it('keeps four verses and three compact chorus passes in Tomorrow Will Be Better
     const passes = measurePlaybackPasses(measures)
     expect([...passes.get(measures[0]!)!]).toEqual([1, 2, 3, 4])
     expect([...passes.get(measures[13]!)!]).toEqual([1, 2, 3])
-    const mei = new DOMParser().parseFromString(m3nToMei(source).mei, 'text/xml')
-    const sequence = mei.querySelector('expansion')!.getAttribute('plist')!.split(' ')
-    expect(sequence).toEqual([
-      '#m3n-segment-1', '#m3n-ending-1',
-      '#m3n-segment-1', '#m3n-ending-2', '#m3n-segment-2',
-      '#m3n-segment-1', '#m3n-ending-2', '#m3n-segment-2',
-      '#m3n-segment-1', '#m3n-ending-2', '#m3n-segment-2',
-    ])
     const sharedChorus = measures.slice(14, 18).flatMap(measure => measure.events)
     const ids = scoreEventIds(document)
     const rows = sharedChorus.flatMap(event => [...root.querySelectorAll(`text[data-m3n-role="lyric"][data-m3n-id="${ids.get(event)}"]`)]
@@ -376,12 +368,12 @@ it('renders solely from ScoreDocument without reading its source text', () => {
     expect(render(document).pages).toEqual(before)
   })
 
-it('shares every MEI event ID, including bass and tuplet children', () => {
+it('shares every source event ID, including bass and tuplet children', () => {
     const source = '{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nB: 1 2 3 4 | 5 6 7 1e |||'
     const { root, document } = render(source)
-    const mei = m3nToMei(source, document)
+    const interaction = deriveScoreInteraction(document)
     for (const id of scoreEventIds(document).values()) {
-      expect(mei.sourceMap.some(item => item.xmlId === id)).toBe(true)
+      expect(interaction.sourceMap.some(item => item.xmlId === id)).toBe(true)
       expect(root.querySelector(`[data-m3n-id="${id}"]`)).not.toBeNull()
     }
     expect(root.querySelector('#m3n-e-1-n3')).not.toBeNull()

@@ -9,7 +9,7 @@ flowchart LR
   browser[Browser]
   app["src<br/>React Web App"]
   renderer["@m3n/score-renderer<br/>render / playback / export"]
-  notation["@m3n/notation<br/>syntax / domain / MEI"]
+  notation["@m3n/notation<br/>syntax / domain / performance"]
   numbered["@m3n/numbered-notation<br/>native engraving / interaction"]
   scores["src/scores/*.m3n<br/>built-in score corpus"]
   docs["docs/*.md<br/>guide and manual"]
@@ -30,7 +30,7 @@ flowchart LR
   worker --> assets
 ```
 
-允许的包依赖方向为 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / txml`。旧jpFun源码和适配器已删除。`worker` 是独立部署入口，不依赖 React 或这些业务包。
+允许的包依赖方向为 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / txml`。`worker` 是独立部署入口，不依赖 React 或这些业务包。
 
 ## Web 应用
 
@@ -48,7 +48,7 @@ flowchart TD
   notationEditor --> sourceEditor["SourceEditor"]
   notationEditor --> analyze["analyzeM3N / formatM3N"]
   notationEditor --> analysisHook["useM3NAnalysis"]
-  analysisHook --> analysisWorker["analysis.worker / analyzeM3NSnapshot"]
+  analysisHook --> analysisWorker["analysis.worker / analyzeM3N"]
   analysisWorker --> notationPkg["@m3n/notation"]
   notationEditor --> scoreRenderer["ScoreRenderer"]
 
@@ -89,9 +89,6 @@ flowchart LR
   scoreRules["score-rules"]
   diagnostics["ScoreDiagnostic[]"]
   analysis["analyzeM3N"]
-  mei["m3n-mei"]
-  meiParts["mei-events / mei-layout<br/>mei-document / mei-lyrics"]
-  xml["MEI XML"]
   format["m3n-format"]
   formatted["formatted M3N"]
 
@@ -102,20 +99,17 @@ flowchart LR
   analysis --> direct
   analysis --> validation
   analysis --> interaction["score-interaction / source maps / lyrics"]
-  analysis -. on demand .-> mei
   syntax --> syntaxRules --> diagnostics
+  score --> interaction
   score --> scoreRules --> diagnostics
   score --> validation --> diagnostics
-  score --> interaction --> mei
-  syntax --> mei
-  mei --> meiParts --> xml
   source --> format
   syntax --> format
   projection --> format
   score --> format --> formatted
 ```
 
-`M3NSyntaxTree` 保留原文和源码范围，供格式化、结构规则和定位使用；`ScoreDocument` 提供规范化音乐语义，供校验、播放计划与 MEI 序列化使用。交互调用方以 `analyzeM3N` 为聚合入口，复用一次解析得到的派生结果。
+`M3NSyntaxTree` 保留原文和源码范围，供格式化、结构规则和定位使用；`ScoreDocument` 提供规范化音乐语义，供校验、播放计划和简谱排版使用。交互调用方以 `analyzeM3N` 为聚合入口，复用一次解析得到的派生结果。
 
 ## 渲染、播放与导出
 
@@ -141,7 +135,7 @@ flowchart LR
   outlines --> vector
 ```
 
-简谱由项目内自研引擎渲染，事件身份与 MEI 共享 `scoreEventIds`；播放使用项目内演奏编译器，不依赖 MEI 或 Verovio。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
+简谱由项目内自研引擎渲染，渲染和演奏共用 `scoreEventIds`；播放使用项目内演奏编译器，直接消费领域文档。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
 
 `lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，宽度切换保留播放状态。
 
