@@ -5,6 +5,7 @@ import { layoutNativeScore } from './native-layout.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
 import { renderNativePages } from './native-svg.js'
 import { nativeStyle } from './native-style.js'
+import { nativeSvgInk } from './native-ink.js'
 
 it.each([320,600,800,1000])('continues hairpin opening through systems in continuous and paged layouts at width %s', width => {
   for (const paged of [false,true]) for (const kind of ['cresc','decres'] as const) {
@@ -57,4 +58,20 @@ it('keeps adjacent independent hairpins separate', () => {
   expect(ranges).toHaveLength(2)
   expect(ranges[0]!.right).toBeLessThan(ranges[1]!.left)
   expect(ranges.every(range => range.startHalf===0)).toBe(true)
+})
+
+it.each([320,540,560,640])('keeps cross-row hairpin strokes inside a zero-margin canvas at width %s', width => {
+  for (const paged of [false,true]) for (const kind of ['cresc','decres'] as const) {
+    const source = `{2/4}\nN: {${kind}}1 2 | {br}3 4 | {br}5 6{/} |||`
+    const layout = layoutNativeScore(parseM3NDocument(source),{width,paged,pageMargin:0})
+    const relation = layout.relations.find(r => r.kind===kind)!
+    const segments = nativeHairpinSegments(relation,layout.systems)
+    expect(segments).toHaveLength(3)
+    for (const [index,segment] of segments.entries()) {
+      const ink = nativeSvgInk(segment.system.relationLayout!.get(relation)!.svg,layout.measurer)
+      expect(ink.left).toBeGreaterThanOrEqual(-1e-6)
+      expect(ink.right).toBeLessThanOrEqual(width+1e-6)
+      if (index) expect(segment.startHalf).toBeCloseTo(segments[index-1]!.endHalf,9)
+    }
+  }
 })

@@ -12,14 +12,17 @@ export function nativeHairpinSegments(relation: NativeRelation, systems: readonl
   const begin = systems.findIndex(system => members(system).includes(relation.first))
   const end = systems.findIndex(system => members(system).includes(relation.last))
   if (begin < 0 || end < begin) return []
-  const size = nativeStyle.music
+  const size = nativeStyle.music, stroke = size*.035
   const ranges = systems.slice(begin,end+1).flatMap((system,index) => {
     const glyphs = members(system)
     if (!glyphs.length) return []
-    const left = index === 0 ? relation.first.x-(relation.first.musicLeft ?? relation.first.left)
-      : Math.min(...glyphs.map(g => g.x-(g.musicLeft ?? g.left)))-size*.25
-    const right = system === systems[end] ? relation.last.x+(relation.last.musicRight ?? relation.last.right)
-      : system.measures.at(-1)!.end
+    // Continuations start at the allocated music edge. Include half the
+    // stroke at both outer boundaries so zero-margin SVGs remain unclipped.
+    const left = Math.max(stroke/2, index === 0 ? relation.first.x-(relation.first.musicLeft ?? relation.first.left)
+      : Math.min(...glyphs.map(g => g.x-(g.musicLeft ?? g.left))))
+    const right = Math.min(system.measures.at(-1)!.end-stroke/2,
+      system === systems[end] ? relation.last.x+(relation.last.musicRight ?? relation.last.right)
+        : system.measures.at(-1)!.end)
     return right > left ? [{system,left,right}] : []
   })
   const total = ranges.reduce((sum,range) => sum+range.right-range.left,0)
@@ -28,6 +31,6 @@ export function nativeHairpinSegments(relation: NativeRelation, systems: readonl
   return ranges.map(range => {
     const startHalf = half(distance)
     distance += range.right-range.left
-    return {...range,startHalf,endHalf:half(distance),stroke:size*.035}
+    return {...range,startHalf,endHalf:half(distance),stroke}
   })
 }
