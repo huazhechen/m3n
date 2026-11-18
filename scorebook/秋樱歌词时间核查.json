@@ -1,7 +1,7 @@
 {
   "date": "2026-11-18",
   "source": "src/scores/qiu_ying_01.m3n",
-  "sourceSha256": "957aaa1712e037fac27b1996f70800d2eca5cc2026d5a27d5526c2ce4ed8ab5b",
+  "sourceSha256": "168de0b5fa0124a87ab1b648e6383721c2a00c7efd673def17461e2716c74ce1",
   "references": [
     {
       "provider": "LRCLIB",
@@ -723,7 +723,7 @@
     "LRC/YRC may be edited or automatically aligned and are not independent ground truth.",
     "YRC kanji units can contain several syllables and do not prove one syllable per event.",
     "YRC third line starts at 36.00 seconds while ordinary LRC starts about 37.48 seconds; that YRC onset was not used as a calibration anchor.",
-    "Only second-verse final-line lyric slots corrected against collected timestamp data; no full-score syllable verification or audio transcription claimed."
+    "Second-verse ending rewritten as a separate variant from timestamp evidence. YRC 供 does not resolve internal ど/も onsets; no audio transcription or full-score syllable verification claimed."
   ],
   "correction": {
     "beforeSourceSha256": "1c875d205a2fad4d2f1cd925e71d5656f1ff6c1dd25bb4ef3438f4bc23c33837",
@@ -827,6 +827,391 @@
         "predictedSeconds": 192.94939235866346,
         "residualSeconds": 1.2906076413365497
       }
-    ]
+    ],
+    "status": "Historical v70 correction, superseded by endingKanaAudit."
+  },
+  "precedingPhraseCorrection": {
+    "supersedes": "v70 corrected only the last line and incorrectly treated five earlier lyric slots as wordless melody. These slots belong partly to the preceding phrase.",
+    "beforeLyrics": [
+      "穏%やかな日はもう% | 少%しあなたの子供%で",
+      "{%2} | {%3}いさせてください |"
+    ],
+    "afterLyrics": [
+      "穏%やかな日はもう% | 少%し{%3}あなたの%",
+      "子% | 供で%いさせてください |"
+    ],
+    "wordComparisons": [
+      {
+        "text": "あ",
+        "referenceSeconds": 191.5,
+        "durationSeconds": 0.14,
+        "scoreBeatWithinVerse": 92.75,
+        "predictedSeconds": 191.52330889609476,
+        "residualSeconds": -0.023308896094761167
+      },
+      {
+        "text": "な",
+        "referenceSeconds": 191.64,
+        "durationSeconds": 0.17,
+        "scoreBeatWithinVerse": 93,
+        "predictedSeconds": 191.7191667841534,
+        "residualSeconds": -0.07916678415341494
+      },
+      {
+        "text": "た",
+        "referenceSeconds": 191.81,
+        "durationSeconds": 0.19,
+        "scoreBeatWithinVerse": 93.25,
+        "predictedSeconds": 191.91502467221204,
+        "residualSeconds": -0.10502467221203915
+      },
+      {
+        "text": "の",
+        "referenceSeconds": 192.0,
+        "durationSeconds": 0.9,
+        "scoreBeatWithinVerse": 93.5,
+        "predictedSeconds": 192.1108825602707,
+        "residualSeconds": -0.11088256027070997
+      },
+      {
+        "text": "子",
+        "referenceSeconds": 192.9,
+        "durationSeconds": 0.3,
+        "scoreBeatWithinVerse": 94.5,
+        "predictedSeconds": 192.8943141125053,
+        "residualSeconds": 0.005685887494706776
+      },
+      {
+        "text": "供",
+        "referenceSeconds": 193.2,
+        "durationSeconds": 0.36,
+        "scoreBeatWithinVerse": 95,
+        "predictedSeconds": 193.28602988862258,
+        "residualSeconds": -0.08602988862259053
+      },
+      {
+        "text": "で",
+        "referenceSeconds": 193.56,
+        "durationSeconds": 0.59,
+        "scoreBeatWithinVerse": 95.5,
+        "predictedSeconds": 193.67774566473992,
+        "residualSeconds": -0.11774566473991399
+      }
+    ],
+    "scope": "Reassign preceding phrase lyrics across the score-line boundary; no melody changes. Blank lyric slots extend preceding syllables rather than introducing wordless music.",
+    "status": "Intermediate v71 attempt superseded by endingKanaAudit: do not use intermediate %3 notation."
+  },
+  "endingKanaAudit": {
+    "text": "もうすこしあなたのこどもでいさせてください",
+    "calibration": "Unchanged first-nine-onset LRCLIB verse-2 fit",
+    "rows": [
+      {
+        "referenceText": "も",
+        "kana": "も",
+        "referenceSeconds": 189.88,
+        "referenceDurationSeconds": 0.23,
+        "scoreKana": [
+          {
+            "kana": "も",
+            "beatWithinVerse": 90.5,
+            "predictedSeconds": 189.76058790356691
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.1194120964330807,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "う",
+        "kana": "う",
+        "referenceSeconds": 190.11,
+        "referenceDurationSeconds": 0.24,
+        "scoreKana": [
+          {
+            "kana": "う",
+            "beatWithinVerse": 90.75,
+            "predictedSeconds": 189.95644579162555
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.15355420837445877,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "す",
+        "kana": "す",
+        "referenceSeconds": 190.35,
+        "referenceDurationSeconds": 0.08,
+        "scoreKana": [
+          {
+            "kana": "す",
+            "beatWithinVerse": 91,
+            "predictedSeconds": 190.15230367968422
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.1976963203157709,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "こ",
+        "kana": "こ",
+        "referenceSeconds": 190.43,
+        "referenceDurationSeconds": 0.17,
+        "scoreKana": [
+          {
+            "kana": "こ",
+            "beatWithinVerse": 91.25,
+            "predictedSeconds": 190.34816156774286
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.08183843225714327,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "し",
+        "kana": "し",
+        "referenceSeconds": 190.6,
+        "referenceDurationSeconds": 0.9,
+        "scoreKana": [
+          {
+            "kana": "し",
+            "beatWithinVerse": 91.5,
+            "predictedSeconds": 190.5440194558015
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.055980544198490634,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "あ",
+        "kana": "あ",
+        "referenceSeconds": 191.5,
+        "referenceDurationSeconds": 0.14,
+        "scoreKana": [
+          {
+            "kana": "あ",
+            "beatWithinVerse": 92.75,
+            "predictedSeconds": 191.52330889609476
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.023308896094761167,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "な",
+        "kana": "な",
+        "referenceSeconds": 191.64,
+        "referenceDurationSeconds": 0.17,
+        "scoreKana": [
+          {
+            "kana": "な",
+            "beatWithinVerse": 93,
+            "predictedSeconds": 191.7191667841534
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.07916678415341494,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "た",
+        "kana": "た",
+        "referenceSeconds": 191.81,
+        "referenceDurationSeconds": 0.19,
+        "scoreKana": [
+          {
+            "kana": "た",
+            "beatWithinVerse": 93.25,
+            "predictedSeconds": 191.91502467221204
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.10502467221203915,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "の",
+        "kana": "の",
+        "referenceSeconds": 192.0,
+        "referenceDurationSeconds": 0.9,
+        "scoreKana": [
+          {
+            "kana": "の",
+            "beatWithinVerse": 93.5,
+            "predictedSeconds": 192.1108825602707
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.11088256027070997,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "子",
+        "kana": "こ",
+        "referenceSeconds": 192.9,
+        "referenceDurationSeconds": 0.3,
+        "scoreKana": [
+          {
+            "kana": "こ",
+            "beatWithinVerse": 94.5,
+            "predictedSeconds": 192.8943141125053
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.005685887494706776,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "供",
+        "kana": "ども",
+        "referenceSeconds": 193.2,
+        "referenceDurationSeconds": 0.36,
+        "scoreKana": [
+          {
+            "kana": "ど",
+            "beatWithinVerse": 95,
+            "predictedSeconds": 193.28602988862258
+          },
+          {
+            "kana": "も",
+            "beatWithinVerse": 95.25,
+            "predictedSeconds": 193.48188777668125
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.08602988862259053,
+        "granularity": "group only; internal kana timing unverified"
+      },
+      {
+        "referenceText": "で",
+        "kana": "で",
+        "referenceSeconds": 193.56,
+        "referenceDurationSeconds": 0.59,
+        "scoreKana": [
+          {
+            "kana": "で",
+            "beatWithinVerse": 95.5,
+            "predictedSeconds": 193.67774566473992
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.11774566473991399,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "い",
+        "kana": "い",
+        "referenceSeconds": 194.18,
+        "referenceDurationSeconds": 0.18,
+        "scoreKana": [
+          {
+            "kana": "い",
+            "beatWithinVerse": 96.25,
+            "predictedSeconds": 194.26531932891584
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.08531932891582983,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "さ",
+        "kana": "さ",
+        "referenceSeconds": 194.36,
+        "referenceDurationSeconds": 0.24,
+        "scoreKana": [
+          {
+            "kana": "さ",
+            "beatWithinVerse": 96.5,
+            "predictedSeconds": 194.46117721697448
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.10117721697446314,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "せ",
+        "kana": "せ",
+        "referenceSeconds": 194.6,
+        "referenceDurationSeconds": 0.25,
+        "scoreKana": [
+          {
+            "kana": "せ",
+            "beatWithinVerse": 96.75,
+            "predictedSeconds": 194.65703510503315
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.05703510503315101,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "て",
+        "kana": "て",
+        "referenceSeconds": 194.85,
+        "referenceDurationSeconds": 0.81,
+        "scoreKana": [
+          {
+            "kana": "て",
+            "beatWithinVerse": 97,
+            "predictedSeconds": 194.8528929930918
+          }
+        ],
+        "firstOnsetResidualSeconds": -0.0028929930918195623,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "く",
+        "kana": "く",
+        "referenceSeconds": 195.66,
+        "referenceDurationSeconds": 0.28,
+        "scoreKana": [
+          {
+            "kana": "く",
+            "beatWithinVerse": 98,
+            "predictedSeconds": 195.63632454532637
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.023675454673622198,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "だ",
+        "kana": "だ",
+        "referenceSeconds": 195.94,
+        "referenceDurationSeconds": 0.16,
+        "scoreKana": [
+          {
+            "kana": "だ",
+            "beatWithinVerse": 98.25,
+            "predictedSeconds": 195.83218243338504
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.10781756661495479,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "さ",
+        "kana": "さ",
+        "referenceSeconds": 196.1,
+        "referenceDurationSeconds": 0.32,
+        "scoreKana": [
+          {
+            "kana": "さ",
+            "beatWithinVerse": 98.5,
+            "predictedSeconds": 196.02804032144368
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.07195967855631125,
+        "granularity": "single kana"
+      },
+      {
+        "referenceText": "い",
+        "kana": "い",
+        "referenceSeconds": 196.42,
+        "referenceDurationSeconds": 3.19,
+        "scoreKana": [
+          {
+            "kana": "い",
+            "beatWithinVerse": 98.75,
+            "predictedSeconds": 196.22389820950235
+          }
+        ],
+        "firstOnsetResidualSeconds": 0.19610179049763587,
+        "granularity": "single kana"
+      }
+    ],
+    "notation": "Separate V1/V2 endings. Sustained same-pitch syllables use ties; V2 has no explicit % lyric slots. 供 is expanded to ども with separate short notes, an editorial subdivision within the available YRC group duration; internal timing is not independently verified.",
+    "maxReferenceUnitOnsetErrorSeconds": 0.1976963203157709
   }
 }
