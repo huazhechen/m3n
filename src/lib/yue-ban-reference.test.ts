@@ -38,13 +38,22 @@ it('keeps the reference subdivisions and sustained notes from bar 26 onward', ()
   ])
 })
 
-it('plays the introduction once, the interlude once, all three chorus endings and the complete coda', () => {
+it('plays the introduction and all three vocal endings while skipping the interlude and coda', () => {
   expect(playbackMeasureIndexes(bars)).toEqual([
-    ...range(0, 48), ...range(9, 36), 48, 49, ...range(25, 36), ...range(50, 57),
+    ...range(0, 39), ...range(9, 36), 39, 40, ...range(25, 36), 41, 42,
   ])
-  expect(compileScorePerformance(document).beats).toBe(378)
+  expect(compileScorePerformance(document).beats).toBe(322)
   expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
-    .toEqual([2, ...Array(56).fill(4)])
+    .toEqual([2, ...Array(42).fill(4)])
+})
+
+it('pads the return pickup with rests and preserves the vocal ending before stopping', () => {
+  expect(bars[38]!.events.map(event => [event.pitches, event.beats])).toEqual([
+    [[], 2], [[], .5], [['3'], .25], [['3'], .25], [['1e'], .5], [['7'], .5],
+  ])
+  expect(bars[42]!.events.map(event => [event.pitches, event.beats])).toEqual([
+    [['7'], 1], [['6'], 3],
+  ])
 })
 
 it('keeps the complete performed lyrics across all three choruses', () => {
