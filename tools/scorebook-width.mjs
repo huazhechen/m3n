@@ -1,5 +1,5 @@
 /** Width is the only engraving variable; all candidates use the web defaults. */
-export const widthCandidates = Array.from({ length: 23 }, (_, index) => 540 + index * 10)
+export const widthCandidates = Array.from({ length: 19 }, (_, index) => 540 + index * 10)
 
 export function chooseBestWidth(candidates) {
   const safe = candidates.filter(candidate => !candidate.error && candidate.stable !== false && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length)

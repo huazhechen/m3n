@@ -3,8 +3,8 @@ import { test } from 'node:test'
 import { chooseBestWidth, widthCandidates, probeWidthCandidates } from './scorebook-width.mjs'
 import { packScorebook, sharedPreferredWidth } from './scorebook-packing.mjs'
 
-test('the search includes both ends of the 540–760 range in 10px steps', () => {
-  assert.deepEqual(widthCandidates, Array.from({ length: 23 }, (_, index) => 540 + index * 10))
+test('the search includes both ends of the 540–720 range in 10px steps', () => {
+  assert.deepEqual(widthCandidates, Array.from({ length: 19 }, (_, index) => 540 + index * 10))
 })
 test('prefer fewer A4 pages, then larger music, excluding unsafe or failed renders', () => {
   const candidate = (width, pageCount, extra = {}) => ({ width, pageCount, outside: [], overlaps: [], ...extra })
@@ -51,7 +51,7 @@ test('width stability caches 655 between 650 and 660 and excludes a page-count t
     measured.push(width)
     return candidate(width, 100, width < 650 ? 2 : 1)
   })
-  assert.deepEqual(renderCache, { requests: 69, uniqueWidths: 47, hits: 22 })
+  assert.deepEqual(renderCache, { requests: 57, uniqueWidths: 39, hits: 18 })
   assert.equal(measured.filter(width => width === 655).length, 1)
   assert.equal(candidates.find(c => c.width === 650).stable, false)
   assert.equal(chooseBestWidth(candidates).width, 660)
