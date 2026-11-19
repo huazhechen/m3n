@@ -2,6 +2,7 @@ import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '..
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
 import { PlaybackLoadingDialog } from './PlaybackLoadingDialog'
+import { ResourceLoadingDialog } from './ResourceLoadingDialog'
 import { cancelToneLoad, loadSampledTone, subscribeToneLoadProgress, type ToneLoadProgress } from '@m3n/score-renderer/tones'
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
@@ -293,7 +294,7 @@ export function ScoreRenderer({
         const { message } = await renderScoreInto(paper, {
           scoreDocument, width: renderWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
-          onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
+          onPhase: phase => { if (!cancelled) setRenderPhase(phase) },
         })
         if (cancelled) return
         addInvalidMeasureHighlights(paper, invalidMeasureIds)
@@ -582,6 +583,11 @@ export function ScoreRenderer({
 
   return (
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
+      {renderPhase === 'loading-staff' && <ResourceLoadingDialog
+        title="加载五线谱资源"
+        description="正在加载五线谱所需资源，请稍候…"
+        progressLabel="五线谱资源加载进度"
+      />}
       {isPlayRequest && toneLoading && toneProgress?.stage === 'download' && <PlaybackLoadingDialog
         tone={playbackTone}
         progress={toneProgress}

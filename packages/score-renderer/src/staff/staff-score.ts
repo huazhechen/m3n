@@ -10,10 +10,15 @@ let engine: ReturnType<typeof createVerovioModule> | undefined
 const ns = 'http://www.w3.org/2000/svg'
 export type StaffSettings = { width?: number; transpose?: number; tempoScale?: number; measureNumbers?: boolean; includeBass?: boolean }
 
+/** Initialize the shared optional engine without preparing an individual score. */
+export function prepareStaffResources() {
+  engine ??= createVerovioModule().catch(error => { engine = undefined; throw error })
+  return engine
+}
+
 /** Staff engraving is optional. Playback and numbered engraving never load this module. */
 export async function prepareStaffScore(score: ScoreDocument, settings: StaffSettings, signal?: AbortSignal) {
-  engine ??= createVerovioModule().catch(error => { engine = undefined; throw error })
-  const module = await engine
+  const module = await prepareStaffResources()
   signal?.throwIfAborted()
   const width = settings.width ?? score.preferredWidth ?? DEFAULT_PREFERRED_WIDTH
   const tempoScale = settings.tempoScale ?? 1

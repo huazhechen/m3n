@@ -6,7 +6,7 @@
 
 ## 独立渲染入口
 
-`@m3n/score-renderer/staff` 按需加载；简谱显示、播放和谱集不导入该入口。`src/lib/render-score.ts` 仅在五线谱分支调用 `prepareStaffScore`，屏幕与单曲导出使用相同参数。简谱内核保持独立。
+`@m3n/score-renderer/staff` 按需加载；简谱显示、播放和谱集不导入该入口。`src/lib/render-score.ts` 仅在五线谱分支调用 `prepareStaffScore`，屏幕与单曲导出使用相同参数。简谱内核保持独立。首次进入五线谱时，从动态模块下载到排版资源初始化完成，复用音色加载的通用对话框显示“加载五线谱资源”和不定进度，支持后台加载；完成或失败后关闭。资源在当前页面内复用，后续切换谱式及调整宽度不再重复弹窗，失败后重新进入可重试。
 
 `packages/score-renderer/src/staff/score-mei.ts` 从现有 `ScoreDocument` 生成 MEI，仅作显示投影，不重新解析源码，不修改传入的领域文档。沿用 `scoreEventIds`，与当前播放器、源码映射共享事件身份。带变调或八度基准的乐段访问按实际演奏顺序展开显示，保留歌词、源事件 ID 与播放遍次；普通反复保持紧凑谱面。播放仍由项目的演奏编译器与 SpessaSynth 完成，不使用 Verovio MIDI 或时间查询。
 
