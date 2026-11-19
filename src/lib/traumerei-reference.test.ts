@@ -13,6 +13,7 @@ it('preserves the Kuaiyuepu Träumerei melody, repeat route and fermatas', () =>
   expect(document.sections ?? []).toEqual([])
   expect(source).not.toContain('{lyricist=')
   expect(source).not.toContain('{breath}')
+  expect(source).not.toMatch(/^---V/m)
   expect(source.match(/\{fermata\}/g)).toHaveLength(3)
   const performance = compileScorePerformance(document)
   expect(performance.notes).toHaveLength(reference.events.length)
