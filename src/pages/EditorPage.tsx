@@ -23,12 +23,12 @@ export function EditorPage() {
         initialSource={exampleSource ?? source ?? undefined}
         draftScope={exampleSource ? `example-${location.key}` : undefined}
         scoreId={scoreId}
-        simulatedSubmit={!import.meta.env.VITE_OFFLINE && isSimulatedSubmit()}
+        simulatedSubmit={isSimulatedSubmit()}
         onBrowse={async (source) => {
           const local = saveLocalScore(source, Date.now(), isLocalScoreId(scoreId) ? scoreId : undefined)
           navigate(`/scores/${local.id}`)
         }}
-        onSubmit={import.meta.env.VITE_OFFLINE ? undefined : async (source) => {
+        onSubmit={async (source) => {
         const id = await submitScore(source)
         navigate(`/scores/${id}`)
         }}

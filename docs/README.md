@@ -12,7 +12,6 @@
 - [NATIVE_ENGINES.md](NATIVE_ENGINES.md)：自研渲染与演奏链路。
 - [NUMBERED_NOTATION.md](NUMBERED_NOTATION.md)：简谱测量、排版与交互。
 - [FORMATTING.md](FORMATTING.md)：格式化规则与验证。
-- [OFFLINE.md](OFFLINE.md)：单文件离线版构建与验证。
 - [HOSTING.md](HOSTING.md)：当前工作区托管及构建方式。
 - [SCOREBOOK.md](SCOREBOOK.md)：谱集构建。
 - [WIDTH_LAYOUT_STABILITY.md](WIDTH_LAYOUT_STABILITY.md)：宽度扰动与分页检查。

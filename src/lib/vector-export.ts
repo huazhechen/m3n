@@ -15,8 +15,6 @@ async function exportFont() {
 
 /** Resolve character geometry while attached, then replace text with portable vector outlines. */
 export async function outlineSvgText(svg: SVGSVGElement) {
-  // The compact offline edition uses system text and its embedded numeral font.
-  if (import.meta.env.VITE_OFFLINE) return
   const fallback = await exportFont()
   const { parse } = await import('opentype.js')
   const embedded = /data:font\/ttf;base64,([A-Za-z0-9+/=]+)/.exec(svg.querySelector('style')?.textContent ?? '')?.[1]
