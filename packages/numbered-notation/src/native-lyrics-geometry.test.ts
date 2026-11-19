@@ -8,6 +8,7 @@ import { nativeSvgInk } from './native-ink.js'
 import { NativeSymbols, line } from './native-symbols.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { NativeNumberedNotationScore } from './native-score.js'
+import { nativeSystemCore } from './native-core.js'
 
 const options = { width: 800, paged: false }
 const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||\nL: 春天在哪里 | 就在这里呀')
@@ -25,8 +26,10 @@ describe('native lyric and music lower envelopes', () => {
     const root = new DOMParser().parseFromString(svg, 'text/html')
     const lyric = root.querySelector('[data-m3n-role="lyric"]')!
     expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(bodyBottom + 6 + lyricMetrics.baseline, 4)
-    const second = score.systems[1]!.lanes[0]!
-    expect(second.y - first.y).toBeCloseTo(first.bottom + 24 + second.top)
+    const firstCore = nativeSystemCore(score.systems[0]!, score.measurer)!
+    const secondCore = nativeSystemCore(score.systems[1]!, score.measurer)!
+    expect(firstCore.bottom).toBeCloseTo(first.y + first.bottom)
+    expect(secondCore.top - firstCore.bottom).toBeCloseTo(24)
   })
 
   it('uses beam and low-octave geometry when that body extends farther', () => {

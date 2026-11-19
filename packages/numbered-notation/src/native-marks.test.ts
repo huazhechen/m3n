@@ -6,7 +6,7 @@ import { nativeMarkStack } from './native-marks.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeStyle } from './native-style.js'
-import { nativeLanePieces } from './native-lanes.js'
+import { nativeSystemCore } from './native-core.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
 const options = { width: 800, paged: false }
@@ -62,15 +62,14 @@ describe('native articulation occupancy', () => {
     expect(triangle.hasAttribute('stroke')).toBe(false)
   })
 
-  it('spaces repeated staccatissimo rows by their painted edges, without nominal envelope slack', () => {
+  it('spaces repeated staccatissimo rows by weighted cores without nominal envelope slack', () => {
     const document = parseM3NDocument('{4/4}\nN: 1{tip} 2 3 4 | {br} 5{tip} 6 7 1e | {br} 1{tip} 2 3 4 |||')
     const score = layoutNativeScore(document, options)
     expect(score.systems).toHaveLength(3)
     for (let index = 1; index < score.systems.length; index++) {
-      const before = score.systems[index - 1]!.lanes[0]!, next = score.systems[index]!.lanes[0]!
-      const upper = nativeLanePieces(score.systems[index - 1]!, score.measurer, true).get(before.id)!
-      const lower = nativeLanePieces(score.systems[index]!, score.measurer, true).get(next.id)!
-      expect(next.y + Math.min(...lower.map(r => r.top)) - before.y - Math.max(...upper.map(r => r.bottom))).toBeCloseTo(24)
+      const upper = nativeSystemCore(score.systems[index - 1]!, score.measurer)!
+      const lower = nativeSystemCore(score.systems[index]!, score.measurer)!
+      expect(lower.top - upper.bottom).toBeCloseTo(24)
     }
     expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(27.24)
   })

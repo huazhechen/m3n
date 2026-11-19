@@ -23,6 +23,7 @@ import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { alignNativeArcs } from './native-relation-alignment.js'
 import { placedNativeControlInk } from './native-controls.js'
+import { nativeSystemCore } from './native-core.js'
 
 export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
@@ -297,9 +298,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const blocks = [...header.blocks.map(block=>({height:block.height, ink: nativeSvgPieces(block.svg, measurer)})), ...systems.map(system => {
     const height = placeNativeLanes(system)
     const pieces = nativeLanePieces(system, measurer)
-    const corePieces = nativeLanePieces(system, measurer, true)
-    const coreInk = system.lanes.flatMap(lane => (corePieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
-    const core = !coreInk.length ? { top: 0, bottom: height } : { top: Math.min(...coreInk.map(piece => piece.top)), bottom: Math.max(...coreInk.map(piece => piece.bottom)) }
+    const core = nativeSystemCore(system, measurer) ?? { top: 0, bottom: height }
     const ink = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
     ink.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
     return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, gapBefore: system.measures[0]?.extraGap ?? 0 }
