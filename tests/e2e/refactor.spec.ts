@@ -89,7 +89,7 @@ test('multipage PDF downloads with the same pages in continuous and paged modes'
     await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
     if (paged) await page.getByRole('switch', { name: '分页', exact: true }).click()
     await page.keyboard.press('Escape')
-    await page.getByRole('button', { name: '导出', exact: true }).click()
+    await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.locator('.export-dialog')
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
     const previewPages = await dialog.locator('.export-preview-page').count()
@@ -148,7 +148,7 @@ test('mobile PNG needs no fonts and PDF downloads when its text font is unavaila
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)
   for (const format of ['PNG', 'PDF']) {
-    await page.getByRole('button', { name: '导出', exact: true }).click()
+    await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.locator('.export-dialog')
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
     const started = Date.now()

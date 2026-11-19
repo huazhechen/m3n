@@ -6,7 +6,6 @@ const navActions = {
   previous: { label: '上一曲', path: 'm14 6-6 6 6 6M5 6v12' },
   next: { label: '下一曲', path: 'm10 6 6 6-6 6M19 6v12' },
   print: { label: '打印', path: 'M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7ZM16 11h1' },
-  export: { label: '导出', path: 'M12 3v12m-5-5 5 5 5-5M4 15v6h16v-6' },
   edit: { label: '编辑', path: 'm15 4 5 5M4 20l5-1L20 8a2 2 0 0 0-5-5L4 14ZM4 20h16' },
   library: { label: '乐谱库', path: 'M3 4h5v16H3ZM10 4h5v16h-5ZM17 5l4-1 3 15-4 1Z' },
   guide: { label: '指南', path: 'M12 5C9 3 6 3 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1ZM12 5v15M6 8h3M6 12h3M15 8h3M15 12h3' },

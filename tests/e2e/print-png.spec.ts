@@ -19,7 +19,7 @@ test('continuous preview has the image frame and PNG downloads without the vecto
       await page.getByRole('switch', { name: '分页', exact: true }).click()
       await page.keyboard.press('Escape')
     }
-    await page.getByRole('button', { name: '导出', exact: true }).click()
+    await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.locator('.export-dialog')
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
     const geometry = await dialog.locator('.export-preview-paper > div > svg, .export-preview-page > svg').first().evaluate(svg => {

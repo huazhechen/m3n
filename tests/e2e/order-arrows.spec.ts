@@ -8,7 +8,7 @@ test('itinerary arrows are vector paths on tablet screens and PDF exports', asyn
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.locator('.score-paper [data-m3n-role="order-arrow"]')).toHaveCount(3)
   expect(await page.locator('.score-paper').innerText()).not.toContain('→')
-  await page.getByRole('button', { name: '导出', exact: true }).click()
+  await page.getByRole('button', { name: '打印', exact: true }).click()
   const preview = page.locator('.export-dialog')
   await expect(preview.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
   await expect(preview.locator('[data-m3n-role="order-arrow"]')).toHaveCount(3)

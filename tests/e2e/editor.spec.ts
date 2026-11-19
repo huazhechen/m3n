@@ -43,7 +43,7 @@ test('exposes playback without an export action', async ({ page }) => {
   await expect(page.getByRole('button', { name: '暂停' })).toBeVisible({ timeout: 30_000 })
   await page.getByRole('button', { name: '暂停' }).click()
 
-  await expect(page.getByRole('button', { name: '导出' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '打印' })).toHaveCount(0)
 })
 
 test('renders tied full beats as sustain dashes and maps a dash back to its own source event', async ({ page }) => {
@@ -93,7 +93,7 @@ test('export preview reuses current display settings and offers PNG and PDF', as
   await page.getByRole('dialog', { name: '选择调性' }).getByRole('button', { name: 'D大调', exact: true }).click()
   const paper = page.locator('.score-paper')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  await page.getByRole('button', { name: '导出', exact: true }).click()
+  await page.getByRole('button', { name: '打印', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
   await expect(dialog.locator('input,select')).toHaveCount(0)
@@ -180,7 +180,7 @@ test('uses the current numbered layout and includes visible bass in PNG and PDF'
   await page.getByRole('button', { name: '保存' }).click()
   await expect(page.locator('.score-paper svg[data-engine="m3n"]')).toBeVisible()
   for (const [format, signature] of [['PNG', 'PNG'], ['PDF', '%PDF']] as const) {
-    await page.getByRole('button', { name: '导出' }).click()
+    await page.getByRole('button', { name: '打印' }).click()
     const dialog = page.getByRole('dialog')
     await expect(dialog.locator('svg[data-engine="m3n"]').first()).toBeVisible()
     await expect(dialog.locator('[data-m3n-id="m3n-e-3"]').first()).toBeVisible()

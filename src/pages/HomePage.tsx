@@ -69,7 +69,7 @@ export function HomePage() {
           <section className="home-feature" aria-labelledby="home-print">
             <div><span className="eyebrow">04 / 打印与导出</span><h2 id="home-print">把调好的谱，带到谱架上</h2></div>
             <div className="home-feature-copy">
-              <p>选好调、排好版，点击 <span className="home-control-hint"><NavActionIcon action="export" />导出</span> 打开预览，图片与 PDF 沿用当前的移调、固定调、小节号、页面宽度与分页设置。</p>
+              <p>选好调、排好版，点击 <span className="home-control-hint"><NavActionIcon action="print" />打印</span> 打开预览，图片与 PDF 沿用当前的移调、固定调、小节号、页面宽度与分页设置。</p>
               <p><strong>PNG</strong> 保存为连续长图，方便分享；<strong>PDF</strong> 自动分页，直接下载高清 A4 文件。打印出来，排练时随手就能翻看。</p>
             </div>
           </section>

@@ -78,7 +78,7 @@ test('staff pagination, tempo and transposition are shared by screen, PNG and ve
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   for (const format of ['PNG', 'PDF']) {
-    await page.getByRole('button', { name: '导出', exact: true }).click()
+    await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: '导出乐谱', exact: true })
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
     await expect(dialog.locator('g.staff').first()).toBeVisible()
