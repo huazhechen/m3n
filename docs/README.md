@@ -16,4 +16,4 @@
 - [SCOREBOOK.md](SCOREBOOK.md)：谱集构建。
 - [WIDTH_LAYOUT_STABILITY.md](WIDTH_LAYOUT_STABILITY.md)：宽度扰动与分页检查。
 
-仓库级说明见[README](../README.md)。所用字体及符号素材的来源与许可证见 `public/licenses/`，音源许可证随 `packages/score-renderer/vendor/soundfonts/` 保留。
+仓库级说明见[README](../README.md)。所用字体及符号素材的来源与许可证见 `public/licenses/`，当前音源由浏览器算法生成，不依赖外部采样音源。

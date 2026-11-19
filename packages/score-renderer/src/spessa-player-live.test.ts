@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { SpessaPlayer } from './spessa-player'
 
 const mocks = vi.hoisted(() => ({
-  tune: vi.fn(), pause: vi.fn(), load: vi.fn(), close: vi.fn(), download: vi.fn(),
+  tune: vi.fn(), pause: vi.fn(), load: vi.fn(), close: vi.fn(), generate: vi.fn(),
   manager: { priorityOrder: ['synth'], addSoundBank: vi.fn(async (_data: ArrayBuffer, id: string) => { mocks.manager.priorityOrder.push(id) }) },
 }))
 vi.mock('spessasynth_lib', () => ({
@@ -26,7 +26,7 @@ vi.mock('spessasynth_lib', () => ({
     duration = 20
   },
 }))
-vi.mock('./playback-tones.js', () => ({ loadSampledTone: mocks.download }))
+vi.mock('./playback-tones.js', () => ({ loadGeneratedTone: mocks.generate }))
 vi.mock('./synthetic-soundfont.js', () => ({ createSyntheticSoundFont: () => new ArrayBuffer(1) }))
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); mocks.manager.priorityOrder = ['synth'] })
@@ -45,10 +45,10 @@ it('live transpose changes sustained voice tuning without replacing or pausing t
   expect(instance.paused).toBe(false)
   expect(mocks.pause).not.toHaveBeenCalled(); expect(mocks.load).not.toHaveBeenCalled(); expect(mocks.close).not.toHaveBeenCalled()
 })
-it('keeps the current bank during a pending download and ignores a superseded tone', async () => {
+it('keeps the current bank during a pending generation and ignores a superseded tone', async () => {
   const instance = await player()
   let finish!: (data: ArrayBuffer) => void
-  mocks.download.mockReturnValueOnce(new Promise<ArrayBuffer>(resolve => { finish = resolve }))
+  mocks.generate.mockReturnValueOnce(new Promise<ArrayBuffer>(resolve => { finish = resolve }))
   const pending = instance.setTone('piano')
   expect(mocks.manager.priorityOrder[0]).toBe('synth')
   expect(instance.paused).toBe(false)
@@ -57,6 +57,6 @@ it('keeps the current bank during a pending download and ignores a superseded to
   expect(mocks.manager.priorityOrder[0]).toBe('synth')
   await instance.setTone('piano')
   expect(mocks.manager.priorityOrder[0]).toBe('piano')
-  expect(mocks.download).toHaveBeenCalledTimes(1)
+  expect(mocks.generate).toHaveBeenCalledTimes(1)
   expect(mocks.pause).not.toHaveBeenCalled(); expect(mocks.load).not.toHaveBeenCalled(); expect(mocks.close).not.toHaveBeenCalled()
 })

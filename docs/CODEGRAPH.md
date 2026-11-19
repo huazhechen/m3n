@@ -124,7 +124,7 @@ flowchart LR
   document --> performance["compileScorePerformance / PlaybackScore"]
   performance --> midi["MIDI + time map"]
   midi --> player["SpessaPlayer"]
-  soundfont["FluidR3 GM Piano SF3"] --> player
+  soundfont["浏览器算法生成 SF2（默认及五种乐器）"] --> player
   coordinator["PlaybackCoordinator"] --> player
   player --> cursor["playback cursor events"]
   cursor --> screen

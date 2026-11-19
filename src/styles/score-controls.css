@@ -53,9 +53,6 @@
 .transpose-key-icon { display: inline-flex; align-items: center; justify-content: center; height: var(--ui-icon-size); font-size: var(--ui-icon-size); line-height: 1; }
 .control-tone-status { font-size: var(--ui-text); overflow-wrap: anywhere; }
 .control-tone-status button { margin-left: var(--ui-space); }
-.tone-loading-spinner { animation: tone-loading-spin .8s linear infinite; }
-@keyframes tone-loading-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .tone-loading-spinner { animation: none; } }
 body:has(> .floating-controls) main { padding-bottom: calc(var(--ui-controls-reserve) + env(safe-area-inset-bottom)); }
 
 .transpose-dialog { width: min(max(320px, calc(var(--ui-unit) * 20), calc(var(--ui-icon-size) * 5 + var(--ui-space) * 8 + 12px)), calc(100vw - var(--ui-space) * 4)); max-height: calc(100dvh - 24px); box-sizing: border-box; padding: calc(var(--ui-space) * 2); border: 1px solid #d3dfd9; border-radius: 14px; color: #244e50; background: #f8faf7; }
@@ -84,3 +81,12 @@ body:has(> .floating-controls) main { padding-bottom: calc(var(--ui-controls-res
 .playback-loading-dialog p { margin: 1em 0; }
 .playback-loading-dialog progress { display: block; width: 100%; height: 1em; accent-color: #176e6e; }
 .playback-loading-dialog button { display: block; margin: 1.5em 0 0 auto; }
+
+.tone-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--ui-space) * 2); }
+.tone-options .control-button { flex-direction: column; padding: calc(var(--ui-space) * 2) var(--ui-space); white-space: normal; text-align: center; }
+.tone-options .control-button[aria-pressed="true"] { color: #fff; background: #176e6e; border-color: #176e6e; }
+.tone-options .control-button svg { width: var(--ui-icon-size); height: var(--ui-icon-size); }
+.playback-loading-actions { display: flex; justify-content: flex-end; gap: calc(var(--ui-space) * 2); margin-top: 1.5em; }
+.playback-loading-actions button { margin: 0; }
+
+.tone-selector span { white-space: normal; line-height: 1.1; overflow-wrap: anywhere; }

@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { PlaybackTone } from '@m3n/score-renderer/tones'
+import { PLAYBACK_TONES, type PlaybackTone } from '@m3n/score-renderer/tones'
 import { PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX } from '../lib/renderer-settings'
 
 import { CIRCLE_OF_FIFTHS, TRANSPOSE_KEYS, currentKeyIndex, isMinorKey, keyPitchClass, nearestKeyTranspose } from '../lib/transpose-key'
@@ -42,6 +42,9 @@ type ScoreControlsProps = {
 }
 
 export function ScoreControls(props: ScoreControlsProps) {
+  const toneDialogRef = useRef<HTMLDialogElement>(null)
+  const toneTitleId = useId()
+  const selectedTone = PLAYBACK_TONES.find(item => item.value === props.tone)!
   const keyDialogRef = useRef<HTMLDialogElement>(null)
   const keyTitleId = useId()
   const settingsId = useId()
@@ -84,10 +87,12 @@ export function ScoreControls(props: ScoreControlsProps) {
 
         </div>
         <div className="control-options">
-      <button type="button" role="switch" aria-label="钢琴音色" aria-checked={props.tone === 'piano' && !props.toneLoading && !props.toneError} aria-busy={props.toneLoading || undefined} title={props.toneLoading ? '钢琴音色加载中' : '钢琴音色（关闭使用合成音色）'} className={props.toneLoading ? 'control-button is-loading' : 'control-button'} onClick={() => props.onToneChange(props.tone === 'piano' ? 'synth' : 'piano')}>
-          {props.toneLoading ? <svg className="tone-loading-spinner" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="9" opacity=".2" /><path d="M12 3a9 9 0 0 1 9 9" strokeLinecap="round" /></svg> : <ScoreControlIcon name="piano" />}
-          <span>{props.toneLoading ? '加载中' : '钢琴'}</span>
-        </button>
+      <button type="button" aria-label={`选择音色，当前${selectedTone.label}`} aria-haspopup="dialog" aria-busy={props.toneLoading || undefined} title="选择音色" className="control-button tone-selector" onClick={() => {
+        toneDialogRef.current?.showModal()
+        toneDialogRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus()
+      }}>
+        <ScoreControlIcon name={props.tone} /><span>{selectedTone.label}</span>
+      </button>
       <button type="button" role="switch" aria-label="分页" aria-checked={props.paged} title="分页显示" className="control-button" onClick={() => props.onPagedChange(!props.paged)}>
           <ScoreControlIcon name="paged" /><span>分页</span>
         </button>
@@ -102,7 +107,21 @@ export function ScoreControls(props: ScoreControlsProps) {
         keyDialogRef.current?.querySelector<SVGElement>('[aria-pressed="true"]')?.focus()
       }}><span className="transpose-key-icon" aria-hidden="true">{selectedKeyLabel}</span><span>调号</span></button>
         </div>
-    {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || '正在下载钢琴音色…'}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
+    {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || `正在生成${selectedTone.label}音色…`}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
+    <dialog ref={toneDialogRef} className="transpose-dialog tone-dialog" aria-labelledby={toneTitleId} onClick={event => {
+      if (event.target === event.currentTarget) {
+        const bounds = event.currentTarget.getBoundingClientRect()
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) event.currentTarget.close()
+      }
+    }}>
+      <div className="transpose-dialog-header"><h2 id={toneTitleId}>选择音色</h2><button type="button" className="control-button" aria-label="关闭音色选择" onClick={() => toneDialogRef.current?.close()}>×</button></div>
+      <div className="tone-options">
+        {PLAYBACK_TONES.map(tone => <button key={tone.value} type="button" className="control-button" aria-pressed={tone.value === props.tone} onClick={() => {
+          toneDialogRef.current?.close()
+          if (tone.value !== props.tone) props.onToneChange(tone.value)
+        }}><ScoreControlIcon name={tone.value} /><span>{tone.label}</span></button>)}
+      </div>
+    </dialog>
     <dialog ref={keyDialogRef} className="transpose-dialog" aria-labelledby={keyTitleId} onClick={event => {
       if (event.target === event.currentTarget) {
         const bounds = event.currentTarget.getBoundingClientRect()

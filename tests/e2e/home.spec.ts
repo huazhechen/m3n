@@ -60,7 +60,7 @@ for (const width of [390, 1280]) {
     expect(controlBounds.y + controlBounds.height).toBeLessThanOrEqual(cardBounds.y + cardBounds.height)
     await controls.getByRole('button', { name: '乐谱设置', exact: true }).click()
     const settings = page.getByRole('dialog', { name: '乐谱设置', exact: true })
-    await expect(settings.getByRole('switch', { name: '钢琴音色' })).toBeVisible()
+    await expect(settings.getByRole('button', { name: /^选择音色，当前/ })).toBeVisible()
     await settings.getByRole('slider', { name: '播放速度', exact: true }).fill('90')
     await expect(settings.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('90')
     await settings.getByRole('switch', { name: '分页', exact: true }).click()

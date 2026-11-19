@@ -26,7 +26,7 @@ test('floating transport stays visible and settings open without shifting the sc
     await expect(settings).toHaveAttribute('aria-expanded', 'true')
     await expect(panel.getByRole('slider')).toHaveCount(2)
     await expect(panel.locator('.control-options > button')).toHaveCount(5)
-    await expect(panel.locator('.control-options > button')).toHaveText(['钢琴', '分页', /固定调/, '小节号', /调号/])
+    await expect(panel.locator('.control-options > button')).toHaveText(['合成音色', '分页', /固定调/, '小节号', /调号/])
     await expect(panel.locator('.transpose-key-icon')).toHaveText('G')
     expect(await paper.boundingBox()).toEqual(before)
     const popupBounds = (await panel.boundingBox())!

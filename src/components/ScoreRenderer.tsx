@@ -2,7 +2,7 @@ import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '..
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
 import { PlaybackLoadingDialog } from './PlaybackLoadingDialog'
-import { loadSampledTone, subscribeToneDownloadProgress, type ToneDownloadProgress } from '@m3n/score-renderer/tones'
+import { cancelToneGeneration, loadGeneratedTone, subscribeToneGenerationProgress, type ToneGenerationProgress } from '@m3n/score-renderer/tones'
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -188,8 +188,11 @@ export function ScoreRenderer({
   const toneRef = useRef(playbackTone)
   toneRef.current = playbackTone
   const [toneLoading, setToneLoading] = useState(playbackTone !== 'synth')
-  const [toneDownload, setToneDownload] = useState<ToneDownloadProgress>({ loaded: 0, total: null })
-  useEffect(() => subscribeToneDownloadProgress(setToneDownload), [])
+  const [toneProgress, setToneProgress] = useState<ToneGenerationProgress | null>(null)
+  const readyToneRef = useRef<typeof playbackTone>('synth')
+  useEffect(() => subscribeToneGenerationProgress(progress => {
+    if (progress.tone === toneRef.current) setToneProgress(progress)
+  }), [])
   const [toneError, setToneError] = useState('')
   const [toneRetry, setToneRetry] = useState(0)
   const [playbackProgress, setPlaybackProgress] = useState(0)
@@ -442,13 +445,14 @@ export function ScoreRenderer({
     let cancelled = false
     setToneError('')
     setToneLoading(playbackTone !== 'synth')
+    setToneProgress(null)
     void (async () => {
       try {
         const player = playerRef.current
-        if (playbackTone !== 'synth') await loadSampledTone(playbackTone)
+        if (playbackTone !== 'synth') await loadGeneratedTone(playbackTone)
         if (cancelled) return
         if (player) await player.setTone(playbackTone)
-        if (!cancelled) setToneLoading(false)
+        if (!cancelled) { readyToneRef.current = playbackTone; setToneLoading(false) }
       } catch (error) {
         if (!cancelled) {
           setToneLoading(false)
@@ -548,8 +552,13 @@ export function ScoreRenderer({
   return (
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
       {(isPlayerLoading || toneLoading) && <PlaybackLoadingDialog
-        downloading={toneLoading}
-        progress={toneDownload}
+        tone={toneLoading ? playbackTone : undefined}
+        progress={toneProgress}
+        onCancelTone={() => {
+          const tone = playbackTone
+          changePlaybackTone(readyToneRef.current)
+          if (tone !== 'synth') cancelToneGeneration(tone)
+        }}
       />}
       {hasAudioControls && <ScoreControls
         playbackOnly={playbackOnly}

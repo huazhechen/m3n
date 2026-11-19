@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { type PlaybackTone } from '@m3n/score-renderer/tones'
+import { isPlaybackTone, type PlaybackTone } from '@m3n/score-renderer/tones'
 
 export const PLAYBACK_TONE_KEY = 'm3n:playback-tone'
 const CHANGE_EVENT = 'm3n:playback-tone-change'
@@ -10,7 +10,7 @@ function readTone(): PlaybackTone {
   if (memoryOverride) return memoryTone
   try {
     const value = localStorage.getItem(PLAYBACK_TONE_KEY)
-    return value === 'piano' ? value : 'synth'
+    return isPlaybackTone(value) ? value : 'synth'
   } catch { return memoryTone }
 }
 

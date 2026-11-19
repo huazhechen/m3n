@@ -1,7 +1,7 @@
 import { BasicMIDI } from 'spessasynth_core'
 import { Sequencer, WorkletSynthesizer } from 'spessasynth_lib' 
 import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
-import { loadSampledTone, type PlaybackTone } from './playback-tones.js'
+import { loadGeneratedTone, type PlaybackTone } from './playback-tones.js'
 import { createSyntheticSoundFont } from './synthetic-soundfont.js'
 import { Metronome, buildMetronomeBeats, initialBeatDurationSeconds } from './metronome.js'
 import { StartupCue, type StartupBeat } from './startup-cue.js'
@@ -92,7 +92,7 @@ export class SpessaPlayer {
   }
 
   static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0, tone: PlaybackTone = 'synth') {
-    const soundBank = tone === 'synth' ? createSyntheticSoundFont() : await loadSampledTone(tone)
+    const soundBank = tone === 'synth' ? createSyntheticSoundFont() : await loadGeneratedTone(tone)
     const context = new AudioContext()
     try {
       await context.audioWorklet.addModule(processorUrl)
@@ -195,13 +195,13 @@ export class SpessaPlayer {
     this.synth.setSystemParameter('fineTune', shift * 100)
   }
 
-  /** Keep the current bank sounding while another bank downloads and decodes. */
+  /** Keep the current bank sounding while another bank generates and decodes. */
   async setTone(tone: PlaybackTone) {
     const version = ++this.toneVersion
     let preparation = this.soundBanks.get(tone)
     if (!preparation) {
       preparation = (async () => {
-        const data = tone === 'synth' ? createSyntheticSoundFont() : await loadSampledTone(tone)
+        const data = tone === 'synth' ? createSyntheticSoundFont() : await loadGeneratedTone(tone)
         if (this.destroyed) return
         await this.synth.soundBankManager.addSoundBank(data, tone)
       })()
