@@ -34,6 +34,7 @@ export default function App() {
         ) : (
           <Routes>
             <Route path="/" element={<HomePage />} />
+            {import.meta.env.VITE_OFFLINE && <Route path="/converter" element={<ConverterPage />} />}
             <Route path="/editor/:scoreId?" element={<EditorPage />} />
             <Route path="/scores" element={<ScoresPage />} />
             <Route path="/scores/:slug" element={<ScoreReaderPage />} />

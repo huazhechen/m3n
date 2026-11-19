@@ -25,10 +25,11 @@ export function TopNav({ actions }: { actions?: ReactNode }) {
     <header className="top-nav">
       <NavLink to="/" className="brand-mark">
         <img src={`${import.meta.env.BASE_URL}favicon.svg`} width="28" height="28" alt="" aria-hidden="true" />
-        <span>M3N</span>
+        <span>M3N{import.meta.env.VITE_OFFLINE ? ' 离线版' : ''}</span>
       </NavLink>
       <nav aria-label="主导航">
         {actions}
+        {import.meta.env.VITE_OFFLINE && <NavLink to="/converter">简谱转换</NavLink>}
         <NavLink to="/scores" aria-label="乐谱库" title="乐谱库"><NavActionContent action="library" /></NavLink>
       </nav>
     </header>

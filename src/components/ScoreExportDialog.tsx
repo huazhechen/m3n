@@ -55,13 +55,20 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           if (!blob) throw new Error('PNG 生成失败。')
           downloadBlob(blob, `${fileName}.png`)
         } else {
-          const [{ jsPDF }, { svg2pdf }] = await Promise.all([import('jspdf'), import('svg2pdf.js')])
+          const { jsPDF } = await import('jspdf')
           const pdf = new jsPDF({ format: 'a4', unit: 'mm' })
           for (const [index, svg] of svgs.entries()) {
             if (index) pdf.addPage('a4', 'portrait')
             const viewBox = svg.viewBox.baseVal
             const placement = a4ImagePlacement(viewBox.width, viewBox.height)
-            await svg2pdf(svg, pdf, { x: placement.x, y: placement.y, width: placement.width, height: placement.height })
+            if (import.meta.env.VITE_OFFLINE) {
+              // Preserve the device's Chinese glyphs without shipping a CJK font.
+              const canvas = await renderScoreCanvas(svg, viewBox.width, 2)
+              pdf.addImage(canvas.toDataURL('image/png'), 'PNG', placement.x, placement.y, placement.width, placement.height)
+            } else {
+              const { svg2pdf } = await import('svg2pdf.js')
+              await svg2pdf(svg, pdf, { x: placement.x, y: placement.y, width: placement.width, height: placement.height })
+            }
           }
           pdf.save(`${fileName}.pdf`)
         }

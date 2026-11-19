@@ -30,7 +30,9 @@
     "check:boundaries": "node tools/check-boundaries.mjs",
     "build:scorebook": "npm run build:packages && node tools/build-scorebook.mjs",
     "export:score-pdfs": "npm run build:packages && node tools/export-score-pdfs.mjs",
-    "compact:scorebook": "node tools/compact-scorebook-pdf.mjs"
+    "compact:scorebook": "node tools/compact-scorebook-pdf.mjs",
+    "build:offline": "npm run build:packages && tsc -b && node --import tsx tools/build-offline.mts",
+    "test:offline": "node tools/check-offline.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

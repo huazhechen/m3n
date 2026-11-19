@@ -48,3 +48,6 @@ playwright-report/
 *.njsproj
 *.sln
 *.sw?
+
+# Generated standalone offline application.
+/offline/
