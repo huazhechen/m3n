@@ -16,7 +16,7 @@ export type NativeOrderItem = { text: string; framed: boolean; x: number; y: num
 export { wrapNativeText }
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeStyle.minimumCoreGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGapEm?:number} = {}) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeStyle.headerGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGapEm?:number} = {}) {
   const available = width - 2 * margin
   const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, measurer, 700)
   const headerContent = numberedHeaderContent(document)

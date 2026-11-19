@@ -11,10 +11,10 @@ describe('direct M3N parser', () => {
     expect(parseM3NDocument('N: 1 2 3 4 |||\nL: {equal-measures=true}').equalMeasures).toBe(false)
   })
   it('reads the score minimum gap only from the header', () => {
-    expect(parseM3NDocument('N: 1 2 3 4 |||').minimumCoreGap).toBeUndefined()
-    for (const gap of [0, 16, 20.5, 40]) expect(parseM3NDocument(`{leading=${gap}}\nN: 1 2 3 4 |||`).minimumCoreGap).toBe(gap)
-    expect(parseM3NDocument('// {leading=16}\nN: 1 2 3 4 |||').minimumCoreGap).toBeUndefined()
-    expect(parseM3NDocument('N: 1 2 3 4 |||\nL: {leading=16}').minimumCoreGap).toBeUndefined()
+    expect(parseM3NDocument('N: 1 2 3 4 |||').minimumCoreGapEm).toBeUndefined()
+    for (const gap of [0, 0.8, 1.2, 2]) expect(parseM3NDocument(`{leading=${gap}}\nN: 1 2 3 4 |||`).minimumCoreGapEm).toBe(gap)
+    expect(parseM3NDocument('// {leading=0.8}\nN: 1 2 3 4 |||').minimumCoreGapEm).toBeUndefined()
+    expect(parseM3NDocument('N: 1 2 3 4 |||\nL: {leading=0.8}').minimumCoreGapEm).toBeUndefined()
   })
   it('starts with defaults until a later key or tempo change is reached', () => {
     const score = parseM3NDocument('N: 1 2 3 4 | {key=G}{90qpm}1 2 3 4 |||')

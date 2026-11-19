@@ -29,7 +29,7 @@ describe('native lyric and music lower envelopes', () => {
     const firstCore = nativeSystemCore(score.systems[0]!, score.measurer)!
     const secondCore = nativeSystemCore(score.systems[1]!, score.measurer)!
     expect(firstCore.bottom).toBeCloseTo(first.y + first.bottom)
-    expect(secondCore.top - firstCore.bottom).toBeCloseTo(24)
+    expect(secondCore.top - firstCore.bottom).toBeCloseTo(26.4)
   })
 
   it('uses beam and low-octave geometry when that body extends farther', () => {

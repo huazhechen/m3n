@@ -148,7 +148,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
 
 export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions): NativeLayout {
   validate(supplied)
-  if (document.minimumCoreGap !== undefined && (!Number.isFinite(document.minimumCoreGap) || document.minimumCoreGap < 0)) throw new Error('最小行距必须为非负有限数值。')
+  if (document.minimumCoreGapEm !== undefined && (!Number.isFinite(document.minimumCoreGapEm) || document.minimumCoreGapEm < 0)) throw new Error('最小行距必须为非负有限数值。')
   const headerDocument = document
   const expanded = supplied.fixedDo && document.orderKeys?.some(Boolean) ? keyedDisplayPerformance(document) : undefined
   if (expanded) document = expanded.document
@@ -168,7 +168,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   measurer ??= new DefaultTextMeasurer()
   const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
-  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, options.coreGap ?? nativeStyle.minimumCoreGap, options)
+  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeStyle.headerGap, options)
   const headerHeight = header.height
   measureNativeHorizontal(projection.measures, options)
   // A closing cross-row arc needs a full horizontal turn before its first
@@ -306,7 +306,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     verticalBlocks: blocks, headerBlocks: header.blocks }
-  const gap = options.coreGap ?? (document.minimumCoreGap ?? nativeStyle.minimumCoreGap)
+  const gap = options.coreGap ?? (document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap)
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
     margin, gap, maxGap: options.coreGap ?? (options.paged ? Math.max(32, gap) : gap), elastic: true })
   positionNativeLayout(layout, pagination)

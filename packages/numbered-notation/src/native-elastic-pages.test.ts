@@ -30,18 +30,18 @@ describe('elastic page core parameter', () => {
     expect(result.coreGaps).toEqual([32])
     expect(result.positions[1]!.top).toBe(42)
   })
-  it('keeps continuous scores at 24px while paged layout stretches to 32px', () => {
+  it('keeps continuous scores at 1.2em while paged layout stretches to 32px', () => {
     const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 |{br} 1 2 3 4 |')
     const continuous = layoutNativeScore(document, { width: 320, paged: false, pageMargin: 0 })
     const paged = layoutNativeScore(document, { width: 320, paged: true, pageMargin: 0 })
-    expect(continuous.pages[0]!.coreGap).toBe(24)
+    expect(continuous.pages[0]!.coreGap).toBeCloseTo(26.4)
     expect(paged.pages[0]!.coreGap).toBe(32)
-    expect(paged.systems[1]!.top - paged.systems[0]!.top).toBeCloseTo(continuous.systems[1]!.top - continuous.systems[0]!.top + 8, 6)
+    expect(paged.systems[1]!.top - paged.systems[0]!.top).toBeCloseTo(continuous.systems[1]!.top - continuous.systems[0]!.top + 5.6, 6)
   })
   it('fits whole scores together using one parameter and fixed inter-score space', () => {
     const documents = [4, 4].map(count => parseM3NDocument('{4/4}\nN: ' + Array(count).fill('1 2 3 4 |{br}').join(' ')))
     const result = renderSharedNumberedNotationScores(documents, { width: 320, pageMargin: 0 }, 22)
-    expect(result.coreGap).toBeGreaterThanOrEqual(24)
+    expect(result.coreGap).toBeGreaterThanOrEqual(26.4)
     expect(result.coreGap).toBeLessThan(32)
     expect(result.markup).toHaveLength(2)
     expect(result.markup).toEqual(documents.map(document => NativeNumberedNotationScore.create(document).render({ width: 320, pageMargin: 0, paged: false, coreGap: result.coreGap })[0]))

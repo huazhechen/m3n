@@ -34,7 +34,7 @@ export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options
 }
 
 /** Largest shared core parameter that fits; collisions may make height flat. */
-export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: number, minimum = 24, maximum = 32): number {
+export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: number, minimum = 26.4, maximum = 32): number {
   if (heightAt(minimum) > capacity + 1e-6) throw new Error('最小核心行距下的谱面超出页面。')
   if (heightAt(maximum) <= capacity) return maximum
   let low = minimum, high = maximum

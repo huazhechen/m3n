@@ -12,7 +12,7 @@ export function documentSettings(tree: M3NSyntaxTree) {
   }
   const headerLines = new Set(tree.lines.filter(line => line.kind === 'header').map(line => line.line))
   let equalMeasures = false
-  let minimumCoreGap: number | undefined
+  let minimumCoreGapEm: number | undefined
   let preferredWidth = DEFAULT_PREFERRED_WIDTH
   let order: string[] | undefined
   let orderKeys: Array<string | undefined> | undefined
@@ -28,7 +28,7 @@ export function documentSettings(tree: M3NSyntaxTree) {
       orderKeys = entries.some(entry => entry.key !== undefined) ? entries.map(entry => entry.key) : undefined
     }
     if (directive.name === 'equal-measures') equalMeasures = directive.value === 'true'
-    if (directive.name === 'leading' && /^\d+(?:\.\d+)?$/.test(directive.value ?? '') && Number.isFinite(Number(directive.value))) minimumCoreGap = Number(directive.value)
+    if (directive.name === 'leading' && /^\d+(?:\.\d+)?$/.test(directive.value ?? '') && Number.isFinite(Number(directive.value))) minimumCoreGapEm = Number(directive.value)
     if (directive.name === 'preferred-width' && /^\d+$/.test(directive.value ?? '')) {
       const width = Number(directive.value)
       if (width >= 320 && width <= 2560) preferredWidth = width
@@ -57,5 +57,5 @@ export function documentSettings(tree: M3NSyntaxTree) {
       hasExplicitTempo = true
     }
   }
-  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, ...(minimumCoreGap !== undefined ? {minimumCoreGap} : {}), preferredWidth, key, meterCount, meterUnit, tempo, hasExplicitTempo }
+  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, ...(minimumCoreGapEm !== undefined ? {minimumCoreGapEm} : {}), preferredWidth, key, meterCount, meterUnit, tempo, hasExplicitTempo }
 }

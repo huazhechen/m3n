@@ -19,16 +19,16 @@ it.each([
         const ink = system.lanes.flatMap(lane => pieces.get(lane.id)!.map(r => ({ top: lane.y + r.top, bottom: lane.y + r.bottom })));
         return { top: Math.min(...ink.map(r => r.top)), bottom: Math.max(...ink.map(r => r.bottom)) };
     });
-    expect(cores[1]!.top - cores[0]!.bottom).toBeGreaterThanOrEqual(24 - 1e-6);
+    expect(cores[1]!.top - cores[0]!.bottom).toBeGreaterThanOrEqual(26.4 - 1e-6);
     const ink = nativeLanePieces(native.systems[1]!, measurer).get('melody')!;
-    expect(Math.min(...ink.map(piece => native.systems[1]!.lanes[0]!.y + piece.top)) - cores[0]!.bottom).toBeLessThan(24);
+    expect(Math.min(...ink.map(piece => native.systems[1]!.lanes[0]!.y + piece.top)) - cores[0]!.bottom).toBeLessThan(26.4);
     const previousInk = nativeLanePieces(native.systems[0]!, measurer).get('melody')!;
     let checked = 0;
     for (const upper of previousInk)
         for (const lower of ink) {
             if (upper.right <= lower.left || upper.left >= lower.right)
                 continue;
-            expect(native.systems[1]!.lanes[0]!.y + lower.top - native.systems[0]!.lanes[0]!.y - upper.bottom).toBeGreaterThanOrEqual(12 - 1e-6);
+            expect(native.systems[1]!.lanes[0]!.y + lower.top - native.systems[0]!.lanes[0]!.y - upper.bottom).toBeGreaterThanOrEqual(13.2 - 1e-6);
             checked++;
         }
     expect(checked).toBeGreaterThan(0);

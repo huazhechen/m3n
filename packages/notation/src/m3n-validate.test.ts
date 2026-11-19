@@ -271,10 +271,10 @@ describe('validateM3N', () => {
   })
 
   it('validates the numeric gap, header placement and uniqueness', () => {
-    for (const gap of ['0', '16', '20.5', '40']) expect(validateM3N(`{leading=${gap}}\nN: 1 2 3 4 |||`)).toEqual([])
+    for (const gap of ['0', '0.8', '1.2', '2']) expect(validateM3N(`{leading=${gap}}\nN: 1 2 3 4 |||`)).toEqual([])
     for (const gap of ['', '-1', 'NaN', 'Infinity', 'true']) expect(messages(`{leading=${gap}}\nN: 1 2 3 4 |||`)).toContain('leading 必须为非负有限数值')
-    expect(messages('N: {leading=16}1 2 3 4 |||')).toContain('leading 只能写在文档首部')
-    expect(messages('{leading=16}{leading=24}\nN: 1 2 3 4 |||')).toContain('重复声明')
+    expect(messages('N: {leading=0.8}1 2 3 4 |||')).toContain('leading 只能写在文档首部')
+    expect(messages('{leading=0.8}{leading=1.2}\nN: 1 2 3 4 |||')).toContain('重复声明')
   })
 
   it('enforces metadata placement, uniqueness, and non-empty values', () => {

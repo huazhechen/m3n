@@ -2,6 +2,7 @@ import { A4_CONTENT_ASPECT_RATIO, validateScoreDocument, type ScoreDocument } fr
 import { layoutNativeScore, nativeContinuousPagination, reflowNativeContinuousLayout, type NativeRenderOptions } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
 import { fitNativeCoreGap } from './native-pagination.js'
+import { nativeStyle } from './native-style.js'
 import type { NativeDiagnostic } from './native-model.js'
 
 /** Native music engraving, with ScoreDocument as its only musical input. */
@@ -22,7 +23,7 @@ export type { NativeRenderOptions as NumberedNotationRenderOptions } from './nat
 export function renderSharedNumberedNotationScores(documents: readonly ScoreDocument[], options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, scoreGap = 22) {
   if (documents.length < 2) throw new Error('A shared page needs at least two scores')
   if (!Number.isFinite(scoreGap) || scoreGap < 0) throw new Error('曲间留白必须为非负有限数值。')
-  const minimum = Math.max(...documents.map(document => document.minimumCoreGap ?? 24))
+  const minimum = Math.max(...documents.map(document => document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap))
   const layouts = documents.map(document => layoutNativeScore(document, { ...options, paged: false, coreGap: minimum }))
   const capacity = Math.floor(layouts[0]!.options.width * A4_CONTENT_ASPECT_RATIO)
   // Continuous SVG viewports round up; fit their real exported heights.
