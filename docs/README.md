@@ -16,4 +16,4 @@
 - [SCOREBOOK.md](SCOREBOOK.md)：谱集构建。
 - [WIDTH_LAYOUT_STABILITY.md](WIDTH_LAYOUT_STABILITY.md)：宽度扰动与分页检查。
 
-仓库级说明见[README](../README.md)。所用字体及符号素材的来源与许可证见 `public/licenses/`，当前音源由浏览器算法生成，不依赖外部采样音源。
+仓库级说明见[README](../README.md)。所用字体及符号素材的来源与许可证见 `public/licenses/`，默认音色由浏览器算法生成，五种乐器使用按需加载的FluidR3 q3采样音源，体积与复现方式见[FLUIDR3-SIZES.md](FLUIDR3-SIZES.md)。

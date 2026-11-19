@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MIDIBuilder } from 'spessasynth_core'
 import { SpessaPlayer } from './spessa-player.js'
 
-vi.mock('./playback-output.js', () => ({ createPlaybackOutput: () => ({}) }))
+vi.mock('./playback-output.js', () => ({ createPlaybackOutput: () => ({ input: {}, setTone: vi.fn() }) }))
 vi.mock('./startup-cue.js', () => ({ StartupCue: class {
   active = false
   play = async () => {}

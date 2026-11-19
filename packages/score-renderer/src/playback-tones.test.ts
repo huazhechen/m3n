@@ -1,18 +1,9 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import type { ToneWorkerResult } from './tone-catalog'
+import { SAMPLED_TONE_URLS } from './sampled-tone-assets'
 
 const valid = new TextEncoder().encode('RIFF1234sfbkpayload').buffer
 new DataView(valid).setUint32(4, valid.byteLength - 8, true)
-const workers: FakeWorker[] = []
-class FakeWorker {
-  onmessage?: (event: { data: ToneWorkerResult }) => void
-  onerror?: (event: { preventDefault: () => void }) => void
-  postMessage = vi.fn()
-  terminate = vi.fn()
-  constructor() { workers.push(this) }
-  send(data: ToneWorkerResult) { this.onmessage?.({ data }) }
-}
-afterEach(() => { workers.length = 0; vi.unstubAllGlobals(); vi.resetModules() })
+afterEach(() => { vi.unstubAllGlobals(); vi.resetModules() })
 function setup() {
   const entries = new Map<string, Response>()
   const cache = {
@@ -21,72 +12,94 @@ function setup() {
     delete: vi.fn(async (url: string) => entries.delete(url)),
   }
   vi.stubGlobal('caches', { open: vi.fn(async () => cache) })
-  vi.stubGlobal('Worker', FakeWorker)
-  vi.stubGlobal('fetch', vi.fn(() => { throw new Error('No sample downloads allowed') }))
-  return { entries, cache }
+  const fetcher = vi.fn(async () => new Response(valid.slice(0), { headers: { 'Content-Length': String(valid.byteLength) } }))
+  vi.stubGlobal('fetch', fetcher)
+  return { entries, cache, fetcher }
 }
-test('deduplicates generation, reports progress and returns independent transferable buffers', async () => {
+test('downloads only the selected instrument, deduplicates and returns independent transferable buffers', async () => {
   setup()
-  const { loadGeneratedTone, subscribeToneGenerationProgress } = await import('./playback-tones')
+  const { loadSampledTone, subscribeToneLoadProgress } = await import('./playback-tones')
   const updates: unknown[] = []
-  const unsubscribe = subscribeToneGenerationProgress(value => updates.push(value))
-  const first = loadGeneratedTone('piano'), second = loadGeneratedTone('piano')
-  await vi.waitFor(() => expect(workers).toHaveLength(1))
-  workers[0].send({ type: 'progress', progress: { tone: 'piano', completed: 12, total: 48, stage: 'samples' } })
-  workers[0].send({ type: 'ready', data: valid.slice(0) })
-  const [a, b] = await Promise.all([first, second])
+  const unsubscribe = subscribeToneLoadProgress(value => updates.push(value))
+  const [a, b] = await Promise.all([loadSampledTone('piano'), loadSampledTone('piano')])
   expect(a).not.toBe(b); expect(new Uint8Array(a)).toEqual(new Uint8Array(b))
   structuredClone(a, { transfer: [a] })
-  expect((await loadGeneratedTone('piano')).byteLength).toBe(valid.byteLength)
-  expect(updates).toContainEqual({ tone: 'piano', completed: 12, total: 48, stage: 'samples' })
-  expect(workers[0].terminate).toHaveBeenCalled()
-  expect(fetch).not.toHaveBeenCalled()
+  expect((await loadSampledTone('piano')).byteLength).toBe(valid.byteLength)
+  expect(updates).toContainEqual({ tone: 'piano', completed: valid.byteLength, total: valid.byteLength, stage: 'download' })
+  expect(fetch).toHaveBeenCalledTimes(1)
+  expect(fetch).toHaveBeenCalledWith(new URL(SAMPLED_TONE_URLS.piano, import.meta.url).href, expect.objectContaining({ signal: expect.any(AbortSignal) }))
   unsubscribe()
 })
-test('reads the persistent generated bank after a module reload without a worker', async () => {
+test('reads the persistent sampled bank after a module reload without a network request', async () => {
   setup()
-  const module = await import('./playback-tones')
-  const request = module.loadGeneratedTone('flute')
-  await vi.waitFor(() => expect(workers).toHaveLength(1))
-  workers[0].send({ type: 'ready', data: valid.slice(0) }); await request
+  await (await import('./playback-tones')).loadSampledTone('flute')
   vi.resetModules()
-  const restored = await (await import('./playback-tones')).loadGeneratedTone('flute')
+  const restored = await (await import('./playback-tones')).loadSampledTone('flute')
   expect(new Uint8Array(restored)).toEqual(new Uint8Array(valid))
-  expect(workers).toHaveLength(1)
+  expect(fetch).toHaveBeenCalledTimes(1)
 })
-test('rebuilds a corrupt cache and retries worker failures', async () => {
-  const { entries, cache } = setup()
+test('replaces corrupt cache entries and retries failed downloads', async () => {
+  const { entries, cache, fetcher } = setup()
   const module = await import('./playback-tones')
-  const key = new URL(`./${module.GENERATED_TONE_CACHE}/guitar.sf2`, import.meta.url).href
+  const key = new URL(SAMPLED_TONE_URLS.guitar, import.meta.url).href
   entries.set(key, new Response('broken'))
-  const first = module.loadGeneratedTone('guitar')
-  const failed = expect(first).rejects.toThrow('failed')
-  await vi.waitFor(() => expect(workers).toHaveLength(1))
-  workers[0].send({ type: 'error', message: 'failed' }); await failed
+  fetcher.mockRejectedValueOnce(new Error('failed'))
+  await expect(module.loadSampledTone('guitar')).rejects.toThrow('failed')
   expect(cache.delete).toHaveBeenCalledWith(key)
-  const retry = module.loadGeneratedTone('guitar')
-  await vi.waitFor(() => expect(workers).toHaveLength(2))
-  workers[1].send({ type: 'ready', data: valid.slice(0) }); await retry
+  await module.loadSampledTone('guitar')
+  expect(fetch).toHaveBeenCalledTimes(2)
 })
-test('cancels a worker and allows a fresh generation without caching partial data', async () => {
-  const { cache } = setup()
+test('cancels a download and allows a fresh request without stale progress or cached partial data', async () => {
+  const { cache, fetcher } = setup()
+  let signal: AbortSignal | undefined
+  fetcher.mockImplementationOnce((_url?: unknown, options?: RequestInit) => new Promise((_resolve, reject) => {
+    signal = options?.signal ?? undefined
+    signal?.addEventListener('abort', () => reject(signal!.reason))
+  }))
   const module = await import('./playback-tones')
-  const request = module.loadGeneratedTone('violin')
+  const request = module.loadSampledTone('violin')
   const cancelled = expect(request).rejects.toMatchObject({ name: 'AbortError' })
-  await vi.waitFor(() => expect(workers).toHaveLength(1))
-  module.cancelToneGeneration('violin'); await cancelled
-  expect(workers[0].terminate).toHaveBeenCalled()
+  await vi.waitFor(() => expect(signal).toBeDefined())
+  module.cancelToneLoad('violin'); await cancelled
   expect(cache.put).not.toHaveBeenCalled()
-  const retry = module.loadGeneratedTone('violin')
-  await vi.waitFor(() => expect(workers).toHaveLength(2))
-  workers[1].send({ type: 'ready', data: valid.slice(0) }); await retry
+  await module.loadSampledTone('violin')
+  expect(fetch).toHaveBeenCalledTimes(2)
 })
-test('storage restrictions do not prevent generation or memory reuse', async () => {
+test('storage restrictions do not prevent downloads or memory reuse', async () => {
   setup(); vi.stubGlobal('caches', { open: async () => { throw new Error('private mode') } })
   const module = await import('./playback-tones')
-  const request = module.loadGeneratedTone('harmonica')
-  await vi.waitFor(() => expect(workers).toHaveLength(1))
-  workers[0].send({ type: 'ready', data: valid.slice(0) }); await request
-  await module.loadGeneratedTone('harmonica')
-  expect(workers).toHaveLength(1)
+  await module.loadSampledTone('harmonica'); await module.loadSampledTone('harmonica')
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+test('supports unknown download length without reporting a fake percentage', async () => {
+  const { fetcher } = setup()
+  fetcher.mockResolvedValueOnce(new Response(valid.slice(0)))
+  const module = await import('./playback-tones')
+  const updates: unknown[] = []
+  module.subscribeToneLoadProgress(value => updates.push(value))
+  await module.loadSampledTone('flute')
+  expect(updates).toContainEqual({ tone: 'flute', completed: valid.byteLength, total: 0, stage: 'download' })
+})
+test.each([new Response('broken'), new Response(null, { status: 404 })])('rejects invalid or missing assets without persisting them', async response => {
+  const { cache, fetcher } = setup()
+  fetcher.mockResolvedValueOnce(response)
+  await expect((await import('./playback-tones')).loadSampledTone('piano')).rejects.toThrow()
+  expect(cache.put).not.toHaveBeenCalled()
+})
+
+test('reports intermediate byte counts before a streamed response completes', async () => {
+  const { fetcher } = setup()
+  let stream!: ReadableStreamDefaultController<Uint8Array>
+  fetcher.mockResolvedValueOnce(new Response(new ReadableStream<Uint8Array>({ start(controller) { stream = controller } }), {
+    headers: { 'Content-Length': String(valid.byteLength) },
+  }))
+  const module = await import('./playback-tones')
+  const updates: unknown[] = []
+  module.subscribeToneLoadProgress(value => updates.push(value))
+  const request = module.loadSampledTone('piano')
+  stream.enqueue(new Uint8Array(valid.slice(0, 8)))
+  await vi.waitFor(() => expect(updates).toContainEqual({ tone: 'piano', completed: 8, total: valid.byteLength, stage: 'download' }))
+  expect(updates).not.toContainEqual({ tone: 'piano', completed: 1, total: 1, stage: 'ready' })
+  stream.enqueue(new Uint8Array(valid.slice(8))); stream.close()
+  expect(new Uint8Array(await request)).toEqual(new Uint8Array(valid))
 })

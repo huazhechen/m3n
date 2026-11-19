@@ -107,7 +107,7 @@ export function ScoreControls(props: ScoreControlsProps) {
         keyDialogRef.current?.querySelector<SVGElement>('[aria-pressed="true"]')?.focus()
       }}><span className="transpose-key-icon" aria-hidden="true">{selectedKeyLabel}</span><span>调号</span></button>
         </div>
-    {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || `正在生成${selectedTone.label}音色…`}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
+    {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || `正在加载${selectedTone.label}音色…`}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
     <dialog ref={toneDialogRef} className="transpose-dialog tone-dialog" aria-labelledby={toneTitleId} onClick={event => {
       if (event.target === event.currentTarget) {
         const bounds = event.currentTarget.getBoundingClientRect()

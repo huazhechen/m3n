@@ -11,7 +11,7 @@ async function ready(page: Page) {
   await expect(page.locator('.control-tone-status')).toHaveCount(0)
 }
 
-test('default needs no generation; all five instruments generate locally and persist', async ({ page }, info) => {
+test('default needs no samples; five FluidR3 q3 instruments load on demand and persist', async ({ page }, info) => {
   const samples: string[] = [], workers: string[] = []
   page.on('request', request => {
     if (/\.sf[23](?:\?|$)/.test(request.url())) samples.push(request.url())
@@ -23,6 +23,7 @@ test('default needs no generation; all five instruments generate locally and per
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
   expect(workers).toHaveLength(0)
+  expect(samples).toHaveLength(0)
   await page.getByRole('button', { name: '暂停', exact: true }).click()
   const timings: Record<string, number> = {}
   for (const label of ['钢琴', '口琴', '钢弦吉他', '小提琴', '长笛']) {
@@ -36,40 +37,43 @@ test('default needs no generation; all five instruments generate locally and per
     await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
     await page.getByRole('button', { name: '暂停', exact: true }).click()
   }
-  expect(samples).toHaveLength(0)
-  await expect.poll(() => page.evaluate(async () => (await (await caches.open('m3n-generated-tones-v3')).keys()).length)).toBe(5)
-  const before = workers.length
+  expect(samples).toHaveLength(5)
+  expect(new Set(samples).size).toBe(5)
+  expect(workers).toHaveLength(0)
+  await expect.poll(() => page.evaluate(async () => (await (await caches.open('m3n-fluidr3-q3-v1')).keys()).length)).toBe(5)
+  const before = samples.length
+  await page.route('**/*.sf3', route => route.abort())
   await page.reload(); await ready(page)
   await openScoreSettings(page)
   await expect(page.getByRole('button', { name: '选择音色，当前长笛', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
-  expect(workers).toHaveLength(before)
-  await info.attach('local-generation-ms.json', { body: JSON.stringify(timings), contentType: 'application/json' })
+  expect(samples).toHaveLength(before)
+  await info.attach('sample-loading-ms.json', { body: JSON.stringify(timings), contentType: 'application/json' })
 })
 
-test('generation has real progress, cancellation and retry on a narrow screen', async ({ page }, info) => {
+test('download has progress, cancellation and retry on a narrow screen', async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 844 })
   await page.goto('/scores/huan_le_song_01')
-  // Hold the worker module before any samples can be generated.
+  // Hold the selected sample download before its response headers arrive.
   let release!: () => void
   const gate = new Promise<void>(resolve => { release = resolve })
-  await page.route('**/*tone-generation.worker-*.js', async route => { await gate; await route.continue().catch(() => {}) })
+  await page.route('**/*FluidR3-piano-q3-*.sf3', async route => { await gate; await route.continue().catch(() => {}) })
   await selectTone(page, '钢琴')
-  const dialog = page.getByRole('dialog', { name: '生成钢琴音色', exact: true })
+  const dialog = page.getByRole('dialog', { name: '加载钢琴音色', exact: true })
   await expect(dialog).toBeVisible()
-  await expect(dialog.getByRole('progressbar', { name: '音色生成进度' })).toHaveAttribute('value', '0')
-  await dialog.screenshot({ path: info.outputPath('tone-generation-mobile.png') })
-  await dialog.getByRole('button', { name: '取消生成' }).click()
+  await expect(dialog.getByRole('progressbar', { name: '音色下载进度' })).not.toHaveAttribute('value')
+  await dialog.screenshot({ path: info.outputPath('tone-download-mobile.png') })
+  await dialog.getByRole('button', { name: '取消加载' }).click()
   await ready(page)
   release()
-  await page.unroute('**/*tone-generation.worker-*.js')
+  await page.unroute('**/*FluidR3-piano-q3-*.sf3')
   await openScoreSettings(page)
   await expect(page.getByRole('button', { name: '选择音色，当前合成音色', exact: true })).toBeVisible()
-  await page.route('**/*tone-generation.worker-*.js', route => route.abort())
+  await page.route('**/*FluidR3-piano-q3-*.sf3', route => route.abort())
   await selectTone(page, '钢琴')
-  await expect(page.locator('.control-tone-status')).toContainText('无法生成音色')
-  await page.unroute('**/*tone-generation.worker-*.js')
+  await expect(page.locator('.control-tone-status')).toContainText('无法加载音色')
+  await page.unroute('**/*FluidR3-piano-q3-*.sf3')
   await openScoreSettings(page)
   await page.getByRole('button', { name: '重试加载音色' }).click()
   await ready(page)
@@ -77,7 +81,7 @@ test('generation has real progress, cancellation and retry on a narrow screen', 
   await expect(page.getByRole('button', { name: '选择音色，当前钢琴', exact: true })).toBeVisible()
 })
 
-test('live generation and transpose preserve the audio context and transport position', async ({ page }) => {
+test('live download and transpose preserve the audio context and transport position', async ({ page }) => {
   await page.addInitScript(() => {
     const NativeContext = window.AudioContext
     const audit = { created: 0, closed: 0 }
@@ -97,7 +101,7 @@ test('live generation and transpose preserve the audio context and transport pos
   const before = Number(await progress.inputValue())
   let release!: () => void
   const gate = new Promise<void>(resolve => { release = resolve })
-  await page.route('**/*tone-generation.worker-*.js', async route => { await gate; await route.continue() })
+  await page.route('**/*FluidR3-violin-q3-*.sf3', async route => { await gate; await route.continue() })
   await selectTone(page, '小提琴')
   await page.getByRole('button', { name: '后台加载' }).click()
   await expect(pause).toBeEnabled()
@@ -185,6 +189,22 @@ for (const label of ['合成音色', '钢琴', '钢弦吉他', '口琴', '小提
     await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms)).toBeGreaterThan(0.2)
     const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number; limiters: number } }).loudnessAudit!)
     expect(audit.limiters).toBe(1)
+    expect(audit.peak).toBeLessThanOrEqual(0.941)
+    await page.getByRole('button', { name: '暂停', exact: true }).click()
+  })
+}
+
+for (const label of ['钢琴', '钢弦吉他', '口琴', '小提琴', '长笛']) {
+  test(`${label} dense sampled chords stay below the output ceiling`, async ({ page }) => {
+    await auditFinalOutput(page)
+    await page.goto('/editor')
+    await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: [135:h]^^ | [135:h]^^ |||\nB: [135d:h]^^ | [135d:h]^^ |||')
+    await selectTone(page, label); await ready(page)
+    await page.getByRole('button', { name: '播放', exact: true }).click()
+    await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
+    await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms)).toBeGreaterThan(0.15)
+    await page.waitForTimeout(1500)
+    const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number } }).loudnessAudit!)
     expect(audit.peak).toBeLessThanOrEqual(0.941)
     await page.getByRole('button', { name: '暂停', exact: true }).click()
   })

@@ -2,7 +2,7 @@ import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '..
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
 import { PlaybackLoadingDialog } from './PlaybackLoadingDialog'
-import { cancelToneGeneration, loadGeneratedTone, subscribeToneGenerationProgress, type ToneGenerationProgress } from '@m3n/score-renderer/tones'
+import { cancelToneLoad, loadSampledTone, subscribeToneLoadProgress, type ToneLoadProgress } from '@m3n/score-renderer/tones'
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -188,9 +188,9 @@ export function ScoreRenderer({
   const toneRef = useRef(playbackTone)
   toneRef.current = playbackTone
   const [toneLoading, setToneLoading] = useState(playbackTone !== 'synth')
-  const [toneProgress, setToneProgress] = useState<ToneGenerationProgress | null>(null)
+  const [toneProgress, setToneProgress] = useState<ToneLoadProgress | null>(null)
   const readyToneRef = useRef<typeof playbackTone>('synth')
-  useEffect(() => subscribeToneGenerationProgress(progress => {
+  useEffect(() => subscribeToneLoadProgress(progress => {
     if (progress.tone === toneRef.current) setToneProgress(progress)
   }), [])
   const [toneError, setToneError] = useState('')
@@ -449,7 +449,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const player = playerRef.current
-        if (playbackTone !== 'synth') await loadGeneratedTone(playbackTone)
+        if (playbackTone !== 'synth') await loadSampledTone(playbackTone)
         if (cancelled) return
         if (player) await player.setTone(playbackTone)
         if (!cancelled) { readyToneRef.current = playbackTone; setToneLoading(false) }
@@ -557,7 +557,7 @@ export function ScoreRenderer({
         onCancelTone={() => {
           const tone = playbackTone
           changePlaybackTone(readyToneRef.current)
-          if (tone !== 'synth') cancelToneGeneration(tone)
+          if (tone !== 'synth') cancelToneLoad(tone)
         }}
       />}
       {hasAudioControls && <ScoreControls
