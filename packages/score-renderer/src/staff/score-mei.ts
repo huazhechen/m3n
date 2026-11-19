@@ -1,4 +1,4 @@
-import { scoreEventIds, m3nChord, planPlayback, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
+import { incomingMeasureKeys, scoreEventIds, m3nChord, planPlayback, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
 import { meiBeamXml as renderBeamXml, meiEventXml as renderEventXml, meiTempoXml as renderTempoXml } from './mei-events.js'
 import { staffDisplayScore } from './display-score.js'
 import { escapeXml } from './mei-xml.js'
@@ -17,6 +17,7 @@ export function scoreToMei(input: ScoreDocument): string {
   const preassignedIds = scoreEventIds(document)
   const previousTiedByStaff = new Map<number, boolean>()
   const previousKeyByStaff = new Map<number, string>()
+  const incomingKeys = new Map([...document.parts.values()].flatMap(part => [...incomingMeasureKeys(document, part.melody)]))
   let previousMeter = { count: document.meterCount, unit: document.meterUnit }
   let previousTempo = document.tempo
   let tempoIndex = document.hasExplicitTempo || document.order ? 1 : 0
@@ -106,7 +107,9 @@ export function scoreToMei(input: ScoreDocument): string {
   }
 
   const keyChangesForMeasure = (measure: ScoreMeasure | undefined, staffNumber: number) => {
-    let key = previousKeyByStaff.get(staffNumber) ?? document.key
+    const predecessors = measure ? [...incomingKeys.get(measure) ?? []] : []
+    const entryKey = measure?.events[0]?.key ?? measure?.multiRestState?.key
+    let key = predecessors.find(key => key !== entryKey) ?? predecessors[0] ?? previousKeyByStaff.get(staffNumber) ?? document.key
     const previousKey = key
     const changes = new Map<number, string>()
     let openingKey: string | undefined

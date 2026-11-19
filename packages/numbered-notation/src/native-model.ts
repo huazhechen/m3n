@@ -7,7 +7,7 @@ import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import type { NativeTempoGeometry } from './native-tempo.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
-import { resolveScorePitches, displayedTempo, sectionEntryKey, sectionKeyVisits, sectionVisitKey, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
+import { incomingMeasureKeys, resolveScorePitches, displayedTempo, sectionEntryKey, sectionKeyVisits, sectionVisitKey, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
 import { lyricsByEvent, type LyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -67,6 +67,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
   const sectionKeys = new Map((document.order ?? []).map(name => [name, {entry:sectionEntryKey(document,name),visits:sectionKeyVisits(document,name)}]))
   let partIndex = 0, measureNumber = 0
   for (const part of document.parts.values()) {
+    const incomingKeys = incomingMeasureKeys(document, part.melody)
     const resolved = options.fixedDo ? new Map([
       ...resolveScorePitches(part.melody), ...resolveScorePitches(part.bass),
     ]) : undefined
@@ -76,6 +77,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       let time = 0
       const state = states.get(lane) ?? { key: document.key, tempo: document.tempo, meter: `${document.meterCount}/${document.meterUnit}`, dynamic: '' }
       states.set(lane, state)
+      const predecessors = incomingKeys.get(host.source)
+      if (predecessors?.size) state.key = predecessors.size === 1 ? [...predecessors][0]! : ''
       const accidentals = new Map<string, string>()
       const settingsControls = (settings: Pick<ScoreEvent, 'key' | 'meterCount' | 'meterUnit' | 'tempo'>) => {
         const controls: NativeControl[] = []
