@@ -270,6 +270,13 @@ describe('validateM3N', () => {
     expect(messages('{equal-measures=true} {equal-measures=false}\nN: 1 2 3 4 |||')).toContain('重复声明')
   })
 
+  it('validates the numeric gap, header placement and uniqueness', () => {
+    for (const gap of ['0', '16', '20.5', '40']) expect(validateM3N(`{leading=${gap}}\nN: 1 2 3 4 |||`)).toEqual([])
+    for (const gap of ['', '-1', 'NaN', 'Infinity', 'true']) expect(messages(`{leading=${gap}}\nN: 1 2 3 4 |||`)).toContain('leading 必须为非负有限数值')
+    expect(messages('N: {leading=16}1 2 3 4 |||')).toContain('leading 只能写在文档首部')
+    expect(messages('{leading=16}{leading=24}\nN: 1 2 3 4 |||')).toContain('重复声明')
+  })
+
   it('enforces metadata placement, uniqueness, and non-empty values', () => {
     const result = messages('{title=} {title=A}\n1 {composer=B} 2 3 4 |||')
     expect(result).toContain('乐谱信息值不能为空')

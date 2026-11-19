@@ -148,6 +148,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
 
 export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions): NativeLayout {
   validate(supplied)
+  if (document.minimumCoreGap !== undefined && (!Number.isFinite(document.minimumCoreGap) || document.minimumCoreGap < 0)) throw new Error('最小行距必须为非负有限数值。')
   const headerDocument = document
   const expanded = supplied.fixedDo && document.orderKeys?.some(Boolean) ? keyedDisplayPerformance(document) : undefined
   if (expanded) document = expanded.document
@@ -305,9 +306,9 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     verticalBlocks: blocks, headerBlocks: header.blocks }
-  const gap = options.coreGap ?? nativeStyle.minimumCoreGap
+  const gap = options.coreGap ?? (document.minimumCoreGap ?? nativeStyle.minimumCoreGap)
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, maxGap: options.coreGap ?? (options.paged ? 32 : gap), elastic: true })
+    margin, gap, maxGap: options.coreGap ?? (options.paged ? Math.max(32, gap) : gap), elastic: true })
   positionNativeLayout(layout, pagination)
   return layout
 }

@@ -30,7 +30,7 @@ describe('elastic page core parameter', () => {
     expect(result.coreGaps).toEqual([32])
     expect(result.positions[1]!.top).toBe(42)
   })
-  it('keeps continuous scores at 24px while paged layout breaks at 16px', () => {
+  it('keeps continuous scores at 24px while paged layout stretches to 32px', () => {
     const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 |{br} 1 2 3 4 |')
     const continuous = layoutNativeScore(document, { width: 320, paged: false, pageMargin: 0 })
     const paged = layoutNativeScore(document, { width: 320, paged: true, pageMargin: 0 })

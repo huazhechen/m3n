@@ -72,6 +72,8 @@ export type ScoreLyricBlock = {
 export type ScoreDocument = {
   /** Equal visible measure widths within each numbered-notation system. */
   equalMeasures?: boolean
+  /** Minimum vertical core clearance in px; defaults to 24 throughout the score. */
+  minimumCoreGap?: number
   /** Suggested logical engraving width; explicit view settings may override it. */
   preferredWidth?: number
   /** Written sections are printed once; order determines performance visits. */
