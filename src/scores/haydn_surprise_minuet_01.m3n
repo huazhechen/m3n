@@ -2,11 +2,11 @@
 // 第一段弱起至第 16 小节；第二段弱起至第 34 小节，均反复两遍。
 {preferred-width=540}
 {title=惊愕交响曲·小步舞曲}
-{subtitle=第94号交响曲 第三乐章（改编版）}
+{subtitle=来自第94号交响曲 第三乐章}
 {composer=海顿}
 {arranger=David Blackwell}
 {key=G} {3/4} {132qpm}
-N: {text=Allegro}{f}{lg}(1 2){/} | {lg}3 1{/} 5 | {lg}3 1{/} 1e | {lg}7 5{/} 4 | 2e 0 {lg}(5d 6d){/} |
+N: {f}{lg}(1 2){/} | {lg}3 1{/} 5 | {lg}3 1{/} 1e | {lg}7 5{/} 4 | 2e 0 {lg}(5d 6d){/} |
 ---
 N: {lg}7d 5d{/} 2 | {lg}7d 5d{/} 4 | {lg}3 1{/} 1 | 1e 0 {mp}{lg}(1 2){/} | {lg}3 2 3{/} | 4^. |
 ---
