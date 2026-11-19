@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MIDIBuilder } from 'spessasynth_core'
 import { SpessaPlayer } from './spessa-player.js'
 
+vi.mock('./playback-output.js', () => ({ createPlaybackOutput: () => ({}) }))
 vi.mock('./startup-cue.js', () => ({ StartupCue: class {
   active = false
   play = async () => {}
@@ -77,11 +78,7 @@ beforeEach(() => {
   vi.stubGlobal('window', globalThis)
   vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  vi.stubGlobal('AudioContext', class { createDynamicsCompressor() { return {
-    threshold: { value: 0 }, knee: { value: 0 }, ratio: { value: 0 },
-    attack: { value: 0 }, release: { value: 0 }, connect: vi.fn(),
-  } }
-
+  vi.stubGlobal('AudioContext', class {
     audioWorklet = { addModule: async () => {} }
     resume = async () => {}
     close = async () => {}

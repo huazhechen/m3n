@@ -5,7 +5,7 @@ const progress = new Map<GeneratedTone, ToneGenerationProgress>()
 const pending = new Map<GeneratedTone, Promise<ArrayBuffer>>()
 const cancellations = new Map<GeneratedTone, () => void>()
 // Bump this revision whenever synthesis or SF2 layout changes.
-export const GENERATED_TONE_CACHE = 'm3n-generated-tones-v2'
+export const GENERATED_TONE_CACHE = 'm3n-generated-tones-v3'
 export function subscribeToneGenerationProgress(listener: (value: ToneGenerationProgress) => void) {
   listeners.add(listener)
   progress.forEach(listener)

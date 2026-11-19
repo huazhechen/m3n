@@ -60,7 +60,7 @@ test('FM electric piano has a brighter attack, a fixed bright timbre, exact tuni
     const audio = sample.getAudioData()
     expect(audio.slice(sample.loopStart, sample.loopStart + period)).toEqual(audio.slice(sample.loopStart + period, sample.loopEnd))
     expect(audio.slice(sample.loopStart - period, sample.loopStart)).toEqual(audio.slice(sample.loopStart, sample.loopStart + period))
-    expect(audio.slice(0, sample.loopEnd).every(value => Number.isFinite(value) && Math.abs(value) <= 0.751)).toBe(true)
+    expect(audio.slice(0, sample.loopEnd).every(value => Number.isFinite(value) && Math.abs(value) <= 0.901)).toBe(true)
   }
   const brightness = (sample: typeof bank.samples[number], start: number) => {
     const period = (sample.loopEnd - sample.loopStart) / 2

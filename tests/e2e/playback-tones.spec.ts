@@ -37,7 +37,7 @@ test('default needs no generation; all five instruments generate locally and per
     await page.getByRole('button', { name: '暂停', exact: true }).click()
   }
   expect(samples).toHaveLength(0)
-  await expect.poll(() => page.evaluate(async () => (await (await caches.open('m3n-generated-tones-v2')).keys()).length)).toBe(5)
+  await expect.poll(() => page.evaluate(async () => (await (await caches.open('m3n-generated-tones-v3')).keys()).length)).toBe(5)
   const before = workers.length
   await page.reload(); await ready(page)
   await openScoreSettings(page)
@@ -135,37 +135,57 @@ test('cold playback shows a modal progress bar until the audio worklet is ready'
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled()
 })
 
-test('full-volume playback stays audible and compresses dense chords without clipping', async ({ page }) => {
+async function auditFinalOutput(page: Page) {
   await page.addInitScript(() => {
-    const NativeContext = window.AudioContext
-    const audit = { peak: 0, rms: 0, compressors: 0 }
+    const NativeNode = window.AudioWorkletNode
+    const audit = { peak: 0, rms: 0, limiters: 0 }
     Object.assign(window, { loudnessAudit: audit })
-    window.AudioContext = class extends NativeContext {
-      override createDynamicsCompressor() {
-        const compressor = super.createDynamicsCompressor()
-        const analyser = this.createAnalyser()
+    window.AudioWorkletNode = class extends NativeNode {
+      constructor(context: BaseAudioContext, name: string, options?: AudioWorkletNodeOptions) {
+        super(context, name, options)
+        if (name !== 'm3n-output-limiter') return
+        const analyser = context.createAnalyser()
         analyser.fftSize = 2048
-        compressor.connect(analyser)
+        this.connect(analyser)
         const samples = new Float32Array(analyser.fftSize)
-        audit.compressors++
+        audit.limiters++
         const timer = window.setInterval(() => {
-          if (this.state === 'closed') { clearInterval(timer); return }
+          if (context.state === 'closed') { clearInterval(timer); return }
           analyser.getFloatTimeDomainData(samples)
           audit.peak = Math.max(audit.peak, ...samples.map(Math.abs))
           audit.rms = Math.max(audit.rms, Math.sqrt(samples.reduce((sum, value) => sum + value * value, 0) / samples.length))
         }, 10)
-        return compressor
       }
     }
   })
+}
+
+test('full-volume playback stays audible and compresses dense chords without clipping', async ({ page }) => {
+  await auditFinalOutput(page)
   await page.goto('/editor')
   // Six simultaneous notes expose clipping that single-note playback cannot.
   await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: [135:h]^^ | [135:h]^^ |||\nB: [135d:h]^^ | [135d:h]^^ |||')
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
   await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms), { timeout: 10_000 }).toBeGreaterThan(0.1)
-  const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number; rms: number; compressors: number } }).loudnessAudit!)
-  expect(audit.compressors).toBe(1)
-  expect(audit.peak).toBeLessThan(1)
+  const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number; rms: number; limiters: number } }).loudnessAudit!)
+  expect(audit.limiters).toBe(1)
+  expect(audit.peak).toBeLessThanOrEqual(0.941)
   await page.getByRole('button', { name: '暂停', exact: true }).click()
 })
+
+for (const label of ['合成音色', '钢琴', '钢弦吉他', '口琴', '小提琴', '长笛']) {
+  test(`${label} has clear monophonic output after mastering`, async ({ page }) => {
+    await auditFinalOutput(page)
+    await page.goto('/editor')
+    await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 - - - | 1 - - - |||')
+    if (label !== '合成音色') { await selectTone(page, label); await ready(page) }
+    await page.getByRole('button', { name: '播放', exact: true }).click()
+    await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
+    await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms)).toBeGreaterThan(0.2)
+    const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number; limiters: number } }).loudnessAudit!)
+    expect(audit.limiters).toBe(1)
+    expect(audit.peak).toBeLessThanOrEqual(0.941)
+    await page.getByRole('button', { name: '暂停', exact: true }).click()
+  })
+}

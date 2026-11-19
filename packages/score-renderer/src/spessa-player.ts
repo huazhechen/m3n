@@ -1,3 +1,5 @@
+import limiterUrl from './output-limiter.worklet.js?worker&url'
+import { createPlaybackOutput } from './playback-output.js'
 import { BasicMIDI } from 'spessasynth_core'
 import { Sequencer, WorkletSynthesizer } from 'spessasynth_lib' 
 import processorUrl from 'spessasynth_lib/dist/spessasynth_processor.min.js?url'
@@ -95,18 +97,9 @@ export class SpessaPlayer {
     const soundBank = tone === 'synth' ? createSyntheticSoundFont() : await loadGeneratedTone(tone)
     const context = new AudioContext()
     try {
-      await context.audioWorklet.addModule(processorUrl)
+      await Promise.all([context.audioWorklet.addModule(processorUrl), context.audioWorklet.addModule(limiterUrl)])
       const synth = new WorkletSynthesizer(context)
-      // Full-velocity notes stay clear; simultaneous notes share a compressor
-      // so a loud chord does not clip the browser's output.
-      const output = context.createDynamicsCompressor()
-      output.threshold.value = -12
-      output.knee.value = 6
-      output.ratio.value = 20
-      output.attack.value = 0.001
-      output.release.value = 0.12
-      output.connect(context.destination)
-      synth.connect(output)
+      synth.connect(createPlaybackOutput(context))
       await synth.soundBankManager.addSoundBank(soundBank, tone)
       await synth.isReady
       const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })

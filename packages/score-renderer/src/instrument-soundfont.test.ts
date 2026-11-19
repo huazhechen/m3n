@@ -19,7 +19,7 @@ test.each(tones)('$label generates a playable bank with complete zones, stable l
   }
   for (const sample of bank.samples) {
     const audio = sample.getAudioData()
-    expect(audio.every(value => Number.isFinite(value) && Math.abs(value) <= 0.721)).toBe(true)
+    expect(audio.every(value => Number.isFinite(value) && Math.abs(value) <= 0.901)).toBe(true)
     const loopPeriod = (sample.loopEnd - sample.loopStart) / 2
     const period = Math.max(16, Math.round(32000 / (440 * 2 ** ((sample.originalKey - 69) / 12))))
     expect(audio.subarray(sample.loopStart - loopPeriod, sample.loopStart).every((value, i) => value === audio[sample.loopStart + i])).toBe(true)

@@ -1,3 +1,4 @@
+import { normalizeSampleLoudness } from './sample-loudness.js'
 import { BasicInstrument, BasicPreset, BasicSample, BasicSoundBank, GeneratorTypes, SampleTypes } from 'spessasynth_core'
 
 const SAMPLE_RATE = 28160
@@ -63,8 +64,7 @@ export function createSyntheticSoundFont() {
       const brightness = Math.exp(-t / 0.32) * gate
       return sustain[phase]! + presence[phase]! + brightness * (attack[phase]! - sustain[phase]!)
     })
-    const peak = audio.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0)
-    for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.75 / peak
+    normalizeSampleLoudness(audio, SAMPLE_RATE)
     const sample = new BasicSample(`FM EP ${root}`, SAMPLE_RATE, root, 0, SampleTypes.monoSample, loopStart, loopEnd)
     sample.setAudioData(audio, SAMPLE_RATE)
     bank.addSamples(sample)

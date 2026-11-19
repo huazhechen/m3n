@@ -2,6 +2,7 @@ import { MIDIBuilder } from 'spessasynth_core'
 import { afterEach, expect, it, vi } from 'vitest'
 import { SpessaPlayer } from './spessa-player'
 
+vi.mock('./playback-output.js', () => ({ createPlaybackOutput: () => ({}) }))
 const mocks = vi.hoisted(() => ({
   tune: vi.fn(), pause: vi.fn(), load: vi.fn(), close: vi.fn(), generate: vi.fn(),
   manager: { priorityOrder: ['synth'], addSoundBank: vi.fn(async (_data: ArrayBuffer, id: string) => { mocks.manager.priorityOrder.push(id) }) },
@@ -31,11 +32,9 @@ vi.mock('./synthetic-soundfont.js', () => ({ createSyntheticSoundFont: () => new
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); mocks.manager.priorityOrder = ['synth'] })
 async function player() {
-  vi.stubGlobal('AudioContext', class { createDynamicsCompressor() { return {
-    threshold: { value: 0 }, knee: { value: 0 }, ratio: { value: 0 },
-    attack: { value: 0 }, release: { value: 0 }, connect: vi.fn(),
-  } }
- destination = {}; audioWorklet = { addModule: async () => {} }; close = mocks.close })
+  vi.stubGlobal('AudioContext', class {
+    destination = {}; audioWorklet = { addModule: async () => {} }; close = mocks.close
+  })
   const midi = new MIDIBuilder(); midi.noteOn(0, 0, 0, 60, 100); midi.noteOff(480, 0, 0, 60)
   const result = await SpessaPlayer.create(midi.writeMIDI(), { onEnded() {}, onTime() {} })
   mocks.manager.priorityOrder = ['synth']
