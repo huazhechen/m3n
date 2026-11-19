@@ -38,14 +38,15 @@ function text(svg: SVGSVGElement, value: string, x: number, y: number, size: num
 }
 
 function frontPages(entries: BookEntry[]) {
-  // Match the script's 25-row columns and keep chapter headings with a song.
+  // Share the publishing script's compact grid and keep chapter headings with a song.
+  const { rowsPerColumn, rowHeight } = plan.contents
   type Row = { section: typeof plan.sections[number] } | { entry: BookEntry }
   const columns: Row[][] = []
   for (const section of plan.sections) {
     const rows: Row[] = [{ section }, ...entries.filter(entry => entry.section === section.id).map(entry => ({ entry }))]
     for (const row of rows) {
       let column = columns.at(-1)
-      if (!column || column.length >= 25 || 'section' in row && column.length === 24) {
+      if (!column || column.length >= rowsPerColumn || 'section' in row && column.length === rowsPerColumn - 1) {
         column = []; columns.push(column)
       }
       column.push(row)
@@ -61,7 +62,7 @@ function frontPages(entries: BookEntry[]) {
     for (let side = 0; side < 2; side++) {
       const x = 40 + side * 377
       for (const [rowIndex, row] of (columns[index * 2 + side] ?? []).entries()) {
-        const y = 120 + rowIndex * 37
+        const y = 120 + rowIndex * rowHeight
         if ('section' in row) { text(svg, row.section.title, x, y, 16); continue }
         const entry = row.entry, first = frontCount + entry.musicStart + 1
         const label = entry.pageCount === 1 ? String(first) : `${first}–${first + entry.pageCount - 1}`

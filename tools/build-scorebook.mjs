@@ -94,7 +94,8 @@ if (probeOnly) { console.log(`Width probes complete: ${records.length} scores`);
 
 // Book furniture does not alter the engraved score pages.
 const tocRows = plan.sections.flatMap(section => [{ section }, ...records.filter(entry => entry.section === section.id).map(entry => ({ entry }))])
-const tocColumns = [], rowsPerColumn = 25
+const tocColumns = []
+const { rowsPerColumn, rowHeight } = plan.contents
 for (const row of tocRows) {
   let column = tocColumns.at(-1)
   if (!column || column.length >= rowsPerColumn || row.section && column.length === rowsPerColumn - 1) {
@@ -114,7 +115,7 @@ for (let index = 0; index < tocCount; index++) {
   for (let side = 0; side < 2; side++) {
     const x = 40 + side * 377, right = x + 337
     for (const [rowIndex, row] of (tocColumns[index * 2 + side] ?? []).entries()) {
-      const y = 120 + rowIndex * 37
+      const y = 120 + rowIndex * rowHeight
       if (row.section) content += text(row.section.title, x, y, 16)
       else {
         const entry = row.entry, label = entry.pages.length === 1 ? entry.pages[0] : `${entry.pages[0]}–${entry.pages.at(-1)}`

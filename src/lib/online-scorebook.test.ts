@@ -4,7 +4,7 @@ import { buildOnlineScorebook } from './online-scorebook'
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(), prepare: vi.fn(), prepared: vi.fn(), solo: vi.fn(), shared: vi.fn(),
-  plan: { title: '测试谱集', page: { width: 794, height: 1123 },
+  plan: { title: '测试谱集', contents: { rowsPerColumn: 28, rowHeight: 35 }, page: { width: 794, height: 1123 },
     sections: [{ id: 'basics', title: '第一章', reorderForSharing: false }],
     entries: [
       { file: 'first.m3n', title: '<第一曲>', section: 'basics', sharePage: true },
