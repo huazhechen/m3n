@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 96,
+  "sourceCount": 97,
   "sections": [
     {
       "id": "basics",
@@ -712,6 +712,14 @@
       "section": "instrumental",
       "group": "舞曲与动画主题",
       "reason": "三拍子、倚音与圆舞曲乐句"
+    },
+    {
+      "id": "meng_huan_qu",
+      "file": "meng_huan_qu_01.m3n",
+      "title": "梦幻曲",
+      "section": "instrumental",
+      "group": "古典抒情与气息控制",
+      "reason": "弱起、长音气息、高低音区跳进、临时降音、连奏和延长记号"
     },
     {
       "id": "ai_de_li_zan",
