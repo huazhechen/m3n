@@ -339,6 +339,17 @@ export function nativeContinuousPagination(layout: NativeLayout, coreGap: number
   return paginateNativeBlocks(layout.verticalBlocks, { pageHeight: Infinity, margin: layout.margin, gap: coreGap, elastic: true })
 }
 
+/** Change page membership and vertical spacing without repeating horizontal layout. */
+export function repaginateNativeLayout(layout: NativeLayout, paged: boolean, coreGap?: number) {
+  const gap = coreGap ?? (layout.document.minimumCoreGapEm !== undefined ? layout.document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap)
+  const pagination = paginateNativeBlocks(layout.verticalBlocks, {
+    pageHeight: paged ? Math.floor(layout.options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
+    margin: layout.margin, gap, maxGap: coreGap ?? (paged ? Math.max(32, gap) : gap), elastic: true,
+  })
+  layout.options = { ...layout.options, paged, coreGap }
+  positionNativeLayout(layout, pagination)
+}
+
 export function reflowNativeContinuousLayout(layout: NativeLayout, coreGap: number) {
   if (layout.options.paged) throw new Error('Only continuous layouts can be reflowed as a shared page')
   positionNativeLayout(layout, nativeContinuousPagination(layout, coreGap))

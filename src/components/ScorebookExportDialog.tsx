@@ -43,7 +43,7 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
     <p>全部内置乐谱按音乐类型编排，含封面与目录。</p>
     <div role="status" aria-live="polite">
       {book ? <p>已生成 {book.scoreCount} 首，共 {book.pages.length} 页，含 {book.sharedPages} 个合页。</p> : error ? <p>谱集生成已停止。</p>
-        : <><p>{progress.total ? progress.phase === 'packing' ? '正在优化合页…' : `${progress.phase === 'measuring' ? '正在检查页面' : '正在排版'} ${Math.floor(progress.completed)} / ${progress.total} 首（${percent}%）` : '正在准备谱集…'}</p>
+        : <><p>{progress.total ? progress.phase === 'packing' ? '正在优化合页…' : `${progress.phase === 'measuring' ? '正在计算排版' : '正在生成页面'} ${Math.floor(progress.completed)} / ${progress.total} 首（${percent}%）` : '正在准备谱集…'}</p>
           <p className="scorebook-current-title">{progress.title || '加载乐谱与排版工具'}</p></>}
     </div>
     <progress aria-label="谱集生成进度" max={progress.total || 1} value={progress.completed} />

@@ -1,14 +1,15 @@
 import plan from '../../scorebook/editorial-plan.json'
-import { DEFAULT_PREFERRED_WIDTH } from '@m3n/notation'
+import { DEFAULT_PREFERRED_WIDTH, parseM3NDocument } from '@m3n/notation'
+import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores } from '@m3n/numbered-notation'
+import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores } from './samples'
-import { prepare, measure, a4Pages, sharedA4Page } from '../../tools/scorebook-layout.mjs'
 import type { WidthMeasurement } from '../../tools/scorebook-width.mjs'
 import { optimizeScorebook, sharedScoreGap, sharedScoreWidth, type PackingEntry } from '../../tools/scorebook-packing.mjs'
 
 export const scorebookTitle = plan.title
 export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'measuring' | 'packing' | 'rendering' }
 export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number }
-type BookEntry = PackingEntry & { file: string; source: string; slug: string; musicStart: number; pageCount: number }
+type BookEntry = PackingEntry & { file: string; prepared: Map<number, PreparedNumberedNotationScore>; slug: string; musicStart: number; pageCount: number }
 const svgNS = 'http://www.w3.org/2000/svg'
 const website = 'https://score.cheesefans.com/'
 
@@ -87,21 +88,17 @@ function linkScores(svg: SVGSVGElement, entries: BookEntry[]) {
   })
 }
 
-/** Reuse source widths and the script's chapter packing and A4 placement, without width search. */
+/** Reuse measured layouts within one export; every invocation starts from the current sources. */
 export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (progress: ScorebookProgress) => void): Promise<OnlineScorebook> {
   const files = new Map(presetScores.map(score => [score.sourcePath, score]))
   if (files.size !== plan.entries.length || plan.entries.some(entry => !files.has(entry.file))) {
     throw new Error('谱集配置与内置曲库不一致，请刷新页面重试。')
   }
-  const host = document.createElement('div')
-  host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none;'
-  host.setAttribute('aria-hidden', 'true')
-  document.body.append(host)
   const entries: BookEntry[] = [], music: SVGSVGElement[] = []
   const pause = async () => { await new Promise(resolve => setTimeout(resolve, 0)); signal.throwIfAborted() }
   try {
     signal.throwIfAborted()
-    await prepare()
+    await prepareNumberedNotationFonts()
     for (const [index, entry] of plan.entries.entries()) {
       signal.throwIfAborted()
       const progress = (fraction = 0) => onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
@@ -110,21 +107,28 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         const source = await loadPresetScore(files.get(entry.file)!.slug)
         signal.throwIfAborted()
         if (!source) throw new Error('乐谱正文缺失，请刷新页面重试。')
+        const document = parseM3NDocument(source)
         const preferredWidth = files.get(entry.file)!.preferredWidth ?? DEFAULT_PREFERRED_WIDTH
         const candidates: WidthMeasurement[] = []
-        const widths = [...new Set([preferredWidth, sharedScoreWidth])]
+        const prepared = new Map<number, PreparedNumberedNotationScore>()
+        const widths = [...new Set('sharePage' in entry && entry.sharePage === false ? [preferredWidth] : [preferredWidth, sharedScoreWidth])]
         for (const [widthIndex, width] of widths.entries()) {
           await pause()
           let result: WidthMeasurement
-          try { result = await measure(source, width, true, undefined, host) }
+          try {
+            const score = new PreparedNumberedNotationScore(document, { width, pageMargin: 0 })
+            prepared.set(width, score)
+            result = { width, pageCount: score.pageCount, rows: 0, outside: [], overlaps: [],
+              naturalHeight: score.pageCount === 1 ? score.continuousHeight() : undefined }
+          }
           catch (error) { result = { width, error: error instanceof Error ? error.message : String(error), pageCount: 0, rows: 0, outside: [], overlaps: [] } }
           signal.throwIfAborted()
           candidates.push(result)
           progress((widthIndex + 1) / widths.length)
         }
         const solo = candidates.find(candidate => candidate.width === preferredWidth)!
-        if (solo.error || !solo.pageCount || solo.outside.length || solo.overlaps.length) throw new Error('当前优选宽度未通过页面边界检查，请检查谱源。')
-        entries.push({ ...entry, source, slug: files.get(entry.file)!.slug, preferredWidth, candidates, musicStart: 0, pageCount: 0 })
+        if (solo.error || !solo.pageCount) throw new Error('当前优选宽度无法完成排版，请检查谱源。')
+        entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, preferredWidth, candidates, musicStart: 0, pageCount: 0 })
       } catch (error) {
         signal.throwIfAborted()
         throw new Error(`《${entry.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)
@@ -140,22 +144,33 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       await pause()
       const start = music.length
       if (members.length > 1) {
-        const rendered = await sharedA4Page(members.map(entry => entry.source), group.width, sharedScoreGap, host)
-        const svg = page(rendered.markup)
+        const rendered = renderSharedPreparedNumberedNotationScores(members.map(entry => entry.prepared.get(group.width)!), sharedScoreGap)
+        const svg = page(rendered.markup.join(''))
+        let top = 0
+        for (const score of svg.querySelectorAll<SVGSVGElement>(':scope > svg')) {
+          const height = score.viewBox.baseVal.height
+          placeScore(score, { x: 12, y: 12 + top * 186 / group.width, width: 186, height: height * 186 / group.width })
+          top += height + sharedScoreGap
+        }
         linkScores(svg, members); music.push(svg); sharedPages++
       } else {
-        const rendered = await a4Pages(members[0].source, group.width, host)
+        const rendered = members[0].prepared.get(group.width)!.renderPaged()
         if (rendered.length !== group.pageCount) throw new Error(`《${members[0].title}》分页结果已改变，请重试。`)
-        for (const item of rendered) {
-          const svg = page(item.markup)
+        for (const markup of rendered) {
+          const svg = page(markup)
+          const score = svg.querySelector<SVGSVGElement>(':scope > svg')!
+          placeScore(score, a4ImagePlacement(score.viewBox.baseVal.width, score.viewBox.baseVal.height))
           linkScores(svg, members); music.push(svg)
         }
       }
       for (const entry of members) { entry.musicStart = start; entry.pageCount = group.pageCount }
-      host.replaceChildren()
       onProgress({ completed: group.end, total: entries.length, title: members.map(entry => entry.title).join(' / '), phase: 'rendering' })
     }
     signal.throwIfAborted()
     return { pages: [...frontPages(packed.entries), ...music], scoreCount: entries.length, sharedPages }
-  } finally { host.remove() }
+  } finally { entries.length = 0 }
+}
+
+function placeScore(svg: SVGSVGElement, placement: { x: number; y: number; width: number; height: number }) {
+  for (const [key, value] of Object.entries(placement)) svg.setAttribute(key, String(value * 96 / 25.4))
 }
