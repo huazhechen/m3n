@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { parseM3NDocument } from '@m3n/notation'
+import { layoutNativeScore } from './native-layout.js'
 import { describe, expect, it } from 'vitest'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 
@@ -15,14 +18,13 @@ function candidatesFor(widths: number[], capacity = 100): NativeLineCandidate[][
 }
 
 // Independent exhaustive oracle: score complete partitions, without DP states
-// or pruning. Including only pair differences deliberately omits the window.
-function score(rows: NativeLineCandidate[], windows = true, relaxLastLine = false) {
+// or pruning.
+function score(rows: NativeLineCandidate[], relaxLastLine = false) {
   return rows.reduce((sum, row, i) => {
     const difference = i ? row.density - rows[i - 1]!.density : 0
-    const curvature = windows && i > 1 ? rows[i - 2]!.density - 2 * rows[i - 1]!.density + row.density : 0
     const factor = relaxLastLine && i === rows.length - 1 && row.density <= .6 ? .5 : 1
     return sum + 1 + factor * Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2
-      + (row.penalty ?? 0) + factor * (difference ** 2 + curvature ** 2)
+      + (row.penalty ?? 0) + factor * difference ** 2
   }, 0)
 }
 
@@ -40,13 +42,23 @@ function selected(candidates: NativeLineCandidate[][], ends: number[]) {
   })
 }
 
-describe('sliding three-row density planning', () => {
-  it('uses the third row to improve on pair-only density balancing', () => {
+describe('adjacent-row density planning', () => {
+  it('selects the lower adjacent-density cost without penalising changes in direction', () => {
     const candidates = candidatesFor([23, 45, 41, 38, 61, 34, 73, 16, 60, 60])
-    const pairOnly = [2, 4, 6, 7, 9, 10], windowed = [2, 4, 6, 8, 9, 10]
-    expect(planNativeLines(candidates)).toEqual(windowed)
-    expect(score(selected(candidates, pairOnly), false)).toBeLessThan(score(selected(candidates, windowed), false))
-    expect(score(selected(candidates, windowed))).toBeLessThan(score(selected(candidates, pairOnly)))
+    const adjacent = [2, 4, 6, 7, 9, 10], former = [2, 4, 6, 8, 9, 10]
+    expect(planNativeLines(candidates)).toEqual(adjacent)
+    expect(score(selected(candidates, adjacent))).toBeLessThan(score(selected(candidates, former)))
+  })
+
+  it('balances Clarinet Polka section B into three rows of three measures at its preferred width', () => {
+    const source = readFileSync(new URL('../../../src/scores/dan_huang_guan_bo_er_ka_01.m3n', import.meta.url), 'utf8')
+    const document = parseM3NDocument(source)
+    const layout = layoutNativeScore(document, { width: document.preferredWidth!, paged: false })
+    // B follows the 17 written measures of A, including its pickup.
+    const section = new Set(layout.projection.measures.slice(17, 26))
+    const rows = layout.systems.filter(system => system.measures.some(measure => section.has(measure)))
+    expect(rows.map(system => system.measures.length)).toEqual([3, 3, 3])
+    expect(rows.flatMap(system => system.measures)).toEqual([...section])
   })
 
   it('looks ahead before committing an early break instead of filling each row greedily', () => {
@@ -67,8 +79,8 @@ describe('sliding three-row density planning', () => {
       const before = structuredClone(candidates)
       for (const relaxLastLine of [false, true]) {
         const result = planNativeLines(candidates, { relaxLastLine })
-        const optimum = Math.min(...enumerate(candidates).map(rows => score(rows, true, relaxLastLine)))
-        expect(score(selected(candidates, result), true, relaxLastLine), `trial ${trial}, relaxed=${relaxLastLine}`).toBeCloseTo(optimum, 10)
+        const optimum = Math.min(...enumerate(candidates).map(rows => score(rows, relaxLastLine)))
+        expect(score(selected(candidates, result), relaxLastLine), `trial ${trial}, relaxed=${relaxLastLine}`).toBeCloseTo(optimum, 10)
         expect(result.at(-1)).toBe(candidates.length)
       }
       expect(candidates).toEqual(before)

@@ -19,15 +19,14 @@ function better(candidate: Plan, current: Plan | undefined) {
   return false
 }
 
-function transition(previous: Row, current: Row, beforePrevious?: Row) {
+function transition(previous: Row, current: Row) {
   const difference = current.density - previous.density
-  const curvature = beforePrevious ? beforePrevious.density - 2 * previous.density + current.density : 0
-  return current.densityPenalty * (difference * difference + curvature * curvature)
+  return current.densityPenalty * difference * difference
 }
 
-/** Minimise row costs plus sliding three-row density penalties over a whole
- * forced-break region. Only states with the same last TWO rows may be merged:
- * the next window still depends on both. No invented neighbours at the ends. */
+/** Minimise row costs plus adjacent-row density differences over a whole
+ * forced-break region. States with the same last row share all future costs
+ * and may be merged. No invented neighbours at the ends. */
 export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], options: { relaxLastLine?: boolean } = {}): number[] {
   const count = candidates.length
   if (!count) return []
@@ -52,23 +51,23 @@ export function planNativeLines(candidates: readonly (readonly NativeLineCandida
   for (let start = 0; start < count;) {
     const row = baseline[start]
     if (!row) throw new Error('简谱换行候选无法覆盖完整内容。')
-    best = { row, previous: best, cost: (best?.cost ?? 0) + row.cost + (best ? transition(best.row, row, best.previous?.row) : 0) }
+    best = { row, previous: best, cost: (best?.cost ?? 0) + row.cost + (best ? transition(best.row, row) : 0) }
     start = row.end
   }
   if (!best?.previous) return ends(best)
-  const states = Array.from({ length: count + 1 }, () => new Map<string, Plan>())
-  for (const row of rows[0]!) states[row.end]!.set(`-1:${row.id}`, { row, cost: row.cost })
+  const states = Array.from({ length: count + 1 }, () => new Map<number, Plan>())
+  for (const row of rows[0]!) states[row.end]!.set(row.id, { row, cost: row.cost })
   for (let start = 1; start < count; start++) {
     for (const previous of states[start]!.values()) {
       if (previous.cost + lower[start]! > best.cost + epsilon) continue
       for (const row of rows[start]!) {
-        const cost = previous.cost + row.cost + transition(previous.row, row, previous.previous?.row)
+        const cost = previous.cost + row.cost + transition(previous.row, row)
         if (cost + lower[row.end]! > best.cost + epsilon) continue
         const plan = { row, cost, previous }
         if (row.end === count) {
           if (better(plan, best)) best = plan
         } else {
-          const key = `${previous.row.id}:${row.id}`, target = states[row.end]!
+          const key = row.id, target = states[row.end]!
           if (better(plan, target.get(key))) target.set(key, plan)
         }
       }
