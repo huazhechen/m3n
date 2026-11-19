@@ -39,7 +39,7 @@ it('matches the reference with the authorized shortening, five merged lyric tail
   expect(part.bass.flatMap(bar => bar.events)).toEqual([])
 })
 
-it('uses repeat bars and DC to preserve 765 attacks with a short slide without an itinerary or segno', () => {
+it('uses repeat bars and DC to preserve 765 attacks with a target-slot Hermite slide without an itinerary or segno', () => {
   const document = parseM3NDocument(source)
   expect(document.order).toBeUndefined()
   expect(document.sections ?? []).toEqual([])
@@ -70,7 +70,12 @@ it('uses repeat bars and DC to preserve 765 attacks with a short slide without a
   expect(performance.notes.map(note => [note.start, note.end, note.pitch])).toEqual(expected)
   const transitions = performance.notes.filter(note => note.transition)
   expect(transitions).toHaveLength(3)
-  expect(transitions.every(note => !note.expression && note.volume?.at(-1)?.value === 100 && note.volume?.some(point => point.value === 118))).toBe(true)
+  expect(transitions.every(note => !note.expression && !note.volume)).toBe(true)
+  for (const note of transitions) {
+    expect(note.pitchBends![1]!.beat).toBeCloseTo(note.start + .25)
+    expect(note.pitchBends![1]!.pitch).toBe(79)
+    expect(note.pitchBends!.at(-1)!.beat).toBe(note.end)
+  }
   expect(transitions.every(note => note.pitchBends?.at(-1)?.pitch === 77)).toBe(true)
 })
 

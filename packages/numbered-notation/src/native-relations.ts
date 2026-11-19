@@ -1,3 +1,4 @@
+import { nativeGlissandoSvg } from './native-glissando.js'
 import { nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
@@ -38,16 +39,7 @@ class NativeRelationPainter extends NativeSymbols {
       return this.text('(', first.x - left - leftWidth - nativeStyle.music * 0.05, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
         + this.text(')', last.x + right + nativeStyle.music * 0.05, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
     }
-    if (relation.kind === 'gliss') {
-      const firstHere = members.includes(relation.first), lastHere = members.includes(relation.last)
-      const left = firstHere ? relation.first.x : system.arcContinuationLeft ?? members[0]!.x
-      const right = lastHere ? relation.last.x : system.measures.at(-1)!.end
-      const pitch = (glyph: typeof relation.first) => Number(glyph.pitches[0]?.degree) + 7 * (glyph.pitches[0]?.octave ?? 0)
-      const up = pitch(relation.last) > pitch(relation.first)
-      const height = nativeStyle.music * .35
-      const y1 = up ? 0 : -height, y2 = up ? -height : 0
-      return `<g data-m3n-relation="gliss">${line(left, y1, right, y2, nativeStyle.music * .055)}</g>`
-    }
+    if (relation.kind === 'gliss') return nativeGlissandoSvg(relation, system, this.measurer)
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = nativeArcGeometry(relation, system)
       return `<path${attrs({ d: nativeArcPath(arc), fill: '#000', transform: 'translate(0 0)', 'data-m3n-relation': relation.kind })}/>`

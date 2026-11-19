@@ -40,6 +40,7 @@ export type ScorePerformanceOptions = { glissandoStyle?: GlissandoStyle; glissan
 /** Compile the domain's itinerary once. No XML, third-party music engine or DOM. */
 export function compileScorePerformance(document: ScoreDocument, options: ScorePerformanceOptions = {}): ScorePerformance {
   if (!Number.isFinite(document.tempo) || document.tempo <= 0) throw new Error('播放速度必须为正数。')
+  const glissandoStyle = options.glissandoStyle ?? 'hermite'
   const unfolded = unfoldScorePerformance(document)
   const ids = scoreEventIds(unfolded)
   const writtenIds = scoreEventIds(document)
@@ -113,7 +114,7 @@ export function compileScorePerformance(document: ScoreDocument, options: ScoreP
               if (slide && slide.target === xmlId && event.kind === 'note' && !event.postfixes.includes('tr') && Math.abs(slide.note.end - start) < 1e-7) {
                 note = slide.note
                 note.pitchBends ??= [{ beat: note.start, pitch: note.pitch }]
-                note.pitchBends.push({ beat: start, pitch, ...(options.glissandoStyle === 'target-duration' || options.glissandoStyle === 'hermite' ? { duration: end - start } : {}) })
+                note.pitchBends.push({ beat: start, pitch, ...(glissandoStyle === 'target-duration' || glissandoStyle === 'hermite' ? { duration: end - start } : {}) })
                 note.end = end
               } else {
                 note = { start, end, pitch, channel, velocity: 90 }
@@ -180,7 +181,7 @@ export function compileScorePerformance(document: ScoreDocument, options: ScoreP
     }
     return notes
   })
-  result.notes = shapeGlissandi(result, options.glissandoStyle ?? 'short-level', options.glissandoWindow)
+  result.notes = shapeGlissandi(result, glissandoStyle, options.glissandoWindow)
   // Pitch bends and expression affect a whole MIDI channel. Reserve independent channels so
   // a melody slide cannot bend the bass, a chord, or another sustained note.
   const slideChannels = new Map<number, number>()

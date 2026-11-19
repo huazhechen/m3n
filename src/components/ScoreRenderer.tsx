@@ -184,7 +184,7 @@ export function ScoreRenderer({
   const hasRenderedRef = useRef(false)
   const [message, setMessage] = useState('')
   const [glissandoStyle, setGlissandoStyle] = useState<GlissandoStyle>('hermite')
-  const [glissandoWindow, setGlissandoWindow] = useState<GlissandoWindow>({ start: 0, end: 1 })
+  const [glissandoWindow, setGlissandoWindow] = useState<GlissandoWindow>({ start: 1, end: .25 })
   const auditionEndRef = useRef<number | null>(null)
   const firstTransition = [...scoreDocument.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events)).find(event => event.postfixes.includes('gliss'))
   const firstTransitionId = sourceMap.find(range => range.sourceStart === firstTransition?.sourceStart)?.xmlId

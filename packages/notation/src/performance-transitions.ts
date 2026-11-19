@@ -2,11 +2,11 @@ import type { PerformanceNote, ScorePerformance } from './performance.js'
 
 export type GlissandoStyle = 'overlap' | 'soft' | 'short' | 'short-smooth' | 'short-level' | 'short-strong' | 'short-carry' | 'target-duration' | 'hermite' | 'continuous'
 
-export type GlissandoPosition = 0 | .5 | 1
+export type GlissandoPosition = 0 | .25 | .5 | 1
 export type GlissandoWindow = { start: GlissandoPosition; end: GlissandoPosition }
 
 /** Shape only explicitly marked transitions; source events and clocks stay intact. */
-export function shapeGlissandi(performance: ScorePerformance, style: GlissandoStyle, window: GlissandoWindow = { start: 0, end: 1 }): PerformanceNote[] {
+export function shapeGlissandi(performance: ScorePerformance, style: GlissandoStyle, window: GlissandoWindow = { start: 1, end: 1 }): PerformanceNote[] {
   const beatsFor = (milliseconds: number, beat: number) => {
     const qpm = performance.tempos.findLast(point => point.beat <= beat)?.qpm ?? 120
     return milliseconds * qpm / 60_000

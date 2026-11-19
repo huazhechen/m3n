@@ -10,7 +10,7 @@ import { nativeMarkStack, nativeInnerMark, nativeMarkRank } from './native-marks
 import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { placeNativeAnnotations, nativeRegionTop, type NativeRegion } from './native-annotations.js'
-import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
+import { resolveScorePitches, type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks, type NativePageBlock } from './native-pagination.js'
 import { nativeHeaderGeometry } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
@@ -31,7 +31,7 @@ export type NativeRenderOptions = {
   pageMargin?: number; coreGap?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
-export type NativeRelation = { kind: 'gliss' | 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
+export type NativeRelation = { kind: 'gliss' | 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number; glissDirection?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
 export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
@@ -56,6 +56,12 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
   const relations: NativeRelation[] = []
   const head = new Map<ScoreEvent, NativeGlyph>()
   for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {
+    const pitches = resolveScorePitches(part[staff])
+    const semitone = (event: ScoreEvent) => {
+      const [name, octave, accidental = ''] = pitches.get(event)![0]!.split(':')
+      return (({ c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 } as Record<string, number>)[name!] ?? 0) + 12 * Number(octave)
+        + (({ s: 1, ss: 2, x: 2, f: -1, ff: -2 } as Record<string, number>)[accidental] ?? 0)
+    }
     let previous: ScoreEvent | undefined
     for (const measure of part[staff]) for (const event of measure.events) {
       const glyphs = byEvent.get(event)
@@ -69,7 +75,7 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
       }
       if (previous?.postfixes.includes('gliss') && previous.kind === 'note' && event.kind === 'note') {
         const start = byEvent.get(previous)?.[0]
-        if (start) relations.push({ kind: 'gliss', first: start, last: first, level: 0 })
+        if (start) relations.push({ kind: 'gliss', first: start, last: first, level: 0, glissDirection: Math.sign(semitone(event) - semitone(previous)) })
       }
       previous = event
       if (event.kind === 'tuplet') relations.push({ kind: 'tuplet', first, last: glyphs.at(-1)!, label: String(event.tuplet?.num ?? glyphs.length), level: 0 })
@@ -181,9 +187,9 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     const glyphs = measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
     const firstByLane = new Map<string, NativeGlyph>()
     for (const glyph of glyphs) if (!firstByLane.has(glyph.lane)) firstByLane.set(glyph.lane,glyph)
-    return Math.max(0,...relations.filter(relation => (relation.kind === 'tie' || relation.kind === 'slur')
+    return Math.max(0,...relations.filter(relation => (relation.kind === 'tie' || relation.kind === 'slur' || relation.kind === 'gliss')
       && firstByLane.get(relation.last.lane) === relation.last && !glyphs.includes(relation.first))
-      .map(relation => nativeStyle.music * .45 * 1.2 - (relation.last.musicLeft ?? relation.last.left)))
+      .map(relation => relation.kind === 'gliss' ? nativeStyle.music * .95 : nativeStyle.music * .45 * 1.2 - (relation.last.musicLeft ?? relation.last.left)))
   }
   const lines = breakMeasures(projection.measures, available, options, arcLeading)
   const systems: NativeSystem[] = lines.map((measures, index) => ({ index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))

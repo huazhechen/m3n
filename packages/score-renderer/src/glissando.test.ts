@@ -55,7 +55,7 @@ it('uses the target slot to slide and reaches its pitch just before the next rep
   score.destroy()
 })
 
-it.each([{ start: 0, end: 1 }, { start: .5, end: .5 }, { start: 1, end: 0 }] as const)('exports Hermite window %j with a single attack and unchanged gain', async glissandoWindow => {
+it.each([{ start: 1, end: .25 }, { start: 0, end: 1 }, { start: .5, end: .5 }, { start: 1, end: 0 }] as const)('exports Hermite window %j with a single attack and unchanged gain', async glissandoWindow => {
   const score = await NativePlaybackScore.create(parseM3NDocument('{2/4}{120qpm}\nN: (2e{gliss} 1e) 1e |||'), { glissandoStyle: 'hermite', glissandoWindow })
   const events = BasicMIDI.fromArrayBuffer(score.midi()).tracks.flatMap(track => track.events)
   const attacks = events.filter(event => (event.statusByte & 240) === 144 && event.data[1]! > 0)

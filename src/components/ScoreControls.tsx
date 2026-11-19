@@ -115,10 +115,10 @@ export function ScoreControls(props: ScoreControlsProps) {
       </select></label>
       {props.transition.style === 'hermite' && <div className="control-transition-window">
         <label>前音起点 <select aria-label="前音起点" value={props.transition.window.start} disabled={props.isLoading} onChange={event => props.transition!.onWindowChange({ ...props.transition!.window, start: Number(event.currentTarget.value) as GlissandoPosition })}>
-          <option value="0">0 · 音头</option><option value="0.5">0.5 · 中点</option><option value="1">1 · 末尾</option>
+          <option value="0">0 · 音头</option><option value="0.25">0.25 · 四分之一</option><option value="0.5">0.5 · 中点</option><option value="1">1 · 末尾</option>
         </select></label>
         <label>后音终点 <select aria-label="后音终点" value={props.transition.window.end} disabled={props.isLoading} onChange={event => props.transition!.onWindowChange({ ...props.transition!.window, end: Number(event.currentTarget.value) as GlissandoPosition })}>
-          <option value="0">0 · 音头</option><option value="0.5">0.5 · 中点</option><option value="1">1 · 末尾</option>
+          <option value="0">0 · 音头</option><option value="0.25">0.25 · 四分之一</option><option value="0.5">0.5 · 中点</option><option value="1">1 · 末尾</option>
         </select></label>
         {props.transition.window.start === 1 && props.transition.window.end === 0 && <span role="status">起终点重合：瞬时换音，无滑动时段。</span>}
       </div>}

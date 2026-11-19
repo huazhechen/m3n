@@ -40,8 +40,8 @@ it('bounds fades within very short notes and isolates simultaneous voices', () =
   }
 })
 
-it('defaults to compensated short slides with one attack, full expression and bounded volume lift', () => {
-  const performance = compileScorePerformance(parseM3NDocument(source))
+it('offers compensated short slides with one attack, full expression and bounded volume lift', () => {
+  const performance = compile('short-level')
   const note = performance.notes.find(note => note.pitchBends)!
   expect(note.pitchBends).toHaveLength(14)
   expect(note.pitchBends!.at(-1)).toEqual({ beat: .5, pitch: 72 })
@@ -115,8 +115,8 @@ it('finishes the glide within the written target slot before sustaining its tied
   expect(performance.notes).toHaveLength(1)
 })
 
-it.each([0, .5, 1] as const)('honors all target endpoints with source position %s, preserving attacks and written clocks', start => {
-  for (const end of [0, .5, 1] as const) {
+it.each([0, .25, .5, 1] as const)('honors all target endpoints with source position %s, preserving attacks and written clocks', start => {
+  for (const end of [0, .25, .5, 1] as const) {
     const performance = compileScorePerformance(parseM3NDocument(source), { glissandoStyle: 'hermite', glissandoWindow: { start, end } })
     const note = performance.notes.find(note => note.transition)!
     const bends = note.pitchBends!
@@ -146,7 +146,12 @@ it.each([0, .5, 1] as const)('honors all target endpoints with source position %
   }
 })
 
-it('defaults Hermite to both full slots and preserves written target duration before a tie', () => {
+it('defaults to Hermite over the target slot and preserves written target duration before a tie', () => {
+  const defaultNote = compileScorePerformance(parseM3NDocument(source)).notes.find(note => note.transition)!
+  expect(defaultNote.pitchBends![1]).toEqual({ beat: .5, pitch: 74 })
+  expect(defaultNote.pitchBends!.at(-1)).toEqual({ beat: 1, pitch: 72 })
+  expect(defaultNote.expression).toBeUndefined()
+  expect(defaultNote.volume).toBeUndefined()
   expect(compile('hermite').notes.find(note => note.transition)!.pitchBends!.at(-1)).toEqual({ beat: 1, pitch: 72 })
   const performance = compileScorePerformance(parseM3NDocument('{3/4}\nN: 1{gliss} 2~ 2 |||'), { glissandoStyle: 'hermite', glissandoWindow: { start: .5, end: .5 } })
   const note = performance.notes[0]!
@@ -157,7 +162,7 @@ it('defaults Hermite to both full slots and preserves written target duration be
 })
 
 it('joins overlapping chained Hermite windows in order, using the dotted middle slot', () => {
-  const performance = compileScorePerformance(parseM3NDocument('{7/8}\nN: (1{gliss} 2.{gliss}) ((3)) 3^ |||'), { glissandoStyle: 'hermite' })
+  const performance = compileScorePerformance(parseM3NDocument('{7/8}\nN: (1{gliss} 2.{gliss}) ((3)) 3^ |||'), { glissandoStyle: 'hermite', glissandoWindow: { start: 0, end: 1 } })
   const note = performance.notes.find(note => note.transition)!
   const bends = note.pitchBends!
   expect(bends.some(point => point.beat === .875 && point.pitch === 62)).toBe(true)
