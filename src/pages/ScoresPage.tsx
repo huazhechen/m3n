@@ -161,8 +161,8 @@ export function ScoresPage() {
   const [view, setView] = useState<LibraryView>(() => {
     try {
       const stored = localStorage.getItem('m3n:library-view')
-      return stored === 'category' || stored === 'modified' ? stored : 'alphabetical'
-    } catch { return 'alphabetical' }
+      return stored === 'alphabetical' || stored === 'modified' ? stored : 'category'
+    } catch { return 'category' }
   })
   const categorized = view === 'category'
   const [localScores, setLocalScores] = useState<LocalScore[]>(() => listLocalScores())

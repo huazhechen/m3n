@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('library groups follow the index, support keyboard jumps and update with search', async ({ page }, info) => {
+  await page.addInitScript(() => { localStorage.setItem('m3n:library-view', 'alphabetical') })
   await page.goto('/scores')
   const index = page.getByRole('navigation', { name: '乐谱首字母索引' })
   await expect(index).toBeVisible()
@@ -26,6 +27,7 @@ test('library groups follow the index, support keyboard jumps and update with se
 test('mobile index can be dragged and leaves room for cards', async ({ browser }, info) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
   const page = await context.newPage()
+  await page.addInitScript(() => { localStorage.setItem('m3n:library-view', 'alphabetical') })
   await page.goto('/scores')
   const index = page.getByRole('navigation', { name: '乐谱首字母索引' })
   await expect(index).toBeVisible()
@@ -55,6 +57,7 @@ test('mobile index can be dragged and leaves room for cards', async ({ browser }
 test('letter rail stays inside a narrow landscape viewport', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 667, height: 320 }, isMobile: true, hasTouch: true })
   const page = await context.newPage()
+  await page.addInitScript(() => { localStorage.setItem('m3n:library-view', 'alphabetical') })
   await page.goto('/scores')
   const rail = page.getByRole('navigation', { name: '乐谱首字母索引' })
   await expect(rail).toBeVisible()
@@ -76,14 +79,14 @@ for (const width of [390, 1280]) {
     const toggle = page.getByRole('button', { name: '切换曲库展示方式' })
     await expect(toggle).toHaveText('')
     await expect(toggle.locator('svg')).toHaveCount(1)
-    await expect(toggle).toHaveAttribute('title', '切换为分类展示')
+    await expect(page.getByRole('status', { name: '当前排序方式' })).toHaveText('音乐类型')
+    await expect(toggle).toHaveAttribute('title', '切换为最后修改时间')
     const toolbar = page.locator('.library-toolbar')
     const toolbarBounds = await toolbar.boundingBox()
     const searchBounds = await page.getByRole('searchbox', { name: '搜索乐谱' }).boundingBox()
     const toggleBounds = await toggle.boundingBox()
     expect(toggleBounds!.x).toBeGreaterThanOrEqual(searchBounds!.x + searchBounds!.width)
     expect(Math.abs(toggleBounds!.y + toggleBounds!.height / 2 - searchBounds!.y - searchBounds!.height / 2)).toBeLessThan(1)
-    await toggle.click()
     await expect(toggle).toHaveAttribute('title', '切换为最后修改时间')
     expect(await toolbar.boundingBox()).toEqual(toolbarBounds)
     expect(await page.getByRole('searchbox', { name: '搜索乐谱' }).boundingBox()).toEqual(searchBounds)
