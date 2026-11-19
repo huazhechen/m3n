@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 99,
+  "sourceCount": 100,
   "sections": [
     {
       "id": "basics",
@@ -832,6 +832,14 @@
       "section": "pop",
       "group": "快速音型与装饰",
       "reason": "快速节奏与高音区"
+    },
+    {
+      "id": "zui_chang_de_dian_ying",
+      "file": "zui_chang_de_dian_ying_01.m3n",
+      "title": "最长的电影",
+      "section": "pop",
+      "group": "弱起与反复",
+      "reason": "十六分切分、跨小节延音、房子内弱起与 D.S. 返回"
     }
   ],
   "edition": "第七十五版",
