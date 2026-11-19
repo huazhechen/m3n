@@ -52,6 +52,38 @@ test('default needs no samples; five FluidR3 q3 instruments load on demand and p
   await info.attach('sample-loading-ms.json', { body: JSON.stringify(timings), contentType: 'application/json' })
 })
 
+test('saved piano waits for Play and cached playback never opens a loading dialog', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('m3n:playback-tone', 'piano'))
+  const samples: string[] = []
+  page.on('request', request => { if (/\.sf3(?:\?|$)/.test(request.url())) samples.push(request.url()) })
+  await page.goto('/scores/huan_le_song_01')
+  await openScoreSettings(page)
+  await expect(page.getByRole('button', { name: '选择音色，当前钢琴', exact: true })).toBeVisible()
+  await ready(page)
+  expect(samples).toHaveLength(0)
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
+  expect(samples).toHaveLength(1)
+  await page.getByRole('button', { name: '暂停', exact: true }).click()
+  await page.reload()
+  await ready(page)
+  // Observe even a brief modal flash, including dialogs removed before the assertion.
+  await page.evaluate(() => {
+    Object.assign(window, { toneDialogs: 0 })
+    new MutationObserver(records => {
+      for (const record of records) for (const node of record.addedNodes) {
+        if (node instanceof Element && (node.matches('.playback-loading-dialog') || node.querySelector('.playback-loading-dialog'))) {
+          (window as Window & { toneDialogs: number }).toneDialogs++
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true })
+  })
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
+  expect(samples).toHaveLength(1)
+  expect(await page.evaluate(() => (window as Window & { toneDialogs: number }).toneDialogs)).toBe(0)
+})
+
 test('download has progress, cancellation and retry on a narrow screen', async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 844 })
   await page.goto('/scores/huan_le_song_01')
@@ -60,6 +92,8 @@ test('download has progress, cancellation and retry on a narrow screen', async (
   const gate = new Promise<void>(resolve => { release = resolve })
   await page.route('**/*FluidR3-piano-q3-*.sf3', async route => { await gate; await route.continue().catch(() => {}) })
   await selectTone(page, '钢琴')
+  await expect(page.locator('.playback-loading-dialog')).toHaveCount(0)
+  await page.getByRole('button', { name: '播放', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: '加载钢琴音色', exact: true })
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('progressbar', { name: '音色下载进度' })).not.toHaveAttribute('value')
@@ -72,6 +106,7 @@ test('download has progress, cancellation and retry on a narrow screen', async (
   await expect(page.getByRole('button', { name: '选择音色，当前合成音色', exact: true })).toBeVisible()
   await page.route('**/*FluidR3-piano-q3-*.sf3', route => route.abort())
   await selectTone(page, '钢琴')
+  await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.locator('.control-tone-status')).toContainText('无法加载音色')
   await page.unroute('**/*FluidR3-piano-q3-*.sf3')
   await openScoreSettings(page)
@@ -103,7 +138,7 @@ test('live download and transpose preserve the audio context and transport posit
   const gate = new Promise<void>(resolve => { release = resolve })
   await page.route('**/*FluidR3-violin-q3-*.sf3', async route => { await gate; await route.continue() })
   await selectTone(page, '小提琴')
-  await page.getByRole('button', { name: '后台加载' }).click()
+  await expect(page.locator('.playback-loading-dialog')).toHaveCount(0)
   await expect(pause).toBeEnabled()
   await openScoreSettings(page)
   await page.getByRole('button', { name: /^移调，当前/ }).click()
@@ -125,18 +160,15 @@ test('unknown stored tones use the default, while harmonica is now supported', a
   await expect(page.getByRole('button', { name: '选择音色，当前口琴', exact: true })).toBeVisible()
 })
 
-test('cold playback shows a modal progress bar until the audio worklet is ready', async ({ page }) => {
+test('cold synth playback prepares the audio worklet without a modal', async ({ page }) => {
   let release!: () => void
   const gate = new Promise<void>(resolve => { release = resolve })
   await page.route('**/*spessasynth_processor.min-*.js', async route => { await gate; await route.continue() })
   await page.goto('/scores/huan_le_song_01')
   await page.getByRole('button', { name: '播放', exact: true }).click()
-  const dialog = page.getByRole('dialog', { name: '准备播放', exact: true })
-  await expect(dialog).toBeVisible()
-  await expect(dialog.getByRole('progressbar', { name: '播放准备进度' })).not.toHaveAttribute('value')
+  await expect(page.locator('.playback-loading-dialog')).toHaveCount(0)
   release()
-  await expect(dialog).toHaveCount(0, { timeout: 30_000 })
-  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled()
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
 })
 
 async function auditFinalOutput(page: Page) {

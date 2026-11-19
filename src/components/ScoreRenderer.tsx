@@ -187,7 +187,7 @@ export function ScoreRenderer({
   const playbackTone = playbackOnly ? 'synth' : savedPlaybackTone
   const toneRef = useRef(playbackTone)
   toneRef.current = playbackTone
-  const [toneLoading, setToneLoading] = useState(playbackTone !== 'synth')
+  const [toneLoading, setToneLoading] = useState(false)
   const [toneProgress, setToneProgress] = useState<ToneLoadProgress | null>(null)
   const readyToneRef = useRef<typeof playbackTone>('synth')
   useEffect(() => subscribeToneLoadProgress(progress => {
@@ -195,6 +195,8 @@ export function ScoreRenderer({
   }), [])
   const [toneError, setToneError] = useState('')
   const [toneRetry, setToneRetry] = useState(0)
+  const playRequestRef = useRef(0)
+  const [isPlayRequest, setIsPlayRequest] = useState(false)
   const [playbackProgress, setPlaybackProgress] = useState(0)
   const defaultWidth = scoreDocument.preferredWidth ?? DEFAULT_SCORE_WIDTH
   const [layoutWidth, setLayoutWidth] = useState(defaultWidth)
@@ -239,11 +241,14 @@ export function ScoreRenderer({
   useEffect(() => {
     const playbackLease = playbackLeaseRef.current
     setPlaybackProgress(0)
+    setIsPlayRequest(false)
+    setToneLoading(false)
     setIsPlaying(false)
     setIsPlayerLoading(false)
     return () => {
       renderGenerationRef.current += 1
       playerGenerationRef.current += 1
+      playRequestRef.current += 1
       scorePlaybackCoordinator.release(playbackLease)
       playerRef.current?.destroy(); playerRef.current = null
       scoreRef.current?.destroy(); scoreRef.current = null
@@ -382,12 +387,12 @@ export function ScoreRenderer({
     if (!isSeekingRef.current && startupBeatRef.current === null) updatePlaybackHighlight(seconds, duration)
   }
 
-  const getPlayer = () => {
+  const getPlayer = (initialTone = toneRef.current) => {
     if (playerRef.current) return Promise.resolve(playerRef.current)
     if (playerInitializationRef.current) return playerInitializationRef.current
     const generation = renderGenerationRef.current
     const playerGeneration = playerGenerationRef.current
-    const tone = toneRef.current
+    const tone = initialTone
     const initialization = (async () => {
       setIsPlayerLoading(true)
       try {
@@ -412,14 +417,6 @@ export function ScoreRenderer({
           onStartupBeat: showStartupBeat,
         }, transposeRef.current, tone)
         if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
-        try {
-          let appliedTone = tone
-          while (appliedTone !== toneRef.current) {
-            appliedTone = toneRef.current
-            await player.setTone(appliedTone)
-          }
-        } catch (error) { player.destroy(); throw error }
-        if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱已更新，请重新播放。') }
         player.setTranspose(transposeRef.current)
         player.setTempo(bpmRef.current)
         player.setMetronomeEnabled(metronomeEnabled)
@@ -444,8 +441,11 @@ export function ScoreRenderer({
   useEffect(() => {
     let cancelled = false
     setToneError('')
-    setToneLoading(playbackTone !== 'synth')
+    setToneLoading(false)
     setToneProgress(null)
+    // A paused player applies the selection on the next explicit play request.
+    if (!playerRef.current || playerRef.current.paused) return
+    setToneLoading(true)
     void (async () => {
       try {
         const player = playerRef.current
@@ -464,20 +464,44 @@ export function ScoreRenderer({
   }, [playbackTone, toneRetry])
 
   const togglePlayback = async () => {
+    if (playerRef.current && !playerRef.current.paused) {
+      stopPlaybackRef.current()
+      return
+    }
+    const request = ++playRequestRef.current
+    const generation = playerGenerationRef.current
+    const isCurrent = () => request === playRequestRef.current && generation === playerGenerationRef.current
+    setIsPlayRequest(true)
+    setToneError('')
+    setToneProgress(null)
+    setToneLoading(true)
     try {
+      // Cache hits report only readiness; only an actual download opens the dialog.
+      let tone = toneRef.current
+      if (tone !== 'synth') await loadSampledTone(tone)
+      if (!isCurrent()) return
       const player = await getPlayer()
-      if (player.paused) {
-        scorePlaybackCoordinator.claim(playbackLeaseRef.current)
-        setIsPlaying(true)
-        await player.play()
-        setIsPlaying(!player.paused)
-      } else {
-        stopPlaybackRef.current()
+      while (isCurrent()) {
+        tone = toneRef.current
+        await player.setTone(tone)
+        if (tone === toneRef.current) break
       }
+      if (!isCurrent()) return
+      readyToneRef.current = tone
+      scorePlaybackCoordinator.claim(playbackLeaseRef.current)
+      setIsPlaying(true)
+      await player.play()
+      if (isCurrent()) setIsPlaying(!player.paused)
     } catch (error) {
+      if (!isCurrent()) return
       scorePlaybackCoordinator.release(playbackLeaseRef.current)
       setIsPlaying(false)
-      setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
+      setToneError(error instanceof Error ? error.message : '无法加载音色，请重试。')
+    } finally {
+      if (request === playRequestRef.current) {
+        setToneLoading(false)
+        setIsPlayRequest(false)
+      }
     }
   }
 
@@ -495,7 +519,7 @@ export function ScoreRenderer({
     if (isSeekingRef.current) return
     isSeekingRef.current = true
     pendingSeekProgressRef.current = playbackProgress
-    void getPlayer().then((player) => {
+    void getPlayer('synth').then((player) => {
       const progress = pendingSeekProgressRef.current
       const playbackSeconds = progress * player.duration
       updatePlaybackHighlight(playbackSeconds, player.duration, false)
@@ -551,10 +575,13 @@ export function ScoreRenderer({
 
   return (
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
-      {(isPlayerLoading || toneLoading) && <PlaybackLoadingDialog
-        tone={toneLoading ? playbackTone : undefined}
+      {isPlayRequest && toneLoading && toneProgress?.stage === 'download' && <PlaybackLoadingDialog
+        tone={playbackTone}
         progress={toneProgress}
         onCancelTone={() => {
+          ++playRequestRef.current
+          setIsPlayRequest(false)
+          setToneLoading(false)
           const tone = playbackTone
           changePlaybackTone(readyToneRef.current)
           if (tone !== 'synth') cancelToneLoad(tone)
@@ -564,7 +591,7 @@ export function ScoreRenderer({
         playbackOnly={playbackOnly}
         contained={containedControls}
         isPlaying={isPlaying}
-        isLoading={isPlayerLoading || isSourceUpdating}
+        isLoading={isPlayerLoading || isPlayRequest || isSourceUpdating}
         progress={playbackProgress}
         bpm={playbackBpm}
         width={Math.round(renderWidth)}
@@ -582,8 +609,11 @@ export function ScoreRenderer({
         tone={playbackTone}
         toneLoading={toneLoading}
         toneError={toneError}
-        onToneChange={tone => { setToneLoading(tone !== 'synth'); setToneError(''); changePlaybackTone(tone) }}
-        onToneRetry={() => setToneRetry(value => value + 1)}
+        onToneChange={tone => { setToneError(''); changePlaybackTone(tone) }}
+        onToneRetry={() => {
+          if (playerRef.current && !playerRef.current.paused) setToneRetry(value => value + 1)
+          else void togglePlayback()
+        }}
         onTogglePlayback={() => void togglePlayback()}
         onSeekStart={beginSeek}
         onSeek={previewSeek}

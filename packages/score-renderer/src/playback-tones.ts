@@ -28,7 +28,6 @@ async function download(tone: InstrumentTone) {
   cancellations.set(tone, controller)
   const check = () => controller.signal.throwIfAborted()
   const ready = () => report({ tone, completed: 1, total: 1, stage: 'ready' })
-  report({ tone, completed: 0, total: 0, stage: 'download' })
   const key = new URL(SAMPLED_TONE_URLS[tone], import.meta.url).href
   try {
     let cache: Cache | undefined
@@ -44,6 +43,7 @@ async function download(tone: InstrumentTone) {
       }
     } catch { check(); cache = undefined }
     check()
+    report({ tone, completed: 0, total: 0, stage: 'download' })
     const response = await fetch(key, { signal: controller.signal })
     if (!response.ok) throw new Error(`无法加载音色（${response.status}），请重试。`)
     const total = Math.max(0, Number(response.headers.get('Content-Length')) || 0)

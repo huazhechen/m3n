@@ -34,7 +34,11 @@ test('reads the persistent sampled bank after a module reload without a network 
   setup()
   await (await import('./playback-tones')).loadSampledTone('flute')
   vi.resetModules()
-  const restored = await (await import('./playback-tones')).loadSampledTone('flute')
+  const module = await import('./playback-tones')
+  const updates: unknown[] = []
+  module.subscribeToneLoadProgress(value => updates.push(value))
+  const restored = await module.loadSampledTone('flute')
+  expect(updates).toEqual([{ tone: 'flute', completed: 1, total: 1, stage: 'ready' }])
   expect(new Uint8Array(restored)).toEqual(new Uint8Array(valid))
   expect(fetch).toHaveBeenCalledTimes(1)
 })
