@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sortScoresByTitle, sortScoresByModifiedTime, scoreTitleInitial } from './score-order'
+import { sortScoresByTitle, sortScoresByModifiedTime, sortScoresByCategory, scoreTitleInitial } from './score-order'
 
 describe('score title ordering', () => {
   it('groups titles by the same normalized pinyin used for sorting', () => {
@@ -32,4 +32,19 @@ it('sorts local and preset scores together from newest to oldest without mutatin
   ]
   expect(sortScoresByModifiedTime(scores).map(score => score.title)).toEqual(['new preset', 'same time', 'old local', 'older preset'])
   expect(scores[0]!.title).toBe('old local')
+})
+
+
+it('navigates in category and within-category order, then uncategorized title order', () => {
+  const scores = [
+    { title: 'A second chapter', category: { order: 1, itemOrder: 0 } },
+    { title: 'Uncategorized Z' },
+    { title: 'A second song', category: { order: 0, itemOrder: 1 } },
+    { title: 'Z first song', category: { order: 0, itemOrder: 0 } },
+    { title: 'Uncategorized A' },
+  ]
+  expect(sortScoresByCategory(scores).map(score => score.title)).toEqual([
+    'Z first song', 'A second song', 'A second chapter', 'Uncategorized A', 'Uncategorized Z',
+  ])
+  expect(scores[0]!.title).toBe('A second chapter')
 })

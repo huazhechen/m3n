@@ -27,3 +27,10 @@ export function scoreTitleInitial(title: string): string {
 export function sortScoresByModifiedTime<T extends { modifiedAt: number }>(scores: readonly T[]): T[] {
   return [...scores].sort((a, b) => b.modifiedAt - a.modifiedAt)
 }
+
+/** Follow the library's category order; uncategorized scores come last in title order. */
+export function sortScoresByCategory<T extends { title: string; category?: { order: number; itemOrder: number } }>(scores: readonly T[]): T[] {
+  return sortScoresByTitle(scores).sort((a, b) =>
+    (a.category?.order ?? Number.MAX_SAFE_INTEGER) - (b.category?.order ?? Number.MAX_SAFE_INTEGER)
+    || (a.category?.itemOrder ?? Number.MAX_SAFE_INTEGER) - (b.category?.itemOrder ?? Number.MAX_SAFE_INTEGER))
+}

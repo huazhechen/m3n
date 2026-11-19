@@ -6,6 +6,7 @@ import { ScoreExportDialog } from '../components/ScoreExportDialog'
 import type { ScoreExportDialogRef } from '../components/ScoreExportDialog'
 import { NavActionContent, TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
+import { sortScoresByCategory } from '../lib/score-order'
 import { useScoreSource } from '../hooks/useScoreSource'
 import type { ScoreDisplaySettings } from '../lib/render-score'
 import { readRenderMode } from '../lib/renderer-settings'
@@ -13,7 +14,8 @@ import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
 
 export function ScoreReaderPage() {
   const { slug } = useParams()
-  const score = presetScores.find((item) => item.slug === slug)
+  const orderedScores = useMemo(() => sortScoresByCategory(presetScores), [])
+  const score = orderedScores.find((item) => item.slug === slug)
   const { source: scoreSource, status, error, retry } = useScoreSource(slug)
   const exportDialogRef = useRef<ScoreExportDialogRef>(null)
   const [displaySettings, setDisplaySettings] = useState<ScoreDisplaySettings | null>(null)
@@ -24,9 +26,9 @@ export function ScoreReaderPage() {
 
   if (status !== 'ready') return <main><TopNav /><ScoreLoadStatus status={status} error={error} onRetry={retry} /></main>
 
-  const scoreIndex = score ? presetScores.indexOf(score) : -1
-  const previousScore = scoreIndex > 0 ? presetScores[scoreIndex - 1] : undefined
-  const nextScore = scoreIndex >= 0 ? presetScores[scoreIndex + 1] : undefined
+  const scoreIndex = score ? orderedScores.indexOf(score) : -1
+  const previousScore = scoreIndex > 0 ? orderedScores[scoreIndex - 1] : undefined
+  const nextScore = scoreIndex >= 0 ? orderedScores[scoreIndex + 1] : undefined
 
   return (
     <main>

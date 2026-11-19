@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path'
 import { chromium } from '@playwright/test'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
-const plan = JSON.parse(readFileSync(join(output, 'editorial-plan.json'), 'utf8'))
+const plan = JSON.parse(readFileSync(join(root, 'config/scorebook/editorial-plan.json'), 'utf8'))
 const record = JSON.parse(readFileSync(join(output, 'layout-record.json'), 'utf8'))
 const temp = join(root, '.tmp', plan.outputKey), staged = join(temp, 'single-pdfs')
 const hash = value => createHash('sha256').update(value).digest('hex')

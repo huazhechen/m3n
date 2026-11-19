@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const args = process.argv.slice(2)
 if (args.includes('--help')) {
-  console.log('Usage: node tools/refresh-score-pdfs.mjs\n\nBuild the renderer, regenerate the complete scorebook, write preferred widths\nback to score sources, then refresh every solo PDF and proof PDF.\nUses scorebook/editorial-plan.json; stops at the first failed step.')
+  console.log('Usage: node tools/refresh-score-pdfs.mjs\n\nBuild the renderer, regenerate the complete scorebook, write preferred widths\nback to score sources, then refresh every solo PDF and proof PDF.\nUses config/scorebook/editorial-plan.json; stops at the first failed step.')
   process.exit(0)
 }
 if (args.length) {

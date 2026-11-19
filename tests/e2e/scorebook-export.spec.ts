@@ -55,7 +55,7 @@ test('exports the full built-in library with progress and a vector PDF, independ
   expect(text).toContain('约定')
   const contents = execFileSync('pdftotext', ['-f', '2', '-l', '3', path, '-'], { encoding: 'utf8' }).replace(/\s/g, '')
   expect((contents.match(/目录/g) ?? []).length).toBe(2)
-  const plan = JSON.parse(await readFile('scorebook/editorial-plan.json', 'utf8')) as { entries: { title: string }[] }
+  const plan = JSON.parse(await readFile('config/scorebook/editorial-plan.json', 'utf8')) as { entries: { title: string }[] }
   for (const entry of plan.entries) expect(contents).toContain(entry.title.replace(/\s/g, ''))
   const firstMusic = execFileSync('pdftotext', ['-f', '4', '-l', '4', path, '-'], { encoding: 'utf8' }).replace(/\s/g, '')
   expect(firstMusic).toContain('半音阶口琴基本功')

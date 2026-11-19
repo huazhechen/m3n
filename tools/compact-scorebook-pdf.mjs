@@ -8,7 +8,7 @@ import { build } from 'vite'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const read = file => JSON.parse(readFileSync(file, 'utf8'))
-const planFile=process.argv.find(arg=>arg.startsWith('--plan='))?.slice(7)??join(output,'editorial-plan.json')
+const planFile=process.argv.find(arg=>arg.startsWith('--plan='))?.slice(7)??join(root,'config/scorebook/editorial-plan.json')
 const plan = read(resolve(planFile)), record = read(join(output, plan.recordFile??'layout-record.json'))
 const temp = join(root, '.tmp', plan.outputKey)
 const pagesFile = join(temp, 'unoutlined-pages.json')

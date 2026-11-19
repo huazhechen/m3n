@@ -4,7 +4,7 @@
 {composer=Joseph Kosma}
 // 主参考：OpenBook autumn_leaves.ly.tera，VoiceFake 版本。
 // https://github.com/veltzer/book-openbook/blob/master/src/openbook/autumn_leaves.ly.tera
-// 版本与核对记录见 scorebook/六首半音阶口琴曲目来源与校订.md。
+// 版本与核对记录见 Git 历史中的 scorebook/六首半音阶口琴曲目来源与校订.md。
 {key=Em} {4/4} {130qpm}
 N: 6d 7d 1 | 4^^~ | 4 5d 6d 7d | 3^ 3^~ |
 ---

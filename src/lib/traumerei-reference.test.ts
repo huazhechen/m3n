@@ -2,8 +2,8 @@ import { compileScorePerformance, formatM3N, parseM3NDocument, validateM3NDiagno
 import { expect, it } from 'vitest'
 import source from '../scores/meng_huan_qu_01.m3n?raw'
 import reference from './fixtures/traumerei-reference.json'
-import plan from '../../scorebook/editorial-plan.json'
-import categories from '../../scorebook/library-categories.json'
+import plan from '../../config/scorebook/editorial-plan.json'
+import categories from '../../config/scorebook/library-categories.json'
 
 it('preserves the Kuaiyuepu Träumerei melody, repeat route and fermatas', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])

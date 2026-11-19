@@ -3,7 +3,7 @@
 {subtitle=Moon River}
 {composer=Henry Mancini}
 // 参考：https://www.kuaiyuepu.com/jianpu/VaQjb1LS8.html
-// 器乐主旋律；版本与核对记录见 scorebook/六首半音阶口琴曲目来源与校订.md。
+// 器乐主旋律；版本与核对记录见 Git 历史中的 scorebook/六首半音阶口琴曲目来源与校订.md。
 {key=C} {3/4} {80qpm}
 N: 5^. | 2e 1e^ | 7. (6) (5 4) | 5^ 1 |
 ---

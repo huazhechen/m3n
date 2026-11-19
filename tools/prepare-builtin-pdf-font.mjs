@@ -11,7 +11,7 @@ const digest = value => createHash('sha256').update(value).digest('hex')
 /** Conservative source superset includes lyrics, credits, headings and renderer symbols. */
 export function builtinPdfCharacters() {
   const read = file => readFileSync(join(root, file), 'utf8')
-  const inputs = [read('scorebook/editorial-plan.json'), read('src/lib/online-scorebook.ts')]
+  const inputs = [read('config/scorebook/editorial-plan.json'), read('src/lib/online-scorebook.ts')]
   for (const file of readdirSync(join(root, 'src/scores')).filter(file => file.endsWith('.m3n')).sort()) inputs.push(read(`src/scores/${file}`))
   for (const file of readdirSync(join(root, 'packages/numbered-notation/src')).filter(file => file.endsWith('.ts') && !file.endsWith('.test.ts')).sort()) inputs.push(read(`packages/numbered-notation/src/${file}`))
   inputs.push(Array.from({ length: 95 }, (_, index) => String.fromCharCode(index + 32)).join(''))

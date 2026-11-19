@@ -4,7 +4,7 @@
 
 本版覆盖97份谱源（96首乐曲及基本功）。完整搜索540～720px、步长10px，并检查候选±5px页数稳定性、实绘越界及音符／歌词碰撞；合页沿用640px与635／645px容量检查。PDF验证成功后，回写每首谱头的建议版宽。整册完成后通过 `npm run export:score-pdfs` 刷新全部单曲及现有校验稿。
 
-生成配置见 `scorebook/editorial-plan.json`。PDF、逐曲布局、体积报告和排序CSV按项目规则保留为本地生成物。
+生成配置见 `config/scorebook/editorial-plan.json`。PDF、逐曲布局、体积报告和排序CSV按项目规则保留为本地生成物。
 
 ## 生成结果
 

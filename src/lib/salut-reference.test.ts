@@ -2,8 +2,8 @@ import { compileScorePerformance, formatM3N, parseM3NDocument, validateM3NDiagno
 import { expect, it } from 'vitest'
 import source from '../scores/ai_de_li_zan_01.m3n?raw'
 import reference from './fixtures/salut-reference.json'
-import plan from '../../scorebook/editorial-plan.json'
-import categories from '../../scorebook/library-categories.json'
+import plan from '../../config/scorebook/editorial-plan.json'
+import categories from '../../config/scorebook/library-categories.json'
 
 it('preserves the reviewed Salut melody, shared ending measures and playback route', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])

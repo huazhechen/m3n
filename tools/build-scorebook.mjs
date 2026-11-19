@@ -10,7 +10,7 @@ import { writePreferredWidths } from './scorebook-source.mjs'
 import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth } from './scorebook-packing.mjs'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
-const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(output, 'editorial-plan.json'))
+const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(root, 'config/scorebook/editorial-plan.json'))
 const probeOnly = process.argv.includes('--probe-only')
 const plan = JSON.parse(readFileSync(planFile, 'utf8'))
 assert(!process.argv.includes('--retain-unchanged-sizes'), 'Every build now selects widths from the web renderer; remove --retain-unchanged-sizes')
@@ -134,6 +134,7 @@ const report = { title: plan.title, edition: plan.edition, renderer: 'web', rend
   widthSearch: { minimum: 540, maximum: 720, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 26.4, pagedMinimum: 26.4, defaultLeadingEm: 1.2, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedScoreWidth, sharedPreferredWidth,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }
+mkdirSync(output, { recursive: true })
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')
 writeFileSync(join(temp, 'index.html'), '<!doctype html><meta charset="utf-8"><title>谱集预览</title><style>body{background:#ddd}figure{display:inline-block;width:380px;margin:10px;vertical-align:top}img{width:100%}</style>'
   + pages.map((page, index) => `<figure><figcaption>第${index + 1}页 · ${page.kind}</figcaption><img loading="lazy" src="pages/${String(index + 1).padStart(3, '0')}.svg"></figure>`).join(''))

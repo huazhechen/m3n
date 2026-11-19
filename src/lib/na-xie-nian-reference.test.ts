@@ -1,7 +1,7 @@
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
-import plan from '../../scorebook/editorial-plan.json'
-import categories from '../../scorebook/library-categories.json'
+import plan from '../../config/scorebook/editorial-plan.json'
+import categories from '../../config/scorebook/library-categories.json'
 import source from '../scores/na_xie_nian_01.m3n?raw'
 import reference from './fixtures/na-xie-nian-kuaiyuepu.json'
 

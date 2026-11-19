@@ -3,7 +3,7 @@
 {subtitle=What a Wonderful World}
 {composer=Bob Thiele、George David Weiss}
 // 参考：https://www.kuaiyuepu.com/jianpu/1DFTk1tVD.html
-// 器乐主旋律；版本与核对记录见 scorebook/六首半音阶口琴曲目来源与校订.md。
+// 器乐主旋律；版本与核对记录见 Git 历史中的 scorebook/六首半音阶口琴曲目来源与校订.md。
 {key=F} {4/4} {80qpm}
 N: 0 0 0 (5d 5d) | 1. (1) 5^ | (0 6) (6 6) 5^ | (0 4) (4 4) 3^ |
 ---

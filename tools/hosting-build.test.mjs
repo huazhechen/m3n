@@ -32,11 +32,11 @@ import { publishWeb, retentionMs } from './publish-web.mjs'
 test('score edits, additions, book metadata and font updates preserve every JavaScript hash', async () => {
   const root = await mkdtemp(join(tmpdir(), 'm3n-catalog-build-'))
   try {
-    for (const folder of ['src/scores', 'src/assets', 'scorebook']) await mkdir(join(root, folder), { recursive: true })
+    for (const folder of ['src/scores', 'src/assets', 'config/scorebook']) await mkdir(join(root, folder), { recursive: true })
     await writeFile(join(root, 'index.html'), '<script type="module" src="/main.js"></script>')
     await writeFile(join(root, 'main.js'), `import scores, { initializeCatalog, loadScoreSource, pdfFontUrl, getScorebookPlan } from 'virtual:m3n-score-catalog'; initializeCatalog().then(() => console.log(scores, loadScoreSource, pdfFontUrl(), getScorebookPlan()));`)
-    await writeFile(join(root, 'scorebook/library-categories.json'), '[]')
-    await writeFile(join(root, 'scorebook/editorial-plan.json'), '{"title":"Book"}')
+    await writeFile(join(root, 'config/scorebook/library-categories.json'), '[]')
+    await writeFile(join(root, 'config/scorebook/editorial-plan.json'), '{"title":"Book"}')
     await writeFile(join(root, 'src/assets/builtin-pdf-text.ttf'), 'font one')
     await writeFile(join(root, 'src/scores/one.m3n'), '{title=One}\n{1=C}\n{4/4}\n1 2 3 4 |||\n')
     const compile = async () => {
@@ -53,9 +53,9 @@ test('score edits, additions, book metadata and font updates preserve every Java
     assert.deepEqual(edited.js, before.js)
     assert.notEqual(edited.catalog.scores[0].sourceUrl, before.catalog.scores[0].sourceUrl)
     await writeFile(join(root, 'src/scores/two.m3n'), '{title=Two}\n{1=C}\n{4/4}\n1 1 1 1 |||\n')
-    await writeFile(join(root, 'scorebook/library-categories.json'), '[{"id":"new","title":"New category","files":["two.m3n"]}]')
+    await writeFile(join(root, 'config/scorebook/library-categories.json'), '[{"id":"new","title":"New category","files":["two.m3n"]}]')
     await writeFile(join(root, 'src/assets/builtin-pdf-text.ttf'), 'font two')
-    await writeFile(join(root, 'scorebook/editorial-plan.json'), '{"title":"Book revised"}')
+    await writeFile(join(root, 'config/scorebook/editorial-plan.json'), '{"title":"Book revised"}')
     const added = await compile()
     assert.deepEqual(added.js, before.js)
     assert.equal(added.catalog.scores.length, 2)

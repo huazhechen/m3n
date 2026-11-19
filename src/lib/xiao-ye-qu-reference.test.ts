@@ -3,8 +3,8 @@ import { expect, it } from 'vitest'
 import source from '../scores/xiao_ye_qu_01.m3n?raw'
 import reference from './fixtures/xiao-ye-qu-kuaiyuepu-reference.json'
 import fixedPitches from './fixtures/xiao-ye-qu-fixed-pitches.json'
-import categories from '../../scorebook/library-categories.json'
-import plan from '../../scorebook/editorial-plan.json'
+import categories from '../../config/scorebook/library-categories.json'
+import plan from '../../config/scorebook/editorial-plan.json'
 
 function midi(value: string) {
   const [letter, octave, accidental = ''] = value.split(':')

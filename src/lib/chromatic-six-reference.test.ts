@@ -1,7 +1,7 @@
 import { compileScorePerformance, formatM3N, parseM3NDocument, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
-import plan from '../../scorebook/editorial-plan.json'
-import categories from '../../scorebook/library-categories.json'
+import plan from '../../config/scorebook/editorial-plan.json'
+import categories from '../../config/scorebook/library-categories.json'
 import references from './fixtures/chromatic-six-references.json'
 
 const sources = import.meta.glob<string>('../scores/*.m3n', { eager: true, query: '?raw', import: 'default' })

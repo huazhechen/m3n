@@ -10,7 +10,7 @@ node tools/refresh-score-pdfs.mjs
 
 也可直接执行 `./tools/refresh-score-pdfs.mjs`。脚本根据自身位置定位项目根目录，依次构建渲染包、生成和校验整册PDF并回写谱头、生成和校验全部单曲PDF及校验稿。任一步失败立即停止，返回失败退出码。
 
-版本与输出路径统一读取 `scorebook/editorial-plan.json`，重复运行刷新配置中的版本，不自动修改版号。`--help` 显示用法，未知参数会报错。PDF、详细布局与体积报告仍为本地生成物。
+版本与输出路径统一读取 `config/scorebook/editorial-plan.json`，重复运行刷新配置中的版本，不自动修改版号。`--help` 显示用法，未知参数会报错。PDF、详细布局与体积报告仍为本地生成物。
 
 脚本测试：`node --test tools/refresh-score-pdfs.test.mjs`。测试验证从其他工作目录调用时的执行顺序，并分别模拟三个阶段失败，确认立即停止且不执行后续阶段。
 
