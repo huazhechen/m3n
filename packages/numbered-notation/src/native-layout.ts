@@ -103,10 +103,13 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
     flush()
   }
   // Rhythm brackets precede arcs, including a short tie from their last child.
-  // Inner arcs are placed first. A later overlapping relation occupies an
-  // outer band; all fragments retain that band through wrapping/pagination.
+  // Arcs stay inside expression hairpins regardless of the respective spans.
+  // Within each layer, inner relations precede outer ones; all fragments
+  // retain that ordering through wrapping/pagination.
   const order = new Map(projection.glyphs.map((glyph, index) => [glyph, index]))
-  relations.sort((a, b) => Number(b.kind === 'tuplet') - Number(a.kind === 'tuplet')
+  const layer = (relation: NativeRelation) => relation.kind === 'tuplet' ? 0
+    : relation.kind === 'cresc' || relation.kind === 'decres' ? 2 : 1
+  relations.sort((a, b) => layer(a) - layer(b)
     || (order.get(a.last)! - order.get(a.first)!) - (order.get(b.last)! - order.get(b.first)!))
   for (const [index, relation] of relations.entries()) {
     if (relation.kind === 'inst') continue

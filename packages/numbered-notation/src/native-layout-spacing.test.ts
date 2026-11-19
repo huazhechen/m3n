@@ -7,6 +7,24 @@ import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeArcSlice } from './native-curve.js'
 
 describe('relation and ending clearance', () => {
+  it.each([
+    '{lg}1 {cresc}2 3{/} 4{/}',
+    '{lg}1 {decres}2 3{/} 4{/}',
+    '{cresc}1 {lg}2 3{/} 4{/}',
+    '{cresc}{lg}1 2 3 4{/}{/}',
+    '{lg}{cresc}1 2 3 4{/}{/}',
+  ])('keeps expression hairpins outside slurs independently of span and declaration order: %s', notes => {
+    const layout = layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${notes} |||`), { width: 800, paged: false })
+    const slur = layout.relations.find(relation => relation.kind === 'slur')!
+    const hairpin = layout.relations.find(relation => relation.kind === 'cresc' || relation.kind === 'decres')!
+    expect(hairpin.level).toBeGreaterThan(slur.level)
+    const system = layout.systems[0]!
+    const arc = system.relationLayout!.get(slur)!.arc!
+    const ink = system.relationLayout!.get(hairpin)!.ink
+    const overlap = nativeArcSlice(arc.commands, Math.max(arc.left, Math.min(arc.right, (ink.left + ink.right) / 2)))!
+    expect(ink.bottom).toBeLessThan(overlap.top)
+  })
+
   it('keeps adjacent ties at the same height when they only share an endpoint', () => {
     const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: (1~ 1~ 1) 2 |||'), { width: 800, paged: false })
     const ties = layout.relations.filter(relation => relation.kind === 'tie')
