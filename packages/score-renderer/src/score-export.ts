@@ -5,8 +5,47 @@ export function downloadBlob(blob: Blob, fileName: string) {
   const link = document.createElement('a')
   link.href = url
   link.download = fileName
+  document.body.append(link)
   link.click()
-  URL.revokeObjectURL(url)
+  link.remove()
+  // Mobile browsers may consume the blob after the click handler returns.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
+
+/** Direct download, including browsers without window.print (Android).
+ * Rasterize one page at a time at 300 dpi to bound mobile canvas memory.
+ */
+export async function createScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void) {
+  if (!pages.length) throw new Error('当前没有可导出的乐谱。')
+  const { PDFDocument } = await import('pdf-lib')
+  const pdf = await PDFDocument.create()
+  const pointsPerMm = 72 / 25.4
+  for (const [index, svg] of pages.entries()) {
+    const size = getSvgSize(svg)
+    if (size.width <= 0 || size.height <= 0) throw new Error('简谱尺寸无效。')
+    const placement = a4ImagePlacement(size.width, size.height)
+    const canvas = await renderScoreCanvas(svg, Math.ceil(placement.width * 300 / 25.4))
+    try {
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
+      if (!blob) throw new Error('PDF 页面生成失败。')
+      const image = await pdf.embedPng(await blob.arrayBuffer())
+      // Release the PNG decoder's uncompressed channels before the next page.
+      await image.embed()
+      const page = pdf.addPage([210 * pointsPerMm, 297 * pointsPerMm])
+      page.drawImage(image, {
+        x: placement.x * pointsPerMm,
+        y: (297 - placement.y - placement.height) * pointsPerMm,
+        width: placement.width * pointsPerMm,
+        height: placement.height * pointsPerMm,
+      })
+    } finally {
+      canvas.width = 0
+      canvas.height = 0
+    }
+    onProgress?.(index + 1, pages.length)
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
+  }
+  return new Blob([new Uint8Array(await pdf.save())], { type: 'application/pdf' })
 }
 
 function getSvgSize(svg: SVGSVGElement) {

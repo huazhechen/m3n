@@ -21,6 +21,20 @@ export type ScoreRenderInput = {
 /** Screen, print preview and downloads use the same numbered engraving. */
 export type ScoreDisplaySettings = Pick<ScoreRenderInput, 'width' | 'paged' | 'fixedDo' | 'measureNumbers' | 'transpose' | 'tempoScale'> & { width: number }
 
+/** One measurement per open export dialog; changing pagination reuses the rows. */
+export async function prepareScoreExport(scoreDocument: ScoreDocument, settings: ScoreDisplaySettings, signal: AbortSignal) {
+  const { PreparedNumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
+  await prepareNumberedNotationFonts()
+  signal.throwIfAborted()
+  const score = new PreparedNumberedNotationScore(scoreDocument, { ...settings, pageMargin: 0 })
+  return (paged: boolean) => {
+    signal.throwIfAborted()
+    const host = document.createElement('div')
+    host.innerHTML = (paged ? score.renderPaged() : score.renderContinuous()).join('')
+    return [...host.querySelectorAll<SVGSVGElement>(':scope > svg')]
+  }
+}
+
 export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInput) {
   const check = () => input.signal?.throwIfAborted()
   check(); input.onPhase?.('loading-library')

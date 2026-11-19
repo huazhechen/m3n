@@ -1,4 +1,5 @@
-import { captureBrowserPrint, printedScorePdf } from './print-capture'
+import { readFile } from 'node:fs/promises'
+import { PDFDocument } from 'pdf-lib'
 import { test, expect } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
 
@@ -74,9 +75,8 @@ test('floating controls expose BPM, tone, transpose, metronome and measure numbe
   await expect(controls.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('160')
 })
 
-test('multipage browser PDF retains system text and all written measures', async ({ page }, info) => {
+test('multipage PDF downloads with the same pages in continuous and paged modes', async ({ page }, info) => {
   test.setTimeout(90_000)
-  await captureBrowserPrint(page)
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 128 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
   await page.getByRole('button', { name: '保存', exact: true }).click()
@@ -92,19 +92,23 @@ test('multipage browser PDF retains system text and all written measures', async
     const previewPages = await dialog.locator('.export-preview-page').count()
     if (paged) expect(previewPages).toBe(expectedPages)
     else expect(previewPages).toBe(0)
+    await expect(dialog.locator('[data-m3n-id="m3n-e-512"]').first()).toBeAttached()
+    const started = Date.now()
+    const downloading = page.waitForEvent('download')
     await dialog.getByRole('button', { name: 'PDF', exact: true }).click()
-    const { html, pdf } = await printedScorePdf(page)
-    expect(html).toContain('中文矢量验证')
-    expect(html).toContain('m3n-e-512')
-    const count = (html.match(/class="print-page"/g) ?? []).length
+    const download = await downloading
+    await info.attach(`pdf-download-ms-${paged}`, { body: String(Date.now() - started), contentType: 'text/plain' })
+    const path = info.outputPath(`system-fonts-${paged}.pdf`)
+    await download.saveAs(path)
+    const pdf = await PDFDocument.load(await readFile(path))
+    const count = pdf.getPageCount()
     expect(count).toBeGreaterThan(1)
     if (paged) expect(count).toBe(expectedPages)
     expectedPages = count
-    expect((pdf.toString('latin1').match(/\/Type \/Page\b/g) ?? []).length).toBe(count)
-    expect(pdf.toString('latin1')).not.toContain('/Subtype /Image')
-    expect(pdf.length).toBeGreaterThan(20_000)
-    const { writeFile } = await import('node:fs/promises')
-    await writeFile(info.outputPath(`system-fonts-${paged}.pdf`), pdf)
+    for (const sheet of pdf.getPages()) {
+      expect(sheet.getWidth()).toBeCloseTo(210 * 72 / 25.4)
+      expect(sheet.getHeight()).toBeCloseTo(297 * 72 / 25.4)
+    }
   }
 })
 
@@ -130,12 +134,12 @@ test('homepage plays numbered notation and documentation examples open as editab
 
 test('mobile PNG and PDF use system fonts without font requests', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 })
+  await page.addInitScript(() => { window.print = () => { throw new Error('Printing is unavailable on this device') } })
   const fontRequests: string[] = []
   await page.route(/\.(?:otf|ttf|woff2?)(?:[?#]|$)/i, route => {
     fontRequests.push(route.request().url())
     return route.abort()
   })
-  await captureBrowserPrint(page)
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=手机保存导出}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
   await page.getByRole('button', { name: '保存', exact: true }).click()
@@ -143,14 +147,16 @@ test('mobile PNG and PDF use system fonts without font requests', async ({ page 
   for (const format of ['PNG', 'PDF']) {
     await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.locator('.export-dialog')
+    await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
+    const started = Date.now()
+    const downloading = page.waitForEvent('download')
+    await dialog.getByRole('button', { name: format, exact: true }).click()
+    const download = await downloading
+    await info.attach(`mobile-${format}-ms`, { body: String(Date.now() - started), contentType: 'text/plain' })
+    const path = info.outputPath(`手机保存导出.${format.toLowerCase()}`)
+    await download.saveAs(path)
     if (format === 'PDF') {
-      await dialog.getByRole('button', { name: format, exact: true }).click()
-      const { pdf } = await printedScorePdf(page)
-      expect(pdf.toString('latin1')).not.toContain('/Subtype /Image')
-    } else {
-      const downloading = page.waitForEvent('download')
-      await dialog.getByRole('button', { name: format, exact: true }).click()
-      await (await downloading).saveAs(info.outputPath('手机保存导出.png'))
+      expect((await PDFDocument.load(await readFile(path))).getPageCount()).toBe(1)
     }
     await expect(dialog).not.toBeVisible()
   }
