@@ -5,8 +5,8 @@ import categories from '../../scorebook/library-categories.json'
 import source from '../scores/na_xie_nian_01.m3n?raw'
 import reference from './fixtures/na-xie-nian-kuaiyuepu.json'
 
-// Original reference event indices: five merged lyric-tail slides, one restored glissando and one continuation of 她.
-const removedSlides = new Set([207, 218, 281, 292, 306])
+// Original reference event indices: six lyric-tail slides and one continuation of 她.
+const removedSlides = new Set([207, 218, 225, 281, 292, 306])
 const authorizedReferenceEvents = reference.events.flatMap((event, index) => {
   if (index === 198 || removedSlides.has(index)) return []
   const adjusted = [...event]
@@ -16,7 +16,7 @@ const authorizedReferenceEvents = reference.events.flatMap((event, index) => {
   return [{ index, event: adjusted }]
 })
 
-it('matches the reference with the authorized shortening, five merged lyric tails and one continuous slide, the bar 41 natural and tempo 72', () => {
+it('matches the reference with the authorized shortening, six merged lyric tails, the bar 41 natural and tempo 72', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document).toMatchObject({ title: reference.title, singer: reference.singer, composer: reference.composer, lyricist: reference.lyricist, key: reference.key, meterCount: 4, meterUnit: 4, tempo: 72 })
@@ -34,12 +34,12 @@ it('matches the reference with the authorized shortening, five merged lyric tail
   }))
   expect(actual).toEqual(authorizedReferenceEvents.map(item => item.event))
   expect(document.intervals.filter(interval => interval.kind === 'lg')).toEqual([])
-  expect(source.match(/\{gliss\}/g)).toHaveLength(1)
-  expect(source).toContain('((2e{gliss} 1e)) ((1e 1e))')
+  expect(source).not.toContain('%')
+  expect(source).not.toContain('{gliss}')
   expect(part.bass.flatMap(bar => bar.events)).toEqual([])
 })
 
-it('uses repeat bars and DC to preserve 765 attacks with five merged lyric tails and one glissando without an itinerary or segno', () => {
+it('uses repeat bars and DC to preserve 765 attacks after merging the six lyric tails without an itinerary or segno', () => {
   const document = parseM3NDocument(source)
   expect(document.order).toBeUndefined()
   expect(document.sections ?? []).toEqual([])
@@ -56,7 +56,7 @@ it('uses repeat bars and DC to preserve 765 attacks with five merged lyric tails
       const [pitch, beats, tie] = event
       const duration = beats as number
       if (pitch !== null) {
-        if (tied || index === 225) expected.at(-1)![1] = time + duration
+        if (tied) expected.at(-1)![1] = time + duration
         else expected.push([time, time + duration, pitch as number])
       }
       time += duration
@@ -67,11 +67,8 @@ it('uses repeat bars and DC to preserve 765 attacks with five merged lyric tails
   expect(time).toBe(reference.performedBeats - 3)
   expect(performance.beats).toBe(460)
   expect(expected).toHaveLength(765)
-  expect(performance.notes.map(note => [note.start, note.end, note.pitch])).toEqual(expected)
-  const slides = performance.notes.filter(note => note.pitchBends)
-  expect(slides).toHaveLength(3)
-  expect(slides.every(note => note.pitchBends!.map(point => point.pitch).join(',') === '79,77')).toBe(true)
-  expect(slides.every(note => note.channel >= 2)).toBe(true)
+  expect(performance.notes.filter(note => note.channel === 0).map(note => [note.start, note.end, note.pitch])).toEqual(expected)
+  expect(performance.notes.filter(note => note.channel !== 0)).toEqual([])
 })
 
 it('includes the score in both the book and the modern pop library category', () => {
