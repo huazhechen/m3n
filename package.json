@@ -13,7 +13,7 @@
     "lint": "oxlint",
     "test:packages": "npm run test -w @m3n/notation && npm run test -w @m3n/numbered-notation && npm run test -w @m3n/score-renderer",
     "test:hosting": "node --import tsx --test tools/hosting-build.test.mjs",
-    "test": "npm run build:packages && npm run test:packages && npm run test:scorebook && npm run test:hosting && vitest run",
+    "test": "npm run build:packages && npm run test:packages && npm run test:scorebook && npm run test:pdf-font && npm run test:hosting && vitest run",
     "test:scorebook": "node --test tools/scorebook-width.test.mjs tools/scorebook-source.test.mjs tools/scorebook-notation.test.mjs",
     "test:e2e": "playwright test",
     "typecheck:packages": "npm run typecheck -w @m3n/notation && npm run typecheck -w @m3n/numbered-notation && npm run typecheck -w @m3n/score-renderer",
@@ -30,7 +30,8 @@
     "check:boundaries": "node tools/check-boundaries.mjs",
     "build:scorebook": "npm run build:packages && node tools/build-scorebook.mjs",
     "export:score-pdfs": "npm run build:packages && node tools/export-score-pdfs.mjs",
-    "compact:scorebook": "node tools/compact-scorebook-pdf.mjs"
+    "compact:scorebook": "node tools/compact-scorebook-pdf.mjs",
+    "test:pdf-font": "node --test tools/builtin-pdf-font.test.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

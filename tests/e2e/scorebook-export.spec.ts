@@ -24,6 +24,7 @@ test('exports the full built-in library with progress and a vector PDF, independ
   const description = await dialog.getByRole('status').first().innerText()
   const declaredPages = Number(description.match(/共 (\d+) 页/)![1])
   const started = Date.now()
+  expect(requests.some(url => /builtin-pdf-text.*\.ttf/.test(url))).toBe(false)
   const downloading = page.waitForEvent('download', { timeout: 90_000 })
   await dialog.getByRole('button', { name: '保存 PDF' }).click()
   const download = await downloading
@@ -43,9 +44,9 @@ test('exports the full built-in library with progress and a vector PDF, independ
   }
   expect(links).toContain('https://score.cheesefans.com/')
   const fonts = execFileSync('pdffonts', [path], { encoding: 'utf8' }).trim().split('\n').slice(2)
-  expect(fonts.filter(row => /yes\s+yes\s+yes/.test(row))).toHaveLength(1)
+  expect(fonts.filter(row => /yes\s+yes\s+yes/.test(row))).toHaveLength(2)
   expect(fonts.some(row => /Barlow.*yes\s+yes\s+yes/.test(row))).toBe(true)
-  expect(fonts.some(row => /STSong-Light.*no\s+no\s+yes/.test(row))).toBe(true)
+  expect(fonts.some(row => /NotoSerif.*yes\s+yes\s+yes/.test(row))).toBe(true)
   expect(execFileSync('pdfimages', ['-list', path], { encoding: 'utf8' }).trim().split('\n').slice(2)).toEqual([])
   const text = execFileSync('pdftotext', [path, '-'], { encoding: 'utf8' }).replace(/\s/g, '')
   expect(text).toContain('目录')
@@ -60,7 +61,8 @@ test('exports the full built-in library with progress and a vector PDF, independ
   expect(firstMusic).toContain('半音阶口琴基本功')
   expect(firstMusic).not.toContain('目录')
 
-  expect(requests.some(url => /\/api\/|\.(?:otf|ttf|woff2?)(?:$|\?)/.test(url))).toBe(false)
+  expect(requests.some(url => /\/api\//.test(url))).toBe(false)
+  expect(requests.filter(url => /builtin-pdf-text.*\.ttf/.test(url))).toHaveLength(1)
   expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore)
   expect(errors).toEqual([])
   await page.getByRole('dialog', { name: '导出 PDF', exact: true }).getByRole('button', { name: '关闭', exact: true }).click()

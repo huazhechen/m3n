@@ -2,6 +2,10 @@ import { build } from 'vite'
 import { cp, mkdir, mkdtemp, readdir, rename, rm } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { parseArgs } from 'node:util'
+import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
+
+// Checked-in subset keeps normal builds independent of Python/fonttools.
+prepareBuiltinPdfFont({ check: true })
 
 const { values } = parseArgs({ options: { outDir: { type: 'string' }, base: { type: 'string' } } })
 const hosted = !values.outDir && process.env.VITE_BASE_URL === '/score/' && process.env.VITE_SUBMIT_MODE === 'remote'

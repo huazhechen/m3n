@@ -24,6 +24,21 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
   const musicCharacters = new Set(music.getCharacterSet())
   const latin = await Promise.all([StandardFonts.TimesRoman, StandardFonts.TimesRomanBold, StandardFonts.TimesRomanItalic, StandardFonts.TimesRomanBoldItalic].map(name => pdf.embedFont(name)))
   const system = registerSystemCjkFont(pdf, pages.flatMap(svg => [...svg.querySelectorAll('text')].flatMap(text => [...(text.textContent ?? '')])))
+  // Choose one text-font policy for the whole document before writing any pages.
+  // Music numerals have their own embedded font and do not need text coverage.
+  const ordinaryCharacters = new Set<string>()
+  for (const svg of pages) for (const text of svg.querySelectorAll('text')) {
+    const family = text.getAttribute('font-family') ?? text.closest('[font-family]')?.getAttribute('font-family') ?? ''
+    if (family.includes('M3N Numbers')) continue
+    for (const char of text.textContent ?? '') if (!/\s|[\u200B\u2800]/u.test(char)) ordinaryCharacters.add(char)
+  }
+  let suppliedFont: ReturnType<typeof fontkit.create> | undefined
+  try { if (options.textFont) suppliedFont = fontkit.create(options.textFont) } catch { /* Invalid font downloads use the same fallback as missing coverage. */ }
+  const complete = suppliedFont && [...ordinaryCharacters].every(char => suppliedFont.hasGlyphForCodePoint(char.codePointAt(0)!))
+  const textFont = complete ? await pdf.embedFont(options.textFont!, { subset: true, customName: 'MNTEXT+NotoSerifCJKsc-Regular' }) : undefined
+  options.signal?.throwIfAborted()
+  const textCharacters = textFont ? new Set(textFont.getCharacterSet()) : undefined
+  const textName = PDFName.of('M3NText')
   // Repeated notes and lyrics share their encoded glyphs; avoid shaping and
   // throwing WinAnsi encoding errors for every occurrence of a Chinese character.
   const encodedCharacters = new Map<string, { name: PDFName; encoded: ReturnType<typeof system.encode> }>()
@@ -50,10 +65,11 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
       const page = pdf.addPage([210 * pt, 297 * pt])
       const musicName = PDFName.of('M3NMusic')
       page.node.setFontDictionary(musicName, music.ref)
-      page.node.setFontDictionary(system.name, system.ref)
+      if (!textFont) page.node.setFontDictionary(system.name, system.ref)
+      if (textFont) page.node.setFontDictionary(textName, textFont.ref)
       const latinNames = latin.map((font, i) => {
         const name = PDFName.of(`M3NLatin${i}`)
-        page.node.setFontDictionary(name, font.ref)
+        if (!textFont) page.node.setFontDictionary(name, font.ref)
         return name
       })
       let elementCount = 0
@@ -96,13 +112,16 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
               if (isMusic) {
                 if (!musicCharacters.has(char.codePointAt(0)!)) throw new Error(`音乐字体缺少字符：${char}`)
                 name = musicName; encoded = music.encodeText(char)
+              } else if (textFont) {
+                if (!textCharacters!.has(char.codePointAt(0)!)) throw new Error(`PDF文字字符覆盖检测不一致：${char}`)
+                name = textName; encoded = textFont.encodeText(char)
               } else {
                 try { encoded = latin[latinIndex]!.encodeText(char); name = latinNames[latinIndex]! } catch { /* The PDF viewer supplies CJK glyphs. */ }
               }
               resolved = { name, encoded }; encodedCharacters.set(cacheKey, resolved)
             }
             const { name, encoded } = resolved
-            const syntheticBold = bold && name === system.name
+            const syntheticBold = bold && (name === system.name || name === textName)
             page.pushOperators(setFontAndSize(name, fontSize),
               setTextRenderingMode(syntheticBold ? TextRenderingMode.FillAndOutline : TextRenderingMode.Fill),
               setLineWidth(fontSize * 0.015),

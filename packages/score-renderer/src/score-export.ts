@@ -13,7 +13,7 @@ export function downloadBlob(blob: Blob, fileName: string) {
 }
 
 export type ScorePdfPhase = 'loading' | 'fonts' | 'pages' | 'saving'
-export type ScorePdfOptions = { fullPage?: boolean; signal?: AbortSignal; onPhase?: (phase: ScorePdfPhase) => void }
+export type ScorePdfOptions = { fullPage?: boolean; textFont?: Uint8Array; signal?: AbortSignal; onPhase?: (phase: ScorePdfPhase) => void }
 let pdfModule: ReturnType<typeof importPdfModule> | undefined
 const importPdfModule = () => import('./score-pdf.js')
 

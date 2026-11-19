@@ -4,7 +4,7 @@ import { openScoreSettings } from './score-settings'
 
 test('continuous preview has the image frame and PNG downloads without the vector font', async ({ page }, info) => {
   const fontRequests: string[] = []
-  await page.route('**/fonts/NotoSerifCJKsc-Regular.otf', route => {
+  await page.route(/\.(?:otf|ttf|woff2?)(?:$|\?)/, route => {
     fontRequests.push(route.request().url())
     return route.abort()
   })
