@@ -1,4 +1,3 @@
-import type { GlissandoStyle, GlissandoPosition, GlissandoWindow } from '@m3n/notation'
 import { useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { PlaybackTone } from '@m3n/score-renderer/tones'
@@ -9,7 +8,6 @@ import { CircleOfFifths } from './CircleOfFifths'
 import { ScoreControlIcon } from './ScoreControlIcon'
 
 type ScoreControlsProps = {
-  transition?: { style: GlissandoStyle; window: GlissandoWindow; onWindowChange: (window: GlissandoWindow) => void; onStyleChange: (style: GlissandoStyle) => void; onPreview: () => void }
   playbackOnly?: boolean
   contained?: boolean
   isPlaying: boolean
@@ -104,26 +102,6 @@ export function ScoreControls(props: ScoreControlsProps) {
         keyDialogRef.current?.querySelector<SVGElement>('[aria-pressed="true"]')?.focus()
       }}><span className="transpose-key-icon" aria-hidden="true">{selectedKeyLabel}</span><span>调号</span></button>
         </div>
-    {props.transition && <div className="control-transition-options" role="group" aria-label="滑音衔接试听">
-      <label>衔接方式 <select aria-label="衔接方式" value={props.transition.style} disabled={props.isLoading} onChange={event => props.transition!.onStyleChange(event.currentTarget.value as GlissandoStyle)}>
-        <option value="hermite">五次 Hermite（可调）</option>
-        <option value="target-duration">按后音时值滑动</option>
-        <option value="short-level">短滑音·轻补偿</option>
-        <option value="short-strong">短滑音·强补偿</option>
-        <option value="short-carry">短滑音·接续</option>
-        <option value="short">原短滑音（对照）</option>
-      </select></label>
-      {props.transition.style === 'hermite' && <div className="control-transition-window">
-        <label>前音起点 <select aria-label="前音起点" value={props.transition.window.start} disabled={props.isLoading} onChange={event => props.transition!.onWindowChange({ ...props.transition!.window, start: Number(event.currentTarget.value) as GlissandoPosition })}>
-          <option value="0">0 · 音头</option><option value="0.25">0.25 · 四分之一</option><option value="0.5">0.5 · 中点</option><option value="1">1 · 末尾</option>
-        </select></label>
-        <label>后音终点 <select aria-label="后音终点" value={props.transition.window.end} disabled={props.isLoading} onChange={event => props.transition!.onWindowChange({ ...props.transition!.window, end: Number(event.currentTarget.value) as GlissandoPosition })}>
-          <option value="0">0 · 音头</option><option value="0.25">0.25 · 四分之一</option><option value="0.5">0.5 · 中点</option><option value="1">1 · 末尾</option>
-        </select></label>
-        {props.transition.window.start === 1 && props.transition.window.end === 0 && <span role="status">起终点重合：瞬时换音，无滑动时段。</span>}
-      </div>}
-      <button type="button" className="control-button" disabled={props.isLoading || props.toneLoading} onClick={props.transition.onPreview}>试听这一处</button>
-    </div>}
     {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || '正在下载钢琴音色…'}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
     <dialog ref={keyDialogRef} className="transpose-dialog" aria-labelledby={keyTitleId} onClick={event => {
       if (event.target === event.currentTarget) {

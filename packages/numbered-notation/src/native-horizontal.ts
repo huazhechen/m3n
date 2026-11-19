@@ -137,10 +137,6 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const left = index === 0 ? 0 : Math.max(groupStarts.has(cell) ? groupGap : cell.before, floor)
     const right = index === items.length - 1 ? 0 : Math.max(groupEnds.has(cell) ? groupGap : cell.after, floor)
     cell.left += left; cell.right += right; cell.before = cell.after = 0
-    // Reserve a small arrow between the music bodies, even in dense beamed runs.
-    if (glyph?.event?.postfixes.includes('gliss') && !glyph.sustain) {
-      cell.right = Math.max(cell.right, (glyph.musicRight ?? glyph.right) + nativeStyle.music * .95)
-    }
     // Note clearance and lyric ink share physical space; do not add both widths.
     if (glyph) {
       // An absent voice gets music-only minimum clearance. Lyrics and

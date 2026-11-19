@@ -63,7 +63,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
   const ids = scoreEventIds(document), lyrics = options.displayLyrics ?? lyricsByEvent(document), sustains = sustainContinuations(document, lyrics)
   const result: NativeProjection = { measures: [], glyphs: [], diagnostics: [], hasBass: options.includeBass !== false && [...document.parts.values()].some(part => part.bass.some(measure => measure.events.length || measure.multiRest)) }
   const textWidth = (text: string, size = nativeStyle.annotation, family = 'serif') => options.textMeasurer.measureText(text, { fontSize: size, fontFamily: family }).w
-  const known = new Set(['tr', 'prall', 'gliss', 'fermata', 'arp', 'str', 'tip', 'hold', 'brk', 'breath', 'sfz', 'f1', 'f2', 'f3', 'f4', 'f5'])
+  const known = new Set(['tr', 'prall', 'fermata', 'arp', 'str', 'tip', 'hold', 'brk', 'breath', 'sfz', 'f1', 'f2', 'f3', 'f4', 'f5'])
   const sectionKeys = new Map((document.order ?? []).map(name => [name, {entry:sectionEntryKey(document,name),visits:sectionKeyVisits(document,name)}]))
   let partIndex = 0, measureNumber = 0
   for (const part of document.parts.values()) {
@@ -115,7 +115,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         controls.push(...settingsControls({...event,key:displayKey}))
         const graces = event.postfixes.flatMap(mark => { const grace = parseM3NGrace(mark); return grace ? (parseM3NGroupPitches(grace.pitchSource) ?? []).map(pitch => ({ ...(options.fixedDo ? nativeDisplayPitch(fixedDoGrace(pitch,event.key,event.octaveShift,options.transpose)) : numberedPitch(pitch,event.octaveShift)), writtenBeats: 1 / 2 ** (grace.depth + 1) })) : [] })
         for (const mark of event.postfixes) if (!known.has(mark) && !parseM3NGrace(mark)) result.diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${mark}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
-        const marks = event.postfixes.filter(mark => known.has(mark) && mark !== 'arp' && mark !== 'gliss')
+        const marks = event.postfixes.filter(mark => known.has(mark) && mark !== 'arp')
         if (event.dynamic && event.dynamic !== state.dynamic) { marks.push(event.dynamic); state.dynamic = event.dynamic }
         if (event.prefix) marks.push(event.prefix)
         for (const interval of document.intervals.filter(interval => interval.staff === staff && interval.start === event.sourceStart)) {

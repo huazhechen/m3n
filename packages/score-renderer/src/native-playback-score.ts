@@ -1,4 +1,4 @@
-import { compileScorePerformance, type ScoreDocument, type ScorePerformanceOptions } from '@m3n/notation'
+import { compileScorePerformance, type ScoreDocument } from '@m3n/notation'
 import { MIDI_PPQ, performanceTick, writePerformanceMidi } from './midi-writer.js'
 
 export type TimedScoreElement = { xmlId: string; rendition: number; orderIndex?: number }
@@ -12,8 +12,8 @@ export class NativePlaybackScore {
   private midiData?: ArrayBuffer
   private destroyed = false
 
-  private constructor(document: ScoreDocument, options: ScorePerformanceOptions) {
-    this.performance = compileScorePerformance(document, options)
+  private constructor(document: ScoreDocument) {
+    this.performance = compileScorePerformance(document)
     const points: Array<{ tick: number; milliseconds: number; micros: number }> = []
     let tick = 0, milliseconds = 0, micros = 500_000
     for (const tempo of this.performance.tempos) {
@@ -41,7 +41,7 @@ export class NativePlaybackScore {
     }
   }
 
-  static async create(document: ScoreDocument, options: ScorePerformanceOptions = {}) { return new NativePlaybackScore(document, options) }
+  static async create(document: ScoreDocument) { return new NativePlaybackScore(document) }
 
   midi() {
     this.check()

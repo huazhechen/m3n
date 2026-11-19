@@ -6,7 +6,7 @@ import { loadSampledTone, subscribeToneDownloadProgress, type ToneDownloadProgre
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ScoreSourceRange, ScoreDocument, GlissandoStyle, GlissandoWindow } from '@m3n/notation'
+import type { ScoreSourceRange, ScoreDocument } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_TRANSPOSE,
   DEFAULT_SCORE_WIDTH,
@@ -183,11 +183,6 @@ export function ScoreRenderer({
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
   const [message, setMessage] = useState('')
-  const [glissandoStyle, setGlissandoStyle] = useState<GlissandoStyle>('hermite')
-  const [glissandoWindow, setGlissandoWindow] = useState<GlissandoWindow>({ start: 1, end: .25 })
-  const auditionEndRef = useRef<number | null>(null)
-  const firstTransition = [...scoreDocument.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events)).find(event => event.postfixes.includes('gliss'))
-  const firstTransitionId = sourceMap.find(range => range.sourceStart === firstTransition?.sourceStart)?.xmlId
   const [savedPlaybackTone, changePlaybackTone] = usePlaybackTone()
   const playbackTone = playbackOnly ? 'synth' : savedPlaybackTone
   const toneRef = useRef(playbackTone)
@@ -240,7 +235,6 @@ export function ScoreRenderer({
 
   useEffect(() => {
     const playbackLease = playbackLeaseRef.current
-    auditionEndRef.current = null
     setPlaybackProgress(0)
     setIsPlaying(false)
     setIsPlayerLoading(false)
@@ -255,7 +249,7 @@ export function ScoreRenderer({
       highlightedElementsRef.current = []
       highlightedMeasuresRef.current = []
     }
-  }, [scoreDocument, glissandoStyle, glissandoWindow])
+  }, [scoreDocument])
 
 
   useEffect(() => {
@@ -382,11 +376,6 @@ export function ScoreRenderer({
   }
 
   const onPlayerTime = (seconds: number, duration: number) => {
-    if (auditionEndRef.current !== null && seconds >= auditionEndRef.current) {
-      auditionEndRef.current = null
-      stopPlaybackRef.current()
-      return
-    }
     if (!isSeekingRef.current && startupBeatRef.current === null) updatePlaybackHighlight(seconds, duration)
   }
 
@@ -401,7 +390,7 @@ export function ScoreRenderer({
       try {
         const scorePreparation = scoreRef.current ? Promise.resolve(scoreRef.current) : (async () => {
           const { PlaybackScore } = await import('@m3n/score-renderer/playback')
-          const score = await PlaybackScore.create(scoreDocument, { glissandoStyle, glissandoWindow })
+          const score = await PlaybackScore.create(scoreDocument)
           if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { score.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
           scoreRef.current = score
           return score
@@ -470,31 +459,7 @@ export function ScoreRenderer({
     return () => { cancelled = true }
   }, [playbackTone, toneRetry])
 
-  const previewTransition = async () => {
-    if (!firstTransitionId) return
-    try {
-      const player = await getPlayer()
-      const milliseconds = scoreRef.current!.timeForElement(firstTransitionId)
-      if (milliseconds < 0 || player.duration <= 0) return
-      player.pause()
-      clearPlaybackHighlight()
-      const seconds = milliseconds / 1000
-      player.seek(Math.max(0, seconds - 1) / player.duration)
-      auditionEndRef.current = Math.min(player.duration, seconds + 2)
-      scorePlaybackCoordinator.claim(playbackLeaseRef.current)
-      setIsPlaying(true)
-      await player.play({ countIn: false })
-      setIsPlaying(!player.paused)
-    } catch (error) {
-      auditionEndRef.current = null
-      scorePlaybackCoordinator.release(playbackLeaseRef.current)
-      setIsPlaying(false)
-      setMessage(error instanceof Error ? error.message : '无法试听衔接。')
-    }
-  }
-
   const togglePlayback = async () => {
-    auditionEndRef.current = null
     try {
       const player = await getPlayer()
       if (player.paused) {
@@ -587,7 +552,6 @@ export function ScoreRenderer({
         progress={toneDownload}
       />}
       {hasAudioControls && <ScoreControls
-        transition={firstTransitionId ? { style: glissandoStyle, window: glissandoWindow, onWindowChange: setGlissandoWindow, onStyleChange: setGlissandoStyle, onPreview: () => void previewTransition() } : undefined}
         playbackOnly={playbackOnly}
         contained={containedControls}
         isPlaying={isPlaying}

@@ -2,10 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MIDIBuilder } from 'spessasynth_core'
 import { SpessaPlayer } from './spessa-player.js'
 
-const startupPlay = vi.hoisted(() => vi.fn(async () => {}))
 vi.mock('./startup-cue.js', () => ({ StartupCue: class {
   active = false
-  play = startupPlay
+  play = async () => {}
   cancel = () => {}
   setTempo = () => {}
 } }))
@@ -73,7 +72,6 @@ const create = async () => {
 }
 
 beforeEach(() => {
-  startupPlay.mockClear()
   vi.useFakeTimers()
   instances.sequences.length = instances.metronomes.length = 0
   vi.stubGlobal('window', globalThis)
@@ -88,17 +86,6 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
 
 describe('audio-thread-confirmed transport and metronome synchronization', () => {
-  it('skips the startup lights for auditions while ordinary playback retains them', async () => {
-    const { player, sequence } = await create()
-    await player.play({ countIn: false })
-    expect(startupPlay).not.toHaveBeenCalled()
-    expect(sequence.play).toHaveBeenCalledOnce()
-    player.pause()
-    await player.play()
-    expect(startupPlay).toHaveBeenCalledOnce()
-    expect(sequence.play).toHaveBeenCalledTimes(2)
-    player.destroy()
-  })
   it('silences old clicks immediately and waits for the new audio position', async () => {
     const { player, sequence, metronome, listener } = await create()
     await player.play()

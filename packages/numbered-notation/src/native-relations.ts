@@ -1,4 +1,3 @@
-import { nativeGlissandoSvg } from './native-glissando.js'
 import { nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
@@ -39,7 +38,6 @@ class NativeRelationPainter extends NativeSymbols {
       return this.text('(', first.x - left - leftWidth - nativeStyle.music * 0.05, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
         + this.text(')', last.x + right + nativeStyle.music * 0.05, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
     }
-    if (relation.kind === 'gliss') return nativeGlissandoSvg(relation, system, this.measurer)
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = nativeArcGeometry(relation, system)
       return `<path${attrs({ d: nativeArcPath(arc), fill: '#000', transform: 'translate(0 0)', 'data-m3n-relation': relation.kind })}/>`
