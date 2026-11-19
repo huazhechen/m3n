@@ -158,7 +158,8 @@ export class Metronome {
     oscillator.type = 'sine'
     oscillator.frequency.setValueAtTime(accent ? 1760 : 1175, at)
     gain.gain.setValueAtTime(0.0001, at)
-    gain.gain.exponentialRampToValueAtTime(accent ? 0.14 : 0.09, at + 0.002)
+    // Match the +6dB level lift applied to instrument playback.
+    gain.gain.exponentialRampToValueAtTime(accent ? 0.28 : 0.18, at + 0.002)
     gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.045)
     oscillator.connect(gain)
     gain.connect(this.context.destination)
