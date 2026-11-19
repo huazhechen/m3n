@@ -6,13 +6,16 @@ import {
   setFillingRgbColor, setStrokingRgbColor, setLineWidth, setLineJoin,
   TextRenderingMode, rgb,
 } from 'pdf-lib'
-import { a4ImagePlacement } from './score-export.js'
+import { a4ImagePlacement, type ScorePdfOptions } from './score-export.js'
 import { registerSystemCjkFont } from './pdf-system-font.js'
 
 const ns = 'http://www.w3.org/2000/svg'
 
 /** Converts only the native engine's primitives; never rasterizes a score. */
-export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void, options: { fullPage?: boolean; signal?: AbortSignal } = {}) {
+export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void, options: ScorePdfOptions = {}) {
+  options.signal?.throwIfAborted()
+  options.onPhase?.('fonts')
+  await new Promise<void>(resolve => setTimeout(resolve, 0))
   const pdf = await PDFDocument.create()
   pdf.registerFontkit(fontkit)
   const embedded = pages.flatMap(svg => [...svg.querySelectorAll('style')]).find(style => style.textContent?.includes('data:font/ttf;base64,'))?.textContent?.match(/data:font\/ttf;base64,([A-Za-z0-9+/=]+)/)?.[1]
@@ -21,6 +24,10 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
   const musicCharacters = new Set(music.getCharacterSet())
   const latin = await Promise.all([StandardFonts.TimesRoman, StandardFonts.TimesRomanBold, StandardFonts.TimesRomanItalic, StandardFonts.TimesRomanBoldItalic].map(name => pdf.embedFont(name)))
   const system = registerSystemCjkFont(pdf, pages.flatMap(svg => [...svg.querySelectorAll('text')].flatMap(text => [...(text.textContent ?? '')])))
+  // Repeated notes and lyrics share their encoded glyphs; avoid shaping and
+  // throwing WinAnsi encoding errors for every occurrence of a Chinese character.
+  const encodedCharacters = new Map<string, { name: PDFName; encoded: ReturnType<typeof system.encode> }>()
+  options.onPhase?.('pages')
   const host = document.createElement('div')
   host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none;'
   host.setAttribute('aria-hidden', 'true')
@@ -49,7 +56,12 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
         page.node.setFontDictionary(name, font.ref)
         return name
       })
+      let elementCount = 0
       for (const element of svg.querySelectorAll<SVGGraphicsElement>('*')) {
+        if (++elementCount % 128 === 0) {
+          await new Promise<void>(resolve => setTimeout(resolve, 0))
+          options.signal?.throwIfAborted()
+        }
         if (element.namespaceURI !== ns || element.closest('defs')) continue
         const tag = element.localName
         if (['svg', 'g', 'a', 'title', 'desc', 'tspan'].includes(tag)) continue
@@ -77,13 +89,19 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
             const rotation = text.getRotationOfChar(offset) * Math.PI / 180
             offset += char.length
             if (/\s|[\u200B\u2800]/u.test(char)) continue
-            let name = system.name, encoded = system.encode(char)
-            if (isMusic) {
-              if (!musicCharacters.has(char.codePointAt(0)!)) throw new Error(`音乐字体缺少字符：${char}`)
-              name = musicName; encoded = music.encodeText(char)
-            } else {
-              try { encoded = latin[latinIndex]!.encodeText(char); name = latinNames[latinIndex]! } catch { /* CJK substitution is provided by the PDF viewer. */ }
+            const cacheKey = `${isMusic ? 'music' : latinIndex}:${char}`
+            let resolved = encodedCharacters.get(cacheKey)
+            if (!resolved) {
+              let name = system.name, encoded = system.encode(char)
+              if (isMusic) {
+                if (!musicCharacters.has(char.codePointAt(0)!)) throw new Error(`音乐字体缺少字符：${char}`)
+                name = musicName; encoded = music.encodeText(char)
+              } else {
+                try { encoded = latin[latinIndex]!.encodeText(char); name = latinNames[latinIndex]! } catch { /* The PDF viewer supplies CJK glyphs. */ }
+              }
+              resolved = { name, encoded }; encodedCharacters.set(cacheKey, resolved)
             }
+            const { name, encoded } = resolved
             const syntheticBold = bold && name === system.name
             page.pushOperators(setFontAndSize(name, fontSize),
               setTextRenderingMode(syntheticBold ? TextRenderingMode.FillAndOutline : TextRenderingMode.Fill),
@@ -132,6 +150,10 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
       await new Promise<void>(resolve => setTimeout(resolve, 0))
     }
     options.signal?.throwIfAborted()
-    return new Blob([new Uint8Array(await pdf.save())], { type: 'application/pdf' })
+    options.onPhase?.('saving')
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
+    const bytes = await pdf.save()
+    options.signal?.throwIfAborted()
+    return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' })
   } finally { host.remove() }
 }

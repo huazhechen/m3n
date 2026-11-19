@@ -53,7 +53,8 @@ export function renderSharedPreparedNumberedNotationScores(scores: readonly Prep
   const minimum = Math.max(...scores.map(score => score.minimumCoreGap))
   const heightAt = (gap: number) => scores.reduce((sum, score) => sum + score.continuousHeight(gap), scoreGap * (scores.length - 1))
   const coreGap = fitNativeCoreGap(heightAt, Math.floor(width * A4_CONTENT_ASPECT_RATIO), minimum, Math.max(32, minimum))
-  return { coreGap, usedHeight: heightAt(coreGap), markup: scores.map(score => score.renderContinuous(coreGap)[0]!) }
+  const fittedScoreGap = scoreGap + Math.max(0, Math.floor(width * A4_CONTENT_ASPECT_RATIO) - heightAt(coreGap)) / (scores.length - 1)
+  return { coreGap, scoreGap: fittedScoreGap, usedHeight: heightAt(coreGap) + (fittedScoreGap - scoreGap) * (scores.length - 1), markup: scores.map(score => score.renderContinuous(coreGap)[0]!) }
 }
 
 /** Whole scores on one page, sharing one core parameter and one logical width. */
@@ -67,5 +68,6 @@ export function renderSharedNumberedNotationScores(documents: readonly ScoreDocu
   const heightAt = (gap: number) => layouts.reduce((sum, layout) => sum + Math.ceil(nativeContinuousPagination(layout, gap).heights[0] ?? 0), scoreGap * (layouts.length - 1))
   const coreGap = fitNativeCoreGap(heightAt, capacity, minimum, Math.max(32, minimum))
   for (const layout of layouts) reflowNativeContinuousLayout(layout, coreGap)
-  return { coreGap, usedHeight: heightAt(coreGap), markup: layouts.map(layout => renderNativePages(layout)[0]!) }
+  const fittedScoreGap = scoreGap + Math.max(0, capacity - heightAt(coreGap)) / (layouts.length - 1)
+  return { coreGap, scoreGap: fittedScoreGap, usedHeight: heightAt(coreGap) + (fittedScoreGap - scoreGap) * (layouts.length - 1), markup: layouts.map(layout => renderNativePages(layout)[0]!) }
 }

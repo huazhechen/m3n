@@ -43,3 +43,30 @@ test('Android PDF download keeps a full song on one A4 page without browser prin
   await expect(dialog).not.toBeVisible()
   await expect(page.locator('iframe[title="乐谱打印"]')).toHaveCount(0)
 })
+
+test('slow PDF module loading shows cancellable progress immediately and does not download after cancellation', async ({ page }) => {
+  let release!: () => void
+  const ready = new Promise<void>(resolve => { release = resolve })
+  let requested = false
+  await page.route('**/score-pdf-*.js', async route => { requested = true; await ready; await route.continue() })
+  let downloads = 0
+  page.on('download', () => downloads++)
+  await page.goto('/scores/yue_ding_01')
+  await page.getByRole('button', { name: '打印', exact: true }).click()
+  const preview = page.locator('.export-dialog')
+  await expect(preview.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
+  await expect.poll(() => requested).toBe(true)
+  await preview.getByRole('button', { name: 'PDF', exact: true }).click()
+  const progress = page.getByRole('dialog', { name: '导出 PDF', exact: true })
+  await expect(progress.getByRole('status')).toHaveText('正在加载导出模块…')
+  await expect(progress.getByRole('progressbar', { name: 'PDF 生成进度' })).toBeVisible()
+  await progress.getByRole('button', { name: '取消', exact: true }).click()
+  await expect(progress).not.toBeVisible()
+  release()
+  await page.getByRole('button', { name: '打印', exact: true }).click()
+  await expect(preview.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
+  const downloading = page.waitForEvent('download')
+  await preview.getByRole('button', { name: 'PDF', exact: true }).click()
+  await downloading
+  expect(downloads).toBe(1)
+})

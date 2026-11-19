@@ -114,14 +114,16 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       try { await api.sharedA4Page(Array(20).fill(sources[0]), width) } catch { overflowRejected = true }
       return { identical: svgs.map((svg, index) => svg.innerHTML === originals[index]),
         widths: svgs.map(svg => svg.viewBox.baseVal.width), items: packed.items.map(({ top, sourceHeight, placement }) => ({ top, sourceHeight, placement })),
-        measuredHeight: summary.naturalHeight, overflowRejected, links: compact.links }
+        scoreGap: packed.scoreGap, usedHeight: packed.usedHeight, measuredHeight: summary.naturalHeight, overflowRejected, links: compact.links }
     })
     assert.deepEqual(shared.identical, [true, true], 'Sharing changes only outer SVG placement')
     assert.deepEqual(shared.widths, [720, 720])
     assert(shared.items[0].sourceHeight >= shared.measuredHeight)
-    assert.equal(shared.items[1].top, shared.items[0].sourceHeight + 22)
+    assert.equal(shared.items[1].top, shared.items[0].sourceHeight + shared.scoreGap)
     assert.equal(shared.items[0].placement.width, shared.items[1].placement.width)
     assert(shared.items[1].placement.y + shared.items[1].placement.height <= 285)
+    assert(shared.scoreGap > 22)
+    assert.equal(shared.usedHeight, Math.floor(720 * 273 / 186))
     assert(shared.overflowRejected)
     assert.deepEqual(shared.links.map(link => [link.label, link.url]), [['合页甲', 'https://score.cheesefans.com/scores/a'], ['合页乙', 'https://score.cheesefans.com/scores/b']])
     assert(shared.links[1].y > shared.links[0].y, 'Shared titles must link at their own page position')

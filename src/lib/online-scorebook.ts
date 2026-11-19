@@ -150,7 +150,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         for (const score of svg.querySelectorAll<SVGSVGElement>(':scope > svg')) {
           const height = score.viewBox.baseVal.height
           placeScore(score, { x: 12, y: 12 + top * 186 / group.width, width: 186, height: height * 186 / group.width })
-          top += height + sharedScoreGap
+          top += height + rendered.scoreGap
         }
         linkScores(svg, members); music.push(svg); sharedPages++
       } else {

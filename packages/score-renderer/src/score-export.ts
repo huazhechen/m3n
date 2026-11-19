@@ -12,10 +12,22 @@ export function downloadBlob(blob: Blob, fileName: string) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
+export type ScorePdfPhase = 'loading' | 'fonts' | 'pages' | 'saving'
+export type ScorePdfOptions = { fullPage?: boolean; signal?: AbortSignal; onPhase?: (phase: ScorePdfPhase) => void }
+let pdfModule: ReturnType<typeof importPdfModule> | undefined
+const importPdfModule = () => import('./score-pdf.js')
+
+/** Start fetching the export module while the visible preview is prepared. */
+export function preloadScorePdf() {
+  return pdfModule ??= importPdfModule().catch(error => { pdfModule = undefined; throw error })
+}
+
 /** Direct vector PDF download on every device; only music numerals are embedded. */
-export async function createScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void, options: { fullPage?: boolean; signal?: AbortSignal } = {}) {
+export async function createScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void, options: ScorePdfOptions = {}) {
   if (!pages.length) throw new Error('当前没有可导出的乐谱。')
-  const { vectorScorePdf } = await import('./score-pdf.js')
+  options.onPhase?.('loading')
+  const { vectorScorePdf } = await preloadScorePdf()
+  options.signal?.throwIfAborted()
   return vectorScorePdf(pages, onProgress, options)
 }
 

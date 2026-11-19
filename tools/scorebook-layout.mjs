@@ -78,11 +78,11 @@ export async function sharedA4Page(sources, width, gap = 22, host = document.que
     const placement = { x: 12, y: 12 + top * scale, width: 186, height: height * scale }
     for (const key of ['x', 'y', 'width', 'height']) svg.setAttribute(key, String(placement[key] * pxPerMm))
     items.push({ markup: svg.outerHTML, sourceWidth: width, sourceHeight: height, top, placement })
-    top += height + gap
+    top += height + fitted.scoreGap
   }
-  const usedHeight = top - gap
+  const usedHeight = top - fitted.scoreGap
   if (usedHeight > Math.floor(width * 273 / 186) + .001) throw new Error('Shared page exceeds A4 content height')
-  return { markup: items.map(item => item.markup).join(''), items, width, usedHeight, coreGap: fitted.coreGap }
+  return { markup: items.map(item => item.markup).join(''), items, width, usedHeight, coreGap: fitted.coreGap, scoreGap: fitted.scoreGap }
 }
 
 /** The same 12mm A4 placement used by the web PDF download, without cropping. */

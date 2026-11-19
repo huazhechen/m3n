@@ -40,7 +40,7 @@ beforeAll(() => Object.defineProperty(SVGElement.prototype, 'viewBox', { configu
 afterAll(() => { if (viewBox) Object.defineProperty(SVGElement.prototype, 'viewBox', viewBox); else Reflect.deleteProperty(SVGElement.prototype, 'viewBox') })
 function layouts() {
   mocks.load.mockImplementation(async (slug: string) => `{title=${slug}}{4/4}\nN: 1 2 3 4 |||`)
-  mocks.shared.mockReturnValue({ markup: [markup, markup] })
+  mocks.shared.mockReturnValue({ markup: [markup, markup], scoreGap: 200 })
   mocks.solo.mockReturnValue([markup])
 }
 afterEach(() => { vi.resetAllMocks(); mocks.plan.entries[0].sharePage = true; document.body.replaceChildren() })
@@ -60,6 +60,8 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(result.pages[1].querySelector('第一曲')).toBeNull()
     expect([...result.pages[2].querySelectorAll('[data-score-slug]')].map(svg => (svg as SVGSVGElement).dataset.scoreSlug)).toEqual(['first', 'second'])
     expect(result.pages[2].querySelector('a')?.getAttribute('href')).toBe('https://score.cheesefans.com/scores/first')
+    const placed = result.pages[2].querySelectorAll(':scope > svg')
+    expect(Number(placed[1].getAttribute('y'))).toBeCloseTo((12 + (200 + 200) * 186 / 640) * 96 / 25.4)
     expect(document.body.children).toHaveLength(0)
   })
 

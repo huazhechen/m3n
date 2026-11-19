@@ -38,7 +38,7 @@ describe('elastic page core parameter', () => {
     expect(paged.pages[0]!.coreGap).toBe(32)
     expect(paged.systems[1]!.top - paged.systems[0]!.top).toBeCloseTo(continuous.systems[1]!.top - continuous.systems[0]!.top + 5.6, 6)
   })
-  it('fits whole scores together using one parameter and fixed inter-score space', () => {
+  it('fits whole scores together using one parameter before distributing remaining inter-score space', () => {
     const documents = [4, 4].map(count => parseM3NDocument('{4/4}\nN: ' + Array(count).fill('1 2 3 4 |{br}').join(' ')))
     const result = renderSharedNumberedNotationScores(documents, { width: 320, pageMargin: 0 }, 22)
     expect(result.coreGap).toBeGreaterThanOrEqual(26.4)
@@ -48,7 +48,7 @@ describe('elastic page core parameter', () => {
     expect(result.usedHeight).toBeLessThanOrEqual(Math.floor(320 * 273 / 186))
     // Shared fitting matches each score rendered with that exact parameter.
     const heights = documents.map(document => Math.ceil(layoutNativeScore(document, { width: 320, pageMargin: 0, paged: false, coreGap: result.coreGap }).pages[0]!.height))
-    expect(result.usedHeight).toBe(heights[0]! + heights[1]! + 22)
+    expect(result.usedHeight).toBe(heights[0]! + heights[1]! + result.scoreGap)
     expect(() => renderSharedNumberedNotationScores(Array(20).fill(documents[0]!), { width: 320, pageMargin: 0 })).toThrow('最小核心行距')
   })
 })

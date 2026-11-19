@@ -31,4 +31,17 @@ describe('prepared export layouts', () => {
     expect(() => renderSharedPreparedNumberedNotationScores([prepared[0]!, new PreparedNumberedNotationScore(documents[0]!, { ...options, width: 540 })])).toThrow('相同版宽')
     expect(() => renderSharedPreparedNumberedNotationScores(Array(20).fill(prepared[0]))).toThrow('最小核心行距')
   })
+  it.each([2, 3])('distributes spare space equally between %i whole scores after row gaps reach 32px', count => {
+    const documents = Array.from({ length: count }, (_, index) => parseM3NDocument(`{title=曲目${index}}{4/4}\nN: 1 2 3 4 |||`))
+    const options = { width: 640, pageMargin: 0 }
+    const scores = documents.map(document => new PreparedNumberedNotationScore(document, options))
+    const result = renderSharedPreparedNumberedNotationScores(scores, 32)
+    expect(result.coreGap).toBe(32)
+    expect(result.scoreGap).toBeGreaterThan(32)
+    const heights = scores.map(score => score.continuousHeight(result.coreGap))
+    expect(heights.reduce((a, b) => a + b, 0) + result.scoreGap * (count - 1)).toBeCloseTo(Math.floor(640 * 273 / 186), 8)
+    expect(result.usedHeight).toBe(Math.floor(640 * 273 / 186))
+    expect(result.markup).toEqual(documents.map(document => NativeNumberedNotationScore.create(document).render({ ...options, paged: false, coreGap: 32 })[0]))
+  })
+
 })

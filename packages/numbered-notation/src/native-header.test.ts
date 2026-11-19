@@ -42,6 +42,8 @@ describe('header text blocks in the native implementation', () => {
         const labels = [...root.querySelectorAll('[data-m3n-role="order"]')];
         const items = geometry.orderRows.flatMap(row => row.items.filter(item => item.framed));
         expect(labels.map(label => label.textContent)).toEqual(['A', 'B', 'C', 'B', 'D']);
+        expect(root.querySelectorAll('path[data-m3n-role="order-arrow"]')).toHaveLength(4);
+        expect([...root.querySelectorAll('text')].some(text => text.textContent === '→')).toBe(false);
         expect(labels.map(label => label.parentElement!.getAttribute('data-m3n-order-index'))).toEqual(['0', '1', '2', '3', '4']);
         expect(labels.every(label => label.parentElement!.querySelector('rect'))).toBe(true);
         labels.forEach((label, index) => {

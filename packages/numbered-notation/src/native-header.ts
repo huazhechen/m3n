@@ -141,7 +141,11 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     for (const item of row.items) {
       if (item.framed) rowSvg += `<g data-m3n-order-index="${orderIndex++}">`
       if (item.framed) rowSvg += `<rect${attrs({ x: item.x + em(0.5), y: item.y + em(0.5), width: item.width - em(1), height: item.height - em(1), fill: 'none', stroke: '#000', 'stroke-width': em(1) })}/>`
-      rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
+      if (!item.framed && item.text === '→') {
+        const left = item.x, right = item.x + item.width, middle = item.y + item.height / 2
+        const head = Math.min(item.width * 0.35, nativeStyle.text * 0.25)
+        rowSvg += `<path${attrs({ d: `M${n(left)} ${n(middle)} H${n(right)} M${n(right - head)} ${n(middle - head)} L${n(right)} ${n(middle)} L${n(right - head)} ${n(middle + head)}`, fill: 'none', stroke: '#000', 'stroke-width': em(1), 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'data-m3n-role': 'order-arrow' })}/>`
+      } else rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
       if (item.framed) rowSvg += '</g>'
     }
     svg += rowSvg

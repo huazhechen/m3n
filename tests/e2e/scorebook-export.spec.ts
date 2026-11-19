@@ -55,7 +55,7 @@ test('exports the full built-in library with progress and a vector PDF, independ
   expect(requests.some(url => /\/api\/|\.(?:otf|ttf|woff2?)(?:$|\?)/.test(url))).toBe(false)
   expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore)
   expect(errors).toEqual([])
-  await dialog.getByRole('button', { name: '关闭', exact: true }).click()
+  await page.getByRole('dialog', { name: '导出 PDF', exact: true }).getByRole('button', { name: '关闭', exact: true }).click()
   await expect(dialog).toHaveCount(0)
 })
 

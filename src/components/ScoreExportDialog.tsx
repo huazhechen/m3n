@@ -1,6 +1,7 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { ScoreDocument } from '@m3n/notation'
-import { createScorePdf, downloadBlob, renderScoreCanvas, scoreFileName, frameScoreImage, wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
+import { preloadScorePdf, downloadBlob, renderScoreCanvas, scoreFileName, frameScoreImage, wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
+import { PdfDownloadPanel } from './PdfDownloadPanel'
 import { prepareScoreExport, type ScoreDisplaySettings } from '../lib/render-score'
 
 type ExportFormat = 'png' | 'pdf'
@@ -19,6 +20,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     const previewPagesRef = useRef<SVGSVGElement[]>([])
     const renderPagesRef = useRef<((paged: boolean) => SVGSVGElement[]) | null>(null)
     const [isOpen, setIsOpen] = useState(false)
+    const [pdfMode, setPdfMode] = useState(false)
     const [exportError, setExportError] = useState('')
     const [isExporting, setIsExporting] = useState(false)
     const [isPreviewing, setIsPreviewing] = useState(false)
@@ -28,6 +30,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
     useEffect(() => {
       const preview = previewRef.current
       if (!isOpen || !preview) return
+      void preloadScorePdf().catch(() => {})
       const controller = new AbortController()
       previewPagesRef.current = []
       renderPagesRef.current = null
@@ -45,10 +48,17 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       return () => { controller.abort(); renderPagesRef.current = null; previewPagesRef.current = [] }
     }, [isOpen, settings, scoreDocument])
 
+    const preparePdf = useCallback(async (signal: AbortSignal) => {
+      signal.throwIfAborted()
+      const pages = settings.paged ? previewPagesRef.current : renderPagesRef.current?.(true) ?? []
+      return { pages, title }
+    }, [settings.paged, title])
+
     const exportScore = async (format: ExportFormat) => {
+      if (format === 'pdf') { setPdfMode(true); return }
       setIsExporting(true); setExportError(''); setProgress('正在生成…'); onError('')
       try {
-        const paged = format === 'pdf'
+        const paged = false
         const svgs = paged === settings.paged ? previewPagesRef.current : renderPagesRef.current?.(paged) ?? []
         if (!svgs.length) throw new Error('当前没有可导出的乐谱。')
         const fileName = scoreFileName(title)
@@ -58,15 +68,13 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
           if (!blob) throw new Error('PNG 生成失败。')
           downloadBlob(blob, `${fileName}.png`)
-        } else {
-          const blob = await createScorePdf(svgs, (done, total) => setProgress(`正在生成 PDF：${done}/${total} 页…`))
-          downloadBlob(blob, `${fileName}.pdf`)
         }
         dialogRef.current?.close()
       } catch (error) { const message = error instanceof Error ? error.message : '导出失败。'; setExportError(message); onError(message) }
       finally { setIsExporting(false) }
     }
-    return <dialog ref={dialogRef} className="export-dialog" onClose={() => setIsOpen(false)}>
+    return <dialog ref={dialogRef} className={pdfMode ? 'scorebook-export-dialog' : 'export-dialog'} aria-label={pdfMode ? '导出 PDF' : undefined} onClose={() => { setIsOpen(false); setPdfMode(false) }}>
+      {pdfMode ? <PdfDownloadPanel prepare={preparePdf} onClose={() => dialogRef.current?.close()} closeOnSuccess /> :
       <div className="export-body">
         <div className="export-header"><h2>打印简谱</h2><button type="button" className="action-button" aria-label="关闭打印" onClick={() => dialogRef.current?.close()} disabled={isExporting}>×</button></div>
         <div className="export-actions" role="group" aria-label="导出格式">
@@ -78,7 +86,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           {previewError && <p role="alert">{previewError}</p>}
           {exportError && <p className="export-error" role="alert">{exportError} 请重试下载。</p>}
           <div className="export-preview" aria-label="打印预览" aria-busy={isPreviewing}><div className="export-preview-paper"><div ref={previewRef} /></div></div></div>
-      </div>
+      </div>}
     </dialog>
   },
 )
