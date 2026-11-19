@@ -75,8 +75,8 @@ export function writeRenderMode(mode: RenderMode) {
 
 export type NotationMode = 'movable' | 'fixed' | 'staff'
 export const NOTATION_MODES = [
-  { value: 'movable', label: '首调简谱' },
-  { value: 'fixed', label: '固定调简谱' },
+  { value: 'movable', label: '首调' },
+  { value: 'fixed', label: '固定调' },
   { value: 'staff', label: '五线谱' },
 ] as const
 export function readNotationMode(): NotationMode {

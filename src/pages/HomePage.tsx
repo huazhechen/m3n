@@ -53,7 +53,7 @@ export function HomePage() {
             <div className="home-feature-copy">
               <p>调不合适，可以换个调；习惯固定调，也能切换显示。打开小节号，排练时更方便找到同一句。</p>
               <ul className="home-feature-details">
-                <li><strong>移调与固定调</strong>：打开 <ControlHint icon="settings" label="设置" /> → <ControlHint musicalKey label="调号" /> 选择调性，谱面与播放一起移调；用 <ControlHint icon="fixedDo" label="记谱方式" /> 选择首调简谱、固定调简谱或五线谱。</li>
+                <li><strong>移调与固定调</strong>：打开 <ControlHint icon="settings" label="设置" /> → <ControlHint musicalKey label="调号" /> 选择调性，谱面与播放一起移调；用 <ControlHint icon="fixedDo" label="记谱方式" /> 选择首调、固定调或五线谱。</li>
                 <li><strong>分页与页面宽度</strong>：在 <ControlHint icon="settings" label="设置" /> 中用 <ControlHint icon="paged" label="分页" /> 切换连续或分页阅读，拖动 <ControlHint slider label="宽度" /> 滑条，让每行乐谱疏密合宜。</li>
                 <li><strong>小节号</strong>：打开 <ControlHint icon="settings" label="设置" /> → <ControlHint icon="measureNumbers" label="小节号" />，定位乐句、一起排练时就能对上位置。</li>
               </ul>
