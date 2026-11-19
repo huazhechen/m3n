@@ -111,18 +111,25 @@
   },
   {
     "id": "instrumental",
-    "title": "古典与器乐",
+    "title": "器乐小品",
     "files": [
       "xia_yu_de_shi_hou_01.m3n",
       "besame_mucho_01.m3n",
       "xiao_ye_qu_01.m3n",
-      "second_waltz_01.m3n",
       "haydn_surprise_minuet_01.m3n",
+      "sea_horses_01.m3n",
       "meng_huan_qu_01.m3n",
       "ai_de_li_zan_01.m3n",
       "cai_yun_zhui_yue_01.m3n",
       "por_una_cabeza_01.m3n",
-      "san_bu_01.m3n",
+      "san_bu_01.m3n"
+    ]
+  },
+  {
+    "id": "instrumental-large",
+    "title": "器乐大型作品",
+    "files": [
+      "second_waltz_01.m3n",
       "canon_01.m3n",
       "zhi_ai_li_si_01.m3n",
       "beer_barrel_polka_01.m3n",

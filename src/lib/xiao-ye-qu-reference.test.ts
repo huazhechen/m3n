@@ -86,8 +86,8 @@ it('keeps only the melody, without lyrics, violin credits or bow symbols', () =>
   expect(source).not.toMatch(/⊓|∨|弓法|text=|小提琴|兔耳|lyricist=|^L\d*:/m)
 })
 
-it('keeps the same final-chapter placement and updates the catalog title', () => {
-  const category = categories.at(-1)!
+it('keeps the small-piece placement and updates the catalog title', () => {
+  const category = categories.find(category => category.id === 'instrumental')!
   expect(category.id).toBe('instrumental')
   expect(category.files[2]).toBe('xiao_ye_qu_01.m3n')
   expect(plan.entries.filter(entry => entry.section === category.id).map(entry => entry.file)).toEqual(category.files)

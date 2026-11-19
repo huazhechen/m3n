@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 97,
+  "sourceCount": 99,
   "sections": [
     {
       "id": "basics",
@@ -34,8 +34,14 @@
     },
     {
       "id": "instrumental",
-      "title": "第六章　古典与器乐",
-      "description": "由歌唱性旋律和舞曲，进入持续快速音型、装饰、半音及长篇结构的综合挑战。",
+      "title": "第六章　器乐小品",
+      "description": "独立短曲、歌唱性小品与短篇改编；侧重乐句、气息、音色及表情处理。",
+      "reorderForSharing": true
+    },
+    {
+      "id": "instrumental-large",
+      "title": "第七章　器乐大型作品",
+      "description": "以当前谱源的篇幅与结构为准，收录段落展开较多、持续音型与长篇结构的综合作品。",
       "reorderForSharing": true
     }
   ],
@@ -706,12 +712,20 @@
       "reason": "三连音、倚音、临时变音、两遍结尾与长音延续"
     },
     {
-      "id": "second_waltz",
-      "file": "second_waltz_01.m3n",
-      "title": "第二圆舞曲",
+      "id": "haydn_surprise_minuet",
+      "file": "haydn_surprise_minuet_01.m3n",
+      "title": "惊愕交响曲·小步舞曲",
       "section": "instrumental",
-      "group": "舞曲与动画主题",
-      "reason": "三拍子、倚音与圆舞曲乐句"
+      "group": "古典舞曲与短篇改编",
+      "reason": "三拍子弱起、两段反复、连奏、跳音与临时升降号"
+    },
+    {
+      "id": "sea_horses",
+      "file": "sea_horses_01.m3n",
+      "title": "海马",
+      "section": "instrumental",
+      "group": "现代器乐小品与表情",
+      "reason": "二二拍、十六分节奏、半音变化、连奏、力度渐变与延长记号"
     },
     {
       "id": "meng_huan_qu",
@@ -754,10 +768,18 @@
       "reason": "切分与器乐乐句"
     },
     {
+      "id": "second_waltz",
+      "file": "second_waltz_01.m3n",
+      "title": "第二圆舞曲",
+      "section": "instrumental-large",
+      "group": "舞曲与动画主题",
+      "reason": "三拍子、倚音与圆舞曲乐句"
+    },
+    {
       "id": "canon",
       "file": "canon_01.m3n",
       "title": "卡农",
-      "section": "instrumental",
+      "section": "instrumental-large",
       "group": "综合进阶",
       "reason": "从长音渐进到十六分音型"
     },
@@ -765,7 +787,7 @@
       "id": "zhi_ai_li_si",
       "file": "zhi_ai_li_si_01.m3n",
       "title": "致爱丽丝",
-      "section": "instrumental",
+      "section": "instrumental-large",
       "group": "综合进阶",
       "reason": "弱起、两房反复、快速音型与三连音"
     },
@@ -773,7 +795,7 @@
       "id": "beer_barrel_polka",
       "file": "beer_barrel_polka_01.m3n",
       "title": "啤酒桶波尔卡",
-      "section": "instrumental",
+      "section": "instrumental-large",
       "group": "快速音型与装饰",
       "reason": "快速二拍子、倚音与变调"
     },
@@ -781,7 +803,7 @@
       "id": "flower_dance",
       "file": "flower_dance_01.m3n",
       "title": "花之舞",
-      "section": "instrumental",
+      "section": "instrumental-large",
       "group": "综合进阶",
       "reason": "长篇幅、快速音型与高音区"
     },
@@ -789,7 +811,7 @@
       "id": "dan_huang_guan_bo_er_ka",
       "file": "dan_huang_guan_bo_er_ka_01.m3n",
       "title": "单簧管波尔卡",
-      "section": "instrumental",
+      "section": "instrumental-large",
       "group": "综合进阶",
       "reason": "快速二拍子、颤音、三连音与弱起分段复用"
     },
@@ -797,7 +819,7 @@
       "id": "turkish_march",
       "file": "turkish_march_01.m3n",
       "title": "土耳其进行曲",
-      "section": "instrumental",
+      "section": "instrumental-large",
       "group": "综合进阶",
       "reason": "快速半音、装饰与多次变调"
     },
@@ -805,7 +827,7 @@
       "id": "valsentino",
       "file": "valsentino_01.m3n",
       "title": "Valsentino(快速圆舞曲)",
-      "section": "instrumental",
+      "section": "instrumental-large",
       "group": "综合进阶",
       "reason": "快速三拍子、半音、三连音与变调"
     },
@@ -813,7 +835,7 @@
       "id": "mozart_k545",
       "file": "mozart_k545_01.m3n",
       "title": "C大调奏鸣曲 K.545 第一乐章",
-      "section": "instrumental",
+      "section": "instrumental-large",
       "group": "综合进阶",
       "reason": "长篇幅、快速音阶、主题交接与反复"
     }
