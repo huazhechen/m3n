@@ -1,12 +1,12 @@
 // 来源：/root/uploads/mmexport1795095694039.jpg，第 7 页。
-// 原谱二分音符约 54，故设置 108qpm；rall. 与 Largo 未给数值，保留文字提示。
+// 原谱二分音符约 54，故设置 108qpm。
 // 第13、17、22小节渐强跨圆滑线边界，采用等义的 cresc. 文字，保持原谱圆滑线端点。
 {preferred-width=540}
 {title=海马}
-{subtitle=Sea Horses · 来自《Just Me!》第四册第5首}
+{subtitle=Sea Horses}
 {composer=Roma Cafolla}
 {key=D} {2/2} {108qpm}
-N: {text=Moderato affettuoso}{mf}{lg}(3e 2e 1e 2e) (3e 5e 4e 3e){/} | {lg}2e 5 2e{/} 0 | {p}{lg}(1e 7 6 7) (1e 3e 2e 1e){/} | {lg}7 3 7{/} 0 |
+N: {mf}{lg}(3e 2e 1e 2e) (3e 5e 4e 3e){/} | {lg}2e 5 2e{/} 0 | {p}{lg}(1e 7 6 7) (1e 3e 2e 1e){/} | {lg}7 3 7{/} 0 |
 ---
 N: {lg}(6 7) {cresc=text}(1e 6) (7 1e 2e 5){/}{/} | {lg}(3e 2e 1e 2e) (3e 2e 3e 4#e) | {f}5e{/} {lg}(4#e 3e) 4#e{/} {lg}6e | 3e{/} (0) {decres}{lg}((3e 4=e)) 5e{/}{/} (0) {p}{lg}(5) |
 ---
@@ -16,6 +16,6 @@ N: {lg}(6b 5 4 3b) (2 5) {cresc=text}(7 4e){/}{/} | {lg}4e 3be{/} 3be 0 | {f}{lg
 ---
 N: (3e 2e 1e 2e) {cresc=text}(3e){/}{/} {lg}((6e 5e) 4e 3e) | (2e 3e 2e 5) 5e{/} 0 | {p}{lg}(1e 7 6 7) (1e){/} {lg}((4e 3e)) {cresc}(2e 1e) | (7 1e){/} (7 3) 3e{/} 0 |
 ---
-N: {p}{lg}(6 7 1e){/} {lg}(6) (7 2e 6e 5e) | {cresc=text}(7 1e 2e){/}{/} {lg}(7) (4e 5e 6be 4e){/} | {f}{lg}(3e 4e 3e 5){/} {lg}(2e 3e 2e 3) | 1e{/} 0 {p}{text=sub.}{lg}7^ |
+N: {p}{lg}(6 7 1e){/} {lg}(6) (7 2e 6e 5e) | {cresc=text}(7 1e 2e){/}{/} {lg}(7) (4e 5e 6be 4e){/} | {f}{lg}(3e 4e 3e 5){/} {lg}(2e 3e 2e 3) | 1e{/} 0 {p}{lg}7^ |
 ---
-N: (6 7 1e 6) {cresc}(7 2e 6e 5e){/}{/} | {text=rall.}{lg}(1e 2e 3e 1e) {decres}(4e 5e) 6be{fermata}{/}{/} | {text=Largo}{cresc}{lg}(5e 5){/} {lg}(5 4e){/}{/} {lg}(3e{hold} 5){/} {lg}(2e{hold} 4) | (1e{hold}){/} {lg}{decres}(5e 3e 1e) 1^{fermata}{/}{/} |||
+N: (6 7 1e 6) {cresc}(7 2e 6e 5e){/}{/} | {lg}(1e 2e 3e 1e) {decres}(4e 5e) 6be{fermata}{/}{/} | {cresc}{lg}(5e 5){/} {lg}(5 4e){/}{/} {lg}(3e{hold} 5){/} {lg}(2e{hold} 4) | (1e{hold}){/} {lg}{decres}(5e 3e 1e) 1^{fermata}{/}{/} |||
