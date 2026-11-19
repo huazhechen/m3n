@@ -19,7 +19,7 @@ export function pageDensityPenalty(fill) {
 }
 
 function soloOption(entry, index) {
-  const solo = chooseBestWidth(entry.candidates)
+  const solo = chooseBestWidth(entry.preferredWidth === undefined ? entry.candidates : entry.candidates.filter(candidate => candidate.width === entry.preferredWidth))
   if (!solo) throw new Error(`No safe layout: ${entry.title}`)
   const fill = solo.pageCount === 1 && Number.isFinite(solo.naturalHeight) ? solo.naturalHeight / capacity(solo.width) : undefined
   return { members: [index], width: solo.width, pageCount: solo.pageCount, fill }

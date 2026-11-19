@@ -1,64 +1,75 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { PresetScore } from './samples'
-import { buildOnlineScorebook, orderedBookScores } from './online-scorebook'
+import { buildOnlineScorebook } from './online-scorebook'
 
-const mocks = vi.hoisted(() => ({ load: vi.fn(), render: vi.fn() }))
+const mocks = vi.hoisted(() => ({
+  load: vi.fn(), prepare: vi.fn(), measure: vi.fn(), solo: vi.fn(), shared: vi.fn(),
+  plan: { title: '测试谱集', page: { width: 794, height: 1123 },
+    sections: [{ id: 'basics', title: '第一章', reorderForSharing: false }],
+    entries: [
+      { file: 'first.m3n', title: '<第一曲>', section: 'basics', sharePage: true },
+      { file: 'second.m3n', title: '第二曲', section: 'basics', sharePage: true },
+    ] },
+}))
+vi.mock('../../scorebook/editorial-plan.json', () => ({ default: mocks.plan }))
 vi.mock('./samples', () => ({
-  presetScores: [
-    { slug: 'second', title: '第二曲', category: { title: '进阶', order: 1, itemOrder: 0 } },
-    { slug: 'first', title: '<第一曲>', category: { title: '基础', order: 0, itemOrder: 0 } },
-  ],
+  presetScores: [{ slug: 'second', sourcePath: 'second.m3n', preferredWidth: 680 }, { slug: 'first', sourcePath: 'first.m3n', preferredWidth: 680 }],
   loadPresetScore: mocks.load,
 }))
-vi.mock('./render-score', () => ({ renderScoreInto: mocks.render }))
+vi.mock('../../tools/scorebook-layout.mjs', () => ({
+  prepare: mocks.prepare, measure: mocks.measure, a4Pages: mocks.solo, sharedA4Page: mocks.shared,
+}))
+const markup = '<svg xmlns="http://www.w3.org/2000/svg" data-engine="m3n"><text font-weight="700" text-anchor="middle">Title</text></svg>'
+function layouts() {
+  mocks.load.mockImplementation(async (slug: string) => slug)
+  mocks.measure.mockImplementation(async (_source: string, width: number) => ({ width, rows: 1, pageCount: 1, naturalHeight: 200, outside: [], overlaps: [] }))
+  mocks.shared.mockResolvedValue({ markup: markup.repeat(2) })
+  mocks.solo.mockResolvedValue([{ markup }])
+}
+afterEach(() => { vi.resetAllMocks(); mocks.plan.entries[0].sharePage = true; document.body.replaceChildren() })
 
-afterEach(() => { vi.resetAllMocks(); document.body.replaceChildren() })
-
-describe('online scorebook', () => {
-  it('keeps category training order without mutating the catalog', () => {
-    const catalog = [
-      { title: '未分类' },
-      { title: 'B', category: { order: 0, itemOrder: 1 } },
-      { title: 'A', category: { order: 0, itemOrder: 0 } },
-    ] as PresetScore[]
-    expect(orderedBookScores(catalog).map(score => score.title)).toEqual(['A', 'B', '未分类'])
-    expect(catalog[0].title).toBe('未分类')
-  })
-
-  it('includes every score, source width, cover and exact contents page numbers', async () => {
-    mocks.load.mockImplementation(async (slug: string) => `{title=${slug}}{preferred-width=680}{4/4}\nN: 1 2 3 4 |||`)
-    mocks.render.mockImplementation(async (host: HTMLElement, input) => {
-      expect(input.scoreDocument.preferredWidth).toBe(680)
-      expect(input.width).toBeUndefined()
-      expect(input.paged).toBe(true)
-      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><text font-weight="700" text-anchor="middle">Title</text></svg>'.repeat(input.scoreDocument.title === 'first' ? 2 : 1)
-    })
-    const progress: number[] = []
-    const result = await buildOnlineScorebook(new AbortController().signal, value => progress.push(value.completed))
+describe('online scorebook with script packing', () => {
+  it('uses saved widths without scanning, shares complete scores and gives both the same contents page', async () => {
+    layouts()
+    const result = await buildOnlineScorebook(new AbortController().signal, () => {})
+    expect(mocks.measure).toHaveBeenCalledTimes(4)
+    expect(new Set(mocks.measure.mock.calls.map(call => call[1]))).toEqual(new Set([640, 680]))
+    expect(mocks.shared).toHaveBeenCalledWith(['first', 'second'], 640, 32, expect.any(HTMLElement))
     expect(result.scoreCount).toBe(2)
-    expect(result.pages).toHaveLength(5)
-    expect(result.pages.slice(2).map(page => page.dataset.scoreSlug)).toEqual(['first', 'first', 'second'])
-    const contents = result.pages[1]
-    expect(contents.textContent).toBe('目录基础<第一曲>3进阶第二曲5')
-    expect(contents.querySelector('第一曲')).toBeNull()
-    expect(contents.querySelector('a')?.getAttribute('href')).toBe('https://score.cheesefans.com/scores/first')
-    expect(result.pages[2].querySelector('a > text')?.textContent).toBe('Title')
-    expect(progress).toEqual([0, 1, 1, 2])
+    expect(result.sharedPages).toBe(1)
+    expect(result.pages).toHaveLength(3)
+    expect(result.pages[1].textContent).toBe('目录第一章<第一曲>3第二曲3')
+    expect(result.pages[1].querySelector('第一曲')).toBeNull()
+    expect([...result.pages[2].querySelectorAll('[data-score-slug]')].map(svg => (svg as SVGSVGElement).dataset.scoreSlug)).toEqual(['first', 'second'])
+    expect(result.pages[2].querySelector('a')?.getAttribute('href')).toBe('https://score.cheesefans.com/scores/first')
     expect(document.body.children).toHaveLength(0)
   })
 
-  it('aborts before engraving and cleans up the scratch host', async () => {
+  it('honors no-sharing anchors and keeps the saved solo width', async () => {
+    layouts(); mocks.plan.entries[0].sharePage = false
+    const result = await buildOnlineScorebook(new AbortController().signal, () => {})
+    expect(result.sharedPages).toBe(0)
+    expect(result.pages).toHaveLength(4)
+    expect(mocks.shared).not.toHaveBeenCalled()
+    expect(mocks.solo).toHaveBeenCalledWith('first', 680, expect.any(HTMLElement))
+    expect(result.pages[1].textContent).toBe('目录第一章<第一曲>3第二曲4')
+  })
+
+  it('aborts during the candidate search and cleans up the scratch host', async () => {
+    layouts()
     const controller = new AbortController()
-    mocks.load.mockImplementation(async () => { controller.abort(); return '{4/4}\nN: 1 2 3 4 |||' })
+    mocks.measure.mockImplementation(async () => { controller.abort(); return {} })
     await expect(buildOnlineScorebook(controller.signal, () => {})).rejects.toMatchObject({ name: 'AbortError' })
-    expect(mocks.render).not.toHaveBeenCalled()
+    expect(mocks.shared).not.toHaveBeenCalled()
+    expect(mocks.solo).not.toHaveBeenCalled()
     expect(document.body.children).toHaveLength(0)
   })
 
-  it('reports the failing score and returns no partial book', async () => {
-    mocks.load.mockRejectedValue(new Error('正文加载失败'))
-    await expect(buildOnlineScorebook(new AbortController().signal, () => {})).rejects.toThrow('《<第一曲>》生成失败：正文加载失败')
+  it('reports the failing score and refuses unsafe partial results', async () => {
+    layouts()
+    mocks.measure.mockRejectedValue(new Error('超出边界'))
+    await expect(buildOnlineScorebook(new AbortController().signal, () => {})).rejects.toThrow('《<第一曲>》生成失败：当前优选宽度未通过页面边界检查，请检查谱源。')
+    expect(mocks.shared).not.toHaveBeenCalled()
     expect(document.body.children).toHaveLength(0)
   })
 })

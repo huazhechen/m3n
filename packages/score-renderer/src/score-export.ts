@@ -97,7 +97,7 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
 }
 
 /** Print native SVG with the device fonts; the browser can save a vector PDF. */
-export async function printScorePages(pages: readonly SVGSVGElement[], title: string) {
+export async function printScorePages(pages: readonly SVGSVGElement[], title: string, options: { fullPage?: boolean } = {}) {
   if (!pages.length) throw new Error('当前没有可打印的乐谱。')
   const frame = document.createElement('iframe')
   frame.title = '乐谱打印'
@@ -126,7 +126,7 @@ export async function printScorePages(pages: readonly SVGSVGElement[], title: st
       section.className = 'print-page'
       const copy = target.importNode(svg, true)
       const size = getSvgSize(svg)
-      const placement = a4ImagePlacement(size.width, size.height)
+      const placement = options.fullPage ? { x: 0, y: 0, width: 210, height: 297 } : a4ImagePlacement(size.width, size.height)
       copy.style.cssText = `left:${placement.x}mm;top:${placement.y}mm;width:${placement.width}mm;height:${placement.height}mm;`
       section.append(copy)
       target.body.append(section)

@@ -32,7 +32,7 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
     try {
       const { printScorePages } = await import('@m3n/score-renderer/view')
       const { scorebookTitle } = await import('../lib/online-scorebook')
-      await printScorePages(book.pages, scorebookTitle)
+      await printScorePages(book.pages, scorebookTitle, { fullPage: true })
     } catch (reason) { setError(reason instanceof Error ? reason.message : '无法打开打印窗口，请重试。') }
     finally { setPrinting(false) }
   }
@@ -42,8 +42,8 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
     <h2 id={titleId}>导出全量谱集</h2>
     <p>全部内置乐谱按音乐类型编排，含封面与目录。</p>
     <div role="status" aria-live="polite">
-      {book ? <p>已生成 {book.scoreCount} 首，共 {book.pages.length} 页。</p> : error ? <p>谱集生成已停止。</p>
-        : <><p>{progress.total ? `正在排版 ${progress.completed} / ${progress.total} 首（${percent}%）` : '正在准备谱集…'}</p>
+      {book ? <p>已生成 {book.scoreCount} 首，共 {book.pages.length} 页，含 {book.sharedPages} 个合页。</p> : error ? <p>谱集生成已停止。</p>
+        : <><p>{progress.total ? progress.phase === 'packing' ? '正在优化合页…' : `${progress.phase === 'measuring' ? '正在检查页面' : '正在排版'} ${Math.floor(progress.completed)} / ${progress.total} 首（${percent}%）` : '正在准备谱集…'}</p>
           <p className="scorebook-current-title">{progress.title || '加载乐谱与排版工具'}</p></>}
     </div>
     <progress aria-label="谱集生成进度" max={progress.total || 1} value={progress.completed} />

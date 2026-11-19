@@ -1,26 +1,25 @@
-import { parseM3NDocument } from '@m3n/notation'
-import { loadPresetScore, presetScores, type PresetScore } from './samples'
-import { renderScoreInto } from './render-score'
+import plan from '../../scorebook/editorial-plan.json'
+import { DEFAULT_PREFERRED_WIDTH } from '@m3n/notation'
+import { loadPresetScore, presetScores } from './samples'
+import { prepare, measure, a4Pages, sharedA4Page } from '../../tools/scorebook-layout.mjs'
+import type { WidthMeasurement } from '../../tools/scorebook-width.mjs'
+import { optimizeScorebook, sharedScoreGap, sharedScoreWidth, type PackingEntry } from '../../tools/scorebook-packing.mjs'
 
-export const scorebookTitle = 'Max的半音阶口琴乐谱集'
-export type ScorebookProgress = { completed: number; total: number; title: string }
-export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number }
+export const scorebookTitle = plan.title
+export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'measuring' | 'packing' | 'rendering' }
+export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number }
+type BookEntry = PackingEntry & { file: string; source: string; slug: string; musicStart: number; pageCount: number }
 const svgNS = 'http://www.w3.org/2000/svg'
 const website = 'https://score.cheesefans.com/'
 
-export function orderedBookScores(scores: readonly PresetScore[]) {
-  return [...scores].sort((a, b) =>
-    (a.category?.order ?? Number.MAX_SAFE_INTEGER) - (b.category?.order ?? Number.MAX_SAFE_INTEGER)
-    || (a.category?.itemOrder ?? Number.MAX_SAFE_INTEGER) - (b.category?.itemOrder ?? Number.MAX_SAFE_INTEGER)
-    || a.title.localeCompare(b.title, 'zh-Hans-CN'))
-}
-
-function page() {
+function page(markup = '') {
   const svg = document.createElementNS(svgNS, 'svg')
   svg.setAttribute('xmlns', svgNS)
-  svg.setAttribute('viewBox', '0 0 744 1092')
-  svg.setAttribute('width', '744')
-  svg.setAttribute('height', '1092')
+  svg.setAttribute('viewBox', `0 0 ${plan.page.width} ${plan.page.height}`)
+  svg.setAttribute('width', String(plan.page.width))
+  svg.setAttribute('height', String(plan.page.height))
+  // These are complete A4 pages; printing must not add a second paper margin.
+  svg.innerHTML = `<rect width="100%" height="100%" fill="white"/>${markup}`
   return svg
 }
 
@@ -37,79 +36,126 @@ function text(svg: SVGSVGElement, value: string, x: number, y: number, size: num
   return node
 }
 
-function frontPages(entries: { score: PresetScore; pages: SVGSVGElement[] }[]) {
-  const cover = page()
-  text(cover, scorebookTitle, 372, 340, 38, website).setAttribute('text-anchor', 'middle')
-  text(cover, `共 ${entries.length} 首`, 372, 400, 22).setAttribute('text-anchor', 'middle')
-  text(cover, website, 372, 450, 20, website).setAttribute('text-anchor', 'middle')
-  const rows: { title: string; entry?: typeof entries[number]; offset?: number }[] = []
-  let category: string | undefined, offset = 0
-  for (const entry of entries) {
-    const next = entry.score.category?.title ?? '其他曲目'
-    if (category !== next) { rows.push({ title: next }); category = next }
-    rows.push({ title: entry.score.title, entry, offset })
-    offset += entry.pages.length
+function frontPages(entries: BookEntry[]) {
+  // Match the script's 25-row columns and keep chapter headings with a song.
+  type Row = { section: typeof plan.sections[number] } | { entry: BookEntry }
+  const columns: Row[][] = []
+  for (const section of plan.sections) {
+    const rows: Row[] = [{ section }, ...entries.filter(entry => entry.section === section.id).map(entry => ({ entry }))]
+    for (const row of rows) {
+      let column = columns.at(-1)
+      if (!column || column.length >= 25 || 'section' in row && column.length === 24) {
+        column = []; columns.push(column)
+      }
+      column.push(row)
+    }
   }
-  const perPage = 42, contentsCount = Math.ceil(rows.length / perPage)
+  const contentsCount = Math.ceil(columns.length / 2), frontCount = 1 + contentsCount
+  const cover = page()
+  text(cover, scorebookTitle, plan.page.width / 2, 350, 40, website).setAttribute('text-anchor', 'middle')
+  text(cover, website, plan.page.width / 2, 410, 18, website).setAttribute('text-anchor', 'middle')
   const contents = Array.from({ length: contentsCount }, (_, index) => {
     const svg = page()
-    text(svg, '目录', 12, 42, 30)
-    rows.slice(index * perPage, (index + 1) * perPage).forEach((row, rowIndex) => {
-      const x = rowIndex < 21 ? 12 : 390, y = 100 + rowIndex % 21 * 46
-      if (!row.entry) { text(svg, row.title, x, y, 21).setAttribute('font-weight', '700'); return }
-      const url = `${website}scores/${encodeURIComponent(row.entry.score.slug)}`
-      const label = text(svg, row.title, x, y, 17, url)
-      // Reserve a separate column for the page number, including long titles.
-      label.setAttribute('textLength', String(Math.min(280, row.title.length * 17)))
-      label.setAttribute('lengthAdjust', 'spacingAndGlyphs')
-      text(svg, String(2 + contentsCount + row.offset!), x + 324, y, 17, url).setAttribute('text-anchor', 'end')
-    })
+    text(svg, '目录', 40, 65, 30)
+    for (let side = 0; side < 2; side++) {
+      const x = 40 + side * 377
+      for (const [rowIndex, row] of (columns[index * 2 + side] ?? []).entries()) {
+        const y = 120 + rowIndex * 37
+        if ('section' in row) { text(svg, row.section.title, x, y, 16); continue }
+        const entry = row.entry, first = frontCount + entry.musicStart + 1
+        const label = entry.pageCount === 1 ? String(first) : `${first}–${first + entry.pageCount - 1}`
+        const url = `${website}scores/${encodeURIComponent(entry.slug)}`
+        text(svg, entry.title, x, y, 16, url)
+        text(svg, label, x + 337, y, 14, url).setAttribute('text-anchor', 'end')
+      }
+    }
     return svg
   })
   return [cover, ...contents]
 }
 
-/** Uses saved source widths and the normal browser renderer; never writes sources or settings. */
+function linkScores(svg: SVGSVGElement, entries: BookEntry[]) {
+  const scores = [...svg.querySelectorAll<SVGSVGElement>('svg[data-engine="m3n"]')]
+  if (scores.length !== entries.length) throw new Error('谱集页面与曲目数量不一致。')
+  scores.forEach((score, index) => {
+    score.dataset.scoreSlug = entries[index].slug
+    for (const title of score.querySelectorAll('text[font-weight="700"][text-anchor="middle"]:not([data-m3n-role])')) {
+      const link = document.createElementNS(svgNS, 'a')
+      link.setAttribute('href', `${website}scores/${encodeURIComponent(entries[index].slug)}`)
+      title.replaceWith(link); link.append(title)
+    }
+  })
+}
+
+/** Reuse source widths and the script's chapter packing and A4 placement, without width search. */
 export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (progress: ScorebookProgress) => void): Promise<OnlineScorebook> {
-  const scores = orderedBookScores(presetScores)
-  if (!scores.length) throw new Error('当前没有可导出的内置乐谱。')
+  const files = new Map(presetScores.map(score => [score.sourcePath, score]))
+  if (files.size !== plan.entries.length || plan.entries.some(entry => !files.has(entry.file))) {
+    throw new Error('谱集配置与内置曲库不一致，请刷新页面重试。')
+  }
   const host = document.createElement('div')
   host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none;'
   host.setAttribute('aria-hidden', 'true')
   document.body.append(host)
-  const entries: { score: PresetScore; pages: SVGSVGElement[] }[] = []
+  const entries: BookEntry[] = [], music: SVGSVGElement[] = []
+  const pause = async () => { await new Promise(resolve => setTimeout(resolve, 0)); signal.throwIfAborted() }
   try {
-    for (const score of scores) {
+    signal.throwIfAborted()
+    await prepare()
+    for (const [index, entry] of plan.entries.entries()) {
       signal.throwIfAborted()
-      onProgress({ completed: entries.length, total: scores.length, title: score.title })
-      // Let progress paint and allow cancellation between synchronous engraving passes.
-      await new Promise(resolve => setTimeout(resolve, 16))
-      signal.throwIfAborted()
+      const progress = (fraction = 0) => onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
+      progress()
       try {
-        const source = await loadPresetScore(score.slug)
+        const source = await loadPresetScore(files.get(entry.file)!.slug)
         signal.throwIfAborted()
         if (!source) throw new Error('乐谱正文缺失，请刷新页面重试。')
-        await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), paged: true, signal })
-        signal.throwIfAborted()
-        const pages = [...host.querySelectorAll<SVGSVGElement>(':scope > svg')]
-        if (!pages.length) throw new Error('没有生成可打印的页面。')
-        for (const svg of pages) {
-          svg.dataset.scoreSlug = score.slug
-          for (const title of svg.querySelectorAll('text[font-weight="700"][text-anchor="middle"]:not([data-m3n-role])')) {
-            const link = document.createElementNS(svgNS, 'a')
-            link.setAttribute('href', `${website}scores/${encodeURIComponent(score.slug)}`)
-            title.replaceWith(link); link.append(title)
-          }
+        const preferredWidth = files.get(entry.file)!.preferredWidth ?? DEFAULT_PREFERRED_WIDTH
+        const candidates: WidthMeasurement[] = []
+        const widths = [...new Set([preferredWidth, sharedScoreWidth])]
+        for (const [widthIndex, width] of widths.entries()) {
+          await pause()
+          let result: WidthMeasurement
+          try { result = await measure(source, width, true, undefined, host) }
+          catch (error) { result = { width, error: error instanceof Error ? error.message : String(error), pageCount: 0, rows: 0, outside: [], overlaps: [] } }
+          signal.throwIfAborted()
+          candidates.push(result)
+          progress((widthIndex + 1) / widths.length)
         }
-        entries.push({ score, pages })
-        host.replaceChildren()
-        onProgress({ completed: entries.length, total: scores.length, title: score.title })
+        const solo = candidates.find(candidate => candidate.width === preferredWidth)!
+        if (solo.error || !solo.pageCount || solo.outside.length || solo.overlaps.length) throw new Error('当前优选宽度未通过页面边界检查，请检查谱源。')
+        entries.push({ ...entry, source, slug: files.get(entry.file)!.slug, preferredWidth, candidates, musicStart: 0, pageCount: 0 })
       } catch (error) {
         signal.throwIfAborted()
-        throw new Error(`《${score.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)
+        throw new Error(`《${entry.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)
       }
     }
+    onProgress({ completed: 0, total: entries.length, title: '正在安排章节与合页…', phase: 'packing' })
+    await pause()
+    const packed = optimizeScorebook(entries, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
+    let sharedPages = 0
+    for (const group of packed.groups) {
+      const members = packed.entries.slice(group.start, group.end)
+      onProgress({ completed: group.start, total: entries.length, title: members.map(entry => entry.title).join(' / '), phase: 'rendering' })
+      await pause()
+      const start = music.length
+      if (members.length > 1) {
+        const rendered = await sharedA4Page(members.map(entry => entry.source), group.width, sharedScoreGap, host)
+        const svg = page(rendered.markup)
+        linkScores(svg, members); music.push(svg); sharedPages++
+      } else {
+        const rendered = await a4Pages(members[0].source, group.width, host)
+        if (rendered.length !== group.pageCount) throw new Error(`《${members[0].title}》分页结果已改变，请重试。`)
+        for (const item of rendered) {
+          const svg = page(item.markup)
+          linkScores(svg, members); music.push(svg)
+        }
+      }
+      for (const entry of members) { entry.musicStart = start; entry.pageCount = group.pageCount }
+      host.replaceChildren()
+      onProgress({ completed: group.end, total: entries.length, title: members.map(entry => entry.title).join(' / '), phase: 'rendering' })
+    }
     signal.throwIfAborted()
-    return { pages: [...frontPages(entries), ...entries.flatMap(entry => entry.pages)], scoreCount: entries.length }
+    return { pages: [...frontPages(packed.entries), ...music], scoreCount: entries.length, sharedPages }
   } finally { host.remove() }
 }

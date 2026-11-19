@@ -7,20 +7,21 @@ import { createSvgInkMeasurer } from './lib/svg-ink-bounds.mjs'
 export async function prepare(fontBase64) {
   // This family is only used when packaging export glyphs. Engraving keeps the
   // web renderer's system serif and CanvasTextMeasurer, without CSS overrides.
-  const font = new FontFace('Scorebook Text', `url(data:font/otf;base64,${fontBase64})`)
-  await font.load()
-  document.fonts.add(font)
+  if (fontBase64) {
+    const font = new FontFace('Scorebook Text', `url(data:font/otf;base64,${fontBase64})`)
+    await font.load()
+    document.fonts.add(font)
+  }
   await prepareNumberedNotationFonts()
 }
 
-export async function render(source, width, paged = true, coreGap) {
-  const host = document.querySelector('#scratch')
+export async function render(source, width, paged = true, coreGap, host = document.querySelector('#scratch')) {
   await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged, coreGap })
   return [...host.querySelectorAll(':scope > svg')]
 }
 
-export async function measure(source, width, paged = true, coreGap) {
-  const pages = await render(source, width, paged, coreGap)
+export async function measure(source, width, paged = true, coreGap, host = document.querySelector('#scratch')) {
+  const pages = await render(source, width, paged, coreGap, host)
   const naturalHeight = !paged && pages.length === 1 ? pages[0].viewBox.baseVal.height : undefined
   const outside = [], overlaps = []
   const ink = createSvgInkMeasurer()
@@ -53,20 +54,19 @@ export async function measure(source, width, paged = true, coreGap) {
   if (!paged) return { ...result, naturalHeight }
   if (pages.length === 1 && !outside.length && !overlaps.length) {
     const markup = pages[0].outerHTML
-    const continuous = await measure(source, width, false)
+    const continuous = await measure(source, width, false, undefined, host)
     if (!continuous.outside.length && !continuous.overlaps.length) result.naturalHeight = continuous.naturalHeight
-    document.querySelector('#scratch').innerHTML = markup
+    host.innerHTML = markup
   }
   return result
 }
 
 /** Fit whole scores at one shared core parameter before A4 placement. */
-export async function sharedA4Page(sources, width, gap = 22) {
+export async function sharedA4Page(sources, width, gap = 22, host = document.querySelector('#scratch')) {
   if (sources.length < 2) throw new Error('A shared page needs at least two scores')
   const pxPerMm = 96 / 25.4, scale = 186 / width
   await prepareNumberedNotationFonts()
   const fitted = renderSharedNumberedNotationScores(sources.map(source => parseM3NDocument(source)), { width, pageMargin: 0 }, gap)
-  const host = document.querySelector('#scratch')
   host.innerHTML = fitted.markup.join('')
   const pages = [...host.querySelectorAll(':scope > svg')]
   const items = []
@@ -86,8 +86,8 @@ export async function sharedA4Page(sources, width, gap = 22) {
 }
 
 /** The same 12mm A4 placement used by the web PDF download, without cropping. */
-export async function a4Pages(source, width) {
-  const pages = await render(source, width)
+export async function a4Pages(source, width, host = document.querySelector('#scratch')) {
+  const pages = await render(source, width, true, undefined, host)
   const pxPerMm = 96 / 25.4
   return pages.map(svg => {
     const { width: sourceWidth, height: sourceHeight } = svg.viewBox.baseVal

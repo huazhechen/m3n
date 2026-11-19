@@ -3,7 +3,7 @@ import { readdir, writeFile } from 'node:fs/promises'
 import { captureBrowserPrint, printedScorePdf } from './print-capture'
 
 test('exports the full built-in library with progress and a vector PDF, independent of search', async ({ page }, info) => {
-  test.setTimeout(120_000)
+  test.setTimeout(5 * 60_000)
   await captureBrowserPrint(page)
   const errors: string[] = [], requests: string[] = []
   page.on('pageerror', error => errors.push(error.message))
@@ -16,7 +16,7 @@ test('exports the full built-in library with progress and a vector PDF, independ
   await expect(dialog).toBeVisible()
   const progress = dialog.getByRole('progressbar', { name: '谱集生成进度' })
   await expect(progress).toBeVisible()
-  await expect(dialog.getByRole('button', { name: '保存 PDF' })).toBeVisible({ timeout: 90_000 })
+  await expect(dialog.getByRole('button', { name: '保存 PDF' })).toBeVisible({ timeout: 4 * 60_000 })
   const count = (await readdir('src/scores')).filter(file => file.endsWith('.m3n')).length
   await expect(progress).toHaveAttribute('value', String(count))
   await expect(progress).toHaveAttribute('max', String(count))
@@ -30,11 +30,13 @@ test('exports the full built-in library with progress and a vector PDF, independ
     return { slugs: [...new Set(scores.map(svg => svg.dataset.scoreSlug))],
       contents: doc.querySelectorAll('.print-page')[1].textContent,
       widths: scores.map(svg => [svg.dataset.scoreSlug, Number(svg.getAttribute('viewBox')?.split(/\s+/)[2])]),
+      groups: [...doc.querySelectorAll('.print-page')].map(page => [...page.querySelectorAll<SVGSVGElement>('[data-score-slug]')].map(svg => svg.dataset.scoreSlug)),
       links: [...doc.querySelectorAll('svg a')].map(link => link.getAttribute('href')) }
   }, printed.html)
   expect(geometry.slugs).toHaveLength(count)
   expect(geometry.slugs[0]).toBe('ban_yin_jie_kou_qin_ji_ben_gong_01')
   expect(geometry.contents).toContain('目录')
+  expect(geometry.groups.some(group => group.length > 1)).toBe(true)
   expect(geometry.links).toContain('https://score.cheesefans.com/scores/xiao_xing_xing_01')
   expect(geometry.widths.find(([slug]) => slug === 'ban_yin_jie_kou_qin_ji_ben_gong_01')?.[1]).toBe(720)
   expect(printed.pdf.subarray(0, 4).toString()).toBe('%PDF')
@@ -42,6 +44,7 @@ test('exports the full built-in library with progress and a vector PDF, independ
   expect(requests.some(url => /\/api\/|\.otf(?:$|\?)/.test(url))).toBe(false)
   expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore)
   expect(errors).toEqual([])
+  await writeFile(info.outputPath('page-groups.json'), JSON.stringify(geometry.groups))
   await dialog.getByRole('button', { name: '关闭', exact: true }).click()
   await expect(dialog).toHaveCount(0)
 })
