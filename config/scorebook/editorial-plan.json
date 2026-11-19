@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 100,
+  "sourceCount": 101,
   "sections": [
     {
       "id": "basics",
@@ -840,6 +840,14 @@
       "section": "pop",
       "group": "弱起与反复",
       "reason": "十六分切分、跨小节延音、房子内弱起与 D.S. 返回"
+    },
+    {
+      "id": "hei_se_you_mo",
+      "file": "hei_se_you_mo_01.m3n",
+      "title": "黑色幽默",
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "reason": "降B与降D调转换、十六分切分、三连音及两遍副歌变奏"
     }
   ],
   "edition": "第七十五版",
