@@ -63,6 +63,60 @@ describe('native performance compiler', () => {
     expect(result.notes.map(note => [note.pitch, note.start])).toEqual([[59, 0], [60, 0.0625], [64, 1], [62, 1.5], [60, 2], [64, 2.0625], [67, 2.125]])
     expect(result.notes.every(note => note.end > note.start)).toBe(true)
   })
+  it('alternates trills with the diatonic upper neighbor without moving source timing', () => {
+    const result = compile('{4/4}\nN: 1{tr} 3{tr} 7{tr} 1e |||')
+    for (const [beat, principal, upper] of [[0, 60, 62], [1, 64, 65], [2, 71, 72]]) {
+      const notes = result.notes.filter(note => note.start >= beat! && note.start < beat! + 1)
+      expect(notes.map(note => note.pitch)).toEqual([principal, upper, principal, upper, principal, upper, principal, upper, principal])
+      expect(notes[0]!.start).toBe(beat)
+      expect(notes.at(-1)!.end).toBe(beat! + 1)
+      notes.slice(1).forEach((note, index) => expect(note.start).toBe(notes[index]!.end))
+    }
+    expect(result.elements.map(element => [element.start, element.end])).toEqual([[0, 1], [1, 2], [2, 3], [3, 4]])
+    expect(result.beats).toBe(4)
+  })
+  it.each([
+    ['{key=G}\nN: 7{tr}', 78, 79],
+    ['{key=F}\nN: 3{tr}', 69, 70],
+    ['{key=Am}\nN: 7{tr}', 71, 72],
+    ['N: 2# 1{tr}', 60, 63],
+    ['N: 2# | 1{tr}', 60, 62],
+    ['N: 2# {key=G}5{tr}', 74, 76],
+    ['N: 1#{tr}', 61, 62],
+    ['N: {8va}7d{tr}{/}', 71, 72],
+    ['N: 7dd{tr}', 47, 48],
+  ])('resolves trill auxiliaries in %s', (source, principal, upper) => {
+    const notes = compile(source).notes.slice(-9)
+    expect(notes.map(note => note.pitch)).toEqual([principal, upper, principal, upper, principal, upper, principal, upper, principal])
+  })
+  it('trills chord tones and bass independently, following on-beat graces and arpeggios', () => {
+    const result = compile('{2/4}\nN: [135:h]{tr}{arp}{ac(7d)} 0 |||\nB: 7d{tr} 0 |||')
+    expect(result.notes[0]).toMatchObject({ pitch: 59, channel: 0, start: 0, end: 1 / 16 })
+    for (const [pitch, start] of [[60, 1 / 16], [64, 2 / 16], [67, 3 / 16]]) {
+      const notes = result.notes.filter(note => note.channel === 0 && note.pitch === pitch)
+      expect(notes[0]!.start).toBe(start)
+      expect(notes.at(-1)!.end).toBe(1)
+    }
+    expect(result.notes.filter(note => note.channel === 1).map(note => note.pitch)).toEqual([59, 60, 59, 60, 59, 60, 59, 60, 59])
+    expect(result.notes.every(note => note.end > note.start && note.end <= 1)).toBe(true)
+  })
+  it('continues a trill through ties and starts a later trill at its own written onset', () => {
+    const sustained = compile('{3/4}\nN: 1~{tr} 1~ 1 |||')
+    expect(sustained.notes).toHaveLength(25)
+    expect(sustained.notes.at(-1)).toMatchObject({ pitch: 60, end: 3 })
+    const later = compile('{3/4}\nN: 1~ 1~{tr} 1 |||')
+    expect(later.notes[0]).toMatchObject({ pitch: 60, start: 0, end: 1 })
+    expect(later.notes[1]).toMatchObject({ pitch: 60, start: 1 })
+    expect(later.notes.at(-1)!.end).toBe(3)
+  })
+  it('bounds short and dotted trills and expands every repeat', () => {
+    const result = compile('{2/4}\nN: ||: (((1{tr}))) 2... :||')
+    expect(result.beats).toBe(4)
+    expect(result.notes).toHaveLength(8)
+    expect(result.notes.slice(0, 3).map(note => note.pitch)).toEqual([60, 62, 60])
+    expect(result.notes[2]!.end).toBe(0.125)
+    expect(result.notes[6]!.end).toBe(2.125)
+  })
   it('does not read or mutate source text and is deterministic', () => {
     const document = parseM3NDocument('{2/4}\nN: ||: 1 2 :||')
     const original = structuredClone(document)

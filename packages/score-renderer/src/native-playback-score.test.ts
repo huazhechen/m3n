@@ -16,6 +16,18 @@ describe('native MIDI and playback index', () => {
     expect(midi.tracks.flatMap(track => track.events).filter(event => (event.statusByte & 240) === 144 && event.data[1]! > 0).map(event => [event.statusByte & 15, event.ticks / 960, event.data[0]])).toEqual([[0, 4, 60], [0, 5, 62], [1, 4, 48]])
     expect(buildMetronomeBeats(midi).filter(beat => beat.accent).map(beat => beat.time)).toEqual([0, 1, 2, 3, 4, 5])
   })
+  it('encodes audible trill attacks while keeping one source highlight for the host note', async () => {
+    const score = await prepare('{2/4}{120qpm}\nN: 3{tr} 4 |||')
+    const midi = BasicMIDI.fromArrayBuffer(score.midi())
+    const attacks = midi.tracks.flatMap(track => track.events).filter(event => (event.statusByte & 240) === 144 && event.data[1]! > 0)
+    expect(attacks.map(event => event.data[0])).toEqual([64, 65, 64, 65, 64, 65, 64, 65, 64, 65])
+    expect(new Set(attacks.map(event => event.ticks)).size).toBe(10)
+    expect(midi.duration).toBeCloseTo(1)
+    expect(score.elementsAtTime(0)).toEqual(score.elementsAtTime(499))
+    expect(score.timeForElement('m3n-e-2')).toBe(500)
+    expect(score.elementsAtTime(500)[0]!.xmlId).toBe('m3n-e-2')
+    score.destroy()
+  })
   it('uses MIDI-quantized tempo changes for source lookup and simultaneous highlighting', async () => {
     const score = await prepare('{2/4}{120qpm}\nN: 1 2 | {60qpm}3 4 |||\nB: 1d^ | 5d^ |||')
     expect(score.timeForElement('m3n-e-4')).toBe(1000)

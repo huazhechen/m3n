@@ -160,7 +160,8 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
 }
 
 /** Absolute pitches with measure accidentals, key changes and octave shifts resolved. */
-export function resolveScorePitches(measures: readonly ScoreMeasure[]) {
+function resolveScorePitchContext(measures: readonly ScoreMeasure[]) {
+  const upperNeighbors = new Map<ScoreEvent, string[]>()
   const resolved = new Map<ScoreEvent, string[]>()
   for (const measure of measures) {
     const accidentals = new Map<string, string>()
@@ -191,9 +192,29 @@ export function resolveScorePitches(measures: readonly ScoreMeasure[]) {
           : accidentals.get(accidentalKey) ?? value.accidGes ?? value.accid
         return `${value.pname}:${value.oct + event.octaveShift}:${accidental}`
       }))
+      upperNeighbors.set(event, event.pitches.map(pitch => {
+        const parsed = parseM3NNote(pitch)
+        if (!parsed || parsed.degreeRaw === '0') return ''
+        const degree = Number(parsed.degreeRaw)
+        const token = `${degree === 7 ? 1 : degree + 1}${parsed.octave}${degree === 7 ? 'e' : ''}`
+        // Normalize octave suffixes when a low 7 crosses back into the base octave.
+        const normalized = token.replace(/de$/, '')
+        const value = m3nPitch(normalized, event.key)
+        const accidental = accidentals.get(`${value.pname}:${value.oct}`) ?? value.accidGes ?? value.accid
+        return `${value.pname}:${value.oct + event.octaveShift}:${accidental}`
+      }))
     }
   }
-  return resolved
+  return { resolved, upperNeighbors }
+}
+
+export function resolveScorePitches(measures: readonly ScoreMeasure[]) {
+  return resolveScorePitchContext(measures).resolved
+}
+
+/** Diatonic upper neighbors, including the active measure accidentals. */
+export function resolveScoreTrillPitches(measures: readonly ScoreMeasure[]) {
+  return resolveScorePitchContext(measures).upperNeighbors
 }
 
 function validateTies(measures: readonly ScoreMeasure[], source?: string) {

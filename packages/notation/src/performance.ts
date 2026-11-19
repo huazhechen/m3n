@@ -1,6 +1,6 @@
 import { unfoldScorePerformance } from './notation/performance-order.js'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups.js'
-import { resolveScorePitches } from './notation/score-rules.js'
+import { resolveScorePitches, resolveScoreTrillPitches } from './notation/score-rules.js'
 import { scoreEventIds } from './score-event-ids.js'
 import { m3nPitch } from './m3n-direct.js'
 import type { ScoreDocument, ScoreEvent } from './notation/score-document.js'
@@ -60,9 +60,11 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     if (result.tempos.at(-1)!.qpm !== tempo) result.tempos.push({ beat, qpm: tempo })
     if (result.meters.at(-1)!.count !== meter.count || result.meters.at(-1)!.unit !== meter.unit) result.meters.push({ beat, ...meter })
   }
+  const trills = new Map<PerformanceNote, { start: number; upper: number }>()
   let partStart = 0
   for (const [partName, part] of unfolded.parts) {
     const pitches = { melody: resolveScorePitches(part.melody), bass: resolveScorePitches(part.bass) }
+    const trillPitches = { melody: resolveScoreTrillPitches(part.melody), bass: resolveScoreTrillPitches(part.bass) }
     const pendingTies = { melody: new Map<number, { note: PerformanceNote; target: string | undefined }>(), bass: new Map<number, { note: PerformanceNote; target: string | undefined }>() }
     let measureStart = partStart
     for (let index = 0; index < Math.max(part.melody.length, part.bass.length); index++) {
@@ -92,14 +94,21 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
           const addNote = (token: string, slot: number, start: number, end: number, outgoing: boolean) => {
             if (token === '0') return
             const pitch = midiPitch(resolved[slot]!)
+            const markTrill = (note: PerformanceNote) => {
+              if (event.postfixes.includes('tr') && !trills.has(note)) {
+                trills.set(note, { start, upper: midiPitch(trillPitches[staff].get(event)![slot]!) })
+              }
+            }
             const tied = previous.get(pitch)
             if (tied && tied.target === xmlId && Math.abs(tied.note.end - cursor) < 1e-7 && (event.kind !== 'tuplet' || slot === 0)) tied.note.end = end
             else {
               const note = { start, end, pitch, channel, velocity: 90 }
               result.notes.push(note)
+              markTrill(note)
               if (outgoing) next.set(pitch, { note, target: tieTargets.get(xmlId) })
               return
             }
+            markTrill(tied.note)
             if (outgoing) next.set(pitch, { note: tied.note, target: tieTargets.get(xmlId) })
           }
           if (event.kind !== 'rest') {
@@ -137,6 +146,21 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     }
     partStart = measureStart
   }
+  // Expand after tie merging so a trill continues over the entire tied sustain.
+  // Use roughly 32nd-note attacks, starting and ending on the principal pitch.
+  result.notes = result.notes.flatMap(note => {
+    const trill = trills.get(note)
+    if (!trill) return [note]
+    const duration = note.end - trill.start
+    const count = Math.max(3, Math.round(duration * 8) | 1)
+    const notes: PerformanceNote[] = note.start < trill.start ? [{ ...note, end: trill.start }] : []
+    for (let index = 0; index < count; index++) {
+      notes.push({ ...note, pitch: index % 2 ? trill.upper : note.pitch,
+        start: trill.start + duration * index / count,
+        end: index === count - 1 ? note.end : trill.start + duration * (index + 1) / count })
+    }
+    return notes
+  })
   result.beats = partStart
   result.notes.sort((a, b) => a.start - b.start || a.channel - b.channel || a.pitch - b.pitch)
   result.elements.sort((a, b) => a.start - b.start)
