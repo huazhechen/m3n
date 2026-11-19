@@ -22,7 +22,7 @@ export type { NativeRenderOptions as NumberedNotationRenderOptions } from './nat
 export function renderSharedNumberedNotationScores(documents: readonly ScoreDocument[], options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, scoreGap = 22) {
   if (documents.length < 2) throw new Error('A shared page needs at least two scores')
   if (!Number.isFinite(scoreGap) || scoreGap < 0) throw new Error('曲间留白必须为非负有限数值。')
-  const layouts = documents.map(document => layoutNativeScore(document, { ...options, paged: false, coreGap: 16 }))
+  const layouts = documents.map(document => layoutNativeScore(document, { ...options, paged: false, coreGap: 24 }))
   const capacity = Math.floor(layouts[0]!.options.width * A4_CONTENT_ASPECT_RATIO)
   // Continuous SVG viewports round up; fit their real exported heights.
   const heightAt = (gap: number) => layouts.reduce((sum, layout) => sum + Math.ceil(nativeContinuousPagination(layout, gap).heights[0] ?? 0), scoreGap * (layouts.length - 1))

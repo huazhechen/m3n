@@ -9,7 +9,7 @@ export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, 
 const safe = candidate => !candidate.error && candidate.stable !== false && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length
 const capacity = width => Math.floor(width * 273 / 186)
 
-/** Score natural content at the same 16px core gap, before stretching page spacing. */
+/** Score natural content at the same 24px core gap, before stretching page spacing. */
 export function pageDensityPenalty(fill) {
   if (!Number.isFinite(fill)) return 0 // Multi-page solos have no continuous height measurement.
   const p = packingPolicy

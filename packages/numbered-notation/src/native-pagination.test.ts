@@ -40,7 +40,7 @@ it('fits paged core gaps while keeping continuous core gaps at 24px', () => {
     };
     expect(step(natural)).toBeGreaterThanOrEqual(natural.pages[0]!.coreGap! - 1e-6);
     for (const page of natural.pages) {
-        expect(page.coreGap).toBeGreaterThanOrEqual(16);
+        expect(page.coreGap).toBeGreaterThanOrEqual(24);
         expect(page.coreGap).toBeLessThanOrEqual(32);
     }
     expect(step(continuous)).toBeCloseTo(24);
@@ -53,7 +53,7 @@ it('fits paged core gaps while keeping continuous core gaps at 24px', () => {
             expect(system.bottom - system.top).toBeCloseTo(counterpart.bottom - counterpart.top);
             const previous = paged.systems[index - 1];
             if (previous?.page === system.page)
-                expect(system.lanes[0]!.y - previous.lanes[0]!.y).toBeGreaterThanOrEqual(16 - 1e-6);
+                expect(system.lanes[0]!.y - previous.lanes[0]!.y).toBeGreaterThanOrEqual(24 - 1e-6);
         });
     }
 });

@@ -305,7 +305,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     verticalBlocks: blocks, headerBlocks: header.blocks }
-  const gap = options.coreGap ?? (options.paged ? 16 : nativeStyle.minimumCoreGap)
+  const gap = options.coreGap ?? nativeStyle.minimumCoreGap
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
     margin, gap, maxGap: options.coreGap ?? (options.paged ? 32 : gap), elastic: true })
   positionNativeLayout(layout, pagination)

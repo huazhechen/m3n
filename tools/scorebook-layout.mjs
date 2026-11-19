@@ -53,7 +53,7 @@ export async function measure(source, width, paged = true, coreGap) {
   if (!paged) return { ...result, naturalHeight }
   if (pages.length === 1 && !outside.length && !overlaps.length) {
     const markup = pages[0].outerHTML
-    const continuous = await measure(source, width, false, 16)
+    const continuous = await measure(source, width, false, 24)
     if (!continuous.outside.length && !continuous.overlaps.length) result.naturalHeight = continuous.naturalHeight
     document.querySelector('#scratch').innerHTML = markup
   }

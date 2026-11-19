@@ -35,7 +35,7 @@ try {
           rowsPerPage: pagination.heights.map((_, index) => pagination.positions.slice(layout.headerBlocks.length).filter(p => p.page === index).length) }
       }
       const before = trial(16), after = trial(24)
-      if (before.pages !== layout.pages.length || JSON.stringify(before.coreGaps) !== JSON.stringify(layout.pages.map(p => p.coreGap))) throw new Error('Baseline differs from current renderer')
+      if (after.pages !== layout.pages.length || JSON.stringify(after.coreGaps) !== JSON.stringify(layout.pages.map(p => p.coreGap))) throw new Error('24px trial differs from current renderer')
       if (after.pages !== before.pages || doc.title.includes('Valsentino')) {
         // A fixed 24px render has identical page membership to a 24–32px
         // fit: the fit stretches only after the minimum has assigned pages.
