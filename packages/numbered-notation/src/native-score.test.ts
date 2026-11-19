@@ -7,7 +7,6 @@ import type { NativeRenderOptions as NumberedNotationRenderOptions } from './nat
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 const options = {paged:false,width:800}
-const systemBaselines = (root:Document) => [...root.querySelectorAll('g.system')].map(system => Number([...system.querySelectorAll('g.note text')].find(node => node.getAttribute('font-size')==='22' && !node.closest('[data-m3n-role="multi-rest"]') && /^[0-7]$/.test(node.textContent ?? ''))!.getAttribute('y')))
 
 function render(source:string|ScoreDocument,settings:Partial<NumberedNotationRenderOptions>={}) {
  const document=typeof source==='string'?parseM3NDocument(source):source
@@ -134,7 +133,7 @@ it('accepts complementary pickups at repeats without hiding invalid meter', () =
 
 it('reflows Qiu Ying independently of font size while retaining event identities', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/qiu_ying_01.m3n'), 'utf8')
-    const settings = { width: 590, pageMargin: 8, coreGap: 18, uniformSystemHeight: true }
+    const settings = { width: 590, pageMargin: 8, coreGap: 18 }
     const normal = render(source, settings)
     const reflowed = render(source, { ...settings, wrapWidthRatio: 0.9 })
     expect(reflowed.root.querySelectorAll('g.system').length).toBeGreaterThan(normal.root.querySelectorAll('g.system').length)
@@ -206,7 +205,7 @@ it('supports 0.2em note gaps without changing Liang Liang content or font sizes'
 
 it('packs Liang Liang into eight complete systems using minimum spacing', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
-    const tight = render(source, { width: 704, pageMargin: 8, coreGap: 22, uniformSystemHeight: true, minimumNoteGapEm: 0.2 })
+    const tight = render(source, { width: 704, pageMargin: 8, coreGap: 22, minimumNoteGapEm: 0.2 })
     const systems = [...tight.root.querySelectorAll('g.system')]
     const firstMeasures = [...new Set([...systems[0]!.querySelectorAll('g.note[data-m3n-measure]')].map(node => node.getAttribute('data-m3n-measure')))]
     expect(firstMeasures.slice(0, 3)).toEqual(['m3n-measure-1-1', 'm3n-measure-1-2', 'm3n-measure-1-3'])
@@ -235,7 +234,7 @@ it('uses a single minimum 0.4 clearance without changing score content', () => {
 
 it('keeps four verses and three compact chorus passes in Tomorrow Will Be Better', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/ming_tian_hui_geng_hao_01.m3n'), 'utf8')
-    const { document, root, score } = render(source, { width: 786, pageMargin: 8, coreGap: 18, uniformSystemHeight: true })
+    const { document, root, score } = render(source, { width: 786, pageMargin: 8, coreGap: 18 })
     const measures = [...document.parts.values()][0]!.melody.filter(measure => measure.events.length)
     const passes = measurePlaybackPasses(measures)
     expect([...passes.get(measures[0]!)!]).toEqual([1, 2, 3, 4])
@@ -246,78 +245,6 @@ it('keeps four verses and three compact chorus passes in Tomorrow Will Be Better
       .map(node => node.getAttribute('data-m3n-rendition')))
     expect(new Set(rows)).toEqual(new Set(['1']))
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
-  })
-
-it('shares music height within each paragraph without propagating its heading', () => {
-    const source = '{title=段内等行高} {4/4}\nN: {lg}1ee 2ee 3ee 4ee{/} | {br} 1 2 3 4 | {br} 1 2 3 4 |\n===B\nN: {br} 1 2 3 4 | {br} 1 2 3 4 | {br} 1 2 3 4 |||'
-    const baseline = render(source)
-    const uniform = render(source, { uniformSystemHeight: true })
-    const axes = systemBaselines(uniform.root)
-    expect(axes).toHaveLength(6)
-    expect(axes[2]! - axes[1]!).toBeCloseTo(axes[1]! - axes[0]!, 2)
-    expect(axes[5]! - axes[4]!).toBeCloseTo(axes[4]! - axes[3]!, 2)
-    expect(axes[1]! - axes[0]!).toBeGreaterThan(axes[4]! - axes[3]! + 5)
-    const groups = [...uniform.root.querySelectorAll('g.system')].map(node => node.getAttribute('data-m3n-paragraph'))
-    expect(new Set(groups.slice(0, 3)).size).toBe(1)
-    expect(new Set(groups.slice(3)).size).toBe(1)
-    expect(groups[0]).not.toBe(groups[3])
-    expect([...uniform.root.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-id')))
-      .toEqual([...baseline.root.querySelectorAll('g.note')].map(node => node.getAttribute('data-m3n-id')))
-    expect(uniform.score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
-  })
-
-it('adds only the visible lyric rows to the uniform music envelope', () => {
-    const source = '{4/4}\nN: 1 2 3 4 | {br} 1ee 2ee 3ee 4ee | {br} 1dd 2dd 3dd 4dd | {br} 1 2 3 4 |||\nL: 春风花开春风花开春风花开春风花开\nL2: _ _ _ _ 山间流水 _ _ _ _ _ _ _ _'
-    const { root, score } = render(source, { uniformSystemHeight: true })
-    const axes = systemBaselines(root)
-    expect(axes).toHaveLength(4)
-    expect(axes[3]! - axes[2]!).toBeCloseTo(axes[1]! - axes[0]!, 2)
-    expect(axes[2]! - axes[1]!).toBeGreaterThan(axes[1]! - axes[0]! + 15)
-    expect([...root.querySelectorAll('text[data-m3n-role="lyric"]')].filter(node => node.textContent?.includes('山'))).toHaveLength(1)
-    expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
-  })
-
-it.each(['turkish_march_01.m3n', 'valsentino_01.m3n', 'second_waltz_01.m3n'])('keeps each music spacing band consistent in %s', file => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')
-    const { root } = render(source, { width: 500, uniformSystemHeight: true, includeBass: false })
-    const axes = systemBaselines(root)
-    expect(axes.length).toBeGreaterThan(3)
-    const bands = new Map<string, number>()
-    const systems = [...root.querySelectorAll('g.system')]
-    for (let i = 1; i < axes.length; i++) {
-      const paragraph = systems[i]!.getAttribute('data-m3n-paragraph')!
-      if (paragraph !== systems[i - 1]!.getAttribute('data-m3n-paragraph')) continue
-      const band = `${paragraph}:${systems[i]!.getAttribute('data-m3n-volta')}`
-      const step = axes[i]! - axes[i - 1]!
-      if (bands.has(band)) expect(step, `${file}: ${band}, row ${i}`).toBeCloseTo(bands.get(band)!, 2)
-      else bands.set(band, step)
-    }
-    expect(bands.size).toBeGreaterThan(0)
-  })
-
-it.each([false, true])('keeps plain systems compact around a cross-system volta, lyrics=%s', withLyrics => {
-    const music = '{4/4}\nN: ||: 1 2 3 4 | {br} 1 2 3 4 | {br}\n---V1\nN: 1 2 3 4 | {br} 1 2 3 4 | {br} 1 2 3 4 :|| {br}\n---V2\nN: 1 2 3 4 | {br}\n---\nN: 1 2 3 4 | {br} 1 2 3 4 |||'
-    const source = withLyrics ? music
-      .replace('---V1', 'L: 春风花开春风花开\nL2: _ _ _ _ 山间流水\n---V1')
-      .replace('---V2', 'L: 春风花开春风花开春风花开\n---V2')
-      .replace('---\nN:', 'L: 春风花开\n---\nN:')
-      + '\nL: 春风花开春风花开' : music
-    const { root, score } = render(source, { uniformSystemHeight: true })
-    const systems = [...root.querySelectorAll('g.system')], y = systemBaselines(root)
-    expect(systems.map(s => s.getAttribute('data-m3n-volta'))).toEqual(['false', 'false', 'true', 'true', 'true', 'true', 'false', 'false'])
-    const rows = systems.map(s => new Set([...s.querySelectorAll('[data-m3n-role="lyric"]')].filter(n => n.textContent?.replaceAll('\u200B', '').trim()).map(n => n.getAttribute('y'))).size)
-    const bands = new Map<string, number>()
-    for (let i = 1; i < y.length; i++) {
-      const key = `${rows[i - 1]}:${systems[i]!.getAttribute('data-m3n-volta')}`
-      const step = y[i]! - y[i - 1]!
-      if (bands.has(key)) expect(step).toBeCloseTo(bands.get(key)!, 2)
-      else bands.set(key, step)
-    }
-    expect(bands.get(`${withLyrics ? 1 : 0}:true`)!).toBeGreaterThan(bands.get(`${withLyrics ? 1 : 0}:false`)! + 10)
-    expect(score.diagnostics.filter(d => d.severity === 'error')).toEqual([])
-    const baseline = render(source)
-    expect([...root.querySelectorAll('g.note')].map(n => [n.getAttribute('data-m3n-id'), n.textContent]))
-      .toEqual([...baseline.root.querySelectorAll('g.note')].map(n => [n.getAttribute('data-m3n-id'), n.textContent]))
   })
 
 it('reduces system spacing without changing notes, lyrics or event identities', () => {

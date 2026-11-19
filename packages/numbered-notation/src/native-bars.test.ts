@@ -75,7 +75,7 @@ describe('measured bar alignment', () => {
   })
   it.each([320, 800].flatMap(width => [false, true].map(paged => ({ width, paged }))))('reserves only visible bars in a split measure at $width (paged: $paged)', ({ width, paged }) => {
     const document = parseM3NDocument(`{64/4}\nN: ${Array(64).fill('1').join(' ')} |||`)
-    const score = layoutNativeScore(document, { width, paged, textMeasurer: unusual, uniformSystemHeight: false })
+    const score = layoutNativeScore(document, { width, paged, textMeasurer: unusual })
     const fragments = score.systems.filter(system => system.measures.every((_, index) => !nativeLaneBarPositions(system.measures, index, 'melody').length))
     expect(fragments.length).toBeGreaterThan(0)
     for (const system of fragments) {

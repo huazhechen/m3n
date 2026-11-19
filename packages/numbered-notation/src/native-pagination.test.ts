@@ -44,8 +44,6 @@ it('fits paged core gaps while keeping continuous core gaps at 24px', () => {
         expect(page.coreGap).toBeLessThanOrEqual(32);
     }
     expect(step(continuous)).toBeCloseTo(24);
-    const uniform = layoutNativeScore(document, { ...options, uniformSystemHeight: true });
-    expect(step(uniform)).toBeGreaterThanOrEqual(16);
     for (const width of [320, 600, 800, 1000]) {
         const paged = layoutNativeScore(document, { width, paged: true });
         const continuous = layoutNativeScore(document, { width, paged: false });

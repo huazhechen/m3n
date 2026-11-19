@@ -107,14 +107,6 @@ describe('native annotations', () => {
     expect(score.systems[0]!.lanes[0]!.top).toBe(section!.top)
   })
 
-  it('keeps local descriptions out of shared music height', () => {
-    const score = layout('{text=soft}1 2 3 4 | {br}1 2 3 4', { uniformSystemHeight: true })
-    const [first, second] = score.systems.map(system => system.lanes[0]!)
-    expect(first!.top).toBeGreaterThan(second!.top)
-    const chord = layout('{chord=C}1 2 3 4 | {br}1 2 3 4', { uniformSystemHeight: true })
-    expect(chord.systems[0]!.lanes[0]!.top).toBe(chord.systems[1]!.lanes[0]!.top)
-  })
-
   it.each([false, true])('clears only the grace ink reached by the actual description footprint: overhang=%s', wide => {
     const score = layout(`{text=${wide ? 'WIDE' : 'cresc.'}}1{ac(2e 3e)} 2 3 4`, wide ? { textMeasurer: overhang } : {})
     const glyph = score.projection.glyphs[0]!, text = annotations(score)[0]!

@@ -36,15 +36,6 @@ describe('native lyric and music lower envelopes', () => {
     expect(lane.bodyBottom).toBeCloseTo(8.91)
   })
 
-  it('keeps uniform systems and their lyrics on the same reserved body envelope', () => {
-    const score = layoutNativeScore(document, { ...options, uniformSystemHeight: true })
-    for (const system of score.systems) {
-      const lane = system.lanes[0]!
-      expect(lane.lyricBottom).toBe(lane.bodyBottom)
-      expect(lane.bottom).toBeCloseTo(lane.bodyBottom! + 6 + 16 * .8)
-    }
-  })
-
   it('puts a lyric underline below the actual descenders, with measured clearance', () => {
     const measurer = { measureText(text: string, style: { fontSize: number }) {
       return { w: text.length * style.fontSize * 0.6, h: style.fontSize * 1.2, baseline: style.fontSize * 0.7 }

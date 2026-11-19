@@ -49,10 +49,10 @@ try {
   await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
   await page.evaluate(async () => { await audit.prepareNumberedNotationFonts(); await document.fonts.ready })
   for (const [file, source] of Object.entries(sources).filter(([f]) => !filter || f.includes(filter))) {
-    for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) for (const uniformSystemHeight of [false, true]) {
-      const result = await page.evaluate(({ source, width, paged, uniformSystemHeight, collisionAudit, renderOptions }) => {
+    for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {
+      const result = await page.evaluate(({ source, width, paged, collisionAudit, renderOptions }) => {
         try {
-          document.querySelector('main').innerHTML = audit.NativeNumberedNotationScore.create(audit.parseM3NDocument(source)).render({ ...renderOptions, width, paged, uniformSystemHeight, measureNumbers: true }).join('')
+          document.querySelector('main').innerHTML = audit.NativeNumberedNotationScore.create(audit.parseM3NDocument(source)).render({ ...renderOptions, width, paged, measureNumbers: true }).join('')
           const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), violations = [], collisions = [], clipping = []
           let primitives = 0, systems = 0, collisionCandidates = 0, collisionLabels = 0
           for (const system of document.querySelectorAll('g.system')) {
@@ -84,8 +84,8 @@ try {
           }
           return { systems, primitives, violations, clipping, ...(collisionAudit ? { collisions, collisionCandidates, collisionLabels } : {}) }
         } catch (e) { return { error: String(e) } }
-      }, { source, width, paged, uniformSystemHeight, collisionAudit, renderOptions })
-      reports.push({ file, width, paged, uniformSystemHeight, renderOptions, ...result })
+      }, { source, width, paged, collisionAudit, renderOptions })
+      reports.push({ file, width, paged, renderOptions, ...result })
       appendFileSync(join(output, 'cases.jsonl'), `${JSON.stringify(reports.at(-1))}\n`)
     }
   }

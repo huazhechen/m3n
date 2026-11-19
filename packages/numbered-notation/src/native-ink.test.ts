@@ -59,9 +59,9 @@ describe('native painted geometry', () => {
     expect(() => nativeSvgInk(svg, fallback)).toThrow(/Unsupported/)
   })
 
-  it.each([false, true])('contains every painted primitive within each system at unusual font metrics, uniform=%s', uniform => {
+  it('contains every painted primitive within each system at unusual font metrics', () => {
     const source = '{title=春天 g}{subtitle=演奏}{4/4}{order=A,B}\n===A{br}\nN: {chord=C}{text=春天} {lg}1{ac(2e 3e)}{tr}{p} 2{fermata} 3{prall} 4{/} |\n---V1\nN: (1d 2 3) 4{rit.} 5 :||\n---V2\nN: {cresc}1 2 3 4{/} | {br} {8va}5 6 7 1e{/} |||\nL: 春天在哪里呀 | 春天在哪里 | 春天在哪里 | 春天在哪里\nB: [1d3d5d:h]^^ | 1d^^^ | 1d^^^ | 1d^^^'
-    const layout = layoutNativeScore(parseM3NDocument(source), { width: 600, paged: true, measureNumbers: true, textMeasurer: measured, uniformSystemHeight: uniform })
+    const layout = layoutNativeScore(parseM3NDocument(source), { width: 600, paged: true, measureNumbers: true, textMeasurer: measured })
     const root = new DOMParser().parseFromString(renderNativePages(layout).join(''), 'text/html')
     for (const system of layout.systems) {
       const node = root.querySelector(`#m3n-system-${system.page + 1}-${system.index}`)!

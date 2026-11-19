@@ -13,6 +13,6 @@ node tools/verify-native-ink.mjs --sources=tools/fixtures/numbered-features.json
 node tools/verify-native-ink.mjs --sources=tools/fixtures/numbered-houses.json --collisions
 ```
 
-每份谱例覆盖4种版宽×连续／分页；实绘检查再覆盖自然／等行高，检查实际 SVG 的裁切、谱行包络及检查器支持的碰撞。两集总计 137 份，对应2192组实绘检查。需要复现网页当前页边距时，另通过 `--render-options=<JSON文件>` 传入 `pageMargin` 等选项；以报告实际记录的配置为准。
+每份谱例覆盖4种版宽×连续／分页，按实际内容测量行高，检查实际 SVG 的裁切、谱行包络及检查器支持的碰撞。两集总计 137 份，对应1096组实绘检查。需要复现网页当前页边距时，另通过 `--render-options=<JSON文件>` 传入 `pageMargin` 等选项；以报告实际记录的配置为准。
 
 更新谱例时，应先通过领域诊断，再执行受影响场景的检查；不要通过删除失败场景或放宽工具容差消除差异。

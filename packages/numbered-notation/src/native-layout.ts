@@ -23,17 +23,16 @@ import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { alignNativeArcs } from './native-relation-alignment.js'
 import { placedNativeControlInk } from './native-controls.js'
-import { nativeUniformHosts, shareNativeUniformHeight } from './native-uniform-height.js'
 
 export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
-  pageMargin?: number; coreGap?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; uniformSystemHeight?: boolean
+  pageMargin?: number; coreGap?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
-export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; paragraph?: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
+export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
@@ -207,7 +206,6 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
-  const uniformHosts = options.uniformSystemHeight ? nativeUniformHosts(systems, measurer) : undefined
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
     const regions: NativeRegion[] = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
@@ -282,15 +280,13 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   }
   // Endings share measured geometry across wrapping and pagination.
   placeNativeVoltas(systems, relationBounds, measurer, options.width)
-  // Chord names participate in shared music height; local descriptions and
-  // section headings are placed afterwards so they cannot enlarge peer rows.
+  // Place chord names before local descriptions and section headings.
   for (const system of systems) {
     const regions = relationBounds.get(system) ?? []
     relationBounds.set(system, regions)
     placeNativeAnnotations(system, regions, measurer, options.width, margin, false)
   }
   for (const system of systems) placeNativeNavigation(system)
-  if (uniformHosts) shareNativeUniformHeight(systems, uniformHosts, measurer)
   for (const system of systems) for (const lane of system.lanes) placeNativeLyrics(system, lane, measurer)
   for (const system of systems) {
     const hasHeading = system.measures.some(measure => measure.columns.some(column => column.glyphs.some(glyph => glyph.event?.sectionLabelBreakAfter)))
@@ -303,10 +299,9 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     const pieces = nativeLanePieces(system, measurer)
     const corePieces = nativeLanePieces(system, measurer, true)
     const coreInk = system.lanes.flatMap(lane => (corePieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
-    const core = options.uniformSystemHeight || !coreInk.length ? { top: 0, bottom: height } : { top: Math.min(...coreInk.map(piece => piece.top)), bottom: Math.max(...coreInk.map(piece => piece.bottom)) }
+    const core = !coreInk.length ? { top: 0, bottom: height } : { top: Math.min(...coreInk.map(piece => piece.top)), bottom: Math.max(...coreInk.map(piece => piece.bottom)) }
     const ink = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
     ink.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
-    if (options.uniformSystemHeight) ink.push({ left: margin, right: options.width - margin, top: 0, bottom: height })
     return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, gapBefore: system.measures[0]?.extraGap ?? 0 }
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,

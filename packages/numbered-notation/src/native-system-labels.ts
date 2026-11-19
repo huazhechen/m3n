@@ -14,8 +14,7 @@ export function placeNativeNavigation(system: NativeSystem) {
     const ink = mark.ink
     lane.top = Math.max(lane.top, -ink.top); lane.bodyBottom = Math.max(lane.bodyBottom ?? 0, ink.bottom)
     lane.lyricBottom = Math.max(lane.lyricBottom ?? 0, ink.bottom)
-    const paragraph = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id).at(-1)?.paragraph
-    system.decorationLayout ??= []; system.decorationLayout.push({ lane: lane.id, svg, paragraph })
+    system.decorationLayout ??= []; system.decorationLayout.push({ lane: lane.id, svg })
   }
 }
 
@@ -51,7 +50,7 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
       lane.top = Math.max(lane.top, -top)
       regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -top })
       system.decorationLayout ??= []
-      system.decorationLayout.push({ lane: lane.id, paragraph: glyphs.at(-1)?.paragraph, svg: `<g transform="translate(0 ${n(y)})">${raw}</g>` })
+      system.decorationLayout.push({ lane: lane.id, svg: `<g transform="translate(0 ${n(y)})">${raw}</g>` })
     }
     if ((measure.source.repeatCount ?? 2) > 2) place(`×${measure.source.repeatCount}`, nativeStyle.repeatCount, { 'data-m3n-role': 'repeat-count' })
     const first = glyphs[0]
