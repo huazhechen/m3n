@@ -35,3 +35,22 @@ it('sets sufficient bend range for wide slides and resets before reusing the cha
   expect(boundary.every(event => event.data[0] === 0 && event.data[1] === 64)).toBe(true)
   score.destroy()
 })
+
+it('uses the target slot to slide and reaches its pitch just before the next repeated target attack', async () => {
+  const score = await NativePlaybackScore.create(parseM3NDocument('{2/4}{120qpm}\nN: (2e{gliss} 1e) 1e |||'), { glissandoStyle: 'target-duration' })
+  const events = BasicMIDI.fromArrayBuffer(score.midi()).tracks.flatMap(track => track.events)
+  const attacks = events.filter(event => (event.statusByte & 240) === 144 && event.data[1]! > 0)
+  expect(attacks.map(event => [event.statusByte & 15, event.ticks, event.data[0]])).toEqual([[0, 960, 72], [2, 0, 74]])
+  const bends = events.filter(event => event.statusByte === 226)
+  expect(bends.filter(event => event.ticks <= 480).every(event => event.data[0] === 0 && event.data[1] === 64)).toBe(true)
+  expect(bends.some(event => event.ticks > 480 && event.ticks < 960)).toBe(true)
+  expect(bends.at(-1)!.ticks).toBe(960)
+  expect(Array.from(bends.at(-1)!.data)).toEqual([0, 0])
+  const off = events.find(event => event.statusByte === 146 && event.data[1] === 0)!
+  expect(off.ticks).toBe(960)
+  expect(events.filter(event => event.statusByte === 178 && event.data[0] === 11).every(event => event.data[1] === 127)).toBe(true)
+  expect(events.filter(event => event.statusByte === 178 && event.data[0] === 7).every(event => event.data[1] === 100)).toBe(true)
+  expect(score.timeForElement('m3n-e-2')).toBe(250)
+  expect(score.timeForElement('m3n-e-3')).toBe(500)
+  score.destroy()
+})

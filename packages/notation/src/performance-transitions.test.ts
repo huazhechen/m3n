@@ -81,3 +81,36 @@ it('offers a stronger local lift while restoring the original volume on both sid
   expect(note.volume!.at(-1)!.value).toBe(100)
   expect(note.volume!.at(-1)!.beat).toBeCloseTo(.516)
 })
+
+it('holds the first slot and spends the whole target slot sliding, without holding the target afterwards', () => {
+  const performance = compile('target-duration')
+  const notes = performance.notes.filter(note => note.channel !== 1)
+  expect(notes).toHaveLength(2)
+  const slide = notes[0]!
+  expect(slide).toMatchObject({ start: 0, end: 1, pitch: 74, transition: true })
+  expect(slide.pitchBends!.slice(0, 2)).toEqual([{ beat: 0, pitch: 74 }, { beat: .5, pitch: 74 }])
+  expect(slide.pitchBends!.at(-1)).toEqual({ beat: 1, pitch: 72 })
+  expect(slide.pitchBends!.find(point => point.beat === .75)?.pitch).toBe(73)
+  expect(slide.expression).toBeUndefined()
+  expect(slide.volume).toBeUndefined()
+  expect(notes[1]).toEqual({ start: 1, end: 2, pitch: 72, channel: 0, velocity: 90 })
+  expect(performance.elements).toEqual(compile('short').elements)
+})
+it('uses dotted target duration and successive target slots without extending the score', () => {
+  const performance = compileScorePerformance(parseM3NDocument('{7/8}\nN: (1{gliss} 2.{gliss}) ((3)) 3^ |||'), { glissandoStyle: 'target-duration' })
+  const slide = performance.notes.find(note => note.pitchBends)!
+  expect(slide.pitchBends!.slice(0, 2)).toEqual([{ beat: 0, pitch: 60 }, { beat: .5, pitch: 60 }])
+  expect(slide.pitchBends!.some(point => point.beat === 1.25 && point.pitch === 62)).toBe(true)
+  expect(slide.pitchBends!.at(-1)).toEqual({ beat: 1.5, pitch: 64 })
+  expect(slide.end).toBe(1.5)
+  expect(performance.notes.find(note => note.start === 1.5)).toMatchObject({ pitch: 64, end: 3.5 })
+  expect(performance.beats).toBe(3.5)
+})
+
+it('finishes the glide within the written target slot before sustaining its tied continuation', () => {
+  const performance = compileScorePerformance(parseM3NDocument('{3/4}\nN: 1{gliss} 2~ 2 |||'), { glissandoStyle: 'target-duration' })
+  const slide = performance.notes[0]!
+  expect(slide.pitchBends!.at(-1)).toEqual({ beat: 2, pitch: 62 })
+  expect(slide.end).toBe(3)
+  expect(performance.notes).toHaveLength(1)
+})

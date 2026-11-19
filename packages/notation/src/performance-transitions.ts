@@ -1,6 +1,6 @@
 import type { PerformanceNote, ScorePerformance } from './performance.js'
 
-export type GlissandoStyle = 'overlap' | 'soft' | 'short' | 'short-smooth' | 'short-level' | 'short-strong' | 'short-carry' | 'continuous'
+export type GlissandoStyle = 'overlap' | 'soft' | 'short' | 'short-smooth' | 'short-level' | 'short-strong' | 'short-carry' | 'target-duration' | 'continuous'
 
 /** Shape only explicitly marked transitions; source events and clocks stay intact. */
 export function shapeGlissandi(performance: ScorePerformance, style: GlissandoStyle): PerformanceNote[] {
@@ -11,6 +11,17 @@ export function shapeGlissandi(performance: ScorePerformance, style: GlissandoSt
   return performance.notes.flatMap(note => {
     const points = note.pitchBends
     if (!points?.length || style === 'continuous') return [note]
+    if (style === 'target-duration') {
+      const bends = [points[0]!]
+      for (let index = 1; index < points.length; index++) {
+        const from = points[index - 1]!, to = points[index]!
+        const end = to.duration === undefined ? points[index + 1]?.beat ?? note.end : to.beat + to.duration
+        // Hold the principal through its own slot, then spend the entire
+        // target slot sliding. Reach the target only when that slot ends.
+        addSmoothBend(bends, { beat: to.beat, pitch: from.pitch }, { beat: end, pitch: to.pitch }, end - to.beat)
+      }
+      return [{ ...note, pitchBends: bends, transition: true }]
+    }
     if (style === 'short-carry') {
       return points.map((point, index) => {
         const previous = points[index - 1], next = points[index + 1]

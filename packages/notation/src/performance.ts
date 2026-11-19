@@ -8,7 +8,7 @@ import { m3nPitch } from './m3n-direct.js'
 import type { ScoreDocument, ScoreEvent } from './notation/score-document.js'
 
 /** Positions and durations are quarter-note beats, independent of audio devices. */
-export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number; pitchBends?: Array<{ beat: number; pitch: number }>; expression?: Array<{ beat: number; value: number }>; volume?: Array<{ beat: number; value: number }>; transition?: boolean }
+export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number; pitchBends?: Array<{ beat: number; pitch: number; duration?: number }>; expression?: Array<{ beat: number; value: number }>; volume?: Array<{ beat: number; value: number }>; transition?: boolean }
 export type PerformanceElement = { start: number; end: number; xmlId: string; rendition: number; voice: string; orderIndex?: number }
 export type PerformanceTempo = { beat: number; qpm: number }
 export type PerformanceMeter = { beat: number; count: number; unit: number }
@@ -111,7 +111,7 @@ export function compileScorePerformance(document: ScoreDocument, options: { glis
               if (slide && slide.target === xmlId && event.kind === 'note' && !event.postfixes.includes('tr') && Math.abs(slide.note.end - start) < 1e-7) {
                 note = slide.note
                 note.pitchBends ??= [{ beat: note.start, pitch: note.pitch }]
-                note.pitchBends.push({ beat: start, pitch })
+                note.pitchBends.push({ beat: start, pitch, ...(options.glissandoStyle === 'target-duration' ? { duration: end - start } : {}) })
                 note.end = end
               } else {
                 note = { start, end, pitch, channel, velocity: 90 }
