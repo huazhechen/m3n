@@ -1,6 +1,7 @@
 import { test, expect, devices } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { PDFDocument } from 'pdf-lib'
+import { execFileSync } from 'node:child_process'
 
 test.use({ ...devices['Pixel 7'] })
 
@@ -29,6 +30,15 @@ test('Android PDF download keeps a full song on one A4 page without browser prin
   expect(pdf.getPageCount()).toBe(1)
   expect(pdf.getPage(0).getWidth()).toBeCloseTo(210 * 72 / 25.4)
   expect(pdf.getPage(0).getHeight()).toBeCloseTo(297 * 72 / 25.4)
+  const fontRows = execFileSync('pdffonts', [path], { encoding: 'utf8' }).trim().split('\n').slice(2)
+  expect(fontRows.some(row => /Barlow.*yes\s+yes\s+yes/.test(row))).toBe(true)
+  expect(fontRows.some(row => /STSong-Light.*no\s+no\s+yes/.test(row))).toBe(true)
+  expect(fontRows.filter(row => /yes\s+yes\s+yes/.test(row))).toHaveLength(1)
+  const images = execFileSync('pdfimages', ['-list', path], { encoding: 'utf8' }).trim().split('\n').slice(2)
+  expect(images).toEqual([])
+  const text = execFileSync('pdftotext', [path, '-'], { encoding: 'utf8' }).replace(/\s/g, '')
+  expect(text).toContain('约定')
+  expect(text).toContain('姚若龙')
   expect(requests.some(url => /\/api\/|\.(?:otf|ttf|woff2?)(?:$|\?)/.test(url))).toBe(false)
   await expect(dialog).not.toBeVisible()
   await expect(page.locator('iframe[title="乐谱打印"]')).toHaveCount(0)

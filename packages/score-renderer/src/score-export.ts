@@ -12,40 +12,11 @@ export function downloadBlob(blob: Blob, fileName: string) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
-/** Direct download, including browsers without window.print (Android).
- * Rasterize one page at a time at 300 dpi to bound mobile canvas memory.
- */
-export async function createScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void) {
+/** Direct vector PDF download on every device; only music numerals are embedded. */
+export async function createScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void, options: { fullPage?: boolean; signal?: AbortSignal } = {}) {
   if (!pages.length) throw new Error('当前没有可导出的乐谱。')
-  const { PDFDocument } = await import('pdf-lib')
-  const pdf = await PDFDocument.create()
-  const pointsPerMm = 72 / 25.4
-  for (const [index, svg] of pages.entries()) {
-    const size = getSvgSize(svg)
-    if (size.width <= 0 || size.height <= 0) throw new Error('简谱尺寸无效。')
-    const placement = a4ImagePlacement(size.width, size.height)
-    const canvas = await renderScoreCanvas(svg, Math.ceil(placement.width * 300 / 25.4))
-    try {
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
-      if (!blob) throw new Error('PDF 页面生成失败。')
-      const image = await pdf.embedPng(await blob.arrayBuffer())
-      // Release the PNG decoder's uncompressed channels before the next page.
-      await image.embed()
-      const page = pdf.addPage([210 * pointsPerMm, 297 * pointsPerMm])
-      page.drawImage(image, {
-        x: placement.x * pointsPerMm,
-        y: (297 - placement.y - placement.height) * pointsPerMm,
-        width: placement.width * pointsPerMm,
-        height: placement.height * pointsPerMm,
-      })
-    } finally {
-      canvas.width = 0
-      canvas.height = 0
-    }
-    onProgress?.(index + 1, pages.length)
-    await new Promise<void>(resolve => setTimeout(resolve, 0))
-  }
-  return new Blob([new Uint8Array(await pdf.save())], { type: 'application/pdf' })
+  const { vectorScorePdf } = await import('./score-pdf.js')
+  return vectorScorePdf(pages, onProgress, options)
 }
 
 function getSvgSize(svg: SVGSVGElement) {
@@ -132,52 +103,5 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
     return canvas
   } finally {
     URL.revokeObjectURL(url)
-  }
-}
-
-/** Print native SVG with the device fonts; the browser can save a vector PDF. */
-export async function printScorePages(pages: readonly SVGSVGElement[], title: string, options: { fullPage?: boolean } = {}) {
-  if (!pages.length) throw new Error('当前没有可打印的乐谱。')
-  const frame = document.createElement('iframe')
-  frame.title = '乐谱打印'
-  frame.setAttribute('aria-hidden', 'true')
-  frame.style.cssText = 'position:fixed;left:-20000px;top:0;width:794px;height:1123px;border:0;'
-  const loaded = new Promise<void>(resolve => { frame.onload = () => resolve() })
-  frame.srcdoc = '<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>'
-  document.body.append(frame)
-  try {
-    await loaded
-    const target = frame.contentDocument!
-    const view = frame.contentWindow!
-    target.documentElement.lang = document.documentElement.lang
-    target.title = title
-    const style = target.createElement('style')
-    style.textContent = `
-      @page { size: A4 portrait; margin: 0; }
-      html, body { margin: 0; padding: 0; background: white; }
-      .print-page { position: relative; width: 210mm; height: 297mm; break-after: page; overflow: hidden; }
-      .print-page:last-child { break-after: auto; }
-      .print-page > svg { position: absolute; display: block; }
-    `
-    target.head.append(style)
-    for (const svg of pages) {
-      const section = target.createElement('section')
-      section.className = 'print-page'
-      const copy = target.importNode(svg, true)
-      const size = getSvgSize(svg)
-      const placement = options.fullPage ? { x: 0, y: 0, width: 210, height: 297 } : a4ImagePlacement(size.width, size.height)
-      copy.style.cssText = `left:${placement.x}mm;top:${placement.y}mm;width:${placement.width}mm;height:${placement.height}mm;`
-      section.append(copy)
-      target.body.append(section)
-    }
-    target.body.getBoundingClientRect()
-    await target.fonts.ready
-    await new Promise<void>(resolve => view.requestAnimationFrame(() => view.requestAnimationFrame(() => resolve())))
-    view.addEventListener('afterprint', () => frame.remove(), { once: true })
-    view.focus()
-    view.print()
-  } catch (error) {
-    frame.remove()
-    throw error
   }
 }
