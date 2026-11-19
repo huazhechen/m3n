@@ -203,7 +203,7 @@ export function ScoreRenderer({
   const tempoScale = playbackBpm / (scoreDocument.tempo * scoreDocument.meterUnit / 4)
   const [playbackTranspose, setPlaybackTranspose] = useState(DEFAULT_PLAYBACK_TRANSPOSE)
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => (
-    !compact && readRendererSetting(METRONOME_ENABLED_KEY, 0, 0, 1) === 1
+    !compact && readRendererSetting(METRONOME_ENABLED_KEY, 1, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
   usePagedReaderLayout(paperRef, fitPagedToViewport && renderMode === 'paged')

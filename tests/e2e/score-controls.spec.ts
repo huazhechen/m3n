@@ -10,7 +10,8 @@ test('floating transport stays visible and settings open without shifting the sc
   await expect(panel).not.toBeVisible()
   await expect(bar.getByRole('slider')).toHaveCount(1)
   await expect(bar.getByRole('switch')).toHaveCount(1)
-  await expect(bar.getByRole('switch', { name: '节拍器' })).toBeVisible()
+  await expect(bar.getByRole('switch', { name: '节拍器' })).toBeChecked()
+  await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'paged')
   for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 })
     const transport = bar.locator('.control-transport')
@@ -47,10 +48,14 @@ test('floating transport stays visible and settings open without shifting the sc
   await expect(panel).toBeVisible()
   await page.getByRole('switch', { name: '节拍器' }).click()
   await expect(panel).not.toBeVisible()
-  await expect(page.getByRole('switch', { name: '节拍器' })).toBeChecked()
+  await expect(page.getByRole('switch', { name: '节拍器' })).not.toBeChecked()
 })
 
 test('BPM resets on reopening while switches persist; speed reset leaves other settings intact', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (localStorage.getItem('m3n:metronome-enabled') === null) localStorage.setItem('m3n:metronome-enabled', '0')
+    if (localStorage.getItem('m3n:render-mode') === null) localStorage.setItem('m3n:render-mode', 'continuous')
+  })
   await page.goto('/scores/huan_le_song_01')
   await openScoreSettings(page)
   const bpm = page.getByRole('slider', { name: '播放速度', exact: true })

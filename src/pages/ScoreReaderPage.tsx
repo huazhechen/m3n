@@ -8,6 +8,7 @@ import { NavActionContent, TopNav } from '../components/TopNav'
 import { presetScores } from '../lib/samples'
 import { useScoreSource } from '../hooks/useScoreSource'
 import type { ScoreDisplaySettings } from '../lib/render-score'
+import { readRenderMode } from '../lib/renderer-settings'
 import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
 
 export function ScoreReaderPage() {
@@ -75,7 +76,7 @@ export function ScoreReaderPage() {
           ref={exportDialogRef}
           scoreDocument={analysis.score}
           title={result.title}
-          settings={displaySettings ?? { width: result.preferredWidth ?? 720, paged: false }}
+          settings={displaySettings ?? { width: result.preferredWidth ?? 720, paged: readRenderMode() === 'paged' }}
           onError={setExportError}
         />
         {exportError && <p className="render-message" role="alert">{exportError}</p>}

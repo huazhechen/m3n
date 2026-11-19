@@ -30,7 +30,7 @@ export const PLAYBACK_TRANSPOSE_MAX = 12
 export const DEFAULT_PLAYBACK_TRANSPOSE = 0
 
 export type RenderMode = 'paged' | 'continuous'
-export const DEFAULT_RENDER_MODE: RenderMode = 'continuous'
+export const DEFAULT_RENDER_MODE: RenderMode = 'paged'
 
 export function readRendererSetting(key: string, fallback: number, min?: number, max?: number) {
   let value = fallback

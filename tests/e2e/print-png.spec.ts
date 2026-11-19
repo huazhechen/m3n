@@ -8,6 +8,7 @@ test('continuous preview has the image frame and PNG downloads without the vecto
     fontRequests.push(route.request().url())
     return route.abort()
   })
+  await page.addInitScript(() => { localStorage.setItem('m3n:render-mode', 'continuous') })
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=中文打印验证}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
   await page.getByRole('button', { name: '保存', exact: true }).click()
