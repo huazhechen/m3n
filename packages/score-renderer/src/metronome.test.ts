@@ -38,7 +38,7 @@ describe('metronome timeline', () => {
 describe('metronome audio scheduling', () => {
   const setup = () => {
     const oscillators: { start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn> }[] = []
-    const parameter = () => ({ setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() })
+    const parameter = () => ({ setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() })
     const context = {
       currentTime: 10, destination: {},
       createOscillator: () => {

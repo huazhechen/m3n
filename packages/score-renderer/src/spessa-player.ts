@@ -119,7 +119,7 @@ export class SpessaPlayer {
         synth,
         sequencer,
         listener,
-        new Metronome(context, buildMetronomeBeats(parsedSequence)),
+        new Metronome(context, buildMetronomeBeats(parsedSequence), 0, 0, output.metronomeInput),
         60 / initialBeatDurationSeconds(parsedSequence), tone, output,
       )
       player.setTranspose(transpose)

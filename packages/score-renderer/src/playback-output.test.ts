@@ -20,6 +20,7 @@ test('applies fixed tone gain before mastering, with smooth live updates', () =>
   vi.stubGlobal('AudioWorkletNode', class { constructor() { return limiter } })
   const output = createPlaybackOutput(context as unknown as AudioContext, 'piano')
   expect(output.input).toBe(input)
+  expect(output.metronomeInput).toBe(limiter)
   expect(input.gain.value).toBe(PLAYBACK_TONE_GAIN.piano)
   expect(input.connect).toHaveBeenCalledWith(highpass)
   expect(highpass.connect).toHaveBeenCalledWith(compressor)

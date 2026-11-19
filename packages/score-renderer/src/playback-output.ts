@@ -30,6 +30,8 @@ export function createPlaybackOutput(context: AudioContext, tone: PlaybackTone) 
   makeup.connect(limiter)
   limiter.connect(context.destination)
   return {
+    // Mix clicks after tone-dependent mastering, before the shared peak ceiling.
+    metronomeInput: limiter,
     input: trim,
     setTone(next: PlaybackTone) { trim.gain.setTargetAtTime(PLAYBACK_TONE_GAIN[next], context.currentTime, 0.02) },
   }

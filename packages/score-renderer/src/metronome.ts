@@ -88,6 +88,7 @@ export class Metronome {
     beats: readonly MetronomeBeat[],
     countInBeats = 0,
     beatDurationSeconds = 0,
+    private readonly destination: AudioNode = context.destination,
   ) {
     const count = Math.max(0, Math.ceil(countInBeats - 1e-9))
     const countIn = count > 0 && beatDurationSeconds > 0
@@ -158,11 +159,13 @@ export class Metronome {
     oscillator.type = 'sine'
     oscillator.frequency.setValueAtTime(accent ? 1760 : 1175, at)
     gain.gain.setValueAtTime(0.0001, at)
-    // Match the +6dB level lift applied to instrument playback.
-    gain.gain.exponentialRampToValueAtTime(accent ? 0.28 : 0.18, at + 0.002)
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.045)
+    // A brief body makes clicks audible alongside sustained instrument notes.
+    const level = accent ? 0.9 : 0.65
+    gain.gain.linearRampToValueAtTime(level, at + 0.002)
+    gain.gain.setValueAtTime(level, at + 0.008)
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.06)
     oscillator.connect(gain)
-    gain.connect(this.context.destination)
+    gain.connect(this.destination)
     oscillator.addEventListener('ended', () => {
       this.scheduled.delete(oscillator)
       oscillator.disconnect()
@@ -170,6 +173,6 @@ export class Metronome {
     })
     this.scheduled.add(oscillator)
     oscillator.start(at)
-    oscillator.stop(at + 0.05)
+    oscillator.stop(at + 0.065)
   }
 }

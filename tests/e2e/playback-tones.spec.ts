@@ -173,6 +173,7 @@ test('full-volume playback stays audible and compresses dense chords without cli
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
   await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms), { timeout: 10_000 }).toBeGreaterThan(0.1)
   const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number; rms: number; limiters: number } }).loudnessAudit!)
+  console.log("mixed/metronome output", JSON.stringify(audit))
   expect(audit.limiters).toBe(1)
   expect(audit.peak).toBeLessThanOrEqual(0.941)
   await page.getByRole('button', { name: '暂停', exact: true }).click()
@@ -188,6 +189,7 @@ for (const label of ['合成音色', '钢琴', '钢弦吉他', '口琴', '小提
     await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
     await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms)).toBeGreaterThan(0.2)
     const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number; limiters: number } }).loudnessAudit!)
+    console.log(`${label} output`, JSON.stringify(audit))
     expect(audit.limiters).toBe(1)
     expect(audit.peak).toBeLessThanOrEqual(0.941)
     await page.getByRole('button', { name: '暂停', exact: true }).click()
@@ -209,3 +211,22 @@ for (const label of ['钢琴', '钢弦吉他', '口琴', '小提琴', '长笛'])
     await page.getByRole('button', { name: '暂停', exact: true }).click()
   })
 }
+
+for (const withNotes of [false, true]) test(`metronome is audible alongside instruments and shares the output ceiling (${withNotes})`, async ({ page }) => {
+  await auditFinalOutput(page)
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill(withNotes
+    ? '{4/4}{120qpm}\nN: [135:h]^^ | [135:h]^^ |||\nB: [135d:h]^^ | [135d:h]^^ |||'
+    : '{4/4}{120qpm}\nN: 0 - - - | 0 - - - |||')
+  const metronome = page.getByRole('switch', { name: '节拍器', exact: true })
+  if (await metronome.getAttribute('aria-checked') !== 'true') await metronome.click()
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms), { timeout: 10_000 }).toBeGreaterThan(0.2)
+  await page.waitForTimeout(1500)
+  const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number; limiters: number } }).loudnessAudit!)
+  console.log("mixed/metronome output", JSON.stringify(audit))
+  expect(audit.limiters).toBe(1)
+  expect(audit.peak).toBeLessThanOrEqual(0.941)
+  const pause = page.getByRole('button', { name: '暂停', exact: true })
+  if (await pause.isVisible()) await pause.click()
+})
