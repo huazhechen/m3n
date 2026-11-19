@@ -79,7 +79,7 @@ test('highlights numbered notation during playback with tuplets and a bass voice
   await page.getByRole('button', { name: '暂停' }).click()
 })
 
-test('export preview reuses current display settings and offers PNG, PDF and MIDI', async ({ page }) => {
+test('export preview reuses current display settings and offers PNG and PDF', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
@@ -96,7 +96,7 @@ test('export preview reuses current display settings and offers PNG, PDF and MID
   const dialog = page.getByRole('dialog')
   await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
   await expect(dialog.locator('input,select')).toHaveCount(0)
-  await expect(dialog.getByRole('group', { name: '导出格式' }).getByRole('button')).toHaveText(['PNG', 'PDF', 'MIDI'])
+  await expect(dialog.getByRole('group', { name: '导出格式' }).getByRole('button')).toHaveText(['PNG', 'PDF'])
   await expect(dialog.locator('svg[data-engine="m3n"]').first()).toHaveAttribute('width', '600')
   expect(await dialog.locator('svg text').allTextContents()).toEqual(await paper.locator('svg text').allTextContents())
   for (const width of [320, 390, 1280]) {

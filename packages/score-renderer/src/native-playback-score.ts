@@ -3,11 +3,6 @@ import { MIDI_PPQ, performanceTick, writePerformanceMidi } from './midi-writer.j
 
 export type TimedScoreElement = { xmlId: string; rendition: number; orderIndex?: number }
 
-/** Standalone download: bake reading settings into MIDI without choosing instruments. */
-export function exportScoreMidi(document: ScoreDocument, settings: { transpose?: number; tempoScale?: number } = {}) {
-  return writePerformanceMidi(compileScorePerformance(document), { ...settings, includeProgramChange: false })
-}
-
 /** MIDI generation and source timing share the exact same quantized clock. */
 export class NativePlaybackScore {
   private readonly performance

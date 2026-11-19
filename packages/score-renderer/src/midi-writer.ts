@@ -23,15 +23,11 @@ function track(events: MidiEvent[], end: number) {
   return chunk('MTrk', data)
 }
 
-export type MidiWriteOptions = { transpose?: number; tempoScale?: number; includeProgramChange?: boolean }
-
 /** Standard MIDI file, format 1: conductor followed by melody/bass channels. */
-export function writePerformanceMidi(performance: ScorePerformance, { transpose = 0, tempoScale = 1, includeProgramChange = true }: MidiWriteOptions = {}): ArrayBuffer {
-  if (!Number.isInteger(transpose)) throw new Error('移调必须为整数半音。')
-  if (!Number.isFinite(tempoScale) || tempoScale <= 0) throw new Error('速度倍率必须为正数。')
+export function writePerformanceMidi(performance: ScorePerformance): ArrayBuffer {
   const conductor: MidiEvent[] = []
   for (const point of performance.tempos) {
-    const micros = Math.round(60_000_000 / (point.qpm * tempoScale))
+    const micros = Math.round(60_000_000 / point.qpm)
     if (micros < 1 || micros > 0xffffff) throw new Error('速度超出 MIDI 范围。')
     conductor.push({ tick: performanceTick(point.beat), priority: 0, data: [0xff, 0x51, 3, ...integer(micros, 3)] })
   }
@@ -41,17 +37,15 @@ export function writePerformanceMidi(performance: ScorePerformance, { transpose 
   const channels = [...new Set([0, ...performance.notes.map(note => note.channel)])]
   for (const channel of channels) {
     const events: MidiEvent[] = [
-      ...(includeProgramChange ? [{ tick: 0, priority: 0, data: [0xc0 | channel, 0] }] : []),
+      { tick: 0, priority: 0, data: [0xc0 | channel, 0] },
       // Full channel volume: the synth's default 100 adds another attenuation.
       { tick: 0, priority: 0, data: [0xb0 | channel, 7, 127] },
     ]
     for (const note of performance.notes.filter(note => note.channel === channel)) {
-      const pitch = note.pitch + transpose
-      if (pitch < 0 || pitch > 127) throw new Error('移调后的音高超出 MIDI 范围（0–127）。')
       const start = performanceTick(note.start), finish = performanceTick(note.end)
       // Retain a short release gap; never turn a very short note off before on.
       const off = Math.max(start + 1, finish - Math.min(8, Math.floor((finish - start) / 4)))
-      events.push({ tick: start, priority: 2, data: [0x90 | channel, pitch, note.velocity] }, { tick: off, priority: 1, data: [0x90 | channel, pitch, 0] })
+      events.push({ tick: start, priority: 2, data: [0x90 | channel, note.pitch, note.velocity] }, { tick: off, priority: 1, data: [0x90 | channel, note.pitch, 0] })
     }
     // Sequencers commonly ignore an end-of-track meta event when calculating
     // audible duration. A silent channel message preserves trailing rests,
