@@ -1,6 +1,6 @@
+import { captureBrowserPrint, printedScorePdf } from './print-capture'
 import { test, expect } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
-import { readFile } from 'node:fs/promises'
 
 test('editor provides highlighting, completions, diagnostic navigation and keyboard resizing', async ({ page }, info) => {
   await page.goto('/editor')
@@ -73,48 +73,37 @@ test('floating controls expose BPM, tone, transpose, metronome and measure numbe
   await expect(controls.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('160')
 })
 
-test('numbered SVG and multipage PDF retain Chinese outlines and all written measures', async ({ page }, info) => {
+test('multipage browser PDF retains system text and all written measures', async ({ page }, info) => {
   test.setTimeout(90_000)
+  await captureBrowserPrint(page)
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 128 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
   await page.getByRole('button', { name: '保存', exact: true }).click()
-  for (const format of ['SVG', 'PDF']) {
+  let expectedPages = 0
+  for (const paged of [false, true]) {
     await openScoreSettings(page)
     await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
-    if (format === 'PDF') await page.getByRole('switch', { name: '分页', exact: true }).click()
+    if (paged) await page.getByRole('switch', { name: '分页', exact: true }).click()
+    await page.keyboard.press('Escape')
     await page.getByRole('button', { name: '打印', exact: true }).click()
-    const dialog = page.getByRole('dialog')
+    const dialog = page.locator('.export-dialog')
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
-    const count = await dialog.locator('.export-preview-page').count()
-    if (format.startsWith('PDF')) {
-      expect(count).toBeGreaterThan(1)
-      const portable = await dialog.locator('.export-preview-page > svg').evaluateAll(pages => pages.every(page => {
-        const view=page.viewBox.baseVal
-        return view.width>0 && view.height>0 && Number(page.getAttribute('width'))>0 && Number(page.getAttribute('height'))>0 && (page.matches('[data-engine="m3n"]') || Boolean(page.querySelector('[data-engine="m3n"]')))
-      }))
-      expect(portable).toBe(true)
-    }
-    const downloading = page.waitForEvent('download')
-    await dialog.getByRole('button', { name: format }).click()
-    const download = await downloading
-    const file = info.outputPath(download.suggestedFilename()); await download.saveAs(file)
-    const bytes = await readFile(file)
-    if (format.startsWith('SVG')) {
-      const svg = bytes.toString()
-      expect(svg).toContain('data-outlined-text="中文矢量验证"')
-      expect(svg).toContain('m3n-e-512')
-      expect(svg).not.toContain('<text')
-      const lyricOutlines = await page.evaluate(svg => {
-        const document = new DOMParser().parseFromString(svg, 'image/svg+xml')
-        return ['春', '天', '来', '了'].map(char => [...document.querySelectorAll('[data-outlined-text]')].some(group => group.getAttribute('data-outlined-text')?.includes(char) && Boolean(group.querySelector('path[d]'))))
-      }, svg)
-      expect(lyricOutlines).toEqual([true, true, true, true])
-    } else {
-      const pdf = bytes.toString('latin1')
-      expect((pdf.match(/\/Type \/Page\b/g) ?? []).length).toBe(count)
-      expect(pdf).not.toContain('/Subtype /Image')
-      expect(bytes.length).toBeGreaterThan(20_000)
-    }
+    const previewPages = await dialog.locator('.export-preview-page').count()
+    if (paged) expect(previewPages).toBe(expectedPages)
+    else expect(previewPages).toBe(0)
+    await dialog.getByRole('button', { name: 'PDF', exact: true }).click()
+    const { html, pdf } = await printedScorePdf(page)
+    expect(html).toContain('中文矢量验证')
+    expect(html).toContain('m3n-e-512')
+    const count = (html.match(/class="print-page"/g) ?? []).length
+    expect(count).toBeGreaterThan(1)
+    if (paged) expect(count).toBe(expectedPages)
+    expectedPages = count
+    expect((pdf.toString('latin1').match(/\/Type \/Page\b/g) ?? []).length).toBe(count)
+    expect(pdf.toString('latin1')).not.toContain('/Subtype /Image')
+    expect(pdf.length).toBeGreaterThan(20_000)
+    const { writeFile } = await import('node:fs/promises')
+    await writeFile(info.outputPath(`system-fonts-${paged}.pdf`), pdf)
   }
 })
 
@@ -138,27 +127,31 @@ test('homepage plays numbered notation and documentation examples open as editab
 })
 
 
-test('mobile saving and export recover visibly from a failed local font request', async ({ page }, info) => {
+test('mobile PNG and PDF use system fonts without font requests', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 })
+  const fontRequests: string[] = []
+  await page.route(/\.(?:otf|ttf|woff2?)(?:[?#]|$)/i, route => {
+    fontRequests.push(route.request().url())
+    return route.abort()
+  })
+  await captureBrowserPrint(page)
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=手机保存导出}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)
-  await page.getByRole('button', { name: '播放', exact: true }).click()
-  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: '暂停', exact: true }).click()
-  let failed = false
-  await page.route('**/fonts/NotoSerifCJKsc-Regular.otf', async route => {
-    if (!failed) { failed = true; await route.fulfill({ status: 503, body: '' }) }
-    else await route.continue()
-  })
-  await page.getByRole('button', { name: '打印', exact: true }).click()
-  const dialog = page.getByRole('dialog')
-  await dialog.getByRole('button', { name: 'SVG', exact: true }).click()
-  await expect(dialog.getByRole('alert')).toContainText('无法加载导出中文字体')
-  await page.screenshot({ path: info.outputPath('mobile-export-retry.png') })
-  const downloading = page.waitForEvent('download')
-  await dialog.getByRole('button', { name: 'SVG', exact: true }).click()
-  await (await downloading).saveAs(info.outputPath('手机保存导出.svg'))
-  await expect(dialog).not.toBeVisible()
+  for (const format of ['PNG', 'PDF']) {
+    await page.getByRole('button', { name: '打印', exact: true }).click()
+    const dialog = page.locator('.export-dialog')
+    if (format === 'PDF') {
+      await dialog.getByRole('button', { name: format, exact: true }).click()
+      const { pdf } = await printedScorePdf(page)
+      expect(pdf.toString('latin1')).not.toContain('/Subtype /Image')
+    } else {
+      const downloading = page.waitForEvent('download')
+      await dialog.getByRole('button', { name: format, exact: true }).click()
+      await (await downloading).saveAs(info.outputPath('手机保存导出.png'))
+    }
+    await expect(dialog).not.toBeVisible()
+  }
+  expect(fontRequests).toEqual([])
 })

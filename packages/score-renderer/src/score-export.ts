@@ -64,6 +64,9 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
   const targetHeight = Math.ceil(targetWidth * sourceHeight / sourceWidth)
   const clone = svg.cloneNode(true) as SVGSVGElement
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  // Standalone SVG images lose the HTML language used for CJK font fallback.
+  const language = svg.closest('[lang]')?.getAttribute('lang') || svg.ownerDocument.documentElement.lang
+  if (language) clone.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:lang', language)
   clone.setAttribute('width', String(sourceWidth))
   clone.setAttribute('height', String(sourceHeight))
   clone.setAttribute('viewBox', `0 0 ${sourceWidth} ${sourceHeight}`)
@@ -90,5 +93,52 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
     return canvas
   } finally {
     URL.revokeObjectURL(url)
+  }
+}
+
+/** Print native SVG with the device fonts; the browser can save a vector PDF. */
+export async function printScorePages(pages: readonly SVGSVGElement[], title: string) {
+  if (!pages.length) throw new Error('当前没有可打印的乐谱。')
+  const frame = document.createElement('iframe')
+  frame.title = '乐谱打印'
+  frame.setAttribute('aria-hidden', 'true')
+  frame.style.cssText = 'position:fixed;left:-20000px;top:0;width:794px;height:1123px;border:0;'
+  const loaded = new Promise<void>(resolve => { frame.onload = () => resolve() })
+  frame.srcdoc = '<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>'
+  document.body.append(frame)
+  try {
+    await loaded
+    const target = frame.contentDocument!
+    const view = frame.contentWindow!
+    target.documentElement.lang = document.documentElement.lang
+    target.title = title
+    const style = target.createElement('style')
+    style.textContent = `
+      @page { size: A4 portrait; margin: 0; }
+      html, body { margin: 0; padding: 0; background: white; }
+      .print-page { position: relative; width: 210mm; height: 297mm; break-after: page; overflow: hidden; }
+      .print-page:last-child { break-after: auto; }
+      .print-page > svg { position: absolute; display: block; }
+    `
+    target.head.append(style)
+    for (const svg of pages) {
+      const section = target.createElement('section')
+      section.className = 'print-page'
+      const copy = target.importNode(svg, true)
+      const size = getSvgSize(svg)
+      const placement = a4ImagePlacement(size.width, size.height)
+      copy.style.cssText = `left:${placement.x}mm;top:${placement.y}mm;width:${placement.width}mm;height:${placement.height}mm;`
+      section.append(copy)
+      target.body.append(section)
+    }
+    target.body.getBoundingClientRect()
+    await target.fonts.ready
+    await new Promise<void>(resolve => view.requestAnimationFrame(() => view.requestAnimationFrame(() => resolve())))
+    view.addEventListener('afterprint', () => frame.remove(), { once: true })
+    view.focus()
+    view.print()
+  } catch (error) {
+    frame.remove()
+    throw error
   }
 }

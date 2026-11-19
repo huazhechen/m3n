@@ -25,7 +25,7 @@ for (const width of [390, 1280]) {
       '从一首喜欢的歌开始', '让谱面合你的习惯', '先听一遍，再跟上节拍',
       '把调好的谱，带到谱架上', '把脑海里的旋律写下来',
     ])
-    for (const feature of ['固定调', '分页', '小节号', '页面宽度', '音色', '节拍器', '速度', '移调', 'SVG', 'PNG', 'PDF']) {
+    for (const feature of ['固定调', '分页', '小节号', '页面宽度', '音色', '节拍器', '速度', '移调', 'PNG', 'PDF']) {
       await expect(features).toContainText(feature)
     }
     await expect(features.getByRole('link', { name: '浏览指南' })).toHaveAttribute('href', '/?doc=guide')

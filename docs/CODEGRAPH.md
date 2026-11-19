@@ -121,7 +121,6 @@ flowchart LR
   numberedSvg --> renderService["lib/render-score"]
   renderService --> screen
   renderService --> exporter
-  numberedSvg --> vector["standalone vector SVG"]
   document --> performance["compileScorePerformance / PlaybackScore"]
   performance --> midi["MIDI + time map"]
   midi --> player["SpessaPlayer"]
@@ -130,12 +129,11 @@ flowchart LR
   player --> cursor["playback cursor events"]
   cursor --> screen
   exporter --> png["PNG"]
-  exporter --> outlines["vector-export / local fonts"]
-  outlines --> pdf["vector PDF via svg2pdf / jsPDF"]
-  outlines --> vector
+  exporter --> raster["browser rasterization / system fonts"]
+  exporter --> pdf["native SVG / browser vector PDF printing"]
 ```
 
-简谱由项目内自研引擎渲染，渲染和演奏共用 `scoreEventIds`；播放使用项目内演奏编译器，直接消费领域文档。简谱预览与导出共用适配器和内嵌数字字体，SVG、PNG 和矢量 PDF 导出共用字形轮廓，中文字体仅在下载时从本站加载。
+简谱由项目内自研引擎渲染，渲染和演奏共用 `scoreEventIds`；播放使用项目内演奏编译器，直接消费领域文档。简谱预览与导出共用适配器和内嵌数字字体，文字使用设备系统字体，不请求字体文件；PNG 栅格化连续谱面，PDF 自动分页并通过浏览器原生SVG打印保留矢量。
 
 `lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，宽度切换保留播放状态。
 

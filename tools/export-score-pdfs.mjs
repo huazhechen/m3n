@@ -12,7 +12,7 @@ const temp = join(root, '.tmp', plan.outputKey), staged = join(temp, 'single-pdf
 const hash = value => createHash('sha256').update(value).digest('hex')
 assert.equal(plan.edition, record.edition)
 assert.equal(record.entries.length, plan.entries.length)
-assert.equal(createHash('sha256').update(readFileSync(join(temp, 'bundle/bundle.js'))).update(readFileSync(join(root, 'public/fonts/NotoSerifCJKsc-Regular.otf'))).digest('hex'), record.rendererSha256)
+assert.equal(createHash('sha256').update(readFileSync(join(temp, 'bundle/bundle.js'))).update(readFileSync(join(root, 'tools/fonts/NotoSerifCJKsc-Regular.otf'))).digest('hex'), record.rendererSha256)
 const sources = new Map(record.entries.map(entry => {
   const source = readFileSync(join(root, 'src/scores', entry.file), 'utf8')
   assert.equal(hash(source), entry.sourceSha256, `Rebuild after editing ${entry.file}`)
@@ -42,7 +42,7 @@ try {
   await page.goto('http://scorebook.local/')
   await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
   await page.addScriptTag({ path: join(temp, 'compact/bundle/bundle.js') })
-  await page.evaluate(async font => { await window.scorebook.prepare(font); await window.compactScorebook.prepare(font) }, readFileSync(join(root, 'public/fonts/NotoSerifCJKsc-Regular.otf')).toString('base64'))
+  await page.evaluate(async font => { await window.scorebook.prepare(font); await window.compactScorebook.prepare(font) }, readFileSync(join(root, 'tools/fonts/NotoSerifCJKsc-Regular.otf')).toString('base64'))
   for (const [index, entry] of plan.entries.entries()) {
     const source = sources.get(entry.file), actual = record.entries.find(item => item.file === entry.file)
     const width = actual.width, url = `https://score.cheesefans.com/scores/${entry.file.replace(/\.m3n$/, '')}`

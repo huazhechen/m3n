@@ -1,3 +1,4 @@
+import { captureBrowserPrint, printedScorePdf } from './print-capture'
 import { expect, test, type Locator } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
 
@@ -79,7 +80,7 @@ test('highlights numbered notation during playback with tuplets and a bass voice
   await page.getByRole('button', { name: '暂停' }).click()
 })
 
-test('print reuses current display settings and offers three horizontal format buttons', async ({ page }) => {
+test('print preview reuses current display settings and offers PNG and PDF', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
@@ -96,7 +97,7 @@ test('print reuses current display settings and offers three horizontal format b
   const dialog = page.getByRole('dialog')
   await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
   await expect(dialog.locator('input,select')).toHaveCount(0)
-  await expect(dialog.getByRole('group', { name: '导出格式' }).getByRole('button')).toHaveText(['SVG', 'PNG', 'PDF'])
+  await expect(dialog.getByRole('group', { name: '导出格式' }).getByRole('button')).toHaveText(['PNG', 'PDF'])
   await expect(dialog.locator('svg').first()).toHaveAttribute('width', '600')
   expect(await dialog.locator('svg text').allTextContents()).toEqual(await paper.locator('svg text').allTextContents())
   for (const width of [320, 390, 1280]) {
@@ -172,29 +173,34 @@ test('orders numbered annotations above music and maps their clicks back to the 
   await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1{tr}'))
 })
 
-test('uses the current numbered layout and includes visible bass in SVG, PNG and PDF', async ({ page }, testInfo) => {
+test('uses the current numbered layout and includes visible bass in PNG and vector PDF', async ({ page }, testInfo) => {
   const { readFile } = await import('node:fs/promises')
+  await captureBrowserPrint(page)
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{title=导出验证} {2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了\nB: 1d 2d | 3d 4d |||')
   await page.getByRole('button', { name: '保存' }).click()
   await expect(page.locator('.score-paper svg[data-engine="m3n"]')).toBeVisible()
-  for (const [format, signature] of [['SVG', '<svg'], ['PNG', 'PNG'], ['PDF', '%PDF']] as const) {
+  for (const [format, signature] of [['PNG', 'PNG'], ['PDF', '%PDF']] as const) {
     await page.getByRole('button', { name: '打印' }).click()
     const dialog = page.getByRole('dialog')
     await expect(dialog.locator('svg[data-engine="m3n"]').first()).toBeVisible()
     await expect(dialog.locator('[data-m3n-id="m3n-e-3"]').first()).toBeVisible()
     await expect(dialog.locator('[data-m3n-id="m3n-e-5"]').first()).toBeVisible()
-    const download = page.waitForEvent('download')
-    await dialog.getByRole('button', { name: format }).click()
-    const downloaded = await download
-    const path = testInfo.outputPath(downloaded.suggestedFilename())
-    await downloaded.saveAs(path)
-    const bytes = await readFile(path)
-    expect(bytes.length).toBeGreaterThan(1000)
-    expect(bytes.subarray(0, 80).toString()).toContain(signature)
-    if (format.startsWith('SVG')) {
-      expect(bytes.toString()).toContain('data:font/ttf;base64,')
-      expect(bytes.toString()).toContain('data-m3n-id="m3n-e-3"')
+    if (format === 'PDF') {
+      await dialog.getByRole('button', { name: format }).click()
+      const { html, pdf } = await printedScorePdf(page)
+      expect(html).toContain('data-m3n-id="m3n-e-5"')
+      expect(pdf.subarray(0, 4).toString()).toBe('%PDF')
+      expect(pdf.toString('latin1')).not.toContain('/Subtype /Image')
+    } else {
+      const download = page.waitForEvent('download')
+      await dialog.getByRole('button', { name: format }).click()
+      const downloaded = await download
+      const path = testInfo.outputPath(downloaded.suggestedFilename())
+      await downloaded.saveAs(path)
+      const bytes = await readFile(path)
+      expect(bytes.length).toBeGreaterThan(1000)
+      expect(bytes.subarray(0, 80).toString()).toContain(signature)
     }
   }
 })

@@ -24,7 +24,7 @@ await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url':
   outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
   lib: { entry: join(root, 'tools/scorebook-layout.mjs'), name: 'scorebook', formats: ['iife'], fileName: () => 'bundle.js' },
 } })
-const font = readFileSync(join(root, 'public/fonts/NotoSerifCJKsc-Regular.otf'))
+const font = readFileSync(join(root, 'tools/fonts/NotoSerifCJKsc-Regular.otf'))
 const rendererSha256 = createHash('sha256').update(readFileSync(join(temp, 'bundle/bundle.js'))).update(font).digest('hex')
 // Reorder or regroup a validated edition without repeating identical width probes.
 const reuseFile = process.argv.find(arg => arg.startsWith('--reuse-widths='))?.slice(15)

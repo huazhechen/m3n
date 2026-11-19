@@ -1188,7 +1188,7 @@ a.action-button {
   gap: 12px;
 }
 
-.export-preview svg {
+.export-preview-paper > div > svg {
   display: block;
   width: 100%;
   min-width: 0;

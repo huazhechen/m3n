@@ -13,6 +13,6 @@ subsetter = subset.Subsetter(options=options)
 subsetter.populate(unicodes=[code for code in font.getBestCmap() if code < 0x10000 or code >= 0x20000])
 subsetter.subset(font)
 # FontTools sets timestamps when saving; the distributed artifact's hash is recorded separately.
-output = Path('public/fonts/NotoSerifCJKsc-Regular.otf')
+output = Path('tools/fonts/NotoSerifCJKsc-Regular.otf')
 output.parent.mkdir(parents=True, exist_ok=True)
 font.save(output)

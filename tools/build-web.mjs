@@ -20,6 +20,8 @@ if (!hosted) {
       if (entry !== 'index.html') await cp(join(staging, entry), join(destination, entry), { recursive: true, force: true })
     }
     await rename(join(staging, 'index.html'), join(destination, 'index.html'))
+    // Previous releases served the large export font; system text needs no font files.
+    await rm(join(destination, 'fonts'), { recursive: true, force: true })
     const assets = new Set(await readdir(join(staging, 'assets'), { recursive: true }))
     for (const entry of await readdir(join(destination, 'assets'), { recursive: true })) {
       if (!assets.has(entry)) await rm(join(destination, 'assets', entry), { recursive: true, force: true })
