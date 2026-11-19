@@ -1,4 +1,5 @@
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
+import type { NotationMode } from './renderer-settings'
 import { wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
 
 export type RenderPhase = 'loading-library' | 'loading-fonts' | 'layout'
@@ -8,6 +9,7 @@ export type ScoreRenderInput = {
   paged: boolean
   pageMargin?: number
   coreGap?: number
+  notationMode?: NotationMode
   fixedDo?: boolean
   transpose?: number
   tempoScale?: number
@@ -18,11 +20,15 @@ export type ScoreRenderInput = {
   onPhase?: (phase: RenderPhase) => void
 }
 
-/** Screen, print preview and downloads use the same numbered engraving. */
-export type ScoreDisplaySettings = Pick<ScoreRenderInput, 'width' | 'paged' | 'fixedDo' | 'measureNumbers' | 'transpose' | 'tempoScale'> & { width: number }
+/** Screen, print preview and downloads share the selected notation and settings. */
+export type ScoreDisplaySettings = Pick<ScoreRenderInput, 'width' | 'paged' | 'notationMode' | 'fixedDo' | 'measureNumbers' | 'transpose' | 'tempoScale'> & { width: number }
 
 /** One measurement per open export dialog; changing pagination reuses the rows. */
 export async function prepareScoreExport(scoreDocument: ScoreDocument, settings: ScoreDisplaySettings, signal: AbortSignal) {
+  if (settings.notationMode === 'staff') {
+    const { prepareStaffScore } = await import('@m3n/score-renderer/staff')
+    return prepareStaffScore(scoreDocument, settings, signal)
+  }
   const { PreparedNumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
   await prepareNumberedNotationFonts()
   signal.throwIfAborted()
@@ -38,6 +44,15 @@ export async function prepareScoreExport(scoreDocument: ScoreDocument, settings:
 export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInput) {
   const check = () => input.signal?.throwIfAborted()
   check(); input.onPhase?.('loading-library')
+  if (input.notationMode === 'staff') {
+    const { prepareStaffScore } = await import('@m3n/score-renderer/staff')
+    check(); input.onPhase?.('layout')
+    const render = await prepareStaffScore(input.scoreDocument, input, input.signal)
+    const pages = render(input.paged)
+    check(); target.replaceChildren(...pages)
+    if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
+    return { message: '' }
+  }
   const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
   check(); input.onPhase?.('loading-fonts')
   await prepareNumberedNotationFonts()

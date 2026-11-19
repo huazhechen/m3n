@@ -15,6 +15,9 @@ import {
   PLAYBACK_TRANSPOSE_MAX,
   PLAYBACK_TRANSPOSE_MIN,
   readRenderMode,
+  readNotationMode,
+  writeNotationMode,
+  type NotationMode,
   writeRenderMode,
   type RenderMode,
   SCORE_WIDTH_MAX,
@@ -213,7 +216,8 @@ export function ScoreRenderer({
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
   const [fitWidth, setFitWidth] = useState(compact && !playbackOnly)
-  const [fixedDo, setFixedDo] = useState(() => !playbackOnly && readRendererSetting('m3n:fixed-do', 0, 0, 1) === 1)
+  const [notationMode, setNotationMode] = useState<NotationMode>(() => playbackOnly ? 'movable' : readNotationMode())
+  const fixedDo = notationMode === 'fixed'
   const [measureNumbers, setMeasureNumbers] = useState(() => !playbackOnly && readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
   const [contentWidth, setContentWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -234,8 +238,8 @@ export function ScoreRenderer({
     setFitWidth(compact && !playbackOnly)
   }, [scoreId, defaultWidth, compact, playbackOnly])
   useEffect(() => {
-    onDisplaySettingsChange?.({ width: renderWidth, paged: renderMode === 'paged', fixedDo, measureNumbers, transpose: playbackTranspose, tempoScale })
-  }, [renderWidth, renderMode, fixedDo, measureNumbers, playbackTranspose, tempoScale, onDisplaySettingsChange])
+    onDisplaySettingsChange?.({ width: renderWidth, paged: renderMode === 'paged', notationMode, fixedDo, measureNumbers, transpose: playbackTranspose, tempoScale })
+  }, [renderWidth, renderMode, notationMode, fixedDo, measureNumbers, playbackTranspose, tempoScale, onDisplaySettingsChange])
   useEffect(() => { if (isSourceUpdating) stopPlaybackRef.current() }, [isSourceUpdating])
 
   useEffect(() => {
@@ -287,7 +291,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const { message } = await renderScoreInto(paper, {
-          scoreDocument, width: renderWidth, paged: renderMode === 'paged', measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
+          scoreDocument, width: renderWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled && isInitialRender) setRenderPhase(phase) },
         })
@@ -298,7 +302,10 @@ export function ScoreRenderer({
         hasRenderedRef.current = true
         setHasAudioControls(true)
       } catch (error: unknown) {
-        if (!cancelled) setMessage(error instanceof Error ? error.message : '简谱渲染失败。')
+        if (!cancelled) {
+          setMessage(error instanceof Error ? error.message : '乐谱渲染失败。')
+          if (notationMode === 'staff') setHasAudioControls(true)
+        }
       } finally {
         if (!cancelled) {
           setIsRendering(false)
@@ -312,7 +319,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers, fixedDo, playbackTranspose, tempoScale])
+  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -597,8 +604,8 @@ export function ScoreRenderer({
         width={Math.round(renderWidth)}
         paged={renderMode === 'paged'}
         onPagedChange={paged => { const mode = paged ? 'paged' : 'continuous'; setRenderMode(mode); if (!compact) writeRenderMode(mode) }}
-        fixedDo={fixedDo}
-        onFixedDoChange={enabled => { setFixedDo(enabled); writeRendererSetting('m3n:fixed-do', enabled ? 1 : 0) }}
+        notationMode={notationMode}
+        onNotationModeChange={mode => { setNotationMode(mode); writeNotationMode(mode) }}
         measureNumbers={measureNumbers}
         onMeasureNumbersChange={enabled => { setMeasureNumbers(enabled); writeRendererSetting('m3n:measure-numbers', enabled ? 1 : 0) }}
         onWidthChange={changeLayoutWidth}
@@ -636,12 +643,13 @@ export function ScoreRenderer({
         data-render-mode={renderMode}
         data-fixed-do={fixedDo}
         data-measure-numbers={measureNumbers}
-        data-notation="numbered"
+        data-notation={notationMode === 'staff' ? 'staff' : 'numbered'}
         aria-busy={isRendering || isSourceUpdating || undefined}
         tabIndex={0}
         onClick={(event) => {
           const element = (event.target as Element).closest('[id^="m3n-e-"], [data-m3n-id^="m3n-e-"]')
-          const xmlId = element?.getAttribute('id') ?? element?.getAttribute('data-m3n-id')
+          const rawId = element?.getAttribute('data-m3n-id') ?? element?.getAttribute('id')
+          const xmlId = notationMode === 'staff' ? rawId?.replace(/-v\d+$/, '').replace(/-n\d+$/, '').replace(/-rend\d+$/, '') : rawId
           if (!xmlId) return
           setSelectedXmlId(xmlId)
           const player = playerRef.current

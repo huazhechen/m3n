@@ -7,6 +7,7 @@
 ```text
 M3N → analyzeM3N → ScoreDocument
                     ├→ NumberedNotationScore → SVG
+                    ├→ MEI → Verovio → 五线谱 SVG（可选、按需加载）
                     └→ compileScorePerformance → MIDI → SpessaSynth
 ```
 
@@ -31,3 +32,5 @@ M3N → analyzeM3N → ScoreDocument
 - `npm run test:e2e`：实际页面编辑、定位、播放、移调和分页。
 
 本站发布字体、音源与AudioWorklet。部分符号轮廓和字体来自第三方，保留所用素材的来源与许可证；许可证不是旧引擎运行依赖。
+
+五线谱独立入口及其与简谱的边界见[五线谱显示](STAFF_NOTATION.md)。

@@ -73,15 +73,16 @@ test('does not substitute a default score for a missing local work', async ({ pa
 test('loads only the selected built-in score body', async ({ page }) => {
   const bodies: string[] = []
   page.on('request', request => {
-    if (/\/assets\/v2\/[a-z_]+_01-[^/]+\.js$/.test(new URL(request.url()).pathname)) bodies.push(request.url())
+    if (/\/assets\/v2\/[^/]+\.m3n$/.test(new URL(request.url()).pathname)) bodies.push(request.url())
   })
   await page.goto('/scores')
   await expect(page.getByRole('heading', { name: '乐谱库', exact: true })).toBeVisible()
   expect(bodies).toEqual([])
   await page.goto('/scores/xiao_xing_xing_01')
   await expect(page.locator('.score-reader svg').first()).toBeVisible({ timeout: 30_000 })
-  expect(bodies).toHaveLength(1)
-  expect(bodies[0]).toContain('xiao_xing_xing_01-')
+  const catalog = await (await page.request.get('/score-catalog.json')).json()
+  const selected = catalog.scores.find((score: { slug: string }) => score.slug === 'xiao_xing_xing_01')
+  expect(bodies).toEqual([new URL('/' + selected.sourceUrl, page.url()).href])
 })
 
 test('submit is simulated locally and opens the reader', async ({ page }) => {
@@ -119,6 +120,7 @@ test('score library marks local scores, opens on click, and deletes', async ({ p
 
 test('library puts recently modified local scores before alphabetized official scores', async ({ page }) => {
   await page.addInitScript(() => {
+    localStorage.setItem('m3n:library-view', 'alphabetical')
     if (localStorage.getItem('m3n:local-scores')) return
     localStorage.setItem('m3n:recent-edits', JSON.stringify([{ id: 'local-sort-0', title: '旧记录', updatedAt: Date.now() }]))
     localStorage.setItem('m3n:local-scores', JSON.stringify(['Zzz 排序用例', 'Aaa 排序用例', '旧版排序用例'].map((title, index) => ({

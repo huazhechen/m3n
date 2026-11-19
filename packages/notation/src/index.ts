@@ -22,3 +22,6 @@ export * from './notation/performance-order.js'
 export * from './performance.js'
 
 export * from './page-format.js'
+
+export { parseKey } from './notation/m3n-primitives.js'
+export { m3nChord } from './m3n-harmony.js'

@@ -1,0 +1,25 @@
+# 五线谱显示
+
+设置中的记谱按钮显示当前状态，点击后选择首调简谱、固定调简谱或五线谱。默认首调简谱；沿用旧固定调设置作为首次迁移值，之后保存三态选择。文档内只提供播放控制的谱例始终使用首调简谱。
+
+五线谱复用曲谱的建议版宽与当前宽度设置，支持源码点击定位、现有播放器高亮、移调、连续／分页，以及单曲 PNG／矢量 PDF 导出。整本谱集始终使用简谱，不提供五线谱谱集。
+
+## 独立渲染入口
+
+`@m3n/score-renderer/staff` 按需加载；简谱显示、播放和谱集不导入该入口。`src/lib/render-score.ts` 仅在五线谱分支调用 `prepareStaffScore`，屏幕与单曲导出使用相同参数。简谱内核保持独立。
+
+`packages/score-renderer/src/staff/score-mei.ts` 从现有 `ScoreDocument` 生成 MEI，仅作显示投影，不重新解析源码，不修改传入的领域文档。沿用 `scoreEventIds`，与当前播放器、源码映射共享事件身份。带变调或八度基准的乐段访问按实际演奏顺序展开显示，保留歌词、源事件 ID 与播放遍次；普通反复保持紧凑谱面。播放仍由项目的演奏编译器与 SpessaSynth 完成，不使用 Verovio MIDI 或时间查询。
+
+Verovio 工具实例只在一次同步排版期间存活，结束即释放；WASM 初始化复用，失败可重试。单次导出会话缓存连续与分页排版。SVG 字形引用展开为路径，嵌套文字按实际坐标展开，SMuFL 文字使用 Leipzig 路径，屏幕、PNG 与 PDF 共用结果。PDF 允许五线谱的路径字形不携带简谱数字字体；简谱仍要求其数字字体。
+
+## 引擎来源
+
+使用历史精简 Verovio 6.2.0（上游 commit `43f806031bfff2c64003fc8ddd9910820445f6ab`），npm 包装器固定为相同版本。产物在 `packages/score-renderer/vendor/verovio/`，仅恢复 Leipzig 字形、MEI 输入等既有裁剪范围。独立 WASM 约2.98MB，本站按需加载，无 CDN。普通构建无需 C++ 工具链。
+
+许可证、字体声明、完整上游源码、补丁和重建脚本位于 `public/licenses/verovio/`；具体重建要求见该目录的 `README.txt`，产物校验值见 vendor 中的 `build.json`。
+
+## 验证
+
+- `src/staff/score-mei.test.ts`：共享身份、领域数据不变性及全量内置曲目真实引擎排版。
+- `tests/e2e/staff-notation.spec.ts`：按需资源、三态切换、版宽、点击定位、播放高亮、移调、分页、设置持久化及 PNG／PDF 下载。
+- 现有简谱、播放及单曲导出回归继续运行。

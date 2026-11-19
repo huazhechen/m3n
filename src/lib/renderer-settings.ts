@@ -72,3 +72,20 @@ export function writeRenderMode(mode: RenderMode) {
     // 本地存储不可用时忽略写入。
   }
 }
+
+export type NotationMode = 'movable' | 'fixed' | 'staff'
+export const NOTATION_MODES = [
+  { value: 'movable', label: '首调简谱' },
+  { value: 'fixed', label: '固定调简谱' },
+  { value: 'staff', label: '五线谱' },
+] as const
+export function readNotationMode(): NotationMode {
+  try {
+    const mode = localStorage.getItem('m3n:notation-mode')
+    if (mode === 'movable' || mode === 'fixed' || mode === 'staff') return mode
+    return localStorage.getItem('m3n:fixed-do') === '1' ? 'fixed' : 'movable'
+  } catch { return 'movable' }
+}
+export function writeNotationMode(mode: NotationMode) {
+  try { localStorage.setItem('m3n:notation-mode', mode) } catch { /* Storage is optional. */ }
+}

@@ -19,9 +19,9 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
   const pdf = await PDFDocument.create()
   pdf.registerFontkit(fontkit)
   const embedded = pages.flatMap(svg => [...svg.querySelectorAll('style')]).find(style => style.textContent?.includes('data:font/ttf;base64,'))?.textContent?.match(/data:font\/ttf;base64,([A-Za-z0-9+/=]+)/)?.[1]
-  if (!embedded) throw new Error('乐谱缺少音乐数字字体，无法导出 PDF。')
-  const music = await pdf.embedFont(Uint8Array.from(atob(embedded), c => c.charCodeAt(0)), { subset: true, customName: 'MUSICF+BarlowSemiCondensed-Medium' })
-  const musicCharacters = new Set(music.getCharacterSet())
+  if (!embedded && !pages.every(page => page.dataset.notation === 'staff')) throw new Error('乐谱缺少音乐数字字体，无法导出 PDF。')
+  const music = embedded ? await pdf.embedFont(Uint8Array.from(atob(embedded), c => c.charCodeAt(0)), { subset: true, customName: 'MUSICF+BarlowSemiCondensed-Medium' }) : undefined
+  const musicCharacters = new Set(music?.getCharacterSet() ?? [])
   const latin = await Promise.all([StandardFonts.TimesRoman, StandardFonts.TimesRomanBold, StandardFonts.TimesRomanItalic, StandardFonts.TimesRomanBoldItalic].map(name => pdf.embedFont(name)))
   const system = registerSystemCjkFont(pdf, pages.flatMap(svg => [...svg.querySelectorAll('text')].flatMap(text => [...(text.textContent ?? '')])))
   // Choose one text-font policy for the whole document before writing any pages.
@@ -64,7 +64,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
       const factor = placement.width * pt / width
       const page = pdf.addPage([210 * pt, 297 * pt])
       const musicName = PDFName.of('M3NMusic')
-      page.node.setFontDictionary(musicName, music.ref)
+      if (music) page.node.setFontDictionary(musicName, music.ref)
       if (!textFont) page.node.setFontDictionary(system.name, system.ref)
       if (textFont) page.node.setFontDictionary(textName, textFont.ref)
       const latinNames = latin.map((font, i) => {
@@ -80,7 +80,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
         }
         if (element.namespaceURI !== ns || element.closest('defs')) continue
         const tag = element.localName
-        if (['svg', 'g', 'a', 'title', 'desc', 'tspan'].includes(tag)) continue
+        if (['svg', 'g', 'a', 'title', 'desc', 'tspan', 'style'].includes(tag)) continue
         if (!['path', 'line', 'rect', 'circle', 'text'].includes(tag)) throw new Error(`不支持的乐谱图形：${tag}`)
         const style = getComputedStyle(element)
         if (style.display === 'none' || style.visibility === 'hidden') continue
@@ -109,7 +109,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
             let resolved = encodedCharacters.get(cacheKey)
             if (!resolved) {
               let name = system.name, encoded = system.encode(char)
-              if (isMusic) {
+              if (isMusic && music) {
                 if (!musicCharacters.has(char.codePointAt(0)!)) throw new Error(`音乐字体缺少字符：${char}`)
                 name = musicName; encoded = music.encodeText(char)
               } else if (textFont) {

@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test'
-import { openScoreSettings } from './score-settings'
+import { openScoreSettings, selectNotationMode } from './score-settings'
 
 async function selectionStart(editor: Locator) {
   return editor.evaluate(element => {
@@ -86,7 +86,8 @@ test('export preview reuses current display settings and offers PNG and PDF', as
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '播放速度', exact: true }).fill('137')
   await openScoreSettings(page)
-  for (const name of ['固定调记谱', '小节号', '分页']) await page.getByRole('switch', { name, exact: true }).click()
+  await selectNotationMode(page, '固定调简谱')
+  for (const name of ['小节号', '分页']) await page.getByRole('switch', { name, exact: true }).click()
   await openScoreSettings(page)
   await page.getByRole('button', { name: /^移调，当前/ }).click()
   await page.getByRole('dialog', { name: '选择调性' }).getByRole('button', { name: 'D大调', exact: true }).click()

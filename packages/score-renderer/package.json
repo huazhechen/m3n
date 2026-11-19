@@ -27,6 +27,10 @@
     "./playback": {
       "types": "./dist/native-playback-score.d.ts",
       "import": "./dist/native-playback-score.js"
+    },
+    "./staff": {
+      "types": "./dist/staff/staff-score.d.ts",
+      "import": "./dist/staff/staff-score.js"
     }
   },
   "scripts": {
@@ -39,7 +43,8 @@
     "@pdf-lib/fontkit": "^1.1.1",
     "pdf-lib": "^1.17.1",
     "spessasynth_core": "^4.3.12",
-    "spessasynth_lib": "^4.3.12"
+    "spessasynth_lib": "^4.3.12",
+    "verovio": "6.2.0"
   },
   "devDependencies": {
     "typescript": "~6.0.2",

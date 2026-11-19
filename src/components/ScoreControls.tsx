@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PLAYBACK_TONES, type PlaybackTone } from '@m3n/score-renderer/tones'
-import { PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX } from '../lib/renderer-settings'
+import { NOTATION_MODES, type NotationMode, PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX } from '../lib/renderer-settings'
 
 import { CIRCLE_OF_FIFTHS, TRANSPOSE_KEYS, currentKeyIndex, isMinorKey, keyPitchClass, nearestKeyTranspose } from '../lib/transpose-key'
 import { CircleOfFifths } from './CircleOfFifths'
@@ -20,8 +20,8 @@ type ScoreControlsProps = {
   metronomeEnabled: boolean
   paged: boolean
   onPagedChange: (enabled: boolean) => void
-  fixedDo: boolean
-  onFixedDoChange: (enabled: boolean) => void
+  notationMode: NotationMode
+  onNotationModeChange: (mode: NotationMode) => void
   measureNumbers: boolean
   tone: PlaybackTone
   toneLoading: boolean
@@ -42,6 +42,9 @@ type ScoreControlsProps = {
 }
 
 export function ScoreControls(props: ScoreControlsProps) {
+  const notationDialogRef = useRef<HTMLDialogElement>(null)
+  const notationTitleId = useId()
+  const notationLabel = NOTATION_MODES.find(mode => mode.value === props.notationMode)!.label
   const toneDialogRef = useRef<HTMLDialogElement>(null)
   const toneTitleId = useId()
   const selectedTone = PLAYBACK_TONES.find(item => item.value === props.tone)!
@@ -96,9 +99,10 @@ export function ScoreControls(props: ScoreControlsProps) {
       <button type="button" role="switch" aria-label="分页" aria-checked={props.paged} title="分页显示" className="control-button" onClick={() => props.onPagedChange(!props.paged)}>
           <ScoreControlIcon name="paged" /><span>分页</span>
         </button>
-      <button type="button" role="switch" aria-label="固定调记谱" aria-checked={props.fixedDo} title="固定C调记谱，变化音统一用♯表示" className="control-button" onClick={() => props.onFixedDoChange(!props.fixedDo)}>
-          <ScoreControlIcon name="fixedDo" /><span>固定调</span>
-        </button>
+      <button type="button" aria-label={`选择记谱方式，当前${notationLabel}`} aria-haspopup="dialog" className="control-button notation-selector" onClick={() => {
+        notationDialogRef.current?.showModal()
+        notationDialogRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus()
+      }}><ScoreControlIcon name={props.notationMode === 'staff' ? 'staff' : 'fixedDo'} /><span>{notationLabel}</span></button>
       <button type="button" role="switch" aria-label="小节号" aria-checked={props.measureNumbers} title="显示小节号" className="control-button" onClick={() => props.onMeasureNumbersChange(!props.measureNumbers)}>
           <ScoreControlIcon name="measureNumbers" /><span>小节号</span>
         </button>
@@ -108,6 +112,15 @@ export function ScoreControls(props: ScoreControlsProps) {
       }}><span className="transpose-key-icon" aria-hidden="true">{selectedKeyLabel}</span><span>调号</span></button>
         </div>
     {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || `正在加载${selectedTone.label}音色…`}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
+    <dialog ref={notationDialogRef} className="transpose-dialog" aria-labelledby={notationTitleId}>
+      <div className="transpose-dialog-header"><h2 id={notationTitleId}>选择记谱方式</h2><button type="button" className="control-button" aria-label="关闭记谱方式选择" onClick={() => notationDialogRef.current?.close()}>×</button></div>
+      <div className="tone-options">
+        {NOTATION_MODES.map(mode => <button key={mode.value} type="button" className="control-button" aria-pressed={mode.value === props.notationMode} onClick={() => {
+          props.onNotationModeChange(mode.value)
+          notationDialogRef.current?.close()
+        }}>{mode.label}</button>)}
+      </div>
+    </dialog>
     <dialog ref={toneDialogRef} className="transpose-dialog tone-dialog" aria-labelledby={toneTitleId} onClick={event => {
       if (event.target === event.currentTarget) {
         const bounds = event.currentTarget.getBoundingClientRect()

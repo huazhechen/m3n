@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { selectNotationMode } from './score-settings'
 
 for (const width of [390, 1280]) {
   test(`home page introduces features before the playable score at ${width}px`, async ({ page }, info) => {
@@ -65,7 +66,7 @@ for (const width of [390, 1280]) {
     await expect(settings.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('90')
     await settings.getByRole('switch', { name: '分页', exact: true }).click()
     await expect(paper).toHaveAttribute('data-render-mode', 'paged')
-    await settings.getByRole('switch', { name: '固定调记谱', exact: true }).click()
+    await selectNotationMode(page, '固定调简谱')
     await expect(paper).toHaveAttribute('data-fixed-do', 'true')
     await settings.getByRole('switch', { name: '小节号', exact: true }).click()
     await expect(paper).toHaveAttribute('data-measure-numbers', 'true')

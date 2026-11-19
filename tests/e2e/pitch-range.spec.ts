@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { openScoreSettings } from './score-settings'
+import { openScoreSettings, selectNotationMode } from './score-settings'
 
 test('header range uses numbered pitches and follows fixed do and transposition', async ({ page }, info) => {
   await page.goto('/editor')
@@ -13,7 +13,7 @@ test('header range uses numbered pitches and follows fixed do and transposition'
   await expect(high.locator('circle')).toHaveCount(1)
   await expect(paper).not.toContainText('音域')
   await openScoreSettings(page)
-  await page.getByRole('switch', { name: '固定调记谱' }).click()
+  await selectNotationMode(page, '固定调简谱')
   await expect(low).toHaveText('2')
   await expect(high).toHaveText('1')
   await expect(high.locator('circle')).toHaveCount(2)
@@ -24,7 +24,7 @@ test('header range uses numbered pitches and follows fixed do and transposition'
   await expect(high).toHaveText('7')
   await expect(high.locator('circle')).toHaveCount(1)
   await openScoreSettings(page)
-  await page.getByRole('switch', { name: '固定调记谱' }).click()
+  await selectNotationMode(page, '首调简谱')
   await expect(low).toHaveText('1')
   await expect(high).toHaveText('7')
   await page.setViewportSize({ width: 320, height: 700 })

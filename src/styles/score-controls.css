@@ -90,3 +90,5 @@ body:has(> .floating-controls) main { padding-bottom: calc(var(--ui-controls-res
 .playback-loading-actions button { margin: 0; }
 
 .tone-selector span { white-space: normal; line-height: 1.1; overflow-wrap: anywhere; }
+
+.notation-selector span { white-space: normal; line-height: 1.1; }
