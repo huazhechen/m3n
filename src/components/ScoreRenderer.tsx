@@ -6,7 +6,7 @@ import { loadSampledTone, subscribeToneDownloadProgress, type ToneDownloadProgre
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ScoreSourceRange, ScoreDocument, GlissandoStyle } from '@m3n/notation'
+import type { ScoreSourceRange, ScoreDocument, GlissandoStyle, GlissandoWindow } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_TRANSPOSE,
   DEFAULT_SCORE_WIDTH,
@@ -183,7 +183,8 @@ export function ScoreRenderer({
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
   const [message, setMessage] = useState('')
-  const [glissandoStyle, setGlissandoStyle] = useState<GlissandoStyle>('target-duration')
+  const [glissandoStyle, setGlissandoStyle] = useState<GlissandoStyle>('hermite')
+  const [glissandoWindow, setGlissandoWindow] = useState<GlissandoWindow>({ start: 0, end: 1 })
   const auditionEndRef = useRef<number | null>(null)
   const firstTransition = [...scoreDocument.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events)).find(event => event.postfixes.includes('gliss'))
   const firstTransitionId = sourceMap.find(range => range.sourceStart === firstTransition?.sourceStart)?.xmlId
@@ -254,7 +255,7 @@ export function ScoreRenderer({
       highlightedElementsRef.current = []
       highlightedMeasuresRef.current = []
     }
-  }, [scoreDocument, glissandoStyle])
+  }, [scoreDocument, glissandoStyle, glissandoWindow])
 
 
   useEffect(() => {
@@ -400,7 +401,7 @@ export function ScoreRenderer({
       try {
         const scorePreparation = scoreRef.current ? Promise.resolve(scoreRef.current) : (async () => {
           const { PlaybackScore } = await import('@m3n/score-renderer/playback')
-          const score = await PlaybackScore.create(scoreDocument, { glissandoStyle })
+          const score = await PlaybackScore.create(scoreDocument, { glissandoStyle, glissandoWindow })
           if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { score.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
           scoreRef.current = score
           return score
@@ -586,7 +587,7 @@ export function ScoreRenderer({
         progress={toneDownload}
       />}
       {hasAudioControls && <ScoreControls
-        transition={firstTransitionId ? { style: glissandoStyle, onStyleChange: setGlissandoStyle, onPreview: () => void previewTransition() } : undefined}
+        transition={firstTransitionId ? { style: glissandoStyle, window: glissandoWindow, onWindowChange: setGlissandoWindow, onStyleChange: setGlissandoStyle, onPreview: () => void previewTransition() } : undefined}
         playbackOnly={playbackOnly}
         contained={containedControls}
         isPlaying={isPlaying}

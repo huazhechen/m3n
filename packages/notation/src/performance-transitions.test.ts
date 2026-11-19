@@ -114,3 +114,57 @@ it('finishes the glide within the written target slot before sustaining its tied
   expect(slide.end).toBe(3)
   expect(performance.notes).toHaveLength(1)
 })
+
+it.each([0, .5, 1] as const)('honors all target endpoints with source position %s, preserving attacks and written clocks', start => {
+  for (const end of [0, .5, 1] as const) {
+    const performance = compileScorePerformance(parseM3NDocument(source), { glissandoStyle: 'hermite', glissandoWindow: { start, end } })
+    const note = performance.notes.find(note => note.transition)!
+    const bends = note.pitchBends!
+    const begin = .5 * start, finish = .5 + .5 * end
+    expect(bends[1]).toEqual({ beat: begin, pitch: 74 })
+    expect(bends.at(-1)).toEqual({ beat: finish, pitch: 72 })
+    expect(bends.every(point => point.pitch >= 72 && point.pitch <= 74)).toBe(true)
+    bends.slice(1).forEach((point, index) => {
+      expect(point.beat).toBeGreaterThanOrEqual(bends[index]!.beat)
+      expect(point.pitch).toBeLessThanOrEqual(bends[index]!.pitch)
+    })
+    if (finish > begin) {
+      expect(bends.length).toBeGreaterThan(32)
+      const midpoint = bends.reduce((best, point) => Math.abs(point.beat - (begin + finish) / 2) < Math.abs(best.beat - (begin + finish) / 2) ? point : best)
+      expect(midpoint.pitch).toBeCloseTo(73, 1)
+      // Flat endpoint velocity and acceleration: first step is O(t^3).
+      const first = bends[2]!, t = (first.beat - begin) / (finish - begin)
+      expect((74 - first.pitch) / 2).toBeLessThan(11 * t ** 3)
+      expect((74 - first.pitch) / 2).toBeGreaterThan(9 * t ** 3)
+    } else expect(bends).toHaveLength(3)
+    expect(note).toMatchObject({ start: 0, end: 1 })
+    expect(note.expression).toBeUndefined()
+    expect(note.volume).toBeUndefined()
+    expect(performance.notes.filter(note => note.channel !== 1)).toHaveLength(2)
+    expect(performance.notes.find(note => note.start === 1)).toMatchObject({ pitch: 72, end: 2 })
+    expect(performance.elements).toEqual(compile('short').elements)
+  }
+})
+
+it('defaults Hermite to both full slots and preserves written target duration before a tie', () => {
+  expect(compile('hermite').notes.find(note => note.transition)!.pitchBends!.at(-1)).toEqual({ beat: 1, pitch: 72 })
+  const performance = compileScorePerformance(parseM3NDocument('{3/4}\nN: 1{gliss} 2~ 2 |||'), { glissandoStyle: 'hermite', glissandoWindow: { start: .5, end: .5 } })
+  const note = performance.notes[0]!
+  expect(note.pitchBends![1]).toEqual({ beat: .5, pitch: 60 })
+  expect(note.pitchBends!.at(-1)).toEqual({ beat: 1.5, pitch: 62 })
+  expect(note.end).toBe(3)
+  expect(performance.notes).toHaveLength(1)
+})
+
+it('joins overlapping chained Hermite windows in order, using the dotted middle slot', () => {
+  const performance = compileScorePerformance(parseM3NDocument('{7/8}\nN: (1{gliss} 2.{gliss}) ((3)) 3^ |||'), { glissandoStyle: 'hermite' })
+  const note = performance.notes.find(note => note.transition)!
+  const bends = note.pitchBends!
+  expect(bends.some(point => point.beat === .875 && point.pitch === 62)).toBe(true)
+  expect(bends.at(-1)).toEqual({ beat: 1.5, pitch: 64 })
+  bends.slice(1).forEach((point, index) => {
+    expect(point.beat).toBeGreaterThanOrEqual(bends[index]!.beat)
+    expect(point.pitch).toBeGreaterThanOrEqual(bends[index]!.pitch)
+  })
+  expect(performance.beats).toBe(3.5)
+})

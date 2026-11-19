@@ -1,9 +1,12 @@
 import type { PerformanceNote, ScorePerformance } from './performance.js'
 
-export type GlissandoStyle = 'overlap' | 'soft' | 'short' | 'short-smooth' | 'short-level' | 'short-strong' | 'short-carry' | 'target-duration' | 'continuous'
+export type GlissandoStyle = 'overlap' | 'soft' | 'short' | 'short-smooth' | 'short-level' | 'short-strong' | 'short-carry' | 'target-duration' | 'hermite' | 'continuous'
+
+export type GlissandoPosition = 0 | .5 | 1
+export type GlissandoWindow = { start: GlissandoPosition; end: GlissandoPosition }
 
 /** Shape only explicitly marked transitions; source events and clocks stay intact. */
-export function shapeGlissandi(performance: ScorePerformance, style: GlissandoStyle): PerformanceNote[] {
+export function shapeGlissandi(performance: ScorePerformance, style: GlissandoStyle, window: GlissandoWindow = { start: 0, end: 1 }): PerformanceNote[] {
   const beatsFor = (milliseconds: number, beat: number) => {
     const qpm = performance.tempos.findLast(point => point.beat <= beat)?.qpm ?? 120
     return milliseconds * qpm / 60_000
@@ -11,6 +14,39 @@ export function shapeGlissandi(performance: ScorePerformance, style: GlissandoSt
   return performance.notes.flatMap(note => {
     const points = note.pitchBends
     if (!points?.length || style === 'continuous') return [note]
+    if (style === 'hermite') {
+      const spans = points.slice(1).map((to, index) => {
+        const from = points[index]!
+        const targetEnd = to.duration === undefined ? points[index + 2]?.beat ?? note.end : to.beat + to.duration
+        return { start: from.beat + (to.beat - from.beat) * window.start,
+          end: to.beat + (targetEnd - to.beat) * window.end, from: from.pitch, to: to.pitch }
+      })
+      // Chained glides share the middle written slot. Join overlapping
+      // windows at their midpoint so their pitch curves never run backward.
+      for (let index = 1; index < spans.length; index++) {
+        const previous = spans[index - 1]!, current = spans[index]!
+        if (previous.end > current.start) previous.end = current.start = (previous.end + current.start) / 2
+      }
+      const bends = [points[0]!]
+      for (const span of spans) {
+        bends.push({ beat: span.start, pitch: span.from })
+        if (span.end <= span.start) {
+          bends.push({ beat: span.end, pitch: span.to })
+          continue
+        }
+        const activeTempo = performance.tempos.findLast(point => point.beat <= span.start)!.qpm
+        const minimumTempo = Math.min(activeTempo, ...performance.tempos.filter(point => point.beat > span.start && point.beat < span.end).map(point => point.qpm))
+        // Approximately 2 ms controls, bounded for very long sustains. Pitch
+        // is in semitones (log frequency), rather than interpolating Hz.
+        const steps = Math.min(16_384, Math.max(32, Math.ceil((span.end - span.start) * 60 / minimumTempo / .002)))
+        for (let step = 1; step <= steps; step++) {
+          const t = step / steps, eased = t * t * t * (10 + t * (-15 + 6 * t))
+          bends.push({ beat: step === steps ? span.end : span.start + (span.end - span.start) * t,
+            pitch: step === steps ? span.to : span.from + (span.to - span.from) * eased })
+        }
+      }
+      return [{ ...note, pitchBends: bends, transition: true }]
+    }
     if (style === 'target-duration') {
       const bends = [points[0]!]
       for (let index = 1; index < points.length; index++) {

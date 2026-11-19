@@ -54,3 +54,21 @@ it('uses the target slot to slide and reaches its pitch just before the next rep
   expect(score.timeForElement('m3n-e-3')).toBe(500)
   score.destroy()
 })
+
+it.each([{ start: 0, end: 1 }, { start: .5, end: .5 }, { start: 1, end: 0 }] as const)('exports Hermite window %j with a single attack and unchanged gain', async glissandoWindow => {
+  const score = await NativePlaybackScore.create(parseM3NDocument('{2/4}{120qpm}\nN: (2e{gliss} 1e) 1e |||'), { glissandoStyle: 'hermite', glissandoWindow })
+  const events = BasicMIDI.fromArrayBuffer(score.midi()).tracks.flatMap(track => track.events)
+  const attacks = events.filter(event => (event.statusByte & 240) === 144 && event.data[1]! > 0)
+  expect(attacks.map(event => [event.statusByte & 15, event.ticks])).toEqual([[0, 960], [2, 0]])
+  const bends = events.filter(event => event.statusByte === 226)
+  const start = 480 * glissandoWindow.start, end = 480 + 480 * glissandoWindow.end
+  expect(bends.filter(event => event.ticks < start).every(event => event.data[0] === 0 && event.data[1] === 64)).toBe(true)
+  expect(bends.at(-1)!.ticks).toBe(end)
+  expect(Array.from(bends.at(-1)!.data)).toEqual([0, 0])
+  if (start === end) expect(bends).toHaveLength(2)
+  else expect(bends.some(event => event.ticks > start && event.ticks < end)).toBe(true)
+  expect(events.filter(event => event.statusByte === 178 && event.data[0] === 11).every(event => event.data[1] === 127)).toBe(true)
+  expect(events.filter(event => event.statusByte === 178 && event.data[0] === 7).every(event => event.data[1] === 100)).toBe(true)
+  expect(score.timeForElement('m3n-e-2')).toBe(250)
+  score.destroy()
+})

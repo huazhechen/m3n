@@ -1,5 +1,5 @@
-import { shapeGlissandi, type GlissandoStyle } from './performance-transitions.js'
-export type { GlissandoStyle } from './performance-transitions.js'
+import { shapeGlissandi, type GlissandoStyle, type GlissandoWindow } from './performance-transitions.js'
+export type { GlissandoStyle, GlissandoPosition, GlissandoWindow } from './performance-transitions.js'
 import { unfoldScorePerformance } from './notation/performance-order.js'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups.js'
 import { resolveScorePitches, resolveScoreTrillPitches } from './notation/score-rules.js'
@@ -35,8 +35,10 @@ function gracePitch(token: string, event: ScoreEvent) {
   return midiPitch(`${value.pname}:${value.oct + event.octaveShift}:${value.accidGes ?? value.accid}`)
 }
 
+export type ScorePerformanceOptions = { glissandoStyle?: GlissandoStyle; glissandoWindow?: GlissandoWindow }
+
 /** Compile the domain's itinerary once. No XML, third-party music engine or DOM. */
-export function compileScorePerformance(document: ScoreDocument, options: { glissandoStyle?: GlissandoStyle } = {}): ScorePerformance {
+export function compileScorePerformance(document: ScoreDocument, options: ScorePerformanceOptions = {}): ScorePerformance {
   if (!Number.isFinite(document.tempo) || document.tempo <= 0) throw new Error('播放速度必须为正数。')
   const unfolded = unfoldScorePerformance(document)
   const ids = scoreEventIds(unfolded)
@@ -111,7 +113,7 @@ export function compileScorePerformance(document: ScoreDocument, options: { glis
               if (slide && slide.target === xmlId && event.kind === 'note' && !event.postfixes.includes('tr') && Math.abs(slide.note.end - start) < 1e-7) {
                 note = slide.note
                 note.pitchBends ??= [{ beat: note.start, pitch: note.pitch }]
-                note.pitchBends.push({ beat: start, pitch, ...(options.glissandoStyle === 'target-duration' ? { duration: end - start } : {}) })
+                note.pitchBends.push({ beat: start, pitch, ...(options.glissandoStyle === 'target-duration' || options.glissandoStyle === 'hermite' ? { duration: end - start } : {}) })
                 note.end = end
               } else {
                 note = { start, end, pitch, channel, velocity: 90 }
@@ -178,7 +180,7 @@ export function compileScorePerformance(document: ScoreDocument, options: { glis
     }
     return notes
   })
-  result.notes = shapeGlissandi(result, options.glissandoStyle ?? 'short-level')
+  result.notes = shapeGlissandi(result, options.glissandoStyle ?? 'short-level', options.glissandoWindow)
   // Pitch bends and expression affect a whole MIDI channel. Reserve independent channels so
   // a melody slide cannot bend the bass, a chord, or another sustained note.
   const slideChannels = new Map<number, number>()
