@@ -8,7 +8,7 @@ import { m3nPitch } from './m3n-direct.js'
 import type { ScoreDocument, ScoreEvent } from './notation/score-document.js'
 
 /** Positions and durations are quarter-note beats, independent of audio devices. */
-export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number; pitchBends?: Array<{ beat: number; pitch: number }>; expression?: Array<{ beat: number; value: number }>; transition?: boolean }
+export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number; pitchBends?: Array<{ beat: number; pitch: number }>; expression?: Array<{ beat: number; value: number }>; volume?: Array<{ beat: number; value: number }>; transition?: boolean }
 export type PerformanceElement = { start: number; end: number; xmlId: string; rendition: number; voice: string; orderIndex?: number }
 export type PerformanceTempo = { beat: number; qpm: number }
 export type PerformanceMeter = { beat: number; count: number; unit: number }
@@ -178,7 +178,7 @@ export function compileScorePerformance(document: ScoreDocument, options: { glis
     }
     return notes
   })
-  result.notes = shapeGlissandi(result, options.glissandoStyle ?? 'soft')
+  result.notes = shapeGlissandi(result, options.glissandoStyle ?? 'short-level')
   // Pitch bends and expression affect a whole MIDI channel. Reserve independent channels so
   // a melody slide cannot bend the bass, a chord, or another sustained note.
   const slideChannels = new Map<number, number>()

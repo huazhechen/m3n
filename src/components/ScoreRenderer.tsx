@@ -183,7 +183,7 @@ export function ScoreRenderer({
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
   const [message, setMessage] = useState('')
-  const [glissandoStyle, setGlissandoStyle] = useState<GlissandoStyle>('soft')
+  const [glissandoStyle, setGlissandoStyle] = useState<GlissandoStyle>('short-level')
   const auditionEndRef = useRef<number | null>(null)
   const firstTransition = [...scoreDocument.parts.values()].flatMap(part => part.melody.flatMap(measure => measure.events)).find(event => event.postfixes.includes('gliss'))
   const firstTransitionId = sourceMap.find(range => range.sourceStart === firstTransition?.sourceStart)?.xmlId
@@ -476,12 +476,13 @@ export function ScoreRenderer({
       const milliseconds = scoreRef.current!.timeForElement(firstTransitionId)
       if (milliseconds < 0 || player.duration <= 0) return
       player.pause()
+      clearPlaybackHighlight()
       const seconds = milliseconds / 1000
       player.seek(Math.max(0, seconds - 1) / player.duration)
       auditionEndRef.current = Math.min(player.duration, seconds + 2)
       scorePlaybackCoordinator.claim(playbackLeaseRef.current)
       setIsPlaying(true)
-      await player.play()
+      await player.play({ countIn: false })
       setIsPlaying(!player.paused)
     } catch (error) {
       auditionEndRef.current = null

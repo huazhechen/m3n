@@ -16,7 +16,7 @@ const authorizedReferenceEvents = reference.events.flatMap((event, index) => {
   return [{ index, event: adjusted }]
 })
 
-it('matches the reference with the authorized shortening, five merged lyric tails and a soft transition, the bar 41 natural and tempo 72', () => {
+it('matches the reference with the authorized shortening, five merged lyric tails and a compensated short slide, the bar 41 natural and tempo 72', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document).toMatchObject({ title: reference.title, singer: reference.singer, composer: reference.composer, lyricist: reference.lyricist, key: reference.key, meterCount: 4, meterUnit: 4, tempo: 72 })
@@ -39,7 +39,7 @@ it('matches the reference with the authorized shortening, five merged lyric tail
   expect(part.bass.flatMap(bar => bar.events)).toEqual([])
 })
 
-it('uses repeat bars and DC to preserve 768 attacks with a softened transition without an itinerary or segno', () => {
+it('uses repeat bars and DC to preserve 765 attacks with a short slide without an itinerary or segno', () => {
   const document = parseM3NDocument(source)
   expect(document.order).toBeUndefined()
   expect(document.sections ?? []).toEqual([])
@@ -56,8 +56,8 @@ it('uses repeat bars and DC to preserve 768 attacks with a softened transition w
       const [pitch, beats, tie] = event
       const duration = beats as number
       if (pitch !== null) {
-        if (tied) expected.at(-1)![1] = time + duration
-        else expected.push([time, time + duration + (index === 224 ? .035 * 72 / 60 : 0), pitch as number])
+        if (tied || index === 225) expected.at(-1)![1] = time + duration
+        else expected.push([time, time + duration, pitch as number])
       }
       time += duration
       tied = tie as boolean
@@ -66,12 +66,12 @@ it('uses repeat bars and DC to preserve 768 attacks with a softened transition w
   const performance = compileScorePerformance(document)
   expect(time).toBe(reference.performedBeats - 3)
   expect(performance.beats).toBe(460)
-  expect(expected).toHaveLength(768)
+  expect(expected).toHaveLength(765)
   expect(performance.notes.map(note => [note.start, note.end, note.pitch])).toEqual(expected)
   const transitions = performance.notes.filter(note => note.transition)
-  expect(transitions).toHaveLength(6)
-  expect(transitions.filter(note => note.pitch === 77).every(note => note.expression?.[0]?.value === 0)).toBe(true)
-  expect(performance.notes.every(note => !note.pitchBends)).toBe(true)
+  expect(transitions).toHaveLength(3)
+  expect(transitions.every(note => !note.expression && note.volume?.at(-1)?.value === 100 && note.volume?.some(point => point.value === 118))).toBe(true)
+  expect(transitions.every(note => note.pitchBends?.at(-1)?.pitch === 77)).toBe(true)
 })
 
 it('includes the score in both the book and the modern pop library category', () => {

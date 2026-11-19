@@ -135,7 +135,7 @@ export class SpessaPlayer {
     return this.sequencer.duration
   }
 
-  async play() {
+  async play(options: { countIn?: boolean } = {}) {
     const token = ++this.playToken
     await this.context.resume()
     if (token !== this.playToken || this.destroyed) return
@@ -143,7 +143,7 @@ export class SpessaPlayer {
     await this.waitForSeek()
     if (token !== this.playToken || this.destroyed) return
     const cuePosition = Math.max(0, this.sequencer.currentTime)
-    await this.startup.play(this.initialBpm * this.sequencer.playbackRate, beat => this.listener.onStartupBeat?.(beat, cuePosition))
+    if (options.countIn !== false) await this.startup.play(this.initialBpm * this.sequencer.playbackRate, beat => this.listener.onStartupBeat?.(beat, cuePosition))
     await this.waitForSeek()
     if (token !== this.playToken || this.destroyed) return
     this.listener.onTime(Math.max(0, this.sequencer.currentTime), this.sequencer.duration)

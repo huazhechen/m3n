@@ -44,15 +44,17 @@ export function writePerformanceMidi(performance: ScorePerformance): ArrayBuffer
       // Each shaped transition has a private channel, so these fades affect
       // only its own voice. Send zero expression before note-on to hide attack.
       if (note.transition || note.pitchBends) events.push({ tick: start, priority: 0, data: [0xb0 | channel, 120, 0] })
-      events.push({ tick: start, priority: 1, data: [0xb0 | channel, 11, note.expression?.[0]?.value ?? 127] })
-      for (let index = 1; index < (note.expression?.length ?? 0); index++) {
-        const from = note.expression![index - 1]!, to = note.expression![index]!
-        if (from.value === to.value) continue
-        const steps = Math.max(1, Math.ceil((to.beat - from.beat) * 256))
-        for (let step = 1; step <= steps; step++) events.push({
-          tick: performanceTick(from.beat + (to.beat - from.beat) * step / steps), priority: 1,
-          data: [0xb0 | channel, 11, Math.round(from.value + (to.value - from.value) * step / steps)],
-        })
+      for (const [controller, points, initial] of [[11, note.expression, 127], [7, note.volume, 100]] as const) {
+        events.push({ tick: start, priority: 1, data: [0xb0 | channel, controller, points?.[0]?.value ?? initial] })
+        for (let index = 1; index < (points?.length ?? 0); index++) {
+          const from = points![index - 1]!, to = points![index]!
+          if (from.value === to.value) continue
+          const steps = Math.max(1, Math.ceil((to.beat - from.beat) * 256))
+          for (let step = 1; step <= steps; step++) events.push({
+            tick: performanceTick(from.beat + (to.beat - from.beat) * step / steps), priority: 1,
+            data: [0xb0 | channel, controller, Math.round(from.value + (to.value - from.value) * step / steps)],
+          })
+        }
       }
       if (note.pitchBends?.length) {
         const range = Math.max(2, ...note.pitchBends.map(point => Math.ceil(Math.abs(point.pitch - note.pitch))))
@@ -67,10 +69,13 @@ export function writePerformanceMidi(performance: ScorePerformance): ArrayBuffer
         bend(note.start, note.pitch)
         for (let index = 1; index < note.pitchBends.length; index++) {
           const from = note.pitchBends[index - 1]!, to = note.pitchBends[index]!
+          if (from.pitch === to.pitch) continue
           const steps = Math.max(1, Math.ceil((to.beat - from.beat) * 64))
           for (let step = 1; step <= steps; step++) bend(from.beat + (to.beat - from.beat) * step / steps, from.pitch + (to.pitch - from.pitch) * step / steps)
         }
-        events.push({ tick: finish, priority: 1, data: [0xe0 | channel, 0, 64] })
+        // Keep the final pitch during release. A later note on this private
+        // channel silences the old tail and establishes its own initial bend.
+        if (!note.transition) events.push({ tick: finish, priority: 1, data: [0xe0 | channel, 0, 64] })
       }
       events.push({ tick: start, priority: 2, data: [0x90 | channel, note.pitch, note.velocity] }, { tick: off, priority: 1, data: [0x90 | channel, note.pitch, 0] })
     }

@@ -106,9 +106,10 @@ export function ScoreControls(props: ScoreControlsProps) {
         </div>
     {props.transition && <div className="control-transition-options" role="group" aria-label="滑音衔接试听">
       <label>衔接方式 <select aria-label="衔接方式" value={props.transition.style} disabled={props.isLoading} onChange={event => props.transition!.onStyleChange(event.currentTarget.value as GlissandoStyle)}>
-        <option value="soft">柔和换音</option>
-        <option value="overlap">短重叠</option>
-        <option value="short">短滑音</option>
+        <option value="short-level">短滑音·轻补偿</option>
+        <option value="short-strong">短滑音·强补偿</option>
+        <option value="short-carry">短滑音·接续</option>
+        <option value="short">原短滑音（对照）</option>
       </select></label>
       <button type="button" className="control-button" disabled={props.isLoading || props.toneLoading} onClick={props.transition.onPreview}>试听这一处</button>
     </div>}
