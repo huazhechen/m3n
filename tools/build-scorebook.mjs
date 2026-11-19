@@ -75,7 +75,7 @@ try {
       const rendered = await page.evaluate(({ sources, width, gap }) => window.scorebook.sharedA4Page(sources, width, gap),
         { sources: entries.map(entry => sources.get(entry.id)), width: group.width, gap: sharedScoreGap })
       music.push({ kind: 'music', ids: entries.map(entry => entry.id), svg: pageSvg(rendered.markup) })
-      musicGroups.push({ musicStart: start, width: group.width, usedHeight: rendered.usedHeight, coreGap: rendered.coreGap, scoreGap: rendered.scoreGap,
+      musicGroups.push({ musicStart: start, width: group.width, usedHeight: rendered.usedHeight, coreGap: rendered.coreGap, scoreGap: rendered.scoreGap, trailingGap: rendered.trailingGap,
         items: entries.map((entry, index) => ({ id: entry.id, top: rendered.items[index].top, height: rendered.items[index].sourceHeight })) })
       console.log(`Shared ${group.width}px: ${entries.map(entry => entry.title).join(' / ')}`)
     } else {

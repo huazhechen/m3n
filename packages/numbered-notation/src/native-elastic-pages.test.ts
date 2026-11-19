@@ -48,7 +48,7 @@ describe('elastic page core parameter', () => {
     expect(result.usedHeight).toBeLessThanOrEqual(Math.floor(320 * 273 / 186))
     // Shared fitting matches each score rendered with that exact parameter.
     const heights = documents.map(document => Math.ceil(layoutNativeScore(document, { width: 320, pageMargin: 0, paged: false, coreGap: result.coreGap }).pages[0]!.height))
-    expect(result.usedHeight).toBe(heights[0]! + heights[1]! + result.scoreGap)
+    expect(result.usedHeight).toBeCloseTo(heights[0]! + heights[1]! + result.scoreGap + result.trailingGap, 8)
     expect(() => renderSharedNumberedNotationScores(Array(20).fill(documents[0]!), { width: 320, pageMargin: 0 })).toThrow('最小核心行距')
   })
 })
