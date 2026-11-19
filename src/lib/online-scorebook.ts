@@ -1,10 +1,12 @@
-import plan from '../../scorebook/editorial-plan.json'
+import { getScorebookPlan } from 'virtual:m3n-score-catalog'
 import { DEFAULT_PREFERRED_WIDTH, parseM3NDocument } from '@m3n/notation'
 import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores } from './samples'
 import type { WidthMeasurement } from '../../tools/scorebook-width.mjs'
 import { optimizeScorebook, sharedScoreGap, sharedScoreWidth, type PackingEntry } from '../../tools/scorebook-packing.mjs'
+
+const plan = getScorebookPlan()
 
 export const scorebookTitle = plan.title
 export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'measuring' | 'packing' | 'rendering' }

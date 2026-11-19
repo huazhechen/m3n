@@ -1,35 +1,26 @@
 import { build } from 'vite'
-import { cp, mkdir, mkdtemp, readdir, rename, rm } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { mkdir, mkdtemp, rm } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
+import { restoreWebHistory } from './asset-history.mjs'
+import { retentionMs, publishWeb } from './publish-web.mjs'
 
-// Checked-in subset keeps normal builds independent of Python/fonttools.
 prepareBuiltinPdfFont({ check: true })
-
+const previousDeployUrl = process.env.M3N_PREVIOUS_DEPLOY_URL
+  ?? (process.env.CF_PAGES === '1' ? 'https://score.cheesefans.com/' : undefined)
 const { values } = parseArgs({ options: { outDir: { type: 'string' }, base: { type: 'string' } } })
-const hosted = !values.outDir && process.env.VITE_BASE_URL === '/score/' && process.env.VITE_SUBMIT_MODE === 'remote'
-if (!hosted) {
-  await build({ ...(values.base ? { base: values.base } : {}), ...(values.outDir ? { build: { outDir: values.outDir } } : {}) })
+if (values.outDir) {
+  await build({ ...(values.base ? { base: values.base } : {}), build: { outDir: values.outDir } })
 } else {
-  // Finish the build before touching served files. Publish assets before HTML,
-  // then remove superseded assets; no previous release is retained.
   await mkdir('.tmp', { recursive: true })
-  const staging = await mkdtemp(resolve('.tmp/hosted-build-'))
-  const destination = resolve('dist')
+  const staging = await mkdtemp(resolve('.tmp/web-build-'))
   try {
-    await build({ build: { outDir: staging, emptyOutDir: true } })
-    await mkdir(destination, { recursive: true })
-    for (const entry of await readdir(staging)) {
-      if (entry !== 'index.html') await cp(join(staging, entry), join(destination, entry), { recursive: true, force: true })
+    await build({ ...(values.base ? { base: values.base } : {}), build: { outDir: staging, emptyOutDir: true } })
+    if (previousDeployUrl) {
+      await restoreWebHistory(resolve('dist'), previousDeployUrl, { retentionMs, staging })
     }
-    await rename(join(staging, 'index.html'), join(destination, 'index.html'))
-    // Previous releases served the large export font; system text needs no font files.
-    await rm(join(destination, 'fonts'), { recursive: true, force: true })
-    const assets = new Set(await readdir(join(staging, 'assets'), { recursive: true }))
-    for (const entry of await readdir(join(destination, 'assets'), { recursive: true })) {
-      if (!assets.has(entry)) await rm(join(destination, 'assets', entry), { recursive: true, force: true })
-    }
+    await publishWeb(staging, resolve('dist'))
   } finally {
     await rm(staging, { recursive: true, force: true })
   }

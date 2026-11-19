@@ -29,6 +29,13 @@ describe('Cloudflare KV score API', () => {
     if (method === 'HEAD') expect(await response.text()).toBe('')
   })
 
+  it.each(['/score-catalog.json', '/asset-history.json'])('rejects SPA fallback for missing data (%s)', async path => {
+    const { worker } = testWorker(() => new Response('<html>SPA</html>', { headers: { 'content-type': 'text/html' } }))
+    const response = await worker.fetch(new Request(`https://m3n.example${path}`))
+    expect(response.status).toBe(404)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+  })
+
   it('preserves valid JavaScript, immutable caching and deep-link HTML', async () => {
     const script = 'export default 1'
     const { worker } = testWorker(() => new Response(script, {

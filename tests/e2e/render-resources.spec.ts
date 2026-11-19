@@ -24,7 +24,10 @@ test('numbered display ignores old staff preference and loads only the selected 
   await page.getByRole('button',{name:'播放',exact:true}).click()
   await page.getByRole('button',{name:'暂停',exact:true}).click()
   expect(external).toEqual([])
-  expect(requests.filter(path=>/assets\/v2\/[a-z_]+_01-[^/]+\.js$/.test(path))).toEqual([expect.stringMatching(/^\/assets\/v2\/huan_le_song_01-[^/]+\.js$/)])
+  const catalog = await (await page.request.get('/score-catalog.json')).json()
+  const selected = catalog.scores.find((score: { slug: string }) => score.slug === 'huan_le_song_01')
+  expect(requests.filter(path => path.endsWith('.m3n'))).toEqual(['/' + selected.sourceUrl])
+  expect(requests.filter(path => path === '/score-catalog.json')).toHaveLength(1)
   expect(requests.filter(path=>/\.wasm$/.test(path))).toHaveLength(0)
 })
 
@@ -44,4 +47,15 @@ test('editing and changing width refresh numbered layout',async({page})=>{
  await openScoreSettings(page)
  await page.getByRole('slider',{name:'乐谱宽度'}).fill('600')
  await expect(paper.locator('svg[data-engine="m3n"]')).toHaveAttribute('viewBox',/^0 0 600 /)
+})
+
+
+test('catalog load failure offers a working retry', async ({ page }) => {
+  let fail = true
+  await page.route('**/score-catalog.json', route => fail ? route.fulfill({ status: 503, body: 'Unavailable' }) : route.continue())
+  await page.goto('/scores')
+  await expect(page.getByText('曲库加载失败，请检查网络后重试。')).toBeVisible()
+  fail = false
+  await page.getByRole('button', { name: '重新加载', exact: true }).click()
+  await expect(page.getByRole('searchbox', { name: '搜索乐谱' })).toBeVisible()
 })

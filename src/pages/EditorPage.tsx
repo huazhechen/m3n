@@ -12,7 +12,7 @@ export function EditorPage() {
   const location = useLocation()
   const exampleSource: string | undefined = typeof location.state?.exampleSource === 'string' ? location.state.exampleSource : undefined
   const { scoreId } = useParams()
-  const { source, status, error, retry } = useScoreSource(scoreId)
+  const { source, status, error, retry } = useScoreSource(scoreId ?? (exampleSource ? undefined : 'huan_le_song_01'))
   if (status !== 'ready') return <main><TopNav /><ScoreLoadStatus status={status} error={error} onRetry={retry} /></main>
 
   return (
@@ -20,7 +20,7 @@ export function EditorPage() {
       <TopNav />
       <NotationEditor
         key={scoreId ?? 'blank-editor'}
-        initialSource={exampleSource ?? source ?? undefined}
+        initialSource={exampleSource ?? source ?? ''}
         draftScope={exampleSource ? `example-${location.key}` : undefined}
         scoreId={scoreId}
         simulatedSubmit={isSimulatedSubmit()}

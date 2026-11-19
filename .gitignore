@@ -48,3 +48,6 @@ playwright-report/
 *.njsproj
 *.sln
 *.sw?
+
+# Local publication retention state (persist with dist between builds).
+/dist.asset-history.json*

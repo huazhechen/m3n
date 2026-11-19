@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
       { file: 'second.m3n', title: '第二曲', section: 'basics', sharePage: true },
     ] },
 }))
-vi.mock('../../scorebook/editorial-plan.json', () => ({ default: mocks.plan }))
+vi.mock('virtual:m3n-score-catalog', () => ({ getScorebookPlan: () => mocks.plan }))
 vi.mock('./samples', () => ({
   presetScores: [{ slug: 'second', sourcePath: 'second.m3n', preferredWidth: 680 }, { slug: 'first', sourcePath: 'first.m3n', preferredWidth: 680 }],
   loadPresetScore: mocks.load,

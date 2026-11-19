@@ -1,4 +1,8 @@
 declare module 'virtual:m3n-score-catalog' {
-  const scores: Array<import('@m3n/notation').PresetScoreMetadata & { sourcePath: string; modifiedAt: number; category?: { id: string; title: string; order: number; itemOrder: number } }>
+  const scores: Array<import('@m3n/notation').PresetScoreMetadata & { sourceUrl: string; sourcePath: string; modifiedAt: number; category?: { id: string; title: string; order: number; itemOrder: number } }>
+  export function initializeCatalog(): Promise<void>
+  export function loadScoreSource(score: (typeof scores)[number]): Promise<string>
+  export function getScorebookPlan(): typeof import('../scorebook/editorial-plan.json')
+  export function pdfFontUrl(): string
   export default scores
 }

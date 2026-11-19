@@ -6,3 +6,9 @@
 
 /scores/*
   Cache-Control: no-store
+
+/score-catalog.json
+  Cache-Control: no-cache
+
+/asset-history.json
+  Cache-Control: no-cache

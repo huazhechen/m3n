@@ -2,7 +2,6 @@ import { EditorSplit } from './EditorSplit'
 import { MOBILE_LAYOUT_QUERY } from '../lib/responsive-layout'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatM3N, formatScoreDiagnostic } from '@m3n/notation'
-import defaultScore from '../scores/huan_le_song_01.m3n?raw'
 import { ScoreRenderer } from './ScoreRenderer'
 import { SourceEditor, type SourceEditorHandle } from './SourceEditor'
 import { useScoreDraft } from '../hooks/useScoreDraft'
@@ -19,7 +18,7 @@ function EditorActionIcon({ action }: { action: keyof typeof editorActionPaths }
 }
 
 type NotationEditorProps = {
-  initialSource?: string
+  initialSource: string
   embedded?: boolean
   playbackOnly?: boolean
   previewWidth?: number
@@ -31,7 +30,7 @@ type NotationEditorProps = {
 }
 
 export function NotationEditor({
-  initialSource = defaultScore,
+  initialSource,
   embedded = false,
   playbackOnly = false,
   previewWidth,

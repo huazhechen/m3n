@@ -113,7 +113,7 @@ export function createWorker(env: Env) {
 
       const asset = await env.ASSETS.fetch(request)
       // A removed hashed module must not become a cacheable SPA document.
-      if (url.pathname.startsWith('/assets/') &&
+      if ((url.pathname.startsWith('/assets/') || url.pathname === '/score-catalog.json' || url.pathname === '/asset-history.json') &&
         (asset.status === 404 || asset.headers.get('content-type')?.includes('text/html'))) {
         return new Response(request.method === 'HEAD' ? null : 'Asset not found. Refresh the page to load the current version.', {
           status: 404,
