@@ -31,7 +31,11 @@ vi.mock('./synthetic-soundfont.js', () => ({ createSyntheticSoundFont: () => new
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); mocks.manager.priorityOrder = ['synth'] })
 async function player() {
-  vi.stubGlobal('AudioContext', class { destination = {}; audioWorklet = { addModule: async () => {} }; close = mocks.close })
+  vi.stubGlobal('AudioContext', class { createDynamicsCompressor() { return {
+    threshold: { value: 0 }, knee: { value: 0 }, ratio: { value: 0 },
+    attack: { value: 0 }, release: { value: 0 }, connect: vi.fn(),
+  } }
+ destination = {}; audioWorklet = { addModule: async () => {} }; close = mocks.close })
   const midi = new MIDIBuilder(); midi.noteOn(0, 0, 0, 60, 100); midi.noteOff(480, 0, 0, 60)
   const result = await SpessaPlayer.create(midi.writeMIDI(), { onEnded() {}, onTime() {} })
   mocks.manager.priorityOrder = ['synth']

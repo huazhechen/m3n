@@ -54,25 +54,23 @@ export function createSyntheticSoundFont() {
     const loopStart = Math.ceil(0.75 * SAMPLE_RATE / period) * period
     const loopEnd = loopStart + 2 * period
     const attackSeconds = loopStart / SAMPLE_RATE
-    for (const hard of [false, true]) {
-      const attack = fmCycle(period, hard ? 1.0 : 0.65, 1, harmonics)
-      const audio = Float32Array.from({ length: loopEnd }, (_, i) => {
-        const t = i / SAMPLE_RATE
-        const phase = i % period
-        // Finish the timbre transition before the loop, so there is no seam.
-        const gate = Math.max(0, Math.min(1, (attackSeconds - 0.12 - t) / 0.12))
-        const brightness = Math.exp(-t / 0.32) * gate
-        return sustain[phase]! + presence[phase]! + brightness * (attack[phase]! - sustain[phase]!)
-      })
-      const peak = audio.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0)
-      for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.75 / peak
-      const sample = new BasicSample(`FM EP ${root} ${hard ? 'hard' : 'soft'}`, SAMPLE_RATE, root, 0, SampleTypes.monoSample, loopStart, loopEnd)
-      sample.setAudioData(audio, SAMPLE_RATE)
-      bank.addSamples(sample)
-      const zone = instrument.createZone(sample)
-      zone.keyRange = { min, max }
-      zone.velRange = hard ? { min: 80, max: 127 } : { min: 0, max: 79 }
-    }
+    const attack = fmCycle(period, 1.0, 1, harmonics)
+    const audio = Float32Array.from({ length: loopEnd }, (_, i) => {
+      const t = i / SAMPLE_RATE
+      const phase = i % period
+      // Finish the timbre transition before the loop, so there is no seam.
+      const gate = Math.max(0, Math.min(1, (attackSeconds - 0.12 - t) / 0.12))
+      const brightness = Math.exp(-t / 0.32) * gate
+      return sustain[phase]! + presence[phase]! + brightness * (attack[phase]! - sustain[phase]!)
+    })
+    const peak = audio.reduce((maximum, value) => Math.max(maximum, Math.abs(value)), 0)
+    for (let i = 0; i < audio.length; i++) audio[i] = audio[i]! * 0.75 / peak
+    const sample = new BasicSample(`FM EP ${root}`, SAMPLE_RATE, root, 0, SampleTypes.monoSample, loopStart, loopEnd)
+    sample.setAudioData(audio, SAMPLE_RATE)
+    bank.addSamples(sample)
+    const zone = instrument.createZone(sample)
+    zone.keyRange = { min, max }
+    zone.velRange = { min: 0, max: 127 }
   }
   bank.addInstruments(instrument)
   const preset = new BasicPreset(bank)

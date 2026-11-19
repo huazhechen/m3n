@@ -97,7 +97,16 @@ export class SpessaPlayer {
     try {
       await context.audioWorklet.addModule(processorUrl)
       const synth = new WorkletSynthesizer(context)
-      synth.connect(context.destination)
+      // Full-velocity notes stay clear; simultaneous notes share a compressor
+      // so a loud chord does not clip the browser's output.
+      const output = context.createDynamicsCompressor()
+      output.threshold.value = -12
+      output.knee.value = 6
+      output.ratio.value = 20
+      output.attack.value = 0.001
+      output.release.value = 0.12
+      output.connect(context.destination)
+      synth.connect(output)
       await synth.soundBankManager.addSoundBank(soundBank, tone)
       await synth.isReady
       const sequencer = new Sequencer(synth, { skipToFirstNoteOn: false })

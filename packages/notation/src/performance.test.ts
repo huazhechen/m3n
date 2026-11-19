@@ -6,6 +6,13 @@ const compile = (source: string) => compileScorePerformance(parseM3NDocument(sou
 const pitches = (source: string) => compile(source).notes.map(note => note.pitch)
 
 describe('native performance compiler', () => {
+  it('plays melody, bass, grace notes and trills at full velocity regardless of written dynamics', () => {
+    const result = compile('{4/4}\nN: {ppp}1{ac(7d)} {fff}2{tr} {cresc}3 4{/} |||\nB: 1d^^ |||')
+    expect(result.notes.some(note => note.channel === 1)).toBe(true)
+    expect(result.notes.some(note => note.end - note.start < 0.1)).toBe(true)
+    expect(result.notes.every(note => note.velocity === 127)).toBe(true)
+    expect(result.beats).toBe(4)
+  })
   it('compiles absolute pitches with measure accidentals, key changes and octave shifts', () => {
     expect(pitches('{key=G}{4/4}\nN: 7 4# 4 4= | 4 {key=F}1 {8va}[135:h]{/} 0 |||')).toEqual([78, 73, 73, 72, 72, 65, 77, 81, 84])
   })

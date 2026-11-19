@@ -48,9 +48,9 @@ test('default synthetic tone covers the keyboard and renders sustained notes and
   }
 }, 30_000)
 
-test('FM electric piano has a brighter attack, velocity layers, exact tuning and seamless loops', () => {
+test('FM electric piano has a brighter attack, a fixed bright timbre, exact tuning and seamless loops', () => {
   const bank = SoundBankLoader.fromArrayBuffer(createSyntheticSoundFont())
-  expect(bank.samples).toHaveLength(16)
+  expect(bank.samples).toHaveLength(8)
   for (let key = 0; key <= 127; key++) for (const velocity of [1, 79, 80, 127]) {
     expect(bank.presets[0]!.getVoiceParameters(key, velocity)).toHaveLength(1)
   }
@@ -71,14 +71,15 @@ test('FM electric piano has a brighter attack, velocity layers, exact tuning and
     }
     return Array.from({ length: 20 }, (_, i) => energy(i + 2)).reduce((sum, value) => sum + value, 0) / energy(1)
   }
-  const soft = bank.samples.find(sample => sample.originalKey === 69 && sample.name.includes('soft'))!
-  const hard = bank.samples.find(sample => sample.originalKey === 69 && sample.name.includes('hard'))!
+  const voice = bank.samples.find(sample => sample.originalKey === 69)!
   // Sustain retains audible low harmonics rather than fading to a near sine.
-  const sustainBrightness = brightness(soft, soft.loopStart)
+  const sustainBrightness = brightness(voice, voice.loopStart)
   expect(sustainBrightness).toBeGreaterThan(0.04)
   expect(sustainBrightness).toBeLessThan(0.15)
-  expect(brightness(soft, 0)).toBeGreaterThan(sustainBrightness * 2)
-  expect(brightness(hard, 0)).toBeGreaterThan(brightness(soft, 0))
+  expect(brightness(voice, 0)).toBeGreaterThan(sustainBrightness * 2)
+  // Every velocity resolves to the same sample: no soft/strong layer switching.
+  const instrument = bank.instruments[0]!
+  expect(instrument.zones.every(zone => zone.velRange.min === 0 && zone.velRange.max === 127)).toBe(true)
 })
 
 test('generated FM banks are cached without sharing transferable buffers', () => {

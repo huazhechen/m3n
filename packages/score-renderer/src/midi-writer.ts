@@ -36,7 +36,11 @@ export function writePerformanceMidi(performance: ScorePerformance): ArrayBuffer
   const tracks = [track(conductor, end)]
   const channels = [...new Set([0, ...performance.notes.map(note => note.channel)])]
   for (const channel of channels) {
-    const events: MidiEvent[] = [{ tick: 0, priority: 0, data: [0xc0 | channel, 0] }]
+    const events: MidiEvent[] = [
+      { tick: 0, priority: 0, data: [0xc0 | channel, 0] },
+      // Full channel volume: the synth's default 100 adds another attenuation.
+      { tick: 0, priority: 0, data: [0xb0 | channel, 7, 127] },
+    ]
     for (const note of performance.notes.filter(note => note.channel === channel)) {
       const start = performanceTick(note.start), finish = performanceTick(note.end)
       // Retain a short release gap; never turn a very short note off before on.

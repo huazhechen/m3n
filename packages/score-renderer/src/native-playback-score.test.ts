@@ -16,6 +16,18 @@ describe('native MIDI and playback index', () => {
     expect(midi.tracks.flatMap(track => track.events).filter(event => (event.statusByte & 240) === 144 && event.data[1]! > 0).map(event => [event.statusByte & 15, event.ticks / 960, event.data[0]])).toEqual([[0, 4, 60], [0, 5, 62], [1, 4, 48]])
     expect(buildMetronomeBeats(midi).filter(beat => beat.accent).map(beat => beat.time)).toEqual([0, 1, 2, 3, 4, 5])
   })
+  it('writes full note velocity and full channel volume while preserving note-off messages', async () => {
+    const score = await prepare('{4/4}\nN: {ppp}1{ac(7d)} {fff}2{tr} {cresc}3 4{/} |||\nB: 1d^^ |||')
+    const midi = BasicMIDI.fromArrayBuffer(score.midi())
+    const events = midi.tracks.flatMap(track => track.events)
+    const notes = events.filter(event => (event.statusByte & 0xf0) === 0x90)
+    expect(notes.filter(event => event.data[1]! > 0).every(event => event.data[1] === 127)).toBe(true)
+    expect(notes.filter(event => event.data[1] === 0)).toHaveLength(notes.filter(event => event.data[1]! > 0).length)
+    for (const channel of [0, 1]) {
+      expect(events.some(event => event.ticks === 0 && event.statusByte === (0xb0 | channel) && event.data[0] === 7 && event.data[1] === 127)).toBe(true)
+    }
+    score.destroy()
+  })
   it('encodes audible trill attacks while keeping one source highlight for the host note', async () => {
     const score = await prepare('{2/4}{120qpm}\nN: 3{tr} 4 |||')
     const midi = BasicMIDI.fromArrayBuffer(score.midi())
@@ -81,14 +93,14 @@ describe('native MIDI and playback index', () => {
   ] as const)('keeps the written third-pass tie in %s instead of reattacking its continuation', (file, pitch, start, end, continuation) => {
     const document = parseM3NDocument(readFileSync(new URL(file, folder), 'utf8'))
     const performance = compileScorePerformance(document)
-    expect(performance.notes).toContainEqual({ pitch, start, end, channel: 0, velocity: 90 })
+    expect(performance.notes).toContainEqual({ pitch, start, end, channel: 0, velocity: 127 })
     expect(performance.notes.some(note => note.pitch === pitch && note.start === continuation)).toBe(false)
     expect(performance.elements.some(element => element.start === continuation && element.rendition === 3)).toBe(true)
   })
   it('sustains Annie’s closing 2 and cross-bar 7 without reattacking their continuations', () => {
     const performance = compileScorePerformance(parseM3NDocument(readFileSync(new URL('annie_01.m3n', folder), 'utf8')))
     for (const [pitch, start, end, continuation] of [[74, 137.75, 139, 138], [71, 139.75, 144, 140]]) {
-      expect(performance.notes).toContainEqual({ pitch, start, end, channel: 0, velocity: 90 })
+      expect(performance.notes).toContainEqual({ pitch, start, end, channel: 0, velocity: 127 })
       expect(performance.notes.some(note => note.pitch === pitch && note.start === continuation)).toBe(false)
       expect(performance.elements.some(element => element.start === continuation)).toBe(true)
     }

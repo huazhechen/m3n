@@ -77,7 +77,11 @@ beforeEach(() => {
   vi.stubGlobal('window', globalThis)
   vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  vi.stubGlobal('AudioContext', class {
+  vi.stubGlobal('AudioContext', class { createDynamicsCompressor() { return {
+    threshold: { value: 0 }, knee: { value: 0 }, ratio: { value: 0 },
+    attack: { value: 0 }, release: { value: 0 }, connect: vi.fn(),
+  } }
+
     audioWorklet = { addModule: async () => {} }
     resume = async () => {}
     close = async () => {}

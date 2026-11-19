@@ -8,9 +8,10 @@ test.each(tones)('$label generates a playable bank with complete zones, stable l
   if (tone === 'synth') return
   const updates: ToneGenerationProgress[] = []
   const bank = SoundBankLoader.fromArrayBuffer(createInstrumentSoundFont(tone, progress => updates.push(progress)))
-  expect(updates.at(-1)).toEqual({ tone, completed: 48, total: 48, stage: 'packing' })
-  expect(updates.slice(0, 48).map(value => value.completed)).toEqual(Array.from({ length: 48 }, (_, i) => i + 1))
-  expect(bank.samples).toHaveLength(48)
+  expect(updates.at(-1)).toEqual({ tone, completed: 16, total: 16, stage: 'packing' })
+  expect(updates.slice(0, 16).map(value => value.completed)).toEqual(Array.from({ length: 16 }, (_, i) => i + 1))
+  expect(bank.samples).toHaveLength(16)
+  expect(bank.instruments[0].zones.every(zone => zone.velRange.min === 0 && zone.velRange.max === 127)).toBe(true)
   expect(bank.presets).toHaveLength(1)
   expect(bank.presets[0].program).toBe(0)
   for (let key = 0; key <= 127; key++) for (const velocity of [1, 54, 55, 94, 95, 127]) {
