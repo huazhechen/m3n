@@ -217,6 +217,22 @@ export function resolveScoreTrillPitches(measures: readonly ScoreMeasure[]) {
   return resolveScorePitchContext(measures).upperNeighbors
 }
 
+function validateGlissandi(measures: readonly ScoreMeasure[]) {
+  const diagnostics: ScoreDiagnostic[] = []
+  const events = measures.flatMap(measure => measure.events)
+  for (const [index, event] of events.entries()) {
+    if (!event.postfixes.includes('gliss')) continue
+    const target = events[index + 1]
+    const incompatible = (value: ScoreEvent) => value.postfixes.some(mark => mark === 'tr' || parseM3NGrace(mark))
+    if (event.kind !== 'note' || event.tie || events[index - 1]?.tie || incompatible(event) || !target || target.kind !== 'note' || incompatible(target)
+      || measures.some(measure => measure.multiRest && (measure.barEnd ?? 0) > event.sourceStart && (measure.barEnd ?? 0) < target.sourceStart)) {
+      diagnostics.push(createScoreDiagnostic({ code: 'M3N_GLISS_TARGET', message: '滑音须连接相邻的两个普通单音，起音不能带延音；两音均不能带颤音或倚音',
+        range: { start: event.sourceStart, end: event.sourceEnd } }))
+    }
+  }
+  return diagnostics
+}
+
 function validateTies(measures: readonly ScoreMeasure[], source?: string) {
   const diagnostics: ScoreDiagnostic[] = []
   const absolutePitches = resolveScorePitches(measures)
@@ -290,7 +306,7 @@ export function validateScoreDocument(document: ScoreDocument, options: { skipBe
     const melody = writtenMeasures(part.melody)
     const bass = writtenMeasures(part.bass)
     if (!options.skipBeatValidation) diagnostics.push(...validateMeasureDurations(document, melody, options.source))
-    diagnostics.push(...validateTies(melody, options.source), ...validateTies(bass, options.source))
+    diagnostics.push(...validateTies(melody, options.source), ...validateTies(bass, options.source), ...validateGlissandi(melody), ...validateGlissandi(bass))
     if (bass.length === 0) continue
     if (melody.length !== bass.length) {
       const message = `双谱表小节数量不一致：正文 ${melody.length} 小节，低音 ${bass.length} 小节`

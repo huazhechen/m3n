@@ -41,6 +41,24 @@ export function writePerformanceMidi(performance: ScorePerformance): ArrayBuffer
       const start = performanceTick(note.start), finish = performanceTick(note.end)
       // Retain a short release gap; never turn a very short note off before on.
       const off = Math.max(start + 1, finish - Math.min(8, Math.floor((finish - start) / 4)))
+      if (note.pitchBends?.length) {
+        const range = Math.max(2, ...note.pitchBends.map(point => Math.ceil(Math.abs(point.pitch - note.pitch))))
+        // RPN 0 sets pitch-bend sensitivity in semitones, then deselects RPN.
+        for (const [controller, value] of [[101, 0], [100, 0], [6, range], [38, 0], [101, 127], [100, 127]]) {
+          events.push({ tick: start, priority: 1, data: [0xb0 | channel, controller!, value!] })
+        }
+        const bend = (beat: number, pitch: number) => {
+          const value = Math.max(0, Math.min(16383, Math.round(8192 + (pitch - note.pitch) / range * 8192)))
+          events.push({ tick: performanceTick(beat), priority: 1, data: [0xe0 | channel, value & 127, value >> 7] })
+        }
+        bend(note.start, note.pitch)
+        for (let index = 1; index < note.pitchBends.length; index++) {
+          const from = note.pitchBends[index - 1]!, to = note.pitchBends[index]!
+          const steps = Math.max(1, Math.ceil((to.beat - from.beat) * 64))
+          for (let step = 1; step <= steps; step++) bend(from.beat + (to.beat - from.beat) * step / steps, from.pitch + (to.pitch - from.pitch) * step / steps)
+        }
+        events.push({ tick: finish, priority: 1, data: [0xe0 | channel, 0, 64] })
+      }
       events.push({ tick: start, priority: 2, data: [0x90 | channel, note.pitch, note.velocity] }, { tick: off, priority: 1, data: [0x90 | channel, note.pitch, 0] })
     }
     // Sequencers commonly ignore an end-of-track meta event when calculating

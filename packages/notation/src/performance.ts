@@ -6,7 +6,7 @@ import { m3nPitch } from './m3n-direct.js'
 import type { ScoreDocument, ScoreEvent } from './notation/score-document.js'
 
 /** Positions and durations are quarter-note beats, independent of audio devices. */
-export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number }
+export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number; pitchBends?: Array<{ beat: number; pitch: number }> }
 export type PerformanceElement = { start: number; end: number; xmlId: string; rendition: number; voice: string; orderIndex?: number }
 export type PerformanceTempo = { beat: number; qpm: number }
 export type PerformanceMeter = { beat: number; count: number; unit: number }
@@ -66,6 +66,7 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     const pitches = { melody: resolveScorePitches(part.melody), bass: resolveScorePitches(part.bass) }
     const trillPitches = { melody: resolveScoreTrillPitches(part.melody), bass: resolveScoreTrillPitches(part.bass) }
     const pendingTies = { melody: new Map<number, { note: PerformanceNote; target: string | undefined }>(), bass: new Map<number, { note: PerformanceNote; target: string | undefined }>() }
+    const pendingSlides = { melody: undefined, bass: undefined } as Record<'melody' | 'bass', { note: PerformanceNote; target: string | undefined } | undefined>
     let measureStart = partStart
     for (let index = 0; index < Math.max(part.melody.length, part.bass.length); index++) {
       let measureEnd = measureStart
@@ -78,6 +79,7 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
           const meter = measure.multiRestState ? meterFor(measure.multiRestState) : result.meters.at(-1)!
           cursor += measure.multiRest * meter.count * 4 / meter.unit
           pendingTies[staff].clear()
+          pendingSlides[staff] = undefined
         }
         for (const event of measure.events) {
           if (!Number.isFinite(event.beats) || event.beats <= 0) throw new Error('播放音符时值必须为正数。')
@@ -102,8 +104,20 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
             const tied = previous.get(pitch)
             if (tied && tied.target === xmlId && Math.abs(tied.note.end - cursor) < 1e-7 && (event.kind !== 'tuplet' || slot === 0)) tied.note.end = end
             else {
-              const note = { start, end, pitch, channel, velocity: 90 }
-              result.notes.push(note)
+              const slide = pendingSlides[staff]
+              let note: PerformanceNote
+              if (slide && slide.target === xmlId && event.kind === 'note' && !event.postfixes.includes('tr') && Math.abs(slide.note.end - start) < 1e-7) {
+                note = slide.note
+                note.pitchBends ??= [{ beat: note.start, pitch: note.pitch }]
+                note.pitchBends.push({ beat: start, pitch })
+                note.end = end
+              } else {
+                note = { start, end, pitch, channel, velocity: 90 }
+                result.notes.push(note)
+              }
+              if (event.postfixes.includes('gliss') && event.kind === 'note' && !event.tie && !event.postfixes.includes('tr')) {
+                pendingSlides[staff] = { note, target: tieTargets.get(xmlId) }
+              } else pendingSlides[staff] = undefined
               markTrill(note)
               if (outgoing) next.set(pitch, { note, target: tieTargets.get(xmlId) })
               return
@@ -137,6 +151,7 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
               addNote(token, slot, onset + spread, cursor + event.beats, event.tie)
             })
           }
+          if (event.kind === 'rest') pendingSlides[staff] = undefined
           pendingTies[staff] = next
           cursor += event.beats
         }
@@ -161,6 +176,15 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     }
     return notes
   })
+  // Pitch bends affect a whole MIDI channel. Reserve independent channels so
+  // a melody slide cannot bend the bass, a chord, or another sustained note.
+  const slideChannels = new Map<number, number>()
+  for (const note of result.notes.filter(note => note.pitchBends).sort((a, b) => a.start - b.start)) {
+    const channel = Array.from({ length: 14 }, (_, index) => index + 2).find(channel => channel !== 9 && (slideChannels.get(channel) ?? 0) <= note.start)
+    if (channel === undefined) throw new Error('同时滑音的声部数量超出 MIDI 通道上限。')
+    note.channel = channel
+    slideChannels.set(channel, note.end)
+  }
   result.beats = partStart
   result.notes.sort((a, b) => a.start - b.start || a.channel - b.channel || a.pitch - b.pitch)
   result.elements.sort((a, b) => a.start - b.start)

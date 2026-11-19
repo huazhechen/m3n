@@ -50,7 +50,7 @@ const INFO_FIELDS = new Set([
 const INTERVAL_FLAGS = new Set(['cresc', 'decres', 'dim', 'lg', '8va', '8vb', 'inst'])
 const DYNAMICS = new Set(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff'])
 const POSTFIX_FLAGS = new Set([
-  'arp', 'tr', 'prall', 'str', 'brk', 'tip', 'hold', 'fermata', 'breath', 'f1', 'f2', 'f3', 'f4', 'f5',
+  'arp', 'tr', 'prall', 'gliss', 'str', 'brk', 'tip', 'hold', 'fermata', 'breath', 'f1', 'f2', 'f3', 'f4', 'f5',
 ])
 
 const KEY_PATTERN = /^([A-G](?:#|b)?)(dor|phr|lyd|mix|m|loc)?$/
@@ -329,6 +329,7 @@ function validateBody(
       const isPostfix = POSTFIX_FLAGS.has(content) || /^(?:ac|ap)\(/.test(content)
       if (isPostfix) {
         if (!postfixTarget || (postfixTarget === 'tuplet' && !/^(?:ac|ap)\(/.test(content))) diagnostics.push(lineMessage(token, '后置指令必须紧跟有音高的普通音符、和音组或同目标的后置指令'))
+        else if (content === 'gliss' && postfixTarget !== 'note') diagnostics.push(lineMessage(token, '滑音只能附在单个普通音符之后'))
         else if (content === 'arp' && postfixTarget !== 'harmony') diagnostics.push(lineMessage(token, '琶音只能附在和音组之后'))
       } else if (content === 'sfz') {
         invalidatePostfix()

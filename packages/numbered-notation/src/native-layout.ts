@@ -31,7 +31,7 @@ export type NativeRenderOptions = {
   pageMargin?: number; coreGap?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
-export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
+export type NativeRelation = { kind: 'gliss' | 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
 export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
@@ -66,6 +66,10 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
       if (previous?.tie && !first.sustain) {
         const start = head.get(previous)
         if (start) relations.push({ kind: 'tie', first: start, last: first, level: 0 })
+      }
+      if (previous?.postfixes.includes('gliss') && previous.kind === 'note' && event.kind === 'note') {
+        const start = byEvent.get(previous)?.[0]
+        if (start) relations.push({ kind: 'gliss', first: start, last: first, level: 0 })
       }
       previous = event
       if (event.kind === 'tuplet') relations.push({ kind: 'tuplet', first, last: glyphs.at(-1)!, label: String(event.tuplet?.num ?? glyphs.length), level: 0 })
