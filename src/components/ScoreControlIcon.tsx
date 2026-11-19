@@ -1,4 +1,4 @@
-export type ScoreControlIconName = 'play' | 'pause' | 'metronome' | 'settings' | 'piano' | 'synth' | 'harmonica' | 'guitar' | 'violin' | 'flute' | 'paged' | 'fixedDo' | 'measureNumbers' | 'staff' | 'reset'
+export type ScoreControlIconName = 'play' | 'pause' | 'metronome' | 'settings' | 'piano' | 'synth' | 'harmonica' | 'guitar' | 'violin' | 'flute' | 'paged' | 'movableDo' | 'fixedDo' | 'measureNumbers' | 'staff' | 'reset'
 
 export function ScoreControlIcon({ name }: { name: ScoreControlIconName }) {
   const shapes = {
@@ -14,6 +14,7 @@ export function ScoreControlIcon({ name }: { name: ScoreControlIconName }) {
     flute: <><path d="m4 19 15-15 2 2L6 21ZM16 7l2 2M7 16l2 2m0-5 2 2m0-5 2 2m0-5 2 2" /></>,
     paged: <><rect x="3" y="3" width="14" height="17" rx="2" /><path d="M7 7h6M7 11h6M7 15h4M17 7h4v14H7" /></>,
     staff: <><path d="M2 5h20M2 9h20M2 13h20M2 17h20M2 21h20M15 15V3" /><ellipse cx="12" cy="16" rx="3" ry="2" fill="currentColor" /></>,
+    movableDo: <path d="m2 9 3-2v10m-2 0h4M10 9c0-3 5-3 5 0 0 2-5 5-5 8h5M18 7h2a2 2 0 0 1 0 5h-1m1 0a2.5 2.5 0 0 1 0 5h-2" />,
     fixedDo: <text x="12" y="20" textAnchor="middle" fontSize="26" fill="currentColor" stroke="none">♯</text>,
     measureNumbers: <path d="M4 4v16M20 4v16M4 8h16M4 16h16M10 10h2v4m-2 0h4" />,
     reset: <path d="M9 4 5 8l4 4M5 8h8a7 7 0 1 1-6.5 9.6" />,

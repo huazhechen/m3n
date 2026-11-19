@@ -102,7 +102,7 @@ export function ScoreControls(props: ScoreControlsProps) {
       <button type="button" aria-label={`选择记谱方式，当前${notationLabel}`} aria-haspopup="dialog" className="control-button notation-selector" onClick={() => {
         notationDialogRef.current?.showModal()
         notationDialogRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus()
-      }}><ScoreControlIcon name={props.notationMode === 'staff' ? 'staff' : 'fixedDo'} /><span>{notationLabel}</span></button>
+      }}><ScoreControlIcon name={props.notationMode === 'staff' ? 'staff' : props.notationMode === 'fixed' ? 'fixedDo' : 'movableDo'} /><span>{notationLabel}</span></button>
       <button type="button" role="switch" aria-label="小节号" aria-checked={props.measureNumbers} title="显示小节号" className="control-button" onClick={() => props.onMeasureNumbersChange(!props.measureNumbers)}>
           <ScoreControlIcon name="measureNumbers" /><span>小节号</span>
         </button>
