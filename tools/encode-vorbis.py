@@ -26,7 +26,7 @@ lib.sf_strerror.restype = c.c_char_p
 raw = sys.stdin.buffer.read()
 assert len(raw) % 4 == 0
 audio = (c.c_float * (len(raw) // 4)).from_buffer_copy(raw)
-# SF_FORMAT_OGG | SF_FORMAT_VORBIS, SFM_WRITE; libvorbis quality 0.1 = FFmpeg q1.
+# SF_FORMAT_OGG | SF_FORMAT_VORBIS, SFM_WRITE; optional quality, default q1.
 info = Info(0, int(sys.argv[1]), 1, 0x200060, 0, 0)
 with tempfile.TemporaryDirectory(prefix='m3n-vorbis-') as directory:
     path = os.path.join(directory, 'sample.ogg')
@@ -34,7 +34,9 @@ with tempfile.TemporaryDirectory(prefix='m3n-vorbis-') as directory:
     if not handle:
         raise RuntimeError(lib.sf_strerror(None).decode())
     try:
-        quality = c.c_double(0.1)
+        quality = c.c_double(float(sys.argv[2]) if len(sys.argv) > 2 else 0.1)
+        if not -0.1 <= quality.value <= 1:
+            raise ValueError('Vorbis quality must be between -0.1 and 1.')
         if lib.sf_command(handle, 0x1300, c.byref(quality), c.sizeof(quality)) != 1:
             raise RuntimeError('Could not set Vorbis quality')
         if lib.sf_write_float(handle, audio, len(audio)) != len(audio):
