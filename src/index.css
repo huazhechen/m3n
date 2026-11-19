@@ -1715,6 +1715,12 @@ a.action-button {
 }
 
 .score-library.has-letter-index .library-groups { padding-right: calc(var(--ui-control-size) + var(--ui-space)); }
+.library-sort-label {
+  margin: 0 0 var(--ui-unit);
+  color: #64756c;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
 .library-group { margin-bottom: calc(var(--ui-unit) * 2); scroll-margin-top: var(--ui-space); }
 .library-group-heading {
   position: sticky;

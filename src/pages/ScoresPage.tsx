@@ -11,6 +11,7 @@ import { matchesScoreSearch } from '../lib/score-search'
 type LibraryView = 'alphabetical' | 'category' | 'modified'
 const nextLibraryView: Record<LibraryView, LibraryView> = { alphabetical: 'category', category: 'modified', modified: 'alphabetical' }
 const viewTitle: Record<LibraryView, string> = { alphabetical: '切换为分类展示', category: '切换为最后修改时间', modified: '切换为字母顺序' }
+const viewLabel: Record<LibraryView, string> = { alphabetical: '首字母', category: '音乐类型', modified: '编辑时间' }
 
 type ScoreCardData = {
   modifiedAt: number
@@ -226,6 +227,7 @@ export function ScoresPage() {
           </div>
         </section>
         <div className="library-groups">
+          <p className="library-sort-label" role="status" aria-label="当前排序方式">{viewLabel[view]}</p>
           {scores.length === 0 && (
             <p className="search-empty">没有找到匹配的乐谱。</p>
           )}
