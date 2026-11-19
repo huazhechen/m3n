@@ -77,16 +77,19 @@ test('floating controls expose BPM, tone, transpose, metronome and measure numbe
 
 test('multipage PDF downloads with the same pages in continuous and paged modes', async ({ page }, info) => {
   test.setTimeout(90_000)
+  await page.addInitScript(() => localStorage.setItem('m3n:render-mode', 'continuous'))
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 128 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
   await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page).toHaveURL(/\/scores\/local-/)
+  await expect(page.locator('.score-paper [data-m3n-id="m3n-e-512"]').first()).toBeAttached()
   let expectedPages = 0
   for (const paged of [false, true]) {
     await openScoreSettings(page)
     await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
     if (paged) await page.getByRole('switch', { name: '分页', exact: true }).click()
     await page.keyboard.press('Escape')
-    await page.getByRole('button', { name: '打印', exact: true }).click()
+    await page.getByRole('button', { name: '导出', exact: true }).click()
     const dialog = page.locator('.export-dialog')
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
     const previewPages = await dialog.locator('.export-preview-page').count()
@@ -132,7 +135,7 @@ test('homepage plays numbered notation and documentation examples open as editab
 })
 
 
-test('mobile PNG and PDF use system fonts without font requests', async ({ page }, info) => {
+test('mobile PNG needs no fonts and PDF downloads when its text font is unavailable', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.addInitScript(() => { window.print = () => { throw new Error('Printing is unavailable on this device') } })
   const fontRequests: string[] = []
@@ -145,7 +148,7 @@ test('mobile PNG and PDF use system fonts without font requests', async ({ page 
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)
   for (const format of ['PNG', 'PDF']) {
-    await page.getByRole('button', { name: '打印', exact: true }).click()
+    await page.getByRole('button', { name: '导出', exact: true }).click()
     const dialog = page.locator('.export-dialog')
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
     const started = Date.now()
@@ -157,8 +160,11 @@ test('mobile PNG and PDF use system fonts without font requests', async ({ page 
     await download.saveAs(path)
     if (format === 'PDF') {
       expect((await PDFDocument.load(await readFile(path))).getPageCount()).toBe(1)
+      expect(fontRequests).toHaveLength(1)
+      expect(fontRequests[0]).toContain('builtin-pdf-text')
+    } else {
+      expect(fontRequests).toEqual([])
     }
     await expect(dialog).not.toBeVisible()
   }
-  expect(fontRequests).toEqual([])
 })

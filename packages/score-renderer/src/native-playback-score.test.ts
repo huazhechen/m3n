@@ -3,9 +3,47 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { BasicMIDI } from 'spessasynth_core'
 import { describe, expect, it } from 'vitest'
 import { buildMetronomeBeats } from './metronome.js'
-import { NativePlaybackScore } from './native-playback-score.js'
+import { exportScoreMidi, NativePlaybackScore } from './native-playback-score.js'
 
 const prepare = (source: string) => NativePlaybackScore.create(parseM3NDocument(source))
+
+describe('standalone MIDI export', () => {
+  it('bakes transposition and proportional tempo changes into both voices and unfolds repeats without selecting instruments', async () => {
+    const document = parseM3NDocument('{2/4}{120qpm}\nN: ||: 1 2 | {60qpm}3 4 :||\nB: 1d^ | 5d^ |||')
+    const playback = await NativePlaybackScore.create(document)
+    const originalBytes = playback.midi()
+    const original = BasicMIDI.fromArrayBuffer(originalBytes)
+    const exported = BasicMIDI.fromArrayBuffer(exportScoreMidi(document, { transpose: -3, tempoScale: 1.5 }))
+    const notes = (midi: typeof original) => midi.tracks.flatMap(track => track.events)
+      .filter(event => (event.statusByte & 0xf0) === 0x90)
+      .map(event => ({ channel: event.statusByte & 15, tick: event.ticks, pitch: event.data[0]!, velocity: event.data[1] }))
+    expect(exported.timeDivision).toBe(960)
+    expect(exported.tracks).toHaveLength(3)
+    expect(notes(exported)).toEqual(notes(original).map(note => ({ ...note, pitch: note.pitch - 3 })))
+    expect(notes(exported).filter(note => note.velocity! > 0)).toHaveLength(12)
+    // Duration and the metronome independently decode the serialized tempo map.
+    expect(exported.duration).toBeCloseTo(original.duration / 1.5, 5)
+    const originalBeats = buildMetronomeBeats(original)
+    const exportedBeats = buildMetronomeBeats(exported)
+    expect(exportedBeats).toHaveLength(originalBeats.length)
+    exportedBeats.forEach((beat, index) => expect(beat.time).toBeCloseTo(originalBeats[index]!.time / 1.5, 5))
+    expect(exported.tracks.flatMap(track => track.events).some(event => (event.statusByte & 0xf0) === 0xc0)).toBe(false)
+    expect(original.tracks.flatMap(track => track.events).some(event => (event.statusByte & 0xf0) === 0xc0)).toBe(true)
+    expect(playback.midi()).toEqual(originalBytes)
+    playback.destroy()
+  })
+
+  it('defaults to the score pitches and tempo, and rejects unencodable export settings', () => {
+    const document = parseM3NDocument('{2/4}{120qpm}\nN: 1 2 |||')
+    const midi = BasicMIDI.fromArrayBuffer(exportScoreMidi(document))
+    expect(midi.duration).toBeCloseTo(1)
+    expect(midi.tracks.flatMap(track => track.events).filter(event => (event.statusByte & 0xf0) === 0x90 && event.data[1]! > 0).map(event => event.data[0])).toEqual([60, 62])
+    for (const tempoScale of [0, -1, NaN, Infinity]) expect(() => exportScoreMidi(document, { tempoScale })).toThrow('速度倍率')
+    expect(() => exportScoreMidi(document, { transpose: 0.5 })).toThrow('整数半音')
+    for (const transpose of [-61, 66]) expect(() => exportScoreMidi(document, { transpose })).toThrow('音高超出 MIDI 范围')
+    expect(() => exportScoreMidi(document, { tempoScale: 0.001 })).toThrow('速度超出 MIDI 范围')
+  })
+})
 
 describe('native MIDI and playback index', () => {
   it('writes a standard format-1 MIDI with independent voices and all silent measures', async () => {

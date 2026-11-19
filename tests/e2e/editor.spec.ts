@@ -34,7 +34,7 @@ test('edits, renders, and maps a score note back to source', async ({ page }) =>
   await expect.poll(() => selectionStart(editor)).toBe(source.indexOf('1 2'))
 })
 
-test('exposes playback without a print action', async ({ page }) => {
+test('exposes playback without an export action', async ({ page }) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill(source)
   const play = page.getByRole('button', { name: '播放', exact: true })
@@ -43,7 +43,7 @@ test('exposes playback without a print action', async ({ page }) => {
   await expect(page.getByRole('button', { name: '暂停' })).toBeVisible({ timeout: 30_000 })
   await page.getByRole('button', { name: '暂停' }).click()
 
-  await expect(page.getByRole('button', { name: '打印' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '导出' })).toHaveCount(0)
 })
 
 test('renders tied full beats as sustain dashes and maps a dash back to its own source event', async ({ page }) => {
@@ -79,7 +79,7 @@ test('highlights numbered notation during playback with tuplets and a bass voice
   await page.getByRole('button', { name: '暂停' }).click()
 })
 
-test('print preview reuses current display settings and offers PNG and PDF', async ({ page }) => {
+test('export preview reuses current display settings and offers PNG, PDF and MIDI', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
@@ -92,12 +92,12 @@ test('print preview reuses current display settings and offers PNG and PDF', asy
   await page.getByRole('dialog', { name: '选择调性' }).getByRole('button', { name: 'D大调', exact: true }).click()
   const paper = page.locator('.score-paper')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  await page.getByRole('button', { name: '打印', exact: true }).click()
+  await page.getByRole('button', { name: '导出', exact: true }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
   await expect(dialog.locator('input,select')).toHaveCount(0)
-  await expect(dialog.getByRole('group', { name: '导出格式' }).getByRole('button')).toHaveText(['PNG', 'PDF'])
-  await expect(dialog.locator('svg').first()).toHaveAttribute('width', '600')
+  await expect(dialog.getByRole('group', { name: '导出格式' }).getByRole('button')).toHaveText(['PNG', 'PDF', 'MIDI'])
+  await expect(dialog.locator('svg[data-engine="m3n"]').first()).toHaveAttribute('width', '600')
   expect(await dialog.locator('svg text').allTextContents()).toEqual(await paper.locator('svg text').allTextContents())
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 844 })
@@ -179,7 +179,7 @@ test('uses the current numbered layout and includes visible bass in PNG and PDF'
   await page.getByRole('button', { name: '保存' }).click()
   await expect(page.locator('.score-paper svg[data-engine="m3n"]')).toBeVisible()
   for (const [format, signature] of [['PNG', 'PNG'], ['PDF', '%PDF']] as const) {
-    await page.getByRole('button', { name: '打印' }).click()
+    await page.getByRole('button', { name: '导出' }).click()
     const dialog = page.getByRole('dialog')
     await expect(dialog.locator('svg[data-engine="m3n"]').first()).toBeVisible()
     await expect(dialog.locator('[data-m3n-id="m3n-e-3"]').first()).toBeVisible()

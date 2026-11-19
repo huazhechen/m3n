@@ -4,7 +4,7 @@ import { preloadScorePdf, downloadBlob, renderScoreCanvas, scoreFileName, frameS
 import { PdfDownloadPanel } from './PdfDownloadPanel'
 import { prepareScoreExport, type ScoreDisplaySettings } from '../lib/render-score'
 
-type ExportFormat = 'png' | 'pdf'
+type ExportFormat = 'png' | 'pdf' | 'midi'
 type ScoreExportDialogProps = {
   scoreDocument: ScoreDocument
   title: string
@@ -58,10 +58,17 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       if (format === 'pdf') { setPdfMode(true); return }
       setIsExporting(true); setExportError(''); setProgress('正在生成…'); onError('')
       try {
+        const fileName = scoreFileName(title)
+        if (format === 'midi') {
+          const { exportScoreMidi } = await import('@m3n/score-renderer/playback')
+          const midi = exportScoreMidi(scoreDocument, { transpose: settings.transpose, tempoScale: settings.tempoScale })
+          downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${fileName}.mid`)
+          dialogRef.current?.close()
+          return
+        }
         const paged = false
         const svgs = paged === settings.paged ? previewPagesRef.current : renderPagesRef.current?.(paged) ?? []
         if (!svgs.length) throw new Error('当前没有可导出的乐谱。')
-        const fileName = scoreFileName(title)
         if (format === 'png') {
           const framed = frameScoreImage(svgs)
           const canvas = await renderScoreCanvas(framed, framed.viewBox.baseVal.width, 2)
@@ -73,12 +80,12 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
       } catch (error) { const message = error instanceof Error ? error.message : '导出失败。'; setExportError(message); onError(message) }
       finally { setIsExporting(false) }
     }
-    return <dialog ref={dialogRef} className={pdfMode ? 'scorebook-export-dialog' : 'export-dialog'} aria-label={pdfMode ? '导出 PDF' : undefined} onClose={() => { setIsOpen(false); setPdfMode(false) }}>
+    return <dialog ref={dialogRef} className={pdfMode ? 'scorebook-export-dialog' : 'export-dialog'} aria-label={pdfMode ? '导出 PDF' : '导出乐谱'} onClose={() => { setIsOpen(false); setPdfMode(false) }}>
       {pdfMode ? <PdfDownloadPanel prepare={preparePdf} onClose={() => dialogRef.current?.close()} closeOnSuccess /> :
       <div className="export-body">
-        <div className="export-header"><h2>打印简谱</h2><button type="button" className="action-button" aria-label="关闭打印" onClick={() => dialogRef.current?.close()} disabled={isExporting}>×</button></div>
+        <div className="export-header"><h2>导出乐谱</h2><button type="button" className="action-button" aria-label="关闭导出" onClick={() => dialogRef.current?.close()} disabled={isExporting}>×</button></div>
         <div className="export-actions" role="group" aria-label="导出格式">
-          {(['png', 'pdf'] as const).map(format => <button key={format} type="button" disabled={isExporting || isPreviewing || Boolean(previewError)} title={format === 'pdf' ? '下载 A4 PDF' : undefined} onClick={() => void exportScore(format)}>{format.toUpperCase()}</button>)}
+          {(['png', 'pdf', 'midi'] as const).map(format => <button key={format} type="button" disabled={isExporting || (format !== 'midi' && (isPreviewing || Boolean(previewError)))} title={format === 'pdf' ? '下载 A4 PDF' : format === 'midi' ? '下载 MIDI' : undefined} onClick={() => void exportScore(format)}>{format.toUpperCase()}</button>)}
         </div>
         <div className="export-content">
           {isPreviewing && <p role="status">正在排版预览…</p>}

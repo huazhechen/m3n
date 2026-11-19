@@ -53,11 +53,11 @@ export function ScoreReaderPage() {
           <button
             type="button"
             className="action-button"
-            aria-label="打印"
-            title="打印"
+            aria-label="导出"
+            title="导出"
             onClick={() => exportDialogRef.current?.open()}
           >
-            <NavActionContent action="print" />
+            <NavActionContent action="export" />
           </button>
           <Link className="action-button" aria-label="编辑" title="编辑" to={`/editor/${slug}`}>
             <NavActionContent action="edit" />

@@ -5,7 +5,7 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(0); vi.stubGlobal('windo
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
 const setup = () => {
   const starts: number[] = []
-  const parameter = () => ({ setValueAtTime() {}, exponentialRampToValueAtTime() {} })
+  const parameter = () => ({ setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} })
   const context = {
     get currentTime() { return Date.now() / 1000 }, destination: {},
     createOscillator: () => ({ frequency: parameter(), connect() {}, disconnect() {}, addEventListener() {}, start(at: number) { starts.push(at) }, stop() {} }),
