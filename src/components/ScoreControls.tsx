@@ -1,3 +1,4 @@
+import type { GlissandoStyle } from '@m3n/notation'
 import { useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { PlaybackTone } from '@m3n/score-renderer/tones'
@@ -8,6 +9,7 @@ import { CircleOfFifths } from './CircleOfFifths'
 import { ScoreControlIcon } from './ScoreControlIcon'
 
 type ScoreControlsProps = {
+  transition?: { style: GlissandoStyle; onStyleChange: (style: GlissandoStyle) => void; onPreview: () => void }
   playbackOnly?: boolean
   contained?: boolean
   isPlaying: boolean
@@ -102,6 +104,14 @@ export function ScoreControls(props: ScoreControlsProps) {
         keyDialogRef.current?.querySelector<SVGElement>('[aria-pressed="true"]')?.focus()
       }}><span className="transpose-key-icon" aria-hidden="true">{selectedKeyLabel}</span><span>调号</span></button>
         </div>
+    {props.transition && <div className="control-transition-options" role="group" aria-label="滑音衔接试听">
+      <label>衔接方式 <select aria-label="衔接方式" value={props.transition.style} disabled={props.isLoading} onChange={event => props.transition!.onStyleChange(event.currentTarget.value as GlissandoStyle)}>
+        <option value="soft">柔和换音</option>
+        <option value="overlap">短重叠</option>
+        <option value="short">短滑音</option>
+      </select></label>
+      <button type="button" className="control-button" disabled={props.isLoading || props.toneLoading} onClick={props.transition.onPreview}>试听这一处</button>
+    </div>}
     {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || '正在下载钢琴音色…'}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
     <dialog ref={keyDialogRef} className="transpose-dialog" aria-labelledby={keyTitleId} onClick={event => {
       if (event.target === event.currentTarget) {

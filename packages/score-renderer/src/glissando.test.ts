@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import { NativePlaybackScore } from './native-playback-score.js'
 
 it('writes continuous pitch bends with one attack for the pair and a new attack for the final target', async () => {
-  const score = await NativePlaybackScore.create(parseM3NDocument('{2/4}{120qpm}\nN: (2e{gliss} 1e) 1e |||\nB: 1d^ |||'))
+  const score = await NativePlaybackScore.create(parseM3NDocument('{2/4}{120qpm}\nN: (2e{gliss} 1e) 1e |||\nB: 1d^ |||'), { glissandoStyle: 'continuous' })
   const midi = BasicMIDI.fromArrayBuffer(score.midi())
   const events = midi.tracks.flatMap(track => track.events)
   const attacks = events.filter(event => (event.statusByte & 240) === 144 && event.data[1]! > 0)
@@ -26,7 +26,7 @@ it('writes continuous pitch bends with one attack for the pair and a new attack 
   score.destroy()
 })
 it('sets sufficient bend range for wide slides and resets before reusing the channel', async () => {
-  const score = await NativePlaybackScore.create(parseM3NDocument('{4/4}\nN: 1{gliss} 1e 1e{gliss} 1 |||'))
+  const score = await NativePlaybackScore.create(parseM3NDocument('{4/4}\nN: 1{gliss} 1e 1e{gliss} 1 |||'), { glissandoStyle: 'continuous' })
   const events = BasicMIDI.fromArrayBuffer(score.midi()).tracks.flatMap(track => track.events)
   const attacks = events.filter(event => event.statusByte === 146 && event.data[1]! > 0)
   expect(attacks.map(event => event.ticks)).toEqual([0, 1920])

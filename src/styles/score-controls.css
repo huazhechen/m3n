@@ -50,6 +50,10 @@
 .control-row-label output { width: 100%; font-size: calc(var(--ui-text) * .85); color: #627b74; font-weight: 400; }
 .control-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: start; gap: var(--ui-space); min-width: 0; }
 .control-options .control-button { flex-direction: column; gap: calc(var(--ui-space) / 4); min-height: var(--ui-control-size); padding: calc(var(--ui-space) / 2) 0; font-size: var(--ui-text); line-height: 1; }
+.control-transition-options { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-space); padding-top: var(--ui-space); border-top: 1px solid #d3dfd9; }
+.control-transition-options label { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-space); font-size: var(--ui-text); }
+.control-transition-options select { min-height: var(--ui-control-size); max-width: 100%; padding: 0 var(--ui-space); border: 1px solid #d3dfd9; border-radius: 6px; color: #315b5d; background: #fff; font: inherit; }
+.control-transition-options select:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
 .transpose-key-icon { display: inline-flex; align-items: center; justify-content: center; height: var(--ui-icon-size); font-size: var(--ui-icon-size); line-height: 1; }
 .control-tone-status { font-size: var(--ui-text); overflow-wrap: anywhere; }
 .control-tone-status button { margin-left: var(--ui-space); }

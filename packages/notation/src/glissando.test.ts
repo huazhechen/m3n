@@ -3,7 +3,7 @@ import { parseM3NDocument } from './m3n-direct.js'
 import { validateM3NDiagnostics } from './m3n-validate.js'
 import { compileScorePerformance } from './performance.js'
 
-const compile = (source: string) => compileScorePerformance(parseM3NDocument(source))
+const compile = (source: string) => compileScorePerformance(parseM3NDocument(source), { glissandoStyle: 'continuous' })
 it('slides between two written notes in one attack, then reattacks the repeated target', () => {
   const source = '{2/4}\nN: (2e{gliss} 1e) 1e |||'
   expect(validateM3NDiagnostics(source)).toEqual([])

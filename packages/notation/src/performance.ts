@@ -1,3 +1,5 @@
+import { shapeGlissandi, type GlissandoStyle } from './performance-transitions.js'
+export type { GlissandoStyle } from './performance-transitions.js'
 import { unfoldScorePerformance } from './notation/performance-order.js'
 import { parseM3NGrace, parseM3NGroupPitches } from './notation/m3n-groups.js'
 import { resolveScorePitches, resolveScoreTrillPitches } from './notation/score-rules.js'
@@ -6,7 +8,7 @@ import { m3nPitch } from './m3n-direct.js'
 import type { ScoreDocument, ScoreEvent } from './notation/score-document.js'
 
 /** Positions and durations are quarter-note beats, independent of audio devices. */
-export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number; pitchBends?: Array<{ beat: number; pitch: number }> }
+export type PerformanceNote = { start: number; end: number; pitch: number; channel: number; velocity: number; pitchBends?: Array<{ beat: number; pitch: number }>; expression?: Array<{ beat: number; value: number }>; transition?: boolean }
 export type PerformanceElement = { start: number; end: number; xmlId: string; rendition: number; voice: string; orderIndex?: number }
 export type PerformanceTempo = { beat: number; qpm: number }
 export type PerformanceMeter = { beat: number; count: number; unit: number }
@@ -34,7 +36,7 @@ function gracePitch(token: string, event: ScoreEvent) {
 }
 
 /** Compile the domain's itinerary once. No XML, third-party music engine or DOM. */
-export function compileScorePerformance(document: ScoreDocument): ScorePerformance {
+export function compileScorePerformance(document: ScoreDocument, options: { glissandoStyle?: GlissandoStyle } = {}): ScorePerformance {
   if (!Number.isFinite(document.tempo) || document.tempo <= 0) throw new Error('播放速度必须为正数。')
   const unfolded = unfoldScorePerformance(document)
   const ids = scoreEventIds(unfolded)
@@ -176,10 +178,11 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     }
     return notes
   })
-  // Pitch bends affect a whole MIDI channel. Reserve independent channels so
+  result.notes = shapeGlissandi(result, options.glissandoStyle ?? 'soft')
+  // Pitch bends and expression affect a whole MIDI channel. Reserve independent channels so
   // a melody slide cannot bend the bass, a chord, or another sustained note.
   const slideChannels = new Map<number, number>()
-  for (const note of result.notes.filter(note => note.pitchBends).sort((a, b) => a.start - b.start)) {
+  for (const note of result.notes.filter(note => note.pitchBends || note.transition).sort((a, b) => a.start - b.start)) {
     const channel = Array.from({ length: 14 }, (_, index) => index + 2).find(channel => channel !== 9 && (slideChannels.get(channel) ?? 0) <= note.start)
     if (channel === undefined) throw new Error('同时滑音的声部数量超出 MIDI 通道上限。')
     note.channel = channel

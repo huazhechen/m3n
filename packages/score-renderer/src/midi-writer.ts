@@ -40,7 +40,20 @@ export function writePerformanceMidi(performance: ScorePerformance): ArrayBuffer
     for (const note of performance.notes.filter(note => note.channel === channel)) {
       const start = performanceTick(note.start), finish = performanceTick(note.end)
       // Retain a short release gap; never turn a very short note off before on.
-      const off = Math.max(start + 1, finish - Math.min(8, Math.floor((finish - start) / 4)))
+      const off = note.transition ? Math.max(start + 1, finish) : Math.max(start + 1, finish - Math.min(8, Math.floor((finish - start) / 4)))
+      // Each shaped transition has a private channel, so these fades affect
+      // only its own voice. Send zero expression before note-on to hide attack.
+      if (note.transition || note.pitchBends) events.push({ tick: start, priority: 0, data: [0xb0 | channel, 120, 0] })
+      events.push({ tick: start, priority: 1, data: [0xb0 | channel, 11, note.expression?.[0]?.value ?? 127] })
+      for (let index = 1; index < (note.expression?.length ?? 0); index++) {
+        const from = note.expression![index - 1]!, to = note.expression![index]!
+        if (from.value === to.value) continue
+        const steps = Math.max(1, Math.ceil((to.beat - from.beat) * 256))
+        for (let step = 1; step <= steps; step++) events.push({
+          tick: performanceTick(from.beat + (to.beat - from.beat) * step / steps), priority: 1,
+          data: [0xb0 | channel, 11, Math.round(from.value + (to.value - from.value) * step / steps)],
+        })
+      }
       if (note.pitchBends?.length) {
         const range = Math.max(2, ...note.pitchBends.map(point => Math.ceil(Math.abs(point.pitch - note.pitch))))
         // RPN 0 sets pitch-bend sensitivity in semitones, then deselects RPN.
