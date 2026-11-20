@@ -229,6 +229,12 @@ export function arrangeStaffSystem(
     }
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
+    if (hasClass(attachment, 'tempo')) {
+      // Start next to the local music, then let the normal ink avoidance
+      // clear stems, curves and directions instead of preserving a fixed gap.
+      const local = music.filter(other => overlapsX(moveInk(ink, dx, 0), other, gap / 2))
+      if (local.length) dy = Math.min(...local.map(other => other.top)) - gap - ink.bottom
+    }
     if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - 12 / scale - ink.bottom
     if (hasClass(attachment, 'mNum')) {
       const endings = findAll(node, (n) => hasClass(n, 'ending'))

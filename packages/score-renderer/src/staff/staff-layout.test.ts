@@ -8,6 +8,8 @@ import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
 import { readXml, findAll, SvgGeometry, textMeasurer, element, overlapsX } from './layout-svg.js'
 import { arrangeStaffSystem, systemDistance } from './system-layout.js'
 import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE } from './vexflow-engine.js'
+import { planStaffLines } from './line-layout.js'
+import { engraveStaffSystems } from './staff-system.js'
 
 
 async function prepare(source: string, width = 720) {
@@ -16,6 +18,27 @@ async function prepare(source: string, width = 720) {
   return prepareStaffScore(analysis.score, { width })
 }
 describe('staff layout contract', () => {
+  it('packs tempo next to local music and raises it for high notes', () => {
+    const gaps: number[] = []
+    for (const melody of ['1 2 3 4', '1eee 2eee 3eee 4eee']) {
+      const document = projectStaffDocument(analyzeM3N(`{4/4}{120qpm}\nN: ${melody} |||`).score)
+      const measure = textMeasurer()
+      const lines = planStaffLines(document, 720, false, measure, 0.25)
+      const node = engraveStaffSystems(document, lines, 720, measure, 0.25, false)[0]!.node
+      const geometry = new SvgGeometry(node, textMeasurer())
+      const tempos = findAll(node, n => n.attributes.class === 'tempo')
+      expect(tempos).toHaveLength(1)
+      const tempo = geometry.ink(tempos[0]!)
+      const music = findAll(node, n => n.attributes.class === 'staff')
+        .flatMap(staff => geometry.pieces(staff))
+        .filter(piece => overlapsX(tempo, piece, 3))
+      const gap = (Math.min(...music.map(piece => piece.top)) - tempo.bottom) * STAFF_SCALE
+      gaps.push(gap)
+      expect(gap).toBeGreaterThanOrEqual(5.9)
+      expect(gap).toBeLessThanOrEqual(6.1)
+    }
+    expect(gaps[0]).toBeCloseTo(gaps[1]!)
+  })
   it('uses the stave rules as its core and expands gaps only for overlapping ink', () => {
     const makeSystem = (lyricX: number, withLyrics = true) => {
       const rules = [40, 50, 60, 70, 80].map(y => element('path', {

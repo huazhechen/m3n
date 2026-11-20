@@ -59,7 +59,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             tempo.children.push(...capture(() => Glyph.renderGlyph(context, tempoX + 9, -55, 28, flags[display.unit] ?? 'flag8thUp')))
           }
           if (display.dots) tempo.children.push(element('circle', { cx: String(tempoX + 16), cy: '-31', r: '1.8', fill: '#000' }))
-          tempo.children.push(...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, tempoX + (display.dots ? 25 : 18), -28, 15, 'tempo')))
+          tempo.children.push(...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, tempoX + (display.dots ? 25 : 18), -28, 15, 'tempo-text')))
           parent.children.push(tempo)
       }
       const node = element('g', { class: 'system' })
