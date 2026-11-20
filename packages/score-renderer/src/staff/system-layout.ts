@@ -210,7 +210,7 @@ export function arrangeStaffSystem(
   const isHeadingTempo = (attachment: XmlNode) => hasStandaloneHeading && hasClass(attachment, 'tempo')
   const placementOrder = (attachment: XmlNode) =>
     isHeadingTempo(attachment) ? 4 : isStandaloneHeading(attachment) ? 3 :
-      hasClass(attachment, 'mNum') ? 2 : hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? 1 : isHairpin(attachment) ? -1 : 0
+      hasClass(attachment, 'mNum') || hasClass(attachment, 'repeatMark') ? 2 : hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? 1 : isHairpin(attachment) ? -1 : 0
   // Keep the section's directions next to its melody: tempo above heading,
   // heading above directions, then music. Place the outer levels last.
   const attachments = findAll(node, (n) => isDecoration(n) && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
@@ -229,11 +229,12 @@ export function arrangeStaffSystem(
     }
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
-    if (hasClass(attachment, 'tempo')) {
+    const localGap = hasClass(attachment, 'repeatMark') ? 4 / scale : gap
+    if (hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark')) {
       // Start next to the local music, then let the normal ink avoidance
       // clear stems, curves and directions instead of preserving a fixed gap.
-      const local = music.filter(other => overlapsX(moveInk(ink, dx, 0), other, gap / 2))
-      if (local.length) dy = Math.min(...local.map(other => other.top)) - gap - ink.bottom
+      const local = music.filter(other => overlapsX(moveInk(ink, dx, 0), other, localGap / 2))
+      if (local.length) dy = Math.min(...local.map(other => other.top)) - localGap - ink.bottom
     }
     if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - 12 / scale - ink.bottom
     if (hasClass(attachment, 'mNum')) {
@@ -246,7 +247,7 @@ export function arrangeStaffSystem(
     // their endpoints; horizontal padding must not invent a second lane.
     const attachmentPieces = geometry.pieces(attachment).map(piece => moveInk(piece, dx, 0))
     const ending = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row')
-    const clearance = ending ? 2 / scale : gap
+    const clearance = ending ? 2 / scale : localGap
     const intervals = attachmentPieces.flatMap(piece => obstacles
       .filter(other => overlapsX(piece, other, isHairpin(attachment) && hairpinPieces.has(other) ? 0 : clearance / 2))
       .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
