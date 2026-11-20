@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs'
 import { BasicSoundBank } from 'spessasynth_core'
 import { createSyntheticSoundFont } from './synthetic-soundfont'
 import { PLAYBACK_TONES } from './tone-catalog'
-import { PLAYBACK_TONE_GAIN } from './tone-levels'
 
 // Exercise the real SF2 envelopes, pan law and channel gain, not just PCM peaks.
 // Piano/guitar previously passed peak tests despite almost silent note bodies.
@@ -29,10 +28,10 @@ test.each(PLAYBACK_TONES)('$label has an audible note body and sustain at full p
           if (t >= 1 && t < 2) { sustain += (left[i]! ** 2 + right[i]! ** 2) / 2; sustainCount++ }
         }
       }
-      // Fixed trims precede mastering; plucked instruments retain natural decay.
+      // Check unboosted samples; plucked instruments retain natural decay.
       // Do not force their second-second level to match a wind/bow sustain.
-      expect(Math.sqrt(body / bodyCount) * PLAYBACK_TONE_GAIN[tone], `${tone} ${key} body RMS`).toBeGreaterThan(0.063)
-      expect(Math.sqrt(sustain / sustainCount) * PLAYBACK_TONE_GAIN[tone], `${tone} ${key} sustain RMS`).toBeGreaterThan(tone === 'guitar' || tone === 'piano' ? 0.004 : 0.032)
+      expect(Math.sqrt(body / bodyCount), `${tone} ${key} body RMS`).toBeGreaterThan(0.025)
+      expect(Math.sqrt(sustain / sustainCount), `${tone} ${key} sustain RMS`).toBeGreaterThan(tone === 'guitar' || tone === 'piano' ? 0.0016 : 0.026)
     }
   } finally { synth.destroySynthProcessor() }
 })

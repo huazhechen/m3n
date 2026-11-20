@@ -3,7 +3,7 @@ import { createPlaybackOutput } from './playback-output'
 import { PLAYBACK_TONE_GAIN } from './tone-levels'
 
 afterEach(() => vi.unstubAllGlobals())
-test('applies fixed tone gain before mastering, with smooth live updates', () => {
+test('keeps unity gain before mastering when switching tones', () => {
   const parameter = () => ({ value: 0, setTargetAtTime: vi.fn() })
   const node = () => ({ connect: vi.fn() })
   const input = { ...node(), gain: parameter() }
@@ -21,7 +21,7 @@ test('applies fixed tone gain before mastering, with smooth live updates', () =>
   const output = createPlaybackOutput(context as unknown as AudioContext, 'piano')
   expect(output.input).toBe(input)
   expect(output.metronomeInput).toBe(limiter)
-  expect(input.gain.value).toBe(PLAYBACK_TONE_GAIN.piano)
+  expect(input.gain.value).toBe(1)
   expect(input.connect).toHaveBeenCalledWith(highpass)
   expect(highpass.connect).toHaveBeenCalledWith(compressor)
   expect(compressor.connect).toHaveBeenCalledWith(makeup)
@@ -29,5 +29,6 @@ test('applies fixed tone gain before mastering, with smooth live updates', () =>
   expect(limiter.connect).toHaveBeenCalledWith(context.destination)
   expect(makeup.gain.value).toBe(1)
   output.setTone('guitar')
-  expect(input.gain.setTargetAtTime).toHaveBeenCalledWith(PLAYBACK_TONE_GAIN.guitar, 10, 0.02)
+  expect(input.gain.setTargetAtTime).toHaveBeenCalledWith(1, 10, 0.02)
+  expect(Object.values(PLAYBACK_TONE_GAIN).every(gain => gain === 1)).toBe(true)
 })
