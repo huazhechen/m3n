@@ -122,7 +122,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         }
         if (member.measure.source.multiRest) {
           const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = model.staves[0]!.getYForLine(2)
-          measureNode.children.push(element('g', { class: 'rest multi-rest' }, [element('path', { d: `M${cx - 20} ${cy} h40 M${cx - 20} ${cy - 8} v16 M${cx + 20} ${cy - 8} v16`, stroke: '#000', 'stroke-width': '3', fill: 'none' }), ...nodes(text(String(member.measure.source.multiRest), cx, cy - 30, 16, 'rest', { 'text-anchor': 'middle' }))]))
+          measureNode.children.push(element('g', { class: 'rest multi-rest' }, [element('path', { d: `M${cx - 20} ${cy} h40 M${cx - 20} ${cy - 8} v16 M${cx + 20} ${cy - 8} v16`, stroke: '#000', 'stroke-width': '3', fill: 'none' }), ...nodes(text(String(member.measure.source.multiRest), cx, cy - 30, 16, 'rest', { 'text-anchor': 'middle', 'font-weight': 'bold' }))]))
         }
         // One spanning barline, redrawn after the final bass/lyric spacing pass.
         const y1 = model.staves[0]!.getYForLine(0), y2 = model.staves.at(-1)!.getYForLine(4)
