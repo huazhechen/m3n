@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { PDFDocument, PDFDict, PDFName } from 'pdf-lib'
 import { openScoreSettings, selectNotationMode } from './score-settings'
+import { staffInkBounds } from '../../tools/lib/staff-ink-collisions.mjs'
 
 test('staff mode uses its own preferred width, locates source, highlights playback and keeps playback alive across modes and transposition', async ({ page }, info) => {
   const wasm: string[] = []
@@ -63,8 +64,9 @@ test('staff mode uses its own preferred width, locates source, highlights playba
 })
 
 test('staff pagination, tempo and transposition are shared by screen, PNG and vector PDF exports', async ({ page }, info) => {
+  test.setTimeout(120_000)
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{title=五线谱导出}{preferred-width=540}{staff-preferred-width=540}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 32 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 32 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
+  await page.getByLabel('M3N source').fill('{title=五线谱导出}{preferred-width=540}{staff-preferred-width=540}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 64 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 64 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('540')
@@ -132,6 +134,7 @@ test('a failed optional staff download leaves the notation selector available', 
 test('basic exercises keep section labels and Chinese directions inside staff pages', async ({ page }) => {
   const source = await readFile('src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', 'utf8')
   await page.goto('/editor')
+  await page.addScriptTag({ content: staffInkBounds.toString() })
   await page.getByLabel('M3N source').fill(source)
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
@@ -142,7 +145,7 @@ test('basic exercises keep section labels and Chinese directions inside staff pa
     await expect(pages.first()).toHaveAttribute('width', String(width))
     await expect(paper).not.toHaveAttribute('aria-busy', 'true')
     const outside = await pages.evaluateAll(elements => elements.flatMap((element, index) => {
-      const svg = element as SVGSVGElement, ink = svg.getBBox(), box = svg.viewBox.baseVal
+      const svg = element as SVGSVGElement, ink = (window as unknown as { staffInkBounds: (svg: SVGSVGElement) => DOMRect }).staffInkBounds(svg), box = svg.viewBox.baseVal
       const tolerance = box.width / Number(svg.getAttribute('width')) * 0.5
       return ink.x < -tolerance || ink.y < -tolerance || ink.x + ink.width > box.width + tolerance || ink.y + ink.height > box.height + tolerance ? [{ page: index + 1, ink: { x: ink.x, y: ink.y, width: ink.width, height: ink.height }, viewBox: { width: box.width, height: box.height } }] : []
     }))

@@ -15,6 +15,7 @@ export function builtinPdfCharacters() {
   for (const file of readdirSync(join(root, 'src/scores')).filter(file => file.endsWith('.m3n')).sort()) inputs.push(read(`src/scores/${file}`))
   for (const file of readdirSync(join(root, 'src/works')).filter(file => file.endsWith('.m3n')).sort()) inputs.push(read(`src/works/${file}`))
   for (const file of readdirSync(join(root, 'packages/numbered-notation/src')).filter(file => file.endsWith('.ts') && !file.endsWith('.test.ts')).sort()) inputs.push(read(`packages/numbered-notation/src/${file}`))
+  for (const file of ['packages/notation/src/heading-content.ts', 'packages/notation/src/heading-lines.ts', 'packages/score-renderer/src/staff/staff-header.ts']) inputs.push(read(file))
   inputs.push(Array.from({ length: 95 }, (_, index) => String.fromCharCode(index + 32)).join(''))
   return [...new Set(inputs.join(''))].filter(char => char.codePointAt(0) >= 32).sort((a, b) => a.codePointAt(0) - b.codePointAt(0)).join('')
 }

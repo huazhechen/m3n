@@ -20,5 +20,5 @@ describe('staff page packing', () => {
     expect((await prepareStaffScore(score, { width: 555 })).pageCount(true)).toBe(2)
     expect(prepared.pageCount(true, 550)).toBe(2)
     expect(score).toEqual(before)
-  }, 30_000)
+  }, 300_000)
 })

@@ -1,0 +1,98 @@
+/** One legal row starting at its index in the candidate table. */
+export type LineCandidate = { end: number; density: number; penalty?: number }
+type Row = LineCandidate & { id: number; cost: number; densityPenalty: number }
+type Plan = { row: Row; cost: number; previous?: Plan }
+const epsilon = 1e-12
+
+function ends(plan: Plan | undefined): number[] {
+  const result: number[] = []
+  for (; plan; plan = plan.previous) result.push(plan.row.end)
+  return result.reverse()
+}
+
+function better(candidate: Plan, current: Plan | undefined) {
+  if (!current || candidate.cost < current.cost - epsilon) return true
+  if (Math.abs(candidate.cost - current.cost) > epsilon) return false
+  // Stable ties put more content on the earliest differing row.
+  const a = ends(candidate),
+    b = ends(current)
+  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i]! > b[i]!
+  return false
+}
+
+function transition(previous: Row, current: Row) {
+  const difference = current.density - previous.density
+  return current.densityPenalty * difference * difference
+}
+
+/** Minimise row costs plus adjacent-row density differences over a whole
+ * forced-break region. States with the same last row share all future costs
+ * and may be merged. No invented neighbours at the ends. */
+export function planScoreLines(
+  candidates: readonly (readonly LineCandidate[])[],
+  options: { relaxLastLine?: boolean } = {},
+): number[] {
+  const count = candidates.length
+  if (!count) return []
+  let id = 0
+  const rows: Row[][] = candidates.map((list) =>
+    list.map((row) => {
+      const densityPenalty = options.relaxLastLine && row.end === count && row.density <= 0.6 ? 0.5 : 1
+      return {
+        ...row,
+        id: id++,
+        densityPenalty,
+        cost:
+          1 +
+          densityPenalty * Math.max(0, 1 - row.density) ** 2 +
+          100 * Math.max(0, row.density - 1) ** 2 +
+          (row.penalty ?? 0),
+      }
+    }),
+  )
+  // An optimistic suffix cost and a feasible plan bound the exact search.
+  // They prune states, never discard a possible improvement to the optimum.
+  const lower = Array<number>(count + 1).fill(Infinity),
+    baseline: (Row | undefined)[] = Array(count)
+  lower[count] = 0
+  for (let start = count - 1; start >= 0; start--)
+    for (const row of rows[start]!) {
+      const cost = row.cost + lower[row.end]!
+      if (
+        cost < lower[start]! - epsilon ||
+        (Math.abs(cost - lower[start]!) <= epsilon && row.end > (baseline[start]?.end ?? 0))
+      ) {
+        lower[start] = cost
+        baseline[start] = row
+      }
+    }
+  let best: Plan | undefined
+  for (let start = 0; start < count;) {
+    const row = baseline[start]
+    if (!row) throw new Error('换行候选无法覆盖完整内容。')
+    best = { row, previous: best, cost: (best?.cost ?? 0) + row.cost + (best ? transition(best.row, row) : 0) }
+    start = row.end
+  }
+  if (!best?.previous) return ends(best)
+  const states = Array.from({ length: count + 1 }, () => new Map<number, Plan>())
+  for (const row of rows[0]!) states[row.end]!.set(row.id, { row, cost: row.cost })
+  for (let start = 1; start < count; start++) {
+    for (const previous of states[start]!.values()) {
+      if (previous.cost + lower[start]! > best.cost + epsilon) continue
+      for (const row of rows[start]!) {
+        const cost = previous.cost + row.cost + transition(previous.row, row)
+        if (cost + lower[row.end]! > best.cost + epsilon) continue
+        const plan = { row, cost, previous }
+        if (row.end === count) {
+          if (better(plan, best)) best = plan
+        } else {
+          const key = row.id,
+            target = states[row.end]!
+          if (better(plan, target.get(key))) target.set(key, plan)
+        }
+      }
+    }
+    states[start]!.clear()
+  }
+  return ends(best)
+}

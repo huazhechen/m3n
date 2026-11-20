@@ -1,10 +1,10 @@
 /** Browser-only, independent paint test. Rectangle intersection selects candidates;
  * opaque raster overlap confirms a collision, so a curve's empty box is harmless.
  */
-export function auditNativeInkCollisions(system) {
+export function auditNativeInkCollisions(system, { groupSelector } = {}) {
   const measure = document.createElement('canvas').getContext('2d')
   const primitiveSelector = 'text,path,line,rect,circle,ellipse'
-  const rootInverse = system.ownerSVGElement.getCTM().inverse()
+  const rootInverse = (system.ownerSVGElement ?? system).getCTM().inverse()
   const primitives = new Map()
   for (const node of system.querySelectorAll(primitiveSelector)) {
     const style = getComputedStyle(node), matrix = rootInverse.multiply(node.getCTM())
@@ -38,9 +38,9 @@ export function auditNativeInkCollisions(system) {
     objects.push({ kind, label, id: node.getAttribute('data-m3n-id') ?? node.id, lane: node.closest('[data-m3n-lane]')?.getAttribute('data-m3n-lane'), pieces,
       left: Math.min(...pieces.map(p => p.left)), right: Math.max(...pieces.map(p => p.right)), top: Math.min(...pieces.map(p => p.top)), bottom: Math.max(...pieces.map(p => p.bottom)) })
   }
-  for (const node of system.querySelectorAll('g.note')) object(node, 'music', '', n => !n.closest('[data-m3n-role="mark"]'))
+  for (const node of system.querySelectorAll('g.note')) object(node, 'music', '', n => !n.closest('[data-m3n-role="mark"],[data-m3n-role="annotation"],.verse'))
   for (const node of system.querySelectorAll('[data-m3n-role="bar"]')) object(node, 'bar', '')
-  for (const node of system.querySelectorAll('[data-m3n-role="beam"]')) object(node, 'music', 'beam')
+  for (const node of system.querySelectorAll('[data-m3n-role="beam"]')) object(node, 'music', 'beam', n => !n.closest('.verse,[data-m3n-role="annotation"]'))
   for (const node of system.querySelectorAll('[data-m3n-role="control"]')) object(node, node.getAttribute('data-m3n-control') === 'passes' ? 'label' : 'control', node.getAttribute('data-m3n-control'))
   for (const node of system.querySelectorAll('[data-m3n-relation]')) {
     if (!node.parentElement.closest('[data-m3n-relation]')) object(node, 'relation', node.getAttribute('data-m3n-relation'))
@@ -55,6 +55,10 @@ export function auditNativeInkCollisions(system) {
     if (node.closest('[data-m3n-role="control"]')) continue
     const group = node.closest('[data-m3n-role="lyric-fragment"],[data-m3n-role="annotation-frame"]') ?? node
     if (!labels.has(group)) { object(group, 'label', group.textContent); labels.add(group) }
+  }
+  if (groupSelector) {
+    objects.length = 0
+    for (const node of system.querySelectorAll(groupSelector)) object(node, 'label', 'system')
   }
   const canvases = [document.createElement('canvas'), document.createElement('canvas')]
   const raster = (item, canvas, left, top, width, height) => {

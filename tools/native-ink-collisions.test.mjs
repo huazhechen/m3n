@@ -37,6 +37,20 @@ test('respects real gaps in a dashed line', async () => {
   assert.equal(result.collisions.length, 0)
 })
 
+test('checks complete system ink without rejecting disjoint shapes in overlapping boxes', async () => {
+  const result = await page.evaluate(() => {
+    const host = document.querySelector('main')
+    host.innerHTML = '<svg width="120" height="100"><g class="system" id="first"><path d="M0 40 H80 V60" fill="none" stroke="black" stroke-width="2"/></g><g class="system" id="second"><rect x="20" y="50" width="10" height="10"/></g></svg>'
+    const clear = auditNativeInkCollisions(host.querySelector('svg'), { groupSelector: 'g.system' })
+    host.querySelector('rect').setAttribute('y', '39')
+    const crossed = auditNativeInkCollisions(host.querySelector('svg'), { groupSelector: 'g.system' })
+    return { clear, crossed }
+  })
+  assert.equal(result.clear.candidates, 1)
+  assert.equal(result.clear.collisions.length, 0)
+  assert.equal(result.crossed.collisions.length, 1)
+})
+
 test('includes a section frame and consolidates a lyric fragment with its prefix', async () => {
   const framed = await check('<g class="note"><rect x="10" y="10" width="5" height="5"/></g><g data-m3n-role="annotation-frame"><rect x="10" y="10" width="30" height="30" fill="none" stroke="black"/><text data-m3n-role="annotation" x="20" y="30" font-size="12">A</text></g>')
   assert.equal(framed.collisions.length, 1)

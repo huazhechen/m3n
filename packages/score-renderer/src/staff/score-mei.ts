@@ -203,7 +203,7 @@ export function scoreToMei(input: ScoreDocument): string {
       const startid = event.kind === 'tuplet' ? `${xmlId}-n1` : xmlId
       return [
         event.chord ? `<harm staff="${staffNumber}" startid="#${startid}">${chordSymbol(event.chord, event.key)}</harm>` : '',
-        event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${startid}"><rend fontweight="bold" halign="left">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
+        event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${startid}" type="${event.sectionLabelBreakAfter ? 'm3n-section-heading' : 'm3n-section'}"><rend fontweight="bold" halign="left">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
         event.dynamic ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.dynamic}</dynam>` : '',
         event.prefix ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.prefix}</dynam>` : '',
         event.text ? `<dir staff="${staffNumber}" startid="#${startid}" place="above">${escapeXml(event.text)}</dir>` : '',
@@ -332,13 +332,14 @@ export function scoreToMei(input: ScoreDocument): string {
         ? `  ${renderTempoXml(document.tempo, document.meterUnit, 'tstamp="1"', 'm3n-tempo-1', document.meterCount)}\n`
         : ''
       const xml = `<measure xml:id="${measureId}" n="${measureNumber}"${metcon}${left}${right}>\n${tempo}${staves}${controls ? `\n${controls}` : ''}\n</measure>`
+      measureNumber += (melody?.multiRest ?? 1) - 1
       return {
         sectionName: melody?.sectionName,
         ending: melody?.ending,
         repeatStart: melody?.left === 'rptstart',
         repeatCount: melody?.repeatCount ?? (melody?.right === 'rptend' ? 2 : undefined),
         navigation: melody?.navigation ?? melody?.events.flatMap((event) => event.navigation) ?? [],
-        breakBefore: melody?.breakBefore,
+        breakBefore: (partIndex > 0 && measureIndex === 0) || melody?.breakBefore || melody?.events.some(event => event.sectionLabel),
         breakAfter: melody?.breakAfter,
         scoreDef: [openingKey ? keyScoreDefXml(openingKey, previousKey) : '', openingMeter ? meterScoreDefXml(openingMeter) : ''].filter(Boolean).join('\n'),
         xml,

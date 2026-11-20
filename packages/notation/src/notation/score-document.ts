@@ -74,7 +74,7 @@ export type ScoreLyricBlock = {
 
 /** Canonical musical meaning of a source document, independent of textual layout. */
 export type ScoreDocument = {
-  /** Equal visible measure widths within each numbered-notation system. */
+  /** Equal visible measure widths within each engraved system. */
   equalMeasures?: boolean
   /** Minimum vertical core clearance in music-font em; defaults to 1.2 throughout the score. */
   minimumCoreGapEm?: number

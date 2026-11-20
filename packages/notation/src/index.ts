@@ -26,3 +26,7 @@ export * from './page-format.js'
 
 export { parseKey } from './notation/m3n-primitives.js'
 export { m3nChord } from './m3n-harmony.js'
+
+export { planScoreLines, type LineCandidate } from './line-breaking.js'
+export { numberedHeadingLines } from './heading-lines.js'
+export { numberedHeaderContent } from './heading-content.js'

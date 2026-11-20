@@ -51,7 +51,8 @@
   "lto": true,
   "binaryenCores": 1,
   "externalWasm": true,
+  "layoutPatchSha256": "d8dcff2fdb73cf51d84b3ec64eb79796fb4f8dee9135653c0b9f6a6750e51fff",
   "sourcePatchSha256": "28677e3780a5aa9ef71f55b92eda2c07cf0805fe8879b4cc4a78053bab2dec47",
-  "moduleSha256": "bf683a2e922dd027852856eaf52074ce4bf3063e90929391c6a5df963bb1c5c7",
-  "wasmSha256": "d55396e6ccf6263eeda9ef4e4cd0c9ff9a291248200e981dd4f3c85ff8e6aa1b"
+  "moduleSha256": "2c4bd08ab24bec3d1b7c32cece65d31c1a0dde79e0c64afce2edfc99f7eac693",
+  "wasmSha256": "3872b861d27ff797c53b201003e597f0b399aa36466af5d807f643ec0ff83dda"
 }

@@ -44,6 +44,9 @@ await writeFile(resolve(source, 'include/vrv/git_commit.h'), `#define GIT_COMMIT
 const sourcePatch = resolve(notices, 'mei-only.patch')
 run('patch', ['-p1', '--batch', '-i', sourcePatch], { cwd: source })
 
+const layoutPatch = resolve(notices, 'm3n-layout.patch')
+run('patch', ['-p1', '--batch', '-i', layoutPatch], { cwd: source })
+
 // Liberation's optional embedded text font is never enabled by M3N.
 // Keep all Leipzig glyphs, Times metrics and the required Bravura code/name map.
 const excludedFonts = ['Gootville', 'Leland', 'Petaluma', 'Liberation']
@@ -94,6 +97,7 @@ await writeFile(resolve(vendor, 'build.json'), `${JSON.stringify({
   version: '6.2.0', commit, sourceSha256, emscriptenVersion,
   excludedFonts, excludedResources, supportedMusicFonts, disabledFeatures, exportedFunctions,
   compileOptimization, linkOptimization, lto: true, binaryenCores: 1, externalWasm: true,
+  layoutPatchSha256: createHash('sha256').update(await readFile(layoutPatch)).digest('hex'),
   sourcePatchSha256: createHash('sha256').update(await readFile(sourcePatch)).digest('hex'),
   moduleSha256: createHash('sha256').update(artifact).digest('hex'),
   wasmSha256: createHash('sha256').update(wasm).digest('hex'),

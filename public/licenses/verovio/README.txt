@@ -21,7 +21,8 @@ SHA-256:
 The complete M3N modification/build recipe is build-verovio.mjs in this
 directory. To rebuild, place it at tools/build-verovio.mjs in a directory
 with the source archive at public/licenses/verovio/verovio-6.2.0-source.tar.gz
-and mei-only.patch from this directory at public/licenses/verovio/mei-only.patch.
+and both mei-only.patch and m3n-layout.patch from this directory at
+public/licenses/verovio/.
 Install and activate Emscripten 4.0.20, provide CMake (tested with 3.31.6),
 GNU Make, patch, tar and Node.js, then run:
   node tools/build-verovio.mjs
@@ -31,7 +32,9 @@ size and link-time optimization, runs Binaryen serially for reproducibility,
 filters resources and links the replacement
 ES module and its adjacent verovio-module.wasm binary. Both files must be
 distributed together. The shared accidental converter is preserved verbatim
-outside the MusicXML guard. No engraving or playback algorithms are changed.
+outside the MusicXML guard. m3n-layout.patch adds measured per-measure widths,
+real-font lyric occupation and unexpanded horizontal measurements for the
+application layout planner. Musical glyph outlines and playback are unchanged.
 See docs/VEROVIO_BUILD.md in the M3N repository for integration and verification.
 
 These source and notice files are optional downloads and are not loaded

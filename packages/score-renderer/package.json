@@ -44,6 +44,8 @@
     "pdf-lib": "^1.17.1",
     "spessasynth_core": "^4.3.12",
     "spessasynth_lib": "^4.3.12",
+    "svg-path-bbox": "^2.1.0",
+    "txml": "^6.0.3",
     "verovio": "6.2.0"
   },
   "devDependencies": {
