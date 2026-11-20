@@ -36,7 +36,7 @@ with tarfile.open(root / 'public/licenses/bravura/glyph-sources.tar.gz') as arch
             parse_path(path.get('d'), TransformPen(pen, (1, 0, 0, -1, 0, 0)))
         native[name] = ''.join(pen.commands)
 
-selected = ['coda', 'segno', 'fermataAbove', 'breathMarkComma', 'articAccentAbove', 'articTenutoAbove', 'articStaccatissimoAbove',
+selected = ['coda', 'segno', 'fermataAbove', 'breathMarkComma', 'articAccentAbove', 'articTenutoAbove', 'articStaccatissimoWedgeAbove',
             'ornamentTrill', 'ornamentShortTrill', 'accidentalFlat', 'accidentalNatural', 'accidentalSharp',
             'dynamicPiano', 'dynamicForte', 'dynamicMP', 'dynamicMF', 'dynamicPP', 'dynamicPPP', 'dynamicFF', 'dynamicFFF', 'dynamicSforzato',
             'metNoteWhole', 'metNoteHalfUp', 'metNoteQuarterUp', 'metNote8thUp', 'metNote16thUp', 'metNote32ndUp', 'metNote64thUp', 'wiggleArpeggiatoUp']
