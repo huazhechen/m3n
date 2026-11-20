@@ -4,91 +4,120 @@ import source from '../scores/you_raise_me_up_01.m3n?raw'
 import plan from '../../config/scorebook/editorial-plan.json'
 import categories from '../../config/scorebook/library-categories.json'
 
-// Independently read from the uploaded image: degree (0 = rest), quarter-note beats.
+// Independently read from the replacement image supplied by the user:
+// https://iknow-pic.cdn.bcebos.com/58ee3d6d55fbb2fb4fbb739f434a20a44723dcae
+// Physical image bars, including the opening/final half-bars; degree 0 is a rest.
 const reference = [
-  '0:1 0:1 0:.75 5d:.25 5d:.5 1:.5',
-  '3:1 3:.75 1:.25 2:.75 1:.25 1:.75 6d:.25',
-  '6d:.5 1:1.5 0:.75 7d:.25 1:.25 3:.75',
-  '5:1 0:.75 1:.25 6:.5 5:.5 5:.5 5:.25 3:.25',
-  '2:2 0:.75 5:.25 6:.5 7:.5',
-  '1e:1 1e:.75 7:.25 7:.5 6:.5 0:.5 5:.25 6:.25',
-  '5:1 3:.5 0:.5 0:.75 5d:.25 5:.5 4:.5',
-  '3:1 0:.75 3:.25 3:.5 2:.25 1:.25 1:.5 7d:.5',
-  '1:2 0:.75 5:.25 6:.5 7:.5',
-  '1e:1.5 7:.5 7:.5 6:.5 5:.5 4:.5',
-  '5:1 3:1 0:.75 5:.25 2e:.75 1e:.25',
-  '1e:1 0:.5 7:.5 7:.5 6:.5 5:.25 4:.25 5:.5',
-  '5:2 0:1 5:.5 7:.5',
-  '1e:1 1e:.75 7:.25 7:.5 6:.25 5:.25 5:.25 4:.5 5:.25',
-  '5:1 1e:1 0:.75 5d:.25 5:.75 4:.25',
-  '3:1 0:.75 3:.25 3:.5 2:.25 1:.25 1:.5 7d:.5',
+  '0:.5 5d:.5 5d:.5 1:.5',
+  '3:1.5 1:.5 2:.75 1:.25 1:.5 6d:.5',
+  '5d:.5 1:1.5 0:.5 7d:.5 1:.5 3:.5',
+  '5:1.5 1:.5 6:.75 5:.25 5:.5 3:.5',
+  '2:2 0:.5 5:.5 6:.5 7:.5',
+  '1e:1.5 1e:.5 7:.5 6:.5 5:.5 4:.5',
+  '5:1 1:1 0:.5 1:.5 5:.5 4:.5',
+  '3:1.5 4:.5 3:.5 2:.5 1:.5 7d:.5',
+  '1:2 0:.5 5:.5 6:.5 7:.5',
+  '1e:1.5 1e:.5 7:.5 6:.5 5:.5 4:.5',
+  '5:1 3:1 0:.5 5:.5 2e:.5 7:.5',
+  '1e:1.5 1e:.5 7:.5 6:.5 5:.5 4:.5',
+  '5:2 0:.5 5:.5 5:.5 7:.5',
+  '1e:1.5 1e:.5 7:.5 6:.5 5:.5 4:.5',
+  '5:1 1e:1 0:.5 1:.5 5:.5 4:.5',
+  '3:1.5 4:.5 3:.5 2:.5 1:.5 7d:.5',
   '1:3 0:1',
-  '0:1 0:1 0:1 0:1',
-  '0:1 0:1 0:.75 5:.25 6:.5 7:.5',
-  '1e:1.5 7:.5 7:.5 6:.5 5:.5 4:.5',
-  '5:1 3:1 0:.75 5:.25 2e:.75 1e:.25',
-  '1e:1 0:.5 7:.5 7:.5 6:.5 5:.25 4:.25 5:.5',
-  '5:2 0:1 5:.5 7:.5',
-  '1e:1 1e:.75 7:.25 7:.5 6:.25 5:.25 5:.25 4:.5 5:.25',
-  '5:1 1e:1 0:.75 5d:.25 5:.75 4:.25',
-  '3:1 0:.75 3:.25 3:.5 2:.25 1:.25 1:.5 7d:.5',
-  '1:2 0:.75 5:.25 6:.5 7:.5',
+  '0:1 0:1 0:.5 5:.5 6:.5 7:.5',
+  '1e:1.5 1e:.5 7:.5 6:.5 5:.5 4:.5',
+  '5:1 3:1 0:.5 5:.5 2e:.5 7:.5',
+  '1e:1.5 1e:.5 7:.5 6:.5 5:.5 4:.5',
+  '5:2 0:.5 5:.5 5:.5 4:.5',
+  '3:1.5 3:.5 4:.5 3:.5 4:.5 6:.5',
+  '5:1 1e:1 0:.5 1:.5 1:.5 2:.5',
+  '3:1.5 4:.5 3:.5 2:.5 1:.5 7d:.5',
+  '1:3 0:1',
+  '0:1 0:1 0:.5 5d:.5 5d:.5 1:.5',
+  '1:3 0:1',
+  '0:1 0:1 0:.5 5d:.5 1:.5 2:.5',
+  '3:1.5 4:.5 3:.5 2:.5 1:.5 7d:.5',
   '1:4',
-  '0:1 0:1 0:.75 5d:.25 1:.5 2:.5',
-  '3:1 0:.75 3:.25 3:.5 2:.25 1:.25 1:.5 7d:.5',
-  '1e:4',
-  '1e:4',
+  '1:2',
 ]
-const expected = reference.map(bar => bar.split(' ').map(token => {
-  const [degree, beats] = token.split(':')
-  const value = Number(degree![0])
-  const pitch = value === 0 ? null : 62 + [0, 2, 4, 5, 7, 9, 11][value - 1]! + (degree!.endsWith('e') ? 12 : degree!.endsWith('d') ? -12 : 0)
-  return [pitch, Number(beats)]
-}))
+const alternateVerse = [
+  '3:1.5 1:.5 2:.75 1:.25 3:.5 2:.5',
+  '1:.5 5d:1.5 0:.5 7d:.5 1:.5 3:.5',
+]
+function events(bar: string, key: 'Eb' | 'E' | 'F') {
+  return bar.split(' ').map(token => {
+    const [degree, beats] = token.split(':')
+    const value = Number(degree![0])
+    const pitch = value === 0 ? null : { Eb: 63, E: 64, F: 65 }[key] + [0, 2, 4, 5, 7, 9, 11][value - 1]! + (degree!.endsWith('e') ? 12 : degree!.endsWith('d') ? -12 : 0)
+    return [pitch, Number(beats)] as const
+  })
+}
 
-it('transcribes all 32 image bars, the D major pitches, sixteenth rhythms and ties', () => {
+it('matches the replacement image notes, credits, alternate verse, Eb/E/F keys and final tie', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
-  expect(document).toMatchObject({ title: 'You Raise Me Up', key: 'D', meterCount: 4, meterUnit: 4, tempo: 60 })
+  expect(document).toMatchObject({ title: 'You Raise Me Up', composer: 'Rolf Lovland', lyricist: 'Brendan Graham', key: 'Eb', meterCount: 4, meterUnit: 4, tempo: 60 })
+  expect(document.order).toEqual(['A', 'B', 'C', 'A', 'B', 'D'])
+  expect(document.orderKeys).toEqual([undefined, undefined, undefined, 'F', 'F', undefined])
+  // Local alternatives occupy two separate written bars; C ends with the two
+  // rests before A's reused pickup, reconstructing image bar 27 without duplication.
+  const written = [
+    ...reference.slice(0, 3).map(bar => events(bar, 'Eb')),
+    ...alternateVerse.map(bar => events(bar, 'Eb')),
+    ...reference.slice(3, 17).map(bar => events(bar, 'Eb')),
+    ...reference.slice(17, 26).map(bar => events(bar, 'E')),
+    events('0:1 0:1', 'E'),
+    ...reference.slice(27).map(bar => events(bar, 'F')),
+  ]
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
   const scale: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }
   expect(bars.map(bar => bar.events.map(event => {
     const [name, octave, alteration] = pitches.get(event)?.[0]?.split(':') ?? []
     return [name ? 12 * (Number(octave) + 1) + scale[name]! + (alteration === 's' ? 1 : alteration === 'f' ? -1 : 0) : null, event.beats]
-  }))).toEqual(expected)
-  expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual(Array(32).fill(4))
-  expect(bars.flatMap((bar, index) => bar.events.flatMap((event, position) => event.tie ? [[index + 1, position + 1]] : [])))
-    .toEqual([[2, 1], [4, 5], [6, 1], [8, 6], [14, 1], [14, 6], [16, 6], [24, 1], [24, 6], [26, 6], [30, 6], [31, 1]])
-  // Bars 20–26 repeat, with bar 27 first ending, then bars 28–32 second ending.
-  const route = [...Array.from({ length: 27 }, (_, index) => index), ...Array.from({ length: 7 }, (_, index) => index + 19), ...Array.from({ length: 5 }, (_, index) => index + 27)]
-  const notes: number[][] = []
-  let time = 0, tied = false
-  for (const bar of route) for (const [index, [pitch, duration]] of expected[bar]!.entries()) {
-    if (pitch !== null) {
-      if (tied) notes.at(-1)![1] = time + duration!
-      else notes.push([time, time + duration!, pitch!])
-    }
-    time += duration!
-    tied = bars[bar]!.events[index]!.tie ?? false
-  }
-  const performance = compileScorePerformance(document)
-  expect(performance.beats).toBe(156)
-  expect(performance.notes.map(note => [note.start, note.end, note.pitch])).toEqual(notes)
+  }))).toEqual(written)
+  expect(bars.flatMap((bar, index) => bar.events.flatMap((event, position) => event.tie ? [[index, position]] : []))).toEqual([[32, 0]])
+  expect(source).not.toContain('{lg}')
+  expect(source).toContain('{text=rit.}')
 })
 
-it('retains English syllables only, including lyrics under tied targets', () => {
+it('plays both verses, the E-major chorus, the F-major return and the coda exactly once', () => {
+  const firstPass = reference.slice(0, 27).flatMap((bar, index) => events(bar, index < 17 ? 'Eb' : index < 26 ? 'E' : 'F'))
+  const secondPass = reference.slice(1, 16).flatMap((bar, index) => events(index < 2 ? alternateVerse[index]! : bar, 'F'))
+  const coda = reference.slice(27).flatMap(bar => events(bar, 'F'))
+  const expected: number[][] = []
+  let time = 0
+  for (const [pitch, duration] of [...firstPass, ...secondPass, ...coda]) {
+    if (pitch !== null) {
+      // Only the last two notes in the image are tied: four plus two beats.
+      if (time === 182) expected.at(-1)![1] = time + duration
+      else expected.push([time, time + duration, pitch])
+    }
+    time += duration
+  }
+  const performance = compileScorePerformance(parseM3NDocument(source))
+  expect(time).toBe(184)
+  expect(performance.beats).toBe(time)
+  expect(performance.notes).toHaveLength(220)
+  expect(performance.notes.map(note => [note.start, note.end, note.pitch])).toEqual(expected)
+  expect(expected.at(-1)).toEqual([178, 184, 65])
+})
+
+it('keeps both English verses and the correct chorus syllables without forced tied-target lyrics', () => {
   const document = parseM3NDocument(source)
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const { lyricsByEvent } = deriveScoreInteraction(document)
-  const lyrics = bars.map(bar => bar.events.map(event => (lyricsByEvent.get(event) ?? []).filter(item => item.kind === 'text').map(item => item.text).join('')))
+  const lyrics = bars.map(bar => bar.events.flatMap(event => (lyricsByEvent.get(event) ?? []).filter(item => item.kind === 'text').map(item => item.text)))
   expect(lyrics.flat().join(' ')).not.toMatch(/\p{Script=Han}/u)
-  expect(lyrics[0]!.filter(Boolean)).toEqual(['When', 'I', 'am'])
-  expect(lyrics[1]!.filter(Boolean)).toEqual(['down', 'and', 'oh', 'my', 'soul,', 'so'])
-  for (const index of [15, 25, 29]) expect(lyrics[index]!.filter(Boolean)).toEqual(['up,', 'to', 'more', 'than', 'I', 'can'])
+  expect(lyrics[0]).toEqual(['When', 'There', 'I', 'is', 'am', 'no'])
+  expect(lyrics[3]).toEqual(['life,', 'no', 'life', 'with', 'out', 'its'])
+  expect(lyrics[4]).toEqual(['hun', 'ger,', 'Each', 'rest', 'less'])
+  expect(lyrics[17]).toEqual(['up,', 'To', 'more', 'than', 'I', 'can'])
+  expect(source).not.toContain('+')
 })
 
-it('includes the song once in both the contemporary pop library and the book', () => {
+it('includes the corrected song once in both the contemporary pop library and the book', () => {
   expect(plan.sourceCount).toBe(plan.entries.length)
   expect(plan.entries.filter(entry => entry.file === 'you_raise_me_up_01.m3n')).toEqual([
     expect.objectContaining({ id: 'you_raise_me_up', title: 'You Raise Me Up', section: 'pop' }),

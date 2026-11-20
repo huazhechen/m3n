@@ -1,8 +1,8 @@
 {
-  "fingerprint": "533f44e908c470190885a264399b9ddab2b1eab53e6217a9265f25922d8f297f",
-  "sha256": "e3b03c66a995d25b539023836c639b86e6e75bcc107f9b1cdd2c62ba56bb0ac3",
-  "characters": 1833,
-  "bytes": 618676,
+  "fingerprint": "f9773631fba0cd77c00d80a0a66ad4f2fe562eb804c32cb1855af7dfc26780f7",
+  "sha256": "f9ec3cbc649e777309db99a392685ebb8581a87be9049e64ddd69ed8716a7c5d",
+  "characters": 1831,
+  "bytes": 618164,
   "font": "Noto Serif CJK SC Regular 2.003",
   "license": "SIL OFL 1.1"
 }

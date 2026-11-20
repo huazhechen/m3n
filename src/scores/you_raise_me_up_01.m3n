@@ -1,48 +1,58 @@
-{preferred-width=590}
+{preferred-width=710}
 {title=You Raise Me Up}
-{key=D} {4/4} {60qpm}
-// 根据用户提供的曲谱图片逐小节转录，仅保留英文歌词。
-// Screenshot_2026-11-20-09-50-18-488_com.kuaiyuepu.app.android-edit.jpg
-// 保留原谱的 D 大调、60qpm、低音5、连线及副歌两房反复。
-// 同音连线下原谱另有歌词的音符用 + 显式对位；英文按音节拆分。
-N: 0 0 (0. (5d)) (5d 1) | 3~ (3. (1)) (2. (1)) (1. (6d)) |
-L: When I am | down +and % oh my soul, so
----
-N: (6d) 1. (0. (7d)) ((1) 3.) | 5 (0. (1)) (6 5~) (5 (5 3)) |
-L: wea-ry When trou-bles | come and my heart +bur-dened %
----
-N: 2^ (0. (5)) (6 7) | 1e~ (1e. (7)) (7 6) (0 (5 6)) |
-L: be. Then, I am | still and wait here in the
----
-N: 5 (3 0) (0. (5d)) (5 4) | 3 (0. (3)) (3 (2 1~)) (1 7d) |
-L: Si-lence Un-til you | come and sit a while with
----
-N: 1^ (0. (5)) (6 7) | 1e. (7) (7 6) (5 4) | 5 3 (0. (5)) (2e. (1e)) |
-L: me. You raise me | up, so I can stand on | moun-tains. You raise me
----
-N: 1e (0 7) (7 6) ({lg}(5 4){/} 5) | 5^ 0 (5 7) |
-L: up, to walk on stor-%my | seas. I am
----
-N: 1e~ (1e. (7)) (7 (6 5~)) ((5) {lg}4 (5){/}) | 5 1e (0. (5d)) (5. (4)) |
-L: strong when I am on your shoul | %ders. You raise me
----
-N: 3 (0. (3)) (3 (2 1~)) (1 7d) | 1^. 0 | 0 0 0 0 | 0 0 (0. (5)) (6 7) |
-L: up, to more than I +can % | be. | | You raise me
----
-N: ||: 1e. (7) (7 6) (5 4) | 5 3 (0. (5)) (2e. (1e)) |
-L: up, so I can stand on | moun-tains. You raise me
----
-N: 1e (0 7) (7 6) ({lg}(5 4){/} 5) | 5^ 0 (5 7) |
-L: up, to walk on stor-%my | seas. I am
----
-N: 1e~ (1e. (7)) (7 (6 5~)) ((5) {lg}4 (5){/}) | 5 1e (0. (5d)) (5. (4)) |
-L: strong when I am on your shoul | %ders. You raise me
----
-N: 3 (0. (3)) (3 (2 1~)) (1 7d) |
-L: up, to more than I +can %
+{composer=Rolf Lovland}
+{lyricist=Brendan Graham}
+{key=Eb} {4/4} {60qpm}
+{order=A,B,C,A@F,B@F,D}
+// Reference supplied by the user:
+// https://iknow-pic.cdn.bcebos.com/58ee3d6d55fbb2fb4fbb739f434a20a44723dcae
+// The image gives a moderately slow tempo without a BPM; retain 60qpm.
+// A/B: verse and chorus. C: E-major chorus and the two-beat rest before returning in F.
+// On the second visit, take the image's alternate verse notes, then jump from B to coda D.
+// The initial and final half-bars, and C -> A's half-bars, complement each other.
+===A
+N: (0 5d) (5d 1) |
+L1: When I am
+L2: There is no
 ---V1
-N: 1^ (0. (5)) (6 7) :||
-L: be. You raise me
+N: 3. (1) (2. (1)) (1 6d) | (5d) 1. (0 7d) (1 3) |
+L: down, And oh my soul so | wear-y, When trou-bles
 ---V2
-N: 1^^ | 0 0 (0. (5d)) (1 2) | 3 (0. (3)) (3 (2 1~)) (1 7d) | 1e^^~ | 1e^^ |||
-L: be. | You raise me | up, to more than I +can % | be. |
+N: 3. (1) (2. (1)) (3 2) | (1) 5d. (0 7d) (1 3) |
+L: life, no life with-out its | hun-ger, Each rest-less
+---
+N: 5. (1) (6. (5)) (5 3) | 2^ (0 5) (6 7) |
+L1: come, And my heart bur-dened | be, Then I am
+L2: heart beats so im-per-fect | ly. But when you
+---
+N: 1e. (1e) (7 6) (5 4) | 5 1 (0 1) (5 4) |
+L1: still, And wait here in the | si-lence, Un-til you
+L2: come and I am filled with | won-der, Some-times I
+---
+N: 3. (4) (3 2) (1 7d) | 1^ (0 5) (6 7) ||
+L1: come, And sit a while with | me. You raise me
+L2: think I glimpse e-ter-ni | ty. You raise me
+===B
+N: 1e. (1e) (7 6) (5 4) | 5 3 (0 5) (2e 7) |
+L: up, So I can stand on | moun-tains, You raise me
+---
+N: 1e. (1e) (7 6) (5 4) | 5^ (0 5) (5 7) |
+L: up, To walk on storm-y | seas, % I am
+---
+N: 1e. (1e) (7 6) (5 4) | 5 1e (0 1) (5 4) | 3. (4) (3 2) (1 7d) ||
+L: strong, When I am on your | shoul-ders, You raise me | up, To more than I can
+===C
+N: 1^. 0 | {key=E}0 0 (0 5) (6 7) |
+L: be. | You raise me
+---
+N: 1e. (1e) (7 6) (5 4) | 5 3 (0 5) (2e 7) |
+L: up, So I can stand on | moun-tains, You raise me
+---
+N: 1e. (1e) (7 6) (5 4) | 5^ (0 5) (5 4) |
+L: up, To walk on storm-y | seas, % I am
+---
+N: 3. (3) (4 3) (4 6) | 5 1e (0 1) (1 2) | 3. (4) (3 2) (1 7d) | 1^. 0 | 0 0 ||
+L: strong, When I am on your | shoul-ders, You raise me | up, To more than I can | be. |
+===D
+N: {key=F}1^. 0 | 0 0 (0 5d) (1 2) | {text=rit.}3. (4) (3 2) (1 7d) | 1^^~ | 1^ |||
+L: be. | You raise me | up, to more than I can | be. |
