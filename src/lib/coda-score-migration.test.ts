@@ -36,10 +36,15 @@ it.each(baselines)('preserves every performed event and lyric after simplifying 
   if (name === 'bai_hua_lin') {
     expect(houses.map(bar => bar.ending)).toEqual(['1', '2'])
     expect(source).not.toContain('{tocoda}')
+  } else if (name === 'hei_se_you_mo') {
+    expect(houses.map(bar => bar.ending)).toEqual(['1', '2'])
+    expect(source).not.toMatch(/\{(?:tocoda|coda)\}/)
+    expect(source.match(/\|\|:/g)).toHaveLength(1)
+    expect(source.match(/:\|\|/g)).toHaveLength(1)
   } else {
     expect(source).toContain('{tocoda}')
     expect(source).toContain('{coda}')
-    expect(houses).toHaveLength(name === 'hei_se_you_mo' ? 8 : 0)
+    expect(houses).toHaveLength(0)
     expect(source).not.toMatch(/^===|\{order=/m)
   }
 })
