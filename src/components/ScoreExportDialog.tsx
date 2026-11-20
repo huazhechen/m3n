@@ -64,7 +64,7 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
         if (!svgs.length) throw new Error('当前没有可导出的乐谱。')
         if (format === 'png') {
           const framed = frameScoreImage(svgs)
-          const canvas = await renderScoreCanvas(framed, framed.viewBox.baseVal.width, 2)
+          const canvas = await renderScoreCanvas(framed, framed.viewBox.baseVal.width, 4)
           const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
           if (!blob) throw new Error('PNG 生成失败。')
           downloadBlob(blob, `${fileName}.png`)
