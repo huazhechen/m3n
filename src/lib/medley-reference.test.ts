@@ -20,32 +20,38 @@ const mushroomDegrees = [
   '3d 7d 7d 7d 7d 7d 7d 7d 7d 7d 7d 7d 7d', '7d 7d 7d 5d 6d 5d 6d 0',
 ]
 
-it('transcribes the uploaded Mushroom melody with its octave dots, ties and mixed meter', () => {
+it('preserves the uploaded Mushroom melody and octave dots when rebarred to 2/4', () => {
   const analysis = analyzeM3N(source)
   expect(analysis.diagnostics).toEqual([])
-  const bars = analysis.score.parts.get('score')!.melody.filter(bar => bar.events.length).slice(22, 52)
-  expect(bars.map(bar => bar.events.map(event => event.pitches[0] ?? '0').join(' '))).toEqual(mushroomDegrees)
+  const bars = analysis.score.parts.get('score')!.melody.filter(bar => bar.events.length).slice(22, 79)
+  const events = bars.flatMap(bar => bar.events)
+  const attacks = events.filter((_, index) => !events[index - 1]?.tie)
+  const referenceAttacks = mushroomDegrees.flatMap((bar, index) =>
+    bar.split(' ').slice([4, 14, 19].includes(index) ? 1 : 0))
+  expect(attacks.map(event => event.pitches[0] ?? '0')).toEqual(referenceAttacks)
   expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
-    .toEqual(Array.from({ length: 30 }, (_, index) => [4, 14, 19].includes(index) ? 2 : 4))
-  expect(bars[0]!.events.map(event => event.beats)).toEqual([.5, .5, .5, .5, .25, .25, .5, .75, .25])
-  for (const index of [3, 13, 18]) expect(bars[index]!.events.at(-1)!.tie).toBe(true)
+    .toEqual(Array(57).fill(2))
+  expect(events.slice(0, 9).map(event => event.beats)).toEqual([.5, .5, .5, .5, .25, .25, .5, .75, .25])
+
 })
 
 it('plays the three songs consecutively in C sharp for 238.4 seconds', () => {
   const { score } = analyzeM3N(source)
   const unfolded = unfoldScorePerformance(score)
   const bars = unfolded.parts.get('score')!.melody.filter(bar => bar.events.length)
-  expect(bars).toHaveLength(98)
+  expect(bars).toHaveLength(149)
   const sections = bars.flatMap(bar => bar.events.filter(event => event.sectionLabel).map(event => event.sectionLabel))
   expect(sections).toEqual(['蜗牛与黄鹂鸟', '蜗牛与黄鹂鸟', '采蘑菇的小姑娘', '踏浪'])
   expect(new Set(bars.flatMap(bar => bar.events.map(event => event.key)))).toEqual(new Set(['C#']))
+  expect(new Set(bars.flatMap(bar => bar.events.map(event => `${event.meterCount}/${event.meterUnit}`)))).toEqual(new Set(['2/4']))
+  expect(source).not.toContain('完整反复两遍，接下曲')
   const performance = compileScorePerformance(score)
   expect(performance.beats).toBe(298)
   expect(performance.tempos).toEqual([{ beat: 0, qpm: 75 }])
   expect(performance.beats * 60 / 75).toBe(238.4)
   // Two complete Snail passes (70.4s), Mushroom (91.2s), then Wave (76.8s).
   expect(bars.slice(0, 44).flatMap(bar => bar.events).reduce((sum, event) => sum + event.beats, 0)).toBe(88)
-  expect(bars.slice(44, 74).flatMap(bar => bar.events).reduce((sum, event) => sum + event.beats, 0)).toBe(114)
+  expect(bars.slice(44, 101).flatMap(bar => bar.events).reduce((sum, event) => sum + event.beats, 0)).toBe(114)
   // Wave's “山上的山花儿开呀” is in the upper register, not low 6/5.
-  expect(bars[82]!.events.map(event => event.pitches[0])).toEqual(['6', '3', '3', '6', '3', '3', '6', '3', '5', '6'])
+  expect(bars.slice(117, 119).flatMap(bar => bar.events.map(event => event.pitches[0]))).toEqual(['6', '3', '3', '6', '3', '3', '6', '3', '5', '6'])
 })
