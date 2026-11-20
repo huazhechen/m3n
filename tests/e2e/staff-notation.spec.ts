@@ -149,3 +149,40 @@ test('basic exercises keep section labels and Chinese directions inside staff pa
     expect(outside, `${width}px staff pages`).toEqual([])
   }
 })
+
+test('staff measure numbers appear only at system ends in continuous and paged layouts', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('m3n:notation-mode', 'staff')
+    localStorage.setItem('m3n:measure-numbers', '1')
+  })
+  await page.goto('/scores/ban_yin_jie_kou_qin_ji_ben_gong_01')
+  const paper = page.locator('.score-paper')
+  for (const paged of [true, false]) {
+    if (!paged) {
+      await openScoreSettings(page)
+      await page.getByRole('switch', { name: '分页', exact: true }).click()
+      await page.keyboard.press('Escape')
+    }
+    await expect(paper.locator('g.system').first()).toBeVisible({ timeout: 60_000 })
+    await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    const systems = await paper.locator('g.system').evaluateAll(systems => systems.map(system => {
+      const measures = [...system.querySelectorAll('g.measure')]
+      const numbers = [...system.querySelectorAll('g.mNum')]
+      const number = numbers[0]
+      const last = measures.at(-1)!
+      const right = Math.max(...[...last.querySelectorAll('g.barLine path')].map(path => path.getBoundingClientRect().right))
+      return { count: numbers.length, last: number?.closest('g.measure') === last,
+        text: number?.textContent?.replace(/\s/g, ''), rightGap: right - (number?.getBoundingClientRect().right ?? 0) }
+    }))
+    expect(systems.length).toBeGreaterThan(1)
+    for (const system of systems) {
+      expect(system.count).toBe(1)
+      expect(system.last).toBe(true)
+      expect(system.text).toMatch(/^\d+$/)
+      expect(Math.abs(system.rightGap)).toBeLessThan(2)
+    }
+  }
+  await openScoreSettings(page)
+  await page.getByRole('switch', { name: '小节号', exact: true }).click()
+  await expect(paper.locator('g.mNum')).toHaveCount(0)
+})

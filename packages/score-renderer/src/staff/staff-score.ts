@@ -97,7 +97,6 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         }
         shape.replaceWith(replacement)
       }
-      if (!settings.measureNumbers) svg.querySelectorAll('g.mNum').forEach(number => number.remove())
       // Flatten Verovio's inner viewport so application SVG sizing rules cannot
       // resize or absolutely position it as a second sheet.
       for (const definition of svg.querySelectorAll<SVGSVGElement>('svg.definition-scale')) {
@@ -109,7 +108,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         definition.replaceWith(content)
       }
       svg.setAttribute('preserveAspectRatio', 'xMinYMin meet')
-      resolveStaffText(svg)
+      resolveStaffText(svg, settings.measureNumbers)
       svg.dataset.notation = 'staff'
       if (needsStaffExpansion(score)) for (const event of svg.querySelectorAll<SVGGElement>('g.note[id], g.chord[id], g.tuplet[id], g.rest[id]')) {
         if (!/^m3n-e-\d+(?:-rend\d+)?$/.test(event.id)) continue

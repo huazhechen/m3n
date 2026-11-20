@@ -5,12 +5,29 @@ const ns = 'http://www.w3.org/2000/svg'
  * This also removes Verovio's indentation from the text consumed by PDF export.
  * Leipzig outlines come from the bundled source; see public/licenses/verovio.
  */
-export function resolveStaffText(svg: SVGSVGElement) {
+export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
   const host = document.createElement('div')
   host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none;'
   host.setAttribute('aria-hidden', 'true')
   document.body.append(host); host.append(svg)
   try {
+    for (const system of svg.querySelectorAll('g.system')) {
+      const measures = [...system.querySelectorAll('g.measure')]
+      const last = measures.at(-1)
+      for (const number of system.querySelectorAll('g.mNum')) {
+        if (!measureNumbers || number.closest('g.measure') !== last) { number.remove(); continue }
+        const text = number.querySelector('text')
+        const barLines = [...last!.querySelectorAll<SVGGraphicsElement>('g.barLine path')]
+        if (!text || !barLines.length) continue
+        const inverse = text.getCTM()!.inverse()
+        const right = Math.max(...barLines.map(line => {
+          const box = line.getBBox()
+          return new DOMPoint(box.x + box.width, box.y).matrixTransform(line.getCTM()!).matrixTransform(inverse).x
+        }))
+        text.setAttribute('x', String(right))
+        text.setAttribute('text-anchor', 'end')
+      }
+    }
     for (const text of svg.querySelectorAll('text')) {
       const characters: Array<{ char: string; element: Element }> = []
       const walker = document.createTreeWalker(text, NodeFilter.SHOW_TEXT)
