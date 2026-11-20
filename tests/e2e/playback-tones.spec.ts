@@ -19,7 +19,7 @@ test('default needs no samples; five FluidR3 q3 instruments load on demand and p
   })
   await page.goto('/scores/huan_le_song_01')
   await openScoreSettings(page)
-  await expect(page.getByRole('button', { name: '选择音色，当前合成音色', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '选择音色，当前合成', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
   expect(workers).toHaveLength(0)
@@ -103,7 +103,7 @@ test('download has progress, cancellation and retry on a narrow screen', async (
   release()
   await page.unroute('**/*FluidR3-piano-q3-*.sf3')
   await openScoreSettings(page)
-  await expect(page.getByRole('button', { name: '选择音色，当前合成音色', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '选择音色，当前合成', exact: true })).toBeVisible()
   await page.route('**/*FluidR3-piano-q3-*.sf3', route => route.abort())
   await selectTone(page, '钢琴')
   await page.getByRole('button', { name: '播放', exact: true }).click()
@@ -145,7 +145,7 @@ test('live download and transpose preserve the audio context and transport posit
   await page.getByRole('dialog', { name: '选择调性' }).getByRole('button', { name: 'D大调', exact: true }).click()
   await expect.poll(async () => Number(await progress.inputValue())).toBeGreaterThan(before + 10)
   release(); await ready(page)
-  await selectTone(page, '合成音色'); await ready(page)
+  await selectTone(page, '合成'); await ready(page)
   await expect(pause).toBeEnabled()
   expect(await page.evaluate(() => (window as Window & { playbackAudit?: object }).playbackAudit)).toEqual({ created: 1, closed: 0 })
   await pause.click()
@@ -154,7 +154,7 @@ test('live download and transpose preserve the audio context and transport posit
 test('unknown stored tones use the default, while harmonica is now supported', async ({ page }) => {
   await page.addInitScript(() => { if (!localStorage.getItem('m3n:playback-tone')) localStorage.setItem('m3n:playback-tone', 'unknown') })
   await page.goto('/scores/huan_le_song_01'); await openScoreSettings(page)
-  await expect(page.getByRole('button', { name: '选择音色，当前合成音色', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '选择音色，当前合成', exact: true })).toBeVisible()
   await selectTone(page, '口琴'); await ready(page)
   await page.reload(); await ready(page); await openScoreSettings(page)
   await expect(page.getByRole('button', { name: '选择音色，当前口琴', exact: true })).toBeVisible()
@@ -211,12 +211,12 @@ test('full-volume playback stays audible and compresses dense chords without cli
   await page.getByRole('button', { name: '暂停', exact: true }).click()
 })
 
-for (const label of ['合成音色', '钢琴', '钢弦吉他', '口琴', '小提琴', '长笛']) {
+for (const label of ['合成', '钢琴', '钢弦吉他', '口琴', '小提琴', '长笛']) {
   test(`${label} has clear monophonic output after mastering`, async ({ page }) => {
     await auditFinalOutput(page)
     await page.goto('/editor')
     await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 - - - | 1 - - - |||')
-    if (label !== '合成音色') { await selectTone(page, label); await ready(page) }
+    if (label !== '合成') { await selectTone(page, label); await ready(page) }
     await page.getByRole('button', { name: '播放', exact: true }).click()
     await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
     await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms)).toBeGreaterThan(0.2)
