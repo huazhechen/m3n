@@ -18,7 +18,7 @@ import { STAFF_SCALE } from './line-layout.js'
 export type StaffSystem = { node: XmlNode; pieces: Ink[]; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
-  'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label',
+  'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row',
 ]
 const isDecoration = (node: XmlNode) => decorations.some((c) => hasClass(node, c))
 function filtered(node: XmlNode, omit: (node: XmlNode) => boolean): XmlNode {
@@ -157,12 +157,49 @@ export function arrangeStaffSystem(
       }
     }
   }
+  const groupedHairpins = new Set<XmlNode>()
+  // Align sequential wedges on the same local lane and clear music as one
+  // unit. Independent placement otherwise follows each note's vertical ink.
+  for (const measure of measures) {
+    const hairpins = nodes(measure).filter((n) => hasClass(n, 'hairpin'))
+      .map((node) => ({ node, ink: geometry.ink(node) }))
+      .sort((a, b) => a.ink.left - b.ink.left)
+    const rows: typeof hairpins[] = []
+    for (const item of hairpins) {
+      const center = (item.ink.top + item.ink.bottom) / 2
+      const row = rows.find((row) => row.every((other) =>
+        Math.abs(center - (other.ink.top + other.ink.bottom) / 2) <= 10 / scale &&
+        !overlapsX(item.ink, other.ink)))
+      if (row) row.push(item)
+      else rows.push([item])
+    }
+    for (const row of rows.filter((row) => row.length > 1)) {
+      const center = Math.max(...row.map(({ ink }) => (ink.top + ink.bottom) / 2))
+      for (const { node, ink } of row) {
+        translate(node, 0, center - (ink.top + ink.bottom) / 2)
+        groupedHairpins.add(node)
+      }
+      measure.children = measure.children.filter((child) =>
+        typeof child === 'string' || !row.some((item) => item.node === child))
+      measure.children.push(element('g', { class: 'm3n-hairpin-row' }, row.map((item) => item.node)))
+    }
+  }
+  const isHairpin = (attachment: XmlNode) => hasClass(attachment, 'hairpin') || hasClass(attachment, 'm3n-hairpin-row')
   const music = geometry.pieces(filtered(node, isDecoration))
   const obstacles = [...music]
+  const hairpinPieces = new Set<Ink>()
   // Relations already come from Verovio; keep brackets/curves inside expression
   // markings. Text is moved only when its actual horizontal span collides.
-  const attachments = findAll(node, isDecoration).sort(
-    (a, b) => Number(hasClass(b, 'hairpin')) - Number(hasClass(a, 'hairpin')),
+  const isStandaloneHeading = (attachment: XmlNode) =>
+    hasClass(attachment, 'reh') && sectionHeadings.has(measures[0]?.attributes.id ?? '')
+  const hasStandaloneHeading = sectionHeadings.has(measures[0]?.attributes.id ?? '')
+  const isHeadingTempo = (attachment: XmlNode) => hasStandaloneHeading && hasClass(attachment, 'tempo')
+  const placementOrder = (attachment: XmlNode) =>
+    isHeadingTempo(attachment) ? 2 : isStandaloneHeading(attachment) ? 1 : isHairpin(attachment) ? -1 : 0
+  // Keep the section's directions next to its melody: tempo above heading,
+  // heading above directions, then music. Place the outer levels last.
+  const attachments = findAll(node, (n) => isDecoration(n) && !groupedHairpins.has(n)).sort(
+    (a, b) => placementOrder(a) - placementOrder(b),
   )
   for (const attachment of attachments) {
     let ink = geometry.ink(attachment)
@@ -171,10 +208,15 @@ export function arrangeStaffSystem(
     let dx = Math.max(0, padding - ink.left)
     if (ink.right + dx + padding > width / scale) dx -= ink.right + dx + padding - width / scale
     let dy = 0
-    const below = hasClass(attachment, 'dynam') || hasClass(attachment, 'hairpin') || attachment.attributes['data-m3n-below'] === 'true'
-    const standalone = hasClass(attachment, 'reh') && sectionHeadings.has(measures[0]?.attributes.id ?? '')
-    if (standalone) dy = union(obstacles).top - 12 / scale - ink.bottom
-    const relevant = obstacles.filter((other) => overlapsX(moveInk(ink, dx, 0), other, gap / 2))
+    const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
+    const standalone = isStandaloneHeading(attachment)
+    if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - 12 / scale - ink.bottom
+    // Consecutive wedges may share a baseline with a small real gap between
+    // their endpoints; horizontal padding must not invent a second lane.
+    const relevant = obstacles.filter((other) => overlapsX(
+      moveInk(ink, dx, 0), other,
+      isHairpin(attachment) && hairpinPieces.has(other) ? 0 : gap / 2,
+    ))
     // Solve forbidden translation intervals, rather than treating empty space
     // inside a relation as a solid rectangular obstacle.
     const intervals = relevant
@@ -198,7 +240,9 @@ export function arrangeStaffSystem(
         }),
       )
     }
-    obstacles.push(...geometry.pieces(attachment))
+    const placed = geometry.pieces(attachment)
+    obstacles.push(...placed)
+    if (isHairpin(attachment)) placed.forEach((piece) => hairpinPieces.add(piece))
   }
   const inline = findAll(node, (n) => hasClass(n, 'reh')).filter(
     () => !sectionHeadings.has(measures[0]?.attributes.id ?? ''),

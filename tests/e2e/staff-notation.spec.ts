@@ -132,6 +132,7 @@ test('a failed optional staff download leaves the notation selector available', 
 })
 
 test('basic exercises keep section labels and Chinese directions inside staff pages', async ({ page }) => {
+  test.setTimeout(120_000)
   const source = await readFile('src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', 'utf8')
   await page.goto('/editor')
   await page.addScriptTag({ content: staffInkBounds.toString() })
@@ -150,6 +151,34 @@ test('basic exercises keep section labels and Chinese directions inside staff pa
       return ink.x < -tolerance || ink.y < -tolerance || ink.x + ink.width > box.width + tolerance || ink.y + ink.height > box.height + tolerance ? [{ page: index + 1, ink: { x: ink.x, y: ink.y, width: ink.width, height: ink.height }, viewBox: { width: box.width, height: box.height } }] : []
     }))
     expect(outside, `${width}px staff pages`).toEqual([])
+    const headings = await paper.locator('g.system').evaluateAll(systems => systems.flatMap(system => {
+      const heading = system.querySelector('g.reh')
+      if (!heading) return []
+      const directions = [...system.querySelectorAll('g.dir')]
+      const tempos = [...system.querySelectorAll('g.tempo')]
+      return [{
+        label: heading.textContent,
+        top: heading.getBoundingClientRect().top,
+        bottom: heading.getBoundingClientRect().bottom,
+        directionTop: Math.min(...directions.map(direction => direction.getBoundingClientRect().top)),
+        tempoBottom: Math.max(...tempos.map(tempo => tempo.getBoundingClientRect().bottom)),
+      }]
+    }))
+    expect(headings).toHaveLength(2)
+    for (const heading of headings) {
+      expect(heading.bottom, `${width}px ${heading.label} must precede directions`).toBeLessThan(heading.directionTop)
+      expect(heading.tempoBottom, `${width}px tempo must precede ${heading.label}`).toBeLessThan(heading.top)
+    }
+    for (const measure of [15, 16, 17, 18]) {
+      const hairpins = await paper.locator(`[id="m3n-measure-1-${measure}"] g.hairpin`).evaluateAll(nodes =>
+        nodes.map(node => {
+          const box = node.getBoundingClientRect()
+          return { x: box.x, right: box.right, center: box.y + box.height / 2 }
+        }))
+      expect(hairpins).toHaveLength(2)
+      expect(hairpins[1].x).toBeGreaterThan(hairpins[0].right)
+      expect(Math.abs(hairpins[0].center - hairpins[1].center), `${width}px measure ${measure}`).toBeLessThan(0.1)
+    }
   }
 })
 
