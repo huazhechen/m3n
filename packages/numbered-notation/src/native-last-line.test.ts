@@ -66,6 +66,35 @@ describe('short final rows', () => {
     expect(layout.systems[0]!.measures.at(-1)!.end).toBeCloseTo(768, 8)
   })
 
+  it.each([false, true])('shortens named-section endings with the same horizontal layout in both display modes, equal=%s', equalMeasures => {
+    const source = `{4/4}\n===A\nN: ${quarters.repeat(4)} {br} 5 6 7 1e |\n===B\nN: ${quarters.repeat(4)} {br} 5 6 7 1e |||`
+    const layouts = [false, true].map(paged => layoutNativeScore(parseM3NDocument(source), { ...options, paged, equalMeasures }))
+    for (const layout of layouts) {
+      expect(layout.systems).toHaveLength(4)
+      for (const index of [0, 2]) expect(layout.systems[index]!.measures.at(-1)!.end).toBeCloseTo(768, 8)
+      for (const index of [1, 3]) {
+        const current = layout.systems[index]!.measures, preceding = layout.systems[index - 1]!.measures
+        const expected = nativeLastLineWidth(nativeHorizontalSpacing(current, layout.options), 736,
+          nativeHorizontalSpacing(preceding, layout.options), 736)
+        expect(current.at(-1)!.end - 32).toBeCloseTo(expected, 8)
+        expect(expected).toBeLessThanOrEqual(736 * .6)
+      }
+    }
+    expect(layouts[0]!.projection.glyphs.map(glyph => glyph.x)).toEqual(layouts[1]!.projection.glyphs.map(glyph => glyph.x))
+  })
+
+  it('keeps single-row sections full instead of inheriting from another section', () => {
+    const layout = layoutNativeScore(parseM3NDocument(`{4/4}\n===A\nN: ${quarters.repeat(4)} |\n===B\nN: 5 6 7 1e |||`), options)
+    expect(layout.systems).toHaveLength(2)
+    for (const system of layout.systems) expect(system.measures.at(-1)!.end).toBeCloseTo(768, 8)
+  })
+
+  it.each(['{br}', '{br}\n---\nN:'])('keeps a short intermediate row full at a plain boundary: %s', boundary => {
+    const layout = layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${quarters.repeat(4)} {br} 5 6 7 1e | ${boundary} ${quarters.repeat(4)} |||`), options)
+    expect(layout.systems.length).toBeGreaterThanOrEqual(3)
+    expect(layout.systems[1]!.measures.at(-1)!.end).toBeCloseTo(768, 8)
+  })
+
   it('does not overflow when a densely populated final bar inherits a sparse preceding bar', () => {
     const layout = layoutNativeScore(parseM3NDocument('{1/4}\nN: 1 | {br} ((1 2 3 4)) |||'), options)
     expect(layout.systems).toHaveLength(2)

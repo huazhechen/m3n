@@ -222,18 +222,24 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   }
   const lines = breakMeasures(projection.measures, available, options, arcLeading)
   const systems: NativeSystem[] = lines.map((measures, index) => ({ index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
-  let lastWidth: number | undefined
-  const last = systems.at(-1), previous = systems.at(-2)
-  if (last && previous && last.measures[0]?.part === previous.measures.at(-1)?.part) {
-    lastWidth = nativeLastLineWidth(nativeHorizontalSpacing(last.measures, options), available - arcLeading(last.measures),
-      nativeHorizontalSpacing(previous.measures, options), available - arcLeading(previous.measures))
+  // Named sections are labels within a projected part; expanded performances
+  // can also introduce part boundaries. Neither a phrase nor {br} ends a section.
+  const startsSection = (current: NativeSystem, previous: NativeSystem) => {
+    const first = current.measures[0]!
+    return first.part !== previous.measures.at(-1)!.part
+      || !first.continuation && first.source.events.some(event => event.sectionLabel)
   }
   const systemOf = new Map<NativeGlyph, number>()
   for (const system of systems) {
     const leading = arcLeading(system.measures)
     const x = margin + leading
     if (leading > 0) system.arcContinuationLeft = margin
-    const width = system === last && lastWidth !== undefined ? lastWidth : options.width - margin - x
+    let width = options.width - margin - x
+    const previous = systems[system.index - 1], next = systems[system.index + 1]
+    if (previous && !startsSection(system, previous) && (!next || startsSection(next, system))) {
+      width = nativeLastLineWidth(nativeHorizontalSpacing(system.measures, options), width,
+        nativeHorizontalSpacing(previous.measures, options), available - arcLeading(previous.measures))
+    }
     const glyphs = placeNativeHorizontal(system.measures, options, x, width)
     for (const glyph of glyphs) systemOf.set(glyph, system.index)
     const laneNames = [...new Set(glyphs.map(glyph => glyph.lane))].sort((a, b) => a === 'melody' ? -1 : b === 'melody' ? 1 : a === 'bass' ? 1 : b === 'bass' ? -1 : a.localeCompare(b))
