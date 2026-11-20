@@ -14,6 +14,7 @@ test('unlisted collection has no public entry and an empty initial archive', asy
   await expect(page.locator('.score-card').first()).toBeVisible()
   await expect(page.locator('a[href*="/works"]')).toHaveCount(0)
   expect(requests.some(url => url.includes('works-catalog.json'))).toBe(false)
+  await page.route('**/works-catalog.json', route => route.fulfill({ json: [] }))
   await page.goto('/works')
   await expect(page.getByRole('heading', { name: '独立作品' })).toBeVisible()
   await expect(page.getByText('暂无独立作品。')).toBeVisible()
