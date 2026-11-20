@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 101,
+  "sourceCount": 102,
   "sections": [
     {
       "id": "basics",
@@ -848,6 +848,14 @@
       "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "降B与降D调转换、十六分切分、三连音及两遍副歌变奏"
+    },
+    {
+      "id": "you_raise_me_up",
+      "file": "you_raise_me_up_01.m3n",
+      "title": "You Raise Me Up",
+      "section": "pop",
+      "group": "切分与延音",
+      "reason": "英文歌词、十六分切分、跨拍延音与副歌两房反复"
     }
   ],
   "edition": "第七十五版",
