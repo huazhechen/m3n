@@ -71,7 +71,8 @@ it('uses the requested common verse melody, image notes, Eb/E/F keys and final t
     return [name ? 12 * (Number(octave) + 1) + scale[name]! + (alteration === 's' ? 1 : alteration === 'f' ? -1 : 0) : null, event.beats]
   }))).toEqual(written)
   expect(bars.flatMap((bar, index) => bar.events.flatMap((event, position) => event.tie ? [[index, position]] : []))).toEqual([[30, 0]])
-  expect(source).not.toContain('{lg}')
+  expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => [interval.start, interval.endStart]))
+    .toEqual([[bars[12]!.events[3]!.sourceStart, bars[12]!.events[4]!.sourceStart]])
   expect(source).toContain('{text=rit.}')
 })
 
@@ -107,6 +108,7 @@ it('keeps both English verses and the correct chorus syllables without forced ti
   expect(lyrics[26]).toEqual(['There', 'is', 'no'])
   expect(lyrics[1]).toEqual(['down,', 'life,', 'And', 'no', 'oh', 'life', 'my', 'with', 'soul', 'out', 'so', 'its'])
   expect(lyrics[2]).toEqual(['wear', 'hun', 'y,', 'ger,', 'When', 'Each', 'trou', 'rest', 'bles', 'less'])
+  expect(bars[12]!.events.map(event => (lyricsByEvent.get(event) ?? []).filter(item => item.kind === 'text').map(item => item.text))).toEqual([['seas,'], [], ['I'], ['am'], []])
   expect(lyrics[15]).toEqual(['up,', 'To', 'more', 'than', 'I', 'can'])
   expect(source).not.toContain('+')
 })
