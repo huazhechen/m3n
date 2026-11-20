@@ -3,13 +3,15 @@ import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
 import source from '../scores/flower_dance_01.m3n?raw'
 
-it('reuses complete Flower Dance sections and writes variations and the ending continuously', () => {
+it('reuses Flower Dance through D.S. and Coda without named sections', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
-  expect(document.order).toEqual(['Intro', 'A', 'B', 'A', 'C', 'D', 'E'])
+  expect(document.order).toBeUndefined()
+  expect(source).not.toMatch(/^===|\{order=/m)
+  for (const mark of ['segno', 'ds', 'tocoda', 'coda']) expect(source).toContain(`{${mark}}`)
   expect(document.parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(75)
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-  expect(bars.filter(bar => bar.left === 'rptstart').map(bar => bar.sectionName)).toEqual(['Intro', 'C'])
+  expect(bars.filter(bar => bar.left === 'rptstart')).toHaveLength(2)
   expect(bars.filter(bar => bar.ending?.length)).toHaveLength(0)
 })
 
