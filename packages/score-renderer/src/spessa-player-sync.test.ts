@@ -87,6 +87,17 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
 
 describe('audio-thread-confirmed transport and metronome synchronization', () => {
+  it('reuses the gesture-unlocked context and closes it with the player', async () => {
+    const context = new AudioContext()
+    const close = vi.spyOn(context, 'close')
+    const addModule = vi.spyOn(context.audioWorklet, 'addModule')
+    const midi = new MIDIBuilder(); midi.noteOn(0, 0, 0, 60, 90); midi.noteOff(480, 0, 0, 60)
+    const player = await SpessaPlayer.create(midi.writeMIDI(), { onTime: vi.fn(), onEnded: vi.fn() }, 0, 'synth', context)
+    expect(addModule).toHaveBeenCalledTimes(2)
+    player.destroy()
+    expect(close).toHaveBeenCalledOnce()
+  })
+
   it('silences old clicks immediately and waits for the new audio position', async () => {
     const { player, sequence, metronome, listener } = await create()
     await player.play()

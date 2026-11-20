@@ -93,10 +93,9 @@ export class SpessaPlayer {
     })
   }
 
-  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0, tone: PlaybackTone = 'synth') {
-    const soundBank = tone === 'synth' ? createSyntheticSoundFont() : await loadSampledTone(tone)
-    const context = new AudioContext()
+  static async create(midi: ArrayBuffer, listener: PlayerListener, transpose = 0, tone: PlaybackTone = 'synth', context = new AudioContext()) {
     try {
+      const soundBank = tone === 'synth' ? createSyntheticSoundFont() : await loadSampledTone(tone)
       await Promise.all([context.audioWorklet.addModule(processorUrl), context.audioWorklet.addModule(limiterUrl)])
       const synth = new WorkletSynthesizer(context)
       const output = createPlaybackOutput(context, tone)

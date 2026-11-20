@@ -175,6 +175,7 @@ export function ScoreRenderer({
   const renderGenerationRef = useRef(0)
   const scoreRef = useRef<PlaybackScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
   const playerInitializationRef = useRef<Promise<SpessaPlayer> | null>(null)
   const playerGenerationRef = useRef(0)
   const stopPlaybackRef = useRef<() => void>(() => undefined)
@@ -259,7 +260,9 @@ export function ScoreRenderer({
       playerGenerationRef.current += 1
       playRequestRef.current += 1
       scorePlaybackCoordinator.release(playbackLease)
+      if (!playerRef.current && audioContextRef.current?.state !== 'closed') void audioContextRef.current?.close()
       playerRef.current?.destroy(); playerRef.current = null
+      audioContextRef.current = null
       scoreRef.current?.destroy(); scoreRef.current = null
       playerInitializationRef.current = null
       midiRef.current = null
@@ -399,12 +402,21 @@ export function ScoreRenderer({
     if (!isSeekingRef.current && startupBeatRef.current === null) updatePlaybackHighlight(seconds, duration)
   }
 
+  const activateAudio = () => {
+    if (!audioContextRef.current || audioContextRef.current.state === 'closed') audioContextRef.current = new AudioContext()
+    // iOS requires resume() in the click/touch handler, before imports or downloads.
+    // play() awaits resume again and reports failures through the normal UI.
+    void audioContextRef.current.resume().catch(() => {})
+    return audioContextRef.current
+  }
+
   const getPlayer = (initialTone = toneRef.current) => {
     if (playerRef.current) return Promise.resolve(playerRef.current)
     if (playerInitializationRef.current) return playerInitializationRef.current
     const generation = renderGenerationRef.current
     const playerGeneration = playerGenerationRef.current
     const tone = initialTone
+    const context = audioContextRef.current ?? activateAudio()
     const initialization = (async () => {
       setIsPlayerLoading(true)
       try {
@@ -427,7 +439,7 @@ export function ScoreRenderer({
           },
           onTime: onPlayerTime,
           onStartupBeat: showStartupBeat,
-        }, transposeRef.current, tone)
+        }, transposeRef.current, tone, context)
         if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
         player.setTranspose(transposeRef.current)
         player.setTempo(bpmRef.current)
@@ -488,6 +500,7 @@ export function ScoreRenderer({
     setToneProgress(null)
     setToneLoading(true)
     try {
+      activateAudio()
       // Cache hits report only readiness; only an actual download opens the dialog.
       let tone = toneRef.current
       if (tone !== 'synth') await loadSampledTone(tone)
@@ -531,7 +544,7 @@ export function ScoreRenderer({
     if (isSeekingRef.current) return
     isSeekingRef.current = true
     pendingSeekProgressRef.current = playbackProgress
-    void getPlayer('synth').then((player) => {
+    void (async () => { activateAudio(); return getPlayer('synth') })().then((player) => {
       const progress = pendingSeekProgressRef.current
       const playbackSeconds = progress * player.duration
       updatePlaybackHighlight(playbackSeconds, player.duration, false)
