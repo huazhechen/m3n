@@ -15,7 +15,7 @@ const measurer: TextMeasurer = { measureText(text, style) {
         return { w: text.length * style.fontSize * 0.6, advance: 26, inkLeft: -2, inkRight: 30, h: 9, baseline: 6 };
     } };
 describe('measured navigation geometry', () => {
-    it.each(['fine'] as const)('centers %s on the measured music axis and contains its overhangs', name => {
+    it.each(['fine','tocoda'] as const)('centers %s on the measured music axis and contains its overhangs', name => {
         const mark = measureNativeNavigation(name, measurer), ink = nativeSvgInk(mark.svg, measurer);
         expect((ink.top + ink.bottom) / 2).toBeCloseTo(-8, 4);
         expect(ink.left).toBe(0);
@@ -23,7 +23,7 @@ describe('measured navigation geometry', () => {
         expect(mark.width).toBe(32);
         expect(mark.ink).toEqual(ink);
     });
-    it.each(['fine'] as const)('keeps trailing advance space for %s without substituting it for ink height', name => {
+    it.each(['fine','tocoda'] as const)('keeps trailing advance space for %s without substituting it for ink height', name => {
         const advance: TextMeasurer = { measureText(text, style) {
                 return { ...measurer.measureText(text, style), advance: 40 };
             } };
@@ -45,7 +45,7 @@ describe('measured navigation geometry', () => {
             } };
         expect(measureNativeNavigation(name, differentText)).toEqual(mark);
     });
-    it.each(['segno', 'ds', 'dc'] as const)('scales %s from actual curve bounds', name => {
+    it.each(['segno', 'ds', 'dc', 'coda'] as const)('scales %s from actual curve bounds', name => {
         const small = nativeNavigationGlyph(name, 12), large = nativeNavigationGlyph(name, 24);
         const a = nativePathInk(small.path), b = nativePathInk(large.path);
         expect(a.left).toBeCloseTo(0, 5);
@@ -64,6 +64,20 @@ describe('measured navigation geometry', () => {
         expect(control.anchor).toBeCloseTo(control.width / 2, 5);
         expect(ink.bottom - ink.top).toBeCloseTo(18.4, 5);
         expect((ink.top + ink.bottom) / 2).toBeCloseTo(-8, 4);
+    });
+    it.each([320,800])('measures Coda onset and To Coda exit without colliding with notes at %spx', width => {
+        const source = '{2/4}\nN: ||: 1 2 | 3 4 {tocoda} |\n---\nN: 5 6 :||\n---\nN: {br}{coda}7 1e |||';
+        const layout = layoutNativeScore(parseM3NDocument(source), {width,paged:true,textMeasurer:measurer});
+        const exit = layout.projection.measures[1]!;
+        expect(exit.navigation!.map(mark => mark.text)).toEqual(['To Coda']);
+        expect(exit.navigation![0]!.x!).toBeGreaterThan(Math.max(...exit.columns.flatMap(column => column.glyphs).map(note => note.x + note.musicRight!)));
+        const coda = layout.projection.glyphs.find(glyph => glyph.controls.some(control => control.kind === 'coda'))!;
+        const control = coda.controls.find(control => control.kind === 'coda')!;
+        const ink = nativeSvgInk(new NativeSymbols(measurer).control(control),measurer);
+        expect(ink.left).toBeGreaterThanOrEqual(0);
+        expect(ink.right).toBeLessThanOrEqual(control.width);
+        expect(control.ink.length).toBeGreaterThan(1);
+        expect(new NativeSymbols(measurer).control(control)).toContain('data-m3n-role="coda"');
     });
     it.each([320, 800])('places all measured navigation fragments before their bar at %spx', width => {
         const source = '{4/4}\nN: ' + Array(6).fill('1 2 3 4 |').join(' ') + ' [135:h] 2 3 4 {fine}{ds} |||';

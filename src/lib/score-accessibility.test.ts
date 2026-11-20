@@ -45,6 +45,11 @@ describe('front-end accessible score descriptions', () => {
     expect(text.measures[2]!.label).toContain('转调至G大调')
     expect(text.measures[1]!.label).toContain('反复结束，共演奏2遍')
   })
+  it('describes the To Coda exit and coda entry', () => {
+    const score = read('{2/4}\nN: ||: 1 2{tocoda} |\n---\nN: 3 4 :||\n---\nN: {coda}5 6 |||')
+    expect(score.measures[0]!.label).toContain('返回后跳至尾声')
+    expect(score.measures[2]!.label).toContain('尾声起点')
+  })
   it('associates tuplet lyrics with each sounded slot and describes chords', () => {
     const text = read('{4/4}\nN: [1 0 3:2] [135:h]^ |||\nL: 春天好')
     expect(all(text)).toContain('3连音，总时值2拍')

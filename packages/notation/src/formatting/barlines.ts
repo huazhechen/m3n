@@ -26,10 +26,10 @@ export function normalizeSectionBarlines(source: string) {
       line.kind === 'phrase' && /^---\s*V/.test(line.raw.trim()))) continue
     const preceding = tree.lines.slice(0, current.index).findLast(line => line.kind === 'phrase' || line.kind === 'section')
     if (preceding?.kind === 'phrase' && /^---\s*V/.test(preceding.raw.trim())) continue
-    if (current.row.directives.some(directive => ['inst', 'ds', 'dc', 'fine', 'segno', 'br'].includes(directive.name))) continue
+    if (current.row.directives.some(directive => ['inst', 'ds', 'dc', 'fine', 'segno', 'tocoda', 'coda', 'br'].includes(directive.name))) continue
     const nextOnset = next.row.tokens.find(token => token.kind === 'note' || token.kind === 'group')?.start ?? Infinity
     if (next.row.directives.some(directive => directive.start < nextOnset &&
-      (['inst', 'text', 'key', 'br', 'ds', 'dc', 'fine', 'segno'].includes(directive.name) || /^\d+\/\d+$/.test(directive.name)))) continue
+      (['inst', 'text', 'key', 'br', 'ds', 'dc', 'fine', 'segno', 'tocoda', 'coda'].includes(directive.name) || /^\d+\/\d+$/.test(directive.name)))) continue
     if (next.row.tokens.some(token => token.kind === 'bar' && token.raw !== '|' && token.start < nextOnset)) continue
     edits.push({ start: bar.start, end: bar.end, value: '|' })
     // Bass and chord rows may explicitly mirror the melody's closing barline.

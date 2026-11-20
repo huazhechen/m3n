@@ -1,3 +1,5 @@
+import type { PlaybackNavigation } from './repeats.js'
+
 export type ScoreEvent = { 
   /** Stable event identity when unfolding a performed visit. */
   playbackId?: string
@@ -16,7 +18,7 @@ export type ScoreEvent = {
   prefix?: 'sfz'
   text?: string
   postfixes: string[]
-  navigation: Array<'segno' | 'ds' | 'dc' | 'fine'>
+  navigation: PlaybackNavigation[]
   octaveShift: number
   sectionLabel?: string
   sectionLabelBreakAfter?: boolean
@@ -44,7 +46,7 @@ export type ScoreMeasure = {
   orderPasses?: number[]
   sectionName?: string
   events: ScoreEvent[]
-  navigation?: Array<'segno' | 'ds' | 'dc' | 'fine'>
+  navigation?: PlaybackNavigation[]
   left?: string
   right?: string
   ending?: string

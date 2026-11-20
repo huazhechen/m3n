@@ -10,10 +10,10 @@ export type NativeNavigation = {
 }
 
 /** One measured fragment supplies both the reserved space and the painted mark. */
-export function measureNativeNavigation(name: 'fine' | 'dc' | 'ds', measurer: TextMeasurer): NativeNavigation {
-  const text = name === 'fine' ? 'Fine.' : name === 'dc' ? 'D.C.' : 'D.S.'
+export function measureNativeNavigation(name: 'fine' | 'dc' | 'ds' | 'tocoda', measurer: TextMeasurer): NativeNavigation {
+  const text = name === 'tocoda' ? 'To Coda' : name === 'fine' ? 'Fine.' : name === 'dc' ? 'D.C.' : 'D.S.'
   const size = nativeStyle.text * (name === 'fine' ? 1.05 : 1)
-  if (name !== 'fine') {
+  if (name === 'ds' || name === 'dc') {
     const glyph = nativeNavigationGlyph(name, size * .9)
     const svg = `<g transform="translate(0 ${nativeMusicAxis(measurer) - glyph.height / 2})" data-m3n-role="navigation"><path d="${glyph.path}" fill="#000"/></g>`
     return { text, size, width: glyph.width, svg, ink: nativeSvgInk(svg, measurer) }

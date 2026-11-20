@@ -87,7 +87,7 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   // A navigation return may join a short ending to a pickup elsewhere in the
   // source. Validate the actual neighbors at every occurrence of that bar.
   if (measures.some(measure => [...(measure.navigation ?? []), ...measure.events.flatMap(event => event.navigation)]
-    .some(value => value === 'ds' || value === 'dc'))) {
+    .some(value => value === 'ds' || value === 'dc' || value === 'tocoda'))) {
     const sequence = playbackMeasureIndexes(measures)
     const occurrences = new Map<number, boolean[]>()
     for (const [position, index] of sequence.entries()) {
@@ -283,9 +283,36 @@ function validateIntervalSpans(document: ScoreDocument, source?: string) {
   return diagnostics
 }
 
+function validateCodaNavigation(document: ScoreDocument) {
+  const diagnostics: ScoreDiagnostic[] = []
+  for (const part of document.parts.values()) {
+    const measures = writtenMeasures(part.melody)
+    const marks = measures.map(measure => [...(measure.navigation ?? []), ...measure.events.flatMap(event => event.navigation)])
+    const toCoda = marks.flatMap((values,index) => values.filter(mark => mark === 'tocoda').map(() => index))
+    const coda = marks.flatMap((values,index) => values.filter(mark => mark === 'coda').map(() => index))
+    if (!toCoda.length && !coda.length) continue
+    const report = (message: string) => diagnostics.push(createScoreDiagnostic({
+      code: 'M3N_SOURCE_REPEAT', message, range: measureRange(measures[toCoda[0] ?? coda[0]!]),
+    }))
+    if (toCoda.length !== 1 || coda.length !== 1) { report('To Coda 与 Coda 必须各有且仅有一个'); continue }
+    const from = toCoda[0]!, to = coda[0]!
+    if (document.order) report('Coda 导航不能与显式 order 混用')
+    if (to <= from) report('Coda 必须位于 To Coda 之后')
+    if (measures[from]!.ending || measures[to]!.ending) report('To Coda 与 Coda 必须放在房子之外的共同乐句')
+    if (marks.some(values => values.includes('fine'))) report('Coda 导航不能与 Fine 混用')
+    const itinerary = playbackMeasureIndexes(measures)
+    const returnSource = marks.findIndex(values => values.includes('ds') || values.includes('dc'))
+    if (returnSource >= to || (returnSource < 0 && !measures.some((measure,index) => index >= from && index < to && measure.right === 'rptend'))) report('Coda 必须位于反复终点或 D.S./D.C. 之后')
+    const jump = itinerary.findIndex((index,position) => index === from && itinerary[position + 1] === to
+      && (returnSource < 0 ? position > itinerary.indexOf(from) : itinerary.slice(0,position).includes(returnSource)))
+    if (jump < 0) report('To Coda 必须能在反复或 D.S./D.C. 返回后跳至 Coda')
+  }
+  return diagnostics
+}
+
 export function validateScoreDocument(document: ScoreDocument, options: { skipBeatValidation?: boolean; source?: string } = {}): ScoreDiagnostic[] {
   const diagnostics: ScoreDiagnostic[] = []
-  diagnostics.push(...validateIntervalSpans(document, options.source))
+  diagnostics.push(...validateIntervalSpans(document, options.source), ...validateCodaNavigation(document))
   for (const part of document.parts.values()) {
     const melody = writtenMeasures(part.melody)
     const bass = writtenMeasures(part.bass)

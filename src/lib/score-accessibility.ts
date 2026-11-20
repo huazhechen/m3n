@@ -9,7 +9,7 @@ import type { NotationMode } from './renderer-settings'
 const pitchNames = ['C', '升C', 'D', '降E', 'E', 'F', '升F', 'G', '降A', 'A', '降B', 'B']
 const solfege = ['', '哆', '来', '咪', '发', '嗦', '拉', '西']
 const modes: Record<string, string> = { '': '大调', m: '小调', dor: '多利亚调式', phr: '弗里几亚调式', lyd: '利底亚调式', mix: '混合利底亚调式', loc: '洛克里亚调式' }
-const navigation: Record<string, string> = { segno: '返回标记', ds: '返回标记处重奏', dc: '从头重奏', fine: '返回后在此结束' }
+const navigation: Record<string, string> = { segno: '返回标记', ds: '返回标记处重奏', dc: '从头重奏', fine: '返回后在此结束', tocoda: '返回后跳至尾声', coda: '尾声起点' }
 const intervals: Record<string, string> = { lg: '连奏', cresc: '渐强', decres: '渐弱', accel: '渐快', rit: '渐慢', '8va': '高八度', '8vb': '低八度', inst: '器乐' }
 const marks: Record<string, string> = { tr: '颤音', prall: '波音', fermata: '延长记号', arp: '琶音', str: '断奏', tip: '重音', hold: '保持音', brk: '换气', breath: '换气' }
 const number = (value: number) => String(Number(value.toFixed(6)))

@@ -42,6 +42,23 @@ describe('optional staff projection', () => {
     expect(mei).toContain('Next')
   })
 
+  it('renders Coda marks and uses the shared navigation route in MEI expansion', async () => {
+    const score = analyzeM3N('{2/4}\nN: ||: 1 2 | 3 4{tocoda} |\n---\nN: 5 6 :||\n---\nN: {coda}7 1e |||').score
+    const mei = scoreToMei(score)
+    expect(mei).toContain('To Coda</dir>')
+    expect(mei).toContain('func="coda"')
+    const expansion = /<expansion[^>]+plist="([^"]+)"/.exec(mei)![1]!.split(' ')
+    expect(expansion).toHaveLength(6)
+    expect(expansion.slice(0,2)).toEqual(expansion.slice(3,5))
+    expect(expansion[2]).not.toEqual(expansion[5])
+    const toolkit = new VerovioToolkit(await createModule())
+    try {
+      toolkit.setOptions({pageWidth:1500,pageHeight:3000,header:'none',footer:'none'})
+      expect(toolkit.loadData(mei)).toBeTruthy()
+      expect(toolkit.renderToSVG(1)).toContain('To Coda')
+    } finally { toolkit.destroy() }
+  })
+
   it('engraves the complete current library with the shipped engine', async () => {
     const toolkit = new VerovioToolkit(await createModule())
     try {

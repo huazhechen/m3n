@@ -3,7 +3,7 @@ import { durationInBeats, keyModeIntervals, parseKey, parseM3NNote } from './not
 import { projectM3NDocument, type M3NDocumentProjection, type M3NDocumentStructure } from './notation/m3n-document.js'
 import type { M3NToken } from './notation/m3n-tokens.js'
 import { parseLyricItems } from './notation/lyrics.js'
-import { parsePassRange, measurePlaybackPasses, hasVisitEndings } from './notation/repeats.js'
+import { parsePassRange, measurePlaybackPasses, hasVisitEndings, type PlaybackNavigation } from './notation/repeats.js'
 import type { ScoreDocument, ScoreEvent, ScoreInterval, ScoreLyricBlock, ScoreMeasure, ScorePart } from './notation/score-document.js'
 import { documentSettings } from './notation/document-settings.js'
 import { harmonyTokens, parseHarmonySymbol } from './notation/harmony-syntax.js'
@@ -196,11 +196,15 @@ function parseBody(
       } else if (value === 'sfz') {
         pendingPrefix = 'sfz'
         lastEvent = undefined
-      } else if (/^(?:segno|ds|dc|fine)$/.test(value)) {
-        const navigation = value as 'segno' | 'ds' | 'dc' | 'fine'
+      } else if (/^(?:segno|ds|dc|fine|tocoda|coda)$/.test(value)) {
+        const navigation = value as PlaybackNavigation
+        // To Coda after a barline is an exit from the completed bar;
+        // Coda is an onset belonging to the following bar.
         const current = measure()
-        current.navigation ??= []
-        current.navigation.push(navigation)
+        const previous = measures().at(-2)
+        const target = navigation === 'tocoda' && !current.events.length && !current.multiRest && previous ? previous : current
+        target.navigation ??= []
+        target.navigation.push(navigation)
       } else if (/^(?:arp|tr|prall|str|brk|tip|hold|fermata|breath|f[1-5])$/.test(value) || parseM3NGrace(value)) {
         if (lastEvent) lastEvent.postfixes.push(value)
       } else if (value === '/' || value.startsWith('/')) {
@@ -312,12 +316,12 @@ function parseBody(
   const trailing = measure()
   const previous = measures().at(-2)
   const trailingEndNavigation = trailing.events.length === 0 && !trailing.multiRest
-    ? trailing.navigation?.filter((value) => value !== 'segno') ?? []
+    ? trailing.navigation?.filter((value) => value !== 'segno' && value !== 'coda') ?? []
     : []
   if (previous && trailingEndNavigation.length > 0) {
     previous.navigation ??= []
     previous.navigation.push(...trailingEndNavigation)
-    trailing.navigation = trailing.navigation?.filter((value) => value === 'segno')
+    trailing.navigation = trailing.navigation?.filter((value) => value === 'segno' || value === 'coda')
   }
 }
 

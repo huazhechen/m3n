@@ -66,7 +66,7 @@ function lineMessage(token: Token, message: string) {
             : name === 'key' ? 'M3N_SOURCE_KEY'
               : /^\d+\/\d+$/.test(content) ? 'M3N_SOURCE_METER'
                 : /^\d+qpm$/i.test(content) || name === 'accel' || name === 'rit' ? 'M3N_SOURCE_TEMPO'
-                  : /^(?:segno|ds|dc|fine)$/.test(content) ? 'M3N_SOURCE_REPEAT'
+                  : /^(?:segno|ds|dc|fine|tocoda|coda)$/.test(content) ? 'M3N_SOURCE_REPEAT'
                     : name === 'chord' || content === 'arp' ? 'M3N_SOURCE_HARMONY'
                       : /^(?:ac|ap)\(/.test(content) ? 'M3N_SOURCE_GRACE'
                         : name === 'rest' ? 'M3N_SOURCE_MULTI_REST'
@@ -398,8 +398,9 @@ function validateBody(
         continue
       }
 
-      if (/^(?:segno|ds|dc|fine)$/.test(content)) {
+      if (/^(?:segno|ds|dc|fine|tocoda|coda)$/.test(content)) {
         if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能使用反复导航标记'))
+        if (content === 'coda' && (unit.currentHasAtom || unit.multiRestPendingBar)) diagnostics.push(lineMessage(token, 'Coda 必须写在小节开头'))
         if (content === 'segno') segnoCount += 1
         if (content === 'ds' || content === 'dc') jumpCount += 1
         if (content === 'ds') dsCount += 1

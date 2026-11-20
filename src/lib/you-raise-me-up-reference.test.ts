@@ -54,7 +54,7 @@ it('uses the requested common verse melody, image notes, Eb/E/F keys and final t
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document).toMatchObject({ title: 'You Raise Me Up', composer: 'Rolf Lovland', lyricist: 'Brendan Graham', key: 'Eb', meterCount: 4, meterUnit: 4, tempo: 60 })
-  expect(source).not.toMatch(/===|\{order=/)
+  expect(source).not.toMatch(/===|\{order=|---V/)
   expect(source).toContain('||: {key=Eb,F}')
   expect(document.parts.get('score')!.melody.find(bar => bar.left === 'rptstart')?.ending).toBeUndefined()
   const written = [
@@ -64,6 +64,7 @@ it('uses the requested common verse melody, image notes, Eb/E/F keys and final t
     ...reference.slice(27).map(bar => events(bar, 'F')),
   ]
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+  expect(bars.flatMap((bar,index) => (bar.navigation ?? []).map(mark => [index,mark]))).toEqual([[15,'tocoda'],[27,'coda']])
   const pitches = resolveScorePitches(bars)
   const scale: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }
   expect(bars.map(bar => bar.events.map(event => {

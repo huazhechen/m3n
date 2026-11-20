@@ -63,6 +63,13 @@ export class NativeSymbols {
     return `<g transform="translate(${n(x)} ${n(y + nativeMusicAxis(this.measurer) - glyph.height / 2)})"><path d="${glyph.path}" fill="#000"/></g>`
   }
 
+  coda(x: number, y: number): string {
+    const glyph = nativeNavigationGlyph('coda', nativeStyle.text * 1.15)
+    const text = this.measurer.measureText('Coda', { fontSize: nativeStyle.text, fontFamily: 'serif' })
+    return `<g data-m3n-role="coda" transform="translate(${n(x)} ${n(y + nativeMusicAxis(this.measurer) - glyph.height / 2)})"><path d="${glyph.path}" fill="#000"/></g>`
+      + this.text('Coda', x + glyph.width + nativeStyle.text * .3, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.text, 'serif')
+  }
+
   mark(mark: string, x: number, y: number): string {
     if (mark === 'fermata') return `<g transform="translate(${n(x)} ${n(y)})">${nativeFermataSvg()}</g>`
     const dynamic = nativeDynamicGlyph(mark)
@@ -81,6 +88,7 @@ export class NativeSymbols {
     }
     if (control.kind === 'tempo') return this.tempo(control.text, x, y, control.tempoGeometry)
     if (control.kind === 'segno') return this.segno(x, y)
+    if (control.kind === 'coda') return this.coda(x, y)
     if (control.kind === 'meter') {
       const meter = control.meterGeometry ?? nativeMeterGeometry(control.text, this.measurer)
       return this.text(meter.numerator, x + control.width / 2, y + meter.numeratorBaseline, nativeStyle.meter, 'M3N Numbers', { 'text-anchor': 'middle' })

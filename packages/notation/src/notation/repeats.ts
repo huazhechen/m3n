@@ -1,4 +1,4 @@
-export type PlaybackNavigation = 'segno' | 'ds' | 'dc' | 'fine' 
+export type PlaybackNavigation = 'segno' | 'ds' | 'dc' | 'fine' | 'tocoda' | 'coda'
 
 export type PlaybackNode = {
   id: string
@@ -83,7 +83,7 @@ export function orderedMeasureVisits<T extends PlaybackMeasure & { sectionName?:
 /** Returns the playback passes in which each written measure occurs. */
 export function measurePlaybackPasses<T extends PlaybackMeasure>(measures: readonly T[]) {
   if(measures.some(measure=>measure.orderPasses))return new Map<T,Set<number>>(measures.map(measure=>[measure,new Set(measure.orderPasses ?? [1])]))
-  if (measures.some(measure => navigationOf(measure).some(value => value === 'ds' || value === 'dc'))) {
+  if (measures.some(measure => navigationOf(measure).some(value => value === 'ds' || value === 'dc' || value === 'tocoda'))) {
     const passes = new Map<T, Set<number>>(measures.map(measure => [measure, new Set()]))
     for (const index of playbackMeasureIndexes(measures)) {
       const measure = measures[index]!
@@ -339,9 +339,26 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
   return [...initial.slice(0, played + 1), ...returnPart]
 }
 
+/** To Coda is taken after a return: after D.S./D.C., or on the second
+ * encounter when the score uses repeat bars alone. The tail keeps its own repeats. */
+function applyCodaJump(nodes: readonly PlaybackNode[], sequence: string[], initial: readonly string[]) {
+  const toCoda = nodes.find(node => node.navigation?.includes('tocoda'))
+  const coda = nodes.find(node => node.navigation?.includes('coda'))
+  if (!toCoda || !coda) return sequence
+  const returnNode = nodes.find(node => node.navigation?.some(mark => mark === 'ds' || mark === 'dc'))
+  const first = sequence.indexOf(toCoda.id)
+  const armedAfter = returnNode ? initial.lastIndexOf(returnNode.id) : first
+  if (armedAfter < 0) return sequence
+  const jump = sequence.indexOf(toCoda.id, armedAfter + 1)
+  const destination = sequence.indexOf(coda.id, jump + 1)
+  if (jump < 0 || destination < 0) return sequence
+  return [...sequence.slice(0, jump + 1), ...sequence.slice(destination)]
+}
+
 /** Returns written node ids in performance order, including navigation returns. */
 export function buildPlaybackSequence(nodes: readonly PlaybackNode[]) {
-  return appendNavigationReturn(nodes, expandInitialPasses(nodes))
+  const initial = expandInitialPasses(nodes)
+  return applyCodaJump(nodes, appendNavigationReturn(nodes, initial), initial)
 }
 
 /** Plans playback order and visit numbers from the same expanded sequence. */

@@ -20,7 +20,7 @@ import { fixedDoPitch, fixedDoGrace, transposedNumberedKeyLabel } from './fixed-
 
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
-export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno'; text: string; keyRows?: NativeKeyRow[]; meterGeometry?: NativeMeterGeometry; tempoGeometry?: NativeTempoGeometry; width: number; anchor: number; top: number; bottom: number; ink: NativeInk[]; x?: number; textInset?: number }
+export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno' | 'coda'; text: string; keyRows?: NativeKeyRow[]; meterGeometry?: NativeMeterGeometry; tempoGeometry?: NativeTempoGeometry; width: number; anchor: number; top: number; bottom: number; ink: NativeInk[]; x?: number; textInset?: number }
 export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; textX: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
@@ -111,6 +111,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         }
         if (staff === 'melody' && event.sectionLabel && !event.sectionLabelBreakAfter) control('section', event.sectionLabel)
         if (eventIndex === 0 && (measure.navigation?.includes('segno') || measure.events.some(event => event.navigation.includes('segno')))) control('segno', '𝄋')
+        if (eventIndex === 0 && (measure.navigation?.includes('coda') || measure.events.some(event => event.navigation.includes('coda')))) control('coda', 'Coda')
         const keys = sectionKeys.get(host.source.sectionName ?? '')
         const visits = keys?.visits ?? []
         const entry = keys?.entry ?? event.key
@@ -218,6 +219,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       }
       if (measure.multiRest) {
         const controls = measure.multiRestState ? settingsControls(measure.multiRestState) : []
+        if (measure.navigation?.includes('coda')) controls.unshift(measureNativeControl('coda','Coda',options.textMeasurer))
         const [count, unit] = state.meter.split('/').map(Number)
         const position = measure.barEnd === undefined ? undefined : measure.barEnd - 1
         const paragraph = position === undefined ? '0' : document.paragraphs?.find(range => range.start <= position && position < range.end)?.id ?? '0'
@@ -244,7 +246,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       measure.number = ++measureNumber
       measureNumber += (source.multiRest ?? 1) - 1
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]
-        .filter(name => name !== 'segno').map(name => measureNativeNavigation(name, options.textMeasurer))
+        .filter(name => name !== 'segno' && name !== 'coda').map(name => measureNativeNavigation(name, options.textMeasurer))
       const first = result.glyphs.length
       measure.beats = projectMeasure(source, 'melody', 'melody', measure)
       if (result.hasBass && part.bass[index]) measure.beats = Math.max(measure.beats, projectMeasure(part.bass[index]!, 'bass', 'bass', measure))

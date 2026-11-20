@@ -208,6 +208,7 @@ export function scoreToMei(input: ScoreDocument): string {
         event.prefix ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.prefix}</dynam>` : '',
         event.text ? `<dir staff="${staffNumber}" startid="#${startid}" place="above">${escapeXml(event.text)}</dir>` : '',
         ...event.navigation.map((value) => {
+          if (value === 'tocoda') return `<dir staff="${staffNumber}" tstamp="${meter.count + 1}" place="above">To Coda</dir>`
           if (value === 'fine') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="fine">Fine</repeatMark>`
           const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value
           if (value === 'ds' || value === 'dc') return `<repeatMark staff="${staffNumber}" tstamp="${meter.count + 1}" place="above" func="${func}"/>`
@@ -218,9 +219,10 @@ export function scoreToMei(input: ScoreDocument): string {
       ].filter(Boolean)
     })
     const navigationControls = staffNumber === 1 ? (measure?.navigation ?? []).map((value) => {
+      if (value === 'tocoda') return `<dir staff="${staffNumber}" tstamp="${meter.count + 1}" place="above">To Coda</dir>`
       const func = value === 'ds' ? 'dalSegno' : value === 'dc' ? 'daCapo' : value
       const lastEventId = idFor(events.at(-1)?.sourceStart)
-      const anchor = value === 'segno'
+      const anchor = value === 'segno' || value === 'coda'
         ? 'tstamp="1"'
         : lastEventId ? `startid="#${lastEventId}"` : `tstamp="${meter.count}"`
       const label = value === 'fine' ? 'Fine' : ''
