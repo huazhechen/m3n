@@ -1,6 +1,6 @@
 import {
   Accidental, Articulation, Beam, Dot, Flow, Formatter, Fraction, GraceNote, GraceNoteGroup,
-  KeySigNote, TimeSigNote, Modifier, Ornament, Stave, StaveNote, SVGContext, Tuplet, Voice,
+  KeySigNote, TimeSigNote, Modifier, Ornament, Stave, StaveModifierPosition, StaveNote, SVGContext, Tuplet, Voice,
   type Note, type Tickable,
 } from 'vexflow/bravura'
 import type { StaffEvent, StaffMeasure } from './staff-document.js'
@@ -131,8 +131,15 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
     right = x + after + (spacing * 22 / STAFF_SCALE)
     return { context, x, after, weight: Math.sqrt(Math.max(0.125, context.getMinTicks()?.value() ?? 4096) / 4096) }
   })
-  const minimum = Math.max(40, start + right + 8)
-  return { staves, entries, controls, voices, beams, tuplets, columns, minimum, start, measure, bassY }
+  // Multi-rests have no tickables, but their fixed bar and count still need
+  // a full body after the clef/key/meter, with padding at both barlines.
+  const multiRestWidth = measure.source.multiRest
+    ? Math.max(43, measureText(String(measure.source.multiRest), 16 / STAFF_SCALE).width) + 16
+    : 0
+  const endInset = Math.max(0, ...staves.flatMap(stave => stave.getModifiers(StaveModifierPosition.END)
+    .map(modifier => -(modifier.getLayoutMetrics()?.xMin ?? 0))))
+  const minimum = Math.max(40, start + right + 8, start + multiRestWidth + (multiRestWidth ? endInset : 0))
+  return { staves, entries, controls, voices, beams, tuplets, columns, minimum, start, endInset, measure, bassY }
 }
 
 /** VexFlow is confined to local music geometry; page policy stays in M3N. */

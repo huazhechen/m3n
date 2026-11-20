@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 import { analyzeM3N, scoreEventIds } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
-import { readXml, findAll, SvgGeometry, textMeasurer, element, overlapsX } from './layout-svg.js'
+import { readXml, findAll, nodes, hasClass, SvgGeometry, textMeasurer, element, overlapsX } from './layout-svg.js'
 import { arrangeStaffSystem, systemDistance } from './system-layout.js'
 import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE } from './vexflow-engine.js'
 import { planStaffLines } from './line-layout.js'
@@ -105,6 +105,34 @@ describe('staff layout contract', () => {
   it('counts real measures across multi-rests', () => {
     const document = projectStaffDocument(analyzeM3N('{4/4}\nN: {rest=4} | 1 2 3 4 |||').score)
     expect(document.measures.map(m => m.number)).toEqual([1, 5])
+  })
+  it('reserves the multi-rest bar after the opening signatures in Second Waltz', () => {
+    const score = analyzeM3N(readFileSync('../../src/scores/second_waltz_01.m3n', 'utf8')).score
+    const document = projectStaffDocument(score), measure = textMeasurer()
+    for (const width of [320, 545, 550, 555, 720]) {
+      const lines = planStaffLines(document, width, false, measure, 0.25)
+      const systems = engraveStaffSystems(document, lines, width, measure, 0.25, false)
+      let count = 0
+      for (const { node } of systems) {
+        const geometry = new SvgGeometry(node, measure)
+        for (const m of nodes(node).filter(n => hasClass(n, 'measure'))) {
+          const rest = nodes(m).find(n => hasClass(n, 'multi-rest'))
+          if (!rest) continue
+          count++
+          const bar = geometry.ink(nodes(rest)[0]!)
+          const staff = nodes(m).find(n => hasClass(n, 'staff'))!
+          const signatures = nodes(staff).filter(n => !hasClass(n, 'staff-line') && n.tagName !== 'rect' && !hasClass(n, 'stavebarline'))
+          for (const signature of signatures) {
+            const ink = geometry.ink(signature)
+            if (ink.left < bar.left) expect(ink.right + 7).toBeLessThanOrEqual(bar.left)
+            else expect(bar.right + 7).toBeLessThanOrEqual(ink.left)
+          }
+          const barline = nodes(m).find(n => hasClass(n, 'barLine'))!
+          expect(bar.right + 7).toBeLessThanOrEqual(geometry.ink(barline).left)
+        }
+      }
+      expect(count).toBe(3)
+    }
   })
   it('splits a dense measure at shared beats without losing original events', async () => {
     const source = '{4/4}\nN: ' + Array.from({ length: 32 }, () => '1___').join(' ') + ' |||'
