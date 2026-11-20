@@ -1,6 +1,7 @@
 import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
+import { ScoreAccessibleText } from './ScoreAccessibleText'
 import { PlaybackLoadingDialog } from './PlaybackLoadingDialog'
 import { ResourceLoadingDialog } from './ResourceLoadingDialog'
 import { cancelToneLoad, loadSampledTone, subscribeToneLoadProgress, type ToneLoadProgress } from '@m3n/score-renderer/tones'
@@ -644,6 +645,7 @@ export function ScoreRenderer({
           playerRef.current?.setTempo(bpm)
         }}
       />}
+      <ScoreAccessibleText score={scoreDocument} notationMode={notationMode} transpose={playbackTranspose} tempoScale={tempoScale} />
       <div
         ref={paperRef}
         className="score-paper"
@@ -654,7 +656,7 @@ export function ScoreRenderer({
         data-measure-numbers={measureNumbers}
         data-notation={notationMode === 'staff' ? 'staff' : 'numbered'}
         aria-busy={isRendering || isSourceUpdating || undefined}
-        tabIndex={0}
+        aria-hidden="true"
         onClick={(event) => {
           const element = (event.target as Element).closest('[id^="m3n-e-"], [data-m3n-id^="m3n-e-"]')
           const rawId = element?.getAttribute('data-m3n-id') ?? element?.getAttribute('id')

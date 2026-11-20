@@ -66,3 +66,20 @@ main {
   margin: 0 auto;
   padding: var(--ui-space) 0 48px;
 }
+
+/* Remains in the accessibility tree without affecting score layout or exports. */
+.score-accessible-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media print {
+  .score-accessible-text { display: none; }
+}
