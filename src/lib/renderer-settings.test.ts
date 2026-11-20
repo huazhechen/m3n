@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { clampPlaybackBpm, PLAYBACK_BPM_KEY, readPlaybackBpm, readNotationMode, writeNotationMode } from './renderer-settings'
+import { clampPlaybackBpm, clampScoreWidth, stepScoreWidth, PLAYBACK_BPM_KEY, readPlaybackBpm, readNotationMode, writeNotationMode } from './renderer-settings'
 
 beforeEach(() => {
   const values = new Map<string, string>()
@@ -9,6 +9,17 @@ beforeEach(() => {
   })
 })
 afterEach(() => vi.unstubAllGlobals())
+
+test('width buttons reach the adjacent 10px grid point within 320–1280', () => {
+  expect(stepScoreWidth(555, -1)).toBe(550)
+  expect(stepScoreWidth(555, 1)).toBe(560)
+  expect(stepScoreWidth(550, -1)).toBe(540)
+  expect(stepScoreWidth(550, 1)).toBe(560)
+  expect(stepScoreWidth(320, -1)).toBe(320)
+  expect(stepScoreWidth(1280, 1)).toBe(1280)
+  expect(clampScoreWidth(2560)).toBe(1280)
+  expect(clampScoreWidth(200)).toBe(320)
+})
 
 test('BPM settings use a new key and never reinterpret stored speed percentages', () => {
   localStorage.setItem('m3n:playback-speed', '75')

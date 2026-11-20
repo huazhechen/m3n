@@ -1,11 +1,12 @@
 import { useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PLAYBACK_TONES, type PlaybackTone } from '@m3n/score-renderer/tones'
-import { NOTATION_MODES, type NotationMode, PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX, SCORE_WIDTH_MIN, SCORE_WIDTH_MAX } from '../lib/renderer-settings'
+import { NOTATION_MODES, type NotationMode, PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX } from '../lib/renderer-settings'
 
 import { CIRCLE_OF_FIFTHS, TRANSPOSE_KEYS, currentKeyIndex, isMinorKey, keyPitchClass, nearestKeyTranspose } from '../lib/transpose-key'
 import { CircleOfFifths } from './CircleOfFifths'
 import { ScoreControlIcon } from './ScoreControlIcon'
+import { ScoreWidthControl } from './ScoreWidthControl'
 
 type ScoreControlsProps = {
   playbackOnly?: boolean
@@ -82,11 +83,7 @@ export function ScoreControls(props: ScoreControlsProps) {
         <input type="range" min={PLAYBACK_BPM_MIN} max={PLAYBACK_BPM_MAX} step="1" value={props.bpm} aria-label="播放速度" onChange={event => props.onBpmChange(Number(event.currentTarget.value))} />
         <button type="button" className="control-button" aria-label="还原速度" title="还原乐谱原速" onClick={props.onResetBpm}><ScoreControlIcon name="reset" /></button>
       </div>
-      <div className="control-slider-row">
-        <span className="control-row-label">宽度<output>{props.width}px</output></span>
-        <input type="range" min={SCORE_WIDTH_MIN} max={SCORE_WIDTH_MAX} step="1" value={props.width} aria-label="乐谱宽度" onChange={event => props.onWidthChange(Number(event.currentTarget.value))} />
-        <button type="button" className="control-button" aria-label="还原宽度" title="还原谱集经典宽度" onClick={props.onResetWidth}><ScoreControlIcon name="reset" /></button>
-      </div>
+      <ScoreWidthControl width={props.width} onChange={props.onWidthChange} onReset={props.onResetWidth} />
 
         </div>
         <div className="control-options">

@@ -12,6 +12,7 @@ import type { ScoreSourceRange, ScoreDocument } from '@m3n/notation'
 import {
   DEFAULT_PLAYBACK_TRANSPOSE,
   DEFAULT_SCORE_WIDTH,
+  clampScoreWidth,
   METRONOME_ENABLED_KEY,
   clampPlaybackBpm,
   PLAYBACK_TRANSPOSE_MAX,
@@ -22,7 +23,6 @@ import {
   type NotationMode,
   writeRenderMode,
   type RenderMode,
-  SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
   readRendererSetting,
   writeRendererSetting,
@@ -210,7 +210,7 @@ export function ScoreRenderer({
   const [playbackProgress, setPlaybackProgress] = useState(0)
   const [notationMode, setNotationMode] = useState<NotationMode>(() => playbackOnly ? 'movable' : readNotationMode())
   const staffNotation = notationMode === 'staff'
-  const defaultWidth = (staffNotation ? scoreDocument.staffPreferredWidth : scoreDocument.preferredWidth) ?? DEFAULT_SCORE_WIDTH
+  const defaultWidth = clampScoreWidth((staffNotation ? scoreDocument.staffPreferredWidth : scoreDocument.preferredWidth) ?? DEFAULT_SCORE_WIDTH)
   const [layoutWidth, setLayoutWidth] = useState(defaultWidth)
   const [bpmOverride, setBpmOverride] = useState<number | null>(null)
   const playbackBpm = bpmOverride ?? clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
@@ -569,7 +569,7 @@ export function ScoreRenderer({
   }, [])
 
   const changeLayoutWidth = (value: number) => {
-    const width = Math.max(SCORE_WIDTH_MIN, Math.min(SCORE_WIDTH_MAX, value))
+    const width = clampScoreWidth(value)
     setFitWidth(false)
     setLayoutWidth(width)
     onLayoutWidthChange?.(width)

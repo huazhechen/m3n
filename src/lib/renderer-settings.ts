@@ -6,9 +6,18 @@ export const METRONOME_ENABLED_KEY = 'm3n:metronome-enabled'
 export const RENDER_MODE_KEY = 'm3n:render-mode'
 
 export const SCORE_WIDTH_MIN = 320
-export const SCORE_WIDTH_MAX = 2560
+export const SCORE_WIDTH_MAX = 1280
 export const SCORE_WIDTH_STEP = 10
 export const DEFAULT_SCORE_WIDTH = DEFAULT_PREFERRED_WIDTH
+
+export function clampScoreWidth(width: number) {
+  return Math.max(SCORE_WIDTH_MIN, Math.min(SCORE_WIDTH_MAX, width))
+}
+
+export function stepScoreWidth(width: number, direction: -1 | 1) {
+  const step = direction === 1 ? Math.floor(width / SCORE_WIDTH_STEP) + 1 : Math.ceil(width / SCORE_WIDTH_STEP) - 1
+  return clampScoreWidth(step * SCORE_WIDTH_STEP)
+}
 
 export const PLAYBACK_BPM_MIN = 10
 export const PLAYBACK_BPM_MAX = 240
