@@ -1,5 +1,5 @@
 import { bravuraSvg } from './bravura.js'
-import { SCORE_TEXT_FONT } from './font-family.js'
+import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
@@ -27,9 +27,10 @@ export class NativeSymbols {
   constructor(readonly measurer: TextMeasurer) {}
   dispose() {}
   text(text: string, x: number, y: number, size = nativeStyle.text, family = SCORE_TEXT_FONT, extra: Record<string, string | number | undefined> = {}): string {
+    const fontWeight = extra['font-weight'] ?? (family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : 400)
     const center = extra['text-anchor'] === 'middle'
-    const offset = center ? this.measurer.measureText(text, { fontFamily: family, fontSize: size, fontWeight: Number(extra['font-weight'] ?? 400), fontStyle: extra['font-style'] === 'italic' ? 'italic' : 'normal', textAlign: 'center' }).centerOffset ?? 0 : 0
-    return `<text${attrs({ x: x - offset, y, 'font-size': size, 'font-family': family, fill: '#000', 'xml:space': 'preserve', ...extra })}>${xml(text)}</text>`
+    const offset = center ? this.measurer.measureText(text, { fontFamily: family, fontSize: size, fontWeight: Number(fontWeight), fontStyle: extra['font-style'] === 'italic' ? 'italic' : 'normal', textAlign: 'center' }).centerOffset ?? 0 : 0
+    return `<text${attrs({ x: x - offset, y, 'font-size': size, 'font-family': family, 'font-weight': fontWeight, fill: '#000', 'xml:space': 'preserve', ...extra })}>${xml(text)}</text>`
   }
 
   sustain(x: number, y: number): string {
@@ -56,7 +57,6 @@ export class NativeSymbols {
   tempo(text: string, x: number, y: number, prepared?: NativeTempoGeometry): string {
     const geometry = prepared ?? nativeTempoGeometry(text, this.measurer)
     return `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'tempo', 'data-m3n-tempo-unit': geometry.unit })}>`
-      + `<path${attrs({ d: geometry.path, fill: '#000' })}/>`
       + this.text(geometry.text, geometry.textX, geometry.baseline, nativeStyle.text, 'M3N Numbers') + '</g>'
   }
 

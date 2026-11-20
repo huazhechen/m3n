@@ -2,7 +2,7 @@ import { NUMBER_FONT_CSS } from './font-data.js'
 import { LATIN_FONTS, CJK_FONTS, BRAVURA_FONTS } from './font-resources.js'
 import { SCORE_CJK_FONT, SCORE_LATIN_FONT } from './font-family.js'
 
-export type ScoreFontResource = { file: string; url: string; characters: string; weight?: number; style?: string }
+export type ScoreFontResource = { file: string; url: string; webUrl?: string; characters: string; weight?: number; style?: string }
 const buffers = new Map<string, Promise<Uint8Array>>()
 const installed = new Map<string, Promise<void>>()
 const coverage = new Map<string, Set<string>>()
@@ -28,8 +28,8 @@ export function scoreCjkFont(text: string): ScoreFontResource {
   return font
 }
 
-export function scoreFontForCharacter(char: string, textFont: ScoreFontResource, weight = 400, italic = false, numbers = false): ScoreFontResource {
-  const latin = numbers ? LATIN_FONTS[1] : italic ? LATIN_FONTS[3] : LATIN_FONTS[weight >= 600 ? 2 : weight >= 500 ? 1 : 0]
+export function scoreFontForCharacter(char: string, textFont: ScoreFontResource, _weight = 400, _italic = false, _numbers = false): ScoreFontResource {
+  const latin = LATIN_FONTS[0]
   if (supports(latin, char)) return latin
   if (supports(BRAVURA_FONTS[0], char)) return BRAVURA_FONTS[0]
   if (supports(textFont, char)) return textFont
@@ -66,8 +66,8 @@ function install(font: ScoreFontResource, family: string) {
   let promise = installed.get(key)
   if (!promise) {
     promise = (async () => {
-      const bytes = await loadScoreFont(font)
-      const face = new FontFace(family, Uint8Array.from(bytes), {
+      const source = font.webUrl ? `url("${font.webUrl}")` : Uint8Array.from(await loadScoreFont(font))
+      const face = new FontFace(family, source, {
         weight: String(font.weight ?? 400), style: font.style ?? 'normal', unicodeRange: unicodeRange(font.characters),
       })
       await face.load()

@@ -2,6 +2,7 @@
 import { parseM3NDocument } from '@m3n/notation';
 import { describe,expect,it } from 'vitest';
 import { nativeHeaderGeometry } from './native-header.js';
+import { nativeSvgInk } from './native-ink.js';
 import { DefaultTextMeasurer } from './native-measure.js';
 const plain = '{title=谱头}{4/4}\nN: 1 2 3 4 |||';
 const measure = new DefaultTextMeasurer();
@@ -52,9 +53,18 @@ describe('subtitle shares measured vertical space with the sides', () => {
     it.each([false, true])('shares all three columns when they fit, paged=%s', _paged => {
         const source = '{title=标题}{subtitle=副标题}{singer=歌手}{composer=甲}{4/4}\nN: 1 2 3 4 |||';
         const native = nativeHeaderGeometry(parseM3NDocument(source), 1000, 32, measure);
-        expect(native.signaturesTop).toBeCloseTo(native.subtitleTop, 4);
-        expect(native.creditsTop).toBeCloseTo(native.subtitleTop, 4);
+        expect(native.subtitleTop).toBeCloseTo(native.titleBottom + 22 * 0.4, 4);
+        expect(native.signaturesTop).toBeCloseTo(native.titleBottom + 22 * 0.8, 4);
+        expect(native.creditsTop).toBeCloseTo(native.signaturesTop, 4);
     });
+});
+it('keeps 0.4em of ink clearance when the subtitle conflicts horizontally with left information', () => {
+    const source = `{title=标题}{subtitle=${'很长的副标题'.repeat(12)}}{composer=作曲者}{4/4}\nN: 1 2 3 4 |||`;
+    const native = nativeHeaderGeometry(parseM3NDocument(source), 320, 32, measure);
+    const root = new DOMParser().parseFromString(`<svg>${native.svg}</svg>`, 'image/svg+xml');
+    const subtitle = root.querySelector('[data-m3n-role="subtitle"]')!;
+    const ink = nativeSvgInk(subtitle.outerHTML, measure);
+    expect(native.signaturesTop).toBeGreaterThanOrEqual(ink.bottom + 22 * 0.4 - 1e-6);
 });
 it('keeps blank subtitle lines from creating invisible collision obstacles', () => {
     const source = '{title=标题}{composer=甲}{4/4}\nN: 1 2 3 4 |||';

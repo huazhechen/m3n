@@ -200,9 +200,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   let measurer = options.textMeasurer
   if (!measurer && typeof window !== 'undefined' && typeof CanvasRenderingContext2D !== 'undefined') {
     const context = window.document.createElement('canvas').getContext('2d')
-    if (context) {
-      measurer = new CanvasTextMeasurer(context)
-    }
+    if (context) measurer = new CanvasTextMeasurer(context)
   }
   measurer ??= new DefaultTextMeasurer()
   const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })

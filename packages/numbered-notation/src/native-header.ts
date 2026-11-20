@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT } from './font-family.js'
+import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { numberedHeaderContent } from './header-content.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
@@ -8,7 +8,7 @@ import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import { nativeDisplayPitch } from './native-model.js'
 import { numberedPitchRange } from './pitch-range.js'
 import { transposedNumberedKeyLabel } from './fixed-do.js'
-import { displayedTempo, sectionOrderLabels, type ScoreDocument } from '@m3n/notation'
+import { sectionOrderLabels, type ScoreDocument } from '@m3n/notation'
 import type { TextMeasurer } from './native-measure.js'
 import { numberedOrderLines } from './order-lines.js'
 import { numberedHeadingLines as wrapNativeText } from './header-text.js'
@@ -24,7 +24,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const subtitleBlocks = headerContent.subtitles.map(text => wrapNativeText(text, available - em(2), nativeStyle.subtitle, measurer))
   const subtitle = subtitleBlocks.flat()
   const painter = new NativeSymbols(measurer)
-  const textBlock = (lines: string[], size: number, weight = 400) => {
+  const textBlock = (lines: string[], size: number, weight = SCORE_TEXT_WEIGHT) => {
     if (!lines.length) return { rows: [], height: 0 }
     const metrics = lines.map(text => measurer.measureText(text, { fontSize: size, fontFamily: SCORE_TEXT_FONT, fontWeight: weight }))
     const advance = size * 1.25
@@ -53,8 +53,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const creditsHeight = creditBottom
   const signatures = [measureNativeControl('key', options.fixedDo ? '1=C' : transposedNumberedKeyLabel(document.key,options.transpose), measurer), measureNativeControl('meter', `${document.meterCount}/${document.meterUnit}`, measurer)]
   if (document.hasExplicitTempo) {
-    const tempo = displayedTempo(document.tempo * (options.tempoScale ?? 1), document.meterCount, document.meterUnit)
-    signatures.push(measureNativeTempo(tempo, measurer))
+    signatures.push(measureNativeTempo({ unit: document.meterUnit, bpm: document.tempo * document.meterUnit / 4 * (options.tempoScale ?? 1) }, measurer))
   }
   let signatureX = margin
   const signaturePieces = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw })
@@ -91,17 +90,19 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const signatureSvg = signaturePieces.join('')
   const signatureInk = nativeSvgInk(signatureSvg, measurer)
   const signaturesHeight = signatureInk.bottom - signatureInk.top
-  const sideTop = margin + titleHeight + (titleHeight ? em(5) : 0)
-  const subtitleTop = sideTop
-  const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, SCORE_TEXT_FONT, { 'text-anchor': 'middle' })).join('')
+  const titleBottom = margin + titleHeight
+  const sideTop = titleBottom + (titleHeight ? nativeStyle.music * 0.8 : 0)
+  const subtitleTop = titleBottom + (titleHeight ? nativeStyle.music * 0.4 : 0)
+  const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'data-m3n-role': 'subtitle' })).join('')
   const centerBounds = nativeSvgPieces(subtitleSvg, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top).map(ink => ({ ...ink, top: ink.top - sideTop, bottom: ink.bottom - sideTop }))
   const signatureBounds = signaturePieces.flatMap(piece => nativeSvgPieces(piece, measurer)).map(ink => ({
     ...ink, top: ink.top - signatureInk.top, bottom: ink.bottom - signatureInk.top,
   }))
   type Bounds = { left: number; right: number; top: number; bottom: number }
+  const centeredGap = nativeStyle.music * 0.4
   const forbidden = (moving: Bounds[], obstacles: Bounds[], centered = false) => moving.flatMap(ink => obstacles.flatMap(other =>
     ink.right + nativeStyle.text > other.left + 1e-6 && other.right + (centered ? nativeStyle.text : 0) > ink.left + 1e-6
-      ? [{ start: other.top - ink.bottom - (centered ? em(5) : 0), end: other.bottom + em(5) - ink.top }] : []))
+      ? [{ start: other.top - ink.bottom - (centered ? centeredGap : 0), end: other.bottom + (centered ? centeredGap : em(5)) - ink.top }] : []))
   const minimumOffset = (intervals: { start: number; end: number }[]) => {
     let offset = 0
     for (const interval of intervals.sort((a, b) => a.start - b.start)) {
@@ -112,7 +113,8 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const creditOffset = minimumOffset(forbidden(creditBounds, centerBounds, true))
   const signatureOffset = minimumOffset([...forbidden(signatureBounds, centerBounds, true),
     ...forbidden(signatureBounds, creditBounds.map(ink => ({ ...ink, top: ink.top + creditOffset, bottom: ink.bottom + creditOffset })))])
-  const sidesHeight = Math.max(subtitleHeight, creditOffset + creditsHeight, signatureOffset + signaturesHeight)
+  const subtitleBottom = subtitleTop - sideTop + subtitleHeight
+  const sidesHeight = Math.max(0, subtitleBottom, creditOffset + creditsHeight, signatureOffset + signaturesHeight)
   const signaturesTop = sideTop + signatureOffset
   const creditsTop = sideTop + creditOffset
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
@@ -121,7 +123,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
       ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
     ])]
-    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: nativeStyle.text, fontFamily: SCORE_TEXT_FONT, fontWeight: item.framed ? 700 : 400 }) }))
+    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: nativeStyle.text, fontFamily: SCORE_TEXT_FONT, fontWeight: item.framed ? 700 : SCORE_TEXT_WEIGHT }) }))
     const height = Math.max(...measured.map(item => item.metrics.h + (item.framed ? nativeStyle.text * (7 / 16) : 0)))
     const top = orderBottom + minimumCoreGap
     let x = margin
@@ -152,12 +154,12 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
         const left = item.x, right = item.x + item.width, middle = item.y + item.height / 2
         const head = Math.min(item.width * 0.35, nativeStyle.text * 0.25)
         rowSvg += `<path${attrs({ d: `M${n(left)} ${n(middle)} H${n(right)} M${n(right - head)} ${n(middle - head)} L${n(right)} ${n(middle)} L${n(right - head)} ${n(middle + head)}`, fill: 'none', stroke: '#000', 'stroke-width': em(1), 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'data-m3n-role': 'order-arrow' })}/>`
-      } else rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, SCORE_TEXT_FONT, { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
+      } else rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, SCORE_TEXT_FONT, { 'font-weight': item.framed ? 700 : SCORE_TEXT_WEIGHT, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
       if (item.framed) rowSvg += '</g>'
     }
     svg += rowSvg
     blocks.push({height:row.height,svg:`<g transform="translate(0 ${n(-row.top)})">${rowSvg}</g>`})
   }
-  return { svg, blocks, title, subtitle, titleTop: margin, subtitleTop, signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
+  return { svg, blocks, title, subtitle, titleTop: margin, titleBottom, sidesTop: sideTop, subtitleTop, signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
     orderRows, height: sideTop - margin + sidesHeight + minimumCoreGap + orderHeight }
 }

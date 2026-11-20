@@ -176,22 +176,8 @@ describe('direct M3N parser', () => {
   })
 })
 
-describe('preferred engraving width', () => {
-  it('defaults to720, reads the header, and ignores comments or misplaced fields', () => {
-    expect(parseM3NDocument('N: 1 2 3 4 |||').preferredWidth).toBe(720)
-    expect(parseM3NDocument('{preferred-width=680}\nN: 1 2 3 4 |||').preferredWidth).toBe(680)
-    expect(parseM3NDocument('// {preferred-width=800}\nN: 1 2 3 4 |||').preferredWidth).toBe(720)
-    expect(parseM3NDocument('N: 1 2 3 4 |||\nL: {preferred-width=800}').preferredWidth).toBe(720)
-  })
-})
-
-describe('independent staff engraving width', () => {
-  it('defaults independently and reads only header directives', () => {
-    expect(parseM3NDocument('{preferred-width=540}\nN: 1 2 3 4 |||').staffPreferredWidth).toBe(720)
-    const score = parseM3NDocument('{preferred-width=540}{staff-preferred-width=613}\nN: 1 2 3 4 |||')
-    expect(score.preferredWidth).toBe(540)
-    expect(score.staffPreferredWidth).toBe(613)
-    expect(parseM3NDocument('// {staff-preferred-width=800}\nN: 1 2 3 4 |||').staffPreferredWidth).toBe(720)
-    expect(parseM3NDocument('N: 1 2 3 4 |||\nL: {staff-preferred-width=800}').staffPreferredWidth).toBe(720)
-  })
+it('ignores removed engraving width directives', () => {
+  const score = parseM3NDocument('{preferred-width=540}{staff-preferred-width=613}\nN: 1 2 3 4 |||')
+  expect(score).not.toHaveProperty('preferredWidth')
+  expect(score).not.toHaveProperty('staffPreferredWidth')
 })

@@ -40,6 +40,16 @@ describe('native repeat boundaries', () => {
   })
 })
 
+describe('native page measurement', () => {
+  it('matches rendered page count without requiring SVG generation', () => {
+    const score = NativeNumberedNotationScore.create(parseM3NDocument('{4/4}\nN: 1 2 3 4 | 5 6 7 1e | 2 3 4 5 |||'))
+    for (const width of [320, 480, 640, 800]) {
+      const options = { width, paged: true, pageMargin: 0 }
+      expect(score.pageCount(options)).toBe(score.render(options).length)
+    }
+  })
+})
+
 describe('native engraving acceptance', () => {
   const folder = resolve(process.cwd(), '../../src/scores')
   it.each(readdirSync(folder).filter(file => file.endsWith('.m3n')))('keeps every event, pitch slot and lyric in %s across narrow and paged layouts', file => {
@@ -496,10 +506,10 @@ it('shows lyricist and composer on the right, singer as a subtitle, and rejects 
     expect(() => render('{4/4}\nN: 1 2 3 4 |||', { width: NaN })).toThrow()
   })
 
-it('uses the embedded number font for both header and in-score tempos', () => {
+it('uses readable BPM labels for both header and in-score tempos', () => {
     const { root } = render('{96qpm} {4/4}\nN: 1 2 3 4 | {120qpm} 5 6 7 1e |||')
-    const tempos = [...root.querySelectorAll('text')].filter(text => /^= (96|120)$/.test(text.textContent ?? ''))
-    expect(new Set(tempos.map(text => text.textContent))).toEqual(new Set(['= 96', '= 120']))
+    const tempos = [...root.querySelectorAll('text')].filter(text => /^(96|120) BPM$/.test(text.textContent ?? ''))
+    expect(new Set(tempos.map(text => text.textContent))).toEqual(new Set(['96 BPM', '120 BPM']))
     expect(tempos).toHaveLength(2)
     for (const tempo of tempos) expect(tempo.getAttribute('font-family')).toBe('M3N Numbers')
   })

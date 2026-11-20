@@ -6,7 +6,6 @@ import { build } from 'vite'
 import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
 import { chromium } from '@playwright/test'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
-import { writePreferredWidths } from './scorebook-source.mjs'
 
 // Library defaults are refreshed by build-scorebook, which also validates packing.
 // Independent works use the same search and SVG checks without book grouping.
@@ -49,5 +48,4 @@ try {
     console.log(`${file}: ${best.width}px, ${best.pageCount} pages, ${result.renderCache.uniqueWidths} probes`)
   }
 } finally { await browser.close() }
-writePreferredWidths(entries, directory)
-writeFileSync(join(output, 'report.json'), JSON.stringify({ strategy: widthSearchStrategy, rendererSha256, written: true, entries }, null, 2) + '\n')
+writeFileSync(join(output, 'report.json'), JSON.stringify({ strategy: widthSearchStrategy, rendererSha256, written: false, entries }, null, 2) + '\n')

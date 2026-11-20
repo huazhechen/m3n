@@ -38,7 +38,7 @@
 
 “最佳”指本次启发式搜索找到并通过稳定性验证的候选，不代表穷举所有整档或全整数宽度的全局最优，也不是人工审美判断。试排不修改源码中的显式换行和等宽标记，也不为减少页数改变音乐内容。
 
-PDF生成并验证成功后，独立曲目的稳定候选宽度、合页成员的固定540px写回每首谱源的 `{preferred-width=…}`，并提交Git。网页解析器、曲库元数据和渲染入口统一读取该字段，缺省720；显式传入的阅读版宽优先。字段只允许在谱头声明一次，值为320～2560之间的整数，单位为逻辑px。更改源谱和渲染器后重新构建可更新最佳宽度，实际检查的候选与拒绝原因保存在本地报告。回写前核验全部源文件摘要，拒绝覆盖试排期间的修改。
+谱集PDF仍根据每首曲目的离线版面测量结果选择宽度；网页曲谱不读取或保存该版宽，每次打开时由浏览器自动搜索。曲集排版与网页阅读的宽度策略相互独立。
 
 ## 构建和检查
 
@@ -46,23 +46,23 @@ PDF生成并验证成功后，独立曲目的稳定候选宽度、合页成员�
 
 ### 独立脚本
 
-一次执行全量刷新与版宽回写：
+一次执行全量刷新：
 
 ```sh
 node tools/refresh-score-pdfs.mjs
 ```
 
-脚本可从任意工作目录调用，依次构建渲染包、搜索全库稳定版宽并生成和校验整册PDF、回写谱头建议宽度、刷新全部单曲PDF和现有校验稿。使用 `config/scorebook/editorial-plan.json` 中的版本和输出路径，重复执行会刷新该版本；需要新版时先修改配置。任一步失败立即停止，后续步骤不会执行。依赖已安装的项目npm包、Chromium和Poppler命令（`pdfinfo`、`pdffonts`、`pdfimages`）；不启动开发服务器。PDF与详细报告仍按下述规则作为本地生成物保存，谱头回写需要提交Git。
+脚本可从任意工作目录调用，依次构建渲染包、搜索整册内部版宽并生成和校验整册PDF、刷新全部单曲PDF和现有校验稿。使用 `config/scorebook/editorial-plan.json` 中的版本和输出路径，重复执行会刷新该版本；需要新版时先修改配置。任一步失败立即停止，后续步骤不会执行。依赖已安装的项目npm包、Chromium和Poppler命令（`pdfinfo`、`pdffonts`、`pdfimages`）；不启动开发服务器。PDF与详细报告仍按下述规则作为本地生成物保存。
 
-乐谱库由 `npm run build:scorebook` 搜索并在整册PDF验证后回写；独立作品执行 `node tools/refresh-numbered-works.mjs`，扫描 `src/works/`，使用相同搜索器并验证320／390px连续与分页显示，全部成功后核验源摘要并回写，报告保存在 `.tmp/numbered-work-widths/report.json`。
+乐谱库由 `npm run build:scorebook` 搜索谱集内部版宽；独立作品执行 `node tools/refresh-numbered-works.mjs` 可生成离线版面报告。两者均不修改谱源。报告保存在 `.tmp/numbered-work-widths/report.json`。
 
-运行 `npm run build:scorebook`。`node tools/build-scorebook.mjs --probe-only` 仅完成全库宽度试排，在临时目录保存 `width-probes.json`，不输出PDF、不回写。调整目录和分类后，可用 `--reuse-widths=报告路径` 复用试排；先核验渲染器与字体摘要，再逐曲核验源文件摘要，变化的谱源自动重新试排。无需开发服务器：Vite只构建离线浏览器包，Playwright通过本地路由提供资源，不访问外网。构建先保存原生页面，再共用导出字体子集打包矢量PDF；打包只保持已排字形的基线，不重新排谱。PDF使用真实A4尺寸，检查页数、嵌入字体、无栅格图片及导出越界。只有PDF成功生成后才回写谱头建议宽度。
+运行 `npm run build:scorebook`。`node tools/build-scorebook.mjs --probe-only` 仅完成全库宽度试排，在临时目录保存 `width-probes.json`，不输出PDF、不修改谱源。调整目录和分类后，可用 `--reuse-widths=报告路径` 复用试排；先核验渲染器与字体摘要，再逐曲核验源文件摘要，变化的谱源自动重新试排。无需开发服务器：Vite只构建离线浏览器包，Playwright通过本地路由提供资源，不访问外网。构建先保存原生页面，再共用导出字体子集打包矢量PDF；打包只保持已排字形的基线，不重新排谱。PDF使用真实A4尺寸，检查页数、嵌入字体、无栅格图片及导出越界。
 
 `npm run test:scorebook` 检查共同宽度合页、顺序与篇章边界、容量和宽度选择规则、网页与谱集SVG一致、A4只缩放外层、署名／低音／替代声部保留及长曲原生分页。生产构建验证网页能够直接读取谱头的建议宽度。`.tmp/scorebook-v63-web/index.html` 和 `pages/` 提供本地逐页预览。
 
 PDF封面标题和显示的网站地址链接到 `https://score.cheesefans.com/`；正文每首曲目的标题链接到该站的 `/scores/<谱源文件名去掉.m3n>`，不使用谱集内部的短ID。合页中的每首标题分别定位链接，多行标题逐行覆盖；目录保持原样。链接在最终PDF中作为透明注释区域添加，不改变标题外观、谱面排版或最佳宽度搜索。打包后使用 `pdfinfo -url` 核验首页和全部曲目的链接均实际存在。
 
-运行 `npm run export:score-pdfs` 可在整册生成和宽度回写后刷新全部单曲PDF及现有校验稿；它使用已验证的同版渲染器，逐份检查页数、A4、矢量、嵌入字体和链接，全部成功后再发布。
+运行 `npm run export:score-pdfs` 可在整册生成后刷新全部单曲PDF及现有校验稿；它使用已验证的同版渲染器，逐份检查页数、A4、矢量、嵌入字体和链接，全部成功后再发布。
 
 PDF、布局和体积报告、排序CSV仍为本地生成物，不提交Git。`npm run compact:scorebook` 可以根据最近构建的页面重新打包PDF；旧逐曲字号保留和谱集回流逻辑已删除。
 

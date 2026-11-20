@@ -8,7 +8,7 @@ test('staff mode uses its own preferred width, locates source, highlights playba
   const wasm: string[] = []
   page.on('request', request => { if (request.url().includes('.wasm')) wasm.push(request.url()) })
   await page.goto('/editor')
-  const source = '{preferred-width=540}{staff-preferred-width=613}{title=五线谱验证}{key=D}{4/4}{60qpm}\nN: [123:2] 4 5 | [135:h] 6 7 1e | 1e 7 6 5 |||\nL: 春夏秋冬天 | 山川天地 | 明月清风\nB: 1d 2d 3d 4d | 5d 6d 7d 1 | 1 7d 6d 5d |'
+  const source = '{title=五线谱验证}{key=D}{4/4}{60qpm}\nN: [123:2] 4 5 | [135:h] 6 7 1e | 1e 7 6 5 |||\nL: 春夏秋冬天 | 山川天地 | 明月清风\nB: 1d 2d 3d 4d | 5d 6d 7d 1 | 1 7d 6d 5d |'
   await page.getByLabel('M3N source').fill(source)
   const paper = page.locator('.score-paper')
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
@@ -66,7 +66,7 @@ test('staff mode uses its own preferred width, locates source, highlights playba
 test('staff pagination, tempo and transposition are shared by screen, PNG and vector PDF exports', async ({ page }, info) => {
   test.setTimeout(120_000)
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{title=五线谱导出}{preferred-width=540}{staff-preferred-width=540}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 64 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 64 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
+  await page.getByLabel('M3N source').fill('{title=五线谱导出}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 64 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 64 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('540')

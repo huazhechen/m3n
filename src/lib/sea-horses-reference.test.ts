@@ -41,7 +41,7 @@ const reference = [
 it('matches all 28 photographed bars, including naturals, sixteenths and the closing octave drop', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
-  expect(document).toMatchObject({ key: 'D', meterCount: 2, meterUnit: 2, tempo: 108, preferredWidth: 540 })
+  expect(document).toMatchObject({ key: 'D', meterCount: 2, meterUnit: 2, tempo: 108 })
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
   const accidentals: Record<string, string> = { s: '#', f: 'b' }

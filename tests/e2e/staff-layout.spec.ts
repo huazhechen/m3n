@@ -8,7 +8,7 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
   await page
     .getByLabel('M3N source')
     .fill(
-      '{title=布局一致性}{staff-preferred-width=640}{4/4}\n===A\nN: 1 2 3 4 | {br}5 6 7 1e |\n===B{br}\nN: 1 2 3 4 |||',
+      '{title=布局一致性}{4/4}\n===A\nN: 1 2 3 4 | {br}5 6 7 1e |\n===B{br}\nN: 1 2 3 4 |||',
     )
   await selectNotationMode(page, '五线谱')
   const paper = page.locator('.score-paper')
@@ -50,7 +50,7 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
 test('staff equal-measure mode changes positions without changing notehead sizes', async ({ page }) => {
   await page.goto('/editor')
   const source =
-    '{staff-preferred-width=640}{equal-measures=true}{4/4}\nN: 1^^ | (1 2) (3 4) (5 6) (7 1e) | 1 2 3 4 |||'
+    '{equal-measures=true}{4/4}\nN: 1^^ | (1 2) (3 4) (5 6) (7 1e) | 1 2 3 4 |||'
   await page.getByLabel('M3N source').fill(source.replace('{equal-measures=true}', ''))
   await selectNotationMode(page, '五线谱')
   const paper = page.locator('.score-paper')
@@ -77,7 +77,7 @@ test('staff equal-measure mode changes positions without changing notehead sizes
 test('multiple lyric verses reopen the complete grand staff including connecting barlines', async ({ page }) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill(
-    '{staff-preferred-width=640}{4/4}\nN: ||: 1 2 3 4 | {br}5 6 7 1e :|||{x8}\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |\n' +
+    '{4/4}\nN: ||: 1 2 3 4 | {br}5 6 7 1e :|||{x8}\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |\n' +
     Array.from({ length: 8 }, (_, i) => `L${i + 1}: 春夏秋冬 | 山川天地`).join('\n'),
   )
   await selectNotationMode(page, '五线谱')
@@ -98,7 +98,7 @@ test('an oversized header still renders continuously and reports an A4 paginatio
   await openScoreSettings(page)
   await page.getByRole('switch', { name: '分页', exact: true }).click()
   await page.keyboard.press('Escape')
-  await page.getByLabel('M3N source').fill(`{staff-preferred-width=320}{title=${'长标题'.repeat(200)}}{4/4}\nN: 1 2 3 4 |||`)
+  await page.getByLabel('M3N source').fill(`{title=${'长标题'.repeat(200)}}{4/4}\nN: 1 2 3 4 |||`)
   const paper = page.locator('.score-paper')
   await expect(paper.locator('g.system')).toHaveCount(1)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')

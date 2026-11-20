@@ -10,6 +10,9 @@ export class NativeNumberedNotationScore {
   diagnostics: NativeDiagnostic[] = []
   private constructor(private readonly document: ScoreDocument) {}
   static create(document: ScoreDocument) { return new NativeNumberedNotationScore(document) }
+  pageCount(options: NativeRenderOptions): number {
+    return layoutNativeScore(this.document, options).pages.length
+  }
   render(options: NativeRenderOptions): string[] {
     const layout = layoutNativeScore(this.document, options)
     this.diagnostics = [...layout.projection.diagnostics, ...validateScoreDocument(this.document).filter(diagnostic => diagnostic.code.startsWith('M3N_METER_')).map(diagnostic => ({ code: 'W_METER_MISMATCH', message: diagnostic.message, severity: 'warning' as const }))]

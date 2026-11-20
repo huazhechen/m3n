@@ -75,7 +75,7 @@ for (const input of [...fixtures.filter(item => !filter || item.file.includes(fi
     })
     await page.goto('http://staff-audit.local/')
     await page.addScriptTag({ url: 'http://staff-audit.local/bundle.js' })
-    const width = Number(/\{staff-preferred-width=(\d+)\}/.exec(input.source)?.[1] ?? 640)
+    const width = 640
     const result = await page.evaluate(
       async ({ source, width, measureNumbers }) => {
         await window.staffWidths.prepare()

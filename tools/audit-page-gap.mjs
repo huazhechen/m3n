@@ -26,7 +26,7 @@ try {
   for (const file of readdirSync(resolve(root, 'src/scores')).filter(f => f.endsWith('.m3n'))) {
     const source = readFileSync(resolve(root, 'src/scores', file), 'utf8')
     const result = await page.evaluate(({ source }) => {
-      const doc = gapAudit.parseM3NDocument(source), width = doc.preferredWidth ?? 720
+      const doc = gapAudit.parseM3NDocument(source), width = 720
       const layout = gapAudit.layoutNativeScore(doc, { width, paged: true, pageMargin: 0 })
       const settings = { pageHeight: Math.floor(width * gapAudit.A4_CONTENT_ASPECT_RATIO), margin: 0, maxGap: 32, elastic: true }
       const trial = gap => {

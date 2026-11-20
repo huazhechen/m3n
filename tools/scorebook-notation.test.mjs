@@ -98,7 +98,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       }
       return widths
     })
-    assert.deepEqual(defaults, [720, 680, 800], 'Source preference supplies the default, while explicit width wins')
+    assert.deepEqual(defaults, [720, 720, 800], 'Removed source width fields are ignored, while explicit render width wins')
     const shared = await page.evaluate(async () => {
       const api = window.scorebook, width = 720
       const sources = ['{title=合页甲}{4/4}\nN: 1 2 3 4 |||', '{title=合页乙}{4/4}\nN: 5 6 7 1 |||']

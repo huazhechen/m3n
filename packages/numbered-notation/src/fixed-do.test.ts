@@ -24,6 +24,6 @@ it('scales every displayed tempo control without changing performance', () => {
   const document = parseM3NDocument('{4/4}{120qpm}\nN: 1 2 3 4 | {60qpm}5 6 7 1e |||')
   const before = compileScorePerformance(document)
   const result = layoutNativeScore(document, { width: 800, paged: false, tempoScale: 1.5 })
-  expect(result.projection.glyphs.flatMap(g => g.controls).filter(c => c.kind === 'tempo').map(c => c.text)).toEqual(['♩ = 90'])
+  expect(result.projection.glyphs.flatMap(g => g.controls).filter(c => c.kind === 'tempo').map(c => c.text)).toEqual(['90 BPM'])
   expect(compileScorePerformance(document)).toEqual(before)
 })

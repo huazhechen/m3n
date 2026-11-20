@@ -21,7 +21,7 @@ export async function prepareStaffResources() {}
 export async function prepareStaffScore(score: ScoreDocument, settings: StaffSettings, signal?: AbortSignal) {
   await prepareNumberedNotationFonts(score)
   signal?.throwIfAborted()
-  const width = settings.width ?? score.staffPreferredWidth ?? DEFAULT_PREFERRED_WIDTH
+  const width = settings.width ?? DEFAULT_PREFERRED_WIDTH
   const minimumGap = (score.minimumCoreGapEm ?? 1.2) * 22
   const outputGap = settings.coreGap ?? minimumGap
   const margin = settings.pageMargin ?? 0

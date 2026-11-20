@@ -90,7 +90,7 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
           scoreDocument={analysis.score}
           title={result.title}
           scoreUrl={`https://score.cheesefans.com${basePath}/${encodeURIComponent(slug ?? '')}`}
-          settings={displaySettings ?? { width: result.preferredWidth ?? 720, paged: readRenderMode() === 'paged' }}
+          settings={displaySettings ?? { width: 720, paged: readRenderMode() === 'paged' }}
           onError={setExportError}
         />
         {exportError && <p className="render-message" role="alert">{exportError}</p>}

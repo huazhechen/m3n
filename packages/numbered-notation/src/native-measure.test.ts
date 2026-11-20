@@ -13,6 +13,7 @@ describe('native logical advance and painted ink', () => {
   it('keeps overhang separate from advance and still measures the complete painted text', () => {
     const canvas = context(), measurer = new CanvasTextMeasurer(canvas)
     const metrics = measurer.measureText('A', { fontSize: 20, fontFamily: SCORE_TEXT_FONT })
+    expect(canvas.font).toBe(`normal 500 20px ${SCORE_TEXT_FONT}`)
     expect(metrics.w).toBe(8.5)
     expect(metrics.advance).toBe(8.5)
     expect(metrics.inkLeft).toBe(-3)
@@ -20,6 +21,7 @@ describe('native logical advance and painted ink', () => {
     expect(canvas.textAlign).toBe('left')
     expect(canvas.textBaseline).toBe('alphabetic')
     const ink = nativeSvgInk(new NativeSymbols(measurer).text('A', 0, 0, 20), measurer)
+    expect(new NativeSymbols(measurer).text('A', 0, 0, 20)).toContain('font-weight="500"')
     expect(ink.left).toBe(-3)
     expect(ink.right).toBe(13)
   })

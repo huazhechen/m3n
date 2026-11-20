@@ -20,6 +20,14 @@ describe('header text blocks in the native implementation', () => {
         expect(numberedHeadingLines('A BCDEFGHIJ', 6, 1, characters)).toEqual(['A BCDE', 'FGHIJ']);
     });
 
+    it('keeps the configured title gap to side information and the smaller gap to a subtitle', () => {
+        const withoutSubtitle = nativeHeaderGeometry(parseM3NDocument('{title=标题}{4/4}\nN: 1 2 3 4 |||'), 800, 32, measurer);
+        expect(withoutSubtitle.sidesTop - withoutSubtitle.titleBottom).toBeCloseTo(22 * 0.8, 8);
+        const withSubtitle = nativeHeaderGeometry(parseM3NDocument('{title=标题}{subtitle=副标题}{4/4}\nN: 1 2 3 4 |||'), 800, 32, measurer);
+        expect(withSubtitle.sidesTop - withSubtitle.titleBottom).toBeCloseTo(22 * 0.8, 8);
+        expect(withSubtitle.subtitleTop - withSubtitle.titleBottom).toBeCloseTo(22 * 0.4, 8);
+    });
+
     it('accounts for measured order rows and configured gaps exactly once', () => {
         const document = parseM3NDocument(source), plain = { ...document, order: undefined };
         for (const gap of [12, 24, 36]) {

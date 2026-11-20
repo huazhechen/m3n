@@ -53,7 +53,7 @@ describe('adjacent-row density planning', () => {
   it('balances Clarinet Polka section B into three rows of three measures at its preferred width', () => {
     const source = readFileSync(new URL('../../../src/scores/dan_huang_guan_bo_er_ka_01.m3n', import.meta.url), 'utf8')
     const document = parseM3NDocument(source)
-    const layout = layoutNativeScore(document, { width: document.preferredWidth!, paged: false })
+    const layout = layoutNativeScore(document, { width: 720, paged: false })
     // B follows the 17 written measures of A, including its pickup.
     const section = new Set(layout.projection.measures.slice(17, 26))
     const rows = layout.systems.filter(system => system.measures.some(measure => section.has(measure)))

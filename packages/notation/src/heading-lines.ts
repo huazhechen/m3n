@@ -9,7 +9,7 @@ export function numberedHeadingLines(
   width: number,
   size: number,
   measurer: HeadingMeasurer,
-  weight = 400,
+  weight = 500,
 ): string[] {
   const lines: string[] = []
   let line = ''

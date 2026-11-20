@@ -4,8 +4,6 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { withPreferredWidth } from './scorebook-source.mjs'
-import { chooseBestWidth, widthSearchStrategy } from './scorebook-width.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const recordPath = join(root, 'config/score-artifacts.json')
@@ -22,7 +20,7 @@ export function sourceFiles() {
 function rendererInputs() {
   const inputs = ['packages/notation/src', 'packages/numbered-notation/src'].flatMap(filesBelow)
     .filter(file => /\.(ts|json)$/.test(file) && !file.endsWith('.test.ts') && !file.endsWith('/font-resources.ts'))
-  inputs.push('src/lib/render-score.ts', 'tools/scorebook-width.mjs', 'tools/changed-score-layout.mjs', 'tools/scorebook-layout.mjs', 'tools/prepare-score-fonts.py', 'tools/subset-builtin-pdf-font.py', 'tools/fonts/NotoSansCJKsc-Regular.otf')
+  inputs.push('tools/scorebook-layout.mjs', 'tools/prepare-score-fonts.py', 'tools/subset-builtin-pdf-font.py', 'tools/fonts/NotoSansCJKsc-Regular.otf')
   for (const file of readdirSync(assetPath).filter(file => /^(Barlow|Bravura)/.test(file))) inputs.push(`packages/numbered-notation/src/font-assets/${file}`)
   return [...new Set(inputs)].sort()
 }
@@ -41,7 +39,7 @@ export function staleScores() {
   const previous = previousRecord(), fingerprint = rendererFingerprint()
   const stale = sourceFiles().filter(file => {
     const entry = previous.entries[file]
-    return previous.rendererSha256 !== fingerprint || previous.strategy !== widthSearchStrategy || previous.fontManifestSha256 !== hash(read(fontManifestFile)) || !entry || entry.sourceSha256 !== hash(read(file))
+    return previous.rendererSha256 !== fingerprint || previous.fontManifestSha256 !== hash(read(fontManifestFile)) || !entry || entry.sourceSha256 !== hash(read(file))
       || !existsSync(join(assetPath, entry.font)) || entry.fontSha256 !== hash(readFileSync(join(assetPath, entry.font)))
   })
   const deleted = Object.keys(previous.entries).filter(file => !existsSync(join(root, file)))
@@ -67,82 +65,36 @@ export async function prepareScoreArtifacts({ check = false, staged = false } = 
   const { previous, fingerprint, stale, deleted } = staleScores()
   if (check) {
     assert(!stale.length && !deleted.length, `乐谱生成结果过期，请运行 npm run prepare:scores：\n${[...stale, ...deleted].join('\n')}`)
-    console.log('Numbered widths and font subsets match every score and the renderer; staff generation is deferred.')
+    console.log('Font subsets match every score; width selection runs in the browser.')
     return
   }
   if (!stale.length && !deleted.length) { console.log('Score artifacts are current.'); return }
   if (staged) assertFullyStaged(stale)
   const interpreter = python()
-  console.log(`Preparing ${stale.length} scores: numbered width and font subset (staff generation deferred).`)
-  const work = join(root, '.tmp/score-artifacts')
-  mkdirSync(work, { recursive: true })
+  console.log(`Preparing font subsets for ${stale.length} changed scores.`)
   const snapshots = new Map(stale.map(file => [file, read(file).toString()]))
-  const results = new Map()
-  const progressPath = join(work, 'progress.json')
-  const progress = existsSync(progressPath) ? JSON.parse(readFileSync(progressPath, 'utf8')) : {}
-  for (const file of stale) {
-    const cached = progress[file]
-    if (cached?.fingerprint === fingerprint && cached.sourceSha256 === hash(snapshots.get(file))) results.set(file, cached.result)
-  }
   if (stale.length) {
     execFileSync('npm', ['run', 'build:packages'], { cwd: root, stdio: 'inherit' })
-    const { build } = await import('vite')
-    const { chromium } = await import('@playwright/test')
-    await build({ configFile: false, logLevel: 'error', base: '/', define: { 'import.meta.url': JSON.stringify('http://score-artifacts.local/bundle.js') }, build: {
-      outDir: join(work, 'bundle'), emptyOutDir: true, minify: false,
-      lib: { entry: join(root, 'tools/changed-score-layout.mjs'), name: 'scoreArtifacts', formats: ['iife'], fileName: () => 'bundle.js' },
-    } })
-    const queue = stale.filter(file => !results.has(file))
-    await Promise.all(Array.from({ length: Math.min(Math.max(1, Number(process.env.M3N_SCORE_WORKERS) || 1), queue.length) }, async () => {
-      const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync), headless: true })
-      try {
-        while (queue.length) {
-          const file = queue.shift(), source = snapshots.get(file)
-          const page = await browser.newPage()
-          try {
-            await page.route('http://score-artifacts.local/**', route => {
-              const pathname = new URL(route.request().url()).pathname
-              if (pathname === '/') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><body></body></html>' })
-              if (pathname === '/bundle.js') return route.fulfill({ contentType: 'application/javascript; charset=utf-8', path: join(work, 'bundle/bundle.js') })
-              return route.abort()
-            })
-            await page.goto('http://score-artifacts.local/')
-            await page.addScriptTag({ url: 'http://score-artifacts.local/bundle.js' })
-            const numberedResult = await page.evaluate(source => window.scoreArtifacts.searchNumbered(source), source)
-            const numbered = chooseBestWidth(numberedResult.candidates)
-            assert(numbered, `${file}: no safe numbered width: ${JSON.stringify(numberedResult.candidates)}`)
-            results.set(file, { numberedWidth: numbered.width, numberedPages: numbered.pageCount })
-            progress[file] = { fingerprint, sourceSha256: hash(source), result: results.get(file) }
-            writeFileSync(progressPath + '.tmp', JSON.stringify(progress)); renameSync(progressPath + '.tmp', progressPath)
-            console.log(`${results.size}/${stale.length} ${file}: ${numbered.width}px`)
-          } finally { await page.close() }
-        }
-      } finally { await browser.close() }
-    }))
   }
-  // Do not overwrite an edit made while the browser was measuring.
+  // Reject edits made while font subsets were generated.
   for (const [file, source] of snapshots) assert.equal(read(file).toString(), source, `乐谱在生成期间发生变化：${file}`)
-  assert.equal(fingerprint, rendererFingerprint(), 'Renderer changed while preparing scores; rerun the command.')
-  for (const [file, result] of results) {
-    const source = withPreferredWidth(snapshots.get(file), result.numberedWidth)
-    writeFileSync(join(root, file), source)
-  }
   execFileSync(interpreter, ['tools/prepare-score-fonts.py'], { cwd: root, stdio: 'inherit' })
+  const preparedFingerprint = rendererFingerprint()
   const { CJK_FONTS, LATIN_FONTS, BRAVURA_FONTS } = await import('../packages/numbered-notation/src/font-resources.ts?prepared=' + Date.now())
   const entries = { ...previous.entries }
   for (const file of deleted) delete entries[file]
   for (const file of sourceFiles()) {
-    const result = results.get(file) ?? previous.entries[file]
+    const { numberedWidth: _numberedWidth, numberedPages: _numberedPages, ...previousResult } = previous.entries[file] ?? {}
     const source = read(file).toString()
     const chars = [...new Set(source + '演唱作词作曲音域：')].filter(c => !/\s|[\u200B\u2800]/u.test(c) && !LATIN_FONTS[0].characters.includes(c) && !BRAVURA_FONTS[0].characters.includes(c))
     const font = CJK_FONTS.filter(font => chars.every(c => font.characters.includes(c))).sort((a, b) => a.bytes - b.bytes)[0]
     assert(font, `Missing font subset: ${file}`)
-    entries[file] = { ...result, sourceSha256: hash(source), font: font.file, fontSha256: hash(readFileSync(fileURLToPath(font.url))) }
+    entries[file] = { ...previousResult, sourceSha256: hash(source), font: font.file, fontSha256: hash(readFileSync(fileURLToPath(font.url))) }
   }
-  assert.equal(fingerprint, rendererFingerprint(), 'Renderer changed while preparing scores; rerun the command.')
-  const output = JSON.stringify({ version: 1, staffGeneration: 'deferred', rendererSha256: fingerprint, fontManifestSha256: hash(read(fontManifestFile)), strategy: widthSearchStrategy, entries }, null, 2) + '\n'
+  assert.equal(preparedFingerprint, rendererFingerprint(), 'Renderer changed while preparing score artifacts; rerun the command.')
+  const output = JSON.stringify({ version: 1, staffGeneration: 'deferred', rendererSha256: preparedFingerprint, fontManifestSha256: hash(read(fontManifestFile)), entries }, null, 2) + '\n'
   writeFileSync(recordPath + '.tmp', output); renameSync(recordPath + '.tmp', recordPath)
-  assert.equal(fingerprint, rendererFingerprint(), 'Renderer changed while preparing scores; rerun the command.')
+  assert.equal(preparedFingerprint, rendererFingerprint(), 'Renderer changed while preparing score artifacts; rerun the command.')
   if (staged) execFileSync('git', ['add', '--', ...stale, 'config/score-artifacts.json', 'packages/numbered-notation/src/font-assets', 'packages/numbered-notation/src/font-resources.ts'], { cwd: root, stdio: 'inherit' })
 }
 

@@ -11,7 +11,7 @@ import { nativeNavigationGlyph } from './native-navigation-glyphs.js'
 import { nativeMusicAxis } from './native-axis.js'
 
 export function measureNativeTempo(tempo: { unit: number; bpm: number }, measurer: TextMeasurer): NativeControl {
-  return measureNativeControl('tempo', `${tempo.unit === 8 ? '♪' : '♩'} = ${Number(tempo.bpm.toFixed(2))}`, measurer, undefined, tempo.unit)
+  return measureNativeControl('tempo', `${Number(tempo.bpm.toFixed(2))} BPM`, measurer, undefined, tempo.unit)
 }
 
 export function measureNativeControl(kind: NativeControl['kind'], text: string, measurer: TextMeasurer, keyRows?: NativeKeyRow[], tempoUnit?: number): NativeControl {

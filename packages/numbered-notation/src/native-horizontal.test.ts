@@ -47,7 +47,7 @@ describe('native spacing and measured note envelopes', () => {
         expect(axes).toHaveLength(4);
         for (const [index, gap] of [46.23176, 44.90601, 44.00402].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(316.41144, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(329.01144, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);

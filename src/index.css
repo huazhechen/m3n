@@ -794,6 +794,7 @@ textarea::selection {
   min-height: unset;
   border-radius: 6px;
   background: #ffffff;
+  font-synthesis: weight style;
 }
 
 /* The frame is 112% of the SVG width: 6% of the score on each side. */

@@ -357,21 +357,8 @@ it('rejects the removed source metadata directive', () => {
   expect(parseM3NDocument('N: 1 2 3 4 |||')).not.toHaveProperty('source')
 })
 
-it('validates preferred-width range, integer value, uniqueness and header placement', () => {
-  for (const width of [320, 640, 720, 800, 2560]) expect(validateM3N(`{preferred-width=${width}}\nN: 1 2 3 4 |||`)).toEqual([])
-  for (const width of ['0', '319', '2561', 'NaN', '720.5', '', '-1', '1e3']) {
-    expect(validateM3N(`{preferred-width=${width}}\nN: 1 2 3 4 |||`).some(item => item.includes('preferred-width 必须'))).toBe(true)
-  }
-  expect(validateM3N('N: {preferred-width=720}1 2 3 4 |||').some(item => item.includes('只能写在文档首部'))).toBe(true)
-  expect(validateM3N('{preferred-width=720}{preferred-width=800}\nN: 1 2 3 4 |||').some(item => item.includes('重复声明'))).toBe(true)
-})
-
-it('validates independent staff width range, header placement and uniqueness', () => {
-  expect(validateM3N('{preferred-width=540}{staff-preferred-width=613}\nN: 1 2 3 4 |||')).toEqual([])
-  for (const width of [320, 720, 2560]) expect(validateM3N(`{staff-preferred-width=${width}}\nN: 1 2 3 4 |||`)).toEqual([])
-  for (const width of ['319', '2561', '720.5', '', '-1', '1e3']) {
-    expect(validateM3N(`{staff-preferred-width=${width}}\nN: 1 2 3 4 |||`).some(item => item.includes('staff-preferred-width 必须'))).toBe(true)
-  }
-  expect(validateM3N('N: {staff-preferred-width=720}1 2 3 4 |||').some(item => item.includes('只能写在文档首部'))).toBe(true)
-  expect(validateM3N('{staff-preferred-width=720}{staff-preferred-width=800}\nN: 1 2 3 4 |||').some(item => item.includes('重复声明'))).toBe(true)
+it('does not expose source width directives in the parsed document model', () => {
+  const score = parseM3NDocument('{preferred-width=540}{staff-preferred-width=613}\nN: 1 2 3 4 |||')
+  expect(score).not.toHaveProperty('preferredWidth')
+  expect(score).not.toHaveProperty('staffPreferredWidth')
 })

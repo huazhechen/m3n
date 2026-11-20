@@ -36,7 +36,7 @@ try {
         const sorted = [...values].sort((a, b) => a - b)
         return { min: sorted[0] ?? null, p10: sorted[Math.floor((sorted.length - 1) * .1)] ?? null, median: sorted[Math.floor((sorted.length - 1) * .5)] ?? null, mean: values.reduce((a, b) => a + b, 0) / (values.length || 1), max: sorted.at(-1) ?? null }
       }
-      const cases = [...new Set([doc.preferredWidth ?? 720, 700])].flatMap(width => [false, true].map(paged => {
+      const cases = [...new Set([720, 700])].flatMap(width => [false, true].map(paged => {
         const layout = density.layoutNativeScore(doc, { width, paged, pageMargin: 0 })
         const rows = layout.systems.map(system => {
           const glyphs = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.staff === 'melody')

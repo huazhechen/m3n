@@ -128,9 +128,9 @@ test('width resets to the preferred width declared by each score', async ({ page
 
 test('width buttons snap to adjacent grid points and dragging commits on release outside the slider', async ({ page }, info) => {
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{preferred-width=555}{4/4}\nN: 1 2 3 4 |||')
+  await page.getByLabel('M3N source').fill('{4/4}\nN: 1 2 3 4 |||')
   const paper = page.locator('.score-paper')
-  await expect(paper.locator('svg').first()).toHaveAttribute('width', '555')
+  await expect(paper.locator('svg').first()).toHaveAttribute('width', '720')
   await openScoreSettings(page)
   const slider = page.getByRole('slider', { name: '乐谱宽度', exact: true })
   const minus = page.getByRole('button', { name: '减小乐谱宽度', exact: true })
@@ -170,18 +170,18 @@ test('width buttons snap to adjacent grid points and dragging commits on release
   expect((await slider.boundingBox())!.width).toBeGreaterThan(30)
   await page.screenshot({ path: info.outputPath('width-control-mobile.png') })
   await page.getByRole('button', { name: '还原宽度' }).click()
-  await expect(paper.locator('svg').first()).toHaveAttribute('width', '555')
+  await expect(paper.locator('svg').first()).toHaveAttribute('width', '720')
 })
 
-test('reading width clamps a source preference to the control range', async ({ page }) => {
+test('removed source width directives do not override the reading width', async ({ page }) => {
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{preferred-width=2560}{4/4}\nN: 1 2 3 4 |||')
-  await expect(page.locator('.score-paper svg').first()).toHaveAttribute('width', '1280')
+  await page.getByLabel('M3N source').fill('{4/4}\nN: 1 2 3 4 |||')
+  await expect(page.locator('.score-paper svg').first()).toHaveAttribute('width', '720')
   await openScoreSettings(page)
   await expect(page.getByRole('button', { name: '增大乐谱宽度', exact: true })).toBeDisabled()
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('640')
   await page.getByRole('button', { name: '还原宽度' }).click()
-  await expect(page.locator('.score-paper svg').first()).toHaveAttribute('width', '1280')
+  await expect(page.locator('.score-paper svg').first()).toHaveAttribute('width', '720')
 })
 
 test('BPM controls actual playback; measure number changes preserve the player', async ({ page }) => {

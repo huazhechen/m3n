@@ -8,7 +8,7 @@ import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import type { NativeTempoGeometry } from './native-tempo.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
-import { incomingMeasureKeys, resolveScorePitches, displayedTempo, sectionEntryKey, sectionKeyVisits, sectionVisitKey, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
+import { incomingMeasureKeys, resolveScorePitches, sectionEntryKey, sectionKeyVisits, sectionVisitKey, parseM3NGrace, parseM3NGroupPitches, scoreEventIds, type ScoreDocument, type ScoreEvent, type ScoreMeasure } from '@m3n/notation'
 import { lyricsByEvent, type LyricsByEvent, type LyricRowData } from './lyrics.js'
 import { sustainContinuations } from './sustains.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -104,8 +104,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         const meter = `${settings.meterCount ?? document.meterCount}/${settings.meterUnit ?? document.meterUnit}`
         if (meter !== state.meter) { control('meter', meter); state.meter = meter }
         if (settings.tempo !== undefined && settings.tempo !== state.tempo) {
-          const tempo = displayedTempo(settings.tempo * (options.tempoScale ?? 1), settings.meterCount ?? document.meterCount, settings.meterUnit ?? document.meterUnit)
-          controls.push(measureNativeTempo(tempo, options.textMeasurer)); state.tempo = settings.tempo
+          const unit = settings.meterUnit ?? document.meterUnit
+          controls.push(measureNativeTempo({ unit, bpm: settings.tempo * unit / 4 * (options.tempoScale ?? 1) }, options.textMeasurer)); state.tempo = settings.tempo
         }
         return controls
       }

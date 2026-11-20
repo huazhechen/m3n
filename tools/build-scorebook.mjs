@@ -7,7 +7,6 @@ import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
-import { writePreferredWidths } from './scorebook-source.mjs'
 import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth } from './scorebook-packing.mjs'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
@@ -142,11 +141,8 @@ writeFileSync(join(temp, 'index.html'), '<!doctype html><meta charset="utf-8"><t
   + pages.map((page, index) => `<figure><figcaption>第${index + 1}页 · ${page.kind}</figcaption><img loading="lazy" src="pages/${String(index + 1).padStart(3, '0')}.svg"></figure>`).join(''))
 // Packaging only embeds glyphs at their resolved positions; it never re-engraves.
 execFileSync(process.execPath, [join(root, 'tools/compact-scorebook-pdf.mjs'), `--plan=${planFile}`], { stdio: 'inherit' })
-// Publish source defaults only after a validated PDF exists. Check all sources
-// first so an edit made during the search cannot be silently overwritten.
-writePreferredWidths(records, join(root, 'src/scores'))
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')
 const csv = [['曲目', '最佳宽度px', '谱集版宽px', '页码'], ...records.map(entry => [entry.title, entry.width, entry.bookWidth, entry.pages.join('/')])]
   .map(row => row.map(value => '"' + String(value).replaceAll('"', '""') + '"').join(',')).join('\n')
 writeFileSync(join(output, '排序与缩放记录.csv'), csv + '\n')
-console.log(JSON.stringify({ entries: records.length, pages: pages.length, widths: 'preferred-width headers', pdf: join(output, plan.outputPdf) }))
+console.log(JSON.stringify({ entries: records.length, pages: pages.length, pdf: join(output, plan.outputPdf) }))

@@ -78,9 +78,6 @@ export type ScoreDocument = {
   equalMeasures?: boolean
   /** Minimum vertical core clearance in music-font em; defaults to 1.2 throughout the score. */
   minimumCoreGapEm?: number
-  /** Suggested logical engraving width; explicit view settings may override it. */
-  preferredWidth?: number
-  staffPreferredWidth?: number
   /** Written sections are printed once; order determines performance visits. */
   order?: string[]
   /** Optional target keys, indexed by outer section visit in order. */

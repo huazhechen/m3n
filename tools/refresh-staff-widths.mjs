@@ -4,7 +4,6 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFile
 import { join, resolve } from 'node:path'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
-import { writePreferredWidths } from './scorebook-source.mjs'
 import { chooseBestWidth, widthSearchStrategy } from './scorebook-width.mjs'
 
 const root = resolve(import.meta.dirname, '..')
@@ -29,7 +28,7 @@ const saveReport = () => {
   writeFileSync(path + '.tmp', JSON.stringify({ ...report, entries: entries.filter(Boolean) }, null, 2) + '\n')
   renameSync(path + '.tmp', path)
 }
-// Capture every input before measuring; writePreferredWidths verifies all digests before writing.
+// Capture every input before measuring so reports describe a consistent source snapshot.
 const inputs = ['scores', 'works'].flatMap(scope => readdirSync(join(directory, scope))
   .filter(file => file.endsWith('.m3n')).sort()
   .map(name => {
@@ -74,7 +73,6 @@ async function refresh() {
   }
 }
 await refresh()
-if (!probeOnly) writePreferredWidths(entries, directory, 'staff-preferred-width')
-report.written = !probeOnly
+report.written = false
 saveReport()
 console.log(JSON.stringify({ scores: entries.length, written: report.written, report: join(output, 'report.json') }))
