@@ -51,10 +51,53 @@ test('width stability caches 655 between 650 and 660 and excludes a page-count t
     measured.push(width)
     return candidate(width, 100, width < 650 ? 2 : 1)
   })
-  assert.deepEqual(renderCache, { requests: 57, uniqueWidths: 39, hits: 18 })
+  assert.ok(renderCache.uniqueWidths < 25, JSON.stringify(renderCache))
+  assert.equal(renderCache.requests - renderCache.hits, renderCache.uniqueWidths)
   assert.equal(measured.filter(width => width === 655).length, 1)
   assert.equal(candidates.find(c => c.width === 650).stable, false)
   assert.equal(chooseBestWidth(candidates).width, 660)
+})
+
+test('flat pagination stops after coarse sampling and local stability verification', async () => {
+  const measured = []
+  const result = await probeWidthCandidates(async width => {
+    measured.push(width)
+    return candidate(width, 100)
+  }, { requiredWidths: [640] })
+  assert.equal(chooseBestWidth(result.candidates).width, 540)
+  assert.ok(result.renderCache.uniqueWidths <= 9)
+  assert.ok(result.candidates.find(c => c.width === 640)?.stable)
+  assert.equal(new Set(measured).size, measured.length)
+})
+
+test('coarse interior samples detect nonmonotone pagination missed by endpoint bisection', async () => {
+  const result = await probeWidthCandidates(async width => candidate(width, 100, width >= 585 && width <= 615 ? 1 : 2))
+  assert.equal(chooseBestWidth(result.candidates).width, 590)
+  assert.ok(result.renderCache.uniqueWidths < 25)
+})
+
+test('expensive SVG checks reject unsafe winners and search their neighbors', async () => {
+  const verified = []
+  const result = await probeWidthCandidates(async width => candidate(width, 100), {
+    verify: async width => {
+      verified.push(width)
+      return { outside: width < 555 ? ['ink'] : [], overlaps: [] }
+    },
+  })
+  assert.equal(chooseBestWidth(result.candidates).width, 560)
+  assert.equal(new Set(verified).size, verified.length)
+  assert.ok(result.renderCache.uniqueWidths < 25)
+})
+
+test('failed renders are recorded and never bypass stability verification', async () => {
+  const result = await probeWidthCandidates(async width => {
+    if (width < 555) throw new Error('render failed')
+    return candidate(width, 100)
+  })
+  assert.equal(chooseBestWidth(result.candidates).width, 560)
+  assert.ok(result.candidates.every(c => !c.stable || c.stabilityCases.every(p => !p.error)))
+  const failed = await probeWidthCandidates(async () => { throw new Error('unrenderable') })
+  assert.equal(chooseBestWidth(failed.candidates), null)
 })
 
 test('shared pages must fit at 635 and 645 during stability verification', () => {

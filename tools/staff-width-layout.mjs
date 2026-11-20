@@ -16,7 +16,7 @@ export async function search(source) {
   const render = await prepareStaffScore(score, {})
   return probeWidthCandidates(async width => ({
     width, pageCount: render.pageCount(true, width), outside: [], overlaps: [],
-  }))
+  }), { verify: width => measureScore(score, width, true) })
 }
 
 export async function measure(source, width, verify = false) {
@@ -29,7 +29,7 @@ async function measureScore(score, width, verify = false) {
   if (!verify) return { width, pageCount }
   const pages = render(true)
   if (pages.length !== pageCount || !pageCount) throw new Error('Staff pagination mismatch')
-  const outside = []
+  const outside = [], overlaps = []
   const host = document.createElement('div')
   document.body.append(host)
   try {
@@ -38,9 +38,13 @@ async function measureScore(score, width, verify = false) {
     pages.forEach((svg, index) => {
       const box = svg.viewBox.baseVal, ink = svg.getBBox()
       if (![box.width, box.height, ink.x, ink.y, ink.width, ink.height].every(Number.isFinite) || box.width <= 0 || box.height <= 0) throw new Error('Invalid staff SVG geometry')
+      const systems = [...svg.querySelectorAll('g.system')].map(system => system.getBoundingClientRect())
+      for (let row = 1; row < systems.length; row++) {
+        if (systems[row].top < systems[row - 1].bottom - 2) overlaps.push({ page: index + 1, row: row + 1 })
+      }
       const tolerance = box.width / width * 2
       if (ink.x < -tolerance || ink.y < -tolerance || ink.x + ink.width > box.width + tolerance || ink.y + ink.height > box.height + tolerance || Number(svg.getAttribute('height')) > a4SourcePageHeight(width) + 2) outside.push(index + 1)
     })
-    return { width, pageCount, outside }
+    return { width, pageCount, outside, overlaps }
   } finally { host.remove() }
 }

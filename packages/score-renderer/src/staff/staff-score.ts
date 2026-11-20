@@ -37,11 +37,14 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   const headerHeight = heading.length ? 30 + (heading.length - 1) * 17 : 0
   const cache = new Map<boolean, string[]>()
   const pageCounts = new Map<string, number>()
+  const systemSpacings = new Map<number, number>()
   // Width refreshes need the actual engine pagination without expanding every SVG glyph.
   const engrave = (paged: boolean, includeMarkup: boolean, candidateWidth = width) => {
     const key = `${candidateWidth}:${paged}`
     signal?.throwIfAborted()
     if (includeMarkup ? cache.has(paged) : pageCounts.has(key)) return
+    // Continuous and paged views use the same chosen system clearance.
+    if (!paged && !systemSpacings.has(candidateWidth)) engrave(true, false, candidateWidth)
     const toolkit = new VerovioToolkit(module)
     try {
       const scale = 38
@@ -54,10 +57,25 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         // extend above that box. Reserve real page space before pagination.
         pageMarginTop: Math.ceil(10 * 100 / scale), pageMarginBottom: 0, pageMarginLeft: 0, pageMarginRight: 0,
         adjustPageHeight: true, breaks: 'smart',
+        spacingSystem: systemSpacings.get(candidateWidth) ?? 3,
         mnumInterval: settings.measureNumbers ? 1 : 0,
         transpose: String(settings.transpose ?? 0),
       })
       if (!toolkit.loadData(mei)) throw new Error(toolkit.getLog() || '五线谱排版失败。')
+      if (paged && !systemSpacings.has(candidateWidth)) {
+        // Establish pagination at the supported minimum clearance, then use the
+        // engine default if it does not add a page. A fixed 4-unit gap otherwise
+        // pushes a nearly full page's last system onto an extra sheet after reflow.
+        const compactCount = toolkit.getPageCount()
+        toolkit.setOptions({ spacingSystem: 4 })
+        if (!toolkit.loadData(mei)) throw new Error(toolkit.getLog() || '五线谱排版失败。')
+        const spacing = toolkit.getPageCount() <= compactCount ? 4 : 3
+        if (spacing === 3) {
+          toolkit.setOptions({ spacingSystem: spacing })
+          if (!toolkit.loadData(mei)) throw new Error(toolkit.getLog() || '五线谱排版失败。')
+        }
+        systemSpacings.set(candidateWidth, spacing)
+      }
       const count = toolkit.getPageCount()
       pageCounts.set(key, count)
       if (includeMarkup) cache.set(paged, Array.from({ length: count }, (_, index) => toolkit.renderToSVG(index + 1)))

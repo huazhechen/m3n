@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
 import { writePreferredWidths } from './scorebook-source.mjs'
-import { chooseBestWidth } from './scorebook-width.mjs'
+import { chooseBestWidth, widthSearchStrategy } from './scorebook-width.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const directory = join(root, 'src'), output = join(root, '.tmp/staff-widths')
@@ -23,7 +23,7 @@ const entries = [], hash = value => createHash('sha256').update(value).digest('h
 const rendererSha256 = hash(Buffer.concat([readFileSync(join(output, 'bundle/bundle.js')), readFileSync(join(root, 'packages/score-renderer/vendor/verovio/verovio-module.wasm'))]))
 const previous = existsSync(join(output, 'report.json')) ? JSON.parse(readFileSync(join(output, 'report.json'), 'utf8')) : undefined
 const reusable = new Map(!fresh && previous?.rendererSha256 === rendererSha256 ? previous.entries.map(entry => [entry.file, entry]) : [])
-const report = { rendererSha256, range: [540, 720], step: 5, candidateStep: 10, stabilityOffsets: [-5, 0, 5], criterion: 'minimum page count, then minimum width', entries }
+const report = { rendererSha256, strategy: widthSearchStrategy, range: [540, 720], step: 5, candidateStep: 10, stabilityOffsets: [-5, 0, 5], criterion: 'minimum page count, then minimum width', entries }
 const saveReport = () => {
   const path = join(output, 'report.json')
   writeFileSync(path + '.tmp', JSON.stringify({ ...report, entries: entries.filter(Boolean) }, null, 2) + '\n')
@@ -45,26 +45,25 @@ async function refresh() {
       const page = await browser.newPage()
       await page.route('http://staff-widths.local/**', route => {
         const pathname = new URL(route.request().url()).pathname
-        if (pathname === '/') return route.fulfill({ contentType: 'text/html', body: '<!doctype html><html lang="zh-CN" style="font-synthesis:none;text-rendering:optimizeLegibility"><body></body></html>' })
+        if (pathname === '/') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><html lang="zh-CN" style="font-synthesis:none;text-rendering:optimizeLegibility"><body></body></html>' })
         if (pathname === '/verovio-module.wasm') return route.fulfill({ path: join(root, 'packages/score-renderer/vendor/verovio/verovio-module.wasm'), contentType: 'application/wasm' })
         const file = resolve(output, 'bundle', '.' + pathname)
         if (!file.startsWith(join(output, 'bundle') + '/') || !existsSync(file)) return route.abort()
-        return route.fulfill({ path: file, contentType: pathname.endsWith('.wasm') ? 'application/wasm' : 'application/javascript' })
+        return route.fulfill({ path: file, contentType: pathname.endsWith('.wasm') ? 'application/wasm' : 'application/javascript; charset=utf-8' })
       })
       await page.goto('http://staff-widths.local/')
       await page.addScriptTag({ url: 'http://staff-widths.local/bundle.js' })
       await page.evaluate(() => window.staffWidths.prepare())
       const cached = reusable.get(file)
       const { candidates, renderCache } = cached?.sourceSha256 === hash(source) ? cached : await page.evaluate(source => window.staffWidths.search(source), source)
-      assert(candidates.every(item => Number.isInteger(item.pageCount) && item.pageCount > 0), `${file}: invalid page counts`)
+      assert(candidates.length, `${file}: no width candidates`)
       let best, verificationCases
-      // Count all 5px probes first; fully render each prospective winner and both
-      // neighbors. Unsafe candidates are rejected using the same policy as numbered scores.
+      // Recheck the chosen width and neighbors, including reused search results.
       while ((best = chooseBestWidth(candidates))) {
         verificationCases = []
         for (const offset of [-5, 0, 5]) verificationCases.push(await page.evaluate(({ source, width }) => window.staffWidths.measure(source, width, true), { source, width: best.width + offset }))
         best.verificationCases = verificationCases
-        if (verificationCases.every(item => item.pageCount === best.pageCount && !item.outside.length)) break
+        if (verificationCases.every(item => item.pageCount === best.pageCount && !item.outside.length && !item.overlaps.length)) break
         best.stable = false
         best.rejection = 'Full SVG verification failed at the candidate or its 5px neighbors'
       }
