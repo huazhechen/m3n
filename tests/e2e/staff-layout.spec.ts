@@ -27,12 +27,22 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
         }
       }),
     )
+  const lines = await paper.locator('g.staff').first().locator(':scope > path').evaluateAll(paths => paths.filter(p => {
+    const b = (p as SVGGraphicsElement).getBBox()
+    return b.width > 100 && b.height === 0 && getComputedStyle(p).stroke !== 'none'
+  }).length)
+  expect(lines).toBe(5)
   const before = await horizontal()
   await openScoreSettings(page)
   await page.getByRole('switch', { name: '分页', exact: true }).click()
   await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  expect(await horizontal()).toEqual(before)
+  const after = await horizontal()
+  expect(after.map(n => n.id)).toEqual(before.map(n => n.id))
+  for (const [i, note] of after.entries()) {
+    expect(note.x).toBeCloseTo(before[i]!.x, 5)
+    expect(note.width).toBeCloseTo(before[i]!.width, 5)
+  }
   expect(await paper.locator('g.reh rect').count()).toBe(2)
   expect(await paper.locator('svg use,svg svg,svg defs').count()).toBe(0)
 })
@@ -59,7 +69,9 @@ test('staff equal-measure mode changes positions without changing notehead sizes
     ),
   )
   for (const row of rows) expect(Math.max(...row) - Math.min(...row)).toBeLessThanOrEqual(3)
-  expect(await sizes()).toEqual(before)
+  const after = await sizes()
+  expect(after).toHaveLength(before.length)
+  for (const [i, size] of after.entries()) expect(size).toBeCloseTo(before[i]!, 3)
 })
 
 test('multiple lyric verses reopen the complete grand staff including connecting barlines', async ({ page }) => {

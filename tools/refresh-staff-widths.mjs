@@ -20,7 +20,7 @@ await build({ configFile: false, logLevel: 'error', base: '/', define: { 'import
 } })
 const launchOptions = { executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true }
 const entries = [], hash = value => createHash('sha256').update(value).digest('hex')
-const rendererSha256 = hash(Buffer.concat([readFileSync(join(output, 'bundle/bundle.js')), readFileSync(join(root, 'packages/score-renderer/vendor/verovio/verovio-module.wasm'))]))
+const rendererSha256 = hash(readFileSync(join(output, 'bundle/bundle.js')))
 const previous = existsSync(join(output, 'report.json')) ? JSON.parse(readFileSync(join(output, 'report.json'), 'utf8')) : undefined
 const reusable = new Map(!fresh && previous?.rendererSha256 === rendererSha256 ? previous.entries.map(entry => [entry.file, entry]) : [])
 const report = { rendererSha256, strategy: widthSearchStrategy, range: [540, 720], step: 5, candidateStep: 10, stabilityOffsets: [-5, 0, 5], criterion: 'minimum page count, then minimum width', entries }
@@ -38,7 +38,7 @@ const inputs = ['scores', 'works'].flatMap(scope => readdirSync(join(directory, 
   }))
 async function refresh() {
   for (const [index, { file, source }] of inputs.entries()) {
-    // A fresh browser releases the complete WASM/renderer heap after each score.
+    // A fresh browser releases the complete renderer heap after each score.
     console.log(`Measuring ${file}`)
     const browser = await chromium.launch(launchOptions)
     try {
@@ -46,7 +46,6 @@ async function refresh() {
       await page.route('http://staff-widths.local/**', route => {
         const pathname = new URL(route.request().url()).pathname
         if (pathname === '/') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><html lang="zh-CN" style="font-synthesis:none;text-rendering:optimizeLegibility"><body></body></html>' })
-        if (pathname === '/verovio-module.wasm') return route.fulfill({ path: join(root, 'packages/score-renderer/vendor/verovio/verovio-module.wasm'), contentType: 'application/wasm' })
         const file = resolve(output, 'bundle', '.' + pathname)
         if (!file.startsWith(join(output, 'bundle') + '/') || !existsSync(file)) return route.abort()
         return route.fulfill({ path: file, contentType: pathname.endsWith('.wasm') ? 'application/wasm' : 'application/javascript; charset=utf-8' })

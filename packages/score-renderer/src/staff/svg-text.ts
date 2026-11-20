@@ -1,11 +1,7 @@
 import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
-import smuflGlyphs from './smufl-glyphs.json'
 const ns = 'http://www.w3.org/2000/svg'
 
-/** Resolve nested SVG text into measured characters and portable Bravura paths.
- * This also removes Verovio's indentation from the text consumed by PDF export.
- * Bravura outlines come from the bundled source; see public/licenses/verovio.
- */
+/** Flatten text to the same measured character positions for screen and PDF. */
 export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
   const host = document.createElement('div')
   host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none;'
@@ -50,21 +46,10 @@ export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
         index += char.length
         if (/\s/.test(char)) continue
         const style = getComputedStyle(element), size = Number.parseFloat(style.fontSize)
-        const code = char.codePointAt(0)!.toString(16).toUpperCase()
-        if (/[\uE000-\uF8FF]/.test(char)) {
-          const outline = (smuflGlyphs as Record<string, string>)[code]
-          if (!outline) throw new Error(`五线谱文字字形缺失：${code}`)
-          const glyph = document.createElementNS(ns, 'g')
-          glyph.setAttribute('transform', `translate(${position.x} ${position.y}) scale(${size / 1000})`)
-          glyph.innerHTML = outline
-          glyph.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'))
-          group.append(glyph)
-        } else {
-          const glyph = document.createElementNS(ns, 'text')
-          glyph.textContent = char
-          for (const [name, value] of Object.entries({ x: position.x, y: position.y, 'font-size': size, 'font-family': SCORE_TEXT_FONT, 'font-weight': style.fontWeight, 'font-style': style.fontStyle, 'text-anchor': 'start' })) glyph.setAttribute(name, String(value))
-          group.append(glyph)
-        }
+        const glyph = document.createElementNS(ns, 'text')
+        glyph.textContent = char
+        for (const [name, value] of Object.entries({ x: position.x, y: position.y, 'font-size': size, 'font-family': SCORE_TEXT_FONT, 'font-weight': style.fontWeight, 'font-style': style.fontStyle, 'text-anchor': 'start' })) glyph.setAttribute(name, String(value))
+        group.append(glyph)
       }
       text.replaceWith(group)
     }

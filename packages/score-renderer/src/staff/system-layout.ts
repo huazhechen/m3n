@@ -16,7 +16,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
+export type StaffSystem = { node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Ink[]; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
   'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row', 'm3n-ending-row',
@@ -78,7 +78,7 @@ export function arrangeStaffSystem(
     const text = findAll(attachment, (n) => n.tagName === 'text')[0]
     if (!text) continue
     const size = Math.max(
-      405,
+      16 / scale,
       ...findAll(text, (n) => Boolean(n.attributes['font-size'])).map((n) => parseFloat(n.attributes['font-size']!)),
     )
     const bold = hasClass(attachment, 'reh')
@@ -150,11 +150,8 @@ export function arrangeStaffSystem(
       const nextInk = union(next.flatMap((staff) => geometry.pieces(staff)))
       const shift = Math.max(0, bottom + 12 / scale - nextInk.top)
       if (shift) {
-        const staffLines = (staffs: XmlNode[]) => union(staffs.flatMap((staff) =>
-          nodes(staff).filter((n) => n.tagName === 'path').flatMap((n) => geometry.pieces(n))))
-        // Ask the engine to reopen the complete grand staff, so connecting
-        // barlines, braces and controls move with their associated staff.
-        staffSpacing = Math.max(staffSpacing, (staffLines(next).top - staffLines(staffs).bottom + shift) / 90 + 2)
+        // Reopen the complete grand staff before drawing connecting barlines.
+        staffSpacing = Math.max(staffSpacing, shift)
       }
     }
   }
@@ -222,7 +219,7 @@ export function arrangeStaffSystem(
   const music = geometry.pieces(filtered(node, isDecoration))
   const obstacles = [...music]
   const hairpinPieces = new Set<Ink>()
-  // Relations already come from Verovio; keep brackets/curves inside expression
+  // Keep brackets and curves inside expression
   // markings. Text is moved only when its actual horizontal span collides.
   const isStandaloneHeading = (attachment: XmlNode) =>
     hasClass(attachment, 'reh') && sectionHeadings.has(measures[0]?.attributes.id ?? '')
@@ -242,7 +239,11 @@ export function arrangeStaffSystem(
     const padding = hasClass(attachment, 'reh') ? 4 / scale : 0
     let dx = Math.max(0, padding - ink.left)
     if (ink.right + dx + padding > width / scale) dx -= ink.right + dx + padding - width / scale
-    let dy = 0
+    let dy = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? Infinity : 0
+    if (!Number.isFinite(dy)) {
+      const below = obstacles.filter(other => overlapsX(ink, other) && other.top >= ink.bottom)
+      dy = below.length ? Math.min(...below.map(p => p.top)) - ink.bottom - 2 / scale : 0
+    }
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
     if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - 12 / scale - ink.bottom
@@ -254,15 +255,13 @@ export function arrangeStaffSystem(
     }
     // Consecutive wedges may share a baseline with a small real gap between
     // their endpoints; horizontal padding must not invent a second lane.
-    const relevant = obstacles.filter((other) => overlapsX(
-      moveInk(ink, dx, 0), other,
-      isHairpin(attachment) && hairpinPieces.has(other) ? 0 : gap / 2,
-    ))
-    // Solve forbidden translation intervals, rather than treating empty space
-    // inside a relation as a solid rectangular obstacle.
-    const intervals = relevant
-      .map((other) => ({ start: other.top - ink.bottom - gap, end: other.bottom - ink.top + gap }))
-      .sort((a, b) => (below ? a.start - b.start : b.end - a.end))
+    const attachmentPieces = geometry.pieces(attachment).map(piece => moveInk(piece, dx, 0))
+    const ending = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row')
+    const clearance = ending ? 2 / scale : gap
+    const intervals = attachmentPieces.flatMap(piece => obstacles
+      .filter(other => overlapsX(piece, other, isHairpin(attachment) && hairpinPieces.has(other) ? 0 : clearance / 2))
+      .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
+      .sort((a, b) => below ? a.start - b.start : b.end - a.end)
     for (const interval of intervals)
       if (dy > interval.start && dy < interval.end) dy = below ? interval.end : interval.start
     if (dx || dy) translate(attachment, dx, dy)
@@ -316,11 +315,13 @@ export function arrangeStaffSystem(
       .pieces(filtered(node, isDecoration))
       .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })),
   )
-  const spacingPieces = geometry.pieces(filtered(node, (child) => hasClass(child, 'ending') || hasClass(child, 'mNum')))
+  const spacingPieces = geometry.pieces(filtered(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')))
     .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
+  const edgePieces = findAll(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')).flatMap(child => geometry.pieces(child))
+    .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
   const lyricInk = union(findAll(node, (n) => hasClass(n, 'verse')).flatMap((verse) => geometry.pieces(verse)))
   if (lyricInk.bottom > lyricInk.top) core.bottom = Math.max(core.bottom, lyricInk.bottom * scale)
-  return { node, pieces, spacingPieces, ink: union(pieces), core, section: Boolean(findAll(node, (n) => hasClass(n, 'reh')).length), staffSpacing }
+  return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(findAll(node, (n) => hasClass(n, 'reh')).length), staffSpacing }
 }
 const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, number>>()
 export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number): number {
@@ -336,7 +337,10 @@ export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: nu
       for (const b of next.spacingPieces) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
     following.set(next, collision)
   }
-  return Math.max(previous.core.bottom + gap - next.core.top, collision + gap / 2) + (next.section ? 12 : 0)
+  let edgeCollision = -Infinity
+  for (const a of previous.pieces) for (const b of next.edgePieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + 2)
+  for (const a of previous.edgePieces) for (const b of next.spacingPieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + 2)
+  return Math.max(previous.core.bottom + gap - next.core.top, collision + gap / 2, edgeCollision) + (next.section ? 12 : 0)
 }
 export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number }
 function positions(systems: StaffSystem[], start: number, gap: number) {

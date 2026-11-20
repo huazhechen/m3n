@@ -11,7 +11,7 @@ test('header range uses numbered pitches and follows fixed do and transposition'
   await expect(high).toHaveText('7')
   await expect(low.locator('circle')).toHaveCount(1)
   await expect(high.locator('circle')).toHaveCount(1)
-  await expect(paper).not.toContainText('音域')
+  await expect(paper).toContainText('音域：')
   await openScoreSettings(page)
   await selectNotationMode(page, '固定调')
   await expect(low).toHaveText('2')

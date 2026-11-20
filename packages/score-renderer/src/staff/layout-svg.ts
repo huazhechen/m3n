@@ -1,8 +1,7 @@
 import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
-import { escapeXml } from './mei-xml.js'
-import smuflGlyphs from './smufl-glyphs.json'
+const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 
 export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string> }
 export type Ink = { left: number; right: number; top: number; bottom: number }
@@ -152,7 +151,7 @@ export class SvgGeometry {
   pieces(
     node: XmlNode,
     parent: Matrix = identity,
-    inherited: { size: number; bold: boolean; italic: boolean } = { size: 405, bold: false, italic: false },
+    inherited: { size: number; bold: boolean; italic: boolean } = { size: 16 / 0.7, bold: false, italic: false },
   ): Ink[] {
     const a = node.attributes,
       num = (key: string, fallback = 0) => parseFloat(a[key] ?? String(fallback))
@@ -201,26 +200,6 @@ export class SvgGeometry {
       boxes = [
         { left: x + metrics.left, right: x + metrics.right, top: y - metrics.ascent, bottom: y + metrics.descent },
       ]
-      if (/[\uE000-\uF8FF]/u.test(content)) {
-        let cursor = x
-        const painted: Ink[] = []
-        for (const character of content) {
-          const outline = (smuflGlyphs as Record<string, string>)[character.codePointAt(0)!.toString(16).toUpperCase()]
-          if (outline) {
-            painted.push(...this.pieces(readXml(outline), [size / 1000, 0, 0, size / 1000, cursor, y], style))
-          } else if (character.trim()) {
-            const ink = this.measure(character, size, style.bold, style.italic)
-            painted.push({
-              left: cursor + ink.left,
-              right: cursor + ink.right,
-              top: y - ink.ascent,
-              bottom: y + ink.descent,
-            })
-          }
-          cursor += this.measure(character, size, style.bold, style.italic).width
-        }
-        boxes = painted
-      }
     } else if (['rect', 'line', 'circle', 'ellipse', 'polygon', 'polyline'].includes(node.tagName)) {
       if (node.tagName === 'rect')
         boxes = [{ left: num('x'), right: num('x') + num('width'), top: num('y'), bottom: num('y') + num('height') }]

@@ -21,6 +21,8 @@ try {
   await build({
     configFile: false,
     logLevel: 'error',
+    // The inline IIFE runs on about:blank; font URLs still need a valid base.
+    define: { 'import.meta.url': JSON.stringify('http://numbered-audit.local/bundle.js') },
     build: {
       outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
       lib: { entry, name: 'm3n', formats: ['iife'], fileName: () => 'bundle.js' },
@@ -29,6 +31,7 @@ try {
   const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)
   browser = await chromium.launch({ executablePath, headless: true })
   const page = await browser.newPage({ viewport: { width: 1100, height: 900 } })
+  page.on('pageerror', error => console.error('Browser startup:', error))
   await page.setContent('<main></main>')
   await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
   const scores = readdirSync(join(root, 'src/scores'))

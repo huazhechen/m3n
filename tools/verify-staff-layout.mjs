@@ -32,6 +32,7 @@ const inputs = ['scores', 'works']
   )
   .filter((item) => !filter || item.file.includes(filter))
 const fixtures = [
+  { file: 'fixture/inline-signatures', source: '{4/4}\nN: 1 2 {key=G} 3 4 | 5 6 7 1e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |' },
   { file: 'fixture/short-breaks', source: '{4/4}\n===A\nN: 1 2 3 4 | {br}5 6 7 1e |\n===B{br}\nN: 1 2 3 4 |||' },
   {
     file: 'fixture/equal-measures',
@@ -68,11 +69,6 @@ for (const input of [...fixtures.filter(item => !filter || item.file.includes(fi
         return route.fulfill({
           contentType: 'text/html; charset=utf-8',
           body: '<!doctype html><html lang="zh-CN"><body></body></html>',
-        })
-      if (path === '/verovio-module.wasm')
-        return route.fulfill({
-          path: join(root, 'packages/score-renderer/vendor/verovio/verovio-module.wasm'),
-          contentType: 'application/wasm',
         })
       return route.fulfill({ path: join(output, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
     })

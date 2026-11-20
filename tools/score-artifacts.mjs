@@ -103,7 +103,6 @@ export async function prepareScoreArtifacts({ check = false, staged = false } = 
             await page.route('http://score-artifacts.local/**', route => {
               const pathname = new URL(route.request().url()).pathname
               if (pathname === '/') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><body></body></html>' })
-              if (pathname === '/verovio-module.wasm') return route.fulfill({ contentType: 'application/wasm', path: join(root) })
               if (pathname === '/bundle.js') return route.fulfill({ contentType: 'application/javascript; charset=utf-8', path: join(work, 'bundle/bundle.js') })
               return route.abort()
             })

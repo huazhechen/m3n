@@ -4,8 +4,9 @@ import {openScoreSettings, selectNotationMode} from './score-settings'
 test('semantic reading is exposed while graphical notes stay hidden and settings update descriptions',async({page})=>{
   await page.goto('scores/hei_se_you_mo_01')
   const reading=page.getByRole('region',{name:'黑色幽默，无障碍读谱',exact:true})
-  await expect(reading.getByRole('heading',{level:3})).toHaveCount(46)
-  await expect(reading).toContainText('第27小节，第2遍房子，转调至降D大调')
+  await expect(reading.getByRole('heading',{level:3})).toHaveCount(59)
+  await expect(reading).toContainText('第5小节，第2遍房子')
+  await expect(reading).toContainText('第16小节，转调至降D大调')
   const paper=page.locator('.score-paper')
   await expect(paper).toHaveAttribute('aria-hidden','true')
   await expect(paper.locator('svg').first()).toBeVisible()

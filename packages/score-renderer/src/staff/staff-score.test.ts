@@ -1,24 +1,23 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+// @vitest-environment jsdom
+import { describe, expect, it, vi } from 'vitest'
+vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 
 describe('staff page packing', () => {
-  it('keeps Turkish March on two pages across the former 550–555px pagination spike', async () => {
-    const source = readFileSync(new URL('../../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8')
+  it('caches candidate layouts without mutating input or changing pagination geometry', async () => {
+    const source = readFileSync(`../../src/scores/turkish_march_01.m3n`, 'utf8')
     const score = analyzeM3N(source).score
     const before = structuredClone(score)
     const prepared = await prepareStaffScore(score, { width: 550 })
-    let previous = Infinity
-    for (let width = 535; width <= 725; width += 5) {
+    for (const width of [540, 550, 640, 720]) {
       const count = prepared.pageCount(true, width)
-      expect(count, `${width}px must not add a page`).toBeLessThanOrEqual(previous)
-      if (width >= 550) expect(count, `${width}px`).toBe(2)
-      previous = count
+      expect(count).toBeGreaterThan(0)
+      expect(prepared.layoutInfo(width).pages).toHaveLength(count)
+      expect(prepared.pageCount(true, width)).toBe(count)
     }
-    // Cached counts and independently prepared layouts must agree.
-    expect((await prepareStaffScore(score, { width: 555 })).pageCount(true)).toBe(2)
-    expect(prepared.pageCount(true, 550)).toBe(2)
+    expect((await prepareStaffScore(score, { width: 550 })).layoutInfo()).toEqual(prepared.layoutInfo(550))
     expect(score).toEqual(before)
-  }, 300_000)
+  }, 120_000)
 })

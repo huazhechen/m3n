@@ -4,7 +4,7 @@
 
 ## 五线谱参考
 
-先阅读本地[五线谱说明](STAFF_NOTATION.md)与[引擎构建说明](VEROVIO_BUILD.md)，再查看随项目分发的 Verovio 6.2.0 源码：`src/view_slur.cpp`、`src/slur.cpp` 和 `src/view_graph.cpp`。通过当前五线谱公共渲染入口实绘三行连奏谱例及 K.545，检查最终SVG路径与截图。
+先阅读本地[五线谱说明](STAFF_NOTATION.md)与当时的旧引擎构建说明（现已删除，可查Git历史），再查看当时随项目分发的 Verovio 6.2.0 源码（当前五线谱已迁移至VexFlow）：`src/view_slur.cpp`、`src/slur.cpp` 和 `src/view_graph.cpp`。通过当前五线谱公共渲染入口实绘三行连奏谱例及 K.545，检查最终SVG路径与截图。
 
 五线谱将跨行首段、中间段和末段分别绘制为完整的贝塞尔曲线，以两条曲线围成具有厚薄过渡的填充区域；贯穿整行的中间段也保留弧度。简谱旧实现仅在首尾用短曲线转弯，中段接水平带，贯穿整行的续段直接成为矩形。
 

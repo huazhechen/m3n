@@ -1,12 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { openScoreSettings, selectNotationMode } from './score-settings'
 
-test('staff loading dialog spans the module and engine download and stays silent after initialization', async ({ page }) => {
-  let releaseModule!: () => void, releaseEngine!: () => void
+test('staff loading dialog spans the module download and stays silent after initialization', async ({ page }) => {
+  let releaseModule!: () => void
   const moduleGate = new Promise<void>(resolve => { releaseModule = resolve })
-  const engineGate = new Promise<void>(resolve => { releaseEngine = resolve })
   await page.route('**/staff-score-*.js', async route => { await moduleGate; await route.continue() })
-  await page.route('**/*.wasm', async route => { await engineGate; await route.continue() })
   await page.goto('/scores/huan_le_song_01')
   const loading = page.getByRole('dialog', { name: '加载五线谱资源', exact: true })
   await expect(loading).toHaveCount(0)
@@ -15,13 +13,9 @@ test('staff loading dialog spans the module and engine download and stays silent
   await moduleRequest
   await expect(loading).toBeVisible()
   await expect(loading.getByRole('progressbar', { name: '五线谱资源加载进度' })).not.toHaveAttribute('value')
-  const engineRequest = page.waitForRequest('**/*.wasm')
-  releaseModule()
-  await engineRequest
-  await expect(loading).toBeVisible()
   await loading.getByRole('button', { name: '后台加载', exact: true }).click()
   await expect(loading).not.toBeVisible()
-  releaseEngine()
+  releaseModule()
   await expect(page.locator('.score-paper g.staff').first()).toBeVisible()
   await expect(loading).toHaveCount(0)
   await page.evaluate(() => {
@@ -45,14 +39,15 @@ test('staff loading dialog spans the module and engine download and stays silent
 })
 
 test('failed staff resources dismiss the dialog and can be retried after returning to numbered notation', async ({ page }) => {
-  await page.route('**/*.wasm', route => route.abort())
+  const staffModule = '**/staff-score-*.js'
+  await page.route(staffModule, route => route.abort())
   await page.goto('/scores/huan_le_song_01')
   await selectNotationMode(page, '五线谱')
   await expect(page.locator('.render-message')).toBeVisible()
   await expect(page.getByRole('dialog', { name: '加载五线谱资源', exact: true })).toHaveCount(0)
   await selectNotationMode(page, '首调')
   await expect(page.locator('.score-paper svg[data-engine="m3n"]').first()).toBeVisible()
-  await page.unroute('**/*.wasm')
+  await page.unroute(staffModule)
   await selectNotationMode(page, '五线谱')
   await expect(page.locator('.score-paper g.staff').first()).toBeVisible()
   await expect(page.locator('.render-message')).toHaveCount(0)

@@ -85,7 +85,7 @@ export function compactPage(markup, scoreUrls = []) {
     text.replaceWith(group)
     for (const { glyph, position } of positions) {
       const actual = glyph.getStartPositionOfChar(0)
-      // Verovio uses large engraving coordinates inside a scaled SVG. Check
+      // Staff engraving uses local coordinates inside a scaled SVG. Check
       // the baseline in paper pixels so float32 rounding in those local units
       // does not falsely report visible movement on a later system.
       const matrix = glyph.getScreenCTM()

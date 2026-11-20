@@ -1,10 +1,13 @@
-import { describe, expect, it } from 'vitest'
+// @vitest-environment jsdom
+import { describe, expect, it, vi } from 'vitest'
+vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 import { readFileSync } from 'node:fs'
 import { analyzeM3N, scoreEventIds } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
-import { scoreToMei } from './score-mei.js'
-import { readXml, findAll, xml, SvgGeometry, textMeasurer, element } from './layout-svg.js'
-import { splitMeasure } from './measure-fragments.js'
+import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
+import { readXml, findAll, SvgGeometry, textMeasurer } from './layout-svg.js'
+import { createStaffContext, createVexMeasure, drawVexMeasure } from './vexflow-engine.js'
+
 
 async function prepare(source: string, width = 720) {
   const analysis = analyzeM3N(source)
@@ -12,6 +15,18 @@ async function prepare(source: string, width = 720) {
   return prepareStaffScore(analysis.score, { width })
 }
 describe('staff layout contract', () => {
+  it('paints inline key changes as well as allocating their width', () => {
+    const analysis = analyzeM3N('{4/4}\nN: 1 2 {key=G} 3 4 |||')
+    expect(analysis.diagnostics.filter(d => d.severity === 'error')).toEqual([])
+    const score = analysis.score
+    const measure = projectStaffDocument(score).measures[0]!
+    const model = createVexMeasure(measure, true, false, textMeasurer(), 0.25)
+    const drawing = drawVexMeasure(model, model.minimum, 0, createStaffContext())
+    const signatures = findAll(drawing, n => n.attributes.class === 'inline-signature')
+    expect(signatures).toHaveLength(1)
+    for (const signature of signatures)
+      expect(findAll(signature, n => n.tagName === 'path' && Boolean(n.attributes.d)).length).toBeGreaterThan(0)
+  })
   it('respects short explicit lines, section entries and standalone section headings', async () => {
     const render = await prepare('{4/4}\n===A\nN: 1 2 3 4 | {br}5 6 7 1e |\n===B{br}\nN: 1 2 3 4 |||')
     expect(render.layoutInfo().lines.map((line) => line.measures.length)).toEqual([1, 1, 1])
@@ -20,8 +35,8 @@ describe('staff layout contract', () => {
     expect(ordinary.layoutInfo().lines).toHaveLength(1)
   })
   it('counts real measures across multi-rests', () => {
-    const mei = scoreToMei(analyzeM3N('{4/4}\nN: {rest=4} | 1 2 3 4 |||').score)
-    expect([...mei.matchAll(/<measure[^>]+ n="(\d+)"/g)].map((m) => m[1])).toEqual(['1', '5'])
+    const document = projectStaffDocument(analyzeM3N('{4/4}\nN: {rest=4} | 1 2 3 4 |||').score)
+    expect(document.measures.map(m => m.number)).toEqual([1, 5])
   })
   it('splits a dense measure at shared beats without losing original events', async () => {
     const source = '{4/4}\nN: ' + Array.from({ length: 32 }, () => '1___').join(' ') + ' |||'
@@ -36,29 +51,17 @@ describe('staff layout contract', () => {
   })
   it('retains IDs, pitches, lyrics and tuplets while splitting an oversized measure', () => {
     const score = analyzeM3N('{4/4}\nN: 1 2 3 4 |||\nL: 春夏秋冬').score
-    const measure = findAll(readXml(scoreToMei(score)), (n) => n.tagName === 'measure')[0]!
-    const fragments = splitMeasure(measure, 2)
+    const measure = projectStaffDocument(score).measures[0]!
+    const fragments = splitStaffMeasure(measure, 2)
     expect(fragments).toHaveLength(2)
-    expect(fragments.map((f) => f.attributes.n)).toEqual(['1', '1'])
-    expect(fragments[0]!.attributes.right).toBe('invis')
-    expect(fragments[1]!.attributes.left).toBe('invis')
-    const output = fragments.map(xml).join('')
-    for (const id of scoreEventIds(score).values())
-      expect(output.match(new RegExp(`xml:id="${id}"`, 'g'))).toHaveLength(1)
-    expect(output).toContain('春')
-    expect(output).toContain('冬')
-    const tuplet = element('measure', { 'xml:id': 'm', n: '1' }, [
-      element('staff', { n: '1' }, [
-        element('layer', { n: '1' }, [
-          element(
-            'tuplet',
-            { num: '3', numbase: '2' },
-            Array.from({ length: 3 }, () => element('note', { dur: '8' })),
-          ),
-        ]),
-      ]),
-    ])
-    expect(splitMeasure(tuplet, 0.25)).toHaveLength(1)
+    expect(fragments.map(f => f.number)).toEqual([1, 1])
+    expect(fragments[0]!.source.right).toBe('invis')
+    expect(fragments[1]!.source.left).toBe('invis')
+    const events = fragments.flatMap(f => f.melody)
+    expect(events.map(e => e.id)).toEqual([...scoreEventIds(score).values()])
+    expect(events.flatMap(e => e.lyrics.map(l => l.text))).toEqual(['春', '夏', '秋', '冬'])
+    const tuplet = projectStaffDocument(analyzeM3N('{4/4}\nN: [123:2] 4 5 |||').score).measures[0]!
+    expect(splitStaffMeasure(tuplet, 0.25)[0]!.melody[0]!.children).toHaveLength(3)
   })
   it('fits measured header text, supports leading, and stretches gaps within fixed pages', async () => {
     const render = await prepare(
@@ -100,7 +103,7 @@ describe('staff layout contract', () => {
     expect(() => render(true)).toThrow('单个五线谱谱行')
   })
   it('replans final line-context widths instead of overflowing Flower Dance', async () => {
-    const source = readFileSync(new URL('../../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8')
+    const source = readFileSync(`../../src/scores/flower_dance_01.m3n`, 'utf8')
     const render = await prepare(source, 700)
     for (const page of render.layoutInfo().pages)
       for (const system of page.systems) expect(system.ink.right).toBeLessThanOrEqual(701)

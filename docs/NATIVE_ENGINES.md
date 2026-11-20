@@ -7,7 +7,7 @@
 ```text
 M3N → analyzeM3N → ScoreDocument
                     ├→ NumberedNotationScore → SVG
-                    ├→ MEI → Verovio → 五线谱 SVG（可选、按需加载）
+                    ├→ VexFlow → 自研系统布局 → 五线谱 SVG（可选、按需加载）
                     └→ compileScorePerformance → MIDI → SpessaSynth
 ```
 

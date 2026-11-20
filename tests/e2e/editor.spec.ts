@@ -99,7 +99,8 @@ test('export preview reuses current display settings and offers PNG and PDF', as
   await expect(dialog.locator('input,select')).toHaveCount(0)
   await expect(dialog.getByRole('group', { name: '导出格式' }).getByRole('button')).toHaveText(['PNG', 'PDF'])
   await expect(dialog.locator('svg[data-engine="m3n"]').first()).toHaveAttribute('width', '600')
-  expect(await dialog.locator('svg text').allTextContents()).toEqual(await paper.locator('svg text').allTextContents())
+  // The continuous export frame also carries the source URL below the score.
+  expect(await dialog.locator('svg[data-engine="m3n"] text').allTextContents()).toEqual(await paper.locator('svg text').allTextContents())
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 844 })
     const rects = await dialog.locator('.export-actions button').evaluateAll(buttons => buttons.map(button => { const r = button.getBoundingClientRect(); return { y: r.y, left: r.left, right: r.right } }))
@@ -125,10 +126,10 @@ test('all embedded documentation scores use numbered notation', async ({ page })
   await expect(page.getByRole('switch',{name:'简谱渲染'})).toHaveCount(0)
 })
 
-test('renders numbered scores and their embedded fonts without loading Verovio', async ({ page }) => {
+test('renders numbered scores and their embedded fonts without loading the staff engine', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
   const engineRequests: string[] = []
-  await page.route(url => /verovio|\.wasm$/.test(url.pathname), route => {
+  await page.route(url => /\/(?:staff-score|vexflow)[^/]*\.js$|\.wasm$/.test(url.pathname), route => {
     engineRequests.push(route.request().url())
     return route.abort()
   })

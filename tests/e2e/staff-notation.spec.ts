@@ -21,7 +21,7 @@ test('staff mode uses its own preferred width, locates source, highlights playba
   await expect(paper.locator('svg svg, use, polygon, polyline, ellipse')).toHaveCount(0)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', '613')
-  expect(wasm).toHaveLength(1)
+  expect(wasm).toHaveLength(0)
   await page.keyboard.press('Escape')
   await paper.locator('[id="m3n-e-2"] .notehead').first().click()
   await expect.poll(() => page.getByLabel('M3N source').evaluate(element => {
@@ -54,7 +54,7 @@ test('staff mode uses its own preferred width, locates source, highlights playba
   await expect(paper).toHaveAttribute('data-fixed-do', 'false')
   await selectNotationMode(page, '五线谱')
   await expect(paper.locator('g.staff').first()).toBeVisible()
-  expect(wasm).toHaveLength(1)
+  expect(wasm).toHaveLength(0)
   await page.getByRole('button', { name: '暂停', exact: true }).click()
   await page.keyboard.press('Escape')
   await paper.screenshot({ path: info.outputPath('staff.png') })
@@ -123,7 +123,7 @@ test('keyed visits keep source clicks and highlight the performed staff occurren
 
 test('a failed optional staff download leaves the notation selector available', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3n:notation-mode', 'staff'))
-  await page.route('**/*.wasm', route => route.abort())
+  await page.route(/\/(?:staff-score|vexflow)[^/]*\.js$/, route => route.abort())
   await page.goto('/scores/huan_le_song_01')
   await expect(page.locator('.render-message')).toBeVisible()
   await selectNotationMode(page, '首调')
@@ -286,13 +286,21 @@ test('staff volta hooks, separation, and music clearance stay correct', async ({
     const lines = [...staff.querySelectorAll('path')].map(path => (path as SVGGraphicsElement).getBoundingClientRect())
       .filter(box => box.width > staffBox.width * .7 && box.height < 2)
     if (!lines.length) return []
-    const house = ending.getBoundingClientRect()
-    return [Math.min(...lines.map(line => line.top)) - house.bottom]
+    const house = (ending.closest('g.m3n-ending-row') ?? ending).getBoundingClientRect()
+    const staffTop = Math.min(...lines.map(line => line.top))
+    // Endings share a baseline across measures; use the complete row's music.
+    const music = [...system.querySelectorAll('g.note,g.chord,g.rest,g.beam,g.tie,g.slur,g.tupletNum')].map(n => n.getBoundingClientRect())
+    const protrusion = Math.max(0, staffTop - Math.min(...music.map(b => b.top)))
+    const svg = system.ownerSVGElement!
+    const scale = svg.viewBox.baseVal.width / svg.getBoundingClientRect().width
+    return [{ gap: (staffTop - house.bottom) * scale, protrusion: protrusion * scale }]
   }))
   expect(gaps.length).toBeGreaterThan(0)
-  for (const gap of gaps) {
+  for (const { gap, protrusion } of gaps) {
     expect(gap).toBeGreaterThanOrEqual(0)
-    expect(gap).toBeLessThanOrEqual(4.5)
+    // Allow compact space for the bracket and its label above actual music;
+    // the previous engine's 4.5 CSS-pixel position is not an engraving rule.
+    expect(gap).toBeLessThanOrEqual(protrusion + 8)
   }
 })
 
@@ -306,7 +314,9 @@ test('besame staff spacing stays compact with ending brackets', async ({ page })
   const rows = await paper.locator('g.system').evaluateAll(systems => systems.slice(0, 3).map(system => {
     const staffLines = [...system.querySelectorAll('g.staff path')].map(path => (path as SVGGraphicsElement).getBoundingClientRect())
       .filter(box => box.width > 100 && box.height < 2)
-    return { top: Math.min(...staffLines.map(box => box.top)), bottom: Math.max(...staffLines.map(box => box.bottom)) }
+    const svg = system.ownerSVGElement!
+    const scale = svg.viewBox.baseVal.width / svg.getBoundingClientRect().width
+    return { top: Math.min(...staffLines.map(box => box.top)) * scale, bottom: Math.max(...staffLines.map(box => box.bottom)) * scale }
   }))
   expect(rows.length).toBe(3)
   const gaps = rows.slice(1).map((row, index) => row.top - rows[index]!.bottom)

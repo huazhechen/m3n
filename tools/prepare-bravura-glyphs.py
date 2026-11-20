@@ -1,4 +1,4 @@
-"""Extract Bravura outlines from the pinned offline Verovio source archive."""
+"""Extract Bravura outlines from the independent offline Bravura glyph sources."""
 import json
 import tarfile
 import xml.etree.ElementTree as ET
@@ -20,17 +20,15 @@ class PathPen(BasePen):
     def _closePath(self): self.emit('Z')
     def _endPath(self): pass
 
-with tarfile.open(root / 'public/licenses/verovio/verovio-6.2.0-source.tar.gz') as archive:
-    files = {m.name.split('/data/', 1)[1]: m for m in archive.getmembers() if '/data/' in m.name and m.isfile()}
+with tarfile.open(root / 'public/licenses/bravura/glyph-sources.tar.gz') as archive:
+    files = {m.name: m for m in archive.getmembers() if m.isfile()}
     metadata = ET.fromstring(archive.extractfile(files['Bravura.xml']).read())
     names = {g.get('c'): g.get('n') for g in metadata}
     native = {}
-    staff = {}
     for file, member in files.items():
         if not file.startswith('Bravura/') or not file.endswith('.xml'): continue
         data = archive.extractfile(member).read().decode()
         code = Path(file).stem
-        staff[code] = data
         name = names.get(code)
         if not name: continue
         pen = PathPen()
@@ -43,4 +41,3 @@ selected = ['coda', 'segno', 'fermataAbove', 'breathMarkComma', 'articAccentAbov
             'dynamicPiano', 'dynamicForte', 'dynamicMP', 'dynamicMF', 'dynamicPP', 'dynamicPPP', 'dynamicFF', 'dynamicFFF', 'dynamicSforzato',
             'metNoteWhole', 'metNoteHalfUp', 'metNoteQuarterUp', 'metNote8thUp', 'metNote16thUp', 'metNote32ndUp', 'metNote64thUp', 'wiggleArpeggiatoUp']
 (root / 'packages/numbered-notation/src/bravura-glyphs.json').write_text(json.dumps({k: native[k] for k in selected}, separators=(',', ':')) + '\n')
-(root / 'packages/score-renderer/src/staff/smufl-glyphs.json').write_text(json.dumps(staff, indent=2) + '\n')
