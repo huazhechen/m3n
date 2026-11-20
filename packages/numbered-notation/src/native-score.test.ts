@@ -315,15 +315,15 @@ it('renders long rests without sustain marks or duplicate DOM IDs', () => {
     expect(lyrics(root, 'm3n-e-3')).toBe('天')
   })
 
-it('uses a filled wedge for staccato while preserving the open accent chevron', () => {
+it('uses filled Bravura outlines for staccato and accent', () => {
     const { root } = render('{2/4}\nN: 1e{tip} 1e{str} |||')
     const wedge = root.querySelector('#m3n-e-1 path')!
     const accent = root.querySelector('#m3n-e-2 path')!
     expect(wedge.getAttribute('fill')).toBe('#000')
     expect(wedge.getAttribute('d')).toMatch(/Z$/)
-    expect(accent.getAttribute('fill')).toBe('none')
-    expect(accent.getAttribute('stroke')).toBe('#000')
-    expect(accent.getAttribute('d')).not.toMatch(/Z$/)
+    expect(accent.getAttribute('fill')).toBe('#000')
+    expect(accent.getAttribute('data-m3n-font')).toBe('Bravura')
+    expect(accent.getAttribute('d')).toMatch(/Z$/)
   })
 
 it('retains text directives, section labels and chord annotations together', () => {

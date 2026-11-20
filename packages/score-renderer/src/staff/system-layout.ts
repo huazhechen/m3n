@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
   SvgGeometry,
@@ -96,7 +97,7 @@ export function arrangeStaffSystem(
           x: String(x),
           y: String(y + i * size * 1.25),
           'font-size': String(size),
-          'font-family': 'serif',
+          'font-family': SCORE_TEXT_FONT,
           ...(bold ? { 'font-weight': 'bold' } : {}),
         },
         [line],

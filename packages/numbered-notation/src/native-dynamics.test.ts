@@ -38,12 +38,13 @@ describe('native dynamic outlines', () => {
         }
     });
     it('leaves non-dynamic marks to their own renderers', () => {
-        for (const name of ['sfz', 'f1', 'tr', 'pppp', 'forte'])
+        for (const name of ['f1', 'tr', 'pppp', 'forte'])
             expect(nativeDynamicGlyph(name)).toBeUndefined();
     });
-    it('uses regular text style for the sfz expression', () => {
+    it('uses a filled Bravura glyph for sfz', () => {
         const svg = new NativeSymbols(measurer).rawMark('sfz');
-        expect(svg).toContain('font-size="13"');
+        expect(svg).toContain('<path');
+        expect(svg).not.toContain('<text');
         expect(svg).not.toContain('font-style="italic"');
     });
     it.each([320, 800])('keeps measured dynamic ink outside a tuplet and below its reserved system top at %s', width => {

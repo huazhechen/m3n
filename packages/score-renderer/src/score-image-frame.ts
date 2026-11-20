@@ -1,5 +1,6 @@
+import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 /** Combine the unchanged SVG pages, with a width-relative frame around the image. */
-export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .06): SVGSVGElement {
+export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .06, scoreUrl = 'https://score.cheesefans.com/'): SVGSVGElement {
   if (!pages.length) throw new Error('当前没有可导出的乐谱。')
   if (!Number.isFinite(marginRatio) || marginRatio < 0) throw new Error('图片外边距比例必须是非负有限数值。')
   const sizes = pages.map(page => ({ width: page.viewBox.baseVal.width, height: page.viewBox.baseVal.height }))
@@ -27,12 +28,12 @@ export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .
     y += sizes[index]!.height
   }
   const footer = doc.createElementNS(ns, 'text')
-  footer.textContent = 'https://score.cheesefans.com/'
-  footer.setAttribute('x', String(width + margin * 2 - margin * .35))
+  footer.textContent = scoreUrl
+  footer.setAttribute('x', String(width + margin))
   footer.setAttribute('y', String(height + margin * 1.55))
   footer.setAttribute('text-anchor', 'end')
-  footer.setAttribute('font-family', 'Arial, sans-serif')
-  footer.setAttribute('font-size', String(Math.max(8, width * .012)))
+  footer.setAttribute('font-family', SCORE_TEXT_FONT)
+  footer.setAttribute('font-size', String(Math.max(12, width * .02)))
   footer.setAttribute('fill', '#666')
   root.append(footer)
   return root

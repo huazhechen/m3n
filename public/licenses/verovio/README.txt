@@ -4,10 +4,11 @@ Upstream commit: 43f806031bfff2c64003fc8ddd9910820445f6ab
 License: LGPL-3.0-or-later (COPYING.LESSER and COPYING in this directory).
 
 M3N distributes a modified build with unused resources and input formats
-excluded. All Leipzig glyphs and CSS, Bravura.xml symbol names and metrics,
-Times text metrics, SVG, MEI, MIDI and timing support are retained.
-Bravura glyphs and CSS, Gootville, Leland, Petaluma and the optional
-Liberation web font are excluded. Music rendering supports Leipzig only.
+excluded. Bravura glyphs and CSS, Times engine text metrics, SVG, MEI, MIDI and timing
+support are retained. Leipzig, Gootville, Leland, Petaluma and optional
+Liberation resources are excluded. Music rendering uses Bravura only.
+Actual displayed text uses the application Barlow / Noto Sans font policy.
+The bravura-default.patch sets the sole music font and single-font readiness.
 Font notices are provided here; font sources and embedded dependency notices
 are in the source archive.
 Unused MusicXML importing, Verovio editor code and C API entry points are
@@ -21,7 +22,7 @@ SHA-256:
 The complete M3N modification/build recipe is build-verovio.mjs in this
 directory. To rebuild, place it at tools/build-verovio.mjs in a directory
 with the source archive at public/licenses/verovio/verovio-6.2.0-source.tar.gz
-and both mei-only.patch and m3n-layout.patch from this directory at
+and mei-only.patch, m3n-layout.patch and bravura-default.patch at
 public/licenses/verovio/.
 Install and activate Emscripten 4.0.20, provide CMake (tested with 3.31.6),
 GNU Make, patch, tar and Node.js, then run:

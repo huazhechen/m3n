@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
@@ -38,7 +39,7 @@ describe('native annotations', () => {
     const measurer = new DefaultTextMeasurer()
     const score = layout(`1 {${kind}=G7}2 3 4`, { textMeasurer: measurer })
     const item = annotations(score)[0]!, host = score.projection.glyphs[1]!
-    const first = measurer.measureText('G', { fontSize: 14, fontFamily: 'serif' })
+    const first = measurer.measureText('G', { fontSize: 14, fontFamily: SCORE_TEXT_FONT })
     expect(item.textX + first.w / 2).toBeCloseTo(host.x, 6)
     expect(item.x).toBeGreaterThan(host.x)
   })

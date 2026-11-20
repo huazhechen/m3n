@@ -50,6 +50,6 @@ export function ScoreWidthControl({ width, onChange, onReset }: Props) {
       <button type="button" className="control-button" aria-label="增大乐谱宽度" title="增至下一个10px档位" disabled={width >= SCORE_WIDTH_MAX}
         onClick={() => onChange(stepScoreWidth(width, 1))}>+</button>
     </div>
-    <button type="button" className="control-button" aria-label="还原宽度" title="还原谱集经典宽度" onClick={() => { finish(); onReset() }}><ScoreControlIcon name="reset" /></button>
+    <button type="button" className="control-button" aria-label="还原宽度" title="还原乐谱推荐宽度" onClick={() => { finish(); onReset() }}><ScoreControlIcon name="reset" /></button>
   </div>
 }

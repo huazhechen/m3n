@@ -7,14 +7,12 @@
     "Gootville",
     "Leland",
     "Petaluma",
-    "Liberation"
-  ],
-  "excludedResources": [
-    "Bravura",
-    "Bravura.css"
-  ],
-  "supportedMusicFonts": [
+    "Liberation",
     "Leipzig"
+  ],
+  "excludedResources": [],
+  "supportedMusicFonts": [
+    "Bravura"
   ],
   "disabledFeatures": [
     "DARMS",
@@ -51,8 +49,9 @@
   "lto": true,
   "binaryenCores": 1,
   "externalWasm": true,
+  "fontPatchSha256": "80695ac2658320f569cea0856ee512a03265673d28f01979f624626a7aecb6db",
   "layoutPatchSha256": "d8dcff2fdb73cf51d84b3ec64eb79796fb4f8dee9135653c0b9f6a6750e51fff",
   "sourcePatchSha256": "28677e3780a5aa9ef71f55b92eda2c07cf0805fe8879b4cc4a78053bab2dec47",
-  "moduleSha256": "2c4bd08ab24bec3d1b7c32cece65d31c1a0dde79e0c64afce2edfc99f7eac693",
-  "wasmSha256": "3872b861d27ff797c53b201003e597f0b399aa36466af5d807f643ec0ff83dda"
+  "moduleSha256": "49be6f0a8e615efdb97681b4ce5d6dff5bcc9b235fda7ce6e5e2928acb405ad6",
+  "wasmSha256": "b90f2a8e92350b52bd164e2c11d3b5ebfa05b83186317121e7571bec59719751"
 }

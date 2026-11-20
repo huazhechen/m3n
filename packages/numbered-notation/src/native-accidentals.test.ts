@@ -2,6 +2,7 @@
 import { parseM3NDocument } from '@m3n/notation';
 import { describe,expect,it } from 'vitest';
 import { nativeAccidentalAdvance,nativeAccidentalGeometry } from './native-accidentals.js';
+import { nativePathInk } from './native-ink.js';
 import { layoutNativeScore } from './native-layout.js';
 import { NativeNumberedNotationScore } from './native-score.js';
 const options = { width: 800, paged: false };
@@ -26,11 +27,10 @@ describe('native accidental geometry', () => {
             expect(geometry.paths).toHaveLength([...symbol].length);
             expect(geometry.advance).toBe(nativeAccidentalAdvance(symbol, size));
             for (const path of geometry.paths) {
-                const coordinates = path.d.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
-                const xs = coordinates.filter((_, index) => index % 2 === 0);
-                expect(Math.min(...xs)).toBeGreaterThanOrEqual(-halfBody - geometry.advance);
-                expect(Math.max(...xs)).toBeLessThan(-halfBody);
-                expect(path.stroke).toBeCloseTo(size * 0.06);
+                const ink = nativePathInk(path.d);
+                expect(ink.left).toBeGreaterThanOrEqual(-halfBody - geometry.advance - 0.000001);
+                expect(ink.right).toBeLessThan(-halfBody);
+                expect(path.stroke).toBe(0);
             }
         }
     });
@@ -49,8 +49,8 @@ describe('native accidental geometry', () => {
         expect([...root.querySelectorAll('g.note text')].some(node => /[♯♭♮]/.test(node.textContent ?? ''))).toBe(false);
         const symbols = [...root.querySelectorAll('g.system [data-m3n-role="accidental"] path')];
         expect(symbols.map(node => node.getAttribute('data-m3n-symbol'))).toEqual(['♯', '♭', '♮', '♯', '♯', '♭', '♭']);
-        expect(symbols[0]!.getAttribute('stroke-width')).toBe('1.32');
-        expect(symbols[1]!.getAttribute('stroke-width')).toBe('0.924');
+        expect(symbols[0]!.getAttribute('fill')).toBe('#000');
+        expect(symbols[1]!.getAttribute('fill')).toBe('#000');
         expect(root.querySelector('[data-m3n-role="grace"] text')!.getAttribute('font-size')).toBe('15.4');
     });
     it('omits repeated explicit accidentals and resets display state at a barline', () => {

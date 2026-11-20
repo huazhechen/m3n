@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
 import type { NativeLane, NativeSystem } from './native-layout.js'
 import type { NativeGlyph } from './native-model.js'
@@ -20,19 +21,19 @@ function lyricFragment(data: LyricRowData, x: number, baseline: number, measurer
   const text = data.texts.join(''), painter = new NativeSymbols(measurer), size = nativeStyle.lyric
   const visible = Boolean(text.replaceAll('\u200B', '').trim())
   if (!visible && !data.annotation) return ''
-  const measure = (value: string) => measurer.measureText(value, { fontSize: size, fontFamily: 'serif' })
+  const measure = (value: string) => measurer.measureText(value, { fontSize: size, fontFamily: SCORE_TEXT_FONT })
   const advance = (value: string) => { const m = measure(value); return m.advance ?? m.w }
   const { prefix, body } = lyricParts(text)
-  const bodyMetrics = measurer.measureText(body, { fontSize: size, fontFamily: 'serif', textAlign: 'center' })
+  const bodyMetrics = measurer.measureText(body, { fontSize: size, fontFamily: SCORE_TEXT_FONT, textAlign: 'center' })
   const left = x - advance(body) / 2 - (bodyMetrics.centerOffset ?? 0) - advance(prefix)
-  let svg = visible ? painter.text(text, left, baseline, size, 'serif', { ...meta, 'data-m3n-role': 'lyric', 'data-m3n-underlined': data.underlined ? 'true' : undefined }) : ''
+  let svg = visible ? painter.text(text, left, baseline, size, SCORE_TEXT_FONT, { ...meta, 'data-m3n-role': 'lyric', 'data-m3n-underlined': data.underlined ? 'true' : undefined }) : ''
   const metrics = measure(text)
   if (data.underlined && visible) {
     const stroke = size * (0.8 / 18.04), y = baseline + metrics.h - metrics.baseline + size * 0.1 + stroke / 2
     const ink = nativeSvgInk(svg, measurer)
     svg += line(ink.left, y, ink.right, y, stroke)
   }
-  if (data.annotation) svg += painter.text(data.annotation, left - size * 0.2, baseline, size, 'serif', { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' })
+  if (data.annotation) svg += painter.text(data.annotation, left - size * 0.2, baseline, size, SCORE_TEXT_FONT, { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' })
   return svg
 }
 
@@ -42,7 +43,7 @@ export function nativeLyricInk(data: LyricRowData, measurer: TextMeasurer) {
   if (!data.texts.some(text => text.replaceAll('\u200B', '').trim()) && !data.annotation) return { left: 0, right: 0, top: 0, bottom: 0 }
   const ink = nativeSvgInk(lyricFragment(data, 0, 0, measurer), measurer)
   const text = data.texts.join(''), size = nativeStyle.lyric
-  const advance = (value: string) => { const m = measurer.measureText(value, { fontSize: size, fontFamily: 'serif' }); return m.advance ?? m.w }
+  const advance = (value: string) => { const m = measurer.measureText(value, { fontSize: size, fontFamily: SCORE_TEXT_FONT }); return m.advance ?? m.w }
   const { prefix, body } = lyricParts(text)
   const left = -advance(body) / 2 - advance(prefix)
   // Measured advances retain the font's side bearings. Ink alone would
@@ -82,7 +83,7 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
     }).map(({glyph,row}) => nativeSvgInk(nativeLyricSvg(glyph,row,0,system.index,measurer),measurer))
     // A placeholder-only tier still reserves an actual font row when a lower
     // verse is present. Its invisible glyph has no ink to measure itself.
-    const fallback = boxes.length ? undefined : measurer.measureText('M',{fontSize:nativeStyle.lyric,fontFamily:'serif'})
+    const fallback = boxes.length ? undefined : measurer.measureText('M',{fontSize:nativeStyle.lyric,fontFamily:SCORE_TEXT_FONT})
     const top = fallback ? -fallback.baseline : Math.min(...boxes.map(b => b.top))
     const lower = fallback ? fallback.h-fallback.baseline : Math.max(...boxes.map(b => b.bottom))
     const y = bottom + (index ? nativeStyle.lyricGap : nativeStyle.lyricTopGap) - top

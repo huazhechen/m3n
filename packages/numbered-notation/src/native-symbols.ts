@@ -1,8 +1,10 @@
+import { bravuraSvg } from './bravura.js'
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeMeterGeometry } from './native-meter.js'
-import { nativeStyle, nativeEm as em, nativeDesignPath } from './native-style.js'
+import { nativeStyle, nativeEm as em } from './native-style.js'
 import type { TextMeasurer } from './native-measure.js'
 import type { NativePitch, NativeControl } from './native-model.js'
 import { nativeKeyGeometry } from './native-key.js'
@@ -24,7 +26,7 @@ export const path = (d: string, fill = 'none', extra = '') => `<path d="${d}" fi
 export class NativeSymbols {
   constructor(readonly measurer: TextMeasurer) {}
   dispose() {}
-  text(text: string, x: number, y: number, size = nativeStyle.text, family = 'serif', extra: Record<string, string | number | undefined> = {}): string {
+  text(text: string, x: number, y: number, size = nativeStyle.text, family = SCORE_TEXT_FONT, extra: Record<string, string | number | undefined> = {}): string {
     const center = extra['text-anchor'] === 'middle'
     const offset = center ? this.measurer.measureText(text, { fontFamily: family, fontSize: size, fontWeight: Number(extra['font-weight'] ?? 400), fontStyle: extra['font-style'] === 'italic' ? 'italic' : 'normal', textAlign: 'center' }).centerOffset ?? 0 : 0
     return `<text${attrs({ x: x - offset, y, 'font-size': size, 'font-family': family, fill: '#000', 'xml:space': 'preserve', ...extra })}>${xml(text)}</text>`
@@ -41,7 +43,7 @@ export class NativeSymbols {
       const halfBody = this.measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
       const symbols = nativeAccidentalGeometry(pitch.accidental, size, halfBody)
       svg += `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'accidental' })}>`
-        + symbols.paths.map(symbol => `<path${attrs({ d: symbol.d, fill: 'none', stroke: '#000', 'stroke-width': symbol.stroke, 'data-m3n-symbol': symbol.symbol, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })}/>`).join('') + '</g>'
+        + symbols.paths.map(symbol => `<path${attrs({ d: symbol.d, fill: symbol.stroke ? 'none' : '#000', stroke: symbol.stroke ? '#000' : 'none', 'stroke-width': symbol.stroke, 'data-m3n-symbol': symbol.symbol, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })}/>`).join('') + '</g>'
     }
     const body = nativeNoteBody(this.measurer, size)
     for (let index = 0; index < Math.abs(pitch.octave); index++) {
@@ -65,9 +67,9 @@ export class NativeSymbols {
 
   coda(x: number, y: number): string {
     const glyph = nativeNavigationGlyph('coda', nativeStyle.text * 1.15)
-    const text = this.measurer.measureText('Coda', { fontSize: nativeStyle.text, fontFamily: 'serif' })
+    const text = this.measurer.measureText('Coda', { fontSize: nativeStyle.text, fontFamily: SCORE_TEXT_FONT })
     return `<g data-m3n-role="coda" transform="translate(${n(x)} ${n(y + nativeMusicAxis(this.measurer) - glyph.height / 2)})"><path d="${glyph.path}" fill="#000"/></g>`
-      + this.text('Coda', x + glyph.width + nativeStyle.text * .3, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.text, 'serif')
+      + this.text('Coda', x + glyph.width + nativeStyle.text * .3, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.text, SCORE_TEXT_FONT)
   }
 
   mark(mark: string, x: number, y: number): string {
@@ -78,13 +80,13 @@ export class NativeSymbols {
     if (ornament !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${ornament}</g>`
     const articulation = nativeArticulationSvg(mark)
     if (articulation !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${articulation}</g>`
-    return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? nativeStyle.music * 0.5 : nativeStyle.grace, 'serif', { 'text-anchor': 'middle' })
+    return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? nativeStyle.music * 0.5 : nativeStyle.grace, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'font-style': /^f[1-5]$/.test(mark) ? 'normal' : 'italic' })
   }
 
   control(control: NativeControl, x = 0, y = 0): string {
     if (control.kind === 'section') {
-      const text = this.measurer.measureText(control.text, { fontSize: nativeStyle.annotation, fontFamily: 'serif', fontWeight: 700 })
-      return `<rect${attrs({ x: x + em(0.5), y: y - control.top + em(0.5), width: control.width - em(1), height: control.top + control.bottom - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>` + this.text(control.text, x + (control.textInset ?? em(3.5)), y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.annotation, 'serif', { 'font-weight': 700 })
+      const text = this.measurer.measureText(control.text, { fontSize: nativeStyle.annotation, fontFamily: SCORE_TEXT_FONT, fontWeight: 700 })
+      return `<rect${attrs({ x: x + em(0.5), y: y - control.top + em(0.5), width: control.width - em(1), height: control.top + control.bottom - em(1), stroke: '#000', 'stroke-width': em(1), fill: 'none' })}/>` + this.text(control.text, x + (control.textInset ?? em(3.5)), y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.annotation, SCORE_TEXT_FONT, { 'font-weight': 700 })
     }
     if (control.kind === 'tempo') return this.tempo(control.text, x, y, control.tempoGeometry)
     if (control.kind === 'segno') return this.segno(x, y)
@@ -101,14 +103,14 @@ export class NativeSymbols {
       const left = x+row.x, baseline = y+axis-geometry.height/2+row.y+row.baseline
       return this.text(row.prefix,left,baseline,nativeStyle.text,'M3N Numbers')
         + `<g transform="translate(${n(left+row.accidentalX)} ${n(baseline)})">`
-        + row.paths.map(symbol=>`<path${attrs({d:symbol.d,fill:'none',stroke:'#000','stroke-width':symbol.stroke,'data-m3n-symbol':symbol.symbol,'stroke-linecap':'round','stroke-linejoin':'round'})}/>`).join('') + '</g>'
+        + row.paths.map(symbol=>`<path${attrs({d:symbol.d,fill:symbol.stroke?'none':'#000',stroke:symbol.stroke?'#000':'none','stroke-width':symbol.stroke,'data-m3n-symbol':symbol.symbol,'stroke-linecap':'round','stroke-linejoin':'round'})}/>`).join('') + '</g>'
         + this.text(row.name,left+row.nameX,baseline,nativeStyle.text,'M3N Numbers')
     }).join('')
   }
 
   rawMark(mark: string): string {
-    if (mark === 'tip' || mark === 'brk') return `<path${attrs({ d: nativeDesignPath('M-2.5 0 h5 l-2.5 7 Z'), fill: '#000' })}/>`
-    if (mark === 'hold') return `<rect${attrs({ x: -em(7.7538) / 2, y: 0, width: em(7.7538), height: em(1.26), fill: '#000' })}/>`
+    if (mark === 'tip' || mark === 'brk') return bravuraSvg('articStaccatissimoAbove', em(7))
+    if (mark === 'hold') return bravuraSvg('articTenutoAbove', em(1.26))
     return this.mark(mark, 0, 0)
   }
 }

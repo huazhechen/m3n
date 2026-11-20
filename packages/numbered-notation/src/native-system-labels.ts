@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
 import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import type { NativeSystem } from './native-layout.js'
@@ -35,14 +36,14 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
     const place = (text: string, size: number, meta: Record<string, string>) => {
       const rightAligned = meta['data-m3n-role'] === 'measure-number'
       const anchor = rightAligned ? 'end' : 'middle'
-      let raw = painter.text(text, bar.x, 0, size, 'serif', { 'text-anchor': anchor, ...meta })
+      let raw = painter.text(text, bar.x, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta })
       let ink = nativeSvgInk(raw, measurer)
       // A small page margin must not clip multi-digit labels or font overhang.
       // Measure numbers end at the bar's anchor, including serif overhang.
       // Repeat counts retain centred alignment unless they leave the canvas.
       const dx = Math.max(-ink.left, Math.min(rightAligned ? bar.x - ink.right : 0, width - ink.right))
       if (dx) {
-        raw = painter.text(text, bar.x + dx, 0, size, 'serif', { 'text-anchor': anchor, ...meta })
+        raw = painter.text(text, bar.x + dx, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta })
         ink = nativeSvgInk(raw, measurer)
       }
       const y = top - nativeStyle.music * 0.12 - ink.bottom

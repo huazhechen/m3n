@@ -15,3 +15,9 @@
 ## Hosted Build Output
 
 - This workspace is served by Code Shell from `dist/` at `/score/`. Read `docs/HOSTING.md` before building. Use `VITE_BASE_URL=/score/ VITE_SUBMIT_MODE=remote npm run build`, or an isolated output directory for build checks; never overwrite the hosted `dist/` with the default root-path build.
+
+## Score Artifacts
+
+- After editing a score or engraving dependencies, run `npm run prepare:scores` before committing. It updates the numbered width and per-score font subsets (staff width generation is deferred until the renderer rewrite); see `docs/SCORE_ARTIFACTS.md`.
+- Keep `.githooks/pre-commit` enabled (`npm run prepare` installs it). Stage complete score and engraving inputs before committing; do not bypass a failed generation hook.
+- CI uses `npm run check:score-artifacts` to reject stale generated results.

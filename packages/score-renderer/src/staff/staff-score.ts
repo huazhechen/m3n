@@ -1,3 +1,5 @@
+import { prepareNumberedNotationFonts } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import createVerovioModule from '../../vendor/verovio/verovio-module.mjs'
 import { VerovioToolkit } from 'verovio/esm'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
@@ -46,7 +48,7 @@ export function prepareStaffResources() {
 
 /** Staff engraving is optional. Playback and numbered engraving never load this module. */
 export async function prepareStaffScore(score: ScoreDocument, settings: StaffSettings, signal?: AbortSignal) {
-  const module = await prepareStaffResources()
+  const [module] = await Promise.all([prepareStaffResources(), prepareNumberedNotationFonts(score)])
   signal?.throwIfAborted()
   const width = settings.width ?? score.staffPreferredWidth ?? DEFAULT_PREFERRED_WIDTH
   const tempoScale = settings.tempoScale ?? 1
@@ -128,8 +130,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const toolkit = new VerovioToolkit(module)
     try {
       const base = {
-        font: 'Leipzig',
-        fontFallback: 'Leipzig',
+        font: 'Bravura',
+        fontFallback: 'Bravura',
         header: 'none',
         footer: 'none',
         svgViewBox: true,
@@ -156,7 +158,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         signal?.throwIfAborted()
         toolkit.setOptions({ ...base, ...options })
         if (!toolkit.loadData(source)) throw new Error(toolkit.getLog() || '五线谱排版失败。')
-        return Array.from({ length: toolkit.getPageCount() }, (_, i) => toolkit.renderToSVG(i + 1))
+        return Array.from({ length: toolkit.getPageCount() }, (_, i) => toolkit.renderToSVG(i + 1).replace(/Times New Roman/g, SCORE_TEXT_FONT).replace(/font-family="serif"/g, `font-family="${SCORE_TEXT_FONT}"`))
       }
       const attempt = (spacing: number): Layout => {
         const render = (source: string, options: Record<string, unknown> = {}) =>
@@ -321,7 +323,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
               viewBox: `0 0 ${width} ${page.height + 2 * margin}`,
               width: String(width),
               height: String(page.height + 2 * margin),
-              'font-family': 'serif',
+              'font-family': SCORE_TEXT_FONT,
               color: '#000',
               'data-notation': 'staff',
               'data-m3n-note-spacing': String(result.spacing),

@@ -1,0 +1,22 @@
+--- a/src/resources.cpp
++++ b/src/resources.cpp
+@@ -68,4 +68,2 @@
+-    // Leipzig is our initial default font
+-    if (!LoadFont(LEIPZIG)) LogError("Leipzig font could not be loaded.");
+-
+-    m_defaultFontName = LEIPZIG;
++
++    m_defaultFontName = BRAVURA;
+--- a/src/options.cpp
++++ b/src/options.cpp
+@@ -1303 +1303 @@
+-    m_font.Init("Leipzig");
++    m_font.Init("Bravura");
+@@ -1311 +1311 @@
+-    m_fontFallback.Init(FONT_FALLBACK_Leipzig, &Option::s_fontFallback);
++    m_fontFallback.Init(FONT_FALLBACK_Bravura, &Option::s_fontFallback);
+--- a/include/vrv/resources.h
++++ b/include/vrv/resources.h
+@@ -57 +57 @@
+-    bool Ok() const { return (m_loadedFonts.size() > 1); }
++    bool Ok() const { return !m_loadedFonts.empty(); }

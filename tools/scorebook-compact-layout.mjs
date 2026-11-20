@@ -69,19 +69,14 @@ export function compactPage(markup, scoreUrls = []) {
       glyph.setAttribute('x', String(position.x))
       glyph.setAttribute('y', String(position.y))
       glyph.setAttribute('font-size', String(size))
-      glyph.setAttribute('font-family', style.fontFamily.includes('M3N Numbers') ? 'M3N Numbers' : 'Scorebook Text')
-      glyph.setAttribute('font-weight', '400')
+      glyph.setAttribute('font-family', style.fontFamily)
+      glyph.setAttribute('font-weight', style.fontWeight)
       glyph.setAttribute('text-anchor', 'start')
       glyph.setAttribute('dominant-baseline', 'alphabetic')
       glyph.setAttribute('fill', style.fill || '#000000')
       glyph.style.fontSynthesis = 'none'
       const rotation = text.getRotationOfChar(index)
       if (rotation) glyph.setAttribute('transform', `rotate(${rotation} ${position.x} ${position.y})`)
-      // The outlined export adds this same stroke instead of another bold font.
-      if (Number.parseInt(style.fontWeight, 10) >= 600) {
-        glyph.setAttribute('stroke', style.fill)
-        glyph.setAttribute('stroke-width', String(size * 0.015))
-      }
       group.append(glyph)
       positions.push({ glyph, position })
       glyphs++

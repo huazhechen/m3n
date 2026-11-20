@@ -33,7 +33,10 @@
     "build:scorebook": "npm run build:packages && node tools/build-scorebook.mjs",
     "export:score-pdfs": "npm run build:packages && node tools/export-score-pdfs.mjs",
     "compact:scorebook": "node tools/compact-scorebook-pdf.mjs",
-    "test:pdf-font": "node --test tools/builtin-pdf-font.test.mjs"
+    "test:pdf-font": "node --test tools/builtin-pdf-font.test.mjs",
+    "prepare": "node tools/install-git-hooks.mjs",
+    "prepare:scores": "node tools/score-artifacts.mjs",
+    "check:score-artifacts": "node tools/score-artifacts.mjs --check"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

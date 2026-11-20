@@ -71,7 +71,7 @@ describe('optional staff projection', () => {
   it('engraves the complete current library with the shipped engine', async () => {
     const toolkit = new VerovioToolkit(await createModule())
     try {
-      toolkit.setOptions({ font: 'Leipzig', fontFallback: 'Leipzig', pageWidth: 1500, pageHeight: 60000, scale: 38, breaks: 'smart', svgViewBox: true, header: 'none', footer: 'none' })
+      toolkit.setOptions({ font: 'Bravura', fontFallback: 'Bravura', pageWidth: 1500, pageHeight: 60000, scale: 38, breaks: 'smart', svgViewBox: true, header: 'none', footer: 'none' })
       const directory = fileURLToPath(new URL('../../../../src/scores/', import.meta.url))
       for (const file of readdirSync(directory, { recursive: true }).map(String).filter(file => file.endsWith('.m3n'))) {
         const score = analyzeM3N(readFileSync(`${directory}/${file}`, 'utf8')).score

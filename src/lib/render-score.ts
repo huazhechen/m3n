@@ -43,7 +43,7 @@ export async function prepareScoreExport(scoreDocument: ScoreDocument, settings:
     return prepareStaffScore(scoreDocument, settings, signal)
   }
   const { PreparedNumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
-  await prepareNumberedNotationFonts()
+  await prepareNumberedNotationFonts(scoreDocument)
   signal.throwIfAborted()
   const score = new PreparedNumberedNotationScore(scoreDocument, { ...settings, pageMargin: 0 })
   return (paged: boolean) => {
@@ -68,7 +68,7 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   }
   const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
   check(); input.onPhase?.('loading-fonts')
-  await prepareNumberedNotationFonts()
+  await prepareNumberedNotationFonts(input.scoreDocument)
   check(); input.onPhase?.('layout')
   const score = NumberedNotationScore.create(input.scoreDocument)
   // Paper margins and image framing belong to the outer container.

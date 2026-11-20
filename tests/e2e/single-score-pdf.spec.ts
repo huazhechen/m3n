@@ -16,7 +16,8 @@ test('Android PDF download keeps a full song on one A4 page without browser prin
   await page.getByRole('button', { name: '打印', exact: true }).click()
   const dialog = page.locator('.export-dialog')
   await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
-  expect(requests.some(url => /builtin-pdf-text.*\.ttf/.test(url))).toBe(false)
+  const cjkBeforePdf = requests.filter(url => /NotoSansSC.*\.ttf/.test(url))
+  expect(cjkBeforePdf.length).toBeGreaterThan(0)
   const started = Date.now()
   const downloading = page.waitForEvent('download')
   await dialog.getByRole('button', { name: 'PDF', exact: true }).click()
@@ -33,8 +34,8 @@ test('Android PDF download keeps a full song on one A4 page without browser prin
   expect(pdf.getPage(0).getHeight()).toBeCloseTo(297 * 72 / 25.4)
   const fontRows = execFileSync('pdffonts', [path], { encoding: 'utf8' }).trim().split('\n').slice(2)
   expect(fontRows.some(row => /Barlow.*yes\s+yes\s+yes/.test(row))).toBe(true)
-  expect(fontRows.some(row => /NotoSerif.*yes\s+yes\s+yes/.test(row))).toBe(true)
-  expect(fontRows.filter(row => /yes\s+yes\s+yes/.test(row))).toHaveLength(2)
+  expect(fontRows.some(row => /NotoSans.*yes\s+yes\s+yes/.test(row))).toBe(true)
+  expect(fontRows.every(row => /(?:Barlow|Bravura|NotoSans).*yes\s+yes\s+yes/.test(row))).toBe(true)
   const images = execFileSync('pdfimages', ['-list', path], { encoding: 'utf8' }).trim().split('\n').slice(2)
   expect(images).toEqual([])
   const text = execFileSync('pdftotext', [path, '-'], { encoding: 'utf8' }).replace(/\s/g, '')
@@ -44,7 +45,7 @@ test('Android PDF download keeps a full song on one A4 page without browser prin
   expect(render.status).toBe(0)
   expect(render.stderr).toBe('')
   expect(requests.some(url => /\/api\//.test(url))).toBe(false)
-  expect(requests.filter(url => /builtin-pdf-text.*\.ttf/.test(url))).toHaveLength(1)
+  expect(requests.filter(url => /NotoSansSC.*\.ttf/.test(url))).toEqual(cjkBeforePdf)
   await expect(dialog).not.toBeVisible()
   await expect(page.locator('iframe[title="乐谱打印"]')).toHaveCount(0)
 })
@@ -76,10 +77,10 @@ test('slow PDF module loading shows cancellable progress immediately and does no
   expect(downloads).toBe(1)
 })
 
-for (const covered of [true, false]) test(`local PDF uses complete font coverage or falls back for missing characters (${covered})`, async ({ page }, info) => {
+for (const covered of [true, false]) test(`local PDF embeds Source Han Sans for both preset and additional characters (${covered})`, async ({ page }, info) => {
   await page.addInitScript((covered) => {
     localStorage.setItem('m3n:local-scores', JSON.stringify([
-      { id: 'local-font-test', source: `{title=${covered ? '小星星' : '本地𠀀字体验证'}}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了`, createdAt: '2026-11-19T00:00:00Z', expiresAt: null },
+      { id: 'local-font-test', source: `{title=${covered ? '小星星' : '本地龘字体验证'}}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了`, createdAt: '2026-11-19T00:00:00Z', expiresAt: null },
     ]))
   }, covered)
   const fonts: string[] = []
@@ -88,38 +89,26 @@ for (const covered of [true, false]) test(`local PDF uses complete font coverage
   await page.getByRole('button', { name: '打印', exact: true }).click()
   const dialog = page.locator('.export-dialog')
   await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
-  expect(fonts).toEqual([])
+  expect(fonts.some(url => /NotoSansSC/.test(url))).toBe(true)
   const downloading = page.waitForEvent('download')
   await dialog.getByRole('button', { name: 'PDF', exact: true }).click()
   const download = await downloading
   const path = info.outputPath('local-font.pdf')
   await download.saveAs(path)
   const rows = execFileSync('pdffonts', [path], { encoding: 'utf8' })
-  if (covered) {
-    expect(rows).toMatch(/NotoSerif.*yes\s+yes\s+yes/)
-    const text = execFileSync('pdftotext', [path, '-'], { encoding: 'utf8' })
-    for (const char of '小星星春天来了') expect(text).toContain(char)
-  }
-  else { expect(rows).toMatch(/STSong-Light.*no\s+no\s+yes/); expect(rows).not.toContain('NotoSerif') }
-  expect(fonts.filter(url => /builtin-pdf-text.*\.ttf/.test(url))).toHaveLength(1)
+  expect(rows).toMatch(/NotoSans.*yes\s+yes\s+yes/)
+  expect(rows).not.toMatch(/Times|STSong|NotoSerif/)
+  const text = execFileSync('pdftotext', [path, '-'], { encoding: 'utf8' })
+  for (const char of '春天来了') expect(text).toContain(char)
+  if (!covered) expect(text).toContain('龘')
 })
 
-for (const failure of ['download', 'parse']) test(`font ${failure} failure falls back without blocking PDF export`, async ({ page }, info) => {
-  let failures = 0
-  await page.route('**/*builtin-pdf-text*.ttf', route => {
-    if (!failures++) return route.fulfill({ status: failure === 'download' ? 503 : 200, body: 'invalid font data' })
-    return route.continue()
-  })
+for (const failure of ['download', 'parse']) test(`font ${failure} failure stops rendering until retry`, async ({ page }) => {
+  await page.route('**/*NotoSansSC*.ttf', route => route.fulfill({ status: failure === 'download' ? 503 : 200, body: 'invalid font data' }))
   await page.goto('/scores/yue_ding_01')
-  await page.getByRole('button', { name: '打印', exact: true }).click()
-  await expect(page.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
-  const downloading = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'PDF', exact: true }).click()
-  const download = await downloading
-  const path = info.outputPath('fallback.pdf')
-  await download.saveAs(path)
-  const fonts = execFileSync('pdffonts', [path], { encoding: 'utf8' })
-  expect(fonts).toContain('STSong-Light')
-  expect(fonts).not.toContain('NotoSerif')
-  expect(failures).toBe(1)
+  await expect(page.locator('.render-message')).toBeVisible()
+  await expect(page.locator('.score-paper svg')).toHaveCount(0)
+  await page.unroute('**/*NotoSansSC*.ttf')
+  await page.reload()
+  await expect(page.locator('.score-paper svg').first()).toBeVisible()
 })

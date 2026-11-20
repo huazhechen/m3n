@@ -5,10 +5,9 @@ import { renderScoreInto } from '../src/lib/render-score'
 import { createSvgInkMeasurer } from './lib/svg-ink-bounds.mjs'
 
 export async function prepare(fontBase64) {
-  // This family is only used when packaging export glyphs. Engraving keeps the
-  // web renderer's system serif and CanvasTextMeasurer, without CSS overrides.
+  // Publishing supplies a freshly generated subset for the actual book text.
   if (fontBase64) {
-    const font = new FontFace('Scorebook Text', `url(data:font/otf;base64,${fontBase64})`)
+    const font = new FontFace('Noto Sans SC', `url(data:font/ttf;base64,${fontBase64})`)
     await font.load()
     document.fonts.add(font)
   }
@@ -65,7 +64,7 @@ export async function measure(source, width, paged = true, coreGap, host = docum
 export async function sharedA4Page(sources, width, gap = 22, host = document.querySelector('#scratch')) {
   if (sources.length < 2) throw new Error('A shared page needs at least two scores')
   const pxPerMm = 96 / 25.4, scale = 186 / width
-  await prepareNumberedNotationFonts()
+  await prepareNumberedNotationFonts(sources)
   const fitted = renderSharedNumberedNotationScores(sources.map(source => parseM3NDocument(source)), { width, pageMargin: 0 }, gap)
   host.innerHTML = fitted.markup.join('')
   const pages = [...host.querySelectorAll(':scope > svg')]

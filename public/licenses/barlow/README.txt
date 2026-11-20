@@ -15,5 +15,8 @@ The static Medium face is mapped to CSS weight 400 to match the engraving
 engine's normal weight. Both Canvas measurement and SVG use the same face;
 the browser does not synthesize a bold weight.
 
-No external font request is required for numbered glyphs or SVG export.
-Other text uses the browser's serif fallback fonts.
+Score text uses the same Barlow Semi Condensed family: Regular (400),
+Medium (500), SemiBold (600), and Italic (400), from the pinned revision above.
+The original static faces are in packages/numbered-notation/src/font-assets.
+Bravura handles musical symbols; Noto Sans SC handles Chinese text.
+PNG exports use these outlines and PDF exports embed subsets of these fonts.

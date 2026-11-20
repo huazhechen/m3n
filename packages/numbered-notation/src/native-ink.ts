@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { parse, type TNode } from 'txml/txml'
 import type { TextMeasurer } from './native-measure.js'
 
@@ -11,8 +12,11 @@ export function translateNativeInk(b: NativeInk, x: number, y: number): NativeIn
   return { left: b.left + x, right: b.right + x, top: b.top + y, bottom: b.bottom + y }
 }
 
-/** Exact polynomial extrema; no curve sampling or control-point bounding box. */
+const pathBounds = new Map<string, NativeInk>()
+/** Exact polynomial extrema; repeated music outlines share bounded cached ink. */
 export function nativePathInk(d: string): NativeInk {
+  const cached = pathBounds.get(d)
+  if (cached) return { ...cached }
   const tokens = d.match(/[a-zA-Z]|[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?/g) ?? []
   const points: { x: number; y: number }[] = []
   let i = 0, x = 0, y = 0, sx = 0, sy = 0, command = ''
@@ -47,7 +51,10 @@ export function nativePathInk(d: string): NativeInk {
     } else throw new Error(`Unsupported native path command: ${command}`)
   }
   if (!points.length) throw new Error('Empty native path')
-  return { left: Math.min(...points.map(p => p.x)), right: Math.max(...points.map(p => p.x)), top: Math.min(...points.map(p => p.y)), bottom: Math.max(...points.map(p => p.y)) }
+  const result = { left: Math.min(...points.map(p => p.x)), right: Math.max(...points.map(p => p.x)), top: Math.min(...points.map(p => p.y)), bottom: Math.max(...points.map(p => p.y)) }
+  if (pathBounds.size >= 4096) pathBounds.clear()
+  pathBounds.set(d, result)
+  return { ...result }
 }
 
 const decode = (text: string) => text.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (_, entity: string) =>
@@ -67,7 +74,7 @@ export function nativeSvgPieces(svg: string, measurer: TextMeasurer): NativeInk[
       children = node.children.flatMap(visit)
     } else if (node.tagName === 'text') {
       const text = decode(node.children.filter(c => typeof c === 'string').join(''))
-      const m = measurer.measureText(text, { fontSize: num('font-size', 16), fontFamily: a['font-family'] ?? 'serif', fontWeight: num('font-weight', 400), fontStyle: a['font-style'] === 'italic' ? 'italic' : 'normal' })
+      const m = measurer.measureText(text, { fontSize: num('font-size', 16), fontFamily: a['font-family'] ?? SCORE_TEXT_FONT, fontWeight: num('font-weight', 400), fontStyle: a['font-style'] === 'italic' ? 'italic' : 'normal' })
       const advance = m.advance ?? m.w, anchor = a['text-anchor'] === 'middle' ? advance / 2 : a['text-anchor'] === 'end' ? advance : 0
       b = { left: num('x') - anchor + (m.inkLeft ?? 0), right: num('x') - anchor + (m.inkRight ?? m.w), top: num('y') - m.baseline, bottom: num('y') - m.baseline + (m.inkBottom ?? m.h) }
     } else if (node.tagName === 'path') b = nativePathInk(a.d!)

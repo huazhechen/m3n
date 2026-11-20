@@ -113,7 +113,11 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 为兼容 iPhone/iPad 的音频手势限制，播放及进度拖动入口在用户操作的同步调用栈中创建并恢复 AudioContext，再开始模块及音源加载；SpessaPlayer 接收并复用该上下文。暂停后继续播放同样先恢复上下文，避免 iOS 中断音频后无法续播。更换乐谱或离开页面时释放上下文，包括尚未完成播放器初始化的情况。
 
-网页、预览和PNG使用设备已安装的系统文字字体，不请求中文字体文件；仅保留小体积内嵌音乐数字字体。单曲导出入口使用打印机图标和“打印”文字，弹窗仅提供 PNG、PDF 两个按钮。PNG 与 PDF：PNG 自动按连续模式生成带外侧白色画布的长图；单曲与全量谱集共用 `createScorePdf`，按需加载 `pdf-lib` 和音乐字体子集处理模块，统一直接下载A4文件，不依赖浏览器打印窗口。PDF直接写入原生SVG的路径、线段、矩形、圆和文字，不经过画布或嵌入整页图片。音乐数字从谱面已有的Barlow字体中嵌入所需字形；所有PDF（内置、本地、分享单曲和全谱集）仅在开始PDF生成时按需下载 `src/assets/builtin-pdf-text.ttf`。先检查整份文档的普通文字字符：全部覆盖时，Noto宋体按文档进一步裁子集并嵌入，粗体模拟加粗；任一字符缺失、字体下载失败或解析失败时，整份文档回退到原有方案：普通中文声明 `STSong-Light`，英文及普通标点声明 `Times-Roman` 及其粗体／斜体变体，不嵌入普通文字字体。回退时由阅读器替换字体，不保证跨设备的字形和罕见字符覆盖。字体仅交给PDF生成器，不注册FontFace，不用于网页、预览或PNG。逐字使用浏览器实测起点与基线，避免替代字体的累计字宽改变歌词位置；PDF保留Unicode映射，可搜索及复制文字。Adobe GB1字符映射只是编码元数据，按文档所用字符写入PDF，不包含字体或字形；来源与许可证见 `public/licenses/adobe-cmap/`，离线再生成入口为 `tools/prepare-gb1-cmap.mjs`。单曲按12mm纸张边距等比放置，谱集页面包含已有A4留白，传入 `fullPage` 不再添加第二层边距。保留SVG内网站链接为PDF链接注释。逐页生成、显示进度并让出主线程；谱集离开页面会中止下载并清理临时容器。打开预览或开始谱集排版时预加载PDF模块；两类导出共用 `PdfDownloadPanel` 和相同对话框样式，在计算前先绘制进度界面，逐批让出主线程并检查取消。重复音符与普通文字在单次生成中缓存编码，避免反复字形排布及中文WinAnsi编码异常。下载链接挂载到文档，Blob URL延迟60秒释放，兼容手机异步下载。预览继续沿用外部当前分页设置；单次打开对话框创建一个 `PreparedNumberedNotationScore`，预览与不同导出模式共用已测量谱行，只切换分页生成SVG，保留版宽及其他显示设置；关闭或设置变化后释放。连续模式预览与PNG共用宽度6%的外侧白色画布。乐谱库提供“导出谱集”入口，`ScorebookExportDialog` 显示逐曲进度、取消及错误重试；按需加载 `lib/online-scorebook.ts`，以谱源建议版宽排版独立曲目，额外测量固定640px合页容量。在线版与独立脚本共用 `tools/scorebook-layout.mjs` 的几何测量、合页渲染和A4放置，以及 `tools/scorebook-packing.mjs` 的章内分组算法与 `config/scorebook/editorial-plan.json` 装订配置，生成同规则的合页、封面和目录，完成后复用同一矢量PDF生成和直接下载入口。在线生成不做候选版宽搜索或±5px稳定性检查，不写入谱源或本地设置；重新选宽、稳定性检查与版宽回写由独立脚本负责。完整字体仅保存在 `tools/fonts/` 供独立发布工具使用；网站仅发布约590KiB的预置子集，来源与SIL OFL许可证见 `public/licenses/noto-serif/`。
+乐谱的网页、预览、PNG和PDF统一使用 Barlow Semi Condensed、Bravura 与思源黑体（Noto Sans CJK SC）。西文和数字使用Barlow，音乐字形优先采用Bravura，中文使用思源黑体；小节线、减时线、弧线及渐强线仍由原生矢量几何生成。标题使用半粗Barlow，数字使用Medium，文字表情使用真实Italic字形。中文子集根据单曲谱源生成，显示前选择覆盖当前文本的最小预置子集；用户新文本超出预置覆盖时按需加载完整思源黑体。字体加载失败停止排版并允许重新加载，不再使用系统宋体或Times替代。字体来源与SIL OFL声明见 `public/licenses/barlow/`、`bravura/`、`noto-sans/`。
+
+单曲“打印”弹窗保留PNG、PDF。预览与导出复用同一次测量；PNG把实际字体字形转为矢量路径后栅格化，避免独立SVG图片丢失浏览器字体。PDF逐字符沿用浏览器实测起点，按字体、字重及斜体选择同一字体资源，进一步按文档所用字形嵌入子集，保留Unicode映射、A4和网站链接。进度、取消与重试由 `PdfDownloadPanel` 提供。前端不再包含整本谱集入口、装订配置或全库PDF文字字体资源。整本谱集仅由本地脚本生成，每次从实际曲目和前置页面文字重新生成总文字子集。
+
+谱源改动的提交前流程见[乐谱生成物](SCORE_ARTIFACTS.md)。Git钩子更新简谱建议宽度及单曲字体，CI校验谱源、渲染器与生成结果的摘要。五线谱渲染器计划重写，暂缓其宽度的自动生成与校验。
 
 `tests/e2e/render-resources.spec.ts` 在阻断所有外站 HTTP 请求的条件下验证显示、切换和播放，检查播放不请求 Verovio 或 WASM、谱例节点保留，以及编辑和版宽变化后的缓存失效。生产构建使用 Vite 默认的按需分包。端到端测试使用 `.tmp/playwright-dist-<port>` 独立构建，避免常规 `dist` 重建中断测试。`M3N_E2E_PORT` 可覆盖预览端口。设置 `M3N_E2E_BROWSER=webkit` 可用 WebKit 执行同一套端到端测试（需安装 Playwright WebKit 浏览器及其系统依赖），覆盖 iPad 设置弹层高度与按钮尺寸；默认仍为 Chromium。测试附件记录本机冷启动与切换耗时，性能数字不作为设备或网络的固定门槛。
 
@@ -142,4 +146,4 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 可选五线谱通过 `@m3n/score-renderer/staff` 独立入口按需加载；只读取 `ScoreDocument`，播放继续使用当前演奏编译器。屏幕与单曲PNG／PDF共用五线谱输出，全量谱集仍固定使用简谱。独立模块、引擎来源与验证见[五线谱显示](STAFF_NOTATION.md)。
 
-导出文件右下角以小字显示 `https://score.cheesefans.com/`：PNG 在既有外框底部放置，矢量 PDF 在每页 A4 底部边距内放置（包括谱集封面、目录和正文）。页脚独立于谱面布局，不改变谱面坐标、导出尺寸或分页。
+单曲导出文件右下角显示当前乐曲的正式地址（曲库为 `https://score.cheesefans.com/scores/<slug>`，独立作品为 `/works/<slug>`），PDF 页脚可点击访问。PNG 在既有外框底部放置，字号为谱面宽度的2%（至少12px）；矢量 PDF 使用10pt文字，在每页A4底部边距内放置。页脚右端与谱面右边距对齐，独立于谱面布局，不改变谱面坐标、导出尺寸或分页。

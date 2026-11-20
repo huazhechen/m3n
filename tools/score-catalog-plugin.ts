@@ -73,28 +73,19 @@ export function scoreCatalogPlugin(): Plugin {
       }))
       if (new Set(scores.map(score => score.slug)).size !== scores.length) throw new Error('内置曲库包含重复的乐谱 ID。')
       if (!production) return `
-        import fontUrl from '/src/assets/builtin-pdf-text.ttf?url';
-        import plan from '/config/scorebook/editorial-plan.json';
-        export const getScorebookPlan = () => plan;
-        export const pdfFontUrl = () => fontUrl;
         export default ${JSON.stringify(sortScoresByTitle(scores))};
         export async function initializeCatalog() {};
         const modules = import.meta.glob('/src/scores/**/*.m3n', { query: '?raw', import: 'default' });
         export const loadScoreSource = score => modules['/src/scores/' + score.sourcePath]();
       `
-      catalog = { plan: JSON.parse(await readFile(resolve(root, 'config/scorebook/editorial-plan.json'), 'utf8')), scores: sortScoresByTitle(scores), pdfFontUrl: asset('builtin-pdf-text.ttf', await readFile(resolve(root, 'src/assets/builtin-pdf-text.ttf'))) }
+      catalog = { scores: sortScoresByTitle(scores) }
       return `
         const scores = []; export default scores;
-        let fontUrl, plan;
-        export const getScorebookPlan = () => plan;
-        export const pdfFontUrl = () => ${JSON.stringify(base)} + fontUrl;
         export async function initializeCatalog() {
           const response = await fetch(${JSON.stringify(base + 'score-catalog.json')}, { cache: 'no-cache' });
           if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error('曲库目录加载失败，请刷新重试。');
           const catalog = await response.json();
           scores.splice(0, scores.length, ...catalog.scores);
-          fontUrl = catalog.pdfFontUrl;
-          plan = catalog.plan;
         }
         export async function loadScoreSource(score) {
           const response = await fetch(${JSON.stringify(base)} + score.sourceUrl);

@@ -2,11 +2,11 @@ import { test, expect } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { openScoreSettings } from './score-settings'
 
-test('continuous preview has the image frame and PNG downloads without the vector font', async ({ page }, info) => {
+test('continuous preview has the image frame and PNG preserves the same score fonts', async ({ page }, info) => {
   const fontRequests: string[] = []
   await page.route(/\.(?:otf|ttf|woff2?)(?:$|\?)/, route => {
     fontRequests.push(route.request().url())
-    return route.abort()
+    return route.continue()
   })
   await page.addInitScript(() => { localStorage.setItem('m3n:render-mode', 'continuous') })
   await page.goto('/editor')
@@ -50,11 +50,11 @@ test('continuous preview has the image frame and PNG downloads without the vecto
     await download.saveAs(file)
     const bytes = await readFile(file)
     expect(bytes.subarray(1, 4).toString()).toBe('PNG')
-    expect(bytes.readUInt32BE(16)).toBe(Math.ceil(geometry.width * 1.12 * 2))
+    expect(bytes.readUInt32BE(16)).toBe(Math.ceil(geometry.width * 1.12 * 4))
     if (paged) expect(bytes.readUInt32BE(20)).toBe(imageHeight)
     imageHeight = bytes.readUInt32BE(20)
     expect(bytes.length).toBeGreaterThan(3000)
-    expect(fontRequests).toEqual([])
+    expect(fontRequests.some(url => /NotoSansSC/.test(url))).toBe(true)
     await expect(dialog).not.toBeVisible()
   }
 })

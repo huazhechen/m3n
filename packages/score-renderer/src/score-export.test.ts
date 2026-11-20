@@ -33,9 +33,12 @@ describe('image export footer', () => {
     const doc = document.implementation.createHTMLDocument()
     const page = doc.createElementNS('http://www.w3.org/2000/svg', 'svg')
     page.setAttribute('viewBox', '0 0 800 1200')
-    const framed = frameScoreImage([page])
+    const url = 'https://score.cheesefans.com/scores/huan_le_song_01'
+    const framed = frameScoreImage([page], .06, url)
     const footer = framed.querySelector('text')!
-    expect(footer.textContent).toBe('https://score.cheesefans.com/')
+    expect(footer.textContent).toBe(url)
+    expect(Number(footer.getAttribute('x'))).toBe(848)
+    expect(Number(footer.getAttribute('font-size'))).toBe(16)
     expect(Number(footer.getAttribute('y'))).toBeLessThan(framed.viewBox.baseVal.height)
     expect(framed.querySelector('svg')?.getAttribute('viewBox')).toBe('0 0 800 1200')
   })

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { build } from 'vite'
+import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
 import { chromium } from '@playwright/test'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
 import { writePreferredWidths } from './scorebook-source.mjs'
@@ -20,7 +21,8 @@ await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url':
   outDir: join(output, 'bundle'), emptyOutDir: true, minify: false,
   lib: { entry: join(root, 'tools/scorebook-layout.mjs'), name: 'scorebook', formats: ['iife'], fileName: () => 'bundle.js' },
 } })
-const font = readFileSync(join(root, 'tools/fonts/NotoSerifCJKsc-Regular.otf'))
+prepareBuiltinPdfFont()
+const font = readFileSync(join(root, '.tmp/scorebook-font/text.ttf'))
 const rendererSha256 = hash(Buffer.concat([readFileSync(join(output, 'bundle/bundle.js')), font]))
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
 const entries = []

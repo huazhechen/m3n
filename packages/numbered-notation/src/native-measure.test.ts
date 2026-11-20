@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { describe, expect, it } from 'vitest'
 import { CanvasTextMeasurer } from './native-measure.js'
 import { NativeSymbols } from './native-symbols.js'
@@ -11,7 +12,7 @@ const context = () => ({ font: '', textAlign: 'center', textBaseline: 'top', mea
 describe('native logical advance and painted ink', () => {
   it('keeps overhang separate from advance and still measures the complete painted text', () => {
     const canvas = context(), measurer = new CanvasTextMeasurer(canvas)
-    const metrics = measurer.measureText('A', { fontSize: 20, fontFamily: 'serif' })
+    const metrics = measurer.measureText('A', { fontSize: 20, fontFamily: SCORE_TEXT_FONT })
     expect(metrics.w).toBe(8.5)
     expect(metrics.advance).toBe(8.5)
     expect(metrics.inkLeft).toBe(-3)

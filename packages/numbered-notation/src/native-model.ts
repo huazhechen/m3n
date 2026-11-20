@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import type { NativeMeterGeometry } from './native-meter.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
@@ -62,7 +63,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
   const painter = new NativeMusicPainter(options.textMeasurer)
   const ids = scoreEventIds(document), lyrics = options.displayLyrics ?? lyricsByEvent(document), sustains = sustainContinuations(document, lyrics)
   const result: NativeProjection = { measures: [], glyphs: [], diagnostics: [], hasBass: options.includeBass !== false && [...document.parts.values()].some(part => part.bass.some(measure => measure.events.length || measure.multiRest)) }
-  const textWidth = (text: string, size = nativeStyle.annotation, family = 'serif') => options.textMeasurer.measureText(text, { fontSize: size, fontFamily: family }).w
+  const textWidth = (text: string, size = nativeStyle.annotation, family = SCORE_TEXT_FONT) => options.textMeasurer.measureText(text, { fontSize: size, fontFamily: family }).w
   const known = new Set(['tr', 'prall', 'fermata', 'arp', 'str', 'tip', 'hold', 'brk', 'breath', 'sfz', 'f1', 'f2', 'f3', 'f4', 'f5'])
   const sectionKeys = new Map((document.order ?? []).map(name => [name, {entry:sectionEntryKey(document,name),visits:sectionKeyVisits(document,name)}]))
   // Compact sections show their first visit's key, with numbered alternatives

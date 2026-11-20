@@ -8,7 +8,7 @@
 node tools/build-verovio.mjs
 ```
 
-源码固定为本地 `public/licenses/verovio/verovio-6.2.0-source.tar.gz`。脚本核验源码摘要，应用 `mei-only.patch` 与 `m3n-layout.patch`，保留Leipzig音乐字形及MEI/SVG能力，输出配套ES模块和WASM，并把精确构建脚本复制到许可证目录。构建中间文件在 `.tmp/verovio-build/`，不使用托管 `dist/`。
+源码固定为本地 `public/licenses/verovio/verovio-6.2.0-source.tar.gz`。脚本核验源码摘要，应用 `mei-only.patch`、`m3n-layout.patch` 与 `bravura-default.patch`，保留Bravura音乐字形及MEI/SVG能力，输出配套ES模块和WASM，并把精确构建脚本复制到许可证目录。构建中间文件在 `.tmp/verovio-build/`，不使用托管 `dist/`。
 
 `m3n-layout.patch` 提供以下仅用于显示投影的扩展：
 
@@ -21,3 +21,5 @@ node tools/build-verovio.mjs
 `build.json` 记录原始源码、两个补丁及最终模块和WASM的SHA256。发布时同步提交产物、补丁、构建脚本和许可证说明。不要只替换WASM或只替换ES模块。
 
 验证使用包内真实引擎测试、`npm run test:staff-layout` 的浏览器几何与像素碰撞审计，以及五线谱交互和导出端到端测试。更改布局后应重新检查建议版宽，旧曲库页数不能作为硬换行、安全避让或作者参数的优先约束。
+
+Bravura为唯一音乐字体；补丁把默认字体、回退字体及就绪条件统一为单字体配置。构建先用真实MEI完成初始化和SVG排版检查，通过后才更新vendor产物。

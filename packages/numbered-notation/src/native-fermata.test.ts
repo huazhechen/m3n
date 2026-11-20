@@ -12,12 +12,11 @@ it.each([6, 12, 24])('scales the complete fermata curves and dot at %s', size =>
     const svg = size === 12 ? new NativeSymbols(new DefaultTextMeasurer()).rawMark('fermata') : nativeFermataSvg(size);
     const ink = nativeSvgInk(svg, new DefaultTextMeasurer());
     const root = new DOMParser().parseFromString(`<svg>${svg}</svg>`, 'image/svg+xml');
-    const path = root.querySelector('path')!, circle = root.querySelector('circle')!;
-    expect(circle).not.toBeNull();
-    expect(Number(circle.getAttribute('r'))).toBeGreaterThan(0);
+    const path = root.querySelector('path')!;
+    expect(path.getAttribute('data-m3n-font')).toBe('Bravura');
+    expect(path.getAttribute('d')!.match(/M/g)!.length).toBeGreaterThanOrEqual(2);
     expect(ink.bottom - ink.top).toBeGreaterThan(size / 2);
-    expect(path.getAttribute('stroke-linecap')).toBe('round');
-    expect(path.getAttribute('stroke-linejoin')).toBe('round');
+    expect(path.getAttribute('fill')).toBe('#000');
     expect(ink.left + ink.right).toBeCloseTo(0, 4);
 });
 it.each(['1{fermata}', '[1e3e5e:h]{fermata}', '1{ac(2e3e)}{fermata}'])('places the complete fermata ink with measured clearance: %s', music => {

@@ -24,7 +24,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       : route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><style>body{margin:0}</style><div id="scratch"></div><div id="web"></div>' }))
     await page.goto('http://scorebook.local/')
     await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
-    await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, 'tools/fonts/NotoSerifCJKsc-Regular.otf')).toString('base64'))
+    await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, 'packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf')).toString('base64'))
     const source = '{title=统一排版}{composer=测试作者}{equal-measures=true}{2/4}\nN: ||: 1 2 |\nB: 1d 2d |\nL1: 甲乙\nL2: 戊己\n---V1\nN: 3 4 :||\nB: 3d 4d |\nL: 丙丁\n---V2\nN: (5 6) 7 |||\nB: 3d 4d |\nL: 庚辛壬'
     for (const width of [640, 800]) {
       const result = await page.evaluate(async ({ source, width }) => {

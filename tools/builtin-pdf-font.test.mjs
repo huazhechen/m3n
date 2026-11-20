@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import fontkit from '@pdf-lib/fontkit'
 
-const bytes = readFileSync(new URL('../src/assets/builtin-pdf-text.ttf', import.meta.url))
+const bytes = readFileSync(new URL('../packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf', import.meta.url))
 for (const text of ['周蕙 演唱 姚若龙 作词 陈小霞 作曲 约定 春天来了', undefined]) {
   test(`PDF TrueType subsetting preserves every outline (${text ? 'single score' : 'full corpus'})`, async () => {
     const font = fontkit.create(bytes)

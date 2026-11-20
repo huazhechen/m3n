@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 // @vitest-environment jsdom
 import { expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
@@ -45,7 +46,7 @@ it('reserves a wide local fingering at the line edge and before its next note', 
     width: 320, paged: false, minimumNoteGapEm: 0.4,
     textMeasurer: { measureText(text, style) {
       const metrics = fallback.measureText(text, style)
-      return text === '2' && style.fontFamily === 'serif' ? { ...metrics, w: 140 } : metrics
+      return text === '2' && style.fontFamily === SCORE_TEXT_FONT ? { ...metrics, w: 140 } : metrics
     } },
   })
   const [first, next] = layout.projection.glyphs

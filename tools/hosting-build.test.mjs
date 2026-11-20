@@ -35,7 +35,7 @@ test('unlisted works stay outside the public catalog and book and preserve code 
   try {
     for (const folder of ['src/scores', 'src/works', 'src/assets', 'config/scorebook']) await mkdir(join(root, folder), { recursive: true })
     await writeFile(join(root, 'index.html'), '<script type="module" src="/main.js"></script>')
-    await writeFile(join(root, 'main.js'), `import scores, { initializeCatalog, getScorebookPlan } from 'virtual:m3n-score-catalog'; import { getWorks, loadWorkSource } from 'virtual:m3n-works-catalog'; initializeCatalog().then(() => console.log(scores, getScorebookPlan(), getWorks(), loadWorkSource));`)
+    await writeFile(join(root, 'main.js'), `import scores, { initializeCatalog } from 'virtual:m3n-score-catalog'; import { getWorks, loadWorkSource } from 'virtual:m3n-works-catalog'; initializeCatalog().then(() => console.log(scores, getWorks(), loadWorkSource));`)
     await writeFile(join(root, 'config/scorebook/library-categories.json'), '[]')
     await writeFile(join(root, 'config/scorebook/editorial-plan.json'), '{"entries":[]}')
     await writeFile(join(root, 'src/assets/builtin-pdf-text.ttf'), 'font')
@@ -71,7 +71,7 @@ test('score edits, additions, book metadata and font updates preserve every Java
   try {
     for (const folder of ['src/scores', 'src/assets', 'config/scorebook']) await mkdir(join(root, folder), { recursive: true })
     await writeFile(join(root, 'index.html'), '<script type="module" src="/main.js"></script>')
-    await writeFile(join(root, 'main.js'), `import scores, { initializeCatalog, loadScoreSource, pdfFontUrl, getScorebookPlan } from 'virtual:m3n-score-catalog'; initializeCatalog().then(() => console.log(scores, loadScoreSource, pdfFontUrl(), getScorebookPlan()));`)
+    await writeFile(join(root, 'main.js'), `import scores, { initializeCatalog, loadScoreSource } from 'virtual:m3n-score-catalog'; initializeCatalog().then(() => console.log(scores, loadScoreSource));`)
     await writeFile(join(root, 'config/scorebook/library-categories.json'), '[]')
     await writeFile(join(root, 'config/scorebook/editorial-plan.json'), '{"title":"Book"}')
     await writeFile(join(root, 'src/assets/builtin-pdf-text.ttf'), 'font one')
@@ -97,7 +97,8 @@ test('score edits, additions, book metadata and font updates preserve every Java
     assert.deepEqual(added.js, before.js)
     assert.equal(added.catalog.scores.length, 2)
     assert.equal(added.catalog.scores.find(score => score.slug === 'one').sourceUrl, edited.catalog.scores[0].sourceUrl)
-    assert.notEqual(added.catalog.pdfFontUrl, edited.catalog.pdfFontUrl)
+    assert.equal(added.catalog.pdfFontUrl, undefined)
+    assert.equal(added.catalog.plan, undefined)
   } finally { await rm(root, { recursive: true, force: true }) }
 })
 

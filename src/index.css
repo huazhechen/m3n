@@ -1135,7 +1135,7 @@ a.action-button {
   background: rgb(31 35 38 / 38%);
 }
 
-.scorebook-export-dialog {
+.pdf-export-dialog {
   width: min(32em, calc(100vw - var(--ui-space) * 4));
   max-height: calc(100dvh - var(--ui-space) * 4);
   box-sizing: border-box;
@@ -1145,11 +1145,10 @@ a.action-button {
   color: #244e50;
   background: #f8faf7;
 }
-.scorebook-export-dialog::backdrop { background: rgb(0 0 0 / 35%); }
-.scorebook-export-dialog h2 { margin: 0; font-size: 1.25em; }
-.scorebook-export-dialog progress { display: block; width: 100%; height: 1em; accent-color: #176e6e; }
-.scorebook-current-title { overflow-wrap: anywhere; }
-.scorebook-export-actions { display: flex; justify-content: flex-end; gap: var(--ui-space); margin-top: 1.5em; }
+.pdf-export-dialog::backdrop { background: rgb(0 0 0 / 35%); }
+.pdf-export-dialog h2 { margin: 0; font-size: 1.25em; }
+.pdf-export-dialog progress { display: block; width: 100%; height: 1em; accent-color: #176e6e; }
+.pdf-export-actions { display: flex; justify-content: flex-end; gap: var(--ui-space); margin-top: 1.5em; }
 
 .export-body {
   display: grid;

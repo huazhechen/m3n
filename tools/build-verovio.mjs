@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
 import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const commit = '43f806031bfff2c64003fc8ddd9910820445f6ab'
@@ -44,14 +44,17 @@ await writeFile(resolve(source, 'include/vrv/git_commit.h'), `#define GIT_COMMIT
 const sourcePatch = resolve(notices, 'mei-only.patch')
 run('patch', ['-p1', '--batch', '-i', sourcePatch], { cwd: source })
 
+const fontPatch = resolve(notices, 'bravura-default.patch')
+run('patch', ['-p1', '--batch', '-i', fontPatch], { cwd: source })
+
 const layoutPatch = resolve(notices, 'm3n-layout.patch')
 run('patch', ['-p1', '--batch', '-i', layoutPatch], { cwd: source })
 
 // Liberation's optional embedded text font is never enabled by M3N.
-// Keep all Leipzig glyphs, Times metrics and the required Bravura code/name map.
-const excludedFonts = ['Gootville', 'Leland', 'Petaluma', 'Liberation']
-const excludedResources = ['Bravura', 'Bravura.css']
-const supportedMusicFonts = ['Leipzig']
+// Keep Bravura glyphs and the engine text metrics; actual text uses the shared score fonts.
+const excludedFonts = ['Gootville', 'Leland', 'Petaluma', 'Liberation', 'Leipzig']
+const excludedResources = []
+const supportedMusicFonts = ['Bravura']
 const disabledFeatures = ['DARMS', 'PAE', 'ABC', 'GABC', 'MXL', 'HUMDRUM', 'MUSICXML', 'EDIT']
 const flags = ['-flto', '-DNDEBUG', '-std=c++20', '-sSTRICT=1', '-fwasm-exceptions']
 const compileOptimization = '-Os'
@@ -86,6 +89,15 @@ run('em++', [resolve(build, 'libverovio.a'), linkOptimization, ...flags,
   `-sEXPORTED_FUNCTIONS=${JSON.stringify(exportedFunctions)}`,
   '-sEXPORTED_RUNTIME_METHODS=["cwrap","HEAPU8"]', '--embed-file', 'data/', '-o', output,
 ], { env: { ...process.env, BINARYEN_CORES: '1' } })
+// Reject an engine that cannot initialize its sole music font before publishing.
+const { VerovioToolkit } = await import('verovio/esm')
+const createModule = (await import(pathToFileURL(output).href)).default
+const toolkit = new VerovioToolkit(await createModule())
+try {
+  toolkit.setOptions({ font: 'Bravura', fontFallback: 'Bravura' })
+  const mei = '<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1"><music><body><mdiv><score><scoreDef><staffGrp><staffDef n="1" lines="5" clef.shape="G" clef.line="2"/></staffGrp></scoreDef><section><measure><staff n="1"><layer n="1"><note pname="c" oct="4" dur="4"/></layer></staff></measure></section></score></mdiv></body></music></mei>'
+  if (!toolkit.loadData(mei) || !toolkit.renderToSVG(1).includes('<svg')) throw new Error('Bravura engine smoke check failed')
+} finally { toolkit.destroy() }
 const bytes = await readFile(output)
 await writeFile(resolve(vendor, 'verovio-module.mjs'), Buffer.concat([
   Buffer.from('/*! Verovio 6.2.0, LGPL-3.0-or-later. M3N slim build; license, source and recipe: /licenses/verovio/README.txt */\n'), bytes,
@@ -97,6 +109,7 @@ await writeFile(resolve(vendor, 'build.json'), `${JSON.stringify({
   version: '6.2.0', commit, sourceSha256, emscriptenVersion,
   excludedFonts, excludedResources, supportedMusicFonts, disabledFeatures, exportedFunctions,
   compileOptimization, linkOptimization, lto: true, binaryenCores: 1, externalWasm: true,
+  fontPatchSha256: createHash('sha256').update(await readFile(fontPatch)).digest('hex'),
   layoutPatchSha256: createHash('sha256').update(await readFile(layoutPatch)).digest('hex'),
   sourcePatchSha256: createHash('sha256').update(await readFile(sourcePatch)).digest('hex'),
   moduleSha256: createHash('sha256').update(artifact).digest('hex'),

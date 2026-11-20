@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import {
   numberedHeadingLines,
   numberedHeaderContent,
@@ -36,7 +37,7 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
           x: String(x),
           y: String(top + metrics.ascent),
           'font-size': String(size),
-          'font-family': 'serif',
+          'font-family': SCORE_TEXT_FONT,
           'text-anchor': anchor,
           ...(bold ? { 'font-weight': 'bold' } : {}),
         },

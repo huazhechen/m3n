@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
@@ -11,7 +12,7 @@ import { NativeNumberedNotationScore } from './native-score.js'
 
 const options = { width: 800, paged: false }
 describe('native articulation occupancy', () => {
-  it.each([['tip', 7], ['brk', 7], ['hold', 1.26], ['str', 6.930890676198985]] as const)('measures %s by its own height', (name, height) => {
+  it.each([['tip', 7], ['brk', 7], ['hold', 1.26], ['str', 6]] as const)('measures %s by its own height', (name, height) => {
     const score = layoutNativeScore(parseM3NDocument(`{4/4}\nN: 1{${name}} 2 3 4 |||`), options)
     const glyph = score.projection.glyphs[0]!
     expect(glyph.top).toBeCloseTo(17.6 + 2.64 + height)
@@ -34,7 +35,7 @@ describe('native articulation occupancy', () => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 {p}([3 4 5:2]) (6{f1}) (7) |||'), {
       width:320,paged:false,textMeasurer:{measureText(text,style) {
         const metrics = fallback.measureText(text,style)
-        return text === '1' && style.fontFamily === 'serif' ? {...metrics,w:220} : metrics
+        return text === '1' && style.fontFamily === SCORE_TEXT_FONT ? {...metrics,w:220} : metrics
       }},
     })
     const dynamicGlyph = score.projection.glyphs.find(g => g.markLayout?.some(m => m.name === 'p'))!
@@ -55,7 +56,7 @@ describe('native articulation occupancy', () => {
     const svg = NativeNumberedNotationScore.create(document).render(options).join('')
     const root = new DOMParser().parseFromString(svg, 'text/html')
     const triangle = root.querySelector('[data-m3n-mark="tip"] path')!
-    expect(triangle.getAttribute('d')).toBe('M-2.5 0 h5 l-2.5 7 Z')
+    expect(triangle.getAttribute('data-m3n-font')).toBe('Bravura')
     const transform = /translate\(([^ ]+) ([^)]+)\)/.exec(triangle.parentElement!.getAttribute('transform')!)!
     expect(Math.abs(Number(transform[1]) - glyph.x)).toBeLessThanOrEqual(.000000501)
     expect(Math.abs(Number(transform[2]) - glyph.y - position.y)).toBeLessThanOrEqual(.000000501)

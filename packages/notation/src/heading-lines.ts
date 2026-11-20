@@ -22,7 +22,7 @@ export function numberedHeadingLines(
     }
     if (
       line &&
-      measurer.measureText(line + character, { fontSize: size, fontFamily: 'serif', fontWeight: weight }).w > width
+      measurer.measureText(line + character, { fontSize: size, fontFamily: 'Barlow Semi Condensed, Bravura, Noto Sans SC', fontWeight: weight }).w > width
     ) {
       const boundary = Math.max(line.lastIndexOf(' '), line.lastIndexOf('('), line.lastIndexOf('（'))
       if (boundary > line.length / 3) {

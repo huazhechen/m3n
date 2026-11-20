@@ -135,13 +135,13 @@ test('homepage plays numbered notation and documentation examples open as editab
 })
 
 
-test('mobile PNG needs no fonts and PDF downloads when its text font is unavailable', async ({ page }, info) => {
+test('mobile PNG and PDF reuse the same score fonts', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.addInitScript(() => { window.print = () => { throw new Error('Printing is unavailable on this device') } })
   const fontRequests: string[] = []
   await page.route(/\.(?:otf|ttf|woff2?)(?:[?#]|$)/i, route => {
     fontRequests.push(route.request().url())
-    return route.abort()
+    return route.continue()
   })
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=手机保存导出}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
@@ -160,10 +160,9 @@ test('mobile PNG needs no fonts and PDF downloads when its text font is unavaila
     await download.saveAs(path)
     if (format === 'PDF') {
       expect((await PDFDocument.load(await readFile(path))).getPageCount()).toBe(1)
-      expect(fontRequests).toHaveLength(1)
-      expect(fontRequests[0]).toContain('builtin-pdf-text')
+      expect(fontRequests.some(url => /NotoSansSC/.test(url))).toBe(true)
     } else {
-      expect(fontRequests).toEqual([])
+      expect(fontRequests.some(url => /NotoSansSC/.test(url))).toBe(true)
     }
     await expect(dialog).not.toBeVisible()
   }

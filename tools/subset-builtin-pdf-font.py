@@ -35,10 +35,10 @@ builder.font['glyf'].padding = 4
 builder.setupHorizontalMetrics(font['hmtx'].metrics)
 builder.setupHorizontalHeader(ascent=font['hhea'].ascent, descent=font['hhea'].descent)
 builder.setupNameTable({
-    'familyName': 'Noto Serif CJK SC', 'styleName': 'Regular',
-    'uniqueFontIdentifier': 'M3N Noto Serif CJK SC Regular',
-    'fullName': 'Noto Serif CJK SC Regular',
-    'psName': 'NotoSerifCJKsc-Regular',
+    'familyName': 'Noto Sans CJK SC', 'styleName': 'Regular',
+    'uniqueFontIdentifier': 'M3N Noto Sans CJK SC Regular',
+    'fullName': 'Noto Sans CJK SC Regular',
+    'psName': 'NotoSansCJKsc-Regular',
     'licenseDescription': 'SIL Open Font License, Version 1.1',
     'licenseInfoURL': 'https://openfontlicense.org/',
 })

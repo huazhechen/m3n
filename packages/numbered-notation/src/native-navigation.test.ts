@@ -61,20 +61,16 @@ describe('measured navigation geometry', () => {
         expect(mark.ink.right).toBe(32);
         expect((mark.ink.top + mark.ink.bottom) / 2).toBeCloseTo(-8, 4);
     });
-    it.each(['ds', 'dc'] as const)('uses a filled, font-independent %s on the measured axis', name => {
+    it.each(['ds', 'dc'] as const)('uses Barlow navigation text on the measured axis', name => {
         const mark = measureNativeNavigation(name, measurer);
-        expect(mark.svg).toContain('<path');
-        expect(mark.svg).not.toContain('<text');
+        expect(mark.svg).toContain('<text');
+        expect(mark.svg).toContain('Barlow Semi Condensed');
+        expect(mark.svg).toContain('font-weight="500"');
         expect(mark.ink.left).toBeCloseTo(0, 5);
-        expect(mark.ink.right).toBeCloseTo(mark.width, 5);
-        expect(mark.ink.bottom - mark.ink.top).toBeCloseTo(14.4, 5);
+        expect(mark.ink.right).toBeLessThanOrEqual(mark.width);
         expect((mark.ink.top + mark.ink.bottom) / 2).toBeCloseTo(-8, 5);
-        const differentText: TextMeasurer = { measureText(text, style) {
-                return style.fontFamily === 'M3N Numbers' ? measurer.measureText(text, style) : { w: 90, h: 50, baseline: 40 };
-            } };
-        expect(measureNativeNavigation(name, differentText)).toEqual(mark);
     });
-    it.each(['segno', 'ds', 'dc', 'coda'] as const)('scales %s from actual curve bounds', name => {
+    it.each(['segno', 'coda'] as const)('scales %s from actual curve bounds', name => {
         const small = nativeNavigationGlyph(name, 12), large = nativeNavigationGlyph(name, 24);
         const a = nativePathInk(small.path), b = nativePathInk(large.path);
         expect(a.left).toBeCloseTo(0, 5);
@@ -87,7 +83,7 @@ describe('measured navigation geometry', () => {
     it('reserves the complete Segno outline and centers its anchor and ink', () => {
         const control = measureNativeControl('segno', '', measurer);
         const ink = nativeSvgInk(new NativeSymbols(measurer).control(control), measurer);
-        expect(control.width).toBeCloseTo(14.04754509, 5);
+        expect(control.width).toBeCloseTo(12.7816793893, 5);
         expect(ink.left).toBeCloseTo(0, 5);
         expect(ink.right).toBeCloseTo(control.width, 5);
         expect(control.anchor).toBeCloseTo(control.width / 2, 5);

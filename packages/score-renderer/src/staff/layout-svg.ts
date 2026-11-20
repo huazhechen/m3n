@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
 import { escapeXml } from './mei-xml.js'
@@ -70,7 +71,7 @@ export function textMeasurer(): MeasureText {
     if (saved) return saved
     let result: FontInk
     if (context) {
-      context.font = `${italic ? 'italic' : 'normal'} ${bold ? 700 : 400} ${size}px serif`
+      context.font = `${italic ? 'italic' : 'normal'} ${bold ? 700 : 400} ${size}px ${SCORE_TEXT_FONT}`
       const m = context.measureText(text)
       result = {
         width: m.width,

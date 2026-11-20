@@ -1,16 +1,100 @@
 import { NUMBER_FONT_CSS } from './font-data.js'
-let ready: Promise<void> | undefined
+import { LATIN_FONTS, CJK_FONTS, BRAVURA_FONTS } from './font-resources.js'
+import { SCORE_CJK_FONT, SCORE_LATIN_FONT } from './font-family.js'
 
-/** The same embedded font is used for measurement, SVG display and offline export. */
-export function prepareNumberedNotationFonts(): Promise<void> {
-  if (typeof document === 'undefined' || typeof FontFace === 'undefined') return Promise.resolve()
-  ready ??= (async () => {
-    const source = /src:(.*);font-weight/.exec(NUMBER_FONT_CSS)?.[1]
-    if (!source) throw new Error('简谱数字字体资源无效。')
-    const font = new FontFace('M3N Numbers', source)
-    await font.load()
-    document.fonts.add(font)
-    await document.fonts.ready
-  })().catch(error => { ready = undefined; throw error })
-  return ready
+export type ScoreFontResource = { file: string; url: string; characters: string; weight?: number; style?: string }
+const buffers = new Map<string, Promise<Uint8Array>>()
+const installed = new Map<string, Promise<void>>()
+const coverage = new Map<string, Set<string>>()
+const supports = (font: ScoreFontResource, char: string) => {
+  let chars = coverage.get(font.file)
+  if (!chars) { chars = new Set(font.characters); coverage.set(font.file, chars) }
+  return chars.has(char)
+}
+
+/** Includes metadata and lyric visits; Map values are part of ScoreDocument. */
+export function scoreFontText(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (value instanceof Map) return [...value.values()].map(scoreFontText).join('')
+  if (Array.isArray(value)) return value.map(scoreFontText).join('')
+  if (value && typeof value === 'object') return Object.values(value).map(scoreFontText).join('')
+  return ''
+}
+
+export function scoreCjkFont(text: string): ScoreFontResource {
+  const chars = [...new Set(text)].filter(c => !/\s|[\u200B\u2800]/u.test(c) && !supports(LATIN_FONTS[0], c) && !supports(BRAVURA_FONTS[0], c))
+  const font = [...CJK_FONTS].sort((a, b) => a.bytes - b.bytes).find(font => chars.every(c => supports(font, c)))
+  if (!font) throw new Error('乐谱包含三种字体均未覆盖的字符，请检查文字。')
+  return font
+}
+
+export function scoreFontForCharacter(char: string, textFont: ScoreFontResource, weight = 400, italic = false, numbers = false): ScoreFontResource {
+  const latin = numbers ? LATIN_FONTS[1] : italic ? LATIN_FONTS[3] : LATIN_FONTS[weight >= 600 ? 2 : weight >= 500 ? 1 : 0]
+  if (supports(latin, char)) return latin
+  if (supports(BRAVURA_FONTS[0], char)) return BRAVURA_FONTS[0]
+  if (supports(textFont, char)) return textFont
+  throw new Error(`乐谱字体缺少字符：${char}`)
+}
+
+export function loadScoreFont(font: ScoreFontResource): Promise<Uint8Array> {
+  let request = buffers.get(font.file)
+  if (!request) {
+    request = (async () => {
+      const response = await fetch(font.url)
+      if (!response.ok) throw new Error('乐谱字体加载失败，请重试。')
+      return new Uint8Array(await response.arrayBuffer())
+    })().catch(error => { buffers.delete(font.file); throw error })
+    buffers.set(font.file, request)
+  }
+  return request
+}
+
+function unicodeRange(text: string) {
+  const codes = [...new Set([...text].map(c => c.codePointAt(0)!))].sort((a, b) => a - b)
+  const ranges: string[] = []
+  for (let i = 0; i < codes.length; i++) {
+    const start = codes[i]!
+    let end = start
+    while (codes[i + 1] === end + 1) { end++; i++ }
+    ranges.push(`U+${start.toString(16)}${end > start ? `-${end.toString(16)}` : ''}`)
+  }
+  return ranges.join(',')
+}
+
+function install(font: ScoreFontResource, family: string) {
+  const key = `${font.file}:${family}`
+  let promise = installed.get(key)
+  if (!promise) {
+    promise = (async () => {
+      const bytes = await loadScoreFont(font)
+      const face = new FontFace(family, Uint8Array.from(bytes), {
+        weight: String(font.weight ?? 400), style: font.style ?? 'normal', unicodeRange: unicodeRange(font.characters),
+      })
+      await face.load()
+      document.fonts.add(face)
+    })().catch(error => { installed.delete(key); throw error })
+    installed.set(key, promise)
+  }
+  return promise
+}
+
+/** Choose the smallest preset covering this score before measuring any glyphs. */
+export async function prepareNumberedNotationFonts(value?: unknown): Promise<void> {
+  if (typeof document === 'undefined' || typeof FontFace === 'undefined') return
+  const text = scoreFontText(value) + '演唱作词作曲音域：'
+  const cjk = scoreCjkFont(text)
+  await Promise.all([
+    ...LATIN_FONTS.map(font => install(font, SCORE_LATIN_FONT)),
+    install(BRAVURA_FONTS[0], 'Bravura'), install(cjk, SCORE_CJK_FONT),
+    (async () => {
+      const key = 'numbers'
+      if (!installed.has(key)) {
+        const source = /src:(.*);font-weight/.exec(NUMBER_FONT_CSS)?.[1]
+        if (!source) throw new Error('简谱数字字体资源无效。')
+        const font = new FontFace('M3N Numbers', source)
+        installed.set(key, font.load().then(() => { document.fonts.add(font) }).catch(error => { installed.delete(key); throw error }))
+      }
+      await installed.get(key)
+    })(),
+  ])
 }

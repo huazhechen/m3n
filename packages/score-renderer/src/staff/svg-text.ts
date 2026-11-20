@@ -1,9 +1,10 @@
+import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import smuflGlyphs from './smufl-glyphs.json'
 const ns = 'http://www.w3.org/2000/svg'
 
-/** Resolve nested SVG text into measured characters and portable Leipzig paths.
+/** Resolve nested SVG text into measured characters and portable Bravura paths.
  * This also removes Verovio's indentation from the text consumed by PDF export.
- * Leipzig outlines come from the bundled source; see public/licenses/verovio.
+ * Bravura outlines come from the bundled source; see public/licenses/verovio.
  */
 export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
   const host = document.createElement('div')
@@ -61,7 +62,7 @@ export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
         } else {
           const glyph = document.createElementNS(ns, 'text')
           glyph.textContent = char
-          for (const [name, value] of Object.entries({ x: position.x, y: position.y, 'font-size': size, 'font-family': 'serif', 'font-weight': style.fontWeight, 'font-style': style.fontStyle, 'text-anchor': 'start' })) glyph.setAttribute(name, String(value))
+          for (const [name, value] of Object.entries({ x: position.x, y: position.y, 'font-size': size, 'font-family': SCORE_TEXT_FONT, 'font-weight': style.fontWeight, 'font-style': style.fontStyle, 'text-anchor': 'start' })) glyph.setAttribute(name, String(value))
           group.append(glyph)
         }
       }

@@ -89,6 +89,7 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
           ref={exportDialogRef}
           scoreDocument={analysis.score}
           title={result.title}
+          scoreUrl={`https://score.cheesefans.com${basePath}/${encodeURIComponent(slug ?? '')}`}
           settings={displaySettings ?? { width: result.preferredWidth ?? 720, paged: readRenderMode() === 'paged' }}
           onError={setExportError}
         />

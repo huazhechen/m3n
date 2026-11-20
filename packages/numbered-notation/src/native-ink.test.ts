@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
@@ -35,7 +36,7 @@ describe('native painted geometry', () => {
   })
   it('measures text style, baseline, advance, overhang, anchors and XML entities', () => {
     const painter = new NativeSymbols(measured)
-    const svg = painter.text('p&g', 50, 60, 20, 'serif', { 'font-style': 'italic', 'text-anchor': 'middle' })
+    const svg = painter.text('p&g', 50, 60, 20, SCORE_TEXT_FONT, { 'font-style': 'italic', 'text-anchor': 'middle' })
     const ink = nativeSvgInk(svg, measured)
     expect(ink.left).toBeCloseTo(27.5)
     expect(ink.right).toBeCloseTo(72.5)
@@ -45,7 +46,7 @@ describe('native painted geometry', () => {
   it('uses actual Canvas ascent/descent and italic font selection', () => {
     const context = { font: '', measureText: () => ({ width: 13, actualBoundingBoxLeft: 2, actualBoundingBoxRight: 14, actualBoundingBoxAscent: 9, actualBoundingBoxDescent: 3 }) }
     const m = new CanvasTextMeasurer(context as unknown as CanvasRenderingContext2D).measureText('p', { fontSize: 22, fontStyle: 'italic', fontWeight: 700 })
-    expect(context.font).toBe('italic 700 22px serif')
+    expect(context.font).toBe(`italic 700 22px ${SCORE_TEXT_FONT}`)
     expect(m).toMatchObject({ w: 13, h: 12, baseline: 9, advance: 13, inkLeft: -2, inkRight: 14 })
     const ink = nativeSvgInk('<text x="0" y="0" font-size="22" font-family="serif" font-style="italic" font-weight="700">A</text>', new CanvasTextMeasurer(context as unknown as CanvasRenderingContext2D))
     expect(ink.right - ink.left).toBe(16)

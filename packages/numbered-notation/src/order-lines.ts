@@ -1,10 +1,11 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 
 /** Shared order rows use the same fonts, frame insets and cell gaps as paint.
  * A section label stays indivisible; only the boundary before it may wrap.
  */
 export function numberedOrderLines(order: readonly string[] | undefined, available: number, measurer: TextMeasurer = new DefaultTextMeasurer(), fontSize = 16): string[][] {
-  const text = (value: string, weight = 400) => measurer.measureText(value, { fontSize, fontFamily: 'serif', fontWeight: weight }).w
+  const text = (value: string, weight = 400) => measurer.measureText(value, { fontSize, fontFamily: SCORE_TEXT_FONT, fontWeight: weight }).w
   const gap = fontSize * 0.25, frameInset = fontSize * (3.5 / 16)
   const arrow = text('→'), continuation = arrow + gap
   const lines: string[][] = []

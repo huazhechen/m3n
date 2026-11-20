@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { numberedHeaderContent } from './header-content.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
@@ -25,7 +26,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const painter = new NativeSymbols(measurer)
   const textBlock = (lines: string[], size: number, weight = 400) => {
     if (!lines.length) return { rows: [], height: 0 }
-    const metrics = lines.map(text => measurer.measureText(text, { fontSize: size, fontFamily: 'serif', fontWeight: weight }))
+    const metrics = lines.map(text => measurer.measureText(text, { fontSize: size, fontFamily: SCORE_TEXT_FONT, fontWeight: weight }))
     const advance = size * 1.25
     const top = Math.min(...metrics.map((m, index) => index * advance - m.baseline))
     const bottom = Math.max(...metrics.map((m, index) => index * advance - m.baseline + m.h))
@@ -43,7 +44,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const creditBounds: { left: number; right: number; top: number; bottom: number }[] = []
   let creditBottom = 0
   const creditSvg = headerContent.credits.map((text, index) => {
-    const raw = painter.text(text, width - margin, 0, nativeStyle.annotation, 'serif', { 'text-anchor': 'end' })
+    const raw = painter.text(text, width - margin, 0, nativeStyle.annotation, SCORE_TEXT_FONT, { 'text-anchor': 'end' })
     const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? em(5) : 0) - ink.top
     creditBounds.push({ left: ink.left, right: ink.right, top: y + ink.top, bottom: y + ink.bottom })
     creditBottom = y + ink.bottom
@@ -73,8 +74,8 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,'M3N Numbers')
     const place = (svg:string,x:number,role?:string) => `<g${role ? ` data-m3n-role="pitch-range-${role}"` : ''} transform="translate(${n(x)} 0)">${svg}</g>`
     const label = '音域：'
-    const labelMetrics = measurer.measureText(label, { fontSize: size, fontFamily: 'serif' })
-    let rangeSvg = painter.text(label,0,axis + labelMetrics.baseline - labelMetrics.h / 2,size,'serif', { 'data-m3n-role': 'pitch-range-label' })
+    const labelMetrics = measurer.measureText(label, { fontSize: size, fontFamily: SCORE_TEXT_FONT })
+    let rangeSvg = painter.text(label,0,axis + labelMetrics.baseline - labelMetrics.h / 2,size,SCORE_TEXT_FONT, { 'data-m3n-role': 'pitch-range-label' })
     let x = Math.max(labelMetrics.w, labelMetrics.advance ?? 0)+gap-Math.min(lowInk.left, -zero.w / 2)
     rangeSvg += place(low,x,'low')
     x += Math.max(lowInk.right, zero.w / 2)+gap
@@ -92,7 +93,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const signaturesHeight = signatureInk.bottom - signatureInk.top
   const sideTop = margin + titleHeight + (titleHeight ? em(5) : 0)
   const subtitleTop = sideTop
-  const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, 'serif', { 'text-anchor': 'middle' })).join('')
+  const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, SCORE_TEXT_FONT, { 'text-anchor': 'middle' })).join('')
   const centerBounds = nativeSvgPieces(subtitleSvg, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top).map(ink => ({ ...ink, top: ink.top - sideTop, bottom: ink.bottom - sideTop }))
   const signatureBounds = signaturePieces.flatMap(piece => nativeSvgPieces(piece, measurer)).map(ink => ({
     ...ink, top: ink.top - signatureInk.top, bottom: ink.bottom - signatureInk.top,
@@ -120,7 +121,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
       ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
     ])]
-    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: nativeStyle.text, fontFamily: 'serif', fontWeight: item.framed ? 700 : 400 }) }))
+    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: nativeStyle.text, fontFamily: SCORE_TEXT_FONT, fontWeight: item.framed ? 700 : 400 }) }))
     const height = Math.max(...measured.map(item => item.metrics.h + (item.framed ? nativeStyle.text * (7 / 16) : 0)))
     const top = orderBottom + minimumCoreGap
     let x = margin
@@ -136,7 +137,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     orderRows.push({ top, height, items }); orderBottom = top + height
   }
   const orderHeight = orderBottom - (sideTop + sidesHeight)
-  let svg = titleRows.map(row => painter.text(row.text, width / 2, margin + row.baseline, nativeStyle.title, 'serif', { 'text-anchor': 'middle', 'font-weight': 700 })).join('')
+  let svg = titleRows.map(row => painter.text(row.text, width / 2, margin + row.baseline, nativeStyle.title, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'font-weight': 700 })).join('')
     + subtitleSvg
     + `<g transform="translate(0 ${n(creditsTop)})">${creditSvg}</g>`
     + `<g transform="translate(0 ${n(signaturesTop - signatureInk.top)})">${signatureSvg}</g>`
@@ -151,7 +152,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
         const left = item.x, right = item.x + item.width, middle = item.y + item.height / 2
         const head = Math.min(item.width * 0.35, nativeStyle.text * 0.25)
         rowSvg += `<path${attrs({ d: `M${n(left)} ${n(middle)} H${n(right)} M${n(right - head)} ${n(middle - head)} L${n(right)} ${n(middle)} L${n(right - head)} ${n(middle + head)}`, fill: 'none', stroke: '#000', 'stroke-width': em(1), 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'data-m3n-role': 'order-arrow' })}/>`
-      } else rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, 'serif', { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
+      } else rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, SCORE_TEXT_FONT, { 'font-weight': item.framed ? 700 : 400, 'data-m3n-role': item.framed ? 'order' : 'order-prefix' })
       if (item.framed) rowSvg += '</g>'
     }
     svg += rowSvg

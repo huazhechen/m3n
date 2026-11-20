@@ -4,3 +4,7 @@ export { prepareNumberedNotationFonts } from './fonts.js'
 export type { NativeDiagnostic as NumberedNotationDiagnostic } from './native-model.js'
 export { renderSharedNumberedNotationScores } from './native-score.js'
 export { PreparedNumberedNotationScore, renderSharedPreparedNumberedNotationScores } from './native-score.js'
+
+export * from './font-family.js'
+export { scoreFontText, scoreCjkFont, scoreFontForCharacter, loadScoreFont } from './fonts.js'
+export type { ScoreFontResource } from './fonts.js'

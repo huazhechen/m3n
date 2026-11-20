@@ -1,3 +1,4 @@
+import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
@@ -24,7 +25,8 @@ await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url':
   outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
   lib: { entry: join(root, 'tools/scorebook-layout.mjs'), name: 'scorebook', formats: ['iife'], fileName: () => 'bundle.js' },
 } })
-const font = readFileSync(join(root, 'tools/fonts/NotoSerifCJKsc-Regular.otf'))
+prepareBuiltinPdfFont()
+const font = readFileSync(join(root, '.tmp/scorebook-font/text.ttf'))
 const rendererSha256 = createHash('sha256').update(readFileSync(join(temp, 'bundle/bundle.js'))).update(font).digest('hex')
 // Reorder or regroup a validated edition without repeating identical width probes.
 const reuseFile = process.argv.find(arg => arg.startsWith('--reuse-widths='))?.slice(15)
@@ -32,7 +34,7 @@ const reused = reuseFile ? JSON.parse(readFileSync(resolve(reuseFile), 'utf8')) 
 if (reused) assert.equal(reused.rendererSha256, rendererSha256, 'Cached width probes must match the renderer and fonts')
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
-const text = (value, x, y, size = 16, attrs = '') => `<text x="${x}" y="${y}" font-size="${size}" font-family="Scorebook Text" ${attrs}>${escape(value)}</text>`
+const text = (value, x, y, size = 16, attrs = '') => `<text x="${x}" y="${y}" font-size="${size}" font-family="Barlow Semi Condensed, Bravura, Noto Sans SC" ${attrs}>${escape(value)}</text>`
 const pageSvg = content => `<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}"><rect width="100%" height="100%" fill="white"/>${content}</svg>`
 const records = [], music = [], sources = new Map(), musicGroups = []
 let orderOptimization

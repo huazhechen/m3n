@@ -13,7 +13,7 @@ export function downloadBlob(blob: Blob, fileName: string) {
 }
 
 export type ScorePdfPhase = 'loading' | 'fonts' | 'pages' | 'saving'
-export type ScorePdfOptions = { fullPage?: boolean; textFont?: Uint8Array; signal?: AbortSignal; onPhase?: (phase: ScorePdfPhase) => void }
+export type ScorePdfOptions = { fullPage?: boolean; scoreUrl?: string; textFont?: Uint8Array; signal?: AbortSignal; onPhase?: (phase: ScorePdfPhase) => void }
 let pdfModule: ReturnType<typeof importPdfModule> | undefined
 const importPdfModule = () => import('./score-pdf.js')
 
@@ -22,7 +22,7 @@ export function preloadScorePdf() {
   return pdfModule ??= importPdfModule().catch(error => { pdfModule = undefined; throw error })
 }
 
-/** Direct vector PDF download on every device; only music numerals are embedded. */
+/** Direct vector PDF download with document subsets of the three score fonts. */
 export async function createScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void, options: ScorePdfOptions = {}) {
   if (!pages.length) throw new Error('当前没有可导出的乐谱。')
   options.onPhase?.('loading')
@@ -96,6 +96,8 @@ export async function renderScoreCanvas(svg: SVGSVGElement, targetWidth: number,
   clone.style.transform = ''
   clone.style.transformOrigin = ''
 
+  const { outlineScoreText } = await import('./score-fonts.js')
+  await outlineScoreText(clone)
   const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   try {
