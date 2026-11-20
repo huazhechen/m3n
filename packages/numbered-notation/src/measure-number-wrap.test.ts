@@ -9,7 +9,8 @@ const sources = [
     ...['guo_huo_01.m3n', 'ming_tian_hui_geng_hao_01.m3n', 'wo_yao_ni_01.m3n', 'xing_xing_dian_deng_01.m3n']
         .map(file => readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')),
 ];
-it.each(sources.map((source, index) => ({ source, index })))('keeps existing automatic rows when numbering case $index', ({ source }) => {
+// Isolate horizontal label placement from adaptive page-capacity selection.
+it.each(sources.map((source, index) => ({ source, index })))('keeps fixed-spacing automatic rows when numbering case $index', ({ source }) => {
     const document = parseM3NDocument(source);
     const systems = (measureNumbers: boolean) => {
         const textMeasurer = { measureText(text: string, style: {
@@ -17,7 +18,7 @@ it.each(sources.map((source, index) => ({ source, index })))('keeps existing aut
             }) {
                 return { w: [...text].reduce((sum, character) => sum + style.fontSize * (character.codePointAt(0)! > 127 ? 1 : .5), 0), h: style.fontSize, baseline: style.fontSize * .8 };
             } };
-        const svg = NumberedNotationScore.create(document).render({ width: 320, paged: false, pageMargin: 11, textMeasurer, measureNumbers });
+        const svg = NumberedNotationScore.create(document).render({ width: 320, paged: false, pageMargin: 11, textMeasurer, measureNumbers, minimumNoteGapEm: .4 });
         const root = new DOMParser().parseFromString(svg.join(''), 'text/html');
         return [...root.querySelectorAll('g.system')].map(system => [...system.querySelectorAll('g.note')].map(note => note.getAttribute('data-m3n-id'))).filter(notes => notes.length);
     };

@@ -152,6 +152,41 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
 
 export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions): NativeLayout {
   validate(supplied)
+  // Explicit spacing remains a fixed engraving override. Automatic spacing is
+  // selected against the same virtual A4 pages in continuous and paged views;
+  // custom vertical gaps must not change the horizontal line breaks.
+  if (supplied.minimumNoteGapEm !== undefined) return layoutNativeScoreAtGap(document, supplied)
+  const minimumCoreGap = document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap
+  let baseline: NativeLayout
+  try {
+    baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGapEm: 0.4 })
+  } catch (error) {
+    // Continuous engraving still supports a single row taller than A4.
+    if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行')) {
+      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGapEm: 0.4 })
+    }
+    throw error
+  }
+  let selected = baseline
+  for (let hundredths = 60; hundredths > 40; hundredths -= 5) {
+    let candidate: NativeLayout
+    try {
+      candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
+        minimumNoteGapEm: hundredths / 100, textMeasurer: baseline.measurer })
+    } catch (error) {
+      // Wider spacing can make a decorated row too tall for one A4 page.
+      // Other layout failures remain visible instead of becoming fallbacks.
+      if (error instanceof Error && error.message.includes('单个谱行')) continue
+      throw error
+    }
+    if (candidate.pages.length <= baseline.pages.length) { selected = candidate; break }
+  }
+  repaginateNativeLayout(selected, supplied.paged, supplied.coreGap)
+  return selected
+}
+
+function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions): NativeLayout {
+  validate(supplied)
   if (document.minimumCoreGapEm !== undefined && (!Number.isFinite(document.minimumCoreGapEm) || document.minimumCoreGapEm < 0)) throw new Error('最小行距必须为非负有限数值。')
   const headerDocument = document
   const expanded = supplied.fixedDo && (document.orderKeys?.some(Boolean) || hasPassKeys(document)) ? keyedDisplayPerformance(document) : undefined

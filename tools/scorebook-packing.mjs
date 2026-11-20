@@ -83,8 +83,9 @@ function orderedPacking(entries) {
 
 /** Exact set partitioning via subset DP, equivalent to choosing one covering group per work. */
 function unorderedPacking(entries) {
-  if (entries.length > 20) throw new Error('Exact chapter packing supports at most 20 works per anchor segment')
-  const size = 1 << entries.length, choices = Array.from({ length: entries.length }, (_, index) => [soloOption(entries[index], index)])
+  const bits = entries.map((_, index) => 1n << BigInt(index))
+  const indexes = new Map(bits.map((bit, index) => [bit, index]))
+  const choices = Array.from({ length: entries.length }, (_, index) => [soloOption(entries[index], index)])
   const eligible = entries.flatMap((entry, index) => {
     const candidate = entry.candidates.find(item => item.width === sharedScoreWidth)
     return entry.sharePage !== false && candidate && safe(candidate) && candidate.pageCount === 1 && Number.isFinite(candidate.naturalHeight) ? [index] : []
@@ -95,24 +96,28 @@ function unorderedPacking(entries) {
       const next = [...members, eligible[i]]
       const group = next.length > 1 ? sharedOption(entries, next) : null
       if (next.length > 1 && !group) continue
-      if (group) choices[next[0]].push({ ...group, mask: next.reduce((mask, index) => mask | 1 << index, 0) })
+      if (group) choices[next[0]].push({ ...group, mask: next.reduce((mask, index) => mask | bits[index], 0n) })
       enumerate(next, i + 1)
     }
   }
   enumerate([], 0)
-  for (let index = 0; index < entries.length; index++) choices[index][0].mask = 1 << index
-  const best = Array(size); best[0] = empty()
+  for (let index = 0; index < entries.length; index++) choices[index][0].mask = bits[index]
+  // Store only reachable partitions, rather than allocating 2^chapterSize slots.
+  // BigInt masks keep distant works distinct beyond the 32-bit bitwise boundary.
+  const best = new Map([[0n, empty()]])
   function solve(mask) {
-    if (best[mask]) return best[mask]
-    const first = 31 - Math.clz32(mask & -mask)
+    if (best.has(mask)) return best.get(mask)
+    const first = indexes.get(mask & -mask)
+    let winner
     for (const group of choices[first]) {
       if ((group.mask & mask) !== group.mask) continue
       const option = prepend(group, solve(mask ^ group.mask))
-      if (better(option, best[mask])) best[mask] = option
+      if (better(option, winner)) winner = option
     }
-    return best[mask]
+    best.set(mask, winner)
+    return winner
   }
-  return solve(size - 1)
+  return solve((1n << BigInt(entries.length)) - 1n)
 }
 
 /** Chapters and explicit anchors bound independently optimized segments. */

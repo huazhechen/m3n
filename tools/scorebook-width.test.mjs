@@ -110,3 +110,23 @@ test('exact chapter set partitioning matches exhaustive permutation search', () 
   const locked = optimizeScorebook(entries, new Set(['classic']))
   assert.deepEqual(locked.entries, entries)
 })
+
+test('large chapters retain exact packing across the 32-bit boundary without a chapter-size cap', () => {
+  const entries = Array.from({ length: 40 }, (_, index) => entry(String(index), [candidate(540, 900), candidate(640, 900)]))
+  for (const index of [0, 39]) entries[index].candidates = [candidate(540, 200), candidate(640, 200)]
+  const result = optimizeScorebook(entries, new Set(['basics']))
+  assert.equal(result.metrics.pages, 39)
+  assert.deepEqual(result.metrics.pageGroups.find(group => group.titles.length === 2).titles, ['0', '39'])
+  assert.equal(result.entries.length, 40)
+  assert.equal(new Set(result.entries).size, 40)
+})
+
+test('forced solo works in a large chapter do not change the optimal partition of short works', () => {
+  const shorts = [480, 420, 330, 280, 220, 170].map((height, index) => entry(`short-${index}`, [candidate(540, height), candidate(640, height)]))
+  const solos = Array.from({ length: 35 }, (_, index) => entry(`solo-${index}`, [candidate(540, undefined, 2), candidate(640, undefined, 2)]))
+  const expected = optimizeScorebook(shorts, new Set(['basics']))
+  const result = optimizeScorebook([...solos, ...shorts], new Set(['basics']))
+  assert(Math.abs(result.metrics.cost - expected.metrics.cost - 70) < 1e-9)
+  assert.equal(result.metrics.pages, expected.metrics.pages + 70)
+  assert.deepEqual(result.entries.slice(35), expected.entries)
+})

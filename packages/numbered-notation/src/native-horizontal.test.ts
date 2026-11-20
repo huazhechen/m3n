@@ -9,10 +9,11 @@ import { projectNativeScore } from './native-model.js';
 // inkBottom distinguishes that estimate's blank tail from a real descender.
 // Ordinary prose is irrelevant to these examples' horizontal music positions.
 const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fontSize === 22 && text === '0' ? 11.154037475585938 : text.length * style.fontSize * 0.58, h: style.fontSize, baseline: style.fontSize * 0.8, inkBottom: style.fontSize * 0.8 }; } };
+// Coordinate regressions use explicit fixed spacing; adaptive selection is tested separately.
 // Deterministic coordinates below use a smaller minimum clearance.
-// Other geometry regressions exercise the current defaults.
+// Other geometry regressions fix the compact 0.4em spacing.
 const narrowSpacing = { minimumNoteGapEm: 0.3, minimumNoteGapFloorEm: 0.1 };
-const layout = (source: string, width = 800, spacing = {}) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, ...spacing });
+const layout = (source: string, width = 800, spacing = {}) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, minimumNoteGapEm: .4, ...spacing });
 describe('native spacing and measured note envelopes', () => {
     it('matches all four note centres and the flush final bar of an unadorned system', () => {
         const result = layout('{4/4}\nN: 1 2 3 4 |||', 800, narrowSpacing);
@@ -92,7 +93,7 @@ describe('native spacing and measured note envelopes', () => {
             measures[1]!.breakBefore = true;
         else
             measures[0]!.breakAfter = true;
-        const combined = layoutNativeScore(document, { width: 800, paged: false, textMeasurer: measurer });
+        const combined = layoutNativeScore(document, { width: 800, paged: false, textMeasurer: measurer, minimumNoteGapEm: .4 });
         const isolated = layout(`{4/4}\nN: ${phrase}`);
         for (const [index, expected] of isolated.projection.measures.entries()) {
             const actual = combined.projection.measures[index + 1]!;

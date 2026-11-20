@@ -8,9 +8,10 @@ import { writePreferredWidths } from './scorebook-source.mjs'
 import { chooseBestWidth } from './scorebook-width.mjs'
 
 const root = resolve(import.meta.dirname, '..')
-const directory = join(root, 'src/scores'), output = join(root, '.tmp/staff-widths')
+const directory = join(root, 'src'), output = join(root, '.tmp/staff-widths')
 const probeOnly = process.argv.includes('--probe-only')
-assert(process.argv.slice(2).every(arg => arg === '--probe-only'), 'Only --probe-only is supported')
+const fresh = process.argv.includes('--fresh')
+assert(process.argv.slice(2).every(arg => ['--probe-only', '--fresh'].includes(arg)), 'Only --probe-only and --fresh are supported')
 mkdirSync(output, { recursive: true })
 // Keep the hosted dist/ untouched; Playwright serves these files in memory, with no dev server.
 await build({ configFile: false, logLevel: 'error', base: '/', define: { 'import.meta.url': JSON.stringify('http://staff-widths.local/bundle.js') }, build: {
@@ -21,7 +22,7 @@ const launchOptions = { executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/
 const entries = [], hash = value => createHash('sha256').update(value).digest('hex')
 const rendererSha256 = hash(Buffer.concat([readFileSync(join(output, 'bundle/bundle.js')), readFileSync(join(root, 'packages/score-renderer/vendor/verovio/verovio-module.wasm'))]))
 const previous = existsSync(join(output, 'report.json')) ? JSON.parse(readFileSync(join(output, 'report.json'), 'utf8')) : undefined
-const reusable = new Map(previous?.rendererSha256 === rendererSha256 ? previous.entries.map(entry => [entry.file, entry]) : [])
+const reusable = new Map(!fresh && previous?.rendererSha256 === rendererSha256 ? previous.entries.map(entry => [entry.file, entry]) : [])
 const report = { rendererSha256, range: [540, 720], step: 5, candidateStep: 10, stabilityOffsets: [-5, 0, 5], criterion: 'minimum page count, then minimum width', entries }
 const saveReport = () => {
   const path = join(output, 'report.json')
@@ -29,7 +30,12 @@ const saveReport = () => {
   renameSync(path + '.tmp', path)
 }
 // Capture every input before measuring; writePreferredWidths verifies all digests before writing.
-const inputs = readdirSync(directory).filter(file => file.endsWith('.m3n')).sort().map(file => ({ file, source: readFileSync(join(directory, file), 'utf8') }))
+const inputs = ['scores', 'works'].flatMap(scope => readdirSync(join(directory, scope))
+  .filter(file => file.endsWith('.m3n')).sort()
+  .map(name => {
+    const file = join(scope, name)
+    return { file, source: readFileSync(join(directory, file), 'utf8') }
+  }))
 async function refresh() {
   for (const [index, { file, source }] of inputs.entries()) {
     // A fresh browser releases the complete WASM/renderer heap after each score.

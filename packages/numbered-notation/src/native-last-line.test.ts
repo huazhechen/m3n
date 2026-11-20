@@ -80,8 +80,8 @@ describe('short final rows', () => {
   it('measures the actual constraints for parallel voices and rigid multi-rests', () => {
     const source = `{4/4}\nN: ${quarters.repeat(4)} {br} {rest=3} |||\nB: ${quarters.repeat(4)} {br} {rest=3} |||`
     const layout = layoutNativeScore(parseM3NDocument(source), options)
-    const last = layout.systems.at(-1)!, spacing = nativeHorizontalSpacing(last.measures, {})
-    const previous = nativeHorizontalSpacing(layout.systems.at(-2)!.measures, {})
+    const last = layout.systems.at(-1)!, spacing = nativeHorizontalSpacing(last.measures, layout.options)
+    const previous = nativeHorizontalSpacing(layout.systems.at(-2)!.measures, layout.options)
     expect(last.measures.at(-1)!.end - 32).toBeCloseTo(nativeLastLineWidth(spacing, 736, previous, 736), 6)
     expect(last.measures.at(-1)!.end - 32).toBeGreaterThanOrEqual(spacing.minimumWidth)
   })

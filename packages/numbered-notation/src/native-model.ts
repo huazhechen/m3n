@@ -65,9 +65,15 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
   const textWidth = (text: string, size = nativeStyle.annotation, family = 'serif') => options.textMeasurer.measureText(text, { fontSize: size, fontFamily: family }).w
   const known = new Set(['tr', 'prall', 'fermata', 'arp', 'str', 'tip', 'hold', 'brk', 'breath', 'sfz', 'f1', 'f2', 'f3', 'f4', 'f5'])
   const sectionKeys = new Map((document.order ?? []).map(name => [name, {entry:sectionEntryKey(document,name),visits:sectionKeyVisits(document,name)}]))
+  // Compact sections show their first visit's key, with numbered alternatives
+  // at entries and modulations. Compare incoming edges in that same display key
+  // so later transposed visits do not manufacture a change at every bar.
+  const displayDocument = document.orderKeys
+    ? { ...document, orderKeys: document.order!.map(name => sectionKeys.get(name)!.visits[0]) }
+    : document
   let partIndex = 0, measureNumber = 0
   for (const part of document.parts.values()) {
-    const incomingKeys = incomingMeasureKeys(document, part.melody)
+    const incomingKeys = incomingMeasureKeys(displayDocument, part.melody)
     const resolved = options.fixedDo ? new Map([
       ...resolveScorePitches(part.melody), ...resolveScorePitches(part.bass),
     ]) : undefined
