@@ -218,3 +218,60 @@ test('staff measure numbers appear only at system ends in continuous and paged l
   await page.getByRole('switch', { name: '小节号', exact: true }).click()
   await expect(paper.locator('g.mNum')).toHaveCount(0)
 })
+
+test('ending brackets stay below row-end measure numbers in both notation modes', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('m3n:notation-mode', 'numbered')
+    localStorage.setItem('m3n:measure-numbers', '1')
+  })
+  await page.goto('/scores/duo_lai_mi_01')
+  const paper = page.locator('.score-paper')
+  for (const mode of ['首调', '五线谱'] as const) {
+    if (mode === '五线谱') await selectNotationMode(page, mode)
+    await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    await expect.poll(() => paper.locator('g.system').count()).toBeGreaterThan(0)
+    const attached = await paper.locator('g.system').evaluateAll(systems => systems.flatMap(system => {
+      const number = system.querySelector('g.mNum,[data-m3n-role="measure-number"]')
+      const ending = system.querySelector('g.ending,[data-m3n-relation="volta"]')
+      if (!number || !ending) return []
+      return [{ numberBottom: number.getBoundingClientRect().bottom, endingTop: ending.getBoundingClientRect().top }]
+    }))
+    expect(attached.length).toBeGreaterThan(0)
+    for (const { numberBottom, endingTop } of attached)
+      expect(numberBottom, `${mode} row-end number above ending`).toBeLessThan(endingTop)
+  }
+})
+
+test('staff ending brackets retain an opening hook and 2px separation', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill(await readFile('src/scores/besame_mucho_01.m3n', 'utf8'))
+  await selectNotationMode(page, '五线谱')
+  const paper = page.locator('.score-paper')
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  const firstEnding = paper.locator('g.ending.id-m3n-ending-1.spanning')
+  await expect(firstEnding).toHaveCount(0)
+  await expect(paper.locator('g.ending.id-m3n-ending-1 .m3n-ending-start-hook')).toHaveCount(1)
+
+  await page.getByLabel('M3N source').fill(await readFile('src/scores/qian_si_xi_01.m3n', 'utf8'))
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  const brackets = await paper.locator('g.system').evaluateAll(systems => systems.flatMap(system => {
+    const endings = [...system.querySelectorAll('g.ending.voltaBracket, g.ending .voltaBracket')]
+      .filter(ending => ending.querySelectorAll('path').length >= 3)
+    if (endings.length < 2) return []
+    return endings.slice(0, 2).map(ending => {
+      const horizontal = [...ending.querySelectorAll('path')].find(path => {
+        const box = (path as SVGGraphicsElement).getBBox()
+        return box.width > box.height * 4
+      }) as SVGGraphicsElement
+      const box = horizontal.getBBox(), matrix = horizontal.getCTM()!
+      const left = new DOMPoint(box.x, box.y + box.height / 2).matrixTransform(matrix)
+      const right = new DOMPoint(box.x + box.width, box.y + box.height / 2).matrixTransform(matrix)
+      return { left: left.x, right: right.x, y: left.y }
+    })
+  }))
+  expect(brackets.length).toBeGreaterThan(0)
+  for (let index = 0; index < brackets.length; index += 2) {
+    expect(Math.abs(brackets[index]!.y - brackets[index + 1]!.y)).toBeLessThan(0.1)
+    expect(brackets[index + 1]!.left - brackets[index]!.right).toBeGreaterThanOrEqual(2)
+  }
+})

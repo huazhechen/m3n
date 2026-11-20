@@ -53,6 +53,25 @@ describe('measured native volta fragments', () => {
     }
   })
 
+  it.each([false, true])('keeps row-end measure numbers outside ending brackets, paged=%s', paged => {
+    const score = layoutNativeScore(parseM3NDocument(`{4/4}
+N: ||: 1 2 3 4 |
+---V1
+N: 5 6 7 1e :||{br}
+---V2
+N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measurer })
+    let checked = 0
+    for (const system of score.systems) {
+      const ending = system.voltas?.[0]
+      const number = system.decorationLayout?.find(label => label.svg.includes('data-m3n-role="measure-number"'))
+      if (!ending || !number) continue
+      expect(nativeSvgInk(number.svg, measurer).bottom)
+        .toBeLessThanOrEqual(nativeSvgInk(ending.svg, measurer).top - 2 + .001)
+      checked++
+    }
+    expect(checked).toBeGreaterThan(0)
+  })
+
   it('keeps the ending hook 2px above the bar and raises it for high notes', () => {
     const gap = (note: string) => {
       const score = layout(`${note} 2 3 4`), system = score.systems[0]!

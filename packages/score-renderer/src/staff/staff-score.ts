@@ -200,10 +200,47 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
                   'data-m3n-empty-verse': 'true',
                 }))
             }
-          systems = roots.flatMap((root) => {
+          const systemNodes = roots.flatMap((root) => findAll(root, (n) => hasClass(n, 'system')))
+          systemNodes.forEach((system, index) => {
+            for (const ending of findAll(system, (n) => hasClass(n, 'ending') && Boolean(n.attributes.class?.split(/\s+/).includes('spanning')))) {
+              const endingId = (ending.attributes.class ?? '').split(/\s+/).find((name) => name.startsWith('id-'))
+              if (!endingId) continue
+              const previouslyDrawn = systemNodes.slice(0, index).some((previous) =>
+                findAll(previous, (n) => hasClass(n, 'ending') && (n.attributes.class ?? '').split(/\s+/).includes(endingId))
+                  .some((n) => findAll(n, (child) => child.tagName === 'path').length > 0),
+              )
+              if (previouslyDrawn) continue
+              const bracket = findAll(ending, (n) => hasClass(n, 'voltaBracket'))[0]
+              if (!bracket) continue
+              const paths = findAll(bracket, (n) => n.tagName === 'path')
+              const horizontal = paths.find((path) => {
+                const numbers = path.attributes.d?.match(/[-+]?\d*\.?\d+/g)?.map(Number) ?? []
+                return numbers.length >= 4 && Math.abs(numbers[1]! - numbers[3]!) < 0.01
+              })
+              const d = horizontal?.attributes.d?.match(/[-+]?\d*\.?\d+/g)?.map(Number)
+              const rightHook = paths.find((path) => {
+                const numbers = path.attributes.d?.match(/[-+]?\d*\.?\d+/g)?.map(Number) ?? []
+                return Boolean(d) && numbers.length >= 4 && Math.abs(numbers[0]! - numbers[2]!) < 0.01
+                  && Math.abs(numbers[0]! - d![2]!) < 0.01
+              })
+              const hook = rightHook?.attributes.d?.match(/[-+]?\d*\.?\d+/g)?.map(Number)
+              if (d && hook) bracket.children.push(element('path', {
+                d: `M${d[0]} ${d[1]} L${d[0]} ${hook[3]}`,
+                stroke: horizontal?.attributes.stroke ?? '#000',
+                'stroke-width': horizontal?.attributes['stroke-width'] ?? '13',
+                'stroke-linecap': horizontal?.attributes['stroke-linecap'] ?? 'square',
+                fill: 'none',
+                class: 'm3n-ending-start-hook',
+              }))
+              ending.attributes.class = (ending.attributes.class ?? '').split(/\s+/).filter((name) => name !== 'spanning').join(' ')
+              for (const text of findAll(bracket, (n) => n.tagName === 'text'))
+                text.children = text.children.map((child) => typeof child === 'string' ? child.replace(/\((\d+(?:\.\d+)*)\)/g, '$1') : child)
+            }
+          })
+          systems = systemNodes.map((node) => {
+            const root = roots.find((candidate) => findAll(candidate, (n) => n === node).length > 0)!
             const geometry = new SvgGeometry(root, measure)
-            return findAll(root, (n) => hasClass(n, 'system')).map((node) =>
-              arrangeStaffSystem(node, geometry, musicWidth, sectionHeadings))
+            return arrangeStaffSystem(node, geometry, musicWidth, sectionHeadings)
           })
           const required = Math.max(0, ...systems.map((system) => system.staffSpacing))
           if (!required) break

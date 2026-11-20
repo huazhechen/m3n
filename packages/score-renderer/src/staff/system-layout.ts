@@ -18,7 +18,7 @@ import { STAFF_SCALE } from './line-layout.js'
 export type StaffSystem = { node: XmlNode; pieces: Ink[]; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
-  'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row',
+  'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row', 'm3n-ending-row',
 ]
 const isDecoration = (node: XmlNode) => decorations.some((c) => hasClass(node, c))
 function filtered(node: XmlNode, omit: (node: XmlNode) => boolean): XmlNode {
@@ -184,6 +184,29 @@ export function arrangeStaffSystem(
       measure.children.push(element('g', { class: 'm3n-hairpin-row' }, row.map((item) => item.node)))
     }
   }
+  const groupedEndings = new Set<XmlNode>()
+  const endings = nodes(node).filter((child) => hasClass(child, 'ending'))
+    .map((ending) => ({ ending, ink: geometry.ink(ending) }))
+    .filter(({ ink }) => ink.right > ink.left && ink.bottom > ink.top)
+    .sort((a, b) => a.ink.left - b.ink.left)
+  const endingRows: typeof endings[] = []
+  for (const item of endings) {
+    const row = endingRows.find((row) => row.every((other) => !overlapsX(item.ink, other.ink)))
+    if (row) row.push(item)
+    else endingRows.push([item])
+  }
+  for (const row of endingRows.filter((row) => row.length > 1)) {
+    const top = Math.min(...row.map(({ ink }) => ink.top))
+    let right = Number.NEGATIVE_INFINITY
+    for (const { ending, ink } of [...row].sort((a, b) => a.ink.left - b.ink.left)) {
+      const dx = Math.max(0, right + 3.5 / scale - ink.left)
+      translate(ending, dx, top - ink.top)
+      right = Math.max(right, ink.right + dx)
+      groupedEndings.add(ending)
+    }
+    node.children = node.children.filter((child) => typeof child === 'string' || !row.some((item) => item.ending === child))
+    node.children.push(element('g', { class: 'm3n-ending-row' }, row.map(({ ending }) => ending)))
+  }
   const isHairpin = (attachment: XmlNode) => hasClass(attachment, 'hairpin') || hasClass(attachment, 'm3n-hairpin-row')
   const music = geometry.pieces(filtered(node, isDecoration))
   const obstacles = [...music]
@@ -195,10 +218,11 @@ export function arrangeStaffSystem(
   const hasStandaloneHeading = sectionHeadings.has(measures[0]?.attributes.id ?? '')
   const isHeadingTempo = (attachment: XmlNode) => hasStandaloneHeading && hasClass(attachment, 'tempo')
   const placementOrder = (attachment: XmlNode) =>
-    isHeadingTempo(attachment) ? 2 : isStandaloneHeading(attachment) ? 1 : isHairpin(attachment) ? -1 : 0
+    isHeadingTempo(attachment) ? 4 : isStandaloneHeading(attachment) ? 3 :
+      hasClass(attachment, 'mNum') ? 2 : hasClass(attachment, 'ending') ? 1 : isHairpin(attachment) ? -1 : 0
   // Keep the section's directions next to its melody: tempo above heading,
   // heading above directions, then music. Place the outer levels last.
-  const attachments = findAll(node, (n) => isDecoration(n) && !groupedHairpins.has(n)).sort(
+  const attachments = findAll(node, (n) => isDecoration(n) && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
     (a, b) => placementOrder(a) - placementOrder(b),
   )
   for (const attachment of attachments) {
@@ -211,6 +235,11 @@ export function arrangeStaffSystem(
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
     if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - 12 / scale - ink.bottom
+    if (hasClass(attachment, 'mNum')) {
+      const endings = findAll(node, (n) => hasClass(n, 'ending'))
+      if (endings.length)
+        dy = Math.min(0, union(endings.flatMap((ending) => geometry.pieces(ending))).top - 8 / scale - ink.bottom)
+    }
     // Consecutive wedges may share a baseline with a small real gap between
     // their endpoints; horizontal padding must not invent a second lane.
     const relevant = obstacles.filter((other) => overlapsX(

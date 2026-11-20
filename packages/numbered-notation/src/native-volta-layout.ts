@@ -28,7 +28,9 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
   for (const system of systems) {
     const lane = system.lanes.find(lane => lane.id === 'melody')
     if (!lane) continue
-    const obstacles = nativeLanePieces(system, measurer, false, false).get(lane.id) ?? []
+    // Measure numbers sit outside the ending, so they must not lift its roof.
+    const withoutNumbers = { ...system, decorationLayout: system.decorationLayout?.filter(label => !label.svg.includes('data-m3n-role="measure-number"')) }
+    const obstacles = nativeLanePieces(withoutNumbers, measurer, false, false).get(lane.id) ?? []
     const relations = [...(system.relationLayout ?? [])].filter(([relation]) => relation.first.lane === lane.id)
     const fragments = spans.flatMap(span => {
       const members = entries.slice(span.begin, span.end).filter(entry => entry.system === system)
@@ -87,6 +89,24 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
       const bounds = regions.get(system) ?? []
       bounds.push({ lane: lane.id, left: fragment.ink.left, right: fragment.ink.right, top })
       regions.set(system, bounds)
+    }
+    if (fragments.length) {
+      const roof = Math.min(...(system.voltas ?? []).map(volta => nativeSvgInk(volta.svg, measurer).top))
+      const obstacles = nativeLanePieces(withoutNumbers, measurer).get(lane.id) ?? []
+      for (const number of system.decorationLayout ?? []) {
+        if (!number.svg.includes('data-m3n-role="measure-number"')) continue
+        const ink = nativeSvgInk(number.svg, measurer)
+        const top = Math.min(roof, ...obstacles.filter(piece => piece.right > ink.left && piece.left < ink.right).map(piece => piece.top))
+        const dy = Math.min(0, top - 8 - ink.bottom)
+        const originalTop = -ink.top
+        const bounds = regions.get(system)!
+        const old = bounds.findIndex(region => region.lane === lane.id && Math.abs(region.left - ink.left) < .001 &&
+          Math.abs(region.right - ink.right) < .001 && Math.abs(region.top - originalTop) < .001)
+        if (old >= 0) bounds.splice(old, 1)
+        number.svg = `<g transform="translate(0 ${n(dy)})">${number.svg}</g>`
+        lane.top = Math.max(lane.top, -(ink.top + dy))
+        bounds.push({ lane: lane.id, left: ink.left, right: ink.right, top: -(ink.top + dy) })
+      }
     }
   }
 }
