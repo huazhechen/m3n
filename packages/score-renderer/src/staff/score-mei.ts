@@ -203,7 +203,7 @@ export function scoreToMei(input: ScoreDocument): string {
       const startid = event.kind === 'tuplet' ? `${xmlId}-n1` : xmlId
       return [
         event.chord ? `<harm staff="${staffNumber}" startid="#${startid}">${chordSymbol(event.chord, event.key)}</harm>` : '',
-        event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${startid}"><rend fontweight="bold">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
+        event.sectionLabel ? `<reh staff="${staffNumber}" startid="#${startid}"><rend fontweight="bold" halign="left">${escapeXml(event.sectionLabel)}</rend></reh>` : '',
         event.dynamic ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.dynamic}</dynam>` : '',
         event.prefix ? `<dynam staff="${staffNumber}" startid="#${startid}">${event.prefix}</dynam>` : '',
         event.text ? `<dir staff="${staffNumber}" startid="#${startid}" place="above">${escapeXml(event.text)}</dir>` : '',

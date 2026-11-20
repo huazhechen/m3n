@@ -202,7 +202,9 @@ export function ScoreRenderer({
   const playRequestRef = useRef(0)
   const [isPlayRequest, setIsPlayRequest] = useState(false)
   const [playbackProgress, setPlaybackProgress] = useState(0)
-  const defaultWidth = scoreDocument.preferredWidth ?? DEFAULT_SCORE_WIDTH
+  const [notationMode, setNotationMode] = useState<NotationMode>(() => playbackOnly ? 'movable' : readNotationMode())
+  const staffNotation = notationMode === 'staff'
+  const defaultWidth = (staffNotation ? scoreDocument.staffPreferredWidth : scoreDocument.preferredWidth) ?? DEFAULT_SCORE_WIDTH
   const [layoutWidth, setLayoutWidth] = useState(defaultWidth)
   const [bpmOverride, setBpmOverride] = useState<number | null>(null)
   const playbackBpm = bpmOverride ?? clampPlaybackBpm(scoreDocument.tempo * scoreDocument.meterUnit / 4)
@@ -217,7 +219,6 @@ export function ScoreRenderer({
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
   const [fitWidth, setFitWidth] = useState(compact && !playbackOnly)
-  const [notationMode, setNotationMode] = useState<NotationMode>(() => playbackOnly ? 'movable' : readNotationMode())
   const fixedDo = notationMode === 'fixed'
   const [measureNumbers, setMeasureNumbers] = useState(() => !playbackOnly && readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
   const [contentWidth, setContentWidth] = useState(0)
@@ -235,9 +236,11 @@ export function ScoreRenderer({
   }, [scoreId])
   useEffect(() => {
     setLayoutWidth(defaultWidth)
+  }, [scoreId, defaultWidth, staffNotation])
+  useEffect(() => {
     setBpmOverride(null)
     setFitWidth(compact && !playbackOnly)
-  }, [scoreId, defaultWidth, compact, playbackOnly])
+  }, [scoreId, compact, playbackOnly])
   useEffect(() => {
     onDisplaySettingsChange?.({ width: renderWidth, paged: renderMode === 'paged', notationMode, fixedDo, measureNumbers, transpose: playbackTranspose, tempoScale })
   }, [renderWidth, renderMode, notationMode, fixedDo, measureNumbers, playbackTranspose, tempoScale, onDisplaySettingsChange])

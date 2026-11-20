@@ -3,23 +3,23 @@ import { readFile } from 'node:fs/promises'
 import { PDFDocument, PDFDict, PDFName } from 'pdf-lib'
 import { openScoreSettings, selectNotationMode } from './score-settings'
 
-test('staff mode reuses width, locates source, highlights playback and keeps playback alive across modes and transposition', async ({ page }, info) => {
+test('staff mode uses its own preferred width, locates source, highlights playback and keeps playback alive across modes and transposition', async ({ page }, info) => {
   const wasm: string[] = []
   page.on('request', request => { if (request.url().includes('.wasm')) wasm.push(request.url()) })
   await page.goto('/editor')
-  const source = '{title=五线谱验证}{key=D}{4/4}{60qpm}\nN: [123:2] 4 5 | [135:h] 6 7 1e | 1e 7 6 5 |||\nL: 春夏秋冬天 | 山川天地 | 明月清风\nB: 1d 2d 3d 4d | 5d 6d 7d 1 | 1 7d 6d 5d |'
+  const source = '{preferred-width=540}{staff-preferred-width=613}{title=五线谱验证}{key=D}{4/4}{60qpm}\nN: [123:2] 4 5 | [135:h] 6 7 1e | 1e 7 6 5 |||\nL: 春夏秋冬天 | 山川天地 | 明月清风\nB: 1d 2d 3d 4d | 5d 6d 7d 1 | 1 7d 6d 5d |'
   await page.getByLabel('M3N source').fill(source)
   const paper = page.locator('.score-paper')
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   expect(wasm).toHaveLength(0)
   await openScoreSettings(page)
-  const width = await page.getByRole('slider', { name: '乐谱宽度' }).inputValue()
+  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('540')
   await selectNotationMode(page, '五线谱')
   await expect(paper).toHaveAttribute('data-notation', 'staff')
   await expect(paper.locator('g.staff').first()).toBeVisible()
   await expect(paper.locator('svg svg, use, polygon, polyline, ellipse')).toHaveCount(0)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', width)
+  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', '613')
   expect(wasm).toHaveLength(1)
   await page.keyboard.press('Escape')
   await paper.locator('[id="m3n-e-2"] .notehead').first().click()
@@ -46,6 +46,7 @@ test('staff mode reuses width, locates source, highlights playback and keeps pla
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '固定调')
   await expect(paper).toHaveAttribute('data-fixed-do', 'true')
+  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('540')
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '首调')
@@ -63,7 +64,7 @@ test('staff mode reuses width, locates source, highlights playback and keeps pla
 
 test('staff pagination, tempo and transposition are shared by screen, PNG and vector PDF exports', async ({ page }, info) => {
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{title=五线谱导出}{preferred-width=540}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 32 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 32 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
+  await page.getByLabel('M3N source').fill('{title=五线谱导出}{preferred-width=540}{staff-preferred-width=540}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 32 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 32 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('540')
@@ -126,4 +127,25 @@ test('a failed optional staff download leaves the notation selector available', 
   await selectNotationMode(page, '首调')
   await expect(page.locator('.score-paper svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.locator('.render-message')).toHaveCount(0)
+})
+
+test('basic exercises keep section labels and Chinese directions inside staff pages', async ({ page }) => {
+  const source = await readFile('src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', 'utf8')
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill(source)
+  await selectNotationMode(page, '五线谱')
+  await openScoreSettings(page)
+  const paper = page.locator('.score-paper')
+  for (const width of [540, 640, 720]) {
+    await page.getByRole('slider', { name: '乐谱宽度' }).fill(String(width))
+    const pages = paper.locator(':scope > .score-page-sheet > svg, :scope > svg')
+    await expect(pages.first()).toHaveAttribute('width', String(width))
+    await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    const outside = await pages.evaluateAll(elements => elements.flatMap((element, index) => {
+      const svg = element as SVGSVGElement, ink = svg.getBBox(), box = svg.viewBox.baseVal
+      const tolerance = box.width / Number(svg.getAttribute('width')) * 0.5
+      return ink.x < -tolerance || ink.y < -tolerance || ink.x + ink.width > box.width + tolerance || ink.y + ink.height > box.height + tolerance ? [{ page: index + 1, ink: { x: ink.x, y: ink.y, width: ink.width, height: ink.height }, viewBox: { width: box.width, height: box.height } }] : []
+    }))
+    expect(outside, `${width}px staff pages`).toEqual([])
+  }
 })

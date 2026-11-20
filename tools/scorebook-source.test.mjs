@@ -30,3 +30,14 @@ test('a concurrent edit prevents writeback of every source', async () => {
     assert.equal(readFileSync(join(directory, 'b.m3n'), 'utf8'), original + '// edited\n')
   } finally { rmSync(directory, { recursive: true, force: true }) }
 })
+
+test('staff writeback preserves numbered width, comments and body and is idempotent', () => {
+  const source = '{preferred-width=540}\r\n// {staff-preferred-width=800}\r\n{title=测试}\r\nN: 1 2 3 4 |||\r\n'
+  const updated = withPreferredWidth(source, 613, 'staff-preferred-width')
+  assert.equal(updated, '{staff-preferred-width=613}\r\n' + source)
+  assert.equal(withPreferredWidth(updated, 613, 'staff-preferred-width'), updated)
+  assert.equal(withPreferredWidth(updated, 650, 'staff-preferred-width'), updated.replace('staff-preferred-width=613', 'staff-preferred-width=650'))
+  assert.equal(parseM3NDocument(updated).preferredWidth, 540)
+  assert.equal(parseM3NDocument(updated).staffPreferredWidth, 613)
+  assert.throws(() => withPreferredWidth('{staff-preferred-width=540}{staff-preferred-width=640}\nN: 1 2 3 4 |||', 613, 'staff-preferred-width'), /Duplicate/)
+})

@@ -14,6 +14,7 @@ export function documentSettings(tree: M3NSyntaxTree) {
   let equalMeasures = false
   let minimumCoreGapEm: number | undefined
   let preferredWidth = DEFAULT_PREFERRED_WIDTH
+  let staffPreferredWidth = DEFAULT_PREFERRED_WIDTH
   let order: string[] | undefined
   let orderKeys: Array<string | undefined> | undefined
   let orderKeyOctaves: Array<number | undefined> | undefined
@@ -29,9 +30,12 @@ export function documentSettings(tree: M3NSyntaxTree) {
     }
     if (directive.name === 'equal-measures') equalMeasures = directive.value === 'true'
     if (directive.name === 'leading' && /^\d+(?:\.\d+)?$/.test(directive.value ?? '') && Number.isFinite(Number(directive.value))) minimumCoreGapEm = Number(directive.value)
-    if (directive.name === 'preferred-width' && /^\d+$/.test(directive.value ?? '')) {
+    if ((directive.name === 'preferred-width' || directive.name === 'staff-preferred-width') && /^\d+$/.test(directive.value ?? '')) {
       const width = Number(directive.value)
-      if (width >= 320 && width <= 2560) preferredWidth = width
+      if (width >= 320 && width <= 2560) {
+        if (directive.name === 'staff-preferred-width') staffPreferredWidth = width
+        else preferredWidth = width
+      }
     }
   }
 
@@ -57,5 +61,5 @@ export function documentSettings(tree: M3NSyntaxTree) {
       hasExplicitTempo = true
     }
   }
-  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, ...(minimumCoreGapEm !== undefined ? {minimumCoreGapEm} : {}), preferredWidth, key, meterCount, meterUnit, tempo, hasExplicitTempo }
+  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, ...(minimumCoreGapEm !== undefined ? {minimumCoreGapEm} : {}), preferredWidth, staffPreferredWidth, key, meterCount, meterUnit, tempo, hasExplicitTempo }
 }

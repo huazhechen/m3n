@@ -15,13 +15,13 @@ export function validateM3NSyntaxTree(tree: M3NSyntaxTree): ScoreDiagnostic[] {
     }))
   }
   for (const directive of tree.directives) {
-    if (directive.name === 'preferred-width') {
+    if (directive.name === 'preferred-width' || directive.name === 'staff-preferred-width') {
       const width = Number(directive.value)
       if (directive.closing || !/^\d+$/.test(directive.value ?? '') || width < 320 || width > 2560) {
-        report('M3N_DIRECTIVE_INVALID_LAYOUT', 'preferred-width 必须为320～2560之间的整数', directive)
+        report('M3N_DIRECTIVE_INVALID_LAYOUT', `${directive.name} 必须为320～2560之间的整数`, directive)
       }
       if (!tree.lines.some(line => line.line === directive.line && line.kind === 'header')) {
-        report('M3N_DIRECTIVE_INVALID_LAYOUT', 'preferred-width 只能写在文档首部', directive)
+        report('M3N_DIRECTIVE_INVALID_LAYOUT', `${directive.name} 只能写在文档首部`, directive)
       }
     }
     if (directive.name === 'leading') {

@@ -28,6 +28,7 @@
     "test:native-ink": "node --test tools/native-ink-collisions.test.mjs && node tools/verify-native-ink.mjs --collisions",
     "test:numbered-audit": "node tools/verify-numbered-layout.mjs --screenshots",
     "check:boundaries": "node tools/check-boundaries.mjs",
+    "refresh:staff-widths": "npm run build:packages && node tools/refresh-staff-widths.mjs",
     "build:scorebook": "npm run build:packages && node tools/build-scorebook.mjs",
     "export:score-pdfs": "npm run build:packages && node tools/export-score-pdfs.mjs",
     "compact:scorebook": "node tools/compact-scorebook-pdf.mjs",

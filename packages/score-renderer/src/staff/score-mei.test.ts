@@ -18,6 +18,11 @@ describe('optional staff projection', () => {
     expect(score).toEqual(before)
   })
 
+  it('left-aligns section labels instead of centering them across the left page edge', () => {
+    const score = analyzeM3N('===音阶训练\nN: 1 2 3 4 |||').score
+    expect(scoreToMei(score)).toContain('<rend fontweight="bold" halign="left">音阶训练</rend>')
+  })
+
   it('prints keyed and octave-shifted visits with matching lyrics and playback identities', () => {
     const score = analyzeM3N('{key=C}{4/4}{order=A,A@D5}\n===A\nN: 1 2 3 4 |||\nL1: 春夏秋冬\nL2: 山川天地').score
     const before = structuredClone(score)

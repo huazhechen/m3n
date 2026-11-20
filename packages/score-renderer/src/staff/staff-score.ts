@@ -20,7 +20,7 @@ export function prepareStaffResources() {
 export async function prepareStaffScore(score: ScoreDocument, settings: StaffSettings, signal?: AbortSignal) {
   const module = await prepareStaffResources()
   signal?.throwIfAborted()
-  const width = settings.width ?? score.preferredWidth ?? DEFAULT_PREFERRED_WIDTH
+  const width = settings.width ?? score.staffPreferredWidth ?? DEFAULT_PREFERRED_WIDTH
   const tempoScale = settings.tempoScale ?? 1
   const displayScore = { ...score, tempo: score.tempo * tempoScale, parts: new Map([...score.parts].map(([name, part]) => {
     const copy = (measures: typeof part.melody) => measures.map(measure => ({ ...measure,
@@ -36,29 +36,36 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   const heading = [score.title, score.subtitle, ...(order?.length ? [`演奏顺序：${order.join(' → ')}`] : []), ...scoreCreditLines(score)].filter(Boolean)
   const headerHeight = heading.length ? 30 + (heading.length - 1) * 17 : 0
   const cache = new Map<boolean, string[]>()
-  return (paged: boolean): SVGSVGElement[] => {
+  const pageCounts = new Map<string, number>()
+  // Width refreshes need the actual engine pagination without expanding every SVG glyph.
+  const engrave = (paged: boolean, includeMarkup: boolean, candidateWidth = width) => {
+    const key = `${candidateWidth}:${paged}`
     signal?.throwIfAborted()
-    let markup = cache.get(paged)
-    if (!markup) {
-      // No toolkit survives this synchronous operation; concurrent previews cannot overwrite it.
-      const toolkit = new VerovioToolkit(module)
-      try {
-        const scale = 38
-        toolkit.setOptions({
-          font: 'Leipzig', fontFallback: 'Leipzig', header: 'none', footer: 'none',
-          svgViewBox: true, scale,
-          pageWidth: Math.round(width * 100 / scale),
-          pageHeight: paged ? Math.round((a4SourcePageHeight(width) - headerHeight) * 100 / scale) : 60000,
-          pageMarginTop: 0, pageMarginBottom: 0, pageMarginLeft: 0, pageMarginRight: 0,
-          adjustPageHeight: true, breaks: 'smart',
-          mnumInterval: settings.measureNumbers ? 1 : 0,
-          transpose: String(settings.transpose ?? 0),
-        })
-        if (!toolkit.loadData(mei)) throw new Error(toolkit.getLog() || '五线谱排版失败。')
-        markup = Array.from({ length: toolkit.getPageCount() }, (_, index) => toolkit.renderToSVG(index + 1))
-        cache.set(paged, markup)
-      } finally { toolkit.destroy() }
-    }
+    if (includeMarkup ? cache.has(paged) : pageCounts.has(key)) return
+    const toolkit = new VerovioToolkit(module)
+    try {
+      const scale = 38
+      toolkit.setOptions({
+        font: 'Leipzig', fontFallback: 'Leipzig', header: 'none', footer: 'none',
+        svgViewBox: true, scale,
+        pageWidth: Math.round(candidateWidth * 100 / scale),
+        pageHeight: paged ? Math.round((a4SourcePageHeight(candidateWidth) - headerHeight) * 100 / scale) : 60000,
+        // Verovio estimates Latin text metrics; browser CJK fallback ascenders
+        // extend above that box. Reserve real page space before pagination.
+        pageMarginTop: Math.ceil(10 * 100 / scale), pageMarginBottom: 0, pageMarginLeft: 0, pageMarginRight: 0,
+        adjustPageHeight: true, breaks: 'smart',
+        mnumInterval: settings.measureNumbers ? 1 : 0,
+        transpose: String(settings.transpose ?? 0),
+      })
+      if (!toolkit.loadData(mei)) throw new Error(toolkit.getLog() || '五线谱排版失败。')
+      const count = toolkit.getPageCount()
+      pageCounts.set(key, count)
+      if (includeMarkup) cache.set(paged, Array.from({ length: count }, (_, index) => toolkit.renderToSVG(index + 1)))
+    } finally { toolkit.destroy() }
+  }
+  const render = (paged: boolean): SVGSVGElement[] => {
+    engrave(paged, true)
+    const markup = cache.get(paged)!
     return markup.map((text, page) => {
       const host = document.createElement('div')
       host.innerHTML = text
@@ -121,7 +128,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         heading.forEach((line, index) => {
           const label = document.createElementNS(ns, 'text')
           label.setAttribute('x', String(box.width / 2))
-          label.setAttribute('y', String((index === 0 ? 23 : 23 + index * 17) * ratio))
+          label.setAttribute('y', String((25 + index * 17) * ratio))
           label.setAttribute('text-anchor', 'middle')
           label.setAttribute('font-size', String((index === 0 ? 20 : 13) * ratio))
           label.setAttribute('font-family', 'serif')
@@ -135,4 +142,10 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return svg
     })
   }
+  return Object.assign(render, {
+    pageCount(paged: boolean, candidateWidth = width) {
+      engrave(paged, false, candidateWidth)
+      return pageCounts.get(`${candidateWidth}:${paged}`)!
+    },
+  })
 }
