@@ -242,15 +242,14 @@ test('ending brackets stay below row-end measure numbers in both notation modes'
   }
 })
 
-test('staff ending brackets retain an opening hook and 2px separation', async ({ page }) => {
+test('staff volta hooks, separation, and music clearance stay correct', async ({ page }) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill(await readFile('src/scores/besame_mucho_01.m3n', 'utf8'))
   await selectNotationMode(page, '五线谱')
   const paper = page.locator('.score-paper')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  const firstEnding = paper.locator('g.ending.id-m3n-ending-1.spanning')
-  await expect(firstEnding).toHaveCount(0)
-  await expect(paper.locator('g.ending.id-m3n-ending-1 .m3n-ending-start-hook')).toHaveCount(1)
+  const firstEnding = paper.locator('g.ending.id-m3n-ending-1')
+  await expect(firstEnding.locator('.m3n-ending-start-hook')).toHaveCount(1)
 
   await page.getByLabel('M3N source').fill(await readFile('src/scores/qian_si_xi_01.m3n', 'utf8'))
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
@@ -273,5 +272,25 @@ test('staff ending brackets retain an opening hook and 2px separation', async ({
   for (let index = 0; index < brackets.length; index += 2) {
     expect(Math.abs(brackets[index]!.y - brackets[index + 1]!.y)).toBeLessThan(0.1)
     expect(brackets[index + 1]!.left - brackets[index]!.right).toBeGreaterThanOrEqual(2)
+  }
+
+  await page.goto('/scores/fly_me_to_the_moon_01')
+  await selectNotationMode(page, '五线谱')
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  const gaps = await paper.locator('g.system').evaluateAll(systems => systems.flatMap(system => {
+    const ending = system.querySelector('g.ending.voltaBracket, g.ending .voltaBracket')
+    const staff = system.querySelector('g.staff')
+    if (!ending || !staff || !ending.querySelector('path')) return []
+    const staffBox = staff.getBoundingClientRect()
+    const lines = [...staff.querySelectorAll('path')].map(path => (path as SVGGraphicsElement).getBoundingClientRect())
+      .filter(box => box.width > staffBox.width * .7 && box.height < 2)
+    if (!lines.length) return []
+    const house = ending.getBoundingClientRect()
+    return [Math.min(...lines.map(line => line.top)) - house.bottom]
+  }))
+  expect(gaps.length).toBeGreaterThan(0)
+  for (const gap of gaps) {
+    expect(gap).toBeGreaterThanOrEqual(0)
+    expect(gap).toBeLessThanOrEqual(4)
   }
 })

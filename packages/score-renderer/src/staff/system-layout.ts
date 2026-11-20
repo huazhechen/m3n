@@ -195,17 +195,27 @@ export function arrangeStaffSystem(
     if (row) row.push(item)
     else endingRows.push([item])
   }
-  for (const row of endingRows.filter((row) => row.length > 1)) {
+  const endingObstacles = geometry.pieces(filtered(node, isDecoration))
+  for (const row of endingRows) {
     const top = Math.min(...row.map(({ ink }) => ink.top))
     let right = Number.NEGATIVE_INFINITY
+    const arranged: Array<{ ending: XmlNode; ink: Ink }> = []
     for (const { ending, ink } of [...row].sort((a, b) => a.ink.left - b.ink.left)) {
       const dx = Math.max(0, right + 3.5 / scale - ink.left)
       translate(ending, dx, top - ink.top)
       right = Math.max(right, ink.right + dx)
       groupedEndings.add(ending)
+      arranged.push({ ending, ink: moveInk(ink, dx, top - ink.top) })
     }
-    node.children = node.children.filter((child) => typeof child === 'string' || !row.some((item) => item.ending === child))
-    node.children.push(element('g', { class: 'm3n-ending-row' }, row.map(({ ending }) => ending)))
+    const clearances = arranged.flatMap(({ ink }) => endingObstacles
+      .filter((other) => overlapsX(ink, other) && other.top >= ink.bottom)
+      .map((other) => other.top - ink.bottom))
+    const dy = clearances.length ? Math.max(0, Math.min(...clearances) - 5 / scale) + 3 / scale : 0
+    if (dy) for (const { ending } of arranged) translate(ending, 0, dy)
+    if (row.length > 1) {
+      node.children = node.children.filter((child) => typeof child === 'string' || !row.some((item) => item.ending === child))
+      node.children.push(element('g', { class: 'm3n-ending-row' }, row.map(({ ending }) => ending)))
+    }
   }
   const isHairpin = (attachment: XmlNode) => hasClass(attachment, 'hairpin') || hasClass(attachment, 'm3n-hairpin-row')
   const music = geometry.pieces(filtered(node, isDecoration))

@@ -205,11 +205,10 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
             for (const ending of findAll(system, (n) => hasClass(n, 'ending') && Boolean(n.attributes.class?.split(/\s+/).includes('spanning')))) {
               const endingId = (ending.attributes.class ?? '').split(/\s+/).find((name) => name.startsWith('id-'))
               if (!endingId) continue
-              const previouslyDrawn = systemNodes.slice(0, index).some((previous) =>
-                findAll(previous, (n) => hasClass(n, 'ending') && (n.attributes.class ?? '').split(/\s+/).includes(endingId))
-                  .some((n) => findAll(n, (child) => child.tagName === 'path').length > 0),
+              const previousFragment = systemNodes.slice(0, index).some((previous) =>
+                findAll(previous, (n) => hasClass(n, 'ending') && (n.attributes.class ?? '').split(/\s+/).includes(endingId)).length > 0,
               )
-              if (previouslyDrawn) continue
+              if (previousFragment) continue
               const bracket = findAll(ending, (n) => hasClass(n, 'voltaBracket'))[0]
               if (!bracket) continue
               const paths = findAll(bracket, (n) => n.tagName === 'path')
