@@ -7,6 +7,7 @@ import { layoutNativeScore } from './native-layout.js';
 import { DefaultTextMeasurer } from './native-measure.js';
 import { nativeStyle } from './native-style.js';
 import { NativeSymbols } from './native-symbols.js';
+import { NativeMusicPainter } from './native-music.js';
 it.each([6, 12, 24])('scales the complete fermata curves and dot at %s', size => {
     const svg = size === 12 ? new NativeSymbols(new DefaultTextMeasurer()).rawMark('fermata') : nativeFermataSvg(size);
     const ink = nativeSvgInk(svg, new DefaultTextMeasurer());
@@ -26,7 +27,6 @@ it.each(['1{fermata}', '[1e3e5e:h]{fermata}', '1{ac(2e3e)}{fermata}'])('places t
     const ink = nativeSvgInk(new NativeSymbols(new DefaultTextMeasurer()).rawMark('fermata'), new DefaultTextMeasurer());
     expect(mark.top).toBeCloseTo(mark.y + ink.top, 4);
     expect(mark.height).toBeCloseTo(ink.bottom - ink.top, 4);
-    const left = (mark.x ?? 0) + mark.left, right = (mark.x ?? 0) + mark.right;
-    const hostTop = Math.min(...glyph.musicInk!.filter(b => b.right > left && b.left < right).map(b => b.top));
+    const hostTop = nativeSvgInk(new NativeMusicPainter(layout.measurer).body({ ...glyph, x: 0, y: 0 }), layout.measurer).top;
     expect(mark.top + mark.height).toBeCloseTo(hostTop - nativeStyle.markGap, 4);
 });

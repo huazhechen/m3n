@@ -59,8 +59,8 @@ describe('relation and ending clearance', () => {
     }
   })
 
-  it.each(['tr', 'fermata', 'f2', 'p'])('retains the exposed octave-dot gap beneath outer %s', mark => {
-    const head = mark === 'p' ? '{p}1e' : `1e{${mark}}`
+  it.each(['p', 'mf', 'sfz'])('retains the exposed octave-dot gap beneath outer %s', mark => {
+    const head = `{${mark}}1e`
     const layout = layoutNativeScore(parseM3NDocument(`{2/4}\nN: {lg}${head} 2e{/} |||`), { width: 800, paged: false })
     const glyph = layout.relations.find(value => value.kind === 'slur')!.first
     expect(nativeTiePortTop(glyph) - glyph.tieTop!).toBeCloseTo(22 * 0.05, 5)

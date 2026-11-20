@@ -83,8 +83,14 @@ describe('native painted geometry', () => {
         .toBeGreaterThanOrEqual(nativeStyle.music * .15 - 0.001)
     }
     const mark = glyph.markLayout!.find(m => m.name === 'tr')!
-    expect(mark.top + mark.height).toBeLessThanOrEqual(Math.min(...relations.map(r => r.arc ? (nativeRibbonRange(r.arc, glyph.x + mark.left, glyph.x + mark.right)?.top ?? Infinity) : r.ink.top)) - nativeStyle.markGap + 0.001)
-    // Expression/ornament placement must not feed back into note arc ports.
-    expect(glyph.musicTop).toBeLessThan(-mark.top)
+    for (const relation of relations) {
+      const range = nativeRibbonRange(relation.arc!, glyph.x + mark.left, glyph.x + mark.right)
+      if (range) expect(range.bottom).toBeLessThanOrEqual(mark.top + 0.001)
+    }
+    const dynamic = glyph.markLayout!.find(m => m.name === 'p')!
+    const curves = relations.flatMap(r => nativeRibbonRange(r.arc!, glyph.x + dynamic.left, glyph.x + dynamic.right) ?? [])
+    expect(curves.length).toBeGreaterThan(0)
+    expect(dynamic.top + dynamic.height).toBeLessThanOrEqual(Math.min(...curves.map(range => range.top)) - nativeStyle.markGap + 0.001)
+    expect(glyph.musicTop).toBeCloseTo(-mark.top)
   })
 })

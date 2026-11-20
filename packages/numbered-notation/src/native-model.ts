@@ -196,6 +196,12 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
             glyph.right = Math.max(glyph.musicRight, lyricRight)
           }
           glyph.markLayout = nativeMarkStack(glyphMarks.filter(nativeInnerMark), metrics.top, options.textMeasurer).items
+          // Local marks remain centered on their host, so reserve their full
+          // width before wrapping instead of shifting them outside relations.
+          glyph.musicLeft = Math.max(glyph.musicLeft ?? 0, ...glyph.markLayout.map(mark => -mark.left))
+          glyph.musicRight = Math.max(glyph.musicRight ?? 0, ...glyph.markLayout.map(mark => mark.right))
+          glyph.left = Math.max(glyph.left, glyph.musicLeft)
+          glyph.right = Math.max(glyph.right, glyph.musicRight)
           glyph.tieTop = -nativeSvgInk(painter.tieBody(glyph), options.textMeasurer).top
           glyph.musicInk = nativeSvgPieces(painter.music(glyph), options.textMeasurer)
           const ink = unionNativeInk(glyph.musicInk)

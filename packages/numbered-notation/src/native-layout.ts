@@ -293,16 +293,16 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       }
     }
   }
-  // Articulations belong to the note; ornaments and expression text clear
-  // relations outside it. Never turn a trill or dynamic into an arc endpoint.
+  // Single-note marks already belong to the measured note and its arc port.
+  // Dynamics and expression text clear relations outside that local stack.
   const symbols = new NativeSymbols(measurer)
   for (const system of systems) {
     const regions = relationBounds.get(system) ?? []
     const outerMarks = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
       .flatMap(glyph => glyph.marks.filter(name => !nativeInnerMark(name)).map(name => ({ glyph, name })))
       .sort((a, b) => nativeMarkRank(a.name) - nativeMarkRank(b.name))
-    // Keep expression outside ornaments even when a neighboring note's wider
-    // ornament overlaps it. Tuplet brackets have already entered regions.
+    // Local marks and tuplet brackets have already entered regions, including
+    // a neighboring note's ornament or fingering that overlaps this expression.
     for (const { glyph, name } of outerMarks) {
       const ink = nativeSvgInk(symbols.rawMark(name), measurer)
       const x = Math.max(margin - ink.left, Math.min(glyph.x, options.width - margin - ink.right))

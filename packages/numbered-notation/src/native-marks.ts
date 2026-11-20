@@ -4,10 +4,13 @@ import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
 
 export type NativeMarkPlacement = { name: string; top: number; height: number; y: number; left: number; right: number; x?: number }
-export const nativeInnerMark = (name: string) => ['tip', 'brk', 'hold', 'str'].includes(name)
-export const nativeMarkRank = (name: string) => nativeInnerMark(name) ? 0
+const nativeArticulation = (name: string) => ['tip', 'brk', 'hold', 'str'].includes(name)
+export const nativeInnerMark = (name: string) => nativeArticulation(name)
+  || ['tr', 'prall', 'fermata', 'breath'].includes(name) || /^f[1-5]$/.test(name)
+export const nativeMarkRank = (name: string) => nativeArticulation(name) ? 0
   : /^(p{1,3}|f{1,3}|mp|mf|sfz)$/.test(name) || /^(cresc\.|dim\.|accel\.|rit\.)/.test(name) ? 2 : 1
-/** Articulations sit nearest the note; other decorations sit outside relations.
+/** Single-note marks sit inside relations, with articulations nearest the note.
+ * Dynamics and expression text remain outside the enclosing relations.
  * Placement and SVG use the very same shapes, including italic text metrics. */
 export function nativeMarkStack(names: readonly string[], bodyTop: number, measurer: TextMeasurer = new DefaultTextMeasurer()) {
   const ordered = [...names].sort((a, b) => nativeMarkRank(a) - nativeMarkRank(b)), painter = new NativeSymbols(measurer)
