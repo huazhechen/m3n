@@ -16,6 +16,17 @@ describe('native MIDI and playback index', () => {
     expect(midi.tracks.flatMap(track => track.events).filter(event => (event.statusByte & 240) === 144 && event.data[1]! > 0).map(event => [event.statusByte & 15, event.ticks / 960, event.data[0]])).toEqual([[0, 4, 60], [0, 5, 62], [1, 4, 48]])
     expect(buildMetronomeBeats(midi).filter(beat => beat.accent).map(beat => beat.time)).toEqual([0, 1, 2, 3, 4, 5])
   })
+  it('starts the metronome grid at the first full bar after an opening pickup', async () => {
+    const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/auld_lang_syne_01.m3n', import.meta.url), 'utf8'))
+    const score = await NativePlaybackScore.create(document)
+    const beats = buildMetronomeBeats(BasicMIDI.fromArrayBuffer(score.midi()))
+    expect(beats.slice(0, 4).map(beat => beat.time)).toEqual([
+      expect.closeTo(0.5 * 60 / 92), expect.closeTo(1.5 * 60 / 92),
+      expect.closeTo(2.5 * 60 / 92), expect.closeTo(3.5 * 60 / 92),
+    ])
+    expect(beats[0]?.accent).toBe(true)
+    score.destroy()
+  })
   it('writes default note velocity and channel volume while preserving note-off messages', async () => {
     const score = await prepare('{4/4}\nN: {ppp}1{ac(7d)} {fff}2{tr} {cresc}3 4{/} |||\nB: 1d^^ |||')
     const midi = BasicMIDI.fromArrayBuffer(score.midi())

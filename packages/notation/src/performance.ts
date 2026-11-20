@@ -62,6 +62,7 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
   }
   const trills = new Map<PerformanceNote, { start: number; upper: number }>()
   let partStart = 0
+  let firstMeasure = true
   for (const [partName, part] of unfolded.parts) {
     const pitches = { melody: resolveScorePitches(part.melody), bass: resolveScorePitches(part.bass) }
     const trillPitches = { melody: resolveScoreTrillPitches(part.melody), bass: resolveScoreTrillPitches(part.bass) }
@@ -141,6 +142,15 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
           cursor += event.beats
         }
         measureEnd = Math.max(measureEnd, cursor)
+      }
+      if (firstMeasure) {
+        const openingMeter = result.meters[0]!
+        const fullMeasureBeats = openingMeter.count * 4 / openingMeter.unit
+        const openingMeasureBeats = measureEnd - measureStart
+        if (openingMeasureBeats < fullMeasureBeats - 1e-7) {
+          result.meters[0] = { ...openingMeter, beat: openingMeasureBeats }
+        }
+        firstMeasure = false
       }
       measureStart = measureEnd
     }

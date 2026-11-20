@@ -73,6 +73,20 @@ describe('metronome audio scheduling', () => {
     expect(oscillators[0]!.start).toHaveBeenCalledWith(10.15)
     metronome.stop()
   })
+  it('does not replay a beat that has just passed when enabled mid-playback', () => {
+    const { context, oscillators } = setup()
+    const metronome = new Metronome(context as unknown as AudioContext, [
+      { time: 5, accent: true }, { time: 5.5, accent: false },
+    ])
+    let playbackTime = 5.002
+    metronome.start(playbackTime, 2, false, () => ({ time: playbackTime, rate: 2 }))
+    context.currentTime = 10.1
+    playbackTime = 5.202
+    vi.advanceTimersByTime(25)
+    expect(oscillators).toHaveLength(1)
+    expect(oscillators[0]!.start.mock.calls[0]![0]).toBeCloseTo(10.249, 9)
+    metronome.stop()
+  })
   it('does not let the count-in timer schedule song beats before MIDI actually starts', () => {
     const { context, oscillators } = setup(); context.currentTime = 0
     const metronome = new Metronome(context as unknown as AudioContext, [{ time: 0, accent: true }], 2, 0.5)

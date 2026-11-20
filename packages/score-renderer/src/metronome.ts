@@ -27,7 +27,7 @@ function sortedMeterPoints(midi: BasicMIDI): MeterPoint[] {
     .filter((point) => point.ticks >= 0 && point.numerator > 0 && Number.isSafeInteger(point.numerator)
       && point.denominator > 0 && Number.isSafeInteger(point.denominator))
     .sort((left, right) => left.ticks - right.ticks)
-  if (points[0]?.ticks !== 0) points.unshift({ ticks: 0, numerator: 4, denominator: 4 })
+  if (points.length === 0) points.unshift({ ticks: 0, numerator: 4, denominator: 4 })
   return points.filter((point, index) => index === 0 || point.ticks !== points[index - 1]?.ticks)
 }
 
@@ -131,7 +131,7 @@ export class Metronome {
     let high = this.beats.length
     while (low < high) {
       const middle = Math.floor((low + high) / 2)
-      if ((this.beats[middle]?.time ?? Infinity) < playbackTime - 0.003) low = middle + 1
+      if ((this.beats[middle]?.time ?? Infinity) < playbackTime) low = middle + 1
       else high = middle
     }
     return low
@@ -148,7 +148,7 @@ export class Metronome {
         : this.anchorAudioTime + (beat.time - this.anchorPlaybackTime) / this.playbackRate
       if (at > horizon) break
       this.nextBeatIndex += 1
-      if (at >= now - 0.003) this.click(beat.accent, Math.max(now, at))
+      if (at >= now) this.click(beat.accent, at)
     }
     if (this.nextBeatIndex < this.beats.length) this.timer = window.setTimeout(this.schedule, SCHEDULER_INTERVAL_MILLISECONDS)
   }

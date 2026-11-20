@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "9dc072d87077343d623bf23941f11043e1f8e5b9b4804217422d54314ddb34bd",
+  "rendererSha256": "f88787d043a7d768741004c1bbe3ccf4ec494baf41be30336eb47d6992ee69d7",
   "fontManifestSha256": "18b0cc61ac4c920ab4512fbb3ca03b5a204a601d6704b1729dc1a05141a51192",
   "strategy": "coarse-bisection-local-stability-v1",
   "entries": {
