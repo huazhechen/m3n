@@ -33,6 +33,7 @@ test('continuous preview has the image frame and PNG downloads without the vecto
         left: origin.x - outer.left, top: origin.y - outer.top, right: outer.right - end.x }
     })
     if (!paged) {
+      await expect(dialog.locator('.export-preview')).toContainText('https://score.cheesefans.com/')
       expect(geometry.frameWidth).toBeCloseTo(geometry.width * 1.12)
       expect(geometry.frameHeight).toBeCloseTo(geometry.height + geometry.width * .12)
       expect(geometry.left).toBeGreaterThan(0)

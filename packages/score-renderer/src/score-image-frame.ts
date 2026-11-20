@@ -26,5 +26,14 @@ export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .
     root.append(copy)
     y += sizes[index]!.height
   }
+  const footer = doc.createElementNS(ns, 'text')
+  footer.textContent = 'https://score.cheesefans.com/'
+  footer.setAttribute('x', String(width + margin * 2 - margin * .35))
+  footer.setAttribute('y', String(height + margin * 1.55))
+  footer.setAttribute('text-anchor', 'end')
+  footer.setAttribute('font-family', 'Arial, sans-serif')
+  footer.setAttribute('font-size', String(Math.max(8, width * .012)))
+  footer.setAttribute('fill', '#666')
+  root.append(footer)
   return root
 }

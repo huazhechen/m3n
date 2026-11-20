@@ -140,3 +140,5 @@ web app -> @m3n/score-renderer -> @m3n/notation
 独立作品另存 `src/works/`，使用仅通过链接访问的 `/works` 列表和 `/works/:slug` 阅读页，不增加公共入口。`worksCatalogPlugin` 生成独立的 `works-catalog.json` 和按内容摘要命名的源文件，只在作品路由中请求；公共曲库及整册谱集不消费这个目录。阅读器和编辑器通过显式集合参数加载源文件，避免同名作品串入公共曲库，草稿和播放状态也区分集合。归档及链接规则见 [独立作品](WORKS.md)。
 
 可选五线谱通过 `@m3n/score-renderer/staff` 独立入口按需加载；只读取 `ScoreDocument`，播放继续使用当前演奏编译器。屏幕与单曲PNG／PDF共用五线谱输出，全量谱集仍固定使用简谱。独立模块、引擎来源与验证见[五线谱显示](STAFF_NOTATION.md)。
+
+导出文件右下角以小字显示 `https://score.cheesefans.com/`：PNG 在既有外框底部放置，矢量 PDF 在每页 A4 底部边距内放置（包括谱集封面、目录和正文）。页脚独立于谱面布局，不改变谱面坐标、导出尺寸或分页。

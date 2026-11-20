@@ -18,6 +18,7 @@ test('itinerary arrows are vector paths on tablet screens and PDF exports', asyn
   await (await downloading).saveAs(path)
   const text = execFileSync('pdftotext', [path, '-'], { encoding: 'utf8' }).replace(/\s/g, '')
   expect(text).toContain('演奏顺序：ABAC')
+  expect(text).toContain('https://score.cheesefans.com/')
   expect(text).not.toContain('→')
   expect(text).not.toContain('於')
 })

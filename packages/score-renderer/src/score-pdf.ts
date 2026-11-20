@@ -27,6 +27,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
   // Choose one text-font policy for the whole document before writing any pages.
   // Music numerals have their own embedded font and do not need text coverage.
   const ordinaryCharacters = new Set<string>()
+  for (const char of 'https://score.cheesefans.com/') ordinaryCharacters.add(char)
   for (const svg of pages) for (const text of svg.querySelectorAll('text')) {
     const family = text.getAttribute('font-family') ?? text.closest('[font-family]')?.getAttribute('font-family') ?? ''
     if (family.includes('M3N Numbers')) continue
@@ -36,6 +37,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
   try { if (options.textFont) suppliedFont = fontkit.create(options.textFont) } catch { /* Invalid font downloads use the same fallback as missing coverage. */ }
   const complete = suppliedFont && [...ordinaryCharacters].every(char => suppliedFont.hasGlyphForCodePoint(char.codePointAt(0)!))
   const textFont = complete ? await pdf.embedFont(options.textFont!, { subset: true, customName: 'MNTEXT+NotoSerifCJKsc-Regular' }) : undefined
+  const footerFont = textFont ?? latin[0]!
   options.signal?.throwIfAborted()
   const textCharacters = textFont ? new Set(textFont.getCharacterSet()) : undefined
   const textName = PDFName.of('M3NText')
@@ -165,6 +167,9 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
           A: { Type: 'Action', S: 'URI', URI: PDFString.of(href) },
         })))
       }
+      const footer = 'https://score.cheesefans.com/'
+      const footerSize = 7
+      page.drawText(footer, { x: 210 * pt - 12 * pt - footerFont.widthOfTextAtSize(footer, footerSize), y: 6 * pt, size: footerSize, font: footerFont, color: rgb(.4, .4, .4) })
       onProgress?.(index + 1, pages.length)
       await new Promise<void>(resolve => setTimeout(resolve, 0))
     }
