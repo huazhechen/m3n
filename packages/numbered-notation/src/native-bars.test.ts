@@ -38,8 +38,13 @@ describe('measured bar obstacles', () => {
     const ink = nativeSvgInk(label.svg, measurer), arc = nativeArcGeometry(relation, system)
     const placed = system.relationLayout!.get(relation)!
     const dy = placed.ink.top + arc.top
-    const slice = nativeArcSlice(arc.commands, (ink.left + ink.right) / 2)!
-    expect(slice.bottom + dy).toBeLessThanOrEqual(ink.top + .001)
+    // A tapered continuation can pass wholly below a high label near the
+    // bar. Require disjoint ink, rather than forcing that label inside it.
+    for (let i = 0; i <= 100; i++) {
+      const x = ink.left + (ink.right - ink.left) * i / 100
+      const slice = nativeArcSlice(arc.commands, x)
+      if (slice) expect(slice.bottom + dy <= ink.top + .001 || slice.top + dy >= ink.bottom - .001).toBe(true)
+    }
   })
   it('keeps the repeat label local when an unrelated high note raises the lane', () => {
     const plain = layout(), high = layout('1eeee')

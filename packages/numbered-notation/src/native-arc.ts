@@ -27,7 +27,6 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   }
   const peers = relation.arcGroup === undefined ? [relation] : system.relations.filter(peer =>
     peer.arcGroup === relation.arcGroup && members.includes(peer.first) && members.includes(peer.last))
-  const height = firstHere && lastHere ? Math.max(automaticHeight(relation), ...peers.map(automaticHeight)) : em(9.9)
   const endpoints = [firstHere ? relation.first : undefined, lastHere ? relation.last : undefined].filter(glyph => glyph !== undefined)
   const port = -Math.max(0, ...(endpoints.length ? endpoints : covered).map(nativeTiePortTop))
   const thickness = nativeStyle.music * 0.09
@@ -37,7 +36,13 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   // indent this edge; the real ink still participates in collision checks.
   const left = firstHere ? relation.first.x : system.arcContinuationLeft ?? Math.min(...members.map(glyph => glyph.x - (glyph.musicLeft ?? glyph.left)))
   const right = lastHere ? relation.last.x : system.measures.at(-1)!.end
-  if (firstHere && lastHere) {
+  const complete = firstHere && lastHere
+  // Like the staff renderer, each broken slur segment is a complete tapered
+  // Bezier bow, including intermediate systems. Scale its rise to this local
+  // span, rather than drawing a fixed hook followed by a horizontal strip.
+  const height = complete ? Math.max(automaticHeight(relation), ...peers.map(automaticHeight))
+    : relation.kind === 'slur' ? Math.min(em(17.6), em(4.4) + em(.44) * Math.sqrt(Math.max(0, right - left) / em(1))) : em(9.9)
+  if (complete || relation.kind === 'slur') {
     const run = (right - left) / 4, outer = height * 4 / 3, inner = Math.max(0, height - thickness) * 4 / 3
     commands.push({ op: 'M', x: left, y: port },
       { op: 'C', cx1: left + run, cy1: port - outer, cx2: right - run, cy2: port - outer, x: right, y: port },

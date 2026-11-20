@@ -27,17 +27,26 @@ describe('native musical arc geometry', () => {
     expect(system.lanes[0]!.top).toBeCloseTo(arc.top)
   })
 
-  it('continues across systems with an opening curve, a flat ribbon and a closing curve', () => {
+  it('continues across systems with curved, tapered ribbons on every fragment', () => {
     const layout = layoutNativeScore(parseM3NDocument('{2/4}\nN: {lg}1 2 | {br}3 4 | {br}5 6{/} |||'), options)
     expect(layout.systems).toHaveLength(3)
     const relation = layout.relations[0]!
     const arcs = layout.systems.map(system => nativeArcGeometry(relation, system))
-    expect(arcs.map(arc => arc.commands.filter(command => command.op === 'Q').length)).toEqual([2, 0, 2])
-    expect(arcs.map(arc => arc.height)).toEqual([9.9, 9.9, 9.9])
     for (const [index, arc] of arcs.entries()) {
+      const left = nativeArcSlice(arc.commands, arc.left)!
+      const right = nativeArcSlice(arc.commands, arc.right)!
+      const middle = nativeArcSlice(arc.commands, (arc.left + arc.right) / 2)!
+      expect(middle.top).toBeLessThan(Math.min(left.top, right.top) - 4)
+      expect(left.bottom - left.top).toBeCloseTo(0)
+      expect(right.bottom - right.top).toBeCloseTo(0)
+      expect(middle.bottom - middle.top).toBeCloseTo(22 * .09)
+      expect(arc.height).toBeGreaterThan(9.9)
       expect(arc.commands.at(-1)?.op).toBe('Z')
       expect(nativeArcPath(arc)).not.toMatch(/NaN|Infinity/)
-      expect(layout.systems[index]!.lanes[0]!.top).toBeCloseTo(arc.top)
+      const system = layout.systems[index]!
+      const placed = system.relationLayout!.get(relation)!
+      expect(system.lanes[0]!.top).toBeCloseTo(-placed.ink.top)
+      expect(system.lanes[0]!.top).toBeGreaterThanOrEqual(arc.top - .001)
     }
   })
 
@@ -54,6 +63,43 @@ describe('native musical arc geometry', () => {
       expect(nativeArcSlice(arc.commands, x)!.bottom).toBeLessThanOrEqual(-nativeTiePortTop(high) + 1e-7)
     }
     expect(layout.systems[0]!.lanes[0]!.top).toBeCloseTo(arc.top)
+  })
+
+  it.each([320, 720].flatMap(width => [false, true].map(paged => ({ width, paged }))))('scales a short closing slur independently of full-row continuations at $width, paged=$paged', ({ width, paged }) => {
+    const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: {lg}1 2 3 4 | {br}5 6 7 1e | {br}2e{/} 3e 4e 5e |||'), {
+      width, paged, pageMargin: 0,
+    })
+    const slur = layout.relations.find(relation => relation.kind === 'slur')!
+    const arcs = layout.systems.map(system => nativeArcGeometry(slur, system))
+    const closing = arcs.at(-1)!
+    expect(closing.right).toBeCloseTo(slur.last.x)
+    expect(closing.left).toBeCloseTo(0)
+    expect(closing.height).toBeLessThan(arcs[1]!.height)
+    for (const system of layout.systems) {
+      const { ink, arc } = system.relationLayout!.get(slur)!
+      expect(ink.left).toBeGreaterThanOrEqual(-.001)
+      expect(ink.right).toBeLessThanOrEqual(width + .001)
+      const center = nativeArcSlice(arc!.commands, (arc!.left + arc!.right) / 2)!
+      expect(center.top).toBeCloseTo(ink.top, 5)
+      expect(center.bottom - center.top).toBeCloseTo(1.98)
+    }
+  })
+
+  it('keeps curved intermediate segments when a long slur crosses a page boundary', () => {
+    const measures = Array.from({ length: 20 }, (_, index) => `${index ? '{br}' : '{lg}'}1 2 3 4${index === 19 ? '{/} |||' : ' |'}`).join(' ')
+    const layout = layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${measures}`), { width: 320, paged: true, pageMargin: 0 })
+    expect(layout.pages.length).toBeGreaterThan(1)
+    const slur = layout.relations.find(relation => relation.kind === 'slur')!
+    for (const page of layout.pages) for (const system of page.systems) {
+      const { arc, ink } = system.relationLayout!.get(slur)!
+      const midpoint = nativeArcSlice(arc!.commands, (arc!.left + arc!.right) / 2)!
+      const start = nativeArcSlice(arc!.commands, arc!.left)!
+      expect(midpoint.top).toBeLessThan(start.top - 4)
+      expect(start.bottom - start.top).toBeCloseTo(0)
+      const lane = system.lanes.find(lane => lane.id === 'melody')!
+      expect(lane.y + ink.top).toBeGreaterThanOrEqual(-.001)
+      expect(lane.y + ink.bottom).toBeLessThanOrEqual(page.height + .001)
+    }
   })
 
   it('keeps an inline meter separate from the note port while clearing its actual column', () => {
@@ -96,9 +142,11 @@ describe('native musical arc geometry', () => {
     const relation = layout.relations.find(relation => relation.kind === 'slur')!
     const arc = nativeArcGeometry(relation, layout.systems[0]!)
     const high = layout.projection.glyphs[1]!
-    expect(arc.height).toBe(9.9)
+    expect(arc.height).toBeGreaterThan(9.9)
     expect(arc.top - arc.height).toBeLessThan(nativeTiePortTop(high))
-    for (const x of [high.x - high.musicLeft!, high.x + high.musicRight!]) {
+    const tips = high.musicInk!.filter(piece => Math.abs(piece.top + high.tieTop!) < 1e-6)
+    expect(tips.length).toBeGreaterThan(0)
+    for (const x of tips.flatMap(piece => [high.x + piece.left, high.x + piece.right])) {
       expect(nativeArcSlice(arc.commands, x)!.bottom).toBeLessThanOrEqual(-nativeTiePortTop(high) + 1e-7)
     }
     expect(layout.systems[0]!.lanes[0]!.top).toBeCloseTo(arc.top)
