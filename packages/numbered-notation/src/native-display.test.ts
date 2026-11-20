@@ -83,7 +83,7 @@ describe('native display options',()=>{
     const geometry = nativeHeaderGeometry(document,800,32,new DefaultTextMeasurer(),24,{fixedDo:true,transpose:-1})
     const root = new DOMParser().parseFromString(`<svg>${geometry.svg}</svg>`,'image/svg+xml')
     const range = root.querySelector('[data-m3n-role="pitch-range"]')!
-    expect([...range.querySelectorAll('text')].map(node=>node.textContent)).toEqual(['7','~','6'])
+    expect([...range.querySelectorAll('text')].map(node=>node.textContent)).toEqual(['音域：','7','~','6'])
     expect([...range.querySelectorAll('text')].every(node=>node.getAttribute('font-size')==='16')).toBe(true)
     const altered = nativeHeaderGeometry(document,800,32,new DefaultTextMeasurer(),24,{fixedDo:true})
     const shifted = new DOMParser().parseFromString(`<svg>${altered.svg}</svg>`,'image/svg+xml')

@@ -1,4 +1,5 @@
 import { parseM3NDocument } from '@m3n/notation';
+import { readFileSync } from 'node:fs';
 import { describe,expect,it } from 'vitest';
 import { measureNativeControl } from './native-controls.js';
 import { nativePathInk,nativeSvgInk } from './native-ink.js';
@@ -7,6 +8,8 @@ import type { TextMeasurer } from './native-measure.js';
 import { nativeNavigationGlyph } from './native-navigation-glyphs.js';
 import { measureNativeNavigation } from './native-navigation.js';
 import { NativeSymbols } from './native-symbols.js';
+import { nativeBarMetrics, nativeHorizontalSpacing, placeNativeHorizontal } from './native-horizontal.js';
+import { projectNativeScore } from './native-model.js';
 // The music's measured axis is -8px. Navigation has a different ascent/descent
 // ratio, a left overhang and ink extending beyond its advance width.
 const measurer: TextMeasurer = { measureText(text, style) {
@@ -15,6 +18,32 @@ const measurer: TextMeasurer = { measureText(text, style) {
         return { w: text.length * style.fontSize * 0.6, advance: 26, inkLeft: -2, inkRight: 30, h: 9, baseline: 6 };
     } };
 describe('measured navigation geometry', () => {
+    it.each([320,600,800])('keeps Flower Dance Coda clear of its first sixteenth at %spx', width => {
+        const source = readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8');
+        for (const equalMeasures of [false, true]) {
+            const layout = layoutNativeScore(parseM3NDocument(source), {width,paged:false,equalMeasures,minimumNoteGapEm:.4,textMeasurer:measurer});
+            const note = layout.projection.glyphs.find(glyph => glyph.controls.some(control => control.kind === 'coda'))!;
+            const control = note.controls.find(control => control.kind === 'coda')!;
+            const rightInk = Math.max(...control.ink.map(ink => ink.right));
+            const gap = note.x - note.musicLeft! - control.x! - rightInk;
+            expect(gap).toBeGreaterThanOrEqual(6.6 - 1e-6);
+        }
+    });
+    it.each(['segno', 'coda'] as const)('gives %s quarter-note clearance on both sides before justification', name => {
+        for (const minimumNoteGapEm of [.4, .6]) {
+            const projection = projectNativeScore(parseM3NDocument(`{1/4}\nN: ||: {${name}}((1 2 3 4)) |||`), {textMeasurer:measurer});
+            const options = {minimumNoteGapEm};
+            const spacing = nativeHorizontalSpacing(projection.measures, options);
+            placeNativeHorizontal(projection.measures, options, 0, spacing.minimumWidth);
+            const measure = projection.measures[0]!, note = projection.glyphs[0]!;
+            const control = note.controls.find(control => control.kind === name)!;
+            const bar = nativeBarMetrics('rptstart');
+            const barRight = measure.openingBarX! + bar.width - bar.anchor;
+            expect(control.x! - barRight).toBeCloseTo(22 * minimumNoteGapEm, 8);
+            // The following sixteenth contributes half of a quarter's margin.
+            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(22 * minimumNoteGapEm / 2 * 1.5, 8);
+        }
+    });
     it.each(['fine','tocoda'] as const)('centers %s on the measured music axis and contains its overhangs', name => {
         const mark = measureNativeNavigation(name, measurer), ink = nativeSvgInk(mark.svg, measurer);
         expect((ink.top + ink.bottom) / 2).toBeCloseTo(-8, 4);

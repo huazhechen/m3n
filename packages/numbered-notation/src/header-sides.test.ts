@@ -60,5 +60,7 @@ it('keeps blank subtitle lines from creating invisible collision obstacles', () 
     const source = '{title=标题}{composer=甲}{4/4}\nN: 1 2 3 4 |||';
     const document = { ...parseM3NDocument(source), subtitle: '\n' };
     const native = nativeHeaderGeometry(document, 240, 32, measure);
-    expect(native.signaturesTop).toBeCloseTo(native.subtitleTop, 4);
+    const withoutSubtitle = nativeHeaderGeometry(parseM3NDocument(source), 240, 32, measure);
+    expect(native.signaturesTop).toBeCloseTo(withoutSubtitle.signaturesTop, 4);
+    expect(native.height).toBeCloseTo(withoutSubtitle.height, 4);
 });

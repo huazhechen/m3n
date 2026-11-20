@@ -81,7 +81,10 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const firstColumn = measure.columns[0]
     const controls = (column: NativeColumn, members: { control: NativeControl; lane: string }[]) => {
       if (!members.length) return
-      const cells = members.map(({ control, lane }) => minimumCell(lane, control.anchor, control.width - control.anchor, 0, 6, scale))
+      // Entry navigation consumes no musical time, but reserves quarter-note
+      // clearance on both sides, with the same elastic weight as a barline.
+      const cells = members.map(({ control, lane }) => minimumCell(lane, control.anchor, control.width - control.anchor,
+        control.kind === 'segno' || control.kind === 'coda' ? 1 : 0, 6, scale))
       items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
     // A section heading introduces the repeat, rather than belonging inside it.
