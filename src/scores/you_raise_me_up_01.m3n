@@ -1,4 +1,4 @@
-{preferred-width=610}
+{preferred-width=600}
 {title=You Raise Me Up}
 {composer=Rolf Lovland}
 {lyricist=Brendan Graham}
@@ -6,15 +6,14 @@
 // Reference supplied by the user:
 // https://iknow-pic.cdn.bcebos.com/58ee3d6d55fbb2fb4fbb739f434a20a44723dcae
 // Repeat the common verse and chorus in Eb, then F; take the numbered endings.
+// Both verses use the first ending melody, as requested by the user.
 // The image gives no numeric tempo; retain 60qpm.
 N: (0 5d) (5d 1) |
 L: When I am
----V1
+---
 N: ||: {key=Eb,F}3. (1) (2. (1)) (1 6d) | (5d) 1. (0 7d) (1 3) |
-L: down, And oh my soul so | wear-y, When trou-bles
----V2
-N: 3. (1) (2. (1)) (3 2) | (1) 5d. (0 7d) (1 3) |
-L: life, no life with-out its | hun-ger, Each rest-less
+L1: down, And oh my soul so | wear-y, When trou-bles
+L2: life, no life with-out its | hun-ger, Each rest-less
 ---
 N: 5. (1) (6. (5)) (5 3) | 2^ (0 5) (6 7) |
 L1: come, And my heart bur-dened | be, Then I am

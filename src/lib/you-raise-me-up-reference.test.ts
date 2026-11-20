@@ -41,10 +41,6 @@ const reference = [
   '1:4',
   '1:2',
 ]
-const alternateVerse = [
-  '3:1.5 1:.5 2:.75 1:.25 3:.5 2:.5',
-  '1:.5 5d:1.5 0:.5 7d:.5 1:.5 3:.5',
-]
 function events(bar: string, key: 'Eb' | 'E' | 'F') {
   return bar.split(' ').map(token => {
     const [degree, beats] = token.split(':')
@@ -54,16 +50,15 @@ function events(bar: string, key: 'Eb' | 'E' | 'F') {
   })
 }
 
-it('matches the replacement image notes, credits, alternate verse, Eb/E/F keys and final tie', () => {
+it('uses the requested common verse melody, image notes, Eb/E/F keys and final tie', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document).toMatchObject({ title: 'You Raise Me Up', composer: 'Rolf Lovland', lyricist: 'Brendan Graham', key: 'Eb', meterCount: 4, meterUnit: 4, tempo: 60 })
   expect(source).not.toMatch(/===|\{order=/)
   expect(source).toContain('||: {key=Eb,F}')
+  expect(document.parts.get('score')!.melody.find(bar => bar.left === 'rptstart')?.ending).toBeUndefined()
   const written = [
-    ...reference.slice(0, 3).map(bar => events(bar, 'Eb')),
-    ...alternateVerse.map(bar => events(bar, 'Eb')),
-    ...reference.slice(3, 17).map(bar => events(bar, 'Eb')),
+    ...reference.slice(0, 17).map(bar => events(bar, 'Eb')),
     ...reference.slice(17, 26).map(bar => events(bar, 'E')),
     events(reference[26]!, 'F'),
     ...reference.slice(27).map(bar => events(bar, 'F')),
@@ -75,14 +70,14 @@ it('matches the replacement image notes, credits, alternate verse, Eb/E/F keys a
     const [name, octave, alteration] = pitches.get(event)?.[0]?.split(':') ?? []
     return [name ? 12 * (Number(octave) + 1) + scale[name]! + (alteration === 's' ? 1 : alteration === 'f' ? -1 : 0) : null, event.beats]
   }))).toEqual(written)
-  expect(bars.flatMap((bar, index) => bar.events.flatMap((event, position) => event.tie ? [[index, position]] : []))).toEqual([[32, 0]])
+  expect(bars.flatMap((bar, index) => bar.events.flatMap((event, position) => event.tie ? [[index, position]] : []))).toEqual([[30, 0]])
   expect(source).not.toContain('{lg}')
   expect(source).toContain('{text=rit.}')
 })
 
 it('plays both verses, the E-major chorus, the F-major return and the coda exactly once', () => {
   const firstPass = reference.slice(0, 27).flatMap((bar, index) => events(bar, index < 17 ? 'Eb' : index < 26 ? 'E' : 'F'))
-  const secondPass = reference.slice(1, 16).flatMap((bar, index) => events(index < 2 ? alternateVerse[index]! : bar, 'F'))
+  const secondPass = reference.slice(1, 16).flatMap(bar => events(bar, 'F'))
   const coda = reference.slice(27).flatMap(bar => events(bar, 'F'))
   const expected: number[][] = []
   let time = 0
@@ -109,10 +104,10 @@ it('keeps both English verses and the correct chorus syllables without forced ti
   const lyrics = bars.map(bar => bar.events.flatMap(event => (lyricsByEvent.get(event) ?? []).filter(item => item.kind === 'text').map(item => item.text)))
   expect(lyrics.flat().join(' ')).not.toMatch(/\p{Script=Han}/u)
   expect(lyrics[0]).toEqual(['When', 'I', 'am'])
-  expect(lyrics[28]).toEqual(['There', 'is', 'no'])
-  expect(lyrics[3]).toEqual(['life,', 'no', 'life', 'with', 'out', 'its'])
-  expect(lyrics[4]).toEqual(['hun', 'ger,', 'Each', 'rest', 'less'])
-  expect(lyrics[17]).toEqual(['up,', 'To', 'more', 'than', 'I', 'can'])
+  expect(lyrics[26]).toEqual(['There', 'is', 'no'])
+  expect(lyrics[1]).toEqual(['down,', 'life,', 'And', 'no', 'oh', 'life', 'my', 'with', 'soul', 'out', 'so', 'its'])
+  expect(lyrics[2]).toEqual(['wear', 'hun', 'y,', 'ger,', 'When', 'Each', 'trou', 'rest', 'bles', 'less'])
+  expect(lyrics[15]).toEqual(['up,', 'To', 'more', 'than', 'I', 'can'])
   expect(source).not.toContain('+')
 })
 
