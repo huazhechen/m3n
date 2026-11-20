@@ -75,8 +75,8 @@ it('matches the performed screenshot melody through both endings and the complet
   expect(source.match(/\{key=[^}]+\}/g)).toEqual(['{key=F}'])
   expect(performance.beats).toBe(fixedPitches.beats)
   expect(performance.tempos).toEqual(fixedPitches.tempos)
-  // Playback now uses fixed full velocity; retain the pitch/timing reference.
-  expect(performance.notes).toEqual(fixedPitches.notes.map(({ name: _name, ...note }) => ({ ...note, velocity: 127 })))
+  // Playback uses the standard default velocity; retain the pitch/timing reference.
+  expect(performance.notes).toEqual(fixedPitches.notes.map(({ name: _name, ...note }) => ({ ...note, velocity: 64 })))
 })
 
 it('keeps only the melody, without lyrics, violin credits or bow symbols', () => {
