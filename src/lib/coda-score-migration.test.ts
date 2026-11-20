@@ -4,11 +4,12 @@ import { compileScorePerformance, deriveScoreInteraction, formatM3N, parseM3NDoc
 import { expect, it } from 'vitest'
 
 // Captured from the four approved arrangements before changing navigation or houses.
-// 黑色幽默 includes the approved bar 43 pitches and restored original triplet ending.
+// 黑色幽默 includes the approved bar 43 pitches, restored original triplet ending,
+// and removal of the final passing notes in bars 19 and 20.
 const baselines = [
   ['flower_dance', '9587f1f7ec480e7b2ead654bf49d1a03109301a5b5adac14b573261f16acba79'],
   ['ai_de_li_zan', 'e830f4034c0e44a479a4296928034ee8c57049c8d59eb01bbbea9e153ca9a279'],
-  ['hei_se_you_mo', 'e179864bfebabf9e100f6da117a93bd839e7b8db0b70e580c298e14be63a1393'],
+  ['hei_se_you_mo', 'c987fba4c4b7bc29ae3d7333ee945bea68be23d97850b0cbd69140ca20d77f71'],
   ['bai_hua_lin', '125c0c339df5316ed23e903bdbd9e266131bc13fd772c5fdfb02b3404994c70b'],
 ] as const
 
