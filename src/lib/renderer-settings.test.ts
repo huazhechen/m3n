@@ -10,15 +10,15 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-test('width buttons reach the adjacent 10px grid point within 320–1280', () => {
+test('width buttons reach the adjacent 10px grid point within 240–1280', () => {
   expect(stepScoreWidth(555, -1)).toBe(550)
   expect(stepScoreWidth(555, 1)).toBe(560)
   expect(stepScoreWidth(550, -1)).toBe(540)
   expect(stepScoreWidth(550, 1)).toBe(560)
-  expect(stepScoreWidth(320, -1)).toBe(320)
+  expect(stepScoreWidth(240, -1)).toBe(240)
   expect(stepScoreWidth(1280, 1)).toBe(1280)
   expect(clampScoreWidth(2560)).toBe(1280)
-  expect(clampScoreWidth(200)).toBe(320)
+  expect(clampScoreWidth(200)).toBe(240)
 })
 
 test('BPM settings use a new key and never reinterpret stored speed percentages', () => {

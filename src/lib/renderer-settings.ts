@@ -5,7 +5,7 @@ export const PLAYBACK_BPM_KEY = 'm3n:playback-bpm'
 export const METRONOME_ENABLED_KEY = 'm3n:metronome-enabled'
 export const RENDER_MODE_KEY = 'm3n:render-mode'
 
-export const SCORE_WIDTH_MIN = 320
+export const SCORE_WIDTH_MIN = 240
 export const SCORE_WIDTH_MAX = 1280
 export const SCORE_WIDTH_STEP = 10
 export const DEFAULT_SCORE_WIDTH = DEFAULT_PREFERRED_WIDTH

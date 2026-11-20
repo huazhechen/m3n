@@ -1,8 +1,8 @@
 import { chooseBestWidth } from './scorebook-width.mjs'
 
-// 32 logical px at 640px A4 width = 9.3mm, never compressed to fit more works.
+// 32 logical px at 560px A4 width = 12mm, never compressed to fit more works.
 export const sharedScoreGap = 32
-export const sharedScoreWidth = 640
+export const sharedScoreWidth = 560
 export const sharedPreferredWidth = 540
 export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, crowdedAbove: .85,
   sparseWeight: 8, crowdedWeight: 6, balanceWeight: 1, pageWeight: 1 })

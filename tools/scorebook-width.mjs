@@ -1,6 +1,6 @@
 /** Width is the only engraving variable; all candidates use the web defaults. */
-export const widthCandidates = Array.from({ length: 19 }, (_, index) => 540 + index * 10)
-export const widthSearchStrategy = 'coarse-bisection-local-stability-v1'
+export const widthCandidates = Array.from({ length: 17 }, (_, index) => 480 + index * 10)
+export const widthSearchStrategy = 'coarse-bisection-local-stability-480-640-v3'
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 const rank = (a, b) => a.pageCount - b.pageCount || a.width - b.width
 
@@ -51,7 +51,7 @@ export async function probeWidthCandidates(measure, { requiredWidths = [], verif
   for (const width of requiredWidths) {
     if (!widthCandidates.includes(width)) throw new Error(`Invalid required width: ${width}`)
   }
-  const anchors = [...new Set([540, 600, 660, 720, ...requiredWidths])].sort((a, b) => a - b)
+  const anchors = [...new Set([480, 560, 640, ...requiredWidths])].sort((a, b) => a - b)
   for (const width of anchors) await probe(width)
   const samples = () => [...cache.values()].filter(c => widthCandidates.includes(c.width) && safe(c)).sort(rank)
   const target = samples()[0]?.pageCount
@@ -76,7 +76,7 @@ export async function probeWidthCandidates(measure, { requiredWidths = [], verif
     const best = chooseBestWidth([...checked.values()])
     if (result.stable && best === result) {
       const previous = result.width - 10
-      if (previous >= 540 && !checked.has(previous)) {
+      if (previous >= 480 && !checked.has(previous)) {
         const neighbor = await probe(previous)
         if (safe(neighbor) && neighbor.pageCount <= result.pageCount) continue
       }

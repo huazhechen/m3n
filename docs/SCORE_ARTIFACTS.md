@@ -1,6 +1,6 @@
 # 乐谱生成结果与提交检查
 
-每首 `src/scores/`、`src/works/`、`src/examples/` 下的 `.m3n` 都维护简谱 `preferred-width` 和思源黑体子集。生成器实际在 Chromium 中排版，搜索安全宽度，再更新谱源与字体。字体只使用 Barlow Semi Condensed、Bravura、思源黑体。
+每首 `src/scores/`、`src/works/`、`src/examples/` 下的 `.m3n` 都维护简谱 `preferred-width` 和思源黑体子集。生成器实际在 Chromium 中排版，在480～640px范围搜索安全宽度，再更新谱源与字体。字体只使用 Barlow Semi Condensed、Bravura、思源黑体。
 
 五线谱已迁移至 VexFlow。曲库和独立作品的 `staff-preferred-width` 通过 `npm run refresh:staff-widths -- --fresh` 独立刷新；它搜索稳定、安全且页数较少的版宽，并核验 ±5px 邻域，全部成功后统一回写。引擎迁移或排版规则调整后，应先刷新建议版宽，再检查默认谱面的疏密与碰撞；规则再次改变时重新核验。搜索范围与取舍见[五线谱显示](STAFF_NOTATION.md#验证与选宽)。提交钩子暂不自动搜索五线谱宽度；刷新后仍须运行 `npm run prepare:scores` 同步谱源摘要及字体生成记录。
 

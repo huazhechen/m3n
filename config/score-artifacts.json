@@ -1,9 +1,9 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "f88787d043a7d768741004c1bbe3ccf4ec494baf41be30336eb47d6992ee69d7",
+  "rendererSha256": "b20463154a3283081406fa54812d262634a89b8aecf1c584e40111426341ee46",
   "fontManifestSha256": "18b0cc61ac4c920ab4512fbb3ca03b5a204a601d6704b1729dc1a05141a51192",
-  "strategy": "coarse-bisection-local-stability-v1",
+  "strategy": "coarse-bisection-local-stability-480-640-v3",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "numberedWidth": 540,
@@ -15,140 +15,140 @@
     "src/scores/ai_de_li_zan_01.m3n": {
       "numberedWidth": 540,
       "numberedPages": 1,
-      "sourceSha256": "746db1e93d918afc5570259bc7cd495a9e32f3771124f195ed30f0716990aa6a",
+      "sourceSha256": "0adabf36673c075510891414d9d5ab93db5ac87f7373166f90346b877af7ea24",
       "font": "NotoSansSC-2e7e0780f58b213e.ttf",
       "fontSha256": "380c2916f5fca3d7aa83f3c014010c3e8a8461005ff32e8b7ce5e5d3d420a4f9"
     },
     "src/scores/ai_er_lan_hua_mei_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "fec28687e4ba12b4f23dfbac4cf7ad13df72434ed795a07f5b386a2dc6f99b03",
+      "sourceSha256": "517aa002673dad10a05b89cd42b4517698e2693e1c46aa5bd68ce4a69579e7a5",
       "font": "NotoSansSC-2797993ad5b2b936.ttf",
       "fontSha256": "995d2de760cd79da76805df2844524e4f2dddf9fee5e71604f5e86110fd152fe"
     },
     "src/scores/ai_ru_chao_shui_01.m3n": {
-      "numberedWidth": 680,
-      "numberedPages": 1,
-      "sourceSha256": "73361dbb6455e810358267f6e24b40126002abeb6b95b53726ca84af289561df",
+      "numberedWidth": 500,
+      "numberedPages": 2,
+      "sourceSha256": "f90c204a5ed9aec19b632e14b25e02b96338926d924bb6336c27d781b4114165",
       "font": "NotoSansSC-65cef641161a4321.ttf",
       "fontSha256": "29c63f1f38904ea2eb24b8b02fc4fdaaf45ad606422bb7ec617d0a0a45a75bea"
     },
     "src/scores/an_xiang_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 510,
       "numberedPages": 1,
-      "sourceSha256": "a6be50cb7d3d75e72ff08c3e10faac6da4e551eb7f8784d97b534e50d5672ff2",
+      "sourceSha256": "4e5afe5b6a595c98be3bd6fabde3cecf44de76caf03b272dbdc0a0baa0720d62",
       "font": "NotoSansSC-f551fd3687d87a24.ttf",
       "fontSha256": "91a6f3ae4f85108d9214c44306852aef2d78c2b2e2ceb4c127fd93dfb7ffa0f1"
     },
     "src/scores/annie_01.m3n": {
       "numberedWidth": 600,
       "numberedPages": 1,
-      "sourceSha256": "91a0346fd08ac464fc3cf2d08b16aa19e5a1e821278ffe9293f49c9ced4bbd9b",
+      "sourceSha256": "009452e9a43ec79b5f337b039cca6b88bcd942f729c00f2a637901d67fd39683",
       "font": "NotoSansSC-462d7c53fd60924a.ttf",
       "fontSha256": "543fe7fc017b1a79f9b38931047e85b7056f9ce02dd5c64a270a53c682d0c7f1"
     },
     "src/scores/auld_lang_syne_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "92bec023315d507ee374fb8944fe7fdef3d2dda3490e9d9b56dea87494a037d2",
+      "sourceSha256": "e899e49afd6511f04547c2d7218a6b98fe4879773e6b571ca420e646411df6fc",
       "font": "NotoSansSC-fbc76d210ab76ae5.ttf",
       "fontSha256": "161e96490cfbbf78504192dfeaa7757375998444aab4967b78dea529848ad570"
     },
     "src/scores/autumn_leaves_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "60186a2b32ff159c4bd64f65f33476231fc126aa1a172c7d25e0ac3df722125f",
+      "sourceSha256": "33e6b79b6dc872bce6ebf8886b806a672b962fd841da5573c059c6c959bae75c",
       "font": "NotoSansSC-075c1b4ac870eaa6.ttf",
       "fontSha256": "79913f58f8703a2aa9cb1bd5b83c63c38679eac469f6d65a7559de37236ec297"
     },
     "src/scores/bai_hua_lin_01.m3n": {
       "numberedWidth": 600,
       "numberedPages": 1,
-      "sourceSha256": "10ecaf1f25a0804475c46b62c094938d83ee5cab885c79d1c9633ed647da3665",
+      "sourceSha256": "5683e289862feb1566ff3865bf851df4f2d59e788a089fe58e9fb75e7fc5c457",
       "font": "NotoSansSC-19b41ac6dcc802a4.ttf",
       "fontSha256": "4d49b11c381fa9fbf59168ff5610c5c8af1b8d58738b24e9789dff5ccf0b3848"
     },
     "src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n": {
-      "numberedWidth": 720,
-      "numberedPages": 2,
-      "sourceSha256": "7b5253d0743d4a2f1280565f01b7345927434f373a92b6cad9d0bfd028088c8e",
+      "numberedWidth": 590,
+      "numberedPages": 3,
+      "sourceSha256": "39bffc08572128b09ac5ea4f4e97dddf3959db05438e12951f176a58c2f3553a",
       "font": "NotoSansSC-e169970754d67afe.ttf",
       "fontSha256": "1665387334ed00e6f2492f5c4c6ad40f50b62a333f160fad2caf7e02d33e1162"
     },
     "src/scores/beer_barrel_polka_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 500,
       "numberedPages": 1,
-      "sourceSha256": "d83beb220f1ef14fe9af10b657606fa3dec140f65905abb36c192a1d47c27fa4",
+      "sourceSha256": "89c2a84083ab8d4488ad8e10631ca52317402a046e66b17386a08b347e346927",
       "font": "NotoSansSC-68605372f5126377.ttf",
       "fontSha256": "382131cd1140d4bb7f9c5f68d6d431dac1d72d3e6a8367c4feb592cf3fea64fc"
     },
     "src/scores/bei_jia_er_hu_pan_01.m3n": {
       "numberedWidth": 580,
       "numberedPages": 1,
-      "sourceSha256": "15c89562926293f2465f245eb29eba5edb3fe00ed8d9365fd3bd0c5175ed3f2a",
+      "sourceSha256": "e72806c5d236bd04a01e4bb8c0700c3ff0b40da2181c6390d1be306be9f42bae",
       "font": "NotoSansSC-a2cc16362c989d3d.ttf",
       "fontSha256": "51ffb4f7cf861aebec6cc8dd2bcda4664ae375ae8834a95b72327c2ba5e102b8"
     },
     "src/scores/besame_mucho_01.m3n": {
       "numberedWidth": 550,
       "numberedPages": 1,
-      "sourceSha256": "3bec4815c1bc12eab9b386393ef770efdd6b21662099055314e1a7acc30a468a",
+      "sourceSha256": "63b63cbbf76be152bf2e4c54bfa191903c6908a7231c5a11c171746afe023166",
       "font": "NotoSansSC-b5d15f47ba549d64.ttf",
       "fontSha256": "2e11d40831373cf7e301378dadc23c3d9840e1a3ceb7363ea0775082a02f360f"
     },
     "src/scores/cai_yun_zhui_yue_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "5b0f394385463f5c446e4b026a28c52bc61d9fb8105e02236b79d889deb016e1",
+      "sourceSha256": "8e66cc97101906ea53598859eb348bf465e20049660c4999ac3913525ccf0873",
       "font": "NotoSansSC-3521f13fd5b54604.ttf",
       "fontSha256": "a390842c380ec8715378fac5572d154be32be466188ec3acdb22eb1d7f731467"
     },
     "src/scores/canon_01.m3n": {
       "numberedWidth": 630,
       "numberedPages": 1,
-      "sourceSha256": "e135f5a03730127b41567facad2ca6bbf0e9066fc1ef9dcf8da9e49980900edd",
+      "sourceSha256": "33e3dc894554b1caffa4c59871c234ae23970895377858179ab830a9065e7746",
       "font": "NotoSansSC-42705de5536e58a1.ttf",
       "fontSha256": "6e6243dad5096c3d0447df45946ff3002b60cd94785d1d5059cd40de2823ec43"
     },
     "src/scores/castle_in_the_sky_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "a66ccacb901aba870793f5ef392172693d7864a2fd71485cb23c03ab18050ad3",
+      "sourceSha256": "dad74c20ba22579907fb9ec65d84b833a22f641e0dd20ede50f22151020f7a3c",
       "font": "NotoSansSC-dea94bfd68d04840.ttf",
       "fontSha256": "2ed7aa9c308fa18f910c13b6f04f9b8443425a49d71d60f71daa870ea268ca99"
     },
     "src/scores/chong_er_fei_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "70ed3223883d7dca781fb0fbae8a4e1cfcfb03bf0c83a9cb0482557a2aa39a39",
+      "sourceSha256": "67dff59a20956a77651b6c47eae7b1c1d92354477dbbf5b575fab8a5ead8d18d",
       "font": "NotoSansSC-3d634892550ed6a5.ttf",
       "fontSha256": "1084a006f9b53ec8f0162a9256aafb29a7298d3d59a4931d513a8ce983b010dd"
     },
     "src/scores/dan_huang_guan_bo_er_ka_01.m3n": {
       "numberedWidth": 560,
       "numberedPages": 1,
-      "sourceSha256": "c146df483b2690dff155925b4da2f98b0c3c8a83f7a8eb1f08fabbb3e43bacc2",
+      "sourceSha256": "078287fe6103d9763e4170ac601808a6710ecb78ad7890be7fbfb861247c213d",
       "font": "NotoSansSC-6a5b56eafaf22384.ttf",
       "fontSha256": "61541d1de81f0407955371fb90388236b795a8a65292a2338912f58b9a144c4b"
     },
     "src/scores/dang_nian_qing_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 520,
       "numberedPages": 1,
-      "sourceSha256": "333ed549d22d3a28550321f0e22756a591850f40ce5e93e376a2284b41f174b5",
+      "sourceSha256": "86727ec9b08df6d97ad3321d59a822064c705c431eaae0962aa180bd364bc670",
       "font": "NotoSansSC-6b0ee9bdfdd36c2e.ttf",
       "fontSha256": "ad8e9634930c08453bde4754bf7109ea834d5fdcfd00138f103468cdfc3eb609"
     },
     "src/scores/duo_lai_mi_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "986d4e81ed01bc0bbac4b1c521b476e49da82a474d6d90f8a8fc415b84d7ee1c",
+      "sourceSha256": "bae12e1c6a367cd17c09e113ce53d27e54946dc20f4baac28ff43c6079ca6657",
       "font": "NotoSansSC-6ad88862e6bfe0e2.ttf",
       "fontSha256": "39cf2f74264bec64290174ed7e3616394a81d15eff262b6fde6997c648b60765"
     },
     "src/scores/feng_01.m3n": {
-      "numberedWidth": 700,
-      "numberedPages": 1,
-      "sourceSha256": "553865abff23dfd9c0b6d849a4707aa5a70c312176f8599c300f656ea23dbd1f",
+      "numberedWidth": 500,
+      "numberedPages": 2,
+      "sourceSha256": "aba8d0797ccfce252a0fc7e16b3a12c854d2979b0132888237c7b09093ace56f",
       "font": "NotoSansSC-fe6d3b8d9da03b7b.ttf",
       "fontSha256": "53d966366589bef98258a4180bf1f3a9219811d7c37b3c74d7d5ee92f393c49c"
     },
@@ -160,16 +160,16 @@
       "fontSha256": "7da8d57148a2f0831fa2965bf286dc05c94c2800e6e08454b24f7b1b2cbba59d"
     },
     "src/scores/fly_me_to_the_moon_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "4700a9e44a287cd05a807706b44d7150563097048b182c2aef4b9a12314c7ba2",
+      "sourceSha256": "36876ce56d3206b5fbd5dd297131669f1cbd554a04e6d0c1df2c65940caa2ae1",
       "font": "NotoSansSC-20d9af51375b2934.ttf",
       "fontSha256": "dc7f5859a71ed4667c0b0cba68c5ce9752a703415f9f017cb68c5a7d1607be41"
     },
     "src/scores/guang_yin_de_gu_shi_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 500,
       "numberedPages": 1,
-      "sourceSha256": "a3a105ee7be93a1906f3c5a7fde49be03368faefb3f58e488d60697249a67c8a",
+      "sourceSha256": "eb42591e23384bc3bef18c516f6aae5123c8744905fe50184dd5d8fff1793daf",
       "font": "NotoSansSC-3a4e34a0406b65ed.ttf",
       "fontSha256": "e6fa8470f3d85c9bb513a5cdde27cd0f9941568c7163b785e41d84df36b43a9e"
     },
@@ -181,205 +181,205 @@
       "fontSha256": "114a0561fdf021a534dea8a440a037b4aa8b536372af625a281ab96dee0aa106"
     },
     "src/scores/haydn_surprise_minuet_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "58bd80eecc27574f20b902d2a7f29a305188f7962b0d3a8a898cfe86a8a49cba",
+      "sourceSha256": "836cdc3f34420077d571033a43856a5c42deea4ccc42364324c5dda41346df3c",
       "font": "NotoSansSC-3e793504061c95d5.ttf",
       "fontSha256": "4d5d627ae0771ad218b971405c5edb7cc31e4000c4822ce334d6a0f0b2afdd7e"
     },
     "src/scores/hei_se_you_mo_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 530,
       "numberedPages": 2,
-      "sourceSha256": "7c3092dea6926a3d02a91a046e6afdaf937e1be420b2a71e5643cbae711963bb",
+      "sourceSha256": "e423658a14e716f22c2b143a73681903a9640bc5db4d63b87cb2181f7c8980a9",
       "font": "NotoSansSC-cb96bee3e1ad30d8.ttf",
       "fontSha256": "0f2f2cd4f88d7eef0e0617e6a6f07ff5fd1c583fa09044a5718155de23eeb71e"
     },
     "src/scores/hong_he_gu_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "67b381487fa6f7f5699122d39c7a21581d77d47ab2b3734f619a28722dd74542",
+      "sourceSha256": "47207f6194ac6e4574592498b4f4f498a9c705bbbaf79f52f1e5925da6e2efc4",
       "font": "NotoSansSC-3b05bf0b15d7c2fa.ttf",
       "fontSha256": "e5bc25c079b242c1d41b93d04ef3c766560474953cd68c233e7b97f15e21afe8"
     },
     "src/scores/hong_mei_hua_er_kai_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 510,
       "numberedPages": 1,
-      "sourceSha256": "786e04a8d2b50de02283018d026c64bda978200365d4ea78a090497d16317f43",
+      "sourceSha256": "db94271ca6992255b3070feb26d998fde5e3af479119d9503d125c3dc75895b5",
       "font": "NotoSansSC-9a5fe9e86df932e4.ttf",
       "fontSha256": "98b9757426147aada99394bf650a0e6c8bbd9e940911ac35fa74327f40fdbe05"
     },
     "src/scores/hou_lai_01.m3n": {
-      "numberedWidth": 720,
-      "numberedPages": 1,
-      "sourceSha256": "bc32469e96d9845b79125391e3a40010b03ba46e0c432d0d3f770322287b2965",
+      "numberedWidth": 510,
+      "numberedPages": 2,
+      "sourceSha256": "074ebde9ff1d0ae565fcb78ec1a196426e6fec51648e2e9eadb97ac52ecf0a7d",
       "font": "NotoSansSC-bb4fdfb0f481827d.ttf",
       "fontSha256": "7553c14f82cd17ca48abf6dcb34d7318e567b8139ce396930a2223ab9172699c"
     },
     "src/scores/huan_le_song_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "ad0f601957ae3f7a708ccaa0eb8672a9014f515e2668c3dfe80a45c5fd7fffd1",
+      "sourceSha256": "3c5718f4aa3e43711beab2ddc3e90f4678accf82d208d23543163ebbc74873e6",
       "font": "NotoSansSC-85dbb9bc473c3e59.ttf",
       "fontSha256": "5e410770f08db46f410c8efb6e6e5b071fea3438ef6b3bfb0371486c71f947bf"
     },
     "src/scores/huang_hun_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 490,
       "numberedPages": 1,
-      "sourceSha256": "79aa496c2fcb711077b9681e44fabfd3c94a0b3fa1166be55339eb23642c027f",
+      "sourceSha256": "097c265b2323497de0cb71918a301830bfe5b9e39b4f8e6dbbe06212c235c287",
       "font": "NotoSansSC-1c850370053cc0e1.ttf",
       "fontSha256": "1eb898bbb16e547022da3fde00995a9b8591d06fd7e01e3a15f1e116a4cc2985"
     },
     "src/scores/jiu_er_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "631910ec67357155d80e44f95145075f4317f2e46c1669a92c04dc8e60437da6",
+      "sourceSha256": "71d7703d9e754a9747c63e9a19c42a77b0243f547523142e6987361724cbcd8c",
       "font": "NotoSansSC-b4738a23ed7f3bbe.ttf",
       "fontSha256": "912de0e37b3c1d863692a00b0ea208e14fae3200c40df962c516607ba857282a"
     },
     "src/scores/katyusha_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "9e6c48aeec3627171b3558bafb618c3154d25c5510d3f5e10b796b4774637bc5",
+      "sourceSha256": "c449a10f8cb311d6adcd267daac21fafa1317e58dc9b116e1672ae7413e977bc",
       "font": "NotoSansSC-635598789a55c0fb.ttf",
       "fontSha256": "6b1ce046b50a3712a4ad0b60f4f0b6589c140aaa08a0053980f72c65b408cf37"
     },
     "src/scores/lao_nan_hai_01.m3n": {
-      "numberedWidth": 670,
-      "numberedPages": 1,
-      "sourceSha256": "ab392232294a4aa3f145f54ce54576441b0cf9fbc4e08a78e001f10e91bcae26",
+      "numberedWidth": 480,
+      "numberedPages": 2,
+      "sourceSha256": "28222157b392e68abe28b633a5926ed0506d81427949985960bff3d3bba1670d",
       "font": "NotoSansSC-9da247747f12859f.ttf",
       "fontSha256": "66f42649126acf030b357e7821c1d3d4510e3ba16cbf8066773f0cc06cf159d8"
     },
     "src/scores/li_hua_you_kai_fang_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 490,
       "numberedPages": 1,
-      "sourceSha256": "26b769db0f38e80a8fe3c069639d6e485c85a8a45b9fdf61f8de19324fd092e4",
+      "sourceSha256": "c7d2bd7f7c4b3672ead0ac3852cea3cd2a0260f20dbebf5dfbe5b5d087ca97c4",
       "font": "NotoSansSC-849ce897c97c278e.ttf",
       "fontSha256": "2889b4ceeb4f9ecd2c3e499dcc63cd4545f87125a6880de7d7b978ca61bb8e0c"
     },
     "src/scores/liang_liang_01.m3n": {
       "numberedWidth": 600,
       "numberedPages": 1,
-      "sourceSha256": "7e8571a867921c1a57d5fab29aba39058c8d1fcb0b238888b9832e15014e6952",
+      "sourceSha256": "ae5cdaf3fe89d47b593db02b2b4701347c3b95ddaa52b156b02fa5bfa55fd5d4",
       "font": "NotoSansSC-fbff071b5a743049.ttf",
       "fontSha256": "7ac0f4891f399d2f8dac599d7d47f830492a7d7872e3583bdbee744bbb78f6b9"
     },
     "src/scores/liang_zhu_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "1aa459fc0c251707992407f328f0cfa7400719e8d7047098f8b8dd0c5108b153",
+      "sourceSha256": "f4a75c8cf5f76b7f95585123b676d2a56494f212b6e52df238f899edc9de1d9a",
       "font": "NotoSansSC-3c84ad0761e5eefe.ttf",
       "fontSha256": "db29bc8a58861c41f8565c902930b52d0537e92de761bdde435d7cff775143fd"
     },
     "src/scores/long_long_ago_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "e39191242c8a6bc9a5abfa2363512c27cdf271ebb96cfef3c7224cd55573b50d",
+      "sourceSha256": "1e7b81be9875980b4664b1487e4941edee76445d7727a69f440e9f8ee27c128f",
       "font": "NotoSansSC-2e3f302577280803.ttf",
       "fontSha256": "ccfac3acdb27f4165208483af6a1dfef1b12de898cd47d85f4a0b1ed8910d518"
     },
     "src/scores/man_bu_ren_sheng_lu_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 500,
       "numberedPages": 1,
-      "sourceSha256": "5327454880bf137c4c916662bc6bcfb8658f552c5bb8728c12fd32739cd1b80d",
+      "sourceSha256": "c5f8adb99d838bab0f0339f1419adb8955681cb1899c5cbddf9c4949c0ce3c3a",
       "font": "NotoSansSC-4df66690b0546c31.ttf",
       "fontSha256": "b976ca319d97f8b82d02a72208210a535151b3b2c27142f14370b8e74b742216"
     },
     "src/scores/man_man_xi_huan_ni_01.m3n": {
       "numberedWidth": 600,
       "numberedPages": 1,
-      "sourceSha256": "7b02758d1aef3a6ab61a825eabc7470c1ff5ed3dbbeb5a0989dd70eaecd26073",
+      "sourceSha256": "3bdf3a4e9f56e3b31eee6669e24c6479b0de2703fdce9992d98663c773d913c5",
       "font": "NotoSansSC-c4e1fc9fde1a3887.ttf",
       "fontSha256": "4df1390e7dda0abd724fd492af66d96269d1bdc72fb909211d214835cdfc7d60"
     },
     "src/scores/mei_li_de_shen_hua_01.m3n": {
       "numberedWidth": 560,
       "numberedPages": 1,
-      "sourceSha256": "1366cf873a7db554a7a6ef8339c79baa638345b5b55d7eb85c0cce1b208083d3",
+      "sourceSha256": "03103a22a9503874c7a1d1938b60488105736a35453ed64ff2aec022a9db0a07",
       "font": "NotoSansSC-bb1c7c44b22a2519.ttf",
       "fontSha256": "ce4248119bd73d90c2db09b0974bd7d89fbf038745e92fdd8bf9ee058ce97429"
     },
     "src/scores/meng_huan_qu_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "16d94432e90e6371361a9d18a33d9332ba57114a9fe4849603e2b3e287e19a32",
+      "sourceSha256": "b0b005790c2c8a4b92730bfe2ee4d845dd80589122ec552187ff82b50d6044ce",
       "font": "NotoSansSC-a2a69422424197e5.ttf",
       "fontSha256": "2e07763608e59e59a065ca248fe02e1f31c51652e3a199af80a9d3a4af1dea80"
     },
     "src/scores/ming_tian_hui_geng_hao_01.m3n": {
       "numberedWidth": 560,
       "numberedPages": 1,
-      "sourceSha256": "d44f636e171fafc06120cda32c8a8905720154dcc10a4ff62552b1b3341a5bc4",
+      "sourceSha256": "553be7f1a88b2f815832fbaa277584e259c0bfff95fd6290adde35110a52d01b",
       "font": "NotoSansSC-3830486a70a12fbf.ttf",
       "fontSha256": "ed4d8c029713f377fed8ee4696ff88a705c26c878bf1742b2b349d7757395960"
     },
     "src/scores/mo_li_hua_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "373d57b1572087e5ccd0cd6b14fb17d7100f820f73bcacb936e9dac368366a3d",
+      "sourceSha256": "a7f701f532b92d7ef68aa0aa76b1aeaa7bb473b1c6b71508e67f125ce9d63ff7",
       "font": "NotoSansSC-42902fc959de8a64.ttf",
       "fontSha256": "c0a3357932b122297bb845a2212a68a20b477d06eced377e8be0c5bd064714f3"
     },
     "src/scores/mo_si_ke_jiao_wai_de_wan_shang_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "cbe21b16bee4138075192f274506a534d939fb7c5b4d19d1d96f573d3258b16f",
+      "sourceSha256": "8135f82b6c92d453e9f9d618eabd9ab37d713088c1de47792d73a0f5254cc13d",
       "font": "NotoSansSC-40548decade33dfe.ttf",
       "fontSha256": "8fc7c27e229010d2d4c259d6a613dceb1cb7201e4165ae53365e0b5838980c43"
     },
     "src/scores/moon_river_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "74fdb856ec9c31c4704298720026d4ab1961dd258ec44a4273fe4c72aec8568a",
+      "sourceSha256": "5568296879642ae0a4d761eb115761d2c51b1f7d0059953a88e7660493f2af83",
       "font": "NotoSansSC-0a034c3ff8bb6432.ttf",
       "fontSha256": "e916180b8251b6a5695e2e84cb36ad4a31501023c8bcb4cd66a690ac285320df"
     },
     "src/scores/mozart_k545_01.m3n": {
       "numberedWidth": 560,
       "numberedPages": 2,
-      "sourceSha256": "82555389b00bf7f6e6929911285655930e821e1d3196792935b450b5c31b5441",
+      "sourceSha256": "04b26386b2b3d1fd137910534d203579d807ce4f79556b53ae00e78d225cb1c2",
       "font": "NotoSansSC-ca0e3db1dea4a03c.ttf",
       "fontSha256": "359f5f1712a74949c9b3fb5d603ceff770e339a8cee0808e124a4db158326720"
     },
     "src/scores/na_xie_nian_01.m3n": {
-      "numberedWidth": 690,
-      "numberedPages": 1,
-      "sourceSha256": "0a19dc6caf9850feb1c5917c2c3fc0da9d80934bd46dca0ddb4fbe63df26129b",
+      "numberedWidth": 490,
+      "numberedPages": 2,
+      "sourceSha256": "be80cd8e5059856fc8c82842bbd8b84f8db96553f980b5d8763505055b219ee0",
       "font": "NotoSansSC-36ff2fcdacb5fc96.ttf",
       "fontSha256": "ea4f41cb879a6e83ae2ef28d0a061fc46f29b6380bcdc77e72ae56a83fe4e949"
     },
     "src/scores/over_the_rainbow_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "260c042c34a90eb8318e10507019c76e12a689ce3640525a43d1dba5f4096cf1",
+      "sourceSha256": "8f0508ff009996428439544578f72e517ce73d220d87b3ba23b2489f74520461",
       "font": "NotoSansSC-95c42793b09096c7.ttf",
       "fontSha256": "949120f5681f1aa160a6b9471bea3dc7a16f1be8599a61f046325bd12942cfb9"
     },
     "src/scores/por_una_cabeza_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "94b1bc5116d834eb72004b5ba538d8a0248da13532f2c8ed3d71060d0a30f7fe",
+      "sourceSha256": "4fce002bc1485640ba579bb122bd15473a4da13336a7777849471e223660f1f4",
       "font": "NotoSansSC-5066b560abe24d20.ttf",
       "fontSha256": "20aec1c77fe7191c84760f421d2b7416909905a424d36e1f519df27506da8a8c"
     },
     "src/scores/qian_nv_you_hun_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "5bac15773836c5134d878325f5fd430c6d153428e28c82d4664579ac184bea9a",
+      "sourceSha256": "d6eb39afb7cd41b105e3c4d0a5897154804bfb800a8e2c5a5029a79e0c92ec76",
       "font": "NotoSansSC-d3dbaec64130c600.ttf",
       "fontSha256": "283f65b3e9c6eb4bd8acf40453cb910beed981fa75ccb0fa56c00a3ee29ad5ef"
     },
     "src/scores/qian_si_xi_01.m3n": {
       "numberedWidth": 610,
       "numberedPages": 1,
-      "sourceSha256": "ae52292bbe830f8c4933d29d0d57959b14c5eda3deaabf631b260c22326ded32",
+      "sourceSha256": "68c6b31f699994b701470a91a6883144f83a385a33a7fc01cb42a696ef0eceff",
       "font": "NotoSansSC-1c1878d1803d9c8d.ttf",
       "fontSha256": "747d9fb6360355294c54c5b0e08d0f4abdf51dc518c18d8e04ee1333f81194df"
     },
     "src/scores/qing_niao_01.m3n": {
       "numberedWidth": 580,
       "numberedPages": 1,
-      "sourceSha256": "64641b263462e0d99bd2e5c3f81e4daff21a37d46499a5deacd472aa55031aca",
+      "sourceSha256": "434fae2f9d60728933900bf2087a6de5d6f7af7258ac017d55548af01225190b",
       "font": "NotoSansSC-d6ba558f70b816b3.ttf",
       "fontSha256": "b3919d2b089a6b1b0d7bebfc068789a4e8b7a0175f1421ed04ba6599e19e5a4d"
     },
@@ -391,65 +391,65 @@
       "fontSha256": "4c3f13ea7229fb1cd62f510492d19cd9349c032d8a37647da75909243a25e8e1"
     },
     "src/scores/rang_wo_men_dang_qi_shuang_jiang_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "241e0b59d748956febe835c1dd85d2679c4e145649f1dd4e439cb8bb65f2e46f",
+      "sourceSha256": "55d19cf3e619d429adb255fda3bba041c367faee1e478366661d30a32eff0f8f",
       "font": "NotoSansSC-f113d56441150be3.ttf",
       "fontSha256": "3026a108a822a581351924ae0ecfa40de6b2c1caec3b94fe998072aae9bda456"
     },
     "src/scores/ren_shi_jian_01.m3n": {
       "numberedWidth": 590,
       "numberedPages": 1,
-      "sourceSha256": "9695dc1fdd428144c27c32aca2186460b3c1f61d25c2ec504f57a4eb291256e5",
+      "sourceSha256": "d5591521e1e7a1cee1bef4134a9913a8ccb237dd776d5f589ca5d70b68478392",
       "font": "NotoSansSC-27a6a6b376694d34.ttf",
       "fontSha256": "10e818b82e333c6df8faa6f0b71d19c20d9d85ef8261707c6f3ec3ecfb2e2700"
     },
     "src/scores/ru_guo_you_ni_zai_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "5a1bede5f5a076f3bb15e4906a6ab282dc42625d0412bd890b86fb42145b2a56",
+      "sourceSha256": "0ce3a8b450f956881c55bb96339b20397e8385d6d7c6b58a3c6b9a14c6919fc3",
       "font": "NotoSansSC-a5da4384316a3f9e.ttf",
       "fontSha256": "a60d16bb59af016d9fb577adf6f1b29e83db9c12b8ce77124d414c6437d50b7d"
     },
     "src/scores/ru_yuan_01.m3n": {
-      "numberedWidth": 670,
-      "numberedPages": 1,
-      "sourceSha256": "ffa8ef26a8809c4e1494f9796c83589997ac8bf47435bdc40865d66d5850d217",
+      "numberedWidth": 480,
+      "numberedPages": 2,
+      "sourceSha256": "79935059a2a706a2355ff2d480b664af253d16c035177a3a1befc254c46cdbbb",
       "font": "NotoSansSC-922f226cf8197e65.ttf",
       "fontSha256": "1221c448ae751ef545372457e8a71720baf0930e7dd3784f95cb1a41cd311620"
     },
     "src/scores/san_bu_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "4b1b31528546c1889f0fee92b6229303267fe1bef65f4e9b69945e6da57cdd32",
+      "sourceSha256": "d76f1ccf27a8fc2d672474dd0bb787399441ed17014c7fb799f763c9546ede3e",
       "font": "NotoSansSC-442db9a2d2b31a39.ttf",
       "fontSha256": "2ea6f6cfbcb553372413aca6846ed8816a521c9b28a629a62ce191f0349539de"
     },
     "src/scores/san_tao_che_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "7639635908726e825ef2b13db92a56da46002541c8ad42121da7a4b58247b01c",
+      "sourceSha256": "686b18fb91d103870e3cb894d3abb9af36a27c6275a1f4187ab403cc0d6c0da3",
       "font": "NotoSansSC-6e554164f18af164.ttf",
       "fontSha256": "a778dcdbaa4e9535226f82ab60602867c75458b10dc4ad05cf89efc7e0c621f0"
     },
     "src/scores/scarborough_fair_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "d35aadc15254447de87f95eaae53fd8a3bf1bfda1f8a9b44964c8ab6b3f7ecdb",
+      "sourceSha256": "6acbbd84d2ca98ccb5fc5e6b25870abc33770302daa879ef27b13839b015910b",
       "font": "NotoSansSC-f508a473d1ead332.ttf",
       "fontSha256": "077abd83ccf782bbfbab199d21c6334c2ea1ad9581191f1337b2014c3c1027cc"
     },
     "src/scores/sea_horses_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "0c416d04f3ab9c05769c83ef7f135566d2c840ae1eb3d917bc9210b5a0cd7a1a",
+      "sourceSha256": "2210d0a934ec23914d868b23d65807201d343701a0ae06631b7665f81cf858dd",
       "font": "NotoSansSC-b20c22e6c5993484.ttf",
       "fontSha256": "20faa706a8dc2cc84158a37d069363ec4c132735f489cd1bd8604cb31f565c06"
     },
     "src/scores/second_waltz_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 510,
       "numberedPages": 1,
-      "sourceSha256": "54fb6e1cad669ffbb860890345c4fc867d5fe9a5db1d835f33f3e9c2c00cd1ac",
+      "sourceSha256": "e8a72a6fbd067891e22adb84111b6babe8efb880c9b0b9d888bbc3a965b81779",
       "font": "NotoSansSC-ca8f528e35115110.ttf",
       "fontSha256": "5c702b742d229c045d5273c8ff16eab2dc3facbdb21e51e14027369799e95862"
     },
@@ -461,44 +461,44 @@
       "fontSha256": "5a22a0c2ea51233cec78712621d4a85d6cb2198ffabbf52674224d97bf7671ff"
     },
     "src/scores/song_bie_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "55e05a00b74f5d294f2e7ca2680310461b320f003c5f0030b91f7e1257d4aacc",
+      "sourceSha256": "64e619ea5972a83656a22f18aea23e72bfe286a3529911a9ea8aa09bda7896ce",
       "font": "NotoSansSC-42a5330c2c4414bf.ttf",
       "fontSha256": "2a219558d221d5f3ee712c6d8a2435d7c3ce4965b3d7265bcc046640ac8d3fd9"
     },
     "src/scores/sound_of_silence_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "bb3fdc4bb240e0ece680400e6fd9c8ae06ce2bf63f16161650c0e31d52c02d0a",
+      "sourceSha256": "074ddb9479cb3b8c26cf035068ecd12a1e187cba2a679ade283df1fc3694af98",
       "font": "NotoSansSC-5db1d4ee5cdd862d.ttf",
       "fontSha256": "0d3290339aa85c8a208f69e46475869e6cfcae807d33e6ad42470c7ef14c99ff"
     },
     "src/scores/su_shan_na_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "c8eaa6c5128519296fda8c050ada8b1e15250c862d7286169adc8f643dd1705b",
+      "sourceSha256": "f40e935f4cc89c6439ab1b8efb4d243cca91612f6b0997e461b37e58884ca2ef",
       "font": "NotoSansSC-b9987ab93046244b.ttf",
       "fontSha256": "9723beffbb9f62c33c70feecd64411cf129f4749518e48c0eef118c5d0499b21"
     },
     "src/scores/tai_yang_zhao_chang_sheng_qi_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "0e20d9b20c3b33f156bc6d5db07d6766d403d1a086c149383dcd1e1fd16ee50f",
+      "sourceSha256": "0413e5bbeafd9ef677b2083956eb2615d55fbb2597e49e2a7e4fba2165bbcd48",
       "font": "NotoSansSC-01b1871bd2b29f90.ttf",
       "fontSha256": "ce9770614249780b4ec4a1c339941d8335c5fd645cd26cd2d942c30bf21dde03"
     },
     "src/scores/the_internationale_01.m3n": {
       "numberedWidth": 600,
       "numberedPages": 1,
-      "sourceSha256": "be8da0c5451f2c751bfe2ef7bb2d87fe146098160bb400032105f299b3e968aa",
+      "sourceSha256": "75dec1158748f62e7a5df8983506ecbb6d2526918bea443725e4812cf72b3e3b",
       "font": "NotoSansSC-eca3f28a794b707d.ttf",
       "fontSha256": "72a3ae884d94ec24592da667dba657e7f6f27d5cc7f2d4ed1624f57873e384fc"
     },
     "src/scores/tie_xue_dan_xin_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "e535dd5f5619185d7ac576214acd864f32efb871ddbc30ebdeea884686363327",
+      "sourceSha256": "7d165a4d45df5699dee27cfffc763eb1d8bf0a5d787ed0917aa02f5d455f67a0",
       "font": "NotoSansSC-755840f8bc645a88.ttf",
       "fontSha256": "f1f099d230acf2694b55dbe54ac37332b8df2f166b48fd1755c9410a3b0c5503"
     },
@@ -510,156 +510,156 @@
       "fontSha256": "c0cf7b2d0e3dedf012433d3b1a978263182634e8ce489a08070722d4aedb64e1"
     },
     "src/scores/tong_hua_zhen_01.m3n": {
-      "numberedWidth": 680,
-      "numberedPages": 1,
-      "sourceSha256": "5d66d363695a5eee90e1dab1ea5cf821ce26c5346e27c704f2dbf9d2abeb8336",
+      "numberedWidth": 490,
+      "numberedPages": 2,
+      "sourceSha256": "a4b641f1b95a4492fc89ebb512a842aab0f82a87e382487a55029103c0853512",
       "font": "NotoSansSC-d23cc0f2275b3721.ttf",
       "fontSha256": "c6f38b06a0e6864623912c1500d95283bbae714b46e294969a450edfef311401"
     },
     "src/scores/tong_zhuo_de_ni_01.m3n": {
       "numberedWidth": 590,
       "numberedPages": 1,
-      "sourceSha256": "f4027ff129c0831c8040519c63d82105d10cff543d6aa3b7e6250d98825607c0",
+      "sourceSha256": "51dfd904aad76de664a9c49bb5197fd0333ea7ae14f6447be604cb3bc8d8bf3f",
       "font": "NotoSansSC-b767e935b365ace4.ttf",
       "fontSha256": "b7b67c803f15945c76fe883befc74b33aab5d4f56d6fbd095a1bf30c2b11262e"
     },
     "src/scores/turkish_march_01.m3n": {
-      "numberedWidth": 710,
-      "numberedPages": 1,
-      "sourceSha256": "8a824f89e2d00499ff2e28fb678ef0abfbef0a2f4dd7dccf4309444603fc4ed4",
+      "numberedWidth": 490,
+      "numberedPages": 2,
+      "sourceSha256": "aabf3671d0afabf399c2a1d4d21e7761944a3f655c313ec67faef46348e0a172",
       "font": "NotoSansSC-d3aee6017170f10d.ttf",
       "fontSha256": "ac1baa01b125ed6ee7507725ce558576cd820d1e4c10a90f2a0e229f0d3131ec"
     },
     "src/scores/valsentino_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 520,
       "numberedPages": 2,
-      "sourceSha256": "267f76d86259e848795ad1bbf8503cde55446ffe54bbbf8a523a5c3f870d8fa0",
+      "sourceSha256": "6ffaef8ad9d648c63bc1142088f0ba30040c08034f68d8f0c8fb5c2b5e07cce3",
       "font": "NotoSansSC-adfcd7991c85e563.ttf",
       "fontSha256": "28c3eb059cb4d80ad3db58a364fdd16437ed09e6c93c8e7441cacefb3dee4fe7"
     },
     "src/scores/wen_rou_de_qing_su_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "dfe5ec0208686409361f7640b05cde0fabed85c010b4ea9a3d501aba1c2dc828",
+      "sourceSha256": "1442a1e3291cb7c3cbca94d27987d584e836dc27ccb04c26773e3dcee67fd2a1",
       "font": "NotoSansSC-c0bd60e6e08cc543.ttf",
       "fontSha256": "e576ed7b2d63c942cb59166eedfbc46a1d15b875f429320681a62c6d0b271573"
     },
     "src/scores/what_a_wonderful_world_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "038cdc6e4039e2a60a055c38065a9c0539058ef643164aa6184435be612bc004",
+      "sourceSha256": "46dea8f2cbbf2a0e2d892ff68a869f9cf8ca8140d8f2298d86b5d13915da9b95",
       "font": "NotoSansSC-20de0ec63c2276e5.ttf",
       "fontSha256": "fa9e6afeafb35be938500eacaf7d9233801c0258688490a60234cff6c80a1ace"
     },
     "src/scores/wo_de_zu_guo_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 500,
       "numberedPages": 1,
-      "sourceSha256": "bc29166ffd246c1881074c8b1612b14b59ac9a5dee3b65a5526edb2ab0e0af23",
+      "sourceSha256": "6b9bc0416c07ecf7dd29a3ba35ae0ea6bb617dc483f899d74d7e7418d2aec43f",
       "font": "NotoSansSC-a9785dcc24eeb60e.ttf",
       "fontSha256": "bc0866a2b1144c9c55b65727ed3a667f4d963b326eb9b74a7332f59798bf2616"
     },
     "src/scores/wo_he_ni_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "591335e06f640f8934a802e2a86fa3195c8f6c8f10142b0df78117e357320650",
+      "sourceSha256": "927e69a55fcc5606c35b2a132b1ec05b695e9eedad501158395d075f4560e594",
       "font": "NotoSansSC-c4803132e0e65155.ttf",
       "fontSha256": "b831e29a163ab8e93506767d7bbaebd189998c564b5bdabc80c519861e57c7cc"
     },
     "src/scores/wo_he_wo_de_zu_guo_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 510,
       "numberedPages": 1,
-      "sourceSha256": "50a691b8d5521ac2229ddf5221f364d28f0f20c68b6ac9d01169ddd5f2fceb84",
+      "sourceSha256": "a65169d37a903d3d1db8a3d8ee43a8d0bbd7db004d9ed89d661d841ce23f9cf5",
       "font": "NotoSansSC-0aadca68916f628a.ttf",
       "fontSha256": "cfd595acdaca06765e8f1c6319ed0a4c154aed2feb1c5c5596927747ae4bd051"
     },
     "src/scores/wo_niu_yu_huang_li_niao_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "e9f1cdcf34a0c95faaaeebd49e7e491fb46db5d583930d518e4e033193bae398",
+      "sourceSha256": "d9a8ee42c340177bd5c7ac682811e2122960409ee1800f7008f49d03fa7f4b38",
       "font": "NotoSansSC-4d200812300344e0.ttf",
       "fontSha256": "9eb77e820e5c3ca2eb5aae6aa60dfce2be9fe0b3c087b06b04faa5ecdb518d81"
     },
     "src/scores/wo_yao_ni_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 500,
       "numberedPages": 1,
-      "sourceSha256": "ca150747e8a6bcb33e097963138ce56618552a835e0854e7f373507fb72f84bc",
+      "sourceSha256": "0651046068193e84d32ae34070cbb48225f8e6cbb91def15020b454126846eec",
       "font": "NotoSansSC-fd1e73be6c33dd18.ttf",
       "fontSha256": "1c63ed0b9329406bad05dfdb4f8c5fe2964a0a8e3b01691656795f34d5c55d9f"
     },
     "src/scores/wo_zhi_zai_hu_ni_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 510,
       "numberedPages": 1,
-      "sourceSha256": "fd1d2cbf4ecb17059c38f08c5beb930f1e3003ab37a947a6e96a5b7d6e9644d4",
+      "sourceSha256": "5f3be5b676718feeaaef47a1abcff3c881b34b334bde74faaf8ff44dc8564075",
       "font": "NotoSansSC-78b78d7c1b739c5c.ttf",
       "fontSha256": "d3a1ea0d22ead07e760060185391e4dfa56400d30039c9f24f4fdffcb6b1e30e"
     },
     "src/scores/xia_yu_de_shi_hou_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "f0e5e7754122d515dfbf26baaa7f6511962ea68e2f3c64428684f323c13c5453",
+      "sourceSha256": "ef16b75846b0e8dd72a67fb65ddf191bf08e42844793b2ee8960997b7a423055",
       "font": "NotoSansSC-6c33a9c1c032886f.ttf",
       "fontSha256": "dfacb9c366ce09a0e9d8f06ad0cc1e05cbda9f866f3bfc615f6e59c927107338"
     },
     "src/scores/xiang_si_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "1ca39578bab72ffd938482766ef1d28c62e35d5297e39a3c882ef06a9c25f3c7",
+      "sourceSha256": "878d2f005016e4a49ca44c94c2b9988f39dd3f50fa56a0da95d328088697282f",
       "font": "NotoSansSC-4a6823c2afdd328a.ttf",
       "fontSha256": "be19ced270c5df43fd9e57abaf48db5a6c406f4cea954a2a366946e1d506cab3"
     },
     "src/scores/xiao_hong_mao_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "359a66adc6a7983ffff2231ce55f0cfa9e7f8edc68789e07c022b2f743331457",
+      "sourceSha256": "2b3eff15f9bcfc47dad1f55ba9eeca9ccd37bf863917b6c2875b9910e2a071ad",
       "font": "NotoSansSC-01a954c03f2c7aa2.ttf",
       "fontSha256": "ffe49299d9361093197d77c00a50b6a0547e16bc66a4d8c80be382ee4b0fb98d"
     },
     "src/scores/xiao_xing_xing_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "1ad617fe7dc00c677e471be6eafac178b5233da2732f6dd914666c2231c9bdd2",
+      "sourceSha256": "c79c793858a7c6ecdbc96648d009a620e42e60a5622a1e76e2cc5edc28676f79",
       "font": "NotoSansSC-ff8f189e70990efb.ttf",
       "fontSha256": "f0dc583fb1c57f4321a6c6a59e9622df5fb3ad59a50b8f4afcc4797d6cbe3770"
     },
     "src/scores/xiao_ye_qu_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "705d22ccdab7c585948542bfe9626cddb2bd45ef90e5f2ab0beb80e116b663a8",
+      "sourceSha256": "9232d7e18027c46130b6b67619a4a15885c7b9931a32789ea539afef558708e3",
       "font": "NotoSansSC-4a79390d0e943582.ttf",
       "fontSha256": "f85c85d786c615318ee46e7c699c894683b8ded7049264feb7381eef1796b99f"
     },
     "src/scores/xin_bu_liao_qing_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 490,
       "numberedPages": 1,
-      "sourceSha256": "ee4d710e976ea3d508f2cf77340e113e62a31c9ddab49b54ab577bf5918e59ac",
+      "sourceSha256": "9dc972a4fa58af20bbd0eef56913b74f07fbbc22c617bd649b6ae14bbd1969b6",
       "font": "NotoSansSC-1f882d8c158ff897.ttf",
       "fontSha256": "c8eeb9d2d52efb52e5c043c2a3e8a7ebaa49a70741766e50b1ea850bdb986601"
     },
     "src/scores/xing_xing_dian_deng_01.m3n": {
       "numberedWidth": 560,
       "numberedPages": 2,
-      "sourceSha256": "e3001bf234e062321f65e0c4793c0f3ecc735cd121347ea92e7482709e0cec78",
+      "sourceSha256": "822af8800d1cc5ccdeb8c44b91c5cc81229543e0d4447656ffeaa9f7812f0d44",
       "font": "NotoSansSC-1eab012a0c3c1a76.ttf",
       "fontSha256": "d78fd637e06aea1c05a4457b03ebb4ebda9635cbb8d8aa6c2492a9a5bfc38994"
     },
     "src/scores/yan_hua_yi_leng_01.m3n": {
       "numberedWidth": 600,
       "numberedPages": 1,
-      "sourceSha256": "3dea1cabe000b5267a0eccb2e698c4d53434282de2e32f891397f320a1c852b4",
+      "sourceSha256": "9022aa65e1bbe7fdc47854d2327a10cb16e3187285e634b02332dd3ddfea3660",
       "font": "NotoSansSC-eb5b0512c72a4b32.ttf",
       "fontSha256": "3b890b8bda658173f88c82e957aef4c2ab3dbb7db1bd52f243184b40a714c159"
     },
     "src/scores/yi_qian_ge_shang_xin_de_li_you_01.m3n": {
       "numberedWidth": 560,
       "numberedPages": 1,
-      "sourceSha256": "10cee69570d7b7fb029cb2134539929abab6e209910f932b4f65633d1866ef13",
+      "sourceSha256": "bb5ab2688e78415a8c3af2236a3181a839c8b333f405478281aa96ced45610ad",
       "font": "NotoSansSC-e0613da2fd238217.ttf",
       "fontSha256": "bddbfc24e8f3cfa39230792e1d50f07cee068c48d38de6886f4d9d8d58679b19"
     },
     "src/scores/yong_yuan_tong_zai_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "16a204cb5aa86e8a25949ef5d5aeffe5994f42b9079434ea23a254e7f4b2c42e",
+      "sourceSha256": "7405286168ad2f6e49c10a5386c526b7ebf9e489bd49b5b0d17b3d0a042b06f2",
       "font": "NotoSansSC-64577d44dc7f928d.ttf",
       "fontSha256": "ac1ddf3c8c33cc094f2b7d4fa9d6f6f5d6f1ab739041c0e4bcc66f68c8420ee0"
     },
@@ -673,63 +673,63 @@
     "src/scores/yu_jian_01.m3n": {
       "numberedWidth": 540,
       "numberedPages": 1,
-      "sourceSha256": "650648c2288406a30fb65ce4e0380f2122c0030dfc6e83ca5512628ec59dc487",
+      "sourceSha256": "09fc6e2eb2f757714524846344d8414f70122d13fb1a6f35298a6cd27d71208c",
       "font": "NotoSansSC-99d26f1f13236276.ttf",
       "fontSha256": "7335b76441a20dee67065cd03d2c988b77544b8ba037656363845147968dbecd"
     },
     "src/scores/yue_ban_xiao_ye_qu_01.m3n": {
       "numberedWidth": 620,
       "numberedPages": 1,
-      "sourceSha256": "2a57ce89c983e7403510f368e726b0ddfb17f5c8cf01a281b39dc3815673e079",
+      "sourceSha256": "d242ac4eff13e24e79e5599c2a3839edd9e8e11ec5d590bc4d711b60e5fb277f",
       "font": "NotoSansSC-74513a500d0ac55c.ttf",
       "fontSha256": "d9427719ed33a3ba5d9c59a560944a77eb74400be2bcd7a85552e2ee8fded3f3"
     },
     "src/scores/yue_ding_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 530,
       "numberedPages": 1,
-      "sourceSha256": "656f9e6755b8df2490d5b3d6ee32f4f9be3bc04712f740222449eb77b71efead",
+      "sourceSha256": "99cc9ce75777c4d0a9f8e122db5378ba3d501233bb76e4fff3b5130d000fdf4d",
       "font": "NotoSansSC-2a8df76885b09fc7.ttf",
       "fontSha256": "bd6aff64cb488c76d160bbce2a5afcb2b644b45832157ff5542c3e2dcf64a103"
     },
     "src/scores/yue_liang_dai_biao_wo_de_xin_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 510,
       "numberedPages": 1,
-      "sourceSha256": "fb43bfd67b137fc10bffd58a6b3a6fece2490cfd4fbe39e770c2faa5f73a1798",
+      "sourceSha256": "ae4e92d6a8343150a955aa15d7fbaab5275224715cc49a296eac8d801090d72e",
       "font": "NotoSansSC-aa232fe57c671bd4.ttf",
       "fontSha256": "80ec1bc61cc2d3312d6cb87c2ecded1d06a1f3de31443fed7358c4db8df1ed8e"
     },
     "src/scores/zhi_ai_li_si_01.m3n": {
       "numberedWidth": 570,
       "numberedPages": 1,
-      "sourceSha256": "78375bfe8aa313e63feb8db59f0abef2c5a18c8517936e6d64df4db12b4c0c66",
+      "sourceSha256": "73a870b0e75672feecac6d226ddeb5a0ed2bd6a2667aa477e295c3378522176e",
       "font": "NotoSansSC-4764e569ecfa0bed.ttf",
       "fontSha256": "eba0f222a6e27b6a42400719c559fafc41587b2abcdfcee80167339fff29afc3"
     },
     "src/scores/zhi_dao_shi_jie_de_jin_tou_01.m3n": {
-      "numberedWidth": 540,
+      "numberedWidth": 480,
       "numberedPages": 1,
-      "sourceSha256": "9a59489f7cee093beddab870992019a4e4eea45be8bfa5f219896c318237dd0c",
+      "sourceSha256": "44d27d45bd5c8e534c59a95ba3e537ea2f2c88eedab01376101aa8a78b0619c1",
       "font": "NotoSansSC-23c844ae2f813884.ttf",
       "fontSha256": "a92052e7651ea5372d48e339552a97d7576dd74e8cb981107a0823800718867c"
     },
     "src/scores/zhui_meng_ren_01.m3n": {
       "numberedWidth": 560,
       "numberedPages": 1,
-      "sourceSha256": "19029a13eb7a266508b3d2a6d6ad5b4e6146b21d870c4f18bd001c7e501dc1e3",
+      "sourceSha256": "19ca6020f4ee1eb98609157aa07d139cfa149ae88a5c6ffacc2adb76e4381e04",
       "font": "NotoSansSC-872dd1e2b2ff3045.ttf",
       "fontSha256": "bfa6a1e44e7f91083657e01d2657bef312ba9e1e75b573f50f8bdb3c2f586bdf"
     },
     "src/scores/zui_chang_de_dian_ying_01.m3n": {
       "numberedWidth": 570,
       "numberedPages": 1,
-      "sourceSha256": "3f347e7aa2db7113479962dccca7d96e269b60d4e363854d11441bf0656755fc",
+      "sourceSha256": "11b14d0c2480aed8856f1e98389db35f38e34240dbf50c254343a0b3e2ce5497",
       "font": "NotoSansSC-03ac67d9191b9735.ttf",
       "fontSha256": "38ad939f59ed92eef91d25e1edb4c9a2628218539df14b4891fa16c3321d0d29"
     },
     "src/works/snail-mushroom-waves.m3n": {
       "numberedWidth": 570,
       "numberedPages": 1,
-      "sourceSha256": "4d83c23a48b3f7a36369eaa8d77d24459c6959aba5a9855ab69b34a5f81ebf97",
+      "sourceSha256": "f7b3dc150f926af3baadb63eec6db7517083f06a06e37a73294b4c8e44cc6be8",
       "font": "NotoSansSC-f9df963ac7b28699.ttf",
       "fontSha256": "e1dc1dd09ff6a1b97a98c8a19f5e29aebd4c014a84c1d30db8ab820d8518f525"
     }

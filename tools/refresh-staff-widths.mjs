@@ -23,7 +23,7 @@ const entries = [], hash = value => createHash('sha256').update(value).digest('h
 const rendererSha256 = hash(readFileSync(join(output, 'bundle/bundle.js')))
 const previous = existsSync(join(output, 'report.json')) ? JSON.parse(readFileSync(join(output, 'report.json'), 'utf8')) : undefined
 const reusable = new Map(!fresh && previous?.rendererSha256 === rendererSha256 ? previous.entries.map(entry => [entry.file, entry]) : [])
-const report = { rendererSha256, strategy: widthSearchStrategy, range: [540, 720], step: 5, candidateStep: 10, stabilityOffsets: [-5, 0, 5], criterion: 'minimum page count, then minimum width', entries }
+const report = { rendererSha256, strategy: widthSearchStrategy, range: [480, 640], step: 5, candidateStep: 10, stabilityOffsets: [-5, 0, 5], criterion: 'minimum page count, then minimum width', entries }
 const saveReport = () => {
   const path = join(output, 'report.json')
   writeFileSync(path + '.tmp', JSON.stringify({ ...report, entries: entries.filter(Boolean) }, null, 2) + '\n')
@@ -66,7 +66,7 @@ async function refresh() {
         best.stable = false
         best.rejection = 'Full SVG verification failed at the candidate or its 5px neighbors'
       }
-      assert(best, `${file}: no stable safe width in 540–720px`)
+      assert(best, `${file}: no stable safe width in 480–640px`)
       entries[index] = { file, sourceSha256: hash(source), width: best.width, pageCount: best.pageCount, candidates, renderCache, verificationCases }
       saveReport()
       console.log(`${index + 1}/${inputs.length} ${file}: ${best.width}px, ${best.pageCount} pages`)
