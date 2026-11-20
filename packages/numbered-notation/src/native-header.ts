@@ -72,14 +72,20 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const gap = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) * 0.1
     const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,'M3N Numbers')
     const place = (svg:string,x:number,role?:string) => `<g${role ? ` data-m3n-role="pitch-range-${role}"` : ''} transform="translate(${n(x)} 0)">${svg}</g>`
-    let rangeSvg = ''
-    let x = signatureX-Math.min(lowInk.left, -zero.w / 2)
+    const label = '音域：'
+    const labelMetrics = measurer.measureText(label, { fontSize: size, fontFamily: 'serif' })
+    let rangeSvg = painter.text(label,0,axis + labelMetrics.baseline - labelMetrics.h / 2,size,'serif', { 'data-m3n-role': 'pitch-range-label' })
+    let x = Math.max(labelMetrics.w, labelMetrics.advance ?? 0)+gap-Math.min(lowInk.left, -zero.w / 2)
     rangeSvg += place(low,x,'low')
     x += Math.max(lowInk.right, zero.w / 2)+gap
     rangeSvg += place(separator,x)
     x += (separatorMetrics.advance ?? separatorMetrics.w)+gap-Math.min(highInk.left, -zero.w / 2)
     rangeSvg += place(high,x,'high')
-    signaturePieces.push(`<g data-m3n-role="pitch-range">${rangeSvg}</g>`)
+    const rangeInk = nativeSvgInk(rangeSvg, measurer)
+    const wrap = signatureX + rangeInk.right > width - margin
+    const rangeX = wrap ? margin : signatureX
+    const rangeY = wrap ? nativeSvgInk(signaturePieces.join(''), measurer).bottom + em(5) - rangeInk.top : 0
+    signaturePieces.push(`<g data-m3n-role="pitch-range" transform="translate(${n(rangeX)} ${n(rangeY)})">${rangeSvg}</g>`)
   }
   const signatureSvg = signaturePieces.join('')
   const signatureInk = nativeSvgInk(signatureSvg, measurer)

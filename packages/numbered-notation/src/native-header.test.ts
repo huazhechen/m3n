@@ -114,7 +114,8 @@ it('aligns range numerals and separator to the measured music axis', () => {
     const geometry = nativeHeaderGeometry(doc, 800, 32, varied);
     const root = new DOMParser().parseFromString(`<svg>${geometry.svg}</svg>`, 'image/svg+xml');
     const parts = [...root.querySelector('[data-m3n-role="pitch-range"]')!.children];
-    expect(parts).toHaveLength(3);
+    expect(parts).toHaveLength(4);
+    expect(parts[0]!.textContent).toBe('音域：');
     const zero = varied.measureText('0', { fontSize: 22 }), axis = zero.h / 2 - zero.baseline;
     for (const part of parts) {
         const ink = nativeSvgInk(part.outerHTML, varied);
@@ -133,7 +134,7 @@ it('reserves a complete numeral body for narrow range digits', () => {
     const separators = ['1', '2'].map(low => {
         const geometry = nativeHeaderGeometry(parseM3NDocument(`{2/4}\nN: ${low} 5 |||`), 800, 32, varied);
         const root = new DOMParser().parseFromString(`<svg>${geometry.svg}</svg>`, 'image/svg+xml');
-        return root.querySelector('[data-m3n-role="pitch-range"]')!.children[1]!.getAttribute('transform');
+        return root.querySelector('[data-m3n-role="pitch-range"]')!.children[2]!.getAttribute('transform');
     });
     expect(separators[0]).toBe(separators[1]);
 });
