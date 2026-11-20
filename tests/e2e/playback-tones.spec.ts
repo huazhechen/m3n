@@ -84,6 +84,26 @@ test('saved piano waits for Play and cached playback never opens a loading dialo
   expect(await page.evaluate(() => (window as Window & { toneDialogs: number }).toneDialogs)).toBe(0)
 })
 
+test('an uncached tone keeps its dialog through preparation after a fast download', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('m3n:playback-tone', 'piano'))
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  await page.route('**/*spessasynth_processor*', async route => { await gate; await route.continue().catch(() => {}) })
+  await page.goto('/scores/huan_le_song_01')
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  try {
+    // At this point the sample has downloaded, but the audio engine is still loading.
+    await expect.poll(() => page.evaluate(async () =>
+      (await (await caches.open('m3n-fluidr3-q3-v1')).keys()).length,
+    )).toBe(1)
+    const dialog = page.getByRole('dialog', { name: '加载钢琴音色', exact: true })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByRole('status')).toContainText('正在准备钢琴音色')
+  } finally { release() }
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
+  await expect(page.locator('.playback-loading-dialog')).toHaveCount(0)
+})
+
 test('download has progress, cancellation and retry on a narrow screen', async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 844 })
   await page.goto('/scores/huan_le_song_01')

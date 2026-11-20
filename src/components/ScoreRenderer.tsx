@@ -195,9 +195,13 @@ export function ScoreRenderer({
   toneRef.current = playbackTone
   const [toneLoading, setToneLoading] = useState(false)
   const [toneProgress, setToneProgress] = useState<ToneLoadProgress | null>(null)
+  const [toneDownloadStarted, setToneDownloadStarted] = useState(false)
   const readyToneRef = useRef<typeof playbackTone>('synth')
   useEffect(() => subscribeToneLoadProgress(progress => {
-    if (progress.tone === toneRef.current) setToneProgress(progress)
+    if (progress.tone === toneRef.current) {
+      setToneProgress(progress)
+      if (progress.stage === 'download') setToneDownloadStarted(true)
+    }
   }), [])
   const [toneError, setToneError] = useState('')
   const [toneRetry, setToneRetry] = useState(0)
@@ -467,6 +471,7 @@ export function ScoreRenderer({
     setToneError('')
     setToneLoading(false)
     setToneProgress(null)
+    setToneDownloadStarted(false)
     // A paused player applies the selection on the next explicit play request.
     if (!playerRef.current || playerRef.current.paused) return
     setToneLoading(true)
@@ -498,6 +503,7 @@ export function ScoreRenderer({
     setIsPlayRequest(true)
     setToneError('')
     setToneProgress(null)
+    setToneDownloadStarted(false)
     setToneLoading(true)
     try {
       activateAudio()
@@ -513,6 +519,7 @@ export function ScoreRenderer({
       }
       if (!isCurrent()) return
       readyToneRef.current = tone
+      setToneLoading(false)
       scorePlaybackCoordinator.claim(playbackLeaseRef.current)
       setIsPlaying(true)
       await player.play()
@@ -605,7 +612,7 @@ export function ScoreRenderer({
         description="正在加载五线谱所需资源，请稍候…"
         progressLabel="五线谱资源加载进度"
       />}
-      {isPlayRequest && toneLoading && toneProgress?.stage === 'download' && <PlaybackLoadingDialog
+      {isPlayRequest && toneLoading && toneDownloadStarted && <PlaybackLoadingDialog
         tone={playbackTone}
         progress={toneProgress}
         onCancelTone={() => {
