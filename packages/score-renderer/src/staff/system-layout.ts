@@ -15,7 +15,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { node: XmlNode; pieces: Ink[]; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
+export type StaffSystem = { node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
   'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row', 'm3n-ending-row',
@@ -247,8 +247,9 @@ export function arrangeStaffSystem(
     if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - 12 / scale - ink.bottom
     if (hasClass(attachment, 'mNum')) {
       const endings = findAll(node, (n) => hasClass(n, 'ending'))
-      if (endings.length)
-        dy = Math.min(0, union(endings.flatMap((ending) => geometry.pieces(ending))).top - 8 / scale - ink.bottom)
+        .map((ending) => geometry.ink(ending))
+        .filter((ending) => ending.right > ending.left && ending.bottom > ending.top && overlapsX(ink, ending))
+      if (endings.length) dy = Math.min(0, Math.min(...endings.map((ending) => ending.top)) - 8 / scale - ink.bottom)
     }
     // Consecutive wedges may share a baseline with a small real gap between
     // their endpoints; horizontal padding must not invent a second lane.
@@ -314,9 +315,11 @@ export function arrangeStaffSystem(
       .pieces(filtered(node, isDecoration))
       .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })),
   )
+  const spacingPieces = geometry.pieces(filtered(node, (child) => hasClass(child, 'ending') || hasClass(child, 'mNum')))
+    .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
   const lyricInk = union(findAll(node, (n) => hasClass(n, 'verse')).flatMap((verse) => geometry.pieces(verse)))
   if (lyricInk.bottom > lyricInk.top) core.bottom = Math.max(core.bottom, lyricInk.bottom * scale)
-  return { node, pieces, ink: union(pieces), core, section: Boolean(findAll(node, (n) => hasClass(n, 'reh')).length), staffSpacing }
+  return { node, pieces, spacingPieces, ink: union(pieces), core, section: Boolean(findAll(node, (n) => hasClass(n, 'reh')).length), staffSpacing }
 }
 const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, number>>()
 export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number): number {
@@ -328,8 +331,8 @@ export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: nu
   let collision = following.get(next)
   if (collision === undefined) {
     collision = -Infinity
-    for (const a of previous.pieces)
-      for (const b of next.pieces) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
+    for (const a of previous.spacingPieces)
+      for (const b of next.spacingPieces) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
     following.set(next, collision)
   }
   return Math.max(previous.core.bottom + gap - next.core.top, collision + gap / 2) + (next.section ? 12 : 0)

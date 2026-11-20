@@ -294,3 +294,29 @@ test('staff volta hooks, separation, and music clearance stay correct', async ({
     expect(gap).toBeLessThanOrEqual(4)
   }
 })
+
+test('besame staff spacing stays compact with ending brackets', async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 1180 })
+  await page.addInitScript(() => localStorage.setItem('m3n:measure-numbers', '1'))
+  await page.goto('/scores/besame_mucho_01')
+  await selectNotationMode(page, '五线谱')
+  const paper = page.locator('.score-paper')
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  const rows = await paper.locator('g.system').evaluateAll(systems => systems.slice(0, 3).map(system => {
+    const staffLines = [...system.querySelectorAll('g.staff path')].map(path => (path as SVGGraphicsElement).getBoundingClientRect())
+      .filter(box => box.width > 100 && box.height < 2)
+    return { top: Math.min(...staffLines.map(box => box.top)), bottom: Math.max(...staffLines.map(box => box.bottom)) }
+  }))
+  expect(rows.length).toBe(3)
+  const gaps = rows.slice(1).map((row, index) => row.top - rows[index]!.bottom)
+  const rowsWithNumbers = await paper.locator('g.system').evaluateAll(systems => systems.slice(0, 4).map(system => {
+    const paths = [...system.querySelectorAll('g.staff path')].map(path => (path as SVGGraphicsElement).getBoundingClientRect())
+      .filter(box => box.width > 100 && box.height < 2)
+    const number = system.querySelector('g.mNum')?.getBoundingClientRect()
+    return { staffTop: Math.min(...paths.map(path => path.top)), numberTop: number?.top, numberBottom: number?.bottom }
+  }))
+  for (const row of rowsWithNumbers) {
+    if (row.numberBottom !== undefined) expect(row.staffTop - row.numberBottom).toBeLessThan(32)
+  }
+  for (const gap of gaps) expect(gap).toBeLessThan(40)
+})

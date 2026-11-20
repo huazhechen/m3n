@@ -254,6 +254,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           for (const system of systems) {
             translate(system.node, musicInset / STAFF_SCALE, 0)
             system.pieces = system.pieces.map((piece) => moveInk(piece, musicInset, 0))
+            system.spacingPieces = system.spacingPieces.map((piece) => moveInk(piece, musicInset, 0))
             system.ink = moveInk(system.ink, musicInset, 0)
             system.core = moveInk(system.core, musicInset, 0)
           }
