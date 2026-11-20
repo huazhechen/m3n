@@ -23,6 +23,15 @@ describe('optional staff projection', () => {
     expect(scoreToMei(score)).toContain('<rend fontweight="bold" halign="left">音阶训练</rend>')
   })
 
+  it('engraves compound-meter tempo with a dotted-quarter beat and balanced spacing', () => {
+    const score = analyzeM3N('{6/8}{120qpm}\nN: 1 2 3 4 5 6 |||').score
+    const mei = scoreToMei(score)
+    expect(mei).toContain('glyph.name="metNoteQuarterUp"')
+    expect(mei).toContain('glyph.name="augmentationDot"')
+    expect(mei).toContain('midi.bpm="120">')
+    expect(mei).toContain('&#160;&#160;=&#160;&#160;80</tempo>')
+  })
+
   it('prints keyed and octave-shifted visits with matching lyrics and playback identities', () => {
     const score = analyzeM3N('{key=C}{4/4}{order=A,A@D5}\n===A\nN: 1 2 3 4 |||\nL1: 春夏秋冬\nL2: 山川天地').score
     const before = structuredClone(score)

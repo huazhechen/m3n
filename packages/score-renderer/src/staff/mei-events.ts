@@ -30,7 +30,7 @@ export function meiTempoXml(qpm: number, meterUnit: number, position: string, id
   const value = Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(2).replace(/\.00$|0$/g, '')
   const dot = display.dots ? '<rend glyph.auth="smufl" glyph.name="augmentationDot" glyph.num="U+E1E7">&#xE1E7;</rend>' : ''
   const note = `<rend glyph.auth="smufl" glyph.name="${glyph.name}" glyph.num="${glyph.num}">&#x${glyph.num.slice(2)};</rend>`
-  return `<tempo xml:id="${id}" staff="1" ${position} midi.bpm="${qpm}">${note}${dot} = ${value}</tempo>`
+  return `<tempo xml:id="${id}" staff="1" ${position} midi.bpm="${qpm}">${note}${dot}&#160;&#160;=&#160;&#160;${value}</tempo>`
 }
 
 export function meiEventXml(
