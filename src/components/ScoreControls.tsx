@@ -1,12 +1,13 @@
 import { useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PLAYBACK_TONES, type PlaybackTone } from '@m3n/score-renderer/tones'
-import { NOTATION_MODES, type NotationMode, PLAYBACK_BPM_MIN, PLAYBACK_BPM_MAX } from '../lib/renderer-settings'
+import { NOTATION_MODES, type NotationMode } from '../lib/renderer-settings'
 
 import { CIRCLE_OF_FIFTHS, TRANSPOSE_KEYS, currentKeyIndex, isMinorKey, keyPitchClass, nearestKeyTranspose } from '../lib/transpose-key'
 import { CircleOfFifths } from './CircleOfFifths'
 import { ScoreControlIcon } from './ScoreControlIcon'
 import { ScoreWidthControl } from './ScoreWidthControl'
+import { PlaybackSpeedControl } from './PlaybackSpeedControl'
 
 type ScoreControlsProps = {
   playbackOnly?: boolean
@@ -78,11 +79,7 @@ export function ScoreControls(props: ScoreControlsProps) {
       <div ref={settingsRef} id={settingsId} popover="auto" role="dialog" aria-label="乐谱设置" className="control-settings-popover" onToggle={event => setSettingsOpen(event.newState === 'open')}>
         <div className="control-settings-header"><strong>乐谱设置</strong><button type="button" className="control-button" aria-label="关闭乐谱设置" onClick={() => settingsRef.current?.hidePopover()}>×</button></div>
         <div className="control-sliders">
-      <div className="control-slider-row">
-        <span className="control-row-label">速度<output>{props.bpm} BPM</output></span>
-        <input type="range" min={PLAYBACK_BPM_MIN} max={PLAYBACK_BPM_MAX} step="1" value={props.bpm} aria-label="播放速度" onChange={event => props.onBpmChange(Number(event.currentTarget.value))} />
-        <button type="button" className="control-button" aria-label="还原速度" title="还原乐谱原速" onClick={props.onResetBpm}><ScoreControlIcon name="reset" /></button>
-      </div>
+      <PlaybackSpeedControl bpm={props.bpm} onChange={props.onBpmChange} onReset={props.onResetBpm} />
       <ScoreWidthControl width={props.width} onChange={props.onWidthChange} onReset={props.onResetWidth} />
 
         </div>

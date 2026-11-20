@@ -29,7 +29,7 @@ export function ScoreWidthControl({ width, onChange, onReset }: Props) {
 
   return <div className="control-slider-row">
     <span className="control-row-label">宽度<output>{draft ?? width}px</output></span>
-    <div className="control-width-adjuster">
+    <div className="control-range-adjuster">
       <button type="button" className="control-button" aria-label="减小乐谱宽度" title="减至上一个10px档位" disabled={width <= SCORE_WIDTH_MIN}
         onClick={() => onChange(stepScoreWidth(width, -1))}>−</button>
       <input type="range" min={SCORE_WIDTH_MIN} max={SCORE_WIDTH_MAX} step={SCORE_WIDTH_STEP} value={draft ?? width} aria-label="乐谱宽度" aria-valuetext={`${draft ?? width}px`}
