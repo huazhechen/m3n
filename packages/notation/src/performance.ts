@@ -102,7 +102,7 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
             const tied = previous.get(pitch)
             if (tied && tied.target === xmlId && Math.abs(tied.note.end - cursor) < 1e-7 && (event.kind !== 'tuplet' || slot === 0)) tied.note.end = end
             else {
-              const note = { start, end, pitch, channel, velocity: 127 }
+              const note = { start, end, pitch, channel, velocity: 64 }
               result.notes.push(note)
               markTrill(note)
               if (outgoing) next.set(pitch, { note, target: tieTargets.get(xmlId) })
@@ -126,7 +126,7 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
             graces.forEach((grace, group) => {
               const duration = requested[group]! * scale / Math.max(1, grace.pitches.length)
               for (const token of grace.pitches) {
-                result.notes.push({ start: onset, end: onset + duration, pitch: gracePitch(token, event), channel, velocity: 127 })
+                result.notes.push({ start: onset, end: onset + duration, pitch: gracePitch(token, event), channel, velocity: 64 })
                 onset += duration
               }
             })

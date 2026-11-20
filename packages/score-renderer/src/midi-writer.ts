@@ -38,8 +38,7 @@ export function writePerformanceMidi(performance: ScorePerformance): ArrayBuffer
   for (const channel of channels) {
     const events: MidiEvent[] = [
       { tick: 0, priority: 0, data: [0xc0 | channel, 0] },
-      // Full channel volume: the synth's default 100 adds another attenuation.
-      { tick: 0, priority: 0, data: [0xb0 | channel, 7, 127] },
+      { tick: 0, priority: 0, data: [0xb0 | channel, 7, 100] },
     ]
     for (const note of performance.notes.filter(note => note.channel === channel)) {
       const start = performanceTick(note.start), finish = performanceTick(note.end)
