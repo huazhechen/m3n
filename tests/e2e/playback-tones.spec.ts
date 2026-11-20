@@ -26,7 +26,7 @@ test('default needs no samples; five FluidR3 q3 instruments load on demand and p
   expect(samples).toHaveLength(0)
   await page.getByRole('button', { name: '暂停', exact: true }).click()
   const timings: Record<string, number> = {}
-  for (const label of ['钢琴', '口琴', '钢弦吉他', '小提琴', '长笛']) {
+  for (const label of ['钢琴', '口琴', '吉他', '小提琴', '长笛']) {
     const start = Date.now()
     await selectTone(page, label)
     await ready(page)
@@ -211,7 +211,7 @@ test('full-volume playback stays audible and compresses dense chords without cli
   await page.getByRole('button', { name: '暂停', exact: true }).click()
 })
 
-for (const label of ['合成', '钢琴', '钢弦吉他', '口琴', '小提琴', '长笛']) {
+for (const label of ['合成', '钢琴', '吉他', '口琴', '小提琴', '长笛']) {
   test(`${label} has clear monophonic output after mastering`, async ({ page }) => {
     await auditFinalOutput(page)
     await page.goto('/editor')
@@ -228,7 +228,7 @@ for (const label of ['合成', '钢琴', '钢弦吉他', '口琴', '小提琴', 
   })
 }
 
-for (const label of ['钢琴', '钢弦吉他', '口琴', '小提琴', '长笛']) {
+for (const label of ['钢琴', '吉他', '口琴', '小提琴', '长笛']) {
   test(`${label} dense sampled chords stay below the output ceiling`, async ({ page }) => {
     await auditFinalOutput(page)
     await page.goto('/editor')
