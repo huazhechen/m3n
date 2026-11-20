@@ -241,7 +241,7 @@ test('fixed C spelling and measure numbers toggle independently and persist', as
   const digits = () => paper.locator('g.note[data-m3n-id] text').allTextContents()
   await expect.poll(digits).toEqual(['1', '2', '3', '4'])
   await openScoreSettings(page)
-  await expect(fixed.locator('svg')).toHaveText('♯')
+  await expect(fixed).toHaveAccessibleName('选择记谱方式，当前首调')
   await openScoreSettings(page)
   await selectNotationMode(page, '固定调')
   await expect(paper).toHaveAttribute('data-fixed-do', 'true')

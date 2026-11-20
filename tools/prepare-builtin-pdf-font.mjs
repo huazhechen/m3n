@@ -13,6 +13,7 @@ export function builtinPdfCharacters() {
   const read = file => readFileSync(join(root, file), 'utf8')
   const inputs = [read('config/scorebook/editorial-plan.json'), read('src/lib/online-scorebook.ts')]
   for (const file of readdirSync(join(root, 'src/scores')).filter(file => file.endsWith('.m3n')).sort()) inputs.push(read(`src/scores/${file}`))
+  for (const file of readdirSync(join(root, 'src/works')).filter(file => file.endsWith('.m3n')).sort()) inputs.push(read(`src/works/${file}`))
   for (const file of readdirSync(join(root, 'packages/numbered-notation/src')).filter(file => file.endsWith('.ts') && !file.endsWith('.test.ts')).sort()) inputs.push(read(`packages/numbered-notation/src/${file}`))
   inputs.push(Array.from({ length: 95 }, (_, index) => String.fromCharCode(index + 32)).join(''))
   return [...new Set(inputs.join(''))].filter(char => char.codePointAt(0) >= 32).sort((a, b) => a.codePointAt(0) - b.codePointAt(0)).join('')

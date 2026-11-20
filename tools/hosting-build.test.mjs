@@ -27,7 +27,44 @@ test('production HTML keeps hashed entry scripts and deferred application chunks
 })
 
 import { scoreCatalogPlugin } from './score-catalog-plugin.ts'
+import { worksCatalogPlugin } from './works-catalog-plugin.ts'
 import { publishWeb, retentionMs } from './publish-web.mjs'
+
+test('unlisted works stay outside the public catalog and book and preserve code hashes', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'm3n-works-build-'))
+  try {
+    for (const folder of ['src/scores', 'src/works', 'src/assets', 'config/scorebook']) await mkdir(join(root, folder), { recursive: true })
+    await writeFile(join(root, 'index.html'), '<script type="module" src="/main.js"></script>')
+    await writeFile(join(root, 'main.js'), `import scores, { initializeCatalog, getScorebookPlan } from 'virtual:m3n-score-catalog'; import { getWorks, loadWorkSource } from 'virtual:m3n-works-catalog'; initializeCatalog().then(() => console.log(scores, getScorebookPlan(), getWorks(), loadWorkSource));`)
+    await writeFile(join(root, 'config/scorebook/library-categories.json'), '[]')
+    await writeFile(join(root, 'config/scorebook/editorial-plan.json'), '{"entries":[]}')
+    await writeFile(join(root, 'src/assets/builtin-pdf-text.ttf'), 'font')
+    const compile = async () => {
+      await build({ root, configFile: false, base: '/score/', plugins: [scoreCatalogPlugin(), worksCatalogPlugin()], logLevel: 'silent', build: { assetsDir: 'assets/v2' } })
+      const output = join(root, 'dist')
+      const files = (await readdir(join(output, 'assets/v2'))).filter(file => file.endsWith('.js'))
+      return {
+        js: await Promise.all(files.sort().map(file => readFile(join(output, 'assets/v2', file), 'utf8'))),
+        works: JSON.parse(await readFile(join(output, 'works-catalog.json'), 'utf8')),
+        public: JSON.parse(await readFile(join(output, 'score-catalog.json'), 'utf8')),
+      }
+    }
+    const empty = await compile()
+    assert.deepEqual(empty.works, [])
+    const source = '{title=Private work}{key=C#}{4/4}\nN: 1 2 3 4 |||'
+    await writeFile(join(root, 'src/works/medley.m3n'), source)
+    const added = await compile()
+    assert.deepEqual(added.js, empty.js)
+    assert.deepEqual(added.public, empty.public)
+    assert.equal(added.works[0].slug, 'medley')
+    assert.equal(await readFile(join(root, 'dist', added.works[0].sourceUrl), 'utf8'), source)
+    assert.ok(added.js.join('').includes('/score/works-catalog.json'))
+    await writeFile(join(root, 'src/works/medley.m3n'), source.replace('1 2 3 4', '4 3 2 1'))
+    const edited = await compile()
+    assert.deepEqual(edited.js, added.js)
+    assert.notEqual(edited.works[0].sourceUrl, added.works[0].sourceUrl)
+  } finally { await rm(root, { recursive: true, force: true }) }
+})
 
 test('score edits, additions, book metadata and font updates preserve every JavaScript hash', async () => {
   const root = await mkdtemp(join(tmpdir(), 'm3n-catalog-build-'))

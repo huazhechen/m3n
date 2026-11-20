@@ -20,7 +20,7 @@ export function NavActionContent({ action }: { action: keyof typeof navActions }
   return <><NavActionIcon action={action} /><span className="nav-action-label">{navActions[action].label}</span></>
 }
 
-export function TopNav({ actions }: { actions?: ReactNode }) {
+export function TopNav({ actions, libraryTo = '/scores', libraryLabel = '乐谱库' }: { actions?: ReactNode; libraryTo?: string; libraryLabel?: string }) {
   return (
     <header className="top-nav">
       <NavLink to="/" className="brand-mark">
@@ -29,7 +29,7 @@ export function TopNav({ actions }: { actions?: ReactNode }) {
       </NavLink>
       <nav aria-label="主导航">
         {actions}
-        <NavLink to="/scores" aria-label="乐谱库" title="乐谱库"><NavActionContent action="library" /></NavLink>
+        <NavLink to={libraryTo} aria-label={libraryLabel} title={libraryLabel}><NavActionIcon action="library" /><span className="nav-action-label">{libraryLabel}</span></NavLink>
       </nav>
     </header>
   )

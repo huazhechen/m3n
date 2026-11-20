@@ -18,7 +18,7 @@ for (const width of [390, 1280]) {
     await expect(page.locator('.hero-actions .primary-link')).toHaveCount(1)
 
     const sample = page.getByRole('region', { name: '用一首《欢乐颂》，开始今天的练习' })
-    await expect(sample.getByRole('heading', { level: 2 })).toBeVisible()
+    await expect(sample.getByRole('heading', { level: 2, name: '用一首《欢乐颂》，开始今天的练习', exact: true })).toBeVisible()
     await expect(sample).toHaveClass(/markdown-panel/)
     await expect(sample).toHaveCSS('background-color', 'rgb(255, 255, 255)')
     const features = page.getByLabel('M3N 功能')

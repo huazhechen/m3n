@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { analyzeM3N, formatScoreDiagnostic } from '@m3n/notation'
 import { ScoreRenderer } from '../components/ScoreRenderer'
 import { ScoreExportDialog } from '../components/ScoreExportDialog'
@@ -12,11 +12,22 @@ import type { ScoreDisplaySettings } from '../lib/render-score'
 import { readRenderMode } from '../lib/renderer-settings'
 import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
 
-export function ScoreReaderPage() {
+export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'scores' | 'works' }) {
   const { slug } = useParams()
-  const orderedScores = useMemo(() => sortScoresByCategory(presetScores), [])
+  const [works, setWorks] = useState<typeof presetScores>([])
+  const basePath = collection === 'works' ? '/works' : '/scores'
+  const navProps = collection === 'works' ? { libraryTo: basePath, libraryLabel: '独立作品' } : {}
+  const orderedScores = useMemo(() => collection === 'works' ? works : sortScoresByCategory(presetScores), [collection, works])
   const score = orderedScores.find((item) => item.slug === slug)
-  const { source: scoreSource, status, error, retry } = useScoreSource(slug)
+  const { source: scoreSource, status, error, retry } = useScoreSource(slug, collection)
+  useEffect(() => {
+    if (collection !== 'works') return
+    let cancelled = false
+    void import('../lib/works').then(module => module.getWorks()).then(value => {
+      if (!cancelled) setWorks(value)
+    }).catch(() => { /* Source loading owns the retry UI. */ })
+    return () => { cancelled = true }
+  }, [collection, slug, status])
   const exportDialogRef = useRef<ScoreExportDialogRef>(null)
   const [displaySettings, setDisplaySettings] = useState<ScoreDisplaySettings | null>(null)
   const [exportError, setExportError] = useState('')
@@ -24,7 +35,7 @@ export function ScoreReaderPage() {
   const { invalidMeasureIds: invalidMeasures } = analysis
   const result = { ...analysis.score, ...analysis.interaction, diagnostics: analysis.diagnostics }
 
-  if (status !== 'ready') return <main><TopNav /><ScoreLoadStatus status={status} error={error} onRetry={retry} /></main>
+  if (status !== 'ready') return <main><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
 
   const scoreIndex = score ? orderedScores.indexOf(score) : -1
   const previousScore = scoreIndex > 0 ? orderedScores[scoreIndex - 1] : undefined
@@ -32,17 +43,17 @@ export function ScoreReaderPage() {
 
   return (
     <main>
-      <TopNav actions={<div className="score-reader-actions">
+      <TopNav {...navProps} actions={<div className="score-reader-actions">
         <div className="score-reader-navigation" role="group" aria-label="切换曲目">
           {score && previousScore ? (
-            <Link className="action-button" aria-label="上一曲" title="上一曲" to={`/scores/${previousScore.slug}`}>
+            <Link className="action-button" aria-label="上一曲" title="上一曲" to={`${basePath}/${previousScore.slug}`}>
               <NavActionContent action="previous" />
             </Link>
           ) : (
             <span className="action-button is-disabled" role="link" aria-label="上一曲" title="上一曲" aria-disabled="true"><NavActionContent action="previous" /></span>
           )}
           {score && nextScore ? (
-            <Link className="action-button" aria-label="下一曲" title="下一曲" to={`/scores/${nextScore.slug}`}>
+            <Link className="action-button" aria-label="下一曲" title="下一曲" to={`${basePath}/${nextScore.slug}`}>
               <NavActionContent action="next" />
             </Link>
           ) : (
@@ -59,7 +70,7 @@ export function ScoreReaderPage() {
           >
             <NavActionContent action="print" />
           </button>
-          <Link className="action-button" aria-label="编辑" title="编辑" to={`/editor/${slug}`}>
+          <Link className="action-button" aria-label="编辑" title="编辑" to={collection === 'works' ? `/works/${slug}/edit` : `/editor/${slug}`}>
             <NavActionContent action="edit" />
           </Link>
         </div>
@@ -67,7 +78,7 @@ export function ScoreReaderPage() {
       <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
           fitPagedToViewport
-          scoreId={slug}
+          scoreId={collection === 'works' ? `works:${slug}` : slug}
           scoreDocument={analysis.score}
 
           sourceMap={result.sourceMap}

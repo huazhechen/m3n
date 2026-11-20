@@ -29,7 +29,7 @@ describe('Cloudflare KV score API', () => {
     if (method === 'HEAD') expect(await response.text()).toBe('')
   })
 
-  it.each(['/score-catalog.json', '/asset-history.json'])('rejects SPA fallback for missing data (%s)', async path => {
+  it.each(['/score-catalog.json', '/works-catalog.json', '/asset-history.json'])('rejects SPA fallback for missing data (%s)', async path => {
     const { worker } = testWorker(() => new Response('<html>SPA</html>', { headers: { 'content-type': 'text/html' } }))
     const response = await worker.fetch(new Request(`https://m3n.example${path}`))
     expect(response.status).toBe(404)

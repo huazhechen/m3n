@@ -9,6 +9,8 @@ const EditorPage = lazy(() => import('./pages/EditorPage').then(({ EditorPage: P
 const ScoresPage = lazy(() => import('./pages/ScoresPage').then(({ ScoresPage: Page }) => ({ default: Page })))
 const ScoreReaderPage = lazy(() => import('./pages/ScoreReaderPage').then(({ ScoreReaderPage: Page }) => ({ default: Page })))
 const ConverterPage = lazy(() => import('./pages/ConverterPage').then(({ ConverterPage: Page }) => ({ default: Page })))
+const WorksPage = lazy(() => import('./pages/WorksPage').then(({ WorksPage: Page }) => ({ default: Page })))
+const WorksLayout = lazy(() => import('./pages/WorksLayout').then(({ WorksLayout: Page }) => ({ default: Page })))
 
 function isH123Host() {
   return typeof window !== 'undefined' && window.location.hostname.split('.')[0]?.toLowerCase() === 'h123'
@@ -37,6 +39,11 @@ export default function App() {
             <Route path="/editor/:scoreId?" element={<EditorPage />} />
             <Route path="/scores" element={<ScoresPage />} />
             <Route path="/scores/:slug" element={<ScoreReaderPage />} />
+            <Route path="/works" element={<WorksLayout />}>
+              <Route index element={<WorksPage />} />
+              <Route path=":slug" element={<ScoreReaderPage collection="works" />} />
+              <Route path=":scoreId/edit" element={<EditorPage collection="works" />} />
+            </Route>
             <Route path="/docs" element={<LegacyDocsRedirect />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
