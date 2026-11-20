@@ -40,6 +40,7 @@ export function documentSettings(tree: M3NSyntaxTree) {
   }
 
   let key = 'C'
+  let initialKeyPasses: string[] | undefined
   let meterCount = 4
   let meterUnit = 4
   let tempo = 120
@@ -49,7 +50,11 @@ export function documentSettings(tree: M3NSyntaxTree) {
     if (token.kind !== 'attribute') continue
     const value = token.content ?? ''
     if (value.startsWith('rest=')) break
-    if (value.startsWith('key=')) key = value.slice(4).trim()
+    if (value.startsWith('key=')) {
+      const keys = value.slice(4).split(',').map(key => key.trim())
+      key = keys[0]!
+      initialKeyPasses = keys.length > 1 ? keys : undefined
+    }
     const meter = /^(\d+)\/(\d+)$/.exec(value)
     if (meter) {
       meterCount = Number(meter[1])
@@ -61,5 +66,5 @@ export function documentSettings(tree: M3NSyntaxTree) {
       hasExplicitTempo = true
     }
   }
-  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, ...(minimumCoreGapEm !== undefined ? {minimumCoreGapEm} : {}), preferredWidth, staffPreferredWidth, key, meterCount, meterUnit, tempo, hasExplicitTempo }
+  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, ...(minimumCoreGapEm !== undefined ? {minimumCoreGapEm} : {}), preferredWidth, staffPreferredWidth, key, initialKeyPasses, meterCount, meterUnit, tempo, hasExplicitTempo }
 }

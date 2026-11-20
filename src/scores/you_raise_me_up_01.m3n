@@ -1,59 +1,32 @@
-{preferred-width=680}
+{preferred-width=610}
 {title=You Raise Me Up}
 {composer=Rolf Lovland}
 {lyricist=Brendan Graham}
 {key=Eb} {4/4} {60qpm}
 // Reference supplied by the user:
 // https://iknow-pic.cdn.bcebos.com/58ee3d6d55fbb2fb4fbb739f434a20a44723dcae
-// Expanded in performed order, including the F-major return and coda.
+// Repeat the common verse and chorus in Eb, then F; take the numbered endings.
 // The image gives no numeric tempo; retain 60qpm.
 N: (0 5d) (5d 1) |
 L: When I am
----
-N: 3. (1) (2. (1)) (1 6d) | (5d) 1. (0 7d) (1 3) |
+---V1
+N: ||: {key=Eb,F}3. (1) (2. (1)) (1 6d) | (5d) 1. (0 7d) (1 3) |
 L: down, And oh my soul so | wear-y, When trou-bles
----
-N: 5. (1) (6. (5)) (5 3) | 2^ (0 5) (6 7) |
-L: come, And my heart bur-dened | be, Then I am
----
-N: 1e. (1e) (7 6) (5 4) | 5 1 (0 1) (5 4) |
-L: still, And wait here in the | si-lence, Un-til you
----
-N: 3. (4) (3 2) (1 7d) | 1^ (0 5) (6 7) ||
-L: come, And sit a while with | me. You raise me
----
-N: 1e. (1e) (7 6) (5 4) | 5 3 (0 5) (2e 7) |
-L: up, So I can stand on | moun-tains, You raise me
----
-N: 1e. (1e) (7 6) (5 4) | 5^ (0 5) (5 7) |
-L: up, To walk on storm-y | seas, % I am
----
-N: 1e. (1e) (7 6) (5 4) | 5 1e (0 1) (5 4) | 3. (4) (3 2) (1 7d) ||
-L: strong, When I am on your | shoul-ders, You raise me | up, To more than I can
----
-N: 1^. 0 | {key=E}0 0 (0 5) (6 7) |
-L: be. | You raise me
----
-N: 1e. (1e) (7 6) (5 4) | 5 3 (0 5) (2e 7) |
-L: up, So I can stand on | moun-tains, You raise me
----
-N: 1e. (1e) (7 6) (5 4) | 5^ (0 5) (5 4) |
-L: up, To walk on storm-y | seas, % I am
----
-N: 3. (3) (4 3) (4 6) | 5 1e (0 1) (1 2) | 3. (4) (3 2) (1 7d) | 1^. 0 | {key=F}0 0 (0 5d) (5d 1) ||
-L: strong, When I am on your | shoul-ders, You raise me | up, To more than I can | be. | There is no
----
+---V2
 N: 3. (1) (2. (1)) (3 2) | (1) 5d. (0 7d) (1 3) |
 L: life, no life with-out its | hun-ger, Each rest-less
 ---
 N: 5. (1) (6. (5)) (5 3) | 2^ (0 5) (6 7) |
-L: heart beats so im-per-fect | ly. But when you
+L1: come, And my heart bur-dened | be, Then I am
+L2: heart beats so im-per-fect | ly. But when you
 ---
 N: 1e. (1e) (7 6) (5 4) | 5 1 (0 1) (5 4) |
-L: come and I am filled with | won-der, Some-times I
+L1: still, And wait here in the | si-lence, Un-til you
+L2: come and I am filled with | won-der, Some-times I
 ---
 N: 3. (4) (3 2) (1 7d) | 1^ (0 5) (6 7) ||
-L: think I glimpse e-ter-ni | ty. You raise me
+L1: come, And sit a while with | me. You raise me
+L2: think I glimpse e-ter-ni | ty. You raise me
 ---
 N: 1e. (1e) (7 6) (5 4) | 5 3 (0 5) (2e 7) |
 L: up, So I can stand on | moun-tains, You raise me
@@ -63,6 +36,18 @@ L: up, To walk on storm-y | seas, % I am
 ---
 N: 1e. (1e) (7 6) (5 4) | 5 1e (0 1) (5 4) | 3. (4) (3 2) (1 7d) ||
 L: strong, When I am on your | shoul-ders, You raise me | up, To more than I can
----
-N: 1^. 0 | 0 0 (0 5d) (1 2) | {text=rit.}3. (4) (3 2) (1 7d) | 1^^~ | 1^ |||
+---V1
+N: {key=Eb}1^. 0 | {key=E}0 0 (0 5) (6 7) |
+L: be. | You raise me
+---V1
+N: 1e. (1e) (7 6) (5 4) | 5 3 (0 5) (2e 7) |
+L: up, So I can stand on | moun-tains, You raise me
+---V1
+N: 1e. (1e) (7 6) (5 4) | 5^ (0 5) (5 4) |
+L: up, To walk on storm-y | seas, % I am
+---V1
+N: 3. (3) (4 3) (4 6) | 5 1e (0 1) (1 2) | 3. (4) (3 2) (1 7d) | 1^. 0 | {key=F}0 0 (0 5d) (5d 1) :||
+L: strong, When I am on your | shoul-ders, You raise me | up, To more than I can | be. | There is no
+---V2
+N: {key=F}1^. 0 | 0 0 (0 5d) (1 2) | {text=rit.}3. (4) (3 2) (1 7d) | 1^^~ | 1^ |||
 L: be. | You raise me | up, to more than I can | be. |

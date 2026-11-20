@@ -206,7 +206,7 @@ function expandInitialPasses(nodes: readonly PlaybackNode[]) {
   let hasExplicitRepeatStart = false
   for (let index = 0; index < nodes.length; index += 1) {
     const node = nodes[index]
-    if (node?.kind === 'section' && node.repeatStart) {
+    if (node?.repeatStart) {
       latestRepeatStart = index
       hasExplicitRepeatStart = true
     }
@@ -229,7 +229,7 @@ function expandInitialPasses(nodes: readonly PlaybackNode[]) {
   let explicitRepeatStart: number | undefined
   for (let index = 0; index < nodes.length; index += 1) {
     const node = nodes[index]!
-    if (node.kind === 'section' && node.repeatStart) explicitRepeatStart = index
+    if (node.repeatStart) explicitRepeatStart = index
     if (node.kind !== 'section' || !node.repeatCount) continue
     repeatStarts.set(index, explicitRepeatStart ?? implicitRepeatStart)
     // Explicit start/end pairs are self-contained. Consecutive bare repeat

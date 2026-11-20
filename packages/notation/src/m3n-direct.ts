@@ -32,6 +32,13 @@ function parseBody(
 ) {
   let depth = 0
   let currentKey = initialKey
+  let currentKeyPasses: string[] | undefined
+  const setKey = (value: string) => {
+    const keys = value.split(',').map(key => key.trim())
+    currentKey = keys[0]!
+    currentKeyPasses = keys.length > 1 ? keys : undefined
+  }
+  setKey(initialKey)
   let currentMeterCount = initialMeterCount
   let currentMeterUnit = initialMeterUnit
   let currentTempo = initialTempo
@@ -107,7 +114,7 @@ function parseBody(
       const event = inheritedSettingEvents[inheritedSettingIndex]
       if (!event) break
       if (event.beats > elapsedBeats) break
-      if (event.kind === 'key') currentKey = event.value
+      if (event.kind === 'key') setKey(event.value)
       if (event.kind === 'meter') {
         const [count, unit] = event.value.split('/').map(Number)
         if (count !== undefined && unit !== undefined) {
@@ -134,8 +141,8 @@ function parseBody(
       }
       pendingRepeatEnd = undefined
       if (value.startsWith('key=')) {
-        currentKey = value.slice(4)
-        if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'key', value: currentKey })
+        setKey(value.slice(4))
+        if (staff === 'melody') settingEvents.push({ beats: elapsedBeats, kind: 'key', value: value.slice(4) })
       }
       if (value.startsWith('key=') && currentChord) chordChanged = true
       const meter = /^(\d+)\/(\d+)$/.exec(value)
@@ -155,7 +162,7 @@ function parseBody(
         syncActiveEnding(sourceStart)
         ensureEndingMeasure()
         measure().multiRest = Number(multiRest[1])
-        measure().multiRestState = { key: currentKey, meterCount: currentMeterCount, meterUnit: currentMeterUnit, tempo: currentTempo }
+        measure().multiRestState = { key: currentKey, ...(currentKeyPasses ? { keyPasses: currentKeyPasses } : {}), meterCount: currentMeterCount, meterUnit: currentMeterUnit, tempo: currentTempo }
         elapsedBeats += Number(multiRest[1]) * currentMeterCount * 4 / currentMeterUnit
       }
       if (value === 'br') {
@@ -265,7 +272,7 @@ function parseBody(
           sourceEnd,
           kind: mode === 'h' ? 'chord' : 'tuplet',
           pitches,
-          key: currentKey,
+          key: currentKey, ...(currentKeyPasses ? { keyPasses: currentKeyPasses } : {}),
           beats: mode === 'h' ? groupBeats : (Number(mode) || pitches.length - 1) * duration(depth, carets.length, dots.length),
           tie: mode === 'h' ? Boolean(group[5]) : Boolean(tuplet?.tiesFromLast),
           tieFromTupletIndex: tuplet?.tiesFromLast ? pitches.length - 1 : undefined,
@@ -291,7 +298,7 @@ function parseBody(
         sourceEnd,
         kind: note.degreeRaw === '0' ? 'rest' : 'note',
         pitches: note.degreeRaw === '0' ? [] : [noteToken.replace(/[\^.~]+$/g, '')],
-        key: currentKey,
+        key: currentKey, ...(currentKeyPasses ? { keyPasses: currentKeyPasses } : {}),
         beats: duration(depth, note.carets.length, note.dots.length),
         tie: Boolean(note.tie),
         postfixes: [],
@@ -433,7 +440,7 @@ function applyPhraseRows(document: ScoreDocument, structure: M3NDocumentStructur
 }
 
 export function parseM3NDocument(source: string, projection: M3NDocumentProjection = projectM3NDocument(source)): ScoreDocument {
-  const settings = documentSettings(projection.syntaxTree)
+  const { initialKeyPasses, ...settings } = documentSettings(projection.syntaxTree)
   const { key, meterCount, meterUnit, tempo: initialTempo } = settings
   const parts = new Map<string, ScorePart>()
   const intervals: ScoreInterval[] = []
@@ -444,8 +451,8 @@ export function parseM3NDocument(source: string, projection: M3NDocumentProjecti
   const phrasePasses = phrases.flatMap(phrase => phrase.melody && phrase.passes
     ? [{ start: phrase.melody.start, end: phrase.melody.start + phrase.melody.text.length, passes: phrase.passes }] : [])
   const melodyTokens = projection.structure.sections.length === 0 ? projection.syntaxTree.tokens : melody
-  parseBody(melodyTokens, 'melody', parts, key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], phrasePasses)
-  if (bass.length > 0) parseBody(bass, 'bass', parts, key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
+  parseBody(melodyTokens, 'melody', parts, initialKeyPasses?.join(',') ?? key, meterCount, meterUnit, initialTempo, intervals, settingEvents, [], phrasePasses)
+  if (bass.length > 0) parseBody(bass, 'bass', parts, initialKeyPasses?.join(',') ?? key, meterCount, meterUnit, initialTempo, intervals, [], settingEvents)
   const document: ScoreDocument = {
     ...settings,
     paragraphs: phrases.flatMap((phrase, index) => phrase.melody

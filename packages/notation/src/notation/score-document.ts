@@ -6,6 +6,8 @@ export type ScoreEvent = {
   kind: 'note' | 'chord' | 'rest' | 'tuplet'
   pitches: string[]
   key: string
+  /** Absolute key for each numbered playback pass, inherited until the next key directive. */
+  keyPasses?: readonly string[]
   beats: number
   tie: boolean
   tieFromTupletIndex?: number
@@ -50,7 +52,7 @@ export type ScoreMeasure = {
   breakAfter?: boolean
   multiRest?: number
   /** Settings at the onset of a rest-only measure, which has no ScoreEvent. */
-  multiRestState?: { key: string; meterCount: number; meterUnit: number; tempo: number }
+  multiRestState?: { key: string; keyPasses?: readonly string[]; meterCount: number; meterUnit: number; tempo: number }
   repeatCount?: number
   barEnd?: number
 }

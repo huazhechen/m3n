@@ -34,6 +34,14 @@ describe('optional staff projection', () => {
     expect(score).toEqual(before)
   })
 
+  it('expands ordinary repeats with numbered keys into the actual staff pitches', () => {
+    const score = analyzeM3N('{key=Eb}{2/4}\nN: ||: {key=Eb,F}1 2 :|||\nL1: First time\nL2: Next time').score
+    const mei = scoreToMei(score)
+    expect(mei).toContain('xml:id="m3n-e-1-rend2" pname="f" oct="4"')
+    expect(mei).toContain('sig="1f"')
+    expect(mei).toContain('Next')
+  })
+
   it('engraves the complete current library with the shipped engine', async () => {
     const toolkit = new VerovioToolkit(await createModule())
     try {

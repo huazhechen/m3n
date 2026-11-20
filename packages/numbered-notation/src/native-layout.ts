@@ -1,3 +1,4 @@
+import { hasPassKeys } from '@m3n/notation'
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
 import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
@@ -153,7 +154,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   validate(supplied)
   if (document.minimumCoreGapEm !== undefined && (!Number.isFinite(document.minimumCoreGapEm) || document.minimumCoreGapEm < 0)) throw new Error('最小行距必须为非负有限数值。')
   const headerDocument = document
-  const expanded = supplied.fixedDo && document.orderKeys?.some(Boolean) ? keyedDisplayPerformance(document) : undefined
+  const expanded = supplied.fixedDo && (document.orderKeys?.some(Boolean) || hasPassKeys(document)) ? keyedDisplayPerformance(document) : undefined
   if (expanded) document = expanded.document
   const minimumNoteGapEm = supplied.minimumNoteGapEm ?? 0.4
   const minimumNoteGapFloorEm = supplied.minimumNoteGapFloorEm ?? 0

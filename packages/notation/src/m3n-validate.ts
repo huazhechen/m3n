@@ -212,7 +212,7 @@ function validateBody(
       if (!event) break
       if (event.beat - elapsedBeats > 1e-9) break
       if (event.kind === 'key') {
-        settings.key = event.value
+        settings.key = event.value.split(',')[0]!.trim()
       } else if (event.kind === 'meter') {
         const [beats = 0, beatValue = 0] = event.value.split('/').map(Number)
         settings.meter = { beats, beatValue }
@@ -349,11 +349,13 @@ function validateBody(
       }
 
       if (name === 'key') {
-        if (!KEY_PATTERN.test(value)) diagnostics.push(lineMessage(token, `调号格式非法：${value}`))
+        const keys = value.split(',').map(key => key.trim())
+        if (keys.length > 1 && (unit.currentHasAtom || unit.multiRestPendingBar)) diagnostics.push(lineMessage(token, '分遍调号必须写在小节开头'))
+        if (!keys.every(key => KEY_PATTERN.test(key))) diagnostics.push(lineMessage(token, `调号格式非法：${value}`))
         else {
-          const changed = settings.key !== value
-          settings.key = value
-          if (!firstMusicSeen) bodyInitial.key = value
+          const changed = settings.key !== keys[0]
+          settings.key = keys[0]!
+          if (!firstMusicSeen) bodyInitial.key = keys[0]!
           if (!bass && changed) settingEvents.push({ beat: elapsedBeats, kind: 'key', value })
         }
         if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能声明调号'))

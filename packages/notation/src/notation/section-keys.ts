@@ -41,3 +41,9 @@ export function sectionVisitKey(key: string, entryKey: string, targetKey: string
   const pitch = ((chroma(current.tonic) + chroma(target.tonic) - chroma(entry.tonic)) % 12 + 12) % 12
   return ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][pitch]! + current.mode
 }
+
+/** Absolute notation must unfold passages with different keys on repeated visits. */
+export function hasPassKeys(document: ScoreDocument) {
+  return [...document.parts.values()].some(part => part.melody.some(measure =>
+    measure.events.some(event => event.keyPasses) || measure.multiRestState?.keyPasses))
+}

@@ -1,3 +1,4 @@
+import { hasPassKeys } from '@m3n/notation'
 import { m3nPitch, parseM3NGrace, parseM3NGroupPitches, resolveScorePitches, unfoldScorePerformance, type ScoreDocument, type ScoreMeasure } from '@m3n/notation'
 import { absoluteSemitones, fixedDoPitch } from './fixed-do.js'
 
@@ -38,7 +39,7 @@ export function numberedPitchRange(document: ScoreDocument, options: { fixedDo?:
       }
     }
   }
-  const performance = document.orderKeys?.some(Boolean) ? unfoldScorePerformance(document) : document
+  const performance = (document.orderKeys?.some(Boolean) || hasPassKeys(document)) ? unfoldScorePerformance(document) : document
   for (const part of performance.parts.values()) visit(part.melody)
   if (low === undefined || high === undefined) return undefined
   const spell = (pitch: string) => options.fixedDo ? fixedDoPitch(pitch, options.transpose).replace(/^n/, '') : relativePitch(pitch, document.key)

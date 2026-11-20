@@ -47,6 +47,19 @@ describe('native display options',()=>{
     const ids = [...root.querySelectorAll('[id]')].map(node=>node.id)
     expect(new Set(ids).size).toBe(ids.length)
   })
+  it('prints numbered repeat keys and expands actual pitches and lyrics in fixed do', () => {
+    const source = '{key=Eb}{2/4}\nN: ||: {key=Eb,F}1 2 | 3 4 :|||\nL1: First time Once more\nL2: Next time Once more'
+    const document = parseM3NDocument(source)
+    const relative = layoutNativeScore(document,options)
+    expect(relative.projection.glyphs.flatMap(glyph => glyph.controls).filter(control => control.kind === 'key').map(control => control.keyRows))
+      .toEqual([[{key:'1=Eb',label:'1'},{key:'1=F',label:'2'}]])
+    const fixed = layoutNativeScore(document,{...options,fixedDo:true})
+    expect(fixed.projection.glyphs.map(glyph => spell(glyph.pitches[0]!))).toEqual(['♯2','4','5','♯5','4','5','6','♯6'])
+    expect(fixed.projection.glyphs.map(glyph => glyph.lyrics.get(0)?.texts.join(''))).toEqual(['First','time','Once','more','Next','time','Once','more'])
+    const shifted = layoutNativeScore(document,{...options,transpose:2})
+    expect(shifted.projection.glyphs.flatMap(glyph => glyph.controls).filter(control => control.kind === 'key').map(control => control.keyRows))
+      .toEqual([[{key:'1=F',label:'1'},{key:'1=G',label:'2'}]])
+  })
   it('inherits absolute octave anchors for successive keyed visits',()=>{
     const document = parseM3NDocument('{key=C}{2/4}{order=A@C4,A@C5}\n===A\nN: 1 2 ||')
     const before = structuredClone(document)

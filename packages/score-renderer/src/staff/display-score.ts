@@ -1,7 +1,8 @@
+import { hasPassKeys } from '@m3n/notation'
 import { deriveScoreInteraction, scoreEventIds, unfoldScorePerformance, type ScoreDocument, type ScoreEvent, type ScoreEventLyric } from '@m3n/notation'
 
 export function needsStaffExpansion(score: ScoreDocument) {
-  return Boolean(score.orderKeys?.some(Boolean) || score.orderKeyOctaves?.some(octave => octave !== undefined && octave !== 4))
+  return Boolean(hasPassKeys(score) || score.orderKeys?.some(Boolean) || score.orderKeyOctaves?.some(octave => octave !== undefined && octave !== 4))
 }
 
 /** Absolute notation prints keyed visits separately, with the same performed IDs. */

@@ -289,6 +289,17 @@ export function validateScoreDocument(document: ScoreDocument, options: { skipBe
   for (const part of document.parts.values()) {
     const melody = writtenMeasures(part.melody)
     const bass = writtenMeasures(part.bass)
+    const passes = measurePlaybackPasses(melody)
+    for (const measure of melody) {
+      const keyed = measure.events.find(event => event.keyPasses) ?? (measure.multiRestState?.keyPasses ? measure.multiRestState : undefined)
+      if (!keyed?.keyPasses) continue
+      const required = Math.max(...(passes.get(measure) ?? [1]))
+      if (document.order || keyed.keyPasses.length < required) diagnostics.push(createScoreDiagnostic({
+        code: 'M3N_SOURCE_KEY',
+        message: document.order ? '分遍调号不能与显式 order 混用' : `分遍调号缺少第 ${required} 遍的调性`,
+        range: measureRange(measure),
+      }))
+    }
     if (!options.skipBeatValidation) diagnostics.push(...validateMeasureDurations(document, melody, options.source))
     diagnostics.push(...validateTies(melody, options.source), ...validateTies(bass, options.source))
     if (bass.length === 0) continue

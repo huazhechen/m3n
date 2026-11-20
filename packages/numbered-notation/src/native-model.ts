@@ -72,17 +72,27 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
       ...resolveScorePitches(part.melody), ...resolveScorePitches(part.bass),
     ]) : undefined
     const keyLabel = (key:string) => transposedNumberedKeyLabel(key,options.transpose)
-    const states = new Map<string, { key: string; tempo: number; meter: string; dynamic: string }>()
+    const states = new Map<string, { key: string; tempo: number; meter: string; dynamic: string; passKeys?: readonly string[] }>()
     const projectMeasure = (measure: ScoreMeasure, staff: 'melody' | 'bass', lane: string, host: NativeMeasure) => {
       let time = 0
       const state = states.get(lane) ?? { key: document.key, tempo: document.tempo, meter: `${document.meterCount}/${document.meterUnit}`, dynamic: '' }
       states.set(lane, state)
       const predecessors = incomingKeys.get(host.source)
-      if (predecessors?.size) state.key = predecessors.size === 1 ? [...predecessors][0]! : ''
+      const passKeys = measure.events[0]?.keyPasses ?? measure.multiRestState?.keyPasses
+      if (passKeys && state.passKeys === passKeys) state.key = passKeys[0]!
+      else if (predecessors?.size) state.key = predecessors.size === 1 ? [...predecessors][0]! : ''
       const accidentals = new Map<string, string>()
-      const settingsControls = (settings: Pick<ScoreEvent, 'key' | 'meterCount' | 'meterUnit' | 'tempo'>) => {
+      const settingsControls = (settings: Pick<ScoreEvent, 'key' | 'keyPasses' | 'meterCount' | 'meterUnit' | 'tempo'>) => {
         const controls: NativeControl[] = []
         const control = (kind: NativeControl['kind'], text: string) => controls.push(measureNativeControl(kind, text, options.textMeasurer))
+        if (!options.fixedDo && settings.keyPasses && settings.keyPasses !== state.passKeys) {
+          const groups = new Map<string,number[]>()
+          settings.keyPasses.forEach((key,index) => groups.set(key,[...(groups.get(key) ?? []),index+1]))
+          const rows = [...groups].map(([key,passes]) => ({key:keyLabel(key),label:passes.join(',')}))
+          controls.push(measureNativeControl('key',keyLabel(settings.key),options.textMeasurer,rows))
+          state.key = settings.key; accidentals.clear()
+        }
+        state.passKeys = settings.keyPasses
         if (!options.fixedDo && settings.key !== state.key) { control('key', keyLabel(settings.key)); state.key = settings.key; accidentals.clear() }
         const meter = `${settings.meterCount ?? document.meterCount}/${settings.meterUnit ?? document.meterUnit}`
         if (meter !== state.meter) { control('meter', meter); state.meter = meter }
