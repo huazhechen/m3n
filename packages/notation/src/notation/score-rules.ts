@@ -299,7 +299,6 @@ function validateCodaNavigation(document: ScoreDocument) {
     if (document.order) report('Coda 导航不能与显式 order 混用')
     if (to <= from) report('Coda 必须位于 To Coda 之后')
     if (measures[from]!.ending || measures[to]!.ending) report('To Coda 与 Coda 必须放在房子之外的共同乐句')
-    if (marks.some(values => values.includes('fine'))) report('Coda 导航不能与 Fine 混用')
     const itinerary = playbackMeasureIndexes(measures)
     const returnSource = marks.findIndex(values => values.includes('ds') || values.includes('dc'))
     if (returnSource >= to || (returnSource < 0 && !measures.some((measure,index) => index >= from && index < to && measure.right === 'rptend'))) report('Coda 必须位于反复终点或 D.S./D.C. 之后')

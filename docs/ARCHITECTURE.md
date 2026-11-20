@@ -48,7 +48,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `packages/notation/src/notation/analysis.ts`：交互调用方的统一分析入口。
 - `packages/notation/src/notation/diagnostics.ts`：结构化诊断契约；规则在产生诊断的位置直接提供稳定 code、严重级别和源码范围，不保留字符串诊断模式。
 - `packages/notation/src/notation/m3n-primitives.ts`：调号、音符和时值等最小语法内核。
-- `packages/notation/src/notation/repeats.ts`：反复次数、跳房子、D.S./D.C. 及 To Coda／Coda 的纯播放计划；演奏编译和歌词对位共享其语义。
+- `packages/notation/src/notation/repeats.ts`：反复次数、跳房子、D.S./D.C. 及 To Coda／Coda 的纯播放计划；带 Coda 的路线逐步执行导航及反复，支持跳入尾声后接续反复与 Fine，避免预展开尚不可达的尾段。演奏编译和歌词对位共享其语义。
 - `packages/notation/src/notation/score-rules.ts`：只消费 `ScoreDocument` 的音乐语义规则；负责小节时值、延音目标和双谱表对齐。
 - `packages/notation/src/m3n-direct.ts`：从源码构造 `ScoreDocument`；领域消费者统一使用 `Score*` 类型，不再暴露旧 `Direct*` 类型。
 - `packages/notation/src/m3n-lyric-alignment.ts`：以已解析文档为输入的书写小节歌词目标和强制延音目标语义，供格式化与校验共享。

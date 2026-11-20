@@ -678,9 +678,12 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
 
   // Playback passes are global so D.S. and alternate endings can share one
   // state machine. Lyric labels are deliberately local to a phrase.
+  // Coda uses the actual itinerary, including visits that bypass all houses.
+  const hasCoda = part.melody.some(measure => measure.navigation?.includes('tocoda'))
   const localTargets = new Map(
     [...targets.entries()]
-      .filter(([pass]) => (housePassLimit === undefined || pass <= housePassLimit || segnoInPhrase)
+      .filter(([pass]) => (housePassLimit === undefined || pass <= housePassLimit || segnoInPhrase
+        || hasCoda)
         && (openingPasses === undefined || openingPasses.has(pass)))
       .sort(([left], [right]) => left - right)
       .map(([, measureTargets], index) => [index + 1, measureTargets]),

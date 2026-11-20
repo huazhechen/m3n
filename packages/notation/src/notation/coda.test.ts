@@ -35,10 +35,48 @@ describe('To Coda navigation', () => {
     expect(pitches(source)).toEqual([60,62,64,65,67,69,60,62,64,65,67,69,60,62,64,65,71,72])
   })
 
+  it('takes an armed To Coda before a repeat at the same barline', () => {
+    const source = '{2/4}\nN: ||: 1 2 {tocoda} :||{x3}\n---\nN: {coda}3 4 |||'
+    expect(validateM3NDiagnostics(source)).toEqual([])
+    expect(pitches(source)).toEqual([60,62,60,62,64,65])
+  })
+
   it('retains repeats within the coda without playing the bypassed passage a second time', () => {
     const source = '{2/4}\nN: ||: 1 2 {tocoda} |\n---\nN: 3 4 :||\n---\nN: ||: {coda}5 6 :|||'
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(pitches(source)).toEqual([60,62,64,65,60,62,67,69,67,69])
+  })
+
+  it('takes the third verse ending via Coda, then repeats a shared chorus in the next key until Fine', () => {
+    const source = `{key=C}{2/4}
+N: ||: {segno}1 2 |
+L1: First verse
+L2: Next verse
+L3: Third verse
+---
+N: 3 4 {tocoda} |
+L1: First end
+L2: Next end
+L3: Third end
+---V1
+N: 3 4 :||
+---V2
+N: 5 6 |
+---
+N: ||: {key=C,Db}7 1e |
+---V1
+N: 2e 3e |
+---V2
+N: 4e 5e |
+---
+N: 6e 7e {fine}{ds} |||
+---
+N: {coda}{key=C}1e 2e | {key=Db}3e 4e :||`
+    expect(validateM3NDiagnostics(source)).toEqual([])
+    const bars = parseM3NDocument(source).parts.get('score')!.melody.filter(bar => bar.events.length)
+    expect(playbackMeasureIndexes(bars)).toEqual([0,1,2,0,1,3,4,5,7,0,1,8,9,4,6,7])
+    expect(pitches(source)).toEqual([60,62,64,65,64,65,60,62,64,65,67,69,71,72,74,76,81,83,60,62,64,65,72,74,77,78,72,73,78,80,82,84])
+    expect(pitches(formatM3N(source))).toEqual(pitches(source))
   })
 
   it('preserves actual incoming keys, bass and the final 4+2 tie with keyed repeats', () => {
@@ -64,7 +102,6 @@ describe('To Coda navigation', () => {
     ['{2/4}\nN: {coda}1 2 | 3 4{tocoda} |||', '必须位于 To Coda 之后'],
     ['{2/4}\nN: 1 2{tocoda} | {coda}3 4 |||', '必须能在反复'],
     ['{2/4}\nN: ||: 1 2{tocoda} | 3 4 :||\n---\nN: 5 {coda}6 |||', '必须写在小节开头'],
-    ['{2/4}\nN: ||: 1 2{tocoda} | 3 4{fine} :||\n---\nN: {coda}5 6 |||', '不能与 Fine 混用'],
     ['{2/4}{order=A,A}\n===A\nN: 1 2{tocoda} | {coda}3 4 |||', '不能与显式 order 混用'],
     ['{2/4}\nN: ||: 1 2 |\n---V1\nN: 3 4{tocoda} :||\n---V2\nN: {coda}5 6 |||', '房子之外'],
     ['{2/4}\nN: ||: 1 2{tocoda} | 3 4 :||\n---\nN: {coda}5 6 |||\nB: {coda}1d^ | 5d^ | 1d^ |', '低音谱表内不能使用反复导航标记'],

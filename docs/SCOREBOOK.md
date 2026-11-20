@@ -172,3 +172,5 @@ M3N_FONT_PYTHON=.tmp/font-subset-env/bin/python node tools/prepare-builtin-pdf-f
 ## 配置与生成物目录
 
 必须提交的两份配置位于 `config/scorebook/`，用途见[配置说明](../config/scorebook/README.md)。`scorebook/` 仅保存本地生成物，整目录忽略，可以全部删除；构建会重新创建。所有PDF、校验稿、布局／体积报告与CSV都不提交Git。旧来源说明、校订依据及排查记录已清理，历史资料可通过Git历史查阅。
+
+《枫》取消 A／B／C 具名分段及顶部演奏顺序，改用普通反复与 D.S.／To Coda／Fine：主歌前两遍走1、2房子，副歌后 D.S. 返回，第三遍在 To Coda 跳至独立尾声，接原第三遍结尾和降D调桥段；桥段末反复至共用副歌，入口以 `{key=C,Db}` 标示两遍调号，第二遍选副歌2房子并在 Fine 结束。逐音与逐字演奏回归保留原有512个事件、397个歌词字及其时间与音高。重新探测建议版宽为670px，A4一页；320px、390px及建议宽度下连续和分页显示均无越界或歌词重叠。

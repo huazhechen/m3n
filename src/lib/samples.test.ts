@@ -1,4 +1,4 @@
-import { analyzeM3N, measurePlaybackPasses, parseM3NDocument, parseM3NDocumentStructure, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
+import { analyzeM3N, compileScorePerformance, deriveScoreInteraction, scoreEventIds, measurePlaybackPasses, parseM3NDocument, parseM3NDocumentStructure, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { describe, expect, it } from 'vitest'
 import besameMucho from '../scores/besame_mucho_01.m3n?raw'
 import polka from '../scores/dan_huang_guan_bo_er_ka_01.m3n?raw'
@@ -53,7 +53,7 @@ describe('bundled score corpus', () => {
     expect(parseM3NDocument(polka).order).toEqual(['A','A','B','B','A','C','C','A','A'])
     expect([0,17,26].map(index=>polkaBars[index]!.events[0]!.key)).toEqual(['C','G','F'])
     const mapleBars = bars(maple)
-    const mapleBridge = mapleBars.filter(bar => bar.sectionName === 'C')
+    const mapleBridge = mapleBars.slice(-8)
     expect(mapleBridge).toHaveLength(8)
     expect(mapleBridge.every(bar => bar.events.every(event => event.key === 'Db'))).toBe(true)
     expect(mapleBars[0]!.events[0]!.beats).toBe(0.5)
@@ -171,24 +171,23 @@ describe('bundled score corpus', () => {
         .flatMap(range=>sectionBlocks.filter(block=>block.range===range))
     })
     const lyrics=blocks.flatMap(block=>block.syllables.filter(syllable=>syllable.kind==='text').map(syllable=>syllable.text)).join('')
-    const mapleWrittenLyrics = (text: string) => {
-      const chorus = text.indexOf('缓缓掉落的枫叶')
-      const bridge = text.indexOf('在山腰间'), finalChorus = text.indexOf('缓缓掉落的枫叶',bridge)
-      const finalEnding = text.indexOf('自秋末的眼泪',finalChorus)
-      const firstEnding = text.indexOf('总在回忆里才看的清')
-      const secondVerse = firstEnding + '总在回忆里才看的清'.length
-      const secondEnding = text.indexOf('只剩挥散不去的难过')
-      const sharedTail = text.indexOf('渗透了地面')
-      const finalSharedTail = text.indexOf('渗透了地面', finalEnding)
-      return text.slice(0, firstEnding) + text.slice(secondVerse, secondEnding)
-        + text.slice(firstEnding, secondVerse) + text.slice(secondEnding, chorus)
-        + text.slice(secondEnding, chorus)
-        + text.slice(chorus, sharedTail) + text.slice(finalEnding, finalSharedTail)
-        + text.slice(finalSharedTail) + text.slice(bridge, finalChorus)
+    if (reference.id === 'feng') {
+      const interaction = deriveScoreInteraction(document)
+      const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, interaction.lyricsByEvent.get(event) ?? []]))
+      const performed = compileScorePerformance(document).elements
+        .filter(element => element.voice === 'score:melody')
+        .flatMap(element => (byId.get(element.xmlId) ?? [])
+          .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
+          .map(lyric => lyric.text)).join('')
+      // The reference omits the repeated third-verse text; the original score sings L2 again.
+      const text = reference.lyricText!
+      const secondVerse = text.slice(text.indexOf('被伤透'), text.indexOf('只剩挥散不去的难过'))
+      const bridge = text.indexOf('在山腰间')
+      const thirdEnding = text.lastIndexOf('只剩挥散不去的难过', bridge)
+      expect(performed.replace(/[^\u3400-\u9fff]/g, '')).toBe(text.slice(0, thirdEnding) + secondVerse + text.slice(thirdEnding))
+      return
     }
-    const expected=reference.id==='feng'
-      ? mapleWrittenLyrics(reference.lyricText!)
-      : reference.id==='yan_hua_yi_leng'
+    const expected=reference.id==='yan_hua_yi_leng'
         ? reference.lyricText!.replace(/(雨纷纷旧故里[\s\S]*?是我们)([\s\S]*?)\1/, '$1$2们们')
         : reference.lyricText
     expect(lyrics.replace(/[^\u3400-\u9fff]/g,'')).toBe(expected)

@@ -339,26 +339,77 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
   return [...initial.slice(0, played + 1), ...returnPart]
 }
 
-/** To Coda is taken after a return: after D.S./D.C., or on the second
- * encounter when the score uses repeat bars alone. The tail keeps its own repeats. */
-function applyCodaJump(nodes: readonly PlaybackNode[], sequence: string[], initial: readonly string[]) {
-  const toCoda = nodes.find(node => node.navigation?.includes('tocoda'))
-  const coda = nodes.find(node => node.navigation?.includes('coda'))
-  if (!toCoda || !coda) return sequence
-  const returnNode = nodes.find(node => node.navigation?.some(mark => mark === 'ds' || mark === 'dc'))
-  const first = sequence.indexOf(toCoda.id)
-  const armedAfter = returnNode ? initial.lastIndexOf(returnNode.id) : first
-  if (armedAfter < 0) return sequence
-  const jump = sequence.indexOf(toCoda.id, armedAfter + 1)
-  const destination = sequence.indexOf(coda.id, jump + 1)
-  if (jump < 0 || destination < 0) return sequence
-  return [...sequence.slice(0, jump + 1), ...sequence.slice(destination)]
+/** Follow Coda navigation as control flow so returns can reach repeat ends
+ * after the coda, rather than expanding an unreachable tail before D.S. */
+function codaPlaybackSequence(nodes: readonly PlaybackNode[]) {
+  type Repeat = { start: number; end: number; count: number; pass: number }
+  const groups = new Map<number, number>()
+  for (let index = 0; index < nodes.length; index++) {
+    if (nodes[index]!.kind !== 'ending') continue
+    const start = index
+    while (nodes[index + 1]?.kind === 'ending') index++
+    groups.set(start,index)
+  }
+  const repeats = new Map<number,Repeat>()
+  let explicitStart: number | undefined, implicitStart = 0
+  for (const [index,node] of nodes.entries()) {
+    if (node.repeatStart) explicitStart = index
+    if (!node.repeatCount) continue
+    const end = [...groups].find(([start,end]) => start <= index && index <= end)?.[1] ?? index
+    repeats.set(index,{start:explicitStart ?? implicitStart,end,count:node.repeatCount,pass:1})
+    if (explicitStart !== undefined) implicitStart = end + 1
+    explicitStart = undefined
+  }
+  const coda = nodes.findIndex(node => node.navigation?.includes('coda'))
+  const hasReturn = nodes.some(node => node.navigation?.some(mark => mark === 'ds' || mark === 'dc'))
+  const visits = new Map<number,number>(), sequence: string[] = []
+  let index = 0, jumped = false, returning = false, returnPass = 1, codaTaken = false
+  while (index < nodes.length) {
+    const groupEnd = groups.get(index)
+    let nextIndex = index + 1
+    if (groupEnd !== undefined) {
+      const repeat = [...repeats.values()].find(repeat => repeat.start <= index && repeat.end >= groupEnd)
+      const pass = returning ? returnPass : repeat?.pass ?? 1
+      const selected = chooseEnding(nodes,index,groupEnd,pass)
+      nextIndex = groupEnd + 1
+      if (selected === undefined) { index = nextIndex; continue }
+      index = selected
+    }
+    const node = nodes[index]!
+    sequence.push(node.id)
+    visits.set(index,(visits.get(index) ?? 0) + 1)
+    const navigation = node.navigation ?? []
+    if (navigation.includes('fine') && (jumped || codaTaken)) break
+    if (navigation.includes('tocoda') && coda >= 0 && !codaTaken && (hasReturn ? jumped : visits.get(index)! > 1)) {
+      codaTaken = true
+      returning = false
+      index = coda
+      continue
+    }
+    const repeat = repeats.get(index)
+    if (!returning && repeat && repeat.pass < repeat.count) {
+      repeat.pass++
+      index = repeat.start
+      continue
+    }
+    if (!jumped && (navigation.includes('ds') || navigation.includes('dc'))) {
+      const destination = navigation.includes('ds') ? nodes.findIndex(node => node.navigation?.includes('segno')) : 0
+      if (destination >= 0) {
+        jumped = returning = true
+        returnPass = (visits.get(destination) ?? 0) + 1
+        index = destination
+        continue
+      }
+    }
+    index = nextIndex
+  }
+  return sequence
 }
 
 /** Returns written node ids in performance order, including navigation returns. */
 export function buildPlaybackSequence(nodes: readonly PlaybackNode[]) {
-  const initial = expandInitialPasses(nodes)
-  return applyCodaJump(nodes, appendNavigationReturn(nodes, initial), initial)
+  if (nodes.some(node => node.navigation?.includes('tocoda'))) return codaPlaybackSequence(nodes)
+  return appendNavigationReturn(nodes,expandInitialPasses(nodes))
 }
 
 /** Plans playback order and visit numbers from the same expanded sequence. */

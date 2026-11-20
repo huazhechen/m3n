@@ -19,9 +19,12 @@ it.each(['ai_ru_chao_shui', 'bai_hua_lin', 'bei_jia_er_hu_pan', 'qian_si_xi', 't
   },
 )
 
-it('keeps the established sections, visit order and key change in 枫', () => {
+it('shares verses and modulating choruses in 枫 with a third-visit Coda ending', () => {
   const source = read('feng')
-  expect(source).toContain('{order=A,A,B,A,C,B@Db}')
-  expect([...source.matchAll(/^===(.+)$/gm)].map(match => match[1])).toEqual(['A', 'B', 'C'])
-  expect(source).not.toMatch(/^Ns\[/m)
+  expect(source).not.toMatch(/\{order=|^===|^Ns\[/m)
+  expect(source).toContain('{key=C,Db}')
+  for (const mark of ['segno', 'ds', 'tocoda', 'coda', 'fine']) expect(source).toContain(`{${mark}}`)
+  expect(source.match(/^---V1$/gm)).toHaveLength(3)
+  expect(source.match(/^---V2$/gm)).toHaveLength(3)
+  expect(source).not.toContain('---V3')
 })
