@@ -2,7 +2,7 @@ import type { PlaybackTone } from './tone-catalog.js'
 import { PLAYBACK_TONE_GAIN } from './tone-levels.js'
 
 /** Final mastering stage shared by every tone. Sub-bass/DC uses headroom without
- * helping a small speaker; moderate compression and +6dB makeup lift melodies.
+ * helping a small speaker; moderate compression controls melody dynamics.
  * A separate lookahead limiter catches chords and fast transitions at -0.54dBFS.
  */
 export function createPlaybackOutput(context: AudioContext, tone: PlaybackTone) {
@@ -19,7 +19,7 @@ export function createPlaybackOutput(context: AudioContext, tone: PlaybackTone) 
   compressor.attack.value = 0.003
   compressor.release.value = 0.12
   const makeup = context.createGain()
-  makeup.gain.value = 2
+  makeup.gain.value = 1
   const limiter = new AudioWorkletNode(context, 'm3n-output-limiter', {
     numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
     channelCount: 2, channelCountMode: 'explicit',

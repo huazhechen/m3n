@@ -27,7 +27,7 @@ test('applies fixed tone gain before mastering, with smooth live updates', () =>
   expect(compressor.connect).toHaveBeenCalledWith(makeup)
   expect(makeup.connect).toHaveBeenCalledWith(limiter)
   expect(limiter.connect).toHaveBeenCalledWith(context.destination)
-  expect(makeup.gain.value).toBe(2)
+  expect(makeup.gain.value).toBe(1)
   output.setTone('guitar')
   expect(input.gain.setTargetAtTime).toHaveBeenCalledWith(PLAYBACK_TONE_GAIN.guitar, 10, 0.02)
 })
