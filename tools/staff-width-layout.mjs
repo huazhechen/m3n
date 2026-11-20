@@ -28,12 +28,12 @@ export async function search(source) {
   )
 }
 
-export async function measure(source, width, verify = false) {
-  return measureScore(readScore(source), width, verify)
+export async function measure(source, width, verify = false, settings = {}) {
+  return measureScore(readScore(source), width, verify, settings)
 }
 
-async function measureScore(score, width, verify = false) {
-  const render = await prepareStaffScore(score, { width })
+async function measureScore(score, width, verify = false, settings = {}) {
+  const render = await prepareStaffScore(score, { ...settings, width })
   const pageCount = render.pageCount(true)
   if (!verify) return { width, pageCount }
   const pages = render(true)
@@ -81,8 +81,8 @@ async function measureScore(score, width, verify = false) {
   }
 }
 
-export async function preview(source,width) {
- const render=await prepareStaffScore(readScore(source),{width})
+export async function preview(source,width,settings = {}) {
+ const render=await prepareStaffScore(readScore(source),{...settings,width})
  const host=document.createElement('main');document.body.replaceChildren(host)
  const pages=render(true);host.replaceChildren(...pages)
  pages.forEach(svg=>{svg.style.display='block';svg.style.marginBottom='16px'})

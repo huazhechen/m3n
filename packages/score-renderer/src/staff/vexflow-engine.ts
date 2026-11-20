@@ -170,7 +170,10 @@ export function drawVexMeasure(model: VexMeasure, width: number, x: number, cont
     const raw = capture(() => stave.setContext(context).draw())
     stave.setNoteStartX(x + model.start)
     const flatten = (nodes: XmlNode[]): XmlNode[] => nodes.flatMap(n => n.tagName === 'g' && !n.attributes.transform ? flatten(n.children.filter((c): c is XmlNode => typeof c !== 'string')) : [n])
-    staff.children.push(...flatten(raw))
+    const staveDrawing = flatten(raw)
+    // VexFlow emits the five stave rules before the clef and signatures.
+    for (const rule of staveDrawing.slice(0, 5)) rule.attributes.class = 'staff-line'
+    staff.children.push(...staveDrawing)
     for (const control of model.controls[lane]!)
       staff.children.push(element('g', { class: 'inline-signature' }, capture(() => control.setContext(context).draw())))
     for (const entry of model.entries[lane]!) {

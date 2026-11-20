@@ -5,8 +5,9 @@ import { readFileSync } from 'node:fs'
 import { analyzeM3N, scoreEventIds } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
-import { readXml, findAll, SvgGeometry, textMeasurer } from './layout-svg.js'
-import { createStaffContext, createVexMeasure, drawVexMeasure } from './vexflow-engine.js'
+import { readXml, findAll, SvgGeometry, textMeasurer, element, overlapsX } from './layout-svg.js'
+import { arrangeStaffSystem, systemDistance } from './system-layout.js'
+import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE } from './vexflow-engine.js'
 
 
 async function prepare(source: string, width = 720) {
@@ -15,6 +16,41 @@ async function prepare(source: string, width = 720) {
   return prepareStaffScore(analysis.score, { width })
 }
 describe('staff layout contract', () => {
+  it('uses the stave rules as its core and expands gaps only for overlapping ink', () => {
+    const makeSystem = (lyricX: number, withLyrics = true) => {
+      const rules = [40, 50, 60, 70, 80].map(y => element('path', {
+        class: 'staff-line', d: `M0 ${y} L180 ${y}`, fill: 'none', stroke: '#000', 'stroke-width': '1',
+      }))
+      const node = element('g', { class: 'system' }, [element('g', { class: 'measure' }, [
+        element('g', { class: 'staff' }, [...rules, ...(withLyrics ? [element('g', { class: 'verse' }, [
+          element('text', { x: String(lyricX), y: '130', 'font-size': '16' }, ['春']),
+        ])] : [])]),
+      ])])
+      return arrangeStaffSystem(node, new SvgGeometry(node, textMeasurer()), 320, new Set())
+    }
+    const plain = makeSystem(20, false), lyrics = makeSystem(20), outside = makeSystem(220)
+    expect(lyrics.core).toEqual(plain.core)
+    expect(plain.core.bottom - plain.core.top).toBeCloseTo(41 * STAFF_SCALE)
+    const base = systemDistance(plain, plain, 26.4)
+    expect(systemDistance(lyrics, plain, 26.4)).toBeGreaterThan(base)
+    expect(systemDistance(outside, plain, 26.4)).toBeCloseTo(base)
+  })
+  it('leaves a short final named section open instead of stretching it across the page', async () => {
+    const render = await prepare('{4/4}\n===A\nN: 1 2 3 4 | 5 6 7 1e | 1 2 3 4 | 5 6 7 1e ||\n===Coda\nN: 1^^ |||', 600)
+    const lines = render.layoutInfo().lines
+    expect(lines).toHaveLength(2)
+    expect(lines[1]!.target).toBeLessThanOrEqual(lines[0]!.target * 0.6)
+    expect(lines[1]!.target).toBeGreaterThanOrEqual(lines[1]!.minimum)
+  })
+  it('clears a lone ending bracket from music and relations after initial placement', () => {
+    const slur = element('g', { class: 'slur' }, [element('rect', { x: '80', y: '12', width: '20', height: '13' })])
+    const ending = element('g', { class: 'ending voltaBracket' }, [element('path', { d: 'M20 20 V5 H160 V20', fill: 'none', stroke: '#000', 'stroke-width': '1' })])
+    const node = element('g', { class: 'system' }, [element('g', { class: 'measure' }, [element('g', { class: 'staff' }, [element('rect', { x: '0', y: '40', width: '180', height: '40' })])]), slur, ending])
+    const geometry = new SvgGeometry(node, textMeasurer())
+    arrangeStaffSystem(node, geometry, 320, new Set())
+    for (const a of geometry.pieces(ending)) for (const b of geometry.pieces(slur))
+      expect(overlapsX(a, b) && a.top < b.bottom && b.top < a.bottom).toBe(false)
+  })
   it('paints inline key changes as well as allocating their width', () => {
     const analysis = analyzeM3N('{4/4}\nN: 1 2 {key=G} 3 4 |||')
     expect(analysis.diagnostics.filter(d => d.severity === 'error')).toEqual([])
@@ -22,6 +58,15 @@ describe('staff layout contract', () => {
     const measure = projectStaffDocument(score).measures[0]!
     const model = createVexMeasure(measure, true, false, textMeasurer(), 0.25)
     const drawing = drawVexMeasure(model, model.minimum, 0, createStaffContext())
+    const rules = findAll(drawing, n => n.attributes.class === 'staff-line')
+    expect(rules).toHaveLength(5)
+    const geometry = new SvgGeometry(drawing, textMeasurer())
+    for (const rule of rules) {
+      expect(rule.tagName).toBe('path')
+      const ink = geometry.ink(rule)
+      expect(ink.bottom - ink.top).toBeCloseTo(1)
+      expect(ink.right - ink.left).toBeGreaterThan(model.minimum - 1)
+    }
     const signatures = findAll(drawing, n => n.attributes.class === 'inline-signature')
     expect(signatures).toHaveLength(1)
     for (const signature of signatures)

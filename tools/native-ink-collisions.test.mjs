@@ -11,6 +11,7 @@ before(async () => {
   await page.setContent('<main></main>')
   await page.addScriptTag({ content: readFileSync(new URL('./lib/native-ink-collisions.mjs', import.meta.url), 'utf8').replace('export function', 'function') })
   await page.addScriptTag({ content: readFileSync(new URL('./lib/numbered-svg-metrics.mjs', import.meta.url), 'utf8').replace('export function', 'function') })
+  await page.addScriptTag({ content: readFileSync(new URL('./lib/staff-ink-collisions.mjs', import.meta.url), 'utf8').replace(/^import .*\n/, '').replaceAll('export function', 'function') })
 })
 after(async () => { await browser?.close() })
 const check = svg => page.evaluate(svg => {
@@ -22,6 +23,24 @@ test('detects real painted text overlap with music', async () => {
   const result = await check('<g class="note" id="note"><rect x="30" y="40" width="30" height="30"/></g><text data-m3n-role="annotation" x="40" y="60" font-size="16">p</text>')
   assert.equal(result.collisions.length, 1)
   assert.ok(result.collisions[0].opaquePixelsAt2x > 0)
+})
+test('staff audit checks independent music and ending hooks but permits beam joins', async () => {
+  const audit = svg => page.evaluate(svg => {
+    document.querySelector('main').innerHTML = `<svg width="120" height="100"><g class="system">${svg}</g></svg>`
+    const system = document.querySelector('g.system')
+    const result = auditStaffInkCollisions(system)
+    return { ...result, restored: !system.querySelector('[data-m3n-role]') }
+  }, svg)
+  const note = '<g class="note" id="a"><rect x="30" y="40" width="10" height="10"/></g>'
+  const music = await audit(note + '<g class="chord" id="b"><rect x="35" y="40" width="10" height="10"/></g>')
+  assert.equal(music.collisions.length, 1)
+  assert.equal(music.restored, true)
+  const ending = await audit(note + '<g class="ending voltaBracket" id="ending"><path d="M35 35 V55" stroke="black"/></g>')
+  assert.equal(ending.collisions.length, 1)
+  const beam = await audit(note + '<g class="beam"><rect x="30" y="40" width="20" height="2"/></g>')
+  assert.equal(beam.collisions.length, 0)
+  const multiRest = await audit('<g class="rest"><path d="M10 60 H50" stroke="black"/><g class="rest"><text x="25" y="40">4</text></g></g>')
+  assert.equal(multiRest.collisions.length, 0)
 })
 test('rejects an empty curve-box intersection while detecting ink crossing the curve', async () => {
   const curve = '<g data-m3n-relation="slur"><path d="M0 60 Q50 -20 100 60" fill="none" stroke="black" stroke-width="2"/></g>'

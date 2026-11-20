@@ -58,7 +58,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         translate(system.node, gutter / STAFF_SCALE, 0)
         system.pieces = system.pieces.map(piece => moveInk(piece, gutter, 0))
         system.spacingPieces = system.spacingPieces.map(piece => moveInk(piece, gutter, 0))
-        system.edgePieces = system.edgePieces.map(piece => moveInk(piece, gutter, 0))
+        system.edgePieces = system.edgePieces.map(piece => ({ ...moveInk(piece, gutter, 0), gap: piece.gap }))
         system.ink = moveInk(system.ink, gutter, 0)
         system.core = moveInk(system.core, gutter, 0)
       }

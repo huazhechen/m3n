@@ -1,7 +1,8 @@
 /** Browser-only, independent paint test. Rectangle intersection selects candidates;
  * opaque raster overlap confirms a collision, so a curve's empty box is harmless.
+ * Staff callers also compare separate music objects; beam/stem joins remain allowed.
  */
-export function auditNativeInkCollisions(system, { groupSelector } = {}) {
+export function auditNativeInkCollisions(system, { groupSelector, independentMusic = false } = {}) {
   const measure = document.createElement('canvas').getContext('2d')
   const primitiveSelector = 'text,path,line,rect,circle,ellipse'
   const rootInverse = (system.ownerSVGElement ?? system).getCTM().inverse()
@@ -83,7 +84,9 @@ export function auditNativeInkCollisions(system, { groupSelector } = {}) {
   let candidates = 0
   for (let i = 0; i < objects.length; i++) for (let j = i + 1; j < objects.length; j++) {
     const a = objects[i], b = objects[j]
-    if (a.kind !== 'label' && b.kind !== 'label') continue
+    const separateMusic = independentMusic && [a, b].every(item =>
+      ['music', 'control'].includes(item.kind) && item.label !== 'beam')
+    if (a.kind !== 'label' && b.kind !== 'label' && !separateMusic) continue
     const left = Math.max(a.left, b.left), right = Math.min(a.right, b.right), top = Math.max(a.top, b.top), bottom = Math.min(a.bottom, b.bottom)
     if (right <= left || bottom <= top) continue
     candidates++

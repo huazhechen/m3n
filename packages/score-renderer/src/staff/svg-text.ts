@@ -11,19 +11,10 @@ export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
     for (const system of svg.querySelectorAll('g.system')) {
       const measures = [...system.querySelectorAll('g.measure')]
       const last = measures.at(-1)
-      for (const number of system.querySelectorAll('g.mNum')) {
-        if (!measureNumbers || number.closest('g.measure') !== last) { number.remove(); continue }
-        const text = number.querySelector('text')
-        const barLines = [...last!.querySelectorAll<SVGGraphicsElement>('g.barLine path')]
-        if (!text || !barLines.length) continue
-        const inverse = text.getCTM()!.inverse()
-        const right = Math.max(...barLines.map(line => {
-          const box = line.getBBox()
-          return new DOMPoint(box.x + box.width, box.y).matrixTransform(line.getCTM()!).matrixTransform(inverse).x
-        }))
-        text.setAttribute('x', String(right))
-        text.setAttribute('text-anchor', 'end')
-      }
+      // Alignment is finalized before collision measurement in arrangeStaffSystem.
+      // Moving numbers here would invalidate the measured inter-system clearance.
+      for (const number of system.querySelectorAll('g.mNum'))
+        if (!measureNumbers || number.closest('g.measure') !== last) number.remove()
     }
     for (const text of svg.querySelectorAll('text')) {
       const characters: Array<{ char: string; element: Element }> = []

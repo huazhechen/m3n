@@ -4,8 +4,9 @@ import { build } from 'vite'
 import { chromium } from '@playwright/test'
 
 const filter=process.argv.find(a=>a.startsWith('--score='))?.slice(8)
+const measureNumbers = process.argv.includes('--measure-numbers')
 const root = resolve(import.meta.dirname, '..'),
-  output = join(root, '.tmp/staff-layout-audit/verification-' + (filter??'all'))
+  output = join(root, '.tmp/staff-layout-audit/verification-' + (filter??'all') + (measureNumbers ? '-numbers' : ''))
 mkdirSync(output, { recursive: true })
 await build({
   configFile: false,
@@ -76,16 +77,16 @@ for (const input of [...fixtures.filter(item => !filter || item.file.includes(fi
     await page.addScriptTag({ url: 'http://staff-audit.local/bundle.js' })
     const width = Number(/\{staff-preferred-width=(\d+)\}/.exec(input.source)?.[1] ?? 640)
     const result = await page.evaluate(
-      async ({ source, width }) => {
+      async ({ source, width, measureNumbers }) => {
         await window.staffWidths.prepare()
-        return window.staffWidths.measure(source, width, true)
+        return window.staffWidths.measure(source, width, true, { measureNumbers })
       },
-      { ...input, width },
+      { ...input, width, measureNumbers },
     )
     entries.push({ file: input.file, ...result })
     console.log(input.file, result.pageCount, result.outside.length, result.overlaps.length)
     if(result.outside.length||result.overlaps.length){
-      const svgs=await page.evaluate(({source,width})=>window.staffWidths.preview(source,width),{...input,width})
+      const svgs=await page.evaluate(({source,width,measureNumbers})=>window.staffWidths.preview(source,width,{measureNumbers}),{...input,width,measureNumbers})
       const name=input.file.replaceAll('/','_')
       svgs.forEach((svg,i)=>writeFileSync(join(output,`${name}-${i+1}.svg`),svg))
       await page.screenshot({path:join(output,`${name}.png`),fullPage:true})

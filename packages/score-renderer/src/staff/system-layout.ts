@@ -16,7 +16,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Ink[]; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
+export type StaffSystem = { node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
   'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row', 'm3n-ending-row',
@@ -29,23 +29,6 @@ function filtered(node: XmlNode, omit: (node: XmlNode) => boolean): XmlNode {
       .filter((child) => typeof child === 'string' || !omit(child))
       .map((child) => (typeof child === 'string' ? child : filtered(child, omit))),
   }
-}
-function weightedCore(pieces: Ink[]): Ink {
-  const bounds = union(pieces),
-    xs = [...new Set(pieces.flatMap((p) => [p.left, p.right]))].sort((a, b) => a - b)
-  let weight = 0,
-    top = 0,
-    bottom = 0
-  for (let i = 1; i < xs.length; i++) {
-    const left = xs[i - 1]!,
-      right = xs[i]!,
-      active = pieces.filter((p) => p.left < right && p.right > left)
-    if (!active.length) continue
-    weight += right - left
-    top += Math.min(...active.map((p) => p.top)) * (right - left)
-    bottom += Math.max(...active.map((p) => p.bottom)) * (right - left)
-  }
-  return { ...bounds, top: weight ? top / weight : bounds.top, bottom: weight ? bottom / weight : bounds.bottom }
 }
 /** Operate on independent attachments. Musical geometry is never stretched.
  * Empty verse containers remain available for interaction but reserve no ink. */
@@ -202,7 +185,6 @@ export function arrangeStaffSystem(
       const dx = Math.max(0, right + 3.5 / scale - ink.left)
       translate(ending, dx, top - ink.top)
       right = Math.max(right, ink.right + dx)
-      groupedEndings.add(ending)
       arranged.push({ ending, ink: moveInk(ink, dx, top - ink.top) })
     }
     const clearances = arranged.flatMap(({ ink }) => endingObstacles
@@ -211,6 +193,7 @@ export function arrangeStaffSystem(
     const dy = clearances.length ? Math.max(0, Math.min(...clearances) - 5 / scale) + 3 / scale : 0
     if (dy) for (const { ending } of arranged) translate(ending, 0, dy)
     if (row.length > 1) {
+      row.forEach(({ ending }) => groupedEndings.add(ending))
       node.children = node.children.filter((child) => typeof child === 'string' || !row.some((item) => item.ending === child))
       node.children.push(element('g', { class: 'm3n-ending-row' }, row.map(({ ending }) => ending)))
     }
@@ -227,7 +210,7 @@ export function arrangeStaffSystem(
   const isHeadingTempo = (attachment: XmlNode) => hasStandaloneHeading && hasClass(attachment, 'tempo')
   const placementOrder = (attachment: XmlNode) =>
     isHeadingTempo(attachment) ? 4 : isStandaloneHeading(attachment) ? 3 :
-      hasClass(attachment, 'mNum') ? 2 : hasClass(attachment, 'ending') ? 1 : isHairpin(attachment) ? -1 : 0
+      hasClass(attachment, 'mNum') ? 2 : hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? 1 : isHairpin(attachment) ? -1 : 0
   // Keep the section's directions next to its melody: tempo above heading,
   // heading above directions, then music. Place the outer levels last.
   const attachments = findAll(node, (n) => isDecoration(n) && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
@@ -310,17 +293,14 @@ export function arrangeStaffSystem(
   const pieces = geometry
     .pieces(node)
     .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
-  const core = weightedCore(
-    geometry
-      .pieces(filtered(node, isDecoration))
-      .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })),
-  )
+  // The stave itself is the stable core. Notes, lyrics and controls only
+  // enlarge a particular row gap when their actual ink requires clearance.
+  const core = union(findAll(node, n => hasClass(n, 'staff-line')).flatMap(rule => geometry.pieces(rule))
+    .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
   const spacingPieces = geometry.pieces(filtered(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')))
     .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
-  const edgePieces = findAll(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')).flatMap(child => geometry.pieces(child))
-    .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
-  const lyricInk = union(findAll(node, (n) => hasClass(n, 'verse')).flatMap((verse) => geometry.pieces(verse)))
-  if (lyricInk.bottom > lyricInk.top) core.bottom = Math.max(core.bottom, lyricInk.bottom * scale)
+  const edgePieces = findAll(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')).flatMap(child =>
+    geometry.pieces(child).map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: hasClass(child, 'mNum') ? 4 : 2 })))
   return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(findAll(node, (n) => hasClass(n, 'reh')).length), staffSpacing }
 }
 const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, number>>()
@@ -338,8 +318,8 @@ export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: nu
     following.set(next, collision)
   }
   let edgeCollision = -Infinity
-  for (const a of previous.pieces) for (const b of next.edgePieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + 2)
-  for (const a of previous.edgePieces) for (const b of next.spacingPieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + 2)
+  for (const a of previous.pieces) for (const b of next.edgePieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + b.gap)
+  for (const a of previous.edgePieces) for (const b of next.spacingPieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + a.gap)
   return Math.max(previous.core.bottom + gap - next.core.top, collision + gap / 2, edgeCollision) + (next.section ? 12 : 0)
 }
 export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number }

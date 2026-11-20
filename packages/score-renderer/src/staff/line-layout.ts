@@ -54,7 +54,7 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
     begin = end
   }
   const last = lines.at(-1), previous = lines.at(-2)
-  if (last && previous && !last.measures[0]!.measure.section) {
+  if (last && previous) {
     const inherited = equal ? Math.max(last.minimum, previous.target / previous.measures.length * last.measures.length)
       : last.minimum + (previous.target - previous.minimum) / previous.weight * last.weight
     if (inherited <= available * 0.6) last.target = inherited

@@ -252,7 +252,8 @@ test('staff volta hooks, separation, and music clearance stay correct', async ({
   const continuedEnding = paper.locator('g.ending.id-m3n-ending-2')
   await expect(continuedEnding.locator('.m3n-ending-start-hook')).toHaveCount(1)
 
-  await page.getByLabel('M3N source').fill(await readFile('src/scores/qian_si_xi_01.m3n', 'utf8'))
+  // A small fixture guarantees two adjacent endings regardless of library widths.
+  await page.getByLabel('M3N source').fill('{4/4}\nN: ||: 1 2 3 4 |\n---V1\nN: 5 6 7 1e :||\n---V2\nN: 5 4 3 1 |||')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const brackets = await paper.locator('g.system').evaluateAll(systems => systems.flatMap(system => {
     const endings = [...system.querySelectorAll('g.ending.voltaBracket, g.ending .voltaBracket')]

@@ -12,6 +12,7 @@
 - [NATIVE_ENGINES.md](NATIVE_ENGINES.md)：自研渲染与演奏链路。
 - [NUMBERED_NOTATION.md](NUMBERED_NOTATION.md)：简谱测量、排版与交互。
 - [STAFF_NOTATION.md](STAFF_NOTATION.md)：可选五线谱显示与单曲导出。
+- [STAFF_SPACING_REVIEW.md](STAFF_SPACING_REVIEW.md)：VexFlow版宽刷新、碰撞与疏密审视。
 - [STAFF_LAYOUT_AUDIT.md](STAFF_LAYOUT_AUDIT.md)：五线谱与简谱的排版差异、统一建议及核验依据。
 - [FORMATTING.md](FORMATTING.md)：格式化规则与验证。
 - [HOSTING.md](HOSTING.md)：当前工作区托管及构建方式。
