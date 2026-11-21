@@ -10,6 +10,15 @@ function read(source: string, options: Parameters<typeof describeAccessibleScore
 const all = (score: ReturnType<typeof read>) => score.measures.flatMap(m => m.voices.flatMap(v => v.events)).join('\n')
 
 describe('front-end accessible score descriptions', () => {
+  it('explains pitch notation once and announces unchanged settings only at their first occurrence', () => {
+    const text = read('{key=C}{2/4}{60qpm}\nN: 1 2 | 3 4 | {key=G}{90qpm}5 6 |||')
+    expect(text.summary).toContain('科学音高记法')
+    expect(all(text)).not.toContain('科学音高记法')
+    expect(text.measures[0]!.voices[0]!.events[0]).toContain('每分钟60拍')
+    expect(text.measures[1]!.voices[0]!.events[0]).not.toMatch(/调性|为一小节|每分钟/)
+    expect(text.measures[2]!.voices[0]!.events[0]).toContain('调性G大调')
+    expect(text.measures[2]!.voices[0]!.events[0]).toContain('每分钟90拍')
+  })
   it('matches compact first-visit keys and expanded absolute displays without changing event identity', () => {
     const source = '{key=C}{2/4}{order=A@Db,A}\n===A\nN: 1 2 |||\nB: 1d 2d |\nL1: 春天\nL2: 秋天'
     const compact = read(source, { notationMode: 'movable', forDisplay: true })

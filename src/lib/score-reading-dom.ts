@@ -1,6 +1,82 @@
 import type { AccessibleScore } from './score-accessibility'
+import type { ScoreDocument } from '@m3n/notation'
 
 const svgNamespace = 'http://www.w3.org/2000/svg'
+type ReadingPosition = { measureId: string; eventId?: string; sourceId?: string }
+type ReadingState = { score?: ScoreDocument; position?: ReadingPosition; measure?: Element; restoring?: boolean }
+const readingStates = new WeakMap<HTMLElement, ReadingState>()
+const readingState = (paper: HTMLElement) => {
+  let state = readingStates.get(paper)
+  if (!state) { state = {}; readingStates.set(paper, state) }
+  return state
+}
+
+export function updateScoreReadingStatus(element: Element) {
+  const base = element.getAttribute('data-reading-label')
+  if (!base) return
+  const playing = element.matches('.is-playing, .is-playing-measure')
+  const editing = element.matches('.is-cursor-active, .is-cursor-active-measure')
+  const status = [playing && '正在播放', editing && '编辑选中'].filter(Boolean)
+  const label = [base, ...status].join('；')
+  if (element.getAttribute('aria-label') !== label) element.setAttribute('aria-label', label)
+  if (playing && element.getAttribute('aria-current') !== 'true') element.setAttribute('aria-current', 'true')
+  else if (!playing && element.hasAttribute('aria-current')) element.removeAttribute('aria-current')
+}
+
+function resolvePosition(paper: HTMLElement, position?: ReadingPosition) {
+  if (!position) return null
+  const notes = [...paper.querySelectorAll<SVGGElement>('[data-reading-event]')]
+  return notes.find(note => note.dataset.readingEvent === position.eventId)
+    ?? notes.find(note => position.sourceId && note.dataset.readingSource === position.sourceId)
+    ?? [...paper.querySelectorAll<SVGGElement>('[data-reading-measure]')].find(measure => measure.dataset.readingMeasure === position.measureId)
+    ?? null
+}
+
+function markReadingPosition(paper: HTMLElement, target: Element) {
+  const state = readingState(paper)
+  const measure = target.closest<SVGGElement>('[data-reading-measure]')
+  if (!measure) return
+  if (state.measure !== measure) state.measure?.removeAttribute('data-reading-current')
+  measure.setAttribute('data-reading-current', 'true')
+  state.measure = measure
+  paper.dispatchEvent(new Event('score-reading-change'))
+}
+
+export function rememberScorePosition(paper: HTMLElement, target: Element) {
+  const state = readingState(paper)
+  if (state.restoring) return
+  const measure = target.closest<SVGGElement>('[data-reading-measure]')
+  if (!measure) return
+  const note = target.closest<SVGGElement>('[data-reading-event]')
+  state.position = { measureId: measure.dataset.readingMeasure!, eventId: note?.dataset.readingEvent, sourceId: note?.dataset.readingSource }
+  markReadingPosition(paper, target)
+}
+
+export function currentReadingMeasure(paper: HTMLElement) {
+  return resolvePosition(paper, readingState(paper).position)?.closest<SVGGElement>('[data-reading-measure]')?.dataset.readingMeasure
+}
+
+/** Capture focus at the actual DOM replacement, never at the start of async layout. */
+export function preserveScoreReading(paper: HTMLElement, score: ScoreDocument) {
+  const state = readingState(paper)
+  const sameScore = state.score === score
+  const focused = paper.contains(document.activeElement)
+  if (!sameScore) {
+    state.position = undefined
+    state.measure = undefined
+  } else if (focused) rememberScorePosition(paper, document.activeElement!)
+  state.score = score
+  return () => {
+    const target = resolvePosition(paper, state.position)
+    if (target) {
+      markReadingPosition(paper, target)
+      if (sameScore && focused) {
+        state.restoring = true
+        try { target.focus({ preventScroll: true }) } finally { state.restoring = false }
+      }
+    } else paper.dispatchEvent(new Event('score-reading-change'))
+  }
+}
 
 /** Native SVG titles name the actual music geometry, without painting text. */
 export function attachScoreReading(paper: HTMLElement, text: AccessibleScore) {
@@ -17,6 +93,7 @@ export function attachScoreReading(paper: HTMLElement, text: AccessibleScore) {
       element.prepend(title)
       // aria-label also supports browsers that do not use a nested SVG title.
       element.setAttribute('aria-label', label)
+      element.setAttribute('data-reading-label', label)
       element.setAttribute('role', role)
       expose(element)
       exposed.add(title)
@@ -49,6 +126,9 @@ export function attachScoreReading(paper: HTMLElement, text: AccessibleScore) {
         const description = events.get(eventId)
         if (!description || claimed.has(eventId)) continue
         name(note, description, 'img')
+        note.dataset.readingEvent = eventId
+        note.dataset.readingSource = eventId.replace(/-rend\d+$/, '')
+        note.setAttribute('tabindex', '-1')
         claimed.add(eventId)
       }
       if (!events.size) {
@@ -71,6 +151,15 @@ export function focusScoreMeasure(paper: HTMLElement | null, id: string) {
   const measure = [...paper?.querySelectorAll<SVGGElement>('[data-reading-measure]') ?? []]
     .find(element => element.dataset.readingMeasure === id)
   if (!measure) return
+  rememberScorePosition(paper!, measure)
   measure.scrollIntoView({ block: 'center', inline: 'nearest' })
   measure.focus({ preventScroll: true })
+}
+
+export function resumeScoreReading(paper: HTMLElement | null, fallbackId: string) {
+  const target = paper && resolvePosition(paper, readingState(paper).position)
+  if (!target) return focusScoreMeasure(paper, fallbackId)
+  target.scrollIntoView({ block: 'center', inline: 'nearest' })
+  readingState(paper!).restoring = true
+  try { target.focus({ preventScroll: true }) } finally { readingState(paper!).restoring = false }
 }

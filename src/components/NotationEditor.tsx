@@ -46,6 +46,7 @@ export function NotationEditor({
   const [sharingAction, setSharingAction] = useState<'browse' | 'submit' | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
   const textareaRef = useRef<SourceEditorHandle>(null)
+  const playbackSelectionRef = useRef(false)
   const latestSource = useRef(source)
   useLayoutEffect(() => { latestSource.current = source }, [source])
   const [isComposing, setIsComposing] = useState(false)
@@ -64,6 +65,7 @@ export function NotationEditor({
   const activeXmlId = isCursorHighlightActive ? cursorXmlId : null
 
   const updateCursorPosition = useCallback((position: number) => {
+    if (playbackSelectionRef.current) return
     setCursorPosition(position)
     setIsCursorHighlightActive(true)
   }, [])
@@ -82,12 +84,14 @@ export function NotationEditor({
     if (analysis.source !== latestSource.current) return
     const textarea = textareaRef.current
     if (!textarea) return
-    if (!xmlId) {
-      textarea.select(textarea.selection(), undefined, false, { scrollIntoView: false })
-      return
-    }
-    const mappedRange = result.sourceMap.find((item) => item.xmlId === xmlId)
-    if (mappedRange) textarea.select(mappedRange.sourceStart, mappedRange.sourceEnd, false, { scrollIntoView: false })
+    playbackSelectionRef.current = true
+    try {
+      if (!xmlId) textarea.select(textarea.selection(), undefined, false, { scrollIntoView: false })
+      else {
+        const mappedRange = result.sourceMap.find((item) => item.xmlId === xmlId)
+        if (mappedRange) textarea.select(mappedRange.sourceStart, mappedRange.sourceEnd, false, { scrollIntoView: false })
+      }
+    } finally { playbackSelectionRef.current = false }
   }, [analysis.source, result.sourceMap])
 
   const formatSource = () => {

@@ -22,7 +22,7 @@
 }
 .control-button svg { flex-shrink: 0; }
 .audio-controls .control-button svg { width: var(--ui-icon-size); height: var(--ui-icon-size); }
-.control-button:disabled { opacity: .45; cursor: default; }
+.control-button:disabled, .control-button[aria-disabled="true"] { opacity: .45; cursor: default; }
 .audio-controls button:focus-visible, .audio-controls input:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
 .audio-controls .playback-toggle, .audio-controls [role="switch"][aria-checked="true"] { border-color: #176e6e; color: white; background: #176e6e; }
 .audio-controls output { font-variant-numeric: tabular-nums; white-space: nowrap; }

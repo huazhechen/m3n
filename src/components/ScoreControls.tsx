@@ -62,7 +62,7 @@ export function ScoreControls(props: ScoreControlsProps) {
   const playLabel = props.isPlaying ? '暂停' : '播放'
   const controls = <div className={props.playbackOnly ? 'audio-controls playback-only' : `audio-controls floating-controls${props.contained ? ' contained-controls' : ''}`} role="group" aria-label="乐谱控制">
     <div className="control-transport">
-        <button type="button" className="control-button playback-toggle" aria-label={playLabel} title={props.isLoading ? '加载中' : playLabel} aria-busy={props.isLoading || undefined} disabled={props.isLoading} onClick={props.onTogglePlayback}>
+        <button type="button" className="control-button playback-toggle" aria-label={playLabel} title={props.isLoading ? '加载中' : playLabel} aria-busy={props.isLoading || undefined} aria-disabled={props.isLoading || undefined} onClick={() => { if (!props.isLoading) props.onTogglePlayback() }}>
           <ScoreControlIcon name={props.isPlaying ? 'pause' : 'play'} /><span>{props.isLoading ? '加载中' : playLabel}</span>
         </button>
         <input type="range" min="0" max="1000" value={Math.round(props.progress * 1000)} aria-label="播放位置" aria-valuetext={`${Math.round(props.progress * 100)}%`}

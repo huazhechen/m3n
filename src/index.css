@@ -923,8 +923,8 @@ textarea::selection {
 
 .score-paper .is-playing,
 .score-paper .is-playing * {
-  fill: #d95f2a;
-  stroke: #d95f2a;
+  fill: #b88200;
+  stroke: #b88200;
 }
 
 /* Preserve music glyph open paths and stroke widths when recoloring symbols. */
@@ -943,7 +943,23 @@ textarea::selection {
 
 .score-paper .is-playing.stem path,
 .score-paper .is-playing .stem path {
-  stroke: #d95f2a !important;
+  stroke: #b88200 !important;
+}
+
+.score-paper [data-reading-measure]:focus,
+.score-paper [data-reading-event]:focus {
+  outline: none;
+}
+
+.score-paper [data-score-reading-hitarea] {
+  fill: transparent !important;
+  stroke: none !important;
+}
+
+.score-paper [data-reading-current] > [data-score-reading-hitarea] {
+  stroke: #315b5d !important;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
 }
 
 .score-paper .startup-beat-highlight {

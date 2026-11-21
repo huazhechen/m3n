@@ -27,7 +27,7 @@ function absoluteNumber(absolute: string) {
 
 function absoluteText(absolute: string, transpose: number) {
   const value = absoluteNumber(absolute) + transpose
-  return `${pitchNames[((value % 12) + 12) % 12]}${Math.floor(value / 12)}，科学音高记法`
+  return `${pitchNames[((value % 12) + 12) % 12]}${Math.floor(value / 12)}`
 }
 
 function keyText(key: string, transpose: number) {
@@ -102,11 +102,12 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
       }
     }
     const compactKeys = new Map<string, string>()
+    const previousEvents = new Map<string, ScoreEvent>()
     const voice = (measure: ScoreMeasure, name: string, pickupOffset: number) => {
       const events: string[] = []
       const compact: string[] = []
       let offset = pickupOffset
-      for (const [index, event] of measure.events.entries()) {
+      for (const event of measure.events) {
         if (compactKeys.has(name) && compactKeys.get(name) !== event.key) compact.push(`（转调至${keyText(event.key, transpose)}）`)
         compactKeys.set(name, event.key)
         const digits = event.pitches.map((token, slot) => {
@@ -123,10 +124,12 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
         })
         compact.push(event.kind === 'rest' ? '0' : event.kind === 'chord' ? `（${digits.join('、')}）` : digits.join(' '))
         const unit = event.meterUnit ?? document.meterUnit
+        const previous = previousEvents.get(name)
         const info: string[] = [`第${number(offset * unit / 4 + 1)}拍`]
-        if (index === 0 || event.key !== measure.events[index - 1]!.key) info.push(`调性${keyText(event.key, transpose)}`)
-        if (index === 0 || event.meterCount !== measure.events[index - 1]!.meterCount || event.meterUnit !== measure.events[index - 1]!.meterUnit) info.push(`${event.meterCount ?? document.meterCount}个${unit}分音符为一小节，以${unit}分音符为一拍`)
-        if (index === 0 || event.tempo !== measure.events[index - 1]!.tempo) info.push(`每分钟${number((event.tempo ?? document.tempo) * unit / 4 * tempoScale)}拍`)
+        if (!previous || event.key !== previous.key) info.push(`调性${keyText(event.key, transpose)}`)
+        if (!previous || (event.meterCount ?? document.meterCount) !== (previous.meterCount ?? document.meterCount) || unit !== (previous.meterUnit ?? document.meterUnit)) info.push(`${event.meterCount ?? document.meterCount}个${unit}分音符为一小节，以${unit}分音符为一拍`)
+        if (!previous || (event.tempo ?? document.tempo) !== (previous.tempo ?? document.tempo) || unit !== (previous.meterUnit ?? document.meterUnit)) info.push(`每分钟${number((event.tempo ?? document.tempo) * unit / 4 * tempoScale)}拍`)
+        previousEvents.set(name, event)
         const pitch = (token: string, slot: number) => {
           if (token === '0') return '休止'
           const absolute = resolved.get(event)?.[slot]

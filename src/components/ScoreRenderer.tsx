@@ -2,6 +2,7 @@ import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '..
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
 import { ScoreAccessibleText } from './ScoreAccessibleText'
+import { updateScoreReadingStatus } from '../lib/score-reading-dom'
 import { PlaybackLoadingDialog } from './PlaybackLoadingDialog'
 import { ResourceLoadingDialog } from './ResourceLoadingDialog'
 import { cancelToneLoad, loadSampledTone, subscribeToneLoadProgress, type ToneLoadProgress } from '@m3n/score-renderer/tones'
@@ -138,6 +139,7 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
     : measureBounds.x + measureBounds.width
   const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   band.classList.add(className)
+  band.setAttribute('aria-hidden', 'true')
   band.setAttribute('x', String(left))
   band.setAttribute('y', String(systemBounds.y))
   band.setAttribute('width', String(Math.max(0, right - left)))
@@ -256,6 +258,7 @@ export function ScoreRenderer({
 
   useEffect(() => {
     const playbackLease = playbackLeaseRef.current
+    setSelectedXmlId(null)
     setPlaybackProgress(0)
     setIsPlayRequest(false)
     setToneLoading(false)
@@ -301,7 +304,6 @@ export function ScoreRenderer({
     setMessage('')
     setIsRendering(true)
     setRenderPhase(isInitialRender ? 'loading-library' : null)
-    setSelectedXmlId(null)
     void (async () => {
       try {
         const selectedWidth = autoWidthSelectionRef.current
@@ -343,28 +345,38 @@ export function ScoreRenderer({
     const paper = paperRef.current
     paper?.querySelectorAll('.is-cursor-active').forEach((element) => {
       element.classList.remove('is-cursor-active')
+      updateScoreReadingStatus(element)
     })
     paper?.querySelectorAll('.is-cursor-active-measure').forEach((measure) => {
       measure.classList.remove('is-cursor-active-measure')
+      updateScoreReadingStatus(measure)
     })
-    const xmlId = activeXmlId ?? selectedXmlId
+    const xmlId = onNoteClick ? activeXmlId ?? selectedXmlId : null
     const element = xmlId ? queryScoreElement(paper, xmlId) : null
     if (element) {
       element.classList.add('is-cursor-active')
+      updateScoreReadingStatus(element)
       const measure = element.closest<SVGGElement>('g.measure')
       if (measure) {
         addMeasureHighlight(measure, 'measure-cursor-highlight')
         measure.classList.add('is-cursor-active-measure')
+        updateScoreReadingStatus(measure)
       }
     }
-  }, [activeXmlId, isRendering, selectedXmlId])
+  }, [activeXmlId, isRendering, selectedXmlId, onNoteClick])
 
   const clearPlaybackHighlight = () => {
-    highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
+    highlightedElementsRef.current.forEach((element) => {
+      element.classList.remove('is-playing')
+      updateScoreReadingStatus(element)
+    })
     highlightedElementsRef.current = []
     paperRef.current?.querySelectorAll('.startup-beat-highlight').forEach(element => element.remove())
     startupBeatRef.current = null
-    highlightedMeasuresRef.current.forEach((measure) => measure.classList.remove('is-playing-measure'))
+    highlightedMeasuresRef.current.forEach((measure) => {
+      measure.classList.remove('is-playing-measure')
+      updateScoreReadingStatus(measure)
+    })
     highlightedMeasuresRef.current = []
     onActiveXmlId?.(null)
   }
@@ -372,6 +384,7 @@ export function ScoreRenderer({
   const highlightMeasure = (measure: SVGGElement) => {
     addMeasureHighlight(measure, 'measure-playback-highlight')
     measure.classList.add('is-playing-measure')
+    updateScoreReadingStatus(measure)
   }
 
   stopPlaybackRef.current = () => {
@@ -396,12 +409,23 @@ export function ScoreRenderer({
     const elements = timedElements.flatMap(({ xmlId, rendition }) => queryPlaybackElements(paperRef.current, xmlId, rendition))
     const orderIndex = timedElements.find(element => element.orderIndex !== undefined)?.orderIndex
     if (orderIndex !== undefined) elements.push(...paperRef.current?.querySelectorAll(`[data-m3n-order-index="${orderIndex}"]`) ?? [])
-    highlightedElementsRef.current.forEach((element) => element.classList.remove('is-playing'))
-    elements.forEach((element) => element.classList.add('is-playing'))
+    highlightedElementsRef.current.forEach((element) => {
+      if (!elements.includes(element)) {
+        element.classList.remove('is-playing')
+        updateScoreReadingStatus(element)
+      }
+    })
+    elements.forEach((element) => {
+      element.classList.add('is-playing')
+      updateScoreReadingStatus(element)
+    })
     highlightedElementsRef.current = elements
     const measures = [...new Set(elements.map((element) => element.closest<SVGGElement>('g.measure')).filter((measure): measure is SVGGElement => Boolean(measure)))]
     highlightedMeasuresRef.current.forEach((measure) => {
-      if (!measures.includes(measure)) measure.classList.remove('is-playing-measure')
+      if (!measures.includes(measure)) {
+        measure.classList.remove('is-playing-measure')
+        updateScoreReadingStatus(measure)
+      }
     })
     measures.forEach(highlightMeasure)
     highlightedMeasuresRef.current = measures
@@ -689,6 +713,8 @@ export function ScoreRenderer({
         role="region"
         aria-label={`${scoreDocument.title || '乐谱'}，逐小节读谱`}
         onClick={(event) => {
+          const readingTarget = (event.target as Element).closest<SVGGElement>('[data-reading-event], [data-reading-measure]')
+          readingTarget?.focus({ preventScroll: true })
           const element = (event.target as Element).closest('[id^="m3n-e-"], [data-m3n-id^="m3n-e-"]')
           const rawId = element?.getAttribute('data-m3n-id') ?? element?.getAttribute('id')
           const xmlId = notationMode === 'staff' ? rawId?.replace(/-v\d+$/, '').replace(/-n\d+$/, '').replace(/-rend\d+$/, '') : rawId

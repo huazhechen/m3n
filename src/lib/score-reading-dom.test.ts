@@ -2,9 +2,57 @@
 import { describe, expect, it, vi } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { describeAccessibleScore } from './score-accessibility'
-import { attachScoreReading, focusScoreMeasure } from './score-reading-dom'
+import { attachScoreReading, currentReadingMeasure, focusScoreMeasure, preserveScoreReading, rememberScorePosition, resumeScoreReading, updateScoreReadingStatus } from './score-reading-dom'
 
 describe('reading text attached to music geometry', () => {
+  it('keeps reading position independent from playing and editing status', () => {
+    const paper = document.createElement('div')
+    paper.innerHTML = '<svg><g data-reading-measure="bar-1" data-reading-label="第1小节"><g data-reading-event="event-1" data-reading-source="event-1" data-reading-label="哆" /></g><g data-reading-measure="bar-2" data-reading-label="第2小节" /></svg>'
+    const first = paper.querySelector('[data-reading-event]')!
+    const other = paper.querySelector('[data-reading-measure="bar-2"]')!
+    rememberScorePosition(paper, first)
+    other.classList.add('is-playing-measure', 'is-cursor-active-measure')
+    updateScoreReadingStatus(other)
+    updateScoreReadingStatus(other)
+    expect(other.getAttribute('aria-label')).toBe('第2小节；正在播放；编辑选中')
+    expect(other.getAttribute('aria-current')).toBe('true')
+    expect(currentReadingMeasure(paper)).toBe('bar-1')
+    expect(paper.querySelector('[data-reading-current]')!.getAttribute('data-reading-measure')).toBe('bar-1')
+    other.classList.remove('is-playing-measure')
+    updateScoreReadingStatus(other)
+    expect(other.getAttribute('aria-label')).toBe('第2小节；编辑选中')
+    expect(other.hasAttribute('aria-current')).toBe(false)
+  })
+
+  it('restores the focused note after reflow and preserves outside control focus', () => {
+    const paper = document.createElement('div')
+    const control = document.createElement('button')
+    document.body.append(paper, control)
+    const score = parseM3NDocument('{2/4}\nN: 1 2 |||')
+    const paint = (expanded = false) => {
+      paper.innerHTML = `<svg><g data-reading-measure="${expanded ? 'bar-2' : 'bar-1'}" tabindex="-1"><g data-reading-event="${expanded ? 'event-1-rend2' : 'event-1'}" data-reading-source="event-1" tabindex="-1" /></g></svg>`
+    }
+    preserveScoreReading(paper, score)()
+    paint()
+    const first = paper.querySelector<SVGGElement>('[data-reading-event]')!
+    first.focus()
+    const restore = preserveScoreReading(paper, score)
+    paint(true)
+    restore()
+    expect(document.activeElement).toBe(paper.querySelector('[data-reading-event]'))
+    expect(currentReadingMeasure(paper)).toBe('bar-2')
+    control.focus()
+    const restoreWithControlFocused = preserveScoreReading(paper, score)
+    paint()
+    restoreWithControlFocused()
+    expect(document.activeElement).toBe(control)
+    const note = paper.querySelector<SVGGElement>('[data-reading-event]')!
+    note.scrollIntoView = vi.fn()
+    resumeScoreReading(paper, 'unused')
+    expect(document.activeElement).toBe(note)
+    expect(note.scrollIntoView).toHaveBeenCalled()
+    paper.remove(); control.remove()
+  })
   it('names actual measures and events and hides decorative glyphs without painting new text', () => {
     const paper = document.createElement('div')
     paper.innerHTML = '<svg role="img"><text>曲名</text><g class="system"><g class="measure" id="m3n-measure-1-1"><g class="note" id="m3n-e-1"><text>1</text></g><g class="note" id="m3n-e-1-sustain2"><text>—</text></g><text>歌词</text><g class="note" id="m3n-e-2"><text>2</text></g></g></g></svg>'

@@ -1,7 +1,7 @@
-import { useEffect, useId, useMemo, useRef, useState, type RefObject } from 'react'
+import { useEffect, useId, useMemo, useState, type RefObject } from 'react'
 import type { ScoreDocument } from '@m3n/notation'
 import { describeAccessibleScore } from '../lib/score-accessibility'
-import { focusScoreMeasure } from '../lib/score-reading-dom'
+import { currentReadingMeasure, focusScoreMeasure, rememberScorePosition, resumeScoreReading } from '../lib/score-reading-dom'
 import type { NotationMode } from '../lib/renderer-settings'
 
 const overviewSize = 8
@@ -9,7 +9,6 @@ const measureName = (label: string) => label.split('，')[0]!
 
 export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale, paperRef }: { score: ScoreDocument; notationMode: NotationMode; transpose: number; tempoScale: number; paperRef?: RefObject<HTMLDivElement | null> }) {
   const [position, setPosition] = useState({ score, index: 0 })
-  const currentMeasure = useRef({ score, id: '' })
   const measureSelectId = useId()
   const text = useMemo(() => {
     try {
@@ -22,17 +21,23 @@ export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale
   useEffect(() => {
     const paper = paperRef?.current
     if (!paper) return
-    const remember = (event: Event) => {
-      const id = (event.target as Element).closest<SVGGElement>('[data-reading-measure]')?.dataset.readingMeasure
-      if (id) currentMeasure.current = { score, id }
+    const sync = () => {
+      const id = currentReadingMeasure(paper)
+      const index = text.measures.findIndex(measure => measure.id === id)
+      if (index >= 0) setPosition(previous => previous.score === score && previous.index === index ? previous : { score, index })
     }
+    const remember = (event: Event) => {
+      rememberScorePosition(paper, event.target as Element)
+    }
+    paper.addEventListener('score-reading-change', sync)
     paper.addEventListener('focusin', remember)
     paper.addEventListener('pointerdown', remember)
     return () => {
+      paper.removeEventListener('score-reading-change', sync)
       paper.removeEventListener('focusin', remember)
       paper.removeEventListener('pointerdown', remember)
     }
-  }, [paperRef, score])
+  }, [paperRef, score, text])
   const groups = Array.from({ length: Math.ceil(text.measures.length / overviewSize) }, (_, index) => {
     const measures = text.measures.slice(index * overviewSize, (index + 1) * overviewSize)
     return { measures, range: `${measureName(measures[0]!.label)}至${measureName(measures.at(-1)!.label)}` }
@@ -41,7 +46,6 @@ export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale
   const jump = () => {
     const id = text.measures[index]?.id
     if (id) {
-      currentMeasure.current = { score, id }
       focusScoreMeasure(paperRef?.current ?? null, id)
     }
   }
@@ -68,7 +72,7 @@ export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale
           {text.measures.map((measure, index) => <option key={measure.id} value={index}>{measure.label}</option>)}
         </select>
         <button type="button" onClick={jump}>跳转到所选小节</button>
-        <button type="button" onClick={() => focusScoreMeasure(paperRef?.current ?? null, (currentMeasure.current.score === score && currentMeasure.current.id) || text.measures[index]!.id)}>继续阅读小节</button>
+        <button type="button" onClick={() => resumeScoreReading(paperRef?.current ?? null, text.measures[index]!.id)}>继续阅读小节</button>
       </nav>}
     </details>
   </section>
