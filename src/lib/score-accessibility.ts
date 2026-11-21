@@ -42,7 +42,7 @@ function duration(beats: number, unit: number) {
   return `${names[String(beats)] ?? '音符'}，${number(beats * unit / 4)}拍`
 }
 
-export type AccessibleMeasure = { label: string; voices: { name: string; events: string[] }[] }
+export type AccessibleMeasure = { label: string; voices: { name: string; events: string[]; compact: string }[] }
 export type AccessibleScore = { title: string; summary: string; measures: AccessibleMeasure[] }
 
 /** Semantic reading text, independent of SVG, pagination and audio scheduling. */
@@ -76,10 +76,27 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
         tied = event.tie
       }
     }
-    const voice = (measure: ScoreMeasure, name: string) => {
+    const compactKeys = new Map<string, string>()
+    const voice = (measure: ScoreMeasure, name: string, pickupOffset: number) => {
       const events: string[] = []
-      let offset = 0
+      const compact: string[] = []
+      let offset = pickupOffset
       for (const [index, event] of measure.events.entries()) {
+        if (compactKeys.has(name) && compactKeys.get(name) !== event.key) compact.push(`（转调至${keyText(event.key, transpose)}）`)
+        compactKeys.set(name, event.key)
+        const digits = event.pitches.map((token, slot) => {
+          if (token === '0') return '0'
+          const absolute = resolved.get(event)?.[slot]
+          if (options.notationMode === 'fixed' && absolute) {
+            const pc = ((absoluteNumber(absolute) + transpose) % 12 + 12) % 12
+            return ['1', '升1', '2', '降3', '3', '4', '升4', '5', '降6', '6', '降7', '7'][pc]!
+          }
+          const degree = /[1-7]/.exec(token)?.[0] ?? token
+          const base = m3nPitch(token.replace(/[#b=]/g, ''), event.key)
+          const difference = absolute ? absoluteNumber(absolute) - absoluteNumber(`${base.pname}:${base.oct + event.octaveShift}:${base.accidGes ?? base.accid}`) : 0
+          return `${difference > 0 ? '升'.repeat(difference) : '降'.repeat(-difference)}${degree}`
+        })
+        compact.push(event.kind === 'rest' ? '0' : event.kind === 'chord' ? `（${digits.join('、')}）` : digits.join(' '))
         const unit = event.meterUnit ?? document.meterUnit
         const info: string[] = [`第${number(offset * unit / 4 + 1)}拍`]
         if (index === 0 || event.key !== measure.events[index - 1]!.key) info.push(`调性${keyText(event.key, transpose)}`)
@@ -140,7 +157,8 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
         offset += event.beats
       }
       if (measure.multiRest) events.push(`连续休止${measure.multiRest}小节；调性${keyText(measure.multiRestState?.key ?? document.key, transpose)}。`)
-      return { name, events }
+      if (measure.multiRest) compact.push(`0（${measure.multiRest}小节）`)
+      return { name, events, compact: compact.join(' ') }
     }
     part.melody.forEach((measure, index) => {
       if (!measure.events.length && !measure.multiRest && !part.bass[index]?.events.length && !part.bass[index]?.multiRest) return
@@ -152,11 +170,18 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
       if (measure.left === 'rptstart') label.push('反复开始')
       if (measure.right === 'rptend') label.push(`反复结束，共演奏${measure.repeatCount ?? 2}遍`)
       if (measure.right === 'end') label.push('全曲结束')
+      const first = measure.events[0]
+      const expected = (first?.meterCount ?? document.meterCount) * 4 / (first?.meterUnit ?? document.meterUnit)
+      const actual = measure.events.reduce((sum, event) => sum + event.beats, 0)
+      const short = actual > 0 && actual < expected - 1e-9
+      const pickup = short && (index === 0 || measure.left === 'rptstart' || measure.sectionName !== part.melody[index - 1]?.sectionName)
+      const pickupOffset = pickup ? expected - actual : 0
+      if (short) label.push(`${pickup ? '弱起' : '不完全小节'}，共${number(actual * (first?.meterUnit ?? document.meterUnit) / 4)}拍`)
       label.push(...(measure.navigation ?? []).map(n => navigation[n]!))
       const entry = measure.events[0]?.key ?? measure.multiRestState?.key
       if (entry && [...incoming.get(measure) ?? []].some(key => key !== entry)) label.push(`转调至${keyText(entry, transpose)}`)
-      const voices = [voice(measure, '旋律')]
-      if (part.bass[index]?.events.length || part.bass[index]?.multiRest) voices.push(voice(part.bass[index]!, '低音'))
+      const voices = [voice(measure, '旋律', pickupOffset)]
+      if (part.bass[index]?.events.length || part.bass[index]?.multiRest) voices.push(voice(part.bass[index]!, '低音', pickupOffset))
       measureDescriptions.push({ label: label.join('，'), voices })
       measureNumber += (measure.multiRest ?? 1) - 1
     })

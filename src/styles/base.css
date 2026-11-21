@@ -67,17 +67,36 @@ main {
   padding: var(--ui-space) 0 48px;
 }
 
-/* Remains in the accessibility tree without affecting score layout or exports. */
+/* Real document geometry lets mobile screen readers explore text by touch. */
 .score-accessible-text {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
+  margin-block: 12px;
+  padding: 12px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.score-accessible-text summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 10px;
+}
+
+.score-accessible-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.score-accessible-pages :is(button, select) {
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.score-accessible-text :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 @media print {

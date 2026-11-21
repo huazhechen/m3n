@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { parseM3NDocument, validateM3NDiagnostics } from '@m3n/notation'
 import { describeAccessibleScore } from './score-accessibility'
 
@@ -9,6 +10,22 @@ function read(source: string, options: Parameters<typeof describeAccessibleScore
 const all = (score: ReturnType<typeof read>) => score.measures.flatMap(m => m.voices.flatMap(v => v.events)).join('\n')
 
 describe('front-end accessible score descriptions', () => {
+  it('keeps the Turkish March pickup and the entire following second beat', () => {
+    const source = readFileSync(new URL('../scores/turkish_march_01.m3n', import.meta.url), 'utf8')
+    const text = read(source)
+    expect(text.measures[0]!.label).toContain('弱起，共1拍')
+    expect(text.measures[0]!.voices[0]!.events.map(event => event.split('；')[0])).toEqual(['第2拍', '第2.25拍', '第2.5拍', '第2.75拍'])
+    expect(text.measures[0]!.voices[0]!.compact).toBe('7 6 升5 6')
+    expect(text.measures[1]!.voices[0]!.events.map(event => event.split('；')[0])).toEqual(['第1拍', '第1.5拍', '第2拍', '第2.25拍', '第2.5拍', '第2.75拍'])
+    expect(text.measures[1]!.voices[0]!.compact).toBe('1 0 2 1 7 1')
+    expect(text.measures[2]!.voices[0]!.compact).toBe('3 0 4 3 升2 3')
+  })
+  it('simplifies rhythm and octaves while retaining carried accidentals, rests and chords', () => {
+    const text = read('{4/4}\nN: (2#e 2e 2=e 2e) [135:h] 0 |||')
+    expect(text.measures[0]!.voices[0]!.compact).toBe('升2 升2 2 2 （1、3、5） 0')
+    expect(read('{2/4}\nN: 2## 3bb |||').measures[0]!.voices[0]!.compact).toBe('升升2 降降3')
+    expect(read('{key=D}{2/4}\nN: 1 2 |||', { notationMode: 'fixed', transpose: 1 }).measures[0]!.voices[0]!.compact).toBe('降3 4')
+  })
   it('describes pitches, octave, duration, rests, lyrics and tied continuations', () => {
     const text = read('{title=试唱}{key=C}{4/4}\nN: 1e (2#d 0) 3~ 3 |||\nL: 春夏天')
     expect(text.title).toBe('试唱，无障碍读谱')
