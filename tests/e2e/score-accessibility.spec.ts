@@ -7,7 +7,8 @@ test('plain text measures support native folding without exposing the score grap
   const reading=page.getByRole('region',{name:'黑色幽默，无障碍读谱',exact:true})
   const entry=reading.getByText('无障碍读谱',{exact:true})
   await expect(reading.locator('.score-accessible-measure > summary').first()).not.toBeVisible()
-  await entry.click()
+  await entry.focus()
+  await page.keyboard.press('Enter')
   const measures=reading.locator('.score-accessible-measure')
   await expect(measures).toHaveCount(59)
   await expect(measures.first().locator('summary')).toHaveText('第1小节，反复开始')
@@ -44,7 +45,8 @@ test('plain text measures support native folding without exposing the score grap
 test('plain text retains pickup beats and separate note paragraphs',async({page})=>{
   await page.goto('scores/turkish_march_01')
   const reading=page.getByRole('region',{name:'土耳其进行曲，无障碍读谱',exact:true})
-  await reading.getByText('无障碍读谱',{exact:true}).click()
+  await reading.getByText('无障碍读谱',{exact:true}).focus()
+  await page.keyboard.press('Enter')
   const measures=reading.locator('.score-accessible-measure')
   await expect(measures.first().locator('summary')).toContainText('弱起，共1拍')
   await measures.first().locator('summary').click()
@@ -61,7 +63,8 @@ test('text follows notation projection and keeps expanded measures across settin
   await page.getByLabel('M3N source').fill('{title=读屏换调测试}{key=C}{2/4}{order=A,A@Db5}\n===A\nN: [1 2 3:2] |||\nL1: 春天好\nL2: 秋天好')
   await page.getByRole('button',{name:'保存',exact:true}).click()
   const reading=page.getByRole('region',{name:'读屏换调测试，无障碍读谱',exact:true})
-  await reading.getByText('无障碍读谱',{exact:true}).click()
+  await reading.getByText('无障碍读谱',{exact:true}).focus()
+  await page.keyboard.press('Enter')
   const measures=reading.locator('.score-accessible-measure')
   await expect(measures).toHaveCount(1)
   await measures.first().locator('summary').click()
@@ -84,19 +87,60 @@ test('editor selection and playback keep their visual colors without focusing hi
   await expect(notes).toHaveCount(2)
   const selected=notes.nth(1)
   await selected.click()
-  expect(await selected.locator('text').first().evaluate(e=>getComputedStyle(e).fill)).toBe('rgb(22, 131, 255)')
+  await expect.poll(()=>selected.locator('text').first().evaluate(e=>getComputedStyle(e).fill)).toBe('rgb(22, 131, 255)')
   expect(await paper.evaluate(e=>e.contains(document.activeElement))).toBe(false)
   const reading=page.getByRole('region',{name:'焦点与播放测试，无障碍读谱',exact:true})
-  await reading.getByText('无障碍读谱',{exact:true}).click()
+  await reading.getByText('无障碍读谱',{exact:true}).focus()
+  await page.keyboard.press('Enter')
   const measure=reading.locator('.score-accessible-measure').nth(1)
   await measure.locator('summary').click()
   const text=await measure.locator('p').textContent()
   const transport=page.getByRole('group',{name:'乐谱控制',exact:true})
   await transport.getByRole('button',{name:'播放',exact:true}).click()
   await expect(notes.first()).toHaveAttribute('aria-current','true',{timeout:15000})
-  expect(await notes.first().locator('text').first().evaluate(e=>getComputedStyle(e).fill)).toBe('rgb(184, 130, 0)')
+  await expect.poll(()=>notes.first().locator('text').first().evaluate(e=>getComputedStyle(e).fill)).toBe('rgb(184, 130, 0)')
   await expect(transport.getByRole('button',{name:'暂停',exact:true})).toBeFocused()
   await expect(measure).toHaveAttribute('open','')
   await expect(measure.locator('p')).toHaveText(text!)
   await transport.getByRole('button',{name:'暂停',exact:true}).click()
+})
+
+test('closed reader leaves the visual score layout unchanged and remains accessible',async({page})=>{
+  await page.goto('scores/hei_se_you_mo_01')
+  const reading=page.getByRole('region',{name:'黑色幽默，无障碍读谱',exact:true})
+  const entry=reading.getByText('无障碍读谱',{exact:true})
+  const paper=page.locator('.score-paper')
+  await expect(paper.locator('svg').first()).toBeVisible()
+  for(const width of [390,1280]){
+    await page.setViewportSize({width,height:844})
+    await expect(reading).toHaveCSS('position','absolute')
+    await expect(reading).toHaveCSS('clip-path','inset(50%)')
+    expect(await reading.ariaSnapshot()).toContain('无障碍读谱')
+    // Removing the reader entirely must not change the score's position or size.
+    const geometry=await page.evaluate(()=>{
+      const reader=document.querySelector<HTMLElement>('.score-accessible-text')!
+      const paper=document.querySelector('.score-paper')!
+      const before=paper.getBoundingClientRect().toJSON()
+      const height=document.documentElement.scrollHeight
+      reader.style.display='none'
+      const after=paper.getBoundingClientRect().toJSON()
+      const hiddenHeight=document.documentElement.scrollHeight
+      reader.style.removeProperty('display')
+      return {before,after,height,hiddenHeight}
+    })
+    expect(geometry.before).toEqual(geometry.after)
+    expect(geometry.height).toBe(geometry.hiddenHeight)
+    await entry.focus()
+    await expect(entry).toBeFocused()
+    await expect(reading).not.toHaveCSS('clip-path','inset(50%)')
+    await page.keyboard.press('Enter')
+    // Focus can leave the reader while its expanded text remains touchable.
+    await page.getByRole('button',{name:'播放',exact:true}).focus()
+    await expect(reading.locator('.score-accessible-measure > summary').first()).toBeVisible()
+    await expect(reading).not.toHaveCSS('position','absolute')
+    await entry.focus()
+    await page.keyboard.press('Enter')
+    await page.getByRole('button',{name:'播放',exact:true}).focus()
+    await expect(reading).toHaveCSS('clip-path','inset(50%)')
+  }
 })

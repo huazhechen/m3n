@@ -76,6 +76,19 @@ main {
   overflow-wrap: anywhere;
 }
 
+/* Keep the default score layout intact. The entry remains in the accessibility
+   tree; keyboard focus or explicitly opening it reveals real reading geometry. */
+.score-accessible-text:not(:focus-within):not(:has(> details[open])) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
 .score-accessible-text summary {
   cursor: pointer;
   min-height: 44px;
