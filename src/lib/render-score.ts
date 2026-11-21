@@ -21,24 +21,58 @@ export type ScoreRenderInput = {
   sheetClass?: string
   signal?: AbortSignal
   onPhase?: (phase: RenderPhase) => void
+  onWidthSelected?: (width: number) => void
 }
 
-export function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase'>, signal?: AbortSignal) {
-  return import('@m3n/numbered-notation').then(async ({ NumberedNotationScore, prepareNumberedNotationFonts }) => {
-    await prepareNumberedNotationFonts(scoreDocument)
+const yieldToBrowser = () => new Promise<void>(resolve => {
+  if (typeof requestIdleCallback === 'function') requestIdleCallback(() => resolve(), { timeout: 50 })
+  else setTimeout(resolve, 0)
+})
+
+export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase' | 'onWidthSelected'>, signal?: AbortSignal, targetPages?: number) {
+  const { NumberedNotationScore } = await import('@m3n/numbered-notation')
+  const score = NumberedNotationScore.create(scoreDocument)
+  const options = { ...settings, paged: true, minimumNoteGapEm: 0.4 }
+  const pageCount = (width: number) => {
     signal?.throwIfAborted()
-    const score = NumberedNotationScore.create(scoreDocument)
-    const pageCount = (width: number) => score.pageCount({ width, paged: true, includeBass: settings.includeBass, measureNumbers: settings.measureNumbers, fixedDo: settings.fixedDo, transpose: settings.transpose, tempoScale: settings.tempoScale, pageMargin: settings.pageMargin ?? 0, coreGap: settings.coreGap })
-    const targetPages = pageCount(640)
-    let low = 480, high = 640
-    while (low < high) {
-      signal?.throwIfAborted()
-      const middle = Math.floor(((low + high) / 2) / 10) * 10
-      if (pageCount(middle) <= targetPages) high = middle
-      else low = middle + 10
+    return score.pageCount({ ...options, width })
+  }
+  const target = targetPages ?? score.pageCount({ ...settings, width: 640, paged: true })
+  let lower = 480
+  let upper = 640
+  for (const width of [480, 600]) {
+    await yieldToBrowser()
+    const pages = pageCount(width)
+    if (pages <= target) {
+      upper = width
+      break
     }
-    return low
-  })
+    lower = width
+  }
+  if (upper !== 480) {
+    while (upper - lower > 10) {
+      await yieldToBrowser()
+      const width = Math.floor(((lower + upper) / 2) / 10) * 10
+      if (pageCount(width) <= target) upper = width
+      else lower = width
+    }
+  }
+  if (upper === 640) return upper
+
+  const formalPageCount = async (width: number) => {
+    await yieldToBrowser()
+    signal?.throwIfAborted()
+    return score.pageCount({ ...settings, width, paged: true })
+  }
+  if (await formalPageCount(upper) <= target) return upper
+  lower = upper
+  upper = 640
+  while (upper - lower > 10) {
+    const width = Math.floor(((lower + upper) / 2) / 10) * 10
+    if (await formalPageCount(width) <= target) upper = width
+    else lower = width
+  }
+  return upper
 }
 
 export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settings: Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase'>, signal?: AbortSignal) {
@@ -105,16 +139,14 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
     if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
     attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
     restoreReading()
-    return { message: '', width }
+    return { message: '', width, widthPending: false }
   }
   const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
   check(); input.onPhase?.('loading-fonts')
   await prepareNumberedNotationFonts(input.scoreDocument)
   check(); input.onPhase?.('layout')
   // Paper margins and image framing belong to the outer container.
-  const width = input.autoWidth
-    ? await chooseNumberedScoreWidth(input.scoreDocument, input, input.signal)
-    : input.width ?? DEFAULT_PREFERRED_WIDTH
+  const width = input.autoWidth ? 640 : input.width ?? DEFAULT_PREFERRED_WIDTH
   const score = NumberedNotationScore.create(input.scoreDocument)
   const markup = score.render({ width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin ?? 0, coreGap: input.coreGap }).join('')
   check()
@@ -123,5 +155,16 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
   attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
   restoreReading()
-  return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；'), width }
+  if (input.autoWidth) {
+    const targetPages = input.paged
+      ? target.querySelectorAll('.score-page-sheet > svg').length || target.querySelectorAll(':scope > svg').length
+      : undefined
+    void yieldToBrowser().then(() => chooseNumberedScoreWidth(input.scoreDocument, input, input.signal, targetPages))
+      .then(selected => {
+        if (!input.signal?.aborted) input.onWidthSelected?.(selected)
+      }).catch(error => {
+        if (error instanceof Error && error.name !== 'AbortError') console.error('曲谱版宽选择失败', error)
+      })
+  }
+  return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；'), width, widthPending: Boolean(input.autoWidth) }
 }

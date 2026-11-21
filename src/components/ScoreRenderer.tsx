@@ -237,7 +237,9 @@ export function ScoreRenderer({
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
-  const renderWidth = previewWidth ?? (fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
+  const autoWidthPending = renderMode === 'paged' && !compact && !previewWidth
+    && (autoWidthSelectionRef.current?.scoreDocument !== scoreDocument || autoWidthSelectionRef.current.notationMode !== notationMode)
+  const renderWidth = previewWidth ?? (autoWidthPending ? 640 : fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
   useEffect(() => {
     transposeRef.current = DEFAULT_PLAYBACK_TRANSPOSE
     setPlaybackTranspose(DEFAULT_PLAYBACK_TRANSPOSE)
@@ -307,15 +309,22 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const selectedWidth = autoWidthSelectionRef.current
-        const autoWidth = !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
-        const { message, width } = await renderScoreInto(paper, {
+        const autoWidth = renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
+        const { message, width, widthPending } = await renderScoreInto(paper, {
           scoreDocument, width: renderWidth, autoWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled) setRenderPhase(phase) },
+          onWidthSelected: selected => {
+            if (cancelled) return
+            autoWidthSelectionRef.current = { scoreDocument, notationMode, width: selected }
+            setLayoutWidth(current => current === selected ? current : selected)
+          },
         })
         if (cancelled) return
-        if (autoWidth && width !== undefined && width !== layoutWidth) setLayoutWidth(width)
-        if (autoWidth && width !== undefined) autoWidthSelectionRef.current = { scoreDocument, notationMode, width }
+        if (autoWidth && !widthPending) {
+          if (width !== undefined) setLayoutWidth(current => current === width ? current : width)
+          if (width !== undefined) autoWidthSelectionRef.current = { scoreDocument, notationMode, width }
+        }
         addInvalidMeasureHighlights(paper, invalidMeasureIds)
         if (startupBeatRef.current !== null) drawStartupBeat(paper, scoreRef.current, startupBeatRef.current, startupPositionRef.current * 1000)
         setMessage(message)
@@ -339,7 +348,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, renderMode, renderWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
+  }, [compact, invalidMeasureIds, previewWidth, renderMode, renderWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -663,7 +672,15 @@ export function ScoreRenderer({
         bpm={playbackBpm}
         width={Math.round(renderWidth)}
         paged={renderMode === 'paged'}
-        onPagedChange={paged => { const mode = paged ? 'paged' : 'continuous'; setRenderMode(mode); if (!compact) writeRenderMode(mode) }}
+        onPagedChange={paged => {
+          const mode = paged ? 'paged' : 'continuous'
+          if (!paged && autoWidthSelectionRef.current) {
+            autoWidthSelectionRef.current = null
+            setLayoutWidth(defaultWidth)
+          }
+          setRenderMode(mode)
+          if (!compact) writeRenderMode(mode)
+        }}
         notationMode={notationMode}
         onNotationModeChange={mode => { setNotationMode(mode); writeNotationMode(mode) }}
         measureNumbers={measureNumbers}
