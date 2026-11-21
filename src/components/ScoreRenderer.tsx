@@ -716,7 +716,7 @@ export function ScoreRenderer({
           playerRef.current?.setTempo(bpm)
         }}
       />}
-      <ScoreAccessibleText score={scoreDocument} notationMode={notationMode} transpose={playbackTranspose} tempoScale={tempoScale} paperRef={paperRef} />
+      <ScoreAccessibleText score={scoreDocument} notationMode={notationMode} transpose={playbackTranspose} tempoScale={tempoScale} />
       <div
         ref={paperRef}
         className="score-paper"
@@ -726,12 +726,8 @@ export function ScoreRenderer({
         data-fixed-do={fixedDo}
         data-measure-numbers={measureNumbers}
         data-notation={notationMode === 'staff' ? 'staff' : 'numbered'}
-        aria-busy={isRendering || isSourceUpdating || undefined}
-        role="region"
-        aria-label={`${scoreDocument.title || '乐谱'}，逐小节读谱`}
+        aria-hidden="true"
         onClick={(event) => {
-          const readingTarget = (event.target as Element).closest<SVGGElement>('[data-reading-event], [data-reading-measure]')
-          readingTarget?.focus({ preventScroll: true })
           const element = (event.target as Element).closest('[id^="m3n-e-"], [data-m3n-id^="m3n-e-"]')
           const rawId = element?.getAttribute('data-m3n-id') ?? element?.getAttribute('id')
           const xmlId = notationMode === 'staff' ? rawId?.replace(/-v\d+$/, '').replace(/-n\d+$/, '').replace(/-rend\d+$/, '') : rawId

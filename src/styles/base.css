@@ -67,7 +67,7 @@ main {
   padding: var(--ui-space) 0 48px;
 }
 
-/* Real document geometry lets mobile screen readers explore text by touch. */
+/* Plain text stays in document flow for native screen-reader navigation. */
 .score-accessible-text {
   margin-block: 12px;
   padding: 12px;
@@ -82,16 +82,13 @@ main {
   padding-block: 10px;
 }
 
-.score-accessible-pages {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
+.score-accessible-measure {
+  margin-block: 8px;
+  border-top: 1px solid currentColor;
 }
 
-.score-accessible-pages :is(button, select) {
-  min-height: 44px;
-  max-width: 100%;
+.score-accessible-measure p {
+  margin-block: 12px;
 }
 
 .score-accessible-text :focus-visible {
