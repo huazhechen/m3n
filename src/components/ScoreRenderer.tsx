@@ -726,6 +726,7 @@ export function ScoreRenderer({
         data-fixed-do={fixedDo}
         data-measure-numbers={measureNumbers}
         data-notation={notationMode === 'staff' ? 'staff' : 'numbered'}
+        aria-busy={isRendering || isSourceUpdating || undefined}
         aria-hidden="true"
         onClick={(event) => {
           const element = (event.target as Element).closest('[id^="m3n-e-"], [data-m3n-id^="m3n-e-"]')

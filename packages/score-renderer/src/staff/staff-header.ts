@@ -134,5 +134,5 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
     }
     y = rowTop + rowHeight
   }
-  return { height: children.length ? y + 24 : 0, node: element('g', { 'data-m3n-role': 'header' }, children) }
+  return { height: children.length ? y + 7 : 0, node: element('g', { 'data-m3n-role': 'header' }, children) }
 }

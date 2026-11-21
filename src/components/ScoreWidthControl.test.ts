@@ -77,7 +77,7 @@ it('steps from an off-grid width in both directions and disables buttons at the 
   act(() => host.querySelector<HTMLButtonElement>('[aria-label="减小乐谱宽度"]')!.click())
   act(() => host.querySelector<HTMLButtonElement>('[aria-label="增大乐谱宽度"]')!.click())
   expect(onChange.mock.calls).toEqual([[550], [560]])
-  render(320)
+  render(240)
   expect(host.querySelector<HTMLButtonElement>('[aria-label="减小乐谱宽度"]')!.disabled).toBe(true)
   render(1280)
   expect(host.querySelector<HTMLButtonElement>('[aria-label="增大乐谱宽度"]')!.disabled).toBe(true)

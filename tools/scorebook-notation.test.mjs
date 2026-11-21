@@ -11,7 +11,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
   let browser
   try {
     const entry = join(temp, 'entry.mjs')
-    writeFileSync(entry, `export * from ${JSON.stringify(join(root, 'tools/scorebook-layout.mjs'))}; export {compactPage} from ${JSON.stringify(join(root, 'tools/scorebook-compact-layout.mjs'))}; export {renderScoreInto} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))}; export {parseM3NDocument, scoreEventIds} from '@m3n/notation'; export {NumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/dist/index.js'))}; export {frameScoreImage} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-image-frame.ts'))}; export {renderScoreCanvas} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-export.ts'))};`)
+    writeFileSync(entry, `export * from ${JSON.stringify(join(root, 'tools/scorebook-layout.mjs'))}; export {compactPage} from ${JSON.stringify(join(root, 'tools/scorebook-compact-layout.mjs'))}; export {renderScoreInto} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))}; export {describeAccessibleScore} from ${JSON.stringify(join(root, 'src/lib/score-accessibility.ts'))}; export {attachScoreReading} from ${JSON.stringify(join(root, 'src/lib/score-reading-dom.ts'))}; export {parseM3NDocument, scoreEventIds} from '@m3n/notation'; export {NumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/dist/index.js'))}; export {frameScoreImage} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-image-frame.ts'))}; export {renderScoreCanvas} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-export.ts'))};`)
     // The temporary entry resolves package imports through an absolute re-export.
     writeFileSync(entry, readFileSync(entry, 'utf8').replace("from '@m3n/notation'", `from ${JSON.stringify(join(root, 'packages/notation/dist/index.js'))}`))
     await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://scorebook.local/bundle.js') }, build: {
@@ -34,7 +34,10 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
         const doc = api.parseM3NDocument(source)
         const directHost = document.createElement('div')
         directHost.innerHTML = api.NumberedNotationScore.create(doc).render({ width, paged: true, pageMargin: 0 }).join('')
+        document.body.append(directHost)
+        api.attachScoreReading(directHost, api.describeAccessibleScore(doc, { forDisplay: true }))
         const direct = [...directHost.querySelectorAll(':scope > svg')].map(svg => svg.outerHTML)
+        directHost.remove()
         const ids = api.scoreEventIds(doc)
         const bassIds = [...doc.parts.values()].flatMap(part => part.bass.flatMap(measure => measure.events.map(event => ids.get(event))))
         const web = document.querySelector('#web')
@@ -56,7 +59,15 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
         const image = await api.renderScoreCanvas(framed, framed.viewBox.baseVal.width, 2)
         const imageInfo = { width: framed.viewBox.baseVal.width, height: framed.viewBox.baseVal.height, x: Number(framed.querySelector('svg').getAttribute('x')), y: Number(framed.querySelector('svg').getAttribute('y')), pngWidth: image.width, whiteCorner: [...image.getContext('2d').getImageData(0, 0, 1, 1).data], unchanged: JSON.stringify(webPages) === JSON.stringify([...web.querySelectorAll(':scope > svg')].map(svg => svg.outerHTML)) }
         const compact = api.compactPage(`<svg xmlns="http://www.w3.org/2000/svg" width="793.7007874" height="1122.519685" viewBox="0 0 793.7007874 1122.519685">${a4[0].markup}</svg>`, ['https://score.cheesefans.com/scores/test_01'])
-        return { layout, imageInfo, sharedMargin: JSON.stringify(original) === JSON.stringify(direct), equalMeasures: doc.equalMeasures, identical: JSON.stringify(original) === JSON.stringify(webPages), unchanged: JSON.stringify(restored) === JSON.stringify(originalXml),
+        const visualMarkup = markup => {
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+          svg.innerHTML = markup
+          svg.querySelectorAll('[data-score-reading], [data-score-reading-hitarea]').forEach(node => node.remove())
+          for (const node of svg.querySelectorAll('*')) for (const attribute of [...node.attributes])
+            if (attribute.name.startsWith('aria-') || ['role', 'tabindex'].includes(attribute.name) || attribute.name.startsWith('data-reading-')) node.removeAttribute(attribute.name)
+          return svg.innerHTML
+        }
+        return { layout, imageInfo, sharedMargin: original.map(visualMarkup).join() === direct.map(visualMarkup).join(), equalMeasures: doc.equalMeasures, identical: JSON.stringify(original) === JSON.stringify(webPages), unchanged: restored.map(visualMarkup).join() === originalXml.map(visualMarkup).join(),
           placements: a4.map(page => page.placement), credits: web.textContent.includes('测试作者'),
           bass: bassIds.length > 0 && bassIds.every(id => web.querySelector(`[data-m3n-id="${id}"]`)),
           houses: doc.parts.get('score').melody.filter(measure => measure.ending).length,
@@ -102,6 +113,14 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     const shared = await page.evaluate(async () => {
       const api = window.scorebook, width = 720
       const sources = ['{title=合页甲}{4/4}\nN: 1 2 3 4 |||', '{title=合页乙}{4/4}\nN: 5 6 7 1 |||']
+      const visualMarkup = (markup) => {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+        svg.innerHTML = markup
+        svg.querySelectorAll('[data-score-reading], [data-score-reading-hitarea]').forEach(node => node.remove())
+        for (const node of svg.querySelectorAll('*')) for (const attribute of [...node.attributes])
+          if (attribute.name.startsWith('aria-') || ['role', 'tabindex'].includes(attribute.name) || attribute.name.startsWith('data-reading-')) node.removeAttribute(attribute.name)
+        return svg.innerHTML
+      }
       const originals = []
       const summary = await api.measure(sources[0], width)
       const packed = await api.sharedA4Page(sources, width)
@@ -112,7 +131,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       const compact = api.compactPage(`<svg xmlns="http://www.w3.org/2000/svg" width="793.7007874" height="1122.519685" viewBox="0 0 793.7007874 1122.519685">${packed.markup}</svg>`, ['https://score.cheesefans.com/scores/a', 'https://score.cheesefans.com/scores/b'])
       let overflowRejected = false
       try { await api.sharedA4Page(Array(20).fill(sources[0]), width) } catch { overflowRejected = true }
-      return { identical: svgs.map((svg, index) => svg.innerHTML === originals[index]),
+      return { identical: svgs.map((svg, index) => visualMarkup(svg.innerHTML) === visualMarkup(originals[index])),
         widths: svgs.map(svg => svg.viewBox.baseVal.width), items: packed.items.map(({ top, sourceHeight, placement }) => ({ top, sourceHeight, placement })),
         scoreGap: packed.scoreGap, trailingGap: packed.trailingGap, usedHeight: packed.usedHeight, measuredHeight: summary.naturalHeight, overflowRejected, links: compact.links }
     })

@@ -10,6 +10,7 @@ import { arrangeStaffSystem, systemDistance } from './system-layout.js'
 import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE } from './vexflow-engine.js'
 import { planStaffLines } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
+import { staffHeader } from './staff-header.js'
 
 
 async function prepare(source: string, width = 720) {
@@ -18,6 +19,14 @@ async function prepare(source: string, width = 720) {
   return prepareStaffScore(analysis.score, { width })
 }
 describe('staff layout contract', () => {
+  it('keeps the opening system within 12px of the title ink', () => {
+    const score = analyzeM3N('{title=标题}{4/4}{120qpm}\nN: 1 2 3 4 |||').score
+    const measure = textMeasurer()
+    const header = staffHeader(score, 720, measure)
+    const title = findAll(header.node, node => node.tagName === 'text')[0]!
+    expect(header.height - new SvgGeometry(header.node, measure).ink(title).bottom).toBeCloseTo(12)
+  })
+
   it('packs tempo next to local music and raises it for high notes', () => {
     const gaps: number[] = []
     for (const melody of ['1 2 3 4', '1eee 2eee 3eee 4eee']) {
