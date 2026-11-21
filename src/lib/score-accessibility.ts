@@ -1,7 +1,7 @@
 import {
   deriveScoreInteraction, incomingMeasureKeys, m3nPitch, parseKey, parseM3NGrace,
   parseM3NGroupPitches, resolveScorePitches, sectionVisitKey, scoreEventIds, unfoldScorePerformance,
-  playbackMeasureIndexes, orderedMeasureIndexes,
+  playbackMeasureIndexes, orderedMeasureIndexes, hasPassKeys, sectionEntryKey, sectionKeyVisits,
   type ScoreDocument, type ScoreMeasure, type ScoreEvent, type ScoreEventLyric,
 } from '@m3n/notation'
 import type { NotationMode } from './renderer-settings'
@@ -42,15 +42,37 @@ function duration(beats: number, unit: number) {
   return `${names[String(beats)] ?? '音符'}，${number(beats * unit / 4)}拍`
 }
 
-export type AccessibleMeasure = { label: string; voices: { name: string; events: string[]; compact: string }[] }
+export type AccessibleMeasure = { id: string; label: string; voices: { name: string; events: string[]; eventIds: string[]; compact: string }[] }
 export type AccessibleScore = { title: string; summary: string; measures: AccessibleMeasure[] }
 
 /** Semantic reading text, independent of SVG, pagination and audio scheduling. */
-export function describeAccessibleScore(source: ScoreDocument, options: { notationMode?: NotationMode; transpose?: number; tempoScale?: number } = {}): AccessibleScore {
+export function describeAccessibleScore(source: ScoreDocument, options: { notationMode?: NotationMode; transpose?: number; tempoScale?: number; forDisplay?: boolean } = {}): AccessibleScore {
   const transpose = options.transpose ?? 0, tempoScale = options.tempoScale ?? 1
   let document = source
   let { lyricsByEvent } = deriveScoreInteraction(source)
-  const expanded = Boolean(source.orderKeys?.some(Boolean) || source.orderKeyOctaves?.some(octave => octave !== undefined && octave !== 4))
+  const keyed = Boolean(source.orderKeys?.some(Boolean))
+  const octaves = Boolean(source.orderKeyOctaves?.some(octave => octave !== undefined && octave !== 4))
+  const expanded = options.forDisplay
+    ? options.notationMode === 'staff' ? hasPassKeys(source) || keyed || octaves : options.notationMode === 'fixed' && (hasPassKeys(source) || keyed)
+    : keyed || octaves
+  if (options.forDisplay && !expanded && keyed && options.notationMode !== 'fixed' && options.notationMode !== 'staff') {
+    const displayLyrics = new Map<ScoreEvent, ScoreEventLyric[]>()
+    const project = (measure: ScoreMeasure, section = measure.sectionName) => {
+      const entry = section ? sectionEntryKey(source, section) : undefined
+      const target = section ? sectionKeyVisits(source, section)[0] : undefined
+      const key = (value: string) => entry && target ? sectionVisitKey(value, entry, target) : value
+      return { ...measure, multiRestState: measure.multiRestState && { ...measure.multiRestState, key: key(measure.multiRestState.key) }, events: measure.events.map(event => {
+        const displayed = { ...event, key: key(event.key) }
+        displayLyrics.set(displayed, lyricsByEvent.get(event) ?? [])
+        return displayed
+      }) }
+    }
+    document = { ...source, parts: new Map([...source.parts].map(([name, part]) => [name, {
+      melody: part.melody.map(measure => project(measure)),
+      bass: part.bass.map((measure, index) => project(measure, part.melody[index]?.sectionName)),
+    }])) }
+    lyricsByEvent = displayLyrics
+  }
   if (expanded) {
     const originals = new Map([...scoreEventIds(source)].map(([event, id]) => [id, event]))
     document = unfoldScorePerformance(source)
@@ -63,8 +85,11 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
     lyricsByEvent = displayed
   }
   const measureDescriptions: AccessibleMeasure[] = []
+  const ids = scoreEventIds(document)
+  let partIndex = 0
   let measureNumber = 0
   for (const [partName, part] of document.parts) {
+    partIndex++
     const incoming = incomingMeasureKeys(document, part.melody)
     const resolved = new Map([...resolveScorePitches(part.melody), ...resolveScorePitches(part.bass)])
     const tiedTargets = new Set<ScoreEvent>()
@@ -158,7 +183,7 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
       }
       if (measure.multiRest) events.push(`连续休止${measure.multiRest}小节；调性${keyText(measure.multiRestState?.key ?? document.key, transpose)}。`)
       if (measure.multiRest) compact.push(`0（${measure.multiRest}小节）`)
-      return { name, events, compact: compact.join(' ') }
+      return { name, events, eventIds: measure.events.map(event => ids.get(event)!), compact: compact.join(' ') }
     }
     part.melody.forEach((measure, index) => {
       if (!measure.events.length && !measure.multiRest && !part.bass[index]?.events.length && !part.bass[index]?.multiRest) return
@@ -182,7 +207,7 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
       if (entry && [...incoming.get(measure) ?? []].some(key => key !== entry)) label.push(`转调至${keyText(entry, transpose)}`)
       const voices = [voice(measure, '旋律', pickupOffset)]
       if (part.bass[index]?.events.length || part.bass[index]?.multiRest) voices.push(voice(part.bass[index]!, '低音', pickupOffset))
-      measureDescriptions.push({ label: label.join('，'), voices })
+      measureDescriptions.push({ id: `m3n-measure-${partIndex}-${index + 1}`, label: label.join('，'), voices })
       measureNumber += (measure.multiRest ?? 1) - 1
     })
   }

@@ -675,7 +675,7 @@ export function ScoreRenderer({
           playerRef.current?.setTempo(bpm)
         }}
       />}
-      <ScoreAccessibleText score={scoreDocument} notationMode={notationMode} transpose={playbackTranspose} tempoScale={tempoScale} />
+      <ScoreAccessibleText score={scoreDocument} notationMode={notationMode} transpose={playbackTranspose} tempoScale={tempoScale} paperRef={paperRef} />
       <div
         ref={paperRef}
         className="score-paper"
@@ -686,7 +686,8 @@ export function ScoreRenderer({
         data-measure-numbers={measureNumbers}
         data-notation={notationMode === 'staff' ? 'staff' : 'numbered'}
         aria-busy={isRendering || isSourceUpdating || undefined}
-        aria-hidden="true"
+        role="region"
+        aria-label={`${scoreDocument.title || '乐谱'}，逐小节读谱`}
         onClick={(event) => {
           const element = (event.target as Element).closest('[id^="m3n-e-"], [data-m3n-id^="m3n-e-"]')
           const rawId = element?.getAttribute('data-m3n-id') ?? element?.getAttribute('id')

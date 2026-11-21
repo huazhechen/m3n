@@ -11,10 +11,10 @@ describe('accessible reading structure', () => {
       notationMode: 'movable', transpose: 0, tempoScale: 1,
     }))
     expect(html).toContain('class="score-accessible-text"')
-    expect(html).toContain('<h4>第1小节')
+    expect(html).toContain('跳转到所选小节')
     expect(html).toContain('<summary>简略全谱</summary>')
     expect(html).toContain('1 2 |')
-    expect(html).toContain('<ol><li>')
+    expect(html).not.toContain('<ol>')
     expect(html).toContain('曲谱 &lt;示例&gt;')
     expect(html).not.toMatch(/aria-hidden|aria-live|tabindex="0"|display:none/)
   })

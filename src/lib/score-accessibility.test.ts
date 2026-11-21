@@ -10,6 +10,20 @@ function read(source: string, options: Parameters<typeof describeAccessibleScore
 const all = (score: ReturnType<typeof read>) => score.measures.flatMap(m => m.voices.flatMap(v => v.events)).join('\n')
 
 describe('front-end accessible score descriptions', () => {
+  it('matches compact first-visit keys and expanded absolute displays without changing event identity', () => {
+    const source = '{key=C}{2/4}{order=A@Db,A}\n===A\nN: 1 2 |||\nB: 1d 2d |\nL1: 春天\nL2: 秋天'
+    const compact = read(source, { notationMode: 'movable', forDisplay: true })
+    expect(compact.measures).toHaveLength(1)
+    expect(compact.measures[0]!.voices[0]!.eventIds).toEqual(['m3n-e-1', 'm3n-e-2'])
+    expect(all(compact)).toContain('音高升C4')
+    expect(compact.measures[0]!.voices[1]!.events[0]).toContain('音高升C3')
+    expect(all(compact)).toContain('歌词“春”')
+    const fixed = read(source, { notationMode: 'fixed', forDisplay: true })
+    expect(fixed.measures).toHaveLength(2)
+    expect(fixed.measures[1]!.voices[0]!.eventIds[0]).toMatch(/-rend2$/)
+    expect(fixed.measures[1]!.voices[0]!.events[0]).toContain('音高C4')
+    expect(fixed.measures[1]!.voices[0]!.events[0]).toContain('歌词“秋”')
+  })
   it('keeps the Turkish March pickup and the entire following second beat', () => {
     const source = readFileSync(new URL('../scores/turkish_march_01.m3n', import.meta.url), 'utf8')
     const text = read(source)

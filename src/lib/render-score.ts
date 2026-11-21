@@ -1,6 +1,8 @@
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import type { NotationMode } from './renderer-settings'
 import { wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
+import { describeAccessibleScore } from './score-accessibility'
+import { attachScoreReading } from './score-reading-dom'
 
 export type RenderPhase = 'loading-library' | 'loading-staff' | 'loading-fonts' | 'layout'
 export type ScoreRenderInput = {
@@ -99,6 +101,7 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
     const pages = render(input.paged)
     check(); target.replaceChildren(...pages)
     if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
+    attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
     return { message: '', width }
   }
   const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
@@ -113,5 +116,6 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   const markup = score.render({ width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin ?? 0, coreGap: input.coreGap }).join('')
   check(); target.innerHTML = markup
   if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
+  attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
   return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；'), width }
 }
