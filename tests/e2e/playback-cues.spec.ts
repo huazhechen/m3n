@@ -34,15 +34,14 @@ test('three tempo pulses color the opening rest, then playback highlights it; pa
   }
   await expect(first.locator('rect.startup-beat-highlight')).toHaveCount(0)
   await expect(first).toHaveClass(/is-playing/)
-  expect(await first.textContent()).toBe('0')
+  await expect(first.locator('text')).toHaveText('0')
   const pulses = await page.evaluate(() => (window as unknown as { cueEvents: { beat: number; at: number }[] }).cueEvents)
   expect(pulses.map(event => event.beat)).toEqual([1, 2, 3])
   for (let i = 1; i < pulses.length; i++) expect(pulses[i]!.at - pulses[i - 1]!.at).toBeGreaterThan(400)
   await page.getByRole('button', { name: '暂停', exact: true }).click()
   await page.getByRole('button', { name: '播放', exact: true }).click()
-  const next = page.locator('.score-paper g.note').nth(1)
   for (const beat of [1, 2, 3]) {
-    await expect(next.locator('.startup-beat-highlight')).toHaveAttribute('data-beat', String(beat))
+    await expect.poll(() => page.locator('.startup-beat-highlight').getAttribute('data-beat')).toBe(String(beat))
     await expect(first.locator('.startup-beat-highlight')).toHaveCount(0)
   }
   await expect(page.locator('.startup-beat-highlight')).toHaveCount(0)
@@ -55,7 +54,7 @@ test('three tempo pulses color the opening rest, then playback highlights it; pa
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
   await expect(page.locator('.score-paper .is-playing')).toHaveCount(0)
   await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 0 4 5 6 |||')
-  await expect(page.locator('.score-paper g.note').nth(1)).toHaveText('4')
+  await expect(page.locator('.score-paper g.note').nth(1).locator('text').last()).toHaveText('4')
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.locator('.startup-beat-highlight')).toHaveCount(1)
   await page.getByRole('button', { name: '暂停', exact: true }).click()

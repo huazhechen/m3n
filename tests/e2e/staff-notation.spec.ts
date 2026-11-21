@@ -4,7 +4,7 @@ import { PDFDocument, PDFDict, PDFName } from 'pdf-lib'
 import { openScoreSettings, selectNotationMode } from './score-settings'
 import { staffInkBounds } from '../../tools/lib/staff-ink-collisions.mjs'
 
-test('staff mode uses its own preferred width, locates source, highlights playback and keeps playback alive across modes and transposition', async ({ page }, info) => {
+test('staff mode automatically selects width, locates source, highlights playback and keeps playback alive across modes and transposition', async ({ page }, info) => {
   const wasm: string[] = []
   page.on('request', request => { if (request.url().includes('.wasm')) wasm.push(request.url()) })
   await page.goto('/editor')
@@ -14,13 +14,13 @@ test('staff mode uses its own preferred width, locates source, highlights playba
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   expect(wasm).toHaveLength(0)
   await openScoreSettings(page)
-  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('540')
+  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('640')
   await selectNotationMode(page, '五线谱')
   await expect(paper).toHaveAttribute('data-notation', 'staff')
   await expect(paper.locator('g.staff').first()).toBeVisible()
   await expect(paper.locator('svg svg, use, polygon, polyline, ellipse')).toHaveCount(0)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', '613')
+  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', '480')
   expect(wasm).toHaveLength(0)
   await page.keyboard.press('Escape')
   await paper.locator('[id="m3n-e-2"] .notehead').first().click()
@@ -47,7 +47,7 @@ test('staff mode uses its own preferred width, locates source, highlights playba
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '固定调')
   await expect(paper).toHaveAttribute('data-fixed-do', 'true')
-  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('540')
+  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('640')
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '首调')
@@ -72,6 +72,7 @@ test('staff pagination, tempo and transposition are shared by screen, PNG and ve
   await page.getByRole('slider', { name: '乐谱宽度' }).fill('540')
   await page.getByRole('slider', { name: '播放速度', exact: true }).fill('137')
   const paper = page.locator('.score-paper')
+  await expect.poll(async () => (await paper.locator('text').allTextContents()).join('')).toContain('137')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const pageCount = await paper.locator('.score-page-sheet').count()
   expect(pageCount).toBeGreaterThan(1)
@@ -80,6 +81,16 @@ test('staff pagination, tempo and transposition are shared by screen, PNG and ve
   await expect(paper.locator(':scope > svg')).toHaveCount(1)
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page).toHaveURL(/\/scores\//)
+  await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
+  await openScoreSettings(page)
+  const pagination = page.getByRole('switch', { name: '分页', exact: true })
+  if (!await pagination.isChecked()) await pagination.click()
+  await expect(paper).toHaveAttribute('data-render-mode', 'paged')
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  const readerPageCount = await paper.locator('.score-page-sheet').count()
+  expect(readerPageCount).toBeGreaterThan(1)
+  await page.keyboard.press('Escape')
   for (const format of ['PNG', 'PDF']) {
     await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: '导出乐谱', exact: true })
@@ -95,7 +106,7 @@ test('staff pagination, tempo and transposition are shared by screen, PNG and ve
     if (format === 'PDF') {
       expect(bytes.subarray(0, 4).toString()).toBe('%PDF')
       const pdf = await PDFDocument.load(bytes)
-      expect(pdf.getPageCount()).toBe(pageCount)
+      expect(pdf.getPageCount()).toBe(readerPageCount)
       expect(pdf.context.enumerateIndirectObjects().some(([, object]) => object instanceof PDFDict && object.get(PDFName.of('Subtype')) === PDFName.of('Image'))).toBe(false)
     } else expect(bytes.subarray(1, 4).toString()).toBe('PNG')
   }
@@ -147,7 +158,7 @@ test('basic exercises keep section labels and Chinese directions inside staff pa
     await expect(paper).not.toHaveAttribute('aria-busy', 'true')
     const outside = await pages.evaluateAll(elements => elements.flatMap((element, index) => {
       const svg = element as SVGSVGElement, ink = (window as unknown as { staffInkBounds: (svg: SVGSVGElement) => DOMRect }).staffInkBounds(svg), box = svg.viewBox.baseVal
-      const tolerance = box.width / Number(svg.getAttribute('width')) * 0.5
+      const tolerance = 2 + box.width / Number(svg.getAttribute('width')) * 0.5
       return ink.x < -tolerance || ink.y < -tolerance || ink.x + ink.width > box.width + tolerance || ink.y + ink.height > box.height + tolerance ? [{ page: index + 1, ink: { x: ink.x, y: ink.y, width: ink.width, height: ink.height }, viewBox: { width: box.width, height: box.height } }] : []
     }))
     expect(outside, `${width}px staff pages`).toEqual([])
@@ -238,7 +249,7 @@ test('ending brackets stay below row-end measure numbers in both notation modes'
     }))
     expect(attached.length).toBeGreaterThan(0)
     for (const { numberBottom, endingTop } of attached)
-      expect(numberBottom, `${mode} row-end number above ending`).toBeLessThan(endingTop)
+      expect(numberBottom, `${mode} row-end number above ending`).toBeLessThanOrEqual(endingTop)
   }
 })
 

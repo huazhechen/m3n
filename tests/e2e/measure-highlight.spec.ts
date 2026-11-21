@@ -45,7 +45,7 @@ test('a measure after a section break starts at its own opening repeat during pl
   await expect(second).toHaveClass(/is-playing-measure/, { timeout: 20_000 })
   const bounds = await second.evaluate(element => {
     const band = element.querySelector<SVGRectElement>('.measure-playback-highlight')!.getBBox()
-    const opening = element.firstElementChild!
+    const opening = element.querySelector('g')!
     const bars = [...opening.querySelectorAll<SVGRectElement>('rect')].filter(rect => rect.height.baseVal.value > 20)
     return { bandLeft: band.x, barLeft: Math.min(...bars.map(rect => rect.x.baseVal.value)) }
   })

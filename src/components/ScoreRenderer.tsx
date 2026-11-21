@@ -190,6 +190,7 @@ export function ScoreRenderer({
   const startupBeatRef = useRef<1 | 2 | 3 | null>(null)
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
+  const manualWidthRef = useRef(false)
   const autoWidthSelectionRef = useRef<{ scoreDocument: ScoreDocument; notationMode: NotationMode; width: number } | null>(null)
   const [message, setMessage] = useState('')
   const [savedPlaybackTone, changePlaybackTone] = usePlaybackTone()
@@ -212,7 +213,6 @@ export function ScoreRenderer({
   const [isPlayRequest, setIsPlayRequest] = useState(false)
   const [playbackProgress, setPlaybackProgress] = useState(0)
   const [notationMode, setNotationMode] = useState<NotationMode>(() => playbackOnly ? 'movable' : readNotationMode())
-  const staffNotation = notationMode === 'staff'
   const defaultWidth = DEFAULT_SCORE_WIDTH
   const [layoutWidth, setLayoutWidth] = useState(defaultWidth)
   const [bpmOverride, setBpmOverride] = useState<number | null>(null)
@@ -237,7 +237,7 @@ export function ScoreRenderer({
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
-  const autoWidthPending = renderMode === 'paged' && !compact && !previewWidth
+  const autoWidthPending = !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth
     && (autoWidthSelectionRef.current?.scoreDocument !== scoreDocument || autoWidthSelectionRef.current.notationMode !== notationMode)
   const renderWidth = previewWidth ?? (autoWidthPending ? 640 : fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
   useEffect(() => {
@@ -248,7 +248,8 @@ export function ScoreRenderer({
   useEffect(() => {
     setLayoutWidth(defaultWidth)
     autoWidthSelectionRef.current = null
-  }, [scoreId, defaultWidth, staffNotation])
+    manualWidthRef.current = false
+  }, [scoreId, defaultWidth])
   useEffect(() => {
     setBpmOverride(null)
     setFitWidth(compact && !playbackOnly)
@@ -309,13 +310,13 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const selectedWidth = autoWidthSelectionRef.current
-        const autoWidth = renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
+        const autoWidth = !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
         const { message, width, widthPending } = await renderScoreInto(paper, {
           scoreDocument, width: renderWidth, autoWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled) setRenderPhase(phase) },
           onWidthSelected: selected => {
-            if (cancelled) return
+            if (cancelled || manualWidthRef.current) return
             autoWidthSelectionRef.current = { scoreDocument, notationMode, width: selected }
             setLayoutWidth(current => current === selected ? current : selected)
           },
@@ -609,6 +610,8 @@ export function ScoreRenderer({
 
   const changeLayoutWidth = (value: number) => {
     const width = clampScoreWidth(value)
+    manualWidthRef.current = true
+    // Cancel pending automatic refinement when the reader chooses a width.
     setFitWidth(false)
     setLayoutWidth(width)
     onLayoutWidthChange?.(width)
@@ -674,10 +677,6 @@ export function ScoreRenderer({
         paged={renderMode === 'paged'}
         onPagedChange={paged => {
           const mode = paged ? 'paged' : 'continuous'
-          if (!paged && autoWidthSelectionRef.current) {
-            autoWidthSelectionRef.current = null
-            setLayoutWidth(defaultWidth)
-          }
           setRenderMode(mode)
           if (!compact) writeRenderMode(mode)
         }}
@@ -686,11 +685,16 @@ export function ScoreRenderer({
         measureNumbers={measureNumbers}
         onMeasureNumbersChange={enabled => { setMeasureNumbers(enabled); writeRendererSetting('m3n:measure-numbers', enabled ? 1 : 0) }}
         onWidthChange={changeLayoutWidth}
-        onResetWidth={() => changeLayoutWidth(
-          autoWidthSelectionRef.current?.scoreDocument === scoreDocument && autoWidthSelectionRef.current.notationMode === notationMode
-            ? autoWidthSelectionRef.current.width
-            : defaultWidth,
-        )}
+        onResetWidth={() => {
+          manualWidthRef.current = false
+          const selected = autoWidthSelectionRef.current
+          const width = selected?.scoreDocument === scoreDocument && selected.notationMode === notationMode
+            ? selected.width
+            : defaultWidth
+          setFitWidth(false)
+          setLayoutWidth(width)
+          onLayoutWidthChange?.(width)
+        }}
         originalKey={scoreDocument.key}
         transpose={playbackTranspose}
         metronomeEnabled={metronomeEnabled}

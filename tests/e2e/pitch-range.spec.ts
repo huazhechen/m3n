@@ -37,7 +37,7 @@ test('header range uses numbered pitches and follows fixed do and transposition'
   const positions = await svg.evaluate(element => {
     const range = element.querySelector('[data-m3n-role="pitch-range-low"]')!.getBoundingClientRect()
     const high = element.querySelector('[data-m3n-role="pitch-range-high"]')!.getBoundingClientRect()
-    const tempo = [...element.querySelectorAll('text')].find(node => node.textContent === '= 120')!.getBoundingClientRect()
+    const tempo = element.querySelector('[data-m3n-role=tempo]')!.getBoundingClientRect()
     const bounds = element.getBoundingClientRect()
     return { low: range.left, tempo: tempo.right, right: high.right, boundary: bounds.right }
   })

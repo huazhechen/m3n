@@ -349,6 +349,9 @@ export function paginateStaff(
       { systems, ys, height: Math.max(headerHeight, ...systems.map((s, i) => s.ink.bottom + ys[i]!)), gap: minimum },
     ]
   }
+  // Leave room for browser-measured glyph ink that can exceed the canvas
+  // advance metrics used during the initial engraving pass by about 2px.
+  const pageInset = 2
   const pages: StaffPage[] = []
   for (const system of systems) {
     let page = pages.at(-1)
@@ -356,13 +359,13 @@ export function paginateStaff(
       page = { systems: [], ys: [], height, gap: minimum }
       pages.push(page)
     }
-    const start = pages.length === 1 ? headerHeight : 0
+    const start = pages.length === 1 ? headerHeight : pageInset
     const members = [...page.systems, system],
       ys = positions(members, start, minimum)
-    if (system.ink.bottom + ys.at(-1)! > height + 1e-6) {
+    if (system.ink.bottom + ys.at(-1)! > height - pageInset + 1e-6) {
       if (!page.systems.length) throw new Error('单个五线谱谱行无法放入A4页面。')
-      const y = -system.ink.top
-      if (system.ink.bottom + y > height) throw new Error('单个五线谱谱行无法放入A4页面。')
+      const y = pageInset - system.ink.top
+      if (system.ink.bottom + y > height - pageInset) throw new Error('单个五线谱谱行无法放入A4页面。')
       pages.push({ systems: [system], ys: [y], height, gap: minimum })
     } else {
       page.systems = members
@@ -374,12 +377,12 @@ export function paginateStaff(
       hi = Math.max(minimum, 32)
     for (let i = 0; i < 20; i++) {
       const mid = (lo + hi) / 2,
-        ys = positions(page.systems, index === 0 ? headerHeight : 0, mid)
-      if (page.systems.at(-1)!.ink.bottom + ys.at(-1)! <= height) lo = mid
+        ys = positions(page.systems, index === 0 ? headerHeight : pageInset, mid)
+      if (page.systems.at(-1)!.ink.bottom + ys.at(-1)! <= height - pageInset) lo = mid
       else hi = mid
     }
     page.gap = lo
-    page.ys = positions(page.systems, index === 0 ? headerHeight : 0, lo)
+    page.ys = positions(page.systems, index === 0 ? headerHeight : pageInset, lo)
   }
   return pages
 }

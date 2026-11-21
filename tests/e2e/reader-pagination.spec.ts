@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test'
-import { DEFAULT_PREFERRED_WIDTH } from '@m3n/notation'
 import { openScoreSettings } from './score-settings'
 
 test.beforeEach(async ({ page }) => {
@@ -88,7 +87,9 @@ test('narrow screens keep full-width vertical pages and mode changes restore con
   await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
   await expect(paper).not.toHaveAttribute('data-viewport-paged')
   await expect(paper.locator('.score-page-sheet')).toHaveCount(0)
-  await expect(paper.locator('svg').first()).toHaveAttribute('width', String(DEFAULT_PREFERRED_WIDTH))
+  const selectedWidth = Number(await paper.locator('svg').first().getAttribute('width'))
+  expect(selectedWidth).toBeGreaterThanOrEqual(480)
+  expect(selectedWidth).toBeLessThanOrEqual(640)
 })
 
 test('a non-touch portrait window keeps desktop page fitting', async ({ page }) => {
@@ -128,9 +129,10 @@ test.describe('touch tablets', () => {
     await page.setViewportSize({ width: 1133, height: 744 })
     await page.screenshot({ path: info.outputPath('tablet-landscape-reader.png') })
     await openScoreSettings(page)
+    const selectedWidth = await paper.locator('.score-page-sheet svg').first().getAttribute('width')
     await page.getByRole('switch', { name: '分页', exact: true }).click()
     await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
-    await expect(paper.locator('svg').first()).toHaveAttribute('width', String(DEFAULT_PREFERRED_WIDTH))
+    await expect(paper.locator('svg').first()).toHaveAttribute('width', selectedWidth!)
     await expect.poll(() => paper.evaluate(element => {
       const frame = element.getBoundingClientRect()
       const svg = element.querySelector('svg')!.getBoundingClientRect()
