@@ -83,6 +83,21 @@ describe('staff layout contract', () => {
     for (const a of geometry.pieces(ending)) for (const b of geometry.pieces(slur))
       expect(overlapsX(a, b) && a.top < b.bottom && b.top < a.bottom).toBe(false)
   })
+  it('measures ending collision edges with their enclosing row transforms', () => {
+    const score = analyzeM3N(readFileSync('../../src/scores/zhi_ai_li_si_01.m3n', 'utf8')).score
+    const document = projectStaffDocument(score), measure = textMeasurer()
+    const lines = planStaffLines(document, 640, false, measure, 0.25)
+    const systems = engraveStaffSystems(document, lines, 640, measure, 0.25, false)
+    const system = systems.find(row => findAll(row.node, node => hasClass(node, 'm3n-ending-row')).length)!
+    expect(system).toBeDefined()
+    const geometry = new SvgGeometry(system.node, measure)
+    const rows = findAll(system.node, node => hasClass(node, 'm3n-ending-row'))
+    const expected = rows.flatMap(row => geometry.pieces(element('g', system.node.attributes, [row])))
+    expect(system.edgePieces.filter(piece => piece.gap === 2)).toEqual(expected.map(piece => ({
+      left: piece.left * STAFF_SCALE, right: piece.right * STAFF_SCALE,
+      top: piece.top * STAFF_SCALE, bottom: piece.bottom * STAFF_SCALE, gap: 2,
+    })))
+  })
   it('paints inline key changes as well as allocating their width', () => {
     const analysis = analyzeM3N('{4/4}\nN: 1 2 {key=G} 3 4 |||')
     expect(analysis.diagnostics.filter(d => d.severity === 'error')).toEqual([])

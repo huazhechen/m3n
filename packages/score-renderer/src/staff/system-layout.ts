@@ -30,6 +30,11 @@ function filtered(node: XmlNode, omit: (node: XmlNode) => boolean): XmlNode {
       .map((child) => (typeof child === 'string' ? child : filtered(child, omit))),
   }
 }
+/** Keep ancestor transforms when measuring only selected attachments. */
+function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode {
+  if (keep(node)) return node
+  return { ...node, tagName: 'g', children: nodes(node).map(child => selected(child, keep)) }
+}
 /** Operate on independent attachments. Musical geometry is never stretched.
  * Empty verse containers remain available for interaction but reserve no ink. */
 export function arrangeStaffSystem(
@@ -306,8 +311,9 @@ export function arrangeStaffSystem(
     .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
   const spacingPieces = geometry.pieces(filtered(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')))
     .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
-  const edgePieces = findAll(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')).flatMap(child =>
-    geometry.pieces(child).map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: hasClass(child, 'mNum') ? 4 : 2 })))
+  const edgePieces = ['ending', 'mNum'].flatMap(kind =>
+    geometry.pieces(selected(node, child => hasClass(child, kind)))
+      .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: kind === 'mNum' ? 4 : 2 })))
   return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(findAll(node, (n) => hasClass(n, 'reh')).length), staffSpacing }
 }
 const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, number>>()
