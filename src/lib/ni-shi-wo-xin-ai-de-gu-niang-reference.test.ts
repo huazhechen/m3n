@@ -30,9 +30,12 @@ const sections = new Map([...reference.notation.matchAll(/([ABC]):\n([\s\S]*?)(?
 describe('Cangqiang 5810 transcription', () => {
   it('preserves original pitches and durations while correcting omitted ties and the pickup', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
-    expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'B', meterCount: 4, meterUnit: 4, tempo: 72, order: ['A', 'B', 'A', 'B', 'B', 'C'] })
+    expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'B', meterCount: 4, meterUnit: 4, tempo: 72 })
+    expect(document.order).toBeUndefined()
+    expect(source).not.toMatch(/^===|\{order=/m)
+    expect(source.match(/:\|\|/g)).toHaveLength(1)
     const expected = ['A', 'B', 'A', 'B', 'B', 'C'].flatMap((name, visit) => sections.get(name)!
-      .map((event, index, events) => ({ ...event, ticks: visit === 3 && index === events.length - 1 ? 9 : event.ticks, tie: event.tie || omittedTies[name]!.includes(index) })))
+      .map((event, index, events) => ({ ...event, pitch: name === 'A' && index === 17 ? '2' : event.pitch, ticks: visit === 3 && index === events.length - 1 ? 9 : event.ticks, tie: event.tie || omittedTies[name]!.includes(index) })))
     const actual = unfoldScorePerformance(document).parts.get('score')!.melody.flatMap(bar => bar.events)
       .flatMap(event => event.kind === 'tuplet'
         ? event.pitches.map((pitch, index) => ({ pitch, ticks: Math.round(event.beats * 3 / event.pitches.length), tie: !!event.tupletTies?.includes(index) || (!!event.tie && index === event.pitches.length - 1) }))
