@@ -21,7 +21,7 @@ const sections = new Map([...reference.notation.matchAll(/([ABC]):\n([\s\S]*?)(?
 }))
 
 describe('User-approved vocal score with JTP123 reference', () => {
-  it('preserves the approved corrections across AB repeats and the expanded ending', () => {
+  it('preserves the approved corrections across AB repeats and the D.S. return', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'Bb', meterCount: 4, meterUnit: 4, tempo: 72 })
     expect(document.order).toBeUndefined()
