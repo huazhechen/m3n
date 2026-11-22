@@ -1,8 +1,8 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "a3ba66fc628774604866c04ab107ad01e7f8462712289eaa6e17a49b30b4dac1",
-  "fontManifestSha256": "0d3a2cc16ccd9ec1d74e858c4cc3387bdd021521db74cafc0b876edf7539c64f",
+  "rendererSha256": "7b5bc97cf06bc7dec47d9920a0b5ed5b0d06d87a0163a81d46f675bc193a2d35",
+  "fontManifestSha256": "b03ad2b395217c327a8fef84771581c145e75e1c152e6d383be3c5e847db0485",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -530,9 +530,9 @@
       "fontSha256": "051a9038c2a7928e0430b1d429ca5728a57c5c93b8fd90e548dd17db91de72d5"
     },
     "src/scores/ni_shi_wo_xin_ai_de_gu_niang_01.m3n": {
-      "sourceSha256": "c14334eaa6dcdf452ee15bb3ba5a38e0e04aaed61c9b2ea0c6b1e5e3bcb52c26",
-      "font": "NotoSansSC-c820110f9fe53d3c.ttf",
-      "fontSha256": "17a50bb2230a903852a32fbae1012c44aebce284dcaca13158fab02af64f2322"
+      "sourceSha256": "75810ef23f9dc535e5ac6681ef802d0eb8f0fb0af2ce8f683c8626f02457d83f",
+      "font": "NotoSansSC-afbeb74e4ea5b377.ttf",
+      "fontSha256": "32dfa432a23e7dacabcedd356825bcbf2f01e7d753dc62482f90e87d178ce68b"
     }
   }
 }

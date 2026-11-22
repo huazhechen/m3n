@@ -1,20 +1,13 @@
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import reference from './fixtures/ni-shi-wo-xin-ai-de-gu-niang-cangqiang.json'
+import reference from './fixtures/ni-shi-wo-xin-ai-de-gu-niang-jtp123.json'
 import plan from '../../config/scorebook/editorial-plan.json'
 import categories from '../../config/scorebook/library-categories.json'
 
 const file = 'ni_shi_wo_xin_ai_de_gu_niang_01.m3n'
 const source = readFileSync(new URL(`../scores/${file}`, import.meta.url), 'utf8')
 const document = parseM3NDocument(source)
-// Zero-based note slots audited against each original section's lyric gaps.
-const omittedTies: Record<string, number[]> = {
-  A: [0, 3, 6, 9, 12, 28, 34, 41, 44, 47, 50, 53, 63, 66, 72, 82, 89, 99, 102, 108, 118, 121, 127, 137, 140, 143],
-  B: [3, 6, 13, 16, 23, 31, 32, 37, 40, 47, 50, 60, 63, 65],
-  C: [7],
-}
-
 // Read the website's independent notation: x marks a triplet eighth,
 // g raises the octave, d lowers it, and each dash adds a quarter note.
 const sections = new Map([...reference.notation.matchAll(/([ABC]):\n([\s\S]*?)(?=\n[ABC]:|$)/g)].map(([, name, body]) => {
@@ -27,20 +20,34 @@ const sections = new Map([...reference.notation.matchAll(/([ABC]):\n([\s\S]*?)(?
   return [name!, events] as const
 }))
 
-describe('Cangqiang 5810 transcription', () => {
-  it('preserves original pitches and durations while correcting omitted ties and the pickup', () => {
+describe('JTP123 58435 vocal transcription', () => {
+  it('matches the reference pitches and rests across AB repeats and the expanded ending', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
-    expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'B', meterCount: 4, meterUnit: 4, tempo: 72 })
+    expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'Bb', meterCount: 4, meterUnit: 4, tempo: 72 })
     expect(document.order).toBeUndefined()
     expect(source).not.toMatch(/^===|\{order=/m)
     expect(source.match(/:\|\|/g)).toHaveLength(1)
-    const expected = ['A', 'B', 'A', 'B', 'B', 'C'].flatMap((name, visit) => sections.get(name)!
-      .map((event, index, events) => ({ ...event, pitch: name === 'A' && index === 17 ? '2' : event.pitch, ticks: visit === 3 && index === events.length - 1 ? 9 : event.ticks, tie: event.tie || omittedTies[name]!.includes(index) })))
-    const actual = unfoldScorePerformance(document).parts.get('score')!.melody.flatMap(bar => bar.events)
-      .flatMap(event => event.kind === 'tuplet'
-        ? event.pitches.map((pitch, index) => ({ pitch, ticks: Math.round(event.beats * 3 / event.pitches.length), tie: !!event.tupletTies?.includes(index) || (!!event.tie && index === event.pitches.length - 1) }))
-        : [{ pitch: event.pitches[0] ?? '0', ticks: Math.round(event.beats * 3), tie: event.tie ?? false }])
+    // Compare every triplet subdivision, independently of how sustained notes
+    // and the two chorus pickups are grouped into printed measures.
+    const expected = ['A', 'B', 'A', 'B', 'B', 'C'].flatMap((name, visit) => {
+      const events = sections.get(name)!
+      return events.flatMap((event, index) => {
+        if (visit === 3 && index === events.length - 1) return Array(9).fill('6d')
+        if (visit === 4 && index === events.length - 1) return [...Array(9).fill('6d'), '0', '0', '1']
+        return Array(event.ticks).fill(event.pitch)
+      })
+    })
+    const melody = unfoldScorePerformance(document).parts.get('score')!.melody
+    const actual = melody.flatMap(bar => bar.events).flatMap(event => event.kind === 'tuplet'
+      ? event.pitches.flatMap(pitch => Array(Math.round(event.beats * 3 / event.pitches.length)).fill(pitch))
+      : Array(Math.round(event.beats * 3)).fill(event.pitches[0] ?? '0'))
     expect(actual).toEqual(expected)
+    // The two verse lyrics require different same-pitch attacks in measure 3.
+    const verseMeasure3 = melody.filter(bar => bar.events.length === 4
+      && bar.events[0]?.kind === 'tuplet' && bar.events[0].pitches.join() === '2,2,1'
+      && bar.events[3]?.kind === 'tuplet' && bar.events[3].pitches.join() === '2,1,6d')
+    expect(verseMeasure3[0]!.events[2]).toMatchObject({ tupletTies: [0, 1], tie: true })
+    expect(verseMeasure3[2]!.events[1]).toMatchObject({ tupletTies: [0] })
     expect(compileScorePerformance(document).beats).toBe(232)
   })
 
@@ -51,9 +58,7 @@ describe('Cangqiang 5810 transcription', () => {
       .flatMap(element => (byId.get(element.xmlId) ?? [])
         .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
         .map(lyric => lyric.text)).join('')
-    const clean = (value: string) => value.replace(/[\s/；]/g, '')
-    const [first, coda] = reference.lyrics[0]!.split('你依然')
-    expect(text).toBe(clean(first! + reference.lyrics[1]! + reference.lyrics[2]! + '你依然' + coda!))
+    expect(text).toBe(reference.lyrics.join(''))
     expect(text.endsWith('你依然会是我心爱的姑娘')).toBe(true)
   })
 
