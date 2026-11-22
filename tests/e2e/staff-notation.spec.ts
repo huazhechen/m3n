@@ -20,7 +20,7 @@ test('staff mode automatically selects width, locates source, highlights playbac
   await expect(paper.locator('g.staff').first()).toBeVisible()
   await expect(paper.locator('svg svg, use, polygon, polyline, ellipse')).toHaveCount(0)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', '480')
+  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', '560')
   expect(wasm).toHaveLength(0)
   await page.keyboard.press('Escape')
   await paper.locator('[id="m3n-e-2"] .notehead').first().click()

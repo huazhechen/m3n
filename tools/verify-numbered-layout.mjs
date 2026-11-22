@@ -10,6 +10,7 @@ const root = resolve(import.meta.dirname, '..')
 const temp = mkdtempSync(join(tmpdir(), 'm3n-layout-'))
 const output = join(root, '.tmp')
 const screenshots = process.argv.includes('--screenshots')
+const scoreFilter = process.argv.find(arg => arg.startsWith('--score='))?.slice(8)
 let browser
 try {
   const entry = join(temp, 'entry.ts')
@@ -67,10 +68,9 @@ try {
       const inkBounds = m3n.createSvgInkMeasurer()
       const texts = [...document.querySelectorAll('svg text')]
       const subtitle = [scoreDocument.subtitle, scoreDocument.singer ? `${scoreDocument.singer} 演唱` : ''].filter(Boolean).join('')
-      for (const [text, size] of [[scoreDocument.title, '32'], [subtitle, '16']]) {
+      for (const [text, role] of [[scoreDocument.title, 'title'], [subtitle, 'subtitle']]) {
         if (!text) continue
-        // The pitch range uses centered 16px number glyphs too; those are not subtitle lines.
-        const headingLines = texts.filter(node => node.getAttribute('font-size') === size && node.getAttribute('font-family') !== 'M3N Numbers' && node.getAttribute('text-anchor') === 'middle' && !node.hasAttribute('data-m3n-role'))
+        const headingLines = texts.filter(node => node.getAttribute('data-m3n-role') === role)
         if (headingLines.map(node=>node.textContent).join('').replace(/\s/g,'') !== text.replace(/\s/g,'')) issues.push({file,width,paged,heading:text,missingHeading:true})
         for(const heading of headingLines) {
         const box = inkBounds(heading)
@@ -180,7 +180,7 @@ try {
     }
     times.sort((a, b) => a - b)
     return { checks, issues, scores: summaries.map(score => ({ ...score, checks: 8, issues: issues.filter(issue => issue.file === score.file).length })), timing: { p50: times[Math.floor(times.length * .5)], p95: times[Math.floor(times.length * .95)], max: times.at(-1) } }
-  }, scores)
+  }, scores.filter(score => !scoreFilter || score.file.includes(scoreFilter)))
   mkdirSync(output, { recursive: true })
   writeFileSync(join(output, 'numbered-layout-report.json'), JSON.stringify(report, null, 2))
   console.log(JSON.stringify({ checks: report.checks, issues: report.issues.length, timing: report.timing, examples: report.issues.slice(0, 8) }, null, 2))

@@ -108,7 +108,7 @@ test('width resets to the automatically selected width for each score', async ({
     await openScoreSettings(page)
     const slider = page.getByRole('slider', { name: '乐谱宽度' })
     await openScoreSettings(page)
-    await expect(slider).toHaveValue(/^(?:4[89]0|5[0-9]0|6[0-4]0)$/)
+    await expect(slider).toHaveValue(/^(?:5[6-9]0|6[0-4]0)$/)
     const width = await slider.inputValue()
     await slider.fill('1000')
     await openScoreSettings(page)
@@ -125,7 +125,7 @@ test('width resets to the automatically selected width for each score', async ({
   await openScoreSettings(page)
   await page.getByRole('button', { name: '还原宽度' }).click()
   await openScoreSettings(page)
-  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('480')
+  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('560')
 })
 
 test('width buttons snap to adjacent grid points and dragging commits on release outside the slider', async ({ page }, info) => {
@@ -174,7 +174,7 @@ test('width buttons snap to adjacent grid points and dragging commits on release
   expect((await slider.boundingBox())!.width).toBeGreaterThan(30)
   await page.screenshot({ path: info.outputPath('width-control-mobile.png') })
   await page.getByRole('button', { name: '还原宽度' }).click()
-  await expect(paper.locator('svg').first()).toHaveAttribute('width', '480')
+  await expect(paper.locator('svg').first()).toHaveAttribute('width', '560')
 })
 
 test('removed source width directives do not override the reading width', async ({ page }) => {
@@ -277,6 +277,7 @@ test('clicking notes during playback seeks forward and backward and keeps playin
   await page.getByRole('button', { name: '播放', exact: true }).click()
   const pause = page.getByRole('button', { name: '暂停', exact: true })
   await expect(pause).toBeVisible({ timeout: 30_000 })
+  await expect(paper.locator('g.note.is-playing').first()).toBeVisible({ timeout: 15_000 })
   await notes.nth(8).click()
   await expect.poll(async () => Number(await progress.inputValue())).toBeGreaterThanOrEqual(660)
   await expect(pause).toBeVisible()
@@ -376,7 +377,7 @@ test('switching songs restores each song’s original tempo and default width', 
   await openScoreSettings(page)
   const originalBpm = await bpm.inputValue()
   await openScoreSettings(page)
-  await expect(width).toHaveValue('480')
+  await expect(width).toHaveValue('560')
   const nextUrl = await page.getByRole('link', { name: '下一曲', exact: true }).getAttribute('href')
   await page.getByRole('link', { name: '下一曲', exact: true }).click()
   await openScoreSettings(page)
@@ -402,5 +403,5 @@ test('switching songs restores each song’s original tempo and default width', 
   await openScoreSettings(page)
   await expect(bpm).toHaveValue(originalBpm)
   await openScoreSettings(page)
-  await expect(width).toHaveValue('480')
+  await expect(width).toHaveValue('560')
 })
