@@ -7,6 +7,8 @@ const source = readFileSync(new URL('../scores/hou_lai_01.m3n', import.meta.url)
 // Apply the separately requested musical corrections to the historical arrangement,
 // then check that the repeat notation preserves it event by event.
 const instrumentalReference = original
+  .replace('{key=C}', '{key=Eb}')
+  .replace('(1e (2e 2e))', '(1e (1e 2e))')
   .replaceAll('((2e) 1e.) 1e~', '((2e) 1e.~) 1e~').replaceAll('再{%2}', '再%')
   .replace('{lg}((2e) 1e){/} ((1e~))', '(2e.) ((1e~))').replace('星%光', '星光')
   .replace('{lg}((5 6)){/} 6^', '(6) 6^').replace('年少%时', '年少时')
@@ -34,6 +36,7 @@ const lyrics = (document: typeof before) => {
 
 describe('Hou Lai written as A, B, repeated A, C', () => {
   it('uses a written chorus and a two-pass chorus with single-bar endings and preserves every event except the previously authorized held beat', () => {
+    expect(after.key).toBe('Eb')
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(after.order).toBeUndefined()
     expect(after.sections ?? []).toEqual([])
