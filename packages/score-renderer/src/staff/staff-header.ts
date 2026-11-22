@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT } from '@m3n/numbered-notation'
 import {
   numberedHeadingLines,
   numberedHeaderContent,
@@ -21,8 +21,8 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
   }
   const wrap = (text: string, size: number, bold = false) =>
     numberedHeadingLines(text, width - 2, size, measurer, bold ? 700 : 400)
-  const put = (text: string, x: number, top: number, size: number, anchor = 'start', bold = false) => {
-    const metrics = measure(text, size, bold),
+  const put = (text: string, x: number, top: number, size: number, anchor = 'start', bold = false, family = SCORE_TEXT_FONT) => {
+    const metrics = measure(text, size, bold, false, family),
       left = x - (anchor === 'middle' ? metrics.width / 2 : anchor === 'end' ? metrics.width : 0)
     const ink = {
       left: left + metrics.left,
@@ -37,7 +37,8 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
           x: String(x),
           y: String(top + metrics.ascent),
           'font-size': String(size),
-          'font-family': SCORE_TEXT_FONT,
+          'font-family': family,
+          ...(family === SCORE_TITLE_FONT ? { 'font-weight': String(SCORE_TITLE_WEIGHT), 'font-synthesis': 'none', 'data-m3n-role': 'title' } : {}),
           'text-anchor': anchor,
           ...(bold ? { 'font-weight': 'bold' } : {}),
         },
@@ -48,8 +49,9 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
     return ink
   }
   let y = 0
-  for (const line of wrap(score.title, 32, true)) {
-    const ink = put(line, width / 2, y, 32, 'middle', true)
+  const titleMeasurer = { measureText: (text: string, style: { fontSize: number }) => ({ w: measure(text, style.fontSize, false, false, SCORE_TITLE_FONT).width }) }
+  for (const line of numberedHeadingLines(score.title, width - 2, 32, titleMeasurer, SCORE_TITLE_WEIGHT)) {
+    const ink = put(line, width / 2, y, 32, 'middle', false, SCORE_TITLE_FONT)
     y = ink.bottom + 5
   }
   const sideTop = y

@@ -82,7 +82,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
             const rotation = text.getRotationOfChar(offset) * Math.PI / 180
             offset += char.length
             if (/\s|[\u200B\u2800]/u.test(char)) continue
-            const resource = fonts.resource(char, Number.parseInt(style.fontWeight), italic, isMusic)
+            const resource = fonts.resource(char, Number.parseInt(style.fontWeight), italic, isMusic, style.fontFamily)
             const { name, font } = embedded.get(resource.file)!
             const cacheKey = `${resource.file}:${char}`
             let encoded = encodedCharacters.get(cacheKey)

@@ -60,17 +60,17 @@ export function translate(node: XmlNode, x: number, y: number) {
   node.attributes.transform = `translate(${x} ${y}) ${node.attributes.transform ?? ''}`
 }
 export type FontInk = { width: number; left: number; right: number; ascent: number; descent: number }
-export type MeasureText = (text: string, size: number, bold?: boolean, italic?: boolean) => FontInk
+export type MeasureText = (text: string, size: number, bold?: boolean, italic?: boolean, family?: string) => FontInk
 export function textMeasurer(): MeasureText {
   const context = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null
   const cache = new Map<string, FontInk>()
-  return (text, size, bold = false, italic = false) => {
-    const key = `${size}:${bold}:${italic}:${text}`
+  return (text, size, bold = false, italic = false, family = SCORE_TEXT_FONT) => {
+    const key = `${family}:${size}:${bold}:${italic}:${text}`
     const saved = cache.get(key)
     if (saved) return saved
     let result: FontInk
     if (context) {
-      context.font = `${italic ? 'italic' : 'normal'} ${bold ? 700 : 400} ${size}px ${SCORE_TEXT_FONT}`
+      context.font = `${italic ? 'italic' : 'normal'} ${bold ? 700 : 400} ${size}px ${family}`
       const m = context.measureText(text)
       result = {
         width: m.width,

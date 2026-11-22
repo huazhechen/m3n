@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
+import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT } from './font-family.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { numberedHeaderContent } from './header-content.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
@@ -19,20 +19,21 @@ export { wrapNativeText }
 /** Shared measured geometry for header painting and the first system's position. */
 export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeStyle.headerGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGapEm?:number} = {}) {
   const available = width - 2 * margin
-  const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, measurer, 700)
+  const titleMeasurer: TextMeasurer = { measureText: (text, style) => measurer.measureText(text, { ...style, fontFamily: SCORE_TITLE_FONT, fontWeight: SCORE_TITLE_WEIGHT }) }
+  const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT)
   const headerContent = numberedHeaderContent(document)
   const subtitleBlocks = headerContent.subtitles.map(text => wrapNativeText(text, available - em(2), nativeStyle.subtitle, measurer))
   const subtitle = subtitleBlocks.flat()
   const painter = new NativeSymbols(measurer)
-  const textBlock = (lines: string[], size: number, weight = SCORE_TEXT_WEIGHT) => {
+  const textBlock = (lines: string[], size: number, weight = SCORE_TEXT_WEIGHT, family = SCORE_TEXT_FONT) => {
     if (!lines.length) return { rows: [], height: 0 }
-    const metrics = lines.map(text => measurer.measureText(text, { fontSize: size, fontFamily: SCORE_TEXT_FONT, fontWeight: weight }))
+    const metrics = lines.map(text => measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: weight }))
     const advance = size * 1.25
     const top = Math.min(...metrics.map((m, index) => index * advance - m.baseline))
     const bottom = Math.max(...metrics.map((m, index) => index * advance - m.baseline + m.h))
     return { rows: lines.map((text, index) => ({ text, baseline: index * advance - top })), height: bottom - top }
   }
-  const titleBlock = textBlock(title, nativeStyle.title, 700), titleRows = titleBlock.rows
+  const titleBlock = textBlock(title, nativeStyle.title, SCORE_TITLE_WEIGHT, SCORE_TITLE_FONT), titleRows = titleBlock.rows
   let subtitleHeight = 0
   const subtitleRows = subtitleBlocks.flatMap((lines, index) => {
     const block = textBlock(lines, nativeStyle.subtitle)
@@ -139,7 +140,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     orderRows.push({ top, height, items }); orderBottom = top + height
   }
   const orderHeight = orderBottom - (sideTop + sidesHeight)
-  let svg = titleRows.map(row => painter.text(row.text, width / 2, margin + row.baseline, nativeStyle.title, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'font-weight': 700 })).join('')
+  let svg = titleRows.map(row => painter.text(row.text, width / 2, margin + row.baseline, nativeStyle.title, SCORE_TITLE_FONT, { 'text-anchor': 'middle', 'font-weight': SCORE_TITLE_WEIGHT, 'font-synthesis': 'none', 'data-m3n-role': 'title' })).join('')
     + subtitleSvg
     + `<g transform="translate(0 ${n(creditsTop)})">${creditSvg}</g>`
     + `<g transform="translate(0 ${n(signaturesTop - signatureInk.top)})">${signatureSvg}</g>`

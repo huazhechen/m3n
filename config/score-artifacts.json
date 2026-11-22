@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "a9ff1dec4b7f3d1fcf18aef9bc062ea5eaaf2c17439f58ede8b17c3bcfde1306",
+  "rendererSha256": "b6020b94ce659b0093cae541ec673d07ea4e676d2d39ff38b2bcb34f53b5252a",
   "fontManifestSha256": "f9091f9f1561c87296d730c0a5c21831204a39935aacc35c0668f9829edcdbd4",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -380,7 +380,7 @@
       "fontSha256": "ac1baa01b125ed6ee7507725ce558576cd820d1e4c10a90f2a0e229f0d3131ec"
     },
     "src/scores/valsentino_01.m3n": {
-      "sourceSha256": "17be926c215754950733e9b090e306132bc3de23ebe9ae99f9412f167501507a",
+      "sourceSha256": "94447ada70461c49d911e4a1b0ead8912cb89b439c5683c028999cc3de5f3b83",
       "font": "NotoSansSC-adfcd7991c85e563.ttf",
       "fontSha256": "28c3eb059cb4d80ad3db58a364fdd16437ed09e6c93c8e7441cacefb3dee4fe7"
     },

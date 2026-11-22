@@ -28,7 +28,8 @@ export function scoreCjkFont(text: string): ScoreFontResource {
   return font
 }
 
-export function scoreFontForCharacter(char: string, textFont: ScoreFontResource, _weight = 400, _italic = false, _numbers = false): ScoreFontResource {
+export function scoreFontForCharacter(char: string, textFont: ScoreFontResource, _weight = 400, _italic = false, _numbers = false, family = ''): ScoreFontResource {
+  if (family.startsWith(SCORE_CJK_FONT) && supports(textFont, char)) return textFont
   const latin = LATIN_FONTS[0]
   if (supports(latin, char)) return latin
   if (supports(BRAVURA_FONTS[0], char)) return BRAVURA_FONTS[0]

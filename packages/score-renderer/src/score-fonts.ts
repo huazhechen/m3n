@@ -9,8 +9,8 @@ export async function prepareScoreTextFonts(pages: readonly SVGSVGElement[], sup
   const parsed = new Map<string, ReturnType<typeof fontkit.create>>()
   const bytes = new Map<string, Uint8Array>()
   const resources = new Map<string, ScoreFontResource>()
-  const resource = (char: string, weight = 400, italic = false, numbers = false) => {
-    const font = scoreFontForCharacter(char, cjk, weight, italic, numbers)
+  const resource = (char: string, weight = 400, italic = false, numbers = false, family = '') => {
+    const font = scoreFontForCharacter(char, cjk, weight, italic, numbers, family)
     resources.set(font.file, font)
     return font
   }
@@ -18,7 +18,7 @@ export async function prepareScoreTextFonts(pages: readonly SVGSVGElement[], sup
     const weight = Number(node.getAttribute('font-weight') ?? 400)
     const italic = node.getAttribute('font-style') === 'italic'
     const numbers = node.getAttribute('font-family') === 'M3N Numbers'
-    for (const char of node.textContent ?? '') if (!/\s|[\u200B\u2800]/u.test(char)) resource(char, weight, italic, numbers)
+    for (const char of node.textContent ?? '') if (!/\s|[\u200B\u2800]/u.test(char)) resource(char, weight, italic, numbers, node.getAttribute('font-family') ?? '')
   }
   for (const char of 'https://score.cheesefans.com/') resource(char)
   await Promise.all([...resources.values()].map(async font => {
@@ -55,7 +55,7 @@ export async function outlineScoreText(svg: SVGSVGElement) {
         const position = text.getStartPositionOfChar(offset), rotation = text.getRotationOfChar(offset)
         offset += char.length
         if (/\s|[\u200B\u2800]/u.test(char)) continue
-        const font = fonts.resource(char, weight, italic, numbers)
+        const font = fonts.resource(char, weight, italic, numbers, style.fontFamily)
         const parsed = fonts.parsed.get(font.file)!
         const glyph = parsed.glyphForCodePoint(char.codePointAt(0)!)
         const path = document.createElementNS(ns, 'path')

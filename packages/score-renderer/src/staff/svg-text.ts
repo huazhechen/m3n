@@ -1,4 +1,3 @@
-import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 const ns = 'http://www.w3.org/2000/svg'
 
 /** Flatten text to the same measured character positions for screen and PDF. */
@@ -39,7 +38,7 @@ export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
         const style = getComputedStyle(element), size = Number.parseFloat(style.fontSize)
         const glyph = document.createElementNS(ns, 'text')
         glyph.textContent = char
-        for (const [name, value] of Object.entries({ x: position.x, y: position.y, 'font-size': size, 'font-family': SCORE_TEXT_FONT, 'font-weight': style.fontWeight, 'font-style': style.fontStyle, 'text-anchor': 'start' })) glyph.setAttribute(name, String(value))
+        for (const [name, value] of Object.entries({ x: position.x, y: position.y, 'font-size': size, 'font-family': style.fontFamily, 'font-weight': style.fontWeight, 'font-style': style.fontStyle, 'text-anchor': 'start' })) glyph.setAttribute(name, String(value))
         group.append(glyph)
       }
       text.replaceWith(group)
