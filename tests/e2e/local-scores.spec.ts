@@ -30,11 +30,11 @@ test('recovers the latest draft after reload without file actions or a save noti
   await page.reload()
   await expect(page.getByLabel('M3N source')).toHaveText(source, { useInnerText: true })
   await expect(page.getByRole('status', { name: '草稿保存状态' })).toHaveCount(0)
-  await expect(page.locator('.editor-header-right button')).toHaveText(['格式化', '保存', '分享'])
+  await expect(page.locator('.editor-header-right button')).toHaveText(['还原原谱', '格式化', '保存', '分享'])
   await expect(page.getByLabel('导入 M3N 文件')).toHaveCount(0)
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 844 })
-    for (const name of ['格式化', '保存', '分享']) {
+    for (const name of ['还原原谱', '格式化', '保存', '分享']) {
       const button = page.getByRole('button', { name, exact: true })
       await expect(button).toBeVisible()
       await expect(button.locator('svg')).toBeVisible()
@@ -46,6 +46,27 @@ test('recovers the latest draft after reload without file actions or a save noti
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   }
+})
+
+test('restores the current original score and clears only its draft, including after reload', async ({ page }) => {
+  const id = 'xiao_xing_xing_01'
+  await page.goto(`/editor/${id}`)
+  const editor = page.getByLabel('M3N source')
+  await expect(editor).toContainText('{title=小星星}')
+  const original = await editor.innerText()
+  await page.evaluate(() => localStorage.setItem('m3n:draft:another-score', JSON.stringify({ source: 'keep', updatedAt: new Date().toISOString() })))
+  await editor.fill(source)
+  await expect.poll(() => page.evaluate(id => JSON.parse(localStorage.getItem(`m3n:draft:${id}`) ?? 'null')?.source, id)).toBe(source)
+  await page.reload()
+  await expect(editor).toHaveText(source, { useInnerText: true })
+  await page.getByRole('button', { name: '还原原谱', exact: true }).click()
+  await expect(editor).toHaveText(original, { useInnerText: true })
+  await page.reload()
+  await expect(editor).toHaveText(original, { useInnerText: true })
+  expect(await page.evaluate(id => localStorage.getItem(`m3n:draft:${id}`), id)).toBeNull()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('m3n:draft:another-score')!).source)).toBe('keep')
+  await editor.fill(source)
+  await expect.poll(() => page.evaluate(id => JSON.parse(localStorage.getItem(`m3n:draft:${id}`) ?? 'null')?.source, id)).toBe(source)
 })
 
 test('keeps the editor open with the source when local storage rejects a save', async ({ page }) => {

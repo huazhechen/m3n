@@ -12,28 +12,34 @@ export function useScoreDraft(initialSource: string, enabled: boolean, scoreId?:
   useEffect(() => {
     if (!enabled) return
     const flush = () => {
-      if (!persistenceEnabled.current || (latest.current === initialSource && !draft)) return
+      if (!persistenceEnabled.current || latest.current === initialSource) return
       try { saveScoreDraft(latest.current, scoreId) } catch { /* Autosave reports failures while mounted. */ }
     }
     window.addEventListener('pagehide', flush)
     return () => { window.removeEventListener('pagehide', flush); flush() }
-  }, [draft, enabled, initialSource, scoreId])
+  }, [enabled, initialSource, scoreId])
 
   useEffect(() => {
-    if (!enabled || (source === initialSource && !draft)) return
+    if (!enabled || source === initialSource) return
     setStatus('正在保存草稿…')
     const timer = window.setTimeout(() => {
-      if (!persistenceEnabled.current) return
+      if (!persistenceEnabled.current || source !== latest.current) return
       try {
         saveScoreDraft(source, scoreId)
         setStatus('草稿已保存到此浏览器')
       } catch (error) { setStatus(error instanceof Error ? error.message : '草稿保存失败。') }
     }, 400)
     return () => window.clearTimeout(timer)
-  }, [draft, enabled, initialSource, scoreId, source])
+  }, [enabled, initialSource, scoreId, source])
 
   return {
     source, setSource, draftStatus: status,
+    resetDraft: () => {
+      latest.current = initialSource
+      setSource(initialSource)
+      clearScoreDraft(scoreId)
+      setStatus('')
+    },
     pauseDraft: () => { persistenceEnabled.current = false },
     resumeDraft: () => {
       persistenceEnabled.current = true

@@ -8,6 +8,7 @@ import { useScoreDraft } from '../hooks/useScoreDraft'
 import { useM3NAnalysis } from '../hooks/useM3NAnalysis'
 
 const editorActionPaths = {
+  reset: 'M3 10a9 9 0 1 1 2 8M3 4v6h6',
   format: 'M4 5h16M4 10h10M4 15h7M4 20h7m3-4 3 3 5-7',
   save: 'M5 3h12l4 4v14H3V3ZM7 3v6h10V3M7 21v-8h10v8',
   share: 'M12 16V3m-5 5 5-5 5 5M5 13H3v8h18v-8h-2',
@@ -40,7 +41,7 @@ export function NotationEditor({
   onBrowse,
   onSubmit,
 }: NotationEditorProps) {
-  const { source, setSource, pauseDraft, resumeDraft, discardDraft } = useScoreDraft(initialSource, !embedded, draftScope ?? scoreId)
+  const { source, setSource, resetDraft, pauseDraft, resumeDraft, discardDraft } = useScoreDraft(initialSource, !embedded, draftScope ?? scoreId)
   const [cursorPosition, setCursorPosition] = useState(0)
   const [isCursorHighlightActive, setIsCursorHighlightActive] = useState(false)
   const [sharingAction, setSharingAction] = useState<'browse' | 'submit' | null>(null)
@@ -136,6 +137,12 @@ export function NotationEditor({
         <div className="editor-header-left"><h2>编辑器</h2></div>
         <div className="editor-header-right">
           {simulatedSubmit && <span className="editor-mode-note">本地模拟提交</span>}
+          <button type="button" className="action-button editor-action" aria-label="还原原谱" title="还原原谱并清除当前草稿" disabled={sharingAction !== null || isComposing} onClick={() => {
+            resetDraft()
+            setCursorPosition(0)
+            setIsCursorHighlightActive(false)
+            setShareError(null)
+          }}><EditorActionIcon action="reset" /><span>还原原谱</span></button>
           <button type="button" className="action-button editor-action" aria-label="格式化" title="格式化" onClick={formatSource}><EditorActionIcon action="format" /><span>格式化</span></button>
           {onBrowse && <button type="button" className="action-button editor-action" aria-label="保存" title="保存" aria-busy={sharingAction === 'browse' || undefined} disabled={sharingAction !== null} onClick={() => void browseScore()}><EditorActionIcon action="save" /><span>{sharingAction === 'browse' ? '保存中' : '保存'}</span></button>}
           {onSubmit && <button type="button" className="action-button editor-action" aria-label="分享" title="生成保留 15 天的分享链接" aria-busy={sharingAction === 'submit' || undefined} disabled={sharingAction !== null} onClick={() => void submitScore()}><EditorActionIcon action="share" /><span>{sharingAction === 'submit' ? '生成中' : '分享'}</span></button>}
