@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 102,
+  "sourceCount": 103,
   "sections": [
     {
       "id": "basics",
@@ -856,6 +856,14 @@
       "section": "pop",
       "group": "切分与延音",
       "reason": "双段英文歌词、降E至E和F升调、十六分切分、第二遍变奏与尾声"
+    },
+    {
+      "id": "ni_shi_wo_xin_ai_de_gu_niang",
+      "file": "ni_shi_wo_xin_ai_de_gu_niang_01.m3n",
+      "title": "你是我心爱的姑娘",
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "reason": "连续八分三连音、低音区旋律、跨段弱起、三遍歌词与副歌再现"
     }
   ],
   "edition": "第七十五版",
