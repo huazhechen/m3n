@@ -30,27 +30,15 @@ const sections = new Map([...reference.notation.matchAll(/([ABC]):\n([\s\S]*?)(?
 describe('Cangqiang 5810 transcription', () => {
   it('preserves original pitches and durations while correcting omitted ties and the pickup', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
-    expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'B', meterCount: 12, meterUnit: 8, tempo: 108, order: ['A', 'B', 'A', 'B', 'B', 'C'] })
+    expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'B', meterCount: 4, meterUnit: 4, tempo: 72, order: ['A', 'B', 'A', 'B', 'B', 'C'] })
     const expected = ['A', 'B', 'A', 'B', 'B', 'C'].flatMap((name, visit) => sections.get(name)!
       .map((event, index, events) => ({ ...event, ticks: visit === 3 && index === events.length - 1 ? 9 : event.ticks, tie: event.tie || omittedTies[name]!.includes(index) })))
     const actual = unfoldScorePerformance(document).parts.get('score')!.melody.flatMap(bar => bar.events)
       .flatMap(event => event.kind === 'tuplet'
-        ? event.pitches.map((pitch, index) => ({ pitch, ticks: Math.round(event.beats * 2 / event.pitches.length), tie: !!event.tupletTies?.includes(index) || (!!event.tie && index === event.pitches.length - 1) }))
-        : [{ pitch: event.pitches[0] ?? '0', ticks: Math.round(event.beats * 2), tie: event.tie ?? false }])
-    // Dotted durations may split a sustain into more written notes in 12/8.
-    const sustained = (events: typeof actual) => events.reduce<typeof actual>((result, event) => {
-      const previous = result.at(-1)
-      if (previous?.tie && previous.pitch === event.pitch) {
-        previous.ticks += event.ticks
-        previous.tie = event.tie
-      } else result.push({ ...event })
-      return result
-    }, [])
-    expect(sustained(actual)).toEqual(sustained(expected))
-    const performance = compileScorePerformance(document)
-    expect(performance.beats).toBe(348)
-    expect(performance.beats * 60 / document.tempo).toBeCloseTo(232 * 60 / 72)
-    expect(source).not.toContain(':2]')
+        ? event.pitches.map((pitch, index) => ({ pitch, ticks: Math.round(event.beats * 3 / event.pitches.length), tie: !!event.tupletTies?.includes(index) || (!!event.tie && index === event.pitches.length - 1) }))
+        : [{ pitch: event.pitches[0] ?? '0', ticks: Math.round(event.beats * 3), tie: event.tie ?? false }])
+    expect(actual).toEqual(expected)
+    expect(compileScorePerformance(document).beats).toBe(232)
   })
 
   it('sings both verses, all three choruses and the complete final word', () => {
