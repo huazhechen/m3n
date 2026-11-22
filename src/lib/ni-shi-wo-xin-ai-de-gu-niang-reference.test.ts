@@ -20,8 +20,8 @@ const sections = new Map([...reference.notation.matchAll(/([ABC]):\n([\s\S]*?)(?
   return [name!, events] as const
 }))
 
-describe('JTP123 58435 vocal transcription', () => {
-  it('matches the reference pitches and rests across AB repeats and the expanded ending', () => {
+describe('User-approved vocal score with JTP123 reference', () => {
+  it('preserves the approved corrections across AB repeats and the expanded ending', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'Bb', meterCount: 4, meterUnit: 4, tempo: 72 })
     expect(document.order).toBeUndefined()
@@ -31,22 +31,36 @@ describe('JTP123 58435 vocal transcription', () => {
     // and the two chorus pickups are grouped into printed measures.
     const expected = ['A', 'B', 'A', 'B', 'B', 'C'].flatMap((name, visit) => {
       const events = sections.get(name)!
-      return events.flatMap((event, index) => {
+      const ticks: string[] = events.flatMap((event, index) => {
         if (visit === 3 && index === events.length - 1) return Array(9).fill('6d')
         if (visit === 4 && index === events.length - 1) return [...Array(9).fill('6d'), '0', '0', '1']
         return Array(event.ticks).fill(event.pitch)
       })
+      // User corrections override the website. Each tick is one triplet eighth.
+      if (name === 'A') {
+        ticks.fill('2', 18, 21) // 言
+        for (const bar of [4, 8, 10, 14, 16]) {
+          ticks.fill('6d', (bar - 1) * 12 + 3, (bar - 1) * 12 + 9)
+        }
+      } else if (name === 'B') {
+        ticks[14] = '5d' // 我就在你身旁
+        ticks[39] = '3' // 方 starts directly on 3 and sustains three beats.
+        ticks[56] = '1e' // 模 / 天
+        ticks[61] = '5d'
+        ticks[62] = '5d' // 即使 / 直到
+      }
+      return ticks
     })
     const melody = unfoldScorePerformance(document).parts.get('score')!.melody
     const actual = melody.flatMap(bar => bar.events).flatMap(event => event.kind === 'tuplet'
       ? event.pitches.flatMap(pitch => Array(Math.round(event.beats * 3 / event.pitches.length)).fill(pitch))
       : Array(Math.round(event.beats * 3)).fill(event.pitches[0] ?? '0'))
     expect(actual).toEqual(expected)
-    // The two verse lyrics require different same-pitch attacks in measure 3.
+    // Both verses share measure 3; +一 places a lyric on a tied note.
     const verseMeasure3 = melody.filter(bar => bar.events.length === 4
       && bar.events[0]?.kind === 'tuplet' && bar.events[0].pitches.join() === '2,2,1'
       && bar.events[3]?.kind === 'tuplet' && bar.events[3].pitches.join() === '2,1,6d')
-    expect(verseMeasure3[0]!.events[2]).toMatchObject({ tupletTies: [0, 1], tie: true })
+    expect(verseMeasure3[0]!.events[1]).toMatchObject({ tupletTies: [0] })
     expect(verseMeasure3[2]!.events[1]).toMatchObject({ tupletTies: [0] })
     expect(compileScorePerformance(document).beats).toBe(232)
   })
