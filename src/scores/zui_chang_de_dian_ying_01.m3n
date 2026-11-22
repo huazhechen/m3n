@@ -2,7 +2,6 @@
 {singer=周杰伦}
 {composer=周杰伦}
 {lyricist=周杰伦}
-// 快乐谱：https://www.kuaiyuepu.com/jianpu/hlBlc1aCO.html
 // 原顺序 A–B–C–B–C–C：反复后 D.S. 返回 C；一、二房子分别包含 B、C 的弱起，跳转位于满拍小节末。
 // 两次反复副歌的末音由四拍收为两拍以接两拍弱起；全曲末音三拍，与开头一拍弱起互补。
 {key=G} {4/4} {80qpm}

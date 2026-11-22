@@ -67,6 +67,10 @@ main {
   padding: var(--ui-space) 0 48px;
 }
 
+main.editor-page {
+  width: calc(100vw - 32px);
+}
+
 /* Plain text stays in document flow for native screen-reader navigation. */
 .score-accessible-text {
   margin-block: 12px;

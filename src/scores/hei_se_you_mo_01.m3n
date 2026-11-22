@@ -2,7 +2,6 @@
 {singer=周杰伦}
 {composer=周杰伦}
 {lyricist=周杰伦}
-// Source: http://www.jianpu.cn/pu/92/92034.htm
 // Melody only; omit guitar accompaniment, intro and interlude.
 // Play=A, capo=1: concert keys Bb / Db. Keep the opening repeat; write both chorus visits in full.
 {key=Bb} {4/4} {63qpm}

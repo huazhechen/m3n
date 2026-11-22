@@ -14,10 +14,10 @@ export function EditorPage({ collection = 'scores' }: { collection?: 'scores' | 
   const { scoreId } = useParams()
   const { source, status, error, retry } = useScoreSource(scoreId ?? (exampleSource || collection === 'works' ? undefined : 'huan_le_song_01'), collection)
   const navProps = collection === 'works' ? { libraryTo: '/works', libraryLabel: '独立作品' } : {}
-  if (status !== 'ready') return <main><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
+  if (status !== 'ready') return <main className="editor-page"><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
 
   return (
-    <main>
+    <main className="editor-page">
       <TopNav {...navProps} />
       <NotationEditor
         key={`${collection}:${scoreId ?? 'blank-editor'}`}

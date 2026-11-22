@@ -2,9 +2,7 @@
 {singer=胡夏}
 {composer=木村充利}
 {lyricist=九把刀}
-// 快悦谱参考：https://www.kuaiyuepu.com/jianpu/amsUb1rJx.html
 // 用 D.C. 复现原站 D.S. 返回曲首的实际行为；按用户要求将副歌前长音缩短一拍。
-// 参考差异见 Git 历史中的 scorebook/那些年快悦谱参考校订.md。
 {key=F} {4/4} {72qpm}
 N: ((0 1 1 2)) | (3 3) (3 (4 3~)) 3 ((0 3 2 1)) | (2 2) (2 (4 3~)) 3 (0 2) |
 L: 又回到 | 最初的起点记忆中 | 你青涩的脸我

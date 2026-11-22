@@ -1613,6 +1613,10 @@ a.action-button {
     padding-top: var(--ui-space);
   }
 
+  main.editor-page {
+    width: calc(100vw - 18px);
+  }
+
   .pane-toolbar {
     align-items: stretch;
     flex-direction: column;
