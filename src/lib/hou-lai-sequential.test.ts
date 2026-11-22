@@ -2,86 +2,54 @@ import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, reso
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const original = readFileSync(new URL('./fixtures/hou-lai-original.m3n', import.meta.url), 'utf8')
 const source = readFileSync(new URL('../scores/hou_lai_01.m3n', import.meta.url), 'utf8')
-// Apply the separately requested musical corrections to the historical arrangement,
-// then check that the repeat notation preserves it event by event.
-const instrumentalReference = original
-  .replace('{key=C}', '{key=Eb}')
-  .replace('(1e (2e 2e))', '(1e (1e 2e))')
-  .replaceAll('((2e) 1e.) 1e~', '((2e) 1e.~) 1e~').replaceAll('再{%2}', '再%')
-  .replace('{lg}((2e) 1e){/} ((1e~))', '(2e.) ((1e~))').replace('星%光', '星光')
-  .replace('{lg}((5 6)){/} 6^', '(6) 6^').replace('年少%时', '年少时')
-const before = parseM3NDocument(instrumentalReference), after = parseM3NDocument(source)
-const performedBars = (document: typeof before) => unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
-const oldBars = performedBars(before), newBars = performedBars(after)
-// The sole authorized correction: A's second ending loses one held beat;
-// The third pickup follows that three-beat ending. All other events remain in order.
-const changedIndex = oldBars.slice(0, 54).reduce((count, bar) => count + bar.events.length, 0) - 1
-const events = (bars: typeof oldBars) => {
-  const pitches = resolveScorePitches(bars)
-  return bars.flatMap(bar => bar.events.map(event => ({
+const document = parseM3NDocument(source)
+const printed = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+const performed = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
+const bars = (first: number, last: number) => printed.slice(first - 1, last)
+const events = (measures: typeof printed) => {
+  const pitches = resolveScorePitches(measures)
+  return measures.flatMap(bar => bar.events.map(event => ({
     pitches: pitches.get(event) ?? [], beats: event.beats, tie: event.tie ?? false,
     postfixes: event.postfixes, dynamic: event.dynamic ?? null, tempo: event.tempo,
   })))
 }
-const lyrics = (document: typeof before) => {
+const lyrics = () => {
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
   return compileScorePerformance(document).elements.filter(element => element.voice === 'score:melody')
     .flatMap(element => (byId.get(element.xmlId) ?? [])
       .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
-      .map(lyric => ({ start: element.start, end: element.end, text: lyric.text })))
+      .map(lyric => lyric.text)).join('')
 }
 
-describe('Hou Lai written as A, B, repeated A, C', () => {
-  it('uses a written chorus and a two-pass chorus with single-bar endings and preserves every event except the previously authorized held beat', () => {
-    expect(after.key).toBe('Eb')
+describe('Hou Lai with a repeated bridge and D.S. chorus', () => {
+  it('uses E-flat and three endings without source diagnostics', () => {
+    expect(document.key).toBe('Eb')
     expect(validateM3NDiagnostics(source)).toEqual([])
-    expect(after.order).toBeUndefined()
-    expect(after.sections ?? []).toEqual([])
-    const printed = after.parts.get('score')!.melody.filter(bar => bar.events.length)
-    expect(printed).toHaveLength(60)
-    expect(printed.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
-    expect(printed.filter(bar => bar.right === 'rptend')).toHaveLength(1)
-    expect(printed.some(bar => bar.right === 'double')).toBe(false)
-    const repeatStart = printed.find(bar => bar.left === 'rptstart')!
-    expect(repeatStart.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
-    const firstEnding = printed.find(bar => bar.ending === '1')!
-    expect(firstEnding.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
-    expect(firstEnding.events.slice(-3).map(event => event.pitches)).toEqual([['3e'], ['2e'], ['1e']])
-    expect(printed.flatMap((bar, index) => bar.ending ? [[index + 1, bar.ending]] : [])).toEqual([[54, '1'], [55, '2']])
-    const expected = events(oldBars)
-    expect(expected).toHaveLength(406)
-    expect(expected[changedIndex]!.beats).toBe(2)
-    expected[changedIndex]!.beats = 1
-    expect(events(newBars)).toEqual(expected)
-    expect(compileScorePerformance(before).beats).toBe(261)
-    expect(compileScorePerformance(after).beats).toBe(260)
+    expect(document.order).toBeUndefined()
+    expect(document.sections ?? []).toEqual([])
+    expect(printed).toHaveLength(62)
+    expect(printed.flatMap((bar, index) => bar.left === 'rptstart' ? [index + 1] : [])).toEqual([42])
+    expect(printed.flatMap((bar, index) => bar.right === 'rptend' ? [index + 1] : [])).toEqual([55])
+    expect(printed.flatMap((bar, index) => bar.ending ? [[index + 1, bar.ending]] : [])).toEqual([[54, '1'], [55, '1'], [56, '2'], [57, '3']])
+    expect(bars(41, 42).map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual([4, 4])
+    expect(bars(54, 57).map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual([4, 4, 4, 4])
   })
 
-  it('joins the first ending and the next pickup into one full bar without changing the performance', () => {
-    const snapshot = (bars: typeof oldBars) => bars.map(bar => ({
-      beats: bar.events.reduce((sum, event) => sum + event.beats, 0),
-      meter: [bar.events[0]!.meterCount, bar.events[0]!.meterUnit],
-    }))
-    const expected = snapshot(oldBars)
-    expect(expected).toHaveLength(68)
-    expect(expected.slice(53, 55).map(bar => bar.beats)).toEqual([4, 1])
-    expected[53]!.beats = 3
-    expected.splice(53, 2, { ...expected[53]!, beats: 4 })
-    expect(snapshot(newBars)).toEqual(expected)
-    expect(newBars).toHaveLength(67)
+  it('repeats the bridge, takes ending two, then returns to the chorus and takes ending three', () => {
+    // One-based printed bar route, independently specified for the updated arrangement.
+    const expected = [...bars(1, 55), ...bars(42, 53), ...bars(56, 56), ...bars(47, 53), ...bars(57, 62)]
+    expect(performed).toHaveLength(81)
+    expect(events(performed)).toEqual(events(expected))
+    expect(compileScorePerformance(document).beats).toBe(312)
   })
 
-  it('preserves every lyric, shifting only lyrics after the shortened hold by one beat', () => {
-    const cutoff = oldBars.slice(0, 54).reduce((sum, bar) => sum + bar.events.reduce((n, event) => n + event.beats, 0), 0)
-    const expected = lyrics(before).map(lyric => ({
-      ...lyric,
-      start: lyric.start >= cutoff ? lyric.start - 1 : lyric.start,
-      end: lyric.end >= cutoff ? lyric.end - 1 : lyric.end,
-    }))
-    expect(expected).toHaveLength(326)
-    expect(lyrics(after)).toEqual(expected)
+  it('sings the bridge twice and the chorus four times in the intended order', () => {
+    const chorus = '后来我总算学会了如何去爱可惜你早已远去消失在人海后来终于在眼泪中明白有些人一旦错过就不再'
+    const verse = '栀子花白花瓣落在我蓝色百褶裙上爱你你轻声说我低下头闻见一阵芬芳那个永恒的夜晚十七岁仲夏你吻我的那个夜晚让我往后的时光每当有感叹总想起当天的星光那时候的爱情为什么就能那样简单而又是为什么人年少时一定要让深爱的人受伤在这相似的深夜里你是否一样也在静静追悔感伤如果当时我们能不那么倔强现在也不那么遗憾'
+    const bridge = '你都如何回忆我带着笑或是很沉默这些年来有没有人能让你不寂寞'
+    const coda = '永远不会再重来有一个男孩爱着那个女孩'
+    expect(lyrics()).toBe(chorus + verse + bridge + chorus + bridge + chorus + chorus + coda)
   })
 })
