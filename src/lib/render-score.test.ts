@@ -1,8 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { ScoreDocument } from '@m3n/notation'
-import { chooseNumberedScoreWidth } from './render-score'
+import { chooseNumberedScoreWidth, chooseStaffScoreWidth } from './render-score'
 
 const { pageCount } = vi.hoisted(() => ({ pageCount: vi.fn() }))
+const { staffPageCount } = vi.hoisted(() => ({ staffPageCount: vi.fn() }))
+vi.mock('@m3n/score-renderer/staff', () => ({
+  prepareStaffResources: vi.fn(),
+  prepareStaffScore: async () => ({ pageCount: staffPageCount }),
+}))
 vi.mock('@m3n/numbered-notation', () => ({
   NumberedNotationScore: { create: () => ({ pageCount }) },
 }))
@@ -28,5 +33,17 @@ describe('numbered automatic width margins', () => {
 
     expect(selected).toBe(560)
     expect(pageCount.mock.calls.every(([options]) => options.width >= 560 && options.width <= 640)).toBe(true)
+  })
+})
+
+describe('staff automatic width range', () => {
+  it.each([510, 590, 640])('selects within 560–640px when the required width is %s', async requiredWidth => {
+    staffPageCount.mockReset()
+    staffPageCount.mockImplementation((_paged, width) => width >= requiredWidth ? 2 : 3)
+
+    const selected = await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })
+
+    expect(selected).toBe(Math.max(560, requiredWidth))
+    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 560 && width <= 640)).toBe(true)
   })
 })

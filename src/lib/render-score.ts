@@ -82,7 +82,7 @@ export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settin
   const render = await prepareStaffScore(scoreDocument, { ...settings, width: 640 }, signal)
   const targetPages = render.pageCount(true, 640)
   const pages = (width: number) => render.pageCount(true, width)
-  let low = 480, high = 640
+  let low = 560, high = 640
   while (low < high) {
     signal?.throwIfAborted()
     const middle = Math.floor(((low + high) / 2) / 10) * 10
