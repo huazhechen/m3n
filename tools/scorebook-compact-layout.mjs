@@ -18,8 +18,8 @@ export function compactPage(markup, scoreUrls = []) {
   if (scoreUrls.length && scores.length !== scoreUrls.length) throw new Error('Every engraved score needs its own URL')
   for (const [index, score] of scores.entries()) {
     if (!scoreUrls[index]) continue
-    // Centered bold header text identifies title rows; musical annotations carry a role.
-    for (const title of score.querySelectorAll('text[font-weight="700"][text-anchor="middle"]:not([data-m3n-role])')) addLink(title, scoreUrls[index])
+    // Titles have an explicit role, independent of their font weight.
+    for (const title of score.querySelectorAll('text[data-m3n-role="title"]')) addLink(title, scoreUrls[index])
   }
   // Native routing may emit boundary primitives on both pages. Drop only
   // those entirely outside their own page before packaging the export font.
