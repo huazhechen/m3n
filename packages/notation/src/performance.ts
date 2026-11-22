@@ -92,6 +92,7 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
           const channel = staff === 'melody' ? 0 : 1
           const previous = pendingTies[staff]
           const next = new Map<number, { note: PerformanceNote; target: string | undefined }>()
+          let previousTupletNote: PerformanceNote | undefined
           const addNote = (token: string, slot: number, start: number, end: number, outgoing: boolean) => {
             if (token === '0') return
             const pitch = midiPitch(resolved[slot]!)
@@ -101,14 +102,22 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
               }
             }
             const tied = previous.get(pitch)
+            const internal = event.kind === 'tuplet' && event.tupletTies?.includes(slot - 1) ? previousTupletNote : undefined
+            if (internal && internal.pitch === pitch && Math.abs(internal.end - start) < 1e-7) {
+              internal.end = end
+              if (outgoing) next.set(pitch, { note: internal, target: tieTargets.get(xmlId) })
+              return
+            }
             if (tied && tied.target === xmlId && Math.abs(tied.note.end - cursor) < 1e-7 && (event.kind !== 'tuplet' || slot === 0)) tied.note.end = end
             else {
               const note = { start, end, pitch, channel, velocity: 64 }
               result.notes.push(note)
+              previousTupletNote = note
               markTrill(note)
               if (outgoing) next.set(pitch, { note, target: tieTargets.get(xmlId) })
               return
             }
+            previousTupletNote = tied.note
             markTrill(tied.note)
             if (outgoing) next.set(pitch, { note: tied.note, target: tieTargets.get(xmlId) })
           }

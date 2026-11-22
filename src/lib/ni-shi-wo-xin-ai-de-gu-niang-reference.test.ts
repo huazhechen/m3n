@@ -8,6 +8,12 @@ import categories from '../../config/scorebook/library-categories.json'
 const file = 'ni_shi_wo_xin_ai_de_gu_niang_01.m3n'
 const source = readFileSync(new URL(`../scores/${file}`, import.meta.url), 'utf8')
 const document = parseM3NDocument(source)
+// Zero-based note slots audited against each original section's lyric gaps.
+const omittedTies: Record<string, number[]> = {
+  A: [0, 3, 6, 9, 12, 28, 34, 41, 44, 47, 50, 53, 63, 66, 72, 82, 89, 99, 102, 108, 118, 121, 127, 137, 140, 143],
+  B: [3, 6, 13, 16, 23, 31, 32, 37, 40, 47, 50, 60, 63, 65],
+  C: [7],
+}
 
 // Read the website's independent notation: x marks a triplet eighth,
 // g raises the octave, d lowers it, and each dash adds a quarter note.
@@ -22,14 +28,14 @@ const sections = new Map([...reference.notation.matchAll(/([ABC]):\n([\s\S]*?)(?
 }))
 
 describe('Cangqiang 5810 transcription', () => {
-  it('preserves every original melody event except the documented one-beat pickup correction', () => {
+  it('preserves original pitches and durations while correcting omitted ties and the pickup', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(document).toMatchObject({ title: '你是我心爱的姑娘', key: 'B', meterCount: 4, meterUnit: 4, tempo: 72, order: ['A', 'B', 'A', 'B', 'B', 'C'] })
     const expected = ['A', 'B', 'A', 'B', 'B', 'C'].flatMap((name, visit) => sections.get(name)!
-      .map((event, index, events) => ({ ...event, ticks: visit === 3 && index === events.length - 1 ? 9 : event.ticks })))
+      .map((event, index, events) => ({ ...event, ticks: visit === 3 && index === events.length - 1 ? 9 : event.ticks, tie: event.tie || omittedTies[name]!.includes(index) })))
     const actual = unfoldScorePerformance(document).parts.get('score')!.melody.flatMap(bar => bar.events)
       .flatMap(event => event.kind === 'tuplet'
-        ? event.pitches.map((pitch, index) => ({ pitch, ticks: Math.round(event.beats * 3 / event.pitches.length), tie: !!event.tie && index === event.pitches.length - 1 }))
+        ? event.pitches.map((pitch, index) => ({ pitch, ticks: Math.round(event.beats * 3 / event.pitches.length), tie: !!event.tupletTies?.includes(index) || (!!event.tie && index === event.pitches.length - 1) }))
         : [{ pitch: event.pitches[0] ?? '0', ticks: Math.round(event.beats * 3), tie: event.tie ?? false }])
     expect(actual).toEqual(expected)
     expect(compileScorePerformance(document).beats).toBe(232)

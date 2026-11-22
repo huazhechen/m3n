@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "00434e6bfa2fcbd28551328823b91e06ba295dec7d883a6e40722c96479753cf",
+  "rendererSha256": "0f147606341f1751bbc0f85e81388a834ee9b1b3d0eb5fb5c9b37074f6601914",
   "fontManifestSha256": "2830c07390ba2e13941f83a5c44c68251915c935d93ff75f5d304b8db18bc4d0",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -530,7 +530,7 @@
       "fontSha256": "051a9038c2a7928e0430b1d429ca5728a57c5c93b8fd90e548dd17db91de72d5"
     },
     "src/scores/ni_shi_wo_xin_ai_de_gu_niang_01.m3n": {
-      "sourceSha256": "7a6deef50f071a2fe8b8ead99c3919ef05e1d12d26f6c32ed75a9ce635a30db3",
+      "sourceSha256": "44535d864dfc55035ab4c6330b30bd413b552b815d657852858fd9e178eac07b",
       "font": "NotoSansSC-93726d8f50dbe138.ttf",
       "fontSha256": "6ad49613da7bc5714412983386a6df3cf9f3312fd827a93eb84c7142a60e7aa6"
     }

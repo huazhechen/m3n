@@ -222,11 +222,12 @@ describe('validateM3N', () => {
     expect(validateM3N('{key=C} {2/4}\n[0 6 6 : 2] |||')).toEqual([])
   })
 
-  it('allows a tie from the final pitched tuplet element only', () => {
+  it('allows internal and outgoing tuplet ties only between matching pitches', () => {
     expect(validateM3N('{key=C} {4/4}\n[123~:2] 3 0 |||')).toEqual([])
     expect(messages('{key=C} {4/4}\n[123~:2] 4 0 |||')).toContain('延音目标的类型或绝对音高不匹配')
-    expect(messages('{key=C} {4/4}\n[1~23:2] 3 0 |||')).toContain('元素序列含非法内容')
-    expect(messages('{key=C} {4/4}\n[120~:2] 0 0 |||')).toContain('连音组内的延音只能附在最后一个有音高的元素上')
+    expect(messages('{key=C} {4/4}\n[1~23:2] 3 0 |||')).toContain('连音组内延音目标的绝对音高不匹配')
+    expect(validateM3N('{key=C} {4/4}\n[1~12~:2] [2~23:2] |||')).toEqual([])
+    expect(messages('{key=C} {4/4}\n[120~:2] 0 0 |||')).toContain('连音组内的延音不能附在休止符上')
   })
 
   it('allows an ordinary note to tie into the first tuplet note', () => {

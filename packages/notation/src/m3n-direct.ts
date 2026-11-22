@@ -280,6 +280,7 @@ function parseBody(
           beats: mode === 'h' ? groupBeats : (Number(mode) || pitches.length - 1) * duration(depth, carets.length, dots.length),
           tie: mode === 'h' ? Boolean(group[5]) : Boolean(tuplet?.tiesFromLast),
           tieFromTupletIndex: tuplet?.tiesFromLast ? pitches.length - 1 : undefined,
+          ...(tuplet?.internalTies.length ? { tupletTies: tuplet.internalTies } : {}),
           postfixes: [],
           navigation: [],
           octaveShift: 0,

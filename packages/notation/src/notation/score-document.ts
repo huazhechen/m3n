@@ -13,6 +13,8 @@ export type ScoreEvent = {
   beats: number
   tie: boolean
   tieFromTupletIndex?: number
+  /** Outgoing ties between adjacent children within a tuplet. */
+  tupletTies?: number[]
   dynamic?: string
   chord?: string
   prefix?: 'sfz'

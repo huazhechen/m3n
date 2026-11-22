@@ -133,13 +133,14 @@ function splitPitchSequence(source: string, allowTerminalTie = false): { pitches
     if (!parsed.pitch) return { pitches, hasRest, hasTerminalTie, terminalTieOnRest: false, error: parsed.error }
     pitches.push(parsed.pitch)
     index += token.length
+    if (allowTerminalTie && pitchSource[index] === '~') index += 1
   }
   return {
     pitches,
     hasRest,
     firstPitch: pitchSource.startsWith('0') ? undefined : pitches[0],
     hasTerminalTie,
-    terminalTieOnRest: hasTerminalTie && pitchSource.endsWith('0'),
+    terminalTieOnRest: /0~/.test(normalized),
     error: null,
   }
 }
@@ -522,7 +523,7 @@ function validateBody(
       }
       if (harmony && sequence.hasRest) diagnostics.push(lineMessage(token, '和音组内不允许休止符'))
       if (!harmony && match[5]) diagnostics.push(lineMessage(token, '连音组整体不能使用延音'))
-      if (!harmony && sequence.terminalTieOnRest) diagnostics.push(lineMessage(token, '连音组内的延音只能附在最后一个有音高的元素上'))
+      if (!harmony && sequence.terminalTieOnRest) diagnostics.push(lineMessage(token, '连音组内的延音不能附在休止符上'))
       const duration = (harmony ? 1 : Number.isFinite(units) && units > 0 ? units : 0)
         * durationInBeats(parens.length, (match[3] ?? '').length, (match[4] ?? '').length)
       addAtom(token, duration, {
@@ -634,10 +635,10 @@ export function phraseLyricTargets(document: ScoreDocument, structure: M3NDocume
       const instrumental = document.intervals.some((interval) => interval.kind === 'inst' && interval.staff === 'melody' &&
         interval.start !== undefined && interval.end !== undefined && interval.start <= event.sourceStart && event.sourceEnd <= interval.end)
       if (instrumental) continue
-      const count = event.kind === 'tuplet' ? event.pitches.filter((pitch) => pitch !== '0').length : 1
+      const slots = event.kind === 'tuplet' ? event.pitches.flatMap((pitch, slot) => pitch === '0' ? [] : [slot]) : [0]
       for (const pass of passes) {
         const passTargets = measureTargets.get(pass) ?? []
-        for (let index = 0; index < count; index += 1) passTargets.push({ tied: tied && index === 0 })
+        for (const slot of slots) passTargets.push({ tied: (tied && slot === 0) || !!event.tupletTies?.includes(slot - 1) })
         measureTargets.set(pass, passTargets)
       }
     }

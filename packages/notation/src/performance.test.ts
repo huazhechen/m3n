@@ -41,6 +41,16 @@ describe('native performance compiler', () => {
       expect(notes[index]!.end).toBeCloseTo(expected[1]!)
     }
   })
+  it('sustains internal tuplet ties through incoming and outgoing ties without extra attacks', () => {
+    const result = compile('{4/4}\nN: 1~ ([1~ 1 1~:2]) ([1~ 1~ 1~:2]) 1 |||')
+    expect(result.notes).toHaveLength(2)
+    for (const [index, [start, end]] of [[0, 5 / 3], [5 / 3, 4]].entries()) {
+      expect(result.notes[index]!.pitch).toBe(60)
+      expect(result.notes[index]!.start).toBeCloseTo(start!)
+      expect(result.notes[index]!.end).toBeCloseTo(end!)
+    }
+    expect(result.elements).toHaveLength(4)
+  })
   it('keeps a tied continuation sounding through its on-beat grace', () => {
     const result = compile('{2/4}\nN: 6e~ 6e{ac(5e)} |||')
     expect(result.notes.map(note => [note.pitch, note.start, note.end])).toEqual([[81, 0, 2], [79, 1, 1.0625]])

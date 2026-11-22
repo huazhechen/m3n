@@ -28,6 +28,10 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
     let previous: StaffEvent | undefined
     for (const m of document.measures) for (const e of m[lane]) {
       if (previous?.event.tie) ties.push({ start: previous, end: e })
+      for (const slot of e.event.tupletTies ?? []) {
+        const start = e.children?.[slot], end = e.children?.[slot + 1]
+        if (start && end) ties.push({ start, end })
+      }
       previous = e
     }
   }

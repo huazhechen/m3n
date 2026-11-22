@@ -223,6 +223,11 @@ function validateTies(measures: readonly ScoreMeasure[], source?: string) {
   const events = measures.flatMap((measure, measureIndex) => measure.events.map((event) => ({ event, measureIndex })))
   for (const [index, item] of events.entries()) {
     const { event, measureIndex } = item
+    for (const slot of event.tupletTies ?? []) {
+      const pitches = absolutePitches.get(event) ?? []
+      if (pitches[slot] && pitches[slot] === pitches[slot + 1] && event.pitches[slot + 1] !== '0') continue
+      diagnostics.push(createScoreDiagnostic({ code: 'M3N_TIE_TARGET_MISMATCH', message: '连音组内延音目标的绝对音高不匹配', range: { start: event.sourceStart, end: event.sourceEnd } }))
+    }
     if (!event.tie || event.kind === 'rest') continue
     const target = events[index + 1]?.event
     const sourceKind = event.kind === 'tuplet' ? 'note' : event.kind
@@ -234,7 +239,7 @@ function validateTies(measures: readonly ScoreMeasure[], source?: string) {
       // A tuplet is sequential: an incoming tie targets its first pitched
       // child, while an outgoing tie from a tuplet targets its final child.
       // Keep the event-level model, but compare against the child pitch here.
-      || (event.kind === 'note' && target.kind === 'tuplet' && targetPitches?.[0] === sourcePitches[0])
+      || (sourceKind === 'note' && target.kind === 'tuplet' && targetPitches?.[0] === sourceTail[0])
     )
     if (matches) continue
     const message = '延音目标的类型或绝对音高不匹配'

@@ -9,6 +9,7 @@ export type M3NGrace = {
 export type M3NTupletPitches = {
   pitches: string[]
   tiesFromLast: boolean
+  internalTies: number[]
 }
 
 /** Parse consecutive group pitches without assigning meaning to whitespace. */
@@ -26,13 +27,23 @@ export function parseM3NGroupPitches(source: string): string[] | null {
   return pitches
 }
 
-/** Parse a sequential group, allowing a tie only on its final pitched element. */
+/** Parse sequential pitches and the outgoing ties on their individual slots. */
 export function parseM3NTupletPitches(source: string): M3NTupletPitches | null {
   const normalized = source.replace(/\s+/g, '')
-  const tiesFromLast = normalized.endsWith('~')
-  const pitches = parseM3NGroupPitches(tiesFromLast ? normalized.slice(0, -1) : normalized)
-  if (!pitches || (tiesFromLast && pitches.at(-1) === '0')) return null
-  return { pitches, tiesFromLast }
+  const pitches: string[] = [], ties: number[] = []
+  let index = 0
+  while (index < normalized.length) {
+    const pitch = GROUP_PITCH.exec(normalized.slice(index))?.[0]
+    if (!pitch) return null
+    pitches.push(pitch)
+    index += pitch.length
+    if (normalized[index] === '~') {
+      if (pitch === '0') return null
+      ties.push(pitches.length - 1)
+      index++
+    }
+  }
+  return { pitches, tiesFromLast: ties.includes(pitches.length - 1), internalTies: ties.filter(slot => slot < pitches.length - 1) }
 }
 
 export function parseM3NGrace(value: string): M3NGrace | null {

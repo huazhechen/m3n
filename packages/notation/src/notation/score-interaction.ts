@@ -65,9 +65,9 @@ export function deriveScoreInteraction(document: ScoreDocument): {
     let tieEnd = false
     for (const measure of part.melody) {
       for (const event of measure.events) {
-        const lyricTargetCount = event.kind === 'tuplet'
-          ? event.pitches.filter((pitch) => pitch !== '0').length
-          : 1
+        const lyricSlots = event.kind === 'tuplet'
+          ? event.pitches.flatMap((pitch, slot) => pitch === '0' ? [] : [slot])
+          : [0]
         const measurePasses = measure ? lyricPassesByMeasure.get(measure) : undefined
         const lyricBlocksAtEvent = lyricSyllables.filter((block) => (
           (block.targetStart === undefined || block.targetStart <= event.sourceStart)
@@ -83,11 +83,11 @@ export function deriveScoreInteraction(document: ScoreDocument): {
         const activeLyricBlocks = lyricBlocksAtEvent.filter((block) => textRowsAtEvent.has(block.verseIndex))
         const hasLyricTarget = event.kind !== 'rest' && !isInstrumentalEvent(event)
         const assignedLyrics = hasLyricTarget
-          ? activeLyricBlocks.flatMap((block) => Array.from({ length: lyricTargetCount }, (_, targetIndex) => {
+          ? activeLyricBlocks.flatMap((block) => lyricSlots.map((slot) => {
             const index = lyricSyllables.indexOf(block)
             const lyricIndex = melodyIndices[index] ?? 0
             const lyric = block.syllables[lyricIndex]
-            const tiedTarget = targetIndex === 0 && tieEnd
+            const tiedTarget = (slot === 0 && tieEnd) || !!event.tupletTies?.includes(slot - 1)
             if (!lyric || lyric.forceTiedTarget !== tiedTarget) return []
             melodyIndices[index] = lyricIndex + 1
             return { ...lyric, n: block.n, verseIndex: block.verseIndex }

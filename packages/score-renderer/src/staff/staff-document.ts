@@ -32,6 +32,14 @@ const accidentalNames: Record<string, string> = { s: '#', f: 'b', ss: '##', x: '
 export function projectStaffDocument(input: ScoreDocument, transpose = 0, includeBass = true): StaffDocument {
   const display = staffDisplayScore(input)
   const ids = scoreEventIds(display.score)
+  const incomingTies = new Set<ScoreEvent>()
+  for (const part of display.score.parts.values()) for (const lane of ['melody', 'bass'] as const) {
+    let tied = false
+    for (const event of part[lane].flatMap(measure => measure.events)) {
+      if (tied) incomingTies.add(event)
+      tied = event.tie
+    }
+  }
   const measures: StaffMeasure[] = []
   const hasBass = includeBass && [...display.score.parts.values()].some(p => p.bass.some(m => m.events.length || m.multiRest))
   let number = 0, previousMeter = `${input.meterCount}/${input.meterUnit}`, previousTempo = input.tempo, previousBreak = false
@@ -96,12 +104,17 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
           })
           const item: StaffEvent = { id, event, pitches: event.pitches.map(p => pitch(p, event)), lyrics, onset, beats: event.beats, key: transposeKey(event.key), previousKey: transposeKey(previous), graces }
           if (event.kind === 'tuplet' && event.tuplet) {
-            let sung = 0
+            const sung = new Map<number, number>()
             const byVerse = new Map<number, ScoreEventLyric[]>()
             for (const lyric of lyrics) byVerse.set(lyric.verseIndex, [...byVerse.get(lyric.verseIndex) ?? [], lyric])
             item.children = event.pitches.map((token, i) => {
-              const syllables = token === '0' ? [] : [...byVerse.values()].flatMap(row => row[sung] ?? [])
-              if (token !== '0') sung++
+              const tied = (i === 0 && incomingTies.has(event)) || !!event.tupletTies?.includes(i - 1)
+              const syllables = token === '0' ? [] : [...byVerse].flatMap(([verse, row]) => {
+                const index = sung.get(verse) ?? 0, lyric = row[index]
+                if (!lyric || lyric.forceTiedTarget !== tied) return []
+                sung.set(verse, index + 1)
+                return [lyric]
+              })
               return { ...item, id: `${id}-n${i + 1}`, event: { ...event, kind: token === '0' ? 'rest' : 'note', postfixes: [], pitches: [token] }, pitches: [item.pitches[i]!], lyrics: syllables, graces: i === 0 ? graces : [], onset: onset + i * event.beats / event.pitches.length, beats: event.tuplet!.unitBeats }
             })
           }

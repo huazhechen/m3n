@@ -387,6 +387,13 @@ it('expands tuplets sequentially with per-note lyrics and a shared playback iden
     expect(root.querySelectorAll('[id^="m3n-e-1-n"]')).toHaveLength(3)
   })
 
+it('engraves internal tuplet ties and places lyrics only on the attacked children', () => {
+    const { root } = render('{2/4}\nN: ([3~ 3 3:2]) ([5 5~ 5:2]) |||\nL: 春夏秋冬')
+    expect(lyrics(root, 'm3n-e-1')).toBe('春夏')
+    expect(lyrics(root, 'm3n-e-2')).toBe('秋冬')
+    expect(root.querySelectorAll('path[data-m3n-relation="tie"]')).toHaveLength(2)
+  })
+
 it('keeps lyrics on the first tied event and skips instrumental passages', () => {
     const tied = render('{4/4}\nN: 1~ 1 2 3 |||\nL: 春天地')
     expect(lyrics(tied.root, 'm3n-e-1')).toBe('春')

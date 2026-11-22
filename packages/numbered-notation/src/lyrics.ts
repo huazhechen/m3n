@@ -35,7 +35,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       ? event.pitches.flatMap((pitch, slot) => pitch === '0' ? [] : [{
           event,
           slot,
-          tie: event.tie && slot === event.tieFromTupletIndex,
+          tie: (event.tie && slot === event.tieFromTupletIndex) || !!event.tupletTies?.includes(slot),
         }])
       : [{ event, slot: 0, tie: event.tie }])
   const result: LyricsByEvent = new Map()
