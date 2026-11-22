@@ -4,6 +4,16 @@ import { buildPlaybackSequence, measurePlaybackPasses, parsePassRange, planPlayb
 const nodes = (...items: Omit<PlaybackNode, 'id'>[]) => items.map((item, index) => ({ id: `n${index + 1}`, ...item }))
 
 describe('repeat planning', () => {
+  it('takes D.S. after the second visit to a shared first and second ending', () => {
+    expect(buildPlaybackSequence(nodes(
+      { kind: 'section' },
+      { kind: 'section', repeatStart: true, navigation: ['segno'] },
+      { kind: 'ending', n: '1,2', repeatCount: 2, navigation: ['ds'] },
+      { kind: 'ending', n: '3' },
+      { kind: 'section' },
+    ))).toEqual(['n1', 'n2', 'n3', 'n2', 'n3', 'n2', 'n4', 'n5'])
+  })
+
   it('continues into the ordinary tail after a D.S. return without a later house', () => {
     const plan = planPlayback(nodes(
       { kind: 'section', repeatStart: true, navigation: ['segno'] },

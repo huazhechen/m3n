@@ -292,7 +292,11 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
   const played = initial.lastIndexOf(jump.id)
   if (played < 0) return initial
 
-  const jumpPass = jump.n === undefined ? undefined : Math.min(...parsePassRange(jump.n))
+  const jumpPasses = jump.n === undefined ? [] : [...parsePassRange(jump.n)]
+  // A shared ending closes its ordinary repeats before taking D.S.
+  const jumpPass = jump.n === undefined ? undefined : jump.repeatCount
+    ? Math.max(...jumpPasses.filter(pass => pass <= jump.repeatCount!))
+    : Math.min(...jumpPasses)
   const firstEnding = jumpPass === undefined ? -1 : nodes.findIndex((node, index) => index >= destination && node.kind === 'ending')
   const sectionEnd = Math.min(fine >= 0 ? fine + 1 : nodes.length, firstEnding >= 0 ? firstEnding : nodes.length)
   const sections = nodes.slice(destination, sectionEnd)

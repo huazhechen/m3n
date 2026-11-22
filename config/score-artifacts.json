@@ -1,8 +1,8 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "1013f1b120abc40442f345e6cbc8387fffa3751af3f14a03fce3ae78090f4c19",
-  "fontManifestSha256": "f9091f9f1561c87296d730c0a5c21831204a39935aacc35c0668f9829edcdbd4",
+  "rendererSha256": "a31a3ca754f8f0584e2067b801d922d60cfe1d7ced44d177551db11929b9b323",
+  "fontManifestSha256": "37f22c95233581bcf6741470ca1e45cb5d4263736c7cc69f293bd6ade1441624",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -523,6 +523,11 @@
       "sourceSha256": "0a993f1790c2a4cfb26a2243b411d25f3f96dbf8af72c639fef707bf699e1a97",
       "font": "NotoSansSC-f9df963ac7b28699.ttf",
       "fontSha256": "e1dc1dd09ff6a1b97a98c8a19f5e29aebd4c014a84c1d30db8ab820d8518f525"
+    },
+    "src/scores/si_le_dou_yao_ai_01.m3n": {
+      "sourceSha256": "826526364b2d551444fb4934bdacca26e33194b5b994eefc353e4ea37fd3d239",
+      "font": "NotoSansSC-3f0e1ed862369216.ttf",
+      "fontSha256": "051a9038c2a7928e0430b1d429ca5728a57c5c93b8fd90e548dd17db91de72d5"
     }
   }
 }
