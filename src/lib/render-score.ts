@@ -32,6 +32,8 @@ const yieldToBrowser = () => new Promise<void>(resolve => {
 export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase' | 'onWidthSelected'>, signal?: AbortSignal, targetPages?: number) {
   const { NumberedNotationScore } = await import('@m3n/numbered-notation')
   const score = NumberedNotationScore.create(scoreDocument)
+  // Match the application render margin in both the fast and full layout passes.
+  settings = { ...settings, pageMargin: settings.pageMargin ?? 0 }
   const options = { ...settings, paged: true, minimumNoteGapEm: 0.4 }
   const pageCount = (width: number) => {
     signal?.throwIfAborted()
