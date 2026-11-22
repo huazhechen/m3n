@@ -959,6 +959,7 @@ textarea::selection {
 .score-paper .startup-beat-highlight {
   stroke: none !important;
   pointer-events: none;
+  opacity: 0.3;
 }
 
 .score-paper .startup-beat-highlight[data-beat="1"] { fill: #ef5350 !important; }

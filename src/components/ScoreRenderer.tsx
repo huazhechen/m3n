@@ -108,19 +108,14 @@ function queryPlaybackElements(paper: HTMLElement | null, xmlId: string, renditi
 function drawStartupBeat(paper: HTMLElement | null, score: PlaybackScore | null, beat: 1 | 2 | 3, milliseconds: number) {
   const first = score?.nextElementAtTime(milliseconds) ?? score?.elementsAtTime(milliseconds)[0]
   if (!first) return
-  const note = queryPlaybackElements(paper, first.xmlId, first.rendition)
-    .find(element => element.matches('g.note')) as SVGGElement | undefined
-  if (!note) return
-  const numeral = [...note.querySelectorAll<SVGTextElement>('text')].find(text => /^[0-7]$/.test(text.textContent ?? ''))
-  const bounds = (numeral ?? note).getBBox()
-  const background = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-  background.classList.add('startup-beat-highlight')
-  background.setAttribute('data-beat', String(beat))
-  background.setAttribute('x', String(bounds.x))
-  background.setAttribute('y', String(bounds.y))
-  background.setAttribute('width', String(bounds.width))
-  background.setAttribute('height', String(bounds.height))
-  note.insertBefore(background, note.firstChild)
+  const measures = new Set(queryPlaybackElements(paper, first.xmlId, first.rendition)
+    .map(element => element.closest<SVGGElement>('g.measure')).filter(measure => measure !== null))
+  for (const measure of measures) {
+    addMeasureHighlight(measure, 'startup-beat-highlight')
+    const background = measure.querySelector<SVGRectElement>(':scope > .startup-beat-highlight')!
+    background.setAttribute('data-beat', String(beat))
+    measure.prepend(background)
+  }
 }
 
 function addMeasureHighlight(measure: SVGGElement, className: string) {
