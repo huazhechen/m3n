@@ -1,6 +1,24 @@
 import { expect, test } from '@playwright/test'
 import { selectNotationMode } from './score-settings'
 
+test('resume skips the interrupted note and keeps the following rest in the cued measure', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill('{2/4}{120qpm}\nN: 1^ | 0 2 | 3^ |||')
+  const notes = page.locator('.score-paper [data-reading-event]')
+  await expect(notes).toHaveCount(4)
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(notes.first()).toHaveClass(/is-playing/)
+  await page.waitForTimeout(150)
+  await page.getByRole('button', { name: '暂停', exact: true }).click()
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  const measure = page.locator('.score-paper g.measure').nth(1)
+  await expect(measure.locator(':scope > .startup-beat-highlight')).toHaveAttribute('data-beat', '1')
+  await expect(notes.nth(1)).toHaveClass(/is-playing/)
+  await expect(notes.first()).not.toHaveClass(/is-playing/)
+  await page.getByRole('button', { name: '暂停', exact: true }).click()
+  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
+})
+
 for (const mode of ['首调', '五线谱'] as const) {
 test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels the cue`, async ({ page }) => {
   await page.goto('/editor')

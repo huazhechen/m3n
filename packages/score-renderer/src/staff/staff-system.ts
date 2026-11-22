@@ -85,6 +85,11 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
               if (item.children) anchors.set(child.id, { first: note, last: note, item: child, measure: measureNode, staff })
               for (const lyric of child.lyrics) {
                 const attrs: Record<string, string> = { id: `${child.id}-v${lyric.verseIndex}`, class: `verse${lyric.passes && lyric.passes.size > 1 ? ` m3n-passes-${[...lyric.passes].join('-')}` : ''}` }
+                attrs['data-m3n-id'] = child.id.replace(/-n\d+$/, '').replace(/-rend\d+$/, '')
+                attrs['data-m3n-rendition'] = String(lyric.verseIndex)
+                const performedPass = /-rend(\d+)/.exec(child.id)?.[1]
+                if (performedPass) attrs['data-m3n-passes'] = performedPass
+                else if (lyric.passes) attrs['data-m3n-passes'] = [...lyric.passes].join('-')
                 if (lyric.kind === 'placeholder') { staff.children.push(element('g', attrs)); continue }
                 const value = lyric.kind === 'extender' ? '_' : lyric.text.replaceAll('~', ' ')
                 const syl = text(value, cx, model.staves[lane]!.getBottomLineY() + 30, 16, 'syl', { 'text-anchor': 'middle' })

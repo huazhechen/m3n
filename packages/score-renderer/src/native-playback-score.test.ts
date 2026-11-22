@@ -8,6 +8,17 @@ import { NativePlaybackScore } from './native-playback-score.js'
 const prepare = (source: string) => NativePlaybackScore.create(parseM3NDocument(source))
 
 describe('native MIDI and playback index', () => {
+  it('resumes after interrupted notes and ties, keeps rests and restarts at the end', async () => {
+    const score = await prepare('{4/4}{120qpm}\nN: 1 0 2 3 |||')
+    expect(score.resumeTimeAt(250)).toBe(500)
+    expect(score.resumeTimeAt(750)).toBe(750)
+    expect(score.resumeTimeAt(1000)).toBe(1000)
+    expect(score.resumeTimeAt(1250)).toBe(1500)
+    expect(score.resumeTimeAt(1750)).toBe(0)
+    const tied = await prepare('{4/4}{120qpm}\nN: 1~ 1 2 3 |||')
+    expect(tied.resumeTimeAt(250)).toBe(1000)
+    expect(tied.resumeTimeAt(750)).toBe(1000)
+  })
   it('writes a standard format-1 MIDI with independent voices and all silent measures', async () => {
     const score = await prepare('{2/4}{120qpm}\nN: {rest=2} | 1 2 | {rest=2} |||\nB: {rest=2} | 1d^ | {rest=2} |||')
     const midi = BasicMIDI.fromArrayBuffer(score.midi())

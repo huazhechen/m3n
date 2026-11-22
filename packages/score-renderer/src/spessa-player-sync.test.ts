@@ -5,12 +5,12 @@ import { SpessaPlayer } from './spessa-player.js'
 vi.mock('./playback-output.js', () => ({ createPlaybackOutput: () => ({ input: {}, setTone: vi.fn() }) }))
 vi.mock('./startup-cue.js', () => ({ StartupCue: class {
   active = false
-  play = async () => {}
+  play = async () => { instances.onCue?.() }
   cancel = () => {}
   setTempo = () => {}
 } }))
 
-const instances = vi.hoisted(() => ({ sequences: [] as any[], metronomes: [] as any[] }))
+const instances = vi.hoisted(() => ({ sequences: [] as any[], metronomes: [] as any[], onCue: undefined as (() => void) | undefined }))
 vi.mock('./synthetic-soundfont.js', () => ({ createSyntheticSoundFont: () => new ArrayBuffer(0) }))
 vi.mock('spessasynth_lib', () => ({
   WorkletSynthesizer: class {
@@ -63,9 +63,9 @@ vi.mock('./metronome.js', () => ({
   },
 }))
 
-const create = async () => {
+const create = async (resumeTime?: (seconds: number) => number) => {
   const midi = new MIDIBuilder(); midi.noteOn(0, 0, 0, 60, 90); midi.noteOff(480, 0, 0, 60)
-  const listener = { onTime: vi.fn(), onEnded: vi.fn() }
+  const listener = { onTime: vi.fn(), onEnded: vi.fn(), resumeTime }
   const player = await SpessaPlayer.create(midi.writeMIDI(), listener, 0)
   const sequence = instances.sequences.at(-1)!, metronome = instances.metronomes.at(-1)!
   player.setMetronomeEnabled(true)
@@ -75,6 +75,7 @@ const create = async () => {
 beforeEach(() => {
   vi.useFakeTimers()
   instances.sequences.length = instances.metronomes.length = 0
+  instances.onCue = undefined
   vi.stubGlobal('window', globalThis)
   vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
@@ -126,6 +127,39 @@ describe('audio-thread-confirmed transport and metronome synchronization', () =>
     expect(metronome.start).toHaveBeenCalledTimes(starts + 1)
     expect(metronome.start.mock.lastCall[0]).toBe(48)
     expect(listener.onTime.mock.calls.slice(-2).map((call: number[]) => call[0])).not.toContain(12)
+    player.destroy()
+  })
+  it('seeks to the next melody boundary before resuming and keeps explicit seeks exact', async () => {
+    const resumeTime = vi.fn(() => 15)
+    const { player, sequence } = await create(resumeTime)
+    await player.play()
+    sequence.time = 12.5
+    player.pause()
+    const playing = player.play()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(resumeTime).toHaveBeenCalledWith(12.5)
+    expect(sequence.pending.at(-1)).toBe(15)
+    expect(sequence.play).toHaveBeenCalledTimes(1)
+    sequence.acknowledge(15)
+    await playing
+    player.pause()
+    player.seek(0.5)
+    sequence.acknowledge(60)
+    await player.play()
+    expect(resumeTime).toHaveBeenCalledTimes(1)
+    player.destroy()
+  })
+  it('reanchors a silent position after the cue while the sequencer is running', async () => {
+    const { player, sequence } = await create()
+    player.seek(0.25)
+    sequence.acknowledge(30)
+    instances.onCue = () => { sequence.time = 31 }
+    const playing = player.play()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(sequence.paused).toBe(false)
+    expect(sequence.pending.at(-1)).toBe(30)
+    sequence.acknowledge(30)
+    await playing
     player.destroy()
   })
   it('does not restart clicks on pause, and resume waits for a pending seek', async () => {

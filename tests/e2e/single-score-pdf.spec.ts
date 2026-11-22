@@ -86,6 +86,8 @@ for (const covered of [true, false]) test(`local PDF embeds Source Han Sans for 
   const fonts: string[] = []
   page.on('request', request => { if (/\.(?:otf|ttf|woff2?)(?:$|\?)/.test(request.url())) fonts.push(request.url()) })
   await page.goto('/scores/local-font-test')
+  await expect(page.locator('.score-paper svg').first()).toHaveAttribute('width', '480')
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await page.getByRole('button', { name: '打印', exact: true }).click()
   const dialog = page.locator('.export-dialog')
   await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')

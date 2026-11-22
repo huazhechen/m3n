@@ -182,12 +182,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       resolveStaffText(svg, settings.measureNumbers)
       svg.querySelectorAll('defs').forEach((node) => node.remove())
       svg.dataset.notation = 'staff'
-      if (needsStaffExpansion(score))
-        for (const event of svg.querySelectorAll<SVGGElement>('g.note[id], g.chord[id], g.tuplet[id], g.rest[id]')) {
-          if (!/^m3n-e-\d+(?:-rend\d+)?$/.test(event.id)) continue
-          event.dataset.m3nId = event.id.replace(/-rend\d+$/, '')
-          event.dataset.m3nPasses = /-rend(\d+)$/.exec(event.id)?.[1] ?? '1'
-        }
+      for (const event of svg.querySelectorAll<SVGGElement>('g.note[id], g.chord[id], g.tuplet[id], g.rest[id]')) {
+        if (!/^m3n-e-\d+(?:-rend\d+)?(?:-n\d+)?$/.test(event.id)) continue
+        event.dataset.m3nId = event.id.replace(/-n\d+$/, '').replace(/-rend\d+$/, '')
+        if (needsStaffExpansion(score)) event.dataset.m3nPasses = /-rend(\d+)/.exec(event.id)?.[1] ?? '1'
+      }
 
       svg.setAttribute('width', String(width))
       svg.setAttribute('height', String((width * svg.viewBox.baseVal.height) / svg.viewBox.baseVal.width))

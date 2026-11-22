@@ -25,6 +25,7 @@ type PlayerListener = {
   onEnded: () => void
   onTime: (seconds: number, duration: number) => void
   onStartupBeat?: (beat: StartupBeat | null, seconds: number) => void
+  resumeTime?: (seconds: number) => number
 }
 
 /** Transpose melodic MIDI channels while leaving percussion (channel 10) intact. */
@@ -54,6 +55,7 @@ export class SpessaPlayer {
   private playToken = 0
   private toneVersion = 0
   private destroyed = false
+  private resumeFromNextEvent = false
   private requestedSeek: number | undefined
   private inFlightSeek: number | undefined
   private readonly seekWaiters = new Set<() => void>()
@@ -144,17 +146,33 @@ export class SpessaPlayer {
     if (this.sequencer.currentTime >= this.sequencer.duration - 0.02) this.seek(0)
     await this.waitForSeek()
     if (token !== this.playToken || this.destroyed) return
+    if (this.resumeFromNextEvent) {
+      const current = Math.max(0, this.sequencer.currentTime)
+      const next = this.listener.resumeTime?.(current) ?? current
+      this.resumeFromNextEvent = false
+      if (next !== current) this.seek(next / this.sequencer.duration)
+      await this.waitForSeek()
+      if (token !== this.playToken || this.destroyed) return
+    }
     const cuePosition = Math.max(0, this.sequencer.currentTime)
     await this.startup.play(this.initialBpm * this.sequencer.playbackRate, beat => this.listener.onStartupBeat?.(beat, cuePosition))
     await this.waitForSeek()
     if (token !== this.playToken || this.destroyed) return
-    this.listener.onTime(Math.max(0, this.sequencer.currentTime), this.sequencer.duration)
+    // Seeking while paused can snap the core clock to the next MIDI event.
+    // Start then re-anchor in the same worklet message batch to retain silence.
     this.sequencer.play()
+    if (Math.abs(this.sequencer.currentTime - cuePosition) > 0.005) {
+      this.seek(cuePosition / this.sequencer.duration)
+      await this.waitForSeek()
+      if (token !== this.playToken || this.destroyed) return
+    }
+    this.listener.onTime(Math.max(0, this.sequencer.currentTime), this.sequencer.duration)
     this.syncMetronome()
     this.startProgressLoop()
   }
 
   pause() {
+    if (!this.startup.active && !this.sequencer.paused) this.resumeFromNextEvent = true
     this.playToken += 1
     this.startup.cancel()
     this.metronome.stop()
@@ -164,6 +182,7 @@ export class SpessaPlayer {
 
   seek(progress: number) {
     if (this.destroyed) return
+    this.resumeFromNextEvent = false
     this.startup.cancel()
     this.metronome.stop()
     this.requestedSeek = seekTimeAtProgress(this.sequencer.duration, progress)

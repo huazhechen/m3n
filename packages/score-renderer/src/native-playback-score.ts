@@ -10,6 +10,8 @@ export class NativePlaybackScore {
   private readonly voices = new Map<string, Array<TimedScoreElement & { start: number; end: number }>>()
   private readonly starts = new Map<string, number>()
   private midiData?: ArrayBuffer
+  private readonly resumeSpans: Array<{ start: number; end: number; sounding: boolean }>
+  private readonly duration: number
   private destroyed = false
 
   private constructor(document: ScoreDocument) {
@@ -30,6 +32,12 @@ export class NativePlaybackScore {
       return point.milliseconds + (tick - point.tick) * point.micros / (1000 * MIDI_PPQ)
     }
     this.spans = this.performance.elements.map(element => ({ ...element, start: time(element.start), end: time(element.end) }))
+    this.duration = time(this.performance.beats)
+    const melodyNotes = this.performance.notes.filter(note => note.channel === 0)
+    this.resumeSpans = this.performance.elements.filter(element => element.voice.endsWith(':melody')).map(element => {
+      const notes = melodyNotes.filter(note => note.start < element.end && note.end > element.start)
+      return { start: time(element.start), end: time(Math.max(element.end, ...notes.map(note => note.end))), sounding: notes.length > 0 }
+    })
     for (const [index, element] of this.performance.elements.entries()) {
       const spans = this.voices.get(element.voice) ?? []
       spans.push(this.spans[index]!); this.voices.set(element.voice, spans)
@@ -81,6 +89,15 @@ export class NativePlaybackScore {
   }
 
   timeForElement(xmlId: string) { this.check(); return this.starts.get(xmlId) ?? -1 }
+
+  /** Skip the interrupted melody event, including tied continuations; keep rests. */
+  resumeTimeAt(milliseconds: number) {
+    this.check()
+    if (!Number.isFinite(milliseconds) || milliseconds < 0 || milliseconds >= this.duration) return 0
+    const active = this.resumeSpans.find(span => span.start <= milliseconds && span.end > milliseconds)
+    if (!active?.sounding || milliseconds === active.start) return milliseconds
+    return active.end >= this.duration ? 0 : active.end
+  }
 
   destroy() { this.destroyed = true; this.midiData = undefined; this.starts.clear(); this.voices.clear(); this.spans.length = 0 }
   private check() { if (this.destroyed) throw new Error('播放乐谱已释放。') }

@@ -128,8 +128,26 @@ test('keyed visits keep source clicks and highlight the performed staff occurren
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(paper.locator('[id="m3n-e-1-rend2"].is-playing')).toBeVisible({ timeout: 12_000 })
+  await expect(paper.locator('[id="m3n-e-1-rend2-v1"]')).toHaveClass(/is-playing/)
+  await expect(paper.locator('[id="m3n-e-1-rend2-v1"] text').first()).toHaveCSS('fill', 'rgb(184, 130, 0)')
   await expect(paper.locator('[id="m3n-e-1"]')).not.toHaveClass(/is-playing/)
   await page.getByRole('button', { name: '暂停', exact: true }).click()
+})
+
+test('staff lyrics highlight the matching verse during a written repeat', async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill('{2/4}{120qpm}\nN: ||: 1 2 :||\nL1: 春天\nL2: 秋天')
+  await selectNotationMode(page, '五线谱')
+  await page.keyboard.press('Escape')
+  const paper = page.locator('.score-paper')
+  const firstVerse = paper.locator('[id="m3n-e-1-v1"]')
+  const secondVerse = paper.locator('[id="m3n-e-1-v2"]')
+  await page.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(firstVerse).toHaveClass(/is-playing/)
+  await expect(secondVerse).not.toHaveClass(/is-playing/)
+  await expect(secondVerse).toHaveClass(/is-playing/)
+  await expect(firstVerse).not.toHaveClass(/is-playing/)
+  await expect(secondVerse.locator('text').first()).toHaveCSS('fill', 'rgb(184, 130, 0)')
 })
 
 test('a failed optional staff download leaves the notation selector available', async ({ page }) => {

@@ -478,6 +478,7 @@ export function ScoreRenderer({
           },
           onTime: onPlayerTime,
           onStartupBeat: showStartupBeat,
+          resumeTime: seconds => score.resumeTimeAt(seconds * 1000) / 1000,
         }, transposeRef.current, tone, context)
         if (generation !== renderGenerationRef.current || playerGeneration !== playerGenerationRef.current) { player.destroy(); throw new Error('乐谱或音色已更新，请重新播放。') }
         player.setTranspose(transposeRef.current)
