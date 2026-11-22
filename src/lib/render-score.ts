@@ -40,9 +40,9 @@ export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, set
     return score.pageCount({ ...options, width })
   }
   const target = targetPages ?? score.pageCount({ ...settings, width: 640, paged: true })
-  let lower = 480
+  let lower = 560
   let upper = 640
-  for (const width of [480, 600]) {
+  for (const width of [560, 600]) {
     await yieldToBrowser()
     const pages = pageCount(width)
     if (pages <= target) {
@@ -51,7 +51,7 @@ export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, set
     }
     lower = width
   }
-  if (upper !== 480) {
+  if (upper !== 560) {
     while (upper - lower > 10) {
       await yieldToBrowser()
       const width = Math.floor(((lower + upper) / 2) / 10) * 10
