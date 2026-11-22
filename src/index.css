@@ -956,12 +956,6 @@ textarea::selection {
   stroke: none !important;
 }
 
-.score-paper [data-reading-current] > [data-score-reading-hitarea] {
-  stroke: #315b5d !important;
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
 .score-paper .startup-beat-highlight {
   stroke: none !important;
   pointer-events: none;

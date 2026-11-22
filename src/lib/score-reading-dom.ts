@@ -116,7 +116,7 @@ export function attachScoreReading(paper: HTMLElement, text: AccessibleScore) {
       }
       name(group, measure.label, 'group')
       group.dataset.readingMeasure = id
-      group.setAttribute('tabindex', '-1')
+      group.removeAttribute('tabindex')
       const events = new Map(measure.voices.flatMap(voice => voice.eventIds.map((id, index) => [id, `${measure.voices.length > 1 ? `${voice.name}，` : ''}${voice.events[index]!}`] as const)))
       const claimed = new Set<string>()
       for (const note of group.querySelectorAll<SVGGElement>('g.note[id], g.chord[id], g.rest[id], g.tuplet[id]')) {
@@ -128,7 +128,7 @@ export function attachScoreReading(paper: HTMLElement, text: AccessibleScore) {
         name(note, description, 'img')
         note.dataset.readingEvent = eventId
         note.dataset.readingSource = eventId.replace(/-rend\d+$/, '')
-        note.setAttribute('tabindex', '-1')
+        note.removeAttribute('tabindex')
         claimed.add(eventId)
       }
       if (!events.size) {

@@ -62,7 +62,7 @@ describe('reading text attached to music geometry', () => {
     const measure = paper.querySelector('[data-reading-measure]')!
     expect(measure.getAttribute('role')).toBe('group')
     expect(measure.getAttribute('aria-label')).toBe('第1小节，全曲结束')
-    expect(measure.getAttribute('tabindex')).toBe('-1')
+    expect(paper.querySelector('[tabindex]')).toBeNull()
     expect(paper.querySelector('#m3n-e-1')!.getAttribute('aria-label')).toContain('哆，音级1')
     expect(paper.querySelector('#m3n-e-1 text')!.getAttribute('aria-hidden')).toBe('true')
     expect(paper.querySelector('#m3n-e-1-sustain2')!.getAttribute('aria-hidden')).toBe('true')
