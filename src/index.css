@@ -1812,3 +1812,5 @@ a.action-button {
   font-size: 2rem;
   pointer-events: none;
 }
+
+.scorebook-current-title { overflow-wrap: anywhere; }

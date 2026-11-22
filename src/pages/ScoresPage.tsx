@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/notation'
 import { NavActionIcon, TopNav } from '../components/TopNav'
 import { deleteLocalScore, listLocalScores, type LocalScore } from '../lib/local-scores'
@@ -7,6 +7,8 @@ import { presetScores, type PresetScore } from '../lib/samples'
 import { sortScoresByTitle, sortScoresByModifiedTime, scoreTitleInitial } from '../lib/score-order'
 import { LibraryIndex } from '../components/LibraryIndex'
 import { matchesScoreSearch } from '../lib/score-search'
+
+const ScorebookExportDialog = lazy(() => import('../components/ScorebookExportDialog').then(module => ({ default: module.ScorebookExportDialog })))
 
 type LibraryView = 'alphabetical' | 'category' | 'modified'
 const nextLibraryView: Record<LibraryView, LibraryView> = { alphabetical: 'category', category: 'modified', modified: 'alphabetical' }
@@ -155,6 +157,7 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
 }
 
 export function ScoresPage() {
+  const [exportingBook, setExportingBook] = useState(false)
   const [query, setQuery] = useState('')
   const [view, setView] = useState<LibraryView>(() => {
     try {
@@ -205,7 +208,8 @@ export function ScoresPage() {
   }, [])
   return (
     <main>
-      <TopNav />
+      <TopNav actions={<button type="button" className="action-button" aria-label="导出全量谱集" title="导出全量谱集" onClick={() => setExportingBook(true)}><NavActionIcon action="print" /><span className="nav-action-label">导出谱集</span></button>} />
+      {exportingBook && <Suspense fallback={<p role="status">正在加载谱集导出…</p>}><ScorebookExportDialog onClose={() => setExportingBook(false)} /></Suspense>}
       <div className={`score-library${showIndex ? ' has-letter-index' : ''}`}>
         <section className="library-toolbar">
           <h1>乐谱库</h1>
