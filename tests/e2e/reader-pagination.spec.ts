@@ -66,6 +66,23 @@ test('extra pages wrap to centered rows and use document scrolling', async ({ pa
   })).toEqual({ wraps: true, firstRowFits: true, scrolls: true, horizontalScroll: false, innerScroll: false })
 })
 
+test('wide desktop readers use the available window width for side-by-side pages', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 })
+  await page.goto('/scores/na_xie_nian_01')
+  const paper = page.locator('.score-paper')
+  await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
+  await expect(paper.locator('.score-page-sheet')).toHaveCount(2)
+  await expect.poll(() => paper.evaluate(element => {
+    const [first, second] = [...element.querySelectorAll('.score-page-sheet')].map(sheet => sheet.getBoundingClientRect())
+    return {
+      sideBySide: Math.abs(first!.top - second!.top) < 1 && second!.left > first!.right,
+      fitsHeight: first!.bottom <= innerHeight,
+      fillsWindow: Math.abs(element.getBoundingClientRect().width - (innerWidth - 32)) < 1,
+      horizontalScroll: document.documentElement.scrollWidth > innerWidth,
+    }
+  })).toEqual({ sideBySide: true, fitsHeight: true, fillsWindow: true, horizontalScroll: false })
+})
+
 test('narrow screens keep full-width vertical pages and mode changes restore continuous layout', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/scores/local-pages-30')

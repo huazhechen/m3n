@@ -865,6 +865,10 @@ textarea::selection {
 }
 
 @media (min-width: 721px) {
+  main:has(> .score-reader .score-paper[data-viewport-paged="true"]) {
+    width: calc(100vw - 32px);
+  }
+
   .score-reader .score-paper[data-viewport-paged="true"] {
     display: flex;
     flex-wrap: wrap;
