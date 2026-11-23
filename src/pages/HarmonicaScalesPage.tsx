@@ -17,8 +17,8 @@ function actionId(action: HarmonicaAction) { return `${action.hole}-${action.bre
 
 function difficultyColor(score: number) {
   const progress = (Math.max(20, Math.min(150, score)) - 20) / 130
-  // Equal lightness and chroma, with yellow at the midpoint of the score range.
-  const hue = progress <= .5 ? 145 - 100 * progress : 165 - 140 * progress
+  // Interpolate directly between green and red at equal lightness and chroma.
+  const hue = 145 - 120 * progress
   return `oklch(82% 0.18 ${hue})`
 }
 

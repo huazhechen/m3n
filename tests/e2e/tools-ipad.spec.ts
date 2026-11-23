@@ -88,7 +88,7 @@ test('all tuning key colors use the same fixed 20–150 OKLCH score scale', asyn
       const score = Number(button.querySelector('span')!.textContent!.match(/\d+/)![0])
       const expected = document.createElement('span')
       const progress = (Math.max(20, Math.min(150, score)) - 20) / 130
-      const hue = progress <= .5 ? 145 - 100 * progress : 165 - 140 * progress
+      const hue = 145 - 120 * progress
       expected.style.color = `oklch(82% 0.18 ${hue})`
       document.body.append(expected)
       const result = { actual: getComputedStyle(button).backgroundColor, expected: getComputedStyle(expected).color }
