@@ -86,3 +86,18 @@ test('major keys follow the circle of fifths and normalized score colors run fro
   await keys.last().click()
   await expect(keys.last()).toHaveAttribute('aria-pressed', 'true')
 })
+
+test('overlapping same-hole connections use separate lanes above the note tiles', async ({ page }) => {
+  await page.goto('/tools/scales')
+  await page.getByRole('button', { name: /^E♭大调，总分/ }).click()
+  const connections = page.locator('.scale-connections')
+  expect(await connections.evaluate(element => element === element.parentElement!.lastElementChild)).toBe(true)
+  const pairs = await connections.locator('path').evaluateAll(paths => paths.filter(path => {
+    const title = path.querySelector('title')!.textContent!
+    return /^双向 [34] → [45]；3孔/.test(title)
+  }).map(path => ({ title: path.querySelector('title')!.textContent!, x: (path as SVGPathElement).getPointAtLength(0).x })))
+  expect(pairs).toHaveLength(2)
+  const lower = pairs.find(pair => pair.title.startsWith('双向 3 → 4'))!
+  const upper = pairs.find(pair => pair.title.startsWith('双向 4 → 5'))!
+  expect(upper.x - lower.x).toBe(28)
+})

@@ -23,6 +23,20 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
     ...scale.transitions.map(edge => ({ ...edge, direction: scale.descending.some(back => actionId(back.from) === actionId(edge.to) && actionId(back.to) === actionId(edge.from)) ? 'both' : 'up' })),
     ...scale.descending.filter(edge => !scale.transitions.some(up => actionId(up.from) === actionId(edge.to) && actionId(up.to) === actionId(edge.from))).map(edge => ({ ...edge, direction: 'down' })),
   ]
+  // Same-hole connections can cover the same vertical span when a pitch
+  // switches between the inner and outer rows. Give overlapping pairs lanes.
+  const verticalSpans = edges.map((edge, index) => {
+    const from = position(edge.from), to = position(edge.to)
+    return { index, x: from.x, low: Math.min(from.y, to.y) + TILE + 2, high: Math.max(from.y, to.y) - 2,
+      vertical: from.x === to.x, pitch: Math.min(edge.from.midi, edge.to.midi) }
+  })
+  const laneOffsets = verticalSpans.map(span => {
+    if (!span.vertical) return 0
+    const peers = verticalSpans.filter(other => other.vertical && other.x === span.x
+      && (other.index === span.index || Math.min(span.high, other.high) > Math.max(span.low, other.low)))
+      .sort((a, b) => a.pitch - b.pitch || a.index - b.index)
+    return peers.length < 2 ? 0 : (peers.findIndex(other => other.index === span.index) / (peers.length - 1) - .5) * 28
+  })
   const tile = (action: HarmonicaAction) => {
     const { x, y } = position(action)
     const inScale = isScaleTone(action.midi, musicalKey)
@@ -51,6 +65,7 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
         <g className="harmonica-row-labels" aria-hidden="true">{[
           ['按键吹', 38], ['吹', 96], ['吸', 222], ['按键吸', 280],
         ].map(([label, y]) => <text key={label} x="68" y={Number(y)}>{label}</text>)}</g>
+        <g className="harmonica-scale-tiles">{layout.filter(action => isScaleTone(action.midi, musicalKey)).map(tile)}</g>
         <g className="scale-connections">{edges.map((edge, index) => {
           const from = position(edge.from), to = position(edge.to)
           const x1 = from.x + TILE / 2, y1 = from.y + TILE / 2
@@ -62,11 +77,10 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
             return [x + (cx - x) * ratio, y + (cy - y) * ratio]
           }
           const [sx, sy] = trim(x1, y1), [ex, ey] = trim(x2, y2)
-          return <path key={index} data-score={edge.score} data-direction={edge.direction} d={`M${sx} ${sy} Q${cx} ${cy} ${ex} ${ey}`} stroke={continuityColor(edge.score)}>
+          return <path key={index} data-score={edge.score} data-direction={edge.direction} d={`M${sx + laneOffsets[index]!} ${sy} Q${cx + laneOffsets[index]!} ${cy} ${ex + laneOffsets[index]!} ${ey}`} stroke={continuityColor(edge.score)}>
             <title>{edge.direction === 'both' ? '双向' : edge.direction === 'up' ? '上行' : '下行'} {degreeLabel(edge.from.midi, musicalKey)} → {degreeLabel(edge.to.midi, musicalKey)}；{actionLabel(edge.from)} → {actionLabel(edge.to)}</title>
           </path>
         })}</g>
-        <g className="harmonica-scale-tiles">{layout.filter(action => isScaleTone(action.midi, musicalKey)).map(tile)}</g>
       </svg>
     </div>
   </>
