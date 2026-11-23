@@ -66,6 +66,16 @@ describe('12-hole C chromatic harmonica', () => {
     expect(layout.filter(action => action.pressed).every(action => layout.some(open => open.hole === action.hole && open.breath === action.breath && !open.pressed && action.midi === open.midi + 1))).toBe(true)
   })
 
+  it('supports the specified full blow/draw tuning rows', () => {
+    const layout = harmonicaLayout('full-blow-draw')
+    const row = (breath: 'blow' | 'draw', pressed: boolean) => layout.filter(action => action.breath === breath && action.pressed === pressed).map(action => action.midi % 12)
+    expect(row('blow', true)).toEqual([5, 8, 11, 1, 3, 5, 8, 11, 1, 3, 5, 8])
+    expect(row('blow', false)).toEqual([4, 7, 9, 0, 2, 4, 7, 9, 0, 2, 4, 7])
+    expect(row('draw', false)).toEqual([6, 9, 11, 2, 4, 6, 9, 11, 2, 4, 6, 9])
+    expect(row('draw', true)).toEqual([7, 10, 0, 3, 5, 7, 10, 0, 3, 5, 7, 10])
+    for (let key = 0; key < 12; key++) expect(harmonicaScale(key, 'full-blow-draw').total).toBeGreaterThanOrEqual(0)
+  })
+
   it('treats a one-hole move like a slide change and penalizes wider jumps nonlinearly', () => {
     const start: HarmonicaAction = { hole: 1, breath: 'blow', pressed: false, midi: 60 }
     expect(continuityScore(start, start)).toBe(0)

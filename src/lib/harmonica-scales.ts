@@ -7,14 +7,33 @@ const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 const NATURALS = [0, 2, 4, 5, 7, 9, 11]
 const MAJOR = [0, 2, 4, 5, 7, 9, 11]
 
-export type HarmonicaTuning = 'standard' | 'c6' | 'diminished'
+export type HarmonicaTuning = 'standard' | 'c6' | 'diminished' | 'full-blow-draw'
 type TuningInput = HarmonicaTuning | boolean
 function tuningMode(tuning: TuningInput = 'standard'): HarmonicaTuning { return tuning === true ? 'c6' : tuning === false ? 'standard' : tuning }
 
-/** 12-hole C solo tuning with optional C6 or diminished tuning. */
+/** 12-hole C solo tuning with optional C6, diminished, or full blow/draw tuning. */
 export function harmonicaLayout(tuning: TuningInput = 'standard'): HarmonicaAction[] {
   const mode = tuningMode(tuning)
   return Array.from({ length: 12 }, (_, index) => {
+    if (mode === 'full-blow-draw') {
+      const offsets = {
+        'blow-pressed': [5, 8, 11, 1, 3],
+        'blow-open': [4, 7, 9, 0, 2],
+        'draw-open': [6, 9, 11, 2, 4],
+        'draw-pressed': [7, 10, 0, 3, 5],
+      }
+      return (['blow', 'draw'] as const).flatMap(breath => [false, true].map(pressed => ({
+        hole: index + 1, breath, pressed,
+        midi: 60 + Math.floor(index / 5) * 12 + (() => {
+          const row = offsets[`${breath}-${pressed ? 'pressed' : 'open'}` as keyof typeof offsets]
+          return row.slice(0, index % 5 + 1).reduce((pitch, pitchClass, position) => {
+            let value = pitchClass
+            if (position) while (value <= pitch) value += 12
+            return value
+          }, -1)
+        })(),
+      })))
+    }
     const block = 60 + Math.floor(index / 4) * 12
     return (['blow', 'draw'] as const).flatMap(breath => [false, true].map(pressed => ({
       hole: index + 1, breath, pressed,
@@ -152,14 +171,30 @@ export function harmonicaScale(key: number, tuning: TuningInput = 'standard'): {
   }
   const diagramTransitions = ascendingChoices.flatMap(branches)
   const diagramDescending = descendingChoices.flatMap(branches)
-  const comparisonPitches = Array.from({ length: 15 }, (_, index) => 60 + key + Math.floor(index / 7) * 12 + MAJOR[index % 7]!)
-  // Start at every scale degree, including phrases crossing the tonic.
-  // Five notes expose the four consecutive breath changes in G's D E F# G A.
+  const playablePhrase = (degreeStart: number, length: number): number[] => {
+    const baseDegree = MAJOR[degreeStart % 7]!
+    const baseOctave = Math.floor(degreeStart / 7)
+    const min = Math.min(...layout.map(action => action.midi))
+    const max = Math.max(...layout.map(action => action.midi))
+    const targetRoot = 60 + key + baseDegree
+    const roots = Array.from({ length: max - min + 1 }, (_, index) => min + index)
+      .filter(root => root % 12 === (key + baseDegree) % 12)
+      .sort((a, b) => Math.abs(a - targetRoot) - Math.abs(b - targetRoot))
+    for (const root of roots) {
+      const phrase = Array.from({ length }, (_, index) => {
+        const degree = degreeStart + index
+        return root + MAJOR[degree % 7]! + Math.floor(degree / 7) * 12 - baseDegree - baseOctave * 12
+      })
+      if (phrase.every(pitch => layout.some(action => action.midi === pitch))) return phrase
+    }
+    throw new RangeError(`No playable scale phrase for key ${key}, degree ${degreeStart}`)
+  }
+  // Use two octaves when available; some tunings cover a narrower register.
+  let comparisonPitches: number[]
+  try { comparisonPitches = playablePhrase(0, 15) }
+  catch { comparisonPitches = playablePhrase(0, 8) }
   const windows = MAJOR.map((_, start) => {
-    const phrase = Array.from({ length: 5 }, (_, index) => {
-      const degree = start + index
-      return 60 + key + Math.floor(degree / 7) * 12 + MAJOR[degree % 7]!
-    })
+    const phrase = playablePhrase(start, 5)
     return {
       ascending: optimizeHarmonicaPhrase(phrase, mode),
       descending: optimizeHarmonicaPhrase([...phrase].reverse(), mode),
@@ -173,8 +208,7 @@ export function harmonicaScale(key: number, tuning: TuningInput = 'standard'): {
     windowAverage: windows.reduce((sum, window) => sum + window.ascending.total + window.descending.total, 0) / (windows.length * 2),
   }
   const average = (difficulty.ascending.total + difficulty.descending.total) / 2
-  // Normalize each component per transition, then express the weighted result
-  // as a 14-transition equivalent. Include gains outside the worst phrase.
-  const total = Math.round((.4 * difficulty.bottleneck / 4 + .4 * difficulty.windowAverage / 4 + .2 * average / 14) * 14)
+  const fullTransitions = comparisonPitches.length - 1
+  const total = Math.round((.4 * difficulty.bottleneck / 4 + .4 * difficulty.windowAverage / 4 + .2 * average / fullTransitions) * fullTransitions)
   return { notes, transitions, descending, diagramTransitions, diagramDescending, difficulty, total }
 }

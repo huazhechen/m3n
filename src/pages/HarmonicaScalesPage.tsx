@@ -7,7 +7,7 @@ import '../styles/tools.css'
 const TILE = 44
 const LEFT = 26
 const STEP = 48
-const TUNINGS = ['standard', 'c6', 'diminished'] as const
+const TUNINGS = ['standard', 'c6', 'diminished', 'full-blow-draw'] as const
 const SCALE_SETS = TUNINGS.map(tuning => HARMONICA_KEYS.map((_, key) => harmonicaScale(key, tuning)))
 const FIFTHS_KEYS = [...CIRCLE_OF_FIFTHS.slice(6), ...CIRCLE_OF_FIFTHS.slice(0, 6)].map(([key]) => keyPitchClass(key))
 function position(action: HarmonicaAction) {
@@ -94,7 +94,7 @@ export function HarmonicaScalesPage() {
   return <main className="tools-page scales-page">
     <TopNav />
     <section id="scales" className="scale-tool" aria-labelledby="scale-tool-title">
-      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴·音阶</h2><select className="tuning-select" aria-label="选择调音方式" value={tuning} onChange={event => setTuning(event.target.value as typeof tuning)}><option value="standard">标准</option><option value="c6">C6</option><option value="diminished">减音阶</option></select></header>
+      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴·音阶</h2><select className="tuning-select" aria-label="选择调音方式" value={tuning} onChange={event => setTuning(event.target.value as typeof tuning)}><option value="standard">标准</option><option value="c6">C6</option><option value="diminished">减音阶</option><option value="full-blow-draw">全吹吸</option></select></header>
       <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 120 * (scales[index]!.total - minScore) / (maxScore - minScore || 1)} 75% 72%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${scales[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{scales[index]!.total} 分</span></button>)}</div>
       <HarmonicaDiagram musicalKey={key} tuning={tuning} />
     </section>
