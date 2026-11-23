@@ -80,14 +80,16 @@ test('tuning buttons share the title row when space permits and wrap together wh
   }
 })
 
-test('all tuning key colors use the same fixed 0–160 score scale', async ({ page }) => {
+test('all tuning key colors use the same fixed 20–150 OKLCH score scale', async ({ page }) => {
   await page.goto('/tools/scales')
   for (const tuning of await page.getByRole('group', { name: '选择调音方式' }).getByRole('button').all()) {
     await tuning.click()
     const colors = await page.locator('.scale-key-picker button').evaluateAll(buttons => buttons.map(button => {
       const score = Number(button.querySelector('span')!.textContent!.match(/\d+/)![0])
       const expected = document.createElement('span')
-      expected.style.color = `hsl(${120 - 120 * Math.max(0, Math.min(160, score)) / 160} 75% 72%)`
+      const progress = (Math.max(20, Math.min(150, score)) - 20) / 130
+      const hue = progress <= .5 ? 145 - 100 * progress : 165 - 140 * progress
+      expected.style.color = `oklch(82% 0.18 ${hue})`
       document.body.append(expected)
       const result = { actual: getComputedStyle(button).backgroundColor, expected: getComputedStyle(expected).color }
       expected.remove()

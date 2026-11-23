@@ -69,23 +69,21 @@ test('tool index contains only two tool entries and opens child routes', async (
   await expect(page.getByRole('button', { name: '开始', exact: true })).toBeVisible()
 })
 
-test('major keys follow the circle of fifths and normalized score colors run from green to red', async ({ page }) => {
+test('major keys follow the circle of fifths and OKLCH hues progress with difficulty', async ({ page }) => {
   await page.goto('/tools/scales')
   const keys = page.getByRole('group', { name: '选择大调' }).getByRole('button')
   await expect(keys).toHaveCount(12)
   expect(await keys.evaluateAll(buttons => buttons.map(button => button.firstChild!.textContent))).toEqual(['G♭', 'D♭', 'A♭', 'E♭', 'B♭', 'F', 'C', 'G', 'D', 'A', 'E', 'B'])
   const colors = await keys.evaluateAll(buttons => buttons.map(button => ({
     score: Number(button.querySelector('span')!.textContent!.match(/\d+/)![0]),
-    rgb: getComputedStyle(button).backgroundColor.match(/\d+/g)!.map(Number),
+    color: getComputedStyle(button).backgroundColor,
   })))
   colors.sort((a, b) => a.score - b.score)
-  expect(colors[0]!.rgb[0]).toBeLessThan(colors[0]!.rgb[1]!)
-  expect(colors.at(-1)!.rgb[0]).toBeGreaterThan(colors.at(-1)!.rgb[1]!)
-  for (let index = 1; index < colors.length; index++) {
-    expect(colors[index]!.rgb[0]).toBeGreaterThanOrEqual(colors[index - 1]!.rgb[0]!)
-    expect(colors[index]!.rgb[1]).toBeLessThanOrEqual(colors[index - 1]!.rgb[1]!)
-    expect(colors[index]!.rgb[2]).toBe(colors[0]!.rgb[2])
-  }
+  const hues = colors.map(({ color }) => {
+    expect(color).toMatch(/^oklch\(0\.82 0\.18 /)
+    return Number(color.match(/ ([\d.]+)\)$/)![1])
+  })
+  for (let index = 1; index < hues.length; index++) expect(hues[index]!).toBeLessThanOrEqual(hues[index - 1]!)
   await keys.last().click()
   await expect(keys.last()).toHaveAttribute('aria-pressed', 'true')
 })

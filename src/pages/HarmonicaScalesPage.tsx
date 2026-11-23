@@ -15,6 +15,13 @@ function position(action: HarmonicaAction) {
 }
 function actionId(action: HarmonicaAction) { return `${action.hole}-${action.breath}-${action.pressed}` }
 
+function difficultyColor(score: number) {
+  const progress = (Math.max(20, Math.min(150, score)) - 20) / 130
+  // Equal lightness and chroma, with yellow at the midpoint of the score range.
+  const hue = progress <= .5 ? 145 - 100 * progress : 165 - 140 * progress
+  return `oklch(82% 0.18 ${hue})`
+}
+
 function HarmonicaDiagram({ musicalKey, tuning }: { musicalKey: number; tuning: typeof TUNINGS[number] }) {
   const scale = SCALE_SETS[TUNINGS.indexOf(tuning)]![musicalKey]!
   const layout = harmonicaLayout(tuning)
@@ -95,7 +102,7 @@ export function HarmonicaScalesPage() {
     <section id="scales" className="scale-tool" aria-labelledby="scale-tool-title">
       <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴·音阶</h2>
       <div className="scale-tuning-picker" role="group" aria-label="选择调音方式">{TUNINGS.map((value, index) => <button key={value} type="button" aria-pressed={tuning === value} onClick={() => setTuning(value)}>{['标准', 'C6', '减音阶', '全吹吸'][index]}</button>)}</div></header>
-      <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 120 * Math.max(0, Math.min(160, scales[index]!.total)) / 160} 75% 72%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${scales[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{scales[index]!.total} 分</span></button>)}</div>
+      <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: difficultyColor(scales[index]!.total) }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${scales[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{scales[index]!.total} 分</span></button>)}</div>
       <HarmonicaDiagram musicalKey={key} tuning={tuning} />
     </section>
   </main>
