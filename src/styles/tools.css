@@ -6,7 +6,7 @@
 .scale-tool { background: #fff; border: 1px solid #d7ddd3; border-radius: 12px; padding: 1rem; scroll-margin-top: 1rem; }
 .scale-tool-heading, .scale-diagram-intro { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
 .scale-tool h2 { margin: 0 0 .75rem; font-size: 1.6rem; color: #163f45; }
-.scale-tool-heading p, .scale-diagram-intro > span { color: #626c65; font-size: .9rem; }
+.scale-tool-heading p { color: #626c65; font-size: .9rem; }
 .scale-key-picker { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .4rem; }
 .scale-key-picker button { min-height: var(--ui-control-size); cursor: pointer; background: #f6f7f2; border: 1px solid #d7ddd3; border-radius: 6px; padding: .45rem .2rem; font-size: 1.1rem; }
 .scale-key-picker button span { display: block; font-size: .7rem; }
@@ -29,16 +29,6 @@
 .harmonica-tile .degree-accidental { font-size: 14px; }
 .harmonica-tile circle { fill: #c8cec7; }
 .harmonica-tile.in-scale circle { fill: #204e38; }
-.continuity-legend { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-top: 1px solid #e2e7df; padding-top: .65rem; }
-.continuity-legend p { margin: .2rem 0; font-size: .9rem; color: #626c65; }
-.continuity-color-scale { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
-.continuity-color-scale > span { border-top: 4px solid; min-width: 1.8rem; text-align: center; padding-top: .25rem; font-weight: 600; }
-.continuity-color-scale small { flex-basis: 100%; color: #626c65; }
-.scale-route-details { margin-top: 1rem; border-top: 1px solid #e2e7df; padding-top: .65rem; }
-.scale-route-details summary { cursor: pointer; min-height: var(--ui-control-size); color: #285b5c; }
-.scale-route-details ol { padding-left: 1.8rem; columns: 3; column-gap: 2rem; }
-.scale-route-details li { padding: .4rem 0; break-inside: avoid; }
-.scale-route-details li span { display: block; font-size: .85rem; }
 .tools-page :focus-visible { outline: 2px solid #285b5c; outline-offset: 3px; }
 @media (max-width: 720px) {
   .tools-catalog { gap: .6rem; }
@@ -46,5 +36,4 @@
   .scale-tool { padding: 1rem; }
   .scale-key-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .harmonica-diagram-frame { margin-inline: -.5rem; }
-  .scale-route-details ol { columns: 2; }
 }

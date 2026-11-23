@@ -36,11 +36,11 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
     </g>
   }
   return <>
-    <div className="scale-diagram-intro"><h3>1 = {HARMONICA_KEYS[musicalKey]}</h3><span>调内音加粗 · 替代音可断开连接</span></div>
+    <div className="scale-diagram-intro"><h3>1 = {HARMONICA_KEYS[musicalKey]}</h3></div>
     <div className="harmonica-diagram-frame" role="region" aria-label="12 孔口琴音阶图">
       <svg className="harmonica-diagram" viewBox="0 0 790 318" role="img" aria-labelledby="harmonica-diagram-title harmonica-diagram-description">
         <title id="harmonica-diagram-title">{HARMONICA_KEYS[musicalKey]} 大调，12 孔 C 调半音阶口琴首调简谱图</title>
-        <desc id="harmonica-diagram-description">上方内行吹，外行按键吹；下方内行吸，外行按键吸。灰色为非调内音。相邻音上下行独立选最短连接，可在替代音处断开。绿色更连续，红色更不连续；详细评分见图下文字表。</desc>
+        <desc id="harmonica-diagram-description">上方内行吹，外行按键吹；下方内行吸，外行按键吸。</desc>
         <g className="harmonica-muted-tiles">{layout.filter(action => !isScaleTone(action.midi, musicalKey)).map(tile)}</g>
         <g className="harmonica-body" aria-hidden="true">
           <rect x="64" y="136" width="674" height="46" rx="13" />
@@ -63,14 +63,12 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
           }
           const [sx, sy] = trim(x1, y1), [ex, ey] = trim(x2, y2)
           return <path key={index} data-score={edge.score} data-direction={edge.direction} d={`M${sx} ${sy} Q${cx} ${cy} ${ex} ${ey}`} stroke={continuityColor(edge.score)}>
-            <title>{edge.direction === 'both' ? '双向' : edge.direction === 'up' ? '上行' : '下行'} {degreeLabel(edge.from.midi, musicalKey)} → {degreeLabel(edge.to.midi, musicalKey)}：{edge.score} 分（动作 {edge.base} ＋ 单音夹段 {edge.isolation}）；{actionLabel(edge.from)} → {actionLabel(edge.to)}</title>
+            <title>{edge.direction === 'both' ? '双向' : edge.direction === 'up' ? '上行' : '下行'} {degreeLabel(edge.from.midi, musicalKey)} → {degreeLabel(edge.to.midi, musicalKey)}；{actionLabel(edge.from)} → {actionLabel(edge.to)}</title>
           </path>
         })}</g>
         <g className="harmonica-scale-tiles">{layout.filter(action => isScaleTone(action.midi, musicalKey)).map(tile)}</g>
       </svg>
     </div>
-    <div className="continuity-legend"><div><strong>连续性参考分 · 越低越连贯</strong><p>动作：按键变化 ×1 ＋ 移孔距离 ×2 ＋ 吹吸变化 ×4</p><p>若前后都只能反向吹吸，单音夹段另加 4 分，分摊到两侧连线各 2 分。</p></div><div className="continuity-color-scale" aria-label="0 分绿色最连续，11 分及以上红色最不连续">{[0, 2, 4, 6, 8, 10, 11].map(score => <span key={score} style={{ borderColor: continuityColor(score), color: continuityColor(score) }}>{score === 11 ? '11+' : score}</span>)}<small>同吹吸偏绿　连续反向切换偏红</small></div></div>
-    <details className="scale-route-details"><summary>查看逐段连接与得分 · 总计 {scale.total} 分</summary><ol>{scale.transitions.map((edge, index) => <li key={index}><strong>{degreeLabel(edge.from.midi, musicalKey)} → {degreeLabel(edge.to.midi, musicalKey)}</strong><span>{actionLabel(edge.from)} → {actionLabel(edge.to)}</span><span style={{ color: continuityColor(edge.score) }}>{edge.score} 分（动作 {edge.base} ＋ 单音夹段 {edge.isolation}）</span></li>)}</ol></details>
   </>
 }
 
@@ -79,7 +77,7 @@ export function HarmonicaScalesPage() {
   return <main className="tools-page">
     <TopNav />
     <section id="scales" className="scale-tool" aria-labelledby="scale-tool-title">
-      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴 · 大调音阶</h2><p>12 孔 C 调 · 标准独奏音列</p></header>
+      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴 · 大调音阶</h2><p>12 孔 C 调</p></header>
       <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 120 * (SCALES[index]!.total - MIN_SCORE) / (MAX_SCORE - MIN_SCORE || 1)} 75% 72%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${SCALES[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{SCALES[index]!.total} 分</span></button>)}</div>
       <HarmonicaDiagram musicalKey={key} />
     </section>
