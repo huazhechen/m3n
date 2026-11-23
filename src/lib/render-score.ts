@@ -53,15 +53,27 @@ export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settin
   const { prepareStaffScore } = await loadStaffResources()
   const render = await prepareStaffScore(scoreDocument, { ...settings, width: 640 }, signal)
   const targetPages = render.pageCount(true, 640)
-  const pages = (width: number) => render.pageCount(true, width)
-  let low = 540, high = 640
-  while (low < high) {
+  const candidates = [] as { width: number; pages: number; score: number }[]
+  for (let width = 540; width <= 640; width += 10) {
     signal?.throwIfAborted()
-    const middle = Math.floor(((low + high) / 2) / 10) * 10
-    if (pages(middle) <= targetPages) high = middle
-    else low = middle + 10
+    try {
+      const info = render.layoutInfo(width)
+      const lines = info.lines as { minimum: number; target: number }[]
+      const available = Number(info.availableWidth)
+      const densities = lines.map(line => line.minimum / available)
+      const mean = densities.reduce((sum, density) => sum + density, 0) / Math.max(1, densities.length)
+      const variation = Math.sqrt(densities.reduce((sum, density) => sum + (density - mean) ** 2, 0) / Math.max(1, densities.length)) / Math.max(mean, Number.EPSILON)
+      const lastLineSlack = lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target / available)) : 0
+      if (Number(info.pageCount) > 0 && Number(info.pageCount) <= targetPages) candidates.push({ width, pages: Number(info.pageCount),
+        score: (540 / width) / (1 + variation + 0.5 * lastLineSlack) })
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.includes('单个五线谱谱行')) throw error
+    }
   }
-  return low
+  if (!candidates.length) return 640
+  const minimumPages = Math.min(...candidates.map(candidate => candidate.pages))
+  return candidates.filter(candidate => candidate.pages === minimumPages)
+    .reduce((best, candidate) => candidate.score > best.score ? candidate : best).width
 }
 
 /** Screen, print preview and downloads share the selected notation and settings. */

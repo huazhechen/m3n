@@ -200,6 +200,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return {
         spacing: result.spacing,
         headerHeight: result.header.height,
+        availableWidth: (candidateWidth - 2 * margin - (projected.hasBass ? 15 : 2)) * STAFF_SCALE,
+        pageCount: result.paginationError ? 0 : outputPages(result, true, candidateWidth).length,
         lines: result.lines.map((line) => ({
           minimum: line.minimum * STAFF_SCALE,
           target: line.target * STAFF_SCALE,

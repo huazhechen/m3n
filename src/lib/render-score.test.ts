@@ -3,10 +3,10 @@ import type { ScoreDocument } from '@m3n/notation'
 import { chooseNumberedScoreWidth, chooseStaffScoreWidth } from './render-score'
 
 const { numberedQuality } = vi.hoisted(() => ({ numberedQuality: vi.fn() }))
-const { staffPageCount } = vi.hoisted(() => ({ staffPageCount: vi.fn() }))
+const { staffPageCount, staffLayoutInfo } = vi.hoisted(() => ({ staffPageCount: vi.fn(), staffLayoutInfo: vi.fn() }))
 vi.mock('@m3n/score-renderer/staff', () => ({
   prepareStaffResources: vi.fn(),
-  prepareStaffScore: async () => ({ pageCount: staffPageCount }),
+  prepareStaffScore: async () => ({ pageCount: staffPageCount, layoutInfo: staffLayoutInfo }),
 }))
 vi.mock('@m3n/numbered-notation', () => ({
   numberedLayoutQuality: numberedQuality,
@@ -70,10 +70,25 @@ describe('staff automatic width range', () => {
   it.each([510, 590, 640])('selects within 540–640px when the required width is %s', async requiredWidth => {
     staffPageCount.mockReset()
     staffPageCount.mockImplementation((_paged, width) => width >= requiredWidth ? 2 : 3)
+    staffLayoutInfo.mockImplementation(width => ({ pageCount: width >= requiredWidth ? 2 : 3, availableWidth: width,
+      lines: [{ minimum: width * 0.6, target: width }, { minimum: width * 0.7, target: width }] }))
 
     const selected = await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })
 
     expect(selected).toBe(Math.max(540, requiredWidth))
     expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 540 && width <= 640)).toBe(true)
+  })
+
+  it('uses the same font-size and line-balance score as numbered notation', async () => {
+    staffPageCount.mockReset(); staffLayoutInfo.mockReset()
+    staffPageCount.mockReturnValue(1)
+    staffLayoutInfo.mockImplementation(width => ({ pageCount: 1, availableWidth: width,
+      lines: width < 570
+        ? [{ minimum: width * 0.88, target: width }, { minimum: width * 0.69, target: width }, { minimum: width * 0.4, target: width * 0.58 }]
+        : width < 590
+          ? [{ minimum: width * 0.55, target: width }, { minimum: width * 0.73, target: width }, { minimum: width * 0.59, target: width }]
+          : [{ minimum: width * 0.99, target: width }, { minimum: width * 0.81, target: width }],
+    }))
+    expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(570)
   })
 })
