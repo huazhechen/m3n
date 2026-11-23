@@ -41,7 +41,6 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
       <svg className="harmonica-diagram" viewBox="0 0 790 318" role="img" aria-labelledby="harmonica-diagram-title harmonica-diagram-description">
         <title id="harmonica-diagram-title">{HARMONICA_KEYS[musicalKey]} 大调，12 孔 C 调半音阶口琴首调简谱图</title>
         <desc id="harmonica-diagram-description">上方内行吹，外行按键吹；下方内行吸，外行按键吸。灰色为非调内音。相邻音上下行独立选最短连接，可在替代音处断开。绿色更连续，红色更不连续；详细评分见图下文字表。</desc>
-        <defs><marker id="scale-line-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke" /></marker></defs>
         <g className="harmonica-muted-tiles">{layout.filter(action => !isScaleTone(action.midi, musicalKey)).map(tile)}</g>
         <g className="harmonica-body" aria-hidden="true">
           <rect x="64" y="136" width="674" height="46" rx="13" />
@@ -63,7 +62,7 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
             return [x + (cx - x) * ratio, y + (cy - y) * ratio]
           }
           const [sx, sy] = trim(x1, y1), [ex, ey] = trim(x2, y2)
-          return <path key={index} data-score={edge.score} data-direction={edge.direction} d={`M${sx} ${sy} Q${cx} ${cy} ${ex} ${ey}`} stroke={continuityColor(edge.score)} markerStart={edge.direction === 'both' ? 'url(#scale-line-arrow)' : undefined} markerEnd="url(#scale-line-arrow)">
+          return <path key={index} data-score={edge.score} data-direction={edge.direction} d={`M${sx} ${sy} Q${cx} ${cy} ${ex} ${ey}`} stroke={continuityColor(edge.score)}>
             <title>{edge.direction === 'both' ? '双向' : edge.direction === 'up' ? '上行' : '下行'} {degreeLabel(edge.from.midi, musicalKey)} → {degreeLabel(edge.to.midi, musicalKey)}：{edge.score} 分（动作 {edge.base} ＋ 单音夹段 {edge.isolation}）；{actionLabel(edge.from)} → {actionLabel(edge.to)}</title>
           </path>
         })}</g>
