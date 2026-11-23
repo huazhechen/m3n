@@ -134,16 +134,15 @@ export function harmonicaScale(key: number, c6 = false): {
   const descendingChoices = notes.slice(1).map((_, index) => choicesFor(notes.length - 1 - index, notes.length - 2 - index, -1))
   const transitions = ascendingChoices.map(choices => choices[0]!)
   const descending = descendingChoices.map(choices => choices[0]!)
-  // Every alternate reed gets its best incoming and outgoing connection.
-  // A single winning pair would hide complete same-breath alternatives.
+  // Keep the primary connection, then only add the nearest same-breath
+  // alternative in each half. Do not fan alternate reeds across the instrument.
   const branches = (choices: ScaleTransition[]) => {
-    const seenFrom = new Set<HarmonicaAction>(), seenTo = new Set<HarmonicaAction>()
-    return choices.filter(edge => {
-      const include = !seenFrom.has(edge.from) || !seenTo.has(edge.to)
-      seenFrom.add(edge.from)
-      seenTo.add(edge.to)
-      return include
-    })
+    const selected = new Set([choices[0]!])
+    for (const breath of ['blow', 'draw'] as const) {
+      const sameHalf = choices.find(edge => edge.from.breath === breath && edge.to.breath === breath)
+      if (sameHalf) selected.add(sameHalf)
+    }
+    return choices.filter(edge => selected.has(edge))
   }
   const diagramTransitions = ascendingChoices.flatMap(branches)
   const diagramDescending = descendingChoices.flatMap(branches)

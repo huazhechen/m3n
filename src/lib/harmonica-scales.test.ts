@@ -164,7 +164,7 @@ describe('12-hole C chromatic harmonica', () => {
     }
   })
 
-  it('gives every alternate reed a lowest-cost incoming and outgoing diagram branch', () => {
+  it('only supplements the primary route with one nearest connection per breath half', () => {
     for (const c6 of [false, true]) for (let key = 0; key < 12; key++) {
       const scale = harmonicaScale(key, c6)
       for (const [direction, edges] of [[1, scale.diagramTransitions], [-1, scale.diagramDescending]] as const) {
@@ -182,18 +182,19 @@ describe('12-hole C chromatic harmonica', () => {
             return { from, to, score: continuityScore(from, to) + Number(source) + Number(target) + (source && target ? 4 : 0) }
           }))
           const pairEdges = edges.filter(edge => edge.from.midi === fromNote.midi && edge.to.midi === toNote.midi)
-          for (const from of fromNote.actions) {
-            expect(Math.min(...pairEdges.filter(edge => edge.from === from).map(edge => edge.score)))
-              .toBe(Math.min(...costs.filter(edge => edge.from === from).map(edge => edge.score)))
-          }
-          for (const to of toNote.actions) {
-            expect(Math.min(...pairEdges.filter(edge => edge.to === to).map(edge => edge.score)))
-              .toBe(Math.min(...costs.filter(edge => edge.to === to).map(edge => edge.score)))
-          }
+          const primary = (direction === 1 ? scale.transitions : scale.descending)[index]!
+          expect(pairEdges).toContain(primary)
+          expect(pairEdges.length).toBeLessThanOrEqual(3)
           for (const edge of pairEdges) {
-            const minimumFrom = Math.min(...costs.filter(choice => choice.from === edge.from).map(choice => choice.score))
-            const minimumTo = Math.min(...costs.filter(choice => choice.to === edge.to).map(choice => choice.score))
-            expect(edge.score === minimumFrom || edge.score === minimumTo).toBe(true)
+            if (edge !== primary) expect(edge.from.breath).toBe(edge.to.breath)
+          }
+          expect(pairEdges.filter(edge => edge.from.breath !== edge.to.breath).length)
+            .toBe(Number(primary.from.breath !== primary.to.breath))
+          for (const breath of ['blow', 'draw'] as const) {
+            const sameHalf = costs.filter(edge => edge.from.breath === breath && edge.to.breath === breath)
+            const drawn = pairEdges.filter(edge => edge.from.breath === breath && edge.to.breath === breath)
+            expect(drawn).toHaveLength(sameHalf.length ? 1 : 0)
+            if (sameHalf.length) expect(drawn[0]!.score).toBe(Math.min(...sameHalf.map(edge => edge.score)))
           }
         }
       }
