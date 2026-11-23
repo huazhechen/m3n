@@ -94,16 +94,16 @@ test('tempo buttons support single steps and holding, and stop on release, leavi
   const plus = page.getByRole('button', { name: '速度增加 1 BPM' })
   const minus = page.getByRole('button', { name: '速度减少 1 BPM' })
   await plus.click()
-  await expect(slider).toHaveValue('81')
+  await expect(slider).toHaveValue('61')
   await plus.focus()
   await page.keyboard.press('Enter')
-  await expect(slider).toHaveValue('82')
+  await expect(slider).toHaveValue('62')
   await plus.hover()
   await page.mouse.down()
   await page.waitForTimeout(750)
   await page.mouse.up()
   const held = Number(await slider.inputValue())
-  expect(held).toBeGreaterThan(85)
+  expect(held).toBeGreaterThan(65)
   await page.waitForTimeout(200)
   await expect(slider).toHaveValue(String(held))
   await minus.hover()
@@ -123,5 +123,60 @@ test('tempo buttons support single steps and holding, and stop on release, leavi
     await page.mouse.up()
     await expect(slider).toHaveValue(bound)
     await expect(button).toBeDisabled()
+  }
+})
+
+test('tempo defaults to 60 and restores slider and button adjustments on reopening', async ({ page }) => {
+  await page.goto('/tools/metronome')
+  const slider = page.getByRole('slider', { name: '速度', exact: true })
+  await expect(slider).toHaveValue('60')
+  await slider.fill('123')
+  await page.reload()
+  await expect(slider).toHaveValue('123')
+  await page.getByRole('button', { name: '速度增加 1 BPM' }).click()
+  await page.getByRole('link', { name: '练琴工具', exact: true }).click()
+  await page.getByRole('link', { name: '节拍器', exact: true }).click()
+  await expect(slider).toHaveValue('124')
+  for (const invalid of ['garbage', '9', '361', '60.5']) {
+    await page.evaluate(value => localStorage.setItem('m3n:metronome-bpm', value), invalid)
+    await page.reload()
+    await expect(slider).toHaveValue('60')
+  }
+})
+
+test('tempo remains usable when local storage is unavailable', async ({ page }) => {
+  await page.addInitScript(() => {
+    Storage.prototype.getItem = () => { throw Error('blocked') }
+    Storage.prototype.setItem = () => { throw Error('blocked') }
+  })
+  await page.goto('/tools/metronome')
+  const slider = page.getByRole('slider', { name: '速度', exact: true })
+  await expect(slider).toHaveValue('60')
+  await page.getByRole('button', { name: '速度增加 1 BPM' }).click()
+  await expect(slider).toHaveValue('61')
+  await slider.fill('180')
+  await expect(page.getByLabel('当前速度')).toHaveText('180')
+})
+
+test('tempo button hit areas fill both sides of the centered number on desktop and mobile', async ({ page }) => {
+  for (const width of [1000, 320]) {
+    await page.setViewportSize({ width, height: 740 })
+    await page.goto('/tools/metronome')
+    const row = (await page.locator('.metronome-tempo').boundingBox())!
+    const number = (await page.getByLabel('当前速度').boundingBox())!
+    const minus = page.getByRole('button', { name: '速度减少 1 BPM' })
+    const plus = page.getByRole('button', { name: '速度增加 1 BPM' })
+    const left = (await minus.boundingBox())!
+    const right = (await plus.boundingBox())!
+    expect(left.x).toBeCloseTo(row.x, 0)
+    expect(right.x + right.width).toBeCloseTo(row.x + row.width, 0)
+    expect(left.height).toBeCloseTo(row.height, 0)
+    expect(number.x + number.width / 2).toBeCloseTo(row.x + row.width / 2, 0)
+    await minus.click({ position: { x: 2, y: left.height / 2 } })
+    await expect(page.getByLabel('当前速度')).toHaveText('59')
+    const updatedRight = (await plus.boundingBox())!
+    await plus.click({ position: { x: updatedRight.width - 2, y: updatedRight.height / 2 } })
+    await expect(page.getByLabel('当前速度')).toHaveText('60')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   }
 })

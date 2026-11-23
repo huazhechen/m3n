@@ -4,6 +4,16 @@ import { PracticeMetronome } from '../lib/practice-metronome'
 import { addPracticeTime, formatPracticeTime, localDay, PRACTICE_TIME_KEY, readPracticeDays } from '../lib/practice-time'
 import '../styles/tools.css'
 
+const TEMPO_KEY = 'm3n:metronome-bpm'
+
+function readTempo() {
+  try {
+    const value = Number(localStorage.getItem(TEMPO_KEY))
+    if (Number.isInteger(value) && value >= 10 && value <= 360) return value
+  } catch { /* Use the default when local storage is unavailable. */ }
+  return 60
+}
+
 function defaultAccents(beats: number) { return Array.from({ length: beats }, (_, index) => index === 0 || (beats === 6 && index === 3)) }
 
 function TempoStepButton({ direction, disabled, onStep }: { direction: -1 | 1; disabled: boolean; onStep: () => void }) {
@@ -52,7 +62,7 @@ function TempoStepButton({ direction, disabled, onStep }: { direction: -1 | 1; d
 }
 
 export function MetronomePage() {
-  const [bpm, setBpm] = useState(80)
+  const [bpm, setBpm] = useState(readTempo)
   const [accents, setAccents] = useState(defaultAccents(4))
   const [running, setRunning] = useState(false)
   const [starting, setStarting] = useState(false)
@@ -103,6 +113,9 @@ export function MetronomePage() {
       setError(cause instanceof Error ? cause.message : '无法启动音频，请重试。')
     }
   }
+  useEffect(() => {
+    try { localStorage.setItem(TEMPO_KEY, String(bpm)) } catch { /* Keep tempo controls usable without storage. */ }
+  }, [bpm])
   useEffect(() => { engine.current?.update({ bpm, accents }) }, [bpm, accents])
   useEffect(() => {
     const timer = setInterval(() => {
