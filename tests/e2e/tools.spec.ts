@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('harmonica diagram highlights scale notes and scores their connections', async ({ page }) => {
   await page.goto('/tools/scales')
-  await expect(page.getByRole('heading', { name: '半音阶口琴 · 大调音阶' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '半音阶口琴·音阶与难度' })).toBeVisible()
   await expect(page.getByRole('combobox')).toHaveCount(0)
   const diagram = page.locator('.harmonica-diagram')
   await expect(diagram.locator('.harmonica-tile')).toHaveCount(48)
@@ -48,7 +48,7 @@ test('all twelve keys remain usable on a narrow screen', async ({ page }) => {
   await page.getByRole('link', { name: '乐谱库', exact: true }).click()
   await page.getByRole('link', { name: '练琴工具', exact: true }).click()
   await page.getByRole('link', { name: '音阶图', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '半音阶口琴 · 大调音阶' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '半音阶口琴·音阶与难度' })).toBeVisible()
 })
 
 

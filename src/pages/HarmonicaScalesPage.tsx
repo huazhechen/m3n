@@ -91,7 +91,7 @@ export function HarmonicaScalesPage() {
   return <main className="tools-page scales-page">
     <TopNav />
     <section id="scales" className="scale-tool" aria-labelledby="scale-tool-title">
-      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴 · 大调音阶</h2><p>12 孔 C 调</p></header>
+      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴·音阶与难度</h2><p>12 孔 C 调</p></header>
       <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 120 * (SCALES[index]!.total - MIN_SCORE) / (MAX_SCORE - MIN_SCORE || 1)} 75% 72%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${SCALES[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{SCALES[index]!.total} 分</span></button>)}</div>
       <HarmonicaDiagram musicalKey={key} />
     </section>
