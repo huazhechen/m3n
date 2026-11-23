@@ -5,12 +5,12 @@
 .scale-tool { background: #fff; border: 1px solid #d7ddd3; border-radius: 12px; padding: 1rem; scroll-margin-top: 1rem; }
 .scale-tool-heading, .scale-diagram-intro { display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; }
 .scale-tool-heading { margin-bottom: .75rem; row-gap: .75rem; }
-.scale-tool h2 { margin: 0; font-size: 1.6rem; color: #163f45; }
-.tuning-select { min-height: var(--ui-control-size); padding: 0 .65rem; border: 1px solid #c8d3cc; border-radius: 6px; background: #fff; color: #285b5c; font: inherit; cursor: pointer; }
+.scale-tool h2 { flex-shrink: 0; margin: 0; font-size: 1.6rem; color: #163f45; }
+.scale-tuning-picker { flex: 1 0 max(240px, 18rem); max-width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .4rem; }
 .scale-key-picker { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .4rem; }
-.scale-key-picker button { min-height: var(--ui-control-size); cursor: pointer; background: #f6f7f2; border: 1px solid #d7ddd3; border-radius: 6px; padding: .45rem .2rem; font-size: 1.1rem; }
+.scale-tuning-picker button, .scale-key-picker button { min-height: var(--ui-control-size); cursor: pointer; background: #f6f7f2; border: 1px solid #d7ddd3; border-radius: 6px; padding: .45rem .2rem; font-size: 1.1rem; }
 .scale-key-picker button span { display: block; font-size: .7rem; }
-.scale-key-picker button[aria-pressed=true] { color: #163f45; border-color: #285b5c; box-shadow: inset 0 0 0 1px #285b5c; font-weight: 700; }
+.scale-tuning-picker button[aria-pressed=true], .scale-key-picker button[aria-pressed=true] { color: #163f45; border-color: #285b5c; box-shadow: inset 0 0 0 1px #285b5c; font-weight: 700; }
 .scale-diagram-intro { margin-top: .75rem; }
 .scale-diagram-intro h3 { margin: 0; font-size: 1.2rem; }
 .harmonica-diagram-frame { margin: .25rem -.5rem; }

@@ -90,13 +90,12 @@ export function HarmonicaScalesPage() {
   const [key, setKey] = useState(0)
   const [tuning, setTuning] = useState<typeof TUNINGS[number]>('standard')
   const scales = SCALE_SETS[TUNINGS.indexOf(tuning)]!
-  const minScore = Math.min(...scales.map(scale => scale.total))
-  const maxScore = Math.max(...scales.map(scale => scale.total))
   return <main className="tools-page scales-page">
     <TopNav />
     <section id="scales" className="scale-tool" aria-labelledby="scale-tool-title">
-      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴·音阶</h2><select className="tuning-select" aria-label="选择调音方式" value={tuning} onChange={event => setTuning(event.target.value as typeof tuning)}><option value="standard">标准</option><option value="c6">C6</option><option value="diminished">减音阶</option><option value="full-blow-draw">全吹吸</option></select></header>
-      <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 120 * (scales[index]!.total - minScore) / (maxScore - minScore || 1)} 75% 72%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${scales[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{scales[index]!.total} 分</span></button>)}</div>
+      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴·音阶</h2>
+      <div className="scale-tuning-picker" role="group" aria-label="选择调音方式">{TUNINGS.map((value, index) => <button key={value} type="button" aria-pressed={tuning === value} onClick={() => setTuning(value)}>{['标准', 'C6', '减音阶', '全吹吸'][index]}</button>)}</div></header>
+      <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 120 * Math.max(0, Math.min(160, scales[index]!.total)) / 160} 75% 72%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${scales[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{scales[index]!.total} 分</span></button>)}</div>
       <HarmonicaDiagram musicalKey={key} tuning={tuning} />
     </section>
   </main>
