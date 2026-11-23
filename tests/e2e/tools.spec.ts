@@ -104,3 +104,39 @@ test('overlapping same-hole connections use separate lanes above the note tiles'
   const upper = pairs.find(pair => pair.title.startsWith('双向 4 → 5'))!
   expect(upper.x - lower.x).toBe(28)
 })
+
+
+test('C6 switch retunes blow notes, recomputes difficulty, and restores standard tuning', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 })
+  await page.goto('/tools/scales')
+  const toggle = page.getByRole('switch', { name: 'C6', exact: true })
+  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+  const keys = page.getByRole('group', { name: '选择大调' }).getByRole('button')
+  const standardScores = await keys.allTextContents()
+  const standardLines = await page.locator('.scale-connections').innerHTML()
+  const blow = (hole: number, pressed: boolean) => page.locator('.harmonica-tile').filter({ has: page.locator('title', { hasText: `，${hole}孔吹·${pressed ? '按键' : '松键'}` }) })
+  for (const hole of [4, 8, 12]) await expect(blow(hole, false).locator('text')).toHaveText('1')
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-checked', 'true')
+  for (const hole of [4, 8, 12]) {
+    await expect(blow(hole, false).locator('text')).toHaveText('6')
+    await expect(blow(hole, true).locator('text')).toHaveText('♭7')
+  }
+  expect(await keys.allTextContents()).not.toEqual(standardScores)
+  expect(await page.locator('.scale-connections').innerHTML()).not.toEqual(standardLines)
+  for (const key of await keys.all()) {
+    await key.click()
+    await expect(key).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('.harmonica-tile')).toHaveCount(48)
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  const switchBounds = (await toggle.boundingBox())!
+  const titleBounds = (await page.getByRole('heading', { name: '半音阶口琴·音阶与难度' }).boundingBox())!
+  expect(switchBounds.x).toBeGreaterThan(titleBounds.x + titleBounds.width)
+  await page.getByRole('button', { name: /^C大调，总分/ }).click()
+  await toggle.focus()
+  await page.keyboard.press('Space')
+  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+  expect(await keys.allTextContents()).toEqual(standardScores)
+  expect(await page.locator('.scale-connections').innerHTML()).toEqual(standardLines)
+})

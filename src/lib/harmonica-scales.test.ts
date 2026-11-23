@@ -29,6 +29,32 @@ describe('12-hole C chromatic harmonica', () => {
     }
   })
 
+  it('retunes only the three fourth-hole blow pairs in C6 and scores playable routes', () => {
+    const standard = harmonicaLayout(), c6 = harmonicaLayout(true)
+    expect(c6).toHaveLength(48)
+    for (let index = 0; index < standard.length; index++) {
+      const action = standard[index]!, retuned = c6[index]!
+      const changed = action.hole % 4 === 0 && action.breath === 'blow'
+      expect(retuned).toEqual({ ...action, midi: action.midi - (changed ? 3 : 0) })
+    }
+    expect(c6.filter(action => action.breath === 'blow' && !action.pressed).map(action => action.midi))
+      .toEqual([60, 64, 67, 69, 72, 76, 79, 81, 84, 88, 91, 93])
+    for (let key = 0; key < 12; key++) {
+      const scale = harmonicaScale(key, true)
+      expect(scale.difficulty.ascending.total).toBe(scale.difficulty.descending.total)
+      for (const route of [scale.difficulty.ascending, scale.difficulty.descending]) {
+        expect(route.actions).toHaveLength(15)
+        expect(route.total).toBe(phraseCost(route.actions))
+        for (const action of route.actions) expect(c6).toContainEqual(action)
+      }
+      for (const edge of [...scale.transitions, ...scale.descending]) {
+        expect(c6).toContainEqual(edge.from)
+        expect(c6).toContainEqual(edge.to)
+      }
+    }
+    expect(harmonicaScale(1, true).total).toBeLessThan(harmonicaScale(1).total)
+  })
+
   it('scores slide, distance and breath at weights 1, 2, 4 and uses a fixed color scale', () => {
     const start: HarmonicaAction = { hole: 1, breath: 'blow', pressed: false, midi: 60 }
     expect(continuityScore(start, start)).toBe(0)
@@ -68,15 +94,17 @@ describe('12-hole C chromatic harmonica', () => {
 
 
   it('finds the global optimum against exhaustive playable fingerings in every key', () => {
-    const layout = harmonicaLayout()
-    for (let key = 0; key < 12; key++) {
-      const pitches = [0, 2, 4, 5, 7, 9, 11, 12].map(offset => 60 + key + offset)
-      for (const phrase of [pitches, [...pitches].reverse()]) {
-        let routes: HarmonicaAction[][] = [[]]
-        for (const midi of phrase) routes = routes.flatMap(route => layout.filter(action => action.midi === midi).map(action => [...route, action]))
-        const best = optimizeHarmonicaPhrase(phrase)
-        expect(best.actions.map(action => action.midi)).toEqual(phrase)
-        expect(best.total).toBe(Math.min(...routes.map(phraseCost)))
+    for (const c6 of [false, true]) {
+      const layout = harmonicaLayout(c6)
+      for (let key = 0; key < 12; key++) {
+        const pitches = [0, 2, 4, 5, 7, 9, 11, 12].map(offset => 60 + key + offset)
+        for (const phrase of [pitches, [...pitches].reverse()]) {
+          let routes: HarmonicaAction[][] = [[]]
+          for (const midi of phrase) routes = routes.flatMap(route => layout.filter(action => action.midi === midi).map(action => [...route, action]))
+          const best = optimizeHarmonicaPhrase(phrase, c6)
+          expect(best.actions.map(action => action.midi)).toEqual(phrase)
+          expect(best.total).toBe(Math.min(...routes.map(phraseCost)))
+        }
       }
     }
   })

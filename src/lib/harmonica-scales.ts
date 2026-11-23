@@ -7,13 +7,13 @@ const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 const NATURALS = [0, 2, 4, 5, 7, 9, 11]
 const MAJOR = [0, 2, 4, 5, 7, 9, 11]
 
-/** 12-hole C solo tuning: C E G C / D F A B, repeated three times. */
-export function harmonicaLayout(): HarmonicaAction[] {
+/** 12-hole C solo tuning; C6 replaces each fourth blow C with A. */
+export function harmonicaLayout(c6 = false): HarmonicaAction[] {
   return Array.from({ length: 12 }, (_, index) => {
     const block = 60 + Math.floor(index / 4) * 12
     return (['blow', 'draw'] as const).flatMap(breath => [false, true].map(pressed => ({
       hole: index + 1, breath, pressed,
-      midi: block + (breath === 'blow' ? [0, 4, 7, 12] : [2, 5, 9, 11])[index % 4]! + Number(pressed),
+      midi: block + (breath === 'blow' ? [0, 4, 7, c6 ? 9 : 12] : [2, 5, 9, 11])[index % 4]! + Number(pressed),
     })))
   }).flat()
 }
@@ -76,8 +76,8 @@ function alternationPenalty(run: number): number {
 /** Choose one playable action per note, retaining breath-run history in the DP.
  * Capping the history at four is exact because the surcharge saturates there.
  */
-export function optimizeHarmonicaPhrase(pitches: number[]): { actions: HarmonicaAction[]; total: number } {
-  const layout = harmonicaLayout()
+export function optimizeHarmonicaPhrase(pitches: number[], c6 = false): { actions: HarmonicaAction[]; total: number } {
+  const layout = harmonicaLayout(c6)
   type State = { actions: HarmonicaAction[]; total: number; run: number; presses: number }
   let states: State[] = [{ actions: [], total: 0, run: 0, presses: 0 }]
   for (const midi of pitches) {
@@ -102,11 +102,11 @@ export function optimizeHarmonicaPhrase(pitches: number[]): { actions: Harmonica
 /** Diagram connections remain local and may use disconnected substitutes.
  * Difficulty compares fully playable, two-octave tonic scales in both directions.
  */
-export function harmonicaScale(key: number): {
+export function harmonicaScale(key: number, c6 = false): {
   notes: ScaleNote[]; transitions: ScaleTransition[]; descending: ScaleTransition[]; total: number
   difficulty: { ascending: ReturnType<typeof optimizeHarmonicaPhrase>; descending: ReturnType<typeof optimizeHarmonicaPhrase> }
 } {
-  const layout = harmonicaLayout()
+  const layout = harmonicaLayout(c6)
   const pitches = [...new Set(layout.filter(action => isScaleTone(action.midi, key)).map(action => action.midi))].sort((a, b) => a - b)
   const notes = pitches.map(midi => ({ name: scalePitchLabel(midi, key), midi, actions: layout.filter(action => action.midi === midi) }))
   const connect = (fromIndex: number, toIndex: number, direction: number): ScaleTransition => {
@@ -129,8 +129,8 @@ export function harmonicaScale(key: number): {
   const descending = notes.slice(1).map((_, index) => connect(notes.length - 1 - index, notes.length - 2 - index, -1))
   const comparisonPitches = Array.from({ length: 15 }, (_, index) => 60 + key + Math.floor(index / 7) * 12 + MAJOR[index % 7]!)
   const difficulty = {
-    ascending: optimizeHarmonicaPhrase(comparisonPitches),
-    descending: optimizeHarmonicaPhrase([...comparisonPitches].reverse()),
+    ascending: optimizeHarmonicaPhrase(comparisonPitches, c6),
+    descending: optimizeHarmonicaPhrase([...comparisonPitches].reverse(), c6),
   }
   return { notes, transitions, descending, difficulty, total: Math.round((difficulty.ascending.total + difficulty.descending.total) / 2) }
 }
