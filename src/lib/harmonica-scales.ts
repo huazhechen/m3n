@@ -100,7 +100,7 @@ export function optimizeHarmonicaPhrase(pitches: number[], c6 = false): { action
 }
 
 /** Diagram connections remain local and may use disconnected substitutes.
- * Difficulty combines the worst five-note phrase with the full-scale average.
+ * Difficulty combines the worst phrase, mean phrase burden and full-scale burden.
  */
 export function harmonicaScale(key: number, c6 = false): {
   notes: ScaleNote[]; transitions: ScaleTransition[]; descending: ScaleTransition[]; total: number
@@ -108,7 +108,7 @@ export function harmonicaScale(key: number, c6 = false): {
   difficulty: {
     ascending: ReturnType<typeof optimizeHarmonicaPhrase>; descending: ReturnType<typeof optimizeHarmonicaPhrase>
     windows: { ascending: ReturnType<typeof optimizeHarmonicaPhrase>; descending: ReturnType<typeof optimizeHarmonicaPhrase> }[]
-    bottleneck: number
+    bottleneck: number; windowAverage: number
   }
 } {
   const layout = harmonicaLayout(c6)
@@ -164,10 +164,11 @@ export function harmonicaScale(key: number, c6 = false): {
     descending: optimizeHarmonicaPhrase([...comparisonPitches].reverse(), c6),
     windows,
     bottleneck: Math.max(...windows.flatMap(window => [window.ascending.total, window.descending.total])),
+    windowAverage: windows.reduce((sum, window) => sum + window.ascending.total + window.descending.total, 0) / (windows.length * 2),
   }
   const average = (difficulty.ascending.total + difficulty.descending.total) / 2
-  // Express both terms as a 14-transition equivalent: 75% worst short-phrase
-  // density and 25% whole-scale density. Easy passages cannot erase a bottleneck.
-  const total = Math.round(.75 * difficulty.bottleneck / 4 * 14 + .25 * average)
+  // Normalize each component per transition, then express the weighted result
+  // as a 14-transition equivalent. Include gains outside the worst phrase.
+  const total = Math.round((.4 * difficulty.bottleneck / 4 + .4 * difficulty.windowAverage / 4 + .2 * average / 14) * 14)
   return { notes, transitions, descending, diagramTransitions, diagramDescending, difficulty, total }
 }

@@ -105,7 +105,7 @@ describe('12-hole C chromatic harmonica', () => {
     expect(g.difficulty.bottleneck).toBeGreaterThan(gb.difficulty.bottleneck * 1.9)
     expect(g.difficulty.bottleneck).toBeGreaterThanOrEqual(d.difficulty.bottleneck * .95)
     // G has fewer hard passages than D, but a comparably hard worst passage.
-    expect(g.total).toBeGreaterThan(d.total * .85)
+    expect(g.total).toBeGreaterThan(Math.max(...[0, 1, 3, 5, 6, 8, 10].map(key => harmonicaScale(key).total)))
     const c6 = harmonicaScale(7, true)
     const improved = c6.difficulty.windows.find(window =>
       window.ascending.actions.map(action => action.midi).join(',') === '74,76,78,79,81')!
@@ -113,6 +113,20 @@ describe('12-hole C chromatic harmonica', () => {
     expect(improved.ascending.total).toBeLessThan(bottleneck.ascending.total)
     expect(c6.difficulty.bottleneck).toBeLessThan(g.difficulty.bottleneck)
     expect(c6.total).toBeLessThan(g.total)
+  })
+
+  it('includes C6 improvements outside the worst G-flat phrase', () => {
+    const standard = harmonicaScale(6), c6 = harmonicaScale(6, true)
+    const phrase = (scale: ReturnType<typeof harmonicaScale>) => scale.difficulty.windows[5]!.ascending
+    expect(phrase(standard).actions.map(action => movableDegree(action.midi, 6).degree)).toEqual(['6', '7', '1', '2', '3'])
+    expect(phrase(c6).total).toBeLessThan(phrase(standard).total)
+    expect(c6.difficulty.bottleneck).toBeGreaterThan(standard.difficulty.bottleneck)
+    expect(c6.difficulty.windowAverage).toBeLessThan(standard.difficulty.windowAverage)
+    // Mean improvement contributes -1.2, versus +1.4 from the worse peak.
+    const meanChange = .4 * (c6.difficulty.windowAverage - standard.difficulty.windowAverage) / 4 * 14
+    expect(meanChange).toBeCloseTo(-1.2)
+    expect(standard.total).toBe(58)
+    expect(c6.total).toBe(58)
   })
 
   it('matches the article’s contextual substitutes in The Swan and See You Again', () => {
@@ -149,6 +163,7 @@ describe('12-hole C chromatic harmonica', () => {
       }
       expect([...starts].sort((a, b) => a - b)).toEqual([0, 2, 4, 5, 7, 9, 11])
       expect(scale.difficulty.bottleneck).toBe(Math.max(...costs))
+      expect(scale.difficulty.windowAverage).toBe(costs.reduce((sum, cost) => sum + cost, 0) / costs.length)
     }
   })
 
@@ -236,7 +251,7 @@ describe('12-hole C chromatic harmonica', () => {
       expect(scale.notes.map(note => note.midi)).toEqual(pitches)
       expect(scale.transitions).toHaveLength(pitches.length - 1)
       const average = (scale.difficulty.ascending.total + scale.difficulty.descending.total) / 2
-      expect(scale.total).toBe(Math.round(.75 * scale.difficulty.bottleneck / 4 * 14 + .25 * average))
+      expect(scale.total).toBe(Math.round((.4 * scale.difficulty.bottleneck / 4 + .4 * scale.difficulty.windowAverage / 4 + .2 * average / 14) * 14))
       expect(scale.difficulty.ascending.total).toBe(scale.difficulty.descending.total)
       for (const route of [scale.difficulty.ascending, scale.difficulty.descending]) {
         expect(route.actions).toHaveLength(15)
