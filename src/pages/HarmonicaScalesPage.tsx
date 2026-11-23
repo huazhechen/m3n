@@ -7,16 +7,17 @@ import '../styles/tools.css'
 const TILE = 44
 const LEFT = 26
 const STEP = 48
-const SCALE_SETS = [false, true].map(c6 => HARMONICA_KEYS.map((_, key) => harmonicaScale(key, c6)))
+const TUNINGS = ['standard', 'c6', 'diminished'] as const
+const SCALE_SETS = TUNINGS.map(tuning => HARMONICA_KEYS.map((_, key) => harmonicaScale(key, tuning)))
 const FIFTHS_KEYS = [...CIRCLE_OF_FIFTHS.slice(6), ...CIRCLE_OF_FIFTHS.slice(0, 6)].map(([key]) => keyPitchClass(key))
 function position(action: HarmonicaAction) {
   return { x: LEFT + (action.hole - 1) * STEP, y: action.breath === 'blow' ? (action.pressed ? 16 : 74) : (action.pressed ? 258 : 200) }
 }
 function actionId(action: HarmonicaAction) { return `${action.hole}-${action.breath}-${action.pressed}` }
 
-function HarmonicaDiagram({ musicalKey, c6 }: { musicalKey: number; c6: boolean }) {
-  const scale = SCALE_SETS[Number(c6)]![musicalKey]!
-  const layout = harmonicaLayout(c6)
+function HarmonicaDiagram({ musicalKey, tuning }: { musicalKey: number; tuning: typeof TUNINGS[number] }) {
+  const scale = SCALE_SETS[TUNINGS.indexOf(tuning)]![musicalKey]!
+  const layout = harmonicaLayout(tuning)
   const edges = [
     ...scale.diagramTransitions.map(edge => ({ ...edge, direction: scale.diagramDescending.some(back => actionId(back.from) === actionId(edge.to) && actionId(back.to) === actionId(edge.from)) ? 'both' : 'up' })),
     ...scale.diagramDescending.filter(edge => !scale.diagramTransitions.some(up => actionId(up.from) === actionId(edge.to) && actionId(up.to) === actionId(edge.from))).map(edge => ({ ...edge, direction: 'down' })),
@@ -51,7 +52,7 @@ function HarmonicaDiagram({ musicalKey, c6 }: { musicalKey: number; c6: boolean 
     <div className="scale-diagram-intro"><h3>1 = {HARMONICA_KEYS[musicalKey]}</h3></div>
     <div className="harmonica-diagram-frame" role="region" aria-label="12 孔口琴音阶图">
       <svg className="harmonica-diagram" viewBox="0 4 618 312" role="img" aria-labelledby="harmonica-diagram-title harmonica-diagram-description">
-        <title id="harmonica-diagram-title">{HARMONICA_KEYS[musicalKey]} 大调，12 孔 {c6 ? 'C6' : 'C'} 调半音阶口琴首调简谱图</title>
+        <title id="harmonica-diagram-title">{HARMONICA_KEYS[musicalKey]} 大调，12 孔 {tuning === 'c6' ? 'C6' : tuning === 'diminished' ? '减音阶' : 'C'} 调半音阶口琴首调简谱图</title>
         <desc id="harmonica-diagram-description">上方内行吹，外行按键吹；下方内行吸，外行按键吸。</desc>
         <g className="harmonica-muted-tiles">{layout.filter(action => !isScaleTone(action.midi, musicalKey)).map(tile)}</g>
         <g className="harmonica-body" aria-hidden="true">
@@ -86,16 +87,16 @@ function HarmonicaDiagram({ musicalKey, c6 }: { musicalKey: number; c6: boolean 
 
 export function HarmonicaScalesPage() {
   const [key, setKey] = useState(0)
-  const [c6, setC6] = useState(false)
-  const scales = SCALE_SETS[Number(c6)]!
+  const [tuning, setTuning] = useState<typeof TUNINGS[number]>('standard')
+  const scales = SCALE_SETS[TUNINGS.indexOf(tuning)]!
   const minScore = Math.min(...scales.map(scale => scale.total))
   const maxScore = Math.max(...scales.map(scale => scale.total))
   return <main className="tools-page scales-page">
     <TopNav />
     <section id="scales" className="scale-tool" aria-labelledby="scale-tool-title">
-      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴·音阶与难度</h2><button className="c6-switch" type="button" role="switch" aria-checked={c6} onClick={() => setC6(!c6)}>C6<span className="c6-switch-track" aria-hidden="true" /></button></header>
+      <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴·音阶</h2><select className="tuning-select" aria-label="选择调音方式" value={tuning} onChange={event => setTuning(event.target.value as typeof tuning)}><option value="standard">标准</option><option value="c6">C6</option><option value="diminished">减音阶</option></select></header>
       <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 120 * (scales[index]!.total - minScore) / (maxScore - minScore || 1)} 75% 72%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${scales[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{scales[index]!.total} 分</span></button>)}</div>
-      <HarmonicaDiagram musicalKey={key} c6={c6} />
+      <HarmonicaDiagram musicalKey={key} tuning={tuning} />
     </section>
   </main>
 }

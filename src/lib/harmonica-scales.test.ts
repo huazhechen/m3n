@@ -55,6 +55,15 @@ describe('12-hole C chromatic harmonica', () => {
     expect(harmonicaScale(1, true).total).toBeLessThan(harmonicaScale(1).total)
   })
 
+  it('supports the four-hole diminished tuning cycle', () => {
+    const layout = harmonicaLayout('diminished')
+    expect(layout.filter(action => !action.pressed && action.breath === 'blow').slice(0, 4).map(action => action.midi % 12))
+      .toEqual([0, 3, 6, 9])
+    expect(layout.filter(action => !action.pressed && action.breath === 'draw').slice(0, 4).map(action => action.midi % 12))
+      .toEqual([2, 5, 9, 11])
+    expect(layout.filter(action => action.pressed).every(action => layout.some(open => open.hole === action.hole && open.breath === action.breath && !open.pressed && action.midi === open.midi + 1))).toBe(true)
+  })
+
   it('treats a one-hole move like a slide change and penalizes wider jumps nonlinearly', () => {
     const start: HarmonicaAction = { hole: 1, breath: 'blow', pressed: false, midi: 60 }
     expect(continuityScore(start, start)).toBe(0)
