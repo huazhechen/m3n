@@ -47,10 +47,10 @@ export function continuityScore(from: HarmonicaAction, to: HarmonicaAction): num
   return Number(from.pressed !== to.pressed) + Math.abs(from.hole - to.hole) * 2 + Number(from.breath !== to.breath) * 4
 }
 
-export const ISOLATED_BREATH_PENALTY = 4
-export const MAX_COLOR_SCORE = 11
+export const ISOLATED_BREATH_PENALTY = 2
+export const MAX_COLOR_SCORE = 13
 
-/** Two neighboring isolated notes can add 4 to an ordinary 7-point change. */
+/** A four-note alternating passage adds 6 to a typical 7-point change. */
 export function continuityColor(score: number): string {
   return `hsl(${120 * (1 - Math.min(MAX_COLOR_SCORE, Math.max(0, score)) / MAX_COLOR_SCORE)} 65% 38%)`
 }
@@ -66,12 +66,46 @@ export function degreeLabel(midi: number, key: number): string {
   return `${degree}${octave === 0 ? '' : `（${octave > 0 ? '高' : '低'}${Math.abs(octave)}个八度）`}`
 }
 
-/** Find each adjacent pair independently. The same pitch may use different
- * substitutes for incoming and outgoing edges; the diagram permits this break.
- * Context adds half of an isolated-breath penalty to each adjacent edge only
- * when the outer neighbor has no same-breath substitute to avoid the reversal.
+/** Additional cost at each step of an uninterrupted run of breath changes.
+ * One isolated note is a small bump; sustained alternation is much harder.
  */
-export function harmonicaScale(key: number): { notes: ScaleNote[]; transitions: ScaleTransition[]; descending: ScaleTransition[]; total: number } {
+function alternationPenalty(run: number): number {
+  return run < 2 ? 0 : Math.min(10, (run - 1) * 4 - 2)
+}
+
+/** Choose one playable action per note, retaining breath-run history in the DP.
+ * Capping the history at four is exact because the surcharge saturates there.
+ */
+export function optimizeHarmonicaPhrase(pitches: number[]): { actions: HarmonicaAction[]; total: number } {
+  const layout = harmonicaLayout()
+  type State = { actions: HarmonicaAction[]; total: number; run: number; presses: number }
+  let states: State[] = [{ actions: [], total: 0, run: 0, presses: 0 }]
+  for (const midi of pitches) {
+    const choices = layout.filter(action => action.midi === midi)
+    if (!choices.length) throw new RangeError(`Pitch outside harmonica range: ${midi}`)
+    const next = new Map<string, State>()
+    for (const state of states) for (const action of choices) {
+      const previous = state.actions.at(-1)
+      const run = previous && previous.breath !== action.breath ? Math.min(4, state.run + 1) : 0
+      const total = state.total + (previous ? continuityScore(previous, action) + alternationPenalty(run) : 0)
+      const candidate = { actions: [...state.actions, action], total, run, presses: state.presses + Number(action.pressed) }
+      const id = `${action.hole}-${action.breath}-${action.pressed}-${run}`
+      const best = next.get(id)
+      if (!best || total < best.total || (total === best.total && candidate.presses < best.presses)) next.set(id, candidate)
+    }
+    states = [...next.values()]
+  }
+  const best = states.sort((a, b) => a.total - b.total || a.presses - b.presses)[0]!
+  return { actions: best.actions, total: best.total }
+}
+
+/** Diagram connections remain local and may use disconnected substitutes.
+ * Difficulty compares fully playable, two-octave tonic scales in both directions.
+ */
+export function harmonicaScale(key: number): {
+  notes: ScaleNote[]; transitions: ScaleTransition[]; descending: ScaleTransition[]; total: number
+  difficulty: { ascending: ReturnType<typeof optimizeHarmonicaPhrase>; descending: ReturnType<typeof optimizeHarmonicaPhrase> }
+} {
   const layout = harmonicaLayout()
   const pitches = [...new Set(layout.filter(action => isScaleTone(action.midi, key)).map(action => action.midi))].sort((a, b) => a - b)
   const notes = pitches.map(midi => ({ name: scalePitchLabel(midi, key), midi, actions: layout.filter(action => action.midi === midi) }))
@@ -84,6 +118,7 @@ export function harmonicaScale(key: number): { notes: ScaleNote[]; transitions: 
       const targetIsolated = switching && after !== undefined && after.every(action => action.breath !== to.breath)
       const base = continuityScore(from, to)
       const isolation = (Number(sourceIsolated) + Number(targetIsolated)) * ISOLATED_BREATH_PENALTY / 2
+        + (sourceIsolated && targetIsolated ? 4 : 0)
       return { from, to, base, isolation, score: base + isolation }
     }))
     return choices.sort((a, b) => a.score - b.score
@@ -92,5 +127,10 @@ export function harmonicaScale(key: number): { notes: ScaleNote[]; transitions: 
   }
   const transitions = notes.slice(1).map((_, index) => connect(index, index + 1, 1))
   const descending = notes.slice(1).map((_, index) => connect(notes.length - 1 - index, notes.length - 2 - index, -1))
-  return { notes, transitions, descending, total: transitions.reduce((sum, edge) => sum + edge.score, 0) }
+  const comparisonPitches = Array.from({ length: 15 }, (_, index) => 60 + key + Math.floor(index / 7) * 12 + MAJOR[index % 7]!)
+  const difficulty = {
+    ascending: optimizeHarmonicaPhrase(comparisonPitches),
+    descending: optimizeHarmonicaPhrase([...comparisonPitches].reverse()),
+  }
+  return { notes, transitions, descending, difficulty, total: Math.round((difficulty.ascending.total + difficulty.descending.total) / 2) }
 }

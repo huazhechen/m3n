@@ -15,7 +15,7 @@ test('harmonica diagram highlights scale notes and scores their connections', as
   expect(routeCount).toBeGreaterThan(20)
   expect(await diagram.locator('.harmonica-muted-tiles').evaluate(element => !!(element.compareDocumentPosition(element.parentElement!.querySelector('.scale-connections')!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true)
   const edges = await diagram.locator('.scale-connections path').evaluateAll(paths => paths.map(path => ({ score: Number(path.getAttribute('data-score')), color: path.getAttribute('stroke') })))
-  expect(edges.every(edge => edge.color === `hsl(${120 * (1 - Math.min(11, edge.score) / 11)} 65% 38%)`)).toBe(true)
+  expect(edges.every(edge => edge.color === `hsl(${120 * (1 - Math.min(13, edge.score) / 13)} 65% 38%)`)).toBe(true)
   await expect(page.locator('.scale-route-details, .continuity-legend')).toHaveCount(0)
   await expect(page.getByText(/标准独奏音列|调内音加粗|替代音可断开连接|同吹吸偏绿/)).toHaveCount(0)
   const keyButtons = page.getByRole('group', { name: '选择大调' }).getByRole('button')

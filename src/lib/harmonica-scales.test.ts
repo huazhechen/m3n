@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { continuityColor, continuityScore, harmonicaLayout, harmonicaScale, isScaleTone, movableDegree, scalePitchLabel, type HarmonicaAction } from './harmonica-scales'
+import { continuityColor, continuityScore, harmonicaLayout, harmonicaScale, isScaleTone, movableDegree, optimizeHarmonicaPhrase, scalePitchLabel, type HarmonicaAction } from './harmonica-scales'
+
+function phraseCost(actions: HarmonicaAction[]): number {
+  let base = 0
+  const switches: boolean[] = []
+  for (let index = 1; index < actions.length; index++) {
+    const from = actions[index - 1]!, to = actions[index]!
+    const switching = from.breath !== to.breath
+    switches.push(switching)
+    base += Number(from.pressed !== to.pressed) + 2 * Math.abs(from.hole - to.hole) + 4 * Number(switching)
+  }
+  // A run of n consecutive breath changes adds 0, 2, 8, 18, 28, ...
+  return base + switches.map(value => value ? 'x' : ' ').join('').split(' ').reduce((sum, run) =>
+    sum + (run.length < 2 ? 0 : run.length === 2 ? 2 : run.length === 3 ? 8 : 18 + (run.length - 4) * 10), 0)
+}
 
 describe('12-hole C chromatic harmonica', () => {
   it('uses solo tuning and raises every reed a semitone with the slide', () => {
@@ -23,8 +37,8 @@ describe('12-hole C chromatic harmonica', () => {
     expect(continuityScore(start, { ...start, breath: 'draw' })).toBe(4)
     expect(continuityScore(start, { ...start, hole: 3, breath: 'draw', pressed: true })).toBe(9)
     expect(continuityColor(0)).toBe('hsl(120 65% 38%)')
-    expect(continuityColor(11)).toBe('hsl(0 65% 38%)')
-    expect(continuityColor(20)).toBe(continuityColor(11))
+    expect(continuityColor(13)).toBe('hsl(0 65% 38%)')
+    expect(continuityColor(20)).toBe(continuityColor(13))
   })
 
   it('maps movable-do semitones and octave dots relative to the selected tonic', () => {
@@ -44,12 +58,38 @@ describe('12-hole C chromatic harmonica', () => {
     expect(eToF.to.pressed).toBe(true)
     expect(eToF.isolation).toBe(0)
     const fSharpToG = g.transitions.find(edge => edge.from.midi === 66 && edge.to.midi === 67)!
-    expect(fSharpToG).toMatchObject({ base: 7, isolation: 4, score: 11 })
+    expect(fSharpToG).toMatchObject({ base: 7, isolation: 6, score: 13 })
     const db = harmonicaScale(1)
     expect(db.transitions.some((edge, index) => index > 0 && JSON.stringify(db.transitions[index - 1]!.to) !== JSON.stringify(edge.from))).toBe(true)
     const easy = [0, 1, 3, 5, 6, 8, 10].map(key => harmonicaScale(key).total)
     const difficult = [2, 4, 7, 9, 11].map(key => harmonicaScale(key).total)
     expect(Math.max(...easy)).toBeLessThan(Math.min(...difficult))
+  })
+
+
+  it('finds the global optimum against exhaustive playable fingerings in every key', () => {
+    const layout = harmonicaLayout()
+    for (let key = 0; key < 12; key++) {
+      const pitches = [0, 2, 4, 5, 7, 9, 11, 12].map(offset => 60 + key + offset)
+      for (const phrase of [pitches, [...pitches].reverse()]) {
+        let routes: HarmonicaAction[][] = [[]]
+        for (const midi of phrase) routes = routes.flatMap(route => layout.filter(action => action.midi === midi).map(action => [...route, action]))
+        const best = optimizeHarmonicaPhrase(phrase)
+        expect(best.actions.map(action => action.midi)).toEqual(phrase)
+        expect(best.total).toBe(Math.min(...routes.map(phraseCost)))
+      }
+    }
+  })
+
+  it('charges sustained alternation more heavily than separated isolated notes', () => {
+    // Unique reeds: E4 (blow), F#4 (draw), G4 (blow), A4 (draw).
+    const alternating = optimizeHarmonicaPhrase([64, 66, 67, 69])
+    const isolated = optimizeHarmonicaPhrase([64, 66, 67, 67])
+    const extras = (actions: HarmonicaAction[]) => phraseCost(actions) - actions.slice(1).reduce((sum, action, index) => sum + continuityScore(actions[index]!, action), 0)
+    expect(extras(alternating.actions)).toBe(8)
+    expect(extras(isolated.actions)).toBe(2)
+    expect(optimizeHarmonicaPhrase([])).toEqual({ actions: [], total: 0 })
+    expect(() => optimizeHarmonicaPhrase([59])).toThrow(RangeError)
   })
 
   it('independently minimizes each adjacent pair in both directions, allowing substitute breaks', () => {
@@ -59,8 +99,15 @@ describe('12-hole C chromatic harmonica', () => {
       const pitches = [...new Set(layout.filter(action => isScaleTone(action.midi, key)).map(action => action.midi))].sort((a, b) => a - b)
       expect(scale.notes.map(note => note.midi)).toEqual(pitches)
       expect(scale.transitions).toHaveLength(pitches.length - 1)
-      expect(scale.total).toBe(scale.transitions.reduce((sum, edge) => sum + edge.score, 0))
-      expect(scale.total).toBe(scale.descending.reduce((sum, edge) => sum + edge.score, 0))
+      expect(scale.total).toBe(Math.round((scale.difficulty.ascending.total + scale.difficulty.descending.total) / 2))
+      expect(scale.difficulty.ascending.total).toBe(scale.difficulty.descending.total)
+      for (const route of [scale.difficulty.ascending, scale.difficulty.descending]) {
+        expect(route.actions).toHaveLength(15)
+        expect(Math.abs(route.actions.at(-1)!.midi - route.actions[0]!.midi)).toBe(24)
+        expect(Math.min(...route.actions.map(action => action.midi))).toBe(60 + key)
+        expect(route.total).toBe(phraseCost(route.actions))
+        for (const action of route.actions) expect(layout).toContainEqual(action)
+      }
       for (const [direction, edges] of [[1, scale.transitions], [-1, scale.descending]] as const) {
         for (const edge of edges) {
           expect(layout).toContainEqual(edge.from)
@@ -72,8 +119,9 @@ describe('12-hole C chromatic harmonica', () => {
               const before = layout.filter(action => action.midi === pitches[fromIndex - direction])
               const after = layout.filter(action => action.midi === pitches[toIndex + direction])
               const switchBreath = from.breath !== to.breath
-              const extra = 2 * (Number(switchBreath && before.length > 0 && before.every(action => action.breath !== from.breath))
-                + Number(switchBreath && after.length > 0 && after.every(action => action.breath !== to.breath)))
+              const source = switchBreath && before.length > 0 && before.every(action => action.breath !== from.breath)
+              const target = switchBreath && after.length > 0 && after.every(action => action.breath !== to.breath)
+              const extra = Number(source) + Number(target) + (source && target ? 4 : 0)
               possible.push(Number(from.pressed !== to.pressed) + 2 * Math.abs(from.hole - to.hole) + 4 * Number(switchBreath) + extra)
             }
           }
