@@ -12,6 +12,8 @@ const ConverterPage = lazy(() => import('./pages/ConverterPage').then(({ Convert
 const WorksPage = lazy(() => import('./pages/WorksPage').then(({ WorksPage: Page }) => ({ default: Page })))
 const WorksLayout = lazy(() => import('./pages/WorksLayout').then(({ WorksLayout: Page }) => ({ default: Page })))
 const ToolsPage = lazy(() => import('./pages/ToolsPage').then(({ ToolsPage: Page }) => ({ default: Page })))
+const HarmonicaScalesPage = lazy(() => import('./pages/HarmonicaScalesPage').then(({ HarmonicaScalesPage: Page }) => ({ default: Page })))
+const MetronomePage = lazy(() => import('./pages/MetronomePage').then(({ MetronomePage: Page }) => ({ default: Page })))
 
 function isH123Host() {
   return typeof window !== 'undefined' && window.location.hostname.split('.')[0]?.toLowerCase() === 'h123'
@@ -40,6 +42,8 @@ export default function App() {
             <Route path="/editor/:scoreId?" element={<EditorPage />} />
             <Route path="/scores" element={<ScoresPage />} />
             <Route path="/tools" element={<ToolsPage />} />
+            <Route path="/tools/scales" element={<HarmonicaScalesPage />} />
+            <Route path="/tools/metronome" element={<MetronomePage />} />
             <Route path="/scores/:slug" element={<ScoreReaderPage />} />
             <Route path="/works" element={<WorksLayout />}>
               <Route index element={<WorksPage />} />

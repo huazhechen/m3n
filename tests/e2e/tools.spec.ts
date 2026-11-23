@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('harmonica diagram highlights scale notes and scores their connections', async ({ page }) => {
-  await page.goto('/tools')
+  await page.goto('/tools/scales')
   await expect(page.getByRole('heading', { name: '半音阶口琴 · 大调音阶' })).toBeVisible()
   await expect(page.getByRole('combobox')).toHaveCount(0)
   const diagram = page.locator('.harmonica-diagram')
@@ -27,7 +27,7 @@ test('harmonica diagram highlights scale notes and scores their connections', as
 
 test('all twelve keys remain usable on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 })
-  await page.goto('/tools')
+  await page.goto('/tools/scales')
   const keys = page.getByRole('group', { name: '选择大调' }).getByRole('button')
   await expect(keys).toHaveCount(12)
   for (const key of await keys.all()) {
@@ -36,11 +36,55 @@ test('all twelve keys remain usable on a narrow screen', async ({ page }) => {
     await expect(page.locator('.harmonica-tile')).toHaveCount(48)
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-  const chart = page.getByRole('region', { name: '12 孔口琴音阶图，可横向滚动' })
-  expect(await chart.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true)
-  await chart.focus()
-  await page.keyboard.press('End')
+  const chart = page.getByRole('region', { name: '12 孔口琴音阶图', exact: true })
+  expect(await chart.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
+  const svg = chart.locator('svg')
+  const bounds = (await svg.boundingBox())!
+  expect(bounds.width).toBeLessThan(320)
+  expect(bounds.height / bounds.width).toBeCloseTo(318 / 790, 3)
+  const blocks = await svg.locator('.harmonica-tile rect').evaluateAll(elements => elements.map(element => { const rect = element.getBoundingClientRect(); return { left: rect.left, right: rect.right } }))
+  expect(blocks.every(block => block.left >= 0 && block.right <= 320)).toBe(true)
   await page.getByRole('link', { name: '乐谱库', exact: true }).click()
   await page.getByRole('link', { name: '练琴工具', exact: true }).click()
+  await page.getByRole('link', { name: '音阶图', exact: true }).click()
   await expect(page.getByRole('heading', { name: '半音阶口琴 · 大调音阶' })).toBeVisible()
+})
+
+
+test('tool index contains only two tool entries and opens child routes', async ({ page }) => {
+  await page.goto('/tools')
+  await expect(page.locator('.tools-catalog a')).toHaveText(['音阶图', '节拍器'])
+  await expect(page.getByRole('heading')).toHaveCount(0)
+  await expect(page.locator('.harmonica-diagram')).toHaveCount(0)
+  await expect(page.getByText('看清孔位、吹吸与按键，找到更连贯的音阶连接。')).toHaveCount(0)
+  await page.getByRole('link', { name: '音阶图', exact: true }).click()
+  await expect(page).toHaveURL(/\/tools\/scales$/)
+  await expect(page.locator('.harmonica-diagram')).toBeVisible()
+  await expect(page.locator('.tools-catalog')).toHaveCount(0)
+  await page.getByRole('link', { name: '练琴工具', exact: true }).click()
+  await page.getByRole('link', { name: '节拍器', exact: true }).click()
+  await expect(page).toHaveURL(/\/tools\/metronome$/)
+  await expect(page.getByRole('heading', { name: '节拍器', exact: true })).toBeVisible()
+  await expect(page.getByText('计划中', { exact: true })).toBeVisible()
+})
+
+test('major keys follow the circle of fifths and score colors run from green to yellow', async ({ page }) => {
+  await page.goto('/tools/scales')
+  const keys = page.getByRole('group', { name: '选择大调' }).getByRole('button')
+  await expect(keys).toHaveCount(12)
+  expect(await keys.evaluateAll(buttons => buttons.map(button => button.firstChild!.textContent))).toEqual(['C', 'G', 'D', 'A', 'E', 'B', 'G♭', 'D♭', 'A♭', 'E♭', 'B♭', 'F'])
+  const colors = await keys.evaluateAll(buttons => buttons.map(button => ({
+    score: Number(button.querySelector('span')!.textContent!.match(/\d+/)![0]),
+    rgb: getComputedStyle(button).backgroundColor.match(/\d+/g)!.map(Number),
+  })))
+  colors.sort((a, b) => a.score - b.score)
+  expect(colors[0]!.rgb[0]).toBeLessThan(colors[0]!.rgb[1]!)
+  expect(colors.at(-1)!.rgb[0]).toBe(colors.at(-1)!.rgb[1])
+  for (let index = 1; index < colors.length; index++) {
+    expect(colors[index]!.rgb[0]).toBeGreaterThanOrEqual(colors[index - 1]!.rgb[0]!)
+    expect(colors[index]!.rgb[1]).toBe(colors[0]!.rgb[1])
+    expect(colors[index]!.rgb[2]).toBe(colors[0]!.rgb[2])
+  }
+  await keys.last().click()
+  await expect(keys.last()).toHaveAttribute('aria-pressed', 'true')
 })
