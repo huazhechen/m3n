@@ -38,8 +38,11 @@ test('all twelve keys remain usable on a narrow screen', async ({ page }) => {
   expect(await chart.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
   const svg = chart.locator('svg')
   const bounds = (await svg.boundingBox())!
+  expect(bounds.width).toBeGreaterThan(300)
   expect(bounds.width).toBeLessThan(320)
-  expect(bounds.height / bounds.width).toBeCloseTo(318 / 790, 3)
+  expect(bounds.height / bounds.width).toBeCloseTo(312 / 618, 3)
+  expect((await svg.locator('.harmonica-tile rect').first().boundingBox())!.width).toBeGreaterThan(21)
+  await expect(svg.locator('.harmonica-row-labels text')).toHaveText(['按', '吹', '吸', '按'])
   const blocks = await svg.locator('.harmonica-tile rect').evaluateAll(elements => elements.map(element => { const rect = element.getBoundingClientRect(); return { left: rect.left, right: rect.right } }))
   expect(blocks.every(block => block.left >= 0 && block.right <= 320)).toBe(true)
   await page.getByRole('link', { name: '乐谱库', exact: true }).click()

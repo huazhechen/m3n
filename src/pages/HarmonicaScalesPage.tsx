@@ -5,8 +5,8 @@ import { CIRCLE_OF_FIFTHS, keyPitchClass } from '../lib/transpose-key'
 import '../styles/tools.css'
 
 const TILE = 44
-const LEFT = 82
-const STEP = 54
+const LEFT = 26
+const STEP = 48
 const SCALES = HARMONICA_KEYS.map((_, key) => harmonicaScale(key))
 const FIFTHS_KEYS = [...CIRCLE_OF_FIFTHS.slice(6), ...CIRCLE_OF_FIFTHS.slice(0, 6)].map(([key]) => keyPitchClass(key))
 const MIN_SCORE = Math.min(...SCALES.map(scale => scale.total))
@@ -52,19 +52,19 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
   return <>
     <div className="scale-diagram-intro"><h3>1 = {HARMONICA_KEYS[musicalKey]}</h3></div>
     <div className="harmonica-diagram-frame" role="region" aria-label="12 孔口琴音阶图">
-      <svg className="harmonica-diagram" viewBox="0 0 790 318" role="img" aria-labelledby="harmonica-diagram-title harmonica-diagram-description">
+      <svg className="harmonica-diagram" viewBox="0 4 618 312" role="img" aria-labelledby="harmonica-diagram-title harmonica-diagram-description">
         <title id="harmonica-diagram-title">{HARMONICA_KEYS[musicalKey]} 大调，12 孔 C 调半音阶口琴首调简谱图</title>
         <desc id="harmonica-diagram-description">上方内行吹，外行按键吹；下方内行吸，外行按键吸。</desc>
         <g className="harmonica-muted-tiles">{layout.filter(action => !isScaleTone(action.midi, musicalKey)).map(tile)}</g>
         <g className="harmonica-body" aria-hidden="true">
-          <rect x="64" y="136" width="674" height="46" rx="13" />
-          <path d="M78 144h646M78 174h646M738 153h25v12h-25M763 147v24" />
-          <circle cx="74" cy="159" r="2" /><circle cx="728" cy="159" r="2" />
+          <rect x="20" y="136" width="584" height="46" rx="13" />
+          <path d="M30 144h564M30 174h564M604 153h10v12h-10M614 149v20" />
+          <circle cx="25" cy="159" r="2" /><circle cx="599" cy="159" r="2" />
           {Array.from({ length: 12 }, (_, index) => <g key={index}><rect x={LEFT + index * STEP + 4} y="150" width="36" height="18" rx="3" /><text x={LEFT + index * STEP + 22} y="163">{index + 1}</text></g>)}
         </g>
         <g className="harmonica-row-labels" aria-hidden="true">{[
-          ['按键吹', 38], ['吹', 96], ['吸', 222], ['按键吸', 280],
-        ].map(([label, y]) => <text key={label} x="68" y={Number(y)}>{label}</text>)}</g>
+          ['按', 38], ['吹', 96], ['吸', 222], ['按', 280],
+        ].map(([label, y]) => <text key={`${label}-${y}`} x="18" y={Number(y)}>{label}</text>)}</g>
         <g className="harmonica-scale-tiles">{layout.filter(action => isScaleTone(action.midi, musicalKey)).map(tile)}</g>
         <g className="scale-connections">{edges.map((edge, index) => {
           const from = position(edge.from), to = position(edge.to)
@@ -88,7 +88,7 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
 
 export function HarmonicaScalesPage() {
   const [key, setKey] = useState(0)
-  return <main className="tools-page">
+  return <main className="tools-page scales-page">
     <TopNav />
     <section id="scales" className="scale-tool" aria-labelledby="scale-tool-title">
       <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴 · 大调音阶</h2><p>12 孔 C 调</p></header>

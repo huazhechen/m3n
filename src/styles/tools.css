@@ -33,7 +33,11 @@
 @media (max-width: 720px) {
   .tools-catalog { gap: .6rem; }
   .tool-entry { padding: .8rem; gap: .6rem; }
-  .scale-tool { padding: 1rem; }
+  .tools-page.scales-page { width: calc(100vw - 8px); }
+  .scale-tool { padding: .5rem .25rem; border-radius: 8px; }
+  .scale-tool h2 { margin-bottom: .4rem; }
+  .scale-tool-heading p { margin-block: 0; }
+  .scale-diagram-intro { margin-top: .4rem; }
   .scale-key-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .harmonica-diagram-frame { margin-inline: -.5rem; }
+  .harmonica-diagram-frame { margin: .125rem 0; }
 }
