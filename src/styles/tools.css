@@ -3,8 +3,9 @@
 .tool-entry svg { width: 2rem; height: 2rem; flex-shrink: 0; }
 .tool-entry:hover { border-color: #2f6f73; background: #edf4f0; }
 .scale-tool { background: #fff; border: 1px solid #d7ddd3; border-radius: 12px; padding: 1rem; scroll-margin-top: 1rem; }
-.scale-tool-heading, .scale-diagram-intro { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
-.scale-tool h2 { margin: 0 0 .75rem; font-size: 1.6rem; color: #163f45; }
+.scale-tool-heading, .scale-diagram-intro { display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.scale-tool-heading { margin-bottom: .75rem; row-gap: .75rem; }
+.scale-tool h2 { margin: 0; font-size: 1.6rem; color: #163f45; }
 .tuning-select { min-height: var(--ui-control-size); padding: 0 .65rem; border: 1px solid #c8d3cc; border-radius: 6px; background: #fff; color: #285b5c; font: inherit; cursor: pointer; }
 .scale-key-picker { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .4rem; }
 .scale-key-picker button { min-height: var(--ui-control-size); cursor: pointer; background: #f6f7f2; border: 1px solid #d7ddd3; border-radius: 6px; padding: .45rem .2rem; font-size: 1.1rem; }
@@ -34,7 +35,7 @@
   .tool-entry { padding: .8rem; gap: .6rem; }
   .tools-page.scales-page { width: calc(100vw - 8px); }
   .scale-tool { padding: .5rem .25rem; border-radius: 8px; }
-  .scale-tool h2 { margin-bottom: .4rem; }
+  .scale-tool-heading { margin-bottom: .65rem; row-gap: .65rem; }
   .scale-diagram-intro { margin-top: .4rem; }
   .scale-key-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .harmonica-diagram-frame { margin: .125rem 0; }

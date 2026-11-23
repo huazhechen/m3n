@@ -18,7 +18,7 @@ export function harmonicaLayout(tuning: TuningInput = 'standard'): HarmonicaActi
     const block = 60 + Math.floor(index / 4) * 12
     return (['blow', 'draw'] as const).flatMap(breath => [false, true].map(pressed => ({
       hole: index + 1, breath, pressed,
-      midi: block + (breath === 'blow' ? (mode === 'diminished' ? [0, 3, 6, 9] : [0, 4, 7, mode === 'c6' ? 9 : 12]) : [2, 5, 9, 11])[index % 4]! + Number(pressed),
+      midi: block + (breath === 'blow' ? (mode === 'diminished' ? [0, 3, 6, 9] : [0, 4, 7, mode === 'c6' ? 9 : 12]) : mode === 'diminished' ? [2, 5, 8, 11] : [2, 5, 9, 11])[index % 4]! + Number(pressed),
     })))
   }).flat()
 }

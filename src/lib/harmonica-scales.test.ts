@@ -60,7 +60,9 @@ describe('12-hole C chromatic harmonica', () => {
     expect(layout.filter(action => !action.pressed && action.breath === 'blow').slice(0, 4).map(action => action.midi % 12))
       .toEqual([0, 3, 6, 9])
     expect(layout.filter(action => !action.pressed && action.breath === 'draw').slice(0, 4).map(action => action.midi % 12))
-      .toEqual([2, 5, 9, 11])
+      .toEqual([2, 5, 8, 11])
+    expect(new Set(layout.map(action => action.midi % 12))).toEqual(new Set(Array.from({ length: 12 }, (_, pitch) => pitch)))
+    for (let key = 0; key < 12; key++) expect(harmonicaScale(key, 'diminished').total).toBeGreaterThanOrEqual(0)
     expect(layout.filter(action => action.pressed).every(action => layout.some(open => open.hole === action.hole && open.breath === action.breath && !open.pressed && action.midi === open.midi + 1))).toBe(true)
   })
 
