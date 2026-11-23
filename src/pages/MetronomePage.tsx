@@ -88,7 +88,6 @@ export function MetronomePage() {
       <div className="metronome-beats" role="group" aria-label="重音设置">{accents.map((accent, index) => <button key={index} type="button" aria-label={`第 ${index + 1} 拍重音`} aria-pressed={accent} data-active={running && activeBeat === index} onClick={() => setAccents(current => current.map((value, beat) => beat === index ? !value : value))}>{index + 1}<span>{accent ? '重' : '轻'}</span></button>)}</div>
       <button className="metronome-start" type="button" disabled={starting} onClick={() => { if (running) stop(); else void start() }}>{starting ? '启动中…' : running ? '暂停' : '开始'}</button>
       <label className="metronome-slider">音量 <output>{Math.round(volume * 100)}%</output><input aria-label="音量" type="range" min="0" max="100" value={Math.round(volume * 100)} onChange={event => setVolume(Number(event.target.value) / 100)} /></label>
-      <p className="metronome-hint">点击拍点切换重音；系统音量请用设备音量键调节。</p>
       {error && <p role="alert">{error}</p>}
       <div className="practice-totals"><div>今日练习<strong aria-label="今日练习时长">{formatPracticeTime(days[today] ?? 0)}</strong></div><div>累计练习<strong aria-label="累计练习时长">{formatPracticeTime(Object.values(days).reduce((sum, duration) => sum + duration, 0))}</strong></div></div>
       <details className="practice-history"><summary>每日记录</summary>{Object.entries(days).length ? <ol>{Object.entries(days).sort(([a], [b]) => b.localeCompare(a)).map(([day, duration]) => <li key={day}><time>{day}</time><span>{formatPracticeTime(duration)}</span></li>)}</ol> : <p>开始节拍器后自动记录。</p>}</details>
