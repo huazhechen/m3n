@@ -81,7 +81,11 @@ export function MetronomePage() {
     <TopNav />
     <section className="metronome-tool" aria-labelledby="metronome-title">
       <h1 id="metronome-title">节拍器</h1>
-      <div className="metronome-tempo"><output aria-label="当前速度">{bpm}</output><span>BPM</span></div>
+      <div className="metronome-tempo">
+        <button className="metronome-tempo-step" type="button" aria-label="速度减少 1 BPM" disabled={bpm <= 30} onClick={() => setBpm(current => Math.max(30, current - 1))}>−</button>
+        <div className="metronome-tempo-value"><output aria-label="当前速度">{bpm}</output><span>BPM</span></div>
+        <button className="metronome-tempo-step" type="button" aria-label="速度增加 1 BPM" disabled={bpm >= 240} onClick={() => setBpm(current => Math.min(240, current + 1))}>+</button>
+      </div>
       <label className="metronome-slider">速度<input aria-label="速度" type="range" min="30" max="240" step="1" value={bpm} onChange={event => setBpm(Number(event.target.value))} /></label>
       <div className="metronome-meters" role="group" aria-label="拍型">{[2, 4, 3, 6].map(beats => <button key={beats} type="button" aria-pressed={accents.length === beats} onClick={() => { setAccents(defaultAccents(beats)); setActiveBeat(-1) }}>{beats} 拍</button>)}</div>
       <div className="metronome-beats" role="group" aria-label="重音设置">{accents.map((accent, index) => <button key={index} type="button" aria-label={`第 ${index + 1} 拍重音`} aria-pressed={accent} data-active={running && activeBeat === index} onClick={() => setAccents(current => current.map((value, beat) => beat === index ? !value : value))}>{index + 1}<span>{accent ? '重' : '轻'}</span></button>)}</div>
