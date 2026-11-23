@@ -1,8 +1,7 @@
-export type MetronomeSettings = { bpm: number; accents: boolean[]; volume: number }
+export type MetronomeSettings = { bpm: number; accents: boolean[] }
 /** Schedule against the audio clock, independent of render and interval jitter. */
 export class PracticeMetronome {
   private context: AudioContext
-  private gain: GainNode
   private timer: ReturnType<typeof setInterval> | undefined
   private animation = 0
   private nextTime = 0
@@ -15,9 +14,6 @@ export class PracticeMetronome {
     this.settings = settings
     this.onBeat = onBeat
     this.context = new AudioContext()
-    this.gain = this.context.createGain()
-    this.gain.gain.value = settings.volume
-    this.gain.connect(this.context.destination)
   }
   async start() {
     await this.context.resume()
@@ -35,7 +31,6 @@ export class PracticeMetronome {
   update(settings: MetronomeSettings) {
     if (settings.accents.length !== this.settings.accents.length) this.beat = 0
     this.settings = settings
-    this.gain.gain.setTargetAtTime(settings.volume, this.context.currentTime, .015)
   }
   private schedule() {
     if (this.nextTime < this.context.currentTime) this.nextTime = this.context.currentTime + .01
@@ -49,7 +44,7 @@ export class PracticeMetronome {
       envelope.gain.linearRampToValueAtTime(accent ? .65 : .35, this.nextTime + .002)
       envelope.gain.exponentialRampToValueAtTime(.001, this.nextTime + .045)
       oscillator.connect(envelope)
-      envelope.connect(this.gain)
+      envelope.connect(this.context.destination)
       oscillator.start(this.nextTime)
       oscillator.stop(this.nextTime + .05)
       oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect() }

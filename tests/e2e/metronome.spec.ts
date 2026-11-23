@@ -1,10 +1,9 @@
 import { expect, test } from '@playwright/test'
 
-test('metronome adjusts tempo, meter, accents and output gain during playback', async ({ page }) => {
+test('metronome adjusts tempo, meter and accents during playback', async ({ page }) => {
   await page.addInitScript(() => {
     const events: { frequency: number; time: number }[] = []
-    const gains: number[] = []
-    Object.assign(window, { metronomeEvents: events, metronomeGains: gains })
+    Object.assign(window, { metronomeEvents: events })
     const original = AudioContext.prototype.createOscillator
     AudioContext.prototype.createOscillator = function () {
       const oscillator = original.call(this)
@@ -12,11 +11,7 @@ test('metronome adjusts tempo, meter, accents and output gain during playback', 
       oscillator.start = (when = 0) => { events.push({ frequency: oscillator.frequency.value, time: when }); start(when) }
       return oscillator
     }
-    const setTarget = AudioParam.prototype.setTargetAtTime
-    AudioParam.prototype.setTargetAtTime = function (value, time, constant) {
-      gains.push(value)
-      return setTarget.call(this, value, time, constant)
-    }
+
   })
   await page.goto('/tools/metronome')
   const tempo = page.getByRole('slider', { name: '速度', exact: true })
@@ -35,8 +30,6 @@ test('metronome adjusts tempo, meter, accents and output gain during playback', 
   const sounds = await page.evaluate(() => (window as unknown as { metronomeEvents: { frequency: number; time: number }[] }).metronomeEvents)
   expect(sounds.slice(0, 3).map(sound => sound.frequency)).toEqual([1500, 1500, 900])
   expect(sounds[1]!.time - sounds[0]!.time).toBeCloseTo(.5, 3)
-  await page.getByRole('slider', { name: '音量', exact: true }).fill('25')
-  await expect.poll(() => page.evaluate(() => (window as unknown as { metronomeGains: number[] }).metronomeGains.at(-1))).toBe(.25)
   await tempo.fill('240')
   await expect.poll(async () => {
     const sounds = await page.evaluate(() => (window as unknown as { metronomeEvents: { time: number }[] }).metronomeEvents)

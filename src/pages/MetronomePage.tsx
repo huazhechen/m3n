@@ -8,7 +8,6 @@ function defaultAccents(beats: number) { return Array.from({ length: beats }, (_
 export function MetronomePage() {
   const [bpm, setBpm] = useState(80)
   const [accents, setAccents] = useState(defaultAccents(4))
-  const [volume, setVolume] = useState(.7)
   const [running, setRunning] = useState(false)
   const [starting, setStarting] = useState(false)
   const [activeBeat, setActiveBeat] = useState(-1)
@@ -17,7 +16,7 @@ export function MetronomePage() {
   const engine = useRef<PracticeMetronome | null>(null)
   const recordedAt = useRef<number | null>(null)
   const daysRef = useRef(days)
-  const settings = { bpm, accents, volume }
+  const settings = { bpm, accents }
   const settingsRef = useRef(settings)
   settingsRef.current = settings
   const saveTime = () => {
@@ -58,7 +57,7 @@ export function MetronomePage() {
       setError(cause instanceof Error ? cause.message : '无法启动音频，请重试。')
     }
   }
-  useEffect(() => { engine.current?.update({ bpm, accents, volume }) }, [bpm, accents, volume])
+  useEffect(() => { engine.current?.update({ bpm, accents }) }, [bpm, accents])
   useEffect(() => {
     const timer = setInterval(() => {
       if (recordedAt.current !== null && !engine.current?.running) stop()
@@ -87,7 +86,6 @@ export function MetronomePage() {
       <div className="metronome-meters" role="group" aria-label="拍型">{[2, 4, 3, 6].map(beats => <button key={beats} type="button" aria-pressed={accents.length === beats} onClick={() => { setAccents(defaultAccents(beats)); setActiveBeat(-1) }}>{beats} 拍</button>)}</div>
       <div className="metronome-beats" role="group" aria-label="重音设置">{accents.map((accent, index) => <button key={index} type="button" aria-label={`第 ${index + 1} 拍重音`} aria-pressed={accent} data-active={running && activeBeat === index} onClick={() => setAccents(current => current.map((value, beat) => beat === index ? !value : value))}>{index + 1}<span>{accent ? '重' : '轻'}</span></button>)}</div>
       <button className="metronome-start" type="button" disabled={starting} onClick={() => { if (running) stop(); else void start() }}>{starting ? '启动中…' : running ? '暂停' : '开始'}</button>
-      <label className="metronome-slider">音量 <output>{Math.round(volume * 100)}%</output><input aria-label="音量" type="range" min="0" max="100" value={Math.round(volume * 100)} onChange={event => setVolume(Number(event.target.value) / 100)} /></label>
       {error && <p role="alert">{error}</p>}
       <div className="practice-totals"><div>今日练习<strong aria-label="今日练习时长">{formatPracticeTime(days[today] ?? 0)}</strong></div><div>累计练习<strong aria-label="累计练习时长">{formatPracticeTime(Object.values(days).reduce((sum, duration) => sum + duration, 0))}</strong></div></div>
       <details className="practice-history"><summary>每日记录</summary>{Object.entries(days).length ? <ol>{Object.entries(days).sort(([a], [b]) => b.localeCompare(a)).map(([day, duration]) => <li key={day}><time>{day}</time><span>{formatPracticeTime(duration)}</span></li>)}</ol> : <p>开始节拍器后自动记录。</p>}</details>
