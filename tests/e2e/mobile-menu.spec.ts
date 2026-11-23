@@ -7,11 +7,11 @@ for (const width of [320, 390, 1280]) {
     const header = page.locator('.top-nav')
     const nav = page.getByRole('navigation', { name: '主导航' })
     await expect(nav.getByRole('button', { name: '打印', exact: true })).toBeVisible()
-    await expect(nav.locator('a, button, [aria-disabled="true"]')).toHaveCount(5)
+    await expect(nav.locator('a, button, [aria-disabled="true"]')).toHaveCount(6)
     expect(await nav.locator('a, button, [aria-disabled="true"]').evaluateAll(elements => elements.map(element => element.getAttribute('aria-label'))))
-      .toEqual(['上一曲', '下一曲', '打印', '编辑', '乐谱库'])
+      .toEqual(['上一曲', '下一曲', '打印', '编辑', '练琴工具', '乐谱库'])
     await expect(page.getByRole('button', { name: '页面菜单' })).toHaveCount(0)
-    for (const name of ['上一曲', '下一曲', '打印', '编辑', '乐谱库']) {
+    for (const name of ['上一曲', '下一曲', '打印', '编辑', '练琴工具', '乐谱库']) {
       const action = nav.getByLabel(name, { exact: true })
       await expect(action).toBeVisible()
       await expect(action.locator('svg')).toBeVisible()
@@ -41,12 +41,13 @@ for (const width of [320, 390, 1280]) {
 }
 
 for (const width of [390, 1280]) {
-  test(`home and reading pages show only the library action at ${width}px`, async ({ page }) => {
+  test(`home and reading pages show tools and library actions at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     for (const route of ['/', '/?doc=guide', '/?doc=manual']) {
       await page.goto(route)
       const nav = page.getByRole('navigation', { name: '主导航' })
-      await expect(nav.locator('a, button')).toHaveCount(1)
+      await expect(nav.locator('a, button')).toHaveCount(2)
+      await expect(nav.getByRole('link', { name: '练琴工具', exact: true })).toBeVisible()
       await expect(nav.getByRole('link', { name: '乐谱库', exact: true })).toBeVisible()
       if (route !== '/') {
         await expect(page.locator('.markdown-panel')).toBeVisible()

@@ -7,6 +7,8 @@
 
 开发维护文档：
 
+- [TOOLS.md](TOOLS.md)：练琴工具与半音阶口琴十二调音阶图。
+
 - [ARCHITECTURE.md](ARCHITECTURE.md)：前端架构与工作区边界。
 - [CODEGRAPH.md](CODEGRAPH.md)：模块依赖与数据流。
 - [NATIVE_ENGINES.md](NATIVE_ENGINES.md)：自研渲染与演奏链路。

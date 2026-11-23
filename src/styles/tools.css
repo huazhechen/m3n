@@ -1,0 +1,58 @@
+.tools-heading { padding: 1rem 0 .75rem; }
+.tools-heading h1 { margin: .5rem 0; font-size: 2.4rem; color: #163f45; line-height: 1.25; }
+.tools-heading p, .scale-help { color: #626c65; }
+.tools-catalog { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.tool-entry { display: flex; gap: 1rem; align-items: center; border: 1px solid #d7ddd3; border-radius: 10px; padding: .65rem 1rem; background: #fff; }
+.tool-entry.is-current { border-color: #2f6f73; background: #edf4f0; }
+.tool-entry.is-planned { color: #737a73; background: transparent; }
+.tool-entry svg { width: 2rem; height: 2rem; flex-shrink: 0; }
+.tool-entry strong, .tool-entry small { display: block; }
+.tool-entry small { margin-top: .25rem; font-size: .85rem; }
+.scale-tool { background: #fff; border: 1px solid #d7ddd3; border-radius: 12px; padding: 1rem; scroll-margin-top: 1rem; }
+.scale-tool-heading, .scale-diagram-intro { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
+.scale-tool h2 { margin: 0 0 .75rem; font-size: 1.6rem; color: #163f45; }
+.scale-tool-heading p, .scale-diagram-intro > span { color: #626c65; font-size: .9rem; }
+.scale-key-picker { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .4rem; }
+.scale-key-picker button { min-height: var(--ui-control-size); cursor: pointer; background: #f6f7f2; border: 1px solid #d7ddd3; border-radius: 6px; padding: .45rem .2rem; font-size: 1.1rem; }
+.scale-key-picker button span { display: block; font-size: .7rem; }
+.scale-key-picker button[aria-pressed=true] { color: #fff; background: #285b5c; border-color: #285b5c; }
+.scale-diagram-intro { margin-top: .75rem; }
+.scale-diagram-intro h3 { margin: 0; font-size: 1.2rem; }
+.harmonica-diagram-scroll { overflow-x: auto; margin: .25rem -.5rem; }
+.harmonica-diagram { display: block; width: 100%; min-width: 660px; max-width: 1000px; margin-inline: auto; font-family: system-ui, sans-serif; }
+.harmonica-body { fill: #f7f8f5; stroke: #7c8d87; stroke-width: 1.5; }
+.harmonica-body path { fill: none; }
+.harmonica-body g rect { fill: #e4eae5; }
+.harmonica-body text { fill: #4c6258; stroke: none; font-size: 10px; text-anchor: middle; }
+.harmonica-row-labels text { fill: #5b6d63; font-size: 12px; text-anchor: end; dominant-baseline: central; }
+.harmonica-row-labels .harmonica-hole-label { font-size: 14px; }
+.scale-connections path { fill: none; stroke-width: 2; stroke-linecap: round; opacity: .8; }
+.harmonica-tile rect { fill: #f8f9f7; stroke: #eef0ec; stroke-width: 1; }
+.harmonica-tile text { fill: #c8cec7; text-anchor: middle; dominant-baseline: central; font-size: 23px; font-weight: 400; }
+.harmonica-tile.in-scale rect { fill: #e4f0e7; stroke: #9ab8a3; }
+.harmonica-tile.in-scale text { fill: #204e38; font-weight: 750; }
+.harmonica-tile .degree-accidental { font-size: 14px; }
+.harmonica-tile circle { fill: #c8cec7; }
+.harmonica-tile.in-scale circle { fill: #204e38; }
+.continuity-legend { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-top: 1px solid #e2e7df; padding-top: .65rem; }
+.continuity-legend p { margin: .2rem 0; font-size: .9rem; color: #626c65; }
+.continuity-color-scale { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.continuity-color-scale > span { border-top: 4px solid; min-width: 1.8rem; text-align: center; padding-top: .25rem; font-weight: 600; }
+.continuity-color-scale small { flex-basis: 100%; color: #626c65; }
+.scale-help { font-size: .9rem; line-height: 1.65; }
+.scale-route-details { margin-top: 1rem; border-top: 1px solid #e2e7df; padding-top: .65rem; }
+.scale-route-details summary { cursor: pointer; min-height: var(--ui-control-size); color: #285b5c; }
+.scale-route-details ol { padding-left: 1.8rem; columns: 3; column-gap: 2rem; }
+.scale-route-details li { padding: .4rem 0; break-inside: avoid; }
+.scale-route-details li span { display: block; font-size: .85rem; }
+.tools-page :focus-visible { outline: 2px solid #285b5c; outline-offset: 3px; }
+@media (max-width: 720px) {
+  .tools-heading { padding-top: 1rem; }
+  .tools-heading h1 { font-size: 1.8rem; }
+  .tools-catalog { gap: .6rem; }
+  .tool-entry { padding: .8rem; gap: .6rem; }
+  .scale-tool { padding: 1rem; }
+  .scale-key-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .harmonica-diagram-scroll { margin-inline: -.5rem; }
+  .scale-route-details ol { columns: 2; }
+}

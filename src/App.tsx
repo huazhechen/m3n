@@ -11,6 +11,7 @@ const ScoreReaderPage = lazy(() => import('./pages/ScoreReaderPage').then(({ Sco
 const ConverterPage = lazy(() => import('./pages/ConverterPage').then(({ ConverterPage: Page }) => ({ default: Page })))
 const WorksPage = lazy(() => import('./pages/WorksPage').then(({ WorksPage: Page }) => ({ default: Page })))
 const WorksLayout = lazy(() => import('./pages/WorksLayout').then(({ WorksLayout: Page }) => ({ default: Page })))
+const ToolsPage = lazy(() => import('./pages/ToolsPage').then(({ ToolsPage: Page }) => ({ default: Page })))
 
 function isH123Host() {
   return typeof window !== 'undefined' && window.location.hostname.split('.')[0]?.toLowerCase() === 'h123'
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/editor/:scoreId?" element={<EditorPage />} />
             <Route path="/scores" element={<ScoresPage />} />
+            <Route path="/tools" element={<ToolsPage />} />
             <Route path="/scores/:slug" element={<ScoreReaderPage />} />
             <Route path="/works" element={<WorksLayout />}>
               <Route index element={<WorksPage />} />

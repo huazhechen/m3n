@@ -48,6 +48,7 @@
 /* Keep mobile queries in sync with MOBILE_LAYOUT_QUERY in lib/responsive-layout.ts. */
 @media (max-width: 720px), (pointer: coarse) and (hover: none) {
   .top-nav { gap: var(--ui-space); }
+  .top-nav > nav { flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
   .top-nav nav,
   .top-nav .score-reader-actions,
   .top-nav .score-reader-navigation,
