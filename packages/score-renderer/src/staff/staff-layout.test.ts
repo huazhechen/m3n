@@ -238,7 +238,7 @@ describe('staff layout contract', () => {
   })
 })
 
-it('renders an unmeasured interlude with a dashed line and unnumbered zero-time slot', () => {
+it('renders an unmeasured interlude with a multimeasure rest symbol and no text or count', () => {
   const source = '{4/4}\nN: 1 2 3 4 | {interlude} | 5 6 7 1e |||'
   const document = projectStaffDocument(analyzeM3N(source).score)
   expect(document.measures.map(measure => measure.number)).toEqual([1, 1, 2])
@@ -248,5 +248,8 @@ it('renders an unmeasured interlude with a dashed line and unnumbered zero-time 
   const systems = engraveStaffSystems(document, lines, 600, measurer, 0.25, false)
   const marker = systems.flatMap(system => findAll(system.node, node => hasClass(node, 'interlude')))
   expect(marker.length).toBeGreaterThan(0)
-  expect(marker.flatMap(nodes).some(node => node.tagName === 'path' && node.attributes['stroke-dasharray'] === '4 3')).toBe(true)
+  expect(marker).toHaveLength(1)
+  expect(hasClass(marker[0]!, 'multi-rest')).toBe(true)
+  expect(marker.flatMap(nodes).filter(node => node.tagName === 'path')).toHaveLength(1)
+  expect(marker.flatMap(nodes).some(node => node.tagName === 'text' || node.attributes['stroke-dasharray'])).toBe(false)
 })

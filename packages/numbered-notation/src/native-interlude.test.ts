@@ -8,7 +8,7 @@ import { DefaultTextMeasurer } from './native-measure.js'
 
 const source = '{4/4}\nN: 1 2 3 4 | {interlude} | 5 6 7 1e |||'
 describe('unmeasured interlude engraving', () => {
-  it.each([320, 600, 800])('shows a multimeasure rest symbol labeled 间奏 without count or duration at width %s', width => {
+  it.each([320, 600, 800])('shows a multimeasure rest symbol without text, count or duration at width %s', width => {
     const document = parseM3NDocument(source)
     const layout = layoutNativeScore(document, { width, paged: false, textMeasurer: new DefaultTextMeasurer() })
     expect(layout.projection.measures.map(measure => measure.number)).toEqual([1, 1, 2])
@@ -17,11 +17,12 @@ describe('unmeasured interlude engraving', () => {
     expect(marker.event).toBeUndefined()
     const root = new DOMParser().parseFromString(renderNativePages(layout).join(''), 'text/html')
     const rendered = root.querySelector('[data-m3n-role="interlude"]')!
-    expect(rendered.textContent).toBe('间奏')
+    expect(rendered.textContent).toBe('')
+    expect(rendered.querySelector('text')).toBeNull()
     expect(rendered.querySelectorAll('line')).toHaveLength(3)
     expect(rendered.querySelector('[stroke-dasharray]')).toBeNull()
     expect(rendered.querySelector('[data-m3n-role="multi-rest"]')).toBeNull()
-    expect(scoreFontText(document)).toContain('间奏')
-    expect(scoreFontText(source)).toContain('间奏')
+    expect(scoreFontText(document)).not.toContain('间奏')
+    expect(scoreFontText(source)).not.toContain('间奏')
   })
 })

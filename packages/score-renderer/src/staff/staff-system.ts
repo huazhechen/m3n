@@ -129,20 +129,11 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           if (i > 0 && event.tempo !== undefined && event.tempo !== previous)
             addTempo(event.tempo * tempoScale, event.meterCount ?? member.measure.meterCount, event.meterUnit ?? member.measure.meterUnit, entry.notes[0]!.getNoteHeadBeginX(), measureNode)
         }
-        if (member.measure.source.interlude) {
-          const cx = x + model.start + (target - model.endInset - model.start) / 2
-          const cy = model.staves[0]!.getYForLine(2)
-          const labelY = model.staves[0]!.getYForLine(0) - 2 / scale - measureText('间奏', 16 / scale).descent
-          measureNode.children.push(element('g', { class: 'interlude', 'data-m3n-role': 'interlude' }, [
-            element('path', { d: `M${cx - 24} ${cy} h48`, stroke: '#000', 'stroke-width': '1', 'stroke-dasharray': '4 3', fill: 'none' }),
-            ...nodes(text('间奏', cx, labelY, 16, 'interlude', { 'text-anchor': 'middle' })),
-          ]))
-        }
-        if (member.measure.source.multiRest) {
+        if (member.measure.source.multiRest || member.measure.source.interlude) {
           const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = model.staves[0]!.getYForLine(2)
-          const count = String(member.measure.source.multiRest)
+          const count = member.measure.source.interlude ? '' : String(member.measure.source.multiRest)
           const countY = model.staves[0]!.getYForLine(0) - 0.5 - 2 / scale - measureText(count, 16 / scale, true).descent
-          measureNode.children.push(element('g', { class: 'rest multi-rest' }, [element('path', { d: `M${cx - 20} ${cy} h40 M${cx - 20} ${cy - 8} v16 M${cx + 20} ${cy - 8} v16`, stroke: '#000', 'stroke-width': '3', fill: 'none' }), ...nodes(text(count, cx, countY, 16, 'rest', { 'text-anchor': 'middle', 'font-weight': 'bold' }))]))
+          measureNode.children.push(element('g', { class: 'rest multi-rest' + (member.measure.source.interlude ? ' interlude' : ''), ...(member.measure.source.interlude ? { 'data-m3n-role': 'interlude' } : {}) }, [element('path', { d: `M${cx - 20} ${cy} h40 M${cx - 20} ${cy - 8} v16 M${cx + 20} ${cy - 8} v16`, stroke: '#000', 'stroke-width': '3', fill: 'none' }), ...(count ? nodes(text(count, cx, countY, 16, 'rest', { 'text-anchor': 'middle', 'font-weight': 'bold' })) : [])]))
         }
         // One spanning barline, redrawn after the final bass/lyric spacing pass.
         const y1 = model.staves[0]!.getYForLine(0), y2 = model.staves.at(-1)!.getYForLine(4)

@@ -14,10 +14,10 @@ const supports = (font: ScoreFontResource, char: string) => {
 
 /** Includes metadata and lyric visits; Map values are part of ScoreDocument. */
 export function scoreFontText(value: unknown): string {
-  if (typeof value === 'string') return value + (value.includes('{interlude}') ? '间奏' : '')
+  if (typeof value === 'string') return value
   if (value instanceof Map) return [...value.values()].map(scoreFontText).join('')
   if (Array.isArray(value)) return value.map(scoreFontText).join('')
-  if (value && typeof value === 'object') return ('interlude' in value && value.interlude === true ? '间奏' : '') + Object.values(value).map(scoreFontText).join('')
+  if (value && typeof value === 'object') return Object.values(value).map(scoreFontText).join('')
   return ''
 }
 

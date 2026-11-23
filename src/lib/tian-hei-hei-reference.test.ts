@@ -15,19 +15,21 @@ const reference = parseM3NDocument(normalizedReference)
 const referenceBars = reference.parts.get('score')!.melody.filter(bar => bar.events.length)
 const expectedEvents = referenceBars.slice(0, 87).flatMap((bar, index) => {
   const number = index + 1
-  if ([12, 26].includes(number) || (number >= 46 && number <= 52)) return []
+  if (number >= 46 && number <= 52) return []
   return bar.events
 })
 const performed = unfoldScorePerformance(document).parts.get('score')!.melody.flatMap(bar => bar.events)
 const eventSignature = (event: typeof performed[number]) => [event.pitches.join(',') || '0', event.beats, event.tie, event.key]
 
 describe('Tian Hei Hei, compact EasyPiano vocal edition', () => {
-  it('uses two nonnested repeats and three unmeasured passages in 50 numbered measure positions', () => {
+  it('uses two nonnested repeats and two unmeasured passages in 51 numbered measure positions', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(document).toMatchObject({ key: 'Ab', meterCount: 4, meterUnit: 4, tempo: 112 })
     const written = document.parts.get('score')!.melody.filter(bar => bar.events.length || bar.interlude)
-    expect(written.filter(bar => bar.events.length)).toHaveLength(50)
-    expect(written.filter(bar => bar.interlude)).toHaveLength(3)
+    expect(written.filter(bar => bar.events.length)).toHaveLength(51)
+    expect(written[11]).toMatchObject({ events: [{ pitches: [], beats: 4 }] })
+    expect(written[11]!.interlude).toBeUndefined()
+    expect(written.filter(bar => bar.interlude)).toHaveLength(2)
     expect(written.filter(bar => bar.left === 'rptstart')).toHaveLength(2)
     expect(written.filter(bar => bar.right === 'rptend')).toHaveLength(2)
     expect(document.order).toBeUndefined()
@@ -40,7 +42,7 @@ describe('Tian Hei Hei, compact EasyPiano vocal edition', () => {
   it('preserves every performed pitch, octave, rhythm, tie and ordinary rest from the normalized reference', () => {
     expect(performed.map(eventSignature)).toEqual(expectedEvents.map(eventSignature))
     const performance = compileScorePerformance(document)
-    expect(performance.beats).toBe(309)
+    expect(performance.beats).toBe(317)
     expect(performance.elements).toHaveLength(expectedEvents.length)
     expect(performance.notes.map(note => [note.pitch, note.end - note.start]))
       .toEqual(compileScorePerformance(reference).notes.map(note => [note.pitch, note.end - note.start]))
@@ -72,11 +74,11 @@ describe('Tian Hei Hei, compact EasyPiano vocal edition', () => {
       .toEqual([['0', '0', '0', '3', '4'], ['0', '0', '0', '5', '2e', '1e']])
   })
 
-  it('skips all three interludes and ends on the last vocal refrain', () => {
+  it('skips both unmeasured interludes and ends on the last vocal refrain', () => {
     expect(source).not.toContain('{inst}')
     const performance = compileScorePerformance(document)
     expect(performance.elements[0]!.start).toBe(0)
     expect(performance.elements.at(-1)!.end).toBe(performance.beats)
-    expect(unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.interlude)).toHaveLength(4)
+    expect(unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.interlude)).toHaveLength(2)
   })
 })

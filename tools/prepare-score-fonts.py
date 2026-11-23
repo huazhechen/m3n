@@ -55,7 +55,7 @@ def save_subset(name, text):
 labels = '演唱作词作曲音域：'
 for path in sorted([*root.glob('src/scores/*.m3n'), *root.glob('src/works/*.m3n'), *root.glob('src/examples/*.m3n')]):
     source = path.read_text()
-    text = labels + ('间奏' if '{interlude}' in source else '') + ''.join(chr(c) for c in range(32, 127)) + source
+    text = labels + ''.join(chr(c) for c in range(32, 127)) + source
     digest = hashlib.sha256(''.join(sorted(set(text))).encode()).hexdigest()[:16]
     name = f'NotoSansSC-{digest}.ttf'
     if not any(item['file'] == name for item in manifest):

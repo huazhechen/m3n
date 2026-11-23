@@ -133,7 +133,7 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
   })
   // Multi-rests have no tickables, but their fixed bar and count still need
   // a full body after the clef/key/meter, with padding at both barlines.
-  const multiRestWidth = measure.source.interlude ? Math.max(60, measureText('间奏', 16 / STAFF_SCALE).width + 16) : measure.source.multiRest
+  const multiRestWidth = measure.source.interlude ? 59 : measure.source.multiRest
     ? Math.max(43, measureText(String(measure.source.multiRest), 16 / STAFF_SCALE, true).width) + 16
     : 0
   const endInset = Math.max(0, ...staves.flatMap(stave => stave.getModifiers(StaveModifierPosition.END)
