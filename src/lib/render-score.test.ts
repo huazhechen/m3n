@@ -25,25 +25,25 @@ describe('numbered automatic width margins', () => {
     expect(pageCount.mock.calls.some(([options]) => options.width === selected && options.minimumNoteGapEm === undefined)).toBe(true)
   })
 
-  it('keeps the automatic width at least 560px when narrower layouts fit', async () => {
+  it('keeps the automatic width at least 540px when narrower layouts fit', async () => {
     pageCount.mockReset()
     pageCount.mockImplementation(({ width }) => width >= 510 ? 2 : 3)
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(560)
-    expect(pageCount.mock.calls.every(([options]) => options.width >= 560 && options.width <= 640)).toBe(true)
+    expect(selected).toBe(540)
+    expect(pageCount.mock.calls.every(([options]) => options.width >= 540 && options.width <= 640)).toBe(true)
   })
 })
 
 describe('staff automatic width range', () => {
-  it.each([510, 590, 640])('selects within 560–640px when the required width is %s', async requiredWidth => {
+  it.each([510, 590, 640])('selects within 540–640px when the required width is %s', async requiredWidth => {
     staffPageCount.mockReset()
     staffPageCount.mockImplementation((_paged, width) => width >= requiredWidth ? 2 : 3)
 
     const selected = await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(Math.max(560, requiredWidth))
-    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 560 && width <= 640)).toBe(true)
+    expect(selected).toBe(Math.max(540, requiredWidth))
+    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 540 && width <= 640)).toBe(true)
   })
 })
