@@ -44,7 +44,8 @@ function HarmonicaDiagram({ musicalKey, tuning }: { musicalKey: number; tuning: 
     return <g key={actionId(action)} data-in-scale={inScale} className={`harmonica-tile${inScale ? ' in-scale' : ''}`}>
       <title>{degreeLabel(action.midi, musicalKey)}，{label}，{actionLabel(action)}，{inScale ? '调内音' : '非调内音'}</title>
       <rect x={x} y={y} width={TILE} height={TILE} rx="4" />
-      <text x={x + TILE / 2} y={y + TILE / 2 + 1}>{degree.length > 1 && <tspan className="degree-accidental" x={x + TILE / 2 - 13}>{degree.slice(0, -1)}</tspan>}<tspan x={x + TILE / 2}>{degree.at(-1)}</tspan></text>
+      {degree.length > 1 && <text className="degree-accidental" x={x + TILE / 2 - 13} y={y + TILE / 2 + 5}>{degree.slice(0, -1)}</text>}
+      <text className="degree-number" x={x + TILE / 2} y={y + TILE / 2 + 8}>{degree.at(-1)}</text>
       {Array.from({ length: Math.abs(octave) }, (_, index) => <circle className="degree-octave-dot" key={index} cx={x + TILE / 2} cy={y + TILE / 2 + (octave > 0 ? -14 - index * 3 : 14 + index * 3)} r="1.25" />)}
     </g>
   }

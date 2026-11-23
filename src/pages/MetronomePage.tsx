@@ -136,7 +136,7 @@ export function MetronomePage() {
     }
   }, [])
   const today = localDay(new Date())
-  return <main className="tools-page">
+  return <main className="tools-page metronome-page">
     <TopNav />
     <section className="metronome-tool" aria-labelledby="metronome-title">
       <h1 id="metronome-title">节拍器</h1>
