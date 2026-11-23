@@ -29,7 +29,7 @@ export type NativeGlyph = {
   lyrics: Map<number, LyricRowData>; lyricBaselines?: Map<number, number>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]
   arpeggioLayout?: ReturnType<typeof nativeArpeggioGeometry>; markLayout?: NativeMarkPlacement[]; annotationLayout?: NativeAnnotation[]; inkLeft?: number; inkRight?: number; musicBottom?: number; graceLayout?: ReturnType<typeof nativeGraceGeometry>; musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number
   tieTop?: number; musicInk?: NativeInk[]
-  left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; paragraph: string
+  left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; interlude?: boolean; paragraph: string
   instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number
 }
 export type NativeColumn = {
@@ -230,13 +230,13 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           }
         }
       }
-      if (measure.multiRest) {
+      if (measure.multiRest || measure.interlude) {
         const controls = measure.multiRestState ? settingsControls(measure.multiRestState) : []
         if (measure.navigation?.includes('coda')) controls.unshift(measureNativeControl('coda','Coda',options.textMeasurer))
         const [count, unit] = state.meter.split('/').map(Number)
         const position = measure.barEnd === undefined ? undefined : measure.barEnd - 1
         const paragraph = position === undefined ? '0' : document.paragraphs?.find(range => range.start <= position && position < range.end)?.id ?? '0'
-        const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.multiRest * count! * 4 / unit!, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls, marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest, paragraph: `${partIndex}:${paragraph}` }
+        const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.interlude ? 0 : measure.multiRest! * count! * 4 / unit!, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls, marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest ?? 1, interlude: measure.interlude, paragraph: `${partIndex}:${paragraph}` }
         if (measure.navigation?.includes('segno')) glyph.controls.unshift(measureNativeControl('segno', '𝄋', options.textMeasurer))
         glyph.markLayout = []
         const ink = nativeSvgInk(painter.music(glyph), options.textMeasurer)
@@ -254,9 +254,9 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
     const count = Math.max(part.melody.length, result.hasBass ? part.bass.length : 0)
     for (let index = 0; index < count; index++) {
       const source = part.melody[index] ?? { events: [] }
-      if (!source.events.length && !source.multiRest && !part.bass[index]?.events.length) continue
+      if (!source.events.length && !source.multiRest && !source.interlude && !part.bass[index]?.events.length) continue
       const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? em(12) : 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
-      measure.number = ++measureNumber
+      measure.number = source.interlude ? measureNumber : ++measureNumber
       measureNumber += (source.multiRest ?? 1) - 1
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]
         .filter(name => name !== 'segno' && name !== 'coda').map(name => measureNativeNavigation(name, options.textMeasurer))

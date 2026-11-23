@@ -54,6 +54,8 @@ export type ScoreMeasure = {
   ending?: string
   breakBefore?: boolean
   breakAfter?: boolean
+  /** Unmeasured instrumental passage: visible, unnumbered and silent in playback. */
+  interlude?: boolean
   multiRest?: number
   /** Settings at the onset of a rest-only measure, which has no ScoreEvent. */
   multiRestState?: { key: string; keyPasses?: readonly string[]; meterCount: number; meterUnit: number; tempo: number }

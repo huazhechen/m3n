@@ -237,3 +237,16 @@ describe('staff layout contract', () => {
     expect(open.pages.every((page) => page.gap === 80)).toBe(true)
   })
 })
+
+it('renders an unmeasured interlude with a dashed line and unnumbered zero-time slot', () => {
+  const source = '{4/4}\nN: 1 2 3 4 | {interlude} | 5 6 7 1e |||'
+  const document = projectStaffDocument(analyzeM3N(source).score)
+  expect(document.measures.map(measure => measure.number)).toEqual([1, 1, 2])
+  expect(document.measures[1]!.melody).toEqual([])
+  const measurer = textMeasurer()
+  const lines = planStaffLines(document, 600, false, measurer, 0.25)
+  const systems = engraveStaffSystems(document, lines, 600, measurer, 0.25, false)
+  const marker = systems.flatMap(system => findAll(system.node, node => hasClass(node, 'interlude')))
+  expect(marker.length).toBeGreaterThan(0)
+  expect(marker.flatMap(nodes).some(node => node.tagName === 'path' && node.attributes['stroke-dasharray'] === '4 3')).toBe(true)
+})

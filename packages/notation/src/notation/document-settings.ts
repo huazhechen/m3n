@@ -39,7 +39,7 @@ export function documentSettings(tree: M3NSyntaxTree) {
     if (token.kind === 'note' || token.kind === 'group' || token.kind === 'bar') break
     if (token.kind !== 'attribute') continue
     const value = token.content ?? ''
-    if (value.startsWith('rest=')) break
+    if (value.startsWith('rest=') || value === 'interlude') break
     if (value.startsWith('key=')) {
       const keys = value.slice(4).split(',').map(key => key.trim())
       key = keys[0]!

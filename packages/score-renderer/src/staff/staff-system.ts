@@ -129,6 +129,15 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           if (i > 0 && event.tempo !== undefined && event.tempo !== previous)
             addTempo(event.tempo * tempoScale, event.meterCount ?? member.measure.meterCount, event.meterUnit ?? member.measure.meterUnit, entry.notes[0]!.getNoteHeadBeginX(), measureNode)
         }
+        if (member.measure.source.interlude) {
+          const cx = x + model.start + (target - model.endInset - model.start) / 2
+          const cy = model.staves[0]!.getYForLine(2)
+          const labelY = model.staves[0]!.getYForLine(0) - 2 / scale - measureText('间奏', 16 / scale).descent
+          measureNode.children.push(element('g', { class: 'interlude', 'data-m3n-role': 'interlude' }, [
+            element('path', { d: `M${cx - 24} ${cy} h48`, stroke: '#000', 'stroke-width': '1', 'stroke-dasharray': '4 3', fill: 'none' }),
+            ...nodes(text('间奏', cx, labelY, 16, 'interlude', { 'text-anchor': 'middle' })),
+          ]))
+        }
         if (member.measure.source.multiRest) {
           const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = model.staves[0]!.getYForLine(2)
           const count = String(member.measure.source.multiRest)
@@ -138,7 +147,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         // One spanning barline, redrawn after the final bass/lyric spacing pass.
         const y1 = model.staves[0]!.getYForLine(0), y2 = model.staves.at(-1)!.getYForLine(4)
         if (member.measure.source.right !== 'invis') measureNode.children.push(element('g', { class: 'barLine' }, [element('path', { d: `M${x + target} ${y1} V${y2}`, stroke: '#000', 'stroke-width': '1', fill: 'none' })]))
-        if (measureNumbers && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - 10, 12, 'mNum', { 'text-anchor': 'end' }))
+        if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - 10, 12, 'mNum', { 'text-anchor': 'end' }))
         x += target
       }
       function addNavigation(nav: string, x: number, y: number, parent: XmlNode) {

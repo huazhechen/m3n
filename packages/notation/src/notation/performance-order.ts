@@ -28,7 +28,7 @@ export function unfoldScorePerformance(document: ScoreDocument): ScoreDocument {
       const clone = (measure:ScoreMeasure|undefined, staff:'melody'|'bass'):ScoreMeasure => ({events:(measure?.events ?? []).map((event)=>{
         const copy={...event,keyPasses:undefined,octaveShift:event.octaveShift+octaveOffset,key:targetKey ? sectionVisitKey(event.key,entryKey,targetKey) : event.keyPasses?.[pass-1] ?? event.key,playbackId:`${ids.get(event)}${pass>1?`-rend${pass}`:''}`,sourceStart:event.sourceStart+offset,sourceEnd:event.sourceEnd+offset,navigation:[]}
         copies.push({source:event,event:copy,staff});return copy
-      }),...(measure?.multiRest?{multiRest:measure.multiRest}:{}),...(measure?.multiRestState?{multiRestState:{...measure.multiRestState,
+      }),...(measure?.interlude?{interlude:true}:{}),...(measure?.multiRest?{multiRest:measure.multiRest}:{}),...(measure?.multiRestState?{multiRestState:{...measure.multiRestState,
         keyPasses:undefined,key:targetKey ? sectionVisitKey(measure.multiRestState.key,entryKey,targetKey) : measure.multiRestState.keyPasses?.[pass-1] ?? measure.multiRestState.key}}:{})})
       const melody = clone(host,'melody'), bass = clone(part.bass[index],'bass')
       if (orderIndex >= 0) { melody.orderIndex = orderIndex; bass.orderIndex = orderIndex }

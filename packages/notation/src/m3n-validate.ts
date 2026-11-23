@@ -22,6 +22,7 @@ type Unit = {
   expected: number
   currentHasAtom: boolean
   multiRestPendingBar: boolean
+  interludePendingBar: boolean
 }
 
 type ParsedPitch = {
@@ -150,6 +151,7 @@ function createUnit(meter: Meter): Unit {
     expected: meter.beats * 4 / meter.beatValue,
     currentHasAtom: false,
     multiRestPendingBar: false,
+    interludePendingBar: false,
   }
 }
 
@@ -186,6 +188,7 @@ function validateBody(
   const commitMeasure = () => {
     unit.currentHasAtom = false
     unit.multiRestPendingBar = false
+    unit.interludePendingBar = false
   }
 
   const finishRepeat = () => {
@@ -237,6 +240,7 @@ function validateBody(
   const addAtom = (token: Token, duration: number, atom: { kind: 'note' | 'rest' | 'harmony' | 'tuplet' }) => {
     firstMusicSeen = true
     for (const paren of parens) paren.atoms += 1
+    if (unit.interludePendingBar) diagnostics.push(lineMessage(token, '不定长间奏必须独占一个小节位置'))
     if (unit.multiRestPendingBar) diagnostics.push(lineMessage(token, '多小节休止必须独占一个小节位置'))
     unit.currentHasAtom = true
     elapsedBeats += duration
@@ -415,7 +419,21 @@ function validateBody(
         continue
       }
 
+      if (name === 'interlude') {
+        rejectPendingSfz(token)
+        if (value || content !== 'interlude') diagnostics.push(lineMessage(token, 'interlude 不接受参数'))
+        if (bass) diagnostics.push(lineMessage(token, '不定长间奏只在旋律行声明，作用于所有声部'))
+        if (parens.length) diagnostics.push(lineMessage(token, '不定长间奏不能使用圆括号修饰'))
+        if (blocks.length) diagnostics.push(lineMessage(token, '区间不能跨越不定长间奏'))
+        if (unit.currentHasAtom) diagnostics.push(lineMessage(token, '不定长间奏必须独占一个小节位置'))
+        firstMusicSeen = true
+        unit.currentHasAtom = true
+        unit.interludePendingBar = true
+        continue
+      }
+
       if (name === 'rest') {
+        if (unit.interludePendingBar) diagnostics.push(lineMessage(token, '不定长间奏必须独占一个小节位置'))
         applyInheritedSettings()
         const count = Number(value)
         if (!/^\d+$/.test(value) || !Number.isSafeInteger(count) || count <= 0) {

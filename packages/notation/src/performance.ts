@@ -74,6 +74,11 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
         const measure = part[staff][index]
         if (!measure) continue
         let cursor = measureStart
+        if (measure.interlude || part.melody[index]?.interlude) {
+          if (staff === 'melody' && measure.multiRestState) applySettings(measure.multiRestState, cursor)
+          pendingTies[staff].clear()
+          continue
+        }
         if (measure.multiRest) {
           if (staff === 'melody' && measure.multiRestState) applySettings(measure.multiRestState, cursor)
           const meter = measure.multiRestState ? meterFor(measure.multiRestState) : result.meters.at(-1)!

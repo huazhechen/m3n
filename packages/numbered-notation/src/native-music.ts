@@ -1,3 +1,4 @@
+import { SCORE_TEXT_FONT } from './font-family.js'
 import { nativeNoteBody } from './native-note-body.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeMusicAxis } from './native-axis.js'
@@ -48,6 +49,14 @@ export class NativeMusicPainter extends NativeSymbols {
   }
 
   music(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>, coreOnly = false): string {
+    if (glyph.interlude) {
+      const size = nativeStyle.text, metrics = this.measurer.measureText('间奏', { fontSize: size, fontFamily: SCORE_TEXT_FONT })
+      const width = Math.max(nativeStyle.music * 3, metrics.w + size), left = glyph.x - nativeStyle.music * 0.4
+      const axis = glyph.y + nativeMusicAxis(this.measurer)
+      return `<g data-m3n-role="interlude">`
+        + `<line${attrs({ x1: left, x2: left + width, y1: axis, y2: axis, stroke: '#000', 'stroke-width': nativeStyle.stroke, 'stroke-dasharray': '4 3' })}/>`
+        + this.text('间奏', left + width / 2, axis - (metrics.inkBottom ?? metrics.h) - size * 0.2 + metrics.baseline, size, SCORE_TEXT_FONT, { 'text-anchor': 'middle' }) + '</g>'
+    }
     if (glyph.multiRest) {
       const size = nativeStyle.music, text = String(glyph.multiRest)
       const metrics = this.measurer.measureText(text, { fontSize: size, fontFamily: 'M3N Numbers' })

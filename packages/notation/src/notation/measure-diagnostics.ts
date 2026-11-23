@@ -18,9 +18,9 @@ export function invalidMeasureBarEnds(source: string, document: ScoreDocument, d
 /** Returns stable measure IDs for meter-invalid measures. */
 export function invalidMeasureIds(source: string, document: ScoreDocument, diagnostics?: readonly ScoreDiagnostic[]) {
   const invalidEnds = new Set(invalidMeasureBarEnds(source, document, diagnostics))
-  const renderedMeasureCount = (measures: Array<{ events: unknown[]; multiRest?: number }>) => {
+  const renderedMeasureCount = (measures: Array<{ events: unknown[]; multiRest?: number; interlude?: boolean }>) => {
     let count = measures.length
-    while (count > 1 && measures[count - 1]?.events.length === 0 && !measures[count - 1]?.multiRest) count -= 1
+    while (count > 1 && measures[count - 1]?.events.length === 0 && !measures[count - 1]?.multiRest && !measures[count - 1]?.interlude) count -= 1
     return count
   }
 

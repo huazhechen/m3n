@@ -184,14 +184,15 @@ export function describeAccessibleScore(source: ScoreDocument, options: { notati
         events.push(info.join('；') + '。')
         offset += event.beats
       }
+      if (measure.interlude) { events.push('间奏，小节数不定，播放跳过。'); compact.push('间奏（小节数不定）') }
       if (measure.multiRest) events.push(`连续休止${measure.multiRest}小节；调性${keyText(measure.multiRestState?.key ?? document.key, transpose)}。`)
       if (measure.multiRest) compact.push(`0（${measure.multiRest}小节）`)
       return { name, events, eventIds: measure.events.map(event => ids.get(event)!), compact: compact.join(' ') }
     }
     part.melody.forEach((measure, index) => {
-      if (!measure.events.length && !measure.multiRest && !part.bass[index]?.events.length && !part.bass[index]?.multiRest) return
-      measureNumber++
-      const label = [`第${measureNumber}小节`]
+      if (!measure.events.length && !measure.multiRest && !measure.interlude && !part.bass[index]?.events.length && !part.bass[index]?.multiRest) return
+      if (!measure.interlude) measureNumber++
+      const label = [measure.interlude ? '间奏（小节数不定，播放跳过）' : `第${measureNumber}小节`]
       if (document.parts.size > 1) label.push(`声部${partName}`)
       if (measure.sectionName) label.push(`乐段${measure.sectionName}`)
       if (measure.ending) label.push(`第${measure.ending.replaceAll(',', '、')}遍房子`)

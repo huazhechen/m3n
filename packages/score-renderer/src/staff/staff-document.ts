@@ -58,7 +58,7 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
     const incoming = incomingMeasureKeys(display.score, part.melody)
     let previousKey = input.key
     let count = Math.max(part.melody.length, hasBass ? part.bass.length : 0)
-    while (count > 1 && !part.melody[count - 1]?.events.length && !part.melody[count - 1]?.multiRest && !part.bass[count - 1]?.events.length && !part.bass[count - 1]?.multiRest) count--
+    while (count > 1 && !part.melody[count - 1]?.events.length && !part.melody[count - 1]?.multiRest && !part.melody[count - 1]?.interlude && !part.bass[count - 1]?.events.length && !part.bass[count - 1]?.multiRest) count--
     for (let index = 0; index < count; index++) {
       const source = part.melody[index] ?? { events: [] }
       const first = source.events[0]
@@ -123,7 +123,7 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
         })
       }
       measures.push({
-        id: `m3n-measure-${partIndex + 1}-${index + 1}`, number: ++number,
+        id: `m3n-measure-${partIndex + 1}-${index + 1}`, number: source.interlude ? number : ++number,
         melody: lane(source), bass: hasBass ? lane(part.bass[index]) : [], source,
         key: transposeKey(key), previousKey: transposeKey(entryKey), meterCount, meterUnit, tempo,
         showTempo: (!measures.length && (input.hasExplicitTempo || Boolean(input.order))) || tempo !== previousTempo,

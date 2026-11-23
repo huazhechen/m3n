@@ -165,6 +165,14 @@ function parseBody(
         measure().multiRestState = { key: currentKey, ...(currentKeyPasses ? { keyPasses: currentKeyPasses } : {}), meterCount: currentMeterCount, meterUnit: currentMeterUnit, tempo: currentTempo }
         elapsedBeats += Number(multiRest[1]) * currentMeterCount * 4 / currentMeterUnit
       }
+      if (value === 'interlude') {
+        applyInheritedSettings()
+        syncActiveEnding(sourceStart)
+        ensureEndingMeasure()
+        measure().interlude = true
+        measure().multiRestState = { key: currentKey, ...(currentKeyPasses ? { keyPasses: currentKeyPasses } : {}), meterCount: currentMeterCount, meterUnit: currentMeterUnit, tempo: currentTempo }
+        lastEvent = undefined
+      }
       if (value === 'br') {
         const current = measure()
         if (current.events.length === 0) current.breakBefore = true
@@ -202,7 +210,7 @@ function parseBody(
         // Coda is an onset belonging to the following bar.
         const current = measure()
         const previous = measures().at(-2)
-        const target = navigation === 'tocoda' && !current.events.length && !current.multiRest && previous ? previous : current
+        const target = navigation === 'tocoda' && !current.events.length && !current.multiRest && !current.interlude && previous ? previous : current
         target.navigation ??= []
         target.navigation.push(navigation)
       } else if (/^(?:arp|tr|prall|str|brk|tip|hold|fermata|breath|f[1-5])$/.test(value) || parseM3NGrace(value)) {
@@ -226,13 +234,13 @@ function parseBody(
       const value = token.raw
       const previous = measures().at(-2)
       const redundantPhraseBar = /^(?:\|\|\||\|\||\|)$/.test(value)
-        && current.events.length === 0 && !current.multiRest
+        && current.events.length === 0 && !current.multiRest && !current.interlude
         && previous?.barEnd !== undefined && lastBarLine !== undefined && token.line > lastBarLine
       if (redundantPhraseBar) {
         lastBarLine = token.line
         continue
       }
-      if (value === '||:' && current.events.length === 0 && !current.multiRest) {
+      if (value === '||:' && current.events.length === 0 && !current.multiRest && !current.interlude) {
         current.left = 'rptstart'
         lastBarLine = token.line
         continue
@@ -316,7 +324,7 @@ function parseBody(
 
   const trailing = measure()
   const previous = measures().at(-2)
-  const trailingEndNavigation = trailing.events.length === 0 && !trailing.multiRest
+  const trailingEndNavigation = trailing.events.length === 0 && !trailing.multiRest && !trailing.interlude
     ? trailing.navigation?.filter((value) => value !== 'segno' && value !== 'coda') ?? []
     : []
   if (previous && trailingEndNavigation.length > 0) {

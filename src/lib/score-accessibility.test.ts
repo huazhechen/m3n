@@ -112,3 +112,12 @@ describe('front-end accessible score descriptions', () => {
     expect(text.measures[1]!.voices[0]!.events[0]).not.toContain('歌词“春”')
   })
 })
+
+it('announces an unmeasured interlude without adding a numbered bar', () => {
+  const text = read('{4/4}\nN: 1 2 3 4 | {interlude} | 5 6 7 1e |||')
+  expect(text.measures).toHaveLength(3)
+  expect(text.measures[0]!.label).toContain('第1小节')
+  expect(text.measures[1]!.label).toContain('间奏（小节数不定，播放跳过）')
+  expect(all(text)).toContain('间奏，小节数不定，播放跳过')
+  expect(text.measures[2]!.label).toContain('第2小节')
+})

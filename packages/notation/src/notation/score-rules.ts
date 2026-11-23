@@ -11,7 +11,7 @@ function writtenMeasures(measures: readonly ScoreMeasure[]) {
   let count = measures.length
   while (count > 0) {
     const measure = measures[count - 1]
-    if (measure && (measure.events.length > 0 || measure.multiRest)) break
+    if (measure && (measure.events.length > 0 || measure.multiRest || measure.interlude)) break
     count -= 1
   }
   return measures.slice(0, count)
@@ -123,7 +123,7 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   }
   if (values.length === 1) {
     const only = values[0]
-    if (only && !equal(only.actual, only.expected)) {
+    if (only && !only.measure.interlude && !equal(only.actual, only.expected)) {
       report('M3N_METER_INCOMPLETE_SINGLE', `第 1 小节：单个小节拍数必须满拍：期望 ${only.expected} 拍，实际 ${only.actual} 拍`, only.measure,
         { measure: 1, expected: only.expected, actual: only.actual })
     }
@@ -135,6 +135,7 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
       && measures[value.index + 1]?.ending !== value.measure.ending) continue
     if (document.order && value.measure.sectionName && (measures[value.index - 1]?.sectionName !== value.measure.sectionName
       || measures[value.index + 1]?.sectionName !== value.measure.sectionName)) continue
+    if (value.measure.interlude || measures[value.index - 1]?.interlude || measures[value.index + 1]?.interlude) continue
     if (!equal(value.actual, value.expected)) {
       report('M3N_METER_INCOMPLETE_MIDDLE', `第 ${value.index + 1} 小节：中间小节拍数不合规：期望 ${value.expected} 拍，实际 ${value.actual} 拍`, value.measure,
         { measure: value.index + 1, expected: value.expected, actual: value.actual })
@@ -146,6 +147,9 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   const first = ordered ? values[ordered[0]!] : values[0]
   const last = ordered ? values[ordered.at(-1)!] : values.at(-1)
   if (!first || !last) return diagnostics
+  // Free-time passages disconnect pickup accounting across the whole song.
+  // Interior bars still follow the ordinary rules unless adjacent to a marker.
+  if (measures.some(measure => measure.interlude)) return diagnostics
   if (complementary.has(first.index) || complementary.has(last.index)) return diagnostics
   if (equal(first.actual, first.expected)) {
     if (!equal(last.actual, last.expected)) {
@@ -234,7 +238,8 @@ function validateTies(measures: readonly ScoreMeasure[], source?: string) {
     const sourcePitches = absolutePitches.get(event) ?? []
     const sourceTail = event.kind === 'tuplet' ? sourcePitches.slice(-1) : sourcePitches
     const targetPitches = target ? absolutePitches.get(target) : undefined
-    const matches = target && (
+    const crossesInterlude = measures.slice(measureIndex + 1, (events[index + 1]?.measureIndex ?? measureIndex) + 1).some(measure => measure.interlude)
+    const matches = !crossesInterlude && target && (
       (target.kind === sourceKind && targetPitches?.join(',') === sourceTail.join(','))
       // A tuplet is sequential: an incoming tie targets its first pitched
       // child, while an outgoing tie from a tuplet targets its final child.
@@ -349,6 +354,9 @@ export function validateScoreDocument(document: ScoreDocument, options: { skipBe
       if (!bassMeasure) continue
       const melodyBeats = measureBeats(melodyMeasure)
       const bassBeats = measureBeats(bassMeasure)
+      if (melodyMeasure.interlude && bassMeasure.events.length) {
+        diagnostics.push(createScoreDiagnostic({ code: 'M3N_BASS_DURATION_MISMATCH', message: '不定长间奏位置的低音必须为空', range: measureRange(bassMeasure) }))
+      }
       if (Math.abs(melodyBeats - bassBeats) <= EPSILON) continue
       const message = `双谱表第 ${index + 1} 小节时值不一致：正文 ${melodyBeats} 拍，低音 ${bassBeats} 拍`
       diagnostics.push(createScoreDiagnostic({
