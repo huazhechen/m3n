@@ -140,3 +140,19 @@ test('C6 switch retunes blow notes, recomputes difficulty, and restores standard
   expect(await keys.allTextContents()).toEqual(standardScores)
   expect(await page.locator('.scale-connections').innerHTML()).toEqual(standardLines)
 })
+
+
+test('F major displays upper and lower 3–4–5 alternatives in C6 tuning', async ({ page }) => {
+  await page.goto('/tools/scales')
+  await page.getByRole('switch', { name: 'C6', exact: true }).click()
+  await page.getByRole('button', { name: /^F大调，总分/ }).click()
+  const paths = page.locator('.scale-connections path')
+  for (const [degrees, actions] of [
+    ['3 → 4', '4孔吹·松键 → 4孔吹·按键'],
+    ['4 → 5', '4孔吹·按键 → 5孔吹·松键'],
+    ['3 → 4', '3孔吸·松键 → 3孔吸·按键'],
+    ['4 → 5', '3孔吸·按键 → 4孔吸·按键'],
+  ]) {
+    await expect(paths.filter({ has: page.locator('title', { hasText: `双向 ${degrees}；${actions}` }) })).toHaveCount(1)
+  }
+})

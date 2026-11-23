@@ -8,7 +8,7 @@ function phraseCost(actions: HarmonicaAction[]): number {
     const from = actions[index - 1]!, to = actions[index]!
     const switching = from.breath !== to.breath
     switches.push(switching)
-    base += Number(from.pressed !== to.pressed) + 2 * Math.abs(from.hole - to.hole) + 4 * Number(switching)
+    base += Number(from.pressed !== to.pressed) + (from.hole - to.hole) ** 2 + 4 * Number(switching)
   }
   // A run of n consecutive breath changes adds 0, 2, 8, 18, 28, ...
   return base + switches.map(value => value ? 'x' : ' ').join('').split(' ').reduce((sum, run) =>
@@ -55,11 +55,13 @@ describe('12-hole C chromatic harmonica', () => {
     expect(harmonicaScale(1, true).total).toBeLessThan(harmonicaScale(1).total)
   })
 
-  it('scores slide, distance and breath at weights 1, 2, 4 and uses a fixed color scale', () => {
+  it('treats a one-hole move like a slide change and penalizes wider jumps nonlinearly', () => {
     const start: HarmonicaAction = { hole: 1, breath: 'blow', pressed: false, midi: 60 }
     expect(continuityScore(start, start)).toBe(0)
     expect(continuityScore(start, { ...start, pressed: true })).toBe(1)
+    expect(continuityScore(start, { ...start, hole: 2 })).toBe(1)
     expect(continuityScore(start, { ...start, hole: 3 })).toBe(4)
+    expect(continuityScore(start, { ...start, hole: 4 })).toBe(9)
     expect(continuityScore(start, { ...start, breath: 'draw' })).toBe(4)
     expect(continuityScore(start, { ...start, hole: 3, breath: 'draw', pressed: true })).toBe(9)
     expect(continuityColor(0)).toBe('hsl(120 65% 38%)')
@@ -84,7 +86,7 @@ describe('12-hole C chromatic harmonica', () => {
     expect(eToF.to.pressed).toBe(true)
     expect(eToF.isolation).toBe(0)
     const fSharpToG = g.transitions.find(edge => edge.from.midi === 66 && edge.to.midi === 67)!
-    expect(fSharpToG).toMatchObject({ base: 7, isolation: 6, score: 13 })
+    expect(fSharpToG).toMatchObject({ base: 6, isolation: 6, score: 12 })
     const db = harmonicaScale(1)
     expect(db.transitions.some((edge, index) => index > 0 && JSON.stringify(db.transitions[index - 1]!.to) !== JSON.stringify(edge.from))).toBe(true)
     const easy = [0, 1, 3, 5, 6, 8, 10].map(key => harmonicaScale(key).total)
@@ -98,8 +100,8 @@ describe('12-hole C chromatic harmonica', () => {
     const bottleneck = g.difficulty.windows.find(window =>
       window.ascending.actions.map(action => action.midi).join(',') === '74,76,78,79,81')!
     expect(bottleneck.ascending.actions.map(action => action.breath)).toEqual(['draw', 'blow', 'draw', 'blow', 'draw'])
-    expect(bottleneck.ascending.total).toBe(40)
-    expect(g.difficulty.bottleneck).toBe(40)
+    expect(bottleneck.ascending.total).toBe(38)
+    expect(g.difficulty.bottleneck).toBe(38)
     expect(g.difficulty.bottleneck).toBeGreaterThan(gb.difficulty.bottleneck * 1.9)
     expect(g.difficulty.bottleneck).toBeGreaterThanOrEqual(d.difficulty.bottleneck * .95)
     // G has fewer hard passages than D, but a comparably hard worst passage.
@@ -147,6 +149,54 @@ describe('12-hole C chromatic harmonica', () => {
       }
       expect([...starts].sort((a, b) => a - b)).toEqual([0, 2, 4, 5, 7, 9, 11])
       expect(scale.difficulty.bottleneck).toBe(Math.max(...costs))
+    }
+  })
+
+  it('shows both upper and lower F-major 3–4–5 paths when C6 provides them', () => {
+    const scale = harmonicaScale(5, true)
+    for (const offset of [0, 12]) for (const breath of ['blow', 'draw'] as const) {
+      for (const [from, to] of [[69 + offset, 70 + offset], [70 + offset, 72 + offset]]) {
+        expect(scale.diagramTransitions.some(edge => edge.from.midi === from && edge.to.midi === to
+          && edge.from.breath === breath && edge.to.breath === breath)).toBe(true)
+        expect(scale.diagramDescending.some(edge => edge.from.midi === to && edge.to.midi === from
+          && edge.from.breath === breath && edge.to.breath === breath)).toBe(true)
+      }
+    }
+  })
+
+  it('gives every alternate reed a lowest-cost incoming and outgoing diagram branch', () => {
+    for (const c6 of [false, true]) for (let key = 0; key < 12; key++) {
+      const scale = harmonicaScale(key, c6)
+      for (const [direction, edges] of [[1, scale.diagramTransitions], [-1, scale.diagramDescending]] as const) {
+        const ids = edges.map(edge => JSON.stringify([edge.from, edge.to]))
+        expect(new Set(ids).size).toBe(ids.length)
+        for (let index = 0; index < scale.notes.length - 1; index++) {
+          const fromIndex = direction === 1 ? index : scale.notes.length - 1 - index
+          const toIndex = fromIndex + direction
+          const fromNote = scale.notes[fromIndex]!, toNote = scale.notes[toIndex]!
+          const before = scale.notes[fromIndex - direction]?.actions, after = scale.notes[toIndex + direction]?.actions
+          const costs = fromNote.actions.flatMap(from => toNote.actions.map(to => {
+            const switching = from.breath !== to.breath
+            const source = switching && !!before?.every(action => action.breath !== from.breath)
+            const target = switching && !!after?.every(action => action.breath !== to.breath)
+            return { from, to, score: continuityScore(from, to) + Number(source) + Number(target) + (source && target ? 4 : 0) }
+          }))
+          const pairEdges = edges.filter(edge => edge.from.midi === fromNote.midi && edge.to.midi === toNote.midi)
+          for (const from of fromNote.actions) {
+            expect(Math.min(...pairEdges.filter(edge => edge.from === from).map(edge => edge.score)))
+              .toBe(Math.min(...costs.filter(edge => edge.from === from).map(edge => edge.score)))
+          }
+          for (const to of toNote.actions) {
+            expect(Math.min(...pairEdges.filter(edge => edge.to === to).map(edge => edge.score)))
+              .toBe(Math.min(...costs.filter(edge => edge.to === to).map(edge => edge.score)))
+          }
+          for (const edge of pairEdges) {
+            const minimumFrom = Math.min(...costs.filter(choice => choice.from === edge.from).map(choice => choice.score))
+            const minimumTo = Math.min(...costs.filter(choice => choice.to === edge.to).map(choice => choice.score))
+            expect(edge.score === minimumFrom || edge.score === minimumTo).toBe(true)
+          }
+        }
+      }
     }
   })
 
@@ -208,7 +258,7 @@ describe('12-hole C chromatic harmonica', () => {
               const source = switchBreath && before.length > 0 && before.every(action => action.breath !== from.breath)
               const target = switchBreath && after.length > 0 && after.every(action => action.breath !== to.breath)
               const extra = Number(source) + Number(target) + (source && target ? 4 : 0)
-              possible.push(Number(from.pressed !== to.pressed) + 2 * Math.abs(from.hole - to.hole) + 4 * Number(switchBreath) + extra)
+              possible.push(Number(from.pressed !== to.pressed) + (from.hole - to.hole) ** 2 + 4 * Number(switchBreath) + extra)
             }
           }
           expect(edge.score).toBe(Math.min(...possible))

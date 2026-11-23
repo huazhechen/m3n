@@ -18,8 +18,8 @@ function HarmonicaDiagram({ musicalKey, c6 }: { musicalKey: number; c6: boolean 
   const scale = SCALE_SETS[Number(c6)]![musicalKey]!
   const layout = harmonicaLayout(c6)
   const edges = [
-    ...scale.transitions.map(edge => ({ ...edge, direction: scale.descending.some(back => actionId(back.from) === actionId(edge.to) && actionId(back.to) === actionId(edge.from)) ? 'both' : 'up' })),
-    ...scale.descending.filter(edge => !scale.transitions.some(up => actionId(up.from) === actionId(edge.to) && actionId(up.to) === actionId(edge.from))).map(edge => ({ ...edge, direction: 'down' })),
+    ...scale.diagramTransitions.map(edge => ({ ...edge, direction: scale.diagramDescending.some(back => actionId(back.from) === actionId(edge.to) && actionId(back.to) === actionId(edge.from)) ? 'both' : 'up' })),
+    ...scale.diagramDescending.filter(edge => !scale.diagramTransitions.some(up => actionId(up.from) === actionId(edge.to) && actionId(up.to) === actionId(edge.from))).map(edge => ({ ...edge, direction: 'down' })),
   ]
   // Same-hole connections can cover the same vertical span when a pitch
   // switches between the inner and outer rows. Give overlapping pairs lanes.
