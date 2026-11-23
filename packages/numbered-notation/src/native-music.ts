@@ -49,24 +49,17 @@ export class NativeMusicPainter extends NativeSymbols {
   }
 
   music(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>, coreOnly = false): string {
-    if (glyph.interlude) {
-      const size = nativeStyle.text, metrics = this.measurer.measureText('间奏', { fontSize: size, fontFamily: SCORE_TEXT_FONT })
-      const width = Math.max(nativeStyle.music * 3, metrics.w + size), left = glyph.x - nativeStyle.music * 0.4
-      const axis = glyph.y + nativeMusicAxis(this.measurer)
-      return `<g data-m3n-role="interlude">`
-        + `<line${attrs({ x1: left, x2: left + width, y1: axis, y2: axis, stroke: '#000', 'stroke-width': nativeStyle.stroke, 'stroke-dasharray': '4 3' })}/>`
-        + this.text('间奏', left + width / 2, axis - (metrics.inkBottom ?? metrics.h) - size * 0.2 + metrics.baseline, size, SCORE_TEXT_FONT, { 'text-anchor': 'middle' }) + '</g>'
-    }
     if (glyph.multiRest) {
-      const size = nativeStyle.music, text = String(glyph.multiRest)
-      const metrics = this.measurer.measureText(text, { fontSize: size, fontFamily: 'M3N Numbers' })
+      const size = nativeStyle.music, text = glyph.interlude ? '间奏' : String(glyph.multiRest)
+      const font = glyph.interlude ? SCORE_TEXT_FONT : 'M3N Numbers'
+      const metrics = this.measurer.measureText(text, { fontSize: size, fontFamily: font })
       const width = Math.max(size * 3, metrics.w + size * 0.5), left = glyph.x - size * 0.4, right = left + width
       const axis = glyph.y + nativeMusicAxis(this.measurer), stroke = size * 0.12, halfCap = (size * 0.65 - stroke) / 2
-      return `<g data-m3n-role="multi-rest">`
+      return `<g data-m3n-role="${glyph.interlude ? 'interlude' : 'multi-rest'}">`
         + line(left + stroke, axis, right - stroke, axis, stroke * 2)
         + line(left + stroke / 2, axis - halfCap, left + stroke / 2, axis + halfCap, stroke)
         + line(right - stroke / 2, axis - halfCap, right - stroke / 2, axis + halfCap, stroke)
-        + this.text(text, left + width / 2, axis - (metrics.inkBottom ?? metrics.h) - size * 0.175 + metrics.baseline, size, 'M3N Numbers', { 'text-anchor': 'middle' }) + '</g>'
+        + this.text(text, left + width / 2, axis - (metrics.inkBottom ?? metrics.h) - size * 0.175 + metrics.baseline, size, font, { 'text-anchor': 'middle' }) + '</g>'
     }
     let music = this.body(glyph, claimedBeams)
     if (coreOnly) return music
