@@ -5,6 +5,52 @@ import { addPracticeTime, formatPracticeTime, localDay, PRACTICE_TIME_KEY, readP
 import '../styles/tools.css'
 
 function defaultAccents(beats: number) { return Array.from({ length: beats }, (_, index) => index === 0 || (beats === 6 && index === 3)) }
+
+function TempoStepButton({ direction, disabled, onStep }: { direction: -1 | 1; disabled: boolean; onStep: () => void }) {
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const repeated = useRef(false)
+  const step = useRef(onStep)
+  step.current = onStep
+  const stopRepeat = () => {
+    clearTimeout(timer.current)
+    timer.current = undefined
+  }
+  useEffect(() => { if (disabled) stopRepeat() }, [disabled])
+  useEffect(() => {
+    window.addEventListener('blur', stopRepeat)
+    window.addEventListener('pagehide', stopRepeat)
+    document.addEventListener('visibilitychange', stopRepeat)
+    return () => {
+      stopRepeat()
+      window.removeEventListener('blur', stopRepeat)
+      window.removeEventListener('pagehide', stopRepeat)
+      document.removeEventListener('visibilitychange', stopRepeat)
+    }
+  }, [])
+  return <button className="metronome-tempo-step" type="button" aria-label={`速度${direction < 0 ? '减少' : '增加'} 1 BPM`} disabled={disabled}
+    onPointerDown={event => {
+      if (!event.isPrimary || event.button !== 0) return
+      stopRepeat()
+      repeated.current = false
+      event.currentTarget.setPointerCapture(event.pointerId)
+      const repeat = () => {
+        repeated.current = true
+        step.current()
+        timer.current = setTimeout(repeat, 60)
+      }
+      timer.current = setTimeout(repeat, 400)
+    }}
+    onPointerMove={event => {
+      if (timer.current === undefined) return
+      const bounds = event.currentTarget.getBoundingClientRect()
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) stopRepeat()
+    }}
+    onPointerUp={stopRepeat} onPointerCancel={stopRepeat} onLostPointerCapture={stopRepeat} onPointerLeave={stopRepeat} onBlur={stopRepeat}
+    onContextMenu={event => event.preventDefault()}
+    onClick={event => { if (event.detail === 0 || !repeated.current) onStep() }}
+  >{direction < 0 ? '−' : '+'}</button>
+}
+
 export function MetronomePage() {
   const [bpm, setBpm] = useState(80)
   const [accents, setAccents] = useState(defaultAccents(4))
@@ -82,9 +128,9 @@ export function MetronomePage() {
     <section className="metronome-tool" aria-labelledby="metronome-title">
       <h1 id="metronome-title">节拍器</h1>
       <div className="metronome-tempo">
-        <button className="metronome-tempo-step" type="button" aria-label="速度减少 1 BPM" disabled={bpm <= 10} onClick={() => setBpm(current => Math.max(10, current - 1))}>−</button>
+        <TempoStepButton direction={-1} disabled={bpm <= 10} onStep={() => setBpm(current => Math.max(10, current - 1))} />
         <div className="metronome-tempo-value"><output aria-label="当前速度">{bpm}</output><span>BPM</span></div>
-        <button className="metronome-tempo-step" type="button" aria-label="速度增加 1 BPM" disabled={bpm >= 360} onClick={() => setBpm(current => Math.min(360, current + 1))}>+</button>
+        <TempoStepButton direction={1} disabled={bpm >= 360} onStep={() => setBpm(current => Math.min(360, current + 1))} />
       </div>
       <label className="metronome-slider">速度<input aria-label="速度" type="range" min="10" max="360" step="1" value={bpm} onChange={event => setBpm(Number(event.target.value))} /></label>
       <div className="metronome-meters" role="group" aria-label="拍型">{[2, 4, 3, 6].map(beats => <button key={beats} type="button" aria-pressed={accents.length === beats} onClick={() => { setAccents(defaultAccents(beats)); setActiveBeat(-1) }}>{beats} 拍</button>)}</div>

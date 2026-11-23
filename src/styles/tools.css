@@ -45,7 +45,7 @@
 .metronome-tempo { display: flex; align-items: center; justify-content: center; gap: .6rem; margin: .7rem 0; color: #285b5c; }
 .metronome-tempo-value { display: flex; flex-direction: column; align-items: center; gap: .15rem; }
 .metronome-tempo-value span { font-size: .8rem; }
-.metronome-tempo-step { flex-shrink: 0; width: max(44px, var(--ui-control-size)); height: max(48px, var(--ui-control-size)); padding: 0; border: none; border-radius: 8px; background: transparent; color: inherit; font-size: 1.5rem; cursor: pointer; }
+.metronome-tempo-step { flex-shrink: 0; width: max(44px, var(--ui-control-size)); height: max(48px, var(--ui-control-size)); padding: 0; border: none; border-radius: 8px; background: transparent; color: inherit; font-size: 1.5rem; cursor: pointer; touch-action: none; user-select: none; -webkit-touch-callout: none; }
 .metronome-tempo-step:disabled { opacity: .4; cursor: default; }
 .metronome-tempo output { font-size: 5rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .metronome-slider { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; font-weight: 600; }
