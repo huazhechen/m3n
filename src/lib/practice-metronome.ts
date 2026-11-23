@@ -41,12 +41,13 @@ export class PracticeMetronome {
       const envelope = this.context.createGain()
       oscillator.frequency.value = accent ? 1500 : 900
       envelope.gain.setValueAtTime(0, this.nextTime)
-      envelope.gain.linearRampToValueAtTime(accent ? .65 : .35, this.nextTime + .002)
-      envelope.gain.exponentialRampToValueAtTime(.001, this.nextTime + .045)
+      envelope.gain.linearRampToValueAtTime(1, this.nextTime + .002)
+      envelope.gain.setValueAtTime(1, this.nextTime + .02)
+      envelope.gain.exponentialRampToValueAtTime(.001, this.nextTime + .08)
       oscillator.connect(envelope)
       envelope.connect(this.context.destination)
       oscillator.start(this.nextTime)
-      oscillator.stop(this.nextTime + .05)
+      oscillator.stop(this.nextTime + .085)
       oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect() }
       this.pending.push({ time: this.nextTime, beat })
       this.nextTime += 60 / this.settings.bpm
