@@ -68,7 +68,6 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
       </svg>
     </div>
     <div className="continuity-legend"><div><strong>连续性参考分 · 越低越连贯</strong><p>动作：按键变化 ×1 ＋ 移孔距离 ×2 ＋ 吹吸变化 ×4</p><p>若前后都只能反向吹吸，单音夹段另加 4 分，分摊到两侧连线各 2 分。</p></div><div className="continuity-color-scale" aria-label="0 分绿色最连续，11 分及以上红色最不连续">{[0, 2, 4, 6, 8, 10, 11].map(score => <span key={score} style={{ borderColor: continuityColor(score), color: continuityColor(score) }}>{score === 11 ? '11+' : score}</span>)}<small>同吹吸偏绿　连续反向切换偏红</small></div></div>
-    <p className="scale-help">全部音块使用当前调的首调简谱，上点为高八度，下点为低八度。同音替代吹法按前后文分别选择，进出连线可以落在不同方块，不强制拼成一条完整指法。双向连接重合时合并显示。按钮总分为全音域各相邻音的局部最优单程得分之和，用于比较调性；具体乐句仍需结合上下文。</p>
     <details className="scale-route-details"><summary>查看逐段连接与得分 · 总计 {scale.total} 分</summary><ol>{scale.transitions.map((edge, index) => <li key={index}><strong>{degreeLabel(edge.from.midi, musicalKey)} → {degreeLabel(edge.to.midi, musicalKey)}</strong><span>{actionLabel(edge.from)} → {actionLabel(edge.to)}</span><span style={{ color: continuityColor(edge.score) }}>{edge.score} 分（动作 {edge.base} ＋ 单音夹段 {edge.isolation}）</span></li>)}</ol></details>
   </>
 }
