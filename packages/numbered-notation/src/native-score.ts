@@ -20,6 +20,21 @@ export class NativeNumberedNotationScore {
   }
 }
 
+/** Compact layout metrics for choosing among equally short page-width candidates. */
+export function numberedLayoutQuality(document: ScoreDocument, options: NativeRenderOptions) {
+  const layout = layoutNativeScore(document, { ...options, paged: true })
+  const width = layout.options.width
+  const available = Math.max(1, width - layout.margin * 2)
+  const densities = layout.systems.map(system => system.measures.reduce((sum, measure) => sum + measure.minimum, 0) / available)
+  const mean = densities.reduce((sum, density) => sum + density, 0) / Math.max(1, densities.length)
+  const variation = Math.sqrt(densities.reduce((sum, density) => sum + (density - mean) ** 2, 0) / Math.max(1, densities.length)) / Math.max(mean, Number.EPSILON)
+  const lastSystem = layout.systems.at(-1)
+  const lastMeasure = lastSystem?.measures.at(-1)
+  const rightEdge = width - layout.margin
+  const lastLineSlack = lastMeasure ? Math.max(0, Math.min(1, (rightEdge - lastMeasure.end) / available)) : 0
+  return { pageCount: layout.pages.length, lineDensityVariation: variation, lastLineSlack }
+}
+
 export type { NativeRenderOptions as NumberedNotationRenderOptions } from './native-layout.js'
 
 /** Per-export measured rows, reused for metadata and final SVG generation. */

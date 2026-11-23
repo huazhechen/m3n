@@ -30,51 +30,23 @@ const yieldToBrowser = () => new Promise<void>(resolve => {
 })
 
 export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase' | 'onWidthSelected'>, signal?: AbortSignal, targetPages?: number) {
-  const { NumberedNotationScore } = await import('@m3n/numbered-notation')
-  const score = NumberedNotationScore.create(scoreDocument)
+  const { numberedLayoutQuality } = await import('@m3n/numbered-notation')
   // Match the application render margin in both the fast and full layout passes.
   settings = { ...settings, pageMargin: settings.pageMargin ?? 0 }
-  const options = { ...settings, paged: true, minimumNoteGapEm: 0.4 }
-  const pageCount = (width: number) => {
-    signal?.throwIfAborted()
-    return score.pageCount({ ...options, width })
-  }
-  const target = targetPages ?? score.pageCount({ ...settings, width: 640, paged: true })
-  let lower = 540
-  let upper = 640
-  for (const width of [540, 600]) {
-    await yieldToBrowser()
-    const pages = pageCount(width)
-    if (pages <= target) {
-      upper = width
-      break
-    }
-    lower = width
-  }
-  if (upper !== 540) {
-    while (upper - lower > 10) {
-      await yieldToBrowser()
-      const width = Math.floor(((lower + upper) / 2) / 10) * 10
-      if (pageCount(width) <= target) upper = width
-      else lower = width
-    }
-  }
-  if (upper === 640) return upper
-
-  const formalPageCount = async (width: number) => {
+  const options = { ...settings, paged: true }
+  const target = targetPages ?? numberedLayoutQuality(scoreDocument, { ...options, width: 640 }).pageCount
+  const qualities = [] as { width: number; pageCount: number; lineDensityVariation: number; lastLineSlack: number; score: number }[]
+  for (let width = 540; width <= 640; width += 10) {
     await yieldToBrowser()
     signal?.throwIfAborted()
-    return score.pageCount({ ...settings, width, paged: true })
+    const quality = numberedLayoutQuality(scoreDocument, { ...options, width })
+    if (quality.pageCount <= target) qualities.push({ width, ...quality,
+      score: (540 / width) / (1 + quality.lineDensityVariation + 0.5 * quality.lastLineSlack) })
   }
-  if (await formalPageCount(upper) <= target) return upper
-  lower = upper
-  upper = 640
-  while (upper - lower > 10) {
-    const width = Math.floor(((lower + upper) / 2) / 10) * 10
-    if (await formalPageCount(width) <= target) upper = width
-    else lower = width
-  }
-  return upper
+  if (!qualities.length) return 640
+  const minimumPages = Math.min(...qualities.map(candidate => candidate.pageCount))
+  return qualities.filter(candidate => candidate.pageCount === minimumPages)
+    .reduce((best, candidate) => candidate.score > best.score ? candidate : best).width
 }
 
 export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settings: Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase'>, signal?: AbortSignal) {
