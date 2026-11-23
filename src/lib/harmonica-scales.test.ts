@@ -8,11 +8,11 @@ function phraseCost(actions: HarmonicaAction[]): number {
     const from = actions[index - 1]!, to = actions[index]!
     const switching = from.breath !== to.breath
     switches.push(switching)
-    base += Number(from.pressed !== to.pressed) + (from.hole - to.hole) ** 2 + 4 * Number(switching)
+    base += Number(from.pressed !== to.pressed) + (from.hole - to.hole) ** 2 + 6 * Number(switching)
   }
-  // A run of n consecutive breath changes adds 0, 2, 8, 18, 28, ...
+  // A run of n consecutive breath changes adds 0, 3, 9, 18, 27, ...
   return base + switches.map(value => value ? 'x' : ' ').join('').split(' ').reduce((sum, run) =>
-    sum + (run.length < 2 ? 0 : run.length === 2 ? 2 : run.length === 3 ? 8 : 18 + (run.length - 4) * 10), 0)
+    sum + (run.length < 2 ? 0 : run.length === 2 ? 3 : run.length === 3 ? 9 : 18 + (run.length - 4) * 9), 0)
 }
 
 describe('12-hole C chromatic harmonica', () => {
@@ -62,8 +62,8 @@ describe('12-hole C chromatic harmonica', () => {
     expect(continuityScore(start, { ...start, hole: 2 })).toBe(1)
     expect(continuityScore(start, { ...start, hole: 3 })).toBe(4)
     expect(continuityScore(start, { ...start, hole: 4 })).toBe(9)
-    expect(continuityScore(start, { ...start, breath: 'draw' })).toBe(4)
-    expect(continuityScore(start, { ...start, hole: 3, breath: 'draw', pressed: true })).toBe(9)
+    expect(continuityScore(start, { ...start, breath: 'draw' })).toBe(6)
+    expect(continuityScore(start, { ...start, hole: 3, breath: 'draw', pressed: true })).toBe(11)
     expect(continuityColor(0)).toBe('hsl(120 65% 38%)')
     expect(continuityColor(13)).toBe('hsl(0 65% 38%)')
     expect(continuityColor(20)).toBe(continuityColor(13))
@@ -86,7 +86,7 @@ describe('12-hole C chromatic harmonica', () => {
     expect(eToF.to.pressed).toBe(true)
     expect(eToF.isolation).toBe(0)
     const fSharpToG = g.transitions.find(edge => edge.from.midi === 66 && edge.to.midi === 67)!
-    expect(fSharpToG).toMatchObject({ base: 6, isolation: 6, score: 12 })
+    expect(fSharpToG).toMatchObject({ base: 8, isolation: 6, score: 14 })
     const db = harmonicaScale(1)
     expect(db.transitions.some((edge, index) => index > 0 && JSON.stringify(db.transitions[index - 1]!.to) !== JSON.stringify(edge.from))).toBe(true)
     const easy = [0, 1, 3, 5, 6, 8, 10].map(key => harmonicaScale(key).total)
@@ -100,9 +100,9 @@ describe('12-hole C chromatic harmonica', () => {
     const bottleneck = g.difficulty.windows.find(window =>
       window.ascending.actions.map(action => action.midi).join(',') === '74,76,78,79,81')!
     expect(bottleneck.ascending.actions.map(action => action.breath)).toEqual(['draw', 'blow', 'draw', 'blow', 'draw'])
-    expect(bottleneck.ascending.total).toBe(38)
-    expect(g.difficulty.bottleneck).toBe(38)
-    expect(g.difficulty.bottleneck).toBeGreaterThan(gb.difficulty.bottleneck * 1.9)
+    expect(bottleneck.ascending.total).toBe(46)
+    expect(g.difficulty.bottleneck).toBe(46)
+    expect(g.difficulty.bottleneck).toBeGreaterThan(gb.difficulty.bottleneck * 1.8)
     expect(g.difficulty.bottleneck).toBeGreaterThanOrEqual(d.difficulty.bottleneck * .95)
     // G has fewer hard passages than D, but a comparably hard worst passage.
     expect(g.total).toBeGreaterThan(Math.max(...[0, 1, 3, 5, 6, 8, 10].map(key => harmonicaScale(key).total)))
@@ -122,11 +122,10 @@ describe('12-hole C chromatic harmonica', () => {
     expect(phrase(c6).total).toBeLessThan(phrase(standard).total)
     expect(c6.difficulty.bottleneck).toBeGreaterThan(standard.difficulty.bottleneck)
     expect(c6.difficulty.windowAverage).toBeLessThan(standard.difficulty.windowAverage)
-    // Mean improvement contributes -1.2, versus +1.4 from the worse peak.
+    // Mean improvement contributes -2.0, versus +1.4 from the worse peak.
     const meanChange = .4 * (c6.difficulty.windowAverage - standard.difficulty.windowAverage) / 4 * 14
-    expect(meanChange).toBeCloseTo(-1.2)
-    expect(standard.total).toBe(58)
-    expect(c6.total).toBe(58)
+    expect(meanChange).toBeCloseTo(-2)
+    expect(c6.difficulty.ascending.total).toBe(standard.difficulty.ascending.total)
   })
 
   it('matches the article’s contextual substitutes in The Swan and See You Again', () => {
@@ -194,7 +193,7 @@ describe('12-hole C chromatic harmonica', () => {
             const switching = from.breath !== to.breath
             const source = switching && !!before?.every(action => action.breath !== from.breath)
             const target = switching && !!after?.every(action => action.breath !== to.breath)
-            return { from, to, score: continuityScore(from, to) + Number(source) + Number(target) + (source && target ? 4 : 0) }
+            return { from, to, score: continuityScore(from, to) + 1.5 * (Number(source) + Number(target)) + (source && target ? 3 : 0) }
           }))
           const pairEdges = edges.filter(edge => edge.from.midi === fromNote.midi && edge.to.midi === toNote.midi)
           const primary = (direction === 1 ? scale.transitions : scale.descending)[index]!
@@ -237,8 +236,12 @@ describe('12-hole C chromatic harmonica', () => {
     const alternating = optimizeHarmonicaPhrase([64, 66, 67, 69])
     const isolated = optimizeHarmonicaPhrase([64, 66, 67, 67])
     const extras = (actions: HarmonicaAction[]) => phraseCost(actions) - actions.slice(1).reduce((sum, action, index) => sum + continuityScore(actions[index]!, action), 0)
-    expect(extras(alternating.actions)).toBe(8)
-    expect(extras(isolated.actions)).toBe(2)
+    expect(extras(alternating.actions)).toBe(9)
+    expect(extras(isolated.actions)).toBe(3)
+    for (const [changes, expected] of [[1, 0], [2, 3], [3, 9], [4, 18], [5, 27], [6, 36]]) {
+      const route = optimizeHarmonicaPhrase(Array.from({ length: changes! + 1 }, (_, index) => index % 2 ? 66 : 64))
+      expect(extras(route.actions)).toBe(expected)
+    }
     expect(optimizeHarmonicaPhrase([])).toEqual({ actions: [], total: 0 })
     expect(() => optimizeHarmonicaPhrase([59])).toThrow(RangeError)
   })
@@ -273,8 +276,8 @@ describe('12-hole C chromatic harmonica', () => {
               const switchBreath = from.breath !== to.breath
               const source = switchBreath && before.length > 0 && before.every(action => action.breath !== from.breath)
               const target = switchBreath && after.length > 0 && after.every(action => action.breath !== to.breath)
-              const extra = Number(source) + Number(target) + (source && target ? 4 : 0)
-              possible.push(Number(from.pressed !== to.pressed) + (from.hole - to.hole) ** 2 + 4 * Number(switchBreath) + extra)
+              const extra = 1.5 * (Number(source) + Number(target)) + (source && target ? 3 : 0)
+              possible.push(Number(from.pressed !== to.pressed) + (from.hole - to.hole) ** 2 + 6 * Number(switchBreath) + extra)
             }
           }
           expect(edge.score).toBe(Math.min(...possible))

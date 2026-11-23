@@ -44,10 +44,10 @@ export function isScaleTone(midi: number, key: number): boolean {
 
 /** Slide change and one-hole moves cost 1; wider jumps grow quadratically. */
 export function continuityScore(from: HarmonicaAction, to: HarmonicaAction): number {
-  return Number(from.pressed !== to.pressed) + (from.hole - to.hole) ** 2 + Number(from.breath !== to.breath) * 4
+  return Number(from.pressed !== to.pressed) + (from.hole - to.hole) ** 2 + Number(from.breath !== to.breath) * 6
 }
 
-export const ISOLATED_BREATH_PENALTY = 2
+export const ISOLATED_BREATH_PENALTY = 3
 export const MAX_COLOR_SCORE = 13
 
 /** A four-note alternating passage adds 6 to a typical 7-point change. */
@@ -70,7 +70,7 @@ export function degreeLabel(midi: number, key: number): string {
  * One isolated note is a small bump; sustained alternation is much harder.
  */
 function alternationPenalty(run: number): number {
-  return run < 2 ? 0 : Math.min(10, (run - 1) * 4 - 2)
+  return run < 2 ? 0 : Math.min(9, (run - 1) * 3)
 }
 
 /** Choose one playable action per note, retaining breath-run history in the DP.
@@ -123,7 +123,7 @@ export function harmonicaScale(key: number, c6 = false): {
       const targetIsolated = switching && after !== undefined && after.every(action => action.breath !== to.breath)
       const base = continuityScore(from, to)
       const isolation = (Number(sourceIsolated) + Number(targetIsolated)) * ISOLATED_BREATH_PENALTY / 2
-        + (sourceIsolated && targetIsolated ? 4 : 0)
+        + (sourceIsolated && targetIsolated ? 3 : 0)
       return { from, to, base, isolation, score: base + isolation }
     }))
     return choices.sort((a, b) => a.score - b.score
