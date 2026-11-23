@@ -176,7 +176,7 @@ export function harmonicaScale(key: number, tuning: TuningInput = 'standard'): {
     const baseOctave = Math.floor(degreeStart / 7)
     const min = Math.min(...layout.map(action => action.midi))
     const max = Math.max(...layout.map(action => action.midi))
-    const targetRoot = 60 + key + baseDegree
+    const targetRoot = (mode === 'full-blow-draw' ? 72 : 60) + key + baseDegree
     const roots = Array.from({ length: max - min + 1 }, (_, index) => min + index)
       .filter(root => root % 12 === (key + baseDegree) % 12)
       .sort((a, b) => Math.abs(a - targetRoot) - Math.abs(b - targetRoot))
@@ -189,10 +189,14 @@ export function harmonicaScale(key: number, tuning: TuningInput = 'standard'): {
     }
     throw new RangeError(`No playable scale phrase for key ${key}, degree ${degreeStart}`)
   }
-  // Use two octaves when available; some tunings cover a narrower register.
+  // Full blow/draw is compared over one octave in a consistent register.
+  // Other tunings use two octaves when available, falling back to one.
   let comparisonPitches: number[]
-  try { comparisonPitches = playablePhrase(0, 15) }
-  catch { comparisonPitches = playablePhrase(0, 8) }
+  if (mode === 'full-blow-draw') comparisonPitches = playablePhrase(0, 8)
+  else {
+    try { comparisonPitches = playablePhrase(0, 15) }
+    catch { comparisonPitches = playablePhrase(0, 8) }
+  }
   const windows = MAJOR.map((_, start) => {
     const phrase = playablePhrase(start, 5)
     return {
