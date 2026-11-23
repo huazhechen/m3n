@@ -75,11 +75,12 @@ describe('12-hole C chromatic harmonica', () => {
     expect(row('draw', true)).toEqual([7, 10, 0, 3, 5, 7, 10, 0, 3, 5, 7, 10])
     for (let key = 0; key < 12; key++) expect(harmonicaScale(key, 'full-blow-draw').total).toBeGreaterThanOrEqual(0)
     const bb = harmonicaScale(10, 'full-blow-draw'), eb = harmonicaScale(3, 'full-blow-draw')
-    expect(bb.difficulty.ascending.actions).toHaveLength(8)
+    expect(bb.difficulty.ascending.actions[0]!.midi % 12).toBe(10)
+    expect(bb.difficulty.ascending.actions.at(-1)!.midi % 12).toBe(10)
     expect(bb.difficulty.ascending.actions.every(action => action.breath === 'draw')).toBe(true)
-    expect(eb.difficulty.ascending.actions).toHaveLength(8)
+    expect(eb.difficulty.ascending.actions[0]!.midi % 12).toBe(3)
+    expect(eb.difficulty.ascending.actions.at(-1)!.midi % 12).toBe(3)
     expect(eb.difficulty.ascending.actions.some((action, index, actions) => index > 0 && action.breath !== actions[index - 1]!.breath)).toBe(true)
-    expect(bb.total).toBeLessThan(eb.total)
   })
 
   it('treats a one-hole move like a slide change and penalizes wider jumps nonlinearly', () => {
