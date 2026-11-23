@@ -714,6 +714,14 @@
       "reason": "器乐间奏与跨拍延音"
     },
     {
+      "id": "tian_hei_hei",
+      "file": "tian_hei_hei_01.m3n",
+      "title": "天黑黑",
+      "section": "pop",
+      "group": "切分与延音",
+      "reason": "多段主歌、跨拍延音与副歌再现"
+    },
+    {
       "id": "yu_jian",
       "file": "yu_jian_01.m3n",
       "title": "遇见",
