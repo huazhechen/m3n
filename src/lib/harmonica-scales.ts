@@ -100,11 +100,15 @@ export function optimizeHarmonicaPhrase(pitches: number[], c6 = false): { action
 }
 
 /** Diagram connections remain local and may use disconnected substitutes.
- * Difficulty compares fully playable, two-octave tonic scales in both directions.
+ * Difficulty combines the worst five-note phrase with the full-scale average.
  */
 export function harmonicaScale(key: number, c6 = false): {
   notes: ScaleNote[]; transitions: ScaleTransition[]; descending: ScaleTransition[]; total: number
-  difficulty: { ascending: ReturnType<typeof optimizeHarmonicaPhrase>; descending: ReturnType<typeof optimizeHarmonicaPhrase> }
+  difficulty: {
+    ascending: ReturnType<typeof optimizeHarmonicaPhrase>; descending: ReturnType<typeof optimizeHarmonicaPhrase>
+    windows: { ascending: ReturnType<typeof optimizeHarmonicaPhrase>; descending: ReturnType<typeof optimizeHarmonicaPhrase> }[]
+    bottleneck: number
+  }
 } {
   const layout = harmonicaLayout(c6)
   const pitches = [...new Set(layout.filter(action => isScaleTone(action.midi, key)).map(action => action.midi))].sort((a, b) => a - b)
@@ -128,9 +132,27 @@ export function harmonicaScale(key: number, c6 = false): {
   const transitions = notes.slice(1).map((_, index) => connect(index, index + 1, 1))
   const descending = notes.slice(1).map((_, index) => connect(notes.length - 1 - index, notes.length - 2 - index, -1))
   const comparisonPitches = Array.from({ length: 15 }, (_, index) => 60 + key + Math.floor(index / 7) * 12 + MAJOR[index % 7]!)
+  // Start at every scale degree, including phrases crossing the tonic.
+  // Five notes expose the four consecutive breath changes in G's D E F# G A.
+  const windows = MAJOR.map((_, start) => {
+    const phrase = Array.from({ length: 5 }, (_, index) => {
+      const degree = start + index
+      return 60 + key + Math.floor(degree / 7) * 12 + MAJOR[degree % 7]!
+    })
+    return {
+      ascending: optimizeHarmonicaPhrase(phrase, c6),
+      descending: optimizeHarmonicaPhrase([...phrase].reverse(), c6),
+    }
+  })
   const difficulty = {
     ascending: optimizeHarmonicaPhrase(comparisonPitches, c6),
     descending: optimizeHarmonicaPhrase([...comparisonPitches].reverse(), c6),
+    windows,
+    bottleneck: Math.max(...windows.flatMap(window => [window.ascending.total, window.descending.total])),
   }
-  return { notes, transitions, descending, difficulty, total: Math.round((difficulty.ascending.total + difficulty.descending.total) / 2) }
+  const average = (difficulty.ascending.total + difficulty.descending.total) / 2
+  // Express both terms as a 14-transition equivalent: 75% worst short-phrase
+  // density and 25% whole-scale density. Easy passages cannot erase a bottleneck.
+  const total = Math.round(.75 * difficulty.bottleneck / 4 * 14 + .25 * average)
+  return { notes, transitions, descending, difficulty, total }
 }

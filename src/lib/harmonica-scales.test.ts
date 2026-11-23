@@ -93,6 +93,63 @@ describe('12-hole C chromatic harmonica', () => {
   })
 
 
+  it('preserves G major’s five-note bottleneck instead of averaging it away', () => {
+    const g = harmonicaScale(7), d = harmonicaScale(2), gb = harmonicaScale(6)
+    const bottleneck = g.difficulty.windows.find(window =>
+      window.ascending.actions.map(action => action.midi).join(',') === '74,76,78,79,81')!
+    expect(bottleneck.ascending.actions.map(action => action.breath)).toEqual(['draw', 'blow', 'draw', 'blow', 'draw'])
+    expect(bottleneck.ascending.total).toBe(40)
+    expect(g.difficulty.bottleneck).toBe(40)
+    expect(g.difficulty.bottleneck).toBeGreaterThan(gb.difficulty.bottleneck * 1.9)
+    expect(g.difficulty.bottleneck).toBeGreaterThanOrEqual(d.difficulty.bottleneck * .95)
+    // G has fewer hard passages than D, but a comparably hard worst passage.
+    expect(g.total).toBeGreaterThan(d.total * .85)
+    const c6 = harmonicaScale(7, true)
+    const improved = c6.difficulty.windows.find(window =>
+      window.ascending.actions.map(action => action.midi).join(',') === '74,76,78,79,81')!
+    expect(improved.ascending.actions.at(-1)!.breath).toBe('blow')
+    expect(improved.ascending.total).toBeLessThan(bottleneck.ascending.total)
+    expect(c6.difficulty.bottleneck).toBeLessThan(g.difficulty.bottleneck)
+    expect(c6.total).toBeLessThan(g.total)
+  })
+
+  it('matches the article’s contextual substitutes in The Swan and See You Again', () => {
+    // The Swan: G major 5 #4 7 3 2 5, then transposed down to G-flat.
+    const original = optimizeHarmonicaPhrase([67, 66, 71, 64, 62, 67])
+    const transposed = optimizeHarmonicaPhrase([66, 65, 70, 63, 61, 66])
+    expect(transposed.actions.slice(0, 3).map(action => action.breath)).toEqual(['draw', 'draw', 'draw'])
+    expect(transposed.total).toBeLessThan(original.total)
+    // The article's absolute-C notation: 2 2 1 b7 2 5 4 1.
+    const farewell = optimizeHarmonicaPhrase([74, 74, 72, 70, 74, 79, 77, 72])
+    expect(farewell.actions.map(action => action.breath))
+      .toEqual(['draw', 'draw', 'draw', 'draw', 'draw', 'blow', 'blow', 'blow'])
+  })
+
+  it('optimizes every five-note window across tonic boundaries in both tunings', () => {
+    for (const c6 of [false, true]) for (let key = 0; key < 12; key++) {
+      const layout = harmonicaLayout(c6), scale = harmonicaScale(key, c6)
+      expect(scale.difficulty.windows).toHaveLength(7)
+      const starts = new Set<number>()
+      const costs: number[] = []
+      for (const window of scale.difficulty.windows) {
+        starts.add((window.ascending.actions[0]!.midi - key + 12) % 12)
+        expect(window.descending.actions.map(action => action.midi)).toEqual(window.ascending.actions.map(action => action.midi).reverse())
+        expect(window.ascending.total).toBe(window.descending.total)
+        for (const route of [window.ascending, window.descending]) {
+          expect(route.actions).toHaveLength(5)
+          for (const action of route.actions) expect(layout).toContainEqual(action)
+          let routes: HarmonicaAction[][] = [[]]
+          for (const action of route.actions) routes = routes.flatMap(prefix =>
+            layout.filter(choice => choice.midi === action.midi).map(choice => [...prefix, choice]))
+          expect(route.total).toBe(Math.min(...routes.map(phraseCost)))
+          costs.push(route.total)
+        }
+      }
+      expect([...starts].sort((a, b) => a - b)).toEqual([0, 2, 4, 5, 7, 9, 11])
+      expect(scale.difficulty.bottleneck).toBe(Math.max(...costs))
+    }
+  })
+
   it('finds the global optimum against exhaustive playable fingerings in every key', () => {
     for (const c6 of [false, true]) {
       const layout = harmonicaLayout(c6)
@@ -127,7 +184,8 @@ describe('12-hole C chromatic harmonica', () => {
       const pitches = [...new Set(layout.filter(action => isScaleTone(action.midi, key)).map(action => action.midi))].sort((a, b) => a - b)
       expect(scale.notes.map(note => note.midi)).toEqual(pitches)
       expect(scale.transitions).toHaveLength(pitches.length - 1)
-      expect(scale.total).toBe(Math.round((scale.difficulty.ascending.total + scale.difficulty.descending.total) / 2))
+      const average = (scale.difficulty.ascending.total + scale.difficulty.descending.total) / 2
+      expect(scale.total).toBe(Math.round(.75 * scale.difficulty.bottleneck / 4 * 14 + .25 * average))
       expect(scale.difficulty.ascending.total).toBe(scale.difficulty.descending.total)
       for (const route of [scale.difficulty.ascending, scale.difficulty.descending]) {
         expect(route.actions).toHaveLength(15)
