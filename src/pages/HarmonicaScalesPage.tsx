@@ -8,7 +8,7 @@ const TILE = 44
 const LEFT = 82
 const STEP = 54
 const SCALES = HARMONICA_KEYS.map((_, key) => harmonicaScale(key))
-const FIFTHS_KEYS = CIRCLE_OF_FIFTHS.map(([key]) => keyPitchClass(key))
+const FIFTHS_KEYS = [...CIRCLE_OF_FIFTHS.slice(6), ...CIRCLE_OF_FIFTHS.slice(0, 6)].map(([key]) => keyPitchClass(key))
 const MIN_SCORE = Math.min(...SCALES.map(scale => scale.total))
 const MAX_SCORE = Math.max(...SCALES.map(scale => scale.total))
 function position(action: HarmonicaAction) {
@@ -41,7 +41,7 @@ function HarmonicaDiagram({ musicalKey }: { musicalKey: number }) {
       <svg className="harmonica-diagram" viewBox="0 0 790 318" role="img" aria-labelledby="harmonica-diagram-title harmonica-diagram-description">
         <title id="harmonica-diagram-title">{HARMONICA_KEYS[musicalKey]} 大调，12 孔 C 调半音阶口琴首调简谱图</title>
         <desc id="harmonica-diagram-description">上方内行吹，外行按键吹；下方内行吸，外行按键吸。灰色为非调内音。相邻音上下行独立选最短连接，可在替代音处断开。绿色更连续，红色更不连续；详细评分见图下文字表。</desc>
-        <defs><marker id="scale-line-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3" markerHeight="3" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke" /></marker></defs>
+        <defs><marker id="scale-line-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="context-stroke" /></marker></defs>
         <g className="harmonica-muted-tiles">{layout.filter(action => !isScaleTone(action.midi, musicalKey)).map(tile)}</g>
         <g className="harmonica-body" aria-hidden="true">
           <rect x="64" y="136" width="674" height="46" rx="13" />
@@ -81,7 +81,7 @@ export function HarmonicaScalesPage() {
     <TopNav />
     <section id="scales" className="scale-tool" aria-labelledby="scale-tool-title">
       <header className="scale-tool-heading"><h2 id="scale-tool-title">半音阶口琴 · 大调音阶</h2><p>12 孔 C 调 · 标准独奏音列</p></header>
-      <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 60 * (SCALES[index]!.total - MIN_SCORE) / (MAX_SCORE - MIN_SCORE || 1)} 65% 86%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${SCALES[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{SCALES[index]!.total} 分</span></button>)}</div>
+      <div className="scale-key-picker" role="group" aria-label="选择大调">{FIFTHS_KEYS.map(index => <button key={index} type="button" style={{ backgroundColor: `hsl(${120 - 120 * (SCALES[index]!.total - MIN_SCORE) / (MAX_SCORE - MIN_SCORE || 1)} 75% 72%)` }} aria-label={`${HARMONICA_KEYS[index]}大调，总分${SCALES[index]!.total}分`} aria-pressed={key === index} onClick={() => setKey(index)}>{HARMONICA_KEYS[index]}<span>{SCALES[index]!.total} 分</span></button>)}</div>
       <HarmonicaDiagram musicalKey={key} />
     </section>
   </main>

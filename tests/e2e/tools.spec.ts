@@ -68,21 +68,21 @@ test('tool index contains only two tool entries and opens child routes', async (
   await expect(page.getByText('计划中', { exact: true })).toBeVisible()
 })
 
-test('major keys follow the circle of fifths and score colors run from green to yellow', async ({ page }) => {
+test('major keys follow the circle of fifths and normalized score colors run from green to red', async ({ page }) => {
   await page.goto('/tools/scales')
   const keys = page.getByRole('group', { name: '选择大调' }).getByRole('button')
   await expect(keys).toHaveCount(12)
-  expect(await keys.evaluateAll(buttons => buttons.map(button => button.firstChild!.textContent))).toEqual(['C', 'G', 'D', 'A', 'E', 'B', 'G♭', 'D♭', 'A♭', 'E♭', 'B♭', 'F'])
+  expect(await keys.evaluateAll(buttons => buttons.map(button => button.firstChild!.textContent))).toEqual(['G♭', 'D♭', 'A♭', 'E♭', 'B♭', 'F', 'C', 'G', 'D', 'A', 'E', 'B'])
   const colors = await keys.evaluateAll(buttons => buttons.map(button => ({
     score: Number(button.querySelector('span')!.textContent!.match(/\d+/)![0]),
     rgb: getComputedStyle(button).backgroundColor.match(/\d+/g)!.map(Number),
   })))
   colors.sort((a, b) => a.score - b.score)
   expect(colors[0]!.rgb[0]).toBeLessThan(colors[0]!.rgb[1]!)
-  expect(colors.at(-1)!.rgb[0]).toBe(colors.at(-1)!.rgb[1])
+  expect(colors.at(-1)!.rgb[0]).toBeGreaterThan(colors.at(-1)!.rgb[1]!)
   for (let index = 1; index < colors.length; index++) {
     expect(colors[index]!.rgb[0]).toBeGreaterThanOrEqual(colors[index - 1]!.rgb[0]!)
-    expect(colors[index]!.rgb[1]).toBe(colors[0]!.rgb[1])
+    expect(colors[index]!.rgb[1]).toBeLessThanOrEqual(colors[index - 1]!.rgb[1]!)
     expect(colors[index]!.rgb[2]).toBe(colors[0]!.rgb[2])
   }
   await keys.last().click()
