@@ -2,7 +2,6 @@
 .tool-entry { display: flex; gap: 1rem; align-items: center; border: 1px solid #d7ddd3; border-radius: 10px; padding: .65rem 1rem; background: #fff; }
 .tool-entry svg { width: 2rem; height: 2rem; flex-shrink: 0; }
 .tool-entry:hover { border-color: #2f6f73; background: #edf4f0; }
-.tool-placeholder { padding: 1rem 0; }
 .scale-tool { background: #fff; border: 1px solid #d7ddd3; border-radius: 12px; padding: 1rem; scroll-margin-top: 1rem; }
 .scale-tool-heading, .scale-diagram-intro { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
 .scale-tool h2 { margin: 0 0 .75rem; font-size: 1.6rem; color: #163f45; }
@@ -44,3 +43,27 @@
   .scale-key-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .harmonica-diagram-frame { margin: .125rem 0; }
 }
+.metronome-tool { max-width: 560px; margin-inline: auto; padding: 1.25rem; background: white; border: 1px solid #d7ddd3; border-radius: 12px; }
+.metronome-tool h1 { margin: 0; color: #163f45; font-size: 1.6rem; }
+.metronome-tempo { display: flex; align-items: baseline; justify-content: center; gap: .6rem; margin: .7rem 0; color: #285b5c; }
+.metronome-tempo output { font-size: 5rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.metronome-slider { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; font-weight: 600; }
+.metronome-slider output { margin-left: auto; font-variant-numeric: tabular-nums; }
+.metronome-slider input { flex-basis: 100%; width: 100%; height: max(36px, var(--ui-control-size)); margin: 0; accent-color: #285b5c; cursor: pointer; }
+.metronome-meters { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin: .75rem 0; }
+.metronome-meters button, .metronome-beats button { min-height: max(40px, var(--ui-control-size)); border: 1px solid #cfd8cc; border-radius: 8px; background: #f8faf7; cursor: pointer; }
+.metronome-meters button[aria-pressed=true] { background: #285b5c; color: #fff; border-color: #285b5c; }
+.metronome-beats { display: flex; gap: .4rem; margin: 1rem 0; }
+.metronome-beats button { flex: 1; min-width: 0; padding: .5rem .15rem; font-size: 1.4rem; font-weight: 700; }
+.metronome-beats button span { display: block; font-size: .8rem; font-weight: 400; }
+.metronome-beats button[aria-pressed=true] { background: #e0ede2; border-color: #6b977e; }
+.metronome-beats button[data-active=true] { background: #285b5c; color: white; box-shadow: 0 0 0 2px #b4ceba; }
+.metronome-start { display: block; width: 100%; min-height: 48px; margin: 1rem 0; border: none; border-radius: 8px; background: #285b5c; color: white; font-size: 1.25rem; font-weight: 600; cursor: pointer; }
+.metronome-start:disabled { opacity: .6; cursor: progress; }
+.metronome-hint { color: #626c65; font-size: .85rem; }
+.practice-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; border-top: 1px solid #e2e7df; padding-top: 1rem; margin-top: 1rem; color: #626c65; }
+.practice-totals strong { display: block; color: #163f45; font-size: 1.65rem; font-variant-numeric: tabular-nums; }
+.practice-history { margin-top: 1rem; }
+.practice-history summary { cursor: pointer; min-height: var(--ui-control-size); color: #285b5c; }
+.practice-history ol { padding: 0; list-style: none; margin-bottom: 0; }
+.practice-history li { display: flex; justify-content: space-between; gap: 1rem; padding-block: .4rem; font-variant-numeric: tabular-nums; }

@@ -66,7 +66,7 @@ test('tool index contains only two tool entries and opens child routes', async (
   await page.getByRole('link', { name: '节拍器', exact: true }).click()
   await expect(page).toHaveURL(/\/tools\/metronome$/)
   await expect(page.getByRole('heading', { name: '节拍器', exact: true })).toBeVisible()
-  await expect(page.getByText('计划中', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '开始', exact: true })).toBeVisible()
 })
 
 test('major keys follow the circle of fifths and normalized score colors run from green to red', async ({ page }) => {
