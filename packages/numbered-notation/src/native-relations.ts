@@ -19,9 +19,9 @@ class NativeRelationPainter extends NativeSymbols {
     const lane = system.lanes.find(lane => lane.id === relation.first.lane)
     if (!members.length || !lane) return ''
     if (relation.kind === 'inst') {
-      const selected = members.filter(glyph => glyph.event && relation.first.event!.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event!.sourceStart)
-      if (!selected.length) return ''
-      const first = selected[0]!, last = selected.at(-1)!
+      const first = relation.first, last = relation.last
+      const opens = members.includes(first), closes = members.includes(last)
+      if (!opens && !closes) return ''
       const role = 'instrument-parenthesis'
       const baseline = (text: string) => {
         const metrics = this.measurer.measureText(text, {fontSize:nativeStyle.music, fontFamily:'M3N Numbers'})
@@ -35,8 +35,8 @@ class NativeRelationPainter extends NativeSymbols {
       // lyric padding remains independent of the instrumental enclosure.
       const left = Math.max(first.musicLeft ?? first.left, first.inkLeft ?? 0)
       const right = Math.max(last.musicRight ?? last.right, last.inkRight ?? 0)
-      return this.text('(', first.x - left - leftWidth - first.parenthesisGap!, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
-        + this.text(')', last.x + right + last.parenthesisGap!, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+      return (opens ? this.text('(', first.x - left - leftWidth - first.parenthesisGap!, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role }) : '')
+        + (closes ? this.text(')', last.x + right + last.parenthesisGap!, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role }) : '')
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = preparedArc ?? nativeArcGeometry(relation, system)

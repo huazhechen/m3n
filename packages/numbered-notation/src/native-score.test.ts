@@ -130,8 +130,7 @@ describe('native engraving acceptance', () => {
     expect(root.body.textContent).not.toContain('8va')
     expect(root.querySelector('#m3n-e-1 [data-m3n-role="music-dot"]')).not.toBeNull()
     expect(root.querySelectorAll('[data-m3n-relation="slur"]').length).toBeGreaterThan(0)
-    expect(root.body.textContent?.match(/\(/g)?.length).toBeGreaterThan(1)
-    expect(root.body.textContent?.match(/\)/g)?.length).toBeGreaterThan(1)
+    expect([...root.querySelectorAll('[data-m3n-role="instrument-parenthesis"]')].map(node => node.textContent)).toEqual(['(', ')'])
   })
 })
 it('accepts complementary pickups at repeats without hiding invalid meter', () => {

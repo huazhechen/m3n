@@ -108,6 +108,13 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
     }
     flush()
   }
+  // Reserve enclosure ink only at passage endpoints, independent of wrapping.
+  const starts = new Set(relations.filter(relation => relation.kind === 'inst').map(relation => relation.first))
+  const ends = new Set(relations.filter(relation => relation.kind === 'inst').map(relation => relation.last))
+  for (const glyph of projection.glyphs) if (glyph.instrumental) {
+    if (!starts.has(glyph)) glyph.parenthesisLeft = 0
+    if (!ends.has(glyph)) glyph.parenthesisRight = 0
+  }
   // Rhythm brackets precede arcs, including a short tie from their last child.
   // Arcs stay inside expression hairpins regardless of the respective spans.
   // Within each layer, inner relations precede outer ones; all fragments
@@ -135,18 +142,13 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
     let end = begin + 1
     while (end < fragments.length && !fragments[end]!.breakBefore && !fragments[end - 1]!.breakAfter) end++
     const group = fragments.slice(begin, end), candidates: NativeLineCandidate[][] = Array.from({ length: group.length }, () => [])
-    // A wrapped instrumental passage restarts its parentheses at each row.
-    // The whole-passage minimum chain omits those interior parentheses. Only
-    // rebuild candidates close enough to capacity for that extra ink to matter.
-    // A bar merged into the next repeat opening also reappears at a row end;
+    // A bar merged into the next repeat opening reappears at a row end;
     // changed boundary bars require the actual row constraint chain.
     const boundaries = group.map((measure, index) => {
       const joined = nativeMeasureBars(group, index), isolated = nativeMeasureBars([measure], 0)
       return {
         changedOpening: joined.opening !== isolated.opening,
         changedClosing: joined.closing !== isolated.closing,
-        left: Math.max(0, ...measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.parenthesisLeft ?? 0))),
-        right: Math.max(0, ...measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.parenthesisRight ?? 0))),
       }
     })
     for (let index = group.length - 1; index >= 0; index--) {
@@ -158,8 +160,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         widestMinimum = Math.max(widestMinimum, measure.minimum)
         const equal = options.equalMeasures
         let minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
-        const boundaryPadding = boundaries[index]!.left + boundaries[stop]!.right
-        if (boundaries[index]!.changedOpening || boundaries[stop]!.changedClosing || boundaryPadding > 0 && minWidth + boundaryPadding > available)
+        if (boundaries[index]!.changedOpening || boundaries[stop]!.changedClosing)
           minWidth = nativeHorizontalSpacing(group.slice(index, stop + 1), options).minimumWidth
         if (minWidth > available && count > 1) break
         candidates[index]!.push({ end: stop + 1, density: minWidth / available })
@@ -319,12 +320,16 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
     if (first === undefined || last === undefined) continue
-    for (let index = first; index <= last; index++) systems[index]!.relations.push(relation)
+    for (let index = first; index <= last; index++) {
+      if (relation.kind === 'inst' && index !== first && index !== last) continue
+      systems[index]!.relations.push(relation)
+    }
   }
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
     if (first === undefined || last === undefined) continue
     for (let index = first; index <= last; index++) {
+      if (relation.kind === 'inst' && index !== first && index !== last) continue
       const system = systems[index]!
       const lane = system.lanes.find(lane => lane.id === relation.first.lane)
       if (lane) {

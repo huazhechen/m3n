@@ -75,19 +75,44 @@ describe('native instrumental parentheses', () => {
     expect(first.x - first.musicLeft! - first.parenthesisLeft!).toBeCloseTo(32, 6)
   })
 
-  it.each([false, true])('reserves a fresh pair on each wrapped system (equal measures: %s)', equalMeasures => {
-    const source = `{4/4}\nN: {inst}${Array(7).fill('1 2 3 4 |').join(' ')} 1 2 3 4{/} |||`
-    const pages = NativeNumberedNotationScore.create(parseM3NDocument(source)).render({ width: 320, paged: false, equalMeasures })
-    const root = new DOMParser().parseFromString(pages.join(''), 'text/html')
-    const systems = [...root.querySelectorAll('g.system')]
-    expect(systems.length).toBeGreaterThan(1)
-    for (const system of systems) {
-      const [left, right] = [...system.querySelectorAll('[data-m3n-role="instrument-parenthesis"]')]
-      expect(left!.textContent).toBe('(')
-      expect(right!.textContent).toBe(')')
-      expect(Number(left!.getAttribute('x'))).toBeGreaterThanOrEqual(32 - 0.1)
-      const width = 22 * 0.58 // The deterministic non-browser text measurer.
-      expect(Number(right!.getAttribute('x')) + width).toBeLessThanOrEqual(288 + 0.1)
+  it.each([false, true])('uses only passage endpoints across wrapped systems (equal measures: %s)', equalMeasures => {
+    const source = `{4/4}\nN: {inst}${Array(39).fill('1 2 3 4 |').join(' ')} 1 2 3 4{/} |||`
+    for (const paged of [false, true]) {
+      const pages = NativeNumberedNotationScore.create(parseM3NDocument(source)).render({ width: 320, paged, equalMeasures })
+      if (paged) expect(pages.length).toBeGreaterThan(1)
+      const root = new DOMParser().parseFromString(pages.join(''), 'text/html')
+      const systems = [...root.querySelectorAll('g.system')]
+      expect(systems.length).toBeGreaterThan(2)
+      systems.forEach((system, index) => {
+        const brackets = [...system.querySelectorAll('[data-m3n-role="instrument-parenthesis"]')]
+        expect(brackets.map(node => node.textContent)).toEqual(index === 0 ? ['('] : index === systems.length - 1 ? [')'] : [])
+        for (const bracket of brackets) {
+          expect(Number(bracket.getAttribute('x'))).toBeGreaterThanOrEqual(32 - 0.1)
+          const width = 22 * 0.58 // The deterministic non-browser text measurer.
+          expect(Number(bracket.getAttribute('x')) + width).toBeLessThanOrEqual(288 + 0.1)
+        }
+      })
     }
+  })
+
+  it('keeps each separated passage enclosed and skips brackets at manual line breaks', () => {
+    const source = '{4/4}\nN: {inst}1 2 3 4 | {br}1 2 3 4{/} | 1 2 3 4 | {inst}1 2 3 4{/} |||'
+    const pages = NativeNumberedNotationScore.create(parseM3NDocument(source)).render({ width: 800, paged: false })
+    const root = new DOMParser().parseFromString(pages.join(''), 'text/html')
+    expect([...root.querySelectorAll('[data-m3n-role="instrument-parenthesis"]')].map(node => node.textContent).sort()).toEqual(['(', '(', ')', ')'])
+    expect(root.querySelector('g.system')!.querySelectorAll('[data-m3n-role="instrument-parenthesis"]')).toHaveLength(1)
+  })
+
+  it('reserves no enclosure space inside a passage, including split measures', () => {
+    const source = `{64/4}\nN: {inst}${Array(16).fill('1 2 3 4').join(' ')}{/} |||`
+    const layout = layoutNativeScore(parseM3NDocument(source), { width: 320, paged: false })
+    expect(layout.systems.length).toBeGreaterThan(2)
+    const glyphs = layout.projection.glyphs
+    glyphs.forEach((glyph, index) => {
+      expect(glyph.parenthesisLeft! > 0).toBe(index === 0)
+      expect(glyph.parenthesisRight! > 0).toBe(index === glyphs.length - 1)
+    })
+    const root = new DOMParser().parseFromString(NativeNumberedNotationScore.create(parseM3NDocument(source)).render({ width: 320, paged: false }).join(''), 'text/html')
+    expect([...root.querySelectorAll('[data-m3n-role="instrument-parenthesis"]')].map(node => node.textContent)).toEqual(['(', ')'])
   })
 })

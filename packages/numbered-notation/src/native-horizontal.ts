@@ -52,20 +52,6 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   const scale = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) / 12
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
-  const parentheses = new Map<NativeGlyph, { left: number; right: number }>()
-  for (const lane of lanes) {
-    const members = surrounding.flatMap(measure => measure.columns.flatMap(column => column.glyphs.filter(glyph => glyph.lane === lane).map(glyph => ({ glyph, measure }))))
-    const joins = (left: typeof members[number] | undefined, right: typeof members[number] | undefined) => left && right
-      && (left.measure === right.measure || !left.measure.breakAfter && !right.measure.breakBefore && left.measure.part === right.measure.part)
-    members.forEach((member, index) => {
-      if (!member.glyph.instrumental) return
-      const previous = members[index - 1], next = members[index + 1]
-      parentheses.set(member.glyph, {
-        left: previous?.glyph.instrumental && joins(previous, member) ? 0 : member.glyph.parenthesisLeft ?? 0,
-        right: next?.glyph.instrumental && joins(member, next) ? 0 : member.glyph.parenthesisRight ?? 0,
-      })
-    })
-  }
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
     cells: lanes.map(lane => minimumCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
@@ -145,9 +131,9 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       // An absent voice gets music-only minimum clearance. Lyrics and
       // parentheses belong to their real voice, not its neighbours' blanks.
       cell.placeholderLeft = cell.left; cell.placeholderRight = cell.right
-      const insets = parentheses.get(glyph)
+      const insets = { left: glyph.parenthesisLeft ?? 0, right: glyph.parenthesisRight ?? 0 }
       // Parentheses enclose the painted host, including beam stroke caps.
-      // Reserve that same extent when a passage starts or resumes on a row.
+      // Reserve that same extent at the actual passage endpoints.
       if (insets?.left) cell.left = Math.max(cell.left, (glyph.inkLeft ?? 0) + left)
       if (insets?.right) cell.right = Math.max(cell.right, (glyph.inkRight ?? 0) + right)
       cell.left = Math.max(cell.left, glyph.lyricLeft ?? 0)

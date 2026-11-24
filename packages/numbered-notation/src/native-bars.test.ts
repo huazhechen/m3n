@@ -13,7 +13,7 @@ const layout = (first = '1') => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${
 const repeatInk = (score: ReturnType<typeof layout>) => nativeSvgInk(score.systems[0]!.decorationLayout!.find(item => item.svg.includes('repeat-count'))!.svg, measurer)
 
 describe('measured bar obstacles', () => {
-  it.each([false, true])('reserves restarted instrumental parentheses before wrapping (paged: %s)', paged => {
+  it.each([false, true])('keeps bars within bounds when instrumental passages wrap (paged: %s)', paged => {
     const source = `{4/4}\nN: {inst}${Array(7).fill('1 2 3 4 |').join(' ')}{/} |||`
     const score = layoutNativeScore(parseM3NDocument(source), { width: 360, pageMargin: 0, paged, minimumNoteGapEm: .6, textMeasurer: measurer })
     expect(score.systems.length).toBeGreaterThan(1)
