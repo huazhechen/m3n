@@ -13,6 +13,24 @@ const ranges: Record<string, Array<[number, number, string]>> = {
 }
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 
+// Historical lyric fingerprints use the full event interval for each lyric,
+// including all syllables of a tuplet. Playback now emits one element per
+// tuplet slot; combine those slots before comparing the original fingerprints.
+function performedLyricGroups(document: ReturnType<typeof parseM3NDocument>) {
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, {
+    beats: event.beats, lyrics: lyricsByEvent.get(event) ?? [],
+  }]))
+  return compileScorePerformance(document).elements
+    .filter(element => element.voice === 'score:melody' && (element.tupletSlot ?? 0) === 0)
+    .flatMap(element => {
+      const event = byId.get(element.xmlId)!
+      return event.lyrics
+        .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
+        .map(lyric => [element.start, element.start + event.beats, lyric.text])
+    })
+}
+
 // Captured from each original itinerary before changing notation or lyric rows.
 describe.each(baselines.filter(baseline => baseline.id in ranges))('$title without named sections', reference => {
   const source = readFileSync(new URL(`../scores/${reference.id}_01.m3n`, import.meta.url), 'utf8')
@@ -36,15 +54,8 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
     expect(compileScorePerformance(document).beats).toBe(reference.beats)
   })
 
-  it('preserves every lyric and its performed note timing', () => {
-    const document = parseM3NDocument(fingerprintSource)
-    const { lyricsByEvent } = deriveScoreInteraction(document)
-    const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-    const lyrics = compileScorePerformance(document).elements
-      .filter(element => element.voice === 'score:melody')
-      .flatMap(element => (byId.get(element.xmlId) ?? [])
-        .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
-        .map(lyric => [element.start, element.end, lyric.text]))
+  it('preserves every lyric and its performed event timing', () => {
+    const lyrics = performedLyricGroups(parseM3NDocument(fingerprintSource))
     expect(lyrics).toHaveLength(reference.lyricCount)
     expect(hash(lyrics)).toBe(reference.lyricsSha256)
   })
@@ -100,15 +111,7 @@ it('preserves Xin Bu Liao Qing performance and lyrics after moving repeat pickup
   expect(original.notes.length - actual.notes.length).toBe(3)
   expect(actual.beats).toBe(224)
   expect(source).toContain('{lg}3. (2){/} 2')
-  const lyrics = (document: typeof before) => {
-    const { lyricsByEvent } = deriveScoreInteraction(document)
-    const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-    return compileScorePerformance(document).elements.filter(element => element.voice === 'score:melody')
-      .flatMap(element => (byId.get(element.xmlId) ?? [])
-        .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
-        .map(lyric => [element.start, element.end, lyric.text]))
-  }
-  expect(lyrics(after)).toEqual(lyrics(before).map(([start, end, text]) => [
+  expect(performedLyricGroups(after)).toEqual(performedLyricGroups(before).map(([start, end, text]) => [
     start, extendedEnds.get(start as number) ?? end, text,
   ]))
 })
