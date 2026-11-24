@@ -61,13 +61,13 @@ describe('measured native grace blocks', () => {
     const body = nativeNoteBody(normal,grace.size)
     const logicalLeft = -body.width / 2 - nativeAccidentalAdvance(accidental,grace.size)
     const [first, second] = grace.notes
-    expect(second!.x + second!.ink.left - (first!.x + first!.ink.right)).toBeCloseTo(1,3)
+    expect(second!.x + second!.ink.left - (first!.x + first!.ink.right)).toBeCloseTo(0,3)
     expect(-grace.left).toBeLessThanOrEqual(first!.x + logicalLeft + .0001)
     expect(grace.left - 6 - grace.sideGap).toBeCloseTo(grace.width,3)
     for (const note of grace.notes) expect(note.x + note.ink.left).toBeGreaterThanOrEqual(-grace.left - .0001)
   })
 
-  it.each([normal, unusual])('keeps a 1px ink gap across mixed durations, accidentals and octaves', measurer => {
+  it.each([normal, unusual])('keeps zero ink gap across mixed durations, accidentals and octaves', measurer => {
     const grace = nativeGraceGeometry([
       { degree: '2', accidental: '', octave: 2, writtenBeats: .5 },
       { degree: '3', accidental: '♯', octave: -2, writtenBeats: .125 },
@@ -75,7 +75,7 @@ describe('measured native grace blocks', () => {
     ], 6, measurer)
     for (const [index, note] of grace.notes.entries()) {
       const previous = grace.notes[index - 1]
-      if (previous) expect(note.x + note.ink.left - previous.x - previous.ink.right).toBeCloseTo(1, 6)
+      if (previous) expect(note.x + note.ink.left - previous.x - previous.ink.right).toBeCloseTo(0, 6)
     }
   })
 
@@ -113,7 +113,7 @@ describe('measured native grace blocks', () => {
     expect(ink.right).toBeLessThanOrEqual(glyph.musicRight! + 0.0001)
     expect(ink.top).toBeGreaterThanOrEqual(-glyph.musicTop! - 0.0001)
     expect(ink.bottom).toBeLessThanOrEqual(glyph.musicBottom! + 0.0001)
-    expect(grace.notes[0]!.x + grace.notes[0]!.ink.right).toBeLessThan(grace.notes[1]!.x + grace.notes[1]!.ink.left)
+    expect(grace.notes[0]!.x + grace.notes[0]!.ink.right).toBeCloseTo(grace.notes[1]!.x + grace.notes[1]!.ink.left, 6)
   })
 
   it('keeps grace beams below the actual digit ink even for a font with no descent', () => {
