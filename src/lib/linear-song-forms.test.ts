@@ -62,14 +62,19 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
 
   it('preserves each visited phrase count, every bar duration and every time signature', () => {
     const bars = parseM3NDocument(fingerprintSource).parts.get('score')!.melody.filter(bar => bar.events.length)
-    // The historical A/B boundary splits one logical bar into two 2-beat
-    // fragments. Split it only for comparison with that historical baseline.
+    // Moving Man Man's repeat barlines past the pickups joins the historical
+    // half-bars. Its performed events and lyrics still match the baselines above.
     if (reference.id === 'man_man_xi_huan_ni') {
-      expect(bars).toHaveLength(36)
-      const joined = bars[21]!
-      expect(joined.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
-      bars.splice(21, 1, { ...joined, events: joined.events.slice(0, 1) },
-        { ...joined, events: joined.events.slice(1) })
+      expect(bars[0]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(2)
+      expect(bars.at(-1)!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(2)
+      expect(bars).toHaveLength(34)
+      expect(bars.slice(1, -1).every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)
+        === bar.events[0]!.meterCount! * 4 / bar.events[0]!.meterUnit!)).toBe(true)
+      expect(bars.findIndex(bar => bar.left === 'rptstart')).toBe(11)
+      expect(bars.findIndex(bar => bar.right === 'rptend')).toBe(30)
+      expect(bars.map(bar => [bar.events[0]!.meterCount, bar.events[0]!.meterUnit]))
+        .toEqual(bars.map((_, index) => [index === 27 ? 2 : 4, 4]))
+      return
     }
     const boundaries = ranges[reference.id]!
     expect(bars).toHaveLength(boundaries.at(-1)![1])
