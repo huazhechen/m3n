@@ -164,7 +164,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const glyphGraces = segment === 0 && slot === 0 ? graces : []
           const glyphAnnotations = segment === 0 && slot === 0 ? [event.chord, event.text, event.sectionLabelBreakAfter ? event.sectionLabel : undefined].filter((value): value is string => Boolean(value)) : []
           const pitchWidth = sustain ? nativeStyle.music * 0.42 : textWidth('0', nativeStyle.music, 'M3N Numbers')
-          const accidentalWidth = sustain ? 0 : Math.max(0, ...pitches.map(pitch => nativeAccidentalAdvance(pitch.accidental, 22)))
+          const accidentalWidth = sustain ? 0 : Math.max(0, ...pitches.map(pitch => nativeAccidentalAdvance(pitch.accidental, 22, options.textMeasurer)))
           const durationBase = 2 ** Math.floor(Math.log2(writtenBeats))
           const dotCount = Math.max(0, [1, 1.5, 1.75, 1.875].findIndex(ratio => Math.abs(writtenBeats / durationBase - ratio) < 1e-7))
           let left = pitchWidth / 2 + accidentalWidth, right = pitchWidth / 2 + dotCount * nativeStyle.music * 0.27

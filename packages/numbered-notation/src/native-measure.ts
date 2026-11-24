@@ -1,3 +1,4 @@
+import { defaultBravuraCharacterMetrics } from './bravura-characters.js'
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 /** Platform-independent text measurement contract used by the native engine. */
 export type TextStyle = { fontFamily?: string; fontSize: number; fontWeight?: number; fontStyle?: 'normal' | 'italic'; textAlign?: 'left' | 'center' | 'right' }
@@ -28,6 +29,8 @@ export class NumberedTextMeasurementCache {
  * headless consumers should inject measured metrics for their actual fonts. */
 export class DefaultTextMeasurer implements TextMeasurer {
   measureText(text: string, style: TextStyle): TextMetrics {
+    const music = style.fontFamily === 'Bravura' ? defaultBravuraCharacterMetrics(text, style.fontSize) : undefined
+    if (music) return music
     return { w: [...text].reduce((width, character) => width + style.fontSize * (character.codePointAt(0)! > 127 ? 1 : 0.58), 0), h: style.fontSize, baseline: style.fontSize * 0.8, inkBottom: style.fontSize * 0.8 }
   }
 }

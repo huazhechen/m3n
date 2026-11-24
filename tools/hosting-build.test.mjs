@@ -84,7 +84,7 @@ test('score edits, additions, book metadata and font updates preserve every Java
       for (const score of catalog.scores) {
         assert.ok((await readFile(join(root, 'dist', score.sourceUrl), 'utf8')).includes('|||'))
         assert.equal(score.fontPreloads.length, 3)
-        assert.deepEqual(score.fontPreloads.map(font => font.as), ['font', 'fetch', 'font'])
+        assert.deepEqual(score.fontPreloads.map(font => font.as), ['font', 'font', 'font'])
         for (const { url } of score.fontPreloads) {
           assert.match(url, /^\/score\/assets\/v2\/.*\.woff2$/)
           assert.equal((await readFile(join(root, 'dist', url.slice('/score/'.length)))).subarray(0, 4).toString(), 'wOF2')

@@ -8,7 +8,7 @@ import { nativeStyle, nativeEm as em } from './native-style.js'
 import type { TextMeasurer } from './native-measure.js'
 import type { NativePitch, NativeControl } from './native-model.js'
 import { nativeKeyGeometry } from './native-key.js'
-import { nativeAccidentalGeometry } from './native-accidentals.js'
+import { nativeAccidentalGeometry, type NativeAccidentalGlyph } from './native-accidentals.js'
 import { nativeArticulationSvg } from './native-articulations.js'
 import { nativeFermataSvg } from './native-fermata.js'
 import { nativeOrnamentSvg } from './native-ornaments.js'
@@ -52,9 +52,9 @@ export class NativeSymbols {
     let svg = this.text(pitch.degree, x, y, size, 'M3N Numbers', { 'text-anchor': 'middle' })
     if (pitch.accidental) {
       const halfBody = this.measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
-      const symbols = nativeAccidentalGeometry(pitch.accidental, size, halfBody)
+      const symbols = nativeAccidentalGeometry(pitch.accidental, size, halfBody, this.measurer)
       svg += `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'accidental' })}>`
-        + symbols.paths.map(symbol => `<path${attrs({ d: symbol.d, fill: symbol.stroke ? 'none' : '#000', stroke: symbol.stroke ? '#000' : 'none', 'stroke-width': symbol.stroke, 'data-m3n-symbol': symbol.symbol, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })}/>`).join('') + '</g>'
+        + symbols.glyphs.map(glyph => this.accidental(glyph)).join('') + '</g>'
     }
     const body = nativeNoteBody(this.measurer, size)
     for (let index = 0; index < Math.abs(pitch.octave); index++) {
@@ -62,6 +62,10 @@ export class NativeSymbols {
       svg += circle(x, y + offset, size * 0.075)
     }
     return svg
+  }
+
+  accidental(glyph: NativeAccidentalGlyph): string {
+    return this.text(glyph.character, glyph.x, glyph.y, glyph.fontSize, 'Bravura', { 'data-m3n-symbol': glyph.symbol, 'data-m3n-font': 'Bravura', 'aria-hidden': 'true' })
   }
 
   tempo(text: string, x: number, y: number, prepared?: NativeTempoGeometry): string {
@@ -113,7 +117,7 @@ export class NativeSymbols {
       const left = x+row.x, baseline = y+axis-geometry.height/2+row.y+row.baseline
       return this.text(row.prefix,left,baseline,nativeStyle.text,'M3N Numbers')
         + `<g transform="translate(${n(left+row.accidentalX)} ${n(baseline)})">`
-        + row.paths.map(symbol=>`<path${attrs({d:symbol.d,fill:symbol.stroke?'none':'#000',stroke:symbol.stroke?'#000':'none','stroke-width':symbol.stroke,'data-m3n-symbol':symbol.symbol,'stroke-linecap':'round','stroke-linejoin':'round'})}/>`).join('') + '</g>'
+        + row.glyphs.map(glyph => this.accidental(glyph)).join('') + '</g>'
         + this.text(row.name,left+row.nameX,baseline,nativeStyle.text,'M3N Numbers')
     }).join('')
   }

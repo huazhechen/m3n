@@ -1,26 +1,37 @@
-import { bravuraGlyph, type BravuraGlyph } from './bravura.js'
-import { nativePathInk } from './native-ink.js'
-const shapes: Record<string, BravuraGlyph> = { '♭': 'accidentalFlat', '♮': 'accidentalNatural', '♯': 'accidentalSharp' }
+import { bravuraAccidentalCharacters } from './bravura-characters.js'
+import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
+import { nativeSvgNumber as n } from './native-svg-number.js'
+import type { NativeInk } from './native-ink.js'
+
+export type NativeAccidentalGlyph = { symbol: string; character: string; fontSize: number; x: number; y: number; ink: NativeInk }
 const height = (symbol: string, size: number) => (symbol === '♯' ? .78 : .82) * size * .72
-export function nativeAccidentalAdvance(symbols: string, size: number): number {
-  return [...symbols].reduce((sum, symbol) => sum + (shapes[symbol] ? bravuraGlyph(shapes[symbol]!, height(symbol, size)).width + size * .035 : 0), 0)
+function measuredGlyphs(symbols: string, size: number, measurer: TextMeasurer) {
+  return [...symbols].flatMap(symbol => {
+    const glyph = bravuraAccidentalCharacters[symbol as keyof typeof bravuraAccidentalCharacters]
+    if (!glyph) return []
+    // Preserve the intended ink height, not a nominal font em size.
+    const fontSize = n(height(symbol, size) / (glyph.ascent + glyph.descent))
+    const metrics = measurer.measureText(glyph.character, { fontSize, fontFamily: 'Bravura', fontWeight: 400, fontStyle: 'normal' })
+    const width = (metrics.inkRight ?? metrics.w) - (metrics.inkLeft ?? 0)
+    return [{ symbol, character: glyph.character, fontSize, ascent: glyph.ascent, metrics, width }]
+  })
 }
-export function nativeAccidentalGeometry(symbols: string, size: number, numberHalfWidth: number) {
-  const advance = nativeAccidentalAdvance(symbols, size)
+export function nativeAccidentalAdvance(symbols: string, size: number, measurer: TextMeasurer = new DefaultTextMeasurer()): number {
+  return measuredGlyphs(symbols, size, measurer).reduce((sum, glyph) => sum + glyph.width + size * .035, 0)
+}
+export function nativeAccidentalGeometry(symbols: string, size: number, numberHalfWidth: number, measurer: TextMeasurer = new DefaultTextMeasurer()) {
+  const measured = measuredGlyphs(symbols, size, measurer)
+  const advance = measured.reduce((sum, glyph) => sum + glyph.width + size * .035, 0)
   let left = -numberHalfWidth - advance
-  const paths: { symbol: string; d: string; stroke: number }[] = []
-  for (const symbol of symbols) {
-    const name = shapes[symbol]
-    if (!name) continue
-    const shape = bravuraGlyph(name, height(symbol, size))
+  const glyphs: NativeAccidentalGlyph[] = measured.map(({ symbol, character, fontSize, ascent, metrics, width }) => {
     const top = -size * .42 - (symbol === '♯' ? .63 : .67) * size * .72
-    let coordinate = 0
-    const d = shape.path.replace(/[MLCZ]|[-+]?(?:\d*\.\d+|\d+\.?\d*)/g, token => {
-      if (/^[MLCZ]$/.test(token)) { coordinate = 0; return token }
-      return String(Number((Number(token) + (coordinate++ % 2 ? top : left)).toFixed(6)))
-    })
-    paths.push({ symbol, d, stroke: 0 })
-    left += nativePathInk(shape.path).right + size * .035
-  }
-  return { advance, paths }
+    // Keep the font outline at its original design position; Canvas ink may
+    // reserve a slightly larger hinted envelope, which still enters avoidance.
+    const x = n(left - (metrics.inkLeft ?? 0)), y = n(top + fontSize * ascent)
+    const ink = { left: x + (metrics.inkLeft ?? 0), right: x + (metrics.inkRight ?? metrics.w),
+      top: y - metrics.baseline, bottom: y - metrics.baseline + (metrics.inkBottom ?? metrics.h) }
+    left += width + size * .035
+    return { symbol, character, fontSize, x, y, ink }
+  })
+  return { advance, glyphs }
 }

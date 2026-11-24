@@ -2,35 +2,40 @@
 import { parseM3NDocument } from '@m3n/notation';
 import { describe,expect,it } from 'vitest';
 import { nativeAccidentalAdvance,nativeAccidentalGeometry } from './native-accidentals.js';
-import { nativePathInk } from './native-ink.js';
+import { nativeSvgInk } from './native-ink.js';
+import { DefaultTextMeasurer } from './native-measure.js';
+import { NativeSymbols } from './native-symbols.js';
 import { layoutNativeScore } from './native-layout.js';
 import { NativeNumberedNotationScore } from './native-score.js';
 const options = { width: 800, paged: false };
 const layout = (music: string) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`), options);
 describe('native accidental geometry', () => {
-    it('uses round caps and joins for key, range, main, chord and grace accidentals', () => {
+    it('uses Bravura SMuFL text for key, range, main, chord and grace accidentals', () => {
         const source = '{key=Db}{4/4}\nN: 1#{ac(7b)} [2 4= 6:h] 3## 4bb |||';
         const root = new DOMParser().parseFromString(NativeNumberedNotationScore.create(parseM3NDocument(source)).render(options).join(''), 'text/html');
-        const paths = [...root.querySelectorAll('path[data-m3n-symbol]')];
-        expect(root.querySelector('[data-m3n-role="pitch-range"] path[data-m3n-symbol]')).not.toBeNull();
-        expect(root.querySelector('[data-m3n-role="grace"] path[data-m3n-symbol]')).not.toBeNull();
-        expect(paths.some(path => !path.closest('g.system'))).toBe(true);
-        for (const path of paths) {
-            expect(path.getAttribute('stroke-linecap')).toBe('round');
-            expect(path.getAttribute('stroke-linejoin')).toBe('round');
+        const glyphs = [...root.querySelectorAll('text[data-m3n-symbol]')];
+        expect(root.querySelector('path[data-m3n-symbol]')).toBeNull();
+        expect(root.querySelector('[data-m3n-role="pitch-range"] text[data-m3n-symbol]')).not.toBeNull();
+        expect(root.querySelector('[data-m3n-role="grace"] text[data-m3n-symbol]')).not.toBeNull();
+        expect(glyphs.some(glyph => !glyph.closest('g.system'))).toBe(true);
+        expect(glyphs.length).toBeGreaterThan(0);
+        for (const glyph of glyphs) {
+            expect(glyph.getAttribute('font-family')).toBe('Bravura');
+            expect(glyph.getAttribute('font-weight')).toBe('400');
+            expect(['\uE260', '\uE261', '\uE262']).toContain(glyph.textContent);
         }
     });
     it.each([13, 22])('keeps every symbol left of the number at size %s', size => {
         const halfBody = size / 4;
         for (const symbol of ['♯', '♭', '♮', '♯♯', '♭♭']) {
             const geometry = nativeAccidentalGeometry(symbol, size, halfBody);
-            expect(geometry.paths).toHaveLength([...symbol].length);
+            expect(geometry.glyphs).toHaveLength([...symbol].length);
             expect(geometry.advance).toBe(nativeAccidentalAdvance(symbol, size));
-            for (const path of geometry.paths) {
-                const ink = nativePathInk(path.d);
+            for (const glyph of geometry.glyphs) {
+                const ink = nativeSvgInk(new NativeSymbols(new DefaultTextMeasurer()).accidental(glyph), new DefaultTextMeasurer());
+                expect(ink).toEqual(glyph.ink);
                 expect(ink.left).toBeGreaterThanOrEqual(-halfBody - geometry.advance - 0.000001);
                 expect(ink.right).toBeLessThan(-halfBody);
-                expect(path.stroke).toBe(0);
             }
         }
     });
@@ -42,12 +47,12 @@ describe('native accidental geometry', () => {
         expect(chord.left - plain.left).toBeCloseTo(nativeAccidentalAdvance('♯♯', 22));
         expect(chord.right).toBe(plain.right);
     });
-    it('uses vectors for main notes, stacked tones and grace notes at their own sizes', () => {
+    it('uses music characters for main notes, stacked tones and grace notes at their own sizes', () => {
         const source = '{4/4}\nN: 1#{ac(7b)} [2 4= 6:h] 3## 4bb |||';
         const svg = NativeNumberedNotationScore.create(parseM3NDocument(source)).render(options).join('');
         const root = new DOMParser().parseFromString(svg, 'text/html');
         expect([...root.querySelectorAll('g.note text')].some(node => /[♯♭♮]/.test(node.textContent ?? ''))).toBe(false);
-        const symbols = [...root.querySelectorAll('g.system [data-m3n-role="accidental"] path')];
+        const symbols = [...root.querySelectorAll('g.system [data-m3n-role="accidental"] text')];
         expect(symbols.map(node => node.getAttribute('data-m3n-symbol'))).toEqual(['♯', '♭', '♮', '♯', '♯', '♭', '♭']);
         expect(symbols[0]!.getAttribute('fill')).toBe('#000');
         expect(symbols[1]!.getAttribute('fill')).toBe('#000');

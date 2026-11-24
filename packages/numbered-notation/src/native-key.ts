@@ -1,4 +1,3 @@
-import { nativePathInk } from './native-ink.js'
 import { nativeStyle } from './native-style.js'
 import { nativeAccidentalGeometry, nativeAccidentalAdvance } from './native-accidentals.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -15,15 +14,15 @@ export function nativeKeyGeometry(rows: NativeKeyRow[], measurer: TextMeasurer) 
     const name = match ? match[2]! + match[4]! : key
     const symbols = (match?.[3] ?? '').replaceAll('#','♯').replaceAll('b','♭')
     const a = measurer.measureText(prefix,style), b = measurer.measureText(name,style)
-    const advance = nativeAccidentalAdvance(symbols,size)
+    const advance = nativeAccidentalAdvance(symbols,size,measurer)
     // Key accidentals have twice the note accidental trailing space.
     const extraGap = [...symbols].length * size * .01
-    const accidental = nativeAccidentalGeometry(symbols,size,-advance)
+    const accidental = nativeAccidentalGeometry(symbols,size,-advance,measurer)
     const nameX = a.w + advance + extraGap
-    const bounds = accidental.paths.map(path => ({ink:nativePathInk(path.d),stroke:path.stroke/2}))
-    const top = Math.min(-a.baseline,-b.baseline,...bounds.map(({ink,stroke})=>ink.top-stroke))
-    const bottom = Math.max((a.inkBottom ?? a.h)-a.baseline,(b.inkBottom ?? b.h)-b.baseline,...bounds.map(({ink,stroke})=>ink.bottom+stroke))
-    return {prefix,name,paths:accidental.paths,accidentalX:a.w,baseline:-top,
+    const bounds = accidental.glyphs.map(glyph => glyph.ink)
+    const top = Math.min(-a.baseline,-b.baseline,...bounds.map(ink=>ink.top))
+    const bottom = Math.max((a.inkBottom ?? a.h)-a.baseline,(b.inkBottom ?? b.h)-b.baseline,...bounds.map(ink=>ink.bottom))
+    return {prefix,name,glyphs:accidental.glyphs,accidentalX:a.w,baseline:-top,
       width:nameX+b.w,nameX,height:bottom-top,x:0,y:0}
   })
   const width = Math.max(...prepared.map(row=>row.width))

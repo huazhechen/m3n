@@ -23,12 +23,12 @@ describe('native measured key signatures', () => {
         expect(native.projection.glyphs.flatMap(g => g.controls).filter(c => c.kind === 'key')).toHaveLength(1);
         for (const system of native.systems) for (const measure of system.measures) expect(measure.start).toBeGreaterThanOrEqual(11);
     });
-    it.each(['1=Bb', '1=F#', '6=Eb', '6=C#'])('draws %s with vector accidentals before the tonic', key => {
+    it.each(['1=Bb', '1=F#', '6=Eb', '6=C#'])('draws %s with music-font accidentals before the tonic', key => {
         const control = measureNativeControl('key', key, measurer);
         const root = new DOMParser().parseFromString(`<svg>${painter.control(control)}</svg>`, 'image/svg+xml');
         const texts = [...root.querySelectorAll('text')];
-        expect(texts.map(node => node.textContent)).toEqual([key.slice(0, 2), key[2]]);
-        expect(root.querySelector('path')?.getAttribute('data-m3n-symbol')).toBe(key.endsWith('b') ? '♭' : '♯');
+        expect(texts.filter(node => !node.hasAttribute('data-m3n-symbol')).map(node => node.textContent)).toEqual([key.slice(0, 2), key[2]]);
+        expect(root.querySelector('text[data-m3n-symbol]')?.getAttribute('data-m3n-symbol')).toBe(key.endsWith('b') ? '♭' : '♯');
         const ink = nativeSvgInk(painter.control(control), measurer);
         expect(control.top).toBeCloseTo(-ink.top);
         expect(control.bottom).toBeCloseTo(ink.bottom);

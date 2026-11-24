@@ -19,3 +19,24 @@ for (const text of ['周蕙 演唱 姚若龙 作词 陈小霞 作曲 约定 春�
     }
   })
 }
+
+test('Bravura accidental codepoints, design metrics and PDF subsets match the bundled font', async () => {
+  const characters = JSON.parse(readFileSync(new URL('../packages/numbered-notation/src/bravura-characters.json', import.meta.url)))
+  const font = fontkit.create(readFileSync(new URL('../packages/numbered-notation/src/font-assets/Bravura.ttf', import.meta.url)))
+  const web = fontkit.create(readFileSync(new URL('../packages/numbered-notation/src/font-assets/Bravura.woff2', import.meta.url)))
+  const subset = font.createSubset(), pairs = []
+  for (const metrics of Object.values(characters)) {
+    const glyph = font.glyphForCodePoint(metrics.character.codePointAt(0))
+    assert.notEqual(glyph.id, 0, 'Use an existing SMuFL glyph')
+    assert.deepEqual(glyph.path.commands, web.glyphForCodePoint(metrics.character.codePointAt(0)).path.commands)
+    assert.equal(glyph.bbox.minX, 0)
+    assert.equal(glyph.bbox.maxX / font.unitsPerEm, metrics.width)
+    assert.equal(glyph.bbox.maxY / font.unitsPerEm, metrics.ascent)
+    assert.equal(-glyph.bbox.minY / font.unitsPerEm, metrics.descent)
+    pairs.push({ glyph, id: subset.includeGlyph(glyph) })
+  }
+  const chunks = []
+  await new Promise((resolve, reject) => subset.encodeStream().on('data', chunk => chunks.push(chunk)).on('end', resolve).on('error', reject))
+  const embedded = fontkit.create(Buffer.concat(chunks))
+  for (const { glyph, id } of pairs) assert.deepEqual(embedded.getGlyph(id).path.commands, glyph.path.commands)
+})

@@ -5,7 +5,6 @@ import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeStyle, nativeEm } from './native-style.js'
 import type { NativeGlyph, NativePitch } from './native-model.js'
 import { nativeInnerMark } from './native-marks.js'
-import { nativePathInk } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 /** All vertical distances come from the primitives used to paint the note. */
 export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, sustain: boolean, measurer: TextMeasurer = new DefaultTextMeasurer()) {
@@ -21,9 +20,8 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
     if (sustain) return { top: -sustainY + sustainHalf, bottom: sustainY + sustainHalf }
     const text = measurer.measureText(pitch.degree, { fontSize: n(size), fontFamily: 'M3N Numbers', fontWeight: 400, fontStyle: 'normal' })
     let top = 0 - text.baseline, bottom = 0 - text.baseline + (text.inkBottom ?? text.h)
-    if (pitch.accidental) for (const symbol of nativeAccidentalGeometry(pitch.accidental, size, body.width / 2).paths) {
-      const ink = nativePathInk(symbol.d), half = n(symbol.stroke) / 2
-      top = Math.min(top, ink.top - half); bottom = Math.max(bottom, ink.bottom + half)
+    if (pitch.accidental) for (const { ink } of nativeAccidentalGeometry(pitch.accidental, size, body.width / 2, measurer).glyphs) {
+      top = Math.min(top, ink.top); bottom = Math.max(bottom, ink.bottom)
     }
     const beams = index === 0 ? beamCount : 0
     for (let dot = 0; dot < Math.abs(pitch.octave); dot++) {

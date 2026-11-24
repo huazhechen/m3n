@@ -35,7 +35,7 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
     const ink = nativeSvgInk(svg, measurer)
     // Keep the measured body/accidental advance as a minimum footprint,
     // while retaining overhang and round caps from the actual paint.
-    const footprint = { ...ink, left: Math.min(ink.left, -half - nativeAccidentalAdvance(pitch.accidental, size)), right: Math.max(ink.right, half) }
+    const footprint = { ...ink, left: Math.min(ink.left, -half - nativeAccidentalAdvance(pitch.accidental, size, measurer)), right: Math.max(ink.right, half) }
     return { pitch, beats, beams, svg, bodySvg, ink, footprint, x: 0, y: 0 }
   })
   if (!notes.length) throw new Error('倚音块不能为空。')

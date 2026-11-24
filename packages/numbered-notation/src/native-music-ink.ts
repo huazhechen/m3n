@@ -3,7 +3,7 @@ import type { TextMeasurer } from './native-measure.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
-import { nativePathInk, type NativeInk } from './native-ink.js'
+import { type NativeInk } from './native-ink.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 
@@ -32,9 +32,9 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
     const left = n(x - (metrics.centerOffset ?? 0)) - (metrics.advance ?? metrics.w) / 2
     pieces.push({ left: left + (metrics.inkLeft ?? 0), right: left + (metrics.inkRight ?? metrics.w),
       top: n(y) - metrics.baseline, bottom: n(y) - metrics.baseline + (metrics.inkBottom ?? metrics.h) })
-    if (pitch.accidental) for (const symbol of nativeAccidentalGeometry(pitch.accidental, size, body.width / 2).paths) {
-      const ink = nativePathInk(symbol.d), half = symbol.stroke ? n(symbol.stroke) / 2 : 0
-      pieces.push({ left: ink.left - half + n(x), right: ink.right + half + n(x), top: ink.top - half + n(y), bottom: ink.bottom + half + n(y) })
+    if (pitch.accidental) for (const symbol of nativeAccidentalGeometry(pitch.accidental, size, body.width / 2, measurer).glyphs) {
+      const ink = symbol.ink
+      pieces.push({ left: ink.left + n(x), right: ink.right + n(x), top: ink.top + n(y), bottom: ink.bottom + n(y) })
     }
     for (let dot = 0; dot < Math.abs(pitch.octave); dot++) circle(x, y + body.octaveY(pitch.octave > 0, dot, index === 0 ? beamCount : 0), size * .075)
   }
