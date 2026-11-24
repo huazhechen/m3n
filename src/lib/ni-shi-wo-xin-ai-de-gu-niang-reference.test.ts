@@ -1,3 +1,4 @@
+import { writtenEventSpans } from './fixtures/written-event-spans'
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
@@ -68,7 +69,7 @@ describe('User-approved vocal score with JTP123 reference', () => {
   it('sings both verses, all three choruses and the complete final word', () => {
     const { lyricsByEvent } = deriveScoreInteraction(document)
     const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-    const text = compileScorePerformance(document).elements.filter(element => element.voice === 'score:melody')
+    const text = writtenEventSpans(compileScorePerformance(document).elements).filter(element => element.voice === 'score:melody')
       .flatMap(element => (byId.get(element.xmlId) ?? [])
         .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
         .map(lyric => lyric.text)).join('')

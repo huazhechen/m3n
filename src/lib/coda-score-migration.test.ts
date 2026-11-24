@@ -1,3 +1,4 @@
+import { writtenEventSpans } from './fixtures/written-event-spans'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { compileScorePerformance, deriveScoreInteraction, formatM3N, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
@@ -26,7 +27,7 @@ it.each(baselines)('preserves every performed event and lyric after simplifying 
   const data = {
     beats: performance.beats, notes: performance.notes, tempos: performance.tempos,
     events: bars.flatMap(bar => bar.events.map(event => [pitches.get(event) ?? [], event.beats, event.tie, event.postfixes, event.dynamic ?? null, event.tempo])),
-    lyrics: performance.elements.filter(element => element.voice === 'score:melody')
+    lyrics: writtenEventSpans(performance.elements).filter(element => element.voice === 'score:melody')
       .flatMap(element => (ids.get(element.xmlId) ?? [])
         .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
         .map(lyric => [element.start, element.end, lyric.text])),

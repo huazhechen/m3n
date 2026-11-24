@@ -1,3 +1,4 @@
+import { writtenEventSpans } from './fixtures/written-event-spans'
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, playbackMeasureIndexes, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
@@ -40,7 +41,7 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
     const document = parseM3NDocument(fingerprintSource)
     const { lyricsByEvent } = deriveScoreInteraction(document)
     const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-    const lyrics = compileScorePerformance(document).elements
+    const lyrics = writtenEventSpans(compileScorePerformance(document).elements)
       .filter(element => element.voice === 'score:melody')
       .flatMap(element => (byId.get(element.xmlId) ?? [])
         .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
@@ -103,7 +104,7 @@ it('simplifies only Xin Bu Liao Qing 明→了 while retaining 朝→朝 and all
   const lyrics = (document: typeof before) => {
     const { lyricsByEvent } = deriveScoreInteraction(document)
     const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-    return compileScorePerformance(document).elements.filter(element => element.voice === 'score:melody')
+    return writtenEventSpans(compileScorePerformance(document).elements).filter(element => element.voice === 'score:melody')
       .flatMap(element => (byId.get(element.xmlId) ?? [])
         .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
         .map(lyric => [element.start, element.end, lyric.text]))

@@ -5,12 +5,26 @@ import type { MeasureText } from './layout-svg.js'
 export { STAFF_SCALE }
 export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: number; head: number; weight: number; inset: number }
 export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; target: number; weight: number }
-export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number): StaffLine[] {
+export type StaffMeasureMinimum = (measure: StaffMeasure, first: boolean, spacing: number) => number
+/** Only immutable minima are shared; VexFlow's mutable drawing objects are discarded. */
+export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText): StaffMeasureMinimum {
+  const minima = new WeakMap<StaffMeasure, Map<number, Array<number | undefined>>>()
+  return (measure, first, spacing) => {
+    let bySpacing = minima.get(measure)
+    if (!bySpacing) { bySpacing = new Map(); minima.set(measure, bySpacing) }
+    let pair = bySpacing.get(spacing)
+    if (!pair) { pair = []; bySpacing.set(spacing, pair) }
+    const index = first ? 1 : 0
+    return pair[index] ?? (pair[index] = createVexMeasure(measure, first, hasBass, measureText, spacing).minimum)
+  }
+}
+export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,
+  minimum: StaffMeasureMinimum = createStaffMeasureMinimum(document.hasBass, measureText)): StaffLine[] {
   const available = (width - 4) / STAFF_SCALE
   const measured: MeasuredStaffMeasure[] = []
   const measureOne = (measure: StaffMeasure): MeasuredStaffMeasure => {
-    const body = createVexMeasure(measure, false, document.hasBass, measureText, spacing).minimum
-    const solo = createVexMeasure(measure, true, document.hasBass, measureText, spacing).minimum
+    const body = minimum(measure, false, spacing)
+    const solo = minimum(measure, true, spacing)
     const label = measure.melody[0]?.event
     const labelWidth = label?.sectionLabel ? measureText(label.sectionLabel, 16, true).width + 21 : 0
     const inset = labelWidth && !label?.sectionLabelBreakAfter && labelWidth <= width / 2 ? labelWidth / STAFF_SCALE : 0

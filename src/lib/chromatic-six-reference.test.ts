@@ -14,7 +14,10 @@ it.each(references.scores)('preserves the independent reference melody and playb
   const document = parseM3NDocument(source)
   expect(document.order).toBeUndefined()
   expect(document.sections ?? []).toEqual([])
-  const performance = compileScorePerformance(document)
+  // Compare the independent principal-note reference; ornament playback has its own tests.
+  const melody = reference.slug === 'cai_yun_zhui_yue'
+    ? parseM3NDocument(source.replaceAll('{prall}', '')) : document
+  const performance = compileScorePerformance(melody)
   expect(performance.beats).toBe(reference.beats)
   // The reviewed Cai Yun Zhui Yue arrangement omits the two upstream grace notes.
   const events = reference.slug === 'cai_yun_zhui_yue'

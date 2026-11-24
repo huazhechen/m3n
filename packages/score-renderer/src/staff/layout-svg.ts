@@ -6,9 +6,23 @@ const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('
 export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string> }
 export type Ink = { left: number; right: number; top: number; bottom: number }
 export const nodes = (node: XmlNode) => node.children.filter((child): child is XmlNode => typeof child !== 'string')
-export const hasClass = (node: XmlNode, name: string) => (node.attributes.class ?? '').split(/\s+/).includes(name)
+export function hasClass(node: XmlNode, name: string): boolean {
+  const value = node.attributes.class ?? ''
+  if (value === name) return true
+  if (!name) return value.split(/\s+/).includes(name)
+  for (let at = value.indexOf(name); at >= 0; at = value.indexOf(name, at + 1))
+    if ((at === 0 || /\s/.test(value[at - 1]!)) &&
+      (at + name.length === value.length || /\s/.test(value[at + name.length]!))) return true
+  return false
+}
 export function findAll(node: XmlNode, match: (node: XmlNode) => boolean): XmlNode[] {
-  return [...(match(node) ? [node] : []), ...nodes(node).flatMap((child) => findAll(child, match))]
+  const result: XmlNode[] = []
+  const visit = (current: XmlNode) => {
+    if (match(current)) result.push(current)
+    for (const child of current.children) if (typeof child !== 'string') visit(child)
+  }
+  visit(node)
+  return result
 }
 export const xml = (node: XmlNode | string): string =>
   typeof node === 'string'
@@ -127,35 +141,38 @@ function matrix(raw: string): Matrix {
   return m
 }
 function transform(b: Ink, m: Matrix): Ink {
-  const corners = [
-    [b.left, b.top],
-    [b.left, b.bottom],
-    [b.right, b.top],
-    [b.right, b.bottom],
-  ].map(([x, y]) => [m[0] * x! + m[2] * y! + m[4], m[1] * x! + m[3] * y! + m[5]])
-  return {
-    left: Math.min(...corners.map((p) => p[0]!)),
-    right: Math.max(...corners.map((p) => p[0]!)),
-    top: Math.min(...corners.map((p) => p[1]!)),
-    bottom: Math.max(...corners.map((p) => p[1]!)),
-  }
+  const x1 = m[0] * b.left + m[2] * b.top + m[4], y1 = m[1] * b.left + m[3] * b.top + m[5]
+  const x2 = m[0] * b.left + m[2] * b.bottom + m[4], y2 = m[1] * b.left + m[3] * b.bottom + m[5]
+  const x3 = m[0] * b.right + m[2] * b.top + m[4], y3 = m[1] * b.right + m[3] * b.top + m[5]
+  const x4 = m[0] * b.right + m[2] * b.bottom + m[4], y4 = m[1] * b.right + m[3] * b.bottom + m[5]
+  return { left: Math.min(x1, x2, x3, x4), right: Math.max(x1, x2, x3, x4),
+    top: Math.min(y1, y2, y3, y4), bottom: Math.max(y1, y2, y3, y4) }
 }
 export class SvgGeometry {
   readonly definitions: Map<string, XmlNode>
+  private readonly transforms = new Map<string, Matrix>()
   constructor(
     root: XmlNode,
     readonly measure: MeasureText,
   ) {
     this.definitions = new Map(findAll(root, (n) => Boolean(n.attributes.id)).map((n) => [n.attributes.id!, n]))
   }
+  /** Exclude matching child subtrees without cloning the mutable SVG tree. */
+  without(node: XmlNode, omit: (node: XmlNode) => boolean): Ink[] {
+    return this.pieces(node, identity, undefined, omit)
+  }
   pieces(
     node: XmlNode,
     parent: Matrix = identity,
     inherited: { size: number; bold: boolean; italic: boolean } = { size: 16 / 0.7, bold: false, italic: false },
+    omit?: (node: XmlNode) => boolean,
   ): Ink[] {
     const a = node.attributes,
       num = (key: string, fallback = 0) => parseFloat(a[key] ?? String(fallback))
-    const m = multiply(parent, matrix(a.transform ?? ''))
+    const raw = a.transform ?? ''
+    let local = this.transforms.get(raw)
+    if (!local) { local = matrix(raw); this.transforms.set(raw, local) }
+    const m = multiply(parent, local)
     const style = {
       size: a['font-size'] && num('font-size') > 0 ? num('font-size') : inherited.size,
       bold:
@@ -227,7 +244,12 @@ export class SvgGeometry {
           },
         ]
       }
-    } else return nodes(node).flatMap((child) => this.pieces(child, m, style))
+    } else {
+      const result: Ink[] = []
+      for (const child of node.children)
+        if (typeof child !== 'string' && !omit?.(child)) result.push(...this.pieces(child, m, style, omit))
+      return result
+    }
     const half = a.stroke === 'none' ? 0 : num('stroke-width') / 2
     return boxes.map((b) =>
       transform({ left: b.left - half, right: b.right + half, top: b.top - half, bottom: b.bottom + half }, m),

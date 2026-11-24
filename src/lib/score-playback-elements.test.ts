@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { compileScorePerformance, parseM3NDocument } from '@m3n/notation'
 import { NumberedNotationScore } from '@m3n/numbered-notation'
-import { NativePlaybackScore } from '@m3n/score-renderer'
+import { NativePlaybackScore } from '@m3n/score-renderer/playback'
 import { queryPlaybackElements } from './score-playback-elements'
 import reasons from '../scores/yi_qian_ge_shang_xin_de_li_you_01.m3n?raw'
 

@@ -12,6 +12,17 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
     )
   await selectNotationMode(page, '五线谱')
   const paper = page.locator('.score-paper')
+  await expect(paper.locator('svg[data-notation="staff"]').first()).toBeVisible()
+  // Pagination must be compared at the same width, after background selection.
+  const settledWidth = async () => {
+    await expect.poll(async () => paper.evaluate(element => {
+      const selected = (element as HTMLElement).dataset.selectedWidth
+      return Boolean(selected && element.querySelector('svg[data-notation="staff"]')?.getAttribute('width') === selected)
+    }), { timeout: 30_000 }).toBe(true)
+  }
+  await settledWidth()
+  const selected = await paper.getAttribute('data-selected-width')
+  await expect(paper.locator('svg[data-notation="staff"]').first()).toHaveAttribute('width', selected!)
   await expect(paper.locator('g.system')).toHaveCount(3)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const horizontal = () =>
@@ -37,6 +48,8 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
   await page.getByRole('switch', { name: '分页', exact: true }).click()
   await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await settledWidth()
+  await expect(paper).toHaveAttribute('data-selected-width', selected!)
   const after = await horizontal()
   expect(after.map(n => n.id)).toEqual(before.map(n => n.id))
   for (const [i, note] of after.entries()) {
@@ -98,11 +111,12 @@ test('an oversized header still renders continuously and reports an A4 paginatio
   await openScoreSettings(page)
   await page.getByRole('switch', { name: '分页', exact: true }).click()
   await page.keyboard.press('Escape')
-  await page.getByLabel('M3N source').fill(`{title=${'长标题'.repeat(200)}}{4/4}\nN: 1 2 3 4 |||`)
+  await page.getByLabel('M3N source').fill(`{title=${'长标题'.repeat(400)}}{4/4}\nN: 1 2 3 4 |||`)
   const paper = page.locator('.score-paper')
   await expect(paper.locator('g.system')).toHaveCount(1)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  expect(Number(await paper.locator(':scope > svg').getAttribute('height'))).toBeGreaterThan(500)
+  const svg = paper.locator(':scope > svg')
+  expect(Number(await svg.getAttribute('height'))).toBeGreaterThan(Number(await svg.getAttribute('width')) * 297 / 210)
   await openScoreSettings(page)
   await page.getByRole('switch', { name: '分页', exact: true }).click()
   await expect(page.locator('.render-message')).toContainText('单个五线谱谱行')
