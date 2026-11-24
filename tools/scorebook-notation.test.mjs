@@ -206,6 +206,22 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, '.tmp/scorebook-font/text.ttf')).toString('base64'))
     const bookSources = JSON.parse(readFileSync(join(root, 'config/scorebook/editorial-plan.json'), 'utf8')).entries
       .map(entry => readFileSync(join(root, 'src/scores', entry.file), 'utf8'))
+    const annie = await page.evaluate(async ({ sources, source }) => {
+      const api = window.scorebook
+      await api.prepareSources(sources)
+      const production = await api.measure(source, 620)
+      const paged = await api.auditWidth(source, 620)
+      const continuous = await api.auditWidth(source, 620, false)
+      const exported = await api.a4Pages(source, 620)
+      return { production, paged, continuous, exported: exported.length }
+    }, { sources: bookSources, source: readFileSync(join(root, 'src/scores/annie_01.m3n'), 'utf8') })
+    for (const layout of [annie.paged, annie.continuous]) {
+      assert.deepEqual(layout.outside, [], 'Annie at 620px must reserve wrapped instrumental parentheses')
+      assert.deepEqual(layout.overlaps, [])
+    }
+    assert.equal(annie.production.pageCount, annie.paged.pageCount)
+    assert.equal(annie.production.rows, annie.paged.rows)
+    assert.equal(annie.exported, annie.paged.pageCount)
     const stable = await page.evaluate(async ({ sources, basics }) => {
       const api = window.scorebook
       await api.prepareSources(sources)

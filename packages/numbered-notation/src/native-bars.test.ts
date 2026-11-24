@@ -13,6 +13,18 @@ const layout = (first = '1') => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${
 const repeatInk = (score: ReturnType<typeof layout>) => nativeSvgInk(score.systems[0]!.decorationLayout!.find(item => item.svg.includes('repeat-count'))!.svg, measurer)
 
 describe('measured bar obstacles', () => {
+  it.each([false, true])('reserves restarted instrumental parentheses before wrapping (paged: %s)', paged => {
+    const source = `{4/4}\nN: {inst}${Array(7).fill('1 2 3 4 |').join(' ')}{/} |||`
+    const score = layoutNativeScore(parseM3NDocument(source), { width: 360, pageMargin: 0, paged, minimumNoteGapEm: .6, textMeasurer: measurer })
+    expect(score.systems.length).toBeGreaterThan(1)
+    for (const system of score.systems) for (let index = 0; index < system.measures.length; index++) {
+      for (const bar of nativeMeasureBarPositions(system.measures, index)) {
+        const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)
+        expect(ink.left).toBeGreaterThanOrEqual(-.000001)
+        expect(ink.right).toBeLessThanOrEqual(360.000001)
+      }
+    }
+  })
   it('puts a repeat-count label above the actual closing bar with the same text clearance', () => {
     const score = layout(), system = score.systems[0]!, label = repeatInk(score)
     const bar = nativeMeasureBarPositions(system.measures, system.measures.length - 1).at(-1)!
