@@ -6,7 +6,7 @@ import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderShar
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores } from './samples'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
-import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
+import { optimizeScorebookWithRefinement, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
 
 
 export const scorebookTitle = plan.title
@@ -182,7 +182,17 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     const packingStarted = performance.now()
     onProgress({ completed: 0, total: entries.length, title: '正在安排章节与合页…', phase: 'packing' })
     await pause()
-    const packed = optimizeScorebook(entries, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
+    const packed = await optimizeScorebookWithRefinement(entries, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)), async (entry, width) => {
+      await pause()
+      signal.throwIfAborted()
+      const scoreTiming = measurementTimings.scores.find(score => score.file === entry.file)!
+      const started = performance.now()
+      const measured = measureNumberedWidth(documents.get(entry.file)!.document, width, { signal, auditLayout, settings: { textMeasurementCache } })
+      entry.prepared.set(width, measured.prepared)
+      scoreTiming.candidates.push({ width, timings: measured.candidate.timings })
+      scoreTiming.wallMs += performance.now() - started
+      return measured.candidate
+    }, { signal })
     measurementTimings.stages.packingMs = performance.now() - packingStarted
     const renderingStarted = performance.now()
     let sharedPages = 0

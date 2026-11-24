@@ -23,7 +23,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
       export {chooseNumberedScoreWidth, chooseStaffScoreWidth} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))};
       export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/dist/index.js'))};
       export {search as staffSearch} from ${JSON.stringify(join(root, 'tools/staff-width-layout.mjs'))};
-      export {optimizeScorebook} from ${JSON.stringify(join(root, 'tools/scorebook-packing.mjs'))};`)
+      export {optimizeScorebook, optimizeScorebookWithRefinement} from ${JSON.stringify(join(root, 'tools/scorebook-packing.mjs'))};`)
     await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://scorebook.local/bundle.js') },
       plugins: [{ name: 'parity-fixtures', enforce: 'pre', resolveId(id) {
         if (id.endsWith('editorial-plan.json')) return '\0parity-plan'
@@ -58,13 +58,13 @@ test('reader, online and local PDF paths share safe width selection; staff reade
         const audited = await api.probeWidthCandidates(width => api.auditWidth(source, width))
         auditedEntries.push(audited.candidates.map(({ timings, ...candidate }) => candidate))
       }
-      const sharedLocal = api.optimizeScorebook(entries).groups
+      const sharedLocal = (await api.optimizeScorebookWithRefinement(entries, new Set(), (entry, width) => api.measure(sources[Number(entry.id)], width))).groups
       const online = await api.buildOnlineScorebook(new AbortController().signal, () => {})
       const music = online.pages.slice(2)
       const sharedOnline = music.map(svg => [...svg.querySelectorAll(':scope > svg')].map(score => score.viewBox.baseVal.width))
       api.parityPlan.entries[0].sharePage = false
       entries[0].sharePage = false
-      const soloLocal = api.optimizeScorebook(entries).groups
+      const soloLocal = (await api.optimizeScorebookWithRefinement(entries, new Set(), (entry, width) => api.measure(sources[Number(entry.id)], width))).groups
       const solo = await api.buildOnlineScorebook(new AbortController().signal, () => {})
       const soloOnline = solo.pages.slice(2).map(svg => [...svg.querySelectorAll(':scope > svg')].map(score => score.viewBox.baseVal.width))
       const readerWidths = [], staffWidths = []

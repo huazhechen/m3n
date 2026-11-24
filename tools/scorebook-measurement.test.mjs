@@ -48,3 +48,13 @@ test('cross-audit comparison permits only audit diagnostics, preserving metrics,
     assert.notEqual(run(['--compare-audit-modes']).status, 0)
   } finally { rmSync(temp, { recursive: true, force: true }) }
 })
+
+
+test('timing summaries include new shared probes even when solo probes were reused', () => {
+  const report = summarizeMeasurements([{ file: 'score', title: 'Score', measurement: { wallMs: 5, reused: true },
+    candidates: [{ width: 600, timings: { totalMs: 100 } }],
+    sharedCandidates: [{ width: 590, timings: { totalMs: 5, layoutMs: 4 } }] }])
+  assert.equal(report.candidateTotals.totalMs, 5)
+  assert.equal(report.candidateTotals.layoutMs, 4)
+  assert.deepEqual(report.scores[0].candidates.map(candidate => candidate.width), [590])
+})

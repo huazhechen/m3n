@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { chooseBestWidth, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
-import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates } from './scorebook-packing.mjs'
+import { packScorebook, optimizeScorebook, optimizeScorebookWithRefinement, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates } from './scorebook-packing.mjs'
 
 test('the shared online and offline search uses 480–720px in 20px steps', () => {
   assert.deepEqual(widthCandidates, Array.from({ length: 13 }, (_, index) => 480 + index * 20))
@@ -235,4 +235,78 @@ test('cancellation during refinement stops the search', async () => {
     return candidate(width, 100, 1, { qualityScore: width === 600 ? 2 : 1 })
   }, { signal: controller.signal }), { name: 'AbortError' })
   assert.deepEqual(measured, [...widthCandidates, 590])
+})
+
+const sharedEntries = (best = 600) => ['A', 'B'].map(title => entry(title,
+  widthCandidates.map(width => candidate(width, 250, 1, { qualityScore: width === best ? 2 : 1 }))))
+
+for (const [coarse, fine] of [[480, [490]], [640, [630]], [600, [590, 610]]]) {
+  test(`shared refinement measures only bounded neighbors of ${coarse}px`, async () => {
+    const entries = sharedEntries(coarse), measured = []
+    const packed = await optimizeScorebookWithRefinement(entries, new Set(), async (entry, width) => {
+      measured.push([entry.title, width])
+      return candidate(width, 250, 1, { qualityScore: 3 })
+    })
+    assert.deepEqual(measured, entries.flatMap(entry => fine.map(width => [entry.title, width])))
+    assert.equal(packed.groups[0].width, Math.min(...fine))
+    assert.equal(packed.groups[0].end, 2)
+    assert.equal(chooseBestWidth(entries[0].candidates).width, coarse)
+    // Reusing the same task never remeasures a width.
+    await optimizeScorebookWithRefinement(entries, new Set(), async () => assert.fail('duplicate measurement'))
+  })
+}
+
+test('shared refinement rejects overflowing, unsafe and multipage neighbors', async () => {
+  for (const extra of [{ naturalHeight: 500 }, { overlaps: ['lyric'] }, { outside: ['ink'] }, { pageCount: 2 }]) {
+    const entries = sharedEntries()
+    const packed = await optimizeScorebookWithRefinement(entries, new Set(), async (_, width) =>
+      candidate(width, 250, 1, { qualityScore: 3, ...extra }))
+    assert.equal(packed.groups[0].width, 600)
+  }
+})
+
+test('shared refinement reuses solo neighbors and requires measurements for every member', async () => {
+  const entries = sharedEntries(), measured = []
+  entries[0].candidates.push(candidate(590, 250, 1, { qualityScore: 5 }))
+  const packed = await optimizeScorebookWithRefinement(entries, new Set(), async (entry, width) => {
+    measured.push([entry.title, width])
+    return candidate(width, 250, 1, { qualityScore: width === 590 ? 5 : 1 })
+  })
+  assert.deepEqual(measured, [['B', 590], ['B', 610], ['A', 610]])
+  assert.equal(packed.groups[0].width, 590)
+})
+
+test('shared refinement records failed measurements and propagates cancellation', async () => {
+  const entries = sharedEntries()
+  const packed = await optimizeScorebookWithRefinement(entries, new Set(), async () => { throw new Error('failed') })
+  assert.equal(packed.groups[0].width, 600)
+  assert(entries.every(entry => entry.sharedCandidates.every(candidate => candidate.error === 'failed')))
+  const controller = new AbortController(), measured = []
+  await assert.rejects(optimizeScorebookWithRefinement(sharedEntries(), new Set(), async (_, width) => {
+    measured.push(width); controller.abort(); return candidate(width, 250)
+  }, { signal: controller.signal }), { name: 'AbortError' })
+  assert.deepEqual(measured, [590])
+})
+
+test('shared refinement honors 640px admission, chapter boundaries and opt-outs', async () => {
+  for (const alter of [
+    entries => { entries[1].section = 'other' },
+    entries => { entries[1].breakBefore = true },
+    entries => { entries[0].sharePage = false },
+    entries => { entries[1].candidates.find(c => c.width === 640).pageCount = 2 },
+  ]) {
+    const entries = sharedEntries(); alter(entries)
+    await optimizeScorebookWithRefinement(entries, new Set(['basics']), async () => assert.fail('ineligible group'))
+  }
+})
+
+test('movable chapters refine all feasible groups and deduplicate shared measurements', async () => {
+  const entries = sharedEntries(); entries.push({ ...sharedEntries()[0], title: 'C' })
+  const measured = []
+  await optimizeScorebookWithRefinement(entries, new Set(['basics']), async (entry, width) => {
+    measured.push(`${entry.title}:${width}`)
+    return candidate(width, 250, 1, { qualityScore: 3 })
+  })
+  assert.equal(measured.length, 6)
+  assert.equal(new Set(measured).size, 6)
 })
