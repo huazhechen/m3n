@@ -71,13 +71,35 @@ main.editor-page {
   width: calc(100vw - 32px);
 }
 
-/* Plain text stays in document flow for native screen-reader navigation. */
 .score-accessible-text {
   margin-block: 12px;
   padding: 12px;
   border: 1px solid currentColor;
   border-radius: 6px;
   overflow-wrap: anywhere;
+}
+
+.score-accessible-text:not(:focus-within):not(.is-open) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.score-accessible-toggle {
+  min-height: 44px;
+  padding: 10px 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .score-accessible-text summary {

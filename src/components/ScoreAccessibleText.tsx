@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useId, useMemo, useState } from 'react'
 import type { ScoreDocument } from '@m3n/notation'
 import { describeAccessibleScore } from '../lib/score-accessibility'
 import type { NotationMode } from '../lib/renderer-settings'
@@ -7,6 +7,8 @@ const overviewSize = 8
 const measureName = (label: string) => label.split('，')[0]!
 
 export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale }: { score: ScoreDocument; notationMode: NotationMode; transpose: number; tempoScale: number }) {
+  const [expanded, setExpanded] = useState(false)
+  const contentId = useId()
   const text = useMemo(() => {
     try {
       return describeAccessibleScore(score, { notationMode, transpose, tempoScale, forDisplay: true })
@@ -19,9 +21,9 @@ export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale
     const measures = text.measures.slice(index * overviewSize, (index + 1) * overviewSize)
     return { measures, range: `${measureName(measures[0]!.label)}至${measureName(measures.at(-1)!.label)}` }
   })
-  return <section className="score-accessible-text" aria-label={text.title}>
-    <details key={text.title}>
-      <summary>无障碍读谱</summary>
+  return <section className={`score-accessible-text${expanded ? ' is-open' : ''}`} aria-label={text.title}>
+    <button type="button" className="score-accessible-toggle" aria-expanded={expanded} aria-controls={contentId} onClick={() => setExpanded(value => !value)}>无障碍读谱</button>
+    <div id={contentId} hidden={!expanded}>
       <p>{text.summary}</p>
       <details className="score-accessible-overview">
         <summary>简略全谱</summary>
@@ -41,6 +43,6 @@ export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale
           {voice.events.map((event, index) => <p key={voice.eventIds[index] ?? index}>{event}</p>)}
         </div>)}
       </details>)}
-    </details>
+    </div>
   </section>
 }
