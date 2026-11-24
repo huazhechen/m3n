@@ -41,14 +41,6 @@
   ],
   "entries": [
     {
-      "id": "ma_li_you_zhi_xiao_gao_yang",
-      "file": "ma_li_you_zhi_xiao_gao_yang_01.m3n",
-      "title": "玛丽有只小羔羊",
-      "section": "basics",
-      "group": "基础旋律与连奏",
-      "reason": "C调窄音域内的简单旋律，练习稳定拍点、重复音起音及基本长短音"
-    },
-    {
       "id": "ban_yin_jie_kou_qin_ji_ben_gong",
       "file": "ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
       "title": "半音阶口琴基本功",
@@ -56,6 +48,14 @@
       "group": "每日训练",
       "reason": "吹吸切换、长音、力度控制、断音及音阶音型的日常综合训练",
       "breakBefore": true
+    },
+    {
+      "id": "ma_li_you_zhi_xiao_gao_yang",
+      "file": "ma_li_you_zhi_xiao_gao_yang_01.m3n",
+      "title": "玛丽有只小羔羊",
+      "section": "basics",
+      "group": "基础旋律与连奏",
+      "reason": "C调窄音域内的简单旋律，练习稳定拍点、重复音起音及基本长短音"
     },
     {
       "id": "xiao_xing_xing",
