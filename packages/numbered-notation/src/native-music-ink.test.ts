@@ -14,6 +14,9 @@ it('direct body geometry matches painted SVG at fractional positions, including 
     const document = parseM3NDocument('{4/4}\nN: 1 2#e/ 3bd// 4.. | [135] 6 7 0 | 1 - - - | 1 [1##3bb5:h]{arp}{ac(2## 3bb)}{str}{tr}{p} 3 4 |')
     const painter = new NativeMusicPainter(measurer)
     const glyphs = projectNativeScore(document, { textMeasurer: measurer }).glyphs
+    // Projection may share ordinary body geometry, but the connection port
+    // must still match its independently painted body for decorated notes.
+    for (const glyph of glyphs) expect(glyph.tieTop).toBe(-nativeSvgInk(painter.tieBody(glyph), measurer).top)
     for (const glyph of glyphs) for (const x of [0, -12.123456789, 534.987654321]) for (const claimed of [undefined, new Set([0, 2])]) {
       const placed = { ...glyph, x, y: x / 3 }
       expect(painter.bodyPieces(placed, claimed)).toEqual(nativeSvgPieces(painter.body(placed, claimed), measurer))

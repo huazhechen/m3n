@@ -203,9 +203,14 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           glyph.musicRight = Math.max(glyph.musicRight ?? 0, ...glyph.markLayout.map(mark => mark.right))
           glyph.left = Math.max(glyph.left, glyph.musicLeft)
           glyph.right = Math.max(glyph.right, glyph.musicRight)
-          glyph.tieTop = -painter.tieBodyInk(glyph).top
           glyph.musicInk = painter.musicPieces(glyph)
           const ink = unionNativeInk(glyph.musicInk)
+          // Without side components or marks, the connection body is exactly
+          // the music body already measured above. Decorated notes keep their
+          // separate connection geometry, which excludes accidentals/graces.
+          const sameTieBody = !glyph.graces.length && !glyph.markLayout.length && !event.postfixes.includes('arp')
+            && glyph.pitches.every(pitch => !pitch.accidental)
+          glyph.tieTop = -(sameTieBody ? ink : painter.tieBodyInk(glyph)).top
           glyph.musicTop = -ink.top; glyph.top = Math.max(-ink.top, ...glyphControls.map(control => control.top))
           glyph.musicBottom = ink.bottom; glyph.bottom = Math.max(ink.bottom, ...glyphControls.map(control => control.bottom))
           glyph.inkLeft = -ink.left; glyph.inkRight = ink.right
