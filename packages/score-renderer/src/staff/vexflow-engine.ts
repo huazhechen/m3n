@@ -93,7 +93,7 @@ export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: num
     const x = right + column.left
     right = x + column.after + (spacing * 22 / STAFF_SCALE)
   }
-  return Math.max(40, metrics.start + right + 8,
+  return Math.max(40, metrics.start + right + 8 + metrics.endInset,
     metrics.start + metrics.multiRestWidth + (metrics.multiRestWidth ? metrics.endInset : 0))
 }
 export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, spacing: number, bassY = 140,
@@ -249,7 +249,7 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
     : 0
   const endInset = Math.max(0, ...staves.flatMap(stave => stave.getModifiers(StaveModifierPosition.END)
     .map(modifier => -(modifier.getLayoutMetrics()?.xMin ?? 0))))
-  const minimum = Math.max(40, start + right + 8, start + multiRestWidth + (multiRestWidth ? endInset : 0))
+  const minimum = Math.max(40, start + right + 8 + endInset, start + multiRestWidth + (multiRestWidth ? endInset : 0))
   const metrics: StaffMeasureMetrics = { start, multiRestWidth, endInset, columns: columnInk }
   return { staves, entries, controls, voices, beams, tuplets, columns, minimum, metrics, start, endInset, measure, bassY }
 }

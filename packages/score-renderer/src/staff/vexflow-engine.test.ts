@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
+import { resolve } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { analyzeM3N } from '@m3n/notation'
-import { findAll } from './layout-svg.js'
+import { element, findAll, SvgGeometry } from './layout-svg.js'
 import { projectStaffDocument } from './staff-document.js'
+import { captureStaffDrawing } from './staff-svg-context.js'
+import { StaveModifierPosition } from 'vexflow/bravura'
 import { createStaffContext, createVexMeasure, drawVexMeasure } from './vexflow-engine.js'
 
 const measureText = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
@@ -88,4 +92,23 @@ it('aligns pickup beaming with the end of the bar while the complementary final 
   const final = createVexMeasure(document.measures.at(-1)!, true, false, measureText, 0.25)
   expect(final.beams.map(beam => beam.notes.length)).toEqual([2, 2])
   expect(final.entries[0]!.at(-1)!.notes[0]!.getBeam()).toBeUndefined()
+})
+
+it('keeps measure 32 of Do-Re-Mi clear of its ending repeat at compact and stretched widths', () => {
+  const source = readFileSync(resolve(process.cwd(), '../../src/scores/duo_lai_mi_01.m3n'), 'utf8')
+  const measure = projectStaffDocument(analyzeM3N(source).score).measures[31]!
+  expect(measure.source.right).toBe('rptend')
+  for (const first of [false, true]) for (const extra of [0, 80]) {
+    const result = createVexMeasure(measure, first, false, measureText, 0.25)
+    const drawing = drawVexMeasure(result, result.minimum + extra, 20, createStaffContext())
+    const geometry = new SvgGeometry(drawing, measureText)
+    const stave = result.staves[0]!
+    const context = createStaffContext()
+    const repeat = element('g', {}, captureStaffDrawing(context, () => {
+      stave.setContext(context)
+      stave.getModifiers(StaveModifierPosition.END).forEach(modifier => modifier.draw(stave))
+    }))
+    const note = findAll(drawing, node => node.attributes.id === measure.melody.at(-1)!.id)[0]!
+    expect(geometry.ink(repeat).left - geometry.ink(note).right).toBeGreaterThanOrEqual(3)
+  }
 })
