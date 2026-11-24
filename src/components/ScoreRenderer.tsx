@@ -9,6 +9,7 @@ import { cancelToneLoad, loadSampledTone, subscribeToneLoadProgress, type ToneLo
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
 import { attachScoreZoom } from '../lib/score-zoom'
+import { measureClickTarget, measureSeekProgress } from '../lib/score-measure-click'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ScoreSourceRange, ScoreDocument } from '@m3n/notation'
 import {
@@ -124,22 +125,29 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   const system = measure.closest<SVGGElement>('g.system')
   const measureBounds = measure.getBBox()
   const systemBounds = system?.getBBox() ?? measureBounds
+  // Music-font getBBox() includes em-box whitespace well outside the engraved
+  // row. Use the numbered layout's measured vertical bounds for every band.
+  const numberedSystemTop = Number(system?.dataset.m3nTop)
+  const numberedSystemBottom = Number(system?.dataset.m3nBottom)
+  const hasNumberedSystemBounds = Number.isFinite(numberedSystemTop)
+    && Number.isFinite(numberedSystemBottom) && numberedSystemBottom > numberedSystemTop
   const numberedMeasureStart = Number(measure.dataset.m3nMeasureStart)
   const numberedMeasureEnd = Number(measure.dataset.m3nMeasureEnd)
+  // Use the exact engraved boundaries without padding into adjacent measures.
   // Native numbered bounds remain valid when a measure continues on another system.
   const left = Number.isFinite(numberedMeasureStart)
-    ? numberedMeasureStart - 5
+    ? numberedMeasureStart
     : measureBounds.x
   const right = Number.isFinite(numberedMeasureEnd)
-    ? numberedMeasureEnd + 5
+    ? numberedMeasureEnd
     : measureBounds.x + measureBounds.width
   const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   band.classList.add(className)
   band.setAttribute('aria-hidden', 'true')
   band.setAttribute('x', String(left))
-  band.setAttribute('y', String(systemBounds.y))
+  band.setAttribute('y', String(hasNumberedSystemBounds ? numberedSystemTop : systemBounds.y))
   band.setAttribute('width', String(Math.max(0, right - left)))
-  band.setAttribute('height', String(systemBounds.height))
+  band.setAttribute('height', String(hasNumberedSystemBounds ? numberedSystemBottom - numberedSystemTop : systemBounds.height))
   measure.appendChild(band)
 }
 
@@ -335,6 +343,17 @@ export function ScoreRenderer({
           if (width !== undefined) setLayoutWidth(current => current === width ? current : width)
           if (width !== undefined) autoWidthSelectionRef.current = { scoreDocument, notationMode, width }
         }
+        paper.querySelectorAll<SVGGElement>('g.measure').forEach(measure => {
+          // Use the same engraved boundaries as the measure highlights, including
+          // the elastic space before the first note and the full music row.
+          measure.querySelector(':scope > [data-score-reading-hitarea]')?.remove()
+          addMeasureHighlight(measure, 'measure-click-area')
+          const area = measure.querySelector<SVGRectElement>(':scope > .measure-click-area')!
+          area.setAttribute('data-score-reading-hitarea', '')
+          area.setAttribute('fill', 'transparent')
+          area.setAttribute('pointer-events', 'all')
+          measure.prepend(area)
+        })
         addInvalidMeasureHighlights(paper, invalidMeasureIds)
         if (startupBeatRef.current !== null) drawStartupBeat(paper, scoreRef.current, startupBeatRef.current, startupPositionRef.current * 1000)
         setMessage(message)
@@ -733,15 +752,16 @@ export function ScoreRenderer({
         aria-busy={isRendering || isSourceUpdating || undefined}
         aria-hidden="true"
         onClick={(event) => {
-          const element = (event.target as Element).closest('[id^="m3n-e-"], [data-m3n-id^="m3n-e-"]')
-          const rawId = element?.getAttribute('data-m3n-id') ?? element?.getAttribute('id')
-          const xmlId = notationMode === 'staff' ? rawId?.replace(/-v\d+$/, '').replace(/-n\d+$/, '').replace(/-rend\d+$/, '') : rawId
-          if (!xmlId) return
+          const target = measureClickTarget(event.currentTarget, event.target as Element)
+          if (!target) return
+          const { xmlId, playbackId } = target
           setSelectedXmlId(xmlId)
           const player = playerRef.current
           if (isPlaying && player && !player.paused && player.duration > 0) {
-            const milliseconds = scoreRef.current?.timeForElement(xmlId) ?? -1
-            if (milliseconds >= 0) player.seek(milliseconds / (player.duration * 1000))
+            const milliseconds = scoreRef.current?.timeForElement(playbackId) ?? -1
+            // Leave the note-on pending: MIDI's accumulated clock can round
+            // just below the score timestamp and otherwise consume the first note.
+            if (milliseconds >= 0) player.seek(measureSeekProgress(milliseconds, player.duration))
           }
           window.requestAnimationFrame(() => onNoteClick?.(xmlId))
         }}

@@ -57,8 +57,8 @@ describe('page-aware automatic note spacing', () => {
   })
 })
 
-it.each([false,true].flatMap(fixedDo=>[480,640,720].map(width=>({fixedDo,width}))))('isolates projection state between automatic spacing trials ($width, fixedDo=$fixedDo)', ({width,fixedDo}) => {
-  const source = readFileSync(new URL('../../../src/scores/valsentino_01.m3n',import.meta.url),'utf8')
+it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_01.m3n','katyusha_01.m3n'].map(file=>({fixedDo,width,file})))))('isolates projection state between automatic spacing trials ($file, $width, fixedDo=$fixedDo)', ({width,fixedDo,file}) => {
+  const source = readFileSync(new URL('../../../src/scores/'+file,import.meta.url),'utf8')
   const document = parseM3NDocument(source), before = structuredClone(document)
   const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}
   const automatic = layoutNativeScore(document,settings,timings)

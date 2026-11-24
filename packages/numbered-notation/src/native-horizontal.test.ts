@@ -45,9 +45,9 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [46.23176, 44.90601, 44.00402].entries())
+        for (const [index, gap] of [47.85, 46.64, 43.69161].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(329.01144, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(332.37743, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);
@@ -63,7 +63,7 @@ describe('native spacing and measured note envelopes', () => {
         expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(73.10901718258879, 5);
         const opening = result.projection.measures[9]!;
         expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(127.74208198726205, 5);
-        expect(result.systems.map(system => system.measures.length)).toEqual([7, 4]);
+        expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320, narrowSpacing);

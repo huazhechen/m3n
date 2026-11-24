@@ -46,7 +46,7 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
       return result
     })
     let start = 0
-    for (const stop of planScoreLines(candidates, { relaxLastLine: end === measured.length })) {
+    for (const stop of planScoreLines(candidates)) {
       const members = group.slice(start, stop), minimum = minimumFor(members)
       lines.push({ measures: members, minimum, target: Math.max(available, minimum), weight: members.reduce((n, m) => n + m.weight, 0) })
       start = stop

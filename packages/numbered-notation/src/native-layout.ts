@@ -128,7 +128,7 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
 
 /** Break complete measures first, splitting oversized measures at time columns. */
 function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0): NativeMeasure[][] {
-  const fragments = measures.flatMap((measure, index) => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1), index === measures.length - 1))
+  const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1)))
   const lines: NativeMeasure[][] = []
   const ratio = options.wrapWidthRatio ?? 1
   for (let begin = 0; begin < fragments.length;) {
@@ -166,7 +166,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
       }
     }
     let index = 0
-    for (const stop of planNativeLines(candidates, { relaxLastLine: end === fragments.length })) { lines.push(group.slice(index, stop)); index = stop }
+    for (const stop of planNativeLines(candidates)) { lines.push(group.slice(index, stop)); index = stop }
     begin = end
   }
   return lines
@@ -249,6 +249,20 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   let projection: NativeProjection
   if (preparation?.projection) {
     projection = cloneNativeProjection(preparation.projection)
+    // Parenthesis padding follows the current trial's note gap. Reuse text
+    // metrics, but rebuild this mutable padding using the original arithmetic.
+    let enclosure: { left: number; right: number } | undefined
+    for (const glyph of projection.glyphs) {
+      if (!glyph.instrumental) continue
+      if (!enclosure) {
+        const style = { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }
+        const left = measurer.measureText('(', style), right = measurer.measureText(')', style)
+        enclosure = { left: left.w - Math.min(0, left.inkLeft ?? 0), right: Math.max(right.w, right.inkRight ?? right.w) }
+      }
+      glyph.parenthesisGap = nativeStyle.music * minimumNoteGapEm
+      glyph.parenthesisLeft = enclosure.left + glyph.parenthesisGap
+      glyph.parenthesisRight = enclosure.right + glyph.parenthesisGap
+    }
     if (timings) timings.projectionReuses = (timings.projectionReuses ?? 0) + 1
   } else {
     const measured = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })

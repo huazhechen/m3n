@@ -1,6 +1,6 @@
 /** One legal row starting at its index in the candidate table. */
 export type LineCandidate = { end: number; density: number; penalty?: number }
-type Row = LineCandidate & { id: number; cost: number; densityPenalty: number }
+type Row = LineCandidate & { id: number; cost: number }
 type Plan = { row: Row; cost: number; previous?: Plan }
 const epsilon = 1e-12
 
@@ -22,7 +22,7 @@ function better(candidate: Plan, current: Plan | undefined) {
 
 function transition(previous: Row, current: Row) {
   const difference = current.density - previous.density
-  return current.densityPenalty * difference * difference
+  return difference * difference
 }
 
 /** Minimise row costs plus adjacent-row density differences over a whole
@@ -30,21 +30,18 @@ function transition(previous: Row, current: Row) {
  * and may be merged. No invented neighbours at the ends. */
 export function planScoreLines(
   candidates: readonly (readonly LineCandidate[])[],
-  options: { relaxLastLine?: boolean } = {},
 ): number[] {
   const count = candidates.length
   if (!count) return []
   let id = 0
   const rows: Row[][] = candidates.map((list) =>
     list.map((row) => {
-      const densityPenalty = options.relaxLastLine && row.end === count && row.density <= 0.6 ? 0.5 : 1
       return {
         ...row,
         id: id++,
-        densityPenalty,
         cost:
           1 +
-          densityPenalty * Math.max(0, 1 - row.density) ** 2 +
+          Math.max(0, 1 - row.density) ** 2 +
           100 * Math.max(0, row.density - 1) ** 2 +
           (row.penalty ?? 0),
       }

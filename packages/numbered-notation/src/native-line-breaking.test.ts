@@ -19,12 +19,11 @@ function candidatesFor(widths: number[], capacity = 100): NativeLineCandidate[][
 
 // Independent exhaustive oracle: score complete partitions, without DP states
 // or pruning.
-function score(rows: NativeLineCandidate[], relaxLastLine = false) {
+function score(rows: NativeLineCandidate[]) {
   return rows.reduce((sum, row, i) => {
     const difference = i ? row.density - rows[i - 1]!.density : 0
-    const factor = relaxLastLine && i === rows.length - 1 && row.density <= .6 ? .5 : 1
-    return sum + 1 + factor * Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2
-      + (row.penalty ?? 0) + factor * difference ** 2
+    return sum + 1 + Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2
+      + (row.penalty ?? 0) + difference ** 2
   }, 0)
 }
 
@@ -65,9 +64,19 @@ describe('adjacent-row density planning', () => {
     expect(planNativeLines(candidatesFor([30, 30, 40, 40, 40, 40]))).toEqual([2, 4, 6])
   })
 
-  it('still balances avoidable short tails and does not add rows just to obtain a relaxed ending', () => {
-    expect(planNativeLines(candidatesFor([30, 30, 40, 40, 40, 40]), { relaxLastLine: true })).toEqual([2, 4, 6])
-    expect(planNativeLines(candidatesFor([90, 90, 30, 30]), { relaxLastLine: true })).toEqual([1, 2, 4])
+  it('allows unavoidable short tails while scoring every row equally', () => {
+    expect(planNativeLines(candidatesFor([30, 30, 40, 40, 40, 40]))).toEqual([2, 4, 6])
+    expect(planNativeLines(candidatesFor([90, 90, 30, 30]))).toEqual([1, 2, 4])
+  })
+
+  it('does not prefer a short final row over balanced Red River Valley rows at 480px', () => {
+    // Actual browser-measured minimum widths at 0.6em; includes the pickup.
+    const widths = [46.6293844628, 142.1124391210, 122.1847213036, 163.7143604291,
+      109.2634219384, 142.1124391210, 122.1847213036, 142.1124391210, 72.2865374756]
+    expect(planNativeLines(candidatesFor(widths, 480))).toEqual([3, 6, 9])
+    const source = readFileSync(new URL('../../../src/scores/hong_he_gu_01.m3n', import.meta.url), 'utf8')
+    const layout = layoutNativeScore(parseM3NDocument(source), { width: 480, pageMargin: 0, paged: true })
+    expect(layout.systems.map(system => system.measures.length)).toEqual([3, 3, 3])
   })
 
   it('matches exhaustive global scoring across varied widths and beat penalties', () => {
@@ -77,12 +86,10 @@ describe('adjacent-row density planning', () => {
       const candidates = candidatesFor(Array.from({ length: 4 + trial % 7 }, () => 10 + Math.floor(random() * 100)), 70 + trial % 4 * 10)
       for (let start = 1; start < candidates.length; start++) if (random() < .3) for (const row of candidates[start]!) row.penalty = 1
       const before = structuredClone(candidates)
-      for (const relaxLastLine of [false, true]) {
-        const result = planNativeLines(candidates, { relaxLastLine })
-        const optimum = Math.min(...enumerate(candidates).map(rows => score(rows, relaxLastLine)))
-        expect(score(selected(candidates, result), relaxLastLine), `trial ${trial}, relaxed=${relaxLastLine}`).toBeCloseTo(optimum, 10)
-        expect(result.at(-1)).toBe(candidates.length)
-      }
+      const result = planNativeLines(candidates)
+      const optimum = Math.min(...enumerate(candidates).map(rows => score(rows)))
+      expect(score(selected(candidates, result)), `trial ${trial}`).toBeCloseTo(optimum, 10)
+      expect(result.at(-1)).toBe(candidates.length)
       expect(candidates).toEqual(before)
     }
   })

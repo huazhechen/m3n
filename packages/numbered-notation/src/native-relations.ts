@@ -35,8 +35,8 @@ class NativeRelationPainter extends NativeSymbols {
       // lyric padding remains independent of the instrumental enclosure.
       const left = Math.max(first.musicLeft ?? first.left, first.inkLeft ?? 0)
       const right = Math.max(last.musicRight ?? last.right, last.inkRight ?? 0)
-      return this.text('(', first.x - left - leftWidth - nativeStyle.music * 0.05, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
-        + this.text(')', last.x + right + nativeStyle.music * 0.05, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+      return this.text('(', first.x - left - leftWidth - first.parenthesisGap!, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
+        + this.text(')', last.x + right + last.parenthesisGap!, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = preparedArc ?? nativeArcGeometry(relation, system)

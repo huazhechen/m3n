@@ -38,7 +38,7 @@ it.each(['{text=间奏}2', '{mf}2', '2{tr}'])('ignores the empty span between in
 
 it('still clears a real parenthesis overlapping a wide dynamic', () => {
   const textMeasurer = { measureText(text: string, style: {fontSize: number; fontFamily?: string}) {
-    if (style.fontFamily === 'Bravura') return {w:style.fontSize*1.5,h:style.fontSize*.7,baseline:style.fontSize*.7}
+    if (style.fontFamily === 'Bravura') return {w:style.fontSize*3,h:style.fontSize*.7,baseline:style.fontSize*.7}
     const parenthesis = text === '(' || text === ')'
     return { w: [...text].length * style.fontSize * .5, h: style.fontSize * (parenthesis ? 1.3 : .7), baseline: style.fontSize * (parenthesis ? 1.1 : .7) }
   } }
